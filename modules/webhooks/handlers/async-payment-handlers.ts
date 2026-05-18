@@ -165,7 +165,7 @@ export async function handleAsyncPaymentFailed(
 					to: order.customerEmail,
 					customerName: order.customerName,
 					orderNumber: order.orderNumber,
-					retryUrl: `${getBaseUrl()}${ROUTES.SHOP.CART}`,
+					retryUrl: `${getBaseUrl()}${ROUTES.SHOP.CHECKOUT}`,
 				},
 			});
 		}

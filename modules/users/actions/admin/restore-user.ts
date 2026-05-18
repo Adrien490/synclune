@@ -5,8 +5,7 @@ import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	success,
@@ -18,16 +17,13 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { restoreUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function restoreUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin (avant rate-limit)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateCheck) return rateCheck.error;
@@ -70,20 +66,6 @@ export async function restoreUser(_prevState: unknown, formData: FormData): Prom
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: USER_AUDIT_ACTIONS.RESTORE,
-			targetType: "user",
-			targetId: userId,
-			metadata: {
-				userName: user.name,
-				userEmail: user.email,
-				wasDeleted: !!user.deletedAt,
-				wasSuspended: !!user.suspendedAt,
-			},
-		});
 
 		return success(`L'utilisateur ${user.name ?? user.email} a ete restaure.`);
 	} catch (e) {

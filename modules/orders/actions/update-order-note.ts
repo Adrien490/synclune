@@ -8,7 +8,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { logAudit } from "@/shared/lib/audit-log";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateOrderNoteSchema } from "../schemas/order.schemas";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
@@ -72,17 +71,6 @@ export async function updateOrderNote(noteId: string, content: string): Promise<
 		if (note.orderId) {
 			updateTag(ORDERS_CACHE_TAGS.NOTES(note.orderId));
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.updateNote",
-			targetType: "orderNote",
-			targetId: note.id,
-			metadata: {
-				orderId: note.orderId,
-			},
-		});
 
 		return success("Note modifiée");
 	} catch (e) {

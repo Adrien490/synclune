@@ -15,12 +15,7 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { requestReturnSchema } from "../schemas/refund.schemas";
-import {
-	WITHDRAWAL_PERIOD_DAYS,
-	MS_PER_DAY,
-	getReturnIneligibilityReason,
-} from "../services/return-eligibility.service";
-import { logAudit } from "@/shared/lib/audit-log";
+import { getReturnIneligibilityReason } from "../services/return-eligibility.service";
 
 /**
  * Client-side return request (droit de retractation 14 jours)
@@ -177,26 +172,6 @@ export async function requestReturn(
 		if (result.userId) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId));
 		}
-
-		// 10. Audit log : conformité droit rétractation 14j FR
-		const daysSinceDelivery = result.deliveryDate
-			? Math.floor((Date.now() - result.deliveryDate.getTime()) / MS_PER_DAY)
-			: null;
-		void logAudit({
-			adminId: user.id,
-			adminName: user.name ?? user.email,
-			action: "refund.requestReturn",
-			targetType: "refund",
-			targetId: result.refund.id,
-			metadata: {
-				orderNumber: result.orderNumber,
-				amount: result.totalAmount,
-				reason,
-				daysSinceDelivery,
-				withinWithdrawalPeriod:
-					daysSinceDelivery !== null && daysSinceDelivery <= WITHDRAWAL_PERIOD_DAYS,
-			},
-		});
 
 		return success(
 			"Votre demande de retour a été enregistrée. Nous la traiterons dans les plus brefs délais.",

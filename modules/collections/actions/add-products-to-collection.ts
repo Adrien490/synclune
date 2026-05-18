@@ -1,9 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
@@ -30,10 +29,8 @@ export async function addProductsToCollection(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.MANAGE_PRODUCTS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -83,20 +80,6 @@ export async function addProductsToCollection(
 		for (const product of result.products) {
 			getProductInvalidationTags(product.slug, product.id).forEach((tag) => updateTag(tag));
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "collection.addProducts",
-			targetType: "collection",
-			targetId: result.collection.id,
-			metadata: {
-				collectionName: result.collection.name,
-				requestedCount: validatedData.productIds.length,
-				addedCount: result.addedCount,
-				skippedCount: validatedData.productIds.length - result.addedCount,
-			},
-		});
 
 		const added = result.addedCount;
 		const requested = validatedData.productIds.length;

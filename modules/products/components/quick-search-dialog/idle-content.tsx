@@ -89,7 +89,7 @@ export function IdleContent({
 												"flex w-24 shrink-0 flex-col items-center gap-2",
 												"rounded-xl p-2 transition-colors",
 												"hover:bg-muted",
-												"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+												"focus-ring",
 											)}
 										>
 											<div className="bg-muted size-20 shrink-0 overflow-hidden rounded-lg">
@@ -166,7 +166,7 @@ export function IdleContent({
 												className={cn(
 													"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
 													"hover:bg-muted touch-manipulation",
-													"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+													"focus-ring",
 													"disabled:opacity-50",
 													"data-[active=true]:bg-muted",
 												)}

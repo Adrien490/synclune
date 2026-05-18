@@ -99,7 +99,7 @@ export async function removeFromWishlist(
 			return error(WISHLIST_ERROR_MESSAGES.ITEM_NOT_FOUND);
 		}
 
-		return success("Retire de votre wishlist", {
+		return success("Retire de vos favoris", {
 			removed: true,
 		});
 	} catch (e) {

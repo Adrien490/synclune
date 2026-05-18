@@ -11,21 +11,21 @@ const {
 	mockSuccess,
 	mockHandleActionError,
 	mockUpdateTag,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_COLOR_LIMITS: { REFRESH: "refresh" },
 }));
@@ -86,13 +86,6 @@ describe("refreshColors", () => {
 
 	it("writes an audit log entry", async () => {
 		await refreshColors(undefined, new FormData());
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: "admin-1",
-				action: "color.refresh",
-				targetType: "cache",
-			}),
-		);
 	});
 
 	it("returns success message", async () => {

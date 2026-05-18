@@ -14,9 +14,17 @@ import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { addToCart } from "@/modules/cart/actions/add-to-cart";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { ActionStatus } from "@/shared/types/server-action";
+import { toast } from "@/shared/utils/toast";
 import { LoaderCircle } from "lucide-react";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
+
+const UNDO_TOAST_DURATION_MS = 5000;
 
 interface RemoveCartItemData {
 	cartItemId: string;
@@ -30,11 +38,40 @@ export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
 	const haptic = useHaptic();
+	const router = useRouter();
+	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
+	const [, startUndoTransition] = useTransition();
+
+	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
+		const handleUndo = () => {
+			adjustCart(quantity);
+			const fd = new FormData();
+			fd.set("skuId", skuId);
+			fd.set("quantity", String(quantity));
+			startUndoTransition(async () => {
+				const result = await addToCart(undefined, fd);
+				if (result.status === ActionStatus.SUCCESS) {
+					router.refresh();
+					toast.success("Article restauré");
+				} else {
+					adjustCart(-quantity);
+					toast.error(result.message);
+				}
+			});
+		};
+
+		toast.success(`${itemName} retiré du panier`, {
+			duration: UNDO_TOAST_DURATION_MS,
+			action: { label: "Annuler", onClick: handleUndo },
+		});
+	};
 
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
+			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
 			removeDialog.close();
+			if (skuId) showUndoToast(skuId, quantity, itemName);
 		},
 	});
 

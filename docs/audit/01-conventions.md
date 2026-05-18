@@ -38,6 +38,18 @@ Toute modification ici implique un PR `docs:` + mise à jour `CHANGELOG.md`.
 
 Les handlers Stripe sont internes (pas Server Actions). `services/` peut contenir de la logique transactionnelle complète (read + mutation atomique) pour garantir l'atomicité.
 
+#### Module `webhooks/handlers/` — I/O atomique direct
+
+Les handlers Stripe sont des orchestrations transactionnelles bornées à un event Stripe (un handler = un type d'event). Les accès Prisma directs y sont acceptés quand :
+
+- le read est suivi immédiatement d'une mutation atomique (même `$transaction` quand critique — cf. `dispute-handlers.ts:127`, `async-payment-handlers.ts:73`)
+- le read sert à localiser la ressource métier liée au PaymentIntent / Charge / Dispute (`prisma.order.findFirst` par `stripePaymentIntentId`, `prisma.orderNote.findFirst` pour dédup webhook replay)
+- extraire en service ne factoriserait rien (un seul caller par read)
+
+Les opérations volumineuses ou réutilisées restent dans `services/` (`checkout-order-processing.service.ts` création Order complète, `refund.service.ts` sync Stripe refunds, `alert.service.ts` admin alert).
+
+> Justification : un handler webhook = un point d'entrée unique pour un event. Extraire chaque read pré-mutation en service serait du sur-engineering sans gain de testabilité (les services orchestrés sont déjà testés indépendamment).
+
 #### Reads de validation dans `actions/`
 
 Acceptés pour :
@@ -60,6 +72,7 @@ Mutations DB ou I/O (email) acceptées dans `services/` quand appelé depuis plu
 | `payments/services/order-creation.service.ts`           | Stock lock + order + discount usage atomique                                                                                                                                                                             |
 | `wishlist/services/notify-back-in-stock.ts`             | Notification atomique post-restock                                                                                                                                                                                       |
 | `wishlist/services/lock-and-validate-sku-for-move.ts`   | Lock `FOR UPDATE` + validation SKU partagé `move-to-cart`. La cohérence dépend du `$transaction` du caller (le lock ne survit pas hors scope).                                                                           |
+| `wishlist/services/upsert-wishlist-item.service.ts`     | Validation produit + upsert wishlist + cap check + create item partagé entre `add-to-wishlist` et `toggle-wishlist-item` (path "add"). La cohérence dépend du `$transaction` du caller (TOCTOU produit).                 |
 | `cart/services/sku-validation.service.ts`               | DB reads partagés actions + SKU selector                                                                                                                                                                                 |
 | `media/services/delete-uploadthing-files.service.ts`    | UTApi cleanup partagé reviews / account-deletion / hard-delete                                                                                                                                                           |
 | `media/services/generate-thumbhash.ts`                  | Sharp + HTTP download appelé depuis UploadThing core (catalogMedia + reviewMedia)                                                                                                                                        |

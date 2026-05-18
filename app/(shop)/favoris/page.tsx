@@ -49,14 +49,17 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
 
 	return (
 		<div className="relative min-h-screen">
+			{/* noStructuredData: page noindex (compte utilisateur) → BreadcrumbList inutile */}
 			<PageHeader
 				title="Mes favoris"
 				breadcrumbs={[{ label: "Mes favoris", href: "/favoris" }]}
 				className="hidden sm:block"
+				accent="underline"
+				noStructuredData
 			/>
 
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
-				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-screen-2xl space-y-6 px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<WishlistGridSkeleton />}>
 						<WishlistList wishlistPromise={wishlistPromise} perPage={perPage} />
 					</Suspense>

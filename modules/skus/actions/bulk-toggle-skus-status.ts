@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -13,7 +13,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_SKU_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -47,10 +46,8 @@ export async function bulkToggleSkusStatus(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -160,21 +157,6 @@ export async function bulkToggleSkusStatus(
 				void notifyBackInStock(productId);
 			}
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: targetIsActive ? "sku.bulkActivate" : "sku.bulkDeactivate",
-			targetType: "sku",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				targetIsActive,
-				skuIds: eligibleIds,
-				skippedDefault: skippedDefault.length,
-				skippedPublicGuard: candidates.length - eligible.length,
-			},
-		});
 
 		const verb = targetIsActive ? "activée" : "désactivée";
 		const plural = eligibleIds.length > 1 ? "s" : "";

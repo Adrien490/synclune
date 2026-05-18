@@ -19,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		color: { findUnique: vi.fn(), update: vi.fn() },
+		productSku: { findMany: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -31,7 +32,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -49,7 +53,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("../../constants/cache", () => ({
 	getColorInvalidationTags: mockGetColorInvalidationTags,
 }));
@@ -71,10 +74,26 @@ describe("toggleColorStatus", () => {
 			user: { id: "admin-1", name: "Admin", email: "admin@test.com" },
 		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockValidateInput.mockReturnValue({ data: { id: COLOR_ID, isActive: false } });
+		mockValidateInput.mockReturnValue({
+			data: { id: COLOR_ID, isActive: false },
+		});
 		mockPrisma.color.findUnique.mockResolvedValue({ id: COLOR_ID, name: "Or", slug: "or" });
 		mockPrisma.color.update.mockResolvedValue({});
-		mockGetColorInvalidationTags.mockReturnValue(["colors-list"]);
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ product: { slug: "bague-or" } },
+			{ product: { slug: "collier-or" } },
+		]);
+		mockGetColorInvalidationTags.mockImplementation(
+			(opts?: { slug?: string; affectedProductSlugs?: readonly string[] }) => {
+				const tags = ["colors-list"];
+				if (opts?.slug) tags.push(`color-${opts.slug}`);
+				if (opts?.affectedProductSlugs?.length) {
+					tags.push("products-list");
+					for (const s of opts.affectedProductSlugs) tags.push(`product-${s}`);
+				}
+				return tags;
+			},
+		);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -125,8 +144,23 @@ describe("toggleColorStatus", () => {
 
 	it("invalidates cache after toggle", async () => {
 		await toggleColorStatus(undefined, createMockFormData({ id: COLOR_ID, isActive: "false" }));
-		expect(mockGetColorInvalidationTags).toHaveBeenCalledWith("or");
+		expect(mockGetColorInvalidationTags).toHaveBeenCalledWith({
+			slug: "or",
+			affectedProductSlugs: ["bague-or", "collier-or"],
+		});
 		expect(mockUpdateTag).toHaveBeenCalledWith("colors-list");
+	});
+
+	it("cascades invalidation to affected product PDPs", async () => {
+		await toggleColorStatus(undefined, createMockFormData({ id: COLOR_ID, isActive: "false" }));
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { deletedAt: null, colors: { some: { colorId: COLOR_ID } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
+		expect(calls).toContain("product-bague-or");
+		expect(calls).toContain("product-collier-or");
 	});
 
 	it("returns appropriate success message for activate/deactivate", async () => {

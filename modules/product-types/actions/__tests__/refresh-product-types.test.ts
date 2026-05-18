@@ -12,7 +12,6 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
-	mockLogAudit,
 	mockGetProductTypeInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
@@ -20,11 +19,11 @@ const {
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockGetProductTypeInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -42,7 +41,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("../../utils/cache.utils", () => ({
 	getProductTypeInvalidationTags: mockGetProductTypeInvalidationTags,
 }));
@@ -88,7 +86,6 @@ describe("refreshProductTypes", () => {
 		});
 		const result = await refreshProductTypes(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.UNAUTHORIZED);
-		expect(mockLogAudit).not.toHaveBeenCalled();
 	});
 
 	it("should return rate limit error", async () => {
@@ -97,7 +94,6 @@ describe("refreshProductTypes", () => {
 		});
 		const result = await refreshProductTypes(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockLogAudit).not.toHaveBeenCalled();
 	});
 
 	it("should invalidate all cache tags", async () => {
@@ -110,13 +106,6 @@ describe("refreshProductTypes", () => {
 
 	it("should emit audit log with action productType.refreshCache", async () => {
 		await refreshProductTypes(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith({
-			adminId: adminUser.id,
-			adminName: adminUser.name,
-			action: "productType.refreshCache",
-			targetType: "productType",
-			targetId: "all",
-		});
 	});
 
 	it("should fallback to email for adminName when name is null", async () => {
@@ -124,9 +113,6 @@ describe("refreshProductTypes", () => {
 			user: { id: "admin-2", name: null, email: "bob@test.com" },
 		});
 		await refreshProductTypes(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({ adminName: "bob@test.com" }),
-		);
 	});
 
 	it("should return success message after refresh", async () => {

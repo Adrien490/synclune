@@ -151,7 +151,7 @@ describe("RemoveWishlistItemAlertDialog", () => {
 		mockRemoveDialog.isOpen = true;
 		render(<RemoveWishlistItemAlertDialog />);
 		expect(
-			screen.getByRole("heading", { name: /Retirer ce produit de votre wishlist/i }),
+			screen.getByRole("heading", { name: /Retirer ce produit de vos favoris/i }),
 		).toBeInTheDocument();
 	});
 

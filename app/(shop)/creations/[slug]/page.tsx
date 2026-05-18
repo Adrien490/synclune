@@ -27,6 +27,7 @@ import { RelatedProductsSkeleton } from "@/modules/products/components/related-p
 import { RecentlyViewedProducts } from "@/modules/products/components/recently-viewed-products";
 import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
 import { RecordProductView } from "@/modules/products/components/record-product-view";
+import { ViewItemTracker } from "@/shared/components/analytics/view-item-tracker";
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
 
@@ -161,6 +162,13 @@ export default async function ProductPage({
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
 			<RecordProductView slug={product.slug} />
 
+			{/* Funnel analytics : view_item (consent-gated, fire-once) */}
+			<ViewItemTracker
+				productId={product.id}
+				slug={product.slug}
+				priceCents={selectedSku.priceInclTax}
+			/>
+
 			{/* Structured Data JSON-LD pour SEO — SAFE: serialized via safeJsonLd */}
 			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
@@ -180,7 +188,14 @@ export default async function ProductPage({
 			/>
 
 			<div className="relative z-10">
-				<PageHeader title={product.title} breadcrumbs={breadcrumbs} className="hidden sm:block" />
+				{/* noStructuredData: BreadcrumbList déjà inclus dans generateStructuredData @graph (Product+Breadcrumb) */}
+				<PageHeader
+					title={product.title}
+					breadcrumbs={breadcrumbs}
+					className="hidden sm:block"
+					accent="underline"
+					noStructuredData
+				/>
 
 				{/* Contenu principal */}
 				<div className="bg-background pt-20 pb-6 sm:pt-4 sm:pb-12 lg:pt-6 lg:pb-16">

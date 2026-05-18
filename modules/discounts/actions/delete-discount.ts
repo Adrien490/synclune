@@ -5,8 +5,7 @@ import { updateTag } from "next/cache";
 import { deleteDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -32,10 +31,8 @@ export async function deleteDiscount(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -67,15 +64,6 @@ export async function deleteDiscount(
 		await softDelete.discount(id);
 
 		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "discount.delete",
-			targetType: "discount",
-			targetId: id,
-			metadata: { code: discount.code },
-		});
 
 		return success(`Code promo "${discount.code}" supprimé`);
 	} catch (e) {

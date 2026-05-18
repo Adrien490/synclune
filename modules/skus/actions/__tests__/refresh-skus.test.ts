@@ -21,6 +21,7 @@ const {
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -57,9 +58,6 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_BADGES: "admin-badges",
 		ADMIN_INVENTORY_LIST: "admin-inventory-list",
 	},
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { refreshSkus } from "../refresh-skus";

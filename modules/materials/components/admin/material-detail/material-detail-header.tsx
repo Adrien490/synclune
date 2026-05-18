@@ -54,7 +54,7 @@ export function MaterialDetailHeader({ material }: MaterialDetailHeaderProps) {
 				</div>
 				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
 					Créé le {format(material.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mis à jour {formatDistanceToNow(material.updatedAt, { addSuffix: true, locale: fr })})
 					</span>

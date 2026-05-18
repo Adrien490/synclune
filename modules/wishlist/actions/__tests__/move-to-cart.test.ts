@@ -1,3 +1,17 @@
+/**
+ * Test d'intégration `moveToCart` — wishlist → cart.
+ *
+ * ⚠️ MOCK DB CART (anti-pattern toléré par convention projet actuelle).
+ *
+ * L'audit `modules/wishlist` (2026-05-17) avait flaggé ce fichier P1.1 :
+ * `moveToCart` mute des tables `cart` (critical path) et le README framework
+ * exige une DB réelle. Audit du périmètre projet a montré que TOUS les tests
+ * cart/orders/payments/discounts/refunds mockent Prisma (pas d'infrastructure
+ * test schema postgres en place). La migration nécessite un sprint dédié
+ * cross-projet (docker compose, prisma migrate test, cleanup hooks).
+ *
+ * À convertir lors du sprint « tests intégration DB réelle » (TBD).
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import type * as ActionsModule from "@/shared/lib/actions";

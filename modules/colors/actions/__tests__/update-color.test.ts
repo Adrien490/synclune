@@ -36,7 +36,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -52,7 +55,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: mockSanitizeText }));
 vi.mock("@/shared/utils/generate-slug", () => ({ generateSlug: mockGenerateSlug }));
 vi.mock("../../constants/cache", () => ({
@@ -110,6 +112,18 @@ describe("updateColor", () => {
 			createMockFormData({ id: COLOR_ID, name: "Or Rose", hex: "#B76E79" }),
 		);
 		expect(result.status).toBe(ActionStatus.FORBIDDEN);
+	});
+
+	it("returns validation error when schema validation fails", async () => {
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "Hex invalide" },
+		});
+		const result = await updateColor(
+			undefined,
+			createMockFormData({ id: COLOR_ID, name: "Or Rose", hex: "not-a-hex" }),
+		);
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
+		expect(mockPrisma.color.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("returns error when color does not exist", async () => {

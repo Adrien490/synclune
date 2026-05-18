@@ -36,6 +36,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({

@@ -16,8 +16,13 @@ export default function AnnouncementsLoading() {
 				description="Configurez le bandeau d'annonce affiché au-dessus du navbar."
 				actions={
 					<Button variant="outline" size="sm" asChild>
-						<Link href="/" target="_blank">
-							<ExternalLink className="size-4" />
+						<Link
+							href="/"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Voir sur la boutique (nouvel onglet)"
+						>
+							<ExternalLink className="size-4" aria-hidden="true" />
 							Voir sur la boutique
 						</Link>
 					</Button>

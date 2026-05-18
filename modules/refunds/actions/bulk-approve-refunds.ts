@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -12,7 +12,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -37,10 +36,8 @@ export async function bulkApproveRefunds(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -96,21 +93,6 @@ export async function bulkApproveRefunds(
 			}
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "refund.bulkApprove",
-			targetType: "refund",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				refundIds: eligibleIds,
-				orderNumbers: eligible.map((r) => r.order.orderNumber),
-				totalAmount: eligible.reduce((sum, r) => sum + r.amount, 0),
-				skipped: refunds.length - eligible.length,
-			},
-		});
 
 		const skipped = refunds.length - eligible.length;
 		const skippedHint =

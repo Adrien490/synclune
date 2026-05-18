@@ -2,8 +2,7 @@
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
@@ -22,10 +21,8 @@ export async function setFeaturedProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -82,19 +79,6 @@ export async function setFeaturedProduct(
 		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "collection.setFeaturedProduct",
-			targetType: "collection",
-			targetId: collectionId,
-			metadata: {
-				productId,
-				productTitle: productCollection.product.title,
-				collectionName: productCollection.collection.name,
-			},
-		});
-
 		return success(
 			`"${productCollection.product.title}" est maintenant le produit vedette de "${productCollection.collection.name}".`,
 		);
@@ -112,10 +96,8 @@ export async function removeFeaturedProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Admin auth check
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -166,19 +148,6 @@ export async function removeFeaturedProduct(
 		// 5. Invalider le cache de la collection
 		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "collection.removeFeaturedProduct",
-			targetType: "collection",
-			targetId: collectionId,
-			metadata: {
-				productId,
-				productTitle: productCollection.product.title,
-				collectionName: productCollection.collection.name,
-			},
-		});
 
 		return success(
 			`"${productCollection.product.title}" n'est plus le produit vedette de "${productCollection.collection.name}".`,

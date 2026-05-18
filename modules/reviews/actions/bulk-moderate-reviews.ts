@@ -3,7 +3,7 @@
 import { ReviewStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -13,7 +13,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -35,10 +34,8 @@ export async function bulkModerateReviews(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.MODERATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -91,19 +88,6 @@ export async function bulkModerateReviews(
 			getReviewModerationTags(r.productId, r.id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: targetStatus === ReviewStatus.HIDDEN ? "review.bulkHide" : "review.bulkPublish",
-			targetType: "review",
-			targetId: `bulk:${eligibleIds.length}`,
-			metadata: {
-				count: eligibleIds.length,
-				targetStatus,
-				reviewIds: eligibleIds,
-			},
-		});
 
 		const verb = targetStatus === ReviewStatus.HIDDEN ? "masqué" : "republié";
 		const plural = eligibleIds.length > 1 ? "s" : "";

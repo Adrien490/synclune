@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	handleActionError,
 	success,
@@ -12,7 +12,6 @@ import {
 	validateInput,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -35,10 +34,8 @@ export async function duplicateMaterial(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -100,15 +97,6 @@ export async function duplicateMaterial(
 				description: original.description,
 				isActive: false, // Desactive par defaut
 			},
-		});
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "material.duplicate",
-			targetType: "material",
-			targetId: duplicate.id,
-			metadata: { originalId: materialId, name: duplicate.name },
 		});
 
 		// 8. Invalider le cache

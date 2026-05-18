@@ -5,11 +5,9 @@ import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
@@ -61,15 +59,6 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: USER_AUDIT_ACTIONS.INVALIDATE_SESSIONS,
-			targetType: "user",
-			targetId: userId,
-			metadata: { sessionCount: result.count },
-		});
 
 		const displayName = user.name ?? user.email;
 		return success(`${result.count} session(s) de ${displayName} invalidée(s)`, {

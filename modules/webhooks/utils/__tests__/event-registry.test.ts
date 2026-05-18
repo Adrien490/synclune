@@ -170,6 +170,30 @@ describe("dispatchEvent - dispute handlers", () => {
 	});
 });
 
+describe("dispatchEvent - internal guard", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("throws explicit error when event type is unsupported (defense-in-depth)", async () => {
+		const unsupported = makeEvent("customer.created", { id: "cus_test" });
+
+		await expect(dispatchEvent(unsupported)).rejects.toThrow(
+			/Unsupported event type: customer\.created/,
+		);
+	});
+
+	it("does not invoke any handler when event type is unsupported", async () => {
+		const unsupported = makeEvent("invoice.finalized", { id: "in_test" });
+
+		await expect(dispatchEvent(unsupported)).rejects.toThrow();
+
+		expect(mockHandleCheckoutSessionCompleted).not.toHaveBeenCalled();
+		expect(mockHandleChargeRefunded).not.toHaveBeenCalled();
+		expect(mockHandleDisputeCreated).not.toHaveBeenCalled();
+	});
+});
+
 describe("isEventSupported", () => {
 	it("returns true for all supported event types post Checkout-Sessions migration", () => {
 		const supportedEvents = [

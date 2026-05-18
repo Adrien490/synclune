@@ -16,7 +16,6 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsProcessingSchema } from "../schemas/order.schemas";
@@ -113,18 +112,6 @@ export async function markAsProcessing(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.markProcessing",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousStatus: order.status,
-			},
-		});
 
 		return success(`Commande ${order.orderNumber} passée en préparation.`);
 	} catch (e) {

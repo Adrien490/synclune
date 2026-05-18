@@ -4,7 +4,6 @@ import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import { prisma } from "@/shared/lib/prisma";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -38,7 +37,6 @@ export async function createProduct(
 		// 1. Verification des droits admin
 		const admin = await requireAdminWithUser();
 		if ("error" in admin) return admin.error;
-		const { user: adminUser } = admin;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_CREATE_LIMIT);
@@ -285,14 +283,6 @@ export async function createProduct(
 		}
 
 		// 10. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.create",
-			targetType: "product",
-			targetId: product.id,
-			metadata: { title: product.title, slug: product.slug, status: product.status },
-		});
 
 		// 11. Success
 		return success(

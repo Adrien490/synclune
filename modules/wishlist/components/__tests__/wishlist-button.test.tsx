@@ -147,14 +147,14 @@ describe("WishlistButton", () => {
 	it("has aria-label when no product title is provided", () => {
 		renderButton({ isInWishlist: false });
 		const button = screen.getByRole("button");
-		expect(button).toHaveAttribute("aria-label", "Ajouter à la wishlist");
+		expect(button).toHaveAttribute("aria-label", "Ajouter aux favoris");
 	});
 
 	it("has aria-label with product title when productTitle is provided and not in wishlist", () => {
 		renderButton({ isInWishlist: false, productTitle: "Bague Lune" });
 		expect(screen.getByRole("button")).toHaveAttribute(
 			"aria-label",
-			"Ajouter Bague Lune à la wishlist",
+			"Ajouter Bague Lune aux favoris",
 		);
 	});
 
@@ -163,7 +163,7 @@ describe("WishlistButton", () => {
 		renderButton({ isInWishlist: true, productTitle: "Bague Lune" });
 		expect(screen.getByRole("button")).toHaveAttribute(
 			"aria-label",
-			"Retirer Bague Lune de la wishlist",
+			"Retirer Bague Lune des favoris",
 		);
 	});
 

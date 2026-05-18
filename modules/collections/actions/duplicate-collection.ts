@@ -2,9 +2,8 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -33,10 +32,8 @@ export async function duplicateCollection(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -110,20 +107,6 @@ export async function duplicateCollection(
 
 		getCollectionInvalidationTags(duplicated.slug).forEach((tag) => updateTag(tag));
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "collection.duplicate",
-			targetType: "collection",
-			targetId: duplicated.id,
-			metadata: {
-				name: duplicated.name,
-				slug: duplicated.slug,
-				sourceCollectionId: collectionId,
-				productCount: sourceCollection.products.length,
-			},
-		});
 
 		return success(`Collection "${duplicated.name}" dupliquée avec succès.`, {
 			collectionId: duplicated.id,

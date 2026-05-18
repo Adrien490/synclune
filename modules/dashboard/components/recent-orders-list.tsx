@@ -113,7 +113,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 												</ItemTitle>
 												<ItemDescription className="text-xs">
 													<span className="truncate">{order.customerName}</span>
-													<span className="block text-[11px]">
+													<span className="text-2xs block">
 														{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
 													</span>
 												</ItemDescription>

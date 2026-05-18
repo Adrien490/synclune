@@ -5,6 +5,8 @@
  */
 
 import { cacheLife, cacheTag, updateTag } from "next/cache";
+import { COLORS_CACHE_TAGS } from "@/modules/colors/constants/cache";
+import { MATERIALS_CACHE_TAGS } from "@/modules/materials/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { SkuDataForInvalidation } from "../types/sku.types";
@@ -48,12 +50,19 @@ export function cacheSkuDetailById(skuId: string) {
  * - La liste des produits (si productSlug fourni)
  * - L'inventaire dashboard
  * - Les badges de la sidebar (affecte le count d'inventaire critique)
+ * - La liste/détail couleurs + KPI distinct products (si `affectedColor*`
+ *   fourni) : les stats admin `_count.skuColors` deviennent stale dès qu'un
+ *   SKU change ses `colorIds`, le mutateur SKU doit propager.
+ * - La liste/détail matériaux (parité M2M `ProductSkuMaterial`).
  */
 export function getSkuInvalidationTags(
 	sku: string,
 	productId?: string,
 	productSlug?: string,
 	skuId?: string,
+	affectedColorSlugs?: readonly string[],
+	affectedColorIds?: readonly string[],
+	affectedMaterialSlugs?: readonly string[],
 ): string[] {
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
@@ -75,6 +84,26 @@ export function getSkuInvalidationTags(
 
 	if (productSlug) {
 		tags.push(PRODUCTS_CACHE_TAGS.DETAIL(productSlug), PRODUCTS_CACHE_TAGS.LIST);
+	}
+
+	if (affectedColorSlugs?.length) {
+		tags.push(COLORS_CACHE_TAGS.LIST);
+		for (const slug of affectedColorSlugs) {
+			tags.push(COLORS_CACHE_TAGS.DETAIL(slug));
+		}
+	}
+
+	if (affectedColorIds?.length) {
+		for (const id of affectedColorIds) {
+			tags.push(`color-${id}-product-count`);
+		}
+	}
+
+	if (affectedMaterialSlugs?.length) {
+		tags.push(MATERIALS_CACHE_TAGS.LIST);
+		for (const slug of affectedMaterialSlugs) {
+			tags.push(MATERIALS_CACHE_TAGS.DETAIL(slug));
+		}
 	}
 
 	return tags;

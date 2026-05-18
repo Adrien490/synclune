@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -12,7 +12,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -33,10 +32,8 @@ export async function bulkToggleDiscountsStatus(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -84,19 +81,6 @@ export async function bulkToggleDiscountsStatus(
 			getDiscountInvalidationTags(d.id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: targetIsActive ? "discount.bulkActivate" : "discount.bulkDeactivate",
-			targetType: "discount",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				targetIsActive,
-				discountIds: eligibleIds,
-			},
-		});
 
 		const verb = targetIsActive ? "activé" : "désactivé";
 		const plural = eligibleIds.length > 1 ? "s" : "";

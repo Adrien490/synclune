@@ -35,8 +35,8 @@ export const hasMessage = (
  * const callbacks = createToastCallbacks({
  *   loadingMessage: "Ajout en cours…",
  *   successAction: {
- *     label: "Voir le panier",
- *     onClick: () => router.push("/panier")
+ *     label: "Voir mes favoris",
+ *     onClick: () => router.push("/favoris")
  *   }
  * });
  * ```

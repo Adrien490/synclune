@@ -33,6 +33,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -51,9 +52,6 @@ vi.mock("@/shared/lib/actions", () => ({
 }));
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
 }));
 vi.mock("../../schemas/order.schemas", () => ({
 	updateOrderNoteSchema: {},

@@ -1,10 +1,9 @@
 "use server";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	error,
 	handleActionError,
@@ -38,10 +37,8 @@ export async function bulkArchiveProducts(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_ARCHIVE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -105,20 +102,6 @@ export async function bulkArchiveProducts(
 			}
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action:
-				targetStatus === ProductStatus.ARCHIVED ? "product.bulkArchive" : "product.bulkRestore",
-			targetType: "product",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				targetStatus,
-				productIds: eligibleIds,
-			},
-		});
 
 		const verb = targetStatus === ProductStatus.ARCHIVED ? "archivé" : "restauré";
 		const plural = eligibleIds.length > 1 ? "s" : "";

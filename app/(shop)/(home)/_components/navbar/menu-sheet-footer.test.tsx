@@ -1,18 +1,24 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// Mock next/link
+// Mock next/link — preserves prefetch as data-prefetch attr (DOM-warning-safe)
 vi.mock("next/link", () => ({
 	default: ({
 		href,
+		prefetch,
 		children,
 		...props
 	}: {
 		href: string;
+		prefetch?: boolean | null;
 		children: React.ReactNode;
 		[key: string]: unknown;
 	}) => (
-		<a href={href} {...props}>
+		<a
+			href={href}
+			data-prefetch={prefetch === null ? "null" : prefetch === false ? "false" : "auto"}
+			{...props}
+		>
 			{children}
 		</a>
 	),

@@ -9,7 +9,6 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
-import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 export const metadata: Metadata = {
 	title: "Collections de bijoux artisanaux | Synclune",
@@ -44,26 +43,6 @@ type CollectionsPageProps = {
 	}>;
 };
 
-// JSON-LD BreadcrumbList pour SEO
-const breadcrumbJsonLd = {
-	"@context": "https://schema.org",
-	"@type": "BreadcrumbList",
-	itemListElement: [
-		{
-			"@type": "ListItem",
-			position: 1,
-			name: "Accueil",
-			item: SITE_URL,
-		},
-		{
-			"@type": "ListItem",
-			position: 2,
-			name: "Collections",
-			item: `${SITE_URL}/collections`,
-		},
-	],
-};
-
 export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (pagination)
 	// Le cache est géré au niveau de fetchCollections() qui utilise déjà "use cache"
@@ -89,15 +68,6 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 
 	return (
 		<div className="relative min-h-screen">
-			{/* JSON-LD Structured Data — SAFE: serialized via safeJsonLd */}
-			{/* react-doctor-disable-next-line react/no-danger */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: safeJsonLd(breadcrumbJsonLd),
-				}}
-			/>
-
 			{/* Background décoratif - Particules pour ambiance bijoux */}
 			<ParticleBackground className="fixed inset-0 z-0" />
 
@@ -105,11 +75,12 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 				title="Les collections"
 				breadcrumbs={[{ label: "Collections", href: "/collections" }]}
 				className="hidden sm:block"
+				accent="underline"
 			/>
 
 			{/* Section principale avec catalogue */}
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
-				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-screen-2xl space-y-6 px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<CollectionGridSkeleton />}>
 						<CollectionGrid collectionsPromise={collectionsPromise} perPage={perPage} />
 					</Suspense>

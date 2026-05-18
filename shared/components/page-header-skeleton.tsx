@@ -7,6 +7,11 @@ interface PageHeaderSkeletonProps {
 	hasActions?: boolean;
 	/** Afficher le placeholder de description */
 	hasDescription?: boolean;
+	/**
+	 * Reflète le back button ChevronLeft mobile (à passer si la page rend des breadcrumbs).
+	 * Default false. Sans effet sur variant=compact.
+	 */
+	hasBreadcrumbs?: boolean;
 	/** Classes CSS additionnelles */
 	className?: string;
 }
@@ -18,6 +23,7 @@ export function PageHeaderSkeleton({
 	variant = "default",
 	hasActions = false,
 	hasDescription = true,
+	hasBreadcrumbs = false,
 	className,
 }: PageHeaderSkeletonProps) {
 	if (variant === "compact") {
@@ -53,8 +59,17 @@ export function PageHeaderSkeleton({
 			<div className="relative mx-auto max-w-6xl px-4 pt-20 pb-2 motion-safe:animate-pulse sm:px-6 sm:pt-32 sm:pb-4 lg:px-8">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
 					<div className="min-w-0 flex-1 gap-y-2">
-						{/* Breadcrumb mobile */}
-						<div className="bg-muted h-5 w-20 rounded sm:hidden" />
+						{/* Mobile breadcrumb row : chevron back button (si hasBreadcrumbs) + label */}
+						<div className="flex items-center gap-1 sm:hidden">
+							{hasBreadcrumbs && (
+								<div
+									className="bg-muted size-5 shrink-0 rounded"
+									aria-hidden="true"
+									data-testid="skeleton-back-chevron"
+								/>
+							)}
+							<div className="bg-muted h-5 w-20 rounded" />
+						</div>
 						{/* Breadcrumb desktop */}
 						<div className="bg-muted hidden h-4 w-32 rounded sm:block" />
 						{/* Title */}

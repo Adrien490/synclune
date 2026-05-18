@@ -58,7 +58,7 @@ export function ProductTypeDetailHeader({ productType }: ProductTypeDetailHeader
 				</div>
 				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
 					Créé le {format(productType.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mis à jour{" "}
 						{formatDistanceToNow(productType.updatedAt, { addSuffix: true, locale: fr })})

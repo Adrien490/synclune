@@ -48,7 +48,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 						"flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 						"bg-accent/40 hover:bg-accent",
 						"text-foreground",
-						"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+						"focus-ring",
 						"mb-4 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 						isViewAllActive && "bg-accent font-medium",
 					)}
@@ -76,7 +76,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 									"motion-safe:can-hover:hover:border-primary/40",
 									"can-hover:hover:shadow-premium-rose",
 									"motion-safe:can-hover:hover:-translate-y-1 motion-safe:can-hover:hover:scale-[1.02]",
-									"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+									"focus-ring",
 									"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
 									isActive && "border-primary/40",
 								)}

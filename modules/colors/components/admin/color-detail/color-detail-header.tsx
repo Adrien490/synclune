@@ -58,7 +58,7 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 				</div>
 				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
 					Créée le {format(color.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mise à jour {formatDistanceToNow(color.updatedAt, { addSuffix: true, locale: fr })})
 					</span>

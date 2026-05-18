@@ -1,7 +1,7 @@
 "use server";
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -17,7 +17,6 @@ import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
-import { logAudit } from "@/shared/lib/audit-log";
 import { deleteOrderSchema } from "../schemas/order.schemas";
 
 /**
@@ -42,10 +41,8 @@ export async function deleteOrder(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -105,17 +102,6 @@ export async function deleteOrder(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.delete",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-			},
-		});
 
 		return success(`Commande ${order.orderNumber} supprimee.`);
 	} catch (e) {

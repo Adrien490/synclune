@@ -16,7 +16,6 @@ import { logger } from "@/shared/lib/logger";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
@@ -222,18 +221,6 @@ export async function markAsPaid(
 				logger.error("Échec envoi email", emailError, { action: "mark-as-paid" });
 			}
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.markPaid",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousPaymentStatus: order.paymentStatus,
-			},
-		});
 
 		const stockMessage =
 			!order._stockAlreadyReserved && order.items.length > 0

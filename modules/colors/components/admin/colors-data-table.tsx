@@ -112,6 +112,8 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 												<div
 													className="border-border inline-flex size-[30px] rounded-full border"
 													style={{ backgroundColor: color.hex }}
+													role="img"
+													aria-label={`Aperçu couleur ${color.hex.toUpperCase()}`}
 												/>
 											</TableCell>
 											<TableCell>

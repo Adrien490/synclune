@@ -1,9 +1,8 @@
 "use server";
 
 import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
@@ -34,10 +33,8 @@ export async function resendOrderEmail(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -204,15 +201,6 @@ export async function resendOrderEmail(
 
 		if (actionResult.status === ActionStatus.SUCCESS) {
 			updateTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
-
-			void logAudit({
-				adminId: adminUser.id,
-				adminName: adminUser.name ?? adminUser.email,
-				action: "order.resendEmail",
-				targetType: "order",
-				targetId: orderId,
-				metadata: { emailType, orderNumber: order.orderNumber },
-			});
 		}
 
 		return actionResult;

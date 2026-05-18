@@ -71,6 +71,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 	const handleSwipeRemove = () => {
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
 			cartItemId: item.id,
+			skuId: item.sku.id,
 			itemName: item.sku.product.title,
 			quantity: item.quantity,
 		});

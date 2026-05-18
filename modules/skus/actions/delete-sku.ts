@@ -1,8 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -33,10 +32,8 @@ export async function deleteProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_DELETE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -69,6 +66,12 @@ export async function deleteProductSku(
 					select: {
 						url: true,
 					},
+				},
+				colors: {
+					select: { colorId: true, color: { select: { slug: true } } },
+				},
+				materials: {
+					select: { material: { select: { slug: true } } },
 				},
 				product: {
 					select: {
@@ -192,11 +195,16 @@ export async function deleteProductSku(
 		await deleteUploadThingFilesFromUrls(imageUrls);
 
 		// 12. Invalider les cache tags concernes
+		// Toutes les couleurs/matériaux liés perdent un lien (`_count.skuColors`
+		// + KPI distinct products) → cascade vers caches admin colors/materials.
 		const tags = getSkuInvalidationTags(
 			existingSku.sku,
 			existingSku.productId,
 			existingSku.product.slug,
 			validatedSkuId, // Invalide aussi le cache stock temps réel
+			existingSku.colors.map((c) => c.color.slug),
+			existingSku.colors.map((c) => c.colorId),
+			existingSku.materials.map((m) => m.material.slug),
 		);
 		tags.forEach((tag) => updateTag(tag));
 
@@ -204,14 +212,6 @@ export async function deleteProductSku(
 		updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(existingSku.productId));
 
 		// 13. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "sku.delete",
-			targetType: "sku",
-			targetId: validatedSkuId,
-			metadata: { sku: existingSku.sku, productTitle: existingSku.product.title },
-		});
 
 		// 14. Success
 		const successMessage = promotedSkuSku

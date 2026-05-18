@@ -8,6 +8,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutEmbed } from "@/modules/payments/components/checkout-embed";
 import { CheckoutMobileTrustHint } from "./_components/checkout-mobile-trust-hint";
+import { BeginCheckoutTracker } from "@/shared/components/analytics/begin-checkout-tracker";
 
 import type { Metadata } from "next";
 
@@ -80,6 +81,9 @@ export default async function CheckoutPage() {
 		);
 	}
 
+	const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+	const cartValueCents = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
+
 	return (
 		<div
 			className="relative min-h-dvh min-h-screen"
@@ -89,6 +93,8 @@ export default async function CheckoutPage() {
 				className="from-primary/5 to-secondary/8 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
 				style={{ viewTransitionName: "none" }}
 			/>
+
+			<BeginCheckoutTracker cartId={cart.id} itemCount={itemCount} valueCents={cartValueCents} />
 
 			<section className="py-4 pb-8 sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

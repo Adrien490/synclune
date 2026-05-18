@@ -203,7 +203,7 @@ describe("CollectionCard", () => {
 			<CollectionCard collection={collectionWithImage} onSelect={onSelect} />,
 		);
 		const link = container.querySelector("a");
-		expect(link).toHaveClass("focus-visible:outline-none");
+		expect(link).toHaveClass("focus-ring");
 	});
 
 	it("renders with the correct href for a different slug", () => {

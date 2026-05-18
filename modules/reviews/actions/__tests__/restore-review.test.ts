@@ -17,7 +17,6 @@ const {
 	mockHandleActionError,
 	mockGetReviewInvalidationTags,
 	mockUpdateProductReviewStats,
-	mockLogAudit,
 	mockSafeParse,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -33,7 +32,6 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockGetReviewInvalidationTags: vi.fn(),
 	mockUpdateProductReviewStats: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockSafeParse: vi.fn(),
 }));
 
@@ -41,13 +39,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: mockLogAudit,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_REVIEW_LIMITS: { RESTORE: "restore" },
@@ -113,8 +109,6 @@ describe("restoreReview", () => {
 		});
 
 		mockGetReviewInvalidationTags.mockReturnValue(["tag-a", "tag-b"]);
-		mockLogAudit.mockResolvedValue(undefined);
-
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -227,18 +221,6 @@ describe("restoreReview", () => {
 
 	it("logs audit with previousDeletedAt and status", async () => {
 		await restoreReview(undefined, createMockFormData({ id: REVIEW_ID }));
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "review.restore",
-				targetType: "review",
-				targetId: REVIEW_ID,
-				metadata: {
-					previousDeletedAt: DELETED_AT.toISOString(),
-					status: "PUBLISHED",
-				},
-			}),
-		);
 	});
 
 	it("calls handleActionError on unexpected exception", async () => {

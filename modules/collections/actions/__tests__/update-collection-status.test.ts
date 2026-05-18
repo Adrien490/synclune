@@ -33,6 +33,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -62,11 +63,6 @@ vi.mock("@/shared/lib/actions", () => ({
 		status: ActionStatus.NOT_FOUND,
 		message: `${entity} introuvable`,
 	}),
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-	logAuditTx: vi.fn(),
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({

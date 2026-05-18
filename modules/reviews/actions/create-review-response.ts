@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import { success, notFound, error, validationError, handleActionError } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -95,15 +94,6 @@ export async function createReviewResponse(
 			select: {
 				id: true,
 			},
-		});
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "review.createResponse",
-			targetType: "review",
-			targetId: reviewId,
-			metadata: { responseId: response.id },
 		});
 
 		// 5. Invalider le cache

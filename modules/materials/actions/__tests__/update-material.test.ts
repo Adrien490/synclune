@@ -23,6 +23,9 @@ const {
 			findFirst: vi.fn(),
 			update: vi.fn(),
 		},
+		productSku: {
+			findMany: vi.fn(),
+		},
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -37,6 +40,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -63,11 +67,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: (message: string) => ({ status: ActionStatus.SUCCESS, message }),
 	error: (message: string) => ({ status: ActionStatus.ERROR, message }),
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-	logAuditTx: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/sanitize", () => ({
@@ -124,7 +123,19 @@ describe("updateMaterial", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSanitizeText.mockImplementation((text: string) => text);
-		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "material-argent-925"]);
+		mockGetMaterialInvalidationTags.mockImplementation(
+			(opts?: string | { slug?: string; affectedProductSlugs?: readonly string[] }) => {
+				const tags = ["materials-list", "admin-badges"];
+				const o = typeof opts === "string" ? { slug: opts } : (opts ?? {});
+				if (o.slug) tags.push(`material-${o.slug}`);
+				if (o.affectedProductSlugs?.length) {
+					tags.push("products-list");
+					for (const s of o.affectedProductSlugs) tags.push(`product-${s}`);
+				}
+				return tags;
+			},
+		);
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
 			message: fallback,
@@ -328,11 +339,18 @@ describe("updateMaterial", () => {
 		);
 		mockPrisma.material.findFirst.mockResolvedValue(null);
 		mockGenerateSlug.mockResolvedValue("or-14k-nouveau");
+		mockPrisma.productSku.findMany.mockResolvedValue([{ product: { slug: "bague-argent" } }]);
 
 		await updateMaterial(undefined, makeFormData({ name: "Or 14k" }));
 
-		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith("argent-925");
-		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith("or-14k-nouveau");
+		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith({
+			slug: "argent-925",
+			affectedProductSlugs: ["bague-argent"],
+		});
+		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith({
+			slug: "or-14k-nouveau",
+			affectedProductSlugs: ["bague-argent"],
+		});
 	});
 
 	it("should only invalidate old slug when name has not changed", async () => {
@@ -351,8 +369,40 @@ describe("updateMaterial", () => {
 
 		await updateMaterial(undefined, makeFormData());
 
-		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith("argent-925");
+		// Name + isActive inchangés → pas de cascade product slugs fetchée,
+		// affectedProductSlugs reste [].
+		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith({
+			slug: "argent-925",
+			affectedProductSlugs: [],
+		});
 		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.productSku.findMany).not.toHaveBeenCalled();
+	});
+
+	it("cascades invalidation to affected product PDPs when name changes", async () => {
+		mockValidateInput.mockReturnValue({
+			data: { id: VALID_CUID, name: "Or 14k", slug: "or-14k", description: null, isActive: true },
+		});
+		mockPrisma.material.findUnique.mockResolvedValue(
+			createMockMaterial({ name: "Argent 925", slug: "argent-925" }),
+		);
+		mockPrisma.material.findFirst.mockResolvedValue(null);
+		mockGenerateSlug.mockResolvedValue("or-14k-nouveau");
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ product: { slug: "bague-1" } },
+			{ product: { slug: "collier-2" } },
+		]);
+
+		await updateMaterial(undefined, makeFormData({ name: "Or 14k" }));
+
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { deletedAt: null, materials: { some: { materialId: VALID_CUID } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
+		expect(calls).toContain("product-bague-1");
+		expect(calls).toContain("product-collier-2");
 	});
 
 	// --------------------------------------------------------------------------

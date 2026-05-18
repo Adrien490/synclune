@@ -22,6 +22,9 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
+		productSku: {
+			findMany: vi.fn(),
+		},
 		productSkuColor: {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
@@ -40,8 +43,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -103,7 +108,21 @@ describe("mergeColors", () => {
 		mockValidateInput.mockReturnValue({
 			data: { sourceId: "color-source", targetId: "color-target" },
 		});
-		mockGetColorInvalidationTags.mockReturnValue(["colors-list", "admin-badges"]);
+		mockGetColorInvalidationTags.mockImplementation(
+			(opts?: { slug?: string; affectedProductSlugs?: readonly string[] }) => {
+				const tags = ["colors-list", "admin-badges"];
+				if (opts?.slug) tags.push(`color-${opts.slug}`);
+				if (opts?.affectedProductSlugs?.length) {
+					tags.push("products-list");
+					for (const s of opts.affectedProductSlugs) tags.push(`product-${s}`);
+				}
+				return tags;
+			},
+		);
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ product: { slug: "bague-or" } },
+			{ product: { slug: "bracelet-argent" } },
+		]);
 
 		mockPrisma.color.findUnique.mockImplementation(({ where }: { where: { id: string } }) => {
 			if (where.id === "color-source")
@@ -233,6 +252,26 @@ describe("mergeColors", () => {
 		expect(calls).toContain("colors-list");
 		expect(calls).toContain("color-bleu-ciel");
 		expect(calls).toContain("color-bleu");
+	});
+
+	it("cascades invalidation to affected product PDPs (storefront swatch refresh)", async () => {
+		await mergeColors(undefined, validFormData);
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { id: { in: ["sku-1", "sku-2", "sku-3"] }, deletedAt: null },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
+		expect(calls).toContain("product-bague-or");
+		expect(calls).toContain("product-bracelet-argent");
+		expect(calls).toContain("products-list");
+	});
+
+	it("skips PDP cascade query when no SKU touched", async () => {
+		mockPrisma.productSkuColor.findMany.mockResolvedValue([]);
+		mockPrisma.productSkuColor.updateMany.mockResolvedValue({ count: 0 });
+		await mergeColors(undefined, validFormData);
+		expect(mockPrisma.productSku.findMany).not.toHaveBeenCalled();
 	});
 
 	it("returns count in success data", async () => {

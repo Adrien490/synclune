@@ -32,8 +32,21 @@ vi.mock("lucide-react", () => {
 	};
 });
 
+vi.mock("@/shared/components/animations/hand-drawn-accent", () => {
+	const { createElement } = require("react");
+	return {
+		HandDrawnAccent: ({ variant }: { variant: string }) =>
+			createElement("svg", {
+				"data-testid": "hand-drawn-accent",
+				"data-variant": variant,
+				"aria-hidden": "true",
+			}),
+	};
+});
+
 // Import AFTER mocks
 import { PageHeader } from "../page-header";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 // ============================================================================
 // SETUP
@@ -213,6 +226,115 @@ describe("PageHeader", () => {
 
 			const group = screen.getByRole("group", { name: "Actions de la page" });
 			expect(group.className).toContain("hidden sm:flex");
+		});
+	});
+
+	// ============================================================================
+	// TESTS — JSON-LD BreadcrumbList
+	// ============================================================================
+
+	describe("structured data (JSON-LD BreadcrumbList)", () => {
+		const breadcrumbs = [
+			{ label: "Produits", href: "/produits" },
+			{ label: "Bague Lune", href: "/produits/bague-lune" },
+		];
+
+		it("emits a <script type='application/ld+json'> when breadcrumbs are present", () => {
+			const { container } = render(<PageHeader title="Bague Lune" breadcrumbs={breadcrumbs} />);
+
+			const script = container.querySelector('script[type="application/ld+json"]');
+			expect(script).toBeInTheDocument();
+		});
+
+		it("does not emit JSON-LD when breadcrumbs are empty", () => {
+			const { container } = render(<PageHeader title="Test" />);
+
+			expect(container.querySelector('script[type="application/ld+json"]')).toBeNull();
+		});
+
+		it("does not emit JSON-LD when noStructuredData is true", () => {
+			const { container } = render(
+				<PageHeader title="Bague Lune" breadcrumbs={breadcrumbs} noStructuredData />,
+			);
+
+			expect(container.querySelector('script[type="application/ld+json"]')).toBeNull();
+		});
+
+		it("does not emit JSON-LD in compact variant even if breadcrumbs passed", () => {
+			const { container } = render(
+				<PageHeader title="Dashboard" variant="compact" breadcrumbs={breadcrumbs} />,
+			);
+
+			expect(container.querySelector('script[type="application/ld+json"]')).toBeNull();
+		});
+
+		it("includes Accueil + breadcrumb items with SITE_URL-prefixed absolute URLs", () => {
+			const { container } = render(<PageHeader title="Bague Lune" breadcrumbs={breadcrumbs} />);
+
+			const script = container.querySelector('script[type="application/ld+json"]');
+			expect(script).toBeInTheDocument();
+
+			// The script content is escaped (< → <). Decode for assertions.
+			const raw = script!.innerHTML
+				.replace(/\\u003c/g, "<")
+				.replace(/\\u003e/g, ">")
+				.replace(/\\u0026/g, "&");
+			const parsed = JSON.parse(raw);
+
+			expect(parsed["@context"]).toBe("https://schema.org");
+			expect(parsed["@type"]).toBe("BreadcrumbList");
+			expect(parsed.itemListElement).toHaveLength(3);
+			expect(parsed.itemListElement[0]).toEqual({
+				"@type": "ListItem",
+				position: 1,
+				name: "Accueil",
+				item: SITE_URL,
+			});
+			expect(parsed.itemListElement[1]).toEqual({
+				"@type": "ListItem",
+				position: 2,
+				name: "Produits",
+				item: `${SITE_URL}/produits`,
+			});
+			expect(parsed.itemListElement[2]).toEqual({
+				"@type": "ListItem",
+				position: 3,
+				name: "Bague Lune",
+				item: `${SITE_URL}/produits/bague-lune`,
+			});
+		});
+	});
+
+	// ============================================================================
+	// TESTS — ACCENT (HandDrawnAccent)
+	// ============================================================================
+
+	describe("decorative accent", () => {
+		it("renders HandDrawnAccent SVG when accent='underline' is passed", () => {
+			render(<PageHeader title="Les collections" accent="underline" />);
+
+			const accent = screen.getByTestId("hand-drawn-accent");
+			expect(accent).toBeInTheDocument();
+			expect(accent).toHaveAttribute("data-variant", "underline");
+			expect(accent).toHaveAttribute("aria-hidden", "true");
+		});
+
+		it("renders HandDrawnAccent with variant='circle' when accent='circle'", () => {
+			render(<PageHeader title="Test" accent="circle" />);
+
+			expect(screen.getByTestId("hand-drawn-accent")).toHaveAttribute("data-variant", "circle");
+		});
+
+		it("does not render accent when accent prop is omitted", () => {
+			render(<PageHeader title="Test" />);
+
+			expect(screen.queryByTestId("hand-drawn-accent")).not.toBeInTheDocument();
+		});
+
+		it("does not render accent in compact variant", () => {
+			render(<PageHeader title="Dashboard" variant="compact" accent="underline" />);
+
+			expect(screen.queryByTestId("hand-drawn-accent")).not.toBeInTheDocument();
 		});
 	});
 

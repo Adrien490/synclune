@@ -352,7 +352,7 @@ function SearchInputInner({
 								className={cn(
 									"border-none shadow-none focus-visible:ring-0",
 									"bg-transparent",
-									"placeholder:text-muted-foreground/50",
+									"placeholder:text-muted-foreground/70",
 									"transition-all duration-150",
 									"[&::-webkit-search-cancel-button]:appearance-none",
 									styles.input,

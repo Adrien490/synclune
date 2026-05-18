@@ -31,7 +31,7 @@ const linkClasses = cn(
 	"motion-safe:transition-[color,background-color] motion-safe:duration-[var(--duration-normal)]",
 	// Subtle rose accent halo on hover (premium brand touch, stays under underline)
 	"motion-safe:hover:bg-primary/5 data-[state=open]:bg-primary/5",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+	"focus-ring",
 	// Underline animé au hover — spring easing premium
 	"after:absolute after:bottom-0 after:left-1 after:right-1",
 	"after:h-0.5 after:bg-primary after:rounded-full",
@@ -49,6 +49,9 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 	return (
 		<NavigationMenu
 			className="hidden lg:flex"
+			// viewport={false} disables Radix's auto-positioned viewport so the
+			// mega-menu content can break out to full-width via the !important
+			// overrides applied on NavigationMenuContent below (top/left/right/w-screen).
 			viewport={false}
 			delayDuration={120}
 			skipDelayDuration={300}
@@ -116,7 +119,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 									"motion-reduce:animate-none",
 								)}
 							>
-								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+								<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
 									{item.dropdownType === "creations" && (
 										<MegaMenuCreations
 											productTypes={item.children}

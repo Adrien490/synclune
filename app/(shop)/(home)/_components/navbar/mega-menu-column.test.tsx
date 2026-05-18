@@ -203,7 +203,7 @@ describe("MegaMenuColumn", () => {
 
 			const links = screen.getAllByRole("link");
 			for (const link of links) {
-				expect(link.className).toContain("focus-visible:ring-2");
+				expect(link.className).toContain("focus-ring");
 			}
 		});
 

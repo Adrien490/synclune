@@ -35,8 +35,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -56,10 +58,6 @@ vi.mock("@/shared/lib/actions", () => ({
 		message: `${entity} introuvable`,
 	}),
 	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-	logAuditTx: vi.fn(),
 }));
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFilesFromUrls: mockDeleteUploadThingFiles,
@@ -87,6 +85,11 @@ function createMockSkuForDelete(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		productId: "prod-1",
 		images: [],
+		colors: [
+			{ colorId: "color-cuid-1", color: { slug: "or" } },
+			{ colorId: "color-cuid-2", color: { slug: "argent" } },
+		],
+		materials: [{ material: { slug: "or-18k" } }],
 		product: {
 			title: "Bracelet Lune",
 			slug: "bracelet-lune",

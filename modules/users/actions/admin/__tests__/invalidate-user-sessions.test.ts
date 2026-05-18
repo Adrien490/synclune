@@ -33,6 +33,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -61,10 +62,6 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-}));
-
 vi.mock("../../../schemas/user-admin.schemas", () => ({
 	adminUserIdSchema: {},
 }));
@@ -81,10 +78,6 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 
 vi.mock("../../../constants/cache", () => ({
 	getUserFullInvalidationTags: (userId: string) => [`user-${userId}`],
-}));
-
-vi.mock("../../../constants/audit-actions", () => ({
-	USER_AUDIT_ACTIONS: { INVALIDATE_SESSIONS: "user.invalidateSessions" },
 }));
 
 import { invalidateUserSessions } from "../invalidate-user-sessions";

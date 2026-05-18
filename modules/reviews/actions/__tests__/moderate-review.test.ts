@@ -40,6 +40,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -62,10 +63,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	notFound: mockNotFound,
 	validationError: mockValidationError,
 	handleActionError: mockHandleActionError,
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-	logAuditTx: vi.fn(),
 }));
 vi.mock("../../constants/cache", () => ({
 	getReviewModerationTags: mockGetReviewModerationTags,

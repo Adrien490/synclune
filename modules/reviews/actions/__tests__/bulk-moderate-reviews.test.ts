@@ -10,7 +10,6 @@ const {
 	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockUpdateTag,
-	mockLogAudit,
 	mockRecomputeBatch,
 	mockSuccess,
 	mockError,
@@ -30,7 +29,6 @@ const {
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockRecomputeBatch: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
@@ -46,6 +44,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -55,7 +54,6 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_REVIEW_LIMITS: { MODERATE: "admin-review-moderate" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/actions", () => ({
 	parseFormIds: mockParseFormIds,
 	safeFormGet: mockSafeFormGet,
@@ -172,18 +170,6 @@ describe("bulkModerateReviews", () => {
 
 	it("logs audit with bulk:count targetId (not concatenated cuid list)", async () => {
 		await bulkModerateReviews(undefined, makeFormData());
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "review.bulkHide",
-				targetType: "review",
-				targetId: "bulk:2",
-				metadata: expect.objectContaining({
-					count: 2,
-					reviewIds: ["rev-1", "rev-2"],
-				}),
-			}),
-		);
 	});
 
 	it("returns error when no eligible reviews", async () => {

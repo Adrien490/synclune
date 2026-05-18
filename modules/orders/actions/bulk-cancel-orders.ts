@@ -14,7 +14,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { logger } from "@/shared/lib/logger";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -195,20 +194,6 @@ export async function bulkCancelOrders(
 			getOrderInvalidationTags(o.userId ?? undefined, o.id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.bulkCancel",
-			targetType: "order",
-			targetId: cancelledOrders.map((o) => o.id).join(","),
-			metadata: {
-				count: cancelledOrders.length,
-				reason,
-				orderNumbers: cancelledOrders.map((o) => o.orderNumber),
-				skipped: orderIds.length - cancelledOrders.length,
-			},
-		});
 
 		// Best-effort email per customer (fire-and-forget, errors logged)
 		for (const o of cancelledOrders) {

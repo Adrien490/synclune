@@ -17,6 +17,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 // Must be imported after mocks

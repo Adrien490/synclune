@@ -44,7 +44,7 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 				className={cn(
 					"rounded-xl text-left font-medium transition-all",
 					"touch-manipulation",
-					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+					"focus-ring",
 					"data-[active=true]:bg-muted",
 					isCompact
 						? "hover:bg-muted flex items-center gap-2 px-3 py-2.5"

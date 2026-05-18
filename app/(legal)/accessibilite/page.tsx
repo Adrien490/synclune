@@ -10,10 +10,12 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 export const metadata: Metadata = {
 	title: "Accessibilité - Synclune | Engagement pour un site accessible à tous",
 	description:
-		"Synclune s'engage pour un site web accessible à tous. Découvrez nos efforts en matière d'accessibilité numérique et nos conformités WCAG 2.1.",
+		"Synclune s'engage pour un site web accessible à tous. Découvrez nos efforts en matière d'accessibilité numérique et nos conformités WCAG 2.2 niveau AA.",
 	keywords: [
 		"accessibilité",
-		"WCAG",
+		"WCAG 2.2",
+		"EAA",
+		"European Accessibility Act",
 		"site accessible",
 		"navigation clavier",
 		"lecteur d'écran",
@@ -71,14 +73,21 @@ export default async function AccessibilityPage() {
 							<h2 className="text-xl font-semibold sm:text-2xl">État de conformité</h2>
 							<p>
 								Ce site web est en <strong>conformité partielle</strong> avec les directives{" "}
-								<strong>WCAG 2.1 niveau AA</strong> (Web Content Accessibility Guidelines) et le{" "}
+								<strong>WCAG 2.2 niveau AA</strong> (Web Content Accessibility Guidelines) et le{" "}
 								<strong>RGAA 4.1.2</strong> (Référentiel Général d'Amélioration de l'Accessibilité).
 								Nous travaillons continuellement pour améliorer l'accessibilité de notre site.
 							</p>
+							<p>
+								Cette démarche s'inscrit dans le cadre de l'
+								<strong>European Accessibility Act</strong> (Directive UE 2019/882), applicable
+								depuis le 28 juin 2025, qui impose des exigences d'accessibilité aux produits et
+								services numériques commercialisés dans l'Union européenne.
+							</p>
 							<p className="text-muted-foreground text-sm">
-								Cette déclaration d'accessibilité a été établie le <strong>10 mars 2026</strong>.
-								Elle n'a pas été établie à partir d'un audit formel RGAA. Un audit de conformité
-								complet est prévu afin de déterminer le taux de conformité exact du site.
+								Cette déclaration d'accessibilité a été établie le <strong>18 mai 2026</strong> sur
+								la base d'un audit interne. Un audit de conformité formel RGAA mené par un
+								prestataire externe certifié est prévu afin de déterminer le taux de conformité
+								exact du site.
 							</p>
 						</section>
 
@@ -306,14 +315,27 @@ export default async function AccessibilityPage() {
 
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									WCAG 2.1 Niveau AA -{" "}
+									WCAG 2.2 Niveau AA -{" "}
 									<a
-										href="https://www.w3.org/WAI/WCAG21/quickref/"
+										href="https://www.w3.org/WAI/WCAG22/quickref/"
 										target="_blank"
 										rel="noopener noreferrer"
 										className="underline"
+										aria-label="Directives W3C WCAG 2.2 (nouvelle fenêtre)"
 									>
 										Directives W3C
+									</a>
+								</li>
+								<li>
+									European Accessibility Act (Directive UE 2019/882) -{" "}
+									<a
+										href="https://eur-lex.europa.eu/eli/dir/2019/882/oj"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="underline"
+										aria-label="Texte officiel de la Directive UE 2019/882 sur EUR-Lex (nouvelle fenêtre)"
+									>
+										Texte officiel EUR-Lex
 									</a>
 								</li>
 								<li>
@@ -323,6 +345,7 @@ export default async function AccessibilityPage() {
 										target="_blank"
 										rel="noopener noreferrer"
 										className="underline"
+										aria-label="Référentiel RGAA 4.1.2 sur accessibilite.numerique.gouv.fr (nouvelle fenêtre)"
 									>
 										Version française
 									</a>
@@ -334,6 +357,7 @@ export default async function AccessibilityPage() {
 										target="_blank"
 										rel="noopener noreferrer"
 										className="underline"
+										aria-label="Spécifications ARIA Authoring Practices Guide W3C (nouvelle fenêtre)"
 									>
 										Spécifications W3C
 									</a>
@@ -356,11 +380,23 @@ export default async function AccessibilityPage() {
 										target="_blank"
 										rel="noopener noreferrer"
 										className="underline"
+										aria-label="Formulaire de saisine du Défenseur des droits (nouvelle fenêtre)"
 									>
 										Défenseur des droits
 									</a>
 								</li>
-								<li>Contacter le délégué du Défenseur des droits dans votre région</li>
+								<li>
+									Contacter le délégué du Défenseur des droits dans votre région -{" "}
+									<a
+										href="https://www.defenseurdesdroits.fr/saisir/delegues"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="underline"
+										aria-label="Annuaire des délégués du Défenseur des droits (nouvelle fenêtre)"
+									>
+										Annuaire
+									</a>
+								</li>
 								<li>
 									Envoyer un courrier (gratuit, ne pas mettre de timbre) à : Défenseur des droits,
 									Libre réponse 71120, 75342 Paris Cedex 07
@@ -369,7 +405,7 @@ export default async function AccessibilityPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 15 mars 2026
+							Dernière mise à jour : 18 mai 2026
 						</p>
 					</div>
 				</div>

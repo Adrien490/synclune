@@ -2,10 +2,9 @@
 
 import { updateTag } from "next/cache";
 
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	error,
 	handleActionError,
@@ -31,10 +30,8 @@ export async function bulkAttachCollectionProducts(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(
 			ADMIN_PRODUCT_BULK_ATTACH_COLLECTION_LIMIT,
 		);
@@ -98,20 +95,6 @@ export async function bulkAttachCollectionProducts(
 			getProductInvalidationTags(p.slug, p.id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.bulkAttachCollection",
-			targetType: "product",
-			targetId: toLink.map((p) => p.id).join(","),
-			metadata: {
-				count: toLink.length,
-				collectionId,
-				collectionName: collection.name,
-				productIds: toLink.map((p) => p.id),
-			},
-		});
 
 		const plural = toLink.length > 1 ? "s" : "";
 		const skipped = alreadyLinked.size;

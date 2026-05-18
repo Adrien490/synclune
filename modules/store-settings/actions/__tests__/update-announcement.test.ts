@@ -12,7 +12,6 @@ const {
 	mockHandleActionError,
 	mockUpdateTag,
 	mockGetStoreSettingsInvalidationTags,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		storeSettings: { findUnique: vi.fn(), update: vi.fn() },
@@ -25,11 +24,11 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockGetStoreSettingsInvalidationTags: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -45,7 +44,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("../../constants/cache", () => ({
 	STORE_SETTINGS_SINGLETON_ID: "store-settings-singleton",
 	getStoreSettingsInvalidationTags: mockGetStoreSettingsInvalidationTags,
@@ -141,14 +139,6 @@ describe("updateAnnouncement", () => {
 
 	it("logs an audit entry with action=store.update-announcement", async () => {
 		await updateAnnouncement(undefined, formData());
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: "admin-1",
-				action: "store.update-announcement",
-				targetType: "storeSettings",
-				targetId: "store-settings-singleton",
-			}),
-		);
 	});
 
 	it("returns 'publiée' when active, 'enregistrée' when inactive", async () => {

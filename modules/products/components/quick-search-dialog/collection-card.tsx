@@ -51,7 +51,7 @@ export function CollectionCard({
 				className={cn(
 					"flex items-center rounded-xl text-left transition-all",
 					"touch-manipulation",
-					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+					"focus-ring",
 					"data-[active=true]:bg-muted",
 					isCompact
 						? "hover:bg-muted justify-between gap-2 px-3 py-2.5"
@@ -87,7 +87,7 @@ export function CollectionCard({
 								{query ? <HighlightMatch text={collection.name} query={query} /> : collection.name}
 							</span>
 						</div>
-						<span className="text-muted-foreground/60 shrink-0 text-xs tabular-nums">
+						<span className="text-muted-foreground shrink-0 text-xs tabular-nums">
 							{collection.productCount}
 						</span>
 					</>
@@ -115,7 +115,7 @@ export function CollectionCard({
 						)}
 						<div className="min-w-0">
 							<span className="line-clamp-1 text-sm font-medium">{collection.name}</span>
-							<span className="text-muted-foreground/60 block text-xs tabular-nums">
+							<span className="text-muted-foreground block text-xs tabular-nums">
 								{collection.productCount} produit{collection.productCount > 1 ? "s" : ""}
 							</span>
 						</div>

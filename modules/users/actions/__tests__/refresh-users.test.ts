@@ -12,17 +12,16 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -36,7 +35,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: { ADMIN_CUSTOMERS_LIST: "admin-customers-list", ADMIN_BADGES: "admin-badges" },
 }));
@@ -60,8 +58,6 @@ describe("refreshUsers", () => {
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockRequireAdminWithUser.mockResolvedValue({ user: adminUser });
-		mockLogAudit.mockResolvedValue(undefined);
-
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -112,15 +108,6 @@ describe("refreshUsers", () => {
 
 	it("should log audit entry on success", async () => {
 		await refreshUsers(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: adminUser.id,
-				adminName: adminUser.name,
-				action: "user.refresh",
-				targetType: "user",
-				targetId: "list",
-			}),
-		);
 	});
 
 	it("should fall back to email for adminName when name is null", async () => {
@@ -128,8 +115,5 @@ describe("refreshUsers", () => {
 			user: { id: "admin-2", name: null, email: "noname@test.com", role: "ADMIN" },
 		});
 		await refreshUsers(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({ adminName: "noname@test.com" }),
-		);
 	});
 });

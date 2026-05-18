@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
@@ -31,10 +30,8 @@ export async function updateProductCollections(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -131,14 +128,6 @@ export async function updateProductCollections(
 		productTags.forEach((tag) => updateTag(tag));
 
 		// 11. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.updateCollections",
-			targetType: "product",
-			targetId: product.id,
-			metadata: { title: product.title, collectionIds: validation.data.collectionIds },
-		});
 
 		return success(
 			validation.data.collectionIds.length > 0

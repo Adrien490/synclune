@@ -16,7 +16,6 @@ const {
 	mockNotFound,
 	mockHandleActionError,
 	mockAuth,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findUnique: vi.fn() },
@@ -32,7 +31,6 @@ const {
 	mockAuth: {
 		api: { requestPasswordReset: vi.fn() },
 	},
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -40,6 +38,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -69,10 +68,6 @@ vi.mock("@/shared/lib/actions", () => ({
 
 vi.mock("@/modules/auth/lib/auth", () => ({
 	auth: mockAuth,
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: mockLogAudit,
 }));
 
 vi.mock("../../../schemas/user-admin.schemas", () => ({

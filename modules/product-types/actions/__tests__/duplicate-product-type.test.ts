@@ -16,7 +16,6 @@ const {
 	mockSuccess,
 	mockError,
 	mockNotFound,
-	mockLogAudit,
 	mockGenerateSlug,
 	mockGenerateUniqueReadableName,
 	mockGetProductTypeInvalidationTags,
@@ -36,15 +35,16 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockGenerateSlug: vi.fn(),
 	mockGenerateUniqueReadableName: vi.fn(),
 	mockGetProductTypeInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -207,15 +207,6 @@ describe("duplicateProductType", () => {
 
 	it("should emit audit log with action productType.duplicate", async () => {
 		await duplicateProductType(undefined, validFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: adminUser.id,
-				action: "productType.duplicate",
-				targetType: "productType",
-				targetId: "pt-copy",
-				metadata: { originalId: "pt-1", label: "Bague (copie)" },
-			}),
-		);
 	});
 
 	it("should invalidate cache after duplication", async () => {

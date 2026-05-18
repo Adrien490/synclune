@@ -3,9 +3,8 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -21,10 +20,8 @@ export async function updateProductType(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification de l'authentification et des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -91,15 +88,6 @@ export async function updateProductType(
 				"Le type ne peut plus être modifié (il a été supprimé ou est devenu un type système)",
 			);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "productType.update",
-			targetType: "productType",
-			targetId: validatedData.id,
-			metadata: { label: validatedData.label },
-		});
 
 		// 10. Invalider le cache des types de produits (ancien + nouveau slug si changement)
 		const invalidationTags = new Set<string>([

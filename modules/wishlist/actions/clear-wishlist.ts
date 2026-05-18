@@ -30,8 +30,8 @@ import { handleActionError, success, enforceRateLimit } from "@/shared/lib/actio
  * Rate limiting via WISHLIST_LIMITS.CLEAR (5/5min — operation destructive bulk).
  */
 export async function clearWishlist(
-	_: ActionState | undefined,
-	__formData?: FormData,
+	_prevState: ActionState | undefined,
+	_formData?: FormData,
 ): Promise<ActionState> {
 	try {
 		// 1. Recuperer l'authentification (user ou session invite existante)

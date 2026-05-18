@@ -20,6 +20,7 @@ const {
 	mockGetGuestWishlistForMerge,
 	mockGetUserWishlistForMerge,
 	mockGetWishlistInvalidationTags,
+	mockGetWishlistSessionId,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findUnique: vi.fn() },
@@ -39,6 +40,7 @@ const {
 	mockGetGuestWishlistForMerge: vi.fn(),
 	mockGetUserWishlistForMerge: vi.fn(),
 	mockGetWishlistInvalidationTags: vi.fn(),
+	mockGetWishlistSessionId: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -48,6 +50,7 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 vi.mock("@/modules/wishlist/lib/wishlist-session", () => ({
 	isValidUuidV4: (value: string) =>
 		/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
+	getWishlistSessionId: mockGetWishlistSessionId,
 }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -112,6 +115,8 @@ describe("mergeWishlists", () => {
 		mockHeaders.mockResolvedValue(new Headers());
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		// Default: cookie matches the supplied sessionId (legitimate auth-hook flow)
+		mockGetWishlistSessionId.mockResolvedValue(VALID_SESSION_ID);
 		mockGetWishlistInvalidationTags.mockImplementation((userId?: string, sessionId?: string) =>
 			userId ? [`wishlist-${userId}`] : sessionId ? [`wishlist-guest-${sessionId}`] : [],
 		);
@@ -148,6 +153,29 @@ describe("mergeWishlists", () => {
 
 	it("rejects when there is no current session at all", async () => {
 		mockGetSession.mockResolvedValue(null);
+
+		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockGetGuestWishlistForMerge).not.toHaveBeenCalled();
+	});
+
+	it("rejects when the cookie sessionId does not match the param (IDOR guard)", async () => {
+		// Attacker authenticated as themselves, attempting to merge a victim's
+		// guest wishlist by supplying victim's sessionId as a parameter.
+		const VICTIM_SESSION_ID = "11111111-1111-4111-8111-111111111111";
+		mockGetWishlistSessionId.mockResolvedValue("22222222-2222-4222-8222-222222222222");
+
+		const result = await mergeWishlists(VALID_USER_ID, VICTIM_SESSION_ID);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toMatch(/Non autorise/i);
+		expect(mockGetGuestWishlistForMerge).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("rejects when there is no wishlist cookie at all (param-only call)", async () => {
+		mockGetWishlistSessionId.mockResolvedValue(null);
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 

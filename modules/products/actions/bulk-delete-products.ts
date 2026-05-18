@@ -3,11 +3,10 @@
 import { updateTag } from "next/cache";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	error,
 	handleActionError,
@@ -31,10 +30,8 @@ export async function bulkDeleteProducts(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_DELETE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -128,15 +125,6 @@ export async function bulkDeleteProducts(
 			}
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.bulkDelete",
-			targetType: "product",
-			targetId: deletableIds.join(","),
-			metadata: { count: deletableIds.length, productIds: deletableIds },
-		});
 
 		const blockedCount = blockedIds.size;
 		const plural = deletableIds.length > 1 ? "s" : "";

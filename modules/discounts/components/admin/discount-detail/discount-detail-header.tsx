@@ -57,7 +57,7 @@ export function DiscountDetailHeader({ discount }: DiscountDetailHeaderProps) {
 					{format(discount.createdAt, "d MMMM yyyy 'à' HH'h'mm", {
 						locale: fr,
 					})}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mis à jour {formatDistanceToNow(discount.updatedAt, { addSuffix: true, locale: fr })})
 					</span>

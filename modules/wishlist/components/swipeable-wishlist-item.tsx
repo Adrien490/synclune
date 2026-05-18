@@ -52,7 +52,7 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 	const { action } = useRemoveFromWishlist({
 		onOptimisticRemove: wishlistListOptimistic?.onItemRemoved,
 		onSuccess: () => {
-			toast.success("Article retiré de votre wishlist", {
+			toast.success("Article retiré de vos favoris", {
 				description: "Vous pourrez toujours le retrouver dans nos créations.",
 				duration: 5000,
 				action: {

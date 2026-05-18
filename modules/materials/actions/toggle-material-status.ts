@@ -1,9 +1,8 @@
 "use server";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -18,10 +17,8 @@ export async function toggleMaterialStatus(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.TOGGLE_STATUS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -55,17 +52,20 @@ export async function toggleMaterialStatus(
 			},
 		});
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "material.toggleStatus",
-			targetType: "material",
-			targetId: validatedData.id,
-			metadata: { name: existingMaterial.name, isActive: validatedData.isActive },
+		// Cascade : désactiver un matériau doit retirer son badge des PDP
+		// storefront immédiatement (sinon stale ≤24h, profil `reference`).
+		const skus = await prisma.productSku.findMany({
+			where: { deletedAt: null, materials: { some: { materialId: validatedData.id } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
 		});
+		const affectedProductSlugs = skus.map((s) => s.product.slug).filter(Boolean);
 
 		// Invalider le cache
-		const tags = getMaterialInvalidationTags(existingMaterial.slug);
+		const tags = getMaterialInvalidationTags({
+			slug: existingMaterial.slug,
+			affectedProductSlugs,
+		});
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(

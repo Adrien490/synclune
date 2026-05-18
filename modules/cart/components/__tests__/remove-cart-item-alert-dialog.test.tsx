@@ -11,20 +11,37 @@ const {
 	mockDialogData,
 	mockAction,
 	mockIsPending,
+	mockOnSuccessCapture,
 	mockOptimisticUpdate,
 	mockStartTransition,
 	mockHaptic,
+	mockAddToCart,
+	mockToastSuccess,
+	mockToastError,
+	mockRouterRefresh,
+	mockAdjustCart,
 } = vi.hoisted(() => ({
 	mockIsOpen: { value: false },
 	mockClose: vi.fn(),
 	mockDialogData: {
-		value: null as { cartItemId: string; itemName: string; quantity: number } | null,
+		value: null as {
+			cartItemId: string;
+			skuId?: string;
+			itemName: string;
+			quantity: number;
+		} | null,
 	},
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
+	mockOnSuccessCapture: { current: undefined as undefined | (() => void) },
 	mockOptimisticUpdate: vi.fn(),
 	mockStartTransition: vi.fn((cb: () => void) => cb()),
 	mockHaptic: vi.fn(),
+	mockAddToCart: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockToastError: vi.fn(),
+	mockRouterRefresh: vi.fn(),
+	mockAdjustCart: vi.fn(),
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -40,15 +57,20 @@ vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+	useRouter: () => ({ push: vi.fn(), refresh: mockRouterRefresh }),
 }));
 
 vi.mock("@/modules/cart/actions/add-to-cart", () => ({
-	addToCart: vi.fn(),
+	addToCart: mockAddToCart,
 }));
 
 vi.mock("@/shared/utils/toast", () => ({
-	toast: { success: vi.fn(), error: vi.fn() },
+	toast: { success: mockToastSuccess, error: mockToastError },
+}));
+
+vi.mock("@/shared/stores/badge-counts-store", () => ({
+	useBadgeCountsStore: (selector: (state: { adjustCart: typeof mockAdjustCart }) => unknown) =>
+		selector({ adjustCart: mockAdjustCart }),
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -60,7 +82,10 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 }));
 
 vi.mock("@/modules/cart/hooks/use-remove-from-cart", () => ({
-	useRemoveFromCart: () => ({ action: mockAction, isPending: mockIsPending.value }),
+	useRemoveFromCart: (opts?: { onSuccess?: () => void }) => {
+		mockOnSuccessCapture.current = opts?.onSuccess;
+		return { action: mockAction, isPending: mockIsPending.value };
+	},
 }));
 
 vi.mock("@/modules/cart/contexts/cart-optimistic-context", () => ({
@@ -136,6 +161,7 @@ vi.mock("lucide-react", () => ({
 // ============================================================================
 
 import { RemoveCartItemAlertDialog } from "../remove-cart-item-alert-dialog";
+import { ActionStatus } from "@/shared/types/server-action";
 
 // ============================================================================
 // TESTS
@@ -220,5 +246,79 @@ describe("RemoveCartItemAlertDialog", () => {
 		if (!form) throw new Error("form not found");
 		fireEvent.submit(form);
 		expect(mockHaptic).toHaveBeenCalledWith("error");
+	});
+
+	describe("undo toast (G4)", () => {
+		it("shows undo toast with Annuler action after successful removal when skuId is provided", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-1",
+				skuId: "sku-1",
+				itemName: "Bague étoile",
+				quantity: 2,
+			};
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			expect(mockClose).toHaveBeenCalled();
+			expect(mockToastSuccess).toHaveBeenCalledWith(
+				"Bague étoile retiré du panier",
+				expect.objectContaining({
+					duration: 5000,
+					action: expect.objectContaining({ label: "Annuler" }),
+				}),
+			);
+		});
+
+		it("skips undo toast when skuId is missing (no restoration possible)", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = { cartItemId: "ci-1", itemName: "Bague", quantity: 1 };
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			expect(mockClose).toHaveBeenCalled();
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+		});
+
+		it("restores item via addToCart and refreshes router on Annuler click", async () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-1",
+				skuId: "sku-9",
+				itemName: "Collier",
+				quantity: 3,
+			};
+			mockAddToCart.mockResolvedValueOnce({ status: ActionStatus.SUCCESS, message: "ok" });
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			const undoCall = mockToastSuccess.mock.calls[0];
+			const undoHandler = (undoCall![1] as { action: { onClick: () => void } }).action.onClick;
+			await undoHandler();
+			expect(mockAdjustCart).toHaveBeenCalledWith(3);
+			expect(mockAddToCart).toHaveBeenCalledWith(undefined, expect.any(FormData));
+			const fd = mockAddToCart.mock.calls[0]![1] as FormData;
+			expect(fd.get("skuId")).toBe("sku-9");
+			expect(fd.get("quantity")).toBe("3");
+			expect(mockRouterRefresh).toHaveBeenCalled();
+			expect(mockToastSuccess).toHaveBeenLastCalledWith("Article restauré");
+		});
+
+		it("rolls back the badge and shows error toast when restoration fails", async () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-1",
+				skuId: "sku-9",
+				itemName: "Collier",
+				quantity: 2,
+			};
+			mockAddToCart.mockResolvedValueOnce({ status: ActionStatus.ERROR, message: "Stock épuisé" });
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			const undoCall = mockToastSuccess.mock.calls[0];
+			const undoHandler = (undoCall![1] as { action: { onClick: () => void } }).action.onClick;
+			await undoHandler();
+			expect(mockAdjustCart).toHaveBeenNthCalledWith(1, 2);
+			expect(mockAdjustCart).toHaveBeenNthCalledWith(2, -2);
+			expect(mockToastError).toHaveBeenCalledWith("Stock épuisé");
+			expect(mockRouterRefresh).not.toHaveBeenCalled();
+		});
 	});
 });

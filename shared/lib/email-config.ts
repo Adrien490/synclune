@@ -52,4 +52,5 @@ export const EMAIL_SUBJECTS = {
 	WELCOME: "Bienvenue chez Synclune !",
 	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",
 	EMAIL_CHANGE_CONFIRMATION: "Confirmez votre nouvelle adresse email - Synclune",
+	REVIEW_REQUEST: "Ton avis sur ta commande - Synclune",
 } as const;

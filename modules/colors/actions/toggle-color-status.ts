@@ -3,9 +3,8 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -19,10 +18,8 @@ export async function toggleColorStatus(
 ): Promise<ActionState> {
 	try {
 		// 1. Admin authorization check
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.TOGGLE_STATUS);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -60,17 +57,20 @@ export async function toggleColorStatus(
 			},
 		});
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "color.toggleStatus",
-			targetType: "color",
-			targetId: validatedData.id,
-			metadata: { name: existingColor.name, isActive: validatedData.isActive },
+		// Cascade : désactiver une couleur doit retirer son swatch des PDP
+		// storefront immédiatement (sinon stale jusqu'à 24h, profil `reference`).
+		const skus = await prisma.productSku.findMany({
+			where: { deletedAt: null, colors: { some: { colorId: validatedData.id } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
 		});
+		const affectedProductSlugs = skus.map((s) => s.product.slug).filter(Boolean);
 
 		// Invalidate cache
-		const tags = getColorInvalidationTags(existingColor.slug);
+		const tags = getColorInvalidationTags({
+			slug: existingColor.slug,
+			affectedProductSlugs,
+		});
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(

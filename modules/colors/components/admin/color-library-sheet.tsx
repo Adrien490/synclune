@@ -1,7 +1,7 @@
 "use client";
 
 import { BookMarked, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
 	ResponsiveDialog,
@@ -49,17 +49,15 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 	const [query, setQuery] = useState("");
 	const [category, setCategory] = useState<ColorLibraryCategory>("all");
 
-	const filteredEntries = useMemo(() => {
-		const normalizedQuery = query.trim().toLowerCase();
-		return COLOR_LIBRARY.filter((entry) => {
-			if (category !== "all" && entry.category !== category) return false;
-			if (normalizedQuery.length === 0) return true;
-			return (
-				entry.name.toLowerCase().includes(normalizedQuery) ||
-				(entry.description?.toLowerCase().includes(normalizedQuery) ?? false)
-			);
-		});
-	}, [category, query]);
+	const normalizedQuery = query.trim().toLowerCase();
+	const filteredEntries = COLOR_LIBRARY.filter((entry) => {
+		if (category !== "all" && entry.category !== category) return false;
+		if (normalizedQuery.length === 0) return true;
+		return (
+			entry.name.toLowerCase().includes(normalizedQuery) ||
+			(entry.description?.toLowerCase().includes(normalizedQuery) ?? false)
+		);
+	});
 
 	const handleSelect = (entry: ColorLibraryEntry) => {
 		haptic("selection");

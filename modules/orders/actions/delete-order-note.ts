@@ -1,13 +1,12 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { logAudit } from "@/shared/lib/audit-log";
 import { deleteOrderNoteSchema } from "../schemas/order.schemas";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
@@ -17,10 +16,8 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 	try {
 		// 1. Vérification admin (avant validation pour cohérence)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -54,17 +51,6 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 		if (note.orderId) {
 			updateTag(ORDERS_CACHE_TAGS.NOTES(note.orderId));
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.deleteNote",
-			targetType: "orderNote",
-			targetId: note.id,
-			metadata: {
-				orderId: note.orderId,
-			},
-		});
 
 		return success("Note supprimée");
 	} catch (e) {

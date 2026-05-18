@@ -12,7 +12,6 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
@@ -165,18 +164,6 @@ export async function markAsDelivered(
 				logger.error("Échec envoi email livraison", emailError, { action: "mark-as-delivered" });
 			}
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.markDelivered",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousStatus: order.status,
-			},
-		});
 
 		const emailMessage = emailSent
 			? " Email envoyé au client."

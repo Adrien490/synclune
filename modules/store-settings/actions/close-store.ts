@@ -5,7 +5,6 @@ import { updateTag } from "next/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_STORE_SETTINGS_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -52,18 +51,6 @@ export async function closeStore(_prevState: unknown, formData: FormData): Promi
 		}
 
 		getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "store.close",
-			targetType: "storeSettings",
-			targetId: STORE_SETTINGS_SINGLETON_ID,
-			metadata: {
-				closureMessage,
-				reopensAt: reopensAt?.toISOString(),
-			},
-		});
 
 		return success("Boutique fermée avec succès");
 	} catch (e) {

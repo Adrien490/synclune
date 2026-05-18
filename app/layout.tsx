@@ -1,3 +1,4 @@
+import { WebVitalsReporter } from "@/app/_components/web-vitals-reporter";
 import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
@@ -60,6 +61,7 @@ export default function RootLayout({
 				</SerwistProvider>
 				<Analytics />
 				<SpeedInsights />
+				<WebVitalsReporter />
 			</body>
 		</html>
 	);

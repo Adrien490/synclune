@@ -3,9 +3,8 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_STORE_SETTINGS_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -18,10 +17,8 @@ export async function updateReopensAt(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(
 			ADMIN_STORE_SETTINGS_LIMITS.UPDATE_REOPENS_AT,
 		);
@@ -55,18 +52,6 @@ export async function updateReopensAt(
 		}
 
 		getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "store.update-reopens-at",
-			targetType: "storeSettings",
-			targetId: STORE_SETTINGS_SINGLETON_ID,
-			metadata: {
-				previousReopensAt: existing.reopensAt?.toISOString() ?? null,
-				newReopensAt: reopensAt?.toISOString() ?? null,
-			},
-		});
 
 		return success(
 			reopensAt ? "Date de réouverture mise à jour" : "Réouverture automatique désactivée",

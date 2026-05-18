@@ -112,6 +112,52 @@ describe("getSkuInvalidationTags", () => {
 		expect(tags).toContain("products-list");
 		expect(tags).toHaveLength(10);
 	});
+
+	it("cascades to colors-list + color-${slug} when affectedColorSlugs provided", () => {
+		const tags = getSkuInvalidationTags("SKU-001", undefined, undefined, undefined, [
+			"or",
+			"argent",
+		]);
+
+		expect(tags).toContain("colors-list");
+		expect(tags).toContain("color-or");
+		expect(tags).toContain("color-argent");
+	});
+
+	it("cascades to color-${id}-product-count when affectedColorIds provided", () => {
+		const tags = getSkuInvalidationTags("SKU-001", undefined, undefined, undefined, undefined, [
+			"color-cuid-1",
+			"color-cuid-2",
+		]);
+
+		expect(tags).toContain("color-color-cuid-1-product-count");
+		expect(tags).toContain("color-color-cuid-2-product-count");
+	});
+
+	it("cascades to materials-list + material-${slug} when affectedMaterialSlugs provided", () => {
+		const tags = getSkuInvalidationTags(
+			"SKU-001",
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			["or-18k", "argent-925"],
+		);
+
+		expect(tags).toContain("materials-list");
+		expect(tags).toContain("material-or-18k");
+		expect(tags).toContain("material-argent-925");
+	});
+
+	it("skips cross-module cascade when arrays are empty", () => {
+		const tags = getSkuInvalidationTags("SKU-001", undefined, undefined, undefined, [], [], []);
+
+		expect(tags).not.toContain("colors-list");
+		expect(tags).not.toContain("materials-list");
+		// Base set unchanged
+		expect(tags).toHaveLength(5);
+	});
 });
 
 // ============================================================================

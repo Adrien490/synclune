@@ -44,6 +44,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -106,10 +107,6 @@ vi.mock("../../schemas/order.schemas", () => ({
 	updateOrderBillingAddressSchema: {
 		safeParse: mockSchemaSafeParse,
 	},
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { updateOrderBillingAddress } from "../update-order-billing-address";

@@ -123,6 +123,28 @@ describe("PageHeaderSkeleton", () => {
 		expect(descPlaceholders.length).toBe(0);
 	});
 
+	// ─── Breadcrumbs back button placeholder (mobile) ──────────────────────
+
+	it("renders back button chevron placeholder when hasBreadcrumbs=true", () => {
+		const { container } = render(<PageHeaderSkeleton hasBreadcrumbs />);
+
+		const chevron = container.querySelector('[data-testid="skeleton-back-chevron"]');
+		expect(chevron).toBeInTheDocument();
+		expect(chevron).toHaveClass("size-5");
+	});
+
+	it("does not render back button chevron placeholder by default", () => {
+		const { container } = render(<PageHeaderSkeleton />);
+
+		expect(container.querySelector('[data-testid="skeleton-back-chevron"]')).toBeNull();
+	});
+
+	it("hasBreadcrumbs has no effect on compact variant", () => {
+		const { container } = render(<PageHeaderSkeleton variant="compact" hasBreadcrumbs />);
+
+		expect(container.querySelector('[data-testid="skeleton-back-chevron"]')).toBeNull();
+	});
+
 	// ─── Custom className ──────────────────────────────────────────────────
 
 	it("applies custom className to the root element", () => {

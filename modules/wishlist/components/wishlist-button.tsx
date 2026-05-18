@@ -52,11 +52,11 @@ export function WishlistButton({
 
 	const ariaLabel = isInWishlist
 		? productTitle
-			? `Retirer ${productTitle} de la wishlist`
-			: "Retirer de la wishlist"
+			? `Retirer ${productTitle} des favoris`
+			: "Retirer des favoris"
 		: productTitle
-			? `Ajouter ${productTitle} à la wishlist`
-			: "Ajouter à la wishlist";
+			? `Ajouter ${productTitle} aux favoris`
+			: "Ajouter aux favoris";
 
 	const tooltipText = isInWishlist ? "Retirer des favoris" : "Enregistrer dans mes favoris";
 

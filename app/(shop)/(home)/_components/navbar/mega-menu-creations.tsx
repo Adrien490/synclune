@@ -67,7 +67,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 											"rounded-lg p-1.5",
 											"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 											"hover:bg-accent/50",
-											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+											"focus-ring",
 										)}
 									>
 										<div

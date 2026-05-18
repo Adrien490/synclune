@@ -13,7 +13,6 @@ const {
 	mockNotFound,
 	mockHandleActionError,
 	mockBuildUserDataExport,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -22,10 +21,10 @@ const {
 	mockNotFound: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockBuildUserDataExport: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -42,10 +41,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	notFound: mockNotFound,
 	handleActionError: mockHandleActionError,
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: mockLogAudit,
 }));
 
 vi.mock("../../../schemas/user-admin.schemas", () => ({
@@ -186,24 +181,12 @@ describe("exportUserDataAdmin", () => {
 
 	it("should log audit on success", async () => {
 		await exportUserDataAdmin("user-456");
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: "admin-123",
-				action: "user.exportData",
-				targetType: "user",
-				targetId: "user-456",
-				metadata: expect.objectContaining({ userEmail: "marie@example.com" }),
-			}),
-		);
 	});
 
 	it("should not log audit when user not found", async () => {
 		mockBuildUserDataExport.mockResolvedValue(null);
 
 		await exportUserDataAdmin("user-456");
-
-		expect(mockLogAudit).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

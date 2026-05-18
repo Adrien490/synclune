@@ -73,7 +73,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 				</div>
 				<p className="text-muted-foreground hidden text-sm md:block">
 					Créée le {format(sku.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mise à jour {formatDistanceToNow(sku.updatedAt, { addSuffix: true, locale: fr })})
 					</span>

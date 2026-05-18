@@ -7,6 +7,8 @@ import type Stripe from "stripe";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId, getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getSkusDetailsBatch } from "@/modules/cart/services/sku-validation.service";
+import { calculateDiscountWithExclusion } from "@/modules/discounts/services/discount-calculation.service";
+import { isDiscountCurrentlyValid } from "@/modules/discounts/services/discount-validation.service";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { STRIPE_SHIPPING_OPTIONS } from "@/modules/orders/constants/stripe-shipping-rates";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
@@ -143,14 +145,71 @@ export async function createCheckoutSession(): Promise<
 				return { success: false, error: "Votre panier est vide." };
 			}
 
-			// Applique le rabais en réduisant proportionnellement chaque unit_amount.
+			// Applique le rabais en re-validant le Discount LIVE (le cache `discountAmountCache`
+			// est figé à `applyDiscount` ; si un admin a modifié `value`/`isActive`/`endsAt`
+			// entre-temps, on doit re-calculer pour ne pas appliquer un montant divergent).
 			// Le webhook créera la DiscountUsage en re-validant le code FOR UPDATE.
 			let discountAmount = 0;
 			let discountCode: string | null = null;
-			if (cart.appliedDiscountCode && cart.discountAmountCache && cart.discountAmountCache > 0) {
-				discountAmount = Math.min(cart.discountAmountCache, subtotal);
-				discountCode = cart.appliedDiscountCode;
-				applyDiscountToLineItems(lineItems, subtotal, discountAmount);
+			if (cart.appliedDiscountCode) {
+				const liveDiscount = await prisma.discount.findFirst({
+					where: { code: cart.appliedDiscountCode, deletedAt: null },
+					select: {
+						id: true,
+						code: true,
+						type: true,
+						value: true,
+						isActive: true,
+						startsAt: true,
+						endsAt: true,
+						minOrderAmount: true,
+						maxUsageCount: true,
+						maxUsagePerUser: true,
+						usageCount: true,
+					},
+				});
+
+				if (liveDiscount && isDiscountCurrentlyValid(liveDiscount)) {
+					const cartItemsForDiscount = cartItems
+						.map((item) => {
+							const sku = skuDetailsMap.get(item.skuId)?.data?.sku;
+							return sku
+								? {
+										priceInclTax: sku.priceInclTax,
+										quantity: item.quantity,
+										compareAtPrice: sku.compareAtPrice,
+									}
+								: null;
+						})
+						.filter((x): x is NonNullable<typeof x> => x !== null);
+
+					const liveAmount = calculateDiscountWithExclusion({
+						type: liveDiscount.type,
+						value: liveDiscount.value,
+						cartItems: cartItemsForDiscount,
+						excludeSaleItems: true,
+					});
+
+					if (liveAmount > 0) {
+						discountAmount = Math.min(liveAmount, subtotal);
+						discountCode = liveDiscount.code;
+
+						if (cart.discountAmountCache !== liveAmount) {
+							Sentry.addBreadcrumb({
+								category: "checkout",
+								message: "discount-cache-drift",
+								level: "warning",
+								data: {
+									code: liveDiscount.code,
+									cachedAmount: cart.discountAmountCache ?? 0,
+									liveAmount,
+								},
+							});
+						}
+
+						applyDiscountToLineItems(lineItems, subtotal, discountAmount);
+					}
+				}
 			}
 
 			// Récupère ou crée le Stripe Customer. Pour les guests sans email, on laisse

@@ -3,10 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	error,
 	handleActionError,
@@ -40,10 +39,8 @@ export async function bulkChangeProductStatus(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_BULK_STATUS_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -140,20 +137,6 @@ export async function bulkChangeProductStatus(
 			}
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.bulkChangeStatus",
-			targetType: "product",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				targetStatus,
-				productIds: eligibleIds,
-				skippedForValidation: skippedForValidation.length,
-			},
-		});
 
 		const verb = STATUS_VERB[targetStatus];
 		const plural = eligibleIds.length > 1 ? "s" : "";

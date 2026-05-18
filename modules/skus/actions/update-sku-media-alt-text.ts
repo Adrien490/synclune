@@ -1,8 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -26,10 +25,8 @@ export async function updateSkuMediaAltText(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_MEDIA_ALT_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -74,15 +71,6 @@ export async function updateSkuMediaAltText(
 			skuInfo.id,
 		);
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "sku.updateMediaAltText",
-			targetType: "sku",
-			targetId: skuInfo.id,
-			metadata: { sku: skuInfo.sku, mediaId, altLength: altText?.length ?? 0 },
-		});
 
 		return success("Texte alternatif mis a jour.");
 	} catch (e) {

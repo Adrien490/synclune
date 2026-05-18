@@ -5,7 +5,7 @@
  * - Mobile: Menu burger à gauche, Logo centré (icône seule), Actions à droite
  * - Desktop: Logo avec texte à gauche, Navigation centrale, Actions à droite
  *
- * Container: max-w-6xl (cohérent avec navbar.tsx)
+ * Container: max-w-screen-2xl (cohérent avec navbar.tsx)
  * Hauteur: h-16 sm:h-20 (cohérent avec navbar.tsx)
  */
 export function NavbarSkeleton() {
@@ -19,7 +19,7 @@ export function NavbarSkeleton() {
 				aria-label="Navigation principale en cours de chargement"
 				className="ease-in-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 items-center gap-4 sm:h-20">
 						{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 						<div className="flex min-w-0 flex-1 items-center lg:flex-none">

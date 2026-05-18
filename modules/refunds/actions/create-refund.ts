@@ -14,7 +14,6 @@ import {
 	safeFormGet,
 	safeFormGetJSON,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { logger } from "@/shared/lib/logger";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
@@ -241,18 +240,6 @@ export async function createRefund(
 		});
 
 		// Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "refund.create",
-			targetType: "refund",
-			targetId: result.refund.id,
-			metadata: {
-				orderId,
-				amount: result.totalAmount,
-				reason: validated.data.reason,
-			},
-		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(REFUNDS_CACHE_TAGS.LIST);

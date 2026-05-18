@@ -46,8 +46,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -149,6 +151,8 @@ describe("createProductSku", () => {
 			sku: "BRC-001",
 			productId: VALID_CUID,
 			product: { slug: "test" },
+			colors: [],
+			materials: [],
 		});
 		mockPrisma.productSku.updateMany.mockResolvedValue({});
 		mockPrisma.skuMedia.createMany.mockResolvedValue({ count: 0 });

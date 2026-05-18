@@ -2,8 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -32,10 +31,8 @@ export async function duplicateProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DUPLICATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -148,18 +145,6 @@ export async function duplicateProduct(
 		}
 
 		// 8. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.duplicate",
-			targetType: "product",
-			targetId: duplicatedProduct.id,
-			metadata: {
-				title: duplicatedProduct.title,
-				slug: duplicatedProduct.slug,
-				sourceProductId: productId,
-			},
-		});
 
 		// 9. Success
 		return success(`Produit "${duplicatedProduct.title}" dupliqué avec succès.`, {

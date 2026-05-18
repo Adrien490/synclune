@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -11,7 +11,6 @@ import {
 	error,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -24,10 +23,8 @@ import { createColorSchema } from "../schemas/color.schemas";
 export async function createColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Admin authorization check
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.CREATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -79,18 +76,6 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 				hex: validatedData.hex,
 				description: validatedData.description ?? null,
 				isActive: true,
-			},
-		});
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "color.create",
-			targetType: "color",
-			targetId: created.id,
-			metadata: {
-				name: validatedData.name,
-				hex: validatedData.hex,
 			},
 		});
 

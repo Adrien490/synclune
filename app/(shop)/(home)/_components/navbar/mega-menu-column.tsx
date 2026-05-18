@@ -103,7 +103,7 @@ export function MegaMenuColumn({
 							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 							"bg-accent/40 hover:bg-accent",
 							"text-foreground",
-							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+							"focus-ring",
 							"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 							pathname === primaryItem.href && "bg-accent font-medium",
 						)}
@@ -135,7 +135,7 @@ export function MegaMenuColumn({
 									className={cn(
 										"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
 										"hover:bg-accent hover:text-accent-foreground",
-										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+										"focus-ring",
 										"motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 										isActive && "bg-accent/50 font-medium",
 									)}
@@ -169,7 +169,7 @@ export function MegaMenuColumn({
 								"relative inline-flex min-h-11 flex-row! items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium",
 								"text-foreground hover:text-foreground",
 								"hover:bg-accent/50",
-								"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+								"focus-ring",
 								"motion-safe:transition-colors",
 							)}
 						>

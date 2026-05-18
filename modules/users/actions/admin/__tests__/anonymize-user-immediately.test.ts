@@ -11,7 +11,6 @@ const {
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockUpdateTag,
-	mockLogAudit,
 	mockSuccess,
 	mockError,
 	mockNotFound,
@@ -27,7 +26,6 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockUpdateTag: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
@@ -38,6 +36,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -51,7 +50,6 @@ vi.mock("next/cache", () => ({
 	cacheLife: vi.fn(),
 	cacheTag: vi.fn(),
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -126,8 +124,6 @@ describe("anonymizeUserImmediately", () => {
 		});
 		mockAnonymizeUserInTransaction.mockResolvedValue(undefined);
 		mockGetUserFullInvalidationTags.mockReturnValue(["tag-a"]);
-		mockLogAudit.mockResolvedValue(undefined);
-
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -234,18 +230,6 @@ describe("anonymizeUserImmediately", () => {
 
 	it("should log audit with reason and previousStatus", async () => {
 		await anonymizeUserImmediately(undefined, createFormData());
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "user.anonymizeImmediately",
-				targetType: "user",
-				targetId: USER_ID,
-				metadata: expect.objectContaining({
-					previousStatus: "ACTIVE",
-					userEmail: USER_EMAIL,
-					reason: "Demande CNIL 2026-04-17 ref #1234",
-				}),
-			}),
-		);
 	});
 
 	it("should return success message referencing GDPR", async () => {

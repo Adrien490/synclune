@@ -22,6 +22,9 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
+		productSku: {
+			findMany: vi.fn(),
+		},
 		productSkuMaterial: {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
@@ -40,8 +43,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -103,7 +108,22 @@ describe("mergeMaterials", () => {
 		mockValidateInput.mockReturnValue({
 			data: { sourceId: "material-source", targetId: "material-target" },
 		});
-		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "admin-badges"]);
+		mockGetMaterialInvalidationTags.mockImplementation(
+			(opts?: string | { slug?: string; affectedProductSlugs?: readonly string[] }) => {
+				const tags = ["materials-list", "admin-badges"];
+				const o = typeof opts === "string" ? { slug: opts } : (opts ?? {});
+				if (o.slug) tags.push(`material-${o.slug}`);
+				if (o.affectedProductSlugs?.length) {
+					tags.push("products-list");
+					for (const s of o.affectedProductSlugs) tags.push(`product-${s}`);
+				}
+				return tags;
+			},
+		);
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ product: { slug: "bague-argent" } },
+			{ product: { slug: "collier-argent" } },
+		]);
 
 		mockPrisma.material.findUnique.mockImplementation(({ where }: { where: { id: string } }) => {
 			if (where.id === "material-source")
@@ -244,6 +264,24 @@ describe("mergeMaterials", () => {
 		expect(calls).toContain("materials-list");
 		expect(calls).toContain("material-argent-925");
 		expect(calls).toContain("material-argent-sterling");
+	});
+
+	it("cascades invalidation to affected product PDPs", async () => {
+		await mergeMaterials(undefined, validFormData);
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { id: { in: ["sku-1", "sku-2", "sku-3"] }, deletedAt: null },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
+		expect(calls).toContain("product-bague-argent");
+		expect(calls).toContain("product-collier-argent");
+	});
+
+	it("skips PDP cascade query when no SKU touched", async () => {
+		mockPrisma.productSkuMaterial.findMany.mockResolvedValue([]);
+		await mergeMaterials(undefined, validFormData);
+		expect(mockPrisma.productSku.findMany).not.toHaveBeenCalled();
 	});
 
 	it("returns count in success data", async () => {

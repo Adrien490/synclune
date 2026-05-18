@@ -41,7 +41,7 @@ export function QuickTagPills({
 						size === "sm" ? "text-sm" : "text-xs",
 						"min-h-11 px-3.5 py-1.5 sm:min-h-9 sm:px-3",
 						"touch-manipulation transition-colors",
-						"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+						"focus-ring",
 					)}
 				>
 					{type.label}

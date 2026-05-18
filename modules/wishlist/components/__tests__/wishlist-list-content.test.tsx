@@ -172,7 +172,7 @@ describe("WishlistListContent", () => {
 		expect(screen.getByTestId("empty")).toBeInTheDocument();
 	});
 
-	it("shows 'Votre wishlist est vide' in empty state", () => {
+	it("shows 'Votre liste de favoris est vide' in empty state", () => {
 		render(
 			<WishlistListContent
 				items={[]}
@@ -181,7 +181,7 @@ describe("WishlistListContent", () => {
 				perPage={12}
 			/>,
 		);
-		expect(screen.getByRole("heading", { name: /wishlist est vide/i })).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /liste de favoris est vide/i })).toBeInTheDocument();
 	});
 
 	it("shows discover link in empty state", () => {

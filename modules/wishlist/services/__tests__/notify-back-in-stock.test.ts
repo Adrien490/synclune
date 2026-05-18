@@ -34,6 +34,15 @@ vi.mock("@/shared/lib/logger", () => ({
 vi.mock("@/modules/wishlist/utils/capture-wishlist-error", () => ({
 	captureWishlistError: mockCaptureWishlistError,
 }));
+vi.mock("@sentry/nextjs", () => ({
+	// startSpan executes the callback with a no-op span so attributes are recorded harmlessly
+	startSpan: vi.fn(
+		async (
+			_options: { name: string; attributes?: Record<string, unknown> },
+			cb: (span: { setAttribute: (k: string, v: unknown) => void }) => Promise<void> | void,
+		) => cb({ setAttribute: () => {} }),
+	),
+}));
 
 import { notifyBackInStock } from "../notify-back-in-stock";
 

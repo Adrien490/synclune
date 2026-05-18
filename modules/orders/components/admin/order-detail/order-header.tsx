@@ -151,7 +151,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					{format(order.createdAt, "d MMMM yyyy 'à' HH'h'mm", {
 						locale: fr,
 					})}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						({formatDistanceToNow(order.createdAt, { addSuffix: true, locale: fr })})
 					</span>

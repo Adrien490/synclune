@@ -126,6 +126,23 @@ describe("getColorBySlug", () => {
 		);
 	});
 
+	// Garde-fou : non-admin ne doit JAMAIS pouvoir contourner `isActive: true` en
+	// passant `includeInactive: true` — sinon escalation type pour exposer
+	// `inactive` storefront. La double-condition `admin && includeInactive`
+	// dans `get-color.ts:34` est testée explicitement ici.
+	it("ignores includeInactive when caller is not admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+		mockPrisma.color.findFirst.mockResolvedValue(null);
+
+		await getColorBySlug({ slug: "rouge", includeInactive: true });
+
+		expect(mockPrisma.color.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { slug: "rouge", isActive: true },
+			}),
+		);
+	});
+
 	it("does not filter by isActive for admin with includeInactive=true", async () => {
 		mockIsAdmin.mockResolvedValue(true);
 		const inactiveColor = makeColor({ isActive: false });

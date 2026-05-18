@@ -20,6 +20,9 @@ const {
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
+		productSku: {
+			findMany: vi.fn(),
+		},
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -32,6 +35,7 @@ const {
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -58,11 +62,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: (message: string) => ({ status: ActionStatus.SUCCESS, message }),
 	error: (message: string) => ({ status: ActionStatus.ERROR, message }),
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
-	logAuditTx: vi.fn(),
 }));
 
 vi.mock("../../constants/cache", () => ({
@@ -103,7 +102,18 @@ describe("toggleMaterialStatus", () => {
 
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list", "material-argent-925"]);
+		mockGetMaterialInvalidationTags.mockImplementation(
+			(opts?: string | { slug?: string; affectedProductSlugs?: readonly string[] }) => {
+				const tags = ["materials-list", "admin-badges"];
+				const o = typeof opts === "string" ? { slug: opts } : (opts ?? {});
+				if (o.slug) tags.push(`material-${o.slug}`);
+				if (o.affectedProductSlugs?.length) {
+					tags.push("products-list");
+					for (const s of o.affectedProductSlugs) tags.push(`product-${s}`);
+				}
+				return tags;
+			},
+		);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
 			message: fallback,
@@ -114,6 +124,10 @@ describe("toggleMaterialStatus", () => {
 
 		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial());
 		mockPrisma.material.update.mockResolvedValue({});
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ product: { slug: "bague-argent" } },
+			{ product: { slug: "collier-argent" } },
+		]);
 	});
 
 	// --------------------------------------------------------------------------
@@ -231,15 +245,34 @@ describe("toggleMaterialStatus", () => {
 	// Cache invalidation
 	// --------------------------------------------------------------------------
 
-	it("should invalidate material cache tags using the material slug", async () => {
+	it("should invalidate material cache tags using the material slug + product cascade", async () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, isActive: true } });
 		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial({ slug: "argent-925" }));
 
 		await toggleMaterialStatus(undefined, makeFormData());
 
-		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith("argent-925");
+		expect(mockGetMaterialInvalidationTags).toHaveBeenCalledWith({
+			slug: "argent-925",
+			affectedProductSlugs: ["bague-argent", "collier-argent"],
+		});
 		expect(mockUpdateTag).toHaveBeenCalledWith("materials-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("material-argent-925");
+	});
+
+	it("cascades invalidation to affected product PDPs", async () => {
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, isActive: true } });
+		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial({ slug: "argent-925" }));
+
+		await toggleMaterialStatus(undefined, makeFormData());
+
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { deletedAt: null, materials: { some: { materialId: VALID_CUID } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
+		expect(calls).toContain("product-bague-argent");
+		expect(calls).toContain("product-collier-argent");
 	});
 
 	// --------------------------------------------------------------------------

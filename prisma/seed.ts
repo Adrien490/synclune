@@ -133,7 +133,17 @@ function logError(context: string, error: unknown): void {
 // ============================================
 async function cleanup(): Promise<void> {
 	if (!CONFIG.cleanup) {
-		console.log("⏭️  Cleanup skipped (SEED_CLEANUP=false)");
+		// Cleanup opt-out is only safe on an empty DB. Otherwise the
+		// subsequent createMany() calls hit @unique constraints and the seed
+		// crashes mid-execution, leaving the DB in a partial state.
+		const existingUserCount = await prisma.user.count();
+		if (existingUserCount > 0) {
+			throw new Error(
+				`SEED_CLEANUP=false requires an empty database. Found ${existingUserCount} existing users. ` +
+					`Run with SEED_CLEANUP=true (or unset) to wipe and re-seed.`,
+			);
+		}
+		console.log("⏭️  Cleanup skipped (SEED_CLEANUP=false, DB empty)");
 		return;
 	}
 

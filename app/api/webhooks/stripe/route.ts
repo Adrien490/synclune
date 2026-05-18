@@ -121,6 +121,19 @@ export async function POST(req: Request) {
 			throw e;
 		}
 
+		// Race-guard post-upsert : si findUnique a vu null mais l'upsert a hit la branche
+		// update (attempts >= 1), un thread concurrent vient de créer le record entre les
+		// deux appels. On skip le dispatch ; les contraintes @unique downstream protègent
+		// déjà l'idempotence mais ce guard évite le double-traitement explicite.
+		if (existingEvent === null && webhookRecord.attempts >= 1) {
+			logger.info("Concurrent webhook race detected (post-upsert), skipping dispatch", {
+				correlationId,
+				eventId: event.id,
+				eventType: event.type,
+			});
+			return NextResponse.json({ received: true, status: "duplicate" });
+		}
+
 		try {
 			// 5. Skip unsupported event types (avoid TypeError + infinite Stripe retries)
 			if (!isEventSupported(event.type)) {
@@ -166,10 +179,13 @@ export async function POST(req: Request) {
 						correlationId,
 						eventType: event.type,
 					});
-					await executePostWebhookTasks(tasks);
+					const stats = await executePostWebhookTasks(tasks);
 					logger.info("Post-webhook tasks completed", {
 						correlationId,
 						eventType: event.type,
+						successful: stats.successful,
+						failed: stats.failed,
+						total: tasks.length,
 					});
 				});
 			}
@@ -212,7 +228,14 @@ export async function POST(req: Request) {
 			});
 			throw error;
 		}
-	} catch {
+	} catch (error) {
+		logger.error("Unhandled error in webhook POST handler", error, { correlationId });
+		Sentry.withScope((scope) => {
+			scope.setTag("webhookHandler", "route-outer-catch");
+			scope.setLevel("error");
+			scope.setFingerprint(["webhook", "route-outer-catch"]);
+			Sentry.captureException(error instanceof Error ? error : new Error(String(error)));
+		});
 		return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
 	}
 }

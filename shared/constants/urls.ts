@@ -60,7 +60,6 @@ export const ROUTES = {
 		COLLECTIONS: "/collections",
 		PRODUCT_TYPE: (slug: string) => `/produits/${slug}`,
 		COLLECTION: (slug: string) => `/collections/${slug}`,
-		CART: "/panier",
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
 		ABOUT: "/a-propos",

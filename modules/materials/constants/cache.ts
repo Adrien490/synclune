@@ -45,22 +45,49 @@ export function cacheMaterialDetail(slug: string) {
 // INVALIDATION HELPER
 // ============================================
 
+interface MaterialInvalidationOptions {
+	/** Slug du matériau modifié (actuel et/ou précédent si renommé). */
+	slug?: string;
+	/**
+	 * Slugs des produits qui possèdent un SKU référençant ce matériau. Quand
+	 * fourni, cascade aussi `products-list` + `product-${slug}` pour que le PDP
+	 * storefront ne reste pas avec un ancien nom/description ≤24h (profil
+	 * `reference`). Parité comportement `getColorInvalidationTags`.
+	 */
+	affectedProductSlugs?: readonly string[];
+}
+
 /**
- * Tags à invalider lors de la modification d'un matériau
+ * Tags à invalider lors de la modification d'un matériau.
  *
  * Invalide automatiquement :
- * - La liste des matériaux
- * - Le détail du matériau (si slug fourni)
+ * - La liste des matériaux (`materials-list`)
+ * - Le détail du matériau (si `slug` fourni)
  * - Les badges de la sidebar admin
+ * - Les pages produit affectées + la liste produits (si `affectedProductSlugs`
+ *   fourni) — le PDP embarque le nom du matériau dans le swatch/badge SKU,
+ *   un rename resterait sinon stale jusqu'à 24h (profil `reference`).
  *
- * @param materialSlug - Slug du matériau (optionnel pour création/bulk)
+ * @param input - soit un slug (signature legacy), soit un options bag.
  */
-export function getMaterialInvalidationTags(materialSlug?: string): string[] {
-	const tags: string[] = [MATERIALS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
+export function getMaterialInvalidationTags(
+	input?: string | MaterialInvalidationOptions,
+): string[] {
+	const opts: MaterialInvalidationOptions =
+		typeof input === "string" ? { slug: input } : (input ?? {});
 
-	if (materialSlug) {
-		tags.push(MATERIALS_CACHE_TAGS.DETAIL(materialSlug));
+	const tags = new Set<string>([MATERIALS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]);
+
+	if (opts.slug) {
+		tags.add(MATERIALS_CACHE_TAGS.DETAIL(opts.slug));
 	}
 
-	return tags;
+	if (opts.affectedProductSlugs && opts.affectedProductSlugs.length > 0) {
+		tags.add(SHARED_CACHE_TAGS.PRODUCTS_LIST);
+		for (const productSlug of opts.affectedProductSlugs) {
+			tags.add(`product-${productSlug}`);
+		}
+	}
+
+	return Array.from(tags);
 }

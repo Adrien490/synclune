@@ -23,7 +23,6 @@ import {
 import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
@@ -174,20 +173,6 @@ export async function updateTracking(
 				message: `Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
 			};
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.updateTracking",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousTrackingNumber: order.trackingNumber,
-				newTrackingNumber: validated.data.trackingNumber,
-				carrier: validated.data.carrier,
-			},
-		});
 
 		const emailMessage = emailSent ? " Email envoyé au client." : "";
 		return success(

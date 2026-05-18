@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	handleActionError,
 	success,
@@ -12,7 +12,6 @@ import {
 	validateInput,
 	BusinessError,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -26,10 +25,8 @@ export async function deleteMaterial(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -80,15 +77,6 @@ export async function deleteMaterial(
 		if (!existingMaterial) {
 			return error("Ce materiau n'existe pas");
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "material.delete",
-			targetType: "material",
-			targetId: validatedData.id,
-			metadata: { name: existingMaterial.name },
-		});
 
 		// Invalider le cache
 		const tags = getMaterialInvalidationTags(existingMaterial.slug);

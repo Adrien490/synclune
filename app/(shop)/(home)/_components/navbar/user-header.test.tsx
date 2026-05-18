@@ -43,18 +43,28 @@ describe("UserHeader", () => {
 		expect(screen.getByText("Bonjour Alice")).toBeInTheDocument();
 	});
 
-	it("falls back to 'vous' when name is null", () => {
+	it("falls back to 'Bonjour' alone when name is null", () => {
 		const session = { user: { ...baseSession.user, name: null } };
 		render(<UserHeader session={session} wishlistCount={0} cartCount={0} />);
 
-		expect(screen.getByText("Bonjour vous")).toBeInTheDocument();
+		expect(screen.getByText("Bonjour")).toBeInTheDocument();
+		expect(screen.queryByText(/Bonjour vous/)).not.toBeInTheDocument();
 	});
 
-	it("falls back to 'vous' when name is empty string", () => {
+	it("falls back to 'Bonjour' alone when name is empty string", () => {
 		const session = { user: { ...baseSession.user, name: "" } };
 		render(<UserHeader session={session} wishlistCount={0} cartCount={0} />);
 
-		expect(screen.getByText("Bonjour vous")).toBeInTheDocument();
+		expect(screen.getByText("Bonjour")).toBeInTheDocument();
+		expect(screen.queryByText(/Bonjour vous/)).not.toBeInTheDocument();
+	});
+
+	it("uses 'bienvenue' subject in aria-label when name is missing", () => {
+		const session = { user: { ...baseSession.user, name: null } };
+		render(<UserHeader session={session} wishlistCount={0} cartCount={0} />);
+
+		const link = screen.getByRole("link");
+		expect(link.getAttribute("aria-label")).toContain("Mon compte - bienvenue");
 	});
 
 	it("links to the account page", () => {

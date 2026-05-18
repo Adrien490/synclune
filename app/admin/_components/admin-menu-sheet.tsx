@@ -193,7 +193,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 								placeholder="Filtrer les pages…"
 								aria-label="Filtrer les pages de navigation"
 								className={cn(
-									"bg-background/80 border-border/60 placeholder:text-muted-foreground/50",
+									"bg-background/80 border-border/60 placeholder:text-muted-foreground/70",
 									"flex h-11 w-full rounded-xl border py-2 pl-9 text-sm",
 									// pr-11 quand le bouton clear est visible, pr-3 sinon — évite que
 									// le texte de la requête passe sous l'icône.

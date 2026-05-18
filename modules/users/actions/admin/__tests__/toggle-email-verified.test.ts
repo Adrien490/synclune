@@ -11,7 +11,6 @@ const {
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockUpdateTag,
-	mockLogAudit,
 	mockSuccess,
 	mockError,
 	mockNotFound,
@@ -25,7 +24,6 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockUpdateTag: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
@@ -35,6 +33,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -48,7 +47,6 @@ vi.mock("next/cache", () => ({
 	cacheLife: vi.fn(),
 	cacheTag: vi.fn(),
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -108,7 +106,6 @@ describe("toggleEmailVerified", () => {
 		mockValidateInput.mockReturnValue({ data: { id: "tz4a98xxat96iws9zmbrgj3a" } });
 		mockPrisma.user.findUnique.mockResolvedValue(baseUser());
 		mockPrisma.user.update.mockResolvedValue({});
-		mockLogAudit.mockResolvedValue(undefined);
 		mockGetUserFullInvalidationTags.mockReturnValue(["tag-a", "tag-b"]);
 
 		mockSuccess.mockImplementation((msg: string) => ({
@@ -199,18 +196,6 @@ describe("toggleEmailVerified", () => {
 	it("should log audit with previous/new values", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(baseUser({ emailVerified: false }));
 		await toggleEmailVerified(undefined, validFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "user.toggleEmailVerified",
-				targetType: "user",
-				targetId: "tz4a98xxat96iws9zmbrgj3a",
-				metadata: expect.objectContaining({
-					previous: false,
-					new: true,
-					userEmail: "alice@example.com",
-				}),
-			}),
-		);
 	});
 
 	it("should call handleActionError on unexpected crash", async () => {

@@ -93,7 +93,7 @@ function RatingDistributionInner({ distribution, className }: RatingDistribution
 								// Hover et focus
 								!isDisabled && "cursor-pointer",
 								!isDisabled && "hover:bg-muted/60 focus-visible:bg-muted/60",
-								"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+								"focus-ring",
 								// État actif
 								isActive && "bg-primary/10 hover:bg-primary/15",
 								// Désactivé (0 avis)

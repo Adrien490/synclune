@@ -1,8 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -45,10 +44,8 @@ export async function createProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_CREATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -173,11 +170,11 @@ export async function createProductSku(
 				include: {
 					product: { select: { title: true, slug: true } },
 					colors: {
-						include: { color: { select: { name: true } } },
+						include: { color: { select: { name: true, slug: true } } },
 						orderBy: { position: "asc" },
 					},
 					materials: {
-						include: { material: { select: { name: true } } },
+						include: { material: { select: { name: true, slug: true } } },
 						orderBy: { position: "asc" },
 					},
 				},
@@ -206,23 +203,20 @@ export async function createProductSku(
 			: `Variante créée avec succès pour "${productSku.product.title}".`;
 
 		// 10. Invalidate cache (immediate visibility for admin)
+		// Toutes les couleurs/matériaux liés deviennent "touchés" (`_count.skuColors`
+		// + `color-${id}-product-count` + détail color stats admin).
 		const tags = getSkuInvalidationTags(
 			productSku.sku,
 			validatedData.productId,
 			productSku.product.slug,
 			productSku.id, // Invalide aussi le cache stock temps réel
+			productSku.colors.map((c) => c.color.slug),
+			productSku.colors.map((c) => c.colorId),
+			productSku.materials.map((m) => m.material.slug),
 		);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 11. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "sku.create",
-			targetType: "sku",
-			targetId: productSku.id,
-			metadata: { sku: productSku.sku, productTitle: productSku.product.title, priceInclTaxCents },
-		});
 
 		// 12. Success - Return ActionState format
 		return {

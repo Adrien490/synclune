@@ -18,12 +18,26 @@ const {
 	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	WebhookEventStatus,
+	PrismaClientKnownRequestError,
 } = vi.hoisted(() => {
 	const constructEvent = vi.fn();
 	const nextResponseJson = vi.fn((body: unknown, init?: ResponseInit) => ({
 		body,
 		status: init?.status ?? 200,
 	}));
+
+	// Real subclass so `e instanceof Prisma.PrismaClientKnownRequestError` in the
+	// route resolves truthy. Object.assign(new Error, {code}) is NOT an instance
+	// and would silently fall through to the outer catch (testing the wrong path).
+	class PrismaClientKnownRequestError extends Error {
+		code: string;
+		clientVersion = "test";
+		constructor(message: string, opts: { code: string }) {
+			super(message);
+			this.code = opts.code;
+			this.name = "PrismaClientKnownRequestError";
+		}
+	}
 
 	return {
 		mockConstructEvent: constructEvent,
@@ -51,6 +65,7 @@ const {
 			FAILED: "FAILED",
 			SKIPPED: "SKIPPED",
 		},
+		PrismaClientKnownRequestError,
 	};
 });
 
@@ -73,12 +88,11 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 }));
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 	ANTI_REPLAY_WINDOW_SECONDS,
-}));
-vi.mock("@/modules/cron/constants/limits", () => ({
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	WebhookEventStatus,
+	Prisma: { PrismaClientKnownRequestError },
 }));
 
 import { POST } from "../route";
@@ -205,14 +219,50 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		expect(result2.status).toBe(200);
 	});
 
-	it("should handle upsert race condition (unique constraint P2002)", async () => {
+	it("should return 200 'duplicate' when upsert hits P2002 unique constraint race", async () => {
+		// Use a real PrismaClientKnownRequestError subclass — `Object.assign(new Error, {code})`
+		// is NOT an instance, so the route's P2002 branch would never fire and the test
+		// would silently pass via the outer catch (testing the wrong behavior).
 		mockPrisma.webhookEvent.upsert.mockRejectedValue(
-			Object.assign(new Error("Unique constraint failed"), { code: "P2002" }),
+			new PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002" }),
 		);
 
 		const result = await POST(makeRequest());
 
-		// Should handle via outer catch → 500
+		expect(result.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({
+			received: true,
+			status: "duplicate",
+		});
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
+	});
+
+	it("should rethrow non-P2002 Prisma errors to outer catch (500)", async () => {
+		mockPrisma.webhookEvent.upsert.mockRejectedValue(
+			new PrismaClientKnownRequestError("Connection lost", { code: "P1001" }),
+		);
+
+		const result = await POST(makeRequest());
+
 		expect(result.status).toBe(500);
+	});
+
+	it("should skip dispatch when concurrent upsert race detected (existingEvent=null but attempts>=1)", async () => {
+		// Race scenario: thread A and B both see findUnique=null at the same time.
+		// Thread B then upserts AFTER thread A — Prisma's upsert hits the update branch
+		// (attempts incremented to 1). Route should skip dispatch to avoid double-processing.
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue(null);
+		mockPrisma.webhookEvent.upsert.mockResolvedValue(
+			makeWebhookRecord({ id: "wh-race", status: "PROCESSING", attempts: 1 }),
+		);
+
+		const result = await POST(makeRequest());
+
+		expect(result.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({
+			received: true,
+			status: "duplicate",
+		});
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
 	});
 });

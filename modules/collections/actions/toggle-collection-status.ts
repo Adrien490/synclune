@@ -2,9 +2,8 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -31,10 +30,8 @@ export async function toggleCollectionStatus(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.TOGGLE_STATUS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -97,15 +94,6 @@ export async function toggleCollectionStatus(
 				newStatus,
 			});
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "collection.toggleStatus",
-			targetType: "collection",
-			targetId: id,
-			metadata: { name: updated.name, oldStatus: updated.status, newStatus },
-		});
 
 		return success(messages[newStatus], {
 			collectionId: id,

@@ -145,7 +145,7 @@ function CartSheetBody({
 							<p className="text-destructive text-xs font-medium">
 								Ajustez votre panier pour continuer
 							</p>
-							<ul className="text-destructive/80 mt-1 space-y-0.5 text-[11px]">
+							<ul className="text-destructive/80 mt-1 space-y-0.5 text-xs">
 								{itemsWithIssues.map((item) => (
 									<li key={item.id} className="flex items-center gap-1">
 										<span aria-hidden="true">•</span>

@@ -84,19 +84,19 @@ export async function handleCheckoutSessionCompleted(
 		});
 
 		// Notif admin : Stripe a encaissé un paiement mais on a échoué à créer l'Order.
-		try {
-			await sendAdminOrderProcessingFailedAlert({
-				orderNumber: "(non créée)",
-				customerEmail: session.customer_details?.email ?? session.customer_email ?? "",
-				total: session.amount_total ?? 0,
-				errorMessage: error instanceof Error ? error.message : String(error),
-				paymentIntentId: piId ?? "(inconnu)",
-			});
-		} catch (alertError) {
+		// Fire-and-forget : un email lent (Resend) ne doit pas faire timeout le
+		// webhook (Stripe 5s) et provoquer une re-livraison qui multiplierait les alerts.
+		void sendAdminOrderProcessingFailedAlert({
+			orderNumber: "(non créée)",
+			customerEmail: session.customer_details?.email ?? session.customer_email ?? "",
+			total: session.amount_total ?? 0,
+			errorMessage: error instanceof Error ? error.message : String(error),
+			paymentIntentId: piId ?? "(inconnu)",
+		}).catch((alertError) => {
 			logger.error("Failed to send order processing failed alert", alertError, {
 				service: "webhook",
 			});
-		}
+		});
 		throw error;
 	}
 }

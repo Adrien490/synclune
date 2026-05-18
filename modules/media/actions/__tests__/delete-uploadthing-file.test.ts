@@ -27,6 +27,7 @@ const {
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({

@@ -159,7 +159,7 @@ describe("CategoryCard", () => {
 	it("link has focus-visible ring classes for accessibility", () => {
 		const { container } = render(<CategoryCard type={mockType} onSelect={onSelect} />);
 		const link = container.querySelector("a");
-		expect(link).toHaveClass("focus-visible:outline-none");
+		expect(link).toHaveClass("focus-ring");
 	});
 
 	it("renders with a different slug in the href", () => {

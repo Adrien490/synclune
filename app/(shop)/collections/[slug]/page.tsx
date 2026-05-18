@@ -134,7 +134,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 					aria-hidden="true"
 					className="bg-secondary/25 pointer-events-none absolute top-40 left-4 -z-10 size-36 rounded-full blur-3xl [animation-delay:1.5s] motion-safe:animate-pulse sm:left-12"
 				/>
-				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+				<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList
 							productsPromise={productsPromise}

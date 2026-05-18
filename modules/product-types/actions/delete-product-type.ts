@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -12,7 +12,6 @@ import {
 	notFound,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -30,10 +29,8 @@ export async function deleteProductType(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -97,15 +94,6 @@ export async function deleteProductType(
 		if (result.status === "blocked") {
 			return error(result.message);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "productType.delete",
-			targetType: "productType",
-			targetId: productTypeId,
-			metadata: { label: result.label },
-		});
 
 		// 5. Invalidation du cache (incluant tag détail granulaire)
 		getProductTypeInvalidationTags(result.slug).forEach((tag) => updateTag(tag));

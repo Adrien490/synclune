@@ -16,7 +16,7 @@ import {
 } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import { getGuestWishlistForMerge, getUserWishlistForMerge } from "../data/get-wishlist-for-merge";
-import { isValidUuidV4 } from "@/modules/wishlist/lib/wishlist-session";
+import { isValidUuidV4, getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 
 /**
  * Fusionne la wishlist visiteur avec la wishlist utilisateur après connexion
@@ -54,6 +54,15 @@ export async function mergeWishlists(
 		// Empêche un attaquant de fusionner la wishlist d'un autre utilisateur
 		const currentSession = await getSession();
 		if (!currentSession?.user.id || currentSession.user.id !== userId) {
+			return error(WISHLIST_ERROR_MESSAGES.UNAUTHORIZED);
+		}
+
+		// 0b-bis. Ownership-of-cookie check: empêche un attaquant authentifié
+		// d'aspirer puis supprimer la wishlist guest d'une victime via RPC direct
+		// en passant un sessionId arbitraire. UUID v4 entropy mitige mais ne fixe
+		// pas la design flaw (IDOR OWASP A01).
+		const cookieSessionId = await getWishlistSessionId();
+		if (cookieSessionId !== sessionId) {
 			return error(WISHLIST_ERROR_MESSAGES.UNAUTHORIZED);
 		}
 
@@ -154,7 +163,7 @@ export async function mergeWishlists(
 
 		return success(
 			addedCount > 0
-				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a votre wishlist`
+				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a vos favoris`
 				: "Tous les favoris etaient deja dans votre liste",
 			{
 				addedItems: addedCount,

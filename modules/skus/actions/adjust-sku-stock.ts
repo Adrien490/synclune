@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -31,10 +30,8 @@ export async function adjustSkuStock(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -126,14 +123,6 @@ export async function adjustSkuStock(
 		}
 
 		// 9. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "sku.adjustStock",
-			targetType: "sku",
-			targetId: skuId,
-			metadata: { sku: sku.sku, adjustment, previousInventory, newInventory },
-		});
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return success(

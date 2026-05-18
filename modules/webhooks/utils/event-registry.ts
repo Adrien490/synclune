@@ -64,10 +64,18 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 };
 
 /**
- * Dispatch un événement au handler approprié
+ * Dispatch un événement au handler approprié.
+ *
+ * Garde interne `isEventSupported` : si un caller oublie son guard, on lève une
+ * erreur explicite plutôt qu'un `TypeError: handler is not a function`.
  */
 export async function dispatchEvent(event: Stripe.Event): Promise<WebhookHandlerResult | null> {
-	const handler = eventHandlers[event.type as SupportedStripeEvent];
+	if (!isEventSupported(event.type)) {
+		throw new Error(
+			`Unsupported event type: ${event.type} (call isEventSupported() before dispatchEvent)`,
+		);
+	}
+	const handler = eventHandlers[event.type];
 	return handler(event);
 }
 

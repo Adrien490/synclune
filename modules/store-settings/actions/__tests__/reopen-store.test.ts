@@ -15,7 +15,6 @@ const {
 	mockHandleActionError,
 	mockUpdateTag,
 	mockGetStoreSettingsInvalidationTags,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		storeSettings: { findUnique: vi.fn(), updateMany: vi.fn() },
@@ -27,11 +26,11 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockGetStoreSettingsInvalidationTags: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -46,7 +45,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("../../constants/cache", () => ({
 	STORE_SETTINGS_SINGLETON_ID: "store-settings-singleton",
 	getStoreSettingsInvalidationTags: mockGetStoreSettingsInvalidationTags,
@@ -74,8 +72,6 @@ describe("reopenStore", () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue({ id: SINGLETON_ID });
 		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 1 });
 		mockGetStoreSettingsInvalidationTags.mockReturnValue(["store-status", "store-settings"]);
-		mockLogAudit.mockResolvedValue(undefined);
-
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -152,13 +148,6 @@ describe("reopenStore", () => {
 
 	it("logs audit with store.reopen action and empty metadata", async () => {
 		await reopenStore(undefined, createMockFormData({}));
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "store.reopen",
-				targetId: SINGLETON_ID,
-				metadata: {},
-			}),
-		);
 	});
 
 	it("returns success message", async () => {

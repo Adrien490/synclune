@@ -31,6 +31,7 @@ import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
+import { PurchaseTracker } from "@/shared/components/analytics/purchase-tracker";
 
 function extractReceiptUrl(charge: Stripe.PaymentIntent["latest_charge"]): string | null {
 	if (charge && typeof charge !== "string") {
@@ -137,6 +138,11 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<h1 className="sr-only">Confirmation de commande</h1>
+
+			{/* Funnel analytics : purchase (only after paid order, sessionStorage-deduped) */}
+			{order && !isPending && (
+				<PurchaseTracker orderNumber={order.orderNumber} valueCents={order.total} />
+			)}
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}

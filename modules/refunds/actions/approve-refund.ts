@@ -1,7 +1,7 @@
 "use server";
 
 import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -18,7 +18,6 @@ import { updateTag } from "next/cache";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { logAudit } from "@/shared/lib/audit-log";
 import { approveRefundSchema } from "../schemas/refund.schemas";
 import { canTransition } from "../services/refund-state-machine.service";
 
@@ -31,10 +30,8 @@ export async function approveRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -100,18 +97,6 @@ export async function approveRefund(
 		if (refund.order.user?.id) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "refund.approve",
-			targetType: "refund",
-			targetId: refund.id,
-			metadata: {
-				orderNumber: refund.order.orderNumber,
-				amount: refund.amount,
-			},
-		});
 
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € approuvé pour la commande ${refund.order.orderNumber}`,

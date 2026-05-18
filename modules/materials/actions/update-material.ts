@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	handleActionError,
 	success,
@@ -12,7 +12,6 @@ import {
 	validateInput,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
@@ -28,10 +27,8 @@ export async function updateMaterial(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.UPDATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -88,22 +85,34 @@ export async function updateMaterial(
 			},
 		});
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "material.update",
-			targetType: "material",
-			targetId: validatedData.id,
-			metadata: { name: validatedData.name },
-		});
-
-		// Invalider le cache
-		// Invalider l'ancien et le nouveau slug si différents
-		const tags = getMaterialInvalidationTags(existingMaterial.slug);
-		if (slug !== existingMaterial.slug) {
-			tags.push(...getMaterialInvalidationTags(slug));
+		// Cascade : si le nom (ou isActive) change, les PDP storefront affichant
+		// ce matériau dans les badges/swatches SKU doivent être réinvalidés.
+		const nameChanged = validatedData.name !== existingMaterial.name;
+		const activeChanged = validatedData.isActive !== existingMaterial.isActive;
+		const affectedProductSlugs: string[] = [];
+		if (nameChanged || activeChanged) {
+			const skus = await prisma.productSku.findMany({
+				where: {
+					deletedAt: null,
+					materials: { some: { materialId: validatedData.id } },
+				},
+				select: { product: { select: { slug: true } } },
+				distinct: ["productId"],
+			});
+			for (const s of skus) {
+				if (s.product.slug) affectedProductSlugs.push(s.product.slug);
+			}
 		}
-		tags.forEach((tag) => updateTag(tag));
+
+		// Invalider le cache — dedupe via Set sur (ancien slug ∪ nouveau slug)
+		// avec cascade product slugs.
+		const tagSet = new Set<string>(
+			getMaterialInvalidationTags({ slug: existingMaterial.slug, affectedProductSlugs }),
+		);
+		if (slug !== existingMaterial.slug) {
+			getMaterialInvalidationTags({ slug, affectedProductSlugs }).forEach((t) => tagSet.add(t));
+		}
+		tagSet.forEach((tag) => updateTag(tag));
 
 		return success("Matériau modifié avec succès");
 	} catch (e) {

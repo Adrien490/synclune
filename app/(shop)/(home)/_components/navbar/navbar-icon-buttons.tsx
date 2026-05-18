@@ -6,6 +6,7 @@ import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
+import { ShortcutKbd } from "@/shared/components/ui/shortcut-kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { iconButtonClassName } from "./navbar-styles";
@@ -52,10 +53,7 @@ export function NavbarIconButtons({
 				</TooltipTrigger>
 				<TooltipContent className="hidden items-center gap-2 lg:inline-flex">
 					<span>Rechercher</span>
-					<kbd className="border-border/60 bg-muted/60 text-muted-foreground inline-flex h-5 items-center gap-0.5 rounded border px-1.5 font-mono text-[0.6875rem] font-medium">
-						<span aria-hidden="true">⌘</span>
-						<span>K</span>
-					</kbd>
+					<ShortcutKbd keyLabel="K" />
 				</TooltipContent>
 			</Tooltip>
 

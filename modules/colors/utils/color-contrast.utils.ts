@@ -36,8 +36,10 @@ export function isLightColor(hex: string, threshold = 0.5): boolean {
 	const g = parseInt(color.substring(2, 4), 16);
 	const b = parseInt(color.substring(4, 6), 16);
 
-	// Calcul de luminance relative (formule ITU-R BT.601 / WCAG 2.0)
-	// https://www.w3.org/TR/WCAG20/#relativeluminancedef
+	// Luminance perceptuelle ITU-R BT.601 (proxy "fond clair vs sombre" pour
+	// décider d'un ring de contraste). Ce n'est PAS la formule WCAG 2.x (qui
+	// applique d'abord une correction gamma sRGB) — ne pas réutiliser pour
+	// calculer un ratio de contraste AA 4.5:1.
 	const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
 	return luminance > threshold;

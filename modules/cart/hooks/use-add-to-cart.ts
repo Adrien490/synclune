@@ -7,6 +7,7 @@ import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { FUNNEL_EVENTS, trackEvent } from "@/shared/lib/analytics/track";
 import type { ActionState } from "@/shared/types/server-action";
 
 interface UseAddToCartOptions {
@@ -52,6 +53,9 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 						if (shouldOpenSheet) {
 							openSheet("cart");
 						}
+						trackEvent(FUNNEL_EVENTS.ADD_TO_CART, {
+							quantity: pendingQuantityRef.current,
+						});
 						if (
 							result &&
 							typeof result === "object" &&

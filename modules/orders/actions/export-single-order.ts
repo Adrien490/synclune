@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -8,7 +8,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { exportSingleOrderSchema } from "../schemas/order.schemas";
 import { generateOrdersCsv } from "../services/export-orders-csv.service";
@@ -39,10 +38,8 @@ export async function exportSingleOrder(
 	formData: FormData,
 ): Promise<ExportSingleOrderState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error as ExportSingleOrderState;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error as ExportSingleOrderState;
 
@@ -81,18 +78,6 @@ export async function exportSingleOrder(
 
 		const csv = generateOrdersCsv([order]);
 		const filename = `commande-${order.orderNumber}.csv`;
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.export",
-			targetType: "order",
-			targetId: id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				format: "csv",
-			},
-		});
 
 		const result: ExportSingleOrderState = {
 			status: ActionStatus.SUCCESS,

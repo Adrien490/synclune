@@ -91,7 +91,7 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 					{isAdmin && (
 						<>
 							<DropdownMenuItem asChild>
-								<Link href={ROUTES.ADMIN.DASHBOARD} className="cursor-pointer">
+								<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer">
 									<LayoutDashboard aria-hidden="true" />
 									<span>Tableau de bord admin</span>
 								</Link>
@@ -100,19 +100,19 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 						</>
 					)}
 					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.ORDERS} className="cursor-pointer">
+						<Link href={ROUTES.ACCOUNT.ORDERS} prefetch={null} className="cursor-pointer">
 							<Package aria-hidden="true" />
 							<span>Mes commandes</span>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.FAVORITES} className="cursor-pointer">
+						<Link href={ROUTES.ACCOUNT.FAVORITES} prefetch={null} className="cursor-pointer">
 							<Heart aria-hidden="true" />
 							<span>Mes favoris</span>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.SETTINGS} className="cursor-pointer">
+						<Link href={ROUTES.ACCOUNT.SETTINGS} prefetch={null} className="cursor-pointer">
 							<Settings aria-hidden="true" />
 							<span>Paramètres</span>
 						</Link>

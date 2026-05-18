@@ -2,8 +2,7 @@
 
 import { z } from "zod";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
@@ -36,10 +35,8 @@ export async function duplicateDiscount(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -118,15 +115,6 @@ export async function duplicateDiscount(
 		});
 
 		getDiscountInvalidationTags(duplicate.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "discount.duplicate",
-			targetType: "discount",
-			targetId: duplicate.id,
-			metadata: { code: duplicate.code, originalDiscountId: discountId },
-		});
 
 		return success(`Code promo duplique: ${duplicate.code}`, {
 			id: duplicate.id,

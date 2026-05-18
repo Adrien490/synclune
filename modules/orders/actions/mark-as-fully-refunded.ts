@@ -11,7 +11,6 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
@@ -116,19 +115,6 @@ export async function markAsFullyRefunded(
 		}
 
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.markFullyRefunded",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousPaymentStatus: order.paymentStatus,
-				reason: reason ?? null,
-			},
-		});
 
 		return {
 			status: ActionStatus.SUCCESS,

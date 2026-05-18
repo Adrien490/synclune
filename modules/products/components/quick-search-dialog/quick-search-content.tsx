@@ -164,7 +164,7 @@ export function QuickSearchContent({
 									Produits
 								</h3>
 								{products.length < totalCount && (
-									<p className="text-muted-foreground/60 mb-2 text-xs">
+									<p className="text-muted-foreground mb-2 text-xs">
 										{products.length} sur {totalCount}
 									</p>
 								)}
@@ -193,7 +193,7 @@ export function QuickSearchContent({
 									</EmptyTitle>
 								</EmptyHeader>
 								<EmptyContent>
-									<p className="text-muted-foreground/70 text-center text-xs">
+									<p className="text-muted-foreground text-center text-xs">
 										Essayez avec moins de mots ou parcourez nos catégories
 									</p>
 									<QuickTagPills

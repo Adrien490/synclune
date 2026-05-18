@@ -22,7 +22,7 @@ import { cn } from "@/shared/utils/cn";
 import { EdgeSwipeIndicator } from "./edge-swipe-indicator";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
-import { iconButtonClassName } from "./navbar-styles";
+import { iconButtonClassName, VAUL_EXIT_DURATION_MS } from "./navbar-styles";
 
 /** Trigger button classes — extends shared iconButtonClassName with mobile-specific overrides */
 const triggerClassName = cn(
@@ -32,14 +32,6 @@ const triggerClassName = cn(
 	// Tap feedback parity with footer-link / bottom-bar (2026-05-12)
 	"touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.95]",
 );
-
-/**
- * Approximate duration of Vaul's exit slide-out animation. Used as safety
- * fallback when deferring a follow-up overlay (LogoutAlertDialog) until the
- * sheet has finished closing — avoids focus-trap / aria-hidden conflicts
- * between overlapping overlays. Source: vaul defaults (~300ms) + margin.
- */
-const VAUL_EXIT_DURATION_MS = 450;
 
 /**
  * navItems (flat list from getMobileNavItems) drives the mobile sheet's link rendering,
@@ -172,14 +164,6 @@ export function MenuSheet({
 							Menu de navigation - Découvrez nos bijoux et collections
 						</SheetDescription>
 					</SheetHeader>
-
-					{/* Live region: announces menu opening to screen readers (fires on mount) */}
-					<p role="status" aria-live="polite" className="sr-only">
-						Menu ouvert, {navItems.length}{" "}
-						{navItems.length > 1
-							? "liens de navigation disponibles"
-							: "lien de navigation disponible"}
-					</p>
 
 					{/* Scrollable content */}
 					<div className="min-h-0 flex-1">

@@ -2,8 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
 import {
 	validateInput,
@@ -36,10 +35,8 @@ export async function updateProduct(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -340,18 +337,6 @@ export async function updateProduct(
 		}
 
 		// 12. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.update",
-			targetType: "product",
-			targetId: updatedProduct.id,
-			metadata: {
-				title: updatedProduct.title,
-				slug: updatedProduct.slug,
-				status: updatedProduct.status,
-			},
-		});
 
 		// 13. Success
 		return success(`Bijou « ${updatedProduct.title} » peaufiné`, updatedProduct);

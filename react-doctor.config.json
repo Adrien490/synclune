@@ -71,11 +71,7 @@
 				"rules": ["react-doctor/no-inline-exhaustive-style"]
 			},
 			{
-				"files": [
-					"app/(shop)/a-propos/page.tsx",
-					"app/(shop)/creations/[slug]/page.tsx",
-					"app/(shop)/collections/[slug]/page.tsx"
-				],
+				"files": ["app/(shop)/creations/[slug]/page.tsx", "app/(shop)/collections/[slug]/page.tsx"],
 				"rules": ["react-doctor/nextjs-missing-metadata"]
 			},
 			{

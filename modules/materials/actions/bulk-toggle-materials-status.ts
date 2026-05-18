@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -12,7 +12,6 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -32,10 +31,8 @@ export async function bulkToggleMaterialsStatus(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.BULK_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -78,22 +75,22 @@ export async function bulkToggleMaterialsStatus(
 			data: { isActive },
 		});
 
+		// Cascade : récupère en une seule requête tous les product slugs touchés
+		// par le bulk-toggle (évite N+1 sur eligible.length matériaux).
+		const skus = await prisma.productSku.findMany({
+			where: { deletedAt: null, materials: { some: { materialId: { in: eligibleIds } } } },
+			select: { product: { select: { slug: true } } },
+			distinct: ["productId"],
+		});
+		const affectedProductSlugs = skus.map((s) => s.product.slug).filter(Boolean);
+
 		const tags = new Set<string>();
 		for (const m of eligible) {
-			getMaterialInvalidationTags(m.slug).forEach((tag) => tags.add(tag));
+			getMaterialInvalidationTags({ slug: m.slug, affectedProductSlugs }).forEach((tag) =>
+				tags.add(tag),
+			);
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: isActive ? "material.bulkActivate" : "material.bulkDeactivate",
-			targetType: "material",
-			// Bulk : utiliser "bulk" comme targetId pour éviter dépassement VARCHAR
-			// (200 cuid joints = ~5200 chars). La liste complète vit dans metadata.materialIds.
-			targetId: "bulk",
-			metadata: { count: eligibleIds.length, isActive, materialIds: eligibleIds },
-		});
 
 		const verb = isActive ? "activé" : "désactivé";
 		const plural = eligibleIds.length > 1 ? "s" : "";

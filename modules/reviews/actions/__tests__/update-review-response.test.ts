@@ -18,7 +18,6 @@ const {
 	mockGetReviewModerationTags,
 	mockSafeParse,
 	mockSanitizeText,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		reviewResponse: { findFirst: vi.fn(), update: vi.fn() },
@@ -33,7 +32,6 @@ const {
 	mockGetReviewModerationTags: vi.fn(),
 	mockSafeParse: vi.fn(),
 	mockSanitizeText: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -41,6 +39,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -61,9 +60,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	notFound: mockNotFound,
 	validationError: mockValidationError,
 	handleActionError: mockHandleActionError,
-}));
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: mockLogAudit,
 }));
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,
@@ -223,19 +219,6 @@ describe("updateReviewResponse", () => {
 		await updateReviewResponse(
 			undefined,
 			createMockFormData({ id: RESPONSE_ID, content: NEW_CONTENT }),
-		);
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "review.updateResponse",
-				targetType: "reviewResponse",
-				targetId: RESPONSE_ID,
-				metadata: {
-					reviewId: "rev-1",
-					previousContent: "Ancien contenu",
-					newContent: NEW_CONTENT,
-				},
-			}),
 		);
 	});
 

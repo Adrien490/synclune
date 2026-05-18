@@ -45,8 +45,10 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -150,6 +152,8 @@ describe("updateProductSku", () => {
 				status: "DRAFT",
 				_count: { skus: 2 },
 			},
+			colors: [],
+			materials: [],
 			images: [],
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
@@ -252,6 +256,8 @@ describe("updateProductSku", () => {
 				status: "PUBLIC",
 				_count: { skus: 1 },
 			},
+			colors: [],
+			materials: [],
 			images: [],
 		});
 		const result = await updateProductSku(undefined, validFormData);
@@ -286,6 +292,8 @@ describe("updateProductSku", () => {
 				status: "PUBLIC",
 				_count: { skus: 3 },
 			},
+			colors: [],
+			materials: [],
 			images: [],
 		});
 		const result = await updateProductSku(undefined, validFormData);
@@ -319,6 +327,8 @@ describe("updateProductSku", () => {
 				status: "DRAFT",
 				_count: { skus: 1 },
 			},
+			colors: [],
+			materials: [],
 			images: [],
 		});
 		const result = await updateProductSku(undefined, validFormData);

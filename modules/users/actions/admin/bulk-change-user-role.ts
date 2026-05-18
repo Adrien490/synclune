@@ -14,13 +14,11 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 import { bulkChangeUserRoleSchema } from "../../schemas/user-admin.schemas";
 
@@ -133,23 +131,6 @@ export async function bulkChangeUserRole(
 			getUserFullInvalidationTags(id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action:
-				targetRole === Role.ADMIN
-					? USER_AUDIT_ACTIONS.BULK_PROMOTE
-					: USER_AUDIT_ACTIONS.BULK_DEMOTE,
-			targetType: "user",
-			targetId: eligibleIds.join(","),
-			metadata: {
-				count: eligibleIds.length,
-				targetRole,
-				userIds: eligibleIds,
-				skippedSelf,
-			},
-		});
 
 		const verb = targetRole === Role.ADMIN ? "promu" : "rétrogradé";
 		const plural = eligibleIds.length > 1 ? "s" : "";

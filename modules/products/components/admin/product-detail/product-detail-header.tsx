@@ -59,7 +59,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 					{format(product.createdAt, "d MMMM yyyy 'à' HH'h'mm", {
 						locale: fr,
 					})}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mis à jour {formatDistanceToNow(product.updatedAt, { addSuffix: true, locale: fr })})
 					</span>

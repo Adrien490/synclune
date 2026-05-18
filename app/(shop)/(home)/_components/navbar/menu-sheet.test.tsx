@@ -332,31 +332,16 @@ describe("MenuSheet", () => {
 		});
 	});
 
-	describe("live region pluralisation", () => {
-		it("uses singular form for a single nav item", () => {
+	describe("dialog announcement", () => {
+		it("relies on SheetTitle + SheetDescription for screen-reader announcement (no redundant live region)", () => {
 			render(<MenuSheet {...baseProps} />);
 
-			const liveRegion = screen.getByRole("status");
-			expect(liveRegion).toHaveTextContent("Menu ouvert, 1 lien de navigation disponible");
-			expect(liveRegion).not.toHaveTextContent(/liens/);
-			expect(liveRegion.getAttribute("aria-live")).toBe("polite");
-			expect(liveRegion.className).toContain("sr-only");
-		});
-
-		it("uses plural form for multiple nav items", () => {
-			render(
-				<MenuSheet
-					{...baseProps}
-					navItems={[
-						{ href: "/", label: "Accueil", icon: "home" as const },
-						{ href: "/produits", label: "Produits", icon: "home" as const },
-						{ href: "/collections", label: "Collections", icon: "home" as const },
-					]}
-				/>,
-			);
-
-			const liveRegion = screen.getByRole("status");
-			expect(liveRegion).toHaveTextContent("Menu ouvert, 3 liens de navigation disponibles");
+			// SheetDescription is rendered sr-only and announced as dialog content.
+			expect(
+				screen.getByText("Menu de navigation - Découvrez nos bijoux et collections"),
+			).toBeInTheDocument();
+			// The former <p role="status"> live region announcing nav item count has been removed.
+			expect(screen.queryByText(/Menu ouvert,/)).not.toBeInTheDocument();
 		});
 	});
 

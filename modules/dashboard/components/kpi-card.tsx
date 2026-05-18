@@ -222,8 +222,7 @@ export function KpiCard({
 	const cardClassName = cn(
 		kpiCardVariants({ size, priority, status }),
 		flatOnMobile && KPI_FLAT_MOBILE_OVERRIDES,
-		href &&
-			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+		href && "focus-ring cursor-pointer",
 	);
 
 	const displayValue = numericValue !== undefined ? `${numericValue}${suffix ?? ""}` : value;

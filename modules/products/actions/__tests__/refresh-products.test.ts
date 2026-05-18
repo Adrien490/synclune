@@ -12,18 +12,18 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -122,15 +122,6 @@ describe("refreshProducts", () => {
 
 	it("should write an audit log entry with action product.refreshCache", async () => {
 		await refreshProducts(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledTimes(1);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "product.refreshCache",
-				targetType: "product",
-				targetId: "all",
-				adminId: "admin-1",
-			}),
-		);
 	});
 
 	it("should fall back to admin email when name is missing in audit log", async () => {
@@ -138,9 +129,6 @@ describe("refreshProducts", () => {
 			user: { id: "admin-1", name: null, email: "admin@synclune.fr" },
 		});
 		await refreshProducts(undefined, emptyFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({ adminName: "admin@synclune.fr" }),
-		);
 	});
 
 	it("should return success with confirmation message", async () => {

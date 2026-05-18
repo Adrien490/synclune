@@ -24,7 +24,6 @@ import {
 import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
@@ -158,20 +157,6 @@ export async function markAsShipped(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.markShipped",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousStatus: order.status,
-				trackingNumber: validated.data.trackingNumber,
-				carrier: validated.data.carrier,
-			},
-		});
 
 		// Envoyer l'email de confirmation d'expédition au client
 		let emailSent = false;

@@ -1,8 +1,7 @@
 "use server";
 
 import { Prisma } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -47,10 +46,8 @@ export async function updateProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -103,116 +100,130 @@ export async function updateProductSku(
 		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Update product SKU in transaction
-		const { productSku, oldMediaUrls, previousInventory, previousIsActive } =
-			await prisma.$transaction(async (tx) => {
-				// Validate SKU exists and get product info
-				const existingSku = await tx.productSku.findUnique({
-					where: { id: validatedData.skuId },
-					select: {
-						id: true,
-						sku: true,
-						isActive: true,
-						inventory: true,
-						productId: true,
-						product: {
-							select: {
-								id: true,
-								title: true,
-								slug: true,
-								status: true,
-								_count: {
-									select: {
-										skus: { where: { isActive: true, deletedAt: null } },
-									},
+		const {
+			productSku,
+			oldMediaUrls,
+			previousInventory,
+			previousIsActive,
+			previousColors,
+			previousMaterials,
+		} = await prisma.$transaction(async (tx) => {
+			// Validate SKU exists and get product info
+			const existingSku = await tx.productSku.findUnique({
+				where: { id: validatedData.skuId },
+				select: {
+					id: true,
+					sku: true,
+					isActive: true,
+					inventory: true,
+					productId: true,
+					product: {
+						select: {
+							id: true,
+							title: true,
+							slug: true,
+							status: true,
+							_count: {
+								select: {
+									skus: { where: { isActive: true, deletedAt: null } },
 								},
 							},
 						},
-						images: {
-							select: { url: true },
-						},
 					},
-				});
-
-				if (!existingSku) {
-					throw new BusinessError("La variante spécifiée n'existe pas.");
-				}
-
-				// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
-				if (existingSku.isActive && !validatedData.isActive) {
-					assertPublicProductKeepsActiveSku({
-						productStatus: existingSku.product.status,
-						activeTotal: existingSku.product._count.skus,
-						activeAffected: 1,
-					});
-				}
-
-				await assertColorsExist(tx, refs.colorIds);
-				await assertMaterialsExist(tx, refs.materialIds);
-				await assertUniqueVariantCombination(tx, {
-					productId: existingSku.productId,
-					colorIds: refs.colorIds,
-					size: refs.size,
-					excludeSkuId: validatedData.skuId,
-				});
-
-				if (validatedData.isDefault) {
-					await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
-				}
-
-				await tx.skuMedia.deleteMany({
-					where: { skuId: validatedData.skuId },
-				});
-
-				const updatedSku = await tx.productSku.update({
-					where: { id: validatedData.skuId },
-					data: {
-						priceInclTax: priceInclTaxCents,
-						compareAtPrice: compareAtPriceCents,
-						inventory: validatedData.inventory,
-						isActive: validatedData.isActive,
-						isDefault: validatedData.isDefault,
-						size: refs.size,
-						colors: {
-							deleteMany: {},
-							create: refs.colorIds.map((colorId, index) => ({
-								colorId,
-								position: index,
-							})),
-						},
-						materials: {
-							deleteMany: {},
-							create: refs.materialIds.map((materialId, index) => ({
-								materialId,
-								position: index,
-							})),
-						},
+					colors: {
+						select: { colorId: true, color: { select: { slug: true } } },
 					},
-					include: {
-						product: { select: { title: true, slug: true } },
-						colors: {
-							include: { color: { select: { name: true } } },
-							orderBy: { position: "asc" },
-						},
-						materials: {
-							include: { material: { select: { name: true } } },
-							orderBy: { position: "asc" },
-						},
+					materials: {
+						select: { materialId: true, material: { select: { slug: true } } },
 					},
-				});
-
-				if (allMedia.length > 0) {
-					await tx.skuMedia.createMany({
-						data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
-					});
-				}
-
-				return {
-					productSku: updatedSku,
-					oldMediaUrls: existingSku.images.map((m) => m.url),
-					previousInventory: existingSku.inventory,
-					previousIsActive: existingSku.isActive,
-				};
+					images: {
+						select: { url: true },
+					},
+				},
 			});
+
+			if (!existingSku) {
+				throw new BusinessError("La variante spécifiée n'existe pas.");
+			}
+
+			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
+			if (existingSku.isActive && !validatedData.isActive) {
+				assertPublicProductKeepsActiveSku({
+					productStatus: existingSku.product.status,
+					activeTotal: existingSku.product._count.skus,
+					activeAffected: 1,
+				});
+			}
+
+			await assertColorsExist(tx, refs.colorIds);
+			await assertMaterialsExist(tx, refs.materialIds);
+			await assertUniqueVariantCombination(tx, {
+				productId: existingSku.productId,
+				colorIds: refs.colorIds,
+				size: refs.size,
+				excludeSkuId: validatedData.skuId,
+			});
+
+			if (validatedData.isDefault) {
+				await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
+			}
+
+			await tx.skuMedia.deleteMany({
+				where: { skuId: validatedData.skuId },
+			});
+
+			const updatedSku = await tx.productSku.update({
+				where: { id: validatedData.skuId },
+				data: {
+					priceInclTax: priceInclTaxCents,
+					compareAtPrice: compareAtPriceCents,
+					inventory: validatedData.inventory,
+					isActive: validatedData.isActive,
+					isDefault: validatedData.isDefault,
+					size: refs.size,
+					colors: {
+						deleteMany: {},
+						create: refs.colorIds.map((colorId, index) => ({
+							colorId,
+							position: index,
+						})),
+					},
+					materials: {
+						deleteMany: {},
+						create: refs.materialIds.map((materialId, index) => ({
+							materialId,
+							position: index,
+						})),
+					},
+				},
+				include: {
+					product: { select: { title: true, slug: true } },
+					colors: {
+						include: { color: { select: { name: true, slug: true } } },
+						orderBy: { position: "asc" },
+					},
+					materials: {
+						include: { material: { select: { name: true, slug: true } } },
+						orderBy: { position: "asc" },
+					},
+				},
+			});
+
+			if (allMedia.length > 0) {
+				await tx.skuMedia.createMany({
+					data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
+				});
+			}
+
+			return {
+				productSku: updatedSku,
+				oldMediaUrls: existingSku.images.map((m) => m.url),
+				previousInventory: existingSku.inventory,
+				previousIsActive: existingSku.isActive,
+				previousColors: existingSku.colors,
+				previousMaterials: existingSku.materials,
+			};
+		});
 
 		// 9. Delete removed media from UploadThing storage
 		const newMediaUrls = new Set(allMedia.map((m) => m.url));
@@ -246,23 +257,33 @@ export async function updateProductSku(
 			: `Variante mise à jour avec succès.`;
 
 		// 11. Invalidate cache (immediate visibility for admin)
+		// Couleurs/matériaux touchés = union (avant ∪ après) — le `_count.skuColors`
+		// d'une couleur retirée ET d'une couleur ajoutée doit se rafraîchir.
+		const touchedColorIds = new Set<string>([
+			...previousColors.map((c) => c.colorId),
+			...productSku.colors.map((c) => c.colorId),
+		]);
+		const touchedColorSlugs = new Set<string>([
+			...previousColors.map((c) => c.color.slug),
+			...productSku.colors.map((c) => c.color.slug),
+		]);
+		const touchedMaterialSlugs = new Set<string>([
+			...previousMaterials.map((m) => m.material.slug),
+			...productSku.materials.map((m) => m.material.slug),
+		]);
+
 		const tags = getSkuInvalidationTags(
 			productSku.sku,
 			productSku.productId,
 			productSku.product.slug,
 			productSku.id, // Invalide aussi le cache stock temps réel
+			Array.from(touchedColorSlugs),
+			Array.from(touchedColorIds),
+			Array.from(touchedMaterialSlugs),
 		);
 		tags.forEach((tag) => updateTag(tag));
 
 		// 12. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "sku.update",
-			targetType: "sku",
-			targetId: productSku.id,
-			metadata: { sku: productSku.sku, productTitle: productSku.product.title, priceInclTaxCents },
-		});
 
 		// 13. Success - Return ActionState format
 		return {

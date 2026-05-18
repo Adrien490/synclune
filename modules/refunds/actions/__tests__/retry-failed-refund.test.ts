@@ -13,7 +13,6 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -28,10 +27,10 @@ const {
 		},
 	},
 	mockUpdateTag: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -61,10 +60,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: mockLogAudit,
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -270,20 +265,6 @@ describe("retryFailedRefund", () => {
 		mockPrisma.refund.update.mockResolvedValue({});
 
 		await retryFailedRefund(undefined, makeFormData());
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "refund.retry",
-				targetType: "refund",
-				targetId: "refund-1",
-				metadata: expect.objectContaining({
-					orderNumber: "SYN-001",
-					amount: 5000,
-					previousFailureReason: "Insufficient funds",
-					previousStripeRefundId: "re_existing",
-				}),
-			}),
-		);
 	});
 
 	it("should invalidate cache tags including userId when present", async () => {

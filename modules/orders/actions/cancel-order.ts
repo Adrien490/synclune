@@ -13,7 +13,6 @@ import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/stat
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -228,19 +227,6 @@ export async function cancelOrder(
 		}
 
 		// Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.cancel",
-			targetType: "order",
-			targetId: id,
-			metadata: {
-				orderNumber: order.orderNumber,
-				previousStatus: order.status,
-				reason: sanitizedReason,
-				stockRestored: order._shouldRestoreStock,
-			},
-		});
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));

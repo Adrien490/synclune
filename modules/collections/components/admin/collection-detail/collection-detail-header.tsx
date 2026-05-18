@@ -60,7 +60,7 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 				</div>
 				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
 					Créée le {format(collection.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
-					<span className="text-muted-foreground/70">
+					<span className="text-muted-foreground">
 						{" "}
 						(mise à jour{" "}
 						{formatDistanceToNow(collection.updatedAt, { addSuffix: true, locale: fr })})

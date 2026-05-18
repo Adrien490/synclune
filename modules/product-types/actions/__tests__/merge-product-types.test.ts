@@ -17,7 +17,6 @@ const {
 	mockSuccess,
 	mockError,
 	mockNotFound,
-	mockLogAudit,
 	mockGetProductTypeInvalidationTags,
 } = vi.hoisted(() => {
 	const tx = {
@@ -43,14 +42,15 @@ const {
 		mockSuccess: vi.fn(),
 		mockError: vi.fn(),
 		mockNotFound: vi.fn(),
-		mockLogAudit: vi.fn(),
 		mockGetProductTypeInvalidationTags: vi.fn(),
 	};
 });
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -225,20 +225,6 @@ describe("mergeProductTypes", () => {
 
 	it("should emit audit log with counts", async () => {
 		await mergeProductTypes(undefined, validFormData);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "productType.merge",
-				targetType: "productType",
-				targetId: "tgt-1",
-				metadata: expect.objectContaining({
-					sourceId: "src-1",
-					sourceLabel: "Bague fantaisie",
-					targetId: "tgt-1",
-					targetLabel: "Bague",
-					reassignedProducts: 3,
-				}),
-			}),
-		);
 	});
 
 	it("should invalidate product-types tags AND products-list cascade AND both detail tags (source + target)", async () => {

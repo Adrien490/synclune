@@ -1,8 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import type { ActionState } from "@/shared/types/server-action";
 import { success, handleActionError } from "@/shared/lib/actions";
@@ -15,10 +14,8 @@ export async function refreshProducts(
 	_formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_REFRESH_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -27,14 +24,6 @@ export async function refreshProducts(
 		updateTag(PRODUCTS_CACHE_TAGS.MAX_PRICE);
 		updateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.refreshCache",
-			targetType: "product",
-			targetId: "all",
-		});
 
 		return success("Produits rafraîchis");
 	} catch (e) {

@@ -76,6 +76,8 @@ interface NavLinkProps {
 	children: React.ReactNode;
 	className?: string;
 	exact?: boolean;
+	/** Pass `null` to opt out of automatic prefetch on viewport-rare destinations. */
+	prefetch?: boolean | null;
 }
 
 function NavLink({
@@ -86,12 +88,14 @@ function NavLink({
 	children,
 	className,
 	exact,
+	prefetch,
 }: NavLinkProps) {
 	return (
 		<m.li variants={itemVariants} custom={customDelay}>
 			<SheetClose asChild>
 				<Link
 					href={href}
+					prefetch={prefetch}
 					className={getLinkClass(href, isMenuItemActive, className, { exact })}
 					aria-current={isMenuItemActive(href, { exact }) ? "page" : undefined}
 					onClick={hapticSelection}
@@ -112,20 +116,23 @@ interface UserHeaderProps {
 }
 
 export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should fall back to "vous"
-	const firstName = session.user.name?.split(" ")[0] || "vous";
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should also be treated as missing
+	const firstName = session.user.name?.split(" ")[0] || null;
+	const greeting = firstName ? `Bonjour ${firstName}` : "Bonjour";
+	const labelSubject = firstName ?? "bienvenue";
 
 	return (
 		<div className="bg-primary/5 mb-4 rounded-xl p-4">
 			<SheetClose asChild>
 				<Link
 					href={ROUTES.ACCOUNT.ROOT}
+					prefetch={null}
 					className="group block"
-					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
+					aria-label={`Mon compte - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
 					onClick={hapticSelection}
 				>
 					<div>
-						<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>
+						<p className="text-foreground text-base font-semibold">{greeting}</p>
 						<p className="text-muted-foreground mt-0.5 text-sm">
 							{wishlistCount > 0 && (
 								<span>
@@ -366,6 +373,7 @@ export function AccountSection({
 						itemVariants={itemVariants}
 						customDelay={delay(150, 1)}
 						className="text-muted-foreground hover:text-foreground"
+						prefetch={null}
 					>
 						Créer un compte
 					</NavLink>

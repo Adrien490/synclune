@@ -523,7 +523,7 @@ export function UploadErrorBanner({
 								<p className="truncate font-medium" title={entry.fileName}>
 									{entry.fileName}
 								</p>
-								<p className="text-muted-foreground text-[11px]">{entry.error}</p>
+								<p className="text-muted-foreground text-xs">{entry.error}</p>
 							</div>
 							{entry.file && (
 								<Button

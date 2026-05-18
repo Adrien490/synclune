@@ -6,7 +6,6 @@ import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	validateInput,
 	success,
@@ -18,7 +17,6 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { suspendUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function suspendUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
@@ -83,15 +81,6 @@ export async function suspendUser(_prevState: unknown, formData: FormData): Prom
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: USER_AUDIT_ACTIONS.SUSPEND,
-			targetType: "user",
-			targetId: userId,
-			metadata: { userName: user.name, userEmail: user.email },
-		});
 
 		return success(`L'utilisateur ${user.name ?? user.email} a ete suspendu.`);
 	} catch (e) {

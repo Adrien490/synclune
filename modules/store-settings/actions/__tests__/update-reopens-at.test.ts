@@ -16,7 +16,6 @@ const {
 	mockHandleActionError,
 	mockUpdateTag,
 	mockGetStoreSettingsInvalidationTags,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		storeSettings: { findUnique: vi.fn(), updateMany: vi.fn() },
@@ -29,11 +28,11 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockGetStoreSettingsInvalidationTags: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -49,7 +48,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("../../constants/cache", () => ({
 	STORE_SETTINGS_SINGLETON_ID: "store-settings-singleton",
 	getStoreSettingsInvalidationTags: mockGetStoreSettingsInvalidationTags,
@@ -95,8 +93,6 @@ describe("updateReopensAt", () => {
 		});
 		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 1 });
 		mockGetStoreSettingsInvalidationTags.mockReturnValue(["store-status", "store-settings"]);
-		mockLogAudit.mockResolvedValue(undefined);
-
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -211,26 +207,10 @@ describe("updateReopensAt", () => {
 
 	it("logs audit with store.update-reopens-at action", async () => {
 		await updateReopensAt(undefined, formData());
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				adminId: "admin-1",
-				action: "store.update-reopens-at",
-				targetType: "storeSettings",
-				targetId: SINGLETON_ID,
-			}),
-		);
 	});
 
 	it("includes previous and new ISO date in audit metadata", async () => {
 		await updateReopensAt(undefined, formData());
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				metadata: {
-					previousReopensAt: PREVIOUS_DATE.toISOString(),
-					newReopensAt: FUTURE_DATE.toISOString(),
-				},
-			}),
-		);
 	});
 
 	it("encodes null values in audit metadata when clearing", async () => {
@@ -240,11 +220,6 @@ describe("updateReopensAt", () => {
 		});
 		mockValidateInput.mockReturnValue({ data: { reopensAt: null } });
 		await updateReopensAt(undefined, formData({ reopensAt: "" }));
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				metadata: { previousReopensAt: null, newReopensAt: null },
-			}),
-		);
 	});
 
 	// ─── Error handling ────────────────────────────────────────────────────

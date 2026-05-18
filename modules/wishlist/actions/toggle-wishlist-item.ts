@@ -9,16 +9,9 @@ import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { toggleWishlistItemSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
-import {
-	getOrCreateWishlistSessionId,
-	getWishlistExpirationDate,
-} from "@/modules/wishlist/lib/wishlist-session";
-import {
-	WISHLIST_ERROR_MESSAGES,
-	WISHLIST_FULL_SENTINEL,
-	PRODUCT_NOT_PUBLIC_SENTINEL,
-} from "@/modules/wishlist/constants/error-messages";
-import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
+import { getOrCreateWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
+import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
+import { addProductToWishlist } from "@/modules/wishlist/services/upsert-wishlist-item.service";
 import { Prisma } from "@/app/generated/prisma/client";
 import {
 	validateInput,
@@ -38,8 +31,8 @@ import {
  * Pattern:
  * 1. Validation des donnees (Zod)
  * 2. Rate limiting (protection anti-spam)
- * 3. Recuperation/creation wishlist (user ou session)
- * 4. Transaction DB (check existence → add ou remove)
+ * 3. Récupération/création wishlist + check existence
+ * 4. Si existe → delete ; sinon → délégation au service `addProductToWishlist`
  * 5. Invalidation cache immediate (read-your-own-writes)
  */
 export async function toggleWishlistItem(
@@ -69,87 +62,54 @@ export async function toggleWishlistItem(
 		});
 		if ("error" in validated) return validated.error;
 
-		const validatedData = validated.data;
+		const { productId } = validated.data;
 
-		// 4. Transaction: Recuperer la wishlist, verifier existence, ajouter ou retirer
-		// Note: product status validation is done inside the transaction (avoids TOCTOU
-		// where product could be archived between the check and the insert).
+		// 4. Transaction: lookup wishlist existante → si item présent retire,
+		//    sinon délègue à addProductToWishlist (qui upsert + valide + create).
 		const transactionResult = await prisma.$transaction(async (tx) => {
-			// Valider le produit (existence et status) — inside tx to prevent TOCTOU
-			const product = await tx.product.findUnique({
-				where: { id: validatedData.productId },
-				select: { id: true, status: true },
-			});
-			if (!product || product.status !== "PUBLIC") {
-				throw new Error(PRODUCT_NOT_PUBLIC_SENTINEL);
-			}
-
-			// Recuperer ou creer la wishlist
-			const wishlist = await tx.wishlist.upsert({
+			// 4a. Lookup wishlist existante (sans création — pas de upsert ici car
+			//     le path "add" délègue à addProductToWishlist qui fait son propre upsert).
+			const existingWishlist = await tx.wishlist.findFirst({
 				where: userId ? { userId } : { sessionId: sessionId! },
-				create: {
-					userId: userId ?? null,
-					sessionId: sessionId ?? null,
-					expiresAt: userId ? null : getWishlistExpirationDate(),
-				},
-				update: {
-					expiresAt: userId ? null : getWishlistExpirationDate(),
-				},
-				select: { id: true },
-			});
-
-			// Check max items limit before adding
-			const itemCount = await tx.wishlistItem.count({
-				where: { wishlistId: wishlist.id },
-			});
-
-			// Verifier si ce produit est deja dans la wishlist
-			const existingItem = await tx.wishlistItem.findFirst({
-				where: {
-					wishlistId: wishlist.id,
-					productId: validatedData.productId,
+				select: {
+					id: true,
+					items: {
+						where: { productId },
+						select: { id: true },
+						take: 1,
+					},
 				},
 			});
 
+			const existingItem = existingWishlist?.items[0];
+
+			// Path "remove" : item existe → delete + refresh timestamp
+			// (existingItem truthy implique existingWishlist truthy par construction)
 			if (existingItem) {
-				await tx.wishlistItem.delete({
-					where: { id: existingItem.id },
-				});
-
+				await tx.wishlistItem.delete({ where: { id: existingItem.id } });
 				await tx.wishlist.update({
-					where: { id: wishlist.id },
+					where: { id: existingWishlist!.id },
 					data: { updatedAt: new Date() },
 				});
 
 				return {
-					wishlist,
 					action: "removed" as const,
 					wishlistItemId: undefined,
 				};
-			} else {
-				if (itemCount >= WISHLIST_MAX_ITEMS) {
-					throw new Error(WISHLIST_FULL_SENTINEL);
-				}
-
-				const wishlistItem = await tx.wishlistItem.create({
-					data: {
-						wishlistId: wishlist.id,
-						productId: validatedData.productId,
-					},
-					select: { id: true },
-				});
-
-				await tx.wishlist.update({
-					where: { id: wishlist.id },
-					data: { updatedAt: new Date() },
-				});
-
-				return {
-					wishlist,
-					action: "added" as const,
-					wishlistItemId: wishlistItem.id,
-				};
 			}
+
+			// Path "add" : pas d'item existant → service partagé (upsert wishlist + check
+			// cap + validation produit + create item, tout dans le scope tx).
+			const created = await addProductToWishlist(tx, {
+				userId: userId ?? null,
+				sessionId,
+				productId,
+			});
+
+			return {
+				action: "added" as const,
+				wishlistItemId: created.wishlistItemId,
+			};
 		});
 
 		// 5. Invalidation cache immediate (read-your-own-writes)
@@ -157,22 +117,17 @@ export async function toggleWishlistItem(
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(
-			transactionResult.action === "added" ? "Ajoute a votre wishlist" : "Retire de votre wishlist",
+			transactionResult.action === "added" ? "Ajoute a vos favoris" : "Retire de vos favoris",
 			{
 				action: transactionResult.action,
 				wishlistItemId: transactionResult.wishlistItemId,
 			},
 		);
 	} catch (e) {
-		if (e instanceof Error && e.message === PRODUCT_NOT_PUBLIC_SENTINEL) {
-			return error(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
-		}
-		if (e instanceof Error && e.message === WISHLIST_FULL_SENTINEL) {
-			return error(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL);
-		}
-		// Unique constraint violation (wishlistId, productId) - race condition on double submit
+		// Unique constraint violation (wishlistId, productId) — race double-submit
+		// concurrent (très rare ici car on a check existence avant), traité comme succès idempotent.
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-			return success("Deja dans votre wishlist");
+			return success("Deja dans vos favoris");
 		}
 		return handleActionError(e, WISHLIST_ERROR_MESSAGES.GENERAL_ERROR);
 	}

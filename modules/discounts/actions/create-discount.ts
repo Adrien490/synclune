@@ -6,8 +6,7 @@ import { updateTag } from "next/cache";
 import { createDiscountSchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -32,10 +31,8 @@ export async function createDiscount(
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 1b. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.CREATE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -90,15 +87,6 @@ export async function createDiscount(
 
 		// 6. Invalidation du cache
 		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "discount.create",
-			targetType: "discount",
-			targetId: discount.id,
-			metadata: { code: discount.code, type: data.type, value: data.value },
-		});
 
 		return success(`Code promo "${discount.code}" créé avec succès`, { id: discount.id });
 	} catch (e) {

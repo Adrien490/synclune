@@ -365,6 +365,7 @@ describe("CartSheetItemRow", () => {
 			screen.getByTestId("swipeable-card").click();
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith("remove-cart-item", {
 				cartItemId: "item-7",
+				skuId: "sku-1",
 				itemName: "Bague Lune",
 				quantity: 3,
 			});

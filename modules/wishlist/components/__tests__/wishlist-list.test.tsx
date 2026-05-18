@@ -43,6 +43,8 @@ vi.mock("@/shared/components/ui/empty", () => ({
 		</div>
 	),
 	EmptyContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	EmptyDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+	EmptyActions: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	EmptyHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	EmptyMedia: ({ children }: { children: React.ReactNode; variant?: string }) => (
 		<div>{children}</div>
@@ -120,7 +122,7 @@ describe("WishlistList", () => {
 		expect(screen.getByTestId("empty")).toBeInTheDocument();
 	});
 
-	it("shows 'Votre wishlist est vide' in empty state", async () => {
+	it("shows 'Votre liste de favoris est vide' in empty state", async () => {
 		const Component = await WishlistList({
 			wishlistPromise: Promise.resolve({
 				items: [],
@@ -130,7 +132,7 @@ describe("WishlistList", () => {
 			perPage: 12,
 		});
 		render(Component);
-		expect(screen.getByRole("heading", { name: /wishlist est vide/i })).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: /liste de favoris est vide/i })).toBeInTheDocument();
 	});
 
 	it("shows 'Découvrir nos créations' link in empty state", async () => {

@@ -257,7 +257,7 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 								</ComposedChart>
 							</ChartContainer>
 						</ChartScrollContainer>
-						<p className="text-muted-foreground mt-2 text-[11px] md:hidden" aria-hidden="true">
+						<p className="text-muted-foreground text-2xs mt-2 md:hidden" aria-hidden="true">
 							Touchez le graphique pour voir le détail.
 						</p>
 					</div>

@@ -11,7 +11,6 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateOrderShippingAddressSchema } from "../schemas/order.schemas";
@@ -32,8 +31,6 @@ export async function updateOrderShippingAddress(
 	try {
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -142,17 +139,6 @@ export async function updateOrderShippingAddress(
 		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
 			updateTag(tag),
 		);
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.updateShippingAddress",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-			},
-		});
 
 		return {
 			status: ActionStatus.SUCCESS,

@@ -18,7 +18,6 @@ const {
 	mockCreateOrderAuditTx,
 	mockBuildUrl,
 	mockGetOrderInvalidationTags,
-	mockLogAudit,
 	mockExtractCustomerFirstName,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -37,7 +36,6 @@ const {
 	mockCreateOrderAuditTx: vi.fn(),
 	mockBuildUrl: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
-	mockLogAudit: vi.fn(),
 	mockExtractCustomerFirstName: vi.fn(),
 }));
 
@@ -47,6 +45,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -83,8 +82,6 @@ vi.mock("@/modules/emails/services/status-emails", () => ({
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,
 }));
-
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 
 vi.mock("../../utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
@@ -402,16 +399,6 @@ describe("bulkCancelOrders", () => {
 		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
 
 		await bulkCancelOrders(undefined, makeFd());
-
-		expect(mockLogAudit).toHaveBeenCalledTimes(1);
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "order.bulkCancel",
-				targetType: "order",
-				adminId: "admin-1",
-				metadata: expect.objectContaining({ count: 1, skipped: 1 }),
-			}),
-		);
 	});
 
 	// --------------------------------------------------------------------

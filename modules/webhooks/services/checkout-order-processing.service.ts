@@ -311,11 +311,21 @@ export async function createOrderFromCheckoutSession(
 						let userCount = 0;
 						let emailCount = 0;
 						if (userId) {
-							userCount = await tx.discountUsage.count({
-								where: { discountId: discount.id, userId },
-							});
+							// FOR UPDATE serialize les usages existants pour ce (discount, user) :
+							// si une autre transaction est en cours de création d'un DiscountUsage
+							// pour le même couple, celle-ci attend ici. Sans ce lock, 2 paiements
+							// async simultanés du même user (2 onglets, SEPA double-confirm)
+							// pouvaient tous deux passer la check `maxUsagePerUser = 1`.
+							const userUsages = await tx.$queryRaw<Array<{ id: string }>>`
+								SELECT id FROM "DiscountUsage"
+								WHERE "discountId" = ${discount.id} AND "userId" = ${userId}
+								FOR UPDATE
+							`;
+							userCount = userUsages.length;
 						}
 						if (customerEmail) {
+							// Best-effort sur emailCount (joint Order — pas de FOR UPDATE simple).
+							// La protection principale repose sur userCount + maxUsageCount global.
 							emailCount = await tx.discountUsage.count({
 								where: { discountId: discount.id, order: { customerEmail } },
 							});

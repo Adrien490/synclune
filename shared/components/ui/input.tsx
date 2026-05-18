@@ -6,10 +6,10 @@ import { cn } from "@/shared/utils/cn";
 
 const inputVariants = cva(
 	cn(
-		"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 shadow-xs outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+		"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input w-full min-w-0 rounded-md border bg-transparent px-3 py-2 shadow-xs file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
 		"transition-[color,box-shadow,border-color]",
 		"hover:border-ring/70",
-		"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
+		"focus-ring",
 		"aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
 	),
 	{
@@ -101,7 +101,7 @@ function Input({
 						<button
 							type="button"
 							onClick={onClear}
-							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mr-2 flex size-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
+							className="focus-ring text-muted-foreground hover:text-foreground -mr-2 flex size-11 items-center justify-center rounded-md transition-colors"
 							aria-label="Effacer le champ"
 						>
 							<X className="size-4" aria-hidden="true" />

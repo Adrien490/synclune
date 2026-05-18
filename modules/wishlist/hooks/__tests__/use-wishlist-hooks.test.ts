@@ -76,13 +76,13 @@ import { useRemoveFromWishlist } from "../use-remove-from-wishlist";
 
 const SUCCESS_ADDED = {
 	status: "success" as const,
-	message: "Ajouté à la wishlist",
+	message: "Ajouté aux favoris",
 	data: { action: "added" as const },
 };
 
 const SUCCESS_REMOVED = {
 	status: "success" as const,
-	message: "Retiré de la wishlist",
+	message: "Retiré des favoris",
 	data: { action: "removed" as const },
 };
 

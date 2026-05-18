@@ -171,7 +171,7 @@ export function AnnouncementBar({ message, link, endsAt, hash }: AnnouncementBar
 							className={cn(
 								"absolute top-1/2 right-14 hidden -translate-y-1/2 items-center gap-1 rounded-full px-2 py-0.5 sm:right-16",
 								"bg-primary-foreground/20 text-primary-foreground",
-								"font-mono text-[11px] font-semibold tracking-wider tabular-nums",
+								"text-2xs font-mono font-semibold tracking-wider tabular-nums",
 								"xs:inline-flex",
 							)}
 						>

@@ -27,7 +27,7 @@ export function LatestCreationsSkeleton({ productsCount = 4 }: LatestCreationsSk
 			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-label="Chargement des dernières créations"
 		>
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
 				{/* Header skeleton */}
 				<header className="mb-8 text-center lg:mb-12">
 					{/* Titre skeleton - "Nouvelles créations" */}

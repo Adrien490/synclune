@@ -5,17 +5,6 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
-import { Button } from "@/shared/components/ui/button";
-import {
-	Empty,
-	EmptyActions,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
-import { Heart } from "lucide-react";
-import Link from "next/link";
 
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
 import {
@@ -23,6 +12,7 @@ import {
 	type WishlistListOptimisticContextValue,
 } from "../contexts/wishlist-list-optimistic-context";
 import { SwipeableWishlistItem } from "./swipeable-wishlist-item";
+import { WishlistEmptyState } from "./wishlist-empty-state";
 
 interface WishlistListContentProps {
 	items: GetWishlistReturn["items"];
@@ -67,38 +57,11 @@ export function WishlistListContent({
 	// Adjust totalCount for optimistic removals on the current page
 	const optimisticTotalCount = totalCount - (items.length - optimisticItems.length);
 
-	// Set des Product IDs en wishlist (basé sur l'état optimiste)
-	const wishlistProductIds = new Set(optimisticItems.map((item) => item.productId));
-
 	// Empty state when all items have been optimistically removed
 	if (optimisticItems.length === 0) {
 		return (
 			<WishlistListOptimisticContext.Provider value={contextValue}>
-				<Empty className="mt-4 mb-12 sm:my-12">
-					<EmptyHeader>
-						<EmptyMedia variant="icon">
-							<Heart className="size-6" />
-						</EmptyMedia>
-						<EmptyTitle>Votre wishlist est vide</EmptyTitle>
-					</EmptyHeader>
-					<EmptyDescription>
-						Découvrez nos créations artisanales et ajoutez vos coups de cœur à votre wishlist pour
-						les retrouver facilement.
-					</EmptyDescription>
-					<EmptyActions>
-						<Button asChild variant="primary" size="lg">
-							<Link href="/produits">Découvrir nos créations</Link>
-						</Button>
-						<Button asChild variant="outline" size="lg">
-							<Link href="/collections">Voir les collections</Link>
-						</Button>
-					</EmptyActions>
-				</Empty>
-
-				{/* Annonce pour screen readers */}
-				<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-					Votre wishlist est maintenant vide
-				</div>
+				<WishlistEmptyState liveAnnouncement="Votre liste de favoris est maintenant vide" />
 			</WishlistListOptimisticContext.Provider>
 		);
 	}
@@ -134,7 +97,7 @@ export function WishlistListContent({
 									<ProductCard
 										product={item.product!}
 										index={index}
-										isInWishlist={wishlistProductIds.has(item.productId)}
+										isInWishlist
 										sectionId="wishlist"
 									/>
 								</SwipeableWishlistItem>
@@ -144,8 +107,8 @@ export function WishlistListContent({
 				</div>
 
 				{/* Annonce pour screen readers */}
-				<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""} dans votre wishlist
+				<div role="status" aria-live="polite" className="sr-only">
+					{optimisticTotalCount} article{optimisticTotalCount > 1 ? "s" : ""} dans vos favoris
 				</div>
 
 				{/* Pagination */}

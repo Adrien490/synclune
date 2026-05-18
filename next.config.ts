@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
 		};
 	},
 
+	async redirects() {
+		return [
+			// Page À propos temporairement masquée — préserve le link equity externe
+			{ source: "/a-propos", destination: "/", permanent: true },
+		];
+	},
+
 	async headers() {
 		return [
 			{

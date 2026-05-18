@@ -3,14 +3,13 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { COLORS_CACHE_TAGS, getColorInvalidationTags } from "../constants/cache";
+import { getColorInvalidationTags } from "../constants/cache";
 import { mergeColorsSchema } from "../schemas/color.schemas";
 
 /**
@@ -33,10 +32,8 @@ export async function mergeColors(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.MERGE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -100,35 +97,40 @@ export async function mergeColors(
 
 			await tx.color.delete({ where: { id: sourceId } });
 
+			// Tous les SKUs touchés (réassignés OU supprimés côté source) —
+			// leurs PDP affichent la couleur dans le swatch et doivent recalculer.
+			const affectedSkuIds = sourceLinks.map((l) => l.skuId);
+
 			return {
 				kind: "ok" as const,
 				source,
 				target,
 				reassignedCount: linksToReassign.length,
+				affectedSkuIds,
 			};
 		});
 
 		if (merged.kind === "source-missing") return notFound("Couleur source");
 		if (merged.kind === "target-missing") return notFound("Couleur cible");
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "color.merge",
-			targetType: "color",
-			targetId: merged.target.id,
-			metadata: {
-				sourceId: merged.source.id,
-				sourceName: merged.source.name,
-				targetId: merged.target.id,
-				targetName: merged.target.name,
-				reassignedSkus: merged.reassignedCount,
-			},
-		});
+		// Récupère les product slugs des SKUs touchés pour cascade PDP storefront.
+		// Sans cela, le PDP afficherait le nom/hex de la couleur source supprimée
+		// jusqu'à la prochaine mutation produit ou expiration `reference` (24h).
+		const affectedProductSlugs =
+			merged.affectedSkuIds.length > 0
+				? await prisma.productSku
+						.findMany({
+							where: { id: { in: merged.affectedSkuIds }, deletedAt: null },
+							select: { product: { select: { slug: true } } },
+							distinct: ["productId"],
+						})
+						.then((skus) => skus.map((s) => s.product.slug).filter(Boolean))
+				: [];
 
-		const tagSet = new Set(getColorInvalidationTags());
-		tagSet.add(COLORS_CACHE_TAGS.DETAIL(merged.source.slug));
-		tagSet.add(COLORS_CACHE_TAGS.DETAIL(merged.target.slug));
+		const tagSet = new Set<string>([
+			...getColorInvalidationTags({ slug: merged.source.slug, affectedProductSlugs }),
+			...getColorInvalidationTags({ slug: merged.target.slug, affectedProductSlugs }),
+		]);
 		tagSet.forEach((tag) => updateTag(tag));
 
 		return success(

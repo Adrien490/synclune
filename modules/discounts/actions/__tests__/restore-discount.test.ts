@@ -39,6 +39,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -62,10 +63,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 	notFound: mockNotFound,
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
 }));
 
 vi.mock("../../schemas/discount.schemas", () => ({

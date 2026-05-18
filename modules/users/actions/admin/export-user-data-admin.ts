@@ -3,10 +3,8 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, success, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 import { buildUserDataExport } from "../../services/build-user-data-export.service";
 
@@ -21,7 +19,6 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 		// 1. Vérification admin (avant rate-limit)
 		const adminCheck = await requireAdminWithUser();
 		if ("error" in adminCheck) return adminCheck.error;
-		const { user: adminUser } = adminCheck;
 
 		// 2. Rate limiting
 		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.EXPORT_DATA);
@@ -37,15 +34,6 @@ export async function exportUserDataAdmin(userId: string): Promise<ActionState> 
 		if (!exportData) {
 			return notFound("Utilisateur");
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: USER_AUDIT_ACTIONS.EXPORT_DATA,
-			targetType: "user",
-			targetId: userId,
-			metadata: { userEmail: exportData.profile.email },
-		});
 
 		return success("Données exportées avec succès", exportData);
 	} catch (e) {

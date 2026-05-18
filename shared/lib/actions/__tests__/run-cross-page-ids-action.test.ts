@@ -16,7 +16,10 @@ const { mockRequireAdmin, mockEnforceRateLimit, mockHandleActionError, mockSucce
 		mockError: vi.fn((message: string) => ({ status: "ERROR", message })),
 	}));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
+	requireAdminWithUser: mockRequireAdmin,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));

@@ -68,7 +68,7 @@ export function RemoveWishlistItemAlertDialog() {
 			removeDialog.close();
 
 			// Toast de confirmation empathique avec undo 5s
-			toast.success("Article retiré de votre wishlist", {
+			toast.success("Article retiré de vos favoris", {
 				description: "Vous pourrez toujours le retrouver dans nos créations.",
 				duration: 5000,
 				action: productId
@@ -108,7 +108,7 @@ export function RemoveWishlistItemAlertDialog() {
 					<input type="hidden" name="productId" value={removeDialog.data?.productId ?? ""} />
 
 					<AlertDialogHeader>
-						<AlertDialogTitle>Retirer ce produit de votre wishlist ?</AlertDialogTitle>
+						<AlertDialogTitle>Retirer ce produit de vos favoris ?</AlertDialogTitle>
 						<AlertDialogDescription asChild>
 							<div className="space-y-3">
 								<p>
@@ -118,10 +118,10 @@ export function RemoveWishlistItemAlertDialog() {
 											<span className="text-foreground font-medium">
 												{removeDialog.data.itemName}
 											</span>{" "}
-											de votre wishlist ?
+											de vos favoris ?
 										</>
 									) : (
-										"Vous voulez vraiment retirer ce produit de votre wishlist ?"
+										"Vous voulez vraiment retirer ce produit de vos favoris ?"
 									)}
 								</p>
 								<p className="text-muted-foreground text-sm">

@@ -131,7 +131,6 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 		{
 			id: "cart",
 			label: "Panier",
-			href: ROUTES.SHOP.CART,
 			icon: ShoppingBag,
 			isActive: false,
 			type: "button" as const,

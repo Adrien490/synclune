@@ -11,9 +11,10 @@
 @import "./styles/scroll-driven.css";
 @import "./styles/components.css";
 
-/* Focus ring centralisé (WCAG 2.4.7) — outline 2px sur token --ring */
+/* Focus ring centralisé (WCAG 2.4.7) — style shadcn (border + ring 3px sur token --ring)
+ * SSOT pour tous les éléments focusables. Aligné sur Button/Input pour cohérence DS. */
 @utility focus-ring {
-	@apply focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2;
+	@apply focus-visible:border-ring focus-visible:ring-ring outline-none focus-visible:ring-[3px];
 }
 
 html {
@@ -106,7 +107,11 @@ html[data-keyboard="open"] [data-hide-on-keyboard] {
 }
 
 @theme inline {
-	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
+	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, mini Android).
+	 * Usage : préfixe `xs:` Tailwind sur classes qui doivent s'activer dès 375px
+	 * (avant le `sm:` standard à 640px). Réservé aux composants où le viewport
+	 * 360-374px nécessite un fallback distinct (announcement-bar, empty state,
+	 * input-group small variant, media-upload-grid, skeleton xs). */
 	--breakpoint-xs: 375px;
 
 	--font-sans: var(--font-sans);
@@ -264,8 +269,8 @@ html[data-keyboard="open"] [data-hide-on-keyboard] {
 
 	--muted: oklch(0.94 0.01 270);
 	--muted-foreground: oklch(
-		0.55 0.01 270
-	); /* Augmenté de 0.48 à 0.55 pour WCAG AAA (ratio 4.5:1+) */
+		0.45 0.01 270
+	); /* WCAG AA (ratio 6:1+ sur --background) — aligné sur --sidebar-muted-foreground */
 
 	--destructive: oklch(0.59 0.17 25);
 	--destructive-foreground: oklch(1 0 0);

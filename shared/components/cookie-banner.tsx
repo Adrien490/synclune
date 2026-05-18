@@ -113,14 +113,14 @@ export function CookieBanner() {
 							<div className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
 								<Link
 									href="/cookies"
-									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none hover:no-underline focus-visible:rounded-sm focus-visible:ring-2"
+									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none focus-visible:rounded-sm focus-visible:ring-2"
 									aria-label="En savoir plus sur les cookies"
 								>
 									En savoir plus
 								</Link>
 								<Link
 									href="/confidentialite"
-									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none hover:no-underline focus-visible:rounded-sm focus-visible:ring-2"
+									className="text-foreground focus-visible:ring-ring/50 py-1 underline outline-none focus-visible:rounded-sm focus-visible:ring-2"
 								>
 									Politique de confidentialité
 								</Link>

@@ -37,6 +37,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -89,10 +90,6 @@ vi.mock("@/modules/orders/constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
 		HISTORY: (id: string) => `order-history-${id}`,
 	},
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { resendOrderEmail } from "../resend-order-email";

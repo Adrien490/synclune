@@ -68,8 +68,8 @@ export async function Navbar() {
 
 	// Featured products for the mega menu (up to 2 recent products with images).
 	// "Nouveau" badge eligibility computed via isProductNew helper.
+	// recentProducts is already capped to 2 via getRecentProducts({ limit: 2 }) above.
 	const featuredProducts = recentProducts
-		.slice(0, 2)
 		.map((p) => {
 			const { sku, image } = extractProductImage(p);
 			return {
@@ -113,7 +113,7 @@ export async function Navbar() {
 					tabIndex={-1}
 					className="outline-none motion-safe:transition-all motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
 				>
-					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+					<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
 						<div
 							className={cn(
 								"flex h-16 items-center gap-4 sm:h-20",

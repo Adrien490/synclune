@@ -1,15 +1,6 @@
-import { Button } from "@/shared/components/ui/button";
-import {
-	Empty,
-	EmptyContent,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@/shared/components/ui/empty";
 import { WishlistListContent } from "./wishlist-list-content";
+import { WishlistEmptyState } from "./wishlist-empty-state";
 import type { GetWishlistReturn } from "@/modules/wishlist/data/get-wishlist";
-import { Heart } from "lucide-react";
-import Link from "next/link";
 
 interface WishlistListProps {
 	wishlistPromise: Promise<GetWishlistReturn>;
@@ -29,30 +20,7 @@ export async function WishlistList({ wishlistPromise, perPage }: WishlistListPro
 
 	// Empty state si aucun item
 	if (items.length === 0) {
-		return (
-			<Empty className="mt-4 mb-12 sm:my-12">
-				<EmptyHeader>
-					<EmptyMedia variant="icon">
-						<Heart className="size-6" />
-					</EmptyMedia>
-					<EmptyTitle>Votre wishlist est vide</EmptyTitle>
-				</EmptyHeader>
-				<EmptyContent>
-					<p className="text-muted-foreground mb-6 max-w-md">
-						Découvrez nos créations artisanales et ajoutez vos coups de cœur à votre wishlist pour
-						les retrouver facilement.
-					</p>
-					<div className="flex flex-col gap-3 sm:flex-row">
-						<Button asChild variant="primary" size="lg">
-							<Link href="/produits">Découvrir nos créations</Link>
-						</Button>
-						<Button asChild variant="outline" size="lg">
-							<Link href="/collections">Voir les collections</Link>
-						</Button>
-					</div>
-				</EmptyContent>
-			</Empty>
-		);
+		return <WishlistEmptyState />;
 	}
 
 	// Déléguer au Client Component pour les optimistic updates

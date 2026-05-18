@@ -5,8 +5,7 @@ import { updateTag } from "next/cache";
 import { extendDiscountValiditySchema } from "../schemas/discount.schemas";
 import { DISCOUNT_ERROR_MESSAGES } from "../constants/discount.constants";
 import type { ActionState } from "@/shared/types/server-action";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -38,10 +37,8 @@ export async function extendDiscountValidity(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.EXTEND_VALIDITY);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -78,20 +75,6 @@ export async function extendDiscountValidity(
 		});
 
 		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "discount.extendValidity",
-			targetType: "discount",
-			targetId: id,
-			metadata: {
-				code: discount.code,
-				days,
-				previousEndsAt: discount.endsAt.toISOString(),
-				newEndsAt: newEndsAt.toISOString(),
-			},
-		});
 
 		return success(`Code "${discount.code}" prolongé de ${days} jour(s)`);
 	} catch (e) {

@@ -29,6 +29,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -45,7 +46,6 @@ vi.mock("@/shared/lib/actions", () => ({
 		return typeof v === "string" ? v : null;
 	},
 }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: vi.fn() }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "Commande introuvable.",

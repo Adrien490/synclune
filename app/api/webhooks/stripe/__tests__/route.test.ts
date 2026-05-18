@@ -736,7 +736,13 @@ describe("POST /api/webhooks/stripe - failed processing", () => {
 
 describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	it("should send admin alert when attempts >= MAX_WEBHOOK_RETRY_ATTEMPTS - 1", async () => {
-		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so alert triggers when attempts >= 2
+		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so alert triggers when attempts >= 2.
+		// Realistic retry scenario: findUnique sees an existing FAILED record, so the
+		// post-upsert race-guard (existingEvent===null && attempts>=1) does NOT trigger.
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_alert",
+			status: WebhookEventStatus.FAILED,
+		});
 		mockDispatchEvent.mockRejectedValue(new Error("Persistent failure"));
 		mockPrisma.webhookEvent.upsert.mockResolvedValue(
 			makeWebhookRecord({ id: "wh_alert", attempts: 2 }),
@@ -758,7 +764,8 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	});
 
 	it("should NOT send admin alert when attempts < MAX_WEBHOOK_RETRY_ATTEMPTS - 1", async () => {
-		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so NO alert when attempts < 2
+		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so NO alert when attempts < 2.
+		// First failure: no existing record, upsert hits create branch (attempts=0).
 		mockDispatchEvent.mockRejectedValue(new Error("First failure"));
 		mockPrisma.webhookEvent.upsert.mockResolvedValue(
 			makeWebhookRecord({ id: "wh_no_alert", attempts: 0 }),
@@ -771,6 +778,11 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	});
 
 	it("should NOT send admin alert when attempts is 1 (below threshold)", async () => {
+		// Realistic retry: findUnique returns existing FAILED to bypass race-guard.
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_no_alert_2",
+			status: WebhookEventStatus.FAILED,
+		});
 		mockDispatchEvent.mockRejectedValue(new Error("Second failure"));
 		mockPrisma.webhookEvent.upsert.mockResolvedValue(
 			makeWebhookRecord({ id: "wh_no_alert_2", attempts: 1 }),
@@ -783,6 +795,10 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	});
 
 	it("should still mark event as FAILED even when alert is sent", async () => {
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_failed_alerted",
+			status: WebhookEventStatus.FAILED,
+		});
 		mockDispatchEvent.mockRejectedValue(new Error("Persistent failure"));
 		mockSendWebhookFailedAlert.mockResolvedValue({ success: true });
 		mockPrisma.webhookEvent.upsert.mockResolvedValue(

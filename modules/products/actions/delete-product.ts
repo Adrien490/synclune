@@ -3,7 +3,6 @@
 import { updateTag } from "next/cache";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -34,7 +33,6 @@ export async function deleteProduct(
 		// 1. Verification des droits admin
 		const admin = await requireAdminWithUser();
 		if ("error" in admin) return admin.error;
-		const { user: adminUser } = admin;
 
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_DELETE_LIMIT);
@@ -141,14 +139,6 @@ export async function deleteProduct(
 		}
 
 		// 10. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.delete",
-			targetType: "product",
-			targetId: productId,
-			metadata: { title: existingProduct.title, slug: existingProduct.slug },
-		});
 
 		// 11. Success
 		return success(`Produit "${existingProduct.title}" supprimé avec succès.`, {

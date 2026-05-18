@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -12,7 +12,6 @@ import {
 	notFound,
 	safeFormGet,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
@@ -36,10 +35,8 @@ export async function duplicateProductType(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.DUPLICATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -81,15 +78,6 @@ export async function duplicateProductType(
 				isActive: false,
 				isSystem: false,
 			},
-		});
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "productType.duplicate",
-			targetType: "productType",
-			targetId: duplicate.id,
-			metadata: { originalId: productTypeId, label: duplicate.label },
 		});
 
 		getProductTypeInvalidationTags(duplicate.slug).forEach((tag) => updateTag(tag));

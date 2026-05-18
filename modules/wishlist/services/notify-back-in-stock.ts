@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendBackInStockEmail } from "@/modules/emails/services/wishlist-emails";
@@ -88,97 +89,116 @@ async function sendNotification(item: NotifyItem, productId: string): Promise<bo
  * `backInStockNotifiedAt: null` queue for a subsequent restock event.
  */
 export async function notifyBackInStock(productId: string): Promise<void> {
-	const failedItems: NotifyItem[] = [];
+	return Sentry.startSpan(
+		{ name: "wishlist.notify-back-in-stock", attributes: { productId } },
+		async (span) => {
+			const failedItems: NotifyItem[] = [];
+			let processed = 0;
+			let errored = 0;
+			let retryRecovered = 0;
+			let batchesScanned = 0;
 
-	try {
-		let cursor: string | undefined;
-		let hasMore = true;
+			try {
+				let cursor: string | undefined;
+				let hasMore = true;
 
-		while (hasMore) {
-			const wishlistItems = await prisma.wishlistItem.findMany({
-				where: {
-					productId,
-					backInStockNotifiedAt: null,
-					wishlist: {
-						userId: { not: null },
-						user: { deletedAt: null },
-					},
-				},
-				select: NOTIFY_ITEM_SELECT,
-				take: NOTIFY_BATCH_SIZE,
-				...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-				orderBy: { id: "asc" },
-			});
-
-			if (wishlistItems.length === 0) break;
-
-			const notifiedItemIds: string[] = [];
-
-			for (const item of wishlistItems) {
-				const success = await sendNotification(item, productId);
-				if (success) {
-					notifiedItemIds.push(item.id);
-				} else {
-					failedItems.push(item);
-				}
-			}
-
-			if (notifiedItemIds.length > 0) {
-				await prisma.wishlistItem.updateMany({
-					where: { id: { in: notifiedItemIds } },
-					data: { backInStockNotifiedAt: new Date() },
-				});
-			}
-
-			hasMore = wishlistItems.length === NOTIFY_BATCH_SIZE;
-			cursor = wishlistItems[wishlistItems.length - 1]!.id;
-		}
-
-		// Single retry pass for items whose first send failed.
-		// Avoids losing notifications when Resend hiccups during the main loop —
-		// items not retried here remain `backInStockNotifiedAt: null` and would
-		// be skipped on this run's cursor (already past), so the retry is the
-		// last chance to deliver within this restock event.
-		if (failedItems.length > 0) {
-			logger.info(`Retrying ${failedItems.length} failed back-in-stock notifications`, {
-				service: "back-in-stock",
-				productId,
-			});
-
-			const retrySuccessIds: string[] = [];
-
-			for (const item of failedItems) {
-				const success = await sendNotification(item, productId);
-				if (success) {
-					retrySuccessIds.push(item.id);
-				} else {
-					captureWishlistError(
-						new Error("Permanent back-in-stock notification failure after retry"),
-						{
-							service: "back-in-stock",
-							stage: "retry-exhausted",
+				while (hasMore) {
+					const wishlistItems = await prisma.wishlistItem.findMany({
+						where: {
 							productId,
-							wishlistItemId: item.id,
+							backInStockNotifiedAt: null,
+							wishlist: {
+								userId: { not: null },
+								user: { deletedAt: null },
+							},
 						},
-					);
-				}
-			}
+						select: NOTIFY_ITEM_SELECT,
+						take: NOTIFY_BATCH_SIZE,
+						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+						orderBy: { id: "asc" },
+					});
 
-			if (retrySuccessIds.length > 0) {
-				await prisma.wishlistItem.updateMany({
-					where: { id: { in: retrySuccessIds } },
-					data: { backInStockNotifiedAt: new Date() },
+					if (wishlistItems.length === 0) break;
+
+					batchesScanned += 1;
+					const notifiedItemIds: string[] = [];
+
+					for (const item of wishlistItems) {
+						const success = await sendNotification(item, productId);
+						if (success) {
+							notifiedItemIds.push(item.id);
+							processed += 1;
+						} else {
+							failedItems.push(item);
+						}
+					}
+
+					if (notifiedItemIds.length > 0) {
+						await prisma.wishlistItem.updateMany({
+							where: { id: { in: notifiedItemIds } },
+							data: { backInStockNotifiedAt: new Date() },
+						});
+					}
+
+					hasMore = wishlistItems.length === NOTIFY_BATCH_SIZE;
+					cursor = wishlistItems[wishlistItems.length - 1]!.id;
+				}
+
+				// Single retry pass for items whose first send failed.
+				// Avoids losing notifications when Resend hiccups during the main loop —
+				// items not retried here remain `backInStockNotifiedAt: null` and would
+				// be skipped on this run's cursor (already past), so the retry is the
+				// last chance to deliver within this restock event.
+				if (failedItems.length > 0) {
+					logger.info(`Retrying ${failedItems.length} failed back-in-stock notifications`, {
+						service: "back-in-stock",
+						productId,
+					});
+
+					const retrySuccessIds: string[] = [];
+
+					for (const item of failedItems) {
+						const success = await sendNotification(item, productId);
+						if (success) {
+							retrySuccessIds.push(item.id);
+							retryRecovered += 1;
+							processed += 1;
+						} else {
+							errored += 1;
+							captureWishlistError(
+								new Error("Permanent back-in-stock notification failure after retry"),
+								{
+									service: "back-in-stock",
+									stage: "retry-exhausted",
+									productId,
+									wishlistItemId: item.id,
+								},
+							);
+						}
+					}
+
+					if (retrySuccessIds.length > 0) {
+						await prisma.wishlistItem.updateMany({
+							where: { id: { in: retrySuccessIds } },
+							data: { backInStockNotifiedAt: new Date() },
+						});
+					}
+				}
+			} catch (outerError) {
+				captureWishlistError(outerError, {
+					service: "back-in-stock",
+					stage: "outer-loop",
+					productId,
 				});
+				logger.error("Failed to process back-in-stock notifications", outerError, {
+					service: "back-in-stock",
+				});
+			} finally {
+				span.setAttribute("processed_count", processed);
+				span.setAttribute("errored_count", errored);
+				span.setAttribute("retry_recovered_count", retryRecovered);
+				span.setAttribute("batches_scanned", batchesScanned);
 			}
-		}
-	} catch (outerError) {
-		captureWishlistError(outerError, {
-			service: "back-in-stock",
-			stage: "outer-loop",
-			productId,
-		});
-		logger.error("Failed to process back-in-stock notifications", outerError, {
-			service: "back-in-stock",
-		});
-	}
+		},
+	);
 }

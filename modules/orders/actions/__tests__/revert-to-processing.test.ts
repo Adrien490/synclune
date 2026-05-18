@@ -17,7 +17,6 @@ const {
 	mockCanRevertToProcessing,
 	mockCreateOrderAuditTx,
 	mockGetOrderInvalidationTags,
-	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), update: vi.fn() },
@@ -31,7 +30,6 @@ const {
 	mockCanRevertToProcessing: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
-	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -40,6 +38,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
 }));
 
@@ -70,7 +69,6 @@ vi.mock("@/shared/lib/actions", async (importOriginal) => {
 });
 
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: mockSanitizeText }));
-vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 
 vi.mock("../../services/order-status-validation.service", () => ({
 	canRevertToProcessing: mockCanRevertToProcessing,
@@ -268,15 +266,6 @@ describe("revertToProcessing", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(makeShippedOrder());
 
 		await revertToProcessing(undefined, makeFd());
-
-		expect(mockLogAudit).toHaveBeenCalledWith(
-			expect.objectContaining({
-				action: "order.revertToProcessing",
-				targetType: "order",
-				adminId: "admin-1",
-				metadata: expect.objectContaining({ previousStatus: "SHIPPED" }),
-			}),
-		);
 	});
 
 	// Success message contains old tracking

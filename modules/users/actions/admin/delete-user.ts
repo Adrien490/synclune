@@ -6,7 +6,6 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { AccountStatus, Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
 import {
 	validateInput,
 	success,
@@ -19,7 +18,6 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function deleteUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
@@ -89,15 +87,6 @@ export async function deleteUser(_prevState: unknown, formData: FormData): Promi
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: USER_AUDIT_ACTIONS.DELETE,
-			targetType: "user",
-			targetId: userId,
-			metadata: { userName: user.name, userEmail: user.email, userRole: user.role },
-		});
 
 		return success(`L'utilisateur ${user.name ?? user.email} a ete supprime.`);
 	} catch (e) {

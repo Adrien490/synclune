@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 
 import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	validateInput,
 	handleActionError,
@@ -12,7 +12,6 @@ import {
 	error,
 	BusinessError,
 } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -23,10 +22,8 @@ import { deleteColorSchema } from "../schemas/color.schemas";
 export async function deleteColor(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
 		// 1. Admin authorization check
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.DELETE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -77,15 +74,6 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 		if (!existingColor) {
 			return error("Cette couleur n'existe pas");
 		}
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "color.delete",
-			targetType: "color",
-			targetId: validatedData.id,
-			metadata: { name: existingColor.name },
-		});
 
 		// Invalidate cache
 		const tags = getColorInvalidationTags(existingColor.slug);

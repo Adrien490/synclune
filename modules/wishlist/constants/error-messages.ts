@@ -16,11 +16,11 @@ export const PRODUCT_NOT_PUBLIC_SENTINEL = "PRODUCT_NOT_PUBLIC";
  */
 
 export const WISHLIST_ERROR_MESSAGES = {
-	WISHLIST_NOT_FOUND: "Votre liste de souhaits n'existe pas",
-	ITEM_NOT_FOUND: "Cet article n'est pas dans votre wishlist",
-	WISHLIST_FULL: "Votre wishlist est pleine (500 articles max)",
+	WISHLIST_NOT_FOUND: "Votre liste de favoris n'existe pas",
+	ITEM_NOT_FOUND: "Cet article n'est pas dans vos favoris",
+	WISHLIST_FULL: "Votre liste de favoris est pleine (500 articles max)",
 	PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible",
-	WISHLIST_ALREADY_EMPTY: "Votre wishlist est deja vide",
+	WISHLIST_ALREADY_EMPTY: "Votre liste de favoris est deja vide",
 	SKU_NOT_FOUND: "Variante introuvable",
 	SKU_INACTIVE: "Cette variante n'est plus disponible",
 	OUT_OF_STOCK: "Cet article n'est plus en stock",
@@ -33,9 +33,9 @@ export const WISHLIST_ERROR_MESSAGES = {
  * Messages informatifs
  */
 export const WISHLIST_INFO_MESSAGES = {
-	SIGN_IN_TO_SAVE: "Connectez-vous pour sauvegarder votre wishlist",
+	SIGN_IN_TO_SAVE: "Connectez-vous pour sauvegarder vos favoris",
 	GUEST_WISHLIST_EXPIRES: (days: number) =>
-		`Votre wishlist expirera dans ${days} jour${days > 1 ? "s" : ""}`,
-	NO_GUEST_WISHLIST: "Aucune wishlist visiteur à fusionner",
+		`Vos favoris expireront dans ${days} jour${days > 1 ? "s" : ""}`,
+	NO_GUEST_WISHLIST: "Aucun favori visiteur à fusionner",
 	NO_ITEMS_TO_MERGE: "Aucun article à fusionner",
 } as const;

@@ -11,7 +11,6 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
-import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateOrderBillingAddressSchema } from "../schemas/order.schemas";
@@ -156,17 +155,6 @@ export async function updateOrderBillingAddress(
 		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
 			updateTag(tag),
 		);
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "order.updateBillingAddress",
-			targetType: "order",
-			targetId: order.id,
-			metadata: {
-				orderNumber: order.orderNumber,
-			},
-		});
 
 		return {
 			status: ActionStatus.SUCCESS,

@@ -3,14 +3,13 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { MATERIALS_CACHE_TAGS, getMaterialInvalidationTags } from "../constants/cache";
+import { getMaterialInvalidationTags } from "../constants/cache";
 import { mergeMaterialsSchema } from "../schemas/materials.schemas";
 
 /**
@@ -33,10 +32,8 @@ export async function mergeMaterials(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.MERGE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -100,35 +97,41 @@ export async function mergeMaterials(
 
 			await tx.material.delete({ where: { id: sourceId } });
 
+			// Tous les SKUs touchés (réassignés OU supprimés côté source) —
+			// leurs PDP affichent le matériau dans le badge/swatch et doivent
+			// recalculer côté storefront.
+			const affectedSkuIds = sourceLinks.map((l) => l.skuId);
+
 			return {
 				kind: "ok" as const,
 				source,
 				target,
 				reassignedCount: linksToReassign.length,
+				affectedSkuIds,
 			};
 		});
 
 		if (merged.kind === "source-missing") return notFound("Matériau source");
 		if (merged.kind === "target-missing") return notFound("Matériau cible");
 
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "material.merge",
-			targetType: "material",
-			targetId: merged.target.id,
-			metadata: {
-				sourceId: merged.source.id,
-				sourceName: merged.source.name,
-				targetId: merged.target.id,
-				targetName: merged.target.name,
-				reassignedSkus: merged.reassignedCount,
-			},
-		});
+		// Récupère les product slugs des SKUs touchés pour cascade PDP storefront.
+		// Sans cela, le PDP afficherait le nom/description du matériau source
+		// supprimé jusqu'à la prochaine mutation produit ou expiration `reference`.
+		const affectedProductSlugs =
+			merged.affectedSkuIds.length > 0
+				? await prisma.productSku
+						.findMany({
+							where: { id: { in: merged.affectedSkuIds }, deletedAt: null },
+							select: { product: { select: { slug: true } } },
+							distinct: ["productId"],
+						})
+						.then((skus) => skus.map((s) => s.product.slug).filter(Boolean))
+				: [];
 
-		const tagSet = new Set(getMaterialInvalidationTags());
-		tagSet.add(MATERIALS_CACHE_TAGS.DETAIL(merged.source.slug));
-		tagSet.add(MATERIALS_CACHE_TAGS.DETAIL(merged.target.slug));
+		const tagSet = new Set<string>([
+			...getMaterialInvalidationTags({ slug: merged.source.slug, affectedProductSlugs }),
+			...getMaterialInvalidationTags({ slug: merged.target.slug, affectedProductSlugs }),
+		]);
 		tagSet.forEach((tag) => updateTag(tag));
 
 		return success(

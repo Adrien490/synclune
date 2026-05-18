@@ -21,6 +21,7 @@ import {
 	DiscoverSection,
 	UserHeader,
 } from "./menu-sheet-nav-sections";
+import { VAUL_EXIT_DURATION_MS } from "./navbar-styles";
 
 // Motion variants for staggered menu items (enter + exit)
 const itemVariants: Variants = {
@@ -105,8 +106,8 @@ export function MenuSheetNav({
 
 		sheetContent.addEventListener("transitionend", onTransitionEnd);
 		// Safety fallback: if transitionend never fires (interrupted by reflow),
-		// focus after ~450ms anyway. Slightly longer than Vaul's exit animation.
-		const fallback = setTimeout(applyFocus, 450);
+		// focus once Vaul's exit animation should have completed.
+		const fallback = setTimeout(applyFocus, VAUL_EXIT_DURATION_MS);
 		return () => {
 			sheetContent.removeEventListener("transitionend", onTransitionEnd);
 			clearTimeout(fallback);
@@ -175,6 +176,7 @@ export function MenuSheetNav({
 					<SheetClose asChild>
 						<Link
 							href={ROUTES.ADMIN.ROOT}
+							prefetch={null}
 							className={cn(
 								"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
 								"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",

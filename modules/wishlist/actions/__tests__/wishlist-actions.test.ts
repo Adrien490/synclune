@@ -228,7 +228,10 @@ describe("addToWishlist", () => {
 		expect(result.message).toContain("Ajoute");
 	});
 
-	it("should return already exists when item is duplicate", async () => {
+	it("should return already exists when item is duplicate (P2002 race)", async () => {
+		// Post-refactor: duplicate detection passe désormais par le P2002 race handler
+		// (le service ne fait plus de findFirst pré-check — le @@unique(wishlistId, productId)
+		// est la source de vérité). UX message inchangé "Deja dans votre wishlist".
 		setupAuthenticatedUser();
 		mockPrisma.product.findUnique.mockResolvedValue({
 			id: VALID_PRODUCT_ID,
@@ -239,9 +242,12 @@ describe("addToWishlist", () => {
 		);
 		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
 		mockPrisma.wishlistItem.count.mockResolvedValue(10);
-		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
-			id: "existing-item",
-		});
+		mockPrisma.wishlistItem.create.mockRejectedValue(
+			new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+				code: "P2002",
+				clientVersion: "6.0.0",
+			}),
+		);
 
 		const result = await addToWishlist(undefined, createFormData({ productId: VALID_PRODUCT_ID }));
 
@@ -381,7 +387,7 @@ describe("removeFromWishlist", () => {
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toBe("Retire de votre wishlist");
+		expect(result.message).toBe("Retire de vos favoris");
 	});
 
 	it("should return item not found message when deleteMany count is 0", async () => {
@@ -450,7 +456,7 @@ describe("removeFromWishlist", () => {
 		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toBe("Retire de votre wishlist");
+		expect(result.message).toBe("Retire de vos favoris");
 	});
 
 	it("should return error when rate limited", async () => {
@@ -480,6 +486,10 @@ describe("toggleWishlistItem", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		setupDefaults();
+		// Reset wishlist.findFirst implementation explicitly to avoid leakage from
+		// removeFromWishlist describe block (which configured it to return {id:"wishlist-1"})
+		// — vi.clearAllMocks() resets call history but NOT mock implementations.
+		mockPrisma.wishlist.findFirst.mockReset();
 	});
 
 	it("should return error when no userId and no sessionId", async () => {
@@ -547,18 +557,14 @@ describe("toggleWishlistItem", () => {
 
 	it("should remove item when already in wishlist", async () => {
 		setupAuthenticatedUser();
-		mockPrisma.product.findUnique.mockResolvedValue({
-			id: VALID_PRODUCT_ID,
-			status: "PUBLIC",
-		});
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "wishlist-1" });
-		mockPrisma.wishlistItem.count.mockResolvedValue(5);
-		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
-			id: "existing-item",
-			productId: VALID_PRODUCT_ID,
+		// Post-refactor: toggle utilise wishlist.findFirst avec items nested au lieu
+		// de wishlistItem.findFirst (1 query au lieu de 2).
+		mockPrisma.wishlist.findFirst.mockResolvedValue({
+			id: "wishlist-1",
+			items: [{ id: "existing-item" }],
 		});
 		mockPrisma.wishlistItem.delete.mockResolvedValue({});
 		mockPrisma.wishlist.update.mockResolvedValue({});
@@ -571,6 +577,8 @@ describe("toggleWishlistItem", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Retire");
 		expect(result.data).toEqual(expect.objectContaining({ action: "removed" }));
+		// Path remove: produit n'est PAS validé (service add non appelé)
+		expect(mockPrisma.product.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("should return error when wishlist is full and trying to add", async () => {
@@ -622,18 +630,13 @@ describe("toggleWishlistItem", () => {
 
 	it("should successfully toggle (remove) as guest", async () => {
 		setupGuestUser();
-		mockPrisma.product.findUnique.mockResolvedValue({
-			id: VALID_PRODUCT_ID,
-			status: "PUBLIC",
-		});
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.wishlist.upsert.mockResolvedValue({ id: "guest-wishlist-1" });
-		mockPrisma.wishlistItem.count.mockResolvedValue(5);
-		mockPrisma.wishlistItem.findFirst.mockResolvedValue({
-			id: "existing-item",
-			productId: VALID_PRODUCT_ID,
+		// Post-refactor: toggle utilise wishlist.findFirst avec items nested.
+		mockPrisma.wishlist.findFirst.mockResolvedValue({
+			id: "guest-wishlist-1",
+			items: [{ id: "existing-item" }],
 		});
 		mockPrisma.wishlistItem.delete.mockResolvedValue({});
 		mockPrisma.wishlist.update.mockResolvedValue({});

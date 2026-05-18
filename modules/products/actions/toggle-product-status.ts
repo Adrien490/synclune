@@ -1,8 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { logAudit } from "@/shared/lib/audit-log";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
@@ -32,10 +31,8 @@ export async function toggleProductStatus(
 ): Promise<ActionState> {
 	try {
 		// 1. Verification des droits admin
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		// 1.1 Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -163,14 +160,6 @@ export async function toggleProductStatus(
 		};
 
 		// 9. Audit log
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "product.toggleStatus",
-			targetType: "product",
-			targetId: productId,
-			metadata: { title: existingProduct.title, oldStatus: currentStatus, newStatus },
-		});
 
 		// 10. Success (avec warning si applicable)
 		const successMessage = warningMessage

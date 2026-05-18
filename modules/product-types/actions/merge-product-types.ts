@@ -3,9 +3,8 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error, notFound } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -31,10 +30,8 @@ export async function mergeProductTypes(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.MERGE);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -87,21 +84,6 @@ export async function mergeProductTypes(
 		}
 
 		const total = merged.reassignedProducts;
-
-		void logAudit({
-			adminId: adminUser.id,
-			adminName: adminUser.name ?? adminUser.email,
-			action: "productType.merge",
-			targetType: "productType",
-			targetId: merged.target.id,
-			metadata: {
-				sourceId: merged.source.id,
-				sourceLabel: merged.source.label,
-				targetId: merged.target.id,
-				targetLabel: merged.target.label,
-				reassignedProducts: merged.reassignedProducts,
-			},
-		});
 
 		const tagSet = new Set<string>([
 			...getProductTypeInvalidationTags(merged.source.slug),

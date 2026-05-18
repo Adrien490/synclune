@@ -36,6 +36,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 	requireAdminWithUser: mockRequireAdmin,
 }));
 
@@ -83,10 +84,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 vi.mock("../../../constants/cache", () => ({
 	USERS_CACHE_TAGS: { ACCOUNTS_LIST: "accounts-list" },
 	getUserFullInvalidationTags: mockGetUserFullInvalidationTags,
-}));
-
-vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
 }));
 
 import { restoreUser } from "../restore-user";

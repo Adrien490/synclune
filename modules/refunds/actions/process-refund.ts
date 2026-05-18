@@ -1,13 +1,12 @@
 "use server";
 
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
-import { logAudit } from "@/shared/lib/audit-log";
 import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
@@ -68,10 +67,8 @@ export async function processRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdminWithUser();
+		const auth = await requireAdmin();
 		if ("error" in auth) return auth.error;
-		const { user: adminUser } = auth;
-
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -230,19 +227,6 @@ export async function processRefund(
 			updateTag(REFUNDS_CACHE_TAGS.LIST);
 			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
 			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
-			void logAudit({
-				adminId: adminUser.id,
-				adminName: adminUser.name ?? adminUser.email,
-				action: "refund.process.pending",
-				targetType: "refund",
-				targetId: id,
-				metadata: {
-					orderId: refundData.refund.order_id,
-					orderNumber: refundData.refund.order_number,
-					amount: refundData.refund.amount,
-					stripeRefundId: stripeResult.refundId,
-				},
-			});
 
 			return {
 				status: ActionStatus.SUCCESS,
@@ -371,21 +355,6 @@ export async function processRefund(
 				}
 			}
 			// Audit log
-			void logAudit({
-				adminId: adminUser.id,
-				adminName: adminUser.name ?? adminUser.email,
-				action: "refund.process",
-				targetType: "refund",
-				targetId: id,
-				metadata: {
-					orderId: refundData.refund.order_id,
-					orderNumber: refundData.refund.order_number,
-					amount: refundData.refund.amount,
-					stripeRefundId: stripeResult.refundId,
-					restockedItems: actualRestockedCount,
-					restockedItemsRequested: restockBySkuId.size,
-				},
-			});
 
 			// Envoyer l'email de confirmation au client (non bloquant)
 			// Le webhook charge.refunded sert de filet de sécurité — la
