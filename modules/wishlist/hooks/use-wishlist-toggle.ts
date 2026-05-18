@@ -153,11 +153,31 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 				: null;
 		lastProductIdRef.current = productId;
 
-		startTransition(() => {
-			// Utilise la ref pour lire l'état actuel (évite closure stale)
-			const currentState = isInWishlistRef.current;
-			const newState = !currentState;
+		// Utilise la ref pour lire l'état actuel (évite closure stale)
+		const currentState = isInWishlistRef.current;
+		const newState = !currentState;
 
+		// Fire-and-forget de l'event d'animation AVANT le startTransition : le
+		// listener `FlyHeartToBadgeLayer` fait `setHearts(...)`, qui serait flaggé
+		// update « transition » par React 19 s'il était dispatché dans le scope du
+		// startTransition (batché avec la mutation `formAction`, render différé par
+		// le scheduler → l'animation lague visuellement après le clic).
+		if (newState) {
+			const triggerRect = getTriggerRect?.();
+			if (triggerRect && typeof window !== "undefined") {
+				const detail: FlyHeartEventDetail = {
+					fromRect: {
+						top: triggerRect.top,
+						left: triggerRect.left,
+						width: triggerRect.width,
+						height: triggerRect.height,
+					},
+				};
+				window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
+			}
+		}
+
+		startTransition(() => {
 			triggerHaptic(newState ? "medium" : "light");
 
 			// Mise à jour optimistic de l'icône coeur
@@ -166,22 +186,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
 			if (newState) {
 				incrementWishlist();
-
-				// Signature visuelle Synclune : mini-heart vole du bouton vers WishlistBadge.
-				// Le layer global FlyHeartToBadgeLayer écoute cet event. No-op si pas monté
-				// ou si prefers-reduced-motion (géré par le layer).
-				const triggerRect = getTriggerRect?.();
-				if (triggerRect && typeof window !== "undefined") {
-					const detail: FlyHeartEventDetail = {
-						fromRect: {
-							top: triggerRect.top,
-							left: triggerRect.left,
-							width: triggerRect.width,
-							height: triggerRect.height,
-						},
-					};
-					window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
-				}
 			} else {
 				decrementWishlist();
 				// Notifier la liste parente pour suppression visuelle immédiate
