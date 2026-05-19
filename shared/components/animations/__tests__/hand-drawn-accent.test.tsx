@@ -50,7 +50,7 @@ vi.mock("@/shared/utils/cn", () => ({
 // IMPORT UNDER TEST
 // ============================================================================
 
-import { HandDrawnAccent, HandDrawnUnderline, HandDrawnCircle } from "../hand-drawn-accent";
+import { HandDrawnAccent, HandDrawnUnderline } from "../hand-drawn-accent";
 
 describe("HandDrawnAccent", () => {
 	beforeEach(() => {
@@ -139,21 +139,5 @@ describe("HandDrawnUnderline", () => {
 		// m.path rendered with animated attribute
 		const path = container.querySelector("path")!;
 		expect(path).toHaveAttribute("stroke", "var(--primary)");
-	});
-});
-
-describe("HandDrawnCircle", () => {
-	beforeEach(() => {
-		mockReducedMotion.value = false;
-	});
-
-	afterEach(cleanup);
-
-	it('renders with variant="circle" and default secondary color', () => {
-		const { container } = render(<HandDrawnCircle />);
-		const svg = container.querySelector("svg")!;
-		expect(svg).toHaveAttribute("viewBox", "0 0 100 95");
-		const path = container.querySelector("path")!;
-		expect(path).toHaveAttribute("stroke", "var(--secondary)");
 	});
 });

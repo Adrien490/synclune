@@ -6,11 +6,16 @@ import { useRef } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 
+export type HandDrawnVariant = "underline" | "circle" | "star" | "heart" | "arrow";
+
+/** Opacité de remplissage pour les variants pleins (star, heart) après animation du contour */
+const FILLED_VARIANT_OPACITY = 0.15;
+
 export interface HandDrawnAccentProps {
 	/**
 	 * Type d'accent dessiné
 	 */
-	variant?: "underline" | "circle" | "star" | "heart" | "arrow";
+	variant?: HandDrawnVariant;
 	/**
 	 * Couleur de l'accent (CSS color value)
 	 */
@@ -50,7 +55,7 @@ export interface HandDrawnAccentProps {
  * Tendance 2026: Hand-drawn aesthetic + artisanal authenticity
  */
 const svgPaths: Record<
-	string,
+	HandDrawnVariant,
 	{ path: string; viewBox: string; defaultWidth: number; defaultHeight: number }
 > = {
 	underline: {
@@ -89,7 +94,7 @@ const svgPaths: Record<
  * Composant SVG décoratif "fait main" avec animation de dessin
  *
  * Utilise stroke-dashoffset pour créer un effet de dessin au scroll.
- * Respecte prefers-reduced-m.
+ * Respecte prefers-reduced-motion.
  *
  * @example
  * ```tsx
@@ -110,18 +115,26 @@ export function HandDrawnAccent({
 	strokeWidth = 2,
 	width,
 	height,
-	duration = 0.5,
+	duration = MOTION_CONFIG.duration.slower,
 	delay = 0,
 	inView = true,
 	className,
 }: HandDrawnAccentProps) {
 	const ref = useRef<SVGSVGElement>(null);
-	const isInView = useInView(ref, { once: true, amount: 0.5 });
+	const isInView = useInView(ref, {
+		once: true,
+		amount: 0.3,
+		margin: "-50px",
+	});
 	const shouldReduceMotion = useReducedMotion();
 
-	const config = svgPaths[variant]!;
+	const config = svgPaths[variant];
 	const finalWidth = width ?? config.defaultWidth;
 	const finalHeight = height ?? config.defaultHeight;
+
+	const isFilledVariant = variant === "star" || variant === "heart";
+	const fillValue = isFilledVariant ? color : "none";
+	const filledOpacityValue = isFilledVariant ? FILLED_VARIANT_OPACITY : 0;
 
 	// Si reduced motion, afficher directement sans animation
 	if (shouldReduceMotion) {
@@ -142,8 +155,8 @@ export function HandDrawnAccent({
 					strokeWidth={strokeWidth}
 					strokeLinecap="round"
 					strokeLinejoin="round"
-					fill={variant === "star" || variant === "heart" ? color : "none"}
-					fillOpacity={variant === "star" || variant === "heart" ? 0.15 : 0}
+					fill={fillValue}
+					fillOpacity={filledOpacityValue}
 				/>
 			</svg>
 		);
@@ -169,7 +182,7 @@ export function HandDrawnAccent({
 				strokeWidth={strokeWidth}
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				fill={variant === "star" || variant === "heart" ? color : "none"}
+				fill={fillValue}
 				initial={{
 					pathLength: 0,
 					fillOpacity: 0,
@@ -178,7 +191,7 @@ export function HandDrawnAccent({
 					shouldAnimate
 						? {
 								pathLength: 1,
-								fillOpacity: variant === "star" || variant === "heart" ? 0.15 : 0,
+								fillOpacity: filledOpacityValue,
 							}
 						: {
 								pathLength: 0,
@@ -210,30 +223,5 @@ export function HandDrawnUnderline({
 	className,
 	...props
 }: Omit<HandDrawnAccentProps, "variant">) {
-	return (
-		<HandDrawnAccent
-			variant="underline"
-			color={color}
-			className={cn("mt-1", className)}
-			{...props}
-		/>
-	);
-}
-
-/**
- * Composant raccourci pour entourer un élément
- */
-export function HandDrawnCircle({
-	color = "var(--secondary)",
-	className,
-	...props
-}: Omit<HandDrawnAccentProps, "variant">) {
-	return (
-		<HandDrawnAccent
-			variant="circle"
-			color={color}
-			className={cn("absolute -inset-2", className)}
-			{...props}
-		/>
-	);
+	return <HandDrawnAccent variant="underline" color={color} className={className} {...props} />;
 }

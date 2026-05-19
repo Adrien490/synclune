@@ -2,12 +2,15 @@
 
 import { m, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
-import type { CSSProperties, RefObject } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useRef, useSyncExternalStore } from "react";
 import { cn } from "@/shared/utils/cn";
 import { cssSupports } from "@/shared/utils/css-supports";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { useMounted } from "@/shared/hooks/use-mounted";
+
+const INTENSITY_DEFAULT = 5;
+const INTENSITY_MAX = 15;
 
 const noopSubscribe = () => () => {};
 const getViewTimelineSupport = () => cssSupports("animation-timeline", "view()");
@@ -26,6 +29,39 @@ function useSupportsViewTimeline(): boolean {
 	return useSyncExternalStore(noopSubscribe, getViewTimelineSupport, getServerViewTimelineSupport);
 }
 
+/**
+ * Clamp `intensity` to a safe range and surface dev-only warnings for
+ * out-of-band values (negative, NaN, Infinity, above the cap).
+ *
+ * Returns 0 for any non-finite or negative input (caller falls back to the
+ * static branch — no CPU cost for an invalid animation).
+ */
+function clampIntensity(raw: number): number {
+	const isProd = process.env.NODE_ENV === "production";
+
+	if (!Number.isFinite(raw)) {
+		if (!isProd) {
+			console.warn(`[ParallaxImage] intensity=${raw} is not finite — disabling parallax.`);
+		}
+		return 0;
+	}
+	if (raw < 0) {
+		if (!isProd) {
+			console.warn(`[ParallaxImage] intensity=${raw} is negative — disabling parallax.`);
+		}
+		return 0;
+	}
+	if (raw > INTENSITY_MAX) {
+		if (!isProd) {
+			console.warn(
+				`[ParallaxImage] intensity=${raw} capped at ${INTENSITY_MAX} to prevent visual overflow.`,
+			);
+		}
+		return INTENSITY_MAX;
+	}
+	return raw;
+}
+
 interface ParallaxImageProps {
 	src: string;
 	alt: string;
@@ -33,7 +69,7 @@ interface ParallaxImageProps {
 	className?: string;
 	/** CSS classes on the outer container */
 	containerClassName?: string;
-	/** Parallax effect strength as a percentage (default: 5, max: 15) */
+	/** Parallax effect strength as a percentage (default: 5, max: 15, min: 0) */
 	intensity?: number;
 	/** Sizes attribute for responsive images */
 	sizes?: string;
@@ -47,15 +83,37 @@ interface ParallaxImageProps {
 	disableOnTouch?: boolean;
 }
 
-interface ParallaxInnerProps {
+interface ParallaxContainerProps {
 	containerRef: RefObject<HTMLDivElement | null>;
-	safeIntensity: number;
-	imageElement: React.ReactNode;
+	containerClassName?: string;
+	children: ReactNode;
 }
 
 /**
- * Inner component handling the parallax animation.
- * Isolates scroll hooks to avoid unnecessary listeners when disabled.
+ * Shared outer wrapper for all three render branches (static, CSS-native, JS).
+ * Owns the container ref, the relative positioning context and the
+ * overflow clipping that prevents oversized inner divs from leaking out.
+ */
+function ParallaxContainer({ containerRef, containerClassName, children }: ParallaxContainerProps) {
+	return (
+		<div
+			ref={containerRef}
+			className={cn("relative h-full w-full overflow-hidden", containerClassName)}
+		>
+			{children}
+		</div>
+	);
+}
+
+interface ParallaxInnerProps {
+	containerRef: RefObject<HTMLDivElement | null>;
+	safeIntensity: number;
+	imageElement: ReactNode;
+}
+
+/**
+ * Motion-react JS fallback used on browsers without `animation-timeline: view()`.
+ * `useTransform` is lazy — near-zero CPU cost when the container is off-screen.
  */
 function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxInnerProps) {
 	const { scrollYProgress } = useScroll({
@@ -63,12 +121,11 @@ function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxIn
 		offset: ["start end", "end start"],
 	});
 
-	// Parallax effect: Y translation based on scroll progress
 	const y = useTransform(scrollYProgress, [0, 1], [`-${safeIntensity}%`, `${safeIntensity}%`]);
 
 	return (
 		<m.div
-			role="presentation"
+			data-parallax="active"
 			className="absolute inset-x-0 w-full"
 			style={{
 				// Oversized container to prevent clipping during parallax
@@ -86,30 +143,39 @@ function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxIn
 /**
  * Image with a subtle parallax scroll effect.
  *
- * Respects prefers-reduced-motion (motion opt-in) and ensures hydration safety.
- * Uses useTransform which is lazy — near-zero CPU cost when off-screen.
+ * Three rendering branches selected at runtime:
+ *  1. **Static** — when motion is gated off (SSR, `prefers-reduced-motion`, touch,
+ *     or `safeIntensity === 0`). Zero JS, zero animation.
+ *  2. **CSS native** — when `animation-timeline: view()` is supported
+ *     (Chrome/Edge 115+, Safari 26+). The keyframe runs on the compositor thread
+ *     via the `.parallax-image-scroll` class (defined per-call-site by the consuming
+ *     stylesheet, e.g. `atelier-section.css`).
+ *  3. **Motion-react fallback** — `useScroll` + `useTransform` for older browsers.
  *
- * @param src - Image URL
- * @param alt - Alt text for accessibility
- * @param blurDataURL - Base64 blur placeholder
- * @param className - CSS classes for the image
- * @param containerClassName - CSS classes for the outer container
- * @param intensity - Effect strength (default: 5%, max: 15%)
- * @param sizes - Responsive sizes attribute
- * @param quality - Compression quality (default: 75)
- * @param preload - Preload for above-fold images
- * @param decorative - Purely decorative image (aria-hidden)
- * @param disableOnTouch - Disable parallax on touch devices (default: true)
+ * @a11y
+ *  - Respects `prefers-reduced-motion: reduce` (strict motion opt-in).
+ *  - `decorative` removes the image from the accessibility tree (`alt=""` + `aria-hidden`).
+ *  - Dev-only warning when `decorative=false` and `alt=""` (WCAG 1.1.1 fail).
+ *
+ * @performance
+ *  - `preload={false}` by default → lazy-loaded (use `preload` only for above-fold).
+ *  - `quality=75` aligns with the Synclune LCP profile.
+ *  - CSS-native branch uses `will-change: translate` (compositor layer).
  *
  * @example
  * ```tsx
  * <ParallaxImage
  *   src={IMAGES.ATELIER}
- *   alt="Atelier de creation Synclune"
+ *   alt="Atelier de création Synclune"
  *   blurDataURL={IMAGES.ATELIER_BLUR}
- *   intensity={8}
- *   sizes="(max-width: 768px) 100vw, 50vw"
+ *   intensity={7}
+ *   sizes="(max-width: 1024px) 100vw, 56rem"
  * />
+ * ```
+ *
+ * @example Purely decorative usage
+ * ```tsx
+ * <ParallaxImage src={...} alt="" decorative intensity={5} />
  * ```
  */
 export function ParallaxImage({
@@ -118,8 +184,8 @@ export function ParallaxImage({
 	blurDataURL,
 	className,
 	containerClassName,
-	intensity = 5,
-	sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 45vw",
+	intensity = INTENSITY_DEFAULT,
+	sizes = "100vw",
 	quality = 75,
 	preload = false,
 	decorative = false,
@@ -129,14 +195,19 @@ export function ParallaxImage({
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 	const supportsViewTimeline = useSupportsViewTimeline();
-
-	// Hydration safety: avoids useReducedMotion server/client mismatches
 	const isMounted = useMounted();
 
-	// Cap intensity to prevent overflow (max 15%)
-	const safeIntensity = Math.min(intensity, 15);
+	// Motion opt-in: animations only run when hydration is complete AND
+	// `prefers-reduced-motion` is explicitly false (not `null`, not `true`).
+	const motionIsAllowed = isMounted && shouldReduceMotion === false;
+	const safeIntensity = clampIntensity(intensity);
 
-	// Shared image element (avoids code duplication between branches)
+	if (process.env.NODE_ENV !== "production" && !decorative && alt === "") {
+		console.warn(
+			'[ParallaxImage] alt="" without decorative=true fails WCAG 1.1.1 — pass decorative={true} for purely visual images.',
+		);
+	}
+
 	const imageElement = (
 		<Image
 			src={src}
@@ -152,37 +223,28 @@ export function ParallaxImage({
 		/>
 	);
 
-	// Motion opt-in: only allow animation when mounted AND reduced-motion is explicitly false.
-	// This prevents a flash of animation for users with prefers-reduced-motion: reduce
-	// whose preference hasn't resolved yet on the first client render.
-	const motionIsAllowed = isMounted && shouldReduceMotion === false;
-	const shouldDisableParallax = !motionIsAllowed || (disableOnTouch && isTouchDevice);
+	// Fast-path: any condition that makes the animation pointless renders static.
+	// `safeIntensity === 0` covers explicit caller intent + invalid input fallthrough.
+	const shouldDisableParallax =
+		!motionIsAllowed || (disableOnTouch && isTouchDevice) || safeIntensity === 0;
 
 	if (shouldDisableParallax) {
 		return (
-			<div
-				ref={containerRef}
-				className={cn("relative h-full w-full overflow-hidden", containerClassName)}
-			>
+			<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
 				{imageElement}
-			</div>
+			</ParallaxContainer>
 		);
 	}
 
-	// Native CSS scroll-driven path: zero JS work on the main thread, animation runs on compositor.
-	// `animation-timeline: view()` is automatically scoped to the element entering/leaving the viewport.
 	if (supportsViewTimeline) {
 		const cssVars = {
 			"--parallax-from": `-${safeIntensity}%`,
 			"--parallax-to": `${safeIntensity}%`,
 		} as CSSProperties;
 		return (
-			<div
-				ref={containerRef}
-				className={cn("relative h-full w-full overflow-hidden", containerClassName)}
-			>
+			<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
 				<div
-					role="presentation"
+					data-parallax="active"
 					className="parallax-image-scroll absolute inset-x-0 w-full"
 					style={{
 						height: `${100 + safeIntensity * 2}%`,
@@ -192,20 +254,17 @@ export function ParallaxImage({
 				>
 					{imageElement}
 				</div>
-			</div>
+			</ParallaxContainer>
 		);
 	}
 
 	return (
-		<div
-			ref={containerRef}
-			className={cn("relative h-full w-full overflow-hidden", containerClassName)}
-		>
+		<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
 			<ParallaxInner
 				containerRef={containerRef}
 				safeIntensity={safeIntensity}
 				imageElement={imageElement}
 			/>
-		</div>
+		</ParallaxContainer>
 	);
 }

@@ -8,7 +8,7 @@
  */
 export function SignatureReveal() {
 	return (
-		<p className="signature-reveal pt-4 text-center" aria-label="Léane">
+		<p className="signature-reveal pt-4 text-center">
 			{/* Em dash drawn as SVG line */}
 			<svg
 				viewBox="0 0 30 4"

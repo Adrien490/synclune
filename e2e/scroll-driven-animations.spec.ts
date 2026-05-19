@@ -241,20 +241,21 @@ test.describe("Scroll-driven CSS animations", { tag: ["@slow"] }, () => {
 	});
 
 	test.describe("Parallax atelier image", () => {
-		test("parallax image is present and uses role=presentation", async ({ page }) => {
+		test("parallax image is present and exposes data-parallax wrapper when active", async ({
+			page,
+		}) => {
 			await page.goto("/");
 			await page.waitForLoadState("domcontentloaded");
 
 			const atelier = page.locator("#atelier-section");
 			await atelier.scrollIntoViewIfNeeded();
 
-			// Next.js <Image fill> within ParallaxImage container
-			const parallaxContainer = atelier.locator('[role="presentation"]').first();
+			const parallaxContainer = atelier.locator('[data-parallax="active"]').first();
 			// Motion is opt-in and disabled on touch devices, so presence is conditional.
 			// We assert the image itself is present as the primary guarantee.
 			const image = atelier.locator(`img[alt*="atelier de création Synclune"]`);
 			await expect(image).toBeVisible();
-			// role=presentation wrapper only mounts when parallax is active (desktop, motion allowed)
+			// data-parallax wrapper only mounts when parallax is active (desktop, motion allowed)
 			if ((await parallaxContainer.count()) > 0) {
 				await expect(parallaxContainer).toBeAttached();
 			}
@@ -274,7 +275,7 @@ test.describe("Scroll-driven CSS animations", { tag: ["@slow"] }, () => {
 			await expect(image).toBeVisible();
 
 			// With reduced motion, the parallax wrapper is not mounted
-			const parallaxWrapper = atelier.locator('[role="presentation"]');
+			const parallaxWrapper = atelier.locator('[data-parallax="active"]');
 			await expect(parallaxWrapper).toHaveCount(0);
 		});
 

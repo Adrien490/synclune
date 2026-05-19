@@ -10,19 +10,6 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@/shared/components/animations", () => ({
-	Reveal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/shared/components/animations/motion.config", () => ({
-	MOTION_CONFIG: {
-		section: {
-			title: { duration: 0 },
-			grid: { y: 0 },
-		},
-	},
-}));
-
 vi.mock("@/shared/components/placeholder-image", () => ({
 	PlaceholderImage: ({ label, className }: { label: string; className?: string }) => (
 		<div data-testid="placeholder-image" aria-label={label} className={className} />

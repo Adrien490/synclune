@@ -5,15 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { trackEvent } from "@/shared/lib/analytics/track";
 import { FLOAT_VARIANTS } from "./float-variants";
+import { PARALLAX_SPEED_MAX, PARALLAX_SPEED_MIN } from "./image-positions";
 import type { FloatingImageProps } from "./types";
 
 // Pointer-reactive depth: images with higher parallaxSpeed (perceived closer)
 // react more to cursor. Bounded ±4px to ±8px for subtle "floating" feel.
 const POINTER_DEPTH_MIN_PX = 4;
 const POINTER_DEPTH_MAX_PX = 8;
-const POINTER_SPEED_MIN = 45;
-const POINTER_SPEED_MAX = 105;
 const POINTER_SPRING = { stiffness: 120, damping: 20, mass: 0.4 } as const;
 
 export function FloatingImage({
@@ -39,7 +39,7 @@ export function FloatingImage({
 
 	const depth =
 		POINTER_DEPTH_MIN_PX +
-		((position.parallaxSpeed - POINTER_SPEED_MIN) / (POINTER_SPEED_MAX - POINTER_SPEED_MIN)) *
+		((position.parallaxSpeed - PARALLAX_SPEED_MIN) / (PARALLAX_SPEED_MAX - PARALLAX_SPEED_MIN)) *
 			(POINTER_DEPTH_MAX_PX - POINTER_DEPTH_MIN_PX);
 
 	const pointerXOffset = useTransform(pointerX, (v) => v * depth);
@@ -74,6 +74,13 @@ export function FloatingImage({
 		const y = ((event.clientY - rect.top) / rect.height) * 100;
 		event.currentTarget.style.setProperty("--mx", `${x}%`);
 		event.currentTarget.style.setProperty("--my", `${y}%`);
+	}
+
+	function handleClick() {
+		trackEvent("hero_floating_image_click", {
+			slug: image.slug,
+			position: position.idleAnimation,
+		});
 	}
 
 	return (
@@ -142,7 +149,8 @@ export function FloatingImage({
 						onPointerEnter={handlePointerEnter}
 						onPointerLeave={handlePointerLeave}
 						onPointerMove={handlePointerMove}
-						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]"
+						onClick={handleClick}
+						className="group relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]"
 						style={
 							{
 								"--img-glow": position.glowColor,
@@ -169,9 +177,6 @@ export function FloatingImage({
 							}}
 						/>
 
-						{/* Light reflection overlay */}
-						<div className="pointer-events-none absolute inset-0 z-10 bg-linear-to-b from-white/8 via-transparent to-transparent" />
-
 						<Image
 							src={image.url}
 							alt={image.alt}
@@ -184,16 +189,6 @@ export function FloatingImage({
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl}
 						/>
-
-						{/* Preview pill — product title on hover */}
-						<div
-							className="pointer-events-none absolute right-2 bottom-2 left-2 z-30 flex justify-center opacity-0 group-hover:translate-y-0 group-hover:opacity-100 motion-safe:translate-y-1 motion-safe:transition-[opacity,transform] motion-safe:delay-[var(--duration-fast)] motion-safe:duration-[var(--duration-slow)]"
-							aria-hidden="true"
-						>
-							<span className="bg-background/80 text-foreground max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-md">
-								{image.title}
-							</span>
-						</div>
 					</Link>
 				</m.div>
 			</div>

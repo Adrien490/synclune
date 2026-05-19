@@ -141,14 +141,14 @@ describe("CookieBanner — animation behavior", () => {
 		it("m.div is rendered with data-initial when banner should show", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			expect(motionDiv).toHaveAttribute("data-initial");
 		});
 
 		it("initial state has opacity:0 and y:20 when motion is enabled", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const initial = JSON.parse(motionDiv.getAttribute("data-initial")!);
 			expect(initial.opacity).toBe(0);
 			expect(initial.y).toBe(20);
@@ -157,7 +157,7 @@ describe("CookieBanner — animation behavior", () => {
 		it("animate state reaches opacity:1 and y:0", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const animate = JSON.parse(motionDiv.getAttribute("data-animate")!);
 			expect(animate.opacity).toBe(1);
 			expect(animate.y).toBe(0);
@@ -166,7 +166,7 @@ describe("CookieBanner — animation behavior", () => {
 		it("exit state uses opacity:0 and y:20 (slides back down on dismiss)", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const exit = JSON.parse(motionDiv.getAttribute("data-exit")!);
 			expect(exit.opacity).toBe(0);
 			expect(exit.y).toBe(20);
@@ -175,7 +175,7 @@ describe("CookieBanner — animation behavior", () => {
 		it("transition uses MOTION_CONFIG.duration.slow", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const transition = JSON.parse(motionDiv.getAttribute("data-transition")!);
 			expect(transition.duration).toBe(0.3);
 		});
@@ -183,7 +183,7 @@ describe("CookieBanner — animation behavior", () => {
 		it("transition uses MOTION_CONFIG.easing.easeOut", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const transition = JSON.parse(motionDiv.getAttribute("data-transition")!);
 			expect(transition.ease).toEqual([0, 0, 0.2, 1]);
 		});
@@ -194,7 +194,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const initial = JSON.parse(motionDiv.getAttribute("data-initial")!);
 			expect(initial.opacity).toBe(1);
 		});
@@ -203,7 +203,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const initial = JSON.parse(motionDiv.getAttribute("data-initial")!);
 			expect(initial.y).toBeUndefined();
 		});
@@ -212,7 +212,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const exit = JSON.parse(motionDiv.getAttribute("data-exit")!);
 			expect(exit.opacity).toBe(1);
 		});
@@ -221,7 +221,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const exit = JSON.parse(motionDiv.getAttribute("data-exit")!);
 			expect(exit.y).toBeUndefined();
 		});
@@ -230,7 +230,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const transition = JSON.parse(motionDiv.getAttribute("data-transition")!);
 			expect(transition.duration).toBe(0);
 		});
@@ -249,7 +249,7 @@ describe("CookieBanner — animation behavior", () => {
 		it("animate is always opacity:1, y:0 with motion on", () => {
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const animate = JSON.parse(motionDiv.getAttribute("data-animate")!);
 			expect(animate.opacity).toBe(1);
 			expect(animate.y).toBe(0);
@@ -259,7 +259,7 @@ describe("CookieBanner — animation behavior", () => {
 			mockReducedMotion.value = true;
 			render(<CookieBanner />);
 
-			const motionDiv = screen.getByRole("alertdialog");
+			const motionDiv = screen.getByRole("region");
 			const animate = JSON.parse(motionDiv.getAttribute("data-animate")!);
 			expect(animate.opacity).toBe(1);
 			expect(animate.y).toBe(0);

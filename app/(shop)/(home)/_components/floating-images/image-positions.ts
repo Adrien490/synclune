@@ -3,7 +3,7 @@ type IdleAnimation =
 	| "hero-idle-float-2"
 	| "hero-idle-float-3"
 	| "hero-idle-float-4";
-type VisibilityClass = "hidden md:block" | "hidden lg:block";
+type VisibilityClass = "hidden md:block";
 
 // Diamond layout: 4 images around central content with varied sizes
 export const IMAGE_POSITIONS: ReadonlyArray<{
@@ -51,7 +51,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleAnimation: "hero-idle-float-2",
 		idleDuration: 22,
 		idleDelay: 2,
-		visibilityClass: "hidden lg:block",
+		visibilityClass: "hidden md:block",
 	},
 	// Bottom-left — small depth
 	{
@@ -67,7 +67,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleAnimation: "hero-idle-float-3",
 		idleDuration: 18,
 		idleDelay: 4,
-		visibilityClass: "hidden lg:block",
+		visibilityClass: "hidden md:block",
 	},
 	// Bottom-right — medium balance
 	{
@@ -86,3 +86,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		visibilityClass: "hidden md:block",
 	},
 ];
+
+const PARALLAX_SPEEDS = IMAGE_POSITIONS.map((p) => p.parallaxSpeed);
+export const PARALLAX_SPEED_MIN = Math.min(...PARALLAX_SPEEDS);
+export const PARALLAX_SPEED_MAX = Math.max(...PARALLAX_SPEEDS);

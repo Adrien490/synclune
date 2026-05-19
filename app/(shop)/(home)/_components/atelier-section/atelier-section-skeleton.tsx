@@ -82,13 +82,6 @@ export function AtelierSectionSkeleton() {
 						<Skeleton className="bg-muted/40 aspect-4/3 w-full rounded-xl" />
 					</div>
 				</div>
-
-				{/* CTA skeleton */}
-				<div className="mt-12 text-center sm:mt-16">
-					<Skeleton className="bg-muted/30 mx-auto h-4 w-48" />
-					<Skeleton className="bg-muted/30 mx-auto mt-2 h-5 w-56" />
-					<Skeleton className="bg-muted/40 mx-auto mt-4 h-11 w-64 rounded-md" />
-				</div>
 			</div>
 		</section>
 	);

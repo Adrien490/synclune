@@ -111,6 +111,7 @@ vi.mock("@/shared/components/rating-stars", () => ({
 
 vi.mock("@/shared/utils/rating-utils", () => ({
 	formatRating: (rating: number) => rating.toFixed(1),
+	formatReviewCount: (count: number) => count.toString(),
 }));
 
 // Prevent transitive module loading
@@ -211,22 +212,14 @@ describe("ReviewsSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("reviews-subtitle");
 	});
 
-	it("applies viewTransitionName for View Transitions API", () => {
-		setupMockUse(mockReviews, mockStats);
-		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
-
-		const section = document.getElementById("reviews");
-		expect(section?.style.viewTransitionName).toBe("reviews-section");
-	});
-
-	it("renders h2 title 'Ce que disent nos clientes'", () => {
+	it("renders h2 title 'Ce que dit notre clientèle'", () => {
 		setupMockUse(mockReviews, mockStats);
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
 
 		const heading = screen.getByRole("heading", { level: 2 });
 		expect(heading).toBeInTheDocument();
 		expect(heading.id).toBe("reviews-title");
-		expect(heading.textContent).toContain("Ce que disent nos clientes");
+		expect(heading.textContent).toContain("Ce que dit notre clientèle");
 	});
 
 	it("renders subtitle text", () => {
@@ -268,7 +261,7 @@ describe("ReviewsSection", () => {
 		setupMockUse(mockReviews, mockStats);
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
 
-		const skipLink = screen.getByText("Passer le carrousel d'avis");
+		const skipLink = screen.getByText("Aller au lien Voir les créations les mieux notées");
 		expect(skipLink).toBeInTheDocument();
 		expect(skipLink.getAttribute("href")).toBe("#reviews-cta");
 	});
@@ -286,6 +279,6 @@ describe("ReviewsSection", () => {
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
 
 		const carousel = screen.getByTestId("carousel");
-		expect(carousel.getAttribute("aria-label")).toBe("Carrousel de 3 avis clients");
+		expect(carousel.getAttribute("aria-label")).toBe("3 avis clients");
 	});
 });

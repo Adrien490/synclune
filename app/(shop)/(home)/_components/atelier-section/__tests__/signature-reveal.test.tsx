@@ -27,11 +27,12 @@ describe("SignatureReveal", () => {
 		({ SignatureReveal } = await import("../signature-reveal"));
 	});
 
-	it("renders a container with aria-label='Léane'", () => {
+	it("ne pose pas d'aria-label sur le <p> wrapper (le texte visible 'Léane' suffit, évite double-lecture screen-reader)", () => {
 		const { container } = render(<SignatureReveal />);
 
-		const wrapper = container.querySelector("[aria-label='Léane']");
+		const wrapper = container.querySelector("p.signature-reveal");
 		expect(wrapper).not.toBeNull();
+		expect(wrapper!.getAttribute("aria-label")).toBeNull();
 	});
 
 	it("renders the name 'Léane'", () => {

@@ -17,10 +17,6 @@ vi.mock("@/shared/constants/process-steps", () => ({
 	},
 }));
 
-vi.mock("lucide-react", () => ({
-	Sparkles: () => <svg data-testid="icon-sparkles" aria-hidden="true" />,
-}));
-
 vi.mock("@/shared/components/animations/glitter-sparkles", () => ({
 	GlitterSparkles: () => <div data-testid="glitter-sparkles" />,
 }));

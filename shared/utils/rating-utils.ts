@@ -33,6 +33,18 @@ export function formatRating(rating: number, locale: string = "fr-FR"): string {
 }
 
 /**
+ * Formate un nombre d'avis avec séparateur de milliers localisé.
+ * Ex: 1234 → "1 234" (fr-FR), 247 → "247"
+ *
+ * @param count - Nombre entier d'avis
+ * @param locale - Locale pour le formatage (par défaut: fr-FR)
+ * @returns Compteur formaté
+ */
+export function formatReviewCount(count: number, locale: string = "fr-FR"): string {
+	return count.toLocaleString(locale);
+}
+
+/**
  * Labels textuels pour les notes (système 1-5)
  */
 const RATING_LABELS: Record<number, string> = {

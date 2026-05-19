@@ -2,14 +2,14 @@ import "./atelier-section.css";
 
 import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
+import { ParallaxImage } from "../parallax-image";
+import { ATELIER_CONTENT } from "./atelier-content";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
-import { POLAROIDS } from "./polaroid-config";
 import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
 import { SignatureReveal } from "./signature-reveal";
@@ -48,28 +48,10 @@ const howToSchema = {
 	})),
 };
 
-// ─── ItemList JSON-LD (Polaroid Gallery) ────────────────────────────────────
-// Note : contentUrl utilise IMAGES.ATELIER en attendant les vraies photos polaroid
-// (à mapper par id dès que les visuels seront livrés).
-const polaroidGallerySchema = {
-	"@context": "https://schema.org",
-	"@type": "ItemList",
-	"@id": `${SITE_URL}/#atelier-polaroid-gallery`,
-	name: "Galerie de l'atelier Synclune",
-	description: "Photos coulisses de l'atelier de création de bijoux artisanaux.",
-	numberOfItems: POLAROIDS.length,
-	itemListElement: POLAROIDS.map((p, i) => ({
-		"@type": "ListItem",
-		position: i + 1,
-		item: {
-			"@type": "ImageObject",
-			name: p.caption,
-			description: p.label,
-			contentUrl: IMAGES.ATELIER,
-			representativeOfPage: false,
-		},
-	})),
-};
+// ItemList JSON-LD (polaroid gallery) : ré-injecter quand chaque polaroid aura
+// un visuel distinct (ajouter `imageUrl?: string` à PolaroidConfig). Schema
+// retiré tant que les 4 contentUrl pointeraient vers la même image (signal
+// SEO trompeur pour Google).
 
 // ─── Section Component ──────────────────────────────────────────────────────
 
@@ -101,16 +83,6 @@ export async function AtelierSection() {
 				}}
 			/>
 
-			{/* ItemList JSON-LD Schema (polaroid gallery) — SAFE: serialized via safeJsonLd */}
-			{/* react-doctor-disable-next-line react/no-danger */}
-			<script
-				id="polaroid-gallery-schema"
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: safeJsonLd(polaroidGallerySchema),
-				}}
-			/>
-
 			<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				{/* Header */}
 				<header className="mb-10 text-center lg:mb-14">
@@ -127,51 +99,45 @@ export async function AtelierSection() {
 						duration={MOTION_CONFIG.section.subtitle.duration}
 					>
 						<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal text-balance">
-							Là où chaque bijou prend vie, un geste à la fois.
+							{ATELIER_CONTENT.subtitle}
 						</p>
 					</Fade>
 				</header>
 
 				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 					<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
-						<PlaceholderImage
-							preserveAspect
-							className="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
-							label="L'atelier de création Synclune, où chaque bijou prend vie"
+						<ParallaxImage
+							src={IMAGES.ATELIER}
+							alt={ATELIER_CONTENT.heroImageAlt}
+							blurDataURL={IMAGES.ATELIER_BLUR}
+							containerClassName="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
+							className="object-cover"
+							intensity={7}
+							sizes="(max-width: 1024px) 100vw, 56rem"
+							quality={75}
 						/>
 					</div>
 				</Fade>
 
 				{/* Confession text with progressive reveal */}
 				<Fade
-					y={MOTION_CONFIG.section.subtitle.y}
-					delay={MOTION_CONFIG.section.subtitle.delay}
-					duration={MOTION_CONFIG.section.subtitle.duration}
+					y={MOTION_CONFIG.section.content.y}
+					delay={MOTION_CONFIG.section.content.delay}
+					duration={MOTION_CONFIG.section.content.duration}
 					inView
 					once
 				>
 					<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
 						<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-							<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
+							<SplitText stagger={0.08}>{ATELIER_CONTENT.confession.intro}</SplitText>
 						</p>
 
 						<div className="text-muted-foreground space-y-4 text-base leading-relaxed text-balance sm:space-y-6 sm:text-lg">
-							<Fade inView once y={15} delay={0}>
-								<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-							</Fade>
-							<Fade inView once y={15} delay={0.2}>
-								<p>
-									Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans
-									mon petit atelier ! C'était pas prévu à la base.
-								</p>
-							</Fade>
-							<Fade inView once y={15} delay={0.4}>
-								<p>
-									Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
-									assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
-									dix).
-								</p>
-							</Fade>
+							{ATELIER_CONTENT.confession.paragraphs.map((paragraph, i) => (
+								<Fade key={i} inView once y={15} delay={i * 0.2}>
+									<p>{paragraph}</p>
+								</Fade>
+							))}
 						</div>
 
 						{/* Signature with ink-flow reveal */}

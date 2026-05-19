@@ -20,8 +20,8 @@ export const FLOAT_VARIANTS = {
 	},
 	whileHover: {
 		full: {
-			scale: 1.08,
-			y: -6,
+			scale: 1.05,
+			y: -3,
 			transition: MOTION_CONFIG.spring.hover,
 		},
 	},

@@ -190,58 +190,20 @@ describe("HowTo JSON-LD schema", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 1bis. ItemList JSON-LD Schema (polaroid gallery)
+// 1bis. ItemList JSON-LD (polaroid gallery) — retiré tant que les 4 polaroids
+// pointent vers la même image (signal SEO trompeur). À ré-injecter quand
+// chaque polaroid aura un imageUrl distinct (cf polaroid-config.ts).
 // ---------------------------------------------------------------------------
 
-describe("ItemList JSON-LD schema (polaroid gallery)", () => {
-	it("renders a second JSON-LD script tag with @type ItemList", async () => {
+describe("ItemList JSON-LD (polaroid gallery)", () => {
+	it("n'est pas injecté tant que les polaroids n'ont pas de visuels distincts", async () => {
 		await renderAtelierSection();
 
 		const scripts = document.querySelectorAll('script[type="application/ld+json"]');
-		expect(scripts.length).toBe(2);
+		expect(scripts.length).toBe(1);
 
-		const itemListScript = document.querySelector(
-			'script#polaroid-gallery-schema[type="application/ld+json"]',
-		);
-		expect(itemListScript).not.toBeNull();
-
-		const schema = JSON.parse(itemListScript!.textContent!);
-		expect(schema["@type"]).toBe("ItemList");
-		expect(schema["@context"]).toBe("https://schema.org");
-		expect(schema.numberOfItems).toBe(4);
-	});
-
-	it("each ListItem wraps an ImageObject with name, description, contentUrl", async () => {
-		await renderAtelierSection();
-
-		const itemListScript = document.querySelector(
-			'script#polaroid-gallery-schema[type="application/ld+json"]',
-		);
-		const schema = JSON.parse(itemListScript!.textContent!);
-
-		expect(schema.itemListElement).toHaveLength(4);
-		schema.itemListElement.forEach((entry: Record<string, unknown>, i: number) => {
-			expect(entry["@type"]).toBe("ListItem");
-			expect(entry.position).toBe(i + 1);
-			const item = entry.item as Record<string, unknown>;
-			expect(item["@type"]).toBe("ImageObject");
-			expect(typeof item.name).toBe("string");
-			expect((item.name as string).length).toBeGreaterThan(0);
-			expect(typeof item.description).toBe("string");
-			expect((item.description as string).length).toBeGreaterThan(0);
-			expect(typeof item.contentUrl).toBe("string");
-			expect((item.contentUrl as string).length).toBeGreaterThan(0);
-		});
-	});
-
-	it("escapes HTML entities in ItemList schema", async () => {
-		await renderAtelierSection();
-
-		const itemListScript = document.querySelector(
-			'script#polaroid-gallery-schema[type="application/ld+json"]',
-		);
-		expect(itemListScript!.innerHTML).not.toContain("<script");
-		expect(itemListScript!.innerHTML).not.toMatch(/<(?!\/script>)/);
+		const itemListScript = document.querySelector("script#polaroid-gallery-schema");
+		expect(itemListScript).toBeNull();
 	});
 });
 

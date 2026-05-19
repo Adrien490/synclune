@@ -8,6 +8,7 @@ import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
+import { SkipLink } from "@/shared/components/skip-link";
 import {
 	Carousel,
 	CarouselContent,
@@ -36,7 +37,7 @@ export async function CollectionsSection() {
 		return null;
 	}
 
-	const showArrows = collections.length > 3;
+	const showArrows = collections.length > 4;
 
 	return (
 		<section
@@ -51,12 +52,7 @@ export async function CollectionsSection() {
 			style={{ viewTransitionName: "collections-section" }}
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
-			<a
-				href="#collections-cta"
-				className="focus:bg-background focus:ring-ring focus:text-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:ring-2"
-			>
-				Passer au bouton Explorer
-			</a>
+			<SkipLink targetId="collections-cta" label="Aller au lien Explorer les collections" />
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
@@ -92,11 +88,10 @@ export async function CollectionsSection() {
 						<Carousel
 							opts={{
 								align: "center",
-								containScroll: "trimSnaps",
 								loop: true,
 							}}
 							className="group/carousel w-full"
-							aria-label="Carrousel de collections"
+							aria-label="Dernières collections"
 						>
 							<CarouselContent className="-ml-4 py-4 sm:-ml-6" showFade>
 								{collections.map((collection, index) => {
@@ -143,7 +138,11 @@ export async function CollectionsSection() {
 					</Reveal>
 				</div>
 
-				<div id="collections-cta" tabIndex={-1} className="focus:outline-none">
+				<div
+					id="collections-cta"
+					tabIndex={-1}
+					className="focus-visible:ring-ring focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+				>
 					<Fade
 						y={MOTION_CONFIG.section.cta.y}
 						delay={MOTION_CONFIG.section.cta.delay}

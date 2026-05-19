@@ -2,7 +2,7 @@
 
 > Single source of truth for known technical debt in Synclune. Update on every audit close and on every `chore(debt):` payment. Do not let debt rot in private memory.
 
-**Last updated:** 2026-05-18 (Quality of Code audit)
+**Last updated:** 2026-05-19 (ReviewsSection UI/UX audit)
 **Cadence:** revue mensuelle ; chaque audit doit ajouter ou solder une entrée ici.
 
 ---
@@ -111,6 +111,18 @@
 
 - **Status:** **OPEN** — risque régression silencieuse.
 
+### Page `/avis` publique dédiée (Phase 2 social proof)
+
+- **Why it's debt:** la `ReviewsSection` homepage n'affiche que 6 avis featured ; aucun moyen pour les visiteurs de lire l'ensemble des avis publiés sans naviguer produit par produit. CTA actuel renvoie vers le catalogue trié par note (`/produits?sortBy=rating-descending`) — pertinent côté conversion, pas côté trust.
+- **Plan:** créer `app/(shop)/avis/page.tsx` paginated (cache `reference`), helper `getPublishedReviews({ page, perPage, filterRating })`, structured data `Review[]` propre + breadcrumb, lien secondaire "Lire tous les avis" dans la `ReviewsSection`.
+- **Status:** **DEFERRED** — user a explicitement choisi de garder le CTA produits (audit 2026-05-19). Reporter quand : (1) signal data analytics montre une demande utilisateur, OU (2) phase de croissance dédiée social proof.
+
+### Badge "Avis vérifiés (achat confirmé)" sous l'agrégat
+
+- **Why it's debt:** signal trust Baymard #84 (review authenticity) absent. Synclune envoie des `send-review-request-email` post-livraison ce qui suggère un mécanisme d'avis vérifié, mais l'UI ne le communique pas.
+- **Plan:** (1) confirmer factuellement que tous les avis affichés sont liés à un `order.fulfillmentStatus = DELIVERED` ; (2) si oui, ajouter sous l'agrégat un `<span className="text-muted-foreground text-xs">Tous nos avis sont vérifiés (achat confirmé)</span>`.
+- **Status:** **DEFERRED** — vérification mécanisme + arbitrage copy requis.
+
 ### Workflow CI auto-review sur modules critiques
 
 - **Status:** **DEFERRED** — `/review` ou `/security-review` automatique sur PRs touchant `modules/payments|webhooks|auth|refunds`. Nécessite secret `ANTHROPIC_API_KEY` + budget API récurrent. CodeQL déjà câblé (`.github/workflows/codeql.yml`) couvre les vulnérabilités statiques. Reporter quand : (1) un incident sécu confirme la valeur, OU (2) la cadence PR critique justifie l'investissement.
@@ -132,6 +144,9 @@
 | 2026-05-18 | CI : PR title validation commitlint (squash merge case)                                   | Quality of Code audit |
 | 2026-05-18 | CONTRIBUTING.md : section Conventional Commits enrichie + commitlint dans required checks | Quality of Code audit |
 | 2026-05-18 | Test contract `stripe-events.test.ts:178` `?.due_by` retiré                               | Quality of Code audit |
+| 2026-05-19 | ReviewsSection : copy neutralisé + `inView once` + `bg-muted/15` + `formatReviewCount`    | ReviewsSection audit  |
+| 2026-05-19 | `homepage-review-card` : `motion-safe:` sur transitions shadow/border                     | ReviewsSection audit  |
+| 2026-05-19 | `reviews-section` : `viewTransitionName` orphelin retiré, aria-describedby CTA            | ReviewsSection audit  |
 
 ---
 
@@ -140,3 +155,4 @@
 - **Audits historiques détaillés** : `MEMORY.md` (privé Claude Code) — résumés par sprint (15+ audits depuis 2026-05-12).
 - **Audit Qualité de Code 2026-05-18** : `.claude/plans/m-ne-un-audit-complet-zippy-shamir.md`
 - **Audit Data Quality 2026-05-18** : `.claude/plans/audit-et-note-ceci-declarative-wind.md`
+- **Audit ReviewsSection 2026-05-19** : `.claude/plans/m-ne-un-audit-complet-smooth-clock.md`

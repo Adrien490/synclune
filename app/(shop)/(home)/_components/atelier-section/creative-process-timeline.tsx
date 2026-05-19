@@ -1,6 +1,5 @@
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { cn } from "@/shared/utils/cn";
-import { Sparkles } from "lucide-react";
 import { processSteps } from "./process-steps";
 import { STEP_ILLUSTRATIONS } from "./step-illustrations";
 
@@ -56,12 +55,6 @@ export function CreativeProcessTimeline() {
 							{/* Title + description */}
 							<h3 className="text-foreground mt-2 text-lg/6 font-medium tracking-tight antialiased">
 								{step.title}
-								{isLast(index) && (
-									<Sparkles
-										className="text-secondary ml-1.5 inline-block size-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
-										aria-hidden="true"
-									/>
-								)}
 							</h3>
 							<p
 								id={`creative-step-${step.id}-desc`}
@@ -134,12 +127,6 @@ export function CreativeProcessTimeline() {
 										{index + 1}.{" "}
 									</span>
 									{step.title}
-									{isLast(index) && (
-										<Sparkles
-											className="text-secondary ml-1.5 inline-block size-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
-											aria-hidden="true"
-										/>
-									)}
 								</h3>
 								<p
 									id={`creative-step-${step.id}-desc`}

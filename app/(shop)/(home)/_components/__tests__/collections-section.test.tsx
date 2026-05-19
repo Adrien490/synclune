@@ -222,7 +222,7 @@ describe("CollectionsSection", () => {
 		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
 		render(await CollectionsSection());
 
-		const skipLink = screen.getByText("Passer au bouton Explorer");
+		const skipLink = screen.getByText("Aller au lien Explorer les collections");
 		expect(skipLink).toBeInTheDocument();
 		expect(skipLink.getAttribute("href")).toBe("#collections-cta");
 	});
@@ -240,12 +240,12 @@ describe("CollectionsSection", () => {
 		render(await CollectionsSection());
 
 		const carousel = screen.getByTestId("carousel");
-		expect(carousel.getAttribute("aria-label")).toBe("Carrousel de collections");
+		expect(carousel.getAttribute("aria-label")).toBe("Dernières collections");
 	});
 
-	it("shows navigation arrows when >3 collections, hides when <=3", async () => {
-		// With 4 collections — arrows should be visible
-		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+	it("shows navigation arrows when >4 collections, hides when <=4", async () => {
+		// With 5 collections — arrows should be visible (lg shows 4 visible, need 5+ to scroll)
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(5)));
 		const { unmount } = render(await CollectionsSection());
 
 		expect(screen.getByTestId("carousel-prev")).toBeInTheDocument();
@@ -253,8 +253,8 @@ describe("CollectionsSection", () => {
 
 		unmount();
 
-		// With 3 collections — no arrows
-		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(3)));
+		// With 4 collections — no arrows (fits exactly on lg breakpoint)
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
 		render(await CollectionsSection());
 
 		expect(screen.queryByTestId("carousel-prev")).not.toBeInTheDocument();

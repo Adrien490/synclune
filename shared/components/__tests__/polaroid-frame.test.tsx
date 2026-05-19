@@ -49,71 +49,95 @@ describe("PolaroidFrame", () => {
 			expect(figure?.querySelector("img")).toBeInTheDocument();
 		});
 
-		it("has tabIndex={0} for keyboard navigation", () => {
-			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
-
-			const figure = container.querySelector("figure");
-			expect(figure).toHaveAttribute("tabindex", "0");
-		});
-
 		it("includes default structural classes on the figure", () => {
 			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
 
 			const figure = container.querySelector("figure");
 			expect(figure?.className).toContain("polaroid-paper");
 			expect(figure?.className).toContain("polaroid-hover");
-			expect(figure?.className).toContain("@container");
+			expect(figure?.className).toContain("group/polaroid");
 		});
 	});
 
 	// --------------------------------------------------------------------------
-	// Tilt
+	// Interactive / tabIndex
 	// --------------------------------------------------------------------------
 
-	describe("tilt", () => {
-		it("adds -rotate-2 class for tilt=left", () => {
-			const { container } = render(<PolaroidFrame tilt="left">content</PolaroidFrame>);
-
-			expect(container.querySelector("figure")?.className).toContain("-rotate-2");
-		});
-
-		it("adds rotate-2 class for tilt=right", () => {
-			const { container } = render(<PolaroidFrame tilt="right">content</PolaroidFrame>);
-
-			expect(container.querySelector("figure")?.className).toContain("rotate-2");
-		});
-
-		it("adds no rotation class for default tilt=none", () => {
+	describe("interactive", () => {
+		it("does not set tabIndex by default (decorative usage)", () => {
 			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
 
-			const className = container.querySelector("figure")?.className ?? "";
-			expect(className).not.toContain("-rotate-2");
-			expect(className).not.toContain("rotate-2");
+			expect(container.querySelector("figure")).not.toHaveAttribute("tabindex");
 		});
 
-		it("sets inline transform when tiltDegree is provided", () => {
-			const { container } = render(<PolaroidFrame tiltDegree={-5}>content</PolaroidFrame>);
+		it("sets tabIndex={0} when interactive=true", () => {
+			const { container } = render(<PolaroidFrame interactive>content</PolaroidFrame>);
 
-			const figure = container.querySelector("figure");
-			expect(figure?.style.transform).toBe("rotate(-5deg)");
+			expect(container.querySelector("figure")).toHaveAttribute("tabindex", "0");
 		});
 
-		it("does not add tilt class when tiltDegree overrides tilt", () => {
+		it("forwards aria-label to the figure element", () => {
 			const { container } = render(
-				<PolaroidFrame tilt="left" tiltDegree={3}>
+				<PolaroidFrame interactive aria-label="Photo de l'atelier">
 					content
 				</PolaroidFrame>,
 			);
 
-			const className = container.querySelector("figure")?.className ?? "";
-			expect(className).not.toContain("-rotate-2");
+			expect(container.querySelector("figure")).toHaveAttribute("aria-label", "Photo de l'atelier");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Tilt — pilote via --polaroid-rotate CSS variable
+	// --------------------------------------------------------------------------
+
+	describe("tilt", () => {
+		it("sets --polaroid-rotate to -2deg for tilt=left", () => {
+			const { container } = render(<PolaroidFrame tilt="left">content</PolaroidFrame>);
+
+			const figure = container.querySelector("figure") as HTMLElement;
+			expect(figure.style.getPropertyValue("--polaroid-rotate")).toBe("-2deg");
 		});
 
-		it("sets --polaroid-rotate CSS variable to matching degrees", () => {
-			const { container } = render(<PolaroidFrame tiltDegree={7}>content</PolaroidFrame>);
+		it("sets --polaroid-rotate to 2deg for tilt=right", () => {
+			const { container } = render(<PolaroidFrame tilt="right">content</PolaroidFrame>);
+
+			const figure = container.querySelector("figure") as HTMLElement;
+			expect(figure.style.getPropertyValue("--polaroid-rotate")).toBe("2deg");
+		});
+
+		it("sets --polaroid-rotate to 0deg for default tilt=none", () => {
+			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
+
+			const figure = container.querySelector("figure") as HTMLElement;
+			expect(figure.style.getPropertyValue("--polaroid-rotate")).toBe("0deg");
+		});
+
+		it("sets --polaroid-rotate from tiltDegree when provided", () => {
+			const { container } = render(<PolaroidFrame tiltDegree={-5}>content</PolaroidFrame>);
+
+			const figure = container.querySelector("figure") as HTMLElement;
+			expect(figure.style.getPropertyValue("--polaroid-rotate")).toBe("-5deg");
+		});
+
+		it("tiltDegree overrides tilt prop", () => {
+			const { container } = render(
+				<PolaroidFrame tilt="left" tiltDegree={7}>
+					content
+				</PolaroidFrame>,
+			);
 
 			const figure = container.querySelector("figure") as HTMLElement;
 			expect(figure.style.getPropertyValue("--polaroid-rotate")).toBe("7deg");
+		});
+
+		it("does not apply inline transform on the figure (hover composition safe)", () => {
+			const { container } = render(<PolaroidFrame tiltDegree={3}>content</PolaroidFrame>);
+
+			const figure = container.querySelector("figure") as HTMLElement;
+			// Rotation must come from --polaroid-rotate (CSS .polaroid-hover applies it),
+			// NOT from inline transform — otherwise the hover lift translateY+scale is broken.
+			expect(figure.style.transform).toBe("");
 		});
 	});
 
@@ -139,6 +163,12 @@ describe("PolaroidFrame", () => {
 			render(<PolaroidFrame caption="Belle photo">content</PolaroidFrame>);
 
 			expect(screen.getByText("Belle photo")).toHaveClass("font-cursive");
+		});
+
+		it("does not apply synthetic italic on cursive font", () => {
+			render(<PolaroidFrame caption="Sans italic">content</PolaroidFrame>);
+
+			expect(screen.getByText("Sans italic").className).not.toContain("italic");
 		});
 
 		it("applies custom captionColor as inline style", () => {
@@ -180,7 +210,6 @@ describe("PolaroidFrame", () => {
 			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
 
 			const washiDivs = container.querySelectorAll("[aria-hidden='true']");
-			// Only the vignette overlay and aging overlay should be present (no washi)
 			const hasWashi = Array.from(washiDivs).some((el) =>
 				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
@@ -228,7 +257,7 @@ describe("PolaroidFrame", () => {
 			expect(strips).toHaveLength(2);
 		});
 
-		it("applies secondary washi color to the top-right strip", () => {
+		it("applies secondary washi color to the top-right strip when explicit", () => {
 			const { container } = render(
 				<PolaroidFrame washiTape washiPosition="both" washiColor="mint" washiColorSecondary="peach">
 					content
@@ -238,7 +267,6 @@ describe("PolaroidFrame", () => {
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
 				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
-			// Top-left strip has -left-3 class, top-right has -right-3 class
 			const leftStrip = strips.find((el) =>
 				(el as HTMLElement).className.includes("-left-3"),
 			) as HTMLElement;
@@ -266,6 +294,57 @@ describe("PolaroidFrame", () => {
 
 			expect(rightStrip.className).toContain("from-purple-200");
 		});
+
+		it("defaults secondary washi to peach when primary is mint (complement table)", () => {
+			const { container } = render(
+				<PolaroidFrame washiTape washiPosition="both" washiColor="mint">
+					content
+				</PolaroidFrame>,
+			);
+
+			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
+				(el as HTMLElement).style.clipPath.includes("polygon"),
+			);
+			const rightStrip = strips.find((el) =>
+				(el as HTMLElement).className.includes("-right-3"),
+			) as HTMLElement;
+
+			expect(rightStrip.className).toContain("from-orange-200");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Aspect ratio
+	// --------------------------------------------------------------------------
+
+	describe("aspect ratio", () => {
+		it("applies polaroid aspect by default (1/1.05 authentic)", () => {
+			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
+
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).toContain("aspect-[1/1.05]");
+		});
+
+		it("applies aspect-square when aspectRatio=square", () => {
+			const { container } = render(<PolaroidFrame aspectRatio="square">content</PolaroidFrame>);
+
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).toContain("aspect-square");
+		});
+
+		it("applies aspect-4/3 when aspectRatio=landscape", () => {
+			const { container } = render(<PolaroidFrame aspectRatio="landscape">content</PolaroidFrame>);
+
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).toContain("aspect-4/3");
+		});
+
+		it("applies aspect-3/4 when aspectRatio=portrait", () => {
+			const { container } = render(<PolaroidFrame aspectRatio="portrait">content</PolaroidFrame>);
+
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).toContain("aspect-3/4");
+		});
 	});
 
 	// --------------------------------------------------------------------------
@@ -276,17 +355,17 @@ describe("PolaroidFrame", () => {
 		it("does not apply vintage classes by default", () => {
 			const { container } = render(<PolaroidFrame>content</PolaroidFrame>);
 
-			const photoContainer = container.querySelector(".aspect-4\\/3");
-			expect(photoContainer?.className).not.toContain("sepia");
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).not.toContain("sepia");
 		});
 
 		it("applies sepia and contrast classes when vintage=true", () => {
 			const { container } = render(<PolaroidFrame vintage>content</PolaroidFrame>);
 
-			const photoContainer = container.querySelector(".aspect-4\\/3");
-			expect(photoContainer?.className).toContain("sepia-[0.08]");
-			expect(photoContainer?.className).toContain("contrast-[1.02]");
-			expect(photoContainer?.className).toContain("saturate-[1.1]");
+			const photoContainer = container.querySelector("[class*='aspect-']") as HTMLElement;
+			expect(photoContainer.className).toContain("sepia-[0.08]");
+			expect(photoContainer.className).toContain("contrast-[1.02]");
+			expect(photoContainer.className).toContain("saturate-[1.1]");
 		});
 	});
 
@@ -308,7 +387,6 @@ describe("PolaroidFrame", () => {
 
 			const figure = container.querySelector("figure") as HTMLElement;
 			expect(figure.style.opacity).toBe("0.8");
-			// boxShadow is always present from tiltShadows
 			expect(figure.style.boxShadow).not.toBe("");
 		});
 	});

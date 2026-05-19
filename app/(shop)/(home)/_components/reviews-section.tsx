@@ -9,9 +9,11 @@ import {
 	CarouselItem,
 } from "@/shared/components/ui/carousel";
 import { SectionTitle } from "@/shared/components/section-title";
+import { SkipLink } from "@/shared/components/skip-link";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
-import { formatRating } from "@/shared/utils/rating-utils";
+import { cn } from "@/shared/utils/cn";
+import { formatRating, formatReviewCount } from "@/shared/utils/rating-utils";
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card";
 import { SectionCtaLink } from "./section-cta-link";
 
@@ -39,24 +41,27 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 	return (
 		<section
 			id="reviews"
-			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
+			className={cn(
+				"bg-muted/15 relative overflow-hidden",
+				"mask-t-from-95% mask-t-to-100% mask-b-from-95% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-90%",
+				SECTION_SPACING.section,
+			)}
 			aria-labelledby="reviews-title"
 			aria-describedby="reviews-subtitle"
-			style={{ viewTransitionName: "reviews-section" }}
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
-			<a
-				href="#reviews-cta"
-				className="focus:bg-background focus:ring-ring focus:text-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:ring-2"
-			>
-				Passer le carrousel d&apos;avis
-			</a>
+			<SkipLink targetId="reviews-cta" label="Aller au lien Voir les créations les mieux notées" />
 
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				{/* Header */}
 				<header className="mb-10 text-center lg:mb-14">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="reviews-title">Ce que disent nos clientes</SectionTitle>
+					<Fade
+						y={MOTION_CONFIG.section.title.y}
+						duration={MOTION_CONFIG.section.title.duration}
+						inView
+						once
+					>
+						<SectionTitle id="reviews-title">Ce que dit notre clientèle</SectionTitle>
 						<HandDrawnUnderline
 							delay={MOTION_CONFIG.section.underline.delay}
 							className="mx-auto mt-2"
@@ -66,12 +71,14 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						y={MOTION_CONFIG.section.subtitle.y}
 						delay={MOTION_CONFIG.section.subtitle.delay}
 						duration={MOTION_CONFIG.section.subtitle.duration}
+						inView
+						once
 					>
 						<p
 							id="reviews-subtitle"
 							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
 						>
-							Des créations uniques, portées et approuvées par notre communauté
+							Des créations uniques, plébiscitées par notre communauté
 						</p>
 					</Fade>
 
@@ -81,18 +88,20 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 							y={MOTION_CONFIG.section.subtitle.y}
 							delay={MOTION_CONFIG.section.subtitle.delay}
 							duration={MOTION_CONFIG.section.subtitle.duration}
+							inView
+							once
 						>
 							<div className="mt-4 flex items-center justify-center gap-2">
 								<span className="sr-only">
 									Note moyenne : {formatRating(stats.averageRating)} sur 5, basée sur{" "}
-									{stats.totalReviews} avis.
+									{formatReviewCount(stats.totalReviews)} avis.
 								</span>
 								<RatingStars rating={stats.averageRating} size="sm" />
 								<span className="text-foreground text-sm font-medium" aria-hidden="true">
 									{formatRating(stats.averageRating)}
 								</span>
 								<span className="text-muted-foreground text-sm" aria-hidden="true">
-									({stats.totalReviews} avis)
+									({formatReviewCount(stats.totalReviews)} avis)
 								</span>
 							</div>
 						</Fade>
@@ -100,7 +109,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 				</header>
 
 				{/* Mobile: carousel */}
-				<div className="mb-6 sm:mb-8 lg:hidden">
+				<div className="mb-8 sm:mb-10 lg:hidden">
 					<Reveal
 						y={MOTION_CONFIG.section.carousel.y}
 						delay={MOTION_CONFIG.section.carousel.delay}
@@ -110,11 +119,10 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						<Carousel
 							opts={{
 								align: "center",
-								containScroll: "trimSnaps",
 								loop: true,
 							}}
 							className="w-full"
-							aria-label={`Carrousel de ${reviews.length} avis clients`}
+							aria-label={`${reviews.length} avis clients`}
 						>
 							<CarouselContent className="-ml-4 py-4" showFade>
 								{reviews.map((review, index) => (
@@ -146,7 +154,11 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 				</Stagger>
 
 				{/* CTA */}
-				<div id="reviews-cta" tabIndex={-1} className="focus:outline-none">
+				<div
+					id="reviews-cta"
+					tabIndex={-1}
+					className="focus-visible:ring-ring focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+				>
 					<Fade
 						y={MOTION_CONFIG.section.cta.y}
 						delay={MOTION_CONFIG.section.cta.delay}
@@ -155,9 +167,15 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						once
 						className="text-center"
 					>
-						<SectionCtaLink href="/produits?sortBy=rating-descending">
+						<SectionCtaLink
+							href="/produits?sortBy=rating-descending"
+							aria-describedby="reviews-cta-description"
+						>
 							Voir les créations les mieux notées
 						</SectionCtaLink>
+						<span id="reviews-cta-description" className="sr-only">
+							Parcourir le catalogue trié par note moyenne décroissante
+						</span>
 					</Fade>
 				</div>
 			</div>

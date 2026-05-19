@@ -20,7 +20,7 @@ export function NotFoundContent({ emoji, title, description, actions }: NotFound
 				<div className="space-y-4" aria-live="polite" aria-atomic="true">
 					<div className="flex flex-col items-center">
 						{title}
-						<HandDrawnUnderline delay={0.2} />
+						<HandDrawnUnderline delay={0.2} className="mt-1" />
 					</div>
 					{description}
 				</div>

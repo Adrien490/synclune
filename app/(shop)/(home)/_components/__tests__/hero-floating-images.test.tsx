@@ -43,12 +43,17 @@ beforeAll(() => {
 // Hoisted mocks
 // ---------------------------------------------------------------------------
 
-const { useReducedMotionMock } = vi.hoisted(() => ({
+const { useReducedMotionMock, trackEventMock } = vi.hoisted(() => ({
 	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
+	trackEventMock: vi.fn(),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
+}));
+
+vi.mock("@/shared/lib/analytics/track", () => ({
+	trackEvent: trackEventMock,
 }));
 
 vi.mock("motion/react", () => {
@@ -201,14 +206,6 @@ describe("HeroFloatingImagesInner", () => {
 		}
 	});
 
-	it("renders preview pill with product title for each image", () => {
-		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
-
-		for (let i = 0; i < 4; i++) {
-			expect(container.textContent).toContain(`Product ${i}`);
-		}
-	});
-
 	it("updates spotlight CSS vars --mx/--my on pointer move", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
@@ -313,5 +310,71 @@ describe("HeroFloatingImagesInner", () => {
 		expect(pointerMoveCalls.length).toBe(0);
 
 		addSpy.mockRestore();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Regression lock — audit floating-images 2026-05-19
+// ---------------------------------------------------------------------------
+
+describe("HeroFloatingImagesInner — regression lock", () => {
+	/**
+	 * @regression hover-simplified-2026-05-19
+	 * Hover signature limited to scale + glow + spotlight (3 layers max).
+	 * Light reflection overlay was removed intentionally for sobriety
+	 * (bijoux artisanaux brand). Do not reintroduce.
+	 */
+	it("does NOT render light reflection overlay (bg-linear-to-b)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		expect(container.querySelector("[class*='bg-linear-to-b']")).toBeNull();
+	});
+
+	/**
+	 * @regression hover-simplified-2026-05-19
+	 * Preview pill (product title on hover) was removed — redundant with
+	 * image.alt for SR (which sees nothing anyway via aria-hidden ancestor)
+	 * and visually noisy on hover. Image titles must not appear in the DOM.
+	 */
+	it("does NOT render product title text (preview pill removed)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		for (let i = 0; i < 4; i++) {
+			expect(container.textContent).not.toContain(`Product ${i}`);
+		}
+	});
+
+	/**
+	 * @regression tablet-4-images-2026-05-19
+	 * Tablet (md, 768-1023px) must show all 4 images — fixes diagonal asymmetry
+	 * where only top-left + bottom-right were visible. Each image wrapper carries
+	 * `hidden md:block` on its visibilityClass.
+	 */
+	it("renders all 4 image wrappers with `md:block` visibility class", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		// 1 container + 4 image wrappers = 5 elements with md:block
+		const mdBlockElements = container.querySelectorAll("[class*='md:block']");
+		expect(mdBlockElements.length).toBe(5);
+		// No element should still rely on lg:block (regression guard)
+		const lgBlockElements = container.querySelectorAll("[class*='lg:block']");
+		expect(lgBlockElements.length).toBe(0);
+	});
+
+	/**
+	 * @regression analytics-tracking-2026-05-19
+	 * Each floating image click fires `hero_floating_image_click` with slug
+	 * + position (idleAnimation key) for conversion measurement. The funnel is
+	 * gated by RGPD consent inside trackEvent itself.
+	 */
+	it("fires trackEvent on image click with slug + position", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const firstLink = container.querySelector<HTMLAnchorElement>("a[href='/creations/product-0']");
+		expect(firstLink).not.toBeNull();
+
+		fireEvent.click(firstLink!);
+
+		expect(trackEventMock).toHaveBeenCalledWith("hero_floating_image_click", {
+			slug: "product-0",
+			position: "hero-idle-float-1",
+		});
 	});
 });

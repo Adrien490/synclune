@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 type TiltDirection = "left" | "right" | "none";
 export type WashiTapeColor = "pink" | "lavender" | "mint" | "peach";
 export type WashiTapePosition = "top-left" | "top-right" | "both";
+export type PolaroidAspect = "polaroid" | "square" | "landscape" | "portrait";
 
 interface PolaroidFrameProps {
 	children: ReactNode;
@@ -21,21 +22,27 @@ interface PolaroidFrameProps {
 	washiTape?: boolean;
 	/** Couleur du washi tape */
 	washiColor?: WashiTapeColor;
-	/** Secondary color for top-right washi tape (defaults to pink↔lavender swap) */
+	/** Secondary color for top-right washi tape (defaults via WASHI_COMPLEMENT) */
 	washiColorSecondary?: WashiTapeColor;
 	/** Position du washi tape */
 	washiPosition?: WashiTapePosition;
 	/** Subtle vintage photo filter */
 	vintage?: boolean;
+	/** Ratio du conteneur photo (défaut: polaroid 1/1.05 authentique) */
+	aspectRatio?: PolaroidAspect;
+	/**
+	 * Active la navigation clavier (tabIndex={0} + focus-visible ring).
+	 * Réserver aux cas où le polaroid est cliquable / lié (lightbox, lien PDP).
+	 * Pour usage décoratif, laisser à false (défaut) pour ne pas polluer le tab order.
+	 */
+	interactive?: boolean;
+	/** Description accessible pour SR (requis si interactive=true sans caption) */
+	"aria-label"?: string;
 	className?: string;
 	style?: React.CSSProperties;
 }
 
-const tiltClasses: Record<TiltDirection, string> = {
-	left: "-rotate-2",
-	right: "rotate-2",
-	none: "",
-};
+const TILT_DEGREES: Record<TiltDirection, number> = { left: -2, right: 2, none: 0 };
 
 const tiltShadows: Record<TiltDirection, string> = {
 	left: "2px 6px 20px rgba(0,0,0,0.13)",
@@ -50,25 +57,51 @@ const washiColors: Record<WashiTapeColor, string> = {
 	peach: "bg-linear-to-r from-orange-200/65 to-orange-300/65",
 };
 
+const WASHI_COMPLEMENT: Record<WashiTapeColor, WashiTapeColor> = {
+	pink: "lavender",
+	lavender: "pink",
+	mint: "peach",
+	peach: "mint",
+};
+
+const aspectClasses: Record<PolaroidAspect, string> = {
+	polaroid: "aspect-[1/1.05]",
+	square: "aspect-square",
+	landscape: "aspect-4/3",
+	portrait: "aspect-3/4",
+};
+
 // Zigzag polygon simulating fibrous washi tape edges
 const washiClipLeft =
 	"polygon(2% 8%, 8% 0%, 15% 5%, 22% 0%, 30% 3%, 38% 0%, 45% 6%, 52% 0%, 60% 4%, 68% 0%, 75% 5%, 82% 0%, 90% 3%, 95% 0%, 100% 8%, 98% 50%, 100% 92%, 95% 100%, 88% 95%, 80% 100%, 72% 96%, 65% 100%, 58% 94%, 50% 100%, 42% 97%, 35% 100%, 28% 95%, 20% 100%, 12% 96%, 5% 100%, 0% 92%, 2% 50%)";
 const washiClipRight =
 	"polygon(5% 0%, 12% 5%, 20% 0%, 28% 4%, 35% 0%, 42% 6%, 50% 0%, 58% 3%, 65% 0%, 72% 5%, 80% 0%, 88% 4%, 95% 0%, 100% 8%, 98% 50%, 100% 92%, 95% 100%, 88% 95%, 80% 100%, 72% 96%, 65% 100%, 58% 94%, 50% 100%, 42% 97%, 35% 100%, 28% 95%, 20% 100%, 12% 96%, 5% 100%, 0% 92%, 2% 50%, 0% 8%)";
 
+function getShadowDirection(deg: number): TiltDirection {
+	if (deg < 0) return "left";
+	if (deg > 0) return "right";
+	return "none";
+}
+
 /**
  * Cadre style Polaroid pour photos.
  * Effet scrapbook/handmade girly.
  *
+ * Rotation pilotée par la CSS var `--polaroid-rotate` (set ici, consommée par
+ * `.polaroid-hover` dans `app/styles/components.css`) — permet l'addition
+ * propre du hover lift (translateY + scale + rotate).
+ *
  * @example
  * ```tsx
  * <PolaroidFrame
- *   tilt="left"
  *   tiltDegree={-3}
  *   caption="Mon atelier"
  *   washiTape
  *   washiColor="pink"
  *   vintage
+ *   aspectRatio="polaroid"
+ *   interactive
+ *   aria-label="Photo de l'atelier Synclune"
  * >
  *   <Image src="/photo.jpg" alt="..." fill />
  * </PolaroidFrame>
@@ -86,35 +119,31 @@ export function PolaroidFrame({
 	washiColorSecondary,
 	washiPosition = "top-left",
 	vintage = false,
+	aspectRatio = "polaroid",
+	interactive = false,
+	"aria-label": ariaLabel,
 	className,
 	style: externalStyle,
 }: PolaroidFrameProps) {
-	const hasCustomDegree = tiltDegree !== undefined;
-	const rotateDeg = hasCustomDegree ? tiltDegree : { left: -2, right: 2, none: 0 }[tilt];
-	const shadowDirection = hasCustomDegree
-		? tiltDegree < 0
-			? "left"
-			: tiltDegree > 0
-				? "right"
-				: "none"
-		: tilt;
+	const rotateDeg = tiltDegree ?? TILT_DEGREES[tilt];
+	const shadowDirection: TiltDirection =
+		tiltDegree !== undefined ? getShadowDirection(tiltDegree) : tilt;
 
-	const secondaryWashi = washiColorSecondary ?? (washiColor === "pink" ? "lavender" : "pink");
+	const secondaryWashi = washiColorSecondary ?? WASHI_COMPLEMENT[washiColor];
 
 	return (
 		<figure
-			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- intentional: keyboard-navigable gallery item
-			tabIndex={0}
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- opt-in via `interactive` prop; gated on interactive ↔ tab order discipline
+			tabIndex={interactive ? 0 : undefined}
+			aria-label={ariaLabel}
 			className={cn(
-				"polaroid-paper polaroid-hover group/polaroid @container",
-				"relative rounded-sm bg-white p-2.5 pb-8 @sm:p-3.5 @sm:pb-11",
-				!hasCustomDegree && tiltClasses[tilt],
+				"polaroid-paper polaroid-hover group/polaroid",
+				"relative rounded-sm bg-white p-2.5 pb-8 sm:p-3.5 sm:pb-11",
 				className,
 			)}
 			style={
 				{
 					boxShadow: tiltShadows[shadowDirection],
-					...(hasCustomDegree ? { transform: `rotate(${tiltDegree}deg)` } : {}),
 					"--polaroid-rotate": `${rotateDeg}deg`,
 					...externalStyle,
 				} as React.CSSProperties
@@ -124,7 +153,7 @@ export function PolaroidFrame({
 			{washiTape && (washiPosition === "top-left" || washiPosition === "both") && (
 				<div
 					className={cn(
-						"absolute -top-2 -left-3 z-10 h-4 w-12 -rotate-12 @sm:h-5 @sm:w-16",
+						"absolute -top-2 -left-3 z-10 h-4 w-12 -rotate-12 sm:h-5 sm:w-16",
 						washiColors[washiColor],
 						"opacity-90 shadow-[inset_0_0_4px_rgba(255,255,255,0.3)]",
 					)}
@@ -137,7 +166,7 @@ export function PolaroidFrame({
 			{washiTape && (washiPosition === "top-right" || washiPosition === "both") && (
 				<div
 					className={cn(
-						"absolute -top-2 -right-3 z-10 h-4 w-12 rotate-12 @sm:h-5 @sm:w-16",
+						"absolute -top-2 -right-3 z-10 h-4 w-12 rotate-12 sm:h-5 sm:w-16",
 						washiColors[secondaryWashi],
 						"opacity-90 shadow-[inset_0_0_4px_rgba(255,255,255,0.3)]",
 					)}
@@ -149,12 +178,13 @@ export function PolaroidFrame({
 			{/* Photo container with vignette + optional vintage filter */}
 			<div
 				className={cn(
-					"bg-muted relative aspect-4/3 overflow-hidden",
+					"bg-muted relative overflow-hidden",
+					aspectClasses[aspectRatio],
 					vintage && "contrast-[1.02] saturate-[1.1] sepia-[0.08]",
 				)}
 			>
 				{/* Photo zoom on hover */}
-				<div className="motion-safe:can-hover:group-hover/polaroid:scale-[1.06] h-full w-full transition-transform duration-500">
+				<div className="motion-safe:can-hover:group-hover/polaroid:scale-[1.06] h-full w-full motion-safe:transition-transform motion-safe:duration-500">
 					{children}
 				</div>
 
@@ -170,7 +200,7 @@ export function PolaroidFrame({
 			{caption && (
 				<figcaption
 					className={cn(
-						"absolute right-0 bottom-2 left-0 text-center text-sm italic @sm:bottom-3 @sm:text-base",
+						"absolute right-0 bottom-2 left-0 text-center text-sm sm:bottom-3 sm:text-base",
 						captionColor ? undefined : "text-muted-foreground",
 						"font-cursive",
 					)}

@@ -28,7 +28,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 			aria-label={`Avis de ${userName} — ${review.rating} sur 5 étoiles`}
 			className={cn(
 				"bg-card text-card-foreground overflow-hidden rounded-lg border-2 border-transparent",
-				"shadow-sm transition-[shadow,border-color] duration-300 ease-out",
+				"shadow-sm motion-safe:transition-[shadow,border-color] motion-safe:duration-300 motion-safe:ease-out",
 				"motion-reduce:transition-colors",
 				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
 				className,

@@ -72,13 +72,14 @@
 	}
 
 	/* Parallax image: subtle vertical motion as the image traverses the viewport.
-	   Replaces motion-react useTransform on translateY for scroll-bound parallax. */
+	   Replaces motion-react useTransform on translateY for scroll-bound parallax.
+	   Vars injected by <ParallaxImage> via inline style — no fallback to surface miswiring. */
 	@keyframes parallax-image-translate {
 		from {
-			translate: 0 calc(var(--parallax-from, -7%));
+			translate: 0 var(--parallax-from);
 		}
 		to {
-			translate: 0 calc(var(--parallax-to, 7%));
+			translate: 0 var(--parallax-to);
 		}
 	}
 

@@ -145,14 +145,11 @@ describe("AtelierSectionSkeleton", () => {
 		});
 	});
 
-	it("renders CTA skeleton at the bottom", () => {
+	it("ne rend pas de bloc CTA skeleton (parité avec composant réel qui n'a pas de CTA — silence narratif)", () => {
 		const { container } = render(<AtelierSectionSkeleton />);
 
 		const ctaSection = container.querySelector(".mt-12.text-center");
-		expect(ctaSection).not.toBeNull();
-
-		const ctaSkeletons = ctaSection!.querySelectorAll("[data-testid='skeleton']");
-		expect(ctaSkeletons.length).toBeGreaterThan(0);
+		expect(ctaSection).toBeNull();
 	});
 
 	it("renders header skeleton with 2 skeleton items", () => {
