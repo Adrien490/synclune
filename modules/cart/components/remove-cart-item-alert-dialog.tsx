@@ -14,7 +14,6 @@ import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
@@ -39,23 +38,14 @@ export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
 	const haptic = useHaptic();
-	const isMobile = useIsMobile();
 	const router = useRouter();
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 	const [, startUndoTransition] = useTransition();
 
-	// Tombstone (mobile) : rien n'a été supprimé — submit a juste appelé
-	// `markAsTombstone` sans toucher à l'optimistic cart, au badge ni au serveur.
-	// L'undo doit donc UNIQUEMENT lever le voile visuel ; appeler `addToCart`
-	// ici doublerait la quantité (item toujours présent en base) ou lèverait
-	// `INSUFFICIENT_STOCK` quand le stock est juste suffisant.
-	const buildTombstoneUndoHandler = (cartItemId: string) => () => {
-		cartOptimistic?.cancelTombstone(cartItemId);
-	};
-
-	// Toast Sonner (desktop) : l'item a déjà été supprimé optimistic + serveur
-	// (cf. branche desktop dans `handleSubmit`). L'undo recrée l'item via
-	// `addToCart` et restaure le badge.
+	// Undo via toast Sonner action (desktop) : l'item a déjà été supprimé
+	// optimistic + serveur dans handleSubmit. L'undo recrée l'item via `addToCart`
+	// et restaure le badge. Sur mobile, `toast.success` route vers MicroToast qui
+	// ignore l'action — l'AlertDialog de confirmation reste l'unique safety net.
 	const buildToastUndoHandler = (skuId: string, quantity: number) => () => {
 		adjustCart(quantity);
 		const fd = new FormData();
@@ -88,8 +78,6 @@ export function RemoveCartItemAlertDialog() {
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
-			// Desktop only — mobile shows tombstone at submit (before action fires)
-			// and defers the server call to `onExpire`, so onSuccess won't fire then.
 			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
 			removeDialog.close();
 			if (!skuId) return;
@@ -107,26 +95,11 @@ export function RemoveCartItemAlertDialog() {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
-		const { cartItemId, skuId, itemName = "Article" } = removeDialog.data ?? {};
+		const { cartItemId } = removeDialog.data ?? {};
 
-		if (isMobile && cartItemId && skuId && cartOptimistic) {
-			// Mobile : tombstone d'abord (pattern Gmail/iOS Mail). L'item reste rendu
-			// par cart-sheet (items.map → Tombstone si entry présente) pendant 5s, et
-			// la server action n'est appelée qu'à l'expiration via `onExpire` —
-			// sinon `updateTag` revalide le cart côté serveur et démonte le Tombstone
-			// avant qu'il n'ait été visible.
-			removeDialog.close();
-			cartOptimistic.markAsTombstone(cartItemId, {
-				onUndo: buildTombstoneUndoHandler(cartItemId),
-				onExpire: () => action(formData),
-				displayName: itemName,
-			});
-			return;
-		}
-
-		if (!isMobile && cartItemId && cartOptimistic) {
-			// Desktop : optimistic remove immédiat → l'item disparaît avant l'action,
-			// puis toast Sonner avec bouton "Annuler" en bas-droite.
+		if (cartItemId && cartOptimistic) {
+			// Optimistic remove immédiat → l'item disparaît avant l'action,
+			// puis (desktop) toast Sonner avec bouton "Annuler" en bas-droite.
 			cartOptimistic.startTransition(() => {
 				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: cartItemId });
 				action(formData);

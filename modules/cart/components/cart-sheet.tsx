@@ -1,13 +1,6 @@
 "use client";
 
-import {
-	useCallback,
-	useDeferredValue,
-	useOptimistic,
-	useRef,
-	useState,
-	useTransition,
-} from "react";
+import { useDeferredValue, useOptimistic, useRef, useTransition } from "react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import {
 	Sheet,
@@ -51,11 +44,7 @@ import {
 	getCartItemSubtotal,
 	getCartItemIssueLabel,
 } from "../services/cart-item.service";
-import {
-	CartOptimisticContext,
-	type CartTombstoneEntry,
-} from "../contexts/cart-optimistic-context";
-import { Tombstone } from "@/shared/components/ui/tombstone";
+import { CartOptimisticContext } from "../contexts/cart-optimistic-context";
 import { CartCloseContext } from "../contexts/cart-close-context";
 import { cartReducer } from "../services/cart-reducer.service";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -80,8 +69,6 @@ interface CartSheetBodyProps {
 	shouldReduceMotion: boolean | null;
 	appliedDiscountCode: string | null;
 	discountAmount: number | null;
-	tombstones: ReadonlyMap<string, CartTombstoneEntry>;
-	onTombstoneExpire: (itemId: string) => void;
 }
 
 function CartSheetBody({
@@ -98,8 +85,6 @@ function CartSheetBody({
 	subtotal,
 	appliedDiscountCode,
 	discountAmount,
-	tombstones,
-	onTombstoneExpire,
 }: CartSheetBodyProps) {
 	// Defer SR announcements so rapid +/- taps don't spam VoiceOver
 	const announceItems = useDeferredValue(totalItems);
@@ -182,33 +167,19 @@ function CartSheetBody({
 						<ScrollFade axis="vertical" className="h-full overscroll-contain" hideScrollbar={false}>
 							<div className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
-									{items.map((item) => {
-										const tombstone = tombstones.get(item.id);
-										return (
-											<m.div
-												key={item.id}
-												layout
-												initial={{ opacity: 0, height: 0, scale: 0.95 }}
-												animate={{ opacity: 1, height: "auto", scale: 1 }}
-												exit={{ opacity: 0, height: 0, scale: 0.95 }}
-												transition={
-													shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list
-												}
-												className="origin-top overflow-hidden"
-											>
-												{tombstone ? (
-													<Tombstone
-														message={`${tombstone.displayName} retiré du panier`}
-														onUndo={tombstone.onUndo}
-														onExpire={() => onTombstoneExpire(item.id)}
-														undoAriaLabel={`Annuler la suppression de ${tombstone.displayName}`}
-													/>
-												) : (
-													<CartSheetItemRow item={item} onClose={close} isMobile={isMobile} />
-												)}
-											</m.div>
-										);
-									})}
+									{items.map((item) => (
+										<m.div
+											key={item.id}
+											layout
+											initial={{ opacity: 0, height: 0, scale: 0.95 }}
+											animate={{ opacity: 1, height: "auto", scale: 1 }}
+											exit={{ opacity: 0, height: 0, scale: 0.95 }}
+											transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
+											className="origin-top overflow-hidden"
+										>
+											<CartSheetItemRow item={item} onClose={close} isMobile={isMobile} />
+										</m.div>
+									))}
 								</AnimatePresence>
 							</div>
 						</ScrollFade>
@@ -248,46 +219,10 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const itemsWithIssues = items.filter(hasCartItemIssue);
 	const hasStockIssues = itemsWithIssues.length > 0;
 
-	const [tombstones, setTombstones] = useState<ReadonlyMap<string, CartTombstoneEntry>>(
-		() => new Map(),
-	);
-
-	const markAsTombstone = useCallback((itemId: string, entry: CartTombstoneEntry) => {
-		setTombstones((prev) => {
-			const next = new Map(prev);
-			next.set(itemId, entry);
-			return next;
-		});
-	}, []);
-
-	const cancelTombstone = useCallback((itemId: string) => {
-		setTombstones((prev) => {
-			if (!prev.has(itemId)) return prev;
-			const next = new Map(prev);
-			next.delete(itemId);
-			return next;
-		});
-	}, []);
-
-	const handleTombstoneExpire = useCallback(
-		(itemId: string) => {
-			const entry = tombstones.get(itemId);
-			cancelTombstone(itemId);
-			startTransition(() => {
-				updateOptimisticCart({ type: "remove", itemId });
-			});
-			entry?.onExpire?.();
-		},
-		[cancelTombstone, startTransition, tombstones, updateOptimisticCart],
-	);
-
 	const cartOptimisticValue = {
 		updateOptimisticCart,
 		isPending,
 		startTransition,
-		tombstones,
-		markAsTombstone,
-		cancelTombstone,
 	};
 
 	const handleOpenChange = (open: boolean) => {
@@ -307,11 +242,6 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		} else {
 			haptic("selection");
 			close();
-			// Flush any pending tombstones — commit the deferred server delete now
-			// so the item doesn't reappear at the next sheet open (the server action
-			// hasn't been called yet at this point, the tombstone holds it).
-			tombstones.forEach((entry) => entry.onExpire?.());
-			setTombstones(new Map());
 			// Return focus to the saved element after Vaul/Radix portal teardown.
 			// Double rAF aligns with Vaul's animation cycle: first frame settles
 			// the unmount commit, second frame ensures focus is applied after
@@ -344,8 +274,6 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		shouldReduceMotion,
 		appliedDiscountCode: optimisticCart?.appliedDiscountCode ?? null,
 		discountAmount: optimisticCart?.discountAmountCache ?? null,
-		tombstones,
-		onTombstoneExpire: handleTombstoneExpire,
 	};
 
 	return (

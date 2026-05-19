@@ -20,9 +20,6 @@ const {
 	mockToastError,
 	mockRouterRefresh,
 	mockAdjustCart,
-	mockIsMobile,
-	mockMarkAsTombstone,
-	mockCancelTombstone,
 } = vi.hoisted(() => ({
 	mockIsOpen: { value: false },
 	mockClose: vi.fn(),
@@ -45,9 +42,6 @@ const {
 	mockToastError: vi.fn(),
 	mockRouterRefresh: vi.fn(),
 	mockAdjustCart: vi.fn(),
-	mockIsMobile: { value: false },
-	mockMarkAsTombstone: vi.fn(),
-	mockCancelTombstone: vi.fn(),
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -98,14 +92,7 @@ vi.mock("@/modules/cart/contexts/cart-optimistic-context", () => ({
 	useCartOptimisticSafe: () => ({
 		updateOptimisticCart: mockOptimisticUpdate,
 		startTransition: mockStartTransition,
-		markAsTombstone: mockMarkAsTombstone,
-		cancelTombstone: mockCancelTombstone,
 	}),
-}));
-
-vi.mock("@/shared/hooks/use-mobile", () => ({
-	useIsMobile: () => mockIsMobile.value,
-	MOBILE_BREAKPOINT: 768,
 }));
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
@@ -188,7 +175,6 @@ describe("RemoveCartItemAlertDialog", () => {
 		mockIsOpen.value = false;
 		mockDialogData.value = null;
 		mockIsPending.value = false;
-		mockIsMobile.value = false;
 	});
 
 	it("renders nothing when dialog is closed", () => {
@@ -338,117 +324,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		});
 	});
 
-	describe("mobile tombstone routing", () => {
-		beforeEach(() => {
-			mockIsMobile.value = true;
-		});
-
-		const submitForm = (container: HTMLElement) => {
-			const form = container.querySelector("form");
-			if (!form) throw new Error("form not found");
-			fireEvent.submit(form);
-		};
-
-		it("calls markAsTombstone on submit (not showUndoToast)", () => {
-			mockIsOpen.value = true;
-			mockDialogData.value = {
-				cartItemId: "ci-42",
-				skuId: "sku-42",
-				itemName: "Bague Lune",
-				quantity: 1,
-			};
-			const { container } = render(<RemoveCartItemAlertDialog />);
-			submitForm(container);
-			expect(mockMarkAsTombstone).toHaveBeenCalledWith(
-				"ci-42",
-				expect.objectContaining({
-					displayName: "Bague Lune",
-					onUndo: expect.any(Function),
-					onExpire: expect.any(Function),
-				}),
-			);
-			expect(mockToastSuccess).not.toHaveBeenCalled();
-			expect(mockClose).toHaveBeenCalled();
-		});
-
-		it("defers the removeFromCart server action until onExpire fires", () => {
-			mockIsOpen.value = true;
-			mockDialogData.value = {
-				cartItemId: "ci-42",
-				skuId: "sku-42",
-				itemName: "Bague Lune",
-				quantity: 1,
-			};
-			const { container } = render(<RemoveCartItemAlertDialog />);
-			submitForm(container);
-			expect(mockAction).not.toHaveBeenCalled();
-			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
-			const onExpire = (tombstoneCall![1] as { onExpire: () => void }).onExpire;
-			onExpire();
-			expect(mockAction).toHaveBeenCalledTimes(1);
-			expect(mockAction).toHaveBeenCalledWith(expect.any(FormData));
-		});
-
-		it("the markAsTombstone onUndo handler ONLY cancels the tombstone (no server call, no badge change)", async () => {
-			mockIsOpen.value = true;
-			mockDialogData.value = {
-				cartItemId: "ci-7",
-				skuId: "sku-7",
-				itemName: "Collier",
-				quantity: 2,
-			};
-			const { container } = render(<RemoveCartItemAlertDialog />);
-			submitForm(container);
-			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
-			const undoHandler = (tombstoneCall![1] as { onUndo: () => void }).onUndo;
-			await undoHandler();
-
-			expect(mockCancelTombstone).toHaveBeenCalledWith("ci-7");
-			// Régression : mobile undo NE DOIT PAS recreate via addToCart (l'item
-			// n'a jamais été retiré du cart serveur ni de l'optimistic state).
-			// Un addToCart ici doublerait la quantité ou lèverait INSUFFICIENT_STOCK.
-			expect(mockAddToCart).not.toHaveBeenCalled();
-			// Régression : le badge n'est jamais décrémenté côté mobile au submit
-			// (décrément différé à expire via useRemoveFromCart.action), donc pas
-			// de +quantity à l'undo.
-			expect(mockAdjustCart).not.toHaveBeenCalled();
-			// Pas de toast "Article restauré" : le retour visuel du <CartSheetItemRow>
-			// à la place du <Tombstone> est le feedback.
-			expect(mockToastSuccess).not.toHaveBeenCalled();
-			// Sanity : undo doit empêcher le server delete d'arriver (onExpire pas invoqué)
-			expect(mockAction).not.toHaveBeenCalled();
-		});
-
-		it("falls back to direct action when skuId is missing (no restoration possible)", () => {
-			mockIsOpen.value = true;
-			mockDialogData.value = { cartItemId: "ci-1", itemName: "Bague", quantity: 1 };
-			const { container } = render(<RemoveCartItemAlertDialog />);
-			submitForm(container);
-			expect(mockMarkAsTombstone).not.toHaveBeenCalled();
-			expect(mockAction).toHaveBeenCalled();
-		});
-
-		it("does NOT call updateOptimisticCart remove on submit (delayed until tombstone expire)", () => {
-			mockIsOpen.value = true;
-			mockDialogData.value = {
-				cartItemId: "ci-9",
-				skuId: "sku-9",
-				itemName: "Bague",
-				quantity: 1,
-			};
-			const { container } = render(<RemoveCartItemAlertDialog />);
-			submitForm(container);
-			expect(mockOptimisticUpdate).not.toHaveBeenCalled();
-			expect(mockAction).not.toHaveBeenCalled();
-			expect(mockMarkAsTombstone).toHaveBeenCalled();
-		});
-	});
-
-	describe("desktop optimistic remove on submit", () => {
-		beforeEach(() => {
-			mockIsMobile.value = false;
-		});
-
+	describe("optimistic remove on submit", () => {
 		it("calls updateOptimisticCart remove BEFORE the server action", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {

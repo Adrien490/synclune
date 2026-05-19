@@ -1,7 +1,5 @@
 "use client";
 
-import { useRef } from "react";
-
 import { AnimatedHeartIcon } from "@/shared/components/icons/animated-heart-icon";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
@@ -57,12 +55,10 @@ export function WishlistButton({
 	size = "md",
 	enableUndoToast = false,
 }: WishlistButtonProps) {
-	const triggerRef = useRef<HTMLButtonElement>(null);
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
 		enableUndoToast,
 		productTitle,
-		getTriggerRect: () => triggerRef.current?.getBoundingClientRect() ?? null,
 	});
 
 	const { button: buttonSize, icon: iconSize } = sizeConfig[size];
@@ -79,7 +75,6 @@ export function WishlistButton({
 
 	const button = (
 		<Button
-			ref={triggerRef}
 			type="submit"
 			variant="ghost"
 			size="icon"

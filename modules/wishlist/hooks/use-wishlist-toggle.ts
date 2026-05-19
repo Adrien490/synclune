@@ -10,10 +10,6 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { showWishlistUndoToast } from "@/modules/wishlist/utils/show-wishlist-undo-toast";
-import {
-	FLY_HEART_EVENT,
-	type FlyHeartEventDetail,
-} from "@/shared/components/animations/fly-heart-to-badge.constants";
 
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
@@ -25,12 +21,6 @@ interface UseWishlistToggleOptions {
 	enableUndoToast?: boolean;
 	/** Titre du produit injecté dans les toasts undo. */
 	productTitle?: string;
-	/**
-	 * Callback retournant le rect du bouton déclencheur — utilisé pour animer
-	 * un mini-heart depuis le bouton vers `WishlistBadge` au moment de l'ajout.
-	 * Retourner `null` désactive l'animation pour ce trigger.
-	 */
-	getTriggerRect?: () => DOMRect | null;
 }
 
 /**
@@ -44,7 +34,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		onSuccess,
 		enableUndoToast = false,
 		productTitle,
-		getTriggerRect,
 	} = options ?? {};
 	const router = useRouter();
 	const pathname = usePathname();
@@ -156,26 +145,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		// Utilise la ref pour lire l'état actuel (évite closure stale)
 		const currentState = isInWishlistRef.current;
 		const newState = !currentState;
-
-		// Fire-and-forget de l'event d'animation AVANT le startTransition : le
-		// listener `FlyHeartToBadgeLayer` fait `setHearts(...)`, qui serait flaggé
-		// update « transition » par React 19 s'il était dispatché dans le scope du
-		// startTransition (batché avec la mutation `formAction`, render différé par
-		// le scheduler → l'animation lague visuellement après le clic).
-		if (newState) {
-			const triggerRect = getTriggerRect?.();
-			if (triggerRect && typeof window !== "undefined") {
-				const detail: FlyHeartEventDetail = {
-					fromRect: {
-						top: triggerRect.top,
-						left: triggerRect.left,
-						width: triggerRect.width,
-						height: triggerRect.height,
-					},
-				};
-				window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
-			}
-		}
 
 		startTransition(() => {
 			triggerHaptic(newState ? "medium" : "light");

@@ -6,29 +6,10 @@ export type CartOptimisticAction =
 	| { type: "remove"; itemId: string }
 	| { type: "updateQuantity"; itemId: string; quantity: number };
 
-export interface CartTombstoneEntry {
-	onUndo: () => void;
-	/**
-	 * Server-side commit déclenché à l'expiration du countdown (ou au flush
-	 * sheet close). Mobile only — desktop fait son optimistic remove + server
-	 * action en synchrone via le toast Sonner.
-	 */
-	onExpire?: () => void;
-	displayName: string;
-}
-
 export interface CartOptimisticContextValue {
 	updateOptimisticCart: (action: CartOptimisticAction) => void;
 	isPending: boolean;
 	startTransition: React.TransitionStartFunction;
-	/**
-	 * Items marqués "tombstoned" : visible 5s en placeholder avec bouton Annuler
-	 * avant retrait visuel final. Pattern Gmail mobile / iOS Mail — remplace les
-	 * toasts undo en bas d'écran qui masquaient la bottom-bar. Cf `Tombstone`.
-	 */
-	tombstones: ReadonlyMap<string, CartTombstoneEntry>;
-	markAsTombstone: (itemId: string, entry: CartTombstoneEntry) => void;
-	cancelTombstone: (itemId: string) => void;
 }
 
 export const CartOptimisticContext = createContext<CartOptimisticContextValue | null>(null);

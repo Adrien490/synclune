@@ -285,56 +285,6 @@ describe("useWishlistToggle", () => {
 		expect(mockShowWishlistUndoToast).not.toHaveBeenCalled();
 	});
 
-	it("dispatches fly-to-badge event on add when getTriggerRect is provided (G5)", async () => {
-		const dispatchSpy = vi.spyOn(window, "dispatchEvent");
-		const fakeRect = { top: 100, left: 200, width: 44, height: 44 } as DOMRect;
-		const { result } = renderHook(() => useWishlistToggle({ getTriggerRect: () => fakeRect }));
-		const formData = new FormData();
-		formData.append("productId", "prod-1");
-
-		await act(async () => {
-			result.current.action(formData);
-		});
-
-		const flyEvents = dispatchSpy.mock.calls
-			.map(([event]) => event)
-			.filter(
-				(event): event is CustomEvent =>
-					event instanceof CustomEvent && event.type === "wishlist:fly-to-badge",
-			);
-		expect(flyEvents).toHaveLength(1);
-		expect(flyEvents[0]?.detail).toEqual({
-			fromRect: { top: 100, left: 200, width: 44, height: 44 },
-		});
-
-		dispatchSpy.mockRestore();
-	});
-
-	it("does NOT dispatch fly-to-badge event on remove (G5 — add-only)", async () => {
-		const dispatchSpy = vi.spyOn(window, "dispatchEvent");
-		mockToggleWishlistItem.mockResolvedValue(SUCCESS_REMOVED);
-		const fakeRect = { top: 100, left: 200, width: 44, height: 44 } as DOMRect;
-		const { result } = renderHook(() =>
-			useWishlistToggle({ initialIsInWishlist: true, getTriggerRect: () => fakeRect }),
-		);
-		const formData = new FormData();
-		formData.append("productId", "prod-1");
-
-		await act(async () => {
-			result.current.action(formData);
-		});
-
-		const flyEvents = dispatchSpy.mock.calls
-			.map(([event]) => event)
-			.filter(
-				(event): event is CustomEvent =>
-					event instanceof CustomEvent && event.type === "wishlist:fly-to-badge",
-			);
-		expect(flyEvents).toHaveLength(0);
-
-		dispatchSpy.mockRestore();
-	});
-
 	it("second action call is ignored while processing (double-submit guard)", async () => {
 		let resolveAction!: (v: typeof SUCCESS_ADDED) => void;
 		mockToggleWishlistItem.mockReturnValue(
