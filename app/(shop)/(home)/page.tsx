@@ -14,7 +14,6 @@ import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
 import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
-import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { HomeFaq } from "./_components/home-faq";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
@@ -82,10 +81,10 @@ export default async function Page() {
 				/>
 			</Suspense>
 
-			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
-			<Suspense fallback={<HeroSectionSkeleton />}>
-				<HeroSection productsPromise={productsPromise} />
-			</Suspense>
+			{/* 1. Hero - Attention capture + rotating tagline + floating product images.
+			    Rendered synchronously (no Suspense) so React 19 hoists the LCP image
+			    `<link rel="preload">` into the initial HTML head — saves ~2s LCP mobile. */}
+			<HeroSection productsPromise={productsPromise} />
 
 			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
 			<HeroReassuranceBanner />

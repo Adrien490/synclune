@@ -52,7 +52,7 @@ export function QuickSearchDialog({
 	productTypes,
 	recentlyViewed = EMPTY_RECENTLY_VIEWED,
 }: QuickSearchDialogProps) {
-	const { isOpen, open, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const searchInputRef = useRef<SearchInputHandle>(null);
@@ -64,21 +64,8 @@ export function QuickSearchDialog({
 		}
 	}, [isOpen]);
 
-	// Global Cmd+K / Ctrl+K shortcut to open quick search
-	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-				e.preventDefault();
-				if (isOpen) {
-					close();
-				} else {
-					open();
-				}
-			}
-		};
-		document.addEventListener("keydown", handleKeyDown);
-		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [isOpen, open, close]);
+	// Cmd+K / Ctrl+K shortcut lives in QuickSearchKeyboardShortcut so the
+	// heavy dialog chunk stays unloaded until first open. See lazy wrapper.
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),

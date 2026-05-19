@@ -8,8 +8,7 @@ import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
-import { CookieBanner } from "@/shared/components/cookie-banner";
-import { FlyHeartToBadgeLayer } from "@/shared/components/animations/fly-heart-to-badge";
+import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
@@ -44,7 +43,7 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			return (
 				<>
 					<StoreClosurePage status={storeStatus} />
-					<CookieBanner />
+					<CookieBannerLazy />
 				</>
 			);
 		}
@@ -73,11 +72,10 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 				<AdminDashboardFab />
 			</Suspense>
 			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
-			<FlyHeartToBadgeLayer />
 			<PullToRefresh />
 			<VisualViewportBridge />
 			<SentryUserBridge userId={session?.user.id} role={session?.user.role} />
-			<CookieBanner />
+			<CookieBannerLazy />
 		</>
 	);
 }

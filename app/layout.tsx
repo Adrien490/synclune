@@ -6,6 +6,7 @@ import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
+import { UPLOADTHING_CDN_HOSTS } from "@/shared/constants/uploadthing";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
@@ -34,6 +35,13 @@ export default function RootLayout({
 			data-scroll-behavior="smooth"
 			suppressHydrationWarning
 		>
+			<head>
+				{/* Preconnect au CDN UploadThing — économise DNS+TCP+TLS handshake
+				    sur l'image LCP du Hero (resource load delay ~500-2000ms 4G mobile). */}
+				{UPLOADTHING_CDN_HOSTS.map((host) => (
+					<link key={host} rel="preconnect" href={host} crossOrigin="anonymous" />
+				))}
+			</head>
 			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />

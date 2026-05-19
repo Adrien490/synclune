@@ -126,8 +126,8 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe("HeroSection", () => {
-	it("renders the section with correct aria attributes", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the section with correct aria attributes", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const section = document.getElementById("hero-section");
 		expect(section).not.toBeNull();
@@ -135,8 +135,8 @@ describe("HeroSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("hero-subtitle");
 	});
 
-	it("renders the h1 title with server-rendered text", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the h1 title with server-rendered text", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const heading = screen.getByRole("heading", { level: 1 });
 		expect(heading).toBeInTheDocument();
@@ -144,28 +144,28 @@ describe("HeroSection", () => {
 		expect(heading.textContent).toContain("Des bijoux");
 	});
 
-	it("renders the subtitle paragraph with id", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the subtitle paragraph with id", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const subtitle = document.getElementById("hero-subtitle");
 		expect(subtitle).not.toBeNull();
 		expect(subtitle?.tagName).toBe("P");
 	});
 
-	it("renders the primary CTA with correct link", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the primary CTA with correct link", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const boutiqueLink = screen.getByText("Découvrir la boutique");
 		expect(boutiqueLink.closest("a")).toHaveAttribute("href", "/produits");
 	});
 
-	it("renders the RotatingWord component", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the RotatingWord component", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 		expect(screen.getByTestId("rotating-word")).toBeInTheDocument();
 	});
 
-	it("renders the ParticleBackground in a decorative container", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the ParticleBackground in a decorative container", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const particleBg = screen.getByTestId("particle-background");
 		expect(particleBg).toBeInTheDocument();
@@ -174,32 +174,31 @@ describe("HeroSection", () => {
 		expect(decorativeContainer?.getAttribute("aria-hidden")).toBe("true");
 	});
 
-	it("renders Suspense boundary for floating images", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders floating images inline (no Suspense — LCP preload in initial HTML)", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
-		// HeroFloatingImagesAsync is an async server component inside Suspense.
-		// In a sync test environment, the HeroFloatingImagesSkeleton fallback renders.
-		// We verify the section still renders correctly without blocking.
-		const section = document.getElementById("hero-section");
-		expect(section).not.toBeNull();
+		// HeroSection awaits productsPromise directly and renders HeroFloatingImages
+		// inline so React 19 emits `<link rel="preload">` for the LCP image in the
+		// initial HTML head. No Suspense boundary involved.
+		expect(screen.getByTestId("floating-images")).toBeInTheDocument();
 	});
 
-	it("renders the Heart icon as decorative (aria-hidden)", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("renders the Heart icon as decorative (aria-hidden)", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const heart = screen.getByTestId("heart-icon");
 		expect(heart.getAttribute("aria-hidden")).toBe("true");
 	});
 
-	it("includes sr-only text 'avec amour'", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+	it("includes sr-only text 'avec amour'", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		const srOnly = screen.getByText("avec amour");
 		expect(srOnly).toBeInTheDocument();
 		expect(srOnly.className).toContain("sr-only");
 	});
 
-	it("renders without crashing under prefers-reduced-motion", () => {
+	it("renders without crashing under prefers-reduced-motion", async () => {
 		const matchMedia = vi.fn(
 			(query: string) =>
 				({
@@ -219,7 +218,7 @@ describe("HeroSection", () => {
 			value: matchMedia,
 		});
 
-		render(<HeroSection productsPromise={mockProductsPromise} />);
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
 
 		// Smoke check: section + h1 still render, no throw
 		expect(document.getElementById("hero-section")).not.toBeNull();

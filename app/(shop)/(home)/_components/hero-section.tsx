@@ -1,5 +1,4 @@
 import { HeroFloatingImages } from "./floating-images";
-import { HeroFloatingImagesSkeleton } from "./hero-floating-images-skeleton";
 import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
@@ -7,19 +6,8 @@ import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
-import { Suspense } from "react";
 import { HeroCtaButtons } from "./hero-cta-buttons";
 import { ParticleBackground } from "./hero-decorations";
-
-async function HeroFloatingImagesAsync({
-	productsPromise,
-}: {
-	productsPromise: Promise<GetProductsReturn>;
-}) {
-	const { products } = await productsPromise;
-	const heroImages = extractHeroImages(products);
-	return <HeroFloatingImages images={heroImages} />;
-}
 
 /**
  * Homepage hero section.
@@ -31,8 +19,19 @@ async function HeroFloatingImagesAsync({
  * "Des bijoux" renders server-side for instant LCP — only the
  * rotating word requires client JS. Decorative animations
  * (particles, scroll indicator) are dynamically imported.
+ *
+ * Awaits `productsPromise` inline (no Suspense) so the LCP image
+ * `<link rel="preload">` is hoisted into the initial HTML head by
+ * React 19 — saves ~2s LCP mobile vs streaming the hero in later.
  */
-export function HeroSection({ productsPromise }: { productsPromise: Promise<GetProductsReturn> }) {
+export async function HeroSection({
+	productsPromise,
+}: {
+	productsPromise: Promise<GetProductsReturn>;
+}) {
+	const { products } = await productsPromise;
+	const heroImages = extractHeroImages(products);
+
 	return (
 		<section
 			id="hero-section"
@@ -64,10 +63,9 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 				<div className="bg-background/10 absolute inset-0" />
 			</div>
 
-			{/* Floating product images - Desktop only, streams in after products load */}
-			<Suspense fallback={<HeroFloatingImagesSkeleton />}>
-				<HeroFloatingImagesAsync productsPromise={productsPromise} />
-			</Suspense>
+			{/* Floating product images - Desktop only. Server-rendered with LCP image
+			    inside so React 19 emits `<link rel="preload">` in the initial HTML. */}
+			<HeroFloatingImages images={heroImages} />
 
 			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">
 				<div className="flex flex-col items-center">

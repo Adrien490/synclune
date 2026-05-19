@@ -5,9 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockGetQuickSearchData, mockQuickSearchDialog } = vi.hoisted(() => ({
+const { mockGetQuickSearchData, mockQuickSearchDialogLazy } = vi.hoisted(() => ({
 	mockGetQuickSearchData: vi.fn(),
-	mockQuickSearchDialog: vi.fn(),
+	mockQuickSearchDialogLazy: vi.fn(),
 }));
 
 // ============================================================================
@@ -18,8 +18,8 @@ vi.mock("@/modules/products/data/get-quick-search-data", () => ({
 	getQuickSearchData: mockGetQuickSearchData,
 }));
 
-vi.mock("../quick-search-dialog", () => ({
-	QuickSearchDialog: mockQuickSearchDialog,
+vi.mock("../quick-search-dialog-lazy", () => ({
+	QuickSearchDialogLazy: mockQuickSearchDialogLazy,
 }));
 
 // ============================================================================
@@ -84,7 +84,7 @@ afterEach(() => {
 describe("QuickSearchDialogAsync", () => {
 	it("calls getQuickSearchData once", async () => {
 		mockGetQuickSearchData.mockResolvedValue(makeQuickSearchData());
-		mockQuickSearchDialog.mockReturnValue(<div data-testid="quick-search-dialog" />);
+		mockQuickSearchDialogLazy.mockReturnValue(<div data-testid="quick-search-dialog" />);
 
 		render(await QuickSearchDialogAsync());
 
@@ -94,7 +94,7 @@ describe("QuickSearchDialogAsync", () => {
 	it("renders QuickSearchDialog with data from getQuickSearchData", async () => {
 		const data = makeQuickSearchData();
 		mockGetQuickSearchData.mockResolvedValue(data);
-		mockQuickSearchDialog.mockImplementation(
+		mockQuickSearchDialogLazy.mockImplementation(
 			(props: {
 				recentSearches: string[];
 				collections: QuickSearchCollection[];
@@ -130,7 +130,7 @@ describe("QuickSearchDialogAsync", () => {
 		mockGetQuickSearchData.mockResolvedValue(data);
 
 		const capturedProps: Record<string, unknown>[] = [];
-		mockQuickSearchDialog.mockImplementation((props: Record<string, unknown>) => {
+		mockQuickSearchDialogLazy.mockImplementation((props: Record<string, unknown>) => {
 			capturedProps.push(props);
 			return <div data-testid="quick-search-dialog" />;
 		});
@@ -155,7 +155,7 @@ describe("QuickSearchDialogAsync", () => {
 		mockGetQuickSearchData.mockResolvedValue(data);
 
 		const capturedProps: Record<string, unknown>[] = [];
-		mockQuickSearchDialog.mockImplementation((props: Record<string, unknown>) => {
+		mockQuickSearchDialogLazy.mockImplementation((props: Record<string, unknown>) => {
 			capturedProps.push(props);
 			return <div data-testid="quick-search-dialog" />;
 		});

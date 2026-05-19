@@ -80,24 +80,16 @@ vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
-		fetchPriority,
-		loading,
+		preload,
 	}: {
 		src: string;
 		alt: string;
-		fetchPriority?: string;
-		loading?: string;
+		preload?: boolean;
 		[key: string]: unknown;
 	}) => (
 		// biome-ignore lint/a11y/useAltText: test mock
 		// eslint-disable-next-line @next/next/no-img-element
-		<img
-			src={src}
-			alt={alt}
-			data-testid="floating-img"
-			data-fetch-priority={fetchPriority}
-			data-loading={loading}
-		/>
+		<img src={src} alt={alt} data-testid="floating-img" data-preload={preload ? "true" : "false"} />
 	),
 }));
 
@@ -188,16 +180,14 @@ describe("HeroFloatingImagesInner", () => {
 		expect(wrapper?.className).toContain("md:block");
 	});
 
-	it("marks only the first image as eager + fetchPriority=high (LCP optimization)", () => {
+	it("marks only the first image as preload=true (LCP — Next 16 emits <link rel=preload>)", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const images = container.querySelectorAll("[data-testid='floating-img']");
-		expect(images[0]?.getAttribute("data-fetch-priority")).toBe("high");
-		expect(images[0]?.getAttribute("data-loading")).toBe("eager");
+		expect(images[0]?.getAttribute("data-preload")).toBe("true");
 
 		for (let i = 1; i < images.length; i++) {
-			expect(images[i]?.getAttribute("data-fetch-priority")).toBe("auto");
-			expect(images[i]?.getAttribute("data-loading")).toBe("lazy");
+			expect(images[i]?.getAttribute("data-preload")).toBe("false");
 		}
 	});
 
