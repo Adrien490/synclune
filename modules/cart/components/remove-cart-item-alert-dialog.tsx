@@ -44,24 +44,35 @@ export function RemoveCartItemAlertDialog() {
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 	const [, startUndoTransition] = useTransition();
 
-	const buildUndoHandler =
-		(cartItemId: string | undefined, skuId: string, quantity: number) => () => {
-			if (cartItemId) cartOptimistic?.cancelTombstone(cartItemId);
-			adjustCart(quantity);
-			const fd = new FormData();
-			fd.set("skuId", skuId);
-			fd.set("quantity", String(quantity));
-			startUndoTransition(async () => {
-				const result = await addToCart(undefined, fd);
-				if (result.status === ActionStatus.SUCCESS) {
-					router.refresh();
-					toast.success("Article restauré");
-				} else {
-					adjustCart(-quantity);
-					toast.error(result.message);
-				}
-			});
-		};
+	// Tombstone (mobile) : rien n'a été supprimé — submit a juste appelé
+	// `markAsTombstone` sans toucher à l'optimistic cart, au badge ni au serveur.
+	// L'undo doit donc UNIQUEMENT lever le voile visuel ; appeler `addToCart`
+	// ici doublerait la quantité (item toujours présent en base) ou lèverait
+	// `INSUFFICIENT_STOCK` quand le stock est juste suffisant.
+	const buildTombstoneUndoHandler = (cartItemId: string) => () => {
+		cartOptimistic?.cancelTombstone(cartItemId);
+	};
+
+	// Toast Sonner (desktop) : l'item a déjà été supprimé optimistic + serveur
+	// (cf. branche desktop dans `handleSubmit`). L'undo recrée l'item via
+	// `addToCart` et restaure le badge.
+	const buildToastUndoHandler = (skuId: string, quantity: number) => () => {
+		adjustCart(quantity);
+		const fd = new FormData();
+		fd.set("skuId", skuId);
+		fd.set("quantity", String(quantity));
+		startUndoTransition(async () => {
+			const result = await addToCart(undefined, fd);
+			if (result.status === ActionStatus.SUCCESS) {
+				// Pas de toast "Article restauré" : le retour de la ligne dans le
+				// cart-sheet après router.refresh() est le feedback visuel.
+				router.refresh();
+			} else {
+				adjustCart(-quantity);
+				toast.error(result.message);
+			}
+		});
+	};
 
 	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
 		toast.success(`${itemName} retiré du panier`, {
@@ -69,7 +80,7 @@ export function RemoveCartItemAlertDialog() {
 			microVariant: "cart",
 			action: {
 				label: "Annuler",
-				onClick: buildUndoHandler(undefined, skuId, quantity),
+				onClick: buildToastUndoHandler(skuId, quantity),
 			},
 		});
 	};
@@ -96,7 +107,7 @@ export function RemoveCartItemAlertDialog() {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
-		const { cartItemId, skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
+		const { cartItemId, skuId, itemName = "Article" } = removeDialog.data ?? {};
 
 		if (isMobile && cartItemId && skuId && cartOptimistic) {
 			// Mobile : tombstone d'abord (pattern Gmail/iOS Mail). L'item reste rendu
@@ -106,7 +117,7 @@ export function RemoveCartItemAlertDialog() {
 			// avant qu'il n'ait été visible.
 			removeDialog.close();
 			cartOptimistic.markAsTombstone(cartItemId, {
-				onUndo: buildUndoHandler(cartItemId, skuId, quantity),
+				onUndo: buildTombstoneUndoHandler(cartItemId),
 				onExpire: () => action(formData),
 				displayName: itemName,
 			});

@@ -312,7 +312,9 @@ describe("RemoveCartItemAlertDialog", () => {
 			expect(fd.get("skuId")).toBe("sku-9");
 			expect(fd.get("quantity")).toBe("3");
 			expect(mockRouterRefresh).toHaveBeenCalled();
-			expect(mockToastSuccess).toHaveBeenLastCalledWith("Article restauré");
+			// Pas de toast "Article restauré" : le retour de la ligne dans le cart-sheet
+			// après router.refresh() est le feedback. Seul le toast undo initial existe.
+			expect(mockToastSuccess).toHaveBeenCalledTimes(1);
 		});
 
 		it("rolls back the badge and shows error toast when restoration fails", async () => {
@@ -387,7 +389,7 @@ describe("RemoveCartItemAlertDialog", () => {
 			expect(mockAction).toHaveBeenCalledWith(expect.any(FormData));
 		});
 
-		it("the markAsTombstone onUndo handler restores via addToCart and cancels the tombstone", async () => {
+		it("the markAsTombstone onUndo handler ONLY cancels the tombstone (no server call, no badge change)", async () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
 				cartItemId: "ci-7",
@@ -395,17 +397,25 @@ describe("RemoveCartItemAlertDialog", () => {
 				itemName: "Collier",
 				quantity: 2,
 			};
-			mockAddToCart.mockResolvedValueOnce({ status: ActionStatus.SUCCESS, message: "ok" });
 			const { container } = render(<RemoveCartItemAlertDialog />);
 			submitForm(container);
 			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
 			const undoHandler = (tombstoneCall![1] as { onUndo: () => void }).onUndo;
 			await undoHandler();
+
 			expect(mockCancelTombstone).toHaveBeenCalledWith("ci-7");
-			expect(mockAdjustCart).toHaveBeenCalledWith(2);
-			expect(mockAddToCart).toHaveBeenCalledWith(undefined, expect.any(FormData));
-			expect(mockToastSuccess).toHaveBeenCalledWith("Article restauré");
-			// Sanity: undo doit empêcher le server delete d'arriver (onExpire pas invoqué)
+			// Régression : mobile undo NE DOIT PAS recreate via addToCart (l'item
+			// n'a jamais été retiré du cart serveur ni de l'optimistic state).
+			// Un addToCart ici doublerait la quantité ou lèverait INSUFFICIENT_STOCK.
+			expect(mockAddToCart).not.toHaveBeenCalled();
+			// Régression : le badge n'est jamais décrémenté côté mobile au submit
+			// (décrément différé à expire via useRemoveFromCart.action), donc pas
+			// de +quantity à l'undo.
+			expect(mockAdjustCart).not.toHaveBeenCalled();
+			// Pas de toast "Article restauré" : le retour visuel du <CartSheetItemRow>
+			// à la place du <Tombstone> est le feedback.
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+			// Sanity : undo doit empêcher le server delete d'arriver (onExpire pas invoqué)
 			expect(mockAction).not.toHaveBeenCalled();
 		});
 
