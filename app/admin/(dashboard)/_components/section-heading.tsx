@@ -48,7 +48,6 @@ export function SectionHeading({
 				</h2>
 			</div>
 			<HandDrawnUnderline
-				color="var(--secondary)"
 				width={80}
 				height={14}
 				strokeWidth={2}

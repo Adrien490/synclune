@@ -105,7 +105,7 @@ export function KpiCard({
 	previousVolume,
 }: KpiCardProps) {
 	const iconClassName = cn(
-		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
+		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
 		size === "featured" && "size-10",
 		size === "default" && "size-8",
 		size === "compact" && "size-6",

@@ -29,7 +29,7 @@ export default function ProductTypeCategoryError({
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={
-						<p className="mb-4 text-8xl" aria-hidden="true">
+						<p className="text-8xl" aria-hidden="true">
 							✨
 						</p>
 					}

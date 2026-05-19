@@ -117,7 +117,6 @@ export async function AtelierSection() {
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
 						<HandDrawnUnderline
-							color="var(--secondary)"
 							delay={MOTION_CONFIG.section.underline.delay}
 							className="mx-auto mt-2"
 						/>

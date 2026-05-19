@@ -45,11 +45,11 @@ export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 					key={item.id}
 					id={item.id}
 					value={item.id}
-					className="scroll-mt-24 lg:scroll-mt-28"
+					className="data-[state=open]:bg-primary/5 scroll-mt-24 transition-colors lg:scroll-mt-28"
 				>
 					<AccordionTrigger
 						headingLevel={3}
-						className="text-base data-[state=open]:font-medium sm:text-lg"
+						className="data-[state=open]:[&_svg]:text-primary text-base data-[state=open]:font-medium sm:text-lg"
 					>
 						{item.question}
 					</AccordionTrigger>

@@ -42,6 +42,13 @@ export async function HeroSection({
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
+				{/* Soft rose-blush glow behind the hero title — amplifies Synclune brand identity */}
+				<div
+					className="pointer-events-none absolute top-[28%] left-1/2 h-[55vh] w-[85vw] max-w-3xl -translate-x-1/2 rounded-full opacity-70 blur-3xl"
+					style={{
+						background: "radial-gradient(closest-side, var(--color-glow-pink), transparent 70%)",
+					}}
+				/>
 				{/* Single instance — component handles responsive internally
             (desktop: count particles, mobile: ceil(count * mobileCountRatio) with reduced blur) */}
 				<ParticleBackground

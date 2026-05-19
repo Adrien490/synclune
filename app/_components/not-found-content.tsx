@@ -17,7 +17,7 @@ export function NotFoundContent({ emoji, title, description, actions }: NotFound
 			<Fade duration={MOTION_CONFIG.duration.emphasis}>{emoji}</Fade>
 
 			<Fade delay={0.05} duration={MOTION_CONFIG.duration.emphasis}>
-				<div className="space-y-4">
+				<div className="space-y-4" aria-live="polite" aria-atomic="true">
 					<div className="flex flex-col items-center">
 						{title}
 						<HandDrawnUnderline delay={0.2} />

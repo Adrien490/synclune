@@ -24,7 +24,7 @@ export default function GlobalError({
 			<body className={`${figtree.className} antialiased`}>
 				<main className="bg-background flex min-h-screen items-center justify-center px-4">
 					<div className="mx-auto max-w-2xl space-y-8 text-center">
-						<p className="text-muted-foreground/30 mb-4 text-8xl font-bold" aria-hidden="true">
+						<p className="text-muted-foreground/30 text-8xl font-bold" aria-hidden="true">
 							💔
 						</p>
 						<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">

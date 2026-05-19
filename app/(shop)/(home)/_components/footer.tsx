@@ -13,8 +13,8 @@ import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { cacheLife, cacheTag } from "next/cache";
+import { ManageCookiesButton } from "@/shared/components/manage-cookies-button";
 import { FooterLink } from "./footer-link";
-import { ManageCookiesButton } from "./manage-cookies-button";
 
 const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 	{
@@ -31,7 +31,7 @@ const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 export function FooterSkeleton() {
 	return (
 		<footer
-			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-linear-to-b"
+			className="pwa-footer from-primary/8 via-background to-primary/5 relative overflow-hidden bg-linear-to-b"
 			aria-hidden="true"
 		>
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
@@ -53,7 +53,7 @@ export async function Footer() {
 	cacheTag("footer");
 	return (
 		<footer
-			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-linear-to-b"
+			className="pwa-footer from-primary/8 via-background to-primary/5 relative overflow-hidden bg-linear-to-b"
 			aria-labelledby="footer-heading"
 			style={{ viewTransitionName: "shop-footer" }}
 		>

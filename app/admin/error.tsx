@@ -22,7 +22,7 @@ export default function AdminError({
 			<div className="mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={
-						<p className="text-muted-foreground/30 mb-4 text-8xl font-bold" aria-hidden="true">
+						<p className="text-muted-foreground/30 text-8xl font-bold" aria-hidden="true">
 							⚙️
 						</p>
 					}

@@ -22,7 +22,7 @@ export async function LatestCreations({
 	return (
 		<section
 			id="latest-creations"
-			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
+			className={`bg-primary/5 relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 			style={{ viewTransitionName: "latest-creations" }}
@@ -33,7 +33,6 @@ export async function LatestCreations({
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="latest-creations-title">Nouvelles créations</SectionTitle>
 						<HandDrawnUnderline
-							color="var(--secondary)"
 							delay={MOTION_CONFIG.section.underline.delay}
 							className="mx-auto mt-2"
 						/>

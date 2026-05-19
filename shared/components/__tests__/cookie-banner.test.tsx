@@ -85,10 +85,6 @@ vi.mock("next/link", () => ({
 	},
 }));
 
-vi.mock("@radix-ui/react-focus-scope", () => ({
-	FocusScope: ({ children }: { children: unknown }) => children,
-}));
-
 // Import AFTER mocks
 import { CookieBanner } from "../cookie-banner";
 
@@ -194,43 +190,51 @@ describe("CookieBanner", () => {
 	});
 
 	describe("keyboard", () => {
-		it("calls rejectCookies on Escape key", () => {
+		it("does not dismiss the banner on Escape key (CNIL: explicit choice required)", () => {
 			render(<CookieBanner />);
 
 			act(() => {
 				fireEvent.keyDown(document, { key: "Escape" });
 			});
-			expect(mockStore.rejectCookies).toHaveBeenCalledOnce();
+			expect(mockStore.rejectCookies).not.toHaveBeenCalled();
+			expect(mockStore.acceptCookies).not.toHaveBeenCalled();
+			expect(screen.getByText("Cookies")).toBeInTheDocument();
 		});
 	});
 
 	describe("accessibility", () => {
-		it("has role='alertdialog'", () => {
+		it("has role='region' (non-blocking banner)", () => {
 			render(<CookieBanner />);
 
-			expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+			expect(screen.getByRole("region", { name: "Cookies" })).toBeInTheDocument();
 		});
 
-		it("has aria-modal='true'", () => {
+		it("does not declare aria-modal (banner is non-blocking)", () => {
 			render(<CookieBanner />);
 
-			expect(screen.getByRole("alertdialog")).toHaveAttribute("aria-modal", "true");
+			expect(screen.getByRole("region", { name: "Cookies" })).not.toHaveAttribute("aria-modal");
 		});
 
-		it("has aria-label='Consentement cookies'", () => {
+		it("has aria-labelledby pointing to the h2 title", () => {
 			render(<CookieBanner />);
 
-			expect(screen.getByRole("alertdialog")).toHaveAttribute("aria-label", "Consentement cookies");
+			const region = screen.getByRole("region", { name: "Cookies" });
+			expect(region).toHaveAttribute("aria-labelledby", "cookie-title");
+			expect(document.getElementById("cookie-title")?.tagName).toBe("H2");
 		});
 
 		it("has aria-describedby pointing to cookie-description", () => {
 			render(<CookieBanner />);
 
-			expect(screen.getByRole("alertdialog")).toHaveAttribute(
-				"aria-describedby",
-				"cookie-description",
-			);
+			const region = screen.getByRole("region", { name: "Cookies" });
+			expect(region).toHaveAttribute("aria-describedby", "cookie-description");
 			expect(document.getElementById("cookie-description")).toBeInTheDocument();
+		});
+
+		it("renders the title as a heading (h2)", () => {
+			render(<CookieBanner />);
+
+			expect(screen.getByRole("heading", { level: 2, name: "Cookies" })).toBeInTheDocument();
 		});
 	});
 });

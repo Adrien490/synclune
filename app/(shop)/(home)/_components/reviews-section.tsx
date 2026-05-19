@@ -58,7 +58,6 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="reviews-title">Ce que disent nos clientes</SectionTitle>
 						<HandDrawnUnderline
-							color="var(--secondary)"
 							delay={MOTION_CONFIG.section.underline.delay}
 							className="mx-auto mt-2"
 						/>

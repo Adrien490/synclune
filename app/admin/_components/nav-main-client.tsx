@@ -27,7 +27,7 @@ export function NavMainClient({ url, tooltip, children }: NavMainClientProps) {
 			asChild
 			isActive={isActive}
 			tooltip={tooltip}
-			className="before:bg-primary relative h-9 before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 before:transition-opacity data-[active=true]:before:opacity-100"
+			className="before:bg-primary data-[active=true]:bg-primary/10 data-[active=true]:[&_svg]:text-primary relative h-9 before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 before:transition-opacity data-[active=true]:before:opacity-100"
 		>
 			<Link href={url} aria-current={isActive ? "page" : undefined}>
 				{children}
