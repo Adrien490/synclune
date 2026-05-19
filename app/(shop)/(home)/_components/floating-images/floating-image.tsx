@@ -28,6 +28,7 @@ export function FloatingImage({
 }: FloatingImageProps) {
 	const ref = useRef<HTMLDivElement>(null);
 	const isInView = useInView(ref, { margin: "50px" });
+	const pointerRectRef = useRef<DOMRect | null>(null);
 
 	// Scroll-driven parallax: bidirectional for depth
 	const parallaxY = useTransform(
@@ -52,9 +53,23 @@ export function FloatingImage({
 
 	const mode = shouldReduceMotion ? "reduced" : "full";
 
+	// Cache rect on pointerenter — reading getBoundingClientRect() on every
+	// pointermove triggers a forced reflow (Lighthouse "Avoid forced reflow").
+	// The rect is invalidated on pointerleave; scroll/resize naturally
+	// re-cache on the next enter.
+	function handlePointerEnter(event: ReactPointerEvent<HTMLAnchorElement>) {
+		if (shouldReduceMotion) return;
+		pointerRectRef.current = event.currentTarget.getBoundingClientRect();
+	}
+
+	function handlePointerLeave() {
+		pointerRectRef.current = null;
+	}
+
 	function handlePointerMove(event: ReactPointerEvent<HTMLAnchorElement>) {
 		if (shouldReduceMotion) return;
-		const rect = event.currentTarget.getBoundingClientRect();
+		const rect = pointerRectRef.current ?? event.currentTarget.getBoundingClientRect();
+		pointerRectRef.current = rect;
 		const x = ((event.clientX - rect.left) / rect.width) * 100;
 		const y = ((event.clientY - rect.top) / rect.height) * 100;
 		event.currentTarget.style.setProperty("--mx", `${x}%`);
@@ -124,6 +139,8 @@ export function FloatingImage({
 						href={`/creations/${image.slug}`}
 						tabIndex={-1}
 						prefetch
+						onPointerEnter={handlePointerEnter}
+						onPointerLeave={handlePointerLeave}
 						onPointerMove={handlePointerMove}
 						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]"
 						style={

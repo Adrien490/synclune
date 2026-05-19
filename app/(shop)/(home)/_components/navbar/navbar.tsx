@@ -111,14 +111,16 @@ export async function Navbar() {
 					aria-label="Navigation principale"
 					data-announcement-focus-fallback
 					tabIndex={-1}
-					className="outline-none motion-safe:transition-all motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
+					className="outline-none motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
 				>
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<div
 							className={cn(
 								"flex h-16 items-center gap-4 sm:h-20",
-								// Scroll compact: shrink sm:h-20 → sm:h-16 when wrapper is scrolled
-								"motion-safe:transition-[height] motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
+								// Scroll compact: shrink sm:h-20 → sm:h-16 once scrolled past threshold.
+								// Snap (no animation) — `height` transition is non-composable and forces
+								// layout reflow at 60fps during the 300ms tween. The compaction is set on
+								// `data-scrolled` (binary state) so the visual jump is acceptable.
 								"group-data-[scrolled=true]:sm:h-16",
 							)}
 						>

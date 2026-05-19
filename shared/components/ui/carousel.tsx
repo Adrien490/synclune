@@ -335,7 +335,7 @@ function CarouselPrevious({
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
-				"motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
+				"motion-safe:transition-[transform,box-shadow,background-color] motion-safe:duration-[var(--duration-slow)]",
 				className,
 			)}
 			disabled={!canScrollPrev}
@@ -384,7 +384,7 @@ function CarouselNext({
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
-				"motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
+				"motion-safe:transition-[transform,box-shadow,background-color] motion-safe:duration-[var(--duration-slow)]",
 				className,
 			)}
 			disabled={!canScrollNext}

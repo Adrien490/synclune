@@ -270,7 +270,7 @@ function SearchInputInner({
 					"bg-background border-input border",
 					"hover:border-muted-foreground/40",
 					"focus-within:border-ring focus-within:ring-ring/30 focus-within:ring-2",
-					"transition-all duration-200",
+					"transition-[border-color,box-shadow] duration-200",
 					isPending && "border-ring/50",
 					maxLengthFlash && "ring-destructive/50 ring-2",
 					styles.container,
@@ -353,7 +353,7 @@ function SearchInputInner({
 									"border-none shadow-none focus-visible:ring-0",
 									"bg-transparent",
 									"placeholder:text-muted-foreground/70",
-									"transition-all duration-150",
+									"transition-[color,background-color] duration-150",
 									"[&::-webkit-search-cancel-button]:appearance-none",
 									styles.input,
 								)}
@@ -378,7 +378,7 @@ function SearchInputInner({
 											size="icon"
 											onClick={handleClear}
 											className={cn(
-												"text-muted-foreground hover:text-foreground transition-all active:scale-95",
+												"text-muted-foreground hover:text-foreground transition-[transform,color] duration-150 active:scale-95",
 												styles.clearButton,
 											)}
 											aria-label="Effacer la recherche"

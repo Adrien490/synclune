@@ -291,7 +291,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 			onClick={toggleSidebar}
 			title={state === "expanded" ? "Réduire la sidebar" : "Agrandir la sidebar"}
 			className={cn(
-				"hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
+				"hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-[transform,background-color,opacity] ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
 				"hover:bg-accent/10 focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 				"in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
 				"[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
@@ -469,7 +469,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-	"peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-all duration-300 ease-out motion-reduce:transition-none hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:pl-3 focus-visible:ring-2 active:bg-sidebar-accent/50 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:pl-3 data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1/2 data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:h-5 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-primary data-[active=true]:before:rounded-full data-[state=open]:hover:bg-sidebar-accent/50 data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! group-data-[collapsible=icon]:hover:pl-2! [&>span:last-child]:truncate [&>svg]:shrink-0 font-medium cursor-pointer",
+	"peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[background-color,color,padding-left] duration-300 ease-out motion-reduce:transition-none hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:pl-3 focus-visible:ring-2 active:bg-sidebar-accent/50 active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:pl-3 data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:left-0 data-[active=true]:before:top-1/2 data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:h-5 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-primary data-[active=true]:before:rounded-full data-[state=open]:hover:bg-sidebar-accent/50 data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! group-data-[collapsible=icon]:hover:pl-2! [&>span:last-child]:truncate [&>svg]:shrink-0 font-medium cursor-pointer",
 	{
 		variants: {
 			variant: {
@@ -638,7 +638,7 @@ function SidebarMenuSubButton({
 			data-size={size}
 			data-active={isActive}
 			className={cn(
-				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground active:bg-sidebar-accent/50 active:text-sidebar-accent-foreground [&>svg]:text-sidebar-accent-foreground relative flex h-9 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 font-medium outline-hidden transition-all duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transition-none [&>span:last-child]:truncate [&>svg]:shrink-0",
+				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground active:bg-sidebar-accent/50 active:text-sidebar-accent-foreground [&>svg]:text-sidebar-accent-foreground relative flex h-9 min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-md px-2 font-medium outline-hidden transition-[background-color,color] duration-300 focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 motion-reduce:transition-none [&>span:last-child]:truncate [&>svg]:shrink-0",
 				// Style actif : barre verticale gauche rose + font-semibold
 				"data-[active=true]:before:bg-primary data-[active=true]:font-semibold data-[active=true]:before:absolute data-[active=true]:before:top-1/2 data-[active=true]:before:left-0 data-[active=true]:before:h-5 data-[active=true]:before:w-0.5 data-[active=true]:before:-translate-y-1/2 data-[active=true]:before:rounded-full",
 				size === "sm" && "text-xs [&>svg]:size-4",

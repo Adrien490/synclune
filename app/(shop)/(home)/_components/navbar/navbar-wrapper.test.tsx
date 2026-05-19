@@ -81,30 +81,34 @@ describe("NavbarWrapper (scroll compact)", () => {
 		expect(header).toHaveAttribute("data-scrolled", "false");
 	});
 
-	it("applies glass-effect classes when scrolled (backdrop-blur + shadow)", () => {
+	it("renders the glass-effect layer with backdrop/shadow/bg classes (visibility via opacity)", () => {
 		const { container } = render(
 			<NavbarWrapper>
 				<nav />
 			</NavbarWrapper>,
 		);
-		const header = container.querySelector("header");
 		fireScroll(40);
-		const className = header?.className ?? "";
-		expect(className).toContain("backdrop-blur-md");
-		expect(className).toContain("shadow-lg");
-		expect(className).toContain("bg-background/95");
+		// Glass effect lives on an absolute layer inside <header> — only its opacity
+		// transitions when data-scrolled flips. Group-hover/data variant applies via :group.
+		const layer = container.querySelector("header > div[aria-hidden]");
+		expect(layer).not.toBeNull();
+		const layerClassName = layer?.className ?? "";
+		expect(layerClassName).toContain("backdrop-blur-md");
+		expect(layerClassName).toContain("shadow-lg");
+		expect(layerClassName).toContain("bg-background/95");
+		expect(layerClassName).toContain("group-data-[scrolled=true]:opacity-100");
+		expect(layerClassName).toContain("opacity-0");
 	});
 
-	it("applies transparent classes when not scrolled", () => {
+	it("positions the header via transform translateY (composable, replaces top: var)", () => {
 		const { container } = render(
 			<NavbarWrapper>
 				<nav />
 			</NavbarWrapper>,
 		);
-		const header = container.querySelector("header");
-		const className = header?.className ?? "";
-		expect(className).toContain("bg-transparent");
-		expect(className).toContain("border-transparent");
+		const header = container.querySelector("header") as HTMLElement | null;
+		expect(header?.style.transform).toContain("translateY(var(--announcement-bar-height");
+		expect(header?.className).toContain("top-0");
 	});
 
 	it("publishes view-transition-name for Next 16 View Transitions API", () => {

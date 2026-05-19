@@ -1,68 +1,12 @@
 /* ========================================================================
-   CSS SCROLL-DRIVEN ANIMATIONS (Atelier section + Carousel)
+   CSS SCROLL-DRIVEN ANIMATIONS — CRITICAL (above-the-fold)
+
+   Contient uniquement les rules visibles dès le premier paint (hero).
+   Les rules below-the-fold sont importées localement par leurs composants :
+   - `app/(shop)/(home)/_components/atelier-section/atelier-section.css`
+   - `app/(shop)/(home)/_components/latest-creations.css`
    ======================================================================== */
 @layer utilities {
-	/* Timeline line draw animation */
-	@keyframes timeline-draw {
-		from {
-			scale: var(--timeline-scale-from);
-		}
-		to {
-			scale: var(--timeline-scale-to);
-		}
-	}
-
-	/* Step icon/circle reveal animation */
-	@keyframes step-reveal {
-		from {
-			opacity: 0;
-			scale: 0.85;
-		}
-		to {
-			opacity: 1;
-			scale: 1;
-		}
-	}
-
-	/* Polaroid scatter-to-land animation (desktop: full scatter, mobile: simple fade+slide) */
-	@keyframes polaroid-land {
-		from {
-			opacity: 0;
-			translate: var(--scatter-x, 0) var(--scatter-y, 0);
-			rotate: var(--scatter-rotate, 0deg);
-			scale: 0.9;
-		}
-		to {
-			opacity: 1;
-			translate: 0 0;
-			rotate: 0deg;
-			scale: 1;
-		}
-	}
-
-	@keyframes polaroid-land-simple {
-		from {
-			opacity: 0;
-			translate: 0 20px;
-			scale: 0.95;
-		}
-		to {
-			opacity: 1;
-			translate: 0 0;
-			scale: 1;
-		}
-	}
-
-	/* Doodle scroll-driven draw */
-	@keyframes doodle-draw-scroll {
-		from {
-			stroke-dashoffset: var(--path-length);
-		}
-		to {
-			stroke-dashoffset: 0;
-		}
-	}
-
 	/* Hero floating images: opacity 1 → 0.2 as the user scrolls past the hero.
 	   Replaces motion-react useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]) */
 	@keyframes hero-floating-fade {
@@ -72,131 +16,6 @@
 		}
 		100% {
 			opacity: 0.2;
-		}
-	}
-
-	/* Parallax image: subtle vertical motion as the image traverses the viewport.
-	   Replaces motion-react useTransform on translateY for scroll-bound parallax. */
-	@keyframes parallax-image-translate {
-		from {
-			translate: 0 calc(var(--parallax-from, -7%));
-		}
-		to {
-			translate: 0 calc(var(--parallax-to, 7%));
-		}
-	}
-
-	/* Latest creations grid: scroll-driven stagger entrance per card.
-	   Native 2026 replacement for Framer Stagger. Compositor-thread, zero JS.
-	   Stagger via --card-index custom property (set inline per item). */
-	@keyframes latest-card-enter {
-		from {
-			opacity: 0;
-			translate: 0 25px;
-		}
-		to {
-			opacity: 1;
-			translate: 0 0;
-		}
-	}
-
-	@supports (animation-timeline: view()) {
-		/* Desktop horizontal timeline line */
-		.timeline-line-desktop {
-			scale: 0 1;
-			transform-origin: left;
-			animation: timeline-draw linear both;
-			animation-timeline: view();
-			animation-range: entry 10% entry 80%;
-			--timeline-scale-from: 0 1;
-			--timeline-scale-to: 1 1;
-		}
-
-		/* Mobile vertical timeline line */
-		.timeline-line-mobile {
-			scale: 1 0;
-			transform-origin: top;
-			animation: timeline-draw linear both;
-			animation-timeline: view();
-			animation-range: entry 0% cover 60%;
-			--timeline-scale-from: 1 0;
-			--timeline-scale-to: 1 1;
-		}
-
-		/* Step reveal with stagger via animation-range offset */
-		.timeline-step-scroll {
-			animation: step-reveal linear both;
-			animation-timeline: view();
-		}
-
-		.timeline-step-scroll:nth-child(1) {
-			animation-range: entry 5% entry 50%;
-		}
-		.timeline-step-scroll:nth-child(2) {
-			animation-range: entry 15% entry 60%;
-		}
-		.timeline-step-scroll:nth-child(3) {
-			animation-range: entry 25% entry 70%;
-		}
-		.timeline-step-scroll:nth-child(4) {
-			animation-range: entry 35% entry 80%;
-		}
-
-		/* Mobile step circle scroll-driven (replaces JS MobileStepCircle) */
-		.mobile-step-scroll {
-			animation: step-reveal linear both;
-			animation-timeline: view();
-			animation-range: entry 20% entry 70%;
-		}
-
-		/* Polaroid scroll-driven: simple fade on mobile, full scatter on desktop */
-		.polaroid-scatter {
-			animation: polaroid-land-simple linear both;
-			animation-timeline: view();
-			animation-range: entry 5% entry 50%;
-		}
-
-		@media (min-width: 1024px) {
-			.polaroid-scatter {
-				animation-name: polaroid-land;
-				animation-range: entry 10% entry 70%;
-			}
-		}
-
-		/* Doodle scroll-driven drawing */
-		.doodle-draw-scroll {
-			stroke-dashoffset: var(--path-length);
-			stroke-dasharray: var(--path-length);
-			animation: doodle-draw-scroll linear both;
-			animation-timeline: view();
-			animation-range: entry 20% cover 40%;
-		}
-
-		/* Signature name fade-in after dash draws */
-		.signature-reveal .signature-name {
-			animation: step-reveal linear both;
-			animation-timeline: view();
-			animation-range: entry 30% cover 50%;
-		}
-
-		/* Parallax image: scroll-bound translateY using the element's view timeline.
-		   Replaces motion-react useScroll/useTransform for scroll-only parallax.
-		   Pointer-reactive parallax (mouse-tracking) stays in JS where CSS cannot reach. */
-		.parallax-image-scroll {
-			animation: parallax-image-translate linear both;
-			animation-timeline: view();
-			animation-range: cover 0% cover 100%;
-			will-change: translate;
-		}
-
-		/* Latest creations cards: stagger entrance bound to the card's own view timeline.
-		   --card-index is set inline (0..3) → 60ms stagger per card matches
-		   MOTION_CONFIG.section.grid.stagger (0.08s rounded snappy for scroll-driven). */
-		.latest-card-enter-scroll {
-			animation: latest-card-enter linear both;
-			animation-timeline: view();
-			animation-range: entry 0% cover 25%;
-			animation-delay: calc(var(--card-index, 0) * 60ms);
 		}
 	}
 
@@ -211,99 +30,10 @@
 		}
 	}
 
-	/* ==========================================
-	   @PROPERTY CONFESSION GLOW GRADIENT
-	   ========================================== */
-
-	@property --confession-glow-a {
-		syntax: "<color>";
-		inherits: false;
-		initial-value: oklch(0.86 0.1 341 / 0.08);
-	}
-
-	@property --confession-glow-b {
-		syntax: "<color>";
-		inherits: false;
-		initial-value: oklch(0.75 0.12 280 / 0.06);
-	}
-
-	@keyframes confession-glow {
-		0%,
-		100% {
-			--confession-glow-a: oklch(0.86 0.1 341 / 0.08);
-			--confession-glow-b: oklch(0.75 0.12 280 / 0.06);
-		}
-		33% {
-			--confession-glow-a: oklch(0.75 0.12 280 / 0.07);
-			--confession-glow-b: oklch(0.82 0.14 160 / 0.06);
-		}
-		66% {
-			--confession-glow-a: oklch(0.82 0.14 160 / 0.08);
-			--confession-glow-b: oklch(0.86 0.1 341 / 0.06);
-		}
-	}
-
-	.confession-glow {
-		background: radial-gradient(
-			ellipse at 50% 50%,
-			var(--confession-glow-a) 0%,
-			var(--confession-glow-b) 50%,
-			transparent 80%
-		);
-		animation: confession-glow 25s ease-in-out infinite;
-	}
-
-	/* ==========================================
-	   SCROLL-DRIVEN REDUCED MOTION
-	   ========================================== */
 	@media (prefers-reduced-motion: reduce) {
-		/* Scroll-driven: afficher état final sans animation */
-		.timeline-line-desktop,
-		.timeline-line-mobile {
-			animation: none;
-			scale: 1;
-		}
-
-		.timeline-step-scroll,
-		.mobile-step-scroll {
+		.hero-floating-images-scroll-fade {
 			animation: none;
 			opacity: 1;
-			scale: 1;
-		}
-
-		.polaroid-scatter {
-			animation: none;
-			opacity: 1;
-			translate: 0;
-			rotate: 0deg;
-			scale: 1;
-		}
-
-		/* Signature name: fade-in scroll-driven off — garder visible */
-		.signature-reveal .signature-name {
-			animation: none;
-			opacity: 1;
-			scale: 1;
-		}
-
-		/* Confession glow: gradient statique */
-		.confession-glow {
-			animation: none;
-		}
-
-		/* Hero floating images & parallax image: keep static (no scroll-driven motion) */
-		.hero-floating-images-scroll-fade,
-		.parallax-image-scroll {
-			animation: none;
-			translate: 0;
-			opacity: 1;
-		}
-
-		/* Latest creations cards: skip stagger, show cards in final state */
-		.latest-card-enter-scroll {
-			animation: none;
-			opacity: 1;
-			translate: 0;
 		}
 	}
 }

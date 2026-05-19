@@ -1,3 +1,5 @@
+import "./atelier-section.css";
+
 import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";

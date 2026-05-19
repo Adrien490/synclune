@@ -1,3 +1,5 @@
+import "./latest-creations.css";
+
 import type { CSSProperties } from "react";
 
 import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
