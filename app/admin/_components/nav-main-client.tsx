@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SidebarMenuButton } from "@/shared/components/ui/sidebar";
+import { LoadingIndicator } from "@/shared/components/navigation/loading-indicator";
 import { isRouteActive } from "@/shared/lib/navigation";
 
 interface NavMainClientProps {
@@ -30,6 +31,7 @@ export function NavMainClient({ url, tooltip, children }: NavMainClientProps) {
 		>
 			<Link href={url} aria-current={isActive ? "page" : undefined}>
 				{children}
+				<LoadingIndicator />
 			</Link>
 		</SidebarMenuButton>
 	);

@@ -11,6 +11,7 @@ import {
 	bottomBarLabelClass,
 	bottomBarBadgeClass,
 } from "@/shared/components/bottom-bar";
+import { LoadingIndicator } from "@/shared/components/navigation/loading-indicator";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -73,6 +74,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					)}
 				</span>
 				<span className={bottomBarLabelClass}>{label}</span>
+				<LoadingIndicator />
 			</Link>
 		);
 	}

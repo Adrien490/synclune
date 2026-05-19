@@ -16,6 +16,7 @@ import {
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
 import { CountBadge } from "@/shared/components/ui/count-badge";
+import { LoadingIndicator } from "@/shared/components/navigation/loading-indicator";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
@@ -214,6 +215,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 							{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 							{iconEl}
 							<span className={bottomBarLabelClass}>{tab.label}</span>
+							<LoadingIndicator />
 						</Link>
 					);
 				})}
