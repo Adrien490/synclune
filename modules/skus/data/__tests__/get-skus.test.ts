@@ -5,14 +5,16 @@ import type { GetProductSkusParams } from "../../types/skus.types";
 // Hoisted mocks
 // ============================================================================
 
-const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockRedirect } = vi.hoisted(
+const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockForbidden } = vi.hoisted(
 	() => ({
 		mockIsAdmin: vi.fn(),
 		mockFetchProductSkus: vi.fn(),
 		mockGetProductSkusSchema: {
 			safeParse: vi.fn(),
 		},
-		mockRedirect: vi.fn(),
+		mockForbidden: vi.fn(() => {
+			throw new Error("NEXT_HTTP_ERROR_FALLBACK;403");
+		}),
 	}),
 );
 
@@ -34,7 +36,7 @@ vi.mock("../../constants/sku.constants", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	redirect: mockRedirect,
+	forbidden: mockForbidden,
 }));
 
 import { getProductSkus } from "../get-skus";
@@ -75,8 +77,8 @@ function makeDefaultInput(): GetProductSkusParams {
 
 function setupDefaults() {
 	mockIsAdmin.mockResolvedValue(true);
-	mockRedirect.mockImplementation(() => {
-		throw new Error("NEXT_REDIRECT");
+	mockForbidden.mockImplementation(() => {
+		throw new Error("NEXT_HTTP_ERROR_FALLBACK;403");
 	});
 	mockGetProductSkusSchema.safeParse.mockReturnValue({
 		success: true,
@@ -98,11 +100,11 @@ describe("getProductSkus – auth guard", () => {
 		setupDefaults();
 	});
 
-	it("redirects to /connexion when user is not admin", async () => {
+	it("calls forbidden() when user is not admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("NEXT_REDIRECT");
-		expect(mockRedirect).toHaveBeenCalledWith("/connexion");
+		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow(/403/);
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 
 	it("does not query DB when user is not admin", async () => {
@@ -251,10 +253,10 @@ describe("getProductSkus – error handling", () => {
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("DB down");
 	});
 
-	it("redirects when user is not admin", async () => {
+	it("throws forbidden when user is not admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("NEXT_REDIRECT");
-		expect(mockRedirect).toHaveBeenCalledWith("/connexion");
+		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow(/403/);
+		expect(mockForbidden).toHaveBeenCalled();
 	});
 });

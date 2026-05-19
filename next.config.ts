@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
 	cacheComponents: true,
 	reactCompiler: true,
 	experimental: {
+		authInterrupts: true,
 		turbopackFileSystemCacheForBuild: true,
 		optimizePackageImports: [
 			"motion/react",

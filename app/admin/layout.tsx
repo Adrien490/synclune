@@ -1,8 +1,9 @@
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SkipLink } from "@/shared/components/skip-link";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { ActionStatus } from "@/shared/types/server-action";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { forbidden, unauthorized } from "next/navigation";
 import { Suspense } from "react";
 import { AdminMenuSheet } from "./_components/admin-menu-sheet";
 import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
@@ -38,7 +39,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
 async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 	const result = await requireAdminWithUser();
-	if ("error" in result) redirect("/connexion");
+	if ("error" in result) {
+		if (result.error.status === ActionStatus.UNAUTHORIZED) unauthorized();
+		forbidden();
+	}
 
 	const user = {
 		name: result.user.name ?? result.user.email,

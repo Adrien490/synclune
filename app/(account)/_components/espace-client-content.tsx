@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { unauthorized } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
 import { AccountTabsNav } from "@/modules/users/components/account-tabs-nav";
@@ -14,11 +14,11 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 			headers: reqHeaders,
 		});
 	} catch {
-		redirect("/connexion?callbackURL=/commandes");
+		unauthorized();
 	}
 
 	if (!session?.user) {
-		redirect("/connexion?callbackURL=/commandes");
+		unauthorized();
 	}
 
 	let user;

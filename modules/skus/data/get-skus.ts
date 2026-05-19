@@ -1,5 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import { redirect } from "next/navigation";
+import { forbidden } from "next/navigation";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/skus.types";
 import { fetchProductSkus } from "./fetch-skus";
@@ -10,9 +10,8 @@ import { fetchProductSkus } from "./fetch-skus";
 export async function getProductSkus(params: GetProductSkusParams): Promise<GetProductSkusReturn> {
 	const admin = await isAdmin();
 
-	// Vérification d'accès admin obligatoire
 	if (!admin) {
-		redirect("/connexion");
+		forbidden();
 	}
 
 	const validation = getProductSkusSchema.safeParse(params);

@@ -77,16 +77,13 @@ test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
 	});
 
 	test("les routes admin protégées redirigent vers la connexion", async ({ page }) => {
-		// Clear auth state by going to a new context behavior
 		const _response = await page.goto("/admin/catalogue/produits");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Should either redirect to login or show the page (if already authenticated)
 		const url = page.url();
 		const isOnAdmin = url.includes("/admin");
 		const isOnLogin = url.includes("/connexion");
 
-		// One of these must be true
 		expect(isOnAdmin || isOnLogin).toBe(true);
 	});
 });
