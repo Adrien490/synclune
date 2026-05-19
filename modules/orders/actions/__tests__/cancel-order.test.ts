@@ -12,6 +12,7 @@ const {
 	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockUpdateTag,
+	mockAfter,
 	mockHandleActionError,
 	mockSendCancelEmail,
 	mockSanitizeText,
@@ -32,6 +33,7 @@ const {
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
+	mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
 	mockHandleActionError: vi.fn(),
 	mockSendCancelEmail: vi.fn(),
 	mockSanitizeText: vi.fn(),
@@ -63,6 +65,10 @@ vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
 	cacheLife: vi.fn(),
 	cacheTag: vi.fn(),
+}));
+
+vi.mock("next/server", () => ({
+	after: mockAfter,
 }));
 
 vi.mock("@/shared/lib/actions", async (importOriginal) => {
@@ -143,6 +149,7 @@ describe("cancelOrder", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
+		mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
 		mockRequireAdminWithUser.mockResolvedValue({
 			user: { id: "admin-1", name: "Admin" },
 		});
@@ -290,6 +297,19 @@ describe("cancelOrder", () => {
 			}),
 		);
 		expect(result.message).toContain("annulée");
+	});
+
+	// Email scheduled via after() (post-response)
+	it("should schedule email via after() and not call it synchronously", async () => {
+		const order = createTxOrder({ customerEmail: "client@example.com" });
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockAfter.mockImplementationOnce(() => Promise.resolve());
+
+		await cancelOrder(undefined, validFormData);
+
+		expect(mockAfter).toHaveBeenCalledOnce();
+		expect(mockAfter).toHaveBeenCalledWith(expect.any(Function));
+		expect(mockSendCancelEmail).not.toHaveBeenCalled();
 	});
 
 	// Email failure fallback

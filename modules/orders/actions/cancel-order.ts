@@ -16,6 +16,7 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -236,16 +237,13 @@ export async function cancelOrder(
 			updateTag(`order-refunds-${order.id}`);
 		}
 
-		// Fire-and-forget email to avoid blocking the admin response
 		if (order.customerEmail) {
 			const customerFirstName = extractCustomerFirstName(
 				order.customerName,
 				order.shippingFirstName,
 			);
-
 			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-
-			void sendCancelOrderConfirmationEmail({
+			const emailPayload = {
 				to: order.customerEmail,
 				orderNumber: order.orderNumber,
 				customerName: customerFirstName,
@@ -253,8 +251,12 @@ export async function cancelOrder(
 				reason: sanitizedReason ?? undefined,
 				wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
 				orderDetailsUrl,
-			}).catch((emailError) => {
-				logger.error("Échec envoi email", emailError, { action: "cancel-order" });
+			};
+
+			after(async () => {
+				await sendCancelOrderConfirmationEmail(emailPayload).catch((emailError) => {
+					logger.error("Échec envoi email", emailError, { action: "cancel-order" });
+				});
 			});
 		}
 
