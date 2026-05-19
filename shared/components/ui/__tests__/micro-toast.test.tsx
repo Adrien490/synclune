@@ -134,7 +134,7 @@ describe("<MicroToast />", () => {
 		expect(screen.getByTestId(iconTestId)).toBeTruthy();
 	});
 
-	it("exposes a tap-to-dismiss button with an accessible label including the message", () => {
+	it("exposes a tap-to-dismiss button with an accessible label = message (content first, not action)", () => {
 		useMicroToastStore.setState({
 			visible: true,
 			message: "Code promo appliqué",
@@ -144,10 +144,12 @@ describe("<MicroToast />", () => {
 			currentDuration: 1200,
 		});
 		render(<MicroToast />);
-		const button = screen.getByRole("button", {
-			name: /Fermer la notification : Code promo appliqué/i,
-		});
+		const button = screen.getByRole("button", { name: /^Code promo appliqué$/i });
 		expect(button).toBeTruthy();
+		expect(button.getAttribute("aria-describedby")).toBe("micro-toast-hint");
+		const hint = document.getElementById("micro-toast-hint");
+		expect(hint).not.toBeNull();
+		expect(hint?.textContent).toMatch(/appuyer pour fermer/i);
 	});
 
 	it("calls hide() when tapped", () => {
@@ -212,9 +214,7 @@ describe("<MicroToast />", () => {
 				currentDuration: 1200,
 			});
 			render(<MicroToast />);
-			const button = screen.getByRole("button", {
-				name: /Fermer la notification : Ajouté \(×2\)/i,
-			});
+			const button = screen.getByRole("button", { name: /^Ajouté \(×2\)$/i });
 			expect(button).toBeTruthy();
 		});
 	});

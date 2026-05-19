@@ -94,56 +94,63 @@ export function MicroToast() {
 				style: { touchAction: "none" as const },
 			};
 
-	const accessibleLabel =
-		count > 1
-			? `Fermer la notification : ${message} (×${count})`
-			: `Fermer la notification : ${message}`;
+	// aria-label = contenu en premier (la pastille EST la notification, le tap-to-close
+	// est secondaire). Le rôle button + cursor-pointer + describedby suffit à signaler
+	// l'action de fermeture. Le canal principal d'annonce reste la live-region globale
+	// `#toast-live-polite` ; cet aria-label est le fallback iOS VoiceOver documenté plus haut.
+	const accessibleLabel = count > 1 ? `${message} (×${count})` : message;
 
 	if (!mounted) return null;
 
 	return createPortal(
-		<AnimatePresence initial={false}>
-			{visible && (
-				<m.button
-					key={key}
-					type="button"
-					onClick={hide}
-					aria-label={accessibleLabel}
-					{...motionProps}
-					{...dragProps}
-					className={cn(
-						"fixed left-1/2 z-(--z-microtoast) -translate-x-1/2",
-						"top-[max(0.5rem,env(safe-area-inset-top))]",
-						"flex max-w-[80vw] cursor-pointer items-center gap-2",
-						"rounded-full border px-4 py-2",
-						"bg-background/85 border-border/40 shadow-sm backdrop-blur-md",
-						"text-foreground text-sm font-medium",
-						"focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
-						"relative overflow-hidden",
-					)}
-				>
-					<span className="shrink-0">{toastIcons[variant]}</span>
-					<span className="truncate">{message}</span>
-					{count > 1 && (
-						<span
-							className="text-muted-foreground bg-muted ml-1 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums"
-							aria-hidden="true"
-						>
-							×{count}
-						</span>
-					)}
-					{!prefersReducedMotion && (
-						<m.span
-							key={`progress-${key}-${count}`}
-							aria-hidden="true"
-							initial={{ scaleX: 1 }}
-							animate={progressControls}
-							className="bg-foreground/25 absolute right-0 bottom-0 left-0 h-px origin-left rounded-full"
-						/>
-					)}
-				</m.button>
-			)}
-		</AnimatePresence>,
+		<>
+			<span id="micro-toast-hint" className="sr-only">
+				Notification — appuyer pour fermer
+			</span>
+			<AnimatePresence initial={false}>
+				{visible && (
+					<m.button
+						key={key}
+						type="button"
+						onClick={hide}
+						aria-label={accessibleLabel}
+						aria-describedby="micro-toast-hint"
+						{...motionProps}
+						{...dragProps}
+						className={cn(
+							"fixed left-1/2 z-(--z-microtoast) -translate-x-1/2",
+							"top-[max(0.5rem,env(safe-area-inset-top))]",
+							"flex max-w-[80vw] cursor-pointer items-center gap-2",
+							"rounded-full border px-4 py-2",
+							"bg-background/85 border-border/40 shadow-sm backdrop-blur-md",
+							"text-foreground text-sm font-medium",
+							"focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
+							"relative overflow-hidden",
+						)}
+					>
+						<span className="shrink-0">{toastIcons[variant]}</span>
+						<span className="truncate">{message}</span>
+						{count > 1 && (
+							<span
+								className="text-muted-foreground bg-muted ml-1 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums"
+								aria-hidden="true"
+							>
+								×{count}
+							</span>
+						)}
+						{!prefersReducedMotion && (
+							<m.span
+								key={`progress-${key}-${count}`}
+								aria-hidden="true"
+								initial={{ scaleX: 1 }}
+								animate={progressControls}
+								className="bg-foreground/60 absolute right-0 bottom-0 left-0 h-0.5 origin-left rounded-full"
+							/>
+						)}
+					</m.button>
+				)}
+			</AnimatePresence>
+		</>,
 		document.body,
 	);
 }
