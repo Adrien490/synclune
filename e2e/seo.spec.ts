@@ -209,6 +209,15 @@ test.describe("SEO et métadonnées - Page produit détail", { tag: ["@slow"] },
 	});
 });
 
+test.describe("SEO - OG images dynamiques", { tag: ["@slow"] }, () => {
+	test("la page categorie produit a une OG image dynamique", async ({ page }) => {
+		const response = await page.goto("/produits/colliers/opengraph-image");
+
+		expect(response?.status()).toBe(200);
+		expect(response?.headers()["content-type"]).toMatch(/^image\//);
+	});
+});
+
 test.describe("SEO - Pages légales", { tag: ["@slow"] }, () => {
 	test("la page CGV charge correctement", async ({ page }) => {
 		await page.goto("/cgv");
