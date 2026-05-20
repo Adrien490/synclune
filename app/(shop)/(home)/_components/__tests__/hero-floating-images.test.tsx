@@ -43,58 +43,36 @@ beforeAll(() => {
 // Hoisted mocks
 // ---------------------------------------------------------------------------
 
-const { useReducedMotionMock, trackEventMock } = vi.hoisted(() => ({
-	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
+const { trackEventMock } = vi.hoisted(() => ({
 	trackEventMock: vi.fn(),
-}));
-
-vi.mock("@/shared/utils/cn", () => ({
-	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
 vi.mock("@/shared/lib/analytics/track", () => ({
 	trackEvent: trackEventMock,
 }));
 
-vi.mock("motion/react", () => {
-	function makeMotionValue(initial = 0) {
-		let value = initial;
-		return {
-			get: () => value,
-			set: (v: number) => {
-				value = v;
-			},
-			on: () => () => {},
-			destroy: () => {},
-		};
-	}
-	return {
-		useReducedMotion: useReducedMotionMock,
-		useScroll: vi.fn(() => ({ scrollYProgress: makeMotionValue(0) })),
-		useTransform: vi.fn(() => makeMotionValue(0)),
-		useMotionValue: vi.fn((initial: number) => makeMotionValue(initial)),
-		useSpring: vi.fn((source: unknown) => source),
-		useInView: vi.fn(() => true),
-		motion: { div: "div" },
-		m: { div: "div", a: "a" },
-		AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	};
-});
-
 vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
 		preload,
+		fetchPriority,
 	}: {
 		src: string;
 		alt: string;
 		preload?: boolean;
+		fetchPriority?: string;
 		[key: string]: unknown;
 	}) => (
 		// biome-ignore lint/a11y/useAltText: test mock
 		// eslint-disable-next-line @next/next/no-img-element
-		<img src={src} alt={alt} data-testid="floating-img" data-preload={preload ? "true" : "false"} />
+		<img
+			src={src}
+			alt={alt}
+			data-testid="floating-img"
+			data-preload={preload ? "true" : "false"}
+			data-fetchpriority={fetchPriority ?? "none"}
+		/>
 	),
 }));
 
@@ -116,18 +94,44 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("@/shared/hooks", () => ({
-	useIsTouchDevice: vi.fn(() => false),
-}));
-
 import { HeroFloatingImages } from "../floating-images";
 import HeroFloatingImagesInner from "../floating-images/hero-floating-images-inner";
 import type { HeroProductImage } from "../../_utils/extract-hero-images";
 
+// ---------------------------------------------------------------------------
+// matchMedia helper — the component reads `(prefers-reduced-motion: reduce)`
+// and `(min-width: 768px)` to gate the desktop pointer-depth listener.
+// ---------------------------------------------------------------------------
+
+const ORIGINAL_MATCH_MEDIA = window.matchMedia;
+
+function mockMatchMedia(matches: (query: string) => boolean) {
+	const fn = vi.fn((query: string) => ({
+		matches: matches(query),
+		media: query,
+		onchange: null,
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	}));
+	Object.defineProperty(window, "matchMedia", {
+		configurable: true,
+		writable: true,
+		value: fn,
+	});
+	return fn;
+}
+
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	useReducedMotionMock.mockReturnValue(false);
+	Object.defineProperty(window, "matchMedia", {
+		configurable: true,
+		writable: true,
+		value: ORIGINAL_MATCH_MEDIA,
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -196,6 +200,17 @@ describe("HeroFloatingImagesInner", () => {
 		}
 	});
 
+	it("marks the LCP image with fetchpriority=high (Lighthouse LCP discovery)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const images = container.querySelectorAll("[data-testid='floating-img']");
+		expect(images[0]?.getAttribute("data-fetchpriority")).toBe("high");
+
+		for (let i = 1; i < images.length; i++) {
+			expect(images[i]?.getAttribute("data-fetchpriority")).toBe("auto");
+		}
+	});
+
 	it("sets prefetch=true on each image link (Next.js warm cache)", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
@@ -231,46 +246,21 @@ describe("HeroFloatingImagesInner", () => {
 		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
 	});
 
-	it("does not update spotlight vars under reduced motion", () => {
-		useReducedMotionMock.mockReturnValue(true);
+	it("renders the pointer spotlight overlay with motion-reduce:hidden", () => {
+		// The cursor spotlight is removed under reduced motion via CSS
+		// (`motion-reduce:hidden`) rather than a JS guard.
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
-		const firstLink = container.querySelector<HTMLAnchorElement>("a[href='/creations/product-0']");
-		firstLink!.getBoundingClientRect = () =>
-			({
-				left: 0,
-				top: 0,
-				width: 200,
-				height: 250,
-				right: 200,
-				bottom: 250,
-				x: 0,
-				y: 0,
-				toJSON: () => ({}),
-			}) as DOMRect;
-
-		fireEvent.pointerMove(firstLink!, { clientX: 10, clientY: 10 });
-
-		// Initial inline default value stays (50%) — handler is skipped under reduced motion
-		expect(firstLink!.style.getPropertyValue("--mx")).toBe("50%");
-		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
+		const spotlights = container.querySelectorAll("[class*='motion-reduce:hidden']");
+		expect(spotlights.length).toBe(4);
+		for (const spotlight of spotlights) {
+			expect(spotlight.className).toContain("mix-blend-screen");
+		}
 	});
 
-	it("attaches a window pointermove listener only when desktop + motion enabled", () => {
+	it("attaches a window pointermove listener when desktop + motion enabled", () => {
+		mockMatchMedia((query) => query === "(min-width: 768px)");
 		const addSpy = vi.spyOn(window, "addEventListener");
-		const matchMediaSpy = vi.spyOn(window, "matchMedia").mockImplementation(
-			(query: string) =>
-				({
-					matches: true,
-					media: query,
-					addEventListener: vi.fn(),
-					removeEventListener: vi.fn(),
-					addListener: vi.fn(),
-					removeListener: vi.fn(),
-					onchange: null,
-					dispatchEvent: vi.fn(),
-				}) as unknown as MediaQueryList,
-		);
 
 		const { unmount } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
@@ -280,12 +270,11 @@ describe("HeroFloatingImagesInner", () => {
 		expect(pointerMoveCalls.length).toBe(1);
 
 		unmount();
-		matchMediaSpy.mockRestore();
 		addSpy.mockRestore();
 	});
 
 	it("does not attach window pointermove listener when reduced motion is enabled", () => {
-		useReducedMotionMock.mockReturnValue(true);
+		mockMatchMedia((query) => query === "(prefers-reduced-motion: reduce)");
 		const addSpy = vi.spyOn(window, "addEventListener");
 
 		render(<HeroFloatingImagesInner images={makeImages(4)} />);
@@ -298,8 +287,8 @@ describe("HeroFloatingImagesInner", () => {
 		addSpy.mockRestore();
 	});
 
-	it("does not attach window pointermove listener on narrow viewports (matchMedia false)", () => {
-		// Default test setup returns matches: false for all queries — desktop listener stays off
+	it("does not attach window pointermove listener on narrow viewports", () => {
+		// Default test setup returns matches: false for all queries — desktop listener stays off.
 		const addSpy = vi.spyOn(window, "addEventListener");
 
 		render(<HeroFloatingImagesInner images={makeImages(4)} />);
@@ -314,7 +303,7 @@ describe("HeroFloatingImagesInner", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Regression lock — audit floating-images 2026-05-19
+// Regression lock — audit floating-images 2026-05-19 + perf audit 2026-05-20
 // ---------------------------------------------------------------------------
 
 describe("HeroFloatingImagesInner — regression lock", () => {
@@ -376,5 +365,18 @@ describe("HeroFloatingImagesInner — regression lock", () => {
 			slug: "product-0",
 			position: "hero-idle-float-1",
 		});
+	});
+
+	/**
+	 * @regression lcp-css-entrance-2026-05-20
+	 * The floating image entrance + parallax are pure CSS (`hero-image-entrance`
+	 * / `hero-image-parallax`) — no motion-react. This is what unblocks the LCP
+	 * image from JS hydration (~2.1s render delay). Do not move the entrance
+	 * back into motion-react initial/animate.
+	 */
+	it("renders the CSS entrance + parallax layers (no JS-gated opacity)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		expect(container.querySelectorAll(".hero-image-entrance").length).toBe(4);
+		expect(container.querySelectorAll(".hero-image-parallax").length).toBe(4);
 	});
 });

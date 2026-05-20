@@ -1,45 +1,32 @@
 "use client";
 
-import { useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef, useSyncExternalStore } from "react";
-import { cssSupports } from "@/shared/utils/css-supports";
+import { useEffect, useRef } from "react";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
 import type { HeroFloatingImagesProps } from "./types";
 
-const noopSubscribe = () => () => {};
-const getScrollTimelineSupport = () => cssSupports("animation-timeline", "scroll()");
-const getServerScrollTimelineSupport = () => false;
-
+/**
+ * Hero floating images container.
+ *
+ * The images themselves render entirely via CSS (entrance, idle float, scroll
+ * parallax, scroll-fade) — see `floating-image.tsx` + `scroll-driven.css`.
+ * No motion-react: the floating images are no longer on the hero critical path.
+ *
+ * The only client JS here is pointer-reactive depth: a desktop-only,
+ * motion-safe, viewport-gated `pointermove` listener that writes the
+ * normalized cursor position to `--hero-pointer-x/y` CSS custom properties.
+ * Each `FloatingImage` composes its own translate from them. The listener is
+ * attached after first paint via IntersectionObserver, so it never blocks LCP.
+ */
 export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const shouldReduceMotion = useReducedMotion();
-
-	// Detect native CSS scroll-driven animations support (Chrome/Edge 115+, Safari 26+).
-	// When supported, opacity is animated via CSS keyframe (compositor thread)
-	// instead of motion-react useTransform (main thread).
-	const supportsScrollTimeline = useSyncExternalStore(
-		noopSubscribe,
-		getScrollTimelineSupport,
-		getServerScrollTimelineSupport,
-	);
-
-	const { scrollYProgress } = useScroll({
-		target: containerRef,
-		offset: ["start start", "end start"],
-	});
-
-	const parallaxOpacityMotion = useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]);
-	// When CSS scroll-timeline is available, defer opacity to the container's CSS animation.
-	const parallaxOpacity = supportsScrollTimeline ? null : parallaxOpacityMotion;
-
-	// Pointer-reactive parallax: normalized -1..1 across the hero container
-	const pointerX = useMotionValue(0);
-	const pointerY = useMotionValue(0);
 
 	useEffect(() => {
-		if (shouldReduceMotion) return;
-		// Desktop only — container is `hidden md:block`, save CPU on narrow viewports
+		// Reduced motion: skip the pointer effect entirely (CSS already disables
+		// the `.hero-image-pointer` translate — this just saves the CPU).
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+		// Desktop only — the container is `hidden md:block`.
 		const mq = window.matchMedia("(min-width: 768px)");
 		if (!mq.matches) return;
 
@@ -50,23 +37,31 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 		let clientX = 0;
 		let clientY = 0;
 		let listenerAttached = false;
+		let rect: DOMRect | null = null;
 
 		function flush() {
 			rafId = 0;
-			const rect = container?.getBoundingClientRect();
-			if (!rect) return;
+			if (!container) return;
+			// Cache the container rect — re-reading it every frame forces a reflow.
+			rect ??= container.getBoundingClientRect();
 			if (
 				clientY < rect.top ||
 				clientY > rect.bottom ||
 				clientX < rect.left ||
 				clientX > rect.right
 			) {
-				pointerX.set(0);
-				pointerY.set(0);
+				container.style.setProperty("--hero-pointer-x", "0");
+				container.style.setProperty("--hero-pointer-y", "0");
 				return;
 			}
-			pointerX.set(((clientX - rect.left) / rect.width) * 2 - 1);
-			pointerY.set(((clientY - rect.top) / rect.height) * 2 - 1);
+			container.style.setProperty(
+				"--hero-pointer-x",
+				String(((clientX - rect.left) / rect.width) * 2 - 1),
+			);
+			container.style.setProperty(
+				"--hero-pointer-y",
+				String(((clientY - rect.top) / rect.height) * 2 - 1),
+			);
 		}
 
 		function onPointerMove(event: PointerEvent) {
@@ -76,22 +71,31 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 			rafId = window.requestAnimationFrame(flush);
 		}
 
+		// Invalidate the cached rect — the hero shifts on scroll/resize.
+		function invalidateRect() {
+			rect = null;
+		}
+
 		function attachListener() {
 			if (listenerAttached) return;
 			window.addEventListener("pointermove", onPointerMove, { passive: true });
+			window.addEventListener("scroll", invalidateRect, { passive: true });
+			window.addEventListener("resize", invalidateRect);
 			listenerAttached = true;
 		}
 
 		function detachListener() {
 			if (!listenerAttached) return;
 			window.removeEventListener("pointermove", onPointerMove);
+			window.removeEventListener("scroll", invalidateRect);
+			window.removeEventListener("resize", invalidateRect);
 			listenerAttached = false;
-			pointerX.set(0);
-			pointerY.set(0);
+			container?.style.setProperty("--hero-pointer-x", "0");
+			container?.style.setProperty("--hero-pointer-y", "0");
 		}
 
-		// Gate the pointermove listener on viewport intersection: once the hero has
-		// scrolled off-screen, calculating bounding rects for every cursor move is wasted CPU.
+		// Gate on viewport intersection: once the hero scrolls off-screen the
+		// pointer maths is wasted CPU. Also keeps the listener off the LCP path.
 		const observer = new IntersectionObserver(
 			([entry]) => {
 				if (entry?.isIntersecting) attachListener();
@@ -104,15 +108,15 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 		function onMqChange() {
 			if (!mq.matches) detachListener();
 		}
-
 		mq.addEventListener("change", onMqChange);
+
 		return () => {
 			observer.disconnect();
 			detachListener();
 			mq.removeEventListener("change", onMqChange);
 			if (rafId) window.cancelAnimationFrame(rafId);
 		};
-	}, [shouldReduceMotion, pointerX, pointerY]);
+	}, []);
 
 	return (
 		<div
@@ -125,19 +129,7 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 				const pos = IMAGE_POSITIONS[index];
 				if (!pos) return null;
 
-				return (
-					<FloatingImage
-						key={image.slug}
-						image={image}
-						position={pos}
-						scrollProgress={scrollYProgress}
-						parallaxOpacity={parallaxOpacity}
-						pointerX={pointerX}
-						pointerY={pointerY}
-						shouldReduceMotion={shouldReduceMotion}
-						isPriority={index === 0}
-					/>
-				);
+				return <FloatingImage key={image.slug} image={image} position={pos} />;
 			})}
 		</div>
 	);

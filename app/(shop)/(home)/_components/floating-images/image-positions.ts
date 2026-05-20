@@ -20,6 +20,8 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 	idleDuration: number;
 	idleDelay: number;
 	visibilityClass: VisibilityClass;
+	/** Largest-painted image — gets preload + fetchPriority=high (LCP candidate). */
+	isLcpCandidate: boolean;
 }> = [
 	// Top-left — large anchor
 	{
@@ -36,6 +38,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleDuration: 20,
 		idleDelay: 0,
 		visibilityClass: "hidden md:block",
+		isLcpCandidate: true,
 	},
 	// Top-right — medium balance
 	{
@@ -52,6 +55,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleDuration: 22,
 		idleDelay: 2,
 		visibilityClass: "hidden md:block",
+		isLcpCandidate: false,
 	},
 	// Bottom-left — small depth
 	{
@@ -68,6 +72,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleDuration: 18,
 		idleDelay: 4,
 		visibilityClass: "hidden md:block",
+		isLcpCandidate: false,
 	},
 	// Bottom-right — medium balance
 	{
@@ -84,6 +89,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 		idleDuration: 24,
 		idleDelay: 6,
 		visibilityClass: "hidden md:block",
+		isLcpCandidate: false,
 	},
 ];
 
