@@ -19,9 +19,11 @@ vi.mock("motion/react", () => ({
 	useReducedMotion: () => mockReducedMotion.value,
 }));
 
+// `duration.normal` mirrors production: MOTION_CONFIG durations are in SECONDS
+// (0.2 = 200ms). Mocking it as `200` here would hide the snap-back unit bug.
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
-		duration: { normal: 200 },
+		duration: { normal: 0.2 },
 		spring: { list: { type: "spring", stiffness: 400, damping: 30, mass: 1 } },
 	},
 }));
@@ -39,6 +41,24 @@ vi.mock("@/shared/utils/cn", () => ({
 // ============================================================================
 
 import { SwipeableCard, applyRubberBand } from "../swipeable-card";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Locate a decorative swipe-action zone by its `data-swipe-action` attribute. */
+function getZone(container: HTMLElement, side: "left" | "right"): HTMLElement {
+	const zone = container.querySelector<HTMLElement>(`[data-swipe-action="${side}"]`);
+	if (!zone) throw new Error(`No swipe-action zone found for side "${side}"`);
+	return zone;
+}
+
+/** Locate the sliding card content div (the one carrying the translateX transform). */
+function getSlidingCard(container: HTMLElement): HTMLElement | undefined {
+	return Array.from(container.querySelectorAll("div")).find((div) =>
+		div.style.transform.includes("translateX"),
+	);
+}
 
 // ============================================================================
 // TESTS
@@ -67,14 +87,14 @@ describe("SwipeableCard", () => {
 			expect(screen.getByText("Card content")).toBeInTheDocument();
 		});
 
-		it("renders without actions (no swipe zones)", () => {
-			render(
+		it("renders no swipe zones when no actions are provided", () => {
+			const { container } = render(
 				<SwipeableCard>
 					<span>Content</span>
 				</SwipeableCard>,
 			);
 
-			expect(screen.queryByRole("button")).not.toBeInTheDocument();
+			expect(container.querySelector("[data-swipe-action]")).toBeNull();
 		});
 
 		it("applies custom className to the container", () => {
@@ -99,12 +119,12 @@ describe("SwipeableCard", () => {
 	});
 
 	// -------------------------------------------------------------------------
-	// Action zones — accessibility
+	// Action zones — accessibility (decorative reveal zones)
 	// -------------------------------------------------------------------------
 
 	describe("action zones accessibility", () => {
-		it("renders left action zone with aria-label and role=button", () => {
-			render(
+		it("renders the left action zone with its icon", () => {
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{
 						children: <span>Delete</span>,
@@ -116,13 +136,12 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const actionZone = screen.getByRole("button", { name: "Supprimer l'article" });
-			expect(actionZone).toBeInTheDocument();
+			expect(getZone(container, "left")).toBeInTheDocument();
 			expect(screen.getByText("Delete")).toBeInTheDocument();
 		});
 
-		it("renders right action zone with aria-label and role=button", () => {
-			render(
+		it("renders the right action zone with its icon", () => {
+			const { container } = render(
 				<SwipeableCard
 					rightAction={{
 						children: <span>Archive</span>,
@@ -134,12 +153,11 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const actionZone = screen.getByRole("button", { name: "Archiver l'article" });
-			expect(actionZone).toBeInTheDocument();
+			expect(getZone(container, "right")).toBeInTheDocument();
 		});
 
 		it("renders both action zones when both actions provided", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 					rightAction={{ children: <span>Archive</span>, label: "Archive", onAction: vi.fn() }}
@@ -148,12 +166,12 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			expect(screen.getByRole("button", { name: "Delete" })).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument();
+			expect(getZone(container, "left")).toBeInTheDocument();
+			expect(getZone(container, "right")).toBeInTheDocument();
 		});
 
-		it("action zones have tabIndex=-1 (not keyboard-focusable)", () => {
-			render(
+		it("action zones are decorative — aria-hidden, no role, not focusable", () => {
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -161,8 +179,10 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone).toHaveAttribute("tabindex", "-1");
+			const zone = getZone(container, "left");
+			expect(zone).toHaveAttribute("aria-hidden", "true");
+			expect(zone).not.toHaveAttribute("role");
+			expect(zone).not.toHaveAttribute("tabindex");
 		});
 	});
 
@@ -172,7 +192,7 @@ describe("SwipeableCard", () => {
 
 	describe("action zones styling", () => {
 		it("applies default bg-destructive to left action zone", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -180,29 +200,23 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone.className).toContain("bg-destructive");
+			expect(getZone(container, "left").className).toContain("bg-destructive");
 		});
 
 		it("applies default bg-secondary to right action zone", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
-					rightAction={{
-						children: <span>Archive</span>,
-						label: "Archive",
-						onAction: vi.fn(),
-					}}
+					rightAction={{ children: <span>Archive</span>, label: "Archive", onAction: vi.fn() }}
 				>
 					<span>Content</span>
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Archive" });
-			expect(zone.className).toContain("bg-secondary");
+			expect(getZone(container, "right").className).toContain("bg-secondary");
 		});
 
 		it("applies custom className to action zone", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{
 						children: <span>Delete</span>,
@@ -215,12 +229,11 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone.className).toContain("bg-red-500");
+			expect(getZone(container, "left").className).toContain("bg-red-500");
 		});
 
-		it("action zones have explicit w-20 width", () => {
-			render(
+		it("action zone width is collapsed (0px) at rest", () => {
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -228,8 +241,7 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone).toHaveClass("w-20");
+			expect(getZone(container, "left").style.width).toBe("0px");
 		});
 	});
 
@@ -247,26 +259,10 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const sliding = Array.from(container.querySelectorAll("div")).find((div) =>
-				div.style.transform.includes("translateX"),
-			);
-			expect(sliding?.style.transform).toBe("translateX(0px)");
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
 		});
 
 		it("action zone opacity is 0 at rest", () => {
-			render(
-				<SwipeableCard
-					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
-				>
-					<span>Content</span>
-				</SwipeableCard>,
-			);
-
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone.style.opacity).toBe("0");
-		});
-
-		it("applies spring-like snap-back transition when not swiping", () => {
 			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
@@ -275,12 +271,22 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const sliding = Array.from(container.querySelectorAll("div")).find(
-				(div) => div.style.transition && div.style.transition !== "none",
+			expect(getZone(container, "left").style.opacity).toBe("0");
+		});
+
+		it("applies a 0.2s spring-like snap-back transition on the sliding card when not swiping", () => {
+			const { container } = render(
+				<SwipeableCard
+					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
+				>
+					<span>Content</span>
+				</SwipeableCard>,
 			);
 
-			expect(sliding?.style.transition).toContain("transform");
-			expect(sliding?.style.transition).toContain("200ms");
+			const transition = getSlidingCard(container)?.style.transition;
+			expect(transition).toContain("transform");
+			// `0.2s` — NOT `0.2ms`: MOTION_CONFIG.duration values are seconds.
+			expect(transition).toContain("0.2s");
 		});
 	});
 
@@ -300,17 +306,13 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const sliding = Array.from(container.querySelectorAll("div")).find((div) =>
-				div.style.transform.includes("translateX"),
-			);
-
-			expect(sliding?.style.transition).toBe("none");
+			expect(getSlidingCard(container)?.style.transition).toBe("none");
 		});
 
 		it("strips scale+rotate transform on icon wrapper when reduced motion active", () => {
 			mockReducedMotion.value = true;
 
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -318,8 +320,7 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			const iconWrapper = zone.querySelector("span");
+			const iconWrapper = getZone(container, "left").querySelector("span");
 			expect(iconWrapper?.style.transform).toBe("");
 		});
 	});
@@ -330,7 +331,7 @@ describe("SwipeableCard", () => {
 
 	describe("action zone CSS vars", () => {
 		it("exposes --swipe-progress CSS var on the left action zone (initial 0)", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -338,12 +339,11 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone.style.getPropertyValue("--swipe-progress")).toBe("0");
+			expect(getZone(container, "left").style.getPropertyValue("--swipe-progress")).toBe("0");
 		});
 
 		it("applies scale+rotate transform on the icon wrapper (motion enabled)", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -351,8 +351,7 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			const iconWrapper = zone.querySelector("span");
+			const iconWrapper = getZone(container, "left").querySelector("span");
 			expect(iconWrapper?.style.transform).toContain("scale(calc(0.6");
 			expect(iconWrapper?.style.transform).toContain("rotate(calc");
 		});
@@ -364,7 +363,7 @@ describe("SwipeableCard", () => {
 
 	describe("color shift (filter saturate)", () => {
 		it("applies saturate filter with default base (0.7) at rest", () => {
-			render(
+			const { container } = render(
 				<SwipeableCard
 					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
 				>
@@ -372,8 +371,7 @@ describe("SwipeableCard", () => {
 				</SwipeableCard>,
 			);
 
-			const zone = screen.getByRole("button", { name: "Delete" });
-			expect(zone.style.filter).toContain("saturate(0.7");
+			expect(getZone(container, "left").style.filter).toContain("saturate(0.7");
 		});
 	});
 

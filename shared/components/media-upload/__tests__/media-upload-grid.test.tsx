@@ -280,11 +280,11 @@ describe("MediaUploadGrid", () => {
 			expect(liveRegion?.getAttribute("aria-atomic")).toBe("true");
 		});
 
-		it("renders the media list with role=list and aria-label", () => {
+		it("renders the media grid with role=group and aria-label", () => {
 			render(<MediaUploadGrid media={[image1]} onChange={mockOnChange} />);
 
-			const list = screen.getByRole("list");
-			expect(list).toHaveAttribute("aria-label", "Médias du produit");
+			const grid = screen.getByRole("group");
+			expect(grid).toHaveAttribute("aria-label", "Médias du produit");
 		});
 	});
 

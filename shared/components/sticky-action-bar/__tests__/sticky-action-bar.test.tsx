@@ -695,6 +695,60 @@ describe("StickyActionBar", () => {
 		});
 	});
 
+	describe("troncature du label", () => {
+		it("applique min-w-0 + truncate sur le label (ellipsis en conteneur flex)", () => {
+			render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			const label = screen.getByText("Rechercher");
+			// Sans min-w-0, un flex-item garde min-width:auto et ne tronque jamais.
+			expect(label.className).toContain("min-w-0");
+			expect(label.className).toContain("truncate");
+		});
+	});
+
+	describe("renforcement de l'état actif", () => {
+		it("colore l'icône en text-primary quand l'item est actif (active)", () => {
+			const items = baseItems();
+			items[0] = { ...items[0]!, active: true } as StickyActionBarItem;
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			const svg = screen.getByLabelText("Ouvrir le tri").querySelector("svg");
+			expect(svg?.getAttribute("class")).toContain("text-primary");
+		});
+
+		it("colore l'icône en text-primary quand badgeCount > 0", () => {
+			const items = baseItems();
+			items[2] = { ...items[2]!, badgeCount: 2 } as StickyActionBarItem;
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			const svg = screen.getByLabelText("Ouvrir les filtres").querySelector("svg");
+			expect(svg?.getAttribute("class")).toContain("text-primary");
+		});
+
+		it("n'applique PAS text-primary sur l'icône d'un item inactif", () => {
+			render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			const svg = screen.getByLabelText("Ouvrir le tri").querySelector("svg");
+			expect(svg?.getAttribute("class")).not.toContain("text-primary");
+		});
+
+		it("expose la teinte data-[state=open] sur les items", () => {
+			render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			expect(screen.getByLabelText("Ouvrir le tri").className).toContain(
+				"data-[state=open]:bg-primary/5",
+			);
+		});
+	});
+
+	describe("label nav/toolbar non dupliqué", () => {
+		it("lie le toolbar au <nav> via aria-labelledby (source unique)", () => {
+			const { container } = render(
+				<StickyActionBar items={baseItems()} ariaLabel="Tri et filtres" />,
+			);
+			const nav = container.querySelector("nav");
+			const toolbar = screen.getByRole("toolbar");
+			expect(nav?.id).toBeTruthy();
+			expect(toolbar).toHaveAttribute("aria-labelledby", nav?.id);
+			expect(toolbar).not.toHaveAttribute("aria-label");
+		});
+	});
+
 	it("refs restent stables apres rerender (focus toujours fonctionnel)", () => {
 		const { rerender } = render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
 		const sortBtn = screen.getByLabelText("Ouvrir le tri");

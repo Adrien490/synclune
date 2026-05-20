@@ -55,8 +55,12 @@ export function DashboardKpis({
 			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+.
 			    `data-no-swipe-nav` opts this row out of the dashboard-level period-swipe
 			    wrapper so the native snap-x horizontal scroll isn't hijacked. */}
-			<div role="region" aria-label="Indicateurs clés ventes" data-no-swipe-nav>
-				<ScrollFade axis="horizontal" className="overscroll-x-contain">
+			<div data-no-swipe-nav>
+				<ScrollFade
+					axis="horizontal"
+					className="overscroll-x-contain"
+					scrollRegionLabel="Indicateurs clés ventes"
+				>
 					<div className="flex snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 sm:pb-0 lg:grid-cols-4">
 						<KpiCardAnimated index={0}>
 							<div className="min-w-[72vw] shrink-0 snap-start sm:min-w-0 sm:shrink">

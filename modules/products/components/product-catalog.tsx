@@ -152,7 +152,6 @@ export function ProductCatalog({
 							className="hidden md:flex"
 							search={
 								<SearchInput
-									mode="live"
 									size="sm"
 									paramName="search"
 									placeholder={searchPlaceholder}

@@ -38,6 +38,15 @@ export const MIN_SEARCH_LENGTH = 3;
 /** Debounce delay (ms) for the live search input */
 export const SEARCH_DEBOUNCE_MS = 300;
 
+/** Downward swipe distance (px) from the mobile header that dismisses the dialog */
+export const SWIPE_CLOSE_THRESHOLD_PX = 80;
+
+/** Dampening applied to an upward (over-)drag so it feels rubber-banded */
+export const SWIPE_RUBBER_BAND_FACTOR = 0.3;
+
+/** Interval (ms) between animated placeholder rotations */
+export const PLACEHOLDER_CYCLE_MS = 3000;
+
 /** Branded error type replacing the raw "error" string literal */
 export type QuickSearchError = { type: "error" };
 

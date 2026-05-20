@@ -7,6 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
+import { lastTrigger } from "./last-trigger";
 
 interface QuickSearchTriggerProps {
 	className?: string;
@@ -24,11 +25,14 @@ export function QuickSearchTrigger({ className, ref }: QuickSearchTriggerProps) 
 			ref={ref}
 			variant="ghost"
 			size="icon"
-			onClick={() => {
+			onClick={(e) => {
 				triggerHaptic("light");
-				// Blur trigger before dialog opens to prevent aria-hidden conflict:
-				// Radix sets aria-hidden on the header before focus moves to dialog content
-				if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+				// Remember this button so focus can return to it when the dialog
+				// closes (see `onCloseAutoFocus`), then blur it: Radix sets
+				// aria-hidden on the header before focus moves to dialog content,
+				// and a focused descendant would trigger a browser warning.
+				lastTrigger.el = e.currentTarget;
+				e.currentTarget.blur();
 				open();
 			}}
 			className={cn("size-11 touch-manipulation transition-all duration-300 ease-out", className)}

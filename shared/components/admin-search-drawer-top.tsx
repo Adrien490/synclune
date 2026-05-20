@@ -117,14 +117,13 @@ export function AdminSearchDrawerTop({
 					<div className="flex-1">
 						<SearchInput
 							paramName={paramName}
-							mode="live"
 							size="sm"
 							// eslint-disable-next-line jsx-a11y/no-autofocus
 							autoFocus={autoFocus}
 							preventMobileBlur
 							debounceMs={300}
 							placeholder={placeholder}
-							ariaLabel={ariaLabel ?? placeholder}
+							aria-label={ariaLabel ?? placeholder}
 							onEscape={() => onOpenChange(false)}
 						/>
 					</div>

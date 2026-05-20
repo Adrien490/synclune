@@ -27,6 +27,7 @@ vi.mock("motion/react", () => {
 	const { forwardRef: fRef } = require("react");
 	return {
 		AnimatePresence: ({ children }: { children: unknown }) => children,
+		MotionConfig: ({ children }: { children: unknown }) => children,
 		m: {
 			span: fRef(
 				(
@@ -69,13 +70,6 @@ vi.mock("@/shared/components/loaders/mini-dots-loader", () => ({
 	MiniDotsLoader: () => {
 		const { createElement } = require("react");
 		return createElement("span", { "data-testid": "mini-dots-loader" });
-	},
-}));
-
-vi.mock("@/shared/components/ui/spinner", () => ({
-	Spinner: (props: Record<string, unknown>) => {
-		const { createElement } = require("react");
-		return createElement("span", { "data-testid": "spinner", ...props });
 	},
 }));
 
@@ -214,14 +208,8 @@ describe("SearchInput", () => {
 		expect(screen.getByPlaceholderText("Rechercher…")).toBeInTheDocument();
 	});
 
-	it("renders a submit button in submit mode", () => {
-		render(<SearchInput paramName="q" mode="submit" />);
-
-		expect(screen.getByRole("button", { name: "Rechercher" })).toBeInTheDocument();
-	});
-
-	it("shows clear button when input has a value", async () => {
-		render(<SearchInput paramName="q" mode="live" />);
+	it("shows clear button when input has a value", () => {
+		render(<SearchInput paramName="q" />);
 
 		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "bracelet" } });
@@ -229,9 +217,9 @@ describe("SearchInput", () => {
 		expect(screen.getByRole("button", { name: "Effacer la recherche" })).toBeInTheDocument();
 	});
 
-	it("clears the input when clear button is clicked", async () => {
+	it("clears the input when clear button is clicked", () => {
 		const onValueChange = vi.fn();
-		render(<SearchInput paramName="q" mode="live" onValueChange={onValueChange} />);
+		render(<SearchInput paramName="q" onValueChange={onValueChange} />);
 
 		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "collier" } });
@@ -245,7 +233,7 @@ describe("SearchInput", () => {
 
 	it("calls onValueChange when input value changes", () => {
 		const onValueChange = vi.fn();
-		render(<SearchInput paramName="q" mode="live" onValueChange={onValueChange} />);
+		render(<SearchInput paramName="q" onValueChange={onValueChange} />);
 
 		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "bague" } });
@@ -253,32 +241,17 @@ describe("SearchInput", () => {
 		expect(onValueChange).toHaveBeenCalledWith("bague");
 	});
 
-	it("navigates to /produits in submit mode when form is submitted", () => {
-		render(<SearchInput paramName="q" mode="submit" />);
+	it("announces the pending state in the live region", () => {
+		render(<SearchInput paramName="q" isPending />);
 
-		const input = screen.getByPlaceholderText("Rechercher…");
-		fireEvent.change(input, { target: { value: "bague lune" } });
-
-		const form = screen.getByRole("search");
-		fireEvent.submit(form);
-
-		expect(mockPush).toHaveBeenCalled();
+		expect(screen.getByRole("status")).toHaveTextContent("Recherche en cours…");
 	});
 
-	it("shows a live region with result count", () => {
-		render(<SearchInput paramName="q" mode="live" resultCount={5} />);
-
-		expect(screen.getByRole("status")).toHaveTextContent("5 résultats");
-	});
-
-	it("shows 'Aucun résultat' when resultCount is 0", () => {
-		render(<SearchInput paramName="q" mode="live" resultCount={0} />);
-
-		expect(screen.getByRole("status")).toHaveTextContent("Aucun résultat");
-	});
-
-	it("applies custom ariaLabel to the input", () => {
-		render(<SearchInput paramName="q" ariaLabel="Rechercher des bijoux" />);
+	// Régression P0 (audit 2026-05-20) : `SearchInput` doit consommer l'attribut DOM
+	// standard `aria-label`. Un consommateur réflexe écrivant `aria-label="…"` ne doit
+	// PAS se retrouver avec un champ sans nom accessible (cf bug QuickSearchDialog).
+	it("uses the standard aria-label attribute as the accessible name", () => {
+		render(<SearchInput paramName="q" aria-label="Rechercher des bijoux" />);
 
 		expect(screen.getByLabelText("Rechercher des bijoux")).toBeInTheDocument();
 	});

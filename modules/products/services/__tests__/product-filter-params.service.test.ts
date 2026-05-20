@@ -8,6 +8,7 @@ import {
 	getDefaultFilterValues,
 	isProductCategoryPage,
 	getCategorySlugFromPath,
+	getSectionActiveCount,
 	type FilterFormData,
 	type ParseFilterParams,
 	type BuildFilterURLParams,
@@ -482,5 +483,55 @@ describe("getCategorySlugFromPath", () => {
 
 	it("should return only the first path segment for nested paths", () => {
 		expect(getCategorySlugFromPath("/produits/bagues/detail")).toBe("bagues");
+	});
+});
+
+// ============================================================================
+// SECTION ACTIVE COUNT
+// ============================================================================
+
+describe("getSectionActiveCount", () => {
+	it("returns all zeros for default values", () => {
+		expect(getSectionActiveCount(makeFormData(), DEFAULT_PRICE_RANGE)).toEqual({
+			types: 0,
+			price: 0,
+			colors: 0,
+			materials: 0,
+			rating: 0,
+			availability: 0,
+		});
+	});
+
+	it("counts the number of selected tokens per section", () => {
+		const counts = getSectionActiveCount(
+			makeFormData({
+				productTypes: ["bagues", "colliers"],
+				colors: ["or"],
+				materials: ["acier", "titane", "platine"],
+			}),
+			DEFAULT_PRICE_RANGE,
+		);
+		expect(counts.types).toBe(2);
+		expect(counts.colors).toBe(1);
+		expect(counts.materials).toBe(3);
+	});
+
+	it("counts a custom price range as 1", () => {
+		expect(
+			getSectionActiveCount(makeFormData({ priceRange: [50, 200] }), DEFAULT_PRICE_RANGE).price,
+		).toBe(1);
+	});
+
+	it("counts rating as 1 when set", () => {
+		expect(getSectionActiveCount(makeFormData({ ratingMin: 4 }), DEFAULT_PRICE_RANGE).rating).toBe(
+			1,
+		);
+	});
+
+	it("counts each availability toggle independently", () => {
+		expect(
+			getSectionActiveCount(makeFormData({ inStockOnly: true, onSale: true }), DEFAULT_PRICE_RANGE)
+				.availability,
+		).toBe(2);
 	});
 });

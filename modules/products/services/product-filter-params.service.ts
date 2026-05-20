@@ -38,6 +38,15 @@ interface ActiveFiltersResult {
 	activeFiltersCount: number;
 }
 
+/** Identifiants stables des sections de filtre (ordre du menu drill-down). */
+export type FilterSectionId =
+	| "types"
+	| "price"
+	| "colors"
+	| "materials"
+	| "rating"
+	| "availability";
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
@@ -375,4 +384,33 @@ export function getCategorySlugFromPath(pathname: string): string | null {
 		return null;
 	}
 	return pathname.split("/produits/")[1]?.split("/")[0] ?? null;
+}
+
+// ============================================================================
+// SECTION ACTIVE COUNT
+// ============================================================================
+
+/**
+ * Compte les filtres actifs par section depuis les valeurs du formulaire.
+ * Sert à la fois aux badges des en-têtes de section et au total
+ * `pendingFilterCount`.
+ *
+ * @param values - Valeurs courantes du formulaire de filtre
+ * @param defaultPriceRange - Plage de prix par défaut (pour détecter un prix custom)
+ */
+export function getSectionActiveCount(
+	values: FilterFormData,
+	defaultPriceRange: [number, number],
+): Record<FilterSectionId, number> {
+	const priceActive =
+		values.priceRange[0] !== defaultPriceRange[0] || values.priceRange[1] !== defaultPriceRange[1];
+
+	return {
+		types: values.productTypes.length,
+		price: priceActive ? 1 : 0,
+		colors: values.colors.length,
+		materials: values.materials.length,
+		rating: values.ratingMin !== null ? 1 : 0,
+		availability: (values.inStockOnly ? 1 : 0) + (values.onSale ? 1 : 0),
+	};
 }

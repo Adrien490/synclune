@@ -3,7 +3,7 @@
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Fade } from "@/shared/components/animations/fade";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -23,12 +23,21 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "@/shared/utils/toast";
 
-import { QUICK_SEARCH_DIALOG_ID, RESULTS_CONTAINER_ID, SEARCH_DEBOUNCE_MS } from "./constants";
+import {
+	MIN_SEARCH_LENGTH,
+	PLACEHOLDER_CYCLE_MS,
+	QUICK_SEARCH_DIALOG_ID,
+	RESULTS_CONTAINER_ID,
+	SEARCH_DEBOUNCE_MS,
+	SWIPE_CLOSE_THRESHOLD_PX,
+	SWIPE_RUBBER_BAND_FACTOR,
+} from "./constants";
 import type {
 	QuickSearchCollection,
 	QuickSearchProductType,
 	RecentlyViewedProduct,
 } from "./constants";
+import { lastTrigger } from "./last-trigger";
 import { IdleContent } from "./idle-content";
 import { QuickSearchContent } from "./quick-search-content";
 import { QuickTagPills } from "./quick-tag-pills";
@@ -56,13 +65,6 @@ export function QuickSearchDialog({
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const searchInputRef = useRef<SearchInputHandle>(null);
-	// Capture the trigger element before Radix steals focus (useLayoutEffect fires before useEffect)
-	const triggerRef = useRef<HTMLElement | null>(null);
-	useLayoutEffect(() => {
-		if (isOpen) {
-			triggerRef.current = document.activeElement as HTMLElement | null;
-		}
-	}, [isOpen]);
 
 	// Cmd+K / Ctrl+K shortcut lives in QuickSearchKeyboardShortcut so the
 	// heavy dialog chunk stays unloaded until first open. See lazy wrapper.
@@ -123,22 +125,7 @@ export function QuickSearchDialog({
 		remove(term);
 	};
 
-	// Flush au unmount / close : applique les remove() pour ne pas perdre
-	// silencieusement l'intention utilisateur si le dialog se ferme avant
-	// l'expiration des tombstones.
-	useEffect(() => {
-		if (isOpen) return;
-		const pending = tombstonedRef.current;
-		if (pending.size === 0) return;
-		for (const term of pending) remove(term);
-		setTombstonedTerms(new Set());
-		// On veut déclencher SEULEMENT à la fermeture du dialog, pas à chaque
-		// mutation de `remove`. Les call-sites de `remove` sont stables et
-		// l'objet `useRecentSearches` est mémorisé en pratique.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isOpen]);
-
-	const { contentRef, handleArrowNavigation, focusFirst, resetActiveIndex, activeDescendantId } =
+	const { contentRef, handleArrowNavigation, resetActiveIndex, activeDescendantId } =
 		useKeyboardNavigation();
 
 	const {
@@ -153,23 +140,45 @@ export function QuickSearchDialog({
 		reset,
 	} = useQuickSearch({ searchInputRef, resetActiveIndex });
 
-	const hasPartialInput = inputValue.trim().length > 0 && !isSearchMode;
-
-	// Cycling placeholder through product types
-	const [placeholderIndex, setPlaceholderIndex] = useState(0);
+	// Cleanup à la fermeture du dialog : (1) flush les tombstones en attente via
+	// `remove()` pour ne pas perdre l'intention utilisateur si le dialog se ferme
+	// avant l'expiration des 5s ; (2) `reset()` l'état de recherche pour qu'une
+	// réouverture reparte propre — couvre les fermetures qui contournent
+	// `handleClose` (sélection d'un résultat, « Voir les résultats »…).
 	useEffect(() => {
-		if (inputValue.length > 0 || productTypes.length === 0) return;
-		const id = setInterval(() => {
-			setPlaceholderIndex((i) => (i + 1) % productTypes.length);
-		}, 3000);
-		return () => clearInterval(id);
-	}, [inputValue.length, productTypes.length]);
+		if (isOpen) return;
+		const pending = tombstonedRef.current;
+		if (pending.size > 0) {
+			for (const term of pending) remove(term);
+			setTombstonedTerms(new Set());
+		}
+		reset();
+		// On veut déclencher SEULEMENT à la fermeture du dialog. `remove` et
+		// `reset` sont stables en pratique (call-sites stables).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
+
+	const hasPartialInput = inputValue.trim().length > 0 && !isSearchMode;
 
 	const shouldReduceMotion = useReducedMotion();
 
+	// Cycling placeholder through product types — disabled under reduced motion
+	// (an indefinitely auto-updating placeholder is itself "motion" per WCAG 2.2.2).
+	const [placeholderIndex, setPlaceholderIndex] = useState(0);
+	useEffect(() => {
+		if (inputValue.length > 0 || productTypes.length === 0 || shouldReduceMotion) return;
+		const id = setInterval(() => {
+			setPlaceholderIndex((i) => (i + 1) % productTypes.length);
+		}, PLACEHOLDER_CYCLE_MS);
+		return () => clearInterval(id);
+	}, [inputValue.length, productTypes.length, shouldReduceMotion]);
+
 	const currentType = productTypes[placeholderIndex];
 	const placeholder = currentType ? `Rechercher : ${currentType.label}...` : "Rechercher un bijou…";
-	const showAnimatedPlaceholder = inputValue.length === 0 && productTypes.length > 0;
+	// Under reduced motion the animated overlay is skipped: the plain (static)
+	// placeholder above is shown instead.
+	const showAnimatedPlaceholder =
+		inputValue.length === 0 && productTypes.length > 0 && !shouldReduceMotion;
 
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
 		if (isPending) return;
@@ -232,8 +241,8 @@ export function QuickSearchDialog({
 		if (typeof y === "number") {
 			const raw = y - touchStartYRef.current;
 			touchDeltaYRef.current = raw;
-			// Rubber band upward (negative): apply 0.3 dampening; downward: 1:1
-			const offset = raw < 0 ? raw * 0.3 : raw;
+			// Rubber band upward (negative) drag; downward stays 1:1
+			const offset = raw < 0 ? raw * SWIPE_RUBBER_BAND_FACTOR : raw;
 			setDragOffset(offset);
 		}
 	};
@@ -242,8 +251,8 @@ export function QuickSearchDialog({
 		touchStartYRef.current = null;
 		touchDeltaYRef.current = 0;
 		setIsDragging(false);
-		// Threshold: 80px downward swipe from header triggers close
-		if (delta > 80) {
+		// A downward swipe past the threshold dismisses the dialog
+		if (delta > SWIPE_CLOSE_THRESHOLD_PX) {
 			triggerHaptic("medium");
 			handleClose();
 		}
@@ -261,8 +270,10 @@ export function QuickSearchDialog({
 			<DialogContent
 				showCloseButton={false}
 				onCloseAutoFocus={(e) => {
+					// Restore focus to the element that opened the dialog (captured in
+					// `lastTrigger` before it blurred itself / before Radix took over).
 					e.preventDefault();
-					triggerRef.current?.focus();
+					lastTrigger.el?.focus();
 				}}
 				aria-busy={isPending}
 				style={{
@@ -298,12 +309,13 @@ export function QuickSearchDialog({
 						<span className="bg-muted-foreground/30 h-1.5 w-10 rounded-full" />
 					</div>
 					<div className="flex h-14 items-center px-4">
+						{/* Single close button: leftmost on mobile, rightmost on desktop (via order) */}
 						<Button
 							variant="ghost"
 							size="icon"
 							onClick={handleClose}
 							disabled={isPending}
-							className="size-11 shrink-0 md:hidden"
+							className="order-first size-11 shrink-0 md:order-last"
 							aria-label="Fermer"
 						>
 							<X className="size-5" />
@@ -316,33 +328,18 @@ export function QuickSearchDialog({
 							Recherchez un bijou par nom ou parcourez les collections et categories.
 						</DialogDescription>
 
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleClose}
-							disabled={isPending}
-							className="hidden size-10 shrink-0 md:inline-flex"
-							aria-label="Fermer"
-						>
-							<X className="size-4" />
-						</Button>
-
-						{/* Spacer to center title on mobile (mirrors the close button width) */}
-						<div className="size-11 shrink-0 md:hidden" aria-hidden="true" />
+						{/* Spacer mirrors the close button width to keep the title centered on mobile */}
+						<div className="order-last size-11 shrink-0 md:hidden" aria-hidden="true" />
 					</div>
 				</header>
 
-				{/* Search Input */}
-				<div
-					className="bg-background shrink-0 px-4 py-3"
-					role="search"
-					data-pending={isPending ? "" : undefined}
-				>
+				{/* Search Input — le landmark `search` est fourni par le <form> de SearchInput */}
+				<div className="bg-background shrink-0 px-4 py-3" data-pending={isPending ? "" : undefined}>
 					<div className="relative overflow-hidden">
 						<SearchInput
 							ref={searchInputRef}
+							// `paramName` is inert here: `onLiveSearch` bypasses URL syncing.
 							paramName="qs"
-							mode="live"
 							debounceMs={SEARCH_DEBOUNCE_MS}
 							size="md"
 							placeholder={showAnimatedPlaceholder ? " " : placeholder}
@@ -355,15 +352,14 @@ export function QuickSearchDialog({
 							onEscape={handleClose}
 							onValueChange={handleInputValueChange}
 							onSubmit={handleEnterKey}
-							activeDescendantId={activeDescendantId}
-							ariaExpanded={isSearchMode}
-							ariaControls={RESULTS_CONTAINER_ID}
-							onKeyDown={(e) => {
-								if (e.key === "ArrowDown") {
-									e.preventDefault();
-									focusFirst();
-								}
-							}}
+							aria-activedescendant={activeDescendantId}
+							// The listbox popup is always rendered while the dialog is open
+							// (idle suggestions or live results), so the combobox is expanded.
+							aria-expanded
+							aria-controls={RESULTS_CONTAINER_ID}
+							// ARIA 1.2 combobox: the input keeps focus, so arrow/Home/End/Enter
+							// navigation must be handled here — not on the listbox container.
+							onKeyDown={handleArrowNavigation}
 						/>
 						{showAnimatedPlaceholder && (
 							<div
@@ -380,7 +376,9 @@ export function QuickSearchDialog({
 											animate={{ y: 0, opacity: 1 }}
 											exit={{ y: -6, opacity: 0 }}
 											transition={{
-												duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.medium,
+												// `showAnimatedPlaceholder` is already false under reduced motion,
+												// so this branch only runs when motion is allowed.
+												duration: MOTION_CONFIG.duration.medium,
 												ease: MOTION_CONFIG.easing.easeOut,
 											}}
 										>
@@ -403,7 +401,7 @@ export function QuickSearchDialog({
 				{/* Hint when input is too short */}
 				{hasPartialInput && (
 					<p className="text-muted-foreground px-4 pb-2 text-xs">
-						Tapez au moins 3 caractères pour rechercher
+						Tapez au moins {MIN_SEARCH_LENGTH} caractères pour rechercher
 					</p>
 				)}
 
@@ -422,9 +420,10 @@ export function QuickSearchDialog({
 				</div>
 
 				{/* Content — ARIA 1.2 combobox pattern: listbox is a presentational
-					 container, the input owns focus and announces active option via
-					 aria-activedescendant. tabIndex={-1} makes it programmatically focusable
-					 to satisfy jsx-a11y while keeping it out of the Tab order. */}
+					 container, the input owns focus and announces the active option via
+					 aria-activedescendant (keyboard navigation is wired on the input).
+					 tabIndex={-1} makes it programmatically focusable to satisfy jsx-a11y
+					 while keeping it out of the Tab order. */}
 				<div
 					ref={contentRef}
 					id={RESULTS_CONTAINER_ID}
@@ -437,7 +436,6 @@ export function QuickSearchDialog({
 						"group-has-[[data-pending]]/search:pointer-events-none",
 						"transition-opacity duration-200",
 					)}
-					onKeyDown={handleArrowNavigation}
 					onMouseLeave={resetActiveIndex}
 				>
 					<AnimatePresence mode="wait">
@@ -468,6 +466,7 @@ export function QuickSearchDialog({
 										onClose={handleClose}
 										onSelectResult={handleSelectResult}
 										onViewAllResults={handleViewAllResults}
+										onRetry={() => handleLiveSearch(searchQuery)}
 									/>
 								) : (
 									<SearchResultsSkeleton />

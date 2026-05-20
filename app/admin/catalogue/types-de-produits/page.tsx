@@ -106,11 +106,10 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 						ariaLabel="Barre d'outils de gestion des types de bijoux"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par label, slug…"
-								ariaLabel="Rechercher un type de bijou par label ou slug"
+								aria-label="Rechercher un type de bijou par label ou slug"
 								className="w-full"
 							/>
 						}

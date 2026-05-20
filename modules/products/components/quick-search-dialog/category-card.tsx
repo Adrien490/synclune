@@ -41,6 +41,8 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
+				// Out of the Tab order: reached via arrow keys (combobox pattern).
+				tabIndex={-1}
 				className={cn(
 					"rounded-xl text-left font-medium transition-all",
 					"touch-manipulation",

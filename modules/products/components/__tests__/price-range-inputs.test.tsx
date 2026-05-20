@@ -357,13 +357,9 @@ describe("PriceRangeInputs – accessibility", () => {
 		expect(screen.getByRole("group")).toBeInTheDocument();
 	});
 
-	it("min input has aria-description='en euros'", () => {
+	it("price inputs expose accessible labels", () => {
 		renderComponent();
-		expect(screen.getByLabelText("Prix minimum")).toHaveAttribute("aria-description", "en euros");
-	});
-
-	it("max input has aria-description='en euros'", () => {
-		renderComponent();
-		expect(screen.getByLabelText("Prix maximum")).toHaveAttribute("aria-description", "en euros");
+		expect(screen.getByLabelText("Prix minimum")).toBeInTheDocument();
+		expect(screen.getByLabelText("Prix maximum")).toBeInTheDocument();
 	});
 });

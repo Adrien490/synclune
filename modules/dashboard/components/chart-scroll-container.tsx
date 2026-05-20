@@ -17,6 +17,10 @@ interface ChartScrollContainerProps {
  * viewport (typically on mobile where charts have a min-width), gradient edge
  * indicators appear on the left/right to signal scrollable content.
  * On desktop where content fits, no fade is shown — natural rendering.
+ *
+ * `scrollRegionLabel` makes the scroll surface itself a keyboard-focusable
+ * `role="region"`, so keyboard users can scroll the chart (which has no
+ * focusable children) with the arrow keys.
  */
 export function ChartScrollContainer({
 	children,
@@ -24,8 +28,10 @@ export function ChartScrollContainer({
 	className,
 }: ChartScrollContainerProps) {
 	return (
-		<div role="region" aria-label={ariaLabel} className={className} data-no-swipe-nav>
-			<ScrollFade axis="horizontal">{children}</ScrollFade>
+		<div className={className} data-no-swipe-nav>
+			<ScrollFade axis="horizontal" scrollRegionLabel={ariaLabel}>
+				{children}
+			</ScrollFade>
 		</div>
 	);
 }

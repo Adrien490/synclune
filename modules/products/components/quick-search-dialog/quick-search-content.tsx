@@ -32,6 +32,8 @@ interface QuickSearchContentProps {
 	onClose: () => void;
 	onSelectResult: () => void;
 	onViewAllResults: () => void;
+	/** Re-run the current query (shown on a server-side search error) */
+	onRetry: () => void;
 }
 
 export function QuickSearchContent({
@@ -43,6 +45,7 @@ export function QuickSearchContent({
 	onClose,
 	onSelectResult,
 	onViewAllResults,
+	onRetry,
 }: QuickSearchContentProps) {
 	const isRateLimited = results.kind === "rate-limited";
 	const isError = results.kind === "error";
@@ -82,6 +85,7 @@ export function QuickSearchContent({
 									type="button"
 									role="option"
 									aria-selected={false}
+									tabIndex={-1}
 									aria-label={`Rechercher ${suggestion}`}
 									onClick={() => {
 										triggerHaptic("selection");
@@ -95,9 +99,10 @@ export function QuickSearchContent({
 							</p>
 						)}
 
-						{/* Matched collections */}
+						{/* Matched collections — role="group" (not <section>) to avoid a
+							landmark region nested inside the results listbox */}
 						{matchedCollections.length > 0 && (
-							<section aria-label="Collections correspondantes">
+							<div role="group" aria-label="Collections correspondantes">
 								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
 									Collections
 								</h3>
@@ -112,12 +117,12 @@ export function QuickSearchContent({
 										/>
 									))}
 								</div>
-							</section>
+							</div>
 						)}
 
 						{/* Matched product types */}
 						{matchedTypes.length > 0 && (
-							<section aria-label="Categories correspondantes">
+							<div role="group" aria-label="Categories correspondantes">
 								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
 									Categories
 								</h3>
@@ -132,7 +137,7 @@ export function QuickSearchContent({
 										/>
 									))}
 								</div>
-							</section>
+							</div>
 						)}
 
 						{/* Rate limited */}
@@ -146,20 +151,26 @@ export function QuickSearchContent({
 							</p>
 						)}
 
-						{/* Server error */}
+						{/* Server error — mirrors the network-error UI in the parent
+							(same wording + retry affordance) */}
 						{isError && !isRateLimited && (
-							<p
+							<div
 								role="alert"
 								aria-live="assertive"
-								className="text-muted-foreground py-4 text-center text-sm"
+								className="flex flex-col items-center justify-center gap-3 px-4 py-8"
 							>
-								Une erreur est survenue lors de la recherche. Veuillez réessayer.
-							</p>
+								<p className="text-muted-foreground text-sm">
+									La recherche est temporairement indisponible.
+								</p>
+								<Button variant="outline" size="sm" onClick={onRetry}>
+									Réessayer
+								</Button>
+							</div>
 						)}
 
 						{/* Product results */}
 						{hasSearchResults && (
-							<section aria-label="Produits">
+							<div role="group" aria-label="Produits">
 								<h3 className="text-muted-foreground mb-2 text-xs font-medium tracking-wider uppercase">
 									Produits
 								</h3>
@@ -178,7 +189,7 @@ export function QuickSearchContent({
 										/>
 									))}
 								</Stagger>
-							</section>
+							</div>
 						)}
 
 						{/* Empty state */}
@@ -217,6 +228,7 @@ export function QuickSearchContent({
 						data-active={undefined}
 						role="option"
 						aria-selected={false}
+						tabIndex={-1}
 						className="data-[active=true]:ring-ring/50 w-full data-[active=true]:ring-[3px]"
 					>
 						{totalCount === 1 ? "Voir le résultat" : `Voir les ${totalCount} résultats`}

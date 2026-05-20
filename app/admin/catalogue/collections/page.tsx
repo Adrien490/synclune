@@ -106,11 +106,10 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 						ariaLabel="Barre d'outils de gestion des collections"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par nom, slug, description…"
-								ariaLabel="Rechercher une collection par nom, slug ou description"
+								aria-label="Rechercher une collection par nom, slug ou description"
 								className="w-full"
 							/>
 						}

@@ -26,6 +26,13 @@ interface ProductSortBarProps {
 }
 
 /**
+ * DOM `id` du contenu du SortDrawer, appairé avec `aria-controls` sur le
+ * bouton « Trier » — permet aux lecteurs d'écran d'annoncer le lien
+ * bouton → popup (cf. JSDoc `SortDrawerProps.id`).
+ */
+const SORT_DRAWER_ID = "product-sort-drawer";
+
+/**
  * Sous-header sticky discret (mobile uniquement) pour tri / recherche / filtres.
  *
  * Positionne juste sous la navbar (sticky), 3 boutons compacts qui ne
@@ -192,6 +199,8 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 						className={cn(buttonBase, hasActiveSort && buttonActive)}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 						aria-haspopup="dialog"
+						aria-controls={SORT_DRAWER_ID}
+						aria-expanded={sortOpen}
 					>
 						<ArrowUpDown className="size-4" aria-hidden="true" />
 						<span className="truncate">Trier</span>
@@ -274,6 +283,7 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 				onOpenChange={setSortOpen}
 				options={sortOptions}
 				showResetOption
+				id={SORT_DRAWER_ID}
 			/>
 		</>
 	);

@@ -30,7 +30,7 @@ describe("RequiredFieldsNote", () => {
 	it("renders default text", () => {
 		render(<RequiredFieldsNote />);
 		expect(
-			screen.getByText("Les champs marqués d'un astérisque (*) sont obligatoires."),
+			screen.getByText("Les champs marqués d'un astérisque sont obligatoires."),
 		).toBeInTheDocument();
 	});
 
@@ -54,5 +54,12 @@ describe("RequiredFieldsNote", () => {
 	it("applies custom className", () => {
 		const { container } = render(<RequiredFieldsNote className="mt-4" />);
 		expect(container.querySelector("p")).toHaveClass("mt-4");
+	});
+
+	it("aligns the asterisk to the first line of wrapped text (items-baseline)", () => {
+		const { container } = render(<RequiredFieldsNote />);
+		const paragraph = container.querySelector("p");
+		expect(paragraph).toHaveClass("items-baseline");
+		expect(paragraph).not.toHaveClass("items-center");
 	});
 });

@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
+import { lastTrigger } from "./last-trigger";
 
 /**
  * Lightweight listener for the global ⌘K / Ctrl+K shortcut.
@@ -24,6 +25,10 @@ export function QuickSearchKeyboardShortcut() {
 				if (isOpen) {
 					close();
 				} else {
+					// Remember the focused element so focus returns there on close.
+					if (document.activeElement instanceof HTMLElement) {
+						lastTrigger.el = document.activeElement;
+					}
 					open();
 				}
 			}

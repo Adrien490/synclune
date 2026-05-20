@@ -7,7 +7,7 @@ interface RequiredFieldsNoteProps {
 	className?: string;
 	/**
 	 * Texte personnalisé
-	 * @default "Les champs marqués d'un astérisque (*) sont obligatoires."
+	 * @default "Les champs marqués d'un astérisque sont obligatoires."
 	 */
 	text?: string;
 }
@@ -29,11 +29,11 @@ interface RequiredFieldsNoteProps {
  */
 export function RequiredFieldsNote({
 	className,
-	text = "Les champs marqués d'un astérisque (*) sont obligatoires.",
+	text = "Les champs marqués d'un astérisque sont obligatoires.",
 }: RequiredFieldsNoteProps) {
 	return (
-		<p className={cn("text-muted-foreground text-xs", "flex items-center gap-1.5", className)}>
-			<span className="text-destructive font-semibold" aria-hidden="true">
+		<p className={cn("text-muted-foreground flex items-baseline gap-1.5 text-xs", className)}>
+			<span className="text-destructive" aria-hidden="true">
 				*
 			</span>
 			<span>{text}</span>

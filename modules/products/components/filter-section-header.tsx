@@ -2,50 +2,78 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
+import {
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/shared/components/ui/accordion";
 import { Search, X } from "lucide-react";
+import type { ReactNode } from "react";
 
 // ============================================================================
-// SECTION HEADER
+// FILTER SECTION (accordéon)
 // ============================================================================
 
-interface SectionHeaderProps {
+interface FilterSectionProps {
+	/** Valeur stable de l'AccordionItem (identifiant DOM). */
+	value: string;
 	label: string;
-	count?: number;
-	badgeContent?: React.ReactNode;
-	onReset?: () => void;
+	/** Nombre de filtres actifs : affiche le badge + le bouton reset si > 0. */
+	count: number;
+	/** Contenu personnalisé du badge (ex: "50€ - 200€"). Défaut : `count`. */
+	badgeContent?: ReactNode;
+	onReset: () => void;
+	children: ReactNode;
+	/** Classe additionnelle sur l'AccordionItem (ex: `border-b-0` pour le dernier). */
+	className?: string;
 }
 
-export function SectionHeader({ label, count, badgeContent, onReset }: SectionHeaderProps) {
+/**
+ * Section repliable du filtre produit : en-tête (libellé + badge + reset) puis
+ * contenu.
+ *
+ * Le bouton de réinitialisation est un `<button>` **frère** de
+ * l'`AccordionTrigger`, jamais imbriqué dans son `<button>` : un élément
+ * interactif descendant d'un `<button>` est du HTML invalide et crée un
+ * tab-stop parasite. Il est positionné en absolu sur la ligne d'en-tête.
+ */
+export function FilterSection({
+	value,
+	label,
+	count,
+	badgeContent,
+	onReset,
+	children,
+	className,
+}: FilterSectionProps) {
+	const hasActive = count > 0;
+
 	return (
-		<div className="flex flex-1 items-center gap-2">
-			<span>{label}</span>
-			{count !== undefined && count > 0 && (
-				<Badge variant="secondary" className="h-5 px-1.5 text-xs font-semibold">
-					{badgeContent ?? count}
-				</Badge>
-			)}
-			{onReset && count !== undefined && count > 0 && (
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={(e) => {
-						e.stopPropagation();
-						onReset();
-					}}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							e.stopPropagation();
-							onReset();
-						}
-					}}
-					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md transition-colors"
-					aria-label={`Effacer le filtre ${label}`}
-				>
-					<X className="size-3" />
-				</div>
-			)}
-		</div>
+		<AccordionItem value={value} className={className}>
+			<div className="relative">
+				<AccordionTrigger headingLevel={3} className="hover:no-underline">
+					<span className="flex flex-1 items-center gap-2 pr-9">
+						<span>{label}</span>
+						{hasActive && (
+							<Badge variant="secondary" className="h-5 px-1.5 text-xs font-semibold">
+								{badgeContent ?? count}
+							</Badge>
+						)}
+					</span>
+				</AccordionTrigger>
+				{hasActive && (
+					<button
+						type="button"
+						onClick={onReset}
+						className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 absolute top-1/2 right-8 flex size-11 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+						aria-label={`Effacer le filtre ${label}`}
+					>
+						<X className="size-3" aria-hidden="true" />
+					</button>
+				)}
+			</div>
+			<AccordionContent>{children}</AccordionContent>
+		</AccordionItem>
 	);
 }
 
@@ -59,6 +87,10 @@ interface SectionSearchProps {
 	placeholder?: string;
 }
 
+/**
+ * Champ de recherche affiché en tête des sections de filtre longues
+ * (couleurs / matériaux au-delà de {@link SEARCH_THRESHOLD} entrées).
+ */
 export function SectionSearch({
 	value,
 	onChange,

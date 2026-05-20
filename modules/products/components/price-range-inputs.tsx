@@ -140,7 +140,6 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 							onBlur={handleMinBlur}
 							className="h-10 text-sm"
 							aria-label="Prix minimum"
-							aria-description="en euros"
 						/>
 					</div>
 					<span className="text-muted-foreground shrink-0">—</span>
@@ -155,7 +154,6 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 							onBlur={handleMaxBlur}
 							className="h-10 text-sm"
 							aria-label="Prix maximum"
-							aria-description="en euros"
 						/>
 					</div>
 					<span className="text-muted-foreground shrink-0 text-sm">€</span>

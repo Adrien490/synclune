@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
+import { useEffect, useId, useRef, type CSSProperties, type MouseEvent } from "react";
 
 import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { useRovingTabIndex } from "@/shared/hooks/use-roving-tab-index";
@@ -96,7 +96,7 @@ const baseItemClasses = cn(
 	"flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
 	"text-xs font-medium text-muted-foreground",
 	"hover:text-foreground",
-	"active:bg-primary/5 motion-safe:active:scale-[0.98]",
+	"active:bg-primary/5 data-[state=open]:bg-primary/5 motion-safe:active:scale-[0.98]",
 	"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
 	"disabled:opacity-50 disabled:pointer-events-none",
@@ -193,7 +193,11 @@ export function StickyActionBar({
 	const { getTabIndex, setFocusedIndex, itemRefs, onKeyDown } = useRovingTabIndex<
 		StickyActionBarItem,
 		HTMLButtonElement | HTMLAnchorElement
-	>({ items, isDisabled: isDisabledItem });
+	>({ items, isDisabled: isDisabledItem, orientation: "horizontal" });
+
+	// Single accessible name shared by the <nav> landmark and the role="toolbar"
+	// widget — avoids literal duplication of `ariaLabel` in the DOM.
+	const toolbarLabelId = useId();
 
 	// Live region — announce active-state transitions (debounced clear 3s)
 	const announcementRef = useRef<HTMLSpanElement>(null);
@@ -227,6 +231,7 @@ export function StickyActionBar({
 
 	return (
 		<nav
+			id={toolbarLabelId}
 			aria-label={ariaLabel}
 			data-testid={testId}
 			style={stickyStyle}
@@ -245,7 +250,7 @@ export function StickyActionBar({
 			<div
 				role="toolbar"
 				aria-orientation="horizontal"
-				aria-label={ariaLabel}
+				aria-labelledby={toolbarLabelId}
 				className="divide-border/30 flex items-stretch divide-x pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
 			>
 				{items.map((item, index) => {
@@ -284,8 +289,14 @@ export function StickyActionBar({
 
 					const children = (
 						<>
-							<Icon className="size-4 shrink-0" aria-hidden="true" />
-							<span className="truncate">{item.label}</span>
+							<Icon
+								className={cn(
+									"size-4 shrink-0 motion-safe:transition-colors",
+									isActive && "text-primary",
+								)}
+								aria-hidden="true"
+							/>
+							<span className="min-w-0 truncate">{item.label}</span>
 							{indicator}
 						</>
 					);

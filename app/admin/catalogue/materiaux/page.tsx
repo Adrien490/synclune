@@ -88,11 +88,10 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 						ariaLabel="Barre d'outils de gestion des matériaux"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par nom, slug ou description…"
-								ariaLabel="Rechercher un matériau par nom, slug ou description"
+								aria-label="Rechercher un matériau par nom, slug ou description"
 								className="w-full"
 							/>
 						}

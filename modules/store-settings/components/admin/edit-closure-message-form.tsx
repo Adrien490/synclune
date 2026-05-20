@@ -4,6 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { useActionState } from "react";
 
 import { useAppForm } from "@/shared/components/forms";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -51,6 +52,8 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 			<span className="sr-only" role="status" aria-live="polite">
 				{isPending ? "Mise à jour du message en cours…" : ""}
 			</span>
+
+			<RequiredFieldsNote />
 
 			<form.AppField name="closureMessage">
 				{(field) => (

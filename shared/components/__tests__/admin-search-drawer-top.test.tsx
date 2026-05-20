@@ -126,29 +126,26 @@ vi.mock("@/shared/components/ui/button", () => ({
 vi.mock("@/shared/components/search-input", () => ({
 	SearchInput: ({
 		paramName,
-		mode,
 		size,
 		autoFocus,
 		preventMobileBlur,
 		debounceMs,
 		placeholder,
-		ariaLabel,
+		"aria-label": ariaLabel,
 		onEscape,
 	}: {
 		paramName?: string;
-		mode?: string;
 		size?: string;
 		autoFocus?: boolean;
 		preventMobileBlur?: boolean;
 		debounceMs?: number;
 		placeholder?: string;
-		ariaLabel?: string;
+		"aria-label"?: string;
 		onEscape?: () => void;
 	}) => (
 		<input
 			data-testid="search-input"
 			data-param={paramName}
-			data-mode={mode}
 			data-size={size}
 			data-autofocus={String(autoFocus)}
 			data-prevent-mobile-blur={String(preventMobileBlur)}
@@ -220,7 +217,6 @@ describe("AdminSearchDrawerTop", () => {
 
 		const input = screen.getByTestId("search-input");
 		expect(input).toHaveAttribute("data-param", "search");
-		expect(input).toHaveAttribute("data-mode", "live");
 		expect(input).toHaveAttribute("data-size", "sm");
 		expect(input).toHaveAttribute("data-autofocus", "true");
 		expect(input).toHaveAttribute("data-prevent-mobile-blur", "true");

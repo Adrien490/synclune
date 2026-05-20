@@ -124,6 +124,40 @@ describe("UploadProgress", () => {
 	});
 
 	// -------------------------------------------------------------------------
+	// Clamp du pourcentage (P2-B)
+	// -------------------------------------------------------------------------
+	describe("clamp du pourcentage", () => {
+		it("borne un progress > 100 à 100 sur la barre de progression", () => {
+			render(<UploadProgress progress={150} isProcessing={false} />);
+
+			const progressBar = screen.getByRole("progressbar");
+			expect(progressBar.getAttribute("aria-valuenow")).toBe("100");
+		});
+
+		it("borne un progress négatif à 0 dans le label et le texte sr-only", () => {
+			render(<UploadProgress progress={-10} />);
+
+			expect(screen.getByText("Envoi… 0%")).toBeTruthy();
+
+			const srSpan = document.querySelector(".sr-only");
+			expect(srSpan?.textContent).toBe("Envoi en cours, 0 pourcent");
+		});
+
+		it("borne un progress négatif à 0 en variant compact", () => {
+			render(<UploadProgress progress={-10} variant="compact" />);
+
+			expect(screen.getByText("0%")).toBeTruthy();
+		});
+
+		it("borne un progress > 100 à 100 en variant compact (état terminé)", () => {
+			render(<UploadProgress progress={150} variant="compact" isProcessing={false} />);
+
+			expect(screen.getByText("OK")).toBeTruthy();
+			expect(screen.queryByText("150%")).toBeNull();
+		});
+	});
+
+	// -------------------------------------------------------------------------
 	// Variant compact
 	// -------------------------------------------------------------------------
 	describe("variant compact", () => {

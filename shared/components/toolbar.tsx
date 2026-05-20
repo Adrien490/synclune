@@ -10,7 +10,7 @@ import { type ReactNode } from "react";
  * @example
  * ```tsx
  * <Toolbar
- *   search={<SearchInput paramName="search" mode="live" size="sm" placeholder="Rechercher..." />}
+ *   search={<SearchInput paramName="search" size="sm" placeholder="Rechercher..." />}
  *   ariaLabel="Barre d'outils de gestion"
  * >
  *   <SelectFilter ... />

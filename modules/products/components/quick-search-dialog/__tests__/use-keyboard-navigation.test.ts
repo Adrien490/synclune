@@ -84,10 +84,10 @@ describe("useKeyboardNavigation", () => {
 		expect(hookResultRef.current!.activeDescendantId).toBeUndefined();
 	});
 
-	it("focusFirst() sets activeDescendantId to qs-nav-0", () => {
+	it("ArrowDown from idle sets activeDescendantId to qs-nav-0", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 
 		expect(hookResultRef.current!.activeDescendantId).toBe("qs-nav-0");
 	});
@@ -95,7 +95,7 @@ describe("useKeyboardNavigation", () => {
 	it("ArrowDown increments active index", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 
 		expect(hookResultRef.current!.activeDescendantId).toBe("qs-nav-1");
@@ -104,7 +104,7 @@ describe("useKeyboardNavigation", () => {
 	it("ArrowDown wraps from last to first", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		// Now at index 2 (last), ArrowDown should wrap to 0
@@ -116,7 +116,7 @@ describe("useKeyboardNavigation", () => {
 	it("ArrowUp decrements active index", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		// Now at index 1, ArrowUp goes back to 0
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowUp")));
@@ -127,7 +127,7 @@ describe("useKeyboardNavigation", () => {
 	it("ArrowUp wraps from first to last", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		// At index 0, ArrowUp wraps to last (2)
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowUp")));
 
@@ -137,7 +137,7 @@ describe("useKeyboardNavigation", () => {
 	it("Home sets index to 0", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		expect(hookResultRef.current!.activeDescendantId).toBe("qs-nav-2");
@@ -150,7 +150,7 @@ describe("useKeyboardNavigation", () => {
 	it("End sets index to last element", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("End")));
 
 		expect(hookResultRef.current!.activeDescendantId).toBe("qs-nav-2");
@@ -162,7 +162,7 @@ describe("useKeyboardNavigation", () => {
 		const firstButton = container.querySelector("button")!;
 		firstButton.addEventListener("click", clickSpy);
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("Enter")));
 
 		expect(clickSpy).toHaveBeenCalledOnce();
@@ -185,7 +185,7 @@ describe("useKeyboardNavigation", () => {
 	it("resetActiveIndex() clears activeDescendantId to undefined", () => {
 		setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 		expect(hookResultRef.current!.activeDescendantId).toBe("qs-nav-0");
 
 		act(() => hookResultRef.current!.resetActiveIndex());
@@ -205,7 +205,7 @@ describe("useKeyboardNavigation", () => {
 	it("sets data-active on active element (no aria-current)", () => {
 		const { container } = setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 
 		const first = container.querySelector('[data-qs-nav-id="0"]');
 		expect(first?.getAttribute("data-active")).toBe("true");
@@ -215,7 +215,7 @@ describe("useKeyboardNavigation", () => {
 	it("clears data-active from previous element when index changes", () => {
 		const { container } = setup();
 
-		act(() => hookResultRef.current!.focusFirst());
+		act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
 
 		const first = container.querySelector('[data-qs-nav-id="0"]');
 		expect(first?.getAttribute("data-active")).toBe("true");

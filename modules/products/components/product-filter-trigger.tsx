@@ -18,7 +18,7 @@ interface ProductFilterTriggerProps {
 	className?: string;
 	/**
 	 * Variante d'affichage :
-	 * - "icon" : bouton icone seul (style mobile, comme SortDrawerTrigger)
+	 * - "icon" : bouton icone seul (style mobile, ghost size-11)
 	 * - "full" : bouton avec texte et badge (style desktop)
 	 */
 	variant?: "icon" | "full";
@@ -32,7 +32,7 @@ interface ProductFilterTriggerProps {
  *
  * @example
  * ```tsx
- * // Mobile - style icon comme SortDrawerTrigger
+ * // Mobile - style icon (bouton icone compact)
  * <ProductFilterTrigger variant="icon" className="md:hidden" />
  *
  * // Desktop - style full avec texte
@@ -52,7 +52,7 @@ function ProductFilterTriggerInner({ className, variant = "full" }: ProductFilte
 	const activeFiltersCount = urlFiltersCount + (isOnCategoryPage ? 1 : 0);
 	const hasActiveFilters = urlHasActiveFilters || isOnCategoryPage;
 
-	// Variante icon (mobile) - meme style que SortDrawerTrigger
+	// Variante icon (mobile) - bouton icone compact ghost size-11
 	if (variant === "icon") {
 		return (
 			<Button

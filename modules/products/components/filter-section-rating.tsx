@@ -1,14 +1,8 @@
 "use client";
 
-import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
-import {
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/shared/components/ui/accordion";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { SectionHeader } from "./filter-section-header";
 
 // ============================================================================
 // TYPES
@@ -23,42 +17,36 @@ interface RatingFilterSectionProps {
 // COMPONENT
 // ============================================================================
 
+/**
+ * Corps de la section "Notes clients" du filtre produit.
+ *
+ * Options mutuellement exclusives (une seule note minimale) → groupe radio
+ * pour une sémantique et une annonce lecteur d'écran correctes. L'effacement
+ * passe par le bouton reset de l'en-tête de section.
+ */
 export function RatingFilterSection({ selectedValue, onChange }: RatingFilterSectionProps) {
 	const haptic = useHaptic();
+
 	return (
-		<AccordionItem value="rating">
-			<AccordionTrigger headingLevel={3} className="hover:no-underline">
-				<SectionHeader
-					label="Notes clients"
-					count={selectedValue !== null ? 1 : 0}
-					badgeContent={selectedValue !== null ? `${selectedValue}+ ★` : undefined}
-					onReset={() => {
-						haptic("light");
-						onChange(null);
+		<div role="radiogroup" aria-label="Note minimale" className="space-y-1">
+			{[5, 4, 3, 2, 1].map((stars) => (
+				<RadioFilterItem
+					key={stars}
+					id={`rating-${stars}`}
+					name="product-filter-rating"
+					value={String(stars)}
+					checked={selectedValue === stars}
+					onCheckedChange={() => {
+						haptic("selection");
+						onChange(stars);
 					}}
-				/>
-			</AccordionTrigger>
-			<AccordionContent>
-				<div className="space-y-1">
-					{[5, 4, 3, 2, 1].map((stars) => {
-						const isSelected = selectedValue === stars;
-						return (
-							<CheckboxFilterItem
-								key={stars}
-								id={`rating-${stars}`}
-								checked={isSelected}
-								onCheckedChange={(checked) => {
-									haptic("selection");
-									onChange(checked ? stars : null);
-								}}
-								indicator={<RatingStars rating={stars} size="sm" />}
-							>
-								{stars === 1 ? "1 étoile et plus" : `${stars} étoiles et plus`}
-							</CheckboxFilterItem>
-						);
-					})}
-				</div>
-			</AccordionContent>
-		</AccordionItem>
+				>
+					<span className="flex items-center gap-2">
+						<RatingStars rating={stars} size="sm" />
+						<span>{stars === 1 ? "1 étoile et plus" : `${stars} étoiles et plus`}</span>
+					</span>
+				</RadioFilterItem>
+			))}
+		</div>
 	);
 }

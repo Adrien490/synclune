@@ -20,7 +20,7 @@ export interface FabProps {
 	initialHidden?: boolean;
 	/** Icone a afficher dans le FAB */
 	icon: React.ReactNode;
-	/** Badge optionnel affiche en haut a droite du FAB */
+	/** Badge optionnel affiche en haut a GAUCHE du FAB (le coin haut-droit est reserve au bouton de fermeture) */
 	badge?: React.ReactNode;
 	/** Contenu du tooltip principal */
 	tooltip: FabTooltipContent;

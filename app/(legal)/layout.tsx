@@ -1,5 +1,6 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
@@ -13,10 +14,16 @@ import { Suspense } from "react";
  */
 export default async function LegalLayout({ children }: { children: React.ReactNode }) {
 	const storeStatus = await getStoreStatus();
+	const showMaintenanceBanner = storeStatus.isClosed && (await isAdmin());
 
 	return (
 		<>
-			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
+			{showMaintenanceBanner && (
+				<MaintenanceBanner
+					closureMessage={storeStatus.closureMessage}
+					reopensAt={storeStatus.reopensAt}
+				/>
+			)}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />
 			</Suspense>

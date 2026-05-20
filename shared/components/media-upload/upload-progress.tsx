@@ -77,8 +77,9 @@ export function UploadProgress({
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const haptic = useHaptic();
+	const clampedProgress = Math.min(100, Math.max(0, progress));
 	const isComplete =
-		progress >= 100 &&
+		clampedProgress >= 100 &&
 		!isProcessing &&
 		phase !== "generating-thumbnails" &&
 		phase !== "compressing" &&
@@ -87,7 +88,7 @@ export function UploadProgress({
 	const isCompressing = phase === "compressing";
 	const isFinalizing = phase === "finalizing";
 	const isServerProcessing =
-		(progress >= 100 && isProcessing) || isThumbnailing || isCompressing || isFinalizing;
+		(clampedProgress >= 100 && isProcessing) || isThumbnailing || isCompressing || isFinalizing;
 
 	const handleCancel = () => {
 		haptic("light");
@@ -109,7 +110,7 @@ export function UploadProgress({
 					? "Polissage final à l'atelier en cours"
 					: isServerProcessing
 						? "Optimisation à l'atelier en cours"
-						: `Envoi en cours, ${progress} pourcent${queueText}`;
+						: `Envoi en cours, ${clampedProgress} pourcent${queueText}`;
 
 	const phaseLabel = isComplete
 		? "Terminé"
@@ -121,7 +122,19 @@ export function UploadProgress({
 					? "Polissage à l'atelier…"
 					: isServerProcessing
 						? "Optimisation à l'atelier…"
-						: `Envoi… ${progress}%`;
+						: `Envoi… ${clampedProgress}%`;
+
+	const phaseKey = isComplete
+		? "done"
+		: isCompressing
+			? "compressing"
+			: isThumbnailing
+				? "thumbnailing"
+				: isFinalizing
+					? "finalizing"
+					: isServerProcessing
+						? "server-processing"
+						: "uploading";
 
 	const etaLabel = !isComplete && phase === "uploading" ? formatEtaLabel(etaSeconds ?? null) : null;
 	const speedLabel =
@@ -160,7 +173,7 @@ export function UploadProgress({
 					)}
 					aria-hidden="true"
 				>
-					{isComplete ? "OK" : isServerProcessing ? "Optimisation…" : `${progress}%`}
+					{isComplete ? "OK" : isServerProcessing ? "Optimisation…" : `${clampedProgress}%`}
 				</span>
 
 				{currentFileName && !isComplete && (
@@ -201,10 +214,10 @@ export function UploadProgress({
 
 			<div className="w-full space-y-2 sm:space-y-1.5">
 				<Progress
-					value={isServerProcessing ? undefined : progress}
+					value={isServerProcessing ? undefined : clampedProgress}
 					aria-valuemin={0}
 					aria-valuemax={100}
-					aria-valuenow={isServerProcessing ? undefined : progress}
+					aria-valuenow={isServerProcessing ? undefined : clampedProgress}
 					aria-label={isServerProcessing ? "Optimisation à l'atelier" : "Progression de l'envoi"}
 					className={cn(
 						"h-2 sm:h-1.5",
@@ -216,7 +229,7 @@ export function UploadProgress({
 				/>
 				<AnimatePresence mode="wait" initial={false}>
 					<m.p
-						key={phaseLabel}
+						key={phaseKey}
 						initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}
@@ -396,7 +409,7 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 					onClick={handleCancel}
 					aria-label={`Annuler ${file.fileName}`}
 					className={cn(
-						"text-muted-foreground hover:text-destructive focus-visible:ring-primary relative flex size-6 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none",
+						"text-muted-foreground hover:text-destructive focus-visible:ring-primary relative flex size-7 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none",
 						"after:absolute after:-inset-2 after:content-['']",
 					)}
 				>

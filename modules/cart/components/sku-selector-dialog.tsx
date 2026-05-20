@@ -15,6 +15,7 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
 import { useAppForm } from "@/shared/components/forms";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
@@ -199,9 +200,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						Choisissez vos options pour ajouter au panier
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
-				<p className="text-muted-foreground text-xs" aria-hidden="true">
-					* Champs obligatoires
-				</p>
+				<RequiredFieldsNote />
 
 				{/* Unavailable product message */}
 				{(noActiveSkus || allOutOfStock) && (

@@ -88,11 +88,10 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 						ariaLabel="Barre d'outils de gestion des commandes"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par numéro, email, nom client, Payment Intent…"
-								ariaLabel="Rechercher une commande par numéro, email client ou Payment Intent"
+								aria-label="Rechercher une commande par numéro, email client ou Payment Intent"
 								className="w-full"
 							/>
 						}

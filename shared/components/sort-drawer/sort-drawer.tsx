@@ -1,6 +1,13 @@
 "use client";
 
-import { useOptimistic, useRef, useTransition, Suspense, type ComponentProps } from "react";
+import {
+	useEffect,
+	useOptimistic,
+	useRef,
+	useTransition,
+	Suspense,
+	type ComponentProps,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Check, X } from "lucide-react";
@@ -78,8 +85,18 @@ function SortDrawerInner({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 	const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+	const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const shouldReduceMotion = useReducedMotion();
 	const triggerHaptic = useHaptic();
+
+	// Nettoie le timer d'auto-close si le composant est démonté avant l'échéance.
+	useEffect(() => {
+		return () => {
+			if (autoCloseTimerRef.current) {
+				clearTimeout(autoCloseTimerRef.current);
+			}
+		};
+	}, []);
 
 	const handleOpenChange = (next: boolean) => {
 		if (!next) {
@@ -88,11 +105,8 @@ function SortDrawerInner({
 		onOpenChange(next);
 	};
 
-	// URL parameter key (no prefix)
-	const paramKey = filterKey;
-
 	// Get current value from URL
-	const currentValue = searchParams.get(paramKey) ?? "";
+	const currentValue = searchParams.get(filterKey) ?? "";
 
 	// Optimistic state for immediate UI feedback
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
@@ -105,6 +119,24 @@ function SortDrawerInner({
 		? [{ value: "", label: resetLabel }, ...options]
 		: options;
 
+	// Source unique de vérité pour l'état sélectionné — partagée par le rendu
+	// ET par le calcul du roving tabindex (doivent rester strictement cohérents).
+	const isOptionSelected = (option: SortOption) =>
+		option.value === "" ? optimisticValue === "" : optimisticValue === option.value;
+
+	// Roving tabindex : un seul bouton dans l'ordre de tabulation. On cible
+	// l'option sélectionnée ; à défaut (aucune sélection, showResetOption=false),
+	// le premier bouton reste atteignable au clavier (WCAG 2.1.1).
+	const selectedIndex = allOptions.findIndex(isOptionSelected);
+	const focusableIndex = selectedIndex === -1 ? 0 : selectedIndex;
+
+	// Au montage du drawer, on focus l'option active plutôt que la poignée de
+	// drag (défaut Vaul/Radix non informatif) — pattern ARIA APG radiogroup.
+	const handleOpenAutoFocus = (e: Event) => {
+		e.preventDefault();
+		optionRefs.current[focusableIndex]?.focus();
+	};
+
 	// Handle option selection
 	const handleSelect = (value: string) => {
 		// Pas de haptic si l'utilisateur retape l'option déjà sélectionnée
@@ -116,9 +148,9 @@ function SortDrawerInner({
 
 		// Update or remove the parameter
 		if (value) {
-			params.set(paramKey, value);
+			params.set(filterKey, value);
 		} else {
-			params.delete(paramKey);
+			params.delete(filterKey);
 		}
 
 		// Reset pagination
@@ -135,7 +167,13 @@ function SortDrawerInner({
 			// Délai pour voir la confirmation visuelle avant fermeture
 			// Pas de délai si reduced motion est activé
 			const delay = shouldReduceMotion ? 0 : 250;
-			setTimeout(() => {
+			// Annule un timer encore en vol avant d'en armer un nouveau : évite
+			// qu'une réouverture rapide du drawer soit refermée par un timer périmé.
+			if (autoCloseTimerRef.current) {
+				clearTimeout(autoCloseTimerRef.current);
+			}
+			autoCloseTimerRef.current = setTimeout(() => {
+				autoCloseTimerRef.current = null;
 				onOpenChange(false);
 			}, delay);
 		}
@@ -174,7 +212,7 @@ function SortDrawerInner({
 
 	return (
 		<Drawer open={open} onOpenChange={handleOpenChange}>
-			<DrawerContent id={id}>
+			<DrawerContent id={id} onOpenAutoFocus={handleOpenAutoFocus}>
 				<DrawerHeader className="relative pb-2">
 					<DrawerTitle className="flex items-center gap-2">
 						{title}
@@ -200,8 +238,7 @@ function SortDrawerInner({
 						className="divide-border/50 flex flex-col divide-y"
 					>
 						{allOptions.map((option, index) => {
-							const isSelected =
-								option.value === "" ? optimisticValue === "" : optimisticValue === option.value;
+							const isSelected = isOptionSelected(option);
 							const isResetOption = option.value === "" && showResetOption;
 
 							return (
@@ -213,7 +250,7 @@ function SortDrawerInner({
 									type="button"
 									role="radio"
 									aria-checked={isSelected}
-									tabIndex={isSelected ? 0 : -1}
+									tabIndex={index === focusableIndex ? 0 : -1}
 									onClick={() => handleSelect(option.value)}
 									onKeyDown={(e) => handleKeyDown(e, index)}
 									disabled={isPending}
@@ -224,9 +261,9 @@ function SortDrawerInner({
 										"transition-colors duration-150",
 										"focus-visible:ring-primary focus-visible:rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										isSelected && !isResetOption
-											? "bg-primary/5 -mx-1 rounded-lg px-5 font-medium"
+											? "bg-primary/5 rounded-lg font-medium"
 											: isSelected && isResetOption
-												? "bg-muted/30 text-muted-foreground -mx-1 rounded-lg px-5 font-medium"
+												? "bg-muted/30 text-muted-foreground rounded-lg font-medium"
 												: "hover:bg-muted/50 text-foreground",
 										isPending && "pointer-events-none opacity-60",
 										isResetOption && !isSelected && "text-muted-foreground",

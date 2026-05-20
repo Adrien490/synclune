@@ -100,11 +100,10 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 						ariaLabel="Barre d'outils de gestion des codes promo"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par code…"
-								ariaLabel="Rechercher un code promo"
+								aria-label="Rechercher un code promo"
 								className="w-full"
 							/>
 						}

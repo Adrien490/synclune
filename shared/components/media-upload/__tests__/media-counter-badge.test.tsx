@@ -58,9 +58,9 @@ describe("MediaCounterBadge", () => {
 		expect(screen.getByTestId("counter-badge")).toHaveAttribute("data-max", "8");
 	});
 
-	it("passes label='images' to CounterBadge", () => {
+	it("passes label='médias' to CounterBadge", () => {
 		render(<MediaCounterBadge count={1} max={5} />);
-		expect(mockCounterBadge).toHaveBeenCalledWith(expect.objectContaining({ label: "images" }));
+		expect(mockCounterBadge).toHaveBeenCalledWith(expect.objectContaining({ label: "médias" }));
 	});
 
 	it("passes the Images icon to CounterBadge", () => {

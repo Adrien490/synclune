@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -42,6 +43,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 					)}
 				</>
 			)}
+
+			<RequiredFieldsNote />
 
 			<div className="space-y-4">
 				{/* Mot de passe actuel */}

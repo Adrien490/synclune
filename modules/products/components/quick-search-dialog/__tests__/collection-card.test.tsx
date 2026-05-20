@@ -206,6 +206,13 @@ describe("CollectionCard", () => {
 		expect(link).toHaveClass("focus-ring");
 	});
 
+	it("link is out of the Tab order (combobox option, reached via arrow keys)", () => {
+		const { container } = render(
+			<CollectionCard collection={collectionWithImage} onSelect={onSelect} />,
+		);
+		expect(container.querySelector("a")).toHaveAttribute("tabindex", "-1");
+	});
+
 	it("renders with the correct href for a different slug", () => {
 		const { container } = render(
 			<CollectionCard collection={collectionWithoutImage} onSelect={onSelect} />,

@@ -6,6 +6,7 @@ import { useActionState } from "react";
 
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -56,6 +57,8 @@ export function CloseStoreForm() {
 				Les clients ne pourront plus passer de commandes tant que la boutique sera fermée. Ils
 				verront le message ci-dessous sur la page d&apos;accueil et les pages produit.
 			</p>
+
+			<RequiredFieldsNote />
 
 			<form.AppField name="closureMessage">
 				{(field) => (

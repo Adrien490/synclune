@@ -167,11 +167,10 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 					ariaLabel="Barre d'outils de gestion des avis"
 					search={
 						<SearchInput
-							mode="live"
 							size="sm"
 							paramName="search"
 							placeholder="Rechercher par client, produit…"
-							ariaLabel="Rechercher un avis"
+							aria-label="Rechercher un avis"
 							className="w-full"
 						/>
 					}

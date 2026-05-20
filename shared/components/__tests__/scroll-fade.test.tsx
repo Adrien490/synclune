@@ -82,9 +82,15 @@ function getContainer() {
 	return screen.getByTestId("scroll-fade-container");
 }
 
-function getFadeOverlays() {
-	const container = screen.getByTestId("scroll-fade-root");
-	return container.querySelectorAll("[aria-hidden='true']");
+// Edge fades are now always mounted and toggled via opacity, so visibility
+// is asserted on the `opacity-100` class rather than on element count.
+function getAllFadeOverlays() {
+	const root = screen.getByTestId("scroll-fade-root");
+	return Array.from(root.querySelectorAll<HTMLElement>("[aria-hidden='true']"));
+}
+
+function getVisibleFadeOverlays() {
+	return getAllFadeOverlays().filter((el) => el.classList.contains("opacity-100"));
 }
 
 // ─── Setup ──────────────────────────────────────────────────────────
@@ -111,7 +117,7 @@ describe("ScrollFade", () => {
 			expect(screen.getByText("Content")).toBeInTheDocument();
 		});
 
-		it("shows no fade overlays when there is no overflow", () => {
+		it("shows no visible fade overlays when there is no overflow", () => {
 			render(
 				<ScrollFade>
 					<p>Content</p>
@@ -126,7 +132,7 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			expect(getFadeOverlays()).toHaveLength(0);
+			expect(getVisibleFadeOverlays()).toHaveLength(0);
 		});
 
 		it("does not render status element when no overflow", () => {
@@ -159,7 +165,7 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const overlays = getVisibleFadeOverlays();
 			expect(overlays).toHaveLength(1);
 			expect(overlays[0]!.className).toContain("right-0");
 		});
@@ -180,9 +186,9 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const overlays = getVisibleFadeOverlays();
 			expect(overlays).toHaveLength(2);
-			const classNames = Array.from(overlays).map((el) => el.className);
+			const classNames = overlays.map((el) => el.className);
 			expect(classNames.some((c) => c.includes("left-0"))).toBe(true);
 			expect(classNames.some((c) => c.includes("right-0"))).toBe(true);
 		});
@@ -203,7 +209,7 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const overlays = getVisibleFadeOverlays();
 			expect(overlays).toHaveLength(1);
 			expect(overlays[0]!.className).toContain("left-0");
 		});
@@ -226,7 +232,7 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const overlays = getVisibleFadeOverlays();
 			expect(overlays).toHaveLength(1);
 			expect(overlays[0]!.className).toContain("bg-linear-to-t");
 		});
@@ -247,9 +253,9 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const overlays = getVisibleFadeOverlays();
 			expect(overlays).toHaveLength(2);
-			const classNames = Array.from(overlays).map((el) => el.className);
+			const classNames = overlays.map((el) => el.className);
 			expect(classNames.some((c) => c.includes("bg-linear-to-b"))).toBe(true);
 			expect(classNames.some((c) => c.includes("bg-linear-to-t"))).toBe(true);
 		});
@@ -275,7 +281,37 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			expect(getFadeOverlays()).toHaveLength(4);
+			expect(getVisibleFadeOverlays()).toHaveLength(4);
+		});
+	});
+
+	describe("edge fade mounting", () => {
+		it("keeps both horizontal overlays mounted even with no overflow", () => {
+			render(
+				<ScrollFade axis="horizontal">
+					<p>Content</p>
+				</ScrollFade>,
+			);
+
+			const container = getContainer();
+			setScrollDimensions(container, { scrollWidth: 300, clientWidth: 300 });
+			act(() => flushRAF());
+
+			// Always-mounted overlays (toggled via opacity) — none visible here.
+			expect(getAllFadeOverlays()).toHaveLength(2);
+			expect(getVisibleFadeOverlays()).toHaveLength(0);
+		});
+
+		it("applies an opacity transition to overlays", () => {
+			render(
+				<ScrollFade axis="horizontal">
+					<p>Content</p>
+				</ScrollFade>,
+			);
+
+			getAllFadeOverlays().forEach((overlay) => {
+				expect(overlay.className).toContain("transition-opacity");
+			});
 		});
 	});
 
@@ -318,10 +354,41 @@ describe("ScrollFade", () => {
 
 			act(() => flushRAF());
 
-			const overlays = getFadeOverlays();
+			const root = screen.getByTestId("scroll-fade-root");
+			const overlays = root.querySelectorAll(".pointer-events-none");
+			expect(overlays.length).toBeGreaterThan(0);
 			overlays.forEach((overlay) => {
 				expect(overlay).toHaveAttribute("aria-hidden", "true");
 			});
+		});
+	});
+
+	describe("scrollRegionLabel prop", () => {
+		it("makes the scroll container a focusable region when provided", () => {
+			render(
+				<ScrollFade scrollRegionLabel="Graphique des ventes">
+					<p>Content</p>
+				</ScrollFade>,
+			);
+
+			const container = getContainer();
+			expect(container).toHaveAttribute("role", "region");
+			expect(container).toHaveAttribute("aria-label", "Graphique des ventes");
+			expect(container).toHaveAttribute("tabindex", "0");
+			expect(container.className).toContain("focus-visible:ring-2");
+		});
+
+		it("adds no region semantics when omitted", () => {
+			render(
+				<ScrollFade>
+					<p>Content</p>
+				</ScrollFade>,
+			);
+
+			const container = getContainer();
+			expect(container).not.toHaveAttribute("role");
+			expect(container).not.toHaveAttribute("tabindex");
+			expect(container).not.toHaveAttribute("aria-label");
 		});
 	});
 

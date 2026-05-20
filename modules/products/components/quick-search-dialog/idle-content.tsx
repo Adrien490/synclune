@@ -5,6 +5,7 @@ import { AnimatePresence, m } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import ScrollFade from "@/shared/components/scroll-fade";
@@ -95,6 +96,8 @@ export function IdleContent({
 											onClick={handleNavigateClose}
 											role="option"
 											aria-selected={false}
+											// Reached via arrow keys, not Tab (combobox pattern).
+											tabIndex={-1}
 											className={cn(
 												"flex w-24 shrink-0 flex-col items-center gap-2",
 												"rounded-xl p-2 transition-colors",
@@ -164,7 +167,7 @@ export function IdleContent({
 											layout
 											initial={{ opacity: 1, height: "auto" }}
 											exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-											transition={{ duration: 0.2 }}
+											transition={{ duration: MOTION_CONFIG.duration.normal }}
 											className="group/item flex items-center gap-1"
 										>
 											{isTombstoned && onUndoTombstone && onExpireTombstone ? (
@@ -185,6 +188,8 @@ export function IdleContent({
 															data-active={undefined}
 															role="option"
 															aria-selected={false}
+															// Reached via arrow keys, not Tab (combobox pattern).
+															tabIndex={-1}
 															className={cn(
 																"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
 																"hover:bg-muted touch-manipulation",

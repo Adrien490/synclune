@@ -10,6 +10,7 @@ import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collec
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
@@ -186,6 +187,8 @@ export function CreateCollectionForm({
 			</form.Subscribe>
 
 			<fieldset disabled={isPending} className="space-y-6">
+				<RequiredFieldsNote />
+
 				<form.AppField
 					name="name"
 					validators={{

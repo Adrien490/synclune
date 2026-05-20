@@ -24,7 +24,7 @@ const SWIPE_DIRECTION_LOCK_DISTANCE = 5;
 interface SwipeActionSlot {
 	/** Icon or label rendered inside the action zone */
 	children: React.ReactNode;
-	/** Screen-reader label for the action zone (required for a11y) */
+	/** Text announced via `aria-live` when the action fires (screen-reader feedback, required) */
 	label: string;
 	/** Tailwind background class (default: "bg-destructive" for left, "bg-secondary" for right) */
 	className?: string;
@@ -51,8 +51,21 @@ interface SwipeableCardProps {
 	className?: string;
 }
 
-// CSS spring() equivalent of MOTION_CONFIG.spring.list
-const SNAP_BACK_TRANSITION = `transform ${MOTION_CONFIG.duration.normal}ms cubic-bezier(0.25, 1.2, 0.5, 1)`;
+/** Shared easing for the elastic snap-back — spring-like overshoot (~MOTION_CONFIG.spring.list). */
+const SNAP_BACK_EASE = "cubic-bezier(0.25, 1.2, 0.5, 1)";
+
+// Card snap-back transition. Note the `s` unit: MOTION_CONFIG.duration values are
+// expressed in seconds (normal = 0.2 = 200ms).
+const SNAP_BACK_TRANSITION = `transform ${MOTION_CONFIG.duration.normal}s ${SNAP_BACK_EASE}`;
+
+// Action-zone snap-back — width + opacity retract in lockstep with the card so the
+// colored zone never desynchronises from the card edge during the return animation.
+const ZONE_SNAP_TRANSITION =
+	`width ${MOTION_CONFIG.duration.normal}s ${SNAP_BACK_EASE}, ` +
+	`opacity ${MOTION_CONFIG.duration.normal}s ${SNAP_BACK_EASE}`;
+
+/** Saturation-filter transition for the action zone — independent of the snap-back. */
+const ZONE_FILTER_TRANSITION = "filter 150ms ease-out";
 
 /** Duration (ms) an aria-live announcement remains in the DOM after firing. */
 const ANNOUNCEMENT_DURATION_MS = 1500;
@@ -105,19 +118,21 @@ function getEffectiveThreshold(pxThreshold: number, containerWidth: number): num
  *
  * Features:
  * - Dynamic threshold: min(configured px, 30% of card width)
- * - Overswipe auto-trigger at >75% of card width (fires `heavy` haptic tier)
+ * - Action zone width tracks the card edge, filling the revealed area (no background gap)
+ * - Overswipe past 75% of card width commits the action — runs on release, `heavy` haptic
  * - iOS-style rubber-band elasticity past the threshold (logarithmic compression)
  * - Scale + rotate icon reveal synchronized with swipe progress (iOS Mail style)
  * - Progressive color saturation of the action zone (feedback intensifies)
- * - Haptic tiers: `light` at 40% hint, `medium` on confirm, `heavy` on overswipe
+ * - Single `medium` haptic tick when the swipe crosses the action threshold; `heavy` on overswipe
  * - `aria-live="polite"` announcement of the action label on confirm (WCAG 2.2)
  * - Elastic snap-back with spring-like timing
  * - Respects `prefers-reduced-motion`
  * - Passive touch listeners for scroll-safe performance
  *
- * **Accessibility**: Each swipe action must also have a visible keyboard-accessible
- * equivalent (button) somewhere in the card content — swipe alone is not sufficient
- * per WCAG 2.2 Level AA Success Criterion 2.5.7 (Dragging Movements).
+ * **Accessibility**: The reveal zones are decorative (`aria-hidden`). Each swipe action
+ * must also have a visible keyboard-accessible equivalent (button) somewhere in the card
+ * content — swipe alone is not sufficient per WCAG 2.2 Level AA Success Criterion 2.5.7
+ * (Dragging Movements).
  */
 export function SwipeableCard({
 	children,
@@ -129,16 +144,12 @@ export function SwipeableCard({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReducedMotion = useReducedMotion();
 	const haptic = useHaptic();
-	const hintFiredRef = useRef(false);
-	const confirmFiredRef = useRef(false);
+	const thresholdHapticFiredRef = useRef(false);
 	const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [announcement, setAnnouncement] = useState("");
 
-	// Hook-side effective callbacks (wrap each action with confirm guard + SR announcement).
+	// Wrap an action with the screen-reader announcement, then run it.
 	function fireAction(onAction: () => void, label: string) {
-		if (!confirmFiredRef.current) {
-			confirmFiredRef.current = true;
-		}
 		if (announcementTimerRef.current) {
 			clearTimeout(announcementTimerRef.current);
 		}
@@ -168,14 +179,12 @@ export function SwipeableCard({
 	const leftThresholdPx = leftAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
 	const rightThresholdPx = rightAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
 
-	// Stable event callbacks — tier controls which haptic pattern fires.
-	// Source of truth for action haptics (no duplication from callers).
-	const onLeftAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
-		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
+	// Stable action callbacks — announce + run. Haptics are fired separately
+	// (medium tick on threshold cross, heavy on overswipe) to keep one source of truth.
+	const onLeftAction = useEffectEvent(() => {
 		if (leftAction) fireAction(leftAction.onAction, leftAction.label);
 	});
-	const onRightAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
-		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
+	const onRightAction = useEffectEvent(() => {
 		if (rightAction) fireAction(rightAction.onAction, rightAction.label);
 	});
 
@@ -261,14 +270,12 @@ export function SwipeableCard({
 				setSwipeOffset(newOffset);
 			});
 
+			// Overswipe past 75%: commit the action and fire the `heavy` haptic now,
+			// but defer running it to touchend so a modal never opens under the finger.
 			if (!overswipeFiredRef.current) {
 				if (measuredWidth > 0 && Math.abs(newOffset) > measuredWidth * OVERSWIPE_RATIO) {
 					overswipeFiredRef.current = true;
-					if (lockedDirectionRef.current === "left") {
-						onLeftAction("overswipe");
-					} else if (lockedDirectionRef.current === "right") {
-						onRightAction("overswipe");
-					}
+					triggerHaptic("heavy");
 				}
 			}
 		}
@@ -279,20 +286,30 @@ export function SwipeableCard({
 			setIsSwiping(false);
 			cancelAnimationFrame(rafIdRef.current);
 
-			if (isTrackingRef.current && !overswipeFiredRef.current) {
-				const offset = swipeOffsetRef.current;
+			if (isTrackingRef.current) {
 				const dir = lockedDirectionRef.current;
-				const width = containerWidthRef.current;
 
-				if (dir === "left") {
-					const threshold = getEffectiveThreshold(leftThresholdPx, width);
-					if (Math.abs(offset) >= threshold) {
-						onLeftAction("confirm");
+				if (overswipeFiredRef.current) {
+					// Overswipe committed during the drag — run the action now the finger is up.
+					if (dir === "left") {
+						onLeftAction();
+					} else if (dir === "right") {
+						onRightAction();
 					}
-				} else if (dir === "right") {
-					const threshold = getEffectiveThreshold(rightThresholdPx, width);
-					if (offset >= threshold) {
-						onRightAction("confirm");
+				} else {
+					const offset = swipeOffsetRef.current;
+					const width = containerWidthRef.current;
+
+					if (dir === "left") {
+						const threshold = getEffectiveThreshold(leftThresholdPx, width);
+						if (Math.abs(offset) >= threshold) {
+							onLeftAction();
+						}
+					} else if (dir === "right") {
+						const threshold = getEffectiveThreshold(rightThresholdPx, width);
+						if (offset >= threshold) {
+							onRightAction();
+						}
 					}
 				}
 			}
@@ -323,16 +340,17 @@ export function SwipeableCard({
 		swipeOffset < 0 ? Math.min(1, Math.abs(swipeOffset) / effectiveLeftThreshold) : 0;
 	const rightProgress = swipeOffset > 0 ? Math.min(1, swipeOffset / effectiveRightThreshold) : 0;
 
+	// Single `medium` haptic tick the moment the swipe crosses the action threshold
+	// (the iOS-style "release to confirm" cue). No premature hint, no release haptic.
 	useEffect(() => {
-		const progress = Math.max(leftProgress, rightProgress);
 		if (!isSwiping) {
-			hintFiredRef.current = false;
-			confirmFiredRef.current = false;
+			thresholdHapticFiredRef.current = false;
 			return;
 		}
-		if (progress >= 0.4 && !hintFiredRef.current) {
-			hintFiredRef.current = true;
-			haptic("light");
+		const progress = Math.max(leftProgress, rightProgress);
+		if (progress >= 1 && !thresholdHapticFiredRef.current) {
+			thresholdHapticFiredRef.current = true;
+			haptic("medium");
 		}
 	}, [isSwiping, leftProgress, rightProgress, haptic]);
 
@@ -353,6 +371,19 @@ export function SwipeableCard({
 
 	const snapTransition = prefersReducedMotion || isSwiping ? "none" : SNAP_BACK_TRANSITION;
 
+	// Action zone width tracks the card edge so the colored zone fills the entire
+	// revealed area — no list-background gap once the swipe exceeds a fixed width.
+	const leftZoneWidth = displayOffset < 0 ? -displayOffset : 0;
+	const rightZoneWidth = displayOffset > 0 ? displayOffset : 0;
+
+	// While dragging: width/opacity follow the finger instantly (filter still eases).
+	// On release: width/opacity share the snap-back so the zone retracts with the card.
+	const zoneTransition = prefersReducedMotion
+		? "none"
+		: isSwiping
+			? ZONE_FILTER_TRANSITION
+			: `${ZONE_SNAP_TRANSITION}, ${ZONE_FILTER_TRANSITION}`;
+
 	return (
 		<div ref={containerRef} className={cn("relative touch-pan-y overflow-hidden", className)}>
 			{/* Screen-reader announcement of the last fired action (WCAG 2.2 SC 2.5.7 complement) */}
@@ -360,25 +391,25 @@ export function SwipeableCard({
 				{announcement}
 			</span>
 
-			{/* Right-side action (revealed on swipe right →) */}
+			{/* Right-side action (revealed on swipe right →) — decorative reveal zone */}
 			{rightAction && (
 				<div
+					aria-hidden="true"
+					data-swipe-action="right"
 					className={cn(
-						"absolute inset-y-0 left-0 flex w-20 items-center justify-start pl-5",
-						"motion-safe:transition-[filter] motion-safe:duration-150",
+						"absolute inset-y-0 left-0 flex items-center justify-start overflow-hidden pl-5",
 						rightAction.className ?? "bg-secondary",
 					)}
-					role="button"
-					tabIndex={-1}
-					aria-label={rightAction.label}
 					style={{
+						width: rightZoneWidth,
 						opacity: rightProgress,
 						filter: `saturate(${0.7 + rightProgress * 0.5})`,
+						transition: zoneTransition,
 						["--swipe-progress" as string]: rightProgress,
 					}}
 				>
 					<span
-						className="motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out"
+						className="shrink-0 motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out"
 						style={{
 							transform: prefersReducedMotion
 								? undefined
@@ -391,25 +422,25 @@ export function SwipeableCard({
 				</div>
 			)}
 
-			{/* Left-side action (revealed on swipe left ←) */}
+			{/* Left-side action (revealed on swipe left ←) — decorative reveal zone */}
 			{leftAction && (
 				<div
+					aria-hidden="true"
+					data-swipe-action="left"
 					className={cn(
-						"absolute inset-y-0 right-0 flex w-20 items-center justify-end pr-5",
-						"motion-safe:transition-[filter] motion-safe:duration-150",
+						"absolute inset-y-0 right-0 flex items-center justify-end overflow-hidden pr-5",
 						leftAction.className ?? "bg-destructive",
 					)}
-					role="button"
-					tabIndex={-1}
-					aria-label={leftAction.label}
 					style={{
+						width: leftZoneWidth,
 						opacity: leftProgress,
 						filter: `saturate(${0.7 + leftProgress * 0.5})`,
+						transition: zoneTransition,
 						["--swipe-progress" as string]: leftProgress,
 					}}
 				>
 					<span
-						className="motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out"
+						className="shrink-0 motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out"
 						style={{
 							transform: prefersReducedMotion
 								? undefined
@@ -427,6 +458,7 @@ export function SwipeableCard({
 				style={{
 					transform: `translateX(${displayOffset}px)`,
 					transition: snapTransition,
+					willChange: isSwiping ? "transform" : undefined,
 				}}
 			>
 				{children}

@@ -142,6 +142,7 @@ const defaultProps = {
 	onClose: vi.fn(),
 	onSelectResult: vi.fn(),
 	onViewAllResults: vi.fn(),
+	onRetry: vi.fn(),
 };
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -201,19 +202,24 @@ describe("QuickSearchContent", () => {
 		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
 	});
 
-	it("shows error message when error flag is set", () => {
+	it("shows error message with a retry button when error flag is set", async () => {
+		const onRetry = vi.fn();
 		render(
 			<QuickSearchContent
 				results={makeResults({ products: [], totalCount: 0, error: true })}
 				{...defaultProps}
+				onRetry={onRetry}
 				query="zzzzz"
 				collections={[]}
 				productTypes={[]}
 			/>,
 		);
 
-		expect(screen.getByText(/une erreur est survenue/i)).toBeInTheDocument();
+		expect(screen.getByText(/temporairement indisponible/i)).toBeInTheDocument();
 		expect(screen.queryByText(/aucun résultat pour/i)).not.toBeInTheDocument();
+
+		await userEvent.click(screen.getByRole("button", { name: /réessayer/i }));
+		expect(onRetry).toHaveBeenCalledOnce();
 	});
 
 	it("does not show error message when rateLimited takes precedence", () => {
@@ -226,7 +232,7 @@ describe("QuickSearchContent", () => {
 		);
 
 		expect(screen.getByText(/trop de requêtes/i)).toBeInTheDocument();
-		expect(screen.queryByText(/une erreur est survenue/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/temporairement indisponible/i)).not.toBeInTheDocument();
 	});
 
 	it("shows spell suggestion", () => {
@@ -258,16 +264,14 @@ describe("QuickSearchContent", () => {
 		render(<QuickSearchContent results={makeResults()} {...defaultProps} />);
 
 		// "bague" query matches "Bagues" collection via word-start
-		expect(
-			screen.getByRole("region", { name: /collections correspondantes/i }),
-		).toBeInTheDocument();
+		expect(screen.getByRole("group", { name: /collections correspondantes/i })).toBeInTheDocument();
 	});
 
 	it("shows matched categories section", () => {
 		render(<QuickSearchContent results={makeResults()} {...defaultProps} />);
 
 		// "bague" query matches "Bagues" product type via word-start
-		expect(screen.getByRole("region", { name: /categories correspondantes/i })).toBeInTheDocument();
+		expect(screen.getByRole("group", { name: /categories correspondantes/i })).toBeInTheDocument();
 	});
 
 	it("announces result count for screen readers", () => {

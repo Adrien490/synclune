@@ -208,11 +208,10 @@ export default async function ProductVariantsPage({
 						ariaLabel="Barre d'outils de gestion des variantes"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher une variante…"
-								ariaLabel="Rechercher une variante"
+								aria-label="Rechercher une variante"
 								className="w-full"
 							/>
 						}

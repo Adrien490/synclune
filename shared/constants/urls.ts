@@ -92,6 +92,7 @@ export const ROUTES = {
 		PRODUCTS: "/admin/catalogue/produits",
 		CUSTOMERS: "/admin/clients",
 		CUSTOMER_DETAIL: (userId: string) => `/admin/clients/${userId}`,
+		STORE_CONFIG: "/admin/configuration/boutique",
 	},
 } as const;
 

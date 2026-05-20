@@ -1,6 +1,6 @@
 import type React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -684,6 +684,94 @@ describe("Fab", () => {
 
 			const hiddenContainer = document.getElementById("fab-hidden-admin-dashboard");
 			expect(hiddenContainer).not.toBeNull();
+		});
+	});
+
+	// Regression: focus was lost on every toggle. onToggle scheduled focus inside a
+	// single requestAnimationFrame, but AnimatePresence mode="wait" mounts the entering
+	// branch only after the exit animation (~200-400ms) — so the ref was still null and
+	// focus fell to <body>. The fix moves focus into callback refs gated by a pending
+	// flag. Motion is mocked here, so these tests verify the callback-ref/flag CONTRACT
+	// (which is what makes the fix timing- and mode-agnostic), not real spring timing.
+	describe("focus management after toggle (G1 regression)", () => {
+		it("focuses the show-toggle button after the FAB is hidden", async () => {
+			const focusSpy = vi.spyOn(HTMLElement.prototype, "focus");
+			render(<Fab {...DEFAULT_PROPS} hideTooltip="Masquer" showTooltip="Afficher" />);
+
+			const closeButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Masquer");
+			expect(closeButton).toBeDefined();
+
+			await act(async () => {
+				fireEvent.click(closeButton!);
+			});
+
+			const focusedLabels = focusSpy.mock.contexts.map((ctx) =>
+				(ctx as HTMLElement | null)?.getAttribute("aria-label"),
+			);
+			expect(focusedLabels).toContain("Afficher");
+			focusSpy.mockRestore();
+		});
+
+		it("focuses the main button after the FAB is shown", async () => {
+			const focusSpy = vi.spyOn(HTMLElement.prototype, "focus");
+			render(<Fab {...DEFAULT_PROPS} initialHidden showTooltip="Afficher" />);
+
+			const toggleButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Afficher");
+			expect(toggleButton).toBeDefined();
+
+			await act(async () => {
+				fireEvent.click(toggleButton!);
+			});
+
+			const focusedLabels = focusSpy.mock.contexts.map((ctx) =>
+				(ctx as HTMLElement | null)?.getAttribute("aria-label"),
+			);
+			expect(focusedLabels).toContain("Ouvrir le menu d'actions");
+			focusSpy.mockRestore();
+		});
+
+		it("does not steal focus on initial mount (pending flag starts null)", () => {
+			const focusSpy = vi.spyOn(HTMLElement.prototype, "focus");
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			expect(focusSpy).not.toHaveBeenCalled();
+			focusSpy.mockRestore();
+		});
+	});
+
+	// Guard tests locking in the design-system consistency fixes (G2/G3/G5).
+	describe("design-system consistency", () => {
+		it("hidden toggle button bumps opacity on keyboard focus (G2)", () => {
+			render(<Fab {...DEFAULT_PROPS} initialHidden showTooltip="Afficher" />);
+
+			const toggleButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Afficher");
+			expect(toggleButton!.className).toContain("focus-visible:opacity-100");
+		});
+
+		it("main button does not redeclare a focus ring — relies on the DS SSOT (G3)", () => {
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			const mainBtn = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Ouvrir le menu d'actions");
+			expect(mainBtn!.className).not.toContain("ring-offset");
+			expect(mainBtn!.className).not.toContain("focus-visible:ring-2");
+		});
+
+		it("renders the badge in the top-left corner, clear of the close button (G5)", () => {
+			const badge = <span data-testid="test-badge">3</span>;
+			render(<Fab {...DEFAULT_PROPS} badge={badge} />);
+
+			const wrapper = document.querySelector(".pointer-events-none.absolute");
+			expect(wrapper).not.toBeNull();
+			expect(wrapper!.className).toContain("-left-1.5");
+			expect(wrapper!.className).not.toContain("-right-1.5");
 		});
 	});
 });

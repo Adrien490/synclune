@@ -222,7 +222,7 @@ export function MediaUploadGrid({
 		}
 		const newMedia = arrayMove(media, index, 0);
 		triggerHaptic("medium");
-		onChange(newMedia);
+		withViewTransition(() => onChange(newMedia));
 		setAnnouncement(`Image ${index + 1} définie comme image principale.`);
 		toast.success("Définie comme image principale");
 	};
@@ -288,7 +288,7 @@ export function MediaUploadGrid({
 							? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
 							: ""
 					}`}
-					role="list"
+					role="group"
 					aria-label="Médias du produit"
 					{...(onFilesDropped
 						? {

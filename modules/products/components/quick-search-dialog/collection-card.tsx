@@ -48,6 +48,8 @@ export function CollectionCard({
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
+				// Out of the Tab order: reached via arrow keys (combobox pattern).
+				tabIndex={-1}
 				className={cn(
 					"flex items-center rounded-xl text-left transition-all",
 					"touch-manipulation",

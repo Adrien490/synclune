@@ -11,6 +11,7 @@ import type { EditableCollection } from "@/modules/collections/types/editable-co
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
@@ -182,6 +183,8 @@ export function EditCollectionForm({
 			</form.Subscribe>
 
 			<fieldset disabled={isPending} className="space-y-6">
+				<RequiredFieldsNote />
+
 				<div className="space-y-1.5">
 					<form.AppField
 						name="name"

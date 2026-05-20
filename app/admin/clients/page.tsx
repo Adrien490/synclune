@@ -130,11 +130,10 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 						ariaLabel="Barre d'outils de gestion des clients"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par nom, email…"
-								ariaLabel="Rechercher un client par nom ou email"
+								aria-label="Rechercher un client par nom ou email"
 								className="w-full"
 							/>
 						}

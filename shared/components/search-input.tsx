@@ -12,14 +12,14 @@ import {
 	type ComponentProps,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { AnimatePresence, m, MotionConfig } from "motion/react";
 import { Search, X } from "lucide-react";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useAppForm } from "@/shared/components/forms";
 import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { cn } from "@/shared/utils/cn";
 
 export interface SearchInputHandle {
@@ -27,15 +27,13 @@ export interface SearchInputHandle {
 }
 
 type SearchInputProps = {
-	/** URL param name - manages URL state automatically */
+	/** URL param name - synced live with debounce */
 	paramName: string;
 	/** Placeholder text */
 	placeholder?: string;
-	/** Search mode: submit redirects to /produits, live updates param in place */
-	mode?: "submit" | "live";
 	/** Size variant: sm (44px) for toolbars, md (48px) for dialogs */
 	size?: "sm" | "md";
-	/** Debounce delay in ms for live mode */
+	/** Debounce delay in ms */
 	debounceMs?: number;
 	/** Show external pending state */
 	isPending?: boolean;
@@ -43,9 +41,9 @@ type SearchInputProps = {
 	autoFocus?: boolean;
 	/** Additional class for the container */
 	className?: string;
-	/** Aria label for the input */
-	ariaLabel?: string;
-	/** Callback before search navigation (for side effects like saving recent searches, closing dialogs) */
+	/** Accessible name for the input (falls back to the placeholder) */
+	"aria-label"?: string;
+	/** Callback on Enter (e.g. navigate to a full results page) */
 	onSubmit?: (term: string) => void;
 	/** Callback on Escape key (two-step: first clears input, then calls onEscape on second press) */
 	onEscape?: () => void;
@@ -53,16 +51,14 @@ type SearchInputProps = {
 	preventMobileBlur?: boolean;
 	/** Callback on every input value change (for live search debouncing in parent) */
 	onValueChange?: (value: string) => void;
-	/** Number of search results for screen reader announcement (live mode) */
-	resultCount?: number;
-	/** In live mode, call this instead of updating URL */
+	/** Call this instead of updating the URL param */
 	onLiveSearch?: (value: string) => void;
 	/** ID of the currently active descendant (for combobox pattern) */
-	activeDescendantId?: string;
+	"aria-activedescendant"?: string;
 	/** Whether the associated listbox/popup is expanded (enables combobox role) */
-	ariaExpanded?: boolean;
+	"aria-expanded"?: boolean;
 	/** ID of the element controlled by this input (for aria-controls) */
-	ariaControls?: string;
+	"aria-controls"?: string;
 	/** Additional keydown handler on the input (composed with internal handler) */
 	onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 	/** Imperative handle ref */
@@ -76,7 +72,6 @@ const sizeStyles = {
 		iconLeft: "left-3",
 		clearButton: "size-11",
 		clearIcon: "size-4",
-		submitButton: "size-11 rounded-md",
 	},
 	md: {
 		container: "h-12 rounded-xl",
@@ -84,52 +79,47 @@ const sizeStyles = {
 		iconLeft: "left-4",
 		clearButton: "size-12",
 		clearIcon: "size-5",
-		submitButton: "size-12 rounded-xl",
 	},
 };
 
 /**
- * Self-sufficient search input component with automatic URL state management.
+ * Self-sufficient live search input with automatic URL state management.
  *
- * Modes:
- * - Submit: shows button, redirects to /produits?{paramName}=xxx on submit
- * - Live: updates {paramName} URL param in place with debounce
- *
- * Optional `onSubmit` callback for side effects (e.g., save recent searches, close dialogs)
+ * Updates the `{paramName}` URL param in place with a debounce. When
+ * `onLiveSearch` is provided, calls it instead of touching the URL (dialog
+ * contexts). Optional `onSubmit` callback fires on Enter.
  */
 function SearchInputInner({
 	paramName,
 	placeholder = "Rechercher…",
-	mode = "submit",
 	size = "md",
 	debounceMs = 300,
 	isPending: externalPending = false,
 	autoFocus = false,
 	className,
-	ariaLabel,
+	"aria-label": ariaLabel,
 	onSubmit,
 	onEscape,
 	onValueChange,
 	preventMobileBlur = false,
-	resultCount,
 	onLiveSearch,
-	activeDescendantId,
-	ariaExpanded,
-	ariaControls,
+	"aria-activedescendant": activeDescendantId,
+	"aria-expanded": ariaExpanded,
+	"aria-controls": ariaControls,
 	onKeyDown: externalKeyDown,
 	ref,
 }: SearchInputProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [internalPending, startTransition] = useTransition();
 	const [maxLengthFlash, setMaxLengthFlash] = useState(false);
-	const shouldReduceMotion = useReducedMotion();
+	const flashTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 	const statusId = useId();
 	const styles = sizeStyles[size];
 
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const initialValue = mode === "live" ? (searchParams.get(paramName) ?? "") : "";
+	const initialValue = searchParams.get(paramName) ?? "";
 	const isPending = externalPending || internalPending;
 
 	const form = useAppForm({
@@ -143,10 +133,10 @@ function SearchInputInner({
 		},
 	}));
 
-	// Sync URL → form (live mode only)
+	// Sync URL → form
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
 	const lastSyncedUrl = useRef(initialValue);
-	const urlValue = mode === "live" ? (searchParams.get(paramName) ?? "") : "";
+	const urlValue = searchParams.get(paramName) ?? "";
 
 	// Effect Event: reads form and onValueChange without re-triggering the sync effect
 	const onUrlSync = useEffectEvent((newUrlValue: string) => {
@@ -156,82 +146,67 @@ function SearchInputInner({
 	});
 
 	useEffect(() => {
-		if (mode !== "live") return;
 		if (urlValue !== lastSyncedUrl.current) {
 			onUrlSync(urlValue);
 		}
-	}, [urlValue, mode]);
+	}, [urlValue]);
+
+	// Clear the maxLength flash timer on unmount
+	useEffect(() => {
+		return () => {
+			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+		};
+	}, []);
 
 	const handleSearch = (searchValue: string) => {
 		const trimmed = searchValue.trim();
 
-		if (mode === "submit") {
-			// Submit mode: redirect to /produits with search param
-			if (!trimmed) return;
-
-			onSubmit?.(trimmed);
-
-			startTransition(() => {
-				// Preserve existing URL params (filters, sort, etc.)
-				const newSearchParams = new URLSearchParams(searchParams.toString());
-				newSearchParams.set(paramName, trimmed);
-				// Reset pagination
-				newSearchParams.delete("cursor");
-				newSearchParams.delete("direction");
-				router.push(`/produits?${newSearchParams.toString()}`);
-			});
-		} else if (onLiveSearch) {
-			// Live mode with callback: bypass URL
+		if (onLiveSearch) {
+			// Callback mode: bypass URL
 			onLiveSearch(trimmed);
 			return;
+		}
+
+		// Update the URL param in place
+		const currentQs = searchParams.get(paramName) ?? "";
+		if (trimmed === currentQs.trim()) return;
+
+		const newSearchParams = new URLSearchParams(searchParams.toString());
+
+		if (trimmed) {
+			newSearchParams.set(paramName, trimmed);
 		} else {
-			// Live mode: update URL param in place
-			const currentQs = searchParams.get(paramName) ?? "";
-			if (trimmed === currentQs.trim()) return;
+			newSearchParams.delete(paramName);
+		}
 
-			const newSearchParams = new URLSearchParams(searchParams.toString());
+		// Reset pagination
+		newSearchParams.delete("cursor");
+		newSearchParams.delete("direction");
 
-			if (trimmed) {
-				newSearchParams.set(paramName, trimmed);
-			} else {
-				newSearchParams.delete(paramName);
-			}
+		startTransition(() => {
+			router.replace(`?${newSearchParams.toString()}`, { scroll: false });
+		});
 
-			// Reset pagination
-			newSearchParams.delete("cursor");
-			newSearchParams.delete("direction");
-
-			startTransition(() => {
-				router.replace(`?${newSearchParams.toString()}`, { scroll: false });
-			});
-
-			// Close keyboard on mobile (skip in dialog contexts)
-			if (!preventMobileBlur && typeof window !== "undefined" && window.innerWidth < 768) {
-				inputRef.current?.blur();
-			}
+		// Close keyboard on mobile (skip in dialog contexts)
+		if (!preventMobileBlur && typeof window !== "undefined" && window.innerWidth < 768) {
+			inputRef.current?.blur();
 		}
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		if (mode === "submit") {
-			handleSearch(form.getFieldValue("search"));
-		} else if (onSubmit) {
-			// Live mode: let consumers handle Enter (e.g. navigate to full results page)
-			onSubmit(form.getFieldValue("search"));
-		}
+		// Let consumers handle Enter (e.g. navigate to a full results page)
+		onSubmit?.(form.getFieldValue("search"));
 	};
 
 	const handleClear = () => {
 		form.setFieldValue("search", "");
 		onValueChange?.("");
-		if (mode === "live") {
-			lastSyncedUrl.current = "";
-			if (onLiveSearch) {
-				onLiveSearch("");
-			} else {
-				handleSearch("");
-			}
+		lastSyncedUrl.current = "";
+		if (onLiveSearch) {
+			onLiveSearch("");
+		} else {
+			handleSearch("");
 		}
 		inputRef.current?.focus();
 	};
@@ -252,185 +227,183 @@ function SearchInputInner({
 
 		// Flash border when maxLength reached
 		if (currentValue.length >= 200 && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
 			setMaxLengthFlash(true);
-			setTimeout(() => setMaxLengthFlash(false), 150);
+			flashTimerRef.current = setTimeout(() => setMaxLengthFlash(false), 150);
 		}
 	};
 
 	return (
-		<form
-			role="search"
-			onSubmit={handleSubmit}
-			className={cn("flex gap-2", className)}
-			data-pending={isPending ? "" : undefined}
-		>
-			<div
-				className={cn(
-					"relative flex flex-1 items-center overflow-hidden",
-					"bg-background border-input border",
-					"hover:border-muted-foreground/40",
-					"focus-within:border-ring focus-within:ring-ring/30 focus-within:ring-2",
-					"transition-[border-color,box-shadow] duration-200",
-					isPending && "border-ring/50",
-					maxLengthFlash && "ring-destructive/50 ring-2",
-					styles.container,
-				)}
+		<MotionConfig reducedMotion="user">
+			<form
+				role="search"
+				onSubmit={handleSubmit}
+				className={cn("flex gap-2", className)}
+				data-pending={isPending ? "" : undefined}
 			>
 				<div
 					className={cn(
-						"text-muted-foreground pointer-events-none absolute inset-y-0 flex items-center",
-						styles.iconLeft,
+						"relative flex flex-1 items-center overflow-hidden",
+						"bg-background border-input border",
+						"hover:border-muted-foreground/40",
+						// Focus ring aligné au SSOT `focus-ring` (app/globals.css) —
+						// `focus-within` car le conteneur n'est pas focusable, l'<input> l'est.
+						"focus-within:border-ring focus-within:ring-ring focus-within:ring-[3px]",
+						"transition-[border-color,box-shadow] duration-200",
+						isPending && "border-ring/50",
+						maxLengthFlash && "ring-destructive/50 ring-2",
+						styles.container,
 					)}
 				>
-					<AnimatePresence mode="wait">
-						{isPending && mode === "live" ? (
-							<m.span
-								key="loader"
-								className="flex items-center"
-								initial={shouldReduceMotion ? false : { opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={shouldReduceMotion ? undefined : { opacity: 0 }}
-								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-							>
-								<MiniDotsLoader size="sm" color="primary" />
-							</m.span>
-						) : (
-							<m.span
-								key="search"
-								initial={shouldReduceMotion ? false : { opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={shouldReduceMotion ? undefined : { opacity: 0 }}
-								transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-							>
-								<Search className="size-4" />
-							</m.span>
+					<div
+						className={cn(
+							"text-muted-foreground pointer-events-none absolute inset-y-0 flex items-center",
+							styles.iconLeft,
 						)}
-					</AnimatePresence>
+					>
+						<AnimatePresence mode="wait">
+							{isPending ? (
+								<m.span
+									key="loader"
+									className="flex items-center"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: MOTION_CONFIG.duration.fast }}
+								>
+									<MiniDotsLoader size="sm" color="primary" />
+								</m.span>
+							) : (
+								<m.span
+									key="search"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: MOTION_CONFIG.duration.fast }}
+								>
+									<Search className="size-4" aria-hidden="true" />
+								</m.span>
+							)}
+						</AnimatePresence>
+					</div>
+
+					<form.AppField
+						name="search"
+						validators={{
+							onChangeAsync: async ({ value }) => {
+								handleSearch(value);
+								return undefined;
+							},
+							onChangeAsyncDebounceMs: debounceMs,
+						}}
+					>
+						{(field) => (
+							<>
+								<Input
+									ref={inputRef}
+									autoComplete="off"
+									autoCorrect="off"
+									autoCapitalize="off"
+									spellCheck={false}
+									// eslint-disable-next-line jsx-a11y/no-autofocus
+									autoFocus={autoFocus}
+									role={ariaExpanded !== undefined ? "combobox" : undefined}
+									aria-expanded={ariaExpanded}
+									aria-controls={ariaControls}
+									aria-activedescendant={activeDescendantId}
+									type="search"
+									inputMode="search"
+									enterKeyHint="search"
+									maxLength={200}
+									value={field.state.value}
+									onChange={(e) => {
+										field.handleChange(e.target.value);
+										onValueChange?.(e.target.value);
+									}}
+									onKeyDown={(e) => {
+										handleKeyDown(e, field.state.value);
+										externalKeyDown?.(e);
+									}}
+									className={cn(
+										"border-none shadow-none focus-visible:ring-0",
+										"bg-transparent",
+										"placeholder:text-muted-foreground/70",
+										"transition-[color,background-color] duration-150",
+										"[&::-webkit-search-cancel-button]:appearance-none",
+										styles.input,
+									)}
+									placeholder={placeholder}
+									aria-label={ariaLabel ?? placeholder}
+									aria-busy={isPending}
+									aria-describedby={statusId}
+								/>
+
+								<AnimatePresence mode="wait">
+									{field.state.value && (
+										<m.div
+											initial={{ opacity: 0, scale: 0.8 }}
+											animate={{ opacity: 1, scale: 1 }}
+											exit={{ opacity: 0, scale: 0.8 }}
+											transition={{ duration: MOTION_CONFIG.duration.fast }}
+											className="absolute right-0"
+										>
+											<Button
+												type="button"
+												variant="ghost"
+												size="icon"
+												onClick={handleClear}
+												className={cn(
+													"text-muted-foreground hover:text-foreground transition-[transform,color] duration-150 active:scale-95",
+													styles.clearButton,
+												)}
+												aria-label="Effacer la recherche"
+											>
+												<X className={styles.clearIcon} aria-hidden="true" />
+											</Button>
+										</m.div>
+									)}
+								</AnimatePresence>
+							</>
+						)}
+					</form.AppField>
 				</div>
 
-				<form.AppField
-					name="search"
-					validators={
-						mode === "live"
-							? {
-									onChangeAsync: async ({ value }) => {
-										handleSearch(value);
-										return undefined;
-									},
-									onChangeAsyncDebounceMs: debounceMs,
-								}
-							: undefined
-					}
-				>
-					{(field) => (
-						<>
-							<Input
-								ref={inputRef}
-								autoComplete="off"
-								autoCorrect="off"
-								autoCapitalize="off"
-								spellCheck={false}
-								// eslint-disable-next-line jsx-a11y/no-autofocus
-								autoFocus={autoFocus}
-								role={ariaExpanded !== undefined ? "combobox" : undefined}
-								aria-expanded={ariaExpanded}
-								aria-controls={ariaControls}
-								aria-activedescendant={activeDescendantId}
-								type="search"
-								inputMode="search"
-								enterKeyHint="search"
-								maxLength={200}
-								value={field.state.value}
-								onChange={(e) => {
-									field.handleChange(e.target.value);
-									onValueChange?.(e.target.value);
-								}}
-								onKeyDown={(e) => {
-									handleKeyDown(e, field.state.value);
-									externalKeyDown?.(e);
-								}}
-								className={cn(
-									"border-none shadow-none focus-visible:ring-0",
-									"bg-transparent",
-									"placeholder:text-muted-foreground/70",
-									"transition-[color,background-color] duration-150",
-									"[&::-webkit-search-cancel-button]:appearance-none",
-									styles.input,
-								)}
-								placeholder={placeholder}
-								aria-label={ariaLabel ?? placeholder}
-								aria-busy={isPending}
-								aria-describedby={statusId}
-							/>
-
-							<AnimatePresence mode="wait">
-								{field.state.value && (
-									<m.div
-										initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.8 }}
-										animate={{ opacity: 1, scale: 1 }}
-										exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
-										transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-										className="absolute right-0"
-									>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon"
-											onClick={handleClear}
-											className={cn(
-												"text-muted-foreground hover:text-foreground transition-[transform,color] duration-150 active:scale-95",
-												styles.clearButton,
-											)}
-											aria-label="Effacer la recherche"
-										>
-											<X className={styles.clearIcon} />
-										</Button>
-									</m.div>
-								)}
-							</AnimatePresence>
-						</>
-					)}
-				</form.AppField>
-			</div>
-
-			{/* Submit button */}
-			{mode === "submit" ? (
-				<form.Subscribe selector={(state) => state.values.search}>
-					{(search) => (
-						<Button
-							type="submit"
-							disabled={!search.trim() || isPending}
-							className={cn("shrink-0", styles.submitButton)}
-							aria-label="Rechercher"
-						>
-							{isPending ? <Spinner className="size-4" /> : <Search className="size-4" />}
-						</Button>
-					)}
-				</form.Subscribe>
-			) : (
-				/* Bouton submit sr-only pour accessibilité clavier en mode live */
+				{/* Bouton submit sr-only pour l'accessibilité clavier (Enter géré nativement) */}
 				<button type="submit" className="sr-only">
 					Rechercher
 				</button>
-			)}
 
-			{/* Live region for screen readers */}
-			<span id={statusId} role="status" aria-live="polite" className="sr-only">
-				{isPending
-					? "Recherche en cours…"
-					: resultCount !== undefined
-						? resultCount === 0
-							? "Aucun résultat"
-							: `${resultCount} résultat${resultCount > 1 ? "s" : ""}`
-						: ""}
-			</span>
-		</form>
+				{/* Live region for screen readers */}
+				<span id={statusId} role="status" aria-live="polite" className="sr-only">
+					{isPending ? "Recherche en cours…" : ""}
+				</span>
+			</form>
+		</MotionConfig>
+	);
+}
+
+function SearchInputSkeleton({
+	size = "md",
+	className,
+}: {
+	size?: "sm" | "md";
+	className?: string;
+}) {
+	return (
+		<div
+			aria-hidden="true"
+			className={cn(
+				"bg-muted/40 w-full",
+				size === "md" ? "h-12 rounded-xl" : "h-11 rounded-md",
+				className,
+			)}
+		/>
 	);
 }
 
 export function SearchInput(props: ComponentProps<typeof SearchInputInner>) {
 	return (
-		<Suspense fallback={null}>
+		<Suspense fallback={<SearchInputSkeleton size={props.size} className={props.className} />}>
 			<SearchInputInner {...props} />
 		</Suspense>
 	);

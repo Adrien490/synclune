@@ -23,16 +23,15 @@ import type { FabProps } from "@/shared/types/fab.types";
 import { toast } from "@/shared/utils/toast";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
-// Shared classes for the main FAB button (used by both href and onClick variants)
+// Shared classes for the main FAB button (used by both href and onClick variants).
+// Rendered with variant="primary" (no shadow logic) so these own the shadow/scale.
+// Focus ring comes from the Button base `focus-ring` utility (DS SSOT) — not redeclared.
 const mainButtonClassName = cn(
-	"relative cursor-pointer rounded-full shadow-lg",
-	"bg-primary hover:bg-primary/90",
-	"flex items-center justify-center",
+	"relative rounded-full shadow-lg",
 	"size-14 p-0",
 	"hover:shadow-primary/25 hover:shadow-xl",
 	"active:scale-95",
-	"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
-	"focus-visible:outline-none",
+	"motion-safe:transition-[transform,color,box-shadow,background-color]",
 );
 
 /**
@@ -104,10 +103,11 @@ export function Fab({
 	onClick,
 }: FabProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const toggleButtonRef = useRef<HTMLButtonElement>(null);
-	const mainButtonRef = useRef<HTMLButtonElement>(null);
 	const statusRef = useRef<HTMLDivElement>(null);
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	// "toggle" | "main" — set on toggle, consumed by the callback ref when the target
+	// button mounts. Survives the AnimatePresence mode="wait" exit-animation delay.
+	const pendingFocusRef = useRef<"toggle" | "main" | null>(null);
 	const [hasMounted, setHasMounted] = useState(false);
 
 	// Stable IDs for aria-controls relationship
@@ -169,13 +169,10 @@ export function Fab({
 			}, 1000);
 		}
 
-		requestAnimationFrame(() => {
-			if (newHiddenState) {
-				toggleButtonRef.current?.focus();
-			} else {
-				mainButtonRef.current?.focus();
-			}
-		});
+		// Defer focus to the callback ref. With AnimatePresence mode="wait" the target
+		// branch mounts only after the exiting branch's exit animation completes —
+		// long after a single requestAnimationFrame, so a ref read here would be null.
+		pendingFocusRef.current = newHiddenState ? "toggle" : "main";
 	}
 
 	function toggle() {
@@ -238,6 +235,24 @@ export function Fab({
 		haptic("light");
 	};
 
+	// Callback refs: focus the node exactly when it attaches to the DOM. Needed because
+	// AnimatePresence mode="wait" mounts the entering branch only after the exiting
+	// branch's exit animation finishes. pendingFocusRef gates this so plain mounts
+	// (initial page load, unrelated re-renders) never steal focus.
+	const hiddenButtonRef = (node: HTMLButtonElement | null) => {
+		if (node && pendingFocusRef.current === "toggle") {
+			pendingFocusRef.current = null;
+			node.focus();
+		}
+	};
+
+	const mainButtonCallbackRef = (node: HTMLButtonElement | null) => {
+		if (node && pendingFocusRef.current === "main") {
+			pendingFocusRef.current = null;
+			node.focus();
+		}
+	};
+
 	return (
 		<>
 			{/* Région aria-live pour annonces screen reader */}
@@ -271,7 +286,7 @@ export function Fab({
 							content={<p className="text-sm">{showTooltip}</p>}
 						>
 							<Button
-								ref={toggleButtonRef}
+								ref={hiddenButtonRef}
 								onClick={handleHideToggle}
 								disabled={isPending}
 								variant="outline"
@@ -282,13 +297,11 @@ export function Fab({
 									"bg-background",
 									"border-r-0",
 									"shadow-sm",
-									"opacity-40 hover:opacity-100",
+									"opacity-40 hover:opacity-100 focus-visible:opacity-100",
 									"hover:bg-accent",
 									"motion-safe:transition-[transform,opacity,background-color] motion-safe:duration-150",
 									"active:scale-95",
-									"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
-									"focus-visible:outline-none",
-									isPending && "cursor-wait opacity-70",
+									isPending && "opacity-70",
 								)}
 								aria-label={showTooltip}
 								aria-pressed={true}
@@ -343,13 +356,10 @@ export function Fab({
 									"shadow-sm",
 									"hover:bg-accent",
 									"active:scale-95",
-									"flex",
 									"md:opacity-0 md:group-hover:opacity-100",
 									"focus-visible:opacity-100",
-									"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-1",
-									"focus-visible:outline-none",
-									"motion-safe:duration-normal motion-safe:transition-[opacity,background-color]",
-									isPending && "cursor-wait md:opacity-100",
+									"motion-safe:duration-normal motion-safe:transition-[transform,opacity,background-color]",
+									isPending && "md:opacity-100",
 								)}
 								aria-label={hideTooltip}
 								aria-pressed={false}
@@ -374,8 +384,9 @@ export function Fab({
 						>
 							{href ? (
 								<Button
-									ref={mainButtonRef}
+									ref={mainButtonCallbackRef}
 									asChild
+									variant="primary"
 									size="lg"
 									className={cn(mainButtonClassName, className)}
 								>
@@ -388,16 +399,15 @@ export function Fab({
 									>
 										{icon}
 										{badge && (
-											<div className="pointer-events-none absolute -top-1.5 -right-1.5">
-												{badge}
-											</div>
+											<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
 										)}
 									</a>
 								</Button>
 							) : (
 								<Button
-									ref={mainButtonRef}
+									ref={mainButtonCallbackRef}
 									onClick={handleMainClick}
+									variant="primary"
 									size="lg"
 									className={cn(mainButtonClassName, className)}
 									aria-label={ariaLabel}
@@ -406,7 +416,7 @@ export function Fab({
 								>
 									{icon}
 									{badge && (
-										<div className="pointer-events-none absolute -top-1.5 -right-1.5">{badge}</div>
+										<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
 									)}
 								</Button>
 							)}

@@ -4,6 +4,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
@@ -82,6 +83,9 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 					}
 				}}
 			>
+				{/* Indication des champs obligatoires */}
+				<RequiredFieldsNote />
+
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">

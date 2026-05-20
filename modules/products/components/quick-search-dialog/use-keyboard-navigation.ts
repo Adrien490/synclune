@@ -67,12 +67,10 @@ export function useKeyboardNavigation() {
 		return () => container.removeEventListener("mouseover", handleMouseOver);
 	}, []);
 
-	const focusFirst = () => {
-		setActiveIndex(0);
-		focusablesRef.current[0]?.scrollIntoView({ block: "nearest" });
-	};
-
-	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
+	// Bound to the search <input> onKeyDown: the input keeps focus (ARIA 1.2
+	// combobox / aria-activedescendant pattern), so the handler must live on the
+	// element that actually receives the keydown — not on the listbox container.
+	const handleArrowNavigation = (e: React.KeyboardEvent<HTMLElement>) => {
 		const focusables = focusablesRef.current;
 		if (focusables.length === 0) return;
 
@@ -119,7 +117,6 @@ export function useKeyboardNavigation() {
 	return {
 		contentRef,
 		handleArrowNavigation,
-		focusFirst,
 		resetActiveIndex,
 		activeDescendantId,
 	};

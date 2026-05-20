@@ -85,11 +85,10 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 						ariaLabel="Barre d'outils de gestion des couleurs"
 						search={
 							<SearchInput
-								mode="live"
 								size="sm"
 								paramName="search"
 								placeholder="Rechercher par nom, slug ou hex…"
-								ariaLabel="Rechercher une couleur par nom, slug ou code hex"
+								aria-label="Rechercher une couleur par nom, slug ou code hex"
 								className="w-full"
 							/>
 						}

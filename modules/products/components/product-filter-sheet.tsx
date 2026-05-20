@@ -4,7 +4,6 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Accordion } from "@/shared/components/ui/accordion";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { withViewTransition } from "@/shared/utils/view-transition";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -19,23 +18,18 @@ import {
 } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
-import { SectionHeader } from "./filter-section-header";
+import { FilterSection } from "./filter-section-header";
 import { TypeFilterSection } from "./filter-section-types";
 import { ColorFilterSection } from "./filter-section-colors";
 import { MaterialFilterSection } from "./filter-section-materials";
 import { RatingFilterSection } from "./filter-section-rating";
 import { AvailabilityFilterSection } from "./filter-section-availability";
 import {
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/shared/components/ui/accordion";
-import {
 	parseFilterValuesFromURL,
 	buildFilterURL,
 	buildClearFiltersURL,
-	countActiveFilters,
 	getDefaultFilterValues,
+	getSectionActiveCount,
 	isProductCategoryPage,
 	getCategorySlugFromPath,
 	type FilterFormData,
@@ -55,10 +49,6 @@ const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
 
 /** Ancre de la grille produits : scroll smooth au lieu de window.scrollTo(0). */
 const PRODUCTS_GRID_ANCHOR_ID = "product-container";
-
-/** Ordre stable des sections Accordion pour retrouver l'item DOM via index. */
-const SECTION_ORDER = ["types", "price", "colors", "materials", "rating", "availability"] as const;
-type SectionValue = (typeof SECTION_ORDER)[number];
 
 // ============================================================================
 // TYPES
@@ -92,6 +82,14 @@ function scrollToProductsGrid() {
 // MAIN COMPONENT
 // ============================================================================
 
+/**
+ * Filtre produit : coquille responsive (`FilterSheetWrapper`) + accordéon de
+ * sections sur un écran unique.
+ *
+ * Toutes les catégories sont visibles d'un coup d'œil ; chacune se déplie sur
+ * place. Le formulaire TanStack est appliqué en bloc via le bouton
+ * « Appliquer » du footer (ou ⌘/Ctrl+Entrée).
+ */
 function ProductFilterSheetInner({
 	colors = EMPTY_COLORS,
 	materials = EMPTY_MATERIALS,
@@ -100,17 +98,11 @@ function ProductFilterSheetInner({
 	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
-	const isMobile = useIsMobile();
 
 	// Focus restoration (WCAG 2.4.3) — capture activeElement avant que le sheet
 	// ne vole le focus, puis restaure sur close via rAF (attend que Vaul ait
-	// fini son animation avant le focus, et preventScroll évite un jump iOS).
+	// fini son animation, et preventScroll évite un jump iOS).
 	const previousFocusRef = useRef<HTMLElement | null>(null);
-
-	// Ref sur la racine Accordion pour focus le premier input d'une section
-	// déroulée manuellement (desktop uniquement — évite d'ouvrir le clavier
-	// soft iOS/Android lors du tap).
-	const accordionRef = useRef<HTMLDivElement>(null);
 
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
 	const pathname = usePathname();
@@ -126,13 +118,12 @@ function ProductFilterSheetInner({
 	const deferredColorSearch = useDeferredValue(colorSearch);
 	const deferredMaterialSearch = useDeferredValue(materialSearch);
 
-	const getValuesFromURL = (): FilterFormData => {
-		return parseFilterValuesFromURL({
+	const getValuesFromURL = (): FilterFormData =>
+		parseFilterValuesFromURL({
 			searchParams,
 			activeProductTypeSlug,
 			defaultPriceRange: DEFAULT_PRICE_RANGE,
 		});
-	};
 
 	const initialValues = getValuesFromURL();
 
@@ -143,11 +134,9 @@ function ProductFilterSheetInner({
 		},
 	});
 
-	// Effect Event: reads form, getValuesFromURL, setColorSearch, setMaterialSearch
-	// without re-triggering the sync effect
+	// Effect Event: resync formulaire + recherche sans re-déclencher l'effet.
 	const onSheetSync = useEffectEvent(() => {
-		const values = getValuesFromURL();
-		form.reset(values);
+		form.reset(getValuesFromURL());
 		setColorSearch("");
 		setMaterialSearch("");
 	});
@@ -198,32 +187,28 @@ function ProductFilterSheetInner({
 		});
 	};
 
-	// P1.4 — Quand une section Accordion est dépliée manuellement (desktop),
-	// focus le premier input interactif pour accélérer la navigation clavier.
-	// Skip sur mobile : éviter d'ouvrir le clavier soft au tap d'une section.
-	const handleAccordionValueChange = (values: string[]) => {
-		const prev = previousOpenSectionsRef.current;
-		previousOpenSectionsRef.current = values;
-		if (isMobile) return;
-		const newlyOpened = values.find(
-			(v) => !prev.includes(v) && SECTION_ORDER.includes(v as SectionValue),
-		) as SectionValue | undefined;
-		if (!newlyOpened) return;
-		const index = SECTION_ORDER.indexOf(newlyOpened);
-		if (index < 0 || !accordionRef.current) return;
-		requestAnimationFrame(() => {
-			const item = accordionRef.current?.children[index] as HTMLElement | undefined;
-			if (!item) return;
-			const focusable = item.querySelector<HTMLElement>(
-				'input:not([type="hidden"]):not([disabled]), [role="slider"]:not([disabled])',
-			);
-			focusable?.focus({ preventScroll: true });
-		});
+	/** Bascule un slug dans une sélection multi-valeurs. */
+	const toggleToken = (
+		name: "productTypes" | "colors" | "materials",
+		current: string[],
+		slug: string,
+		checked: boolean,
+	) => {
+		form.setFieldValue(name, checked ? [...current, slug] : current.filter((s) => s !== slug));
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = countActiveFilters(searchParams);
+	// Sections ouvertes par défaut : types + prix + toute section avec un filtre
+	// actif au montage. Lazy init pour garder le tableau stable.
+	const [defaultOpenSections] = useState<string[]>(() => {
+		const sections = ["types", "price"];
+		if (initialValues.colors.length > 0) sections.push("colors");
+		if (initialValues.materials.length > 0) sections.push("materials");
+		if (initialValues.ratingMin !== null) sections.push("rating");
+		if (initialValues.inStockOnly || initialValues.onSale) sections.push("availability");
+		return sections;
+	});
 
-	// Sort colors and materials by count (descending)
+	// Sort colors / materials / types by count (descending)
 	const sortedColors = colors.toSorted((a, b) => b._count.skus - a._count.skus);
 	const sortedMaterials = materials.toSorted(
 		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
@@ -242,192 +227,152 @@ function ProductFilterSheetInner({
 			)
 		: sortedMaterials;
 
-	// Default open sections: types + price + any section with active filters.
-	// Lazy-initialized to keep the array stable across re-renders and to allow
-	// the ref below to snapshot it at mount without accessing refs during render.
-	const [defaultOpenSections] = useState<string[]>(() => {
-		const sections = ["types", "price"];
-		if (initialValues.colors.length > 0) sections.push("colors");
-		if (initialValues.materials.length > 0) sections.push("materials");
-		if (initialValues.ratingMin !== null) sections.push("rating");
-		if (initialValues.inStockOnly || initialValues.onSale) sections.push("availability");
-		return sections;
-	});
-	const previousOpenSectionsRef = useRef<string[]>(defaultOpenSections);
-
-	// P2.2 — Compte des filtres actifs dans le formulaire (pas l'URL) pour
-	// annoncer les toggles avant Apply. Mis à jour à chaque ajout/retrait via
-	// chip ou section.
-	const formValues = form.state.values;
-	const pendingFilterCount =
-		formValues.productTypes.length +
-		formValues.colors.length +
-		formValues.materials.length +
-		(formValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
-		formValues.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
-			? 1
-			: 0) +
-		(formValues.ratingMin !== null ? 1 : 0) +
-		(formValues.inStockOnly ? 1 : 0) +
-		(formValues.onSale ? 1 : 0);
-
+	// `form.Subscribe` garantit le re-render du sheet (badges + total
+	// `pendingFilterCount`) à chaque mutation du formulaire.
 	return (
-		<FilterSheetWrapper
-			open={isOpen}
-			onOpenChange={handleOpenChange}
-			hideTrigger
-			activeFiltersCount={activeFiltersCount}
-			hasActiveFilters={hasActiveFilters}
-			onApply={() => void form.handleSubmit()}
-			onClearAll={clearAllFilters}
-			isPending={isPending}
-			title="Filtres"
-			description="Affinez votre recherche"
-		>
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					void form.handleSubmit();
-				}}
-			>
-				<Accordion
-					ref={accordionRef}
-					type="multiple"
-					defaultValue={defaultOpenSections}
-					onValueChange={handleAccordionValueChange}
-					className="w-full"
-					aria-label="Filtres de recherche"
-				>
-					{/* 1. Types de bijoux */}
-					<form.Field name="productTypes" mode="array">
-						{(field) => (
-							<TypeFilterSection
-								productTypes={sortedProductTypes}
-								selectedValues={field.state.value}
-								onToggle={(slug, checked) => {
-									const isSelected = field.state.value.includes(slug);
-									if (checked && !isSelected) {
-										field.pushValue(slug);
-									} else if (!checked && isSelected) {
-										const index = field.state.value.indexOf(slug);
-										field.removeValue(index);
-									}
+		<form.Subscribe selector={(state) => state.values}>
+			{(values) => {
+				const counts = getSectionActiveCount(values, DEFAULT_PRICE_RANGE);
+				const pendingFilterCount = Object.values(counts).reduce((sum, n) => sum + n, 0);
+
+				return (
+					<FilterSheetWrapper
+						open={isOpen}
+						onOpenChange={handleOpenChange}
+						hideTrigger
+						activeFiltersCount={pendingFilterCount}
+						hasActiveFilters={pendingFilterCount > 0}
+						onApply={() => void form.handleSubmit()}
+						onClearAll={clearAllFilters}
+						isPending={isPending}
+						title="Filtres"
+						description="Affinez votre recherche"
+					>
+						<Accordion type="multiple" defaultValue={defaultOpenSections} className="w-full">
+							{/* 1. Types de bijoux (masqué si aucun type) */}
+							{sortedProductTypes.length > 0 && (
+								<FilterSection
+									value="types"
+									label="Types de bijoux"
+									count={counts.types}
+									onReset={() => form.setFieldValue("productTypes", [])}
+								>
+									<TypeFilterSection
+										productTypes={sortedProductTypes}
+										selectedValues={values.productTypes}
+										onToggle={(slug, checked) =>
+											toggleToken("productTypes", values.productTypes, slug, checked)
+										}
+									/>
+								</FilterSection>
+							)}
+
+							{/* 2. Prix (toujours visible) */}
+							<FilterSection
+								value="price"
+								label="Prix"
+								count={counts.price}
+								badgeContent={
+									counts.price > 0
+										? `${values.priceRange[0]}€ - ${values.priceRange[1]}€`
+										: undefined
+								}
+								onReset={() => form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE)}
+							>
+								<PriceRangeInputs
+									value={values.priceRange}
+									onChange={(value) => form.setFieldValue("priceRange", value)}
+									maxPrice={maxPriceInEuros}
+								/>
+							</FilterSection>
+
+							{/* 3. Couleurs (masqué si aucune couleur) */}
+							{sortedColors.length > 0 && (
+								<FilterSection
+									value="colors"
+									label="Couleurs"
+									count={counts.colors}
+									onReset={() => form.setFieldValue("colors", [])}
+								>
+									<ColorFilterSection
+										colors={sortedColors}
+										filteredColors={filteredColors}
+										selectedValues={values.colors}
+										colorSearch={colorSearch}
+										onColorSearchChange={setColorSearch}
+										onToggle={(slug, checked) =>
+											toggleToken("colors", values.colors, slug, checked)
+										}
+									/>
+								</FilterSection>
+							)}
+
+							{/* 4. Matériaux (masqué si aucun matériau) */}
+							{sortedMaterials.length > 0 && (
+								<FilterSection
+									value="materials"
+									label="Matériaux"
+									count={counts.materials}
+									onReset={() => form.setFieldValue("materials", [])}
+								>
+									<MaterialFilterSection
+										materials={sortedMaterials}
+										filteredMaterials={filteredMaterials}
+										selectedValues={values.materials}
+										materialSearch={materialSearch}
+										onMaterialSearchChange={setMaterialSearch}
+										onToggle={(slug, checked) =>
+											toggleToken("materials", values.materials, slug, checked)
+										}
+									/>
+								</FilterSection>
+							)}
+
+							{/* 5. Notes clients (toujours visible) */}
+							<FilterSection
+								value="rating"
+								label="Notes clients"
+								count={counts.rating}
+								badgeContent={values.ratingMin !== null ? `${values.ratingMin}+ ★` : undefined}
+								onReset={() => form.setFieldValue("ratingMin", null)}
+							>
+								<RatingFilterSection
+									selectedValue={values.ratingMin}
+									onChange={(value) => form.setFieldValue("ratingMin", value)}
+								/>
+							</FilterSection>
+
+							{/* 6. Disponibilité (toujours visible) */}
+							<FilterSection
+								value="availability"
+								label="Disponibilité"
+								count={counts.availability}
+								onReset={() => {
+									form.setFieldValue("inStockOnly", false);
+									form.setFieldValue("onSale", false);
 								}}
-								onReset={() => field.handleChange([])}
-							/>
-						)}
-					</form.Field>
+								className="border-b-0"
+							>
+								<AvailabilityFilterSection
+									inStockOnly={values.inStockOnly}
+									onSale={values.onSale}
+									onInStockChange={(checked) => form.setFieldValue("inStockOnly", checked)}
+									onSaleChange={(checked) => form.setFieldValue("onSale", checked)}
+								/>
+							</FilterSection>
+						</Accordion>
 
-					{/* 2. Prix */}
-					<form.Field name="priceRange">
-						{(field) => {
-							const hasCustomPrice =
-								field.state.value[0] !== 0 || field.state.value[1] !== maxPriceInEuros;
-							return (
-								<AccordionItem value="price">
-									<AccordionTrigger headingLevel={3} className="hover:no-underline">
-										<SectionHeader
-											label="Prix"
-											count={hasCustomPrice ? 1 : 0}
-											badgeContent={
-												hasCustomPrice
-													? `${field.state.value[0]}€ - ${field.state.value[1]}€`
-													: undefined
-											}
-											onReset={() => field.handleChange(DEFAULT_PRICE_RANGE)}
-										/>
-									</AccordionTrigger>
-									<AccordionContent>
-										<PriceRangeInputs
-											value={field.state.value}
-											onChange={field.handleChange}
-											maxPrice={maxPriceInEuros}
-										/>
-									</AccordionContent>
-								</AccordionItem>
-							);
-						}}
-					</form.Field>
-
-					{/* 3. Couleurs */}
-					<form.Field name="colors" mode="array">
-						{(field) => (
-							<ColorFilterSection
-								colors={sortedColors}
-								filteredColors={filteredColors}
-								selectedValues={field.state.value}
-								colorSearch={colorSearch}
-								onColorSearchChange={setColorSearch}
-								onToggle={(slug, checked) => {
-									const isSelected = field.state.value.includes(slug);
-									if (checked && !isSelected) {
-										field.pushValue(slug);
-									} else if (!checked && isSelected) {
-										const index = field.state.value.indexOf(slug);
-										field.removeValue(index);
-									}
-								}}
-								onReset={() => field.handleChange([])}
-							/>
-						)}
-					</form.Field>
-
-					{/* 4. Materiaux */}
-					<form.Field name="materials" mode="array">
-						{(field) => (
-							<MaterialFilterSection
-								materials={sortedMaterials}
-								filteredMaterials={filteredMaterials}
-								selectedValues={field.state.value}
-								materialSearch={materialSearch}
-								onMaterialSearchChange={setMaterialSearch}
-								onToggle={(slug, checked) => {
-									const isSelected = field.state.value.includes(slug);
-									if (checked && !isSelected) {
-										field.pushValue(slug);
-									} else if (!checked && isSelected) {
-										const index = field.state.value.indexOf(slug);
-										field.removeValue(index);
-									}
-								}}
-								onReset={() => field.handleChange([])}
-							/>
-						)}
-					</form.Field>
-
-					{/* 5. Notes clients */}
-					<form.Field name="ratingMin">
-						{(field) => (
-							<RatingFilterSection
-								selectedValue={field.state.value}
-								onChange={field.handleChange}
-							/>
-						)}
-					</form.Field>
-
-					{/* 6. Disponibilite */}
-					<AvailabilityFilterSection
-						inStockOnly={form.state.values.inStockOnly}
-						onSale={form.state.values.onSale}
-						onInStockChange={(checked) => form.setFieldValue("inStockOnly", checked)}
-						onSaleChange={(checked) => form.setFieldValue("onSale", checked)}
-						onReset={() => {
-							form.setFieldValue("inStockOnly", false);
-							form.setFieldValue("onSale", false);
-						}}
-					/>
-				</Accordion>
-
-				{/* P2.2 — Live region : annonce le nombre de filtres en attente à
-				    chaque changement du formulaire (chip retirée, toggle, reset). */}
-				<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-					{pendingFilterCount === 0
-						? "Aucun filtre sélectionné"
-						: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
-				</div>
-			</form>
-		</FilterSheetWrapper>
+						{/* Live region : annonce le nombre de filtres en attente à chaque
+						    changement du formulaire (toggle, reset). */}
+						<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+							{pendingFilterCount === 0
+								? "Aucun filtre sélectionné"
+								: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
+						</div>
+					</FilterSheetWrapper>
+				);
+			}}
+		</form.Subscribe>
 	);
 }
 

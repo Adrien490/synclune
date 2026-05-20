@@ -210,6 +210,12 @@ vi.mock("@/shared/components/animations/fade", () => ({
 	),
 }));
 
+// Mock minimal de SearchInput. Il rend `<form role="search">` comme le vrai
+// composant (le landmark `search` vient du <form>, pas du dialog) et consomme
+// l'attribut DOM standard `aria-label`. Ce mock vérifie que QuickSearchDialog
+// *passe* le bon attribut ; la garantie que SearchInput le *consomme* est
+// couverte par search-input.test.tsx. Ne pas rendre ce mock plus permissif
+// que le vrai composant (props ARIA en kebab-case, comme l'API réelle).
 vi.mock("@/shared/components/search-input", () => ({
 	SearchInput: ({
 		onSubmit,
@@ -219,7 +225,6 @@ vi.mock("@/shared/components/search-input", () => ({
 		autoFocus: _autoFocus,
 	}: {
 		paramName: string;
-		mode: string;
 		debounceMs?: number;
 		size?: string;
 		placeholder?: string;
@@ -231,21 +236,23 @@ vi.mock("@/shared/components/search-input", () => ({
 		onEscape?: () => void;
 		onValueChange?: (value: string) => void;
 		onSubmit?: (value: string) => void;
-		activeDescendantId?: string;
-		ariaExpanded?: boolean;
-		ariaControls?: string;
+		"aria-activedescendant"?: string;
+		"aria-expanded"?: boolean;
+		"aria-controls"?: string;
 		onKeyDown?: (e: React.KeyboardEvent) => void;
 		ref?: unknown;
 	}) => (
-		<input
-			data-testid="search-input"
-			aria-label={ariaLabel}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" && onSubmit) onSubmit("test query");
-				if (e.key === "Escape" && onEscape) onEscape();
-				if (onKeyDown) onKeyDown(e);
-			}}
-		/>
+		<form role="search">
+			<input
+				data-testid="search-input"
+				aria-label={ariaLabel}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" && onSubmit) onSubmit("test query");
+					if (e.key === "Escape" && onEscape) onEscape();
+					if (onKeyDown) onKeyDown(e);
+				}}
+			/>
+		</form>
 	),
 }));
 
@@ -478,6 +485,16 @@ describe("QuickSearchDialog", () => {
 		it("renders search role on the search input area", () => {
 			render(<QuickSearchDialog {...defaultProps} />);
 			expect(screen.getByRole("search")).toBeInTheDocument();
+		});
+
+		// Régression P0 (audit 2026-05-20) : à l'ouverture (input vide + productTypes
+		// présents), le placeholder vaut " " — le champ doit malgré tout exposer un
+		// nom accessible explicite via `aria-label`, pas un placeholder vide.
+		it("gives the search input a non-empty accessible name", () => {
+			render(<QuickSearchDialog {...defaultProps} />);
+			const input = screen.getByTestId("search-input");
+			expect(input.getAttribute("aria-label")?.trim()).toBeTruthy();
+			expect(input).toHaveAccessibleName("Rechercher un bijou");
 		});
 	});
 
@@ -728,6 +745,32 @@ describe("QuickSearchDialog", () => {
 			mockInputValue.current = "";
 			render(<QuickSearchDialog {...defaultProps} productTypes={[]} />);
 			expect(screen.queryByText("Rechercher :")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("keyboard navigation wiring", () => {
+		// Régression P1-A (audit 2026-05-20) : le handler de navigation clavier
+		// doit être branché sur l'<input> (l'input garde le focus — pattern
+		// combobox aria-activedescendant), pas sur le conteneur listbox frère.
+		it("routes the search input's onKeyDown to the keyboard navigation handler", () => {
+			render(<QuickSearchDialog {...defaultProps} />);
+			fireEvent.keyDown(screen.getByTestId("search-input"), { key: "ArrowDown" });
+			expect(mockHandleArrowNavigation).toHaveBeenCalled();
+		});
+
+		it("navigates to the full results page when Enter is pressed on the input", () => {
+			mockIsSearchMode.current = true;
+			mockInputValue.current = "bague";
+			mockSearchQuery.current = "bague";
+			mockSearchResults.current = {
+				kind: "success",
+				products: [],
+				totalCount: 0,
+				suggestion: null,
+			};
+			render(<QuickSearchDialog {...defaultProps} />);
+			fireEvent.keyDown(screen.getByTestId("search-input"), { key: "Enter" });
+			expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("/produits?search="));
 		});
 	});
 });

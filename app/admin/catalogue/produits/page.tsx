@@ -163,11 +163,10 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				ariaLabel="Barre d'outils de gestion des produits"
 				search={
 					<SearchInput
-						mode="live"
 						size="sm"
 						paramName="search"
 						placeholder="Rechercher par titre, type…"
-						ariaLabel="Rechercher un produit par titre ou type"
+						aria-label="Rechercher un produit par titre ou type"
 						className="w-full"
 					/>
 				}

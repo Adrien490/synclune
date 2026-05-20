@@ -299,9 +299,20 @@ function PendingUploadItem({
 	return (
 		<div
 			ref={draggable ? sortable.ref : undefined}
+			{...(draggable
+				? {
+						tabIndex: 0,
+						role: "group",
+						"aria-roledescription": "fichier réorganisable",
+						"aria-label": `Fichier ${index + 1}`,
+						"aria-describedby": "pending-drag-instructions",
+					}
+				: {})}
 			className={cn(
 				"bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg border",
 				draggable && "touch-none",
+				draggable &&
+					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 				draggable && sortable.isDragging && "ring-primary z-10 ring-2",
 			)}
 		>

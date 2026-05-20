@@ -9,6 +9,6 @@ interface MediaCounterBadgeProps {
 
 export function MediaCounterBadge({ count, max, className }: MediaCounterBadgeProps) {
 	return (
-		<CounterBadge count={count} max={max} label="images" icon={Images} className={className} />
+		<CounterBadge count={count} max={max} label="médias" icon={Images} className={className} />
 	);
 }

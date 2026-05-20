@@ -76,6 +76,9 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
+				// Out of the Tab order: reached via arrow keys (aria-activedescendant
+				// combobox pattern). Still matched by FOCUSABLE_SELECTOR.
+				tabIndex={-1}
 				className={cn(
 					"group/result flex items-center gap-3 rounded-xl px-3 py-2.5",
 					"hover:bg-muted transition-colors",

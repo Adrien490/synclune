@@ -2,6 +2,7 @@ import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
@@ -39,11 +40,17 @@ async function SentryUserBridgeWithAuth() {
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
 	const storeStatus = await getStoreStatus();
+	const showMaintenanceBanner = storeStatus.isClosed && (await isAdmin());
 
 	return (
 		<>
 			<PullToRefresh />
-			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
+			{showMaintenanceBanner && (
+				<MaintenanceBanner
+					closureMessage={storeStatus.closureMessage}
+					reopensAt={storeStatus.reopensAt}
+				/>
+			)}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />
 			</Suspense>

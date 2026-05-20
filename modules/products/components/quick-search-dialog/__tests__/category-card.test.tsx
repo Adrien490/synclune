@@ -162,6 +162,11 @@ describe("CategoryCard", () => {
 		expect(link).toHaveClass("focus-ring");
 	});
 
+	it("link is out of the Tab order (combobox option, reached via arrow keys)", () => {
+		const { container } = render(<CategoryCard type={mockType} onSelect={onSelect} />);
+		expect(container.querySelector("a")).toHaveAttribute("tabindex", "-1");
+	});
+
 	it("renders with a different slug in the href", () => {
 		const type: QuickSearchProductType = { slug: "collier", label: "Colliers" };
 		const { container } = render(<CategoryCard type={type} onSelect={onSelect} />);

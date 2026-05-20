@@ -120,7 +120,6 @@ export function UploadActionSheet({
 							"hover:border-primary/50 hover:bg-muted/50",
 							triggerClassName,
 						)}
-						aria-label={triggerLabel}
 					>
 						<span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full">
 							<Plus className="size-5" aria-hidden="true" />
@@ -229,7 +228,7 @@ export function UploadActionSheet({
 			<input
 				ref={filesInputRef}
 				type="file"
-				accept="*/*"
+				accept={acceptWithHeic}
 				multiple={multiple}
 				hidden
 				aria-hidden="true"

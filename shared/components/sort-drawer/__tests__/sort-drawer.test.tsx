@@ -37,34 +37,45 @@ vi.mock("motion/react", () => ({
 	},
 }));
 
-vi.mock("@/shared/components/ui/drawer", () => ({
-	Drawer: ({ children, open, onOpenChange: _onOpenChange }: any) =>
-		open ? (
-			<div data-testid="drawer" data-open={open}>
+vi.mock("@/shared/components/ui/drawer", async () => {
+	const { useEffect } = await vi.importActual<{
+		useEffect: (effect: () => void | (() => void), deps?: unknown[]) => void;
+	}>("react");
+	return {
+		Drawer: ({ children, open, onOpenChange: _onOpenChange }: any) =>
+			open ? (
+				<div data-testid="drawer" data-open={open}>
+					{children}
+				</div>
+			) : null,
+		DrawerContent: ({ children, className, onOpenAutoFocus }: any) => {
+			// Simule l'autofocus Vaul/Radix déclenché à l'ouverture du drawer.
+			useEffect(() => {
+				onOpenAutoFocus?.(new Event("focus", { cancelable: true }));
+			}, [onOpenAutoFocus]);
+			return (
+				<div data-testid="drawer-content" className={className}>
+					{children}
+				</div>
+			);
+		},
+		DrawerHeader: ({ children, className }: any) => (
+			<div data-testid="drawer-header" className={className}>
 				{children}
 			</div>
-		) : null,
-	DrawerContent: ({ children, className }: any) => (
-		<div data-testid="drawer-content" className={className}>
-			{children}
-		</div>
-	),
-	DrawerHeader: ({ children, className }: any) => (
-		<div data-testid="drawer-header" className={className}>
-			{children}
-		</div>
-	),
-	DrawerTitle: ({ children, className }: any) => (
-		<h2 data-testid="drawer-title" className={className}>
-			{children}
-		</h2>
-	),
-	DrawerBody: ({ children, className }: any) => (
-		<div data-testid="drawer-body" className={className}>
-			{children}
-		</div>
-	),
-}));
+		),
+		DrawerTitle: ({ children, className }: any) => (
+			<h2 data-testid="drawer-title" className={className}>
+				{children}
+			</h2>
+		),
+		DrawerBody: ({ children, className }: any) => (
+			<div data-testid="drawer-body" className={className}>
+				{children}
+			</div>
+		),
+	};
+});
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
@@ -425,6 +436,133 @@ describe("SortDrawer", () => {
 			vi.runAllTimers();
 
 			expect(onOpenChange).not.toHaveBeenCalled();
+			vi.useRealTimers();
+		});
+
+		it("re-selecting clears the previous auto-close timer (only one close fires)", () => {
+			vi.useFakeTimers();
+			const onOpenChange = vi.fn();
+			renderDrawer({ onOpenChange });
+
+			const radios = screen.getAllByRole("radio");
+			fireEvent.click(radios[0]!); // arme un timer d'auto-close
+			fireEvent.click(radios[1]!); // doit annuler le précédent avant d'en armer un neuf
+			vi.runAllTimers();
+
+			const closeCalls = onOpenChange.mock.calls.filter((c) => c[0] === false);
+			expect(closeCalls).toHaveLength(1);
+			vi.useRealTimers();
+		});
+
+		it("clears the pending auto-close timer on unmount", () => {
+			vi.useFakeTimers();
+			const onOpenChange = vi.fn();
+			const { unmount } = renderDrawer({ onOpenChange });
+
+			fireEvent.click(screen.getAllByRole("radio")[0]!);
+			unmount();
+			vi.runAllTimers();
+
+			expect(onOpenChange).not.toHaveBeenCalled();
+			vi.useRealTimers();
+		});
+	});
+
+	// ============================================================================
+	// Roving tabindex (WCAG 2.1.1)
+	// ============================================================================
+
+	describe("roving tabindex", () => {
+		it("first option is focusable when no selection and showResetOption=false", () => {
+			renderDrawer({ showResetOption: false });
+
+			const radios = screen.getAllByRole("radio");
+			expect(radios[0]).toHaveAttribute("tabindex", "0");
+			expect(radios[1]).toHaveAttribute("tabindex", "-1");
+			expect(radios[2]).toHaveAttribute("tabindex", "-1");
+		});
+
+		it("exactly one radio is in the tab order", () => {
+			renderDrawer({ showResetOption: false });
+
+			const focusable = screen
+				.getAllByRole("radio")
+				.filter((r) => r.getAttribute("tabindex") === "0");
+			expect(focusable).toHaveLength(1);
+		});
+
+		it("the selected option is the focusable one", () => {
+			setSearchParams({ sortBy: "price-descending" });
+			renderDrawer();
+
+			const focusable = screen
+				.getAllByRole("radio")
+				.find((r) => r.getAttribute("tabindex") === "0");
+			expect(focusable).toHaveTextContent("Prix décroissant");
+			expect(focusable).toHaveAttribute("aria-checked", "true");
+		});
+
+		it("reset option at index 0 is focusable when selected (showResetOption, no param)", () => {
+			renderDrawer({ showResetOption: true });
+
+			const radios = screen.getAllByRole("radio");
+			expect(radios[0]).toHaveAttribute("tabindex", "0");
+			expect(radios[0]).toHaveAttribute("aria-checked", "true");
+		});
+	});
+
+	// ============================================================================
+	// Open auto-focus (APG radiogroup pattern)
+	// ============================================================================
+
+	describe("open auto-focus", () => {
+		it("focuses the selected option when the drawer opens", () => {
+			setSearchParams({ sortBy: "price-descending" });
+			renderDrawer();
+
+			const radios = screen.getAllByRole("radio");
+			expect(document.activeElement).toBe(radios[1]);
+		});
+
+		it("focuses the first option when nothing is selected", () => {
+			renderDrawer({ showResetOption: false });
+
+			const radios = screen.getAllByRole("radio");
+			expect(document.activeElement).toBe(radios[0]);
+		});
+
+		it("focuses the reset option when it is the active choice", () => {
+			renderDrawer({ showResetOption: true });
+
+			const radios = screen.getAllByRole("radio");
+			expect(document.activeElement).toBe(radios[0]);
+		});
+	});
+
+	// ============================================================================
+	// Selected option styling (no layout jank)
+	// ============================================================================
+
+	describe("selected option styling", () => {
+		it("selected and unselected options share the same horizontal padding", () => {
+			setSearchParams({ sortBy: "price-ascending" });
+			renderDrawer();
+
+			screen.getAllByRole("radio").forEach((radio) => {
+				expect(radio.className).toContain("px-4");
+				expect(radio.className).not.toContain("px-5");
+			});
+		});
+
+		it("does not duplicate the -mx-1 utility class on the selected option", () => {
+			setSearchParams({ sortBy: "price-ascending" });
+			renderDrawer();
+
+			const selected = screen
+				.getAllByRole("radio")
+				.find((r) => r.getAttribute("aria-checked") === "true")!;
+			const occurrences = selected.className.split(/\s+/).filter((c) => c === "-mx-1");
+			expect(occurrences).toHaveLength(1);
 		});
 	});
 });

@@ -103,6 +103,13 @@ describe("SearchResultItem", () => {
 		expect(container.querySelector("a")).toHaveAttribute("href", "/creations/bague-lune");
 	});
 
+	it("link is out of the Tab order (combobox option, reached via arrow keys)", () => {
+		const { container } = render(
+			<SearchResultItem product={makeProduct()} query="bague" onSelect={onSelect} />,
+		);
+		expect(container.querySelector("a")).toHaveAttribute("tabindex", "-1");
+	});
+
 	it("renders the product title", () => {
 		const { container } = render(
 			<SearchResultItem product={makeProduct()} query="bague" onSelect={onSelect} />,

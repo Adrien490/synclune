@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -32,6 +33,8 @@ export function ProfileForm({ user }: ProfileFormProps) {
 	return (
 		<div className="space-y-4">
 			<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
+				<RequiredFieldsNote />
+
 				<form.AppField
 					name="name"
 					validators={{
