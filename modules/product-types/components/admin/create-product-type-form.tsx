@@ -100,22 +100,25 @@ export function CreateProductTypeForm({
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
 			event.preventDefault();
-			if (isPending || !form.state.canSubmit) return;
+			if (isPending) return;
 			haptic("medium");
 			formRef.current?.requestSubmit();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, formRef, haptic]);
+	}, [isMobile, isPending, formRef, haptic]);
 
 	useEffect(() => {
 		if (isMobile) return;
 		const handler = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || isPending) return;
 			const target = event.target as HTMLElement | null;
+			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
+			// Select/dropdown menu) — otherwise closing a Select would also trigger the
+			// "unsaved changes" confirm and navigate away.
 			if (
 				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
 				)
 			) {
 				return;
@@ -138,17 +141,20 @@ export function CreateProductTypeForm({
 	return (
 		<form
 			ref={formRef}
-			action={action}
 			aria-label="Formulaire de création de type de produit"
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={(event) => {
-				if (!form.state.canSubmit) {
-					event.preventDefault();
-					focusFirstInvalid();
-					return;
-				}
-				void form.handleSubmit();
+				event.preventDefault();
+				if (isPending || form.state.isSubmitting) return;
+				const formData = new FormData(event.currentTarget);
+				void form.handleSubmit().then(() => {
+					if (form.state.isValid) {
+						action(formData);
+					} else {
+						requestAnimationFrame(() => focusFirstInvalid());
+					}
+				});
 			}}
 		>
 			<form.Subscribe

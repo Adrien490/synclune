@@ -49,13 +49,25 @@ describe("ColorLibrarySheet", () => {
 		expect(tiles).toHaveLength(COLOR_LIBRARY.length);
 	});
 
-	it("filters by category when a tab is clicked", () => {
+	it("filters by category when a category button is clicked", () => {
 		render(<ColorLibrarySheet onSelect={vi.fn()} />);
-		const metauxTab = screen.getByRole("tab", { name: "Métaux" });
-		fireEvent.click(metauxTab);
+		const metauxButton = screen.getByRole("button", { name: "Métaux" });
+		expect(metauxButton).toHaveAttribute("aria-pressed", "false");
+		fireEvent.click(metauxButton);
+		expect(metauxButton).toHaveAttribute("aria-pressed", "true");
 		const tiles = screen.getAllByRole("button", { name: /^Utiliser / });
 		const metauxCount = COLOR_LIBRARY.filter((e) => e.category === "metaux").length;
 		expect(tiles).toHaveLength(metauxCount);
+	});
+
+	it("announces the result count via an sr-only status region", () => {
+		render(<ColorLibrarySheet onSelect={vi.fn()} />);
+		expect(screen.getByRole("status")).toHaveTextContent(
+			`${COLOR_LIBRARY.length} couleurs trouvées.`,
+		);
+		const input = screen.getByPlaceholderText(/Rechercher/i);
+		fireEvent.change(input, { target: { value: "xyzzz-nothing" } });
+		expect(screen.getByRole("status")).toHaveTextContent("Aucune couleur trouvée.");
 	});
 
 	it("filters by search query (name)", () => {

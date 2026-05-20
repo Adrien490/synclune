@@ -82,13 +82,7 @@ export function ColorFormFields({ form, isPending }: ColorFormFieldsProps) {
 							: null;
 					return (
 						<>
-							<div
-								className={cn(
-									"bg-background/95 sticky top-(--navbar-height,_56px) z-10 -mx-4 flex items-center gap-4 px-4 py-3 supports-backdrop-blur:backdrop-blur-md sm:static sm:mx-0 sm:rounded-lg sm:border sm:px-4",
-								)}
-								role="img"
-								aria-label={`Aperçu de ${displayName}`}
-							>
+							<div className="bg-background/95 sticky top-(--navbar-height,_56px) z-10 -mx-4 flex items-center gap-4 px-4 py-3 supports-backdrop-blur:backdrop-blur-md sm:static sm:mx-0 sm:rounded-lg sm:border sm:px-4">
 								<div
 									className={cn(
 										"border-border size-20 shrink-0 rounded-full border-2 shadow-sm sm:size-24",
@@ -191,7 +185,7 @@ export function ColorFormFields({ form, isPending }: ColorFormFieldsProps) {
 												aria-label={`Sélectionner ${suggestion.label} (${suggestion.hex})`}
 												aria-pressed={isSelected}
 												className={cn(
-													"focus-visible:ring-ring relative flex h-12 w-full items-center justify-center rounded-md border-2 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-50",
+													"focus-visible:ring-ring relative flex h-12 w-full items-center justify-center rounded-md border-2 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none",
 													isSelected
 														? "border-foreground"
 														: "border-border hover:border-foreground/60",

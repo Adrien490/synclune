@@ -105,13 +105,13 @@ export function CreateColorForm({
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
 			event.preventDefault();
-			if (isPending || !form.state.canSubmit) return;
+			if (isPending) return;
 			haptic("medium");
 			formRef.current?.requestSubmit();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, formRef, haptic]);
+	}, [isMobile, isPending, formRef, haptic]);
 
 	useEffect(() => {
 		if (isMobile) return;
@@ -143,17 +143,20 @@ export function CreateColorForm({
 	return (
 		<form
 			ref={formRef}
-			action={action}
 			aria-label="Formulaire de création de couleur"
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={(event) => {
-				if (!form.state.canSubmit) {
-					event.preventDefault();
-					focusFirstInvalid();
-					return;
-				}
-				void form.handleSubmit();
+				event.preventDefault();
+				if (isPending || form.state.isSubmitting) return;
+				const formData = new FormData(event.currentTarget);
+				void form.handleSubmit().then(() => {
+					if (form.state.isValid) {
+						action(formData);
+					} else {
+						requestAnimationFrame(() => focusFirstInvalid());
+					}
+				});
 			}}
 		>
 			<form.Subscribe

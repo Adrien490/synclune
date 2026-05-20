@@ -75,7 +75,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 					variant="outline"
 					disabled={disabled}
 					onClick={() => haptic("light")}
-					className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:min-h-9 sm:w-auto"
+					className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] motion-reduce:transition-none sm:min-h-9 sm:w-auto"
 				>
 					<BookMarked className="size-4" aria-hidden="true" />
 					Choisir depuis le catalogue
@@ -112,7 +112,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 
 					<div
 						className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-						role="tablist"
+						role="group"
 						aria-label="Catégories de couleurs"
 					>
 						{COLOR_LIBRARY_CATEGORIES.map((cat) => {
@@ -121,8 +121,7 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 								<button
 									key={cat.value}
 									type="button"
-									role="tab"
-									aria-selected={isActive}
+									aria-pressed={isActive}
 									onClick={() => {
 										setCategory(cat.value);
 										haptic("light");
@@ -140,6 +139,14 @@ export function ColorLibrarySheet({ onSelect, disabled }: ColorLibrarySheetProps
 						})}
 					</div>
 				</div>
+
+				<p className="sr-only" role="status">
+					{filteredEntries.length === 0
+						? "Aucune couleur trouvée."
+						: `${filteredEntries.length} couleur${filteredEntries.length > 1 ? "s" : ""} trouvée${
+								filteredEntries.length > 1 ? "s" : ""
+							}.`}
+				</p>
 
 				{filteredEntries.length === 0 ? (
 					<p className="text-muted-foreground py-12 text-center text-sm">

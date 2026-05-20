@@ -2,6 +2,7 @@
 
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useUpdateProductForm } from "@/modules/products/hooks/use-update-product-form";
@@ -110,22 +111,25 @@ export function EditProductForm({
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
 			event.preventDefault();
-			if (isPending || isMediaUploading || !form.state.canSubmit) return;
+			if (isPending || isMediaUploading) return;
 			haptic("medium");
 			formRef.current?.requestSubmit();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isMediaUploading, form, formRef, haptic]);
+	}, [isMobile, isPending, isMediaUploading, formRef, haptic]);
 
 	useEffect(() => {
 		if (isMobile) return;
 		const handler = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || isPending) return;
 			const target = event.target as HTMLElement | null;
+			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
+			// Select/dropdown menu) — otherwise closing a Select would also trigger the
+			// "unsaved changes" confirm and navigate away.
 			if (
 				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
 				)
 			) {
 				return;
@@ -154,14 +158,20 @@ export function EditProductForm({
 	return (
 		<form
 			ref={formRef}
-			action={action}
 			aria-label="Formulaire d'édition de bijou"
+			aria-busy={isPending || isMediaUploading}
 			className="space-y-6"
-			onSubmit={() => {
-				void form.handleSubmit();
-				if (!form.state.canSubmit) {
-					focusFirstInvalid();
-				}
+			onSubmit={(event) => {
+				event.preventDefault();
+				if (isPending || isMediaUploading || form.state.isSubmitting) return;
+				const formData = new FormData(event.currentTarget);
+				void form.handleSubmit().then(() => {
+					if (form.state.isValid) {
+						action(formData);
+					} else {
+						requestAnimationFrame(() => focusFirstInvalid());
+					}
+				});
 			}}
 			onInvalidCapture={onInvalidCapture}
 		>
@@ -227,6 +237,8 @@ export function EditProductForm({
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>
+
+			<RequiredFieldsNote />
 
 			<fieldset
 				disabled={isPending}

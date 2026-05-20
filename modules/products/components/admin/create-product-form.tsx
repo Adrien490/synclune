@@ -2,6 +2,7 @@
 
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
@@ -90,6 +91,10 @@ export function CreateProductForm({
 			form.reset();
 			setDeletedImageUrls([]);
 			clearFailedMediaUploads();
+			// Re-focus the title field to streamline creating another product
+			requestAnimationFrame(() => {
+				formRef.current?.querySelector<HTMLElement>("#title")?.focus();
+			});
 		},
 	});
 
@@ -115,13 +120,13 @@ export function CreateProductForm({
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
 			event.preventDefault();
-			if (isPending || isMediaUploading || !form.state.canSubmit) return;
+			if (isPending || isMediaUploading) return;
 			haptic("medium");
 			formRef.current?.requestSubmit();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isMediaUploading, form, formRef, haptic]);
+	}, [isMobile, isPending, isMediaUploading, formRef, haptic]);
 
 	// Desktop keyboard shortcut: Escape cancels (symmetric to Cmd+S) — confirm if dirty
 	useEffect(() => {
@@ -129,9 +134,12 @@ export function CreateProductForm({
 		const handler = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || isPending) return;
 			const target = event.target as HTMLElement | null;
+			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
+			// Select/dropdown menu) — otherwise closing a Select would also trigger the
+			// "unsaved changes" confirm and navigate away.
 			if (
 				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
 				)
 			) {
 				return;
@@ -160,14 +168,20 @@ export function CreateProductForm({
 	return (
 		<form
 			ref={formRef}
-			action={action}
 			aria-label="Formulaire de création de bijou"
+			aria-busy={isPending || isMediaUploading}
 			className="space-y-6"
-			onSubmit={() => {
-				void form.handleSubmit();
-				if (!form.state.canSubmit) {
-					focusFirstInvalid();
-				}
+			onSubmit={(event) => {
+				event.preventDefault();
+				if (isPending || isMediaUploading || form.state.isSubmitting) return;
+				const formData = new FormData(event.currentTarget);
+				void form.handleSubmit().then(() => {
+					if (form.state.isValid) {
+						action(formData);
+					} else {
+						requestAnimationFrame(() => focusFirstInvalid());
+					}
+				});
 			}}
 			onInvalidCapture={onInvalidCapture}
 		>
@@ -224,6 +238,8 @@ export function CreateProductForm({
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>
+
+			<RequiredFieldsNote />
 
 			<fieldset
 				disabled={isPending}

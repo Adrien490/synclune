@@ -68,6 +68,22 @@ describe("CreateColorForm", () => {
 		expect(button).toHaveAttribute("type", "submit");
 	});
 
+	it("submitting the pristine empty form does not call createColor (F1 regression)", async () => {
+		// On a pristine form `canSubmit` is stale-true, so the button is clickable.
+		// onSubmit must run client validation first and short-circuit before the
+		// server action when the form is invalid (empty required `name`).
+		render(<CreateColorForm />);
+		fireEvent.click(screen.getByRole("button", { name: /Créer/ }));
+
+		await waitFor(() => {
+			expect(screen.getByLabelText(/^Nom/, { selector: "input" })).toHaveAttribute(
+				"aria-invalid",
+				"true",
+			);
+		});
+		expect(mockCreateColor).not.toHaveBeenCalled();
+	});
+
 	it("calls createColor server action when submitted with a valid name", async () => {
 		render(<CreateColorForm />);
 		const nameInput = screen.getByLabelText(/^Nom/, { selector: "input" });

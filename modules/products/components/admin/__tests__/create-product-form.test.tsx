@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -172,6 +172,7 @@ const defaultProps = {
 
 interface FormOverrides {
 	canSubmit?: boolean;
+	isValid?: boolean;
 	status?: string;
 	collectionIds?: string[];
 	initialSku?: {
@@ -232,11 +233,13 @@ function createMockForm(overrides: FormOverrides = {}) {
 			},
 		},
 		canSubmit: overrides.canSubmit ?? true,
+		isValid: overrides.isValid ?? true,
+		isSubmitting: false,
 	};
 
 	return {
 		state: formState,
-		handleSubmit: vi.fn(),
+		handleSubmit: vi.fn().mockResolvedValue(undefined),
 		reset: vi.fn(),
 		setFieldValue: vi.fn(),
 		Subscribe: ({
@@ -278,10 +281,11 @@ afterEach(cleanup);
 describe("CreateProductForm", () => {
 	function setup(formOverrides: FormOverrides = {}, hookOverrides: Record<string, unknown> = {}) {
 		const mockForm = createMockForm(formOverrides);
+		const action = vi.fn();
 
 		mockUseCreateProductForm.mockReturnValue({
 			form: mockForm,
-			action: vi.fn(),
+			action,
 			isPending: false,
 			formErrors: [],
 			...hookOverrides,
@@ -297,12 +301,13 @@ describe("CreateProductForm", () => {
 			clearFailed: vi.fn(),
 		});
 
+		const routerPush = vi.fn();
 		mockUseRouter.mockReturnValue({
-			push: vi.fn(),
+			push: routerPush,
 			refresh: vi.fn(),
 		});
 
-		return { mockForm };
+		return { mockForm, action, routerPush };
 	}
 
 	// --------------------------------------------------------------------------
@@ -789,6 +794,126 @@ describe("CreateProductForm", () => {
 			submitButtons.forEach((button) => {
 				expect(button).toBeDisabled();
 			});
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Escape-to-cancel shortcut
+	// --------------------------------------------------------------------------
+
+	describe("Escape-to-cancel shortcut", () => {
+		it("navigates to the product list on Escape from outside any overlay", () => {
+			const { routerPush } = setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+			expect(routerPush).toHaveBeenCalledWith("/admin/catalogue/produits");
+		});
+
+		it("ignores Escape that originates from an open Select overlay", () => {
+			// Regression: closing a Select with Escape must NOT trigger the cancel
+			// navigation — the global handler used to miss data-slot='select-content'.
+			const { routerPush } = setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			const overlay = document.createElement("div");
+			overlay.setAttribute("data-slot", "select-content");
+			const option = document.createElement("div");
+			overlay.appendChild(option);
+			document.body.appendChild(overlay);
+
+			option.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+			expect(routerPush).not.toHaveBeenCalled();
+			overlay.remove();
+		});
+
+		it("ignores Escape that originates from an open dropdown menu", () => {
+			const { routerPush } = setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			const overlay = document.createElement("div");
+			overlay.setAttribute("data-slot", "dropdown-menu-content");
+			document.body.appendChild(overlay);
+
+			overlay.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+			expect(routerPush).not.toHaveBeenCalled();
+			overlay.remove();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Accessibility
+	// --------------------------------------------------------------------------
+
+	describe("accessibility", () => {
+		it("renders the required-fields legend", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(
+				screen.getByText("Les champs marqués d'un astérisque sont obligatoires."),
+			).toBeInTheDocument();
+		});
+
+		it("marks the form aria-busy when pending", () => {
+			setup({}, { isPending: true });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("form")).toHaveAttribute("aria-busy", "true");
+		});
+
+		it("marks the form not aria-busy when idle", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("form")).toHaveAttribute("aria-busy", "false");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Submit handler
+	// --------------------------------------------------------------------------
+
+	describe("submit handler", () => {
+		it("invokes form.handleSubmit when the form is submitted", () => {
+			const { mockForm } = setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			fireEvent.submit(screen.getByRole("form"));
+
+			expect(mockForm.handleSubmit).toHaveBeenCalled();
+		});
+
+		it("calls the server action once validation passes", async () => {
+			const { action } = setup({ isValid: true });
+			render(<CreateProductForm {...defaultProps} />);
+
+			fireEvent.submit(screen.getByRole("form"));
+
+			// Flush the handleSubmit().then() microtask before asserting
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(action).toHaveBeenCalled();
+		});
+
+		it("does not call the server action when the form is invalid", async () => {
+			// Regression: an invalid form runs client validation (handleSubmit) but
+			// must NOT reach the server action — it focuses the first invalid field.
+			const { mockForm, action } = setup({ isValid: false });
+			render(<CreateProductForm {...defaultProps} />);
+
+			fireEvent.submit(screen.getByRole("form"));
+
+			// Flush the handleSubmit().then() microtask before asserting
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(mockForm.handleSubmit).toHaveBeenCalled();
+			expect(action).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -114,9 +114,12 @@ export function EditProductTypeForm({
 		const handler = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || isPending) return;
 			const target = event.target as HTMLElement | null;
+			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
+			// Select/dropdown menu) — otherwise closing a Select would also trigger the
+			// "unsaved changes" confirm and navigate away.
 			if (
 				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
 				)
 			) {
 				return;
