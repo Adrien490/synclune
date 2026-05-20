@@ -1,12 +1,11 @@
 "use client";
 
-import { m, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useRef, useSyncExternalStore } from "react";
 import { cn } from "@/shared/utils/cn";
 import { cssSupports } from "@/shared/utils/css-supports";
-import { useIsTouchDevice } from "@/shared/hooks";
+import { useIsTouchDevice, useMediaQuery } from "@/shared/hooks";
 import { useMounted } from "@/shared/hooks/use-mounted";
 
 const INTENSITY_DEFAULT = 5;
@@ -105,52 +104,17 @@ function ParallaxContainer({ containerRef, containerClassName, children }: Paral
 	);
 }
 
-interface ParallaxInnerProps {
-	containerRef: RefObject<HTMLDivElement | null>;
-	safeIntensity: number;
-	imageElement: ReactNode;
-}
-
-/**
- * Motion-react JS fallback used on browsers without `animation-timeline: view()`.
- * `useTransform` is lazy — near-zero CPU cost when the container is off-screen.
- */
-function ParallaxInner({ containerRef, safeIntensity, imageElement }: ParallaxInnerProps) {
-	const { scrollYProgress } = useScroll({
-		target: containerRef,
-		offset: ["start end", "end start"],
-	});
-
-	const y = useTransform(scrollYProgress, [0, 1], [`-${safeIntensity}%`, `${safeIntensity}%`]);
-
-	return (
-		<m.div
-			data-parallax="active"
-			className="absolute inset-x-0 w-full"
-			style={{
-				// Oversized container to prevent clipping during parallax
-				height: `${100 + safeIntensity * 2}%`,
-				// Vertically centered to prevent clipping at extremes
-				top: `-${safeIntensity}%`,
-				y,
-			}}
-		>
-			{imageElement}
-		</m.div>
-	);
-}
-
 /**
  * Image with a subtle parallax scroll effect.
  *
- * Three rendering branches selected at runtime:
+ * Two rendering branches selected at runtime:
  *  1. **Static** — when motion is gated off (SSR, `prefers-reduced-motion`, touch,
- *     or `safeIntensity === 0`). Zero JS, zero animation.
+ *     `safeIntensity === 0`, or no `animation-timeline: view()` support). Zero JS,
+ *     zero animation.
  *  2. **CSS native** — when `animation-timeline: view()` is supported
  *     (Chrome/Edge 115+, Safari 26+). The keyframe runs on the compositor thread
  *     via the `.parallax-image-scroll` class (defined per-call-site by the consuming
- *     stylesheet, e.g. `atelier-section.css`).
- *  3. **Motion-react fallback** — `useScroll` + `useTransform` for older browsers.
+ *     stylesheet, e.g. `atelier-section.css`). Zero motion-react.
  *
  * @a11y
  *  - Respects `prefers-reduced-motion: reduce` (strict motion opt-in).
@@ -192,14 +156,14 @@ export function ParallaxImage({
 	disableOnTouch = true,
 }: ParallaxImageProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const shouldReduceMotion = useReducedMotion();
+	const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 	const isTouchDevice = useIsTouchDevice();
 	const supportsViewTimeline = useSupportsViewTimeline();
 	const isMounted = useMounted();
 
-	// Motion opt-in: animations only run when hydration is complete AND
-	// `prefers-reduced-motion` is explicitly false (not `null`, not `true`).
-	const motionIsAllowed = isMounted && shouldReduceMotion === false;
+	// Motion opt-in: animations only run once hydration is complete AND
+	// `prefers-reduced-motion` is not set.
+	const motionIsAllowed = isMounted && !prefersReducedMotion;
 	const safeIntensity = clampIntensity(intensity);
 
 	if (process.env.NODE_ENV !== "production" && !decorative && alt === "") {
@@ -228,7 +192,10 @@ export function ParallaxImage({
 	const shouldDisableParallax =
 		!motionIsAllowed || (disableOnTouch && isTouchDevice) || safeIntensity === 0;
 
-	if (shouldDisableParallax) {
+	// Static branch — motion gated off, or no `animation-timeline: view()`
+	// support (Safari <= 18): the parallax keyframe would otherwise leave the
+	// oversized inner div mis-positioned, so render the image plainly.
+	if (shouldDisableParallax || !supportsViewTimeline) {
 		return (
 			<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
 				{imageElement}
@@ -236,35 +203,24 @@ export function ParallaxImage({
 		);
 	}
 
-	if (supportsViewTimeline) {
-		const cssVars = {
-			"--parallax-from": `-${safeIntensity}%`,
-			"--parallax-to": `${safeIntensity}%`,
-		} as CSSProperties;
-		return (
-			<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
-				<div
-					data-parallax="active"
-					className="parallax-image-scroll absolute inset-x-0 w-full"
-					style={{
-						height: `${100 + safeIntensity * 2}%`,
-						top: `-${safeIntensity}%`,
-						...cssVars,
-					}}
-				>
-					{imageElement}
-				</div>
-			</ParallaxContainer>
-		);
-	}
-
+	// CSS-native branch — compositor-thread `animation-timeline: view()`.
+	const cssVars = {
+		"--parallax-from": `-${safeIntensity}%`,
+		"--parallax-to": `${safeIntensity}%`,
+	} as CSSProperties;
 	return (
 		<ParallaxContainer containerRef={containerRef} containerClassName={containerClassName}>
-			<ParallaxInner
-				containerRef={containerRef}
-				safeIntensity={safeIntensity}
-				imageElement={imageElement}
-			/>
+			<div
+				data-parallax="active"
+				className="parallax-image-scroll absolute inset-x-0 w-full"
+				style={{
+					height: `${100 + safeIntensity * 2}%`,
+					top: `-${safeIntensity}%`,
+					...cssVars,
+				}}
+			>
+				{imageElement}
+			</div>
 		</ParallaxContainer>
 	);
 }
