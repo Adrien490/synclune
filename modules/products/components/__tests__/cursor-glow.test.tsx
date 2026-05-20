@@ -122,4 +122,73 @@ describe("CursorGlow", () => {
 		expect(wrapper.style.getPropertyValue("--mx")).toBe("250px");
 		expect(wrapper.style.getPropertyValue("--my")).toBe("150px");
 	});
+
+	it("caches the rect on pointer enter, not on every move (no forced reflow per move)", () => {
+		const { container } = render(
+			<CursorGlow>
+				<span>Content</span>
+			</CursorGlow>,
+		);
+
+		const wrapper = container.firstChild as HTMLElement;
+		let rectCalls = 0;
+		wrapper.getBoundingClientRect = () => {
+			rectCalls += 1;
+			return {
+				left: 0,
+				top: 0,
+				right: 400,
+				bottom: 300,
+				width: 400,
+				height: 300,
+				x: 0,
+				y: 0,
+				toJSON: () => {},
+			};
+		};
+
+		fireEvent.pointerEnter(wrapper);
+		fireEvent.pointerMove(wrapper, { clientX: 100, clientY: 80 });
+		fireEvent.pointerMove(wrapper, { clientX: 250, clientY: 150 });
+		fireEvent.pointerMove(wrapper, { clientX: 300, clientY: 200 });
+
+		// getBoundingClientRect read once (on enter) — not on each of the 3 moves
+		expect(rectCalls).toBe(1);
+		expect(wrapper.style.getPropertyValue("--mx")).toBe("300px");
+		expect(wrapper.style.getPropertyValue("--my")).toBe("200px");
+	});
+
+	it("invalidates the cached rect on pointer leave", () => {
+		const { container } = render(
+			<CursorGlow>
+				<span>Content</span>
+			</CursorGlow>,
+		);
+
+		const wrapper = container.firstChild as HTMLElement;
+		let rectCalls = 0;
+		wrapper.getBoundingClientRect = () => {
+			rectCalls += 1;
+			return {
+				left: 0,
+				top: 0,
+				right: 400,
+				bottom: 300,
+				width: 400,
+				height: 300,
+				x: 0,
+				y: 0,
+				toJSON: () => {},
+			};
+		};
+
+		fireEvent.pointerEnter(wrapper); // call 1 — caches rect
+		fireEvent.pointerMove(wrapper, { clientX: 10, clientY: 10 });
+		fireEvent.pointerLeave(wrapper); // invalidates the cache
+		fireEvent.pointerMove(wrapper, { clientX: 20, clientY: 20 }); // ref null → fallback call 2
+
+		expect(rectCalls).toBe(2);
+		expect(wrapper.style.getPropertyValue("--mx")).toBe("20px");
+		expect(wrapper.style.getPropertyValue("--my")).toBe("20px");
+	});
 });

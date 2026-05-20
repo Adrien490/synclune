@@ -7,13 +7,13 @@
 	},
 	{
 		"name": "Homepage",
-		"path": ".next/static/chunks/app/(boutique)/(accueil)/*.js",
+		"path": ".next/static/chunks/app/(shop)/(home)/*.js",
 		"limit": "80 kB",
 		"gzip": true
 	},
 	{
 		"name": "Product page",
-		"path": ".next/static/chunks/app/(boutique)/produits/**/*.js",
+		"path": ".next/static/chunks/app/(shop)/creations/**/*.js",
 		"limit": "80 kB",
 		"gzip": true
 	},
@@ -24,8 +24,8 @@
 		"gzip": true
 	},
 	{
-		"name": "Cart page",
-		"path": ".next/static/chunks/app/(boutique)/panier/**/*.js",
+		"name": "Catalogue (produits)",
+		"path": ".next/static/chunks/app/(shop)/produits/**/*.js",
 		"limit": "80 kB",
 		"gzip": true
 	},
@@ -49,19 +49,19 @@
 	},
 	{
 		"name": "Collections",
-		"path": ".next/static/chunks/app/(boutique)/collections/**/*.js",
+		"path": ".next/static/chunks/app/(shop)/collections/**/*.js",
 		"limit": "70 kB",
 		"gzip": true
 	},
 	{
 		"name": "Account (espace client)",
-		"path": ".next/static/chunks/app/(boutique)/(espace-client)/**/*.js",
+		"path": ".next/static/chunks/app/(account)/**/*.js",
 		"limit": "60 kB",
 		"gzip": true
 	},
 	{
 		"name": "Legal pages",
-		"path": ".next/static/chunks/app/(boutique)/(informations-legales)/**/*.js",
+		"path": ".next/static/chunks/app/(legal)/**/*.js",
 		"limit": "30 kB",
 		"gzip": true
 	}

@@ -189,22 +189,11 @@
 		initial-value: oklch(0.75 0.12 280 / 0.16);
 	}
 
-	@keyframes confession-glow {
-		0%,
-		100% {
-			--confession-glow-a: oklch(0.86 0.1 341 / 0.2);
-			--confession-glow-b: oklch(0.75 0.12 280 / 0.16);
-		}
-		33% {
-			--confession-glow-a: oklch(0.75 0.12 280 / 0.18);
-			--confession-glow-b: oklch(0.82 0.14 160 / 0.16);
-		}
-		66% {
-			--confession-glow-a: oklch(0.82 0.14 160 / 0.2);
-			--confession-glow-b: oklch(0.86 0.1 341 / 0.16);
-		}
-	}
-
+	/* Static decorative glow. Previously a 25s @property color-morph loop, but
+	   animating gradient colors repaints the whole layer every frame for 25s.
+	   The morph was subtle and below the fold — a static gradient is visually
+	   ~equivalent at zero per-frame cost. The @property defs above are kept so
+	   the custom properties resolve to their typed initial values. */
 	.confession-glow {
 		background: radial-gradient(
 			ellipse at 50% 50%,
@@ -212,7 +201,6 @@
 			var(--confession-glow-b) 50%,
 			transparent 80%
 		);
-		animation: confession-glow 25s ease-in-out infinite;
 	}
 
 	/* ==========================================
@@ -244,10 +232,6 @@
 			animation: none;
 			opacity: 1;
 			scale: 1;
-		}
-
-		.confession-glow {
-			animation: none;
 		}
 
 		.parallax-image-scroll {
