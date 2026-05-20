@@ -401,6 +401,11 @@ model ProductSku {
   updatedAt  DateTime    @updatedAt
   deletedAt  DateTime? // Soft delete pour preserver historique commandes
 
+  // Index FK explicite : couvre les lookups par produit y compris SKU soft-deleted.
+  // Les index uniques partiels ci-dessous (WHERE "deletedAt" IS NULL) ne couvrent
+  // productId en prefixe que pour les lignes actives.
+  @@index([productId])
+
   // Garantir unicite des combinaisons produit/taille (actifs uniquement)
   // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL).
   // Note 2026-05-15 : couleur retirée de l'index suite à la migration M2M
@@ -410,6 +415,10 @@ model ProductSku {
   //
   // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
   // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
+  //
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   ProductSku_inventory_non_negative      CHECK (inventory >= 0)
+  //   ProductSku_priceInclTax_positive       CHECK ("priceInclTax" > 0)
 }
 
 model SkuMedia {
@@ -475,8 +484,11 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
-  @@index([userId, abandonedEmailSentAt, updatedAt]) // abandoned-cart-emails cron
-  @@index([guestEmail, abandonedEmailSentAt, updatedAt]) // abandoned-cart-emails cron (guests)
+  // Note : les champs abandonedEmailSentAt / guestEmail / guestPhone / guestContactAt /
+  // marketingConsent sont du scaffolding pour une future relance panier abandonne.
+  // Tant qu'aucun cron de relance n'existe, aucun index dedie n'est maintenu
+  // (userId a deja son index via @unique). Recreer les index composites le jour
+  // ou le cron sera cable.
 }
 
 model CartItem {
@@ -503,6 +515,10 @@ model CartItem {
 
   @@unique([cartId, skuId])
   @@index([skuId])
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   CartItem_quantity_positive    CHECK (quantity >= 1)
+  //   CartItem_priceAtAdd_positive  CHECK ("priceAtAdd" > 0)
 }
 
 // ============================================================================
@@ -546,7 +562,7 @@ model WishlistItem {
   // Un produit ne peut etre ajoute qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
   @@unique([wishlistId, productId])
-  @@index([productId])
+  // [productId] seul couvert en prefixe par l'index composite ci-dessous
   @@index([productId, backInStockNotifiedAt]) // For back-in-stock notification queries
 }
 
@@ -726,7 +742,16 @@ model Order {
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
   @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
-  @@index([fulfillmentStatus, actualDelivery, crossSellEmailSentAt]) // cross-sell-emails cron
+  // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
+  // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   Order_subtotal_non_negative        CHECK (subtotal >= 0)
+  //   Order_total_non_negative           CHECK (total >= 0)
+  //   Order_discountAmount_non_negative  CHECK ("discountAmount" >= 0)
+  //   Order_shippingCost_non_negative    CHECK ("shippingCost" >= 0)
+  //   Order_taxAmount_non_negative       CHECK ("taxAmount" >= 0)
+  //   Order_currency_eur_check           CHECK (currency = 'EUR')
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -815,6 +840,10 @@ model OrderItem {
   @@index([orderId])
   @@index([skuId])
   @@index([productId])
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   OrderItem_price_positive     CHECK (price > 0)
+  //   OrderItem_quantity_positive  CHECK (quantity > 0)
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
@@ -909,6 +938,10 @@ model Refund {
   @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
   @@index([createdBy]) // Admin: remboursements par admin
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   Refund_amount_positive    CHECK (amount > 0)
+  //   Refund_currency_eur_check CHECK (currency = 'EUR')
 }
 
 model RefundItem {
@@ -936,6 +969,10 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   RefundItem_quantity_positive  CHECK (quantity >= 1)
+  //   RefundItem_amount_positive    CHECK (amount > 0)
 }
 
 // ============================================================================
@@ -990,6 +1027,11 @@ model Dispute {
   updatedAt DateTime @updatedAt
 
   @@index([orderId])
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   Dispute_amount_positive     CHECK (amount > 0)
+  //   Dispute_fee_non_negative    CHECK (fee >= 0)
+  //   Dispute_currency_eur_check  CHECK (currency = 'EUR')
 }
 
 // ============================================================================
@@ -1032,6 +1074,10 @@ model Discount {
   deletedAt DateTime?
 
   @@index([isActive, deletedAt, startsAt, endsAt]) // Admin list + checkout active check
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   Discount_value_positive     CHECK (value > 0)
+  //   Discount_percentage_max_100 CHECK (type != 'PERCENTAGE' OR value <= 100)
 }
 
 model DiscountUsage {
@@ -1113,9 +1159,11 @@ model ProductReview {
   // Note: Contrainte unique sur champs nullable - PostgreSQL permet plusieurs (NULL, NULL)
   // La validation metier est faite cote applicatif pour les avis actifs
   @@unique([userId, productId])
-  @@index([productId])
+  // [productId] seul couvert en prefixe par l'index composite ci-dessous
   @@index([productId, status, deletedAt])
   @@index([deletedAt]) // hard-delete-retention cron (soft-deleted >= 10y, sans filtre product)
+
+  // CHECK constraint (DB, SQL brut) : ProductReview_rating_range CHECK (rating >= 1 AND rating <= 5)
 }
 
 /// Photo jointe a un avis produit
@@ -1186,6 +1234,9 @@ model ProductReviewStats {
   updatedAt DateTime @updatedAt
 
   @@index([averageRating]) // Dashboard: filter/sort products by rating
+
+  // CHECK constraint (DB, SQL brut) :
+  //   ProductReviewStats_averageRating_range CHECK ("averageRating" >= 0 AND "averageRating" <= 5)
 }
 
 // ============================================================================
