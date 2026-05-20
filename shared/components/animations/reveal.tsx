@@ -1,56 +1,49 @@
-"use client";
+import type { CSSProperties } from "react";
 
-import { m, useReducedMotion } from "motion/react";
-import { useIsTouchDevice, useMounted } from "@/shared/hooks";
+import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 import type { RevealProps } from "./types";
 
+const REVEAL_EASE = `cubic-bezier(${MOTION_CONFIG.easing.easeOut.join(",")})`;
+
 /**
- * Animation reveal avec whileInView (scroll-triggered)
- * L'animation se déclenche quand l'élément entre dans le viewport
+ * Reveal — scroll-triggered entrance (always `whileInView` semantics).
  *
- * Fix hydratation: On assume toujours une animation normale côté serveur
- * et on ajuste côté client si reduced motion est activé
+ * Universal component (no "use client"): a plain `<div>` driven by the CSS
+ * `entrance-fade` keyframe bound to `animation-timeline: view()`. Zero
+ * motion-react. Browsers without `view()` (Safari <= 18) and reduced-motion
+ * users see the content fully — no FOUC.
  *
- * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
+ * `delay`, `once`, `amount` and `disableOnTouch` are accepted for API
+ * compatibility but are no-ops for the CSS scroll-driven reveal. Any `data-*`
+ * attribute is forwarded to the wrapper.
  */
 export function Reveal({
 	children,
 	className,
-	delay = 0,
+	delay: _delay = 0,
 	duration = MOTION_CONFIG.duration.normal,
 	y = MOTION_CONFIG.transform.fadeY,
-	once = true,
-	amount = 0.2,
+	once: _once,
+	amount: _amount,
 	role,
-	disableOnTouch = false,
+	disableOnTouch: _disableOnTouch,
 	...rest
 }: RevealProps) {
-	const prefersReducedMotion = useReducedMotion();
-	const isTouchDevice = useIsTouchDevice();
-	const isClient = useMounted();
-
-	// Côté serveur et première hydratation: toujours avec animation
-	// Côté client après mount: respecte les préférences utilisateur
-	const shouldReduceMotion = isClient && prefersReducedMotion;
-	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
-
-	const animationProps = skipAnimation
-		? {}
-		: {
-				initial: { opacity: 0, y },
-				whileInView: { opacity: 1, y: 0 },
-				viewport: { once, amount },
-				transition: {
-					duration,
-					delay,
-					ease: MOTION_CONFIG.easing.easeOut,
-				},
-			};
-
 	return (
-		<m.div className={className} role={role} {...animationProps} {...rest}>
+		<div
+			className={cn("enter-inview", className)}
+			role={role}
+			style={
+				{
+					"--enter-y": `${y}px`,
+					"--enter-duration": `${Math.round(duration * 1000)}ms`,
+					"--enter-ease": REVEAL_EASE,
+				} as CSSProperties
+			}
+			{...rest}
+		>
 			{children}
-		</m.div>
+		</div>
 	);
 }

@@ -1,8 +1,5 @@
-"use client";
+import { isValidElement, type CSSProperties, type Key, type ReactNode } from "react";
 
-import { m, useReducedMotion } from "motion/react";
-import React, { isValidElement, type ReactNode, type Key } from "react";
-import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 
 export interface StaggerGridProps extends React.AriaAttributes {
@@ -19,21 +16,27 @@ export interface StaggerGridProps extends React.AriaAttributes {
 	 * Mobile: passer 1 si grille volumineuse pour épargner GPU (composited layer).
 	 */
 	scale?: number;
-	/** Enable scroll-triggered animation */
+	/** Enable scroll-triggered animation (default: true) */
 	inView?: boolean;
-	/** Only animate once when entering viewport */
+	/** Accepté pour compat API — no-op (une animation CSS ne joue qu'une fois). */
 	once?: boolean;
-	/** Portion of element visible to trigger (default: 0.1) */
+	/** Accepté pour compat API — no-op (le seuil est géré par animation-range). */
 	amount?: number;
 	/** HTML role attribute */
 	role?: string;
-	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	/** Accepté pour compat API — no-op (le CSS n'a aucun coût JS sur tactile). */
 	disableOnTouch?: boolean;
 	/** Data attributes */
 	[key: `data-${string}`]: string | undefined;
 }
 
-/** Extraire une key stable de l'enfant ou utiliser l'index comme fallback */
+const GRID_EASE = `cubic-bezier(${MOTION_CONFIG.easing.easeOut.join(",")})`;
+
+// Scroll-driven (inView) stagger: see Stagger — same range-offset cascade.
+const STAGGER_RANGE_STEP_PCT = 5;
+const STAGGER_RANGE_MAX_PCT = 25;
+
+/** Stable key from the child, falling back to the index. */
 function getStableKey(child: ReactNode, index: number): Key {
 	if (isValidElement(child) && child.key != null) {
 		return child.key;
@@ -42,10 +45,15 @@ function getStableKey(child: ReactNode, index: number): Key {
 }
 
 /**
- * Wrapper pour grilles avec animation stagger
- * Chaque enfant direct apparaît en cascade avec scale + fade
- * Idéal pour grilles de produits, collections, etc.
- * Respecte prefers-reduced-motion
+ * StaggerGrid — cascade entrance for grids: each direct child fades + slides +
+ * scales in with a growing offset.
+ *
+ * Universal component (no "use client"): the container is a plain `<div>` and
+ * each child is wrapped in a `<div>` driven by the CSS `entrance-fade`
+ * keyframe (with `--enter-scale`). Zero motion-react.
+ *
+ * `once`, `amount` and `disableOnTouch` are accepted for API compatibility
+ * but are no-ops. Any `data-*` / `aria-*` attribute is forwarded.
  */
 export function StaggerGrid({
 	children,
@@ -55,79 +63,38 @@ export function StaggerGrid({
 	y = 20,
 	scale = 0.95,
 	inView = true,
-	once = true,
-	amount = 0.1,
+	once: _once,
+	amount: _amount,
 	role,
-	disableOnTouch = false,
+	disableOnTouch: _disableOnTouch,
 	...rest
 }: StaggerGridProps) {
-	const shouldReduceMotion = useReducedMotion();
-	const isTouchDevice = useIsTouchDevice();
-	const skipAnimation = shouldReduceMotion === true || (disableOnTouch && isTouchDevice);
-
-	const containerVariants = {
-		hidden: {},
-		visible: {
-			transition: {
-				staggerChildren: skipAnimation ? 0 : stagger,
-				delayChildren: skipAnimation ? 0 : delay,
-			},
-		},
-	};
-
-	const itemVariants = {
-		hidden: {
-			opacity: skipAnimation ? 1 : 0,
-			y: skipAnimation ? 0 : y,
-			scale: skipAnimation ? 1 : scale,
-		},
-		visible: {
-			opacity: 1,
-			y: 0,
-			scale: 1,
-			transition: {
-				duration: skipAnimation ? 0 : MOTION_CONFIG.duration.slow,
-				ease: MOTION_CONFIG.easing.easeOut,
-			},
-		},
-	};
-
 	const childrenArray = Array.isArray(children) ? children : [children];
-
-	if (inView) {
-		return (
-			<m.div
-				className={className}
-				role={role}
-				initial="hidden"
-				whileInView="visible"
-				viewport={{ once, amount }}
-				variants={containerVariants}
-				{...rest}
-			>
-				{childrenArray.map((child, index) => (
-					<m.div key={getStableKey(child, index)} variants={itemVariants}>
-						{child}
-					</m.div>
-				))}
-			</m.div>
-		);
-	}
+	const itemClass = inView ? "enter-inview" : "enter-load";
 
 	return (
-		<m.div
-			className={className}
-			role={role}
-			initial="hidden"
-			animate="visible"
-			variants={containerVariants}
-			{...rest}
-		>
+		<div className={className} role={role} {...rest}>
 			{childrenArray.map((child, index) => (
-				<m.div key={getStableKey(child, index)} variants={itemVariants}>
+				<div
+					key={getStableKey(child, index)}
+					className={itemClass}
+					style={
+						{
+							"--enter-y": `${y}px`,
+							"--enter-scale": scale,
+							"--enter-duration": `${Math.round(MOTION_CONFIG.duration.slow * 1000)}ms`,
+							"--enter-ease": GRID_EASE,
+							"--enter-delay": `${Math.round((delay + index * stagger) * 1000)}ms`,
+							"--enter-stagger": `${Math.min(
+								index * STAGGER_RANGE_STEP_PCT,
+								STAGGER_RANGE_MAX_PCT,
+							)}%`,
+						} as CSSProperties
+					}
+				>
 					{child}
-				</m.div>
+				</div>
 			))}
-		</m.div>
+		</div>
 	);
 }

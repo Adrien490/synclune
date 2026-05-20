@@ -1,58 +1,37 @@
-"use client";
-
-import { m, useInView, useReducedMotion } from "motion/react";
-import { useRef } from "react";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 
 export type HandDrawnVariant = "underline" | "circle" | "star" | "heart" | "arrow";
 
-/** Opacité de remplissage pour les variants pleins (star, heart) après animation du contour */
+/** Opacité de remplissage pour les variants pleins (star, heart) après dessin du contour. */
 const FILLED_VARIANT_OPACITY = 0.15;
 
 export interface HandDrawnAccentProps {
-	/**
-	 * Type d'accent dessiné
-	 */
+	/** Type d'accent dessiné */
 	variant?: HandDrawnVariant;
-	/**
-	 * Couleur de l'accent (CSS color value)
-	 */
+	/** Couleur de l'accent (CSS color value) */
 	color?: string;
-	/**
-	 * Épaisseur du trait
-	 */
+	/** Épaisseur du trait */
 	strokeWidth?: number;
-	/**
-	 * Largeur du SVG
-	 */
+	/** Largeur du SVG */
 	width?: number;
-	/**
-	 * Hauteur du SVG
-	 */
+	/** Hauteur du SVG */
 	height?: number;
-	/**
-	 * Durée de l'animation de dessin (en secondes)
-	 */
+	/** Durée de l'animation de dessin (en secondes) */
 	duration?: number;
-	/**
-	 * Délai avant le début de l'animation (en secondes)
-	 */
+	/** Délai avant le début de l'animation (en secondes, mode load uniquement) */
 	delay?: number;
-	/**
-	 * Déclencher l'animation quand visible dans le viewport
-	 */
+	/** Déclencher le dessin au scroll (true) ou au montage (false). Défaut: true. */
 	inView?: boolean;
-	/**
-	 * Classe CSS personnalisée
-	 */
+	/** Classe CSS personnalisée */
 	className?: string;
 }
 
 /**
- * Paths SVG pour chaque variante d'accent dessiné à la main
- * Tendance 2026: Hand-drawn aesthetic + artisanal authenticity
+ * Paths SVG pour chaque variante d'accent dessiné à la main.
+ * Tendance 2026: Hand-drawn aesthetic + artisanal authenticity.
  */
 const svgPaths: Record<
 	HandDrawnVariant,
@@ -91,22 +70,21 @@ const svgPaths: Record<
 };
 
 /**
- * Composant SVG décoratif "fait main" avec animation de dessin
+ * Composant SVG décoratif "fait main" avec animation de dessin.
  *
- * Utilise stroke-dashoffset pour créer un effet de dessin au scroll.
- * Respecte prefers-reduced-motion.
+ * Universal component (no "use client"): le tracé est dessiné via une
+ * animation CSS `stroke-dashoffset` (`hand-draw`). Le `<path>` porte
+ * `pathLength="1"` — la longueur est normalisée, aucune mesure JS requise.
+ * Zéro motion-react.
+ *
+ * `inView` (défaut true) lie le dessin au scroll (`animation-timeline: view()`) ;
+ * `inView=false` le joue au montage. Reduced motion + Safari <= 18 affichent
+ * l'accent fini, sans animation.
  *
  * @example
  * ```tsx
- * // Sous un titre de section
  * <h2>Nos créations</h2>
- * <HandDrawnAccent variant="underline" color="var(--primary)" inView />
- *
- * // Autour d'un CTA
- * <div className="relative">
- *   <HandDrawnAccent variant="circle" className="absolute -inset-4" />
- *   <Button>Découvrir</Button>
- * </div>
+ * <HandDrawnAccent variant="underline" color="var(--primary)" />
  * ```
  */
 export function HandDrawnAccent({
@@ -120,54 +98,16 @@ export function HandDrawnAccent({
 	inView = true,
 	className,
 }: HandDrawnAccentProps) {
-	const ref = useRef<SVGSVGElement>(null);
-	const isInView = useInView(ref, {
-		once: true,
-		amount: 0.3,
-		margin: "-50px",
-	});
-	const shouldReduceMotion = useReducedMotion();
-
 	const config = svgPaths[variant];
 	const finalWidth = width ?? config.defaultWidth;
 	const finalHeight = height ?? config.defaultHeight;
 
 	const isFilledVariant = variant === "star" || variant === "heart";
 	const fillValue = isFilledVariant ? color : "none";
-	const filledOpacityValue = isFilledVariant ? FILLED_VARIANT_OPACITY : 0;
-
-	// Si reduced motion, afficher directement sans animation
-	if (shouldReduceMotion) {
-		return (
-			<svg
-				ref={ref}
-				width={finalWidth}
-				height={finalHeight}
-				viewBox={config.viewBox}
-				fill="none"
-				className={cn("pointer-events-none", className)}
-				aria-hidden="true"
-				focusable="false"
-			>
-				<path
-					d={config.path}
-					stroke={color}
-					strokeWidth={strokeWidth}
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					fill={fillValue}
-					fillOpacity={filledOpacityValue}
-				/>
-			</svg>
-		);
-	}
-
-	// Animation trigger: soit au scroll (inView), soit immédiatement
-	const shouldAnimate = inView ? isInView : true;
+	const fillOpacity = isFilledVariant ? FILLED_VARIANT_OPACITY : 0;
 
 	return (
 		<svg
-			ref={ref}
 			width={finalWidth}
 			height={finalHeight}
 			viewBox={config.viewBox}
@@ -176,47 +116,29 @@ export function HandDrawnAccent({
 			aria-hidden="true"
 			focusable="false"
 		>
-			<m.path
+			<path
 				d={config.path}
+				pathLength={1}
 				stroke={color}
 				strokeWidth={strokeWidth}
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				fill={fillValue}
-				initial={{
-					pathLength: 0,
-					fillOpacity: 0,
-				}}
-				animate={
-					shouldAnimate
-						? {
-								pathLength: 1,
-								fillOpacity: filledOpacityValue,
-							}
-						: {
-								pathLength: 0,
-								fillOpacity: 0,
-							}
+				className={inView ? "hand-draw-inview" : "hand-draw-load"}
+				style={
+					{
+						"--hand-duration": `${Math.round(duration * 1000)}ms`,
+						"--hand-delay": `${Math.round(delay * 1000)}ms`,
+						"--hand-fill-opacity": fillOpacity,
+					} as CSSProperties
 				}
-				transition={{
-					pathLength: {
-						duration,
-						delay,
-						ease: MOTION_CONFIG.easing.easeOut,
-					},
-					fillOpacity: {
-						duration: duration * 0.5,
-						delay: delay + duration * 0.5,
-						ease: MOTION_CONFIG.easing.easeIn,
-					},
-				}}
 			/>
 		</svg>
 	);
 }
 
 /**
- * Composant raccourci pour souligner un titre
+ * Composant raccourci pour souligner un titre.
  */
 export function HandDrawnUnderline({
 	color = "var(--primary)",

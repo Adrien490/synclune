@@ -1,42 +1,27 @@
-"use client";
+import type { CSSProperties } from "react";
 
-import { m, useReducedMotion } from "motion/react";
-import { useIsTouchDevice } from "@/shared/hooks";
+import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 import type { FadeProps } from "./types";
 
+const FADE_EASE = `cubic-bezier(${MOTION_CONFIG.easing.easeInOut.join(",")})`;
+
 /**
- * Animation Fade simple avec mouvement vertical
+ * Fade — opacity + vertical-offset entrance animation.
  *
- * Support prefers-reduced-motion et animations au scroll (whileInView).
- * Optimisé GPU avec willChange.
+ * Universal component (no "use client"): renders a plain `<div>` driven by
+ * the CSS `entrance-fade` keyframe. Zero motion-react, zero hydration cost —
+ * the animation runs on the compositor thread.
  *
- * @param children - Contenu à animer
- * @param className - Classes Tailwind additionnelles
- * @param delay - Délai avant animation en secondes (défaut: 0)
- * @param duration - Durée de l'animation en secondes (défaut: normal)
- * @param y - Décalage vertical en pixels (défaut: config)
- * @param inView - Active animation au scroll avec whileInView (défaut: false)
- * @param once - N'anime qu'une fois au scroll (défaut: false)
- * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
+ * @param delay - Delay before the animation, in seconds (load mode only)
+ * @param duration - Animation duration, in seconds
+ * @param y - Vertical offset in pixels the content travels from
+ * @param inView - Scroll-triggered (`animation-timeline: view()`) when true,
+ *   otherwise runs on mount. Browsers without `view()` (Safari <= 18) and
+ *   reduced-motion users see the content fully — no FOUC.
  *
- * @example
- * ```tsx
- * // Fade simple au chargement
- * <Fade y={20} delay={0.3}>
- *   <p>Texte qui apparaît</p>
- * </Fade>
- *
- * // Fade au scroll (une fois)
- * <Fade inView once y={30}>
- *   <div>Contenu révélé au scroll</div>
- * </Fade>
- *
- * // Désactiver sur mobile pour performance
- * <Fade disableOnTouch y={20}>
- *   <div>Contenu sans animation sur mobile</div>
- * </Fade>
- * ```
+ * `once` and `disableOnTouch` are accepted for API compatibility but are
+ * no-ops: a CSS animation runs once by nature and carries no JS cost.
  */
 export function Fade({
 	children,
@@ -45,41 +30,20 @@ export function Fade({
 	duration = MOTION_CONFIG.duration.normal,
 	y = MOTION_CONFIG.transform.fadeY,
 	inView = false,
-	once = false,
-	disableOnTouch = false,
 }: FadeProps) {
-	const shouldReduceMotion = useReducedMotion();
-	const isTouchDevice = useIsTouchDevice();
-	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
-
-	const animationProps = skipAnimation
-		? {}
-		: inView
-			? {
-					initial: { opacity: 0, y: y },
-					whileInView: { opacity: 1, y: 0 },
-					viewport: { once, margin: "-100px" },
-					exit: { opacity: 0, y: -y },
-					transition: {
-						duration,
-						delay,
-						ease: MOTION_CONFIG.easing.easeInOut,
-					},
-				}
-			: {
-					initial: { opacity: 0, y: y },
-					animate: { opacity: 1, y: 0 },
-					exit: { opacity: 0, y: -y },
-					transition: {
-						duration,
-						delay,
-						ease: MOTION_CONFIG.easing.easeInOut,
-					},
-				};
-
 	return (
-		<m.div className={className} {...animationProps}>
+		<div
+			className={cn(inView ? "enter-inview" : "enter-load", className)}
+			style={
+				{
+					"--enter-y": `${y}px`,
+					"--enter-duration": `${Math.round(duration * 1000)}ms`,
+					"--enter-delay": `${Math.round(delay * 1000)}ms`,
+					"--enter-ease": FADE_EASE,
+				} as CSSProperties
+			}
+		>
 			{children}
-		</m.div>
+		</div>
 	);
 }

@@ -1,6 +1,6 @@
 import "./atelier-section.css";
 
-import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, SplitTextCSS } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
@@ -129,7 +129,7 @@ export async function AtelierSection() {
 				>
 					<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
 						<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-							<SplitText stagger={0.08}>{ATELIER_CONTENT.confession.intro}</SplitText>
+							<SplitTextCSS stagger={80}>{ATELIER_CONTENT.confession.intro}</SplitTextCSS>
 						</p>
 
 						<div className="text-muted-foreground space-y-4 text-base leading-relaxed text-balance sm:space-y-6 sm:text-lg">

@@ -1,0 +1,108 @@
+/* ========================================================================
+   ENTRANCE ANIMATIONS — CSS replacements for the motion-react wrappers
+
+   Powers <Fade> / <Reveal> / <Stagger> / <StaggerGrid> / <HandDrawnAccent>.
+   Those wrappers are now plain (universal) components that only set CSS
+   custom properties — zero motion-react, zero client JS, zero hydration cost.
+   This is the dominant TBT win of the perf audit.
+
+   Two trigger modes:
+   - `.enter-load`   — runs on mount (replaces motion initial/animate)
+   - `.enter-inview` — runs as the element scrolls into view, via
+     `animation-timeline: view()` (replaces motion whileInView)
+
+   `.enter-inview` / `.hand-draw-inview` default to a fully-visible state so
+   browsers without `animation-timeline: view()` (Safari <= 18) and
+   reduced-motion users see all content — no FOUC, no hidden sections.
+   ======================================================================== */
+@layer utilities {
+	/* Compositor-only: opacity + translate + scale. --enter-y / --enter-scale
+	   default to a no-op so a plain fade needs no extra vars. */
+	@keyframes entrance-fade {
+		from {
+			opacity: 0;
+			translate: 0 var(--enter-y, 0);
+			scale: var(--enter-scale, 1);
+		}
+		to {
+			opacity: 1;
+			translate: 0 0;
+			scale: 1;
+		}
+	}
+
+	.enter-load {
+		animation: entrance-fade var(--enter-duration, 400ms)
+			var(--enter-ease, cubic-bezier(0, 0, 0.2, 1)) var(--enter-delay, 0ms) both;
+	}
+
+	/* Default visible — covers Safari <= 18 (no view() timeline) + reduced motion. */
+	.enter-inview {
+		opacity: 1;
+	}
+
+	@supports (animation-timeline: view()) {
+		.enter-inview {
+			animation: entrance-fade var(--enter-duration, 400ms)
+				var(--enter-ease, cubic-bezier(0, 0, 0.2, 1)) both;
+			animation-timeline: view();
+			/* --enter-stagger shifts the start point per child (Stagger cascade). */
+			animation-range: entry var(--enter-stagger, 0%) cover 32%;
+		}
+	}
+
+	/* HandDrawnAccent — SVG "drawn by hand" via stroke-dashoffset. The <path>
+	   carries pathLength="1" so the dash maths is normalised: the stroke draws
+	   over 0-60%, the fill (star/heart variants) fades in over 60-100%. */
+	@keyframes hand-draw {
+		0% {
+			stroke-dashoffset: 1;
+			fill-opacity: 0;
+		}
+		60% {
+			stroke-dashoffset: 0;
+			fill-opacity: 0;
+		}
+		100% {
+			stroke-dashoffset: 0;
+			fill-opacity: var(--hand-fill-opacity, 0);
+		}
+	}
+
+	.hand-draw-load {
+		stroke-dasharray: 1;
+		animation: hand-draw var(--hand-duration, 800ms) cubic-bezier(0, 0, 0.2, 1)
+			var(--hand-delay, 0ms) both;
+	}
+
+	/* Default drawn — Safari <= 18 shows the finished accent (no animation). */
+	.hand-draw-inview {
+		stroke-dasharray: 1;
+		fill-opacity: var(--hand-fill-opacity, 0);
+	}
+
+	@supports (animation-timeline: view()) {
+		.hand-draw-inview {
+			animation: hand-draw var(--hand-duration, 800ms) cubic-bezier(0, 0, 0.2, 1) both;
+			animation-timeline: view();
+			animation-range: entry 0% cover 40%;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.enter-load,
+		.enter-inview {
+			animation: none;
+			opacity: 1;
+			translate: 0 0;
+			scale: 1;
+		}
+
+		.hand-draw-load,
+		.hand-draw-inview {
+			animation: none;
+			stroke-dashoffset: 0;
+			fill-opacity: var(--hand-fill-opacity, 0);
+		}
+	}
+}

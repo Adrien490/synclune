@@ -1,12 +1,16 @@
-"use client";
+import { Children, isValidElement, type CSSProperties, type Key, type ReactNode } from "react";
 
-import { m, useReducedMotion } from "motion/react";
-import { Children, isValidElement, type ReactNode, type Key } from "react";
-import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { StaggerProps } from "./types";
 
-/** Extraire une key stable de l'enfant ou utiliser l'index comme fallback */
+const STAGGER_EASE = `cubic-bezier(${MOTION_CONFIG.easing.easeOut.join(",")})`;
+
+// Scroll-driven (inView) stagger: each child's animation-range start is shifted
+// by STEP per index, capped so `entry <start>% cover 32%` stays a valid range.
+const STAGGER_RANGE_STEP_PCT = 5;
+const STAGGER_RANGE_MAX_PCT = 25;
+
+/** Stable key from the child, falling back to the index. */
 function getStableKey(child: ReactNode, index: number): Key {
 	if (isValidElement(child) && child.key != null) {
 		return child.key;
@@ -15,14 +19,19 @@ function getStableKey(child: ReactNode, index: number): Key {
 }
 
 /**
- * Animation stagger ultra-simple avec support prefers-reduced-motion
- * Chaque enfant reçoit un delay croissant
- * Supporte whileInView pour animations au scroll
+ * Stagger — cascade entrance: each direct child fades + slides in with a
+ * growing offset.
  *
- * Note: willChange retiré pour meilleure performance GPU.
- * Framer Motion optimise déjà les animations avec transform et opacity.
+ * Universal component (no "use client"): the container is a plain `<div>` and
+ * each child is wrapped in a `<div>` driven by the CSS `entrance-fade`
+ * keyframe. Zero motion-react.
  *
- * @param disableOnTouch - Désactiver l'animation sur appareils tactiles (défaut: false)
+ * - `inView=false` (default): runs on mount, cascade via `animation-delay`.
+ * - `inView=true`: scroll-triggered (`animation-timeline: view()`), cascade
+ *   via a per-child `animation-range` start offset.
+ *
+ * `once`, `amount` and `disableOnTouch` are accepted for API compatibility
+ * but are no-ops. Any `data-*` attribute is forwarded to the container.
  */
 export function Stagger({
 	children,
@@ -32,67 +41,39 @@ export function Stagger({
 	duration = MOTION_CONFIG.duration.normal,
 	y = 20,
 	inView = false,
-	once = true,
-	amount = 0.2,
+	once: _once,
+	amount: _amount,
 	role,
-	disableOnTouch = false,
+	disableOnTouch: _disableOnTouch,
 	...rest
 }: StaggerProps) {
-	const shouldReduceMotion = useReducedMotion();
-	const isTouchDevice = useIsTouchDevice();
 	const childrenArray = Children.toArray(children);
-
-	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
-
-	// Variants pour gérer les animations avec ou sans inView
-	const containerVariants = skipAnimation
-		? undefined
-		: {
-				hidden: {},
-				visible: {
-					transition: {
-						staggerChildren: stagger,
-						delayChildren: delay,
-					},
-				},
-			};
-
-	const itemVariants = skipAnimation
-		? undefined
-		: {
-				hidden: { opacity: 0, y },
-				visible: {
-					opacity: 1,
-					y: 0,
-					transition: {
-						duration,
-						ease: MOTION_CONFIG.easing.easeOut,
-					},
-				},
-			};
-
-	const containerProps = skipAnimation
-		? {}
-		: inView
-			? {
-					initial: "hidden" as const,
-					whileInView: "visible" as const,
-					viewport: { once, amount },
-					variants: containerVariants,
-				}
-			: {
-					initial: "hidden" as const,
-					animate: "visible" as const,
-					variants: containerVariants,
-				};
+	const itemClass = inView ? "enter-inview" : "enter-load";
 
 	return (
-		<m.div className={className} role={role} {...containerProps} {...rest}>
+		<div className={className} role={role} {...rest}>
 			{childrenArray.map((child, index) => (
-				<m.div key={getStableKey(child, index)} variants={itemVariants}>
+				<div
+					key={getStableKey(child, index)}
+					className={itemClass}
+					style={
+						{
+							"--enter-y": `${y}px`,
+							"--enter-duration": `${Math.round(duration * 1000)}ms`,
+							"--enter-ease": STAGGER_EASE,
+							// Load mode — per-child delay cascade.
+							"--enter-delay": `${Math.round((delay + index * stagger) * 1000)}ms`,
+							// Scroll mode — per-child animation-range start offset.
+							"--enter-stagger": `${Math.min(
+								index * STAGGER_RANGE_STEP_PCT,
+								STAGGER_RANGE_MAX_PCT,
+							)}%`,
+						} as CSSProperties
+					}
+				>
 					{child}
-				</m.div>
+				</div>
 			))}
-		</m.div>
+		</div>
 	);
 }

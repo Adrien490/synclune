@@ -9,6 +9,7 @@
 @import "./styles/utilities.css";
 @import "./styles/animations.css";
 @import "./styles/scroll-driven.css";
+@import "./styles/entrance.css";
 @import "./styles/components.css";
 
 /* Focus ring centralisé (WCAG 2.4.7) — style shadcn (border + ring 3px sur token --ring)

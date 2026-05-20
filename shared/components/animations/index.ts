@@ -1,17 +1,18 @@
 /**
- * Animations Synclune — wrappers Motion / CSS production-ready 2026.
+ * Animations Synclune — wrappers production-ready 2026.
  *
  * Tous les wrappers respectent prefers-reduced-motion.
  *
- * Le LazyMotion + features domAnimation sont déjà montés au niveau racine via
- * `shared/providers/motion-provider.tsx` — les composants utilisent `m.` (~6kb).
+ * Les wrappers d'entrée (Fade / Reveal / Stagger / HandDrawn) sont des
+ * composants universels pilotés par du CSS (`app/styles/entrance.css`) —
+ * zéro motion-react, zéro coût d'hydratation. ParticleBackground et les
+ * animations interactives restent sur motion-react (`m.`).
  */
 
 export { Fade } from "./fade";
 export { Reveal } from "./reveal";
 export { Stagger } from "./stagger";
 
-export { SplitText } from "./split-text";
 export { SplitTextCSS } from "./split-text-css";
 
 export { HandDrawnAccent, HandDrawnUnderline } from "./hand-drawn-accent";

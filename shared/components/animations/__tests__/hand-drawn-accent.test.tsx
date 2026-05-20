@@ -1,67 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, cleanup } from "@testing-library/react";
-
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion, mockIsInView } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-	mockIsInView: { value: true },
-}));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
-
-vi.mock("motion/react", () => {
-	const { forwardRef: fRef } = require("react");
-	return {
-		m: {
-			path: fRef(
-				(
-					{
-						initial: _initial,
-						animate: _animate,
-						transition: _transition,
-						...props
-					}: Record<string, unknown>,
-					ref: unknown,
-				) => {
-					const { createElement } = require("react");
-					return createElement("path", {
-						ref,
-						"data-animated": "true",
-						...props,
-					});
-				},
-			),
-		},
-		useInView: () => mockIsInView.value,
-		useReducedMotion: () => mockReducedMotion.value,
-	};
-});
-
-vi.mock("@/shared/utils/cn", () => ({
-	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
-// ============================================================================
-// IMPORT UNDER TEST
-// ============================================================================
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render } from "@testing-library/react";
 
 import { HandDrawnAccent, HandDrawnUnderline } from "../hand-drawn-accent";
 
+// HandDrawnAccent is now a universal component: the SVG <path> draws via the
+// CSS `hand-draw` keyframe (stroke-dashoffset), with `pathLength="1"` so no JS
+// measurement is needed. No motion-react, nothing to mock.
+
+afterEach(cleanup);
+
 describe("HandDrawnAccent", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockReducedMotion.value = false;
-		mockIsInView.value = true;
-	});
-
-	afterEach(cleanup);
-
-	it("renders SVG with aria-hidden and focusable=false", () => {
+	it("renders an SVG with aria-hidden and focusable=false", () => {
 		const { container } = render(<HandDrawnAccent />);
 		const svg = container.querySelector("svg")!;
 		expect(svg).toHaveAttribute("aria-hidden", "true");
@@ -78,66 +27,67 @@ describe("HandDrawnAccent", () => {
 
 	it('variant="circle" uses viewBox "0 0 100 95"', () => {
 		const { container } = render(<HandDrawnAccent variant="circle" />);
-		const svg = container.querySelector("svg")!;
-		expect(svg).toHaveAttribute("viewBox", "0 0 100 95");
+		expect(container.querySelector("svg")!).toHaveAttribute("viewBox", "0 0 100 95");
 	});
 
-	it("custom width/height override defaults", () => {
+	it("custom width/height override the variant defaults", () => {
 		const { container } = render(<HandDrawnAccent width={200} height={50} />);
 		const svg = container.querySelector("svg")!;
 		expect(svg).toHaveAttribute("width", "200");
 		expect(svg).toHaveAttribute("height", "50");
 	});
 
-	it("renders static <path> (not m.path) when reduced motion", () => {
-		mockReducedMotion.value = true;
+	it("normalises the path length via pathLength=1 (no JS measurement)", () => {
 		const { container } = render(<HandDrawnAccent />);
-		const path = container.querySelector("path")!;
-		// Static path has no data-animated attribute
-		expect(path).not.toHaveAttribute("data-animated");
+		expect(container.querySelector("path")!).toHaveAttribute("pathLength", "1");
 	});
 
-	it("star and heart variants use fill={color} with fillOpacity", () => {
-		mockReducedMotion.value = true;
+	it("uses the .hand-draw-inview class by default (inView defaults to true)", () => {
+		const { container } = render(<HandDrawnAccent />);
+		expect(container.querySelector("path")!.getAttribute("class")).toBe("hand-draw-inview");
+	});
+
+	it("uses the .hand-draw-load class when inView is false", () => {
+		const { container } = render(<HandDrawnAccent inView={false} />);
+		expect(container.querySelector("path")!.getAttribute("class")).toBe("hand-draw-load");
+	});
+
+	it("star/heart variants fill with the color and set --hand-fill-opacity", () => {
 		const { container: starContainer } = render(<HandDrawnAccent variant="star" color="red" />);
 		const starPath = starContainer.querySelector("path")!;
 		expect(starPath).toHaveAttribute("fill", "red");
-		expect(starPath.getAttribute("fill-opacity")).toBe("0.15");
+		expect(starPath.style.getPropertyValue("--hand-fill-opacity")).toBe("0.15");
 
 		cleanup();
 
 		const { container: heartContainer } = render(<HandDrawnAccent variant="heart" color="pink" />);
-		const heartPath = heartContainer.querySelector("path")!;
-		expect(heartPath).toHaveAttribute("fill", "pink");
+		expect(heartContainer.querySelector("path")!).toHaveAttribute("fill", "pink");
 	});
 
-	it('underline and circle variants use fill="none"', () => {
-		mockReducedMotion.value = true;
+	it('underline/circle variants use fill="none" and a zero fill opacity', () => {
 		const { container } = render(<HandDrawnAccent variant="underline" />);
 		const path = container.querySelector("path")!;
 		expect(path).toHaveAttribute("fill", "none");
+		expect(path.style.getPropertyValue("--hand-fill-opacity")).toBe("0");
 	});
 
-	it("className is forwarded to SVG", () => {
+	it("converts duration + delay (seconds) to millisecond custom properties", () => {
+		const { container } = render(<HandDrawnAccent duration={0.5} delay={0.15} />);
+		const path = container.querySelector("path")!;
+		expect(path.style.getPropertyValue("--hand-duration")).toBe("500ms");
+		expect(path.style.getPropertyValue("--hand-delay")).toBe("150ms");
+	});
+
+	it("forwards className to the SVG", () => {
 		const { container } = render(<HandDrawnAccent className="my-accent" />);
-		const svg = container.querySelector("svg")!;
-		expect(svg.className.baseVal).toContain("my-accent");
+		expect(container.querySelector("svg")!.getAttribute("class")).toContain("my-accent");
 	});
 });
 
 describe("HandDrawnUnderline", () => {
-	beforeEach(() => {
-		mockReducedMotion.value = false;
-	});
-
-	afterEach(cleanup);
-
-	it('renders with variant="underline" and default primary color', () => {
+	it('renders with variant="underline" and the default primary color', () => {
 		const { container } = render(<HandDrawnUnderline />);
-		const svg = container.querySelector("svg")!;
-		expect(svg).toHaveAttribute("viewBox", "0 0 120 20");
-		// m.path rendered with animated attribute
-		const path = container.querySelector("path")!;
-		expect(path).toHaveAttribute("stroke", "var(--primary)");
+		expect(container.querySelector("svg")!).toHaveAttribute("viewBox", "0 0 120 20");
+		expect(container.querySelector("path")!).toHaveAttribute("stroke", "var(--primary)");
 	});
 });

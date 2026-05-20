@@ -1,84 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
-
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion, mockIsTouchDevice } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-	mockIsTouchDevice: { value: false },
-}));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
-
-vi.mock("motion/react", () => {
-	const { forwardRef: fRef } = require("react");
-	return {
-		m: {
-			div: fRef(
-				(
-					{
-						children,
-						initial,
-						animate,
-						whileInView,
-						exit: _exit,
-						transition: _transition,
-						viewport: _viewport,
-						...props
-					}: Record<string, unknown> & { children?: unknown },
-					ref: unknown,
-				) => {
-					const { createElement } = require("react");
-					return createElement(
-						"div",
-						{
-							ref,
-							"data-initial": JSON.stringify(initial),
-							"data-animate": animate ? JSON.stringify(animate) : undefined,
-							"data-while-in-view": whileInView ? JSON.stringify(whileInView) : undefined,
-							...props,
-						},
-						children,
-					);
-				},
-			),
-		},
-		useReducedMotion: () => mockReducedMotion.value,
-	};
-});
-
-vi.mock("@/shared/hooks", () => ({
-	useIsTouchDevice: () => mockIsTouchDevice.value,
-}));
-
-vi.mock("@/shared/components/animations/motion.config", () => ({
-	MOTION_CONFIG: {
-		duration: { normal: 0.2 },
-		transform: { fadeY: 8 },
-		easing: { easeInOut: [0.25, 0.1, 0.25, 1] },
-	},
-}));
-
-// ============================================================================
-// IMPORT UNDER TEST
-// ============================================================================
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { Fade } from "../fade";
 
+// Fade is now a universal component driven entirely by CSS (`entrance-fade`
+// keyframe) — no motion-react, no hooks, nothing to mock.
+
+afterEach(cleanup);
+
 describe("Fade", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockReducedMotion.value = false;
-		mockIsTouchDevice.value = false;
-	});
-
-	afterEach(cleanup);
-
-	it("renders children inside m.div", () => {
+	it("renders children", () => {
 		render(<Fade>Hello</Fade>);
 		expect(screen.getByText("Hello")).toBeInTheDocument();
 	});
@@ -88,45 +19,43 @@ describe("Fade", () => {
 		expect(container.firstChild).toHaveClass("my-class");
 	});
 
-	it("renders m.div without animation props when disableOnTouch + touch device", () => {
-		mockIsTouchDevice.value = true;
-		const { container } = render(<Fade disableOnTouch>Content</Fade>);
-		// Always renders m.div but without animation attributes
-		expect(container.firstChild).not.toHaveAttribute("data-initial");
-		expect(container.firstChild).not.toHaveAttribute("data-animate");
-		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
-		expect(screen.getByText("Content")).toBeInTheDocument();
+	it("uses .enter-load when inView is false (default — runs on mount)", () => {
+		const { container } = render(<Fade>Content</Fade>);
+		expect(container.firstChild).toHaveClass("enter-load");
+		expect(container.firstChild).not.toHaveClass("enter-inview");
 	});
 
-	it("renders m.div when disableOnTouch=false + touch device", () => {
-		mockIsTouchDevice.value = true;
-		const { container } = render(<Fade disableOnTouch={false}>Content</Fade>);
-		expect(container.firstChild).toHaveAttribute("data-initial");
-	});
-
-	it("uses whileInView when inView=true", () => {
+	it("uses .enter-inview when inView is true (scroll-triggered)", () => {
 		const { container } = render(<Fade inView>Content</Fade>);
-		expect(container.firstChild).toHaveAttribute("data-while-in-view");
-		expect(container.firstChild).not.toHaveAttribute("data-animate");
+		expect(container.firstChild).toHaveClass("enter-inview");
+		expect(container.firstChild).not.toHaveClass("enter-load");
 	});
 
-	it("uses animate when inView=false", () => {
-		const { container } = render(<Fade>Content</Fade>);
-		expect(container.firstChild).toHaveAttribute("data-animate");
-		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
+	it("sets the --enter-y custom property from the y prop", () => {
+		const { container } = render(<Fade y={24}>Content</Fade>);
+		expect((container.firstChild as HTMLElement).style.getPropertyValue("--enter-y")).toBe("24px");
 	});
 
-	it("renders m.div without animation props when reduced motion is on", () => {
-		mockReducedMotion.value = true;
-		const { container } = render(<Fade>Content</Fade>);
-		expect(container.firstChild).not.toHaveAttribute("data-initial");
-		expect(container.firstChild).not.toHaveAttribute("data-animate");
-		expect(screen.getByText("Content")).toBeInTheDocument();
+	it("converts duration + delay (seconds) to millisecond custom properties", () => {
+		const { container } = render(
+			<Fade duration={0.6} delay={0.3}>
+				Content
+			</Fade>,
+		);
+		const el = container.firstChild as HTMLElement;
+		expect(el.style.getPropertyValue("--enter-duration")).toBe("600ms");
+		expect(el.style.getPropertyValue("--enter-delay")).toBe("300ms");
 	});
 
-	it("sets opacity:0 in initial when reduced motion is off", () => {
-		const { container } = render(<Fade>Content</Fade>);
-		const initial = JSON.parse((container.firstChild as Element).getAttribute("data-initial")!);
-		expect(initial.opacity).toBe(0);
+	it("accepts once + disableOnTouch without error (API-compat no-ops)", () => {
+		const { container } = render(
+			<Fade once disableOnTouch>
+				Content
+			</Fade>,
+		);
+		expect(container.firstChild).toHaveClass("enter-load");
+		// No-op props must not leak to the DOM.
+		expect(container.firstChild).not.toHaveAttribute("once");
+		expect(container.firstChild).not.toHaveAttribute("disableOnTouch");
 	});
 });

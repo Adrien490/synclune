@@ -1,84 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
-
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion, mockIsTouchDevice } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-	mockIsTouchDevice: { value: false },
-}));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
-
-vi.mock("motion/react", () => {
-	const { forwardRef: fRef } = require("react");
-	return {
-		m: {
-			div: fRef(
-				(
-					{
-						children,
-						initial,
-						animate,
-						whileInView,
-						variants,
-						viewport: _viewport,
-						...props
-					}: Record<string, unknown> & { children?: unknown },
-					ref: unknown,
-				) => {
-					const { createElement } = require("react");
-					return createElement(
-						"div",
-						{
-							ref,
-							"data-initial": initial ? String(initial) : undefined,
-							"data-animate": animate ? String(animate) : undefined,
-							"data-while-in-view": whileInView ? String(whileInView) : undefined,
-							"data-has-variants": variants ? "true" : undefined,
-							...props,
-						},
-						children,
-					);
-				},
-			),
-		},
-		useReducedMotion: () => mockReducedMotion.value,
-	};
-});
-
-vi.mock("@/shared/hooks", () => ({
-	useIsTouchDevice: () => mockIsTouchDevice.value,
-}));
-
-vi.mock("@/shared/components/animations/motion.config", () => ({
-	MOTION_CONFIG: {
-		stagger: { normal: 0.06 },
-		duration: { normal: 0.2 },
-		easing: { easeOut: [0, 0, 0.2, 1] },
-	},
-}));
-
-// ============================================================================
-// IMPORT UNDER TEST
-// ============================================================================
+import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 
 import { Stagger } from "../stagger";
 
+// Stagger is now a universal component: the container is a plain <div> and
+// each child is wrapped in a <div> driven by the CSS `entrance-fade` keyframe.
+
+afterEach(cleanup);
+
 describe("Stagger", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockReducedMotion.value = false;
-		mockIsTouchDevice.value = false;
-	});
-
-	afterEach(cleanup);
-
-	it("renders each child in a wrapper div", () => {
+	it("renders every child", () => {
 		render(
 			<Stagger>
 				<span>A</span>
@@ -91,54 +22,64 @@ describe("Stagger", () => {
 		expect(screen.getByText("C")).toBeInTheDocument();
 	});
 
-	it("creates correct number of wrapper divs", () => {
+	it("wraps each child in one item div", () => {
 		const { container } = render(
 			<Stagger>
 				<span>A</span>
 				<span>B</span>
 			</Stagger>,
 		);
-		// Container > 2 item wrappers
-		const wrappers = container.firstChild!.childNodes;
-		expect(wrappers).toHaveLength(2);
+		expect(container.firstChild!.childNodes).toHaveLength(2);
 	});
 
-	it("renders m.div without animation props when disableOnTouch + touch device", () => {
-		mockIsTouchDevice.value = true;
+	it("wraps each child in .enter-load when inView is false (default)", () => {
 		const { container } = render(
-			<Stagger disableOnTouch>
+			<Stagger>
 				<span>A</span>
 				<span>B</span>
 			</Stagger>,
 		);
-		// Always renders m.div but without animation attributes
-		expect(container.firstChild).not.toHaveAttribute("data-initial");
-		expect(container.firstChild).not.toHaveAttribute("data-animate");
-		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
-		expect(screen.getByText("A")).toBeInTheDocument();
-		expect(screen.getByText("B")).toBeInTheDocument();
+		expect(container.querySelectorAll(".enter-load")).toHaveLength(2);
+		expect(container.querySelectorAll(".enter-inview")).toHaveLength(0);
 	});
 
-	it("uses whileInView when inView=true", () => {
+	it("wraps each child in .enter-inview when inView is true", () => {
 		const { container } = render(
 			<Stagger inView>
 				<span>A</span>
+				<span>B</span>
 			</Stagger>,
 		);
-		expect(container.firstChild).toHaveAttribute("data-while-in-view", "visible");
+		expect(container.querySelectorAll(".enter-inview")).toHaveLength(2);
 	});
 
-	it("uses animate when inView=false", () => {
+	it("applies an increasing --enter-delay per child (load cascade)", () => {
 		const { container } = render(
-			<Stagger>
+			<Stagger stagger={0.1} delay={0}>
 				<span>A</span>
+				<span>B</span>
+				<span>C</span>
 			</Stagger>,
 		);
-		expect(container.firstChild).toHaveAttribute("data-animate", "visible");
-		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
+		const items = [...container.querySelectorAll<HTMLElement>(".enter-load")];
+		expect(items[0]!.style.getPropertyValue("--enter-delay")).toBe("0ms");
+		expect(items[1]!.style.getPropertyValue("--enter-delay")).toBe("100ms");
+		expect(items[2]!.style.getPropertyValue("--enter-delay")).toBe("200ms");
 	});
 
-	it("passes role and className to the container", () => {
+	it("applies an increasing --enter-stagger per child (scroll cascade)", () => {
+		const { container } = render(
+			<Stagger inView>
+				<span>A</span>
+				<span>B</span>
+			</Stagger>,
+		);
+		const items = [...container.querySelectorAll<HTMLElement>(".enter-inview")];
+		expect(items[0]!.style.getPropertyValue("--enter-stagger")).toBe("0%");
+		expect(items[1]!.style.getPropertyValue("--enter-stagger")).toBe("5%");
+	});
+
+	it("passes className and role to the container", () => {
 		const { container } = render(
 			<Stagger className="grid" role="list">
 				<span>A</span>
@@ -148,8 +89,16 @@ describe("Stagger", () => {
 		expect(container.firstChild).toHaveAttribute("role", "list");
 	});
 
-	it("uses child.key if present via getStableKey", () => {
-		// This test verifies rendering works with keyed children (no crash)
+	it("forwards data-* attributes to the container", () => {
+		const { container } = render(
+			<Stagger data-carousel-scroll="true">
+				<span>A</span>
+			</Stagger>,
+		);
+		expect(container.firstChild).toHaveAttribute("data-carousel-scroll", "true");
+	});
+
+	it("renders keyed children without crashing", () => {
 		const { container } = render(
 			<Stagger>
 				<span key="item-a">A</span>
@@ -157,32 +106,5 @@ describe("Stagger", () => {
 			</Stagger>,
 		);
 		expect(container.firstChild!.childNodes).toHaveLength(2);
-	});
-
-	it("uses index fallback when no key", () => {
-		// Verify children without keys render correctly
-		const items = ["X", "Y"];
-		const { container } = render(
-			<Stagger>
-				{items.map((item, i) => (
-					<span key={i}>{item}</span>
-				))}
-			</Stagger>,
-		);
-		expect(container.firstChild!.childNodes).toHaveLength(2);
-	});
-
-	it("renders m.div without animation props when reduced motion is on", () => {
-		mockReducedMotion.value = true;
-		const { container } = render(
-			<Stagger>
-				<span>A</span>
-			</Stagger>,
-		);
-		// No animation attributes when reduced motion is on
-		expect(container.firstChild).not.toHaveAttribute("data-initial");
-		expect(container.firstChild).not.toHaveAttribute("data-animate");
-		expect(container.firstChild).not.toHaveAttribute("data-has-variants");
-		expect(screen.getByText("A")).toBeInTheDocument();
 	});
 });
