@@ -25,6 +25,7 @@ import {
 	KpisSkeleton,
 	ChartSkeleton,
 	ListSkeleton,
+	VatProgressSkeleton,
 } from "@/modules/dashboard/components/skeletons";
 
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
@@ -39,10 +40,12 @@ import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadl
 import {
 	DASHBOARD_PERIODS,
 	getComparisonLabel,
+	parseChartMode,
 	parseComparisonMode,
 	parsePeriod,
 } from "@/modules/dashboard/constants/period.constants";
 import type {
+	ChartMode,
 	ComparisonMode,
 	DashboardPeriod,
 } from "@/modules/dashboard/constants/period.constants";
@@ -53,13 +56,14 @@ export const metadata: Metadata = {
 };
 
 type AdminDashboardPageProps = {
-	searchParams: Promise<{ period?: string; comparison?: string }>;
+	searchParams: Promise<{ period?: string; comparison?: string; chartMode?: string }>;
 };
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
 	const params = await searchParams;
 	const period = parsePeriod(params.period);
 	const comparisonMode = parseComparisonMode(params.comparison);
+	const chartMode = parseChartMode(params.chartMode);
 
 	return (
 		<section aria-label="Tableau de bord" className="relative isolate">
@@ -71,7 +75,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
 				actions={
 					<>
-						<div className="hidden w-full items-center gap-2 md:flex md:w-auto md:justify-end">
+						<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
+							<DashboardFreshness />
 							<PeriodSelector />
 							<ExportRevenueButton period={period} />
 							<RefreshDashboardButton />
@@ -81,13 +86,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				}
 			/>
 
-			<Suspense fallback={<DashboardGreetingFallback />}>
-				<DashboardGreeting period={period} comparisonMode={comparisonMode} />
-			</Suspense>
-
 			<div className="space-y-8">
 				<Suspense>
 					<AlertsWrapper />
+				</Suspense>
+
+				<Suspense fallback={<DashboardGreetingFallback />}>
+					<DashboardGreeting period={period} comparisonMode={comparisonMode} />
 				</Suspense>
 
 				<DashboardFreshness className="md:hidden" />
@@ -128,7 +133,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 							/>
 						}
 					>
-						<RevenueChartWrapper period={period} />
+						<RevenueChartWrapper period={period} chartMode={chartMode} />
 					</Suspense>
 				</section>
 
@@ -155,16 +160,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 }
 
 function DashboardGreetingFallback() {
-	return <div aria-hidden="true" className="-mt-2 mb-6 h-6 sm:h-7" />;
-}
-
-function VatProgressSkeleton() {
-	return (
-		<div
-			className="bg-muted/40 h-32 animate-pulse rounded-xl"
-			aria-label="Chargement du suivi de seuil TVA"
-		/>
-	);
+	return <div aria-hidden="true" className="h-6 sm:h-7" />;
 }
 
 async function KpisWrapper({
@@ -229,7 +225,13 @@ async function VatProgressWrapper() {
 	return <VatProgressCard data={data} />;
 }
 
-async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {
+async function RevenueChartWrapper({
+	period,
+	chartMode,
+}: {
+	period: DashboardPeriod;
+	chartMode: ChartMode;
+}) {
 	let chartData;
 	try {
 		chartData = await fetchDashboardRevenueChart(period);
@@ -242,7 +244,7 @@ async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {
 			/>
 		);
 	}
-	return <LazyRevenueChart chartData={chartData} />;
+	return <LazyRevenueChart chartData={chartData} chartMode={chartMode} />;
 }
 
 async function RecentOrdersWrapper() {

@@ -13,21 +13,12 @@ import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-au
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { AddressSelector } from "./address-selector";
 import { CheckoutErrorSummary } from "./checkout-error-summary";
+import { CHECKOUT_FIELD_LABELS } from "../constants/checkout-fields";
 
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
 	value: code,
 	label: COUNTRY_NAMES[code],
 }));
-
-const CHECKOUT_FIELD_LABELS: Record<string, string> = {
-	email: "Adresse email",
-	"shipping.fullName": "Nom complet",
-	"shipping.addressLine1": "Adresse",
-	"shipping.postalCode": "Code postal",
-	"shipping.city": "Ville",
-	"shipping.country": "Pays",
-	"shipping.phoneNumber": "Téléphone",
-};
 
 /**
  * Extracted sub-component for the address autocomplete field.

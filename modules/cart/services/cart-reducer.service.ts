@@ -20,6 +20,15 @@ export function cartReducer(state: GetCartReturn, action: CartOptimisticAction):
 					item.id === action.itemId ? { ...item, quantity: action.quantity } : item,
 				),
 			};
+		case "clear":
+			// Mirror `clearCart` server action : items + discount metadata reset.
+			// `notes` n'est pas exposé par GET_CART_SELECT → rien à faire côté UI.
+			return {
+				...state,
+				items: [],
+				appliedDiscountCode: null,
+				discountAmountCache: null,
+			};
 		default: {
 			const _exhaustiveCheck: never = action;
 			return _exhaustiveCheck;

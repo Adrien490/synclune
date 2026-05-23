@@ -24,6 +24,7 @@ import { CheckoutAddressFields } from "./checkout-address-fields";
 import { CheckoutDiscountSection } from "./checkout-discount-section";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
 import { CheckoutStripeSection } from "./checkout-stripe-section";
+import { getIncompleteSections } from "../constants/checkout-fields";
 
 interface CheckoutFormBodyProps {
 	form: ReturnType<typeof useCheckoutForm>["form"];
@@ -150,23 +151,35 @@ export function CheckoutFormBody({
 									canSubmit: s.canSubmit,
 									email: s.values.email,
 									billingName: s.values.shipping.fullName,
+									fieldMeta: s.fieldMeta,
 								})}
 							>
-								{({ canSubmit, email, billingName }) => (
-									<CheckoutStripeSection
-										clientSecret={pi.clientSecret!}
-										total={total}
-										canSubmit={canSubmit}
-										shippingUnavailable={shippingUnavailable}
-										isOnline={isOnline}
-										email={
-											isGuest ? (email as string) || undefined : (session?.user.email ?? undefined)
-										}
-										billingName={(billingName as string) || undefined}
-										getFormData={getFormData}
-										allowNavigation={allowNavigation}
-									/>
-								)}
+								{({ canSubmit, email, billingName, fieldMeta }) => {
+									const invalidPaths = Object.entries(
+										fieldMeta as Record<string, { errors: string[] }>,
+									)
+										.filter(([, meta]) => meta.errors.length > 0)
+										.map(([name]) => name);
+									const incompleteSections = getIncompleteSections(invalidPaths);
+									return (
+										<CheckoutStripeSection
+											clientSecret={pi.clientSecret!}
+											total={total}
+											canSubmit={canSubmit}
+											shippingUnavailable={shippingUnavailable}
+											isOnline={isOnline}
+											email={
+												isGuest
+													? (email as string) || undefined
+													: (session?.user.email ?? undefined)
+											}
+											billingName={(billingName as string) || undefined}
+											incompleteSections={incompleteSections}
+											getFormData={getFormData}
+											allowNavigation={allowNavigation}
+										/>
+									);
+								}}
 							</form.Subscribe>
 						) : null}
 					</CheckoutSection>

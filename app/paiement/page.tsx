@@ -44,7 +44,7 @@ export default async function CheckoutPage() {
 	// Cart is a Sheet, not a route, so we surface the situation here with clear next steps.
 	if (!cart || cart.items.length === 0) {
 		return (
-			<div className="min-h-dvh min-h-screen">
+			<div className="min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
 				<section className="bg-background py-8 sm:py-10">
 					<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 						<div className="mb-6 sm:mb-8">
@@ -87,7 +87,7 @@ export default async function CheckoutPage() {
 	// Stock / disponibilité KO — keep user on /paiement with clear remediation.
 	if (validation.issues.length > 0) {
 		return (
-			<div className="min-h-dvh min-h-screen">
+			<div className="min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
 				<section className="bg-background py-8 sm:py-10">
 					<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 						<div className="mb-6 sm:mb-8">
@@ -135,13 +135,10 @@ export default async function CheckoutPage() {
 	}
 
 	return (
-		<div
-			className="relative min-h-dvh min-h-screen"
-			style={{ viewTransitionName: "shop-paiement" }}
-		>
+		<div className="relative min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
 			{/* Decorative background — légèrement renforcé pour signature visuelle Synclune */}
 			<div
-				className="from-primary/5 to-secondary/8 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
+				className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
 				style={{ viewTransitionName: "none" }}
 			/>
 
@@ -151,13 +148,22 @@ export default async function CheckoutPage() {
 						<h1 className="font-display text-xl font-normal tracking-wide max-sm:text-center sm:text-3xl">
 							Finaliser ma commande
 						</h1>
-						<div className="mt-2 hidden sm:block">
+						<div className="mt-2 max-sm:flex max-sm:justify-center">
 							<HandDrawnUnderline
 								color="var(--primary)"
-								width={80}
+								width={60}
 								strokeWidth={1.5}
 								inView={false}
+								className="sm:hidden"
 							/>
+							<div className="hidden sm:block">
+								<HandDrawnUnderline
+									color="var(--primary)"
+									width={80}
+									strokeWidth={1.5}
+									inView={false}
+								/>
+							</div>
 						</div>
 						<p className="font-cursive text-muted-foreground mt-2 text-sm italic max-sm:text-center sm:mt-3 sm:text-base">
 							<span className="sm:hidden">Étape finale — tu y es presque.</span>

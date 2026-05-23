@@ -195,6 +195,18 @@ describe("Footer", () => {
 		expect(links[3]).toHaveTextContent("Mon compte");
 	});
 
+	// --- Focus ring SSOT (WCAG 2.4.7) ---
+
+	it("applies focus-ring SSOT utility on FooterLink anchors", async () => {
+		await renderFooter();
+
+		const navSection = screen.getByRole("navigation", { name: /navigation/i });
+		const links = within(navSection).getAllByRole("link");
+		for (const link of links) {
+			expect(link.className).toContain("focus-ring");
+		}
+	});
+
 	// --- Contact section ---
 
 	it("renders contact section with email, copy-button and location", async () => {

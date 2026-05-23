@@ -101,16 +101,13 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 	}
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* Decorative background */}
-			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
+			<div className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card
-						style={{ viewTransitionName: "checkout-pay-cta" }}
-						className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md"
-					>
+					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
 							<Fade y={10} delay={0.15}>
@@ -156,8 +153,13 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Articles commandés */}
 							{order.items.length > 0 && (
-								<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
-									<h2 className="text-base font-semibold">Articles commandés</h2>
+								<section
+									aria-labelledby="confirmation-items-heading"
+									className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4"
+								>
+									<h2 id="confirmation-items-heading" className="text-base font-semibold">
+										Articles commandés
+									</h2>
 									<div className="space-y-3">
 										{order.items.map((item) => (
 											<div key={item.id} className="flex gap-3 text-sm">
@@ -194,12 +196,17 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											</div>
 										))}
 									</div>
-								</div>
+								</section>
 							)}
 
 							{/* Récapitulatif montants */}
-							<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
-								<h2 className="text-base font-semibold">Récapitulatif</h2>
+							<section
+								aria-labelledby="confirmation-summary-heading"
+								className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4"
+							>
+								<h2 id="confirmation-summary-heading" className="text-base font-semibold">
+									Récapitulatif
+								</h2>
 								<dl className="space-y-2 text-sm">
 									<div className="flex justify-between">
 										<dt className="text-muted-foreground">Sous-total</dt>
@@ -228,12 +235,17 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<dd className="tabular-nums">{formatEuro(order.total)}</dd>
 									</div>
 								</dl>
-							</div>
+							</section>
 
 							{/* Adresse de livraison */}
-							<div className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4">
-								<h2 className="text-base font-semibold">Adresse de livraison</h2>
-								<address className="text-muted-foreground text-sm not-italic">
+							<section
+								aria-labelledby="confirmation-address-heading"
+								className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4"
+							>
+								<h2 id="confirmation-address-heading" className="text-base font-semibold">
+									Adresse de livraison
+								</h2>
+								<div className="text-muted-foreground text-sm">
 									<p className="text-foreground font-medium">
 										{order.shippingFirstName} {order.shippingLastName}
 									</p>
@@ -243,8 +255,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										{order.shippingPostalCode} {order.shippingCity}
 									</p>
 									<p>{COUNTRY_NAMES[(order.shippingCountry as ShippingCountry | null) ?? "FR"]}</p>
-								</address>
-							</div>
+								</div>
+							</section>
 
 							{/* Message personnalisé */}
 							<Alert>

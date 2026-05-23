@@ -15,7 +15,6 @@ import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-se
 import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
 import { HomeFaq } from "./_components/home-faq";
-import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -89,10 +88,12 @@ export default async function Page() {
 			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
 			<HeroReassuranceBanner />
 
-			{/* 2. Latest Creations - 4 most recent products */}
-			<Suspense fallback={<LatestCreationsSkeleton />}>
-				<LatestCreations productsPromise={productsPromise} />
-			</Suspense>
+			{/* 2. Latest Creations - 4 most recent products.
+			    Rendered synchronously (productsPromise already awaited by HeroSection
+			    above) so React 19 hoists `<link rel="preload">` for the LCP product
+			    image (ProductCard[0]) into the initial <head> on mobile, where the
+			    hero floating images are hidden. */}
+			<LatestCreations productsPromise={productsPromise} />
 
 			{/* 3. Collections - Thematic browsing with descriptions */}
 			<Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>

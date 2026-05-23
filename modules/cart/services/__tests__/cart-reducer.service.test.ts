@@ -46,6 +46,39 @@ describe("cartReducer", () => {
 			expect(
 				cartReducer(null, { type: "updateQuantity", itemId: "item-1", quantity: 3 }),
 			).toBeNull();
+			expect(cartReducer(null, { type: "clear" })).toBeNull();
+		});
+	});
+
+	describe("clear action", () => {
+		it("should empty items array", () => {
+			const cart = createCart([{ id: "item-1" }, { id: "item-2" }]);
+			const result = cartReducer(cart, { type: "clear" });
+			expect(result!.items).toHaveLength(0);
+		});
+
+		it("should reset appliedDiscountCode and discountAmountCache", () => {
+			const cart = createCart([{ id: "item-1" }]);
+			cart.appliedDiscountCode = "PROMO10";
+			cart.discountAmountCache = 500;
+			const result = cartReducer(cart, { type: "clear" });
+			expect(result!.appliedDiscountCode).toBeNull();
+			expect(result!.discountAmountCache).toBeNull();
+		});
+
+		it("should preserve cart identity fields (id, userId, sessionId)", () => {
+			const cart = createCart([{ id: "item-1" }]);
+			const result = cartReducer(cart, { type: "clear" });
+			expect(result!.id).toBe("cart-1");
+			expect(result!.userId).toBe("user-1");
+		});
+
+		it("should not mutate the original state", () => {
+			const cart = createCart([{ id: "item-1" }, { id: "item-2" }]);
+			cart.appliedDiscountCode = "PROMO10";
+			cartReducer(cart, { type: "clear" });
+			expect(cart.items).toHaveLength(2);
+			expect(cart.appliedDiscountCode).toBe("PROMO10");
 		});
 	});
 

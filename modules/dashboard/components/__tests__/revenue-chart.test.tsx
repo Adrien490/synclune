@@ -78,6 +78,20 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic,
 }));
 
+const mockRouterPush = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({
+		push: mockRouterPush,
+		replace: vi.fn(),
+		back: vi.fn(),
+		forward: vi.fn(),
+		refresh: vi.fn(),
+		prefetch: vi.fn(),
+	}),
+	useSearchParams: () => new URLSearchParams(),
+	usePathname: () => "/admin",
+}));
+
 import { RevenueChart } from "../revenue-chart";
 
 afterEach(cleanup);
@@ -237,24 +251,20 @@ describe("RevenueChart", () => {
 		expect(screen.getByText(/Pic commandes : 5 le 2 janv./)).toBeInTheDocument();
 	});
 
-	it("renders figure role with descriptive aria-label", () => {
+	it("renders figure role labelled by the chart title and described by the sr-only summary", () => {
 		render(<RevenueChart chartData={makeChartData()} />);
 
 		const figure = screen.getByRole("figure");
-		expect(figure).toHaveAttribute(
-			"aria-label",
-			"Graphique des revenus et commandes - Revenus des 30 derniers jours",
-		);
+		expect(figure).toHaveAttribute("aria-labelledby", "revenue-chart-title");
+		expect(figure).toHaveAttribute("aria-describedby", "revenue-chart-description");
 	});
 
-	it("renders dynamic aria-label when periodLabel is provided", () => {
-		render(<RevenueChart chartData={makeChartData()} periodLabel="7 jours" />);
+	it("links the sr-only description container by id", () => {
+		render(<RevenueChart chartData={makeChartData()} />);
 
-		const figure = screen.getByRole("figure");
-		expect(figure).toHaveAttribute(
-			"aria-label",
-			"Graphique des revenus et commandes - Revenus - 7 jours",
-		);
+		const description = document.getElementById("revenue-chart-description");
+		expect(description).not.toBeNull();
+		expect(description?.textContent).toContain("Total revenus");
 	});
 
 	it("does not render figure when there is no revenue", () => {
@@ -319,5 +329,92 @@ describe("RevenueChart", () => {
 		render(<RevenueChart chartData={makeChartData()} />);
 
 		expect(screen.getByText("Touchez le graphique pour voir le détail.")).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// URL-persisted chart mode toggle (F6)
+	// -------------------------------------------------------------------------
+
+	it("uses the chartMode prop to pick initial detailed view", () => {
+		const chartData: GetRevenueChartReturn = {
+			data: [
+				{
+					date: "1 janv.",
+					revenue: 500,
+					orders: 2,
+					subtotal: 400,
+					discounts: 50,
+					shipping: 10,
+				},
+			],
+			periodLabel: "30 jours",
+		};
+		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
+		expect(screen.getByRole("button", { name: /vue simple/i })).toBeInTheDocument();
+	});
+
+	it("pushes ?chartMode=detailed when toggling from simple", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		mockRouterPush.mockClear();
+		const chartData: GetRevenueChartReturn = {
+			data: [
+				{
+					date: "1 janv.",
+					revenue: 500,
+					orders: 2,
+					subtotal: 400,
+					discounts: 50,
+					shipping: 10,
+				},
+			],
+			periodLabel: "30 jours",
+		};
+		render(<RevenueChart chartData={chartData} chartMode="simple" />);
+		fireEvent.click(screen.getByRole("button", { name: /détailler/i }));
+
+		expect(mockRouterPush).toHaveBeenCalledWith("?chartMode=detailed", { scroll: false });
+	});
+
+	it("clears ?chartMode= when toggling back to simple (default)", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		mockRouterPush.mockClear();
+		const chartData: GetRevenueChartReturn = {
+			data: [
+				{
+					date: "1 janv.",
+					revenue: 500,
+					orders: 2,
+					subtotal: 400,
+					discounts: 50,
+					shipping: 10,
+				},
+			],
+			periodLabel: "30 jours",
+		};
+		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
+		fireEvent.click(screen.getByRole("button", { name: /vue simple/i }));
+
+		expect(mockRouterPush).toHaveBeenCalledWith(".", { scroll: false });
+	});
+
+	it("exposes aria-pressed reflecting the current detailed state", () => {
+		const chartData: GetRevenueChartReturn = {
+			data: [
+				{
+					date: "1 janv.",
+					revenue: 500,
+					orders: 2,
+					subtotal: 400,
+					discounts: 50,
+					shipping: 10,
+				},
+			],
+			periodLabel: "30 jours",
+		};
+		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
+		expect(screen.getByRole("button", { name: /vue simple/i })).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
 	});
 });

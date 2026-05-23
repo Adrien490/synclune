@@ -188,11 +188,17 @@ describe("CollectionCard", () => {
 		});
 	});
 
-	describe("title attribute (P1.6)", () => {
-		it("sets title attribute on heading for tooltip on truncation", () => {
+	describe("title attribute regression", () => {
+		/**
+		 * @regression collection-card-no-title-attribute
+		 * Audit 2026-05-24: `title={name}` retiré car redondant avec le texte enfant du heading
+		 * (certains SR comme NVDA/VoiceOver l'annoncent deux fois). line-clamp est purement
+		 * visuel, le texte complet reste accessible aux SR via le DOM.
+		 */
+		it("does NOT set a redundant title attribute on the heading", () => {
 			renderCard({ name: "Collection Noël 2026 Édition Limitée" });
 			const heading = screen.getByRole("heading");
-			expect(heading.getAttribute("title")).toBe("Collection Noël 2026 Édition Limitée");
+			expect(heading.hasAttribute("title")).toBe(false);
 		});
 	});
 
@@ -213,11 +219,46 @@ describe("CollectionCard", () => {
 	});
 
 	describe("description visibility (P3.3)", () => {
-		it("description uses hidden sm:block (desktop-only)", () => {
+		/**
+		 * @regression collection-card-description-sr-only-mobile
+		 * Audit 2026-05-24: description passe de `hidden sm:block` à `sr-only sm:not-sr-only sm:block`.
+		 * Visuel inchangé (cachée mobile, visible desktop) mais lue par SR mobile (a11y +).
+		 */
+		it("description is sr-only on mobile and visible on desktop", () => {
 			renderCard({ description: "Bijoux faits à la main" });
 			const desc = screen.getByText("Bijoux faits à la main");
-			expect(desc.className).toMatch(/hidden/);
+			expect(desc.className).toMatch(/sr-only/);
+			expect(desc.className).toMatch(/sm:not-sr-only/);
 			expect(desc.className).toMatch(/sm:block/);
+			expect(desc.className).not.toMatch(/(?<![a-z:])hidden/);
+		});
+	});
+
+	describe("price range SR clarity (audit 2026-05-24)", () => {
+		/**
+		 * @regression collection-card-range-sr-only-a
+		 * L'en-dash U+2013 est lu « tiret demi-cadratin » par NVDA fr. Pattern WAI :
+		 * marquer le tiret aria-hidden + ajouter un sr-only « à » pour clarté SR.
+		 */
+		it("emits sr-only 'à' between min and max for SR clarity", () => {
+			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
+			const srOnlySpans = container.querySelectorAll("span.sr-only");
+			const texts = Array.from(srOnlySpans).map((s) => s.textContent.trim());
+			expect(texts).toContain("à");
+		});
+
+		it("hides the dash separator from SR via aria-hidden", () => {
+			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
+			const ariaHiddenSpans = container.querySelectorAll('span[aria-hidden="true"]');
+			const dashSpan = Array.from(ariaHiddenSpans).find((s) => s.textContent.includes("–"));
+			expect(dashSpan).toBeDefined();
+		});
+
+		it("does NOT emit sr-only 'à' when min equals max (single price)", () => {
+			const { container } = renderCard({ priceRange: { min: 3000, max: 3000 } });
+			const srOnlySpans = container.querySelectorAll("span.sr-only");
+			const texts = Array.from(srOnlySpans).map((s) => s.textContent.trim());
+			expect(texts).not.toContain("à");
 		});
 	});
 });

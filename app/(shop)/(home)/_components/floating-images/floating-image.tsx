@@ -133,8 +133,6 @@ export function FloatingImage({ image, position }: FloatingImageProps) {
 								alt={image.alt}
 								width={position.width}
 								height={position.height}
-								preload={position.isLcpCandidate}
-								fetchPriority={position.isLcpCandidate ? "high" : "auto"}
 								className="relative aspect-4/5 w-full object-cover"
 								sizes={position.sizes}
 								quality={85}

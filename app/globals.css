@@ -263,6 +263,10 @@ html[data-keyboard="open"] [data-hide-on-keyboard] {
 	--secondary: oklch(0.9221 0.0871 86.29); /* Gris clair */
 	--secondary-foreground: oklch(0.13 0.01 270);
 
+	/* Star rating — gold contrasté WCAG G207 (≥3:1 sur card/background) */
+	--star-filled: oklch(0.74 0.16 80);
+	--star-empty: var(--muted-foreground);
+
 	/* ==========================================
 	   ACCENT (Couleur logo - décoratif)
 	   ========================================== */

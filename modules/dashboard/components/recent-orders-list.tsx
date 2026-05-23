@@ -81,7 +81,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 					<>
 						<ItemGroup aria-label="Dernières commandes">
 							{orders.map((order: RecentOrderItem, index) => (
-								<Fade key={order.id} y={6} delay={index * 0.04} inView once>
+								<Fade key={order.id} y={6} delay={index * 0.02} inView once>
 									{index > 0 && <ItemSeparator />}
 									<Item asChild size="sm">
 										<Link

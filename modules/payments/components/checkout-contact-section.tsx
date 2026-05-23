@@ -6,6 +6,7 @@ import type { Session } from "@/modules/auth/lib/auth";
 import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
 import { logout } from "@/modules/auth/actions/logout";
+import { toast } from "@/shared/utils/toast";
 import { Info, Mail } from "lucide-react";
 import Link from "next/link";
 
@@ -21,7 +22,12 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 
 	const handleSwitchAccount = () => {
 		startLogoutTransition(async () => {
-			await logout();
+			try {
+				await logout();
+			} catch {
+				toast.error("Impossible de te déconnecter. Réessaye dans un instant.");
+				return;
+			}
 			router.push("/connexion?callbackURL=/paiement");
 			router.refresh();
 		});
@@ -76,7 +82,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 
 				{/* Email display for logged-in users */}
 				{!isGuest && session.user.email && (
-					<div className="border-primary/10 bg-primary/3 flex flex-wrap items-center gap-2 rounded-xl border p-3.5 text-sm">
+					<div className="border-primary/10 bg-primary/5 flex flex-wrap items-center gap-2 rounded-xl border p-3.5 text-sm">
 						<Mail className="text-muted-foreground size-4 shrink-0" />
 						<span className="text-muted-foreground">Email :</span>
 						<span className="font-medium">{session.user.email}</span>

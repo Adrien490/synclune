@@ -298,7 +298,7 @@ describe("Gallery", () => {
 			const { container } = render(<Gallery product={createProduct()} title="Bague étoile" />);
 			// Find mobile tablist wrapper — the one inside md:hidden wrapper
 			const mobileTablist = container.querySelector(
-				'[role="tablist"][aria-label="Vignettes"].pl-\\[env\\(safe-area-inset-left\\,0px\\)\\]',
+				'[role="tablist"][aria-label="Vignettes du produit"].pl-\\[env\\(safe-area-inset-left\\,0px\\)\\]',
 			);
 			expect(mobileTablist).toBeInTheDocument();
 		});

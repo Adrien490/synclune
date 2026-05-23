@@ -1,16 +1,28 @@
-import type { GetProductReturn } from "../types/product.types";
+import { Gem, Hand, Layers, MapPin, Maximize2, Palette, type LucideIcon } from "lucide-react";
+
 import { generateHighlights } from "../services/product-highlights.service";
+import type { ProductHighlightId } from "../types/product-services.types";
+import type { GetProductReturn } from "../types/product.types";
 
 interface ProductHighlightsProps {
 	product: GetProductReturn;
 }
 
+const HIGHLIGHT_ICONS = {
+	material: Gem,
+	color: Palette,
+	handmade: Hand,
+	french: MapPin,
+	adjustable: Maximize2,
+	collection: Layers,
+} as const satisfies Record<ProductHighlightId, LucideIcon>;
+
 /**
- * ProductHighlights - Points cles produit avec pattern Baymard
+ * ProductHighlights - Points clés produit avec pattern Baymard
  *
- * Pattern: [DOT] + [TITRE] + [DESCRIPTION]
- * Ameliore la scanabilite UX (78% des sites echouent selon Baymard).
- * Genere automatiquement depuis les donnees existantes.
+ * Pattern: [ICÔNE TYPÉE] + [LABEL] + [DESCRIPTION]
+ * Améliore la scanabilité UX (78% des sites échouent selon Baymard).
+ * Aligné visuellement avec le sibling ProductReassurance (même PDP).
  */
 export function ProductHighlights({ product }: ProductHighlightsProps) {
 	const highlights = generateHighlights(product);
@@ -20,24 +32,26 @@ export function ProductHighlights({ product }: ProductHighlightsProps) {
 	}
 
 	return (
-		<section aria-labelledby="highlights-title">
-			<h2 id="highlights-title" className="sr-only">
-				Points clés du produit
+		<section
+			aria-labelledby="highlights-title"
+			className="bg-muted/30 border-border/50 rounded-xl border p-4"
+		>
+			<h2 id="highlights-title" className="text-foreground mb-3 text-sm font-semibold">
+				Points clés
 			</h2>
-			<ul className="grid gap-4 sm:grid-cols-2">
-				{highlights.map((highlight) => (
-					<li key={highlight.id} className="flex items-start gap-2">
-						<span className="text-primary mt-1" aria-hidden="true">
-							•
-						</span>
-						<div className="min-w-0">
-							<p className="text-sm/6 font-medium tracking-normal antialiased">{highlight.label}</p>
-							<p className="text-muted-foreground text-xs/5 tracking-normal antialiased">
-								{highlight.description}
-							</p>
-						</div>
-					</li>
-				))}
+			<ul className="space-y-2.5">
+				{highlights.map((highlight) => {
+					const Icon = HIGHLIGHT_ICONS[highlight.id];
+					return (
+						<li key={highlight.id} className="flex items-start gap-2.5">
+							<Icon className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
+							<div>
+								<p className="text-foreground text-sm font-medium">{highlight.label}</p>
+								<p className="text-muted-foreground text-xs">{highlight.description}</p>
+							</div>
+						</li>
+					);
+				})}
 			</ul>
 		</section>
 	);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import {
@@ -16,12 +16,12 @@ import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsLabel } from "@/modules/skus/utils/sku-colors-label";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
-import { ChevronDown, Info, Shield } from "lucide-react";
+import { ChevronDown, ExternalLink, Info, Shield } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
 import Link from "next/link";
+import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
 
 type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
@@ -66,6 +66,7 @@ function SummaryContent({
 	totalItems,
 	onEditCart,
 }: SummaryContentProps) {
+	const tvaTooltipId = useId();
 	return (
 		<>
 			{/* Liste des articles */}
@@ -168,7 +169,9 @@ function SummaryContent({
 					<span className="text-muted-foreground">Livraison</span>
 					<span className="text-base/6 font-medium tabular-nums">
 						{shippingUnavailable ? (
-							<span className="text-muted-foreground text-sm italic">Sélectionne ton pays</span>
+							<span className="text-muted-foreground text-sm italic">
+								{SHIPPING_UNAVAILABLE.summary}
+							</span>
 						) : (
 							formatEuro(shipping)
 						)}
@@ -185,7 +188,7 @@ function SummaryContent({
 
 			{/* Total */}
 			<div
-				className="bg-primary/3 -mx-1 space-y-2 rounded-xl p-3"
+				className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3"
 				aria-live="polite"
 				aria-atomic="true"
 				aria-label={`Total mis à jour : ${formatEuro(total)}`}
@@ -202,12 +205,13 @@ function SummaryContent({
 								type="button"
 								className="text-muted-foreground focus-visible:ring-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 								aria-label="Pourquoi pas de TVA ?"
+								aria-describedby={tvaTooltipId}
 							>
 								<span>TVA non applicable, art. 293 B du CGI</span>
 								<Info className="size-3" aria-hidden="true" />
 							</button>
 						</TooltipTrigger>
-						<TooltipContent className="max-w-xs text-center">
+						<TooltipContent id={tvaTooltipId} className="max-w-xs text-center">
 							Synclune est en franchise en base de TVA (régime micro-entreprise). Aucune TVA
 							n&apos;est facturée sur vos commandes.
 						</TooltipContent>
@@ -232,12 +236,24 @@ function SummaryContent({
 
 				{/* Trust links */}
 				<div className="text-muted-foreground flex items-center justify-center gap-3 text-xs">
-					<Link href="/retractation" className="underline hover:no-underline" target="_blank">
+					<Link
+						href="/retractation"
+						className="inline-flex items-center gap-1 underline hover:no-underline"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						Politique de retour
+						<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
 					</Link>
 					<span aria-hidden="true">·</span>
-					<Link href="/cgv" className="underline hover:no-underline" target="_blank">
+					<Link
+						href="/cgv"
+						className="inline-flex items-center gap-1 underline hover:no-underline"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
 						CGV
+						<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
 					</Link>
 				</div>
 			</div>
@@ -263,7 +279,7 @@ export function CheckoutSummary({
 
 	const handleEditCart = () => {
 		haptic("light");
-		withViewTransition(() => openCart());
+		openCart();
 	};
 
 	const contentProps: SummaryContentProps = {

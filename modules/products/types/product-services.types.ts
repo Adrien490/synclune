@@ -29,10 +29,22 @@ export interface SkuForPricing {
 // ============================================================================
 
 /**
- * Highlight produit pour améliorer la scanabilité
+ * Highlight produit pour améliorer la scanabilité.
+ *
+ * `id` est une union literal stable : permet aux consommateurs (UI) de mapper
+ * chaque highlight à une icône via `satisfies Record<ProductHighlightId, ...>`
+ * sans `as` et avec exhaustivité validée par TS.
  */
+export type ProductHighlightId =
+	| "material"
+	| "color"
+	| "handmade"
+	| "french"
+	| "adjustable"
+	| "collection";
+
 export type ProductHighlight = {
-	id: string;
+	id: ProductHighlightId;
 	label: string;
 	description: string;
 	priority: number;

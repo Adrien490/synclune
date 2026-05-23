@@ -329,6 +329,17 @@ describe("ProductCatalog", () => {
 			);
 			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
 		});
+
+		/**
+		 * @regression onsale-active-filters
+		 * preferOnSale alone must flip hasActiveFilters → badges row visible so the
+		 * "En promotion" filter can be removed from the grid. Before this fix,
+		 * `?onSale=true` alone left activeFiltersCount=0 and hid the badges row.
+		 */
+		it("renders filter badges when preferOnSale is true even with 0 active filters", () => {
+			render(<ProductCatalog {...makeProps({ activeFiltersCount: 0, preferOnSale: true })} />);
+			expect(screen.getByTestId("product-filter-badges")).toBeInTheDocument();
+		});
 	});
 
 	describe("search placeholder", () => {
@@ -352,9 +363,11 @@ describe("ProductCatalog", () => {
 	});
 
 	describe("layout", () => {
-		it("renders the catalog section with correct aria-label", () => {
-			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByRole("region", { name: "Catalogue des créations" })).toBeInTheDocument();
+		it("does not expose a static region label that would contradict the dynamic h1", () => {
+			render(<ProductCatalog {...makeProps({ searchTerm: "bague" })} />);
+			expect(
+				screen.queryByRole("region", { name: "Catalogue des créations" }),
+			).not.toBeInTheDocument();
 		});
 
 		it("renders the ProductList component", () => {

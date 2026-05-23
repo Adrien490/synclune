@@ -14,11 +14,6 @@ const ANIMATION_PROPS = {
 	exit: { opacity: 0 },
 } as const;
 
-const ICON_VARIANTS = {
-	initial: { opacity: 0.6 },
-	hover: { opacity: 1 },
-} as const;
-
 const DRAG_CONSTRAINTS = { left: 0, right: 0 } as const;
 const DRAG_DISMISS_THRESHOLD = 80;
 
@@ -36,17 +31,17 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
 
-	// Swipe-to-dismiss on touch devices (hooks must be called before early return)
+	// Left-only swipe-to-dismiss (iOS convention) — right rubberband stays full-opacity by design.
 	const x = useMotionValue(0);
 	const dragOpacity = useTransform(
 		x,
 		[-DRAG_DISMISS_THRESHOLD, 0, DRAG_DISMISS_THRESHOLD],
-		[0.2, 1, 0.2],
+		[0.2, 1, 1],
 	);
 	const dragScale = useTransform(
 		x,
 		[-DRAG_DISMISS_THRESHOLD, 0, DRAG_DISMISS_THRESHOLD],
-		[0.92, 1, 0.92],
+		[0.92, 1, 1],
 	);
 
 	const formatted = formatFilter?.(filter);
@@ -61,7 +56,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 	const filterDescription = `${displayLabel}${displayValue ? ` ${displayValue}` : ""}`;
 	const ariaLabelRemove = `Supprimer le filtre ${filterDescription}`;
 
-	// Optimistic removal - instant badge disappearance
+	// Parent `FilterBadges` has aria-live=polite — removal is announced via list update.
 	const handleRemove = () => {
 		triggerHaptic("selection");
 		let value: string | undefined;
@@ -72,6 +67,13 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 			value = String(filter.value);
 		} else if (filter.value instanceof Date) {
 			value = filter.value.toISOString();
+		} else if (Array.isArray(filter.value)) {
+			// `useFilter` decomposes arrays into distinct entries — reaching this signals a hook contract regression.
+			if (process.env.NODE_ENV !== "production") {
+				throw new Error(
+					`FilterBadge received an array value for key "${filter.key}". The useFilter hook should decompose arrays before rendering.`,
+				);
+			}
 		}
 
 		onRemove(filter.key, value);
@@ -87,7 +89,6 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 		shouldReduceMotion ?? false,
 	);
 	const enableDrag = isTouchDevice && !shouldReduceMotion;
-	const enableHover = !isTouchDevice && !shouldReduceMotion;
 
 	return (
 		<m.button
@@ -96,12 +97,11 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 			transition={transitionProps}
 			onClick={handleRemove}
 			aria-label={ariaLabelRemove}
-			whileHover={enableHover ? "hover" : undefined}
 			drag={enableDrag ? "x" : false}
 			dragConstraints={DRAG_CONSTRAINTS}
 			dragElastic={0.3}
 			onDragEnd={(_, info) => {
-				if (Math.abs(info.offset.x) > DRAG_DISMISS_THRESHOLD) {
+				if (info.offset.x < -DRAG_DISMISS_THRESHOLD) {
 					handleRemove();
 				}
 			}}
@@ -112,7 +112,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 			}}
 			className={cn(
 				// Layout
-				"flex items-center gap-1.5",
+				"group flex items-center gap-1.5",
 				"h-11 sm:h-8",
 				"px-3",
 				// Pill shape
@@ -123,13 +123,13 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 				"max-w-70 sm:max-w-80",
 				// States
 				"can-hover:cursor-pointer touch-manipulation",
-				"transition-colors duration-150",
+				"motion-safe:transition-colors motion-safe:duration-150",
 				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
 				// Active (mobile)
 				"active:scale-[0.95] sm:active:scale-[0.98]",
 				"active:bg-destructive/15 active:border-destructive/30",
-				// Focus
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+				// Focus ring (SSOT — app/globals.css @utility focus-ring)
+				"focus-ring",
 			)}
 		>
 			{/* Text: label + value */}
@@ -151,21 +151,21 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 				)}
 			</span>
 
-			{/* X icon - responsive: plain on mobile, circle on desktop */}
-			<m.span
+			{/* X opacity: full on mobile (primary affordance, no hover), dimmed-at-rest on desktop. */}
+			<span
 				aria-hidden="true"
-				variants={ICON_VARIANTS}
-				initial="initial"
-				transition={transitionProps}
 				className={cn(
 					"shrink-0",
+					"opacity-100 sm:opacity-60",
+					"can-hover:group-hover:opacity-100",
+					"motion-safe:transition-opacity motion-safe:duration-150",
 					"sm:flex sm:items-center sm:justify-center",
 					"sm:size-5 sm:rounded-full",
 					"sm:bg-destructive/10 sm:text-destructive",
 				)}
 			>
 				<X className="size-3.5 sm:size-3" />
-			</m.span>
+			</span>
 		</m.button>
 	);
 }

@@ -41,13 +41,18 @@ export function ColorFormDialog() {
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
 						{isUpdateMode
-							? "Modifiez le nom ou le code couleur"
+							? "Modifiez les informations de la couleur"
 							: "Ajoutez une nouvelle couleur au catalogue"}
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
 				{isUpdateMode ? (
-					<EditColorForm color={color!} onSuccess={close} redirectOnSuccess={false} />
+					<EditColorForm
+						key={color!.id}
+						color={color!}
+						onSuccess={close}
+						redirectOnSuccess={false}
+					/>
 				) : (
 					<CreateColorForm
 						onSuccess={close}

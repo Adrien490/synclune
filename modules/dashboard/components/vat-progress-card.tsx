@@ -44,12 +44,15 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 				status === "default" && "border-info/40 from-info/5",
 			)}
 			role="region"
-			aria-label={`Seuil TVA franchise ${year}`}
+			aria-labelledby="vat-progress-card-title"
 			style={{ viewTransitionName: "vat-progress-card" } as CSSProperties}
 		>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<div className="flex items-center gap-1.5">
-					<CardTitle className="text-muted-foreground text-sm font-medium">
+					<CardTitle
+						id="vat-progress-card-title"
+						className="text-muted-foreground text-sm font-medium"
+					>
 						Seuil TVA {year}
 					</CardTitle>
 					<Tooltip>

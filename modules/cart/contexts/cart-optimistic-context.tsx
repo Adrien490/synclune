@@ -4,7 +4,8 @@ import { createContext, use } from "react";
 
 export type CartOptimisticAction =
 	| { type: "remove"; itemId: string }
-	| { type: "updateQuantity"; itemId: string; quantity: number };
+	| { type: "updateQuantity"; itemId: string; quantity: number }
+	| { type: "clear" };
 
 export interface CartOptimisticContextValue {
 	updateOptimisticCart: (action: CartOptimisticAction) => void;

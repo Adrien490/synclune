@@ -37,11 +37,17 @@ export function KpiValue({
 		size === "compact" && "text-2xl",
 	);
 
+	const useTicker = size === "featured" && numericValue !== undefined;
+
 	return (
 		<div className={valueClassName}>
-			{numericValue !== undefined ? (
+			{useTicker ? (
 				<>
-					<NumberTicker value={numericValue} decimalPlaces={decimalPlaces} delay={animationDelay} />
+					<NumberTicker
+						value={numericValue as number}
+						decimalPlaces={decimalPlaces}
+						delay={animationDelay}
+					/>
 					{suffix}
 				</>
 			) : (

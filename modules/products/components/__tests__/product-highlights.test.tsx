@@ -1,8 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type {
+	ProductHighlight,
+	ProductHighlightId,
+} from "@/modules/products/services/product-highlights.service";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductHighlight } from "@/modules/products/services/product-highlights.service";
 
 // ─── Hoist mock refs ──────────────────────────────────────────────────────────
 
@@ -29,7 +32,11 @@ function makeProduct(): GetProductReturn {
 	} as unknown as GetProductReturn;
 }
 
-function makeHighlight(id: string, label: string, description: string): ProductHighlight {
+function makeHighlight(
+	id: ProductHighlightId,
+	label: string,
+	description: string,
+): ProductHighlight {
 	return { id, label, description, priority: 1 };
 }
 
@@ -58,41 +65,79 @@ describe("ProductHighlights", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("renders bullet dot indicators alongside each highlight", () => {
-		mockGenerateHighlights.mockReturnValue([makeHighlight("handmade", "Fait main", "Description")]);
-
-		render(<ProductHighlights product={makeProduct()} />);
-
-		// The bullet dot spans are aria-hidden
-		const dots = document.querySelectorAll('[aria-hidden="true"]');
-		expect(dots.length).toBeGreaterThanOrEqual(1);
-	});
-
-	it("wraps the list in a section with an accessible title", () => {
+	it("renders exactly one icon per highlight item", () => {
 		mockGenerateHighlights.mockReturnValue([
-			makeHighlight("french", "Artisanat français", "Créé dans notre atelier en France"),
-		]);
-
-		render(<ProductHighlights product={makeProduct()} />);
-
-		const section = screen.getByRole("region", { name: /Points clés du produit/i });
-		expect(section).toBeInTheDocument();
-
-		// The heading is visually hidden with sr-only
-		const heading = screen.getByText("Points clés du produit");
-		expect(heading).toBeInTheDocument();
-	});
-
-	it("renders each highlight as a list item", () => {
-		mockGenerateHighlights.mockReturnValue([
-			makeHighlight("a", "Alpha", "Desc A"),
-			makeHighlight("b", "Beta", "Desc B"),
-			makeHighlight("c", "Gamma", "Desc C"),
+			makeHighlight("material", "Argent 925", "Matière"),
+			makeHighlight("handmade", "Fait main", "Unique"),
+			makeHighlight("french", "Artisanat français", "France"),
 		]);
 
 		render(<ProductHighlights product={makeProduct()} />);
 
 		const items = screen.getAllByRole("listitem");
 		expect(items).toHaveLength(3);
+		for (const item of items) {
+			const icons = item.querySelectorAll("svg");
+			expect(icons).toHaveLength(1);
+		}
+	});
+
+	it("wraps the list in a section with a visible heading", () => {
+		mockGenerateHighlights.mockReturnValue([
+			makeHighlight("french", "Artisanat français", "Créé dans notre atelier en France"),
+		]);
+
+		render(<ProductHighlights product={makeProduct()} />);
+
+		const section = screen.getByRole("region", { name: /Points clés/i });
+		expect(section).toBeInTheDocument();
+
+		const heading = within(section).getByRole("heading", { level: 2, name: /Points clés/i });
+		expect(heading).toBeInTheDocument();
+		// Le heading n'est plus sr-only : doit être visible (pas de classe sr-only)
+		expect(heading).not.toHaveClass("sr-only");
+	});
+
+	it("renders each highlight as a list item", () => {
+		mockGenerateHighlights.mockReturnValue([
+			makeHighlight("material", "Alpha", "Desc A"),
+			makeHighlight("color", "Beta", "Desc B"),
+			makeHighlight("handmade", "Gamma", "Desc C"),
+		]);
+
+		render(<ProductHighlights product={makeProduct()} />);
+
+		const items = screen.getAllByRole("listitem");
+		expect(items).toHaveLength(3);
+	});
+
+	/**
+	 * @regression product-highlights-icon-mapping
+	 *
+	 * Vérifie que chaque id stable du service a bien une icône mappée
+	 * dans le composant. Si un nouveau ProductHighlightId est ajouté au service
+	 * sans icône correspondante, TypeScript échoue à la compilation (satisfies)
+	 * mais ce test garantit aussi qu'à l'exécution chaque id rend une icône.
+	 */
+	it("maps every ProductHighlightId to a rendered icon", () => {
+		const allIds: ProductHighlightId[] = [
+			"material",
+			"color",
+			"handmade",
+			"french",
+			"adjustable",
+			"collection",
+		];
+		mockGenerateHighlights.mockReturnValue(
+			allIds.map((id) => makeHighlight(id, `Label ${id}`, `Desc ${id}`)),
+		);
+
+		render(<ProductHighlights product={makeProduct()} />);
+
+		const items = screen.getAllByRole("listitem");
+		expect(items).toHaveLength(allIds.length);
+		for (const item of items) {
+			expect(item.querySelector("svg")).not.toBeNull();
+		}
 	});
 });

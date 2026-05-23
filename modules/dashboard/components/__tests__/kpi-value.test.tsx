@@ -66,39 +66,53 @@ describe("KpiValue", () => {
 	// NumberTicker rendering
 	// -------------------------------------------------------------------------
 
-	it("renders NumberTicker when numericValue is provided", () => {
-		render(<KpiValue value="42 €" numericValue={42} />);
+	it("renders NumberTicker when numericValue is provided and size=featured", () => {
+		render(<KpiValue value="42 €" numericValue={42} size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toBeInTheDocument();
 	});
 
+	it("does NOT render NumberTicker when size=default (even with numericValue)", () => {
+		render(<KpiValue value="42 €" numericValue={42} size="default" />);
+
+		expect(screen.queryByTestId("number-ticker")).toBeNull();
+		expect(screen.getByText("42 €")).toBeInTheDocument();
+	});
+
+	it("does NOT render NumberTicker when size=compact (even with numericValue)", () => {
+		render(<KpiValue value="4.8 / 5" numericValue={4.8} size="compact" />);
+
+		expect(screen.queryByTestId("number-ticker")).toBeNull();
+		expect(screen.getByText("4.8 / 5")).toBeInTheDocument();
+	});
+
 	it("passes numericValue to NumberTicker", () => {
-		render(<KpiValue value="1500" numericValue={1500} />);
+		render(<KpiValue value="1500" numericValue={1500} size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toHaveAttribute("data-value", "1500");
 	});
 
 	it("passes decimalPlaces to NumberTicker", () => {
-		render(<KpiValue value="42.50 €" numericValue={42.5} decimalPlaces={2} />);
+		render(<KpiValue value="42.50 €" numericValue={42.5} decimalPlaces={2} size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toHaveAttribute("data-decimals", "2");
 	});
 
 	it("passes animationDelay to NumberTicker", () => {
-		render(<KpiValue value="100" numericValue={100} animationDelay={0.5} />);
+		render(<KpiValue value="100" numericValue={100} animationDelay={0.5} size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toHaveAttribute("data-delay", "0.5");
 	});
 
 	it("renders suffix after NumberTicker", () => {
-		render(<KpiValue value="42 €" numericValue={42} suffix=" €" />);
+		render(<KpiValue value="42 €" numericValue={42} suffix=" €" size="featured" />);
 
 		const container = screen.getByTestId("number-ticker").parentElement;
 		expect(container?.textContent).toContain("€");
 	});
 
 	it("does not render suffix when not provided", () => {
-		render(<KpiValue value="42" numericValue={42} />);
+		render(<KpiValue value="42" numericValue={42} size="featured" />);
 
 		const ticker = screen.getByTestId("number-ticker");
 		expect(ticker.parentElement?.textContent).toBe("42");
@@ -137,13 +151,13 @@ describe("KpiValue", () => {
 	// -------------------------------------------------------------------------
 
 	it("renders NumberTicker with numericValue=0", () => {
-		render(<KpiValue value="0 €" numericValue={0} suffix=" €" />);
+		render(<KpiValue value="0 €" numericValue={0} suffix=" €" size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toHaveAttribute("data-value", "0");
 	});
 
 	it("uses default decimalPlaces=0 when not specified", () => {
-		render(<KpiValue value="42" numericValue={42} />);
+		render(<KpiValue value="42" numericValue={42} size="featured" />);
 
 		expect(screen.getByTestId("number-ticker")).toHaveAttribute("data-decimals", "0");
 	});

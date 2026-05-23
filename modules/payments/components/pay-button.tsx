@@ -9,6 +9,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useCheckoutSubmit } from "../hooks/use-checkout-submit";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
+import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
 
 interface PayButtonProps {
 	total: number;
@@ -17,6 +18,12 @@ interface PayButtonProps {
 	isOnline: boolean;
 	email?: string;
 	billingName?: string;
+	/**
+	 * Liste ordonnée des sections incomplètes (Contact, Livraison...) à corriger.
+	 * Si fournie et non-vide alors que `disabled` est true, remplace le hint
+	 * générique "Remplis tous les champs obligatoires" par un message précis.
+	 */
+	incompleteSections?: string[];
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
 	allowNavigation?: () => void;
@@ -37,6 +44,7 @@ export function PayButton({
 	isOnline,
 	email,
 	billingName,
+	incompleteSections,
 	getFormData,
 	allowNavigation,
 }: PayButtonProps) {
@@ -167,11 +175,13 @@ export function PayButton({
 				</p>
 			) : shippingUnavailable ? (
 				<p className="text-destructive text-center text-sm" role="alert">
-					Cette zone n&apos;est pas livrable.
+					{SHIPPING_UNAVAILABLE.payButton}
 				</p>
 			) : disabled && !isProcessing ? (
 				<p className="text-muted-foreground text-center text-xs md:text-sm">
-					Remplis tous les champs obligatoires pour continuer.
+					{incompleteSections && incompleteSections.length > 0
+						? `À compléter : ${incompleteSections.join(", ")}`
+						: "Remplis tous les champs obligatoires pour continuer."}
 				</p>
 			) : null}
 		</div>

@@ -121,6 +121,11 @@ export function countActiveFilters(
 		count += 1;
 	}
 
+	// Promotions
+	if (filters.onSale) {
+		count += 1;
+	}
+
 	return count;
 }
 

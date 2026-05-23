@@ -5,13 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const mockSearchParamsKeys = vi.fn<() => string[]>();
+const mockSearchParamsEntries = vi.fn<() => [string, string][]>();
 const mockSearchParamsHas = vi.fn<(key: string) => boolean>();
 const mockSearchParamsGet = vi.fn<(key: string) => string | null>();
 
 vi.mock("next/navigation", () => ({
 	useSearchParams: () => ({
-		keys: () => mockSearchParamsKeys(),
+		entries: () => mockSearchParamsEntries(),
+		keys: () => mockSearchParamsEntries().map(([k]) => k),
 		has: (key: string) => mockSearchParamsHas(key),
 		get: (key: string) => mockSearchParamsGet(key),
 	}),
@@ -105,7 +106,7 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-	mockSearchParamsKeys.mockReturnValue([]);
+	mockSearchParamsEntries.mockReturnValue([]);
 	mockSearchParamsHas.mockReturnValue(false);
 	mockSearchParamsGet.mockReturnValue(null);
 });
@@ -131,18 +132,21 @@ describe("SkusBottomBar", () => {
 	});
 
 	it("badge count Filter = number of filter_* URL keys", () => {
-		mockSearchParamsKeys.mockReturnValue([
-			"filter_stockStatus",
-			"filter_colorId",
-			"sortBy",
-			"cursor",
+		mockSearchParamsEntries.mockReturnValue([
+			["filter_stockStatus", "in-stock"],
+			["filter_colorId", "abc"],
+			["sortBy", "name-asc"],
+			["cursor", "10"],
 		]);
 		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-filter")).toHaveAttribute("data-badge", "2");
 	});
 
 	it("Filter badge stays at 0 when no filter_ keys", () => {
-		mockSearchParamsKeys.mockReturnValue(["sortBy", "cursor"]);
+		mockSearchParamsEntries.mockReturnValue([
+			["sortBy", "name-asc"],
+			["cursor", "10"],
+		]);
 		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-filter")).toHaveAttribute("data-badge", "0");
 	});

@@ -24,6 +24,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 	const haptic = useHaptic();
 	const [liveMessage, setLiveMessage] = useState("");
+	const [isApplying, setIsApplying] = useState(false);
 
 	return (
 		<>
@@ -62,6 +63,28 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 						);
 					}
 
+					async function validateAndApply(rawCode: string) {
+						const code = rawCode.trim().toUpperCase();
+						if (!code) return;
+						setIsApplying(true);
+						const result = await validateDiscountCode(code, subtotal);
+						setIsApplying(false);
+						if (result.valid && result.discount) {
+							form.setFieldValue("_appliedDiscount", result.discount);
+							form.setFieldValue("discountCode", "");
+							form.setFieldMeta("discountCode", (prev) => ({ ...prev, errors: [] }));
+							haptic("success");
+							setLiveMessage(
+								`Code ${code} validé : -${formatEuro(result.discount.discountAmount)}`,
+							);
+							return;
+						}
+						haptic("error");
+						const message = result.error ?? "Code invalide";
+						setLiveMessage(message);
+						form.setFieldMeta("discountCode", (prev) => ({ ...prev, errors: [message] }));
+					}
+
 					return (
 						<form.Subscribe selector={(s) => s.values._discountOpen}>
 							{(isOpen) => (
@@ -77,28 +100,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 									</CollapsibleTrigger>
 									<CollapsibleContent>
 										<div className="space-y-2 pt-1">
-											<form.AppField
-												name="discountCode"
-												validators={{
-													onBlurAsync: async ({ value, fieldApi }) => {
-														const code = (value as string).trim().toUpperCase();
-														if (!code) return undefined;
-														const result = await validateDiscountCode(code, subtotal);
-														if (result.valid && result.discount) {
-															fieldApi.form.setFieldValue("_appliedDiscount", result.discount);
-															fieldApi.form.setFieldValue("discountCode", "");
-															haptic("success");
-															setLiveMessage(
-																`Code ${code} validé : -${formatEuro(result.discount.discountAmount)}`,
-															);
-															return undefined;
-														}
-														haptic("error");
-														setLiveMessage(result.error ?? "Code invalide");
-														return result.error ?? "Code invalide";
-													},
-												}}
-											>
+											<form.AppField name="discountCode">
 												{(field) => (
 													<div className="flex gap-2">
 														<field.InputField
@@ -114,21 +116,18 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 															onKeyDown={(e: React.KeyboardEvent) => {
 																if (e.key === "Enter") {
 																	e.preventDefault();
-																	field.handleBlur();
+																	void validateAndApply(field.state.value as string);
 																}
 															}}
 														/>
 														<Button
 															type="button"
 															variant="outline"
-															disabled={
-																field.state.meta.isValidating ||
-																!(field.state.value as string).trim()
-															}
-															aria-busy={field.state.meta.isValidating}
-															onClick={() => field.handleBlur()}
+															disabled={isApplying || !(field.state.value as string).trim()}
+															aria-busy={isApplying}
+															onClick={() => void validateAndApply(field.state.value as string)}
 														>
-															{field.state.meta.isValidating ? (
+															{isApplying ? (
 																<>
 																	<LoaderCircle
 																		className="size-4 motion-safe:animate-spin"

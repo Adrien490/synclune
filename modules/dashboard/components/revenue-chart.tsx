@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	ChartContainer,
 	ChartLegend,
@@ -18,10 +19,16 @@ import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts
 import { ChartEmpty } from "./chart-empty";
 import { ChartScrollContainer } from "./chart-scroll-container";
 import { CHART_STYLES } from "../constants/chart-styles";
+import {
+	CHART_MODE_SEARCH_PARAM,
+	DEFAULT_CHART_MODE,
+	type ChartMode,
+} from "../constants/period.constants";
 
 interface RevenueChartProps {
 	chartData: GetRevenueChartReturn;
 	periodLabel?: string;
+	chartMode?: ChartMode;
 }
 
 const simpleChartConfig = {
@@ -54,10 +61,35 @@ const detailedChartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
+export function RevenueChart({
+	chartData,
+	periodLabel,
+	chartMode = DEFAULT_CHART_MODE,
+}: RevenueChartProps) {
 	const { data } = chartData;
 	const chartTitle = periodLabel ? `Revenus - ${periodLabel}` : "Revenus des 30 derniers jours";
-	const [isDetailed, setIsDetailed] = useState(false);
+
+	const router = useRouter();
+	const searchParams = useSearchParams();
+	const [, startTransition] = useTransition();
+	const [optimisticMode, setOptimisticMode] = useOptimistic<ChartMode>(chartMode);
+	const isDetailed = optimisticMode === "detailed";
+
+	function toggleMode() {
+		triggerHaptic("selection");
+		const next: ChartMode = isDetailed ? "simple" : "detailed";
+		const params = new URLSearchParams(searchParams);
+		if (next === DEFAULT_CHART_MODE) {
+			params.delete(CHART_MODE_SEARCH_PARAM);
+		} else {
+			params.set(CHART_MODE_SEARCH_PARAM, next);
+		}
+		startTransition(() => {
+			setOptimisticMode(next);
+			const query = params.toString();
+			router.push(query ? `?${query}` : ".", { scroll: false });
+		});
+	}
 
 	const hasRevenue = data.some((item) => item.revenue > 0);
 	const hasBreakdown = data.some((item) => item.subtotal > 0 || item.shipping > 0);
@@ -98,11 +130,9 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 				{hasBreakdown && (
 					<Button
 						variant="ghost"
-						onClick={() => {
-							triggerHaptic("selection");
-							setIsDetailed((prev) => !prev);
-						}}
-						className={cn(CHART_STYLES.touchTarget.button, "self-start text-xs sm:self-auto")}
+						onClick={toggleMode}
+						aria-pressed={isDetailed}
+						className={cn(CHART_STYLES.touchTarget.button, "self-end text-xs sm:self-auto")}
 					>
 						{isDetailed ? "Vue simple" : "Détailler"}
 					</Button>
@@ -112,8 +142,12 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
-					<div role="figure" aria-label={`Graphique des revenus et commandes - ${chartTitle}`}>
-						<div className="sr-only">
+					<div
+						role="figure"
+						aria-labelledby="revenue-chart-title"
+						aria-describedby="revenue-chart-description"
+					>
+						<div id="revenue-chart-description" className="sr-only">
 							<p>
 								Graphique montrant l&apos;evolution du chiffre d&apos;affaires quotidien et du
 								nombre de commandes sur les 30 derniers jours.

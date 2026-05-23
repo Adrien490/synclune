@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Elements, ExpressCheckoutElement, PaymentElement } from "@stripe/react-stripe-js";
 import type { StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { ExternalLink, Lock, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -24,6 +24,8 @@ interface CheckoutStripeSectionProps {
 	isOnline: boolean;
 	email?: string;
 	billingName?: string;
+	/** Forwarded to PayButton — sections incomplètes affichées dans le hint disabled. */
+	incompleteSections?: string[];
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
 	allowNavigation?: () => void;
@@ -44,6 +46,7 @@ export function CheckoutStripeSection({
 	isOnline,
 	email,
 	billingName,
+	incompleteSections,
 	getFormData,
 	allowNavigation,
 }: CheckoutStripeSectionProps) {
@@ -97,20 +100,22 @@ export function CheckoutStripeSection({
 							En passant commande, tu acceptes nos{" "}
 							<Link
 								href="/cgv"
-								className="text-foreground underline hover:no-underline"
+								className="text-foreground inline-flex items-center gap-0.5 underline hover:no-underline"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								conditions générales de vente
+								<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
 							</Link>{" "}
 							et notre{" "}
 							<Link
 								href="/confidentialite"
-								className="text-foreground underline hover:no-underline"
+								className="text-foreground inline-flex items-center gap-0.5 underline hover:no-underline"
 								target="_blank"
 								rel="noopener noreferrer"
 							>
 								politique de confidentialité
+								<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
 							</Link>
 							.
 						</p>
@@ -121,6 +126,7 @@ export function CheckoutStripeSection({
 							isOnline={isOnline}
 							email={email}
 							billingName={billingName}
+							incompleteSections={incompleteSections}
 							getFormData={getFormData}
 							allowNavigation={allowNavigation}
 						/>
@@ -152,6 +158,14 @@ function ExpressCheckoutSection({
 	const [error, setError] = useState<string | null>(null);
 
 	const submit = useCheckoutSubmit({ getFormData, allowNavigation });
+
+	// Auto-clear error after 8s so the alert doesn't stick indefinitely
+	// when the user moves on to another payment method.
+	useEffect(() => {
+		if (!error) return;
+		const timeout = window.setTimeout(() => setError(null), 8000);
+		return () => window.clearTimeout(timeout);
+	}, [error]);
 
 	function showError(message: string) {
 		setError(message);
@@ -189,7 +203,17 @@ function ExpressCheckoutSection({
 		<div className={cn(!hasExpress && "hidden")}>
 			{error && (
 				<Alert variant="destructive" role="alert" aria-live="assertive" className="mb-4">
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription className="flex items-start justify-between gap-2">
+						<span>{error}</span>
+						<button
+							type="button"
+							onClick={() => setError(null)}
+							aria-label="Fermer le message d'erreur"
+							className="text-destructive hover:text-destructive/80 focus-visible:ring-ring -m-1 shrink-0 rounded-sm p-1 focus-visible:ring-2 focus-visible:outline-none"
+						>
+							<X className="size-3.5" aria-hidden="true" />
+						</button>
+					</AlertDescription>
 				</Alert>
 			)}
 			<div role="group" aria-label="Paiement express" className="space-y-4">

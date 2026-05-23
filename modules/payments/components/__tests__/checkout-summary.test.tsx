@@ -81,6 +81,7 @@ vi.mock("@/shared/components/icons/payment-icons", () => ({
 
 vi.mock("lucide-react", () => ({
 	ChevronDown: () => <svg data-testid="chevron-down" />,
+	ExternalLink: () => <svg data-testid="external-link-icon" />,
 	Info: () => <svg data-testid="info-icon" />,
 	Pencil: () => <svg data-testid="pencil-icon" />,
 	Shield: () => <svg data-testid="shield-icon" />,
@@ -355,12 +356,12 @@ describe("CheckoutSummary", () => {
 	});
 
 	describe("shipping unavailable", () => {
-		it("invites the user to select a country when shippingUnavailable is true", () => {
+		it("shows the SSOT 'Zone non livrable' label when shippingUnavailable is true", () => {
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} shippingUnavailable={true} />);
 
-			expect(screen.getAllByText("Sélectionne ton pays").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("Zone non livrable").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows shipping info when provided", () => {

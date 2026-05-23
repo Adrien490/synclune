@@ -165,10 +165,11 @@ function CartSheetBody({
 
 					<div className="min-h-0 flex-1">
 						<ScrollFade axis="vertical" className="h-full overscroll-contain" hideScrollbar={false}>
-							<div className="space-y-3 px-6 py-4">
+							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+							<ul role="list" className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
 									{items.map((item) => (
-										<m.div
+										<m.li
 											key={item.id}
 											layout
 											initial={{ opacity: 0, height: 0, scale: 0.95 }}
@@ -178,10 +179,10 @@ function CartSheetBody({
 											className="origin-top overflow-hidden"
 										>
 											<CartSheetItemRow item={item} onClose={close} isMobile={isMobile} />
-										</m.div>
+										</m.li>
 									))}
 								</AnimatePresence>
-							</div>
+							</ul>
 						</ScrollFade>
 					</div>
 				</>

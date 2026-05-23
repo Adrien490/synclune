@@ -1,3 +1,5 @@
+import { ProductCardSkeleton } from "@/modules/products/components/product-card-skeleton";
+
 /**
  * Skeleton de chargement pour le composant RelatedProducts
  *
@@ -8,7 +10,7 @@
  * - Container : <aside className="space-y-6">
  * - En-tête : <div className="space-y-2"> avec h2
  * - Carousel : flex horizontal avec basis-[clamp(...)]
- * - Cards : ProductCard structure
+ * - Cards : ProductCard structure (via ProductCardSkeleton partagé)
  * - CTA : <div className="flex justify-center pt-4">
  */
 export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
@@ -46,36 +48,5 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 				<div className="bg-muted h-5 w-64 rounded motion-safe:animate-pulse" />
 			</div>
 		</aside>
-	);
-}
-
-/**
- * Skeleton d'une ProductCard
- *
- * Structure exacte de ProductCard:
- * - article avec rounded-lg, shadow-sm, bg-card, gap-4
- * - Image : aspect-square sm:aspect-4/5, rounded-lg
- * - Contenu : flex flex-col gap-2.5 sm:gap-3, px-3 pb-3 sm:px-4 sm:pb-4
- *   - Titre : text-base sm:text-lg
- *   - Prix : ProductPrice
- *
- * ⚠️ IMPORTANT : Les dimensions DOIVENT correspondre exactement à ProductCard
- * pour éviter le Cumulative Layout Shift (CLS).
- */
-function ProductCardSkeleton() {
-	return (
-		<div className="product-card-skeleton bg-card grid gap-4 overflow-hidden rounded-lg shadow-sm">
-			{/* Image - aspect-square sur mobile, aspect-4/5 sur desktop (comme ProductCard) */}
-			<div className="bg-muted aspect-3/4 rounded-lg motion-safe:animate-pulse sm:aspect-4/5" />
-
-			{/* Contenu - gap et padding identiques à ProductCard */}
-			<div className="flex flex-col gap-2.5 px-3 pb-3 sm:gap-3 sm:px-4 sm:pb-4">
-				{/* Titre - text-base sm:text-lg (hauteur correspondante) */}
-				<div className="bg-muted h-5 w-full rounded motion-safe:animate-pulse sm:h-6" />
-
-				{/* Prix - ProductPrice */}
-				<div className="bg-muted h-5 w-20 rounded motion-safe:animate-pulse" />
-			</div>
-		</div>
 	);
 }

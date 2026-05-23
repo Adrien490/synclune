@@ -41,12 +41,5 @@ export async function DashboardGreeting({ period, comparisonMode }: DashboardGre
 	}
 	const hour = getHourInParis();
 	const message = buildGreetingMessage(pendingShipmentCount, hour);
-	return (
-		<p
-			className="font-cursive text-muted-foreground/90 -mt-3 mb-6 text-base italic sm:-mt-4 sm:text-lg"
-			aria-live="polite"
-		>
-			{message}
-		</p>
-	);
+	return <p className="font-cursive text-muted-foreground/90 text-base sm:text-lg">{message}</p>;
 }

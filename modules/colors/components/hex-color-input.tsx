@@ -17,6 +17,9 @@ const getEyeDropperSnapshot = () =>
 	typeof window !== "undefined" && "EyeDropper" in (window as EyeDropperWindow);
 const getEyeDropperServerSnapshot = () => false;
 
+const VALID_HEX_REGEX = /^#[0-9A-F]{6}$/;
+const DEFAULT_PICKER_FALLBACK = "#000000";
+
 type HexColorInputProps = {
 	value: string;
 	onChange: (hex: string) => void;
@@ -40,7 +43,7 @@ function expandToSixDigit(hex: string): string {
 			.join("")}`;
 	}
 	if (cleaned.length === 6) return `#${cleaned}`;
-	return "#000000";
+	return DEFAULT_PICKER_FALLBACK;
 }
 
 export function HexColorInput({
@@ -65,14 +68,29 @@ export function HexColorInput({
 	// (not a ref) so the eslint react-hooks/refs rule stays clean.
 	const [text, setText] = useState(() => stripHash(normalizeHex(value)));
 	const [lastSyncedValue, setLastSyncedValue] = useState(value);
+	// Last valid 6-char hex seen — used as the native color picker fallback so
+	// the swatch keeps showing the last meaningful colour when the controlled
+	// value transitions to empty/invalid (e.g. user clicks Clear). Without this,
+	// expandToSixDigit("") would surface #000000 and falsely imply a black value.
+	const [lastValidHex, setLastValidHex] = useState(() => {
+		const normalized = normalizeHex(value);
+		return VALID_HEX_REGEX.test(normalized) ? normalized : DEFAULT_PICKER_FALLBACK;
+	});
+	const [blurAnnouncement, setBlurAnnouncement] = useState("");
+
 	if (lastSyncedValue !== value) {
 		setLastSyncedValue(value);
 		setText(stripHash(normalizeHex(value)));
+		const normalized = normalizeHex(value);
+		if (VALID_HEX_REGEX.test(normalized) && normalized !== lastValidHex) {
+			setLastValidHex(normalized);
+		}
 	}
 
 	const inputId = id ?? "hex-color-input";
 
 	const handleTextChange = (raw: string) => {
+		if (blurAnnouncement) setBlurAnnouncement("");
 		const cleaned = raw
 			.replace(/[^0-9A-Fa-f]/g, "")
 			.slice(0, 6)
@@ -98,8 +116,11 @@ export function HexColorInput({
 			}
 			return;
 		}
-		// Invalid intermediate length: revert to last committed value
+		// Invalid intermediate length (1, 2, 4 or 5 chars): revert to last
+		// committed value and announce to assistive tech so the disappearance is
+		// not silent (WCAG 3.3.1 — input assistance).
 		setText(stripHash(normalizeHex(value)));
+		setBlurAnnouncement("Code couleur incomplet, valeur précédente restaurée");
 	};
 
 	const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,8 +150,16 @@ export function HexColorInput({
 	const handleClear = () => {
 		if (disabled) return;
 		setText("");
+		setBlurAnnouncement("");
 		onChange("");
+		haptic("light");
 	};
+
+	// Native color picker preserves the last meaningful hex when the controlled
+	// value is empty or partial — avoids flashing #000000 mid-clear (F2 audit).
+	const cleanedValue = stripHash(value);
+	const pickerValue =
+		cleanedValue.length === 3 || cleanedValue.length === 6 ? expandToSixDigit(value) : lastValidHex;
 
 	return (
 		<div className="flex flex-col gap-2" data-slot="hex-color-input">
@@ -139,24 +168,29 @@ export function HexColorInput({
 					<input
 						type="color"
 						aria-label="Sélecteur de couleur visuel"
-						value={expandToSixDigit(value)}
+						value={pickerValue}
 						onChange={handleNativeChange}
 						disabled={disabled}
-						className="absolute inset-0 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 disabled:cursor-not-allowed [&::-moz-color-swatch]:rounded-none [&::-moz-color-swatch]:border-0 [&::-webkit-color-swatch]:rounded-none [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
+						className="focus-ring absolute inset-0 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 disabled:cursor-not-allowed [&::-moz-color-swatch]:rounded-none [&::-moz-color-swatch]:border-0 [&::-webkit-color-swatch]:rounded-none [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
 					/>
 				</div>
-				{hasEyeDropper && (
-					<button
-						type="button"
-						onClick={handleEyeDropper}
-						disabled={disabled}
-						aria-label="Piocher une couleur à l'écran"
-						title="Piocher une couleur à l'écran"
-						className="border-border bg-background hover:bg-muted focus-visible:ring-ring inline-flex size-11 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-					>
-						<Pipette className="size-4" aria-hidden="true" />
-					</button>
-				)}
+				{/* Placeholder rendu en SSR pour éviter le CLS quand le bouton EyeDropper
+				 * monte post-hydration sur Chrome/Edge desktop. Coût : 44px+gap réservés
+				 * sur tous les browsers ; CLS zero acceptée par audit. */}
+				<span className="inline-block size-11 shrink-0" aria-hidden={!hasEyeDropper}>
+					{hasEyeDropper && (
+						<button
+							type="button"
+							onClick={handleEyeDropper}
+							disabled={disabled}
+							aria-label="Piocher une couleur à l'écran"
+							title="Piocher une couleur à l'écran"
+							className="focus-ring border-border bg-background hover:bg-muted inline-flex size-full items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-50 motion-safe:transition-colors"
+						>
+							<Pipette className="size-4" aria-hidden="true" />
+						</button>
+					)}
+				</span>
 				<div className="relative flex-1">
 					<span
 						className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-base select-none md:text-sm"
@@ -174,18 +208,18 @@ export function HexColorInput({
 						disabled={disabled}
 						placeholder="FF5733"
 						inputMode="text"
+						pattern="[0-9A-Fa-f]*"
 						autoCapitalize="characters"
 						autoComplete="off"
 						autoCorrect="off"
 						spellCheck={false}
 						maxLength={6}
-						aria-invalid={ariaInvalid ?? false}
+						aria-invalid={ariaInvalid ? true : undefined}
 						aria-describedby={ariaDescribedBy ?? `${inputId}-help`}
 						className={cn(
-							"border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent py-2 pl-7 font-mono text-base tracking-wider shadow-xs transition-[color,box-shadow,border-color] outline-none md:text-sm",
+							"focus-ring border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent py-2 pl-7 font-mono text-base tracking-wider shadow-xs motion-safe:transition-[color,box-shadow,border-color] md:text-sm",
 							text.length > 0 ? "pr-9" : "pr-3",
 							"hover:border-ring/70",
-							"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
 							"aria-invalid:border-destructive aria-invalid:ring-destructive/20",
 							"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
 						)}
@@ -195,7 +229,7 @@ export function HexColorInput({
 							type="button"
 							onClick={handleClear}
 							aria-label="Effacer le code couleur"
-							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+							className="focus-ring text-muted-foreground hover:text-foreground absolute top-1/2 right-2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded"
 						>
 							<X className="size-3.5" aria-hidden="true" />
 						</button>
@@ -205,6 +239,9 @@ export function HexColorInput({
 			<p id={`${inputId}-help`} className="text-muted-foreground text-xs">
 				Format hexadécimal sur 3 ou 6 caractères (ex : F57 ou FF5733)
 			</p>
+			<span role="status" aria-live="polite" className="sr-only">
+				{blurAnnouncement}
+			</span>
 		</div>
 	);
 }

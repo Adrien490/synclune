@@ -50,6 +50,14 @@ vi.mock("motion/react", () => ({
 			className?: string;
 			[key: string]: unknown;
 		}) => <div className={className}>{children}</div>,
+		li: ({
+			children,
+			className,
+		}: {
+			children: React.ReactNode;
+			className?: string;
+			[key: string]: unknown;
+		}) => <li className={className}>{children}</li>,
 	},
 	useReducedMotion: mockUseReducedMotion,
 }));

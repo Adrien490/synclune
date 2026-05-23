@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -65,7 +64,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 		colorsLabel,
 		materialsLabel,
 		`quantité ${item.quantity}`,
-		`${formatEuro(getCartItemSubtotal(item))}`,
+		formatEuro(subtotal),
 	].filter(Boolean);
 
 	const handleSwipeRemove = () => {
@@ -77,6 +76,11 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 		});
 	};
 
+	const thumbSrc =
+		primaryImage?.mediaType === "VIDEO"
+			? (primaryImage.thumbnailUrl ?? primaryImage.url)
+			: primaryImage?.url;
+
 	const article = (
 		<article
 			className={cn(
@@ -86,44 +90,23 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 			)}
 			aria-label={ariaLabelParts.join(", ")}
 		>
-			{/* Image - row-span-2 sur mobile pour occuper les 2 lignes */}
 			<Link
 				href={`/creations/${item.sku.product.slug}`}
 				onClick={onClose}
 				className="bg-muted focus-visible:ring-ring relative row-span-2 size-20 overflow-hidden rounded-md transition-opacity group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:opacity-80 sm:size-24"
 				aria-label={`Voir ${item.sku.product.title}`}
 			>
-				{primaryImage ? (
-					primaryImage.mediaType === "VIDEO" ? (
-						<video
-							className="h-full w-full object-cover"
-							autoPlay
-							muted
-							loop
-							playsInline
-							preload="none"
-							poster={primaryImage.thumbnailUrl ?? undefined}
-							aria-label={primaryImage.altText ?? `Video du produit ${item.sku.product.title}`}
-							aria-describedby={`video-desc-${item.id}`}
-						>
-							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-							<p id={`video-desc-${item.id}`} className="sr-only">
-								Video de presentation du bijou {item.sku.product.title}. La video est en lecture
-								automatique et sans son.
-							</p>
-						</video>
-					) : (
-						<Image
-							src={primaryImage.url}
-							alt={primaryImage.altText ?? item.sku.product.title}
-							fill
-							className="object-cover"
-							sizes="(min-width: 640px) 96px, 80px"
-							quality={80}
-							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={primaryImage.blurDataUrl ?? undefined}
-						/>
-					)
+				{primaryImage && thumbSrc ? (
+					<Image
+						src={thumbSrc}
+						alt={primaryImage.altText ?? item.sku.product.title}
+						fill
+						className="object-cover"
+						sizes="(min-width: 640px) 96px, 80px"
+						quality={80}
+						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
+						blurDataURL={primaryImage.blurDataUrl ?? undefined}
+					/>
 				) : (
 					<div className="text-muted-foreground flex h-full w-full items-center justify-center">
 						<span className="text-2xs">Pas d&apos;image</span>
@@ -131,18 +114,17 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 				)}
 			</Link>
 
-			{/* Infos */}
 			<div className="min-w-0 flex-1 gap-y-1">
-				{/* Nom */}
-				<Link
-					href={`/creations/${item.sku.product.slug}`}
-					onClick={onClose}
-					className="hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded text-sm font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
-				>
-					{item.sku.product.title}
-				</Link>
+				<h3 className="text-sm">
+					<Link
+						href={`/creations/${item.sku.product.slug}`}
+						onClick={onClose}
+						className="hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
+					>
+						{item.sku.product.title}
+					</Link>
+				</h3>
 
-				{/* Attributs */}
 				<dl className="text-muted-foreground flex flex-wrap gap-x-1 text-xs">
 					{colorsLabel && (
 						<div className="inline-flex items-center gap-1">
@@ -170,7 +152,8 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					)}
 					{item.sku.size && (
 						<div className="inline-flex items-center">
-							{(colorsLabel ?? materialsLabel) && (
+							{/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- helpers return string ("" is falsy, ?? misses) */}
+							{(colorsLabel || materialsLabel) && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>
@@ -181,7 +164,6 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					)}
 				</dl>
 
-				{/* Prix final */}
 				<div
 					className={cn(
 						"text-sm font-medium tabular-nums",
@@ -218,7 +200,6 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					)}
 				</div>
 
-				{/* Badges stock */}
 				{hasIssue ? (
 					<div className="flex gap-1">
 						{isOutOfStock && (
@@ -233,15 +214,13 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 						)}
 					</div>
 				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
-					<p className="text-xs text-orange-800">Plus que {item.sku.inventory} en stock</p>
+					<p className="text-xs text-amber-700">Plus que {item.sku.inventory} en stock</p>
 				) : null}
 			</div>
 
-			{/* Actions - à droite de l'image, sous le prix */}
-			<div className="flex items-center justify-between gap-2" data-vaul-no-drag>
-				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
+			<div className="flex items-center justify-between gap-2" data-no-swipe data-vaul-no-drag>
 				{item.sku.inventory === 1 && !hasIssue ? (
-					<span className="text-xs font-medium text-orange-800">Dernière pièce !</span>
+					<span className="text-xs font-medium text-amber-700">Dernière pièce !</span>
 				) : (
 					<CartItemQuantitySelector
 						cartItemId={item.id}
@@ -251,7 +230,6 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					/>
 				)}
 
-				{/* Supprimer - à droite (fallback keyboard/desktop — WCAG 2.1 AA) */}
 				<CartItemRemoveButton
 					cartItemId={item.id}
 					skuId={item.sku.id}

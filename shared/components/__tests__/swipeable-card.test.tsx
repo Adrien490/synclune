@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -391,6 +391,53 @@ describe("SwipeableCard", () => {
 			expect(status).toHaveAttribute("aria-live", "polite");
 			expect(status).toHaveClass("sr-only");
 			expect(status.textContent).toBe("");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// data-no-swipe opt-out (regression)
+	// -------------------------------------------------------------------------
+
+	describe("data-no-swipe opt-out", () => {
+		it("ignores touchstart that originates inside a [data-no-swipe] subtree", () => {
+			const onAction = vi.fn();
+			const { container } = render(
+				<SwipeableCard leftAction={{ children: <span>Delete</span>, label: "Delete", onAction }}>
+					<div>
+						<div data-no-swipe data-testid="actions">
+							<button type="button">Stepper +</button>
+						</div>
+					</div>
+				</SwipeableCard>,
+			);
+
+			const button = screen.getByRole("button", { name: "Stepper +" });
+			fireEvent.touchStart(button, { touches: [{ clientX: 100, clientY: 100 }] });
+			fireEvent.touchMove(button, { touches: [{ clientX: 20, clientY: 100 }] });
+			fireEvent.touchEnd(button);
+
+			// Tracking was skipped → sliding card stays at rest, no action fired.
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("still tracks touchstart outside [data-no-swipe] (control)", () => {
+			const { container } = render(
+				<SwipeableCard
+					leftAction={{ children: <span>Delete</span>, label: "Delete", onAction: vi.fn() }}
+				>
+					<div data-testid="card-body">
+						<span>Swipable area</span>
+					</div>
+				</SwipeableCard>,
+			);
+
+			// Touching the body (no data-no-swipe) must start tracking — sliding card
+			// switches its transition to "none" while tracking is active.
+			fireEvent.touchStart(screen.getByTestId("card-body"), {
+				touches: [{ clientX: 100, clientY: 100 }],
+			});
+			expect(getSlidingCard(container)?.style.transition).toBe("none");
 		});
 	});
 

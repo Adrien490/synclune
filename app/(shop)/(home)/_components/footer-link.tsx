@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 const BASE_TACTILE_CLASSES =
-	"touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.98]";
+	"focus-ring touch-manipulation motion-safe:transition-transform motion-safe:duration-150 active:scale-[0.98]";
 
 type FooterLinkBaseProps = {
 	href: string;

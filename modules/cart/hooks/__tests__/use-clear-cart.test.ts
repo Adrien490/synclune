@@ -5,22 +5,37 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockClearCart, mockToast } = vi.hoisted(() => ({
-	mockClearCart: vi.fn(),
-	mockToast: {
-		loading: vi.fn(),
-		dismiss: vi.fn(),
-		success: vi.fn(),
-		error: vi.fn(),
-		warning: vi.fn(),
-	},
-}));
+const { mockClearCart, mockToast, mockRouterRefresh, mockAdjustCart, mockBadgeState } = vi.hoisted(
+	() => ({
+		mockClearCart: vi.fn(),
+		mockToast: {
+			loading: vi.fn(),
+			dismiss: vi.fn(),
+			success: vi.fn(),
+			error: vi.fn(),
+			warning: vi.fn(),
+		},
+		mockRouterRefresh: vi.fn(),
+		mockAdjustCart: vi.fn(),
+		mockBadgeState: { cartCount: 3 },
+	}),
+);
 
 vi.mock("@/modules/cart/actions/clear-cart", () => ({
 	clearCart: mockClearCart,
 }));
 
 vi.mock("@/shared/utils/toast", () => ({ toast: mockToast }));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ refresh: mockRouterRefresh }),
+}));
+
+vi.mock("@/shared/stores/badge-counts-store", () => ({
+	useBadgeCountsStore: (
+		selector: (state: { adjustCart: typeof mockAdjustCart; cartCount: number }) => unknown,
+	) => selector({ adjustCart: mockAdjustCart, cartCount: mockBadgeState.cartCount }),
+}));
 
 // Prevent auth/Stripe initialization during module evaluation
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: {} }));
@@ -56,6 +71,7 @@ describe("useClearCart", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockClearCart.mockResolvedValue(SUCCESS_RESULT);
+		mockBadgeState.cartCount = 3;
 	});
 
 	describe("return shape", () => {
@@ -199,6 +215,65 @@ describe("useClearCart", () => {
 			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
 			expect(onSuccess).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith("DB error");
+		});
+	});
+
+	/**
+	 * @regression clear-cart-optimistic-badge-2026-05-24
+	 * Avant fix : `useClearCart` n'était pas optimistic — le badge navbar
+	 * restait à N pendant la requête serveur, puis tombait à 0 après
+	 * invalidation cache. UX laggy. Fix : `adjustCart(-cartCount)` immédiat
+	 * + snapshot ref pour rollback en cas d'erreur serveur.
+	 */
+	describe("@regression optimistic badge", () => {
+		it("zeros out the navbar badge immediately when action fires", async () => {
+			mockBadgeState.cartCount = 5;
+			const { result } = renderHook(() => useClearCart());
+
+			await act(async () => {
+				result.current.action(makeFormData());
+			});
+
+			expect(mockAdjustCart).toHaveBeenCalledWith(-5);
+		});
+
+		it("does not call adjustCart when cart is already empty", async () => {
+			mockBadgeState.cartCount = 0;
+			const { result } = renderHook(() => useClearCart());
+
+			await act(async () => {
+				result.current.action(makeFormData());
+			});
+
+			expect(mockAdjustCart).not.toHaveBeenCalled();
+		});
+
+		it("rolls back the badge count on server error + refreshes router", async () => {
+			mockBadgeState.cartCount = 4;
+			mockClearCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useClearCart());
+
+			await act(async () => {
+				result.current.action(makeFormData());
+			});
+
+			// 1er appel optimistic (-4), 2e appel rollback (+4).
+			expect(mockAdjustCart).toHaveBeenNthCalledWith(1, -4);
+			expect(mockAdjustCart).toHaveBeenNthCalledWith(2, 4);
+			expect(mockRouterRefresh).toHaveBeenCalled();
+		});
+
+		it("does NOT rollback on success", async () => {
+			mockBadgeState.cartCount = 2;
+			const { result } = renderHook(() => useClearCart());
+
+			await act(async () => {
+				result.current.action(makeFormData());
+			});
+
+			expect(mockAdjustCart).toHaveBeenCalledTimes(1);
+			expect(mockAdjustCart).toHaveBeenCalledWith(-2);
+			expect(mockRouterRefresh).not.toHaveBeenCalled();
 		});
 	});
 });

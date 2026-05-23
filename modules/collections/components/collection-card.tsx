@@ -1,9 +1,15 @@
 import { ABOVE_FOLD_THRESHOLD } from "@/modules/collections/constants/image-sizes.constants";
 import { COLLECTION_TEXTS } from "@/modules/collections/constants/collection-texts.constants";
+import {
+	CARD_SURFACE_BASE,
+	CARD_SURFACE_FOCUS,
+	CARD_SURFACE_HOVER,
+} from "@/shared/components/card-surface.constants";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Link from "next/link";
+import { useId } from "react";
 import type { CollectionImage } from "../types/collection.types";
 import { CollectionImagesGrid } from "./collection-images-grid";
 
@@ -26,7 +32,7 @@ interface CollectionCardProps {
 }
 
 /**
- * Card de collection - Design coherent avec ProductCard
+ * Card de collection - Design coherent avec ProductCard via CARD_SURFACE_*.
  *
  * Pattern stretched-link : <article relative> wrappe la carte, <Link> entoure
  * uniquement le titre avec ::after qui couvre toute la carte. Permet d'ajouter
@@ -43,41 +49,29 @@ export function CollectionCard({
 	priceRange,
 	disablePreload = false,
 }: CollectionCardProps) {
-	const uniqueSuffix = `${slug}-${index ?? 0}`;
-	const titleId = `collection-title-${uniqueSuffix}`;
+	const titleId = `collection-title-${useId()}`;
 	const isAboveFold = !disablePreload && index !== undefined && index < ABOVE_FOLD_THRESHOLD;
 
-	const displayImages = images ?? [];
 	const collectionUrl = `/collections/${slug}`;
+	const hasImages = images !== undefined && images.length > 0;
 
 	return (
 		<article
 			aria-labelledby={titleId}
 			className={cn(
-				"bg-card group relative touch-manipulation overflow-hidden rounded-lg lg:rounded-xl",
-				// COHERENCE ProductCard: border-2 transparent
-				"border-2 border-transparent shadow-sm",
-				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
-				// Motion-reduce: desactiver transforms, garder transitions couleurs
-				"motion-reduce:transition-colors",
-				// COHERENCE ProductCard: border-primary/40
-				"can-hover:hover:border-primary/40",
-				// COHERENCE ProductCard: shadow oklch pastel
-				"can-hover:hover:shadow-[0_8px_30px_-8px_var(--color-glow-pink),0_4px_15px_-5px_var(--color-glow-lavender)]",
-				// COHERENCE ProductCard: transform subtil (version plus douce)
+				CARD_SURFACE_BASE,
+				"rounded-lg lg:rounded-xl",
+				CARD_SURFACE_HOVER,
 				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
-				// COHERENCE ProductCard: focus state
-				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
-				// Mobile tap feedback
+				CARD_SURFACE_FOCUS,
 				"active:scale-[0.98] active:transition-transform active:duration-75",
-				// COHERENCE ProductCard: GPU optimization
 				"can-hover:group-hover:will-change-transform",
 			)}
 		>
 			{/* Images Bento Grid (ou placeholder) */}
-			{displayImages.length > 0 ? (
+			{hasImages ? (
 				<CollectionImagesGrid
-					images={displayImages}
+					images={images}
 					collectionName={name}
 					isAboveFold={isAboveFold}
 					collectionSlug={slug}
@@ -98,7 +92,6 @@ export function CollectionCard({
 						"via-primary/50 bg-linear-to-r from-transparent to-transparent",
 						"origin-center transition-[transform,opacity] duration-300",
 						"scale-x-75",
-						// Motion-reduce: pas d'animation de scale
 						"motion-reduce:scale-x-100",
 						"motion-safe:can-hover:group-hover:scale-x-100 motion-safe:can-hover:group-hover:via-primary/60",
 						"group-focus-within:via-primary/60 motion-safe:group-focus-within:scale-x-100",
@@ -115,7 +108,6 @@ export function CollectionCard({
 				>
 					<HeadingTag
 						id={titleId}
-						title={name}
 						className={cn(
 							"wrap-break-words line-clamp-2",
 							"text-base tracking-wide sm:text-lg",
@@ -126,26 +118,33 @@ export function CollectionCard({
 					</HeadingTag>
 				</Link>
 
-				{/* Description : desktop uniquement (coherent avec la versio visuelle) */}
+				{/* Description : visible desktop, lue par SR sur mobile (a11y) */}
 				{description && (
-					<p className="text-muted-foreground mt-1.5 line-clamp-2 hidden text-xs sm:block">
+					<p className="text-muted-foreground sr-only mt-1.5 line-clamp-2 text-xs sm:not-sr-only sm:block">
 						{description}
 					</p>
 				)}
 
 				{/* Price range */}
 				{priceRange && (
-					<p className="text-foreground/80 mt-1.5 text-xs font-medium wrap-anywhere">
+					<p className="text-foreground/80 mt-1.5 text-xs font-medium">
 						<span className="sr-only">{COLLECTION_TEXTS.PRICING.PRICE_LABEL}</span>
-						{priceRange.min === priceRange.max
-							? `${formatEuro(priceRange.min, { compact: true })}`
-							: `${formatEuro(priceRange.min, { compact: true })} – ${formatEuro(priceRange.max, { compact: true })}`}
+						{priceRange.min === priceRange.max ? (
+							formatEuro(priceRange.min, { compact: true })
+						) : (
+							<>
+								{formatEuro(priceRange.min, { compact: true })}
+								<span aria-hidden="true"> – </span>
+								<span className="sr-only"> à </span>
+								{formatEuro(priceRange.max, { compact: true })}
+							</>
+						)}
 					</p>
 				)}
 
 				{/* Product count — signal e-commerce mis en avant */}
 				{productCount !== undefined && productCount > 0 && (
-					<p className="text-foreground/70 mt-2 text-sm font-medium wrap-anywhere">
+					<p className="text-foreground/70 mt-2 text-sm font-medium">
 						{COLLECTION_TEXTS.PRODUCT_COUNT(productCount)}
 					</p>
 				)}

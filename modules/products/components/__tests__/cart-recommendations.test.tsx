@@ -21,18 +21,15 @@ vi.mock("@/modules/wishlist/data/get-wishlist-product-ids", () => ({
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({
 		product,
-		index,
 		isInWishlist,
 		sectionId,
 	}: {
 		product: { id: string; title: string };
-		index: number;
 		isInWishlist: boolean;
 		sectionId: string;
 	}) => (
 		<div
 			data-testid={`product-card-${product.id}`}
-			data-index={index}
 			data-in-wishlist={isInWishlist}
 			data-section-id={sectionId}
 		>
@@ -51,6 +48,22 @@ vi.mock("@/shared/components/animations", () => ({
 vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: ({ className }: { className?: string }) => (
 		<hr data-testid="separator" className={className} />
+	),
+}));
+
+vi.mock("next/link", () => ({
+	default: ({
+		href,
+		children,
+		className,
+	}: {
+		href: string;
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<a href={href} className={className}>
+			{children}
+		</a>
 	),
 }));
 
@@ -160,16 +173,6 @@ describe("CartRecommendations", () => {
 			expect(screen.getByTestId("product-card-prod-3")).toBeInTheDocument();
 		});
 
-		it("passes index to each ProductCard", async () => {
-			const products = [createProduct({ id: "prod-1" }), createProduct({ id: "prod-2" })];
-			mockGetRelatedProducts.mockResolvedValue(products);
-
-			render(await CartRecommendations({}));
-
-			expect(screen.getByTestId("product-card-prod-1")).toHaveAttribute("data-index", "0");
-			expect(screen.getByTestId("product-card-prod-2")).toHaveAttribute("data-index", "1");
-		});
-
 		it("passes sectionId='cart-reco' to each ProductCard", async () => {
 			mockGetRelatedProducts.mockResolvedValue([createProduct({ id: "prod-1" })]);
 
@@ -179,6 +182,41 @@ describe("CartRecommendations", () => {
 				"data-section-id",
 				"cart-reco",
 			);
+		});
+	});
+
+	describe("CTA link", () => {
+		it("shows 'Découvrir toutes les créations' link when results reach the limit", async () => {
+			const products = Array.from({ length: 4 }, (_, i) => createProduct({ id: `prod-${i + 1}` }));
+			mockGetRelatedProducts.mockResolvedValue(products);
+
+			render(await CartRecommendations({}));
+
+			const link = screen.getByRole("link", { name: /Découvrir toutes les créations/ });
+			expect(link).toBeInTheDocument();
+			expect(link).toHaveAttribute("href", "/produits");
+		});
+
+		it("does not show the CTA link when results are fewer than the limit", async () => {
+			const products = Array.from({ length: 2 }, (_, i) => createProduct({ id: `prod-${i + 1}` }));
+			mockGetRelatedProducts.mockResolvedValue(products);
+
+			render(await CartRecommendations({}));
+
+			expect(
+				screen.queryByRole("link", { name: /Découvrir toutes les créations/ }),
+			).not.toBeInTheDocument();
+		});
+
+		it("respects a custom limit when deciding to show the CTA", async () => {
+			const products = Array.from({ length: 6 }, (_, i) => createProduct({ id: `prod-${i + 1}` }));
+			mockGetRelatedProducts.mockResolvedValue(products);
+
+			render(await CartRecommendations({ limit: 6 }));
+
+			expect(
+				screen.getByRole("link", { name: /Découvrir toutes les créations/ }),
+			).toBeInTheDocument();
 		});
 	});
 

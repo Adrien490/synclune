@@ -1,7 +1,6 @@
 "use client";
 
 import { BRAND } from "@/shared/constants/brand";
-import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,8 +27,6 @@ interface LogoProps {
 	shadow?: boolean;
 	/** View Transition name applied to the image wrapper for cross-page morphing. */
 	viewTransitionName?: string;
-	/** Haptic pattern triggered on tap. Defaults to `false` (nav passive vers home). */
-	haptic?: HapticPattern | false;
 	/** Override the generated aria-label (homepage/admin fallbacks otherwise). */
 	ariaLabel?: string;
 	/** Expose BRAND.tagline via native `title` attribute (desktop tooltip). */
@@ -49,7 +46,6 @@ export function Logo({
 	rounded = "full",
 	shadow = false,
 	viewTransitionName,
-	haptic = false,
 	ariaLabel,
 	enableTooltip = false,
 }: LogoProps) {
@@ -77,10 +73,6 @@ export function Logo({
 		"motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out",
 		"motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 	);
-
-	const handleTap = () => {
-		if (haptic !== false) triggerHaptic(haptic);
-	};
 
 	const logoContent = (
 		<div
@@ -135,7 +127,6 @@ export function Logo({
 				href={href}
 				className={linkClassName}
 				aria-label={ariaLabel ?? `${BRAND.name} - Accueil`}
-				onClick={handleTap}
 			>
 				{logoContent}
 			</Link>
@@ -145,12 +136,7 @@ export function Logo({
 	if (href) {
 		const fallbackLabel = href === "/admin" ? `${BRAND.name} - Administration` : BRAND.name;
 		return (
-			<Link
-				href={href}
-				className={linkClassName}
-				aria-label={ariaLabel ?? fallbackLabel}
-				onClick={handleTap}
-			>
+			<Link href={href} className={linkClassName} aria-label={ariaLabel ?? fallbackLabel}>
 				{logoContent}
 			</Link>
 		);

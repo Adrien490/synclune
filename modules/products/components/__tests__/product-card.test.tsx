@@ -6,12 +6,13 @@ const { mockGetProductCardData } = vi.hoisted(() => ({
 	mockGetProductCardData: vi.fn(),
 }));
 
-// Mock next/image — expose loading + fetchPriority via data-attributes (Next 16 multi-LCP pattern)
+// Mock next/image — expose preload + loading + fetchPriority via data-attributes (Next 16 multi-LCP pattern)
 vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
 		fill: _fill,
+		preload,
 		loading,
 		fetchPriority,
 		placeholder: _placeholder,
@@ -24,6 +25,7 @@ vi.mock("next/image", () => ({
 		src: string;
 		alt: string;
 		fill?: boolean;
+		preload?: boolean;
 		loading?: string;
 		fetchPriority?: string;
 		placeholder?: string;
@@ -39,6 +41,7 @@ vi.mock("next/image", () => ({
 			alt={alt}
 			className={className}
 			data-sizes={sizes}
+			data-preload={preload === undefined ? undefined : String(preload)}
 			data-loading={loading}
 			data-fetch-priority={fetchPriority}
 			data-vt={style?.viewTransitionName}
@@ -340,9 +343,10 @@ describe("ProductCard", () => {
 					} as unknown as Partial<Product>)}
 				/>,
 			);
-			const meter = screen.getByRole("meter");
-			expect(meter).toBeInTheDocument();
-			expect(meter).toHaveAttribute("aria-valuenow", "4.3");
+			// role="img" is preferred over "meter" for static rating displays nested in a Link
+			// (the Link's aria-label already announces the score; meter would be redundant noise)
+			const rating = screen.getByRole("img", { name: /Note : 4,3 sur 5, 12 avis/ });
+			expect(rating).toBeInTheDocument();
 			expect(screen.getByText("(12)")).toBeInTheDocument();
 		});
 
@@ -355,7 +359,7 @@ describe("ProductCard", () => {
 					} as unknown as Partial<Product>)}
 				/>,
 			);
-			expect(screen.queryByRole("meter")).toBeNull();
+			expect(screen.queryByRole("img", { name: /Note/ })).toBeNull();
 		});
 
 		it("does not render rating when reviewStats is null", () => {
@@ -365,7 +369,7 @@ describe("ProductCard", () => {
 					product={createProduct({ reviewStats: null } as unknown as Partial<Product>)}
 				/>,
 			);
-			expect(screen.queryByRole("meter")).toBeNull();
+			expect(screen.queryByRole("img", { name: /Note/ })).toBeNull();
 		});
 	});
 
@@ -593,45 +597,59 @@ describe("ProductCard", () => {
 		});
 	});
 
-	describe("viewTransitionName scoping", () => {
-		it("scopes view transition name with sectionId to avoid grid collisions", () => {
+	describe("viewTransitionName alignment with Gallery PDP", () => {
+		// Card→PDP morph requires identical viewTransitionName on both sides.
+		// Gallery PDP uses `product-${product.id}` (gallery.tsx:436) — sectionId must NOT be scoped here.
+		it("emits product-${id} regardless of sectionId (matches Gallery PDP contract)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} sectionId="related" />);
 			const primary = container.querySelector("img[src*='image.jpg']");
-			expect(primary?.getAttribute("data-vt")).toBe("product-related-prod-1");
+			expect(primary?.getAttribute("data-vt")).toBe("product-prod-1");
 		});
 
-		it("falls back to 'card' scope when sectionId is omitted", () => {
+		it("emits product-${id} when sectionId is omitted", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} />);
 			const primary = container.querySelector("img[src*='image.jpg']");
-			expect(primary?.getAttribute("data-vt")).toBe("product-card-prod-1");
+			expect(primary?.getAttribute("data-vt")).toBe("product-prod-1");
 		});
 	});
 
 	describe("eager loading policy (Next 16 multi-LCP pattern)", () => {
-		it("sets loading=eager + fetchPriority=high for above-fold cards (index < 4)", () => {
+		it("LCP candidate (index=0): preload=true + eager + fetchPriority=high", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} index={0} />);
 			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).toHaveAttribute("data-preload", "true");
 			expect(img).toHaveAttribute("data-loading", "eager");
 			expect(img).toHaveAttribute("data-fetch-priority", "high");
 		});
 
-		it("sets loading=lazy + fetchPriority=auto for below-fold cards (index >= 4)", () => {
+		it("above-fold non-LCP (index=1-3): preload=false + eager + fetchPriority=high (no <link rel=preload> to spare bandwidth)", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} index={2} />);
+			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).toHaveAttribute("data-preload", "false");
+			expect(img).toHaveAttribute("data-loading", "eager");
+			expect(img).toHaveAttribute("data-fetch-priority", "high");
+		});
+
+		it("below-fold (index>=4): preload=false + lazy + fetchPriority=auto", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} index={4} />);
 			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).toHaveAttribute("data-preload", "false");
 			expect(img).toHaveAttribute("data-loading", "lazy");
 			expect(img).toHaveAttribute("data-fetch-priority", "auto");
 		});
 
-		it("disablePreload overrides index=0 (lazy + auto)", () => {
+		it("disablePreload overrides index=0 (no preload, lazy, auto)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(
 				<ProductCard product={createProduct()} index={0} disablePreload />,
 			);
 			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).toHaveAttribute("data-preload", "false");
 			expect(img).toHaveAttribute("data-loading", "lazy");
 			expect(img).toHaveAttribute("data-fetch-priority", "auto");
 		});

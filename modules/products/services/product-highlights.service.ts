@@ -8,7 +8,7 @@
 import type { GetProductReturn } from "../types/product.types";
 import type { ProductHighlight } from "../types/product-services.types";
 
-export type { ProductHighlight } from "../types/product-services.types";
+export type { ProductHighlight, ProductHighlightId } from "../types/product-services.types";
 
 const MAX_COLLECTION_NAME_LENGTH = 20;
 const DEFAULT_MATERIAL_DESCRIPTION = "Matériau de qualité sélectionné avec soin";

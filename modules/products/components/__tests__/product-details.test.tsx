@@ -17,9 +17,29 @@ vi.mock("motion/react", () => ({
 		{
 			get:
 				(_target, tag: string) =>
-				({ children, ...rest }: { children?: React.ReactNode; [key: string]: unknown }) => {
+				({
+					children,
+					transition,
+					variants: _variants,
+					initial: _initial,
+					animate: _animate,
+					exit: _exit,
+					...rest
+				}: {
+					children?: React.ReactNode;
+					transition?: unknown;
+					variants?: unknown;
+					initial?: unknown;
+					animate?: unknown;
+					exit?: unknown;
+					[key: string]: unknown;
+				}) => {
 					const Tag = tag as keyof React.JSX.IntrinsicElements;
-					return <Tag {...rest}>{children}</Tag>;
+					return (
+						<Tag {...rest} data-transition={JSON.stringify(transition ?? null)}>
+							{children}
+						</Tag>
+					);
 				},
 		},
 	),
@@ -285,7 +305,7 @@ describe("ProductDetails", () => {
 			expect(container.querySelector("#product-description")).not.toBeInTheDocument();
 		});
 
-		it("description container has id='product-description' and itemProp='description'", () => {
+		it("description container has id='product-description' without orphan itemProp", () => {
 			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
 
 			const { container } = render(
@@ -297,7 +317,22 @@ describe("ProductDetails", () => {
 
 			const descEl = container.querySelector("#product-description");
 			expect(descEl).toBeInTheDocument();
-			expect(descEl).toHaveAttribute("itemprop", "description");
+			expect(descEl).not.toHaveAttribute("itemprop");
+		});
+
+		it("renders sr-only h2 'Description' as landmark for screen readers", () => {
+			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
+
+			render(
+				<ProductDetails
+					product={makeProduct({ description: "Desc." })}
+					defaultSku={makeProductSku()}
+				/>,
+			);
+
+			const heading = screen.getByRole("heading", { name: "Description", level: 2 });
+			expect(heading).toBeInTheDocument();
+			expect(heading).toHaveClass("sr-only");
 		});
 	});
 
@@ -346,6 +381,49 @@ describe("ProductDetails", () => {
 			// Component should still render all required children
 			expect(screen.getByTestId("product-price-display")).toBeInTheDocument();
 			expect(screen.getByTestId("add-to-cart-form")).toBeInTheDocument();
+		});
+
+		it("zeroes out delay on Characteristics transition when reduced motion is preferred", () => {
+			// Regression: avant le fix F2, `delay: 0.05` persistait même sous reducedMotion,
+			// produisant un saut différé de 50ms sans animation.
+			mockUseReducedMotion.mockReturnValue(true);
+			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
+
+			render(<ProductDetails product={makeProduct()} defaultSku={makeProductSku()} />);
+
+			const charsWrapper = screen.getByTestId("product-characteristics").parentElement;
+			const transition = JSON.parse(charsWrapper?.getAttribute("data-transition") ?? "{}");
+			expect(transition.duration).toBe(0);
+			expect(transition.delay).toBe(0);
+		});
+
+		it("applies the 50ms delay on Characteristics transition without reduced motion", () => {
+			mockUseReducedMotion.mockReturnValue(false);
+			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
+
+			render(<ProductDetails product={makeProduct()} defaultSku={makeProductSku()} />);
+
+			const charsWrapper = screen.getByTestId("product-characteristics").parentElement;
+			const transition = JSON.parse(charsWrapper?.getAttribute("data-transition") ?? "{}");
+			expect(transition.delay).toBe(0.05);
+			expect(transition.duration).toBeGreaterThan(0);
+		});
+	});
+
+	describe("aria-live cascade (F1 regression)", () => {
+		// Regression: avant le fix F1, deux wrappers `<div aria-live="polite" aria-atomic="false">`
+		// entouraient ProductPriceDisplay et ProductCharacteristics, créant une cascade triple
+		// d'annonces SR (wrapper outer + ProductPriceDisplay interne + sr-only span).
+		it("does not wrap children in aria-live polite atomic=false containers", () => {
+			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
+
+			const { container } = render(
+				<ProductDetails product={makeProduct()} defaultSku={makeProductSku()} />,
+			);
+
+			expect(
+				container.querySelector('[aria-live="polite"][aria-atomic="false"]'),
+			).not.toBeInTheDocument();
 		});
 	});
 });

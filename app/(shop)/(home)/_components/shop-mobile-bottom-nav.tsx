@@ -206,9 +206,6 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 						<Link
 							key={tab.id}
 							href={tab.href}
-							onClick={() => {
-								if (!tab.isActive) triggerHaptic("selection");
-							}}
 							className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 							aria-current={tab.isActive ? "page" : undefined}
 						>

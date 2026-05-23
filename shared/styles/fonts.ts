@@ -26,5 +26,7 @@ export const caveat = Caveat({
 	subsets: ["latin"],
 	display: "swap",
 	variable: "--font-cursive",
-	preload: true, // Used in navbar logo (above-the-fold) + atelier signature reveal — preload to avoid FOIT
+	// Navbar streams in via Suspense (after LCP) and atelier signature is below the fold.
+	// `display: "swap"` keeps the fallback visible until Caveat loads — no preload needed.
+	preload: false,
 });

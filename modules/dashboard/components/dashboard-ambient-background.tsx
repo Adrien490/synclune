@@ -9,7 +9,7 @@ export function DashboardAmbientBackground() {
 			<DecorativeHalo
 				variant="rose"
 				blur="xl"
-				opacity="medium"
+				opacity="light"
 				animate="float"
 				className="-top-24 -left-24 hidden size-72 md:block"
 			/>

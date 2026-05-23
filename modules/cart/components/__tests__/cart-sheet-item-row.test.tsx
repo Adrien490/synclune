@@ -157,10 +157,6 @@ vi.mock("../cart-item-remove-button", () => ({
 	),
 }));
 
-vi.mock("@/modules/media/utils/media-utils", () => ({
-	getVideoMimeType: vi.fn(() => "video/mp4"),
-}));
-
 vi.mock("@/modules/cart/services/cart-item.service", () => ({
 	getCartItemSubtotal: vi.fn(
 		(item: { priceAtAdd: number; quantity: number }) => item.priceAtAdd * item.quantity,
@@ -260,6 +256,64 @@ describe("CartSheetItemRow", () => {
 		const image = screen.getByAltText("Bague Lune image");
 		expect(image).toBeInTheDocument();
 		expect(image).toHaveAttribute("src", "https://example.com/image.jpg");
+	});
+
+	it("renders the product title as a level-3 heading (SR rotor nav)", () => {
+		render(<CartSheetItemRow item={createCartItem()} />);
+		const heading = screen.getByRole("heading", { level: 3, name: "Bague Lune" });
+		expect(heading).toBeInTheDocument();
+	});
+
+	it("uses thumbnailUrl as <Image> src when mediaType is VIDEO (no autoplay in cart)", () => {
+		const item = createCartItem({
+			sku: {
+				...(createCartItem().sku as Record<string, unknown>),
+				images: [
+					{
+						id: "img-1",
+						url: "https://example.com/clip.mp4",
+						altText: "Clip Bague",
+						blurDataUrl: null,
+						mediaType: "VIDEO",
+						thumbnailUrl: "https://example.com/clip-poster.jpg",
+					},
+				],
+			},
+		});
+		render(<CartSheetItemRow item={item} />);
+		const image = screen.getByAltText("Clip Bague");
+		expect(image.tagName).toBe("IMG");
+		expect(image).toHaveAttribute("src", "https://example.com/clip-poster.jpg");
+	});
+
+	it("falls back to video url when thumbnailUrl is missing", () => {
+		const item = createCartItem({
+			sku: {
+				...(createCartItem().sku as Record<string, unknown>),
+				images: [
+					{
+						id: "img-1",
+						url: "https://example.com/clip.mp4",
+						altText: "Clip Bague",
+						blurDataUrl: null,
+						mediaType: "VIDEO",
+						thumbnailUrl: null,
+					},
+				],
+			},
+		});
+		render(<CartSheetItemRow item={item} />);
+		expect(screen.getByAltText("Clip Bague")).toHaveAttribute(
+			"src",
+			"https://example.com/clip.mp4",
+		);
+	});
+
+	it("marks the actions row with data-no-swipe to prevent SwipeableCard tracking on +/- taps", () => {
+		const { container } = render(<CartSheetItemRow item={createCartItem()} />);
+		const actionsRow = container.querySelector("[data-no-swipe]");
+		expect(actionsRow).not.toBeNull();
+		expect(actionsRow?.querySelector("[data-testid='remove-button']")).not.toBeNull();
 	});
 
 	it("renders the link to the product page", () => {

@@ -43,9 +43,9 @@ describe("CartRecommendationsSkeleton", () => {
 		expect(headerDiv?.children).toHaveLength(2);
 	});
 
-	it("renders the divider element", () => {
+	it("renders a Separator element (parity with loaded version)", () => {
 		const { container } = render(<CartRecommendationsSkeleton />);
-		const divider = container.querySelector(".bg-border.mb-8.h-px");
-		expect(divider).not.toBeNull();
+		const separator = container.querySelector("[data-slot='separator']");
+		expect(separator).not.toBeNull();
 	});
 });

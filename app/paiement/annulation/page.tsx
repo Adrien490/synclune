@@ -1,12 +1,6 @@
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import { getCheckoutCancelMessage } from "@/modules/payments/constants/checkout-cancel-messages";
 import { Info, ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
@@ -48,21 +42,22 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const errorInfo = getCheckoutCancelMessage(reason);
 	const ErrorIcon = errorInfo.icon;
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* Decorative background */}
-			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
-			<h1 className="sr-only">Paiement annulé</h1>
+			<div className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card
-						style={{ viewTransitionName: "checkout-pay-cta" }}
-						className="border-primary/10 rounded-2xl shadow-md"
-					>
+					<Card className="border-primary/10 rounded-2xl shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<div className="bg-muted/80 mx-auto flex size-18 items-center justify-center rounded-full">
-								<ErrorIcon className="text-muted-foreground size-10" />
+								<ErrorIcon className="text-muted-foreground size-10" aria-hidden="true" />
 							</div>
-							<CardTitle className="font-display text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
+							<h1
+								data-slot="card-title"
+								className="font-display text-2xl leading-none font-normal sm:text-3xl"
+							>
+								{errorInfo.title}
+							</h1>
 							<CardDescription className="text-base">
 								Ta commande n&apos;a pas été finalisée
 							</CardDescription>

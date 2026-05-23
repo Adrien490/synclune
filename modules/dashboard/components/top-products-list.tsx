@@ -149,7 +149,7 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 									<Fade
 										key={`${product.productId ?? "unknown"}-${rank}`}
 										y={6}
-										delay={index * 0.04}
+										delay={index * 0.02}
 										inView
 										once
 									>

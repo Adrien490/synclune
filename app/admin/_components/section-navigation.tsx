@@ -2,7 +2,6 @@
 
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -65,7 +64,6 @@ export function SectionNavigation({
 					<Link
 						key={link.href}
 						href={link.href}
-						onClick={() => triggerHaptic("light")}
 						className="focus-visible:ring-primary rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					>
 						<Card

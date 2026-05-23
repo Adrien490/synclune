@@ -249,52 +249,49 @@ describe("FilterBadge", () => {
 		expect(lastMotionProps.value?.drag).toBe(false);
 	});
 
-	it("calls onRemove when swipe exceeds 80px threshold", () => {
-		mockIsTouchDevice.value = true;
-		const onRemove = vi.fn();
-		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 120, y: 0 } });
-		expect(onRemove).toHaveBeenCalledWith("color", "red");
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
-	});
-
-	it("calls onRemove when swipe exceeds 80px threshold in either direction", () => {
+	it("calls onRemove when left swipe exceeds 80px threshold", () => {
 		mockIsTouchDevice.value = true;
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
 		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 } });
 		expect(onRemove).toHaveBeenCalledWith("color", "red");
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 	});
 
-	it("does not call onRemove when swipe is below 80px threshold", () => {
+	it("does not call onRemove when swipe is below threshold (left)", () => {
 		mockIsTouchDevice.value = true;
 		const onRemove = vi.fn();
 		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
-		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 50, y: 0 } });
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -50, y: 0 } });
 		expect(onRemove).not.toHaveBeenCalled();
 		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 
 	// ========================================================================
-	// HOVER (desktop only)
+	// AFFORDANCE — X icon opacity (CSS-only, no Motion variants)
 	// ========================================================================
 
-	it("enables whileHover on non-touch desktop", () => {
-		mockIsTouchDevice.value = false;
+	it("X icon container exposes touch-first opacity classes (opacity-100 mobile, sm:opacity-60 desktop)", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
-		expect(lastMotionProps.value?.whileHover).toBe("hover");
+		const iconContainer = screen.getByTestId("x-icon").closest("[aria-hidden]");
+		expect(iconContainer?.className).toContain("opacity-100");
+		expect(iconContainer?.className).toContain("sm:opacity-60");
+		expect(iconContainer?.className).toContain("can-hover:group-hover:opacity-100");
 	});
 
-	it("disables whileHover on touch devices (prevents sticky hover state)", () => {
-		mockIsTouchDevice.value = true;
+	it("button is the hover group anchor (group class present)", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
-		expect(lastMotionProps.value?.whileHover).toBeUndefined();
+		const button = screen.getByRole("button");
+		expect(button.className).toContain("group");
 	});
 
-	it("disables whileHover when user prefers reduced motion", () => {
-		mockIsTouchDevice.value = false;
-		mockReducedMotion.value = true;
+	// ========================================================================
+	// FOCUS RING — SSOT alignment (app/globals.css @utility focus-ring)
+	// ========================================================================
+
+	it("uses the shared focus-ring utility (SSOT)", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
-		expect(lastMotionProps.value?.whileHover).toBeUndefined();
+		const button = screen.getByRole("button");
+		expect(button.className).toContain("focus-ring");
 	});
 });

@@ -64,6 +64,7 @@ import {
 	KpiCardSkeleton,
 	KpisSkeleton,
 	ListSkeleton,
+	VatProgressSkeleton,
 } from "../index";
 
 afterEach(cleanup);
@@ -228,5 +229,41 @@ describe("FulfillmentSkeleton", () => {
 			"aria-label",
 			"Chargement du pipeline d'expédition",
 		);
+	});
+});
+
+// ============================================================================
+// VatProgressSkeleton
+// ============================================================================
+
+describe("VatProgressSkeleton", () => {
+	it("renders with role='status' and aria-busy", () => {
+		render(<VatProgressSkeleton />);
+		const status = screen.getByRole("status");
+		expect(status).toBeInTheDocument();
+		expect(status).toHaveAttribute("aria-busy", "true");
+	});
+
+	it("uses the default aria-label", () => {
+		render(<VatProgressSkeleton />);
+		expect(screen.getByRole("status")).toHaveAttribute(
+			"aria-label",
+			"Chargement du suivi de seuil TVA",
+		);
+	});
+
+	it("accepts a custom ariaLabel", () => {
+		render(<VatProgressSkeleton ariaLabel="Chargement seuil TVA franchise" />);
+		expect(screen.getByRole("status")).toHaveAttribute(
+			"aria-label",
+			"Chargement seuil TVA franchise",
+		);
+	});
+
+	it("imitates the structure of VatProgressCard (header + value/threshold + progress bar + caption)", () => {
+		render(<VatProgressSkeleton />);
+		// Header (title + icon) + content (value, threshold, progress bar, caption)
+		const skeletons = screen.getAllByTestId("skeleton");
+		expect(skeletons.length).toBeGreaterThanOrEqual(5);
 	});
 });

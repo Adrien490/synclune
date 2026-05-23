@@ -143,4 +143,27 @@ describe("ColorFormDialog", () => {
 		await user.click(screen.getByTestId("trigger-close"));
 		expect(close).toHaveBeenCalledTimes(1);
 	});
+
+	it("update mode description mentions full info, not just hex code", () => {
+		const color = { id: "c-1", name: "Rouge", slug: "rouge", hex: "#FF0000" };
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: { color } };
+		render(<ColorFormDialog />);
+		expect(screen.getByText(/informations de la couleur/i)).toBeInTheDocument();
+		expect(screen.queryByText(/code couleur/i)).not.toBeInTheDocument();
+	});
+
+	it("remounts EditColorForm when color.id changes (key forces fresh defaults)", () => {
+		const colorA = { id: "c-1", name: "Rouge", slug: "rouge", hex: "#FF0000" };
+		const colorB = { id: "c-2", name: "Bleu", slug: "bleu", hex: "#0000FF" };
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: { color: colorA } };
+		const { rerender } = render(<ColorFormDialog />);
+		expect(mockEditColorForm).toHaveBeenCalledTimes(1);
+
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: { color: colorB } };
+		rerender(<ColorFormDialog />);
+
+		const lastCall = mockEditColorForm.mock.lastCall?.[0] as { color: { id: string } };
+		expect(lastCall.color.id).toBe("c-2");
+		expect(mockEditColorForm.mock.calls.length).toBeGreaterThanOrEqual(2);
+	});
 });

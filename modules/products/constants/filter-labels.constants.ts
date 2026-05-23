@@ -1,6 +1,6 @@
 /**
- * Labels pour les filtres de produits
- * Utilises dans NoResultsFilters et autres composants de filtrage
+ * Labels pour les filtres de produits.
+ * Consommé par ProductFilterBadges et createProductFilterFormatter.
  */
 export const FILTER_LABELS: Record<string, string> = {
 	type: "Type",

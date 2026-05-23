@@ -3,6 +3,7 @@
 import { Package } from "lucide-react";
 import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
 
 interface ShippingMethodSectionProps {
 	shipping: number;
@@ -23,14 +24,14 @@ export function ShippingMethodSection({
 		return (
 			<div className="border-destructive/20 bg-destructive/5 rounded-xl border p-4">
 				<p className="text-destructive text-sm">
-					Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
+					{SHIPPING_UNAVAILABLE.section} {SHIPPING_UNAVAILABLE.contactCta}
 				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="border-primary/10 bg-primary/2 flex items-center gap-3 rounded-xl border p-4">
+		<div className="border-primary/10 bg-primary/5 flex items-center gap-3 rounded-xl border p-4">
 			<Package className="text-muted-foreground size-5 shrink-0" />
 			<div className="flex-1 text-sm">
 				<div className="flex items-center justify-between">

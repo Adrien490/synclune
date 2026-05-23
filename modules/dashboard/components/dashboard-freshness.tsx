@@ -15,10 +15,14 @@ interface DashboardFreshnessProps {
 }
 
 /**
- * Mobile-only "Mis à jour il y a X" indicator displayed below the alerts banner.
- * Resets when `useRefreshDashboard` succeeds (RefreshSheet button) or when the
- * shared `PullToRefresh` gesture fires — both dispatch window events that this
- * component subscribes to.
+ * "Affiché il y a X" indicator. The timestamp reflects the client mount
+ * (or the latest refresh event), NOT the server cache regeneration — hence
+ * "Affiché à" rather than "Mis à jour", which would be misleading given the
+ * 60s `user` cache profile.
+ *
+ * Resets when `useRefreshDashboard` succeeds (RefreshSheet button) or when
+ * the shared `PullToRefresh` gesture fires — both dispatch window events
+ * this component subscribes to.
  */
 export function DashboardFreshness({ className }: DashboardFreshnessProps) {
 	const [mountedAt, setMountedAt] = useState<Date>(() => new Date());
@@ -34,16 +38,13 @@ export function DashboardFreshness({ className }: DashboardFreshnessProps) {
 	}, []);
 
 	return (
-		<p
-			className={cn("text-muted-foreground flex items-center gap-1.5 text-xs", className)}
-			aria-live="polite"
-		>
+		<p className={cn("text-muted-foreground flex items-center gap-1.5 text-xs", className)}>
 			<span
 				className="bg-success/60 size-1.5 shrink-0 rounded-full motion-safe:animate-pulse"
 				aria-hidden="true"
 			/>
 			<span>
-				Mis à jour <RelativeClock from={mountedAt} paused={false} />
+				Affiché <RelativeClock from={mountedAt} paused={false} />
 			</span>
 		</p>
 	);

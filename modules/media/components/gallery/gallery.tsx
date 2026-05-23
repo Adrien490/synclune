@@ -110,7 +110,12 @@ function GalleryThumbnailList({
 	if (isDesktop) {
 		return (
 			<div className="order-1 hidden md:block">
-				<div ref={tablistRef} className="flex flex-col gap-2" role="tablist" aria-label="Vignettes">
+				<div
+					ref={tablistRef}
+					className="flex flex-col gap-2"
+					role="tablist"
+					aria-label="Vignettes du produit"
+				>
 					{thumbnails}
 				</div>
 			</div>
@@ -125,7 +130,7 @@ function GalleryThumbnailList({
 					ref={tablistRef}
 					className="flex flex-nowrap gap-2 py-1 pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
 					role="tablist"
-					aria-label="Vignettes"
+					aria-label="Vignettes du produit"
 				>
 					{thumbnails}
 				</div>

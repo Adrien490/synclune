@@ -60,7 +60,7 @@ function SummaryContent() {
 			<Separator />
 
 			{/* Total */}
-			<div className="bg-primary/3 -mx-1 space-y-2 rounded-xl p-3">
+			<div className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3">
 				<div className="flex items-center justify-between">
 					<Skeleton className="h-6 w-12" />
 					<Skeleton className="h-7 w-20" />
@@ -96,12 +96,12 @@ export default function CheckoutLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="L'atelier prépare ton paiement…"
-			className="relative min-h-dvh min-h-screen"
+			className="relative min-h-dvh"
 			style={{ viewTransitionName: "shop-paiement" }}
 		>
 			{/* Decorative background */}
 			<div
-				className="from-primary/5 to-secondary/8 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
+				className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
 				style={{ viewTransitionName: "none" }}
 			/>
 
@@ -182,7 +182,7 @@ export default function CheckoutLoading() {
 									</div>
 
 									{/* Trust badges */}
-									<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
+									<div className="border-primary/5 bg-primary/5 rounded-xl border p-4">
 										<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
 											<Skeleton className="h-3 w-28" />
 											<Skeleton className="hidden h-3 w-px sm:inline" />

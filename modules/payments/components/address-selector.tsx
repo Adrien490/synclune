@@ -1,6 +1,7 @@
 "use client";
 
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+import { Badge } from "@/shared/components/ui/badge";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { MapPin } from "lucide-react";
@@ -70,7 +71,9 @@ export function AddressSelector({
 								</p>
 							</div>
 							{address.isDefault && (
-								<span className="text-muted-foreground mt-0.5 shrink-0 text-xs">Par défaut</span>
+								<Badge variant="secondary" className="mt-0.5">
+									Par défaut
+								</Badge>
 							)}
 						</label>
 					);

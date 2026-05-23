@@ -189,25 +189,20 @@ describe("HeroFloatingImagesInner", () => {
 		expect(wrapper?.className).toContain("md:block");
 	});
 
-	it("marks only the first image as preload=true (LCP — Next 16 emits <link rel=preload>)", () => {
+	/**
+	 * @regression mobile-lcp-preload-2026-05-24
+	 * Floating images are `hidden md:block`. Emitting `<link rel="preload">` for any
+	 * of them costs ~119 KiB of bandwidth on 4G mobile for an image that is never
+	 * painted, delaying the real LCP (ProductCard[0] in LatestCreations).
+	 * The LCP preload now lives on the first ProductCard image instead.
+	 */
+	it("never preloads or boosts fetchpriority on any floating image (mobile LCP fix)", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const images = container.querySelectorAll("[data-testid='floating-img']");
-		expect(images[0]?.getAttribute("data-preload")).toBe("true");
-
-		for (let i = 1; i < images.length; i++) {
-			expect(images[i]?.getAttribute("data-preload")).toBe("false");
-		}
-	});
-
-	it("marks the LCP image with fetchpriority=high (Lighthouse LCP discovery)", () => {
-		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
-
-		const images = container.querySelectorAll("[data-testid='floating-img']");
-		expect(images[0]?.getAttribute("data-fetchpriority")).toBe("high");
-
-		for (let i = 1; i < images.length; i++) {
-			expect(images[i]?.getAttribute("data-fetchpriority")).toBe("auto");
+		for (const image of images) {
+			expect(image.getAttribute("data-preload")).toBe("false");
+			expect(image.getAttribute("data-fetchpriority")).toBe("none");
 		}
 	});
 

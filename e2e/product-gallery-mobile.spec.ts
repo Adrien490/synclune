@@ -19,7 +19,7 @@ test.describe("Galerie produit mobile", { tag: ["@critical", "@mobile"] }, () =>
 
 	test("le thumbnail scroll mobile applique les safe-area paddings", async ({ page }) => {
 		const gallery = page.locator('[role="region"][aria-roledescription="carrousel"]');
-		const tablists = gallery.locator('[role="tablist"][aria-label="Vignettes"]');
+		const tablists = gallery.locator('[role="tablist"][aria-label="Vignettes du produit"]');
 		const imgCount = await gallery.locator("img").count();
 		test.skip(imgCount < 2, "Need multiple images to display thumbnails");
 

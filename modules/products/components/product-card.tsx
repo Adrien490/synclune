@@ -1,3 +1,8 @@
+import {
+	CARD_SURFACE_BASE,
+	CARD_SURFACE_FOCUS,
+	CARD_SURFACE_HOVER,
+} from "@/shared/components/card-surface.constants";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
@@ -82,18 +87,8 @@ function ProductCardRating({
 	return (
 		<div
 			className="flex items-center gap-0.5"
-			role="meter"
+			role="img"
 			aria-label={`Note : ${formattedRating} sur 5, ${totalCount} avis`}
-			aria-valuenow={averageRating}
-			aria-valuemin={0}
-			aria-valuemax={5}
-			aria-valuetext={`${formattedRating} étoiles sur 5`}
-			style={
-				{
-					"--star-filled": "var(--secondary)",
-					"--star-empty": "var(--muted-foreground)",
-				} as React.CSSProperties
-			}
 		>
 			{Array.from({ length: 5 }, (_, i) => (
 				<StarIcon
@@ -175,6 +170,9 @@ export function ProductCard({
 			: baseUrl;
 
 	const isAboveFold = !disablePreload && (index ?? 0) < ABOVE_FOLD_THRESHOLD;
+	// LCP candidate: only the very first card of a list emits `<link rel="preload">`.
+	// Multiple preload links on a 4G connection would compete for bandwidth.
+	const isLcpCandidate = !disablePreload && index === 0;
 
 	// Review stats: hoisted so the rating link can include the score in its aria-label.
 	const reviewStats =
@@ -182,9 +180,8 @@ export function ProductCard({
 	const reviewAverage = reviewStats ? Number(reviewStats.averageRating) : 0;
 	const formattedRating = reviewStats ? ratingFormatter.format(reviewAverage) : null;
 
-	// Scope viewTransitionName by sectionId to prevent collisions when the same
-	// product appears in multiple grids on the same page (e.g. related + recently-viewed).
-	const productViewTransitionName = `product-${sectionId ?? "card"}-${product.id}`;
+	// Aligned with Gallery PDP for card→detail morph (gallery.tsx:436).
+	const productViewTransitionName = `product-${product.id}`;
 
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];
@@ -210,17 +207,11 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			aria-describedby={badgeDescId}
 			className={cn(
-				"product-card bg-card group relative grid touch-manipulation gap-4 overflow-hidden rounded-lg border-2 border-transparent sm:rounded-xl",
-				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
-				// Disable transforms for motion-reduce, keep color transitions (WCAG 2.3.3)
-				"motion-reduce:transition-colors",
-				"shadow-sm",
-				"can-hover:hover:border-primary/40",
-				"can-hover:hover:shadow-[0_8px_30px_-8px_var(--color-glow-pink),0_4px_15px_-5px_var(--color-glow-lavender)]",
-				// Lift effect on hover (scale + translateY)
+				CARD_SURFACE_BASE,
+				"product-card grid gap-4 rounded-lg sm:rounded-xl",
+				CARD_SURFACE_HOVER,
 				"motion-safe:can-hover:hover:scale-[1.02]",
-				// Focus state for keyboard navigation
-				"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",
+				CARD_SURFACE_FOCUS,
 			)}
 		>
 			{/* sr-only badge descriptions for screen readers */}
@@ -237,7 +228,7 @@ export function ProductCard({
 					"product-card-media bg-muted relative overflow-hidden rounded-lg sm:rounded-xl",
 					"aspect-3/4 sm:aspect-4/5",
 					// Gradient overlay on hover
-					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 after:transition-opacity after:duration-300",
+					"motion-safe:can-hover:group-hover:after:opacity-100 after:absolute after:inset-0 after:z-[5] after:bg-linear-to-t after:from-black/5 after:to-transparent after:opacity-0 motion-safe:after:transition-opacity motion-safe:after:duration-300",
 				)}
 			>
 				{/* Status badges — stock badges take priority over promo */}
@@ -273,6 +264,7 @@ export function ProductCard({
 						style={{ viewTransitionName: productViewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
+						preload={isLcpCandidate}
 						loading={isAboveFold ? "eager" : "lazy"}
 						fetchPriority={isAboveFold ? "high" : "auto"}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}

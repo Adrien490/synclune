@@ -34,9 +34,9 @@ afterEach(cleanup);
 // ============================================================================
 
 describe("DashboardFreshness", () => {
-	it("renders 'Mis à jour' prefix and the relative clock", () => {
+	it("renders 'Affiché' prefix and the relative clock", () => {
 		render(<DashboardFreshness />);
-		expect(screen.getByText(/mis à jour/i)).toBeInTheDocument();
+		expect(screen.getByText(/affiché/i)).toBeInTheDocument();
 		expect(screen.getByTestId("relative-clock")).toBeInTheDocument();
 	});
 
@@ -47,21 +47,21 @@ describe("DashboardFreshness", () => {
 		expect(clock.getAttribute("data-paused")).toBe("false");
 	});
 
-	it("announces freshness updates via aria-live=polite", () => {
+	it("does NOT use aria-live (would re-announce every second tick — SR noise)", () => {
 		render(<DashboardFreshness />);
-		const region = screen.getByText(/mis à jour/i).closest("p");
-		expect(region).toHaveAttribute("aria-live", "polite");
+		const region = screen.getByText(/affiché/i).closest("p");
+		expect(region).not.toHaveAttribute("aria-live");
 	});
 
 	it("forwards className for responsive visibility (e.g. md:hidden)", () => {
 		render(<DashboardFreshness className="md:hidden" />);
-		const region = screen.getByText(/mis à jour/i).closest("p");
+		const region = screen.getByText(/affiché/i).closest("p");
 		expect(region?.className).toContain("md:hidden");
 	});
 
 	it("includes the pulse dot decoration", () => {
 		render(<DashboardFreshness />);
-		const region = screen.getByText(/mis à jour/i).closest("p");
+		const region = screen.getByText(/affiché/i).closest("p");
 		const dot = region?.querySelector('[aria-hidden="true"]');
 		expect(dot).toBeInTheDocument();
 		expect(dot?.className).toContain("bg-success/60");

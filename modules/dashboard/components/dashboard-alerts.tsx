@@ -34,7 +34,7 @@ export function DashboardAlerts({ alerts, urssafDeadline }: DashboardAlertsProps
 	return (
 		<div
 			className="flex flex-wrap gap-3"
-			role="status"
+			role="region"
 			aria-label="Alertes nécessitant ton attention"
 		>
 			{urssafAlert && (

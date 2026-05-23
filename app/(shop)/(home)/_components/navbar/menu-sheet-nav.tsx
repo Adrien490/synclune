@@ -6,7 +6,6 @@ import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion, type Variants } from "motion/react";
@@ -184,7 +183,6 @@ export function MenuSheetNav({
 								"text-foreground/80 hover:bg-accent hover:text-foreground",
 								"motion-safe:active:scale-[0.97]",
 							)}
-							onClick={() => triggerHaptic("selection")}
 						>
 							Tableau de bord
 						</Link>

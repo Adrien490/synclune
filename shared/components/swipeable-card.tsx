@@ -133,6 +133,11 @@ function getEffectiveThreshold(pxThreshold: number, containerWidth: number): num
  * must also have a visible keyboard-accessible equivalent (button) somewhere in the card
  * content — swipe alone is not sufficient per WCAG 2.2 Level AA Success Criterion 2.5.7
  * (Dragging Movements).
+ *
+ * **Opt-out**: Children can mark any subtree with `data-no-swipe` to skip gesture
+ * tracking when the touch starts inside it — useful for interactive controls
+ * (quantity steppers, action buttons) where an accidental micro-drag during a tap
+ * should never trigger the swipe-to-action flow.
  */
 export function SwipeableCard({
 	children,
@@ -222,6 +227,8 @@ export function SwipeableCard({
 		function onTouchStart(e: TouchEvent) {
 			const touch = e.touches[0];
 			if (!touch) return;
+			const target = e.target as Element | null;
+			if (target?.closest("[data-no-swipe]")) return;
 			touchStartRef.current = { x: touch.clientX, y: touch.clientY };
 			isTrackingRef.current = true;
 			lockedDirectionRef.current = null;

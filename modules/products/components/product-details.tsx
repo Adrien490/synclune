@@ -56,80 +56,77 @@ export function ProductDetails({
 
 	return (
 		<div className="space-y-8">
-			{/* 1. Prix (Baymard: visible en premier) — wrapper stable aria-live pour que les
-			    lecteurs d'écran annoncent le changement malgré le remount AnimatePresence */}
-			<div aria-live="polite" aria-atomic="false">
-				<AnimatePresence mode="popLayout">
-					<m.div
-						key={`price-${currentSku.id || "no-sku"}`}
-						variants={fadeVariants}
-						initial="initial"
-						animate="animate"
-						exit="exit"
-						transition={{
-							duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.normal,
-						}}
-					>
-						<ProductPriceDisplay
-							selectedSku={currentSku}
-							product={product}
-							cartsCount={cartsCount}
-							isInWishlist={isInWishlist}
-						/>
-					</m.div>
-				</AnimatePresence>
-			</div>
+			{/* 1. Prix (Baymard: visible en premier).
+			    Pas de wrapper aria-live ici : ProductPriceDisplay possède déjà ses propres
+			    annonces SR (aria-live + sr-only "Prix mis à jour : ..."). */}
+			<AnimatePresence mode="popLayout">
+				<m.div
+					key={`price-${currentSku.id || "no-sku"}`}
+					variants={fadeVariants}
+					initial="initial"
+					animate="animate"
+					exit="exit"
+					transition={{
+						duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.normal,
+					}}
+				>
+					<ProductPriceDisplay
+						selectedSku={currentSku}
+						product={product}
+						cartsCount={cartsCount}
+						isInWishlist={isInWishlist}
+					/>
+				</m.div>
+			</AnimatePresence>
 
 			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
 
-			{/* 4. CTA principal (monté pour réduire la distance au fold - Baymard) */}
+			{/* 3. CTA principal (monté pour réduire la distance au fold - Baymard) */}
 			<AddToCartForm product={product} selectedSku={currentSku} />
 
-			{/* 5. Estimation livraison dynamique */}
+			{/* 4. Estimation livraison dynamique */}
 			<DeliveryEstimator />
 
-			{/* 6. Réassurance (après CTA - "decision support") */}
+			{/* 5. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
-			{/* 5. Caractéristiques principales — wrapper stable aria-live */}
-			<div aria-live="polite" aria-atomic="false">
-				<AnimatePresence mode="popLayout">
-					<m.div
-						key={`chars-${currentSku.id || "no-sku"}`}
-						variants={fadeVariants}
-						initial="initial"
-						animate="animate"
-						exit="exit"
-						transition={{
-							duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.fast,
-							delay: 0.05,
-						}}
-					>
-						<ProductCharacteristics selectedSku={currentSku} />
-					</m.div>
-				</AnimatePresence>
-			</div>
+			{/* 6. Caractéristiques principales. */}
+			<AnimatePresence mode="popLayout">
+				<m.div
+					key={`chars-${currentSku.id || "no-sku"}`}
+					variants={fadeVariants}
+					initial="initial"
+					animate="animate"
+					exit="exit"
+					transition={{
+						duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.fast,
+						delay: prefersReducedMotion ? 0 : 0.05,
+					}}
+				>
+					<ProductCharacteristics selectedSku={currentSku} />
+				</m.div>
+			</AnimatePresence>
 
-			<Separator className="bg-border" />
+			<Separator />
 
-			{/* 6. Highlights produit (après CTA - pattern Etsy) */}
+			{/* 7. Highlights produit (après CTA - pattern Etsy) */}
 			<ProductHighlights product={product} />
 
-			{/* 7. Description produit (après CTA - pattern Etsy) */}
+			{/* 8. Description produit (après CTA - pattern Etsy) */}
 			{product.description && (
 				<div
 					id="product-description"
 					className="text-muted-foreground max-w-prose space-y-3 text-base leading-relaxed tracking-normal antialiased"
-					itemProp="description"
 				>
+					<h2 className="sr-only">Description</h2>
 					{product.description.split("\n").map((line, i) => (
 						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
 					))}
 				</div>
 			)}
 
-			{/* 8. Entretien et livraison (reste en bas) */}
+			{/* 9. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />
 		</div>
 	);

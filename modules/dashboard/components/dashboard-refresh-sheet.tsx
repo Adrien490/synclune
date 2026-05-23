@@ -86,7 +86,6 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 				showCloseButton={false}
 				onOverlayClick={handleOverlayClick}
 				data-pending={isPending ? "" : undefined}
-				aria-busy={isPending}
 				data-testid="dashboard-refresh-sheet"
 			>
 				{isMobile && <SheetHandle />}
@@ -115,7 +114,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 					</div>
 				</SheetHeader>
 
-				<div className="flex-1 gap-y-4 p-6">
+				<div className="flex-1 gap-y-4 p-6" aria-busy={isPending}>
 					<div className="bg-muted/40 rounded-lg border px-4 py-3">
 						<p className="text-muted-foreground text-xs tracking-wide uppercase">
 							Dernière mise à jour

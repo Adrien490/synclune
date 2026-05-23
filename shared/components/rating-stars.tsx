@@ -116,12 +116,6 @@ export function RatingStars({
 			aria-required={interactive && required ? true : undefined}
 			aria-invalid={ariaInvalid}
 			aria-describedby={ariaDescribedBy}
-			style={
-				{
-					"--star-filled": "var(--secondary)",
-					"--star-empty": "var(--muted-foreground)",
-				} as React.CSSProperties
-			}
 		>
 			{Array.from({ length: maxRating }, (_, i) => {
 				const star = i + 1;

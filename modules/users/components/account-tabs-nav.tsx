@@ -3,7 +3,6 @@
 import { useTransition } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ROUTES } from "@/shared/constants/urls";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { MapPin, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -36,7 +35,6 @@ export function AccountTabsNav() {
 	const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
 		if (isActive(href)) return;
 		e.preventDefault();
-		triggerHaptic("selection");
 		startTransition(() => {
 			router.push(href);
 		});

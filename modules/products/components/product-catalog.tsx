@@ -25,16 +25,11 @@ import { SearchInput } from "@/shared/components/search-input";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ScrollRestoration } from "@/shared/components/scroll-restoration";
 
-// Lazy loading - filter sheet charge uniquement a l'ouverture
 const ProductFilterSheet = dynamic(() =>
 	import("@/modules/products/components/product-filter-sheet").then(
 		(mod) => mod.ProductFilterSheet,
 	),
 );
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 export type ProductCatalogProps = {
 	/** Promise des produits (permet le streaming) */
@@ -69,10 +64,6 @@ export type ProductCatalogProps = {
 	breadcrumbs: Array<{ label: string; href: string }>;
 };
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
-
 export function ProductCatalog({
 	productsPromise,
 	perPage,
@@ -88,9 +79,8 @@ export function ProductCatalog({
 	jsonLd,
 	breadcrumbs,
 }: ProductCatalogProps) {
-	const hasActiveFilters = activeFiltersCount > 0 || !!activeProductType;
+	const hasActiveFilters = activeFiltersCount > 0 || !!activeProductType || !!preferOnSale;
 
-	// Configuration de la page
 	const pageTitle = searchTerm
 		? `Recherche "${searchTerm}"`
 		: activeProductType
@@ -101,7 +91,6 @@ export function ProductCatalog({
 		activeProductType?.description ??
 		"Découvrez toutes mes créations colorées faites main dans mon atelier. Des pièces uniques inspirées de mes passions !";
 
-	// Sort options for mobile drawer
 	const sortOptions = Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
 		value: option,
 		label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
@@ -125,11 +114,7 @@ export function ProductCatalog({
 				breadcrumbs={breadcrumbs}
 			/>
 
-			{/* Section principale avec catalogue */}
-			<section
-				className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16"
-				aria-label="Catalogue des créations"
-			>
+			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
 				<div
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
@@ -141,12 +126,10 @@ export function ProductCatalog({
 						{pageTitle}
 					</h1>
 
-					{/* Mobile sticky sub-header (tri / recherche / filtres) */}
 					<Suspense fallback={null}>
 						<ProductSortBar sortOptions={sortOptions} />
 					</Suspense>
 
-					{/* Desktop Toolbar - hidden on mobile */}
 					<Suspense fallback={null}>
 						<Toolbar
 							className="hidden md:flex"
@@ -162,25 +145,22 @@ export function ProductCatalog({
 							<SelectFilter
 								filterKey="sortBy"
 								label="Trier par"
-								options={Object.values(PRODUCTS_SORT_OPTIONS).map((option) => ({
-									value: option,
-									label: PRODUCTS_SORT_LABELS[option as keyof typeof PRODUCTS_SORT_LABELS],
-								}))}
+								options={sortOptions}
 								placeholder="Trier par"
 								noPrefix
 							/>
 							<ProductFilterTrigger />
 						</Toolbar>
-
-						{hasActiveFilters && (
-							<ProductFilterBadges
-								colors={colors}
-								materials={materials}
-								productTypes={productTypes}
-								activeProductType={activeProductType}
-							/>
-						)}
 					</Suspense>
+
+					{hasActiveFilters && (
+						<ProductFilterBadges
+							colors={colors}
+							materials={materials}
+							productTypes={productTypes}
+							activeProductType={activeProductType}
+						/>
+					)}
 
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList

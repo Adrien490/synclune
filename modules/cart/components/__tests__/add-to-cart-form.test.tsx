@@ -28,20 +28,31 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-// Mock Button — render a standard button to preserve disabled, type, etc.
+// Mock Button — render a standard button to preserve disabled, type, ARIA, etc.
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
 		children,
 		disabled,
 		type,
 		className,
+		"aria-invalid": ariaInvalid,
+		"aria-describedby": ariaDescribedBy,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		type?: "button" | "submit" | "reset";
 		className?: string;
+		"aria-invalid"?: boolean;
+		"aria-describedby"?: string;
 	}) => (
-		<button type={type} disabled={disabled} className={className}>
+		// eslint-disable-next-line jsx-a11y/role-supports-aria-props -- test mock exposes aria-invalid for assertions
+		<button
+			type={type}
+			disabled={disabled}
+			className={className}
+			aria-invalid={ariaInvalid}
+			aria-describedby={ariaDescribedBy}
+		>
 			{children}
 		</button>
 	),
@@ -360,6 +371,60 @@ describe("AddToCartForm", () => {
 
 			const form = container.querySelector("form");
 			expect(form?.getAttribute("aria-busy")).toBe("true");
+		});
+	});
+
+	describe("error state accessibility", () => {
+		function setupErrorState(message = "Stock insuffisant") {
+			mockUseAddToCart.mockReturnValue({
+				action: vi.fn(),
+				isPending: false,
+				state: { status: "error", message },
+			});
+			mockUseVariantValidation.mockReturnValue({
+				validationErrors: [],
+				isValid: true,
+				requiresColor: false,
+				requiresMaterial: false,
+				requiresSize: false,
+			});
+			mockSearchParams.mockReturnValue(createSearchParams());
+		}
+
+		it("renders the inline error message with role=alert and stable id", () => {
+			setupErrorState("Stock insuffisant");
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			const alert = screen.getByRole("alert");
+			expect(alert).toHaveTextContent("Stock insuffisant");
+			expect(alert).toHaveAttribute("id", "add-to-cart-error");
+		});
+
+		it("links the submit button to the error via aria-invalid + aria-describedby", () => {
+			setupErrorState();
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			const button = screen.getByRole("button");
+			expect(button).toHaveAttribute("aria-invalid", "true");
+			expect(button).toHaveAttribute("aria-describedby", "add-to-cart-error");
+		});
+
+		it("omits aria-invalid and aria-describedby on the submit button when no error", () => {
+			setupDefaultMocks();
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			const button = screen.getByRole("button");
+			expect(button).not.toHaveAttribute("aria-invalid");
+			expect(button).not.toHaveAttribute("aria-describedby");
 		});
 	});
 });

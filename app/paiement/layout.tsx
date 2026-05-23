@@ -27,7 +27,7 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 	}
 
 	return (
-		<div className="bg-background flex min-h-dvh min-h-screen flex-col">
+		<div className="bg-background flex min-h-dvh flex-col">
 			{/* Preconnect to Stripe — only needed on checkout pages */}
 			<link rel="dns-prefetch" href="https://js.stripe.com" />
 			<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
@@ -42,7 +42,7 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 
 			{/* Header minimal */}
 			<header
-				className="bg-background/90 border-primary/10 border-b-0 backdrop-blur-md md:border-b"
+				className="bg-background/90 border-primary/10 border-b backdrop-blur-md"
 				style={{ viewTransitionName: "shop-paiement-header" }}
 			>
 				{/* Safe-area cushion preserves notch on iPhone landscape (background extends behind statusbar) */}

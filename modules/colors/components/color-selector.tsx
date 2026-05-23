@@ -18,77 +18,39 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { m, useReducedMotion } from "motion/react";
 
 interface ColorSelectorProps {
-	colors: Color[];
+	/**
+	 * Combinaisons de couleurs M2M extraites du produit. Chaque pastille = une
+	 * variante (mono ou multi). Pilote l'URL via `?variant=<comboKey>` (slugs
+	 * triés alphabétiquement, séparés par `__`), rend des pastilles split-gradient
+	 * (linear/conic) pour les SKUs multi-couleur.
+	 */
+	combos: ColorCombo[];
 	product: GetProductReturn;
 	showMaterialLabel?: boolean;
 	defaultSku?: ProductSku;
 	/**
-	 * Combinaisons de couleurs M2M extraites du produit. Si présent et non vide,
-	 * le sélecteur passe en mode « combos » : chaque pastille = une variante
-	 * (mono ou multi). Sinon, fallback liste plate `colors[]`.
+	 * @deprecated Mode legacy retiré (M2M depuis 2026-05-15). Conservé pour
+	 * compatibilité de l'appelant `sku-selector.tsx` mais non utilisé.
 	 */
-	combos?: ColorCombo[];
+	colors?: Color[];
 }
 
 /**
- * Sélecteur de couleur — supporte les variantes M2M multi-couleur.
+ * Sélecteur de couleur — variantes M2M (mono ou multi-couleur).
  *
- * - Mode combos (par défaut quand `combos` non vide) : pilote l'URL via
- *   `?variant=<comboKey>` (slugs triés alphabétiquement, séparés par "__"),
- *   rend des pastilles split-gradient (linear/conic) pour les SKUs multi-couleur.
- * - Mode legacy (fallback produits sans couleurs M2M ou ancien data layer) :
- *   pilote l'URL via `?color=<slug>` avec pastilles mono.
- *
- * L'utilisateur navigue au clavier (Arrow/Home/End), le matching est strict
- * en mode combos (`matchColorCombo`) vs permissif en legacy (`matchColor` any-of).
+ * - Pilote l'URL via `?variant=<comboKey>`. Compatible rétro `?color=<slug>`
+ *   dérivé au mount (cf. liens partagés/anciens bookmarks).
+ * - Normalise un `?variant=` stale (combo retiré du catalogue) vers le
+ *   defaultSku pour éviter un état "rien de sélectionné" silencieux.
+ * - Clavier (Arrow/Home/End) : le focus traverse les options indisponibles
+ *   (aria-disabled) pour permettre l'annonce SR, mais l'action est bloquée.
  */
 function ColorSelectorInner({
-	colors,
+	combos,
 	product,
 	showMaterialLabel = false,
 	defaultSku,
-	combos,
 }: ColorSelectorProps) {
-	const useCombosMode = (combos?.length ?? 0) > 0;
-
-	if (useCombosMode) {
-		return (
-			<ColorCombosSelector
-				combos={combos!}
-				product={product}
-				showMaterialLabel={showMaterialLabel}
-				defaultSku={defaultSku}
-			/>
-		);
-	}
-
-	return (
-		<ColorFlatSelector
-			colors={colors}
-			product={product}
-			showMaterialLabel={showMaterialLabel}
-			defaultSku={defaultSku}
-		/>
-	);
-}
-
-// ============================================================================
-// Mode combos M2M (SKU keyed-by-combo)
-// ============================================================================
-
-interface ColorCombosSelectorProps {
-	combos: ColorCombo[];
-	product: GetProductReturn;
-	showMaterialLabel: boolean;
-	defaultSku?: ProductSku;
-}
-
-function ColorCombosSelector({
-	combos,
-	product,
-	showMaterialLabel,
-	defaultSku,
-}: ColorCombosSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -100,17 +62,20 @@ function ColorCombosSelector({
 			? buildComboKey(defaultSku.colors.map((c) => c.color.slug))
 			: null;
 
-	// Source de vérité : ?variant=. Si absent et que ?color= legacy est posé, on
-	// dérive le combo (le 1er qui contient ce slug, mono prioritaire).
 	const variantParam = searchParams.get("variant");
 	const colorLegacyParam = searchParams.get("color");
-	const derivedFromLegacy = (() => {
-		if (variantParam || !colorLegacyParam) return null;
+	let derivedFromLegacy: string | null = null;
+	if (!variantParam && colorLegacyParam) {
 		const match = combos.find((c) => c.colors.some((cc) => cc.slug === colorLegacyParam));
-		return match?.comboKey ?? null;
-	})();
+		derivedFromLegacy = match?.comboKey ?? null;
+	}
 
-	const currentCombo = variantParam ?? derivedFromLegacy ?? defaultComboKey;
+	const rawCombo = variantParam ?? derivedFromLegacy ?? defaultComboKey;
+	// Garde-fou URL stale : un ?variant=<comboKey> retiré du catalogue (bookmark
+	// vieillot, partage social, produit édité) ne doit pas laisser l'UI en état
+	// "aucune option" alors que la query string dit l'inverse → fallback default.
+	const currentCombo =
+		rawCombo && combos.some((c) => c.comboKey === rawCombo) ? rawCombo : defaultComboKey;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
 
@@ -132,15 +97,13 @@ function ColorCombosSelector({
 			size: currentSize ?? undefined,
 		});
 		const primaryImage = compatibleSkus[0]?.images[0];
-		if (primaryImage?.url) {
-			const link = document.createElement("link");
-			link.rel = "prefetch";
-			link.as = "image";
-			link.href = primaryImage.url;
-			if (!document.querySelector(`link[href="${primaryImage.url}"]`)) {
-				document.head.appendChild(link);
-			}
-		}
+		if (!primaryImage?.url) return;
+		if (document.querySelector(`link[href="${primaryImage.url}"]`)) return;
+		const link = document.createElement("link");
+		link.rel = "prefetch";
+		link.as = "image";
+		link.href = primaryImage.url;
+		document.head.appendChild(link);
 	};
 
 	const updateCombo = (comboKey: string | null) => {
@@ -162,16 +125,30 @@ function ColorCombosSelector({
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: combos,
 		getOptionId: (combo) => combo.comboKey,
-		isOptionDisabled: (combo) => !isComboAvailable(combo.comboKey),
-		onSelect: (combo) => updateCombo(combo.comboKey),
+		// Pas de gate `isOptionDisabled` ici : on laisse le focus traverser les
+		// options indisponibles pour qu'elles soient annoncées par les lecteurs
+		// d'écran (cf. WCAG 1.3.1). La mutation d'URL reste bloquée par le guard
+		// `isComboAvailable` ci-dessous + le no-op `onClick` côté bouton.
+		onSelect: (combo) => {
+			if (isComboAvailable(combo.comboKey)) updateCombo(combo.comboKey);
+		},
 	});
+
+	if (combos.length === 0) {
+		return (
+			<div role="status" className="sr-only">
+				Aucune couleur disponible
+			</div>
+		);
+	}
 
 	const currentLabel = combos.find((c) => c.comboKey === optimisticCombo)?.label ?? null;
 
 	return (
 		<fieldset
 			data-pending={isPending ? "" : undefined}
-			className="group/color space-y-3"
+			aria-busy={isPending || undefined}
+			className="space-y-3"
 			aria-label="Sélection de la variante"
 		>
 			<div className="flex items-center justify-between">
@@ -185,7 +162,8 @@ function ColorCombosSelector({
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/color:opacity-70"
+						aria-busy={isPending || undefined}
+						className="text-muted-foreground text-xs/5 tracking-normal antialiased aria-busy:opacity-70"
 						onClick={() => updateCombo(null)}
 						type="button"
 					>
@@ -206,21 +184,29 @@ function ColorCombosSelector({
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
+							aria-disabled={!isAvailable}
 							aria-label={`${combo.ariaLabel}${!isAvailable ? " (indisponible)" : ""}`}
 							data-option-id={combo.comboKey}
-							onClick={() => updateCombo(combo.comboKey)}
+							onClick={() => {
+								if (!isAvailable) return;
+								updateCombo(combo.comboKey);
+							}}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							onPointerEnter={() =>
-								isAvailable && !isSelected && prefetchComboImage(combo.comboKey)
-							}
-							disabled={!isAvailable}
+							onPointerEnter={(e) => {
+								// Ignorer les pointeurs tactiles : `onPointerEnter` est déclenché
+								// au premier touch en mobile (spec Pointer Events) → un simple
+								// scroll par-dessus la grille générerait des prefetch inutiles.
+								if (e.pointerType !== "mouse") return;
+								if (!isAvailable || isSelected) return;
+								prefetchComboImage(combo.comboKey);
+							}}
 							className={cn(
 								"group relative flex min-h-13 items-center gap-2.5 rounded-xl border-2 p-3.5 transition-all sm:min-h-11 sm:rounded-lg sm:p-3",
-								"hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
+								"hover:shadow-sm active:scale-[0.98]",
+								"aria-disabled:cursor-not-allowed aria-disabled:opacity-70 aria-disabled:saturate-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
 							<div
@@ -250,186 +236,7 @@ function ColorCombosSelector({
 							</div>
 							{isSelected && (
 								<m.div
-									initial={shouldReduceMotion ? {} : { scale: 0 }}
-									animate={{ scale: 1 }}
-									transition={
-										shouldReduceMotion
-											? { duration: 0 }
-											: { type: "spring", stiffness: 400, damping: 15 }
-									}
-								>
-									<Check className="text-primary ml-auto h-4 w-4" aria-hidden="true" />
-								</m.div>
-							)}
-						</button>
-					);
-				})}
-			</div>
-		</fieldset>
-	);
-}
-
-// ============================================================================
-// Mode legacy (liste plate Color[]) — conservé pour rétro-compat
-// ============================================================================
-
-interface ColorFlatSelectorProps {
-	colors: Color[];
-	product: GetProductReturn;
-	showMaterialLabel: boolean;
-	defaultSku?: ProductSku;
-}
-
-function ColorFlatSelector({
-	colors,
-	product,
-	showMaterialLabel,
-	defaultSku,
-}: ColorFlatSelectorProps) {
-	const router = useRouter();
-	const pathname = usePathname();
-	const searchParams = useSearchParams();
-	const [isPending, startTransition] = useTransition();
-	const shouldReduceMotion = useReducedMotion();
-
-	const currentColor = searchParams.get("color") ?? defaultSku?.colors[0]?.color.slug ?? null;
-	const currentMaterial = searchParams.get("material");
-	const currentSize = searchParams.get("size");
-
-	const [optimisticColor, setOptimisticColor] = useOptimistic(currentColor);
-
-	const isColorAvailable = (colorId: string): boolean => {
-		const compatibleSkus = filterCompatibleSkus(product, {
-			colorSlug: colorId,
-			materialSlug: currentMaterial ?? undefined,
-			size: currentSize ?? undefined,
-		});
-		return compatibleSkus.length > 0;
-	};
-
-	const prefetchColorImage = (colorId: string) => {
-		const compatibleSkus = filterCompatibleSkus(product, {
-			colorSlug: colorId,
-			materialSlug: currentMaterial ?? undefined,
-			size: currentSize ?? undefined,
-		});
-		const sku = compatibleSkus[0];
-		const primaryImage = sku?.images[0];
-		if (primaryImage?.url) {
-			const link = document.createElement("link");
-			link.rel = "prefetch";
-			link.as = "image";
-			link.href = primaryImage.url;
-			if (!document.querySelector(`link[href="${primaryImage.url}"]`)) {
-				document.head.appendChild(link);
-			}
-		}
-	};
-
-	const updateColor = (colorId: string | null) => {
-		triggerHaptic("selection");
-		startTransition(() => {
-			setOptimisticColor(colorId);
-			const params = new URLSearchParams(searchParams.toString());
-			if (colorId) {
-				params.set("color", colorId);
-			} else {
-				params.delete("color");
-			}
-			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-		});
-	};
-
-	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
-		options: colors,
-		getOptionId: (color) => color.slug ?? color.id,
-		isOptionDisabled: (color) => !isColorAvailable(color.slug ?? color.id),
-		onSelect: (color) => updateColor(color.slug ?? color.id),
-	});
-
-	if (colors.length === 0) {
-		return (
-			<div role="status" className="sr-only">
-				Aucune couleur disponible
-			</div>
-		);
-	}
-
-	return (
-		<fieldset
-			data-pending={isPending ? "" : undefined}
-			className="group/color space-y-3"
-			aria-label="Sélection de couleur"
-		>
-			<div className="flex items-center justify-between">
-				<legend className="text-sm/6 font-semibold tracking-tight antialiased">
-					{showMaterialLabel ? "Couleur / Matériau" : "Couleur"}
-					{optimisticColor && (
-						<span className="text-muted-foreground ml-1 font-normal">
-							: {colors.find((c) => (c.slug ?? c.id) === optimisticColor)?.name}
-						</span>
-					)}
-				</legend>
-				{optimisticColor && (
-					<Button
-						variant="ghost"
-						size="sm"
-						className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/color:opacity-70"
-						onClick={() => updateColor(null)}
-						type="button"
-					>
-						Réinitialiser
-					</Button>
-				)}
-			</div>
-			<div ref={containerRef} className="flex flex-wrap gap-3">
-				{colors.map((color, index) => {
-					const colorIdentifier = color.slug ?? color.id;
-					const isSelected = colorIdentifier === optimisticColor;
-					const isAvailable = isColorAvailable(colorIdentifier);
-
-					return (
-						<button
-							key={color.id}
-							type="button"
-							role="radio"
-							aria-checked={isSelected}
-							aria-label={`${color.name}${!isAvailable ? " (indisponible)" : ""}`}
-							data-option-id={colorIdentifier}
-							onClick={() => updateColor(colorIdentifier)}
-							onKeyDown={(e) => handleKeyDown(e, index)}
-							onPointerEnter={() =>
-								isAvailable && !isSelected && prefetchColorImage(colorIdentifier)
-							}
-							disabled={!isAvailable}
-							className={cn(
-								"group relative flex min-h-13 items-center gap-2.5 rounded-xl border-2 p-3.5 transition-all sm:min-h-11 sm:rounded-lg sm:p-3",
-								"hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
-								isSelected
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
-							)}
-						>
-							{color.hex && (
-								<div
-									className="border-background h-8 w-8 shrink-0 rounded-full border-2 shadow-sm sm:h-7 sm:w-7"
-									style={{ backgroundColor: color.hex }}
-								/>
-							)}
-							<div className="text-left">
-								<span className="text-sm/6 font-medium tracking-normal antialiased">
-									{color.name}
-								</span>
-								{!isAvailable && (
-									<p className="text-muted-foreground text-xs/5 tracking-normal antialiased">
-										Indisponible
-									</p>
-								)}
-							</div>
-							{isSelected && (
-								<m.div
-									initial={shouldReduceMotion ? {} : { scale: 0 }}
+									initial={shouldReduceMotion ? {} : { scale: 0.85 }}
 									animate={{ scale: 1 }}
 									transition={
 										shouldReduceMotion

@@ -87,3 +87,22 @@ export function parseComparisonMode(raw: string | undefined): ComparisonMode {
 export function getComparisonLabel(period: DashboardPeriod, mode: ComparisonMode): string {
 	return mode === "yoy" ? YOY_COMPARISON_LABELS[period] : COMPARISON_LABELS[period];
 }
+
+// ============================================================================
+// CHART MODE (revenue chart : simple vs detailed breakdown)
+// ============================================================================
+
+export type ChartMode = "simple" | "detailed";
+
+export const DEFAULT_CHART_MODE: ChartMode = "simple";
+
+export const CHART_MODE_SEARCH_PARAM = "chartMode";
+
+/**
+ * Parses and validates a chart mode string from URL search params.
+ * Returns DEFAULT_CHART_MODE for invalid or missing values.
+ */
+export function parseChartMode(raw: string | undefined): ChartMode {
+	if (raw === "detailed" || raw === "simple") return raw;
+	return DEFAULT_CHART_MODE;
+}

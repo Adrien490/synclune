@@ -73,10 +73,10 @@ describe("DashboardAlerts", () => {
 		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements?filter_status=PENDING");
 	});
 
-	it("has role=status with aria-label", () => {
+	it("has role=region with aria-label (not status — banner contains interactive links)", () => {
 		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
 
-		const container = screen.getByRole("status");
+		const container = screen.getByRole("region");
 		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant ton attention");
 	});
 

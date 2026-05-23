@@ -56,6 +56,9 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 
 	const canAddToCart = selectedSku && isAvailable;
 
+	const hasError =
+		!!state && state.status !== "success" && state.status !== "initial" && !isPending;
+
 	return (
 		<form
 			id="add-to-cart-form"
@@ -90,6 +93,8 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 				)}
 				disabled={!canAddToCart || isPending}
 				size="lg"
+				aria-invalid={hasError ? true : undefined}
+				aria-describedby={hasError ? "add-to-cart-error" : undefined}
 			>
 				{isPending ? (
 					<span className="inline-flex items-center gap-2">
@@ -112,8 +117,8 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 			</Button>
 
 			{/* Inline error message after failed add-to-cart */}
-			{state && state.status !== "success" && state.status !== "initial" && !isPending && (
-				<p className="text-destructive text-center text-sm" role="alert">
+			{hasError && (
+				<p id="add-to-cart-error" className="text-destructive text-center text-sm" role="alert">
 					{state.message}
 				</p>
 			)}

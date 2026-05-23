@@ -364,7 +364,7 @@ describe("AccountTabsNav", () => {
 			expect(mockStartTransition).toHaveBeenCalledTimes(1);
 		});
 
-		it("triggers haptic feedback when navigating to an inactive link", () => {
+		it("does NOT trigger haptic when navigating to an inactive link (nav passive — feedback_haptics_no_overuse)", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
 			const mobileNav = getMobileNav(container)!;
@@ -373,8 +373,7 @@ describe("AccountTabsNav", () => {
 
 			fireEvent.click(adressesLink);
 
-			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
-			expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
 		});
 
 		it("does NOT call router.push when clicking the already-active link", () => {
