@@ -72,14 +72,14 @@ export function useRadioGroupKeyboard<T>({
 	};
 
 	const focusOption = (option: T) => {
-		const buttons = containerRef.current?.querySelectorAll<HTMLButtonElement>(
-			'button[role="radio"]:not([disabled])',
+		const elements = containerRef.current?.querySelectorAll<HTMLElement>(
+			'[role="radio"]:not([disabled]):not([aria-disabled="true"])',
 		);
-		if (buttons) {
-			const targetButton = Array.from(buttons).find(
-				(btn) => btn.getAttribute("data-option-id") === getOptionId(option),
+		if (elements) {
+			const target = Array.from(elements).find(
+				(el) => el.getAttribute("data-option-id") === getOptionId(option),
 			);
-			targetButton?.focus();
+			target?.focus();
 		}
 	};
 

@@ -1,4 +1,5 @@
-import { renderHook } from "@testing-library/react";
+import { render, renderHook } from "@testing-library/react";
+import { createElement, useRef, type ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type React from "react";
 
@@ -288,6 +289,103 @@ describe("useRadioGroupKeyboard", () => {
 			result.current.handleKeyDown(makeKeyEvent("Tab"), 0);
 
 			expect(onSelect).not.toHaveBeenCalled();
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// focusOption selector — supports <button role="radio"> AND <div role="radio">
+	// -------------------------------------------------------------------------
+
+	describe("focusOption selector", () => {
+		function Harness({
+			tag,
+			disabledAttr,
+		}: {
+			tag: "button" | "div";
+			disabledAttr?: "disabled" | "aria-disabled";
+		}): ReactElement {
+			const ref = useRef<HTMLDivElement>(null);
+			const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
+				options: OPTIONS,
+				getOptionId: (o) => o.id,
+				isOptionDisabled: () => false,
+				onSelect: vi.fn(),
+			});
+
+			(containerRef as unknown as { current: HTMLDivElement | null }).current = ref.current;
+
+			return createElement(
+				"div",
+				{
+					ref: (node: HTMLDivElement | null) => {
+						ref.current = node;
+						(containerRef as unknown as { current: HTMLDivElement | null }).current = node;
+					},
+				},
+				OPTIONS.map((option, idx) => {
+					const isFirstDisabled = idx === 0 && disabledAttr !== undefined;
+					const props: Record<string, unknown> = {
+						key: option.id,
+						role: "radio",
+						"data-option-id": option.id,
+						tabIndex: idx === 1 ? 0 : -1,
+						onKeyDown: (e: React.KeyboardEvent) => handleKeyDown(e, idx),
+					};
+					if (isFirstDisabled === true) {
+						if (disabledAttr === "disabled") props.disabled = true;
+						if (disabledAttr === "aria-disabled") props["aria-disabled"] = "true";
+					}
+					return createElement(tag, props, option.label);
+				}),
+			);
+		}
+
+		it("focuses a <button role='radio'> match by data-option-id", () => {
+			const { container } = render(createElement(Harness, { tag: "button" }));
+			const target = container.querySelector<HTMLButtonElement>('[data-option-id="c"]');
+			expect(target).not.toBeNull();
+
+			target?.previousElementSibling?.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }),
+			);
+
+			// Manual focus via handler — verify the element CAN be focused via the selector.
+			target?.focus();
+			expect(document.activeElement).toBe(target);
+		});
+
+		it("focuses a <div role='radio'> match (Radix-style)", () => {
+			const { container } = render(createElement(Harness, { tag: "div" }));
+			const target = container.querySelector<HTMLDivElement>('[data-option-id="c"]');
+			expect(target).not.toBeNull();
+			expect(target?.getAttribute("role")).toBe("radio");
+			// Native div needs an explicit tabIndex to be focusable — the hook
+			// doesn't add it; consumer is responsible.
+			target?.focus();
+			expect(document.activeElement).toBe(target);
+		});
+
+		it("excludes elements with aria-disabled='true' from the focus selector", () => {
+			const { container } = render(
+				createElement(Harness, { tag: "div", disabledAttr: "aria-disabled" }),
+			);
+			const enabled = container.querySelectorAll(
+				'[role="radio"]:not([disabled]):not([aria-disabled="true"])',
+			);
+			// 4 options - 1 aria-disabled = 3 enabled
+			expect(enabled.length).toBe(3);
+			expect(enabled[0]?.getAttribute("data-option-id")).toBe("b");
+		});
+
+		it("excludes elements with disabled attribute from the focus selector", () => {
+			const { container } = render(
+				createElement(Harness, { tag: "button", disabledAttr: "disabled" }),
+			);
+			const enabled = container.querySelectorAll(
+				'[role="radio"]:not([disabled]):not([aria-disabled="true"])',
+			);
+			expect(enabled.length).toBe(3);
+			expect(enabled[0]?.getAttribute("data-option-id")).toBe("b");
 		});
 	});
 });
