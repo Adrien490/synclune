@@ -26,7 +26,11 @@ export function useActiveListControls(filterPrefix = "filter_") {
 	const sp = useSearchParams();
 	const search = sp.get("search") ?? "";
 	const sortBy = sp.get("sortBy");
-	const filterCount = Array.from(sp.keys()).filter((k) => k.startsWith(filterPrefix)).length;
+	// Compte les filtres ayant une valeur non-vide (un `?filter_status=` orphelin
+	// — pris en charge p.ex. en clear partiel — ne doit pas être considéré actif).
+	const filterCount = Array.from(sp.entries()).filter(
+		([k, v]) => k.startsWith(filterPrefix) && v !== "",
+	).length;
 
 	return {
 		hasActiveSearch: search !== "",

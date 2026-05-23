@@ -15,6 +15,11 @@ import { useOverlayStackStore } from "@/shared/stores/use-overlay-stack-store";
  *
  * Pass `enabled=false` to opt out (e.g. onboarding welcome sheet that should
  * not collapse the bottom-bar behind it).
+ *
+ * Implementation note: backed by the Zustand `useOverlayStackStore`. Any
+ * consumer of that store (`useOverlayStackStore(s => s.count)`) re-renders
+ * when this hook mounts/unmounts. Read via `.getState()` here so the hook
+ * itself does NOT subscribe — only the bottom-bar pays the re-render cost.
  */
 export function useRegisterOverlay(enabled: boolean = true) {
 	useEffect(() => {

@@ -63,8 +63,13 @@ export function useFocusFirstError() {
 			block: "center",
 			behavior: prefersReducedMotion() ? "auto" : "smooth",
 		});
-		if (typeof (element as HTMLInputElement).focus === "function") {
-			(element as HTMLInputElement).focus({ preventScroll: true });
+		// `focus()` accepte un options-bag sur tous les éléments focusables
+		// (HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement, HTMLButtonElement,
+		// contenteditable…). Le guard couvre le cas d'un nœud spécial où l'API
+		// est absente (rare — SVG sans tabindex, certains custom elements).
+		const focusableEl = element as HTMLElement & { focus?: (opts?: FocusOptions) => void };
+		if (typeof focusableEl.focus === "function") {
+			focusableEl.focus({ preventScroll: true });
 		}
 		triggerHaptic("error");
 	};

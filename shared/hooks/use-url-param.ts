@@ -9,6 +9,13 @@ interface UseUrlParamOptions {
 	 * @default true
 	 */
 	resetPage?: boolean;
+	/**
+	 * Scroll-to-top after navigation. Defaults to `false` (preserve scroll
+	 * position — common for sort/filter where the user is mid-list). Set to
+	 * `true` for params that change the dataset entirely (e.g. switching tabs).
+	 * @default false
+	 */
+	scroll?: boolean;
 }
 
 /**
@@ -26,6 +33,7 @@ export function useUrlParam(paramKey: string, options?: UseUrlParamOptions) {
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 
 	const resetPage = options?.resetPage ?? true;
+	const scroll = options?.scroll ?? false;
 
 	const update = (value: string) => {
 		const params = new URLSearchParams(searchParams);
@@ -34,7 +42,7 @@ export function useUrlParam(paramKey: string, options?: UseUrlParamOptions) {
 		if (resetPage) params.set("page", "1");
 		startTransition(() => {
 			setOptimisticValue(value);
-			router.push(`?${params.toString()}`, { scroll: false });
+			router.push(`?${params.toString()}`, { scroll });
 		});
 	};
 
