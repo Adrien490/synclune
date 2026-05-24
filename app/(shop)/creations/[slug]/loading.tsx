@@ -15,7 +15,7 @@ import { ProductReviewsSectionSkeleton } from "@/modules/reviews/components/prod
 export default function ProductDetailLoading() {
 	return (
 		<div
-			className="relative min-h-screen"
+			className="relative min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du produit"

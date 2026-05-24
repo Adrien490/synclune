@@ -2,7 +2,7 @@ import { ParticleBackground } from "@/shared/components/animations";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="bg-background relative min-h-screen">
+		<div className="bg-background relative min-h-dvh">
 			<ParticleBackground
 				count={5}
 				shape={["pearl", "circle", "diamond"]}

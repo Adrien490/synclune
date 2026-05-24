@@ -57,7 +57,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
-			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-screen">
+			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-dvh">
 				<Suspense>
 					<EspaceClientContent>{children}</EspaceClientContent>
 				</Suspense>

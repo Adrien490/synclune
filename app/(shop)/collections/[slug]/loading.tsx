@@ -4,7 +4,7 @@ import { ProductListSkeleton } from "@/modules/products/components/product-list-
 export default function CollectionDetailLoading() {
 	return (
 		<div
-			className="min-h-screen"
+			className="min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la collection"

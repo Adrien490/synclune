@@ -89,7 +89,7 @@ export default async function LegalPage() {
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
-		<div className="min-h-screen">
+		<div className="min-h-dvh">
 			<PageHeader
 				title="Informations légales"
 				description="Consultez toutes les informations légales concernant Synclune"

@@ -25,7 +25,7 @@ export function NotFoundShell({ children, errorCode = "404" }: NotFoundShellProp
 	}, [errorCode]);
 
 	return (
-		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center bg-linear-to-br px-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-dvh items-center justify-center bg-linear-to-br px-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
 			<ParticleBackgroundError count={8} shape={RICH_ERROR_SHAPES} />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">{children}</div>
 		</main>

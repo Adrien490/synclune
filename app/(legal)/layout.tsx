@@ -30,7 +30,7 @@ export default async function LegalLayout({ children }: { children: React.ReactN
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
-			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-screen">
+			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-dvh">
 				{children}
 			</main>
 			<Suspense fallback={<FooterSkeleton />}>

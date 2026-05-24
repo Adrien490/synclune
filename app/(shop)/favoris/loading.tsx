@@ -4,7 +4,7 @@ import { WishlistGridSkeleton } from "@/modules/wishlist/components/wishlist-gri
 export default function WishlistLoading() {
 	return (
 		<div
-			className="relative min-h-screen"
+			className="relative min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement des favoris"

@@ -12,7 +12,7 @@ export default function CheckoutReturnLoading() {
 			role="status"
 			aria-live="polite"
 			aria-busy="true"
-			className="flex min-h-screen items-center justify-center px-4"
+			className="flex min-h-dvh items-center justify-center px-4"
 		>
 			<div className="max-w-sm space-y-5 text-center">
 				<Spinner className="mx-auto size-10" />

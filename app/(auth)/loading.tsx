@@ -7,7 +7,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function AuthLoading() {
 	return (
 		<div
-			className="bg-background relative min-h-screen"
+			className="bg-background relative min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement"
@@ -25,7 +25,7 @@ export default function AuthLoading() {
 			</div>
 
 			{/* Main content */}
-			<div className="flex min-h-screen justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+			<div className="flex min-h-dvh justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
 				<div className="my-auto w-full max-w-md space-y-8">
 					{/* Header */}
 					<div className="space-y-7 text-center">

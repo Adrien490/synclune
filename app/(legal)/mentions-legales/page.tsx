@@ -38,7 +38,7 @@ export default async function MentionsLegalesPage() {
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* Background discret - Halo statique pour maintenir l'identité */}
 			<DecorativeHalo
 				size="xl"

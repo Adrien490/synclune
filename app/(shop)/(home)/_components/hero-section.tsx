@@ -38,7 +38,7 @@ export async function HeroSection({
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
 			style={{ viewTransitionName: "shop-hero" }}
-			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
+			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-dvh max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">

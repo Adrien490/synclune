@@ -180,7 +180,7 @@ export function MenuSheetNav({
 								"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
 								"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
 								"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-								"text-foreground/80 hover:bg-accent hover:text-foreground",
+								"text-foreground/80 can-hover:hover:bg-accent can-hover:hover:text-foreground",
 								"motion-safe:active:scale-[0.97]",
 							)}
 						>

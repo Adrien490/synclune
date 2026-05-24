@@ -25,7 +25,7 @@ export function ProductCatalogSkeleton({
 	hideHeaderOnMobile = true,
 }: ProductCatalogSkeletonProps = {}) {
 	return (
-		<div className="min-h-screen">
+		<div className="min-h-dvh">
 			<PageHeaderSkeleton className={hideHeaderOnMobile ? "hidden sm:block" : undefined} />
 
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">

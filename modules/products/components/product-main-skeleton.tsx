@@ -18,7 +18,7 @@ export function ProductMainSkeleton() {
 			<span className="sr-only">Chargement de la création…</span>
 
 			{/* Gallery Section - Left (sticky on desktop) */}
-			<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
+			<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100dvh-6rem)] lg:overflow-hidden">
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-[60px_1fr] md:gap-4 lg:grid-cols-[80px_1fr]">
 					{/* Thumbnails verticales - Desktop uniquement */}
 					<div className="order-1 hidden max-h-[min(500px,60vh)] overflow-y-auto md:block">
@@ -53,7 +53,7 @@ export function ProductMainSkeleton() {
 			</section>
 
 			{/* Product Info + Details Section - Right (scrollable) */}
-			<section className="space-y-6 lg:min-h-screen">
+			<section className="space-y-6 lg:min-h-dvh">
 				{/* ===== 1. ProductInfo ===== */}
 				<div className="space-y-4">
 					{/* Titre avec bouton wishlist - Mobile uniquement (sm:hidden) */}

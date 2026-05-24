@@ -3,9 +3,9 @@ import { cn } from "@/shared/utils/cn";
 /** Shared base classes for icon buttons in the navbar (desktop + mobile trigger) */
 export const iconButtonClassName = cn(
 	"relative items-center justify-center size-11 rounded-xl group",
-	"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
 	"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
-	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
+	"motion-safe:can-hover:hover:scale-105 motion-safe:active:scale-95",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
 );
 

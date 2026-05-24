@@ -88,7 +88,7 @@ export function CartSheetFooter({
 					<Button
 						asChild
 						size="lg"
-						className="w-full shadow-md transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 hover:shadow-lg"
+						className="can-hover:hover:shadow-lg w-full shadow-md transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50"
 					>
 						<Link href="/paiement" onClick={handleCheckoutClick}>
 							Passer commande
@@ -101,7 +101,7 @@ export function CartSheetFooter({
 					<button
 						type="button"
 						onClick={onClose}
-						className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm text-sm underline underline-offset-4 transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+						className="text-muted-foreground can-hover:hover:text-foreground focus-visible:ring-ring rounded-sm text-sm underline underline-offset-4 transition-colors group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					>
 						Continuer mes achats
 					</button>

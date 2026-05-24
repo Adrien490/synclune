@@ -101,7 +101,7 @@ export function ProductCatalog({
 		: "Rechercher des bijoux…";
 
 	return (
-		<div className="min-h-screen">
+		<div className="min-h-dvh">
 			<ScrollRestoration />
 			{/* JSON-LD Structured Data — SAFE: serialized via safeJsonLd (no user HTML) */}
 			{/* react-doctor-disable-next-line react/no-danger */}

@@ -79,7 +79,7 @@ export function AddToCartCardButton({
 							"absolute z-30",
 							"right-2.5 bottom-2.5",
 							"sm:inset-x-0 sm:right-0 sm:bottom-0",
-							"opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
+							"sm:can-hover:group-hover:translate-y-0 sm:can-hover:group-hover:opacity-100 opacity-100 sm:translate-y-2 sm:opacity-0 sm:focus-within:translate-y-0 sm:focus-within:opacity-100",
 							"duration-300 motion-safe:transition-[opacity,transform]",
 						),
 				className,
@@ -101,7 +101,7 @@ export function AddToCartCardButton({
 								"h-11 w-full rounded-md",
 								"text-muted-foreground bg-transparent",
 								"border-border/80 border",
-								"hover:border-primary/60 hover:text-foreground hover:bg-primary/5",
+								"can-hover:hover:border-primary/60 can-hover:hover:text-foreground can-hover:hover:bg-primary/5",
 								"active:scale-[0.98]",
 								"text-sm font-medium",
 								"motion-safe:transition-all motion-safe:duration-200",
@@ -117,7 +117,7 @@ export function AddToCartCardButton({
 								"sm:bg-primary sm:text-primary-foreground",
 								"sm:shadow-lg sm:shadow-black/20",
 								// Active/hover desktop - feedback visuel clair
-								"sm:hover:bg-primary/85 sm:hover:-translate-y-0.5 sm:hover:shadow-xl",
+								"sm:can-hover:hover:bg-primary/85 sm:can-hover:hover:-translate-y-0.5 sm:can-hover:hover:shadow-xl",
 								"sm:active:bg-primary/90 sm:active:translate-y-0 sm:active:shadow-md",
 								// Transitions
 								"motion-safe:transition-all motion-safe:duration-200",

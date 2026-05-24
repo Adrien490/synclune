@@ -9,7 +9,7 @@ import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 export default function HomeLoading() {
 	return (
 		<div
-			className="min-h-screen"
+			className="min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la page d'accueil"

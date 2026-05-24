@@ -67,7 +67,7 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 	});
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* Background décoratif - Particules pour ambiance bijoux */}
 			<ParticleBackground className="fixed inset-0 z-0" />
 

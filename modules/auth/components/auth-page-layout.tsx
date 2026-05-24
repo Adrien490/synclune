@@ -45,7 +45,7 @@ export function AuthPageLayout({
 			</div>
 
 			{/* Main content */}
-			<div className="relative z-10 flex min-h-screen justify-center pt-[calc(4rem+env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(2rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] sm:pt-[calc(5rem+env(safe-area-inset-top))] sm:pb-[max(3rem,env(safe-area-inset-bottom))]">
+			<div className="relative z-10 flex min-h-dvh justify-center pt-[calc(4rem+env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(2rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] sm:pt-[calc(5rem+env(safe-area-inset-top))] sm:pb-[max(3rem,env(safe-area-inset-bottom))]">
 				<div
 					className="my-auto w-full max-w-md space-y-8"
 					style={{ viewTransitionName: "auth-card" }}

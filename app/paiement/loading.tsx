@@ -228,6 +228,7 @@ export default function CheckoutLoading() {
 			{/* Sticky PayButton placeholder (CLS-safe: matches the real fixed-bottom button on mobile) */}
 			<div
 				aria-hidden="true"
+				data-hide-on-keyboard=""
 				className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:hidden"
 			>
 				<Skeleton className="h-12 w-full rounded-md" />

@@ -124,7 +124,7 @@ export async function Footer() {
 									<li key={item.href}>
 										<FooterLink
 											href={item.href}
-											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+											className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
 										</FooterLink>
@@ -147,7 +147,7 @@ export async function Footer() {
 									<FooterLink
 										href={`mailto:${BRAND.contact.email}`}
 										external
-										className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="text-foreground can-hover:hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 									>
 										{BRAND.contact.email}
@@ -156,7 +156,7 @@ export async function Footer() {
 										text={BRAND.contact.email}
 										label="Email"
 										size="icon"
-										className="text-muted-foreground hover:text-foreground size-9"
+										className="text-muted-foreground can-hover:hover:text-foreground size-11"
 									/>
 								</div>
 
@@ -181,13 +181,13 @@ export async function Footer() {
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="group can-hover:hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
 											decorative
 											size={20}
-											className="text-foreground group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)] motion-safe:group-hover:scale-110"
+											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.instagram.handle}
@@ -200,13 +200,13 @@ export async function Footer() {
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="group can-hover:hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
 											decorative
 											size={20}
-											className="text-foreground group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)] motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)] motion-safe:group-hover:scale-110"
+											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
@@ -223,7 +223,7 @@ export async function Footer() {
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
-									className="bg-card/50 border-border/60 hover:border-border rounded-xl border px-5 py-4 shadow-sm hover:shadow-md motion-safe:transition-shadow motion-safe:duration-[var(--duration-normal)]"
+									className="bg-card/50 border-border/60 can-hover:hover:border-border can-hover:hover:shadow-md rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-shadow motion-safe:duration-[var(--duration-normal)]"
 								>
 									<div className="text-sm">
 										<p className="text-foreground font-medium">{item.title}</p>
@@ -247,13 +247,13 @@ export async function Footer() {
 							<StripeWordmark className="text-muted-foreground" />
 						</p>
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
-							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+							<li className="text-muted-foreground can-hover:hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
 								<VisaIcon aria-label="Visa accepté" />
 							</li>
-							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+							<li className="text-muted-foreground can-hover:hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
 								<MastercardIcon aria-label="Mastercard accepté" />
 							</li>
-							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+							<li className="text-muted-foreground can-hover:hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
 								<CBIcon aria-label="Carte Bancaire acceptée" />
 							</li>
 						</ul>
@@ -276,12 +276,12 @@ export async function Footer() {
 									key={link.href}
 									href={link.href}
 									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
-									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
+									className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
 								>
 									{link.label}
 								</FooterLink>
 							))}
-							<ManageCookiesButton className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start" />
+							<ManageCookiesButton className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start" />
 						</nav>
 					</div>
 				</Fade>

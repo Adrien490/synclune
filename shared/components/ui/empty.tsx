@@ -2,7 +2,7 @@ import { cn } from "@/shared/utils/cn";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const emptyVariants = cva(
-	"flex min-w-0 flex-1 flex-col items-center justify-center rounded-lg text-center text-balance transition-all duration-500 ease-out animate-in fade-in-0 slide-in-from-bottom-4",
+	"flex min-w-0 flex-1 flex-col items-center justify-center rounded-lg text-center text-balance transition-all duration-500 ease-out motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4",
 	{
 		variants: {
 			variant: {

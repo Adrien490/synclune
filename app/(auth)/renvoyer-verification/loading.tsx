@@ -14,7 +14,7 @@ export default function ResendVerificationLoading() {
 			</div>
 
 			{/* Contenu principal */}
-			<div className="relative z-10 flex min-h-screen justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
+			<div className="relative z-10 flex min-h-dvh justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
 				<div className="my-auto w-full max-w-md space-y-8">
 					{/* Header skeleton */}
 					<div className="space-y-7 text-center">

@@ -119,7 +119,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					<Link
 						href={`/creations/${item.sku.product.slug}`}
 						onClick={onClose}
-						className="hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
+						className="can-hover:hover:text-foreground active:text-muted-foreground focus-visible:ring-ring line-clamp-2 block rounded font-medium transition-colors group-has-[[data-pending]]/item:pointer-events-none group-has-[[data-pending]]/item:opacity-50 group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:line-clamp-1"
 					>
 						{item.sku.product.title}
 					</Link>

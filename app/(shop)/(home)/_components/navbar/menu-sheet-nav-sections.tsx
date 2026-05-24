@@ -16,7 +16,7 @@ const linkClassName = cn(
 	"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3.5 rounded-lg",
 	"ease-out motion-safe:transition-[transform,color,background-color,padding] motion-safe:duration-[var(--duration-slow)]",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-	"text-foreground/85 hover:text-foreground hover:bg-primary/5 hover:pl-5",
+	"text-foreground/85 can-hover:hover:text-foreground can-hover:hover:bg-primary/5 can-hover:hover:pl-5",
 	"motion-safe:active:scale-[0.97]",
 );
 
@@ -349,7 +349,7 @@ export function AccountSection({
 							type="button"
 							className={cn(
 								linkClassName,
-								"text-muted-foreground hover:text-foreground w-full text-left",
+								"text-muted-foreground can-hover:hover:text-foreground w-full text-left",
 							)}
 							onClick={onLogoutClick}
 						>
@@ -365,7 +365,7 @@ export function AccountSection({
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
 						customDelay={delay(150, 1)}
-						className="text-muted-foreground hover:text-foreground"
+						className="text-muted-foreground can-hover:hover:text-foreground"
 						prefetch={null}
 					>
 						Créer un compte

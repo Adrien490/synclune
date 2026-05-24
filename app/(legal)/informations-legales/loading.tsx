@@ -9,7 +9,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export default function LegalLoading() {
 	return (
 		<div
-			className="min-h-screen"
+			className="min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement des mentions légales"

@@ -48,7 +48,7 @@ export default async function WishlistPage({ searchParams }: WishlistPageProps) 
 	});
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* noStructuredData: page noindex (compte utilisateur) → BreadcrumbList inutile */}
 			<PageHeader
 				title="Mes favoris"

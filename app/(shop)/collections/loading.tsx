@@ -8,7 +8,7 @@ import { CollectionGridSkeleton } from "@/modules/collections/components/collect
 export default function CollectionsLoading() {
 	return (
 		<div
-			className="relative min-h-screen"
+			className="relative min-h-dvh"
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement des collections"

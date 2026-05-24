@@ -163,7 +163,7 @@ export default async function ProductPage({
 			: undefined;
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh">
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
 			<RecordProductView slug={product.slug} />
 
@@ -211,12 +211,12 @@ export default async function ProductPage({
 							<Suspense fallback={<ProductMainSkeleton />}>
 								<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
 									{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
-									<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
+									<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100dvh-6rem)] lg:overflow-hidden">
 										<Gallery product={product} title={product.title} />
 									</section>
 
 									{/* Informations et configurateur scrollables */}
-									<section className="space-y-6 lg:min-h-screen">
+									<section className="space-y-6 lg:min-h-dvh">
 										{/* 1. ProductInfo - Badges, note, wishlist (pattern Etsy : contexte rapide) */}
 										<ProductInfo
 											product={product}

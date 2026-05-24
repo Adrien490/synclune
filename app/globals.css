@@ -84,10 +84,15 @@ main#main-content {
 		transform var(--duration-normal) var(--ease-spring),
 		opacity var(--duration-normal) ease-out;
 }
-html[data-keyboard="open"] [data-hide-on-keyboard] {
-	transform: translateY(100%);
-	opacity: 0;
-	pointer-events: none;
+/* Scoped to mobile widths only: above `md:` (768px) components opting into this
+ * attribute (PayButton, BottomBar) switch to non-fixed layouts, so translating
+ * them would shift content in normal flow (iPad landscape + hw keyboard). */
+@media (max-width: 767px) {
+	html[data-keyboard="open"] [data-hide-on-keyboard] {
+		transform: translateY(100%);
+		opacity: 0;
+		pointer-events: none;
+	}
 }
 @media (prefers-reduced-motion: reduce) {
 	[data-hide-on-keyboard] {

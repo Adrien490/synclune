@@ -214,7 +214,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 							href={`/creations/${product.slug}`}
 							onClick={handleClose}
 							aria-label={`Voir la fiche produit : ${product.title}`}
-							className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+							className="text-muted-foreground can-hover:hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 						>
 							Voir la fiche produit
 							<ArrowRight className="size-3.5" aria-hidden="true" />

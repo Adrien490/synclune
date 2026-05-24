@@ -26,7 +26,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 	return (
 		<>
 			<meta name="robots" content="noindex, nofollow" />
-			<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br px-[max(1rem,env(safe-area-inset-left))] py-[max(1.5rem,env(safe-area-inset-bottom))]">
+			<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-dvh items-center justify-center overflow-hidden bg-linear-to-br px-[max(1rem,env(safe-area-inset-left))] py-[max(1.5rem,env(safe-area-inset-bottom))]">
 				{/* CSS-only decorative blobs */}
 				<div aria-hidden="true">
 					<div className="bg-primary/10 absolute top-[10%] left-[15%] size-32 rounded-full blur-2xl motion-safe:animate-[drift_20s_ease-in-out_infinite]" />

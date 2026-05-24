@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function OfflinePage() {
 	return (
-		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br px-4">
+		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-dvh items-center justify-center overflow-hidden bg-linear-to-br px-4">
 			{/* CSS-only decorative shapes */}
 			<div aria-hidden="true">
 				<div className="bg-primary/10 absolute top-[10%] left-[15%] size-32 rounded-full blur-2xl motion-safe:animate-[drift_20s_ease-in-out_infinite]" />
