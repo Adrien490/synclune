@@ -118,7 +118,15 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 				<ColorsSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<ColorsMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<ColorsMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<ColorsMobileList
 						colorsPromise={colorsPromise}
 						perPage={perPage}
@@ -131,7 +139,13 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<ColorsDataTableSkeleton />}>
-					<ColorsDataTable colorsPromise={colorsPromise} perPage={perPage} />
+					<ColorsDataTable
+						colorsPromise={colorsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 			</div>
 

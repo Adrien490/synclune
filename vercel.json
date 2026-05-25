@@ -15,7 +15,7 @@
 		},
 		{
 			"path": "/api/cron/hard-delete-retention",
-			"schedule": "0 8 1 * *"
+			"schedule": "0 4 2 * *"
 		},
 		{
 			"path": "/api/cron/cleanup-wishlists",
@@ -27,11 +27,11 @@
 		},
 		{
 			"path": "/api/cron/cleanup-webhook-events",
-			"schedule": "0 7 1 * *"
+			"schedule": "0 3 1 * *"
 		},
 		{
 			"path": "/api/cron/cleanup-orphan-media",
-			"schedule": "0 9 1 * *"
+			"schedule": "0 5 3 * *"
 		},
 		{
 			"path": "/api/cron/retry-webhooks",
@@ -43,7 +43,7 @@
 		},
 		{
 			"path": "/api/cron/reconcile-refunds",
-			"schedule": "0 */6 * * *"
+			"schedule": "30 */6 * * *"
 		},
 		{
 			"path": "/api/cron/cleanup-pending-orders",

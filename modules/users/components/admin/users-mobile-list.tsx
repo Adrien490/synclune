@@ -61,14 +61,14 @@ export function UsersMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "client", plural: "clients" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "client", plural: "clients" }} />
 					{filterParams ? (
 						<UsersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={users.length} singular="client" plural="clients" />
-					<ItemGroup role="list" aria-label="Clients" className="gap-2">
+					<ItemGroup aria-label="Clients" className="gap-2">
 						{users.map((user) => (
 							<div key={user.id} role="listitem">
 								<UserMobileItem user={user} />

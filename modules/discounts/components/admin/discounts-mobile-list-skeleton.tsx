@@ -4,10 +4,20 @@ import { Item, ItemActions, ItemContent, ItemGroup } from "@/shared/components/u
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { useReducedMotion } from "motion/react";
 
-export function DiscountsMobileListSkeleton() {
+interface DiscountsMobileListSkeletonProps {
+	hasActiveFilters?: boolean;
+}
+
+export function DiscountsMobileListSkeleton({
+	hasActiveFilters,
+}: DiscountsMobileListSkeletonProps = {}) {
 	const reduced = useReducedMotion();
 	return (
-		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<div className="flex items-center justify-end">
+				<Skeleton shape="rounded" className="h-11 w-32" />
+			</div>
+			{hasActiveFilters ? <Skeleton shape="rounded" className="h-12 w-full" /> : null}
 			<SkeletonGroup label="Chargement des codes promo">
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (

@@ -109,7 +109,6 @@ export async function Navbar() {
 			<NavbarWrapper>
 				<nav
 					aria-label="Navigation principale"
-					data-announcement-focus-fallback
 					tabIndex={-1}
 					className="outline-none motion-safe:transition-colors motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
 				>

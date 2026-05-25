@@ -4,6 +4,7 @@ import {
 	useEffect,
 	useOptimistic,
 	useRef,
+	useState,
 	useTransition,
 	Suspense,
 	type ComponentProps,
@@ -86,14 +87,20 @@ function SortDrawerInner({
 	const [isPending, startTransition] = useTransition();
 	const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const appliedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const [appliedLabel, setAppliedLabel] = useState<string | null>(null);
 	const shouldReduceMotion = useReducedMotion();
 	const triggerHaptic = useHaptic();
 
-	// Nettoie le timer d'auto-close si le composant est démonté avant l'échéance.
+	// Nettoie les timers d'auto-close + d'annonce post-success si le composant
+	// est démonté avant l'échéance.
 	useEffect(() => {
 		return () => {
 			if (autoCloseTimerRef.current) {
 				clearTimeout(autoCloseTimerRef.current);
+			}
+			if (appliedTimerRef.current) {
+				clearTimeout(appliedTimerRef.current);
 			}
 		};
 	}, []);
@@ -113,6 +120,24 @@ function SortDrawerInner({
 
 	// Get current selected label for aria-live and header
 	const selectedLabel = options.find((o) => o.value === optimisticValue)?.label;
+
+	// Annonce SR post-success : sur la chute de `isPending`, on confirme l'application
+	// du tri (« Tri appliqué : X »). Pattern identique à `StickyActionBar.announcementRef`.
+	// Reset après 2s pour ne pas polluer les annonces ultérieures.
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			setAppliedLabel(selectedLabel ?? resetLabel);
+			if (appliedTimerRef.current) {
+				clearTimeout(appliedTimerRef.current);
+			}
+			appliedTimerRef.current = setTimeout(() => {
+				appliedTimerRef.current = null;
+				setAppliedLabel(null);
+			}, 2000);
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, selectedLabel, resetLabel]);
 
 	// Build full options list with reset option
 	const allOptions: SortOption[] = showResetOption
@@ -253,7 +278,6 @@ function SortDrawerInner({
 									tabIndex={index === focusableIndex ? 0 : -1}
 									onClick={() => handleSelect(option.value)}
 									onKeyDown={(e) => handleKeyDown(e, index)}
-									disabled={isPending}
 									className={cn(
 										"flex w-full items-center justify-between",
 										"-mx-1 px-4 py-3.5",
@@ -265,7 +289,6 @@ function SortDrawerInner({
 											: isSelected && isResetOption
 												? "bg-muted/30 text-muted-foreground rounded-lg font-medium"
 												: "hover:bg-muted/50 text-foreground",
-										isPending && "pointer-events-none opacity-60",
 										isResetOption && !isSelected && "text-muted-foreground",
 									)}
 								>
@@ -292,7 +315,11 @@ function SortDrawerInner({
 
 					{/* Live region for screen readers */}
 					<span role="status" aria-live="polite" className="sr-only">
-						{isPending ? `Tri en cours : ${selectedLabel ?? "par défaut"}...` : ""}
+						{isPending
+							? `Tri en cours : ${selectedLabel ?? "par défaut"}...`
+							: appliedLabel
+								? `Tri appliqué : ${appliedLabel}`
+								: ""}
 					</span>
 				</DrawerBody>
 			</DrawerContent>

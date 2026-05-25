@@ -92,7 +92,6 @@ export function DataTableSkeleton({
 									<TableHead
 										key={`skeleton-col-${i}`}
 										className={cn(
-											col.width && `w-[${col.width}]`,
 											col.hiddenBelow && hiddenClasses[col.hiddenBelow],
 											col.align && alignClasses[col.align],
 										)}

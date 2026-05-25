@@ -1,9 +1,19 @@
 import { Item, ItemContent, ItemGroup } from "@/shared/components/ui/item";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
-export function CollectionsMobileListSkeleton() {
+interface CollectionsMobileListSkeletonProps {
+	hasActiveFilters?: boolean;
+}
+
+export function CollectionsMobileListSkeleton({
+	hasActiveFilters,
+}: CollectionsMobileListSkeletonProps = {}) {
 	return (
-		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<div className="flex items-center justify-end">
+				<Skeleton shape="rounded" className="h-11 w-32" />
+			</div>
+			{hasActiveFilters ? <Skeleton shape="rounded" className="h-12 w-full" /> : null}
 			<SkeletonGroup label="Chargement des collections">
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (

@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, use, useEffect, useState, type ReactNode } from "react";
+import { createContext, use, useDeferredValue, useEffect, useState, type ReactNode } from "react";
 
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListBulkPendingStore } from "@/shared/stores/use-admin-list-bulk-pending-store";
 
 /**
@@ -46,6 +47,11 @@ const AdminListPendingContext = createContext<AdminListPendingContextValue | nul
 
 interface AdminListPendingProviderProps {
 	children: ReactNode;
+	/**
+	 * Libellé items pour l'annonce SR centralisée (« 12 produits en cours… »).
+	 * Optionnel — default "élément/éléments" si non fourni.
+	 */
+	itemsLabel?: { singular: string; plural: string };
 }
 
 /**
@@ -63,7 +69,7 @@ interface AdminListPendingProviderProps {
  * exigerait de lifter `products` dans un Client Component) — juste un signal
  * "tu vas etre mute, montre-le". La verite reste serveur via revalidation.
  */
-export function AdminListPendingProvider({ children }: AdminListPendingProviderProps) {
+export function AdminListPendingProvider({ children, itemsLabel }: AdminListPendingProviderProps) {
 	const [pendingIds, setPendingIds] = useState<Set<string>>(() => new Set());
 	const [pendingKind, setPendingKind] = useState<AdminListPendingKind | null>(null);
 
@@ -96,7 +102,41 @@ export function AdminListPendingProvider({ children }: AdminListPendingProviderP
 	}, [pendingKind]);
 
 	return (
-		<AdminListPendingContext.Provider value={value}>{children}</AdminListPendingContext.Provider>
+		<AdminListPendingContext.Provider value={value}>
+			<AdminListPendingAnnouncer itemsLabel={itemsLabel} />
+			{children}
+		</AdminListPendingContext.Provider>
+	);
+}
+
+/**
+ * Announcer SR centralisé pour les bulk-actions en cours.
+ *
+ * Remplace les `aria-live="polite"` individuels sur chaque badge pending (qui
+ * spammaient le SR de N annonces simultanées sur un bulk de N items). Une seule
+ * annonce polite consolidée — recalculée via `useDeferredValue` pour éviter
+ * les rebonds rapides.
+ */
+function AdminListPendingAnnouncer({
+	itemsLabel,
+}: {
+	itemsLabel?: { singular: string; plural: string };
+}) {
+	const ctx = use(AdminListPendingContext);
+	const count = ctx?.pendingIds.size ?? 0;
+	const kind = ctx?.pendingKind ?? null;
+
+	const label =
+		count > 1 ? (itemsLabel?.plural ?? "éléments") : (itemsLabel?.singular ?? "élément");
+
+	const message = count > 0 && kind ? `${ADMIN_PENDING_LABELS[kind]} ${count} ${label}` : "";
+
+	const deferredMessage = useDeferredValue(message);
+
+	return (
+		<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+			{deferredMessage}
+		</div>
 	);
 }
 

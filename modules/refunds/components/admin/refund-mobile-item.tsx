@@ -1,12 +1,18 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, ReceiptText } from "lucide-react";
 
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enums";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "@/shared/components/ui/item";
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
@@ -55,7 +61,7 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={refund.id}
-			itemLabel={`Remboursement ${refund.order.orderNumber}`}
+			itemLabel={`Remboursement ${refund.order.orderNumber}, ${REFUND_STATUS_LABELS[refund.status]}, ${formatEuro(refund.amount)}, ${refund.order.customerName ?? refund.order.customerEmail}`}
 			longPressProps={{
 				href: `/admin/ventes/remboursements/${refund.id}`,
 				ariaLabel: `Remboursement ${refund.order.orderNumber}`,
@@ -73,6 +79,13 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 				aria-roledescription="carte remboursement"
 				aria-busy={isPendingItem || undefined}
 			>
+				<ItemMedia variant="icon">
+					<ReceiptText
+						className="text-muted-foreground size-5"
+						aria-hidden="true"
+						style={{ viewTransitionName: `refund-icon-${refund.id}` }}
+					/>
+				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span
@@ -84,7 +97,6 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 						{isPendingItem ? (
 							<Badge
 								variant="secondary"
-								aria-live="polite"
 								style={{ viewTransitionName: `refund-status-${refund.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

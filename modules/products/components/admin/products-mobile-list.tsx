@@ -76,17 +76,17 @@ export function ProductsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "produit", plural: "produits" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "produit", plural: "produits" }} />
-					<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
 					{filterParams ? (
 						<ProductsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
-					<ItemGroup role="list" aria-label="Produits" className="gap-2">
-						{products.map((product) => (
+					<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
+					<ItemGroup aria-label="Produits" className="gap-2">
+						{products.map((product, index) => (
 							<div key={product.id} role="listitem">
-								<ProductMobileItem product={product} />
+								<ProductMobileItem product={product} preload={index === 0} />
 							</div>
 						))}
 					</ItemGroup>

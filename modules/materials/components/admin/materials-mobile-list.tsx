@@ -69,14 +69,14 @@ export function MaterialsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "matériau", plural: "matériaux" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "matériau", plural: "matériaux" }} />
 					{filterParams ? (
 						<MaterialsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
-					<ItemGroup role="list" aria-label="Materiaux" className="gap-2">
+					<ItemGroup aria-label="Materiaux" className="gap-2">
 						{materials.map((material) => (
 							<div key={material.id} role="listitem">
 								<MaterialMobileItem material={material} />

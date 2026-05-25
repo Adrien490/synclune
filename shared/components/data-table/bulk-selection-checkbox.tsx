@@ -6,7 +6,12 @@ import { useBulkSelectionContext } from "./bulk-selection-context";
 
 interface BulkSelectionRowCheckboxProps {
 	id: string;
-	itemLabel?: string;
+	/**
+	 * Label accessible décrivant l'item (ex: "Commande #2026-0042", "Couleur Or rose").
+	 * Obligatoire : sans label, le SR annonce un générique "ligne" qui ne permet pas
+	 * à l'utilisateur de distinguer les checkboxes entre elles.
+	 */
+	itemLabel: string;
 }
 
 /**
@@ -25,13 +30,7 @@ export function BulkSelectionRowCheckbox({ id, itemLabel }: BulkSelectionRowChec
 				toggle(id);
 			}}
 			onClick={(event) => event.stopPropagation()}
-			aria-label={
-				itemLabel
-					? `${checked ? "Désélectionner" : "Sélectionner"} ${itemLabel}`
-					: checked
-						? "Désélectionner cette ligne"
-						: "Sélectionner cette ligne"
-			}
+			aria-label={`${checked ? "Désélectionner" : "Sélectionner"} ${itemLabel}`}
 		/>
 	);
 }

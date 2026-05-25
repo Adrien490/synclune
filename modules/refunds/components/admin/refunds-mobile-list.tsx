@@ -72,7 +72,9 @@ export function RefundsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider
+				itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
+			>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader
 						itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
@@ -85,7 +87,7 @@ export function RefundsMobileList({
 						singular="remboursement"
 						plural="remboursements"
 					/>
-					<ItemGroup role="list" aria-label="Remboursements" className="gap-2">
+					<ItemGroup aria-label="Remboursements" className="gap-2">
 						{refunds.map((refund) => (
 							<div key={refund.id} role="listitem">
 								<RefundMobileItem

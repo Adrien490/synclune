@@ -14,6 +14,7 @@ export const IMAGE_POSITIONS: ReadonlyArray<{
 	height: number;
 	widthClasses: string;
 	sizes: string;
+	/** Seconds. Sum with `idleDelay` for CSS `animationDelay` (s) AND multiplied by 1000 for `--enter-delay` (ms). */
 	delay: number;
 	glowColor: string;
 	parallaxSpeed: number;

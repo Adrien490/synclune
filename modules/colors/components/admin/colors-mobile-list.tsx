@@ -69,14 +69,14 @@ export function ColorsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "couleur", plural: "couleurs" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "couleur", plural: "couleurs" }} />
 					{filterParams ? (
 						<ColorsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
-					<ItemGroup role="list" aria-label="Couleurs" className="gap-2">
+					<ItemGroup aria-label="Couleurs" className="gap-2">
 						{colors.map((color) => (
 							<div key={color.id} role="listitem">
 								<ColorMobileItem color={color} />

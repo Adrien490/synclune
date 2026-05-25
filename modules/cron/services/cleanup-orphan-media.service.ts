@@ -8,7 +8,7 @@ import {
 	MAX_PAGES_PER_RUN,
 	UPLOADTHING_LIST_LIMIT,
 } from "@/modules/cron/constants/limits";
-import type { CronResult } from "@/modules/cron/lib/cron-result";
+import { CronDeadlineExceededError, type CronResult } from "@/modules/cron/lib/cron-result";
 import { paginateCursor } from "@/modules/cron/lib/paginate-cursor";
 
 /**
@@ -95,9 +95,23 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 			filesScanned,
 		});
 	} catch (error) {
+		// Deadline hit during DB key scan : rethrow enriched with partial counts so
+		// `withCronGuard` can return HTTP 200 + `hasMore: true` (resumable, no alert).
+		if (error instanceof CronDeadlineExceededError) {
+			throw new CronDeadlineExceededError(error.message, {
+				processed: orphansDeleted,
+				errored: errors,
+				// skipped = files protected by 24h race-condition guard or not orphan
+				skipped: Math.max(0, filesScanned - orphansDeleted - errors),
+				step: error.partial.step,
+				filesScanned,
+				orphansDeleted,
+				errors,
+			});
+		}
 		logger.error("Error during cleanup", error, { cronJob: "cleanup-orphan-media" });
-		// Re-throw to signal total failure to the route handler (returns cronError/500)
-		// A DB failure during key scan means we can't safely determine orphans
+		// Re-throw real failures (DB unavailable, UploadThing 5xx) so the middleware
+		// returns 500 + admin alert.
 		throw error;
 	}
 
@@ -106,6 +120,7 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 	return {
 		processed: orphansDeleted,
 		errored: errors,
+		// skipped = files protected by 24h race-condition guard or not orphan
 		skipped: Math.max(0, filesScanned - orphansDeleted - errors),
 		filesScanned,
 		orphansDeleted,

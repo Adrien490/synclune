@@ -64,14 +64,14 @@ export function ReviewsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "avis", plural: "avis" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "avis", plural: "avis" }} />
-					<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
 					{filterParams ? (
 						<ReviewsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
-					<ItemGroup role="list" aria-label="Avis clients" className="gap-2">
+					<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
+					<ItemGroup aria-label="Avis clients" className="gap-2">
 						{adminReviews.map((review) => (
 							<div key={review.id} role="listitem">
 								<ReviewMobileItem review={review} />

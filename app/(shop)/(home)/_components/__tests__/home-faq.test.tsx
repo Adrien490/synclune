@@ -139,7 +139,9 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-import { HomeFaq, HOME_FAQ_ITEMS } from "../home-faq";
+import { HOME_FAQ_ITEMS } from "@/shared/constants/faq-items";
+
+import { HomeFaq } from "../home-faq";
 
 afterEach(() => {
 	cleanup();
@@ -227,14 +229,13 @@ describe("HomeFaq", () => {
 		}
 	});
 
-	it("renders mailto CTA with subject and aria-describedby", () => {
+	it("renders mailto CTA with encoded subject", () => {
 		render(<HomeFaq />);
 
 		const cta = screen.getByRole("link", { name: /Une autre question/i });
 		expect(cta.getAttribute("href")).toBe(
 			"mailto:contact@synclune.fr?subject=Une%20question%20sur%20Synclune",
 		);
-		expect(cta.getAttribute("aria-describedby")).toBe("home-faq-cta-description");
 	});
 
 	it("renders mailto link inside personnalisation answer", () => {
@@ -260,9 +261,8 @@ describe("HomeFaq", () => {
 	it("emits FAQPage JSON-LD with all 6 questions, inLanguage and dateModified", () => {
 		render(<HomeFaq />);
 
-		const script = document.getElementById("home-faq-schema");
+		const script = document.querySelector('section#home-faq script[type="application/ld+json"]');
 		expect(script).not.toBeNull();
-		expect(script?.getAttribute("type")).toBe("application/ld+json");
 
 		const json = JSON.parse(script!.innerHTML);
 		expect(json["@type"]).toBe("FAQPage");

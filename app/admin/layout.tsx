@@ -47,6 +47,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 	const user = {
 		name: result.user.name ?? result.user.email,
 		email: result.user.email,
+		image: result.user.image,
 	};
 
 	return (

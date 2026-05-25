@@ -101,9 +101,8 @@ export function MobileSelectableCard({
 				ctx.toggle(id);
 			}}
 			className={cn(
-				"focus-visible:ring-primary relative flex min-h-11 w-full items-center gap-3 rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-[background-color,box-shadow] motion-safe:duration-150",
+				"focus-ring relative flex min-h-11 w-full items-center gap-3 rounded-lg text-left",
+				"transform-gpu active:scale-[0.985] motion-safe:transition-[background-color,box-shadow] motion-safe:duration-150",
 				isSelected && "bg-primary/5 ring-primary/30 ring-2",
 			)}
 		>

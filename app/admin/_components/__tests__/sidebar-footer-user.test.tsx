@@ -25,6 +25,23 @@ vi.mock("lucide-react", async (importOriginal) => {
 	};
 });
 
+vi.mock("@/shared/components/ui/avatar", () => ({
+	Avatar: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+		<span data-testid="avatar" className={className}>
+			{children}
+		</span>
+	),
+	AvatarImage: ({ src, alt }: { src?: string; alt?: string }) => (
+		// eslint-disable-next-line @next/next/no-img-element -- test mock for AvatarImage primitive
+		<img data-testid="avatar-image" data-src={src ?? ""} alt={alt ?? ""} />
+	),
+	AvatarFallback: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+		<span data-testid="avatar-fallback" className={className}>
+			{children}
+		</span>
+	),
+}));
+
 vi.mock("@/shared/components/ui/sidebar", () => ({
 	SidebarFooter: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="sidebar-footer">{children}</div>
@@ -79,27 +96,24 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenuItem: ({
 		children,
 		className,
+		variant,
+		preventDefault,
 	}: {
 		children: React.ReactNode;
 		preventDefault?: boolean;
+		variant?: "default" | "destructive";
 		className?: string;
 	}) => (
-		<button data-testid="dropdown-item" role="menuitem" className={className}>
+		<button
+			data-testid="dropdown-item"
+			role="menuitem"
+			className={className}
+			data-variant={variant}
+			data-prevent-default={preventDefault ? "true" : undefined}
+		>
 			{children}
 		</button>
 	),
-	DropdownMenuLabel: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<div data-testid="dropdown-label" className={className}>
-			{children}
-		</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
 	DropdownMenuTrigger: ({
 		children,
 		asChild: _asChild,
@@ -121,7 +135,7 @@ import { SidebarFooterUser } from "../sidebar-footer-user";
 // SETUP
 // ============================================================================
 
-const defaultUser = { name: "Admin User", email: "admin@synclune.fr" };
+const defaultUser = { name: "Admin User", email: "admin@synclune.fr", image: null };
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -143,26 +157,31 @@ describe("SidebarFooterUser", () => {
 
 		it("displays user name in trigger", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
-			const names = screen.getAllByText("Admin User");
-			expect(names.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByText("Admin User")).toBeInTheDocument();
 		});
 
 		it("displays user email in trigger", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
-			const emails = screen.getAllByText("admin@synclune.fr");
-			expect(emails.length).toBeGreaterThanOrEqual(1);
+			expect(screen.getByText("admin@synclune.fr")).toBeInTheDocument();
 		});
 
 		it("renders chevrons icon", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
 			expect(screen.getByTestId("icon-chevrons")).toBeInTheDocument();
 		});
+
+		it("renders title attribute on email span for overflow fallback", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			const email = screen.getByText("admin@synclune.fr");
+			expect(email).toHaveAttribute("title", "admin@synclune.fr");
+		});
 	});
 
 	describe("accessibility", () => {
-		it("renders trigger with aria-label", () => {
+		it("does not override accessible name with aria-label (relies on visible content)", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
-			expect(screen.getByLabelText("Menu utilisateur de Admin User")).toBeInTheDocument();
+			const trigger = screen.getByTestId("sidebar-menu-button");
+			expect(trigger).not.toHaveAttribute("aria-label");
 		});
 
 		it("renders chevrons with aria-hidden", () => {
@@ -173,6 +192,36 @@ describe("SidebarFooterUser", () => {
 		it("renders logout icon with aria-hidden", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
 			expect(screen.getByTestId("icon-logout")).toHaveAttribute("aria-hidden", "true");
+		});
+
+		it("renders avatar image with empty alt (decorative, identity comes from text)", () => {
+			render(<SidebarFooterUser user={{ ...defaultUser, image: "https://cdn.example/u.png" }} />);
+			expect(screen.getByTestId("avatar-image")).toHaveAttribute("alt", "");
+		});
+	});
+
+	describe("avatar", () => {
+		it("renders avatar with image when provided", () => {
+			render(<SidebarFooterUser user={{ ...defaultUser, image: "https://cdn.example/u.png" }} />);
+			expect(screen.getByTestId("avatar-image")).toHaveAttribute(
+				"data-src",
+				"https://cdn.example/u.png",
+			);
+		});
+
+		it("computes initials from two-part name", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			expect(screen.getByTestId("avatar-fallback")).toHaveTextContent("AU");
+		});
+
+		it("computes initials from single-word name", () => {
+			render(<SidebarFooterUser user={{ name: "Synclune", email: "x@y.fr", image: null }} />);
+			expect(screen.getByTestId("avatar-fallback")).toHaveTextContent("SY");
+		});
+
+		it("falls back to email-based initials when name is empty", () => {
+			render(<SidebarFooterUser user={{ name: "", email: "owner@synclune.fr", image: null }} />);
+			expect(screen.getByTestId("avatar-fallback")).toHaveTextContent("OW");
 		});
 	});
 
@@ -191,18 +240,6 @@ describe("SidebarFooterUser", () => {
 	});
 
 	describe("dropdown content", () => {
-		it("shows user info in dropdown label", () => {
-			render(<SidebarFooterUser user={defaultUser} />);
-			const label = screen.getByTestId("dropdown-label");
-			expect(label).toHaveTextContent("Admin User");
-			expect(label).toHaveTextContent("admin@synclune.fr");
-		});
-
-		it("renders separator", () => {
-			render(<SidebarFooterUser user={defaultUser} />);
-			expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
-		});
-
 		it("renders logout option", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
 			expect(screen.getByText("Déconnexion")).toBeInTheDocument();
@@ -212,6 +249,16 @@ describe("SidebarFooterUser", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
 			expect(screen.getByTestId("logout-alert-dialog")).toBeInTheDocument();
 		});
+
+		it("applies destructive variant to logout item", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			expect(screen.getByTestId("dropdown-item")).toHaveAttribute("data-variant", "destructive");
+		});
+
+		it("uses preventDefault on logout item to defer close to AlertDialog", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			expect(screen.getByTestId("dropdown-item")).toHaveAttribute("data-prevent-default", "true");
+		});
 	});
 
 	describe("trigger button", () => {
@@ -220,7 +267,7 @@ describe("SidebarFooterUser", () => {
 			expect(screen.getByTestId("sidebar-menu-button")).toHaveAttribute("data-size", "lg");
 		});
 
-		it("has user name as tooltip", () => {
+		it("has user name as tooltip for collapsed icon-only mode", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
 			expect(screen.getByTestId("sidebar-menu-button")).toHaveAttribute("title", "Admin User");
 		});

@@ -39,8 +39,14 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	const shouldReduceMotion = useReducedMotion();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur le matériau principal du defaultSku
-	const currentMaterial =
+	const rawMaterial =
 		searchParams.get("material") ?? defaultSku?.materials[0]?.material.name ?? null;
+	// Garde-fou URL stale : un ?material=<value> retiré du catalogue (bookmark, partage)
+	// ne doit pas laisser l'UI en état "aucune option" alors que la query string dit l'inverse.
+	const currentMaterial =
+		rawMaterial && materials.some((m) => m.name.toLowerCase() === rawMaterial.toLowerCase())
+			? rawMaterial
+			: null;
 	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
 
@@ -73,11 +79,16 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	};
 
 	// Navigation clavier pour le radio group
+	// Pas de gate `isOptionDisabled` ici : on laisse le focus traverser les
+	// options indisponibles pour qu'elles soient annoncées par les lecteurs
+	// d'écran (cf. WCAG 1.3.1). La mutation reste bloquée par le guard
+	// `isMaterialAvailable` ci-dessous + le no-op `onClick` côté bouton.
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: materials,
 		getOptionId: (material) => material.name,
-		isOptionDisabled: (material) => !isMaterialAvailable(material.name),
-		onSelect: (material) => updateMaterial(material.name),
+		onSelect: (material) => {
+			if (isMaterialAvailable(material.name)) updateMaterial(material.name);
+		},
 	});
 
 	// Ne pas afficher si un seul matériau ou aucun
@@ -86,7 +97,8 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	return (
 		<fieldset
 			data-pending={isPending ? "" : undefined}
-			className="group/material space-y-3"
+			aria-busy={isPending || undefined}
+			className="space-y-3"
 			aria-label="Sélection de matériau"
 		>
 			<div className="flex items-center justify-between">
@@ -95,7 +107,8 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/material:opacity-70"
+						aria-busy={isPending || undefined}
+						className="text-muted-foreground text-xs/5 tracking-normal antialiased aria-busy:opacity-70"
 						onClick={() => updateMaterial(null)}
 						type="button"
 					>
@@ -115,18 +128,21 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
+							aria-disabled={!isAvailable}
 							aria-label={`${material.name}${!isAvailable ? " (indisponible)" : ""}`}
 							data-option-id={material.name}
-							onClick={() => updateMaterial(material.name)}
+							onClick={() => {
+								if (!isAvailable) return;
+								updateMaterial(material.name);
+							}}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							disabled={!isAvailable}
 							className={cn(
 								"flex min-h-13 items-center justify-between rounded-lg border p-3 text-left transition-all sm:min-h-11",
-								"hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50",
+								"hover:shadow-sm active:scale-95",
+								"aria-disabled:cursor-not-allowed aria-disabled:opacity-70 aria-disabled:saturate-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
 							<span className="text-sm/6 font-medium tracking-normal antialiased">

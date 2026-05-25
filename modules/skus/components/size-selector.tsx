@@ -54,7 +54,10 @@ function SizeSelectorInner({
 	const shouldReduceMotion = useReducedMotion();
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const currentSize = searchParams.get("size") ?? defaultSku?.size ?? null;
+	const rawSize = searchParams.get("size") ?? defaultSku?.size ?? null;
+	// Garde-fou URL stale : un ?size=<value> retiré du catalogue (bookmark, partage)
+	// ne doit pas laisser l'UI en état "aucune option" alors que la query string dit l'inverse.
+	const currentSize = rawSize && sizes.some((s) => s.size === rawSize) ? rawSize : null;
 	const currentColor = searchParams.get("color");
 	const currentMaterial = searchParams.get("material");
 
@@ -87,11 +90,16 @@ function SizeSelectorInner({
 	};
 
 	// Navigation clavier pour le radio group
+	// Pas de gate `isOptionDisabled` ici : on laisse le focus traverser les
+	// options indisponibles pour qu'elles soient annoncées par les lecteurs
+	// d'écran (cf. WCAG 1.3.1). La mutation reste bloquée par le guard
+	// `isSizeAvailable` ci-dessous + le no-op `onClick` côté bouton.
 	const { containerRef, handleKeyDown } = useRadioGroupKeyboard({
 		options: sizes,
 		getOptionId: (sizeOption) => sizeOption.size,
-		isOptionDisabled: (sizeOption) => !isSizeAvailable(sizeOption.size),
-		onSelect: (sizeOption) => updateSize(sizeOption.size),
+		onSelect: (sizeOption) => {
+			if (isSizeAvailable(sizeOption.size)) updateSize(sizeOption.size);
+		},
 	});
 
 	if (!shouldShow || sizes.length === 0) return null;
@@ -107,7 +115,8 @@ function SizeSelectorInner({
 	return (
 		<fieldset
 			data-pending={isPending ? "" : undefined}
-			className="group/size space-y-3"
+			aria-busy={isPending || undefined}
+			className="space-y-3"
 			aria-label="Sélection de taille"
 		>
 			<div className="flex items-center justify-between">
@@ -120,7 +129,8 @@ function SizeSelectorInner({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="text-muted-foreground text-xs/5 tracking-normal antialiased group-has-[[data-pending]]/size:opacity-70"
+							aria-busy={isPending || undefined}
+							className="text-muted-foreground text-xs/5 tracking-normal antialiased aria-busy:opacity-70"
 							onClick={() => updateSize(null)}
 							type="button"
 						>
@@ -143,18 +153,21 @@ function SizeSelectorInner({
 							type="button"
 							role="radio"
 							aria-checked={isSelected}
+							aria-disabled={!isAvailable}
 							aria-label={`Taille ${sizeOption.size}${!isAvailable ? " (indisponible)" : ""}`}
 							data-option-id={sizeOption.size}
-							onClick={() => updateSize(sizeOption.size)}
+							onClick={() => {
+								if (!isAvailable) return;
+								updateSize(sizeOption.size);
+							}}
 							onKeyDown={(e) => handleKeyDown(e, index)}
-							disabled={!isAvailable}
 							className={cn(
 								"relative flex min-h-13 items-center justify-center rounded-xl border-2 p-3 text-center transition-all sm:min-h-11 sm:rounded-lg sm:p-2.5",
-								"hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
+								"hover:shadow-sm active:scale-[0.98]",
+								"aria-disabled:cursor-not-allowed aria-disabled:opacity-70 aria-disabled:saturate-50",
 								isSelected
 									? "border-primary bg-primary/5"
 									: "border-border hover:border-primary/50",
-								!isAvailable && "opacity-70 saturate-50",
 							)}
 						>
 							<span className="text-sm/6 font-medium tracking-normal antialiased">

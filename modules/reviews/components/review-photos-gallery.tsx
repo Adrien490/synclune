@@ -75,7 +75,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 			</h3>
 
 			<div className="relative">
-				<div className="scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent -mx-4 flex gap-2 overflow-x-auto px-4 pb-2">
+				<div className="scrollbar-thumb-muted -mx-4 flex scrollbar-thin scrollbar-track-transparent gap-2 overflow-x-auto px-4 pb-2">
 					{allPhotos.map((photo, index) => (
 						<button
 							key={photo.id}

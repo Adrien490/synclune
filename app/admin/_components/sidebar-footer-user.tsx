@@ -1,12 +1,11 @@
 "use client";
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
@@ -23,11 +22,22 @@ interface SidebarFooterUserProps {
 	user: {
 		name: string;
 		email: string;
+		image?: string | null;
 	};
+}
+
+function getInitials(name: string, email: string): string {
+	const source = name.trim() || email;
+	const [first, second] = source.split(/\s+/).filter(Boolean);
+	if (first && second) {
+		return (first.charAt(0) + second.charAt(0)).toUpperCase();
+	}
+	return source.slice(0, 2).toUpperCase();
 }
 
 export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 	const { isMobile } = useSidebar();
+	const initials = getInitials(user.name, user.email);
 
 	return (
 		<SidebarFooter>
@@ -39,11 +49,18 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 								size="lg"
 								tooltip={user.name}
 								className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-								aria-label={`Menu utilisateur de ${user.name}`}
 							>
+								<Avatar className="size-8 shrink-0 rounded-lg">
+									<AvatarImage src={user.image ?? undefined} alt="" />
+									<AvatarFallback className="rounded-lg text-xs font-medium">
+										{initials}
+									</AvatarFallback>
+								</Avatar>
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-medium">{user.name}</span>
-									<span className="text-muted-foreground truncate text-xs">{user.email}</span>
+									<span className="text-muted-foreground truncate text-xs" title={user.email}>
+										{user.email}
+									</span>
 								</div>
 								<ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
 							</SidebarMenuButton>
@@ -54,15 +71,8 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 							align="end"
 							sideOffset={4}
 						>
-							<DropdownMenuLabel className="p-0 font-normal">
-								<div className="px-2 py-1.5 text-left text-sm">
-									<p className="truncate font-medium">{user.name}</p>
-									<p className="text-muted-foreground truncate text-xs">{user.email}</p>
-								</div>
-							</DropdownMenuLabel>
-							<DropdownMenuSeparator />
 							<LogoutAlertDialog>
-								<DropdownMenuItem preventDefault className="cursor-pointer">
+								<DropdownMenuItem preventDefault variant="destructive" className="cursor-pointer">
 									<LogOut aria-hidden="true" />
 									Déconnexion
 								</DropdownMenuItem>

@@ -3,8 +3,15 @@
 import { CircleCheck, Loader2, Shield } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "@/shared/components/ui/item";
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
@@ -28,8 +35,19 @@ interface UserMobileItemProps {
 	};
 }
 
+function getInitials(name: string | null, email: string): string {
+	const trimmed = name?.trim();
+	const source = trimmed && trimmed.length > 0 ? trimmed : email;
+	const parts = source.split(/\s+/).filter(Boolean);
+	if (parts.length >= 2) {
+		return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
+	}
+	return source.slice(0, 2).toUpperCase();
+}
+
 export function UserMobileItem({ user }: UserMobileItemProps) {
 	const displayName = user.name ?? "Utilisateur";
+	const initials = getInitials(user.name, user.email);
 	const orderCount = user._count.orders;
 	const pendingCtx = useAdminListPendingContextOptional();
 	const isPendingItem = pendingCtx?.isPending(user.id) ?? false;
@@ -43,7 +61,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 		<>
 			<MobileSelectableCard
 				id={user.id}
-				itemLabel={`Client ${displayName}`}
+				itemLabel={`Client ${displayName}, ${user.email}${isAdmin ? ", admin" : ""}${user.deletedAt ? ", supprimé" : user.suspendedAt ? ", suspendu" : ""}, ${orderCount} commande${orderCount !== 1 ? "s" : ""}`}
 				longPressProps={{
 					href: `/admin/clients/${user.id}`,
 					ariaLabel: `Client ${displayName}`,
@@ -65,6 +83,16 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					aria-roledescription="carte client"
 					aria-busy={isPendingItem || undefined}
 				>
+					<ItemMedia variant="icon">
+						<Avatar
+							className="bg-primary/10 text-primary size-8"
+							style={{ viewTransitionName: `user-avatar-${user.id}` }}
+						>
+							<AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+								{initials}
+							</AvatarFallback>
+						</Avatar>
+					</ItemMedia>
 					<ItemContent className="min-w-0">
 						<ItemTitle className="w-full min-w-0">
 							<span
@@ -80,11 +108,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 								/>
 							) : null}
 							{isPendingItem ? (
-								<Badge
-									variant="secondary"
-									aria-live="polite"
-									style={{ viewTransitionName: `user-status-${user.id}` }}
-								>
+								<Badge variant="secondary" style={{ viewTransitionName: `user-status-${user.id}` }}>
 									<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
 									{pendingLabel}
 								</Badge>

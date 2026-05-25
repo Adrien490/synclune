@@ -64,14 +64,14 @@ export function OrdersMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "commande", plural: "commandes" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "commande", plural: "commandes" }} />
 					{filterParams ? (
 						<OrdersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
-					<ItemGroup role="list" aria-label="Commandes" className="gap-2">
+					<ItemGroup aria-label="Commandes" className="gap-2">
 						{orders.map((order) => (
 							<div key={order.id} role="listitem">
 								<OrdersMobileListItem order={order} />

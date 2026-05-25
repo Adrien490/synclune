@@ -1,12 +1,17 @@
 "use client";
 
 import { ReviewStatus } from "@/app/generated/prisma/browser";
-import { CircleCheck, EyeOff, Loader2 } from "lucide-react";
+import { CircleCheck, EyeOff, Loader2, Star } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
-import { RatingStars } from "@/shared/components/rating-stars";
 import { Badge } from "@/shared/components/ui/badge";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "@/shared/components/ui/item";
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
@@ -33,7 +38,7 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={review.id}
-			itemLabel={`Avis sur ${review.product.title}`}
+			itemLabel={`Avis sur ${review.product.title}, ${review.rating} étoile${review.rating > 1 ? "s" : ""}, ${REVIEW_STATUS_LABELS[review.status]}${review.response ? ", répondu" : ""}, par ${review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}`}
 			longPressProps={{
 				href: `/admin/marketing/avis/${review.id}`,
 				ariaLabel: `Avis sur ${review.product.title}`,
@@ -51,10 +56,20 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 				aria-roledescription="carte avis"
 				aria-busy={isPendingItem || undefined}
 			>
+				<ItemMedia variant="icon">
+					<span
+						className="flex items-center gap-0.5 text-xs font-semibold tabular-nums"
+						aria-label={`Note ${review.rating} sur 5`}
+						style={{ viewTransitionName: `review-rating-${review.id}` }}
+					>
+						<span>{review.rating}</span>
+						<Star className="size-3 fill-amber-500 text-amber-500" aria-hidden="true" />
+					</span>
+				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span
-							className="hover:text-primary truncate font-semibold"
+							className="truncate font-semibold"
 							style={{ viewTransitionName: `review-title-${review.id}` }}
 						>
 							{review.product.title}
@@ -63,7 +78,6 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 							<Badge
 								variant="secondary"
 								className="gap-1"
-								aria-live="polite"
 								style={{ viewTransitionName: `review-status-${review.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
@@ -91,10 +105,6 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span>{review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}</span>
-						<span aria-hidden="true">·</span>
-						<span style={{ viewTransitionName: `review-rating-${review.id}` }}>
-							<RatingStars rating={review.rating} size="sm" />
-						</span>
 						{review.response ? (
 							<>
 								<span aria-hidden="true">·</span>

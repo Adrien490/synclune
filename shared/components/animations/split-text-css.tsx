@@ -15,6 +15,11 @@ export interface SplitTextCSSProps {
  * - Each word gets `animation-delay` via CSS custom property `--i`
  * - No opacity:0 in initial state — text is visible during SSR for LCP
  * - Reduced motion: animation disabled via CSS media query
+ *
+ * a11y: word `<span>`s are `aria-hidden` (decorative split), so the
+ * accessible name comes from `role="group" aria-label={children}` on the
+ * wrapper. Do NOT remove either — without them, SR would read empty content
+ * (e.g. inside a `<h1>`, the heading would have no accessible name).
  */
 export function SplitTextCSS({ children, stagger = 80, className }: SplitTextCSSProps) {
 	const words = children.split(" ");

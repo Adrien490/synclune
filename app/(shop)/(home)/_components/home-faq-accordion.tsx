@@ -28,7 +28,6 @@ export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 			type="single"
 			collapsible
 			className="mx-auto max-w-3xl"
-			aria-label="Liste des questions fréquentes"
 			onValueChange={(value) => {
 				if (!value) return;
 				const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

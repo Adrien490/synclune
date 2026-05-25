@@ -81,24 +81,29 @@ export function MobileSelectionBottomBar({
 			aria-label={ariaLabel}
 			className={cn("px-3 py-2", className)}
 		>
-			{noSelection ? (
-				<div className="flex h-full items-center justify-between gap-3">
-					<p className="text-muted-foreground truncate text-sm" aria-live="polite">
-						{emptyHint}
-					</p>
-					<Button
-						type="button"
-						variant="ghost"
-						size="sm"
-						onClick={exitSelectionMode}
-						className="min-h-11 shrink-0 px-3"
-					>
-						Annuler
-					</Button>
-				</div>
-			) : (
-				children
-			)}
+			<div
+				className="motion-safe:transition-[min-height] motion-safe:duration-200 motion-safe:ease-out"
+				style={{ minHeight: noSelection ? COMPACT_BAR_HEIGHT - 16 : ACTION_BAR_HEIGHT - 16 }}
+			>
+				{noSelection ? (
+					<div className="flex h-full items-center justify-between gap-3">
+						<p className="text-muted-foreground truncate text-sm" aria-live="polite">
+							{emptyHint}
+						</p>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={exitSelectionMode}
+							className="min-h-11 shrink-0 px-3"
+						>
+							Annuler
+						</Button>
+					</div>
+				) : (
+					children
+				)}
+			</div>
 		</BottomBar>
 	);
 }

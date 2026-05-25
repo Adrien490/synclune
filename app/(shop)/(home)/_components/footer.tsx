@@ -35,7 +35,7 @@ export function FooterSkeleton() {
 			aria-hidden="true"
 		>
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
-				<div className="min-h-[400px] sm:min-h-[350px]" />
+				<div className="min-h-[1100px] sm:min-h-[750px] lg:min-h-[550px]" />
 			</div>
 		</footer>
 	);
@@ -92,18 +92,21 @@ export async function Footer() {
 							</div>
 							<div className="max-w-xs space-y-2">
 								<p className="text-muted-foreground text-sm/6 antialiased">
-									<span className="text-foreground relative inline-block font-medium">
-										Des bijoux <span className="text-foreground">colorés</span>
-										<HandDrawnAccent
-											variant="underline"
-											color="currentColor"
-											width={60}
-											height={12}
-											strokeWidth={1.5}
-											delay={0.8}
-											inView
-											className="absolute -bottom-1 left-[4.5ch]"
-										/>
+									<span className="text-foreground font-medium">
+										Des bijoux{" "}
+										<span className="relative inline-block">
+											colorés
+											<HandDrawnAccent
+												variant="underline"
+												color="currentColor"
+												width={60}
+												height={12}
+												strokeWidth={1.5}
+												delay={0.8}
+												inView
+												className="absolute inset-x-0 -bottom-1"
+											/>
+										</span>
 									</span>
 									<br />
 									créés avec passion
@@ -119,12 +122,13 @@ export async function Footer() {
 							>
 								Navigation
 							</h3>
-							<ul className="space-y-2">
+							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+							<ul role="list" className="space-y-2">
 								{footerNavItems.map((item) => (
 									<li key={item.href}>
 										<FooterLink
 											href={item.href}
-											className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+											className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
 										</FooterLink>
@@ -147,7 +151,7 @@ export async function Footer() {
 									<FooterLink
 										href={`mailto:${BRAND.contact.email}`}
 										external
-										className="text-foreground can-hover:hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="text-foreground can-hover:hover:bg-accent wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 									>
 										{BRAND.contact.email}
@@ -174,14 +178,15 @@ export async function Footer() {
 							>
 								Réseaux sociaux
 							</h3>
-							<ul className="space-y-2">
+							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+							<ul role="list" className="space-y-2">
 								<li>
 									<FooterLink
 										href={BRAND.social.instagram.url}
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group can-hover:hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="group can-hover:hover:bg-accent inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
@@ -200,7 +205,7 @@ export async function Footer() {
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group can-hover:hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="group can-hover:hover:bg-accent inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
@@ -219,7 +224,8 @@ export async function Footer() {
 
 					{/* Reassurance - Baymard UX trust signals */}
 					<section aria-label="Engagements et garanties" className="mb-8 sm:mb-10">
-						<ul className="grid gap-3 sm:grid-cols-3">
+						{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+						<ul role="list" className="grid gap-3 sm:grid-cols-3">
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
@@ -246,7 +252,12 @@ export async function Footer() {
 							<span>Sécurisé par</span>
 							<StripeWordmark className="text-muted-foreground" />
 						</p>
-						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
+						{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+						<ul
+							role="list"
+							className="flex items-center gap-4"
+							aria-label="Moyens de paiement acceptés"
+						>
 							<li className="text-muted-foreground can-hover:hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
 								<VisaIcon aria-label="Visa accepté" />
 							</li>
@@ -261,27 +272,30 @@ export async function Footer() {
 
 					{/* Copyright + Liens légaux */}
 					<div className="flex flex-col items-center gap-4 pt-8">
-						<p
-							className="text-muted-foreground text-center text-sm/6 antialiased"
-							suppressHydrationWarning
-						>
+						<p className="text-muted-foreground text-center text-sm/6 antialiased">
 							© {new Date().getFullYear()} {BRAND.name}. Tous droits réservés.
 						</p>
-						<nav
-							aria-label="Liens légaux"
-							className="flex flex-col items-center justify-center gap-x-2 sm:flex-row sm:flex-wrap"
-						>
-							{legalLinks.map((link) => (
-								<FooterLink
-									key={link.href}
-									href={link.href}
-									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
-									className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
-								>
-									{link.label}
-								</FooterLink>
-							))}
-							<ManageCookiesButton className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start" />
+						<nav aria-label="Liens légaux">
+							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+							<ul
+								role="list"
+								className="flex flex-col items-center justify-center gap-x-2 sm:flex-row sm:flex-wrap"
+							>
+								{legalLinks.map((link) => (
+									<li key={link.href}>
+										<FooterLink
+											href={link.href}
+											aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
+											className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
+										>
+											{link.label}
+										</FooterLink>
+									</li>
+								))}
+								<li>
+									<ManageCookiesButton className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-sm antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start" />
+								</li>
+							</ul>
 						</nav>
 					</div>
 				</Fade>

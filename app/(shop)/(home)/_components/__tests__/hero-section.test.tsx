@@ -135,6 +135,13 @@ describe("HeroSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("hero-subtitle");
 	});
 
+	it("applies viewTransitionName for cross-page continuity", async () => {
+		render(await HeroSection({ productsPromise: mockProductsPromise }));
+
+		const section = document.getElementById("hero-section");
+		expect(section?.style.viewTransitionName).toBe("shop-hero");
+	});
+
 	it("renders the h1 title with server-rendered text", async () => {
 		render(await HeroSection({ productsPromise: mockProductsPromise }));
 

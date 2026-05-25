@@ -26,12 +26,24 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 // Shared classes for the main FAB button (used by both href and onClick variants).
 // Rendered with variant="primary" (no shadow logic) so these own the shadow/scale.
 // Focus ring comes from the Button base `focus-ring` utility (DS SSOT) — not redeclared.
+// `can-hover:` guards `hover:` against iOS Safari/Chrome sticky-hover on tap.
 const mainButtonClassName = cn(
-	"relative rounded-full shadow-lg",
+	"group/fab relative rounded-full shadow-lg",
 	"size-14 p-0",
-	"hover:shadow-primary/25 hover:shadow-xl",
-	"active:scale-95",
-	"motion-safe:transition-[transform,color,box-shadow,background-color]",
+	"before:pointer-events-none before:absolute before:inset-0 before:rounded-full",
+	"before:bg-primary/35 before:blur-xl before:opacity-0 before:scale-90 before:-z-10",
+	"can-hover:hover:before:opacity-100 can-hover:hover:before:scale-110",
+	"focus-visible:before:opacity-100 focus-visible:before:scale-110",
+	"can-hover:hover:shadow-primary/30 can-hover:hover:shadow-2xl",
+	"motion-safe:can-hover:hover:scale-[1.06] motion-safe:active:scale-[0.94]",
+	"motion-safe:transition-[transform,color,box-shadow,background-color] motion-safe:duration-200",
+	"motion-safe:before:transition-[opacity,transform] motion-safe:before:duration-300",
+	"motion-safe:ease-[cubic-bezier(0.34,1.2,0.64,1)]",
+);
+
+const iconWrapperClassName = cn(
+	"inline-flex motion-safe:transition-transform motion-safe:duration-300",
+	"motion-safe:can-hover:group-hover/fab:rotate-[6deg]",
 );
 
 /**
@@ -397,7 +409,7 @@ export function Fab({
 										aria-haspopup={ariaHasPopup}
 										aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 									>
-										{icon}
+										<span className={iconWrapperClassName}>{icon}</span>
 										{badge && (
 											<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
 										)}
@@ -414,7 +426,7 @@ export function Fab({
 									aria-haspopup={ariaHasPopup}
 									aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}
 								>
-									{icon}
+									<span className={iconWrapperClassName}>{icon}</span>
 									{badge && (
 										<div className="pointer-events-none absolute -top-1.5 -left-1.5">{badge}</div>
 									)}

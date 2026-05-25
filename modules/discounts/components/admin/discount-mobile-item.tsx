@@ -35,7 +35,7 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={discount.id}
-			itemLabel={`Code promo ${discount.code}`}
+			itemLabel={`Code promo ${discount.code}, ${status.label}, ${formatDiscountValue(discount.type, discount.value)}`}
 			longPressProps={{
 				href: `/admin/marketing/discounts/${discount.id}`,
 				ariaLabel: `Code promo ${discount.code}`,
@@ -64,7 +64,6 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 						{isPendingItem ? (
 							<Badge
 								variant="secondary"
-								aria-live="polite"
 								style={{ viewTransitionName: `discount-status-${discount.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

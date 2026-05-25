@@ -39,11 +39,6 @@ vi.mock("@/shared/components/ui/card", () => ({
 		<p data-testid="card-description">{children}</p>
 	),
 	CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	CardTitle: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-		<h3 data-testid="card-title" className={className}>
-			{children}
-		</h3>
-	),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -124,6 +119,20 @@ describe("SectionNavigation", () => {
 			const links = screen.getAllByRole("link");
 			expect(links[0]).toHaveAttribute("href", "/admin/produits");
 			expect(links[1]).toHaveAttribute("href", "/admin/collections");
+		});
+	});
+
+	describe("semantics", () => {
+		it("renders as <nav> landmark labelled by section title", () => {
+			render(<SectionNavigation title="Catalogue" links={baseLinks} />);
+			expect(screen.getByRole("navigation", { name: "Catalogue" })).toBeInTheDocument();
+		});
+
+		it("renders each link title as an h3 heading", () => {
+			render(<SectionNavigation title="Catalogue" links={baseLinks} />);
+			expect(screen.getByRole("heading", { level: 3, name: "Produits" })).toBeInTheDocument();
+			expect(screen.getByRole("heading", { level: 3, name: "Collections" })).toBeInTheDocument();
+			expect(screen.getByRole("heading", { level: 3, name: "Couleurs" })).toBeInTheDocument();
 		});
 	});
 

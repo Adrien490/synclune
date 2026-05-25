@@ -71,9 +71,9 @@ export function SkusMobileList({
 				<MobileSelectionHeader itemsLabel={{ singular: "variante", plural: "variantes" }} />
 				<AdminListLiveCount count={productSkus.length} singular="variante" plural="variantes" />
 				<ItemGroup aria-label="Variantes" className="gap-2">
-					{productSkus.map((sku) => (
+					{productSkus.map((sku, index) => (
 						<div key={sku.id} role="listitem">
-							<SkuMobileItem sku={sku} productSlug={productSlug} />
+							<SkuMobileItem sku={sku} productSlug={productSlug} preload={index === 0} />
 						</div>
 					))}
 				</ItemGroup>

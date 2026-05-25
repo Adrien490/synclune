@@ -38,6 +38,7 @@ vi.mock("@/shared/components/ui/badge", () => ({
 vi.mock("@/shared/components/ui/item", () => ({
 	Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	ItemMedia: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));

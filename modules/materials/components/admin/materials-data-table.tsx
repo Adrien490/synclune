@@ -1,15 +1,10 @@
-import { CursorPagination } from "@/shared/components/cursor-pagination";
 import {
+	AdminDataTable,
 	BulkSelectionHeaderCheckbox,
-	BulkSelectionProvider,
 	BulkSelectionRowCheckbox,
 	TableEmptyState,
 } from "@/shared/components/data-table";
-import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
-import { TableScrollContainer } from "@/shared/components/table-scroll-container";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import {
-	Table,
 	TableBody,
 	TableCell,
 	TableHead,
@@ -43,18 +38,11 @@ export function MaterialsDataTable({
 				className="hidden md:flex"
 				icon={Gem}
 				title="Aucun matériau trouvé"
-				description={
-					hasActiveFilters
-						? "Aucun matériau ne correspond aux critères de recherche."
-						: "Aucun matériau pour l'instant."
-				}
-				actionElement={
-					hasActiveFilters ? (
-						<EmptyResetFiltersAction href="/admin/catalogue/materiaux" />
-					) : (
-						<CreateMaterialButton />
-					)
-				}
+				description="Aucun matériau ne correspond aux critères de recherche."
+				noItemsDescription="Aucun matériau pour l'instant."
+				hasActiveFilters={hasActiveFilters}
+				resetFiltersHref="/admin/catalogue/materiaux"
+				actionElement={<CreateMaterialButton />}
 			/>
 		);
 	}
@@ -62,99 +50,83 @@ export function MaterialsDataTable({
 	const pageItemIds = materials.map((m) => m.id);
 
 	return (
-		<Card className="hidden md:block">
-			<CardContent>
-				<BulkSelectionProvider pageItemIds={pageItemIds}>
-					<MaterialsBulkActionsBar />
-					<TableScrollContainer>
-						<Table
-							caption="Liste des matériaux"
-							striped
-							noRegion
-							className="min-w-full table-fixed [&>caption]:sr-only"
-						>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="w-[4%]">
-										<BulkSelectionHeaderCheckbox itemsLabel="matériaux" />
-										<span className="sr-only">Sélection</span>
-									</TableHead>
-									<TableHead className="w-[23%]">Nom</TableHead>
-									<TableHead className="w-[28%]">Description</TableHead>
-									<TableHead className="w-[10%] text-center">Statut</TableHead>
-									<TableHead className="w-[10%] text-center">Variantes</TableHead>
-									<TableHead
-										className="w-[8%] text-right"
-										aria-label="Actions disponibles pour chaque matériau"
+		<AdminDataTable
+			caption="Liste des matériaux"
+			pageItemIds={pageItemIds}
+			pagination={{
+				perPage,
+				hasNextPage: pagination.hasNextPage,
+				hasPreviousPage: pagination.hasPreviousPage,
+				currentPageSize: materials.length,
+				nextCursor: pagination.nextCursor,
+				prevCursor: pagination.prevCursor,
+			}}
+			bulkActionsBar={<MaterialsBulkActionsBar />}
+		>
+			<TableHeader>
+				<TableRow>
+					<TableHead className="w-[4%]">
+						<BulkSelectionHeaderCheckbox itemsLabel="matériaux" />
+						<span className="sr-only">Sélection</span>
+					</TableHead>
+					<TableHead className="w-[23%]">Nom</TableHead>
+					<TableHead className="w-[28%]">Description</TableHead>
+					<TableHead className="w-[10%] text-center">Statut</TableHead>
+					<TableHead className="w-[10%] text-center">Variantes</TableHead>
+					<TableHead
+						className="w-[8%] text-right"
+						aria-label="Actions disponibles pour chaque matériau"
+					>
+						Actions
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{materials.map((material) => {
+					const skuCount = material._count.skus;
+
+					return (
+						<TableRow key={material.id}>
+							<TableCell>
+								<BulkSelectionRowCheckbox
+									id={material.id}
+									itemLabel={`Matériau ${material.name}`}
+								/>
+							</TableCell>
+							<TableCell>
+								<div className="overflow-hidden">
+									<span
+										className="text-foreground block truncate font-semibold"
+										title={material.name}
 									>
-										Actions
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{materials.map((material) => {
-									const skuCount = material._count.skus;
-
-									return (
-										<TableRow key={material.id}>
-											<TableCell>
-												<BulkSelectionRowCheckbox
-													id={material.id}
-													itemLabel={`Matériau ${material.name}`}
-												/>
-											</TableCell>
-											<TableCell>
-												<div className="overflow-hidden">
-													<span
-														className="text-foreground block truncate font-semibold"
-														title={material.name}
-													>
-														{material.name}
-													</span>
-												</div>
-											</TableCell>
-											<TableCell>
-												<span className="text-muted-foreground line-clamp-2 text-sm">
-													{material.description ?? "-"}
-												</span>
-											</TableCell>
-											<TableCell className="text-center">
-												<MaterialActiveToggle
-													materialId={material.id}
-													isActive={material.isActive}
-												/>
-											</TableCell>
-											<TableCell className="text-center">
-												<span className="text-sm font-medium">{skuCount}</span>
-											</TableCell>
-											<TableCell className="text-right">
-												<MaterialsRowActions
-													materialId={material.id}
-													materialName={material.name}
-													materialSlug={material.slug}
-													materialDescription={material.description}
-													materialIsActive={material.isActive}
-												/>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</TableScrollContainer>
-
-					<div className="mt-4">
-						<CursorPagination
-							perPage={perPage}
-							hasNextPage={pagination.hasNextPage}
-							hasPreviousPage={pagination.hasPreviousPage}
-							currentPageSize={materials.length}
-							nextCursor={pagination.nextCursor}
-							prevCursor={pagination.prevCursor}
-						/>
-					</div>
-				</BulkSelectionProvider>
-			</CardContent>
-		</Card>
+										{material.name}
+									</span>
+								</div>
+							</TableCell>
+							<TableCell>
+								<span className="text-muted-foreground line-clamp-2 text-sm">
+									{material.description ?? "-"}
+								</span>
+							</TableCell>
+							<TableCell className="text-center">
+								<MaterialActiveToggle materialId={material.id} isActive={material.isActive} />
+							</TableCell>
+							<TableCell className="text-center">
+								<span className="text-sm font-medium">{skuCount}</span>
+							</TableCell>
+							<TableCell className="text-right">
+								<MaterialsRowActions
+									materialId={material.id}
+									materialName={material.name}
+									materialSlug={material.slug}
+									materialDescription={material.description}
+									materialIsActive={material.isActive}
+								/>
+							</TableCell>
+						</TableRow>
+					);
+				})}
+			</TableBody>
+		</AdminDataTable>
 	);
 }

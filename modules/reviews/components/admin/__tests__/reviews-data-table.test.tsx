@@ -450,7 +450,7 @@ describe("ReviewsDataTable", () => {
 		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 	});
 
-	it("does not render cursor pagination when no more pages", async () => {
+	it("renders cursor pagination even when no more pages (per-page selector + position indicator)", async () => {
 		const reviews = [createReview()];
 		const Component = await ReviewsDataTable({
 			reviewsPromise: Promise.resolve({
@@ -460,7 +460,7 @@ describe("ReviewsDataTable", () => {
 			}),
 		});
 		render(Component);
-		expect(screen.queryByTestId("cursor-pagination")).not.toBeInTheDocument();
+		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 	});
 
 	// ─── Table structure ──────────────────────────────────────────────────────

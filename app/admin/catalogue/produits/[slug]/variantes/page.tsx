@@ -245,7 +245,19 @@ export default async function ProductVariantsPage({
 					/>
 				</Suspense>
 
-				<Suspense fallback={<SkusMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<SkusMobileListSkeleton
+							hasActiveFilters={
+								Boolean(search) ||
+								Boolean(filters.stockStatus) ||
+								Boolean(filters.colorId?.length) ||
+								Boolean(filters.materialId?.length) ||
+								typeof filters.isActive === "boolean"
+							}
+						/>
+					}
+				>
 					<SkusMobileList
 						skusPromise={skusPromise}
 						productSlug={slug}

@@ -6,6 +6,13 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 interface TableScrollContainerProps {
 	children: ReactNode;
 	className?: string;
+	/**
+	 * Nom accessible de la région scrollable (`aria-label` du `role=region`).
+	 * À aligner sur le `caption` de la `<Table>` enfant pour que les screen
+	 * readers annoncent le bon contexte (« Liste des commandes » plutôt que le
+	 * fallback générique).
+	 */
+	label?: string;
 }
 
 /**
@@ -13,7 +20,11 @@ interface TableScrollContainerProps {
  * Affiche des gradients pour indiquer qu'il y a plus de contenu
  * visible uniquement sur mobile/tablet
  */
-export function TableScrollContainer({ children, className }: TableScrollContainerProps) {
+export function TableScrollContainer({
+	children,
+	className,
+	label = "Tableau avec scroll horizontal",
+}: TableScrollContainerProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
 	const [canScrollRight, setCanScrollRight] = useState(false);
@@ -64,7 +75,7 @@ export function TableScrollContainer({ children, className }: TableScrollContain
 				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 				tabIndex={0}
 				role="region"
-				aria-label="Tableau avec scroll horizontal"
+				aria-label={label}
 			>
 				{children}
 			</div>

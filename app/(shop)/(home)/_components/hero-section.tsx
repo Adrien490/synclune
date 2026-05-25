@@ -86,7 +86,7 @@ export async function HeroSection({
 								align="center"
 								weight="light"
 								id="hero-title"
-								className="text-foreground"
+								className="text-foreground text-balance"
 							>
 								<span className="inline-flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-2">
 									<SplitTextCSS>Des bijoux</SplitTextCSS>{" "}
@@ -95,8 +95,10 @@ export async function HeroSection({
 							</SectionTitle>
 							<p
 								id="hero-subtitle"
-								className="text-foreground mx-auto max-w-2xl text-lg/7 font-light tracking-tight antialiased sm:text-xl/8 md:text-2xl/9 2xl:max-w-3xl 2xl:text-3xl/10"
+								className="text-foreground mx-auto max-w-2xl text-lg/7 font-light tracking-tight text-pretty antialiased sm:text-xl/8 md:text-2xl/9 2xl:max-w-3xl 2xl:text-3xl/10"
 							>
+								{/* Distinct copy mobile/desktop (intentional UX — short on mobile, full on desktop).
+								    Both in DOM = OK for SEO (Google dedupes), display:none respected by SR per viewport. */}
 								<span className="sm:hidden">Faits main pour sublimer votre quotidien </span>
 								<span className="hidden sm:inline">
 									Créés à la main pour des occasions particulières, ou pour sublimer votre

@@ -75,7 +75,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 	if (pageItemIds.length === 0) return null;
 
 	const stickyShell =
-		"sticky top-0 z-10 -mx-3 px-3 supports-[backdrop-filter]:bg-background/80 bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)]";
+		"sticky top-0 z-(--z-bar) -mx-3 px-3 supports-[backdrop-filter]:bg-background/80 bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)]";
 
 	if (!selectionMode) {
 		return (

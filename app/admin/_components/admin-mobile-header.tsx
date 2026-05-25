@@ -34,10 +34,17 @@ function isDetailRoute(pathname: string): boolean {
  * Shows current page title + contextual actions. Hidden on md+.
  * Scroll-aware: transparent at top, glass effect on scroll.
  *
+ * Architecture compositor-friendly (mirror `NavbarWrapper`) :
+ * - Glass effect (backdrop, shadow, border) sur calque absolu dédié dont seule
+ *   l'opacité est animée — pas de transitions sur background-color/border-color/
+ *   box-shadow/backdrop-filter (paint thrash sur iOS Safari pendant le scroll).
+ * - `data-scrolled` exposé pour des animations enfants éventuelles.
+ *
  * Navigation redundancies by design:
  * - Bottom bar covers primary nav (Accueil, Commandes, Produits, Menu + FAB command palette)
  * - Back button (here) appears on detail routes — backup for non-standalone browsers
- *   where SwipeBackProvider is a no-op
+ *   where SwipeBackProvider is a no-op. Fallback `router.push(parentHref)` quand
+ *   `history.length <= 1` (deep-link / nouvel onglet).
  * - Search icon mirrors the FAB command palette for thumb-reach users at the top
  */
 export function AdminMobileHeader() {
@@ -48,35 +55,53 @@ export function AdminMobileHeader() {
 	const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
 
 	const showBack = isDetailRoute(pathname);
-	const parentLabel = breadcrumbs.length >= 2 ? breadcrumbs[breadcrumbs.length - 2]?.label : null;
+	const parentSegment = breadcrumbs.length >= 2 ? breadcrumbs[breadcrumbs.length - 2] : null;
+	const parentLabel = parentSegment?.label ?? null;
+	const parentHref = parentSegment?.href ?? "/admin";
 	const showParent = Boolean(showBack && parentLabel);
+
+	const handleBack = () => {
+		triggerHaptic("light");
+		// Fallback parent quand l'historique est vide (deep-link, nouvel onglet).
+		// `history.length === 1` couvre 95% des cas. Hors-scope : referrer cross-origin.
+		if (typeof window !== "undefined" && window.history.length <= 1) {
+			router.push(parentHref);
+			return;
+		}
+		router.back();
+	};
 
 	return (
 		<header
+			data-scrolled={isScrolled}
+			data-admin-mobile-header
 			className={cn(
-				"pwa-header fixed inset-x-0 top-0 z-40 flex min-h-[var(--admin-header-height,3.5rem)] items-center md:hidden",
-				"motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-300 motion-safe:ease-out",
-				"border-b",
-				isScrolled
-					? "bg-background/80 border-border shadow-lg shadow-black/8 backdrop-blur-xl"
-					: "border-transparent bg-transparent",
+				"pwa-header group fixed inset-x-0 top-0 z-40 flex min-h-[var(--admin-header-height,3.5rem)] items-center md:hidden",
 			)}
 			aria-label="En-tête mobile administration"
 		>
+			{/* Glass effect layer — opacity-only (compositor-friendly). */}
+			<div
+				aria-hidden="true"
+				className={cn(
+					"pointer-events-none absolute inset-0 -z-10",
+					"bg-background/80 border-border border-b shadow-lg shadow-black/8 backdrop-blur-xl",
+					"opacity-0 motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
+					"group-data-[scrolled=true]:opacity-100",
+				)}
+			/>
+
 			<div className="flex w-full items-center gap-2 px-[var(--admin-main-x,1.5rem)]">
 				{showBack && (
 					<button
 						type="button"
-						onClick={() => {
-							triggerHaptic("light");
-							router.back();
-						}}
+						onClick={handleBack}
 						aria-label="Retour"
 						className={cn(
 							"-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full",
-							"text-muted-foreground hover:text-foreground active:bg-accent",
-							"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
-							"transition-colors",
+							"text-muted-foreground can-hover:hover:text-foreground active:bg-accent",
+							"focus-ring",
+							"motion-safe:transition-colors",
 						)}
 					>
 						<ChevronLeft className="size-5" aria-hidden="true" />

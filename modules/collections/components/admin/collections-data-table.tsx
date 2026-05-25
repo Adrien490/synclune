@@ -1,16 +1,12 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { CursorPagination } from "@/shared/components/cursor-pagination";
 import {
+	AdminDataTable,
 	BulkSelectionHeaderCheckbox,
-	BulkSelectionProvider,
 	BulkSelectionRowCheckbox,
 	TableEmptyState,
 } from "@/shared/components/data-table";
-import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import {
-	Table,
 	TableBody,
 	TableCell,
 	TableHead,
@@ -50,11 +46,13 @@ const STATUS_CONFIG: Record<
 interface CollectionsDataTableProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
 export async function CollectionsDataTable({
 	collectionsPromise,
 	perPage,
+	hasActiveFilters,
 }: CollectionsDataTableProps) {
 	const { collections, pagination } = await collectionsPromise;
 
@@ -72,6 +70,9 @@ export async function CollectionsDataTable({
 				icon={FolderOpen}
 				title="Aucune collection trouvée"
 				description="Aucune collection ne correspond aux critères de recherche."
+				noItemsDescription="Aucune collection pour l'instant."
+				hasActiveFilters={hasActiveFilters}
+				resetFiltersHref="/admin/catalogue/collections"
 				actionElement={<CreateCollectionButton />}
 			/>
 		);
@@ -80,145 +81,128 @@ export async function CollectionsDataTable({
 	const pageItemIds = collections.map((c) => c.id);
 
 	return (
-		<Card className="hidden md:block">
-			<CardContent>
-				<BulkSelectionProvider pageItemIds={pageItemIds}>
-					<CollectionsBulkActionsBar />
-					<TableScrollContainer>
-						<Table
-							caption="Liste des collections"
-							striped
-							noRegion
-							className="min-w-full table-fixed [&>caption]:sr-only"
-						>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="w-[4%]">
-										<BulkSelectionHeaderCheckbox itemsLabel="collections" />
-										<span className="sr-only">Sélection</span>
-									</TableHead>
-									<TableHead className="w-[23%]">Nom</TableHead>
-									<TableHead className="w-[12%]">Statut</TableHead>
-									<TableHead className="w-[23%]">Description</TableHead>
-									<TableHead className="w-[10%] text-center">Produits</TableHead>
-									<TableHead
-										className="w-[8%] text-right"
-										aria-label="Actions disponibles pour chaque collection"
+		<AdminDataTable
+			caption="Liste des collections"
+			pageItemIds={pageItemIds}
+			pagination={{
+				perPage,
+				hasNextPage: pagination.hasNextPage,
+				hasPreviousPage: pagination.hasPreviousPage,
+				currentPageSize: collections.length,
+				nextCursor: pagination.nextCursor,
+				prevCursor: pagination.prevCursor,
+			}}
+			bulkActionsBar={<CollectionsBulkActionsBar />}
+		>
+			<TableHeader>
+				<TableRow>
+					<TableHead className="w-[4%]">
+						<BulkSelectionHeaderCheckbox itemsLabel="collections" />
+						<span className="sr-only">Sélection</span>
+					</TableHead>
+					<TableHead className="w-[23%]">Nom</TableHead>
+					<TableHead className="w-[12%]">Statut</TableHead>
+					<TableHead className="w-[23%]">Description</TableHead>
+					<TableHead className="w-[10%] text-center">Produits</TableHead>
+					<TableHead
+						className="w-[8%] text-right"
+						aria-label="Actions disponibles pour chaque collection"
+					>
+						Actions
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{collections.map((collection) => {
+					const productsCount = collection._count.products || 0;
+					const truncatedDescription = truncateDescription(collection.description);
+					// Verifier si un produit featured est defini
+					const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
+
+					return (
+						<TableRow key={collection.id}>
+							<TableCell>
+								<BulkSelectionRowCheckbox
+									id={collection.id}
+									itemLabel={`Collection ${collection.name}`}
+								/>
+							</TableCell>
+							<TableCell>
+								<div className="flex items-center gap-2 overflow-hidden">
+									<Link
+										href={`/admin/catalogue/collections/${collection.slug}`}
+										className="text-foreground truncate font-semibold hover:underline"
+										title={collection.name}
 									>
-										Actions
-									</TableHead>
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{collections.map((collection) => {
-									const productsCount = collection._count.products || 0;
-									const truncatedDescription = truncateDescription(collection.description);
-									// Verifier si un produit featured est defini
-									const hasFeaturedProduct = collection.products[0]?.isFeatured === true;
-
-									return (
-										<TableRow key={collection.id}>
-											<TableCell>
-												<BulkSelectionRowCheckbox
-													id={collection.id}
-													itemLabel={`Collection ${collection.name}`}
-												/>
-											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2 overflow-hidden">
-													<Link
-														href={`/admin/catalogue/collections/${collection.slug}`}
-														className="text-foreground truncate font-semibold hover:underline"
-														title={collection.name}
-													>
-														{collection.name}
-													</Link>
-													{hasFeaturedProduct && (
-														<Tooltip>
-															<TooltipTrigger asChild>
-																<Star className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
-															</TooltipTrigger>
-															<TooltipContent>
-																<p>Produit vedette defini</p>
-															</TooltipContent>
-														</Tooltip>
-													)}
-												</div>
-											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
-													{(() => {
-														const { label, variant, Icon } = STATUS_CONFIG[collection.status];
-														return (
-															<Badge
-																variant={variant}
-																role="status"
-																aria-label={`Statut : ${label}`}
-															>
-																<Icon aria-hidden="true" />
-																{label}
-															</Badge>
-														);
-													})()}
-													{/* Warning si PUBLIC mais aucun produit visible */}
-													{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
-														<Tooltip>
-															<TooltipTrigger asChild>
-																<span className="text-amber-500">
-																	<TriangleAlert className="size-4" />
-																</span>
-															</TooltipTrigger>
-															<TooltipContent>
-																<p>Aucun produit visible en boutique</p>
-															</TooltipContent>
-														</Tooltip>
-													)}
-												</div>
-											</TableCell>
-											<TableCell>
-												<div className="overflow-hidden">
-													<span
-														className="text-muted-foreground block truncate text-sm"
-														title={collection.description ?? "—"}
-													>
-														{truncatedDescription}
-													</span>
-												</div>
-											</TableCell>
-											<TableCell className="text-center">
-												<span className="text-sm font-medium">{productsCount}</span>
-											</TableCell>
-											<TableCell>
-												<div className="flex justify-end">
-													<CollectionRowActions
-														collectionId={collection.id}
-														collectionName={collection.name}
-														collectionSlug={collection.slug}
-														collectionDescription={collection.description}
-														collectionStatus={collection.status}
-														productsCount={productsCount}
-													/>
-												</div>
-											</TableCell>
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
-					</TableScrollContainer>
-
-					<div className="mt-4">
-						<CursorPagination
-							perPage={perPage}
-							hasNextPage={pagination.hasNextPage}
-							hasPreviousPage={pagination.hasPreviousPage}
-							currentPageSize={collections.length}
-							nextCursor={pagination.nextCursor}
-							prevCursor={pagination.prevCursor}
-						/>
-					</div>
-				</BulkSelectionProvider>
-			</CardContent>
-		</Card>
+										{collection.name}
+									</Link>
+									{hasFeaturedProduct && (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Star className="size-4 shrink-0 fill-yellow-400 text-yellow-400" />
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>Produit vedette defini</p>
+											</TooltipContent>
+										</Tooltip>
+									)}
+								</div>
+							</TableCell>
+							<TableCell>
+								<div className="flex items-center gap-2">
+									{(() => {
+										const { label, variant, Icon } = STATUS_CONFIG[collection.status];
+										return (
+											<Badge variant={variant} role="status" aria-label={`Statut : ${label}`}>
+												<Icon aria-hidden="true" />
+												{label}
+											</Badge>
+										);
+									})()}
+									{/* Warning si PUBLIC mais aucun produit visible */}
+									{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span className="text-amber-500">
+													<TriangleAlert className="size-4" />
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>Aucun produit visible en boutique</p>
+											</TooltipContent>
+										</Tooltip>
+									)}
+								</div>
+							</TableCell>
+							<TableCell>
+								<div className="overflow-hidden">
+									<span
+										className="text-muted-foreground block truncate text-sm"
+										title={collection.description ?? "—"}
+									>
+										{truncatedDescription}
+									</span>
+								</div>
+							</TableCell>
+							<TableCell className="text-center">
+								<span className="text-sm font-medium">{productsCount}</span>
+							</TableCell>
+							<TableCell>
+								<div className="flex justify-end">
+									<CollectionRowActions
+										collectionId={collection.id}
+										collectionName={collection.name}
+										collectionSlug={collection.slug}
+										collectionDescription={collection.description}
+										collectionStatus={collection.status}
+										productsCount={productsCount}
+									/>
+								</div>
+							</TableCell>
+						</TableRow>
+					);
+				})}
+			</TableBody>
+		</AdminDataTable>
 	);
 }

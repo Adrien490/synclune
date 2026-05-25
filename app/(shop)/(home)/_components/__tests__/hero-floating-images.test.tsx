@@ -100,7 +100,7 @@ import type { HeroProductImage } from "../../_utils/extract-hero-images";
 
 // ---------------------------------------------------------------------------
 // matchMedia helper — the component reads `(prefers-reduced-motion: reduce)`
-// and `(min-width: 768px)` to gate the desktop pointer-depth listener.
+// and `(hover: hover) and (pointer: fine)` to gate the desktop mouse listener.
 // ---------------------------------------------------------------------------
 
 const ORIGINAL_MATCH_MEDIA = window.matchMedia;
@@ -253,8 +253,8 @@ describe("HeroFloatingImagesInner", () => {
 		}
 	});
 
-	it("attaches a window pointermove listener when desktop + motion enabled", () => {
-		mockMatchMedia((query) => query === "(min-width: 768px)");
+	it("attaches a window pointermove listener when fine pointer + motion enabled", () => {
+		mockMatchMedia((query) => query === "(hover: hover) and (pointer: fine)");
 		const addSpy = vi.spyOn(window, "addEventListener");
 
 		const { unmount } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
@@ -282,8 +282,8 @@ describe("HeroFloatingImagesInner", () => {
 		addSpy.mockRestore();
 	});
 
-	it("does not attach window pointermove listener on narrow viewports", () => {
-		// Default test setup returns matches: false for all queries — desktop listener stays off.
+	it("does not attach window pointermove listener on coarse pointers (touch devices)", () => {
+		// Default test setup returns matches: false for all queries — coarse pointer listener stays off.
 		const addSpy = vi.spyOn(window, "addEventListener");
 
 		render(<HeroFloatingImagesInner images={makeImages(4)} />);
@@ -373,5 +373,20 @@ describe("HeroFloatingImagesInner — regression lock", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 		expect(container.querySelectorAll(".hero-image-entrance").length).toBe(4);
 		expect(container.querySelectorAll(".hero-image-parallax").length).toBe(4);
+	});
+
+	/**
+	 * @regression no-view-transition-floating-pdp-2026-05-14
+	 * User explicit refusal (2026-05-12 + 2026-05-14): morph small (~150-250px)
+	 * → fullscreen PDP gallery is visually jarring. Floating images are
+	 * decorative (aria-hidden + tabIndex=-1) — products are reachable via the
+	 * accessible "Dernières créations" section below. The `viewTransitionName:
+	 * shop-hero` lives at section level (hero-section.tsx), not per-image.
+	 */
+	it("does NOT set viewTransitionName on any floating image or link", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		for (const el of container.querySelectorAll("a, img")) {
+			expect((el as HTMLElement).style.viewTransitionName).toBe("");
+		}
 	});
 });

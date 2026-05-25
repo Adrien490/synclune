@@ -66,19 +66,23 @@ export async function LatestCreations({
 						</p>
 					</Fade>
 				) : (
-					<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
+					/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */
+					<ul
+						role="list"
+						className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8"
+					>
 						{products.map((product, index) => (
-							<div
+							<li
 								key={product.id}
 								className="latest-card-enter-scroll"
 								style={{ "--card-index": index } as CSSProperties}
 							>
 								<CursorGlow>
-									<ProductCard product={product} index={index} sectionId="latest" />
+									<ProductCard product={product} index={index} sectionId="latest" disablePreload />
 								</CursorGlow>
-							</div>
+							</li>
 						))}
-					</div>
+					</ul>
 				)}
 				<Fade
 					y={MOTION_CONFIG.section.cta.y}

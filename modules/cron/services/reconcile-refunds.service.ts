@@ -37,15 +37,20 @@ import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error
  * 3. Idempotent : guard `status: APPROVED` on each update — concurrent
  *    webhook reconciliation never collides.
  */
-export async function reconcileRefunds(): Promise<CronResult | null> {
+export async function reconcileRefunds(): Promise<CronResult> {
 	logger.info("Starting refund reconciliation", { cronJob: "reconcile-refunds" });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		logger.error("STRIPE_SECRET_KEY not configured", undefined, {
+		logger.warn("STRIPE_SECRET_KEY not configured — skipping run", {
 			cronJob: "reconcile-refunds",
 		});
-		return null;
+		return {
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		};
 	}
 
 	// Scan window : 7 days, with at least REFUND_RECONCILE_MIN_AGE_MS (1h) of
@@ -104,9 +109,8 @@ export async function reconcileRefunds(): Promise<CronResult | null> {
 		}
 
 		try {
-			if (processed > 0 || errored > 0) {
-				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
-			}
+			// Throttle every call (uniform pacing, cap burst at 1/STRIPE_THROTTLE_MS req/s).
+			await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 
 			const stripeRefund = await stripe.refunds.retrieve(refund.stripeRefundId, undefined, {
 				timeout: STRIPE_TIMEOUT_MS,

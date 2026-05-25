@@ -87,9 +87,9 @@ describe("BulkSelectionRowCheckbox", () => {
 		expect(screen.getByText("1 produit sélectionné")).toBeInTheDocument();
 	});
 
-	it("uses generic aria-label when itemLabel missing", () => {
-		renderWithProvider(["a"], <BulkSelectionRowCheckbox id="a" />);
-		expect(screen.getByLabelText("Sélectionner cette ligne")).toBeInTheDocument();
+	it("uses provided itemLabel in aria-label", () => {
+		renderWithProvider(["a"], <BulkSelectionRowCheckbox id="a" itemLabel="Bague A" />);
+		expect(screen.getByLabelText("Sélectionner Bague A")).toBeInTheDocument();
 	});
 });
 
@@ -104,8 +104,8 @@ describe("BulkSelectionHeaderCheckbox", () => {
 			["a", "b"],
 			<>
 				<BulkSelectionHeaderCheckbox itemsLabel="produits" />
-				<BulkSelectionRowCheckbox id="a" />
-				<BulkSelectionRowCheckbox id="b" />
+				<BulkSelectionRowCheckbox id="a" itemLabel="Bague A" />
+				<BulkSelectionRowCheckbox id="b" itemLabel="Bague B" />
 				<BulkSelectionToolbar itemsLabel={{ singular: "produit", plural: "produits" }} />
 			</>,
 		);
@@ -121,11 +121,11 @@ describe("BulkSelectionHeaderCheckbox", () => {
 			["a", "b"],
 			<>
 				<BulkSelectionHeaderCheckbox itemsLabel="bagues" />
-				<BulkSelectionRowCheckbox id="a" />
+				<BulkSelectionRowCheckbox id="a" itemLabel="Bague A" />
 			</>,
 		);
 
-		fireEvent.click(screen.getByLabelText("Sélectionner cette ligne"));
+		fireEvent.click(screen.getByLabelText("Sélectionner Bague A"));
 
 		const headerCheckbox = screen.getByRole("checkbox", { name: /sélectionner.*de la page/i });
 		expect(headerCheckbox).toHaveAttribute("data-state", "indeterminate");
@@ -146,12 +146,12 @@ describe("BulkSelectionToolbar", () => {
 		renderWithProvider(
 			["a"],
 			<>
-				<BulkSelectionRowCheckbox id="a" />
+				<BulkSelectionRowCheckbox id="a" itemLabel="Bague A" />
 				<BulkSelectionToolbar itemsLabel={{ singular: "produit", plural: "produits" }} />
 			</>,
 		);
 
-		fireEvent.click(screen.getByLabelText("Sélectionner cette ligne"));
+		fireEvent.click(screen.getByLabelText("Sélectionner Bague A"));
 		expect(screen.getByText("1 produit sélectionné")).toBeInTheDocument();
 
 		fireEvent.click(screen.getByLabelText("Effacer la sélection"));
@@ -212,7 +212,7 @@ function SelectionModeProbe() {
 			<button onClick={enterSelectionMode}>enter</button>
 			<button onClick={exitSelectionMode}>exit</button>
 			<button onClick={selectAllVisible}>select-all</button>
-			<button onClick={clear}>clear</button>
+			<button onClick={() => clear()}>clear</button>
 			<button onClick={() => toggle("a")}>toggle-a</button>
 		</div>
 	);

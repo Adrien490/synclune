@@ -80,7 +80,7 @@ export function KpisSkeleton({
 			{count > 0 && (
 				<div
 					className={cn(
-						"scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2",
+						"flex snap-x snap-mandatory scrollbar-none gap-4 overflow-x-auto pb-2",
 						"sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0",
 						gridCols,
 					)}

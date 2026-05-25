@@ -56,10 +56,12 @@ export const STRIPE_THROTTLE_MS = 20;
 
 /**
  * Global deadline for batch processing in cron jobs (ms)
- * Leaves a 10s safety margin before the 60s Vercel function timeout.
+ * Leaves a 15s safety margin before the 60s Vercel function timeout.
  * Jobs check this deadline before each iteration and stop early if exceeded.
+ * The wider margin absorbs hung Stripe/DB calls without SIGTERM (which would
+ * lose the partial CronResult and skip the deadline-handling path).
  */
-export const BATCH_DEADLINE_MS = 50_000;
+export const BATCH_DEADLINE_MS = 45_000;
 
 /**
  * Maximum records to delete/update in a single cleanup operation

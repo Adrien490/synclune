@@ -46,7 +46,7 @@ describe("NotFoundShell", () => {
 		);
 		const main = screen.getByRole("main");
 		expect(main).toBeInTheDocument();
-		expect(main.className).toContain("min-h-screen");
+		expect(main.className).toContain("min-h-dvh");
 		expect(main.className).toContain("safe-area-inset-bottom");
 		expect(screen.getByTestId("child")).toBeInTheDocument();
 		expect(screen.getByTestId("particles")).toBeInTheDocument();

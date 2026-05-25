@@ -29,13 +29,20 @@ import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails
  * 3-5 business days to confirm. This cron polls Stripe to reconcile
  * statuses in case of webhook failure.
  */
-export async function syncAsyncPayments(): Promise<CronResult | null> {
+export async function syncAsyncPayments(): Promise<CronResult> {
 	logger.info("Starting async payment sync", { cronJob: "sync-async-payments" });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		logger.error("STRIPE_SECRET_KEY not configured", undefined, { cronJob: "sync-async-payments" });
-		return null;
+		logger.warn("STRIPE_SECRET_KEY not configured — skipping run", {
+			cronJob: "sync-async-payments",
+		});
+		return {
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		};
 	}
 
 	// Find PENDING orders created between 1h and 10 days ago
@@ -85,10 +92,8 @@ export async function syncAsyncPayments(): Promise<CronResult | null> {
 		if (!order.stripePaymentIntentId) continue;
 
 		try {
-			// Throttle to avoid Stripe rate limits
-			if (updated > 0 || errors > 0) {
-				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
-			}
+			// Throttle every call (uniform pacing, cap burst at 1/STRIPE_THROTTLE_MS req/s).
+			await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			const paymentIntent = await stripe.paymentIntents.retrieve(
 				order.stripePaymentIntentId,
 				undefined,

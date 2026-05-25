@@ -210,6 +210,18 @@ export async function POST(req: Request) {
 
 			// Alert admin if too many failed attempts
 			if (webhookRecord.attempts >= MAX_WEBHOOK_RETRY_ATTEMPTS - 1) {
+				Sentry.withScope((scope) => {
+					scope.setLevel("warning");
+					scope.setTag("webhookEventType", event.type);
+					scope.setTag("webhookExhausted", "true");
+					scope.setFingerprint(["webhook", "max-retries-exhausted", event.type]);
+					scope.setContext("webhook", {
+						eventId: event.id,
+						attempts: webhookRecord.attempts + 1,
+						maxAttempts: MAX_WEBHOOK_RETRY_ATTEMPTS,
+					});
+					Sentry.captureMessage("Webhook max retries exhausted", "warning");
+				});
 				after(async () => {
 					await sendWebhookFailedAlert({
 						eventId: event.id,

@@ -162,7 +162,15 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 				<UsersSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<UsersMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<UsersMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<UsersMobileList
 						usersPromise={usersPromise}
 						perPage={perPage}
@@ -178,7 +186,9 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 					<UsersDataTable
 						usersPromise={usersPromise}
 						perPage={perPage}
-						resetHref="/admin/clients"
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
 					/>
 				</Suspense>
 			</div>

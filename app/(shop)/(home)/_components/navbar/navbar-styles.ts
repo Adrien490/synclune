@@ -6,7 +6,7 @@ export const iconButtonClassName = cn(
 	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
 	"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
 	"motion-safe:can-hover:hover:scale-105 motion-safe:active:scale-95",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	"focus-ring",
 );
 
 /**

@@ -69,7 +69,9 @@ export function ProductTypesMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider
+				itemsLabel={{ singular: "type de bijou", plural: "types de bijoux" }}
+			>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "type", plural: "types" }} />
 					{filterParams ? (
@@ -80,7 +82,7 @@ export function ProductTypesMobileList({
 						singular="type de bijou"
 						plural="types de bijoux"
 					/>
-					<ItemGroup role="list" aria-label="Types de bijoux" className="gap-2">
+					<ItemGroup aria-label="Types de bijoux" className="gap-2">
 						{productTypes.map((productType) => (
 							<div key={productType.id} role="listitem">
 								<ProductTypeMobileItem productType={productType} />

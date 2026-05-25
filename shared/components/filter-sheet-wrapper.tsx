@@ -232,10 +232,7 @@ export function FilterSheetWrapper({
 
 				<ScrollArea className="min-h-0 flex-1 overscroll-contain" data-vaul-no-drag>
 					<div
-						className={cn(
-							"px-6 py-4 transition-opacity duration-200",
-							isPending && "pointer-events-none opacity-50",
-						)}
+						className={cn("px-6 py-4", isPending && "pointer-events-none")}
 						role="region"
 						aria-label="Options de filtrage"
 						aria-busy={isPending}

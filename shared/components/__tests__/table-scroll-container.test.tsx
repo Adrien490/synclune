@@ -64,6 +64,20 @@ describe("TableScrollContainer", () => {
 		expect(region).toHaveTextContent("Cell content");
 	});
 
+	it("uses provided label as aria-label on the scroll region", () => {
+		render(
+			<TableScrollContainer label="Liste des commandes">
+				<span>content</span>
+			</TableScrollContainer>,
+		);
+
+		expect(screen.getByRole("region", { name: "Liste des commandes" })).toBeInTheDocument();
+		// Default fallback should NOT match
+		expect(
+			screen.queryByRole("region", { name: "Tableau avec scroll horizontal" }),
+		).not.toBeInTheDocument();
+	});
+
 	it("scroll region has tabIndex 0", () => {
 		render(
 			<TableScrollContainer>

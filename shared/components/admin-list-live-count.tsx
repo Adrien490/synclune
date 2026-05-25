@@ -12,7 +12,7 @@ interface AdminListLiveCountProps {
 	singular: string;
 	/** Libellé pluriel. Ex: "produits", "commandes". */
 	plural: string;
-	/** Préfixe optionnel. Default: "Liste mise à jour :". */
+	/** Préfixe optionnel. Default: "" (annonce courte « N produits affichés »). */
 	prefix?: string;
 }
 
@@ -20,12 +20,13 @@ export function AdminListLiveCount({
 	count,
 	singular,
 	plural,
-	prefix = "Liste mise à jour :",
+	prefix = "",
 }: AdminListLiveCountProps) {
-	const message =
+	const tail =
 		count === 0
-			? `${prefix} aucun ${singular}.`
-			: `${prefix} ${count} ${count > 1 ? plural : singular} affiché${count > 1 ? "s" : ""}.`;
+			? `aucun ${singular}`
+			: `${count} ${count > 1 ? plural : singular} affiché${count > 1 ? "s" : ""}`;
+	const message = prefix ? `${prefix} ${tail}.` : `${tail}.`;
 
 	return (
 		<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">

@@ -48,6 +48,7 @@ vi.mock("@sentry/nextjs", () => ({
 	withScope: mockSentryWithScope,
 	captureException: mockSentryCaptureException,
 	captureMessage: vi.fn(),
+	addBreadcrumb: vi.fn(),
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
@@ -82,12 +83,17 @@ describe("retryFailedWebhooks", () => {
 		mockIsEventSupported.mockReturnValue(true);
 	});
 
-	it("returns null when Stripe is not configured", async () => {
+	it("returns skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
 		mockGetStripeClient.mockReturnValue(null);
 
 		const result = await retryFailedWebhooks();
 
-		expect(result).toBeNull();
+		expect(result).toEqual({
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		});
 	});
 
 	it("flips stale PROCESSING events back to FAILED before retrying", async () => {
@@ -220,6 +226,6 @@ describe("retryFailedWebhooks", () => {
 
 		const result = await retryFailedWebhooks();
 
-		expect(result?.hasMore).toBe(true);
+		expect(result.hasMore).toBe(true);
 	});
 });

@@ -139,7 +139,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 				<ProductTypesSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<ProductTypesMobileListSkeleton />}>
+				<Suspense fallback={<ProductTypesMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
 					<ProductTypesMobileList
 						productTypesPromise={productTypesPromise}
 						perPage={perPage}

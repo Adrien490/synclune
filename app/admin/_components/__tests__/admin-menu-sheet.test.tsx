@@ -6,15 +6,23 @@ import type * as LucideReact from "lucide-react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsOpen, mockOpenMenu, mockCloseMenu, mockUsePathname, mockTriggerHaptic } = vi.hoisted(
-	() => ({
-		mockIsOpen: { current: false },
-		mockOpenMenu: vi.fn(),
-		mockCloseMenu: vi.fn(),
-		mockUsePathname: vi.fn(() => "/admin"),
-		mockTriggerHaptic: vi.fn(),
-	}),
-);
+const {
+	mockIsOpen,
+	mockOpenMenu,
+	mockCloseMenu,
+	mockUsePathname,
+	mockTriggerHaptic,
+	mockSheetContentProps,
+} = vi.hoisted(() => ({
+	mockIsOpen: { current: false },
+	mockOpenMenu: vi.fn(),
+	mockCloseMenu: vi.fn(),
+	mockUsePathname: vi.fn(() => "/admin"),
+	mockTriggerHaptic: vi.fn(),
+	// Capture handler props passed to SheetContent so tests can invoke them with a
+	// synthetic event (otherwise unreachable without a real Vaul portal).
+	mockSheetContentProps: { current: null as null | { onOpenAutoFocus?: (e: Event) => void } },
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -107,17 +115,22 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		className,
 		id,
 		onOverlayClick,
+		onOpenAutoFocus,
 	}: {
 		children: React.ReactNode;
 		className?: string;
 		id?: string;
 		onOverlayClick?: (e: React.MouseEvent) => void;
-	}) => (
-		<div data-testid="sheet-content" data-slot="sheet-content" id={id} className={className}>
-			<div data-testid="sheet-overlay" onClick={(e) => onOverlayClick?.(e)} aria-hidden="true" />
-			{children}
-		</div>
-	),
+		onOpenAutoFocus?: (e: Event) => void;
+	}) => {
+		mockSheetContentProps.current = { onOpenAutoFocus };
+		return (
+			<div data-testid="sheet-content" data-slot="sheet-content" id={id} className={className}>
+				<div data-testid="sheet-overlay" onClick={(e) => onOverlayClick?.(e)} aria-hidden="true" />
+				{children}
+			</div>
+		);
+	},
 	SheetHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<div data-testid="sheet-header" className={className}>
 			{children}
@@ -156,6 +169,7 @@ const defaultUser = { name: "Admin User", email: "admin@synclune.fr" };
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsOpen.current = false;
+	mockSheetContentProps.current = null;
 	vi.useFakeTimers();
 });
 
@@ -600,6 +614,143 @@ describe("AdminMenuSheet", () => {
 			const btn = screen.getByText("Déconnexion").closest("button")!;
 			expect(btn.className).toContain("active:bg-destructive/10");
 			expect(btn.className).not.toContain("active:bg-accent");
+		});
+	});
+
+	describe("focus management on open (F1 — parité menu-sheet-nav)", () => {
+		it("passes an onOpenAutoFocus handler that calls preventDefault (no iOS keyboard pop)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const e = { preventDefault: vi.fn() };
+			mockSheetContentProps.current?.onOpenAutoFocus?.(e as unknown as Event);
+			expect(e.preventDefault).toHaveBeenCalledTimes(1);
+		});
+
+		it("focuses the first nav link after the open animation (fallback timer)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			// transitionend ne fire pas en JSDOM ; le fallback @ VAUL_EXIT_DURATION_MS applique le focus
+			vi.advanceTimersByTime(450);
+			const dashboardLink = screen.getByRole("link", { name: /Tableau de bord/i });
+			expect(document.activeElement).toBe(dashboardLink);
+		});
+
+		it("scrolls the active route link into view on open", () => {
+			const scrollSpy = vi.fn();
+			const originalScrollIntoView = Element.prototype.scrollIntoView;
+			Element.prototype.scrollIntoView = scrollSpy as unknown as Element["scrollIntoView"];
+			try {
+				mockUsePathname.mockReturnValue("/admin/catalogue/produits");
+				mockIsOpen.current = true;
+				render(<AdminMenuSheet user={defaultUser} />);
+				vi.advanceTimersByTime(450);
+				expect(scrollSpy).toHaveBeenCalledWith({ block: "center", behavior: "smooth" });
+			} finally {
+				Element.prototype.scrollIntoView = originalScrollIntoView;
+			}
+		});
+	});
+
+	describe("focus-ring SSOT (F2 / F3 — WCAG 2.4.7)", () => {
+		it("applies focus-ring on nav links via NAV_ITEM_TACTILE_CLASS", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const link = screen.getByRole("link", { name: /Tableau de bord/i });
+			expect(link.className).toContain("focus-ring");
+		});
+
+		it("applies focus-ring on the search input (replaces raw focus-visible:ring-*)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			expect(input.className).toContain("focus-ring");
+		});
+
+		it("applies focus-ring on the clear button", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "x" } });
+			const clearBtn = screen.getByLabelText("Effacer la recherche");
+			expect(clearBtn.className).toContain("focus-ring");
+		});
+	});
+
+	describe("iOS Safari search input hygiene (F4 / F7)", () => {
+		it("suppresses the native webkit search cancel button (avoid duplicate X)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			expect(input.className).toContain("[&::-webkit-search-cancel-button]:appearance-none");
+		});
+
+		it('uses enterKeyHint="done" (live filter, no submit cible)', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			expect(input).toHaveAttribute("enterKeyHint", "done");
+		});
+	});
+
+	describe("list semantics (F5 — iOS Safari + VoiceOver)", () => {
+		it("renders at least one <ul role='list'> in the default view", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const lists = screen.getAllByRole("list");
+			// 6 nav groups (SHOP_LIVE=true) + 1 actions card = 7 minimum
+			expect(lists.length).toBeGreaterThanOrEqual(2);
+		});
+
+		it("wraps each nav group link in a <li>", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const productsLink = screen.getByRole("link", { name: /Produits/i });
+			expect(productsLink.closest("li")).not.toBeNull();
+		});
+
+		it("wraps the logout button in a <li>", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const logoutBtn = screen.getByText("Déconnexion").closest("button");
+			expect(logoutBtn?.closest("li")).not.toBeNull();
+		});
+
+		it("wraps search results in <ul role='list'> + <li>", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			// "remboursements" matche un seul item (évite la collision Produits / Types de produits)
+			fireEvent.change(input, { target: { value: "remboursements" } });
+			const refundsLink = screen.getByRole("link", { name: /Remboursements/i });
+			expect(refundsLink.closest("li")).not.toBeNull();
+			expect(refundsLink.closest("ul")).toHaveAttribute("role", "list");
+		});
+	});
+
+	describe("accent-insensitive search (F6)", () => {
+		it('matches "Matériaux" when user types "materiaux" (no accent)', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "materiaux" } });
+			expect(screen.getByText("Matériaux")).toBeInTheDocument();
+		});
+
+		it('still matches "Matériaux" when user types "matériaux" (with accent)', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "matériaux" } });
+			expect(screen.getByText("Matériaux")).toBeInTheDocument();
+		});
+	});
+
+	describe("logout button a11y (F8)", () => {
+		it('announces aria-haspopup="dialog" on the logout button', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const btn = screen.getByText("Déconnexion").closest("button")!;
+			expect(btn).toHaveAttribute("aria-haspopup", "dialog");
 		});
 	});
 });

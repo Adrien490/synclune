@@ -7,6 +7,7 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { Button } from "@/shared/components/ui/button";
+import { EmptyResetFiltersAction } from "./empty-reset-filters-action";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,6 +22,12 @@ interface TableEmptyStateProps {
 	hasActiveFilters?: boolean;
 	/** Description when the table is truly empty (no filters active). Defaults to description. */
 	noItemsDescription?: string;
+	/**
+	 * URL nue de la liste (sans filtres). Quand fournie ET `hasActiveFilters === true`,
+	 * un `<EmptyResetFiltersAction>` est auto-rendu (priorité sur `action`/`actionElement`).
+	 * Évite la duplication du « Réinitialiser les filtres » dans chaque call-site.
+	 */
+	resetFiltersHref?: string;
 	/** Action optionnelle (bouton avec lien) */
 	action?: {
 		/** Label du bouton */
@@ -53,12 +60,26 @@ export function TableEmptyState({
 	description,
 	hasActiveFilters,
 	noItemsDescription,
+	resetFiltersHref,
 	action,
 	actionElement,
 	className,
 }: TableEmptyStateProps) {
 	const displayDescription =
 		hasActiveFilters === false ? (noItemsDescription ?? description) : description;
+
+	const autoResetAction =
+		hasActiveFilters && resetFiltersHref ? (
+			<EmptyResetFiltersAction href={resetFiltersHref} />
+		) : null;
+	const resolvedAction =
+		autoResetAction ??
+		actionElement ??
+		(action ? (
+			<Button asChild>
+				<Link href={action.href}>{action.label}</Link>
+			</Button>
+		) : null);
 
 	return (
 		<Empty size="lg" className={className}>
@@ -69,15 +90,7 @@ export function TableEmptyState({
 				<EmptyTitle>{title}</EmptyTitle>
 				<EmptyDescription>{displayDescription}</EmptyDescription>
 			</EmptyHeader>
-			{(action ?? actionElement) && (
-				<EmptyActions>
-					{actionElement ?? (
-						<Button asChild>
-							<Link href={action!.href}>{action!.label}</Link>
-						</Button>
-					)}
-				</EmptyActions>
-			)}
+			{resolvedAction && <EmptyActions>{resolvedAction}</EmptyActions>}
 		</Empty>
 	);
 }

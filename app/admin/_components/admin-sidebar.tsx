@@ -22,6 +22,7 @@ interface AdminSidebarProps {
 	user?: {
 		name: string;
 		email: string;
+		image?: string | null;
 	};
 }
 
@@ -29,7 +30,10 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 	return (
 		<Sidebar variant="floating" disableMobileSheet>
 			<SidebarHeader>
-				<SidebarMenu>
+				<SidebarMenu
+					// iOS Safari + VO drop implicit list role when list-style:none
+					role="list"
+				>
 					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild tooltip={`${BRAND.name} - Administration`}>
 							<Link href="/admin">
@@ -44,7 +48,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 			</SidebarHeader>
 			<SidebarContent>
 				{navigationData.navGroups.map((group, index) => {
-					const groupId = `nav-group-${index}`;
+					const groupId = `nav-group-${group.label.toLowerCase().replace(/\s+/g, "-")}`;
 					const isLastGroup = index === navigationData.navGroups.length - 1;
 
 					return (
@@ -59,7 +63,11 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 									>
 										{group.label}
 									</SidebarGroupLabel>
-									<SidebarMenu className="gap-1" aria-label={group.label}>
+									<SidebarMenu
+										className="gap-1"
+										// iOS Safari + VO drop implicit list role when list-style:none
+										role="list"
+									>
 										{group.items.map((item) => {
 											const Icon = item.icon;
 											return (

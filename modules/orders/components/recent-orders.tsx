@@ -67,7 +67,7 @@ export function RecentOrders({ ordersPromise, limit = 5, showViewAll = false }: 
 				</Empty>
 			) : (
 				<>
-					<TableScrollContainer className="rounded-lg border">
+					<TableScrollContainer className="rounded-lg border" label="Commandes récentes">
 						<Table aria-label="Commandes récentes">
 							<TableHeader>
 								<TableRow>

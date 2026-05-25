@@ -216,7 +216,7 @@ describe("ProductMobileItem", () => {
 		);
 
 		expect(
-			screen.getByRole("checkbox", { name: "Sélectionner Produit Anneau doré" }),
+			screen.getByRole("checkbox", { name: /^Sélectionner Produit Anneau doré/ }),
 		).toBeInTheDocument();
 		expect(screen.queryByRole("link", { name: "Produit Anneau doré" })).not.toBeInTheDocument();
 	});
@@ -229,10 +229,10 @@ describe("ProductMobileItem", () => {
 			</BulkSelectionProvider>,
 		);
 
-		fireEvent.click(screen.getByRole("checkbox", { name: "Sélectionner Produit Anneau doré" }));
+		fireEvent.click(screen.getByRole("checkbox", { name: /^Sélectionner Produit Anneau doré/ }));
 
 		expect(
-			screen.getByRole("checkbox", { name: "Désélectionner Produit Anneau doré" }),
+			screen.getByRole("checkbox", { name: /^Désélectionner Produit Anneau doré/ }),
 		).toHaveAttribute("aria-checked", "true");
 	});
 });

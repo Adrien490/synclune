@@ -22,12 +22,13 @@ export function NavMainClient({ url, tooltip, children }: NavMainClientProps) {
 	// Déterminer si le lien est actif
 	const isActive = isRouteActive(pathname, url);
 
+	// Override la barre active shadcn par défaut (h-5 w-0.5) : pleine hauteur 3px + fade-in opacité
 	return (
 		<SidebarMenuButton
 			asChild
 			isActive={isActive}
 			tooltip={tooltip}
-			className="before:bg-primary data-[active=true]:bg-primary/10 data-[active=true]:[&_svg]:text-primary relative h-9 before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 before:transition-opacity data-[active=true]:before:opacity-100"
+			className="before:bg-primary data-[active=true]:bg-primary/10 data-[active=true]:[&_svg]:text-primary relative before:absolute before:inset-y-1 before:left-0 before:w-[3px] before:rounded-full before:opacity-0 data-[active=true]:before:opacity-100 motion-safe:before:transition-opacity"
 		>
 			<Link href={url} aria-current={isActive ? "page" : undefined}>
 				{children}

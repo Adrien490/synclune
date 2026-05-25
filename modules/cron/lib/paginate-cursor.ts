@@ -1,4 +1,5 @@
 import { logger } from "@/shared/lib/logger";
+import { CronDeadlineExceededError } from "@/modules/cron/lib/cron-result";
 
 interface WithId {
 	id: string;
@@ -29,7 +30,8 @@ interface PaginateCursorOptions<T extends WithId> {
  * Cursor-based pagination loop with deadline checking.
  *
  * Replaces hand-rolled `for (;;) { findMany + cursor + break-on-short-batch }` blocks.
- * Throws `Error("Deadline exceeded during <jobName> <step>")` if the deadline is reached.
+ * Throws `CronDeadlineExceededError` (caught and downgraded to warn + HTTP 200
+ * with `hasMore: true` by `withCronGuard`) if the deadline is reached.
  *
  * Each iteration:
  * 1. Checks `Date.now() < deadline` — throws if exceeded.
@@ -50,7 +52,12 @@ export async function paginateCursor<T extends WithId>(
 				cronJob: jobName,
 				step,
 			});
-			throw new Error(`Deadline exceeded during ${jobName} ${step}`);
+			throw new CronDeadlineExceededError(`Deadline exceeded during ${jobName} ${step}`, {
+				processed: 0,
+				errored: 0,
+				skipped: 0,
+				step,
+			});
 		}
 
 		const batch = await fetch(cursor, batchSize);

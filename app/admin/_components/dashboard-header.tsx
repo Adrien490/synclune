@@ -7,12 +7,25 @@ import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { cn } from "@/shared/utils/cn";
 import { ExternalLink, Keyboard } from "lucide-react";
 import Link from "next/link";
 
+const iconButtonClass = cn(
+	"inline-flex size-8 shrink-0 items-center justify-center rounded-md",
+	"text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
+	"motion-safe:transition-colors focus-ring",
+);
+
 /**
- * Header du dashboard
- * Sidebar trigger + breadcrumb
+ * Header desktop du dashboard admin (`md:flex`, sibling de `AdminMobileHeader`).
+ *
+ * Rendus :
+ * - `SidebarTrigger` — toggle sidebar (raccourci ⌘B bindé dans `SidebarProvider`).
+ * - `DashboardBreadcrumb` — fil d'Ariane (desktop uniquement).
+ * - Bouton "Raccourcis clavier" — ouvre `KeyboardShortcutsDialog` (touche `?` bindée
+ *   dans le dialog, ce bouton sert d'affordance visuelle).
+ * - Lien externe vers le site (`target="_blank"`).
  */
 export function DashboardHeader() {
 	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
@@ -25,7 +38,7 @@ export function DashboardHeader() {
 			<div className="flex min-w-0 flex-1 items-center gap-2 px-4">
 				<Tooltip>
 					<TooltipTrigger asChild>
-						<SidebarTrigger className="-ml-1 hidden shrink-0 md:flex" />
+						<SidebarTrigger className="-ml-1 shrink-0" />
 					</TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
@@ -35,10 +48,7 @@ export function DashboardHeader() {
 						</KbdGroup>
 					</TooltipContent>
 				</Tooltip>
-				<Separator
-					orientation="vertical"
-					className="mr-2 hidden h-4 shrink-0 data-[orientation=vertical]:h-4 md:block"
-				/>
+				<Separator orientation="vertical" className="mr-2 h-4 shrink-0" />
 				<div className="min-w-0 flex-1">
 					<DashboardBreadcrumb />
 				</div>
@@ -47,7 +57,7 @@ export function DashboardHeader() {
 						<button
 							type="button"
 							onClick={() => openShortcuts()}
-							className="hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-1 focus-visible:outline-none"
+							className={iconButtonClass}
 							aria-label="Afficher les raccourcis clavier"
 						>
 							<Keyboard className="size-4" aria-hidden="true" />
@@ -66,7 +76,7 @@ export function DashboardHeader() {
 							href="/"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-1 focus-visible:outline-none"
+							className={iconButtonClass}
 							aria-label="Voir le site (nouvel onglet)"
 						>
 							<ExternalLink className="size-4" aria-hidden="true" />

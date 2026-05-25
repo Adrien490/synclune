@@ -49,9 +49,13 @@ export function LatestCreationsSkeleton({ productsCount = 4 }: LatestCreationsSk
 function LatestCreationsGridSkeleton({ productsCount = 4 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<>
-			<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
+			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+			<ul
+				role="list"
+				className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8"
+			>
 				{Array.from({ length: productsCount }).map((_, i) => (
-					<div
+					<li
 						key={i}
 						className="bg-card overflow-hidden rounded-lg border-2 border-transparent shadow-sm"
 					>
@@ -65,9 +69,9 @@ function LatestCreationsGridSkeleton({ productsCount = 4 }: LatestCreationsSkele
 							{/* Price skeleton */}
 							<div className="bg-muted h-5 w-20 rounded motion-safe:animate-pulse" />
 						</div>
-					</div>
+					</li>
 				))}
-			</div>
+			</ul>
 
 			{/* CTA skeleton */}
 			<div className="text-center">

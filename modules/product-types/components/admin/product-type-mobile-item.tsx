@@ -51,7 +51,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 	return (
 		<MobileSelectableCard
 			id={productType.id}
-			itemLabel={`Type de bijou ${productType.label}`}
+			itemLabel={`Type de bijou ${productType.label}, ${statusLabel}${productType.isSystem ? ", système" : ""}, ${productsCount} produit${productsCount !== 1 ? "s" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/types-de-produits/${productType.slug}`,
 				ariaLabel: `Type de bijou ${productType.label}`,
@@ -59,7 +59,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				menuTitle: "Actions",
 				menuDescription: productType.label,
 				className: "text-left",
-				viewTransitionName: `product-type-${productType.slug}`,
+				viewTransitionName: `product-type-card-${productType.id}`,
 			}}
 		>
 			<Item
@@ -77,12 +77,11 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
-					<ItemTitle className="w-full min-w-0 flex-wrap gap-y-1">
+					<ItemTitle className="w-full min-w-0">
 						<span className="min-w-0 flex-1 truncate font-semibold">{productType.label}</span>
 						{showPending ? (
 							<Badge
 								variant="secondary"
-								aria-live="polite"
 								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

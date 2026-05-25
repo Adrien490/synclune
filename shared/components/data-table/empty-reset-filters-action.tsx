@@ -22,7 +22,7 @@ export function EmptyResetFiltersAction({
 	label = "Réinitialiser les filtres",
 }: EmptyResetFiltersActionProps) {
 	return (
-		<Button asChild variant="outline" size="sm">
+		<Button asChild variant="outline">
 			<Link
 				href={href}
 				onClick={() => {

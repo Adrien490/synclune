@@ -104,7 +104,7 @@ function ResponsiveDialogContent({
 				{...(props as React.ComponentProps<typeof DrawerContent>)}
 			>
 				<div
-					className="-mx-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2 [scrollbar-gutter:stable]"
+					className="-mx-4 flex min-h-0 flex-1 [scrollbar-gutter:stable] flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2"
 					data-vaul-no-drag
 				>
 					{children}

@@ -143,5 +143,14 @@ describe("NavMainClient", () => {
 			render(<NavMainClient {...defaultProps} />);
 			expect(screen.getByTestId("sidebar-menu-button")).toHaveAttribute("data-active", "false");
 		});
+
+		it("locks active styling classes (regression: highlight bg + icon color)", () => {
+			mockIsRouteActive.mockReturnValue(true);
+			render(<NavMainClient {...defaultProps} />);
+			const button = screen.getByTestId("sidebar-menu-button");
+			expect(button.className).toMatch(/data-\[active=true\]:bg-primary\/10/);
+			expect(button.className).toMatch(/data-\[active=true\]:\[&_svg\]:text-primary/);
+			expect(button.className).toMatch(/motion-safe:before:transition-opacity/);
+		});
 	});
 });

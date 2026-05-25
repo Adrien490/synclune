@@ -29,8 +29,6 @@ interface LogoProps {
 	viewTransitionName?: string;
 	/** Override the generated aria-label (homepage/admin fallbacks otherwise). */
 	ariaLabel?: string;
-	/** Expose BRAND.tagline via native `title` attribute (desktop tooltip). */
-	enableTooltip?: boolean;
 }
 
 export function Logo({
@@ -47,7 +45,6 @@ export function Logo({
 	shadow = false,
 	viewTransitionName,
 	ariaLabel,
-	enableTooltip = false,
 }: LogoProps) {
 	const effectiveMaxSize = sizeMd ?? size;
 	// Petits logos (≤40px) → quality 75 suffit ; sinon 90 (fidélité brand).
@@ -66,24 +63,25 @@ export function Logo({
 						: "text-base";
 
 	const linkClassName = cn(
-		"inline-flex items-center",
-		"min-w-11 min-h-11", // Touch target minimum 44px (WCAG 2.5.5)
-		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+		"focus-ring inline-flex items-center",
+		// Touch target minimum 44px (WCAG 2.5.5) — only in icon-only mode.
+		// With showText, the text itself is the affordance and the extra min-h
+		// would misalign with adjacent navbar icons.
+		!showText && "min-w-11 min-h-11",
 		ROUNDED_CLASSES[rounded],
-		"motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out",
-		"motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 	);
 
 	const logoContent = (
-		<div
-			className={cn("inline-flex items-center gap-3", className)}
-			title={enableTooltip ? BRAND.tagline : undefined}
-		>
+		<div className={cn("flex items-center gap-3", className)}>
 			<div
 				className={cn(
 					"relative overflow-hidden",
 					ROUNDED_CLASSES[rounded],
 					shadow && "shadow-md transition-shadow duration-300 ease-out hover:shadow-lg",
+					// Hover/active scale on the visual wrapper, not the anchor —
+					// decouples from the navbar's scroll-compact transform.
+					"motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out",
+					"motion-safe:can-hover:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 					sizeMd && "md:!h-(--logo-size-md) md:!w-(--logo-size-md)",
 				)}
 				style={{

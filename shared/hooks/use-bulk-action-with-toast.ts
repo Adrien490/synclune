@@ -123,7 +123,9 @@ export function useBulkActionWithToast<TSnapshot = void>(
 
 				lastSnapshotRef.current = null;
 				opts?.onSuccess?.(result);
-				clearRef.current();
+				// Clear silencieux : pas de haptic post-success (déjà couvert par
+				// le toast). Évite la vibration parasite après confirmation visuelle.
+				clearRef.current({ silent: true });
 			} else {
 				toast.error(result.message);
 			}

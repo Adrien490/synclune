@@ -139,7 +139,15 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 				<CollectionsSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<CollectionsMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<CollectionsMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<CollectionsMobileList
 						collectionsPromise={collectionsPromise}
 						perPage={perPage}
@@ -152,7 +160,13 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<CollectionsDataTableSkeleton />}>
-					<CollectionsDataTable collectionsPromise={collectionsPromise} perPage={perPage} />
+					<CollectionsDataTable
+						collectionsPromise={collectionsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 			</div>
 		</>

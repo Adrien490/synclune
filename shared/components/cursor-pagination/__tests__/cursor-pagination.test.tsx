@@ -326,10 +326,8 @@ describe("CursorPagination", () => {
 
 		it("announces result count and position on first page", () => {
 			renderPagination({ currentPageSize: 20, hasNextPage: true, hasPreviousPage: false });
-			const srText = screen.getByText(/Affichage de 20 résultats sur cette page/);
-			expect(srText).toBeInTheDocument();
-			expect(srText.textContent).toContain("Première page.");
-			expect(srText.textContent).toContain("Pages suivantes disponibles.");
+			expect(screen.getByText("Page chargée, 20 résultats.")).toBeInTheDocument();
+			expect(screen.getByText("Première page")).toBeInTheDocument();
 		});
 
 		it("announces last page position", () => {
@@ -339,9 +337,8 @@ describe("CursorPagination", () => {
 				hasPreviousPage: true,
 				prevCursor: "cm1abc2def3ghi4jkl5mnop",
 			});
-			const srText = screen.getByText(/Affichage de 5 résultats sur cette page/);
-			expect(srText.textContent).toContain("Page précédente disponible.");
-			expect(srText.textContent).toContain("Dernière page.");
+			expect(screen.getByText("Page chargée, 5 résultats.")).toBeInTheDocument();
+			expect(screen.getByText("Dernière page")).toBeInTheDocument();
 		});
 
 		it("announces single page", () => {
@@ -350,8 +347,9 @@ describe("CursorPagination", () => {
 				hasNextPage: false,
 				hasPreviousPage: false,
 			});
-			const srText = screen.getByText(/Affichage de 5 résultats sur cette page/);
-			expect(srText.textContent).toContain("Page unique, navigation non disponible.");
+			expect(screen.getByText("Page chargée, 5 résultats.")).toBeInTheDocument();
+			// Nav (avec "Page unique") n'est pas rendu quand !canNavigate.
+			expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 		});
 
 		it("renders nav with aria-describedby pointing to shortcuts", () => {

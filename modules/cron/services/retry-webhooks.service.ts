@@ -33,13 +33,18 @@ const CRON_JOB = "retry-webhooks";
  * — events older than 30 minutes (default) are eligible. The cron runs every
  * 30 minutes so each retry happens at most once per cycle.
  */
-export async function retryFailedWebhooks(): Promise<CronResult | null> {
+export async function retryFailedWebhooks(): Promise<CronResult> {
 	logger.info("Starting webhook retry", { cronJob: CRON_JOB });
 
 	const stripe = getStripeClient();
 	if (!stripe) {
-		logger.error("STRIPE_SECRET_KEY not configured", undefined, { cronJob: CRON_JOB });
-		return null;
+		logger.warn("STRIPE_SECRET_KEY not configured — skipping run", { cronJob: CRON_JOB });
+		return {
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		};
 	}
 
 	// Reset stale PROCESSING events (worker crashed mid-flight) so they retry next time
@@ -83,10 +88,8 @@ export async function retryFailedWebhooks(): Promise<CronResult | null> {
 			break;
 		}
 
-		// Throttle Stripe calls (rate limit 100 req/s) — skip first iteration
-		if (processed > 0 || errored > 0 || skipped > 0) {
-			await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
-		}
+		// Throttle every call (uniform pacing, cap burst at 1/STRIPE_THROTTLE_MS req/s).
+		await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 
 		// Atomic lock: only this cron picks the row up. P2025 if another worker raced.
 		try {

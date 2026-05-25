@@ -73,11 +73,7 @@ function OrderCardContent({
 						{order.orderNumber}
 					</span>
 					{isPendingItem ? (
-						<Badge
-							variant="secondary"
-							aria-live="polite"
-							style={{ viewTransitionName: `order-status-${order.id}` }}
-						>
+						<Badge variant="secondary" style={{ viewTransitionName: `order-status-${order.id}` }}>
 							<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
 							{pendingLabel}
 						</Badge>
@@ -160,7 +156,10 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 
 	if (ctx?.selectionMode) {
 		return (
-			<MobileSelectableCard id={order.id} itemLabel={`Commande ${order.orderNumber}`}>
+			<MobileSelectableCard
+				id={order.id}
+				itemLabel={`Commande ${order.orderNumber}, ${ORDER_STATUS_LABELS[order.status]}, ${PAYMENT_STATUS_LABELS[order.paymentStatus]}, ${formatEuro(order.total)}, ${order.customerName ?? order.customerEmail}`}
+			>
 				<OrderCardContent order={order} isPendingItem={isPendingItem} pendingLabel={pendingLabel} />
 			</MobileSelectableCard>
 		);
@@ -184,9 +183,8 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 					{...bind}
 					style={{ ...bind.style, viewTransitionName: `order-card-${order.id}` }}
 					className={cn(
-						"focus-visible:ring-primary relative block w-full rounded-lg",
-						"focus-visible:ring-2 focus-visible:outline-none",
-						"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
+						"focus-ring relative block w-full rounded-lg",
+						"transform-gpu active:scale-[0.985] motion-safe:transition-transform motion-safe:duration-150",
 					)}
 				>
 					<OrderCardContent

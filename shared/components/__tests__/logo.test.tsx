@@ -30,10 +30,6 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("@/shared/styles/fonts", () => ({
-	fraunces: { className: "font-fraunces" },
-}));
-
 vi.mock("next/image", () => ({
 	default: ({
 		src,
@@ -251,16 +247,39 @@ describe("Logo", () => {
 		expect(wrapper?.className).toContain("shadow-md");
 	});
 
-	it("exposes BRAND.tagline as title when enableTooltip is true", () => {
-		const { container } = render(<Logo enableTooltip />);
+	it("applies hover/active scale on the inner visual wrapper, not the anchor", () => {
+		const { container } = render(<Logo href="/" />);
 
-		const tooltipNode = container.querySelector("[title]");
-		expect(tooltipNode).toHaveAttribute("title", "Créations uniques faites avec amour");
+		const link = screen.getByRole("link");
+		expect(link.className).not.toContain("hover:scale-[1.02]");
+		expect(link.className).not.toContain("active:scale-[0.98]");
+
+		const visualWrapper = container.querySelector("[style]");
+		expect(visualWrapper?.className).toContain("can-hover:hover:scale-[1.02]");
+		expect(visualWrapper?.className).toContain("active:scale-[0.98]");
 	});
 
-	it("does NOT expose BRAND.tagline as title when enableTooltip is false (default)", () => {
-		const { container } = render(<Logo />);
+	it("omits min-h-11/min-w-11 on the link when showText is true (text is the affordance)", () => {
+		render(<Logo href="/" showText />);
 
-		expect(container.querySelector("[title]")).toBeNull();
+		const link = screen.getByRole("link");
+		expect(link.className).not.toContain("min-h-11");
+		expect(link.className).not.toContain("min-w-11");
+	});
+
+	it("applies min-h-11/min-w-11 on the link when icon-only (touch target WCAG 2.5.5)", () => {
+		render(<Logo href="/" />);
+
+		const link = screen.getByRole("link");
+		expect(link.className).toContain("min-h-11");
+		expect(link.className).toContain("min-w-11");
+	});
+
+	it("uses focus-ring SSOT utility on the link wrapper", () => {
+		render(<Logo href="/" />);
+
+		const link = screen.getByRole("link");
+		expect(link.className).toContain("focus-ring");
+		expect(link.className).not.toContain("focus-visible:ring-primary");
 	});
 });

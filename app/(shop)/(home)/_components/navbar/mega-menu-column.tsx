@@ -96,6 +96,7 @@ export function MegaMenuColumn({
 			{/* Primary CTA link with distinct styling */}
 			{primaryItem && (
 				<NavigationMenuLink asChild>
+					{/* flex-row! requis : NavigationMenuLink applique flex-col par défaut (shared/components/ui/navigation-menu.tsx). */}
 					<Link
 						href={primaryItem.href}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
@@ -109,7 +110,7 @@ export function MegaMenuColumn({
 						)}
 					>
 						{primaryItem.label}
-						<ArrowRight className="text-muted-foreground size-3.5!" aria-hidden="true" />
+						<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
 						<LoadingIndicator />
 					</Link>
 				</NavigationMenuLink>
@@ -174,7 +175,7 @@ export function MegaMenuColumn({
 							)}
 						>
 							{viewAllLink.label}
-							<ArrowRight className="text-muted-foreground size-3.5!" aria-hidden="true" />
+							<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
 							<LoadingIndicator />
 						</Link>
 					</NavigationMenuLink>

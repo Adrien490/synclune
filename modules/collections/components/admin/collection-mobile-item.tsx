@@ -20,6 +20,8 @@ interface CollectionMobileItemProps {
 		Collection,
 		"id" | "name" | "slug" | "description" | "status" | "products" | "_count"
 	>;
+	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
+	preload?: boolean;
 }
 
 const STATUS_CONFIG: Record<
@@ -40,7 +42,7 @@ function getCoverImage(products: CollectionMobileItemProps["collection"]["produc
 	return null;
 }
 
-export function CollectionMobileItem({ collection }: CollectionMobileItemProps) {
+export function CollectionMobileItem({ collection, preload }: CollectionMobileItemProps) {
 	const productsCount = collection._count.products || 0;
 	const statusConfig = STATUS_CONFIG[collection.status];
 	const cover = getCoverImage(collection.products);
@@ -61,7 +63,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 	return (
 		<MobileSelectableCard
 			id={collection.id}
-			itemLabel={`Collection ${collection.name}`}
+			itemLabel={`Collection ${collection.name}, ${statusConfig.label}, ${productsCount} produit${productsCount !== 1 ? "s" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/collections/${collection.slug}`,
 				ariaLabel: `Collection ${collection.name}`,
@@ -88,6 +90,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
 						style={{ viewTransitionName: `collection-image-${collection.id}` }}
+						{...(preload ? { preload: true } : {})}
 						{...(cover.blurDataUrl ? { placeholder: "blur", blurDataURL: cover.blurDataUrl } : {})}
 					/>
 				) : (
@@ -104,7 +107,6 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 						{isPendingItem ? (
 							<Badge
 								variant="secondary"
-								aria-live="polite"
 								style={{ viewTransitionName: `collection-status-${collection.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

@@ -186,6 +186,16 @@ describe("generateBreadcrumbs", () => {
 		expect(result[result.length - 1]!.label).toBe("Variantes");
 	});
 
+	it('formats "adresse-livraison" as "Adresse de livraison"', () => {
+		const result = generateBreadcrumbs("/admin/ventes/commandes/abc/adresse-livraison");
+		expect(result[result.length - 1]!.label).toBe("Adresse de livraison");
+	});
+
+	it('formats "fermer" as "Fermer la boutique"', () => {
+		const result = generateBreadcrumbs("/admin/configuration/boutique/fermer");
+		expect(result[result.length - 1]!.label).toBe("Fermer la boutique");
+	});
+
 	it("matches navigation config labels for known URLs", () => {
 		const result = generateBreadcrumbs("/admin/catalogue/collections");
 		expect(result[2]!.label).toBe("Collections");
@@ -210,30 +220,18 @@ describe("generateBreadcrumbs", () => {
 // TESTS - DashboardBreadcrumb component
 // ============================================================================
 
-/**
- * The component renders BOTH a mobile and a desktop breadcrumb.
- * Most rendering tests target the desktop version via classname filter.
- */
-function getDesktopBreadcrumb(): HTMLElement {
-	const all = screen.getAllByTestId("breadcrumb");
-	const desktop = all.find((el) => el.className.includes("md:block"));
-	if (!desktop) throw new Error("Desktop breadcrumb not found");
-	return desktop;
-}
-
 describe("DashboardBreadcrumb", () => {
 	describe("rendering", () => {
 		it('renders with aria-label "Fil d\'Ariane"', () => {
 			mockUsePathname.mockReturnValue("/admin");
 			render(<DashboardBreadcrumb />);
-			expect(getDesktopBreadcrumb()).toHaveAttribute("aria-label", "Fil d'Ariane");
+			expect(screen.getByTestId("breadcrumb")).toHaveAttribute("aria-label", "Fil d'Ariane");
 		});
 
 		it("renders dashboard as current page on /admin", () => {
 			mockUsePathname.mockReturnValue("/admin");
 			render(<DashboardBreadcrumb />);
-			const pages = screen.getAllByTestId("breadcrumb-page");
-			expect(pages[0]).toHaveTextContent("Tableau de bord");
+			expect(screen.getByTestId("breadcrumb-page")).toHaveTextContent("Tableau de bord");
 		});
 
 		it("renders dashboard as link when not on /admin", () => {
@@ -253,16 +251,15 @@ describe("DashboardBreadcrumb", () => {
 	});
 
 	describe("collapse behavior", () => {
-		it("does not collapse desktop when 4 or fewer segments", () => {
+		it("does not collapse when 4 or fewer segments", () => {
 			// /admin/catalogue/produits = 3 segments (dashboard + catalogue + produits)
 			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			render(<DashboardBreadcrumb />);
-			// Desktop shouldn't have ellipsis dropdown when <=4 segments
 			const triggers = screen.queryAllByRole("button", { name: /Afficher plus de segments/i });
 			expect(triggers).toHaveLength(0);
 		});
 
-		it("collapses desktop when more than 4 segments", () => {
+		it("collapses when more than 4 segments", () => {
 			// /admin/catalogue/produits/abc/modifier = 5 segments
 			mockUsePathname.mockReturnValue("/admin/catalogue/produits/abc/modifier");
 			render(<DashboardBreadcrumb />);
@@ -280,9 +277,15 @@ describe("DashboardBreadcrumb", () => {
 		it("keeps first and last 2 segments visible when collapsed", () => {
 			mockUsePathname.mockReturnValue("/admin/catalogue/produits/abc/modifier");
 			render(<DashboardBreadcrumb />);
-			// First segment (dashboard) + last 2 should be visible
-			expect(screen.getAllByText("Tableau de bord").length).toBeGreaterThan(0);
-			expect(screen.getAllByText("Modifier").length).toBeGreaterThan(0);
+			expect(screen.getByText("Tableau de bord")).toBeDefined();
+			expect(screen.getByText("Modifier")).toBeDefined();
+		});
+
+		it("applies focus-ring SSOT to collapse dropdown trigger", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits/abc/modifier");
+			render(<DashboardBreadcrumb />);
+			const trigger = screen.getByRole("button", { name: /Afficher plus de segments/i });
+			expect(trigger.className).toContain("focus-ring");
 		});
 	});
 });

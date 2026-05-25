@@ -15,14 +15,14 @@ import Link from "next/link";
 const linkClassName = cn(
 	"flex items-center text-base/6 font-medium tracking-wide antialiased px-4 py-3.5 rounded-lg",
 	"ease-out motion-safe:transition-[transform,color,background-color,padding] motion-safe:duration-[var(--duration-slow)]",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	"focus-ring",
 	"text-foreground/85 can-hover:hover:text-foreground can-hover:hover:bg-primary/5 can-hover:hover:pl-5",
 	"motion-safe:active:scale-[0.97]",
 );
 
 const activeLinkClassName = cn(
 	linkClassName,
-	"bg-primary/12 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm",
+	"bg-primary/15 text-foreground font-semibold border-l-2 border-primary pl-5 shadow-sm",
 );
 
 interface SectionProps {

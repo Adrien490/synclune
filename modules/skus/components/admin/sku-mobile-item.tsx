@@ -11,7 +11,6 @@ import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list
 import { cn } from "@/shared/utils/cn";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
-import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 import {
@@ -26,6 +25,8 @@ type Sku = GetProductSkusReturn["productSkus"][number];
 interface SkuMobileItemProps {
 	sku: Sku;
 	productSlug: string;
+	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
+	preload?: boolean;
 }
 
 const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
@@ -35,7 +36,7 @@ const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 
 const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
 
-export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
+export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps) {
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
 	const displayTitle = getSkuDisplayTitle(sku);
@@ -61,7 +62,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={sku.id}
-			itemLabel={`Variante ${displayTitle}`}
+			itemLabel={`Variante ${spokenTitle}, ${getStockAriaLabel(sku.inventory)}, ${formatPrice(sku.priceInclTax)}${sku.isDefault ? ", par défaut" : ""}${!sku.isActive ? ", inactive" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`,
 				ariaLabel: `Variante : ${spokenTitle}`,
@@ -80,38 +81,30 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 				aria-busy={isPendingItem || undefined}
 			>
 				{primaryImage ? (
-					primaryImage.mediaType === "VIDEO" ? (
-						<video
-							className="size-12 shrink-0 rounded-md border object-cover"
-							muted
-							loop
-							playsInline
-							preload="none"
-							poster={primaryImage.thumbnailUrl ?? undefined}
-							aria-label={primaryImage.altText ?? `Vidéo variante ${sku.sku}`}
-						>
-							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-						</video>
-					) : (
-						<Image
-							src={primaryImage.url}
-							alt=""
-							width={48}
-							height={48}
-							sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
-							className="size-12 shrink-0 rounded-md border object-cover"
-							{...(primaryImage.blurDataUrl
-								? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-								: {})}
-						/>
-					)
+					<Image
+						src={
+							primaryImage.mediaType === "VIDEO"
+								? (primaryImage.thumbnailUrl ?? primaryImage.url)
+								: primaryImage.url
+						}
+						alt=""
+						width={48}
+						height={48}
+						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
+						className="size-12 shrink-0 rounded-md border object-cover"
+						unoptimized={primaryImage.mediaType === "VIDEO" && !primaryImage.thumbnailUrl}
+						{...(preload ? { preload: true } : {})}
+						{...(primaryImage.blurDataUrl
+							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
+							: {})}
+					/>
 				) : (
 					<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
 						<Package className="text-muted-foreground size-5" aria-hidden="true" />
 					</div>
 				)}
 				<ItemContent className="min-w-0">
-					<ItemTitle className="w-full min-w-0 flex-wrap items-center">
+					<ItemTitle className="w-full min-w-0">
 						{colorHexes.length > 0 ? (
 							<span
 								className="border-border inline-block size-3 shrink-0 rounded-full border"
@@ -123,11 +116,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
 						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								aria-live="polite"
-								style={{ viewTransitionName: `sku-stock-${sku.id}` }}
-							>
+							<Badge variant="secondary" style={{ viewTransitionName: `sku-stock-${sku.id}` }}>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
 								{pendingLabel}
 							</Badge>

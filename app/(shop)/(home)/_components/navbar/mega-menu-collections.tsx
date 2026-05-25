@@ -54,7 +54,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 					)}
 				>
 					Toutes les collections
-					<ArrowRight className="text-muted-foreground size-3.5!" aria-hidden="true" />
+					<ArrowRight className="text-muted-foreground size-3.5" aria-hidden="true" />
 				</Link>
 			</NavigationMenuLink>
 

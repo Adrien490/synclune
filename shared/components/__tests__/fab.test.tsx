@@ -773,5 +773,30 @@ describe("Fab", () => {
 			expect(wrapper!.className).toContain("-left-1.5");
 			expect(wrapper!.className).not.toContain("-right-1.5");
 		});
+
+		// Hover modernization audit (2026-05-25) — halo + scale + can-hover guard
+		it("applies can-hover:hover halo + scale classes (F1/F4 — sticky-hover safe on touch)", () => {
+			render(<Fab {...DEFAULT_PROPS} onClick={() => {}} />);
+
+			const mainBtn = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Ouvrir le menu d'actions");
+			expect(mainBtn!.className).toContain("group/fab");
+			expect(mainBtn!.className).toContain("can-hover:hover:before:opacity-100");
+			expect(mainBtn!.className).toContain("focus-visible:before:opacity-100");
+			expect(mainBtn!.className).toContain("motion-safe:can-hover:hover:scale-[1.06]");
+			expect(mainBtn!.className).toContain("motion-safe:active:scale-[0.94]");
+			expect(mainBtn!.className).not.toContain("active:scale-95"); // F7 legacy removed
+		});
+
+		it("wraps the main icon in a group-hover rotate span (F3 — icon micro-interaction)", () => {
+			render(<Fab {...DEFAULT_PROPS} onClick={() => {}} />);
+
+			const icon = screen.getByTestId("test-icon");
+			const wrapper = icon.parentElement;
+			expect(wrapper).not.toBeNull();
+			expect(wrapper!.tagName).toBe("SPAN");
+			expect(wrapper!.className).toContain("motion-safe:can-hover:group-hover/fab:rotate-[6deg]");
+		});
 	});
 });

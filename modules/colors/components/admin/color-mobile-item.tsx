@@ -49,7 +49,7 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={color.id}
-			itemLabel={`Couleur ${color.name}`}
+			itemLabel={`Couleur ${color.name}, ${statusLabel}, ${skuCount} variante${skuCount !== 1 ? "s" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/couleurs/${color.slug}`,
 				ariaLabel: `Couleur ${color.name}`,
@@ -74,19 +74,14 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 							backgroundColor: color.hex,
 							viewTransitionName: `color-swatch-${color.id}`,
 						}}
-						role="img"
-						aria-label={`Aperçu couleur ${hexUpper}`}
+						aria-hidden="true"
 					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
 						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								aria-live="polite"
-								style={{ viewTransitionName: `color-status-${color.id}` }}
-							>
+							<Badge variant="secondary" style={{ viewTransitionName: `color-status-${color.id}` }}>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
 								{pendingLabel}
 							</Badge>

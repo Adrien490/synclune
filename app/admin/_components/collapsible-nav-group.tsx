@@ -41,7 +41,11 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 					</SidebarGroupLabel>
 				</CollapsibleTrigger>
 				<CollapsibleContent>
-					<SidebarMenu className="gap-1" aria-label={group.label}>
+					<SidebarMenu
+						className="gap-1"
+						// iOS Safari + VO drop implicit list role when list-style:none
+						role="list"
+					>
 						{group.items.map((item) => {
 							const Icon = item.icon;
 							return (

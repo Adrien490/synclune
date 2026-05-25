@@ -111,7 +111,15 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 				<RefundsSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<RefundsMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<RefundsMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<RefundsMobileList
 						refundsPromise={refundsPromise}
 						perPage={perPage}
@@ -124,7 +132,13 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<RefundsDataTableSkeleton />}>
-					<RefundsDataTable refundsPromise={refundsPromise} perPage={perPage} />
+					<RefundsDataTable
+						refundsPromise={refundsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 			</div>
 

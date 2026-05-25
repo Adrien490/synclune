@@ -122,7 +122,15 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 				<OrdersSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<OrdersMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<OrdersMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<OrdersMobileList
 						ordersPromise={ordersPromise}
 						perPage={perPage}
@@ -135,7 +143,13 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<OrdersDataTableSkeleton />}>
-					<OrdersDataTable ordersPromise={ordersPromise} perPage={perPage} />
+					<OrdersDataTable
+						ordersPromise={ordersPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 			</div>
 

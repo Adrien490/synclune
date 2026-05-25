@@ -241,3 +241,89 @@ describe("AdminMobileBottomBar - bouton Menu (a11y trigger ↔ sheet)", () => {
 		expect(openMock).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe("AdminMobileBottomBar - badge orders pluralisé", () => {
+	it("rend « 1 commande en attente » (singulier) pour count=1", () => {
+		render(<AdminMobileBottomBar badges={{ orders: 1 }} />);
+
+		expect(screen.getByLabelText("1 commande en attente")).toBeInTheDocument();
+		expect(screen.getByText("1")).toBeInTheDocument();
+	});
+
+	it("rend « N commandes en attente » (pluriel) pour count>=2", () => {
+		render(<AdminMobileBottomBar badges={{ orders: 5 }} />);
+
+		expect(screen.getByLabelText("5 commandes en attente")).toBeInTheDocument();
+		expect(screen.getByText("5")).toBeInTheDocument();
+	});
+
+	it("clamp visuel « 99+ » mais garde le compte exact dans le label SR", () => {
+		render(<AdminMobileBottomBar badges={{ orders: 250 }} />);
+
+		expect(screen.getByText("99+")).toBeInTheDocument();
+		expect(screen.getByLabelText("250 commandes en attente")).toBeInTheDocument();
+	});
+
+	it("n'expose aucun badge pour count=0 ou orders undefined", () => {
+		const { rerender } = render(<AdminMobileBottomBar badges={{ orders: 0 }} />);
+		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+
+		rerender(<AdminMobileBottomBar badges={{}} />);
+		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+
+		rerender(<AdminMobileBottomBar />);
+		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+	});
+});
+
+describe("AdminMobileBottomBar - masquage via overlay stack", () => {
+	it("cache la bottom-bar (isHidden) quand un overlay du stack est ouvert", () => {
+		mockUseHasOverlay.mockReturnValue(true);
+
+		render(<AdminMobileBottomBar />);
+
+		const nav = screen.getByLabelText("Navigation principale administration");
+		expect(nav).toHaveAttribute("data-hidden", "true");
+	});
+});
+
+describe("AdminMobileBottomBar - aria-current convention", () => {
+	it("pose aria-current='page' sur le tab actif", () => {
+		mockIsRouteActive.mockImplementation(
+			(_p: string, url: string) => url === "/admin/ventes/commandes",
+		);
+
+		render(<AdminMobileBottomBar />);
+
+		expect(screen.getByRole("link", { name: /Commandes/i })).toHaveAttribute(
+			"aria-current",
+			"page",
+		);
+	});
+
+	it("omet aria-current sur les tabs inactifs (pas 'false')", () => {
+		render(<AdminMobileBottomBar />);
+
+		expect(screen.getByRole("link", { name: /Produits/i })).not.toHaveAttribute("aria-current");
+	});
+});
+
+describe("AdminMobileBottomBar - haptic policy", () => {
+	it("ne déclenche pas de haptic au clic d'un tab déjà actif", () => {
+		mockIsRouteActive.mockImplementation((_p: string, url: string) => url === "/admin");
+
+		render(<AdminMobileBottomBar />);
+
+		fireEvent.click(screen.getByRole("link", { name: /Accueil/i }));
+
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
+	});
+
+	it("déclenche haptic « light » au clic d'un tab inactif", () => {
+		render(<AdminMobileBottomBar />);
+
+		fireEvent.click(screen.getByRole("link", { name: /Commandes/i }));
+
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+	});
+});

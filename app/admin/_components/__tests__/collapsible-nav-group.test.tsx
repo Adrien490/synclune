@@ -69,13 +69,15 @@ vi.mock("@/shared/components/ui/sidebar", () => ({
 	SidebarMenu: ({
 		children,
 		className,
+		role,
 		"aria-label": ariaLabel,
 	}: {
 		children: React.ReactNode;
 		className?: string;
+		role?: string;
 		"aria-label"?: string;
 	}) => (
-		<ul data-testid="sidebar-menu" className={className} aria-label={ariaLabel}>
+		<ul data-testid="sidebar-menu" className={className} role={role} aria-label={ariaLabel}>
 			{children}
 		</ul>
 	),
@@ -193,9 +195,14 @@ describe("CollapsibleNavGroup", () => {
 			expect(screen.getByText("Collections")).toBeInTheDocument();
 		});
 
-		it("sets aria-label on SidebarMenu", () => {
+		it("sets role=list on SidebarMenu (iOS Safari + VoiceOver)", () => {
 			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
-			expect(screen.getByTestId("sidebar-menu")).toHaveAttribute("aria-label", "Catalogue");
+			expect(screen.getByTestId("sidebar-menu")).toHaveAttribute("role", "list");
+		});
+
+		it("omits aria-label on SidebarMenu (parent aria-labelledby suffices)", () => {
+			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
+			expect(screen.getByTestId("sidebar-menu")).not.toHaveAttribute("aria-label");
 		});
 	});
 });

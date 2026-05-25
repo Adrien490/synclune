@@ -15,6 +15,7 @@ import {
 	useEffectEvent,
 	useId,
 	useRef,
+	useState,
 	useTransition,
 	Suspense,
 	type ComponentProps,
@@ -57,6 +58,10 @@ function CursorPaginationInner({
 	// eslint-disable-next-line react-hooks/refs
 	const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
 	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
+	// Tracker du dernier bouton cliqué pour afficher un spinner ciblé pendant
+	// `isPending`. Lu pendant le render (la condition `isPending && ...` redevient
+	// false naturellement à la fin de la transition donc le spinner disparaît).
+	const [lastAction, setLastAction] = useState<"prev" | "next" | "reset" | "perPage" | null>(null);
 
 	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
 	const cursor = searchParams.get("cursor") ?? undefined;
@@ -89,6 +94,7 @@ function CursorPaginationInner({
 
 	function navigateNext(nc: string | null) {
 		if (!nc) return;
+		setLastAction("next");
 		const params = preserveParams();
 		params.set("cursor", nc);
 		params.set("direction", "forward");
@@ -99,6 +105,7 @@ function CursorPaginationInner({
 
 	function navigatePrevious(pc: string | null) {
 		if (!pc) return;
+		setLastAction("prev");
 		const params = preserveParams();
 		params.set("cursor", pc);
 		params.set("direction", "backward");
@@ -149,6 +156,7 @@ function CursorPaginationInner({
 		navigatePrevious(prevCursor);
 	}
 	function handleReset() {
+		setLastAction("reset");
 		const params = preserveParams();
 		params.delete("cursor");
 		params.delete("direction");
@@ -158,6 +166,7 @@ function CursorPaginationInner({
 	}
 	function handlePerPageChange(newPerPage: number) {
 		if (newPerPage === perPage) return;
+		setLastAction("perPage");
 		const params = preserveParams();
 		params.set("perPage", String(newPerPage));
 		params.delete("cursor");
@@ -199,31 +208,14 @@ function CursorPaginationInner({
 	const prevUrl = hasPreviousPage ? buildPaginationUrl(prevCursor, "backward") : null;
 	const nextUrl = hasNextPage ? buildPaginationUrl(nextCursor, "forward") : null;
 
-	// Message pour les screen readers
-	const ariaLiveMessage = (() => {
-		if (isPending) return "Chargement des résultats…";
-		if (currentPageSize === 0) return "Aucun résultat.";
-
-		const parts = [
-			`Affichage de ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""} sur cette page.`,
-		];
-
-		if (!canNavigate) {
-			parts.push("Page unique, navigation non disponible.");
-		} else if (!hasPreviousPage) {
-			parts.push("Première page.");
-		} else {
-			parts.push("Page précédente disponible.");
-		}
-
-		if (canNavigate && hasNextPage) {
-			parts.push("Pages suivantes disponibles.");
-		} else if (canNavigate) {
-			parts.push("Dernière page.");
-		}
-
-		return parts.join(" ");
-	})();
+	// Message pour les screen readers — une phrase concise. La position
+	// (première/dernière) est déjà annoncée par le `<div role="status">`
+	// ci-dessous, on évite le doublon.
+	const ariaLiveMessage = isPending
+		? "Chargement des résultats…"
+		: currentPageSize === 0
+			? "Aucun résultat."
+			: `Page chargée, ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""}.`;
 
 	return (
 		<div
@@ -297,7 +289,7 @@ function CursorPaginationInner({
 						className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
 						aria-label="Retour au début"
 					>
-						{isPending && !isFirstPage ? (
+						{isPending && lastAction === "reset" ? (
 							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
 						) : (
 							<ChevronsLeft className="size-5 md:size-4" />
@@ -315,7 +307,11 @@ function CursorPaginationInner({
 							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page précédente"
 						>
-							<ChevronLeft className="size-5 md:size-4" />
+							{isPending && lastAction === "prev" ? (
+								<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+							) : (
+								<ChevronLeft className="size-5 md:size-4" />
+							)}
 						</Button>
 
 						<div
@@ -346,7 +342,11 @@ function CursorPaginationInner({
 							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page suivante"
 						>
-							<ChevronRight className="size-5 md:size-4" />
+							{isPending && lastAction === "next" ? (
+								<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+							) : (
+								<ChevronRight className="size-5 md:size-4" />
+							)}
 						</Button>
 					</ButtonGroup>
 				</nav>

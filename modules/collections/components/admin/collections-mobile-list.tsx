@@ -69,7 +69,7 @@ export function CollectionsMobileList({
 
 	return (
 		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider>
+			<AdminListPendingProvider itemsLabel={{ singular: "collection", plural: "collections" }}>
 				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "collection", plural: "collections" }} />
 					{filterParams ? (
@@ -80,10 +80,10 @@ export function CollectionsMobileList({
 						singular="collection"
 						plural="collections"
 					/>
-					<ItemGroup role="list" aria-label="Collections" className="gap-2">
-						{collections.map((collection) => (
+					<ItemGroup aria-label="Collections" className="gap-2">
+						{collections.map((collection, index) => (
 							<div key={collection.id} role="listitem">
-								<CollectionMobileItem collection={collection} />
+								<CollectionMobileItem collection={collection} preload={index === 0} />
 							</div>
 						))}
 					</ItemGroup>

@@ -74,8 +74,26 @@ vi.mock("@/modules/products/components/cursor-glow", () => ({
 vi.mock("@/modules/products/data/get-products", () => ({}));
 
 vi.mock("@/modules/products/components/product-card", () => ({
-	ProductCard: ({ product }: { product: { id: string }; [key: string]: unknown }) => (
-		<div data-testid={`product-card-${product.id}`}>ProductCard</div>
+	ProductCard: ({
+		product,
+		index,
+		sectionId,
+		disablePreload,
+	}: {
+		product: { id: string };
+		index?: number;
+		sectionId?: string;
+		disablePreload?: boolean;
+		[key: string]: unknown;
+	}) => (
+		<div
+			data-testid={`product-card-${product.id}`}
+			data-index={index}
+			data-section-id={sectionId}
+			data-disable-preload={disablePreload ? "true" : "false"}
+		>
+			ProductCard
+		</div>
 	),
 }));
 
@@ -195,5 +213,30 @@ describe("LatestCreations", () => {
 
 		const cursorGlows = screen.getAllByTestId("cursor-glow");
 		expect(cursorGlows).toHaveLength(mockProducts.length);
+	});
+
+	it("grid uses ul[role=list] with li wrappers carrying --card-index for CSS stagger", async () => {
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
+
+		const list = document.querySelector("ul[role='list']");
+		expect(list).not.toBeNull();
+
+		const items = list?.querySelectorAll("li.latest-card-enter-scroll") ?? [];
+		expect(items).toHaveLength(mockProducts.length);
+
+		items.forEach((item, i) => {
+			expect((item as HTMLElement).style.getPropertyValue("--card-index")).toBe(String(i));
+		});
+	});
+
+	it("ProductCard receives incremental index, sectionId='latest' and disablePreload (below-fold)", async () => {
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
+
+		mockProducts.forEach((product, i) => {
+			const card = screen.getByTestId(`product-card-${product.id}`);
+			expect(card.getAttribute("data-index")).toBe(String(i));
+			expect(card.getAttribute("data-section-id")).toBe("latest");
+			expect(card.getAttribute("data-disable-preload")).toBe("true");
+		});
 	});
 });

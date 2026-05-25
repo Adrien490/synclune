@@ -121,7 +121,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 				<MaterialsSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<MaterialsMobileListSkeleton />}>
+				<Suspense fallback={<MaterialsMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
 					<MaterialsMobileList
 						materialsPromise={materialsPromise}
 						perPage={perPage}

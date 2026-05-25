@@ -111,7 +111,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 
 			{/* Desktop: table (>=sm) */}
 			<div className="hidden overflow-hidden rounded-lg border sm:block">
-				<TableScrollContainer>
+				<TableScrollContainer label="Liste de vos commandes">
 					<Table role="table" aria-label="Liste de vos commandes" className="min-w-full">
 						<TableHeader>
 							<TableRow>

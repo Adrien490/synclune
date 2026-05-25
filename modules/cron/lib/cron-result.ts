@@ -20,6 +20,50 @@ export interface CronResult {
 	skipped: number;
 	/** True when the bounded batch was fully consumed and more records remain. */
 	hasMore?: boolean;
+	/**
+	 * When set, signals the job did not run (misconfiguration / dependency
+	 * unavailable). `withCronGuard` uses this to skip the admin alert path —
+	 * misconfig must be caught by boot env checks, not cron alerts.
+	 */
+	reason?: string;
 	/** Job-specific breakdown fields (sessionsDeleted, completedDeleted, etc.). */
 	[key: string]: unknown;
+}
+
+/**
+ * Thrown by `paginateCursor` (and any cron-side helper that bounds wall-time)
+ * when the per-run deadline is exceeded.
+ *
+ * `withCronGuard` catches this *separately* from generic errors:
+ * - logs `warn` (not `error`)
+ * - returns HTTP 200 with `deadlineExceeded: true, hasMore: true`
+ * - does NOT send an admin alert
+ *
+ * Hitting the deadline is the *designed* behavior for jobs whose backlog
+ * exceeds a single 60s Vercel function run; the next scheduled invocation
+ * will resume where this one stopped.
+ */
+export class CronDeadlineExceededError extends Error {
+	readonly partial: {
+		processed: number;
+		errored: number;
+		skipped: number;
+		step?: string;
+		[key: string]: unknown;
+	};
+
+	constructor(
+		message: string,
+		partial: {
+			processed: number;
+			errored: number;
+			skipped: number;
+			step?: string;
+			[key: string]: unknown;
+		} = { processed: 0, errored: 0, skipped: 0 },
+	) {
+		super(message);
+		this.name = "CronDeadlineExceededError";
+		this.partial = partial;
+	}
 }

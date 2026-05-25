@@ -61,12 +61,18 @@ describe("syncAsyncPayments", () => {
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 	});
 
-	it("should return null when Stripe is not configured", async () => {
+	it("should return skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
 		mockGetStripeClient.mockReturnValue(null);
 
 		const result = await syncAsyncPayments();
 
-		expect(result).toBeNull();
+		expect(result).toEqual({
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		});
+		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
 	});
 
 	it("should return zero counts when no pending orders exist", async () => {

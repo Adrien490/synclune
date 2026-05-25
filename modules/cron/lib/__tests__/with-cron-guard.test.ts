@@ -47,6 +47,7 @@ vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 vi.mock("@sentry/nextjs", () => mockSentry);
 
 import { withCronGuard } from "../with-cron-guard";
+import { CronDeadlineExceededError } from "../cron-result";
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -69,7 +70,7 @@ describe("withCronGuard", () => {
 		expect(res).toBe(blocked);
 	});
 
-	it("wraps a successful handler in cronSuccess with job name", async () => {
+	it("wraps a successful handler in cronSuccess with job name and status: success", async () => {
 		const handler = withCronGuard({ jobName: "test" }, async () => ({
 			processed: 5,
 			errored: 0,
@@ -79,21 +80,120 @@ describe("withCronGuard", () => {
 		const body = await res.json();
 
 		expect(res.status).toBe(200);
-		expect(body).toMatchObject({ success: true, job: "test", processed: 5 });
+		expect(body).toMatchObject({
+			success: true,
+			job: "test",
+			status: "success",
+			processed: 5,
+		});
 		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+		expect(spanSetAttribute).toHaveBeenCalledWith("result", "success");
 	});
 
-	it("alerts admin when result reports errored > 0", async () => {
+	it("returns HTTP 207 with status: partial when errored > 0 and processed > 0", async () => {
 		const handler = withCronGuard({ jobName: "test" }, async () => ({
 			processed: 5,
 			errored: 2,
 			skipped: 0,
 		}));
+		const res = await handler();
+		const body = await res.json();
 
-		await handler();
-
+		expect(res.status).toBe(207);
+		expect(body).toMatchObject({
+			success: true,
+			job: "test",
+			status: "partial",
+			processed: 5,
+			errored: 2,
+		});
 		expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
 			expect.objectContaining({ job: "test", errors: 2 }),
+		);
+		expect(spanSetAttribute).toHaveBeenCalledWith("result", "partial");
+	});
+
+	it("returns HTTP 500 with status: failed when errored > 0 and processed === 0", async () => {
+		const handler = withCronGuard({ jobName: "test" }, async () => ({
+			processed: 0,
+			errored: 3,
+			skipped: 0,
+		}));
+		const res = await handler();
+		const body = await res.json();
+
+		expect(res.status).toBe(500);
+		expect(body).toMatchObject({
+			success: false,
+			job: "test",
+			status: "failed",
+			processed: 0,
+			errored: 3,
+		});
+		expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
+			expect.objectContaining({ job: "test", errors: 3 }),
+		);
+		expect(spanSetAttribute).toHaveBeenCalledWith("result", "failed");
+	});
+
+	it("returns HTTP 200 with status: skipped and DOES NOT alert when result.reason is set", async () => {
+		const handler = withCronGuard({ jobName: "test" }, async () => ({
+			processed: 0,
+			errored: 0,
+			skipped: 1,
+			reason: "STRIPE_KEY_MISSING",
+		}));
+		const res = await handler();
+		const body = await res.json();
+
+		expect(res.status).toBe(200);
+		expect(body).toMatchObject({
+			success: true,
+			job: "test",
+			status: "skipped",
+			reason: "STRIPE_KEY_MISSING",
+		});
+		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+		expect(mockSentry.captureException).not.toHaveBeenCalled();
+		expect(spanSetAttribute).toHaveBeenCalledWith("result", "skipped");
+		expect(spanSetAttribute).toHaveBeenCalledWith("reason", "STRIPE_KEY_MISSING");
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("skipped"),
+			expect.objectContaining({ cronJob: "test", reason: "STRIPE_KEY_MISSING" }),
+		);
+	});
+
+	it("handles CronDeadlineExceededError: HTTP 200 + hasMore + NO admin alert", async () => {
+		const handler = withCronGuard({ jobName: "test" }, async () => {
+			throw new CronDeadlineExceededError("Deadline exceeded during test scan", {
+				processed: 12,
+				errored: 0,
+				skipped: 3,
+				step: "scan",
+				filesScanned: 500,
+			});
+		});
+		const res = await handler();
+		const body = await res.json();
+
+		expect(res.status).toBe(200);
+		expect(body).toMatchObject({
+			success: true,
+			job: "test",
+			status: "deadline-exceeded",
+			deadlineExceeded: true,
+			hasMore: true,
+			processed: 12,
+			skipped: 3,
+			filesScanned: 500,
+		});
+		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+		expect(mockSentry.captureException).not.toHaveBeenCalled();
+		expect(spanSetAttribute).toHaveBeenCalledWith("result", "deadline-exceeded");
+		expect(spanSetAttribute).toHaveBeenCalledWith("processed_count", 12);
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("hit deadline"),
+			expect.objectContaining({ cronJob: "test", step: "scan" }),
 		);
 	});
 

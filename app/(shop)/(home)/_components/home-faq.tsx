@@ -10,8 +10,6 @@ import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { HomeFaqAccordion } from "./home-faq-accordion";
 import { SectionCtaLink } from "./section-cta-link";
 
-export { HOME_FAQ_ITEMS };
-
 const faqPageSchema = {
 	"@context": "https://schema.org",
 	"@type": "FAQPage",
@@ -40,7 +38,6 @@ export function HomeFaq() {
 			{/* SAFE: serialized via safeJsonLd (no user HTML) */}
 			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
-				id="home-faq-schema"
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{ __html: safeJsonLd(faqPageSchema) }}
 			/>
@@ -79,14 +76,10 @@ export function HomeFaq() {
 					className="mt-10 flex flex-col items-center gap-3 text-center lg:mt-14"
 				>
 					<SectionCtaLink
-						href={`mailto:${BRAND.contact.email}?subject=Une%20question%20sur%20Synclune`}
-						aria-describedby="home-faq-cta-description"
+						href={`mailto:${BRAND.contact.email}?subject=${encodeURIComponent("Une question sur Synclune")}`}
 					>
 						Une autre question ? Écrivez-moi
 					</SectionCtaLink>
-					<span id="home-faq-cta-description" className="sr-only">
-						Envoyer un email à Synclune pour toute question non couverte par la FAQ
-					</span>
 				</Fade>
 			</div>
 		</section>

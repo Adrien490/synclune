@@ -47,7 +47,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={material.id}
-			itemLabel={`Matériau ${material.name}`}
+			itemLabel={`Matériau ${material.name}, ${statusLabel}, ${skuCount} variante${skuCount !== 1 ? "s" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/materiaux/${material.slug}`,
 				ariaLabel: `Matériau ${material.name}`,
@@ -78,7 +78,6 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 						{isPendingItem ? (
 							<Badge
 								variant="secondary"
-								aria-live="polite"
 								style={{ viewTransitionName: `material-status-${material.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

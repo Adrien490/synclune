@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useDeferredValue, type ReactNode } from "react";
 import { useBulkSelectionContext } from "./bulk-selection-context";
 
 interface BulkSelectionToolbarProps {
@@ -41,6 +41,11 @@ export function BulkSelectionToolbar({
 	"aria-busy": ariaBusy,
 }: BulkSelectionToolbarProps) {
 	const { selectedCount, clear } = useBulkSelectionContext();
+	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
+	const countText = `${selectedCount} ${label} sélectionné${selectedCount > 1 ? "s" : ""}`;
+	// Débouncer les annonces SR sur tap rapide (pattern identique à MobileSelectionHeader).
+	// Hook avant tout early-return (Rules of Hooks).
+	const deferredCountText = useDeferredValue(countText);
 
 	if (presentation === "bottom-bar") {
 		if (!children) return null;
@@ -55,8 +60,6 @@ export function BulkSelectionToolbar({
 	}
 
 	if (selectedCount === 0) return null;
-
-	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
 
 	return (
 		<div
@@ -83,7 +86,7 @@ export function BulkSelectionToolbar({
 					<X className="size-4" aria-hidden="true" />
 				</Button>
 				<span aria-live="polite" className="text-sm font-medium">
-					{selectedCount} {label} sélectionné{selectedCount > 1 ? "s" : ""}
+					{deferredCountText}
 				</span>
 			</div>
 			{children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}

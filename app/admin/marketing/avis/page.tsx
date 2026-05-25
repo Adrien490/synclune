@@ -217,7 +217,15 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			<ReviewsSortBadge />
 
 			{/* Liste mobile */}
-			<Suspense fallback={<ReviewsMobileListSkeleton />}>
+			<Suspense
+				fallback={
+					<ReviewsMobileListSkeleton
+						hasActiveFilters={
+							!!search || !!params.status || !!params.rating || !!params.hasResponse
+						}
+					/>
+				}
+			>
 				<ReviewsMobileList
 					reviewsPromise={reviewsPromise}
 					perPage={perPage}
@@ -234,7 +242,11 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 
 			{/* DataTable desktop */}
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>
-				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
+				<ReviewsDataTable
+					reviewsPromise={reviewsPromise}
+					perPage={perPage}
+					hasActiveFilters={!!search || !!params.status || !!params.rating || !!params.hasResponse}
+				/>
 			</Suspense>
 
 			{/* Dialogs des actions long-press / row-actions (toggle status) */}

@@ -51,6 +51,8 @@ interface ProductMobileItemProps {
 		skus: Sku[];
 		type: { label: string } | null;
 	};
+	/** Premier item ATF : déclenche preload SSR (LCP candidate). */
+	preload?: boolean;
 }
 
 const getTotalStock = (skus: Sku[]) => skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
@@ -63,7 +65,7 @@ const getPriceDisplay = (skus: Sku[]) => {
 	return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
 };
 
-export function ProductMobileItem({ product }: ProductMobileItemProps) {
+export function ProductMobileItem({ product, preload }: ProductMobileItemProps) {
 	const statusConfig = STATUS_CONFIG[product.status];
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
@@ -87,7 +89,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={product.id}
-			itemLabel={`Produit ${product.title}`}
+			itemLabel={`Produit ${product.title}, ${statusConfig.label}, ${stockAriaLabel}, ${priceDisplay}`}
 			longPressProps={{
 				href: `/admin/catalogue/produits/${product.slug}`,
 				ariaLabel: `Produit ${product.title}`,
@@ -114,6 +116,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
 						style={{ viewTransitionName: `product-image-${product.id}` }}
+						{...(preload ? { preload: true } : {})}
 						{...(primaryImage.blurDataUrl
 							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
 							: {})}
@@ -133,7 +136,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 							<Badge
 								variant="secondary"
 								className="gap-1"
-								aria-live="polite"
 								style={{ viewTransitionName: `product-status-${product.id}` }}
 							>
 								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />

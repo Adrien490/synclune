@@ -1,3 +1,4 @@
+export { AdminDataTable } from "./admin-data-table";
 export { DataTableSkeleton } from "./data-table-skeleton";
 export { EmptyResetFiltersAction } from "./empty-reset-filters-action";
 export { TableEmptyState } from "./table-empty-state";

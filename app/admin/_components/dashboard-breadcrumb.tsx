@@ -30,6 +30,21 @@ interface BreadcrumbSegment {
 const MAX_VISIBLE_SEGMENTS = 4;
 
 /**
+ * Overrides explicites pour les segments d'URL qui n'apparaissent pas dans
+ * `navigationData` mais doivent recevoir un label lisible (FR, contextuel).
+ * Sans override, le fallback split/uppercase produit un Title Case acceptable
+ * pour la majorité des segments (ex. "prix" → "Prix").
+ */
+const SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
+	nouveau: "Nouveau",
+	modifier: "Modifier",
+	variantes: "Variantes",
+	"adresse-livraison": "Adresse de livraison",
+	"adresse-facturation": "Adresse de facturation",
+	fermer: "Fermer la boutique",
+};
+
+/**
  * Génère les segments de breadcrumb basés sur le pathname actuel
  * Utilise la configuration de navigation pour obtenir les labels appropriés
  */
@@ -79,15 +94,11 @@ export function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 
 		// Si pas trouvé dans la config, formatter le segment
 		if (!found) {
-			// Gérer les cas spéciaux
-			if (part === "nouveau") {
-				label = "Nouveau";
-			} else if (part === "modifier") {
-				label = "Modifier";
-			} else if (part === "variantes") {
-				label = "Variantes";
+			const override = SEGMENT_LABEL_OVERRIDES[part];
+			if (override) {
+				label = override;
 			} else {
-				// Formater : "types-de-bijoux" → "Types de bijoux"
+				// Fallback : "types-de-bijoux" → "Types De Bijoux"
 				label = part
 					.split("-")
 					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -106,158 +117,92 @@ export function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 }
 
 /**
- * Breadcrumb dynamique pour le dashboard
- * S'affiche dans le header et se met à jour automatiquement en fonction de la route
+ * Breadcrumb dynamique pour le dashboard admin (desktop uniquement).
+ * Rendu dans `DashboardHeader` ; le mobile a son propre header via `AdminMobileHeader`
+ * qui consomme `generateBreadcrumbs()` pour afficher uniquement title + parent.
  *
- * **Responsive** :
- * - Mobile : Bouton back + page actuelle uniquement
- * - Desktop : Breadcrumb complet avec collapse si trop long
- *
- * **Collapse** :
- * - Si plus de 4 segments, les segments intermédiaires sont collapsés
- * - Un dropdown permet d'accéder aux segments cachés
+ * **Collapse** : si plus de 4 segments, les segments intermédiaires sont masqués
+ * derrière un dropdown ellipsis. Le premier segment (Tableau de bord) et les 2
+ * derniers restent toujours visibles.
  */
 export function DashboardBreadcrumb() {
 	const pathname = usePathname();
 	const breadcrumbs = generateBreadcrumbs(pathname);
 
-	// Déterminer si on doit collapser les segments
 	const shouldCollapse = breadcrumbs.length > MAX_VISIBLE_SEGMENTS;
 
-	// Segments à afficher
 	let visibleSegments: BreadcrumbSegment[];
 	let collapsedSegments: BreadcrumbSegment[] = [];
 
 	if (shouldCollapse) {
-		// Garder le premier segment et les 2 derniers
-		visibleSegments = [
-			breadcrumbs[0]!, // Tableau de bord
-			...breadcrumbs.slice(-2), // 2 derniers
-		];
-		// Segments cachés (tous sauf le premier et les 2 derniers)
+		visibleSegments = [breadcrumbs[0]!, ...breadcrumbs.slice(-2)];
 		collapsedSegments = breadcrumbs.slice(1, -2);
 	} else {
 		visibleSegments = breadcrumbs;
 	}
 
-	const currentSegment = breadcrumbs[breadcrumbs.length - 1]!;
-	const parentSegment = breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2]! : null;
-
 	return (
-		<>
-			{/* Mobile : parent (dropdown) + current page — compact pattern */}
-			<Breadcrumb className="min-w-0 md:hidden" aria-label="Fil d'Ariane">
-				<BreadcrumbList className="flex-nowrap">
-					{breadcrumbs.length > 1 && (
-						<>
-							<BreadcrumbItem className="shrink-0">
-								<DropdownMenu>
-									<DropdownMenuTrigger
-										className="hover:text-foreground text-muted-foreground focus-visible:ring-primary inline-flex min-h-11 min-w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
-										aria-label="Afficher les niveaux parents"
-									>
-										<Ellipsis className="size-4" />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="start">
-										{breadcrumbs.slice(0, -1).map((segment) => (
-											<DropdownMenuItem key={segment.href} asChild>
-												<Link href={segment.href}>{segment.label}</Link>
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</BreadcrumbItem>
-							<BreadcrumbSeparator className="shrink-0" />
-							{parentSegment && (
-								<>
-									<BreadcrumbItem className="min-w-0 shrink">
-										<BreadcrumbLink
-											href={parentSegment.href}
-											className="inline-flex min-h-11 max-w-28 items-center truncate"
-											title={parentSegment.label}
-										>
-											{parentSegment.label}
-										</BreadcrumbLink>
-									</BreadcrumbItem>
-									<BreadcrumbSeparator className="shrink-0" />
-								</>
-							)}
-						</>
-					)}
-					<BreadcrumbItem className="min-w-0">
-						<BreadcrumbPage
-							className="inline-flex min-h-11 max-w-40 items-center truncate"
-							title={currentSegment.label}
-						>
-							{currentSegment.label}
+		<Breadcrumb className="min-w-0" aria-label="Fil d'Ariane">
+			<BreadcrumbList className="flex-nowrap">
+				{/* Premier segment (Tableau de bord) */}
+				<BreadcrumbItem className="shrink-0">
+					{visibleSegments[0]!.isCurrentPage ? (
+						<BreadcrumbPage title={visibleSegments[0]!.label}>
+							{visibleSegments[0]!.label}
 						</BreadcrumbPage>
-					</BreadcrumbItem>
-				</BreadcrumbList>
-			</Breadcrumb>
-
-			{/* Desktop : breadcrumb complet avec collapse */}
-			<Breadcrumb className="hidden min-w-0 md:block" aria-label="Fil d'Ariane">
-				<BreadcrumbList className="flex-nowrap">
-					{/* Premier segment (Tableau de bord) */}
-					<BreadcrumbItem className="shrink-0">
-						{visibleSegments[0]!.isCurrentPage ? (
-							<BreadcrumbPage title={visibleSegments[0]!.label}>
-								{visibleSegments[0]!.label}
-							</BreadcrumbPage>
-						) : (
-							<BreadcrumbLink href={visibleSegments[0]!.href} title={visibleSegments[0]!.label}>
-								{visibleSegments[0]!.label}
-							</BreadcrumbLink>
-						)}
-					</BreadcrumbItem>
-
-					{/* Segments collapsés avec dropdown */}
-					{shouldCollapse && collapsedSegments.length > 0 && (
-						<>
-							<BreadcrumbSeparator className="shrink-0" />
-							<BreadcrumbItem className="shrink-0">
-								<DropdownMenu>
-									<DropdownMenuTrigger
-										className="hover:text-foreground flex items-center gap-1 transition-colors"
-										aria-label="Afficher plus de segments"
-									>
-										<Ellipsis className="size-4" />
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="start">
-										{collapsedSegments.map((segment) => (
-											<DropdownMenuItem key={segment.href} asChild>
-												<Link href={segment.href}>{segment.label}</Link>
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</BreadcrumbItem>
-						</>
+					) : (
+						<BreadcrumbLink href={visibleSegments[0]!.href} title={visibleSegments[0]!.label}>
+							{visibleSegments[0]!.label}
+						</BreadcrumbLink>
 					)}
+				</BreadcrumbItem>
 
-					{/* Remaining visible segments (skip the first one) */}
-					{visibleSegments.slice(1).map((segment, _index) => (
-						<Fragment key={segment.href}>
-							<BreadcrumbSeparator className="shrink-0" />
-							<BreadcrumbItem className="min-w-0">
-								{segment.isCurrentPage ? (
-									<BreadcrumbPage className="max-w-45 truncate" title={segment.label}>
-										{segment.label}
-									</BreadcrumbPage>
-								) : (
-									<BreadcrumbLink
-										href={segment.href}
-										className="max-w-35 truncate"
-										title={segment.label}
-									>
-										{segment.label}
-									</BreadcrumbLink>
-								)}
-							</BreadcrumbItem>
-						</Fragment>
-					))}
-				</BreadcrumbList>
-			</Breadcrumb>
-		</>
+				{/* Segments collapsés avec dropdown */}
+				{shouldCollapse && collapsedSegments.length > 0 && (
+					<>
+						<BreadcrumbSeparator className="shrink-0" />
+						<BreadcrumbItem className="shrink-0">
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									className="hover:text-foreground focus-ring inline-flex items-center gap-1 rounded-sm px-1 transition-colors"
+									aria-label="Afficher plus de segments"
+								>
+									<Ellipsis className="size-4" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="start">
+									{collapsedSegments.map((segment) => (
+										<DropdownMenuItem key={segment.href} asChild>
+											<Link href={segment.href}>{segment.label}</Link>
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</BreadcrumbItem>
+					</>
+				)}
+
+				{/* Segments visibles restants (sans le premier) */}
+				{visibleSegments.slice(1).map((segment) => (
+					<Fragment key={segment.href}>
+						<BreadcrumbSeparator className="shrink-0" />
+						<BreadcrumbItem className="min-w-0">
+							{segment.isCurrentPage ? (
+								<BreadcrumbPage className="truncate md:max-w-45" title={segment.label}>
+									{segment.label}
+								</BreadcrumbPage>
+							) : (
+								<BreadcrumbLink
+									href={segment.href}
+									className="truncate md:max-w-35"
+									title={segment.label}
+								>
+									{segment.label}
+								</BreadcrumbLink>
+							)}
+						</BreadcrumbItem>
+					</Fragment>
+				))}
+			</BreadcrumbList>
+		</Breadcrumb>
 	);
 }

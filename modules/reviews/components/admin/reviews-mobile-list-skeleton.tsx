@@ -1,9 +1,19 @@
 import { Item, ItemActions, ItemContent, ItemGroup } from "@/shared/components/ui/item";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
-export function ReviewsMobileListSkeleton() {
+interface ReviewsMobileListSkeletonProps {
+	hasActiveFilters?: boolean;
+}
+
+export function ReviewsMobileListSkeleton({
+	hasActiveFilters,
+}: ReviewsMobileListSkeletonProps = {}) {
 	return (
-		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<div className="flex items-center justify-end">
+				<Skeleton shape="rounded" className="h-11 w-32" />
+			</div>
+			{hasActiveFilters ? <Skeleton shape="rounded" className="h-12 w-full" /> : null}
 			<SkeletonGroup label="Chargement des avis">
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (

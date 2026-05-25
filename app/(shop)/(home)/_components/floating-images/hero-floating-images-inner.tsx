@@ -26,8 +26,11 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 		// the `.hero-image-pointer` translate — this just saves the CPU).
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-		// Desktop only — the container is `hidden md:block`.
-		const mq = window.matchMedia("(min-width: 768px)");
+		// Desktop mouse only — the pointer-reactive depth is a hover enhancement.
+		// Coarse pointers (iPad/tablette tactile ≥768px) déclencheraient pointermove
+		// au toucher pour rien : CPU gaspillé + incohérent avec le `can-hover` gate
+		// repo. Le container visuel reste `hidden md:block` (cf. visibilityClass).
+		const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
 		if (!mq.matches) return;
 
 		const container = containerRef.current;

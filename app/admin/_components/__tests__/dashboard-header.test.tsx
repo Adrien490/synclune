@@ -180,5 +180,44 @@ describe("DashboardHeader", () => {
 			const separator = screen.getByTestId("separator");
 			expect(separator).toHaveAttribute("data-orientation", "vertical");
 		});
+
+		/**
+		 * @regression dashboard-header-no-dead-hidden-classes
+		 *
+		 * Parent <header> est `hidden md:flex` ; `hidden md:block` sur le Separator
+		 * et `hidden md:flex` sur SidebarTrigger étaient morts (jamais évalués hors
+		 * md:). Retrait validé pour éviter le drift de styles dupliqués.
+		 */
+		it("does not carry dead `hidden` breakpoint classes on the separator", () => {
+			render(<DashboardHeader />);
+			const separator = screen.getByTestId("separator");
+			expect(separator.className).not.toMatch(/\bhidden\b/);
+			expect(separator.className).not.toMatch(/\bmd:block\b/);
+		});
+	});
+
+	describe("icon buttons (focus + SSOT)", () => {
+		/**
+		 * @regression dashboard-header-focus-ring-ssot
+		 *
+		 * Drift documenté : `focus-visible:ring-1` custom remplacé par l'utility
+		 * `focus-ring` (app/globals.css:17, ring-[3px] WCAG 2.4.7). Verrouille
+		 * également `can-hover:hover:*` (sticky-hover iOS Safari iPad mode bureau).
+		 */
+		it("applies focus-ring SSOT + can-hover:hover on the shortcuts button", () => {
+			render(<DashboardHeader />);
+			const button = screen.getByLabelText("Afficher les raccourcis clavier");
+			expect(button.className).toMatch(/\bfocus-ring\b/);
+			expect(button.className).toMatch(/can-hover:hover:bg-accent/);
+			expect(button.className).not.toMatch(/focus-visible:ring-1\b/);
+		});
+
+		it("applies focus-ring SSOT + can-hover:hover on the external link", () => {
+			render(<DashboardHeader />);
+			const link = screen.getByLabelText("Voir le site (nouvel onglet)");
+			expect(link.className).toMatch(/\bfocus-ring\b/);
+			expect(link.className).toMatch(/can-hover:hover:bg-accent/);
+			expect(link.className).not.toMatch(/focus-visible:ring-1\b/);
+		});
 	});
 });

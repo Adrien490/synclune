@@ -132,7 +132,7 @@ export default function ScrollFade({
 				{...scrollRegionProps}
 				className={cn(
 					hideScrollbar &&
-						"[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+						"[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
 					axis === "horizontal" && "w-full overflow-x-auto overflow-y-hidden",
 					axis === "vertical" && "h-full overflow-x-hidden overflow-y-auto",
 					axis === "both" && "overflow-auto",

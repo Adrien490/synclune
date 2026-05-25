@@ -15,8 +15,12 @@ interface BulkSelectionContextValue {
 	isSelected: (id: string) => boolean;
 	toggle: (id: string) => void;
 	togglePage: () => void;
-	/** Reset selection AND exit selection mode (used after bulk action completes). */
-	clear: () => void;
+	/**
+	 * Reset selection AND exit selection mode (used after bulk action completes).
+	 * Accepte `{ silent: true }` pour skip le haptic feedback — utile en post-success
+	 * d'une mutation programmatique où le toast suffit (vibration parasite sinon).
+	 */
+	clear: (options?: { silent?: boolean }) => void;
 	pageState: "none" | "some" | "all";
 	/**
 	 * Mobile-only "selection mode" flag (pattern Mail iOS).
@@ -101,8 +105,10 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 		});
 	};
 
-	const clear = () => {
-		triggerHaptic("selection");
+	const clear = (options?: { silent?: boolean }) => {
+		if (!options?.silent) {
+			triggerHaptic("selection");
+		}
 		setSelectedIds(new Set());
 		setSelectionMode(false);
 	};

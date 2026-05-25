@@ -206,7 +206,15 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 			/>
 
 			{/* Liste mobile */}
-			<Suspense fallback={<ProductsMobileListSkeleton />}>
+			<Suspense
+				fallback={
+					<ProductsMobileListSkeleton
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
+				}
+			>
 				<ProductsMobileList
 					productsPromise={Promise.resolve(productsData)}
 					perPage={perPage}

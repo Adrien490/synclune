@@ -130,7 +130,15 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 				<DiscountsSortBadge />
 
 				{/* Liste mobile */}
-				<Suspense fallback={<DiscountsMobileListSkeleton />}>
+				<Suspense
+					fallback={
+						<DiscountsMobileListSkeleton
+							hasActiveFilters={
+								!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+							}
+						/>
+					}
+				>
 					<DiscountsMobileList
 						discountsPromise={discountsPromise}
 						perPage={perPage}
@@ -143,7 +151,13 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>
-					<DiscountsDataTable discountsPromise={discountsPromise} perPage={perPage} />
+					<DiscountsDataTable
+						discountsPromise={discountsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 			</div>
 

@@ -96,7 +96,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 						{rest.length > 0 ? (
 							<>
 								<ul
-									className="-mx-[var(--admin-main-x,1.5rem)] flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-contain px-[var(--admin-main-x,1.5rem)] pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+									className="-mx-[var(--admin-main-x,1.5rem)] flex snap-x snap-mandatory [scrollbar-width:none] gap-2 overflow-x-auto overscroll-contain px-[var(--admin-main-x,1.5rem)] pb-1 md:hidden [&::-webkit-scrollbar]:hidden"
 									aria-label={`Galerie d'images (swipe horizontal, ${images.length} image${images.length > 1 ? "s" : ""})`}
 								>
 									{images.map((image, index) => (
