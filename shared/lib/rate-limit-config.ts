@@ -1656,3 +1656,23 @@ const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
 export const ADMIN_DASHBOARD_LIMITS = {
 	REFRESH: ADMIN_DASHBOARD_REFRESH_LIMIT,
 } as const;
+
+// ========================================
+// 🪝 WEBHOOKS
+// ========================================
+
+/**
+ * Limite pour les requêtes entrantes sur le webhook Stripe (`/api/webhooks/stripe`)
+ *
+ * Protège contre :
+ * - Flooding de webhooks avec signatures invalides (CPU drain HMAC verify)
+ * - Tentative d'épuisement de ressources avant `stripe.webhooks.constructEvent`
+ *
+ * Stripe légitime envoie ≤10 events/sec sur un webhook (test + prod combinés).
+ * 100/min = ~6× headroom, suffisant pour absorber un burst legit sans bloquer.
+ * Appliqué AVANT signature verify pour rejeter les attaquants au plus tôt.
+ */
+export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
+	limit: 100,
+	windowMs: minutes(1),
+};

@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockSendAdminStuckOrdersAlert } = vi.hoisted(() => ({
-	mockPrisma: {
-		order: { findMany: vi.fn() },
-	},
-	mockSendAdminStuckOrdersAlert: vi.fn(),
-}));
+const { mockPrisma, mockSendAdminStuckOrdersAlert, mockSentryCapture, mockSentryWithScope } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			order: { findMany: vi.fn() },
+		},
+		mockSendAdminStuckOrdersAlert: vi.fn(),
+		mockSentryCapture: vi.fn(),
+		mockSentryWithScope: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -16,17 +19,43 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminStuckOrdersAlert: mockSendAdminStuckOrdersAlert,
 }));
 
+vi.mock("@sentry/nextjs", () => ({
+	captureException: mockSentryCapture,
+	withScope: mockSentryWithScope,
+	captureMessage: vi.fn(),
+	addBreadcrumb: vi.fn(),
+	startSpan: vi.fn(async (_opts: unknown, cb: () => unknown) => cb()),
+}));
+
 import { alertStuckOrders } from "../alert-stuck-orders.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
 const NOW = new Date("2026-02-09T12:00:00Z");
 
+interface FakeSentryScope {
+	setTag: ReturnType<typeof vi.fn>;
+	setLevel: ReturnType<typeof vi.fn>;
+	setFingerprint: ReturnType<typeof vi.fn>;
+	setContext: ReturnType<typeof vi.fn>;
+}
+
 describe("alertStuckOrders", () => {
+	let lastScope: FakeSentryScope;
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(NOW);
 		mockSendAdminStuckOrdersAlert.mockResolvedValue({ success: true, data: { id: "email-1" } });
+		mockSentryWithScope.mockImplementation((cb: (s: FakeSentryScope) => void) => {
+			lastScope = {
+				setTag: vi.fn(),
+				setLevel: vi.fn(),
+				setFingerprint: vi.fn(),
+				setContext: vi.fn(),
+			};
+			cb(lastScope);
+		});
 	});
 
 	it("returns zero counts and does NOT send email when no orders are stuck", async () => {
@@ -144,5 +173,58 @@ describe("alertStuckOrders", () => {
 
 		expect(result.errored).toBe(1);
 		expect(result.processed).toBe(0);
+	});
+
+	it("captures the email failure to Sentry with the 'email-failed' fingerprint (admin alert dead-loop)", async () => {
+		mockPrisma.order.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "p1",
+					orderNumber: "SYN-100",
+					total: 4500,
+					paidAt: new Date(NOW.getTime() - 8 * 24 * 60 * 60 * 1000),
+				},
+			])
+			.mockResolvedValueOnce([]);
+		const sendError = new Error("Resend down");
+		mockSendAdminStuckOrdersAlert.mockRejectedValue(sendError);
+
+		await alertStuckOrders();
+
+		expect(mockSentryCapture).toHaveBeenCalledWith(sendError);
+		expect(lastScope.setTag).toHaveBeenCalledWith("cronJob", "alert-stuck-orders");
+		expect(lastScope.setFingerprint).toHaveBeenCalledWith([
+			"cron",
+			"alert-stuck-orders",
+			"email-failed",
+		]);
+		expect(lastScope.setContext).toHaveBeenCalledWith(
+			"stuckOrders",
+			expect.objectContaining({ totalStuck: 1, processingCount: 1, shippedCount: 0 }),
+		);
+	});
+
+	it("captures to Sentry even when sendAdminStuckOrdersAlert returns { success: false }", async () => {
+		mockPrisma.order.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([
+			{
+				id: "s1",
+				orderNumber: "SYN-200",
+				total: 7800,
+				shippedAt: new Date(NOW.getTime() - 15 * 24 * 60 * 60 * 1000),
+			},
+		]);
+		mockSendAdminStuckOrdersAlert.mockResolvedValue({
+			success: false,
+			error: new Error("Resend 500"),
+		});
+
+		await alertStuckOrders();
+
+		expect(mockSentryCapture).toHaveBeenCalledOnce();
+		expect(lastScope.setFingerprint).toHaveBeenCalledWith([
+			"cron",
+			"alert-stuck-orders",
+			"email-failed",
+		]);
 	});
 });

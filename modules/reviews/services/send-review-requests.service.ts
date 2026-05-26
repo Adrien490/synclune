@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { FulfillmentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -5,6 +6,8 @@ import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails"
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+
+const emailSchema = z.string().email();
 
 /**
  * Cron : envoie un email de demande d'avis J+7 après livraison.
@@ -16,8 +19,13 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
  *  - Order.userId IS NOT NULL           (seuls les comptes peuvent laisser un avis)
  *  - notDeleted
  *
- * Idempotence :
- *  - `reviewRequestSentAt` est mis à jour APRÈS envoi réussi.
+ * Idempotence (best-effort, "1 email max") :
+ *  - `reviewRequestSentAt` est mis à jour APRÈS chaque tentative, qu'elle ait
+ *    réussi ou échoué. On préfère perdre 1 email occasionnel (erreur Resend)
+ *    plutôt que risquer une duplication au prochain run (incident historique).
+ *  - Cross-instance : `Idempotency-Key: review-request:${order.id}` transmis à
+ *    Resend. Deux appels concurrents avec la même clé renvoient le même `id`
+ *    (dedup serveur 24h) — protège contre la double-fire entre instances.
  *  - Si la livraison contient uniquement des produits déjà notés (ou supprimés),
  *    on flag quand même `reviewRequestSentAt` pour éviter de revisiter cette
  *    commande à chaque run.
@@ -134,6 +142,37 @@ export async function sendReviewRequests(): Promise<CronResult> {
 			continue;
 		}
 
+		// Validate customer email before hitting Resend. An invalid email would
+		// otherwise stay in the candidate set forever, draining the daily batch
+		// slot and inflating errored counts.
+		const emailParse = emailSchema.safeParse(order.customerEmail);
+		if (!emailParse.success) {
+			try {
+				await prisma.order.update({
+					where: { id: order.id },
+					data: { reviewRequestSentAt: new Date() },
+				});
+				skipped++;
+				logger.warn("Skipped review-request: invalid customer email", {
+					cronJob: "send-review-requests",
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					reason: "invalid_email",
+				});
+			} catch (error) {
+				errored++;
+				logger.error("Failed to flag invalid-email order", error, {
+					cronJob: "send-review-requests",
+					orderId: order.id,
+				});
+			}
+			continue;
+		}
+
+		// Best-effort send: always flag `reviewRequestSentAt` after the attempt,
+		// even on failure. Prevents duplication on the next run at the cost of
+		// occasionally losing a single email (acceptable trade-off for J+7 reviews).
+		let sendSucceeded = false;
 		try {
 			const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 			const result = await sendReviewRequestEmail({
@@ -142,29 +181,42 @@ export async function sendReviewRequests(): Promise<CronResult> {
 				orderNumber: order.orderNumber,
 				items,
 				unsubscribeUrl,
+				idempotencyKey: `review-request:${order.id}`,
 			});
 
-			if (!result.success) {
-				errored++;
+			if (result.success) {
+				sendSucceeded = true;
+			} else {
 				logger.error("Resend rejected review-request email", result.error, {
 					cronJob: "send-review-requests",
 					orderId: order.id,
 				});
-				continue;
 			}
-
-			await prisma.order.update({
-				where: { id: order.id },
-				data: { reviewRequestSentAt: new Date() },
-			});
-
-			processed++;
 		} catch (error) {
-			errored++;
 			logger.error("Failed to send review-request email", error, {
 				cronJob: "send-review-requests",
 				orderId: order.id,
 				orderNumber: order.orderNumber,
+			});
+		}
+
+		try {
+			await prisma.order.update({
+				where: { id: order.id },
+				data: { reviewRequestSentAt: new Date() },
+			});
+			if (sendSucceeded) {
+				processed++;
+			} else {
+				errored++;
+			}
+		} catch (flagError) {
+			errored++;
+			logger.error("Failed to flag review-request order after send attempt", flagError, {
+				cronJob: "send-review-requests",
+				orderId: order.id,
+				orderNumber: order.orderNumber,
+				sendSucceeded,
 			});
 		}
 	}

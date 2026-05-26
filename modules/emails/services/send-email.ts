@@ -131,6 +131,16 @@ export async function sendEmail(params: {
 	 * Default: false (idempotence enforced).
 	 */
 	skipIdempotence?: boolean;
+	/**
+	 * Cross-instance idempotency key forwarded to Resend as `Idempotency-Key`
+	 * header. Resend deduplicates server-side over a 24h window: two calls
+	 * with the same key + recipient return the same `id` without re-sending.
+	 *
+	 * Use for cron jobs where the same logical email can be retried across
+	 * serverless instances (the in-process dedup cache is per-instance).
+	 * Example : `review-request:${orderId}`.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	if (!params.to || (Array.isArray(params.to) && params.to.length === 0)) {
 		logger.error("Missing recipient", undefined, { service: "send-email" });
@@ -170,12 +180,21 @@ export async function sendEmail(params: {
 		const { data, error } = await resendCircuitBreaker.execute(() =>
 			withRetry(
 				async () => {
-					const { unsubscribeUrl: _unsub, headers: _h, skipIdempotence: _si, ...rest } = params;
-					const result = await resend.emails.send({
-						from: EMAIL_FROM,
-						...rest,
-						...(Object.keys(mergedHeaders).length > 0 ? { headers: mergedHeaders } : {}),
-					});
+					const {
+						unsubscribeUrl: _unsub,
+						headers: _h,
+						skipIdempotence: _si,
+						idempotencyKey: _ik,
+						...rest
+					} = params;
+					const result = await resend.emails.send(
+						{
+							from: EMAIL_FROM,
+							...rest,
+							...(Object.keys(mergedHeaders).length > 0 ? { headers: mergedHeaders } : {}),
+						},
+						params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined,
+					);
 					if (result.error && isRetryableEmailError(result.error)) {
 						throw result.error;
 					}

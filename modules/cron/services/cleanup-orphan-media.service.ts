@@ -11,6 +11,46 @@ import {
 import { CronDeadlineExceededError, type CronResult } from "@/modules/cron/lib/cron-result";
 import { paginateCursor } from "@/modules/cron/lib/paginate-cursor";
 
+class UploadThingTimeoutError extends Error {
+	constructor(operation: string, timeoutMs: number) {
+		super(`UploadThing ${operation} exceeded deadline (${timeoutMs}ms)`);
+		this.name = "UploadThingTimeoutError";
+	}
+}
+
+/**
+ * Promise.race wrapper for UploadThing calls.
+ *
+ * UploadThing SDK v7 only supports `AbortSignal` on uploads (cf
+ * `node_modules/uploadthing/dist/types-Bs3w2d_3.d.ts:382`), NOT on
+ * `listFiles` / `deleteFiles` (their option types `ListFilesOptions` /
+ * `DeleteFilesOptions` don't extend any signal-bearing interface). We bound
+ * each call to the remaining deadline manually so a hanging UploadThing
+ * incident doesn't blow past the 45s `BATCH_DEADLINE_MS` and trigger a
+ * spurious Vercel 60s timeout + admin alert.
+ *
+ * On timeout we throw a typed error caught upstream as a clean break with
+ * `hasMore: true` — the next monthly run will pick up the orphans.
+ */
+async function withDeadline<T>(
+	promise: Promise<T>,
+	deadline: number,
+	operation: string,
+): Promise<T> {
+	const timeoutMs = Math.max(0, deadline - Date.now());
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => {
+			reject(new UploadThingTimeoutError(operation, timeoutMs));
+		}, timeoutMs);
+	});
+	try {
+		return await Promise.race([promise, timeoutPromise]);
+	} finally {
+		if (timer) clearTimeout(timer);
+	}
+}
+
 /**
  * Cleans up orphaned UploadThing files not referenced in the database.
  *
@@ -27,6 +67,7 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 	let filesScanned = 0;
 	let orphansDeleted = 0;
 	let errors = 0;
+	let hasMore = false;
 
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
@@ -40,14 +81,32 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 
 		// 2. List UploadThing files with pagination
 		let offset = 0;
-		let hasMore = true;
+		hasMore = true;
 		let pagesProcessed = 0;
 
 		while (hasMore && pagesProcessed < MAX_PAGES_PER_RUN && Date.now() < deadline) {
-			const response = await utapi.listFiles({
-				limit: UPLOADTHING_LIST_LIMIT,
-				offset,
-			});
+			let response: Awaited<ReturnType<typeof utapi.listFiles>>;
+			try {
+				response = await withDeadline(
+					utapi.listFiles({
+						limit: UPLOADTHING_LIST_LIMIT,
+						offset,
+					}),
+					deadline,
+					"listFiles",
+				);
+			} catch (error) {
+				if (error instanceof UploadThingTimeoutError) {
+					logger.warn("UploadThing listFiles timed out — resumable next run", {
+						cronJob: "cleanup-orphan-media",
+						pagesProcessed,
+						offset,
+					});
+					hasMore = true;
+					break;
+				}
+				throw error;
+			}
 			const files = response.files;
 			filesScanned += files.length;
 
@@ -72,13 +131,22 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 			// 4. Delete orphan files from this page
 			if (orphanKeys.length > 0) {
 				try {
-					await utapi.deleteFiles(orphanKeys);
+					await withDeadline(utapi.deleteFiles(orphanKeys), deadline, "deleteFiles");
 					orphansDeleted += orphanKeys.length;
 					logger.info("Deleted orphan files", {
 						cronJob: "cleanup-orphan-media",
 						count: orphanKeys.length,
 					});
 				} catch (error) {
+					if (error instanceof UploadThingTimeoutError) {
+						logger.warn("UploadThing deleteFiles timed out — resumable next run", {
+							cronJob: "cleanup-orphan-media",
+							pagesProcessed,
+							pendingKeys: orphanKeys.length,
+						});
+						hasMore = true;
+						break;
+					}
 					logger.error("Error deleting orphan files", error, { cronJob: "cleanup-orphan-media" });
 					errors += orphanKeys.length;
 				}
@@ -122,6 +190,11 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 		errored: errors,
 		// skipped = files protected by 24h race-condition guard or not orphan
 		skipped: Math.max(0, filesScanned - orphansDeleted - errors),
+		// `hasMore` propagates either (a) a natural page-full UploadThing list
+		// (more files exist past `MAX_PAGES_PER_RUN * UPLOADTHING_LIST_LIMIT`)
+		// or (b) a timeout-triggered break (cf `withDeadline` above) so the
+		// next monthly run resumes from a clean slate.
+		hasMore,
 		filesScanned,
 		orphansDeleted,
 		errors,

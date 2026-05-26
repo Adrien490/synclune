@@ -25,6 +25,8 @@ export type ActionState =
 				| ActionStatus.FORBIDDEN;
 			message: string;
 			data?: undefined;
+			/** Secondes avant retry quand l'erreur est un rate limit (cf. RFC 7231 Retry-After) */
+			retryAfter?: number;
 	  }
 	| { status: ActionStatus.INITIAL; message: string; data?: undefined };
 

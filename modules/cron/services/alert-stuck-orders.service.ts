@@ -1,9 +1,27 @@
+import * as Sentry from "@sentry/nextjs";
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { BATCH_SIZE_LARGE, THRESHOLDS } from "@/modules/cron/constants/limits";
 import { sendAdminStuckOrdersAlert } from "@/modules/emails/services/admin-emails";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
+
+const CRON_JOB = "alert-stuck-orders";
+
+/**
+ * Capture to Sentry when the admin alert email itself fails — the admin alert
+ * IS the email, so a failed send is a dead-loop otherwise (no other channel
+ * notifies the admin that they need to look at stuck orders).
+ */
+function captureEmailFailure(error: unknown, context: Record<string, unknown>): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("cronJob", CRON_JOB);
+		scope.setLevel("error");
+		scope.setFingerprint(["cron", CRON_JOB, "email-failed"]);
+		scope.setContext("stuckOrders", context);
+		Sentry.captureException(error);
+	});
+}
 
 interface StuckOrderRow {
 	id: string;
@@ -87,20 +105,32 @@ export async function alertStuckOrders(): Promise<CronResult> {
 	}
 
 	let errored = 0;
+	const alertContext = {
+		processingCount: processingOrders.length,
+		shippedCount: shippedOrders.length,
+		totalStuck,
+	};
 	try {
 		const result = await sendAdminStuckOrdersAlert({ processingOrders, shippedOrders });
 		if (!result.success) {
 			errored = 1;
 			logger.error("Failed to send stuck orders alert", undefined, {
-				cronJob: "alert-stuck-orders",
+				cronJob: CRON_JOB,
 				error: result.error,
 			});
+			captureEmailFailure(
+				result.error instanceof Error
+					? result.error
+					: new Error(typeof result.error === "string" ? result.error : "Resend returned failure"),
+				alertContext,
+			);
 		}
 	} catch (error) {
 		errored = 1;
 		logger.error("Exception sending stuck orders alert", error, {
-			cronJob: "alert-stuck-orders",
+			cronJob: CRON_JOB,
 		});
+		captureEmailFailure(error, alertContext);
 	}
 
 	return {

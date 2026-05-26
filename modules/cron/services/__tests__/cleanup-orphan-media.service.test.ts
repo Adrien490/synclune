@@ -31,6 +31,7 @@ vi.mock("@/modules/media/utils/extract-file-key", () => ({
 }));
 
 import { cleanupOrphanMedia } from "../cleanup-orphan-media.service";
+import { CronDeadlineExceededError } from "@/modules/cron/lib/cron-result";
 
 describe("cleanupOrphanMedia", () => {
 	beforeEach(() => {
@@ -197,5 +198,70 @@ describe("cleanupOrphanMedia", () => {
 		// First page: 500 files scanned, second page: 0 (empty, breaks loop)
 		expect(result.filesScanned).toBe(500);
 		expect(mockListFiles).toHaveBeenCalledTimes(2);
+	});
+
+	it("re-throws CronDeadlineExceededError enriched with partial counts when DB scan exceeds deadline", async () => {
+		mockPrisma.skuMedia.findMany.mockRejectedValue(
+			new CronDeadlineExceededError("Deadline hit during skuMedia-scan", {
+				processed: 0,
+				errored: 0,
+				skipped: 0,
+				step: "skuMedia-scan",
+			}),
+		);
+
+		await expect(cleanupOrphanMedia()).rejects.toMatchObject({
+			name: "CronDeadlineExceededError",
+			partial: expect.objectContaining({
+				step: "skuMedia-scan",
+				filesScanned: 0,
+				orphansDeleted: 0,
+				errors: 0,
+			}),
+		});
+	});
+
+	it("breaks gracefully with hasMore: true when UploadThing listFiles hangs past the deadline", async () => {
+		vi.useFakeTimers();
+		try {
+			// Hang forever — only the internal withDeadline timer will resolve the race.
+			mockListFiles.mockImplementation(() => new Promise(() => {}));
+
+			const promise = cleanupOrphanMedia();
+			// Advance past BATCH_DEADLINE_MS (45_000) so the timeout timer fires.
+			await vi.advanceTimersByTimeAsync(50_000);
+			const result = await promise;
+
+			expect(result).toMatchObject({
+				orphansDeleted: 0,
+				errors: 0,
+				hasMore: true,
+			});
+			expect(mockDeleteFiles).not.toHaveBeenCalled();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("breaks gracefully with hasMore: true when UploadThing deleteFiles hangs past the deadline", async () => {
+		vi.useFakeTimers();
+		try {
+			const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+			mockListFiles.mockResolvedValueOnce({
+				files: [{ key: "orphan-hang", uploadedAt: twoDaysAgo }],
+			});
+			mockDeleteFiles.mockImplementation(() => new Promise(() => {}));
+
+			const promise = cleanupOrphanMedia();
+			await vi.advanceTimersByTimeAsync(50_000);
+			const result = await promise;
+
+			expect(result).toMatchObject({
+				orphansDeleted: 0,
+				hasMore: true,
+			});
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });

@@ -1,8 +1,12 @@
 /**
  * In-memory rate limiting
  *
- * Uses a Map-based sliding window for rate limiting.
- * Sufficient for single-instance deployments; Arcjet handles distributed rate limiting.
+ * Algorithme: fixed counter window per identifier — un seul { count, resetAt } par clé,
+ * reset complet quand l'expiry est atteint. Pas de log d'événements ni de calcul sliding pondéré.
+ *
+ * Sufficient for single-instance deployments; cold-start vide les Maps et chaque instance
+ * Vercel serverless a sa propre copie — protection best-effort uniquement.
+ * Pour multi-instance + persistance: migrer vers Upstash Redis ou Arcjet.
  */
 
 import { logger } from "@/shared/lib/logger";
@@ -67,36 +71,41 @@ function formatRetryAfter(seconds: number): string {
 	return `${minutes} minute${minutes > 1 ? "s" : ""}`;
 }
 
+function evictExpired(store: Map<string, RateLimitEntry>, now: number): void {
+	for (const [key, entry] of store.entries()) {
+		if (entry.resetAt < now) {
+			store.delete(key);
+		}
+	}
+}
+
+function trimStoreToMaxSize(store: Map<string, RateLimitEntry>): void {
+	if (store.size <= MAX_STORE_SIZE) return;
+	const entries = Array.from(store.entries()).sort((a, b) => a[1].resetAt - b[1].resetAt);
+	const targetSize = Math.floor(MAX_STORE_SIZE * 0.9);
+	const toDelete = entries.slice(0, entries.length - targetSize);
+	toDelete.forEach(([key]) => store.delete(key));
+}
+
 function cleanupExpiredEntries(): void {
 	const now = Date.now();
-	const shouldForceCleanup = rateLimitStore.size > MAX_STORE_SIZE;
+	const shouldForceCleanup =
+		rateLimitStore.size > MAX_STORE_SIZE || globalIpLimitStore.size > MAX_STORE_SIZE;
 
-	if (!shouldForceCleanup && (now - lastCleanup < CLEANUP_INTERVAL || rateLimitStore.size < 1000)) {
+	if (
+		!shouldForceCleanup &&
+		(now - lastCleanup < CLEANUP_INTERVAL ||
+			(rateLimitStore.size < 1000 && globalIpLimitStore.size < 1000))
+	) {
 		return;
 	}
 
 	lastCleanup = now;
 
-	for (const [key, entry] of rateLimitStore.entries()) {
-		if (entry.resetAt < now) {
-			rateLimitStore.delete(key);
-		}
-	}
-
-	if (rateLimitStore.size > MAX_STORE_SIZE) {
-		const entries = Array.from(rateLimitStore.entries()).sort(
-			(a, b) => a[1].resetAt - b[1].resetAt,
-		);
-		const targetSize = Math.floor(MAX_STORE_SIZE * 0.9);
-		const toDelete = entries.slice(0, entries.length - targetSize);
-		toDelete.forEach(([key]) => rateLimitStore.delete(key));
-	}
-
-	for (const [key, entry] of globalIpLimitStore.entries()) {
-		if (entry.resetAt < now) {
-			globalIpLimitStore.delete(key);
-		}
-	}
+	evictExpired(rateLimitStore, now);
+	evictExpired(globalIpLimitStore, now);
+	trimStoreToMaxSize(rateLimitStore);
+	trimStoreToMaxSize(globalIpLimitStore);
 }
 
 // ============================================================================
@@ -161,14 +170,14 @@ function checkRateLimitInMemory(
 	const now = Date.now();
 	const key = `ratelimit:${identifier}`;
 
-	// Global IP limit
+	// Global IP limit — read/modify/write fully synchronous (no await between get/set)
 	if (ipAddress) {
 		const globalKey = `global:ip:${ipAddress}`;
-		let globalEntry = globalIpLimitStore.get(globalKey);
-
-		if (!globalEntry || globalEntry.resetAt < now) {
-			globalEntry = { count: 0, resetAt: now + GLOBAL_IP_WINDOW };
-		}
+		const existingGlobal = globalIpLimitStore.get(globalKey);
+		const globalEntry =
+			!existingGlobal || existingGlobal.resetAt < now
+				? { count: 0, resetAt: now + GLOBAL_IP_WINDOW }
+				: existingGlobal;
 
 		if (globalEntry.count >= GLOBAL_IP_LIMIT) {
 			const retryAfterSeconds = Math.ceil((globalEntry.resetAt - now) / 1000);
@@ -190,27 +199,26 @@ function checkRateLimitInMemory(
 			};
 		}
 
-		globalEntry.count++;
-		globalIpLimitStore.set(globalKey, globalEntry);
+		globalIpLimitStore.set(globalKey, {
+			count: globalEntry.count + 1,
+			resetAt: globalEntry.resetAt,
+		});
 	}
 
-	cleanupExpiredEntries();
-
-	let entry = rateLimitStore.get(key);
-
-	if (!entry || entry.resetAt < now) {
-		entry = { count: 0, resetAt: now + windowMs };
-	}
+	// Per-action limit — same read/modify/write atomicity
+	const existing = rateLimitStore.get(key);
+	const entry =
+		!existing || existing.resetAt < now ? { count: 0, resetAt: now + windowMs } : existing;
 
 	const wouldExceedLimit = entry.count >= limit;
 
 	if (!wouldExceedLimit) {
-		entry.count++;
-		rateLimitStore.set(key, entry);
+		rateLimitStore.set(key, { count: entry.count + 1, resetAt: entry.resetAt });
 	}
 
 	const success = !wouldExceedLimit;
-	const remaining = Math.max(0, limit - entry.count);
+	const finalCount = success ? entry.count + 1 : entry.count;
+	const remaining = Math.max(0, limit - finalCount);
 	const retryAfterSeconds = success ? undefined : Math.ceil((entry.resetAt - now) / 1000);
 
 	if (!success) {
@@ -223,6 +231,10 @@ function checkRateLimitInMemory(
 			retryAfterSeconds: retryAfterSeconds!,
 		});
 	}
+
+	// Cleanup hors chemin critique (après check). Évite une fenêtre de race entre
+	// le check global et le check per-action si cleanup est lent (sort O(N log N)).
+	cleanupExpiredEntries();
 
 	return {
 		success,
@@ -256,13 +268,24 @@ export function getRateLimitIdentifier(
 
 /**
  * Extracts the real client IP from Next.js headers
+ *
+ * Ordre de priorité Vercel-first :
+ * 1. `x-vercel-forwarded-for` — injecté par l'edge Vercel, non-spoofable côté client
+ * 2. `x-real-ip` — alternative posée par Vercel/proxies de confiance
+ * 3. `x-forwarded-for` — fallback dev local / proxies non-Vercel (premier IP de la chain)
+ *
+ * Sur Vercel, un client peut envoyer `X-Forwarded-For: 1.2.3.4` mais l'edge Vercel ajoute
+ * la vraie IP dans `x-vercel-forwarded-for` que le client ne peut pas écraser.
  */
 export async function getClientIp(headers: ReadonlyHeaders): Promise<string | null> {
-	const forwardedFor = headers.get("x-forwarded-for");
-	if (forwardedFor) return forwardedFor.split(",")[0]!.trim();
+	const vercelForwardedFor = headers.get("x-vercel-forwarded-for");
+	if (vercelForwardedFor) return vercelForwardedFor.split(",")[0]!.trim();
 
 	const realIp = headers.get("x-real-ip");
 	if (realIp) return realIp.trim();
+
+	const forwardedFor = headers.get("x-forwarded-for");
+	if (forwardedFor) return forwardedFor.split(",")[0]!.trim();
 
 	return null;
 }

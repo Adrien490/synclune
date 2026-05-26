@@ -10,6 +10,7 @@ const { mockPrisma, mockStripe, mockGetStripeClient, mockCanTransition, mockCapt
 				aggregate: vi.fn(),
 			},
 			order: { update: vi.fn() },
+			orderHistory: { create: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockStripe: {
@@ -222,5 +223,53 @@ describe("reconcileRefunds", () => {
 		const result = await reconcileRefunds();
 
 		expect(result.hasMore).toBe(true);
+	});
+
+	it("writes a SYSTEM OrderHistory entry on successful COMPLETED finalisation (DLQ audit trail)", async () => {
+		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
+
+		await reconcileRefunds();
+
+		expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				orderId: "order-1",
+				action: "REFUND_COMPLETED",
+				source: "SYSTEM",
+				authorName: "Système (reconcile-refunds)",
+				newPaymentStatus: "REFUNDED",
+				metadata: expect.objectContaining({
+					refundId: "refund-1",
+					reason: "stripe_dlq_reconcile",
+				}),
+			}),
+		});
+	});
+
+	it("writes a SYSTEM OrderHistory entry on FAILED finalisation (DLQ audit trail)", async () => {
+		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockStripe.refunds.retrieve.mockResolvedValue({
+			status: "failed",
+			failure_reason: "expired_or_canceled_card",
+		});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+
+		await reconcileRefunds();
+
+		expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				orderId: "order-1",
+				action: "REFUND_FAILED",
+				source: "SYSTEM",
+				authorName: "Système (reconcile-refunds)",
+				metadata: expect.objectContaining({
+					refundId: "refund-1",
+					failureReason: "expired_or_canceled_card",
+					reason: "stripe_dlq_reconcile",
+				}),
+			}),
+		});
 	});
 });

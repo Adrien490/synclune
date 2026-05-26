@@ -228,4 +228,37 @@ describe("retryFailedWebhooks", () => {
 
 		expect(result.hasMore).toBe(true);
 	});
+
+	it("breaks the loop early when the BATCH_DEADLINE_MS deadline is exceeded mid-batch", async () => {
+		const batch = Array.from({ length: 3 }, (_, i) => ({
+			id: `wh-${i}`,
+			stripeEventId: `evt_${i}`,
+			eventType: "payment_intent.succeeded",
+			attempts: 0,
+		}));
+		mockPrisma.webhookEvent.findMany.mockResolvedValueOnce(batch);
+		mockStripe.events.retrieve.mockResolvedValue({
+			id: "evt",
+			type: "payment_intent.succeeded",
+		});
+		mockDispatchEvent.mockResolvedValue({ skipped: false });
+
+		// Date.now() climbs ~30s per call → after iter 1 the deadline (initialAt + 45s)
+		// is already in the past, so iter 2 should break before any work.
+		let virtualNow = 1_700_000_000_000;
+		const spy = vi.spyOn(Date, "now").mockImplementation(() => {
+			const t = virtualNow;
+			virtualNow += 30_000;
+			return t;
+		});
+
+		try {
+			const result = await retryFailedWebhooks();
+
+			expect(mockDispatchEvent).toHaveBeenCalledTimes(1);
+			expect(result).toMatchObject({ processed: 1, errored: 0, skipped: 0 });
+		} finally {
+			spy.mockRestore();
+		}
+	});
 });

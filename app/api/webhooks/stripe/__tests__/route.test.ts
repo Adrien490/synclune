@@ -15,6 +15,8 @@ const {
 	mockIsEventSupported,
 	mockExecutePostWebhookTasks,
 	mockSendWebhookFailedAlert,
+	mockCheckRateLimit,
+	mockGetClientIp,
 	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	WebhookEventStatus,
@@ -46,6 +48,8 @@ const {
 		mockIsEventSupported: vi.fn(),
 		mockExecutePostWebhookTasks: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
+		mockCheckRateLimit: vi.fn(),
+		mockGetClientIp: vi.fn(),
 		ANTI_REPLAY_WINDOW_SECONDS: 300,
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
 		WebhookEventStatus: {
@@ -101,6 +105,15 @@ vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	WebhookEventStatus,
+}));
+
+vi.mock("@/shared/lib/rate-limit", () => ({
+	checkRateLimit: mockCheckRateLimit,
+	getClientIp: mockGetClientIp,
+}));
+
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	STRIPE_WEBHOOK_LIMIT: { limit: 100, windowMs: 60_000 },
 }));
 
 import { POST } from "../route";
@@ -181,6 +194,98 @@ beforeEach(() => {
 
 	// Default: after() immediately calls the callback
 	mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
+
+	// Default: rate limit allows the request
+	mockGetClientIp.mockResolvedValue("203.0.113.10");
+	mockCheckRateLimit.mockResolvedValue({
+		success: true,
+		remaining: 99,
+		limit: 100,
+		reset: Date.now() + 60_000,
+	});
+});
+
+// ============================================================================
+// 0. Rate limit (pre-signature)
+// ============================================================================
+
+describe("POST /api/webhooks/stripe - rate limit", () => {
+	it("returns 429 with Retry-After header when rate limit exceeded", async () => {
+		mockCheckRateLimit.mockResolvedValueOnce({
+			success: false,
+			remaining: 0,
+			limit: 100,
+			reset: Date.now() + 60_000,
+			retryAfter: 42,
+			error: "Trop de requêtes.",
+		});
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		expect(response.status).toBe(429);
+		expect(mockNextResponseJson).toHaveBeenCalledWith(
+			{ error: "Rate limit exceeded" },
+			{ status: 429, headers: { "Retry-After": "42" } },
+		);
+	});
+
+	it("falls back to Retry-After: 60 when retryAfter is missing", async () => {
+		mockCheckRateLimit.mockResolvedValueOnce({
+			success: false,
+			remaining: 0,
+			limit: 100,
+			reset: Date.now() + 60_000,
+			error: "Trop de requêtes.",
+		});
+
+		const req = makeRequest();
+		await POST(req);
+
+		expect(mockNextResponseJson).toHaveBeenCalledWith(
+			{ error: "Rate limit exceeded" },
+			{ status: 429, headers: { "Retry-After": "60" } },
+		);
+	});
+
+	it("does not call constructEvent when rate limit is exceeded", async () => {
+		mockCheckRateLimit.mockResolvedValueOnce({
+			success: false,
+			remaining: 0,
+			limit: 100,
+			reset: Date.now() + 60_000,
+			error: "Trop de requêtes.",
+		});
+
+		const req = makeRequest();
+		await POST(req);
+
+		expect(mockConstructEvent).not.toHaveBeenCalled();
+	});
+
+	it("passes Stripe webhook identifier and IP to checkRateLimit", async () => {
+		const req = makeRequest();
+		await POST(req);
+
+		expect(mockCheckRateLimit).toHaveBeenCalledWith(
+			"stripe-webhook:203.0.113.10",
+			{ limit: 100, windowMs: 60_000 },
+			"203.0.113.10",
+		);
+	});
+
+	it("uses 'unknown' identifier when client IP cannot be resolved", async () => {
+		mockGetClientIp.mockResolvedValueOnce(null);
+
+		const req = makeRequest();
+		await POST(req);
+
+		expect(mockCheckRateLimit).toHaveBeenCalledWith(
+			"stripe-webhook:unknown",
+			{ limit: 100, windowMs: 60_000 },
+			null,
+		);
+	});
 });
 
 // ============================================================================

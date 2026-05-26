@@ -32,6 +32,7 @@ interface EmailLayoutProps {
  * que les clients email n'arrivent pas à toucher autrement.
  */
 const EMAIL_HEAD_STYLES = `
+	@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Caveat:wght@400&display=swap');
 	:root { color-scheme: light dark; }
 	@media (prefers-color-scheme: dark) {
 		body { background-color: ${EMAIL_COLORS_DARK.background.main} !important; }
@@ -59,7 +60,7 @@ const EMAIL_HEAD_STYLES = `
 			border-right: none !important;
 			max-width: 100% !important;
 		}
-		.${EMAIL_CLASSES.heading.h1} { font-size: 22px !important; line-height: 1.25 !important; }
+		.${EMAIL_CLASSES.heading.h1} { font-size: 24px !important; line-height: 1.25 !important; }
 		.${EMAIL_CLASSES.heading.h2} { font-size: 20px !important; line-height: 1.3 !important; }
 		.${EMAIL_CLASSES.heading.h3} { font-size: 17px !important; }
 		.${EMAIL_CLASSES.button.primary},

@@ -1,5 +1,5 @@
 import { Img, Link, Section, Text } from "react-email";
-import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_FONT_FAMILY, EMAIL_STYLES } from "./email-colors";
 import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
@@ -100,7 +100,18 @@ export const ReviewRequestEmail = ({
 
 			<Section style={{ marginBottom: "16px" }}>
 				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
-					Quelques minutes suffisent — merci d&apos;avance ! Léane
+					Quelques minutes suffisent — merci d&apos;avance !
+				</Text>
+				<Text
+					style={{
+						margin: "8px 0 0",
+						fontFamily: EMAIL_FONT_FAMILY.cursive,
+						fontSize: "26px",
+						lineHeight: 1.1,
+						color: EMAIL_COLORS.primary,
+					}}
+				>
+					Léane
 				</Text>
 			</Section>
 		</EmailLayout>

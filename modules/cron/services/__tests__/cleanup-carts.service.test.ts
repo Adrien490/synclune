@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockLogger } = vi.hoisted(() => ({
+const { mockPrisma, mockLogger, mockSentryCapture, mockSentryWithScope } = vi.hoisted(() => ({
 	mockPrisma: {
 		cart: {
 			findMany: vi.fn(),
@@ -14,6 +14,8 @@ const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 		error: vi.fn(),
 		debug: vi.fn(),
 	},
+	mockSentryCapture: vi.fn(),
+	mockSentryWithScope: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -24,11 +26,37 @@ vi.mock("@/shared/lib/logger", () => ({
 	logger: mockLogger,
 }));
 
+vi.mock("@sentry/nextjs", () => ({
+	captureException: mockSentryCapture,
+	withScope: mockSentryWithScope,
+	captureMessage: vi.fn(),
+	addBreadcrumb: vi.fn(),
+	startSpan: vi.fn(async (_opts: unknown, cb: () => unknown) => cb()),
+}));
+
 import { cleanupExpiredCarts } from "../cleanup-carts.service";
 
 const GRACE_PERIOD_MS = 23 * 24 * 60 * 60 * 1000;
 
+interface FakeSentryScope {
+	setTag: ReturnType<typeof vi.fn>;
+	setLevel: ReturnType<typeof vi.fn>;
+	setFingerprint: ReturnType<typeof vi.fn>;
+	setContext: ReturnType<typeof vi.fn>;
+}
+
+function createSentryScope(): FakeSentryScope {
+	return {
+		setTag: vi.fn(),
+		setLevel: vi.fn(),
+		setFingerprint: vi.fn(),
+		setContext: vi.fn(),
+	};
+}
+
 describe("cleanupExpiredCarts", () => {
+	let lastScope: FakeSentryScope;
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
@@ -41,6 +69,10 @@ describe("cleanupExpiredCarts", () => {
 		]);
 		mockPrisma.cart.deleteMany.mockResolvedValue({ count: 3 });
 		mockPrisma.$executeRaw.mockResolvedValue(0);
+		mockSentryWithScope.mockImplementation((cb: (s: FakeSentryScope) => void) => {
+			lastScope = createSentryScope();
+			cb(lastScope);
+		});
 	});
 
 	it("should hard-delete guest carts past grace period (expiresAt < now - 23j, userId null)", async () => {
@@ -138,5 +170,41 @@ describe("cleanupExpiredCarts", () => {
 		mockPrisma.cart.findMany.mockRejectedValue(new Error("DB connection lost"));
 
 		await expect(cleanupExpiredCarts()).rejects.toThrow("DB connection lost");
+	});
+
+	it("should capture cart-deletion errors to Sentry with a step-specific fingerprint before re-throwing", async () => {
+		const dbError = new Error("DB connection lost");
+		mockPrisma.cart.findMany.mockRejectedValue(dbError);
+
+		await expect(cleanupExpiredCarts()).rejects.toThrow("DB connection lost");
+
+		expect(mockSentryWithScope).toHaveBeenCalledOnce();
+		expect(mockSentryCapture).toHaveBeenCalledWith(dbError);
+		expect(lastScope.setTag).toHaveBeenCalledWith("cronJob", "cleanup-carts");
+		expect(lastScope.setTag).toHaveBeenCalledWith("step", "cart-deletion");
+		expect(lastScope.setFingerprint).toHaveBeenCalledWith([
+			"cron",
+			"cleanup-carts",
+			"cart-deletion",
+		]);
+		expect(lastScope.setContext).toHaveBeenCalledWith(
+			"cleanup",
+			expect.objectContaining({ deletedCount: expect.any(Number) }),
+		);
+	});
+
+	it("should capture orphan-items errors to Sentry separately from cart-deletion (distinct issue groups)", async () => {
+		const orphanError = new Error("Raw SQL timeout");
+		mockPrisma.$executeRaw.mockRejectedValue(orphanError);
+
+		await expect(cleanupExpiredCarts()).rejects.toThrow("Raw SQL timeout");
+
+		expect(mockSentryCapture).toHaveBeenCalledWith(orphanError);
+		expect(lastScope.setTag).toHaveBeenCalledWith("step", "orphan-items");
+		expect(lastScope.setFingerprint).toHaveBeenCalledWith([
+			"cron",
+			"cleanup-carts",
+			"orphan-items",
+		]);
 	});
 });

@@ -775,15 +775,15 @@ describe("Fab", () => {
 		});
 
 		// Hover modernization audit (2026-05-25) — halo + scale + can-hover guard
-		it("applies can-hover:hover halo + scale classes (F1/F4 — sticky-hover safe on touch)", () => {
+		// Audit beauté (2026-05-26) — halo migré sur l'utility SSOT `hover-halo` (globals.css).
+		it("applies hover-halo SSOT utility + scale classes (F1/F4 — sticky-hover safe on touch)", () => {
 			render(<Fab {...DEFAULT_PROPS} onClick={() => {}} />);
 
 			const mainBtn = screen
 				.getAllByTestId("button")
 				.find((el) => el.getAttribute("aria-label") === "Ouvrir le menu d'actions");
 			expect(mainBtn!.className).toContain("group/fab");
-			expect(mainBtn!.className).toContain("can-hover:hover:before:opacity-100");
-			expect(mainBtn!.className).toContain("focus-visible:before:opacity-100");
+			expect(mainBtn!.className).toContain("hover-halo");
 			expect(mainBtn!.className).toContain("motion-safe:can-hover:hover:scale-[1.06]");
 			expect(mainBtn!.className).toContain("motion-safe:active:scale-[0.94]");
 			expect(mainBtn!.className).not.toContain("active:scale-95"); // F7 legacy removed

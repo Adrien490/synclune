@@ -387,7 +387,7 @@ const form = useAppForm<MyInput>({
 
 ## Security
 
-- **Rate limiting**: in-memory per-action via `shared/lib/rate-limit.ts` (sliding window, 100 req/min IP global + per-action limits). Single-instance Node.js : sur Vercel serverless chaque instance a son propre Map, reset au cold-start → protection best-effort contre abus simples, **insuffisant pour DDoS sérieux**. Pour cohérence cross-instance : Upstash Redis ou Arcjet (non installés à ce jour).
+- **Rate limiting**: in-memory per-action via `shared/lib/rate-limit.ts` (**fixed counter window** par identifier — un `{count,resetAt}` reset complet à expiry, pas de log d'événements sliding ; 100 req/min IP global + per-action limits). IP extraction Vercel-first : `x-vercel-forwarded-for` → `x-real-ip` → `x-forwarded-for` (les deux premiers sont non-spoofables via l'edge Vercel). Single-instance Node.js : sur Vercel serverless chaque instance a son propre Map, reset au cold-start → protection best-effort contre abus simples, **insuffisant pour DDoS sérieux**. Pour cohérence cross-instance : Upstash Redis ou Arcjet (non installés à ce jour).
 - **Validation**: Zod server-side
 - **RGPD**: Soft deletes, consent tracking, data export
 - **Webhooks**: Stripe signature verification + idempotency + 5-minute anti-replay window

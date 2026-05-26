@@ -55,11 +55,23 @@ export const EMAIL_COLORS_DARK = {
 } as const;
 
 /**
+ * Font families pour les emails — alignées sur la marque storefront (Fraunces serif,
+ * Figtree sans, Caveat cursive). Les web fonts sont chargées via @import Google Fonts
+ * dans EMAIL_HEAD_STYLES. Outlook Desktop ignore @import et tombe sur les fallbacks
+ * (Georgia/Brush Script MT) — dégradation gracieuse.
+ */
+export const EMAIL_FONT_FAMILY = {
+	body: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+	display: "'Fraunces', Georgia, 'Times New Roman', serif",
+	cursive: "'Caveat', 'Brush Script MT', 'Lucida Handwriting', cursive",
+} as const;
+
+/**
  * Styles inline réutilisables pour les composants d'email
  */
 export const EMAIL_STYLES = {
 	body: {
-		fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+		fontFamily: EMAIL_FONT_FAMILY.body,
 	},
 
 	container: {
@@ -73,18 +85,26 @@ export const EMAIL_STYLES = {
 
 	heading: {
 		/**
-		 * Premier titre de contenu - hiérarchie sémantique (rendu visuel identique au h2 pour éviter de casser la charte)
+		 * Premier titre de contenu — Fraunces (display serif Soft+Wonk),
+		 * porte la signature typographique de la marque en email.
+		 * Fallback Georgia/Times pour clients sans web fonts (Outlook Desktop).
 		 */
 		h1: {
 			margin: 0,
-			fontSize: "24px",
-			fontWeight: "bold" as const,
+			fontFamily: EMAIL_FONT_FAMILY.display,
+			fontSize: "28px",
+			fontWeight: "normal" as const,
+			letterSpacing: "-0.01em",
+			lineHeight: "1.2",
 			color: EMAIL_COLORS.text.primary,
 		},
 		h2: {
 			margin: 0,
-			fontSize: "24px",
-			fontWeight: "bold" as const,
+			fontFamily: EMAIL_FONT_FAMILY.display,
+			fontSize: "22px",
+			fontWeight: "normal" as const,
+			letterSpacing: "-0.01em",
+			lineHeight: "1.3",
 			color: EMAIL_COLORS.text.primary,
 		},
 		h3: {

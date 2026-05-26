@@ -213,4 +213,34 @@ describe("enforceRateLimitForCurrentUser", () => {
 			expect.anything(),
 		);
 	});
+
+	it("propagates retryAfter when checkRateLimit provides it", async () => {
+		mockCheckRateLimit.mockResolvedValue({
+			success: false,
+			remaining: 0,
+			limit: 10,
+			retryAfter: 75,
+			error: "Trop de requêtes. Veuillez réessayer dans 75 secondes.",
+		});
+
+		const result = await enforceRateLimitForCurrentUser(MOCK_LIMIT);
+
+		if (!("error" in result)) throw new Error("Expected error result");
+		if (result.error.status !== ActionStatus.ERROR) throw new Error("Expected ERROR status");
+		expect(result.error.retryAfter).toBe(75);
+	});
+
+	it("omits retryAfter when checkRateLimit does not provide it", async () => {
+		mockCheckRateLimit.mockResolvedValue({
+			success: false,
+			remaining: 0,
+			limit: 10,
+			error: "Trop de requêtes. Veuillez réessayer plus tard.",
+		});
+
+		const result = await enforceRateLimitForCurrentUser(MOCK_LIMIT);
+
+		if (!("error" in result)) throw new Error("Expected error result");
+		expect("retryAfter" in result.error).toBe(false);
+	});
 });

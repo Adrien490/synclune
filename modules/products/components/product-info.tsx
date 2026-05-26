@@ -32,7 +32,10 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 					{/* h1 sr-only mobile : PageHeader (h1 desktop) est `hidden sm:block`, donc absent du DOM mobile.
 					    Mobile-first indexing Google + lecteurs d'écran iOS/Android attendent un h1. */}
 					<h1 className="sr-only sm:hidden">{product.title}</h1>
-					<p className="text-foreground text-3xl/10 font-medium tracking-normal" itemProp="name">
+					<p
+						className="font-display text-foreground text-3xl/10 font-normal tracking-tight text-balance sm:text-4xl/12"
+						itemProp="name"
+					>
 						{product.title}
 					</p>
 					<HandDrawnAccent

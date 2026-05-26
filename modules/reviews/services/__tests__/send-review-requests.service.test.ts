@@ -119,6 +119,7 @@ describe("sendReviewRequests", () => {
 			customerName: "Marie",
 			orderNumber: "SYN-2026-00001",
 			unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
+			idempotencyKey: "review-request:order-1",
 		});
 		expect(args.items).toHaveLength(1);
 		expect(args.items[0]).toMatchObject({
@@ -183,14 +184,60 @@ describe("sendReviewRequests", () => {
 		});
 	});
 
-	it("counts a Resend failure as errored and does not flag the order", async () => {
+	it("counts a Resend failure as errored AND still flags the order (best-effort, no duplicates)", async () => {
 		mockPrisma.order.findMany.mockResolvedValue([buildOrder()]);
 		mockSendReviewRequestEmail.mockResolvedValue({ success: false, error: "boom" });
+		mockPrisma.order.update.mockResolvedValue({});
 
 		const result = await sendReviewRequests();
 
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		// Even on Resend failure, the order is flagged so we never re-send (avoids
+		// the historical "user gets 2 emails on Resend timeout" duplication bug).
+		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+			where: { id: "order-1" },
+			data: { reviewRequestSentAt: expect.any(Date) },
+		});
 		expect(result).toMatchObject({ processed: 0, errored: 1, emailsSent: 0 });
+	});
+
+	it("flags the order even when sendReviewRequestEmail throws (best-effort)", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([buildOrder()]);
+		mockSendReviewRequestEmail.mockRejectedValue(new Error("network down"));
+		mockPrisma.order.update.mockResolvedValue({});
+
+		const result = await sendReviewRequests();
+
+		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+			where: { id: "order-1" },
+			data: { reviewRequestSentAt: expect.any(Date) },
+		});
+		expect(result).toMatchObject({ processed: 0, errored: 1 });
+	});
+
+	it("skips and flags orders with an invalid customer email (never reach Resend)", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([
+			buildOrder({ id: "order-bad", customerEmail: "not-an-email" }),
+		]);
+		mockPrisma.order.update.mockResolvedValue({});
+
+		const result = await sendReviewRequests();
+
+		expect(mockSendReviewRequestEmail).not.toHaveBeenCalled();
+		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+			where: { id: "order-bad" },
+			data: { reviewRequestSentAt: expect.any(Date) },
+		});
+		expect(result).toMatchObject({ processed: 0, errored: 0, skipped: 1, emailsSent: 0 });
+	});
+
+	it("passes a stable idempotencyKey 'review-request:<orderId>' to Resend", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([buildOrder({ id: "order-abc-123" })]);
+		mockSendReviewRequestEmail.mockResolvedValue({ success: true });
+
+		await sendReviewRequests();
+
+		const args = mockSendReviewRequestEmail.mock.calls[0]![0];
+		expect(args.idempotencyKey).toBe("review-request:order-abc-123");
 	});
 
 	it("falls back to a default customerName when name is empty", async () => {

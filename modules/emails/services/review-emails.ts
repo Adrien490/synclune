@@ -19,6 +19,7 @@ export async function sendReviewRequestEmail({
 	orderNumber,
 	items,
 	unsubscribeUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	customerName: string;
@@ -30,12 +31,14 @@ export async function sendReviewRequestEmail({
 		productImageUrl?: string | null;
 	}>;
 	unsubscribeUrl: string;
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(ReviewRequestEmail({ customerName, orderNumber, items, unsubscribeUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
 		replyTo: EMAIL_CONTACT,
 		unsubscribeUrl,
+		idempotencyKey,
 		tags: [
 			{ name: "category", value: "review" },
 			{ name: "transactional", value: "false" },

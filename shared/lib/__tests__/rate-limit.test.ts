@@ -8,10 +8,12 @@ vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 import {
 	checkRateLimit,
+	getClientIp,
 	getRateLimitIdentifier,
 	resetRateLimit,
 	getRateLimitStatus,
 } from "../rate-limit";
+import type { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
 beforeEach(() => {
 	delete process.env.RATE_LIMIT_WHITELIST;
@@ -263,6 +265,61 @@ describe("getRateLimitStatus", () => {
 		expect(status).not.toBeNull();
 		expect(status!.count).toBe(1);
 		expect(status!.resetAt).toBeGreaterThan(Date.now());
+	});
+});
+
+describe("getClientIp - Vercel-first priority", () => {
+	function makeHeaders(entries: Record<string, string>): ReadonlyHeaders {
+		return new Headers(entries) as unknown as ReadonlyHeaders;
+	}
+
+	it("prioritizes x-vercel-forwarded-for over x-real-ip and x-forwarded-for", async () => {
+		const headers = makeHeaders({
+			"x-vercel-forwarded-for": "203.0.113.10",
+			"x-real-ip": "10.0.0.1",
+			"x-forwarded-for": "1.2.3.4",
+		});
+		expect(await getClientIp(headers)).toBe("203.0.113.10");
+	});
+
+	it("falls back to x-real-ip when x-vercel-forwarded-for is absent", async () => {
+		const headers = makeHeaders({
+			"x-real-ip": "10.0.0.1",
+			"x-forwarded-for": "1.2.3.4",
+		});
+		expect(await getClientIp(headers)).toBe("10.0.0.1");
+	});
+
+	it("falls back to x-forwarded-for when both Vercel headers are absent", async () => {
+		const headers = makeHeaders({ "x-forwarded-for": "1.2.3.4" });
+		expect(await getClientIp(headers)).toBe("1.2.3.4");
+	});
+
+	it("takes the first IP in a comma-separated x-vercel-forwarded-for chain", async () => {
+		const headers = makeHeaders({
+			"x-vercel-forwarded-for": "203.0.113.10, 1.2.3.4, 5.6.7.8",
+		});
+		expect(await getClientIp(headers)).toBe("203.0.113.10");
+	});
+
+	it("returns null when no relevant header is present", async () => {
+		const headers = makeHeaders({});
+		expect(await getClientIp(headers)).toBeNull();
+	});
+
+	it("trims whitespace around the extracted IP", async () => {
+		const headers = makeHeaders({ "x-vercel-forwarded-for": "  203.0.113.10  " });
+		expect(await getClientIp(headers)).toBe("203.0.113.10");
+	});
+
+	it("ignores a spoofed x-forwarded-for when x-vercel-forwarded-for is present", async () => {
+		// Vercel adds x-vercel-forwarded-for at the edge (non-spoofable).
+		// A client-spoofed x-forwarded-for must NOT take precedence.
+		const headers = makeHeaders({
+			"x-vercel-forwarded-for": "203.0.113.99",
+			"x-forwarded-for": "1.1.1.1",
+		});
+		expect(await getClientIp(headers)).toBe("203.0.113.99");
 	});
 });
 

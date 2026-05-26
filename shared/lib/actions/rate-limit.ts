@@ -39,6 +39,7 @@ export async function enforceRateLimit(
 			error: {
 				status: ActionStatus.ERROR,
 				message: check.error ?? "Trop de requêtes. Veuillez réessayer plus tard.",
+				...(check.retryAfter !== undefined && { retryAfter: check.retryAfter }),
 			},
 		};
 	}

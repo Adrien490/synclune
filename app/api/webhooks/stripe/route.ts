@@ -13,6 +13,8 @@ import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import { logger } from "@/shared/lib/logger";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+import { STRIPE_WEBHOOK_LIMIT } from "@/shared/lib/rate-limit-config";
 import * as Sentry from "@sentry/nextjs";
 
 export const maxDuration = 60;
@@ -47,6 +49,23 @@ export async function POST(req: Request) {
 
 		if (!signature) {
 			return NextResponse.json({ error: "No signature" }, { status: 400 });
+		}
+
+		// 1.5 Rate limit AVANT signature verify (anti-CPU-drain sur signatures invalides)
+		const ipAddress = await getClientIp(headersList);
+		const rateCheck = await checkRateLimit(
+			`stripe-webhook:${ipAddress ?? "unknown"}`,
+			STRIPE_WEBHOOK_LIMIT,
+			ipAddress,
+		);
+		if (!rateCheck.success) {
+			return NextResponse.json(
+				{ error: "Rate limit exceeded" },
+				{
+					status: 429,
+					headers: { "Retry-After": String(rateCheck.retryAfter ?? 60) },
+				},
+			);
 		}
 
 		// 2. Vérification de la signature (CRITIQUE - Sécurité)

@@ -124,6 +124,45 @@ describe("enforceRateLimit — failure without error message", () => {
 });
 
 // ============================================================================
+// retryAfter propagation
+// ============================================================================
+
+describe("enforceRateLimit — retryAfter propagation", () => {
+	it("propagates retryAfter when checkRateLimit provides it", async () => {
+		mockCheckRateLimit.mockResolvedValue({
+			success: false,
+			remaining: 0,
+			limit: 10,
+			reset: 9999,
+			retryAfter: 42,
+			error: "Trop de requêtes. Veuillez réessayer dans 42 secondes.",
+		});
+
+		const result = await enforceRateLimit("user:abc", LIMIT_CONFIG);
+
+		if (!("error" in result)) throw new Error("Expected error result");
+		if (result.error.status !== ActionStatus.ERROR) throw new Error("Expected ERROR status");
+		expect(result.error.retryAfter).toBe(42);
+	});
+
+	it("omits retryAfter when checkRateLimit does not provide it", async () => {
+		mockCheckRateLimit.mockResolvedValue({
+			success: false,
+			remaining: 0,
+			limit: 10,
+			reset: 9999,
+			error: "Trop de requêtes. Veuillez réessayer plus tard.",
+			// retryAfter absent
+		});
+
+		const result = await enforceRateLimit("user:abc", LIMIT_CONFIG);
+
+		if (!("error" in result)) throw new Error("Expected error result");
+		expect("retryAfter" in result.error).toBe(false);
+	});
+});
+
+// ============================================================================
 // Argument forwarding
 // ============================================================================
 

@@ -1,5 +1,10 @@
 import { updateTag } from "next/cache";
-import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import {
+	HistorySource,
+	OrderAction,
+	PaymentStatus,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -16,6 +21,9 @@ import { REFUNDS_CACHE_TAGS } from "@/modules/refunds/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+
+const RECONCILE_AUDIT_AUTHOR = "Système (reconcile-refunds)";
 
 /**
  * DLQ refund reconciler.
@@ -135,11 +143,31 @@ export async function reconcileRefunds(): Promise<CronResult> {
 				}
 			} else if (stripeRefund.status === "failed") {
 				const failureReason = stripeRefund.failure_reason ?? "unknown";
-				const updated = await prisma.refund.updateMany({
-					where: { id: refund.id, status: RefundStatus.APPROVED },
-					data: { status: RefundStatus.FAILED, failureReason },
+				const failed = await prisma.$transaction(async (tx) => {
+					const updated = await tx.refund.updateMany({
+						where: { id: refund.id, status: RefundStatus.APPROVED },
+						data: { status: RefundStatus.FAILED, failureReason },
+					});
+					if (updated.count === 0) return false;
+
+					await createOrderAuditTx(tx, {
+						orderId: refund.orderId,
+						action: OrderAction.REFUND_FAILED,
+						source: HistorySource.SYSTEM,
+						authorName: RECONCILE_AUDIT_AUTHOR,
+						note: `Refund failed via Stripe DLQ reconciliation (${failureReason})`,
+						metadata: {
+							refundId: refund.id,
+							stripeRefundId: refund.stripeRefundId,
+							amount: refund.amount,
+							failureReason,
+							reason: "stripe_dlq_reconcile",
+						},
+					});
+					return true;
 				});
-				if (updated.count > 0) {
+
+				if (failed) {
 					processed++;
 					tagsToInvalidate.add(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
 				} else {
@@ -236,17 +264,40 @@ async function finalizeRefund(params: {
 		});
 		const totalRefunded = completedAggregate._sum.amount ?? refundAmount;
 
+		let newPaymentStatus: PaymentStatus | undefined;
 		if (totalRefunded >= orderTotal) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.REFUNDED },
-			});
+			newPaymentStatus = PaymentStatus.REFUNDED;
 		} else if (totalRefunded > 0) {
+			newPaymentStatus = PaymentStatus.PARTIALLY_REFUNDED;
+		}
+
+		if (newPaymentStatus) {
 			await tx.order.update({
 				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+				data: { paymentStatus: newPaymentStatus },
 			});
 		}
+
+		// Audit trail : conformité L123-22 + auditabilité du chemin DLQ. Sans
+		// cette ligne, un refund finalisé via cron n'a aucune trace dans
+		// OrderHistory contrairement aux refunds finalisés par webhook normal
+		// ou action admin (drift invisible post-prod, impossible à expliquer
+		// à un audit TVA).
+		await createOrderAuditTx(tx, {
+			orderId,
+			action: OrderAction.REFUND_COMPLETED,
+			source: HistorySource.SYSTEM,
+			authorName: RECONCILE_AUDIT_AUTHOR,
+			newPaymentStatus,
+			note: "Refund completed via Stripe DLQ reconciliation",
+			metadata: {
+				refundId,
+				refundAmount,
+				totalRefunded,
+				orderTotal,
+				reason: "stripe_dlq_reconcile",
+			},
+		});
 
 		return true;
 	});
