@@ -19,16 +19,22 @@ export async function GET(
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// Rate limit: PDF generation is CPU-intensive
-	const identifier = getRateLimitIdentifier(session.user.id);
-	const rateCheck = await checkRateLimit(identifier, ORDER_LIMITS.INVOICE_DOWNLOAD);
-	if (!rateCheck.success) {
-		return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
-			status: 429,
-			headers: {
-				"Retry-After": String(rateCheck.retryAfter ?? 60),
-			},
-		});
+	const isAdmin = session.user.role === "ADMIN";
+
+	// Rate limit: PDF generation is CPU-intensive. Admins bypass it because
+	// audit operations (fiscal control, customer support, batch verification)
+	// can legitimately exceed the 10/h threshold meant for client downloads.
+	if (!isAdmin) {
+		const identifier = getRateLimitIdentifier(session.user.id);
+		const rateCheck = await checkRateLimit(identifier, ORDER_LIMITS.INVOICE_DOWNLOAD);
+		if (!rateCheck.success) {
+			return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
+				status: 429,
+				headers: {
+					"Retry-After": String(rateCheck.retryAfter ?? 60),
+				},
+			});
+		}
 	}
 
 	const order = await getOrder({ orderNumber });
@@ -36,9 +42,11 @@ export async function GET(
 		return new Response("Commande introuvable", { status: 404 });
 	}
 
-	// Defense-in-depth: getOrder already scopes by userId for non-admins,
-	// but we add an explicit ownership check for the API route
-	if (order.userId !== session.user.id) {
+	// Defense-in-depth: getOrder already scopes by userId for non-admins, but
+	// we add an explicit ownership check for the API route. Admins bypass for
+	// fiscal audit / customer support — getOrder returned a record they had
+	// the right to see in the first place.
+	if (!isAdmin && order.userId !== session.user.id) {
 		return new Response("Accès interdit", { status: 403 });
 	}
 
@@ -112,7 +120,11 @@ function buildPdfHeaders(invoiceNumber: string | null, orderNumber: string): Hea
 	return {
 		"Content-Type": "application/pdf",
 		"Content-Disposition": `attachment; filename="${filename}"`,
-		"Cache-Control": "private, max-age=3600",
+		// La facture d'une commande PAID est immuable bit-à-bit (Art. L102 B LPF —
+		// archivée UploadThing + SHA-256). On peut cacher agressivement côté client
+		// pour économiser CPU/bande passante : un téléchargement répété sert le
+		// même fichier figé. `private` empêche tout cache intermédiaire partagé.
+		"Cache-Control": "private, max-age=31536000, immutable",
 		"X-Frame-Options": "DENY",
 		"X-Content-Type-Options": "nosniff",
 		"Referrer-Policy": "no-referrer",

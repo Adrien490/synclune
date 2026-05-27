@@ -65,7 +65,10 @@ function makeParams() {
 	return { params: Promise.resolve({ orderNumber: ORDER_NUMBER }) };
 }
 
-const SESSION = { user: { id: "user-1", email: "u@example.com" } };
+const SESSION = { user: { id: "user-1", email: "u@example.com", role: "USER" } };
+const ADMIN_SESSION = {
+	user: { id: "admin-1", email: "admin@example.com", role: "ADMIN" },
+};
 
 const PAID_ORDER = {
 	id: "order-1",
@@ -209,10 +212,10 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(mockPersistInvoiceNumber).not.toHaveBeenCalled();
 		});
 
-		it("sets Cache-Control: private, max-age=3600", async () => {
+		it("sets Cache-Control: private, max-age=31536000, immutable (facture figée Art. L102 B)", async () => {
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.headers.get("Cache-Control")).toBe("private, max-age=3600");
+			expect(res.headers.get("Cache-Control")).toBe("private, max-age=31536000, immutable");
 		});
 
 		it("calls generateInvoicePdf with the order", async () => {
@@ -275,6 +278,48 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(mockGenerateInvoicePdf).toHaveBeenCalled();
 
 			fetchSpy.mockRestore();
+		});
+	});
+
+	/**
+	 * @regression invoice-admin-bypass-2026-05-27
+	 *
+	 * Un admin doit pouvoir télécharger n'importe quelle facture pour audit
+	 * fiscal/service client sans subir le rate-limit de 10/h ni le check
+	 * d'ownership prévu pour les clients. Audit conformité 2026-05-27 §
+	 * EINV-AUDIT-012.
+	 */
+	describe("admin bypass", () => {
+		it("does NOT enforce rate-limit when session role is ADMIN", async () => {
+			mockGetSession.mockResolvedValue(ADMIN_SESSION);
+
+			await GET(makeReq(), makeParams());
+
+			expect(mockCheckRateLimit).not.toHaveBeenCalled();
+			expect(mockGetRateLimitIdentifier).not.toHaveBeenCalled();
+		});
+
+		it("still enforces rate-limit when session role is USER", async () => {
+			await GET(makeReq(), makeParams());
+
+			expect(mockCheckRateLimit).toHaveBeenCalled();
+		});
+
+		it("allows admin to download an invoice owned by a different user (audit)", async () => {
+			mockGetSession.mockResolvedValue(ADMIN_SESSION);
+			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+		});
+
+		it("non-admin still blocked by ownership check", async () => {
+			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(403);
 		});
 	});
 });
