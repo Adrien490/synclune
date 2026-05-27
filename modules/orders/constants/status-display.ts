@@ -1,4 +1,9 @@
-import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/enums";
+import type {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // Re-export pour compatibilité
@@ -50,4 +55,16 @@ export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant
 	SHIPPED: "secondary",
 	DELIVERED: "success",
 	RETURNED: "destructive",
+};
+
+export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+	PENDING: "Non émise",
+	GENERATED: "Émise",
+	VOIDED: "Annulée (avoir)",
+};
+
+export const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
+	PENDING: "outline",
+	GENERATED: "success",
+	VOIDED: "warning",
 };

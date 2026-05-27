@@ -133,6 +133,29 @@ describe("buildOrderFilterConditions", () => {
 		expect(result.fulfillmentStatus).toBe("SHIPPED");
 	});
 
+	it("should filter by single invoiceStatus", () => {
+		const result = buildOrderFilterConditions(
+			filters({
+				invoiceStatus: "GENERATED",
+			}),
+		);
+		expect(result.invoiceStatus).toBe("GENERATED");
+	});
+
+	it("should filter by multiple invoiceStatuses (admin audit fiscal)", () => {
+		const result = buildOrderFilterConditions(
+			filters({
+				invoiceStatus: ["GENERATED", "VOIDED"],
+			}),
+		);
+		expect(result.invoiceStatus).toEqual({ in: ["GENERATED", "VOIDED"] });
+	});
+
+	it("does not add invoiceStatus condition when unset", () => {
+		const result = buildOrderFilterConditions(filters({}));
+		expect(result.invoiceStatus).toBeUndefined();
+	});
+
 	it("should filter by totalMin only", () => {
 		const result = buildOrderFilterConditions(filters({ totalMin: 1000 }));
 		expect(result.total).toEqual({ gte: 1000 });

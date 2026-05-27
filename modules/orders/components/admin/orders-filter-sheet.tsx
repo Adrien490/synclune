@@ -14,6 +14,7 @@ import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_LABELS,
+	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
@@ -30,6 +31,7 @@ interface FilterFormData {
 	statuses: string[];
 	paymentStatuses: string[];
 	fulfillmentStatuses: string[];
+	invoiceStatuses: string[];
 	priceRange: [number, number];
 	dateRange: {
 		from: string;
@@ -51,6 +53,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const statuses: string[] = [];
 		const paymentStatuses: string[] = [];
 		const fulfillmentStatuses: string[] = [];
+		const invoiceStatuses: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0]!;
 		let priceMax = DEFAULT_PRICE_RANGE[1]!;
 		let dateFrom = "";
@@ -64,6 +67,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 				paymentStatuses.push(value);
 			} else if (key === "filter_fulfillmentStatus") {
 				fulfillmentStatuses.push(value);
+			} else if (key === "filter_invoiceStatus") {
+				invoiceStatuses.push(value);
 			} else if (key === "filter_totalMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0]!;
 			} else if (key === "filter_totalMax") {
@@ -81,6 +86,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			statuses: [...new Set(statuses)],
 			paymentStatuses: [...new Set(paymentStatuses)],
 			fulfillmentStatuses: [...new Set(fulfillmentStatuses)],
+			invoiceStatuses: [...new Set(invoiceStatuses)],
 			priceRange: [priceMin, priceMax],
 			dateRange: { from: dateFrom, to: dateTo },
 			showDeleted,
@@ -102,6 +108,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_status",
 			"filter_paymentStatus",
 			"filter_fulfillmentStatus",
+			"filter_invoiceStatus",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -130,6 +137,11 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			formData.fulfillmentStatuses.forEach((status) =>
 				params.append("filter_fulfillmentStatus", status),
 			);
+		}
+
+		// Add invoice statuses (Art. 286 CGI — auditer factures émises/voided)
+		if (formData.invoiceStatuses.length > 0) {
+			formData.invoiceStatuses.forEach((status) => params.append("filter_invoiceStatus", status));
 		}
 
 		// Add price range (convert euros to cents)
@@ -164,6 +176,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			statuses: [],
 			paymentStatuses: [],
 			fulfillmentStatuses: [],
+			invoiceStatuses: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0]!, DEFAULT_PRICE_RANGE[1]!],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
@@ -176,6 +189,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_status",
 			"filter_paymentStatus",
 			"filter_fulfillmentStatus",
+			"filter_invoiceStatus",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -198,7 +212,12 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		let count = 0;
 
 		// Multi-value filters: count each individual value
-		const multiValueKeys = ["filter_status", "filter_paymentStatus", "filter_fulfillmentStatus"];
+		const multiValueKeys = [
+			"filter_status",
+			"filter_paymentStatus",
+			"filter_fulfillmentStatus",
+			"filter_invoiceStatus",
+		];
 		// Paired filters: count the pair as one filter (use the first key as representative)
 		const pairedFilters: Record<string, string[]> = {
 			filter_totalMin: ["filter_totalMin", "filter_totalMax"],
@@ -321,6 +340,39 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 									<CheckboxFilterItem
 										key={value}
 										id={`fulfillment-${value}`}
+										checked={isSelected}
+										onCheckedChange={(checked) => {
+											if (checked && !isSelected) {
+												field.pushValue(value);
+											} else if (!checked && isSelected) {
+												const index = field.state.value.indexOf(value);
+												field.removeValue(index);
+											}
+										}}
+									>
+										{label}
+									</CheckboxFilterItem>
+								);
+							})}
+						</fieldset>
+					)}
+				</form.Field>
+
+				<Separator />
+
+				{/* Invoice Status (Art. 286 CGI — audit fiscal) */}
+				<form.Field name="invoiceStatuses" mode="array">
+					{(field) => (
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">
+								Statut de facture
+							</legend>
+							{Object.entries(INVOICE_STATUS_LABELS).map(([value, label]) => {
+								const isSelected = field.state.value.includes(value);
+								return (
+									<CheckboxFilterItem
+										key={value}
+										id={`invoice-${value}`}
 										checked={isSelected}
 										onCheckedChange={(checked) => {
 											if (checked && !isSelected) {

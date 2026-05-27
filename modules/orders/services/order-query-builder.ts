@@ -84,6 +84,14 @@ export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderW
 			fulfillmentStatuses.length === 1 ? fulfillmentStatuses[0] : { in: fulfillmentStatuses };
 	}
 
+	if (filters.invoiceStatus !== undefined) {
+		const invoiceStatuses = Array.isArray(filters.invoiceStatus)
+			? filters.invoiceStatus
+			: [filters.invoiceStatus];
+		conditions.invoiceStatus =
+			invoiceStatuses.length === 1 ? invoiceStatuses[0] : { in: invoiceStatuses };
+	}
+
 	if (typeof filters.totalMin === "number" && typeof filters.totalMax === "number") {
 		conditions.total = {
 			gte: filters.totalMin,

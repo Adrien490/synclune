@@ -3,11 +3,20 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PaymentStatus } from "@/app/generated/prisma/browser";
-import { CircleCheck, CreditCard, Download, Ellipsis, Loader2, Truck } from "lucide-react";
-import { useActionState } from "react";
+import {
+	CircleCheck,
+	CreditCard,
+	Download,
+	Ellipsis,
+	FileText,
+	Loader2,
+	Truck,
+} from "lucide-react";
+import { useActionState, useState } from "react";
 import { exportSingleOrder } from "@/modules/orders/actions/export-single-order";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { toast } from "@/shared/utils/toast";
 import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveActionMenu,
@@ -84,6 +93,55 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		},
 	};
 
+	const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
+	const canDownloadInvoice = order.paymentStatus === PaymentStatus.PAID;
+	const downloadInvoiceItem: ActionMenuItem = {
+		key: "download-invoice",
+		label: isDownloadingInvoice ? "Téléchargement…" : "Télécharger la facture",
+		icon: FileText,
+		disabled: !canDownloadInvoice || isDownloadingInvoice,
+		pending: isDownloadingInvoice,
+		onSelect: () => {
+			void downloadInvoice();
+		},
+	};
+
+	async function downloadInvoice() {
+		if (!canDownloadInvoice || isDownloadingInvoice) return;
+		setIsDownloadingInvoice(true);
+		const task = (async () => {
+			const response = await fetch(`/api/orders/${order.orderNumber}/invoice`);
+			if (!response.ok) {
+				throw new Error(
+					response.status === 400
+						? "Facture indisponible — commande non payée"
+						: "Erreur lors du téléchargement de la facture",
+				);
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = order.invoiceNumber
+				? `facture-${order.invoiceNumber}.pdf`
+				: `facture-${order.orderNumber}.pdf`;
+			link.click();
+			URL.revokeObjectURL(url);
+		})();
+		toast.promise(task, {
+			loading: "Téléchargement…",
+			success: "Facture téléchargée",
+			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		});
+		try {
+			await task;
+		} catch {
+			// Surfaced by toast.promise
+		} finally {
+			setIsDownloadingInvoice(false);
+		}
+	}
+
 	const sections: ActionMenuSection[] = baseSections
 		.map((section) => {
 			if (section.key === "info") {
@@ -97,6 +155,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 									? { ...item, label: `Notes internes (${notesCount})` }
 									: item,
 							),
+						downloadInvoiceItem,
 						exportItem,
 					],
 				};

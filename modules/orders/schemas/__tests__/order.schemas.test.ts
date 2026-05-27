@@ -5,35 +5,43 @@ import { z } from "zod";
 // Hoisted mocks — must be set up before any module under test is imported.
 // ---------------------------------------------------------------------------
 
-const { mockOrderStatus, mockPaymentStatus, mockFulfillmentStatus } = vi.hoisted(() => ({
-	mockOrderStatus: {
-		PENDING: "PENDING",
-		PROCESSING: "PROCESSING",
-		SHIPPED: "SHIPPED",
-		DELIVERED: "DELIVERED",
-		CANCELLED: "CANCELLED",
-		RETURNED: "RETURNED",
-	},
-	mockPaymentStatus: {
-		PENDING: "PENDING",
-		PAID: "PAID",
-		FAILED: "FAILED",
-		REFUNDED: "REFUNDED",
-		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
-	},
-	mockFulfillmentStatus: {
-		UNFULFILLED: "UNFULFILLED",
-		PROCESSING: "PROCESSING",
-		SHIPPED: "SHIPPED",
-		DELIVERED: "DELIVERED",
-		RETURNED: "RETURNED",
-	},
-}));
+const { mockOrderStatus, mockPaymentStatus, mockFulfillmentStatus, mockInvoiceStatus } = vi.hoisted(
+	() => ({
+		mockOrderStatus: {
+			PENDING: "PENDING",
+			PROCESSING: "PROCESSING",
+			SHIPPED: "SHIPPED",
+			DELIVERED: "DELIVERED",
+			CANCELLED: "CANCELLED",
+			RETURNED: "RETURNED",
+		},
+		mockPaymentStatus: {
+			PENDING: "PENDING",
+			PAID: "PAID",
+			FAILED: "FAILED",
+			REFUNDED: "REFUNDED",
+			PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+		},
+		mockFulfillmentStatus: {
+			UNFULFILLED: "UNFULFILLED",
+			PROCESSING: "PROCESSING",
+			SHIPPED: "SHIPPED",
+			DELIVERED: "DELIVERED",
+			RETURNED: "RETURNED",
+		},
+		mockInvoiceStatus: {
+			PENDING: "PENDING",
+			GENERATED: "GENERATED",
+			VOIDED: "VOIDED",
+		},
+	}),
+);
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	OrderStatus: mockOrderStatus,
 	PaymentStatus: mockPaymentStatus,
 	FulfillmentStatus: mockFulfillmentStatus,
+	InvoiceStatus: mockInvoiceStatus,
 }));
 
 vi.mock("@/shared/constants/pagination", () => ({

@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/client";
 import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
@@ -23,6 +28,10 @@ const fulfillmentStatusSchema = z
 	.union([z.enum(FulfillmentStatus), z.array(z.enum(FulfillmentStatus))])
 	.optional();
 
+const invoiceStatusSchema = z
+	.union([z.enum(InvoiceStatus), z.array(z.enum(InvoiceStatus))])
+	.optional();
+
 // ============================================================================
 // GET ORDER SCHEMA
 // ============================================================================
@@ -40,6 +49,7 @@ export const orderFiltersSchema = z
 		status: orderStatusSchema,
 		paymentStatus: paymentStatusSchema,
 		fulfillmentStatus: fulfillmentStatusSchema,
+		invoiceStatus: invoiceStatusSchema,
 		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		createdAfter: stringOrDateSchema,

@@ -8,6 +8,7 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	let status: OrderFilters["status"] = undefined;
 	let paymentStatus: OrderFilters["paymentStatus"] = undefined;
 	let fulfillmentStatus: OrderFilters["fulfillmentStatus"] = undefined;
+	let invoiceStatus: OrderFilters["invoiceStatus"] = undefined;
 	let totalMin: number | undefined = undefined;
 	let totalMax: number | undefined = undefined;
 	let createdAfter: Date | undefined = undefined;
@@ -29,6 +30,9 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 						break;
 					case "fulfillmentStatus":
 						fulfillmentStatus = filterValue as OrderFilters["fulfillmentStatus"];
+						break;
+					case "invoiceStatus":
+						invoiceStatus = filterValue as OrderFilters["invoiceStatus"];
 						break;
 					case "totalMin":
 						totalMin = Number(filterValue) * 100; // Convert euros to cents
@@ -56,6 +60,7 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 		status,
 		paymentStatus,
 		fulfillmentStatus,
+		invoiceStatus,
 		totalMin,
 		totalMax,
 		createdAfter,

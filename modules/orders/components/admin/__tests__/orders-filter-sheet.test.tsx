@@ -283,6 +283,11 @@ vi.mock("@/modules/orders/constants/status-display", () => ({
 		DELIVERED: "Livré",
 		RETURNED: "Retourné",
 	},
+	INVOICE_STATUS_LABELS: {
+		PENDING: "Non émise",
+		GENERATED: "Émise",
+		VOIDED: "Annulée (avoir)",
+	},
 }));
 
 vi.mock("lucide-react", () => ({
@@ -693,6 +698,7 @@ describe("OrdersFilterSheet", () => {
 			statuses: [],
 			paymentStatuses: [],
 			fulfillmentStatuses: [],
+			invoiceStatuses: [],
 			priceRange: [0, 500000],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",

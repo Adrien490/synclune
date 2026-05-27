@@ -14,6 +14,7 @@ import { cn } from "@/shared/utils/cn";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
+	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 
 interface OrdersFilterDrawerProps {
@@ -35,14 +36,21 @@ const FILTER_OPTIONS = [
 		value: `payment_${key}`,
 		label: `Paiement: ${label}`,
 	})),
+	// Invoice statuses
+	...Object.entries(INVOICE_STATUS_LABELS).map(([key, label]) => ({
+		value: `invoice_${key}`,
+		label: `Facture: ${label}`,
+	})),
 ];
 
 function getCurrentFilter(searchParams: URLSearchParams): string {
 	const filterStatus = searchParams.get("filter_status");
 	const filterPaymentStatus = searchParams.get("filter_paymentStatus");
+	const filterInvoiceStatus = searchParams.get("filter_invoiceStatus");
 
 	if (filterStatus) return `status_${filterStatus}`;
 	if (filterPaymentStatus) return `payment_${filterPaymentStatus}`;
+	if (filterInvoiceStatus) return `invoice_${filterInvoiceStatus}`;
 	return "all";
 }
 
@@ -64,12 +72,15 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 			params.delete("direction");
 			params.delete("filter_status");
 			params.delete("filter_paymentStatus");
+			params.delete("filter_invoiceStatus");
 
 			// Apply new filter
 			if (value.startsWith("status_")) {
 				params.set("filter_status", value.replace("status_", ""));
 			} else if (value.startsWith("payment_")) {
 				params.set("filter_paymentStatus", value.replace("payment_", ""));
+			} else if (value.startsWith("invoice_")) {
+				params.set("filter_invoiceStatus", value.replace("invoice_", ""));
 			}
 
 			router.push(`?${params.toString()}`, { scroll: false });

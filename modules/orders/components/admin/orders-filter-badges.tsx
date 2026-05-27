@@ -6,6 +6,7 @@ import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_LABELS,
+	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -37,6 +38,12 @@ function formatOrderFilter(
 	if (filterKey === "fulfillmentStatus") {
 		const label = FULFILLMENT_STATUS_LABELS[value as keyof typeof FULFILLMENT_STATUS_LABELS];
 		return label ? { label: "Traitement", displayValue: label } : null;
+	}
+
+	// Gestion du statut de facture (Art. 286 CGI — audit fiscal)
+	if (filterKey === "invoiceStatus") {
+		const label = INVOICE_STATUS_LABELS[value as keyof typeof INVOICE_STATUS_LABELS];
+		return label ? { label: "Facture", displayValue: label } : null;
 	}
 
 	// Gestion du montant (grouper totalMin/totalMax)
