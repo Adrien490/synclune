@@ -371,6 +371,45 @@ await prisma.$transaction(
 
 Sans override : risque P2024 timeout + rollback partiel.
 
+## Facturation électronique — invariants
+
+Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). Calendrier réforme : émission obligatoire au **1ᵉʳ septembre 2027**, réception au **1ᵉʳ septembre 2026**. Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
+
+### Invariants intangibles
+
+1. **Aucune création manuelle de facture** depuis l'admin ou ailleurs. Toute facture (`invoiceNumber`) doit passer par `persist-invoice-number.service.ts`, déclenché uniquement par le webhook `payment_intent.succeeded` (eager via `ensure-invoice-number.service.ts`) ou en lazy fallback dans `app/api/orders/[orderNumber]/invoice/route.ts`. Aucune Server Action ne doit écrire `invoiceNumber` ou `creditNoteNumber`.
+2. **Aucun avoir manuel.** `creditNoteNumber` (`A-YYYY-NNNNN`) est généré uniquement par `void-invoice.service.ts`, appelé depuis `cancel-order`, `mark-as-fully-refunded` et le webhook `charge.refunded` (cas remboursement total).
+3. **`OrderHistory` est immuable** — pas de `deletedAt`, pas d'`update`, pas de `delete`. Audit trail comptable Art. L123-22, conservation 10 ans.
+4. **Snapshots OrderItem figés** au moment du checkout (`productTitle`, `productImageUrl`, `skuColor`, `skuMaterial`, `skuSize`, `price`). Une mutation Product/Sku ne doit jamais modifier un OrderItem existant.
+5. **Snapshots adresses figés** sur Order (`billing*`, `shipping*`) au checkout. Le modèle `Address` du client peut évoluer indépendamment.
+6. **PDF immuable post-paiement** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). La route `/api/orders/[orderNumber]/invoice` sert le PDF archivé en priorité (régénération seulement en fallback si fetch UploadThing échoue).
+7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année.
+8. **Pas de vente manuelle / pas de caisse.** Aucune Server Action ne doit créer une commande payée sans passer par Stripe (PaymentIntent). Tout flow alternatif (`recordCashSale`, `createManualOrder`, etc.) requiert validation comptable préalable — sinon risque "logiciel de caisse" NF 525 non conforme.
+
+### Tests régression dédiés
+
+| Test                                                                       | Fichier                                                                                            | Garde                               |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| OrderHistory n'a pas `deletedAt`                                           | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                  | Audit trail immuable (Art. L123-22) |
+| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                  | Invariant 1 + 2                     |
+| Numérotation : pas de rollover silencieux au-delà de 99999/an              | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow") | Invariant 7                         |
+
+### Conformité réglementaire (référencement)
+
+| Article                                    | Localisation                                                          | Statut |
+| ------------------------------------------ | --------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                 | ✓      |
+| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)             | ✓      |
+| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                     | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `generate-invoice-pdf.ts:188-197`                                     | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)               | ✓      |
+| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                 | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007) | ✓      |
+| Réforme 2026-2027 émission structurée      | (Phase 3 audit 2026-05-27)                                            | ⏳     |
+| Réforme 2026-2027 e-reporting B2C          | (Phase 3 audit 2026-05-27)                                            | ⏳     |
+
+Audit conformité complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27).
+
 ## Forms
 
 TanStack Form avec `useAppForm`. Voir `shared/components/forms/` pour les composants de formulaire.
