@@ -675,6 +675,18 @@ model Order {
   customerName  String  @db.VarChar(100)
   customerPhone String? @db.VarChar(20)
 
+  // === TYPE DE CLIENT - SNAPSHOT B2B/B2G (Facturation electronique 2026-2027) ===
+  //
+  // Fige le type de client + les identifiants entreprise au moment du checkout
+  // (Art. 289 CGI - donnees obligatoires sur la facture). Un User peut basculer
+  // B2C->B2B plus tard, ses commandes anterieures conservent l'identification
+  // qui etait valide au moment de leur emission.
+  customerType            CustomerType @default(B2C)
+  customerCompanyName     String?      @db.VarChar(255)
+  customerCompanySiren    String?      @db.VarChar(9)
+  customerCompanySiret    String?      @db.VarChar(14)
+  customerCompanyVatNumber String?     @db.VarChar(15)
+
   // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
   shippingFirstName  String  @db.VarChar(50)
   shippingLastName   String  @db.VarChar(50)
@@ -774,6 +786,7 @@ model Order {
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
   @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
+  @@index([customerType, paidAt(sort: Desc)]) // Admin: dashboard B2B vs B2C, e-reporting B2C agregat (Phase 3)
   // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
   // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
 
