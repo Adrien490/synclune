@@ -1004,6 +1004,21 @@ model Refund {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // === AVOIR / CREDIT NOTE (Art. 272-I CGI - Phase 2A) ===
+  //
+  // Stocke le numero d'avoir par REMBOURSEMENT (vs sur Order auparavant).
+  // Permet d'emettre un avoir partiel distinct pour chaque refund partiel
+  // COMPLETED, sans confondre avec l'annulation totale de la facture.
+  //
+  // Cycle de deprecation : les champs equivalents sur Order restent
+  // populates par voidInvoice() (full void path) tant que le code n'a pas
+  // migre. Le backfill SQL initial copie Order.creditNoteNumber vers le
+  // dernier Refund COMPLETED de la commande (idempotent).
+  creditNoteNumber      String?   @unique @db.VarChar(30) // Format: A-YYYY-NNNNN
+  creditNoteGeneratedAt DateTime?
+  creditNotePdfUrl      String?   @db.VarChar(2048)
+  creditNotePdfHash     String?   @db.VarChar(64)
+
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement un remboursement (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
