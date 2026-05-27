@@ -85,6 +85,54 @@ export const envSchema = z.object({
 		.optional(),
 
 	// ========================================
+	// Facturation électronique — vendeur (Synclune)
+	// ========================================
+	// Si non définies, getVendorLegalInfo() (shared/lib/stripe.ts) utilise des
+	// fallbacks. Toute valeur définie ici DOIT respecter le format légal pour
+	// éviter qu'une faute de frappe dans .env ne se propage sur des factures
+	// archivées 10 ans (Art. L102 B LPF).
+	VENDOR_LEGAL_NAME: z.string().min(1).optional(),
+	VENDOR_TRADE_NAME: z.string().min(1).optional(),
+	VENDOR_SIREN: z
+		.string()
+		.regex(
+			/^\d{3}\s?\d{3}\s?\d{3}$/,
+			"VENDOR_SIREN doit avoir 9 chiffres (avec ou sans espaces). Ex: '839 183 027'",
+		)
+		.optional(),
+	VENDOR_SIRET: z
+		.string()
+		.regex(
+			/^\d{3}\s?\d{3}\s?\d{3}\s?\d{5}$/,
+			"VENDOR_SIRET doit avoir 14 chiffres (avec ou sans espaces). Ex: '839 183 027 00037'",
+		)
+		.optional(),
+	VENDOR_VAT_NUMBER: z
+		.string()
+		.regex(
+			/^FR[A-Z0-9]{2}\d{9}$/,
+			"VENDOR_VAT_NUMBER doit suivre le format FR (FR + 2 chiffres/lettres + 9 chiffres SIREN). Ex: 'FR35839183027'",
+		)
+		.optional(),
+	VENDOR_APE_CODE: z
+		.string()
+		.regex(/^\d{2}\.\d{2}[A-Z]$/, "VENDOR_APE_CODE doit être au format NN.NNL. Ex: '47.91B'")
+		.optional(),
+	VENDOR_FULL_ADDRESS: z.string().min(1).optional(),
+	VENDOR_EMAIL: z.string().email("VENDOR_EMAIL doit être un email valide").optional(),
+	VENDOR_VAT_EXEMPTION_TEXT: z.string().min(1).optional(),
+	VENDOR_LATE_PAYMENT_PENALTY_RATE: z.string().min(1).optional(),
+	VENDOR_RECOVERY_FEE: z.string().min(1).optional(),
+	VENDOR_INSURANCE_COMPANY: z.string().min(1).optional(),
+	VENDOR_INSURANCE_CONTACT: z
+		.string()
+		.email("VENDOR_INSURANCE_CONTACT doit être un email valide")
+		.optional(),
+	VENDOR_INSURANCE_COVERAGE: z.string().min(1).optional(),
+	VENDOR_REGISTRY: z.string().min(1).optional(),
+	VENDOR_OPERATION_NATURE: z.string().min(1).optional(),
+
+	// ========================================
 	// Node
 	// ========================================
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

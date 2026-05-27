@@ -272,4 +272,160 @@ describe("envSchema", () => {
 			expect(result.success).toBe(false);
 		});
 	});
+
+	// --------------------------------------------------------------------------
+	// VENDOR_* — facturation électronique vendeur (Synclune)
+	// --------------------------------------------------------------------------
+	describe("VENDOR_SIREN", () => {
+		it("accepts 9 digits without spaces", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIREN: "839183027" });
+			expect(result.success).toBe(true);
+		});
+
+		it("accepts 9 digits with spaces (format INSEE)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIREN: "839 183 027" });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects fewer than 9 digits", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIREN: "83918302" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects letters", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIREN: "839ABC027" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects 14 digits (SIRET instead of SIREN)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIREN: "83918302700037" });
+			expect(result.success).toBe(false);
+		});
+
+		it("accepts env without VENDOR_SIREN (default in getVendorLegalInfo kicks in)", () => {
+			const result = envSchema.safeParse(validEnv());
+			expect(result.success).toBe(true);
+		});
+	});
+
+	describe("VENDOR_SIRET", () => {
+		it("accepts 14 digits without spaces", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIRET: "83918302700037" });
+			expect(result.success).toBe(true);
+		});
+
+		it("accepts 14 digits with spaces (format INSEE)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIRET: "839 183 027 00037" });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects 9 digits (SIREN instead of SIRET)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIRET: "839183027" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects letters mixed in", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_SIRET: "8391830270003A" });
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("VENDOR_VAT_NUMBER", () => {
+		it("accepts standard French VAT FR + 2 digits + 9 digits", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_VAT_NUMBER: "FR35839183027" });
+			expect(result.success).toBe(true);
+		});
+
+		it("accepts FR + 2 letters key (allowed by EU spec)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_VAT_NUMBER: "FR3A839183027" });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects missing country prefix", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_VAT_NUMBER: "35839183027" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects non-FR country prefix", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_VAT_NUMBER: "DE35839183027" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects lowercase fr (case sensitive)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_VAT_NUMBER: "fr35839183027" });
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("VENDOR_APE_CODE", () => {
+		it("accepts NN.NNL format", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_APE_CODE: "47.91B" });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects missing dot", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_APE_CODE: "4791B" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects lowercase letter", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_APE_CODE: "47.91b" });
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects missing trailing letter", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_APE_CODE: "47.91" });
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("VENDOR_EMAIL", () => {
+		it("accepts a valid email", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_EMAIL: "contact@synclune.fr" });
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects an invalid email", () => {
+			const result = envSchema.safeParse({ ...validEnv(), VENDOR_EMAIL: "not-an-email" });
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("VENDOR_INSURANCE_CONTACT", () => {
+		it("accepts a valid email", () => {
+			const result = envSchema.safeParse({
+				...validEnv(),
+				VENDOR_INSURANCE_CONTACT: "ins@synclune.fr",
+			});
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects an invalid email", () => {
+			const result = envSchema.safeParse({
+				...validEnv(),
+				VENDOR_INSURANCE_CONTACT: "not-an-email",
+			});
+			expect(result.success).toBe(false);
+		});
+	});
+
+	describe("Synclune production defaults are schema-valid", () => {
+		// Garantit que les défauts hard-codés dans `getVendorLegalInfo` (shared/lib/
+		// stripe.ts) restent compatibles si on bascule vers `env.VENDOR_*`.
+		it("accepts the current production values", () => {
+			const result = envSchema.safeParse({
+				...validEnv(),
+				VENDOR_LEGAL_NAME: "TADDEI LEANE - Entrepreneur Individuel",
+				VENDOR_TRADE_NAME: "Synclune",
+				VENDOR_SIRET: "839 183 027 00037",
+				VENDOR_SIREN: "839 183 027",
+				VENDOR_VAT_NUMBER: "FR35839183027",
+				VENDOR_APE_CODE: "47.91B",
+				VENDOR_FULL_ADDRESS: "77 Boulevard du Tertre, 44100 Nantes, France",
+				VENDOR_EMAIL: "contact@synclune.fr",
+				VENDOR_INSURANCE_CONTACT: "contact@synclune.fr",
+			});
+			expect(result.success).toBe(true);
+		});
+	});
 });
