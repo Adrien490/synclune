@@ -215,26 +215,30 @@ describe("updateOrderCustomerInfo", () => {
 		);
 	});
 
-	it("creates audit trail with previous and new values", async () => {
+	it("creates audit trail with PII-free metadata (changedFields only)", async () => {
+		// ORD-COMPLY-001 : email/name/phone strippés du metadata (exposé client).
 		await updateOrderCustomerInfo(undefined, validFormData);
 		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
 			mockPrisma,
 			expect.objectContaining({
 				action: "ADDRESS_UPDATED",
 				note: "Informations client modifiées",
-				metadata: expect.objectContaining({
+				metadata: {
 					updateType: "customerInfo",
-					previous: expect.objectContaining({
-						email: "client@example.com",
-						phone: "0600000000",
-					}),
-					new: expect.objectContaining({
-						email: "new@example.com",
-						phone: "0612345678",
-					}),
-				}),
+					changedFields: expect.arrayContaining(["contactIdentity", "contactNumber"]),
+				},
 			}),
 		);
+	});
+
+	it("never leaks raw email / phone values into metadata", async () => {
+		await updateOrderCustomerInfo(undefined, validFormData);
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]?.[1];
+		const metadataJson = JSON.stringify(auditCall?.metadata ?? {});
+		expect(metadataJson).not.toContain("client@example.com");
+		expect(metadataJson).not.toContain("new@example.com");
+		expect(metadataJson).not.toContain("0600000000");
+		expect(metadataJson).not.toContain("0612345678");
 	});
 
 	it("invalidates metadata caches", async () => {

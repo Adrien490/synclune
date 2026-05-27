@@ -10,6 +10,12 @@ export interface CreateStripeRefundParams {
 	metadata?: Record<string, string>;
 	/** Clé d'idempotence pour éviter les doublons */
 	idempotencyKey?: string;
+	/**
+	 * ORD-REFUND-008: si fourni, court-circuite le retrieve PaymentIntent
+	 * pour validation de devise (la commande tient déjà cette info en DB).
+	 * Économise 1 round-trip Stripe par appel.
+	 */
+	expectedCurrency?: string;
 }
 
 export type StripeRefundStatus =

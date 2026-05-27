@@ -4,39 +4,49 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockSendAdminRefundFailedAlert, mockGetBaseUrl } = vi.hoisted(() => {
-	const mockTx = {
-		$queryRaw: vi.fn().mockResolvedValue([]),
-		refund: {
-			update: vi.fn(),
-			upsert: vi.fn(),
-			findUnique: vi.fn(),
-		},
-		order: {
-			findUniqueOrThrow: vi.fn(),
-			update: vi.fn(),
-		},
-	};
-
-	return {
-		mockPrisma: {
-			$transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
-			order: {
-				update: vi.fn(),
-			},
+const { mockPrisma, mockSendAdminRefundFailedAlert, mockGetBaseUrl, mockCreateOrderAuditTx } =
+	vi.hoisted(() => {
+		const mockTx = {
+			$queryRaw: vi.fn().mockResolvedValue([]),
 			refund: {
+				update: vi.fn(),
+				updateMany: vi.fn(),
+				upsert: vi.fn(),
 				findUnique: vi.fn(),
+				create: vi.fn(),
+				findMany: vi.fn(),
+			},
+			order: {
+				findUniqueOrThrow: vi.fn(),
 				update: vi.fn(),
 			},
-			_mockTx: mockTx,
-		},
-		mockSendAdminRefundFailedAlert: vi.fn(),
-		mockGetBaseUrl: vi.fn().mockReturnValue("https://synclune.fr"),
-	};
-});
+			orderHistory: { create: vi.fn() },
+		};
+
+		return {
+			mockPrisma: {
+				$transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+				order: {
+					update: vi.fn(),
+				},
+				refund: {
+					findUnique: vi.fn(),
+					update: vi.fn(),
+					updateMany: vi.fn(),
+					findMany: vi.fn().mockResolvedValue([]),
+				},
+				orderHistory: { create: vi.fn() },
+				_mockTx: mockTx,
+			},
+			mockSendAdminRefundFailedAlert: vi.fn(),
+			mockGetBaseUrl: vi.fn().mockReturnValue("https://synclune.fr"),
+			mockCreateOrderAuditTx: vi.fn(),
+		};
+	});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
@@ -67,6 +77,30 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	RefundReason: {
+		CUSTOMER_REQUEST: "CUSTOMER_REQUEST",
+		DEFECTIVE: "DEFECTIVE",
+		WRONG_ITEM: "WRONG_ITEM",
+		LOST_IN_TRANSIT: "LOST_IN_TRANSIT",
+		FRAUD: "FRAUD",
+		OTHER: "OTHER",
+	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+		DISPUTE_OPENED: "DISPUTE_OPENED",
+		DISPUTE_RESOLVED: "DISPUTE_RESOLVED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+
+vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
+	SYSTEM_AUTHOR_ID: "00000000-0000-0000-0000-000000000000",
 }));
 
 import {
@@ -102,15 +136,32 @@ describe("syncStripeRefunds", () => {
 		} as unknown as Stripe.Charge;
 
 		const existingRefunds = [
-			{ id: "ref-app-1", amount: 5000, status: "APPROVED" as const, stripeRefundId: "re_1" },
+			{
+				id: "ref-app-1",
+				amount: 5000,
+				status: "APPROVED" as const,
+				stripeRefundId: "re_1",
+				processedAt: new Date("2026-05-01T10:00:00Z"),
+			},
 		];
+
+		// Pre-populate audit fetch
+		mockTx.refund.findUnique.mockResolvedValue({
+			amount: 5000,
+			stripeRefundId: "re_1",
+			status: "APPROVED",
+		});
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
 
-		expect(mockTx.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-app-1" },
-			data: { status: "COMPLETED" },
-		});
+		// ORD-REFUND-005: now uses updateMany with guard on status + deletedAt
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: "ref-app-1" }),
+				data: expect.objectContaining({ status: "COMPLETED" }),
+			}),
+		);
 	});
 
 	it("should link app-created refund to Stripe refund via metadata", async () => {
@@ -128,16 +179,22 @@ describe("syncStripeRefunds", () => {
 			},
 		} as unknown as Stripe.Charge;
 
+		mockTx.refund.findUnique.mockResolvedValue({ amount: 3000, status: "APPROVED" });
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
+
 		await syncStripeRefunds(charge, [], "order-1");
 
-		expect(mockTx.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-app-2" },
-			data: expect.objectContaining({
-				stripeRefundId: "re_new",
-				status: "COMPLETED",
-				processedAt: expect.any(Date),
+		// ORD-REFUND-005: linkRefund now uses updateMany with guard
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ id: "ref-app-2" }),
+				data: expect.objectContaining({
+					stripeRefundId: "re_new",
+					status: "COMPLETED",
+					processedAt: expect.any(Date),
+				}),
 			}),
-		});
+		);
 	});
 
 	it("should upsert Dashboard-initiated refund when no metadata", async () => {
@@ -155,22 +212,27 @@ describe("syncStripeRefunds", () => {
 			},
 		} as unknown as Stripe.Charge;
 
+		// ORD-REFUND-003: upsert now uses findUnique + create (with RefundItems)
+		mockTx.refund.findUnique.mockResolvedValue(null); // pas d'existing
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({
+			total: 2000,
+			items: [{ id: "oi-1", price: 2000, quantity: 1 }],
+		});
+		mockTx.refund.create.mockResolvedValue({ id: "ref-dashboard-1" });
+
 		await syncStripeRefunds(charge, [], "order-1");
 
-		expect(mockTx.refund.upsert).toHaveBeenCalledWith({
-			where: { stripeRefundId: "re_dashboard" },
-			create: expect.objectContaining({
-				orderId: "order-1",
-				stripeRefundId: "re_dashboard",
-				amount: 2000,
-				status: "COMPLETED",
-				reason: "OTHER",
-				note: "Remboursement effectué via Dashboard Stripe",
+		expect(mockTx.refund.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					orderId: "order-1",
+					stripeRefundId: "re_dashboard",
+					amount: 2000,
+					status: "COMPLETED",
+					reason: "OTHER",
+				}),
 			}),
-			update: expect.objectContaining({
-				status: "COMPLETED",
-			}),
-		});
+		);
 	});
 
 	it("should skip refunds without id", async () => {
@@ -194,7 +256,13 @@ describe("syncStripeRefunds", () => {
 		} as unknown as Stripe.Charge;
 
 		const existingRefunds = [
-			{ id: "ref-1", amount: 5000, status: "COMPLETED" as const, stripeRefundId: "re_1" },
+			{
+				id: "ref-1",
+				amount: 5000,
+				status: "COMPLETED" as const,
+				stripeRefundId: "re_1",
+				processedAt: new Date("2026-05-01T10:00:00Z"),
+			},
 		];
 
 		await syncStripeRefunds(charge, existingRefunds, "order-1");
@@ -335,8 +403,16 @@ describe("mapStripeRefundStatus", () => {
 // ============================================================================
 
 describe("updateRefundStatus — state transitions", () => {
+	const mockTx = mockPrisma._mockTx;
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// ORD-REFUND-002: wrapping update in $transaction → bind tx to mockPrisma
+		// so existing assertions on mockPrisma.refund.update continue to work.
+		(
+			mockPrisma.$transaction as unknown as { mockImplementation: (fn: unknown) => void }
+		).mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
+		// fallback for transactions still routed to mockTx
+		void mockTx;
 	});
 
 	it("should update PENDING to COMPLETED", async () => {
@@ -374,14 +450,20 @@ describe("updateRefundStatus — state transitions", () => {
 	});
 
 	it("should fetch current status from DB when not provided", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue({ status: "APPROVED" });
+		mockPrisma.refund.findUnique.mockResolvedValue({
+			status: "APPROVED",
+			orderId: "order-1",
+			amount: 5000,
+			stripeRefundId: "re_1",
+		});
 		mockPrisma.refund.update.mockResolvedValue({});
 
 		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded");
 
+		// ORD-REFUND-002: select étendu pour le audit trail
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith({
 			where: { id: "ref-1" },
-			select: { status: true },
+			select: expect.objectContaining({ status: true }),
 		});
 		expect(mockPrisma.refund.update).toHaveBeenCalled();
 	});
@@ -408,6 +490,9 @@ describe("updateRefundStatus — state transitions", () => {
 describe("markRefundAsFailed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		(
+			mockPrisma.$transaction as unknown as { mockImplementation: (fn: unknown) => void }
+		).mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma));
 	});
 
 	it("should set status to FAILED with reason", async () => {
@@ -436,6 +521,10 @@ describe("resolveRefundByStripeId", () => {
 		vi.clearAllMocks();
 		mockTx.refund.findUnique.mockReset();
 		mockTx.refund.update.mockReset();
+		// Restore $transaction to use mockTx (was reset to mockPrisma by prior describe)
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
+			fn(mockTx),
+		);
 	});
 
 	it("should find refund by stripeRefundId", async () => {

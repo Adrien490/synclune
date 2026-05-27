@@ -34,7 +34,6 @@ const {
 	mockIsEventSupported,
 	mockExecutePostWebhookTasks,
 	mockSendWebhookFailedAlert,
-	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	WebhookEventStatus,
 	PrismaClientKnownRequestError,
@@ -75,7 +74,6 @@ const {
 		mockIsEventSupported: vi.fn(),
 		mockExecutePostWebhookTasks: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
-		ANTI_REPLAY_WINDOW_SECONDS: 300,
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
 		WebhookEventStatus: {
 			PENDING: "PENDING",
@@ -106,7 +104,6 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 	sendWebhookFailedAlert: mockSendWebhookFailedAlert,
 }));
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
-	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 }));
 vi.mock("@/app/generated/prisma/client", () => ({

@@ -3,7 +3,9 @@
 import {
 	OrderStatus,
 	PaymentStatus,
+	FulfillmentStatus,
 	HistorySource,
+	InvoiceStatus,
 	RefundReason,
 	RefundStatus,
 } from "@/app/generated/prisma/client";
@@ -24,6 +26,7 @@ import { getOrderInvalidationTags } from "../constants/cache";
 import { cancelOrderSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { canCancelOrder } from "../services/order-status-validation.service";
+import { voidInvoice } from "../services/void-invoice.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { extractCustomerFirstName } from "../utils/customer-name";
@@ -34,8 +37,12 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  *
  * Règles métier :
  * - Passe le statut de la commande à CANCELLED
- * - Si la commande était payée, passe le paymentStatus à REFUNDED
- * - Remet le stock (inventory) des SKUs à jour (incrémentation)
+ * - paymentStatus : PAID/PARTIALLY_REFUNDED → REFUNDED, PENDING → FAILED, autres inchangés
+ * - Restocke les SKUs si fulfillmentStatus ∈ {UNFULFILLED, PROCESSING} (articles non sortis)
+ * - Si une facture a été générée (invoiceStatus=GENERATED) : passe à VOIDED + audit
+ *   INVOICE_VOIDED (invoiceNumber conservé pour séquentialité Art. 286 CGI)
+ * - autoRefund : crée un Refund APPROVED du SOLDE restant à rembourser (gère
+ *   PARTIALLY_REFUNDED via aggregate des refunds existants)
  * - Préserve l'intégrité comptable (la commande reste en base avec son invoiceNumber)
  * - Une commande déjà annulée ne peut pas être annulée à nouveau
  */
@@ -74,12 +81,15 @@ export async function cancelOrder(
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
+					fulfillmentStatus: true,
 					total: true,
 					stripePaymentIntentId: true,
 					userId: true,
 					customerEmail: true,
 					customerName: true,
 					shippingFirstName: true,
+					invoiceNumber: true,
+					invoiceStatus: true,
 					items: {
 						select: {
 							id: true,
@@ -102,17 +112,34 @@ export async function cancelOrder(
 				return { ...found, _error };
 			}
 
-			// Déterminer le nouveau paymentStatus
+			// Déterminer le nouveau paymentStatus.
+			// - PAID/PARTIALLY_REFUNDED → REFUNDED (le remboursement sera traité)
+			// - PENDING → FAILED (le paiement n'a jamais abouti, on coupe le polling cron)
+			// - FAILED/EXPIRED/REFUNDED → inchangé
 			const newPaymentStatus =
 				found.paymentStatus === PaymentStatus.PAID ||
 				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
 					? PaymentStatus.REFUNDED
-					: found.paymentStatus;
+					: found.paymentStatus === PaymentStatus.PENDING
+						? PaymentStatus.FAILED
+						: found.paymentStatus;
 
-			// Ne restaurer le stock QUE si la commande était PENDING
-			const shouldRestoreStock = found.paymentStatus === PaymentStatus.PENDING;
+			// Restock basé sur le fulfillment : tant qu'on n'a pas préparé/expédié,
+			// les articles sont encore physiquement en stock. paymentStatus n'est pas
+			// le bon proxy (une commande PROCESSING PAID = articles non sortis du stock).
+			const shouldRestoreStock =
+				found.fulfillmentStatus === FulfillmentStatus.UNFULFILLED ||
+				found.fulfillmentStatus === FulfillmentStatus.PROCESSING;
+
+			// La facture émise n'est pas effacée (séquentialité Art. 286 CGI) — elle
+			// passe en VOIDED + 2e audit trail (un avoir doit être émis séparément).
+			const shouldVoidInvoice = found.invoiceStatus === InvoiceStatus.GENERATED;
 
 			// 1. Mettre à jour la commande
+			// Note : si shouldVoidInvoice, le passage VOIDED + émission de l'avoir
+			// (creditNoteNumber séquentiel A-YYYY-NNNNN, advisory lock dédié) sont
+			// gérés par voidInvoice() après commit (Art. 272-I CGI). Ce service
+			// ne peut pas être imbriqué dans la tx parent (advisory lock Postgres).
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -121,7 +148,7 @@ export async function cancelOrder(
 				},
 			});
 
-			// 2. Restaurer le stock uniquement si la commande était PENDING
+			// 2. Restaurer le stock
 			if (shouldRestoreStock) {
 				for (const item of found.items) {
 					await tx.productSku.update({
@@ -155,30 +182,49 @@ export async function cancelOrder(
 			}
 
 			// 4. Auto-refund: créer un Refund (status APPROVED) à traiter manuellement
-			// par l'admin via processRefund (appel Stripe synchrone hors transaction)
+			// par l'admin via processRefund (appel Stripe synchrone hors transaction).
+			// Pour PARTIALLY_REFUNDED, calcule le solde restant à rembourser
+			// (sinon on créerait un Refund du montant total qui dépasse le payé restant).
 			let createdRefundId: string | null = null;
-			const wasPaid = found.paymentStatus === PaymentStatus.PAID;
-			if (autoRefund && wasPaid) {
-				const refund = await tx.refund.create({
-					data: {
+			let autoRefundAmount = 0;
+			const wasPayable =
+				found.paymentStatus === PaymentStatus.PAID ||
+				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
+			if (autoRefund && wasPayable) {
+				const alreadyRefunded = await tx.refund.aggregate({
+					where: {
 						orderId: id,
-						amount: found.total,
-						reason: RefundReason.CUSTOMER_REQUEST,
-						status: RefundStatus.APPROVED,
-						note: sanitizedReason ?? "Remboursement automatique sur annulation",
-						createdBy: adminUser.id,
-						items: {
-							create: found.items.map((item) => ({
-								orderItemId: item.id,
-								quantity: item.quantity,
-								amount: item.price * item.quantity,
-								restock: shouldRestoreStock,
-							})),
+						status: {
+							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
 						},
+						deletedAt: null,
 					},
-					select: { id: true },
+					_sum: { amount: true },
 				});
-				createdRefundId = refund.id;
+				const remainingToRefund = found.total - (alreadyRefunded._sum.amount ?? 0);
+				if (remainingToRefund > 0) {
+					const refund = await tx.refund.create({
+						data: {
+							orderId: id,
+							amount: remainingToRefund,
+							reason: RefundReason.CUSTOMER_REQUEST,
+							status: RefundStatus.APPROVED,
+							note: sanitizedReason ?? "Remboursement automatique sur annulation",
+							createdBy: adminUser.id,
+							items: {
+								create: found.items.map((item) => ({
+									orderItemId: item.id,
+									quantity: item.quantity,
+									amount: item.price * item.quantity,
+									restock: shouldRestoreStock,
+								})),
+							},
+						},
+						select: { id: true },
+					});
+					createdRefundId = refund.id;
+					autoRefundAmount = remainingToRefund;
+				}
 			}
 
 			// 5. Audit trail (Best Practice Stripe 2025)
@@ -198,14 +244,21 @@ export async function cancelOrder(
 					itemsCount: found.items.length,
 					releasedDiscountIds,
 					autoRefundId: createdRefundId,
+					autoRefundAmount,
+					invoiceVoided: shouldVoidInvoice,
 				},
 			});
+
+			// L'audit INVOICE_VOIDED + emission avoir sont gérés par voidInvoice()
+			// après commit (advisory lock Postgres incompatible avec tx imbriquée).
 
 			return {
 				...found,
 				_newPaymentStatus: newPaymentStatus,
 				_shouldRestoreStock: shouldRestoreStock,
 				_autoRefundId: createdRefundId,
+				_autoRefundAmount: autoRefundAmount,
+				_invoiceVoided: shouldVoidInvoice,
 			};
 		});
 
@@ -228,6 +281,20 @@ export async function cancelOrder(
 		}
 
 		// Audit log
+
+		// Cycle VOIDED facture + émission avoir séquentiel (Art. 272-I CGI).
+		// Best-effort hors transaction principale (advisory lock Postgres).
+		let creditNoteNumber: string | null = null;
+		if (order._invoiceVoided) {
+			const voided = await voidInvoice({
+				orderId: order.id,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Admin",
+				source: HistorySource.ADMIN,
+				reason: sanitizedReason ?? "Facture invalidée suite à annulation",
+			});
+			creditNoteNumber = voided?.creditNoteNumber ?? null;
+		}
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
@@ -261,7 +328,7 @@ export async function cancelOrder(
 		}
 
 		const refundMessage = order._autoRefundId
-			? ` Remboursement Stripe en attente (${(order.total / 100).toFixed(2)} €), à traiter via la fiche remboursement.`
+			? ` Remboursement Stripe en attente (${(order._autoRefundAmount / 100).toFixed(2)} €), à traiter via la fiche remboursement.`
 			: order._newPaymentStatus === PaymentStatus.REFUNDED
 				? " Statut passé à REFUNDED. Un remboursement Stripe doit être effectué séparément si nécessaire."
 				: "";
@@ -270,12 +337,18 @@ export async function cancelOrder(
 			order._shouldRestoreStock && order.items.length > 0
 				? ` Stock restauré pour ${order.items.length} article(s).`
 				: order.items.length > 0 && !order._shouldRestoreStock
-					? " Stock non restauré (commande déjà payée/traitée)."
+					? " Stock non restauré (commande déjà expédiée)."
 					: "";
+
+		const invoiceMessage = order._invoiceVoided
+			? creditNoteNumber
+				? ` Facture ${order.invoiceNumber} invalidée, avoir ${creditNoteNumber} émis.`
+				: ` Facture ${order.invoiceNumber} invalidée — avoir à émettre manuellement.`
+			: "";
 
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}`,
+			message: `Commande ${order.orderNumber} annulée.${refundMessage}${stockMessage}${invoiceMessage}`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.CANCEL_FAILED);

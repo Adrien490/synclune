@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
 	error,
@@ -36,8 +37,9 @@ export async function bulkApproveRefunds(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.BULK_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -75,10 +77,31 @@ export async function bulkApproveRefunds(
 
 		const eligibleIds = eligible.map((r) => r.id);
 
-		// Update via condition WHERE pour éviter TOCTOU
-		await prisma.refund.updateMany({
-			where: { id: { in: eligibleIds }, status: RefundStatus.PENDING },
-			data: { status: RefundStatus.APPROVED },
+		// Update via condition WHERE pour éviter TOCTOU + audit trail per-refund
+		await prisma.$transaction(async (tx) => {
+			await tx.refund.updateMany({
+				where: { id: { in: eligibleIds }, status: RefundStatus.PENDING },
+				data: { status: RefundStatus.APPROVED },
+			});
+			// ORD-REFUND-001: audit trail conformité L123-22 (un OrderHistory par
+			// refund pour traçabilité par commande)
+			for (const r of eligible) {
+				await createOrderAuditTx(tx, {
+					orderId: r.order.id,
+					action: OrderAction.REFUND_CREATED,
+					source: HistorySource.ADMIN,
+					authorId: adminUser.id,
+					authorName: adminUser.name ?? adminUser.email,
+					note: "Remboursement approuvé en lot",
+					metadata: {
+						refundId: r.id,
+						amount: r.amount,
+						event: "bulk_approved",
+						previousStatus: RefundStatus.PENDING,
+						newStatus: RefundStatus.APPROVED,
+					},
+				});
+			}
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);

@@ -293,6 +293,43 @@ async function cleanupFailedCheckout(
 	orderDiscountCode: string | null,
 	appliedDiscountId: string | null,
 ) {
+	// ORD-STRIPE-004 : pre-check anti-race. Entre la création de l'order
+	// (step 8) et l'échec de `stripe.paymentIntents.update` (step 9), le
+	// client peut avoir confirmé son paiement côté front et le webhook
+	// `payment_intent.succeeded` peut avoir déjà marqué l'order PAID. Sans
+	// ce guard, on hard-delete une commande payée → carte débitée sans
+	// trace en DB. On préfère laisser l'order PAID et alerter Sentry pour
+	// intervention admin manuelle (refund Stripe ou réconciliation).
+	const existing = await prisma.order.findUnique({
+		where: { id: orderId },
+		select: { paymentStatus: true, stripePaymentIntentId: true },
+	});
+	if (existing?.paymentStatus === "PAID") {
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setTag("checkout", "cleanup-aborted-paid");
+			scope.setFingerprint(["confirm-checkout", "cleanup-aborted-paid"]);
+			scope.setContext("order", {
+				orderId,
+				stripePaymentIntentId: existing.stripePaymentIntentId,
+			});
+			Sentry.captureMessage(
+				"cleanupFailedCheckout aborted: order already PAID by concurrent webhook",
+				"error",
+			);
+		});
+		logger.error(
+			"cleanupFailedCheckout aborted: order already PAID by concurrent webhook",
+			undefined,
+			{
+				service: "checkout",
+				orderId,
+				stripePaymentIntentId: existing.stripePaymentIntentId,
+			},
+		);
+		return;
+	}
+
 	await prisma.$transaction(async (tx) => {
 		if (orderDiscountCode) {
 			await tx.discountUsage.deleteMany({ where: { orderId } });

@@ -239,6 +239,46 @@ describe("markAsShippedSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
+	it("rejects javascript: URL in trackingUrl (ORD-SEC-008)", () => {
+		const result = markAsShippedSchema.safeParse({
+			...validInput,
+			trackingUrl: "javascript:alert(document.cookie)",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects data: URL in trackingUrl (ORD-SEC-008)", () => {
+		const result = markAsShippedSchema.safeParse({
+			...validInput,
+			trackingUrl: "data:text/html,<script>alert(1)</script>",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects vbscript: URL in trackingUrl (ORD-SEC-008)", () => {
+		const result = markAsShippedSchema.safeParse({
+			...validInput,
+			trackingUrl: "vbscript:msgbox(1)",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("accepts https://... in trackingUrl", () => {
+		const result = markAsShippedSchema.safeParse({
+			...validInput,
+			trackingUrl: "https://www.laposte.fr/tracking/123",
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it("accepts http://... in trackingUrl (legacy carriers)", () => {
+		const result = markAsShippedSchema.safeParse({
+			...validInput,
+			trackingUrl: "http://tracking.example.com/123",
+		});
+		expect(result.success).toBe(true);
+	});
+
 	it("defaults sendEmail to true when omitted", () => {
 		const result = markAsShippedSchema.safeParse({
 			id: VALID_CUID,
@@ -455,6 +495,42 @@ describe("exportInvoicesSchema", () => {
 			dateFrom: "2024-01-01",
 		});
 		expect(result.success).toBe(false);
+	});
+
+	it("rejects dateFrom > dateTo (ORD-SEC-003)", () => {
+		const result = exportInvoicesSchema.safeParse({
+			periodType: "custom",
+			dateFrom: "2024-12-31",
+			dateTo: "2024-01-01",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("accepts dateFrom === dateTo (single-day export)", () => {
+		const result = exportInvoicesSchema.safeParse({
+			periodType: "custom",
+			dateFrom: "2024-06-15",
+			dateTo: "2024-06-15",
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it("rejects custom range exceeding 366 days (ORD-SEC-010)", () => {
+		const result = exportInvoicesSchema.safeParse({
+			periodType: "custom",
+			dateFrom: "2024-01-01",
+			dateTo: "2026-01-01",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("accepts custom range of exactly 366 days", () => {
+		const result = exportInvoicesSchema.safeParse({
+			periodType: "custom",
+			dateFrom: "2024-01-01",
+			dateTo: "2025-01-01",
+		});
+		expect(result.success).toBe(true);
 	});
 
 	it("rejects an invalid periodType value", () => {

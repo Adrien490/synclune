@@ -1,8 +1,12 @@
+import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
+
 /**
  * Signature "— Léane" with scroll-driven ink-flow reveal.
  *
  * Uses an SVG stroke-dashoffset animation for the em dash "drawing",
- * then the name fades in with the text-shadow-glow effect.
+ * then the name fades in with the text-shadow-glow effect + a hand-drawn
+ * rose underline mirroring the brand signature accent used elsewhere
+ * (cf. footer "colorés" underline).
  *
  * Server component — CSS-only animation via scroll-driven API + fallback.
  */
@@ -33,8 +37,20 @@ export function SignatureReveal() {
 				/>
 			</svg>
 			{/* Name appears after dash draws */}
-			<span className="font-cursive signature-name text-foreground text-shadow-glow text-lg italic md:text-xl">
-				Léane
+			<span className="relative inline-block">
+				<span className="font-cursive signature-name text-foreground text-shadow-glow text-lg italic md:text-xl">
+					Léane
+				</span>
+				<HandDrawnAccent
+					variant="underline"
+					color="var(--primary)"
+					width={70}
+					height={14}
+					strokeWidth={1.5}
+					delay={0.6}
+					inView
+					className="absolute inset-x-0 -bottom-2"
+				/>
 			</span>
 		</p>
 	);

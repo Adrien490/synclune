@@ -85,6 +85,15 @@ export async function updateOrderCustomerInfo(
 				},
 			});
 
+			// ORD-COMPLY-001 : ne PAS stocker email/name/phone (avant/après) dans
+			// metadata — exposé côté client via GET_ORDER_SELECT_CUSTOMER.history.
+			// L'audit conserve juste le type d'update et la liste des champs
+			// modifiés (Art. L123-22 traçabilité admin).
+			const changedFields: string[] = [];
+			if (found.customerName !== sanitizedName) changedFields.push("name");
+			if (found.customerEmail !== sanitizedEmail) changedFields.push("contactIdentity");
+			if (found.customerPhone !== sanitizedPhone) changedFields.push("contactNumber");
+
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
@@ -93,16 +102,7 @@ export async function updateOrderCustomerInfo(
 				note: "Informations client modifiées",
 				metadata: {
 					updateType: "customerInfo",
-					previous: {
-						email: found.customerEmail,
-						name: found.customerName,
-						phone: found.customerPhone,
-					},
-					new: {
-						email: sanitizedEmail,
-						name: sanitizedName,
-						phone: sanitizedPhone,
-					},
+					changedFields,
 				},
 			});
 

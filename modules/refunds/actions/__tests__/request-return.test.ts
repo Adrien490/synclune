@@ -84,6 +84,16 @@ vi.mock("@/modules/dashboard/constants/cache", () => ({
 vi.mock("../../schemas/refund.schemas", () => ({ requestReturnSchema: {} }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	RefundStatus: { PENDING: "PENDING", APPROVED: "APPROVED", COMPLETED: "COMPLETED" },
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: vi.fn(),
 }));
 
 import { requestReturn } from "../request-return";

@@ -5,42 +5,52 @@ import type Stripe from "stripe";
 // Hoisted mocks - must be declared before any imports
 // ============================================================================
 
-const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES } = vi.hoisted(() => {
-	const mockTx = {
-		dispute: {
-			create: vi.fn(),
-			findUnique: vi.fn(),
-			update: vi.fn(),
-		},
-		order: {
-			update: vi.fn(),
-		},
-		orderNote: {
-			create: vi.fn(),
-		},
-	};
-
-	return {
-		mockTx,
-		mockPrisma: {
-			$transaction: vi.fn(),
+const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES, mockCreateOrderAuditTx } = vi.hoisted(
+	() => {
+		const mockTx = {
+			dispute: {
+				create: vi.fn(),
+				findUnique: vi.fn(),
+				update: vi.fn(),
+			},
 			order: {
-				findFirst: vi.fn(),
 				update: vi.fn(),
 			},
 			orderNote: {
-				findFirst: vi.fn(),
 				create: vi.fn(),
 			},
-		},
-		mockGetBaseUrl: vi.fn(),
-		mockROUTES: {
-			ADMIN: {
-				ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
+			refund: {
+				aggregate: vi.fn(),
+				create: vi.fn(),
 			},
-		},
-	};
-});
+			orderHistory: {
+				create: vi.fn(),
+			},
+		};
+
+		return {
+			mockTx,
+			mockPrisma: {
+				$transaction: vi.fn(),
+				order: {
+					findFirst: vi.fn(),
+					update: vi.fn(),
+				},
+				orderNote: {
+					findFirst: vi.fn(),
+					create: vi.fn(),
+				},
+			},
+			mockGetBaseUrl: vi.fn(),
+			mockROUTES: {
+				ADMIN: {
+					ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
+				},
+			},
+			mockCreateOrderAuditTx: vi.fn(),
+		};
+	},
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -88,6 +98,30 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		LOST: "LOST",
 		CHARGE_REFUNDED: "CHARGE_REFUNDED",
 	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+		DISPUTE_OPENED: "DISPUTE_OPENED",
+		DISPUTE_RESOLVED: "DISPUTE_RESOLVED",
+	},
+	PaymentStatus: {
+		PAID: "PAID",
+		REFUNDED: "REFUNDED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+	},
+	RefundReason: {
+		FRAUD: "FRAUD",
+		OTHER: "OTHER",
+	},
+	RefundStatus: {
+		COMPLETED: "COMPLETED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
 import { handleDisputeCreated, handleDisputeClosed } from "../dispute-handlers";
@@ -121,6 +155,7 @@ function makeOrder(
 		orderNumber: string;
 		customerEmail: string | null;
 		paymentStatus: string;
+		total: number;
 	}> = {},
 ) {
 	return {
@@ -128,6 +163,7 @@ function makeOrder(
 		orderNumber: "SYN-001",
 		customerEmail: "client@test.com",
 		paymentStatus: "PAID",
+		total: 5000,
 		...overrides,
 	};
 }
@@ -155,15 +191,17 @@ describe("handleDisputeCreated", () => {
 		const result = await handleDisputeCreated(dispute);
 
 		// Verifies the Dispute record was created
-		expect(mockTx.dispute.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				stripeDisputeId: "dp_test_1",
-				orderId: "order-1",
-				amount: 5000,
-				reason: "FRAUDULENT",
-				status: "NEEDS_RESPONSE",
+		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					stripeDisputeId: "dp_test_1",
+					orderId: "order-1",
+					amount: 5000,
+					reason: "FRAUDULENT",
+					status: "NEEDS_RESPONSE",
+				}),
 			}),
-		});
+		);
 
 		// Verifies the note was created with the right content
 		expect(mockTx.orderNote.create).toHaveBeenCalledWith({
@@ -315,7 +353,7 @@ describe("handleDisputeClosed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
 		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
@@ -324,6 +362,9 @@ describe("handleDisputeClosed", () => {
 		mockTx.dispute.update.mockResolvedValue({});
 		mockTx.order.update.mockResolvedValue({});
 		mockTx.orderNote.create.mockResolvedValue({});
+		// ORD-REFUND-010: chargeback materialization needs aggregate + create
+		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
 	});
 
 	it("should create a won note, update Dispute, and NOT update paymentStatus when dispute is won", async () => {
@@ -521,9 +562,11 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ fee: 1500 }),
-		});
+		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ fee: 1500 }),
+			}),
+		);
 	});
 
 	it("should default fee to 0 when balance_transactions is empty", async () => {
@@ -531,9 +574,11 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ fee: 0 }),
-		});
+		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ fee: 0 }),
+			}),
+		);
 	});
 
 	it.each([
@@ -550,9 +595,11 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ reason: expectedEnum }),
-		});
+		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ reason: expectedEnum }),
+			}),
+		);
 	});
 
 	it("should default unknown reason to GENERAL", async () => {
@@ -562,8 +609,10 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({ reason: "GENERAL" }),
-		});
+		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ reason: "GENERAL" }),
+			}),
+		);
 	});
 });

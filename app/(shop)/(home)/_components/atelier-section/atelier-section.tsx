@@ -68,7 +68,7 @@ export async function AtelierSection() {
 	return (
 		<section
 			id="atelier-section"
-			className={`bg-muted/20 relative overflow-hidden mask-t-from-97% mask-t-to-100% mask-b-from-99% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-95% ${SECTION_SPACING.spacious}`}
+			className={`bg-primary/5 relative overflow-hidden mask-t-from-97% mask-t-to-100% mask-b-from-99% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-95% ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-section-title"
 			data-content-type="about-creator"
 			style={{ viewTransitionName: "atelier-section" }}
@@ -82,6 +82,26 @@ export async function AtelierSection() {
 					__html: safeJsonLd(howToSchema),
 				}}
 			/>
+
+			{/* Ambient rose + lavender halos — "creator studio" warmth, purely decorative */}
+			<div
+				className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+				aria-hidden="true"
+			>
+				<div
+					className="absolute top-[8%] right-[-10%] h-[40vh] w-[60vw] max-w-xl rounded-full opacity-50 blur-3xl"
+					style={{
+						background: "radial-gradient(closest-side, var(--color-glow-pink), transparent 70%)",
+					}}
+				/>
+				<div
+					className="absolute bottom-[12%] left-[-8%] h-[35vh] w-[50vw] max-w-md rounded-full opacity-40 blur-3xl"
+					style={{
+						background:
+							"radial-gradient(closest-side, var(--color-glow-lavender), transparent 70%)",
+					}}
+				/>
+			</div>
 
 			<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				{/* Header */}

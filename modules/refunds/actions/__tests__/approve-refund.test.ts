@@ -13,6 +13,7 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
+	mockCreateOrderAuditTx,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -21,15 +22,21 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockPrisma: {
+		$transaction: vi.fn(),
 		refund: {
 			findUnique: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		orderNote: {
 			create: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	},
 	mockUpdateTag: vi.fn(),
+	mockCreateOrderAuditTx: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -113,6 +120,16 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
 import { approveRefund } from "../approve-refund";
@@ -176,6 +193,11 @@ describe("approveRefund", () => {
 			message: msg,
 		}));
 		mockPrisma.orderNote.create.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => Promise<void>) =>
+			cb(mockPrisma),
+		);
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -235,7 +257,7 @@ describe("approveRefund", () => {
 
 		await approveRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { id: "refund-1", status: "PENDING" },
 			data: { status: "APPROVED" },
 		});

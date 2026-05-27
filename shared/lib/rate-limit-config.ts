@@ -494,12 +494,25 @@ export const ADMIN_ORDER_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
+/**
+ * Limite pour l'export bulk CSV du livre de recettes (admin)
+ *
+ * STRICTE car requete lourde : jusqu'a 50_000 lignes par export.
+ * 10/heure = headroom suffisant pour usage legitime, protege la DB d'un admin
+ * compromis ou d'une boucle de script.
+ */
+export const ADMIN_ORDER_EXPORT_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: hours(1),
+};
+
 export const ADMIN_ORDER_LIMITS = {
 	RESEND_EMAIL: ADMIN_ORDER_RESEND_EMAIL_LIMIT,
 	MARK_AS_PAID: ADMIN_ORDER_MARK_AS_PAID_LIMIT,
 	BULK_OPERATIONS: ADMIN_ORDER_BULK_OPERATIONS_LIMIT,
 	SINGLE_OPERATIONS: ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT,
 	REFRESH: ADMIN_ORDER_REFRESH_LIMIT,
+	EXPORT: ADMIN_ORDER_EXPORT_LIMIT,
 } as const;
 
 /**

@@ -42,7 +42,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 		<section
 			id="reviews"
 			className={cn(
-				"bg-muted/15 relative overflow-hidden",
+				"bg-primary/5 relative overflow-hidden",
 				"mask-t-from-95% mask-t-to-100% mask-b-from-95% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-90%",
 				SECTION_SPACING.section,
 			)}

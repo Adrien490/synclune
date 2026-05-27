@@ -12,6 +12,9 @@ const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
 		order: {
 			update: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	};
 	return {
 		mockTx,

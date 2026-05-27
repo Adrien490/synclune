@@ -80,7 +80,7 @@ export interface OrderForShipValidation {
 
 export type ShipValidationResult = { canShip: true } | { canShip: false; reason: ShipBlockReason };
 
-type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid";
+type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid" | "not_processing";
 
 export interface OrderStateInput {
 	status: OrderStatus;

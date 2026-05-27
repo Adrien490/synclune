@@ -1,7 +1,10 @@
 pnpm lint-staged
 
 # Run critical-path tests when staged files touch protected modules.
-changed=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^modules/(cart|orders|payments|webhooks|auth|discounts|refunds)/' || true)
+# Keep glob aligned with `test:critical` in package.json so a developer
+# adding a new test under app/api/webhooks/stripe or test/contract is
+# also gated pre-commit.
+changed=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(modules/(cart|orders|payments|webhooks|auth|discounts|refunds)/|app/api/webhooks/stripe/|test/contract/)' || true)
 if [ -n "$changed" ]; then
 	echo "🧪 Critical module(s) modified — running test:pre-commit"
 	pnpm test:pre-commit

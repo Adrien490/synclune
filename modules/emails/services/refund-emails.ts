@@ -10,6 +10,13 @@ type RefundConfirmationEmailParams = {
 	refundAmount: number;
 	reason: string;
 	orderDetailsUrl: string;
+	/**
+	 * ORD-STRIPE-008 : clé Resend Idempotency-Key (24h cross-instance).
+	 * Évite l'envoi double si le webhook est rejoué (Stripe retry, cron
+	 * retry-webhooks) ou si admin path et webhook path tombent quand même
+	 * tous deux dans cette fonction (filet de sécurité après ORD-STRIPE-001).
+	 */
+	idempotencyKey?: string;
 };
 
 /**
@@ -33,6 +40,7 @@ export async function sendRefundConfirmationEmail(
 			subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
+			...(params.idempotencyKey && { idempotencyKey: params.idempotencyKey }),
 		},
 	);
 }

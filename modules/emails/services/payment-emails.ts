@@ -11,16 +11,23 @@ export async function sendPaymentFailedEmail({
 	customerName,
 	orderNumber,
 	retryUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	customerName: string;
 	orderNumber: string;
 	retryUrl: string;
+	/**
+	 * ORD-STRIPE-008 : clé Resend Idempotency-Key (24h cross-instance).
+	 * Évite double-envoi en cas de retry webhook (cron retry-webhooks).
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(PaymentFailedEmail({ orderNumber, customerName, retryUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.PAYMENT_FAILED,
 		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "payment" }],
+		...(idempotencyKey && { idempotencyKey }),
 	});
 }

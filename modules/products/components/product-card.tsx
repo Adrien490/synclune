@@ -40,6 +40,14 @@ interface ProductCardProps {
 	preferOnSale?: boolean;
 	/** Disable above-fold preload (for cards inside Suspense boundaries) */
 	disablePreload?: boolean;
+	/**
+	 * Opt-in "Nouveau" badge. Set by the calling section (typically
+	 * `latest-creations`) — ProductCard does not infer freshness from
+	 * `createdAt` because `Date.now()` is not permitted in cached Server
+	 * Components (Next 16 Cache Components). Yields to stock/urgency/promo
+	 * badges sharing the top-left slot.
+	 */
+	showNewBadge?: boolean;
 }
 
 /**
@@ -133,6 +141,7 @@ export function ProductCard({
 	sectionId,
 	preferOnSale,
 	disablePreload = false,
+	showNewBadge: showNewBadgeProp = false,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
@@ -162,6 +171,15 @@ export function ProductCard({
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge =
 		hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge && !noActiveSku;
+
+	// "Nouveau" badge — opt-in by the parent section. Yields to stock/urgency/promo
+	// badges sharing the top-left slot.
+	const showNewBadge =
+		showNewBadgeProp &&
+		stockStatus !== "out_of_stock" &&
+		!showUrgencyBadge &&
+		!showPromoBadge &&
+		!noActiveSku;
 
 	const baseUrl = `/creations/${slug}`;
 	const productUrl =
@@ -194,6 +212,9 @@ export function ProductCard({
 	}
 	if (showPromoBadge) {
 		badgeDescriptions.push(`Promotion : -${discountPercent}%`);
+	}
+	if (showNewBadge) {
+		badgeDescriptions.push("Nouveauté");
 	}
 	const badgeDescId =
 		badgeDescriptions.length > 0
@@ -242,6 +263,7 @@ export function ProductCard({
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
 				{showPromoBadge && <CardBadge variant="destructive">-{discountPercent}%</CardBadge>}
+				{showNewBadge && <CardBadge variant="default">Nouveau</CardBadge>}
 
 				{/* Wishlist button (client island) */}
 				<WishlistButton

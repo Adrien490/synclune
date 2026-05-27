@@ -1,7 +1,8 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -34,8 +35,9 @@ export async function cancelRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -82,12 +84,34 @@ export async function cancelRefund(
 		// Soft delete : marquer comme CANCELLED au lieu de supprimer
 		// (Conformité comptable Art. L123-22 Code de Commerce - conservation 10 ans)
 		// Le where inclut le statut courant pour protection TOCTOU
-		await prisma.refund.update({
-			where: { id, status: refund.status },
-			data: {
-				status: RefundStatus.CANCELLED,
-				deletedAt: new Date(),
-			},
+		await prisma.$transaction(async (tx) => {
+			const updated = await tx.refund.updateMany({
+				where: { id, status: refund.status },
+				data: {
+					status: RefundStatus.CANCELLED,
+					deletedAt: new Date(),
+				},
+			});
+			if (updated.count === 0) {
+				throw new Error("ALREADY_PROCESSED");
+			}
+			// ORD-REFUND-001: audit trail (REFUND_FAILED + event=cancelled_by_admin
+			// car pas d'enum REFUND_CANCELLED dédié)
+			await createOrderAuditTx(tx, {
+				orderId: refund.order.id,
+				action: OrderAction.REFUND_FAILED,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+				note: "Remboursement annulé (soft delete)",
+				metadata: {
+					refundId: refund.id,
+					amount: refund.amount,
+					event: "cancelled_by_admin",
+					previousStatus: refund.status,
+					newStatus: RefundStatus.CANCELLED,
+				},
+			});
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -102,7 +126,10 @@ export async function cancelRefund(
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € annulé pour la commande ${refund.order.orderNumber}`,
 		);
-	} catch (error) {
-		return handleActionError(error, REFUND_ERROR_MESSAGES.CANCEL_FAILED);
+	} catch (e) {
+		if (e instanceof Error && e.message === "ALREADY_PROCESSED") {
+			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
+		}
+		return handleActionError(e, REFUND_ERROR_MESSAGES.CANCEL_FAILED);
 	}
 }

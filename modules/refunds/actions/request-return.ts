@@ -1,7 +1,8 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { RETURN_REQUEST_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -153,6 +154,23 @@ export async function requestReturn(
 					},
 				},
 				select: { id: true },
+			});
+
+			// ORD-REFUND-016: audit trail customer-initiated return
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.REFUND_CREATED,
+				source: HistorySource.CUSTOMER,
+				authorId: user.id,
+				authorName: user.name ?? user.email,
+				note: sanitizedMessage ?? undefined,
+				metadata: {
+					refundId: refund.id,
+					amount: totalAmount,
+					reason,
+					itemCount: refundItems.length,
+					trigger: "return_request_14j",
+				},
 			});
 
 			return {

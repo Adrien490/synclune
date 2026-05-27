@@ -162,6 +162,16 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		COMPLETED: "COMPLETED",
 		APPROVED: "APPROVED",
 	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: vi.fn(),
 }));
 
 // Mock stripe to avoid API key requirement
@@ -187,6 +197,7 @@ function makeRefundRow(overrides: Record<string, unknown> = {}) {
 		status: "APPROVED",
 		amount: 5000,
 		reason: "CUSTOMER_REQUEST",
+		attempt_count: 0,
 		order_id: "order-1",
 		order_number: "SYN-001",
 		order_total: 10000,
@@ -322,14 +333,15 @@ describe("processRefund", () => {
 	});
 
 	it("should mark FAILED when Stripe returns neither success nor pending", async () => {
-		// First transaction: lock + validate
-		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+		// First transaction: lock + validate, second: FAILED + audit
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockTx) => unknown) =>
 			fn(mockTx),
 		);
 		mockTx.$queryRaw
 			.mockResolvedValueOnce([makeRefundRow()]) // refund lock
 			.mockResolvedValueOnce([]) // refund items
 			.mockResolvedValueOnce([]); // completed refunds
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		mockCreateStripeRefund.mockResolvedValue({
 			success: false,
@@ -339,7 +351,7 @@ describe("processRefund", () => {
 
 		const result = await processRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "refund-1", status: "APPROVED" },
 				data: expect.objectContaining({ status: "FAILED" }),
@@ -646,5 +658,87 @@ describe("processRefund", () => {
 				}),
 			}),
 		);
+	});
+
+	// ========================================================================
+	// ORD-TEST-020 — idempotencyKey rotation per attempt
+	//
+	// Stripe garde les réponses 4xx en cache 24h. Sans rotation de la clé
+	// d'idempotence à chaque retry, un appel `retryFailedRefund` qui ré-invoque
+	// `processRefund` recevrait la réponse cachée (échec) au lieu d'effectuer
+	// un vrai retry. La clé doit donc inclure `attempt_count`.
+	// ========================================================================
+
+	describe("idempotencyKey rotation (ORD-TEST-020)", () => {
+		it.each([
+			{ attempt: 0, expected: "refund_refund-1_0" },
+			{ attempt: 1, expected: "refund_refund-1_1" },
+			{ attempt: 5, expected: "refund_refund-1_5" },
+		])(
+			"should pass idempotencyKey '$expected' to Stripe when attempt_count=$attempt",
+			async ({ attempt, expected }) => {
+				mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+					fn(mockTx),
+				);
+				mockTx.$queryRaw
+					.mockResolvedValueOnce([makeRefundRow({ attempt_count: attempt })])
+					.mockResolvedValueOnce([])
+					.mockResolvedValueOnce([]);
+				mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_ok" });
+				mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+					fn(mockTx),
+				);
+				mockPrisma.productSku.findMany.mockResolvedValue([]);
+
+				await processRefund(undefined, makeFormData());
+
+				expect(mockCreateStripeRefund).toHaveBeenCalledWith(
+					expect.objectContaining({ idempotencyKey: expected }),
+				);
+			},
+		);
+
+		it("should use distinct idempotencyKey when retried after FAILED → APPROVED cycle", async () => {
+			// First processing (attempt 0)
+			mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+				fn(mockTx),
+			);
+			mockTx.$queryRaw
+				.mockResolvedValueOnce([makeRefundRow({ attempt_count: 0 })])
+				.mockResolvedValueOnce([])
+				.mockResolvedValueOnce([]);
+			mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_1" });
+			mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+				fn(mockTx),
+			);
+			mockPrisma.productSku.findMany.mockResolvedValue([]);
+
+			await processRefund(undefined, makeFormData());
+
+			const firstKey = mockCreateStripeRefund.mock.calls[0]?.[0]?.idempotencyKey;
+
+			// Reset and run second processing with attempt_count incremented
+			// (simulates retryFailedRefund which sets `attemptCount: { increment: 1 }`)
+			mockCreateStripeRefund.mockClear();
+			mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+				fn(mockTx),
+			);
+			mockTx.$queryRaw
+				.mockResolvedValueOnce([makeRefundRow({ attempt_count: 1 })])
+				.mockResolvedValueOnce([])
+				.mockResolvedValueOnce([]);
+			mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_2" });
+			mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+				fn(mockTx),
+			);
+
+			await processRefund(undefined, makeFormData());
+
+			const secondKey = mockCreateStripeRefund.mock.calls[0]?.[0]?.idempotencyKey;
+
+			expect(firstKey).toBe("refund_refund-1_0");
+			expect(secondKey).toBe("refund_refund-1_1");
+			expect(firstKey).not.toBe(secondKey);
+		});
 	});
 });

@@ -1,12 +1,19 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import { Prisma, HistorySource } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { getOrderInvalidationTags } from "../constants/cache";
+import { createOrderAuditTx } from "../utils/order-audit";
 
 interface PersistInvoiceNumberResult {
 	invoiceNumber: string;
 	invoiceGeneratedAt: Date;
+}
+
+interface PersistInvoiceNumberOptions {
+	source?: HistorySource;
+	authorId?: string;
+	authorName?: string;
 }
 
 /**
@@ -43,7 +50,10 @@ function invoiceAdvisoryLockKey(year: number): number {
 export async function persistInvoiceNumber(
 	orderId: string,
 	userId: string | null,
+	options: PersistInvoiceNumberOptions = {},
 ): Promise<PersistInvoiceNumberResult | null> {
+	const { source = HistorySource.SYSTEM, authorId, authorName } = options;
+
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
 			const result = await prisma.$transaction(async (tx) => {
@@ -83,6 +93,22 @@ export async function persistInvoiceNumber(
 						invoiceGeneratedAt: now,
 					},
 					select: { invoiceNumber: true, invoiceGeneratedAt: true },
+				});
+
+				// Audit trail (Art. L123-22 Code de Commerce) — la génération de
+				// facture est une mutation critique qui doit apparaître dans la
+				// timeline OrderHistory au même titre que les transitions de statut.
+				await createOrderAuditTx(tx, {
+					orderId,
+					action: "INVOICE_GENERATED",
+					authorId,
+					authorName,
+					source,
+					note: `Facture ${invoiceNumber} générée`,
+					metadata: {
+						invoiceNumber,
+						invoiceGeneratedAt: now.toISOString(),
+					},
 				});
 
 				return updated;

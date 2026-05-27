@@ -151,6 +151,7 @@ export async function markAsShipped(
 				already_shipped: ORDER_ERROR_MESSAGES.ALREADY_SHIPPED,
 				cancelled: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
 				unpaid: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
+				not_processing: ORDER_ERROR_MESSAGES.CANNOT_SHIP_NOT_PROCESSING,
 			};
 			return error(errorMessages[order._error] ?? ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED);
 		}

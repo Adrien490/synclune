@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/shared/lib/prisma";
+import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -36,11 +36,11 @@ export async function updateOrderNote(noteId: string, content: string): Promise<
 
 		const note = await prisma.$transaction(async (tx) => {
 			const found = await tx.orderNote.findUnique({
-				where: { id: validated.data.noteId },
-				select: { id: true, orderId: true, authorId: true, deletedAt: true },
+				where: { id: validated.data.noteId, ...notDeleted },
+				select: { id: true, orderId: true, authorId: true },
 			});
 
-			if (!found || found.deletedAt) return null;
+			if (!found) return null;
 
 			if (found.authorId !== adminUser.id) {
 				return { ...found, _error: "not_author" as const };

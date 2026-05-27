@@ -191,7 +191,11 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 									triggerHaptic("selection");
 									tab.onClick();
 								}}
-								className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
+								className={cn(
+									bottomBarItemClass,
+									"can-hover:hover:bg-primary/5",
+									tab.isActive && bottomBarActiveItemClass,
+								)}
 								aria-haspopup="dialog"
 								aria-label={tab.label}
 							>
@@ -206,7 +210,11 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 						<Link
 							key={tab.id}
 							href={tab.href}
-							className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
+							className={cn(
+								bottomBarItemClass,
+								"can-hover:hover:bg-primary/5",
+								tab.isActive && bottomBarActiveItemClass,
+							)}
 							aria-current={tab.isActive ? "page" : undefined}
 						>
 							{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}

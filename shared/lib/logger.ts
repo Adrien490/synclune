@@ -25,10 +25,40 @@ function redactPii(message: string): string {
 	return result;
 }
 
+// Cf. audit conformité 2026-05-27 — ORD-COMPLY-008.
+// Pino redact ne supporte pas `*.email` ; on liste explicitement les chemins
+// imbriqués (depth ≤ 2) qui peuvent recevoir des PII. Pour des structures plus
+// profondes, scrubber Sentry côté SDK + redactPii() côté message restent les
+// garde-fous secondaires.
+export const REDACT_PATHS = [
+	// niveau 1 (context.*)
+	"context.email",
+	"context.phone",
+	"context.customerEmail",
+	"context.customerPhone",
+	"context.shippingPhone",
+	"context.billingPhone",
+	"context.address1",
+	"context.address2",
+	"context.firstName",
+	"context.lastName",
+	// niveau 2 (context.user.* | context.order.* | context.body.shipping.*)
+	"context.user.email",
+	"context.user.phone",
+	"context.user.name",
+	"context.order.customerEmail",
+	"context.order.customerName",
+	"context.order.customerPhone",
+	"context.shipping.email",
+	"context.shipping.phone",
+	"context.body.shipping.email",
+	"context.body.shipping.phone",
+];
+
 const pinoLogger = pino({
 	level: process.env.NODE_ENV === "development" ? "debug" : "info",
 	redact: {
-		paths: ["context.email", "context.phone"],
+		paths: REDACT_PATHS,
 		censor: "[REDACTED]",
 	},
 	...(process.env.NODE_ENV === "development"

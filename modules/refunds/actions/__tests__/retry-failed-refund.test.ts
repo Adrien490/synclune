@@ -13,6 +13,7 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
+	mockCreateOrderAuditTx,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -21,12 +22,18 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockPrisma: {
+		$transaction: vi.fn(),
 		refund: {
 			findUnique: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
+		},
+		orderHistory: {
+			create: vi.fn(),
 		},
 	},
 	mockUpdateTag: vi.fn(),
+	mockCreateOrderAuditTx: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -109,6 +116,16 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
 import { retryFailedRefund } from "../retry-failed-refund";
@@ -163,6 +180,11 @@ describe("retryFailedRefund", () => {
 			status: "error",
 			message: msg,
 		}));
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => Promise<void>) =>
+			cb(mockPrisma),
+		);
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -199,7 +221,7 @@ describe("retryFailedRefund", () => {
 		await retryFailedRefund(undefined, makeFormData());
 
 		expect(mockError).toHaveBeenCalledWith("Le remboursement n'existe pas.");
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return NOT_FAILED when status is PENDING", async () => {
@@ -210,7 +232,7 @@ describe("retryFailedRefund", () => {
 		expect(mockError).toHaveBeenCalledWith(
 			"Seuls les remboursements en échec peuvent être relancés.",
 		);
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return NOT_FAILED when status is APPROVED", async () => {
@@ -235,11 +257,11 @@ describe("retryFailedRefund", () => {
 
 	it("should transition FAILED to APPROVED with TOCTOU guard", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { id: "refund-1", status: "FAILED" },
 			data: {
 				status: "APPROVED",
@@ -252,24 +274,26 @@ describe("retryFailedRefund", () => {
 
 	it("should reset failureReason to null", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 
-		const call = mockPrisma.refund.update.mock.calls[0]?.[0] as { data: { failureReason: null } };
+		const call = mockPrisma.refund.updateMany.mock.calls[0]?.[0] as {
+			data: { failureReason: null };
+		};
 		expect(call.data.failureReason).toBeNull();
 	});
 
 	it("should snapshot previousFailureReason and previousStripeRefundId in audit log", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 	});
 
 	it("should invalidate cache tags including userId when present", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 
@@ -283,7 +307,7 @@ describe("retryFailedRefund", () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(
 			makeRefund({ order: { id: "order-1", orderNumber: "SYN-001", user: null } }),
 		);
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 
@@ -295,7 +319,7 @@ describe("retryFailedRefund", () => {
 
 	it("should include formatted amount in success message", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ amount: 7500 }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await retryFailedRefund(undefined, makeFormData());
 

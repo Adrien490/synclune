@@ -1,7 +1,8 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -35,8 +36,9 @@ export async function retryFailedRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -88,14 +90,36 @@ export async function retryFailedRefund(
 		// On efface aussi `stripeRefundId` : la précédente tentative n'a pas
 		// créé de refund Stripe valide (status = FAILED), donc l'anchor doit
 		// être réinitialisé pour permettre une vraie nouvelle attempt.
-		await prisma.refund.update({
-			where: { id, status: RefundStatus.FAILED },
-			data: {
-				status: RefundStatus.APPROVED,
-				failureReason: null,
-				stripeRefundId: null,
-				attemptCount: { increment: 1 },
-			},
+		await prisma.$transaction(async (tx) => {
+			const updated = await tx.refund.updateMany({
+				where: { id, status: RefundStatus.FAILED },
+				data: {
+					status: RefundStatus.APPROVED,
+					failureReason: null,
+					stripeRefundId: null,
+					attemptCount: { increment: 1 },
+				},
+			});
+			if (updated.count === 0) {
+				throw new Error("NOT_FAILED");
+			}
+			// ORD-REFUND-001: audit trail (REFUND_CREATED + event=retry_after_failure)
+			await createOrderAuditTx(tx, {
+				orderId: refund.order.id,
+				action: OrderAction.REFUND_CREATED,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+				note: "Remboursement réarmé après échec",
+				metadata: {
+					refundId: refund.id,
+					amount: refund.amount,
+					event: "retry_after_failure",
+					previousFailureReason: refund.failureReason,
+					previousStatus: RefundStatus.FAILED,
+					newStatus: RefundStatus.APPROVED,
+				},
+			});
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -111,6 +135,9 @@ export async function retryFailedRefund(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € réarmé pour la commande ${refund.order.orderNumber}. Cliquez sur "Traiter" pour relancer Stripe.`,
 		);
 	} catch (e) {
+		if (e instanceof Error && e.message === "NOT_FAILED") {
+			return error(REFUND_ERROR_MESSAGES.NOT_FAILED);
+		}
 		return handleActionError(e, REFUND_ERROR_MESSAGES.RETRY_FAILED);
 	}
 }

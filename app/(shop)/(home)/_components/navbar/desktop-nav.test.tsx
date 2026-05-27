@@ -242,7 +242,7 @@ describe("DesktopNav", () => {
 		it("renders subtle primary-tinted hover background (gold/rose accent)", () => {
 			render(<DesktopNav navItems={navItems} />);
 			const link = screen.getByRole("link", { name: "L'atelier" });
-			expect(link.className).toContain("hover:bg-primary/5");
+			expect(link.className).toContain("hover:bg-primary/8");
 		});
 
 		it("binds the underline transition to --ease-spring token", () => {

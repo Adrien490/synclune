@@ -30,7 +30,7 @@ const linkClasses = cn(
 	"data-[active=true]:text-foreground",
 	"motion-safe:transition-[color,background-color] motion-safe:duration-[var(--duration-normal)]",
 	// Subtle rose accent halo on hover (premium brand touch, stays under underline)
-	"motion-safe:hover:bg-primary/5 data-[state=open]:bg-primary/5",
+	"motion-safe:hover:bg-primary/8 data-[state=open]:bg-primary/8",
 	"focus-ring",
 	// Underline animé au hover — spring easing premium
 	"after:absolute after:bottom-0 after:left-1 after:right-1",

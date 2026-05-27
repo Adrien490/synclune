@@ -27,7 +27,10 @@ const {
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },
-		refund: { create: vi.fn() },
+		refund: {
+			create: vi.fn(),
+			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
+		},
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -97,6 +100,10 @@ vi.mock("../../services/order-status-validation.service", () => ({
 
 vi.mock("../../utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+
+vi.mock("../../services/void-invoice.service", () => ({
+	voidInvoice: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -174,6 +181,7 @@ describe("cancelOrder", () => {
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
 		mockPrisma.discount.update.mockResolvedValue({});
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-auto-1" });
+		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 
 		vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
 			success: true,

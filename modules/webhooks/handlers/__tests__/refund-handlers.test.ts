@@ -15,7 +15,10 @@ const {
 	mockGetBaseUrl,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findFirst: vi.fn() },
+		order: {
+			findFirst: vi.fn(),
+			findUnique: vi.fn().mockResolvedValue({ invoiceStatus: null, invoiceNumber: null }),
+		},
 	},
 	mockSyncStripeRefunds: vi.fn(),
 	mockUpdateOrderPaymentStatus: vi.fn(),
@@ -78,6 +81,11 @@ vi.mock("@/shared/constants/urls", () => ({
 // Mock stripe to avoid API key requirement from transitive imports
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: {},
+}));
+
+// Mock voidInvoice (ORD-COMPLY-003 — cycle VOIDED post charge.refunded)
+vi.mock("@/modules/orders/services/void-invoice.service", () => ({
+	voidInvoice: vi.fn().mockResolvedValue(null),
 }));
 
 import type Stripe from "stripe";

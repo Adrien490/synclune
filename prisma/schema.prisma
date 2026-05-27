@@ -682,6 +682,15 @@ model Order {
   invoiceNumber      String?        @unique @db.VarChar(30) // Format: F-YYYY-NNNNN (séquentiel par année)
   invoiceStatus      InvoiceStatus? // null = pas encore de facture
   invoiceGeneratedAt DateTime? // Date de première génération de la facture
+  invoiceVoidedAt    DateTime? // Horodatage de passage VOIDED (avoir comptable émis - Art. 272-I CGI)
+
+  // === AVOIR / CREDIT NOTE (Art. 272-I CGI - annulation post-facture) ===
+  creditNoteNumber      String?   @unique @db.VarChar(30) // Format: A-YYYY-NNNNN (séquentiel par année)
+  creditNoteGeneratedAt DateTime? // Date d'émission de l'avoir
+
+  // === ARCHIVAGE PDF IMMUABLE (Art. L102 B LPF) ===
+  invoicePdfUrl  String? @db.VarChar(2048) // URL UploadThing du PDF archivé (immuable bit-à-bit)
+  invoicePdfHash String? @db.VarChar(64) // SHA-256 du PDF (empreinte audit fiscal)
 
   // === LIVRAISON ===
   shippingMethod    String?   @db.VarChar(20) // Type de livraison
@@ -861,11 +870,18 @@ model OrderNote {
   authorId   String
   authorName String @db.VarChar(100) // Denormalise pour historique si admin supprime
 
+  // Drapeau interne : true = visible uniquement par les admins (fraude suspectee,
+  // blacklist, escalade legale, etc.). false = visible aussi cote client si jamais
+  // /account/orders expose les notes. Default false pour preserver le comportement
+  // historique des notes existantes.
+  isInternal Boolean @default(false)
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
+  @@index([orderId, isInternal])
 }
 
 // ============================================================================

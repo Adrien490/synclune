@@ -44,9 +44,17 @@ export async function HeroSection({
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				{/* Soft rose-blush glow behind the hero title — amplifies Synclune brand identity */}
 				<div
-					className="pointer-events-none absolute top-[28%] left-1/2 h-[55vh] w-[85vw] max-w-3xl -translate-x-1/2 rounded-full opacity-70 blur-3xl"
+					className="pointer-events-none absolute top-[28%] left-1/2 h-[65vh] w-[95vw] max-w-3xl -translate-x-1/2 rounded-full opacity-80 blur-3xl"
 					style={{
 						background: "radial-gradient(closest-side, var(--color-glow-pink), transparent 70%)",
+					}}
+				/>
+				{/* Secondary lavender aurora bottom-left for multi-source warmth (creator vibe) */}
+				<div
+					className="pointer-events-none absolute bottom-[5%] left-[-10%] h-[45vh] w-[60vw] max-w-2xl rounded-full opacity-60 blur-3xl"
+					style={{
+						background:
+							"radial-gradient(closest-side, var(--color-glow-lavender), transparent 70%)",
 					}}
 				/>
 				{/* Single instance — component handles responsive internally
@@ -59,13 +67,13 @@ export async function HeroSection({
 						"oklch(0.92 0.08 350)",
 						"oklch(0.75 0.12 280)",
 					]}
-					count={10}
+					count={14}
 					size={[25, 90]}
 					opacity={[0.25, 0.55]}
 					blur={[8, 24]}
 					animationStyle="drift"
 					depthParallax={true}
-					mobileCountRatio={0.4}
+					mobileCountRatio={0.5}
 				/>
 				<div className="bg-background/10 absolute inset-0" />
 			</div>
@@ -86,7 +94,7 @@ export async function HeroSection({
 								align="center"
 								weight="light"
 								id="hero-title"
-								className="text-foreground text-balance"
+								className="text-foreground text-shadow-glow text-balance"
 							>
 								<span className="inline-flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-2">
 									<SplitTextCSS>Des bijoux</SplitTextCSS>{" "}

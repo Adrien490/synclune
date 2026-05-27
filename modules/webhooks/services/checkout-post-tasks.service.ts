@@ -73,6 +73,8 @@ export function buildPostCheckoutTasks(
 					country: order.shippingCountry ?? "",
 				},
 				trackingUrl,
+				// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries.
+				idempotencyKey: `order-confirm-${order.id}`,
 			},
 		});
 	}
@@ -185,6 +187,8 @@ export function buildPostCheckoutTasksFromPI(
 					country: order.shippingCountry ?? "",
 				},
 				trackingUrl,
+				// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries.
+				idempotencyKey: `order-confirm-${order.id}`,
 			},
 		});
 	}

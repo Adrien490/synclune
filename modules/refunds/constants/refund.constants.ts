@@ -102,7 +102,10 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 	subtotal: true,
 	discountAmount: true,
 	total: true,
+	status: true,
 	paymentStatus: true,
+	fulfillmentStatus: true,
+	trackingNumber: true,
 	stripePaymentIntentId: true,
 	items: {
 		select: {

@@ -1,7 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -20,6 +20,7 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { approveRefundSchema } from "../schemas/refund.schemas";
 import { canTransition } from "../services/refund-state-machine.service";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 
 /**
  * Approuve un remboursement (passe de PENDING à APPROVED)
@@ -30,8 +31,9 @@ export async function approveRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -80,13 +82,34 @@ export async function approveRefund(
 			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 
-		// Mettre à jour le statut
+		// Mettre à jour le statut + audit trail dans une transaction atomique
 		// Le where inclut le statut attendu pour protection TOCTOU
-		await prisma.refund.update({
-			where: { id, status: RefundStatus.PENDING },
-			data: {
-				status: RefundStatus.APPROVED,
-			},
+		await prisma.$transaction(async (tx) => {
+			const updated = await tx.refund.updateMany({
+				where: { id, status: RefundStatus.PENDING },
+				data: { status: RefundStatus.APPROVED },
+			});
+			if (updated.count === 0) {
+				// Concurrent state change between findUnique and update.
+				throw new Error("ALREADY_PROCESSED");
+			}
+			// ORD-REFUND-001: audit trail conformité L123-22
+			await createOrderAuditTx(tx, {
+				orderId: refund.order.id,
+				action: OrderAction.REFUND_CREATED,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+				note: "Remboursement approuvé",
+				metadata: {
+					refundId: refund.id,
+					amount: refund.amount,
+					reason: refund.reason,
+					event: "approved",
+					previousStatus: RefundStatus.PENDING,
+					newStatus: RefundStatus.APPROVED,
+				},
+			});
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -102,6 +125,9 @@ export async function approveRefund(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € approuvé pour la commande ${refund.order.orderNumber}`,
 		);
 	} catch (e) {
+		if (e instanceof Error && e.message === "ALREADY_PROCESSED") {
+			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
+		}
 		return handleActionError(e, REFUND_ERROR_MESSAGES.APPROVE_FAILED);
 	}
 }

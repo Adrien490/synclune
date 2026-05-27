@@ -20,6 +20,7 @@ export async function sendOrderConfirmationEmail({
 	total,
 	shippingAddress,
 	trackingUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	orderNumber: string;
@@ -31,6 +32,11 @@ export async function sendOrderConfirmationEmail({
 	total: number;
 	shippingAddress: ShippingAddress;
 	trackingUrl: string;
+	/**
+	 * ORD-STRIPE-008 : clé Resend Idempotency-Key (24h cross-instance).
+	 * Évite double-envoi en cas de retry webhook (cron retry-webhooks).
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		OrderConfirmationEmail({
@@ -49,6 +55,7 @@ export async function sendOrderConfirmationEmail({
 			subject: EMAIL_SUBJECTS.ORDER_CONFIRMATION,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
+			...(idempotencyKey && { idempotencyKey }),
 		},
 	);
 }

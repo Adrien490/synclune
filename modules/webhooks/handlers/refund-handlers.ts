@@ -14,6 +14,9 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { captureWebhookError } from "../utils/capture-webhook-error";
+import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
+import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
+import { HistorySource, InvoiceStatus } from "@/app/generated/prisma/client";
 
 /**
  * Gère les remboursements (charge.refunded)
@@ -51,6 +54,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 						status: true,
 						stripeRefundId: true,
 						reason: true,
+						// ORD-STRIPE-002 : utilisé par syncStripeRefunds pour détecter
+						// un SAGA processRefund en cours et skip l'update concurrent.
+						processedAt: true,
 					},
 					orderBy: { createdAt: "desc" },
 				},
@@ -81,6 +87,24 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			{ service: "webhook" },
 		);
 
+		// 4b. Cycle VOIDED facture (Art. 272-I CGI) si remboursement total après émission.
+		// Idempotent : noop si déjà VOIDED ou si pas de facture active.
+		if (isFullyRefunded) {
+			const invoiceState = await prisma.order.findUnique({
+				where: { id: order.id },
+				select: { invoiceStatus: true, invoiceNumber: true },
+			});
+			if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
+				await voidInvoice({
+					orderId: order.id,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: "Stripe",
+					source: HistorySource.WEBHOOK,
+					reason: "Avoir émis suite à remboursement total Stripe",
+				});
+			}
+		}
+
 		// 5. Build post-tasks (email + cache invalidation)
 		const tasks: PostWebhookTask[] = [];
 
@@ -95,7 +119,20 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		}
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
-		if (order.customerEmail) {
+		// ORD-STRIPE-001: éviter le double email confirmation refund.
+		// `processRefund` (admin path) envoie déjà l'email côté action ;
+		// `reconcile-refunds` (cron DLQ) idem. Le webhook ne doit envoyer que
+		// pour les refunds Dashboard Stripe nouvellement détectés (aucun local
+		// match préexistant). Stratégie : on émet l'email uniquement si au
+		// moins un refund Stripe n'avait PAS de local Refund avec ce
+		// `stripeRefundId` avant le webhook (state pré-syncStripeRefunds).
+		const dashboardRefundDetected = (charge.refunds?.data ?? []).some(
+			(stripeRefund) =>
+				typeof stripeRefund.id === "string" &&
+				!order.refunds.some((r) => r.stripeRefundId === stripeRefund.id),
+		);
+
+		if (order.customerEmail && dashboardRefundDetected) {
 			// Read reason from local DB Refund (matches internal RefundReason enum
 			// keys used by REFUND_REASON_LABELS in refund-confirmed-email.tsx).
 			// Stripe.Refund.reason values (`requested_by_customer`, `fraudulent`...)
@@ -114,6 +151,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					refundAmount: totalRefundedOnStripe,
 					reason,
 					orderDetailsUrl,
+					// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries
+					// webhook ou rejouent cron retry-webhooks.
+					idempotencyKey: `refund-confirm-charge-${charge.id}-${totalRefundedOnStripe}`,
 				},
 			});
 		}

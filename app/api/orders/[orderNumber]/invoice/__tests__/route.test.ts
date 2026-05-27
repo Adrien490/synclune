@@ -8,16 +8,22 @@ const {
 	mockGetOrder,
 	mockGenerateInvoicePdf,
 	mockPersistInvoiceNumber,
+	mockArchiveInvoicePdf,
 	mockGetSession,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
+	mockPrisma,
 } = vi.hoisted(() => ({
 	mockGetOrder: vi.fn(),
 	mockGenerateInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
+	mockArchiveInvoicePdf: vi.fn(),
 	mockGetSession: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
+	mockPrisma: {
+		order: { findUnique: vi.fn() },
+	},
 }));
 
 vi.mock("@/modules/orders/data/get-order", () => ({ getOrder: mockGetOrder }));
@@ -27,6 +33,9 @@ vi.mock("@/modules/orders/services/generate-invoice-pdf", () => ({
 vi.mock("@/modules/orders/services/persist-invoice-number.service", () => ({
 	persistInvoiceNumber: mockPersistInvoiceNumber,
 }));
+vi.mock("@/modules/orders/services/archive-invoice-pdf.service", () => ({
+	archiveInvoicePdf: mockArchiveInvoicePdf,
+}));
 vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
@@ -34,6 +43,10 @@ vi.mock("@/shared/lib/rate-limit", () => ({
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ORDER_LIMITS: { INVOICE_DOWNLOAD: { limit: 5, windowMs: 60_000 } },
+}));
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 import { GET } from "../route";
@@ -78,6 +91,11 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		mockGetOrder.mockResolvedValue(PAID_ORDER);
 		mockPersistInvoiceNumber.mockResolvedValue(null);
 		mockGenerateInvoicePdf.mockReturnValue(Buffer.from("PDF-BYTES"));
+		mockArchiveInvoicePdf.mockResolvedValue({
+			invoicePdfUrl: "https://ufs.example/inv-1.pdf",
+			invoicePdfHash: "a".repeat(64),
+		});
+		mockPrisma.order.findUnique.mockResolvedValue({ invoicePdfUrl: null });
 	});
 
 	describe("authentication", () => {
@@ -201,6 +219,62 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			await GET(makeReq(), makeParams());
 
 			expect(mockGenerateInvoicePdf).toHaveBeenCalledWith(PAID_ORDER);
+		});
+	});
+
+	/**
+	 * @regression ORD-COMPLY-005 (audit conformité 2026-05-27)
+	 * Verrouille le service archivé du PDF (Art. L102 B LPF — facture immuable).
+	 */
+	describe("archived PDF serving", () => {
+		it("calls archiveInvoicePdf after regeneration when no archive exists", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({ invoicePdfUrl: null });
+
+			await GET(makeReq(), makeParams());
+
+			expect(mockGenerateInvoicePdf).toHaveBeenCalled();
+			expect(mockArchiveInvoicePdf).toHaveBeenCalledWith(
+				"order-1",
+				"INV-2026-0001",
+				expect.anything(),
+			);
+		});
+
+		it("streams archived PDF from UploadThing when invoicePdfUrl is set (no regeneration)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://ufs.example/archived.pdf",
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(fetchSpy).toHaveBeenCalledWith(
+				"https://ufs.example/archived.pdf",
+				expect.objectContaining({ cache: "no-store" }),
+			);
+			expect(mockGenerateInvoicePdf).not.toHaveBeenCalled();
+			expect(mockArchiveInvoicePdf).not.toHaveBeenCalled();
+
+			fetchSpy.mockRestore();
+		});
+
+		it("falls back to regeneration when archive fetch fails (non-blocking)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://ufs.example/archived.pdf",
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response("not found", { status: 404 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(mockGenerateInvoicePdf).toHaveBeenCalled();
+
+			fetchSpy.mockRestore();
 		});
 	});
 });

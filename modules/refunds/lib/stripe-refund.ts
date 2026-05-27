@@ -45,7 +45,15 @@ export async function createStripeRefund(
 		// Validate PaymentIntent currency before creating the refund.
 		// Guards against accidental cross-currency refunds if the PI was created
 		// in a different currency (e.g. during Stripe account misconfiguration).
-		if (params.paymentIntentId) {
+		// ORD-REFUND-008: skip retrieve PI si expectedCurrency fourni (-1 RT Stripe).
+		if (params.expectedCurrency) {
+			if (params.expectedCurrency.toUpperCase() !== DEFAULT_CURRENCY.toUpperCase()) {
+				return {
+					success: false,
+					error: `Devise incompatible : la commande est en ${params.expectedCurrency.toUpperCase()}, attendu ${DEFAULT_CURRENCY}`,
+				};
+			}
+		} else if (params.paymentIntentId) {
 			const pi = await stripeCircuitBreaker.execute(() =>
 				stripe.paymentIntents.retrieve(params.paymentIntentId!),
 			);

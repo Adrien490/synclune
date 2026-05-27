@@ -19,7 +19,14 @@ interface ExportableOrder {
 }
 
 /**
- * Builds the Prisma where clause for the export query based on period filters
+ * Builds the Prisma where clause for the export query based on period filters.
+ *
+ * IMPORTANT (ORD-COMPLY-007, audit conformité 2026-05-27) : le filtre
+ * périodique porte volontairement sur `paidAt` (date d'encaissement) et non
+ * sur `createdAt` (date de commande). En micro-entreprise française (Art. 50-0
+ * CGI), le CA est compté à l'encaissement : une commande créée en décembre et
+ * payée en janvier doit apparaître dans l'export janvier. NE PAS basculer ce
+ * filtre sur `createdAt` sous peine de discordance avec le livre de recettes.
  */
 export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.OrderWhereInput {
 	const where: Prisma.OrderWhereInput = {

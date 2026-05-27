@@ -141,9 +141,15 @@ export async function updateTracking(
 			updateTag(tag),
 		);
 
+		// Correction tracking post-livraison : ne pas notifier le client (colis déjà
+		// chez lui, l'email "nouveau numéro de suivi" serait trompeur). On garde
+		// l'audit trail mais on neutralise le sendEmail demandé par l'UI.
+		const shouldSuppressEmail = order.status === OrderStatus.DELIVERED;
+		const effectiveSendEmail = validated.data.sendEmail && !shouldSuppressEmail;
+
 		// Envoyer l'email de mise à jour du suivi au client
 		let emailSent = false;
-		if (validated.data.sendEmail && order.customerEmail) {
+		if (effectiveSendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
 			const customerFirstName = extractCustomerFirstName(
@@ -167,14 +173,19 @@ export async function updateTracking(
 		}
 
 		// Si l'email devait être envoyé mais a échoué, retourner un warning
-		if (validated.data.sendEmail && !emailSent) {
+		// (n'applique pas quand on a délibérément supprimé l'envoi post-livraison).
+		if (effectiveSendEmail && !emailSent) {
 			return {
 				status: ActionStatus.WARNING,
 				message: `Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
 			};
 		}
 
-		const emailMessage = emailSent ? " Email envoyé au client." : "";
+		const emailMessage = emailSent
+			? " Email envoyé au client."
+			: shouldSuppressEmail && validated.data.sendEmail
+				? " Email non envoyé (commande déjà livrée)."
+				: "";
 		return success(
 			`Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}.${emailMessage}`,
 		);

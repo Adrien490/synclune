@@ -103,6 +103,28 @@ describe("buildExportWhereClause", () => {
 		const result = buildExportWhereClause(input({ invoiceStatus: "all" }));
 		expect(result.invoiceStatus).toBeUndefined();
 	});
+
+	/**
+	 * @regression ORD-COMPLY-007 (audit conformité 2026-05-27)
+	 *
+	 * Verrouille que TOUS les filtres périodiques portent sur `paidAt` (fait
+	 * générateur fiscal en micro-entreprise, Art. 50-0 CGI) et JAMAIS sur
+	 * `createdAt`. Une commande créée en décembre payée en janvier doit être
+	 * comptée dans l'export janvier.
+	 */
+	it.each([
+		{ periodType: "year" as const, year: 2026, month: undefined },
+		{ periodType: "month" as const, year: 2026, month: 5 },
+		{
+			periodType: "custom" as const,
+			dateFrom: new Date("2026-01-01"),
+			dateTo: new Date("2026-12-31"),
+		},
+	])("never filters by createdAt for periodType=$periodType", (params) => {
+		const result = buildExportWhereClause(input(params));
+		expect(result.createdAt).toBeUndefined();
+		expect(result.paidAt).toBeDefined();
+	});
 });
 
 // ============================================================================

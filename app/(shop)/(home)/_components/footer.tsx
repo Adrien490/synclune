@@ -31,7 +31,7 @@ const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 export function FooterSkeleton() {
 	return (
 		<footer
-			className="pwa-footer from-primary/8 via-background to-primary/5 relative overflow-hidden bg-linear-to-b"
+			className="pwa-footer from-primary/12 via-background to-primary/8 relative overflow-hidden bg-linear-to-b"
 			aria-hidden="true"
 		>
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
@@ -53,7 +53,7 @@ export async function Footer() {
 	cacheTag("footer");
 	return (
 		<footer
-			className="pwa-footer from-primary/8 via-background to-primary/5 relative overflow-hidden bg-linear-to-b"
+			className="pwa-footer from-primary/12 via-background to-primary/8 relative overflow-hidden bg-linear-to-b"
 			aria-labelledby="footer-heading"
 			style={{ viewTransitionName: "shop-footer" }}
 		>
@@ -98,7 +98,7 @@ export async function Footer() {
 											colorés
 											<HandDrawnAccent
 												variant="underline"
-												color="currentColor"
+												color="var(--primary)"
 												width={60}
 												height={12}
 												strokeWidth={1.5}
@@ -128,7 +128,7 @@ export async function Footer() {
 									<li key={item.href}>
 										<FooterLink
 											href={item.href}
-											className="text-muted-foreground can-hover:hover:bg-accent can-hover:hover:text-accent-foreground inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+											className="text-muted-foreground can-hover:hover:bg-primary/5 can-hover:hover:text-primary inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
 										</FooterLink>
@@ -151,7 +151,7 @@ export async function Footer() {
 									<FooterLink
 										href={`mailto:${BRAND.contact.email}`}
 										external
-										className="text-foreground can-hover:hover:bg-accent wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="text-foreground can-hover:hover:bg-primary/8 can-hover:hover:text-primary wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 									>
 										{BRAND.contact.email}
@@ -211,7 +211,7 @@ export async function Footer() {
 										<TikTokIcon
 											decorative
 											size={20}
-											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
+											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
@@ -229,7 +229,7 @@ export async function Footer() {
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
-									className="bg-card/50 border-border/60 can-hover:hover:border-border can-hover:hover:shadow-md rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-shadow motion-safe:duration-[var(--duration-normal)]"
+									className="bg-card/50 border-border/60 can-hover:hover:border-primary/30 can-hover:hover:shadow-primary/15 can-hover:hover:shadow-md rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-[border-color,box-shadow] motion-safe:duration-[var(--duration-normal)]"
 								>
 									<div className="text-sm">
 										<p className="text-foreground font-medium">{item.title}</p>

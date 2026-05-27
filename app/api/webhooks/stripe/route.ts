@@ -5,10 +5,7 @@ import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import {
-	ANTI_REPLAY_WINDOW_SECONDS,
-	MAX_WEBHOOK_RETRY_ATTEMPTS,
-} from "@/modules/webhooks/constants/webhook.constants";
+import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
@@ -24,8 +21,8 @@ export const maxDuration = 60;
  *
  * Gère les événements Stripe de manière idempotente.
  * L'idempotence est assurée par :
- * - Anti-replay check (5 min window)
- * - WebhookEvent model en DB (évite les doublons)
+ * - Anti-replay via signature timestamp (constructEvent, tolerance 300s SDK Stripe)
+ * - WebhookEvent model en DB (évite les doublons sur le même event.id)
  * - Order.paymentStatus === "PAID" (évite double décrémentation stock)
  * - Refund.stripeRefundId @unique (évite double remboursement)
  */
@@ -68,7 +65,16 @@ export async function POST(req: Request) {
 			);
 		}
 
-		// 2. Vérification de la signature (CRITIQUE - Sécurité)
+		// 2. Vérification de la signature (CRITIQUE - Sécurité + anti-replay).
+		// `constructEvent()` valide le `Stripe-Signature` header dont le
+		// timestamp est SIGNÉ par Stripe (HMAC-SHA256 sur `${timestamp}.${body}`).
+		// Le SDK applique une tolérance par défaut de 300 secondes sur ce
+		// timestamp, ce qui couvre l'anti-replay : un attaquant rejouant un
+		// payload >5min ne pourra pas regénérer un timestamp signé valide.
+		// Stripe regénère le header à chaque retry, donc les retries légitimes
+		// (1h/3h/6h backoff) passent malgré un `event.created` ancien.
+		// ORD-STRIPE-003 : on a retiré l'ancien check `event.created > 300s`
+		// qui rejetait les retries Stripe légitimes en plus du replay malveillant.
 		let event: Stripe.Event;
 		try {
 			event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -76,22 +82,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
 		}
 
-		// 3. ANTI-REPLAY CHECK (Best Practice Stripe 2026)
-		const eventAgeSeconds = Math.floor(Date.now() / 1000) - event.created;
-		if (eventAgeSeconds > ANTI_REPLAY_WINDOW_SECONDS) {
-			logger.warn("Event too old, rejecting for anti-replay", {
-				correlationId,
-				eventId: event.id,
-				eventType: event.type,
-				eventAgeSeconds,
-			});
-			return NextResponse.json(
-				{ error: "Event too old (anti-replay protection)" },
-				{ status: 400 },
-			);
-		}
-
-		// 4. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
+		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
 			select: { id: true, status: true },
@@ -154,7 +145,7 @@ export async function POST(req: Request) {
 		}
 
 		try {
-			// 5. Skip unsupported event types (avoid TypeError + infinite Stripe retries)
+			// 4. Skip unsupported event types (avoid TypeError + infinite Stripe retries)
 			if (!isEventSupported(event.type)) {
 				logger.info("Unsupported event type, skipping", {
 					correlationId,
@@ -171,12 +162,12 @@ export async function POST(req: Request) {
 				return NextResponse.json({ received: true, status: "skipped" });
 			}
 
-			// 6. Dispatch au handler approprié
+			// 5. Dispatch au handler approprié
 			const result = await Sentry.startSpan({ name: `webhook.${event.type}`, op: "webhook" }, () =>
 				dispatchEvent(event),
 			);
 
-			// 7. MARQUER COMME COMPLÉTÉ OU SKIPPED
+			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED
 			const finalStatus = result?.skipped
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
@@ -188,7 +179,7 @@ export async function POST(req: Request) {
 				},
 			});
 
-			// 8. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
+			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });
 
 			const tasks = result?.tasks;

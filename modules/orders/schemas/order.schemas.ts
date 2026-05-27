@@ -167,6 +167,35 @@ export const exportInvoicesSchema = z
 		{
 			message: "Les paramètres de période sont invalides",
 		},
+	)
+	.refine(
+		(data) => {
+			// ORD-SEC-003: dateFrom doit precéder dateTo (anti DB-load inutile + UX)
+			if (data.periodType === "custom" && data.dateFrom && data.dateTo) {
+				return data.dateFrom <= data.dateTo;
+			}
+			return true;
+		},
+		{
+			message: "dateFrom doit être antérieure ou égale à dateTo",
+			path: ["dateFrom"],
+		},
+	)
+	.refine(
+		(data) => {
+			// ORD-SEC-010: cap range custom à 366 jours (defense en profondeur DB load —
+			// complete le cap take: 50_000 de getOrdersForExport). Pour exports
+			// pluri-annuels, utiliser periodType "year" itéré côté UI.
+			if (data.periodType === "custom" && data.dateFrom && data.dateTo) {
+				const MAX_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
+				return data.dateTo.getTime() - data.dateFrom.getTime() <= MAX_RANGE_MS;
+			}
+			return true;
+		},
+		{
+			message: "La période custom ne peut pas excéder 366 jours",
+			path: ["dateTo"],
+		},
 	);
 
 export type ExportInvoicesInput = z.infer<typeof exportInvoicesSchema>;
@@ -243,6 +272,27 @@ export const markAsPaidSchema = z.object({
 });
 
 // ============================================================================
+// TRACKING URL SCHEMA (ORD-SEC-008 — anti javascript:/data:/vbscript: XSS)
+// ============================================================================
+
+/**
+ * URL de suivi colis : http(s) uniquement.
+ *
+ * Le trackingUrl est rendu via `<a href={trackingUrl}>` dans 3 emails
+ * transactionnels (order-confirmation, shipping-confirmation, tracking-update)
+ * et dans le panneau admin update-tracking-form. Sans cette restriction,
+ * `z.url()` accepte `javascript:alert(1)` → XSS au clic depuis l'admin et
+ * potentiellement depuis certains rendus email (preview inline JS).
+ */
+const trackingUrlSchema = z
+	.url()
+	.refine((url) => /^https?:\/\//i.test(url), {
+		message: "L'URL de suivi doit commencer par http:// ou https://",
+	})
+	.optional()
+	.or(z.literal(""));
+
+// ============================================================================
 // CARRIER ENUM
 // ============================================================================
 
@@ -275,7 +325,7 @@ export const carrierEnum = z.enum([
 export const markAsShippedSchema = z.object({
 	id: z.cuid2(),
 	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
-	trackingUrl: z.string().url().optional().or(z.literal("")),
+	trackingUrl: trackingUrlSchema,
 	carrier: carrierEnum.optional(),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
@@ -298,7 +348,7 @@ export const markAsShippedSchema = z.object({
 export const updateTrackingSchema = z.object({
 	id: z.cuid2(),
 	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
-	trackingUrl: z.string().url().optional().or(z.literal("")),
+	trackingUrl: trackingUrlSchema,
 	carrier: carrierEnum.optional(),
 	sendEmail: z
 		.union([z.boolean(), z.enum(["true", "false"])])
@@ -395,6 +445,9 @@ export const addOrderNoteSchema = z.object({
 		.string()
 		.min(1, "La note ne peut pas être vide")
 		.max(5000, "Note trop longue (max 5000 caractères)"),
+	// true = note interne admin (fraude suspectée, blacklist, escalade légale).
+	// Filtrée par getOrderNotesForUser pour empêcher tout leak côté client.
+	isInternal: z.boolean().optional().default(false),
 });
 
 /**

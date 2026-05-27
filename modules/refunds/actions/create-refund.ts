@@ -1,7 +1,8 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -58,7 +59,7 @@ export async function createRefund(
 		// Parser les données du formulaire
 		const rawOrderId = safeFormGet(formData, "orderId");
 		const rawReason = safeFormGet(formData, "reason");
-		const note = formData.get("note") as string | null;
+		const note = safeFormGet(formData, "note");
 		const items = safeFormGetJSON<unknown>(formData, "items");
 		if (!items) return error("Format des articles invalide");
 
@@ -101,6 +102,8 @@ export async function createRefund(
 					subtotal: true,
 					discountAmount: true,
 					total: true,
+					currency: true,
+					status: true,
 					paymentStatus: true,
 					stripePaymentIntentId: true,
 					items: {
@@ -134,6 +137,12 @@ export async function createRefund(
 
 			if (!order) {
 				throw new Error("ORDER_NOT_FOUND");
+			}
+
+			// ORD-REFUND-006: bloquer les commandes non-EUR (Stripe refund nécessite
+			// que la devise du PaymentIntent match la commande, sinon refund FAILED).
+			if (order.currency && order.currency.toUpperCase() !== "EUR") {
+				throw new Error(`CURRENCY_NOT_SUPPORTED:${order.currency}`);
 			}
 
 			// Vérifier que la commande est payée (ou partiellement remboursée)
@@ -236,10 +245,26 @@ export async function createRefund(
 				},
 			});
 
+			// ORD-REFUND-001: audit trail conformité L123-22
+			// ORD-REFUND-007: trace si commande déjà CANCELLED (refund post-cancel)
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.REFUND_CREATED,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+				note: sanitizedNote ?? undefined,
+				metadata: {
+					refundId: refund.id,
+					amount: totalAmount,
+					reason: validated.data.reason,
+					itemCount: validatedItems.length,
+					context: order.status === "CANCELLED" ? "cancelled-order" : "standard",
+				},
+			});
+
 			return { refund, totalAmount };
 		});
-
-		// Audit log
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
 		updateTag(REFUNDS_CACHE_TAGS.LIST);
@@ -275,6 +300,12 @@ export async function createRefund(
 				const max = Number(e.message.split(":")[1]);
 				return error(
 					`${REFUND_ERROR_MESSAGES.AMOUNT_EXCEEDS_REMAINING} (Max: ${(max / 100).toFixed(2)} €)`,
+				);
+			}
+			if (e.message.startsWith("CURRENCY_NOT_SUPPORTED:")) {
+				const curr = e.message.split(":")[1] ?? "?";
+				return error(
+					`Cette commande est en devise ${curr.toUpperCase()} — seuls les remboursements en EUR sont supportés.`,
 				);
 			}
 		}

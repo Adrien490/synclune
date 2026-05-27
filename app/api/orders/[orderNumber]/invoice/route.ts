@@ -1,9 +1,12 @@
 import { getOrder } from "@/modules/orders/data/get-order";
 import { generateInvoicePdf } from "@/modules/orders/services/generate-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
+import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { logger } from "@/shared/lib/logger";
+import { prisma } from "@/shared/lib/prisma";
 
 export async function GET(
 	_request: Request,
@@ -46,6 +49,9 @@ export async function GET(
 	}
 
 	// Generate and persist invoice number on first download (Article 286 CGI)
+	// Fallback : normalement déjà persisté par ensureInvoiceNumberPersisted dans
+	// le webhook checkout-completed (ORD-COMPLY-002), mais on garde le lazy path
+	// pour les commandes historiques antérieures à ce déploiement.
 	let invoiceOrder = order;
 	if (!order.invoiceNumber) {
 		const result = await persistInvoiceNumber(order.id, order.userId);
@@ -59,20 +65,56 @@ export async function GET(
 		}
 	}
 
+	// ORD-COMPLY-005 : servir le PDF archivé immuable si déjà uploadé.
+	// invoicePdfUrl n'est pas dans GET_ORDER_SELECT_CUSTOMER (minimisation) — on
+	// fait un select dédié ici. Si setté, on stream depuis UploadThing au lieu de
+	// régénérer (garantit l'immuabilité bit-à-bit, Art. L102 B LPF).
+	const archive = await prisma.order.findUnique({
+		where: { id: order.id },
+		select: { invoicePdfUrl: true },
+	});
+	if (archive?.invoicePdfUrl) {
+		try {
+			const archived = await fetch(archive.invoicePdfUrl, { cache: "no-store" });
+			if (archived.ok) {
+				const buffer = await archived.arrayBuffer();
+				return new Response(buffer, {
+					headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
+				});
+			}
+			logger.warn(
+				`Archived invoice fetch failed (${archived.status}) — falling back to regeneration`,
+				{ service: "invoice-route", orderId: order.id },
+			);
+		} catch (error) {
+			logger.warn(`Archived invoice fetch threw — falling back to regeneration`, {
+				service: "invoice-route",
+				orderId: order.id,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
+
 	const pdfBuffer = generateInvoicePdf(invoiceOrder);
 
-	const filename = invoiceOrder.invoiceNumber
-		? `facture-${invoiceOrder.invoiceNumber}.pdf`
-		: `facture-${orderNumber}.pdf`;
+	// Archive sur UploadThing si invoiceNumber présent (best-effort, ne bloque pas).
+	if (invoiceOrder.invoiceNumber) {
+		await archiveInvoicePdf(order.id, invoiceOrder.invoiceNumber, pdfBuffer);
+	}
 
 	return new Response(pdfBuffer, {
-		headers: {
-			"Content-Type": "application/pdf",
-			"Content-Disposition": `attachment; filename="${filename}"`,
-			"Cache-Control": "private, max-age=3600",
-			"X-Frame-Options": "DENY",
-			"X-Content-Type-Options": "nosniff",
-			"Referrer-Policy": "no-referrer",
-		},
+		headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
 	});
+}
+
+function buildPdfHeaders(invoiceNumber: string | null, orderNumber: string): HeadersInit {
+	const filename = invoiceNumber ? `facture-${invoiceNumber}.pdf` : `facture-${orderNumber}.pdf`;
+	return {
+		"Content-Type": "application/pdf",
+		"Content-Disposition": `attachment; filename="${filename}"`,
+		"Cache-Control": "private, max-age=3600",
+		"X-Frame-Options": "DENY",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy": "no-referrer",
+	};
 }

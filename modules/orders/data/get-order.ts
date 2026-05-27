@@ -7,7 +7,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { type Prisma } from "@/app/generated/prisma/client";
 
-import { GET_ORDER_SELECT } from "../constants/order.constants";
+import { GET_ORDER_SELECT_ADMIN, GET_ORDER_SELECT_CUSTOMER } from "../constants/order.constants";
 import { getOrderSchema } from "../schemas/order.schemas";
 import type { GetOrderParams, GetOrderReturn, FetchOrderContext } from "../types/order.types";
 
@@ -58,10 +58,10 @@ export async function fetchOrder(
 	try {
 		const order = await prisma.order.findFirst({
 			where,
-			select: GET_ORDER_SELECT,
+			select: context.admin ? GET_ORDER_SELECT_ADMIN : GET_ORDER_SELECT_CUSTOMER,
 		});
 
-		return order;
+		return order as GetOrderReturn | null;
 	} catch (error) {
 		logger.error("Failed to fetch order", error, { service: "fetchOrder" });
 		return null;

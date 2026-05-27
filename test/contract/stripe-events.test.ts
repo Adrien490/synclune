@@ -25,6 +25,9 @@ const {
 	mockHandleRefundFailed,
 	mockHandleDisputeCreated,
 	mockHandleDisputeClosed,
+	mockHandlePaymentSuccess,
+	mockHandlePaymentFailure,
+	mockHandlePaymentCanceled,
 } = vi.hoisted(() => ({
 	mockHandleCheckoutCompleted: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleCheckoutExpired: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
@@ -35,6 +38,9 @@ const {
 	mockHandleRefundFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeCreated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeClosed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandlePaymentSuccess: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandlePaymentFailure: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandlePaymentCanceled: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 }));
 
 vi.mock("@/modules/webhooks/handlers/checkout-handlers", () => ({
@@ -54,6 +60,12 @@ vi.mock("@/modules/webhooks/handlers/dispute-handlers", () => ({
 	handleDisputeCreated: mockHandleDisputeCreated,
 	handleDisputeClosed: mockHandleDisputeClosed,
 }));
+vi.mock("@/modules/webhooks/handlers/payment-handlers", () => ({
+	handlePaymentSuccess: mockHandlePaymentSuccess,
+	handlePaymentFailure: mockHandlePaymentFailure,
+	handlePaymentCanceled: mockHandlePaymentCanceled,
+	handleInvoicePaymentFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+}));
 
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 
@@ -70,6 +82,9 @@ const EXPECTED_HANDLERS: Record<string, ReturnType<typeof vi.fn>> = {
 	"refund.failed": mockHandleRefundFailed,
 	"charge.dispute.created": mockHandleDisputeCreated,
 	"charge.dispute.closed": mockHandleDisputeClosed,
+	"payment_intent.succeeded": mockHandlePaymentSuccess,
+	"payment_intent.payment_failed": mockHandlePaymentFailure,
+	"payment_intent.canceled": mockHandlePaymentCanceled,
 };
 
 function loadFixtures(): Array<{ name: string; event: Stripe.Event }> {
@@ -177,5 +192,28 @@ describe("Stripe webhook contract — payload semantics per type", () => {
 		const dispute = event.data.object as Stripe.Dispute;
 		expect(dispute.evidence_details.due_by).toBeTypeOf("number");
 		expect(dispute.reason).toBeTruthy();
+	});
+
+	it("payment_intent.succeeded has status='succeeded' and amount_received>0", () => {
+		const event = byType("payment_intent.succeeded");
+		const pi = event.data.object as Stripe.PaymentIntent;
+		expect(pi.status).toBe("succeeded");
+		expect(pi.amount_received).toBeGreaterThan(0);
+	});
+
+	it("payment_intent.payment_failed carries last_payment_error.decline_code for admin UX", () => {
+		const event = byType("payment_intent.payment_failed");
+		const pi = event.data.object as Stripe.PaymentIntent;
+		expect(pi.status).toBe("requires_payment_method");
+		expect(pi.last_payment_error?.decline_code).toBeTruthy();
+		expect(pi.last_payment_error?.code).toBeTruthy();
+	});
+
+	it("payment_intent.canceled carries cancellation_reason and canceled_at", () => {
+		const event = byType("payment_intent.canceled");
+		const pi = event.data.object as Stripe.PaymentIntent;
+		expect(pi.status).toBe("canceled");
+		expect(pi.cancellation_reason).toBeTruthy();
+		expect(pi.canceled_at).toBeTypeOf("number");
 	});
 });

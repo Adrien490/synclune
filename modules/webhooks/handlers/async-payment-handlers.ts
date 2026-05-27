@@ -200,6 +200,8 @@ export async function handleAsyncPaymentFailed(
 					customerName: order.customerName,
 					orderNumber: order.orderNumber,
 					retryUrl,
+					// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries.
+					idempotencyKey: `payment-failed-${order.id}`,
 				},
 			});
 		}

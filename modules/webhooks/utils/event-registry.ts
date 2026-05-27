@@ -21,7 +21,12 @@ import {
 	handleAsyncPaymentSucceeded,
 	handleAsyncPaymentFailed,
 } from "../handlers/async-payment-handlers";
-import { handleDisputeCreated, handleDisputeClosed } from "../handlers/dispute-handlers";
+import {
+	handleDisputeCreated,
+	handleDisputeClosed,
+	handleDisputeFundsWithdrawn,
+	handleDisputeFundsReinstated,
+} from "../handlers/dispute-handlers";
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
@@ -85,6 +90,8 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	// === DISPUTE (chargebacks) ===
 	"charge.dispute.created": async (e) => handleDisputeCreated(getDispute(e)),
 	"charge.dispute.closed": async (e) => handleDisputeClosed(getDispute(e)),
+	"charge.dispute.funds_withdrawn": async (e) => handleDisputeFundsWithdrawn(getDispute(e)),
+	"charge.dispute.funds_reinstated": async (e) => handleDisputeFundsReinstated(getDispute(e)),
 
 	// === INVOICE ===
 	"invoice.payment_failed": async (e) => handleInvoicePaymentFailed(getInvoice(e)),

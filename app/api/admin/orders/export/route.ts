@@ -1,4 +1,5 @@
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { getOrdersForExport } from "@/modules/orders/data/get-orders-for-export";
 import { exportInvoicesSchema } from "@/modules/orders/schemas/order.schemas";
 import {
@@ -6,10 +7,23 @@ import {
 	generateOrdersCsv,
 } from "@/modules/orders/services/export-orders-csv.service";
 import { logger } from "@/shared/lib/logger";
+import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
 export async function GET(request: Request) {
 	const admin = await requireAdminApiRoute();
 	if ("response" in admin) return admin.response;
+
+	const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.EXPORT);
+	if ("error" in rateLimit) {
+		const retryAfter = "retryAfter" in rateLimit.error ? rateLimit.error.retryAfter : undefined;
+		return new Response(JSON.stringify({ error: rateLimit.error.message }), {
+			status: 429,
+			headers: {
+				"Content-Type": "application/json",
+				...(retryAfter !== undefined && { "Retry-After": String(retryAfter) }),
+			},
+		});
+	}
 
 	const { searchParams } = new URL(request.url);
 	const input = {
@@ -44,6 +58,12 @@ export async function GET(request: Request) {
 			headers: {
 				"Content-Type": "text/csv; charset=utf-8",
 				"Content-Disposition": `attachment; filename="${filename}"`,
+				// ORD-SEC-009: defense en profondeur — empeche sniff MIME (anti-XSS si CSV
+				// ouvert dans navigateur), iframe embedding (anti-clickjack), referrer leak.
+				"X-Content-Type-Options": "nosniff",
+				"X-Frame-Options": "DENY",
+				"Referrer-Policy": "no-referrer",
+				"Cache-Control": "private, no-store",
 			},
 		});
 	} catch (error) {

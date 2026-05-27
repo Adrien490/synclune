@@ -27,6 +27,18 @@ export async function LatestCreations({
 			aria-describedby="latest-creations-subtitle"
 			style={{ viewTransitionName: "latest-creations" }}
 		>
+			{/* Soft rose halo top-right — brand warmth marker (cf. atelier section) */}
+			<div
+				className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+				aria-hidden="true"
+			>
+				<div
+					className="absolute top-[5%] right-[-8%] h-[35vh] w-[50vw] max-w-md rounded-full opacity-50 blur-3xl"
+					style={{
+						background: "radial-gradient(closest-side, var(--color-glow-pink), transparent 70%)",
+					}}
+				/>
+			</div>
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				{/* Baymard UX: Full scope labels — h2 "Nouvelles créations" reste explicite (vs "Nouveautés" générique) */}
 				<header className="mb-10 text-center lg:mb-14">
@@ -78,7 +90,13 @@ export async function LatestCreations({
 								style={{ "--card-index": index } as CSSProperties}
 							>
 								<CursorGlow>
-									<ProductCard product={product} index={index} sectionId="latest" disablePreload />
+									<ProductCard
+										product={product}
+										index={index}
+										sectionId="latest"
+										disablePreload
+										showNewBadge
+									/>
 								</CursorGlow>
 							</li>
 						))}

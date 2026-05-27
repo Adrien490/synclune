@@ -21,6 +21,7 @@ import {
 	buildPostCheckoutTasksFromPI,
 } from "../services/checkout.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
+import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 
 /**
  * Resolves orderId from PI metadata.
@@ -39,14 +40,32 @@ function resolveOrderId(metadata: Stripe.Metadata): string | undefined {
 export async function handlePaymentSuccess(
 	paymentIntent: Stripe.PaymentIntent,
 ): Promise<WebhookHandlerResult> {
-	const orderId = resolveOrderId(paymentIntent.metadata);
+	let orderId = resolveOrderId(paymentIntent.metadata);
 
+	// ORD-STRIPE-005 : si Stripe émet `payment_intent.succeeded` avant que
+	// `confirmCheckout` step 9 ait pu poser `metadata.orderId` (paiement
+	// instantané sans 3DS), on retrouve l'order via la clé unique
+	// `stripePaymentIntentId` posée en step 8 (order-creation transaction).
+	// Sans ce fallback, l'order reste PENDING et n'est rattrapée que ~1h
+	// plus tard par le cron `sync-async-payments`.
 	if (!orderId) {
-		logger.warn(
-			`⚠️ [WEBHOOK] payment_intent.succeeded without orderId in metadata (PI: ${paymentIntent.id})`,
-			{ service: "webhook" },
-		);
-		return { success: true, skipped: true, reason: "no_order_id" };
+		const fallbackOrder = await prisma.order.findFirst({
+			where: { stripePaymentIntentId: paymentIntent.id, ...notDeleted },
+			select: { id: true },
+		});
+		if (fallbackOrder) {
+			orderId = fallbackOrder.id;
+			logger.info(
+				`⚠️ [WEBHOOK] payment_intent.succeeded missing metadata.orderId — resolved via stripePaymentIntentId fallback`,
+				{ service: "webhook", orderId, paymentIntentId: paymentIntent.id },
+			);
+		} else {
+			logger.warn(
+				`⚠️ [WEBHOOK] payment_intent.succeeded without orderId in metadata (PI: ${paymentIntent.id})`,
+				{ service: "webhook" },
+			);
+			return { success: true, skipped: true, reason: "no_order_id" };
+		}
 	}
 
 	// New PI flow: no checkoutSessionId means this PI was created directly (not via Checkout Session)
@@ -55,6 +74,8 @@ export async function handlePaymentSuccess(
 	if (isNewPIFlow) {
 		try {
 			const order = await processOrderFromPaymentIntent(orderId, paymentIntent);
+			// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
+			await ensureInvoiceNumberPersisted(orderId);
 			const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 			return { success: true, tasks };
 		} catch (error) {
@@ -93,6 +114,9 @@ export async function handlePaymentSuccess(
 
 	// Old flow: checkout.session.completed handles everything, just mark as paid
 	await markOrderAsPaid(orderId, paymentIntent.id);
+	// Génération facture eager si checkout.session.completed n'a pas encore tourné
+	// (idempotent — noop si déjà persistée par l'autre handler).
+	await ensureInvoiceNumberPersisted(orderId);
 	return { success: true };
 }
 

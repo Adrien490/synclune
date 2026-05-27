@@ -19,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), update: vi.fn() },
+		refund: { count: vi.fn().mockResolvedValue(0) },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -79,6 +80,23 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		REFUNDED: "REFUNDED",
 	},
 	HistorySource: { ADMIN: "ADMIN", CUSTOMER: "CUSTOMER", SYSTEM: "SYSTEM" },
+	RefundStatus: {
+		PENDING: "PENDING",
+		APPROVED: "APPROVED",
+		COMPLETED: "COMPLETED",
+		REJECTED: "REJECTED",
+		FAILED: "FAILED",
+		CANCELLED: "CANCELLED",
+	},
+	InvoiceStatus: {
+		PENDING: "PENDING",
+		GENERATED: "GENERATED",
+		VOIDED: "VOIDED",
+	},
+}));
+
+vi.mock("../../services/void-invoice.service", () => ({
+	voidInvoice: vi.fn(),
 }));
 
 vi.mock("../../schemas/order.schemas", () => ({

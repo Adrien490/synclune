@@ -1,7 +1,8 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -35,8 +36,9 @@ export async function rejectRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.SINGLE_OPERATION);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -93,14 +95,33 @@ export async function rejectRefund(
 				: `[REFUSÉ] ${sanitizedReason}`
 			: refund.note;
 
-		// Mettre à jour le statut
-		// Le where inclut le statut attendu pour protection TOCTOU
-		await prisma.refund.update({
-			where: { id, status: RefundStatus.PENDING },
-			data: {
-				status: RefundStatus.REJECTED,
-				note: updatedNote,
-			},
+		// Mettre à jour le statut + audit dans une transaction atomique
+		await prisma.$transaction(async (tx) => {
+			const updated = await tx.refund.updateMany({
+				where: { id, status: RefundStatus.PENDING },
+				data: { status: RefundStatus.REJECTED, note: updatedNote },
+			});
+			if (updated.count === 0) {
+				throw new Error("ALREADY_PROCESSED");
+			}
+			// ORD-REFUND-001: audit trail (action=REFUND_FAILED + event=rejected_by_admin
+			// car l'enum OrderAction n'a pas de REFUND_REJECTED dédié)
+			await createOrderAuditTx(tx, {
+				orderId: refund.order.id,
+				action: OrderAction.REFUND_FAILED,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+				note: sanitizedReason ?? "Remboursement refusé",
+				metadata: {
+					refundId: refund.id,
+					amount: refund.amount,
+					event: "rejected_by_admin",
+					rejectionReason: sanitizedReason,
+					previousStatus: RefundStatus.PENDING,
+					newStatus: RefundStatus.REJECTED,
+				},
+			});
 		});
 
 		updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -115,7 +136,10 @@ export async function rejectRefund(
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,
 		);
-	} catch (error) {
-		return handleActionError(error, REFUND_ERROR_MESSAGES.REJECT_FAILED);
+	} catch (e) {
+		if (e instanceof Error && e.message === "ALREADY_PROCESSED") {
+			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
+		}
+		return handleActionError(e, REFUND_ERROR_MESSAGES.REJECT_FAILED);
 	}
 }

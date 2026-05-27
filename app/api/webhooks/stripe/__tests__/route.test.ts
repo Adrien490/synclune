@@ -17,7 +17,6 @@ const {
 	mockSendWebhookFailedAlert,
 	mockCheckRateLimit,
 	mockGetClientIp,
-	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	WebhookEventStatus,
 } = vi.hoisted(() => {
@@ -50,7 +49,6 @@ const {
 		mockSendWebhookFailedAlert: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
-		ANTI_REPLAY_WINDOW_SECONDS: 300,
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
 		WebhookEventStatus: {
 			PENDING: "PENDING",
@@ -99,7 +97,6 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 }));
 
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
-	ANTI_REPLAY_WINDOW_SECONDS,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 }));
 
@@ -404,51 +401,57 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 });
 
 // ============================================================================
-// 3. Anti-replay check
+// 3. Anti-replay (delegated to constructEvent signature timestamp)
 // ============================================================================
 
 /**
- * @regression webhooks-audit-2026-05-17 (anti-replay 5min)
+ * @regression stripe-audit-2026-05-27 (ORD-STRIPE-003)
  *
- * Bug : sans anti-replay window, un attaquant pouvait re-livrer un event Stripe
- * intercepté plusieurs minutes plus tard (signature valide indéfiniment). Le
- * fix borne l'event.created à 5 minutes max via ANTI_REPLAY_WINDOW_SECONDS.
+ * Précédente régression (webhooks-audit-2026-05-17) ajoutait un check manuel
+ * `event.created > 300s → 400` en plus de `constructEvent`. Analyse audit
+ * 2026-05-27 a démontré que ce check rejetait les retries Stripe légitimes
+ * (Stripe retry jusqu'à 3j en backoff exponentiel 1h/3h/6h/12h…). Le
+ * `Stripe-Signature` header est régénéré à chaque retry avec un timestamp
+ * frais ; `constructEvent` vérifie déjà ce timestamp (tolerance 300s du SDK).
+ * `event.created` reste constant à travers les retries → check redondant et
+ * contre-productif.
  *
- * Garde-fou : ne PAS retirer le check `event.created < NOW - 300s` du route
- * handler — Stripe recommande explicitement cette fenêtre dans sa doc webhook.
+ * Garde-fou : ne PAS rajouter de check manuel sur `event.created`. L'anti-replay
+ * cryptographique est entièrement délégué à `constructEvent`.
  */
-describe("POST /api/webhooks/stripe - anti-replay check", () => {
-	it("should return 400 when event is older than ANTI_REPLAY_WINDOW_SECONDS", async () => {
-		const oldEvent = makeStripeEvent({
-			created: NOW_SECONDS - 301, // 301 seconds old - exceeds the 300s window
+describe("POST /api/webhooks/stripe - anti-replay (signature timestamp)", () => {
+	it("accepts a Stripe retry with old event.created (signature timestamp is fresh)", async () => {
+		// Simule un retry Stripe à T+1h après l'événement initial. event.created
+		// reste l'original (1h ancien) mais constructEvent (mocké) a déjà validé
+		// le signature timestamp frais.
+		const retriedEvent = makeStripeEvent({
+			created: NOW_SECONDS - 3600,
 		});
-		mockConstructEvent.mockReturnValue(oldEvent);
+		mockConstructEvent.mockReturnValue(retriedEvent);
 
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockNextResponseJson).toHaveBeenCalledWith(
-			{ error: "Event too old (anti-replay protection)" },
-			{ status: 400 },
-		);
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(200);
+		// Idempotence DB est consultée — l'event n'est plus court-circuité.
+		expect(mockPrisma.webhookEvent.findUnique).toHaveBeenCalled();
 	});
 
-	it("should return 400 when event is exactly at the boundary (eventAgeSeconds > window)", async () => {
-		const oldEvent = makeStripeEvent({
-			created: NOW_SECONDS - (ANTI_REPLAY_WINDOW_SECONDS + 1),
+	it("accepts events at the legacy boundary (300s old) since constructEvent owns anti-replay", async () => {
+		const edgeEvent = makeStripeEvent({
+			created: NOW_SECONDS - 301,
 		});
-		mockConstructEvent.mockReturnValue(oldEvent);
+		mockConstructEvent.mockReturnValue(edgeEvent);
 
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(200);
 	});
 
-	it("should NOT reject events within the anti-replay window", async () => {
+	it("accepts recent events normally", async () => {
 		const recentEvent = makeStripeEvent({
-			created: NOW_SECONDS - 299, // 299 seconds old - within the 300s window
+			created: NOW_SECONDS - 30,
 		});
 		mockConstructEvent.mockReturnValue(recentEvent);
 
@@ -456,29 +459,6 @@ describe("POST /api/webhooks/stripe - anti-replay check", () => {
 		const response = await POST(req);
 
 		expect(response.status).toBe(200);
-	});
-
-	it("should NOT reject events at exactly the window boundary (eventAgeSeconds === window)", async () => {
-		const edgeEvent = makeStripeEvent({
-			created: NOW_SECONDS - ANTI_REPLAY_WINDOW_SECONDS, // exactly 300s old
-		});
-		mockConstructEvent.mockReturnValue(edgeEvent);
-
-		const req = makeRequest();
-		const response = await POST(req);
-
-		// eventAgeSeconds === window is NOT > window, so should proceed
-		expect(response.status).toBe(200);
-	});
-
-	it("should not check idempotency when event is too old", async () => {
-		const oldEvent = makeStripeEvent({ created: NOW_SECONDS - 400 });
-		mockConstructEvent.mockReturnValue(oldEvent);
-
-		const req = makeRequest();
-		await POST(req);
-
-		expect(mockPrisma.webhookEvent.findUnique).not.toHaveBeenCalled();
 	});
 });
 

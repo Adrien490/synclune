@@ -211,18 +211,35 @@ describe("bulkCancelOrders", () => {
 	// Filtering: only PENDING+UNPAID orders are eligible
 	// --------------------------------------------------------------------
 
-	it("queries only PENDING + payment PENDING orders", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
+	it("ventile la sélection (eligible vs ignorées par statut) puis ne charge que les éligibles", async () => {
+		// 1er findMany : tous les sélectionnés (pour le breakdown).
+		// 2e findMany : uniquement les éligibles (PENDING + PENDING).
+		mockPrisma.order.findMany.mockResolvedValueOnce([
+			{ id: VALID_CUID, status: "PENDING", paymentStatus: "PENDING" },
+			{ id: VALID_CUID_2, status: "SHIPPED", paymentStatus: "PAID" },
+		]);
+		mockPrisma.order.findMany.mockResolvedValueOnce([makeOrder({ id: VALID_CUID })]);
 
 		await bulkCancelOrders(undefined, makeFd());
 
-		expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
+		// Sélecteur initial : tous les ids, pas de filtre statut.
+		expect(mockPrisma.order.findMany).toHaveBeenNthCalledWith(
+			1,
 			expect.objectContaining({
 				where: expect.objectContaining({
-					status: "PENDING",
-					paymentStatus: "PENDING",
-					deletedAt: null,
 					id: { in: [VALID_CUID, VALID_CUID_2] },
+					deletedAt: null,
+				}),
+			}),
+		);
+		// Sélecteur final : seulement les éligibles (sans status/paymentStatus
+		// dans le where car déjà filtrés en mémoire).
+		expect(mockPrisma.order.findMany).toHaveBeenNthCalledWith(
+			2,
+			expect.objectContaining({
+				where: expect.objectContaining({
+					id: { in: [VALID_CUID] },
+					deletedAt: null,
 				}),
 			}),
 		);
@@ -384,15 +401,27 @@ describe("bulkCancelOrders", () => {
 	// --------------------------------------------------------------------
 
 	it("includes a skipped hint in the success message when some orders were ineligible", async () => {
-		// Only 1 of 2 orders matched the PENDING+UNPAID filter → 1 skipped
-		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
+		// 1er findMany : 1 sur 2 commandes éligibles (l'autre est SHIPPED).
+		// 2e findMany : retourne uniquement l'éligible enrichie.
+		mockPrisma.order.findMany.mockResolvedValueOnce([
+			{ id: VALID_CUID, status: "PENDING", paymentStatus: "PENDING" },
+			{ id: VALID_CUID_2, status: "SHIPPED", paymentStatus: "PAID" },
+		]);
+		mockPrisma.order.findMany.mockResolvedValueOnce([makeOrder({ id: VALID_CUID })]);
 
 		const result = await bulkCancelOrders(undefined, makeFd());
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toMatch(/1 commande annulée/);
-		expect(result.message).toMatch(/1 commande ignorée/);
-		expect(result.data).toEqual({ count: 1, skipped: 1 });
+		expect(result.message).toMatch(/ignorées/);
+		expect(result.message).toMatch(/expédiée/);
+		expect(result.data).toEqual(
+			expect.objectContaining({
+				count: 1,
+				skipped: 1,
+				skippedBreakdown: expect.objectContaining({ alreadyShipped: 1 }),
+			}),
+		);
 	});
 
 	it("emits the global admin audit log entry once", async () => {

@@ -14,6 +14,7 @@ import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
+import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 
 /**
  * Gère la complétion d'une session checkout
@@ -54,6 +55,11 @@ export async function handleCheckoutSessionCompleted(
 
 		// 2. Traiter la commande dans une transaction atomique
 		const order = await processOrderTransaction(orderId, session, shippingCost, shippingRateId);
+
+		// 2b. Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
+		// Hors transaction principale (advisory lock Postgres pas safe imbriqué).
+		// Idempotent + best-effort : un échec n'interrompt pas le webhook.
+		await ensureInvoiceNumberPersisted(orderId);
 
 		// 3. Construire les tâches post-webhook (emails, cache)
 		const tasks = buildPostCheckoutTasks(order, session);

@@ -12,7 +12,6 @@ const {
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockSuccess,
-	mockError,
 	mockHandleActionError,
 	mockUpdateTag,
 } = vi.hoisted(() => ({
@@ -24,13 +23,13 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdmin,
@@ -53,13 +52,18 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
-	error: mockError,
 }));
 vi.mock("../../schemas/order.schemas", () => ({
 	deleteOrderNoteSchema: {},
 }));
 vi.mock("../../constants/cache", () => ({
 	ORDERS_CACHE_TAGS: { NOTES: (id: string) => `order-notes-${id}` },
+}));
+vi.mock("../../constants/order.constants", () => ({
+	ORDER_ERROR_MESSAGES: {
+		NOTE_NOT_FOUND: "Note introuvable.",
+		NOT_NOTE_AUTHOR: "Vous ne pouvez modifier que vos propres notes.",
+	},
 }));
 
 import { deleteOrderNote } from "../delete-order-note";
@@ -69,13 +73,14 @@ import { deleteOrderNote } from "../delete-order-note";
 // ============================================================================
 
 const NOTE_ID = VALID_CUID;
+const ADMIN_ID = "admin-1";
 
 describe("deleteOrderNote", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
 		mockRequireAdmin.mockResolvedValue({
-			user: { id: "admin-1", name: "Admin", email: "admin@test.com" },
+			user: { id: ADMIN_ID, name: "Admin", email: "admin@test.com" },
 		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { noteId: NOTE_ID } });
@@ -85,15 +90,12 @@ describe("deleteOrderNote", () => {
 		mockPrisma.orderNote.findUnique.mockResolvedValue({
 			id: NOTE_ID,
 			orderId: VALID_ORDER_ID,
+			authorId: ADMIN_ID,
 		});
 		mockPrisma.orderNote.update.mockResolvedValue({});
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
-			message: msg,
-		}));
-		mockError.mockImplementation((msg: string) => ({
-			status: ActionStatus.ERROR,
 			message: msg,
 		}));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
@@ -108,6 +110,7 @@ describe("deleteOrderNote", () => {
 		});
 		const result = await deleteOrderNote(NOTE_ID);
 		expect(result.status).toBe(ActionStatus.FORBIDDEN);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("returns rate limit error when exceeded", async () => {
@@ -116,6 +119,7 @@ describe("deleteOrderNote", () => {
 		});
 		const result = await deleteOrderNote(NOTE_ID);
 		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("returns validation error when input is invalid", async () => {
@@ -126,11 +130,30 @@ describe("deleteOrderNote", () => {
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
-	it("returns error when note does not exist", async () => {
+	it("returns NOT_FOUND when note does not exist", async () => {
 		mockPrisma.orderNote.findUnique.mockResolvedValue(null);
 		const result = await deleteOrderNote(NOTE_ID);
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("Note non trouvée");
+		expect(result.status).toBe(ActionStatus.NOT_FOUND);
+	});
+
+	it("filters soft-deleted notes via notDeleted in findUnique (ORD-SEC-005)", async () => {
+		await deleteOrderNote(NOTE_ID);
+		expect(mockPrisma.orderNote.findUnique).toHaveBeenCalledWith({
+			where: { id: NOTE_ID, deletedAt: null },
+			select: { id: true, orderId: true, authorId: true },
+		});
+	});
+
+	it("returns FORBIDDEN when admin is not the author (ORD-SEC-002)", async () => {
+		mockPrisma.orderNote.findUnique.mockResolvedValue({
+			id: NOTE_ID,
+			orderId: VALID_ORDER_ID,
+			authorId: "other-admin",
+		});
+		const result = await deleteOrderNote(NOTE_ID);
+		expect(result.status).toBe(ActionStatus.FORBIDDEN);
+		expect(mockPrisma.orderNote.update).not.toHaveBeenCalled();
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("soft-deletes the note (legal compliance)", async () => {
@@ -150,6 +173,7 @@ describe("deleteOrderNote", () => {
 		mockPrisma.orderNote.findUnique.mockResolvedValue({
 			id: NOTE_ID,
 			orderId: null,
+			authorId: ADMIN_ID,
 		});
 		await deleteOrderNote(NOTE_ID);
 		expect(mockUpdateTag).not.toHaveBeenCalled();
@@ -158,11 +182,13 @@ describe("deleteOrderNote", () => {
 	it("returns success on delete", async () => {
 		const result = await deleteOrderNote(NOTE_ID);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toBe("Note supprimée");
 	});
 
 	it("calls handleActionError on unexpected exception", async () => {
-		mockPrisma.orderNote.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await deleteOrderNote(NOTE_ID);
+		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

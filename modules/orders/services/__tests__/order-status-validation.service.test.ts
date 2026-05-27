@@ -52,7 +52,6 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 
 import {
 	canMarkAsShipped,
-	isOrderInFinalState,
 	canCancelOrder,
 	canRefundOrder,
 	getOrderPermissions,
@@ -68,12 +67,12 @@ import {
 // ============================================================================
 
 describe("canMarkAsShipped", () => {
-	it("should allow shipping a paid, pending order", () => {
+	it("should block shipping a pending order (must transition to PROCESSING first)", () => {
 		const result = canMarkAsShipped({
 			status: "PENDING",
 			paymentStatus: "PAID",
 		});
-		expect(result).toEqual({ canShip: true });
+		expect(result).toEqual({ canShip: false, reason: "not_processing" });
 	});
 
 	it("should allow shipping a paid, processing order", () => {
@@ -108,7 +107,7 @@ describe("canMarkAsShipped", () => {
 		expect(result).toEqual({ canShip: false, reason: "cancelled" });
 	});
 
-	it("should block shipping an unpaid order", () => {
+	it("should block shipping a processing but unpaid order", () => {
 		const result = canMarkAsShipped({
 			status: "PROCESSING",
 			paymentStatus: "PENDING",
@@ -116,9 +115,9 @@ describe("canMarkAsShipped", () => {
 		expect(result).toEqual({ canShip: false, reason: "unpaid" });
 	});
 
-	it("should block shipping a failed payment order", () => {
+	it("should block shipping a processing order with FAILED payment", () => {
 		const result = canMarkAsShipped({
-			status: "PENDING",
+			status: "PROCESSING",
 			paymentStatus: "FAILED",
 		});
 		expect(result).toEqual({ canShip: false, reason: "unpaid" });
@@ -130,32 +129,6 @@ describe("canMarkAsShipped", () => {
 			paymentStatus: "PARTIALLY_REFUNDED",
 		});
 		expect(result).toEqual({ canShip: true });
-	});
-});
-
-// ============================================================================
-// isOrderInFinalState
-// ============================================================================
-
-describe("isOrderInFinalState", () => {
-	it("should return true for DELIVERED", () => {
-		expect(isOrderInFinalState("DELIVERED")).toBe(true);
-	});
-
-	it("should return true for CANCELLED", () => {
-		expect(isOrderInFinalState("CANCELLED")).toBe(true);
-	});
-
-	it("should return false for PENDING", () => {
-		expect(isOrderInFinalState("PENDING")).toBe(false);
-	});
-
-	it("should return false for PROCESSING", () => {
-		expect(isOrderInFinalState("PROCESSING")).toBe(false);
-	});
-
-	it("should return false for SHIPPED", () => {
-		expect(isOrderInFinalState("SHIPPED")).toBe(false);
 	});
 });
 

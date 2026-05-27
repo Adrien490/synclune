@@ -22,6 +22,8 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 const RECONCILE_AUDIT_AUTHOR = "Système (reconcile-refunds)";
 
@@ -80,12 +82,18 @@ export async function reconcileRefunds(): Promise<CronResult> {
 			stripeRefundId: true,
 			amount: true,
 			orderId: true,
+			// ORD-STRIPE-007 : reason + customerEmail/Name nécessaires pour
+			// envoyer le mail confirmation client après finalisation DLQ.
+			reason: true,
+			attemptCount: true,
 			order: {
 				select: {
 					id: true,
 					orderNumber: true,
 					total: true,
 					userId: true,
+					customerEmail: true,
+					customerName: true,
 				},
 			},
 		},
@@ -137,6 +145,46 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					if (refund.order.userId) {
 						tagsToInvalidate.add(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.userId));
+					}
+
+					// ORD-STRIPE-007 : email confirmation client. Si l'admin path
+					// (`processRefund`) avait abort en Step 3, l'email n'a pas
+					// été envoyé. Le webhook `charge.refunded` est aussi un filet
+					// possible, mais s'il a échoué (raison pour laquelle on tombe
+					// ici), le client n'a aucune notification. `idempotencyKey`
+					// Resend (24h) dédupe si le webhook se réveille plus tard.
+					if (refund.order.customerEmail) {
+						const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.orderId));
+						try {
+							await sendRefundConfirmationEmail({
+								to: refund.order.customerEmail,
+								orderNumber: refund.order.orderNumber,
+								customerName: refund.order.customerName || "Client",
+								refundAmount: refund.amount,
+								reason: refund.reason,
+								orderDetailsUrl,
+								idempotencyKey: `refund-confirm-${refund.id}-${refund.attemptCount}`,
+							});
+						} catch (emailError) {
+							logger.error(
+								"Failed to send refund confirmation email after DLQ reconcile",
+								emailError,
+								{
+									cronJob: "reconcile-refunds",
+									refundId: refund.id,
+									orderNumber: refund.order.orderNumber,
+								},
+							);
+							// Non-bloquant : refund finalisé en DB, alerte admin
+							// via Sentry mais cron continue.
+							captureRefundError(emailError, {
+								action: "reconcile-refunds-email",
+								refundId: refund.id,
+								stripeRefundId: refund.stripeRefundId,
+								orderId: refund.orderId,
+								orderNumber: refund.order.orderNumber,
+							});
+						}
 					}
 				} else {
 					skipped++;

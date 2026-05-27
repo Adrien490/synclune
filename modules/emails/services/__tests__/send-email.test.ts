@@ -100,16 +100,19 @@ describe("sendEmail", () => {
 			tags: [{ name: "category", value: "order" }],
 		});
 
-		expect(mockResendEmailsSend).toHaveBeenCalledWith({
-			from: "Synclune <contact@synclune.fr>",
-			to: "user@example.com",
-			subject: "Order Confirmation",
-			html: "<p>Your order is confirmed</p>",
-			text: "Your order is confirmed",
-			replyTo: "support@synclune.fr",
-			headers: { "X-Custom": "value" },
-			tags: [{ name: "category", value: "order" }],
-		});
+		expect(mockResendEmailsSend).toHaveBeenCalledWith(
+			{
+				from: "Synclune <contact@synclune.fr>",
+				to: "user@example.com",
+				subject: "Order Confirmation",
+				html: "<p>Your order is confirmed</p>",
+				text: "Your order is confirmed",
+				replyTo: "support@synclune.fr",
+				headers: { "X-Custom": "value" },
+				tags: [{ name: "category", value: "order" }],
+			},
+			undefined,
+		);
 	});
 
 	it("should return success with data on successful send", async () => {
@@ -226,6 +229,7 @@ describe("sendEmail", () => {
 			expect.objectContaining({
 				to: ["alice@example.com", "bob@example.com"],
 			}),
+			undefined,
 		);
 	});
 
@@ -329,6 +333,7 @@ describe("renderAndSend", () => {
 				to: "user@example.com",
 				subject: "Order Confirmation",
 			}),
+			undefined,
 		);
 	});
 
@@ -410,6 +415,119 @@ describe("renderAndSend", () => {
 				html: "<p>Content</p>",
 				text: "Content",
 			}),
+			undefined,
 		);
+	});
+});
+
+// ============================================================================
+// ORD-TEST-016 — In-process email dedup (1× max for identical content)
+//
+// Le pattern critique : `processRefund` envoie l'email de confirmation au client
+// ; quelques secondes plus tard le webhook `charge.refunded` arrive et tente
+// d'envoyer un second email. Le cache de dedup doit court-circuiter le second
+// envoi pour éviter le doublon dans la boîte du client.
+// ============================================================================
+
+describe("sendEmail — in-process dedup", () => {
+	beforeEach(async () => {
+		vi.resetAllMocks();
+		vi.stubEnv("RESEND_API_KEY", "re_test_123");
+		const { __resetEmailDedupCacheForTests } = await import("../send-email");
+		__resetEmailDedupCacheForTests();
+	});
+
+	it("should skip the second call for identical (recipient, subject, html)", async () => {
+		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg_first" }, error: null });
+
+		const params = {
+			to: "client@example.com",
+			subject: "Votre remboursement a été effectué - Synclune",
+			html: "<p>Refund of 49.99€ for order SYN-2026-0042</p>",
+		};
+
+		const first = await sendEmail(params);
+		const second = await sendEmail(params);
+
+		expect(mockResendEmailsSend).toHaveBeenCalledTimes(1);
+		expect(first.success).toBe(true);
+		// Second call returns success with the original resendId (idempotent shape).
+		expect(second.success).toBe(true);
+	});
+
+	it("should log 'Email skipped' on the second identical call", async () => {
+		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg_first" }, error: null });
+
+		const params = {
+			to: "client@example.com",
+			subject: "Refund confirmation",
+			html: "<p>Same content</p>",
+		};
+
+		await sendEmail(params);
+		await sendEmail(params);
+
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			expect.stringContaining("Email skipped"),
+			expect.any(Object),
+		);
+	});
+
+	it("should send twice for different recipients (same subject + html)", async () => {
+		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg" }, error: null });
+
+		const html = "<p>Same content</p>";
+		await sendEmail({ to: "alice@example.com", subject: "Refund", html });
+		await sendEmail({ to: "bob@example.com", subject: "Refund", html });
+
+		expect(mockResendEmailsSend).toHaveBeenCalledTimes(2);
+	});
+
+	it("should send twice for different subjects (same recipient + html)", async () => {
+		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg" }, error: null });
+
+		const html = "<p>Same body</p>";
+		await sendEmail({ to: "client@example.com", subject: "Refund A", html });
+		await sendEmail({ to: "client@example.com", subject: "Refund B", html });
+
+		expect(mockResendEmailsSend).toHaveBeenCalledTimes(2);
+	});
+
+	it("should send twice when skipIdempotence=true (broadcast escape hatch)", async () => {
+		mockResendEmailsSend.mockResolvedValue({ data: { id: "msg" }, error: null });
+
+		const params = {
+			to: "client@example.com",
+			subject: "Marketing",
+			html: "<p>Newsletter</p>",
+			skipIdempotence: true,
+		};
+
+		await sendEmail(params);
+		await sendEmail(params);
+
+		expect(mockResendEmailsSend).toHaveBeenCalledTimes(2);
+	});
+
+	it("should not consume the dedup slot when the first send fails", async () => {
+		mockResendEmailsSend.mockResolvedValueOnce({
+			data: null,
+			error: { message: "rate_limit_exceeded" },
+		});
+
+		const params = {
+			to: "client@example.com",
+			subject: "Refund",
+			html: "<p>Failed attempt</p>",
+		};
+
+		const first = await sendEmail(params);
+		// Allow a successful retry
+		mockResendEmailsSend.mockResolvedValueOnce({ data: { id: "msg_retry" }, error: null });
+		const second = await sendEmail(params);
+
+		expect(first.success).toBe(false);
+		expect(second.success).toBe(true);
+		expect(mockResendEmailsSend).toHaveBeenCalledTimes(2);
 	});
 });

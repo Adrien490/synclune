@@ -1,10 +1,19 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
+import {
+	DisputeReason,
+	DisputeStatus,
+	HistorySource,
+	OrderAction,
+	PaymentStatus,
+	RefundReason,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
@@ -88,6 +97,8 @@ export async function handleDisputeCreated(
 				id: true,
 				orderNumber: true,
 				customerEmail: true,
+				// ORD-REFUND-011: déclencher alerte spéciale si dispute sur order déjà remboursée
+				paymentStatus: true,
 			},
 		});
 
@@ -97,6 +108,9 @@ export async function handleDisputeCreated(
 			});
 			throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
 		}
+
+		// ORD-REFUND-011: flag suspicious dispute (déjà remboursée → potentielle double dépense)
+		const alreadyRefunded = order.paymentStatus === PaymentStatus.REFUNDED;
 
 		// Prevent duplicate OrderNote on webhook replay
 		const existingNote = await prisma.orderNote.findFirst({
@@ -126,7 +140,7 @@ export async function handleDisputeCreated(
 
 		await prisma.$transaction(
 			async (tx) => {
-				await tx.dispute.create({
+				const createdDispute = await tx.dispute.create({
 					data: {
 						stripeDisputeId: dispute.id,
 						orderId: order.id,
@@ -136,6 +150,7 @@ export async function handleDisputeCreated(
 						status: mapStripeDisputeStatus(dispute.status),
 						dueBy,
 					},
+					select: { id: true },
 				});
 
 				await tx.orderNote.create({
@@ -144,6 +159,25 @@ export async function handleDisputeCreated(
 						content: noteContent,
 						authorId: SYSTEM_AUTHOR_ID,
 						authorName: SYSTEM_AUTHOR_NAME,
+					},
+				});
+
+				// ORD-REFUND-002 + ORD-REFUND-009: audit trail dispute ouvert
+				await createOrderAuditTx(tx, {
+					orderId: order.id,
+					action: OrderAction.DISPUTE_OPENED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
+					note: noteContent,
+					metadata: {
+						disputeId: createdDispute.id,
+						stripeDisputeId: dispute.id,
+						amount: dispute.amount,
+						fee: dispute.balance_transactions[0]?.fee ?? 0,
+						reason: dispute.reason,
+						dueBy: dueBy?.toISOString() ?? null,
+						alreadyRefunded,
 					},
 				});
 			},
@@ -167,7 +201,11 @@ export async function handleDisputeCreated(
 						orderNumber: order.orderNumber,
 						customerEmail: order.customerEmail || "Email non disponible",
 						amount: dispute.amount,
-						reason: DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason,
+						// ORD-REFUND-011: signaler explicitement dans le sujet de l'alerte
+						// si la commande était déjà remboursée (suspicion fraude/double dépense)
+						reason: alreadyRefunded
+							? `[CRITIQUE — commande déjà remboursée] ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}`
+							: (DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason),
 						disputeId: dispute.id,
 						deadline: dispute.evidence_details.due_by
 							? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
@@ -227,6 +265,7 @@ export async function handleDisputeClosed(
 				orderNumber: true,
 				customerEmail: true,
 				paymentStatus: true,
+				total: true,
 			},
 		});
 
@@ -286,11 +325,85 @@ export async function handleDisputeClosed(
 					},
 				});
 
-				// If lost, Stripe has already debited the amount — mark as REFUNDED
-				if (!won && order.paymentStatus !== "REFUNDED") {
-					await tx.order.update({
-						where: { id: order.id },
-						data: { paymentStatus: "REFUNDED" },
+				// ORD-REFUND-010: matérialiser le chargeback perdu comme un Refund
+				// COMPLETED reason=FRAUD pour traçabilité comptable. Recalculer
+				// paymentStatus selon le cumul réel (un dispute perdu après refund
+				// partiel doit refléter le bon total).
+				if (!won) {
+					const completedAggregate = await tx.refund.aggregate({
+						where: { orderId: order.id, status: RefundStatus.COMPLETED },
+						_sum: { amount: true },
+					});
+					const alreadyRefunded = completedAggregate._sum.amount ?? 0;
+
+					const chargebackRefund = await tx.refund.create({
+						data: {
+							orderId: order.id,
+							amount: dispute.amount,
+							currency: "EUR",
+							reason: RefundReason.FRAUD,
+							status: RefundStatus.COMPLETED,
+							note: `[CHARGEBACK PERDU] Litige Stripe ${dispute.id} — montant débité automatiquement par Stripe`,
+							processedAt: new Date(),
+						},
+						select: { id: true },
+					});
+
+					const totalAfter = alreadyRefunded + dispute.amount;
+					const computedStatus =
+						totalAfter >= order.total ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
+
+					// Ne pas rétrograder REFUNDED → PARTIALLY_REFUNDED (sticky state).
+					const newPaymentStatus =
+						order.paymentStatus === PaymentStatus.REFUNDED
+							? PaymentStatus.REFUNDED
+							: computedStatus;
+
+					if (order.paymentStatus !== newPaymentStatus) {
+						await tx.order.update({
+							where: { id: order.id },
+							data: { paymentStatus: newPaymentStatus },
+						});
+					}
+
+					// ORD-REFUND-002: audit trail dispute resolved (perdu)
+					await createOrderAuditTx(tx, {
+						orderId: order.id,
+						action: OrderAction.DISPUTE_RESOLVED,
+						source: HistorySource.WEBHOOK,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
+						previousPaymentStatus: order.paymentStatus,
+						newPaymentStatus:
+							order.paymentStatus !== newPaymentStatus ? newPaymentStatus : undefined,
+						note: noteContent,
+						metadata: {
+							disputeId: existingDispute?.id ?? null,
+							stripeDisputeId: dispute.id,
+							won: false,
+							amount: dispute.amount,
+							fee: dispute.balance_transactions[0]?.fee ?? 0,
+							chargebackRefundId: chargebackRefund.id,
+							alreadyRefunded,
+							totalAfter,
+						},
+					});
+				} else {
+					// Won: pas de mutation Order, juste audit trail
+					await createOrderAuditTx(tx, {
+						orderId: order.id,
+						action: OrderAction.DISPUTE_RESOLVED,
+						source: HistorySource.WEBHOOK,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
+						note: noteContent,
+						metadata: {
+							disputeId: existingDispute?.id ?? null,
+							stripeDisputeId: dispute.id,
+							won: true,
+							amount: dispute.amount,
+							fee: dispute.balance_transactions[0]?.fee ?? 0,
+						},
 					});
 				}
 			},
@@ -343,4 +456,125 @@ export async function handleDisputeClosed(
 		});
 		throw error;
 	}
+}
+
+/**
+ * ORD-REFUND-013 — Handlers minimalistes pour les flux de fonds liés aux disputes.
+ *
+ * `funds_withdrawn` : Stripe a retiré les fonds en attendant la résolution du dispute.
+ * `funds_reinstated` : Stripe a restitué les fonds (cas dispute gagné après withdrawn).
+ *
+ * Ces events sont informatifs : pas de mutation business directe (les vraies
+ * transitions paymentStatus restent dans `charge.dispute.closed`), mais on garde
+ * un OrderNote + OrderHistory pour traçabilité de trésorerie.
+ */
+async function handleDisputeFundsFlow(
+	dispute: Stripe.Dispute,
+	flow: "withdrawn" | "reinstated",
+): Promise<WebhookHandlerResult | null> {
+	const paymentIntentId =
+		typeof dispute.payment_intent === "string"
+			? dispute.payment_intent
+			: dispute.payment_intent?.id;
+	const eventType = `charge.dispute.funds_${flow}` as const;
+	const label = flow === "withdrawn" ? "Fonds retirés" : "Fonds restitués";
+	const notePrefix = flow === "withdrawn" ? "[LITIGE FONDS RETIRÉS]" : "[LITIGE FONDS RESTITUÉS]";
+
+	try {
+		if (!paymentIntentId) {
+			throw new Error(`Dispute ${dispute.id} ${flow} has no payment_intent`);
+		}
+
+		const order = await prisma.order.findFirst({
+			where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
+			select: { id: true, orderNumber: true },
+		});
+
+		if (!order) {
+			logger.warn(`[WEBHOOK] No order found for dispute ${flow} PI ${paymentIntentId}`, {
+				service: "webhook",
+			});
+			return { success: true, skipped: true, reason: `Order not found for dispute ${flow}` };
+		}
+
+		const noteContent = `${notePrefix} Litige ${dispute.id} — ${label} par Stripe (montant: ${dispute.amount} centimes).`;
+
+		// Anti-replay
+		const existingNote = await prisma.orderNote.findFirst({
+			where: {
+				orderId: order.id,
+				content: { startsWith: `${notePrefix} Litige ${dispute.id}` },
+			},
+			select: { id: true },
+		});
+
+		if (existingNote) {
+			return { success: true, skipped: true, reason: `Dispute ${flow} note already created` };
+		}
+
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.orderNote.create({
+					data: {
+						orderId: order.id,
+						content: noteContent,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
+					},
+				});
+				await createOrderAuditTx(tx, {
+					orderId: order.id,
+					action: OrderAction.DISPUTE_RESOLVED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
+					note: noteContent,
+					metadata: {
+						stripeDisputeId: dispute.id,
+						amount: dispute.amount,
+						event: `funds_${flow}`,
+					},
+				});
+			},
+			{ timeout: 10000 },
+		);
+
+		logger.info(`💸 [WEBHOOK] Dispute ${dispute.id} funds ${flow} for order ${order.orderNumber}`, {
+			service: "webhook",
+		});
+
+		return {
+			success: true,
+			tasks: [
+				{
+					type: "INVALIDATE_CACHE",
+					tags: [
+						ORDERS_CACHE_TAGS.LIST,
+						ORDERS_CACHE_TAGS.NOTES(order.id),
+						SHARED_CACHE_TAGS.ADMIN_BADGES,
+					],
+				},
+			],
+		};
+	} catch (error) {
+		captureWebhookError(error, {
+			handler: `handleDisputeFunds${flow.charAt(0).toUpperCase()}${flow.slice(1)}`,
+			eventType,
+			stripeDisputeId: dispute.id,
+			paymentIntentId,
+		});
+		throw error;
+	}
+}
+
+export async function handleDisputeFundsWithdrawn(
+	dispute: Stripe.Dispute,
+): Promise<WebhookHandlerResult | null> {
+	return handleDisputeFundsFlow(dispute, "withdrawn");
+}
+
+export async function handleDisputeFundsReinstated(
+	dispute: Stripe.Dispute,
+): Promise<WebhookHandlerResult | null> {
+	return handleDisputeFundsFlow(dispute, "reinstated");
 }

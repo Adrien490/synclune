@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { type Metadata } from "next";
 import { CreateRefundForm } from "@/modules/refunds/components/admin/create-refund-form";
 import { PaymentStatus } from "@/app/generated/prisma/client";
+import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 
 export const metadata: Metadata = {
 	title: "Nouveau remboursement - Administration",
@@ -28,11 +29,11 @@ export default async function NewRefundPage({ searchParams }: NewRefundPageProps
 		notFound();
 	}
 
-	// Vérifier que la commande peut être remboursée
-	if (
-		order.paymentStatus !== PaymentStatus.PAID &&
-		order.paymentStatus !== PaymentStatus.REFUNDED
-	) {
+	// Vérifier que la commande peut être remboursée — SSOT getOrderPermissions :
+	// autorise PROCESSING|SHIPPED|DELIVERED × PAID|PARTIALLY_REFUNDED (refund itératif).
+	// REFUNDED autorise l'accès en lecture (consultation historique remboursement).
+	const permissions = getOrderPermissions(order);
+	if (!permissions.canRefund && order.paymentStatus !== PaymentStatus.REFUNDED) {
 		redirect(`/admin/ventes/commandes/${orderId}`);
 	}
 

@@ -70,12 +70,36 @@ export async function bulkCancelOrders(
 
 		const { orderIds } = validation.data;
 
+		// Ventile la sélection : éligibles vs ignorées (par statut) pour donner
+		// un feedback admin précis. Le filtre éligibilité reste strict :
+		// status=PENDING ET paymentStatus=PENDING.
+		const allSelected = await prisma.order.findMany({
+			where: { id: { in: orderIds }, ...notDeleted },
+			select: { id: true, status: true, paymentStatus: true },
+		});
+
+		const orderIdsEligible = allSelected
+			.filter((o) => o.status === OrderStatus.PENDING && o.paymentStatus === PaymentStatus.PENDING)
+			.map((o) => o.id);
+
+		const skippedBreakdown = {
+			alreadyCancelled: allSelected.filter((o) => o.status === OrderStatus.CANCELLED).length,
+			alreadyShipped: allSelected.filter((o) => o.status === OrderStatus.SHIPPED).length,
+			alreadyDelivered: allSelected.filter((o) => o.status === OrderStatus.DELIVERED).length,
+			alreadyPaid: allSelected.filter(
+				(o) =>
+					o.status !== OrderStatus.CANCELLED &&
+					o.status !== OrderStatus.SHIPPED &&
+					o.status !== OrderStatus.DELIVERED &&
+					o.paymentStatus !== PaymentStatus.PENDING,
+			).length,
+			notFound: orderIds.length - allSelected.length,
+		};
+
 		const orders = await prisma.order.findMany({
 			where: {
-				id: { in: orderIds },
+				id: { in: orderIdsEligible },
 				...notDeleted,
-				status: OrderStatus.PENDING,
-				paymentStatus: PaymentStatus.PENDING,
 			},
 			select: {
 				id: true,
@@ -221,14 +245,28 @@ export async function bulkCancelOrders(
 		}
 
 		const skipped = orderIds.length - cancelledOrders.length;
-		const skippedHint =
-			skipped > 0
-				? ` (${skipped} commande${skipped > 1 ? "s" : ""} ignorée${skipped > 1 ? "s" : ""} : déjà payée${skipped > 1 ? "s" : ""} ou expédiée${skipped > 1 ? "s" : ""})`
-				: "";
+		const reasons: string[] = [];
+		if (skippedBreakdown.alreadyShipped > 0) {
+			reasons.push(`${skippedBreakdown.alreadyShipped} expédiée(s)`);
+		}
+		if (skippedBreakdown.alreadyDelivered > 0) {
+			reasons.push(`${skippedBreakdown.alreadyDelivered} livrée(s)`);
+		}
+		if (skippedBreakdown.alreadyCancelled > 0) {
+			reasons.push(`${skippedBreakdown.alreadyCancelled} déjà annulée(s)`);
+		}
+		if (skippedBreakdown.alreadyPaid > 0) {
+			reasons.push(`${skippedBreakdown.alreadyPaid} déjà payée(s)`);
+		}
+		if (skippedBreakdown.notFound > 0) {
+			reasons.push(`${skippedBreakdown.notFound} introuvable(s)`);
+		}
+		const skippedHint = skipped > 0 ? ` (ignorées : ${reasons.join(", ")})` : "";
 		const plural = cancelledOrders.length > 1 ? "s" : "";
 		return success(`${cancelledOrders.length} commande${plural} annulée${plural}${skippedHint}`, {
 			count: cancelledOrders.length,
 			skipped,
+			skippedBreakdown,
 		});
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de l'annulation en lot");

@@ -29,7 +29,7 @@ vi.mock("pino", () => ({
 // Mock Sentry
 vi.mock("@sentry/nextjs", () => mockSentry);
 
-import { logger } from "../logger";
+import { logger, REDACT_PATHS } from "../logger";
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -98,6 +98,36 @@ describe("redactPii - combined and passthrough", () => {
 			{ context: undefined },
 			"Order created successfully",
 		);
+	});
+});
+
+// ============================================================================
+// REDACT_PATHS configuration (ORD-COMPLY-008 — audit conformité 2026-05-27)
+// ============================================================================
+
+describe("REDACT_PATHS", () => {
+	it("includes top-level context email + phone (legacy)", () => {
+		expect(REDACT_PATHS).toContain("context.email");
+		expect(REDACT_PATHS).toContain("context.phone");
+	});
+
+	it("includes customer/shipping/billing PII variants", () => {
+		expect(REDACT_PATHS).toContain("context.customerEmail");
+		expect(REDACT_PATHS).toContain("context.customerPhone");
+		expect(REDACT_PATHS).toContain("context.shippingPhone");
+		expect(REDACT_PATHS).toContain("context.billingPhone");
+	});
+
+	it("includes nested user.* paths", () => {
+		expect(REDACT_PATHS).toContain("context.user.email");
+		expect(REDACT_PATHS).toContain("context.user.phone");
+		expect(REDACT_PATHS).toContain("context.user.name");
+	});
+
+	it("includes nested order.* paths", () => {
+		expect(REDACT_PATHS).toContain("context.order.customerEmail");
+		expect(REDACT_PATHS).toContain("context.order.customerName");
+		expect(REDACT_PATHS).toContain("context.order.customerPhone");
 	});
 });
 

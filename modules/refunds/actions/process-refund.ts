@@ -1,7 +1,13 @@
 "use server";
 
-import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import {
+	HistorySource,
+	OrderAction,
+	PaymentStatus,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -33,6 +39,7 @@ type RefundLockRow = {
 	order_number: string;
 	order_total: number;
 	order_user_id: string | null;
+	order_currency: string | null;
 	stripe_payment_intent_id: string | null;
 };
 
@@ -67,8 +74,9 @@ export async function processRefund(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(REFUND_LIMITS.PROCESS);
 		if ("error" in rateLimit) return rateLimit.error;
 
@@ -96,6 +104,7 @@ export async function processRefund(
 					o."orderNumber" as order_number,
 					o.total as order_total,
 					o."userId" as order_user_id,
+					o.currency as order_currency,
 					o."stripePaymentIntentId" as stripe_payment_intent_id
 				FROM "Refund" r
 				INNER JOIN "Order" o ON r."orderId" = o.id
@@ -173,6 +182,8 @@ export async function processRefund(
 				order_id: refundData.refund.order_id,
 			},
 			idempotencyKey: `refund_${id}_${refundData.refund.attempt_count}`,
+			// ORD-REFUND-008: skip retrieve PaymentIntent (devise déjà connue en DB)
+			expectedCurrency: refundData.refund.order_currency ?? undefined,
 		});
 
 		// P0.1: Gérer les différents états de retour Stripe
@@ -182,14 +193,35 @@ export async function processRefund(
 			// passé le refund en CANCELLED entre Step 1 commit et l'appel Stripe)
 			// d'être écrasé par FAILED.
 			const failureMessage = stripeResult.error ?? REFUND_ERROR_MESSAGES.STRIPE_ERROR;
-			const updated = await prisma.refund.updateMany({
-				where: { id, status: RefundStatus.APPROVED },
-				data: {
-					status: RefundStatus.FAILED,
-					failureReason: failureMessage,
-				},
+			const failTxResult = await prisma.$transaction(async (tx) => {
+				const updated = await tx.refund.updateMany({
+					where: { id, status: RefundStatus.APPROVED },
+					data: {
+						status: RefundStatus.FAILED,
+						failureReason: failureMessage,
+					},
+				});
+				if (updated.count > 0) {
+					// ORD-REFUND-001: audit trail conformité L123-22
+					await createOrderAuditTx(tx, {
+						orderId: refundData.refund.order_id,
+						action: OrderAction.REFUND_FAILED,
+						source: HistorySource.ADMIN,
+						authorId: adminUser.id,
+						authorName: adminUser.name ?? adminUser.email,
+						note: `Échec Stripe: ${failureMessage}`,
+						metadata: {
+							refundId: id,
+							amount: refundData.refund.amount,
+							reason: refundData.refund.reason,
+							failureReason: failureMessage,
+							stripeRefundId: stripeResult.refundId ?? null,
+						},
+					});
+				}
+				return updated.count;
 			});
-			if (updated.count === 0) {
+			if (failTxResult === 0) {
 				logger.warn(
 					`Refund ${id} no longer APPROVED — concurrent state change detected; skipping FAILED transition`,
 					{ refundId: id, stripeRefundId: stripeResult.refundId ?? null },
@@ -300,17 +332,40 @@ export async function processRefund(
 				const totalRefundedAfter = refundData.totalRefundedBefore + refundData.refund.amount;
 
 				// Mettre à jour le paymentStatus selon le montant remboursé
+				let newPaymentStatus: PaymentStatus | undefined;
 				if (totalRefundedAfter >= refundData.refund.order_total) {
+					newPaymentStatus = PaymentStatus.REFUNDED;
 					await tx.order.update({
 						where: { id: refundData.refund.order_id },
 						data: { paymentStatus: PaymentStatus.REFUNDED },
 					});
 				} else if (totalRefundedAfter > 0) {
+					newPaymentStatus = PaymentStatus.PARTIALLY_REFUNDED;
 					await tx.order.update({
 						where: { id: refundData.refund.order_id },
 						data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
 					});
 				}
+
+				// ORD-REFUND-001: audit trail conformité L123-22
+				await createOrderAuditTx(tx, {
+					orderId: refundData.refund.order_id,
+					action: OrderAction.REFUND_COMPLETED,
+					source: HistorySource.ADMIN,
+					authorId: adminUser.id,
+					authorName: adminUser.name ?? adminUser.email,
+					newPaymentStatus,
+					note: `Remboursement Stripe traité avec succès`,
+					metadata: {
+						refundId: id,
+						amount: refundData.refund.amount,
+						reason: refundData.refund.reason,
+						stripeRefundId: stripeResult.refundId,
+						totalRefunded: totalRefundedAfter,
+						orderTotal: refundData.refund.order_total,
+						restockedSkuCount: restockBySkuId.size,
+					},
+				});
 			});
 
 			// Invalider le cache commandes et badges (paymentStatus a changé)
@@ -375,6 +430,10 @@ export async function processRefund(
 						refundAmount: refundData.refund.amount,
 						reason: refundData.refund.reason,
 						orderDetailsUrl,
+						// ORD-STRIPE-008 : dedup Resend 24h sur double-clic admin
+						// ou retry. `attempt_count` rotation pour les vrais retries
+						// après un échec Resend (besoin nouveau call).
+						idempotencyKey: `refund-confirm-${refundData.refund.id}-${refundData.refund.attempt_count}`,
 					}).catch((emailError) => {
 						prisma.orderNote
 							.create({
@@ -404,6 +463,32 @@ export async function processRefund(
 			// reconciler will pick this up and finalize it.
 			const isConcurrent =
 				step3Error instanceof Error && step3Error.message === "CONCURRENT_STATE_CHANGE";
+
+			// ORD-STRIPE-010 : si la race vient d'un webhook concurrent qui a
+			// déjà finalisé le refund (status=COMPLETED + processedAt!=null),
+			// le warning UI est trompeur — la finalisation est en réalité OK.
+			// Avec [[ORD-STRIPE-002]] le webhook skip désormais quand le SAGA
+			// est en cours, donc cette branche ne devrait être atteinte que
+			// pour les races vraiment edge (admin cancelRefund concurrent).
+			// On re-fetch pour distinguer les deux cas.
+			if (isConcurrent) {
+				const current = await prisma.refund.findUnique({
+					where: { id },
+					select: { status: true, processedAt: true },
+				});
+				if (current?.status === RefundStatus.COMPLETED && current.processedAt !== null) {
+					logger.info("SAGA Step 3 race: refund already finalized by concurrent webhook", {
+						refundId: id,
+						stripeRefundId: stripeResult.refundId,
+						orderId: refundData.refund.order_id,
+					});
+					return {
+						status: ActionStatus.SUCCESS,
+						message: `Remboursement de ${(refundData.refund.amount / 100).toFixed(2)} € traité avec succès.`,
+						data: { stripeRefundId: stripeResult.refundId },
+					};
+				}
+			}
 
 			logger.error(
 				isConcurrent

@@ -31,6 +31,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdmin,
@@ -96,7 +97,6 @@ describe("updateOrderNote", () => {
 			id: NOTE_ID,
 			orderId: VALID_ORDER_ID,
 			authorId: ADMIN_ID,
-			deletedAt: null,
 		});
 		mockPrisma.orderNote.update.mockResolvedValue({});
 
@@ -142,15 +142,12 @@ describe("updateOrderNote", () => {
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 
-	it("returns NOT_FOUND when note is soft-deleted", async () => {
-		mockPrisma.orderNote.findUnique.mockResolvedValue({
-			id: NOTE_ID,
-			orderId: VALID_ORDER_ID,
-			authorId: ADMIN_ID,
-			deletedAt: new Date(),
+	it("filters soft-deleted notes via notDeleted in findUnique (ORD-SEC-005)", async () => {
+		await updateOrderNote(NOTE_ID, NEW_CONTENT);
+		expect(mockPrisma.orderNote.findUnique).toHaveBeenCalledWith({
+			where: { id: NOTE_ID, deletedAt: null },
+			select: { id: true, orderId: true, authorId: true },
 		});
-		const result = await updateOrderNote(NOTE_ID, NEW_CONTENT);
-		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 
 	it("returns FORBIDDEN when admin is not the author", async () => {
@@ -158,7 +155,6 @@ describe("updateOrderNote", () => {
 			id: NOTE_ID,
 			orderId: VALID_ORDER_ID,
 			authorId: "other-admin",
-			deletedAt: null,
 		});
 		const result = await updateOrderNote(NOTE_ID, NEW_CONTENT);
 		expect(result.status).toBe(ActionStatus.FORBIDDEN);
@@ -196,7 +192,6 @@ describe("updateOrderNote", () => {
 			id: NOTE_ID,
 			orderId: null,
 			authorId: ADMIN_ID,
-			deletedAt: null,
 		});
 		await updateOrderNote(NOTE_ID, NEW_CONTENT);
 		expect(mockUpdateTag).not.toHaveBeenCalled();

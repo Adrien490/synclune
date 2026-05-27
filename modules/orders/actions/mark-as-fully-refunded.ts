@@ -1,6 +1,11 @@
 "use server";
 
-import { PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
+import {
+	PaymentStatus,
+	HistorySource,
+	RefundStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -15,6 +20,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { voidInvoice } from "../services/void-invoice.service";
 
 /**
  * Marque une commande comme entièrement remboursée
@@ -60,6 +66,8 @@ export async function markAsFullyRefunded(
 					orderNumber: true,
 					userId: true,
 					paymentStatus: true,
+					invoiceStatus: true,
+					invoiceNumber: true,
 				},
 			});
 
@@ -74,6 +82,20 @@ export async function markAsFullyRefunded(
 				found.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED
 			) {
 				return { ...found, _error: "not_paid" as const };
+			}
+
+			// Bloquer si un Refund Stripe est en cours (PENDING ou APPROVED). Sinon
+			// double remboursement possible : admin marque manuel ici + webhook
+			// charge.refunded reconnaît le Refund APPROVED et le passe à COMPLETED.
+			const pendingStripeRefunds = await tx.refund.count({
+				where: {
+					orderId: id,
+					status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
+					deletedAt: null,
+				},
+			});
+			if (pendingStripeRefunds > 0) {
+				return { ...found, _error: "pending_stripe_refunds" as const };
 			}
 
 			await tx.order.update({
@@ -110,15 +132,35 @@ export async function markAsFullyRefunded(
 			const message =
 				order._error === "already_refunded"
 					? ORDER_ERROR_MESSAGES.ALREADY_FULLY_REFUNDED
-					: ORDER_ERROR_MESSAGES.CANNOT_REFUND_NOT_PAID;
+					: order._error === "pending_stripe_refunds"
+						? ORDER_ERROR_MESSAGES.PENDING_STRIPE_REFUNDS
+						: ORDER_ERROR_MESSAGES.CANNOT_REFUND_NOT_PAID;
 			return { status: ActionStatus.ERROR, message };
+		}
+
+		// Émission avoir (Art. 272-I CGI) si la facture était active.
+		// Hors transaction principale : advisory lock Postgres pas safe imbriqué.
+		let creditNoteNumber: string | null = null;
+		if (order.invoiceStatus === InvoiceStatus.GENERATED && order.invoiceNumber) {
+			const voided = await voidInvoice({
+				orderId: order.id,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Admin",
+				source: HistorySource.ADMIN,
+				reason: reason ?? "Avoir suite à remboursement total manuel",
+			});
+			creditNoteNumber = voided?.creditNoteNumber ?? null;
 		}
 
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
+		const invoiceMessage = creditNoteNumber
+			? ` Facture ${order.invoiceNumber} invalidée, avoir ${creditNoteNumber} émis.`
+			: "";
+
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme remboursée. Aucun appel Stripe effectué.`,
+			message: `Commande ${order.orderNumber} marquée comme remboursée. Aucun appel Stripe effectué.${invoiceMessage}`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_FULLY_REFUNDED_FAILED);

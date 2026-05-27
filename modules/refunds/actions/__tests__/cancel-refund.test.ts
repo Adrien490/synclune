@@ -13,6 +13,7 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
+	mockCreateOrderAuditTx,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -21,15 +22,21 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockPrisma: {
+		$transaction: vi.fn(),
 		refund: {
 			findUnique: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		orderNote: {
 			create: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	},
 	mockUpdateTag: vi.fn(),
+	mockCreateOrderAuditTx: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -112,6 +119,16 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
 import { cancelRefund } from "../cancel-refund";
@@ -173,6 +190,11 @@ describe("cancelRefund", () => {
 			message: msg,
 		}));
 		mockPrisma.orderNote.create.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.updateMany.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => Promise<void>) =>
+			cb(mockPrisma),
+		);
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -212,21 +234,21 @@ describe("cancelRefund", () => {
 
 	it("should cancel a PENDING refund", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "PENDING" }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 		expect(mockSuccess).toHaveBeenCalled();
 	});
 
 	it("should cancel an APPROVED refund", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "APPROVED" }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 		expect(mockSuccess).toHaveBeenCalled();
 	});
 
@@ -238,7 +260,7 @@ describe("cancelRefund", () => {
 		expect(mockError).toHaveBeenCalledWith(
 			"Ce remboursement ne peut plus être annulé (déjà traité ou refusé).",
 		);
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should return CANNOT_CANCEL when status is REJECTED", async () => {
@@ -263,11 +285,11 @@ describe("cancelRefund", () => {
 
 	it("should update refund with CANCELLED status and set deletedAt", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "PENDING" }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					status: "CANCELLED",
@@ -279,11 +301,11 @@ describe("cancelRefund", () => {
 
 	it("should use TOCTOU protection by including current status in where clause", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "PENDING" }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "refund-1", status: "PENDING" },
 			}),
@@ -292,11 +314,11 @@ describe("cancelRefund", () => {
 
 	it("should use TOCTOU protection when cancelling an APPROVED refund", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ status: "APPROVED" }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "refund-1", status: "APPROVED" },
 			}),
@@ -305,7 +327,7 @@ describe("cancelRefund", () => {
 
 	it("should invalidate all 6 cache tags when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
@@ -320,7 +342,7 @@ describe("cancelRefund", () => {
 
 	it("should invalidate user-specific cache tag when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
@@ -331,7 +353,7 @@ describe("cancelRefund", () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(
 			makeRefund({ order: { id: "order-1", orderNumber: "SYN-001", user: null } }),
 		);
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
@@ -343,7 +365,7 @@ describe("cancelRefund", () => {
 
 	it("should return formatted success message with amount and order number", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ amount: 5000 }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
@@ -354,7 +376,7 @@ describe("cancelRefund", () => {
 
 	it("should format fractional amounts correctly in success message", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ amount: 7599 }));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 

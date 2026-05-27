@@ -34,7 +34,9 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("../../constants/order.constants", () => ({
-	GET_ORDER_SELECT: { id: true, orderNumber: true },
+	GET_ORDER_SELECT: { id: true, orderNumber: true, _admin: true },
+	GET_ORDER_SELECT_ADMIN: { id: true, orderNumber: true, _admin: true },
+	GET_ORDER_SELECT_CUSTOMER: { id: true, orderNumber: true, _customer: true },
 }));
 
 vi.mock("../../constants/cache", () => ({
@@ -243,12 +245,22 @@ describe("fetchOrder", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
-	it("uses GET_ORDER_SELECT for the DB query", async () => {
+	it("uses GET_ORDER_SELECT_CUSTOMER (minimized) for non-admin", async () => {
 		await fetchOrder({ orderNumber: "ORD-001" }, { admin: false, userId: "user-1" });
 
 		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
-				select: { id: true, orderNumber: true },
+				select: { id: true, orderNumber: true, _customer: true },
+			}),
+		);
+	});
+
+	it("uses GET_ORDER_SELECT_ADMIN (complete) for admin", async () => {
+		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
+
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				select: { id: true, orderNumber: true, _admin: true },
 			}),
 		);
 	});

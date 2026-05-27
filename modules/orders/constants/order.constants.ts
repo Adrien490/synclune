@@ -48,8 +48,21 @@ export const GET_ORDERS_SELECT = {
 // ============================================================================
 // SELECT DEFINITIONS - ORDER DETAIL
 // ============================================================================
+//
+// Deux sélecteurs distincts pour la fiche commande :
+//   - GET_ORDER_SELECT_ADMIN (alias GET_ORDER_SELECT) : complet, réservé admin
+//   - GET_ORDER_SELECT_CUSTOMER : minimisation RGPD pour l'espace client
+//
+// Différences customer vs admin :
+//   - stripePaymentIntentId / stripeCustomerId / stripeInvoiceId : retirés
+//     (cross-order fingerprint inutile, seul stripeCheckoutSessionId sert au receipt)
+//   - history.metadata : retiré (peut contenir des PII, ex: previous.email sur ADDRESS_UPDATED)
+//   - history.authorName : retiré (fuite identité admin interne)
+//
+// Cf. audit conformité 2026-05-27 — ORD-COMPLY-001 + ORD-COMPLY-004
+// ============================================================================
 
-export const GET_ORDER_SELECT = {
+export const GET_ORDER_SELECT_ADMIN = {
 	id: true,
 	orderNumber: true,
 	userId: true,
@@ -170,6 +183,132 @@ export const GET_ORDER_SELECT = {
 	},
 } as const satisfies Prisma.OrderSelect;
 
+/**
+ * Alias rétro-compatible. Les types `GetOrderReturn` (cf. order.types.ts)
+ * sont dérivés de ce sélecteur (forme la plus large = admin).
+ */
+export const GET_ORDER_SELECT = GET_ORDER_SELECT_ADMIN;
+
+/**
+ * Sélecteur minimisé pour les consommateurs non-admin (espace client).
+ * Tout champ retiré ici n'est jamais transporté hors du serveur pour un client.
+ */
+export const GET_ORDER_SELECT_CUSTOMER = {
+	id: true,
+	orderNumber: true,
+	userId: true,
+	stripeCheckoutSessionId: true,
+	customerEmail: true,
+	customerName: true,
+	customerPhone: true,
+	subtotal: true,
+	discountAmount: true,
+	shippingCost: true,
+	taxAmount: true,
+	total: true,
+	currency: true,
+	shippingFirstName: true,
+	shippingLastName: true,
+	shippingAddress1: true,
+	shippingAddress2: true,
+	shippingPostalCode: true,
+	shippingCity: true,
+	shippingCountry: true,
+	shippingPhone: true,
+	billingSameAsShipping: true,
+	billingFirstName: true,
+	billingLastName: true,
+	billingAddress1: true,
+	billingAddress2: true,
+	billingPostalCode: true,
+	billingCity: true,
+	billingCountry: true,
+	billingPhone: true,
+	shippingMethod: true,
+	shippingCarrier: true,
+	shippingRateId: true,
+	trackingNumber: true,
+	trackingUrl: true,
+	actualDelivery: true,
+	shippedAt: true,
+	status: true,
+	paymentStatus: true,
+	fulfillmentStatus: true,
+	paymentMethod: true,
+	paidAt: true,
+	invoiceNumber: true,
+	invoiceStatus: true,
+	invoiceGeneratedAt: true,
+	createdAt: true,
+	updatedAt: true,
+	items: {
+		select: {
+			id: true,
+			skuId: true,
+			productId: true,
+			productTitle: true,
+			productDescription: true,
+			productImageUrl: true,
+			skuColor: true,
+			skuMaterial: true,
+			skuSize: true,
+			skuImageUrl: true,
+			price: true,
+			quantity: true,
+		},
+	},
+	refunds: {
+		select: {
+			id: true,
+			status: true,
+			reason: true,
+			amount: true,
+			currency: true,
+			note: true,
+			processedAt: true,
+			createdAt: true,
+			items: {
+				select: {
+					id: true,
+					orderItemId: true,
+					quantity: true,
+					amount: true,
+					orderItem: {
+						select: {
+							productTitle: true,
+							skuColor: true,
+						},
+					},
+				},
+			},
+		},
+		orderBy: { createdAt: "desc" as const },
+	},
+	discountUsages: {
+		select: {
+			discountCode: true,
+			amountApplied: true,
+		},
+	},
+	history: {
+		select: {
+			id: true,
+			action: true,
+			previousStatus: true,
+			newStatus: true,
+			previousPaymentStatus: true,
+			newPaymentStatus: true,
+			previousFulfillmentStatus: true,
+			newFulfillmentStatus: true,
+			note: true,
+			source: true,
+			createdAt: true,
+		},
+		orderBy: { createdAt: "desc" as const },
+		take: 50,
+	},
+} as const satisfies Prisma.OrderSelect;
+
 // ============================================================================
 // PAGINATION & SORTING
 // ============================================================================
@@ -238,6 +377,8 @@ export const ORDER_ERROR_MESSAGES = {
 	ALREADY_SHIPPED: "Cette commande est déjà expédiée.",
 	CANNOT_SHIP_UNPAID: "Une commande non payée ne peut pas être expédiée.",
 	CANNOT_SHIP_CANCELLED: "Une commande annulée ne peut pas être expédiée.",
+	CANNOT_SHIP_NOT_PROCESSING:
+		"Seule une commande en préparation peut être expédiée. Passez-la d'abord en préparation.",
 	// Mark as delivered
 	MARK_AS_DELIVERED_FAILED: "Erreur lors du marquage de la commande comme livrée.",
 	ALREADY_DELIVERED: "Cette commande est déjà livrée.",
@@ -275,6 +416,9 @@ export const ORDER_ERROR_MESSAGES = {
 	MARK_AS_FULLY_REFUNDED_FAILED: "Erreur lors du marquage de la commande comme remboursée.",
 	CANNOT_REFUND_NOT_PAID: "Seules les commandes payées peuvent être marquées comme remboursées.",
 	ALREADY_FULLY_REFUNDED: "Cette commande est déjà entièrement remboursée.",
+	PENDING_STRIPE_REFUNDS:
+		"Un remboursement Stripe est en cours de traitement pour cette commande. " +
+		"Attendez sa confirmation ou annulez-le avant de marquer la commande comme remboursée manuellement.",
 	// Update customer info
 	UPDATE_CUSTOMER_INFO_FAILED: "Erreur lors de la modification des informations client.",
 	// Export single order

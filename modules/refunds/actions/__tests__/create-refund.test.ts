@@ -18,10 +18,12 @@ const {
 	mockSanitizeText,
 	mockShouldRestockByDefault,
 	mockLogger,
+	mockCreateOrderAuditTx,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
 		refund: { create: vi.fn() },
+		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 		$queryRaw: vi.fn(),
 	},
@@ -35,6 +37,7 @@ const {
 	mockSanitizeText: vi.fn(),
 	mockShouldRestockByDefault: vi.fn(),
 	mockLogger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+	mockCreateOrderAuditTx: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
@@ -103,6 +106,16 @@ vi.mock("../../services/refund-restock.service", () => ({
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	RefundStatus: { PENDING: "PENDING", APPROVED: "APPROVED", COMPLETED: "COMPLETED" },
+	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+		REFUND_FAILED: "REFUND_FAILED",
+	},
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
 import { createRefund } from "../create-refund";

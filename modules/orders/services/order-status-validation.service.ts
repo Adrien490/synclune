@@ -30,9 +30,10 @@ import type {
  * Vérifie si une commande peut être marquée comme expédiée
  *
  * Règles :
- * - La commande ne doit pas être déjà expédiée ou livrée
- * - La commande ne doit pas être annulée
- * - La commande doit être payée
+ * - La commande doit être en cours de préparation (PROCESSING). Le passage
+ *   PENDING → SHIPPED est interdit pour aligner backend et UI ;
+ *   l'admin doit d'abord exécuter `markAsProcessing`.
+ * - La commande doit être payée (PAID ou PARTIALLY_REFUNDED)
  *
  * @param order - Commande à valider
  * @returns Résultat de validation
@@ -48,6 +49,11 @@ export function canMarkAsShipped(order: OrderForShipValidation): ShipValidationR
 		return { canShip: false, reason: "cancelled" };
 	}
 
+	// Vérifier si en préparation (PENDING bloqué — doit passer par PROCESSING)
+	if (order.status !== OrderStatus.PROCESSING) {
+		return { canShip: false, reason: "not_processing" };
+	}
+
 	// Vérifier si payée (PARTIALLY_REFUNDED = still has funds to fulfill remaining items)
 	if (
 		order.paymentStatus !== PaymentStatus.PAID &&
@@ -57,16 +63,6 @@ export function canMarkAsShipped(order: OrderForShipValidation): ShipValidationR
 	}
 
 	return { canShip: true };
-}
-
-/**
- * Vérifie si une commande est dans un état final (non modifiable)
- *
- * @param status - Statut de la commande
- * @returns true si la commande est dans un état final
- */
-export function isOrderInFinalState(status: OrderStatus): boolean {
-	return status === OrderStatus.DELIVERED || status === OrderStatus.CANCELLED;
 }
 
 /**

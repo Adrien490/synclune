@@ -13,8 +13,16 @@ import { updateTag } from "next/cache";
 
 /**
  * Server Action ADMIN pour ajouter une note interne à une commande
+ *
+ * @param isInternal Si true, la note est filtree par `getOrderNotesForUser`
+ *                   et n'apparaitra jamais cote client. Default false pour
+ *                   preserver le comportement historique.
  */
-export async function addOrderNote(orderId: string, content: string): Promise<ActionState> {
+export async function addOrderNote(
+	orderId: string,
+	content: string,
+	isInternal = false,
+): Promise<ActionState> {
 	try {
 		// 1. Vérification authentification et admin
 		const auth = await requireAdminWithUser();
@@ -23,7 +31,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Validation des entrées
-		const validated = validateInput(addOrderNoteSchema, { orderId, content });
+		const validated = validateInput(addOrderNoteSchema, { orderId, content, isInternal });
 		if ("error" in validated) return validated.error;
 
 		// 4. Sanitize input
@@ -44,6 +52,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 					content: sanitizedContent,
 					authorId: auth.user.id,
 					authorName: auth.user.name ?? auth.user.email,
+					isInternal: validated.data.isInternal,
 				},
 			});
 
