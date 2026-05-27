@@ -7,6 +7,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockGetOrder,
 	mockGenerateInvoicePdf,
+	mockBuildInvoiceData,
+	mockRenderInvoicePdf,
 	mockPersistInvoiceNumber,
 	mockArchiveInvoicePdf,
 	mockGetSession,
@@ -16,6 +18,8 @@ const {
 } = vi.hoisted(() => ({
 	mockGetOrder: vi.fn(),
 	mockGenerateInvoicePdf: vi.fn(),
+	mockBuildInvoiceData: vi.fn(),
+	mockRenderInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
 	mockArchiveInvoicePdf: vi.fn(),
 	mockGetSession: vi.fn(),
@@ -27,6 +31,12 @@ const {
 }));
 
 vi.mock("@/modules/orders/data/get-order", () => ({ getOrder: mockGetOrder }));
+vi.mock("@/modules/invoices/services/build-invoice-data", () => ({
+	buildInvoiceData: mockBuildInvoiceData,
+}));
+vi.mock("@/modules/invoices/services/render-invoice-pdf", () => ({
+	renderInvoicePdf: mockRenderInvoicePdf,
+}));
 vi.mock("@/modules/orders/services/generate-invoice-pdf", () => ({
 	generateInvoicePdf: mockGenerateInvoicePdf,
 }));
@@ -94,6 +104,8 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		mockGetOrder.mockResolvedValue(PAID_ORDER);
 		mockPersistInvoiceNumber.mockResolvedValue(null);
 		mockGenerateInvoicePdf.mockReturnValue(Buffer.from("PDF-BYTES"));
+		mockBuildInvoiceData.mockReturnValue({});
+		mockRenderInvoicePdf.mockReturnValue(Buffer.from("PDF-BYTES"));
 		mockArchiveInvoicePdf.mockResolvedValue({
 			invoicePdfUrl: "https://ufs.example/inv-1.pdf",
 			invoicePdfHash: "a".repeat(64),
@@ -218,10 +230,13 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(res.headers.get("Cache-Control")).toBe("private, max-age=31536000, immutable");
 		});
 
-		it("calls generateInvoicePdf with the order", async () => {
+		it("calls buildInvoiceData with the order and pipes the result to renderInvoicePdf", async () => {
 			await GET(makeReq(), makeParams());
 
-			expect(mockGenerateInvoicePdf).toHaveBeenCalledWith(PAID_ORDER);
+			expect(mockBuildInvoiceData).toHaveBeenCalledWith(PAID_ORDER);
+			expect(mockRenderInvoicePdf).toHaveBeenCalledWith(
+				mockBuildInvoiceData.mock.results[0]?.value,
+			);
 		});
 	});
 
@@ -235,7 +250,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 			await GET(makeReq(), makeParams());
 
-			expect(mockGenerateInvoicePdf).toHaveBeenCalled();
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
 			expect(mockArchiveInvoicePdf).toHaveBeenCalledWith(
 				"order-1",
 				"INV-2026-0001",
@@ -258,7 +273,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 				"https://ufs.example/archived.pdf",
 				expect.objectContaining({ cache: "no-store" }),
 			);
-			expect(mockGenerateInvoicePdf).not.toHaveBeenCalled();
+			expect(mockRenderInvoicePdf).not.toHaveBeenCalled();
 			expect(mockArchiveInvoicePdf).not.toHaveBeenCalled();
 
 			fetchSpy.mockRestore();
@@ -275,7 +290,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			const res = await GET(makeReq(), makeParams());
 
 			expect(res.status).toBe(200);
-			expect(mockGenerateInvoicePdf).toHaveBeenCalled();
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
 
 			fetchSpy.mockRestore();
 		});

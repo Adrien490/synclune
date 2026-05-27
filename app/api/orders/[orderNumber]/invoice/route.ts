@@ -1,5 +1,6 @@
 import { getOrder } from "@/modules/orders/data/get-order";
-import { generateInvoicePdf } from "@/modules/orders/services/generate-invoice-pdf";
+import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
+import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { getSession } from "@/modules/auth/lib/get-current-session";
@@ -103,7 +104,7 @@ export async function GET(
 		}
 	}
 
-	const pdfBuffer = generateInvoicePdf(invoiceOrder);
+	const pdfBuffer = renderInvoicePdf(buildInvoiceData(invoiceOrder));
 
 	// Archive sur UploadThing si invoiceNumber présent (best-effort, ne bloque pas).
 	if (invoiceOrder.invoiceNumber) {
