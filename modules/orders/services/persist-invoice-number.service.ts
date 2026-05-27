@@ -1,4 +1,5 @@
 import { Prisma, HistorySource } from "@/app/generated/prisma/client";
+import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
@@ -21,6 +22,18 @@ interface PersistInvoiceNumberOptions {
  * window for invoice generation while keeping tail latency under control.
  */
 const MAX_RETRIES = 5;
+
+/**
+ * CHECK constraint DB (`Order_invoiceNumber_format`) impose `^F-[0-9]{4}-[0-9]{5}$`
+ * → 99999 factures/an max. Au-delà : on throw avant l'UPDATE plutôt que
+ * laisser Postgres rejeter silencieusement avec une P2002 que la boucle de
+ * retry tenterait 4 fois de plus en vain.
+ *
+ * À 99 999 : alerter d'urgence. Élargir la regex en migration (`{5,6}`) prend
+ * 10 min mais nécessite un déploiement → mieux vaut le faire avant que ça
+ * casse en prod.
+ */
+const MAX_SEQUENCE_PER_YEAR = 99_999;
 
 /**
  * 32-bit advisory lock key for invoice generation, derived from the current
@@ -80,6 +93,14 @@ export async function persistInvoiceNumber(
 					if (!isNaN(lastSequence)) {
 						nextSequence = lastSequence + 1;
 					}
+				}
+
+				if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
+					throw new BusinessError(
+						`Séquence facture saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
+							`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
+						"INVOICE_SEQUENCE_OVERFLOW",
+					);
 				}
 
 				const invoiceNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;

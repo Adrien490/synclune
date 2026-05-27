@@ -266,4 +266,93 @@ describe("voidInvoice", () => {
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
+
+	/**
+	 * @regression credit-note-sequence-overflow-2026-05-27
+	 *
+	 * Le CHECK constraint DB `Order_creditNoteNumber_format_check` n'accepte
+	 * que des numéros à 5 chiffres (`^A-[0-9]{4}-[0-9]{5}$`). Au-delà de
+	 * 99 999 avoirs/an, le service doit refuser net plutôt que générer un
+	 * numéro à 6 chiffres rejeté par Postgres avec une P2002 retentée 4 fois
+	 * en vain.
+	 */
+	describe("rollover guard at 99999 (Art. 272-I CGI — séquence avoir bornée)", () => {
+		it("returns null + logs BusinessError when last credit note is A-YYYY-99999", async () => {
+			const tx = makeTx();
+			const year = new Date().getFullYear();
+			tx.order.findUnique.mockResolvedValue({
+				id: "order-overflow",
+				userId: "user-1",
+				invoiceNumber: `F-${year}-00100`,
+				invoiceStatus: "GENERATED",
+				invoiceVoidedAt: null,
+				creditNoteNumber: null,
+			});
+			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99999` }]);
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
+				fn(tx),
+			);
+
+			const result = await voidInvoice({ orderId: "order-overflow", ...AUTHOR });
+
+			expect(result).toBeNull();
+			expect(tx.order.update).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				"Failed to void invoice",
+				expect.objectContaining({
+					name: "BusinessError",
+					message: expect.stringContaining("Séquence avoir saturée"),
+				}),
+				expect.objectContaining({ service: "void-invoice", orderId: "order-overflow" }),
+			);
+		});
+
+		it("does NOT retry on overflow (BusinessError ≠ P2002)", async () => {
+			const tx = makeTx();
+			const year = new Date().getFullYear();
+			tx.order.findUnique.mockResolvedValue({
+				id: "order-overflow",
+				userId: "user-1",
+				invoiceNumber: `F-${year}-00100`,
+				invoiceStatus: "GENERATED",
+				invoiceVoidedAt: null,
+				creditNoteNumber: null,
+			});
+			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99999` }]);
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
+				fn(tx),
+			);
+
+			await voidInvoice({ orderId: "order-overflow", ...AUTHOR });
+
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+
+		it("still emits A-YYYY-99999 when last is A-YYYY-99998 (limit not exceeded)", async () => {
+			const tx = makeTx();
+			const year = new Date().getFullYear();
+			tx.order.findUnique.mockResolvedValue({
+				id: "order-near-limit",
+				userId: "user-1",
+				invoiceNumber: `F-${year}-00100`,
+				invoiceStatus: "GENERATED",
+				invoiceVoidedAt: null,
+				creditNoteNumber: null,
+			});
+			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99998` }]);
+			tx.order.update.mockResolvedValue({
+				invoiceVoidedAt: new Date(),
+				creditNoteNumber: `A-${year}-99999`,
+				creditNoteGeneratedAt: new Date(),
+				userId: "user-1",
+			});
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
+				fn(tx),
+			);
+
+			const result = await voidInvoice({ orderId: "order-near-limit", ...AUTHOR });
+
+			expect(result?.creditNoteNumber).toBe(`A-${year}-99999`);
+		});
+	});
 });

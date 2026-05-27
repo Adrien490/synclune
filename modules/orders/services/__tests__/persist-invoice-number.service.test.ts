@@ -337,4 +337,68 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
 	});
+
+	/**
+	 * @regression invoice-sequence-overflow-2026-05-27
+	 *
+	 * Le CHECK constraint DB `Order_invoiceNumber_format` n'accepte que des
+	 * numéros à 5 chiffres (`^F-[0-9]{4}-[0-9]{5}$`). Au-delà de 99 999, le
+	 * service doit refuser net plutôt que générer un numéro qui passerait
+	 * silencieusement la regex JavaScript mais provoquerait une P2002 (CHECK
+	 * fail) — retentée 4 fois en vain par la boucle de retry.
+	 */
+	describe("rollover guard at 99999 (Art. 286 CGI — séquence bornée)", () => {
+		it("returns null + logs error when last invoice is F-YYYY-99999 (overflow)", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+			expect(mockTx.order.update).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				"Failed to persist invoice number",
+				expect.objectContaining({
+					name: "BusinessError",
+					message: expect.stringContaining("Séquence facture saturée"),
+				}),
+				expect.objectContaining({ service: "persist-invoice-number" }),
+			);
+		});
+
+		it("does NOT retry on overflow (BusinessError ≠ P2002)", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+
+		it("still emits F-YYYY-99999 when last is F-YYYY-99998 (limit not exceeded)", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99998` }]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: `F-${year}-99999`,
+				invoiceGeneratedAt: new Date(),
+			});
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe(`F-${year}-99999`);
+		});
+
+		it("does NOT invalidate cache tags on overflow", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockUpdateTag).not.toHaveBeenCalled();
+		});
+	});
 });

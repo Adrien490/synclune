@@ -1,5 +1,6 @@
 import { Prisma, OrderAction, InvoiceStatus } from "@/app/generated/prisma/client";
 import type { HistorySource } from "@/app/generated/prisma/client";
+import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
@@ -26,6 +27,13 @@ interface VoidInvoiceParams {
  * pour la justification détaillée.
  */
 const MAX_RETRIES = 5;
+
+/**
+ * CHECK constraint DB (`Order_creditNoteNumber_format_check`) impose
+ * `^A-[0-9]{4}-[0-9]{5}$` → 99 999 avoirs/an max. Voir l'équivalent
+ * `MAX_SEQUENCE_PER_YEAR` dans `persist-invoice-number.service.ts`.
+ */
+const MAX_SEQUENCE_PER_YEAR = 99_999;
 
 /**
  * Clé Postgres advisory lock pour les avoirs (offset distinct de la facture
@@ -106,6 +114,14 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 					if (!isNaN(parsed)) {
 						nextSequence = parsed + 1;
 					}
+				}
+
+				if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
+					throw new BusinessError(
+						`Séquence avoir saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
+							`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
+						"CREDIT_NOTE_SEQUENCE_OVERFLOW",
+					);
 				}
 
 				const creditNoteNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
