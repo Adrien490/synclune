@@ -84,6 +84,8 @@ type Refund = {
 	processedAt: Date | null;
 	note: string | null;
 	currency: string;
+	creditNoteNumber: string | null;
+	creditNoteGeneratedAt: Date | null;
 	items: RefundItem[];
 };
 
@@ -97,6 +99,8 @@ function createRefund(overrides: Partial<Refund> = {}): Refund {
 		processedAt: null,
 		note: null,
 		currency: "EUR",
+		creditNoteNumber: null,
+		creditNoteGeneratedAt: null,
 		items: [],
 		...overrides,
 	};

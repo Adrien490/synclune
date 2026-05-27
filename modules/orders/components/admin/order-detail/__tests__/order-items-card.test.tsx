@@ -36,12 +36,20 @@ function createItem(overrides = {}) {
 		productTitle: "Bague dorée",
 		productDescription: null,
 		productImageUrl: null,
+		skuSku: null,
 		skuImageUrl: null,
 		skuColor: null,
+		skuColorHexes: null,
 		skuSize: null,
 		skuMaterial: null,
 		price: 2500,
 		quantity: 1,
+		// TVA par ligne (Phase 2A — franchise art. 293 B par défaut)
+		taxRate: 0,
+		taxAmount: 0,
+		lineTotalExcludingTax: 2500,
+		lineTotalIncludingTax: 2500,
+		taxCategoryCode: "ZB" as const,
 		...overrides,
 	};
 }

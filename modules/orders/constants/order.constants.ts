@@ -73,6 +73,12 @@ export const GET_ORDER_SELECT_ADMIN = {
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,
+	// Snapshot B2B/B2G (Phase 2A — EINV-AUDIT-001)
+	customerType: true,
+	customerCompanyName: true,
+	customerCompanySiren: true,
+	customerCompanySiret: true,
+	customerCompanyVatNumber: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
@@ -111,6 +117,12 @@ export const GET_ORDER_SELECT_ADMIN = {
 	invoiceNumber: true,
 	invoiceStatus: true,
 	invoiceGeneratedAt: true,
+	invoiceVoidedAt: true,
+	creditNoteNumber: true,
+	creditNoteGeneratedAt: true,
+	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
+	invoicePdfUrl: true,
+	invoicePdfHash: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -121,12 +133,20 @@ export const GET_ORDER_SELECT_ADMIN = {
 			productTitle: true,
 			productDescription: true,
 			productImageUrl: true,
+			skuSku: true,
 			skuColor: true,
+			skuColorHexes: true,
 			skuMaterial: true,
 			skuSize: true,
 			skuImageUrl: true,
 			price: true,
 			quantity: true,
+			// TVA par ligne (Phase 2A — EINV-AUDIT-002, requis pour Factur-X/UBL/CII)
+			taxRate: true,
+			taxAmount: true,
+			lineTotalExcludingTax: true,
+			lineTotalIncludingTax: true,
+			taxCategoryCode: true,
 		},
 	},
 	refunds: {
@@ -139,6 +159,9 @@ export const GET_ORDER_SELECT_ADMIN = {
 			note: true,
 			processedAt: true,
 			createdAt: true,
+			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
+			creditNoteNumber: true,
+			creditNoteGeneratedAt: true,
 			items: {
 				select: {
 					id: true,
@@ -239,6 +262,9 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	invoiceNumber: true,
 	invoiceStatus: true,
 	invoiceGeneratedAt: true,
+	invoiceVoidedAt: true,
+	creditNoteNumber: true,
+	creditNoteGeneratedAt: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -249,12 +275,20 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			productTitle: true,
 			productDescription: true,
 			productImageUrl: true,
+			skuSku: true,
 			skuColor: true,
+			skuColorHexes: true,
 			skuMaterial: true,
 			skuSize: true,
 			skuImageUrl: true,
 			price: true,
 			quantity: true,
+			// TVA par ligne (Phase 2A — EINV-AUDIT-002, requis pour Factur-X/UBL/CII)
+			taxRate: true,
+			taxAmount: true,
+			lineTotalExcludingTax: true,
+			lineTotalIncludingTax: true,
+			taxCategoryCode: true,
 		},
 	},
 	refunds: {
@@ -267,6 +301,9 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			note: true,
 			processedAt: true,
 			createdAt: true,
+			// Avoir par refund (Phase 2A — EINV-AUDIT-010)
+			creditNoteNumber: true,
+			creditNoteGeneratedAt: true,
 			items: {
 				select: {
 					id: true,
