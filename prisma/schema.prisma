@@ -29,6 +29,17 @@ enum AccountStatus {
   ANONYMIZED
 }
 
+// === TYPE DE CLIENT (facturation electronique 2026-2027) ===
+//
+// Distingue B2C (particulier), B2B (entreprise) et B2G (entite publique
+// via Chorus Pro). Les champs `companyName`/`companySiren`/etc. ne sont
+// requis (validation applicative) que quand customerType != B2C.
+enum CustomerType {
+  B2C
+  B2B
+  B2G
+}
+
 model User {
   id               String    @id @default(cuid())
   role             Role      @default(USER)
@@ -52,6 +63,17 @@ model User {
   anonymizedAt        DateTime? // Date d'anonymisation effective
   deletionRequestedAt DateTime? // Demande de suppression enregistree
 
+  // === FACTURATION ELECTRONIQUE (2026-2027) ===
+  //
+  // Toutes les valeurs sont stockees normalisees (chiffres pour SIREN/SIRET, sans
+  // espaces). La validation applicative impose ces champs quand customerType !=
+  // B2C. Les CHECK constraints en migration garantissent le format au niveau DB.
+  customerType     CustomerType @default(B2C)
+  companyName      String?      @db.VarChar(255)
+  companySiren     String?      @db.VarChar(9)
+  companySiret     String?      @db.VarChar(14)
+  companyVatNumber String?      @db.VarChar(15) // Format intra-UE: ISO 3166-1 alpha-2 + 11 chars (FR: FR + 2 + 9 digits)
+
   sessions       Session[]
   accounts       Account[]
   orders         Order[]
@@ -69,6 +91,7 @@ model User {
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
   @@index([role, deletedAt]) // admin count guard + listing role filter
   @@index([deletedAt, suspendedAt]) // admin listing soft-delete + suspension filter
+  @@index([customerType, deletedAt]) // admin listing B2B/B2G filter (futur)
 }
 
 model Session {
