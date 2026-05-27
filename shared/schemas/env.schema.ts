@@ -133,6 +133,16 @@ export const envSchema = z.object({
 	VENDOR_OPERATION_NATURE: z.string().min(1).optional(),
 
 	// ========================================
+	// Facturation électronique — provider & feature flags (Phase 2B+)
+	// ========================================
+	// `local` (défaut) garde le comportement actuel : pas de plateforme externe,
+	// PDF archivé sur UploadThing. Les autres valeurs activeront la transmission
+	// PDP/PA quand le contrat sera signé (Phase 3-5).
+	INVOICE_PROVIDER: z.enum(["local"]).optional().default("local"),
+	INVOICE_ENABLE_XML: z.string().optional(),
+	INVOICE_ENABLE_EREPORTING: z.string().optional(),
+
+	// ========================================
 	// Node
 	// ========================================
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
