@@ -873,6 +873,29 @@ model OrderItem {
   price    Int // Prix unitaire FINAL sans TVA en centimes (micro-entreprise exoneree)
   quantity Int
 
+  // === TVA PAR LIGNE (Facturation electronique 2026-2027) ===
+  //
+  // Champs requis pour Factur-X / UBL / CII (mapping CEFACT UNTDID BT-151
+  // Item VAT category, BT-152 Item VAT rate, BT-117 Invoiced net amount).
+  //
+  // Defauts pour la franchise TVA actuelle (Art. 293 B CGI) :
+  //   - taxRate = 0 (basis points : 2000 = 20.00%)
+  //   - taxAmount = 0 (centimes)
+  //   - taxCategoryCode = "ZB" (Z = zero rate, branche franchise) — voir
+  //     mapping UNTDID 5305 pour les autres categories ("S" standard, "AE"
+  //     autoliquidation, "E" exoneree, "G" export hors UE, "K" intra-UE)
+  //   - lineTotalExcludingTax = price * quantity (backfille via migration)
+  //   - lineTotalIncludingTax = price * quantity (idem pour franchise)
+  //
+  // Quand Synclune basculera au regime reel, les actions checkout devront
+  // recalculer ces champs ligne par ligne (les valeurs ne sont PAS derivees
+  // a la lecture pour garantir le snapshot Art. L102 B LPF).
+  taxRate                Int     @default(0)
+  taxAmount              Int     @default(0)
+  lineTotalExcludingTax  Int     @default(0)
+  lineTotalIncludingTax  Int     @default(0)
+  taxCategoryCode        String? @db.VarChar(2)
+
   // Relations
   refundItems RefundItem[]
 

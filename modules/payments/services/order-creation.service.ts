@@ -11,6 +11,7 @@ import { generateOrderNumber } from "@/modules/orders/services/order-generation.
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
+import { DEFAULT_TAX_CATEGORY } from "@/shared/constants/tax-categories";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 
@@ -311,6 +312,11 @@ export async function createOrderInTransaction(
 					.map((c) => c.hex)
 					.filter(Boolean)
 					.join(",");
+				// TVA par ligne (Phase 2A, EINV-AUDIT-002) — franchise art. 293 B :
+				// taxRate=0, taxAmount=0, lineTotalExclTax=lineTotalInclTax=price*qty.
+				// Quand Synclune basculera au regime reel, calculer ces valeurs ici
+				// au lieu d'utiliser les defauts franchise.
+				const lineTotal = sku.priceInclTax * cartItem.quantity;
 				await tx.orderItem.create({
 					data: {
 						orderId: newOrder.id,
@@ -326,6 +332,11 @@ export async function createOrderInTransaction(
 						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
+						taxRate: 0,
+						taxAmount: 0,
+						lineTotalExcludingTax: lineTotal,
+						lineTotalIncludingTax: lineTotal,
+						taxCategoryCode: DEFAULT_TAX_CATEGORY,
 					},
 				});
 			}
