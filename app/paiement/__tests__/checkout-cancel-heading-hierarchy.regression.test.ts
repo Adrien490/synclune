@@ -20,8 +20,10 @@ describe("checkout cancel heading hierarchy (regression)", () => {
 		expect(cancelPage).not.toMatch(/<h1\s+className="sr-only"/);
 	});
 
-	it("contient un h1 visible (data-slot=card-title)", () => {
-		expect(cancelPage).toMatch(/<h1\s+data-slot="card-title"/);
+	it("contient un h1 visible utilisant la typographie display", () => {
+		// La page rend un <h1> visible avec les classes display (font-display + text-2xl)
+		// et ne se rabat pas sur CardTitle (rendu en <div>) ni sur un h1 sr-only.
+		expect(cancelPage).toMatch(/<h1\s+className="font-display[^"]*text-2xl/);
 	});
 
 	it("ne consomme plus CardTitle (qui est un div h4 par défaut)", () => {

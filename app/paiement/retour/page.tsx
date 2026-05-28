@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { z } from "zod";
 import { stripe } from "@/shared/lib/stripe";
 
+const STRIPE_RETRIEVE_TIMEOUT_MS = 5_000;
+
 const piSearchParamsSchema = z.object({
 	payment_intent: z.string().min(1),
 	redirect_status: z.string().min(1),
@@ -32,6 +34,27 @@ interface CheckoutReturnPageProps {
 }
 
 /**
+ * Promise.race wrapper pour borner les appels Stripe.
+ *
+ * Le SDK Stripe v18 supporte `maxNetworkRetries` mais pas de deadline globale —
+ * une indisponibilité Stripe pourrait figer la page jusqu'au timeout Vercel (10-30s).
+ * On rejette manuellement après 5s et le caller redirige vers `/paiement/annulation?reason=processing_error`.
+ */
+async function withStripeDeadline<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => {
+			reject(new Error(`Stripe retrieve exceeded ${timeoutMs}ms`));
+		}, timeoutMs);
+	});
+	try {
+		return await Promise.race([promise, timeoutPromise]);
+	} finally {
+		if (timer) clearTimeout(timer);
+	}
+}
+
+/**
  * Payment return page — handles both PI flow and legacy Checkout Session flow.
  * Verifies payment status and redirects to the appropriate page.
  */
@@ -50,7 +73,10 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 		let redirectUrl: string;
 
 		try {
-			const pi = await stripe.paymentIntents.retrieve(piId);
+			const pi = await withStripeDeadline(
+				stripe.paymentIntents.retrieve(piId),
+				STRIPE_RETRIEVE_TIMEOUT_MS,
+			);
 			const orderNumber = pi.metadata.orderNumber;
 			const cancelSuffix = orderNumber ? `&order_number=${orderNumber}` : "";
 
@@ -71,7 +97,7 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 		redirect(redirectUrl);
 	}
 
-	// === Legacy Checkout Session flow ===
+	// === Legacy Checkout Session flow (encore utilisé par modules/webhooks/services/checkout.service.ts) ===
 	const sessionValidation = sessionSearchParamsSchema.safeParse(params);
 	if (!sessionValidation.success) {
 		redirect("/");
@@ -82,7 +108,10 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 	let redirectUrl: string;
 
 	try {
-		const session = await stripe.checkout.sessions.retrieve(sessionId);
+		const session = await withStripeDeadline(
+			stripe.checkout.sessions.retrieve(sessionId),
+			STRIPE_RETRIEVE_TIMEOUT_MS,
+		);
 		const orderNumber = session.metadata?.orderNumber;
 		const cancelSuffix = orderNumber ? `&order_number=${orderNumber}` : "";
 

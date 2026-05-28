@@ -3,36 +3,22 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
 import { PurchaseTracker } from "@/shared/components/analytics/purchase-tracker";
+import { ReceiptButton } from "./_components/receipt-button";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { getShippingInfo } from "@/modules/orders/services/shipping.service";
 import { COUNTRY_NAMES, type ShippingCountry } from "@/shared/constants/countries";
+import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { stripe } from "@/shared/lib/stripe";
-import {
-	Clock,
-	ExternalLink,
-	Heart,
-	Package,
-	Receipt,
-	Sparkles,
-	TruckIcon,
-	UserPlus,
-} from "lucide-react";
+import { formatDateLong } from "@/shared/utils/dates";
+import { Clock, Heart, Package, Sparkles, TruckIcon, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import type Stripe from "stripe";
-
-function extractReceiptUrl(charge: Stripe.PaymentIntent["latest_charge"]): string | null {
-	if (charge && typeof charge !== "string") {
-		return charge.receipt_url ?? null;
-	}
-	return null;
-}
 
 export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
@@ -51,12 +37,42 @@ interface CheckoutSuccessPageProps {
 	}>;
 }
 
+type NextStep = {
+	title: string;
+	description: (customerEmail: string | null) => React.ReactNode;
+};
+
+const NEXT_STEPS: readonly NextStep[] = [
+	{
+		title: "Email de confirmation",
+		description: (email) =>
+			email ? (
+				<>
+					Récapitulatif envoyé à{" "}
+					<span className="text-foreground font-medium break-all">{email}</span> dans les prochaines
+					minutes. Pense à vérifier tes spams.
+				</>
+			) : (
+				"Tu vas recevoir un email récapitulatif dans les prochaines minutes. Pense à vérifier tes spams si tu ne le reçois pas."
+			),
+	},
+	{
+		title: "Je prépare ta commande",
+		description: () =>
+			"Ton bijou sera préparé avec soin et expédié dans les prochains jours ouvrés.",
+	},
+	{
+		title: "Suivi de livraison",
+		description: () =>
+			"Tu recevras un email avec le numéro de suivi dès que ton colis sera expédié.",
+	},
+];
+
 /**
- * Page de confirmation de commande réussie
- * Affichée après le paiement Stripe réussi
+ * Page de confirmation de commande réussie.
  *
- * SÉCURISÉ : Nécessite order_id + order_number (double vérification)
- * Accepte paymentStatus PENDING car le webhook peut ne pas avoir encore process
+ * SÉCURISÉ : double vérification order_id + order_number.
+ * Accepte paymentStatus PENDING car le webhook peut ne pas avoir encore traité.
  */
 export default async function CheckoutSuccessPage({ searchParams }: CheckoutSuccessPageProps) {
 	const params = await searchParams;
@@ -64,58 +80,38 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 	const orderNumber = params.order_number;
 	const isPending = params.pending === "true";
 
-	// Both params required for secure lookup
 	if (!orderId || !orderNumber) {
 		redirect("/");
 	}
 
-	// Fetch order and session in parallel
 	const [order, session] = await Promise.all([
 		getOrderForConfirmation(orderId, orderNumber),
 		getSession(),
 	]);
 
-	// Accept both PENDING and PAID: Stripe already confirmed payment on the return page,
-	// but the webhook may not have processed yet (race condition)
 	if (!order) {
 		redirect("/");
 	}
 
-	// Delivery estimate based on shipping country
 	const shippingInfo = getShippingInfo(
 		((order.shippingCountry as ShippingCountry | null) ?? "FR") as ShippingCountry,
 		order.shippingPostalCode,
 	);
 
-	// Fetch Stripe receipt URL (best-effort, non-blocking)
-	let receiptUrl: string | null = null;
-	if (order.stripePaymentIntentId && !isPending) {
-		try {
-			const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
-				expand: ["latest_charge"],
-			});
-			receiptUrl = extractReceiptUrl(pi.latest_charge);
-		} catch {
-			// Non-critical: receipt link is optional
-		}
-	}
-
 	return (
 		<div className="relative min-h-dvh">
-			{/* Decorative background */}
-			<div className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
 					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
-							<Fade y={10} delay={0.15}>
+							<Fade y={10} delay={0.1}>
 								<h1 className="font-display text-2xl leading-none font-normal sm:text-3xl">
 									Merci pour ta confiance ! <span aria-hidden="true">✨</span>
 								</h1>
 							</Fade>
-							<Fade y={10} delay={0.25}>
+							<Fade y={10} delay={0.15}>
 								<div className="space-y-2">
 									<p className="text-muted-foreground text-sm">
 										{isPending
@@ -123,16 +119,13 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											: "Ton paiement a été accepté avec succès"}
 									</p>
 									<p className="text-lg font-semibold">Commande #{order.orderNumber}</p>
-									{receiptUrl && (
-										<div className="flex justify-center pt-2">
-											<Button asChild variant="outline" size="sm">
-												<a href={receiptUrl} target="_blank" rel="noopener noreferrer">
-													<Receipt className="size-4" />
-													Télécharger mon reçu
-													<ExternalLink className="size-3" />
-												</a>
-											</Button>
-										</div>
+									<p className="text-muted-foreground text-xs">
+										Commandée le {formatDateLong(order.createdAt)}
+									</p>
+									{order.stripePaymentIntentId && !isPending && (
+										<Suspense fallback={null}>
+											<ReceiptButton stripePaymentIntentId={order.stripePaymentIntentId} />
+										</Suspense>
 									)}
 								</div>
 							</Fade>
@@ -160,9 +153,10 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<h2 id="confirmation-items-heading" className="text-base font-semibold">
 										Articles commandés
 									</h2>
-									<div className="space-y-3">
+									{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+									<ul role="list" className="space-y-3">
 										{order.items.map((item) => (
-											<div key={item.id} className="flex gap-3 text-sm">
+											<li key={item.id} className="flex gap-3 text-sm">
 												<div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-xl border">
 													{item.skuImageUrl ? (
 														<Image
@@ -193,9 +187,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 														{formatEuro(item.price * item.quantity)}
 													</p>
 												</div>
-											</div>
+											</li>
 										))}
-									</div>
+									</ul>
 								</section>
 							)}
 
@@ -280,67 +274,24 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									Que va-t-il se passer maintenant ?
 								</h2>
 
-								<Fade y={15} delay={0.3}>
+								<Fade y={15} delay={0.2}>
 									<ol className="space-y-3">
-										<li className="flex items-start gap-3">
-											<div
-												aria-hidden="true"
-												className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full"
-											>
-												<span className="text-primary text-sm font-semibold">1</span>
-											</div>
-											<div>
-												<p className="font-medium">Email de confirmation</p>
-												<p className="text-muted-foreground text-sm">
-													{order.customerEmail ? (
-														<>
-															Récapitulatif envoyé à{" "}
-															<span className="text-foreground font-medium break-all">
-																{order.customerEmail}
-															</span>{" "}
-															dans les prochaines minutes. Pense à vérifier tes spams.
-														</>
-													) : (
-														<>
-															Tu vas recevoir un email récapitulatif dans les prochaines minutes.
-															Pense à vérifier tes spams si tu ne le reçois pas.
-														</>
-													)}
-												</p>
-											</div>
-										</li>
-
-										<li className="flex items-start gap-3">
-											<div
-												aria-hidden="true"
-												className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full"
-											>
-												<span className="text-primary text-sm font-semibold">2</span>
-											</div>
-											<div>
-												<p className="font-medium">Je prépare ta commande</p>
-												<p className="text-muted-foreground text-sm">
-													Ton bijou sera préparé avec soin et expédié dans les prochains jours
-													ouvrés.
-												</p>
-											</div>
-										</li>
-
-										<li className="flex items-start gap-3">
-											<div
-												aria-hidden="true"
-												className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full"
-											>
-												<span className="text-primary text-sm font-semibold">3</span>
-											</div>
-											<div>
-												<p className="font-medium">Suivi de livraison</p>
-												<p className="text-muted-foreground text-sm">
-													Tu recevras un email avec le numéro de suivi dès que ton colis sera
-													expédié.
-												</p>
-											</div>
-										</li>
+										{NEXT_STEPS.map((step, idx) => (
+											<li key={step.title} className="flex items-start gap-3">
+												<div
+													aria-hidden="true"
+													className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full"
+												>
+													<span className="text-primary text-sm font-semibold">{idx + 1}</span>
+												</div>
+												<div>
+													<p className="font-medium">{step.title}</p>
+													<p className="text-muted-foreground text-sm">
+														{step.description(order.customerEmail)}
+													</p>
+												</div>
+											</li>
+										))}
 									</ol>
 								</Fade>
 							</section>
@@ -358,7 +309,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<Button asChild size="lg" className="flex-1">
 										<Link href={ROUTES.SHOP.HOME}>
 											<Package className="mr-2 size-4" />
-											Retour à l'accueil
+											Retour à l&apos;accueil
 										</Link>
 									</Button>
 								)}
@@ -400,7 +351,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					<div className="mt-8 space-y-2 text-center">
 						<p className="text-muted-foreground text-sm">Une question sur ta commande ?</p>
 						<Button asChild variant="link">
-							<Link href="mailto:contact@synclune.fr">Écris-moi</Link>
+							<Link href={`mailto:${BRAND.contact.email}`}>Écris-moi</Link>
 						</Button>
 					</div>
 				</div>

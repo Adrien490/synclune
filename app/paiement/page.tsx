@@ -165,12 +165,6 @@ export default async function CheckoutPage() {
 								/>
 							</div>
 						</div>
-						<p className="font-cursive text-muted-foreground mt-2 text-sm italic max-sm:text-center sm:mt-3 sm:text-base">
-							<span className="sm:hidden">Étape finale — tu y es presque.</span>
-							<span className="hidden sm:inline">
-								Plus que quelques instants avant de recevoir tes bijoux.
-							</span>
-						</p>
 					</div>
 					<CheckoutForm cart={cart} session={session} addresses={addresses} />
 				</div>

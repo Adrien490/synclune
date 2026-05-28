@@ -1,19 +1,30 @@
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/shared/components/ui/card";
-import { getCheckoutCancelMessage } from "@/modules/payments/constants/checkout-cancel-messages";
+import {
+	CHECKOUT_CANCEL_REASONS,
+	getCheckoutCancelMessage,
+} from "@/modules/payments/constants/checkout-cancel-messages";
+import { BRAND } from "@/shared/constants/brand";
 import { Info, ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { z } from "zod";
 
 export const metadata: Metadata = {
 	title: "Paiement annulé | Synclune",
 	description: "Ton paiement a été annulé. Ton panier est toujours disponible.",
 	robots: {
-		index: false, // Ne pas indexer les pages de paiement
+		index: false,
 		follow: false,
 	},
 };
+
+const cancelParamsSchema = z.object({
+	order_id: z.string().optional(),
+	order_number: z.string().optional(),
+	reason: z.enum(CHECKOUT_CANCEL_REASONS).optional(),
+});
 
 interface CheckoutCancelPageProps {
 	searchParams: Promise<{
@@ -25,26 +36,25 @@ interface CheckoutCancelPageProps {
 
 /**
  * Page d'annulation de paiement avec messages d'erreur spécifiques.
- * Affichée quand l'utilisateur annule le paiement Stripe ou rencontre une erreur.
  *
- * Paramètres URL supportés :
- * - order_id : ID interne de la commande (cuid, fallback display)
- * - order_number : numéro lisible de la commande (préféré pour l'affichage)
- * - reason : raison de l'annulation (card_declined, expired_card, insufficient_funds, etc.)
+ * Paramètres URL :
+ * - order_id    : ID interne (cuid, fallback display)
+ * - order_number: numéro lisible (préféré pour l'affichage)
+ * - reason      : code Stripe normalisé (validé par CHECKOUT_CANCEL_REASONS)
  */
 export default async function CheckoutCancelPage({ searchParams }: CheckoutCancelPageProps) {
 	const params = await searchParams;
-	const orderId = params.order_id;
-	const orderNumber = params.order_number;
-	const reason = params.reason;
+	const parsed = cancelParamsSchema.safeParse(params);
+	const orderId = parsed.success ? parsed.data.order_id : undefined;
+	const orderNumber = parsed.success ? parsed.data.order_number : undefined;
+	const reason = parsed.success ? parsed.data.reason : undefined;
 	const displayReference = orderNumber ?? orderId;
 
 	const errorInfo = getCheckoutCancelMessage(reason);
 	const ErrorIcon = errorInfo.icon;
+
 	return (
 		<div className="relative min-h-dvh">
-			{/* Decorative background */}
-			<div className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<Card className="border-primary/10 rounded-2xl shadow-md">
@@ -52,10 +62,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							<div className="bg-muted/80 mx-auto flex size-18 items-center justify-center rounded-full">
 								<ErrorIcon className="text-muted-foreground size-10" aria-hidden="true" />
 							</div>
-							<h1
-								data-slot="card-title"
-								className="font-display text-2xl leading-none font-normal sm:text-3xl"
-							>
+							<h1 className="font-display text-2xl leading-none font-normal sm:text-3xl">
 								{errorInfo.title}
 							</h1>
 							<CardDescription className="text-base">
@@ -64,13 +71,13 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* 🔴 CORRECTION : Message d'erreur spécifique */}
+							{/* Message d'erreur spécifique */}
 							<Alert variant={reason && reason !== "canceled" ? "destructive" : "default"}>
 								<Info className="size-4" />
 								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
-							{/* Afficher la référence de commande si disponible (orderNumber préféré) */}
+							{/* Référence commande (orderNumber préféré) */}
 							{displayReference && (
 								<Alert>
 									<Info className="size-4" />
@@ -83,64 +90,22 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								</Alert>
 							)}
 
-							{/* 🔴 CORRECTION : Informations et conseils spécifiques */}
-							<div className="text-muted-foreground space-y-3 text-sm">
-								<p>
-									Ton panier est toujours disponible avec tous tes articles sélectionnés. Tu peux
-									reprendre ta commande à tout moment.
-								</p>
+							{/* Conseil contextuel (colocalisé dans CHECKOUT_CANCEL_MESSAGES.advice) */}
+							{errorInfo.advice && (
+								<aside
+									aria-label="Conseil"
+									className="text-muted-foreground flex items-start gap-2 text-sm"
+								>
+									<span className="mt-0.5" aria-hidden="true">
+										💡
+									</span>
+									<span>
+										<strong className="text-foreground">Que faire ?</strong> {errorInfo.advice}
+									</span>
+								</aside>
+							)}
 
-								{/* Conseils spécifiques selon le type d'erreur */}
-								{reason === "card_declined" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Vérifie que ta carte est activée pour les
-											paiements en ligne, ou contacte ta banque si le problème persiste.
-										</span>
-									</aside>
-								)}
-
-								{reason === "insufficient_funds" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Vérifie ton solde ou utilise une autre carte
-											bancaire.
-										</span>
-									</aside>
-								)}
-
-								{reason === "authentication_failed" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Assure-toi d&apos;avoir accès à ton application
-											bancaire ou SMS pour valider l&apos;authentification 3D Secure.
-										</span>
-									</aside>
-								)}
-
-								{(!reason || reason === "canceled") && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											Si tu as rencontré un problème lors du paiement, n&apos;hésite pas à me
-											contacter !
-										</span>
-									</aside>
-								)}
-							</div>
-
-							{/* Reassurance message */}
+							{/* Reassurance unique (panier sauvegardé + retry immédiat) */}
 							<p className="text-muted-foreground text-center text-sm">
 								Ton panier et tes informations ont été sauvegardés. Tu peux réessayer immédiatement.
 							</p>
@@ -154,7 +119,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="mailto:contact@synclune.fr">M'écrire</Link>
+									<Link href={`mailto:${BRAND.contact.email}`}>M&apos;écrire</Link>
 								</Button>
 							</div>
 						</CardContent>

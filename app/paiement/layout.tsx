@@ -35,10 +35,16 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 			{/* Skip to main content (WCAG 2.4.1) */}
 			<a
 				href="#main-content"
-				className="bg-background text-foreground border-primary focus-visible:ring-ring sr-only z-50 rounded-md border px-4 py-2 text-sm font-medium shadow-md focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+				className="focus-ring bg-background text-foreground border-primary sr-only z-50 rounded-md border px-4 py-2 text-sm font-medium shadow-md focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4"
 			>
 				Aller au contenu
 			</a>
+
+			{/* Decorative background hoisted from confirmation/annulation pages (single SSOT). */}
+			<div
+				aria-hidden="true"
+				className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
+			/>
 
 			{/* Header minimal */}
 			<header
