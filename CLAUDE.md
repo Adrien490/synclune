@@ -409,6 +409,7 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 | Réforme 2026-2027 e-reporting B2C          | (Phase 3 audit 2026-05-27)                                            | ⏳     |
 
 Audit conformité complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27).
+Architecture détaillée, matrices B2C/B2B/B2G, état des phases, feature flags, troubleshooting : `docs/INVOICING.md`.
 
 ## Forms
 
