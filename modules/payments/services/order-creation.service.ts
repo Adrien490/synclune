@@ -13,6 +13,7 @@ import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { DEFAULT_TAX_CATEGORY } from "@/shared/constants/tax-categories";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
+import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 
 function isDiscountType(value: string): value is DiscountType {
@@ -177,7 +178,10 @@ export async function createOrderInTransaction(
 				}
 				const discountType = discount.type;
 
-				// Read usage counts directly in transaction to prevent stale cache reads
+				// Read usage counts directly in transaction to prevent stale cache reads.
+				// Email is normalized (lowercase+trim) to avoid trivial guest bypass of
+				// maxUsagePerUser via casing/whitespace (cf [[CHECKOUT-AUDIT-003]]).
+				const normalizedEmail = finalEmail ? normalizeEmail(finalEmail) : null;
 				let usageCounts: { userCount: number; emailCount: number } | undefined;
 				if (discount.maxUsagePerUser) {
 					let userCount = 0;
@@ -188,9 +192,9 @@ export async function createOrderInTransaction(
 							where: { discountId: discount.id, userId },
 						});
 					}
-					if (finalEmail) {
+					if (normalizedEmail) {
 						emailCount = await tx.discountUsage.count({
-							where: { discountId: discount.id, order: { customerEmail: finalEmail } },
+							where: { discountId: discount.id, order: { customerEmail: normalizedEmail } },
 						});
 					}
 
@@ -214,7 +218,7 @@ export async function createOrderInTransaction(
 					{
 						subtotal,
 						userId: userId ?? undefined,
-						customerEmail: finalEmail ?? undefined,
+						customerEmail: normalizedEmail ?? undefined,
 					},
 					usageCounts,
 				);
@@ -277,7 +281,7 @@ export async function createOrderInTransaction(
 					taxAmount,
 					total,
 					currency: DEFAULT_CURRENCY,
-					customerEmail: finalEmail ?? "",
+					customerEmail: normalizeEmail(finalEmail ?? ""),
 					customerName: `${firstName} ${lastName}`.trim(),
 					shippingFirstName: firstName,
 					shippingLastName: lastName,

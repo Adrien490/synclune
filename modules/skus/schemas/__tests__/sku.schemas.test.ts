@@ -437,6 +437,56 @@ describe("updateSkuPriceSchema", () => {
 		const result = updateSkuPriceSchema.safeParse({ priceInclTaxEuros: 49.99 });
 		expect(result.success).toBe(false);
 	});
+
+	// CAT-AUDIT-004 regression: compareAtPrice < price doit être rejete au niveau Zod
+	// (pas en P2024 opaque cote DB). Avant fix le schema ne portait pas refineCompareAtPrice.
+	it("should reject when compareAtPriceEuros < priceInclTaxEuros (CAT-AUDIT-004)", () => {
+		const result = updateSkuPriceSchema.safeParse({
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 30,
+			compareAtPriceEuros: 20,
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(
+				result.error.issues.some((i) =>
+					i.message.includes("Le prix comparé doit être supérieur ou égal au prix de vente"),
+				),
+			).toBe(true);
+		}
+	});
+
+	it("should accept when compareAtPriceEuros >= priceInclTaxEuros", () => {
+		const equal = updateSkuPriceSchema.safeParse({
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 30,
+			compareAtPriceEuros: 30,
+		});
+		expect(equal.success).toBe(true);
+
+		const greater = updateSkuPriceSchema.safeParse({
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 30,
+			compareAtPriceEuros: 45,
+		});
+		expect(greater.success).toBe(true);
+	});
+
+	// CAT-AUDIT-008 regression: prix entre 0 et 0.005€ rejete au niveau Zod
+	// (Math.round * 100 = 0 → CHECK DB priceInclTax > 0 echouait avec message opaque).
+	it("should reject prices below 0.01 € (CAT-AUDIT-008)", () => {
+		const below = updateSkuPriceSchema.safeParse({
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 0.001,
+		});
+		expect(below.success).toBe(false);
+
+		const exactlyOneCent = updateSkuPriceSchema.safeParse({
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 0.01,
+		});
+		expect(exactlyOneCent.success).toBe(true);
+	});
 });
 
 // ============================================================================

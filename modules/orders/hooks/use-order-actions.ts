@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	Banknote,
 	CircleCheck,
 	CircleX,
 	CreditCard,
@@ -36,6 +37,7 @@ import { useResendOrderEmail } from "./use-resend-order-email";
 import { CANCEL_ORDER_DIALOG_ID } from "../components/admin/cancel-order-alert-dialog";
 import { DELETE_ORDER_DIALOG_ID } from "../components/admin/delete-order-alert-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "../components/admin/mark-as-delivered-alert-dialog";
+import { MARK_AS_FULLY_REFUNDED_DIALOG_ID } from "../components/admin/mark-as-fully-refunded-alert-dialog";
 import { MARK_AS_PAID_DIALOG_ID } from "../components/admin/mark-as-paid-alert-dialog";
 import { MARK_AS_PROCESSING_DIALOG_ID } from "../components/admin/mark-as-processing-alert-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "../components/admin/mark-as-returned-alert-dialog";
@@ -70,6 +72,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const markAsProcessingDialog = useAlertDialog(MARK_AS_PROCESSING_DIALOG_ID);
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
+	const markAsFullyRefundedDialog = useAlertDialog(MARK_AS_FULLY_REFUNDED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 	const router = useRouter();
 	const isMobile = useIsMobile();
@@ -98,9 +101,10 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		canMarkAsProcessing,
 		canRevertToProcessing,
 		canMarkAsReturned,
+		canMarkAsFullyRefunded,
 	} = permissions;
 
-	const canTrack = isShipped && order.trackingUrl;
+	const canTrack = (isShipped || isDelivered) && order.trackingUrl;
 	const canDelete =
 		!order.invoiceNumber &&
 		order.paymentStatus !== PaymentStatus.PAID &&
@@ -229,6 +233,20 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					icon: RotateCcw,
 					hidden: !canRefund,
 					href: `/admin/ventes/remboursements/nouveau?orderId=${order.id}`,
+				},
+				{
+					key: "mark-fully-refunded",
+					label: "Marquer comme remboursée (hors Stripe)",
+					icon: Banknote,
+					hidden: !canMarkAsFullyRefunded,
+					closesMenu: false,
+					onSelect: () =>
+						markAsFullyRefundedDialog.open(
+							open({
+								invoiceStatus: order.invoiceStatus ?? null,
+								invoiceNumber: order.invoiceNumber ?? null,
+							}),
+						),
 				},
 			],
 		},

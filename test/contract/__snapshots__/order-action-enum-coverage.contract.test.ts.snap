@@ -1,0 +1,120 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map snapshot for review on drift 1`] = `
+{
+  "ADDRESS_UPDATED": [
+    "modules/orders/actions/update-order-billing-address.ts",
+    "modules/orders/actions/update-order-customer-info.ts",
+    "modules/orders/actions/update-order-shipping-address.ts",
+  ],
+  "BULK_EXPORT": [
+    "app/api/admin/orders/export/route.ts",
+  ],
+  "CANCELLED": [
+    "modules/cron/services/cleanup-pending-orders.service.ts",
+    "modules/orders/actions/bulk-cancel-orders.ts",
+    "modules/orders/actions/cancel-order-customer.ts",
+    "modules/orders/actions/cancel-order.ts",
+    "modules/orders/actions/delete-order.ts",
+    "modules/webhooks/services/payment-intent.service.ts",
+  ],
+  "CREATED": [],
+  "CREDIT_NOTE_FAILED": [
+    "modules/orders/services/void-invoice.service.ts",
+  ],
+  "CREDIT_NOTE_GENERATED": [
+    "modules/refunds/services/issue-credit-note.service.ts",
+  ],
+  "DELIVERED": [
+    "modules/orders/actions/mark-as-delivered.ts",
+  ],
+  "DISPUTE_OPENED": [
+    "modules/webhooks/handlers/dispute-handlers.ts",
+  ],
+  "DISPUTE_RESOLVED": [
+    "modules/webhooks/handlers/dispute-handlers.ts",
+  ],
+  "INVOICE_ARCHIVED": [
+    "modules/orders/services/archive-invoice-pdf.service.ts",
+    "modules/refunds/services/archive-credit-note-pdf.service.ts",
+  ],
+  "INVOICE_DOWNLOADED": [
+    "app/api/orders/[orderNumber]/credit-note/[refundId]/route.ts",
+    "app/api/orders/[orderNumber]/credit-note/route.ts",
+    "app/api/orders/[orderNumber]/invoice/route.ts",
+  ],
+  "INVOICE_GENERATED": [
+    "modules/orders/services/persist-invoice-number.service.ts",
+  ],
+  "INVOICE_GENERATION_FAILED": [
+    "modules/orders/services/ensure-invoice-number.service.ts",
+  ],
+  "INVOICE_RECONCILED": [
+    "modules/cron/services/reconcile-invoices.service.ts",
+  ],
+  "INVOICE_VOIDED": [
+    "app/api/orders/[orderNumber]/credit-note/route.ts",
+    "modules/orders/services/void-invoice.service.ts",
+  ],
+  "PAID": [
+    "modules/orders/actions/mark-as-paid.ts",
+    "modules/webhooks/services/payment-intent.service.ts",
+  ],
+  "PDF_ARCHIVE_FAILED": [
+    "modules/orders/services/archive-invoice-pdf.service.ts",
+    "modules/refunds/services/archive-credit-note-pdf.service.ts",
+  ],
+  "PDP_ABANDONED": [],
+  "PDP_ACCEPTED": [
+    "modules/orders/services/persist-pdp-transmission.service.ts",
+  ],
+  "PDP_CANCELLED": [
+    "modules/orders/services/persist-pdp-transmission.service.ts",
+  ],
+  "PDP_REJECTED": [
+    "modules/orders/services/persist-pdp-transmission.service.ts",
+  ],
+  "PDP_RETRY": [],
+  "PDP_SUBMITTED": [
+    "modules/orders/services/persist-pdp-transmission.service.ts",
+  ],
+  "PROCESSING": [
+    "modules/orders/actions/mark-as-processing.ts",
+  ],
+  "REFUND_COMPLETED": [
+    "modules/cron/services/reconcile-refunds.service.ts",
+    "modules/orders/actions/mark-as-fully-refunded.ts",
+    "modules/refunds/actions/process-refund.ts",
+    "modules/webhooks/services/refund.service.ts",
+  ],
+  "REFUND_CREATED": [
+    "modules/orders/actions/mark-as-fully-refunded.ts",
+    "modules/refunds/actions/approve-refund.ts",
+    "modules/refunds/actions/bulk-approve-refunds.ts",
+    "modules/refunds/actions/create-refund.ts",
+    "modules/refunds/actions/request-return.ts",
+    "modules/refunds/actions/retry-failed-refund.ts",
+    "modules/webhooks/services/payment-intent.service.ts",
+    "modules/webhooks/services/refund.service.ts",
+  ],
+  "REFUND_FAILED": [
+    "modules/cron/services/reconcile-refunds.service.ts",
+    "modules/refunds/actions/cancel-refund.ts",
+    "modules/refunds/actions/process-refund.ts",
+    "modules/refunds/actions/reject-refund.ts",
+    "modules/webhooks/services/refund.service.ts",
+  ],
+  "RETURNED": [
+    "modules/orders/actions/mark-as-returned.ts",
+  ],
+  "SHIPPED": [
+    "modules/orders/actions/mark-as-shipped.ts",
+  ],
+  "STATUS_REVERTED": [
+    "modules/orders/actions/revert-to-processing.ts",
+  ],
+  "TRACKING_UPDATED": [
+    "modules/orders/actions/update-tracking.ts",
+  ],
+}
+`;

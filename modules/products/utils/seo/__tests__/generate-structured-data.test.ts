@@ -295,12 +295,14 @@ describe("generateStructuredData", () => {
 		expect(images[0].height).toBe(1200);
 	});
 
-	it("includes MPN from SKU code", () => {
+	it("does NOT include MPN (would duplicate SKU — handmade products have no manufacturer part number)", () => {
 		const result = generateStructuredData({
 			product: makeProduct(),
 			selectedSku: makeSku({ sku: "BRC-CUSTOM-001" }),
 		});
 
-		expect(graph(result)[0].mpn).toBe("BRC-CUSTOM-001");
+		expect(graph(result)[0].mpn).toBeUndefined();
+		// SKU still present
+		expect(graph(result)[0].sku).toBe("BRC-CUSTOM-001");
 	});
 });

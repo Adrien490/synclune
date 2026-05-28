@@ -45,6 +45,10 @@ export const AUTH_RATE_LIMIT_RULES = {
 		window: 60,
 		max: 5,
 	},
+	"/sign-in/social": {
+		window: 60,
+		max: 5,
+	},
 	"/sign-up/email": {
 		window: 60,
 		max: 3,
@@ -60,6 +64,10 @@ export const AUTH_RATE_LIMIT_RULES = {
 	"/verify-email": {
 		window: 60,
 		max: 5,
+	},
+	"/change-password": {
+		window: 60,
+		max: 3,
 	},
 } as const;
 

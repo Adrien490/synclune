@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
@@ -23,7 +24,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
-import { Link2, Mail, Truck } from "lucide-react";
+import { Link2, LoaderCircle, Mail, Truck } from "lucide-react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
 
 export const MARK_AS_SHIPPED_DIALOG_ID = "mark-as-shipped";
@@ -38,10 +39,12 @@ function MarkAsShippedFormContent({
 	orderId,
 	orderNumber,
 	onClose,
+	onPendingChange,
 }: {
 	orderId: string;
 	orderNumber: string;
 	onClose: () => void;
+	onPendingChange: (pending: boolean) => void;
 }) {
 	const { form, action, isPending } = useMarkAsShippedForm({
 		orderId,
@@ -49,6 +52,13 @@ function MarkAsShippedFormContent({
 			onClose();
 		},
 	});
+
+	// Lift `isPending` au parent pour bloquer la fermeture du dialog
+	// pendant la mutation (click outside / Escape). Pattern aligné sur
+	// `cancel-order-alert-dialog.tsx` (`!open && !isPending`).
+	useEffect(() => {
+		onPendingChange(isPending);
+	}, [isPending, onPendingChange]);
 
 	// Watch form values
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
@@ -227,7 +237,14 @@ function MarkAsShippedFormContent({
 					<Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
 						Annuler
 					</Button>
-					<Button type="submit" disabled={isPending || !trackingNumber.trim()}>
+					<Button
+						type="submit"
+						disabled={isPending || !trackingNumber.trim()}
+						aria-busy={isPending}
+					>
+						{isPending && (
+							<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+						)}
 						{isPending ? "Expédition…" : "Valider l'expédition"}
 					</Button>
 				</ResponsiveDialogFooter>
@@ -238,9 +255,10 @@ function MarkAsShippedFormContent({
 
 export function MarkAsShippedDialog() {
 	const dialog = useAlertDialog<MarkAsShippedData>(MARK_AS_SHIPPED_DIALOG_ID);
+	const [isPending, setIsPending] = useState(false);
 
 	const handleOpenChange = (open: boolean) => {
-		if (!open) {
+		if (!open && !isPending) {
 			dialog.close();
 		}
 	};
@@ -253,6 +271,7 @@ export function MarkAsShippedDialog() {
 						orderId={dialog.data.orderId}
 						orderNumber={dialog.data.orderNumber}
 						onClose={dialog.close}
+						onPendingChange={setIsPending}
 					/>
 				)}
 			</ResponsiveDialogContent>

@@ -92,6 +92,7 @@ export async function updateTracking(
 					shippingCity: true,
 					shippingCountry: true,
 					trackingNumber: true,
+					actualDelivery: true,
 				},
 			});
 
@@ -99,6 +100,18 @@ export async function updateTracking(
 
 			if (found.status !== OrderStatus.SHIPPED && found.status !== OrderStatus.DELIVERED) {
 				return { ...found, _error: "not_shipped" as const };
+			}
+
+			// ORD-BIZ-006 : refuse la modification du tracking au-delà de 30 jours
+			// après livraison. Au-delà, la preuve de livraison est stabilisée
+			// (litige client / réclamation transporteur prescrits sous ce délai).
+			// Modifier après = risque d'altération de preuve.
+			if (found.status === OrderStatus.DELIVERED && found.actualDelivery) {
+				const daysSinceDelivery =
+					(Date.now() - found.actualDelivery.getTime()) / (1000 * 60 * 60 * 24);
+				if (daysSinceDelivery > 30) {
+					return { ...found, _error: "tracking_lock_window" as const };
+				}
 			}
 
 			await tx.order.update({
@@ -133,7 +146,11 @@ export async function updateTracking(
 		}
 
 		if ("_error" in order) {
-			return error("Impossible de modifier le suivi : la commande n'est pas expédiée.");
+			const message =
+				order._error === "tracking_lock_window"
+					? "Impossible de modifier le suivi : la commande a été livrée il y a plus de 30 jours (préservation de la preuve de livraison)."
+					: "Impossible de modifier le suivi : la commande n'est pas expédiée.";
+			return error(message);
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
@@ -165,6 +182,9 @@ export async function updateTracking(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
+					// EMAIL-AUDIT-003 : dedup Resend 24h. La clé varie par trackingNumber
+					// pour qu'un changement de transporteur émette bien un nouveau mail.
+					idempotencyKey: `tracking-update:${order.id}:${validated.data.trackingNumber}`,
 				});
 				emailSent = true;
 			} catch (emailError) {

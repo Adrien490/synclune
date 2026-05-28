@@ -17,15 +17,17 @@ const bulkProductIdsSchema = z
 
 const baseSkuFields = {
 	// Prix en euros (sera converti en centimes cote serveur)
+	// .min(0.01) plutot que .positive() pour eviter qu'un prix entre 0 et 0.005€
+	// passe le schema Zod puis echoue le CHECK DB priceInclTax > 0 (message opaque).
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
-		.positive({ error: "Le prix doit être positif" })
+		.min(0.01, { error: "Le prix doit être d'au moins 0,01 €" })
 		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix comparé doit être positif" })
+		.min(0.01, { error: "Le prix comparé doit être d'au moins 0,01 €" })
 		.max(PRICE_LIMITS.MAX_EUR, {
 			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
 		})

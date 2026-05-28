@@ -69,6 +69,7 @@ describe("sendAdminNewOrderEmail", () => {
 
 	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
 		await sendAdminNewOrderEmail({
+			orderId: "order_1",
 			orderNumber: "CMD-001",
 			customerName: "Marie Dupont",
 			customerEmail: "customer@test.com",
@@ -101,12 +102,14 @@ describe("sendAdminNewOrderEmail", () => {
 				to: "admin@test.com",
 				subject: "🎉 Nouvelle commande CMD-001 - 125.00€",
 				tags: [{ name: "category", value: "admin" }],
+				idempotencyKey: "admin-new-order:order_1",
 			}),
 		);
 	});
 
 	it("should format total correctly in subject", async () => {
 		await sendAdminNewOrderEmail({
+			orderId: "order_2",
 			orderNumber: "CMD-002",
 			customerName: "Jean Martin",
 			customerEmail: "jean@test.com",
@@ -123,8 +126,27 @@ describe("sendAdminNewOrderEmail", () => {
 		expect(callArgs.subject).toBe("🎉 Nouvelle commande CMD-002 - 99.99€");
 	});
 
+	it("EMAIL-AUDIT-002 : forwards a stable idempotencyKey derived from orderId", async () => {
+		await sendAdminNewOrderEmail({
+			orderId: "order_42",
+			orderNumber: "CMD-042",
+			customerName: "Léa",
+			customerEmail: "lea@test.com",
+			items: mockItems,
+			subtotal: 5000,
+			discount: 0,
+			shipping: 0,
+			total: 5000,
+			shippingAddress: mockShippingAddress,
+			dashboardUrl: "https://test.com/admin/commandes/CMD-042",
+		});
+		const callArgs = mockRenderAndSend.mock.calls[0]![1];
+		expect(callArgs.idempotencyKey).toBe("admin-new-order:order_42");
+	});
+
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminNewOrderEmail({
+			orderId: "order_1",
 			orderNumber: "CMD-001",
 			customerName: "Marie Dupont",
 			customerEmail: "customer@test.com",

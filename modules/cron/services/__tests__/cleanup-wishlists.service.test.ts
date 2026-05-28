@@ -246,9 +246,13 @@ describe("cleanupExpiredWishlists", () => {
 		});
 	});
 
-	it("should propagate errors from prisma operations", async () => {
+	it("OPS-AUDIT-005: increments errored instead of throwing on prisma error", async () => {
 		mockPrisma.wishlist.findMany.mockRejectedValue(new Error("DB connection lost"));
+		mockPrisma.$executeRaw.mockResolvedValue(0);
 
-		await expect(cleanupExpiredWishlists()).rejects.toThrow("DB connection lost");
+		const result = await cleanupExpiredWishlists();
+
+		expect(result.errored).toBeGreaterThanOrEqual(1);
+		expect(result.deletedCount).toBe(0);
 	});
 });

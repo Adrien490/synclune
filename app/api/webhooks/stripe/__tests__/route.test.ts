@@ -13,7 +13,8 @@ const {
 	mockHeaders,
 	mockDispatchEvent,
 	mockIsEventSupported,
-	mockExecutePostWebhookTasks,
+	mockPersistPostWebhookTasks,
+	mockExecutePersistedTasksForEvent,
 	mockSendWebhookFailedAlert,
 	mockCheckRateLimit,
 	mockGetClientIp,
@@ -39,13 +40,16 @@ const {
 				upsert: vi.fn(),
 				update: vi.fn(),
 			},
+			// ORD-STRIPE-003 : $transaction utilisée pour persister tasks + update event atomique
+			$transaction: vi.fn(),
 		},
 		mockNextResponseJson: nextResponseJson,
 		mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
 		mockHeaders: vi.fn(),
 		mockDispatchEvent: vi.fn(),
 		mockIsEventSupported: vi.fn(),
-		mockExecutePostWebhookTasks: vi.fn(),
+		mockPersistPostWebhookTasks: vi.fn(),
+		mockExecutePersistedTasksForEvent: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
@@ -88,8 +92,9 @@ vi.mock("@/modules/webhooks/utils/event-registry", () => ({
 	isEventSupported: mockIsEventSupported,
 }));
 
-vi.mock("@/modules/webhooks/utils/execute-post-tasks", () => ({
-	executePostWebhookTasks: mockExecutePostWebhookTasks,
+vi.mock("@/modules/webhooks/services/post-webhook-tasks.service", () => ({
+	persistPostWebhookTasks: mockPersistPostWebhookTasks,
+	executePersistedTasksForEvent: mockExecutePersistedTasksForEvent,
 }));
 
 vi.mock("@/modules/webhooks/services/alert.service", () => ({
@@ -191,6 +196,14 @@ beforeEach(() => {
 
 	// Default: after() immediately calls the callback
 	mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
+
+	// ORD-STRIPE-003 : $transaction runs the callback with the same mockPrisma
+	// (tx === prisma) so persistPostWebhookTasks can be invoked with our spy.
+	mockPrisma.$transaction.mockImplementation(
+		async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma),
+	);
+	mockPersistPostWebhookTasks.mockResolvedValue({ created: 0 });
+	mockExecutePersistedTasksForEvent.mockResolvedValue({ successful: 0, failed: 0, skipped: 0 });
 
 	// Default: rate limit allows the request
 	mockGetClientIp.mockResolvedValue("203.0.113.10");
@@ -709,7 +722,7 @@ describe("POST /api/webhooks/stripe - skipped events", () => {
 // ============================================================================
 
 describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
-	it("should schedule post-webhook tasks via after() when tasks are present", async () => {
+	it("ORD-STRIPE-003: should persist tasks atomically then execute persisted via after()", async () => {
 		const tasks = [
 			{ type: "ORDER_CONFIRMATION_EMAIL", data: { orderId: "order-1" } },
 			{ type: "ADMIN_NEW_ORDER_EMAIL", data: { orderId: "order-1" } },
@@ -719,8 +732,9 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 		const req = makeRequest();
 		await POST(req);
 
+		expect(mockPersistPostWebhookTasks).toHaveBeenCalledWith(mockPrisma, expect.any(String), tasks);
 		expect(mockAfter).toHaveBeenCalledOnce();
-		expect(mockExecutePostWebhookTasks).toHaveBeenCalledWith(tasks);
+		expect(mockExecutePersistedTasksForEvent).toHaveBeenCalledWith(expect.any(String));
 	});
 
 	it("should NOT call after() when tasks array is empty", async () => {
@@ -730,7 +744,8 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 		await POST(req);
 
 		expect(mockAfter).not.toHaveBeenCalled();
-		expect(mockExecutePostWebhookTasks).not.toHaveBeenCalled();
+		expect(mockPersistPostWebhookTasks).not.toHaveBeenCalled();
+		expect(mockExecutePersistedTasksForEvent).not.toHaveBeenCalled();
 	});
 
 	it("should NOT call after() when result is null (no tasks)", async () => {
@@ -740,7 +755,8 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 		await POST(req);
 
 		expect(mockAfter).not.toHaveBeenCalled();
-		expect(mockExecutePostWebhookTasks).not.toHaveBeenCalled();
+		expect(mockPersistPostWebhookTasks).not.toHaveBeenCalled();
+		expect(mockExecutePersistedTasksForEvent).not.toHaveBeenCalled();
 	});
 
 	it("should NOT call after() when result has no tasks property", async () => {
@@ -994,17 +1010,27 @@ describe("POST /api/webhooks/stripe - full happy path", () => {
 			callOrder.push("dispatchEvent");
 			return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: ["products"] }] };
 		});
+		mockPrisma.$transaction.mockImplementation(
+			async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				callOrder.push("transaction");
+				return cb(mockPrisma);
+			},
+		);
 		mockPrisma.webhookEvent.update.mockImplementation(async () => {
 			callOrder.push("update");
 			return {};
+		});
+		mockPersistPostWebhookTasks.mockImplementation(async () => {
+			callOrder.push("persistPostWebhookTasks");
+			return { created: 1 };
 		});
 		mockAfter.mockImplementation((fn: () => Promise<void>) => {
 			callOrder.push("after");
 			return fn();
 		});
-		mockExecutePostWebhookTasks.mockImplementation(async () => {
-			callOrder.push("executePostWebhookTasks");
-			return { successful: 1, failed: 0, errors: [] };
+		mockExecutePersistedTasksForEvent.mockImplementation(async () => {
+			callOrder.push("executePersistedTasksForEvent");
+			return { successful: 1, failed: 0, skipped: 0 };
 		});
 
 		const req = makeRequest();
@@ -1014,9 +1040,11 @@ describe("POST /api/webhooks/stripe - full happy path", () => {
 			"findUnique",
 			"upsert",
 			"dispatchEvent",
+			"transaction",
 			"update",
+			"persistPostWebhookTasks",
 			"after",
-			"executePostWebhookTasks",
+			"executePersistedTasksForEvent",
 		]);
 		expect(response.status).toBe(200);
 	});

@@ -15,9 +15,21 @@ const REFUND_FAILURE_LABELS: Record<"payment_failed" | "payment_canceled" | "oth
 };
 
 /**
+ * Limite la taille des stack traces injectées dans les emails admin (EMAIL-AUDIT-011).
+ * Évite (a) bombes de payload Resend, (b) forward accidentel de détails internes verbeux.
+ */
+const STACK_TRACE_MAX_CHARS = 2000;
+function truncateStackTrace(input?: string): string | undefined {
+	if (!input) return undefined;
+	if (input.length <= STACK_TRACE_MAX_CHARS) return input;
+	return `${input.slice(0, STACK_TRACE_MAX_CHARS)}\n…[tronqué — ${input.length - STACK_TRACE_MAX_CHARS} caractères omis. Voir Sentry pour la stack complète]`;
+}
+
+/**
  * Envoie un email de notification admin pour une nouvelle commande
  */
 export async function sendAdminNewOrderEmail({
+	orderId,
 	orderNumber,
 	customerName,
 	customerEmail,
@@ -29,6 +41,7 @@ export async function sendAdminNewOrderEmail({
 	shippingAddress,
 	dashboardUrl,
 }: {
+	orderId: string;
 	orderNumber: string;
 	customerName: string;
 	customerEmail: string;
@@ -57,6 +70,10 @@ export async function sendAdminNewOrderEmail({
 			to: EMAIL_ADMIN,
 			subject: `🎉 Nouvelle commande ${orderNumber} - ${(total / 100).toFixed(2)}€`,
 			tags: [{ name: "category", value: "admin" }],
+			// Dedup cross-instance 24h Resend : protège contre retry-webhooks cron
+			// qui rejouerait le webhook checkout.session.completed / payment_intent.succeeded
+			// (EMAIL-AUDIT-002).
+			idempotencyKey: `admin-new-order:${orderId}`,
 		},
 	);
 }
@@ -100,7 +117,7 @@ export async function sendAdminRefundFailedAlert({
 			type: "refund",
 			context,
 			summary: `Le remboursement automatique a échoué. Type: ${REFUND_FAILURE_LABELS[reason]}. Une intervention manuelle est requise pour rembourser le client ${customerEmail}.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 			stripeCtaUrl: stripeDashboardUrl,
@@ -114,6 +131,56 @@ export async function sendAdminRefundFailedAlert({
 			// retry-webhooks qui rejoueraient le même handler refund-failed (audit
 			// monitoring 2026-05-28 EINV-OPS-009).
 			idempotencyKey: `alert:refund-failed:${stripePaymentIntentId}`,
+		},
+	);
+}
+
+/**
+ * ORD-STRIPE-006 — alerte admin pour un refund créé via Dashboard Stripe qui
+ * nécessite une intervention manuelle (refund partiel sans RefundItem → impossible
+ * de connaître les articles remboursés ni de restocker automatiquement).
+ */
+export async function sendAdminDashboardRefundAttentionAlert({
+	orderNumber,
+	orderId,
+	stripeRefundId,
+	amount,
+	isFullRefund,
+}: {
+	orderNumber: string;
+	orderId: string;
+	stripeRefundId: string;
+	amount: number;
+	isFullRefund: boolean;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes/${orderId}`;
+	const stripeDashboardUrl = `https://dashboard.stripe.com/refunds/${stripeRefundId}`;
+	const kind = isFullRefund ? "TOTAL" : "PARTIEL";
+	const context = [
+		`Commande   : ${orderNumber}`,
+		`Refund ID  : ${stripeRefundId}`,
+		`Type       : ${kind}`,
+		`Montant    : ${formatEuro(amount)}`,
+	].join("\n");
+	const summary = isFullRefund
+		? `Refund TOTAL via Dashboard Stripe sans RefundItem. Vérifier si les articles doivent être restockés (intervention admin manuelle requise).`
+		: `Refund PARTIEL via Dashboard Stripe SANS RefundItem détaillé. Impossible de déterminer quels articles ont été remboursés ni de restocker. Intervention admin requise pour compléter la traçabilité.`;
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "refund",
+			context,
+			summary,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+			stripeCtaUrl: stripeDashboardUrl,
+			stripeCtaLabel: "Voir le refund Stripe",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Refund Dashboard ${kind} — ${orderNumber}`,
+			tags: [{ name: "category", value: "admin" }],
+			// Resend 24h dedup : éviter spam si le webhook charge.refunded est rejoué
+			idempotencyKey: `alert:dashboard-refund:${stripeRefundId}`,
 		},
 	);
 }
@@ -144,7 +211,7 @@ export async function sendWebhookFailedAlertEmail({
 			type: "webhook",
 			context,
 			summary: `Le webhook ${eventType} a échoué ${attempts} fois. Vérifiez le dashboard Stripe pour plus de détails et rejouer si nécessaire.`,
-			stackTrace: error,
+			stackTrace: truncateStackTrace(error),
 			ctaUrl: adminDashboardUrl,
 			ctaLabel: "Dashboard Admin",
 			stripeCtaUrl: stripeDashboardUrl,
@@ -184,7 +251,7 @@ export async function sendAdminCronFailedAlert({
 			type: "cron",
 			context,
 			summary: `Le cron ${job} a rencontré ${errors} erreur(s). Vérifiez les logs Vercel pour les détails complets.`,
-			stackTrace: detailLines || undefined,
+			stackTrace: truncateStackTrace(detailLines || undefined),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir le dashboard",
 		}),
@@ -223,7 +290,7 @@ export async function sendAdminCheckoutFailedAlert({
 			type: "checkout",
 			context,
 			summary: `La création de la session Stripe Checkout a échoué pour la commande ${orderNumber}. La commande orpheline sera nettoyée automatiquement. Vérifiez l'état Stripe et la configuration.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir le dashboard",
 		}),
@@ -266,7 +333,7 @@ export async function sendAdminOrderProcessingFailedAlert({
 			type: "order-processing",
 			context,
 			summary: `Le paiement a été reçu sur Stripe mais le traitement de la commande ${orderNumber} a échoué. Une intervention manuelle est requise : créer la commande manuellement ou rembourser le client.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir le dashboard",
 			stripeCtaUrl: stripeDashboardUrl,
@@ -432,7 +499,7 @@ export async function sendAdminInvoiceFailedAlert({
 			type: "invoice",
 			context: contextLines.join("\n"),
 			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client. Voir docs/RUNBOOK-INVOICING.md.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 			stripeCtaUrl,
@@ -477,7 +544,7 @@ export async function sendAdminPdfArchiveFailedAlert({
 			type: "invoice",
 			context: contextLines.join("\n"),
 			summary: `L'archivage immuable du PDF facture ${invoiceNumber} sur UploadThing a échoué. La facture est actuellement régénérée à chaque téléchargement — risque de drift template. Vérifier UploadThing puis relancer via le bouton "Relancer" du dashboard /admin/ventes/facturation.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 		}),
@@ -522,7 +589,7 @@ export async function sendAdminCreditNoteFailedAlert({
 			type: "invoice",
 			context: contextLines.join("\n"),
 			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit. Voir docs/RUNBOOK-INVOICING.md.`,
-			stackTrace: errorMessage,
+			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 		}),

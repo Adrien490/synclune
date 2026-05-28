@@ -610,6 +610,36 @@ describe("createOrderInTransaction — discount flow", () => {
 		});
 	});
 
+	it("[regression] CHECKOUT-AUDIT-003 — normalizes email for per-email usage count and Order snapshot", async () => {
+		mockTx.$queryRaw
+			.mockReset()
+			.mockResolvedValueOnce([makeSkuRow()])
+			.mockResolvedValueOnce([makeDiscountRow({ maxUsagePerUser: 1 })]);
+		mockTx.order.create.mockResolvedValueOnce(makeCreatedOrder());
+
+		await createOrderInTransaction(
+			makeParams({
+				discountCode: "PROMO10",
+				userId: null,
+				finalEmail: "  Marie@Example.COM  ",
+			}),
+		);
+
+		// Count uses normalized email (lowercase + trim)
+		expect(mockTx.discountUsage.count).toHaveBeenCalledWith({
+			where: {
+				discountId: "discount_1",
+				order: { customerEmail: "marie@example.com" },
+			},
+		});
+
+		// Order.customerEmail is stored normalized
+		const createCall = mockTx.order.create.mock.calls.at(-1)?.[0] as
+			| { data: { customerEmail: string } }
+			| undefined;
+		expect(createCall?.data.customerEmail).toBe("marie@example.com");
+	});
+
 	it("should not query usage counts when maxUsagePerUser is null", async () => {
 		// Default discount row has maxUsagePerUser: null
 		await createOrderInTransaction(makeParams({ discountCode: "PROMO10" }));

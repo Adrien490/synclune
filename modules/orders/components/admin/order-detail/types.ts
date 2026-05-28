@@ -50,7 +50,11 @@ export interface OrderCustomerCardProps {
 export interface OrderRefundsCardProps {
 	refunds: OrderRefundItem[];
 	orderId: string;
+	orderNumber: string;
 	canRefund: boolean;
+	canMarkAsFullyRefunded: boolean;
+	invoiceStatus: GetOrderReturn["invoiceStatus"];
+	invoiceNumber: string | null;
 }
 
 export interface OrderAddressCardProps {

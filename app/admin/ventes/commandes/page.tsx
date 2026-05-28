@@ -92,8 +92,8 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 							<SearchInput
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par numéro, email, nom client, Payment Intent…"
-								aria-label="Rechercher une commande par numéro, email client ou Payment Intent"
+								placeholder="Rechercher par numéro de commande, facture, avoir, email, client…"
+								aria-label="Rechercher une commande par numéro, numéro de facture/avoir, email client ou Payment Intent"
 								className="w-full"
 							/>
 						}

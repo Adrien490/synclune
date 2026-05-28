@@ -1,14 +1,20 @@
 "use server";
 
-import { AccountStatus, OrderStatus, RefundStatus } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { AccountStatus, OrderStatus, RefundStatus, Role } from "@/app/generated/prisma/client";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
 import { cookies, headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { success, error, validateInput, handleActionError } from "@/shared/lib/actions";
+import {
+	success,
+	error,
+	validateInput,
+	handleActionError,
+	BusinessError,
+} from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteAccountSchema } from "../schemas/user.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -84,16 +90,38 @@ export async function deleteAccount(
 			);
 		}
 
-		// 6. Set account to PENDING_DELETION
-		await prisma.user.update({
-			where: { id: userId },
-			data: {
-				accountStatus: AccountStatus.PENDING_DELETION,
-				deletionRequestedAt: new Date(),
-			},
-		});
+		// 6. Atomically: refuse if last admin + mark PENDING_DELETION + revoke ALL sessions
+		// (RGPD Art. 17 — la suppression doit "fermer le robinet" immédiatement sur TOUS
+		// les devices, pas seulement celui qui émet la requête).
+		await prisma.$transaction(
+			async (tx) => {
+				if (user.role === Role.ADMIN) {
+					const otherAdmins = await tx.user.count({
+						where: { role: Role.ADMIN, ...notDeleted, id: { not: userId } },
+					});
+					if (otherAdmins < 1) {
+						throw new BusinessError(
+							"Impossible de supprimer votre compte : vous êtes le dernier administrateur. Promouvez un autre utilisateur avant de demander la suppression.",
+							"LAST_ADMIN",
+						);
+					}
+				}
 
-		// 7. Sign out (invalidate session)
+				await tx.user.update({
+					where: { id: userId },
+					data: {
+						accountStatus: AccountStatus.PENDING_DELETION,
+						deletionRequestedAt: new Date(),
+					},
+				});
+
+				await tx.session.deleteMany({ where: { userId } });
+			},
+			{ isolationLevel: "Serializable" },
+		);
+
+		// 7. Sign out (clear cookie on current device — sessions on other devices
+		// already purged by the transaction above)
 		const headersList = await headers();
 		await auth.api.signOut({
 			headers: headersList,

@@ -39,7 +39,7 @@ vi.mock("lucide-react", () => ({
 	CircleX: () => <svg data-testid="icon-circle-x" />,
 }));
 
-import { OrderProgressStepper } from "../order-progress-stepper";
+import { OrderProgressStepper } from "../order-detail/order-progress-stepper";
 
 afterEach(cleanup);
 

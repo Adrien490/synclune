@@ -1,5 +1,17 @@
 "use server";
 
+/**
+ * Server Action : annulation de commande **cote client** (requireAuth).
+ *
+ * Variante restreinte de `cancel-order.ts` :
+ * - IDOR : seul l'owner peut annuler.
+ * - Statuts autorises : PENDING uniquement (jamais PROCESSING/SHIPPED).
+ * - Pas d'opt-in autoRefund (geste commercial admin uniquement).
+ *
+ * A appeler depuis l'espace client (`app/(account)/commandes/...`).
+ * Ne pas importer `cancelOrder` (admin) depuis le client.
+ * Cf. ORD-MAP-007 (audit cartographie 2026-05-28).
+ */
 import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -178,6 +190,8 @@ export async function cancelOrderCustomer(
 					orderTotal: order.total,
 					wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
 					orderDetailsUrl,
+					// EMAIL-AUDIT-004 : dedup Resend 24h contre double-soumission du formulaire client.
+					idempotencyKey: `order-cancel:${order.id}`,
 				});
 			} catch (emailError) {
 				logger.error("Email send failed", emailError, { action: "cancel-order-customer" });

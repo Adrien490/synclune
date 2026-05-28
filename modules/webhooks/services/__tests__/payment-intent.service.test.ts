@@ -7,15 +7,22 @@ const {
 	mockSendAdminRefundFailedAlert,
 	mockGetBaseUrl,
 	mockRoutes,
+	mockReleaseOrderDiscountUsageTx,
+	mockUpdateTag,
 } = vi.hoisted(() => {
 	const mockTx = {
 		order: {
 			findFirst: vi.fn(),
+			findUniqueOrThrow: vi.fn(),
 			update: vi.fn(),
 		},
 		productSku: {
 			findMany: vi.fn(),
 			update: vi.fn(),
+		},
+		refund: {
+			findFirst: vi.fn(),
+			create: vi.fn(),
 		},
 		orderHistory: {
 			create: vi.fn(),
@@ -33,6 +40,9 @@ const {
 			productSku: {
 				update: vi.fn(),
 			},
+			refund: {
+				update: vi.fn(),
+			},
 		},
 		mockStripeRefunds: {
 			create: vi.fn(),
@@ -44,6 +54,8 @@ const {
 				ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
 			},
 		},
+		mockReleaseOrderDiscountUsageTx: vi.fn().mockResolvedValue([]),
+		mockUpdateTag: vi.fn(),
 	};
 });
 
@@ -65,6 +77,20 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
 	ROUTES: mockRoutes,
+}));
+
+vi.mock("@/modules/discounts/services/release-order-discount-usage.service", () => ({
+	releaseOrderDiscountUsageTx: mockReleaseOrderDiscountUsageTx,
+}));
+
+vi.mock("@/modules/discounts/constants/cache", () => ({
+	DISCOUNT_CACHE_TAGS: {
+		USAGE: (discountId: string) => `discount-usage-${discountId}`,
+	},
+}));
+
+vi.mock("next/cache", () => ({
+	updateTag: mockUpdateTag,
 }));
 
 import {
@@ -327,7 +353,8 @@ describe("restoreStockForOrder", () => {
 describe("markOrderAsFailed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+		mockReleaseOrderDiscountUsageTx.mockResolvedValue([]);
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
 	});
@@ -369,6 +396,7 @@ describe("markOrderAsFailed", () => {
 		await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
 
 		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
@@ -382,6 +410,23 @@ describe("markOrderAsFailed", () => {
 
 		await expect(markOrderAsFailed("nonexistent", "pi_x", failureDetails)).resolves.toBeUndefined();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
+	});
+
+	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
+		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
+		mockTx.order.update.mockResolvedValue({});
+		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_1", "disc_2"]);
+
+		await markOrderAsFailed("order-1", "pi_failed123", {
+			code: null,
+			declineCode: null,
+			message: null,
+		});
+
+		expect(mockReleaseOrderDiscountUsageTx).toHaveBeenCalledWith(mockTx, "order-1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_2");
 	});
 });
 
@@ -392,7 +437,8 @@ describe("markOrderAsFailed", () => {
 describe("markOrderAsCancelled", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+		mockReleaseOrderDiscountUsageTx.mockResolvedValue([]);
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
 	});
@@ -423,6 +469,7 @@ describe("markOrderAsCancelled", () => {
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
 		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
@@ -433,6 +480,18 @@ describe("markOrderAsCancelled", () => {
 		).resolves.toBeUndefined();
 
 		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
+	});
+
+	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
+		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
+		mockTx.order.update.mockResolvedValue({});
+		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_42"]);
+
+		await markOrderAsCancelled("order-1", "pi_cancelled123");
+
+		expect(mockReleaseOrderDiscountUsageTx).toHaveBeenCalledWith(mockTx, "order-1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc_42");
 	});
 });
 
@@ -443,6 +502,20 @@ describe("markOrderAsCancelled", () => {
 describe("initiateAutomaticRefund", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
+			cb(mockTx),
+		);
+		// ORD-BIZ-002 : auto-refund crée maintenant un Refund local AVANT Stripe
+		mockTx.refund.findFirst.mockResolvedValue(null);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({
+			total: 1000,
+			items: [{ id: "oi-1", price: 1000, quantity: 1 }],
+		});
+		mockTx.refund.create.mockResolvedValue({
+			id: "ref-local-1",
+			status: "APPROVED",
+			stripeRefundId: null,
+		});
 	});
 
 	it("should create a refund via Stripe and return success with refundId", async () => {

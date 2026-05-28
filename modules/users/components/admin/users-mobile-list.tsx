@@ -2,7 +2,7 @@ import { use } from "react";
 import { Users } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
-import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { AdminMobileStickyPagination } from "@/shared/components/cursor-pagination";
 import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
@@ -76,13 +76,14 @@ export function UsersMobileList({
 						))}
 					</ItemGroup>
 
-					<CursorPagination
+					<AdminMobileStickyPagination
 						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}
 						currentPageSize={users.length}
 						nextCursor={pagination.nextCursor}
 						prevCursor={pagination.prevCursor}
+						totalCount={totalCount}
 					/>
 				</div>
 				<MobileSelectionBottomBar emptyHint="Tape sur les clients à fidéliser">

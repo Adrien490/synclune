@@ -153,6 +153,8 @@ function makeRefundRecord() {
 		amount: 5000,
 		reason: "OTHER" as const,
 		orderId: "order-1",
+		processedAt: null,
+		updatedAt: new Date(),
 		order: {
 			id: "order-1",
 			orderNumber: "SYN-001",
@@ -483,6 +485,8 @@ describe("resolveRefundByStripeId", () => {
 		amount: true,
 		reason: true,
 		orderId: true,
+		processedAt: true,
+		updatedAt: true,
 		order: {
 			select: {
 				id: true,

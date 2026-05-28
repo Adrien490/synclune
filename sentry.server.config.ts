@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 
-const PROD_DEFAULT_SAMPLE_RATE = 0.1;
+const PROD_DEFAULT_SAMPLE_RATE = 0.15;
 const PROD_CRON_SAMPLE_RATE = 1.0;
 const DEV_SAMPLE_RATE = 1.0;
 

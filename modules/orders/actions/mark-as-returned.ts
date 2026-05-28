@@ -26,6 +26,14 @@ import { canMarkAsReturned } from "../services/order-status-validation.service";
  * - Le OrderStatus reste DELIVERED (on ne revient pas en arrière)
  * - Passe FulfillmentStatus à RETURNED
  * - Optionnel : raison du retour pour l'audit trail
+ *
+ * ORD-BIZ-010 : cette action NE déclenche PAS de restock automatique. Le
+ * restock est lié au `Refund` (RefundItem.restock=true) — l'admin doit
+ * créer manuellement le remboursement après le retour, ce qui restockera
+ * en même temps qu'il rembourse. Le dialog `MarkAsReturnedAlertDialog`
+ * propose un lien direct vers la création de remboursement en étape 2.
+ * `metadata.requiresRefund: true` est tracé pour faciliter les futurs
+ * filtres "retours en attente de remboursement".
  */
 export async function markAsReturned(
 	_prevState: ActionState | undefined,
@@ -82,6 +90,8 @@ export async function markAsReturned(
 				},
 			});
 
+			// ORD-BIZ-010 : `requiresRefund: true` flag pour identifier les retours
+			// en attente de remboursement (cron / dashboard alert futur).
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "RETURNED",
@@ -91,6 +101,7 @@ export async function markAsReturned(
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
+				metadata: { requiresRefund: true, restockAutomated: false },
 			});
 
 			return found;

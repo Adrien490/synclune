@@ -10,6 +10,9 @@ export const envSchema = z.object({
 	// Base de données
 	// ========================================
 	DATABASE_URL: z.string().url("DATABASE_URL doit être une URL valide"),
+	// Direct (unpooled) Neon endpoint utilisé exclusivement par `prisma migrate
+	// deploy` — PgBouncer (pooler) rejette les prepared statements DDL.
+	DATABASE_URL_UNPOOLED: z.string().url().optional(),
 
 	// ========================================
 	// Authentification (Better Auth)
@@ -26,6 +29,10 @@ export const envSchema = z.object({
 	// ========================================
 	RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY doit commencer par 're_'"),
 	RESEND_CONTACT_EMAIL: z.string().email("RESEND_CONTACT_EMAIL doit être un email valide"),
+	// Adresse BCC ajoutée automatiquement aux alertes admin (refund failed,
+	// invoice sequence overflow, dispute, etc.). Permet d'éviter un single
+	// point of failure sur l'unique boîte admin. Optionnel.
+	EMAIL_ADMIN_BCC: z.string().email("EMAIL_ADMIN_BCC doit être un email valide").optional(),
 
 	// ========================================
 	// Stripe (Paiement)
@@ -43,6 +50,14 @@ export const envSchema = z.object({
 	// Cron Jobs
 	// ========================================
 	CRON_SECRET: z.string().min(32, "CRON_SECRET doit avoir au moins 32 caractères"),
+	/**
+	 * Active le dry-run cron (OPS-AUDIT-006) — chaque cron logue ce qu'il
+	 * aurait fait mais retourne `skipped` sans muter la DB. Utilisé en staging
+	 * pour valider une nouvelle version de cron sans risquer prod.
+	 *
+	 * Pour activer : `CRON_DRY_RUN=true` côté Vercel Preview.
+	 */
+	CRON_DRY_RUN: z.enum(["true", "false"]).optional(),
 
 	// ========================================
 	// SEO & Verification (optionnel)
@@ -71,6 +86,20 @@ export const envSchema = z.object({
 	NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
 	SENTRY_ORG: z.string().optional(),
 	SENTRY_PROJECT: z.string().optional(),
+	// Token utilisé par le plugin Sentry Webpack pour uploader les sourcemaps
+	// au build. Build-time uniquement, jamais exposé runtime.
+	SENTRY_AUTH_TOKEN: z.string().optional(),
+
+	// ========================================
+	// Healthcheck (sondes externes type UptimeRobot/Better Stack)
+	// ========================================
+	// Si défini, `/api/health?token=<value>` renvoie le statut détaillé
+	// (DB + Stripe + Resend + latences) sans nécessiter une session admin.
+	// Doit être ≥32 chars pour limiter le brute-force.
+	HEALTHCHECK_TOKEN: z
+		.string()
+		.min(32, "HEALTHCHECK_TOKEN doit avoir au moins 32 caractères")
+		.optional(),
 
 	// ========================================
 	// Deployment
@@ -131,6 +160,22 @@ export const envSchema = z.object({
 	VENDOR_INSURANCE_COVERAGE: z.string().min(1).optional(),
 	VENDOR_REGISTRY: z.string().min(1).optional(),
 	VENDOR_OPERATION_NATURE: z.string().min(1).optional(),
+	// Réforme facturation 2026-2027 — métadonnées Factur-X / UBL / annuaire DGFiP
+	VENDOR_LEGAL_FORM: z.string().min(1).optional(),
+	VENDOR_VAT_REGIME: z.enum(["FRANCHISE_BASE", "NORMAL", "SIMPLIFIE"]).optional(),
+	VENDOR_EINVOICING_PLATFORM_ID: z.string().min(1).optional(),
+	VENDOR_EINVOICING_ADDRESS: z.string().min(1).optional(),
+	VENDOR_BANK_IBAN: z
+		.string()
+		.regex(/^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/, "VENDOR_BANK_IBAN doit être un IBAN valide")
+		.optional(),
+	VENDOR_BANK_BIC: z
+		.string()
+		.regex(
+			/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/,
+			"VENDOR_BANK_BIC doit être un BIC valide (8 ou 11 caractères)",
+		)
+		.optional(),
 
 	// ========================================
 	// Facturation électronique — provider & feature flags (Phase 2B+)

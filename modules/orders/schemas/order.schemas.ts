@@ -225,9 +225,16 @@ export type ExportInvoicesInput = z.infer<typeof exportInvoicesSchema>;
  * Une commande peut être supprimée UNIQUEMENT si :
  * - Aucune facture n'a été émise (invoiceNumber === null)
  * - Elle n'a pas été payée (paymentStatus !== PAID)
+ *
+ * ORD-BIZ-003 : `reason` requis (3..500 chars) tracé dans `OrderHistory`
+ * pour audit trail Art. L123-22.
  */
 export const deleteOrderSchema = z.object({
 	id: z.cuid2(),
+	reason: z
+		.string()
+		.min(3, "La raison de suppression est obligatoire (min 3 caractères)")
+		.max(500, "La raison ne doit pas dépasser 500 caractères"),
 });
 
 // ============================================================================
@@ -488,11 +495,17 @@ export const updateOrderNoteSchema = z.object({
 
 /**
  * Schema pour transition explicite paymentStatus -> REFUNDED admin
- * Sans annulation de la commande (geste commercial, remboursement hors-bord Stripe)
+ * Sans annulation de la commande (geste commercial, remboursement hors-bord Stripe).
+ *
+ * ORD-BIZ-008 : `manualRefundMethod` requis pour tracer dans `OrderHistory`
+ * le moyen exact du remboursement hors Stripe (audit comptable Art. L123-22).
  */
+export const manualRefundMethodEnum = z.enum(["wire", "check", "goodwill", "cash", "other"]);
+
 export const markAsFullyRefundedSchema = z.object({
 	id: z.cuid2(),
 	reason: z.string().min(3).max(500).optional(),
+	manualRefundMethod: manualRefundMethodEnum,
 });
 
 /**

@@ -333,8 +333,8 @@ describe("Exported class constants", () => {
 		expect(bottomBarContainerClass).toContain("flex");
 	});
 
-	it("bottomBarItemClass contains focus-visible styles", () => {
-		expect(bottomBarItemClass).toContain("focus-visible");
+	it("bottomBarItemClass uses focus-ring SSOT utility (globals.css)", () => {
+		expect(bottomBarItemClass).toContain("focus-ring");
 	});
 
 	it("bottomBarItemClass contains min touch target", () => {

@@ -1,5 +1,14 @@
 "use server";
 
+/**
+ * Server Action : annulation de commande **admin** (requireAdminWithUser).
+ *
+ * Pour l'annulation cote client (espace compte), utiliser
+ * `cancel-order-customer.ts` qui applique des regles plus strictes
+ * (PENDING uniquement, IDOR protection). Ne pas importer `cancelOrder`
+ * depuis `app/(account)/` — cela bypasserait les gates customer.
+ * Cf. ORD-MAP-007 (audit cartographie 2026-05-28).
+ */
 import {
 	OrderStatus,
 	PaymentStatus,
@@ -113,6 +122,45 @@ export async function cancelOrder(
 				return { ...found, _error };
 			}
 
+			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
+			// commande. Annuler + perdre le chargeback = double-débit côté merchant
+			// + voidInvoice émis pour rien si Stripe gagne ensuite.
+			const openDispute = await tx.dispute.findFirst({
+				where: {
+					orderId: id,
+					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
+				},
+				select: { id: true },
+			});
+			if (openDispute) {
+				return { ...found, _error: "open_dispute" as const };
+			}
+
+			// Agrégat des Refunds non-terminaux déjà créés (utilisé pour le solde
+			// auto-refund + le guard ORD-BIZ-009 ci-dessous).
+			const alreadyRefundedAggregate = await tx.refund.aggregate({
+				where: {
+					orderId: id,
+					status: {
+						in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+					},
+					deletedAt: null,
+				},
+				_sum: { amount: true },
+			});
+			const alreadyRefundedTotal = alreadyRefundedAggregate._sum.amount ?? 0;
+			const wasPayable =
+				found.paymentStatus === PaymentStatus.PAID ||
+				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
+
+			// ORD-BIZ-009 : refus si autoRefund=false sur commande payée sans
+			// Refund couvrant le total. Sinon paymentStatus=REFUNDED serait posé
+			// sans aucun Refund DB / Stripe, créant un faux-positif comptable
+			// (commande "Remboursée" sans trace de remboursement).
+			if (wasPayable && !autoRefund && alreadyRefundedTotal < found.total) {
+				return { ...found, _error: "requires_refund" as const };
+			}
+
 			// Déterminer le nouveau paymentStatus.
 			// - PAID/PARTIALLY_REFUNDED → REFUNDED (le remboursement sera traité)
 			// - PENDING → FAILED (le paiement n'a jamais abouti, on coupe le polling cron)
@@ -188,21 +236,8 @@ export async function cancelOrder(
 			// (sinon on créerait un Refund du montant total qui dépasse le payé restant).
 			let createdRefundId: string | null = null;
 			let autoRefundAmount = 0;
-			const wasPayable =
-				found.paymentStatus === PaymentStatus.PAID ||
-				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 			if (autoRefund && wasPayable) {
-				const alreadyRefunded = await tx.refund.aggregate({
-					where: {
-						orderId: id,
-						status: {
-							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-						},
-						deletedAt: null,
-					},
-					_sum: { amount: true },
-				});
-				const remainingToRefund = found.total - (alreadyRefunded._sum.amount ?? 0);
+				const remainingToRefund = found.total - alreadyRefundedTotal;
 				if (remainingToRefund > 0) {
 					const refund = await tx.refund.create({
 						data: {
@@ -274,7 +309,11 @@ export async function cancelOrder(
 			const message =
 				order._error === "already_cancelled"
 					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED
-					: "Impossible d'annuler une commande expediee ou livree.";
+					: order._error === "requires_refund"
+						? "Cette commande est payée et aucun remboursement n'a été créé. Cochez « Auto-refund » pour générer le remboursement Stripe, ou créez d'abord un remboursement manuel."
+						: order._error === "open_dispute"
+							? "Un litige Stripe est en cours sur cette commande. L'annulation est bloquée jusqu'à la résolution du litige (gérée automatiquement par le webhook charge.dispute.closed)."
+							: "Impossible d'annuler une commande expediee ou livree.";
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -342,6 +381,8 @@ export async function cancelOrder(
 				reason: sanitizedReason ?? undefined,
 				wasRefunded: order._newPaymentStatus === PaymentStatus.REFUNDED,
 				orderDetailsUrl,
+				// EMAIL-AUDIT-004 : dedup Resend 24h contre double-clic admin / bulk-cancel.
+				idempotencyKey: `order-cancel:${order.id}`,
 			};
 
 			after(async () => {

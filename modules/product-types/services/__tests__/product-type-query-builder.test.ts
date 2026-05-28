@@ -84,15 +84,15 @@ describe("buildProductTypeFilterConditions", () => {
 		});
 	});
 
-	it("should add hasProducts some condition when set to true", () => {
+	it("should add hasProducts some PUBLIC condition when set to true", () => {
 		expect(buildProductTypeFilterConditions({ hasProducts: true })).toEqual({
-			products: { some: {} },
+			products: { some: { status: "PUBLIC", deletedAt: null } },
 		});
 	});
 
-	it("should add hasProducts none condition when set to false", () => {
+	it("should add hasProducts none PUBLIC condition when set to false", () => {
 		expect(buildProductTypeFilterConditions({ hasProducts: false })).toEqual({
-			products: { none: {} },
+			products: { none: { status: "PUBLIC", deletedAt: null } },
 		});
 	});
 
@@ -106,7 +106,7 @@ describe("buildProductTypeFilterConditions", () => {
 		expect(result).toEqual({
 			isActive: true,
 			isSystem: false,
-			products: { some: {} },
+			products: { some: { status: "PUBLIC", deletedAt: null } },
 		});
 	});
 });

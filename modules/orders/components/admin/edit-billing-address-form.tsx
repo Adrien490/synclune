@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * Formulaire d'edition de l'adresse de facturation.
+ *
+ * Pattern dual : utilise en dialog modal
+ * (`edit-billing-address-dialog.tsx`) ET en page inline
+ * (`app/admin/ventes/commandes/[id]/adresse-facturation/page.tsx`).
+ *
+ * Le gate `InvoiceStatus` (interdit si facture GENERATED) est applique
+ * cote page inline (redirect notFound) ET cote Server Action
+ * `updateOrderBillingAddress`. Toute modification de la regle doit etre
+ * faite des deux cotes. Cf. ORD-MAP-002.
+ */
 import { Info, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

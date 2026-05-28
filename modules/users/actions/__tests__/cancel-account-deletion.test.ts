@@ -8,7 +8,7 @@ import { VALID_USER_ID } from "@/test/factories";
 
 const {
 	mockPrisma,
-	mockRequireAuth,
+	mockRequireAuthAllowPendingDeletion,
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
@@ -18,7 +18,7 @@ const {
 	mockPrisma: {
 		user: { findUnique: vi.fn(), update: vi.fn() },
 	},
-	mockRequireAuth: vi.fn(),
+	mockRequireAuthAllowPendingDeletion: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
@@ -27,7 +27,9 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAuth: mockRequireAuth }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAuthAllowPendingDeletion: mockRequireAuthAllowPendingDeletion,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -58,7 +60,7 @@ describe("cancelAccountDeletion", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockRequireAuth.mockResolvedValue({
+		mockRequireAuthAllowPendingDeletion.mockResolvedValue({
 			user: { id: VALID_USER_ID, email: "user@example.com", name: "User" },
 		});
 		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
@@ -84,7 +86,7 @@ describe("cancelAccountDeletion", () => {
 	});
 
 	it("should return auth error when not authenticated", async () => {
-		mockRequireAuth.mockResolvedValue({
+		mockRequireAuthAllowPendingDeletion.mockResolvedValue({
 			error: { status: ActionStatus.UNAUTHORIZED, message: "No" },
 		});
 		const result = await cancelAccountDeletion(undefined);

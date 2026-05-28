@@ -1,5 +1,9 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+
 import { PricingCard } from "./shared/pricing-card";
 import { StatusCard } from "./shared/status-card";
 import { StockCard } from "./shared/stock-card";
@@ -61,6 +65,33 @@ export function EditProductSidebarCards({ form, colors, materials }: EditProduct
 				]}
 				radioHint="Une variante inactive n'est plus achetable même si le produit est public"
 			/>
+			<form.Subscribe
+				selector={(state) =>
+					[
+						state.values.status,
+						state.values.defaultSku.isActive,
+						Number(state.values.defaultSku.inventory),
+					] as const
+				}
+			>
+				{([status, isActive, inventory]) => {
+					if (status !== "PUBLIC") return null;
+					const reasons: string[] = [];
+					if (!isActive) reasons.push("la variante par défaut est inactive");
+					if (inventory <= 0) reasons.push("le stock de la variante par défaut est à zéro");
+					if (reasons.length === 0) return null;
+					return (
+						<Alert variant="warning" data-slot="publication-warning">
+							<TriangleAlert aria-hidden="true" />
+							<AlertTitle>Publication incohérente</AlertTitle>
+							<AlertDescription>
+								Le serveur refusera la publication car {reasons.join(" et ")}. Repassez le statut en
+								« Brouillon » ou corrigez la variante par défaut avant d'enregistrer.
+							</AlertDescription>
+						</Alert>
+					);
+				}}
+			</form.Subscribe>
 		</div>
 	);
 }

@@ -6,7 +6,7 @@ Sentry.init({
 	release: process.env.VERCEL_GIT_COMMIT_SHA,
 	environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
 
-	tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+	tracesSampleRate: process.env.NODE_ENV === "production" ? 0.15 : 1.0,
 
 	// RGPD: no PII sent by default
 	sendDefaultPii: false,

@@ -1,5 +1,9 @@
 "use client";
 
+import { TriangleAlert } from "lucide-react";
+
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+
 import { PricingCard } from "./shared/pricing-card";
 import { StatusCard } from "./shared/status-card";
 import { StockCard } from "./shared/stock-card";
@@ -55,6 +59,25 @@ export function CreateProductSidebarCards({
 				radioHint="Un brouillon reste invisible côté boutique. Public le rend visible immédiatement."
 				cardAriaLabel="Statut du bijou"
 			/>
+			<form.Subscribe
+				selector={(state) =>
+					[state.values.status, Number(state.values.initialSku.inventory)] as const
+				}
+			>
+				{([status, inventory]) => {
+					if (status !== "PUBLIC" || inventory > 0) return null;
+					return (
+						<Alert variant="warning" data-slot="publication-warning">
+							<TriangleAlert aria-hidden="true" />
+							<AlertTitle>Publication incohérente</AlertTitle>
+							<AlertDescription>
+								Le serveur refusera la création car le stock initial est à zéro. Repassez le statut
+								en « Brouillon » ou renseignez un stock avant d'enregistrer.
+							</AlertDescription>
+						</Alert>
+					);
+				}}
+			</form.Subscribe>
 		</div>
 	);
 }

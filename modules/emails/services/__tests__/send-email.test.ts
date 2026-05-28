@@ -25,6 +25,9 @@ vi.mock("react-email", () => ({
 
 vi.mock("@/shared/lib/email-config", () => ({
 	EMAIL_FROM: "Synclune <contact@synclune.fr>",
+	EMAIL_CONTACT: "contact@synclune.fr",
+	EMAIL_ADMIN: "contact@synclune.fr",
+	EMAIL_ADMIN_BCC: "ops-fallback@synclune.fr",
 }));
 
 vi.mock("@/shared/utils/with-retry", () => ({
@@ -256,6 +259,54 @@ describe("sendEmail", () => {
 
 		expect(result).toEqual({ success: false, error: "RESEND_API_KEY not configured" });
 		expect(mockResendEmailsSend).not.toHaveBeenCalled();
+	});
+
+	describe("EMAIL_ADMIN_BCC auto-injection", () => {
+		it("adds bcc when to === EMAIL_ADMIN and EMAIL_ADMIN_BCC is set", async () => {
+			mockResendEmailsSend.mockResolvedValue({ data: { id: "evt_1" }, error: null });
+
+			await sendEmail({
+				to: "contact@synclune.fr",
+				subject: "Admin alert",
+				html: "<p>X</p>",
+			});
+
+			expect(mockResendEmailsSend).toHaveBeenCalledWith(
+				expect.objectContaining({ bcc: "ops-fallback@synclune.fr" }),
+				undefined,
+			);
+		});
+
+		it("does NOT add bcc on non-admin recipient", async () => {
+			mockResendEmailsSend.mockResolvedValue({ data: { id: "evt_2" }, error: null });
+
+			await sendEmail({
+				to: "customer@example.com",
+				subject: "Order confirmation",
+				html: "<p>X</p>",
+			});
+
+			expect(mockResendEmailsSend).toHaveBeenCalledWith(
+				expect.not.objectContaining({ bcc: expect.anything() }),
+				undefined,
+			);
+		});
+
+		it("preserves caller-provided bcc instead of auto-injecting", async () => {
+			mockResendEmailsSend.mockResolvedValue({ data: { id: "evt_3" }, error: null });
+
+			await sendEmail({
+				to: "contact@synclune.fr",
+				bcc: "custom@example.com",
+				subject: "Admin alert",
+				html: "<p>X</p>",
+			});
+
+			expect(mockResendEmailsSend).toHaveBeenCalledWith(
+				expect.objectContaining({ bcc: "custom@example.com" }),
+				undefined,
+			);
+		});
 	});
 });
 

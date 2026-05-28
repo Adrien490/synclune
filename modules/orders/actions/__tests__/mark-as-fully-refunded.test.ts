@@ -149,6 +149,7 @@ import { markAsFullyRefunded } from "../mark-as-fully-refunded";
 const validFormData = createMockFormData({
 	id: VALID_CUID,
 	reason: "Geste commercial",
+	manualRefundMethod: "goodwill",
 });
 
 describe("markAsFullyRefunded", () => {
@@ -161,7 +162,7 @@ describe("markAsFullyRefunded", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSanitizeText.mockImplementation((t: string) => t);
 		mockValidateInput.mockReturnValue({
-			data: { id: VALID_CUID, reason: "Geste commercial" },
+			data: { id: VALID_CUID, reason: "Geste commercial", manualRefundMethod: "goodwill" },
 		});
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 
@@ -298,16 +299,16 @@ describe("markAsFullyRefunded", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	it("uses default note when reason is not provided", async () => {
+	it("uses default note (including manualRefundMethod) when reason is not provided", async () => {
 		mockValidateInput.mockReturnValue({
-			data: { id: VALID_CUID, reason: undefined },
+			data: { id: VALID_CUID, reason: undefined, manualRefundMethod: "goodwill" },
 		});
-		const fdNoReason = createMockFormData({ id: VALID_CUID });
+		const fdNoReason = createMockFormData({ id: VALID_CUID, manualRefundMethod: "goodwill" });
 		await markAsFullyRefunded(undefined, fdNoReason);
 		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
 			mockPrisma,
 			expect.objectContaining({
-				note: "Marquée comme remboursée (manuel)",
+				note: expect.stringMatching(/Marquée comme remboursée.*goodwill/i),
 			}),
 		);
 	});

@@ -8,7 +8,7 @@
 @import "./styles/pwa.css";
 @import "./styles/utilities.css";
 @import "./styles/animations.css";
-@import "./styles/scroll-driven.css";
+/* scroll-driven.css moved into floating-images/ and imported locally by hero-floating-images-inner.tsx — keeps /admin /auth /paiement free of hero keyframes. */
 @import "./styles/entrance.css";
 @import "./styles/components.css";
 

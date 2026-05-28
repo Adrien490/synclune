@@ -29,6 +29,10 @@ const {
 			// Refund COMPLETED pour résoudre creditNoteNumber. Null par défaut → email
 			// envoyé sans creditNoteNumber (rétro-compat tests sans avoir).
 			findFirst: vi.fn().mockResolvedValue(null),
+			// ORD-REFUND-AUDIT-007 : lookup Refund local par stripeRefundId pour
+			// aligner l'idempotencyKey email avec l'admin side. Null par défaut
+			// → fallback charge-based idempotencyKey (legacy behaviour préservé).
+			findUnique: vi.fn().mockResolvedValue(null),
 		},
 	},
 	mockSyncStripeRefunds: vi.fn(),
@@ -147,6 +151,11 @@ function makeRefundRecord(overrides: Record<string, unknown> = {}) {
 		status: "APPROVED",
 		amount: 5000,
 		orderId: "order-1",
+		// ORD-REFUND-AUDIT-004 : guard SAGA in-flight skip si APPROVED+null+<30s.
+		// Par défaut on fixe processedAt non-null pour que les anciens tests
+		// (status change handling) ne soient pas accidentellement skippés.
+		processedAt: new Date("2026-01-01T00:00:00Z"),
+		updatedAt: new Date("2026-01-01T00:00:00Z"),
 		order: {
 			id: "order-1",
 			orderNumber: "SYN-001",

@@ -1,4 +1,5 @@
 import {
+	sendOAuthAccountLinkedEmail,
 	sendPasswordResetEmail,
 	sendVerificationEmail,
 	sendWelcomeEmail,
@@ -6,10 +7,11 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
+import { AccountStatus } from "@/app/generated/prisma/client";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { createAuthMiddleware } from "better-auth/api";
+import { createAuthMiddleware, APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
 import Stripe from "stripe";
@@ -98,20 +100,46 @@ export const auth = betterAuth({
 
 	secret: process.env.BETTER_AUTH_SECRET,
 	baseUrl: process.env.BETTER_AUTH_URL,
+	// Whitelist explicite des origines acceptées (CSRF / OAuth callbacks / reset URLs).
+	// Fallback inclut l'URL preview Vercel pour ne pas casser les PR builds.
+	trustedOrigins: [
+		process.env.BETTER_AUTH_URL ?? "",
+		...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+		...(process.env.VERCEL_BRANCH_URL ? [`https://${process.env.VERCEL_BRANCH_URL}`] : []),
+	].filter(Boolean),
+	advanced: {
+		// Force cookies HTTPS + HttpOnly + SameSite=Lax en prod. Dev: HTTPS désactivé.
+		useSecureCookies: process.env.NODE_ENV === "production",
+		defaultCookieAttributes: {
+			sameSite: "lax",
+			httpOnly: true,
+			secure: process.env.NODE_ENV === "production",
+		},
+	},
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
 	}),
 	plugins: [
 		customSession(async ({ user, session }) => {
-			// Récupérer les informations utilisateur complètes depuis la base de données
-			// Filter out soft-deleted AND suspended users to prevent access
+			// Filtre les comptes bloqués : soft-deleted (deletedAt) + suspended (suspendedAt)
+			// + accountStatus INACTIVE/ANONYMIZED. PENDING_DELETION reste accepté pour
+			// permettre à l'utilisateur d'annuler sa demande via `cancelAccountDeletion`.
+			//
+			// ⚠️ DÉFENSE EN PROFONDEUR — Ne pas se reposer uniquement sur cette dégradation.
+			// `requireAuth()` / `requireAdmin*()` (modules/auth/lib/require-auth.ts) re-checkent
+			// strictement `accountStatus = ACTIVE` (filtre `fetchUserForAuth`) avant toute action
+			// sensible. Le fallback `role: USER` ci-dessous existe uniquement pour permettre le
+			// logout button d'un compte révoqué (sinon Better Auth peut crash).
 			const userData = await prisma.user.findUnique({
-				where: { id: session.userId, ...notDeleted, suspendedAt: null },
+				where: {
+					id: session.userId,
+					...notDeleted,
+					suspendedAt: null,
+					accountStatus: { in: [AccountStatus.ACTIVE, AccountStatus.PENDING_DELETION] },
+				},
 				select: { role: true },
 			});
 
-			// Si l'utilisateur n'existe plus en base (supprimé ou suspendu),
-			// permettre quand même le logout en retournant une session avec un rôle par défaut
 			if (!userData) {
 				return {
 					user: {
@@ -202,10 +230,94 @@ export const auth = betterAuth({
 		updateAge: AUTH_SESSION_CONFIG.updateAge,
 		cookieCache: AUTH_SESSION_CONFIG.cookieCache,
 	},
+	databaseHooks: {
+		account: {
+			create: {
+				after: async (account) => {
+					// Notification email envoyée à l'utilisateur quand un nouveau provider OAuth
+					// (Google, …) est lié à son compte Synclune existant. Défense en profondeur
+					// contre l'account-takeover via `trustedProviders` (Better Auth lie auto si
+					// l'email matche et est vérifié provider-side).
+					//
+					// Skip credential (email/password — pas du linking OAuth).
+					if (account.providerId === "credential") return;
+
+					try {
+						const accountCount = await prisma.account.count({
+							where: { userId: account.userId },
+						});
+
+						// Si c'est le premier account du user → signup OAuth initial, pas du linking
+						if (accountCount <= 1) return;
+
+						const user = await prisma.user.findUnique({
+							where: { id: account.userId },
+							select: { email: true, name: true },
+						});
+
+						if (!user?.email) return;
+
+						const providerName =
+							account.providerId === "google"
+								? "Google"
+								: account.providerId.charAt(0).toUpperCase() + account.providerId.slice(1);
+
+						await sendOAuthAccountLinkedEmail({
+							to: user.email,
+							userName: user.name ?? user.email,
+							providerName,
+						});
+					} catch (error) {
+						// Ne pas bloquer la création de l'account si l'email échoue
+						logger.error("Failed to send OAuth account linked email", error, {
+							service: "auth",
+							userId: account.userId,
+							providerId: account.providerId,
+						});
+					}
+				},
+			},
+		},
+	},
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
-			// Security audit logging for auth-sensitive endpoints
 			const path = ctx.path;
+
+			// Bloquer signin email pour comptes révoqués (suspended/anonymized/deleted).
+			// Réponse générique "invalid credentials" → pas d'énumération possible.
+			// PENDING_DELETION + INACTIVE restent permis (peuvent se reconnecter
+			// pour annuler la demande via `cancelAccountDeletion`).
+			if (path === "/sign-in/email") {
+				const body = ctx.body as { email?: string } | undefined;
+				const email = body?.email?.toLowerCase().trim();
+				if (email) {
+					const blockedUser = await prisma.user.findFirst({
+						where: {
+							email,
+							OR: [
+								{ deletedAt: { not: null } },
+								{ suspendedAt: { not: null } },
+								{ accountStatus: AccountStatus.ANONYMIZED },
+							],
+						},
+						select: { id: true, accountStatus: true, suspendedAt: true, deletedAt: true },
+					});
+					if (blockedUser) {
+						logger.warn("Sign-in blocked: revoked account", {
+							service: "auth",
+							userId: blockedUser.id,
+							accountStatus: blockedUser.accountStatus,
+							suspended: blockedUser.suspendedAt !== null,
+							deleted: blockedUser.deletedAt !== null,
+						});
+						throw new APIError("UNAUTHORIZED", {
+							message: "Invalid email or password",
+						});
+					}
+				}
+			}
+
+			// Security audit logging for auth-sensitive endpoints
 			const isAuthAttempt =
 				path === "/sign-in/email" ||
 				path === "/sign-up/email" ||
@@ -242,6 +354,18 @@ export const auth = betterAuth({
 			// Vérifier qu'une nouvelle session a été créée (connexion/inscription réussie)
 			if (!newSession) {
 				return; // Pas de nouvelle session, rien à faire
+			}
+
+			// Skip merge cart/wishlist/orders si le compte n'est pas ACTIVE.
+			// Cas: un user PENDING_DELETION qui se reconnecte UNIQUEMENT pour annuler
+			// sa demande (cancelAccountDeletion) ne doit pas rattacher de nouvelles
+			// données (commandes guest, panier) à son compte mort.
+			const accountState = await prisma.user.findUnique({
+				where: { id: newSession.user.id },
+				select: { accountStatus: true },
+			});
+			if (accountState?.accountStatus !== AccountStatus.ACTIVE) {
+				return;
 			}
 
 			// Récupérer le cookie de session visiteur du panier (validation UUID v4 stricte)

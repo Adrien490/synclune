@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { Label } from "@/shared/components/ui/label";
 import {
 	ResponsiveAlertDialog,
 	ResponsiveAlertDialogAction,
@@ -10,6 +12,7 @@ import {
 	ResponsiveAlertDialogHeader,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
+import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
 import { LoaderCircle } from "lucide-react";
@@ -24,15 +27,18 @@ interface DeleteOrderData {
 
 export function DeleteOrderAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteOrderData>(DELETE_ORDER_DIALOG_ID);
+	const [reason, setReason] = useState("");
 
 	const { action, isPending } = useDeleteOrder({
 		onSuccess: () => {
+			setReason("");
 			deleteDialog.close();
 		},
 	});
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {
+			setReason("");
 			deleteDialog.close();
 		}
 	};
@@ -59,9 +65,34 @@ export function DeleteOrderAlertDialog() {
 							</div>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
+
+					<div className="mt-4 space-y-2">
+						<Label htmlFor="delete-order-reason">
+							Raison de la suppression <span className="text-destructive">*</span>
+						</Label>
+						<Textarea
+							id="delete-order-reason"
+							name="reason"
+							required
+							minLength={3}
+							maxLength={500}
+							value={reason}
+							onChange={(e) => setReason(e.target.value)}
+							placeholder="Ex: commande de test, paiement abandonné, doublon créé par erreur…"
+							disabled={isPending}
+						/>
+						<p className="text-muted-foreground text-xs">
+							Tracée dans l&apos;audit trail (Art. L123-22, conservation 10 ans).
+						</p>
+					</div>
+
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						<ResponsiveAlertDialogAction
+							type="submit"
+							disabled={isPending || reason.trim().length < 3}
+							aria-busy={isPending}
+						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression…" : "Supprimer"}
 						</ResponsiveAlertDialogAction>

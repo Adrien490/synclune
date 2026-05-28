@@ -2,29 +2,15 @@ import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { BRAND } from "@/shared/constants/brand";
-import { FAQ_DATE_MODIFIED, HOME_FAQ_ITEMS } from "@/shared/constants/faq-items";
-import { SITE_URL } from "@/shared/constants/seo-config";
+import { HOME_FAQ_ITEMS } from "@/shared/constants/faq-items";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
-import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 import { HomeFaqAccordion } from "./home-faq-accordion";
 import { SectionCtaLink } from "./section-cta-link";
 
-const faqPageSchema = {
-	"@context": "https://schema.org",
-	"@type": "FAQPage",
-	"@id": `${SITE_URL}/#faq`,
-	inLanguage: "fr-FR",
-	dateModified: FAQ_DATE_MODIFIED,
-	mainEntity: HOME_FAQ_ITEMS.map((item) => ({
-		"@type": "Question",
-		name: item.question,
-		acceptedAnswer: {
-			"@type": "Answer",
-			text: item.answerText,
-		},
-	})),
-};
+// NOTE: pas de FAQPage JSON-LD ici — HOME_FAQ_ITEMS est un sous-ensemble de FAQ_ITEMS
+// rendu sur /aide. Google déduplique automatiquement les FAQPage qui partagent du contenu
+// et risque d'ignorer un des deux schemas. Le canonical reste /aide#faq pour les rich results.
 
 export function HomeFaq() {
 	return (
@@ -35,12 +21,6 @@ export function HomeFaq() {
 			className={`bg-background relative scroll-mt-24 lg:scroll-mt-28 ${SECTION_SPACING.section}`}
 			style={{ viewTransitionName: "home-faq" }}
 		>
-			{/* SAFE: serialized via safeJsonLd (no user HTML) */}
-			{/* react-doctor-disable-next-line react/no-danger */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: safeJsonLd(faqPageSchema) }}
-			/>
 			<div className={CONTAINER_CLASS}>
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>

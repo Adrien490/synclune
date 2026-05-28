@@ -97,6 +97,10 @@ export const createRefundSchema = z.object({
 		.array(createRefundItemSchema)
 		.min(1, "Au moins un article doit être sélectionné")
 		.max(100, "Maximum 100 articles par remboursement"),
+	// ORD-REFUND-AUDIT-003 : confirmation explicite admin pour refund sur
+	// commande déjà annulée (OrderStatus.CANCELLED). Évite refund accidentel
+	// après cancel-order. UI affiche checkbox conditionnelle.
+	acceptCancelledOrder: z.boolean().optional().default(false),
 });
 
 // ============================================================================

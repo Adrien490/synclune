@@ -1,5 +1,6 @@
 {
 	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"regions": ["cdg1"],
 	"crons": [
 		{
 			"path": "/api/cron/cleanup-sessions",
@@ -36,6 +37,10 @@
 		{
 			"path": "/api/cron/retry-webhooks",
 			"schedule": "*/30 * * * *"
+		},
+		{
+			"path": "/api/cron/retry-post-webhook-tasks",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/reopen-store",

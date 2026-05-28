@@ -55,10 +55,9 @@ interface ResponsiveDialogProps {
  */
 function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProps) {
 	const isMobile = useIsMobile();
-	const value = React.useMemo(() => ({ isMobile }), [isMobile]);
 
 	return (
-		<Ctx.Provider value={value}>
+		<Ctx.Provider value={{ isMobile }}>
 			{isMobile ? (
 				<Drawer open={open} onOpenChange={onOpenChange}>
 					{children}

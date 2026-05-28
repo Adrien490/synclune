@@ -35,12 +35,17 @@ export async function cleanupExpiredCarts(): Promise<CronResult> {
 	const cutoff = new Date(now.getTime() - CART_GRACE_PERIOD_MS);
 	let deletedCount = 0;
 	let orphanedItemsCount = 0;
+	let errored = 0;
 	let hasMore = false;
 
 	logger.info("Starting expired carts cleanup", { cronJob: CRON_JOB });
 
+	// OPS-AUDIT-005 : per-step try/catch + errored++ instead of throwing — keeps
+	// the orphan-cleanup step running even when the primary cart deletion fails,
+	// and the admin alert via `withCronGuard` reports both partial counts.
+
+	// 1. Trouver les paniers guest expirés depuis > grace period (bounded)
 	try {
-		// 1. Trouver les paniers guest expirés depuis > grace period (bounded)
 		const cartsToDelete = await prisma.cart.findMany({
 			where: {
 				expiresAt: { lt: cutoff },
@@ -67,11 +72,11 @@ export async function cleanupExpiredCarts(): Promise<CronResult> {
 	} catch (error) {
 		logger.error("Error during cart deletion", error, { cronJob: CRON_JOB });
 		captureStepError(error, "cart-deletion", { cutoff: cutoff.toISOString(), deletedCount });
-		throw error;
+		errored++;
 	}
 
+	// 2. Cleanup CartItems orphelins (safety net si cascade DB ne déclenche pas)
 	try {
-		// 2. Cleanup CartItems orphelins (safety net si cascade DB ne déclenche pas)
 		const rawCount = await prisma.$executeRaw`
 			DELETE FROM "CartItem"
 			WHERE id IN (
@@ -94,14 +99,14 @@ export async function cleanupExpiredCarts(): Promise<CronResult> {
 	} catch (error) {
 		logger.error("Error during orphan items cleanup", error, { cronJob: CRON_JOB });
 		captureStepError(error, "orphan-items", { deletedCount, orphanedItemsCount });
-		throw error;
+		errored++;
 	}
 
-	logger.info("Cleanup completed", { cronJob: CRON_JOB });
+	logger.info("Cleanup completed", { cronJob: CRON_JOB, errored });
 
 	return {
 		processed: deletedCount + orphanedItemsCount,
-		errored: 0,
+		errored,
 		skipped: 0,
 		deletedCount,
 		orphanedItemsCount,

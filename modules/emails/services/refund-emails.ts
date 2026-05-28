@@ -25,6 +25,13 @@ type RefundConfirmationEmailParams = {
 	 * tous deux dans cette fonction (filet de sécurité après ORD-STRIPE-001).
 	 */
 	idempotencyKey?: string;
+	/**
+	 * ORD-STRIPE-005 : si présent, le dispatcher PostWebhookTask route vers
+	 * `sendRefundConfirmationOnce(refundId, ...)` qui pose
+	 * `Refund.confirmationEmailSentAt` atomiquement avant envoi pour bloquer
+	 * les autres call-sites (SAGA admin / webhook / cron).
+	 */
+	refundId?: string;
 };
 
 /**

@@ -14,6 +14,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 
+import * as Sentry from "@sentry/nextjs";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { generateInvoiceAccessToken } from "../utils/invoice-token";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -82,6 +83,7 @@ export async function markAsPaid(
 					shippingCity: true,
 					shippingCountry: true,
 					stripeCheckoutSessionId: true,
+					stripePaymentIntentId: true,
 					items: {
 						select: {
 							skuId: true,
@@ -103,8 +105,36 @@ export async function markAsPaid(
 				return { ...found, _error: "already_paid" as const };
 			}
 
+			if (
+				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED ||
+				found.paymentStatus === PaymentStatus.REFUNDED
+			) {
+				return { ...found, _error: "already_refunded" as const };
+			}
+
 			if (found.status === OrderStatus.CANCELLED) {
 				return { ...found, _error: "cancelled" as const };
+			}
+
+			// ORD-BIZ-004 : recovery FAILED/EXPIRED → PAID autorisée (paiement
+			// bancaire manuel après échec). Safety guard : refuser s'il existe
+			// déjà un Refund non-terminal (sinon on autorise mark-as-paid + le
+			// Refund finalise plus tard = bug comptable).
+			const isRecovery =
+				found.paymentStatus === PaymentStatus.FAILED ||
+				found.paymentStatus === PaymentStatus.EXPIRED;
+			if (isRecovery) {
+				const existingRefund = await tx.refund.findFirst({
+					where: {
+						orderId: id,
+						status: { in: ["PENDING", "APPROVED", "COMPLETED"] },
+						deletedAt: null,
+					},
+					select: { id: true },
+				});
+				if (existingRefund) {
+					return { ...found, _error: "has_pending_refund" as const };
+				}
 			}
 
 			// Stock reservation check
@@ -141,7 +171,8 @@ export async function markAsPaid(
 				},
 			});
 
-			// Audit trail (Best Practice Stripe 2025)
+			// Audit trail (Best Practice Stripe 2025). ORD-BIZ-004 :
+			// metadata.recoveredFrom flag recovery FAILED/EXPIRED → PAID.
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "PAID",
@@ -157,6 +188,7 @@ export async function markAsPaid(
 				metadata: {
 					stockAdjusted: !stockAlreadyReserved,
 					itemsCount: found.items.length,
+					...(isRecovery && { recoveredFrom: found.paymentStatus }),
 				},
 			});
 
@@ -174,7 +206,11 @@ export async function markAsPaid(
 			const message =
 				order._error === "already_paid"
 					? ORDER_ERROR_MESSAGES.ALREADY_PAID
-					: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
+					: order._error === "already_refunded"
+						? "Cette commande a déjà été remboursée (totalement ou partiellement)."
+						: order._error === "has_pending_refund"
+							? "Un remboursement est en cours pour cette commande. Annulez-le d'abord."
+							: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -183,6 +219,50 @@ export async function markAsPaid(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+
+		// ORD-BIZ-007 : annule le PaymentIntent Stripe en parallèle (si encore actif)
+		// pour éviter qu'un client paie en double via le lien checkout original
+		// après que l'admin a marqué la commande payée hors Stripe.
+		// Best-effort post-commit : ne PAS rollback si Stripe refuse (PaymentIntent
+		// déjà succeeded/canceled — Stripe retourne payment_intent_unexpected_state
+		// qu'on logge sans bloquer).
+		if (order.stripePaymentIntentId) {
+			try {
+				const { stripe } = await import("@/shared/lib/stripe");
+				await stripe.paymentIntents.cancel(order.stripePaymentIntentId, {
+					cancellation_reason: "abandoned",
+				});
+				logger.info(
+					`[mark-as-paid] PaymentIntent ${order.stripePaymentIntentId} annulé (manuel hors Stripe)`,
+					{ action: "mark-as-paid", orderId: order.id },
+				);
+			} catch (cancelError) {
+				const message = cancelError instanceof Error ? cancelError.message : String(cancelError);
+				// payment_intent_unexpected_state = PI déjà succeeded/canceled : OK.
+				// Tout autre erreur = Sentry warning (double-charge possible si PI encore ouvert).
+				const isExpectedTerminalState = message.includes("payment_intent_unexpected_state");
+				if (!isExpectedTerminalState) {
+					Sentry.withScope((scope) => {
+						scope.setLevel("warning");
+						scope.setTag("payments", "mark-as-paid-cancel-pi-failed");
+						scope.setContext("order", {
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							stripePaymentIntentId: order.stripePaymentIntentId,
+						});
+						Sentry.captureException(cancelError);
+					});
+					logger.warn(
+						`[mark-as-paid] PaymentIntent ${order.stripePaymentIntentId} cancel failed — double-charge possible`,
+						{
+							action: "mark-as-paid",
+							orderId: order.id,
+							error: message,
+						},
+					);
+				}
+			}
+		}
 
 		// Send order confirmation email for manual payment
 		let emailSent = false;
@@ -219,6 +299,9 @@ export async function markAsPaid(
 					invoiceUrl: buildUrl(
 						`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice?token=${generateInvoiceAccessToken(order.id, order.orderNumber)}`,
 					),
+					// EMAIL-AUDIT-003 : même convention que le webhook (`order-confirm:${id}`)
+					// pour qu'un mark-as-paid manuel post-webhook ne ré-envoie pas.
+					idempotencyKey: `order-confirm-${order.id}`,
 				});
 				emailSent = true;
 			} catch (emailError) {

@@ -4,7 +4,10 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
-import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
+import {
+	persistPostWebhookTasks,
+	executePersistedTasksForEvent,
+} from "@/modules/webhooks/services/post-webhook-tasks.service";
 import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/webhooks/constants/webhook.constants";
 import {
 	BATCH_DEADLINE_MS,
@@ -112,6 +115,27 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 			throw e;
 		}
 
+		// OPS-AUDIT-004 : back-pressure deadline guard right before the Stripe
+		// call (which can hang up to STRIPE_TIMEOUT_MS=5s). Without this guard a
+		// degraded Stripe could burn the whole BATCH_DEADLINE_MS=45s on
+		// `events.retrieve` calls and the cron would return `hasMore: true`
+		// without actually retrying any failed webhook on that page.
+		if (Date.now() + STRIPE_TIMEOUT_MS > deadline) {
+			logger.warn("Insufficient time for Stripe retrieve, stopping batch early", {
+				cronJob: CRON_JOB,
+				remainingMs: deadline - Date.now(),
+			});
+			// Revert the optimistic PROCESSING lock so the candidate is eligible next run.
+			await prisma.webhookEvent.update({
+				where: { id: candidate.id },
+				data: {
+					status: WebhookEventStatus.FAILED,
+					attempts: { decrement: 1 },
+				},
+			});
+			break;
+		}
+
 		try {
 			const stripeEvent = await stripe.events.retrieve(candidate.stripeEventId, undefined, {
 				timeout: STRIPE_TIMEOUT_MS,
@@ -139,18 +163,27 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
 
-			await prisma.webhookEvent.update({
-				where: { id: candidate.id },
-				data: {
-					status: finalStatus,
-					processedAt: new Date(),
-					errorMessage: null,
-				},
+			// ORD-STRIPE-003 : persiste les post-tasks dans la même tx que
+			// l'update du webhookEvent, puis exécute. Si l'exécution échoue,
+			// les tasks restent PENDING/FAILED → retry-post-webhook-tasks les rattrape.
+			const tasks = result?.tasks ?? [];
+			await prisma.$transaction(async (tx) => {
+				await tx.webhookEvent.update({
+					where: { id: candidate.id },
+					data: {
+						status: finalStatus,
+						processedAt: new Date(),
+						errorMessage: null,
+					},
+				});
+				if (tasks.length > 0) {
+					await persistPostWebhookTasks(tx, candidate.id, tasks);
+				}
 			});
 
-			if (result?.tasks?.length) {
+			if (tasks.length > 0) {
 				try {
-					await executePostWebhookTasks(result.tasks);
+					await executePersistedTasksForEvent(candidate.id);
 				} catch (e) {
 					logger.warn("Post-webhook tasks failed during retry", {
 						cronJob: CRON_JOB,

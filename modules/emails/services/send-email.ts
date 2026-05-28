@@ -1,11 +1,42 @@
 import { createHash } from "node:crypto";
+import * as Sentry from "@sentry/nextjs";
 import { render } from "react-email";
 import { Resend } from "resend";
 import { withRetry } from "@/shared/utils/with-retry";
 import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";
 import { logger } from "@/shared/lib/logger";
-import { EMAIL_CONTACT, EMAIL_FROM } from "../constants/email.constants";
+import {
+	EMAIL_ADMIN,
+	EMAIL_ADMIN_BCC,
+	EMAIL_CONTACT,
+	EMAIL_FROM,
+} from "../constants/email.constants";
 import type { EmailResult } from "../types/email.types";
+
+/**
+ * EMAIL-AUDIT-007 : classifie le type d'erreur pour grouping Sentry (fingerprint).
+ * Évite que chaque "Resend 500" crée un événement séparé.
+ */
+function classifyEmailError(error: unknown): string {
+	if (error instanceof CircuitBreakerError) return "circuit-breaker-open";
+	if (typeof error === "object" && error !== null) {
+		if ("name" in error) {
+			const name = (error as { name: unknown }).name;
+			if (typeof name === "string" && name.length > 0) return name;
+		}
+		if ("statusCode" in error) {
+			const statusCode = (error as { statusCode: unknown }).statusCode;
+			if (typeof statusCode === "number") return `http-${statusCode}`;
+		}
+	}
+	if (error instanceof Error) {
+		const message = error.message.toLowerCase();
+		if (message.includes("timeout")) return "timeout";
+		if (message.includes("network") || message.includes("fetch")) return "network";
+		if (message.includes("econnrefused")) return "econnrefused";
+	}
+	return "unknown";
+}
 
 /**
  * Generates a stable SHA-256 hash for in-process email dedup.
@@ -88,31 +119,45 @@ function isRetryableEmailError(error: unknown): boolean {
 			return true;
 		}
 	}
-	// Resend API errors with statusCode
+	// Resend nomme certaines erreurs (ex: rate_limit_exceeded) au lieu de statusCode
+	if (typeof error === "object" && error !== null && "name" in error) {
+		const name = (error as { name: unknown }).name;
+		if (typeof name === "string" && name === "rate_limit_exceeded") {
+			return true;
+		}
+	}
+	// Resend API errors with statusCode : 5xx ou 429 (rate limit)
+	// EMAIL-AUDIT-005 : 429 ajouté pour préserver les emails pendant un burst.
 	if (typeof error === "object" && error !== null && "statusCode" in error) {
 		const statusCode = (error as { statusCode: number }).statusCode;
-		return statusCode >= 500;
+		return statusCode >= 500 || statusCode === 429;
 	}
 	return false;
 }
 
 /**
- * Construit les headers List-Unsubscribe conformes RFC 8058 (one-click).
+ * Construit les headers marketing conformes RFC 8058 (one-click) + RFC 3834 (auto-responder).
  * Requis par Gmail et Yahoo depuis février 2024 pour tout bulk sender (>5000 emails/jour).
  *
  * Applique aux catégories commerciales/marketing où une opt-out est attendue :
  * marketing, review. Les emails transactionnels (order, payment, auth)
  * ne doivent PAS avoir de List-Unsubscribe — Gmail peut les flagger comme non transactionnels.
+ *
+ * EMAIL-AUDIT-009 : ajout Precedence: bulk + Auto-Submitted: auto-generated pour
+ * empêcher les vacation replies / auto-responders de répondre.
  */
-function buildUnsubscribeHeaders(unsubscribeUrl: string): Record<string, string> {
+function buildMarketingHeaders(unsubscribeUrl: string): Record<string, string> {
 	return {
 		"List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:${EMAIL_CONTACT}?subject=unsubscribe>`,
 		"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+		Precedence: "bulk",
+		"Auto-Submitted": "auto-generated",
 	};
 }
 
 export async function sendEmail(params: {
 	to: string | string[];
+	bcc?: string | string[];
 	subject: string;
 	html: string;
 	text?: string;
@@ -154,9 +199,16 @@ export async function sendEmail(params: {
 	}
 
 	const mergedHeaders: Record<string, string> = {
-		...(params.unsubscribeUrl ? buildUnsubscribeHeaders(params.unsubscribeUrl) : {}),
+		...(params.unsubscribeUrl ? buildMarketingHeaders(params.unsubscribeUrl) : {}),
 		...params.headers,
 	};
+
+	// Auto-inject EMAIL_ADMIN_BCC on admin alerts (refund failed, sequence
+	// overflow, dispute, etc.) so a fallback human receives them even if the
+	// primary admin mailbox is down. No-op when EMAIL_ADMIN_BCC is unset or
+	// the caller already provided a `bcc`.
+	const resolvedBcc =
+		params.bcc ?? (EMAIL_ADMIN_BCC && params.to === EMAIL_ADMIN ? EMAIL_ADMIN_BCC : undefined);
 
 	// In-process idempotence: skip if same content was just sent.
 	// Guards against accidental double-fire (cron retry + webhook callback
@@ -176,6 +228,21 @@ export async function sendEmail(params: {
 		}
 	}
 
+	// EMAIL-AUDIT-007 : breadcrumb Sentry pour tracer la chaîne d'événements
+	// (utile pour diagnostiquer ordering bug, webhook → cron → manual retry).
+	const emailCategory = params.tags?.find((t) => t.name === "category")?.value;
+	Sentry.addBreadcrumb({
+		category: "email",
+		level: "info",
+		message: `send-email: ${params.subject}`,
+		data: {
+			subject: params.subject,
+			category: emailCategory,
+			hasIdempotencyKey: Boolean(params.idempotencyKey),
+			hasUnsubscribeUrl: Boolean(params.unsubscribeUrl),
+		},
+	});
+
 	try {
 		const { data, error } = await resendCircuitBreaker.execute(() =>
 			withRetry(
@@ -185,12 +252,14 @@ export async function sendEmail(params: {
 						headers: _h,
 						skipIdempotence: _si,
 						idempotencyKey: _ik,
+						bcc: _bcc,
 						...rest
 					} = params;
 					const result = await resend.emails.send(
 						{
 							from: EMAIL_FROM,
 							...rest,
+							...(resolvedBcc !== undefined ? { bcc: resolvedBcc } : {}),
 							...(Object.keys(mergedHeaders).length > 0 ? { headers: mergedHeaders } : {}),
 						},
 						params.idempotencyKey ? { idempotencyKey: params.idempotencyKey } : undefined,
@@ -208,9 +277,15 @@ export async function sendEmail(params: {
 			),
 		);
 		if (error) {
-			logger.error("Failed to send email", error, {
-				service: "send-email",
-				subject: params.subject,
+			// EMAIL-AUDIT-007 : fingerprint stable pour grouping Sentry par type d'erreur.
+			Sentry.withScope((scope) => {
+				scope.setFingerprint(["email", params.subject, classifyEmailError(error)]);
+				if (emailCategory) scope.setTag("email_category", emailCategory);
+				if (params.idempotencyKey) scope.setTag("email_idempotency_key", params.idempotencyKey);
+				logger.error("Failed to send email", error, {
+					service: "send-email",
+					subject: params.subject,
+				});
 			});
 			return { success: false, error };
 		}
@@ -230,7 +305,15 @@ export async function sendEmail(params: {
 			});
 			return { success: false, error: "Email service temporarily unavailable" };
 		}
-		logger.error("Failed to send email", error, { service: "send-email", subject: params.subject });
+		Sentry.withScope((scope) => {
+			scope.setFingerprint(["email", params.subject, classifyEmailError(error)]);
+			if (emailCategory) scope.setTag("email_category", emailCategory);
+			if (params.idempotencyKey) scope.setTag("email_idempotency_key", params.idempotencyKey);
+			logger.error("Failed to send email", error, {
+				service: "send-email",
+				subject: params.subject,
+			});
+		});
 		return { success: false, error };
 	}
 }

@@ -94,7 +94,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	},
 }));
 
-import { OrderHistoryTimeline } from "../order-history-timeline";
+import { OrderHistoryTimeline } from "../order-detail/order-history-timeline";
 
 // ============================================================================
 // TYPES & FACTORY

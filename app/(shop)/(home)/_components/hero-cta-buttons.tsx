@@ -11,7 +11,7 @@ export function HeroCtaButtons() {
 			<Button
 				asChild
 				size="lg"
-				className="can-hover:hover:shadow-md motion-safe:can-hover:hover:scale-[1.02] w-full font-medium tracking-wide ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:active:scale-[0.98] sm:w-auto"
+				className="motion-safe:can-hover:hover:scale-[1.02] w-full font-medium tracking-wide shadow-md ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:active:scale-[0.98] sm:w-auto"
 			>
 				<Link
 					href="/produits"
@@ -25,7 +25,7 @@ export function HeroCtaButtons() {
 				asChild
 				size="lg"
 				variant="secondary"
-				className="can-hover:hover:shadow-md motion-safe:can-hover:hover:scale-[1.02] w-full font-medium ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:active:scale-[0.98] sm:w-auto"
+				className="motion-safe:can-hover:hover:scale-[1.02] w-full font-medium shadow-md ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:active:scale-[0.98] sm:w-auto"
 			>
 				<Link
 					href="/collections"

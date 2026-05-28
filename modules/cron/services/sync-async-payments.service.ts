@@ -4,11 +4,14 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import {
-	markOrderAsPaid,
 	markOrderAsFailed,
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 } from "@/modules/webhooks/services/payment-intent.service";
+import { processOrderFromPaymentIntent } from "@/modules/webhooks/services/checkout.service";
+import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
+import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -108,7 +111,15 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					cronJob: "sync-async-payments",
 					orderNumber: order.orderNumber,
 				});
-				await markOrderAsPaid(order.id, order.stripePaymentIntentId);
+				// ORD-STRIPE-001: utiliser le même chemin que le webhook pour garantir
+				// le décrément stock + désactivation SKU épuisés + clear cart + facture
+				// + e-reporting. processOrderFromPaymentIntent est idempotent (guard
+				// paymentStatus === "PAID" dans checkout-order-processing.service.ts).
+				const paymentMethod =
+					(await extractPaymentMethodFromPaymentIntent(paymentIntent)) ?? undefined;
+				await processOrderFromPaymentIntent(order.id, paymentIntent, paymentMethod);
+				await ensureInvoiceNumberPersisted(order.id);
+				await recordSalesEReporting(order.id);
 				updated++;
 			} else if (
 				paymentIntent.status === "canceled" ||
@@ -121,16 +132,18 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					stripeStatus: paymentIntent.status,
 				});
 				const failureDetails = extractPaymentFailureDetails(paymentIntent);
-				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
+				// OPS-AUDIT-003 : restore stock FIRST. If it throws, we skip the
+				// markOrderAsFailed call → order stays PENDING → re-picked on
+				// next 4h run (atomic retry without an extra DB flag). Handles
+				// the race where a PAID webhook moved status to PROCESSING
+				// between the findMany and this code path.
+				let stockResult: Awaited<ReturnType<typeof restoreStockForOrder>>;
 				try {
-					const stockResult = await restoreStockForOrder(order.id);
-					for (const skuId of stockResult.restoredSkuIds) {
-						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-					}
+					stockResult = await restoreStockForOrder(order.id);
 				} catch (stockError) {
 					const stockErrorMessage =
 						stockError instanceof Error ? stockError.message : String(stockError);
-					logger.error("Stock not restored after payment failure", stockError, {
+					logger.error("Stock restore failed — order kept PENDING for next run", stockError, {
 						cronJob: "sync-async-payments",
 						orderNumber: order.orderNumber,
 						orderId: order.id,
@@ -140,7 +153,13 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 						orderNumber: order.orderNumber,
 						error: stockErrorMessage,
 					});
+					errors++;
+					continue;
 				}
+				for (const skuId of stockResult.restoredSkuIds) {
+					tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+				}
+				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
 				updated++;
 			}
 			// Other statuses (processing, requires_action) are still pending

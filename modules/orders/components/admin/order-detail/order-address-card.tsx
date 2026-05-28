@@ -106,7 +106,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 								variant="ghost"
 								size="sm"
 								onClick={handleEditShipping}
-								className="min-h-11 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9"
+								className="min-h-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9"
 								aria-label="Modifier l'adresse de livraison"
 							>
 								<Pencil className="size-4" aria-hidden="true" />
@@ -148,7 +148,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 								variant="ghost"
 								size="sm"
 								onClick={handleEditBilling}
-								className="min-h-11 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9"
+								className="min-h-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9"
 								aria-label="Modifier l'adresse de facturation"
 							>
 								<Pencil className="size-4" aria-hidden="true" />

@@ -8,6 +8,7 @@ import {
 	RefundStatus,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
@@ -40,6 +41,64 @@ function mapStripeRefundReason(stripeReason: string | null | undefined): RefundR
 }
 
 /**
+ * ORD-BIZ-001: Alloue un montant Dashboard refund (full ou partiel) sur les
+ * OrderItem de la commande au pro-rata du subtotal item / subtotal commande.
+ *
+ * Préserve la traçabilité comptable Art. 272-I CGI et permet à l'admin de
+ * décider du restock par item plus tard. Approximation assumée pour les
+ * partial refunds Dashboard : la quantity reflète la qty totale de l'item
+ * (proxy "touché"), seul l'amount est pro-rata. Les items dont l'amount
+ * pro-rata arrondi tombe à 0 (contrainte DB `amount > 0`) sont filtrés.
+ *
+ * @returns liste de RefundItem prêts à create, vide si aucune allocation possible
+ */
+function allocateDashboardRefundItems(
+	items: Array<{ id: string; price: number; quantity: number }>,
+	refundAmount: number,
+	isFullRefund: boolean,
+): Array<{ orderItemId: string; quantity: number; amount: number; restock: boolean }> {
+	if (items.length === 0 || refundAmount <= 0) return [];
+
+	if (isFullRefund) {
+		return items.map((oi) => ({
+			orderItemId: oi.id,
+			quantity: oi.quantity,
+			amount: oi.price * oi.quantity,
+			restock: false,
+		}));
+	}
+
+	const subtotal = items.reduce((acc, oi) => acc + oi.price * oi.quantity, 0);
+	if (subtotal <= 0) return [];
+
+	const allocations = items
+		.map((oi) => {
+			const itemSubtotal = oi.price * oi.quantity;
+			const proRata = Math.round((refundAmount * itemSubtotal) / subtotal);
+			return { orderItemId: oi.id, quantity: oi.quantity, amount: proRata, restock: false };
+		})
+		.filter((a) => a.amount > 0);
+
+	if (allocations.length === 0) return [];
+
+	// Ajuste le dernier item pour absorber l'écart de rounding (sum doit == refundAmount).
+	const allocated = allocations.reduce((acc, a) => acc + a.amount, 0);
+	const drift = refundAmount - allocated;
+	if (drift !== 0) {
+		const last = allocations[allocations.length - 1]!;
+		const adjusted = last.amount + drift;
+		// Contrainte DB amount > 0 : si l'ajustement annule le dernier item, on retire.
+		if (adjusted > 0) {
+			last.amount = adjusted;
+		} else {
+			allocations.pop();
+		}
+	}
+
+	return allocations;
+}
+
+/**
  * Validates and returns a currency code string, defaulting to EUR if invalid
  */
 function validateCurrencyCode(currency: string | undefined | null): string {
@@ -53,9 +112,19 @@ function validateCurrencyCode(currency: string | undefined | null): string {
 	return "EUR";
 }
 
+/** Dashboard refund créé pendant le sync (ORD-STRIPE-006 alert admin). */
+export interface DashboardRefundSummary {
+	stripeRefundId: string;
+	amount: number;
+	isFullRefund: boolean;
+}
+
 /**
  * Synchronise les remboursements Stripe avec la base de données
  * Gère les remboursements via l'app et via Dashboard Stripe
+ *
+ * Retourne la liste des refunds Dashboard nouvellement créés pour permettre
+ * au handler webhook d'émettre une alerte admin temps réel (ORD-STRIPE-006).
  */
 export async function syncStripeRefunds(
 	charge: Stripe.Charge,
@@ -67,7 +136,7 @@ export async function syncStripeRefunds(
 		processedAt: Date | null;
 	}>,
 	orderId: string,
-): Promise<void> {
+): Promise<{ dashboardRefundsCreated: DashboardRefundSummary[] }> {
 	const stripeRefunds = charge.refunds?.data ?? [];
 
 	// ⚠️ AUDIT FIX: Batch toutes les opérations pour éviter N+1 queries
@@ -85,6 +154,8 @@ export async function syncStripeRefunds(
 		  };
 
 	const operations: RefundOperation[] = [];
+	// ORD-STRIPE-006 : trace les Dashboard refunds créés pour alerte admin
+	const dashboardRefundsCreated: DashboardRefundSummary[] = [];
 
 	for (const stripeRefund of stripeRefunds) {
 		if (!stripeRefund.id) continue;
@@ -299,12 +370,13 @@ export async function syncStripeRefunds(
 						}
 
 						case "upsertDashboard": {
-							// ORD-REFUND-003: refunds Dashboard arrivent sans RefundItems
-							// → impossible de connaître la breakdown article par article.
-							// Si le montant correspond au total commande, on crée des
-							// RefundItem couvrant tous les OrderItem (restock=false par
-							// défaut : décision admin manuelle requise pour Dashboard).
-							// Si partiel, on ne crée pas de RefundItem mais on alerte.
+							// ORD-REFUND-003 / ORD-BIZ-001: refunds Dashboard arrivent
+							// sans breakdown article par article. On crée systématiquement
+							// des RefundItem proxy pour préserver la traçabilité comptable
+							// (Art. 272-I CGI) et permettre un restock admin manuel — au
+							// pro-rata du montant pour un partial refund, full montant
+							// pour un total. restock=false par défaut dans les deux cas :
+							// décision admin manuelle requise pour Dashboard refunds.
 							const existing = await tx.refund.findUnique({
 								where: { stripeRefundId: op.stripeRefundId },
 								select: { id: true },
@@ -345,6 +417,11 @@ export async function syncStripeRefunds(
 								},
 							});
 							const isFullRefund = op.amount >= orderForRefund.total;
+							const allocatedItems = allocateDashboardRefundItems(
+								orderForRefund.items,
+								op.amount,
+								isFullRefund,
+							);
 
 							const createdDashboardRefund = await tx.refund.create({
 								data: {
@@ -356,20 +433,9 @@ export async function syncStripeRefunds(
 									status: op.status,
 									note: isFullRefund
 										? "Remboursement TOTAL via Dashboard Stripe — stock non restauré (intervention admin requise si retour produit)"
-										: "Remboursement PARTIEL via Dashboard Stripe — items non-traçables, intervention admin requise",
+										: "Remboursement PARTIEL via Dashboard Stripe — items alloués au pro-rata, intervention admin requise pour restock",
 									processedAt: now,
-									...(isFullRefund && orderForRefund.items.length > 0
-										? {
-												items: {
-													create: orderForRefund.items.map((oi) => ({
-														orderItemId: oi.id,
-														quantity: oi.quantity,
-														amount: oi.price * oi.quantity,
-														restock: false,
-													})),
-												},
-											}
-										: {}),
+									...(allocatedItems.length > 0 ? { items: { create: allocatedItems } } : {}),
 								},
 								select: { id: true },
 							});
@@ -400,14 +466,24 @@ export async function syncStripeRefunds(
 								`⚠️ [WEBHOOK] Created Dashboard refund ${op.stripeRefundId} (${isFullRefund ? "full" : "partial"}) — admin attention required`,
 								{ service: "webhook", orderId, amount: op.amount, isFullRefund },
 							);
+							// ORD-STRIPE-006 : flag pour alerte admin temps réel
+							dashboardRefundsCreated.push({
+								stripeRefundId: op.stripeRefundId,
+								amount: op.amount,
+								isFullRefund,
+							});
 							break;
 						}
 					}
 				}
 			},
-			{ timeout: 10000 },
+			// ORD-STRIPE-004 : tx batch upsert refunds — contention possible avec
+			// SAGA admin processRefund concurrent. maxWait override évite P2024.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 	}
+
+	return { dashboardRefundsCreated };
 }
 
 /**
@@ -458,6 +534,11 @@ const REFUND_RECORD_SELECT = {
 	amount: true,
 	reason: true,
 	orderId: true,
+	// ORD-REFUND-AUDIT-004 : processedAt + updatedAt requis pour le guard
+	// SAGA in-flight dans handleRefundUpdated (skip webhook si refund admin
+	// APPROVED + processedAt=null + updatedAt < 30s).
+	processedAt: true,
+	updatedAt: true,
 	order: {
 		select: {
 			id: true,

@@ -37,9 +37,12 @@ export default function RootLayout({
 		>
 			<head>
 				{/* Preconnect au CDN UploadThing — économise DNS+TCP+TLS handshake
-				    sur l'image LCP du Hero (resource load delay ~500-2000ms 4G mobile). */}
+				    sur l'image LCP du Hero (resource load delay ~500-2000ms 4G mobile).
+				    Pas de crossOrigin : next/image fait des fetch no-cors, et une preconnect
+				    avec crossOrigin="anonymous" ouvre une connexion CORS-anonymous non réutilisable
+				    par ces fetch (cf. Lighthouse "Préconnexion inutilisée"). */}
 				{UPLOADTHING_CDN_HOSTS.map((host) => (
-					<link key={host} rel="preconnect" href={host} crossOrigin="anonymous" />
+					<link key={host} rel="preconnect" href={host} />
 				))}
 			</head>
 			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>

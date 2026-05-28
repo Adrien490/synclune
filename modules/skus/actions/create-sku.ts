@@ -1,5 +1,7 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
+
 import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -230,6 +232,13 @@ export async function createProductSku(
 		};
 	} catch (e) {
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			// Collision SKU code rare (generateSkuCode + generateUniqueTechnicalName retry interne)
+			// → monitoring pour detecter si le volume admin la rend frequente
+			Sentry.captureMessage("SKU code collision (P2002) on createProductSku", {
+				level: "warning",
+				tags: { action: "createProductSku", code: "P2002" },
+				extra: { target: e.meta?.target },
+			});
 			return {
 				status: ActionStatus.ERROR,
 				message: "Une variante avec ce code existe déjà.",

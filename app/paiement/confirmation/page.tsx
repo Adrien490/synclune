@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
 import { PurchaseTracker } from "@/shared/components/analytics/purchase-tracker";
+import { PendingPaymentWatcher } from "./_components/pending-payment-watcher";
 import { ReceiptButton } from "./_components/receipt-button";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
@@ -93,6 +94,23 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 		redirect("/");
 	}
 
+	// CHECKOUT-AUDIT-004 — si le paiement a déjà basculé FAILED côté webhook
+	// (race d'over-sell du dernier exemplaire, refus async), on redirige vers
+	// la page d'annulation pour éviter d'afficher "Commande confirmée" sur une
+	// commande qui sera remboursée automatiquement.
+	if (order.paymentStatus === "FAILED") {
+		redirect(
+			`/paiement/annulation?order_id=${encodeURIComponent(orderId)}&order_number=${encodeURIComponent(orderNumber)}&reason=payment_failed`,
+		);
+	}
+
+	// `isWebhookPending` = le webhook Stripe n'a pas encore acquitté le PaymentIntent.
+	// On garde l'utilisateur dans un état "vérification en cours" jusqu'au bascule
+	// `PAID`, pour éviter le scénario double-vente où "Commande confirmée"
+	// s'affiche avant le refund automatique (cf [[CHECKOUT-AUDIT-004]]).
+	const isWebhookPending = order.paymentStatus === "PENDING";
+	const showPendingState = isPending || isWebhookPending;
+
 	const shippingInfo = getShippingInfo(
 		((order.shippingCountry as ShippingCountry | null) ?? "FR") as ShippingCountry,
 		order.shippingPostalCode,
@@ -114,7 +132,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							<Fade y={10} delay={0.15}>
 								<div className="space-y-2">
 									<p className="text-muted-foreground text-sm">
-										{isPending
+										{showPendingState
 											? "Ta commande a été enregistrée"
 											: "Ton paiement a été accepté avec succès"}
 									</p>
@@ -122,7 +140,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<p className="text-muted-foreground text-xs">
 										Commandée le {formatDateLong(order.createdAt)}
 									</p>
-									{order.stripePaymentIntentId && !isPending && (
+									{order.stripePaymentIntentId && !showPendingState && (
 										<Suspense fallback={null}>
 											<ReceiptButton stripePaymentIntentId={order.stripePaymentIntentId} />
 										</Suspense>
@@ -132,14 +150,15 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* Async payment pending banner */}
-							{isPending && (
+							{/* Pending payment state (webhook not yet acknowledged or async SEPA/Klarna) */}
+							{showPendingState && (
 								<Alert>
 									<Clock />
-									<AlertTitle>Paiement en cours de traitement</AlertTitle>
+									<AlertTitle>Paiement en cours de vérification</AlertTitle>
 									<AlertDescription>
-										Ton paiement est en cours de traitement. Tu recevras un email de confirmation
-										dès que le paiement sera validé.
+										Ton paiement est en cours de vérification. Tu recevras un email de confirmation
+										dès qu&apos;il sera validé.
+										<PendingPaymentWatcher orderId={order.id} orderNumber={order.orderNumber} />
 									</AlertDescription>
 								</Alert>
 							)}
@@ -356,7 +375,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					</div>
 				</div>
 			</section>
-			{!isPending && (
+			{!showPendingState && (
 				<PurchaseTracker orderNumber={order.orderNumber} valueCents={order.total} currency="EUR" />
 			)}
 		</div>

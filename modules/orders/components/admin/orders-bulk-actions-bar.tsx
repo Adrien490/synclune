@@ -37,6 +37,10 @@ export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActi
 	const wasPendingRef = useRef(false);
 	useEffect(() => {
 		if (wasPendingRef.current && !isPending) {
+			// Pending vient de se terminer : on ferme la confirmation et on libère
+			// le pendingCtx. Laisse le spinner du dialog visible pendant toute la
+			// mutation (cf. ORD-UI-003).
+			setConfirmOpen(false);
 			pendingCtx?.clearPending();
 		}
 		wasPendingRef.current = isPending;
@@ -56,7 +60,9 @@ export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActi
 		fd.set("reason", "Annulation en lot via admin");
 		pendingCtx?.startPending(ids, "cancel");
 		submit(fd);
-		setConfirmOpen(false);
+		// NE PAS fermer ici — laisser le useEffect ci-dessus fermer
+		// quand isPending repasse à false (sinon le spinner du dialog
+		// disparaît avant la fin de la mutation).
 	}
 
 	return (

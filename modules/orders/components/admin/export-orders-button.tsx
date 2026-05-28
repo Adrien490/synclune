@@ -104,6 +104,12 @@ export function ExportOrdersButton() {
 				toast.error("Veuillez renseigner les dates de début et de fin");
 				return;
 			}
+			// Cross-field guard (ORD-UI-006) : un livre de recettes Art. 286 CGI
+			// avec une plage inversée serait vide et porte à confusion comptable.
+			if (new Date(state.dateFrom) > new Date(state.dateTo)) {
+				toast.error("La date de début doit précéder la date de fin");
+				return;
+			}
 			params.set("dateFrom", state.dateFrom);
 			params.set("dateTo", state.dateTo);
 		}

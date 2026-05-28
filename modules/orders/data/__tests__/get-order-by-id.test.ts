@@ -32,7 +32,19 @@ vi.mock("../../constants/order.constants", () => ({
 	GET_ORDER_SELECT: { id: true, orderNumber: true },
 }));
 
-vi.mock("../../constants/cache", () => ({}));
+vi.mock("../../constants/cache", () => ({
+	ORDERS_CACHE_TAGS: {
+		LIST: "orders-list",
+		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
+		LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
+		ACCOUNT_STATS: (userId: string) => `account-stats-${userId}`,
+		HISTORY: (orderId: string) => `order-history-${orderId}`,
+		NOTES: (orderId: string) => `order-notes-${orderId}`,
+		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
+		CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
+		DETAIL: (orderId: string) => `order-detail-${orderId}`,
+	},
+}));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {

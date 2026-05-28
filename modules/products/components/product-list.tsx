@@ -174,6 +174,7 @@ export function ProductList({
 					currentPageSize={products.length}
 					nextCursor={nextCursor}
 					prevCursor={prevCursor}
+					totalCount={totalCount}
 				/>
 			</div>
 		</div>

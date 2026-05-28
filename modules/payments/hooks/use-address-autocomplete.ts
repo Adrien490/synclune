@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { searchAddressForCheckout } from "@/modules/addresses/data/search-address";
+import { searchAddressForCheckout } from "@/modules/addresses/actions/search-address";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import type { ShippingCountry } from "@/shared/constants/countries";
 

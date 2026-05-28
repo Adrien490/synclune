@@ -32,6 +32,9 @@ export const ORDERS_CACHE_TAGS = {
 
 	/** Commande pour page de confirmation post-paiement (public, double-lookup id+orderNumber) */
 	CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
+
+	/** Détail admin d'une commande (page /admin/ventes/commandes/[id]) — tag granulaire pour éviter d'invalider tout `ADMIN_ORDERS_LIST` (ORD-CACHE-001) */
+	DETAIL: (orderId: string) => `order-detail-${orderId}`,
 } as const;
 
 // ============================================
@@ -62,7 +65,11 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId), ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
+		tags.push(
+			ORDERS_CACHE_TAGS.HISTORY(orderId),
+			ORDERS_CACHE_TAGS.CONFIRMATION(orderId),
+			ORDERS_CACHE_TAGS.DETAIL(orderId),
+		);
 	}
 
 	return tags;
@@ -83,7 +90,11 @@ export function getOrderMetadataInvalidationTags(userId?: string, orderId?: stri
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId), ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
+		tags.push(
+			ORDERS_CACHE_TAGS.HISTORY(orderId),
+			ORDERS_CACHE_TAGS.CONFIRMATION(orderId),
+			ORDERS_CACHE_TAGS.DETAIL(orderId),
+		);
 	}
 
 	return tags;

@@ -1,9 +1,11 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
@@ -18,10 +20,16 @@ export const changePassword = async (
 	try {
 		const headersList = await headers();
 
-		// Verify authenticated user exists in DB (checks deletedAt: null)
+		// Verify authenticated user exists in DB (checks deletedAt: null + accountStatus = ACTIVE + suspendedAt = null)
 		const authResult = await requireAuth();
 		if ("error" in authResult) return authResult.error;
 		const { user } = authResult;
+
+		// Rate limit AFTER auth (3/h per user) — protège contre brute-force du
+		// currentPassword sur session active volée. Le rate-limit après auth évite
+		// aussi de consommer le bucket pour les requêtes non authentifiées.
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.PASSWORD_CHANGE);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// Check user has a credential account (not OAuth-only)
 		const userWithAccounts = await prisma.user.findUnique({

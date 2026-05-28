@@ -192,7 +192,7 @@ export async function Footer() {
 										<InstagramIcon
 											decorative
 											size={20}
-											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
+											className="text-foreground motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.instagram.handle}
@@ -211,7 +211,7 @@ export async function Footer() {
 										<TikTokIcon
 											decorative
 											size={20}
-											className="text-foreground can-hover:group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
+											className="text-foreground motion-safe:can-hover:group-hover:scale-110 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
@@ -229,7 +229,7 @@ export async function Footer() {
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
-									className="bg-card/50 border-border/60 can-hover:hover:border-primary/30 can-hover:hover:shadow-primary/15 can-hover:hover:shadow-md rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-[border-color,box-shadow] motion-safe:duration-[var(--duration-normal)]"
+									className="bg-card/50 border-border/60 motion-safe:can-hover:hover:scale-[1.01] rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
 								>
 									<div className="text-sm">
 										<p className="text-foreground font-medium">{item.title}</p>

@@ -6,6 +6,7 @@ import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails"
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, THRESHOLDS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { generateUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
 
 const emailSchema = z.string().email();
 
@@ -174,7 +175,9 @@ export async function sendReviewRequests(): Promise<CronResult> {
 		// occasionally losing a single email (acceptable trade-off for J+7 reviews).
 		let sendSucceeded = false;
 		try {
-			const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
+			const unsubscribeUrl = buildUrl(
+				`${ROUTES.NOTIFICATIONS.UNSUBSCRIBE}?email=${encodeURIComponent(order.customerEmail)}&token=${generateUnsubscribeToken(order.customerEmail)}`,
+			);
 			const result = await sendReviewRequestEmail({
 				to: order.customerEmail,
 				customerName: order.customerName || "vous",

@@ -1,0 +1,34 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list of admin actions audited (drift detection) 1`] = `
+[
+  "modules/invoices/actions/retry-ereporting-batch.ts",
+  "modules/invoices/actions/retry-invoice-generation.ts",
+  "modules/orders/actions/add-order-note.ts",
+  "modules/orders/actions/bulk-cancel-orders.ts",
+  "modules/orders/actions/cancel-order.ts",
+  "modules/orders/actions/delete-order-note.ts",
+  "modules/orders/actions/delete-order.ts",
+  "modules/orders/actions/export-single-order.ts",
+  "modules/orders/actions/mark-as-delivered.ts",
+  "modules/orders/actions/mark-as-fully-refunded.ts",
+  "modules/orders/actions/mark-as-paid.ts",
+  "modules/orders/actions/mark-as-processing.ts",
+  "modules/orders/actions/mark-as-returned.ts",
+  "modules/orders/actions/mark-as-shipped.ts",
+  "modules/orders/actions/resend-order-email.ts",
+  "modules/orders/actions/revert-to-processing.ts",
+  "modules/orders/actions/update-order-billing-address.ts",
+  "modules/orders/actions/update-order-customer-info.ts",
+  "modules/orders/actions/update-order-note.ts",
+  "modules/orders/actions/update-order-shipping-address.ts",
+  "modules/orders/actions/update-tracking.ts",
+  "modules/refunds/actions/approve-refund.ts",
+  "modules/refunds/actions/bulk-approve-refunds.ts",
+  "modules/refunds/actions/cancel-refund.ts",
+  "modules/refunds/actions/create-refund.ts",
+  "modules/refunds/actions/process-refund.ts",
+  "modules/refunds/actions/reject-refund.ts",
+  "modules/refunds/actions/retry-failed-refund.ts",
+]
+`;

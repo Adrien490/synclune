@@ -23,7 +23,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -195,23 +195,22 @@ export async function reconcileRefunds(): Promise<CronResult> {
 						);
 					}
 
-					// ORD-STRIPE-007 : email confirmation client. Si l'admin path
-					// (`processRefund`) avait abort en Step 3, l'email n'a pas
-					// été envoyé. Le webhook `charge.refunded` est aussi un filet
-					// possible, mais s'il a échoué (raison pour laquelle on tombe
-					// ici), le client n'a aucune notification. `idempotencyKey`
-					// Resend (24h) dédupe si le webhook se réveille plus tard.
+					// ORD-STRIPE-005 : émetteur centralisé. Pose
+					// `Refund.confirmationEmailSentAt` atomiquement — si admin SAGA
+					// ou webhook `charge.refunded` a déjà envoyé, on skip silencieusement.
 					if (refund.order.customerEmail) {
 						const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.orderId));
 						try {
-							await sendRefundConfirmationEmail({
+							await sendRefundConfirmationOnce({
+								refundId: refund.id,
 								to: refund.order.customerEmail,
 								orderNumber: refund.order.orderNumber,
 								customerName: refund.order.customerName || "Client",
 								refundAmount: refund.amount,
 								reason: refund.reason,
 								orderDetailsUrl,
-								idempotencyKey: `refund-confirm-${refund.id}-${refund.attemptCount}`,
+								invoiceNumber: null,
+								creditNoteNumber: null,
 							});
 						} catch (emailError) {
 							logger.error(

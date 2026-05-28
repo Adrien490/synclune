@@ -1,7 +1,6 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
-import { useCallback } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 
@@ -55,20 +54,17 @@ export function ErrorSummary({
 	ariaLive = "polite",
 	className,
 }: ErrorSummaryProps) {
-	const focusField = useCallback(
-		(name: string) => {
-			const scope = formId ? document.getElementById(formId) : document;
-			const el =
-				scope?.querySelector<HTMLElement>(`#${CSS.escape(name)}`) ?? document.getElementById(name);
-			if (!el) return;
-			const reduced =
-				typeof window !== "undefined" &&
-				window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-			el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
-			if (typeof el.focus === "function") el.focus({ preventScroll: true });
-		},
-		[formId],
-	);
+	const focusField = (name: string) => {
+		const scope = formId ? document.getElementById(formId) : document;
+		const el =
+			scope?.querySelector<HTMLElement>(`#${CSS.escape(name)}`) ?? document.getElementById(name);
+		if (!el) return;
+		const reduced =
+			typeof window !== "undefined" &&
+			window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+		if (typeof el.focus === "function") el.focus({ preventScroll: true });
+	};
 
 	if (fieldErrors.length === 0) return null;
 

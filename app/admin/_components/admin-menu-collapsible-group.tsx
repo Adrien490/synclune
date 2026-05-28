@@ -31,7 +31,7 @@ export function AdminMenuCollapsibleGroup({
 				<CollapsibleTrigger
 					className={cn(
 						"flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wider uppercase",
-						"text-muted-foreground hover:text-foreground cursor-pointer transition-colors",
+						"text-muted-foreground can-hover:hover:text-foreground cursor-pointer transition-colors",
 						"motion-safe:active:scale-[0.98]",
 						"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
 						"min-h-[44px]",
@@ -59,7 +59,7 @@ export function AdminMenuCollapsibleGroup({
 											"motion-safe:active:scale-[0.97]",
 											isActive
 												? "bg-accent text-foreground before:bg-foreground font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full"
-												: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+												: "text-muted-foreground can-hover:hover:bg-accent/50 can-hover:hover:text-foreground",
 										)}
 										aria-current={isActive ? "page" : undefined}
 									>

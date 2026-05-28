@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { stripe } from "@/shared/lib/stripe";
 import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
 
@@ -114,7 +115,8 @@ export async function cancelExpiredOrder(
 			);
 			return { cancelled: true, orderNumber: order.orderNumber } as const;
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 
 	return result;

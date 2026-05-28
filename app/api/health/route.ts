@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/shared/lib/prisma";
 import { stripeCircuitBreaker, resendCircuitBreaker } from "@/shared/lib/circuit-breaker";
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
@@ -65,13 +66,29 @@ async function checkResend(): Promise<ServiceCheck> {
 	return { status: "ok" };
 }
 
-export async function GET() {
-	// Check if the requester is an admin for detailed response
-	const adminCheck = await requireAdminApiRoute();
-	const isAdmin = "user" in adminCheck;
+function verifyHealthcheckToken(request: Request): boolean {
+	const expected = process.env.HEALTHCHECK_TOKEN;
+	if (!expected) return false;
 
-	// Unauthenticated/non-admin: return minimal status only
-	if (!isAdmin) {
+	const url = new URL(request.url);
+	const provided = url.searchParams.get("token") ?? request.headers.get("x-healthcheck-token");
+	if (!provided) return false;
+
+	const expectedBytes = Buffer.from(expected);
+	const providedBytes = Buffer.from(provided);
+	if (expectedBytes.length !== providedBytes.length) return false;
+	return timingSafeEqual(expectedBytes, providedBytes);
+}
+
+export async function GET(request: Request) {
+	// Detailed view granted if either the user is admin OR a valid healthcheck
+	// token is provided (external probes like UptimeRobot / Better Stack).
+	const tokenValid = verifyHealthcheckToken(request);
+	const adminCheck = tokenValid ? null : await requireAdminApiRoute();
+	const detailed = tokenValid || (adminCheck !== null && "user" in adminCheck);
+
+	// Unauthenticated/non-admin without token: return minimal status only
+	if (!detailed) {
 		return Response.json({ status: "ok" });
 	}
 

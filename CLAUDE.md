@@ -7,7 +7,7 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Storefront** (`/boutique`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
-- **Emails** - React Email + Resend (26 templates)
+- **Emails** - React Email + Resend (16 templates)
 - **PWA** - Serwist (service worker, offline page)
 
 ## Commands
@@ -45,7 +45,7 @@ app/
 ├── ~offline/                # Page offline PWA
 └── sitemap-images.xml/      # Generation sitemap images
 
-modules/                     # DDD - 23 modules
+modules/                     # DDD - 24 modules
 ├── [module]/
 │   ├── actions/             # Server Actions (mutations)
 │   ├── data/                # Data fetching + cache ("use cache")
@@ -74,7 +74,7 @@ shared/                      # Cross-cutting concerns
 ├── providers/               # Root providers, dialog/sheet/store providers
 ├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)
 ├── services/                # Shared business logic (unique name generator)
-├── stores/                  # Zustand stores (8 stores)
+├── stores/                  # Zustand stores (9 stores)
 ├── styles/                  # Global styles, fonts
 ├── types/                   # Shared types (server actions, sessions, pagination, errors)
 └── utils/                   # Formatting, slug, date, currency, password strength, seeded random
@@ -85,7 +85,7 @@ shared/                      # Cross-cutting concerns
 - **Auth**: Better Auth (email, Google, GitHub)
 - **Database**: PostgreSQL (Neon) + Prisma 7
 - **Forms**: TanStack Form + `useAppForm` hook
-- **State**: Zustand (8 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, overlay-stack, admin-list-selection, admin-list-bulk-pending)
+- **State**: Zustand (9 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, micro-toast, overlay-stack, admin-list-selection, admin-list-bulk-pending)
 - **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
@@ -278,17 +278,20 @@ Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (do
 
 Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce sont des services transactionnels appeles depuis plusieurs contextes (cron, webhooks, server components) ou la logique doit rester atomique:
 
-| Fichier                                                   | Raison                                                     |
-| --------------------------------------------------------- | ---------------------------------------------------------- |
-| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions                    |
-| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout                   |
-| `payments/services/order-creation.service.ts`             | Transaction atomique stock lock + order + discount usage   |
-| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock                        |
-| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions                   |
-| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire)           |
-| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire)           |
-| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription              |
-| `cart/services/sku-validation.service.ts`                 | Validation DB reads partagees entre actions + SKU selector |
+| Fichier                                                   | Raison                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions                                               |
+| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout                                              |
+| `payments/services/order-creation.service.ts`             | Transaction atomique stock lock + order + discount usage                              |
+| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock                                                   |
+| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions                                              |
+| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire)                                      |
+| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire)                                      |
+| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription                                         |
+| `cart/services/sku-validation.service.ts`                 | Validation DB reads partagees entre actions + SKU selector                            |
+| `reviews/services/send-review-requests.service.ts`        | Cron job — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email |
+| `users/services/refresh-customer-routing.service.ts`      | Cron job — `user.update` pour rafraichir `customerRoutingKey` apres expiration TTL    |
+| `store-settings/services/auto-reopen.service.ts`          | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues       |
 
 ## API Routes
 
@@ -298,24 +301,33 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-22 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services). Les crons e-invoicing (build/transmit-ereporting-batch, transmit-invoices, retry-invoice-transmissions, reconcile-{invoices,voided-invoices,invoice-statuses}, refresh-stale-directory-entries) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
+23 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
 
-| Job                         | Schedule           |
-| --------------------------- | ------------------ |
-| `reopen-store`              | Every 15 min       |
-| `retry-webhooks`            | Every 30 min       |
-| `sync-async-payments`       | Every 4h           |
-| `reconcile-refunds`         | Every 6h           |
-| `cleanup-wishlists`         | Daily 2:30         |
-| `cleanup-sessions`          | Daily 3:00         |
-| `cleanup-carts`             | Daily 3:30         |
-| `cleanup-pending-orders`    | Daily 4:30         |
-| `process-account-deletions` | Daily 5:00         |
-| `send-review-requests`      | Daily 10:00        |
-| `alert-stuck-orders`        | Weekly Monday 9:00 |
-| `cleanup-webhook-events`    | Monthly 1st 7:00   |
-| `hard-delete-retention`     | Monthly 1st 8:00   |
-| `cleanup-orphan-media`      | Monthly 1st 9:00   |
+| Job                               | Schedule           | Catégorie   |
+| --------------------------------- | ------------------ | ----------- |
+| `retry-post-webhook-tasks`        | Every 5 min        | revenue     |
+| `reopen-store`                    | Every 15 min       | ops         |
+| `retry-invoice-transmissions`     | Every 15 min       | e-invoicing |
+| `retry-webhooks`                  | Every 30 min       | revenue     |
+| `transmit-invoices`               | Every 30 min       | e-invoicing |
+| `transmit-ereporting-batch`       | Every 30 min       | e-invoicing |
+| `sync-async-payments`             | Every 4h           | revenue     |
+| `reconcile-invoice-statuses`      | Every 4h           | e-invoicing |
+| `reconcile-refunds`               | Every 6h, H+30     | revenue     |
+| `build-ereporting-batch`          | Daily 1:00         | e-invoicing |
+| `reconcile-invoices`              | Daily 2:00         | e-invoicing |
+| `cleanup-wishlists`               | Daily 2:30         | retention   |
+| `cleanup-sessions`                | Daily 3:00         | retention   |
+| `cleanup-carts`                   | Daily 3:30         | retention   |
+| `cleanup-pending-orders`          | Daily 4:30         | revenue     |
+| `process-account-deletions`       | Daily 5:00         | RGPD        |
+| `reconcile-voided-invoices`       | Daily 7:00         | e-invoicing |
+| `send-review-requests`            | Daily 10:00        | engagement  |
+| `alert-stuck-orders`              | Weekly Monday 9:00 | monitoring  |
+| `refresh-stale-directory-entries` | Monthly 1st 6:00   | e-invoicing |
+| `cleanup-webhook-events`          | Monthly 1st 7:00   | retention   |
+| `hard-delete-retention`           | Monthly 1st 8:00   | RGPD        |
+| `cleanup-orphan-media`            | Monthly 1st 9:00   | retention   |
 
 ### Other API Routes
 
@@ -325,9 +337,17 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ## Emails
 
-26 transactional email templates in `emails/` using React Email + Resend.
+16 templates React Email + Resend (dont 1 polyvalent `AdminAlertEmail` couvrant 8+ sous-types).
 
-Templates: order confirmation, shipping, delivery, cancellation, return, payment failed, refund (approved/confirmed), review request/response, newsletter (confirmation/welcome), password (reset/changed), verification, customization (request/confirmation), tracking update, admin notifications (new order, invoice failed, refund failed, webhook failed).
+**Clients (14)** : order-confirmation, shipping-confirmation, tracking-update, delivery-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed, back-in-stock, review-request (9 transactionnels/marketing) + welcome, account-deletion, verification, password-reset, oauth-account-linked (5 auth/compte).
+
+**Admin (2 templates polyvalents)** : `admin-new-order-email` (toujours seul) + `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, ereporting-stuck, stuck-orders, cron, checkout).
+
+**Anti-doublon** : `idempotencyKey` Resend (24h cross-instance, ex: `admin-new-order:${orderId}`, `order-cancel:${orderId}`) + cache LRU in-process 10 min via `send-email.ts`. Pas de flag DB côté Order (KISS).
+
+**Délivrabilité** : marketing emails (back-in-stock, review-request) ont `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` (RFC 8058) + `Precedence: bulk` + `Auto-Submitted: auto-generated` (RFC 3834).
+
+**Endpoint désinscription** : `/notifications/desinscription` (token HMAC stateless) — alerte admin par email, **pas de persistance DB** ⇒ l'admin propage manuellement le retrait (limitation MVP, à itérer si volume).
 
 Config: `shared/lib/email-config.ts`. Preview: `pnpm email:dev`.
 
@@ -403,7 +423,7 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 | Art. 286 CGI — séquentialité gap-free        | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                         | ✓      |
 | Art. 289-I CGI — émission à l'encaissement   | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                     | ✓      |
 | Art. 272-I CGI — avoir post-facture          | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                             | ✓      |
-| Art. 293 B CGI — mention franchise TVA       | `generate-invoice-pdf.ts:188-197`                                                                                                                             | ✓      |
+| Art. 293 B CGI — mention franchise TVA       | `render-invoice-pdf.ts:235-242`                                                                                                                               | ✓      |
 | Art. L102 B LPF — immutabilité 10 ans        | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                       | ✓      |
 | Art. L123-22 C. com. — audit trail           | `OrderHistory` + `createOrderAuditTx`                                                                                                                         | ✓      |
 | Art. 50-0 CGI — CA à l'encaissement          | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                         | ✓      |
@@ -467,7 +487,7 @@ Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refu
 ### Conventions de tests
 
 - Fichiers : `<nom>.test.ts(x)` à côté du code ou dans `__tests__/`.
-- **Régression locked** : suffixe `<sujet>.regression.test.ts(x)` + JSDoc `@regression <slug>` en tête (cf `docs/QA.md § Regression playbook`). 2 régressions actives à 2026-05-18 : `webhook-concurrency.regression.test.ts` (P2002 race) + `link-history-back.regression.test.tsx` (Vaul `<DrawerClose asChild>` annule navigation `<Link>`).
+- **Régression locked** : suffixe `<sujet>.regression.test.ts(x)` + JSDoc `@regression <slug>` en tête. Convention : un test régression verrouille une correction de bug précise — toute modif requiert review explicite. Inventaire vivant via `grep -rn "@regression" --include="*.test.ts*"`. Exemples : `webhook-concurrency.regression.test.ts` (P2002 race), `link-history-back.regression.test.tsx` (Vaul `<DrawerClose asChild>` annule navigation `<Link>`).
 - **Integration DB** : suffixe `<nom>.integration.test.ts`, runner séparé (`vitest.integration.config.ts`), DB dédiée via `INTEGRATION_DATABASE_URL`. Import du client via `@/test/integration/prisma-client` UNIQUEMENT (jamais `@/shared/lib/prisma` → refus si URL contient "prod"/"production"). Skip silencieux si env vide.
 - **Contract Stripe** : `test/contract/stripe-events.test.ts` charge chaque fixture `test/fixtures/stripe/*.json` et vérifie shape + routing via `event-registry.dispatchEvent`. Si Stripe modifie un payload : regénérer via `stripe trigger <type> --print-json`.
 - Tags E2E : `@smoke` (flow minimal), `@critical` (paiement/auth).

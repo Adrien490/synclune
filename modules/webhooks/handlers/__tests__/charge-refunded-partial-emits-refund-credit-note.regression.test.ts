@@ -43,6 +43,9 @@ const {
 		refund: {
 			findMany: vi.fn(),
 			findFirst: vi.fn().mockResolvedValue(null),
+			// ORD-REFUND-AUDIT-007 : lookup Refund local par stripeRefundId pour
+			// aligner l'idempotencyKey email. Null par défaut → fallback charge-based.
+			findUnique: vi.fn().mockResolvedValue(null),
 		},
 	},
 	mockSyncStripeRefunds: vi.fn(),
@@ -135,7 +138,8 @@ describe("@regression charge-refunded-partial-emits-refund-credit-note — EINV-
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
-		mockSyncStripeRefunds.mockResolvedValue(undefined);
+		// ORD-STRIPE-006 : syncStripeRefunds retourne maintenant { dashboardRefundsCreated }
+		mockSyncStripeRefunds.mockResolvedValue({ dashboardRefundsCreated: [] });
 		mockIssueCreditNoteForRefund.mockResolvedValue({
 			kind: "issued",
 			creditNoteNumber: "A-2026-00042",

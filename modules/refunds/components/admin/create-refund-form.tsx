@@ -25,6 +25,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Kbd } from "@/shared/components/ui/kbd";
 import {
 	Select,
@@ -87,9 +88,12 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		});
 
 	const note = useStore(form.store, (s) => s.values.note);
+	const acceptCancelledOrder = useStore(form.store, (s) => s.values.acceptCancelledOrder);
 	const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts);
 	const fieldMeta = useStore(form.store, (s) => s.fieldMeta);
 	const isDirty = useStore(form.store, (s) => s.isDirty);
+	// ORD-REFUND-AUDIT-003 : refund sur commande déjà annulée requiert checkbox.
+	const isCancelledOrder = order.status === "CANCELLED";
 
 	const fieldErrors: ErrorSummaryField[] = [];
 	if (submissionAttempts > 0) {
@@ -254,7 +258,9 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		}
 	};
 
-	const canSubmit = canSubmitRefund(selectedItems, totalAmount, maxRefundable);
+	const canSubmit =
+		canSubmitRefund(selectedItems, totalAmount, maxRefundable) &&
+		(!isCancelledOrder || acceptCancelledOrder);
 	const restockByDefault = getDefaultRestock(reason);
 
 	return (
@@ -321,12 +327,47 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				<input type="hidden" name="reason" value={reason} />
 				<input type="hidden" name="note" value={note} />
 				<input type="hidden" name="items" value={JSON.stringify(itemsForAction)} />
+				<input
+					type="hidden"
+					name="acceptCancelledOrder"
+					value={acceptCancelledOrder ? "true" : "false"}
+				/>
 
 				{fieldErrors.length > 0 && (
 					<ErrorSummary
 						fieldErrors={fieldErrors}
 						ariaLive={totalAmount > maxRefundable ? "assertive" : "polite"}
 					/>
+				)}
+
+				{isCancelledOrder && (
+					<div
+						role="alert"
+						className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900"
+					>
+						<div className="flex-1 space-y-2">
+							<p className="text-sm font-semibold">Cette commande est annulée</p>
+							<p className="text-xs text-amber-800">
+								Le remboursement reste possible si le paiement a été capturé, mais vérifie
+								qu&apos;un voidInvoice ou un avoir n&apos;a pas déjà été émis depuis
+								l&apos;annulation.
+							</p>
+							<label
+								htmlFor="accept-cancelled-order"
+								className="mt-2 flex cursor-pointer items-center gap-2 text-xs font-medium"
+							>
+								<Checkbox
+									id="accept-cancelled-order"
+									checked={acceptCancelledOrder}
+									onCheckedChange={(checked) => {
+										haptic("selection");
+										form.setFieldValue("acceptCancelledOrder", checked === true);
+									}}
+								/>
+								<span>Je confirme vouloir rembourser cette commande annulée</span>
+							</label>
+						</div>
+					</div>
 				)}
 
 				<fieldset disabled={isPending} className="grid gap-6 lg:grid-cols-3">

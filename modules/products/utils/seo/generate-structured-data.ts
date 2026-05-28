@@ -99,7 +99,6 @@ export function generateStructuredData({
 		],
 	};
 
-	// MPN (Manufacturer Part Number) - utilise le code SKU comme référence fabricant
 	const skuCode = selectedSku?.sku ?? product.skus[0]?.sku;
 
 	// Nombre de SKUs actifs pour AggregateOffer
@@ -133,8 +132,10 @@ export function generateStructuredData({
 		},
 	};
 
-	// Price valid for 1 year — required by Google for rich results eligibility
-	const priceValidUntil = new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+	// Price valid for 90 days — Google requires a future date for rich results eligibility,
+	// short enough to force recrawl after price changes (avoids stale snippet in SERPs).
+	const PRICE_VALIDITY_DAYS = 90;
+	const priceValidUntil = new Date(Date.now() + PRICE_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
 		.toISOString()
 		.split("T")[0];
 
@@ -192,8 +193,6 @@ export function generateStructuredData({
 		description: product.description ?? `${product.title} - Bijou artisanal fait main`,
 		image: allImages.length > 0 ? allImages : mainImageObject ? [mainImageObject] : [],
 		sku: skuCode,
-		// MPN = Manufacturer Part Number (code produit du fabricant)
-		...(skuCode && { mpn: skuCode }),
 		brand: {
 			"@type": "Brand",
 			name: "Synclune",

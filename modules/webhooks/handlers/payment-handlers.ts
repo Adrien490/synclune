@@ -1,7 +1,6 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import {
-	markOrderAsPaid,
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 	markOrderAsFailed,
@@ -36,8 +35,13 @@ function resolveOrderId(metadata: Stripe.Metadata): string | undefined {
 /**
  * Handles successful payment via Payment Intent.
  *
- * New PI flow (no checkoutSessionId): processes order via processOrderFromPaymentIntent.
- * Old Checkout Session flow: only marks as paid (checkout.session.completed handles the rest).
+ * ORD-STRIPE-002 (2026-05-28) — unifié : on emprunte toujours
+ * `processOrderFromPaymentIntent` (qui décrémente le stock + clear cart + désactive
+ * SKU épuisés). L'ancien chemin "old CS flow" appelait `markOrderAsPaid` seul,
+ * qui omettait le décrément stock — bug latent si `payment_intent.succeeded`
+ * arrivait avant `checkout.session.completed` (l'ordre des webhooks Stripe
+ * n'est pas garanti). `processOrderFromPaymentIntent` est idempotent via le
+ * guard `paymentStatus === "PAID"` (checkout-order-processing.service.ts:114).
  */
 export async function handlePaymentSuccess(
 	paymentIntent: Stripe.PaymentIntent,
@@ -70,66 +74,52 @@ export async function handlePaymentSuccess(
 		}
 	}
 
-	// New PI flow: no checkoutSessionId means this PI was created directly (not via Checkout Session)
-	const isNewPIFlow = !paymentIntent.metadata.checkoutSessionId;
-
 	// Extraction du type de paiement effectif depuis Stripe (EINV-EREPORT-001).
 	// Best-effort (null si Stripe API échoue) — ne bloque pas le flow paiement.
 	const paymentMethod = (await extractPaymentMethodFromPaymentIntent(paymentIntent)) ?? undefined;
 
-	if (isNewPIFlow) {
+	try {
+		const order = await processOrderFromPaymentIntent(orderId, paymentIntent, paymentMethod);
+		// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
+		await ensureInvoiceNumberPersisted(orderId);
+		// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
+		// feature-flagged via INVOICE_ENABLE_EREPORTING — fail-closed quand
+		// la transmission DGFiP n'est pas encore configurée.
+		await recordSalesEReporting(orderId);
+		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
+		return { success: true, tasks };
+	} catch (error) {
+		logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
+			service: "webhook",
+		});
+		captureWebhookError(error, {
+			handler: "handlePaymentSuccess",
+			eventType: "payment_intent.succeeded",
+			orderId,
+			paymentIntentId: paymentIntent.id,
+		});
+		// Send immediate admin alert — payment was received but order processing failed
 		try {
-			const order = await processOrderFromPaymentIntent(orderId, paymentIntent, paymentMethod);
-			// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
-			await ensureInvoiceNumberPersisted(orderId);
-			// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
-			// feature-flagged via INVOICE_ENABLE_EREPORTING — fail-closed quand
-			// la transmission DGFiP n'est pas encore configurée.
-			await recordSalesEReporting(orderId);
-			const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
-			return { success: true, tasks };
-		} catch (error) {
-			logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
-				service: "webhook",
+			const order = await prisma.order.findFirst({
+				where: { id: orderId },
+				select: { orderNumber: true, customerEmail: true, total: true },
 			});
-			captureWebhookError(error, {
-				handler: "handlePaymentSuccess",
-				eventType: "payment_intent.succeeded",
-				orderId,
-				paymentIntentId: paymentIntent.id,
-			});
-			// Send immediate admin alert — payment was received but order processing failed
-			try {
-				const order = await prisma.order.findFirst({
-					where: { id: orderId },
-					select: { orderNumber: true, customerEmail: true, total: true },
-				});
-				if (order) {
-					await sendAdminOrderProcessingFailedAlert({
-						orderNumber: order.orderNumber,
-						customerEmail: order.customerEmail,
-						total: order.total,
-						errorMessage: error instanceof Error ? error.message : String(error),
-						paymentIntentId: paymentIntent.id,
-					});
-				}
-			} catch (alertError) {
-				logger.error("Failed to send order processing failed alert", alertError, {
-					service: "webhook",
+			if (order) {
+				await sendAdminOrderProcessingFailedAlert({
+					orderNumber: order.orderNumber,
+					customerEmail: order.customerEmail,
+					total: order.total,
+					errorMessage: error instanceof Error ? error.message : String(error),
+					paymentIntentId: paymentIntent.id,
 				});
 			}
-			throw error;
+		} catch (alertError) {
+			logger.error("Failed to send order processing failed alert", alertError, {
+				service: "webhook",
+			});
 		}
+		throw error;
 	}
-
-	// Old flow: checkout.session.completed handles everything, just mark as paid
-	await markOrderAsPaid(orderId, paymentIntent.id, paymentMethod);
-	// Génération facture eager si checkout.session.completed n'a pas encore tourné
-	// (idempotent — noop si déjà persistée par l'autre handler).
-	await ensureInvoiceNumberPersisted(orderId);
-	// E-reporting B2C — idempotent + feature-flagged (cf. recordSalesEReporting).
-	await recordSalesEReporting(orderId);
-	return { success: true };
 }
 
 /**

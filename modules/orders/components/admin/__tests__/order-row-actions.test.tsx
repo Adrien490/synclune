@@ -85,6 +85,7 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
+	Banknote: () => <svg data-testid="icon-banknote" />,
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
 	CreditCard: () => <svg data-testid="icon-credit-card" />,
 	Eye: () => <svg data-testid="icon-eye" />,

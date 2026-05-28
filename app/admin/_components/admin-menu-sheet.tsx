@@ -277,7 +277,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 									}}
 									aria-label="Effacer la recherche"
 									className={cn(
-										"text-muted-foreground/70 hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full",
+										"text-muted-foreground/70 can-hover:hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full",
 										"touch-manipulation [-webkit-tap-highlight-color:transparent] motion-safe:active:scale-[0.92]",
 										"focus-ring",
 									)}

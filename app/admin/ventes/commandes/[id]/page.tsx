@@ -45,6 +45,11 @@ const MarkAsReturnedAlertDialog = dynamic(() =>
 		(mod) => mod.MarkAsReturnedAlertDialog,
 	),
 );
+const MarkAsFullyRefundedAlertDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/mark-as-fully-refunded-alert-dialog").then(
+		(mod) => mod.MarkAsFullyRefundedAlertDialog,
+	),
+);
 const OrderNotesDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/order-notes-dialog").then(
 		(mod) => mod.OrderNotesDialog,
@@ -139,6 +144,7 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 			<MarkAsProcessingAlertDialog />
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
+			<MarkAsFullyRefundedAlertDialog />
 			<OrderNotesDialog />
 			<ResendEmailDialog />
 			<EditCustomerInfoDialog />

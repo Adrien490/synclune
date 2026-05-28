@@ -258,26 +258,11 @@ describe("HomeFaq", () => {
 		expect(link.getAttribute("href")).toBe("/retractation");
 	});
 
-	it("emits FAQPage JSON-LD with all 6 questions, inLanguage and dateModified", () => {
+	it("does NOT emit FAQPage JSON-LD (canonical on /aide#faq to avoid Google dedup ambiguity)", () => {
 		render(<HomeFaq />);
 
 		const script = document.querySelector('section#home-faq script[type="application/ld+json"]');
-		expect(script).not.toBeNull();
-
-		const json = JSON.parse(script!.innerHTML);
-		expect(json["@type"]).toBe("FAQPage");
-		expect(json["@id"]).toBe("https://synclune.fr/#faq");
-		expect(json.inLanguage).toBe("fr-FR");
-		expect(json.dateModified).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-		expect(json.mainEntity).toHaveLength(6);
-		for (const entity of json.mainEntity) {
-			expect(entity["@type"]).toBe("Question");
-			expect(typeof entity.name).toBe("string");
-			expect(entity.acceptedAnswer["@type"]).toBe("Answer");
-			expect(typeof entity.acceptedAnswer.text).toBe("string");
-			// answerText must be plain text — never includes JSX-leaked tags.
-			expect(entity.acceptedAnswer.text).not.toMatch(/<\/?strong/);
-		}
+		expect(script).toBeNull();
 	});
 
 	it("HOME_FAQ_ITEMS exposes plain answerText for SEO + ReactNode answer for UI", () => {

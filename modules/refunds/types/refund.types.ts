@@ -82,4 +82,6 @@ export interface CreateRefundFormValues {
 	reason: RefundReason;
 	note: string;
 	items: RefundItemValue[];
+	/** ORD-REFUND-AUDIT-003 : confirmation pour refund sur commande annulée */
+	acceptCancelledOrder: boolean;
 }

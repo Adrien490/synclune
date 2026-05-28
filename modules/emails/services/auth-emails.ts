@@ -2,6 +2,7 @@ import { VerificationEmail } from "@/emails/verification-email";
 import { PasswordResetEmail } from "@/emails/password-reset-email";
 import { AccountDeletionEmail } from "@/emails/account-deletion-email";
 import { WelcomeEmail } from "@/emails/welcome-email";
+import { OAuthAccountLinkedEmail } from "@/emails/oauth-account-linked-email";
 import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -57,6 +58,29 @@ export async function sendWelcomeEmail({
 	return renderAndSend(WelcomeEmail({ userName, shopUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.WELCOME,
+		replyTo: EMAIL_CONTACT,
+		tags: [{ name: "category", value: "auth" }],
+	});
+}
+
+/**
+ * Notifie l'utilisateur qu'un compte OAuth (Google, …) a été lié à son compte
+ * Synclune existant. Sert de défense en profondeur contre un account-takeover
+ * via OAuth account linking (Better Auth `trustedProviders`).
+ */
+export async function sendOAuthAccountLinkedEmail({
+	to,
+	userName,
+	providerName,
+}: {
+	to: string;
+	userName: string;
+	providerName: string;
+}): Promise<EmailResult> {
+	const supportUrl = buildUrl("/contact");
+	return renderAndSend(OAuthAccountLinkedEmail({ providerName, userName, supportUrl }), {
+		to,
+		subject: EMAIL_SUBJECTS.OAUTH_ACCOUNT_LINKED,
 		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
 	});

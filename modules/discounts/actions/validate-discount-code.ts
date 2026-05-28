@@ -17,6 +17,7 @@ import { checkDiscountEligibility } from "../services/discount-eligibility.servi
 import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCart } from "@/modules/cart/data/get-cart";
+import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type {
 	ValidateDiscountCodeReturn,
 	DiscountApplicationContext,
@@ -142,8 +143,12 @@ export async function validateDiscountCode(
 		const userId = session?.user.id;
 		const sessionEmail = session?.user.email ?? undefined;
 
-		// Use session email if available, fallback to provided guest email
-		const effectiveEmail = sessionEmail ?? customerEmail;
+		// Use session email if available, fallback to provided guest email.
+		// Normalize (lowercase + trim) to align with confirm-checkout +
+		// order-creation, preventing trivial guest bypass of maxUsagePerUser
+		// via casing/whitespace (cf [[CHECKOUT-AUDIT-003]]).
+		const rawEffectiveEmail = sessionEmail ?? customerEmail;
+		const effectiveEmail = rawEffectiveEmail ? normalizeEmail(rawEffectiveEmail) : undefined;
 
 		// Fetch cart server-side to compute subtotal (never trust client-provided value)
 		const cart = await getCart();

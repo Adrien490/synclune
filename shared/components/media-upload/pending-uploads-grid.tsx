@@ -13,7 +13,7 @@ import {
 } from "@/modules/media/hooks/use-video-thumbnail";
 import { cn } from "@/shared/utils/cn";
 import { Loader2, Play, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { DragDropProvider, KeyboardSensor, PointerSensor, type DragEndEvent } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { PointerActivationConstraints } from "@dnd-kit/dom";
@@ -63,19 +63,16 @@ export function PendingUploadsGrid({
 	const isMobile = useIsMobile();
 	const isTouchDevice = useIsTouchDevice();
 
-	// Object URLs computed in render — revoked on cleanup to avoid memory leaks
-	const previews = useMemo(
-		() =>
-			files.map((file) => {
-				if (!file.type.startsWith("image/")) return "";
-				try {
-					return URL.createObjectURL(file);
-				} catch {
-					return "";
-				}
-			}),
-		[files],
-	);
+	// Object URLs computed in render — revoked on cleanup to avoid memory leaks.
+	// React Compiler memoizes this expression based on `files` identity.
+	const previews = files.map((file) => {
+		if (!file.type.startsWith("image/")) return "";
+		try {
+			return URL.createObjectURL(file);
+		} catch {
+			return "";
+		}
+	});
 
 	useEffect(() => {
 		return () => {

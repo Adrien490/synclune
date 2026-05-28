@@ -21,6 +21,7 @@ import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { logger } from "@/shared/lib/logger";
+import { normalizeEmail } from "@/shared/utils/normalize-email";
 import Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
 
@@ -102,9 +103,10 @@ export async function confirmCheckout(
 				};
 			}
 
-			// 4. Resolve email
-			const finalEmail = v.email ?? userEmail;
-			if (!finalEmail) {
+			// 4. Resolve email (normalize so Order.customerEmail and downstream
+			// discount per-user counts stay consistent — cf [[CHECKOUT-AUDIT-003]])
+			const rawFinalEmail = v.email ?? userEmail;
+			if (!rawFinalEmail) {
 				return {
 					success: false,
 					error: userId
@@ -112,6 +114,7 @@ export async function confirmCheckout(
 						: "L'email est requis pour une commande invité.",
 				};
 			}
+			const finalEmail = normalizeEmail(rawFinalEmail);
 
 			const { firstName, lastName } = parseFullName(v.shippingAddress.fullName);
 

@@ -6,11 +6,11 @@ import type { SearchAddressResult } from "@/modules/addresses/types/search-addre
 // Mocks
 // ============================================================================
 
-vi.mock("@/modules/addresses/data/search-address", () => ({
+vi.mock("@/modules/addresses/actions/search-address", () => ({
 	searchAddressForCheckout: vi.fn(),
 }));
 
-import { searchAddressForCheckout } from "@/modules/addresses/data/search-address";
+import { searchAddressForCheckout } from "@/modules/addresses/actions/search-address";
 import { useAddressAutocomplete } from "../use-address-autocomplete";
 
 // ============================================================================

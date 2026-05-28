@@ -132,10 +132,15 @@ const validatedData = {
 		compareAtPriceEuros: undefined,
 		inventory: 15,
 		isActive: true,
-		colorId: "",
-		materialId: "",
+		colorIds: [],
+		materialIds: [],
 		size: "",
-		media: [],
+		media: [
+			{
+				url: "https://utfs.io/f/test.webp",
+				mediaType: "IMAGE" as const,
+			},
+		],
 	},
 };
 
@@ -159,14 +164,28 @@ describe("updateProduct", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
+		// findUnique charge maintenant title + skus pour permettre la validation publication
+		// sans seconde requete (cf. update-product.ts:84-114).
 		mockPrisma.product.findUnique.mockResolvedValue({
 			id: VALID_CUID,
+			title: "Bracelet Lune Updated",
 			slug: "bracelet-lune",
 			status: "PUBLIC",
 			collections: [{ collectionId: "col_1", collection: { slug: "col-slug" } }],
-			_count: { skus: 1 },
+			skus: [
+				{
+					id: "sku_1",
+					isActive: true,
+					inventory: 15,
+					images: [{ id: "img_1" }],
+				},
+			],
 		});
-		mockPrisma.productSku.findFirst.mockResolvedValue({ id: "sku_1" });
+		mockPrisma.productSku.findFirst.mockResolvedValue({
+			id: "sku_1",
+			isDefault: true,
+			isActive: true,
+		});
 		mockPrisma.product.update.mockResolvedValue({
 			id: VALID_CUID,
 			title: "Bracelet Lune Updated",

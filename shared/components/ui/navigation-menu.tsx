@@ -55,7 +55,7 @@ function NavigationMenuItem({
 }
 
 const navigationMenuTriggerStyle =
-	"group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-ring/50 outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1";
+	"group inline-flex h-9 w-max items-center justify-center rounded-md bg-transparent px-4 py-2 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 transition-[color,box-shadow] focus-ring";
 
 function NavigationMenuTrigger({
 	className,
@@ -128,7 +128,7 @@ function NavigationMenuLink({
 		<NavigationMenuPrimitive.Link
 			data-slot="navigation-menu-link"
 			className={cn(
-				"focus-visible:ring-ring/50 [&_svg:not([class*='text-'])]:text-muted-foreground flex flex-col gap-1 rounded-none p-2 text-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:outline-1 [&_svg:not([class*='size-'])]:size-4",
+				"[&_svg:not([class*='text-'])]:text-muted-foreground focus-ring flex flex-col gap-1 rounded-none p-2 text-sm transition-all [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}

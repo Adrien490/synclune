@@ -87,16 +87,17 @@ export async function retryFailedRefund(
 		// P0.2: incrémente `attemptCount` pour que processRefund génère une
 		// nouvelle clé d'idempotence Stripe (sinon Stripe rejoue la réponse
 		// d'erreur cachée pendant 24h).
-		// On efface aussi `stripeRefundId` : la précédente tentative n'a pas
-		// créé de refund Stripe valide (status = FAILED), donc l'anchor doit
-		// être réinitialisé pour permettre une vraie nouvelle attempt.
+		// ORD-REFUND-AUDIT-002 : NE PAS clear stripeRefundId. La rotation
+		// attemptCount produit déjà une nouvelle clé d'idempotence Stripe
+		// (refund_<id>_<n+1>) qui force un nouveau re.id Stripe. Garder l'anchor
+		// préserve la traçabilité reconcile et évite un double-débit théorique
+		// si le refund Stripe précédent était en réalité encore en `pending`.
 		await prisma.$transaction(async (tx) => {
 			const updated = await tx.refund.updateMany({
 				where: { id, status: RefundStatus.FAILED },
 				data: {
 					status: RefundStatus.APPROVED,
 					failureReason: null,
-					stripeRefundId: null,
 					attemptCount: { increment: 1 },
 				},
 			});

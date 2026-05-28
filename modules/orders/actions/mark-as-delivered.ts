@@ -16,7 +16,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
-import { createOrderAuditTx } from "../utils/order-audit";
+import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsDelivered } from "../services/order-status-validation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -89,6 +89,9 @@ export async function markAsDelivered(
 				},
 			});
 
+			// ORD-BIZ-012 : `emailRequested` capture l'intention admin (case cochée
+			// dans le dialog). Le résultat réel de l'envoi (post-commit) est tracé
+			// via une 2e entrée OrderHistory si l'email échoue (voir post-commit).
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "DELIVERED",
@@ -101,7 +104,7 @@ export async function markAsDelivered(
 				source: HistorySource.ADMIN,
 				metadata: {
 					deliveryDate: deliveryDate.toISOString(),
-					emailSent: validated.data.sendEmail,
+					emailRequested: validated.data.sendEmail,
 				},
 			});
 
@@ -158,11 +161,27 @@ export async function markAsDelivered(
 					customerName: customerFirstName,
 					deliveryDate: deliveryDateStr,
 					orderDetailsUrl,
+					// EMAIL-AUDIT-003 : dedup Resend 24h contre double-clic admin.
+					idempotencyKey: `order-delivered:${order.id}`,
 				});
 				emailSent = true;
 			} catch (emailError) {
 				logger.error("Échec envoi email livraison", emailError, { action: "mark-as-delivered" });
 			}
+		}
+
+		// ORD-BIZ-012 : trace post-commit du résultat réel de l'envoi email
+		// (si demandé) pour distinguer l'intention (audit initial) du fait.
+		if (validated.data.sendEmail && !emailSent && order.customerEmail) {
+			await createOrderAudit({
+				orderId: order.id,
+				action: "DELIVERED",
+				note: "Email de confirmation de livraison non envoyé (échec Resend ou client sans email)",
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Admin",
+				source: HistorySource.SYSTEM,
+				metadata: { emailDeliveryFailed: true, postCommit: true },
+			});
 		}
 
 		const emailMessage = emailSent

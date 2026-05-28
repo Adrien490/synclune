@@ -93,6 +93,7 @@ export function buildPostCheckoutTasks(
 	tasks.push({
 		type: "ADMIN_NEW_ORDER_EMAIL",
 		data: {
+			orderId: order.id,
 			orderNumber: order.orderNumber,
 			customerName:
 				`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client",
@@ -209,6 +210,7 @@ export function buildPostCheckoutTasksFromPI(
 	tasks.push({
 		type: "ADMIN_NEW_ORDER_EMAIL",
 		data: {
+			orderId: order.id,
 			orderNumber: order.orderNumber,
 			customerName: orderCustomerName,
 			customerEmail: customerEmail ?? "Email non disponible",

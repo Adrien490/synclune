@@ -76,7 +76,10 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 vi.mock("../../services/order-status-validation.service", () => ({
 	canMarkAsShipped: mockCanMarkAsShipped,
 }));
-vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
+	createOrderAudit: vi.fn(),
+}));
 vi.mock("@/modules/orders/utils/carrier.utils", () => ({
 	getCarrierLabel: mockGetCarrierLabel,
 	getTrackingUrl: mockGetTrackingUrl,

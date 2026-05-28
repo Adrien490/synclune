@@ -47,7 +47,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 						variant="ghost"
 						size="sm"
 						onClick={handleEdit}
-						className="min-h-11 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9"
+						className="min-h-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9"
 					>
 						<Pencil className="size-4" aria-hidden="true" />
 						Modifier

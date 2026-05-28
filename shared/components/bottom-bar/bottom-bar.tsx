@@ -19,9 +19,9 @@ export const bottomBarItemClass = cn(
 	"h-full min-h-14 min-w-16",
 	"transition-colors duration-200",
 	"active:scale-[0.98] active:bg-primary/10",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+	"focus-ring",
 	"relative",
-	"text-muted-foreground hover:text-foreground",
+	"text-muted-foreground can-hover:hover:text-foreground",
 );
 
 /**
@@ -72,7 +72,7 @@ export const bottomBarBadgeClass = cn(
 export function ActiveDot() {
 	return (
 		<span
-			className="bg-primary animate-in zoom-in-50 absolute -top-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full duration-200"
+			className="bg-primary motion-safe:animate-in motion-safe:zoom-in-50 absolute -top-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full duration-200"
 			aria-hidden="true"
 		/>
 	);

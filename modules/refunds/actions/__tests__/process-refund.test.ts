@@ -23,6 +23,9 @@ const {
 		refund: { update: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		order: { update: vi.fn() },
+		// ORD-STRIPE-007 : dispute.findFirst utilisé dans Step 1 pour bloquer le
+		// processRefund SAGA si un dispute Stripe est ouvert sur la commande.
+		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
 	};
 
 	return {
@@ -104,6 +107,20 @@ vi.mock("../../lib/stripe-refund", () => ({
 
 vi.mock("@/modules/emails/services/refund-emails", () => ({
 	sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
+}));
+
+// ORD-STRIPE-005 : process-refund passe par sendRefundConfirmationOnce qui
+// wrappe sendRefundConfirmationEmail. On délègue le mock vers la version legacy
+// pour préserver les assertions existantes sur l'envoi/échec.
+vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
+	sendRefundConfirmationOnce: vi.fn(async (args: Record<string, unknown>) => {
+		try {
+			await mockSendRefundConfirmationEmail(args);
+			return { sent: true, skipped: false };
+		} catch (e) {
+			throw e;
+		}
+	}),
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -680,7 +697,9 @@ describe("processRefund", () => {
 				data: expect.objectContaining({
 					orderId: "order-1",
 					content: expect.stringContaining("SMTP down"),
-					authorId: "system",
+					// ORD-STRIPE-008 : on utilise désormais SYSTEM_AUTHOR_ID
+					// (constante UUID v4 nil-like) au lieu du litéral "system".
+					authorId: "00000000-0000-0000-0000-000000000000",
 				}),
 			}),
 		);

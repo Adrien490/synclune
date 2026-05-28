@@ -1,13 +1,17 @@
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
+
+const CRON_JOB = "cleanup-sessions";
 
 interface SessionCleanupBreakdown {
 	sessionsDeleted: number;
 	verificationsDeleted: number;
 	accessTokensCleared: number;
 	refreshTokensCleared: number;
+	errored: number;
 	hasMore: boolean;
 }
 
@@ -15,7 +19,7 @@ function buildResult(b: SessionCleanupBreakdown): CronResult {
 	const tokensCleared = b.accessTokensCleared + b.refreshTokensCleared;
 	return {
 		processed: b.sessionsDeleted + b.verificationsDeleted + tokensCleared,
-		errored: 0,
+		errored: b.errored,
 		skipped: 0,
 		sessionsDeleted: b.sessionsDeleted,
 		verificationsDeleted: b.verificationsDeleted,
@@ -24,6 +28,16 @@ function buildResult(b: SessionCleanupBreakdown): CronResult {
 		tokensCleared,
 		hasMore: b.hasMore,
 	};
+}
+
+function captureStepError(error: unknown, step: string): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("cronJob", CRON_JOB);
+		scope.setTag("step", step);
+		scope.setLevel("error");
+		scope.setFingerprint(["cron", CRON_JOB, step]);
+		Sentry.captureException(error);
+	});
 }
 
 /**
@@ -38,7 +52,7 @@ function checkDeadlineOrReturn(
 ): CronResult | null {
 	if (Date.now() > deadline) {
 		logger.warn(`Approaching timeout, stopping after ${afterStep}`, {
-			cronJob: "cleanup-sessions",
+			cronJob: CRON_JOB,
 		});
 		return buildResult({ ...current, hasMore: true });
 	}
@@ -64,12 +78,17 @@ export async function cleanupExpiredSessions(): Promise<CronResult> {
 	let verificationsDeleted = 0;
 	let accessTokensCleared = 0;
 	let refreshTokensCleared = 0;
+	let errored = 0;
 	let hasMore = false;
 
-	logger.info("Starting expired sessions cleanup", { cronJob: "cleanup-sessions" });
+	logger.info("Starting expired sessions cleanup", { cronJob: CRON_JOB });
 
+	// OPS-AUDIT-005 : per-step try/catch preserves partial counts when a later
+	// phase fails, so the admin alert reports "3 phases ok + 1 errored" instead
+	// of a 500 that loses the deleted counts.
+
+	// 1. Delete expired sessions (bounded)
 	try {
-		// 1. Delete expired sessions (bounded)
 		const sessionsToDelete = await prisma.session.findMany({
 			where: { expiresAt: { lt: now } },
 			select: { id: true },
@@ -82,25 +101,32 @@ export async function cleanupExpiredSessions(): Promise<CronResult> {
 
 		sessionsDeleted = sessionsResult.count;
 
-		logger.info("Deleted expired sessions", { cronJob: "cleanup-sessions", sessionsDeleted });
+		logger.info("Deleted expired sessions", { cronJob: CRON_JOB, sessionsDeleted });
 
 		if (sessionsToDelete.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
 			logger.warn("Session delete limit reached, remaining will be cleaned on next run", {
-				cronJob: "cleanup-sessions",
+				cronJob: CRON_JOB,
 			});
 		}
+	} catch (error) {
+		logger.error("Error deleting expired sessions", error, { cronJob: CRON_JOB });
+		captureStepError(error, "sessions");
+		errored++;
+	}
 
-		// 2. Delete expired verification tokens (bounded)
-		const afterSessionsBail = checkDeadlineOrReturn(deadline, "sessions", {
-			sessionsDeleted,
-			verificationsDeleted: 0,
-			accessTokensCleared: 0,
-			refreshTokensCleared: 0,
-			hasMore,
-		});
-		if (afterSessionsBail) return afterSessionsBail;
+	// 2. Delete expired verification tokens (bounded)
+	const afterSessionsBail = checkDeadlineOrReturn(deadline, "sessions", {
+		sessionsDeleted,
+		verificationsDeleted: 0,
+		accessTokensCleared: 0,
+		refreshTokensCleared: 0,
+		errored,
+		hasMore,
+	});
+	if (afterSessionsBail) return afterSessionsBail;
 
+	try {
 		const verificationsToDelete = await prisma.verification.findMany({
 			where: { expiresAt: { lt: now } },
 			select: { id: true },
@@ -114,24 +140,31 @@ export async function cleanupExpiredSessions(): Promise<CronResult> {
 		verificationsDeleted = verificationsResult.count;
 
 		logger.info("Deleted expired verifications", {
-			cronJob: "cleanup-sessions",
+			cronJob: CRON_JOB,
 			verificationsDeleted,
 		});
 
 		if (verificationsToDelete.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
 		}
+	} catch (error) {
+		logger.error("Error deleting verifications", error, { cronJob: CRON_JOB });
+		captureStepError(error, "verifications");
+		errored++;
+	}
 
-		// 3. Clear expired access tokens (short-lived, don't touch refresh tokens)
-		const afterVerificationsBail = checkDeadlineOrReturn(deadline, "verifications", {
-			sessionsDeleted,
-			verificationsDeleted,
-			accessTokensCleared: 0,
-			refreshTokensCleared: 0,
-			hasMore,
-		});
-		if (afterVerificationsBail) return afterVerificationsBail;
+	// 3. Clear expired access tokens (short-lived, don't touch refresh tokens)
+	const afterVerificationsBail = checkDeadlineOrReturn(deadline, "verifications", {
+		sessionsDeleted,
+		verificationsDeleted,
+		accessTokensCleared: 0,
+		refreshTokensCleared: 0,
+		errored,
+		hasMore,
+	});
+	if (afterVerificationsBail) return afterVerificationsBail;
 
+	try {
 		const expiredAccessTokens = await prisma.account.findMany({
 			where: { accessTokenExpiresAt: { lt: now } },
 			select: { id: true },
@@ -151,17 +184,24 @@ export async function cleanupExpiredSessions(): Promise<CronResult> {
 		if (expiredAccessTokens.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
 		}
+	} catch (error) {
+		logger.error("Error clearing access tokens", error, { cronJob: CRON_JOB });
+		captureStepError(error, "access-tokens");
+		errored++;
+	}
 
-		// 4. Clear expired refresh tokens (long-lived, separate from access tokens)
-		const afterAccessTokensBail = checkDeadlineOrReturn(deadline, "access tokens", {
-			sessionsDeleted,
-			verificationsDeleted,
-			accessTokensCleared,
-			refreshTokensCleared: 0,
-			hasMore,
-		});
-		if (afterAccessTokensBail) return afterAccessTokensBail;
+	// 4. Clear expired refresh tokens (long-lived, separate from access tokens)
+	const afterAccessTokensBail = checkDeadlineOrReturn(deadline, "access tokens", {
+		sessionsDeleted,
+		verificationsDeleted,
+		accessTokensCleared,
+		refreshTokensCleared: 0,
+		errored,
+		hasMore,
+	});
+	if (afterAccessTokensBail) return afterAccessTokensBail;
 
+	try {
 		const expiredRefreshTokens = await prisma.account.findMany({
 			where: { refreshTokenExpiresAt: { lt: now } },
 			select: { id: true },
@@ -181,24 +221,26 @@ export async function cleanupExpiredSessions(): Promise<CronResult> {
 		if (expiredRefreshTokens.length === CLEANUP_DELETE_LIMIT) {
 			hasMore = true;
 		}
-
-		logger.info("Cleared expired tokens", {
-			cronJob: "cleanup-sessions",
-			accessTokensCleared,
-			refreshTokensCleared,
-		});
-
-		logger.info("Cleanup completed", { cronJob: "cleanup-sessions" });
-
-		return buildResult({
-			sessionsDeleted,
-			verificationsDeleted,
-			accessTokensCleared,
-			refreshTokensCleared,
-			hasMore,
-		});
 	} catch (error) {
-		logger.error("Error during cleanup", error, { cronJob: "cleanup-sessions" });
-		throw error;
+		logger.error("Error clearing refresh tokens", error, { cronJob: CRON_JOB });
+		captureStepError(error, "refresh-tokens");
+		errored++;
 	}
+
+	logger.info("Cleared expired tokens", {
+		cronJob: CRON_JOB,
+		accessTokensCleared,
+		refreshTokensCleared,
+	});
+
+	logger.info("Cleanup completed", { cronJob: CRON_JOB, errored });
+
+	return buildResult({
+		sessionsDeleted,
+		verificationsDeleted,
+		accessTokensCleared,
+		refreshTokensCleared,
+		errored,
+		hasMore,
+	});
 }

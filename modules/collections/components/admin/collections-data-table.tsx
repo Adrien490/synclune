@@ -54,7 +54,7 @@ export async function CollectionsDataTable({
 	perPage,
 	hasActiveFilters,
 }: CollectionsDataTableProps) {
-	const { collections, pagination } = await collectionsPromise;
+	const { collections, pagination, totalCount } = await collectionsPromise;
 
 	// Helper pour tronquer la description
 	const truncateDescription = (description: string | null, maxLength = 100) => {
@@ -91,6 +91,7 @@ export async function CollectionsDataTable({
 				currentPageSize: collections.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<CollectionsBulkActionsBar />}
 		>

@@ -14,6 +14,8 @@ interface AdminDataTablePagination {
 	currentPageSize: number;
 	nextCursor: string | null;
 	prevCursor: string | null;
+	/** Total cross-pages — affiche "X sur N résultats" quand fourni. */
+	totalCount?: number;
 }
 
 interface AdminDataTableProps {
@@ -95,6 +97,7 @@ export function AdminDataTable({
 							currentPageSize={pagination.currentPageSize}
 							nextCursor={pagination.nextCursor}
 							prevCursor={pagination.prevCursor}
+							totalCount={pagination.totalCount}
 						/>
 					</div>
 				</BulkSelectionProvider>

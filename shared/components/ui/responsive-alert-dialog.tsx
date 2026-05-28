@@ -68,10 +68,8 @@ type RootProps = {
  * déclenché au tap.
  */
 function ResponsiveAlertDialog({ open, onOpenChange, children, tone = "neutral" }: RootProps) {
-	const value = React.useMemo(() => ({ tone }), [tone]);
-
 	return (
-		<Ctx.Provider value={value}>
+		<Ctx.Provider value={{ tone }}>
 			<AlertDialog open={open} onOpenChange={onOpenChange}>
 				{children}
 			</AlertDialog>

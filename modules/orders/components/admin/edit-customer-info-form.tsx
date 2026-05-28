@@ -1,5 +1,19 @@
 "use client";
 
+/**
+ * Formulaire d'edition des infos client (email, nom, telephone).
+ *
+ * Pattern dual : utilise a la fois en dialog modal
+ * (`edit-customer-info-dialog.tsx`) ET en page inline
+ * (`app/admin/ventes/commandes/[id]/client/page.tsx`). Le `redirectOnSuccess`
+ * prop permet a la page inline de revenir au detail commande apres submit ;
+ * le dialog passe `onSuccess` pour fermer la modale a la place.
+ *
+ * Les regles "ne pas editer si facture deja generee" sont enforcees a la
+ * fois par la page inline (`InvoiceStatus` gate) ET par la Server Action
+ * `updateOrderCustomerInfo`. Si tu modifies les conditions d'edition, fais
+ * les deux. Cf. ORD-MAP-002 (audit cartographie 2026-05-28).
+ */
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

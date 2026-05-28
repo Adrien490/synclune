@@ -1,9 +1,11 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
 	OrderAction,
 	PaymentStatus,
+	type RefundReason,
 	RefundStatus,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
@@ -21,7 +23,8 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
-import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
+import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
@@ -136,6 +139,20 @@ export async function processRefund(
 			// Vérifier qu'on a un ID de paiement Stripe
 			if (!refund.stripe_payment_intent_id) {
 				throw new Error("NO_CHARGE_ID");
+			}
+
+			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
+			// commande. Sans ce guard, le refund admin + le chargeback Stripe
+			// peuvent cumuler → double dépense côté merchant.
+			const openDispute = await tx.dispute.findFirst({
+				where: {
+					orderId: refund.order_id,
+					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
+				},
+				select: { id: true },
+			});
+			if (openDispute) {
+				throw new Error("OPEN_DISPUTE");
 			}
 
 			// Récupérer les items du remboursement
@@ -293,6 +310,9 @@ export async function processRefund(
 		}
 		// P2.1: compteur réel mis à jour quand l'update réussit
 		let actualRestockedCount = 0;
+		// ORD-REFUND-AUDIT-001 : tracer les SKU manqués (catalogue refactor /
+		// soft-delete entre create et process) pour audit forensic + alerte Sentry.
+		let skippedRestocks: Array<{ skuId: string; qty: number }> = [];
 
 		try {
 			await prisma.$transaction(async (tx) => {
@@ -313,22 +333,32 @@ export async function processRefund(
 				}
 
 				// 2. Restaurer le stock pour les articles avec restock=true (parallèle)
+				// ORD-REFUND-AUDIT-001 : tracer les SKU manqués pour audit + alerte
+				// Sentry. Un SKU supprimé entre création refund et processing →
+				// inventory ghost silencieux sans cette traçabilité.
 				const restockResults = await Promise.all(
-					Array.from(restockBySkuId.entries()).map(([skuId, qty]) =>
-						tx.productSku
-							.update({
+					Array.from(restockBySkuId.entries()).map(async ([skuId, qty]) => {
+						try {
+							await tx.productSku.update({
 								where: { id: skuId },
 								data: { inventory: { increment: qty } },
-							})
-							.then(() => true)
-							.catch(() => {
-								// SKU may have been deleted between refund creation and processing
-								logger.warn(`SKU ${skuId} not found, skipping restock`);
-								return false;
-							}),
-					),
+							});
+							return { skuId, qty, ok: true } as const;
+						} catch {
+							return { skuId, qty, ok: false } as const;
+						}
+					}),
 				);
-				actualRestockedCount = restockResults.filter(Boolean).length;
+				skippedRestocks = restockResults
+					.filter((r) => !r.ok)
+					.map((s) => ({ skuId: s.skuId, qty: s.qty }));
+				actualRestockedCount = restockResults.length - skippedRestocks.length;
+				if (skippedRestocks.length > 0) {
+					logger.warn(
+						`Refund ${id} — ${skippedRestocks.length} SKU restock skipped (deleted SKUs)`,
+						{ refundId: id, skipped: skippedRestocks },
+					);
+				}
 
 				// 3. Calculer si la commande est totalement ou partiellement remboursée
 				const totalRefundedAfter = refundData.totalRefundedBefore + refundData.refund.amount;
@@ -350,6 +380,8 @@ export async function processRefund(
 				}
 
 				// ORD-REFUND-001: audit trail conformité L123-22
+				// ORD-REFUND-AUDIT-001 : metadata enrichie avec skippedRestocks pour
+				// audit forensic (catalogue refactor, SKU archivé entre create et process).
 				await createOrderAuditTx(tx, {
 					orderId: refundData.refund.order_id,
 					action: OrderAction.REFUND_COMPLETED,
@@ -365,10 +397,36 @@ export async function processRefund(
 						stripeRefundId: stripeResult.refundId,
 						totalRefunded: totalRefundedAfter,
 						orderTotal: refundData.refund.order_total,
-						restockedSkuCount: restockBySkuId.size,
+						restockedSkuCount: actualRestockedCount,
+						requestedRestockSkuCount: restockBySkuId.size,
+						...(skippedRestocks.length > 0 && {
+							skippedRestocks: skippedRestocks.map((s) => ({ skuId: s.skuId, qty: s.qty })),
+						}),
 					},
 				});
 			});
+
+			// ORD-REFUND-AUDIT-001 : alerte Sentry pour rattrapage manuel admin.
+			// Stock perdu silencieux (catalogue refactor, SKU archivé) — fingerprint
+			// stable par refund + tag pour grouper dans Sentry Issues.
+			if (skippedRestocks.length > 0) {
+				Sentry.withScope((scope) => {
+					scope.setLevel("warning");
+					scope.setTag("refund-restock", "sku-missing");
+					scope.setFingerprint(["refund-restock-skipped", id]);
+					scope.setContext("refund", {
+						refundId: id,
+						orderId: refundData.refund.order_id,
+						orderNumber: refundData.refund.order_number,
+						skippedRestocks,
+						restockedCount: actualRestockedCount,
+					});
+					Sentry.captureMessage(
+						`Refund ${id} — ${skippedRestocks.length} SKU restock skipped (deleted SKUs)`,
+						"warning",
+					);
+				});
+			}
 
 			// Invalider le cache commandes et badges (paymentStatus a changé)
 			updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -470,26 +528,28 @@ export async function processRefund(
 						refundFacts?.creditNoteNumber ?? refundFacts?.order.creditNoteNumber ?? null;
 					const invoiceNumber = refundFacts?.order.invoiceNumber ?? null;
 
-					sendRefundConfirmationEmail({
+					// ORD-STRIPE-005 : émetteur centralisé qui pose
+					// `Refund.confirmationEmailSentAt` atomiquement avant envoi.
+					// Webhook + cron skip si déjà envoyé → plus de triple-email.
+					sendRefundConfirmationOnce({
+						refundId: refundData.refund.id,
 						to: customerInfo.email,
 						orderNumber: refundData.refund.order_number,
 						customerName: customerInfo.name ?? "Client",
 						refundAmount: refundData.refund.amount,
-						reason: refundData.refund.reason,
+						// reason vient d'un raw query `r.reason::text` → cast en RefundReason
+						// (les valeurs de la BDD sont garanties dans l'enum côté Prisma).
+						reason: refundData.refund.reason as RefundReason,
 						orderDetailsUrl,
 						creditNoteNumber,
 						invoiceNumber,
-						// ORD-STRIPE-008 : dedup Resend 24h sur double-clic admin
-						// ou retry. `attempt_count` rotation pour les vrais retries
-						// après un échec Resend (besoin nouveau call).
-						idempotencyKey: `refund-confirm-${refundData.refund.id}-${refundData.refund.attempt_count}`,
 					}).catch((emailError) => {
 						prisma.orderNote
 							.create({
 								data: {
 									orderId: refundData.refund.order_id,
 									content: `[EMAIL] Échec notification confirmation remboursement (commande ${refundData.refund.order_number}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
-									authorId: "system",
+									authorId: SYSTEM_AUTHOR_ID,
 									authorName: "Système (process-refund)",
 								},
 							})
@@ -590,6 +650,11 @@ export async function processRefund(
 					return {
 						status: ActionStatus.ERROR,
 						message: REFUND_ERROR_MESSAGES.NO_CHARGE_ID,
+					};
+				case "OPEN_DISPUTE":
+					return {
+						status: ActionStatus.ERROR,
+						message: REFUND_ERROR_MESSAGES.OPEN_DISPUTE,
 					};
 			}
 		}

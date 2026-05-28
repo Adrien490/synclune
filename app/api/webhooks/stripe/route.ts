@@ -7,7 +7,10 @@ import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
-import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
+import {
+	persistPostWebhookTasks,
+	executePersistedTasksForEvent,
+} from "@/modules/webhooks/services/post-webhook-tasks.service";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
@@ -19,12 +22,33 @@ export const maxDuration = 60;
 /**
  * Webhook Stripe
  *
- * Gère les événements Stripe de manière idempotente.
- * L'idempotence est assurée par :
- * - Anti-replay via signature timestamp (constructEvent, tolerance 300s SDK Stripe)
- * - WebhookEvent model en DB (évite les doublons sur le même event.id)
- * - Order.paymentStatus === "PAID" (évite double décrémentation stock)
- * - Refund.stripeRefundId @unique (évite double remboursement)
+ * Sécurité et idempotence en couches indépendantes :
+ *
+ *  1. **Authenticité** (signature HMAC-SHA256 sur `${timestamp}.${body}` par Stripe).
+ *     `stripe.webhooks.constructEvent` rejette tout payload dont la signature
+ *     ne valide pas — clé : `STRIPE_WEBHOOK_SECRET`. Sans la clé, un attaquant
+ *     ne peut PAS forger un timestamp signé valide.
+ *
+ *  2. **Anti-replay temporel** (tolérance 300s du SDK sur le timestamp signé).
+ *     Un payload capté est rejouable PENDANT 5 minutes — au-delà, le SDK le
+ *     rejette comme "timestamp outside the tolerance zone". Les retries
+ *     légitimes de Stripe (1h/3h/6h backoff) passent car Stripe re-signe le
+ *     payload à chaque retry avec un nouveau timestamp.
+ *     ⚠️ Un attaquant qui intercepte un payload signé peut le rejouer pendant
+ *     5min — mitigé par la couche 3 ci-dessous.
+ *
+ *  3. **Anti-replay applicatif** (par `event.id`). `WebhookEvent.stripeEventId`
+ *     est UNIQUE en DB. Un même `evt_xxx` n'est traité qu'une fois (status
+ *     PROCESSING/COMPLETED/SKIPPED → skip). Couvre aussi bien :
+ *       - le replay malveillant pendant la fenêtre 5min
+ *       - les retries Stripe légitimes après timeout 200
+ *       - les doublons cross-instance Vercel (race-guard post-upsert L138-145)
+ *
+ *  4. **Idempotence métier** (downstream) :
+ *       - `Order.stripePaymentIntentId @unique` → pas de double order par PI
+ *       - `Order.paymentStatus === "PAID"` guard → pas de double décrément stock
+ *       - `Refund.stripeRefundId @unique` → pas de double refund
+ *       - Advisory locks Postgres sur la numérotation facture/avoir
  */
 export async function POST(req: Request) {
 	const correlationId = crypto.randomUUID().slice(0, 8);
@@ -167,30 +191,38 @@ export async function POST(req: Request) {
 				dispatchEvent(event),
 			);
 
-			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED
+			// 6. MARQUER COMME COMPLÉTÉ OU SKIPPED + persister les post-tasks (ORD-STRIPE-003)
+			// Atomique : si la persist échoue, l'event reste PROCESSING → retry-webhooks
+			// le repop. Si la persist réussit, les tasks survivront à un crash lambda
+			// dans le after() qui suit (cron retry-post-webhook-tasks les rattrape).
 			const finalStatus = result?.skipped
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
-			await prisma.webhookEvent.update({
-				where: { id: webhookRecord.id },
-				data: {
-					status: finalStatus,
-					processedAt: new Date(),
-				},
+			const tasks = result?.tasks ?? [];
+			await prisma.$transaction(async (tx) => {
+				await tx.webhookEvent.update({
+					where: { id: webhookRecord.id },
+					data: {
+						status: finalStatus,
+						processedAt: new Date(),
+					},
+				});
+				if (tasks.length > 0) {
+					await persistPostWebhookTasks(tx, webhookRecord.id, tasks);
+				}
 			});
 
 			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });
 
-			const tasks = result?.tasks;
-			if (tasks?.length) {
+			if (tasks.length > 0) {
 				after(async () => {
-					logger.info(`Executing ${tasks.length} post-webhook tasks`, {
+					logger.info(`Executing ${tasks.length} persisted post-webhook tasks`, {
 						correlationId,
 						eventType: event.type,
 					});
-					const stats = await executePostWebhookTasks(tasks);
-					logger.info("Post-webhook tasks completed", {
+					const stats = await executePersistedTasksForEvent(webhookRecord.id);
+					logger.info("Post-webhook tasks executed", {
 						correlationId,
 						eventType: event.type,
 						successful: stats.successful,

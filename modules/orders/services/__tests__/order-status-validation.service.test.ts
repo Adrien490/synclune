@@ -308,6 +308,32 @@ describe("getOrderPermissions", () => {
 
 		expect(permissions.canUpdateTracking).toBe(false);
 	});
+
+	it("should allow canMarkAsFullyRefunded for PAID and PARTIALLY_REFUNDED orders", () => {
+		expect(
+			getOrderPermissions({ status: "PROCESSING", paymentStatus: "PAID" }).canMarkAsFullyRefunded,
+		).toBe(true);
+		expect(
+			getOrderPermissions({ status: "SHIPPED", paymentStatus: "PARTIALLY_REFUNDED" })
+				.canMarkAsFullyRefunded,
+		).toBe(true);
+		expect(
+			getOrderPermissions({ status: "DELIVERED", paymentStatus: "PAID" }).canMarkAsFullyRefunded,
+		).toBe(true);
+	});
+
+	it("should not allow canMarkAsFullyRefunded for unpaid or already REFUNDED orders", () => {
+		expect(
+			getOrderPermissions({ status: "PENDING", paymentStatus: "PENDING" }).canMarkAsFullyRefunded,
+		).toBe(false);
+		expect(
+			getOrderPermissions({ status: "CANCELLED", paymentStatus: "REFUNDED" })
+				.canMarkAsFullyRefunded,
+		).toBe(false);
+		expect(
+			getOrderPermissions({ status: "PROCESSING", paymentStatus: "FAILED" }).canMarkAsFullyRefunded,
+		).toBe(false);
+	});
 });
 
 // ============================================================================
@@ -580,14 +606,15 @@ describe("getOrderPermissions - PARTIALLY_REFUNDED payment status", () => {
 });
 
 describe("getOrderPermissions - EXPIRED payment status", () => {
-	it("should block paid-gated permissions for PENDING + EXPIRED", () => {
+	it("should block paid-gated permissions for PENDING + EXPIRED but allow recovery via canMarkAsPaid (ORD-BIZ-004)", () => {
 		const permissions = getOrderPermissions({
 			status: "PENDING",
 			paymentStatus: "EXPIRED",
 		});
 
 		expect(permissions.canMarkAsProcessing).toBe(false);
-		expect(permissions.canMarkAsPaid).toBe(false);
+		// ORD-BIZ-004 : recovery EXPIRED → PAID autorisée
+		expect(permissions.canMarkAsPaid).toBe(true);
 		expect(permissions.canRefund).toBe(false);
 		expect(permissions.canCancel).toBe(true);
 		expect(permissions.canMarkAsShipped).toBe(false);
@@ -595,7 +622,7 @@ describe("getOrderPermissions - EXPIRED payment status", () => {
 		expect(permissions.canRevertToProcessing).toBe(false);
 	});
 
-	it("should block paid-gated permissions for PROCESSING + EXPIRED", () => {
+	it("should allow canMarkAsPaid recovery for PROCESSING + EXPIRED (ORD-BIZ-004)", () => {
 		const permissions = getOrderPermissions({
 			status: "PROCESSING",
 			paymentStatus: "EXPIRED",
@@ -603,7 +630,8 @@ describe("getOrderPermissions - EXPIRED payment status", () => {
 
 		expect(permissions.canMarkAsShipped).toBe(false);
 		expect(permissions.canRefund).toBe(false);
-		expect(permissions.canMarkAsPaid).toBe(false);
+		// ORD-BIZ-004 : recovery EXPIRED → PAID autorisée
+		expect(permissions.canMarkAsPaid).toBe(true);
 		expect(permissions.canCancel).toBe(true);
 		expect(permissions.canMarkAsDelivered).toBe(false);
 		expect(permissions.canRevertToProcessing).toBe(false);

@@ -9,6 +9,7 @@ import { createMockFormData } from "@/test/factories";
 const {
 	mockAuth,
 	mockHeaders,
+	mockEnforceRateLimit,
 	mockValidateInput,
 	mockError,
 	mockUnauthorized,
@@ -22,6 +23,7 @@ const {
 		},
 	},
 	mockHeaders: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
@@ -31,6 +33,12 @@ const {
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	AUTH_LIMITS: { LOGIN: { limit: 5, windowMs: 900000 } },
+}));
 vi.mock("next/navigation", () => ({
 	redirect: mockRedirect,
 	unstable_rethrow: mockUnstableRethrow,
@@ -72,6 +80,7 @@ describe("signInSocial", () => {
 
 		mockHeaders.mockResolvedValue(new Headers());
 		mockAuth.api.getSession.mockResolvedValue(null);
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signInSocial.mockResolvedValue({ url: "https://accounts.google.com/oauth" });
 		// Default: unstable_rethrow no-op (non-redirect errors)
@@ -195,5 +204,33 @@ describe("signInSocial", () => {
 		expect(mockAuth.api.signInSocial).toHaveBeenCalledWith(
 			expect.objectContaining({ body: expect.objectContaining({ callbackURL: "/" }) }),
 		);
+	});
+
+	/**
+	 * @regression AUTH-ADMIN-006 — `signInSocial` must rate-limit OAuth attempts
+	 * (mirror /sign-in/email LOGIN limit) to prevent enumeration via Better Auth
+	 * account-linking and DoS towards the OAuth provider.
+	 */
+	it("(AUTH-ADMIN-006) returns rate-limit error when bucket is exhausted", async () => {
+		mockEnforceRateLimit.mockResolvedValue({
+			error: {
+				status: ActionStatus.ERROR,
+				message: "Trop de requêtes. Veuillez réessayer plus tard.",
+			},
+		});
+
+		const result = await signInSocial(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockAuth.api.signInSocial).not.toHaveBeenCalled();
+	});
+
+	it("(AUTH-ADMIN-006) rate-limit runs AFTER the already-logged-in check", async () => {
+		mockAuth.api.getSession.mockResolvedValue({ user: { id: "user-1" } });
+
+		await signInSocial(undefined, validFormData);
+
+		// If user is already logged in, we don't burn a rate-limit bucket
+		expect(mockEnforceRateLimit).not.toHaveBeenCalled();
 	});
 });

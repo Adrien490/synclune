@@ -25,15 +25,17 @@ export const getProductSkuSchema = z.object({
  */
 const baseSkuFieldsSchema = z.object({
 	// Prix en euros (sera converti en centimes cote serveur)
+	// .min(0.01) plutot que .positive() pour eviter qu'un prix entre 0 et 0.005€
+	// passe le schema Zod puis echoue le CHECK DB priceInclTax > 0 (message opaque).
 	priceInclTaxEuros: z.coerce
 		.number({ error: "Le prix est requis" })
-		.positive({ error: "Le prix doit être positif" })
+		.min(0.01, { error: "Le prix doit être d'au moins 0,01 €" })
 		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
 
 	// Prix compare (optionnel, pour afficher prix barre)
 	compareAtPriceEuros: z.coerce
 		.number()
-		.positive({ error: "Le prix comparé doit être positif" })
+		.min(0.01, { error: "Le prix comparé doit être d'au moins 0,01 €" })
 		.max(PRICE_LIMITS.MAX_EUR, {
 			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
 		})
@@ -231,22 +233,26 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
  * Utilisé dans le dialog de modification rapide de prix
  * Note: Les prix sont en EUROS (convertis en centimes côté serveur)
  */
-export const updateSkuPriceSchema = z.object({
-	skuId: z.cuid2({ message: "ID variante invalide" }),
-	priceInclTaxEuros: z.coerce
-		.number()
-		.positive({ error: "Le prix doit être supérieur à 0" })
-		.max(PRICE_LIMITS.MAX_EUR, { error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €` }),
-	compareAtPriceEuros: z.coerce
-		.number()
-		.positive({ error: "Le prix comparé doit être positif" })
-		.max(PRICE_LIMITS.MAX_EUR, {
-			error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
-		})
-		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
-});
+export const updateSkuPriceSchema = z
+	.object({
+		skuId: z.cuid2({ message: "ID variante invalide" }),
+		priceInclTaxEuros: z.coerce
+			.number()
+			.min(0.01, { error: "Le prix doit être d'au moins 0,01 €" })
+			.max(PRICE_LIMITS.MAX_EUR, {
+				error: `Le prix ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
+			}),
+		compareAtPriceEuros: z.coerce
+			.number()
+			.min(0.01, { error: "Le prix comparé doit être d'au moins 0,01 €" })
+			.max(PRICE_LIMITS.MAX_EUR, {
+				error: `Le prix comparé ne peut pas dépasser ${PRICE_LIMITS.MAX_EUR} €`,
+			})
+			.optional()
+			.or(z.literal(""))
+			.transform((val) => (val === "" ? undefined : val)),
+	})
+	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
 
 /**
  * Schema pour l'ajustement de stock d'un SKU

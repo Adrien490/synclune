@@ -19,7 +19,7 @@ export function SectionCtaLink({
 	children,
 	"aria-describedby": ariaDescribedBy,
 	variant = "outline",
-	className = "ease-out hover:shadow-md motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
+	className = "shadow-sm ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 }: SectionCtaLinkProps) {
 	return (
 		<Button asChild size="lg" variant={variant} className={className}>

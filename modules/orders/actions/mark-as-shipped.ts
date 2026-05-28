@@ -27,7 +27,7 @@ import { logger } from "@/shared/lib/logger";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
-import { createOrderAuditTx } from "../utils/order-audit";
+import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsShipped } from "../services/order-status-validation.service";
 
@@ -121,6 +121,9 @@ export async function markAsShipped(
 				},
 			});
 
+			// ORD-BIZ-012 : `emailRequested` capture l'intention admin (case cochée
+			// dans le dialog). Le résultat réel de l'envoi (post-commit) est tracé
+			// via une 2e entrée OrderHistory si l'email échoue (voir post-commit).
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "SHIPPED",
@@ -135,7 +138,7 @@ export async function markAsShipped(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier,
-					emailSent: validated.data.sendEmail,
+					emailRequested: validated.data.sendEmail,
 				},
 			});
 
@@ -186,11 +189,27 @@ export async function markAsShipped(
 						city: order.shippingCity || "",
 						country: order.shippingCountry || "France",
 					},
+					// EMAIL-AUDIT-003 : dedup Resend 24h contre double-clic admin.
+					idempotencyKey: `order-shipped:${order.id}`,
 				});
 				emailSent = true;
 			} catch (emailError) {
 				logger.error("Échec envoi email", emailError, { action: "mark-as-shipped" });
 			}
+		}
+
+		// ORD-BIZ-012 : trace post-commit du résultat réel de l'envoi email
+		// (si demandé) pour distinguer l'intention (audit initial) du fait.
+		if (validated.data.sendEmail && !emailSent && order.customerEmail) {
+			await createOrderAudit({
+				orderId: order.id,
+				action: "SHIPPED",
+				note: "Email de confirmation d'expédition non envoyé (échec Resend ou client sans email)",
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Admin",
+				source: HistorySource.SYSTEM,
+				metadata: { emailDeliveryFailed: true, postCommit: true },
+			});
 		}
 
 		// Si l'email devait être envoyé mais a échoué, retourner un warning

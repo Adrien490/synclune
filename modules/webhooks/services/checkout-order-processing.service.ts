@@ -1,12 +1,63 @@
 import type Stripe from "stripe";
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { type Prisma, type PaymentMethod } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import {
 	getShippingMethodFromRate,
 	getShippingCarrierFromRate,
 } from "@/modules/orders/constants/stripe-shipping-rates";
 import type { OrderWithItems } from "../types/checkout.types";
+import { initiateAutomaticRefund } from "./payment-intent.service";
+
+/**
+ * ORD-BIZ-011 : custom error thrown when a `payment_intent.succeeded` webhook
+ * arrives APRÈS que l'admin (ou un cron) a déjà annulé la commande. Le caller
+ * (checkout.service.ts) catch et skip invoice/email chain — l'auto-refund est
+ * déjà initié de manière idempotente.
+ */
+export class CancelledOrderRaceError extends Error {
+	constructor(public readonly orderId: string) {
+		super(`Order ${orderId} cancelled — auto-refund initié, paiement Stripe non finalisé`);
+		this.name = "CancelledOrderRaceError";
+	}
+}
+
+/**
+ * ORD-BIZ-011 : détection pré-transaction d'un payment_intent.succeeded tardif
+ * sur commande CANCELLED. Déclenche un auto-refund Stripe idempotent et throw
+ * pour que le caller skip toute mutation/chain post-paiement.
+ */
+async function detectCancelledOrderRace(
+	orderId: string,
+	paymentIntentId: string,
+	flowLabel: string,
+): Promise<void> {
+	const order = await prisma.order.findUnique({
+		where: { id: orderId, ...notDeleted },
+		select: { id: true, orderNumber: true, status: true },
+	});
+	if (!order || order.status !== "CANCELLED") return;
+
+	logger.warn(
+		`[WEBHOOK] Late payment_intent.succeeded for already-CANCELLED order ${orderId} (${flowLabel}) — auto-refunding`,
+		{ service: "webhook", orderId, paymentIntentId },
+	);
+
+	Sentry.withScope((scope) => {
+		scope.setLevel("warning");
+		scope.setTag("payments", "cancel-vs-webhook-race");
+		scope.setContext("order", { orderId, orderNumber: order.orderNumber });
+		Sentry.captureMessage(
+			`Late payment confirmation on cancelled order ${order.orderNumber} — auto-refund triggered`,
+			"warning",
+		);
+	});
+
+	await initiateAutomaticRefund(paymentIntentId, orderId, "cancelled-before-confirmation");
+	throw new CancelledOrderRaceError(orderId);
+}
 
 /**
  * Maps a Prisma order to OrderWithItems.
@@ -247,6 +298,10 @@ export async function processOrderTransaction(
 	shippingCost: number,
 	shippingRateId: string | undefined,
 ): Promise<OrderWithItems> {
+	// ORD-BIZ-011 : pré-check CANCELLED hors transaction pour court-circuiter
+	// avant FOR UPDATE + auto-refund le paiement tardif (throws CancelledOrderRaceError).
+	await detectCancelledOrderRace(orderId, session.payment_intent as string, "CS flow");
+
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			return processOrderAtomically(
@@ -268,7 +323,9 @@ export async function processOrderTransaction(
 				session.amount_total,
 			);
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : tx FOR UPDATE sur SKU + Order — sans maxWait override
+		// le défaut Prisma (2s) génère P2024 sous contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 }
 
@@ -286,6 +343,9 @@ export async function processOrderFromPaymentIntent(
 	paymentIntent: Stripe.PaymentIntent,
 	paymentMethod?: PaymentMethod,
 ): Promise<OrderWithItems> {
+	// ORD-BIZ-011 : pré-check CANCELLED hors transaction (throws CancelledOrderRaceError).
+	await detectCancelledOrderRace(orderId, paymentIntent.id, "PI flow");
+
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			return processOrderAtomically(
@@ -305,6 +365,8 @@ export async function processOrderFromPaymentIntent(
 				paymentIntent.amount_received,
 			);
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : tx FOR UPDATE sur SKU + Order — sans maxWait override
+		// le défaut Prisma (2s) génère P2024 sous contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 }

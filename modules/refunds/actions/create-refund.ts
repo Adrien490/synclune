@@ -68,6 +68,7 @@ export async function createRefund(
 			reason: rawReason,
 			note,
 			items,
+			acceptCancelledOrder: safeFormGet(formData, "acceptCancelledOrder") === "true",
 		});
 
 		if ("error" in validated) return validated.error;
@@ -145,11 +146,33 @@ export async function createRefund(
 				throw new Error(`CURRENCY_NOT_SUPPORTED:${order.currency}`);
 			}
 
+			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la commande.
+			// Cumul refund + chargeback = double dépense côté merchant.
+			const openDispute = await tx.dispute.findFirst({
+				where: {
+					orderId,
+					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
+				},
+				select: { id: true },
+			});
+			if (openDispute) {
+				throw new Error("OPEN_DISPUTE");
+			}
+
 			// Vérifier que la commande est payée (ou partiellement remboursée)
 			if (order.paymentStatus !== "PAID" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
 				throw new Error(
 					order.paymentStatus === "REFUNDED" ? "ORDER_ALREADY_REFUNDED" : "ORDER_NOT_PAID",
 				);
+			}
+
+			// ORD-REFUND-AUDIT-003 : warning bloquant pour refund sur commande
+			// déjà annulée. UI affiche une checkbox conditionnelle qui pose
+			// `acceptCancelledOrder=true` ; sans confirmation explicite l'action
+			// throw → admin re-vérifie qu'il ne rembourse pas par erreur après
+			// un cancel-order qui aurait pu déjà déclencher un voidInvoice.
+			if (order.status === "CANCELLED" && !validated.data.acceptCancelledOrder) {
+				throw new Error("ORDER_CANCELLED_NEEDS_CONFIRMATION");
 			}
 
 			// Calculer le montant déjà remboursé (PENDING + APPROVED + COMPLETED)
@@ -247,6 +270,8 @@ export async function createRefund(
 
 			// ORD-REFUND-001: audit trail conformité L123-22
 			// ORD-REFUND-007: trace si commande déjà CANCELLED (refund post-cancel)
+			// ORD-REFUND-AUDIT-006 : items listés en metadata pour audit forensic
+			// self-contained (litige client « j'ai été remboursé du mauvais bijou »)
 			await createOrderAuditTx(tx, {
 				orderId,
 				action: OrderAction.REFUND_CREATED,
@@ -259,6 +284,12 @@ export async function createRefund(
 					amount: totalAmount,
 					reason: validated.data.reason,
 					itemCount: validatedItems.length,
+					items: validatedItems.map((i) => ({
+						orderItemId: i.orderItemId,
+						quantity: i.quantity,
+						amount: i.amount,
+						restock: i.restock,
+					})),
 					context: order.status === "CANCELLED" ? "cancelled-order" : "standard",
 				},
 			});
@@ -285,6 +316,10 @@ export async function createRefund(
 					return error("Cette commande n'a pas été payée et ne peut pas être remboursée.");
 				case "ORDER_ALREADY_REFUNDED":
 					return error("Cette commande est déjà totalement remboursée.");
+				case "ORDER_CANCELLED_NEEDS_CONFIRMATION":
+					return error(REFUND_ERROR_MESSAGES.ORDER_CANCELLED_NEEDS_CONFIRMATION);
+				case "OPEN_DISPUTE":
+					return error(REFUND_ERROR_MESSAGES.OPEN_DISPUTE);
 				case "INVALID_ITEMS":
 					return error(REFUND_ERROR_MESSAGES.INVALID_ITEMS);
 				case "AMOUNT_ZERO":

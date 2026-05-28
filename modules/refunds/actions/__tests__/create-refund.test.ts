@@ -24,6 +24,8 @@ const {
 		order: { findUnique: vi.fn() },
 		refund: { create: vi.fn() },
 		orderHistory: { create: vi.fn() },
+		// ORD-STRIPE-007 : createRefund check dispute.findFirst dans la tx (Step initial)
+		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
 		$transaction: vi.fn(),
 		$queryRaw: vi.fn(),
 	},

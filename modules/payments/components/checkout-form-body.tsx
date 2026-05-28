@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent } from "react";
+import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { CircleAlert, WifiOff } from "lucide-react";
@@ -23,8 +24,15 @@ import { CheckoutContactSection } from "./checkout-contact-section";
 import { CheckoutAddressFields } from "./checkout-address-fields";
 import { CheckoutDiscountSection } from "./checkout-discount-section";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
-import { CheckoutStripeSection } from "./checkout-stripe-section";
 import { getIncompleteSections } from "../constants/checkout-fields";
+
+// Lazy-load the ~100 KB `@stripe/react-stripe-js` bundle. Keeps `/paiement`
+// initial JS below the 130 KB size-limit budget and lets the address/summary
+// sections paint before Stripe Elements hydrate.
+const CheckoutStripeSection = dynamic(
+	() => import("./checkout-stripe-section").then((m) => m.CheckoutStripeSection),
+	{ ssr: false, loading: () => <PaymentSectionSkeleton /> },
+);
 
 interface CheckoutFormBodyProps {
 	form: ReturnType<typeof useCheckoutForm>["form"];

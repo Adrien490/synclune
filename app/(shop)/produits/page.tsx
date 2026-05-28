@@ -121,12 +121,17 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	// Breadcrumbs
 	const breadcrumbs = [{ label: "Créations", href: "/produits" }];
 
+	// Snapshot products pour enrichir le JSON-LD avec ItemList (rich result Product carousel).
+	// Await partagé avec ProductCatalog — pas de double-fetch (même promise object).
+	const productsSnapshot = await productsPromise;
+
 	// JSON-LD
 	const jsonLd = buildCatalogJsonLd({
 		name: "Bijoux artisanaux faits main",
 		description: "Découvrez toutes mes créations colorées faites main dans mon atelier.",
 		url: `${SITE_URL}/produits`,
 		breadcrumbs: [{ name: "Accueil", url: SITE_URL }, { name: "Bijoux" }],
+		products: productsSnapshot.products,
 	});
 
 	return (

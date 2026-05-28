@@ -54,7 +54,7 @@ export async function DiscountsDataTable({
 	perPage,
 	hasActiveFilters,
 }: DiscountsDataTableProps) {
-	const { discounts, pagination } = await discountsPromise;
+	const { discounts, pagination, totalCount } = await discountsPromise;
 
 	if (discounts.length === 0) {
 		return (
@@ -84,6 +84,7 @@ export async function DiscountsDataTable({
 				currentPageSize: discounts.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<DiscountsBulkActionsBar />}
 		>

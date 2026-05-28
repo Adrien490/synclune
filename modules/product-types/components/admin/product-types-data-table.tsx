@@ -31,7 +31,7 @@ export async function ProductTypesDataTable({
 	perPage,
 	hasActiveFilters,
 }: ProductTypesDataTableProps) {
-	const { productTypes, pagination } = await productTypesPromise;
+	const { productTypes, pagination, totalCount } = await productTypesPromise;
 
 	if (productTypes.length === 0) {
 		return (
@@ -61,6 +61,7 @@ export async function ProductTypesDataTable({
 				currentPageSize: productTypes.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<ProductTypesBulkActionsBar />}
 		>

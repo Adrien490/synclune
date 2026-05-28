@@ -8,6 +8,8 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 	const mockTx = {
 		order: {
 			findFirst: vi.fn(),
+			findUnique: vi.fn(),
+			findUniqueOrThrow: vi.fn(),
 			update: vi.fn(),
 		},
 		productSku: {
@@ -17,6 +19,18 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 		orderHistory: {
 			create: vi.fn(),
 		},
+		// initiateAutomaticRefund + cancelOrder utilisent ces clients dans la tx
+		refund: {
+			findFirst: vi.fn().mockResolvedValue(null),
+			create: vi.fn(),
+		},
+		discountUsage: {
+			findMany: vi.fn().mockResolvedValue([]),
+			deleteMany: vi.fn(),
+		},
+		discount: {
+			update: vi.fn(),
+		},
 	};
 
 	return {
@@ -25,6 +39,9 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 			$transaction: vi.fn(),
 			order: {
 				findFirst: vi.fn(),
+				update: vi.fn(),
+			},
+			refund: {
 				update: vi.fn(),
 			},
 		},
@@ -401,6 +418,23 @@ describe("markOrderAsCancelled — idempotency", () => {
 describe("initiateAutomaticRefund — failure recovery", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// initiateAutomaticRefund wraps work in $transaction → mock to invoke cb(mockTx)
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
+			cb(mockTx),
+		);
+		// findFirst guard returns null → not already-existing → enters create branch
+		mockTx.refund.findFirst.mockResolvedValue(null);
+		// findUniqueOrThrow returns minimal order with empty items
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({
+			total: 5000,
+			items: [],
+		});
+		mockTx.refund.create.mockResolvedValue({
+			id: "refund-auto-1",
+			status: "APPROVED",
+			stripeRefundId: null,
+		});
+		mockTx.orderHistory.create.mockResolvedValue({});
 	});
 
 	it("should create Stripe refund with idempotency key", async () => {
@@ -413,7 +447,11 @@ describe("initiateAutomaticRefund — failure recovery", () => {
 			{
 				payment_intent: "pi_abc123",
 				reason: "requested_by_customer",
-				metadata: { orderId: "order-1", reason: "Payment cancelled" },
+				metadata: {
+					orderId: "order-1",
+					reason: "Payment cancelled",
+					refund_id: "refund-auto-1",
+				},
 			},
 			{ idempotencyKey: "auto-refund-pi_abc123" },
 		);

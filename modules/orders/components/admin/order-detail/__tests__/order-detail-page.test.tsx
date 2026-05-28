@@ -37,7 +37,7 @@ vi.mock("@/modules/orders/components/admin/order-detail/order-header", () => ({
 	),
 }));
 
-vi.mock("@/modules/orders/components/admin/order-progress-stepper", () => ({
+vi.mock("@/modules/orders/components/admin/order-detail/order-progress-stepper", () => ({
 	OrderProgressStepper: () => <div data-testid="order-progress-stepper" />,
 }));
 
@@ -73,7 +73,7 @@ vi.mock("@/modules/orders/components/admin/order-detail/order-payment-card", () 
 	OrderPaymentCard: () => <div data-testid="order-payment-card" />,
 }));
 
-vi.mock("@/modules/orders/components/admin/order-history-timeline", () => ({
+vi.mock("@/modules/orders/components/admin/order-detail/order-history-timeline", () => ({
 	OrderHistoryTimeline: () => <div data-testid="order-history-timeline" />,
 }));
 

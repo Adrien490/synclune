@@ -26,7 +26,7 @@ interface UsersDataTableProps {
 }
 
 export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: UsersDataTableProps) {
-	const { users, pagination } = use(usersPromise);
+	const { users, pagination, totalCount } = use(usersPromise);
 
 	if (users.length === 0) {
 		return (
@@ -56,6 +56,7 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 				currentPageSize: users.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<UsersBulkActionsBar />}
 		>

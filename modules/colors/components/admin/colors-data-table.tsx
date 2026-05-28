@@ -30,7 +30,7 @@ export function ColorsDataTable({
 	perPage,
 	hasActiveFilters,
 }: ColorsDataTableProps) {
-	const { colors, pagination } = use(colorsPromise);
+	const { colors, pagination, totalCount } = use(colorsPromise);
 
 	if (colors.length === 0) {
 		return (
@@ -60,6 +60,7 @@ export function ColorsDataTable({
 				currentPageSize: colors.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<ColorsBulkActionsBar />}
 		>

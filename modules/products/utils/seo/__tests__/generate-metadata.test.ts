@@ -22,6 +22,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 	return {
 		priceInclTax: 4999,
 		inventory: 5,
+		isActive: true,
 		images: [{ url: "https://cdn.example.com/img1.jpg", isPrimary: true, altText: "Vue face" }],
 		...overrides,
 	} as never;

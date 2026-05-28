@@ -16,6 +16,8 @@ import {
 import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
+	PAYMENT_STATUS_LABELS,
+	PAYMENT_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -52,7 +54,7 @@ export async function OrdersDataTable({
 	perPage,
 	hasActiveFilters,
 }: OrdersDataTableProps) {
-	const { orders, pagination } = await ordersPromise;
+	const { orders, pagination, totalCount } = await ordersPromise;
 
 	if (orders.length === 0) {
 		return (
@@ -84,6 +86,7 @@ export async function OrdersDataTable({
 				currentPageSize: orders.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<OrdersBulkActionsBar />}
 		>
@@ -94,9 +97,10 @@ export async function OrdersDataTable({
 						<span className="sr-only">Sélection</span>
 					</TableHead>
 					<TableHead className="w-[12%]">Commande</TableHead>
-					<TableHead className="w-[18%]">Client</TableHead>
-					<TableHead className="w-[12%]">Date</TableHead>
-					<TableHead className="w-[13%]">Statut</TableHead>
+					<TableHead className="w-[15%]">Client</TableHead>
+					<TableHead className="w-[10%]">Date</TableHead>
+					<TableHead className="w-[12%]">Statut</TableHead>
+					<TableHead className="w-[12%]">Paiement</TableHead>
 					<TableHead className="w-[12%] text-right">Montant</TableHead>
 					<TableHead
 						className="w-[8%] text-right"
@@ -123,8 +127,7 @@ export async function OrdersDataTable({
 								) : (
 									<span
 										className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
-										aria-label="Commande non annulable en lot"
-										title="Déjà payée ou expédiée — annuler individuellement"
+										aria-label="Commande non annulable en lot — déjà payée ou expédiée, annuler individuellement"
 									>
 										—
 									</span>
@@ -159,6 +162,21 @@ export async function OrdersDataTable({
 											aria-label={`Statut : ${label}`}
 										>
 											<Icon aria-hidden="true" />
+											{label}
+										</Badge>
+									);
+								})()}
+							</TableCell>
+							<TableCell>
+								{(() => {
+									const paymentStatus = order.paymentStatus as PaymentStatus;
+									const label = PAYMENT_STATUS_LABELS[paymentStatus];
+									return (
+										<Badge
+											variant={PAYMENT_STATUS_VARIANTS[paymentStatus]}
+											role="status"
+											aria-label={`Paiement : ${label}`}
+										>
 											{label}
 										</Badge>
 									);

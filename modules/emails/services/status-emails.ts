@@ -14,6 +14,7 @@ export async function sendCancelOrderConfirmationEmail({
 	reason,
 	wasRefunded,
 	orderDetailsUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	orderNumber: string;
@@ -22,6 +23,12 @@ export async function sendCancelOrderConfirmationEmail({
 	reason?: string;
 	wasRefunded: boolean;
 	orderDetailsUrl: string;
+	/**
+	 * Optionnel. Dedup Resend 24h cross-instance (EMAIL-AUDIT-004) :
+	 * protège contre double-clic admin sur l'action cancel-order ou bulk-cancel.
+	 * Convention : `order-cancel:${orderId}`.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		CancelOrderConfirmationEmail({
@@ -37,6 +44,7 @@ export async function sendCancelOrderConfirmationEmail({
 			subject: EMAIL_SUBJECTS.ORDER_CANCELLED,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
+			...(idempotencyKey && { idempotencyKey }),
 		},
 	);
 }

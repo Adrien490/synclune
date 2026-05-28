@@ -55,6 +55,28 @@ export function withCronGuard<R extends CronJobResult | null>(
 		const unauthorized = await verifyCronRequest(jobName);
 		if (unauthorized) return unauthorized;
 
+		// OPS-AUDIT-006 : CRON_DRY_RUN short-circuits every cron with a
+		// `skipped` result so staging Preview deployments can validate that
+		// crons authenticate + boot without mutating the DB. Mitigates the
+		// risk that a leaked `CRON_SECRET` against a Preview branch with
+		// shared prod credentials triggers destructive cleanups.
+		if (process.env.CRON_DRY_RUN === "true") {
+			logger.warn(`Cron ${jobName} short-circuited by CRON_DRY_RUN=true`, {
+				cronJob: jobName,
+			});
+			return cronSuccess(
+				{
+					job: jobName,
+					status: "skipped",
+					processed: 0,
+					errored: 0,
+					skipped: 1,
+					reason: "CRON_DRY_RUN",
+				},
+				cronTimer(),
+			);
+		}
+
 		const startTime = cronTimer();
 		return Sentry.startSpan(
 			{ name: `cron.${jobName}`, op: "cron", attributes: { jobName } },

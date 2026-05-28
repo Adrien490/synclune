@@ -97,7 +97,9 @@ export async function updateOrderShippingAddress(
 				data: sanitizedData,
 			});
 
-			// Audit trail (Art. L123-22 Code de Commerce)
+			// Audit trail (Art. L123-22 Code de Commerce). ORD-BIZ-005 :
+			// `addressType: "shipping"` harmonise avec update-order-billing-address
+			// pour permettre les filtres d'audit par type d'adresse.
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
@@ -105,6 +107,7 @@ export async function updateOrderShippingAddress(
 				authorName: auth.user.name ?? "Admin",
 				note: "Adresse de livraison modifiee",
 				metadata: {
+					addressType: "shipping",
 					previousAddress: {
 						firstName: found.shippingFirstName,
 						lastName: found.shippingLastName,

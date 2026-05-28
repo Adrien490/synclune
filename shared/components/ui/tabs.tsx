@@ -33,7 +33,9 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
 		<TabsPrimitive.Trigger
 			data-slot="tabs-trigger"
 			className={cn(
-				"data-[state=active]:bg-background=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring focus-visible:outline-ring=active]:border-input=active]:bg-input/30 text-foreground inline-flex min-h-11 shrink-0 snap-start items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-2 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm sm:min-h-9 sm:px-2 sm:py-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"text-foreground inline-flex min-h-11 shrink-0 snap-start items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-2 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 sm:min-h-9 sm:px-2 sm:py-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-input data-[state=active]:shadow-sm",
+				"focus-ring",
 				className,
 			)}
 			{...props}
@@ -45,10 +47,7 @@ function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPr
 	return (
 		<TabsPrimitive.Content
 			data-slot="tabs-content"
-			className={cn(
-				"focus-visible:ring-ring flex-1 outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-				className,
-			)}
+			className={cn("focus-ring flex-1", className)}
 			{...props}
 		/>
 	);

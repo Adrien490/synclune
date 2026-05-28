@@ -27,6 +27,11 @@ export type { ResendEmailType } from "../types/email.types";
 
 /**
  * Server Action ADMIN pour renvoyér un email de commande
+ *
+ * EMAIL-AUDIT-003 : volontairement SANS `idempotencyKey` Resend — l'admin clique
+ * ce bouton précisément pour bypass la dedup (ex: client dit "je n'ai rien reçu").
+ * Protection contre double-clic = rate-limit `ADMIN_ORDER_LIMITS.RESEND_EMAIL`
+ * appliqué dès l'entrée.
  */
 export async function resendOrderEmail(
 	orderId: string,

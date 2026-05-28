@@ -143,6 +143,10 @@ export default async function ProductTypeCategoryPage({
 		{ label: productType.label, href: `/produits/${productTypeSlug}` },
 	];
 
+	// Snapshot products pour enrichir le JSON-LD avec ItemList (rich result Product carousel).
+	// Await partagé avec ProductCatalog — pas de double-fetch (même promise object).
+	const productsSnapshot = await productsPromise;
+
 	// JSON-LD
 	const jsonLd = buildCatalogJsonLd({
 		name: `${productType.label} artisanaux faits main`,
@@ -155,6 +159,7 @@ export default async function ProductTypeCategoryPage({
 			{ name: "Créations", url: `${SITE_URL}/produits` },
 			{ name: productType.label },
 		],
+		products: productsSnapshot.products,
 	});
 
 	return (

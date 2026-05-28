@@ -1,0 +1,72 @@
+name: Migrate database (prod)
+
+# Manual workflow to apply Prisma migrations on the production database.
+#
+# Why a separate workflow (not in the build pipeline) :
+#   - Vercel auto-deploys every push on main → running migrations in the
+#     Next.js build script would also run them on every preview deployment.
+#   - Migrations are infrequent and should be intentional. A manual trigger
+#     keeps the operator in the loop and avoids surprise schema drift.
+#
+# How to use :
+#   1. Push the new migration(s) to main.
+#   2. Go to Actions → "Migrate database (prod)" → Run workflow → pick
+#      `target=prod` and confirm.
+#   3. Once green, Vercel can be re-deployed (or the existing deployment
+#      will pick up the schema on next request — Prisma Client is already
+#      generated).
+#
+# Required GitHub Secrets :
+#   - DATABASE_URL_UNPOOLED  : direct Neon endpoint (no PgBouncer — PgBouncer
+#                              rejects prepared statements used by DDL).
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - prod
+          - staging
+      dry_run:
+        description: "Dry run (skip apply, only show pending migrations)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-${{ github.event.inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: prisma migrate deploy (${{ github.event.inputs.target }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Show migration status
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: pnpm dlx prisma migrate status
+      - name: Apply migrations
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: pnpm dlx prisma migrate deploy
+      - name: Confirm final status
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: pnpm dlx prisma migrate status

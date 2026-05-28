@@ -72,6 +72,12 @@ vi.mock("../../constants/cache", () => ({
 vi.mock("../../schemas/order.schemas", () => ({
 	deleteOrderSchema: {},
 }));
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAuditTx: vi.fn(),
+}));
+vi.mock("@/shared/lib/sanitize", () => ({
+	sanitizeText: (t: string) => t,
+}));
 
 import { deleteOrder } from "../delete-order";
 
@@ -79,7 +85,7 @@ import { deleteOrder } from "../delete-order";
 // HELPERS
 // ============================================================================
 
-const validFormData = createMockFormData({ id: VALID_CUID });
+const validFormData = createMockFormData({ id: VALID_CUID, reason: "test cleanup" });
 
 // ============================================================================
 // TESTS
@@ -91,7 +97,7 @@ describe("deleteOrder", () => {
 
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, reason: "test cleanup" } });
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);

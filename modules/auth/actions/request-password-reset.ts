@@ -3,19 +3,24 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { requestPasswordResetSchema } from "../schemas/auth.schemas";
+
+const GENERIC_SUCCESS_MESSAGE =
+	"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.";
 
 export const requestPasswordReset = async (
 	_: ActionState | undefined,
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
+		// 1. Rate limit by IP/user (3/h) — limite l'attaquant qui spam le formulaire
 		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.PASSWORD_RESET);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// Validation des données
+		// 2. Validation des données
 		const rawData = {
 			email: safeFormGet(formData, "email"),
 		};
@@ -25,6 +30,15 @@ export const requestPasswordReset = async (
 
 		const { email } = validation.data;
 
+		// 3. Rate limit per email-target (3/h) — empêche le mail bombing d'une victime
+		// via rotation d'IP (Tor, botnet). Identifier dédié, indépendant du RL IP/user.
+		// Réponse générique pour ne PAS révéler que l'email existe ou est sous attaque.
+		const emailKey = `password-reset-email:${email.toLowerCase().trim()}`;
+		const emailCheck = await checkRateLimit(emailKey, AUTH_LIMITS.PASSWORD_RESET);
+		if (!emailCheck.success) {
+			return success(GENERIC_SUCCESS_MESSAGE);
+		}
+
 		// Note: Ne PAS vérifier si l'utilisateur existe pour éviter l'énumération
 
 		try {
@@ -32,14 +46,10 @@ export const requestPasswordReset = async (
 				body: { email, redirectTo: "/reinitialiser-mot-de-passe" },
 			});
 
-			return success(
-				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.",
-			);
+			return success(GENERIC_SUCCESS_MESSAGE);
 		} catch {
 			// Succès même en cas d'erreur pour ne pas révéler d'information
-			return success(
-				"Si cet email existe dans notre base, vous recevrez un lien de réinitialisation.",
-			);
+			return success(GENERIC_SUCCESS_MESSAGE);
 		}
 	} catch {
 		return error("Une erreur inattendue est survenue");

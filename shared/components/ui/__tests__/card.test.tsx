@@ -59,6 +59,28 @@ describe("Card", () => {
 		render(<Card data-testid="card">content</Card>);
 		expect(screen.getByTestId("card").tagName).toBe("DIV");
 	});
+
+	it("renders flat by default (mobile-first) and bordered at md:", () => {
+		render(<Card data-testid="card">content</Card>);
+		const className = screen.getByTestId("card").className;
+		expect(className).toContain("border-0");
+		expect(className).toContain("shadow-none");
+		expect(className).toContain("rounded-none");
+		expect(className).toContain("md:border");
+		expect(className).toContain("md:shadow-md");
+		expect(className).toContain("md:rounded-xl");
+	});
+
+	it("gates hover:shadow-lg behind md: for interactive variant (no orphan touch hover)", () => {
+		render(
+			<Card data-testid="card" interactive>
+				content
+			</Card>,
+		);
+		const className = screen.getByTestId("card").className;
+		expect(className).toContain("md:hover:shadow-lg");
+		expect(className).not.toMatch(/(^|\s)hover:shadow-lg/);
+	});
 });
 
 // ============================================================================
@@ -71,6 +93,13 @@ describe("CardHeader", () => {
 	it("has data-slot='card-header'", () => {
 		render(<CardHeader data-testid="header">header</CardHeader>);
 		expect(screen.getByTestId("header")).toHaveAttribute("data-slot", "card-header");
+	});
+
+	it("uses --admin-main-x var padding on mobile and px-6 at md:", () => {
+		render(<CardHeader data-testid="header">header</CardHeader>);
+		const className = screen.getByTestId("header").className;
+		expect(className).toContain("px-[var(--admin-main-x,1rem)]");
+		expect(className).toContain("md:px-6");
 	});
 });
 
@@ -89,6 +118,18 @@ describe("CardTitle", () => {
 	it("renders children", () => {
 		render(<CardTitle>My Card Title</CardTitle>);
 		expect(screen.getByText("My Card Title")).toBeInTheDocument();
+	});
+
+	it("is uppercase tracking-wider mobile and font-display normal-case at md:", () => {
+		render(<CardTitle data-testid="title">Title</CardTitle>);
+		const className = screen.getByTestId("title").className;
+		expect(className).toContain("uppercase");
+		expect(className).toContain("tracking-wider");
+		expect(className).toContain("text-xs");
+		expect(className).toContain("md:font-display");
+		expect(className).toContain("md:text-lg");
+		expect(className).toContain("md:normal-case");
+		expect(className).toContain("md:tracking-normal");
 	});
 });
 

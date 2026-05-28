@@ -615,6 +615,8 @@ describe("sendRefundFailedAlert", () => {
 			amount: 5000,
 			reason: "CUSTOMER_REQUEST" as const,
 			orderId: "order-1",
+			processedAt: null,
+			updatedAt: new Date(),
 			order: {
 				id: "order-1",
 				orderNumber: "SYN-001",
@@ -645,6 +647,8 @@ describe("sendRefundFailedAlert", () => {
 			amount: 1000,
 			reason: "OTHER" as const,
 			orderId: "order-1",
+			processedAt: null,
+			updatedAt: new Date(),
 			order: {
 				id: "order-1",
 				orderNumber: "SYN-002",
@@ -665,6 +669,8 @@ describe("sendRefundFailedAlert", () => {
 			amount: 2000,
 			reason: "DEFECTIVE" as const,
 			orderId: "order-1",
+			processedAt: null,
+			updatedAt: new Date(),
 			order: {
 				id: "order-1",
 				orderNumber: "SYN-003",

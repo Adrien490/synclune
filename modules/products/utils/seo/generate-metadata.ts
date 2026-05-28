@@ -78,6 +78,13 @@ export async function generateProductMetadata({
 	const primarySku = product.skus[0];
 	const price = primarySku?.priceInclTax ? `${(primarySku.priceInclTax / 100).toFixed(2)}€` : "";
 
+	// Availability OG = somme inventaire sur tous SKUs actifs (aligné avec AggregateOffer JSON-LD).
+	// Évite de signaler "out of stock" quand seul le SKU principal est épuisé mais d'autres variantes sont dispo.
+	const totalInventory = product.skus.reduce(
+		(sum, sku) => (sku.isActive ? sum + sku.inventory : sum),
+		0,
+	);
+
 	// Construire le titre SEO optimisé (< 60 caractères garanti)
 	const title = buildSeoTitle(product.title, price || undefined);
 
@@ -126,8 +133,7 @@ export async function generateProductMetadata({
 			"product:price:amount":
 				price || (primarySku?.priceInclTax ? (primarySku.priceInclTax / 100).toFixed(2) : ""),
 			"product:price:currency": "EUR",
-			"product:availability":
-				primarySku?.inventory && primarySku.inventory > 0 ? "in stock" : "out of stock",
+			"product:availability": totalInventory > 0 ? "in stock" : "out of stock",
 			"product:condition": "new",
 			"product:brand": "Synclune",
 		},

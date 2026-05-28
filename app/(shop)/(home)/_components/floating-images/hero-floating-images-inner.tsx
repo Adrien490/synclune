@@ -1,5 +1,7 @@
 "use client";
 
+import "./scroll-driven.css";
+
 import { useEffect, useRef } from "react";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
@@ -132,7 +134,9 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 				const pos = IMAGE_POSITIONS[index];
 				if (!pos) return null;
 
-				return <FloatingImage key={image.slug} image={image} position={pos} />;
+				return (
+					<FloatingImage key={image.slug} image={image} position={pos} preload={index === 0} />
+				);
 			})}
 		</div>
 	);

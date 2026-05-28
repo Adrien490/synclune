@@ -78,6 +78,7 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 			reason: RefundReason.CUSTOMER_REQUEST as RefundReason,
 			note: "",
 			items: initializeRefundItems(orderItems, RefundReason.CUSTOMER_REQUEST),
+			acceptCancelledOrder: false,
 		} as CreateRefundFormValues,
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});

@@ -78,6 +78,7 @@ export async function sendShippingConfirmationEmail({
 	trackingUrl,
 	carrierLabel,
 	shippingAddress,
+	idempotencyKey,
 }: {
 	to: string;
 	orderNumber: string;
@@ -86,6 +87,8 @@ export async function sendShippingConfirmationEmail({
 	trackingUrl: string | null;
 	carrierLabel: string;
 	shippingAddress: ShippingAddress;
+	/** EMAIL-AUDIT-003 : dedup Resend 24h. Convention `order-shipped:${orderId}`. */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		ShippingConfirmationEmail({
@@ -101,6 +104,7 @@ export async function sendShippingConfirmationEmail({
 			subject: EMAIL_SUBJECTS.ORDER_SHIPPED,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
+			...(idempotencyKey && { idempotencyKey }),
 		},
 	);
 }
@@ -115,6 +119,7 @@ export async function sendTrackingUpdateEmail({
 	trackingNumber,
 	trackingUrl,
 	carrierLabel,
+	idempotencyKey,
 }: {
 	to: string;
 	orderNumber: string;
@@ -122,6 +127,12 @@ export async function sendTrackingUpdateEmail({
 	trackingNumber: string;
 	trackingUrl: string | null;
 	carrierLabel: string;
+	/**
+	 * EMAIL-AUDIT-003 : dedup Resend 24h. La clé inclut `trackingNumber` car un
+	 * même numéro updaté plusieurs fois = même info, mais un nouveau tracking
+	 * mérite un nouveau mail.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		TrackingUpdateEmail({
@@ -136,6 +147,7 @@ export async function sendTrackingUpdateEmail({
 			subject: EMAIL_SUBJECTS.ORDER_TRACKING_UPDATE,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
+			...(idempotencyKey && { idempotencyKey }),
 		},
 	);
 }
@@ -149,12 +161,15 @@ export async function sendDeliveryConfirmationEmail({
 	customerName,
 	deliveryDate,
 	orderDetailsUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	orderNumber: string;
 	customerName: string;
 	deliveryDate: string;
 	orderDetailsUrl: string;
+	/** EMAIL-AUDIT-003 : dedup Resend 24h. Convention `order-delivered:${orderId}`. */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		DeliveryConfirmationEmail({
@@ -168,6 +183,7 @@ export async function sendDeliveryConfirmationEmail({
 			subject: EMAIL_SUBJECTS.ORDER_DELIVERED,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
+			...(idempotencyKey && { idempotencyKey }),
 		},
 	);
 }

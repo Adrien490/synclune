@@ -30,7 +30,7 @@ export function MaterialsDataTable({
 	perPage,
 	hasActiveFilters,
 }: MaterialsDataTableProps) {
-	const { materials, pagination } = use(materialsPromise);
+	const { materials, pagination, totalCount } = use(materialsPromise);
 
 	if (materials.length === 0) {
 		return (
@@ -60,6 +60,7 @@ export function MaterialsDataTable({
 				currentPageSize: materials.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<MaterialsBulkActionsBar />}
 		>

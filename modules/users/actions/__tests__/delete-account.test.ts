@@ -19,26 +19,47 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		user: { findUnique: vi.fn(), update: vi.fn() },
+	mockBusinessError,
+} = vi.hoisted(() => {
+	const mockPrisma = {
+		user: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
 		order: { count: vi.fn() },
 		refund: { count: vi.fn() },
-	},
-	mockRequireAuth: vi.fn(),
-	mockEnforceRateLimit: vi.fn(),
-	mockAuth: { api: { signOut: vi.fn() } },
-	mockHeaders: vi.fn(),
-	mockCookies: vi.fn(),
-	mockCookieDelete: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockValidateInput: vi.fn(),
-	mockHandleActionError: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-}));
+		session: { deleteMany: vi.fn() },
+		// $transaction proxies tx.user/tx.session calls to the same mocks so
+		// existing `mockPrisma.user.update.toHaveBeenCalled()` assertions still work.
+		$transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
+			return callback({
+				user: { update: mockPrisma.user.update, count: mockPrisma.user.count },
+				session: { deleteMany: mockPrisma.session.deleteMany },
+			});
+		}),
+	};
+	class MockBusinessError extends Error {
+		code: string;
+		constructor(message: string, code: string) {
+			super(message);
+			this.code = code;
+		}
+	}
+	return {
+		mockPrisma,
+		mockRequireAuth: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockAuth: { api: { signOut: vi.fn() } },
+		mockHeaders: vi.fn(),
+		mockCookies: vi.fn(),
+		mockCookieDelete: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockBusinessError: MockBusinessError,
+	};
+});
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAuth: mockRequireAuth }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
@@ -61,6 +82,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	BusinessError: mockBusinessError,
 }));
 vi.mock("../../schemas/user.schemas", () => ({ deleteAccountSchema: {} }));
 vi.mock("@/shared/constants/cache-tags", () => ({
@@ -88,13 +110,23 @@ describe("deleteAccount", () => {
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockRequireAuth.mockResolvedValue({
-			user: { id: VALID_USER_ID, email: "user@example.com", name: "User" },
+			user: { id: VALID_USER_ID, email: "user@example.com", name: "User", role: "USER" },
 		});
 		mockValidateInput.mockReturnValue({ data: { confirmation: "SUPPRIMER MON COMPTE" } });
 		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
 		mockPrisma.order.count.mockResolvedValue(0);
 		mockPrisma.refund.count.mockResolvedValue(0);
 		mockPrisma.user.update.mockResolvedValue({});
+		mockPrisma.user.count.mockResolvedValue(5); // 5 other admins by default
+		mockPrisma.session.deleteMany.mockResolvedValue({ count: 1 });
+		mockPrisma.$transaction.mockImplementation(
+			async (callback: (tx: unknown) => Promise<unknown>) => {
+				return callback({
+					user: { update: mockPrisma.user.update, count: mockPrisma.user.count },
+					session: { deleteMany: mockPrisma.session.deleteMany },
+				});
+			},
+		);
 		mockHeaders.mockResolvedValue(new Headers());
 		mockCookies.mockResolvedValue({ delete: mockCookieDelete });
 		mockAuth.api.signOut.mockResolvedValue({});
@@ -200,5 +232,77 @@ describe("deleteAccount", () => {
 		const result = await deleteAccount(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	/**
+	 * @regression AUTH-ADMIN-002 — `deleteAccount` must revoke ALL sessions of the user,
+	 * not only the device that emitted the request. Otherwise the iPhone session keeps
+	 * working 7 days after the user requested deletion (RGPD Art. 17 violation).
+	 */
+	it("(AUTH-ADMIN-002) deletes all sessions for the user atomically in the transaction", async () => {
+		await deleteAccount(undefined, validFormData);
+
+		expect(mockPrisma.$transaction).toHaveBeenCalled();
+		expect(mockPrisma.session.deleteMany).toHaveBeenCalledWith({
+			where: { userId: VALID_USER_ID },
+		});
+	});
+
+	it("(AUTH-ADMIN-002) session.deleteMany runs in the same transaction as user.update", async () => {
+		await deleteAccount(undefined, validFormData);
+
+		// Both calls should fire (they execute inside the $transaction callback)
+		expect(mockPrisma.user.update).toHaveBeenCalled();
+		expect(mockPrisma.session.deleteMany).toHaveBeenCalled();
+	});
+
+	/**
+	 * @regression AUTH-ADMIN-004 — last admin cannot self-delete; mirrors the
+	 * LAST_ADMIN check in `change-user-role.ts` to keep the back-office reachable.
+	 */
+	it("(AUTH-ADMIN-004) refuses deleteAccount if user is the LAST admin", async () => {
+		mockRequireAuth.mockResolvedValue({
+			user: {
+				id: VALID_USER_ID,
+				email: "admin@synclune.fr",
+				name: "Last Admin",
+				role: "ADMIN",
+			},
+		});
+		// 0 other admins (this user is the last)
+		mockPrisma.user.count.mockResolvedValue(0);
+
+		const result = await deleteAccount(undefined, validFormData);
+
+		// BusinessError → handleActionError → ERROR
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+		// user.update should NOT have been called because the transaction threw
+		expect(mockPrisma.user.update).not.toHaveBeenCalled();
+		expect(mockPrisma.session.deleteMany).not.toHaveBeenCalled();
+	});
+
+	it("(AUTH-ADMIN-004) allows admin to self-delete if other admins exist", async () => {
+		mockRequireAuth.mockResolvedValue({
+			user: { id: VALID_USER_ID, email: "admin@synclune.fr", name: "Admin", role: "ADMIN" },
+		});
+		mockPrisma.user.count.mockResolvedValue(3); // 3 other admins
+
+		const result = await deleteAccount(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.user.update).toHaveBeenCalled();
+		expect(mockPrisma.session.deleteMany).toHaveBeenCalled();
+	});
+
+	it("(AUTH-ADMIN-004) does NOT count admins for a regular USER", async () => {
+		mockRequireAuth.mockResolvedValue({
+			user: { id: VALID_USER_ID, email: "u@example.com", name: "User", role: "USER" },
+		});
+
+		await deleteAccount(undefined, validFormData);
+
+		expect(mockPrisma.user.count).not.toHaveBeenCalled();
+		expect(mockPrisma.user.update).toHaveBeenCalled();
 	});
 });

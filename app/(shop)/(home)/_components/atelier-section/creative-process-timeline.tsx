@@ -7,7 +7,7 @@ function StepIllustration({ stepId }: { stepId: string }) {
 	const Illustration = STEP_ILLUSTRATIONS[stepId];
 	if (!Illustration) return null;
 	return (
-		<Illustration className="size-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-[var(--duration-slow)]" />
+		<Illustration className="size-7 motion-safe:transition-[rotate,translate,scale,opacity] motion-safe:duration-[var(--duration-slow)]" />
 	);
 }
 
@@ -39,7 +39,7 @@ export function CreativeProcessTimeline() {
 							{/* Icon circle with illustration overlay */}
 							<div
 								className={cn(
-									"relative z-10 mx-auto flex size-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+									"relative z-10 mx-auto flex size-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate] motion-safe:duration-[var(--duration-slow)]",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,
@@ -91,7 +91,7 @@ export function CreativeProcessTimeline() {
 							{/* Desktop (sm-lg): icon circles */}
 							<div
 								className={cn(
-									"relative z-20 hidden size-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
+									"relative z-20 hidden size-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,

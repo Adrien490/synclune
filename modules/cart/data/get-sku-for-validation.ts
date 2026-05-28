@@ -10,9 +10,10 @@ import { prisma } from "@/shared/lib/prisma";
 /**
  * Fetches a SKU with all relations needed for validation (stock check, soft-delete check)
  *
- * Cached with `realtime` profile (30s stale / 15s revalidate / 1min expire).
+ * Cached with `checkout` profile (60s stale / 30s revalidate / 5min expire).
  * Tags: SKU_STOCK (invalidated on inventory mutations) + SKU_DETAIL_BY_ID
- * (invalidated on price/status/soft-delete changes).
+ * (invalidated on price/status/soft-delete changes). Overselling is prevented
+ * downstream by `FOR UPDATE` row locks in `order-creation.service.ts`.
  */
 export async function fetchSkuForValidation(skuId: string) {
 	"use cache";
@@ -86,7 +87,7 @@ export async function fetchSkuForValidation(skuId: string) {
 /**
  * Fetches multiple SKUs in a single query for batch validation (merge carts, cart validation)
  *
- * Cached with `realtime` profile. Tags each SKU with SKU_STOCK so any inventory
+ * Cached with `checkout` profile. Tags each SKU with SKU_STOCK so any inventory
  * mutation on any SKU in the batch invalidates this cache entry.
  */
 export async function fetchSkusForBatchValidation(skuIds: string[]) {

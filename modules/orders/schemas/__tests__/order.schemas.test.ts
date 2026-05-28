@@ -131,18 +131,28 @@ describe("getOrderSchema", () => {
 // ============================================================================
 
 describe("deleteOrderSchema", () => {
-	it("accepts a valid cuid2 id", () => {
-		const result = deleteOrderSchema.safeParse({ id: VALID_CUID });
+	it("accepts a valid cuid2 id with reason (ORD-BIZ-003)", () => {
+		const result = deleteOrderSchema.safeParse({ id: VALID_CUID, reason: "test cleanup" });
 		expect(result.success).toBe(true);
 	});
 
+	it("rejects when reason is missing (ORD-BIZ-003)", () => {
+		const result = deleteOrderSchema.safeParse({ id: VALID_CUID });
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects when reason is too short (<3 chars)", () => {
+		const result = deleteOrderSchema.safeParse({ id: VALID_CUID, reason: "ab" });
+		expect(result.success).toBe(false);
+	});
+
 	it("rejects an invalid id format", () => {
-		const result = deleteOrderSchema.safeParse({ id: "not-a-cuid2" });
+		const result = deleteOrderSchema.safeParse({ id: "not-a-cuid2", reason: "test cleanup" });
 		expect(result.success).toBe(false);
 	});
 
 	it("rejects an empty id", () => {
-		const result = deleteOrderSchema.safeParse({ id: "" });
+		const result = deleteOrderSchema.safeParse({ id: "", reason: "test cleanup" });
 		expect(result.success).toBe(false);
 	});
 

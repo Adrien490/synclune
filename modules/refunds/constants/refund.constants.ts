@@ -229,6 +229,8 @@ export const REFUND_ERROR_MESSAGES = {
 	CANNOT_CANCEL: "Ce remboursement ne peut plus être annulé (déjà traité ou refusé).",
 	AMOUNT_EXCEEDS_ORDER: "Le montant du remboursement dépasse le total de la commande.",
 	AMOUNT_EXCEEDS_REMAINING: "Le montant dépasse le montant restant remboursable.",
+	ORDER_CANCELLED_NEEDS_CONFIRMATION:
+		"Cette commande est annulée. Coche la case de confirmation pour rembourser malgré tout.",
 	NO_CHARGE_ID: "Impossible de rembourser : aucun ID de paiement Stripe trouvé.",
 	STRIPE_ERROR: "Erreur lors du remboursement Stripe.",
 	INVALID_ITEMS: "Les articles du remboursement sont invalides.",
@@ -238,4 +240,7 @@ export const REFUND_ERROR_MESSAGES = {
 	RETURN_DEADLINE_EXCEEDED: "Le délai de rétractation de 14 jours est dépassé.",
 	RETURN_ALREADY_REQUESTED: "Une demande de retour est déjà en cours pour cette commande.",
 	RETURN_REQUEST_FAILED: "Erreur lors de la demande de retour.",
+	// ORD-STRIPE-007 : action admin bloquée car un dispute Stripe est ouvert
+	OPEN_DISPUTE:
+		"Un litige Stripe est en cours sur cette commande. Toute action de remboursement ou d'annulation doit attendre la résolution du litige (gérée automatiquement par le webhook).",
 } as const;

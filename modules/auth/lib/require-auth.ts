@@ -5,7 +5,7 @@
  * Utilisent directement la session et Prisma pour éviter les cycles de dépendances.
  */
 
-import type { Prisma } from "@/app/generated/prisma/client";
+import { AccountStatus, type Prisma } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -29,14 +29,28 @@ type RequireAuthUser = Prisma.UserGetPayload<{
 }>;
 
 /**
- * Récupère l'utilisateur depuis la DB pour les helpers d'auth
- * Version interne qui évite le cycle de dépendances avec users/
+ * Récupère l'utilisateur depuis la DB pour les helpers d'auth.
+ *
+ * Filtre par défaut: `deletedAt IS NULL` + `suspendedAt IS NULL` + `accountStatus = ACTIVE`.
+ * Bloque suspended / PENDING_DELETION / INACTIVE / ANONYMIZED.
+ *
+ * Pour `cancelAccountDeletion` (qui doit accepter PENDING_DELETION),
+ * passer `allowPendingDeletion: true` → filtre élargi à `[ACTIVE, PENDING_DELETION]`.
  */
-async function fetchUserForAuth(userId: string): Promise<RequireAuthUser | null> {
+async function fetchUserForAuth(
+	userId: string,
+	options: { allowPendingDeletion?: boolean } = {},
+): Promise<RequireAuthUser | null> {
+	const allowedStatuses = options.allowPendingDeletion
+		? [AccountStatus.ACTIVE, AccountStatus.PENDING_DELETION]
+		: [AccountStatus.ACTIVE];
+
 	const user = await prisma.user.findUnique({
 		where: {
 			id: userId,
 			...notDeleted,
+			suspendedAt: null,
+			accountStatus: { in: allowedStatuses },
 		},
 		select: REQUIRE_AUTH_USER_SELECT,
 	});
@@ -71,6 +85,44 @@ export async function requireAuth(): Promise<{ user: RequireAuthUser } | { error
 	}
 
 	const user = await fetchUserForAuth(session.user.id);
+
+	if (!user) {
+		return {
+			error: {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Vous devez être connecté pour effectuer cette action.",
+			},
+		};
+	}
+
+	return { user };
+}
+
+/**
+ * Variante de `requireAuth()` qui accepte un compte en `PENDING_DELETION`.
+ *
+ * À utiliser EXCLUSIVEMENT par les flows qui doivent rester accessibles
+ * pendant la période de grâce 30 jours (RGPD Art. 17) :
+ * - `cancelAccountDeletion` (annuler la demande de suppression)
+ * - logout / signOut
+ *
+ * Refuse toujours: deleted, suspended, INACTIVE, ANONYMIZED.
+ */
+export async function requireAuthAllowPendingDeletion(): Promise<
+	{ user: RequireAuthUser } | { error: ActionState }
+> {
+	const session = await getSession();
+
+	if (!session?.user.id) {
+		return {
+			error: {
+				status: ActionStatus.UNAUTHORIZED,
+				message: "Vous devez être connecté pour effectuer cette action.",
+			},
+		};
+	}
+
+	const user = await fetchUserForAuth(session.user.id, { allowPendingDeletion: true });
 
 	if (!user) {
 		return {

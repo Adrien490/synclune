@@ -8,7 +8,8 @@ export const fraunces = Fraunces({
 	display: "swap",
 	axes: ["opsz", "SOFT", "WONK"],
 	variable: "--font-display",
-	preload: false, // Body font (Figtree) is preloaded; display font defers to reduce render-blocking
+	// Hero h1 uses Fraunces above-fold; without preload the woff2 fetched in ~3s on desktop, blocking LCP element render.
+	preload: true,
 });
 
 // Figtree — Sans-serif géométrique optimisée pour le web

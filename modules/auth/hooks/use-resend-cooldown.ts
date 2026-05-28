@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const DEFAULT_COOLDOWN_MS = 60_000;
 const TICK_INTERVAL_MS = 1_000;
@@ -80,12 +80,12 @@ export function useResendCooldown({
 		return () => clearInterval(interval);
 	}, [isCoolingDown]);
 
-	const start = useCallback(() => {
+	const start = () => {
 		const ts = Date.now();
 		writeTimestamp(storageKey, ts);
 		setLastSent(ts);
 		setNow(ts);
-	}, [storageKey]);
+	};
 
 	return {
 		remainingSeconds: Math.ceil(remainingMs / 1000),

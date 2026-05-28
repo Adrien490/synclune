@@ -25,17 +25,15 @@ export interface CursorPaginationProps {
 	focusTargetRef?: RefObject<HTMLElement | null>;
 	/**
 	 * Total optionnel d'éléments dans la collection (toutes pages confondues).
-	 * Si fourni, l'affichage devient "Affiche X-Y sur N résultats" — utile aux
-	 * power-users pour estimer le volume restant. Le backend doit calculer ce
-	 * count avec parcimonie (ex: $count en transaction avec findMany).
+	 * Si fourni ET strictement supérieur à `currentPageSize`, l'affichage
+	 * devient "X sur N résultats" (mobile : "X sur N"). Sinon, comportement
+	 * inchangé "X résultats". Le backend doit calculer ce count avec parcimonie
+	 * (ex: prisma.count en transaction avec findMany).
+	 *
+	 * Note : la position exacte (page X/Y) n'est pas calculable en
+	 * cursor-pagination opaque mid-navigation, d'où le format compact "X sur N".
 	 */
 	totalCount?: number;
-	/**
-	 * Index du premier élément affiché sur la page courante (1-based).
-	 * Utilisé avec totalCount pour calculer la plage X-Y. Si non fourni,
-	 * seul le total est affiché.
-	 */
-	startIndex?: number;
 }
 
 /**

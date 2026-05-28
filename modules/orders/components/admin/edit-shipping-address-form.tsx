@@ -1,5 +1,17 @@
 "use client";
 
+/**
+ * Formulaire d'edition de l'adresse de livraison.
+ *
+ * Pattern dual : utilise en dialog modal
+ * (`edit-shipping-address-dialog.tsx`) ET en page inline
+ * (`app/admin/ventes/commandes/[id]/adresse-livraison/page.tsx`).
+ *
+ * Le gate `FulfillmentStatus` (interdit si SHIPPED/DELIVERED/RETURNED) est
+ * applique cote page inline (redirect notFound) ET cote Server Action
+ * `updateOrderShippingAddress`. Toute modification de la regle doit etre
+ * faite des deux cotes. Cf. ORD-MAP-002.
+ */
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

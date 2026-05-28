@@ -236,6 +236,8 @@ export async function bulkCancelOrders(
 				reason: reason ?? undefined,
 				wasRefunded: false,
 				orderDetailsUrl,
+				// EMAIL-AUDIT-004 : dedup Resend 24h contre rejouage bulk-cancel.
+				idempotencyKey: `order-cancel:${o.id}`,
 			}).catch((emailError) => {
 				logger.error("Échec envoi email annulation lot", emailError, {
 					action: "bulk-cancel-orders",

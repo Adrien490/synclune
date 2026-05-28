@@ -21,6 +21,15 @@ import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 /**
+ * ORD-REFUND-AUDIT-004 : fenêtre de grâce pour SAGA admin in-flight.
+ * Si processRefund (admin) est entre Step 2.5 (stripeRefundId persisté) et
+ * Step 3 (finalize transaction), le webhook refund.updated arrive parfois
+ * AVANT la fin de Step 3. Sans guard, updateRefundStatus marque COMPLETED →
+ * Step 3 abort → restock + audit ADMIN perdus.
+ */
+const SAGA_IN_FLIGHT_GRACE_MS = 30_000;
+
+/**
  * Gère les remboursements (charge.refunded)
  * Synchronise les remboursements Stripe avec la base de données
  */
@@ -73,7 +82,13 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		}
 
 		// 3. Synchroniser les remboursements Stripe avec la base
-		await syncStripeRefunds(charge, order.refunds, order.id);
+		// ORD-STRIPE-006 : récupère la liste des Dashboard refunds créés pour
+		// émettre une alerte admin temps réel (les RefundItem au pro-rata
+		// ne suffisent pas — admin doit valider/restocker manuellement).
+		// Defensive : fallback {} si le retour est undefined (compat mocks legacy).
+		const syncResult = await syncStripeRefunds(charge, order.refunds, order.id);
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Mocks legacy peuvent retourner undefined
+		const dashboardRefundsCreated = syncResult?.dashboardRefundsCreated ?? [];
 
 		// 4. Mettre à jour le statut de paiement de la commande
 		const totalRefundedOnStripe = charge.amount_refunded || 0;
@@ -166,6 +181,21 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		}
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
+		// ORD-STRIPE-006 : alerte admin temps réel pour chaque Dashboard refund
+		// nouvellement créé (admin doit vérifier le restock manuel + traçabilité).
+		for (const dashRefund of dashboardRefundsCreated) {
+			tasks.push({
+				type: "ADMIN_DASHBOARD_REFUND_ALERT",
+				data: {
+					orderNumber: order.orderNumber,
+					orderId: order.id,
+					stripeRefundId: dashRefund.stripeRefundId,
+					amount: dashRefund.amount,
+					isFullRefund: dashRefund.isFullRefund,
+				},
+			});
+		}
+
 		// ORD-STRIPE-001: éviter le double email confirmation refund.
 		// `processRefund` (admin path) envoie déjà l'email côté action ;
 		// `reconcile-refunds` (cron DLQ) idem. Le webhook ne doit envoyer que
@@ -186,6 +216,25 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			// would not match the enum and produce an empty label.
 			const latestLocalRefund = order.refunds[0];
 			const reason = latestLocalRefund?.reason ?? "OTHER";
+			// ORD-REFUND-AUDIT-007 : récupérer le Refund local fraîchement créé
+			// par syncStripeRefunds pour aligner l'idempotencyKey email avec
+			// l'admin side (`refund-confirm-${refundId}`). Fallback sur charge.id
+			// si plusieurs nouveaux refunds Stripe (ambigu).
+			const newStripeRefundIds = (charge.refunds?.data ?? [])
+				.map((r) => r.id)
+				.filter(
+					(rid): rid is string =>
+						typeof rid === "string" && !order.refunds.some((r) => r.stripeRefundId === rid),
+				);
+			const localRefundForEmail =
+				newStripeRefundIds.length === 1 && newStripeRefundIds[0]
+					? await prisma.refund
+							.findUnique({
+								where: { stripeRefundId: newStripeRefundIds[0] },
+								select: { id: true },
+							})
+							.catch(() => null)
+					: null;
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
@@ -210,6 +259,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				latestRefund?.creditNoteNumber ?? latestRefund?.order.creditNoteNumber ?? null;
 			const invoiceNumber = latestRefund?.order.invoiceNumber ?? null;
 
+			// ORD-STRIPE-005 : on inclut refundId dans le payload pour que le
+			// dispatcher PostWebhookTask route vers sendRefundConfirmationOnce.
+			// Si localRefundForEmail est null (cas ambigu multi-refunds), on tombe
+			// sur le legacy path basé sur idempotencyKey Resend seul.
 			tasks.push({
 				type: "REFUND_CONFIRMATION_EMAIL",
 				data: {
@@ -221,9 +274,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					orderDetailsUrl,
 					creditNoteNumber,
 					invoiceNumber,
-					// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries
-					// webhook ou rejouent cron retry-webhooks.
-					idempotencyKey: `refund-confirm-charge-${charge.id}-${totalRefundedOnStripe}`,
+					...(localRefundForEmail && { refundId: localRefundForEmail.id }),
+					idempotencyKey: localRefundForEmail
+						? `refund-confirm-${localRefundForEmail.id}`
+						: `refund-confirm-charge-${charge.id}-${totalRefundedOnStripe}`,
 				},
 			});
 		}
@@ -265,6 +319,23 @@ export async function handleRefundUpdated(
 				{ service: "webhook" },
 			);
 			return { success: true, skipped: true, reason: "Refund not found in database" };
+		}
+
+		// ORD-REFUND-AUDIT-004 : skip si SAGA admin in-flight (Step 2.5 a posé
+		// stripeRefundId mais Step 3 n'a pas encore commit). Sans ce guard, la
+		// transition APPROVED→COMPLETED par le webhook précède Step 3 → restock
+		// + audit ADMIN perdus. Le SAGA Step 3 (ou le cron reconcile) finalisera.
+		const sinceUpdate = Date.now() - refund.updatedAt.getTime();
+		if (
+			refund.status === RefundStatus.APPROVED &&
+			refund.processedAt === null &&
+			sinceUpdate < SAGA_IN_FLIGHT_GRACE_MS
+		) {
+			logger.info(
+				`⏳ [WEBHOOK] SAGA admin in-flight — skipping refund.updated for ${stripeRefund.id}`,
+				{ service: "webhook", refundId: refund.id, sinceUpdateMs: sinceUpdate },
+			);
+			return { success: true, skipped: true, reason: "SAGA admin in-flight" };
 		}
 
 		// 2. Mapper le statut Stripe vers notre statut

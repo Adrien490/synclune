@@ -10,6 +10,7 @@ import {
 	RefundStatus,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -181,7 +182,8 @@ export async function handleDisputeCreated(
 					},
 				});
 			},
-			{ timeout: 10000 },
+			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 
 		logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
@@ -407,7 +409,8 @@ export async function handleDisputeClosed(
 					});
 				}
 			},
-			{ timeout: 10000 },
+			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 
 		logger.info(
@@ -536,7 +539,8 @@ async function handleDisputeFundsFlow(
 					},
 				});
 			},
-			{ timeout: 10000 },
+			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 
 		logger.info(`💸 [WEBHOOK] Dispute ${dispute.id} funds ${flow} for order ${order.orderNumber}`, {

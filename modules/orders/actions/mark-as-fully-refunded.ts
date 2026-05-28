@@ -55,14 +55,16 @@ export async function markAsFullyRefunded(
 
 		const rawReason = safeFormGet(formData, "reason");
 		const reason = rawReason ? sanitizeText(rawReason) : null;
+		const rawMethod = safeFormGet(formData, "manualRefundMethod");
 
 		const validated = validateInput(markAsFullyRefundedSchema, {
 			id: safeFormGet(formData, "id"),
 			reason: reason ?? undefined,
+			manualRefundMethod: rawMethod ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 
-		const { id } = validated.data;
+		const { id, manualRefundMethod } = validated.data;
 
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
@@ -210,11 +212,12 @@ export async function markAsFullyRefunded(
 						authorId: adminUser.id,
 						authorName: adminUser.name ?? "Admin",
 						source: HistorySource.ADMIN,
-						note: `Refund manuel créé pour traçabilité du flux financier (${(remainingAmount / 100).toFixed(2)} €)`,
+						note: `Refund manuel créé pour traçabilité du flux financier (${(remainingAmount / 100).toFixed(2)} €) — méthode: ${manualRefundMethod}`,
 						metadata: {
 							refundId: createdRefund.id,
 							amount: remainingAmount,
 							manual: true,
+							manualRefundMethod,
 						},
 					});
 				}
@@ -233,9 +236,10 @@ export async function markAsFullyRefunded(
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
-				note: reason ?? "Marquée comme remboursée (manuel)",
+				note: reason ?? `Marquée comme remboursée (manuel — méthode: ${manualRefundMethod})`,
 				metadata: {
 					manual: true,
+					manualRefundMethod,
 					previousPaymentStatus: found.paymentStatus,
 					manualRefundId: createdRefundId,
 				},

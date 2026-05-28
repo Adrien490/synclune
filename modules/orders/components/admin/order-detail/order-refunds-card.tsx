@@ -11,17 +11,26 @@ import { formatDateShort } from "@/shared/utils/dates";
 import { RotateCcw, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { MarkAsFullyRefundedTrigger } from "./mark-as-fully-refunded-trigger";
 import type { OrderRefundsCardProps } from "./types";
 
-export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCardProps) {
+export function OrderRefundsCard({
+	refunds,
+	orderId,
+	orderNumber,
+	canRefund,
+	canMarkAsFullyRefunded,
+	invoiceStatus,
+	invoiceNumber,
+}: OrderRefundsCardProps) {
 	// Ne pas afficher si aucun remboursement et pas éligible
-	if (refunds.length === 0 && !canRefund) {
+	if (refunds.length === 0 && !canRefund && !canMarkAsFullyRefunded) {
 		return null;
 	}
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between pb-3">
+			<CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-3">
 				<CardTitle className="flex items-center gap-2 text-base">
 					<RotateCcw className="size-5" aria-hidden="true" />
 					Remboursements
@@ -31,14 +40,24 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 						</Badge>
 					)}
 				</CardTitle>
-				{canRefund && (
-					<Button variant="outline" size="sm" asChild>
-						<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
-							<Plus className="size-4" aria-hidden="true" />
-							Créer
-						</Link>
-					</Button>
-				)}
+				<div className="flex flex-wrap items-center gap-2">
+					{canMarkAsFullyRefunded && (
+						<MarkAsFullyRefundedTrigger
+							orderId={orderId}
+							orderNumber={orderNumber}
+							invoiceStatus={invoiceStatus}
+							invoiceNumber={invoiceNumber}
+						/>
+					)}
+					{canRefund && (
+						<Button variant="outline" size="sm" asChild>
+							<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
+								<Plus className="size-4" aria-hidden="true" />
+								Créer
+							</Link>
+						</Button>
+					)}
+				</div>
 			</CardHeader>
 			<CardContent>
 				{refunds.length === 0 ? (

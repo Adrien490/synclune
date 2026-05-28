@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { redirect, unstable_rethrow } from "next/navigation";
@@ -16,6 +18,11 @@ export const signInSocial = async (_: unknown, formData: FormData): Promise<Acti
 		if (session?.user.id) {
 			return unauthorized("Vous êtes déjà connecté");
 		}
+
+		// Rate-limit OAuth signin attempts (mirror /sign-in/email LOGIN limit) —
+		// protège contre énumération via account-linking et DoS vers le provider.
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGIN);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		// Validation des données
 		const rawData = {

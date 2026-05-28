@@ -18,7 +18,7 @@
 - **Auth** : Better Auth (email/password, Google)
 - **Paiements** : Stripe
 - **Uploads** : UploadThing
-- **Emails** : React Email + Resend (36 templates)
+- **Emails** : React Email + Resend (16 templates)
 - **PWA** : Serwist
 - **Analytics** : Vercel Analytics + Speed Insights
 
@@ -77,7 +77,7 @@ app/
 ├── serwist/                 # Service Worker PWA
 └── ~offline/                # Page offline PWA
 
-modules/                     # DDD - 26 modules metier
+modules/                     # DDD - 24 modules metier
 ├── [module]/
 │   ├── actions/             # Server Actions (mutations)
 │   ├── data/                # Data fetching + cache ("use cache")
@@ -93,7 +93,7 @@ shared/                      # Cross-cutting concerns
 ├── lib/                     # Core: prisma, stripe, email, cache, rate-limit
 ├── providers/               # Root providers
 ├── schemas/                 # Shared Zod schemas
-├── stores/                  # Zustand stores (5 stores)
+├── stores/                  # Zustand stores (9 stores)
 └── utils/                   # Formatting, slug, date, currency
 ```
 
@@ -182,7 +182,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 Deploye sur [Vercel](https://vercel.com). Push sur `main` declenche le deploiement automatique.
 
-18 cron jobs definis dans `vercel.json`.
+23 cron jobs definis dans `vercel.json` (voir [docs/CRONS.md](./docs/CRONS.md)).
 
 ---
 

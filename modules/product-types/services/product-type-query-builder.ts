@@ -39,10 +39,13 @@ export function buildProductTypeFilterConditions(
 	}
 
 	if (filters.hasProducts !== undefined) {
+		// Restreint aux produits PUBLIC + non soft-deleted : un ProductType qui n'a que
+		// des DRAFT/ARCHIVED se rendrait comme catégorie vide (signal "thin content" pour Google).
+		const publicProductsOnly = { status: "PUBLIC", deletedAt: null } as const;
 		if (filters.hasProducts) {
-			conditions.products = { some: {} };
+			conditions.products = { some: publicProductsOnly };
 		} else {
-			conditions.products = { none: {} };
+			conditions.products = { none: publicProductsOnly };
 		}
 	}
 

@@ -4,7 +4,10 @@ const {
 	mockPrisma,
 	mockStripe,
 	mockGetStripeClient,
-	mockMarkOrderAsPaid,
+	mockProcessOrderFromPaymentIntent,
+	mockEnsureInvoiceNumberPersisted,
+	mockRecordSalesEReporting,
+	mockExtractPaymentMethodFromPaymentIntent,
 	mockMarkOrderAsFailed,
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
@@ -17,7 +20,10 @@ const {
 		paymentIntents: { retrieve: vi.fn() },
 	},
 	mockGetStripeClient: vi.fn(),
-	mockMarkOrderAsPaid: vi.fn(),
+	mockProcessOrderFromPaymentIntent: vi.fn(),
+	mockEnsureInvoiceNumberPersisted: vi.fn(),
+	mockRecordSalesEReporting: vi.fn(),
+	mockExtractPaymentMethodFromPaymentIntent: vi.fn(),
 	mockMarkOrderAsFailed: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
@@ -38,10 +44,25 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
-	markOrderAsPaid: mockMarkOrderAsPaid,
 	markOrderAsFailed: mockMarkOrderAsFailed,
 	extractPaymentFailureDetails: mockExtractPaymentFailureDetails,
 	restoreStockForOrder: mockRestoreStockForOrder,
+}));
+
+vi.mock("@/modules/webhooks/services/checkout.service", () => ({
+	processOrderFromPaymentIntent: mockProcessOrderFromPaymentIntent,
+}));
+
+vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
+	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
+}));
+
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordSalesEReporting: mockRecordSalesEReporting,
+}));
+
+vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
+	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethodFromPaymentIntent,
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
@@ -59,6 +80,10 @@ describe("syncAsyncPayments", () => {
 		mockGetStripeClient.mockReturnValue(mockStripe);
 		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
+		mockProcessOrderFromPaymentIntent.mockResolvedValue(undefined);
+		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
+		mockRecordSalesEReporting.mockResolvedValue(undefined);
+		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
 	});
 
 	it("should return skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
@@ -99,24 +124,53 @@ describe("syncAsyncPayments", () => {
 		expect(call.where.createdAt.lt.getTime()).toBe(minAge.getTime());
 	});
 
-	it("should mark order as paid when Stripe shows succeeded", async () => {
+	it("should process order via the webhook path when Stripe shows succeeded", async () => {
 		const order = {
 			id: "order-1",
 			orderNumber: "SYN-001",
 			stripePaymentIntentId: "pi_success",
 			paymentStatus: "PENDING",
 		};
+		const paymentIntent = { id: "pi_success", status: "succeeded" };
 		mockPrisma.order.findMany.mockResolvedValue([order]);
-		mockStripe.paymentIntents.retrieve.mockResolvedValue({
-			status: "succeeded",
-		});
+		mockStripe.paymentIntents.retrieve.mockResolvedValue(paymentIntent);
 
 		const result = await syncAsyncPayments();
 
-		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_success");
+		// ORD-STRIPE-001 : décrément stock garanti via processOrderFromPaymentIntent
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
+			"order-1",
+			paymentIntent,
+			undefined,
+		);
+		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
+		expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 		expect(result!.updated).toBe(1);
 		expect(result!.checked).toBe(1);
 		expect(result!.hasMore).toBe(false);
+	});
+
+	// ORD-STRIPE-001 régression : si le webhook async_payment_succeeded est perdu,
+	// le cron doit déclencher le même flow que le webhook (décrément stock inclus).
+	it("ORD-STRIPE-001: should propagate the resolved paymentMethod to processOrderFromPaymentIntent", async () => {
+		const order = {
+			id: "order-card",
+			orderNumber: "SYN-CARD",
+			stripePaymentIntentId: "pi_card_success",
+			paymentStatus: "PENDING",
+		};
+		const paymentIntent = { id: "pi_card_success", status: "succeeded" };
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue(paymentIntent);
+		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue("CARD");
+
+		await syncAsyncPayments();
+
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
+			"order-card",
+			paymentIntent,
+			"CARD",
+		);
 	});
 
 	it("should mark order as failed and restore stock when Stripe shows canceled", async () => {
@@ -176,7 +230,7 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(mockMarkOrderAsPaid).not.toHaveBeenCalled();
+		expect(mockProcessOrderFromPaymentIntent).not.toHaveBeenCalled();
 		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 		expect(result!.updated).toBe(0);
 		expect(result!.checked).toBe(1);
@@ -270,7 +324,7 @@ describe("syncAsyncPayments", () => {
 		expect(result!.hasMore).toBe(true);
 	});
 
-	it("should continue counting order as updated even if restoreStockForOrder fails", async () => {
+	it("OPS-AUDIT-003: should leave order PENDING (errors++) when restoreStockForOrder fails", async () => {
 		const order = {
 			id: "order-stock-fail",
 			orderNumber: "SYN-STOCK-FAIL",
@@ -287,14 +341,12 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
-			"order-stock-fail",
-			"pi_canceled",
-			failureDetails,
-		);
+		// OPS-AUDIT-003 : stock-first → skip markOrderAsFailed so order stays
+		// PENDING for the next 4h run (atomic retry).
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-stock-fail");
-		expect(result!.updated).toBe(1);
-		expect(result!.errors).toBe(0);
+		expect(result!.updated).toBe(0);
+		expect(result!.errors).toBe(1);
 		expect(result!.hasMore).toBe(false);
 	});
 

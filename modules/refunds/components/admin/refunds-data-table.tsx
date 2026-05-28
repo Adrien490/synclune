@@ -55,7 +55,7 @@ export async function RefundsDataTable({
 	perPage,
 	hasActiveFilters,
 }: RefundsDataTableProps) {
-	const { refunds, pagination } = await refundsPromise;
+	const { refunds, pagination, totalCount } = await refundsPromise;
 
 	if (refunds.length === 0) {
 		return (
@@ -85,6 +85,7 @@ export async function RefundsDataTable({
 				currentPageSize: refunds.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<RefundsBulkActionsBar />}
 		>

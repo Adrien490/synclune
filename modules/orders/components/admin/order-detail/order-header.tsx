@@ -225,7 +225,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					<Button
 						size="sm"
 						onClick={handleMarkAsPaid}
-						className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
 						<CreditCard className="size-4" aria-hidden="true" />
 						Marquer payée
@@ -235,7 +235,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					<Button
 						size="sm"
 						onClick={handleMarkAsShipped}
-						className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
 						<Truck className="size-4" aria-hidden="true" />
 						Marquer expédiée
@@ -245,7 +245,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					<Button
 						size="sm"
 						onClick={handleMarkAsDelivered}
-						className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
 						<CircleCheck className="size-4" aria-hidden="true" />
 						Marquer livrée
@@ -258,7 +258,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						onClick={() => void downloadInvoice()}
 						disabled={isDownloadingInvoice}
 						aria-busy={isDownloadingInvoice || undefined}
-						className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
 						{isDownloadingInvoice ? (
 							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
@@ -276,7 +276,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 							size="sm"
 							aria-label="Plus d'actions"
 							aria-busy={isExporting || undefined}
-							className="min-h-11 min-w-11 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 sm:min-w-9"
+							className="min-h-11 min-w-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 sm:min-w-9"
 						>
 							{isExporting ? (
 								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />

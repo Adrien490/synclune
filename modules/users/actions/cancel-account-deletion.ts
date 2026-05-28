@@ -4,7 +4,7 @@ import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { requireAuthAllowPendingDeletion } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { success, error, handleActionError } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -24,8 +24,8 @@ export async function cancelAccountDeletion(
 		const rateCheck = await enforceRateLimitForCurrentUser(USER_LIMITS.CANCEL_DELETION);
 		if ("error" in rateCheck) return rateCheck.error;
 
-		// 2. Auth
-		const userAuth = await requireAuth();
+		// 2. Auth (allow PENDING_DELETION so user can cancel their own deletion request)
+		const userAuth = await requireAuthAllowPendingDeletion();
 		if ("error" in userAuth) return userAuth.error;
 
 		const userId = userAuth.user.id;

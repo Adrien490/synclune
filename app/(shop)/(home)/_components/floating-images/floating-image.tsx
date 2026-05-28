@@ -28,7 +28,7 @@ const POINTER_DEPTH_MAX_PX = 8;
  * The `<Link>` keeps a small client footprint: the cursor spotlight
  * (`--mx`/`--my`) and the analytics click event. No motion-react.
  */
-export function FloatingImage({ image, position }: FloatingImageProps) {
+export function FloatingImage({ image, position, preload = false }: FloatingImageProps) {
 	const rectRef = useRef<DOMRect | null>(null);
 
 	// Pointer-reactive depth derived from the image's parallax speed.
@@ -136,6 +136,7 @@ export function FloatingImage({ image, position }: FloatingImageProps) {
 								className="relative aspect-4/5 w-full object-cover"
 								sizes={position.sizes}
 								quality={85}
+								preload={preload}
 								placeholder={image.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={image.blurDataUrl}
 							/>

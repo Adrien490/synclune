@@ -20,6 +20,7 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { updateProductSchema } from "../schemas/product.schemas";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { getProductInvalidationTags } from "../utils/cache.utils";
+import { validateProductForPublication } from "../services/product-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 
@@ -82,10 +83,13 @@ export async function updateProduct(
 		const validatedData = validation.data;
 
 		// 4. Verifier que le produit et le SKU existent
+		// Le select charge aussi title + skus (avec stock + isPrimary image) pour
+		// permettre validateProductForPublication ci-dessous sans seconde requete.
 		const existingProduct = await prisma.product.findUnique({
 			where: { id: validatedData.productId },
 			select: {
 				id: true,
+				title: true,
 				slug: true,
 				status: true,
 				collections: {
@@ -96,11 +100,13 @@ export async function updateProduct(
 						},
 					},
 				},
-				_count: {
+				skus: {
+					where: { deletedAt: null },
 					select: {
-						skus: {
-							where: { isActive: true },
-						},
+						id: true,
+						isActive: true,
+						inventory: true,
+						images: { where: { isPrimary: true }, select: { id: true } },
 					},
 				},
 			},
@@ -116,22 +122,46 @@ export async function updateProduct(
 				id: validatedData.defaultSku.skuId,
 				productId: validatedData.productId,
 			},
-			select: { id: true },
+			select: { id: true, isDefault: true, isActive: true },
 		});
 
 		if (!existingSku) {
 			return notFound("La variante");
 		}
 
-		// 5. Validation metier : Produit PUBLIC doit avoir au moins 1 SKU actif
-		if (
-			validatedData.status === "PUBLIC" &&
-			!validatedData.defaultSku.isActive &&
-			existingProduct._count.skus === 1
-		) {
+		// 5. Validation metier : refus de desactiver la variante principale (alignement
+		// avec update-sku-status.ts). Si l'admin veut deplacer le defaut, il doit
+		// d'abord promouvoir une autre variante via setDefaultSku.
+		if (existingSku.isDefault && !validatedData.defaultSku.isActive) {
 			return validationError(
-				"Impossible de désactiver la seule variante d'un produit PUBLIC. Veuillez créer une autre variante active ou mettre le produit en DRAFT.",
+				"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
 			);
+		}
+
+		// 5.5. Validation publication complete pour status=PUBLIC : projection de
+		// l'etat post-update du defaultSku sur le reste des SKUs du produit, puis
+		// passage dans validateProductForPublication (titre + >=1 SKU actif avec
+		// stock + image). Aligne updateProduct sur toggleProductStatus + bulk.
+		if (validatedData.status === "PUBLIC") {
+			// Projection: le defaultSku herite des nouvelles valeurs envoyees
+			const projectedSkus = existingProduct.skus.map((s) =>
+				s.id === validatedData.defaultSku.skuId
+					? {
+							id: s.id,
+							isActive: validatedData.defaultSku.isActive,
+							inventory: validatedData.defaultSku.inventory,
+							// Le schema Zod garantit deja media.length > 0 sur defaultSku
+							images: validatedData.defaultSku.media.length > 0 ? [{ id: "_" } as const] : [],
+						}
+					: s,
+			);
+			const pubCheck = validateProductForPublication({
+				title: validatedData.title,
+				skus: projectedSkus,
+			});
+			if (!pubCheck.isValid) {
+				return validationError(pubCheck.errorMessage!);
+			}
 		}
 
 		// 6. Normalize empty strings to null for optional foreign keys

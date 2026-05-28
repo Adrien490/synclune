@@ -46,6 +46,7 @@ function CursorPaginationInner({
 	prevCursor,
 	perPageOptions = PER_PAGE_OPTIONS,
 	focusTargetRef,
+	totalCount,
 }: CursorPaginationProps) {
 	const perPageId = useId();
 	const haptic = useHaptic();
@@ -208,6 +209,11 @@ function CursorPaginationInner({
 	const prevUrl = hasPreviousPage ? buildPaginationUrl(prevCursor, "backward") : null;
 	const nextUrl = hasNextPage ? buildPaginationUrl(nextCursor, "forward") : null;
 
+	// Affiche le total uniquement s'il dépasse la page courante (sinon redondant
+	// avec le compteur "X résultats" déjà rendu — la liste tient sur une page).
+	const showTotal = typeof totalCount === "number" && totalCount > currentPageSize;
+	const pluralRef = totalCount ?? currentPageSize;
+
 	// Message pour les screen readers — une phrase concise. La position
 	// (première/dernière) est déjà annoncée par le `<div role="status">`
 	// ci-dessous, on évite le doublon.
@@ -215,7 +221,9 @@ function CursorPaginationInner({
 		? "Chargement des résultats…"
 		: currentPageSize === 0
 			? "Aucun résultat."
-			: `Page chargée, ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""}.`;
+			: showTotal
+				? `Page chargée, ${currentPageSize} sur ${totalCount} résultat${totalCount > 1 ? "s" : ""}.`
+				: `Page chargée, ${currentPageSize} résultat${currentPageSize > 1 ? "s" : ""}.`;
 
 	return (
 		<div
@@ -261,7 +269,13 @@ function CursorPaginationInner({
 					{currentPageSize > 0 ? (
 						<>
 							<span className="text-foreground font-medium">{currentPageSize}</span>
-							<span className="hidden sm:inline"> résultat{currentPageSize > 1 ? "s" : ""}</span>
+							{showTotal && (
+								<>
+									<span> sur </span>
+									<span className="text-foreground font-medium">{totalCount}</span>
+								</>
+							)}
+							<span className="hidden sm:inline"> résultat{pluralRef > 1 ? "s" : ""}</span>
 						</>
 					) : (
 						<span className="hidden sm:inline">Aucun résultat</span>

@@ -1,5 +1,7 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
+
 import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -115,6 +117,7 @@ export async function updateProductSku(
 					id: true,
 					sku: true,
 					isActive: true,
+					isDefault: true,
 					inventory: true,
 					productId: true,
 					product: {
@@ -144,6 +147,23 @@ export async function updateProductSku(
 
 			if (!existingSku) {
 				throw new BusinessError("La variante spécifiée n'existe pas.");
+			}
+
+			// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
+			// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
+			if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
+				throw new BusinessError(
+					"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
+				);
+			}
+
+			// Refus de retirer isDefault sans transfert. L'admin doit utiliser
+			// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
+			// unsetOtherDefaultSkus de l'action setDefaultSku).
+			if (existingSku.isDefault && !validatedData.isDefault) {
+				throw new BusinessError(
+					"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
+				);
 			}
 
 			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
@@ -298,6 +318,11 @@ export async function updateProductSku(
 		};
 	} catch (e) {
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			Sentry.captureMessage("SKU code collision (P2002) on updateProductSku", {
+				level: "warning",
+				tags: { action: "updateProductSku", code: "P2002" },
+				extra: { target: e.meta?.target },
+			});
 			return {
 				status: ActionStatus.ERROR,
 				message: "Une variante avec ce code existe déjà.",

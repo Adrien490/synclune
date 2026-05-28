@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Panel de gestion des notes internes admin (ajout, suppression).
+ *
+ * Pattern dual : utilise en dialog modal (`order-notes-dialog.tsx`,
+ * desktop) ET en page inline (`app/admin/ventes/commandes/[id]/notes/page.tsx`,
+ * mobile via `useOrderActions.openNotes`). Cf. ORD-MAP-002.
+ */
 import { Suspense, use, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";

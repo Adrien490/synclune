@@ -21,7 +21,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getProductSkus } from "@/modules/skus/data/get-skus";
+import { getProductSkus } from "@/modules/skus/actions/get-skus";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";

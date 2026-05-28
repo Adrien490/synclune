@@ -43,6 +43,9 @@ const {
 			// Path email (refund-handlers.ts:198-217) lit le dernier Refund COMPLETED
 			// pour résoudre creditNoteNumber. Null par défaut suffit ici.
 			findFirst: vi.fn().mockResolvedValue(null),
+			// ORD-REFUND-AUDIT-007 : lookup Refund local par stripeRefundId pour
+			// aligner l'idempotencyKey email. Null par défaut → fallback charge-based.
+			findUnique: vi.fn().mockResolvedValue(null),
 		},
 	},
 	mockSyncStripeRefunds: vi.fn(),

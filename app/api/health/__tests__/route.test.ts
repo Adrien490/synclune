@@ -65,7 +65,7 @@ describe("GET /api/health", () => {
 				response: new Response("Unauthorized", { status: 401 }),
 			});
 
-			const response = await GET();
+			const response = await GET(new Request("http://localhost/api/health"));
 
 			expect(response.status).toBe(200);
 			const body = await response.json();
@@ -84,7 +84,7 @@ describe("GET /api/health", () => {
 			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
 			mockStripeBalance.mockResolvedValue({ available: [] });
 
-			const response = await GET();
+			const response = await GET(new Request("http://localhost/api/health"));
 
 			expect(response.status).toBe(200);
 			const body = await response.json();
@@ -99,7 +99,7 @@ describe("GET /api/health", () => {
 			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
 			mockStripeBalance.mockResolvedValue({ available: [] });
 
-			const response = await GET();
+			const response = await GET(new Request("http://localhost/api/health"));
 			const body = await response.json();
 
 			expect(typeof body.services.database.latencyMs).toBe("number");
@@ -116,7 +116,7 @@ describe("GET /api/health", () => {
 			mockQueryRaw.mockRejectedValue(new Error("Connection refused"));
 			mockStripeBalance.mockResolvedValue({ available: [] });
 
-			const response = await GET();
+			const response = await GET(new Request("http://localhost/api/health"));
 
 			expect(response.status).toBe(503);
 			const body = await response.json();
@@ -135,12 +135,69 @@ describe("GET /api/health", () => {
 			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
 			mockStripeBalance.mockRejectedValue(new Error("Stripe timeout"));
 
-			const response = await GET();
+			const response = await GET(new Request("http://localhost/api/health"));
 
 			expect(response.status).toBe(503);
 			const body = await response.json();
 			expect(body.status).toBe("error");
 			expect(body.services.stripe.status).toBe("error");
+		});
+	});
+
+	describe("healthcheck token (external probes)", () => {
+		const TOKEN = "a".repeat(32);
+
+		beforeEach(() => {
+			mockRequireAdminApiRoute.mockResolvedValue({
+				response: new Response("Unauthorized", { status: 401 }),
+			});
+			vi.stubEnv("HEALTHCHECK_TOKEN", TOKEN);
+		});
+
+		it("returns detailed status when token matches via query param", async () => {
+			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
+			mockStripeBalance.mockResolvedValue({ available: [] });
+
+			const response = await GET(new Request(`http://localhost/api/health?token=${TOKEN}`));
+
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body.status).toBe("ok");
+			expect(body.services.database.status).toBe("ok");
+		});
+
+		it("returns detailed status when token matches via header", async () => {
+			mockQueryRaw.mockResolvedValue([{ "?column?": 1 }]);
+			mockStripeBalance.mockResolvedValue({ available: [] });
+
+			const response = await GET(
+				new Request("http://localhost/api/health", {
+					headers: { "x-healthcheck-token": TOKEN },
+				}),
+			);
+
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body.services.database.status).toBe("ok");
+		});
+
+		it("returns minimal status when token mismatches", async () => {
+			const response = await GET(new Request("http://localhost/api/health?token=wrong"));
+
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body).toEqual({ status: "ok" });
+			expect(body.services).toBeUndefined();
+		});
+
+		it("returns minimal status when HEALTHCHECK_TOKEN env is unset", async () => {
+			vi.stubEnv("HEALTHCHECK_TOKEN", "");
+
+			const response = await GET(new Request(`http://localhost/api/health?token=${TOKEN}`));
+
+			expect(response.status).toBe(200);
+			const body = await response.json();
+			expect(body).toEqual({ status: "ok" });
 		});
 	});
 });

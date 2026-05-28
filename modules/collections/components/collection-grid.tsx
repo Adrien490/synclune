@@ -27,7 +27,7 @@ interface CollectionGridProps {
 }
 
 export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridProps) {
-	const { collections, pagination } = use(collectionsPromise);
+	const { collections, pagination, totalCount } = use(collectionsPromise);
 
 	// Afficher le composant Empty si aucune collection
 	if (collections.length === 0) {
@@ -132,6 +132,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 					currentPageSize={collections.length}
 					nextCursor={nextCursor}
 					prevCursor={prevCursor}
+					totalCount={totalCount}
 				/>
 			</div>
 		</div>

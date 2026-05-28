@@ -38,7 +38,7 @@ export async function ReviewsDataTable({
 	perPage = 20,
 	hasActiveFilters,
 }: ReviewsDataTableProps) {
-	const { reviews, pagination } = await reviewsPromise;
+	const { reviews, pagination, totalCount } = await reviewsPromise;
 	const adminReviews = reviews as ReviewAdmin[];
 
 	if (reviews.length === 0) {
@@ -68,6 +68,7 @@ export async function ReviewsDataTable({
 				currentPageSize: reviews.length,
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
+				totalCount,
 			}}
 			bulkActionsBar={<ReviewsBulkActionsBar />}
 		>

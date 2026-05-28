@@ -6,19 +6,22 @@ const {
 	mockGetStripeClient,
 	mockDispatchEvent,
 	mockIsEventSupported,
-	mockExecutePostWebhookTasks,
+	mockPersistPostWebhookTasks,
+	mockExecutePersistedTasksForEvent,
 	mockSentryStartSpan,
 	mockSentryWithScope,
 	mockSentryCaptureException,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		webhookEvent: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockStripe: { events: { retrieve: vi.fn() } },
 	mockGetStripeClient: vi.fn(),
 	mockDispatchEvent: vi.fn(),
 	mockIsEventSupported: vi.fn(() => true),
-	mockExecutePostWebhookTasks: vi.fn(),
+	mockPersistPostWebhookTasks: vi.fn(),
+	mockExecutePersistedTasksForEvent: vi.fn(),
 	mockSentryStartSpan: vi.fn(async (_opts: unknown, cb: () => unknown) => cb()),
 	mockSentryWithScope: vi.fn((cb: (scope: unknown) => void) =>
 		cb({ setTag: vi.fn(), setLevel: vi.fn(), setFingerprint: vi.fn(), setContext: vi.fn() }),
@@ -39,8 +42,9 @@ vi.mock("@/modules/webhooks/utils/event-registry", () => ({
 	isEventSupported: mockIsEventSupported,
 }));
 
-vi.mock("@/modules/webhooks/utils/execute-post-tasks", () => ({
-	executePostWebhookTasks: mockExecutePostWebhookTasks,
+vi.mock("@/modules/webhooks/services/post-webhook-tasks.service", () => ({
+	persistPostWebhookTasks: mockPersistPostWebhookTasks,
+	executePersistedTasksForEvent: mockExecutePersistedTasksForEvent,
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -81,6 +85,15 @@ describe("retryFailedWebhooks", () => {
 		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
 		mockIsEventSupported.mockReturnValue(true);
+		mockPrisma.$transaction.mockImplementation(
+			async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma),
+		);
+		mockPersistPostWebhookTasks.mockResolvedValue({ created: 0 });
+		mockExecutePersistedTasksForEvent.mockResolvedValue({
+			successful: 0,
+			failed: 0,
+			skipped: 0,
+		});
 	});
 
 	it("returns skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {

@@ -32,7 +32,8 @@ const {
 	mockHeaders,
 	mockDispatchEvent,
 	mockIsEventSupported,
-	mockExecutePostWebhookTasks,
+	mockPersistPostWebhookTasks,
+	mockExecutePersistedTasksForEvent,
 	mockSendWebhookFailedAlert,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 	WebhookEventStatus,
@@ -66,13 +67,15 @@ const {
 				upsert: vi.fn(),
 				update: vi.fn(),
 			},
+			$transaction: vi.fn(),
 		},
 		mockNextResponseJson: nextResponseJson,
 		mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
 		mockHeaders: vi.fn(),
 		mockDispatchEvent: vi.fn(),
 		mockIsEventSupported: vi.fn(),
-		mockExecutePostWebhookTasks: vi.fn(),
+		mockPersistPostWebhookTasks: vi.fn(),
+		mockExecutePersistedTasksForEvent: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
 		WebhookEventStatus: {
@@ -97,8 +100,9 @@ vi.mock("@/modules/webhooks/utils/event-registry", () => ({
 	dispatchEvent: mockDispatchEvent,
 	isEventSupported: mockIsEventSupported,
 }));
-vi.mock("@/modules/webhooks/utils/execute-post-tasks", () => ({
-	executePostWebhookTasks: mockExecutePostWebhookTasks,
+vi.mock("@/modules/webhooks/services/post-webhook-tasks.service", () => ({
+	persistPostWebhookTasks: mockPersistPostWebhookTasks,
+	executePersistedTasksForEvent: mockExecutePersistedTasksForEvent,
 }));
 vi.mock("@/modules/webhooks/services/alert.service", () => ({
 	sendWebhookFailedAlert: mockSendWebhookFailedAlert,
@@ -174,6 +178,15 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		mockIsEventSupported.mockReturnValue(true);
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks: [] });
 		mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
+		mockPrisma.$transaction.mockImplementation(
+			async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma),
+		);
+		mockPersistPostWebhookTasks.mockResolvedValue({ created: 0 });
+		mockExecutePersistedTasksForEvent.mockResolvedValue({
+			successful: 0,
+			failed: 0,
+			skipped: 0,
+		});
 	});
 
 	it("should detect duplicate event via COMPLETED status and return 200", async () => {

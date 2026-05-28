@@ -79,6 +79,37 @@ jobs:
       - name: Run critical path tests
         run: pnpm test:critical
 
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    # Fast feedback : decoupled from secrets so Dependabot/external PRs
+    # still validate that the production build compiles. Uses placeholder
+    # env vars matching the Zod schema in shared/schemas/env.schema.ts.
+    env:
+      DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+      BETTER_AUTH_SECRET: "ci-placeholder-secret-32-chars-min!"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      STRIPE_SECRET_KEY: "sk_test_placeholder"
+      STRIPE_WEBHOOK_SECRET: "whsec_placeholder"
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_placeholder"
+      RESEND_API_KEY: "re_placeholder"
+      RESEND_CONTACT_EMAIL: "ci@example.com"
+      UPLOADTHING_TOKEN: "ci-placeholder-token"
+      CRON_SECRET: "ci-placeholder-cron-secret-32-chars!"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build (prisma generate + next build --turbopack)
+        run: pnpm build
+      - name: Bundle size check
+        run: pnpm size
+
   tests:
     name: Unit tests
     runs-on: ubuntu-latest

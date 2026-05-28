@@ -521,7 +521,12 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												onSelect={(date) => {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
-												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+												disabled={(date) => {
+													if (date > new Date() || date < new Date("2020-01-01")) return true;
+													// Cross-field guard (ORD-UI-006) : dateFrom <= dateTo
+													const dateTo = form.getFieldValue("dateRange.to");
+													return dateTo ? date > new Date(dateTo) : false;
+												}}
 												// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
 												autoFocus
 											/>
@@ -560,7 +565,12 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												onSelect={(date) => {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
-												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
+												disabled={(date) => {
+													if (date > new Date() || date < new Date("2020-01-01")) return true;
+													// Cross-field guard (ORD-UI-006) : dateTo >= dateFrom
+													const dateFrom = form.getFieldValue("dateRange.from");
+													return dateFrom ? date < new Date(dateFrom) : false;
+												}}
 												// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
 												autoFocus
 											/>

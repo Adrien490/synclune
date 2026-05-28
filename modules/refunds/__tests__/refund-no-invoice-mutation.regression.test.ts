@@ -137,6 +137,12 @@ describe("@regression refund-no-invoice-mutation", () => {
 				// Archivage PDF avoir UploadThing + SHA-256 (Art. L102 B LPF). Écrit
 				// uniquement creditNotePdfUrl + creditNotePdfHash (jamais le numéro).
 				"modules/refunds/services/archive-credit-note-pdf.service.ts",
+				// ORD-STRIPE-005 (2026-05-28) : faux positif heuristique — fait
+				// `prisma.refund.updateMany({ data: { confirmationEmailSentAt } })`,
+				// puis 40 lignes plus loin passe `creditNoteNumber` en argument à
+				// `sendRefundConfirmationEmail` (pas en write DB). Le test scan
+				// 40 lignes après `data:{`, donc inclus ici comme allow-list.
+				"modules/refunds/services/send-refund-confirmation.service.ts",
 			].sort(),
 		);
 	});

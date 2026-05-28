@@ -261,12 +261,14 @@ describe("retryFailedRefund", () => {
 
 		await retryFailedRefund(undefined, makeFormData());
 
+		// ORD-REFUND-AUDIT-002 : stripeRefundId préservé (anchor reconcile).
+		// La rotation attemptCount suffit à forcer une nouvelle clé idempotence
+		// Stripe — éviter le double-débit théorique sur refund Stripe `pending`.
 		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { id: "refund-1", status: "FAILED" },
 			data: {
 				status: "APPROVED",
 				failureReason: null,
-				stripeRefundId: null,
 				attemptCount: { increment: 1 },
 			},
 		});

@@ -22,6 +22,14 @@ const {
 	};
 	return {
 		mockPrisma: {
+			// ORD-BIZ-011 : pré-check status CANCELLED hors transaction
+			order: {
+				findUnique: vi.fn().mockResolvedValue({
+					id: "order_test_123",
+					orderNumber: "SYN-TEST",
+					status: "PENDING",
+				}),
+			},
 			$transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
 			_mockTx: mockTx,
 		},
@@ -36,7 +44,23 @@ const {
 	};
 });
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
+}));
+vi.mock("@/shared/lib/prisma-tx-options", () => ({
+	TX_TIMEOUT_LONG: 30000,
+	TX_MAX_WAIT_LONG: 10000,
+}));
+vi.mock("../payment-intent.service", () => ({
+	initiateAutomaticRefund: vi.fn(),
+}));
+vi.mock("@sentry/nextjs", () => ({
+	withScope: vi.fn(),
+	captureMessage: vi.fn(),
+	captureException: vi.fn(),
+	addBreadcrumb: vi.fn(),
+}));
 vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
 	getShippingMethodFromRate: mockGetShippingMethodFromRate,
 	getShippingCarrierFromRate: mockGetShippingCarrierFromRate,

@@ -41,7 +41,12 @@ const {
 
 	const mockPrisma = {
 		order: {
-			findUnique: vi.fn(),
+			// ORD-BIZ-011 : pré-check status hors transaction. Par défaut PENDING.
+			findUnique: vi.fn().mockResolvedValue({
+				id: "order_test",
+				orderNumber: "SYN-TEST",
+				status: "PENDING",
+			}),
 			update: vi.fn(),
 		},
 		$transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
@@ -73,6 +78,20 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
+}));
+vi.mock("@/shared/lib/prisma-tx-options", () => ({
+	TX_TIMEOUT_LONG: 30000,
+	TX_MAX_WAIT_LONG: 10000,
+}));
+vi.mock("../payment-intent.service", () => ({
+	initiateAutomaticRefund: vi.fn(),
+}));
+vi.mock("@sentry/nextjs", () => ({
+	withScope: vi.fn(),
+	captureMessage: vi.fn(),
+	captureException: vi.fn(),
+	addBreadcrumb: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/stripe", () => ({
@@ -494,14 +513,17 @@ describe("processOrderTransaction", () => {
 		});
 	});
 
-	it("should use the transaction with 10-second timeout", async () => {
+	it("ORD-STRIPE-004: should use the transaction with 30s timeout + 10s maxWait", async () => {
 		const order = makeOrderRow({ paymentStatus: "PAID" });
 		mockTx.order.findUnique.mockResolvedValue(order);
 
 		const session = makeStripeSession();
 		await processOrderTransaction("order-1", session, 600, "shr_france_123");
 
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 30000,
+			maxWait: 10000,
+		});
 	});
 });
 
@@ -718,7 +740,10 @@ describe("cancelExpiredOrder", () => {
 		const result = await cancelExpiredOrder("order-3");
 
 		expect(result).toEqual({ cancelled: false, orderNumber: "SYN-003" });
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 30000,
+			maxWait: 10000,
+		});
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
@@ -731,7 +756,10 @@ describe("cancelExpiredOrder", () => {
 		const result = await cancelExpiredOrder("order-4");
 
 		expect(result).toEqual({ cancelled: false, orderNumber: "SYN-004" });
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 30000,
+			maxWait: 10000,
+		});
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
@@ -741,7 +769,10 @@ describe("cancelExpiredOrder", () => {
 		const result = await cancelExpiredOrder("nonexistent-order");
 
 		expect(result).toEqual({ cancelled: false });
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 30000,
+			maxWait: 10000,
+		});
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
@@ -754,6 +785,9 @@ describe("cancelExpiredOrder", () => {
 			where: { id: "order-xyz" },
 			select: { paymentStatus: true, orderNumber: true },
 		});
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 10000 });
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			timeout: 30000,
+			maxWait: 10000,
+		});
 	});
 });

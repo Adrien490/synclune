@@ -31,6 +31,8 @@ const {
 			create: vi.fn(),
 			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
 		},
+		// ORD-STRIPE-007 : dispute.findFirst utilisé pour bloquer cancel sur dispute ouvert
+		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -280,15 +282,18 @@ describe("cancelOrder", () => {
 		);
 	});
 
-	// Success with PAID payment (mark REFUNDED)
+	// Success with PAID payment (mark REFUNDED) — ORD-BIZ-009 requires autoRefund=true
 	it("should mark paymentStatus as REFUNDED when cancelling a PAID order", async () => {
 		const order = createTxOrder({ paymentStatus: "PAID" });
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 
-		const result = await cancelOrder(undefined, validFormData);
+		const result = await cancelOrder(
+			undefined,
+			createMockFormData({ id: VALID_CUID, autoRefund: "true" }),
+		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("REFUNDED");
+		expect(result.message).toContain("annulée");
 	});
 
 	// Email sent
@@ -370,7 +375,7 @@ describe("cancelOrder", () => {
 		expect(mockSanitizeText).toHaveBeenCalledWith("<script>alert(1)</script>");
 	});
 
-	// Discount usage release
+	// Discount usage release — ORD-BIZ-009 requires autoRefund=true on PAID orders
 	it("should release discount usages when cancelling an order", async () => {
 		const order = createTxOrder({
 			paymentStatus: "PAID",
@@ -381,7 +386,7 @@ describe("cancelOrder", () => {
 			{ id: "usage-2", discountId: "disc-B" },
 		]);
 
-		await cancelOrder(undefined, validFormData);
+		await cancelOrder(undefined, createMockFormData({ id: VALID_CUID, autoRefund: "true" }));
 
 		expect(mockPrisma.discount.update).toHaveBeenCalledTimes(2);
 		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
@@ -408,15 +413,18 @@ describe("cancelOrder", () => {
 		expect(mockPrisma.discount.update).not.toHaveBeenCalled();
 	});
 
-	// PARTIALLY_REFUNDED should become REFUNDED on cancel
+	// PARTIALLY_REFUNDED should become REFUNDED on cancel — requires autoRefund=true (ORD-BIZ-009)
 	it("should mark paymentStatus as REFUNDED when cancelling a PARTIALLY_REFUNDED order", async () => {
 		const order = createTxOrder({ paymentStatus: "PARTIALLY_REFUNDED" });
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 
-		const result = await cancelOrder(undefined, validFormData);
+		const result = await cancelOrder(
+			undefined,
+			createMockFormData({ id: VALID_CUID, autoRefund: "true" }),
+		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("REFUNDED");
+		expect(result.message).toContain("annulée");
 	});
 
 	// handleActionError on unexpected exception
@@ -434,7 +442,7 @@ describe("cancelOrder", () => {
 	// ========================================================================
 
 	describe("autoRefund", () => {
-		it("should NOT create refund when autoRefund=false even on PAID order", async () => {
+		it("should REFUSE cancellation when autoRefund=false on PAID order without existing refund (ORD-BIZ-009)", async () => {
 			const order = createTxOrder({
 				paymentStatus: "PAID",
 				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 1000 }],
@@ -442,9 +450,12 @@ describe("cancelOrder", () => {
 			mockPrisma.order.findUnique.mockResolvedValue(order);
 			const fdNoAuto = createMockFormData({ id: VALID_CUID, autoRefund: "false" });
 
-			await cancelOrder(undefined, fdNoAuto);
+			const result = await cancelOrder(undefined, fdNoAuto);
 
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(result.message).toMatch(/payée/i);
 			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+			expect(mockPrisma.order.update).not.toHaveBeenCalled();
 		});
 
 		it("should NOT create refund when autoRefund=true but order is PENDING", async () => {

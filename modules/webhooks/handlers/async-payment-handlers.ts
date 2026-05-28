@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { handleCheckoutSessionCompleted } from "./checkout-handlers";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
@@ -147,7 +148,8 @@ export async function handleAsyncPaymentFailed(
 					releasedDiscountIds: discountUsages.map((u) => u.discountId),
 				};
 			},
-			{ timeout: 10000 },
+			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 
 		if (txResult.skipped) {

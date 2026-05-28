@@ -30,6 +30,16 @@ export const EMAIL_CONTACT = CONTACT_EMAIL;
 export const EMAIL_ADMIN = CONTACT_EMAIL;
 
 /**
+ * Adresse BCC optionnelle ajoutée automatiquement aux emails admin (alertes
+ * critiques : refund failed, invoice sequence overflow, dispute, etc.).
+ *
+ * Permet d'avoir un fallback humain si la boîte EMAIL_ADMIN est saturée ou
+ * inaccessible. Activée uniquement si EMAIL_ADMIN_BCC est défini en env —
+ * sinon `undefined` et aucun BCC n'est ajouté (comportement historique).
+ */
+export const EMAIL_ADMIN_BCC = process.env.EMAIL_ADMIN_BCC ?? undefined;
+
+/**
  * Messages d'email prédéfinis
  */
 export const EMAIL_SUBJECTS = {
@@ -53,4 +63,5 @@ export const EMAIL_SUBJECTS = {
 	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",
 	EMAIL_CHANGE_CONFIRMATION: "Confirmez votre nouvelle adresse email - Synclune",
 	REVIEW_REQUEST: "Ton avis sur ta commande - Synclune",
+	OAUTH_ACCOUNT_LINKED: "Un nouveau moyen de connexion a été lié à votre compte - Synclune",
 } as const;

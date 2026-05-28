@@ -24,7 +24,7 @@ export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-	PENDING: "En attente",
+	PENDING: "Paiement en attente",
 	PAID: "Payée",
 	FAILED: "Échouée",
 	EXPIRED: "Expirée",

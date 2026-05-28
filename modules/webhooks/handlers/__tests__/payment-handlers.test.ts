@@ -6,7 +6,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockPrisma,
-	mockMarkOrderAsPaid,
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
 	mockMarkOrderAsFailed,
@@ -24,7 +23,6 @@ const {
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
 	},
-	mockMarkOrderAsPaid: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
 	mockMarkOrderAsFailed: vi.fn(),
@@ -50,7 +48,6 @@ vi.mock("@/shared/lib/logger", () => ({
 }));
 
 vi.mock("../../services/payment-intent.service", () => ({
-	markOrderAsPaid: mockMarkOrderAsPaid,
 	extractPaymentFailureDetails: mockExtractPaymentFailureDetails,
 	restoreStockForOrder: mockRestoreStockForOrder,
 	markOrderAsFailed: mockMarkOrderAsFailed,
@@ -166,33 +163,42 @@ describe("handlePaymentSuccess", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should call markOrderAsPaid with orderId and paymentIntentId (old checkout session flow)", async () => {
-		mockMarkOrderAsPaid.mockResolvedValue(undefined);
+	it("ORD-STRIPE-002: should call processOrderFromPaymentIntent even when metadata.checkoutSessionId is present", async () => {
+		// Avant ORD-STRIPE-002, ce flow appelait markOrderAsPaid (sans décrément stock).
+		// Un webhook payment_intent.succeeded arrivant avant checkout.session.completed
+		// laissait l'order PAID + stock non décrémenté (guard checkout-order-processing.ts:114).
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
 
-		// Old flow: checkoutSessionId present means this PI came from a Checkout Session
-		await handlePaymentSuccess(
-			makePaymentIntent({ metadata: { order_id: "order-1", checkoutSessionId: "cs_123" } }),
-		);
+		const pi = makePaymentIntent({
+			metadata: { order_id: "order-1", checkoutSessionId: "cs_123" },
+		});
+		await handlePaymentSuccess(pi);
 
-		// 3rd arg = paymentMethod (undefined ici car mockExtractPaymentMethod résout null)
-		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123", undefined);
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, undefined);
+		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
+		expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 	});
 
-	it("propagates the extracted payment_method to markOrderAsPaid (EINV-EREPORT-001)", async () => {
-		mockMarkOrderAsPaid.mockResolvedValue(undefined);
+	it("propagates the extracted payment_method to processOrderFromPaymentIntent (EINV-EREPORT-001)", async () => {
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
 		mockExtractPaymentMethod.mockResolvedValueOnce("SEPA_DEBIT");
 
-		await handlePaymentSuccess(
-			makePaymentIntent({ metadata: { order_id: "order-1", checkoutSessionId: "cs_123" } }),
-		);
+		const pi = makePaymentIntent({
+			metadata: { order_id: "order-1", checkoutSessionId: "cs_123" },
+		});
+		await handlePaymentSuccess(pi);
 
-		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123", "SEPA_DEBIT");
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, "SEPA_DEBIT");
 	});
 
-	it("should not call markOrderAsPaid when no orderId in metadata (warn only)", async () => {
-		await handlePaymentSuccess(makePaymentIntent({ metadata: {} }));
+	it("should warn and skip when no orderId in metadata", async () => {
+		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+		const result = await handlePaymentSuccess(makePaymentIntent({ metadata: {} }));
 
-		expect(mockMarkOrderAsPaid).not.toHaveBeenCalled();
+		expect(mockProcessOrderFromPaymentIntent).not.toHaveBeenCalled();
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
 		expect(mockLogger.warn).toHaveBeenCalledWith(
 			expect.stringContaining("payment_intent.succeeded without orderId"),
 			expect.objectContaining({ service: "webhook" }),

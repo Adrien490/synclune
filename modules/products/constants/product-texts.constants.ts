@@ -135,8 +135,9 @@ export const PRODUCT_TYPES_REQUIRING_SIZE = ["ring", "bracelet"] as const;
  * Configuration des tailles d'images optimisées pour performance
  */
 export const IMAGE_SIZES = {
+	// Card max width on desktop wide = 224px; hover scale x1.02 ≈ 228px. 256px covers retina (dpr 2 ≈ 512px source).
 	PRODUCT_CARD:
-		"(max-width: 767px) 45vw, (max-width: 1023px) 30vw, (max-width: 1279px) 22vw, 340px",
+		"(max-width: 767px) 45vw, (max-width: 1023px) 30vw, (max-width: 1279px) 22vw, 256px",
 	PRODUCT_GALLERY: "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px",
 	PRODUCT_THUMBNAIL: "120px",
 } as const;

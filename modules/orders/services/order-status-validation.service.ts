@@ -191,6 +191,8 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isPartiallyRefunded = order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 	const isPaidOrPartiallyRefunded = isPaid || isPartiallyRefunded;
 	const isPaymentPending = order.paymentStatus === PaymentStatus.PENDING;
+	const isPaymentFailed = order.paymentStatus === PaymentStatus.FAILED;
+	const isPaymentExpired = order.paymentStatus === PaymentStatus.EXPIRED;
 	const hasTrackingNumber = !!order.trackingNumber;
 
 	const isReturned = order.fulfillmentStatus === FulfillmentStatus.RETURNED;
@@ -211,8 +213,13 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 		// Passage en traitement possible si en attente et payé (ou partiellement remboursé)
 		canMarkAsProcessing: isPending && isPaidOrPartiallyRefunded,
 
-		// Marquage comme payé possible si paiement en attente
-		canMarkAsPaid: isPaymentPending && (isPending || isProcessing),
+		// Marquage comme payé possible si paiement en attente OU échoué/expiré
+		// (ORD-BIZ-004 : recovery après paiement bancaire manuel post-échec ou
+		// expiration session checkout). Bloqué sur PAID/PARTIALLY_REFUNDED/REFUNDED
+		// pour éviter double comptabilisation. L'action ajoute des safety guards
+		// (pas de Refund existant, pas de cancellation, etc.).
+		canMarkAsPaid:
+			(isPaymentPending || isPaymentFailed || isPaymentExpired) && (isPending || isProcessing),
 
 		// Annulation possible si pas encore expédié
 		canCancel: (isPending || isProcessing) && !isCancelled,
@@ -222,6 +229,12 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 
 		// Retour possible si livré et pas encore retourné
 		canMarkAsReturned: isDelivered && !isReturned,
+
+		// Marquage manuel comme entièrement remboursé (hors Stripe) :
+		// remboursement bancaire / chèque / virement / geste commercial.
+		// Le service action verifie en plus l'absence de Refund Stripe PENDING/APPROVED
+		// (cf. mark-as-fully-refunded.ts:122-131).
+		canMarkAsFullyRefunded: isPaidOrPartiallyRefunded,
 	};
 }
 

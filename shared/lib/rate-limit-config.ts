@@ -446,11 +446,24 @@ export const ADMIN_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
 	windowMs: hours(1), // par heure
 };
 
+/**
+ * Limite pour le polling du statut de paiement post-checkout (CHECKOUT-AUDIT-004).
+ *
+ * Appelé par `/paiement/confirmation` toutes les 3s tant que `paymentStatus`
+ * reste PENDING. 60/min couvre un polling intensif sur 30s + retry F5
+ * raisonnable. Au-delà, on suspecte un client bogué ou un scraping.
+ */
+export const ORDER_STATUS_POLL_LIMIT: RateLimitConfig = {
+	limit: 60,
+	windowMs: minutes(1),
+};
+
 export const ORDER_LIMITS = {
 	CREATE: ORDER_CREATE_LIMIT,
 	CANCEL: ORDER_CANCEL_LIMIT,
 	INVOICE_DOWNLOAD: ORDER_INVOICE_DOWNLOAD_LIMIT,
 	ADMIN_INVOICE_DOWNLOAD: ADMIN_INVOICE_DOWNLOAD_LIMIT,
+	STATUS_POLL: ORDER_STATUS_POLL_LIMIT,
 } as const;
 
 // ========================================

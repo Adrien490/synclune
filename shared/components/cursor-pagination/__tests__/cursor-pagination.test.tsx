@@ -151,6 +151,42 @@ describe("CursorPagination", () => {
 			expect(screen.getByText("Aucun résultat")).toBeInTheDocument();
 		});
 
+		// ====================================================================
+		// totalCount (P2-1)
+		// ====================================================================
+
+		it("renders 'X sur N' when totalCount is greater than currentPageSize", () => {
+			// Use perPage=50 to avoid collision with default perPage=20 select value
+			renderPagination({ perPage: 50, currentPageSize: 23, totalCount: 127 });
+			expect(screen.getByText("23")).toBeInTheDocument();
+			expect(screen.getByText("127")).toBeInTheDocument();
+			// "sur" apparaît à la fois dans le span visible et dans le message aria-live
+			expect(screen.getAllByText(/sur/).length).toBeGreaterThanOrEqual(2);
+		});
+
+		it("does NOT render 'sur N' when totalCount equals currentPageSize (fits on one page)", () => {
+			renderPagination({ currentPageSize: 5, totalCount: 5, hasNextPage: false });
+			expect(screen.getByText("5")).toBeInTheDocument();
+			expect(screen.queryByText(/sur/)).not.toBeInTheDocument();
+		});
+
+		it("does NOT render 'sur N' when totalCount is undefined", () => {
+			renderPagination({ currentPageSize: 15 });
+			expect(screen.queryByText(/sur/)).not.toBeInTheDocument();
+		});
+
+		it("announces total in aria-live when totalCount provided", () => {
+			renderPagination({ perPage: 50, currentPageSize: 23, totalCount: 127 });
+			expect(screen.getByText("Page chargée, 23 sur 127 résultats.")).toBeInTheDocument();
+		});
+
+		it("uses plural 'résultats' based on totalCount when provided", () => {
+			renderPagination({ currentPageSize: 1, totalCount: 50, hasNextPage: false });
+			// Plural based on totalCount=50, not currentPageSize=1
+			const matches = screen.getAllByText(/résultats/);
+			expect(matches.length).toBeGreaterThanOrEqual(1);
+		});
+
 		it("renders 'Par page' label", () => {
 			renderPagination();
 			expect(screen.getByText("Par page")).toBeInTheDocument();

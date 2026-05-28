@@ -26,12 +26,7 @@ export function PolaroidGallery() {
 							washiPosition={p.washiPosition}
 							vintage={p.vintage}
 							aspectRatio="landscape"
-							className={cn(
-								p.scatterClass,
-								"polaroid-scatter",
-								"motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]",
-								GLOW_CLASSES[p.glowColor],
-							)}
+							className={cn(p.scatterClass, "polaroid-scatter", GLOW_CLASSES[p.glowColor])}
 							style={
 								{
 									...p.scatterVars,

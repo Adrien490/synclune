@@ -187,7 +187,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 					style={{ ...bind.style, viewTransitionName: `order-card-${order.id}` }}
 					className={cn(
 						"focus-ring relative block w-full rounded-lg",
-						"transform-gpu active:scale-[0.985] motion-safe:transition-transform motion-safe:duration-150",
+						"transform-gpu motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.985]",
 					)}
 				>
 					<OrderCardContent

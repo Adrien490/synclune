@@ -5,6 +5,7 @@ import { sendBackInStockEmail } from "@/modules/emails/services/wishlist-emails"
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { logger } from "@/shared/lib/logger";
 import { captureWishlistError } from "@/modules/wishlist/utils/capture-wishlist-error";
+import { generateUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
 
 /** Number of wishlist items processed per batch to bound Resend API latency */
 const NOTIFY_BATCH_SIZE = 50;
@@ -50,7 +51,10 @@ async function sendNotification(item: NotifyItem, productId: string): Promise<bo
 
 	try {
 		const productUrl = buildUrl(`${ROUTES.SHOP.PRODUCTS}/${item.product.slug}`);
-		const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
+		const recipientEmail = item.wishlist.user.email;
+		const unsubscribeUrl = buildUrl(
+			`${ROUTES.NOTIFICATIONS.UNSUBSCRIBE}?email=${encodeURIComponent(recipientEmail)}&token=${generateUnsubscribeToken(recipientEmail)}`,
+		);
 		const productImageUrl = item.product.skus[0]?.images[0]?.url ?? null;
 
 		const result = await sendBackInStockEmail({

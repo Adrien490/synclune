@@ -46,6 +46,8 @@ const {
 			create: vi.fn(),
 			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
 		},
+		// ORD-STRIPE-007 : dispute.findFirst dans cancelOrder
+		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -153,7 +155,12 @@ vi.mock("@sentry/nextjs", () => ({
 import { cancelOrder } from "../cancel-order";
 import { cancelOrderSchema } from "../../schemas/order.schemas";
 
-const validFormData = createMockFormData({ id: VALID_CUID, reason: "Annulation client" });
+// ORD-BIZ-009 : autoRefund=true requis pour annuler une commande PAID
+const validFormData = createMockFormData({
+	id: VALID_CUID,
+	reason: "Annulation client",
+	autoRefund: "true",
+});
 
 function createTxOrder(overrides: Record<string, unknown> = {}) {
 	return createMockOrder({
@@ -194,10 +201,12 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		// ORD-BIZ-009 : autoRefund=true crée un Refund (DB write requires mock)
+		mockPrisma.refund.create.mockResolvedValue({ id: "ref-auto-1" });
 
 		vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
 			success: true,
-			data: { id: VALID_CUID, reason: "Annulation client" },
+			data: { id: VALID_CUID, reason: "Annulation client", autoRefund: true },
 		} as never);
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
@@ -229,9 +238,9 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 		it("utilise une raison par défaut quand sanitizedReason est null", async () => {
 			vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
 				success: true,
-				data: { id: VALID_CUID, reason: undefined },
+				data: { id: VALID_CUID, reason: undefined, autoRefund: true },
 			} as never);
-			const fdNoReason = createMockFormData({ id: VALID_CUID });
+			const fdNoReason = createMockFormData({ id: VALID_CUID, autoRefund: "true" });
 			mockPrisma.order.findUnique.mockResolvedValue(
 				createTxOrder({ invoiceNumber: "F-2026-00045", invoiceStatus: "GENERATED" }),
 			);

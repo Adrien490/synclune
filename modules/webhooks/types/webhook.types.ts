@@ -6,6 +6,7 @@ import type {
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
+	sendAdminDashboardRefundAttentionAlert,
 } from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
@@ -21,6 +22,10 @@ export interface RefundRecord {
 	amount: number;
 	reason: RefundReason;
 	orderId: string;
+	/** ORD-REFUND-AUDIT-004 : guard SAGA admin in-flight dans webhook handler */
+	processedAt: Date | null;
+	/** ORD-REFUND-AUDIT-004 : âge mutation pour fenêtre SAGA 30s */
+	updatedAt: Date;
 	order: {
 		id: string;
 		orderNumber: string;
@@ -55,6 +60,11 @@ export type PostWebhookTask =
 	| {
 			type: "ADMIN_ORDER_PROCESSING_FAILED_ALERT";
 			data: Parameters<typeof sendAdminOrderProcessingFailedAlert>[0];
+	  }
+	| {
+			// ORD-STRIPE-006 : alerte admin pour Dashboard refunds nécessitant attention
+			type: "ADMIN_DASHBOARD_REFUND_ALERT";
+			data: Parameters<typeof sendAdminDashboardRefundAttentionAlert>[0];
 	  }
 	| { type: "INVALIDATE_CACHE"; tags: string[] };
 

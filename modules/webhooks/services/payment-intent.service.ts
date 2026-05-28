@@ -1,29 +1,41 @@
 import type Stripe from "stripe";
+import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 import {
 	type Prisma,
 	HistorySource,
 	OrderAction,
 	type PaymentMethod,
+	RefundReason,
+	RefundStatus,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
+import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { PaymentFailureDetails } from "../types/webhook.types";
+
+const AUTO_REFUND_NOTE_PREFIX = "Auto-refund payment_failed webhook";
 
 // Re-export types for backwards compatibility
 export type { PaymentFailureDetails };
 
 /**
- * Met à jour une commande comme payée (via payment_intent.succeeded)
- * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
- * Idempotent: si la commande est déjà PAID, l'opération est ignorée
+ * @deprecated ORD-STRIPE-001 / ORD-STRIPE-002 (2026-05-28) — NE PAS UTILISER en
+ *   nouveau code. Cette fonction marque `paymentStatus=PAID` mais ne décrémente
+ *   PAS le stock et ne désactive PAS les SKUs épuisés. Si elle est appelée avant
+ *   `processOrderTransaction` / `processOrderFromPaymentIntent`, le guard
+ *   `paymentStatus === "PAID"` (checkout-order-processing.service.ts:114) court-
+ *   circuite tout décrément ultérieur → oversell silencieux. Utiliser
+ *   `processOrderFromPaymentIntent` à la place : idempotent + décrément + clear
+ *   cart + désactivation SKUs en une seule transaction.
  *
- * @param paymentMethod (optionnel) — type Stripe extrait via
- *   `extractPaymentMethodFromPaymentIntent`. Si fourni, persisté sur
- *   Order.paymentMethod pour conformité e-reporting (EINV-EREPORT-001).
- *   Si omis, la valeur existante est conservée (default DB = CARD).
+ * Conservée uniquement pour rétro-compat des tests d'idempotence existants.
+ * Tout nouveau call-site doit être refusé en review.
  */
 export async function markOrderAsPaid(
 	orderId: string,
@@ -79,7 +91,8 @@ export async function markOrderAsPaid(
 				service: "webhook",
 			});
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 }
 
@@ -174,20 +187,25 @@ export async function restoreStockForOrder(
 			);
 			return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 }
 
 /**
  * Met à jour une commande comme échouée avec les détails d'erreur
- * Idempotent: if the order is already FAILED, the operation is skipped
+ * Idempotent: if the order is already FAILED, the operation is skipped.
+ *
+ * Libère également le code promo attaché (cf [[CHECKOUT-AUDIT-001]]) : décrémente
+ * `Discount.usageCount` et supprime les `DiscountUsage` orphelines, sinon le
+ * compteur dérive à chaque paiement échoué.
  */
 export async function markOrderAsFailed(
 	orderId: string,
 	paymentIntentId: string,
 	failureDetails: PaymentFailureDetails,
 ): Promise<void> {
-	await prisma.$transaction(
+	const releasedDiscountIds = await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			const order = await tx.order.findFirst({
 				where: { id: orderId, ...notDeleted },
@@ -198,14 +216,14 @@ export async function markOrderAsFailed(
 				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsFailed`, undefined, {
 					service: "webhook",
 				});
-				return;
+				return [];
 			}
 
 			if (order.paymentStatus === "FAILED") {
 				logger.info(`⏭️ [WEBHOOK] Order ${orderId} already marked as FAILED, skipping`, {
 					service: "webhook",
 				});
-				return;
+				return [];
 			}
 
 			await tx.order.update({
@@ -219,6 +237,8 @@ export async function markOrderAsFailed(
 					paymentFailureMessage: failureDetails.message,
 				},
 			});
+
+			const discountIds = await releaseOrderDiscountUsageTx(tx, orderId);
 
 			await createOrderAuditTx(tx, {
 				orderId,
@@ -234,24 +254,33 @@ export async function markOrderAsFailed(
 					failureCode: failureDetails.code,
 					declineCode: failureDetails.declineCode,
 					failureMessage: failureDetails.message,
+					releasedDiscountsCount: discountIds.length,
 				},
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as FAILED`, { service: "webhook" });
+			return discountIds;
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
+
+	for (const discountId of releasedDiscountIds) {
+		updateTag(DISCOUNT_CACHE_TAGS.USAGE(discountId));
+	}
 }
 
 /**
  * Marque une commande comme annulée
- * Idempotent: if the order is already CANCELLED with FAILED payment, the operation is skipped
+ * Idempotent: if the order is already CANCELLED with FAILED payment, the operation is skipped.
+ *
+ * Libère également le code promo attaché (cf [[CHECKOUT-AUDIT-001]]).
  */
 export async function markOrderAsCancelled(
 	orderId: string,
 	paymentIntentId: string,
 ): Promise<void> {
-	await prisma.$transaction(
+	const releasedDiscountIds = await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			const order = await tx.order.findFirst({
 				where: { id: orderId, ...notDeleted },
@@ -262,7 +291,7 @@ export async function markOrderAsCancelled(
 				logger.error(`❌ [WEBHOOK] Order ${orderId} not found in markOrderAsCancelled`, undefined, {
 					service: "webhook",
 				});
-				return;
+				return [];
 			}
 
 			if (order.status === "CANCELLED" && order.paymentStatus === "FAILED") {
@@ -270,7 +299,7 @@ export async function markOrderAsCancelled(
 					`⏭️ [WEBHOOK] Order ${orderId} already CANCELLED with FAILED payment, skipping`,
 					{ service: "webhook" },
 				);
-				return;
+				return [];
 			}
 
 			await tx.order.update({
@@ -282,6 +311,8 @@ export async function markOrderAsCancelled(
 				},
 			});
 
+			const discountIds = await releaseOrderDiscountUsageTx(tx, orderId);
+
 			await createOrderAuditTx(tx, {
 				orderId,
 				action: OrderAction.CANCELLED,
@@ -291,17 +322,37 @@ export async function markOrderAsCancelled(
 				newPaymentStatus: "FAILED",
 				authorName: "Stripe",
 				source: HistorySource.WEBHOOK,
-				metadata: { paymentIntentId, reason: "payment_intent.canceled" },
+				metadata: {
+					paymentIntentId,
+					reason: "payment_intent.canceled",
+					releasedDiscountsCount: discountIds.length,
+				},
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`, { service: "webhook" });
+			return discountIds;
 		},
-		{ timeout: 10000 },
+		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
+
+	for (const discountId of releasedDiscountIds) {
+		updateTag(DISCOUNT_CACHE_TAGS.USAGE(discountId));
+	}
 }
 
 /**
- * Initie un remboursement automatique via Stripe
+ * Initie un remboursement automatique via Stripe.
+ *
+ * ORD-BIZ-002 : crée un `Refund` local APPROVED (avec `RefundItems` couvrant
+ * tous les OrderItem, `restock=false` car le stock est déjà restauré par
+ * `restoreStockForOrder` lors de `payment_failed`) AVANT l'appel Stripe.
+ * `metadata.refund_id = localRefund.id` permet au webhook `charge.refunded`
+ * de matcher via la branche `linkRefund` (et non `upsertDashboard`), donc
+ * d'éviter la perte de traçabilité items côté DB.
+ *
+ * Idempotent : si un Refund auto a déjà été créé pour cet ordre + paymentIntent,
+ * on le re-utilise (la clé d'idempotence Stripe garantit le même `re_*` Stripe).
  */
 export async function initiateAutomaticRefund(
 	paymentIntentId: string,
@@ -309,6 +360,69 @@ export async function initiateAutomaticRefund(
 	reason: string,
 ): Promise<{ success: boolean; refundId?: string; error?: Error }> {
 	try {
+		const localRefund = await prisma.$transaction(
+			async (tx) => {
+				const existing = await tx.refund.findFirst({
+					where: {
+						orderId,
+						note: { startsWith: AUTO_REFUND_NOTE_PREFIX },
+						status: { notIn: [RefundStatus.CANCELLED, RefundStatus.REJECTED] },
+						...notDeleted,
+					},
+					select: { id: true, status: true, stripeRefundId: true },
+				});
+				if (existing) return existing;
+
+				const order = await tx.order.findUniqueOrThrow({
+					where: { id: orderId },
+					select: {
+						total: true,
+						items: { select: { id: true, price: true, quantity: true } },
+					},
+				});
+
+				const created = await tx.refund.create({
+					data: {
+						orderId,
+						amount: order.total,
+						currency: "EUR",
+						reason: RefundReason.OTHER,
+						status: RefundStatus.APPROVED,
+						note: `${AUTO_REFUND_NOTE_PREFIX} (${reason})`,
+						items: {
+							create: order.items.map((oi) => ({
+								orderItemId: oi.id,
+								quantity: oi.quantity,
+								amount: oi.price * oi.quantity,
+								restock: false,
+							})),
+						},
+					},
+					select: { id: true, status: true, stripeRefundId: true },
+				});
+
+				await createOrderAuditTx(tx, {
+					orderId,
+					action: OrderAction.REFUND_CREATED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: "Système (auto-refund)",
+					note: `Auto-refund initié suite à ${reason}`,
+					metadata: {
+						refundId: created.id,
+						paymentIntentId,
+						amount: order.total,
+						itemsCount: order.items.length,
+						automatic: true,
+					},
+				});
+
+				return created;
+			},
+			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
+
 		const { stripe } = await import("@/shared/lib/stripe");
 
 		const refund = await stripe.refunds.create(
@@ -318,6 +432,7 @@ export async function initiateAutomaticRefund(
 				metadata: {
 					orderId,
 					reason,
+					refund_id: localRefund.id,
 				},
 			},
 			{
@@ -325,12 +440,23 @@ export async function initiateAutomaticRefund(
 			},
 		);
 
-		logger.info(`✅ [WEBHOOK] Refund created successfully: ${refund.id} for order ${orderId}`, {
-			service: "webhook",
-		});
+		// Persiste stripeRefundId si pas déjà posé. Le webhook charge.refunded
+		// tombera ensuite sur la branche `linkRefund` (refund_id présent dans
+		// metadata) et finalisera le status à COMPLETED dans le même flux.
+		if (!localRefund.stripeRefundId) {
+			await prisma.refund.update({
+				where: { id: localRefund.id },
+				data: { stripeRefundId: refund.id },
+			});
+		}
+
+		logger.info(
+			`✅ [WEBHOOK] Auto-refund Stripe ${refund.id} créé + lié au Refund local ${localRefund.id} pour ordre ${orderId}`,
+			{ service: "webhook" },
+		);
 		return { success: true, refundId: refund.id };
 	} catch (error) {
-		logger.error(`❌ [WEBHOOK] Failed to create refund for order ${orderId}:`, error, {
+		logger.error(`❌ [WEBHOOK] Failed to create auto-refund for order ${orderId}:`, error, {
 			service: "webhook",
 		});
 		return { success: false, error: error instanceof Error ? error : new Error(String(error)) };

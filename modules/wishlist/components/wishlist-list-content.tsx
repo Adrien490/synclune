@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useOptimistic, useState } from "react";
+import { useOptimistic, useState } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
@@ -54,37 +54,31 @@ export function WishlistListContent({
 		() => new Map(),
 	);
 
-	const markAsTombstone = useCallback((productId: string, entry: WishlistTombstoneEntry) => {
+	const markAsTombstone = (productId: string, entry: WishlistTombstoneEntry) => {
 		setTombstones((prev) => {
 			const next = new Map(prev);
 			next.set(productId, entry);
 			return next;
 		});
-	}, []);
+	};
 
-	const cancelTombstone = useCallback((productId: string) => {
+	const cancelTombstone = (productId: string) => {
 		setTombstones((prev) => {
 			if (!prev.has(productId)) return prev;
 			const next = new Map(prev);
 			next.delete(productId);
 			return next;
 		});
-	}, []);
+	};
 
-	const handleItemRemoved = useCallback(
-		(productId: string) => {
-			removeOptimisticItem(productId);
-		},
-		[removeOptimisticItem],
-	);
+	const handleItemRemoved = (productId: string) => {
+		removeOptimisticItem(productId);
+	};
 
-	const handleTombstoneExpire = useCallback(
-		(productId: string) => {
-			cancelTombstone(productId);
-			handleItemRemoved(productId);
-		},
-		[cancelTombstone, handleItemRemoved],
-	);
+	const handleTombstoneExpire = (productId: string) => {
+		cancelTombstone(productId);
+		handleItemRemoved(productId);
+	};
 
 	const contextValue: WishlistListOptimisticContextValue = {
 		onItemRemoved: handleItemRemoved,
@@ -174,6 +168,7 @@ export function WishlistListContent({
 						currentPageSize={optimisticItems.length}
 						nextCursor={nextCursor}
 						prevCursor={prevCursor}
+						totalCount={optimisticTotalCount}
 					/>
 				</div>
 			</div>

@@ -166,19 +166,25 @@ describe("cleanupExpiredCarts", () => {
 		);
 	});
 
-	it("should propagate errors from prisma operations", async () => {
+	it("OPS-AUDIT-005: increments errored instead of throwing on prisma error", async () => {
 		mockPrisma.cart.findMany.mockRejectedValue(new Error("DB connection lost"));
+		mockPrisma.$executeRaw.mockResolvedValue(0);
 
-		await expect(cleanupExpiredCarts()).rejects.toThrow("DB connection lost");
+		const result = await cleanupExpiredCarts();
+
+		expect(result.errored).toBeGreaterThanOrEqual(1);
+		expect(result.deletedCount).toBe(0);
 	});
 
-	it("should capture cart-deletion errors to Sentry with a step-specific fingerprint before re-throwing", async () => {
+	it("OPS-AUDIT-005: captures cart-deletion errors to Sentry with step fingerprint (no rethrow)", async () => {
 		const dbError = new Error("DB connection lost");
 		mockPrisma.cart.findMany.mockRejectedValue(dbError);
+		mockPrisma.$executeRaw.mockResolvedValue(0);
 
-		await expect(cleanupExpiredCarts()).rejects.toThrow("DB connection lost");
+		const result = await cleanupExpiredCarts();
 
-		expect(mockSentryWithScope).toHaveBeenCalledOnce();
+		expect(result.errored).toBeGreaterThanOrEqual(1);
+		expect(mockSentryWithScope).toHaveBeenCalled();
 		expect(mockSentryCapture).toHaveBeenCalledWith(dbError);
 		expect(lastScope.setTag).toHaveBeenCalledWith("cronJob", "cleanup-carts");
 		expect(lastScope.setTag).toHaveBeenCalledWith("step", "cart-deletion");
@@ -193,12 +199,13 @@ describe("cleanupExpiredCarts", () => {
 		);
 	});
 
-	it("should capture orphan-items errors to Sentry separately from cart-deletion (distinct issue groups)", async () => {
+	it("OPS-AUDIT-005: orphan-items errors captured separately and counted (no rethrow)", async () => {
 		const orphanError = new Error("Raw SQL timeout");
 		mockPrisma.$executeRaw.mockRejectedValue(orphanError);
 
-		await expect(cleanupExpiredCarts()).rejects.toThrow("Raw SQL timeout");
+		const result = await cleanupExpiredCarts();
 
+		expect(result.errored).toBeGreaterThanOrEqual(1);
 		expect(mockSentryCapture).toHaveBeenCalledWith(orphanError);
 		expect(lastScope.setTag).toHaveBeenCalledWith("step", "orphan-items");
 		expect(lastScope.setFingerprint).toHaveBeenCalledWith([

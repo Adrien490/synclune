@@ -4,6 +4,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { type z } from "zod";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import type { GetOrderReturn } from "../types/order.types";
 import { getOrderByIdSchema } from "../schemas/order.schemas";
@@ -45,6 +46,9 @@ async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 	"use cache";
 	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	// Tag granulaire (ORD-CACHE-001) : permet d'invalider uniquement
+	// cette commande via getOrderInvalidationTags(_, orderId).
+	cacheTag(ORDERS_CACHE_TAGS.DETAIL(id));
 
 	try {
 		const order = await prisma.order.findFirst({

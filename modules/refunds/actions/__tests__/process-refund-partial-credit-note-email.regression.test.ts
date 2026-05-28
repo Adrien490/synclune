@@ -34,6 +34,8 @@ const {
 		refund: { update: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		order: { update: vi.fn() },
+		// ORD-STRIPE-007 : dispute.findFirst utilisé dans Step 1 du SAGA processRefund
+		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
 	};
 	return {
 		mockRequireAdminWithUser: vi.fn(),

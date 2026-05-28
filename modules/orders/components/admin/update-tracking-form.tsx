@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Formulaire de mise a jour du suivi (tracking number, carrier, URL).
+ *
+ * Pattern dual : utilise en dialog modal (`update-tracking-dialog.tsx`)
+ * ET en page inline (`app/admin/ventes/commandes/[id]/suivi/page.tsx`).
+ * Cf. ORD-MAP-002.
+ */
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
