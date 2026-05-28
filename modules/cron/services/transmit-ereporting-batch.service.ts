@@ -93,8 +93,14 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 			case "NOT_ELIGIBLE":
 				skipped++;
 				break;
-			case "REJECTED":
 			case "RETRYING":
+				// EINV-CRON-004 : RETRYING est un état transitoire auto-réparant (backoff
+				// puis re-tentative au prochain run). Le compter en `errored` déclenchait
+				// une alerte admin (withCronGuard) à chaque blip réseau → fatigue d'alerte.
+				// Seuls REJECTED/ABANDONED (action humaine requise) restent `errored`.
+				skipped++;
+				break;
+			case "REJECTED":
 			case "ABANDONED":
 				errored++;
 				break;

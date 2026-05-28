@@ -208,8 +208,6 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 					<BatchesTable batches={overview.pendingBatches} showStatus />
 				</section>
 			)}
-
-			<TransmissionSection transmission={overview.transmission} />
 		</div>
 	);
 }
@@ -319,8 +317,8 @@ function RejectedBatchesAlert({ batches }: { batches: ReadonlyArray<BatchSummary
 			<AlertTitle>{batches.length} batch(es) e-reporting rejeté(s) par la DGFiP</AlertTitle>
 			<AlertDescription className="space-y-2">
 				<p>
-					Action requise — ouvrir le détail du batch pour voir le payload XML et relancer la
-					transmission après correction.
+					Action requise — ouvrir le détail du batch pour consulter le motif de rejet DGFiP et la
+					réponse du provider, puis relancer la transmission après correction.
 				</p>
 				<ul className="space-y-1 text-sm">
 					{batches.slice(0, 3).map((batch) => (
@@ -344,7 +342,6 @@ function FeatureFlagsCard({ flags }: { flags: InvoiceFeatureFlags }) {
 			</CardHeader>
 			<CardContent>
 				<div className="flex flex-wrap gap-2 text-sm">
-					<Flag label="XML structuré (Factur-X/UBL/CII)" active={flags.enable_xml} />
 					<Flag label="E-reporting B2C DGFiP" active={flags.enable_ereporting} />
 				</div>
 				<p className="text-muted-foreground mt-3 text-xs">
@@ -363,128 +360,6 @@ function Flag({ label, active }: { label: string; active: boolean }) {
 		<Badge variant={active ? "default" : "outline"} className="text-xs">
 			{active ? "ON" : "OFF"} · {label}
 		</Badge>
-	);
-}
-
-function TransmissionSection({
-	transmission,
-}: {
-	transmission: InvoicingOverview["transmission"];
-}) {
-	// Pas de provider PDP actif ET aucune écriture historique → section masquée.
-	const hasAnyTransmission = Object.values(transmission.counters).some((n) => n > 0);
-	if (!transmission.providerActive && !hasAnyTransmission) {
-		return null;
-	}
-
-	const hasRejected = transmission.recentRejected.length > 0;
-
-	return (
-		<section aria-labelledby="pdp-transmission-heading" aria-live="polite" className="space-y-4">
-			<div className="flex items-center justify-between gap-2">
-				<h2 id="pdp-transmission-heading" className="text-foreground text-lg font-medium">
-					Transmission plateforme (B2B/B2G)
-				</h2>
-				<Badge variant={transmission.providerActive ? "default" : "outline"} className="text-xs">
-					Provider · {transmission.providerName}{" "}
-					{transmission.providerActive ? "actif" : "(local — aucune transmission)"}
-				</Badge>
-			</div>
-
-			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
-				<CounterCard
-					compact
-					icon={<Clock className="text-muted-foreground size-4" aria-hidden="true" />}
-					label="En attente"
-					value={transmission.counters.PENDING}
-				/>
-				<CounterCard
-					compact
-					icon={<Send className="text-info size-4" aria-hidden="true" />}
-					label="Transmises"
-					value={transmission.counters.SENT}
-				/>
-				<CounterCard
-					compact
-					icon={<CheckCircle2 className="text-success size-4" aria-hidden="true" />}
-					label="Acceptées"
-					value={transmission.counters.ACCEPTED}
-				/>
-				<CounterCard
-					compact
-					icon={<XCircle className="text-destructive size-4" aria-hidden="true" />}
-					label="Rejetées"
-					value={transmission.counters.REJECTED}
-					danger={transmission.counters.REJECTED > 0}
-				/>
-				<CounterCard
-					compact
-					icon={<Clock className="text-warning size-4" aria-hidden="true" />}
-					label="Retry"
-					value={transmission.counters.RETRYING}
-				/>
-				<CounterCard
-					compact
-					icon={<FileWarning className="text-muted-foreground size-4" aria-hidden="true" />}
-					label="Annulées"
-					value={transmission.counters.CANCELLED}
-				/>
-				<CounterCard
-					compact
-					icon={<AlertTriangle className="text-destructive size-4" aria-hidden="true" />}
-					label="Abandonnées"
-					value={transmission.counters.ABANDONED}
-					danger={transmission.counters.ABANDONED > 0}
-				/>
-			</div>
-
-			{hasRejected && (
-				<div className="border-border rounded-md border">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Facture</TableHead>
-								<TableHead>Commande</TableHead>
-								<TableHead>Statut</TableHead>
-								<TableHead>Code rejet</TableHead>
-								<TableHead className="text-right">Retries</TableHead>
-								<TableHead>Dernier essai</TableHead>
-								<TableHead className="text-right">Action</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{transmission.recentRejected.map((row) => (
-								<TableRow key={row.orderId}>
-									<TableCell className="font-mono text-xs">{row.invoiceNumber ?? "—"}</TableCell>
-									<TableCell className="font-mono text-xs">{row.orderNumber}</TableCell>
-									<TableCell>
-										<Badge variant={row.pdpStatus === "ABANDONED" ? "destructive" : "secondary"}>
-											{row.pdpStatus}
-										</Badge>
-									</TableCell>
-									<TableCell className="text-xs">{row.pdpRejectionCode ?? "—"}</TableCell>
-									<TableCell className="text-right text-xs">{row.pdpRetryCount}</TableCell>
-									<TableCell className="text-muted-foreground text-xs">
-										{row.pdpLastRetryAt
-											? row.pdpLastRetryAt.toISOString().slice(0, 16).replace("T", " ")
-											: "—"}
-									</TableCell>
-									<TableCell className="text-right">
-										<Link
-											href={`/admin/ventes/commandes/${row.orderId}`}
-											className="text-sm underline"
-											aria-label={`Voir le détail de la commande ${row.orderNumber}`}
-										>
-											Détail
-										</Link>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-			)}
-		</section>
 	);
 }
 

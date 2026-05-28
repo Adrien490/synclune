@@ -7,6 +7,7 @@ import { CopyButton } from "@/shared/components/copy-button";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { InvoiceStatusBadge } from "@/modules/orders/components/admin/invoice-status-badge";
 import { DownloadAdminInvoiceButton } from "./download-admin-invoice-button";
+import { DownloadAdminCreditNoteButton } from "./download-admin-credit-note-button";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
 interface OrderInvoiceCardProps {
@@ -37,6 +38,8 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 	const isAnomaly = isPaid && !hasInvoice;
 	const isVoided = order.invoiceStatus === "VOIDED" && Boolean(order.creditNoteNumber);
 	const hashSuffix = order.invoicePdfHash ? order.invoicePdfHash.slice(-8) : null;
+	// EINV-UI-105 : facture émise mais archivage PDF / avoir escaladé en échec (DLQ).
+	const isRetryDeferred = hasInvoice && order.invoiceRetryDeferred === true;
 
 	return (
 		<Card>
@@ -61,6 +64,22 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 								ensure-invoice-number
 							</code>
 							).
+						</AlertDescription>
+					</Alert>
+				)}
+
+				{isRetryDeferred && (
+					<Alert variant="destructive">
+						<AlertTriangle className="size-4" aria-hidden="true" />
+						<AlertTitle>Archivage / avoir en échec</AlertTitle>
+						<AlertDescription>
+							La facture est émise mais l&apos;archivage PDF ou l&apos;avoir a échoué et a été
+							escaladé ({order.invoiceReconcileAttempts} tentative
+							{order.invoiceReconcileAttempts > 1 ? "s" : ""}). Le cron{" "}
+							<code className="bg-destructive/10 mx-1 rounded px-1 py-0.5 text-xs">
+								reconcile-invoices
+							</code>
+							réessaie automatiquement — voir le runbook facturation si persistant.
 						</AlertDescription>
 					</Alert>
 				)}
@@ -155,6 +174,10 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 								<p className="mt-1 text-sm">{formatDateTime(order.invoiceVoidedAt)}</p>
 							</div>
 						)}
+						<DownloadAdminCreditNoteButton
+							orderNumber={order.orderNumber}
+							creditNoteNumber={order.creditNoteNumber}
+						/>
 					</div>
 				)}
 			</CardContent>

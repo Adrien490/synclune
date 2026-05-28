@@ -7,6 +7,7 @@ import {
 	sendAdminCreditNoteFailedAlert,
 	sendAdminSequenceOverflowAlert,
 } from "@/modules/emails/services/admin-emails";
+import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 
@@ -91,21 +92,6 @@ interface VoidInvoiceParams {
 const MAX_RETRIES = 5;
 
 /**
- * CHECK constraint DB (`Order_creditNoteNumber_format_check`) impose
- * `^A-[0-9]{4}-[0-9]{5}$` → 99 999 avoirs/an max. Voir l'équivalent
- * `MAX_SEQUENCE_PER_YEAR` dans `persist-invoice-number.service.ts`.
- */
-const MAX_SEQUENCE_PER_YEAR = 99_999;
-
-/**
- * Clé Postgres advisory lock pour les avoirs (offset distinct de la facture
- * pour ne pas sérialiser facture + avoir mutuellement).
- */
-function creditNoteAdvisoryLockKey(year: number): number {
-	return 2_000_000 + year;
-}
-
-/**
  * Marque la facture d'une commande comme VOIDED + émet un avoir (credit note)
  * avec son propre numéro séquentiel "A-YYYY-NNNNN", dans une transaction atomique.
  *
@@ -157,38 +143,12 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 					};
 				}
 
+				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
+				// (advisory lock 2_000_000+year + lookup UNION). Garantit l'unicité
+				// cross-table que les CHECK/UNIQUE par table ne couvrent pas
+				// (EINV-PRISMA-001).
 				const year = new Date().getFullYear();
-				const prefix = `A-${year}-`;
-
-				await tx.$executeRaw(
-					Prisma.sql`SELECT pg_advisory_xact_lock(${creditNoteAdvisoryLockKey(year)})`,
-				);
-
-				const lastRow = await tx.$queryRaw<Array<{ creditNoteNumber: string | null }>>(
-					Prisma.sql`SELECT "creditNoteNumber" FROM "Order"
-						WHERE "creditNoteNumber" LIKE ${prefix + "%"}
-						ORDER BY "creditNoteNumber" DESC
-						LIMIT 1`,
-				);
-
-				let nextSequence = 1;
-				const lastNumber = lastRow[0]?.creditNoteNumber;
-				if (lastNumber) {
-					const parsed = parseInt(lastNumber.slice(prefix.length), 10);
-					if (!isNaN(parsed)) {
-						nextSequence = parsed + 1;
-					}
-				}
-
-				if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
-					throw new BusinessError(
-						`Séquence avoir saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
-							`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
-						"CREDIT_NOTE_SEQUENCE_OVERFLOW",
-					);
-				}
-
-				const creditNoteNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
+				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 				const now = new Date();
 
 				const updated = await tx.order.update({

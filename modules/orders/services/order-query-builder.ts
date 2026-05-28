@@ -115,6 +115,19 @@ export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderW
 		conditions.invoiceNumber = null;
 	}
 
+	// Preset "PDF non archivé" : facture émise (GENERATED) mais PDF immuable absent
+	// (invoicePdfUrl IS NULL). Art. L102 B LPF — maintenance archivage (EINV-UI-106).
+	if (filters.pdfNotArchived === true) {
+		conditions.invoiceStatus = "GENERATED";
+		conditions.invoicePdfUrl = null;
+	}
+
+	// Preset "retry escaladé" : DLQ facturation (invoiceRetryDeferred = true) —
+	// archivage PDF / avoir en échec, escaladé au cron reconcile-invoices (EINV-UI-106).
+	if (filters.retryDeferred === true) {
+		conditions.invoiceRetryDeferred = true;
+	}
+
 	if (typeof filters.totalMin === "number" && typeof filters.totalMax === "number") {
 		conditions.total = {
 			gte: filters.totalMin,

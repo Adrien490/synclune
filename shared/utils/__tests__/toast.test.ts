@@ -18,11 +18,19 @@ const { mockSonner, mockHaptic } = vi.hoisted(() => ({
 vi.mock("sonner", () => ({ toast: mockSonner }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ triggerHaptic: mockHaptic }));
 
-import { toast, sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration } from "../toast";
+import {
+	toast,
+	sanitizeErrorMessage,
+	GENERIC_ERROR_MESSAGE,
+	computeDuration,
+	__resetDesktopCoalesce,
+} from "../toast";
 import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	// Évite la contamination inter-tests via le cache de dédup desktop (Date.now réel).
+	__resetDesktopCoalesce();
 });
 
 describe("sanitizeErrorMessage", () => {
@@ -299,8 +307,14 @@ describe("toast wrapper", () => {
 			expect(mockSonner.success).not.toHaveBeenCalled();
 		});
 
-		it("promise() rejects manually with toast.error on mobile (function error msg)", async () => {
+		it("promise() rejects manually with toast.error on mobile (routes to MicroToast, function error msg)", async () => {
 			stubMatchMedia(true);
+			useMicroToastStore.setState({
+				visible: false,
+				message: "",
+				variant: "success",
+				action: null,
+			});
 			const p = Promise.reject(new Error("boom"));
 			toast.promise(p, {
 				loading: "Chargement…",
@@ -310,10 +324,12 @@ describe("toast wrapper", () => {
 			await p.catch(() => {});
 			await Promise.resolve();
 			expect(mockSonner.promise).not.toHaveBeenCalled();
-			expect(mockSonner.error).toHaveBeenCalledWith(
-				"boom",
-				expect.objectContaining({ duration: expect.any(Number) }),
-			);
+			// F1 : error sur mobile route vers la pastille MicroToast, pas Sonner.
+			expect(mockSonner.error).not.toHaveBeenCalled();
+			const state = useMicroToastStore.getState();
+			expect(state.visible).toBe(true);
+			expect(state.variant).toBe("error");
+			expect(state.message).toBe("boom");
 		});
 
 		it("promise() forwards to sonner on desktop", () => {
@@ -345,6 +361,95 @@ describe("toast wrapper", () => {
 			toast.success("Bijou créé", { duration: 800 });
 
 			expect(useMicroToastStore.getState().currentDuration).toBe(800);
+		});
+
+		it("error() on mobile routes to MicroToast (variant error) instead of Sonner (F1)", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({
+				visible: false,
+				message: "",
+				variant: "success",
+				currentDuration: 0,
+				count: 1,
+				action: null,
+			});
+
+			toast.error("Stock insuffisant");
+
+			expect(mockSonner.error).not.toHaveBeenCalled();
+			const state = useMicroToastStore.getState();
+			expect(state.visible).toBe(true);
+			expect(state.variant).toBe("error");
+			expect(state.message).toBe("Stock insuffisant");
+			// floor erreur = 5000
+			expect(state.currentDuration).toBeGreaterThanOrEqual(5000);
+		});
+
+		it("error() on mobile sanitizes technical messages before showing the pastille", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({ visible: false, message: "", action: null });
+
+			toast.error("TypeError: boom at app.js:1");
+
+			expect(useMicroToastStore.getState().message).toBe(GENERIC_ERROR_MESSAGE);
+		});
+
+		it("success() on mobile propagates the action to the pastille (F5)", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({ visible: false, message: "", action: null });
+			const onClick = vi.fn();
+
+			toast.success("Archivé", { action: { label: "Annuler", onClick } });
+
+			const { action } = useMicroToastStore.getState();
+			expect(action).not.toBeNull();
+			expect(action?.label).toBe("Annuler");
+			action?.onClick();
+			expect(onClick).toHaveBeenCalledTimes(1);
+		});
+
+		it("action on mobile extends the duration to at least 6000ms (time to tap)", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({ visible: false, message: "", action: null });
+
+			toast.success("OK", { action: { label: "Annuler", onClick: vi.fn() } });
+
+			expect(useMicroToastStore.getState().currentDuration).toBeGreaterThanOrEqual(6000);
+		});
+	});
+
+	describe("desktop coalescing (F4)", () => {
+		it("passes a stable id derived from (variant, message) so Sonner refreshes instead of stacking", () => {
+			toast.success("Ajouté au panier");
+			expect(mockSonner.success).toHaveBeenCalledWith(
+				"Ajouté au panier",
+				expect.objectContaining({ id: "coalesce:success::Ajouté au panier" }),
+			);
+		});
+
+		it("suffixes ×N on the message when the same toast repeats within the window", () => {
+			toast.success("Ajouté au panier");
+			toast.success("Ajouté au panier");
+			toast.success("Ajouté au panier");
+			expect(mockSonner.success).toHaveBeenLastCalledWith(
+				"Ajouté au panier ×3",
+				expect.objectContaining({ id: "coalesce:success::Ajouté au panier" }),
+			);
+		});
+
+		it("does NOT dedup when the caller provides an explicit action (undo)", () => {
+			const action = { label: "Annuler", onClick: vi.fn() };
+			toast.success("Article supprimé", { action });
+			const call = mockSonner.success.mock.calls[0];
+			expect(call?.[1]).not.toHaveProperty("id");
+		});
+
+		it("does NOT dedup when the caller provides an explicit id", () => {
+			toast.success("Sauvegardé", { id: "custom-id" });
+			expect(mockSonner.success).toHaveBeenCalledWith(
+				"Sauvegardé",
+				expect.objectContaining({ id: "custom-id" }),
+			);
 		});
 	});
 });

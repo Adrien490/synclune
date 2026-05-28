@@ -10,7 +10,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
-import { CheckCircle2, ExternalLink, Link2, Loader2, Mail } from "lucide-react";
+import { CheckCircle2, ExternalLink, Link2, Loader2 } from "lucide-react";
 
 import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
@@ -102,7 +102,6 @@ export function UpdateTrackingForm({
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
 	const carrier = useStore(form.store, (state) => state.values.carrier);
 	const trackingUrl = useStore(form.store, (state) => state.values.trackingUrl);
-	const sendEmail = useStore(form.store, (state) => state.values.sendEmail);
 	const customUrlMode = useStore(form.store, (state) => state.values.customUrlMode);
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 
@@ -212,7 +211,6 @@ export function UpdateTrackingForm({
 		>
 			<input type="hidden" name="id" value={orderId} />
 			<input type="hidden" name="trackingUrl" value={trackingUrl} />
-			<input type="hidden" name="sendEmail" value={sendEmail ? "true" : "false"} />
 
 			<p className="text-muted-foreground text-sm">
 				Commande <span className="text-foreground font-semibold">{orderNumber}</span>
@@ -342,25 +340,6 @@ export function UpdateTrackingForm({
 						</p>
 					</div>
 				</div>
-
-				<div className="bg-muted/30 flex items-start gap-x-3 rounded-lg border p-4">
-					<Checkbox
-						id="sendEmailCheckbox"
-						checked={sendEmail}
-						onCheckedChange={(checked) => form.setFieldValue("sendEmail", checked === true)}
-						disabled={isPending}
-						className="touch-manipulation"
-					/>
-					<div className="space-y-1 leading-none">
-						<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
-							<Mail className="size-4" aria-hidden="true" />
-							Prévenir le client par email
-						</Label>
-						<p className="text-muted-foreground text-xs">
-							On envoie un email avec le numéro et le lien de suivi.
-						</p>
-					</div>
-				</div>
 			</fieldset>
 
 			<AdminFormFooter pending={isPending}>
@@ -375,9 +354,7 @@ export function UpdateTrackingForm({
 						{isPending && (
 							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 						)}
-						<span>
-							{isPending ? (sendEmail ? "Envoi…" : "Mise à jour…") : "Enregistrer le suivi"}
-						</span>
+						<span>{isPending ? "Mise à jour…" : "Enregistrer le suivi"}</span>
 						{!isPending && (
 							<Kbd
 								aria-hidden="true"

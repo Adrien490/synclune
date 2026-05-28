@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus } from "@/app/generated/prisma/browser";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
 import type { ResendEmailType } from "@/modules/orders/actions/resend-order-email";
-import { Mail, Truck, PackageCheck } from "lucide-react";
+import { Mail, Truck } from "lucide-react";
 
 export const RESEND_EMAIL_DIALOG_ID = "resend-email";
 
@@ -24,7 +24,6 @@ interface ResendEmailData {
 	orderId: string;
 	orderNumber: string;
 	orderStatus: OrderStatus;
-	fulfillmentStatus: FulfillmentStatus;
 	[key: string]: unknown;
 }
 
@@ -45,12 +44,6 @@ const EMAIL_OPTIONS: {
 		label: "Confirmation d'expédition",
 		description: "Email avec le numéro de suivi et le transporteur",
 		icon: Truck,
-	},
-	{
-		value: "delivery",
-		label: "Confirmation de livraison",
-		description: "Email confirmant la réception du colis",
-		icon: PackageCheck,
 	},
 ];
 
@@ -79,14 +72,9 @@ export function ResendEmailDialog() {
 		dialog.data?.orderStatus === OrderStatus.SHIPPED ||
 		dialog.data?.orderStatus === OrderStatus.DELIVERED;
 
-	const canSendDelivery =
-		dialog.data?.orderStatus === OrderStatus.DELIVERED ||
-		dialog.data?.fulfillmentStatus === FulfillmentStatus.DELIVERED;
-
 	const availableOptions = EMAIL_OPTIONS.filter((option) => {
 		if (option.value === "confirmation") return true;
-		if (option.value === "shipping") return canSendShipping;
-		return canSendDelivery;
+		return canSendShipping;
 	});
 
 	return (
@@ -125,7 +113,7 @@ export function ResendEmailDialog() {
 						})}
 					</RadioGroup>
 
-					{availableOptions.length < 3 && (
+					{availableOptions.length < EMAIL_OPTIONS.length && (
 						<p className="text-muted-foreground mt-4 text-xs">
 							Certains emails ne sont pas disponibles car la commande n'a pas encore atteint le
 							statut requis.

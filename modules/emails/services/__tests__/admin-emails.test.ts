@@ -8,10 +8,6 @@ vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
 }));
 
-vi.mock("@/emails/admin-new-order-email", () => ({
-	AdminNewOrderEmail: vi.fn((props) => ({ type: "AdminNewOrderEmail", props })),
-}));
-
 vi.mock("@/emails/admin-alert-email", () => ({
 	AdminAlertEmail: vi.fn((props) => ({ type: "AdminAlertEmail", props })),
 }));
@@ -30,138 +26,13 @@ vi.mock("@/shared/constants/urls", () => ({
 }));
 
 import {
-	sendAdminNewOrderEmail,
 	sendAdminRefundFailedAlert,
 	sendWebhookFailedAlertEmail,
 	sendAdminCronFailedAlert,
-	sendAdminCheckoutFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
 } from "../admin-emails";
-
-const mockShippingAddress = {
-	firstName: "Marie",
-	lastName: "Dupont",
-	address1: "12 rue de la Paix",
-	city: "Paris",
-	postalCode: "75001",
-	country: "FR",
-	phone: "+33612345678",
-};
-
-const mockItems = [
-	{
-		productTitle: "Bague en or",
-		skuColor: "Or jaune",
-		skuMaterial: null,
-		skuSize: "52",
-		quantity: 1,
-		price: 12000,
-	},
-];
-
-describe("sendAdminNewOrderEmail", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-1" } });
-	});
-
-	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
-		await sendAdminNewOrderEmail({
-			orderId: "order_1",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			customerEmail: "customer@test.com",
-			items: mockItems,
-			subtotal: 12000,
-			discount: 0,
-			shipping: 500,
-			total: 12500,
-			shippingAddress: mockShippingAddress,
-			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		});
-
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminNewOrderEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerName: "Marie Dupont",
-					customerEmail: "customer@test.com",
-					items: mockItems,
-					subtotal: 12000,
-					discount: 0,
-					shipping: 500,
-					total: 12500,
-					shippingAddress: mockShippingAddress,
-					dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "🎉 Nouvelle commande CMD-001 - 125.00€",
-				tags: [{ name: "category", value: "admin" }],
-				idempotencyKey: "admin-new-order:order_1",
-			}),
-		);
-	});
-
-	it("should format total correctly in subject", async () => {
-		await sendAdminNewOrderEmail({
-			orderId: "order_2",
-			orderNumber: "CMD-002",
-			customerName: "Jean Martin",
-			customerEmail: "jean@test.com",
-			items: mockItems,
-			subtotal: 9999,
-			discount: 0,
-			shipping: 0,
-			total: 9999,
-			shippingAddress: mockShippingAddress,
-			dashboardUrl: "https://test.com/admin/commandes/CMD-002",
-		});
-
-		const callArgs = mockRenderAndSend.mock.calls[0]![1];
-		expect(callArgs.subject).toBe("🎉 Nouvelle commande CMD-002 - 99.99€");
-	});
-
-	it("EMAIL-AUDIT-002 : forwards a stable idempotencyKey derived from orderId", async () => {
-		await sendAdminNewOrderEmail({
-			orderId: "order_42",
-			orderNumber: "CMD-042",
-			customerName: "Léa",
-			customerEmail: "lea@test.com",
-			items: mockItems,
-			subtotal: 5000,
-			discount: 0,
-			shipping: 0,
-			total: 5000,
-			shippingAddress: mockShippingAddress,
-			dashboardUrl: "https://test.com/admin/commandes/CMD-042",
-		});
-		const callArgs = mockRenderAndSend.mock.calls[0]![1];
-		expect(callArgs.idempotencyKey).toBe("admin-new-order:order_42");
-	});
-
-	it("should return the result from renderAndSend", async () => {
-		const result = await sendAdminNewOrderEmail({
-			orderId: "order_1",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			customerEmail: "customer@test.com",
-			items: mockItems,
-			subtotal: 12000,
-			discount: 0,
-			shipping: 500,
-			total: 12500,
-			shippingAddress: mockShippingAddress,
-			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-		});
-
-		expect(result).toEqual({ success: true, data: { id: "email-1" } });
-	});
-});
 
 describe("sendAdminRefundFailedAlert", () => {
 	beforeEach(() => {
@@ -376,47 +247,6 @@ describe("sendAdminCronFailedAlert", () => {
 	});
 });
 
-describe("sendAdminCheckoutFailedAlert", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-5" } });
-	});
-
-	it("should render AdminAlertEmail with type=checkout", async () => {
-		await sendAdminCheckoutFailedAlert({
-			orderNumber: "CMD-001",
-			customerEmail: "customer@test.com",
-			total: 12500,
-			errorMessage: "stripe.checkout.sessions.create failed",
-		});
-
-		const emailArg = mockRenderAndSend.mock.calls[0]![0];
-		expect(emailArg.props.type).toBe("checkout");
-		expect(emailArg.props.context).toContain("CMD-001");
-		expect(emailArg.props.context).toContain("customer@test.com");
-		expect(emailArg.props.stackTrace).toBe("stripe.checkout.sessions.create failed");
-		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin");
-
-		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
-		expect(sendOpts).toMatchObject({
-			to: "admin@test.com",
-			subject: "[Admin] Échec checkout Stripe — CMD-001",
-			tags: [{ name: "category", value: "admin" }],
-		});
-	});
-
-	it("should return the result from renderAndSend", async () => {
-		const result = await sendAdminCheckoutFailedAlert({
-			orderNumber: "CMD-001",
-			customerEmail: "customer@test.com",
-			total: 12500,
-			errorMessage: "Error",
-		});
-
-		expect(result).toEqual({ success: true, data: { id: "email-5" } });
-	});
-});
-
 describe("sendAdminDisputeAlert", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
@@ -489,12 +319,10 @@ describe("sendAdminInvoiceFailedAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-7" } });
 	});
 
-	it("should render AdminAlertEmail with type=invoice and include B2B fields", async () => {
+	it("should render AdminAlertEmail with type=invoice", async () => {
 		await sendAdminInvoiceFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
-			customerCompanyName: "SARL Dupont",
-			customerSiret: "12345678901234",
 			amount: 12500,
 			errorMessage: "PDF generation failed",
 			stripePaymentIntentId: "pi_test123",
@@ -503,8 +331,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 
 		const emailArg = mockRenderAndSend.mock.calls[0]![0];
 		expect(emailArg.props.type).toBe("invoice");
-		expect(emailArg.props.context).toContain("SARL Dupont");
-		expect(emailArg.props.context).toContain("12345678901234");
+		expect(emailArg.props.context).toContain("CMD-001");
 		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/payments/pi_test123");
 
 		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
@@ -515,7 +342,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 		});
 	});
 
-	it("should omit optional B2B fields from context when not provided and omit stripeCtaUrl", async () => {
+	it("should omit stripeCtaUrl when no payment intent provided", async () => {
 		await sendAdminInvoiceFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",

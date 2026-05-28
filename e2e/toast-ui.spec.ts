@@ -95,9 +95,11 @@ test.describe("Toast — Reduced motion", { tag: ["@regression"] }, () => {
 		expect(matches).toBe(true);
 	});
 
-	// A11Y-AUDIT-005 — l'icône du toast erreur (.animate-heart-beat) est appliquée
-	// sans préfixe motion-safe: au call-site ; le bloc reduced-motion doit la neutraliser.
-	test("neutralise l'animation heart-beat de l'icône toast erreur", async ({ page }) => {
+	// A11Y-AUDIT-005 — garde générique : l'utilitaire `.animate-heart-beat` (appliqué
+	// sans préfixe motion-safe:) doit être neutralisé sous reduced-motion. Depuis F2,
+	// l'icône du toast erreur est statique (rouge) et n'utilise plus cette classe ;
+	// le test reste un garde-fou si la classe est réutilisée ailleurs.
+	test("neutralise l'utilitaire animate-heart-beat sous reduced-motion", async ({ page }) => {
 		await page.emulateMedia({ reducedMotion: "reduce" });
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");

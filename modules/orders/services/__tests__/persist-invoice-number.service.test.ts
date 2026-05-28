@@ -21,6 +21,9 @@ const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
 		mockTx,
 		mockPrisma: {
 			$transaction: vi.fn(),
+			// EINV-SEQ-002 : lookup hors transaction de paidAt/createdAt pour dériver
+			// le millésime de la séquence (Europe/Paris).
+			order: { findUnique: vi.fn() },
 		},
 		mockUpdateTag: vi.fn(),
 		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -138,6 +141,15 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mockTx.$executeRaw.mockResolvedValue(undefined);
 	mockTx.order.findUnique.mockResolvedValue(makeOrderForSnapshot());
+	// EINV-SEQ-002 + EINV-SEQ-005 : lecture order unique hors lock, sert au millésime
+	// (paidAt = 15 juin midi de l'année courante → millésime Paris ==
+	// `new Date().getFullYear()`, conserve les assertions `F-${year}`) ET au snapshot
+	// (order complet → buildInvoiceData). Plus de findUnique dans la transaction.
+	mockPrisma.order.findUnique.mockResolvedValue({
+		...makeOrderForSnapshot(),
+		paidAt: new Date(Date.UTC(new Date().getFullYear(), 5, 15, 12, 0, 0)),
+		createdAt: new Date(Date.UTC(new Date().getFullYear(), 5, 15, 12, 0, 0)),
+	});
 });
 
 // ============================================================================
@@ -238,8 +250,6 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 					vendorVatNumber?: string | null;
 					vendorVatRegime?: string;
 					vendorLegalForm?: string;
-					vendorEInvoicingPlatformId?: string | null;
-					vendorEInvoicingAddress?: string | null;
 				};
 			};
 			// Toutes les valeurs du snapshot sont presentes (defaults env si non set)
@@ -253,9 +263,6 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			// Default regime = FRANCHISE_BASE (art. 293 B CGI)
 			expect(updateArgs.data.vendorVatRegime).toBe("FRANCHISE_BASE");
 			expect(updateArgs.data.vendorLegalForm).toBeTruthy();
-			// PDP emetteur optionnel — null si env non set (cas par defaut)
-			expect(updateArgs.data.vendorEInvoicingPlatformId).toBeDefined();
-			expect(updateArgs.data.vendorEInvoicingAddress).toBeDefined();
 		});
 
 		it("normalise VAT number env (espaces, points) au format CHECK '^[A-Z]{2}[A-Z0-9]{2,13}$'", async () => {

@@ -53,6 +53,19 @@ vi.mock("@/app/generated/prisma/client", () => {
 			REJECTED: "REJECTED",
 			CANCELLED: "CANCELLED",
 		},
+		// EINV-SEQ-001 : la garde full-refund lit PaymentStatus/InvoiceStatus.
+		PaymentStatus: {
+			PENDING: "PENDING",
+			PAID: "PAID",
+			PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+			REFUNDED: "REFUNDED",
+			FAILED: "FAILED",
+		},
+		InvoiceStatus: {
+			PENDING: "PENDING",
+			GENERATED: "GENERATED",
+			VOIDED: "VOIDED",
+		},
 	};
 });
 

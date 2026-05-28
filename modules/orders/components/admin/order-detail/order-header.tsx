@@ -143,6 +143,57 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		}
 	}
 
+	// EINV-UI-101 : avoir comptable téléchargeable (Art. 272-I CGI) quand la
+	// facture a été annulée (VOIDED). Le numéro d'avoir A-YYYY-NNNNN sert de label.
+	const [isDownloadingCreditNote, setIsDownloadingCreditNote] = useState(false);
+	const canDownloadCreditNote = order.invoiceStatus === "VOIDED" && Boolean(order.creditNoteNumber);
+	const downloadCreditNoteItem: ActionMenuItem = {
+		key: "download-credit-note",
+		label: isDownloadingCreditNote ? "Téléchargement…" : "Télécharger l'avoir",
+		icon: FileText,
+		disabled: !canDownloadCreditNote || isDownloadingCreditNote,
+		pending: isDownloadingCreditNote,
+		onSelect: () => {
+			void downloadCreditNote();
+		},
+	};
+
+	async function downloadCreditNote() {
+		if (!canDownloadCreditNote || isDownloadingCreditNote) return;
+		setIsDownloadingCreditNote(true);
+		const task = (async () => {
+			const response = await fetch(`/api/orders/${order.orderNumber}/credit-note`);
+			if (!response.ok) {
+				throw new Error(
+					response.status === 404
+						? "Avoir indisponible — aucun avoir comptable émis"
+						: "Erreur lors du téléchargement de l'avoir",
+				);
+			}
+			const blob = await response.blob();
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = order.creditNoteNumber
+				? `avoir-${order.creditNoteNumber}.pdf`
+				: `avoir-${order.orderNumber}.pdf`;
+			link.click();
+			URL.revokeObjectURL(url);
+		})();
+		toast.promise(task, {
+			loading: "Téléchargement…",
+			success: "Avoir téléchargé",
+			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
+		});
+		try {
+			await task;
+		} catch {
+			// Surfaced by toast.promise
+		} finally {
+			setIsDownloadingCreditNote(false);
+		}
+	}
+
 	const sections: ActionMenuSection[] = baseSections
 		.map((section) => {
 			if (section.key === "info") {
@@ -157,6 +208,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 									: item,
 							),
 						downloadInvoiceItem,
+						...(canDownloadCreditNote ? [downloadCreditNoteItem] : []),
 						exportItem,
 					],
 				};

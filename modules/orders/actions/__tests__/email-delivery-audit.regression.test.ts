@@ -1,13 +1,16 @@
 /**
  * @regression ORD-BIZ-012
  *
- * Garantit que `markAsShipped` et `markAsDelivered` distinguent dans l'audit
- * trail l'intention d'envoyer un email (`emailRequested`) du résultat réel.
- * Si l'envoi Resend échoue après commit, une 2e entrée OrderHistory est créée
- * avec `metadata.emailDeliveryFailed: true`.
+ * Garantit que `markAsShipped` distingue dans l'audit trail l'intention
+ * d'envoyer un email (`emailRequested`) du résultat réel. Si l'envoi Resend
+ * échoue après commit, une 2e entrée OrderHistory est créée avec
+ * `metadata.emailDeliveryFailed: true`.
  *
  * Sans cette régression : `metadata.emailSent: true` est posé dans l'audit
  * initial avant l'envoi réel → audit faussement positif si l'envoi échoue.
+ *
+ * Note : `markAsDelivered` n'envoie plus aucun email (email de confirmation de
+ * livraison supprimé) — le volet livraison de cette régression a donc été retiré.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -22,11 +25,9 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSendShippingEmail,
-	mockSendDeliveryEmail,
 	mockCreateOrderAuditTx,
 	mockCreateOrderAudit,
 	mockCanMarkAsShipped,
-	mockCanMarkAsDelivered,
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -38,11 +39,9 @@ const {
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSendShippingEmail: vi.fn(),
-	mockSendDeliveryEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockCreateOrderAudit: vi.fn(),
 	mockCanMarkAsShipped: vi.fn().mockReturnValue({ canShip: true }),
-	mockCanMarkAsDelivered: vi.fn().mockReturnValue({ canDeliver: true }),
 	mockGetOrderInvalidationTags: vi.fn().mockReturnValue([]),
 }));
 
@@ -71,7 +70,6 @@ vi.mock("@/shared/lib/actions", async (importOriginal) => {
 });
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendShippingConfirmationEmail: mockSendShippingEmail,
-	sendDeliveryConfirmationEmail: mockSendDeliveryEmail,
 	sendOrderConfirmationEmail: vi.fn(),
 }));
 vi.mock("../../utils/order-audit", () => ({
@@ -80,7 +78,6 @@ vi.mock("../../utils/order-audit", () => ({
 }));
 vi.mock("../../services/order-status-validation.service", () => ({
 	canMarkAsShipped: mockCanMarkAsShipped,
-	canMarkAsDelivered: mockCanMarkAsDelivered,
 }));
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
@@ -101,7 +98,6 @@ vi.mock("@/modules/orders/utils/carrier.utils", () => ({
 }));
 
 import { markAsShipped } from "../mark-as-shipped";
-import { markAsDelivered } from "../mark-as-delivered";
 
 describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", () => {
 	beforeEach(() => {
@@ -192,58 +188,6 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 			await markAsShipped(undefined, makeForm());
 
 			expect(mockCreateOrderAudit).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("markAsDelivered", () => {
-		const makeForm = () => createMockFormData({ id: VALID_CUID, sendEmail: "true" });
-
-		it("trace metadata.emailRequested (intention) — pas emailSent (fait)", async () => {
-			mockPrisma.order.findUnique.mockResolvedValue(
-				createMockOrder({
-					id: VALID_CUID,
-					status: "SHIPPED",
-					fulfillmentStatus: "SHIPPED",
-					customerEmail: "client@example.com",
-				}),
-			);
-			mockSendDeliveryEmail.mockResolvedValue(undefined);
-
-			await markAsDelivered(undefined, makeForm());
-
-			expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
-				mockPrisma,
-				expect.objectContaining({
-					action: "DELIVERED",
-					metadata: expect.objectContaining({ emailRequested: true }),
-				}),
-			);
-			const initialAudit = mockCreateOrderAuditTx.mock.calls[0]?.[1];
-			expect(initialAudit?.metadata.emailSent).toBeUndefined();
-		});
-
-		it("crée une 2e OrderHistory post-commit si l'email échoue", async () => {
-			mockPrisma.order.findUnique.mockResolvedValue(
-				createMockOrder({
-					id: VALID_CUID,
-					status: "SHIPPED",
-					fulfillmentStatus: "SHIPPED",
-					customerEmail: "client@example.com",
-				}),
-			);
-			mockSendDeliveryEmail.mockRejectedValue(new Error("Resend down"));
-
-			await markAsDelivered(undefined, makeForm());
-
-			expect(mockCreateOrderAudit).toHaveBeenCalledWith(
-				expect.objectContaining({
-					action: "DELIVERED",
-					metadata: expect.objectContaining({
-						emailDeliveryFailed: true,
-						postCommit: true,
-					}),
-				}),
-			);
 		});
 	});
 });

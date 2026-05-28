@@ -725,7 +725,7 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 	it("ORD-STRIPE-003: should persist tasks atomically then execute persisted via after()", async () => {
 		const tasks = [
 			{ type: "ORDER_CONFIRMATION_EMAIL", data: { orderId: "order-1" } },
-			{ type: "ADMIN_NEW_ORDER_EMAIL", data: { orderId: "order-1" } },
+			{ type: "INVALIDATE_CACHE", tags: ["orders-list"] },
 		];
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks });
 

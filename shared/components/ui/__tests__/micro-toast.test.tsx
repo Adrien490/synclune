@@ -41,6 +41,22 @@ vi.mock("motion/react", () => ({
 				<button {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}>{children}</button>
 			);
 		},
+		div: ({
+			children,
+			initial: _initial,
+			animate: _animate,
+			exit: _exit,
+			transition: _transition,
+			drag: _drag,
+			dragConstraints: _dragConstraints,
+			dragElastic: _dragElastic,
+			dragMomentum: _dragMomentum,
+			onDragEnd,
+			...props
+		}: React.PropsWithChildren<Record<string, unknown>>) => {
+			capturedDragProps.onDragEnd = onDragEnd as never;
+			return <div {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>;
+		},
 		span: ({
 			children,
 			initial: _initial,
@@ -65,6 +81,7 @@ vi.mock("@/shared/components/ui/toast-icons", () => ({
 		success: <span data-testid="icon-success" />,
 		info: <span data-testid="icon-info" />,
 		warning: <span data-testid="icon-warning" />,
+		error: <span data-testid="icon-error" />,
 		wishlist: <span data-testid="icon-wishlist" />,
 		cart: <span data-testid="icon-cart" />,
 		discount: <span data-testid="icon-discount" />,
@@ -91,6 +108,7 @@ beforeEach(() => {
 		key: 0,
 		count: 1,
 		currentDuration: 1200,
+		action: null,
 	});
 });
 
@@ -118,6 +136,7 @@ describe("<MicroToast />", () => {
 		["success", "icon-success"],
 		["info", "icon-info"],
 		["warning", "icon-warning"],
+		["error", "icon-error"],
 		["wishlist", "icon-wishlist"],
 		["cart", "icon-cart"],
 		["discount", "icon-discount"],
@@ -250,6 +269,75 @@ describe("<MicroToast />", () => {
 			render(<MicroToast />);
 			expect(mockControls.set).not.toHaveBeenCalled();
 			expect(mockControls.start).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("inline action variant (F5 — undo mobile)", () => {
+		it("renders the action button and a dismiss button when action is set", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Article archivé",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 6000,
+				action: { label: "Annuler", onClick: vi.fn() },
+			});
+			render(<MicroToast />);
+			expect(screen.getByRole("button", { name: "Annuler" })).toBeTruthy();
+			expect(screen.getByRole("button", { name: /fermer la notification/i })).toBeTruthy();
+		});
+
+		it("calls action.onClick then hides when the action button is tapped", () => {
+			const onClick = vi.fn();
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Article archivé",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 6000,
+				action: { label: "Annuler", onClick },
+			});
+			const { rerender } = render(<MicroToast />);
+			fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+			rerender(<MicroToast />);
+			expect(onClick).toHaveBeenCalledTimes(1);
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+
+		it("hides (without firing the action) when the dismiss button is tapped", () => {
+			const onClick = vi.fn();
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Article archivé",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 6000,
+				action: { label: "Annuler", onClick },
+			});
+			const { rerender } = render(<MicroToast />);
+			fireEvent.click(screen.getByRole("button", { name: /fermer la notification/i }));
+			rerender(<MicroToast />);
+			expect(onClick).not.toHaveBeenCalled();
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+
+		it("still dismisses via swipe-up in the action variant", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Article archivé",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 6000,
+				action: { label: "Annuler", onClick: vi.fn() },
+			});
+			render(<MicroToast />);
+			expect(capturedDragProps.onDragEnd).not.toBeNull();
+			capturedDragProps.onDragEnd?.(null, { offset: { y: -60 }, velocity: { y: 0 } });
+			expect(useMicroToastStore.getState().visible).toBe(false);
 		});
 	});
 

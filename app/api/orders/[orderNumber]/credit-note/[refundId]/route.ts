@@ -4,6 +4,7 @@ import { buildCreditNoteData } from "@/modules/invoices/services/build-credit-no
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { archiveCreditNotePdf } from "@/modules/refunds/services/archive-credit-note-pdf.service";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
+import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
 import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -67,11 +68,13 @@ export async function GET(
 	const { orderNumber, refundId } = await params;
 
 	const session = await getSession();
-	const isAdmin = session?.user.role === "ADMIN";
 
 	if (!session?.user.id) {
 		return new Response("Non autorisé", { status: 401 });
 	}
+
+	// EINV-SEC-001 : re-vérification DB du rôle admin (cookie-cache stale ~5 min).
+	const isAdmin = await resolveInvoiceActorIsAdmin(session, "credit-note-route");
 
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
@@ -97,8 +100,11 @@ export async function GET(
 	}
 
 	const sessionOwns = order.userId === session.user.id;
+	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice. Pas de token
+	// guest sur cette route → l'accès owner-session implique un compte non anonymisé
+	// (sessions supprimées à l'anonymisation), donc pas de garde EINV-SEC-002 ici.
 	if (!isAdmin && !sessionOwns) {
-		return new Response("Accès interdit", { status: 403 });
+		return new Response("Commande introuvable", { status: 404 });
 	}
 
 	const refund = await prisma.refund.findFirst({

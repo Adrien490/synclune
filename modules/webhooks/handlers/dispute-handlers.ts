@@ -265,7 +265,6 @@ export async function handleDisputeClosed(
 			select: {
 				id: true,
 				orderNumber: true,
-				customerEmail: true,
 				paymentStatus: true,
 				total: true,
 			},
@@ -418,28 +417,13 @@ export async function handleDisputeClosed(
 			{ service: "webhook" },
 		);
 
-		const baseUrl = getBaseUrl();
-		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-		const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
-
+		// Pas d'alerte admin à la clôture du litige : l'admin a déjà été notifié à
+		// l'ouverture (handleDisputeCreated) et l'issue (gagné/perdu) est tracée en
+		// OrderNote + OrderHistory, consultable sur le dashboard. On évite un 2e mail
+		// par litige (réduction du volume d'alertes admin).
 		return {
 			success: true,
 			tasks: [
-				{
-					type: "ADMIN_DISPUTE_ALERT",
-					data: {
-						orderNumber: order.orderNumber,
-						customerEmail: order.customerEmail || "Email non disponible",
-						amount: dispute.amount,
-						reason: won
-							? `Litige clôturé — Vous avez GAGNÉ`
-							: `Litige clôturé — Vous avez PERDU (montant débité)`,
-						disputeId: dispute.id,
-						deadline: null,
-						dashboardUrl,
-						stripeDashboardUrl,
-					},
-				},
 				{
 					type: "INVALIDATE_CACHE",
 					tags: [

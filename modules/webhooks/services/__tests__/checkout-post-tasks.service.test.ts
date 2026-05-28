@@ -150,19 +150,13 @@ describe("buildPostCheckoutTasks", () => {
 		expect(email.data.to).toBe("fallback@example.test");
 	});
 
-	it("always emits ADMIN_NEW_ORDER_EMAIL even without customer email", () => {
-		const order = makeOrder({ customerEmail: null });
-		const session = makeSession({ customer_email: null, customer_details: null });
+	it("never emits an admin new-order task (removed)", () => {
+		const order = makeOrder();
+		const session = makeSession();
 
 		const tasks = buildPostCheckoutTasks(order, session);
-		const adminEmail = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL");
 
-		expect(adminEmail).toBeDefined();
-		if (adminEmail?.type !== "ADMIN_NEW_ORDER_EMAIL") throw new Error("type guard");
-		expect(adminEmail.data.customerEmail).toBe("Email non disponible");
-		expect(adminEmail.data.dashboardUrl).toBe(
-			"https://example.test/admin/ventes/commandes/order_1",
-		);
+		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
 	});
 
 	it("falls back to 'Client' when no shipping name available", () => {

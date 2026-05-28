@@ -72,9 +72,9 @@ export function OrdersMobileList({
 					) : null}
 					<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
 					<ItemGroup aria-label="Commandes" className="gap-2">
-						{orders.map((order) => (
+						{orders.map((order, index) => (
 							<div key={order.id} role="listitem">
-								<OrdersMobileListItem order={order} />
+								<OrdersMobileListItem order={order} isFirst={index === 0} />
 							</div>
 						))}
 					</ItemGroup>

@@ -1,4 +1,3 @@
-import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
 import { AdminAlertEmail } from "@/emails/admin-alert-email";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { EMAIL_ADMIN } from "../constants/email.constants";
@@ -6,7 +5,7 @@ import { renderAndSend } from "./send-email";
 import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls";
 import type { RefundReason } from "@/app/generated/prisma/client";
 import { REFUND_REASON_LABELS as INTERNAL_REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
-import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types";
+import type { EmailResult } from "../types/email.types";
 
 const REFUND_FAILURE_LABELS: Record<"payment_failed" | "payment_canceled" | "other", string> = {
 	payment_failed: "Échec du paiement",
@@ -23,59 +22,6 @@ function truncateStackTrace(input?: string): string | undefined {
 	if (!input) return undefined;
 	if (input.length <= STACK_TRACE_MAX_CHARS) return input;
 	return `${input.slice(0, STACK_TRACE_MAX_CHARS)}\n…[tronqué — ${input.length - STACK_TRACE_MAX_CHARS} caractères omis. Voir Sentry pour la stack complète]`;
-}
-
-/**
- * Envoie un email de notification admin pour une nouvelle commande
- */
-export async function sendAdminNewOrderEmail({
-	orderId,
-	orderNumber,
-	customerName,
-	customerEmail,
-	items,
-	subtotal,
-	discount,
-	shipping,
-	total,
-	shippingAddress,
-	dashboardUrl,
-}: {
-	orderId: string;
-	orderNumber: string;
-	customerName: string;
-	customerEmail: string;
-	items: OrderItem[];
-	subtotal: number;
-	discount: number;
-	shipping: number;
-	total: number;
-	shippingAddress: ShippingAddress & { phone: string };
-	dashboardUrl: string;
-}): Promise<EmailResult> {
-	return renderAndSend(
-		AdminNewOrderEmail({
-			orderNumber,
-			customerName,
-			customerEmail,
-			items,
-			subtotal,
-			discount,
-			shipping,
-			total,
-			shippingAddress,
-			dashboardUrl,
-		}),
-		{
-			to: EMAIL_ADMIN,
-			subject: `🎉 Nouvelle commande ${orderNumber} - ${(total / 100).toFixed(2)}€`,
-			tags: [{ name: "category", value: "admin" }],
-			// Dedup cross-instance 24h Resend : protège contre retry-webhooks cron
-			// qui rejouerait le webhook checkout.session.completed / payment_intent.succeeded
-			// (EMAIL-AUDIT-002).
-			idempotencyKey: `admin-new-order:${orderId}`,
-		},
-	);
 }
 
 /**
@@ -269,45 +215,6 @@ export async function sendAdminCronFailedAlert({
 }
 
 /**
- * Alerte admin : Echec creation session Stripe Checkout
- * Envoyee quand stripe.checkout.sessions.create() echoue
- * (la commande orpheline est nettoyee automatiquement)
- */
-export async function sendAdminCheckoutFailedAlert({
-	orderNumber,
-	customerEmail,
-	total,
-	errorMessage,
-}: {
-	orderNumber: string;
-	customerEmail: string;
-	total: number;
-	errorMessage: string;
-}): Promise<EmailResult> {
-	const dashboardUrl = `${getBaseUrl()}/admin`;
-	const context = [
-		`Commande : ${orderNumber}`,
-		`Client   : ${customerEmail}`,
-		`Total    : ${formatEuro(total)}`,
-	].join("\n");
-	return renderAndSend(
-		AdminAlertEmail({
-			type: "checkout",
-			context,
-			summary: `La création de la session Stripe Checkout a échoué pour la commande ${orderNumber}. La commande orpheline sera nettoyée automatiquement. Vérifiez l'état Stripe et la configuration.`,
-			stackTrace: truncateStackTrace(errorMessage),
-			ctaUrl: dashboardUrl,
-			ctaLabel: "Voir le dashboard",
-		}),
-		{
-			to: EMAIL_ADMIN,
-			subject: `[Admin] Échec checkout Stripe — ${orderNumber}`,
-			tags: [{ name: "category", value: "admin" }],
-		},
-	);
-}
-
-/**
  * Alerte admin : Paiement recu mais traitement de commande echoue
  * Envoyee quand processOrderTransaction ou processOrderFromPaymentIntent echoue
  * apres un paiement reussi — intervention manuelle requise
@@ -468,8 +375,6 @@ export async function sendAdminInvoiceFailedAlert({
 	orderId,
 	orderNumber,
 	customerEmail,
-	customerCompanyName,
-	customerSiret,
 	amount,
 	errorMessage,
 	stripePaymentIntentId,
@@ -478,8 +383,6 @@ export async function sendAdminInvoiceFailedAlert({
 	orderId?: string;
 	orderNumber: string;
 	customerEmail: string;
-	customerCompanyName?: string;
-	customerSiret?: string;
 	amount: number;
 	errorMessage: string;
 	stripePaymentIntentId?: string;
@@ -490,8 +393,6 @@ export async function sendAdminInvoiceFailedAlert({
 		`Client   : ${customerEmail}`,
 		`Montant  : ${formatEuro(amount)}`,
 	];
-	if (customerCompanyName) contextLines.push(`Entreprise: ${customerCompanyName}`);
-	if (customerSiret) contextLines.push(`SIRET    : ${customerSiret}`);
 	if (stripePaymentIntentId) contextLines.push(`Payment ID: ${stripePaymentIntentId}`);
 	const stripeCtaUrl = stripePaymentIntentId
 		? `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`

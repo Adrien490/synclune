@@ -228,6 +228,29 @@ describe("buildOrderFilterConditions", () => {
 		expect(result.paymentStatus).toBe("PAID");
 		expect(result.total).toEqual({ gte: 500 });
 	});
+
+	it("EINV-UI-005 : preset invoiceAnomaly → PAID + invoiceNumber null", () => {
+		const result = buildOrderFilterConditions(filters({ invoiceAnomaly: true }));
+		expect(result.paymentStatus).toBe("PAID");
+		expect(result.invoiceNumber).toBeNull();
+	});
+
+	it("EINV-UI-106 : preset pdfNotArchived → invoiceStatus GENERATED + invoicePdfUrl null", () => {
+		const result = buildOrderFilterConditions(filters({ pdfNotArchived: true }));
+		expect(result.invoiceStatus).toBe("GENERATED");
+		expect(result.invoicePdfUrl).toBeNull();
+	});
+
+	it("EINV-UI-106 : preset retryDeferred → invoiceRetryDeferred true", () => {
+		const result = buildOrderFilterConditions(filters({ retryDeferred: true }));
+		expect(result.invoiceRetryDeferred).toBe(true);
+	});
+
+	it("EINV-UI-106 : presets désactivés n'ajoutent aucune condition facturation", () => {
+		const result = buildOrderFilterConditions(filters({}));
+		expect(result.invoicePdfUrl).toBeUndefined();
+		expect(result.invoiceRetryDeferred).toBeUndefined();
+	});
 });
 
 // ============================================================================

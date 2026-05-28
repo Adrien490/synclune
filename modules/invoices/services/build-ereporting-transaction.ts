@@ -4,8 +4,8 @@ import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 /**
  * Construit le payload d'une `EReportingTransaction` à partir d'un `Order` (SALES)
  * ou d'un `Refund` (REFUND). Fonction pure — aucun I/O, aucun write DB. Le
- * caller (hook après `markOrderAsPaid` / `processRefund`, ou cron de
- * rattrapage) appelle `prisma.eReportingTransaction.create({data: ...})`
+ * caller (hook après `processOrderFromPaymentIntent` / `processRefund`, ou cron
+ * de rattrapage) appelle `prisma.eReportingTransaction.create({data: ...})`
  * avec le résultat.
  *
  * Règles invariantes :
@@ -83,7 +83,7 @@ export function buildSalesTransaction(
 	if (!order.paidAt) {
 		throw new Error(
 			`buildSalesTransaction : Order ${order.orderNumber} n'a pas de paidAt. ` +
-				`Appeler uniquement après markOrderAsPaid().`,
+				`Appeler uniquement après l'encaissement (processOrderFromPaymentIntent).`,
 		);
 	}
 
@@ -126,18 +126,50 @@ interface BuildRefundTransactionInput {
 	};
 	order: Pick<
 		GetOrderReturn,
-		"orderNumber" | "paymentMethod" | "shippingCountry" | "customerType" | "stripePaymentIntentId"
+		| "orderNumber"
+		| "paymentMethod"
+		| "shippingCountry"
+		| "customerType"
+		| "stripePaymentIntentId"
+		// EINV-GLOBAL-011 — totaux de la commande parente pour dériver la part
+		// TVA du remboursement au prorata (au lieu d'un 0 codé en dur).
+		| "total"
+		| "taxAmount"
 	>;
 }
 
 /**
- * Pour un `Refund` COMPLETED, produit la transaction REFUND correspondante.
- * Le montant est inversé en signe négatif pour respecter le CHECK constraint
- * (REFUND.amountIncTax < 0).
+ * Dérive la part TVA (centimes, magnitude positive) d'un remboursement au
+ * prorata du taux effectif de la commande parente (EINV-GLOBAL-011).
  *
- * Note : Synclune étant en franchise (TVA = 0), `taxAmount` reste 0 et
- * `amountExclTax` == `amountIncTax`. Cette logique évoluera quand le régime
- * réel sera activé.
+ * - Franchise art. 293 B (`order.taxAmount === 0`) → 0 : comportement
+ *   historique préservé, aucun changement observable tant que Synclune reste en
+ *   franchise.
+ * - Régime réel (`order.taxAmount > 0`) → `refund.amount × taxAmount / total`,
+ *   arrondi, borné à `refund.amount`.
+ *
+ * ⚠️ À confirmer comptable/fiscalement : l'allocation au prorata du total est
+ * une approximation MVP correcte pour un panier mono-taux. Pour un panier
+ * multi-taux, la part exacte se calcule depuis `RefundItems.taxAmount` (source
+ * à câbler avant la sortie effective de franchise). Tant que le régime est
+ * franchise, le résultat est 0 et la question ne se pose pas.
+ */
+function deriveRefundTaxAmount(
+	refundAmount: number,
+	orderTotal: number,
+	orderTaxAmount: number,
+): number {
+	if (orderTaxAmount <= 0 || orderTotal <= 0) return 0;
+	const proportional = Math.round((refundAmount * orderTaxAmount) / orderTotal);
+	return Math.min(proportional, refundAmount);
+}
+
+/**
+ * Pour un `Refund` COMPLETED, produit la transaction REFUND correspondante.
+ * Le montant TTC est inversé en signe négatif pour respecter le CHECK
+ * constraint (`REFUND.amountIncTax < 0`). La part TVA (`taxAmount`) reste une
+ * magnitude positive (CHECK `taxAmount >= 0`) ; le HT négatif est donc
+ * `amountIncTax + taxAmount` (cf. EINV-GLOBAL-011).
  */
 export function buildRefundTransaction(
 	input: BuildRefundTransactionInput,
@@ -150,9 +182,11 @@ export function buildRefundTransaction(
 		);
 	}
 
-	// Franchise art. 293 B : TVA = 0 → exclTax == inclTax. Quand on basculera
-	// au régime réel, calculer taxAmount depuis les RefundItems.taxAmount.
 	const amountIncTaxNegative = -refund.amount;
+	// Magnitude positive (CHECK DB `taxAmount >= 0`).
+	const refundTaxAmount = deriveRefundTaxAmount(refund.amount, order.total, order.taxAmount);
+	// HT négatif = TTC négatif + TVA positive (mirroir signé du SALES HT = TTC - TVA).
+	const amountExclTaxNegative = amountIncTaxNegative + refundTaxAmount;
 
 	return {
 		orderId: null,
@@ -162,8 +196,8 @@ export function buildRefundTransaction(
 		countryCode: order.shippingCountry,
 		paymentMethod: order.paymentMethod,
 		amountIncTax: amountIncTaxNegative,
-		amountExclTax: amountIncTaxNegative,
-		taxAmount: 0,
+		amountExclTax: amountExclTaxNegative,
+		taxAmount: refundTaxAmount,
 		currency: refund.currency,
 		payloadSnapshot: {
 			orderNumber: order.orderNumber,
@@ -171,8 +205,8 @@ export function buildRefundTransaction(
 			occurredAt: refund.processedAt.toISOString(),
 			currency: refund.currency,
 			amountIncTax: amountIncTaxNegative,
-			amountExclTax: amountIncTaxNegative,
-			taxAmount: 0,
+			amountExclTax: amountExclTaxNegative,
+			taxAmount: refundTaxAmount,
 			paymentMethod: order.paymentMethod,
 			countryCode: order.shippingCountry,
 			stripePaymentIntentId: order.stripePaymentIntentId,

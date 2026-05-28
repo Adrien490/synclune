@@ -170,6 +170,33 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		// Doit lire `stripeCheckoutSessionId` pour décider de la décrémentation
 		// stock — confirme que l'Order doit avoir transité par Stripe Checkout.
 		expect(content).toMatch(/stripeCheckoutSessionId/);
+		// EINV-CASH-001 : doit REFUSER explicitement toute Order sans preuve Stripe
+		// (ni PaymentIntent ni Checkout Session) — empêche un encaissement fictif.
+		expect(content).toMatch(/no_stripe_proof/);
+		expect(content).toMatch(
+			/!\s*found\.stripePaymentIntentId\s*&&\s*!\s*found\.stripeCheckoutSessionId/,
+		);
+	});
+
+	it("markOrderAsPaid (déprécié) has no production call-site outside its definition", () => {
+		// EINV-CASH-003 : markOrderAsPaid écrit `PAID + paidAt` SANS décrément stock,
+		// clear cart, persistInvoiceNumber ni recordSalesEReporting. Il est allowlisté
+		// comme *writer* ci-dessus (rétro-compat tests d'idempotence), mais un nouveau
+		// call-site PRODUCTION produirait une Order PAID sans facture ni e-reporting →
+		// oversell + divergence DGFiP silencieuse (Art. 286 / 289-I CGI). On interdit
+		// donc tout usage hors tests + hors sa propre définition. Cette garde complète
+		// l'allowlist *writer* par une garde *call-site*.
+		const DEFINITION = "modules/webhooks/services/payment-intent.service.ts";
+		const stripComments = (c: string) =>
+			c.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+		const offenders = allSourceFiles
+			.map(relPath)
+			.filter((rel) => rel !== DEFINITION)
+			.filter((rel) =>
+				/\bmarkOrderAsPaid\b/.test(stripComments(readFileSync(join(REPO_ROOT, rel), "utf-8"))),
+			)
+			.sort();
+		expect(offenders).toEqual([]);
 	});
 
 	it("no source file exports a function named recordCashSale / createManualOrder", () => {

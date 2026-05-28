@@ -8,7 +8,7 @@
  *
  * Garde-fous testés :
  *   - Auth obligatoire (admin OU owner — pas de token guest)
- *   - 403 si session ni admin ni owner de l'order
+ *   - 404 si session ni admin ni owner de l'order (EINV-SEC-003 anti-enumeration)
  *   - 404 si order/refund inexistant
  *   - 400 si refund pas COMPLETED (avoir non émissible)
  *   - 404 si creditNoteNumber non encore généré
@@ -46,6 +46,8 @@ const {
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
 		refund: { findFirst: vi.fn() },
+		// EINV-SEC-001 : la route re-vérifie le rôle admin en DB.
+		user: { findUnique: vi.fn() },
 	},
 	mockSentry: {
 		addBreadcrumb: vi.fn(),
@@ -156,6 +158,8 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 		mockArchiveCreditNotePdf.mockResolvedValue(null);
 		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([0x25, 0x50, 0x44, 0x46])); // %PDF
 		mockBuildCreditNoteData.mockReturnValue({});
+		// EINV-SEC-001 : par défaut la DB confirme le rôle pour les tests ADMIN.
+		mockPrisma.user.findUnique.mockResolvedValue({ role: "ADMIN" });
 	});
 
 	describe("Auth obligatoire — pas de token guest sur cette route", () => {
@@ -176,7 +180,7 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 		});
 	});
 
-	describe("Lookup order — 404 / 403", () => {
+	describe("Lookup order — 404 (introuvable ou non autorisé)", () => {
 		it("404 quand order introuvable", async () => {
 			mockGetSession.mockResolvedValue({ user: { id: "user-1", role: "USER" } });
 			mockPrisma.order.findFirst.mockResolvedValue(null);
@@ -186,13 +190,13 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 			expect(res.status).toBe(404);
 		});
 
-		it("403 quand session ni admin ni owner", async () => {
+		it("404 quand session ni admin ni owner (EINV-SEC-003 anti-enumeration)", async () => {
 			mockGetSession.mockResolvedValue({ user: { id: "user-INTRUDER", role: "USER" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ userId: "user-1" }));
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.status).toBe(403);
+			expect(res.status).toBe(404);
 		});
 
 		it("200-path pour admin (audit access)", async () => {

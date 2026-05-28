@@ -55,6 +55,9 @@ export const GET_REFUND_SELECT = {
 	processedAt: true,
 	createdAt: true,
 	updatedAt: true,
+	// Avoir comptable partiel (Art. 272-I CGI) — EINV-UI-102
+	creditNoteNumber: true,
+	creditNoteGeneratedAt: true,
 	order: {
 		select: {
 			id: true,

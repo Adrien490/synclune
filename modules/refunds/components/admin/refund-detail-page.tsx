@@ -1,10 +1,11 @@
-import { ExternalLink, Info } from "lucide-react";
+import { ExternalLink, FileWarning, Info } from "lucide-react";
 import Link from "next/link";
 
 import { CopyButton } from "@/shared/components/copy-button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { DownloadAdminCreditNoteButton } from "@/modules/orders/components/admin/order-detail/download-admin-credit-note-button";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -66,6 +67,45 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 							</dl>
 						</CardContent>
 					</Card>
+
+					{refund.creditNoteNumber ? (
+						<Card>
+							<CardHeader>
+								<CardTitle className="flex items-center gap-2">
+									<FileWarning className="text-warning size-5" aria-hidden="true" />
+									Avoir comptable
+								</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-3">
+								<dl className="grid gap-3 text-sm">
+									<div className="flex items-center justify-between gap-3">
+										<dt className="text-muted-foreground">Numéro d&apos;avoir</dt>
+										<dd className="flex items-center gap-1">
+											<code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs tabular-nums">
+												{refund.creditNoteNumber}
+											</code>
+											<CopyButton
+												text={refund.creditNoteNumber}
+												label="Numéro d'avoir"
+												className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+											/>
+										</dd>
+									</div>
+									{refund.creditNoteGeneratedAt ? (
+										<div className="flex items-center justify-between gap-3">
+											<dt className="text-muted-foreground">Émis le</dt>
+											<dd>{formatDateShort(refund.creditNoteGeneratedAt)}</dd>
+										</div>
+									) : null}
+								</dl>
+								<DownloadAdminCreditNoteButton
+									orderNumber={refund.order.orderNumber}
+									creditNoteNumber={refund.creditNoteNumber}
+									refundId={refund.id}
+								/>
+							</CardContent>
+						</Card>
+					) : null}
 				</div>
 
 				<div className="space-y-6">

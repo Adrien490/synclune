@@ -18,16 +18,12 @@ vi.mock("@/emails/password-reset-email", () => ({
 vi.mock("@/emails/account-deletion-email", () => ({
 	AccountDeletionEmail: vi.fn((props) => ({ type: "AccountDeletionEmail", props })),
 }));
-vi.mock("@/emails/welcome-email", () => ({
-	WelcomeEmail: vi.fn((props) => ({ type: "WelcomeEmail", props })),
-}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
 		VERIFICATION: "Vérifiez votre adresse email - Synclune",
 		PASSWORD_RESET: "Réinitialisez votre mot de passe - Synclune",
 		ACCOUNT_DELETED: "Votre compte a été supprimé - Synclune",
-		WELCOME: "Bienvenue chez Synclune !",
 	},
 	EMAIL_CONTACT: "contact@test.com",
 }));
@@ -40,7 +36,6 @@ vi.mock("@/shared/constants/urls", () => ({
 import {
 	sendVerificationEmail,
 	sendPasswordResetEmail,
-	sendWelcomeEmail,
 	sendAccountDeletionEmail,
 } from "../auth-emails";
 
@@ -110,32 +105,6 @@ describe("sendPasswordResetEmail", () => {
 
 		const result = await sendPasswordResetEmail({ to: "u@t.com", url: "https://x" });
 		expect(result).toEqual({ success: false, error: "RESEND_FAILED" });
-	});
-});
-
-describe("sendWelcomeEmail", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "w-1" } });
-		mockBuildUrl.mockReturnValue("https://synclune.fr/produits");
-	});
-
-	it("builds the shop URL and forwards userName + shopUrl", async () => {
-		await sendWelcomeEmail({ to: "marie@test.com", userName: "Marie" });
-
-		expect(mockBuildUrl).toHaveBeenCalledWith("/produits");
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "WelcomeEmail",
-				props: { userName: "Marie", shopUrl: "https://synclune.fr/produits" },
-			}),
-			expect.objectContaining({
-				to: "marie@test.com",
-				subject: "Bienvenue chez Synclune !",
-				replyTo: "contact@test.com",
-				tags: [{ name: "category", value: "auth" }],
-			}),
-		);
 	});
 });
 

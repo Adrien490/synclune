@@ -18,15 +18,28 @@ import { devtools } from "zustand/middleware";
  *   useMicroToastStore.getState().show(message, "wishlist") // microVariant
  */
 
-export type MicroToastVariant = "success" | "info" | "warning" | "wishlist" | "cart" | "discount";
+export type MicroToastVariant =
+	| "success"
+	| "info"
+	| "warning"
+	| "error"
+	| "wishlist"
+	| "cart"
+	| "discount";
 
-const MAX_MESSAGE_LENGTH = 32;
+const MAX_MESSAGE_LENGTH = 48;
 const DEFAULT_DURATION_MS = 1200;
 export const COALESCE_WINDOW_MS = 600;
 
 function truncate(message: string): string {
 	if (message.length <= MAX_MESSAGE_LENGTH) return message;
 	return `${message.slice(0, MAX_MESSAGE_LENGTH - 1).trimEnd()}…`;
+}
+
+/** Action inline optionnelle sur la pastille (undo mobile — F5). */
+export interface MicroToastAction {
+	label: string;
+	onClick: () => void;
 }
 
 interface MicroToastState {
@@ -38,7 +51,14 @@ interface MicroToastState {
 	count: number;
 	/** Duration appliquée au timer courant — exposée pour aligner la progress bar. */
 	currentDuration: number;
-	show: (message: string, variant: MicroToastVariant, duration?: number) => void;
+	/** Bouton d'action inline (ex: « Annuler »). `null` = pastille passive (défaut). */
+	action: MicroToastAction | null;
+	show: (
+		message: string,
+		variant: MicroToastVariant,
+		duration?: number,
+		action?: MicroToastAction | null,
+	) => void;
 	hide: () => void;
 }
 
@@ -55,12 +75,22 @@ export const useMicroToastStore = create<MicroToastState>()(
 			key: 0,
 			count: 1,
 			currentDuration: DEFAULT_DURATION_MS,
-			show: (message, variant, duration = DEFAULT_DURATION_MS) => {
+			action: null,
+			show: (message, variant, duration = DEFAULT_DURATION_MS, action = null) => {
 				const truncated = truncate(message);
 				const signature = `${variant}::${truncated}`;
 				const now = Date.now();
 				const within = now - lastShowAt < COALESCE_WINDOW_MS;
 				const current = get();
+
+				// Error-sticky : une erreur affichée ne doit jamais être enterrée par un
+				// success/info/warning (F1 — les erreurs partagent désormais le slot pastille
+				// sur mobile). Les erreurs restent prioritaires ; seule une autre erreur peut
+				// remplacer une erreur visible.
+				if (current.visible && current.variant === "error" && variant !== "error") {
+					return;
+				}
+
 				const shouldCoalesce = within && current.visible && signature === lastShowSignature;
 
 				if (dismissTimer !== null) clearTimeout(dismissTimer);
@@ -70,6 +100,7 @@ export const useMicroToastStore = create<MicroToastState>()(
 						{
 							count: current.count + 1,
 							currentDuration: duration,
+							action,
 						},
 						false,
 						"coalesce",
@@ -83,6 +114,7 @@ export const useMicroToastStore = create<MicroToastState>()(
 							key: now,
 							count: 1,
 							currentDuration: duration,
+							action,
 						},
 						false,
 						"show",

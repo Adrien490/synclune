@@ -3,9 +3,13 @@
  *
  * Trois invariants d'autorisation de la route GET /api/orders/:orderNumber/invoice :
  *
- * 1. Client A authentifié ne peut JAMAIS lire la facture du Client B → 403.
+ * 1. Client A authentifié ne peut JAMAIS lire la facture du Client B → 404.
  * 2. Anonyme sans token ne peut JAMAIS lire une facture → 401.
- * 3. Anonyme avec token invalide ne peut JAMAIS lire une facture → 403.
+ * 3. Anonyme avec token invalide ne peut JAMAIS lire une facture → 404.
+ *
+ * EINV-SEC-003 : l'accès non autorisé renvoie 404 (indistinct du cas
+ * "commande inexistante") et non 403, pour ne pas révéler l'existence d'une
+ * commande (anti-énumération).
  *
  * L'admin bypasse l'ownership (audit fiscal / SAV) mais reste rate-limité (cf
  * EINV-SEC-004). Le token guest signé HMAC-BETTER_AUTH_SECRET permet le download
@@ -170,24 +174,24 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("returns 403 when client B is authenticated and tries to download client A's invoice", async () => {
+	it("returns 404 when client B is authenticated and tries to download client A's invoice", async () => {
 		mockGetSession.mockResolvedValue({
 			user: { id: OTHER_USER_ID, role: "USER" },
 		});
 
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA");
 
-		expect(response.status).toBe(403);
+		expect(response.status).toBe(404);
 		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
 	});
 
-	it("returns 403 when anonymous request has an invalid token (signature mismatch)", async () => {
+	it("returns 404 when anonymous request has an invalid token (signature mismatch)", async () => {
 		mockGetSession.mockResolvedValue(null);
 		mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
 		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "tampered-token");
 
-		expect(response.status).toBe(403);
+		expect(response.status).toBe(404);
 		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
 	});
 
@@ -231,5 +235,53 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		const response = await callRoute("CMD-9999999999999-FFFFFFFFFFFF");
 
 		expect(response.status).toBe(404);
+	});
+
+	// EINV-SEC-002 — révocation du token permanent après effacement RGPD.
+	it("returns 410 when a valid token targets an order whose owner is ANONYMIZED", async () => {
+		mockGetSession.mockResolvedValue(null);
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
+		// isInvoiceOwnerErased : le compte propriétaire a été anonymisé.
+		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ANONYMIZED" });
+
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+
+		expect(response.status).toBe(410);
+		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
+	});
+
+	it("returns 410 when a valid token targets an order whose owner no longer exists (hard-deleted)", async () => {
+		mockGetSession.mockResolvedValue(null);
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
+		mockPrisma.user.findUnique.mockResolvedValue(null);
+
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+
+		expect(response.status).toBe(410);
+	});
+
+	it("returns 200 when a valid token targets an account order whose owner is still ACTIVE", async () => {
+		mockGetSession.mockResolvedValue(null);
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
+		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
+
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+
+		expect(response.status).toBe(200);
+	});
+
+	it("does NOT query the owner account for a guest order token (userId === null)", async () => {
+		mockGetSession.mockResolvedValue(null);
+		mockVerifyInvoiceAccessToken.mockReturnValue(true);
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
+
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+
+		expect(response.status).toBe(200);
+		// Pas de compte à effacer pour un guest → aucune lecture user.
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 });

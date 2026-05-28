@@ -143,8 +143,9 @@ export function buildSellerInfo(order: GetOrderReturn): SellerInfo {
 		legalForm: order.vendorLegalForm ?? vendor.company_legal_form,
 		address,
 		email: order.vendorEmail ?? vendor.company_email,
-		eInvoicingAddress: order.vendorEInvoicingAddress ?? vendor.einvoicing_address,
-		eInvoicingPlatformId: order.vendorEInvoicingPlatformId ?? vendor.einvoicing_platform_id,
+		// Routing PDP émetteur : non utilisé en B2C franchise (config env uniquement).
+		eInvoicingAddress: vendor.einvoicing_address,
+		eInvoicingPlatformId: vendor.einvoicing_platform_id,
 		vatExemptionText:
 			order.vendorVatRegime === "FRANCHISE_BASE" || !order.vendorVatRegime
 				? vendor.vat_exemption
@@ -185,22 +186,22 @@ function parseVendorAddress(raw: string, recipientName: string): StructuredAddre
 
 export function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 	const { firstName, lastName } = splitCustomerName(order.customerName);
+	// Synclune vend exclusivement en B2C (particuliers) : aucun identifiant
+	// société ni routing PDP n'est capturé au checkout.
 	return {
 		type: order.customerType,
-		legalName: order.customerCompanyName,
+		legalName: null,
 		firstName,
 		lastName,
 		email: order.customerEmail,
 		phone: order.customerPhone,
-		siren: order.customerCompanySiren,
-		siret: order.customerCompanySiret,
-		vatNumber: order.customerCompanyVatNumber,
-		// Routing PDP client (annuaire central — reforme 2026-2027).
-		eInvoicingAddress: order.customerEInvoicingAddress,
-		eInvoicingPlatformId: order.customerEInvoicingPlatformId,
-		// Chorus Pro — obligatoire B2G.
-		publicEntityId: order.customerPublicEntityCode,
-		chorusServiceCode: order.customerServiceCode,
+		siren: null,
+		siret: null,
+		vatNumber: null,
+		eInvoicingAddress: null,
+		eInvoicingPlatformId: null,
+		publicEntityId: null,
+		chorusServiceCode: null,
 	};
 }
 
@@ -250,11 +251,10 @@ export function buildBillingAddress(
 }
 
 function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: number): InvoiceLine {
-	const taxCategoryCode = (item.taxCategoryCode ?? DEFAULT_TAX_CATEGORY) as TaxCategoryCode;
-	// Garde-fou : lineTotal* peuvent etre 0 sur les lignes historiques pre-Phase 2A.
-	// Dans ce cas, on reconstruit depuis price * quantity (cas franchise).
-	const lineTotalExclTax = item.lineTotalExcludingTax || item.price * item.quantity;
-	const lineTotalInclTax = item.lineTotalIncludingTax || item.price * item.quantity;
+	// Franchise TVA (Art. 293 B CGI) : taux et montant TVA toujours nuls, total
+	// ligne = prix unitaire HT × quantité (HT = TTC). Aucune TVA par ligne n'est
+	// stockée — elle se dérive intégralement ici.
+	const lineTotal = item.price * item.quantity;
 	return {
 		lineNumber,
 		productTitle: item.productTitle,
@@ -268,13 +268,13 @@ function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: num
 		quantity: item.quantity,
 		unitPriceExclTax: item.price,
 		discountAmount: 0, // pas de remise par ligne actuellement
-		taxRate: item.taxRate,
-		taxCategoryCode,
-		taxAmount: item.taxAmount,
-		lineTotalExclTax,
-		lineTotalInclTax,
-		hsCode: item.hsCode ?? null,
-		unitCode: item.unitCode ?? null,
+		taxRate: 0,
+		taxCategoryCode: DEFAULT_TAX_CATEGORY as TaxCategoryCode,
+		taxAmount: 0,
+		lineTotalExclTax: lineTotal,
+		lineTotalInclTax: lineTotal,
+		hsCode: null,
+		unitCode: null,
 	};
 }
 

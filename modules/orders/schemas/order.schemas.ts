@@ -56,6 +56,16 @@ export const orderFiltersSchema = z
 		 * cas critique Art. 286 CGI : commande encaissée sans facture émise.
 		 */
 		invoiceAnomaly: z.coerce.boolean().optional(),
+		/**
+		 * Preset "PDF non archivé" (EINV-UI-106) : facture GENERATED dont le PDF
+		 * immuable est absent (invoicePdfUrl IS NULL) — maintenance Art. L102 B LPF.
+		 */
+		pdfNotArchived: z.coerce.boolean().optional(),
+		/**
+		 * Preset "retry escaladé" (EINV-UI-106) : DLQ facturation
+		 * (invoiceRetryDeferred = true) — archivage PDF / avoir en échec escaladé.
+		 */
+		retryDeferred: z.coerce.boolean().optional(),
 		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		createdAfter: stringOrDateSchema,
@@ -301,8 +311,8 @@ export const markAsPaidSchema = z.object({
 /**
  * URL de suivi colis : http(s) uniquement.
  *
- * Le trackingUrl est rendu via `<a href={trackingUrl}>` dans 3 emails
- * transactionnels (order-confirmation, shipping-confirmation, tracking-update)
+ * Le trackingUrl est rendu via `<a href={trackingUrl}>` dans 2 emails
+ * transactionnels (order-confirmation, shipping-confirmation)
  * et dans le panneau admin update-tracking-form. Sans cette restriction,
  * `z.url()` accepte `javascript:alert(1)` → XSS au clic depuis l'admin et
  * potentiellement depuis certains rendus email (preview inline JS).
@@ -373,14 +383,6 @@ export const updateTrackingSchema = z.object({
 	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
 	trackingUrl: trackingUrlSchema,
 	carrier: carrierEnum.optional(),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(true)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
 });
 
 // ============================================================================
@@ -393,14 +395,6 @@ export const updateTrackingSchema = z.object({
  */
 export const markAsDeliveredSchema = z.object({
 	id: z.cuid2(),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(true)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
 });
 
 // ============================================================================

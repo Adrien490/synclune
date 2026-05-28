@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { EReportingTransactionType, Prisma } from "@/app/generated/prisma/client";
+import { CustomerType, EReportingTransactionType, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { INVOICE_FEATURE_FLAGS } from "../constants/feature-flags";
@@ -93,6 +93,19 @@ export async function recordSalesEReporting(
 			return "skipped";
 		}
 
+		// EINV-EREPORT-001 : garde-fou invariant. Synclune vend exclusivement en
+		// B2C (customerType toujours B2C), donc cette condition ne se déclenche
+		// jamais en pratique. Conservée comme filet : un éventuel B2B/B2G relèverait
+		// de la facture électronique (hors e-reporting agrégé) et doublonnerait
+		// sinon la déclaration DGFiP.
+		if (order.customerType !== CustomerType.B2C) {
+			logger.info(
+				`recordSalesEReporting — Order ${orderId} is ${order.customerType} (e-invoicing scope), skipping`,
+				{ service: "record-ereporting", orderId },
+			);
+			return "skipped";
+		}
+
 		const payload = buildSalesTransaction({ order });
 		return await persistTransaction(payload);
 	} catch (e) {
@@ -154,6 +167,10 @@ export async function recordRefundEReporting(
 						shippingCountry: true,
 						customerType: true,
 						stripePaymentIntentId: true,
+						// EINV-GLOBAL-011 — totaux pour dériver la part TVA du remboursement
+						// au prorata (0 en franchise, calculé sinon).
+						total: true,
+						taxAmount: true,
 					},
 				},
 			},
@@ -161,6 +178,16 @@ export async function recordRefundEReporting(
 		if (!refund || !refund.processedAt) {
 			logger.warn(
 				`recordRefundEReporting — Refund ${refundId} not found or not processed, skipping`,
+				{ service: "record-ereporting", refundId },
+			);
+			return "skipped";
+		}
+
+		// EINV-EREPORT-001 : symétrique du SALES — un avoir B2B/B2G est porté par
+		// le credit note e-invoice (void-invoice → PDP), pas par l'e-reporting.
+		if (refund.order.customerType !== CustomerType.B2C) {
+			logger.info(
+				`recordRefundEReporting — Refund ${refundId} parent order is ${refund.order.customerType} (e-invoicing scope), skipping`,
 				{ service: "record-ereporting", refundId },
 			);
 			return "skipped";

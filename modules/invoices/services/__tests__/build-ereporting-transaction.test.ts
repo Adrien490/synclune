@@ -28,6 +28,9 @@ function makeRefundOrder(overrides: Partial<RefundOrder> = {}): RefundOrder {
 		shippingCountry: "FR",
 		customerType: "B2C",
 		stripePaymentIntentId: "pi_test_1",
+		// Franchise par défaut (taxAmount = 0) → part TVA remboursement = 0.
+		total: 9500,
+		taxAmount: 0,
 		...overrides,
 	} satisfies Pick<GetOrderReturn, keyof RefundOrder>;
 }
@@ -184,6 +187,80 @@ describe("buildRefundTransaction", () => {
 				order: makeRefundOrder(),
 			}),
 		).toThrow(/processedAt/);
+	});
+
+	// EINV-GLOBAL-011 — dérivation de la part TVA du remboursement au prorata
+	// du taux effectif de la commande parente (au lieu d'un 0 codé en dur).
+	describe("dérivation TVA au prorata (EINV-GLOBAL-011)", () => {
+		it("franchise (order.taxAmount=0) → taxAmount=0 + exclTax==incTax (inchangé)", () => {
+			const result = buildRefundTransaction({
+				refund: {
+					id: "refund-1",
+					orderId: "order-1",
+					amount: 2500,
+					currency: "EUR",
+					processedAt: new Date(),
+					reason: "CUSTOMER_REQUEST",
+				},
+				order: makeRefundOrder({ total: 9500, taxAmount: 0 }),
+			});
+			expect(result.taxAmount).toBe(0);
+			expect(result.amountExclTax).toBe(-2500);
+			expect(result.payloadSnapshot.taxAmount).toBe(0);
+		});
+
+		it("régime réel : taxAmount au prorata = round(refund × tax / total), magnitude positive", () => {
+			// Commande 12000 TTC dont 2000 TVA (≈16,67% effectif). Refund total → tax = 2000.
+			const result = buildRefundTransaction({
+				refund: {
+					id: "refund-1",
+					orderId: "order-1",
+					amount: 12000,
+					currency: "EUR",
+					processedAt: new Date(),
+					reason: "CUSTOMER_REQUEST",
+				},
+				order: makeRefundOrder({ total: 12000, taxAmount: 2000 }),
+			});
+			expect(result.taxAmount).toBe(2000); // magnitude positive (CHECK taxAmount >= 0)
+			expect(result.amountIncTax).toBe(-12000); // négatif (CHECK amountIncTax < 0)
+			expect(result.amountExclTax).toBe(-10000); // HT négatif = -12000 + 2000
+		});
+
+		it("refund partiel : part TVA proportionnelle arrondie", () => {
+			// Commande 12000 TTC / 2000 TVA. Refund 3000 → tax = round(3000×2000/12000)=500.
+			const result = buildRefundTransaction({
+				refund: {
+					id: "refund-1",
+					orderId: "order-1",
+					amount: 3000,
+					currency: "EUR",
+					processedAt: new Date(),
+					reason: "PARTIAL",
+				},
+				order: makeRefundOrder({ total: 12000, taxAmount: 2000 }),
+			});
+			expect(result.taxAmount).toBe(500);
+			expect(result.amountIncTax).toBe(-3000);
+			expect(result.amountExclTax).toBe(-2500); // -3000 + 500
+		});
+
+		it("ne produit jamais une part TVA supérieure au montant remboursé", () => {
+			const result = buildRefundTransaction({
+				refund: {
+					id: "refund-1",
+					orderId: "order-1",
+					amount: 100,
+					currency: "EUR",
+					processedAt: new Date(),
+					reason: "OTHER",
+				},
+				// taxAmount aberrant > total → borné à refund.amount.
+				order: makeRefundOrder({ total: 100, taxAmount: 999 }),
+			});
+			expect(result.taxAmount).toBeLessThanOrEqual(100);
+			expect(result.taxAmount).toBeGreaterThanOrEqual(0);
+		});
 	});
 });
 

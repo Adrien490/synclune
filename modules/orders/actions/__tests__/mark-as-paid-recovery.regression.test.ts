@@ -117,7 +117,10 @@ function createOrder(overrides: Record<string, unknown> = {}) {
 		status: "PENDING",
 		paymentStatus: "PENDING",
 		stripeCheckoutSessionId: null,
-		stripePaymentIntentId: null,
+		// EINV-CASH-001 : une commande FAILED/EXPIRED/PENDING recoverable a toujours
+		// un PaymentIntent Stripe (le paiement a été tenté). Sans lui, le garde
+		// `no_stripe_proof` rejette avant d'atteindre la logique de recovery.
+		stripePaymentIntentId: "pi_recovery_test",
 		items: [],
 		...overrides,
 	});

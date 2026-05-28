@@ -420,29 +420,25 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(undefined, "guest-abc");
 	});
 
-	it("always emits admin notification task with dashboard URL", () => {
+	it("never emits an admin new-order task (removed)", () => {
 		const order = makeOrderWithItems();
 		const paymentIntent = makePaymentIntent();
 
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
-		const adminTask = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL") as
-			| { type: string; data: { dashboardUrl: string } }
-			| undefined;
-		expect(adminTask).toBeDefined();
-		expect(adminTask?.data.dashboardUrl).toContain("/admin/ventes/commandes/order-1");
+		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
 	});
 
-	it("falls back to 'Client' when shipping first+last names are empty", () => {
+	it("falls back to 'Client' on the confirmation email when shipping first+last names are empty", () => {
 		const order = makeOrderWithItems({ shippingFirstName: "", shippingLastName: "" });
 		const paymentIntent = makePaymentIntent();
 
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
-		const adminTask = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL") as
+		const emailTask = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL") as
 			| { type: string; data: { customerName: string } }
 			| undefined;
-		expect(adminTask?.data.customerName).toBe("Client");
+		expect(emailTask?.data.customerName).toBe("Client");
 	});
 
 	it("maps line items with productTitle fallback to 'Produit'", () => {

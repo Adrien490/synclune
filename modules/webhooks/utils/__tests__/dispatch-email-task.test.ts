@@ -13,7 +13,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockSendOrderConfirmationEmail,
-	mockSendAdminNewOrderEmail,
 	mockSendRefundConfirmationEmail,
 	mockSendRefundConfirmationOnce,
 	mockSendPaymentFailedEmail,
@@ -24,7 +23,6 @@ const {
 	mockSendAdminDashboardRefundAttentionAlert,
 } = vi.hoisted(() => ({
 	mockSendOrderConfirmationEmail: vi.fn(),
-	mockSendAdminNewOrderEmail: vi.fn(),
 	mockSendRefundConfirmationEmail: vi.fn(),
 	mockSendRefundConfirmationOnce: vi.fn(),
 	mockSendPaymentFailedEmail: vi.fn(),
@@ -39,7 +37,6 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
 }));
 vi.mock("@/modules/emails/services/admin-emails", () => ({
-	sendAdminNewOrderEmail: mockSendAdminNewOrderEmail,
 	sendAdminRefundFailedAlert: mockSendAdminRefundFailedAlert,
 	sendAdminDisputeAlert: mockSendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert: mockSendAdminInvoiceFailedAlert,
@@ -63,7 +60,6 @@ describe("dispatchEmailTask", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockSendOrderConfirmationEmail.mockResolvedValue({ success: true });
-		mockSendAdminNewOrderEmail.mockResolvedValue({ success: true });
 		mockSendRefundConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendRefundConfirmationOnce.mockResolvedValue({ success: true });
 		mockSendPaymentFailedEmail.mockResolvedValue({ success: true });
@@ -79,10 +75,6 @@ describe("dispatchEmailTask", () => {
 			[
 				{ type: "ORDER_CONFIRMATION_EMAIL", data: { d: 1 } } as unknown as PostWebhookTask,
 				() => expect(mockSendOrderConfirmationEmail).toHaveBeenCalledWith({ d: 1 }),
-			],
-			[
-				{ type: "ADMIN_NEW_ORDER_EMAIL", data: { d: 2 } } as unknown as PostWebhookTask,
-				() => expect(mockSendAdminNewOrderEmail).toHaveBeenCalledWith({ d: 2 }),
 			],
 			[
 				{ type: "PAYMENT_FAILED_EMAIL", data: { d: 4 } } as unknown as PostWebhookTask,

@@ -9,6 +9,7 @@ import { getVendorLegalInfo } from "@/shared/lib/stripe";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
+import { getParisDateParts } from "@/shared/utils/timezone";
 import { updateTag } from "next/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
 import { GET_ORDER_SELECT_ADMIN } from "../constants/order.constants";
@@ -86,10 +87,41 @@ export async function persistInvoiceNumber(
 ): Promise<PersistInvoiceNumberResult | null> {
 	const { source = HistorySource.SYSTEM, authorId, authorName } = options;
 
+	// Lecture unique HORS section critique (EINV-SEQ-002 + EINV-SEQ-005). Sert à la
+	// fois à résoudre le millésime d'encaissement ET à figer le snapshot comptable,
+	// de sorte que l'advisory lock par année ne couvre plus aucun round-trip DB
+	// (seuls le SELECT du dernier numéro + l'UPDATE restent dans la transaction
+	// verrouillée). Les champs du snapshot (items/adresses/totaux) sont figés au
+	// checkout et les `vendor*` proviennent de l'env → aucune mutation concurrente
+	// possible entre cette lecture et l'UPDATE.
+	const order = await prisma.order.findUnique({
+		where: { id: orderId },
+		select: GET_ORDER_SELECT_ADMIN,
+	});
+	if (!order) {
+		logger.error("persistInvoiceNumber — order not found before sequence resolution", undefined, {
+			service: "persist-invoice-number",
+			orderId,
+		});
+		return null;
+	}
+
+	// EINV-SEQ-002 : le millésime de la séquence F-YYYY doit suivre la date
+	// d'ENCAISSEMENT (Art. 289-I / 286 CGI), PAS l'horloge de génération. Une
+	// génération tardive (fallback lazy download ou cron `reconcile-invoices`
+	// franchissant le 31/12) ne doit jamais attribuer un numéro de l'année N+1 à
+	// une vente de l'année N. Calcul en `Europe/Paris` : le serveur Vercel tourne
+	// en UTC, donc un paiement du 31/12 23:30 UTC (= 01/01 00:30 Paris) doit porter
+	// le millésime Paris. Fallback `createdAt` si `paidAt` absent (état incohérent).
+	const year = getParisDateParts(order.paidAt ?? order.createdAt).year;
+
+	// Identité vendeur figée à l'émission (Art. L102 B LPF) — déterministe (env),
+	// donc calculable hors transaction.
+	const vendorSnapshot = buildVendorSnapshot();
+
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
 			const result = await prisma.$transaction(async (tx) => {
-				const year = new Date().getFullYear();
 				const prefix = `F-${year}-`;
 
 				// Advisory lock — serializes invoice generation per year, even when
@@ -146,25 +178,15 @@ export async function persistInvoiceNumber(
 
 				const invoiceNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
 				const now = new Date();
-				const vendorSnapshot = buildVendorSnapshot();
 
 				// Fige le snapshot `InvoiceData` au moment précis de l'attribution
 				// du numéro (Art. L102 B LPF — la "facture" comptable EST le payload
 				// de données, pas son rendu PDF). Toute régénération future doit
 				// produire un PDF identique à partir de ce snapshot grâce au
-				// déterminisme de `renderInvoicePdf`.
-				const orderForSnapshot = await tx.order.findUnique({
-					where: { id: orderId },
-					select: GET_ORDER_SELECT_ADMIN,
-				});
-				if (!orderForSnapshot) {
-					throw new BusinessError(
-						`Order ${orderId} not found while building invoice snapshot`,
-						"ORDER_NOT_FOUND",
-					);
-				}
+				// déterminisme de `renderInvoicePdf`. Construit à partir de l'order
+				// pré-lu hors lock (EINV-SEQ-005) : pas de findUnique dans la tx.
 				const orderForBuild = {
-					...orderForSnapshot,
+					...order,
 					invoiceNumber,
 					invoiceStatus: "GENERATED",
 					invoiceGeneratedAt: now,
@@ -236,7 +258,7 @@ export async function persistInvoiceNumber(
 			// (étendre regex DB à 6 chiffres puis déployer).
 			if (e instanceof BusinessError && e.code === "INVOICE_SEQUENCE_OVERFLOW") {
 				await sendAdminSequenceOverflowAlert({
-					year: new Date().getFullYear(),
+					year,
 					documentType: "invoice",
 				}).catch((alertError) =>
 					logger.error("sendAdminSequenceOverflowAlert threw", alertError, {
@@ -250,6 +272,58 @@ export async function persistInvoiceNumber(
 	}
 
 	return null;
+}
+
+/**
+ * EINV-PDF-005 : backfill du snapshot comptable (`invoiceDataSnapshot` +
+ * `invoiceDataHash`) pour les factures émises AVANT l'introduction du snapshot
+ * figé (numéro présent, snapshot null).
+ *
+ * NE GÉNÈRE PAS de numéro de facture (invariant 1 — il existe déjà) ni d'avoir.
+ * Idempotent : noop si snapshot déjà présent ou si l'order n'est pas facturé.
+ *
+ * Pour ces factures historiques, `buildInvoiceData` résout l'identité vendeur
+ * via les colonnes `vendor*` figées si présentes, sinon via l'env courant
+ * (best-effort — l'env d'émission n'est pas récupérable). Le snapshot fige
+ * cette résolution pour neutraliser toute dérive future (Art. L102 B LPF).
+ *
+ * Appelé par le cron `reconcile-invoices` (Passe 0).
+ */
+export async function backfillInvoiceDataSnapshot(
+	orderId: string,
+): Promise<{ invoiceDataHash: string; invoiceDataSnapshot: Prisma.JsonValue } | null> {
+	const order = await prisma.order.findUnique({
+		where: { id: orderId },
+		select: GET_ORDER_SELECT_ADMIN,
+	});
+	if (!order || !order.invoiceNumber || !order.invoiceGeneratedAt) {
+		return null;
+	}
+	// Idempotent — snapshot déjà figé.
+	if (order.invoiceDataSnapshot != null) {
+		return null;
+	}
+
+	const invoiceData = buildInvoiceData(order as GetOrderReturn);
+	const canonicalJson = canonicalJsonStringify(invoiceData);
+	const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
+	const snapshot = JSON.parse(canonicalJson) as Prisma.JsonValue;
+
+	await prisma.order.update({
+		where: { id: orderId },
+		data: {
+			invoiceDataSnapshot: snapshot as Prisma.InputJsonValue,
+			invoiceDataHash,
+		},
+	});
+
+	logger.info(`📑 Backfilled invoice data snapshot for legacy order ${orderId}`, {
+		service: "persist-invoice-number",
+		orderId,
+		invoiceNumber: order.invoiceNumber,
+	});
+
+	return { invoiceDataHash, invoiceDataSnapshot: snapshot };
 }
 
 /**
@@ -278,8 +352,6 @@ function buildVendorSnapshot(): Pick<
 	| "vendorEmail"
 	| "vendorBankIban"
 	| "vendorBankBic"
-	| "vendorEInvoicingPlatformId"
-	| "vendorEInvoicingAddress"
 > {
 	const vendor = getVendorLegalInfo();
 	return {
@@ -298,8 +370,6 @@ function buildVendorSnapshot(): Pick<
 		// '^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$' / '^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$'.
 		vendorBankIban: normalizeBankIdentifier(vendor.bank_iban),
 		vendorBankBic: normalizeBankIdentifier(vendor.bank_bic),
-		vendorEInvoicingPlatformId: vendor.einvoicing_platform_id,
-		vendorEInvoicingAddress: vendor.einvoicing_address,
 	};
 }
 

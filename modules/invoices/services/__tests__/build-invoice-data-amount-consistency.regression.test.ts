@@ -12,7 +12,7 @@ import type { GetOrderReturn } from "@/modules/orders/types/order.types";
  * (Art. L102 B LPF — incohérence audit fiscal).
  *
  * Invariants vérifiés :
- *  1. sum(OrderItem.lineTotalIncludingTax) ≈ Order.subtotal + Order.taxAmount
+ *  1. sum(OrderItem.price × quantity) ≈ Order.subtotal (franchise : TVA dérivée à 0)
  *  2. Order.subtotal + Order.shippingCost - Order.discountAmount = Order.total
  *     (en franchise — taxAmount=0 et shippingTax=0)
  *  3. totals retournés par buildInvoiceData préservent la relation
@@ -121,9 +121,9 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 }
 
 describe("buildInvoiceData — cohérence montants Order ↔ OrderItem (régression)", () => {
-	it("sum(OrderItem.lineTotalIncludingTax) ≈ Order.subtotal + Order.taxAmount", () => {
+	it("sum(OrderItem.price × quantity) ≈ Order.subtotal (franchise : TVA = 0)", () => {
 		const order = makeOrderFixture();
-		const sumLines = order.items.reduce((acc, item) => acc + item.lineTotalIncludingTax, 0);
+		const sumLines = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 		expect(sumLines).toBe(order.subtotal + order.taxAmount);
 	});
 

@@ -39,10 +39,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		customerName: "Alice Dupont",
 		customerPhone: "+33612345678",
 		customerType: "B2C",
-		customerCompanyName: null,
-		customerCompanySiren: null,
-		customerCompanySiret: null,
-		customerCompanyVatNumber: null,
 		subtotal: 9000,
 		discountAmount: 0,
 		shippingCost: 500,
@@ -86,7 +82,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		creditNoteGeneratedAt: null,
 		invoicePdfUrl: null,
 		invoicePdfHash: null,
-		// Snapshot vendeur + routing PDP (defaults null = fallback env)
+		// Snapshot vendeur (defaults null = fallback env)
 		vendorLegalName: null,
 		vendorTradeName: null,
 		vendorAddress: null,
@@ -99,18 +95,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		vendorEmail: null,
 		vendorBankIban: null,
 		vendorBankBic: null,
-		vendorEInvoicingPlatformId: null,
-		vendorEInvoicingAddress: null,
-		customerEInvoicingPlatformId: null,
-		customerEInvoicingAddress: null,
-		customerPublicEntityCode: null,
-		customerServiceCode: null,
-		pdpStatus: null,
-		pdpTransmittedAt: null,
-		pdpAcceptedAt: null,
-		pdpRejectedAt: null,
-		pdpRejectionReason: null,
-		pdpProviderRef: null,
 		createdAt: new Date("2026-05-27T17:55:00Z"),
 		updatedAt: new Date("2026-05-27T18:00:00Z"),
 		items: [
@@ -129,13 +113,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 				skuImageUrl: null,
 				price: 4500,
 				quantity: 2,
-				taxRate: 0,
-				taxAmount: 0,
-				lineTotalExcludingTax: 9000,
-				lineTotalIncludingTax: 9000,
-				taxCategoryCode: "ZB",
-				hsCode: null,
-				unitCode: null,
 			},
 		],
 		refunds: [],
@@ -145,7 +122,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 	} as Order;
 }
 
-describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
+describe("buildInvoiceData — B2C franchise", () => {
 	beforeEach(() => vi.clearAllMocks());
 
 	it("produces an InvoiceData that satisfies the Zod schema", () => {
@@ -189,6 +166,10 @@ describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
 		expect(data.buyer.siren).toBeNull();
 		expect(data.buyer.siret).toBeNull();
 		expect(data.buyer.vatNumber).toBeNull();
+		expect(data.buyer.eInvoicingAddress).toBeNull();
+		expect(data.buyer.eInvoicingPlatformId).toBeNull();
+		expect(data.buyer.publicEntityId).toBeNull();
+		expect(data.buyer.chorusServiceCode).toBeNull();
 	});
 
 	it("uses shipping address as billing when billingSameAsShipping=true", () => {
@@ -214,50 +195,18 @@ describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
 		expect(data.billingAddress.postalCode).toBe("75003");
 	});
 
-	it("maps each OrderItem to an InvoiceLine with 1-indexed lineNumber", () => {
+	it("maps each OrderItem to an InvoiceLine, deriving franchise totals from price × quantity", () => {
 		const data = buildInvoiceData(makeOrder());
 		expect(data.lines).toHaveLength(1);
 		expect(data.lines[0]!.lineNumber).toBe(1);
 		expect(data.lines[0]!.productTitle).toBe("Collier Lune d'Argent");
 		expect(data.lines[0]!.skuCode).toBe("COL-LUN-001");
+		// Franchise : TVA toujours nulle, total ligne = price × quantity.
+		expect(data.lines[0]!.taxRate).toBe(0);
+		expect(data.lines[0]!.taxAmount).toBe(0);
 		expect(data.lines[0]!.taxCategoryCode).toBe("ZB");
 		expect(data.lines[0]!.lineTotalExclTax).toBe(9000);
-	});
-
-	it("recovers lineTotal from price * quantity on legacy (pre-Phase 2A) rows", () => {
-		const order = makeOrder({
-			items: [
-				{
-					id: "item-legacy",
-					skuId: "sku-x",
-					productId: "product-x",
-					productTitle: "Bague historique",
-					productDescription: null,
-					productImageUrl: null,
-					skuSku: null,
-					skuColor: null,
-					skuColorHexes: null,
-					skuMaterial: null,
-					skuSize: null,
-					skuImageUrl: null,
-					price: 3000,
-					quantity: 3,
-					taxRate: 0,
-					taxAmount: 0,
-					lineTotalExcludingTax: 0, // backfill non encore appliqué
-					lineTotalIncludingTax: 0,
-					taxCategoryCode: null,
-					hsCode: null,
-					unitCode: null,
-				},
-			],
-			subtotal: 9000,
-			total: 9500,
-		});
-		const data = buildInvoiceData(order);
-		expect(data.lines[0]!.lineTotalExclTax).toBe(9000);
 		expect(data.lines[0]!.lineTotalInclTax).toBe(9000);
-		expect(data.lines[0]!.taxCategoryCode).toBe("ZB"); // DEFAULT_TAX_CATEGORY
 	});
 
 	it("totals : taxBreakdown groups by (rate, categoryCode) with franchise reason", () => {
@@ -289,7 +238,6 @@ describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
 	it("invoiceFormat defaults to PDF; accepts override", () => {
 		expect(buildInvoiceData(makeOrder()).invoiceFormat).toBe("PDF");
 		expect(buildInvoiceData(makeOrder(), { format: "FACTURX" }).invoiceFormat).toBe("FACTURX");
-		expect(buildInvoiceData(makeOrder(), { format: "UBL" }).invoiceFormat).toBe("UBL");
 	});
 
 	it("throws when invoiceNumber is missing (caller must persist first)", () => {
@@ -312,31 +260,6 @@ describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
 		});
 		expect(data.precedingInvoice).not.toBeNull();
 		expect(data.precedingInvoice!.invoiceNumber).toBe("F-2026-00001");
-	});
-});
-
-describe("buildInvoiceData — B2B snapshots (Phase 2A)", () => {
-	beforeEach(() => vi.clearAllMocks());
-
-	it("produces B2B buyer with company fields populated", () => {
-		const data = buildInvoiceData(
-			makeOrder({
-				customerType: "B2B",
-				customerCompanyName: "Acme SARL",
-				customerCompanySiren: "123456789",
-				customerCompanySiret: "12345678900012",
-				customerCompanyVatNumber: "FR00123456789",
-			}),
-		);
-		expect(data.buyer.type).toBe("B2B");
-		expect(data.buyer.legalName).toBe("Acme SARL");
-		expect(data.buyer.siren).toBe("123456789");
-		expect(data.buyer.siret).toBe("12345678900012");
-		expect(data.buyer.vatNumber).toBe("FR00123456789");
-
-		// Still validates against the schema with B2B fields
-		const result = invoiceDataSchema.safeParse(data);
-		expect(result.success).toBe(true);
 	});
 
 	it("snapshot reproducibility — same Order → identical InvoiceData (Art. L102 B)", () => {
@@ -374,11 +297,10 @@ describe("buildInvoiceData — snapshot vendeur (Art. L102 B LPF)", () => {
 		expect(data.seller.address.line1).toBe("1 rue de l'Ancien");
 		expect(data.seller.address.postalCode).toBe("75001");
 		expect(data.seller.address.city).toBe("Paris");
-		// recipientName du snapshot adresse est le legalName figé, pas l'env actuel
 		expect(data.seller.address.recipientName).toBe("ANCIEN NOM SARL");
 	});
 
-	it("fallback getVendorLegalInfo() env quand snapshot Order.vendor* est null (factures pre-Phase 5)", () => {
+	it("fallback getVendorLegalInfo() env quand snapshot Order.vendor* est null", () => {
 		const data = buildInvoiceData(makeOrder()); // defaults all null
 		expect(data.seller.legalName).toBe("TADDEI LEANE - Entrepreneur Individuel");
 		expect(data.seller.siren).toBe("839183027");
@@ -394,25 +316,5 @@ describe("buildInvoiceData — snapshot vendeur (Art. L102 B LPF)", () => {
 	it("vatExemptionText null si snapshot regime = NORMAL (sortie franchise — facture historique correcte)", () => {
 		const data = buildInvoiceData(makeOrder({ vendorVatRegime: "NORMAL" }));
 		expect(data.seller.vatExemptionText).toBeNull();
-	});
-
-	it("routing PDP customer cable depuis snapshot Order.customerEInvoicing* + Chorus Pro B2G", () => {
-		const data = buildInvoiceData(
-			makeOrder({
-				customerType: "B2G",
-				customerCompanyName: "Mairie de Nantes",
-				customerCompanySiren: "211440092",
-				customerCompanySiret: "21144009200011",
-				customerEInvoicingAddress: "21144009200011",
-				customerEInvoicingPlatformId: "0009:CHORUS-PRO",
-				customerPublicEntityCode: "21144009200011",
-				customerServiceCode: "SERVICE-FACTURE-MAIRIE",
-			}),
-		);
-		expect(data.buyer.type).toBe("B2G");
-		expect(data.buyer.eInvoicingAddress).toBe("21144009200011");
-		expect(data.buyer.eInvoicingPlatformId).toBe("0009:CHORUS-PRO");
-		expect(data.buyer.publicEntityId).toBe("21144009200011");
-		expect(data.buyer.chorusServiceCode).toBe("SERVICE-FACTURE-MAIRIE");
 	});
 });

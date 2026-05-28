@@ -7,7 +7,7 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Storefront** (`/boutique`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
-- **Emails** - React Email + Resend (16 templates)
+- **Emails** - React Email + Resend (11 templates)
 - **PWA** - Serwist (service worker, offline page)
 
 ## Commands
@@ -288,9 +288,7 @@ Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce so
 | `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                        |
 | `reviews/services/send-review-requests.service.ts`     | Cron job — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email                                                                                                                             |
 | `refunds/services/send-refund-confirmation.service.ts` | Émetteur unique email remboursement — `refund.updateMany` claim atomique (`confirmationEmailSentAt`) partagé entre cron `reconcile-refunds` + webhook `charge.refunded` + action `processRefund` (ORD-STRIPE-005) |
-| `users/services/refresh-customer-routing.service.ts`   | Cron job — `user.update` pour rafraichir `customerRoutingKey` apres expiration TTL                                                                                                                                |
 | `store-settings/services/auto-reopen.service.ts`       | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues                                                                                                                                   |
-| `orders/services/persist-pdp-transmission.service.ts`  | E-invoicing — `OrderHistory` create + flags transmission PDP (immuable, Art. L123-22)                                                                                                                             |
 | `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                             |
 
 ## API Routes
@@ -301,33 +299,29 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-23 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
+19 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing (e-reporting B2C uniquement) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
 
-| Job                               | Schedule           | Catégorie   |
-| --------------------------------- | ------------------ | ----------- |
-| `retry-post-webhook-tasks`        | Every 5 min        | revenue     |
-| `reopen-store`                    | Every 15 min       | ops         |
-| `retry-invoice-transmissions`     | Every 15 min       | e-invoicing |
-| `retry-webhooks`                  | Every 30 min       | revenue     |
-| `transmit-invoices`               | Every 30 min       | e-invoicing |
-| `transmit-ereporting-batch`       | Every 30 min       | e-invoicing |
-| `sync-async-payments`             | Every 4h           | revenue     |
-| `reconcile-invoice-statuses`      | Every 4h           | e-invoicing |
-| `reconcile-refunds`               | Every 6h, H+30     | revenue     |
-| `build-ereporting-batch`          | Daily 1:00         | e-invoicing |
-| `reconcile-invoices`              | Daily 2:00         | e-invoicing |
-| `cleanup-wishlists`               | Daily 2:30         | retention   |
-| `cleanup-sessions`                | Daily 3:00         | retention   |
-| `cleanup-carts`                   | Daily 3:30         | retention   |
-| `cleanup-pending-orders`          | Daily 4:30         | revenue     |
-| `process-account-deletions`       | Daily 5:00         | RGPD        |
-| `reconcile-voided-invoices`       | Daily 7:00         | e-invoicing |
-| `send-review-requests`            | Daily 10:00        | engagement  |
-| `alert-stuck-orders`              | Weekly Monday 9:00 | monitoring  |
-| `refresh-stale-directory-entries` | Monthly 1st 6:00   | e-invoicing |
-| `cleanup-webhook-events`          | Monthly 1st 7:00   | retention   |
-| `hard-delete-retention`           | Monthly 1st 8:00   | RGPD        |
-| `cleanup-orphan-media`            | Monthly 1st 9:00   | retention   |
+| Job                         | Schedule           | Catégorie   |
+| --------------------------- | ------------------ | ----------- |
+| `retry-post-webhook-tasks`  | Every 5 min        | revenue     |
+| `reopen-store`              | Every 15 min       | ops         |
+| `retry-webhooks`            | Every 30 min       | revenue     |
+| `transmit-ereporting-batch` | Every 30 min       | e-invoicing |
+| `sync-async-payments`       | Every 4h           | revenue     |
+| `reconcile-refunds`         | Every 6h, H+30     | revenue     |
+| `build-ereporting-batch`    | Daily 1:00         | e-invoicing |
+| `reconcile-invoices`        | Daily 2:00         | e-invoicing |
+| `cleanup-wishlists`         | Daily 2:30         | retention   |
+| `cleanup-sessions`          | Daily 3:00         | retention   |
+| `cleanup-carts`             | Daily 3:30         | retention   |
+| `cleanup-pending-orders`    | Daily 4:30         | revenue     |
+| `process-account-deletions` | Daily 5:00         | RGPD        |
+| `reconcile-voided-invoices` | Daily 7:00         | e-invoicing |
+| `send-review-requests`      | Daily 10:00        | engagement  |
+| `alert-stuck-orders`        | Weekly Monday 9:00 | monitoring  |
+| `cleanup-webhook-events`    | Monthly 1st 7:00   | retention   |
+| `hard-delete-retention`     | Monthly 1st 8:00   | RGPD        |
+| `cleanup-orphan-media`      | Monthly 1st 9:00   | retention   |
 
 ### Other API Routes
 
@@ -337,13 +331,13 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ## Emails
 
-16 templates React Email + Resend (dont 1 polyvalent `AdminAlertEmail` couvrant 8+ sous-types).
+11 templates React Email + Resend (dont 1 polyvalent `AdminAlertEmail` couvrant 7 sous-types).
 
-**Clients (14)** : order-confirmation, shipping-confirmation, tracking-update, delivery-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed, back-in-stock, review-request (9 transactionnels/marketing) + welcome, account-deletion, verification, password-reset, oauth-account-linked (5 auth/compte).
+**Clients (10)** : order-confirmation, shipping-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed, back-in-stock, review-request (7 transactionnels/marketing) + account-deletion, verification, password-reset (3 auth/compte). _Retirés (volume e-mail) : tracking-update + delivery-confirmation (redondants/informatifs), welcome + oauth-account-linked (faible valeur)._
 
-**Admin (2 templates polyvalents)** : `admin-new-order-email` (toujours seul) + `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, ereporting-stuck, stuck-orders, cron, checkout).
+**Admin (1 template polyvalent)** : `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, ereporting-stuck, stuck-orders, cron). _Retirés : `admin-new-order-email` (1 mail/commande, dashboard suffit) + sous-type `checkout` (code mort). Le litige n'émet plus qu'une alerte à l'ouverture (pas à la clôture)._
 
-**Anti-doublon** : `idempotencyKey` Resend (24h cross-instance, ex: `admin-new-order:${orderId}`, `order-cancel:${orderId}`) + cache LRU in-process 10 min via `send-email.ts`. Pas de flag DB côté Order (KISS).
+**Anti-doublon** : `idempotencyKey` Resend (24h cross-instance, ex: `order-confirm-${orderId}`, `order-cancel:${orderId}`) + cache LRU in-process 10 min via `send-email.ts`. Pas de flag DB côté Order (KISS).
 
 **Délivrabilité** : marketing emails (back-in-stock, review-request) ont `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` (RFC 8058) + `Precedence: bulk` + `Auto-Submitted: auto-generated` (RFC 3834).
 
@@ -418,18 +412,16 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 
 ### Conformité réglementaire (référencement)
 
-| Article                                      | Localisation                                                                                                                                                  | Statut |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Art. 286 CGI — séquentialité gap-free        | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                         | ✓      |
-| Art. 289-I CGI — émission à l'encaissement   | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                     | ✓      |
-| Art. 272-I CGI — avoir post-facture          | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                             | ✓      |
-| Art. 293 B CGI — mention franchise TVA       | `render-invoice-pdf.ts:235-242`                                                                                                                               | ✓      |
-| Art. L102 B LPF — immutabilité 10 ans        | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                       | ✓      |
-| Art. L123-22 C. com. — audit trail           | `OrderHistory` + `createOrderAuditTx`                                                                                                                         | ✓      |
-| Art. 50-0 CGI — CA à l'encaissement          | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                         | ✓      |
-| Réforme 2026-2027 émission structurée        | `render-{facturx,ubl}.ts` + `transmit-invoices.service.ts` + `submit-invoice-by-id.service.ts` (Phase 3++ infrastructure prête, attente provider PDP)         | ⏳     |
-| Réforme 2026-2027 e-reporting B2C            | `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` (Phase 4 livré, dry-run prod tant que flag OFF) | ⏳     |
-| CEN EN 16931 validation BR-CO-_ / BR-FR-FX-_ | `validate-facturx.ts` + `validate-ubl.ts` (opt-in via `INVOICE_VALIDATE_XML`)                                                                                 | ⏳     |
+| Article                                    | Localisation                                                                                                                                                            | Statut |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                                   | ✓      |
+| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                               | ✓      |
+| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                                       | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:235-242`                                                                                                                                         | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                                 | ✓      |
+| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                                                                                                                   | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                                   | ✓      |
+| Réforme 2026-2027 e-reporting B2C          | `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` (livré, dry-run prod tant que flag OFF + PA non branchée) | ⏳     |
 
 Audit conformité complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27).
 Architecture détaillée, matrices B2C/B2B/B2G, état des phases, feature flags, troubleshooting : `docs/INVOICING.md`.

@@ -754,7 +754,7 @@ describe("useResendOrderEmail", () => {
 	});
 
 	it("resend works with all supported email types", async () => {
-		const emailTypes = ["confirmation", "shipping", "delivery"] as const;
+		const emailTypes = ["confirmation", "shipping"] as const;
 
 		for (const emailType of emailTypes) {
 			vi.clearAllMocks();

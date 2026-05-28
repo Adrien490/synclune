@@ -95,7 +95,7 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 		expect(result).toEqual({ processed: 0, errored: 0, skipped: 4, hasMore: false });
 	});
 
-	it("counts REJECTED / RETRYING / ABANDONED as errored", async () => {
+	it("counts REJECTED / ABANDONED as errored, RETRYING as skipped (EINV-CRON-004)", async () => {
 		mockPrisma.eReportingBatch.findMany.mockResolvedValue([
 			{ id: "b1" },
 			{ id: "b2" },
@@ -106,7 +106,8 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 			.mockResolvedValueOnce({ batchId: "b2", status: "RETRYING", retryCount: 2 })
 			.mockResolvedValueOnce({ batchId: "b3", status: "ABANDONED", retryCount: 6 });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 0, errored: 3, skipped: 0, hasMore: false });
+		// RETRYING (transitoire auto-réparant) ne déclenche plus d'alerte admin.
+		expect(result).toEqual({ processed: 0, errored: 2, skipped: 1, hasMore: false });
 	});
 
 	it("aggregates mixed statuses correctly", async () => {
@@ -122,7 +123,8 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 			.mockResolvedValueOnce({ batchId: "b3", status: "RETRYING", retryCount: 1 })
 			.mockResolvedValueOnce({ batchId: "b4", status: "ACCEPTED" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 2, errored: 1, skipped: 1, hasMore: false });
+		// b1=SENT, b4=ACCEPTED → processed=2 ; b2=DRY_RUN + b3=RETRYING → skipped=2.
+		expect(result).toEqual({ processed: 2, errored: 0, skipped: 2, hasMore: false });
 	});
 });
 

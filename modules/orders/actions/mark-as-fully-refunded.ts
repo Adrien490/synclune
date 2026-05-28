@@ -18,14 +18,12 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
-import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { voidInvoice } from "../services/void-invoice.service";
-import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 
 /**
@@ -265,23 +263,18 @@ export async function markAsFullyRefunded(
 			return { status: ActionStatus.ERROR, message };
 		}
 
-		// EINV-CREDIT-004 : e-reporting du Refund manuel + émission avoir sur ce
-		// Refund (Art. 272-I CGI). Best-effort hors transaction.
+		// EINV-CREDIT-004 : e-reporting du Refund manuel (Art. 272-I CGI).
+		// Best-effort hors transaction.
+		//
+		// EINV-SEQ-001 (audit séquences 2026-05-28, Option A) : ce flow est un
+		// remboursement TOTAL → l'avoir est émis par `voidInvoice` ci-dessous
+		// (`Order.creditNoteNumber`), émetteur unique. On NE pose donc PAS d'avoir
+		// par Refund (`issueCreditNoteForRefund`) ici, sinon deux numéros A-YYYY
+		// seraient consommés pour un seul remboursement. L'e-reporting REFUND reste
+		// rattaché au Refund, indépendant de la numérotation de l'avoir.
 		const createdRefundId = "_createdRefundId" in order ? order._createdRefundId : null;
 		if (createdRefundId) {
 			await recordRefundEReporting(createdRefundId);
-			const creditNoteResult = await issueCreditNoteForRefund({
-				refundId: createdRefundId,
-				source: HistorySource.ADMIN,
-				authorId: adminUser.id,
-				authorName: adminUser.name ?? adminUser.email,
-			});
-			if (creditNoteResult.kind === "failed") {
-				logger.warn(
-					`mark-as-fully-refunded — credit note emission failed for manual refund ${createdRefundId}: ${creditNoteResult.error}`,
-					{ refundId: createdRefundId },
-				);
-			}
 		}
 
 		// Émission avoir VOID (Art. 272-I CGI) si la facture était active.

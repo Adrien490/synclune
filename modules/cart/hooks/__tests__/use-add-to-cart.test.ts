@@ -52,6 +52,7 @@ vi.mock("next/headers", () => ({ headers: vi.fn(), cookies: vi.fn() }));
 // ============================================================================
 
 import { useAddToCart } from "../use-add-to-cart";
+import { __resetDesktopCoalesce } from "@/shared/utils/toast";
 
 // ============================================================================
 // Helpers
@@ -75,6 +76,7 @@ const ERROR_RESULT = { status: "error" as const, message: "Erreur lors de l'ajou
 describe("useAddToCart", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		__resetDesktopCoalesce();
 		mockAddToCart.mockResolvedValue(SUCCESS_RESULT);
 	});
 

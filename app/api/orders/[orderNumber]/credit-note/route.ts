@@ -5,6 +5,8 @@ import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { archiveCreditNotePdf } from "@/modules/orders/services/archive-credit-note-pdf.service";
 import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
@@ -73,11 +75,15 @@ export async function GET(
 	const tokenFromQuery = url.searchParams.get("token");
 
 	const session = await getSession();
-	const isAdmin = session?.user.role === "ADMIN";
 
 	if (!session?.user.id && !tokenFromQuery) {
 		return new Response("Non autorisé", { status: 401 });
 	}
+
+	// EINV-SEC-001 : `session.user.role` est best-effort (cookie-cache Better Auth
+	// stale ~5 min). Re-vérification DB partagée avec /invoice — un admin démoté ne
+	// doit pas conserver le bypass d'ownership ni le quota 200/h sur les avoirs.
+	const isAdmin = await resolveInvoiceActorIsAdmin(session, "credit-note-route");
 
 	// Rate limit : même profil CPU/I/O que /invoice (génération PDF jsPDF +
 	// upload UploadThing), on partage les configs ORDER_LIMITS.INVOICE_DOWNLOAD
@@ -99,7 +105,7 @@ export async function GET(
 				level: "warning",
 				tags: { route: "credit-note", actor: "admin" },
 				extra: {
-					adminUserId: session.user.id,
+					adminUserId: session?.user.id,
 					limit: rateLimitConfig.limit,
 					windowMs: rateLimitConfig.windowMs,
 				},
@@ -125,8 +131,16 @@ export async function GET(
 		tokenFromQuery !== null &&
 		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
 	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
+	// EINV-SEC-003 : 404 indistinct (anti-énumération), cf. /invoice.
 	if (!isAdmin && !sessionOwns && !tokenValid) {
-		return new Response("Accès interdit", { status: 403 });
+		return new Response("Commande introuvable", { status: 404 });
+	}
+
+	// EINV-SEC-002 : révocation du token permanent après effacement RGPD du compte.
+	if (!isAdmin && !sessionOwns && (await isInvoiceOwnerErased(order.userId))) {
+		return new Response("Ce document n'est plus accessible (compte supprimé).", {
+			status: 410,
+		});
 	}
 
 	// Garde fondamentale : pas de génération lazy d'avoir. Contrairement à la

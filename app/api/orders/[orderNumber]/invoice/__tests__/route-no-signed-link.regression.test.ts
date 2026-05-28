@@ -192,14 +192,14 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 		});
 	});
 
-	describe("token invalide → 403 (HMAC vérifie pas)", () => {
-		it("sans session + token query mais verifyInvoiceAccessToken=false → 403", async () => {
+	describe("token invalide → 404 (HMAC vérifie pas, anti-enumeration EINV-SEC-003)", () => {
+		it("sans session + token query mais verifyInvoiceAccessToken=false → 404", async () => {
 			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
 			const res = await GET(makeReq("tampered-token-xxxxx"), makeParams());
 
-			expect(res.status).toBe(403);
+			expect(res.status).toBe(404);
 			expect(mockVerifyInvoiceAccessToken).toHaveBeenCalledWith(
 				GUEST_ORDER.id,
 				GUEST_ORDER.orderNumber,

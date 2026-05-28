@@ -220,12 +220,12 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(res.status).toBe(404);
 		});
 
-		it("returns 403 when order belongs to a different user", async () => {
+		it("returns 404 when order belongs to a different user (anti-enumeration EINV-SEC-003)", async () => {
 			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.status).toBe(403);
+			expect(res.status).toBe(404);
 		});
 
 		it("returns 400 when order is not paid", async () => {
@@ -383,12 +383,12 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			expect(res.status).toBe(200);
 		});
 
-		it("non-admin still blocked by ownership check", async () => {
+		it("non-admin still blocked by ownership check (404 anti-enumeration)", async () => {
 			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.status).toBe(403);
+			expect(res.status).toBe(404);
 		});
 	});
 

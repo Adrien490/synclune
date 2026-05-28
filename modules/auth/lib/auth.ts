@@ -1,8 +1,6 @@
 import {
-	sendOAuthAccountLinkedEmail,
 	sendPasswordResetEmail,
 	sendVerificationEmail,
-	sendWelcomeEmail,
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -230,55 +228,6 @@ export const auth = betterAuth({
 		updateAge: AUTH_SESSION_CONFIG.updateAge,
 		cookieCache: AUTH_SESSION_CONFIG.cookieCache,
 	},
-	databaseHooks: {
-		account: {
-			create: {
-				after: async (account) => {
-					// Notification email envoyée à l'utilisateur quand un nouveau provider OAuth
-					// (Google, …) est lié à son compte Synclune existant. Défense en profondeur
-					// contre l'account-takeover via `trustedProviders` (Better Auth lie auto si
-					// l'email matche et est vérifié provider-side).
-					//
-					// Skip credential (email/password — pas du linking OAuth).
-					if (account.providerId === "credential") return;
-
-					try {
-						const accountCount = await prisma.account.count({
-							where: { userId: account.userId },
-						});
-
-						// Si c'est le premier account du user → signup OAuth initial, pas du linking
-						if (accountCount <= 1) return;
-
-						const user = await prisma.user.findUnique({
-							where: { id: account.userId },
-							select: { email: true, name: true },
-						});
-
-						if (!user?.email) return;
-
-						const providerName =
-							account.providerId === "google"
-								? "Google"
-								: account.providerId.charAt(0).toUpperCase() + account.providerId.slice(1);
-
-						await sendOAuthAccountLinkedEmail({
-							to: user.email,
-							userName: user.name ?? user.email,
-							providerName,
-						});
-					} catch (error) {
-						// Ne pas bloquer la création de l'account si l'email échoue
-						logger.error("Failed to send OAuth account linked email", error, {
-							service: "auth",
-							userId: account.userId,
-							providerId: account.providerId,
-						});
-					}
-				},
-			},
-		},
-	},
 	hooks: {
 		before: createAuthMiddleware(async (ctx) => {
 			const path = ctx.path;
@@ -338,18 +287,6 @@ export const auth = betterAuth({
 		}),
 		after: createAuthMiddleware(async (ctx) => {
 			const newSession = ctx.context.newSession;
-
-			// Send welcome email after successful email verification
-			if (ctx.path === "/verify-email" && newSession?.user) {
-				try {
-					await sendWelcomeEmail({
-						to: newSession.user.email,
-						userName: newSession.user.name,
-					});
-				} catch {
-					// Don't block verification if welcome email fails
-				}
-			}
 
 			// Vérifier qu'une nouvelle session a été créée (connexion/inscription réussie)
 			if (!newSession) {

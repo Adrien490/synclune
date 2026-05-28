@@ -10,6 +10,8 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	let fulfillmentStatus: OrderFilters["fulfillmentStatus"] = undefined;
 	let invoiceStatus: OrderFilters["invoiceStatus"] = undefined;
 	let invoiceAnomaly: boolean | undefined = undefined;
+	let pdfNotArchived: boolean | undefined = undefined;
+	let retryDeferred: boolean | undefined = undefined;
 	let totalMin: number | undefined = undefined;
 	let totalMax: number | undefined = undefined;
 	let createdAfter: Date | undefined = undefined;
@@ -37,6 +39,12 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 						break;
 					case "invoiceAnomaly":
 						invoiceAnomaly = filterValue === "true" || filterValue === "1";
+						break;
+					case "pdfNotArchived":
+						pdfNotArchived = filterValue === "true" || filterValue === "1";
+						break;
+					case "retryDeferred":
+						retryDeferred = filterValue === "true" || filterValue === "1";
 						break;
 					case "totalMin":
 						totalMin = Number(filterValue) * 100; // Convert euros to cents
@@ -66,6 +74,8 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 		fulfillmentStatus,
 		invoiceStatus,
 		invoiceAnomaly,
+		pdfNotArchived,
+		retryDeferred,
 		totalMin,
 		totalMax,
 		createdAfter,

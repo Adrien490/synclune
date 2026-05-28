@@ -84,6 +84,8 @@ import {
 	addOrderNoteSchema,
 	bulkDeleteOrdersSchema,
 	exportInvoicesSchema,
+	markAsFullyRefundedSchema,
+	manualRefundMethodEnum,
 } from "../order.schemas";
 
 // A valid cuid2 string (26 lowercase alphanumeric chars, starts with a letter).
@@ -571,5 +573,49 @@ describe("exportInvoicesSchema", () => {
 			month: 13,
 		});
 		expect(result.success).toBe(false);
+	});
+});
+
+// ============================================================================
+// markAsFullyRefundedSchema — EINV-CASH-002
+// ============================================================================
+
+/**
+ * @regression einv-cash-002-manual-refund-traceability
+ *
+ * Garde-fou caisse : le remboursement manuel hors Stripe (geste commercial,
+ * virement, chèque, cash) enregistre un mouvement financier sans preuve PSP.
+ * Sa SEULE traçabilité comptable (Art. L123-22) repose sur `manualRefundMethod`
+ * obligatoirement renseigné + tracé dans `OrderHistory` (`metadata.manual`).
+ * Rendre ce champ optionnel ferait disparaître la méthode de remboursement de
+ * l'audit trail → ne JAMAIS le passer en `.optional()`.
+ */
+describe("markAsFullyRefundedSchema (EINV-CASH-002)", () => {
+	const VALID = "clh1234567890abcdefghijklm";
+
+	it("rejette l'absence de manualRefundMethod (traçabilité obligatoire)", () => {
+		const result = markAsFullyRefundedSchema.safeParse({ id: VALID });
+		expect(result.success).toBe(false);
+	});
+
+	it("accepte chaque méthode de remboursement manuel tracée", () => {
+		for (const method of ["wire", "check", "goodwill", "cash", "other"]) {
+			const result = markAsFullyRefundedSchema.safeParse({ id: VALID, manualRefundMethod: method });
+			expect(result.success).toBe(true);
+		}
+	});
+
+	it("rejette une méthode hors enum", () => {
+		const result = markAsFullyRefundedSchema.safeParse({
+			id: VALID,
+			manualRefundMethod: "bitcoin",
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("manualRefundMethodEnum expose exactement les 5 méthodes attendues", () => {
+		expect([...manualRefundMethodEnum.options].sort()).toEqual(
+			["cash", "check", "goodwill", "other", "wire"].sort(),
+		);
 	});
 });

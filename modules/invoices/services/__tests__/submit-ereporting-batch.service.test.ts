@@ -353,3 +353,80 @@ describe("submitEReportingBatchById — idempotence + backoff", () => {
 		expect(mockProvider.submitEReportingBatch).toHaveBeenCalled();
 	});
 });
+
+/**
+ * @regression ereporting-fail-open-status
+ *
+ * Garde-fou : un provider qui renvoie un statut NON terminal (RETRYING /
+ * ABANDONED) ou inattendu ne doit JAMAIS être coercé vers SENT. Avant le fix,
+ * le mapping `targetStatus` tombait sur un défaut `: SENT`, marquant le batch
+ * (et ses transactions enfants) comme transmis à la DGFiP alors qu'il ne
+ * l'était pas — fail-open = risque d'intégrité fiscale. Le chemin doit être
+ * routé vers `handleTransmitError` (retryCount/backoff/ABANDONED/Sentry).
+ */
+describe("submitEReportingBatchById — non-terminal provider status (fail-safe)", () => {
+	it("provider returns RETRYING → routed to error handler, batch RETRYING not SENT", async () => {
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+		mockProvider.submitEReportingBatch.mockResolvedValue({
+			providerBatchId: "pa-retrying-001",
+			status: "RETRYING",
+			submittedAt: new Date("2026-05-28T12:00:00Z"),
+		});
+
+		const result = await submitEReportingBatchById("batch-1");
+
+		expect(result.status).toBe("RETRYING");
+		expect(result.retryCount).toBe(1);
+
+		const updateCall = mockPrisma.eReportingBatch.update.mock.calls[0]?.[0] as {
+			data: Record<string, unknown>;
+		};
+		expect(updateCall.data.status).toBe("RETRYING");
+		expect(updateCall.data.retryCount).toBe(1);
+		expect(updateCall.data.sentAt).toBeUndefined();
+
+		// Les transactions enfants ne doivent pas être propagées en SENT.
+		expect(mockPrisma.eReportingTransaction.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("provider returns ABANDONED → routed to error handler, never marked SENT", async () => {
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+		mockProvider.submitEReportingBatch.mockResolvedValue({
+			providerBatchId: "pa-abandoned-001",
+			status: "ABANDONED",
+			submittedAt: new Date("2026-05-28T12:00:00Z"),
+		});
+
+		const result = await submitEReportingBatchById("batch-1");
+
+		// retryCount 0 → 1, donc RETRYING (pas encore au-delà de MAX_RETRY).
+		expect(result.status).toBe("RETRYING");
+
+		const updateCall = mockPrisma.eReportingBatch.update.mock.calls[0]?.[0] as {
+			data: Record<string, unknown>;
+		};
+		expect(updateCall.data.status).not.toBe("SENT");
+	});
+
+	it("never writes status SENT for any non-terminal provider status", async () => {
+		for (const badStatus of ["RETRYING", "ABANDONED", "PENDING_SUBMISSION"]) {
+			vi.clearAllMocks();
+			mockPrisma.eReportingTransaction.findMany.mockResolvedValue([]);
+			mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+			mockProvider.submitEReportingBatch.mockResolvedValue({
+				providerBatchId: `pa-${badStatus}`,
+				status: badStatus,
+				submittedAt: new Date("2026-05-28T12:00:00Z"),
+			});
+
+			await submitEReportingBatchById("batch-1");
+
+			for (const call of mockPrisma.eReportingBatch.update.mock.calls) {
+				expect((call[0] as { data: Record<string, unknown> }).data.status).not.toBe("SENT");
+			}
+			for (const call of mockPrisma.eReportingTransaction.updateMany.mock.calls) {
+				expect((call[0] as { data: Record<string, unknown> }).data.status).not.toBe("SENT");
+			}
+		}
+	});
+});

@@ -7,7 +7,6 @@ import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 
 export type AdminAlertType =
-	| "checkout"
 	| "cron"
 	| "dispute"
 	| "invoice"
@@ -28,7 +27,6 @@ interface AdminAlertEmailProps {
 }
 
 const HEADER_TEXT: Record<AdminAlertType, string> = {
-	checkout: "Échec checkout Stripe",
 	cron: "Échec cron job",
 	dispute: "Litige Stripe",
 	invoice: "Échec génération facture",
@@ -39,7 +37,6 @@ const HEADER_TEXT: Record<AdminAlertType, string> = {
 };
 
 const PREVIEW_TEXT: Record<AdminAlertType, string> = {
-	checkout: "Échec checkout Stripe — intervention requise",
 	cron: "Échec cron job — vérifier les logs",
 	dispute: "Litige Stripe — action requise",
 	invoice: "Échec génération facture — conformité légale",
@@ -50,7 +47,6 @@ const PREVIEW_TEXT: Record<AdminAlertType, string> = {
 };
 
 const URGENCY_LABEL: Record<AdminAlertType, string> = {
-	checkout: "Intervention requise",
 	cron: "Action manuelle peut-être requise",
 	dispute: "Action requise",
 	invoice: "Conformité légale — Action requise",

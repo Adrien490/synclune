@@ -50,7 +50,6 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 			trackingNumber: options.initialTrackingNumber ?? "",
 			trackingUrl: options.initialTrackingUrl ?? "",
 			carrier: options.initialCarrier ?? ("colissimo" as Carrier),
-			sendEmail: true,
 			customUrlMode: false,
 		},
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),

@@ -1,11 +1,14 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
-import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
+import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
+import { InvoiceSnapshotIntegrityError } from "@/modules/invoices/services/verify-invoice-snapshot";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
@@ -91,30 +94,9 @@ export async function GET(
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// EINV-SEC-008 : `session.user.role` est best-effort (jusqu'à 5 min stale)
-	// à cause du `cookieCache` Better Auth. Un admin récemment démoté conserverait
-	// sinon le quota élargi (200/h) et bypasserait l'ownership check. On re-vérifie
-	// le rôle en DB UNIQUEMENT quand le cookie claim admin (1 query supplémentaire
-	// limitée aux admins, pas d'impact sur les users normaux).
-	let isAdmin = false;
-	if (session?.user.role === "ADMIN" && session.user.id) {
-		const dbUser = await prisma.user.findUnique({
-			where: { id: session.user.id, ...notDeleted },
-			select: { role: true },
-		});
-		isAdmin = dbUser?.role === "ADMIN";
-		if (!isAdmin) {
-			logger.warn(
-				"Stale admin session detected on invoice route — falling back to owner/token path",
-				{
-					service: "invoice-route",
-					userId: session.user.id,
-					sessionRole: session.user.role,
-					dbRole: dbUser?.role ?? "user_not_found",
-				},
-			);
-		}
-	}
+	// EINV-SEC-008 / EINV-SEC-001 : re-vérification DB du rôle admin (cookie-cache
+	// Better Auth stale jusqu'à ~5 min). Helper partagé avec les routes avoir.
+	const isAdmin = await resolveInvoiceActorIsAdmin(session, "invoice-route");
 
 	// Rate limit: PDF generation is CPU-intensive.
 	// EINV-SEC-004 : admin n'est PLUS bypassé — quota large 200/h anti-exfiltration interne,
@@ -179,8 +161,20 @@ export async function GET(
 		tokenFromQuery !== null &&
 		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
 	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
+	// EINV-SEC-003 : 404 (pas 403) sur accès non autorisé — réponse indistincte du
+	// cas "commande inexistante" pour ne pas révéler l'existence d'une commande
+	// (anti-énumération, défense en profondeur en plus de l'entropie de orderNumber).
 	if (!isAdmin && !sessionOwns && !tokenValid) {
-		return new Response("Accès interdit", { status: 403 });
+		return new Response("Commande introuvable", { status: 404 });
+	}
+
+	// EINV-SEC-002 : l'accès restant non-admin/non-owner est forcément par token.
+	// Une fois le compte propriétaire anonymisé (RGPD Art. 17), on révoque le token
+	// permanent : il ne doit plus servir le PDF figé contenant l'identité d'origine.
+	if (!isAdmin && !sessionOwns && (await isInvoiceOwnerErased(order.userId))) {
+		return new Response("Ce document n'est plus accessible (compte supprimé).", {
+			status: 410,
+		});
 	}
 
 	if (order.paymentStatus !== "PAID") {
@@ -217,7 +211,14 @@ export async function GET(
 	// régénérer (garantit l'immuabilité bit-à-bit, Art. L102 B LPF).
 	const archive = await prisma.order.findUnique({
 		where: { id: order.id },
-		select: { invoicePdfUrl: true, invoicePdfHash: true },
+		select: {
+			invoicePdfUrl: true,
+			invoicePdfHash: true,
+			// EINV-PDF-001 : snapshot figé pour le rendu de fallback (cf. plus bas).
+			// Pas dans GET_ORDER_SELECT_CUSTOMER (minimisation) — select ciblé ici.
+			invoiceDataSnapshot: true,
+			invoiceDataHash: true,
+		},
 	});
 	// Source de l'audit-trail EINV-SEC-002.
 	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
@@ -293,7 +294,40 @@ export async function GET(
 		invoicePath = "lazy_regenerate";
 	}
 
-	const pdfBuffer = renderInvoicePdf(buildInvoiceData(invoiceOrder));
+	// EINV-PDF-001 : rendre depuis le snapshot figé (`invoiceDataSnapshot`) en
+	// priorité, jamais depuis une recomputation des colonnes Order live. Le
+	// resolver vérifie aussi l'intégrité (SHA-256 canonical-JSON vs
+	// `invoiceDataHash`) — EINV-PDF-003.
+	let pdfBuffer: ArrayBuffer;
+	try {
+		pdfBuffer = renderInvoicePdf(
+			resolveInvoiceDataForRender(invoiceOrder, {
+				invoiceDataSnapshot: archive?.invoiceDataSnapshot,
+				invoiceDataHash: archive?.invoiceDataHash,
+			}),
+		);
+	} catch (error) {
+		if (error instanceof InvoiceSnapshotIntegrityError) {
+			// Snapshot comptable corrompu/altéré : refuser de servir un document
+			// non conforme (Art. L102 B LPF) plutôt que de rendre des données
+			// divergentes. Alerte Sentry pour investigation manuelle.
+			logger.error("Invoice snapshot integrity check failed — refusing to render", error, {
+				service: "invoice-route",
+				orderId: order.id,
+				invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
+			});
+			Sentry.captureException(error, {
+				fingerprint: ["invoice", "snapshot-integrity", invoiceOrder.invoiceNumber ?? "unknown"],
+				tags: { service: "invoice-route" },
+				extra: { orderId: order.id, invoiceNumber: invoiceOrder.invoiceNumber },
+			});
+			return new Response(
+				"Facture temporairement indisponible (vérification d'intégrité en cours).",
+				{ status: 503, headers: { "Retry-After": "60" } },
+			);
+		}
+		throw error;
+	}
 
 	// EINV-PDF-002 : si une archive existe avec un hash connu, refuser de servir
 	// un PDF régénéré qui diverge (un déploiement intermédiaire a pu changer

@@ -167,7 +167,10 @@ describe("ORD-BIZ-007 — mark-as-paid annule le PaymentIntent Stripe", () => {
 			createPendingOrder({
 				id: VALID_CUID,
 				stripePaymentIntentId: null,
-				stripeCheckoutSessionId: null,
+				// EINV-CASH-001 : preuve Stripe via Checkout Session (paiement carte
+				// dont le PI n'a pas été persisté) — le garde `no_stripe_proof` passe,
+				// et l'absence de PI ⇒ aucun appel paymentIntents.cancel.
+				stripeCheckoutSessionId: "cs_no_pi",
 				items: [],
 			}),
 		);

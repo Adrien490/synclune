@@ -29,6 +29,8 @@ const {
 	mockPrisma: {
 		order: { findUnique: vi.fn(), findFirst: vi.fn() },
 		orderHistory: { findFirst: vi.fn() },
+		// EINV-SEC-001 : la route re-vérifie le rôle admin en DB.
+		user: { findUnique: vi.fn() },
 	},
 	mockSentry: {
 		addBreadcrumb: vi.fn(),
@@ -123,7 +125,7 @@ const VOIDED_ORDER = {
  * @regression credit-note-route-2026-05-28
  *
  * Verrouille le téléchargement sécurisé du PDF avoir (Art. 272-I CGI / L102 B LPF) :
- *  - 401/403 stricts (session + ownership + token guest)
+ *  - 401 si ni session ni token ; 404 indistinct si non autorisé (EINV-SEC-003)
  *  - 404 si `creditNoteNumber` ou `invoiceNumber` absent (pas de lazy émission)
  *  - rate-limit partagé avec /invoice (même profil CPU)
  *  - intégrité SHA-256 sur archive (refuse 503 si divergence)
@@ -146,6 +148,9 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 			creditNotePdfHash: null,
 		});
 		mockPrisma.orderHistory.findFirst.mockResolvedValue({ note: "Remboursement total" });
+		// EINV-SEC-001 : par défaut la DB confirme le rôle (les tests ADMIN_SESSION
+		// passent par cette re-vérification).
+		mockPrisma.user.findUnique.mockResolvedValue({ role: "ADMIN" });
 		mockBuildInvoiceData.mockReturnValue({});
 		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([0x25, 0x50, 0x44, 0x46]).buffer);
 		mockArchiveCreditNotePdf.mockResolvedValue({
@@ -199,12 +204,12 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 			expect(res.status).toBe(404);
 		});
 
-		it("returns 403 when order belongs to a different user", async () => {
+		it("returns 404 when order belongs to a different user (EINV-SEC-003 anti-enumeration)", async () => {
 			mockPrisma.order.findFirst.mockResolvedValue({ ...VOIDED_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.status).toBe(403);
+			expect(res.status).toBe(404);
 		});
 
 		it("returns 404 when creditNoteNumber is null (no credit note issued yet)", async () => {

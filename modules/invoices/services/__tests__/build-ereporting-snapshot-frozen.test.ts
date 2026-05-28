@@ -87,6 +87,8 @@ describe("buildRefundTransaction — snapshot indépendant de la source", () => 
 			shippingCountry: "FR",
 			customerType: "B2C" as const,
 			stripePaymentIntentId: "pi_test_1",
+			total: 2500,
+			taxAmount: 0,
 		};
 
 		const payload = buildRefundTransaction({ refund, order });

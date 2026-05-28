@@ -33,6 +33,8 @@ interface FilterFormData {
 	fulfillmentStatuses: string[];
 	invoiceStatuses: string[];
 	invoiceAnomaly: boolean;
+	pdfNotArchived: boolean;
+	retryDeferred: boolean;
 	priceRange: [number, number];
 	dateRange: {
 		from: string;
@@ -56,6 +58,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const fulfillmentStatuses: string[] = [];
 		const invoiceStatuses: string[] = [];
 		let invoiceAnomaly = false;
+		let pdfNotArchived = false;
+		let retryDeferred = false;
 		let priceMin = DEFAULT_PRICE_RANGE[0]!;
 		let priceMax = DEFAULT_PRICE_RANGE[1]!;
 		let dateFrom = "";
@@ -73,6 +77,10 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 				invoiceStatuses.push(value);
 			} else if (key === "filter_invoiceAnomaly") {
 				invoiceAnomaly = value === "true" || value === "1";
+			} else if (key === "filter_pdfNotArchived") {
+				pdfNotArchived = value === "true" || value === "1";
+			} else if (key === "filter_retryDeferred") {
+				retryDeferred = value === "true" || value === "1";
 			} else if (key === "filter_totalMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0]!;
 			} else if (key === "filter_totalMax") {
@@ -92,6 +100,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			fulfillmentStatuses: [...new Set(fulfillmentStatuses)],
 			invoiceStatuses: [...new Set(invoiceStatuses)],
 			invoiceAnomaly,
+			pdfNotArchived,
+			retryDeferred,
 			priceRange: [priceMin, priceMax],
 			dateRange: { from: dateFrom, to: dateTo },
 			showDeleted,
@@ -115,6 +125,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
+			"filter_pdfNotArchived",
+			"filter_retryDeferred",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -155,6 +167,16 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			params.set("filter_invoiceAnomaly", "true");
 		}
 
+		// Preset PDF non archivé (EINV-UI-106) : GENERATED + invoicePdfUrl IS NULL
+		if (formData.pdfNotArchived) {
+			params.set("filter_pdfNotArchived", "true");
+		}
+
+		// Preset retry escaladé (EINV-UI-106) : invoiceRetryDeferred = true
+		if (formData.retryDeferred) {
+			params.set("filter_retryDeferred", "true");
+		}
+
 		// Add price range (convert euros to cents)
 		if (
 			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
@@ -189,6 +211,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			fulfillmentStatuses: [],
 			invoiceStatuses: [],
 			invoiceAnomaly: false,
+			pdfNotArchived: false,
+			retryDeferred: false,
 			priceRange: [DEFAULT_PRICE_RANGE[0]!, DEFAULT_PRICE_RANGE[1]!],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
@@ -203,6 +227,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
+			"filter_pdfNotArchived",
+			"filter_retryDeferred",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -231,6 +257,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
 			"filter_invoiceAnomaly",
+			"filter_pdfNotArchived",
+			"filter_retryDeferred",
 		];
 		// Paired filters: count the pair as one filter (use the first key as representative)
 		const pairedFilters: Record<string, string[]> = {
@@ -405,13 +433,13 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 					)}
 				</form.Field>
 
-				{/* Preset Anomalie de facturation (EINV-UI-005 — payée sans facture émise) */}
-				<form.Field name="invoiceAnomaly">
-					{(field) => (
-						<fieldset className="space-y-1">
-							<legend className="text-foreground mb-2 text-sm font-medium">
-								Anomalies de facturation
-							</legend>
+				{/* Presets maintenance facturation (EINV-UI-005 + EINV-UI-106) */}
+				<fieldset className="space-y-1">
+					<legend className="text-foreground mb-2 text-sm font-medium">
+						Anomalies de facturation
+					</legend>
+					<form.Field name="invoiceAnomaly">
+						{(field) => (
 							<CheckboxFilterItem
 								id="invoice-anomaly"
 								checked={field.state.value === true}
@@ -421,9 +449,35 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 							>
 								Commandes payées sans facture émise (Art. 286 / 289-I CGI)
 							</CheckboxFilterItem>
-						</fieldset>
-					)}
-				</form.Field>
+						)}
+					</form.Field>
+					<form.Field name="pdfNotArchived">
+						{(field) => (
+							<CheckboxFilterItem
+								id="invoice-pdf-not-archived"
+								checked={field.state.value === true}
+								onCheckedChange={(checked) => {
+									field.handleChange(checked === true);
+								}}
+							>
+								Facture émise sans PDF archivé (Art. L102 B LPF)
+							</CheckboxFilterItem>
+						)}
+					</form.Field>
+					<form.Field name="retryDeferred">
+						{(field) => (
+							<CheckboxFilterItem
+								id="invoice-retry-deferred"
+								checked={field.state.value === true}
+								onCheckedChange={(checked) => {
+									field.handleChange(checked === true);
+								}}
+							>
+								Archivage / avoir escaladé en échec (DLQ)
+							</CheckboxFilterItem>
+						)}
+					</form.Field>
+				</fieldset>
 
 				<Separator />
 

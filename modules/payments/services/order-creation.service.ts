@@ -11,7 +11,6 @@ import { generateOrderNumber } from "@/modules/orders/services/order-generation.
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
-import { DEFAULT_TAX_CATEGORY } from "@/shared/constants/tax-categories";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
@@ -22,7 +21,7 @@ function isDiscountType(value: string): value is DiscountType {
 
 type SkuDetailsResult = Awaited<ReturnType<typeof getSkuDetails>>;
 
-interface CreateOrderParams {
+export interface CreateOrderParams {
 	cartItems: Array<{ skuId: string; quantity: number }>;
 	skuDetailsResults: SkuDetailsResult[];
 	subtotal: number;
@@ -296,6 +295,8 @@ export async function createOrderInTransaction(
 					paymentStatus: "PENDING",
 					fulfillmentStatus: "UNFULFILLED",
 					...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
+					// Synclune vend exclusivement en B2C : customerType prend le défaut
+					// schema (B2C), aucun identifiant société n'est capturé au checkout.
 				},
 			});
 
@@ -316,11 +317,9 @@ export async function createOrderInTransaction(
 					.map((c) => c.hex)
 					.filter(Boolean)
 					.join(",");
-				// TVA par ligne (Phase 2A, EINV-AUDIT-002) — franchise art. 293 B :
-				// taxRate=0, taxAmount=0, lineTotalExclTax=lineTotalInclTax=price*qty.
-				// Quand Synclune basculera au regime reel, calculer ces valeurs ici
-				// au lieu d'utiliser les defauts franchise.
-				const lineTotal = sku.priceInclTax * cartItem.quantity;
+				// Micro-entreprise franchise TVA (art. 293 B CGI) : aucune TVA par ligne
+				// n'est stockée. Le total ligne (HT = TTC) se dérive de price × quantity ;
+				// la facture le recalcule dans buildInvoiceData() (taxRate=0).
 				await tx.orderItem.create({
 					data: {
 						orderId: newOrder.id,
@@ -336,11 +335,6 @@ export async function createOrderInTransaction(
 						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
-						taxRate: 0,
-						taxAmount: 0,
-						lineTotalExcludingTax: lineTotal,
-						lineTotalIncludingTax: lineTotal,
-						taxCategoryCode: DEFAULT_TAX_CATEGORY,
 					},
 				});
 			}

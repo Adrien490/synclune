@@ -147,15 +147,21 @@ describe("@regression refund-no-invoice-mutation", () => {
 		);
 	});
 
-	it("aucun fichier sous modules/refunds/ n'émet un template A-YYYY-NNNNN en dehors de issue-credit-note.service.ts", () => {
+	it("aucun fichier sous modules/refunds/ n'émet un template A-YYYY-NNNNN (séquence centralisée dans invoices/credit-note-sequence.service.ts)", () => {
 		// Filet de sécurité côté refunds — la garde principale est dans
 		// modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts,
 		// ce test verrouille la slice refunds/ pour éviter les drifts.
+		//
+		// EINV-PRISMA-001 : la génération du template `A-YYYY-NNNNN` est centralisée
+		// dans le helper SSOT `modules/invoices/services/credit-note-sequence.service.ts`
+		// (`nextCreditNoteNumberTx`, advisory lock 2_000_000+year + lookup UNION).
+		// `issue-credit-note.service.ts` délègue à ce helper et ne construit donc
+		// PLUS le template lui-même → aucun fichier de refunds/ ne l'émet.
 		const pattern = /`A-\$\{[^}]*\}-/;
 		const writers = refundSourceFiles
 			.filter((f) => pattern.test(readFileSync(f, "utf-8")))
 			.map(relPath);
 
-		expect(writers.sort()).toEqual(["modules/refunds/services/issue-credit-note.service.ts"]);
+		expect(writers.sort()).toEqual([]);
 	});
 });

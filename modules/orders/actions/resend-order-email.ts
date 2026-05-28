@@ -1,12 +1,11 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	sendOrderConfirmationEmail,
 	sendShippingConfirmationEmail,
-	sendDeliveryConfirmationEmail,
 } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -49,7 +48,7 @@ export async function resendOrderEmail(
 		const validated = validateInput(
 			z.object({
 				orderId: z.cuid2(),
-				emailType: z.enum(["confirmation", "shipping", "delivery"]),
+				emailType: z.enum(["confirmation", "shipping"]),
 			}),
 			{ orderId, emailType },
 		);
@@ -61,7 +60,6 @@ export async function resendOrderEmail(
 			select: {
 				orderNumber: true,
 				status: true,
-				fulfillmentStatus: true,
 				id: true,
 				customerEmail: true,
 				customerName: true,
@@ -79,7 +77,6 @@ export async function resendOrderEmail(
 				shippingCarrier: true,
 				trackingNumber: true,
 				trackingUrl: true,
-				actualDelivery: true,
 				items: {
 					select: {
 						productTitle: true,
@@ -167,41 +164,6 @@ export async function resendOrderEmail(
 				actionResult = result.success
 					? success("Email d'expedition renvoyé")
 					: error("Erreur lors de l'envoi de l'email d'expedition");
-				break;
-			}
-
-			case "delivery": {
-				// Vérifier que la commande a été livrée
-				if (
-					order.status !== OrderStatus.DELIVERED &&
-					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
-				) {
-					return error("La commande n'a pas encore été livrée");
-				}
-
-				const deliveryDate = order.actualDelivery
-					? new Date(order.actualDelivery).toLocaleDateString("fr-FR", {
-							day: "numeric",
-							month: "long",
-							year: "numeric",
-						})
-					: new Date().toLocaleDateString("fr-FR", {
-							day: "numeric",
-							month: "long",
-							year: "numeric",
-						});
-
-				const result = await sendDeliveryConfirmationEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
-					deliveryDate,
-					orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
-				});
-
-				actionResult = result.success
-					? success("Email de livraison renvoyé")
-					: error("Erreur lors de l'envoi de l'email de livraison");
 				break;
 			}
 

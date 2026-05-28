@@ -262,12 +262,6 @@ describe("UpdateTrackingDialog", () => {
 		expect(screen.getByLabelText(/URL personnalisée/)).toBeInTheDocument();
 	});
 
-	it('renders send email checkbox with label "Prévenir le client par email"', () => {
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		expect(screen.getByLabelText(/Prévenir le client par email/)).toBeInTheDocument();
-	});
-
 	it("renders required fields note", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
@@ -280,27 +274,6 @@ describe("UpdateTrackingDialog", () => {
 		const hiddenId = document.querySelector('input[type="hidden"][name="id"]') as HTMLInputElement;
 		expect(hiddenId).not.toBeNull();
 		expect(hiddenId.value).toBe("order-99");
-	});
-
-	it("renders hidden sendEmail as true when sendEmail is true", () => {
-		mockFormStore.sendEmail = true;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const hiddenSendEmail = document.querySelector(
-			'input[type="hidden"][name="sendEmail"]',
-		) as HTMLInputElement;
-		expect(hiddenSendEmail).not.toBeNull();
-		expect(hiddenSendEmail.value).toBe("true");
-	});
-
-	it("renders hidden sendEmail as false when sendEmail is false", () => {
-		mockFormStore.sendEmail = false;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const hiddenSendEmail = document.querySelector(
-			'input[type="hidden"][name="sendEmail"]',
-		) as HTMLInputElement;
-		expect(hiddenSendEmail.value).toBe("false");
 	});
 
 	// --- URL field read-only vs editable ---
@@ -421,12 +394,11 @@ describe("UpdateTrackingDialog", () => {
 		expect(screen.getByText("Enregistrer le suivi")).toBeInTheDocument();
 	});
 
-	it('shows "Envoi…" when isPending is true and sendEmail is true', () => {
+	it('shows "Mise à jour…" when isPending is true', () => {
 		mockFormHook.isPending = true;
-		mockFormStore.sendEmail = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByText("Envoi…")).toBeInTheDocument();
+		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
 		expect(screen.queryByText("Enregistrer le suivi")).toBeNull();
 	});
 
@@ -456,11 +428,10 @@ describe("UpdateTrackingDialog", () => {
 
 	it("submit button is disabled when isPending even with valid trackingNumber", () => {
 		mockFormHook.isPending = true;
-		mockFormStore.sendEmail = true;
 		mockFormStore.trackingNumber = "8N00234567890";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Envoi…").closest("button");
+		const submitBtn = screen.getByText("Mise à jour…").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 
@@ -482,35 +453,7 @@ describe("UpdateTrackingDialog", () => {
 		expect(checkbox).toBeDisabled();
 	});
 
-	it("send email checkbox is disabled when isPending", () => {
-		mockFormHook.isPending = true;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", { name: /Prévenir le client par email/ });
-		expect(checkbox).toBeDisabled();
-	});
-
 	// --- Checkbox state reflection ---
-
-	it("send email checkbox is checked when sendEmail is true", () => {
-		mockFormStore.sendEmail = true;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", {
-			name: /Prévenir le client par email/,
-		}) as HTMLInputElement;
-		expect(checkbox.checked).toBe(true);
-	});
-
-	it("send email checkbox is unchecked when sendEmail is false", () => {
-		mockFormStore.sendEmail = false;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", {
-			name: /Prévenir le client par email/,
-		}) as HTMLInputElement;
-		expect(checkbox.checked).toBe(false);
-	});
 
 	it("custom URL checkbox is checked when customUrlMode is true", () => {
 		mockFormStore.customUrlMode = true;
@@ -532,16 +475,6 @@ describe("UpdateTrackingDialog", () => {
 		const input = screen.getByPlaceholderText("Ex : 8N00234567890");
 		await user.type(input, "A");
 		expect(mockFormHook.setFieldValue).toHaveBeenCalledWith("trackingNumber", expect.any(String));
-	});
-
-	it("calls setFieldValue with sendEmail when send email checkbox toggled", async () => {
-		const user = userEvent.setup();
-		mockFormStore.sendEmail = true;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", { name: /Prévenir le client par email/ });
-		await user.click(checkbox);
-		expect(mockFormHook.setFieldValue).toHaveBeenCalledWith("sendEmail", false);
 	});
 
 	it("calls setFieldValue with customUrlMode when custom URL checkbox toggled", async () => {

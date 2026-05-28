@@ -709,3 +709,28 @@ describe("createOrderInTransaction — totals", () => {
 		expect(createCall.data.total).toBe(0);
 	});
 });
+
+// ============================================================================
+// B2C exclusif (micro-entreprise franchise TVA)
+// ============================================================================
+
+describe("createOrderInTransaction — client B2C", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockTx.$queryRaw.mockResolvedValue([makeSkuRow()]);
+		mockTx.$executeRaw.mockResolvedValue(1);
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+		mockTx.orderItem.create.mockResolvedValue({});
+		mockCalculateShipping.mockReturnValue(450);
+		mockGenerateOrderNumber.mockReturnValue("SYN-2026-0001");
+		mockGetValidImageUrl.mockReturnValue("https://example.com/image.jpg");
+	});
+
+	it("n'écrit jamais customerType explicitement (défaut schema B2C)", async () => {
+		await createOrderInTransaction(makeParams());
+
+		const data = mockTx.order.create.mock.calls[0]![0].data;
+		// Aucune écriture explicite → la colonne prend son défaut Prisma (B2C).
+		expect(data.customerType).toBeUndefined();
+	});
+});

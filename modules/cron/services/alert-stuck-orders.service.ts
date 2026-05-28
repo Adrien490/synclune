@@ -98,8 +98,6 @@ export async function alertStuckOrders(): Promise<CronResult> {
 				id: true,
 				orderNumber: true,
 				customerEmail: true,
-				customerCompanyName: true,
-				customerCompanySiret: true,
 				total: true,
 				stripePaymentIntentId: true,
 				paidAt: true,
@@ -107,10 +105,22 @@ export async function alertStuckOrders(): Promise<CronResult> {
 			take: BATCH_SIZE_LARGE,
 			orderBy: { paidAt: "asc" },
 		}),
-		// EINV-OPS-010 : batches e-reporting PENDING/RETRYING > 48h
+		// EINV-OPS-010 + EINV-EREPORT-004 : batches e-reporting bloqués > 48h.
+		// REJECTED inclus : un rejet PA n'est jamais re-tenté automatiquement et
+		// reste non transmis à la DGFiP jusqu'à action admin (retryEReportingBatch).
+		// ABANDONED inclus (EINV-CRON-005) : épuisement des retries = données fiscales
+		// définitivement non transmises ; le Sentry one-shot émis à l'abandon peut
+		// être manqué → rappel hebdo idempotent indispensable.
 		prisma.eReportingBatch.findMany({
 			where: {
-				status: { in: [EReportingStatus.PENDING, EReportingStatus.RETRYING] },
+				status: {
+					in: [
+						EReportingStatus.PENDING,
+						EReportingStatus.RETRYING,
+						EReportingStatus.REJECTED,
+						EReportingStatus.ABANDONED,
+					],
+				},
 				createdAt: { lt: ereportingStuckCutoff },
 			},
 			select: { id: true, status: true, createdAt: true },
@@ -180,8 +190,6 @@ export async function alertStuckOrders(): Promise<CronResult> {
 				orderId: order.id,
 				orderNumber: order.orderNumber,
 				customerEmail: order.customerEmail,
-				customerCompanyName: order.customerCompanyName ?? undefined,
-				customerSiret: order.customerCompanySiret ?? undefined,
 				amount: order.total,
 				errorMessage: "Détectée par cron alert-stuck-orders (facture absente > 7j post-paiement)",
 				stripePaymentIntentId: order.stripePaymentIntentId ?? undefined,

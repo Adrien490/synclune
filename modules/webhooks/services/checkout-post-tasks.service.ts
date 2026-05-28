@@ -5,7 +5,7 @@ import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { OrderWithItems } from "../types/checkout.types";
-import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { getBaseUrl } from "@/shared/constants/urls";
 
 function buildInvoiceUrl(baseUrl: string, orderId: string, orderNumber: string): string {
 	const token = generateInvoiceAccessToken(orderId, orderNumber);
@@ -91,43 +91,6 @@ export function buildPostCheckoutTasks(
 		});
 	}
 
-	// 3. Admin notification
-	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-
-	tasks.push({
-		type: "ADMIN_NEW_ORDER_EMAIL",
-		data: {
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-			customerName:
-				`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client",
-			customerEmail: customerEmail ?? "Email non disponible",
-			items: order.items.map((item) => ({
-				productTitle: item.productTitle ?? "Produit",
-				skuColor: item.skuColor,
-				skuMaterial: item.skuMaterial,
-				skuSize: item.skuSize,
-				quantity: item.quantity,
-				price: item.price,
-			})),
-			subtotal: order.subtotal,
-			discount: order.discountAmount,
-			shipping: order.shippingCost,
-			total: order.total,
-			shippingAddress: {
-				firstName: order.shippingFirstName ?? "",
-				lastName: order.shippingLastName ?? "",
-				address1: order.shippingAddress1 ?? "",
-				address2: order.shippingAddress2,
-				postalCode: order.shippingPostalCode ?? "",
-				city: order.shippingCity ?? "",
-				country: order.shippingCountry ?? "",
-				phone: order.shippingPhone ?? "",
-			},
-			dashboardUrl,
-		},
-	});
-
 	return tasks;
 }
 
@@ -207,42 +170,6 @@ export function buildPostCheckoutTasksFromPI(
 			},
 		});
 	}
-
-	// 3. Admin notification
-	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-
-	tasks.push({
-		type: "ADMIN_NEW_ORDER_EMAIL",
-		data: {
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-			customerName: orderCustomerName,
-			customerEmail: customerEmail ?? "Email non disponible",
-			items: order.items.map((item) => ({
-				productTitle: item.productTitle ?? "Produit",
-				skuColor: item.skuColor,
-				skuMaterial: item.skuMaterial,
-				skuSize: item.skuSize,
-				quantity: item.quantity,
-				price: item.price,
-			})),
-			subtotal: order.subtotal,
-			discount: order.discountAmount,
-			shipping: order.shippingCost,
-			total: order.total,
-			shippingAddress: {
-				firstName: order.shippingFirstName ?? "",
-				lastName: order.shippingLastName ?? "",
-				address1: order.shippingAddress1 ?? "",
-				address2: order.shippingAddress2,
-				postalCode: order.shippingPostalCode ?? "",
-				city: order.shippingCity ?? "",
-				country: order.shippingCountry ?? "",
-				phone: order.shippingPhone ?? "",
-			},
-			dashboardUrl,
-		},
-	});
 
 	return tasks;
 }

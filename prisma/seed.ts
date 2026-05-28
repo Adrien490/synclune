@@ -44,6 +44,17 @@ if (!process.env.DATABASE_URL) {
 	process.exit(1);
 }
 
+// EINV-CASH-004 : refus si la DATABASE_URL pointe vers la production, même en
+// NODE_ENV=development. Le seed crée des commandes PAID fictives (préfixe DEV,
+// sans invoiceNumber) qui pollueraient le périmètre comptable (exports / livre
+// de recettes / e-reporting). Miroir du garde de test/integration/prisma-client.
+if (process.env.DATABASE_URL.includes("prod") || process.env.DATABASE_URL.includes("production")) {
+	console.error(
+		"❌ Seed interdit : DATABASE_URL contient 'prod'/'production'. Utilisez une base de développement.",
+	);
+	process.exit(1);
+}
+
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 const faker = fakerFR;

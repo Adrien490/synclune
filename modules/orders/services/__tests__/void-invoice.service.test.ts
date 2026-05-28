@@ -146,7 +146,7 @@ describe("voidInvoice", () => {
 			creditNoteNumber: null,
 		});
 		const year = new Date().getFullYear();
-		tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-00041` }]);
+		tx.$queryRaw.mockResolvedValue([{ cn: `A-${year}-00041` }]);
 		tx.order.update.mockResolvedValue({
 			invoiceVoidedAt: new Date(),
 			creditNoteNumber: `A-${year}-00042`,
@@ -310,7 +310,7 @@ describe("voidInvoice", () => {
 				invoiceVoidedAt: null,
 				creditNoteNumber: null,
 			});
-			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99999` }]);
+			tx.$queryRaw.mockResolvedValue([{ cn: `A-${year}-99999` }]);
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 				fn(tx),
 			);
@@ -343,7 +343,7 @@ describe("voidInvoice", () => {
 				invoiceVoidedAt: null,
 				creditNoteNumber: null,
 			});
-			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99999` }]);
+			tx.$queryRaw.mockResolvedValue([{ cn: `A-${year}-99999` }]);
 			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
 				fn(tx),
 			);
@@ -364,7 +364,7 @@ describe("voidInvoice", () => {
 				invoiceVoidedAt: null,
 				creditNoteNumber: null,
 			});
-			tx.$queryRaw.mockResolvedValue([{ creditNoteNumber: `A-${year}-99998` }]);
+			tx.$queryRaw.mockResolvedValue([{ cn: `A-${year}-99998` }]);
 			tx.order.update.mockResolvedValue({
 				invoiceVoidedAt: new Date(),
 				creditNoteNumber: `A-${year}-99999`,

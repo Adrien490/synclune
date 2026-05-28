@@ -66,19 +66,11 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/refunds/services/archive-credit-note-pdf.service.ts",
   ],
   "PDP_ABANDONED": [],
-  "PDP_ACCEPTED": [
-    "modules/orders/services/persist-pdp-transmission.service.ts",
-  ],
-  "PDP_CANCELLED": [
-    "modules/orders/services/persist-pdp-transmission.service.ts",
-  ],
-  "PDP_REJECTED": [
-    "modules/orders/services/persist-pdp-transmission.service.ts",
-  ],
+  "PDP_ACCEPTED": [],
+  "PDP_CANCELLED": [],
+  "PDP_REJECTED": [],
   "PDP_RETRY": [],
-  "PDP_SUBMITTED": [
-    "modules/orders/services/persist-pdp-transmission.service.ts",
-  ],
+  "PDP_SUBMITTED": [],
   "PROCESSING": [
     "modules/orders/actions/mark-as-processing.ts",
   ],

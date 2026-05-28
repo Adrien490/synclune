@@ -1,48 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@react-email/render";
 import { CancelOrderConfirmationEmail } from "../cancel-order-confirmation-email";
-import { DeliveryConfirmationEmail } from "../delivery-confirmation-email";
 import { PaymentFailedEmail } from "../payment-failed-email";
 import { RefundConfirmedEmail } from "../refund-confirmed-email";
-import { TrackingUpdateEmail } from "../tracking-update-email";
 import { AccountDeletionEmail } from "../account-deletion-email";
-import { AdminNewOrderEmail } from "../admin-new-order-email";
 import { AdminAlertEmail } from "../admin-alert-email";
-import { WelcomeEmail } from "../welcome-email";
-import type { OrderItem, AdminShippingAddress } from "@/modules/emails/types/email.types";
-
-// ---------------------------------------------------------------------------
-// Shared fixtures
-// ---------------------------------------------------------------------------
-
-const baseAdminShippingAddress: AdminShippingAddress = {
-	firstName: "Marie",
-	lastName: "Dupont",
-	address1: "12 Rue de la Paix",
-	postalCode: "75002",
-	city: "Paris",
-	country: "France",
-	phone: "+33 6 12 34 56 78",
-};
-
-const baseOrderItems: OrderItem[] = [
-	{
-		productTitle: "Collier Luna en Or Rose",
-		skuColor: "Or Rose",
-		skuMaterial: "Or 18 carats",
-		skuSize: "45cm",
-		quantity: 1,
-		price: 8900,
-	},
-	{
-		productTitle: "Boucles d'oreilles Étoile",
-		skuColor: "Argent",
-		skuMaterial: "Argent 925",
-		skuSize: null,
-		quantity: 2,
-		price: 4500,
-	},
-];
 
 // ---------------------------------------------------------------------------
 // CancelOrderConfirmationEmail
@@ -84,37 +46,6 @@ describe("CancelOrderConfirmationEmail", () => {
 	it("does not show refund section when wasRefunded is false", async () => {
 		const html = await render(<CancelOrderConfirmationEmail {...baseProps} wasRefunded={false} />);
 		expect(html).not.toContain("Remboursement");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// DeliveryConfirmationEmail
-// ---------------------------------------------------------------------------
-
-describe("DeliveryConfirmationEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerName: "Marie",
-		deliveryDate: "27 novembre 2025",
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-1730000000-ABCD",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<DeliveryConfirmationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<DeliveryConfirmationEmail {...baseProps} />);
-		expect(html).toContain("Commande livrée");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<DeliveryConfirmationEmail {...baseProps} />);
-		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("Marie");
-		expect(html).toContain("27 novembre 2025");
 	});
 });
 
@@ -180,50 +111,6 @@ describe("RefundConfirmedEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// TrackingUpdateEmail
-// ---------------------------------------------------------------------------
-
-describe("TrackingUpdateEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerName: "Marie",
-		trackingNumber: "8N00234567890",
-		trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
-		carrierLabel: "Colissimo",
-		estimatedDelivery: "3-5 jours ouvrés",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<TrackingUpdateEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<TrackingUpdateEmail {...baseProps} />);
-		expect(html).toContain("Suivi mis à jour");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<TrackingUpdateEmail {...baseProps} />);
-		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("Marie");
-		expect(html).toContain("8N00234567890");
-		expect(html).toContain("Colissimo");
-	});
-
-	it("shows tracking button when trackingUrl is provided", async () => {
-		const html = await render(<TrackingUpdateEmail {...baseProps} />);
-		expect(html).toContain("Suivre mon colis");
-	});
-
-	it("does not show tracking button when trackingUrl is null", async () => {
-		const html = await render(<TrackingUpdateEmail {...baseProps} trackingUrl={null} />);
-		expect(html).not.toContain("Suivre mon colis");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // AccountDeletionEmail
 // ---------------------------------------------------------------------------
 
@@ -257,54 +144,6 @@ describe("AccountDeletionEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AdminNewOrderEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminNewOrderEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerName: "Marie Dupont",
-		customerEmail: "marie.dupont@example.com",
-		items: baseOrderItems,
-		subtotal: 17900,
-		discount: 0,
-		shipping: 490,
-		total: 18390,
-		shippingAddress: baseAdminShippingAddress,
-		dashboardUrl: "https://synclune.fr/dashboard/orders/clxxx12345",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminNewOrderEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<AdminNewOrderEmail {...baseProps} />);
-		expect(html).toContain("Nouvelle Commande");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminNewOrderEmail {...baseProps} />);
-		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("Marie Dupont");
-		expect(html).toContain("marie.dupont@example.com");
-		expect(html).toContain("Collier Luna en Or Rose");
-	});
-
-	it("shows discount line when discount is greater than zero", async () => {
-		const html = await render(<AdminNewOrderEmail {...baseProps} discount={1000} />);
-		expect(html).toContain("Réduction");
-	});
-
-	it("does not show discount line when discount is zero", async () => {
-		const html = await render(<AdminNewOrderEmail {...baseProps} />);
-		expect(html).not.toContain("Réduction");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // AdminAlertEmail (merged template, 7 variants)
 // ---------------------------------------------------------------------------
 
@@ -320,11 +159,6 @@ describe("AdminAlertEmail", () => {
 		const html = await render(<AdminAlertEmail {...baseProps} type="refund" />);
 		expect(html).toContain("<!DOCTYPE");
 		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("uses header specific to type=checkout", async () => {
-		const html = await render(<AdminAlertEmail {...baseProps} type="checkout" />);
-		expect(html).toContain("Échec checkout Stripe");
 	});
 
 	it("uses header specific to type=cron", async () => {
@@ -396,35 +230,5 @@ describe("AdminAlertEmail", () => {
 		const html = await render(<AdminAlertEmail {...baseProps} type="cron" />);
 		expect(html).toContain("Voir le dashboard");
 		expect(html).toContain("https://synclune.fr/admin");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// WelcomeEmail
-// ---------------------------------------------------------------------------
-
-describe("WelcomeEmail", () => {
-	const baseProps = {
-		userName: "Marie",
-		shopUrl: "https://synclune.fr/produits",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<WelcomeEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<WelcomeEmail {...baseProps} />);
-		expect(html).toContain("Bienvenue");
-		expect(html).toContain("Marie");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<WelcomeEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("https://synclune.fr/produits");
-		expect(html).toContain("France");
 	});
 });

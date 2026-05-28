@@ -10,10 +10,14 @@
  *     `Refund.creditNoteNumber`. La facture reste GENERATED (valide pour la
  *     part non remboursée). EINV-CREDIT-001 (2026-05-28).
  *
- * Ce test verrouille le **nouveau** invariant introduit par EINV-CREDIT-001 :
- * pour chaque Refund COMPLETED sans `creditNoteNumber` (re-fetch post
- * syncStripeRefunds), `issueCreditNoteForRefund` doit être appelé — peu importe
- * que le refund global soit partiel ou total.
+ * Ce test verrouille l'invariant EINV-CREDIT-001 affiné par EINV-SEQ-001
+ * (audit séquences 2026-05-28, Option A) :
+ *   - refund PARTIEL → `issueCreditNoteForRefund` appelé pour chaque Refund
+ *     COMPLETED sans `creditNoteNumber` (re-fetch post syncStripeRefunds).
+ *   - refund TOTAL → `voidInvoice` est l'émetteur UNIQUE de l'avoir
+ *     (`Order.creditNoteNumber`) ; `issueCreditNoteForRefund` n'est PAS appelé,
+ *     sinon deux numéros A-YYYY seraient consommés pour un seul remboursement
+ *     (avoir fictif, Art. 272-I/286 CGI).
  *
  * Ancien invariant (« partial NE GÉNÈRE PAS d'avoir », EINV-TEST-008) :
  * désormais factuellement faux, ce test remplace le précédent
@@ -230,8 +234,8 @@ describe("@regression charge-refunded-partial-emits-refund-credit-note — EINV-
 		});
 	});
 
-	describe("refund TOTAL — voidInvoice prend la main ET issueCreditNoteForRefund couvre les Refunds locaux", () => {
-		it("refund total avec facture GENERATED → voidInvoice appelé 1× + issueCreditNoteForRefund pour Refunds COMPLETED sans creditNoteNumber", async () => {
+	describe("refund TOTAL — voidInvoice est l'émetteur UNIQUE (EINV-SEQ-001, Option A)", () => {
+		it("refund total avec facture GENERATED → voidInvoice appelé 1× et issueCreditNoteForRefund JAMAIS (anti double avoir)", async () => {
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrderWithInvoice());
 			mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
 			mockVoidInvoice.mockResolvedValue({
@@ -244,8 +248,13 @@ describe("@regression charge-refunded-partial-emits-refund-credit-note — EINV-
 
 			await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
 
+			// EINV-SEQ-001 : sur un refund TOTAL, voidInvoice (Order.creditNoteNumber)
+			// est l'avoir canonique unique. issueCreditNoteForRefund ne doit PAS être
+			// appelé — sinon deux numéros A-YYYY consommés pour un seul remboursement.
 			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
-			expect(mockIssueCreditNoteForRefund).toHaveBeenCalledTimes(1);
+			expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
+			// L'étape 4c (re-fetch Refunds COMPLETED) est court-circuitée pour le total.
+			expect(mockPrisma.refund.findMany).not.toHaveBeenCalled();
 		});
 	});
 

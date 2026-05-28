@@ -3,9 +3,7 @@
 import { OrderStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { sendTrackingUpdateEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
 import {
 	validateInput,
 	handleActionError,
@@ -15,19 +13,13 @@ import {
 } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
-import {
-	getCarrierLabel,
-	getTrackingUrl,
-	type Carrier,
-} from "@/modules/orders/utils/carrier.utils";
+import { getTrackingUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderMetadataInvalidationTags } from "../constants/cache";
 import { updateTrackingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
-import { extractCustomerFirstName } from "../utils/customer-name";
 
 /**
  * Met à jour les informations de suivi d'une commande expédiée
@@ -36,7 +28,6 @@ import { extractCustomerFirstName } from "../utils/customer-name";
  * Règles métier :
  * - La commande doit être expédiée (SHIPPED) ou livrée (DELIVERED)
  * - Met à jour le numéro de suivi, l'URL et le transporteur
- * - Envoie un email de mise à jour au client si sendEmail = true
  */
 export async function updateTracking(
 	_prevState: ActionState | undefined,
@@ -54,14 +45,12 @@ export async function updateTracking(
 		const trackingNumber = safeFormGet(formData, "trackingNumber");
 		const trackingUrl = safeFormGet(formData, "trackingUrl");
 		const carrier = safeFormGet(formData, "carrier");
-		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const validated = validateInput(updateTrackingSchema, {
 			id: rawId,
 			trackingNumber,
 			trackingUrl: trackingUrl ?? undefined,
 			carrier: carrier ?? undefined,
-			sendEmail: sendEmail ?? "true",
 		});
 		if ("error" in validated) return validated.error;
 
@@ -82,15 +71,6 @@ export async function updateTracking(
 					status: true,
 					fulfillmentStatus: true,
 					userId: true,
-					customerEmail: true,
-					customerName: true,
-					shippingFirstName: true,
-					shippingLastName: true,
-					shippingAddress1: true,
-					shippingAddress2: true,
-					shippingPostalCode: true,
-					shippingCity: true,
-					shippingCountry: true,
 					trackingNumber: true,
 					actualDelivery: true,
 				},
@@ -158,57 +138,7 @@ export async function updateTracking(
 			updateTag(tag),
 		);
 
-		// Correction tracking post-livraison : ne pas notifier le client (colis déjà
-		// chez lui, l'email "nouveau numéro de suivi" serait trompeur). On garde
-		// l'audit trail mais on neutralise le sendEmail demandé par l'UI.
-		const shouldSuppressEmail = order.status === OrderStatus.DELIVERED;
-		const effectiveSendEmail = validated.data.sendEmail && !shouldSuppressEmail;
-
-		// Envoyer l'email de mise à jour du suivi au client
-		let emailSent = false;
-		if (effectiveSendEmail && order.customerEmail) {
-			const carrierLabel = getCarrierLabel(carrierValue);
-
-			const customerFirstName = extractCustomerFirstName(
-				order.customerName,
-				order.shippingFirstName,
-			);
-
-			try {
-				await sendTrackingUpdateEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: customerFirstName,
-					trackingNumber: validated.data.trackingNumber,
-					trackingUrl: finalTrackingUrl,
-					carrierLabel,
-					// EMAIL-AUDIT-003 : dedup Resend 24h. La clé varie par trackingNumber
-					// pour qu'un changement de transporteur émette bien un nouveau mail.
-					idempotencyKey: `tracking-update:${order.id}:${validated.data.trackingNumber}`,
-				});
-				emailSent = true;
-			} catch (emailError) {
-				logger.error("Echec envoi email", emailError, { action: "update-tracking" });
-			}
-		}
-
-		// Si l'email devait être envoyé mais a échoué, retourner un warning
-		// (n'applique pas quand on a délibérément supprimé l'envoi post-livraison).
-		if (effectiveSendEmail && !emailSent) {
-			return {
-				status: ActionStatus.WARNING,
-				message: `Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
-			};
-		}
-
-		const emailMessage = emailSent
-			? " Email envoyé au client."
-			: shouldSuppressEmail && validated.data.sendEmail
-				? " Email non envoyé (commande déjà livrée)."
-				: "";
-		return success(
-			`Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}.${emailMessage}`,
-		);
+		return success(`Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}.`);
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour du suivi.");
 	}

@@ -1,10 +1,9 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { EReportingStatus, PdpTransmissionStatus } from "@/app/generated/prisma/client";
+import { EReportingStatus } from "@/app/generated/prisma/client";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
 
 /**
  * Vue d'ensemble du module facturation pour le dashboard admin
@@ -58,18 +57,6 @@ export type InvoicingOverview = {
 		warningCents: number;
 		reached: boolean;
 	};
-	/**
-	 * EINV-PROVIDER-012 : statuts de transmission individuelle vers la PDP (B2B/B2G).
-	 * Vide quand `providerActive=false` (LocalPdfProvider, capability submitInvoice=false).
-	 * Quand `providerActive=true` : compteurs par PdpTransmissionStatus + 10 derniers
-	 * rejets actionnables.
-	 */
-	transmission: {
-		providerName: string;
-		providerActive: boolean;
-		counters: Record<PdpTransmissionStatus, number>;
-		recentRejected: ReadonlyArray<TransmissionFailureSummary>;
-	};
 };
 
 export type InvoiceAnomalyType = "MISSING_INVOICE_NUMBER" | "MISSING_PDF" | "MISSING_CREDIT_NOTE";
@@ -94,20 +81,6 @@ export interface BatchSummary {
 	currency: string;
 	rejectionReason: string | null;
 	createdAt: Date;
-}
-
-export interface TransmissionFailureSummary {
-	orderId: string;
-	orderNumber: string;
-	invoiceNumber: string | null;
-	pdpStatus: PdpTransmissionStatus;
-	pdpProviderRef: string | null;
-	pdpRejectionCode: string | null;
-	pdpRejectionReason: string | null;
-	pdpRetryCount: number;
-	pdpLastRetryAt: Date | null;
-	pdpTransmittedAt: Date | null;
-	customerName: string | null;
 }
 
 export interface InvoiceSummary {
@@ -368,70 +341,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		paidRefunds: refundedOrders30d,
 	};
 
-	// EINV-PROVIDER-012 : compteurs + rejets PDP par-facture (Phase 5).
-	// Si le provider courant ne supporte pas submitInvoice (LocalPdfProvider),
-	// la section est masquée côté UI mais on calcule quand même les compteurs
-	// pour assurer une visibilité si un provider externe a été branché puis
-	// désactivé (factures rejetées historiques restent visibles).
-	const provider = getInvoiceProvider();
-	const transmissionGroups = await prisma.order.groupBy({
-		by: ["pdpStatus"],
-		where: { ...notDeleted },
-		_count: { pdpStatus: true },
-	});
-	const transmissionCounters: Record<PdpTransmissionStatus, number> = {
-		PENDING: 0,
-		SENT: 0,
-		ACCEPTED: 0,
-		REJECTED: 0,
-		RETRYING: 0,
-		CANCELLED: 0,
-		ABANDONED: 0,
-	};
-	for (const group of transmissionGroups) {
-		if (group.pdpStatus !== null) {
-			transmissionCounters[group.pdpStatus] = group._count.pdpStatus;
-		}
-	}
-
-	const recentRejected = await prisma.order.findMany({
-		where: {
-			pdpStatus: { in: [PdpTransmissionStatus.REJECTED, PdpTransmissionStatus.ABANDONED] },
-			...notDeleted,
-		},
-		orderBy: { pdpRejectedAt: "desc" },
-		take: 10,
-		select: {
-			id: true,
-			orderNumber: true,
-			invoiceNumber: true,
-			pdpStatus: true,
-			pdpProviderRef: true,
-			pdpRejectionCode: true,
-			pdpRejectionReason: true,
-			pdpRetryCount: true,
-			pdpLastRetryAt: true,
-			pdpTransmittedAt: true,
-			customerName: true,
-		},
-	});
-
-	const recentRejectedNormalized: TransmissionFailureSummary[] = recentRejected
-		.filter((row) => row.pdpStatus !== null)
-		.map((row) => ({
-			orderId: row.id,
-			orderNumber: row.orderNumber,
-			invoiceNumber: row.invoiceNumber,
-			pdpStatus: row.pdpStatus as PdpTransmissionStatus,
-			pdpProviderRef: row.pdpProviderRef,
-			pdpRejectionCode: row.pdpRejectionCode,
-			pdpRejectionReason: row.pdpRejectionReason,
-			pdpRetryCount: row.pdpRetryCount,
-			pdpLastRetryAt: row.pdpLastRetryAt,
-			pdpTransmittedAt: row.pdpTransmittedAt,
-			customerName: row.customerName,
-		}));
-
 	return {
 		invoiceCounters,
 		batchCounters,
@@ -449,12 +358,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 			thresholdCents: FRANCHISE_THRESHOLD_CENTS,
 			warningCents: FRANCHISE_WARNING_CENTS,
 			reached: revenue12mCents >= FRANCHISE_WARNING_CENTS,
-		},
-		transmission: {
-			providerName: provider.id,
-			providerActive: provider.capabilities.submitInvoice,
-			counters: transmissionCounters,
-			recentRejected: recentRejectedNormalized,
 		},
 	};
 }

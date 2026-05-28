@@ -379,7 +379,9 @@ describe("confirmCheckout", () => {
 
 			expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
 				where: { id: "user-123" },
-				select: { stripeCustomerId: true },
+				select: {
+					stripeCustomerId: true,
+				},
 			});
 		});
 

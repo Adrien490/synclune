@@ -183,6 +183,12 @@ export async function submitEReportingBatchById(
 				amountIncTax: true,
 				amountExclTax: true,
 				taxAmount: true,
+				// EINV-EREPORT-002 : mode de règlement + devise + type transmis à la
+				// PA (arrêté 2022-1299 §4.3). Capturés à la création mais auparavant
+				// droppés du payload provider.
+				paymentMethod: true,
+				currency: true,
+				type: true,
 			},
 		});
 
@@ -197,6 +203,10 @@ export async function submitEReportingBatchById(
 					totalTaxAmount: batch.totalTaxAmount,
 					transactions,
 				},
+				// EINV-EREPORT-003 : clé d'idempotence déterministe = batch.id. La PA
+				// dédup sur cette clé → un re-submit après crash (entre l'appel réseau
+				// et l'update DB ci-dessous) ne double-transmet pas à la DGFiP.
+				idempotencyKey: batch.id,
 			}),
 			deadline,
 			`provider.submitEReportingBatch[${batch.id}]`,
@@ -217,14 +227,29 @@ export async function submitEReportingBatchById(
 			};
 		}
 
+		// Fail-safe : un statut non terminal (RETRYING/ABANDONED) ou inattendu signifie
+		// que le batch n'a PAS été accepté/transmis. Ne jamais coercer vers SENT
+		// (fail-open = données marquées transmises à tort à la DGFiP). On route vers le
+		// même handler que les erreurs réseau : retryCount/backoff/ABANDONED/Sentry
+		// s'appliquent uniformément.
+		if (
+			result.status !== EReportingStatus.ACCEPTED &&
+			result.status !== EReportingStatus.SENT &&
+			result.status !== EReportingStatus.REJECTED
+		) {
+			return handleTransmitError(
+				batch.id,
+				batch.retryCount,
+				new Error(`Provider returned non-terminal status "${result.status}" for batch ${batch.id}`),
+			);
+		}
+
 		const targetStatus =
-			result.status === "ACCEPTED"
+			result.status === EReportingStatus.ACCEPTED
 				? EReportingStatus.ACCEPTED
-				: result.status === "SENT"
+				: result.status === EReportingStatus.SENT
 					? EReportingStatus.SENT
-					: result.status === "REJECTED"
-						? EReportingStatus.REJECTED
-						: EReportingStatus.SENT;
+					: EReportingStatus.REJECTED;
 
 		await prisma.eReportingBatch.update({
 			where: { id: batch.id },
@@ -257,6 +282,16 @@ export async function submitEReportingBatchById(
 			batchId: batch.id,
 			providerBatchId: result.providerBatchId,
 		});
+
+		// EINV-EREPORT-004 : un rejet synchrone PA est un blocage fiscal (données
+		// non transmises à la DGFiP) qui exige une action admin. Sentry warning en
+		// plus du dashboard passif et du scan hebdo alert-stuck-orders.
+		if (targetStatus === EReportingStatus.REJECTED) {
+			captureRejectedBatch(
+				batch.id,
+				(result.rejectionReason ?? "Provider returned REJECTED without reason").slice(0, 1000),
+			);
+		}
 
 		return {
 			batchId,
@@ -296,6 +331,9 @@ async function handleTransmitError(
 			service: "submit-ereporting-batch",
 			batchId,
 		});
+		// EINV-EREPORT-004 : rejet métier 4xx = blocage fiscal nécessitant correction
+		// admin (jamais re-tenté automatiquement). Alerte Sentry warning.
+		captureRejectedBatch(batchId, reason);
 		return { batchId, status: "REJECTED", rejectionReason: reason };
 	}
 
@@ -337,4 +375,22 @@ async function handleTransmitError(
 		error: error instanceof Error ? error.message : String(error),
 	});
 	return { batchId, status: "RETRYING", retryCount: nextRetryCount };
+}
+
+/**
+ * EINV-EREPORT-004 : émet une alerte Sentry `warning` quand un batch e-reporting
+ * passe REJECTED (ACK synchrone PA ou erreur métier 4xx). Un REJECTED bloque la
+ * transmission des données fiscales jusqu'à correction admin (`retryEReportingBatch`)
+ * et, contrairement à ABANDONED, n'était auparavant ni alerté par Sentry ni repris
+ * par le scan PENDING/RETRYING de `alert-stuck-orders`. Fingerprint dédié pour ne
+ * pas se mélanger aux alertes ABANDONED.
+ */
+function captureRejectedBatch(batchId: string, reason: string): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("service", "submit-ereporting-batch");
+		scope.setTag("batchId", batchId);
+		scope.setFingerprint(["service", "submit-ereporting-batch", "rejected"]);
+		scope.setLevel("warning");
+		Sentry.captureException(new Error(`E-reporting batch ${batchId} REJECTED: ${reason}`));
+	});
 }

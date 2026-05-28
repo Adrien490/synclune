@@ -29,11 +29,11 @@ enum AccountStatus {
   ANONYMIZED
 }
 
-// === TYPE DE CLIENT (facturation electronique 2026-2027) ===
+// === TYPE DE CLIENT (discriminant e-reporting B2C) ===
 //
-// Distingue B2C (particulier), B2B (entreprise) et B2G (entite publique
-// via Chorus Pro). Les champs `companyName`/`companySiren`/etc. ne sont
-// requis (validation applicative) que quand customerType != B2C.
+// Synclune vend exclusivement en B2C (micro-entreprise franchise TVA). L'enum
+// conserve B2B/B2G pour le discriminant du payload e-reporting DGFiP, mais
+// aucun parcours d'achat ne produit de commande B2B/B2G aujourd'hui.
 enum CustomerType {
   B2C
   B2B
@@ -63,29 +63,6 @@ model User {
   anonymizedAt        DateTime? // Date d'anonymisation effective
   deletionRequestedAt DateTime? // Demande de suppression enregistree
 
-  // === FACTURATION ELECTRONIQUE (2026-2027) ===
-  //
-  // Toutes les valeurs sont stockees normalisees (chiffres pour SIREN/SIRET, sans
-  // espaces). La validation applicative impose ces champs quand customerType !=
-  // B2C. Les CHECK constraints en migration garantissent le format au niveau DB.
-  customerType     CustomerType @default(B2C)
-  companyName      String?      @db.VarChar(255)
-  companySiren     String?      @db.VarChar(9)
-  companySiret     String?      @db.VarChar(14)
-  companyVatNumber String?      @db.VarChar(15) // Format intra-UE: ISO 3166-1 alpha-2 + 11 chars (FR: FR + 2 + 9 digits)
-
-  // === ROUTING PDP CLIENT (Annuaire central facturation electronique - reforme 2026-2027) ===
-  //
-  // Cache local des resolutions annuaire DGFiP. Refresh par cron mensuel ou au
-  // checkout si TTL expire. directoryLastCheckedSiretSnapshot fige le SIRET au
-  // moment du lookup — si l'user change de SIRET, on invalide automatiquement
-  // le cache. Snapshote au checkout vers Order.customerEInvoicing* (immuable
-  // post-paiement).
-  customerEInvoicingPlatformId      String?   @db.VarChar(100)
-  customerEInvoicingAddress         String?   @db.VarChar(255)
-  directoryLastCheckedAt            DateTime?
-  directoryLastCheckedSiretSnapshot String?   @db.VarChar(14)
-
   sessions       Session[]
   accounts       Account[]
   orders         Order[]
@@ -103,7 +80,6 @@ model User {
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
   @@index([role, deletedAt]) // admin count guard + listing role filter
   @@index([deletedAt, suspendedAt]) // admin listing soft-delete + suspension filter
-  @@index([customerType, deletedAt]) // admin listing B2B/B2G filter (futur)
 }
 
 model Session {
@@ -682,45 +658,6 @@ enum VatRegime {
   SIMPLIFIE // Regime reel simplifie
 }
 
-/// Statut de transmission de la facture a la Plateforme de Dematerialisation Partenaire (PDP)
-/// dans le cadre de la reforme facturation electronique B2B/B2G (emission obligatoire 2027-09-01).
-/// Granularite par facture — l'agregat e-reporting B2C est trace separement via EReportingBatch.
-/// Mappe sur le type TS `ProviderInvoiceStatus` (modules/invoices/types/invoice-provider.ts) :
-/// PENDING_SUBMISSION→PENDING, SUBMITTED→SENT, ACCEPTED→ACCEPTED, REJECTED→REJECTED,
-/// CANCELLED→CANCELLED. RETRYING/ABANDONED sont des etats d'orchestration locaux.
-enum PdpTransmissionStatus {
-  PENDING // En attente de transmission
-  SENT // Transmise a la PDP, en attente d'ACK
-  ACCEPTED // Accuse de reception positif de la PDP/destinataire
-  REJECTED // Rejet de la PDP — rejectionReason rempli
-  RETRYING // Tentative de retransmission en cours
-  CANCELLED // Annulee par l'emetteur avant ACCEPTED (PDP supporte le rappel)
-  ABANDONED // Abandon apres echecs repetes — escalade manuelle requise
-}
-
-/// Direction d'un log de transmission (sortant vers la plateforme ou entrant via webhook).
-enum TransmissionDirection {
-  OUTBOUND
-  INBOUND
-}
-
-/// Statut d'une tentative individuelle (chaque ligne InvoiceTransmissionLog).
-enum TransmissionLogStatus {
-  PENDING
-  SUCCESS
-  FAILED
-}
-
-/// Statut d'un webhook entrant emis par la plateforme agreee (PDP/PA).
-/// Mirror de WebhookEventStatus (Stripe) — table separee pour ne pas melanger les eventTypes.
-enum ProviderWebhookEventStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-  SKIPPED
-}
-
 /// Methode de paiement client. Typologie alignée sur Stripe `payment_method_details.type`
 /// pour conformité e-reporting B2C (arrêté 2022-1299 §4.3, mode de règlement granulaire
 /// transmis à la DGFiP). Mapping appliqué par `modules/payments/services/map-stripe-payment-method.ts`.
@@ -763,28 +700,12 @@ model Order {
   customerName  String  @db.VarChar(100)
   customerPhone String? @db.VarChar(20)
 
-  // === TYPE DE CLIENT - SNAPSHOT B2B/B2G (Facturation electronique 2026-2027) ===
+  // === TYPE DE CLIENT (discriminant e-reporting B2C) ===
   //
-  // Fige le type de client + les identifiants entreprise au moment du checkout
-  // (Art. 289 CGI - donnees obligatoires sur la facture). Un User peut basculer
-  // B2C->B2B plus tard, ses commandes anterieures conservent l'identification
-  // qui etait valide au moment de leur emission.
-  customerType            CustomerType @default(B2C)
-  customerCompanyName     String?      @db.VarChar(255)
-  customerCompanySiren    String?      @db.VarChar(9)
-  customerCompanySiret    String?      @db.VarChar(14)
-  customerCompanyVatNumber String?     @db.VarChar(15)
-
-  // === ROUTING PDP CLIENT (Annuaire facturation electronique - reforme 2026-2027) ===
-  //
-  // Adresse electronique = adresse a laquelle la PDP livre la facture (souvent
-  // egale au SIRET). publicEntityCode + serviceCode = obligatoires pour B2G via
-  // Chorus Pro (code service de la collectivite destinataire).
-  // Snapshote au checkout (B2B/B2G) — peut etre null pour B2C.
-  customerEInvoicingPlatformId String? @db.VarChar(100)
-  customerEInvoicingAddress    String? @db.VarChar(255)
-  customerPublicEntityCode     String? @db.VarChar(50)
-  customerServiceCode          String? @db.VarChar(100)
+  // Synclune vend exclusivement en B2C (micro-entreprise franchise TVA). Le champ
+  // reste comme discriminant du payload e-reporting DGFiP (réforme 2026-2027) ;
+  // sa valeur est toujours B2C en l'absence de parcours B2B/B2G au checkout.
+  customerType CustomerType @default(B2C)
 
   // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
   shippingFirstName  String  @db.VarChar(50)
@@ -831,14 +752,6 @@ model Order {
   invoicePdfHash String? @db.VarChar(64) // SHA-256 du PDF (empreinte audit fiscal)
   invoiceArchivedAt DateTime? // Horodatage d'upload UploadThing (cron archive-unarchived cible NULL)
 
-  // === ARCHIVAGE XML STRUCTURE (Factur-X / UBL / CII — EINV-FORMAT-004) ===
-  // Parallele au PDF : artifact XML transmis a la PDP (retry idempotent + audit).
-  // invoiceXmlFormat : FACTURX_MINIMUM | FACTURX_BASIC | UBL_INVOICE | UBL_CREDITNOTE
-  invoiceXmlUrl        String?   @db.VarChar(2048)
-  invoiceXmlHash       String?   @db.VarChar(64)
-  invoiceXmlFormat     String?   @db.VarChar(16)
-  invoiceXmlArchivedAt DateTime?
-
   // === SNAPSHOT INVOICEDATA FIGÉ (Art. L102 B LPF — facture comme données) ===
   // Le PDF n'est qu'un rendu visuel. La "facture" au sens comptable EST le
   // payload InvoiceData figé au moment de l'attribution du numéro. Tout futur
@@ -869,30 +782,6 @@ model Order {
   vendorBankBic  String? @db.VarChar(11)
   vendorVatRegime VatRegime?
   vendorLegalForm String?    @db.VarChar(100)
-
-  // === ROUTING PDP EMETTEUR (Annuaire central reforme 2026-2027) ===
-  //
-  // Identifiants emetteur dans l'annuaire central PDP. Stocke au moment de
-  // l'emission (vs lu live depuis env) pour garantir la tracabilite a 10 ans
-  // meme si la PDP du vendeur change.
-  vendorEInvoicingPlatformId String? @db.VarChar(100)
-  vendorEInvoicingAddress    String? @db.VarChar(255)
-
-  // === STATUT TRANSMISSION PDP (par facture, granularite B2B/B2G) ===
-  //
-  // Granularite par facture vs EReportingBatch qui est un agregat journalier
-  // B2C. A partir de 2027-09-01 — chaque facture B2B/B2G est transmise
-  // individuellement a la PDP du client avec ACK explicite.
-  pdpStatus          PdpTransmissionStatus?
-  pdpTransmittedAt   DateTime?
-  pdpAcceptedAt      DateTime?
-  pdpRejectedAt      DateTime?
-  pdpRejectionReason String?                @db.Text
-  pdpProviderRef     String?                @db.VarChar(255) // ID retourne par la PDP
-  pdpProviderName    String?                @db.VarChar(100) // Nom du provider (chorus-pro, pdp-xxx, local) au moment de la transmission
-  pdpRejectionCode   String?                @db.VarChar(100) // Code structuré du rejet (filtré par cron DLQ pour codes récupérables)
-  pdpRetryCount      Int                    @default(0)
-  pdpLastRetryAt     DateTime?
 
   // === LIVRAISON ===
   shippingMethod    String?   @db.VarChar(20) // Type de livraison
@@ -925,8 +814,7 @@ model Order {
   notes                  OrderNote[]
   history                OrderHistory[] // Audit trail (conformite legale)
   disputes               Dispute[]
-  eReportingTransactions EReportingTransaction[] // Phase 3 — transmission B2C DGFiP
-  transmissionLogs       InvoiceTransmissionLog[] // Phase 5 — audit immuable transmissions PDP
+  eReportingTransactions EReportingTransaction[] // e-reporting B2C DGFiP (réforme 2026-2027)
 
   // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
   billingSameAsShipping Boolean @default(true)
@@ -963,11 +851,8 @@ model Order {
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
   @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
-  @@index([customerType, paidAt(sort: Desc)]) // Admin: dashboard B2B vs B2C, e-reporting B2C agregat (Phase 3)
+  @@index([customerType, paidAt(sort: Desc)]) // Admin: dashboard CA, e-reporting B2C agregat
   @@index([invoiceStatus, invoiceArchivedAt], map: "Order_invoiceStatus_invoicePdfUrl_idx") // cron archive-unarchived (filtre GENERATED + url NULL)
-  @@index([pdpStatus, invoiceGeneratedAt]) // Cron retry transmission PDP (B2B/B2G — Phase 5)
-  @@index([pdpStatus, pdpLastRetryAt]) // Cron retry-invoice-transmissions DLQ : WHERE pdpStatus IN (REJECTED, RETRYING) ORDER BY pdpLastRetryAt
-  @@index([pdpStatus, pdpTransmittedAt]) // Cron reconcile-invoice-statuses : WHERE pdpStatus = SENT AND pdpTransmittedAt < now-24h
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx") // Cron reconcile-invoices : index partiel SQL (WHERE invoiceRetryDeferred = true)
   // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
   // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
@@ -982,8 +867,8 @@ model Order {
   //   Order_vendorSiren_format_check        CHECK ("vendorSiren" IS NULL OR "vendorSiren" ~ '^[0-9]{9}$')
   //   Order_vendorSiret_format_check        CHECK ("vendorSiret" IS NULL OR "vendorSiret" ~ '^[0-9]{14}$')
   //   Order_vendorVatNumber_format_check    CHECK ("vendorVatNumber" IS NULL OR "vendorVatNumber" ~ '^[A-Z]{2}[A-Z0-9]{2,13}$')
-  //   Order_invoiceXmlFormat_check          CHECK ("invoiceXmlFormat" IS NULL OR "invoiceXmlFormat" IN ('FACTURX_MINIMUM', 'FACTURX_BASIC', 'UBL_INVOICE', 'UBL_CREDITNOTE'))
-  //   Order_invoiceXmlHash_format_check     CHECK ("invoiceXmlHash" IS NULL OR "invoiceXmlHash" ~ '^[a-f0-9]{64}$')
+  //   Order_invoicePdfHash_format_check     CHECK ("invoicePdfHash" IS NULL OR "invoicePdfHash" ~ '^[a-f0-9]{64}$')
+  //   Order_creditNotePdfHash_format_check  CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -1057,42 +942,10 @@ model OrderItem {
   skuImageUrl  String? @db.VarChar(2048)
 
   // Prix et quantite
-  price    Int // Prix unitaire FINAL sans TVA en centimes (micro-entreprise exoneree)
+  // Micro-entreprise franchise TVA (Art. 293 B CGI) : TVA toujours nulle, le
+  // total ligne se derive de price * quantity. Pas de snapshot TVA par ligne.
+  price    Int // Prix unitaire FINAL sans TVA en centimes
   quantity Int
-
-  // === TVA PAR LIGNE (Facturation electronique 2026-2027) ===
-  //
-  // Champs requis pour Factur-X / UBL / CII (mapping CEFACT UNTDID BT-151
-  // Item VAT category, BT-152 Item VAT rate, BT-117 Invoiced net amount).
-  //
-  // Defauts pour la franchise TVA actuelle (Art. 293 B CGI) :
-  //   - taxRate = 0 (basis points : 2000 = 20.00%)
-  //   - taxAmount = 0 (centimes)
-  //   - taxCategoryCode = "ZB" (Z = zero rate, branche franchise) — voir
-  //     mapping UNTDID 5305 pour les autres categories ("S" standard, "AE"
-  //     autoliquidation, "E" exoneree, "G" export hors UE, "K" intra-UE)
-  //   - lineTotalExcludingTax = price * quantity (backfille via migration)
-  //   - lineTotalIncludingTax = price * quantity (idem pour franchise)
-  //
-  // Quand Synclune basculera au regime reel, les actions checkout devront
-  // recalculer ces champs ligne par ligne (les valeurs ne sont PAS derivees
-  // a la lecture pour garantir le snapshot Art. L102 B LPF).
-  taxRate                Int     @default(0)
-  taxAmount              Int     @default(0)
-  lineTotalExcludingTax  Int     @default(0)
-  lineTotalIncludingTax  Int     @default(0)
-  taxCategoryCode        String? @db.VarChar(2)
-
-  // === IDENTIFIANTS PRODUIT (Facturation electronique BASIC/EN 16931+) ===
-  // Snapshot au checkout pour Factur-X BASIC/EN16931 (BT-156 classification
-  // douaniere SH) et UBL/CII (cac:Item/cbc:CommodityClassification).
-  // - hsCode   : Systeme Harmonise OMD (6 a 10 chiffres). Optionnel : a peupler
-  //              uniquement si export hors UE prevu.
-  // - unitCode : UN/ECE Rec 20 (H87 = piece, KGM = kg, MTR = metre). Defaut
-  //              applicatif "H87" au checkout pour bijoux unitaires. NULL pour
-  //              les commandes anterieures a la migration (snapshot Art. L102 B).
-  hsCode   String? @db.VarChar(10)
-  unitCode String? @db.VarChar(3)
 
   // Relations
   refundItems RefundItem[]
@@ -1110,8 +963,6 @@ model OrderItem {
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   OrderItem_price_positive     CHECK (price > 0)
   //   OrderItem_quantity_positive  CHECK (quantity > 0)
-  //   OrderItem_hsCode_check       CHECK (hsCode IS NULL OR hsCode ~ '^[0-9]{6,10}$')
-  //   OrderItem_unitCode_check     CHECK (unitCode IS NULL OR unitCode ~ '^[A-Z0-9]{1,3}$')
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
@@ -1242,6 +1093,7 @@ model Refund {
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   Refund_amount_positive    CHECK (amount > 0)
   //   Refund_currency_eur_check CHECK (currency = 'EUR')
+  //   Refund_creditNotePdfHash_format_check CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
 }
 
 model RefundItem {
@@ -1745,78 +1597,4 @@ model EReportingTransaction {
   // La CHECK constraint `EReportingTransaction_source_xor` garantit l'XOR.
   @@unique([orderId, type], name: "EReportingTransaction_orderId_type_key")
   @@unique([refundId, type], name: "EReportingTransaction_refundId_type_key")
-}
-
-// ============================================================================
-// AUDIT TRANSMISSION PDP (Réforme facturation électronique 2026-2027)
-// ============================================================================
-//
-// Chaque tentative de transmission (sortante vers la PDP/PA, ou entrante via
-// webhook) laisse une trace IMMUABLE pour audit fiscal (Art. 286 CGI, Art. L102 B
-// LPF — conservation 10 ans). Mirror conceptuel d'OrderHistory pour la couche
-// transmission : pas de deletedAt, pas d'updatedAt, jamais d'update.
-//
-// onDelete: SetNull pour préserver l'audit trail si l'Order parent est purgé.
-
-model InvoiceTransmissionLog {
-  id      String  @id @default(cuid())
-  orderId String?
-  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  /// Nom du provider qui a traité la transmission (chorus-pro, pdp-xxx, local).
-  provider  String                @db.VarChar(100)
-  direction TransmissionDirection
-  status    TransmissionLogStatus
-  attempt   Int                   @default(1)
-
-  /// Numero de facture au moment de l'evenement (snapshot, immuable).
-  invoiceNumber String? @db.VarChar(30)
-
-  /// ID provider retourné par la plateforme (présent une fois SUBMITTED).
-  providerInvoiceId String? @db.VarChar(255)
-
-  /// Code structuré du rejet/erreur (filtrable par cron DLQ).
-  errorCode    String? @db.VarChar(100)
-  errorMessage String? @db.Text
-
-  /// Snapshot du payload échangé (request OUTBOUND ou event INBOUND).
-  /// Réutilisable pour rejeu déterministe en cas de besoin (audit fiscal).
-  payloadSnapshot Json?
-
-  occurredAt DateTime @default(now())
-
-  @@index([orderId, occurredAt(sort: Desc)])
-  @@index([status, occurredAt(sort: Desc)]) // Dashboard admin "derniers rejets"
-  @@index([provider, status, occurredAt(sort: Desc)]) // Diagnostic provider-specific
-}
-
-// ============================================================================
-// WEBHOOK PLATEFORME AGRÉÉE (Idempotence + audit, Phase 5)
-// ============================================================================
-//
-// Mirror conceptuel de WebhookEvent (Stripe) mais sur une table DEDIEE :
-// les eventTypes Stripe et PDP ont des espaces de noms disjoints et leurs
-// invariants downstream different (Stripe = Order/Payment, PDP = transmission).
-// (provider, externalEventId) @@unique garantit l'idempotence anti-rejeu.
-
-model ProviderWebhookEvent {
-  id              String                     @id @default(cuid())
-  /// Identifiant provider (chorus-pro, pdp-xxx, mock). Combiné à externalEventId pour idempotence.
-  provider        String                     @db.VarChar(100)
-  /// Identifiant unique d'événement émis par la plateforme.
-  externalEventId String                     @db.VarChar(255)
-  eventType       String                     @db.VarChar(100)
-  status          ProviderWebhookEventStatus @default(PENDING)
-  errorMessage    String?                    @db.Text
-  attempts        Int                        @default(0)
-  receivedAt      DateTime                   @default(now())
-  processedAt     DateTime?
-
-  /// Snapshot du payload (signature vérifiée OK avant écriture).
-  payloadSnapshot Json?
-
-  @@unique([provider, externalEventId])
-  @@index([status, processedAt])
-  @@index([status, receivedAt])
-  @@index([status, attempts, processedAt]) // cron retry symétrique de retry-webhooks
 }

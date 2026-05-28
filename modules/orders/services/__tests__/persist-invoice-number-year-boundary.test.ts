@@ -5,6 +5,11 @@
  *
  * EINV-TEST-019 — combine overflow + transition année (les 2 cas existants
  * sont testés séparément dans `persist-invoice-number.service.test.ts`).
+ *
+ * EINV-SEQ-002 (audit séquences 2026-05-28) : le millésime de la séquence suit
+ * désormais la date d'ENCAISSEMENT (`order.paidAt`) en `Europe/Paris`, PAS
+ * l'horloge de génération. Ces tests pilotent donc l'année via `paidAt`
+ * (mocké sur `prisma.order.findUnique`), pas via `vi.setSystemTime`.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -24,7 +29,7 @@ const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
 	};
 	return {
 		mockTx,
-		mockPrisma: { $transaction: vi.fn() },
+		mockPrisma: { $transaction: vi.fn(), order: { findUnique: vi.fn() } },
 		mockUpdateTag: vi.fn(),
 		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	};
@@ -47,6 +52,19 @@ function runTx() {
 	mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<unknown>) =>
 		cb(mockTx),
 	);
+}
+
+/**
+ * EINV-SEQ-002 + EINV-SEQ-005 : pilote le millésime via la date d'encaissement.
+ * `prisma.order.findUnique` (hors transaction) lit l'order complet (snapshot +
+ * paidAt/createdAt) — il n'y a plus de findUnique dans la transaction.
+ */
+function setPaidAt(paidAt: Date): void {
+	mockPrisma.order.findUnique.mockResolvedValue({
+		...makeOrderForSnapshot(),
+		paidAt,
+		createdAt: paidAt,
+	});
 }
 
 function makeOrderForSnapshot(): Record<string, unknown> {
@@ -116,6 +134,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mockTx.$executeRaw.mockResolvedValue(undefined);
 	mockTx.order.findUnique.mockResolvedValue(makeOrderForSnapshot());
+	// Défaut : encaissement clairement en 2026 (15 juin midi, pas d'ambiguïté TZ).
+	setPaidAt(new Date("2026-06-15T12:00:00Z"));
 });
 
 afterEach(() => {
@@ -124,8 +144,7 @@ afterEach(() => {
 
 describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 	it("overflow F-2026-99999 retourne null + log error (limite atteinte)", async () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-12-31T22:00:00Z"));
+		setPaidAt(new Date("2026-06-15T12:00:00Z"));
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
@@ -136,10 +155,9 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
 
-	it("après overflow 2026, l'année 2027 démarre à F-2027-00001 (séquence indépendante, pas de continuité)", async () => {
-		// 2027-01-01 : la SELECT filtre par prefix "F-2027-%" → renvoie [] (aucune facture 2027 encore)
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2027-01-01T00:01:00Z"));
+	it("une vente encaissée en 2027 démarre à F-2027-00001 (séquence indépendante, pas de continuité)", async () => {
+		// paidAt 2027 → prefix "F-2027-%" → SELECT renvoie [] (aucune facture 2027 encore).
+		setPaidAt(new Date("2027-01-15T12:00:00Z"));
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([]); // SELECT prefix=F-2027-% returns nothing
 		mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
@@ -155,8 +173,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 	});
 
 	it("le SELECT 2027 ne voit PAS les factures 2026 (filtre LIKE par préfixe d'année)", async () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2027-01-01T00:01:00Z"));
+		setPaidAt(new Date("2027-01-15T12:00:00Z"));
 		runTx();
 		// Si quelqu'un avait par erreur passé un filtre globalement (sans année),
 		// le SELECT verrait "F-2026-99999" en tête → next serait 100000 → overflow.
@@ -175,10 +192,8 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 	});
 
 	it("l'advisory lock key change entre 2026 et 2027 (lock par année, pas global)", async () => {
-		vi.useFakeTimers();
-
-		// Année 2026
-		vi.setSystemTime(new Date("2026-06-15T12:00:00Z"));
+		// Encaissement 2026
+		setPaidAt(new Date("2026-06-15T12:00:00Z"));
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([]);
 		mockTx.order.update.mockResolvedValue({
@@ -188,11 +203,11 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		await persistInvoiceNumber("order-1", "user-1");
 		const lockKey2026 = mockTx.$executeRaw.mock.calls[0]![0].values[0];
 
-		// Année 2027
+		// Encaissement 2027
 		vi.clearAllMocks();
 		mockTx.$executeRaw.mockResolvedValue(undefined);
 		mockTx.order.findUnique.mockResolvedValue(makeOrderForSnapshot());
-		vi.setSystemTime(new Date("2027-06-15T12:00:00Z"));
+		setPaidAt(new Date("2027-06-15T12:00:00Z"));
 		mockTx.$queryRaw.mockResolvedValue([]);
 		mockTx.order.update.mockResolvedValue({
 			invoiceNumber: "F-2027-00001",
@@ -208,8 +223,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 	});
 
 	it("ne retry PAS l'overflow (BusinessError ≠ P2002) — défaut MAX_RETRIES non déclenché", async () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-12-31T23:59:00Z"));
+		setPaidAt(new Date("2026-12-31T20:00:00Z"));
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
@@ -224,8 +238,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 	});
 
 	it("F-2026-99998 → F-2026-99999 (dernier numéro autorisé de l'année, pas d'overflow)", async () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-12-31T20:00:00Z"));
+		setPaidAt(new Date("2026-12-31T20:00:00Z"));
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99998" }]);
 		mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
@@ -236,5 +249,74 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		const result = await persistInvoiceNumber("order-1", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2026-99999");
+	});
+});
+
+describe("persistInvoiceNumber — millésime = encaissement, pas génération (EINV-SEQ-002)", () => {
+	it("génération tardive en 2027 sur une vente encaissée en 2026 → F-2026 (pas F-2027)", async () => {
+		// Cas reconcile-invoices/lazy download qui tourne après le 31/12 : la vente
+		// 2026 doit garder un numéro 2026 même générée en 2027.
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2027-01-02T03:00:00Z")); // horloge de génération = 2027
+		setPaidAt(new Date("2026-06-15T12:00:00Z")); // encaissement = 2026
+		runTx();
+		mockTx.$queryRaw.mockResolvedValue([]);
+		mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+			invoiceNumber: args.data.invoiceNumber,
+			invoiceGeneratedAt: new Date(),
+		}));
+
+		const result = await persistInvoiceNumber("order-1", "user-1");
+
+		expect(result?.invoiceNumber).toBe("F-2026-00001");
+		// Prefix + advisory lock suivent l'année d'encaissement 2026.
+		expect(mockTx.$queryRaw.mock.calls[0]![0].values[0]).toBe("F-2026-%");
+		expect(mockTx.$executeRaw.mock.calls[0]![0].values[0]).toBe(1_000_000 + 2026);
+	});
+
+	it("encaissement 31/12 23:30 UTC = 01/01 00:30 Paris → millésime Paris 2027", async () => {
+		// Frontière minuit : le serveur (UTC) lirait 2026, mais en heure de Paris on
+		// est déjà en 2027 → la séquence doit suivre Paris.
+		setPaidAt(new Date("2026-12-31T23:30:00Z"));
+		runTx();
+		mockTx.$queryRaw.mockResolvedValue([]);
+		mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+			invoiceNumber: args.data.invoiceNumber,
+			invoiceGeneratedAt: new Date(),
+		}));
+
+		const result = await persistInvoiceNumber("order-1", "user-1");
+
+		expect(result?.invoiceNumber).toBe("F-2027-00001");
+		expect(mockTx.$queryRaw.mock.calls[0]![0].values[0]).toBe("F-2027-%");
+	});
+
+	it("fallback createdAt si paidAt absent (état incohérent)", async () => {
+		mockPrisma.order.findUnique.mockResolvedValue({
+			...makeOrderForSnapshot(),
+			paidAt: null,
+			createdAt: new Date("2025-09-10T12:00:00Z"),
+		});
+		runTx();
+		mockTx.$queryRaw.mockResolvedValue([]);
+		mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+			invoiceNumber: args.data.invoiceNumber,
+			invoiceGeneratedAt: new Date(),
+		}));
+
+		const result = await persistInvoiceNumber("order-1", "user-1");
+
+		expect(result?.invoiceNumber).toBe("F-2025-00001");
+	});
+
+	it("order introuvable avant résolution séquence → null (pas de tx ouverte)", async () => {
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		runTx();
+
+		const result = await persistInvoiceNumber("order-unknown", "user-1");
+
+		expect(result).toBeNull();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockLogger.error).toHaveBeenCalled();
 	});
 });

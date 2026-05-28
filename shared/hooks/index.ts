@@ -5,6 +5,7 @@ export { useMounted } from "./use-mounted";
 
 // Gesture hooks
 export { useLongPress } from "./use-long-press";
+export { useGestureHintOnce } from "./use-gesture-hint-once";
 
 // State & Effects hooks
 export { useBottomBarHeight } from "./use-bottom-bar-height";

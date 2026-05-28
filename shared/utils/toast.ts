@@ -4,7 +4,11 @@ import { toast as sonnerToast } from "sonner";
 
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { MOBILE_BREAKPOINT } from "@/shared/hooks/use-mobile";
-import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
+import {
+	COALESCE_WINDOW_MS,
+	type MicroToastAction,
+	useMicroToastStore,
+} from "@/shared/stores/micro-toast-store";
 
 /**
  * Wrapper toast central pour Synclune — haptics natives + sanitisation d'erreurs
@@ -20,12 +24,12 @@ import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
  *    Les régions DOM sont montées par `<AppToaster />` — cf toaster.tsx.
  * 4. Duration adaptative (WPS-based) : messages longs restent plus longtemps,
  *    erreurs persistent au moins 5s (parité iOS Live Activities).
- * 5. Mobile (≤767px) : `success/info/warning` routent vers `<MicroToast />`
- *    pastille top-center (1.2s, ne masque pas la bottom-bar). `error` reste
- *    Sonner classique pour persister 5s+. Les undo doivent migrer vers le
- *    pattern tombstone inline (cf `shared/components/ui/tombstone.tsx`) — un
- *    `opts.action` passé en mode mobile est ignoré silencieusement en prod,
- *    avec un `console.warn` en dev.
+ * 5. Mobile (≤767px) : `success/info/warning/error` routent tous vers
+ *    `<MicroToast />` pastille top-center (feedback unifié, F1). `error` y persiste
+ *    5s+ (computeDuration) et reste "sticky" : un success ne peut pas l'enterrer
+ *    (cf micro-toast-store). Un `opts.action` passé en mode mobile est propagé à
+ *    la pastille (bouton inline, F5) ; les flux undo legacy peuvent aussi utiliser
+ *    le pattern tombstone inline (cf `shared/components/ui/tombstone.tsx`).
  */
 
 const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Merci de réessayer.";
@@ -130,6 +134,37 @@ function clearPendingNonError(): void {
 	}
 }
 
+/**
+ * Dédup desktop (F4) — parité avec le coalescing ×N de la pastille mobile.
+ * Sans ça, Sonner empile jusqu'à 3 toasts identiques sur actions répétées rapides.
+ * On dérive un `id` stable depuis `(variant, message)` : Sonner rafraîchit le toast
+ * existant au lieu d'empiler, et on suffixe ` ×N` au message dans la fenêtre.
+ * Non appliqué quand l'appelant fournit un `id` explicite ou une `action` (chaque
+ * undo cible un état distinct).
+ */
+const desktopCoalesce = new Map<string, { count: number; lastAt: number }>();
+
+function coalesceDesktop(variant: string, message: string): { id: string; displayMessage: string } {
+	const now = Date.now();
+	// Éviction des entrées expirées (borne la taille du Map).
+	for (const [k, v] of desktopCoalesce) {
+		if (now - v.lastAt >= COALESCE_WINDOW_MS) desktopCoalesce.delete(k);
+	}
+	const key = `${variant}::${message}`;
+	const prev = desktopCoalesce.get(key);
+	const count = prev && now - prev.lastAt < COALESCE_WINDOW_MS ? prev.count + 1 : 1;
+	desktopCoalesce.set(key, { count, lastAt: now });
+	return {
+		id: `coalesce:${key}`,
+		displayMessage: count > 1 ? `${message} ×${count}` : message,
+	};
+}
+
+/** Reset interne (tests uniquement) — vide le cache de dédup desktop. */
+function __resetDesktopCoalesce(): void {
+	desktopCoalesce.clear();
+}
+
 type SonnerToast = typeof sonnerToast;
 type ExternalToastOptions = Parameters<SonnerToast["success"]>[1];
 
@@ -145,11 +180,32 @@ type ExternalToastOptionsWithMicroVariant = ExternalToastOptions & {
 	microVariant?: MicroVariantOverride;
 };
 
-function warnActionIgnored(method: "success" | "info" | "warning"): void {
-	if (process.env.NODE_ENV !== "development") return;
-	console.warn(
-		`[toast.${method}] action ignorée sur mobile — utilise le pattern tombstone inline (shared/components/ui/tombstone.tsx)`,
-	);
+/** Durée minimale quand la pastille porte une action inline (laisser le temps de cliquer). */
+const ACTION_MIN_DURATION_MS = 6000;
+
+/**
+ * Convertit une `action` Sonner ({ label, onClick }) en `MicroToastAction` pour la
+ * pastille mobile (F5). Retourne `null` si l'action n'est pas exploitable côté pastille
+ * (ReactNode custom, label non-string) — on reste alors fire-and-forget.
+ */
+function toMicroAction(
+	action: NonNullable<ExternalToastOptions>["action"],
+): MicroToastAction | null {
+	if (!action || typeof action !== "object") return null;
+	const candidate = action as { label?: unknown; onClick?: unknown };
+	if (typeof candidate.label !== "string" || typeof candidate.onClick !== "function") return null;
+	const onClick = candidate.onClick as (event: unknown) => void;
+	return { label: candidate.label, onClick: () => onClick(undefined) };
+}
+
+/** Durée pastille : floor par type, étendue à `ACTION_MIN_DURATION_MS` si action présente. */
+function microDuration(
+	message: string,
+	type: keyof typeof MIN_DURATION,
+	hasAction: boolean,
+): number {
+	const base = computeDuration(message, type);
+	return hasAction ? Math.max(base, ACTION_MIN_DURATION_MS) : base;
 }
 
 export const toast = {
@@ -160,17 +216,27 @@ export const toast = {
 		announceToScreenReader(message, "polite");
 		if (isMobileViewport()) {
 			triggerHaptic("light");
-			if (opts?.action) warnActionIgnored("success");
 			if (typeof message === "string") {
-				const duration = opts?.duration ?? computeDuration(message, "success");
-				useMicroToastStore.getState().show(message, opts?.microVariant ?? "success", duration);
+				const action = toMicroAction(opts?.action);
+				const duration = opts?.duration ?? microDuration(message, "success", action !== null);
+				useMicroToastStore
+					.getState()
+					.show(message, opts?.microVariant ?? "success", duration, action);
 			}
 			return undefined as never;
 		}
 		triggerHaptic("success");
 		const duration = opts?.duration ?? computeDuration(message, "success");
 		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
-		const id = sonnerToast.success(message, { ...sonnerOpts, duration });
+		const dedup =
+			typeof message === "string" && sonnerOpts.id === undefined && sonnerOpts.action === undefined
+				? coalesceDesktop("success", message)
+				: null;
+		const id = sonnerToast.success(dedup?.displayMessage ?? message, {
+			...sonnerOpts,
+			...(dedup ? { id: dedup.id } : {}),
+			duration,
+		});
 		lastNonErrorToastId = id;
 		return id;
 	},
@@ -178,9 +244,28 @@ export const toast = {
 		triggerHaptic("error");
 		const sanitized = typeof message === "string" ? sanitizeErrorMessage(message) : message;
 		announceToScreenReader(sanitized, "assertive");
+		if (isMobileViewport()) {
+			// F1 : les erreurs partagent le slot pastille top-center (feedback unifié
+			// mobile). La pastille remplace toujours un success/warning visible (variant
+			// différente → pas de coalesce) et reste "sticky" (cf micro-toast-store).
+			if (typeof sanitized === "string") {
+				const action = toMicroAction(opts?.action);
+				const duration = opts?.duration ?? microDuration(sanitized, "error", action !== null);
+				useMicroToastStore.getState().show(sanitized, "error", duration, action);
+			}
+			return undefined as never;
+		}
 		clearPendingNonError();
 		const duration = opts?.duration ?? computeDuration(sanitized, "error");
-		return sonnerToast.error(sanitized, { ...opts, duration });
+		const dedup =
+			typeof sanitized === "string" && opts?.id === undefined && opts?.action === undefined
+				? coalesceDesktop("error", sanitized)
+				: null;
+		return sonnerToast.error(dedup?.displayMessage ?? sanitized, {
+			...opts,
+			...(dedup ? { id: dedup.id } : {}),
+			duration,
+		});
 	},
 	warning: (
 		message: Parameters<SonnerToast["warning"]>[0],
@@ -189,17 +274,27 @@ export const toast = {
 		announceToScreenReader(message, "polite");
 		if (isMobileViewport()) {
 			triggerHaptic("medium");
-			if (opts?.action) warnActionIgnored("warning");
 			if (typeof message === "string") {
-				const duration = opts?.duration ?? computeDuration(message, "warning");
-				useMicroToastStore.getState().show(message, opts?.microVariant ?? "warning", duration);
+				const action = toMicroAction(opts?.action);
+				const duration = opts?.duration ?? microDuration(message, "warning", action !== null);
+				useMicroToastStore
+					.getState()
+					.show(message, opts?.microVariant ?? "warning", duration, action);
 			}
 			return undefined as never;
 		}
 		triggerHaptic("medium");
 		const duration = opts?.duration ?? computeDuration(message, "warning");
 		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
-		const id = sonnerToast.warning(message, { ...sonnerOpts, duration });
+		const dedup =
+			typeof message === "string" && sonnerOpts.id === undefined && sonnerOpts.action === undefined
+				? coalesceDesktop("warning", message)
+				: null;
+		const id = sonnerToast.warning(dedup?.displayMessage ?? message, {
+			...sonnerOpts,
+			...(dedup ? { id: dedup.id } : {}),
+			duration,
+		});
 		lastNonErrorToastId = id;
 		return id;
 	},
@@ -209,16 +304,24 @@ export const toast = {
 	) => {
 		announceToScreenReader(message, "polite");
 		if (isMobileViewport()) {
-			if (opts?.action) warnActionIgnored("info");
 			if (typeof message === "string") {
-				const duration = opts?.duration ?? computeDuration(message, "info");
-				useMicroToastStore.getState().show(message, opts?.microVariant ?? "info", duration);
+				const action = toMicroAction(opts?.action);
+				const duration = opts?.duration ?? microDuration(message, "info", action !== null);
+				useMicroToastStore.getState().show(message, opts?.microVariant ?? "info", duration, action);
 			}
 			return undefined as never;
 		}
 		const duration = opts?.duration ?? computeDuration(message, "info");
 		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
-		const id = sonnerToast.info(message, { ...sonnerOpts, duration });
+		const dedup =
+			typeof message === "string" && sonnerOpts.id === undefined && sonnerOpts.action === undefined
+				? coalesceDesktop("info", message)
+				: null;
+		const id = sonnerToast.info(dedup?.displayMessage ?? message, {
+			...sonnerOpts,
+			...(dedup ? { id: dedup.id } : {}),
+			duration,
+		});
 		lastNonErrorToastId = id;
 		return id;
 	}) as SonnerToast["info"],
@@ -290,4 +393,10 @@ export const toast = {
 		sonnerToast.custom(...args)) as SonnerToast["custom"],
 };
 
-export { sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration, announceToScreenReader };
+export {
+	sanitizeErrorMessage,
+	GENERIC_ERROR_MESSAGE,
+	computeDuration,
+	announceToScreenReader,
+	__resetDesktopCoalesce,
+};

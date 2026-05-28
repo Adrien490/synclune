@@ -4,7 +4,7 @@
  * EINV-TEST-010 — Immutabilité facture après mutation Product/Sku.
  *
  * Invariant 4 (CLAUDE.md §Facturation) : Snapshots OrderItem (productTitle,
- * productImageUrl, skuColor, skuMaterial, skuSize, price, taxRate) sont figés
+ * productImageUrl, skuColor, skuMaterial, skuSize, price) sont figés
  * au checkout. Une mutation Product/Sku ne doit JAMAIS modifier un OrderItem
  * existant — donc `buildInvoiceData(order)` doit produire le même payload
  * avant et après mutation produit.
@@ -76,11 +76,6 @@ describeIntegration(
 								skuColor: "Argent",
 								skuMaterial: "Argent 925",
 								price: 4999,
-								taxRate: 0,
-								taxAmount: 0,
-								lineTotalExcludingTax: 4999,
-								lineTotalIncludingTax: 4999,
-								taxCategoryCode: "ZB",
 							},
 						],
 					},
@@ -159,11 +154,6 @@ describeIntegration(
 								productTitle: "Bague Discontinuée",
 								skuMaterial: "Or jaune",
 								price: 4999,
-								taxRate: 0,
-								taxAmount: 0,
-								lineTotalExcludingTax: 4999,
-								lineTotalIncludingTax: 4999,
-								taxCategoryCode: "ZB",
 							},
 						],
 					},

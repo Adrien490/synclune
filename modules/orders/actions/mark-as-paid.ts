@@ -116,6 +116,16 @@ export async function markAsPaid(
 				return { ...found, _error: "cancelled" as const };
 			}
 
+			// EINV-CASH-001 : preuve Stripe obligatoire. Une commande marquée payée
+			// DOIT être née d'un checkout Stripe (PaymentIntent ou Checkout Session).
+			// Sans cette preuve PSP, mark-as-paid fabriquerait un encaissement fictif
+			// → facture fiscale + e-reporting SALES sans contrepartie réelle, ce qui
+			// expose Synclune à une qualification "logiciel de caisse" non conforme
+			// (invariant CLAUDE.md #8 — « pas de commande payée sans PaymentIntent »).
+			if (!found.stripePaymentIntentId && !found.stripeCheckoutSessionId) {
+				return { ...found, _error: "no_stripe_proof" as const };
+			}
+
 			// ORD-BIZ-004 : recovery FAILED/EXPIRED → PAID autorisée (paiement
 			// bancaire manuel après échec). Safety guard : refuser s'il existe
 			// déjà un Refund non-terminal (sinon on autorise mark-as-paid + le
@@ -210,7 +220,9 @@ export async function markAsPaid(
 						? "Cette commande a déjà été remboursée (totalement ou partiellement)."
 						: order._error === "has_pending_refund"
 							? "Un remboursement est en cours pour cette commande. Annulez-le d'abord."
-							: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
+							: order._error === "no_stripe_proof"
+								? "Cette commande n'a aucune preuve de paiement Stripe (PaymentIntent ou session Checkout). Le marquage manuel est interdit sans origine Stripe."
+								: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
 			return {
 				status: ActionStatus.ERROR,
 				message,

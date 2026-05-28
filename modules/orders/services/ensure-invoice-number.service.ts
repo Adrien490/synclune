@@ -6,7 +6,7 @@ import { getBaseUrl } from "@/shared/constants/urls";
 import { GET_ORDER_SELECT_ADMIN } from "../constants/order.constants";
 import { archiveInvoicePdf } from "./archive-invoice-pdf.service";
 import { persistInvoiceNumber } from "./persist-invoice-number.service";
-import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
+import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { createOrderAudit } from "../utils/order-audit";
 import type { GetOrderReturn } from "../types/order.types";
@@ -28,8 +28,6 @@ async function flagInvoiceFailureForReconcile(
 			select: {
 				orderNumber: true,
 				customerEmail: true,
-				customerCompanyName: true,
-				customerCompanySiret: true,
 				total: true,
 				stripePaymentIntentId: true,
 			},
@@ -51,8 +49,6 @@ async function flagInvoiceFailureForReconcile(
 			orderId,
 			orderNumber: order.orderNumber,
 			customerEmail: order.customerEmail,
-			customerCompanyName: order.customerCompanyName ?? undefined,
-			customerSiret: order.customerCompanySiret ?? undefined,
 			amount: order.total,
 			errorMessage,
 			stripePaymentIntentId: order.stripePaymentIntentId ?? undefined,
@@ -167,7 +163,11 @@ async function archiveAfterGeneration(orderId: string, invoiceNumber: string): P
 		if (!order || !order.invoiceNumber || !order.invoiceGeneratedAt) {
 			return;
 		}
-		const pdf = renderInvoicePdf(buildInvoiceData(order as GetOrderReturn));
+		// EINV-PDF-001 : l'archive doit refléter le snapshot figé, pas une
+		// recomputation. `persistInvoiceNumber` vient d'écrire le snapshot, donc
+		// `resolveInvoiceDataForRender` le lit ici (fallback buildInvoiceData
+		// uniquement pour les rares legacy sans snapshot).
+		const pdf = renderInvoicePdf(resolveInvoiceDataForRender(order as GetOrderReturn));
 		await archiveInvoicePdf(orderId, invoiceNumber, pdf);
 	} catch (error) {
 		// Archive échoue → le PDF sera archivé au premier download. Pas d'incident

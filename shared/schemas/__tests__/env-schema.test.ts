@@ -430,7 +430,7 @@ describe("envSchema", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// INVOICE_PROVIDER + transmission flags (Phase 5 — réforme 2026-2027)
+	// INVOICE_PROVIDER (e-reporting B2C — réforme 2026-2027)
 	// --------------------------------------------------------------------------
 
 	describe("INVOICE_PROVIDER", () => {
@@ -443,7 +443,7 @@ describe("envSchema", () => {
 		});
 
 		it("accepts each supported provider id", () => {
-			for (const provider of ["local", "mock", "chorus-pro", "pdp-xxx"]) {
+			for (const provider of ["local", "mock"]) {
 				const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: provider });
 				expect(result.success).toBe(true);
 			}
@@ -454,69 +454,8 @@ describe("envSchema", () => {
 			expect(result.success).toBe(false);
 		});
 
-		it("rejects a typo on a known provider id", () => {
-			// Typo case mentionné dans EINV-PROVIDER-007.
-			const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: "pdp-XYZ" });
-			expect(result.success).toBe(false);
-		});
-	});
-
-	describe("INVOICE_TRANSMISSION_CANARY_PERCENT", () => {
-		it("accepts 0 (disabled)", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_CANARY_PERCENT: "0",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts 100 (full rollout)", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_CANARY_PERCENT: "100",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("rejects values > 100", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_CANARY_PERCENT: "101",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects non-numeric values", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_CANARY_PERCENT: "fifty",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects negative values (regex anchors)", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_CANARY_PERCENT: "-5",
-			});
-			expect(result.success).toBe(false);
-		});
-	});
-
-	describe("INVOICE_TRANSMISSION_MIN_AMOUNT", () => {
-		it("accepts a positive integer (centimes)", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_MIN_AMOUNT: "5000",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("rejects non-integer values", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				INVOICE_TRANSMISSION_MIN_AMOUNT: "50.00",
-			});
+		it("rejects a B2B/B2G provider id (transmission supprimée — scope B2C)", () => {
+			const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: "chorus-pro" });
 			expect(result.success).toBe(false);
 		});
 	});

@@ -1,6 +1,5 @@
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import {
-	sendAdminNewOrderEmail,
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
@@ -26,7 +25,6 @@ import type { PostWebhookTask } from "../types/webhook.types";
 /** Tâches email orientées client qui justifient une alerte admin en cas d'échec. */
 export const CRITICAL_EMAIL_TASKS = new Set([
 	"ORDER_CONFIRMATION_EMAIL",
-	"ADMIN_NEW_ORDER_EMAIL",
 	"REFUND_CONFIRMATION_EMAIL",
 	"PAYMENT_FAILED_EMAIL",
 	"ADMIN_ORDER_PROCESSING_FAILED_ALERT",
@@ -42,9 +40,6 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 	switch (task.type) {
 		case "ORDER_CONFIRMATION_EMAIL":
 			await sendOrderConfirmationEmail(task.data);
-			break;
-		case "ADMIN_NEW_ORDER_EMAIL":
-			await sendAdminNewOrderEmail(task.data);
 			break;
 		case "REFUND_CONFIRMATION_EMAIL":
 			// ORD-STRIPE-005 : si le payload contient refundId, on passe par

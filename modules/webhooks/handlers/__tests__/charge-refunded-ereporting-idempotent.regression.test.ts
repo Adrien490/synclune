@@ -43,13 +43,26 @@ vi.mock("@/modules/invoices/services/build-ereporting-transaction", () => ({
 	buildRefundTransaction: mockBuildRefundTransaction,
 }));
 
-vi.mock("@/app/generated/prisma/client", () => ({
-	EReportingTransactionType: {
-		SALES: "SALES",
-		REFUND: "REFUND",
-		PAYMENT: "PAYMENT",
-	},
-}));
+vi.mock("@/app/generated/prisma/client", () => {
+	class FakePrismaClientKnownRequestError extends Error {
+		code: string;
+		meta?: { target?: string | string[] };
+		constructor(message: string, opts: { code: string; meta?: { target?: string | string[] } }) {
+			super(message);
+			this.code = opts.code;
+			this.meta = opts.meta;
+		}
+	}
+	return {
+		EReportingTransactionType: {
+			SALES: "SALES",
+			REFUND: "REFUND",
+			PAYMENT: "PAYMENT",
+		},
+		CustomerType: { B2C: "B2C", B2B: "B2B", B2G: "B2G" },
+		Prisma: { PrismaClientKnownRequestError: FakePrismaClientKnownRequestError },
+	};
+});
 
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 

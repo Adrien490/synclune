@@ -143,26 +143,34 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// creditNoteNumber (refund partiel via Dashboard Stripe OU rattrapage
 		// après SAGA admin abort). Best-effort, idempotent. Re-fetch les refunds
 		// après syncStripeRefunds pour avoir le state actuel (status COMPLETED).
-		const refundsPostSync = await prisma.refund.findMany({
-			where: {
-				orderId: order.id,
-				status: RefundStatus.COMPLETED,
-				creditNoteNumber: null,
-			},
-			select: { id: true },
-		});
-		for (const r of refundsPostSync) {
-			const creditNoteResult = await issueCreditNoteForRefund({
-				refundId: r.id,
-				source: HistorySource.WEBHOOK,
-				authorId: SYSTEM_AUTHOR_ID,
-				authorName: "Stripe",
+		//
+		// EINV-SEQ-001 (audit séquences 2026-05-28, Option A) : sur un remboursement
+		// TOTAL, `voidInvoice` (étape 4b) est l'émetteur unique de l'avoir
+		// (`Order.creditNoteNumber`). On NE déclenche donc l'avoir par Refund que
+		// pour un refund NON total — sinon deux numéros A-YYYY seraient consommés
+		// pour un seul événement (avoir fictif, Art. 272-I/286 CGI).
+		if (!isFullyRefunded) {
+			const refundsPostSync = await prisma.refund.findMany({
+				where: {
+					orderId: order.id,
+					status: RefundStatus.COMPLETED,
+					creditNoteNumber: null,
+				},
+				select: { id: true },
 			});
-			if (creditNoteResult.kind === "failed") {
-				logger.warn(
-					`charge.refunded — credit note emission failed for refund ${r.id}: ${creditNoteResult.error}`,
-					{ service: "webhook", orderId: order.id, refundId: r.id },
-				);
+			for (const r of refundsPostSync) {
+				const creditNoteResult = await issueCreditNoteForRefund({
+					refundId: r.id,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: "Stripe",
+				});
+				if (creditNoteResult.kind === "failed") {
+					logger.warn(
+						`charge.refunded — credit note emission failed for refund ${r.id}: ${creditNoteResult.error}`,
+						{ service: "webhook", orderId: order.id, refundId: r.id },
+					);
+				}
 			}
 		}
 
@@ -236,12 +244,12 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
-			// EINV-CREDIT-001 : pour un refund PARTIEL, l'avoir est sur
-			// `Refund.creditNoteNumber` (issueCreditNoteForRefund, étape 4c).
-			// Pour un refund TOTAL, voidInvoice a écrit `Order.creditNoteNumber`
-			// (étape 4b) ET issueCreditNoteForRefund écrit aussi sur Refund.
+			// EINV-CREDIT-001 / EINV-SEQ-001 : pour un refund PARTIEL, l'avoir est
+			// sur `Refund.creditNoteNumber` (issueCreditNoteForRefund, étape 4c).
+			// Pour un refund TOTAL, seul `voidInvoice` (étape 4b) émet l'avoir sur
+			// `Order.creditNoteNumber` — `Refund.creditNoteNumber` reste null.
 			// Stratégie : prendre le dernier Refund COMPLETED en priorité (avoir
-			// le plus récent), fallback Order.creditNoteNumber (full void historique).
+			// partiel le plus récent), fallback Order.creditNoteNumber (full void).
 			// Best-effort : email envoyé même si la lecture échoue (champs null).
 			const latestRefund = await prisma.refund
 				.findFirst({

@@ -1,10 +1,17 @@
-import { Prisma, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import {
+	Prisma,
+	OrderAction,
+	RefundStatus,
+	PaymentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/client";
 import type { HistorySource } from "@/app/generated/prisma/client";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
+import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { REFUNDS_CACHE_TAGS } from "../constants/cache";
@@ -15,16 +22,25 @@ import { REFUNDS_CACHE_TAGS } from "../constants/cache";
  *
  * Distinct de `voidInvoice()` :
  *   - voidInvoice() : full void → passe `Order.invoiceStatus` à VOIDED, écrit
- *     `Order.creditNoteNumber`. Cas refund total / cancel-order.
- *   - issueCreditNoteForRefund() : refund partiel OU total → écrit
- *     `Refund.creditNoteNumber` uniquement. La facture reste GENERATED (valide
- *     pour la part non remboursée si partiel).
+ *     `Order.creditNoteNumber`. Cas refund TOTAL / cancel-order — c'est
+ *     `voidInvoice` (Order) qui porte l'avoir canonique d'un remboursement total.
+ *   - issueCreditNoteForRefund() : refund PARTIEL uniquement → écrit
+ *     `Refund.creditNoteNumber`. La facture reste GENERATED (valide pour la part
+ *     non remboursée). Sur un refund total (`paymentStatus=REFUNDED` ou facture
+ *     déjà `VOIDED`), ce service NE pose PAS d'avoir : il noop et défère à
+ *     `voidInvoice` (EINV-SEQ-001 Option A — sinon deux numéros A-YYYY pour un
+ *     seul événement, Art. 272-I/286 CGI).
  *
- * Séquence A-YYYY-NNNNN PARTAGÉE avec Order.creditNoteNumber (advisory lock
- * 2_000_000+year + lookup UNION). Unicité globale garantie par contrainte
- * UNIQUE sur chaque table (race retry via P2002).
+ * Séquence A-YYYY-NNNNN PARTAGÉE avec Order.creditNoteNumber via le helper SSOT
+ * `nextCreditNoteNumberTx` (advisory lock 2_000_000+year + lookup MAX sur
+ * l'UNION Order ∪ Refund). C'est le lookup UNION partagé — et NON la contrainte
+ * UNIQUE par table — qui garantit l'unicité cross-table : une UNIQUE par table
+ * ne détecte pas une collision entre Order.creditNoteNumber et
+ * Refund.creditNoteNumber (EINV-PRISMA-001). Le retry P2002 couvre la race
+ * intra-table résiduelle.
  *
  * Cf. audit avoirs 2026-05-28 — EINV-CREDIT-001 + EINV-CREDIT-005 + EINV-CREDIT-010
+ * + audit Prisma 2026-05-28 — EINV-PRISMA-001
  */
 export type IssueCreditNoteResult =
 	| {
@@ -34,7 +50,7 @@ export type IssueCreditNoteResult =
 	  }
 	| {
 			kind: "noop";
-			reason: "missing" | "already-issued" | "refund-not-completed";
+			reason: "missing" | "already-issued" | "refund-not-completed" | "full-refund-voided-on-order";
 			creditNoteNumber?: string;
 	  }
 	| {
@@ -50,15 +66,6 @@ interface IssueCreditNoteParams {
 }
 
 const MAX_RETRIES = 5;
-const MAX_SEQUENCE_PER_YEAR = 99_999;
-
-/**
- * Même clé advisory lock que `voidInvoice` (offset 2_000_000) pour partager
- * la séquence A-YYYY-NNNNN entre Order et Refund.
- */
-function creditNoteAdvisoryLockKey(year: number): number {
-	return 2_000_000 + year;
-}
 
 export async function issueCreditNoteForRefund(
 	params: IssueCreditNoteParams,
@@ -84,6 +91,7 @@ export async function issueCreditNoteForRefund(
 								userId: true,
 								invoiceNumber: true,
 								invoiceStatus: true,
+								paymentStatus: true,
 							},
 						},
 					},
@@ -106,51 +114,36 @@ export async function issueCreditNoteForRefund(
 					return { kind: "refund-not-completed" as const };
 				}
 
+				// EINV-SEQ-001 (Option A) : sur un remboursement TOTAL, l'avoir
+				// canonique est l'avoir d'annulation porté par voidInvoice sur
+				// Order.creditNoteNumber. On NE pose donc PAS de second avoir sur le
+				// Refund — sinon deux numéros A-YYYY consommés pour un seul événement
+				// (avoir fictif, Art. 272-I/286 CGI). Garde centralisée : couvre les
+				// chemins process-refund (admin) + reconcile-refunds (cron DLQ) qui
+				// appelaient sans garde, en plus du webhook charge.refunded (4c) et de
+				// mark-as-fully-refunded déjà gardés côté appelant.
+				//   - paymentStatus === REFUNDED : ordre process-refund → webhook
+				//     (paymentStatus posé par la tx process-refund avant cet appel).
+				//   - invoiceStatus === VOIDED : ordre cancel-order → refund Stripe
+				//     (voidInvoice a déjà tourné avant que ce Refund passe COMPLETED).
+				if (
+					refund.order.paymentStatus === PaymentStatus.REFUNDED ||
+					refund.order.invoiceStatus === InvoiceStatus.VOIDED
+				) {
+					return { kind: "full-refund-on-order" as const };
+				}
+
 				// Pas de facture originale → pas d'avoir comptable possible
 				// (cas commande payée sans facturation séquentielle).
 				if (!refund.order.invoiceNumber) {
 					return { kind: "missing" as const };
 				}
 
+				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
+				// (advisory lock 2_000_000+year + lookup UNION) — unicité
+				// cross-table garantie (EINV-PRISMA-001).
 				const year = new Date().getFullYear();
-				const prefix = `A-${year}-`;
-
-				await tx.$executeRaw(
-					Prisma.sql`SELECT pg_advisory_xact_lock(${creditNoteAdvisoryLockKey(year)})`,
-				);
-
-				// Lookup MAX(A-YYYY-NNNNN) sur les DEUX tables (Order + Refund)
-				// — la séquence est partagée pour garantir l'unicité globale.
-				const lastRow = await tx.$queryRaw<Array<{ cn: string | null }>>(
-					Prisma.sql`
-						SELECT MAX(cn) AS cn FROM (
-							SELECT "creditNoteNumber" AS cn FROM "Order"
-								WHERE "creditNoteNumber" LIKE ${prefix + "%"}
-							UNION ALL
-							SELECT "creditNoteNumber" AS cn FROM "Refund"
-								WHERE "creditNoteNumber" LIKE ${prefix + "%"}
-						) t
-					`,
-				);
-
-				let nextSequence = 1;
-				const lastNumber = lastRow[0]?.cn;
-				if (lastNumber) {
-					const parsed = parseInt(lastNumber.slice(prefix.length), 10);
-					if (!isNaN(parsed)) {
-						nextSequence = parsed + 1;
-					}
-				}
-
-				if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
-					throw new BusinessError(
-						`Séquence avoir saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
-							`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
-						"CREDIT_NOTE_SEQUENCE_OVERFLOW",
-					);
-				}
-
-				const creditNoteNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
+				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 				const now = new Date();
 
 				const updated = await tx.refund.update({
@@ -193,6 +186,14 @@ export async function issueCreditNoteForRefund(
 					service: "issue-credit-note",
 				});
 				return { kind: "noop", reason: "missing" };
+			}
+
+			if (result.kind === "full-refund-on-order") {
+				logger.info(
+					`issueCreditNoteForRefund — refund ${refundId} is a full refund — avoir porté par voidInvoice (Order), pas de second avoir sur Refund (EINV-SEQ-001)`,
+					{ service: "issue-credit-note" },
+				);
+				return { kind: "noop", reason: "full-refund-voided-on-order" };
 			}
 
 			if (result.kind === "already-issued") {

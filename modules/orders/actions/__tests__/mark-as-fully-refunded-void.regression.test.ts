@@ -230,10 +230,12 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			expect(result.message).toContain("A-2026-00099");
 		});
 
-		it("EINV-CREDIT-001 garde anti-green-for-wrong-reason : issueCreditNoteForRefund + recordRefundEReporting SONT appelés sur le Refund manuel", async () => {
-			// Sans cette assertion, le test aurait été « green for the wrong reason »
-			// si un dev futur retirait l'appel à issueCreditNoteForRefund — le mock
-			// vi.fn() couvrirait silencieusement la régression (cf audit 2026-05-28).
+		it("EINV-SEQ-001 : recordRefundEReporting appelé sur le Refund manuel, mais issueCreditNoteForRefund JAMAIS (avoir porté par voidInvoice)", async () => {
+			// EINV-SEQ-001 (Option A) : ce flow est un remboursement TOTAL. L'avoir
+			// est émis exclusivement par voidInvoice (Order.creditNoteNumber). Émettre
+			// EN PLUS un avoir par Refund consommerait deux numéros A-YYYY pour un seul
+			// remboursement (avoir fictif, Art. 272-I/286 CGI). L'e-reporting REFUND
+			// reste rattaché au Refund (indépendant de la numérotation de l'avoir).
 			mockIssueCreditNoteForRefund.mockResolvedValue({
 				kind: "issued",
 				creditNoteNumber: "A-2026-00101",
@@ -242,14 +244,10 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 
 			await markAsFullyRefunded(undefined, validFormData);
 
-			expect(mockIssueCreditNoteForRefund).toHaveBeenCalledTimes(1);
-			expect(mockIssueCreditNoteForRefund).toHaveBeenCalledWith(
-				expect.objectContaining({
-					refundId: expect.any(String),
-					source: "ADMIN",
-				}),
-			);
+			expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 			expect(mockRecordRefundEReporting).toHaveBeenCalledTimes(1);
+			// voidInvoice reste l'émetteur unique de l'avoir pour le full refund.
+			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
 		});
 	});
 

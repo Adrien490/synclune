@@ -1,8 +1,7 @@
 /**
  * @regression einv-format-010-renderer-purity
  *
- * Verrouille l'invariant architectural #14 (CLAUDE.md objectifs Factur-X) :
- * les renderers (`render-invoice-pdf.ts`, `render-facturx.ts`) ne contiennent
+ * Verrouille l'invariant : le renderer PDF (`render-invoice-pdf.ts`) ne contient
  * AUCUN calcul fiscal — tout est pré-agrégé dans `buildInvoiceData()` et figé
  * dans `InvoiceData` avant le rendu.
  *
@@ -18,16 +17,10 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderFacturXMinimum } from "../render-facturx";
 import { renderInvoicePdf } from "../render-invoice-pdf";
 import type { InvoiceData } from "../../types/invoice-data";
 
-const RENDERERS = [
-	"modules/invoices/services/render-invoice-pdf.ts",
-	"modules/invoices/services/render-facturx.ts",
-	"modules/invoices/services/render-facturx-basic.ts",
-	"modules/invoices/services/render-ubl.ts",
-];
+const RENDERERS = ["modules/invoices/services/render-invoice-pdf.ts"];
 
 function loadRenderer(relPath: string): string {
 	const abs = resolve(process.cwd(), relPath);
@@ -197,13 +190,6 @@ describe("renderer purity — no fiscal aggregation in render-* sources", () => 
 });
 
 describe("renderer determinism — same InvoiceData → same bytes", () => {
-	it("renderFacturXMinimum is deterministic", () => {
-		const data = makeFixture();
-		const xml1 = renderFacturXMinimum(data);
-		const xml2 = renderFacturXMinimum(data);
-		expect(xml1).toBe(xml2);
-	});
-
 	it("renderInvoicePdf is deterministic (SHA-256 stable)", () => {
 		const data = makeFixture();
 		const pdf1 = new Uint8Array(renderInvoicePdf(data));

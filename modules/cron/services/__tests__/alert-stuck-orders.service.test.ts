@@ -262,4 +262,27 @@ describe("alertStuckOrders", () => {
 			"email-failed",
 		]);
 	});
+
+	it("EINV-CRON-005: scanne les batches e-reporting ABANDONED en plus de PENDING/RETRYING/REJECTED", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.eReportingBatch.findMany.mockResolvedValueOnce([
+			{
+				id: "batch_abandoned",
+				status: "ABANDONED",
+				createdAt: new Date(NOW.getTime() - 72 * 60 * 60 * 1000),
+			},
+		]);
+
+		const result = await alertStuckOrders();
+
+		const batchCall = mockPrisma.eReportingBatch.findMany.mock.calls[0]![0];
+		expect(batchCall.where.status.in).toEqual(
+			expect.arrayContaining(["PENDING", "RETRYING", "REJECTED", "ABANDONED"]),
+		);
+		// Un batch abandonné bloqué > 48h déclenche l'alerte admin (rappel hebdo).
+		expect(mockSendAdminEReportingStuckAlert).toHaveBeenCalledTimes(1);
+		const payload = mockSendAdminEReportingStuckAlert.mock.calls[0]![0];
+		expect(payload.stuckBatches[0]).toMatchObject({ id: "batch_abandoned", status: "ABANDONED" });
+		expect(result.ereportingStuck).toBe(1);
+	});
 });

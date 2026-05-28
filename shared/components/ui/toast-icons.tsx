@@ -5,7 +5,8 @@
  * Métaphores :
  * - success  : diamant + sparkle doré
  * - info     : cercle informatif minimaliste
- * - error    : coeur brisé (animation heart-beat)
+ * - error    : coeur brisé rouge (text-destructive, statique) — sémantique d'alerte
+ *              alignée sur le border-left destructive du toast Sonner desktop.
  * - warning  : étoile dorée (animation sparkle-pulse)
  * - loading  : anneau + sparkle (animation spin)
  * - wishlist : cœur plein + sparkle (mobile uniquement via `microVariant`)
@@ -54,7 +55,7 @@ export const toastIcons = {
 	error: (
 		<div className="relative" aria-hidden="true">
 			<svg
-				className="text-primary animate-heart-beat size-[18px]"
+				className="text-destructive size-[18px]"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -66,13 +67,6 @@ export const toastIcons = {
 					d="M12 21C12 21 4 14 4 8.5C4 5.5 6.5 3 9.5 3C11 3 12 4 12 4C12 4 13 3 14.5 3C17.5 3 20 5.5 20 8.5C20 14 12 21 12 21Z"
 				/>
 				<path strokeLinecap="round" strokeLinejoin="round" d="M12 4L10 10L14 12L12 21" />
-			</svg>
-			<svg
-				className="text-primary/60 animate-sparkle-pulse absolute -right-0.5 -bottom-0.5 size-1.5"
-				viewBox="0 0 24 24"
-				fill="currentColor"
-			>
-				<path d="M12 0L13.5 9L24 12L13.5 15L12 24L10.5 15L0 12L10.5 9L12 0Z" />
 			</svg>
 		</div>
 	),

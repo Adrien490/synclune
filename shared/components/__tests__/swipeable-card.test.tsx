@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -470,6 +470,97 @@ describe("SwipeableCard", () => {
 			const width = 400;
 			const extreme = applyRubberBand(9999, width, 80);
 			expect(extreme).toBeLessThanOrEqual(width * 0.85);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Peek nudge (one-shot discoverability)
+	// -------------------------------------------------------------------------
+
+	describe("peek nudge", () => {
+		beforeEach(() => {
+			vi.useFakeTimers();
+		});
+
+		afterEach(() => {
+			vi.runOnlyPendingTimers();
+			vi.useRealTimers();
+		});
+
+		const onAction = vi.fn();
+		const rightAction = {
+			children: <span>Notes</span>,
+			label: "Ouvrir les notes",
+			onAction,
+		};
+
+		it("auto-reveals the card then snaps back, firing no action", () => {
+			onAction.mockClear();
+			const { container } = render(
+				<SwipeableCard peek rightAction={rightAction}>
+					<span>Card</span>
+				</SwipeableCard>,
+			);
+
+			// Before the delay: card at rest.
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+
+			// After PEEK_DELAY_MS (700ms): card slid open (positive offset for a right action).
+			act(() => {
+				vi.advanceTimersByTime(700);
+			});
+			const opened = getSlidingCard(container)?.style.transform ?? "";
+			expect(opened).toContain("translateX(");
+			expect(opened).not.toBe("translateX(0px)");
+
+			// After PEEK_HOLD_MS more (650ms): snapped back to rest.
+			act(() => {
+				vi.advanceTimersByTime(650);
+			});
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+
+			// Demo only — the action must never fire.
+			expect(onAction).not.toHaveBeenCalled();
+		});
+
+		it("does nothing under prefers-reduced-motion", () => {
+			mockReducedMotion.value = true;
+			const { container } = render(
+				<SwipeableCard peek rightAction={rightAction}>
+					<span>Card</span>
+				</SwipeableCard>,
+			);
+
+			act(() => {
+				vi.advanceTimersByTime(700);
+			});
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+		});
+
+		it("does nothing when no action is configured", () => {
+			const { container } = render(
+				<SwipeableCard peek>
+					<span>Card</span>
+				</SwipeableCard>,
+			);
+
+			act(() => {
+				vi.advanceTimersByTime(700);
+			});
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
+		});
+
+		it("does nothing when peek is false (default)", () => {
+			const { container } = render(
+				<SwipeableCard rightAction={rightAction}>
+					<span>Card</span>
+				</SwipeableCard>,
+			);
+
+			act(() => {
+				vi.advanceTimersByTime(2000);
+			});
+			expect(getSlidingCard(container)?.style.transform).toBe("translateX(0px)");
 		});
 	});
 });

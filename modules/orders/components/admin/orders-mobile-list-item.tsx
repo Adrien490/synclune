@@ -20,6 +20,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
 import { useLongPress } from "@/shared/hooks/use-long-press";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -124,9 +125,15 @@ function OrderCardContent({
  * - **Mode sélection ON** : SwipeableCard, swipe et long-press désactivés ;
  *   la card devient `<button role="checkbox">` qui toggle la sélection (pattern
  *   Mail iOS, géré via `MobileSelectableCard`).
+ *
+ * `isFirst` active le « peek nudge » de découvrabilité (cf. `useGestureHintOnce`) :
+ * seul le premier item de la première page joue la démo de swipe, une fois par appareil.
  */
-export function OrdersMobileListItem({ order }: { order: Order }) {
+export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst?: boolean }) {
 	const ctx = useBulkSelectionContextOptional();
+	// Hook appelé inconditionnellement (rules-of-hooks) mais désactivé hors 1er item :
+	// aucune lecture localStorage superflue sur les autres cartes.
+	const peek = useGestureHintOnce("admin-orders", { enabled: isFirst });
 	const pendingCtx = useAdminListPendingContextOptional();
 	const isPendingItem = pendingCtx?.isPending(order.id) ?? false;
 	const pendingKind = pendingCtx?.pendingKind ?? null;
@@ -172,6 +179,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 		<>
 			<SwipeableCard
 				className="rounded-lg"
+				peek={peek}
 				rightAction={{
 					children: <StickyNote className="text-secondary-foreground size-5" aria-hidden="true" />,
 					label: `Ouvrir les notes de ${order.orderNumber}`,

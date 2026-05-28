@@ -79,6 +79,7 @@
 		"@radix-ui/react-tooltip": "^1.2.8",
 		"@sentry/nextjs": "^10.54.0",
 		"@serwist/turbopack": "^9.5.11",
+		"@stackforge-eu/factur-x": "^1.1.0",
 		"@stripe/react-stripe-js": "^6.4.0",
 		"@stripe/stripe-js": "^9.7.0",
 		"@tanstack/react-form": "^1.32.1",

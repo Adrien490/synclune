@@ -77,22 +77,6 @@
 		{
 			"path": "/api/cron/reconcile-invoices",
 			"schedule": "0 2 * * *"
-		},
-		{
-			"path": "/api/cron/transmit-invoices",
-			"schedule": "*/30 * * * *"
-		},
-		{
-			"path": "/api/cron/retry-invoice-transmissions",
-			"schedule": "*/15 * * * *"
-		},
-		{
-			"path": "/api/cron/reconcile-invoice-statuses",
-			"schedule": "0 */4 * * *"
-		},
-		{
-			"path": "/api/cron/refresh-stale-directory-entries",
-			"schedule": "0 6 1 * *"
 		}
 	]
 }

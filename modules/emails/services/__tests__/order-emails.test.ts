@@ -16,30 +16,15 @@ vi.mock("@/emails/shipping-confirmation-email", () => ({
 	ShippingConfirmationEmail: vi.fn((props) => ({ type: "ShippingConfirmationEmail", props })),
 }));
 
-vi.mock("@/emails/tracking-update-email", () => ({
-	TrackingUpdateEmail: vi.fn((props) => ({ type: "TrackingUpdateEmail", props })),
-}));
-
-vi.mock("@/emails/delivery-confirmation-email", () => ({
-	DeliveryConfirmationEmail: vi.fn((props) => ({ type: "DeliveryConfirmationEmail", props })),
-}));
-
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
 		ORDER_CONFIRMATION: "Confirmation de commande - Synclune",
 		ORDER_SHIPPED: "Votre commande a été expédiée - Synclune",
-		ORDER_TRACKING_UPDATE: "Mise à jour du suivi de votre commande - Synclune",
-		ORDER_DELIVERED: "Votre commande a été livrée - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
 }));
 
-import {
-	sendOrderConfirmationEmail,
-	sendShippingConfirmationEmail,
-	sendTrackingUpdateEmail,
-	sendDeliveryConfirmationEmail,
-} from "../order-emails";
+import { sendOrderConfirmationEmail, sendShippingConfirmationEmail } from "../order-emails";
 
 const mockShippingAddress = {
 	firstName: "Marie",
@@ -192,102 +177,5 @@ describe("sendShippingConfirmationEmail", () => {
 		});
 
 		expect(result).toEqual({ success: true, data: { id: "email-2" } });
-	});
-});
-
-describe("sendTrackingUpdateEmail", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
-	});
-
-	it("should call renderAndSend with correct component props", async () => {
-		await sendTrackingUpdateEmail({
-			to: "customer@test.com",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			trackingNumber: "TRACK123",
-			trackingUrl: "https://tracking.test.com/TRACK123",
-			carrierLabel: "Chronopost",
-		});
-
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "TrackingUpdateEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerName: "Marie Dupont",
-					trackingNumber: "TRACK123",
-					trackingUrl: "https://tracking.test.com/TRACK123",
-					carrierLabel: "Chronopost",
-				}),
-			}),
-			expect.objectContaining({
-				to: "customer@test.com",
-				subject: "Mise à jour du suivi de votre commande - Synclune",
-				replyTo: "contact@test.com",
-				tags: [{ name: "category", value: "order" }],
-			}),
-		);
-	});
-
-	it("should return the result from renderAndSend", async () => {
-		const result = await sendTrackingUpdateEmail({
-			to: "customer@test.com",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			trackingNumber: "TRACK123",
-			trackingUrl: null,
-			carrierLabel: "Chronopost",
-		});
-
-		expect(result).toEqual({ success: true, data: { id: "email-3" } });
-	});
-});
-
-describe("sendDeliveryConfirmationEmail", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } });
-	});
-
-	it("should call renderAndSend with correct component props", async () => {
-		await sendDeliveryConfirmationEmail({
-			to: "customer@test.com",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			deliveryDate: "2026-02-24",
-			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		});
-
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "DeliveryConfirmationEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerName: "Marie Dupont",
-					deliveryDate: "2026-02-24",
-					orderDetailsUrl: "https://test.com/commandes/CMD-001",
-				}),
-			}),
-			expect.objectContaining({
-				to: "customer@test.com",
-				subject: "Votre commande a été livrée - Synclune",
-				replyTo: "contact@test.com",
-				tags: [{ name: "category", value: "order" }],
-			}),
-		);
-	});
-
-	it("should return the result from renderAndSend", async () => {
-		const result = await sendDeliveryConfirmationEmail({
-			to: "customer@test.com",
-			orderNumber: "CMD-001",
-			customerName: "Marie Dupont",
-			deliveryDate: "2026-02-24",
-			orderDetailsUrl: "https://test.com/commandes/CMD-001",
-		});
-
-		expect(result).toEqual({ success: true, data: { id: "email-4" } });
 	});
 });

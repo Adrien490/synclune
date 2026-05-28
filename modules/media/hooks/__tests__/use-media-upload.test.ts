@@ -56,6 +56,7 @@ vi.mock("sonner", () => ({
 
 import { toast } from "sonner";
 import { useMediaUpload } from "../use-media-upload";
+import { __resetDesktopCoalesce } from "@/shared/utils/toast";
 
 // ============================================================================
 // HELPERS
@@ -89,6 +90,7 @@ function createOversizedVideoFile(): File {
 describe("useMediaUpload", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		__resetDesktopCoalesce();
 		// Default: withRetry just calls fn() directly
 		mockWithRetry.mockImplementation((fn: () => unknown) => fn());
 		// Default: thumbnail generation supported

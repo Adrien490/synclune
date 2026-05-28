@@ -3,23 +3,19 @@
 import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
-import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
-import { extractCustomerFirstName } from "../utils/customer-name";
+import { createOrderAuditTx } from "../utils/order-audit";
 import { canMarkAsDelivered } from "../services/order-status-validation.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Marque une commande comme livrée
@@ -31,7 +27,6 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
  * - Passe OrderStatus à DELIVERED
  * - Passe FulfillmentStatus à DELIVERED
  * - Enregistre la date de livraison effective
- * - Envoie un email au client si sendEmail = true
  */
 export async function markAsDelivered(
 	_prevState: ActionState | undefined,
@@ -46,11 +41,9 @@ export async function markAsDelivered(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawId = safeFormGet(formData, "id");
-		const sendEmail = safeFormGet(formData, "sendEmail");
 
 		const validated = validateInput(markAsDeliveredSchema, {
 			id: rawId,
-			sendEmail: sendEmail ?? "true",
 		});
 		if ("error" in validated) return validated.error;
 
@@ -67,9 +60,6 @@ export async function markAsDelivered(
 					status: true,
 					fulfillmentStatus: true,
 					userId: true,
-					customerEmail: true,
-					customerName: true,
-					shippingFirstName: true,
 				},
 			});
 
@@ -89,9 +79,6 @@ export async function markAsDelivered(
 				},
 			});
 
-			// ORD-BIZ-012 : `emailRequested` capture l'intention admin (case cochée
-			// dans le dialog). Le résultat réel de l'envoi (post-commit) est tracé
-			// via une 2e entrée OrderHistory si l'email échoue (voir post-commit).
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "DELIVERED",
@@ -104,7 +91,6 @@ export async function markAsDelivered(
 				source: HistorySource.ADMIN,
 				metadata: {
 					deliveryDate: deliveryDate.toISOString(),
-					emailRequested: validated.data.sendEmail,
 				},
 			});
 
@@ -135,64 +121,9 @@ export async function markAsDelivered(
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(order.userId));
 		}
 
-		// Envoyer l'email de confirmation de livraison au client
-		let emailSent = false;
-		if (validated.data.sendEmail && order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(
-				order.customerName,
-				order.shippingFirstName,
-			);
-
-			// Formater la date de livraison
-			const deliveryDateStr = deliveryDate.toLocaleDateString("fr-FR", {
-				weekday: "long",
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-			});
-
-			// URL vers la page de détail de la commande
-			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-
-			try {
-				await sendDeliveryConfirmationEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: customerFirstName,
-					deliveryDate: deliveryDateStr,
-					orderDetailsUrl,
-					// EMAIL-AUDIT-003 : dedup Resend 24h contre double-clic admin.
-					idempotencyKey: `order-delivered:${order.id}`,
-				});
-				emailSent = true;
-			} catch (emailError) {
-				logger.error("Échec envoi email livraison", emailError, { action: "mark-as-delivered" });
-			}
-		}
-
-		// ORD-BIZ-012 : trace post-commit du résultat réel de l'envoi email
-		// (si demandé) pour distinguer l'intention (audit initial) du fait.
-		if (validated.data.sendEmail && !emailSent && order.customerEmail) {
-			await createOrderAudit({
-				orderId: order.id,
-				action: "DELIVERED",
-				note: "Email de confirmation de livraison non envoyé (échec Resend ou client sans email)",
-				authorId: adminUser.id,
-				authorName: adminUser.name ?? "Admin",
-				source: HistorySource.SYSTEM,
-				metadata: { emailDeliveryFailed: true, postCommit: true },
-			});
-		}
-
-		const emailMessage = emailSent
-			? " Email envoyé au client."
-			: validated.data.sendEmail
-				? " (Échec envoi email)"
-				: "";
-
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme livrée.${emailMessage}`,
+			message: `Commande ${order.orderNumber} marquée comme livrée.`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_DELIVERED_FAILED);

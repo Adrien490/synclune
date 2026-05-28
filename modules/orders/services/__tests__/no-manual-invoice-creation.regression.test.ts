@@ -78,19 +78,19 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 		);
 	});
 
-	it("only void-invoice + issue-credit-note services emit A-YYYY-NNNNN templates", () => {
+	it("only credit-note-sequence.service.ts emits the A-YYYY-NNNNN template (SSOT, EINV-PRISMA-001)", () => {
 		const pattern = /`A-\$\{[^}]*\}-/;
 		const writers = allSourceFiles
 			.filter((f) => pattern.test(readFileSync(f, "utf-8")))
 			.map(relPath);
 		expect(writers.sort()).toEqual(
 			[
-				// Full void de la facture (Order.creditNoteNumber, Art. 272-I CGI)
-				"modules/orders/services/void-invoice.service.ts",
-				// Avoir partiel OU total rattaché à un Refund (Refund.creditNoteNumber,
-				// Art. 272-I CGI). Séquence partagée avec void-invoice via UNION SQL +
-				// même advisory lock 2_000_000+year — unicité globale garantie.
-				"modules/refunds/services/issue-credit-note.service.ts",
+				// SSOT de la séquence avoir A-YYYY-NNNNN (advisory lock 2_000_000+year +
+				// lookup UNION Order∪Refund). void-invoice.service.ts (full void Order)
+				// ET issue-credit-note.service.ts (avoir Refund) délèguent tous deux à
+				// `nextCreditNoteNumberTx` ici → un seul émetteur du template, unicité
+				// cross-table garantie (EINV-PRISMA-001, audit séquences 2026-05-28).
+				"modules/invoices/services/credit-note-sequence.service.ts",
 			].sort(),
 		);
 	});
@@ -147,11 +147,6 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 				// Archivage PDF avoir immuable UploadThing + SHA-256 (Art. L102 B LPF,
 				// symétrie facture pour Art. 272-I CGI)
 				"modules/orders/services/archive-credit-note-pdf.service.ts",
-				// Snapshot immuable du invoiceNumber dans InvoiceTransmissionLog (audit
-				// transmission PDP) — n'écrit PAS sur Order.invoiceNumber. Le pattern
-				// 40-lignes du test matche aussi le `data: {` du log create qui suit
-				// le `tx.order.update`. Cf. EINV-PROVIDER-001 + EINV-PROVIDER-002.
-				"modules/orders/services/persist-pdp-transmission.service.ts",
 			].sort(),
 		);
 	});

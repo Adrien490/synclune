@@ -119,7 +119,10 @@ export async function confirmCheckout(
 
 			const { firstName, lastName } = parseFullName(v.shippingAddress.fullName);
 
-			// 5. Get or create Stripe customer
+			// 5. Get or create Stripe customer + résoudre le snapshot e-invoicing B2B/B2G.
+			// Le même `User` porte le `stripeCustomerId` et l'identité fiscale figée
+			// au checkout (Art. 289 CGI). Les invités restent B2C (pas de compte → pas
+			// d'identifiants entreprise).
 			let stripeCustomerId: string | null = null;
 			if (userId) {
 				const user = await prisma.user.findUnique({

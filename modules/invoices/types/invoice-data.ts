@@ -64,8 +64,14 @@ export interface VoidedInfo {
 }
 
 /**
- * Format de rendu cible. Le payload `InvoiceData` est identique pour tous —
- * seul le renderer change (`renderInvoicePdf` / `renderFacturX` / etc.).
+ * Format de rendu cible (métadonnée pivot informative — ne pilote PAS le
+ * routage : le renderer PDF est appelé explicitement et branche sur le préfixe
+ * `A-` pour distinguer facture/avoir).
+ *
+ * Synclune (micro-entreprise franchise TVA, B2C) ne produit que du **PDF**. Les
+ * formats XML structurés (Factur-X / UBL / CII), réservés à la transmission
+ * B2B/B2G sur PDP, ont été retirés (recentrage B2C 2026-05-28). La valeur reste
+ * un union pour compat de signature mais seul `"PDF"` est émis.
  */
 export type InvoiceFormat = "PDF" | "FACTURX" | "UBL" | "CII";
 

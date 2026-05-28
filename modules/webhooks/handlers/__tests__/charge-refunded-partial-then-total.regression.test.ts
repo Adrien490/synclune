@@ -29,6 +29,7 @@ const {
 	mockMarkRefundAsFailed,
 	mockGetBaseUrl,
 	mockVoidInvoice,
+	mockIssueCreditNoteForRefund,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
@@ -56,6 +57,7 @@ const {
 	mockMarkRefundAsFailed: vi.fn(),
 	mockGetBaseUrl: vi.fn(),
 	mockVoidInvoice: vi.fn(),
+	mockIssueCreditNoteForRefund: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -94,6 +96,10 @@ vi.mock("@/shared/lib/stripe", () => ({ stripe: {} }));
 
 vi.mock("@/modules/orders/services/void-invoice.service", () => ({
 	voidInvoice: mockVoidInvoice,
+}));
+
+vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
+	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
 
 import type Stripe from "stripe";
@@ -138,6 +144,7 @@ describe("@regression charge-refunded-partial-then-total — EINV-TEST-009", () 
 			creditNoteGeneratedAt: new Date(),
 			invoiceVoidedAt: new Date(),
 		});
+		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
 	});
 
 	it("saga 3 partiels (2000+3000+1000) puis total final → voidInvoice appelé 1× au total", async () => {
@@ -216,6 +223,28 @@ describe("@regression charge-refunded-partial-then-total — EINV-TEST-009", () 
 		await handleChargeRefunded(makeCharge(10000, "direct"));
 
 		expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
+	});
+
+	it("total AVEC un Refund COMPLETED sans avoir → voidInvoice 1×, issueCreditNoteForRefund JAMAIS (EINV-SEQ-001 guard 4c)", async () => {
+		// Verrouille le guard `if (!isFullyRefunded)` de l'étape 4c : sur un
+		// remboursement TOTAL, même quand `refund.findMany` renvoie un Refund
+		// COMPLETED sans creditNoteNumber, la boucle 4c NE DOIT PAS émettre d'avoir
+		// sur le Refund (voidInvoice/Order est l'émetteur canonique). Sans le guard,
+		// deux numéros A-YYYY seraient consommés pour un seul remboursement.
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceStatus: "GENERATED",
+			invoiceNumber: INVOICE_NUMBER,
+		});
+		// Refund COMPLETED sans avoir présent — piège du guard : la boucle 4c le
+		// ramasserait si elle n'était pas court-circuitée par `!isFullyRefunded`.
+		mockPrisma.refund.findMany.mockResolvedValue([{ id: "refund-total-1" }]);
+
+		await handleChargeRefunded(makeCharge(10000, "total-with-refund"));
+
+		expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
+		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 	});
 
 	it("saga partiels uniquement (jamais total) → voidInvoice JAMAIS appelé", async () => {

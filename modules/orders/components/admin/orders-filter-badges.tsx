@@ -91,6 +91,17 @@ function formatOrderFilter(
 		};
 	}
 
+	// Presets booléens maintenance facturation (EINV-UI-005 + EINV-UI-106)
+	if (filterKey === "invoiceAnomaly") {
+		return { label: "Facturation", displayValue: "Payée sans facture" };
+	}
+	if (filterKey === "pdfNotArchived") {
+		return { label: "Facturation", displayValue: "PDF non archivé" };
+	}
+	if (filterKey === "retryDeferred") {
+		return { label: "Facturation", displayValue: "Retry escaladé" };
+	}
+
 	// Cas par défaut : afficher tel quel
 	return {
 		label: filterKey,

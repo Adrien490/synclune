@@ -337,8 +337,6 @@
 	.product-item {
 		animation: grid-crossfade-in 0.4s cubic-bezier(0, 0, 0.2, 1) both;
 		animation-delay: calc(var(--item-index, 0) * 30ms);
-		content-visibility: auto;
-		contain-intrinsic-size: auto 360px;
 	}
 
 	/* ==========================================

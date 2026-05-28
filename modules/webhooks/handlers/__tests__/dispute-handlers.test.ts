@@ -389,12 +389,8 @@ describe("handleDisputeClosed", () => {
 		// paymentStatus must not be touched
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 
-		// Verify the returned tasks
-		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
-		expect(alertTask?.data).toMatchObject({
-			reason: "Litige clôturé — Vous avez GAGNÉ",
-			deadline: null,
-		});
+		// No admin alert on dispute close (only emitted on dispute open)
+		expect(result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT")).toBeUndefined();
 		expect(result?.success).toBe(true);
 	});
 
@@ -423,11 +419,8 @@ describe("handleDisputeClosed", () => {
 			data: { paymentStatus: "REFUNDED" },
 		});
 
-		// Verify the returned tasks
-		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
-		expect(alertTask?.data).toMatchObject({
-			reason: "Litige clôturé — Vous avez PERDU (montant débité)",
-		});
+		// No admin alert on dispute close (only emitted on dispute open)
+		expect(result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT")).toBeUndefined();
 		expect(result?.success).toBe(true);
 	});
 
@@ -489,16 +482,14 @@ describe("handleDisputeClosed", () => {
 		});
 	});
 
-	it("should include correct dashboard URLs in the ADMIN_DISPUTE_ALERT task", async () => {
+	it("should emit ONLY an INVALIDATE_CACHE task (no admin alert on close)", async () => {
 		const dispute = makeDispute({ status: "won" });
 
 		const result = await handleDisputeClosed(dispute);
 
-		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
-		expect(alertTask?.data).toMatchObject({
-			dashboardUrl: "https://synclune.fr/admin/ventes/commandes/order-1",
-			stripeDashboardUrl: "https://dashboard.stripe.com/test/disputes/dp_test_1",
-		});
+		expect(result?.tasks).toHaveLength(1);
+		expect(result?.tasks?.[0]?.type).toBe("INVALIDATE_CACHE");
+		expect(result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT")).toBeUndefined();
 	});
 
 	it("should extract payment_intent id when payment_intent is an object", async () => {
@@ -525,16 +516,6 @@ describe("handleDisputeClosed", () => {
 		expect(mockTx.dispute.update).not.toHaveBeenCalled();
 		// Note should still be created
 		expect(mockTx.orderNote.create).toHaveBeenCalledTimes(1);
-	});
-
-	it("should use fallback email when customerEmail is empty string", async () => {
-		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ customerEmail: "" }));
-		const dispute = makeDispute({ status: "won" });
-
-		const result = await handleDisputeClosed(dispute);
-
-		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
-		expect(alertTask?.data).toMatchObject({ customerEmail: "Email non disponible" });
 	});
 });
 

@@ -4,11 +4,15 @@
  * Garde-fou EMAIL-AUDIT-002 + EMAIL-AUDIT-010 :
  * Si `buildPostCheckoutTasks` ou `buildPostCheckoutTasksFromPI` est appelé 2× sur la
  * même commande (cas réel : `cron retry-webhooks` rejoue checkout.session.completed),
- * les tasks ORDER_CONFIRMATION_EMAIL et ADMIN_NEW_ORDER_EMAIL doivent porter une
- * `idempotencyKey` STABLE — Resend dédupera côté serveur sur 24 h.
+ * la task ORDER_CONFIRMATION_EMAIL doit porter une `idempotencyKey` STABLE — Resend
+ * dédupera côté serveur sur 24 h — et apparaître EXACTEMENT une fois par build.
  *
- * Si quelqu'un supprime l'`idempotencyKey` ou le rend variable (timestamp, nonce…),
- * ce test échoue et bloque la régression.
+ * Verrouille aussi le retrait de l'email admin « nouvelle commande » : aucune task
+ * ADMIN_NEW_ORDER_EMAIL ne doit plus être émise par ces builders.
+ *
+ * Si quelqu'un supprime l'`idempotencyKey`, le rend variable (timestamp, nonce…),
+ * duplique la confirmation client, ou réintroduit l'email admin, ce test échoue et
+ * bloque la régression.
  */
 import { describe, expect, it, vi } from "vitest";
 import type Stripe from "stripe";
@@ -87,45 +91,47 @@ function makePaymentIntent(overrides: Partial<Stripe.PaymentIntent> = {}): Strip
 }
 
 describe("checkout-post-tasks — webhook double-fire no duplicate email", () => {
-	it("emits ORDER_CONFIRMATION_EMAIL with stable idempotencyKey across two builds", () => {
+	it("emits ORDER_CONFIRMATION_EMAIL exactly once with a stable idempotencyKey across two builds", () => {
 		const order = makeOrder();
 		const a = buildPostCheckoutTasks(order, makeSession());
 		const b = buildPostCheckoutTasks(order, makeSession());
-		const taskA = a.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
-		const taskB = b.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		const emailsA = a.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		const emailsB = b.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		expect(emailsA).toHaveLength(1);
+		expect(emailsB).toHaveLength(1);
+		const taskA = emailsA[0];
+		const taskB = emailsB[0];
 		if (taskA?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task A");
 		if (taskB?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task B");
 		expect(taskA.data.idempotencyKey).toBe("order-confirm-order_42");
 		expect(taskB.data.idempotencyKey).toBe(taskA.data.idempotencyKey);
 	});
 
-	it("emits ADMIN_NEW_ORDER_EMAIL with orderId propagated for idempotencyKey downstream", () => {
+	it("never emits an admin new-order task (removed)", () => {
 		const order = makeOrder();
 		const tasks = buildPostCheckoutTasks(order, makeSession());
-		const adminTask = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL");
-		if (adminTask?.type !== "ADMIN_NEW_ORDER_EMAIL") throw new Error("expected admin task");
-		// `orderId` est obligatoire et identifie la commande pour la idempotencyKey
-		// `admin-new-order:${orderId}` posée dans sendAdminNewOrderEmail.
-		expect(adminTask.data.orderId).toBe("order_42");
+		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
 	});
 
-	it("PI flow emits the same stable idempotencyKey on ORDER_CONFIRMATION_EMAIL", () => {
+	it("PI flow emits ORDER_CONFIRMATION_EMAIL exactly once with the same stable idempotencyKey", () => {
 		const order = makeOrder();
 		const a = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
 		const b = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
-		const taskA = a.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
-		const taskB = b.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		const emailsA = a.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		const emailsB = b.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		expect(emailsA).toHaveLength(1);
+		expect(emailsB).toHaveLength(1);
+		const taskA = emailsA[0];
+		const taskB = emailsB[0];
 		if (taskA?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task A");
 		if (taskB?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task B");
 		expect(taskA.data.idempotencyKey).toBe("order-confirm-order_42");
 		expect(taskB.data.idempotencyKey).toBe(taskA.data.idempotencyKey);
 	});
 
-	it("PI flow emits ADMIN_NEW_ORDER_EMAIL with orderId propagated", () => {
+	it("PI flow never emits an admin new-order task (removed)", () => {
 		const order = makeOrder();
 		const tasks = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
-		const adminTask = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL");
-		if (adminTask?.type !== "ADMIN_NEW_ORDER_EMAIL") throw new Error("expected admin task");
-		expect(adminTask.data.orderId).toBe("order_42");
+		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
 	});
 });

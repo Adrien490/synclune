@@ -1,43 +1,39 @@
 # Cron jobs Synclune
 
-23 cron jobs Vercel pilotés par `vercel.json` (SSOT). Tous les schedules sont en **UTC** (Vercel n'accepte pas d'autre TZ). Cette table donne les équivalents France pour faciliter la lecture humaine.
+19 cron jobs Vercel pilotés par `vercel.json` (SSOT). Tous les schedules sont en **UTC** (Vercel n'accepte pas d'autre TZ). Cette table donne les équivalents France pour faciliter la lecture humaine.
 
-Les jobs e-invoicing (9 jobs marqués `e-invoicing` ci-dessous) sont également détaillés côté flux/PDP dans [`INVOICING.md`](./INVOICING.md). Runbook opérationnel : [`RUNBOOK-INVOICING.md`](./RUNBOOK-INVOICING.md).
+Les jobs e-invoicing (4 jobs marqués `e-invoicing` ci-dessous, scope **e-reporting B2C** uniquement — Synclune est en franchise de TVA, vente B2C : pas de transmission de facture B2B/B2G sur une PDP) sont également détaillés côté flux dans [`INVOICING.md`](./INVOICING.md). Runbook opérationnel : [`RUNBOOK-INVOICING.md`](./RUNBOOK-INVOICING.md).
 
 ## Schedules
 
-| Job                               | Schedule (UTC) | Heure France (CET / CEST) | Fréquence         | Catégorie   | Service                                                            |
-| --------------------------------- | -------------- | ------------------------- | ----------------- | ----------- | ------------------------------------------------------------------ |
-| `retry-post-webhook-tasks`        | `*/5 * * * *`  | toutes les 5 min          | toutes les 5 min  | revenue     | `modules/cron/services/retry-post-webhook-tasks.service.ts`        |
-| `reopen-store`                    | `*/15 * * * *` | toutes les 15 min         | toutes les 15 min | ops         | `modules/store-settings/services/auto-reopen.service.ts`           |
-| `retry-invoice-transmissions`     | `*/15 * * * *` | toutes les 15 min         | toutes les 15 min | e-invoicing | `modules/cron/services/retry-invoice-transmissions.service.ts`     |
-| `retry-webhooks`                  | `*/30 * * * *` | toutes les 30 min         | toutes les 30 min | revenue     | `modules/cron/services/retry-webhooks.service.ts`                  |
-| `transmit-invoices`               | `*/30 * * * *` | toutes les 30 min         | toutes les 30 min | e-invoicing | `modules/cron/services/transmit-invoices.service.ts`               |
-| `transmit-ereporting-batch`       | `*/30 * * * *` | toutes les 30 min         | toutes les 30 min | e-invoicing | `modules/cron/services/transmit-ereporting-batch.service.ts`       |
-| `sync-async-payments`             | `0 */4 * * *`  | toutes les 4h, H:00       | toutes les 4h     | revenue     | `modules/cron/services/sync-async-payments.service.ts`             |
-| `reconcile-invoice-statuses`      | `0 */4 * * *`  | toutes les 4h, H:00       | toutes les 4h     | e-invoicing | `modules/cron/services/reconcile-invoice-statuses.service.ts`      |
-| `reconcile-refunds`               | `30 */6 * * *` | toutes les 6h, H+30       | toutes les 6h     | revenue     | `modules/cron/services/reconcile-refunds.service.ts`               |
-| `build-ereporting-batch`          | `0 1 * * *`    | 02:00 / 03:00             | quotidien         | e-invoicing | `modules/cron/services/build-ereporting-batch.service.ts`          |
-| `reconcile-invoices`              | `0 2 * * *`    | 03:00 / 04:00             | quotidien         | e-invoicing | `modules/cron/services/reconcile-invoices.service.ts`              |
-| `cleanup-wishlists`               | `30 2 * * *`   | 03:30 / 04:30             | quotidien         | retention   | `modules/cron/services/cleanup-wishlists.service.ts`               |
-| `cleanup-sessions`                | `0 3 * * *`    | 04:00 / 05:00             | quotidien         | retention   | `modules/cron/services/cleanup-sessions.service.ts`                |
-| `cleanup-carts`                   | `30 3 * * *`   | 04:30 / 05:30             | quotidien         | retention   | `modules/cron/services/cleanup-carts.service.ts`                   |
-| `cleanup-pending-orders`          | `30 4 * * *`   | 05:30 / 06:30             | quotidien         | revenue     | `modules/cron/services/cleanup-pending-orders.service.ts`          |
-| `process-account-deletions`       | `0 5 * * *`    | 06:00 / 07:00             | quotidien         | RGPD        | `modules/cron/services/process-account-deletions.service.ts`       |
-| `reconcile-voided-invoices`       | `0 7 * * *`    | 08:00 / 09:00             | quotidien         | e-invoicing | `modules/cron/services/reconcile-voided-invoices.service.ts`       |
-| `send-review-requests`            | `0 10 * * *`   | 11:00 / 12:00             | quotidien         | engagement  | `modules/cron/services/send-review-requests.service.ts`            |
-| `alert-stuck-orders`              | `0 9 * * 1`    | 10:00 / 11:00 lundi       | hebdo (lundi)     | monitoring  | `modules/cron/services/alert-stuck-orders.service.ts`              |
-| `refresh-stale-directory-entries` | `0 6 1 * *`    | 07:00 / 08:00 le 1er      | mensuel (1er)     | e-invoicing | `modules/cron/services/refresh-stale-directory-entries.service.ts` |
-| `cleanup-webhook-events`          | `0 3 1 * *`    | 04:00 / 05:00 le 1er      | mensuel (1er)     | retention   | `modules/cron/services/cleanup-webhook-events.service.ts`          |
-| `hard-delete-retention`           | `0 4 2 * *`    | 05:00 / 06:00 le 2        | mensuel (2)       | RGPD        | `modules/cron/services/hard-delete-retention.service.ts`           |
-| `cleanup-orphan-media`            | `0 5 3 * *`    | 06:00 / 07:00 le 3        | mensuel (3)       | retention   | `modules/cron/services/cleanup-orphan-media.service.ts`            |
+| Job                         | Schedule (UTC) | Heure France (CET / CEST) | Fréquence         | Catégorie   | Service                                                      |
+| --------------------------- | -------------- | ------------------------- | ----------------- | ----------- | ------------------------------------------------------------ |
+| `retry-post-webhook-tasks`  | `*/5 * * * *`  | toutes les 5 min          | toutes les 5 min  | revenue     | `modules/cron/services/retry-post-webhook-tasks.service.ts`  |
+| `reopen-store`              | `*/15 * * * *` | toutes les 15 min         | toutes les 15 min | ops         | `modules/store-settings/services/auto-reopen.service.ts`     |
+| `retry-webhooks`            | `*/30 * * * *` | toutes les 30 min         | toutes les 30 min | revenue     | `modules/cron/services/retry-webhooks.service.ts`            |
+| `transmit-ereporting-batch` | `*/30 * * * *` | toutes les 30 min         | toutes les 30 min | e-invoicing | `modules/cron/services/transmit-ereporting-batch.service.ts` |
+| `sync-async-payments`       | `0 */4 * * *`  | toutes les 4h, H:00       | toutes les 4h     | revenue     | `modules/cron/services/sync-async-payments.service.ts`       |
+| `reconcile-refunds`         | `30 */6 * * *` | toutes les 6h, H+30       | toutes les 6h     | revenue     | `modules/cron/services/reconcile-refunds.service.ts`         |
+| `build-ereporting-batch`    | `0 1 * * *`    | 02:00 / 03:00             | quotidien         | e-invoicing | `modules/cron/services/build-ereporting-batch.service.ts`    |
+| `reconcile-invoices`        | `0 2 * * *`    | 03:00 / 04:00             | quotidien         | e-invoicing | `modules/cron/services/reconcile-invoices.service.ts`        |
+| `cleanup-wishlists`         | `30 2 * * *`   | 03:30 / 04:30             | quotidien         | retention   | `modules/cron/services/cleanup-wishlists.service.ts`         |
+| `cleanup-sessions`          | `0 3 * * *`    | 04:00 / 05:00             | quotidien         | retention   | `modules/cron/services/cleanup-sessions.service.ts`          |
+| `cleanup-carts`             | `30 3 * * *`   | 04:30 / 05:30             | quotidien         | retention   | `modules/cron/services/cleanup-carts.service.ts`             |
+| `cleanup-pending-orders`    | `30 4 * * *`   | 05:30 / 06:30             | quotidien         | revenue     | `modules/cron/services/cleanup-pending-orders.service.ts`    |
+| `process-account-deletions` | `0 5 * * *`    | 06:00 / 07:00             | quotidien         | RGPD        | `modules/cron/services/process-account-deletions.service.ts` |
+| `reconcile-voided-invoices` | `0 7 * * *`    | 08:00 / 09:00             | quotidien         | e-invoicing | `modules/cron/services/reconcile-voided-invoices.service.ts` |
+| `send-review-requests`      | `0 10 * * *`   | 11:00 / 12:00             | quotidien         | engagement  | `modules/cron/services/send-review-requests.service.ts`      |
+| `alert-stuck-orders`        | `0 9 * * 1`    | 10:00 / 11:00 lundi       | hebdo (lundi)     | monitoring  | `modules/cron/services/alert-stuck-orders.service.ts`        |
+| `cleanup-webhook-events`    | `0 3 1 * *`    | 04:00 / 05:00 le 1er      | mensuel (1er)     | retention   | `modules/cron/services/cleanup-webhook-events.service.ts`    |
+| `hard-delete-retention`     | `0 4 2 * *`    | 05:00 / 06:00 le 2        | mensuel (2)       | RGPD        | `modules/cron/services/hard-delete-retention.service.ts`     |
+| `cleanup-orphan-media`      | `0 5 3 * *`    | 06:00 / 07:00 le 3        | mensuel (3)       | retention   | `modules/cron/services/cleanup-orphan-media.service.ts`      |
 
 ## Conventions
 
 - **TZ Vercel** : toujours UTC. Le format `JJ HH UTC` correspond à `JJ (HH+1) CET` ou `JJ (HH+2) CEST` selon la saison France.
 - **Mensuels étalés** : les 3 crons "1er du mois" historiques (`cleanup-webhook-events` / `hard-delete-retention` / `cleanup-orphan-media`) ont été déplacés sur 3 jours différents (1er / 2 / 3) pour éviter la lock contention sur `webhook_event` et les pics simultanés UploadThing + DB.
-- **`reconcile-refunds`** : déclenché à H+30 (pas H:00) pour ne jamais chevaucher `sync-async-payments` ni `reconcile-invoice-statuses` qui démarrent à H:00 — évite le burst Stripe inter-cron.
-- **Crons e-invoicing toutes les 30 min** : `transmit-invoices` + `transmit-ereporting-batch` partagent la fenêtre (PDP call). Pas de collision DB (datasets disjoints) mais surveiller le quota PDP si batch lourd.
+- **`reconcile-refunds`** : déclenché à H+30 (pas H:00) pour ne jamais chevaucher `sync-async-payments` qui démarre à H:00 — évite le burst Stripe inter-cron.
+- **`transmit-ereporting-batch` (toutes les 30 min)** : transmet les batches e-reporting B2C à la PA. No-op tant que `INVOICE_ENABLE_EREPORTING=OFF` ou `INVOICE_PROVIDER=local`.
 - **`maxDuration`** : toutes les routes exposent `export const maxDuration = 60` (Vercel Pro). `BATCH_DEADLINE_MS = 45_000` laisse 15s de marge pour finir proprement.
 
 ## Sécurité

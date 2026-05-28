@@ -4,6 +4,19 @@ Architecture, invariants et état d'avancement de la conformité française à l
 réforme **facturation électronique 2026-2027** (Art. 286 / 289-I / 272-I /
 293 B CGI, L102 B LPF, L123-22 C. com., Directive EU 2014/55).
 
+> **⚠️ Recentrage B2C (2026-05-28).** Synclune est une micro-entreprise en
+> franchise de TVA vendant **exclusivement en B2C**. Toute l'infrastructure de
+> **transmission B2B/B2G sur PDP** (champs `Order.pdp*`, modèles
+> `InvoiceTransmissionLog` / `ProviderWebhookEvent`, crons `transmit-invoices` /
+> `retry-invoice-transmissions` / `reconcile-invoice-statuses`), l'**annuaire
+> DGFiP** (`refresh-stale-directory-entries`, champs `User`/`Order` de routing),
+> le **XML structuré** (Factur-X / UBL / CII) et la **TVA par ligne OrderItem**
+> ont été **supprimés** : jamais activés, sans pertinence pour un commerce B2C en
+> franchise. La seule couche structurée conservée est l'**e-reporting B2C**
+> agrégé (`EReportingTransaction` / `EReportingBatch`, vraie obligation Sept 2027).
+> Les sections ci-dessous décrivant la transmission PDP B2B/B2G et le XML sont
+> conservées à titre historique mais **ne correspondent plus au code**.
+
 > Audits :
 >
 > - `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27) — audit conformité initial.
@@ -122,19 +135,27 @@ processRefund() (admin Server Action)        OR    reconcile-refunds cron (DLQ)
 Référencés en détail dans **CLAUDE.md** § "Facturation électronique — invariants". Résumé :
 
 1. **Aucune création manuelle de facture** — toute facture passe par `persistInvoiceNumber` (webhook payment ou route invoice lazy fallback).
-2. **Aucun avoir manuel** — `voidInvoice` est le seul producteur de `A-YYYY-NNNNN`.
-3. **`OrderHistory` immuable** — pas de `deletedAt`, pas d'`update`/`delete`. Audit trail 10 ans.
+2. **Aucun avoir manuel** — `A-YYYY-NNNNN` n'est produit que par `voidInvoice` (full void, écrit `Order.creditNoteNumber`) et `issueCreditNoteForRefund` (refund partiel/total, écrit `Refund.creditNoteNumber`). **Les deux passent obligatoirement par le helper SSOT `nextCreditNoteNumberTx` (`modules/invoices/services/credit-note-sequence.service.ts`)** : advisory lock `2_000_000+year` + lookup `MAX` sur l'**UNION (Order ∪ Refund)**. C'est ce lookup partagé — et non les UNIQUE par table — qui garantit l'unicité cross-table (EINV-PRISMA-001). Ne jamais réintroduire un lookup `FROM "Order"` seul.
+3. **`OrderHistory` immuable** — pas de `deletedAt`, pas d'`update`/`delete`. Audit trail 10 ans. Idem `InvoiceTransmissionLog` (append-only, create seul).
 4. **Snapshots `OrderItem`** figés au checkout.
 5. **Snapshots adresses** figés au checkout.
-6. **PDF immuable** après paiement — archive UploadThing + SHA-256, servi en priorité depuis l'archive.
-7. **Numérotation séquentielle gap-free** — CHECK constraints DB + advisory locks Postgres.
+6. **PDF immuable** après paiement — archive UploadThing + SHA-256, servi en priorité depuis l'archive. Les 3 colonnes de hash PDF (`Order.invoicePdfHash`, `Order.creditNotePdfHash`, `Refund.creditNotePdfHash`) ont un CHECK `^[a-f0-9]{64}$` (EINV-PRISMA-002), aligné sur `invoiceDataHash`/`invoiceXmlHash`.
+7. **Numérotation séquentielle gap-free** — CHECK constraints DB (format) + advisory locks Postgres (sérialisation). ⚠️ **Garantie applicative, pas DB** (EINV-PRISMA-004) : la DB valide le _format_ (`^F-…$`/`^A-…$`) et l'unicité _par table_, mais la séquentialité/gap-free et l'immutabilité de l'audit reposent sur l'advisory lock + le scan `MAX` côté code — il n'existe ni séquence Postgres ni trigger anti-UPDATE/DELETE. Toute migration ou script de maintenance doit préserver cet invariant manuellement.
 8. **Pas de vente manuelle / pas de caisse** — toute Order PAID passe par Stripe (sinon risque NF 525).
+9. **Snapshot routage B2B/B2G figé au checkout** (EINV-PDP-001/005) — `customerType`, `customerCompany*` et `customerEInvoicing*` sont figés sur `Order` au moment du checkout depuis le `User` + l'annuaire DGFiP résolu (`refreshCustomerRouting`). Un changement ultérieur du `User` (SIRET, PDP) **ne modifie jamais** une commande émise. `build-invoice-data` lit exclusivement ce snapshot Order, jamais le `User` live.
 
 Tests de régression dédiés :
 
 - `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`
+- `modules/orders/services/__tests__/invoice-transmission-log-immutability.regression.test.ts` (EINV-PRISMA-004)
 - `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`
 - `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (suite "overflow")
+- `modules/invoices/services/__tests__/credit-note-sequence.regression.test.ts` (EINV-PRISMA-001 — séquence avoir cross-table)
+
+### Notes d'audit Prisma (2026-05-28)
+
+- **EINV-PRISMA-003** — `Order.invoiceXmlFormat` CHECK est volontairement aligné sur les **seuls formats émis par le renderer** (`FACTURX_MINIMUM`, `FACTURX_BASIC`, `UBL_INVOICE`, `UBL_CREDITNOTE` — cf. `XmlArtifactFormat` dans `store-invoice-artifact.ts`). **Ne pas élargir le CHECK de façon spéculative.** Le jour où `render-facturx`/`render-ubl` émet un nouveau profil (EN16931/COMFORT, EXTENDED, CII…) exigé par le PDP, étendre le type `XmlArtifactFormat` **et** le CHECK DB dans la même migration (lockstep), sinon drift code↔DB.
+- **EINV-PRISMA-006** — deux migrations historiques n'ont pas de `down.sql` (`20260223_add_indexes_fix_refund_item`, `20260208_drop_ghost_invoice_columns`, cette dernière destructive). Conforme à la politique "pas de rétroactif". Rollback de ces deux migrations = **restore Neon PITR** uniquement.
 
 ---
 
@@ -148,7 +169,7 @@ Tests de régression dédiés :
 | **B2B intra-UE**           | `customerType=B2B` + VAT intracom              | Factur-X (intracom rules)        | NON                                                | OUI                |
 | **B2C hors UE**            | `customerType=B2C` + `shippingCountry` hors UE | PDF + mention export             | OUI (export)                                       | À confirmer        |
 
-Synclune actuel : 100 % B2C FR. La distinction B2B/B2G nécessite Phase 5 (onboarding form + lookup annuaire DGFiP).
+Synclune actuel : 100 % B2C FR. Le pipeline B2B/B2G est **câblé** (snapshot checkout EINV-PDP-001, résolution annuaire EINV-PDP-005, filtre transmission EINV-PDP-002, réception webhook EINV-PDP-003) ; reste à livrer l'onboarding form B2B (capture `customerType`/SIRET côté `User`) + la capture Chorus Pro B2G (`customerPublicEntityCode`/`customerServiceCode`, non encore portés par le modèle `User`).
 
 ---
 
@@ -220,8 +241,9 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
    - `<NAME>_API_URL`, `<NAME>_API_KEY`, `<NAME>_WEBHOOK_SECRET`. Ne jamais hardcoder d'URL ni de secret dans le code.
 4. **Implémenter `handleProviderWebhook`** : vérifier la signature provider-specific (HMAC, RSA, etc.). La route générique `/api/webhooks/pdp/<name>` la délègue déjà — voir `app/api/webhooks/pdp/[providerId]/route.ts`.
 5. **Mapper les erreurs HTTP** :
-   - 4xx (validation, schema) → throw `ProviderBusinessError(message, status)` → l'orchestrateur passe en `REJECTED` direct sans retry.
-   - 5xx / timeout / network → throw classique → l'orchestrateur passe en `RETRYING` avec backoff exponentiel.
+   - 4xx (validation, schema) → throw `ProviderBusinessError(message, status)` → `submitInvoiceById` persiste `REJECTED` avec un `errorCode` **non** dans `RETRYABLE_ERROR_CODES` → le cron DLQ marque `ABANDONED` direct (pas de retry inutile).
+   - 5xx / timeout / network → throw classique → persiste `REJECTED` avec un `errorCode` retryable (`TIMEOUT`, `NETWORK_ERROR`, `PROVIDER_5XX`, `RATE_LIMITED`, `TEMPORARY_UNAVAILABLE`) → le cron `retry-invoice-transmissions` réessaie avec backoff exponentiel.
+   - **Note `RETRYING`** : la valeur d'enum `PdpTransmissionStatus.RETRYING` existe mais n'est **jamais positionnée** — le re-essai est modélisé par `REJECTED` + `pdpRetryCount`, et le cron repasse directement à `SENT`/`REJECTED`. `RETRYING` est réservé (état d'orchestration documentaire, non utilisé en l'état — EINV-PDP-006).
 6. **Écrire les tests** :
    - Étendre `provider-contract.test.ts` pour inclure le provider dans le harness `describe.each`.
    - Tests dédiés `<name>.provider.test.ts` (signature webhook, error mapping, idempotence).
@@ -230,6 +252,11 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
    - `INVOICE_PROVIDER=<name>` en staging vers sandbox PDP.
    - Canary 1% prod via flag custom (à définir au moment du go-live).
    - Activer `INVOICE_ENABLE_XML=true` puis `INVOICE_ENABLE_EREPORTING=true` selon scope.
+8. **Réconciliation acceptation asynchrone e-reporting (EINV-CRON-003)** : si la PA renvoie `SENT` (dépôt accusé) et confirme l'acceptation DGFiP **de façon asynchrone** (webhook ou polling), prévoir AVANT le go-live :
+   - ajouter `getEReportingBatchStatus(providerBatchId)` à l'interface `InvoiceProvider` (symétrique de `getInvoiceStatus` pour les factures) ;
+   - créer un cron `reconcile-ereporting-statuses` qui poll les batches `SENT` âgés et applique `SENT → ACCEPTED/REJECTED` (modèle : `reconcile-invoice-statuses.service.ts`) ;
+   - étendre `alert-stuck-orders` au statut `SENT` âgé.
+     Sans ça, un batch `SENT` reste figé indéfiniment (ni `transmit-ereporting-batch` ni `alert-stuck-orders` ne scannent `SENT`). Tant qu'aucune PA n'est branchée, `LocalPdfProvider` retourne `PENDING` (dry-run) → ce point ne mord pas.
 
 ### Invariants à respecter
 
@@ -238,6 +265,9 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
 - Toute transition `Order.pdpStatus` passe par `persistPdpTransmission` (régression test `no-direct-pdp-status-write`).
 - Aucune mutation directe `EReportingTransaction` / `EReportingBatch` hors `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `submit-ereporting-batch.service.ts` (Invariant 9, cf. CLAUDE.md).
 - Idempotence : `providerInvoiceId` / `providerBatchId` doivent être stables pour le même input — `MockProvider` montre le pattern (hash de `invoiceNumber`).
+- **Idempotency-key transmission (EINV-PDP-004)** : `submitInvoice({ ..., idempotencyKey })` reçoit `invoiceNumber` (stable transmission initiale + tous les retries DLQ). Tout adaptateur réel **DOIT** la propager côté plateforme (en-tête HTTP `Idempotency-Key` ou champ API). Sans elle, un retry après une réponse perdue (timeout) crée une **deuxième** facture côté PDP pour un même `invoiceNumber` → incident comptable (séquentiel gap-free Art. 286 CGI).
+- **Périmètre transmission B2B/B2G uniquement** : `transmit-invoices` ne sélectionne que `customerType ∈ {B2B, B2G}`. Le B2C passe par l'e-reporting agrégé, jamais par un dépôt de facture sur la PDP (EINV-PDP-002).
+- **Réception webhook** : `/api/webhooks/pdp/[providerId]` applique l'ACK via `persistPdpTransmission` (résolution `Order` par `pdpProviderRef`). Un event référençant un ref inconnu → `ProviderWebhookEvent` en `FAILED` (rejouable), jamais `COMPLETED` silencieux (EINV-PDP-003).
 
 ---
 

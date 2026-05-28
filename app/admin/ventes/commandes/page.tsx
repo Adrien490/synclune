@@ -32,6 +32,8 @@ export type OrderFiltersSearchParams = {
 	filter_paymentStatus?: string;
 	filter_invoiceStatus?: string;
 	filter_invoiceAnomaly?: string;
+	filter_pdfNotArchived?: string;
+	filter_retryDeferred?: string;
 	filter_totalMin?: string;
 	filter_totalMax?: string;
 	filter_createdAfter?: string;

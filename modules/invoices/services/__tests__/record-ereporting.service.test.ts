@@ -25,6 +25,7 @@ vi.mock("@/app/generated/prisma/client", () => {
 	}
 	return {
 		EReportingTransactionType: { SALES: "SALES", REFUND: "REFUND", PAYMENT: "PAYMENT" },
+		CustomerType: { B2C: "B2C", B2B: "B2B", B2G: "B2G" },
 		Prisma: { PrismaClientKnownRequestError: FakePrismaClientKnownRequestError },
 	};
 });
@@ -85,6 +86,32 @@ describe("recordSalesEReporting — happy path", () => {
 			select: { id: true },
 		});
 	});
+});
+
+describe("recordSalesEReporting — gate B2C (EINV-EREPORT-001)", () => {
+	it.each(["B2B", "B2G"])(
+		"returns 'skipped' and does NOT create for customerType=%s (e-invoicing scope)",
+		async (customerType) => {
+			mockPrisma.eReportingTransaction.findFirst.mockResolvedValue(null);
+			mockPrisma.order.findUnique.mockResolvedValue({
+				id: "order-b2b",
+				orderNumber: "SYN-2026-0099",
+				paidAt: new Date("2026-05-27T18:00:00Z"),
+				total: 9500,
+				taxAmount: 0,
+				currency: "EUR",
+				paymentMethod: "CARD",
+				shippingCountry: "FR",
+				customerType,
+				stripePaymentIntentId: "pi_b2b",
+			});
+
+			const result = await recordSalesEReporting("order-b2b");
+
+			expect(result).toBe("skipped");
+			expect(mockPrisma.eReportingTransaction.create).not.toHaveBeenCalled();
+		},
+	);
 });
 
 describe("recordSalesEReporting — idempotence", () => {
@@ -201,6 +228,8 @@ describe("recordRefundEReporting — happy path", () => {
 				shippingCountry: "FR",
 				customerType: "B2C",
 				stripePaymentIntentId: "pi_test_1",
+				total: 2500,
+				taxAmount: 0,
 			},
 		});
 		mockPrisma.eReportingTransaction.create.mockResolvedValue({ id: "tx-refund-new" });

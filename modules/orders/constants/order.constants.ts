@@ -73,17 +73,8 @@ export const GET_ORDER_SELECT_ADMIN = {
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,
-	// Snapshot B2B/B2G (Phase 2A — EINV-AUDIT-001)
+	// Discriminant e-reporting B2C (toujours B2C — micro-entreprise franchise)
 	customerType: true,
-	customerCompanyName: true,
-	customerCompanySiren: true,
-	customerCompanySiret: true,
-	customerCompanyVatNumber: true,
-	// Routing PDP client (annuaire central reforme 2026-2027)
-	customerEInvoicingPlatformId: true,
-	customerEInvoicingAddress: true,
-	customerPublicEntityCode: true,
-	customerServiceCode: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
@@ -125,9 +116,17 @@ export const GET_ORDER_SELECT_ADMIN = {
 	invoiceVoidedAt: true,
 	creditNoteNumber: true,
 	creditNoteGeneratedAt: true,
+	// DLQ facturation (EINV-UI-105) — escalade archivage/avoir en échec
+	invoiceRetryDeferred: true,
+	invoiceReconcileAttempts: true,
 	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
 	invoicePdfUrl: true,
 	invoicePdfHash: true,
+	// Snapshot InvoiceData figé (Art. L102 B LPF) — source de vérité unique du
+	// rendu PDF/XML (EINV-PDF-001). `resolveInvoiceDataForRender` préfère ce
+	// snapshot à toute recomputation depuis les colonnes Order.
+	invoiceDataSnapshot: true,
+	invoiceDataHash: true,
 	// Snapshot vendeur fige au moment de invoiceGeneratedAt (Art. L102 B LPF)
 	vendorLegalName: true,
 	vendorTradeName: true,
@@ -137,20 +136,11 @@ export const GET_ORDER_SELECT_ADMIN = {
 	vendorVatNumber: true,
 	vendorVatRegime: true,
 	vendorLegalForm: true,
-	vendorEInvoicingPlatformId: true,
-	vendorEInvoicingAddress: true,
 	// Extension snapshot (EINV-FORMAT-007/008 — 2026-05-28)
 	vendorEmail: true,
 	vendorApeCode: true,
 	vendorBankIban: true,
 	vendorBankBic: true,
-	// Statut transmission PDP par facture (B2B/B2G — Phase 5)
-	pdpStatus: true,
-	pdpTransmittedAt: true,
-	pdpAcceptedAt: true,
-	pdpRejectedAt: true,
-	pdpRejectionReason: true,
-	pdpProviderRef: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -169,15 +159,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 			skuImageUrl: true,
 			price: true,
 			quantity: true,
-			// TVA par ligne (Phase 2A — EINV-AUDIT-002, requis pour Factur-X/UBL/CII)
-			taxRate: true,
-			taxAmount: true,
-			lineTotalExcludingTax: true,
-			lineTotalIncludingTax: true,
-			taxCategoryCode: true,
-			// Identifiants produit (Phase 3 — EINV-FORMAT-006, BASIC/EN16931)
-			hsCode: true,
-			unitCode: true,
 		},
 	},
 	refunds: {
@@ -314,15 +295,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			skuImageUrl: true,
 			price: true,
 			quantity: true,
-			// TVA par ligne (Phase 2A — EINV-AUDIT-002, requis pour Factur-X/UBL/CII)
-			taxRate: true,
-			taxAmount: true,
-			lineTotalExcludingTax: true,
-			lineTotalIncludingTax: true,
-			taxCategoryCode: true,
-			// Identifiants produit (Phase 3 — EINV-FORMAT-006, BASIC/EN16931)
-			hsCode: true,
-			unitCode: true,
 		},
 	},
 	refunds: {

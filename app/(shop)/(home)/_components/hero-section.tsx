@@ -67,15 +67,15 @@ export async function HeroSection({
 						"oklch(0.92 0.08 350)",
 						"oklch(0.75 0.12 280)",
 					]}
-					count={14}
+					count={18}
 					size={[25, 90]}
-					opacity={[0.25, 0.55]}
-					blur={[8, 24]}
+					opacity={[0.45, 0.8]}
+					blur={[4, 14]}
 					animationStyle="drift"
 					depthParallax={true}
 					mobileCountRatio={0.5}
 				/>
-				<div className="bg-background/10 absolute inset-0" />
+				<div className="bg-background/5 absolute inset-0" />
 			</div>
 
 			{/* Floating product images - Desktop only. Server-rendered with LCP image

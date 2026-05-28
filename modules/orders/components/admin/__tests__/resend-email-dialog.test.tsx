@@ -177,10 +177,10 @@ describe("ResendEmailDialog", () => {
 			expect(screen.getByText("Confirmation d'expédition")).toBeInTheDocument();
 		});
 
-		it("shows 'Confirmation de livraison' when orderStatus is DELIVERED", () => {
+		it("does not offer a delivery option (email supprimé)", () => {
 			openDialog({ orderStatus: "DELIVERED", fulfillmentStatus: "DELIVERED" });
 			render(<ResendEmailDialog />);
-			expect(screen.getByText("Confirmation de livraison")).toBeInTheDocument();
+			expect(screen.queryByText("Confirmation de livraison")).not.toBeInTheDocument();
 		});
 
 		it("hides shipping option when orderStatus is PENDING", () => {
@@ -195,8 +195,8 @@ describe("ResendEmailDialog", () => {
 			expect(screen.getByText(/Certains emails ne sont pas disponibles/)).toBeInTheDocument();
 		});
 
-		it("hides hint text when all 3 options are available (DELIVERED order)", () => {
-			openDialog({ orderStatus: "DELIVERED", fulfillmentStatus: "DELIVERED" });
+		it("hides hint text when all options are available (SHIPPED order)", () => {
+			openDialog({ orderStatus: "SHIPPED", fulfillmentStatus: "SHIPPED" });
 			render(<ResendEmailDialog />);
 			expect(screen.queryByText(/Certains emails ne sont pas disponibles/)).not.toBeInTheDocument();
 		});

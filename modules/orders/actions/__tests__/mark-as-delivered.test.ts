@@ -13,9 +13,7 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockValidateInput,
-	mockSendDeliveryEmail,
 	mockCreateOrderAuditTx,
-	mockBuildUrl,
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -28,9 +26,7 @@ const {
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockValidateInput: vi.fn(),
-	mockSendDeliveryEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
-	mockBuildUrl: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
 }));
 
@@ -54,14 +50,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	validateInput: mockValidateInput,
 }));
-vi.mock("@/modules/emails/services/order-emails", () => ({
-	sendDeliveryConfirmationEmail: mockSendDeliveryEmail,
-}));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
-vi.mock("@/shared/constants/urls", () => ({
-	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
-}));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
 		NOT_FOUND: "La commande n'existe pas.",
@@ -108,8 +97,6 @@ describe("markAsDelivered", () => {
 		mockRequireAdminWithUser.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockCreateOrderAuditTx.mockResolvedValue(undefined);
-		mockSendDeliveryEmail.mockResolvedValue(undefined);
-		mockBuildUrl.mockReturnValue("https://synclune.fr/order");
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 
 		mockPrisma.$transaction.mockImplementation(
@@ -118,7 +105,7 @@ describe("markAsDelivered", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createShippedOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 
-		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, sendEmail: true } });
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -169,11 +156,18 @@ describe("markAsDelivered", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	it("should succeed and send delivery email", async () => {
+	it("should succeed and mark the order as delivered", async () => {
 		const result = await markAsDelivered(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSendDeliveryEmail).toHaveBeenCalled();
-		expect(result.message).toContain("Email");
+		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ status: "DELIVERED" }),
+			}),
+		);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			mockPrisma,
+			expect.objectContaining({ action: "DELIVERED" }),
+		);
 	});
 
 	it("should invalidate reviewable cache for user", async () => {

@@ -20,7 +20,6 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
-	mockSendTrackingEmail,
 	mockCreateOrderAuditTx,
 	mockGetOrderMetadataInvalidationTags,
 } = vi.hoisted(() => ({
@@ -35,7 +34,6 @@ const {
 		status: "error",
 		message: e.message || fallback,
 	})),
-	mockSendTrackingEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderMetadataInvalidationTags: vi.fn().mockReturnValue([]),
 }));
@@ -63,9 +61,6 @@ vi.mock("@/shared/lib/actions", async (importOriginal) => {
 		handleActionError: mockHandleActionError,
 	};
 });
-vi.mock("@/modules/emails/services/order-emails", () => ({
-	sendTrackingUpdateEmail: mockSendTrackingEmail,
-}));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("../../constants/order.constants", async (importOriginal) => {
 	const actual = await importOriginal<typeof OrderConstants>();
@@ -79,10 +74,6 @@ vi.mock("../../constants/cache", () => ({
 }));
 vi.mock("@/modules/orders/utils/carrier.utils", () => ({
 	getTrackingUrl: vi.fn().mockReturnValue("https://carrier/track"),
-	getCarrierLabel: vi.fn().mockReturnValue("La Poste"),
-}));
-vi.mock("../../utils/customer-name", () => ({
-	extractCustomerFirstName: vi.fn().mockReturnValue("Client"),
 }));
 
 import { updateTracking } from "../update-tracking";
@@ -92,7 +83,6 @@ function makeForm() {
 		id: VALID_CUID,
 		trackingNumber: "8N12345678901",
 		carrier: "colissimo",
-		sendEmail: "false",
 	});
 }
 

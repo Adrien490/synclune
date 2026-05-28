@@ -610,21 +610,13 @@ describe("buildPostCheckoutTasks", () => {
 		expect(emailTask).toBeUndefined();
 	});
 
-	it("should always include ADMIN_NEW_ORDER_EMAIL task", () => {
+	it("should never include an admin new-order task (removed)", () => {
 		const order = makeOrderWithItems();
 		const session = makeStripeSession();
 
 		const tasks = buildPostCheckoutTasks(order, session);
 
-		const adminEmailTask = tasks.find((t) => t.type === "ADMIN_NEW_ORDER_EMAIL");
-		expect(adminEmailTask).toBeDefined();
-		if (adminEmailTask?.type === "ADMIN_NEW_ORDER_EMAIL") {
-			expect(adminEmailTask.data.orderNumber).toBe("SYN-001");
-			expect(adminEmailTask.data.customerEmail).toBe("client@example.com");
-			expect(adminEmailTask.data.dashboardUrl).toBe(
-				"https://synclune.fr/admin/ventes/commandes/order-1",
-			);
-		}
+		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
 	});
 
 	it("should use customer_details email as fallback when customer_email is null", () => {

@@ -48,6 +48,14 @@ interface SwipeableCardProps {
 	rightAction?: SwipeActionSlot;
 	/** Whether swipe gestures are active (default: true) */
 	enabled?: boolean;
+	/**
+	 * One-shot discoverability nudge: on mount, the card briefly auto-reveals its
+	 * action zone then snaps back, teaching the swipe gesture (iOS Mail / Reminders
+	 * style). Silent demo — fires no haptic and triggers no action. Skipped under
+	 * `prefers-reduced-motion`. Drive this from `useGestureHintOnce` so it plays once
+	 * per device. @default false
+	 */
+	peek?: boolean;
 	className?: string;
 }
 
@@ -69,6 +77,15 @@ const ZONE_FILTER_TRANSITION = "filter 150ms ease-out";
 
 /** Duration (ms) an aria-live announcement remains in the DOM after firing. */
 const ANNOUNCEMENT_DURATION_MS = 1500;
+
+/** Fraction of the action threshold revealed during the one-shot peek nudge. */
+const PEEK_OFFSET_RATIO = 0.55;
+
+/** Delay (ms) before the peek opens — lets list entrance animations settle first. */
+const PEEK_DELAY_MS = 700;
+
+/** Duration (ms) the peek stays open before snapping back. */
+const PEEK_HOLD_MS = 650;
 
 /** Rubber-band compression factor — fraction of container width controlling the log curve stiffness. */
 const RUBBER_BAND_K_RATIO = 0.3;
@@ -144,6 +161,7 @@ export function SwipeableCard({
 	leftAction,
 	rightAction,
 	enabled = true,
+	peek = false,
 	className,
 }: SwipeableCardProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -368,6 +386,42 @@ export function SwipeableCard({
 			}
 		};
 	}, []);
+
+	// One-shot "peek" nudge: briefly auto-reveal the action zone then snap back, to
+	// teach the swipe gesture on first visit. Silent demo — no haptic, no action fires.
+	// Reuses the existing offset/snap-back machinery (CSS transition runs when not
+	// actively swiping, and the colored zones already track `swipeOffset`).
+	useEffect(() => {
+		if (!peek || !enabled || prefersReducedMotion) return;
+		if (!hasLeft && !hasRight) return;
+
+		const open = setTimeout(() => {
+			// Skip if the user already grabbed the card — never hijack a real gesture.
+			if (isTrackingRef.current) return;
+			// Prefer the right action (card slides →); fall back to the left action (←).
+			const magnitude =
+				(hasRight ? effectiveRightThreshold : effectiveLeftThreshold) * PEEK_OFFSET_RATIO;
+			setSwipeOffset(hasRight ? magnitude : -magnitude);
+		}, PEEK_DELAY_MS);
+
+		const close = setTimeout(() => {
+			if (isTrackingRef.current) return;
+			setSwipeOffset(0);
+		}, PEEK_DELAY_MS + PEEK_HOLD_MS);
+
+		return () => {
+			clearTimeout(open);
+			clearTimeout(close);
+		};
+	}, [
+		peek,
+		enabled,
+		prefersReducedMotion,
+		hasLeft,
+		hasRight,
+		effectiveLeftThreshold,
+		effectiveRightThreshold,
+	]);
 
 	// Apply iOS-style rubber-band compression past the active-direction threshold.
 	const activeThreshold =

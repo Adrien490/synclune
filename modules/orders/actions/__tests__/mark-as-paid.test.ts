@@ -35,6 +35,12 @@ const {
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
+// Stripe est importé dynamiquement par mark-as-paid pour annuler le PaymentIntent
+// (best-effort). Mocké ici pour garder le test hermétique — sinon le fixture porteur
+// d'un stripePaymentIntentId (EINV-CASH-001) déclenche un vrai appel réseau Stripe.
+vi.mock("@/shared/lib/stripe", () => ({
+	stripe: { paymentIntents: { cancel: vi.fn().mockResolvedValue({ status: "canceled" }) } },
+}));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdminWithUser,
 	requireAdminWithUser: mockRequireAdminWithUser,
@@ -96,6 +102,10 @@ function createPendingOrder(overrides: Record<string, unknown> = {}) {
 		status: "PENDING",
 		paymentStatus: "PENDING",
 		stripeCheckoutSessionId: null,
+		// EINV-CASH-001 : toute Order réelle naît d'un checkout Stripe et porte un
+		// PaymentIntent (order-creation.service.ts). Le fixture doit le refléter,
+		// sinon le garde `no_stripe_proof` rejette la commande.
+		stripePaymentIntentId: "pi_default_test",
 		...overrides,
 	});
 }
@@ -176,6 +186,18 @@ describe("markAsPaid", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingOrder({ status: "CANCELLED" }));
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("should reject an order without any Stripe proof (EINV-CASH-001)", async () => {
+		// Commande sans PaymentIntent NI Checkout Session = aucune preuve PSP.
+		// markAsPaid doit refuser (anti encaissement fictif / logiciel de caisse).
+		mockPrisma.order.findUnique.mockResolvedValue(
+			createPendingOrder({ stripePaymentIntentId: null, stripeCheckoutSessionId: null }),
+		);
+		const result = await markAsPaid(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toMatch(/Stripe/i);
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should decrement stock for orders without Stripe session", async () => {

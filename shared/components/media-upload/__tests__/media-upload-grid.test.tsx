@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MediaUploadGrid, type MediaItem } from "../media-upload-grid";
+import { __resetDesktopCoalesce } from "@/shared/utils/toast";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -174,6 +175,7 @@ describe("MediaUploadGrid", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		__resetDesktopCoalesce();
 		// localStorage mock (jsdom doesn't provide .clear in all versions)
 		Object.defineProperty(window, "localStorage", {
 			value: {

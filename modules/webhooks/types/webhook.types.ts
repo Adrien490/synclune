@@ -1,7 +1,6 @@
 import type { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
 import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type {
-	sendAdminNewOrderEmail,
 	sendAdminRefundFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
@@ -51,7 +50,6 @@ export interface PaymentFailureDetails {
  */
 export type PostWebhookTask =
 	| { type: "ORDER_CONFIRMATION_EMAIL"; data: Parameters<typeof sendOrderConfirmationEmail>[0] }
-	| { type: "ADMIN_NEW_ORDER_EMAIL"; data: Parameters<typeof sendAdminNewOrderEmail>[0] }
 	| { type: "REFUND_CONFIRMATION_EMAIL"; data: Parameters<typeof sendRefundConfirmationEmail>[0] }
 	| { type: "PAYMENT_FAILED_EMAIL"; data: Parameters<typeof sendPaymentFailedEmail>[0] }
 	| { type: "ADMIN_REFUND_FAILED_ALERT"; data: Parameters<typeof sendAdminRefundFailedAlert>[0] }
