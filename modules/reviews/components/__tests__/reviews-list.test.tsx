@@ -225,10 +225,12 @@ describe("ReviewsList", () => {
 		expect(screen.getByRole("status")).toHaveTextContent(/étoile/);
 	});
 
-	it("renders the feed region", () => {
+	it("renders the reviews list region with id=reviews-list", () => {
 		render(
 			<ReviewsList initialReviews={[createReview("r1")]} stats={createStats()} totalCount={1} />,
 		);
-		expect(screen.getByRole("feed")).toBeInTheDocument();
+		const list = screen.getByRole("list", { name: "Liste des avis clients" });
+		expect(list).toBeInTheDocument();
+		expect(list).toHaveAttribute("id", "reviews-list");
 	});
 });

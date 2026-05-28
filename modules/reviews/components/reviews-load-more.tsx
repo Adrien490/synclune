@@ -1,111 +1,65 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { toast } from "@/shared/utils/toast";
-import { Button } from "@/shared/components/ui/button";
-import { LoaderCircle } from "lucide-react";
+import { LoadMore } from "@/shared/components/load-more";
+
 import { loadMoreReviews } from "../actions/load-more-reviews";
-import { ReviewCard } from "./review-card";
 import type { ReviewPublic, ReviewSortField } from "../types/review.types";
+import { ReviewCard } from "./review-card";
 
 interface ReviewsLoadMoreProps {
 	productId: string;
 	initialCursor: string | null;
 	initialHasMore: boolean;
+	initialDisplayedCount: number;
+	totalCount: number;
 	ratingFilter?: number;
 	sortBy?: ReviewSortField;
 }
 
 /**
- * Client component for loading additional reviews
- * Manages local state for appended reviews and cursor pagination
+ * Thin wrapper around the generic <LoadMore> for product reviews.
+ *
+ * Parent re-mounts via key={`${ratingFilter}-${sortBy}`} (reviews-list.tsx)
+ * to reset local state when filter/sort changes — see regression test
+ * `reviews-load-more.regression.test.tsx`.
  */
 export function ReviewsLoadMore({
 	productId,
 	initialCursor,
 	initialHasMore,
+	initialDisplayedCount,
+	totalCount,
 	ratingFilter,
 	sortBy,
 }: ReviewsLoadMoreProps) {
-	const [additionalReviews, setAdditionalReviews] = useState<ReviewPublic[]>([]);
-	const [cursor, setCursor] = useState(initialCursor);
-	const [hasMore, setHasMore] = useState(initialHasMore);
-	const [isPending, startTransition] = useTransition();
-
-	if (!hasMore && additionalReviews.length === 0) {
-		return null;
-	}
-
-	const handleLoadMore = () => {
-		if (!cursor) return;
-
-		startTransition(async () => {
-			try {
+	return (
+		<LoadMore<ReviewPublic>
+			initialCursor={initialCursor}
+			initialHasMore={initialHasMore}
+			initialDisplayedCount={initialDisplayedCount}
+			totalCount={totalCount}
+			controlsId="reviews-list"
+			itemsLabel="avis"
+			itemsLabelPlural="avis"
+			buttonLabel="Voir plus d'avis"
+			errorMessage="Impossible de charger plus d'avis"
+			itemsContainerLabel="Avis supplémentaires"
+			getItemKey={(r) => r.id}
+			renderItem={(r) => <ReviewCard review={r} />}
+			loadFn={async (cursor) => {
 				const result = await loadMoreReviews({
 					productId,
 					cursor,
 					filterRating: ratingFilter,
 					sortBy,
 				});
-
-				if (result.error) {
-					toast.error(result.error);
-					return;
-				}
-
-				setAdditionalReviews((prev) => [...prev, ...result.reviews]);
-				setCursor(result.nextCursor);
-				setHasMore(result.hasMore);
-			} catch {
-				toast.error("Impossible de charger plus d'avis");
-			}
-		});
-	};
-
-	return (
-		<>
-			{/* Additional reviews loaded via "load more" */}
-			{additionalReviews.length > 0 && (
-				<div
-					className="grid grid-cols-1 gap-4 lg:grid-cols-2"
-					role="feed"
-					aria-label="Avis supplémentaires"
-				>
-					{additionalReviews.map((review, index) => (
-						<div
-							key={review.id}
-							className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4"
-							style={{
-								animationDelay: `${index * 50}ms`,
-								animationFillMode: "backwards",
-							}}
-						>
-							<ReviewCard review={review} />
-						</div>
-					))}
-				</div>
-			)}
-
-			{/* Load more button */}
-			{hasMore && (
-				<div className="flex justify-center pt-2">
-					<Button
-						variant="outline"
-						onClick={handleLoadMore}
-						disabled={isPending}
-						className="min-w-[200px]"
-					>
-						{isPending ? (
-							<>
-								<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
-								Chargement…
-							</>
-						) : (
-							"Voir plus d'avis"
-						)}
-					</Button>
-				</div>
-			)}
-		</>
+				return {
+					items: result.reviews,
+					nextCursor: result.nextCursor,
+					hasMore: result.hasMore,
+					error: result.error,
+				};
+			}}
+		/>
 	);
 }

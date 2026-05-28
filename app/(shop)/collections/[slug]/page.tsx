@@ -140,6 +140,8 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 							productsPromise={productsPromise}
 							perPage={perPage}
 							wishlistProductIdsPromise={wishlistProductIdsPromise}
+							sortBy={sortBy as SortField}
+							filters={parseFilters(searchParamsData, slug)}
 						/>
 					</Suspense>
 				</div>

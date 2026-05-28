@@ -275,6 +275,18 @@ export const REVIEW_LOAD_MORE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // par minute
 };
 
+/**
+ * Limite pour le chargement paginé du catalogue produits (load more mobile)
+ *
+ * Permissif car action de lecture fréquente sur catalogue mobile avec
+ * auto-scroll (IntersectionObserver 80% viewport). Aligné sur
+ * PRODUCT_SEARCH_LIMIT pour cohérence (mêmes filtres serveur).
+ */
+export const PRODUCT_LOAD_MORE_LIMIT: RateLimitConfig = {
+	limit: 60,
+	windowMs: minutes(1),
+};
+
 // ========================================
 // ❤️ WISHLIST (FAVORIS)
 // ========================================

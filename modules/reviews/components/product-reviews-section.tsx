@@ -1,5 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
+import { GET_REVIEWS_DEFAULT_PER_PAGE } from "../constants/review.constants";
 import { getReviews } from "../data/get-reviews";
 import { getProductReviewStats } from "../data/get-product-review-stats";
 import { ReviewsList } from "./reviews-list";
@@ -33,7 +34,7 @@ export async function ProductReviewsSection({
 	const [reviewsData, stats] = await Promise.all([
 		getReviews({
 			productId,
-			perPage: 10,
+			perPage: GET_REVIEWS_DEFAULT_PER_PAGE,
 			filterRating: ratingFilter,
 			sortBy,
 		}),

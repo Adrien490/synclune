@@ -32,6 +32,7 @@ vi.mock("../../data/get-reviews", () => ({
 	getReviews: mockGetReviews,
 }));
 
+import { GET_REVIEWS_DEFAULT_PER_PAGE } from "../../constants/review.constants";
 import { loadMoreReviews } from "../load-more-reviews";
 
 // ============================================================================
@@ -134,7 +135,7 @@ describe("loadMoreReviews", () => {
 			{
 				productId: VALID_CUID,
 				cursor: VALID_CUID_2,
-				perPage: 10,
+				perPage: GET_REVIEWS_DEFAULT_PER_PAGE,
 				direction: "forward",
 				filterRating: undefined,
 				sortBy: undefined,
@@ -154,7 +155,7 @@ describe("loadMoreReviews", () => {
 			{
 				productId: VALID_CUID,
 				cursor: VALID_CUID_2,
-				perPage: 10,
+				perPage: GET_REVIEWS_DEFAULT_PER_PAGE,
 				direction: "forward",
 				filterRating: 4,
 				sortBy: "createdAt-desc",

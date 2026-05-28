@@ -3,11 +3,13 @@ import { TriangleAlert } from "lucide-react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
+import type { ProductFilters, SortField } from "@/modules/products/types/product.types";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
+import { ProductsLoadMore } from "./products-load-more";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
@@ -26,6 +28,10 @@ interface ProductListProps {
 	wishlistProductIdsPromise?: Promise<Set<string>>;
 	/** Si true, priorise l'affichage du SKU en promotion */
 	preferOnSale?: boolean;
+	/** Tri actif (forwardé à load-more mobile pour cohérence avec la page initiale). */
+	sortBy?: SortField;
+	/** Filtres serveur actifs (forwardés à load-more mobile). */
+	filters?: ProductFilters;
 }
 
 export function ProductList({
@@ -34,6 +40,8 @@ export function ProductList({
 	searchTerm,
 	wishlistProductIdsPromise,
 	preferOnSale,
+	sortBy,
+	filters,
 }: ProductListProps) {
 	const result = use(productsPromise);
 	const { products, pagination, totalCount, suggestion } = result;
@@ -145,6 +153,7 @@ export function ProductList({
 
 			{/* P8: Grille des produits avec animation stagger */}
 			<StaggerGrid
+				id="products-list"
 				role="list"
 				aria-label="Liste des produits"
 				className="grid grid-cols-2 gap-4 transition-[opacity,filter,transform] duration-300 ease-out outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.98] group-has-[[data-pending]]/container:opacity-40 group-has-[[data-pending]]/container:blur-[2px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5"
@@ -167,7 +176,25 @@ export function ProductList({
 					</div>
 				))}
 			</StaggerGrid>
-			<div className="mt-8 flex justify-end lg:mt-12">
+
+			{/* Mobile: load-more hybride (bouton + IntersectionObserver 80%) */}
+			<div className="mt-6 md:hidden">
+				<ProductsLoadMore
+					key={`${sortBy ?? "default"}-${searchTerm ?? ""}-${JSON.stringify(filters ?? {})}`}
+					initialCursor={nextCursor}
+					initialHasMore={hasNextPage}
+					initialDisplayedCount={products.length}
+					totalCount={totalCount}
+					wishlistProductIds={wishlistProductIds}
+					sortBy={sortBy}
+					search={searchTerm}
+					filters={filters}
+					preferOnSale={preferOnSale}
+				/>
+			</div>
+
+			{/* Desktop: cursor pagination URL-driven (deep-link, SEO, back/forward) */}
+			<div className="mt-8 hidden justify-end md:flex lg:mt-12">
 				<CursorPagination
 					perPage={perPage}
 					hasNextPage={hasNextPage}

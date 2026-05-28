@@ -5,7 +5,10 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { logger } from "@/shared/lib/logger";
 import { REVIEW_LOAD_MORE_LIMIT } from "@/shared/lib/rate-limit-config";
 
-import { GET_REVIEWS_SORT_FIELDS } from "../constants/review.constants";
+import {
+	GET_REVIEWS_DEFAULT_PER_PAGE,
+	GET_REVIEWS_SORT_FIELDS,
+} from "../constants/review.constants";
 import { getReviews } from "../data/get-reviews";
 import type { ReviewPublic, ReviewSortField } from "../types/review.types";
 
@@ -59,7 +62,7 @@ export async function loadMoreReviews(
 			{
 				productId,
 				cursor,
-				perPage: 10,
+				perPage: GET_REVIEWS_DEFAULT_PER_PAGE,
 				direction: "forward",
 				filterRating,
 				sortBy: sortBy as ReviewSortField | undefined,

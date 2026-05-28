@@ -24,6 +24,8 @@ export interface StaggerGridProps extends React.AriaAttributes {
 	amount?: number;
 	/** HTML role attribute */
 	role?: string;
+	/** HTML id attribute (used by load-more `aria-controls` for example). */
+	id?: string;
 	/** Accepté pour compat API — no-op (le CSS n'a aucun coût JS sur tactile). */
 	disableOnTouch?: boolean;
 	/** Data attributes */

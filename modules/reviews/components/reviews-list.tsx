@@ -124,13 +124,15 @@ export function ReviewsList({
 			{!isFiltered && <ReviewPhotosGallery reviews={initialReviews} />}
 
 			{/* Liste des avis */}
-			<div
-				className="grid grid-cols-1 gap-4 lg:grid-cols-2"
-				role="feed"
+			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+			<ul
+				id="reviews-list"
+				role="list"
 				aria-label="Liste des avis clients"
+				className="grid grid-cols-1 gap-4 lg:grid-cols-2"
 			>
 				{initialReviews.map((review, index) => (
-					<div
+					<li
 						key={review.id}
 						className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-4"
 						style={{
@@ -139,16 +141,19 @@ export function ReviewsList({
 						}}
 					>
 						<ReviewCard review={review} />
-					</div>
+					</li>
 				))}
-			</div>
+			</ul>
 
 			{/* Load more + additional reviews */}
 			{productId && (
 				<ReviewsLoadMore
+					key={`${ratingFilter ?? "all"}-${sortBy ?? "default"}`}
 					productId={productId}
 					initialCursor={nextCursor ?? null}
 					initialHasMore={hasMore ?? false}
+					initialDisplayedCount={initialReviews.length}
+					totalCount={isFiltered ? totalCount : stats.totalCount}
 					ratingFilter={ratingFilter}
 					sortBy={sortBy}
 				/>
