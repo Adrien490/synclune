@@ -48,6 +48,14 @@ const sellerSchema = z.object({
 	eInvoicingAddress: z.string().max(255).nullable(),
 	eInvoicingPlatformId: z.string().max(100).nullable(),
 	vatExemptionText: z.string().max(255).nullable(),
+	bankIban: z
+		.string()
+		.regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN format invalide")
+		.nullable(),
+	bankBic: z
+		.string()
+		.regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "BIC/SWIFT format invalide")
+		.nullable(),
 });
 
 const buyerSchema = z.object({
@@ -93,6 +101,14 @@ const invoiceLineSchema = z.object({
 	taxAmount: z.number().int().nonnegative(),
 	lineTotalExclTax: z.number().int().nonnegative(),
 	lineTotalInclTax: z.number().int().nonnegative(),
+	hsCode: z
+		.string()
+		.regex(/^[0-9]{6,10}$/, "Code SH : 6 à 10 chiffres")
+		.nullable(),
+	unitCode: z
+		.string()
+		.regex(/^[A-Z0-9]{1,3}$/, "UN/ECE Rec 20 : 1-3 caractères alphanumériques")
+		.nullable(),
 });
 
 const taxBreakdownLineSchema = z.object({
@@ -131,6 +147,13 @@ const precedingInvoiceSchema = z
 	})
 	.nullable();
 
+const voidedInfoSchema = z
+	.object({
+		creditNoteNumber: z.string().regex(/^A-[0-9]{4}-[0-9]{5}$/, "Format A-YYYY-NNNNN attendu"),
+		voidedAt: z.date(),
+	})
+	.nullable();
+
 const invoiceMetaSchema = z.object({
 	orderId: z.string().min(1),
 	orderNumber: z.string().min(1).max(50),
@@ -160,6 +183,7 @@ export const invoiceDataSchema = z
 		totals: invoiceTotalsSchema,
 		payment: paymentInfoSchema,
 		precedingInvoice: precedingInvoiceSchema,
+		voidedInfo: voidedInfoSchema,
 		meta: invoiceMetaSchema,
 	})
 	.refine(

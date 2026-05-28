@@ -6,6 +6,7 @@ import { Loader2, StickyNote } from "lucide-react";
 import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import { useBulkSelectionContextOptional } from "@/shared/components/data-table";
 import { LinkPendingOverlay } from "@/shared/components/long-press-menu-link";
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
@@ -45,6 +46,7 @@ type Order = {
 	trackingNumber?: string | null;
 	trackingUrl?: string | null;
 	invoiceNumber?: string | null;
+	invoiceStatus?: InvoiceStatus | null;
 };
 
 function OrderCardContent({
@@ -142,6 +144,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 			trackingNumber: order.trackingNumber,
 			trackingUrl: order.trackingUrl,
 			invoiceNumber: order.invoiceNumber,
+			invoiceStatus: order.invoiceStatus,
 		},
 	});
 

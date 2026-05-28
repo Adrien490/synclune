@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { jsPDF } from "jspdf";
 import type { InvoiceData, StructuredAddress } from "../types/invoice-data";
 
@@ -9,12 +10,32 @@ import type { InvoiceData, StructuredAddress } from "../types/invoice-data";
  * les futurs renderers Factur-X / UBL / CII sans refactor de la source de
  * vérité — c'est l'objectif de l'extraction en module `modules/invoices/`.
  *
- * Le visuel reste identique à l'ancien rendu pour garantir la stabilité
- * des factures archivées (Art. L102 B LPF — bit-identical between releases).
+ * **Déterminisme bit-à-bit (Art. L102 B LPF)** : deux appels avec le même
+ * `InvoiceData` produisent le même SHA-256. Cf. `renderInvoicePdf.deterministic`
+ * régression test. Les sources de non-déterminisme jsPDF sont neutralisées :
+ *   - `/CreationDate` figée via `setCreationDate(data.issuedAt)`
+ *   - `/ID` figé via `setFileId` dérivé md5(invoiceNumber + issuedAt)
+ *   - Propriétés document figées (creator, producer, title)
+ *   - Dates rendues via `formatDateDeterministic` sans `Intl` (drift ICU)
  */
 export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	const isCreditNote = data.invoiceNumber.startsWith("A-");
 	const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+	// === Métadonnées déterministes (avant tout write) ===
+	const issuedAt = coerceDate(data.issuedAt);
+	doc.setCreationDate(issuedAt);
+	doc.setFileId(deriveFileId(data.invoiceNumber, issuedAt));
+	doc.setProperties({
+		title: `${isCreditNote ? "Avoir" : "Facture"} ${data.invoiceNumber}`,
+		subject: isCreditNote
+			? `Avoir Synclune ${data.invoiceNumber}`
+			: `Facture Synclune ${data.invoiceNumber}`,
+		author: data.seller.legalName,
+		creator: "Synclune Invoice Engine",
+		keywords: data.invoiceNumber,
+	});
+
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const margin = 20;
 	const contentWidth = pageWidth - margin * 2;
@@ -58,6 +79,14 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	doc.text(dateLine, pageWidth - margin - doc.getTextWidth(dateLine), margin + 12);
 	doc.text(orderLine, pageWidth - margin - doc.getTextWidth(orderLine), margin + 16);
 
+	// Date de paiement visible (Art. 242 nonies A annexe II CGI 9° :
+	// la date d'opération et les conditions de paiement doivent être lisibles).
+	// Doublonné en mentions légales pour les avoirs (paidAt facture originale).
+	if (data.payment.paidAt && !isCreditNote) {
+		const paidLine = `Payé le : ${formatDate(data.payment.paidAt)}`;
+		doc.text(paidLine, pageWidth - margin - doc.getTextWidth(paidLine), margin + 20);
+	}
+
 	// Pour les avoirs : référence à la facture annulée (Art. 272-I CGI)
 	if (data.precedingInvoice) {
 		const refOrig = `Facture annulée : ${data.precedingInvoice.invoiceNumber}`;
@@ -65,6 +94,28 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	}
 
 	y += 10;
+
+	// EINV-SEC-007 : bandeau ANNULÉE sur les factures voidées (Art. 272-I CGI).
+	// Le PDF original archivé sur UploadThing reste accessible via invoicePdfUrl
+	// pour preuve historique (L102 B LPF), mais la route /invoice sert désormais
+	// cette version surchargée pour éviter qu'un client n'attache une facture
+	// VALIDE-apparente à sa déclaration fiscale alors qu'elle est annulée.
+	if (data.voidedInfo) {
+		const banner = `FACTURE ANNULÉE — Avoir N° ${data.voidedInfo.creditNoteNumber} émis le ${formatDate(data.voidedInfo.voidedAt)}`;
+		doc.setFillColor(254, 226, 226); // red-100
+		doc.setDrawColor(220, 38, 38); // red-600
+		doc.setLineWidth(0.8);
+		doc.rect(margin, y, contentWidth, 12, "FD");
+		doc.setTextColor(153, 27, 27); // red-800
+		doc.setFontSize(11);
+		doc.setFont("helvetica", "bold");
+		const bannerWidth = doc.getTextWidth(banner);
+		doc.text(banner, margin + (contentWidth - bannerWidth) / 2, y + 8);
+		doc.setTextColor(0, 0, 0);
+		doc.setLineWidth(0.5);
+		doc.setDrawColor(220, 220, 220);
+		y += 18;
+	}
 
 	doc.setDrawColor(220, 220, 220);
 	doc.setLineWidth(0.5);
@@ -202,6 +253,24 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	doc.text(formatEuro(data.totals.totalInclTax), colX.total, y);
 	y += 12;
 
+	// === Modalités de paiement (B2B : viré) — affiché seulement si renseigné ===
+	if (data.seller.bankIban) {
+		doc.setFont("helvetica", "bold");
+		doc.setFontSize(9);
+		doc.setTextColor(0, 0, 0);
+		doc.text("Modalités de paiement", margin, y);
+		y += 5;
+		doc.setFont("helvetica", "normal");
+		doc.setFontSize(8);
+		doc.text(`IBAN : ${formatIbanForDisplay(data.seller.bankIban)}`, margin, y);
+		y += 4;
+		if (data.seller.bankBic) {
+			doc.text(`BIC : ${data.seller.bankBic}`, margin, y);
+			y += 4;
+		}
+		y += 4;
+	}
+
 	// === Mentions légales ===
 	doc.setFont("helvetica", "italic");
 	doc.setFontSize(7);
@@ -233,19 +302,70 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 // Helpers
 // ============================================================================
 
+/**
+ * Formate un montant en centimes au format français `N NNN,NN €` SANS `Intl`
+ * (l'espace insécable Intl a basculé U+00A0 → U+202F entre versions Node, source
+ * de divergence bit-à-bit du PDF archivé).
+ */
 function formatEuro(cents: number): string {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(cents / 100);
+	const sign = cents < 0 ? "-" : "";
+	const abs = Math.abs(Math.round(cents));
+	const euros = Math.floor(abs / 100);
+	const remainder = abs % 100;
+	const eurosFormatted = euros.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+	const centsFormatted = remainder.toString().padStart(2, "0");
+	return `${sign}${eurosFormatted},${centsFormatted} €`;
 }
 
-function formatDate(date: Date): string {
-	return new Intl.DateTimeFormat("fr-FR", {
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-	}).format(date);
+const FRENCH_MONTHS = [
+	"janvier",
+	"février",
+	"mars",
+	"avril",
+	"mai",
+	"juin",
+	"juillet",
+	"août",
+	"septembre",
+	"octobre",
+	"novembre",
+	"décembre",
+] as const;
+
+/**
+ * Formate une date au format `D mois YYYY` en français SANS recourir à `Intl`
+ * (l'output `Intl.DateTimeFormat` peut dériver entre versions Node/ICU :
+ * espace insécable U+202F vs U+00A0, casing du mois). Crucial pour garantir
+ * le déterminisme bit-à-bit du PDF archivé sur 10 ans (Art. L102 B LPF).
+ *
+ * Utilise `getUTC*` pour neutraliser le timezone serveur (Vercel cold-start
+ * en UTC mais dev local potentiellement en Europe/Paris).
+ */
+function formatDateDeterministic(date: Date): string {
+	const d = date.getUTCDate();
+	const m = FRENCH_MONTHS[date.getUTCMonth()];
+	const y = date.getUTCFullYear();
+	return `${d} ${m} ${y}`;
+}
+
+function formatDate(date: Date | string): string {
+	return formatDateDeterministic(coerceDate(date));
+}
+
+function coerceDate(value: Date | string): Date {
+	return value instanceof Date ? value : new Date(value);
+}
+
+/**
+ * Dérive un `/ID` PDF déterministe (32 hex chars uppercase) depuis le numéro
+ * de facture + sa date d'émission. Identique pour 2 appels successifs avec
+ * le même `InvoiceData`.
+ */
+function deriveFileId(invoiceNumber: string, issuedAt: Date): string {
+	return createHash("md5")
+		.update(`${invoiceNumber}|${issuedAt.toISOString()}`)
+		.digest("hex")
+		.toUpperCase();
 }
 
 function formatSellerAddress(addr: StructuredAddress): string {
@@ -263,4 +383,12 @@ function formatSellerAddress(addr: StructuredAddress): string {
 function formatSiretForDisplay(siret: string): string {
 	if (siret.length !== 14) return siret;
 	return `${siret.slice(0, 3)} ${siret.slice(3, 6)} ${siret.slice(6, 9)} ${siret.slice(9)}`;
+}
+
+/**
+ * Affiche un IBAN par blocs de 4 caractères pour lisibilité (norme ISO 13616).
+ * Le stockage canonique reste sans espaces (validation Zod).
+ */
+function formatIbanForDisplay(iban: string): string {
+	return iban.replace(/(.{4})/g, "$1 ").trim();
 }

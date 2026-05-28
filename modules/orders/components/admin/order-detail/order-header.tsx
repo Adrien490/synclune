@@ -77,6 +77,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			trackingNumber: order.trackingNumber,
 			trackingUrl: order.trackingUrl,
 			invoiceNumber: order.invoiceNumber,
+			invoiceStatus: order.invoiceStatus,
 		},
 	});
 
@@ -248,6 +249,23 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 					>
 						<CircleCheck className="size-4" aria-hidden="true" />
 						Marquer livrée
+					</Button>
+				)}
+				{canDownloadInvoice && (
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => void downloadInvoice()}
+						disabled={isDownloadingInvoice}
+						aria-busy={isDownloadingInvoice || undefined}
+						className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+					>
+						{isDownloadingInvoice ? (
+							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+						) : (
+							<FileText className="size-4" aria-hidden="true" />
+						)}
+						{isDownloadingInvoice ? "Facture…" : "Facture"}
 					</Button>
 				)}
 

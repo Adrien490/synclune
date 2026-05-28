@@ -65,6 +65,22 @@ vi.mock("@/shared/lib/stripe", () => ({
 	stripe: {},
 }));
 
+// UploadThing + invoice archiver indirectly pulled via ensure-invoice-number.
+// utapi requires a runtime env that vitest doesn't have — must be mocked.
+vi.mock("@/shared/lib/uploadthing", () => ({ utapi: { uploadFiles: vi.fn() } }));
+vi.mock("@/modules/orders/services/archive-invoice-pdf.service", () => ({
+	archiveInvoicePdf: vi.fn(),
+}));
+vi.mock("@/modules/invoices/services/render-invoice-pdf", () => ({
+	renderInvoicePdf: vi.fn().mockReturnValue(new ArrayBuffer(4)),
+}));
+vi.mock("@/modules/invoices/services/build-invoice-data", () => ({
+	buildInvoiceData: vi.fn().mockReturnValue({}),
+}));
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminInvoiceFailedAlert: vi.fn(),
+}));
+
 import type Stripe from "stripe";
 import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "../checkout-handlers";
 

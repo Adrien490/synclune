@@ -1,4 +1,5 @@
 import { updateTag } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
 	OrderAction,
@@ -24,6 +25,7 @@ import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 const RECONCILE_AUDIT_AUTHOR = "Système (reconcile-refunds)";
@@ -64,10 +66,14 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		};
 	}
 
-	// Scan window : 7 days, with at least REFUND_RECONCILE_MIN_AGE_MS (1h) of
-	// quarantine so the regular webhook path has a chance to finalize first.
+	// Scan window : 90 jours, avec au moins REFUND_RECONCILE_MIN_AGE_MS (1h) de
+	// quarantine pour laisser le webhook path finaliser en premier.
+	// EINV-CREDIT-009 : élargi 7j→90j pour couvrir les incidents production
+	// prolongés (panne BDD, pause cron prolongée) où un Refund peut rester
+	// stuck en APPROVED+stripeRefundId+processedAt=null pendant plusieurs
+	// semaines sans rattrapage. Au-delà de 90j : procédure manuelle.
 	const now = Date.now();
-	const maxAge = new Date(now - 7 * 24 * 60 * 60 * 1000);
+	const maxAge = new Date(now - 90 * 24 * 60 * 60 * 1000);
 	const minAge = new Date(now - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 
 	const candidates = await prisma.refund.findMany({
@@ -106,6 +112,27 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		cronJob: "reconcile-refunds",
 		count: candidates.length,
 	});
+
+	// EINV-CREDIT-009 : alerte Sentry P1 si on atteint le batch max — indique
+	// soit un backlog anormal (incident production prolongé), soit un bug
+	// systémique (webhook charge.refunded en panne durable). Cas normal : on
+	// pick quelques unités/jour, jamais BATCH_SIZE_MEDIUM (=50).
+	if (candidates.length === BATCH_SIZE_MEDIUM) {
+		Sentry.withScope((scope) => {
+			scope.setLevel("warning");
+			scope.setTag("cron", "reconcile-refunds");
+			scope.setTag("anomaly", "batch-saturated");
+			scope.setFingerprint(["reconcile-refunds", "batch-saturated"]);
+			scope.setContext("reconcile", {
+				batchSize: BATCH_SIZE_MEDIUM,
+				windowDays: 90,
+			});
+			Sentry.captureMessage(
+				`reconcile-refunds picked ${BATCH_SIZE_MEDIUM} candidates (batch saturated — system anomaly)`,
+				"warning",
+			);
+		});
+	}
 
 	let processed = 0;
 	let errored = 0;
@@ -153,6 +180,20 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					// son Step 3 a réussi ; ici on rattrape le cas DLQ pur
 					// (idempotence assurée par recordRefundEReporting).
 					await recordRefundEReporting(refund.id);
+
+					// EINV-CREDIT-001 : rattrapage avoir si l'admin path a abort
+					// avant l'émission. Idempotent (noop si creditNoteNumber set).
+					const creditNoteResult = await issueCreditNoteForRefund({
+						refundId: refund.id,
+						source: HistorySource.SYSTEM,
+						authorName: RECONCILE_AUDIT_AUTHOR,
+					});
+					if (creditNoteResult.kind === "failed") {
+						logger.warn(
+							`reconcile-refunds — credit note emission failed for refund ${refund.id}: ${creditNoteResult.error}`,
+							{ cronJob: "reconcile-refunds", refundId: refund.id },
+						);
+					}
 
 					// ORD-STRIPE-007 : email confirmation client. Si l'admin path
 					// (`processRefund`) avait abort en Step 3, l'email n'a pas

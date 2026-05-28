@@ -50,6 +50,12 @@ export const orderFiltersSchema = z
 		paymentStatus: paymentStatusSchema,
 		fulfillmentStatus: fulfillmentStatusSchema,
 		invoiceStatus: invoiceStatusSchema,
+		/**
+		 * Preset "anomalie de facturation" (EINV-UI-005 audit 2026-05-28).
+		 * Filtre les commandes `paymentStatus=PAID AND invoiceNumber IS NULL` —
+		 * cas critique Art. 286 CGI : commande encaissée sans facture émise.
+		 */
+		invoiceAnomaly: z.coerce.boolean().optional(),
 		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		createdAfter: stringOrDateSchema,

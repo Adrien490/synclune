@@ -23,6 +23,7 @@ import {
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 
 /**
  * Resolves orderId from PI metadata.
@@ -72,9 +73,13 @@ export async function handlePaymentSuccess(
 	// New PI flow: no checkoutSessionId means this PI was created directly (not via Checkout Session)
 	const isNewPIFlow = !paymentIntent.metadata.checkoutSessionId;
 
+	// Extraction du type de paiement effectif depuis Stripe (EINV-EREPORT-001).
+	// Best-effort (null si Stripe API échoue) — ne bloque pas le flow paiement.
+	const paymentMethod = (await extractPaymentMethodFromPaymentIntent(paymentIntent)) ?? undefined;
+
 	if (isNewPIFlow) {
 		try {
-			const order = await processOrderFromPaymentIntent(orderId, paymentIntent);
+			const order = await processOrderFromPaymentIntent(orderId, paymentIntent, paymentMethod);
 			// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
 			await ensureInvoiceNumberPersisted(orderId);
 			// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
@@ -118,7 +123,7 @@ export async function handlePaymentSuccess(
 	}
 
 	// Old flow: checkout.session.completed handles everything, just mark as paid
-	await markOrderAsPaid(orderId, paymentIntent.id);
+	await markOrderAsPaid(orderId, paymentIntent.id, paymentMethod);
 	// Génération facture eager si checkout.session.completed n'a pas encore tourné
 	// (idempotent — noop si déjà persistée par l'autre handler).
 	await ensureInvoiceNumberPersisted(orderId);

@@ -1,4 +1,71 @@
 import type { InvoiceData } from "../types/invoice-data";
+import { INVOICE_FEATURE_FLAGS } from "../constants/feature-flags";
+import { assertFacturXCenRules, assertFacturXXmlStructure } from "./validate-facturx";
+
+/**
+ * EINV-GLOBAL-009 — validation structurelle (pas un XSD complet) du payload
+ * avant émission XML. Le XSD officiel Factur-X 1.0.07 MINIMUM nécessite un
+ * validateur XML natif (libxml2 / xsdwasm) absent de l'environnement actuel ;
+ * en attendant la signature PDP/PA (cf. EINV-GLOBAL-002) qui validera de
+ * toute façon, on bloque ici les invariants les plus probables de casser :
+ *  - identité émetteur complète (SIREN 9 chiffres, currency 3 lettres)
+ *  - identité destinataire (legalName XOR firstName+lastName)
+ *  - issuedAt valide + format invoiceNumber attendu
+ *
+ * La cohérence des montants est volontairement hors scope ici : elle est
+ * gardée par `build-invoice-data-amount-consistency.regression.test.ts` sur
+ * le pipeline canonique. Le renderer doit rester un layer "dumb" et émettre
+ * ce qu'on lui donne — sinon les tests d'output (formatAmount, escaping)
+ * deviennent impossibles à isoler.
+ *
+ * Un échec ici signale un drift entre `buildInvoiceData` et le contrat du XML.
+ * Throw plutôt que silent skip pour éviter d'archiver une facture corrompue
+ * (Art. L102 B LPF).
+ */
+function assertFacturXMinimumInvariants(data: InvoiceData): void {
+	const errors: string[] = [];
+
+	if (!data.invoiceNumber || !/^[FA]-\d{4}-\d{5}$/.test(data.invoiceNumber)) {
+		errors.push(`invoiceNumber invalide: "${data.invoiceNumber}"`);
+	}
+	if (!(data.issuedAt instanceof Date) || Number.isNaN(data.issuedAt.getTime())) {
+		errors.push("issuedAt absent ou invalide");
+	}
+	if (data.currency.length !== 3) {
+		errors.push(`currency invalide: "${data.currency}"`);
+	}
+
+	const seller = data.seller;
+	if (!seller.tradeName.trim() || !seller.legalName.trim()) {
+		errors.push("seller.tradeName / seller.legalName requis");
+	}
+	if (!/^\d{9}$/.test(seller.siren)) {
+		errors.push(`seller.siren doit être 9 chiffres: "${seller.siren}"`);
+	}
+	if (!seller.address.postalCode || !seller.address.city || !seller.address.line1) {
+		errors.push("seller.address incomplète (postalCode/city/line1)");
+	}
+	if (seller.address.countryCode.length !== 2) {
+		errors.push(
+			`seller.address.countryCode doit être ISO 3166-1 alpha-2: "${seller.address.countryCode}"`,
+		);
+	}
+
+	const buyer = data.buyer;
+	const buyerName = buyer.legalName ?? `${buyer.firstName} ${buyer.lastName}`.trim();
+	if (!buyerName) {
+		errors.push("buyer.legalName ou (firstName + lastName) requis (BT-44)");
+	}
+	if (buyer.siren !== null && !/^\d{9}$/.test(buyer.siren)) {
+		errors.push(`buyer.siren doit être 9 chiffres: "${buyer.siren}"`);
+	}
+
+	if (errors.length > 0) {
+		throw new Error(
+			`Factur-X MINIMUM invariants violated for ${data.invoiceNumber}: ${errors.join(" ; ")}`,
+		);
+	}
+}
 
 /**
  * Rend l'objet pivot `InvoiceData` en XML CII profil MINIMUM (Factur-X 1.0.07).
@@ -21,6 +88,14 @@ import type { InvoiceData } from "../types/invoice-data";
  *             UN/CEFACT Cross Industry Invoice D16B
  */
 export function renderFacturXMinimum(data: InvoiceData): string {
+	assertFacturXMinimumInvariants(data);
+
+	// Validation CEN EN 16931 opt-in (BR-CO-* + BR-FR-FX-*) — capture les drifts
+	// buildInvoiceData vs contrat XML avant rendu. Cf. INVOICE_VALIDATE_XML.
+	if (INVOICE_FEATURE_FLAGS.validate_xml) {
+		assertFacturXCenRules(data);
+	}
+
 	const isCreditNote = data.invoiceNumber.startsWith("A-");
 	const typeCode = isCreditNote ? "381" : "380"; // UN/EDIFACT 1001
 	const issueDate = formatDateCEFACT(data.issuedAt);
@@ -28,7 +103,7 @@ export function renderFacturXMinimum(data: InvoiceData): string {
 	const buyer = renderBuyerParty(data);
 	const monetarySummation = renderMonetarySummation(data);
 
-	return (
+	const xml =
 		`<?xml version="1.0" encoding="UTF-8"?>\n` +
 		`<rsm:CrossIndustryInvoice ` +
 		`xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100" ` +
@@ -64,8 +139,13 @@ export function renderFacturXMinimum(data: InvoiceData): string {
 		monetarySummation +
 		`		</ram:ApplicableHeaderTradeSettlement>\n` +
 		`	</rsm:SupplyChainTradeTransaction>\n` +
-		`</rsm:CrossIndustryInvoice>\n`
-	);
+		`</rsm:CrossIndustryInvoice>\n`;
+
+	if (INVOICE_FEATURE_FLAGS.validate_xml) {
+		assertFacturXXmlStructure(xml, data);
+	}
+
+	return xml;
 }
 
 // ============================================================================

@@ -50,6 +50,8 @@ function createItem(overrides = {}) {
 		lineTotalExcludingTax: 2500,
 		lineTotalIncludingTax: 2500,
 		taxCategoryCode: "ZB" as const,
+		hsCode: null,
+		unitCode: null,
 		...overrides,
 	};
 }

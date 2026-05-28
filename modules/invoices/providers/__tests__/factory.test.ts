@@ -1,12 +1,29 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as Sentry from "@sentry/nextjs";
 import { getInvoiceProvider, resetInvoiceProviderForTests } from "../factory";
 import { LocalPdfProvider } from "../local-pdf.provider";
+import { MockProvider } from "../mock.provider";
+
+vi.mock("@sentry/nextjs", () => ({
+	captureMessage: vi.fn(),
+	captureException: vi.fn(),
+	addBreadcrumb: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: {
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+	},
+}));
 
 describe("getInvoiceProvider", () => {
 	const ORIGINAL_PROVIDER = process.env.INVOICE_PROVIDER;
 
 	beforeEach(() => {
 		resetInvoiceProviderForTests();
+		vi.clearAllMocks();
 	});
 
 	afterEach(() => {
@@ -15,6 +32,7 @@ describe("getInvoiceProvider", () => {
 		} else {
 			process.env.INVOICE_PROVIDER = ORIGINAL_PROVIDER;
 		}
+		vi.unstubAllEnvs();
 		resetInvoiceProviderForTests();
 	});
 
@@ -30,6 +48,12 @@ describe("getInvoiceProvider", () => {
 		expect(provider).toBeInstanceOf(LocalPdfProvider);
 	});
 
+	it("returns MockProvider when INVOICE_PROVIDER=mock", () => {
+		process.env.INVOICE_PROVIDER = "mock";
+		const provider = getInvoiceProvider();
+		expect(provider).toBeInstanceOf(MockProvider);
+	});
+
 	it("caches the instance (singleton)", () => {
 		process.env.INVOICE_PROVIDER = "local";
 		const first = getInvoiceProvider();
@@ -42,6 +66,11 @@ describe("getInvoiceProvider", () => {
 		expect(() => getInvoiceProvider()).toThrow(/Unknown INVOICE_PROVIDER/);
 	});
 
+	it("throws on chorus-pro (reserved, not implemented)", () => {
+		process.env.INVOICE_PROVIDER = "chorus-pro";
+		expect(() => getInvoiceProvider()).toThrow(/reserved but not implemented/);
+	});
+
 	it("resetInvoiceProviderForTests breaks the cache (different instance after env change)", () => {
 		process.env.INVOICE_PROVIDER = "local";
 		const first = getInvoiceProvider();
@@ -49,5 +78,23 @@ describe("getInvoiceProvider", () => {
 		const second = getInvoiceProvider();
 		expect(first).not.toBe(second);
 		expect(second).toBeInstanceOf(LocalPdfProvider);
+	});
+
+	it("logs a Sentry warning when INVOICE_PROVIDER=mock in production", () => {
+		process.env.INVOICE_PROVIDER = "mock";
+		vi.stubEnv("NODE_ENV", "production");
+		const provider = getInvoiceProvider();
+		expect(provider).toBeInstanceOf(MockProvider);
+		expect(Sentry.captureMessage).toHaveBeenCalledWith(
+			expect.stringContaining("MockProvider does not transmit"),
+			{ level: "warning" },
+		);
+	});
+
+	it("does NOT log Sentry warning when INVOICE_PROVIDER=mock in non-production", () => {
+		process.env.INVOICE_PROVIDER = "mock";
+		vi.stubEnv("NODE_ENV", "test");
+		getInvoiceProvider();
+		expect(Sentry.captureMessage).not.toHaveBeenCalled();
 	});
 });

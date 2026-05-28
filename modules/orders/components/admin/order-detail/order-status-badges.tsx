@@ -6,6 +6,8 @@ import {
 	PAYMENT_STATUS_VARIANTS,
 	FULFILLMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_VARIANTS,
+	INVOICE_STATUS_LABELS,
+	INVOICE_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import type { OrderStatusBadgesProps } from "./types";
 
@@ -13,6 +15,9 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 	const orderStatusLabel = ORDER_STATUS_LABELS[order.status];
 	const paymentStatusLabel = PAYMENT_STATUS_LABELS[order.paymentStatus];
 	const fulfillmentStatusLabel = FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus];
+	const invoiceStatusLabel = order.invoiceStatus
+		? INVOICE_STATUS_LABELS[order.invoiceStatus]
+		: null;
 
 	return (
 		<div className="flex flex-wrap gap-2" role="group" aria-label="Statuts de la commande">
@@ -43,6 +48,16 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 			>
 				{fulfillmentStatusLabel}
 			</Badge>
+			{order.invoiceStatus && invoiceStatusLabel && (
+				<Badge
+					variant={INVOICE_STATUS_VARIANTS[order.invoiceStatus]}
+					className="text-sm"
+					role="status"
+					aria-label={`Statut de la facture : ${invoiceStatusLabel}`}
+				>
+					{invoiceStatusLabel}
+				</Badge>
+			)}
 		</div>
 	);
 }

@@ -14,6 +14,9 @@ const { mockInstance, MockJsPDF } = vi.hoisted(() => {
 		setDrawColor: vi.fn(),
 		setLineWidth: vi.fn(),
 		setFillColor: vi.fn(),
+		setCreationDate: vi.fn(),
+		setFileId: vi.fn(),
+		setProperties: vi.fn(),
 		text: vi.fn(),
 		line: vi.fn(),
 		rect: vi.fn(),
@@ -28,6 +31,9 @@ const { mockInstance, MockJsPDF } = vi.hoisted(() => {
 		setDrawColor = inst.setDrawColor;
 		setLineWidth = inst.setLineWidth;
 		setFillColor = inst.setFillColor;
+		setCreationDate = inst.setCreationDate;
+		setFileId = inst.setFileId;
+		setProperties = inst.setProperties;
 		text = inst.text;
 		line = inst.line;
 		rect = inst.rect;
@@ -72,6 +78,8 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			eInvoicingAddress: null,
 			eInvoicingPlatformId: null,
 			vatExemptionText: "TVA non applicable, art. 293 B du CGI",
+			bankIban: null,
+			bankBic: null,
 		},
 		buyer: {
 			type: "B2C",
@@ -119,6 +127,8 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 				taxAmount: 0,
 				lineTotalExclTax: 9000,
 				lineTotalInclTax: 9000,
+				hsCode: null,
+				unitCode: null,
 			},
 		],
 		totals: {
@@ -148,9 +158,10 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			stripeChargeId: null,
 		},
 		precedingInvoice: null,
+		voidedInfo: null,
 		meta: { orderId: "order-1", orderNumber: "SYN-2026-0001", notes: null },
 		...overrides,
-	};
+	} as InvoiceData;
 }
 
 describe("renderInvoicePdf — output format", () => {
@@ -203,6 +214,31 @@ describe("renderInvoicePdf — facture vs avoir title", () => {
 		const calls = getTextCalls();
 		expect(calls).toContainEqual("AVOIR");
 		expect(calls.some((t) => t.includes("F-2026-00001"))).toBe(true);
+	});
+
+	/**
+	 * @regression credit-note-mention-2026-05-28
+	 *
+	 * Art. 272-I CGI : l'avoir doit référencer sans ambiguïté la facture annulée
+	 * + le motif de l'annulation. Mention rendue en pied de page via
+	 * `data.precedingInvoice.reason`.
+	 */
+	it("renders 'Avoir émis suite à : <reason> (facture F-YYYY-NNNNN)' for credit note", () => {
+		renderInvoicePdf(
+			makeInvoice({
+				invoiceNumber: "A-2026-00007",
+				precedingInvoice: {
+					invoiceNumber: "F-2026-00042",
+					issuedAt: new Date("2026-05-26T10:00:00Z"),
+					reason: "Remboursement total",
+				},
+			}),
+		);
+		const calls = getTextCalls();
+		expect(calls).toContainEqual(
+			"Avoir émis suite à : Remboursement total (facture F-2026-00042).",
+		);
+		expect(calls).toContainEqual("Facture annulée : F-2026-00042");
 	});
 });
 
@@ -331,6 +367,8 @@ describe("renderInvoicePdf — lines and totals", () => {
 						taxAmount: 2000,
 						lineTotalExclTax: 10000,
 						lineTotalInclTax: 12000,
+						hsCode: null,
+						unitCode: null,
 					},
 				],
 				totals: {

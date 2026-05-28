@@ -1,12 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockPrisma, mockPersistInvoiceNumber, mockLogger } = vi.hoisted(() => ({
+const {
+	mockPrisma,
+	mockPersistInvoiceNumber,
+	mockLogger,
+	mockArchiveInvoicePdf,
+	mockRenderInvoicePdf,
+	mockBuildInvoiceData,
+	mockSendAdminAlert,
+	mockCreateOrderAudit,
+} = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
 			findUnique: vi.fn(),
+			update: vi.fn().mockResolvedValue({}),
 		},
 	},
 	mockPersistInvoiceNumber: vi.fn(),
+	mockArchiveInvoicePdf: vi.fn(),
+	mockRenderInvoicePdf: vi.fn().mockReturnValue(new ArrayBuffer(4)),
+	mockBuildInvoiceData: vi.fn().mockReturnValue({}),
+	mockSendAdminAlert: vi.fn(),
+	mockCreateOrderAudit: vi.fn(),
 	mockLogger: {
 		info: vi.fn(),
 		warn: vi.fn(),
@@ -20,6 +35,26 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("../persist-invoice-number.service", () => ({
 	persistInvoiceNumber: mockPersistInvoiceNumber,
+}));
+
+vi.mock("../archive-invoice-pdf.service", () => ({
+	archiveInvoicePdf: mockArchiveInvoicePdf,
+}));
+
+vi.mock("@/modules/invoices/services/render-invoice-pdf", () => ({
+	renderInvoicePdf: mockRenderInvoicePdf,
+}));
+
+vi.mock("@/modules/invoices/services/build-invoice-data", () => ({
+	buildInvoiceData: mockBuildInvoiceData,
+}));
+
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminInvoiceFailedAlert: mockSendAdminAlert,
+}));
+
+vi.mock("../utils/order-audit", () => ({
+	createOrderAudit: mockCreateOrderAudit,
 }));
 
 vi.mock("@/shared/lib/logger", () => ({
@@ -78,6 +113,30 @@ describe("ensureInvoiceNumberPersisted", () => {
 		expect(mockPersistInvoiceNumber).not.toHaveBeenCalled();
 		expect(mockLogger.warn).toHaveBeenCalled();
 	});
+
+	/**
+	 * @regression ensure-invoice-non-paid-2026-05-28
+	 *
+	 * Verrouille que TOUS les statuts non-PAID sont rejetés. Si l'enum
+	 * `PaymentStatus` évolue (ajout d'un statut intermédiaire post-checkout),
+	 * ce test doit être mis à jour explicitement — sinon une commande non
+	 * encaissée pourrait émettre une facture (violation Art. 289-I CGI :
+	 * émission à l'encaissement).
+	 */
+	it.each(["PENDING", "FAILED", "EXPIRED", "PARTIALLY_REFUNDED", "REFUNDED"] as const)(
+		"refuses to persist invoice number when paymentStatus is %s",
+		async (status) => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoiceNumber: null,
+				userId: "user-1",
+				paymentStatus: status,
+			});
+
+			await ensureInvoiceNumberPersisted("order-1");
+
+			expect(mockPersistInvoiceNumber).not.toHaveBeenCalled();
+		},
+	);
 
 	it("supports guest orders (userId null)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({

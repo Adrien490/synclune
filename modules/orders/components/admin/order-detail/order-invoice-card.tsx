@@ -1,0 +1,163 @@
+import { AlertTriangle, FileText, FileWarning, ShieldCheck } from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { PaymentStatus } from "@/app/generated/prisma/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { CopyButton } from "@/shared/components/copy-button";
+import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { InvoiceStatusBadge } from "@/modules/orders/components/admin/invoice-status-badge";
+import { DownloadAdminInvoiceButton } from "./download-admin-invoice-button";
+import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+
+interface OrderInvoiceCardProps {
+	order: GetOrderReturn;
+}
+
+function formatDateTime(date: Date | null | undefined): string | null {
+	if (!date) return null;
+	return format(date, "d MMMM yyyy 'à' HH'h'mm", { locale: fr });
+}
+
+/**
+ * Vue consolidée Facture / Avoir / Archive PDF pour le détail commande admin.
+ *
+ * Affiche `invoiceNumber` (F-YYYY-NNNNN), `invoiceGeneratedAt`, `invoicePdfHash`
+ * (4 derniers chars pour audit), `creditNoteNumber` (A-YYYY-NNNNN) et
+ * `creditNoteGeneratedAt` quand la facture est VOIDED.
+ *
+ * Détecte l'anomalie : commande PAID sans `invoiceNumber` (`invoiceStatus`
+ * PENDING ou NULL alors que `paymentStatus===PAID`) — affichée en Alert
+ * destructive (cf. EINV-UI-005 filter `invoiceAnomaly`).
+ *
+ * EINV-UI-016 + EINV-UI-001 + EINV-UI-002 (audit UI admin facturation 2026-05-28).
+ */
+export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
+	const isPaid = order.paymentStatus === PaymentStatus.PAID;
+	const hasInvoice = Boolean(order.invoiceNumber);
+	const isAnomaly = isPaid && !hasInvoice;
+	const isVoided = order.invoiceStatus === "VOIDED" && Boolean(order.creditNoteNumber);
+	const hashSuffix = order.invoicePdfHash ? order.invoicePdfHash.slice(-8) : null;
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="flex items-center justify-between gap-2">
+					<span className="flex items-center gap-2">
+						<FileText className="size-5" aria-hidden="true" />
+						Facture & avoir
+					</span>
+					{order.invoiceStatus && <InvoiceStatusBadge status={order.invoiceStatus} />}
+				</CardTitle>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{isAnomaly && (
+					<Alert variant="destructive">
+						<AlertTriangle className="size-4" aria-hidden="true" />
+						<AlertTitle>Anomalie de facturation</AlertTitle>
+						<AlertDescription>
+							Commande payée mais aucune facture émise. Le webhook ou le cron retry sera relancé
+							automatiquement (vérifier Sentry tag
+							<code className="bg-destructive/10 mx-1 rounded px-1 py-0.5 text-xs">
+								ensure-invoice-number
+							</code>
+							).
+						</AlertDescription>
+					</Alert>
+				)}
+
+				{!hasInvoice && !isAnomaly && (
+					<p className="text-muted-foreground text-sm">
+						Aucune facture n&apos;est encore émise pour cette commande. Elle sera générée
+						automatiquement à la confirmation du paiement (Art. 289-I CGI).
+					</p>
+				)}
+
+				{hasInvoice && order.invoiceNumber && (
+					<div className="space-y-3">
+						<div>
+							<p className="text-muted-foreground text-sm">Numéro de facture</p>
+							<div className="mt-1 flex items-center gap-2">
+								<code
+									className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
+									aria-label={`Numéro de facture ${order.invoiceNumber}`}
+								>
+									{order.invoiceNumber}
+								</code>
+								<CopyButton
+									text={order.invoiceNumber}
+									label="Numéro de facture"
+									className="size-7 p-0"
+									size="icon"
+								/>
+							</div>
+						</div>
+
+						{order.invoiceGeneratedAt && (
+							<div>
+								<p className="text-muted-foreground text-sm">Émise le</p>
+								<p className="mt-1 text-sm">{formatDateTime(order.invoiceGeneratedAt)}</p>
+							</div>
+						)}
+
+						{hashSuffix && (
+							<div>
+								<p className="text-muted-foreground text-sm">Empreinte SHA-256 (PDF immuable)</p>
+								<p
+									className="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums"
+									title="Art. L102 B LPF — archive immuable"
+								>
+									<ShieldCheck className="text-success size-3.5" aria-hidden="true" />…{hashSuffix}
+								</p>
+							</div>
+						)}
+
+						<DownloadAdminInvoiceButton
+							orderNumber={order.orderNumber}
+							invoiceNumber={order.invoiceNumber}
+						/>
+					</div>
+				)}
+
+				{isVoided && order.creditNoteNumber && (
+					<div className="border-warning/40 bg-warning/5 space-y-3 rounded-md border p-3">
+						<div className="flex items-center gap-2">
+							<FileWarning className="text-warning size-4" aria-hidden="true" />
+							<p className="text-foreground text-sm font-medium">
+								Avoir comptable émis (Art. 272-I CGI)
+							</p>
+						</div>
+						<div>
+							<p className="text-muted-foreground text-xs">Numéro d&apos;avoir</p>
+							<div className="mt-1 flex items-center gap-2">
+								<code
+									className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
+									aria-label={`Numéro d'avoir ${order.creditNoteNumber}`}
+								>
+									{order.creditNoteNumber}
+								</code>
+								<CopyButton
+									text={order.creditNoteNumber}
+									label="Numéro d'avoir"
+									className="size-7 p-0"
+									size="icon"
+								/>
+							</div>
+						</div>
+						{order.creditNoteGeneratedAt && (
+							<div>
+								<p className="text-muted-foreground text-xs">Émis le</p>
+								<p className="mt-1 text-sm">{formatDateTime(order.creditNoteGeneratedAt)}</p>
+							</div>
+						)}
+						{order.invoiceVoidedAt && (
+							<div>
+								<p className="text-muted-foreground text-xs">Facture annulée le</p>
+								<p className="mt-1 text-sm">{formatDateTime(order.invoiceVoidedAt)}</p>
+							</div>
+						)}
+					</div>
+				)}
+			</CardContent>
+		</Card>
+	);
+}

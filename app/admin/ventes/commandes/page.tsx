@@ -31,6 +31,7 @@ export type OrderFiltersSearchParams = {
 	filter_status?: string;
 	filter_paymentStatus?: string;
 	filter_invoiceStatus?: string;
+	filter_invoiceAnomaly?: string;
 	filter_totalMin?: string;
 	filter_totalMax?: string;
 	filter_createdAfter?: string;

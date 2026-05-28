@@ -15,6 +15,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { updateTag } from "next/cache";
 import { z } from "zod";
@@ -56,6 +57,7 @@ export async function resendOrderEmail(
 				orderNumber: true,
 				status: true,
 				fulfillmentStatus: true,
+				id: true,
 				customerEmail: true,
 				customerName: true,
 				subtotal: true,
@@ -116,6 +118,9 @@ export async function resendOrderEmail(
 						country: order.shippingCountry || "France",
 					},
 					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
+					invoiceUrl: buildUrl(
+						`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice?token=${generateInvoiceAccessToken(order.id, order.orderNumber)}`,
+					),
 				});
 
 				actionResult = result.success

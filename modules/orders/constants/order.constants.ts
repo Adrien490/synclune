@@ -79,6 +79,11 @@ export const GET_ORDER_SELECT_ADMIN = {
 	customerCompanySiren: true,
 	customerCompanySiret: true,
 	customerCompanyVatNumber: true,
+	// Routing PDP client (annuaire central reforme 2026-2027)
+	customerEInvoicingPlatformId: true,
+	customerEInvoicingAddress: true,
+	customerPublicEntityCode: true,
+	customerServiceCode: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
@@ -123,6 +128,29 @@ export const GET_ORDER_SELECT_ADMIN = {
 	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
 	invoicePdfUrl: true,
 	invoicePdfHash: true,
+	// Snapshot vendeur fige au moment de invoiceGeneratedAt (Art. L102 B LPF)
+	vendorLegalName: true,
+	vendorTradeName: true,
+	vendorAddress: true,
+	vendorSiren: true,
+	vendorSiret: true,
+	vendorVatNumber: true,
+	vendorVatRegime: true,
+	vendorLegalForm: true,
+	vendorEInvoicingPlatformId: true,
+	vendorEInvoicingAddress: true,
+	// Extension snapshot (EINV-FORMAT-007/008 — 2026-05-28)
+	vendorEmail: true,
+	vendorApeCode: true,
+	vendorBankIban: true,
+	vendorBankBic: true,
+	// Statut transmission PDP par facture (B2B/B2G — Phase 5)
+	pdpStatus: true,
+	pdpTransmittedAt: true,
+	pdpAcceptedAt: true,
+	pdpRejectedAt: true,
+	pdpRejectionReason: true,
+	pdpProviderRef: true,
 	createdAt: true,
 	updatedAt: true,
 	items: {
@@ -147,6 +175,9 @@ export const GET_ORDER_SELECT_ADMIN = {
 			lineTotalExcludingTax: true,
 			lineTotalIncludingTax: true,
 			taxCategoryCode: true,
+			// Identifiants produit (Phase 3 — EINV-FORMAT-006, BASIC/EN16931)
+			hsCode: true,
+			unitCode: true,
 		},
 	},
 	refunds: {
@@ -289,6 +320,9 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 			lineTotalExcludingTax: true,
 			lineTotalIncludingTax: true,
 			taxCategoryCode: true,
+			// Identifiants produit (Phase 3 — EINV-FORMAT-006, BASIC/EN16931)
+			hsCode: true,
+			unitCode: true,
 		},
 	},
 	refunds: {

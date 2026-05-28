@@ -103,7 +103,7 @@ vi.mock("../../utils/order-audit", () => ({
 }));
 
 vi.mock("../../services/void-invoice.service", () => ({
-	voidInvoice: vi.fn().mockResolvedValue(null),
+	voidInvoice: vi.fn().mockResolvedValue({ kind: "noop", reason: "no-active-invoice" }),
 }));
 
 vi.mock("@/shared/constants/urls", () => ({

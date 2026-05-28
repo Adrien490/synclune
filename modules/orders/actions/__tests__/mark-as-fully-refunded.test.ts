@@ -16,10 +16,20 @@ const {
 	mockSanitizeText,
 	mockCreateOrderAuditTx,
 	mockGetOrderInvalidationTags,
+	// EINV-CREDIT-004 : hoister ces 2 mocks pour pouvoir les re-set après
+	// `vi.resetAllMocks()` du beforeEach. Sans accès au nom hoisted, le mock
+	// inline (`vi.fn().mockResolvedValue(...)` dans vi.mock) est vidé par reset
+	// et retourne undefined → `creditNoteResult.kind` throw TypeError ligne 275.
+	mockIssueCreditNoteForRefund,
+	mockRecordRefundEReporting,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), update: vi.fn() },
-		refund: { count: vi.fn().mockResolvedValue(0) },
+		refund: {
+			count: vi.fn().mockResolvedValue(0),
+			// EINV-CREDIT-004 : créé pour traçabilité du flux financier manuel.
+			create: vi.fn().mockResolvedValue({ id: "refund-manual-1" }),
+		},
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -30,6 +40,8 @@ const {
 	mockSanitizeText: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
+	mockIssueCreditNoteForRefund: vi.fn(),
+	mockRecordRefundEReporting: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -88,6 +100,21 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	// EINV-CREDIT-004 : Refund manuel créé avec reason=OTHER. Sans ce mock,
+	// `RefundReason.OTHER` throw TypeError → exception silencieusement attrapée
+	// par catch handleActionError → tests passent à 'error' au lieu de 'success'.
+	RefundReason: {
+		CUSTOMER_REQUEST: "CUSTOMER_REQUEST",
+		DEFECTIVE: "DEFECTIVE",
+		WRONG_ITEM: "WRONG_ITEM",
+		LOST_IN_TRANSIT: "LOST_IN_TRANSIT",
+		FRAUD: "FRAUD",
+		OTHER: "OTHER",
+	},
+	OrderAction: {
+		REFUND_CREATED: "REFUND_CREATED",
+		REFUND_COMPLETED: "REFUND_COMPLETED",
+	},
 	InvoiceStatus: {
 		PENDING: "PENDING",
 		GENERATED: "GENERATED",
@@ -96,7 +123,17 @@ vi.mock("@/app/generated/prisma/client", () => ({
 }));
 
 vi.mock("../../services/void-invoice.service", () => ({
-	voidInvoice: vi.fn(),
+	voidInvoice: vi.fn().mockResolvedValue({ kind: "noop", reason: "no-active-invoice" }),
+}));
+
+// EINV-CREDIT-004 : markAsFullyRefunded crée un Refund + appelle ces 2 services
+// best-effort hors transaction. Mocké pour isoler les tests legacy de l'avoir
+// comptable (couvert dans issue-credit-note.service.test.ts).
+vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
+	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
+}));
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordRefundEReporting: mockRecordRefundEReporting,
 }));
 
 vi.mock("../../schemas/order.schemas", () => ({
@@ -133,6 +170,14 @@ describe("markAsFullyRefunded", () => {
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createMockOrder({ paymentStatus: "PAID" }));
 		mockPrisma.order.update.mockResolvedValue({});
+		// EINV-CREDIT-004 : vi.resetAllMocks() reset les mockResolvedValue de la
+		// hoisted — il faut re-set ici. Sans ça, `tx.refund.create` retourne
+		// undefined → TypeError silencieuse sur `createdRefund.id` → tests "succeeds
+		// when..." passent à 'error' (pattern « green for the wrong reason »).
+		mockPrisma.refund.count.mockResolvedValue(0);
+		mockPrisma.refund.create.mockResolvedValue({ id: "refund-manual-1" });
+		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
+		mockRecordRefundEReporting.mockResolvedValue("skipped");
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,

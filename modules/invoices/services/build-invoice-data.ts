@@ -16,6 +16,7 @@ import type {
 	StructuredAddress,
 	TaxBreakdownLine,
 	PrecedingInvoiceRef,
+	VoidedInfo,
 } from "../types/invoice-data";
 
 /**
@@ -62,12 +63,13 @@ export function buildInvoiceData(
 
 	const { format = "PDF", precedingInvoice = null } = options;
 
-	const seller = buildSellerInfo();
+	const seller = buildSellerInfo(order);
 	const buyer = buildBuyerInfo(order);
 	const shippingAddress = buildShippingAddress(order);
 	const billingAddress = buildBillingAddress(order, shippingAddress);
 	const lines = order.items.map((item, index) => buildInvoiceLine(item, index + 1));
 	const totals = buildTotals(order, lines);
+	const voidedInfo = buildVoidedInfo(order);
 
 	return {
 		invoiceNumber: order.invoiceNumber,
@@ -88,6 +90,7 @@ export function buildInvoiceData(
 			stripeChargeId: null, // pas dans GET_ORDER_SELECT, peut être ajouté plus tard
 		},
 		precedingInvoice,
+		voidedInfo,
 		meta: {
 			orderId: order.id,
 			orderNumber: order.orderNumber,
@@ -96,42 +99,82 @@ export function buildInvoiceData(
 	};
 }
 
+/**
+ * EINV-SEC-007 : si la facture a été annulée (`invoiceStatus === "VOIDED"`)
+ * et que les colonnes d'avoir sont remplies, on construit `voidedInfo`. Le
+ * renderer s'en sert pour estampiller le PDF. Si les colonnes manquent (cas
+ * historique pré-fix), on tombe sur `null` — le PDF n'aura pas le bandeau
+ * (best-effort, mieux qu'une erreur).
+ */
+function buildVoidedInfo(order: GetOrderReturn): VoidedInfo | null {
+	if (order.invoiceStatus !== "VOIDED") return null;
+	if (!order.creditNoteNumber || !order.invoiceVoidedAt) return null;
+	return {
+		creditNoteNumber: order.creditNoteNumber,
+		voidedAt: order.invoiceVoidedAt,
+	};
+}
+
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function buildSellerInfo(): SellerInfo {
+/**
+ * Construit le SellerInfo en preferant le snapshot vendor* fige sur Order
+ * (Art. L102 B LPF). Si le snapshot est absent (factures pre-Phase 5), tombe
+ * sur getVendorLegalInfo() (env actuel) — best-effort uniquement, le PDF
+ * archive UploadThing reste l'autorite immuable via invoicePdfHash.
+ */
+export function buildSellerInfo(order: GetOrderReturn): SellerInfo {
 	const vendor = getVendorLegalInfo();
+	const legalName = order.vendorLegalName ?? vendor.company_legal_name;
+	const tradeName = order.vendorTradeName ?? vendor.company_trade_name;
+	const address = order.vendorAddress
+		? parseVendorAddress(order.vendorAddress, legalName)
+		: parseVendorAddress(vendor.company_address, legalName);
 	return {
-		legalName: vendor.company_legal_name,
-		tradeName: vendor.company_trade_name,
-		// Normalise pour respecter le format canonique InvoiceData (chiffres seuls).
-		siren: normalizeFiscalIdentifier(vendor.company_siren) ?? "",
-		siret: normalizeFiscalIdentifier(vendor.company_siret) ?? "",
-		vatNumber: normalizeFiscalIdentifier(vendor.company_vat),
-		apeCode: vendor.company_ape,
-		legalForm: "Entrepreneur individuel",
-		address: parseVendorAddress(vendor.company_address),
-		email: vendor.company_email,
-		// Phase 5 — pas encore référencé annuaire DGFiP
-		eInvoicingAddress: null,
-		eInvoicingPlatformId: null,
-		vatExemptionText: vendor.vat_exemption,
+		legalName,
+		tradeName,
+		// Snapshot DB est deja normalise (CHECK constraint `^[0-9]{9}$` / `^[0-9]{14}$`).
+		siren: order.vendorSiren ?? normalizeFiscalIdentifier(vendor.company_siren) ?? "",
+		siret: order.vendorSiret ?? normalizeFiscalIdentifier(vendor.company_siret) ?? "",
+		vatNumber: order.vendorVatNumber ?? normalizeFiscalIdentifier(vendor.company_vat),
+		apeCode: order.vendorApeCode ?? vendor.company_ape,
+		legalForm: order.vendorLegalForm ?? vendor.company_legal_form,
+		address,
+		email: order.vendorEmail ?? vendor.company_email,
+		eInvoicingAddress: order.vendorEInvoicingAddress ?? vendor.einvoicing_address,
+		eInvoicingPlatformId: order.vendorEInvoicingPlatformId ?? vendor.einvoicing_platform_id,
+		vatExemptionText:
+			order.vendorVatRegime === "FRANCHISE_BASE" || !order.vendorVatRegime
+				? vendor.vat_exemption
+				: null,
+		bankIban: normalizeIban(order.vendorBankIban ?? vendor.bank_iban),
+		bankBic: normalizeBic(order.vendorBankBic ?? vendor.bank_bic),
 	};
+}
+
+function normalizeIban(raw: string | null): string | null {
+	if (!raw) return null;
+	return raw.replace(/\s+/g, "").toUpperCase();
+}
+
+function normalizeBic(raw: string | null): string | null {
+	if (!raw) return null;
+	return raw.replace(/\s+/g, "").toUpperCase();
 }
 
 /**
  * Parse une adresse vendeur "rue, postalCode city, country" en `StructuredAddress`.
  * Format actuel : "77 Boulevard du Tertre, 44100 Nantes, France".
  */
-function parseVendorAddress(raw: string): StructuredAddress {
-	const vendor = getVendorLegalInfo();
+function parseVendorAddress(raw: string, recipientName: string): StructuredAddress {
 	const parts = raw.split(",").map((p) => p.trim());
 	const line1 = parts[0] ?? raw;
 	const cityPart = parts[1] ?? "";
 	const postalMatch = cityPart.match(/^(\d{4,10})\s+(.+)$/);
 	return {
-		recipientName: vendor.company_legal_name,
+		recipientName,
 		line1,
 		line2: null,
 		postalCode: postalMatch?.[1] ?? "",
@@ -140,7 +183,7 @@ function parseVendorAddress(raw: string): StructuredAddress {
 	};
 }
 
-function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
+export function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 	const { firstName, lastName } = splitCustomerName(order.customerName);
 	return {
 		type: order.customerType,
@@ -152,10 +195,12 @@ function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 		siren: order.customerCompanySiren,
 		siret: order.customerCompanySiret,
 		vatNumber: order.customerCompanyVatNumber,
-		eInvoicingAddress: null, // Phase 5
-		eInvoicingPlatformId: null,
-		publicEntityId: null,
-		chorusServiceCode: null,
+		// Routing PDP client (annuaire central — reforme 2026-2027).
+		eInvoicingAddress: order.customerEInvoicingAddress,
+		eInvoicingPlatformId: order.customerEInvoicingPlatformId,
+		// Chorus Pro — obligatoire B2G.
+		publicEntityId: order.customerPublicEntityCode,
+		chorusServiceCode: order.customerServiceCode,
 	};
 }
 
@@ -176,7 +221,7 @@ function splitCustomerName(fullName: string): { firstName: string; lastName: str
 	};
 }
 
-function buildShippingAddress(order: GetOrderReturn): StructuredAddress {
+export function buildShippingAddress(order: GetOrderReturn): StructuredAddress {
 	return {
 		recipientName: `${order.shippingFirstName} ${order.shippingLastName}`.trim(),
 		line1: order.shippingAddress1,
@@ -187,7 +232,7 @@ function buildShippingAddress(order: GetOrderReturn): StructuredAddress {
 	};
 }
 
-function buildBillingAddress(
+export function buildBillingAddress(
 	order: GetOrderReturn,
 	shippingAddress: StructuredAddress,
 ): StructuredAddress {
@@ -228,6 +273,8 @@ function buildInvoiceLine(item: GetOrderReturn["items"][number], lineNumber: num
 		taxAmount: item.taxAmount,
 		lineTotalExclTax,
 		lineTotalInclTax,
+		hsCode: item.hsCode ?? null,
+		unitCode: item.unitCode ?? null,
 	};
 }
 
@@ -261,7 +308,7 @@ function buildTotals(order: GetOrderReturn, lines: InvoiceLine[]): InvoiceTotals
  * Agrège les lignes par (taux, catégorie) pour produire le breakdown TVA
  * affiché en pied de facture et exigé par Factur-X (BT-117 + BT-119).
  */
-function buildTaxBreakdown(
+export function buildTaxBreakdown(
 	lines: InvoiceLine[],
 	shippingExclTax: number,
 	shippingTax: number,

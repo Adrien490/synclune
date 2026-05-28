@@ -15,9 +15,9 @@ describe("generateOrderNumber", () => {
 		expect(generateOrderNumber()).toMatch(/^CMD-/);
 	});
 
-	it("should follow the format CMD-{timestamp}-{4chars}", () => {
+	it("should follow the format CMD-{timestamp}-{12 hex chars}", () => {
 		const result = generateOrderNumber();
-		expect(result).toMatch(/^CMD-\d+-[A-Z0-9]{4}$/);
+		expect(result).toMatch(/^CMD-\d+-[A-F0-9]{12}$/);
 	});
 
 	it("should include a valid timestamp in the middle segment", () => {
@@ -36,11 +36,11 @@ describe("generateOrderNumber", () => {
 		expect(numbers.size).toBeGreaterThan(1);
 	});
 
-	it("should have a 4-character uppercase alphanumeric suffix", () => {
+	it("should have a 12-character uppercase hex suffix", () => {
 		const result = generateOrderNumber();
 		const parts = result.split("-");
 		const suffix = parts[parts.length - 1];
-		expect(suffix).toMatch(/^[A-Z0-9]{4}$/);
+		expect(suffix).toMatch(/^[A-F0-9]{12}$/);
 	});
 
 	it("should use current Date.now() timestamp", () => {
@@ -48,8 +48,27 @@ describe("generateOrderNumber", () => {
 		vi.spyOn(Date, "now").mockReturnValue(mockTimestamp);
 
 		const result = generateOrderNumber();
-		expect(result).toMatch(new RegExp(`^CMD-${mockTimestamp}-[A-Z0-9]{4}$`));
+		expect(result).toMatch(new RegExp(`^CMD-${mockTimestamp}-[A-F0-9]{12}$`));
 
 		vi.restoreAllMocks();
+	});
+
+	// EINV-SEC-006 : régression CSPRNG vs Math.random().
+	it("should produce no collisions across 10k iterations (CSPRNG entropy ~2^48)", () => {
+		const set = new Set<string>();
+		for (let i = 0; i < 10_000; i++) {
+			set.add(generateOrderNumber());
+		}
+		expect(set.size).toBe(10_000);
+	});
+
+	it("should use crypto.randomBytes (CSPRNG), not Math.random", () => {
+		// Sanity check : verify that Math.random is NOT called during generation.
+		// Math.random returns predictable values seeded by v8 xorshift — a CSPRNG
+		// alternative is required to prevent orderNumber enumeration.
+		const mathRandomSpy = vi.spyOn(Math, "random");
+		generateOrderNumber();
+		expect(mathRandomSpy).not.toHaveBeenCalled();
+		mathRandomSpy.mockRestore();
 	});
 });

@@ -1,14 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockSendAdminStuckOrdersAlert, mockSentryCapture, mockSentryWithScope } =
-	vi.hoisted(() => ({
-		mockPrisma: {
-			order: { findMany: vi.fn() },
-		},
-		mockSendAdminStuckOrdersAlert: vi.fn(),
-		mockSentryCapture: vi.fn(),
-		mockSentryWithScope: vi.fn(),
-	}));
+const {
+	mockPrisma,
+	mockSendAdminStuckOrdersAlert,
+	mockSendAdminInvoiceFailedAlert,
+	mockSendAdminEReportingStuckAlert,
+	mockSentryCapture,
+	mockSentryWithScope,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		order: { findMany: vi.fn() },
+		eReportingBatch: { findMany: vi.fn() },
+	},
+	mockSendAdminStuckOrdersAlert: vi.fn(),
+	mockSendAdminInvoiceFailedAlert: vi.fn(),
+	mockSendAdminEReportingStuckAlert: vi.fn(),
+	mockSentryCapture: vi.fn(),
+	mockSentryWithScope: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -17,6 +26,25 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminStuckOrdersAlert: mockSendAdminStuckOrdersAlert,
+	sendAdminInvoiceFailedAlert: mockSendAdminInvoiceFailedAlert,
+	sendAdminEReportingStuckAlert: mockSendAdminEReportingStuckAlert,
+}));
+
+vi.mock("@/shared/constants/urls", () => ({
+	getBaseUrl: () => "https://test.synclune.fr",
+}));
+
+vi.mock("@/app/generated/prisma/client", () => ({
+	OrderStatus: { PENDING: "PENDING", PROCESSING: "PROCESSING", SHIPPED: "SHIPPED" },
+	PaymentStatus: { PAID: "PAID" },
+	EReportingStatus: {
+		PENDING: "PENDING",
+		RETRYING: "RETRYING",
+		SENT: "SENT",
+		ACCEPTED: "ACCEPTED",
+		REJECTED: "REJECTED",
+		ABANDONED: "ABANDONED",
+	},
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -47,6 +75,13 @@ describe("alertStuckOrders", () => {
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(NOW);
 		mockSendAdminStuckOrdersAlert.mockResolvedValue({ success: true, data: { id: "email-1" } });
+		mockSendAdminInvoiceFailedAlert.mockResolvedValue({ success: true, data: { id: "email-2" } });
+		mockSendAdminEReportingStuckAlert.mockResolvedValue({ success: true, data: { id: "email-3" } });
+		// Default : empty (invoice-stuck call #3). Tests qui ont besoin de
+		// processing/shipped specifient via `mockResolvedValueOnce` ; le 3ᵉ
+		// appel (invoice-stuck) tombera sur ce default.
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.eReportingBatch.findMany.mockResolvedValue([]);
 		mockSentryWithScope.mockImplementation((cb: (s: FakeSentryScope) => void) => {
 			lastScope = {
 				setTag: vi.fn(),

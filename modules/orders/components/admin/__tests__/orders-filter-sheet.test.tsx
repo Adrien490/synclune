@@ -699,6 +699,7 @@ describe("OrdersFilterSheet", () => {
 			paymentStatuses: [],
 			fulfillmentStatuses: [],
 			invoiceStatuses: [],
+			invoiceAnomaly: false,
 			priceRange: [0, 500000],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",

@@ -211,4 +211,40 @@ describe("PrimaryImageUpload", () => {
 		render(<PrimaryImageUpload {...defaultProps} imageUrl="https://utfs.io/f/photo.jpg" />);
 		expect(screen.getByTestId("product-image")).toBeInTheDocument();
 	});
+
+	// ─── @regression upload-media-audit-2026-05-28-video-retry-remount ────────
+	// Le retry vidéo de MediaErrorFallback appelait `videoRef.current?.load()` —
+	// mais videoRef est null quand l'erreur est affichée (le <video> est
+	// démonté). Le fix attache `key={videoRetryCount}` au <video> et incrémente
+	// le compteur sur retry pour forcer un remount React (vide le cache d'erreur
+	// du navigateur).
+	describe("regression: video retry forces a fresh mount", () => {
+		it("returns to the <video> element after clicking the error retry button", async () => {
+			const { container } = render(
+				<PrimaryImageUpload
+					{...defaultProps}
+					imageUrl="https://utfs.io/f/video.mp4"
+					mediaType="VIDEO"
+				/>,
+			);
+
+			const initialVideo = container.querySelector("video");
+			expect(initialVideo).toBeInTheDocument();
+
+			// Simulate video error → MediaErrorFallback should appear
+			const videoEl = initialVideo!;
+			(videoEl as HTMLVideoElement).dispatchEvent(new Event("error"));
+
+			// MediaErrorFallback is rendered via the mock at the top of this file
+			const retryBtn = await screen.findByRole("button", { name: /retry/i });
+			expect(retryBtn).toBeInTheDocument();
+			expect(container.querySelector("video")).not.toBeInTheDocument();
+
+			await userEvent.click(retryBtn);
+
+			// Video element is back — the new mount has a fresh `key`, so the browser
+			// is free to re-fetch the source.
+			expect(container.querySelector("video")).toBeInTheDocument();
+		});
+	});
 });

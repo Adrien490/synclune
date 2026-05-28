@@ -21,6 +21,13 @@ interface OrderConfirmationEmailProps {
 	total: number;
 	shippingAddress: ShippingAddress;
 	trackingUrl: string;
+	/**
+	 * URL directe vers le PDF de la facture (Art. 289-I CGI — mise à disposition
+	 * immédiate). Inclut un token signé pour les commandes guest. Optionnel :
+	 * absent si la commande n'a pas encore reçu son numéro de facture au moment
+	 * de l'envoi (race rare avec le webhook payment_intent.succeeded).
+	 */
+	invoiceUrl?: string | null;
 }
 
 export const OrderConfirmationEmail = ({
@@ -33,6 +40,7 @@ export const OrderConfirmationEmail = ({
 	total,
 	shippingAddress,
 	trackingUrl,
+	invoiceUrl,
 }: OrderConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} confirmée`}>
@@ -196,6 +204,21 @@ export const OrderConfirmationEmail = ({
 
 			<EmailCTA href={trackingUrl}>Suivre ma commande</EmailCTA>
 
+			{invoiceUrl && (
+				<Section style={{ marginTop: "12px", textAlign: "center" }}>
+					<Link
+						href={invoiceUrl}
+						style={{
+							color: EMAIL_COLORS.text.secondary,
+							textDecoration: "underline",
+							fontSize: "14px",
+						}}
+					>
+						Télécharger ma facture (PDF)
+					</Link>
+				</Section>
+			)}
+
 			<Section style={{ marginBottom: "24px" }}>
 				<Hr style={{ ...EMAIL_STYLES.hr, margin: "0 0 16px 0" }} />
 				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
@@ -268,6 +291,8 @@ OrderConfirmationEmail.PreviewProps = {
 		country: "France",
 	},
 	trackingUrl: "https://synclune.fr/compte/commandes/example-order-id",
+	invoiceUrl:
+		"https://synclune.fr/api/orders/CMD-1730000000-ABCD/invoice?token=abc123def456abc123def456abc12345",
 } as OrderConfirmationEmailProps;
 
 export default OrderConfirmationEmail;

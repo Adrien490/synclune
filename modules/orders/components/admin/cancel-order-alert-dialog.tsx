@@ -14,7 +14,8 @@ import {
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
-import { Ban, LoaderCircle } from "lucide-react";
+import type { InvoiceStatus } from "@/app/generated/prisma/browser";
+import { Ban, FileWarning, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
@@ -23,6 +24,8 @@ interface CancelOrderData {
 	orderId: string;
 	orderNumber: string;
 	isPaid: boolean;
+	invoiceStatus?: InvoiceStatus | null;
+	invoiceNumber?: string | null;
 	[key: string]: unknown;
 }
 
@@ -45,6 +48,8 @@ export function CancelOrderAlertDialog() {
 	};
 
 	const isPaid = cancelDialog.data?.isPaid ?? false;
+	const hasGeneratedInvoice = cancelDialog.data?.invoiceStatus === "GENERATED";
+	const invoiceNumber = cancelDialog.data?.invoiceNumber;
 
 	return (
 		<ResponsiveAlertDialog
@@ -91,6 +96,37 @@ export function CancelOrderAlertDialog() {
 												depuis le module Remboursements.
 											</p>
 										)}
+									</div>
+								)}
+								{hasGeneratedInvoice && (
+									<div
+										className="border-warning/40 bg-warning/5 mt-3 space-y-1 rounded-md border p-3"
+										role="alert"
+									>
+										<p className="text-foreground flex items-center gap-2 text-sm font-medium">
+											<FileWarning className="text-warning size-4" aria-hidden="true" />
+											Émission d&apos;un avoir comptable
+										</p>
+										<p className="text-muted-foreground text-sm">
+											Cette commande est facturée
+											{invoiceNumber ? (
+												<>
+													{" "}
+													(
+													<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+														{invoiceNumber}
+													</code>
+													)
+												</>
+											) : null}
+											. Un avoir{" "}
+											<code className="bg-muted rounded px-1 py-0.5 font-mono text-xs tabular-nums">
+												A-YYYY-NNNNN
+											</code>{" "}
+											sera émis automatiquement (Art. 272-I CGI). Cette opération est{" "}
+											<strong>irréversible</strong> — l&apos;avoir intègre la séquence comptable
+											gap-free.
+										</p>
 									</div>
 								)}
 								<p className="text-muted-foreground mt-4 text-sm">

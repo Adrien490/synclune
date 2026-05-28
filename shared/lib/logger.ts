@@ -6,9 +6,52 @@ export interface LogContext {
 	action?: string;
 	route?: string;
 	orderId?: string;
+	orderNumber?: string;
 	cronJob?: string;
 	service?: string;
+	// First-class accounting/transaction identifiers — promoted to Sentry tags
+	// so the triage dashboard can filter/group by these (cf. audit monitoring
+	// 2026-05-28 EINV-OPS-006). Pas de PII : tous des IDs internes ou Stripe.
+	invoiceNumber?: string;
+	creditNoteNumber?: string;
+	refundId?: string;
+	stripeRefundId?: string;
+	paymentIntentId?: string;
+	stripeEventId?: string;
+	eReportingBatchId?: string;
+	invoicePath?: "archived" | "lazy_regenerate" | "lazy_generate_number";
 	[key: string]: unknown;
+}
+
+// Keys of LogContext that are promoted to first-class Sentry tags. Each
+// surfaces in the Sentry triage UI as a filterable/groupable facet.
+const SENTRY_TAG_KEYS = [
+	"action",
+	"cronJob",
+	"service",
+	"route",
+	"orderId",
+	"orderNumber",
+	"invoiceNumber",
+	"creditNoteNumber",
+	"refundId",
+	"stripeRefundId",
+	"paymentIntentId",
+	"stripeEventId",
+	"eReportingBatchId",
+	"invoicePath",
+] as const satisfies ReadonlyArray<keyof LogContext>;
+
+function extractSentryTags(context: LogContext | undefined): Record<string, string> {
+	if (!context) return {};
+	const tags: Record<string, string> = {};
+	for (const key of SENTRY_TAG_KEYS) {
+		const value = context[key];
+		if (value !== undefined && value !== "") {
+			tags[key] = String(value);
+		}
+	}
+	return tags;
 }
 
 // PII patterns to redact from log messages
@@ -102,14 +145,11 @@ export const logger = {
 
 		pinoLogger.error({ err: errorObj, context }, redactPii(message));
 
+		const tags = extractSentryTags(context);
+
 		if (errorObj) {
 			Sentry.captureException(errorObj, {
-				tags: {
-					...(context?.action && { action: String(context.action) }),
-					...(context?.cronJob && { cronJob: String(context.cronJob) }),
-					...(context?.service && { service: String(context.service) }),
-					...(context?.route && { route: String(context.route) }),
-				},
+				tags,
 				contexts: {
 					custom: context as Record<string, unknown>,
 				},
@@ -117,10 +157,7 @@ export const logger = {
 		} else {
 			Sentry.captureMessage(redactPii(message), {
 				level: "error",
-				tags: {
-					...(context?.action && { action: String(context.action) }),
-					...(context?.cronJob && { cronJob: String(context.cronJob) }),
-				},
+				tags,
 			});
 		}
 	},

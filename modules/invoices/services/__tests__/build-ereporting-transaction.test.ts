@@ -11,7 +11,6 @@ function makeSalesOrder(overrides: Partial<SalesOrder> = {}): SalesOrder {
 		orderNumber: "SYN-2026-0001",
 		paidAt: new Date("2026-05-27T18:00:00Z"),
 		total: 9500,
-		subtotal: 9000,
 		taxAmount: 0,
 		currency: "EUR",
 		paymentMethod: "CARD",

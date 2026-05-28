@@ -78,6 +78,12 @@ export interface SubmitEReportingBatchResult {
 	providerBatchId: string;
 	status: EReportingStatus;
 	submittedAt: Date;
+	/**
+	 * Motif de rejet renvoyé par la PA quand `status === "REJECTED"` (ACK
+	 * synchrone vs `ProviderBusinessError` async). Tronqué à 1000 caractères
+	 * côté persist pour rester aligné avec `EReportingBatch.rejectionReason`.
+	 */
+	rejectionReason?: string;
 }
 
 /**
@@ -90,7 +96,22 @@ export interface DirectoryLookupInput {
 	value: string;
 }
 
+/**
+ * Statut d'un lookup annuaire DGFiP.
+ * - FOUND       : destinataire identifie et PDP resolue.
+ * - NOT_FOUND   : pas de PDP designee (client peut etre absent de l'annuaire,
+ *                 reception via Portail Public de Facturation par defaut).
+ * - UNAVAILABLE : annuaire injoignable (5xx, timeout, panne reseau). Le caller
+ *                 doit retry — NE PAS confondre avec NOT_FOUND (faux negatif).
+ */
+export type DirectoryLookupStatus = "FOUND" | "NOT_FOUND" | "UNAVAILABLE";
+
 export interface DirectoryLookupResult {
+	status: DirectoryLookupStatus;
+	/**
+	 * @deprecated Utiliser `status === "FOUND"`. Conserve pour retro-compat
+	 * le temps de migrer les call-sites (une release).
+	 */
 	found: boolean;
 	platformId: string | null;
 	routingAddress: string | null;

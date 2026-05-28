@@ -13,6 +13,18 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { AlertTriangle, Check, LoaderCircle, RefreshCw, X } from "lucide-react";
 import type { FileProgress } from "@/modules/media/types/hooks.types";
 
+// Screen reader announcements are throttled to these milestones to avoid spamming
+// NVDA/VoiceOver with one annoucement per progress tick during long uploads.
+const SR_MILESTONES = [0, 25, 50, 75, 100] as const;
+
+function nearestMilestone(percent: number): (typeof SR_MILESTONES)[number] {
+	let nearest: (typeof SR_MILESTONES)[number] = 0;
+	for (const m of SR_MILESTONES) {
+		if (percent >= m) nearest = m;
+	}
+	return nearest;
+}
+
 export type UploadPhase =
 	| "validating"
 	| "compressing"
@@ -100,6 +112,9 @@ export function UploadProgress({
 		completedCount !== undefined && completedCount > 0
 			? `${completedCount} fichier${completedCount > 1 ? "s" : ""} envoyé${completedCount > 1 ? "s" : ""}`
 			: "Envoi terminé";
+	// Round the spoken percentage to the nearest milestone (0/25/50/75/100) so SR
+	// announcements happen at most ~5 times during an upload instead of every tick.
+	const announcedPercent = nearestMilestone(clampedProgress);
 	const srText = isComplete
 		? completedText
 		: isCompressing
@@ -110,7 +125,7 @@ export function UploadProgress({
 					? "Polissage final à l'atelier en cours"
 					: isServerProcessing
 						? "Optimisation à l'atelier en cours"
-						: `Envoi en cours, ${clampedProgress} pourcent${queueText}`;
+						: `Envoi en cours, ${announcedPercent} pourcent${queueText}`;
 
 	const phaseLabel = isComplete
 		? "Terminé"
@@ -318,7 +333,7 @@ interface FileProgressListProps {
 function FileProgressList({ files, reducedMotion, onCancelOne }: FileProgressListProps) {
 	return (
 		<ul
-			className="bg-muted/20 flex max-h-40 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
+			className="bg-muted/20 flex max-h-52 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
 			aria-label="Détails par fichier"
 		>
 			{files.map((file) => (

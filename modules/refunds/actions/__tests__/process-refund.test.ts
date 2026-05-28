@@ -34,9 +34,18 @@ const {
 		mockError: vi.fn(),
 		mockPrisma: {
 			$transaction: vi.fn(),
-			refund: { update: vi.fn(), updateMany: vi.fn() },
+			refund: {
+				update: vi.fn(),
+				updateMany: vi.fn(),
+				// EINV-CREDIT-001 : process-refund.ts lit Refund.creditNoteNumber
+				// (+ Order.invoiceNumber/creditNoteNumber via relation) pour résoudre
+				// l'avoir partiel ou total inclus dans l'email client (Art. 272-I CGI).
+				findUnique: vi.fn().mockResolvedValue(null),
+			},
 			productSku: { findMany: vi.fn() },
 			user: { findUnique: vi.fn() },
+			// Legacy : conservé pour les tests historiques qui mockent ce path.
+			order: { findUnique: vi.fn() },
 			orderNote: { create: vi.fn() },
 		},
 		mockTx,
@@ -177,6 +186,18 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 // Mock stripe to avoid API key requirement
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: {},
+}));
+
+// EINV-CREDIT-001 : processRefund Step 3 appelle issueCreditNoteForRefund après
+// COMPLETED. Mocké pour isoler les tests refund-de-paiement de l'avoir
+// comptable (couvert dans modules/refunds/services/__tests__/issue-credit-note.service.test.ts).
+vi.mock("../../services/issue-credit-note.service", () => ({
+	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
+}));
+
+// EINV-CREDIT-001 : recordRefundEReporting est appelé best-effort.
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordRefundEReporting: vi.fn().mockResolvedValue("skipped"),
 }));
 
 import { processRefund } from "../process-refund";
@@ -603,6 +624,11 @@ describe("processRefund", () => {
 			fn(mockTx),
 		);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
+		// EINV-GLOBAL-008 : email confirmation refund cite invoiceNumber + creditNoteNumber.
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceNumber: null,
+			creditNoteNumber: null,
+		});
 	}
 
 	it("should send confirmation email to customer after successful processing", async () => {

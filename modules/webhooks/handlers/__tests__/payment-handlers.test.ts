@@ -17,6 +17,9 @@ const {
 	mockLogger,
 	mockProcessOrderFromPaymentIntent,
 	mockBuildPostCheckoutTasksFromPI,
+	mockEnsureInvoiceNumberPersisted,
+	mockRecordSalesEReporting,
+	mockExtractPaymentMethod,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
@@ -32,6 +35,9 @@ const {
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockBuildPostCheckoutTasksFromPI: vi.fn(),
+	mockEnsureInvoiceNumberPersisted: vi.fn().mockResolvedValue(undefined),
+	mockRecordSalesEReporting: vi.fn().mockResolvedValue("skipped"),
+	mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -100,6 +106,22 @@ vi.mock("@/shared/lib/stripe", () => ({
 	stripe: {},
 }));
 
+vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
+	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
+}));
+
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordSalesEReporting: mockRecordSalesEReporting,
+}));
+
+vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
+	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethod,
+}));
+
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminOrderProcessingFailedAlert: vi.fn(),
+}));
+
 import type Stripe from "stripe";
 import {
 	handlePaymentSuccess,
@@ -152,7 +174,19 @@ describe("handlePaymentSuccess", () => {
 			makePaymentIntent({ metadata: { order_id: "order-1", checkoutSessionId: "cs_123" } }),
 		);
 
-		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123");
+		// 3rd arg = paymentMethod (undefined ici car mockExtractPaymentMethod résout null)
+		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123", undefined);
+	});
+
+	it("propagates the extracted payment_method to markOrderAsPaid (EINV-EREPORT-001)", async () => {
+		mockMarkOrderAsPaid.mockResolvedValue(undefined);
+		mockExtractPaymentMethod.mockResolvedValueOnce("SEPA_DEBIT");
+
+		await handlePaymentSuccess(
+			makePaymentIntent({ metadata: { order_id: "order-1", checkoutSessionId: "cs_123" } }),
+		);
+
+		expect(mockMarkOrderAsPaid).toHaveBeenCalledWith("order-1", "pi_123", "SEPA_DEBIT");
 	});
 
 	it("should not call markOrderAsPaid when no orderId in metadata (warn only)", async () => {

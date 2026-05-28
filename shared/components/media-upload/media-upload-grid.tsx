@@ -7,7 +7,7 @@ import { arrayMove } from "@dnd-kit/helpers";
 import type { DragEndEvent } from "@dnd-kit/react";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useReducedMotion } from "motion/react";
-import { Play } from "lucide-react";
+import { Play, Upload } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
@@ -223,8 +223,9 @@ export function MediaUploadGrid({
 		const newMedia = arrayMove(media, index, 0);
 		triggerHaptic("medium");
 		withViewTransition(() => onChange(newMedia));
+		// Single feedback channel: aria-live + visible ★ badge mutation. Toast removed
+		// to avoid double announcement to screen readers (Sonner toasts also speak aloud).
 		setAnnouncement(`Image ${index + 1} définie comme image principale.`);
-		toast.success("Définie comme image principale");
 	};
 
 	// Update the alt text (description) of a single media item
@@ -283,7 +284,7 @@ export function MediaUploadGrid({
 				</div>
 
 				<div
-					className={`xs:gap-2.5 grid w-full grid-cols-2 gap-2 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
+					className={`xs:gap-2.5 relative grid w-full grid-cols-2 gap-2 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
 						isFileDropTarget && onFilesDropped
 							? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
 							: ""
@@ -343,6 +344,17 @@ export function MediaUploadGrid({
 					{/* Upload zone */}
 					{canAddMore && renderUploadZone && (
 						<div className="aspect-square overflow-hidden rounded-lg">{renderUploadZone()}</div>
+					)}
+
+					{/* OS files drag overlay — pointer-events-none so it doesn't intercept the drop. */}
+					{isFileDropTarget && onFilesDropped && (
+						<div
+							aria-hidden="true"
+							className="border-primary bg-background/85 text-primary pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
+						>
+							<Upload className="size-8" aria-hidden="true" />
+							<p className="text-sm font-medium">Déposez pour ajouter</p>
+						</div>
 					)}
 				</div>
 

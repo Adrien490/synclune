@@ -46,8 +46,21 @@ export interface InvoiceData {
 	// === RÉFÉRENCE FACTURE ORIGINALE (uniquement pour les avoirs) ===
 	precedingInvoice: PrecedingInvoiceRef | null;
 
+	// === ANNULATION (EINV-SEC-007) — uniquement si la facture a été annulée ===
+	// Présent quand `Order.invoiceStatus === "VOIDED"`. Force le renderer à
+	// dessiner un bandeau "ANNULÉE — Avoir A-YYYY-NNNNN" en première page (Art. 272-I
+	// CGI : un avoir doit identifier sans ambiguïté la facture annulée).
+	voidedInfo: VoidedInfo | null;
+
 	// === MÉTADONNÉES ===
 	meta: InvoiceMeta;
+}
+
+export interface VoidedInfo {
+	/** Numéro d'avoir associé (`A-YYYY-NNNNN`). */
+	creditNoteNumber: string;
+	/** Date à laquelle la facture a été annulée. */
+	voidedAt: Date;
 }
 
 /**
@@ -72,6 +85,10 @@ export interface SellerInfo {
 	eInvoicingPlatformId: string | null;
 	/** Texte mention TVA si franchise (Art. 293 B CGI). */
 	vatExemptionText: string | null;
+	/** IBAN du vendeur (BT-84 EN16931) — affiché sur factures B2B viré. */
+	bankIban: string | null;
+	/** BIC/SWIFT du vendeur (BT-86 EN16931). */
+	bankBic: string | null;
 }
 
 export interface BuyerInfo {
@@ -129,6 +146,10 @@ export interface InvoiceLine {
 	lineTotalExclTax: number;
 	/** Total ligne TTC en centimes. */
 	lineTotalInclTax: number;
+	/** Code SH OMD (6-10 chiffres) — BT-156 Factur-X BASIC/EN16931. Optionnel. */
+	hsCode: string | null;
+	/** Code unite UN/ECE Rec 20 (H87 = piece) — BG-25 line item quantity unit. Optionnel. */
+	unitCode: string | null;
 }
 
 export interface InvoiceTotals {

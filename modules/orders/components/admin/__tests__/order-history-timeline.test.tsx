@@ -14,6 +14,7 @@ vi.mock("date-fns/locale", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
+	AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
 	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
 	Clock: () => <svg data-testid="icon-clock" />,
 	CreditCard: () => <svg data-testid="icon-credit-card" />,

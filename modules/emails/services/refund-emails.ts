@@ -11,6 +11,14 @@ type RefundConfirmationEmailParams = {
 	reason: string;
 	orderDetailsUrl: string;
 	/**
+	 * Numéro d'avoir comptable (`A-YYYY-NNNNN`, Art. 272-I CGI). Optionnel —
+	 * uniquement présent quand `voidInvoice()` a émis un avoir suite au
+	 * remboursement total.
+	 */
+	creditNoteNumber?: string | null;
+	/** Numéro de la facture annulée par l'avoir (`F-YYYY-NNNNN`). */
+	invoiceNumber?: string | null;
+	/**
 	 * ORD-STRIPE-008 : clé Resend Idempotency-Key (24h cross-instance).
 	 * Évite l'envoi double si le webhook est rejoué (Stripe retry, cron
 	 * retry-webhooks) ou si admin path et webhook path tombent quand même
@@ -34,6 +42,8 @@ export async function sendRefundConfirmationEmail(
 			refundAmount: params.refundAmount,
 			reason: params.reason,
 			orderDetailsUrl: params.orderDetailsUrl,
+			creditNoteNumber: params.creditNoteNumber,
+			invoiceNumber: params.invoiceNumber,
 		}),
 		{
 			to: params.to,

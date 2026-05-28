@@ -15,6 +15,7 @@ import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
+import { generateInvoiceAccessToken } from "../utils/invoice-token";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -215,6 +216,9 @@ export async function markAsPaid(
 						country: order.shippingCountry || "France",
 					},
 					trackingUrl,
+					invoiceUrl: buildUrl(
+						`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice?token=${generateInvoiceAccessToken(order.id, order.orderNumber)}`,
+					),
 				});
 				emailSent = true;
 			} catch (emailError) {

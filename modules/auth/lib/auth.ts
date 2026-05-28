@@ -25,7 +25,7 @@ validateAuthEnvironment();
 
 // Initialiser Stripe client avec valeur par défaut pour le build
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-04-22.dahlia",
+	apiVersion: "2026-05-27.dahlia",
 	maxNetworkRetries: 2,
 });
 

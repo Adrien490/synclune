@@ -20,6 +20,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { logger } from "@/shared/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -284,6 +285,10 @@ export async function cancelOrder(
 
 		// Cycle VOIDED facture + émission avoir séquentiel (Art. 272-I CGI).
 		// Best-effort hors transaction principale (advisory lock Postgres).
+		// EINV-CREDIT-008 : Sentry alerte sur `failed` quand paymentStatus passe à
+		// REFUNDED — la facture stale post-cancel est rattrapée par le cron
+		// reconcile-voided-invoices (EINV-CREDIT-003) mais l'alerte doit fire au
+		// plus tôt pour visibilité oncall.
 		let creditNoteNumber: string | null = null;
 		if (order._invoiceVoided) {
 			const voided = await voidInvoice({
@@ -293,7 +298,26 @@ export async function cancelOrder(
 				source: HistorySource.ADMIN,
 				reason: sanitizedReason ?? "Facture invalidée suite à annulation",
 			});
-			creditNoteNumber = voided?.creditNoteNumber ?? null;
+			if (voided.kind === "voided") {
+				creditNoteNumber = voided.creditNoteNumber;
+			} else if (voided.kind === "noop" && voided.reason === "already-voided") {
+				creditNoteNumber = voided.creditNoteNumber ?? null;
+			} else if (voided.kind === "failed" && order._newPaymentStatus === PaymentStatus.REFUNDED) {
+				Sentry.withScope((scope) => {
+					scope.setLevel("error");
+					scope.setTag("invoicing", "void-invoice-failed");
+					scope.setFingerprint(["void-invoice", "max-retries", order.id]);
+					scope.setContext("order", {
+						orderId: order.id,
+						orderNumber: order.orderNumber,
+						paymentStatus: order._newPaymentStatus,
+					});
+					Sentry.captureMessage(
+						"voidInvoice failed on cancel-order with paymentStatus=REFUNDED — facture stale",
+						"error",
+					);
+				});
+			}
 		}
 
 		// Invalider les caches (orders list admin + commandes user)

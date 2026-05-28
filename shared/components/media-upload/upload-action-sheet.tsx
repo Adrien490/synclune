@@ -132,7 +132,7 @@ export function UploadActionSheet({
 						</span>
 					</Button>
 				</DrawerTrigger>
-				<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[70vh]">
+				<DrawerContent onOverlayClick={() => haptic("light")} className="max-h-fit">
 					<DrawerHeader>
 						<DrawerTitle>{sheetTitle}</DrawerTitle>
 						{sheetDescription && <DrawerDescription>{sheetDescription}</DrawerDescription>}

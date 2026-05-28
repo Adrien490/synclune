@@ -36,18 +36,22 @@ describe("LocalPdfProvider", () => {
 		await expect(provider.handleProviderWebhook()).rejects.toThrow(/webhook plateforme/);
 	});
 
-	it("submitEReportingBatch throws — not active until Phase 3", async () => {
+	it("submitEReportingBatch returns PENDING dry-run (no I/O, no throw)", async () => {
 		const provider = new LocalPdfProvider();
-		await expect(provider.submitEReportingBatch()).rejects.toThrow(/e-reporting/);
+		const result = await provider.submitEReportingBatch();
+		expect(result.status).toBe("PENDING");
+		expect(result.providerBatchId).toMatch(/^local:dry-run:/);
+		expect(result.submittedAt).toBeInstanceOf(Date);
 	});
 
-	it("lookupEInvoicingDirectory returns found:false (no annuaire yet)", async () => {
+	it("lookupEInvoicingDirectory returns NOT_FOUND (no annuaire branched)", async () => {
 		const provider = new LocalPdfProvider();
 		const result = await provider.lookupEInvoicingDirectory({
 			type: "SIREN",
 			value: "839183027",
 		});
 		expect(result).toEqual({
+			status: "NOT_FOUND",
 			found: false,
 			platformId: null,
 			routingAddress: null,

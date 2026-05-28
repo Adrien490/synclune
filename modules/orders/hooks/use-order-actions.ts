@@ -19,7 +19,12 @@ import {
 
 import { useRouter } from "next/navigation";
 
-import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
+import {
+	OrderStatus,
+	PaymentStatus,
+	type FulfillmentStatus,
+	type InvoiceStatus,
+} from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -50,6 +55,7 @@ interface UseOrderActionsParams {
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
 		invoiceNumber?: string | null;
+		invoiceStatus?: InvoiceStatus | null;
 	};
 }
 
@@ -241,6 +247,8 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 							orderId: order.id,
 							orderNumber: order.orderNumber,
 							isPaid: order.paymentStatus === PaymentStatus.PAID,
+							invoiceStatus: order.invoiceStatus ?? null,
+							invoiceNumber: order.invoiceNumber ?? null,
 						}),
 				},
 				{

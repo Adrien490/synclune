@@ -1,4 +1,5 @@
-import { EReportingTransactionType } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
+import { EReportingTransactionType, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { INVOICE_FEATURE_FLAGS } from "../constants/feature-flags";
@@ -9,6 +10,28 @@ import {
 } from "./build-ereporting-transaction";
 
 /**
+ * Unique constraint names introduced by migration 20260528160000 covering the
+ * anti-doublon e-reporting (EINV-GLOBAL-013). A P2002 carrying one of these
+ * targets means a concurrent webhook just created the same SALES/REFUND row
+ * between our findFirst and create — treat as success-equivalent.
+ */
+const EREPORTING_UNIQUE_CONSTRAINTS = new Set([
+	"EReportingTransaction_orderId_type_key",
+	"EReportingTransaction_refundId_type_key",
+]);
+
+function isDuplicateEReportingError(error: unknown): boolean {
+	if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== "P2002") {
+		return false;
+	}
+	const target = error.meta?.target;
+	if (typeof target === "string") return EREPORTING_UNIQUE_CONSTRAINTS.has(target);
+	if (Array.isArray(target))
+		return target.some((t) => typeof t === "string" && EREPORTING_UNIQUE_CONSTRAINTS.has(t));
+	return false;
+}
+
+/**
  * Wrapper best-effort qui crée une `EReportingTransaction` à partir d'un
  * Order PAID (SALES) ou d'un Refund COMPLETED (REFUND).
  *
@@ -17,12 +40,15 @@ import {
  *  - **Fail-closed sur feature flag** : si `INVOICE_ENABLE_EREPORTING=false`,
  *    on retourne silencieusement. Permet d'activer progressivement par
  *    déploiement sans changement de code.
- *  - **Idempotent** : findFirst sur (orderId/refundId, type) avant create.
- *    Un webhook rejoué N fois → toujours une seule transaction.
- *  - **Best-effort** : capture l'erreur et la log dans Sentry, ne re-throw
- *    JAMAIS. Une transaction e-reporting manquée est rattrapée par
- *    `backfillEReportingTransactions` (cron futur) ; un order paid qui
- *    rollback à cause d'une création e-reporting défaillante = catastrophe.
+ *  - **Idempotent** : findFirst sur (orderId/refundId, type) avant create +
+ *    unique index DB (`EReportingTransaction_orderId_type_key` /
+ *    `EReportingTransaction_refundId_type_key`, migration 20260528160000) qui
+ *    rattrape les races concurrent-insert via P2002 (skip silencieux).
+ *  - **Best-effort** : capture l'erreur, la log + Sentry scope, mais ne
+ *    re-throw JAMAIS. Une transaction e-reporting manquée est rattrapée par
+ *    `reconcile-refunds` (refunds) ou par ré-tirage manuel admin (orders) ;
+ *    un order paid qui rollback à cause d'une création e-reporting
+ *    défaillante = catastrophe.
  *
  * Cf. EINV-AUDIT-004 / Phase 3 / Phase 4 wiring.
  */
@@ -51,7 +77,6 @@ export async function recordSalesEReporting(
 				orderNumber: true,
 				paidAt: true,
 				total: true,
-				subtotal: true,
 				taxAmount: true,
 				currency: true,
 				paymentMethod: true,
@@ -71,6 +96,25 @@ export async function recordSalesEReporting(
 		const payload = buildSalesTransaction({ order });
 		return await persistTransaction(payload);
 	} catch (e) {
+		// Race entre findFirst + create : un webhook concurrent vient d'écrire la
+		// même paire (orderId, SALES). Le unique index DB nous a protégés ; on
+		// rapporte "skipped" plutôt que "error" car le résultat fonctionnel est
+		// identique à l'idempotence par check préalable.
+		if (isDuplicateEReportingError(e)) {
+			logger.info("recordSalesEReporting — concurrent insert detected, skipping (idempotent)", {
+				service: "record-ereporting",
+				orderId,
+			});
+			return "skipped";
+		}
+		Sentry.withScope((scope) => {
+			scope.setTag("service", "record-ereporting");
+			scope.setTag("ereportingType", "SALES");
+			scope.setTag("orderId", orderId);
+			scope.setFingerprint(["ereporting", "record-sales-failed"]);
+			scope.setLevel("error");
+			Sentry.captureException(e);
+		});
 		logger.error("recordSalesEReporting failed", e, {
 			service: "record-ereporting",
 			orderId,
@@ -135,6 +179,21 @@ export async function recordRefundEReporting(
 		});
 		return await persistTransaction(payload);
 	} catch (e) {
+		if (isDuplicateEReportingError(e)) {
+			logger.info("recordRefundEReporting — concurrent insert detected, skipping (idempotent)", {
+				service: "record-ereporting",
+				refundId,
+			});
+			return "skipped";
+		}
+		Sentry.withScope((scope) => {
+			scope.setTag("service", "record-ereporting");
+			scope.setTag("ereportingType", "REFUND");
+			scope.setTag("refundId", refundId);
+			scope.setFingerprint(["ereporting", "record-refund-failed"]);
+			scope.setLevel("error");
+			Sentry.captureException(e);
+		});
 		logger.error("recordRefundEReporting failed", e, {
 			service: "record-ereporting",
 			refundId,

@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
@@ -15,8 +16,9 @@ import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
+import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
-import { HistorySource, InvoiceStatus } from "@/app/generated/prisma/client";
+import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 /**
  * Gère les remboursements (charge.refunded)
@@ -89,19 +91,64 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 		// 4b. Cycle VOIDED facture (Art. 272-I CGI) si remboursement total après émission.
 		// Idempotent : noop si déjà VOIDED ou si pas de facture active.
+		// EINV-CREDIT-008 : Sentry alerte sur `failed` (full refund → facture stale).
 		if (isFullyRefunded) {
 			const invoiceState = await prisma.order.findUnique({
 				where: { id: order.id },
 				select: { invoiceStatus: true, invoiceNumber: true },
 			});
 			if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
-				await voidInvoice({
+				const voided = await voidInvoice({
 					orderId: order.id,
 					authorId: SYSTEM_AUTHOR_ID,
 					authorName: "Stripe",
 					source: HistorySource.WEBHOOK,
 					reason: "Avoir émis suite à remboursement total Stripe",
 				});
+				if (voided.kind === "failed") {
+					Sentry.withScope((scope) => {
+						scope.setLevel("error");
+						scope.setTag("invoicing", "void-invoice-failed");
+						scope.setTag("source", "webhook-charge-refunded");
+						scope.setFingerprint(["void-invoice", "max-retries", order.id]);
+						scope.setContext("order", {
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							stripeChargeId: charge.id,
+						});
+						Sentry.captureMessage(
+							"voidInvoice failed on charge.refunded (full refund) — facture stale",
+							"error",
+						);
+					});
+				}
+			}
+		}
+
+		// 4c. EINV-CREDIT-001 : émission avoir pour chaque Refund COMPLETED sans
+		// creditNoteNumber (refund partiel via Dashboard Stripe OU rattrapage
+		// après SAGA admin abort). Best-effort, idempotent. Re-fetch les refunds
+		// après syncStripeRefunds pour avoir le state actuel (status COMPLETED).
+		const refundsPostSync = await prisma.refund.findMany({
+			where: {
+				orderId: order.id,
+				status: RefundStatus.COMPLETED,
+				creditNoteNumber: null,
+			},
+			select: { id: true },
+		});
+		for (const r of refundsPostSync) {
+			const creditNoteResult = await issueCreditNoteForRefund({
+				refundId: r.id,
+				source: HistorySource.WEBHOOK,
+				authorId: SYSTEM_AUTHOR_ID,
+				authorName: "Stripe",
+			});
+			if (creditNoteResult.kind === "failed") {
+				logger.warn(
+					`charge.refunded — credit note emission failed for refund ${r.id}: ${creditNoteResult.error}`,
+					{ service: "webhook", orderId: order.id, refundId: r.id },
+				);
 			}
 		}
 
@@ -142,6 +189,27 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
+			// EINV-CREDIT-001 : pour un refund PARTIEL, l'avoir est sur
+			// `Refund.creditNoteNumber` (issueCreditNoteForRefund, étape 4c).
+			// Pour un refund TOTAL, voidInvoice a écrit `Order.creditNoteNumber`
+			// (étape 4b) ET issueCreditNoteForRefund écrit aussi sur Refund.
+			// Stratégie : prendre le dernier Refund COMPLETED en priorité (avoir
+			// le plus récent), fallback Order.creditNoteNumber (full void historique).
+			// Best-effort : email envoyé même si la lecture échoue (champs null).
+			const latestRefund = await prisma.refund
+				.findFirst({
+					where: { orderId: order.id, status: RefundStatus.COMPLETED },
+					orderBy: { processedAt: "desc" },
+					select: {
+						creditNoteNumber: true,
+						order: { select: { invoiceNumber: true, creditNoteNumber: true } },
+					},
+				})
+				.catch(() => null);
+			const creditNoteNumber =
+				latestRefund?.creditNoteNumber ?? latestRefund?.order.creditNoteNumber ?? null;
+			const invoiceNumber = latestRefund?.order.invoiceNumber ?? null;
+
 			tasks.push({
 				type: "REFUND_CONFIRMATION_EMAIL",
 				data: {
@@ -151,6 +219,8 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					refundAmount: totalRefundedOnStripe,
 					reason,
 					orderDetailsUrl,
+					creditNoteNumber,
+					invoiceNumber,
 					// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries
 					// webhook ou rejouent cron retry-webhooks.
 					idempotencyKey: `refund-confirm-charge-${charge.id}-${totalRefundedOnStripe}`,

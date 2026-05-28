@@ -433,10 +433,24 @@ export const ORDER_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
 	windowMs: hours(1), // par heure
 };
 
+/**
+ * Limite pour le telechargement de factures (admin) — EINV-SEC-004
+ *
+ * Admin n'est pas bypassé : un compte ADMIN compromis ou un insider malveillant
+ * peut exfiltrer toutes les factures sans trace. 200/h est large pour les audits
+ * fiscaux légitimes, mais une exfiltration massive (>200/h) déclenchera un 429.
+ * En complément : Sentry.captureMessage à 80% du quota pour alerte proactive.
+ */
+export const ADMIN_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
+	limit: 200, // 200 telechargements maximum
+	windowMs: hours(1), // par heure
+};
+
 export const ORDER_LIMITS = {
 	CREATE: ORDER_CREATE_LIMIT,
 	CANCEL: ORDER_CANCEL_LIMIT,
 	INVOICE_DOWNLOAD: ORDER_INVOICE_DOWNLOAD_LIMIT,
+	ADMIN_INVOICE_DOWNLOAD: ADMIN_INVOICE_DOWNLOAD_LIMIT,
 } as const;
 
 // ========================================
@@ -1686,6 +1700,18 @@ export const ADMIN_DASHBOARD_LIMITS = {
  * Appliqué AVANT signature verify pour rejeter les attaquants au plus tôt.
  */
 export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
+	limit: 100,
+	windowMs: minutes(1),
+};
+
+/**
+ * Webhook plateforme agréée (PDP/PA — Phase 5).
+ *
+ * Volume légitime attendu nettement plus faible que Stripe (≤1 event/facture
+ * vs N events/order Stripe). On garde 100 req/min/IP comme garde-fou CPU-drain
+ * (anti-bombardement de signatures invalides). Appliqué AVANT verify signature.
+ */
+export const PDP_WEBHOOK_LIMIT: RateLimitConfig = {
 	limit: 100,
 	windowMs: minutes(1),
 };

@@ -86,6 +86,7 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 		trackingUrl: null,
 		items: [
 			{
+				id: "cm1234567890abcdef0",
 				skuId: VALID_SKU_ID,
 				quantity: 1,
 				productTitle: "Bracelet Lune",
@@ -93,8 +94,14 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 				skuMaterial: "Argent 925",
 				skuSize: "M",
 				price: 4999,
+				// EINV-CREDIT-004 : `refundItems` agrégé par mark-as-fully-refunded
+				// pour calculer la quantité restant à rembourser sur chaque item.
+				refundItems: [],
 			},
 		],
+		// EINV-CREDIT-004 : `refunds` lu par mark-as-fully-refunded pour calculer
+		// le montant restant à rembourser (order.total - sum(active refunds)).
+		refunds: [],
 		...overrides,
 	};
 }

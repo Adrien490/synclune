@@ -138,9 +138,38 @@ export const envSchema = z.object({
 	// `local` (défaut) garde le comportement actuel : pas de plateforme externe,
 	// PDF archivé sur UploadThing. Les autres valeurs activeront la transmission
 	// PDP/PA quand le contrat sera signé (Phase 3-5).
-	INVOICE_PROVIDER: z.enum(["local"]).optional().default("local"),
+	//
+	// Étendre l'enum INVOICE_PROVIDER à chaque ajout de provider concret (la
+	// factory `modules/invoices/providers/factory.ts` lève déjà runtime sur une
+	// valeur inconnue, mais Zod déclenche le boot fail-fast — défense en profondeur).
+	INVOICE_PROVIDER: z.enum(["local", "mock", "chorus-pro", "pdp-xxx"]).optional().default("local"),
 	INVOICE_ENABLE_XML: z.string().optional(),
 	INVOICE_ENABLE_EREPORTING: z.string().optional(),
+	// Active la validation CEN EN 16931 post-render (BR-CO-* + BR-FR-*).
+	// Recommandé en staging avant activation prod pour capturer les drifts
+	// buildInvoiceData vs renderer (audit e-invoicing 2026-05-28). Fail-closed.
+	INVOICE_VALIDATE_XML: z.string().optional(),
+
+	// Kill-switch global pour la transmission PDP/PA (B2B/B2G). Indépendant de
+	// INVOICE_PROVIDER : on peut avoir un provider concret branché mais désactiver
+	// temporairement la transmission (rollback rapide en cas d'incident).
+	INVOICE_ENABLE_PROVIDER_TRANSMISSION: z.string().optional(),
+
+	// Canary par sous-ensemble d'orders (0-100). Combiné avec
+	// INVOICE_ENABLE_PROVIDER_TRANSMISSION : si flag global ON et canary=10,
+	// seulement ~10% des factures (hash modulo) seront transmises.
+	// Validé contre [0,100] côté helper shouldTransmitInvoice.
+	INVOICE_TRANSMISSION_CANARY_PERCENT: z
+		.string()
+		.regex(/^(?:100|[0-9]{1,2})$/, "INVOICE_TRANSMISSION_CANARY_PERCENT doit être un entier 0-100")
+		.optional(),
+
+	// Critère secondaire optionnel : ne transmettre que les factures > X centimes.
+	// Utile pour pilot B2B sur les commandes à forte valeur.
+	INVOICE_TRANSMISSION_MIN_AMOUNT: z
+		.string()
+		.regex(/^\d+$/, "INVOICE_TRANSMISSION_MIN_AMOUNT doit être un entier positif (centimes)")
+		.optional(),
 
 	// ========================================
 	// Node

@@ -293,4 +293,46 @@ describe("UploadProgress", () => {
 			expect(hasAnimateSpin).toBe(true);
 		});
 	});
+
+	// -------------------------------------------------------------------------
+	// @regression upload-media-audit-2026-05-28-sr-throttle
+	// L'annonce SR `Envoi en cours, X pourcent` était émise pour chaque tick
+	// (0%, 1%, 2%…) — VoiceOver/NVDA verbalisait des dizaines de fois par envoi.
+	// Le pourcentage parlé est désormais arrondi aux jalons 0/25/50/75/100.
+	// -------------------------------------------------------------------------
+	describe("regression: SR percentage is rounded to milestones", () => {
+		it("announces 0% for any progress in [0, 25)", () => {
+			const ticks = [0, 5, 12, 24];
+			for (const p of ticks) {
+				cleanup();
+				render(<UploadProgress progress={p} />);
+				expect(document.querySelector(".sr-only")?.textContent).toBe("Envoi en cours, 0 pourcent");
+			}
+		});
+
+		it("announces 25% for progress in [25, 50)", () => {
+			cleanup();
+			render(<UploadProgress progress={37} />);
+			expect(document.querySelector(".sr-only")?.textContent).toBe("Envoi en cours, 25 pourcent");
+		});
+
+		it("announces 50% at the half mark", () => {
+			cleanup();
+			render(<UploadProgress progress={50} />);
+			expect(document.querySelector(".sr-only")?.textContent).toBe("Envoi en cours, 50 pourcent");
+		});
+
+		it("announces 75% for progress in [75, 100)", () => {
+			cleanup();
+			render(<UploadProgress progress={92} />);
+			expect(document.querySelector(".sr-only")?.textContent).toBe("Envoi en cours, 75 pourcent");
+		});
+
+		it("keeps the visible percent (not milestone) in the visual phase label", () => {
+			cleanup();
+			render(<UploadProgress progress={37} />);
+			// Visual label uses the exact percentage — only the SR text is rounded.
+			expect(screen.getByText("Envoi… 37%")).toBeTruthy();
+		});
+	});
 });

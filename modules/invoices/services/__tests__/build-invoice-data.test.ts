@@ -7,10 +7,16 @@ vi.mock("@/shared/lib/stripe", () => ({
 		company_siret: "839 183 027 00037",
 		company_siren: "839 183 027",
 		company_vat: "FR35839183027",
+		company_vat_regime: "FRANCHISE_BASE",
+		company_legal_form: "Entrepreneur individuel",
 		company_ape: "47.91B",
 		company_address: "77 Boulevard du Tertre, 44100 Nantes, France",
 		company_email: "contact@synclune.fr",
+		einvoicing_platform_id: null,
+		einvoicing_address: null,
 		vat_exemption: "TVA non applicable, art. 293 B du CGI",
+		bank_iban: null,
+		bank_bic: null,
 	}),
 }));
 
@@ -80,6 +86,31 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		creditNoteGeneratedAt: null,
 		invoicePdfUrl: null,
 		invoicePdfHash: null,
+		// Snapshot vendeur + routing PDP (defaults null = fallback env)
+		vendorLegalName: null,
+		vendorTradeName: null,
+		vendorAddress: null,
+		vendorSiren: null,
+		vendorSiret: null,
+		vendorVatNumber: null,
+		vendorVatRegime: null,
+		vendorLegalForm: null,
+		vendorApeCode: null,
+		vendorEmail: null,
+		vendorBankIban: null,
+		vendorBankBic: null,
+		vendorEInvoicingPlatformId: null,
+		vendorEInvoicingAddress: null,
+		customerEInvoicingPlatformId: null,
+		customerEInvoicingAddress: null,
+		customerPublicEntityCode: null,
+		customerServiceCode: null,
+		pdpStatus: null,
+		pdpTransmittedAt: null,
+		pdpAcceptedAt: null,
+		pdpRejectedAt: null,
+		pdpRejectionReason: null,
+		pdpProviderRef: null,
 		createdAt: new Date("2026-05-27T17:55:00Z"),
 		updatedAt: new Date("2026-05-27T18:00:00Z"),
 		items: [
@@ -103,6 +134,8 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 				lineTotalExcludingTax: 9000,
 				lineTotalIncludingTax: 9000,
 				taxCategoryCode: "ZB",
+				hsCode: null,
+				unitCode: null,
 			},
 		],
 		refunds: [],
@@ -214,6 +247,8 @@ describe("buildInvoiceData — B2C franchise (Phase 2A defaults)", () => {
 					lineTotalExcludingTax: 0, // backfill non encore appliqué
 					lineTotalIncludingTax: 0,
 					taxCategoryCode: null,
+					hsCode: null,
+					unitCode: null,
 				},
 			],
 			subtotal: 9000,
@@ -309,5 +344,75 @@ describe("buildInvoiceData — B2B snapshots (Phase 2A)", () => {
 		const first = buildInvoiceData(order);
 		const second = buildInvoiceData(order);
 		expect(first).toEqual(second);
+	});
+});
+
+describe("buildInvoiceData — snapshot vendeur (Art. L102 B LPF)", () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it("prefere le snapshot Order.vendor* au lieu de relire getVendorLegalInfo() env", () => {
+		// Simule une commande emise quand Synclune etait sous un ANCIEN SIRET / raison sociale.
+		// Si l'env a change depuis, la facture historique doit garder les valeurs d'emission.
+		const data = buildInvoiceData(
+			makeOrder({
+				vendorLegalName: "ANCIEN NOM SARL",
+				vendorTradeName: "Ancienne Marque",
+				vendorAddress: "1 rue de l'Ancien, 75001 Paris, France",
+				vendorSiren: "111222333",
+				vendorSiret: "11122233300011",
+				vendorVatNumber: "FR00111222333",
+				vendorVatRegime: "FRANCHISE_BASE",
+				vendorLegalForm: "SARL",
+			}),
+		);
+		expect(data.seller.legalName).toBe("ANCIEN NOM SARL");
+		expect(data.seller.tradeName).toBe("Ancienne Marque");
+		expect(data.seller.siren).toBe("111222333");
+		expect(data.seller.siret).toBe("11122233300011");
+		expect(data.seller.vatNumber).toBe("FR00111222333");
+		expect(data.seller.legalForm).toBe("SARL");
+		expect(data.seller.address.line1).toBe("1 rue de l'Ancien");
+		expect(data.seller.address.postalCode).toBe("75001");
+		expect(data.seller.address.city).toBe("Paris");
+		// recipientName du snapshot adresse est le legalName figé, pas l'env actuel
+		expect(data.seller.address.recipientName).toBe("ANCIEN NOM SARL");
+	});
+
+	it("fallback getVendorLegalInfo() env quand snapshot Order.vendor* est null (factures pre-Phase 5)", () => {
+		const data = buildInvoiceData(makeOrder()); // defaults all null
+		expect(data.seller.legalName).toBe("TADDEI LEANE - Entrepreneur Individuel");
+		expect(data.seller.siren).toBe("839183027");
+		expect(data.seller.siret).toBe("83918302700037");
+		expect(data.seller.vatNumber).toBe("FR35839183027");
+	});
+
+	it("vatExemptionText present si snapshot regime = FRANCHISE_BASE", () => {
+		const data = buildInvoiceData(makeOrder({ vendorVatRegime: "FRANCHISE_BASE" }));
+		expect(data.seller.vatExemptionText).toContain("art. 293 B");
+	});
+
+	it("vatExemptionText null si snapshot regime = NORMAL (sortie franchise — facture historique correcte)", () => {
+		const data = buildInvoiceData(makeOrder({ vendorVatRegime: "NORMAL" }));
+		expect(data.seller.vatExemptionText).toBeNull();
+	});
+
+	it("routing PDP customer cable depuis snapshot Order.customerEInvoicing* + Chorus Pro B2G", () => {
+		const data = buildInvoiceData(
+			makeOrder({
+				customerType: "B2G",
+				customerCompanyName: "Mairie de Nantes",
+				customerCompanySiren: "211440092",
+				customerCompanySiret: "21144009200011",
+				customerEInvoicingAddress: "21144009200011",
+				customerEInvoicingPlatformId: "0009:CHORUS-PRO",
+				customerPublicEntityCode: "21144009200011",
+				customerServiceCode: "SERVICE-FACTURE-MAIRIE",
+			}),
+		);
+		expect(data.buyer.type).toBe("B2G");
+		expect(data.buyer.eInvoicingAddress).toBe("21144009200011");
+		expect(data.buyer.eInvoicingPlatformId).toBe("0009:CHORUS-PRO");
+		expect(data.buyer.publicEntityId).toBe("21144009200011");
+		expect(data.buyer.chorusServiceCode).toBe("SERVICE-FACTURE-MAIRIE");
 	});
 });

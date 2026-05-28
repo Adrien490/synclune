@@ -13,9 +13,21 @@ const { mockPrisma, mockLogger, mockFeatureFlags } = vi.hoisted(() => ({
 	mockFeatureFlags: { enable_xml: false, enable_ereporting: true },
 }));
 
-vi.mock("@/app/generated/prisma/client", () => ({
-	EReportingTransactionType: { SALES: "SALES", REFUND: "REFUND", PAYMENT: "PAYMENT" },
-}));
+vi.mock("@/app/generated/prisma/client", () => {
+	class FakePrismaClientKnownRequestError extends Error {
+		code: string;
+		meta?: { target?: string | string[] };
+		constructor(message: string, opts: { code: string; meta?: { target?: string | string[] } }) {
+			super(message);
+			this.code = opts.code;
+			this.meta = opts.meta;
+		}
+	}
+	return {
+		EReportingTransactionType: { SALES: "SALES", REFUND: "REFUND", PAYMENT: "PAYMENT" },
+		Prisma: { PrismaClientKnownRequestError: FakePrismaClientKnownRequestError },
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
@@ -52,7 +64,6 @@ describe("recordSalesEReporting — happy path", () => {
 			orderNumber: "SYN-2026-0001",
 			paidAt: new Date("2026-05-27T18:00:00Z"),
 			total: 9500,
-			subtotal: 9000,
 			taxAmount: 0,
 			currency: "EUR",
 			paymentMethod: "CARD",
@@ -94,7 +105,6 @@ describe("recordSalesEReporting — idempotence", () => {
 			orderNumber: "SYN-2026-0001",
 			paidAt: new Date("2026-05-27T18:00:00Z"),
 			total: 9500,
-			subtotal: 9000,
 			taxAmount: 0,
 			currency: "EUR",
 			paymentMethod: "CARD",
@@ -132,7 +142,6 @@ describe("recordSalesEReporting — graceful failures (best-effort)", () => {
 			orderNumber: "SYN-2026-0001",
 			paidAt: null,
 			total: 9500,
-			subtotal: 9000,
 			taxAmount: 0,
 			currency: "EUR",
 			paymentMethod: "CARD",

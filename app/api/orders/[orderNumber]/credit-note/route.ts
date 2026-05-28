@@ -1,0 +1,311 @@
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
+import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
+import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
+import { archiveCreditNotePdf } from "@/modules/orders/services/archive-credit-note-pdf.service";
+import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import { createOrderAudit } from "@/modules/orders/utils/order-audit";
+import { getSession } from "@/modules/auth/lib/get-current-session";
+import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
+import { checkRateLimit, getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
+import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { logger } from "@/shared/lib/logger";
+import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+import { OrderAction, HistorySource } from "@/app/generated/prisma/client";
+
+const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
+const DEFAULT_VOID_REASON = "Avoir comptable";
+
+/**
+ * Audit RGPD Art. 30/32 : trace chaque accès avoir réussi. Le PDF de l'avoir
+ * a la même criticité que la facture (document fiscal Art. L102 B LPF). On
+ * réutilise l'action `INVOICE_DOWNLOADED` avec `documentType: "CREDIT_NOTE"` —
+ * pas de nouvel enum requis (cf. justification CLAUDE.md « ne pas designer
+ * pour des cas hypothétiques »).
+ */
+async function recordCreditNoteDownload(params: {
+	orderId: string;
+	creditNoteNumber: string;
+	authorId: string | undefined;
+	source: HistorySource;
+}): Promise<void> {
+	try {
+		await createOrderAudit({
+			orderId: params.orderId,
+			action: OrderAction.INVOICE_DOWNLOADED,
+			authorId: params.authorId,
+			source: params.source,
+			metadata: {
+				documentType: "CREDIT_NOTE",
+				creditNoteNumber: params.creditNoteNumber,
+				isAdminContext: params.source === HistorySource.ADMIN,
+			},
+		});
+		Sentry.addBreadcrumb({
+			category: "credit-note",
+			message: "credit-note-downloaded",
+			level: "info",
+			data: {
+				orderId: params.orderId,
+				source: params.source,
+				creditNoteNumber: params.creditNoteNumber,
+			},
+		});
+	} catch (error) {
+		logger.warn("Failed to record CREDIT_NOTE_DOWNLOADED audit (best-effort)", {
+			service: "credit-note-route",
+			orderId: params.orderId,
+			source: params.source,
+			error: error instanceof Error ? error.message : String(error),
+		});
+	}
+}
+
+export async function GET(
+	request: Request,
+	{ params }: { params: Promise<{ orderNumber: string }> },
+) {
+	const { orderNumber } = await params;
+	const url = new URL(request.url);
+	const tokenFromQuery = url.searchParams.get("token");
+
+	const session = await getSession();
+	const isAdmin = session?.user.role === "ADMIN";
+
+	if (!session?.user.id && !tokenFromQuery) {
+		return new Response("Non autorisé", { status: 401 });
+	}
+
+	// Rate limit : même profil CPU/I/O que /invoice (génération PDF jsPDF +
+	// upload UploadThing), on partage les configs ORDER_LIMITS.INVOICE_DOWNLOAD
+	// et ADMIN_INVOICE_DOWNLOAD. Pas de quota séparé : un client malveillant
+	// alternant /invoice et /credit-note resterait sous le même cap effectif.
+	const headersList = await headers();
+	const rateLimitConfig = isAdmin
+		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
+		: ORDER_LIMITS.INVOICE_DOWNLOAD;
+	const rateLimitIdentifier = session?.user.id
+		? isAdmin
+			? `admin-invoice:${session.user.id}`
+			: getRateLimitIdentifier(session.user.id)
+		: `invoice-token:${(await getClientIp(headersList)) ?? "unknown"}`;
+	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig);
+	if (!rateCheck.success) {
+		if (isAdmin) {
+			Sentry.captureMessage("admin-credit-note-download-rate-limited", {
+				level: "warning",
+				tags: { route: "credit-note", actor: "admin" },
+				extra: {
+					adminUserId: session.user.id,
+					limit: rateLimitConfig.limit,
+					windowMs: rateLimitConfig.windowMs,
+				},
+			});
+		}
+		return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
+			status: 429,
+			headers: {
+				"Retry-After": String(rateCheck.retryAfter ?? 60),
+			},
+		});
+	}
+
+	const order = (await prisma.order.findFirst({
+		where: { orderNumber, ...notDeleted },
+		select: GET_ORDER_SELECT_CUSTOMER,
+	})) as GetOrderReturn | null;
+	if (!order) {
+		return new Response("Commande introuvable", { status: 404 });
+	}
+
+	const tokenValid =
+		tokenFromQuery !== null &&
+		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
+	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
+	if (!isAdmin && !sessionOwns && !tokenValid) {
+		return new Response("Accès interdit", { status: 403 });
+	}
+
+	// Garde fondamentale : pas de génération lazy d'avoir. Contrairement à la
+	// facture (qui peut être créée au 1er download si le webhook a échoué),
+	// l'avoir est émis explicitement par `voidInvoice` (cancel-order /
+	// mark-as-fully-refunded / charge.refunded webhook). Si `creditNoteNumber`
+	// est null, l'avoir n'existe pas — point.
+	if (!order.creditNoteNumber || !order.creditNoteGeneratedAt || !order.invoiceNumber) {
+		return new Response("Avoir non disponible pour cette commande", { status: 404 });
+	}
+
+	const archive = await prisma.order.findUnique({
+		where: { id: order.id },
+		select: { creditNotePdfUrl: true, creditNotePdfHash: true },
+	});
+	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
+	const auditAuthorId = session?.user.id;
+
+	type CreditNotePath = "archived" | "lazy_regenerate";
+	let creditNotePath: CreditNotePath = "archived";
+
+	if (archive?.creditNotePdfUrl) {
+		// Whitelist host UploadThing avant fetch (anti-SSRF — cohérent avec /invoice).
+		if (!isAllowedMediaDomain(archive.creditNotePdfUrl)) {
+			logger.error("creditNotePdfUrl is not on UploadThing whitelist — refusing fetch", undefined, {
+				service: "credit-note-route",
+				orderId: order.id,
+				host: safeHostname(archive.creditNotePdfUrl),
+			});
+			Sentry.captureMessage("credit-note-pdf-url-host-not-whitelisted", {
+				level: "error",
+				tags: { service: "credit-note-route" },
+				extra: { orderId: order.id, host: safeHostname(archive.creditNotePdfUrl) },
+			});
+			return new Response("Configuration avoir invalide", { status: 500 });
+		}
+
+		try {
+			const archived = await fetch(archive.creditNotePdfUrl, {
+				cache: "no-store",
+				signal: AbortSignal.timeout(UPLOADTHING_FETCH_TIMEOUT_MS),
+			});
+			if (archived.ok) {
+				const buffer = await archived.arrayBuffer();
+				Sentry.setTag("credit_note_path", creditNotePath);
+				await recordCreditNoteDownload({
+					orderId: order.id,
+					creditNoteNumber: order.creditNoteNumber,
+					authorId: auditAuthorId,
+					source: auditSource,
+				});
+				return new Response(buffer, {
+					headers: buildPdfHeaders(order.creditNoteNumber, orderNumber),
+				});
+			}
+			creditNotePath = "lazy_regenerate";
+			logger.warn(
+				`Archived credit note fetch failed (${archived.status}) — falling back to regeneration`,
+				{ service: "credit-note-route", orderId: order.id },
+			);
+		} catch (error) {
+			creditNotePath = "lazy_regenerate";
+			logger.warn(`Archived credit note fetch threw — falling back to regeneration`, {
+				service: "credit-note-route",
+				orderId: order.id,
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	} else {
+		creditNotePath = "lazy_regenerate";
+	}
+
+	// Dérive le motif d'avoir depuis le dernier OrderHistory INVOICE_VOIDED
+	// (rempli par `voidInvoice` via cancel-order / mark-as-fully-refunded /
+	// webhook charge.refunded). Fallback statique conforme juridiquement.
+	const voidedEvent = await prisma.orderHistory.findFirst({
+		where: { orderId: order.id, action: OrderAction.INVOICE_VOIDED },
+		orderBy: { createdAt: "desc" },
+		select: { note: true },
+	});
+	const trimmedNote = voidedEvent?.note?.trim();
+	const reason = trimmedNote && trimmedNote.length > 0 ? trimmedNote : DEFAULT_VOID_REASON;
+
+	// `buildInvoiceData` reçoit un Order où `invoiceNumber = creditNoteNumber` :
+	// le renderer détecte le préfixe `A-` et bascule en mode AVOIR
+	// (render-invoice-pdf.ts:22,69,91,249). `precedingInvoice` injecte la
+	// référence vers la facture annulée (Art. 272-I CGI).
+	const orderAsCreditNote: GetOrderReturn = {
+		...order,
+		invoiceNumber: order.creditNoteNumber,
+		invoiceGeneratedAt: order.creditNoteGeneratedAt,
+	};
+	const pdfBuffer = renderInvoicePdf(
+		buildInvoiceData(orderAsCreditNote, {
+			precedingInvoice: {
+				invoiceNumber: order.invoiceNumber,
+				issuedAt: order.invoiceGeneratedAt!,
+				reason,
+			},
+		}),
+	);
+
+	// Si une archive existe avec un hash connu, le PDF régénéré doit matcher
+	// bit-à-bit (Art. L102 B LPF). Sinon : 503 plutôt que servir un PDF qui
+	// diverge du document comptable archivé.
+	if (archive?.creditNotePdfHash) {
+		const regeneratedHash = createHash("sha256").update(new Uint8Array(pdfBuffer)).digest("hex");
+		if (regeneratedHash !== archive.creditNotePdfHash) {
+			logger.error(
+				"Regenerated credit note PDF hash diverges from archived hash — refusing to serve",
+				undefined,
+				{
+					service: "credit-note-route",
+					orderId: order.id,
+					creditNoteNumber: order.creditNoteNumber,
+					archivedHash: archive.creditNotePdfHash,
+					regeneratedHash,
+				},
+			);
+			Sentry.captureMessage("credit-note-pdf-hash-divergence", {
+				level: "error",
+				fingerprint: ["credit-note", "hash-mismatch", order.creditNoteNumber],
+				tags: { service: "credit-note-route" },
+				extra: {
+					orderId: order.id,
+					creditNoteNumber: order.creditNoteNumber,
+					archivedHash: archive.creditNotePdfHash,
+					regeneratedHash,
+				},
+			});
+			return new Response(
+				"Avoir temporairement indisponible (vérification d'intégrité en cours).",
+				{
+					status: 503,
+					headers: { "Retry-After": "60" },
+				},
+			);
+		}
+	}
+
+	// Archive best-effort (idempotent — si déjà uploadé, retourne l'existant).
+	await archiveCreditNotePdf(order.id, order.creditNoteNumber, pdfBuffer);
+
+	Sentry.setTag("credit_note_path", creditNotePath);
+	Sentry.addBreadcrumb({
+		category: "credit-note",
+		level: "warning",
+		message: `Credit note served via ${creditNotePath}`,
+		data: { orderId: order.id, creditNotePath },
+	});
+
+	await recordCreditNoteDownload({
+		orderId: order.id,
+		creditNoteNumber: order.creditNoteNumber,
+		authorId: auditAuthorId,
+		source: auditSource,
+	});
+
+	return new Response(pdfBuffer, {
+		headers: buildPdfHeaders(order.creditNoteNumber, orderNumber),
+	});
+}
+
+function safeHostname(rawUrl: string): string {
+	try {
+		return new URL(rawUrl).hostname;
+	} catch {
+		return "<invalid-url>";
+	}
+}
+
+function buildPdfHeaders(creditNoteNumber: string, orderNumber: string): HeadersInit {
+	const filename = `avoir-${creditNoteNumber || orderNumber}.pdf`;
+	return {
+		"Content-Type": "application/pdf",
+		"Content-Disposition": `attachment; filename="${filename}"`,
+		"Cache-Control": "private, max-age=31536000, immutable",
+		"X-Frame-Options": "DENY",
+		"X-Content-Type-Options": "nosniff",
+		"Referrer-Policy": "no-referrer",
+	};
+}

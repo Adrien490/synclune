@@ -14,9 +14,22 @@ export interface RefundErrorContext {
 	stripeRefundId?: string;
 	orderId?: string;
 	orderNumber?: string;
+	invoiceNumber?: string;
+	creditNoteNumber?: string;
 	amount?: number;
 	[key: string]: string | number | undefined;
 }
+
+// Identifiers promoted to first-class Sentry tags. Cf. audit monitoring
+// 2026-05-28 EINV-OPS-006.
+const PROMOTED_REFUND_TAGS = [
+	"refundId",
+	"stripeRefundId",
+	"orderId",
+	"orderNumber",
+	"invoiceNumber",
+	"creditNoteNumber",
+] as const;
 
 /**
  * Captures a refund-domain exception in Sentry with structured business context.
@@ -34,6 +47,13 @@ export function captureRefundError(error: unknown, context: RefundErrorContext):
 		if (step) scope.setTag("refundStep", step);
 		scope.setLevel("error");
 		scope.setFingerprint(step ? ["refunds", action, step] : ["refunds", action]);
+
+		for (const tagKey of PROMOTED_REFUND_TAGS) {
+			const value = business[tagKey];
+			if (typeof value === "string" && value !== "") {
+				scope.setTag(tagKey, value);
+			}
+		}
 
 		const businessEntries = Object.entries(business).filter(([, v]) => v !== undefined);
 		if (businessEntries.length > 0) {

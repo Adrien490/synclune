@@ -393,11 +393,13 @@ export function SortableMediaItem({
 								}
 								aria-label={media.altText ?? `Aperçu vidéo ${index + 1}`}
 							>
-								<track kind="captions" srcLang="fr" label="Français" default />
 								Votre navigateur ne supporte pas la lecture de vidéos.
 							</video>
 						)}
-						{/* Play icon - clickable to open lightbox */}
+						{/* Play icon - clickable to open lightbox.
+						    `pointer-events-none` when invisible on hover-capable devices lets the
+						    underlying <video> receive onMouseEnter/Leave + onTouch* (autoplay on hover,
+						    tap-vs-scroll handling). Re-enabled on hover/focus so the button stays clickable. */}
 						<button
 							type="button"
 							onClick={(e) => {
@@ -408,6 +410,7 @@ export function SortableMediaItem({
 							className={cn(
 								"absolute inset-0 flex cursor-pointer items-center justify-center",
 								"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100 opacity-100",
+								"can-hover:pointer-events-none can-hover:group-focus-within:pointer-events-auto can-hover:group-hover:pointer-events-auto",
 								"motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)]",
 							)}
 							aria-label={`Lire la vidéo ${index + 1}`}
@@ -631,11 +634,42 @@ export function SortableMediaItem({
 							<EllipsisVertical className="size-5 text-white" />
 						</Button>
 					</DrawerTrigger>
-					<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[80vh]">
+					<DrawerContent onOverlayClick={() => haptic("light")} className="max-h-[80vh]">
 						<DrawerHeader>
-							<DrawerTitle>
-								Actions sur {isVideo ? "la vidéo" : "l'image"} {index + 1}
-							</DrawerTitle>
+							<div className="flex items-center gap-3">
+								<div className="bg-muted relative size-10 shrink-0 overflow-hidden rounded-md">
+									{isVideo && media.thumbnailUrl ? (
+										<Image
+											src={media.thumbnailUrl}
+											alt=""
+											fill
+											className="object-cover"
+											sizes="40px"
+											aria-hidden="true"
+										/>
+									) : isVideo ? (
+										<div className="bg-muted flex h-full w-full items-center justify-center">
+											<Play
+												className="text-muted-foreground size-4"
+												fill="currentColor"
+												aria-hidden="true"
+											/>
+										</div>
+									) : (
+										<Image
+											src={media.url}
+											alt=""
+											fill
+											className="object-cover"
+											sizes="40px"
+											aria-hidden="true"
+										/>
+									)}
+								</div>
+								<DrawerTitle className="flex-1 text-left">
+									Actions sur {isVideo ? "la vidéo" : "l'image"} {index + 1}
+								</DrawerTitle>
+							</div>
 						</DrawerHeader>
 						{mobileActionItems}
 					</DrawerContent>

@@ -178,6 +178,7 @@ export async function OrdersDataTable({
 										trackingNumber: order.trackingNumber,
 										trackingUrl: order.trackingUrl,
 										invoiceNumber: order.invoiceNumber,
+										invoiceStatus: order.invoiceStatus,
 									}}
 								/>
 							</TableCell>

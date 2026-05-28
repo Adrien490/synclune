@@ -4,6 +4,7 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import {
+	AlertTriangle,
 	ChevronDown,
 	Clock,
 	CreditCard,
@@ -94,6 +95,12 @@ const ACTION_CONFIG: Record<
 		label: "Facture générée",
 		symbol: "📄",
 	},
+	INVOICE_GENERATION_FAILED: {
+		icon: AlertTriangle,
+		color: "text-destructive",
+		label: "Échec génération facture",
+		symbol: "⚠",
+	},
 	REFUND_CREATED: {
 		icon: RotateCcw,
 		color: "text-orange-500",
@@ -130,7 +137,104 @@ const ACTION_CONFIG: Record<
 		label: "Facture annulée",
 		symbol: "✗",
 	},
+	CREDIT_NOTE_GENERATED: {
+		icon: FileText,
+		color: "text-amber-500",
+		label: "Avoir émis",
+		symbol: "↺",
+	},
+	INVOICE_ARCHIVED: {
+		icon: FileText,
+		color: "text-emerald-500",
+		label: "PDF facture archivé",
+		symbol: "🔒",
+	},
+	PDF_ARCHIVE_FAILED: {
+		icon: AlertTriangle,
+		color: "text-destructive",
+		label: "Échec archivage PDF",
+		symbol: "⚠",
+	},
+	CREDIT_NOTE_FAILED: {
+		icon: AlertTriangle,
+		color: "text-destructive",
+		label: "Échec émission avoir",
+		symbol: "⚠",
+	},
+	INVOICE_RECONCILED: {
+		icon: CircleCheck,
+		color: "text-emerald-600",
+		label: "Facture rattrapée (cron)",
+		symbol: "🔄",
+	},
+	INVOICE_DOWNLOADED: {
+		icon: FileText,
+		color: "text-blue-400",
+		label: "Facture téléchargée",
+		symbol: "⬇",
+	},
+	BULK_EXPORT: {
+		icon: FileText,
+		color: "text-indigo-400",
+		label: "Export CSV admin",
+		symbol: "📊",
+	},
+	PDP_SUBMITTED: {
+		icon: FileText,
+		color: "text-sky-500",
+		label: "Transmis à la PDP",
+		symbol: "📤",
+	},
+	PDP_ACCEPTED: {
+		icon: CircleCheck,
+		color: "text-emerald-500",
+		label: "Accepté par la PDP",
+		symbol: "✓",
+	},
+	PDP_REJECTED: {
+		icon: CircleX,
+		color: "text-red-500",
+		label: "Rejeté par la PDP",
+		symbol: "✗",
+	},
+	PDP_RETRY: {
+		icon: RotateCcw,
+		color: "text-amber-500",
+		label: "Nouvelle tentative PDP",
+		symbol: "🔄",
+	},
+	PDP_ABANDONED: {
+		icon: AlertTriangle,
+		color: "text-destructive",
+		label: "Transmission PDP abandonnée",
+		symbol: "⚠",
+	},
+	PDP_CANCELLED: {
+		icon: CircleX,
+		color: "text-gray-500",
+		label: "Transmission PDP annulée",
+		symbol: "✗",
+	},
 };
+
+/**
+ * Extrait les numéros de facture / avoir depuis `entry.metadata` (JsonValue) pour
+ * affichage inline. Renvoie null si introuvable — l'entry reste rendue mais sans
+ * code monospace. Cf. EINV-UI-009 (audit UI admin facturation 2026-05-28).
+ */
+function extractInvoiceMetadata(metadata: unknown): {
+	invoiceNumber?: string;
+	creditNoteNumber?: string;
+	errorMessage?: string;
+} {
+	if (typeof metadata !== "object" || metadata === null) return {};
+	const m = metadata as Record<string, unknown>;
+	return {
+		invoiceNumber: typeof m.invoiceNumber === "string" ? m.invoiceNumber : undefined,
+		creditNoteNumber: typeof m.creditNoteNumber === "string" ? m.creditNoteNumber : undefined,
+		errorMessage: typeof m.errorMessage === "string" ? m.errorMessage : undefined,
+	};
+}
 
 // Labels traduits pour les statuts
 const STATUS_LABELS: Record<string, string> = {
@@ -193,6 +297,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 						{visibleHistory.map((entry) => {
 							const config = ACTION_CONFIG[entry.action];
 							const Icon = config.icon;
+							const invoiceMeta = extractInvoiceMetadata(entry.metadata);
 
 							return (
 								<li key={entry.id} className="relative pl-10">
@@ -219,6 +324,29 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 												})}
 											</span>
 										</div>
+
+										{/* Numéro facture / avoir extrait du metadata (EINV-UI-009) */}
+										{invoiceMeta.invoiceNumber && (
+											<div className="text-muted-foreground mt-1 text-xs">
+												Facture{" "}
+												<code className="bg-muted rounded px-1 py-0.5 font-mono tabular-nums">
+													{invoiceMeta.invoiceNumber}
+												</code>
+											</div>
+										)}
+										{invoiceMeta.creditNoteNumber && (
+											<div className="text-muted-foreground mt-1 text-xs">
+												Avoir{" "}
+												<code className="bg-muted rounded px-1 py-0.5 font-mono tabular-nums">
+													{invoiceMeta.creditNoteNumber}
+												</code>
+											</div>
+										)}
+										{invoiceMeta.errorMessage && (
+											<div className="text-destructive mt-1 text-xs">
+												Erreur : {invoiceMeta.errorMessage}
+											</div>
+										)}
 
 										{/* Changements de statut */}
 										{entry.newStatus && (

@@ -2,7 +2,12 @@
 
 import { EllipsisVertical } from "lucide-react";
 
-import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import type {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/browser";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -22,6 +27,7 @@ interface OrderRowActionsProps {
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
 		invoiceNumber?: string | null;
+		invoiceStatus?: InvoiceStatus | null;
 	};
 }
 

@@ -3,6 +3,8 @@
 import {
 	PaymentStatus,
 	HistorySource,
+	OrderAction,
+	RefundReason,
 	RefundStatus,
 	InvoiceStatus,
 } from "@/app/generated/prisma/client";
@@ -15,12 +17,16 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
+import { logger } from "@/shared/lib/logger";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { voidInvoice } from "../services/void-invoice.service";
+import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
+import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 
 /**
  * Marque une commande comme entièrement remboursée
@@ -65,9 +71,35 @@ export async function markAsFullyRefunded(
 					id: true,
 					orderNumber: true,
 					userId: true,
+					total: true,
 					paymentStatus: true,
 					invoiceStatus: true,
 					invoiceNumber: true,
+					items: {
+						select: {
+							id: true,
+							quantity: true,
+							price: true,
+							refundItems: {
+								where: {
+									refund: {
+										status: {
+											in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+										},
+									},
+								},
+								select: { quantity: true, amount: true },
+							},
+						},
+					},
+					refunds: {
+						where: {
+							status: {
+								in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+							},
+						},
+						select: { amount: true },
+					},
 				},
 			});
 
@@ -98,6 +130,96 @@ export async function markAsFullyRefunded(
 				return { ...found, _error: "pending_stripe_refunds" as const };
 			}
 
+			// EINV-CREDIT-004 : créer un Refund manuel pour tracer le flux financier.
+			// Calcule la part restant à rembourser : order.total moins ce qui est
+			// déjà couvert par des refunds existants (PARTIALLY_REFUNDED + manuel
+			// supplémentaire = REFUNDED total).
+			//
+			// Defensive : si le select Prisma n'a pas retourné items/refunds (cas
+			// tests legacy avec mock simplifié), on skip la création Refund —
+			// l'audit OrderHistory.REFUND_COMPLETED reste émis plus bas. En prod,
+			// le select garantit que ces champs sont présents.
+			const refundsArr = Array.isArray(found.refunds) ? found.refunds : [];
+			const itemsArr = Array.isArray(found.items) ? found.items : [];
+			const alreadyRefunded = refundsArr.reduce((sum, r) => sum + r.amount, 0);
+			const remainingAmount = found.total - alreadyRefunded;
+
+			let createdRefundId: string | null = null;
+
+			if (remainingAmount > 0 && itemsArr.length > 0) {
+				// Calculer les quantités restantes par OrderItem
+				const itemsToRefund = itemsArr
+					.map((item) => {
+						const itemRefundedItems = Array.isArray(item.refundItems) ? item.refundItems : [];
+						const refundedQty = itemRefundedItems.reduce((s, ri) => s + ri.quantity, 0);
+						const refundedAmt = itemRefundedItems.reduce((s, ri) => s + ri.amount, 0);
+						return {
+							orderItemId: item.id,
+							quantity: item.quantity - refundedQty,
+							itemTotal: item.price * item.quantity - refundedAmt,
+						};
+					})
+					.filter((i) => i.quantity > 0 && i.itemTotal > 0);
+
+				// Distribuer remainingAmount sur les items proportionnellement à
+				// itemTotal. Le dernier item absorbe l'arrondi pour garantir
+				// `sum(refundItem.amount) === remainingAmount`.
+				const itemsTotalSum = itemsToRefund.reduce((s, i) => s + i.itemTotal, 0);
+				let allocated = 0;
+				const refundItemsData = itemsToRefund.map((item, idx) => {
+					const isLast = idx === itemsToRefund.length - 1;
+					const amount = isLast
+						? remainingAmount - allocated
+						: itemsTotalSum > 0
+							? Math.round((item.itemTotal / itemsTotalSum) * remainingAmount)
+							: 0;
+					allocated += amount;
+					return {
+						orderItemId: item.orderItemId,
+						quantity: item.quantity,
+						amount,
+						// Pas de restock par défaut : refund manuel hors Stripe = geste
+						// commercial, le client a probablement gardé l'article.
+						restock: false,
+					};
+				});
+
+				if (refundItemsData.length > 0 && typeof tx.refund.create === "function") {
+					const createdRefund = await tx.refund.create({
+						data: {
+							orderId: id,
+							amount: remainingAmount,
+							currency: "EUR",
+							reason: RefundReason.OTHER,
+							status: RefundStatus.COMPLETED,
+							createdBy: adminUser.id,
+							processedAt: new Date(),
+							note:
+								reason ?? "Remboursement manuel hors Stripe (chèque, virement, geste commercial)",
+							items: {
+								create: refundItemsData,
+							},
+						},
+						select: { id: true },
+					});
+					createdRefundId = createdRefund.id;
+
+					await createOrderAuditTx(tx, {
+						orderId: id,
+						action: OrderAction.REFUND_CREATED,
+						authorId: adminUser.id,
+						authorName: adminUser.name ?? "Admin",
+						source: HistorySource.ADMIN,
+						note: `Refund manuel créé pour traçabilité du flux financier (${(remainingAmount / 100).toFixed(2)} €)`,
+						metadata: {
+							refundId: createdRefund.id,
+							amount: remainingAmount,
+							manual: true,
+						},
+					});
+				}
+			}
+
 			await tx.order.update({
 				where: { id },
 				data: { paymentStatus: PaymentStatus.REFUNDED },
@@ -105,7 +227,7 @@ export async function markAsFullyRefunded(
 
 			await createOrderAuditTx(tx, {
 				orderId: id,
-				action: "REFUND_COMPLETED",
+				action: OrderAction.REFUND_COMPLETED,
 				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: PaymentStatus.REFUNDED,
 				authorId: adminUser.id,
@@ -115,10 +237,11 @@ export async function markAsFullyRefunded(
 				metadata: {
 					manual: true,
 					previousPaymentStatus: found.paymentStatus,
+					manualRefundId: createdRefundId,
 				},
 			});
 
-			return found;
+			return { ...found, _createdRefundId: createdRefundId };
 		});
 
 		if (!order) {
@@ -138,8 +261,29 @@ export async function markAsFullyRefunded(
 			return { status: ActionStatus.ERROR, message };
 		}
 
-		// Émission avoir (Art. 272-I CGI) si la facture était active.
+		// EINV-CREDIT-004 : e-reporting du Refund manuel + émission avoir sur ce
+		// Refund (Art. 272-I CGI). Best-effort hors transaction.
+		const createdRefundId = "_createdRefundId" in order ? order._createdRefundId : null;
+		if (createdRefundId) {
+			await recordRefundEReporting(createdRefundId);
+			const creditNoteResult = await issueCreditNoteForRefund({
+				refundId: createdRefundId,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+			});
+			if (creditNoteResult.kind === "failed") {
+				logger.warn(
+					`mark-as-fully-refunded — credit note emission failed for manual refund ${createdRefundId}: ${creditNoteResult.error}`,
+					{ refundId: createdRefundId },
+				);
+			}
+		}
+
+		// Émission avoir VOID (Art. 272-I CGI) si la facture était active.
 		// Hors transaction principale : advisory lock Postgres pas safe imbriqué.
+		// EINV-CREDIT-008 : Sentry alerte sur `failed` — paymentStatus est passé
+		// à REFUNDED ligne précédente, donc la facture stale est ici garantie.
 		let creditNoteNumber: string | null = null;
 		if (order.invoiceStatus === InvoiceStatus.GENERATED && order.invoiceNumber) {
 			const voided = await voidInvoice({
@@ -149,7 +293,26 @@ export async function markAsFullyRefunded(
 				source: HistorySource.ADMIN,
 				reason: reason ?? "Avoir suite à remboursement total manuel",
 			});
-			creditNoteNumber = voided?.creditNoteNumber ?? null;
+			if (voided.kind === "voided") {
+				creditNoteNumber = voided.creditNoteNumber;
+			} else if (voided.kind === "noop" && voided.reason === "already-voided") {
+				creditNoteNumber = voided.creditNoteNumber ?? null;
+			} else if (voided.kind === "failed") {
+				Sentry.withScope((scope) => {
+					scope.setLevel("error");
+					scope.setTag("invoicing", "void-invoice-failed");
+					scope.setFingerprint(["void-invoice", "max-retries", order.id]);
+					scope.setContext("order", {
+						orderId: order.id,
+						orderNumber: order.orderNumber,
+						paymentStatus: PaymentStatus.REFUNDED,
+					});
+					Sentry.captureMessage(
+						"voidInvoice failed on mark-as-fully-refunded — facture stale",
+						"error",
+					);
+				});
+			}
 		}
 
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));

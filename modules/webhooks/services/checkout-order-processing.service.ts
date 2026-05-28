@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import { type Prisma } from "@/app/generated/prisma/client";
+import { type Prisma, type PaymentMethod } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	getShippingMethodFromRate,
@@ -275,10 +275,16 @@ export async function processOrderTransaction(
 /**
  * Processes order from a Payment Intent (new PI flow).
  * Shipping info is already stored in the Order (set during confirmCheckout).
+ *
+ * @param paymentMethod (optionnel) — type Stripe extrait via
+ *   `extractPaymentMethodFromPaymentIntent`. Persisté sur Order.paymentMethod
+ *   pour conformité e-reporting B2C (EINV-EREPORT-001). Si omis, la valeur
+ *   par défaut Prisma (CARD) reste appliquée.
  */
 export async function processOrderFromPaymentIntent(
 	orderId: string,
 	paymentIntent: Stripe.PaymentIntent,
+	paymentMethod?: PaymentMethod,
 ): Promise<OrderWithItems> {
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
@@ -292,6 +298,7 @@ export async function processOrderFromPaymentIntent(
 					stripePaymentIntentId: paymentIntent.id,
 					stripeCustomerId:
 						typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
+					...(paymentMethod !== undefined && { paymentMethod }),
 				},
 				paymentIntent.metadata.guestSessionId,
 				"PI flow",

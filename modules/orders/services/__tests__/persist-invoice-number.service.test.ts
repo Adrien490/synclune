@@ -11,6 +11,7 @@ const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
 		$queryRaw: vi.fn(),
 		order: {
 			update: vi.fn(),
+			findUnique: vi.fn(),
 		},
 		orderHistory: {
 			create: vi.fn(),
@@ -64,9 +65,79 @@ function runTx() {
 	);
 }
 
+/**
+ * Mock minimal d'Order pour `buildInvoiceData` inside persistInvoiceNumber tx.
+ * Doit contenir tous les champs lus par build-invoice-data + tax fields snapshot
+ * (Phase 2A) + B2B fields (Phase 2A). Le payload InvoiceData résultant doit
+ * être complet pour que canonical-JSON + SHA-256 fonctionnent.
+ */
+function makeOrderForSnapshot(): Record<string, unknown> {
+	return {
+		id: "order-1",
+		orderNumber: "SYN-2026-00001",
+		userId: "user-1",
+		customerEmail: "test@example.com",
+		customerName: "Alice Dupont",
+		customerPhone: null,
+		customerType: "B2C",
+		customerCompanyName: null,
+		customerCompanySiren: null,
+		customerCompanySiret: null,
+		customerCompanyVatNumber: null,
+		shippingFirstName: "Alice",
+		shippingLastName: "Dupont",
+		shippingAddress1: "10 rue de la Paix",
+		shippingAddress2: null,
+		shippingPostalCode: "75002",
+		shippingCity: "Paris",
+		shippingCountry: "FR",
+		shippingPhone: "+33600000000",
+		billingSameAsShipping: true,
+		billingFirstName: null,
+		billingLastName: null,
+		billingAddress1: null,
+		billingAddress2: null,
+		billingPostalCode: null,
+		billingCity: null,
+		billingCountry: null,
+		billingPhone: null,
+		subtotal: 9000,
+		discountAmount: 0,
+		taxAmount: 0,
+		shippingCost: 500,
+		total: 9500,
+		currency: "EUR",
+		paymentMethod: "CARD",
+		paidAt: new Date("2026-05-28T10:00:00Z"),
+		stripePaymentIntentId: "pi_test_1",
+		items: [
+			{
+				id: "item-1",
+				productTitle: "Collier",
+				productDescription: null,
+				productImageUrl: null,
+				skuSku: "SKU-1",
+				skuColor: "Argent",
+				skuColorHexes: null,
+				skuMaterial: "Argent 925",
+				skuSize: null,
+				skuImageUrl: null,
+				price: 4500,
+				quantity: 2,
+				taxRate: 0,
+				taxAmount: 0,
+				lineTotalExcludingTax: 9000,
+				lineTotalIncludingTax: 9000,
+				taxCategoryCode: "ZB",
+			},
+		],
+	};
+}
+
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockTx.$executeRaw.mockResolvedValue(undefined);
+	mockTx.order.findUnique.mockResolvedValue(makeOrderForSnapshot());
 });
 
 // ============================================================================
@@ -90,6 +161,46 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			expect(result?.invoiceNumber).toContain(`F-${year}-`);
 		});
 
+		it("écrit invoiceDataSnapshot (Json) + invoiceDataHash (SHA-256) dans la même tx — Art. L102 B LPF", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
+			expect(mockTx.order.update).toHaveBeenCalledOnce();
+			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
+				data: { invoiceDataSnapshot?: unknown; invoiceDataHash?: string };
+			};
+			expect(updateArgs.data.invoiceDataHash).toBe(result?.invoiceDataHash);
+			expect(updateArgs.data.invoiceDataSnapshot).toBeDefined();
+			expect(typeof updateArgs.data.invoiceDataSnapshot).toBe("object");
+			expect(
+				(updateArgs.data.invoiceDataSnapshot as { invoiceNumber?: string }).invoiceNumber,
+			).toBe(result?.invoiceNumber);
+		});
+
+		it("hash invoiceDataHash inclus dans OrderHistory metadata (audit trail Art. L123-22)", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockTx.orderHistory.create).toHaveBeenCalledOnce();
+			const historyArgs = mockTx.orderHistory.create.mock.calls[0]?.[0] as {
+				data: { metadata?: { invoiceDataHash?: string } };
+			};
+			expect(historyArgs.data.metadata?.invoiceDataHash).toBe(result?.invoiceDataHash);
+		});
+
 		it("pads the sequence to 5 digits", async () => {
 			runTx();
 			mockTx.$queryRaw.mockResolvedValue([]);
@@ -102,6 +213,108 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 
 			const sequence = result!.invoiceNumber.split("-")[2];
 			expect(sequence).toHaveLength(5);
+		});
+	});
+
+	describe("vendor snapshot (Art. L102 B LPF — facture reconstituable a l'identique)", () => {
+		it("fige les champs vendor* depuis getVendorLegalInfo() dans la meme tx d'INSERT", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockTx.order.update).toHaveBeenCalledOnce();
+			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
+				data: {
+					vendorLegalName?: string;
+					vendorTradeName?: string;
+					vendorAddress?: string;
+					vendorSiren?: string;
+					vendorSiret?: string;
+					vendorVatNumber?: string | null;
+					vendorVatRegime?: string;
+					vendorLegalForm?: string;
+					vendorEInvoicingPlatformId?: string | null;
+					vendorEInvoicingAddress?: string | null;
+				};
+			};
+			// Toutes les valeurs du snapshot sont presentes (defaults env si non set)
+			expect(updateArgs.data.vendorLegalName).toBeTruthy();
+			expect(updateArgs.data.vendorTradeName).toBeTruthy();
+			expect(updateArgs.data.vendorAddress).toBeTruthy();
+			// SIREN normalise (chiffres seuls) — respecte CHECK '^[0-9]{9}$'
+			expect(updateArgs.data.vendorSiren).toMatch(/^[0-9]{9}$/);
+			// SIRET normalise (chiffres seuls) — respecte CHECK '^[0-9]{14}$'
+			expect(updateArgs.data.vendorSiret).toMatch(/^[0-9]{14}$/);
+			// Default regime = FRANCHISE_BASE (art. 293 B CGI)
+			expect(updateArgs.data.vendorVatRegime).toBe("FRANCHISE_BASE");
+			expect(updateArgs.data.vendorLegalForm).toBeTruthy();
+			// PDP emetteur optionnel — null si env non set (cas par defaut)
+			expect(updateArgs.data.vendorEInvoicingPlatformId).toBeDefined();
+			expect(updateArgs.data.vendorEInvoicingAddress).toBeDefined();
+		});
+
+		it("normalise VAT number env (espaces, points) au format CHECK '^[A-Z]{2}[A-Z0-9]{2,13}$'", async () => {
+			const ORIGINAL_VAT = process.env.VENDOR_VAT_NUMBER;
+			process.env.VENDOR_VAT_NUMBER = "FR 35 839 183 027";
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
+				data: { vendorVatNumber?: string | null };
+			};
+			expect(updateArgs.data.vendorVatNumber).toBe("FR35839183027");
+
+			process.env.VENDOR_VAT_NUMBER = ORIGINAL_VAT;
+		});
+
+		it("snapshot est passe dans le MEME prisma.order.update que invoiceNumber (atomicite)", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			// 1 seul UPDATE = snapshot + numero + status sont commitees atomiquement
+			expect(mockTx.order.update).toHaveBeenCalledOnce();
+			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
+				data: { invoiceNumber: string; vendorSiren?: string };
+			};
+			expect(updateArgs.data.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
+			expect(updateArgs.data.vendorSiren).toBeTruthy();
+		});
+
+		it("parseVatRegime fallback FRANCHISE_BASE si VENDOR_VAT_REGIME inconnu", async () => {
+			const ORIGINAL = process.env.VENDOR_VAT_REGIME;
+			process.env.VENDOR_VAT_REGIME = "INVALID_REGIME";
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
+				data: { vendorVatRegime?: string };
+			};
+			expect(updateArgs.data.vendorVatRegime).toBe("FRANCHISE_BASE");
+
+			process.env.VENDOR_VAT_REGIME = ORIGINAL;
 		});
 	});
 

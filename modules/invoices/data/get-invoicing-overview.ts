@@ -1,9 +1,10 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { EReportingStatus } from "@/app/generated/prisma/client";
+import { EReportingStatus, PdpTransmissionStatus } from "@/app/generated/prisma/client";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
 
 /**
  * Vue d'ensemble du module facturation pour le dashboard admin
@@ -28,7 +29,60 @@ export type InvoicingOverview = {
 	last30DaysRevenueCents: number;
 	last30DaysTransactionCount: number;
 	last30DaysRefundCount: number;
+	/**
+	 * Nombre de commandes PAID sans invoiceNumber émis (anomalie Art. 286/289-I).
+	 * EINV-UI-005 audit 2026-05-28 — drillable depuis le dashboard via
+	 * `/admin/ventes/commandes?filter_invoiceAnomaly=true`.
+	 */
+	invoiceAnomalyCount: number;
+	/** 10 dernières factures émises (recherche + drill-down EINV-UI-012). */
+	recentInvoices: ReadonlyArray<InvoiceSummary>;
+	/** Audit monitoring 2026-05-28 EINV-OPS-007 : commandes en anomalie actionnable (max 50). */
+	anomalies: ReadonlyArray<InvoiceAnomaly>;
+	/** EINV-OPS-012 : couverture e-reporting 30j (ratios entre 0 et 1). */
+	eReportingCoverage: {
+		sales: number;
+		refund: number;
+		paidOrders: number;
+		paidRefunds: number;
+	};
+	/**
+	 * EINV-GLOBAL-011 : surveillance du seuil franchise TVA art. 293 B CGI
+	 * (37 500 € HT/an pour ventes de biens). Pré-alerte UI à 30 000 € (~80 %)
+	 * pour planifier la migration régime réel (recalcul TVA OrderItem +
+	 * mentions PDF). Ne bloque jamais l'émission — signal d'anticipation.
+	 */
+	franchiseThreshold: {
+		revenue12mCents: number;
+		thresholdCents: number;
+		warningCents: number;
+		reached: boolean;
+	};
+	/**
+	 * EINV-PROVIDER-012 : statuts de transmission individuelle vers la PDP (B2B/B2G).
+	 * Vide quand `providerActive=false` (LocalPdfProvider, capability submitInvoice=false).
+	 * Quand `providerActive=true` : compteurs par PdpTransmissionStatus + 10 derniers
+	 * rejets actionnables.
+	 */
+	transmission: {
+		providerName: string;
+		providerActive: boolean;
+		counters: Record<PdpTransmissionStatus, number>;
+		recentRejected: ReadonlyArray<TransmissionFailureSummary>;
+	};
 };
+
+export type InvoiceAnomalyType = "MISSING_INVOICE_NUMBER" | "MISSING_PDF" | "MISSING_CREDIT_NOTE";
+
+export interface InvoiceAnomaly {
+	orderId: string;
+	orderNumber: string;
+	type: InvoiceAnomalyType;
+	paidAt: Date | null;
+	total: number;
+	invoiceNumber: string | null;
+	invoiceReconcileAttempts: number;
+}
 
 export interface BatchSummary {
 	id: string;
@@ -40,6 +94,33 @@ export interface BatchSummary {
 	currency: string;
 	rejectionReason: string | null;
 	createdAt: Date;
+}
+
+export interface TransmissionFailureSummary {
+	orderId: string;
+	orderNumber: string;
+	invoiceNumber: string | null;
+	pdpStatus: PdpTransmissionStatus;
+	pdpProviderRef: string | null;
+	pdpRejectionCode: string | null;
+	pdpRejectionReason: string | null;
+	pdpRetryCount: number;
+	pdpLastRetryAt: Date | null;
+	pdpTransmittedAt: Date | null;
+	customerName: string | null;
+}
+
+export interface InvoiceSummary {
+	id: string;
+	orderId: string;
+	orderNumber: string;
+	invoiceNumber: string;
+	invoiceGeneratedAt: Date;
+	invoiceStatus: InvoiceStatus;
+	creditNoteNumber: string | null;
+	total: number;
+	customerName: string | null;
+	paidAt: Date | null;
 }
 
 export async function getInvoicingOverview(): Promise<InvoicingOverview | null> {
@@ -54,6 +135,14 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 
 	const now = new Date();
 	const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+	const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+	// EINV-GLOBAL-011 : seuil franchise TVA art. 293 B CGI. Exonération TVA
+	// jusqu'à 37 500 € HT/an (vente de biens). Pré-alerte à 30 000 € (80 %)
+	// pour planifier le passage au régime réel : recalcul TVA OrderItem,
+	// mention "TVA non applicable art. 293 B" retirée du PDF.
+	const FRANCHISE_THRESHOLD_CENTS = 3_750_000;
+	const FRANCHISE_WARNING_CENTS = 3_000_000;
 
 	// Compteurs Order.invoiceStatus — exclut les commandes soft-deleted.
 	const invoiceGroups = await prisma.order.groupBy({
@@ -137,6 +226,17 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		_sum: { total: true },
 	});
 
+	// CA encaissé 12 derniers mois (surveillance seuil franchise TVA 293 B).
+	const last12MonthsRevenue = await prisma.order.aggregate({
+		where: {
+			paymentStatus: "PAID",
+			paidAt: { gte: twelveMonthsAgo, lte: now },
+			...notDeleted,
+		},
+		_sum: { total: true },
+	});
+	const revenue12mCents = last12MonthsRevenue._sum.total ?? 0;
+
 	// Nombre de transactions e-reporting créées sur 30 jours.
 	const last30DaysTransactionCount = await prisma.eReportingTransaction.count({
 		where: {
@@ -152,6 +252,186 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		},
 	});
 
+	// Anomalie : commandes PAID sans invoiceNumber (Art. 286 / 289-I CGI).
+	// EINV-UI-005 audit 2026-05-28 — drill-down depuis CounterCard "En attente".
+	const invoiceAnomalyCount = await prisma.order.count({
+		where: {
+			paymentStatus: "PAID",
+			invoiceNumber: null,
+			...notDeleted,
+		},
+	});
+
+	// 10 dernières factures émises (EINV-UI-012 — vue rapide + recherche
+	// par numéro depuis le dashboard).
+	const recentInvoices = await prisma.order.findMany({
+		where: {
+			invoiceNumber: { not: null },
+			...notDeleted,
+		},
+		orderBy: { invoiceGeneratedAt: "desc" },
+		take: 10,
+		select: {
+			id: true,
+			orderNumber: true,
+			invoiceNumber: true,
+			invoiceGeneratedAt: true,
+			invoiceStatus: true,
+			creditNoteNumber: true,
+			total: true,
+			customerName: true,
+			paidAt: true,
+		},
+	});
+
+	const recentInvoicesNormalized: InvoiceSummary[] = recentInvoices
+		.filter((row) => row.invoiceNumber && row.invoiceGeneratedAt && row.invoiceStatus)
+		.map((row) => ({
+			id: row.id,
+			orderId: row.id,
+			orderNumber: row.orderNumber,
+			invoiceNumber: row.invoiceNumber as string,
+			invoiceGeneratedAt: row.invoiceGeneratedAt as Date,
+			invoiceStatus: row.invoiceStatus as InvoiceStatus,
+			creditNoteNumber: row.creditNoteNumber,
+			total: row.total,
+			customerName: row.customerName,
+			paidAt: row.paidAt,
+		}));
+
+	// Anomalies actionnables (EINV-OPS-007). Index partiel `invoiceRetryDeferred`
+	// cible uniquement les rows pathologiques. Cap 50 — le cron reconcile-invoices
+	// (daily) écoule la file en arrière-plan.
+	const anomalyRows = await prisma.order.findMany({
+		where: { invoiceRetryDeferred: true, ...notDeleted },
+		select: {
+			id: true,
+			orderNumber: true,
+			paidAt: true,
+			total: true,
+			invoiceNumber: true,
+			invoicePdfUrl: true,
+			invoiceStatus: true,
+			paymentStatus: true,
+			creditNoteNumber: true,
+			invoiceReconcileAttempts: true,
+		},
+		orderBy: { invoiceReconcileAttempts: "desc" },
+		take: 50,
+	});
+	const anomalies: InvoiceAnomaly[] = anomalyRows.map((o) => {
+		let type: InvoiceAnomalyType = "MISSING_INVOICE_NUMBER";
+		if (!o.invoiceNumber) {
+			type = "MISSING_INVOICE_NUMBER";
+		} else if (!o.invoicePdfUrl && o.invoiceStatus === "GENERATED") {
+			type = "MISSING_PDF";
+		} else if (
+			o.paymentStatus === "REFUNDED" &&
+			o.invoiceStatus === "GENERATED" &&
+			!o.creditNoteNumber
+		) {
+			type = "MISSING_CREDIT_NOTE";
+		}
+		return {
+			orderId: o.id,
+			orderNumber: o.orderNumber,
+			type,
+			paidAt: o.paidAt,
+			total: o.total,
+			invoiceNumber: o.invoiceNumber,
+			invoiceReconcileAttempts: o.invoiceReconcileAttempts,
+		};
+	});
+
+	// Couverture e-reporting 30j (EINV-OPS-012). Ratio entre 0 et 1 ; le UI
+	// affiche un warning quand < 99%. Quand le module est inactif (feature flag
+	// OFF), `last30DaysTransactionCount` reste à 0 → ratio descend, alerte
+	// visible côté admin = signal de health attendu.
+	const paidOrders30d = await prisma.order.count({
+		where: {
+			paymentStatus: "PAID",
+			paidAt: { gte: thirtyDaysAgo, lte: now },
+			...notDeleted,
+		},
+	});
+	const refundedOrders30d = await prisma.order.count({
+		where: {
+			paymentStatus: { in: ["REFUNDED", "PARTIALLY_REFUNDED"] },
+			paidAt: { gte: thirtyDaysAgo, lte: now },
+			...notDeleted,
+		},
+	});
+	const eReportingCoverage = {
+		sales: paidOrders30d === 0 ? 1 : Math.min(1, last30DaysTransactionCount / paidOrders30d),
+		refund: refundedOrders30d === 0 ? 1 : Math.min(1, last30DaysRefundCount / refundedOrders30d),
+		paidOrders: paidOrders30d,
+		paidRefunds: refundedOrders30d,
+	};
+
+	// EINV-PROVIDER-012 : compteurs + rejets PDP par-facture (Phase 5).
+	// Si le provider courant ne supporte pas submitInvoice (LocalPdfProvider),
+	// la section est masquée côté UI mais on calcule quand même les compteurs
+	// pour assurer une visibilité si un provider externe a été branché puis
+	// désactivé (factures rejetées historiques restent visibles).
+	const provider = getInvoiceProvider();
+	const transmissionGroups = await prisma.order.groupBy({
+		by: ["pdpStatus"],
+		where: { ...notDeleted },
+		_count: { pdpStatus: true },
+	});
+	const transmissionCounters: Record<PdpTransmissionStatus, number> = {
+		PENDING: 0,
+		SENT: 0,
+		ACCEPTED: 0,
+		REJECTED: 0,
+		RETRYING: 0,
+		CANCELLED: 0,
+		ABANDONED: 0,
+	};
+	for (const group of transmissionGroups) {
+		if (group.pdpStatus !== null) {
+			transmissionCounters[group.pdpStatus] = group._count.pdpStatus;
+		}
+	}
+
+	const recentRejected = await prisma.order.findMany({
+		where: {
+			pdpStatus: { in: [PdpTransmissionStatus.REJECTED, PdpTransmissionStatus.ABANDONED] },
+			...notDeleted,
+		},
+		orderBy: { pdpRejectedAt: "desc" },
+		take: 10,
+		select: {
+			id: true,
+			orderNumber: true,
+			invoiceNumber: true,
+			pdpStatus: true,
+			pdpProviderRef: true,
+			pdpRejectionCode: true,
+			pdpRejectionReason: true,
+			pdpRetryCount: true,
+			pdpLastRetryAt: true,
+			pdpTransmittedAt: true,
+			customerName: true,
+		},
+	});
+
+	const recentRejectedNormalized: TransmissionFailureSummary[] = recentRejected
+		.filter((row) => row.pdpStatus !== null)
+		.map((row) => ({
+			orderId: row.id,
+			orderNumber: row.orderNumber,
+			invoiceNumber: row.invoiceNumber,
+			pdpStatus: row.pdpStatus as PdpTransmissionStatus,
+			pdpProviderRef: row.pdpProviderRef,
+			pdpRejectionCode: row.pdpRejectionCode,
+			pdpRejectionReason: row.pdpRejectionReason,
+			pdpRetryCount: row.pdpRetryCount,
+			pdpLastRetryAt: row.pdpLastRetryAt,
+			pdpTransmittedAt: row.pdpTransmittedAt,
+			customerName: row.customerName,
+		}));
+
 	return {
 		invoiceCounters,
 		batchCounters,
@@ -160,5 +440,21 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		last30DaysRevenueCents: last30DaysRevenue._sum.total ?? 0,
 		last30DaysTransactionCount,
 		last30DaysRefundCount,
+		invoiceAnomalyCount,
+		recentInvoices: recentInvoicesNormalized,
+		anomalies,
+		eReportingCoverage,
+		franchiseThreshold: {
+			revenue12mCents,
+			thresholdCents: FRANCHISE_THRESHOLD_CENTS,
+			warningCents: FRANCHISE_WARNING_CENTS,
+			reached: revenue12mCents >= FRANCHISE_WARNING_CENTS,
+		},
+		transmission: {
+			providerName: provider.id,
+			providerActive: provider.capabilities.submitInvoice,
+			counters: transmissionCounters,
+			recentRejected: recentRejectedNormalized,
+		},
 	};
 }

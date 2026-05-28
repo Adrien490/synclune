@@ -57,14 +57,21 @@ export class LocalPdfProvider implements InvoiceProvider {
 	}
 
 	async submitEReportingBatch(): Promise<SubmitEReportingBatchResult> {
-		throw new Error(
-			"LocalPdfProvider ne transmet pas l'e-reporting B2C. " +
-				"À activer en Phase 3 via une PDP/PA agréée.",
-		);
+		// Dry-run silencieux : la capability `eReporting: false` signale déjà au caller
+		// qu'il doit skip. Retourner un PENDING permet à la chaîne d'orchestration
+		// (cron transmit-ereporting-batch futur) de tester end-to-end sans crasher
+		// la pipeline lors d'une activation accidentelle de INVOICE_ENABLE_EREPORTING
+		// avec INVOICE_PROVIDER=local.
+		return {
+			providerBatchId: `local:dry-run:${crypto.randomUUID()}`,
+			status: "PENDING",
+			submittedAt: new Date(),
+		};
 	}
 
 	async lookupEInvoicingDirectory(_input: DirectoryLookupInput): Promise<DirectoryLookupResult> {
 		return {
+			status: "NOT_FOUND",
 			found: false,
 			platformId: null,
 			routingAddress: null,

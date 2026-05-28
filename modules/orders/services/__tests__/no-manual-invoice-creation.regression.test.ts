@@ -7,11 +7,13 @@ import { describe, expect, it } from "vitest";
  *
  * Garantit que la création d'une facture (`invoiceNumber` `F-YYYY-NNNNN`) et
  * d'un avoir (`creditNoteNumber` `A-YYYY-NNNNN`) ne passe JAMAIS par une
- * Server Action, une route API arbitraire ou un composant admin. Seuls deux
+ * Server Action, une route API arbitraire ou un composant admin. Seuls trois
  * services dédiés peuvent générer ces numéros, sous advisory lock Postgres
  * sérialisé par année :
  *  - `persist-invoice-number.service.ts` (Art. 286 / 289-I CGI)
- *  - `void-invoice.service.ts` (Art. 272-I CGI)
+ *  - `void-invoice.service.ts` (Art. 272-I CGI — full void Order)
+ *  - `issue-credit-note.service.ts` (Art. 272-I CGI — avoir partiel ou total
+ *    rattaché à un Refund. Séquence A-YYYY-NNNNN partagée via UNION SQL.)
  *
  * Cf. CLAUDE.md § "Facturation électronique — invariants" #1 et #2.
  *
@@ -76,12 +78,21 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 		);
 	});
 
-	it("only void-invoice.service.ts emits A-YYYY-NNNNN templates", () => {
+	it("only void-invoice + issue-credit-note services emit A-YYYY-NNNNN templates", () => {
 		const pattern = /`A-\$\{[^}]*\}-/;
 		const writers = allSourceFiles
 			.filter((f) => pattern.test(readFileSync(f, "utf-8")))
 			.map(relPath);
-		expect(writers.sort()).toEqual(["modules/orders/services/void-invoice.service.ts"]);
+		expect(writers.sort()).toEqual(
+			[
+				// Full void de la facture (Order.creditNoteNumber, Art. 272-I CGI)
+				"modules/orders/services/void-invoice.service.ts",
+				// Avoir partiel OU total rattaché à un Refund (Refund.creditNoteNumber,
+				// Art. 272-I CGI). Séquence partagée avec void-invoice via UNION SQL +
+				// même advisory lock 2_000_000+year — unicité globale garantie.
+				"modules/refunds/services/issue-credit-note.service.ts",
+			].sort(),
+		);
 	});
 
 	it("only allowed call-sites assign a concrete invoiceStatus value", () => {
@@ -98,6 +109,9 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 				"modules/orders/services/void-invoice.service.ts",
 				// In-memory object refinement after persistInvoiceNumber returned, NOT a DB write.
 				"app/api/orders/[orderNumber]/invoice/route.ts",
+				// Cron de réconciliation : restaure GENERATED quand une commande VOIDED
+				// a été remise PAID après rollback Stripe (idempotent + audit).
+				"modules/cron/services/reconcile-voided-invoices.service.ts",
 			].sort(),
 		);
 	});
@@ -105,7 +119,7 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 	it("only allowlisted services pass invoice* / creditNote* fields inside a Prisma write block", () => {
 		const writePattern = /\b(?:prisma|tx)\.order\.(?:update|create|upsert)\s*\(/;
 		const fieldPattern =
-			/\b(?:invoiceNumber|creditNoteNumber|invoiceGeneratedAt|invoiceVoidedAt|creditNoteGeneratedAt|invoicePdfUrl|invoicePdfHash)\s*:\s*(?!true\b|false\b)/;
+			/\b(?:invoiceNumber|creditNoteNumber|invoiceGeneratedAt|invoiceVoidedAt|creditNoteGeneratedAt|invoicePdfUrl|invoicePdfHash|creditNotePdfUrl|creditNotePdfHash)\s*:\s*(?!true\b|false\b)/;
 		const writers = allSourceFiles
 			.filter((f) => {
 				const content = readFileSync(f, "utf-8");
@@ -130,6 +144,14 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 				"modules/orders/services/void-invoice.service.ts",
 				// Archivage PDF immuable UploadThing + SHA-256 (Art. L102 B LPF)
 				"modules/orders/services/archive-invoice-pdf.service.ts",
+				// Archivage PDF avoir immuable UploadThing + SHA-256 (Art. L102 B LPF,
+				// symétrie facture pour Art. 272-I CGI)
+				"modules/orders/services/archive-credit-note-pdf.service.ts",
+				// Snapshot immuable du invoiceNumber dans InvoiceTransmissionLog (audit
+				// transmission PDP) — n'écrit PAS sur Order.invoiceNumber. Le pattern
+				// 40-lignes du test matche aussi le `data: {` du log create qui suit
+				// le `tx.order.update`. Cf. EINV-PROVIDER-001 + EINV-PROVIDER-002.
+				"modules/orders/services/persist-pdp-transmission.service.ts",
 			].sort(),
 		);
 	});

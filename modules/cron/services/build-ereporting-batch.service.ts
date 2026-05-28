@@ -2,7 +2,7 @@ import { EReportingStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
+import { BATCH_SIZE_MEDIUM, MAX_BATCH_TRANSACTIONS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 
 /**
@@ -77,48 +77,65 @@ export async function buildEReportingBatch(): Promise<CronResult> {
 			const dayStart = parseUtcDay(day);
 			const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-			const totalAmountIncTax = txs.reduce((sum, t) => sum + t.amountIncTax, 0);
-			const totalAmountExclTax = txs.reduce((sum, t) => sum + t.amountExclTax, 0);
-			const totalTaxAmount = txs.reduce((sum, t) => sum + t.taxAmount, 0);
+			// Split par cap MAX_BATCH_TRANSACTIONS — un Black Friday à 5000 tx
+			// dépasse la limite PA typique (1000-5000/batch). Chaque chunk devient
+			// un EReportingBatch indépendant pour la même journée (EINV-EREPORT-005).
+			const chunks: (typeof txs)[] = [];
+			for (let i = 0; i < txs.length; i += MAX_BATCH_TRANSACTIONS) {
+				chunks.push(txs.slice(i, i + MAX_BATCH_TRANSACTIONS));
+			}
 
-			const batch = await prisma.$transaction(
-				async (tx) => {
-					const created = await tx.eReportingBatch.create({
-						data: {
-							periodFrom: dayStart,
-							periodTo: dayEnd,
-							status: EReportingStatus.PENDING,
-							transactionCount: txs.length,
-							totalAmountIncTax,
-							totalAmountExclTax,
-							totalTaxAmount,
-						},
-						select: { id: true },
-					});
+			for (const chunk of chunks) {
+				const totalAmountIncTax = chunk.reduce((sum, t) => sum + t.amountIncTax, 0);
+				const totalAmountExclTax = chunk.reduce((sum, t) => sum + t.amountExclTax, 0);
+				const totalTaxAmount = chunk.reduce((sum, t) => sum + t.taxAmount, 0);
 
-					// Assigner les transactions au batch. updateMany retourne le
-					// count : s'il diffère de txs.length, une transaction a été
-					// concurrent-assigned ailleurs (race extrêmement improbable
-					// dans ce cron monocaller, mais on log).
-					const ids = txs.map((t) => t.id);
-					const updated = await tx.eReportingTransaction.updateMany({
-						where: { id: { in: ids }, batchId: null },
-						data: { batchId: created.id },
-					});
-					if (updated.count !== txs.length) {
-						logger.warn(
-							`build-ereporting-batch — assigned ${updated.count}/${txs.length} transactions (concurrent rebatch?)`,
-							{ cronJob: "build-ereporting-batch", batchId: created.id, day },
-						);
-					}
+				const batch = await prisma.$transaction(
+					async (tx) => {
+						const created = await tx.eReportingBatch.create({
+							data: {
+								periodFrom: dayStart,
+								periodTo: dayEnd,
+								status: EReportingStatus.PENDING,
+								transactionCount: chunk.length,
+								totalAmountIncTax,
+								totalAmountExclTax,
+								totalTaxAmount,
+							},
+							select: { id: true },
+						});
 
-					return created;
-				},
-				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-			);
+						// Assigner les transactions au batch. updateMany retourne le
+						// count : s'il diffère de chunk.length, une transaction a été
+						// concurrent-assigned ailleurs (race extrêmement improbable
+						// dans ce cron monocaller, mais on log).
+						const ids = chunk.map((t) => t.id);
+						const updated = await tx.eReportingTransaction.updateMany({
+							where: { id: { in: ids }, batchId: null },
+							data: { batchId: created.id },
+						});
+						if (updated.count !== chunk.length) {
+							logger.warn(
+								`build-ereporting-batch — assigned ${updated.count}/${chunk.length} transactions (concurrent rebatch?)`,
+								{ cronJob: "build-ereporting-batch", batchId: created.id, day },
+							);
+						}
 
-			createdBatches.push(batch.id);
-			processed += txs.length;
+						return created;
+					},
+					{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+				);
+
+				createdBatches.push(batch.id);
+				processed += chunk.length;
+			}
+
+			if (chunks.length > 1) {
+				logger.info(
+					`build-ereporting-batch — day ${day} split into ${chunks.length} batches (${txs.length} tx, cap ${MAX_BATCH_TRANSACTIONS})`,
+					{ cronJob: "build-ereporting-batch", day, chunkCount: chunks.length },
+				);
+			}
 		} catch (e) {
 			errored += txs.length;
 			logger.error(`build-ereporting-batch — failed to aggregate day ${day}`, e, {

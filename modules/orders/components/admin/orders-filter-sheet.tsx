@@ -32,6 +32,7 @@ interface FilterFormData {
 	paymentStatuses: string[];
 	fulfillmentStatuses: string[];
 	invoiceStatuses: string[];
+	invoiceAnomaly: boolean;
 	priceRange: [number, number];
 	dateRange: {
 		from: string;
@@ -54,6 +55,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		const paymentStatuses: string[] = [];
 		const fulfillmentStatuses: string[] = [];
 		const invoiceStatuses: string[] = [];
+		let invoiceAnomaly = false;
 		let priceMin = DEFAULT_PRICE_RANGE[0]!;
 		let priceMax = DEFAULT_PRICE_RANGE[1]!;
 		let dateFrom = "";
@@ -69,6 +71,8 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 				fulfillmentStatuses.push(value);
 			} else if (key === "filter_invoiceStatus") {
 				invoiceStatuses.push(value);
+			} else if (key === "filter_invoiceAnomaly") {
+				invoiceAnomaly = value === "true" || value === "1";
 			} else if (key === "filter_totalMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0]!;
 			} else if (key === "filter_totalMax") {
@@ -87,6 +91,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			paymentStatuses: [...new Set(paymentStatuses)],
 			fulfillmentStatuses: [...new Set(fulfillmentStatuses)],
 			invoiceStatuses: [...new Set(invoiceStatuses)],
+			invoiceAnomaly,
 			priceRange: [priceMin, priceMax],
 			dateRange: { from: dateFrom, to: dateTo },
 			showDeleted,
@@ -109,6 +114,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_paymentStatus",
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
+			"filter_invoiceAnomaly",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -144,6 +150,11 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			formData.invoiceStatuses.forEach((status) => params.append("filter_invoiceStatus", status));
 		}
 
+		// Preset anomalie (EINV-UI-005) : PAID + invoiceNumber IS NULL
+		if (formData.invoiceAnomaly) {
+			params.set("filter_invoiceAnomaly", "true");
+		}
+
 		// Add price range (convert euros to cents)
 		if (
 			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
@@ -177,6 +188,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			paymentStatuses: [],
 			fulfillmentStatuses: [],
 			invoiceStatuses: [],
+			invoiceAnomaly: false,
 			priceRange: [DEFAULT_PRICE_RANGE[0]!, DEFAULT_PRICE_RANGE[1]!],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
@@ -190,6 +202,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_paymentStatus",
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
+			"filter_invoiceAnomaly",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -217,6 +230,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_paymentStatus",
 			"filter_fulfillmentStatus",
 			"filter_invoiceStatus",
+			"filter_invoiceAnomaly",
 		];
 		// Paired filters: count the pair as one filter (use the first key as representative)
 		const pairedFilters: Record<string, string[]> = {
@@ -387,6 +401,26 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 									</CheckboxFilterItem>
 								);
 							})}
+						</fieldset>
+					)}
+				</form.Field>
+
+				{/* Preset Anomalie de facturation (EINV-UI-005 — payée sans facture émise) */}
+				<form.Field name="invoiceAnomaly">
+					{(field) => (
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">
+								Anomalies de facturation
+							</legend>
+							<CheckboxFilterItem
+								id="invoice-anomaly"
+								checked={field.state.value === true}
+								onCheckedChange={(checked) => {
+									field.handleChange(checked === true);
+								}}
+							>
+								Commandes payées sans facture émise (Art. 286 / 289-I CGI)
+							</CheckboxFilterItem>
 						</fieldset>
 					)}
 				</form.Field>

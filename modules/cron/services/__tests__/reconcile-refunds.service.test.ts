@@ -94,7 +94,7 @@ describe("reconcileRefunds", () => {
 		expect(result).toMatchObject({ processed: 0, errored: 0, skipped: 0, hasMore: false });
 	});
 
-	it("queries refunds with APPROVED status, stripeRefundId set, processedAt null, in 7d window", async () => {
+	it("queries refunds with APPROVED status, stripeRefundId set, processedAt null, in 90d window", async () => {
 		await reconcileRefunds();
 
 		const call = mockPrisma.refund.findMany.mock.calls[0]![0];
@@ -103,8 +103,8 @@ describe("reconcileRefunds", () => {
 		expect(call.where.processedAt).toBeNull();
 		expect(call.where.deletedAt).toBeNull();
 
-		const sevenDays = 7 * 24 * 60 * 60 * 1000;
-		const expectedMaxAge = new Date(Date.now() - sevenDays);
+		const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+		const expectedMaxAge = new Date(Date.now() - ninetyDays);
 		const expectedMinAge = new Date(Date.now() - THRESHOLDS.REFUND_RECONCILE_MIN_AGE_MS);
 		expect(call.where.createdAt.gte.getTime()).toBe(expectedMaxAge.getTime());
 		expect(call.where.createdAt.lt.getTime()).toBe(expectedMinAge.getTime());

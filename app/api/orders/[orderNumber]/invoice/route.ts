@@ -1,53 +1,185 @@
-import { getOrder } from "@/modules/orders/data/get-order";
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
+import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
+import { checkRateLimit, getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
-import { prisma } from "@/shared/lib/prisma";
+import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+import { OrderAction, HistorySource } from "@/app/generated/prisma/client";
+
+/**
+ * Timeout fetch UploadThing : si le CDN hang, on retombe sur la régénération
+ * contrôlée plutôt que d'attendre le Vercel 504 (60s). Le PDF archivé est
+ * normalement servi en quelques centaines de ms — 5s laisse une marge réseau.
+ */
+const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
+
+/**
+ * EINV-SEC-002 : audit-trail RGPD Art. 30/32 sur chaque accès facture réussi.
+ *
+ * Best-effort : échec audit ne bloque jamais le download. La source distingue :
+ * - ADMIN : session admin (re-vérifiée DB côté caller via session.user.role)
+ * - CUSTOMER : owner session ou guest token (`verifyInvoiceAccessToken`)
+ * - SYSTEM : devrait être inatteignable ici, garde-fou
+ *
+ * Pas de PII dans metadata (cf. orderHistoryMetadataSchema garde-fou).
+ */
+async function recordInvoiceDownload(params: {
+	orderId: string;
+	invoiceNumber: string | null;
+	authorId: string | undefined;
+	source: HistorySource;
+}): Promise<void> {
+	try {
+		await createOrderAudit({
+			orderId: params.orderId,
+			action: OrderAction.INVOICE_DOWNLOADED,
+			authorId: params.authorId,
+			source: params.source,
+			metadata: {
+				invoiceNumber: params.invoiceNumber,
+				isAdminContext: params.source === HistorySource.ADMIN,
+			},
+		});
+		Sentry.addBreadcrumb({
+			category: "invoice",
+			message: "invoice-downloaded",
+			level: "info",
+			data: {
+				orderId: params.orderId,
+				source: params.source,
+				hasInvoiceNumber: !!params.invoiceNumber,
+			},
+		});
+	} catch (error) {
+		logger.warn("Failed to record INVOICE_DOWNLOADED audit (best-effort)", {
+			service: "invoice-route",
+			orderId: params.orderId,
+			source: params.source,
+			error: error instanceof Error ? error.message : String(error),
+		});
+	}
+}
 
 export async function GET(
-	_request: Request,
+	request: Request,
 	{ params }: { params: Promise<{ orderNumber: string }> },
 ) {
 	const { orderNumber } = await params;
+	const url = new URL(request.url);
+	const tokenFromQuery = url.searchParams.get("token");
 
 	const session = await getSession();
-	if (!session?.user.id) {
+
+	// Auth modes (any one is sufficient):
+	// 1. Admin session — bypasses ownership + rate limit (audit / customer support).
+	// 2. Owner session — must match Order.userId.
+	// 3. Signed token in `?token=` — covers guest checkouts (Order.userId=null)
+	//    where the customer has no session. Token is HMAC-derived from
+	//    BETTER_AUTH_SECRET and delivered in the order confirmation email.
+	if (!session?.user.id && !tokenFromQuery) {
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	const isAdmin = session.user.role === "ADMIN";
+	// EINV-SEC-008 : `session.user.role` est best-effort (jusqu'à 5 min stale)
+	// à cause du `cookieCache` Better Auth. Un admin récemment démoté conserverait
+	// sinon le quota élargi (200/h) et bypasserait l'ownership check. On re-vérifie
+	// le rôle en DB UNIQUEMENT quand le cookie claim admin (1 query supplémentaire
+	// limitée aux admins, pas d'impact sur les users normaux).
+	let isAdmin = false;
+	if (session?.user.role === "ADMIN" && session.user.id) {
+		const dbUser = await prisma.user.findUnique({
+			where: { id: session.user.id, ...notDeleted },
+			select: { role: true },
+		});
+		isAdmin = dbUser?.role === "ADMIN";
+		if (!isAdmin) {
+			logger.warn(
+				"Stale admin session detected on invoice route — falling back to owner/token path",
+				{
+					service: "invoice-route",
+					userId: session.user.id,
+					sessionRole: session.user.role,
+					dbRole: dbUser?.role ?? "user_not_found",
+				},
+			);
+		}
+	}
 
-	// Rate limit: PDF generation is CPU-intensive. Admins bypass it because
-	// audit operations (fiscal control, customer support, batch verification)
-	// can legitimately exceed the 10/h threshold meant for client downloads.
-	if (!isAdmin) {
-		const identifier = getRateLimitIdentifier(session.user.id);
-		const rateCheck = await checkRateLimit(identifier, ORDER_LIMITS.INVOICE_DOWNLOAD);
-		if (!rateCheck.success) {
-			return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
-				status: 429,
-				headers: {
-					"Retry-After": String(rateCheck.retryAfter ?? 60),
+	// Rate limit: PDF generation is CPU-intensive.
+	// EINV-SEC-004 : admin n'est PLUS bypassé — quota large 200/h anti-exfiltration interne,
+	// avec Sentry warning à 80% du quota pour alerte proactive.
+	// EINV-SEC-010 : token auth (guest) rate-limit by IP, déjà en place.
+	const headersList = await headers();
+	const rateLimitConfig = isAdmin
+		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
+		: ORDER_LIMITS.INVOICE_DOWNLOAD;
+	const rateLimitIdentifier = session?.user.id
+		? isAdmin
+			? `admin-invoice:${session.user.id}`
+			: getRateLimitIdentifier(session.user.id)
+		: `invoice-token:${(await getClientIp(headersList)) ?? "unknown"}`;
+	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig);
+	if (!rateCheck.success) {
+		if (isAdmin) {
+			Sentry.captureMessage("admin-invoice-download-rate-limited", {
+				level: "warning",
+				tags: { route: "invoice", actor: "admin" },
+				extra: {
+					adminUserId: session?.user.id,
+					limit: rateLimitConfig.limit,
+					windowMs: rateLimitConfig.windowMs,
+				},
+			});
+		}
+		return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
+			status: 429,
+			headers: {
+				"Retry-After": String(rateCheck.retryAfter ?? 60),
+			},
+		});
+	}
+	if (isAdmin) {
+		const adminLimit = rateLimitConfig.limit ?? 200;
+		if (rateCheck.remaining <= Math.floor(adminLimit * 0.2)) {
+			Sentry.captureMessage("admin-invoice-download-quota-warning", {
+				level: "warning",
+				tags: { route: "invoice", actor: "admin" },
+				extra: {
+					adminUserId: session?.user.id,
+					remaining: rateCheck.remaining,
+					limit: adminLimit,
 				},
 			});
 		}
 	}
 
-	const order = await getOrder({ orderNumber });
+	// Direct lookup (no session scope): we apply auth rules below ourselves so
+	// the token-bypass path works for guest orders (Order.userId=null) where
+	// `getOrder()` would refuse to return anything without a session.
+	const order = (await prisma.order.findFirst({
+		where: { orderNumber, ...notDeleted },
+		select: GET_ORDER_SELECT_CUSTOMER,
+	})) as GetOrderReturn | null;
 	if (!order) {
 		return new Response("Commande introuvable", { status: 404 });
 	}
 
-	// Defense-in-depth: getOrder already scopes by userId for non-admins, but
-	// we add an explicit ownership check for the API route. Admins bypass for
-	// fiscal audit / customer support — getOrder returned a record they had
-	// the right to see in the first place.
-	if (!isAdmin && order.userId !== session.user.id) {
+	const tokenValid =
+		tokenFromQuery !== null &&
+		verifyInvoiceAccessToken(order.id, order.orderNumber, tokenFromQuery);
+	const sessionOwns = !!session?.user.id && order.userId === session.user.id;
+	if (!isAdmin && !sessionOwns && !tokenValid) {
 		return new Response("Accès interdit", { status: 403 });
 	}
 
@@ -62,7 +194,12 @@ export async function GET(
 	// le webhook checkout-completed (ORD-COMPLY-002), mais on garde le lazy path
 	// pour les commandes historiques antérieures à ce déploiement.
 	let invoiceOrder = order;
+	// Audit monitoring 2026-05-28 EINV-OPS-014 : trace observable de la branche
+	// empruntée pour servir le PDF (archived / lazy_regenerate / lazy_generate_number).
+	type InvoicePath = "archived" | "lazy_regenerate" | "lazy_generate_number";
+	let invoicePath: InvoicePath = "archived";
 	if (!order.invoiceNumber) {
+		invoicePath = "lazy_generate_number";
 		const result = await persistInvoiceNumber(order.id, order.userId);
 		if (result) {
 			invoiceOrder = {
@@ -80,54 +217,179 @@ export async function GET(
 	// régénérer (garantit l'immuabilité bit-à-bit, Art. L102 B LPF).
 	const archive = await prisma.order.findUnique({
 		where: { id: order.id },
-		select: { invoicePdfUrl: true },
+		select: { invoicePdfUrl: true, invoicePdfHash: true },
 	});
-	if (archive?.invoicePdfUrl) {
+	// Source de l'audit-trail EINV-SEC-002.
+	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
+	const auditAuthorId = session?.user.id;
+
+	// EINV-SEC-007 : si la facture est VOIDED, on régénère systématiquement
+	// pour incruster le bandeau "FACTURE ANNULÉE — Avoir A-YYYY-NNNNN" (Art. 272-I CGI).
+	// L'archive UploadThing reste consultable pour l'audit fiscal admin via la table
+	// Order.invoicePdfUrl, mais n'est PLUS servie au client (risque qu'il l'attache à
+	// sa déclaration comme valide). Le check d'intégrité d'hash est également bypass
+	// pour cette raison (le PDF régénéré diverge par design).
+	const isVoidedInvoice = invoiceOrder.invoiceStatus === "VOIDED";
+
+	if (!isVoidedInvoice && archive?.invoicePdfUrl) {
+		// EINV-PDF-005 : whitelist host UploadThing avant fetch (anti-SSRF). Si la
+		// DB est compromise (admin / dépendance malveillante), le serveur ne doit
+		// PAS fetcher un endpoint arbitraire (metadata cloud, intranet).
+		if (!isAllowedMediaDomain(archive.invoicePdfUrl)) {
+			logger.error("invoicePdfUrl is not on UploadThing whitelist — refusing fetch", undefined, {
+				service: "invoice-route",
+				orderId: order.id,
+				host: safeHostname(archive.invoicePdfUrl),
+			});
+			Sentry.captureMessage("invoice-pdf-url-host-not-whitelisted", {
+				level: "error",
+				tags: { service: "invoice-route" },
+				extra: { orderId: order.id, host: safeHostname(archive.invoicePdfUrl) },
+			});
+			return new Response("Configuration facture invalide", { status: 500 });
+		}
+
 		try {
-			const archived = await fetch(archive.invoicePdfUrl, { cache: "no-store" });
+			// EINV-PDF-004 : AbortSignal timeout 5s pour éviter le 504 Vercel
+			// si UploadThing hang.
+			const archived = await fetch(archive.invoicePdfUrl, {
+				cache: "no-store",
+				signal: AbortSignal.timeout(UPLOADTHING_FETCH_TIMEOUT_MS),
+			});
 			if (archived.ok) {
 				const buffer = await archived.arrayBuffer();
+				Sentry.setTag("invoice_path", invoicePath);
+				Sentry.addBreadcrumb({
+					category: "invoice",
+					level: "info",
+					message: `Invoice served via ${invoicePath}`,
+					data: { orderId: order.id, invoicePath },
+				});
+				await recordInvoiceDownload({
+					orderId: order.id,
+					invoiceNumber: invoiceOrder.invoiceNumber,
+					authorId: auditAuthorId,
+					source: auditSource,
+				});
 				return new Response(buffer, {
 					headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
 				});
 			}
+			invoicePath = "lazy_regenerate";
 			logger.warn(
 				`Archived invoice fetch failed (${archived.status}) — falling back to regeneration`,
-				{ service: "invoice-route", orderId: order.id },
+				{ service: "invoice-route", orderId: order.id, invoicePath },
 			);
 		} catch (error) {
+			invoicePath = "lazy_regenerate";
 			logger.warn(`Archived invoice fetch threw — falling back to regeneration`, {
 				service: "invoice-route",
 				orderId: order.id,
+				invoicePath,
 				error: error instanceof Error ? error.message : String(error),
 			});
 		}
+	} else if (invoicePath !== "lazy_generate_number") {
+		invoicePath = "lazy_regenerate";
 	}
 
 	const pdfBuffer = renderInvoicePdf(buildInvoiceData(invoiceOrder));
+
+	// EINV-PDF-002 : si une archive existe avec un hash connu, refuser de servir
+	// un PDF régénéré qui diverge (un déploiement intermédiaire a pu changer
+	// le template/SDK jsPDF). Le service est tenu à la restitution à l'identique
+	// (Art. L102 B LPF). Préférer un 503 + Retry-After plutôt que de servir un
+	// PDF non conforme au fichier comptable archivé.
+	// EINV-SEC-007 : bypass pour les factures VOIDED — le bandeau ANNULÉE incrusté
+	// fait diverger l'hash par design.
+	if (!isVoidedInvoice && archive?.invoicePdfHash) {
+		const regeneratedHash = createHash("sha256").update(new Uint8Array(pdfBuffer)).digest("hex");
+		if (regeneratedHash !== archive.invoicePdfHash) {
+			logger.error(
+				"Regenerated invoice PDF hash diverges from archived hash — refusing to serve",
+				undefined,
+				{
+					service: "invoice-route",
+					orderId: order.id,
+					invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
+					archivedHash: archive.invoicePdfHash,
+					regeneratedHash,
+				},
+			);
+			Sentry.captureMessage("invoice-pdf-hash-divergence", {
+				level: "error",
+				fingerprint: ["invoice", "hash-mismatch", invoiceOrder.invoiceNumber ?? "unknown"],
+				tags: { service: "invoice-route" },
+				extra: {
+					orderId: order.id,
+					invoiceNumber: invoiceOrder.invoiceNumber,
+					archivedHash: archive.invoicePdfHash,
+					regeneratedHash,
+				},
+			});
+			return new Response(
+				"Facture temporairement indisponible (vérification d'intégrité en cours).",
+				{ status: 503, headers: { "Retry-After": "60" } },
+			);
+		}
+	}
 
 	// Archive sur UploadThing si invoiceNumber présent (best-effort, ne bloque pas).
 	if (invoiceOrder.invoiceNumber) {
 		await archiveInvoicePdf(order.id, invoiceOrder.invoiceNumber, pdfBuffer);
 	}
 
+	// `invoicePath` est forcément lazy ici (l'archive a été servie + return plus haut
+	// sinon). Le tag warning matérialise le signal opérationnel attendu (EINV-OPS-014).
+	Sentry.setTag("invoice_path", invoicePath);
+	Sentry.addBreadcrumb({
+		category: "invoice",
+		level: "warning",
+		message: `Invoice served via ${invoicePath}`,
+		data: { orderId: order.id, invoicePath },
+	});
+
+	await recordInvoiceDownload({
+		orderId: order.id,
+		invoiceNumber: invoiceOrder.invoiceNumber,
+		authorId: auditAuthorId,
+		source: auditSource,
+	});
+
 	return new Response(pdfBuffer, {
-		headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
+		headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber, {
+			voided: isVoidedInvoice,
+		}),
 	});
 }
 
-function buildPdfHeaders(invoiceNumber: string | null, orderNumber: string): HeadersInit {
+function safeHostname(rawUrl: string): string {
+	try {
+		return new URL(rawUrl).hostname;
+	} catch {
+		return "<invalid-url>";
+	}
+}
+
+function buildPdfHeaders(
+	invoiceNumber: string | null,
+	orderNumber: string,
+	options: { voided?: boolean } = {},
+): HeadersInit {
 	const filename = invoiceNumber ? `facture-${invoiceNumber}.pdf` : `facture-${orderNumber}.pdf`;
 	return {
 		"Content-Type": "application/pdf",
 		"Content-Disposition": `attachment; filename="${filename}"`,
-		// La facture d'une commande PAID est immuable bit-à-bit (Art. L102 B LPF —
-		// archivée UploadThing + SHA-256). On peut cacher agressivement côté client
-		// pour économiser CPU/bande passante : un téléchargement répété sert le
-		// même fichier figé. `private` empêche tout cache intermédiaire partagé.
-		"Cache-Control": "private, max-age=31536000, immutable",
+		// EINV-SEC-007 : si VOIDED, cache courte vie côté client (pour permettre
+		// au customer de re-télécharger si on regénère le bandeau). Sinon : 1 an
+		// immuable (Art. L102 B LPF — facture figée bit-à-bit).
+		"Cache-Control": options.voided
+			? "private, max-age=0, must-revalidate"
+			: "private, max-age=31536000, immutable",
 		"X-Frame-Options": "DENY",
 		"X-Content-Type-Options": "nosniff",
 		"Referrer-Policy": "no-referrer",
+		// EINV-SEC-007 : signal côté client pour différencier l'UI.
+		...(options.voided ? { "X-Invoice-Status": "VOIDED" } : {}),
 	};
 }

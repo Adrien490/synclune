@@ -1,6 +1,11 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import { type Prisma, HistorySource, OrderAction } from "@/app/generated/prisma/client";
+import {
+	type Prisma,
+	HistorySource,
+	OrderAction,
+	type PaymentMethod,
+} from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
@@ -14,8 +19,17 @@ export type { PaymentFailureDetails };
  * Met à jour une commande comme payée (via payment_intent.succeeded)
  * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
  * Idempotent: si la commande est déjà PAID, l'opération est ignorée
+ *
+ * @param paymentMethod (optionnel) — type Stripe extrait via
+ *   `extractPaymentMethodFromPaymentIntent`. Si fourni, persisté sur
+ *   Order.paymentMethod pour conformité e-reporting (EINV-EREPORT-001).
+ *   Si omis, la valeur existante est conservée (default DB = CARD).
  */
-export async function markOrderAsPaid(orderId: string, paymentIntentId: string): Promise<void> {
+export async function markOrderAsPaid(
+	orderId: string,
+	paymentIntentId: string,
+	paymentMethod?: PaymentMethod,
+): Promise<void> {
 	await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
 			// Vérification d'idempotence
@@ -45,6 +59,7 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 					paymentStatus: "PAID",
 					stripePaymentIntentId: paymentIntentId,
 					paidAt: new Date(),
+					...(paymentMethod !== undefined && { paymentMethod }),
 				},
 			});
 

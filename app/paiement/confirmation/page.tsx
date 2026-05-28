@@ -84,10 +84,10 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 		redirect("/");
 	}
 
-	const [order, session] = await Promise.all([
-		getOrderForConfirmation(orderId, orderNumber),
-		getSession(),
-	]);
+	// EINV-SEC-001 : on fetch la session AVANT pour passer userId à getOrderForConfirmation,
+	// qui rejette toute commande dont userId ne matche pas la session courante (sauf guest).
+	const session = await getSession();
+	const order = await getOrderForConfirmation(orderId, orderNumber, session?.user.id);
 
 	if (!order) {
 		redirect("/");

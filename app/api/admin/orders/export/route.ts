@@ -8,6 +8,9 @@ import {
 } from "@/modules/orders/services/export-orders-csv.service";
 import { logger } from "@/shared/lib/logger";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { prisma } from "@/shared/lib/prisma";
+import { OrderAction, HistorySource } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
 
 export async function GET(request: Request) {
 	const admin = await requireAdminApiRoute();
@@ -53,6 +56,45 @@ export async function GET(request: Request) {
 		const now = new Date();
 		const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 		const filename = `livre-recettes-${dateStr}.csv`;
+
+		// EINV-SEC-005 : audit-trail RGPD Art. 30 sur l'export massif (insider threat).
+		// Best-effort : échec audit n'empêche pas la réponse.
+		// orderId NULL accepté (OrderHistory.orderId String?) : c'est un audit "global"
+		// non rattaché à une commande spécifique.
+		try {
+			await prisma.orderHistory.create({
+				data: {
+					orderId: null,
+					action: OrderAction.BULK_EXPORT,
+					authorId: admin.user.id,
+					source: HistorySource.ADMIN,
+					note: `Export CSV livre de recettes — ${orders.length} lignes`,
+					metadata: {
+						exportType: "ORDERS_CSV",
+						rowCount: orders.length,
+						periodType: result.data.periodType,
+						year: result.data.year,
+						month: result.data.month,
+						dateFrom: result.data.dateFrom,
+						dateTo: result.data.dateTo,
+						format: result.data.format,
+						invoiceStatus: result.data.invoiceStatus,
+					},
+				},
+			});
+			Sentry.addBreadcrumb({
+				category: "admin-export",
+				message: "orders-csv-exported",
+				level: "info",
+				data: { adminUserId: admin.user.id, rowCount: orders.length },
+			});
+		} catch (auditError) {
+			logger.warn("Failed to record BULK_EXPORT audit (best-effort)", {
+				service: "admin-orders-export",
+				adminUserId: admin.user.id,
+				error: auditError instanceof Error ? auditError.message : String(auditError),
+			});
+		}
 
 		return new Response(csv, {
 			headers: {

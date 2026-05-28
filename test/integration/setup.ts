@@ -15,6 +15,13 @@ import { execSync } from "node:child_process";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { getIntegrationPrismaClient, getIntegrationDatabaseUrl } from "./prisma-client";
 
+// Stub minimal pour les modules qui instancient Stripe au load (cf
+// `shared/lib/stripe.ts:13` — throw sans STRIPE_SECRET_KEY). Les services
+// invoicing importent `getVendorLegalInfo` depuis ce module au chargement.
+// Aucun appel Stripe réel n'est effectué en intégration (les hooks paiement
+// restent mocks au niveau fonction).
+process.env.STRIPE_SECRET_KEY ??= "sk_test_integration_stub";
+
 const skip = !process.env.INTEGRATION_DATABASE_URL;
 
 if (skip) {

@@ -1,10 +1,16 @@
 import type Stripe from "stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { OrderWithItems } from "../types/checkout.types";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+
+function buildInvoiceUrl(baseUrl: string, orderId: string, orderNumber: string): string {
+	const token = generateInvoiceAccessToken(orderId, orderNumber);
+	return `${baseUrl}/api/orders/${encodeURIComponent(orderNumber)}/invoice?token=${token}`;
+}
 
 /**
  * Builds post-checkout tasks for a successful Checkout Session order.
@@ -43,6 +49,7 @@ export function buildPostCheckoutTasks(
 	const customerEmail = session.customer_email ?? session.customer_details?.email;
 	if (customerEmail) {
 		const trackingUrl = `${baseUrl}/orders`;
+		const invoiceUrl = buildInvoiceUrl(baseUrl, order.id, order.orderNumber);
 
 		tasks.push({
 			type: "ORDER_CONFIRMATION_EMAIL",
@@ -73,6 +80,7 @@ export function buildPostCheckoutTasks(
 					country: order.shippingCountry ?? "",
 				},
 				trackingUrl,
+				invoiceUrl,
 				// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries.
 				idempotencyKey: `order-confirm-${order.id}`,
 			},
@@ -128,6 +136,7 @@ export function buildPostCheckoutTasksFromPI(
 ): PostWebhookTask[] {
 	const tasks: PostWebhookTask[] = [];
 	const baseUrl = getBaseUrl();
+	const invoiceUrl = buildInvoiceUrl(baseUrl, order.id, order.orderNumber);
 
 	// 1. Cache invalidation
 	const cacheTags: string[] = [...getOrderInvalidationTags(order.userId ?? undefined, order.id)];
@@ -187,6 +196,7 @@ export function buildPostCheckoutTasksFromPI(
 					country: order.shippingCountry ?? "",
 				},
 				trackingUrl,
+				invoiceUrl,
 				// ORD-STRIPE-008 : dedup cross-instance Resend 24h sur retries.
 				idempotencyKey: `order-confirm-${order.id}`,
 			},

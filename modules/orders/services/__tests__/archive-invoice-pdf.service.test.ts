@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockPrisma, mockUtapi, mockLogger } = vi.hoisted(() => ({
+const {
+	mockPrisma,
+	mockUtapi,
+	mockLogger,
+	mockCreateOrderAuditTx,
+	mockCreateOrderAudit,
+	mockSendAdminAlert,
+} = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
 			findUnique: vi.fn(),
-			update: vi.fn().mockResolvedValue({}),
+			update: vi.fn().mockResolvedValue({ orderNumber: "SYN-001" }),
 		},
+		orderHistory: { create: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockUtapi: {
 		uploadFiles: vi.fn(),
@@ -15,11 +24,21 @@ const { mockPrisma, mockUtapi, mockLogger } = vi.hoisted(() => ({
 		warn: vi.fn(),
 		error: vi.fn(),
 	},
+	mockCreateOrderAuditTx: vi.fn(),
+	mockCreateOrderAudit: vi.fn(),
+	mockSendAdminAlert: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/uploadthing", () => ({ utapi: mockUtapi }));
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAudit: mockCreateOrderAudit,
+	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminPdfArchiveFailedAlert: mockSendAdminAlert,
+}));
 
 import { archiveInvoicePdf } from "../archive-invoice-pdf.service";
 
@@ -32,7 +51,12 @@ const sampleBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
 describe("archiveInvoicePdf", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.update.mockResolvedValue({ orderNumber: "SYN-001" });
+		// $transaction calls handler with tx === mockPrisma so order.update/orderHistory.create
+		// can be exercised through the same mock as outside-tx writes.
+		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) =>
+			cb(mockPrisma),
+		);
 	});
 
 	it("uploads to UploadThing + persists URL + SHA-256 hash on first call", async () => {
@@ -85,7 +109,14 @@ describe("archiveInvoicePdf", () => {
 		const result = await archiveInvoicePdf("order-3", "F-2026-00003", sampleBytes);
 
 		expect(result).toBeNull();
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		// Le success path UPDATE (invoicePdfUrl/Hash/ArchivedAt) ne DOIT PAS avoir
+		// été exécuté ; en revanche le flagPdfArchiveFailure setifie invoiceRetryDeferred
+		// → assertion ciblée sur l'absence d'écriture de invoicePdfUrl.
+		const writesWithArchiveFields = mockPrisma.order.update.mock.calls.filter((c) => {
+			const data = (c[0] as { data?: Record<string, unknown> }).data ?? {};
+			return "invoicePdfUrl" in data || "invoicePdfHash" in data;
+		});
+		expect(writesWithArchiveFields).toHaveLength(0);
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
 

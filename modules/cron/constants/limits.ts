@@ -86,6 +86,15 @@ export const MAX_PAGES_PER_RUN = 5;
 export const DB_QUERY_BATCH_SIZE = 500;
 
 /**
+ * Maximum transactions per EReportingBatch transmis à la DGFiP via PDP/PA.
+ * Si une journée dépasse, le cron `build-ereporting-batch` splitte en plusieurs
+ * batches (suffix -1, -2, ...). Valeur conservative — à ajuster selon le
+ * contrat PA effectif (typique 1000-5000 transactions/batch).
+ * Cf. EINV-EREPORT-005.
+ */
+export const MAX_BATCH_TRANSACTIONS = 1000;
+
+/**
  * Time thresholds in milliseconds
  */
 export const THRESHOLDS = {

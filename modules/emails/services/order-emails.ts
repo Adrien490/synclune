@@ -20,6 +20,7 @@ export async function sendOrderConfirmationEmail({
 	total,
 	shippingAddress,
 	trackingUrl,
+	invoiceUrl,
 	idempotencyKey,
 }: {
 	to: string;
@@ -32,6 +33,11 @@ export async function sendOrderConfirmationEmail({
 	total: number;
 	shippingAddress: ShippingAddress;
 	trackingUrl: string;
+	/**
+	 * Lien direct vers le PDF facture (mise à disposition Art. 289-I CGI).
+	 * Inclut un token signé HMAC pour les commandes guest sans session.
+	 */
+	invoiceUrl?: string | null;
 	/**
 	 * ORD-STRIPE-008 : clé Resend Idempotency-Key (24h cross-instance).
 	 * Évite double-envoi en cas de retry webhook (cron retry-webhooks).
@@ -49,6 +55,7 @@ export async function sendOrderConfirmationEmail({
 			total,
 			shippingAddress,
 			trackingUrl,
+			invoiceUrl,
 		}),
 		{
 			to,

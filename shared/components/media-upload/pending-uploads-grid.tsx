@@ -168,7 +168,8 @@ export function PendingUploadsGrid({
 		onReorder(arrayMove(files, sourceIndex, targetIndex));
 	};
 
-	const ctaLabel = confirmLabel ?? `Ajouter ${files.length} fichier${files.length > 1 ? "s" : ""}`;
+	const ctaLabel =
+		confirmLabel ?? `Téléverser ${files.length} fichier${files.length > 1 ? "s" : ""}`;
 
 	const items = files.map((file, index) => {
 		const preview = previews[index];

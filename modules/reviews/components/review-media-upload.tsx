@@ -132,28 +132,39 @@ export function ReviewMediaUpload({
 			return [];
 		}
 		const accepted: File[] = [];
-		const wrongType: string[] = [];
-		const oversized: string[] = [];
+		const wrongType: { name: string; type: string }[] = [];
+		const oversized: { name: string; size: number }[] = [];
 		for (const file of files) {
 			if (accepted.length >= remainingSlots) break;
 			if (!file.type.startsWith("image/")) {
-				wrongType.push(file.name);
+				wrongType.push({ name: file.name, type: file.type || "type inconnu" });
 				continue;
 			}
 			if (file.size > REVIEW_MAX_SIZE) {
-				oversized.push(file.name);
+				oversized.push({ name: file.name, size: file.size });
 				continue;
 			}
 			accepted.push(file);
 		}
 		if (wrongType.length > 0) {
+			const first = wrongType[0]!;
+			const moreSuffix =
+				wrongType.length > 1
+					? ` (+${wrongType.length - 1} autre${wrongType.length > 2 ? "s" : ""})`
+					: "";
 			toast.warning(`${wrongType.length} fichier(s) ignoré(s)`, {
-				description: "Seules les images sont acceptées",
+				description: `« ${first.name} » (${first.type})${moreSuffix} — seuls JPEG, PNG, WebP et HEIC sont acceptés.`,
 			});
 		}
 		if (oversized.length > 0) {
+			const first = oversized[0]!;
+			const sizeMb = (first.size / 1024 / 1024).toFixed(1);
+			const moreSuffix =
+				oversized.length > 1
+					? ` (+${oversized.length - 1} autre${oversized.length > 2 ? "s" : ""})`
+					: "";
 			toast.warning(`${oversized.length} fichier(s) trop volumineux`, {
-				description: "Maximum 4 Mo par photo",
+				description: `« ${first.name} » fait ${sizeMb} Mo${moreSuffix} — maximum 4 Mo par photo.`,
 			});
 		}
 		const dropped = files.length - accepted.length - wrongType.length - oversized.length;

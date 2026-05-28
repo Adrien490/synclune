@@ -5,6 +5,8 @@ const { mockPrisma, mockIsAdmin } = vi.hoisted(() => ({
 		order: {
 			groupBy: vi.fn(),
 			aggregate: vi.fn(),
+			count: vi.fn(),
+			findMany: vi.fn(),
 		},
 		eReportingBatch: {
 			groupBy: vi.fn(),
@@ -27,6 +29,27 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		ABANDONED: "ABANDONED",
 	},
 	InvoiceStatus: { PENDING: "PENDING", GENERATED: "GENERATED", VOIDED: "VOIDED" },
+	PdpTransmissionStatus: {
+		PENDING: "PENDING",
+		SENT: "SENT",
+		ACCEPTED: "ACCEPTED",
+		REJECTED: "REJECTED",
+		RETRYING: "RETRYING",
+		CANCELLED: "CANCELLED",
+		ABANDONED: "ABANDONED",
+	},
+}));
+
+vi.mock("@/modules/invoices/providers/factory", () => ({
+	getInvoiceProvider: () => ({
+		id: "local",
+		capabilities: {
+			submitInvoice: false,
+			receiveInvoice: false,
+			eReporting: false,
+			directoryLookup: false,
+		},
+	}),
 }));
 
 vi.mock("@/modules/auth/utils/guards", () => ({ isAdmin: mockIsAdmin }));
@@ -50,6 +73,8 @@ beforeEach(() => {
 	// Defaults : empty everywhere
 	mockPrisma.order.groupBy.mockResolvedValue([]);
 	mockPrisma.order.aggregate.mockResolvedValue({ _sum: { total: null } });
+	mockPrisma.order.count.mockResolvedValue(0);
+	mockPrisma.order.findMany.mockResolvedValue([]);
 	mockPrisma.eReportingBatch.groupBy.mockResolvedValue([]);
 	mockPrisma.eReportingBatch.findMany.mockResolvedValue([]);
 	mockPrisma.eReportingTransaction.count.mockResolvedValue(0);

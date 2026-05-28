@@ -5,8 +5,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ============================================================================
 
 const {
-	mockGetOrder,
-	mockGenerateInvoicePdf,
 	mockBuildInvoiceData,
 	mockRenderInvoicePdf,
 	mockPersistInvoiceNumber,
@@ -14,10 +12,14 @@ const {
 	mockGetSession,
 	mockCheckRateLimit,
 	mockGetRateLimitIdentifier,
+	mockGetClientIp,
+	mockHeaders,
+	mockVerifyInvoiceAccessToken,
+	mockCreateOrderAudit,
+	mockIsAllowedMediaDomain,
 	mockPrisma,
+	mockSentry,
 } = vi.hoisted(() => ({
-	mockGetOrder: vi.fn(),
-	mockGenerateInvoicePdf: vi.fn(),
 	mockBuildInvoiceData: vi.fn(),
 	mockRenderInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
@@ -25,20 +27,42 @@ const {
 	mockGetSession: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
 	mockGetRateLimitIdentifier: vi.fn(),
+	mockGetClientIp: vi.fn(),
+	mockHeaders: vi.fn(),
+	mockVerifyInvoiceAccessToken: vi.fn(),
+	mockCreateOrderAudit: vi.fn(),
+	mockIsAllowedMediaDomain: vi.fn(),
 	mockPrisma: {
-		order: { findUnique: vi.fn() },
+		order: { findUnique: vi.fn(), findFirst: vi.fn() },
+		user: { findUnique: vi.fn() },
+	},
+	mockSentry: {
+		addBreadcrumb: vi.fn(),
+		captureMessage: vi.fn(),
+		captureException: vi.fn(),
+		setTag: vi.fn(),
+		setUser: vi.fn(),
+		setContext: vi.fn(),
+		setExtra: vi.fn(),
+		withScope: vi.fn(
+			(
+				cb: (scope: {
+					setTag: () => void;
+					setFingerprint: () => void;
+					setLevel: () => void;
+				}) => void,
+			) => cb({ setTag: vi.fn(), setFingerprint: vi.fn(), setLevel: vi.fn() }),
+		),
 	},
 }));
 
-vi.mock("@/modules/orders/data/get-order", () => ({ getOrder: mockGetOrder }));
+vi.mock("next/headers", () => ({ headers: mockHeaders }));
+vi.mock("@sentry/nextjs", () => mockSentry);
 vi.mock("@/modules/invoices/services/build-invoice-data", () => ({
 	buildInvoiceData: mockBuildInvoiceData,
 }));
 vi.mock("@/modules/invoices/services/render-invoice-pdf", () => ({
 	renderInvoicePdf: mockRenderInvoicePdf,
-}));
-vi.mock("@/modules/orders/services/generate-invoice-pdf", () => ({
-	generateInvoicePdf: mockGenerateInvoicePdf,
 }));
 vi.mock("@/modules/orders/services/persist-invoice-number.service", () => ({
 	persistInvoiceNumber: mockPersistInvoiceNumber,
@@ -46,17 +70,40 @@ vi.mock("@/modules/orders/services/persist-invoice-number.service", () => ({
 vi.mock("@/modules/orders/services/archive-invoice-pdf.service", () => ({
 	archiveInvoicePdf: mockArchiveInvoicePdf,
 }));
+vi.mock("@/modules/orders/utils/invoice-token", () => ({
+	verifyInvoiceAccessToken: mockVerifyInvoiceAccessToken,
+}));
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAudit: mockCreateOrderAudit,
+}));
+vi.mock("@/modules/orders/constants/order.constants", () => ({
+	GET_ORDER_SELECT_CUSTOMER: { id: true },
+}));
 vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSession }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
+	getClientIp: mockGetClientIp,
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
-	ORDER_LIMITS: { INVOICE_DOWNLOAD: { limit: 5, windowMs: 60_000 } },
+	ORDER_LIMITS: {
+		INVOICE_DOWNLOAD: { limit: 10, windowMs: 60 * 60_000 },
+		ADMIN_INVOICE_DOWNLOAD: { limit: 200, windowMs: 60 * 60_000 },
+	},
 }));
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
+}));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+vi.mock("@/shared/lib/media-validation", () => ({
+	isAllowedMediaDomain: mockIsAllowedMediaDomain,
+}));
+vi.mock("@/app/generated/prisma/client", () => ({
+	OrderAction: { INVOICE_DOWNLOADED: "INVOICE_DOWNLOADED" },
+	HistorySource: { ADMIN: "ADMIN", CUSTOMER: "CUSTOMER", SYSTEM: "SYSTEM" },
 }));
 
 import { GET } from "../route";
@@ -100,17 +147,25 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 		mockGetSession.mockResolvedValue(SESSION);
 		mockGetRateLimitIdentifier.mockReturnValue("user:user-1");
-		mockCheckRateLimit.mockResolvedValue({ success: true });
-		mockGetOrder.mockResolvedValue(PAID_ORDER);
+		mockGetClientIp.mockResolvedValue("127.0.0.1");
+		mockHeaders.mockResolvedValue(new Headers());
+		mockVerifyInvoiceAccessToken.mockReturnValue(false);
+		mockIsAllowedMediaDomain.mockReturnValue(true);
+		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 999 });
+		mockPrisma.order.findFirst.mockResolvedValue(PAID_ORDER);
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoicePdfUrl: null,
+			invoicePdfHash: null,
+		});
+		mockPrisma.user.findUnique.mockResolvedValue({ role: "ADMIN" });
 		mockPersistInvoiceNumber.mockResolvedValue(null);
-		mockGenerateInvoicePdf.mockReturnValue(Buffer.from("PDF-BYTES"));
 		mockBuildInvoiceData.mockReturnValue({});
-		mockRenderInvoicePdf.mockReturnValue(Buffer.from("PDF-BYTES"));
+		mockRenderInvoicePdf.mockReturnValue(new Uint8Array([0x25, 0x50, 0x44, 0x46]).buffer);
 		mockArchiveInvoicePdf.mockResolvedValue({
-			invoicePdfUrl: "https://ufs.example/inv-1.pdf",
+			invoicePdfUrl: "https://utfs.io/f/inv-1.pdf",
 			invoicePdfHash: "a".repeat(64),
 		});
-		mockPrisma.order.findUnique.mockResolvedValue({ invoicePdfUrl: null });
+		mockCreateOrderAudit.mockResolvedValue(undefined);
 	});
 
 	describe("authentication", () => {
@@ -158,7 +213,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 	describe("order resolution", () => {
 		it("returns 404 when order not found", async () => {
-			mockGetOrder.mockResolvedValue(null);
+			mockPrisma.order.findFirst.mockResolvedValue(null);
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -166,7 +221,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 
 		it("returns 403 when order belongs to a different user", async () => {
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -174,7 +229,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 
 		it("returns 400 when order is not paid", async () => {
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, paymentStatus: "PENDING" });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, paymentStatus: "PENDING" });
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -194,7 +249,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 
 		it("falls back to orderNumber when no invoice number is set", async () => {
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, invoiceNumber: null });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, invoiceNumber: null });
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -204,7 +259,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 
 		it("persists a new invoice number on first download (no existing number)", async () => {
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, invoiceNumber: null });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, invoiceNumber: null });
 			mockPersistInvoiceNumber.mockResolvedValue({
 				invoiceNumber: "INV-2026-9999",
 				invoiceGeneratedAt: new Date("2026-04-17"),
@@ -300,18 +355,17 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 	 * @regression invoice-admin-bypass-2026-05-27
 	 *
 	 * Un admin doit pouvoir télécharger n'importe quelle facture pour audit
-	 * fiscal/service client sans subir le rate-limit de 10/h ni le check
-	 * d'ownership prévu pour les clients. Audit conformité 2026-05-27 §
-	 * EINV-AUDIT-012.
+	 * fiscal/service client. EINV-SEC-004 : depuis 2026-05-28, admin n'est plus
+	 * bypassé du rate-limit (quota large ADMIN_INVOICE_DOWNLOAD pour bloquer
+	 * exfiltration interne). Ownership check reste bypassée pour l'audit.
 	 */
-	describe("admin bypass", () => {
-		it("does NOT enforce rate-limit when session role is ADMIN", async () => {
+	describe("admin behavior", () => {
+		it("enforces rate-limit when session role is ADMIN (cap large, anti-exfiltration)", async () => {
 			mockGetSession.mockResolvedValue(ADMIN_SESSION);
 
 			await GET(makeReq(), makeParams());
 
-			expect(mockCheckRateLimit).not.toHaveBeenCalled();
-			expect(mockGetRateLimitIdentifier).not.toHaveBeenCalled();
+			expect(mockCheckRateLimit).toHaveBeenCalled();
 		});
 
 		it("still enforces rate-limit when session role is USER", async () => {
@@ -322,7 +376,7 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 		it("allows admin to download an invoice owned by a different user (audit)", async () => {
 			mockGetSession.mockResolvedValue(ADMIN_SESSION);
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -330,11 +384,75 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 
 		it("non-admin still blocked by ownership check", async () => {
-			mockGetOrder.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
+			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, userId: "other-user" });
 
 			const res = await GET(makeReq(), makeParams());
 
 			expect(res.status).toBe(403);
+		});
+	});
+
+	/**
+	 * @regression invoice-pdf-hash-divergence-2026-05-28
+	 *
+	 * EINV-PDF-002 / EINV-PDF-004 / EINV-PDF-005 — audit comptable-tech.
+	 * Le service est tenu à la restitution à l'identique (Art. L102 B LPF) :
+	 * si une archive existe, on ne sert JAMAIS un PDF régénéré dont le SHA-256
+	 * diverge du hash stocké. Plutôt 503 + Retry-After que servir non conforme.
+	 */
+	describe("intégrité du PDF servi (Art. L102 B LPF)", () => {
+		it("retourne 503 si le hash du PDF régénéré diverge de l'archive (EINV-PDF-002)", async () => {
+			// Archive existe avec un hash connu, mais le fetch UploadThing échoue
+			// → on retombe sur la régénération. Hash regen ne matchera pas → 503.
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/inv-1.pdf",
+				invoicePdfHash: "deadbeef".repeat(8),
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response("server error", { status: 500 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(503);
+			expect(res.headers.get("Retry-After")).toBe("60");
+			fetchSpy.mockRestore();
+		});
+
+		it("refuse fetch et retourne 500 si invoicePdfUrl est hors whitelist UploadThing (EINV-PDF-005)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "http://169.254.169.254/metadata", // SSRF tentative
+				invoicePdfHash: "a".repeat(64),
+			});
+			mockIsAllowedMediaDomain.mockReturnValueOnce(false);
+			const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(500);
+			expect(fetchSpy).not.toHaveBeenCalled();
+			fetchSpy.mockRestore();
+		});
+
+		it("applique AbortSignal.timeout sur le fetch UploadThing (EINV-PDF-004)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/inv-1.pdf",
+				invoicePdfHash: null,
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200 }));
+
+			await GET(makeReq(), makeParams());
+
+			expect(fetchSpy).toHaveBeenCalledWith(
+				"https://utfs.io/f/inv-1.pdf",
+				expect.objectContaining({
+					cache: "no-store",
+					signal: expect.any(AbortSignal),
+				}),
+			);
+			fetchSpy.mockRestore();
 		});
 	});
 });

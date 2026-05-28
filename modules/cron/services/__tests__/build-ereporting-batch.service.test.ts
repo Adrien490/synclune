@@ -38,6 +38,7 @@ vi.mock("@/shared/lib/logger", () => ({
 
 vi.mock("@/modules/cron/constants/limits", () => ({
 	BATCH_SIZE_MEDIUM: 100,
+	MAX_BATCH_TRANSACTIONS: 1000,
 }));
 
 import { buildEReportingBatch } from "../build-ereporting-batch.service";

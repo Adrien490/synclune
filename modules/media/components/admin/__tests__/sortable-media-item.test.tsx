@@ -555,4 +555,49 @@ describe("SortableMediaItem", () => {
 			expect(onLightbox).toHaveBeenCalledWith(1);
 		});
 	});
+
+	// -----------------------------------------------------------------------
+	// @regression upload-media-audit-2026-05-28-video-pointer-events
+	// Le bouton Play overlay couvre `absolute inset-0` la <video>. Sans
+	// `pointer-events-none` en idle, il interceptait `onMouseEnter` /
+	// `onTouchStart` du <video> → autoplay hover et tap-vs-scroll cassés.
+	// -----------------------------------------------------------------------
+	describe("regression: video play button does not intercept video events when idle", () => {
+		it("video play button has pointer-events-none classes when invisible on hover-capable devices", () => {
+			renderItem({ media: videoMedia, index: 0 });
+
+			const playBtn = screen.getByLabelText("Lire la vidéo 1");
+			// Idle: pointer-events-none so the underlying <video> can receive hover / touch events.
+			expect(playBtn).toHaveClass("can-hover:pointer-events-none");
+			// Hover / focus restores pointer events so the click handler still works.
+			expect(playBtn).toHaveClass("can-hover:group-hover:pointer-events-auto");
+			expect(playBtn).toHaveClass("can-hover:group-focus-within:pointer-events-auto");
+		});
+	});
+
+	// -----------------------------------------------------------------------
+	// @regression upload-media-audit-2026-05-28-drawer-thumbnail
+	// DrawerHeader des actions mobile contient désormais une mini-thumbnail
+	// 40px pour confirmer visuellement la cible.
+	// -----------------------------------------------------------------------
+	describe("regression: mobile drawer header includes thumbnail preview", () => {
+		it("renders the media thumbnail next to the drawer title (image)", () => {
+			renderItem({ index: 2 });
+
+			const drawer = screen.getByTestId("drawer-content");
+			// The first <img> inside the drawer is the thumbnail (alt is empty — aria-hidden).
+			const thumb = drawer.querySelector("img");
+			expect(thumb).toBeTruthy();
+			expect(thumb!.getAttribute("src")).toBe(imageMedia.url);
+		});
+
+		it("renders the video thumbnail when media is a video with thumbnailUrl", () => {
+			renderItem({ media: videoMedia, index: 0 });
+
+			const drawer = screen.getByTestId("drawer-content");
+			const thumb = drawer.querySelector("img");
+			expect(thumb).toBeTruthy();
+			expect(thumb!.getAttribute("src")).toBe(videoMedia.thumbnailUrl);
+		});
+	});
 });

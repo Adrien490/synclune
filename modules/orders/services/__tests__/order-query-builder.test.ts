@@ -42,7 +42,23 @@ describe("buildOrderSearchConditions", () => {
 	it("should return OR conditions for a search term", () => {
 		const result = buildOrderSearchConditions("SYN-001");
 		expect(result).not.toBeNull();
-		expect(result!.OR).toHaveLength(4);
+		// EINV-GLOBAL-016 : invoiceNumber + creditNoteNumber ajoutés aux 4 critères
+		// historiques (orderNumber / user.email / user.name / stripePaymentIntentId).
+		expect(result!.OR).toHaveLength(6);
+	});
+
+	it("EINV-GLOBAL-016 : should include invoiceNumber search (admin rapprochement comptable)", () => {
+		const result = buildOrderSearchConditions("F-2026-00042");
+		expect(result!.OR).toContainEqual({
+			invoiceNumber: { contains: "F-2026-00042", mode: "insensitive" },
+		});
+	});
+
+	it("EINV-GLOBAL-016 : should include creditNoteNumber search (avoir Art. 272-I)", () => {
+		const result = buildOrderSearchConditions("A-2026-00012");
+		expect(result!.OR).toContainEqual({
+			creditNoteNumber: { contains: "A-2026-00012", mode: "insensitive" },
+		});
 	});
 
 	it("should include orderNumber search", () => {

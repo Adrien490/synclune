@@ -18,6 +18,17 @@ interface RefundConfirmedEmailProps {
 	refundAmount: number;
 	reason: string;
 	orderDetailsUrl: string;
+	/**
+	 * Numéro d'avoir (format `A-YYYY-NNNNN`) émis automatiquement lors du
+	 * remboursement total (Art. 272-I CGI). Absent pour les remboursements
+	 * partiels ou les commandes sans facture émise.
+	 */
+	creditNoteNumber?: string | null;
+	/**
+	 * Numéro de la facture initiale annulée par l'avoir. Affiché pour permettre
+	 * au client de retracer le lien comptable.
+	 */
+	invoiceNumber?: string | null;
 }
 
 /**
@@ -30,6 +41,8 @@ export const RefundConfirmedEmail = ({
 	refundAmount,
 	reason,
 	orderDetailsUrl,
+	creditNoteNumber,
+	invoiceNumber,
 }: RefundConfirmedEmailProps) => {
 	const reasonLabel = REFUND_REASON_LABELS[reason] ?? reason;
 	const formattedAmount = formatEuro(refundAmount);
@@ -61,7 +74,33 @@ export const RefundConfirmedEmail = ({
 					variant="highlight"
 				/>
 				<EmailSummaryRow label="Raison" value={reasonLabel} />
+				{creditNoteNumber && (
+					<EmailSummaryRow
+						style={{ marginTop: "8px" }}
+						label="Avoir"
+						value={creditNoteNumber}
+						variant="mono"
+					/>
+				)}
+				{invoiceNumber && (
+					<EmailSummaryRow
+						style={{ marginTop: "8px" }}
+						label="Facture annulée"
+						value={invoiceNumber}
+						variant="mono"
+					/>
+				)}
 			</EmailCard>
+
+			{creditNoteNumber && (
+				<Section style={{ marginBottom: "16px" }}>
+					<Text className={EMAIL_CLASSES.text.secondary} style={{ ...EMAIL_STYLES.text.small }}>
+						Conformément à l'article 272-I du Code général des impôts, un avoir {creditNoteNumber} a
+						été émis en annulation de la facture {invoiceNumber ?? "initiale"}. Le document est
+						consultable depuis votre espace commande.
+					</Text>
+				</Section>
+			)}
 
 			<EmailCTA href={orderDetailsUrl}>Voir ma commande</EmailCTA>
 		</EmailLayout>
@@ -74,6 +113,8 @@ RefundConfirmedEmail.PreviewProps = {
 	refundAmount: 8990,
 	reason: "CUSTOMER_REQUEST",
 	orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
+	creditNoteNumber: "A-2026-00012",
+	invoiceNumber: "F-2026-00084",
 } as RefundConfirmedEmailProps;
 
 export default RefundConfirmedEmail;

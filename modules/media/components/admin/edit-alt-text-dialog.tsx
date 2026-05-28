@@ -45,6 +45,11 @@ export function EditAltTextDialog({
 					<ResponsiveDialogDescription>
 						Décrivez le contenu pour les lecteurs d'écran et le SEO. Concis, factuel, sans préfixe «
 						Image de ».
+						<span className="mt-2 block text-xs">
+							<span className="text-emerald-700">À privilégier</span> : « Bague argent ciselé,
+							pierre verte sertie, vue 3/4 ». <span className="text-destructive">À éviter</span> : «
+							Image de bague ».
+						</span>
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 				{/* Inner body is mounted only when open → useState seeds from current value without effect-driven sync */}

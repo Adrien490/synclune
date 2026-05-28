@@ -468,7 +468,7 @@ describe("getStripeClient", () => {
 		freshGetStripeClient();
 
 		expect(mocks.mockStripeConstructor).toHaveBeenCalledWith("sk_test_abc123", {
-			apiVersion: "2026-04-22.dahlia",
+			apiVersion: "2026-05-27.dahlia",
 			maxNetworkRetries: 2,
 			timeout: 10_000,
 		});

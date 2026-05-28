@@ -25,8 +25,19 @@ Sentry.init({
 	beforeSend(event, hint) {
 		const error = hint.originalException;
 
-		// BusinessError = expected user-facing error, not a bug
+		// BusinessError = expected user-facing error, not a bug — EXCEPT critical
+		// accounting/compliance codes that MUST surface (audit monitoring 2026-05-28
+		// EINV-OPS-005). Without this whitelist, a 99_999/year sequence overflow on
+		// invoice/credit-note emission would silently noop : payment continues,
+		// nothing emitted, no alert, no Sentry trace. Add new codes here whenever a
+		// BusinessError must trigger an admin investigation.
 		if (error instanceof BusinessError) {
+			if (
+				error.code === "INVOICE_SEQUENCE_OVERFLOW" ||
+				error.code === "CREDIT_NOTE_SEQUENCE_OVERFLOW"
+			) {
+				return event;
+			}
 			return null;
 		}
 

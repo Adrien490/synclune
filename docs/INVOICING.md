@@ -4,8 +4,12 @@ Architecture, invariants et état d'avancement de la conformité française à l
 réforme **facturation électronique 2026-2027** (Art. 286 / 289-I / 272-I /
 293 B CGI, L102 B LPF, L123-22 C. com., Directive EU 2014/55).
 
-> Audit complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md`
-> (2026-05-27). Ce document trace les choix d'implémentation qui en découlent.
+> Audits :
+>
+> - `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27) — audit conformité initial.
+> - `~/.claude/plans/tu-es-un-auditeur-merry-russell.md` (2026-05-28) — audit avoirs & remboursements (EINV-CREDIT-001 à 017).
+>
+> Ce document trace les choix d'implémentation qui en découlent.
 
 ---
 
@@ -150,17 +154,18 @@ Synclune actuel : 100 % B2C FR. La distinction B2B/B2G nécessite Phase 5 (onboa
 
 ## État des phases
 
-| Phase   | Scope                                                                                                                                        | Statut                                | Commits clés            |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------- |
-| **1**   | Sécurisation immédiate (doc invariants, rollover guard 99999, validation env, cache immutable, admin bypass, UI download/filter/export, E2E) | ✓ livré 2026-05-27                    | `63a063be` → `11165652` |
-| **2A**  | Migrations Prisma additives (User B2B, Order snapshot, OrderItem TVA/ligne, Refund.creditNoteNumber)                                         | ✓ livré 2026-05-27                    | `e2aa1eec` → `116f9458` |
-| **2B**  | Module `modules/invoices/` (InvoiceData pivot, schemas, build/render, provider abstraction, flags)                                           | ✓ livré 2026-05-27                    | `2663de7d` → `df659031` |
-| **3**   | Factur-X MINIMUM XML + modèles EReporting + service build transaction + cron aggregation                                                     | ✓ livré 2026-05-28                    | `3bdc268f` → `b17d4272` |
-| **4**   | Câblage hooks production + dashboard admin + cette doc                                                                                       | ⏳ en cours                           | `99be7719` → présent    |
-| **3+**  | XSD validation CI + PDF/A-3 embedding (engine swap jsPDF→pdf-lib)                                                                            | ⏸ hors scope court terme              | —                       |
-| **3++** | Provider PDP/PA concret + cron `transmit-ereporting-batch` + webhook entrant                                                                 | 🔒 bloqué : choix plateforme business | —                       |
-| **4+**  | E2E full flow B2C avec transmission sandbox + audit externe comptable+RGPD                                                                   | 🔒 bloqué : sandbox PDP requise       | —                       |
-| **5**   | Onboarding B2B (form SIREN) + lookup annuaire DGFiP + Chorus Pro                                                                             | 🔮 à activer quand besoin métier      | —                       |
+| Phase   | Scope                                                                                                                                                                                                                                                                                             | Statut                                                 | Commits clés            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------- |
+| **1**   | Sécurisation immédiate (doc invariants, rollover guard 99999, validation env, cache immutable, admin bypass, UI download/filter/export, E2E)                                                                                                                                                      | ✓ livré 2026-05-27                                     | `63a063be` → `11165652` |
+| **2A**  | Migrations Prisma additives (User B2B, Order snapshot, OrderItem TVA/ligne, Refund.creditNoteNumber)                                                                                                                                                                                              | ✓ livré 2026-05-27                                     | `e2aa1eec` → `116f9458` |
+| **2B**  | Module `modules/invoices/` (InvoiceData pivot, schemas, build/render, provider abstraction, flags)                                                                                                                                                                                                | ✓ livré 2026-05-27                                     | `2663de7d` → `df659031` |
+| **3**   | Factur-X MINIMUM XML + modèles EReporting + service build transaction + cron aggregation                                                                                                                                                                                                          | ✓ livré 2026-05-28                                     | `3bdc268f` → `b17d4272` |
+| **4**   | Câblage hooks production (SALES + REFUND e-reporting sur webhooks payment/refund/cancel-order/mark-as-fully-refunded) + dashboard admin + cette doc                                                                                                                                               | ✓ livré 2026-05-28                                     | `99be7719` → présent    |
+| **2C**  | Avoir comptable Phase 2 — `issueCreditNoteForRefund` (refund partiel), `archiveCreditNotePdf`, `buildCreditNoteData`, endpoint `/credit-note/[refundId]`, enum `CREDIT_NOTE_GENERATED`, fenêtre `reconcile-refunds` 90j, Sentry alert `voidInvoice` failed                                        | ⏳ livré 2026-05-28 (audit EINV-CREDIT)                | présent                 |
+| **3+**  | Validation CEN EN 16931 runtime (BR-CO-_ + BR-FR-FX-_) via `assertFacturXCenRules` + `assertUblCenRules` — flag opt-in `INVOICE_VALIDATE_XML` (cf. audit 2026-05-28). XSD validation CI complète + PDF/A-3 embedding (engine swap jsPDF→pdf-lib) restent reportés post-PDP signing                | ⏳ partiel — runtime livré, XSD/PDF-A3 reportés        | présent                 |
+| **3++** | Provider PDP/PA concret + cron `transmit-ereporting-batch` + cron `transmit-invoices` (B2B initial) + webhook entrant. Infrastructure complète (orchestrateurs + interface + canary `shouldTransmitInvoice` + 2 crons no-op tant que `LocalPdfProvider`) — manque uniquement le provider concret. | ⏳ infrastructure prête — attente provider concret     | présent                 |
+| **4+**  | E2E full flow B2C avec transmission sandbox + audit externe comptable+RGPD                                                                                                                                                                                                                        | 🔒 bloqué : sandbox PDP requise                        | —                       |
+| **5**   | Onboarding B2B (form SIREN) + lookup annuaire DGFiP + Chorus Pro — `lookupEInvoicingDirectory` interface + cron `refresh-stale-directory-entries` livrés, manque provider concret                                                                                                                 | ⏳ infrastructure partielle — attente provider concret | présent                 |
 
 ---
 
@@ -170,36 +175,88 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
 (`shared/schemas/env.schema.ts`). **Fail-closed** : une valeur autre que
 `true|1|yes` (insensible casse) = OFF.
 
-| Variable                          | Effet quand ON                                                                        | Effet quand OFF (défaut)                             |
-| --------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `INVOICE_PROVIDER=local` (défaut) | n/a                                                                                   | n/a                                                  |
-| `INVOICE_PROVIDER=<pdp>` (futur)  | Active provider concret pour transmission                                             | Comportement actuel local                            |
-| `INVOICE_ENABLE_XML`              | Génère Factur-X XML en plus du PDF                                                    | XML jamais généré                                    |
-| `INVOICE_ENABLE_EREPORTING`       | `recordSalesEReporting` / `recordRefundEReporting` créent réellement les transactions | Hooks répondent "skipped" immédiatement (rien en DB) |
+| Variable                               | Effet quand ON                                                                        | Effet quand OFF (défaut)                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `INVOICE_PROVIDER=local` (défaut)      | n/a                                                                                   | n/a                                                          |
+| `INVOICE_PROVIDER=<pdp>` (futur)       | Active provider concret pour transmission                                             | Comportement actuel local                                    |
+| `INVOICE_ENABLE_XML`                   | Génère Factur-X XML en plus du PDF                                                    | XML jamais généré                                            |
+| `INVOICE_ENABLE_EREPORTING`            | `recordSalesEReporting` / `recordRefundEReporting` créent réellement les transactions | Hooks répondent "skipped" immédiatement (rien en DB)         |
+| `INVOICE_VALIDATE_XML`                 | Active la validation CEN EN 16931 post-render (BR-CO-_ + BR-FR-FX-_). Fail-closed     | Renderer émet sans valider (assertions structurelles seules) |
+| `INVOICE_ENABLE_PROVIDER_TRANSMISSION` | Active la transmission B2B/B2G via `transmit-invoices` cron + `submit-invoice-by-id`  | Cron tourne mais skip tous les candidats                     |
+| `INVOICE_TRANSMISSION_CANARY_PERCENT`  | Limite la transmission à X% des orders (hash modulo). 0=off, 100=full                 | 0% = aucune transmission                                     |
+| `INVOICE_TRANSMISSION_MIN_AMOUNT`      | Ne transmet que les factures > X centimes (pilote B2B grosses commandes)              | Pas de seuil                                                 |
 
-**Recommandation de roll-out** :
+**Recommandation de roll-out** (ordre chronologique, étape N exige étape N-1) :
 
-1. ⏳ Activer `INVOICE_ENABLE_EREPORTING` en staging dès aujourd'hui — la cron J4 agrège, rien n'est transmis. Permet de vérifier la qualité des payloads snapshot.
-2. ⏳ Activer en prod canary (1 % users) pour mesurer l'overhead webhook.
-3. 🔒 Activer `INVOICE_ENABLE_XML` quand PDP signée (les XML serviront à la transmission).
-4. 🔒 Switcher `INVOICE_PROVIDER=<chosen-pdp>` quand l'intégration concrète est testée en sandbox.
+1. ⏳ **Staging** — `INVOICE_ENABLE_EREPORTING=true` : la cron J4 agrège les `EReportingTransaction`, rien n'est transmis (provider=local). Valide la qualité des `payloadSnapshot` snapshot par snapshot pendant ~7 jours.
+2. ⏳ **Staging** — `INVOICE_VALIDATE_XML=true` : capture les drifts CEN EN 16931 entre `buildInvoiceData` et `renderFacturXMinimum`/`renderUblInvoice`. Si une seule violation BR-CO-_ / BR-FR-FX-_ sort, c'est un bug bloquant à corriger avant prod.
+3. ⏳ **Prod canary 1 %** — `INVOICE_ENABLE_EREPORTING=true` : mesure l'overhead webhook (~5ms attendu). Snapshot prod ⇄ snapshot staging doit être identique structurellement.
+4. ⏳ **Prod 100 %** — `INVOICE_ENABLE_EREPORTING=true` partout.
+5. 🔒 **Pré-PDP signing** — `INVOICE_ENABLE_XML=true` : les XML serviront à la transmission. Activer après que `INVOICE_VALIDATE_XML` ait tourné ≥ 4 semaines sans alerte.
+6. 🔒 **PDP signing** — `INVOICE_PROVIDER=<chosen-pdp>` : remplacer `LocalPdfProvider`. Tester en sandbox PDP avant.
+7. 🔒 **PDP transmission canary** — `INVOICE_ENABLE_PROVIDER_TRANSMISSION=true` + `INVOICE_TRANSMISSION_CANARY_PERCENT=1` + `INVOICE_TRANSMISSION_MIN_AMOUNT=50000` (transmet uniquement ~1 % des orders > 500 €). Monitorer le ratio ACCEPTED/REJECTED sur 1 semaine.
+8. 🔒 **PDP transmission full** — `INVOICE_TRANSMISSION_CANARY_PERCENT=100`, `INVOICE_TRANSMISSION_MIN_AMOUNT=0`.
+
+---
+
+## Brancher une nouvelle PDP
+
+Étapes pour ajouter un provider concret (Chorus Pro, PDP commerciale, etc.) sans toucher au contrat existant. L'abstraction repose sur l'interface `InvoiceProvider` (`modules/invoices/types/invoice-provider.ts`), un factory env-driven (`modules/invoices/providers/factory.ts`) et trois orchestrateurs réutilisables :
+
+- `submitInvoiceById(orderId)` — `modules/invoices/services/submit-invoice-by-id.service.ts` (Phase 5 B2B/B2G).
+- `submitEReportingBatchById(batchId)` — `modules/invoices/services/submit-ereporting-batch.service.ts` (Phase 3+ B2C).
+- `persistPdpTransmission` — `modules/orders/services/persist-pdp-transmission.service.ts` (audit trail + idempotence).
+
+### Checklist
+
+1. **Créer la classe provider** dans `modules/invoices/providers/<name>.provider.ts` :
+   - `implements InvoiceProvider`
+   - `id`, `supportedFormats`, `capabilities` adaptés. Mettre à `true` uniquement les méthodes implémentées — `LocalPdfProvider` est l'exemple "tout à `false`", `MockProvider` "tout à `true`".
+   - Méthodes non supportées : `throw new Error("not implemented")` (jamais retourner un faux statut).
+2. **Ajouter le case dans la factory** `modules/invoices/providers/factory.ts` :
+   - `case "<name>": cached = new <Name>Provider(); return cached;`
+   - Retirer `<name>` de la liste throw "reserved" si présent.
+3. **Définir les env vars provider-specific** dans `shared/schemas/env.schema.ts` :
+   - `<NAME>_API_URL`, `<NAME>_API_KEY`, `<NAME>_WEBHOOK_SECRET`. Ne jamais hardcoder d'URL ni de secret dans le code.
+4. **Implémenter `handleProviderWebhook`** : vérifier la signature provider-specific (HMAC, RSA, etc.). La route générique `/api/webhooks/pdp/<name>` la délègue déjà — voir `app/api/webhooks/pdp/[providerId]/route.ts`.
+5. **Mapper les erreurs HTTP** :
+   - 4xx (validation, schema) → throw `ProviderBusinessError(message, status)` → l'orchestrateur passe en `REJECTED` direct sans retry.
+   - 5xx / timeout / network → throw classique → l'orchestrateur passe en `RETRYING` avec backoff exponentiel.
+6. **Écrire les tests** :
+   - Étendre `provider-contract.test.ts` pour inclure le provider dans le harness `describe.each`.
+   - Tests dédiés `<name>.provider.test.ts` (signature webhook, error mapping, idempotence).
+7. **Bascule progressive** :
+   - `INVOICE_PROVIDER=mock` en CI E2E pour tester l'orchestration.
+   - `INVOICE_PROVIDER=<name>` en staging vers sandbox PDP.
+   - Canary 1% prod via flag custom (à définir au moment du go-live).
+   - Activer `INVOICE_ENABLE_XML=true` puis `INVOICE_ENABLE_EREPORTING=true` selon scope.
+
+### Invariants à respecter
+
+- Aucun `process.env.INVOICE_PROVIDER` ailleurs que dans `factory.ts`.
+- Aucun appel HTTP externe en dehors de la classe provider — l'orchestrateur ne connaît que l'interface.
+- Toute transition `Order.pdpStatus` passe par `persistPdpTransmission` (régression test `no-direct-pdp-status-write`).
+- Aucune mutation directe `EReportingTransaction` / `EReportingBatch` hors `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `submit-ereporting-batch.service.ts` (Invariant 9, cf. CLAUDE.md).
+- Idempotence : `providerInvoiceId` / `providerBatchId` doivent être stables pour le même input — `MockProvider` montre le pattern (hash de `invoiceNumber`).
 
 ---
 
 ## Conformité réglementaire — matrice
 
-| Article                                     | Localisation                                                    | Statut                                           |
-| ------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------ |
-| Art. 286 CGI — séquentialité gap-free       | `persist-invoice-number.service.ts` + CHECK DB                  | ✓                                                |
-| Art. 289-I CGI — émission à l'encaissement  | `ensure-invoice-number.service.ts` (ORD-COMPLY-002)             | ✓                                                |
-| Art. 272-I CGI — avoir post-facture         | `void-invoice.service.ts` (ORD-COMPLY-003)                      | ✓                                                |
-| Art. 293 B CGI — mention franchise TVA      | `render-invoice-pdf.ts` (mention pied)                          | ✓                                                |
-| Art. L102 B LPF — immutabilité 10 ans       | `archive-invoice-pdf.service.ts` (ORD-COMPLY-005)               | ✓                                                |
-| Art. L123-22 C. com. — audit trail          | `OrderHistory` + `createOrderAuditTx`                           | ✓                                                |
-| Art. 50-0 CGI — CA à l'encaissement         | `export-orders-csv.service.ts` filtre `paidAt` (ORD-COMPLY-007) | ✓                                                |
-| EU 2014/55 — facture structurée             | `render-facturx.ts` profil MINIMUM                              | ✓ partiel (MINIMUM, pas BASIC/EN16931/EXTENDED)  |
-| Réforme 2026/2027 — émission structurée B2B | (Phase 5 + provider PDP)                                        | 🔒                                               |
-| Réforme 2026/2027 — e-reporting B2C         | (Phase 3+4 + provider PDP)                                      | ⏳ infrastructure prête, transmission en attente |
+| Article                                         | Localisation                                                    | Statut                                           |
+| ----------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------ |
+| Art. 286 CGI — séquentialité gap-free           | `persist-invoice-number.service.ts` + CHECK DB                  | ✓                                                |
+| Art. 289-I CGI — émission à l'encaissement      | `ensure-invoice-number.service.ts` (ORD-COMPLY-002)             | ✓                                                |
+| Art. 272-I CGI — avoir post-facture (full)      | `void-invoice.service.ts` (ORD-COMPLY-003)                      | ✓                                                |
+| Art. 272-I CGI — avoir post-facture (partiel)   | `issueCreditNoteForRefund` (EINV-CREDIT-001/005/010)            | ✓ livré 2026-05-28                               |
+| Art. 293 B CGI — mention franchise TVA          | `render-invoice-pdf.ts` (mention pied)                          | ✓                                                |
+| Art. L102 B LPF — immutabilité 10 ans (facture) | `archive-invoice-pdf.service.ts` (ORD-COMPLY-005)               | ✓                                                |
+| Art. L102 B LPF — immutabilité 10 ans (avoir)   | `archive-credit-note-pdf.service.ts` (EINV-CREDIT-002)          | ✓ livré 2026-05-28                               |
+| Art. L123-22 C. com. — audit trail              | `OrderHistory` + `createOrderAuditTx`                           | ✓                                                |
+| Art. 50-0 CGI — CA à l'encaissement             | `export-orders-csv.service.ts` filtre `paidAt` (ORD-COMPLY-007) | ✓                                                |
+| EU 2014/55 — facture structurée                 | `render-facturx.ts` profil MINIMUM                              | ✓ partiel (MINIMUM, pas BASIC/EN16931/EXTENDED)  |
+| Réforme 2026/2027 — émission structurée B2B     | (Phase 5 + provider PDP)                                        | 🔒                                               |
+| Réforme 2026/2027 — e-reporting B2C             | (Phase 3+4 + provider PDP)                                      | ⏳ infrastructure prête, transmission en attente |
 
 ---
 
@@ -242,12 +299,18 @@ Probabilité : nulle à court terme (Synclune émet ~50-100 factures/mois). Le g
 
 ## Crons
 
-| Job                         | Schedule (UTC)         | Service                                                   | Statut        |
-| --------------------------- | ---------------------- | --------------------------------------------------------- | ------------- |
-| `build-ereporting-batch`    | `0 1 * * *`            | `modules/cron/services/build-ereporting-batch.service.ts` | ✓ livré (J4)  |
-| `transmit-ereporting-batch` | `*/30 * * * *` (cible) | (Phase 3++)                                               | 🔒 bloqué PDP |
+| Job                               | Schedule (UTC) | Service                                                            | Statut                                                                                                                            |
+| --------------------------------- | -------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `build-ereporting-batch`          | `0 1 * * *`    | `modules/cron/services/build-ereporting-batch.service.ts`          | ✓ livré (Phase 3)                                                                                                                 |
+| `transmit-ereporting-batch`       | `*/30 * * * *` | `modules/cron/services/transmit-ereporting-batch.service.ts`       | ✓ livré (dry-run tant que `provider=local`)                                                                                       |
+| `transmit-invoices`               | `*/30 * * * *` | `modules/cron/services/transmit-invoices.service.ts`               | ✓ livré (Phase 3++ — initial B2B/B2G transmission, no-op tant que `INVOICE_ENABLE_PROVIDER_TRANSMISSION` OFF ou `provider=local`) |
+| `retry-invoice-transmissions`     | `*/15 * * * *` | `modules/cron/services/retry-invoice-transmissions.service.ts`     | ✓ livré (DLQ REJECTED, backoff exponentiel 5×)                                                                                    |
+| `reconcile-invoices`              | `0 2 * * *`    | `modules/cron/services/reconcile-invoices.service.ts`              | ✓ livré (DLQ invoiceRetryDeferred 3 passes)                                                                                       |
+| `reconcile-voided-invoices`       | `0 7 * * *`    | `modules/cron/services/reconcile-voided-invoices.service.ts`       | ✓ livré (rattrape avoirs manquants post-refund)                                                                                   |
+| `reconcile-invoice-statuses`      | `0 */4 * * *`  | `modules/cron/services/reconcile-invoice-statuses.service.ts`      | ✓ livré (polling status PDP si webhook raté)                                                                                      |
+| `refresh-stale-directory-entries` | `0 6 1 * *`    | `modules/cron/services/refresh-stale-directory-entries.service.ts` | ✓ livré (annuaire DGFiP, no-op `LocalPdfProvider`)                                                                                |
 
-Cf. `docs/CRONS.md` pour la liste complète des crons Synclune.
+Cf. `docs/CRONS.md` pour la liste complète des crons Synclune (incl. crons non liés à la facturation).
 
 ---
 
@@ -267,9 +330,13 @@ VENDOR_VAT_EXEMPTION_TEXT="TVA non applicable, art. 293 B du CGI"
 # … cf. shared/lib/stripe.ts:getVendorLegalInfo()
 
 # Provider & feature flags
-INVOICE_PROVIDER=local              # local (défaut) | <futur PDP>
-INVOICE_ENABLE_XML=                 # vide = OFF, "true"/"1"/"yes" = ON
-INVOICE_ENABLE_EREPORTING=          # idem
+INVOICE_PROVIDER=local                          # local (défaut) | mock | chorus-pro (futur) | pdp-xxx (futur)
+INVOICE_ENABLE_XML=                             # vide = OFF, "true"/"1"/"yes" = ON
+INVOICE_ENABLE_EREPORTING=                      # idem
+INVOICE_VALIDATE_XML=                           # idem — active validation CEN EN 16931 post-render
+INVOICE_ENABLE_PROVIDER_TRANSMISSION=           # idem — kill-switch global transmission B2B/B2G
+INVOICE_TRANSMISSION_CANARY_PERCENT=0           # 0-100, hash modulo orderId
+INVOICE_TRANSMISSION_MIN_AMOUNT=0               # centimes (0 = pas de seuil)
 ```
 
 ---

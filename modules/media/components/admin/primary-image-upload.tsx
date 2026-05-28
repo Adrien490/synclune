@@ -61,6 +61,10 @@ export function PrimaryImageUpload({
 }: PrimaryImageUploadProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoError, setVideoError] = useState(false);
+	// Increments on retry to force re-mount of the <video> element via `key` —
+	// otherwise the browser keeps the failed response cached and the next render
+	// errors immediately with the same URL.
+	const [videoRetryCount, setVideoRetryCount] = useState(0);
 	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
 	const haptic = useHaptic();
 	const isTouchDevice = useIsTouchDevice();
@@ -127,13 +131,12 @@ export function PrimaryImageUpload({
 											type="video"
 											onRetry={() => {
 												setVideoError(false);
-												if (videoRef.current) {
-													videoRef.current.load();
-												}
+												setVideoRetryCount((n) => n + 1);
 											}}
 										/>
 									) : (
 										<video
+											key={videoRetryCount}
 											ref={videoRef}
 											src={imageUrl}
 											poster={thumbnailUrl}
@@ -163,7 +166,6 @@ export function PrimaryImageUpload({
 											onError={() => setVideoError(true)}
 											aria-label="Aperçu vidéo du média principal"
 										>
-											<track kind="captions" srcLang="fr" label="Français" default />
 											Votre navigateur ne supporte pas la lecture de vidéos.
 										</video>
 									)}

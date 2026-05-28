@@ -5,6 +5,11 @@ import { afterEach, vi } from "vitest";
 // Tests mock Stripe calls but still import shared/lib/stripe.ts transitively.
 process.env.STRIPE_SECRET_KEY ??= "sk_test_unit_test_stub";
 
+// `generateInvoiceAccessToken` (invoice token HMAC for guest checkouts —
+// EINV-GLOBAL-012) requires BETTER_AUTH_SECRET ≥ 32 chars. Stub in tests
+// so anything that imports the helper transitively can run.
+process.env.BETTER_AUTH_SECRET ??= "test-better-auth-secret-not-used-in-prod-32chars-min";
+
 // jsdom does not implement matchMedia — provide a desktop-default stub so
 // useIsMobile / useMediaQuery don't throw. Tests can override per-test.
 if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {

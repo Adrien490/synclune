@@ -10,6 +10,8 @@ export interface WebhookErrorContext {
 	stripeEventId?: string;
 	orderId?: string;
 	orderNumber?: string;
+	invoiceNumber?: string;
+	creditNoteNumber?: string;
 	paymentIntentId?: string;
 	stripeRefundId?: string;
 	refundId?: string;
@@ -18,6 +20,19 @@ export interface WebhookErrorContext {
 	checkoutSessionId?: string;
 	[key: string]: string | undefined;
 }
+
+// Identifiers promoted to first-class Sentry tags (filterable/groupable in the
+// triage UI). Cf. audit monitoring 2026-05-28 EINV-OPS-006.
+const PROMOTED_WEBHOOK_TAGS = [
+	"stripeEventId",
+	"orderId",
+	"orderNumber",
+	"invoiceNumber",
+	"creditNoteNumber",
+	"paymentIntentId",
+	"stripeRefundId",
+	"refundId",
+] as const;
 
 /**
  * Captures a webhook handler exception in Sentry with structured business context.
@@ -34,6 +49,13 @@ export function captureWebhookError(error: unknown, context: WebhookErrorContext
 		scope.setTag("eventType", eventType);
 		scope.setLevel("error");
 		scope.setFingerprint(["webhook", handler]);
+
+		for (const tagKey of PROMOTED_WEBHOOK_TAGS) {
+			const value = business[tagKey];
+			if (value !== undefined && value !== "") {
+				scope.setTag(tagKey, value);
+			}
+		}
 
 		const businessEntries = Object.entries(business).filter(([, v]) => v !== undefined);
 		if (businessEntries.length > 0) {

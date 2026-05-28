@@ -298,7 +298,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-14 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services).
+22 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services). Les crons e-invoicing (build/transmit-ereporting-batch, transmit-invoices, retry-invoice-transmissions, reconcile-{invoices,voided-invoices,invoice-statuses}, refresh-stale-directory-entries) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
 
 | Job                         | Schedule           |
 | --------------------------- | ------------------ |
@@ -385,6 +385,7 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 6. **PDF immuable post-paiement** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). La route `/api/orders/[orderNumber]/invoice` sert le PDF archivé en priorité (régénération seulement en fallback si fetch UploadThing échoue).
 7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année.
 8. **Pas de vente manuelle / pas de caisse.** Aucune Server Action ne doit créer une commande payée sans passer par Stripe (PaymentIntent). Tout flow alternatif (`recordCashSale`, `createManualOrder`, etc.) requiert validation comptable préalable — sinon risque "logiciel de caisse" NF 525 non conforme.
+9. **Pas de mutation manuelle des modèles `EReportingTransaction` / `EReportingBatch`.** Seuls `record-ereporting.service.ts` (hook SALES + REFUND) et les services cron `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` peuvent écrire. Aucune Server Action admin ne doit poser un `status: ACCEPTED` manuel ni créer un batch fictif — risque divergence DGFiP + invalidation idempotence transmission.
 
 ### Tests régression dédiés
 
@@ -393,23 +394,26 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 | OrderHistory n'a pas `deletedAt`                                           | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                  | Audit trail immuable (Art. L123-22) |
 | Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                  | Invariant 1 + 2                     |
 | Numérotation : pas de rollover silencieux au-delà de 99999/an              | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow") | Invariant 7                         |
+| Aucune Server Action ne crée/mute `EReporting*` directement                | `modules/invoices/services/__tests__/no-manual-ereporting-write.regression.test.ts`                | Invariant 9                         |
 
 ### Conformité réglementaire (référencement)
 
-| Article                                    | Localisation                                                          | Statut |
-| ------------------------------------------ | --------------------------------------------------------------------- | ------ |
-| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                 | ✓      |
-| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)             | ✓      |
-| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                     | ✓      |
-| Art. 293 B CGI — mention franchise TVA     | `generate-invoice-pdf.ts:188-197`                                     | ✓      |
-| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)               | ✓      |
-| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                 | ✓      |
-| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007) | ✓      |
-| Réforme 2026-2027 émission structurée      | (Phase 3 audit 2026-05-27)                                            | ⏳     |
-| Réforme 2026-2027 e-reporting B2C          | (Phase 3 audit 2026-05-27)                                            | ⏳     |
+| Article                                      | Localisation                                                                                                                                                  | Statut |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free        | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                         | ✓      |
+| Art. 289-I CGI — émission à l'encaissement   | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                     | ✓      |
+| Art. 272-I CGI — avoir post-facture          | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                             | ✓      |
+| Art. 293 B CGI — mention franchise TVA       | `generate-invoice-pdf.ts:188-197`                                                                                                                             | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans        | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                       | ✓      |
+| Art. L123-22 C. com. — audit trail           | `OrderHistory` + `createOrderAuditTx`                                                                                                                         | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement          | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                         | ✓      |
+| Réforme 2026-2027 émission structurée        | `render-{facturx,ubl}.ts` + `transmit-invoices.service.ts` + `submit-invoice-by-id.service.ts` (Phase 3++ infrastructure prête, attente provider PDP)         | ⏳     |
+| Réforme 2026-2027 e-reporting B2C            | `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` (Phase 4 livré, dry-run prod tant que flag OFF) | ⏳     |
+| CEN EN 16931 validation BR-CO-_ / BR-FR-FX-_ | `validate-facturx.ts` + `validate-ubl.ts` (opt-in via `INVOICE_VALIDATE_XML`)                                                                                 | ⏳     |
 
 Audit conformité complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27).
 Architecture détaillée, matrices B2C/B2B/B2G, état des phases, feature flags, troubleshooting : `docs/INVOICING.md`.
+Procédures opérationnelles alertes admin facturation : `docs/RUNBOOK-INVOICING.md` (audit monitoring 2026-05-28 — EINV-OPS-\*).
 
 ## Forms
 
@@ -447,9 +451,9 @@ const form = useAppForm<MyInput>({
 | **E2E smoke**       | CI PR + push main                       | `pnpm e2e --grep @smoke` | ~3 min      |
 | **E2E complet**     | CI PR + push main (sharded ×4)          | `pnpm e2e`               | ~15 min     |
 
-### Critical path (7 modules)
+### Critical path (8 modules)
 
-Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refunds` sont les flows transactionnels revenus/sécurité. Leurs tests s'exécutent :
+Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refunds`, `invoices` sont les flows transactionnels revenus/sécurité (le module `invoices` contient les hooks e-reporting SALES + REFUND câblés sur webhook paiement et action refund — toute régression cassant l'agrégation DGFiP est un risque réglementaire). Leurs tests s'exécutent :
 
 - **Pre-commit local** (hook husky) : uniquement si `git diff --cached` contient un fichier sous ces modules — commit instantané sinon.
 - **CI** : job `tests-critical` dédié en parallèle de `quality` pour feedback rapide.

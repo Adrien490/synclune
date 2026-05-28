@@ -7,6 +7,9 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 // Lightweight select for the confirmation page
 const CONFIRMATION_ORDER_SELECT = {
 	id: true,
+	// EINV-SEC-001 : nécessaire pour l'ownership check côté wrapper non-caché.
+	// Ne PAS exposer userId à un composant client (server-only).
+	userId: true,
 	orderNumber: true,
 	createdAt: true,
 	customerEmail: true,
@@ -49,16 +52,37 @@ export type OrderForConfirmation = NonNullable<
 >;
 
 /**
- * Retrieves an order for the confirmation page without requiring authentication.
+ * Retrieves an order for the confirmation page.
  *
- * Security: The order is looked up by both `id` (cuid, cryptographically random)
- * AND `orderNumber`, providing a double verification that prevents enumeration.
- * Only non-deleted orders are returned.
+ * Security :
+ * - Lookup by `id` (cuid, cryptographically random) AND `orderNumber` (double verification).
+ * - Soft-deleted orders excluded (`notDeleted`).
+ * - EINV-SEC-001 : si la commande est rattachée à un compte (`order.userId !== null`),
+ *   la session en cours doit correspondre. Les guest checkouts (`order.userId === null`)
+ *   restent accessibles à toute personne ayant le couple (orderId, orderNumber) — c'est
+ *   le seul moyen pour un acheteur invité d'afficher sa page post-paiement.
+ *
+ * @param sessionUserId — `session?.user?.id` du caller. `undefined` si non connecté.
  */
-export async function getOrderForConfirmation(orderId: string, orderNumber: string) {
+export async function getOrderForConfirmation(
+	orderId: string,
+	orderNumber: string,
+	sessionUserId?: string,
+) {
 	const validation = confirmationParamsSchema.safeParse({ orderId, orderNumber });
 	if (!validation.success) return null;
-	return fetchOrderForConfirmation(validation.data.orderId, validation.data.orderNumber);
+
+	const order = await fetchOrderForConfirmation(
+		validation.data.orderId,
+		validation.data.orderNumber,
+	);
+	if (!order) return null;
+
+	if (order.userId && order.userId !== sessionUserId) {
+		return null;
+	}
+
+	return order;
 }
 
 /**

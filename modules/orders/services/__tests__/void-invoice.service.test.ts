@@ -110,7 +110,9 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-1", ...AUTHOR });
 
-		expect(result?.creditNoteNumber).toBe("A-2026-00001");
+		expect(result.kind).toBe("voided");
+		if (result.kind !== "voided") throw new Error("expected voided");
+		expect(result.creditNoteNumber).toBe("A-2026-00001");
 		expect(tx.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
@@ -157,7 +159,9 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-2", ...AUTHOR });
 
-		expect(result?.creditNoteNumber).toBe(`A-${year}-00042`);
+		expect(result.kind).toBe("voided");
+		if (result.kind !== "voided") throw new Error("expected voided");
+		expect(result.creditNoteNumber).toBe(`A-${year}-00042`);
 	});
 
 	it("idempotent — noop when invoice already VOIDED (no double credit note)", async () => {
@@ -176,7 +180,10 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-3", ...AUTHOR });
 
-		expect(result).toBeNull();
+		expect(result.kind).toBe("noop");
+		if (result.kind === "noop") {
+			expect(result.reason).toBe("no-active-invoice");
+		}
 		expect(tx.order.update).not.toHaveBeenCalled();
 		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
@@ -197,12 +204,16 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-3b", ...AUTHOR });
 
-		expect(result).toBeNull();
+		expect(result.kind).toBe("noop");
+		if (result.kind === "noop") {
+			expect(result.reason).toBe("already-voided");
+			expect(result.creditNoteNumber).toBe("A-2026-00008");
+		}
 		expect(tx.order.update).not.toHaveBeenCalled();
 		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
 
-	it("returns null when invoiceNumber is absent (no active invoice to void)", async () => {
+	it("returns noop kind when invoiceNumber is absent (no active invoice to void)", async () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue({
 			id: "order-4",
@@ -218,11 +229,14 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-4", ...AUTHOR });
 
-		expect(result).toBeNull();
+		expect(result.kind).toBe("noop");
+		if (result.kind === "noop") {
+			expect(result.reason).toBe("no-active-invoice");
+		}
 		expect(tx.order.update).not.toHaveBeenCalled();
 	});
 
-	it("returns null when order is missing", async () => {
+	it("returns missing kind when order is absent", async () => {
 		const tx = makeTx();
 		tx.order.findUnique.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
@@ -231,7 +245,10 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "missing", ...AUTHOR });
 
-		expect(result).toBeNull();
+		expect(result.kind).toBe("noop");
+		if (result.kind === "noop") {
+			expect(result.reason).toBe("missing");
+		}
 		expect(mockLogger.warn).toHaveBeenCalled();
 	});
 
@@ -242,7 +259,7 @@ describe("voidInvoice", () => {
 				new Prisma.PrismaClientKnownRequestError("dup", { code: "P2002", clientVersion: "test" }),
 			)
 			.mockResolvedValueOnce({
-				kind: "voided",
+				kind: "voided-tx",
 				updated: {
 					invoiceVoidedAt: new Date(),
 					creditNoteNumber: "A-2026-00099",
@@ -253,16 +270,21 @@ describe("voidInvoice", () => {
 
 		const result = await voidInvoice({ orderId: "order-5", ...AUTHOR });
 
-		expect(result?.creditNoteNumber).toBe("A-2026-00099");
+		expect(result.kind).toBe("voided");
+		if (result.kind !== "voided") throw new Error("expected voided");
+		expect(result.creditNoteNumber).toBe("A-2026-00099");
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
 	});
 
-	it("does not retry on non-P2002 errors", async () => {
+	it("returns failed kind on non-P2002 errors", async () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB connection lost"));
 
 		const result = await voidInvoice({ orderId: "order-6", ...AUTHOR });
 
-		expect(result).toBeNull();
+		expect(result.kind).toBe("failed");
+		if (result.kind === "failed") {
+			expect(result.error).toBe("DB connection lost");
+		}
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
@@ -277,7 +299,7 @@ describe("voidInvoice", () => {
 	 * en vain.
 	 */
 	describe("rollover guard at 99999 (Art. 272-I CGI — séquence avoir bornée)", () => {
-		it("returns null + logs BusinessError when last credit note is A-YYYY-99999", async () => {
+		it("returns failed kind + logs BusinessError when last credit note is A-YYYY-99999", async () => {
 			const tx = makeTx();
 			const year = new Date().getFullYear();
 			tx.order.findUnique.mockResolvedValue({
@@ -295,7 +317,10 @@ describe("voidInvoice", () => {
 
 			const result = await voidInvoice({ orderId: "order-overflow", ...AUTHOR });
 
-			expect(result).toBeNull();
+			expect(result.kind).toBe("failed");
+			if (result.kind === "failed") {
+				expect(result.error).toContain("Séquence avoir saturée");
+			}
 			expect(tx.order.update).not.toHaveBeenCalled();
 			expect(mockLogger.error).toHaveBeenCalledWith(
 				"Failed to void invoice",
@@ -352,7 +377,9 @@ describe("voidInvoice", () => {
 
 			const result = await voidInvoice({ orderId: "order-near-limit", ...AUTHOR });
 
-			expect(result?.creditNoteNumber).toBe(`A-${year}-99999`);
+			expect(result.kind).toBe("voided");
+			if (result.kind !== "voided") throw new Error("expected voided");
+			expect(result.creditNoteNumber).toBe(`A-${year}-99999`);
 		});
 	});
 });

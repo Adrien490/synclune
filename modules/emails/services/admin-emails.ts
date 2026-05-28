@@ -110,6 +110,10 @@ export async function sendAdminRefundFailedAlert({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Échec remboursement — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
+			// Resend server-side 24h dedup — protège contre N retries Stripe + cron
+			// retry-webhooks qui rejoueraient le même handler refund-failed (audit
+			// monitoring 2026-05-28 EINV-OPS-009).
+			idempotencyKey: `alert:refund-failed:${stripePaymentIntentId}`,
 		},
 	);
 }
@@ -150,6 +154,10 @@ export async function sendWebhookFailedAlertEmail({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Webhook ${eventType} échoué (${attempts} tentatives)`,
 			tags: [{ name: "category", value: "admin" }],
+			// `:${attempts}` permet une nouvelle alerte par seuil franchi (1→2→3
+			// tentatives) sans spammer si le même attempt rejoue (audit monitoring
+			// 2026-05-28 EINV-OPS-009).
+			idempotencyKey: `alert:webhook-failed:${eventId}:${attempts}`,
 		},
 	);
 }
@@ -268,6 +276,9 @@ export async function sendAdminOrderProcessingFailedAlert({
 			to: EMAIL_ADMIN,
 			subject: `[URGENT] Paiement recu — Echec traitement commande ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
+			// 1 alerte par PI peu importe le nombre de retries Stripe (audit
+			// monitoring 2026-05-28 EINV-OPS-009).
+			idempotencyKey: `alert:order-processing-failed:${paymentIntentId}`,
 		},
 	);
 }
@@ -374,12 +385,15 @@ export async function sendAdminStuckOrdersAlert({
 }
 
 /**
- * Alerte admin : Echec generation facture (Conformite legale)
+ * Alerte admin : Echec generation facture (Conformite legale Art. 286/289-I CGI)
  *
- * Preparatory code for automated invoice generation.
- * Will be wired up when the invoice feature is implemented.
+ * Declenchee par `ensure-invoice-number.service.ts` quand `persistInvoiceNumber`
+ * echoue malgre les 5 retries (advisory lock conflict, P2002 persistant, etc.).
+ * Le cron `reconcile-invoices` (daily) prend le relais via `Order.invoiceRetryDeferred`,
+ * mais l'admin doit etre prevenu pour suivre l'incident.
  */
 export async function sendAdminInvoiceFailedAlert({
+	orderId,
 	orderNumber,
 	customerEmail,
 	customerCompanyName,
@@ -389,6 +403,7 @@ export async function sendAdminInvoiceFailedAlert({
 	stripePaymentIntentId,
 	dashboardUrl,
 }: {
+	orderId?: string;
 	orderNumber: string;
 	customerEmail: string;
 	customerCompanyName?: string;
@@ -409,11 +424,14 @@ export async function sendAdminInvoiceFailedAlert({
 	const stripeCtaUrl = stripePaymentIntentId
 		? `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`
 		: undefined;
+	// 1 alerte par order (peu importe le nombre de retries cron), cf. audit
+	// monitoring 2026-05-28 EINV-OPS-001 / EINV-OPS-009.
+	const idempotencyKey = `alert:invoice-failed:${orderId ?? orderNumber}`;
 	return renderAndSend(
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client.`,
+			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client. Voir docs/RUNBOOK-INVOICING.md.`,
 			stackTrace: errorMessage,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
@@ -424,6 +442,169 @@ export async function sendAdminInvoiceFailedAlert({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Échec génération facture — ${orderNumber}`,
 			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey,
+		},
+	);
+}
+
+/**
+ * Alerte admin : Echec archivage PDF facture (Art. L102 B LPF - conservation 10 ans)
+ *
+ * Declenchee par `archive-invoice-pdf.service.ts` quand UploadThing retourne
+ * une erreur ou ne fournit pas d'URL. Le fallback est la regeneration a chaque
+ * download — risque de drift template si on touche au layout/SIRET/mentions TVA.
+ * Cf. audit monitoring 2026-05-28 EINV-OPS-002.
+ */
+export async function sendAdminPdfArchiveFailedAlert({
+	orderId,
+	orderNumber,
+	invoiceNumber,
+	errorMessage,
+}: {
+	orderId: string;
+	orderNumber: string;
+	invoiceNumber: string;
+	errorMessage: string;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes/${orderId}`;
+	const contextLines = [
+		`Commande   : ${orderNumber}`,
+		`Facture    : ${invoiceNumber}`,
+		`Order ID   : ${orderId}`,
+	];
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: contextLines.join("\n"),
+			summary: `L'archivage immuable du PDF facture ${invoiceNumber} sur UploadThing a échoué. La facture est actuellement régénérée à chaque téléchargement — risque de drift template. Vérifier UploadThing puis relancer via le bouton "Relancer" du dashboard /admin/ventes/facturation.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Échec archivage PDF facture — ${orderNumber} (${invoiceNumber})`,
+			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey: `alert:pdf-archive-failed:${orderId}`,
+		},
+	);
+}
+
+/**
+ * Alerte admin : Echec emission avoir post-refund (Art. 272-I CGI)
+ *
+ * Declenchee par `void-invoice.service.ts` quand l'emission d'avoir
+ * (`A-YYYY-NNNNN`) echoue apres 5 retries. Le refund est traite (paymentStatus
+ * = REFUNDED) mais la facture reste GENERATED + creditNoteNumber NULL — etat
+ * comptable incoherent. Le cron `reconcile-invoices` (passe 3) rejouera, mais
+ * l'admin doit valider l'incident.
+ * Cf. audit monitoring 2026-05-28 EINV-OPS-003.
+ */
+export async function sendAdminCreditNoteFailedAlert({
+	orderId,
+	orderNumber,
+	invoiceNumber,
+	errorMessage,
+}: {
+	orderId: string;
+	orderNumber: string;
+	invoiceNumber: string;
+	errorMessage: string;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes/${orderId}`;
+	const contextLines = [
+		`Commande   : ${orderNumber}`,
+		`Facture    : ${invoiceNumber}`,
+		`Order ID   : ${orderId}`,
+	];
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: contextLines.join("\n"),
+			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit. Voir docs/RUNBOOK-INVOICING.md.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Échec émission avoir — ${orderNumber} (${invoiceNumber})`,
+			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey: `alert:credit-note-failed:${orderId}`,
+		},
+	);
+}
+
+/**
+ * Alerte admin URGENT : Saturation sequence facture/avoir (Art. 286 CGI)
+ *
+ * Declenchee quand le compteur sequentiel annuel atteint 99 999 (limite CHECK
+ * DB). Au-dela, aucune nouvelle facture/avoir n'est emise. Etendre la regex
+ * DB (`{5,6}`) requiert un deploiement — a faire AVANT que ca casse en prod.
+ * Cf. audit monitoring 2026-05-28 EINV-OPS-005.
+ */
+export async function sendAdminSequenceOverflowAlert({
+	year,
+	documentType,
+}: {
+	year: number;
+	documentType: "invoice" | "credit-note";
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/facturation`;
+	const label = documentType === "invoice" ? "facture" : "avoir";
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: [`Type    : ${label}`, `Année   : ${year}`, `Limite  : 99 999`].join("\n"),
+			summary: `La séquence ${label} a atteint sa limite annuelle de 99 999. Toute nouvelle émission est bloquée. Action requise : étendre la CHECK regex DB à 6 chiffres puis déployer. Voir docs/RUNBOOK-INVOICING.md § Sequence Overflow.`,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir le dashboard",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[URGENT] Saturation séquence ${label} ${year} — émission bloquée`,
+			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey: `alert:sequence-overflow:${documentType}:${year}`,
+		},
+	);
+}
+
+/**
+ * Alerte admin : E-reporting batches stuck PENDING/RETRYING > 48h
+ *
+ * Declenchee par le cron `alert-stuck-orders` (hebdo) si des batches n'ont pas
+ * ete transmis. A l'approche de la reforme (1er sept 2027 emission B2B/B2G),
+ * un blocage de transmission DGFiP/PDP doit etre escalade rapidement.
+ * Cf. audit monitoring 2026-05-28 EINV-OPS-010.
+ */
+export async function sendAdminEReportingStuckAlert({
+	stuckBatches,
+}: {
+	stuckBatches: Array<{ id: string; status: string; ageHours: number }>;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/facturation`;
+	const lines = stuckBatches.map((b) => `  • ${b.id} — ${b.status} — ${b.ageHours}h`);
+	const oldest = stuckBatches.reduce((max, b) => (b.ageHours > max ? b.ageHours : max), 0);
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: [
+				`Batches bloqués : ${stuckBatches.length}`,
+				`Plus ancien     : ${oldest}h`,
+				"",
+				...lines,
+			].join("\n"),
+			summary: `${stuckBatches.length} batch(es) e-reporting bloqués depuis plus de 48h (status PENDING/RETRYING). Vérifier la configuration provider PDP / Chorus Pro et débloquer via le dashboard. Voir docs/RUNBOOK-INVOICING.md.`,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir les batches",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] ${stuckBatches.length} batch(es) e-reporting bloqué(s) > 48h`,
+			tags: [{ name: "category", value: "admin" }],
+			// 1 alerte par "cohorte" hebdo : si le hash des IDs change, c'est une
+			// nouvelle situation a signaler.
+			idempotencyKey: `alert:ereporting-stuck:${stuckBatches.map((b) => b.id).join(",")}`,
 		},
 	);
 }

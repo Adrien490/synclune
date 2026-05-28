@@ -28,6 +28,7 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
 import { captureRefundError } from "../utils/capture-refund-error";
+import { issueCreditNoteForRefund } from "../services/issue-credit-note.service";
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -225,7 +226,7 @@ export async function processRefund(
 			if (failTxResult === 0) {
 				logger.warn(
 					`Refund ${id} no longer APPROVED — concurrent state change detected; skipping FAILED transition`,
-					{ refundId: id, stripeRefundId: stripeResult.refundId ?? null },
+					{ refundId: id, stripeRefundId: stripeResult.refundId ?? undefined },
 				);
 			}
 
@@ -418,17 +419,56 @@ export async function processRefund(
 			// process-refund : un échec ici est rattrapable via le reconcile cron.
 			await recordRefundEReporting(id);
 
+			// EINV-CREDIT-001 : émission avoir séquentiel sur le Refund (Art. 272-I CGI).
+			// Best-effort hors transaction (advisory lock incompatible avec tx longue).
+			// Idempotent (noop si déjà émis). NB : pour un refund total, voidInvoice()
+			// est appelé séparément depuis cancel-order / mark-as-fully-refunded /
+			// webhook charge.refunded — issue-credit-note couvre ici le cas du
+			// refund partiel ou direct (admin) où aucun voidInvoice n'est déclenché.
+			const creditNoteResult = await issueCreditNoteForRefund({
+				refundId: id,
+				source: HistorySource.ADMIN,
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? adminUser.email,
+			});
+			if (creditNoteResult.kind === "failed") {
+				logger.warn(
+					`processRefund — credit note emission failed for refund ${id}: ${creditNoteResult.error} (cron rattrapera)`,
+					{ refundId: id },
+				);
+			}
+
 			// Envoyer l'email de confirmation au client (non bloquant)
 			// Le webhook charge.refunded sert de filet de sécurité — la
 			// déduplication côté email/Resend repose sur le refund_id via tag.
 			if (refundData.refund.order_user_id) {
-				const customerInfo = await prisma.user.findUnique({
-					where: { id: refundData.refund.order_user_id },
-					select: { email: true, name: true },
-				});
+				// EINV-CREDIT-001 : on lit `Refund.creditNoteNumber` en priorité car
+				// `issueCreditNoteForRefund` (appelé juste avant) écrit sur Refund —
+				// pas sur Order. Pour un refund partiel, `Order.creditNoteNumber`
+				// reste null (voidInvoice non déclenché), mais `Refund.creditNoteNumber`
+				// porte l'avoir A-YYYY-NNNNN réellement émis.
+				// Fallback `Order.creditNoteNumber` : refund total où voidInvoice a
+				// déjà tourné côté webhook charge.refunded mais issueCreditNote a
+				// raté ce refund spécifique (cas exotique rattrapé par cron).
+				const [customerInfo, refundFacts] = await Promise.all([
+					prisma.user.findUnique({
+						where: { id: refundData.refund.order_user_id },
+						select: { email: true, name: true },
+					}),
+					prisma.refund.findUnique({
+						where: { id: refundData.refund.id },
+						select: {
+							creditNoteNumber: true,
+							order: { select: { invoiceNumber: true, creditNoteNumber: true } },
+						},
+					}),
+				]);
 
 				if (customerInfo?.email) {
 					const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refundData.refund.order_id));
+					const creditNoteNumber =
+						refundFacts?.creditNoteNumber ?? refundFacts?.order.creditNoteNumber ?? null;
+					const invoiceNumber = refundFacts?.order.invoiceNumber ?? null;
 
 					sendRefundConfirmationEmail({
 						to: customerInfo.email,
@@ -437,6 +477,8 @@ export async function processRefund(
 						refundAmount: refundData.refund.amount,
 						reason: refundData.refund.reason,
 						orderDetailsUrl,
+						creditNoteNumber,
+						invoiceNumber,
 						// ORD-STRIPE-008 : dedup Resend 24h sur double-clic admin
 						// ou retry. `attempt_count` rotation pour les vrais retries
 						// après un échec Resend (besoin nouveau call).

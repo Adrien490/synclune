@@ -213,7 +213,7 @@ export function EmptyMediaState({
 						<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed p-3">
 							<ImagePlus className="text-muted-foreground/50 size-5" />
 							<p className="text-muted-foreground text-sm">
-								Confiez jusqu'à {maxMediaCount} clichés de votre bijou à l'atelier
+								Confiez jusqu'à {maxMediaCount} médias de votre bijou à l'atelier
 							</p>
 						</div>
 					)}
@@ -281,11 +281,11 @@ export function EmptyMediaState({
 														? "Relâchez"
 														: isMediaUploading
 															? "Ajouter d'autres médias"
-															: "Ajouter des médias"}
+															: "Cliquez ou glissez-déposez vos médias"}
 												</p>
 												{!isMediaUploading && (
 													<p className="text-muted-foreground text-xs">
-														Images (max 16 Mo) et vidéos (max 512 Mo)
+														Images JPEG/PNG/WebP/HEIC (max 16 Mo) · Vidéos MP4 (max 512 Mo)
 													</p>
 												)}
 											</div>

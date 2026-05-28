@@ -42,6 +42,21 @@ export function buildOrderSearchConditions(search: string): Prisma.OrderWhereInp
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
+			// EINV-GLOBAL-016 : recherche admin par numéro de facture/avoir pour
+			// rapprochement comptable (Art. 286 / 272-I CGI). Insensitive sur
+			// "F-2026-00012" / "A-2026-00012" / "f-2026" suffixes.
+			{
+				invoiceNumber: {
+					contains: searchTerm,
+					mode: Prisma.QueryMode.insensitive,
+				},
+			},
+			{
+				creditNoteNumber: {
+					contains: searchTerm,
+					mode: Prisma.QueryMode.insensitive,
+				},
+			},
 		],
 	};
 }
@@ -90,6 +105,14 @@ export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderW
 			: [filters.invoiceStatus];
 		conditions.invoiceStatus =
 			invoiceStatuses.length === 1 ? invoiceStatuses[0] : { in: invoiceStatuses };
+	}
+
+	// Preset "anomalie de facturation" : commande encaissée (PAID) sans facture
+	// émise (invoiceNumber IS NULL). Art. 286 / 289-I CGI — cas critique audit
+	// admin (EINV-UI-005 audit 2026-05-28).
+	if (filters.invoiceAnomaly === true) {
+		conditions.paymentStatus = "PAID";
+		conditions.invoiceNumber = null;
 	}
 
 	if (typeof filters.totalMin === "number" && typeof filters.totalMax === "number") {

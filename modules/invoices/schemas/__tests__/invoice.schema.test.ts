@@ -29,6 +29,8 @@ function makeValidB2cInvoice(): InvoiceData {
 			eInvoicingAddress: null,
 			eInvoicingPlatformId: null,
 			vatExemptionText: "TVA non applicable, art. 293 B du CGI",
+			bankIban: null,
+			bankBic: null,
 		},
 		buyer: {
 			type: "B2C",
@@ -76,6 +78,8 @@ function makeValidB2cInvoice(): InvoiceData {
 				taxAmount: 0,
 				lineTotalExclTax: 9000,
 				lineTotalInclTax: 9000,
+				hsCode: null,
+				unitCode: null,
 			},
 		],
 		totals: {
@@ -105,6 +109,7 @@ function makeValidB2cInvoice(): InvoiceData {
 			stripeChargeId: null,
 		},
 		precedingInvoice: null,
+		voidedInfo: null,
 		meta: {
 			orderId: "order-1",
 			orderNumber: "SYN-2026-0001",

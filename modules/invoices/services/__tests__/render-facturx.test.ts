@@ -29,6 +29,8 @@ function makeB2cInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			eInvoicingAddress: null,
 			eInvoicingPlatformId: null,
 			vatExemptionText: "TVA non applicable, art. 293 B du CGI",
+			bankIban: null,
+			bankBic: null,
 		},
 		buyer: {
 			type: "B2C",
@@ -76,6 +78,8 @@ function makeB2cInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 				taxAmount: 0,
 				lineTotalExclTax: 9000,
 				lineTotalInclTax: 9000,
+				hsCode: null,
+				unitCode: null,
 			},
 		],
 		totals: {
@@ -105,9 +109,10 @@ function makeB2cInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 			stripeChargeId: null,
 		},
 		precedingInvoice: null,
+		voidedInfo: null,
 		meta: { orderId: "order-1", orderNumber: "SYN-2026-0001", notes: null },
 		...overrides,
-	};
+	} as InvoiceData;
 }
 
 describe("renderFacturXMinimum — structure", () => {
@@ -268,6 +273,9 @@ describe("renderFacturXMinimum — monetary summation (BT-109..BT-115)", () => {
 					...makeB2cInvoice().totals,
 					totalInclTax: 1234567,
 					totalExclTax: 1234567,
+					totalTax: 0,
+					totalPaid: 1234567,
+					amountDue: 0,
 				},
 			}),
 		);
@@ -280,6 +288,10 @@ describe("renderFacturXMinimum — monetary summation (BT-109..BT-115)", () => {
 				totals: {
 					...makeB2cInvoice().totals,
 					totalInclTax: 50,
+					totalExclTax: 50,
+					totalTax: 0,
+					totalPaid: 50,
+					amountDue: 0,
 				},
 			}),
 		);

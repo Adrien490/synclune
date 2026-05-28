@@ -26,7 +26,6 @@ interface BuildSalesTransactionInput {
 		| "orderNumber"
 		| "paidAt"
 		| "total"
-		| "subtotal"
 		| "taxAmount"
 		| "currency"
 		| "paymentMethod"
@@ -74,8 +73,8 @@ export interface PayloadSnapshot {
 /**
  * Pour une `Order` PAID, produit la transaction SALES correspondante.
  * À appeler depuis le hook post-paiement (webhook checkout.session.completed
- * ou payment_intent.succeeded), idempotent côté DB via le compose
- * (orderId, type='SALES') si on ajoute un unique index ultérieurement.
+ * ou payment_intent.succeeded). Idempotent au niveau DB via l'unique index
+ * `EReportingTransaction_orderId_type_key` (migration 20260528160000).
  */
 export function buildSalesTransaction(
 	input: BuildSalesTransactionInput,

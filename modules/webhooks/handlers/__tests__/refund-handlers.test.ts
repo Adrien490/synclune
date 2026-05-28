@@ -19,6 +19,17 @@ const {
 			findFirst: vi.fn(),
 			findUnique: vi.fn().mockResolvedValue({ invoiceStatus: null, invoiceNumber: null }),
 		},
+		refund: {
+			// EINV-CREDIT-001 : refund-handlers boucle sur les Refunds COMPLETED
+			// sans creditNoteNumber pour émettre l'avoir (cf refund-handlers.ts:128-153).
+			// Tableau vide par défaut → boucle no-op pour les tests qui ne ciblent pas
+			// ce chemin. Tests dédiés (issue-credit-note) overrident cette valeur.
+			findMany: vi.fn().mockResolvedValue([]),
+			// Path email post-voidInvoice (refund-handlers.ts:198-217) lit le dernier
+			// Refund COMPLETED pour résoudre creditNoteNumber. Null par défaut → email
+			// envoyé sans creditNoteNumber (rétro-compat tests sans avoir).
+			findFirst: vi.fn().mockResolvedValue(null),
+		},
 	},
 	mockSyncStripeRefunds: vi.fn(),
 	mockUpdateOrderPaymentStatus: vi.fn(),
@@ -84,8 +95,9 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 // Mock voidInvoice (ORD-COMPLY-003 — cycle VOIDED post charge.refunded)
+// EINV-CREDIT-008 (2026-05-28) : discriminated union remplace `Result | null`.
 vi.mock("@/modules/orders/services/void-invoice.service", () => ({
-	voidInvoice: vi.fn().mockResolvedValue(null),
+	voidInvoice: vi.fn().mockResolvedValue({ kind: "noop", reason: "no-active-invoice" }),
 }));
 
 import type Stripe from "stripe";

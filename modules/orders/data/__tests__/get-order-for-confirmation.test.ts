@@ -40,6 +40,7 @@ const VALID_ORDER_NUMBER = "ORD-2024-0001";
 function makeConfirmationOrder(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_ORDER_ID,
+		userId: null, // EINV-SEC-001 : par défaut guest order pour ne pas casser les tests existants
 		orderNumber: VALID_ORDER_NUMBER,
 		subtotal: 9900,
 		shippingCost: 500,
@@ -191,6 +192,70 @@ describe("getOrderForConfirmation", () => {
 			mockPrisma.order.findFirst.mockRejectedValue(new Error("Prisma timeout"));
 
 			await expect(getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER)).resolves.toBeNull();
+		});
+	});
+
+	describe("EINV-SEC-001 ownership check", () => {
+		const OWNER_USER_ID = "user_aaa111";
+		const OTHER_USER_ID = "user_bbb222";
+
+		it("returns the order when order.userId matches sessionUserId", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(
+				makeConfirmationOrder({ userId: OWNER_USER_ID }),
+			);
+
+			const result = await getOrderForConfirmation(
+				VALID_ORDER_ID,
+				VALID_ORDER_NUMBER,
+				OWNER_USER_ID,
+			);
+
+			expect(result).not.toBeNull();
+			expect(result?.userId).toBe(OWNER_USER_ID);
+		});
+
+		it("returns null when order.userId differs from sessionUserId (cross-user IDOR)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(
+				makeConfirmationOrder({ userId: OWNER_USER_ID }),
+			);
+
+			const result = await getOrderForConfirmation(
+				VALID_ORDER_ID,
+				VALID_ORDER_NUMBER,
+				OTHER_USER_ID,
+			);
+
+			expect(result).toBeNull();
+		});
+
+		it("returns null when order has userId but caller has no session (anonymous IDOR)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(
+				makeConfirmationOrder({ userId: OWNER_USER_ID }),
+			);
+
+			const result = await getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER, undefined);
+
+			expect(result).toBeNull();
+		});
+
+		it("returns the guest order (userId === null) even without session", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(makeConfirmationOrder({ userId: null }));
+
+			const result = await getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER, undefined);
+
+			expect(result).not.toBeNull();
+		});
+
+		it("returns the guest order (userId === null) with any logged-in session", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(makeConfirmationOrder({ userId: null }));
+
+			const result = await getOrderForConfirmation(
+				VALID_ORDER_ID,
+				VALID_ORDER_NUMBER,
+				OTHER_USER_ID,
+			);
+
+			expect(result).not.toBeNull();
 		});
 	});
 });

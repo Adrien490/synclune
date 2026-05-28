@@ -1,0 +1,351 @@
+/**
+ * @regression cancel-order-void-invoice
+ *
+ * Garde-fou comptable Art. 272-I CGI : cancelOrder DOIT appeler voidInvoice()
+ * avec les bons arguments (orderId, authorId, authorName, source=ADMIN, reason)
+ * UNIQUEMENT quand la facture est `invoiceStatus=GENERATED`.
+ *
+ * Bug latent visé (EINV-TEST-003) : le test existant `cancel-order.test.ts`
+ * mocke `voidInvoice` mais ne vérifie jamais son appel. Un refactor peut casser
+ * silencieusement le branchement post-tx (`if (order._invoiceVoided)`) sans
+ * qu'aucun test rouge ne le signale → émission avoir cassée Art. 272-I CGI.
+ *
+ * Complète aussi l'alerte Sentry sur `kind: "failed"` quand paymentStatus passe
+ * à REFUNDED (cf EINV-CREDIT-008).
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { ActionStatus } from "@/shared/types/server-action";
+import { createMockFormData, createMockOrder, VALID_CUID } from "@/test/factories";
+import type * as SharedActions from "@/shared/lib/actions";
+
+const {
+	mockPrisma,
+	mockRequireAdminWithUser,
+	mockEnforceRateLimit,
+	mockUpdateTag,
+	mockAfter,
+	mockHandleActionError,
+	mockSendCancelEmail,
+	mockSanitizeText,
+	mockCanCancelOrder,
+	mockCreateOrderAuditTx,
+	mockBuildUrl,
+	mockGetOrderInvalidationTags,
+	mockVoidInvoice,
+	mockSentryWithScope,
+	mockSentryCaptureMessage,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		order: { findUnique: vi.fn(), update: vi.fn() },
+		productSku: { update: vi.fn() },
+		orderHistory: { create: vi.fn() },
+		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
+		discount: { update: vi.fn() },
+		refund: {
+			create: vi.fn(),
+			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
+		},
+		$transaction: vi.fn(),
+	},
+	mockRequireAdminWithUser: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
+	mockUpdateTag: vi.fn(),
+	mockAfter: vi.fn((fn: () => Promise<void>) => fn()),
+	mockHandleActionError: vi.fn(),
+	mockSendCancelEmail: vi.fn(),
+	mockSanitizeText: vi.fn(),
+	mockCanCancelOrder: vi.fn(),
+	mockCreateOrderAuditTx: vi.fn(),
+	mockBuildUrl: vi.fn(),
+	mockGetOrderInvalidationTags: vi.fn(),
+	mockVoidInvoice: vi.fn(),
+	mockSentryWithScope: vi.fn(),
+	mockSentryCaptureMessage: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
+}));
+
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdminWithUser,
+	requireAdminWithUser: mockRequireAdminWithUser,
+}));
+
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	ADMIN_ORDER_LIMITS: { SINGLE_OPERATIONS: "admin-order-single" },
+}));
+
+vi.mock("next/cache", () => ({
+	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
+}));
+
+vi.mock("next/server", () => ({ after: mockAfter }));
+
+vi.mock("@/shared/lib/actions", async (importOriginal) => {
+	const original = await importOriginal<typeof SharedActions>();
+	return {
+		...original,
+		safeFormGet: (formData: FormData, key: string) => {
+			const v = formData.get(key);
+			return typeof v === "string" ? v : null;
+		},
+		handleActionError: mockHandleActionError,
+	};
+});
+
+vi.mock("@/modules/emails/services/status-emails", () => ({
+	sendCancelOrderConfirmationEmail: mockSendCancelEmail,
+}));
+
+vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: mockSanitizeText }));
+
+vi.mock("../../services/order-status-validation.service", () => ({
+	canCancelOrder: mockCanCancelOrder,
+}));
+
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+
+vi.mock("../../services/void-invoice.service", () => ({
+	voidInvoice: mockVoidInvoice,
+}));
+
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: mockBuildUrl,
+	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+}));
+
+vi.mock("../../schemas/order.schemas", () => ({
+	cancelOrderSchema: {
+		safeParse: vi
+			.fn()
+			.mockReturnValue({ success: true, data: { id: VALID_CUID, reason: "Test reason" } }),
+	},
+}));
+
+vi.mock("../../constants/order.constants", () => ({
+	ORDER_ERROR_MESSAGES: {
+		NOT_FOUND: "La commande n'existe pas.",
+		ALREADY_CANCELLED: "Cette commande est deja annulee.",
+		CANCEL_FAILED: "Erreur lors de l'annulation de la commande.",
+	},
+}));
+
+vi.mock("../../constants/cache", () => ({
+	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	withScope: mockSentryWithScope,
+	captureMessage: mockSentryCaptureMessage,
+}));
+
+import { cancelOrder } from "../cancel-order";
+import { cancelOrderSchema } from "../../schemas/order.schemas";
+
+const validFormData = createMockFormData({ id: VALID_CUID, reason: "Annulation client" });
+
+function createTxOrder(overrides: Record<string, unknown> = {}) {
+	return createMockOrder({
+		status: "PROCESSING",
+		paymentStatus: "PAID",
+		invoiceNumber: null,
+		invoiceStatus: "PENDING",
+		...overrides,
+	});
+}
+
+describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
+	beforeEach(() => {
+		vi.resetAllMocks();
+		mockAfter.mockImplementation((fn: () => Promise<void>) => fn());
+		mockRequireAdminWithUser.mockResolvedValue({
+			user: { id: "admin-1", name: "Admin Sophie" },
+		});
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockSanitizeText.mockImplementation((t: string) => t);
+		mockCanCancelOrder.mockReturnValue(true);
+		mockCreateOrderAuditTx.mockResolvedValue(undefined);
+		mockSendCancelEmail.mockResolvedValue(undefined);
+		mockBuildUrl.mockReturnValue("https://synclune.fr/compte/commandes/SYN-2026-0001");
+		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
+		mockVoidInvoice.mockResolvedValue({
+			kind: "voided",
+			creditNoteNumber: "A-2026-00042",
+			creditNoteGeneratedAt: new Date("2026-05-28"),
+			invoiceVoidedAt: new Date("2026-05-28"),
+		});
+
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
+		mockPrisma.order.findUnique.mockResolvedValue(createTxOrder());
+		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.productSku.update.mockResolvedValue({});
+		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+
+		vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
+			success: true,
+			data: { id: VALID_CUID, reason: "Annulation client" },
+		} as never);
+
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
+		}));
+	});
+
+	describe("invoice GENERATED — voidInvoice must be called with admin context", () => {
+		it("appelle voidInvoice avec orderId, authorId admin, authorName, source=ADMIN", async () => {
+			const order = createTxOrder({
+				invoiceNumber: "F-2026-00123",
+				invoiceStatus: "GENERATED",
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+
+			await cancelOrder(undefined, validFormData);
+
+			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
+			expect(mockVoidInvoice).toHaveBeenCalledWith({
+				orderId: order.id,
+				authorId: "admin-1",
+				authorName: "Admin Sophie",
+				source: "ADMIN",
+				reason: "Annulation client",
+			});
+		});
+
+		it("utilise une raison par défaut quand sanitizedReason est null", async () => {
+			vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
+				success: true,
+				data: { id: VALID_CUID, reason: undefined },
+			} as never);
+			const fdNoReason = createMockFormData({ id: VALID_CUID });
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({ invoiceNumber: "F-2026-00045", invoiceStatus: "GENERATED" }),
+			);
+
+			await cancelOrder(undefined, fdNoReason);
+
+			expect(mockVoidInvoice).toHaveBeenCalledWith(
+				expect.objectContaining({
+					reason: "Facture invalidée suite à annulation",
+				}),
+			);
+		});
+
+		it("retourne success message mentionnant creditNoteNumber A-YYYY-NNNNN", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({ invoiceNumber: "F-2026-00123", invoiceStatus: "GENERATED" }),
+			);
+
+			const result = await cancelOrder(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(result.message).toContain("F-2026-00123");
+			expect(result.message).toContain("A-2026-00042");
+		});
+
+		it("retourne success mais signale avoir à émettre manuellement quand voidInvoice noop already-voided sans num", async () => {
+			mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "already-voided" });
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({ invoiceNumber: "F-2026-00007", invoiceStatus: "GENERATED" }),
+			);
+
+			const result = await cancelOrder(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(result.message).toContain("avoir à émettre manuellement");
+		});
+	});
+
+	describe("invoice non-GENERATED — voidInvoice must NOT be called", () => {
+		it("ne déclenche PAS voidInvoice quand invoiceStatus=PENDING", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({ invoiceNumber: null, invoiceStatus: "PENDING" }),
+			);
+
+			await cancelOrder(undefined, validFormData);
+
+			expect(mockVoidInvoice).not.toHaveBeenCalled();
+		});
+
+		it("ne déclenche PAS voidInvoice quand invoiceStatus=VOIDED (déjà invalidée)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({
+					invoiceNumber: "F-2026-00001",
+					invoiceStatus: "VOIDED",
+				}),
+			);
+
+			await cancelOrder(undefined, validFormData);
+
+			expect(mockVoidInvoice).not.toHaveBeenCalled();
+		});
+
+		it("ne déclenche PAS voidInvoice pour une commande PENDING payment sans facture", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({ paymentStatus: "PENDING", invoiceStatus: "PENDING", invoiceNumber: null }),
+			);
+
+			await cancelOrder(undefined, validFormData);
+
+			expect(mockVoidInvoice).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("voidInvoice failed → Sentry alert quand paymentStatus=REFUNDED", () => {
+		it("Sentry.captureMessage fire quand voidInvoice failed + paymentStatus passe à REFUNDED", async () => {
+			mockVoidInvoice.mockResolvedValue({ kind: "failed", error: "MAX_RETRIES exceeded" });
+			mockSentryWithScope.mockImplementation((cb: (scope: unknown) => void) => {
+				cb({
+					setLevel: vi.fn(),
+					setTag: vi.fn(),
+					setFingerprint: vi.fn(),
+					setContext: vi.fn(),
+				});
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({
+					invoiceNumber: "F-2026-00001",
+					invoiceStatus: "GENERATED",
+					paymentStatus: "PAID",
+				}),
+			);
+
+			const result = await cancelOrder(undefined, validFormData);
+
+			expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
+				expect.stringContaining("voidInvoice failed"),
+				"error",
+			);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+		});
+
+		it("Sentry NE fire PAS quand voidInvoice failed mais paymentStatus reste FAILED (PENDING→FAILED)", async () => {
+			mockVoidInvoice.mockResolvedValue({ kind: "failed", error: "X" });
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createTxOrder({
+					invoiceNumber: "F-2026-00001",
+					invoiceStatus: "GENERATED",
+					paymentStatus: "PENDING",
+				}),
+			);
+
+			await cancelOrder(undefined, validFormData);
+
+			expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
+		});
+	});
+});
