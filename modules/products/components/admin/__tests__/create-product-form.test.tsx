@@ -133,12 +133,22 @@ vi.mock("@/modules/materials/components/admin/material-multi-select-field", () =
 }));
 
 vi.mock("@/shared/components/ui/alert", () => ({
-	Alert: ({ children, ...props }: { children: React.ReactNode }) => (
-		<div data-testid="form-alert" {...props}>
+	Alert: ({
+		children,
+		"data-slot": dataSlot,
+		...props
+	}: {
+		children: React.ReactNode;
+		"data-slot"?: string;
+	}) => (
+		// Le `data-slot` distingue les alerts métier (`publication-warning`)
+		// de l'éventuel global form-error alert : on n'ajoute le testid que sur ce dernier.
+		<div data-testid={dataSlot ? undefined : "form-alert"} data-slot={dataSlot} {...props}>
 			{children}
 		</div>
 	),
 	AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	AlertTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // ============================================================================

@@ -1,4 +1,5 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -199,6 +200,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 					currentPageSize={orders.length}
 					nextCursor={pagination.nextCursor}
 					prevCursor={pagination.prevCursor}
+					perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
 				/>
 			</div>
 		</div>

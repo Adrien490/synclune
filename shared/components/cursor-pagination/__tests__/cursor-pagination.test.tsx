@@ -6,14 +6,21 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRouterPush, mockRouterPrefetch, mockHaptic, mockSearchParams, mockPathname } =
-	vi.hoisted(() => ({
-		mockRouterPush: vi.fn(),
-		mockRouterPrefetch: vi.fn(),
-		mockHaptic: vi.fn(),
-		mockSearchParams: { current: new URLSearchParams() },
-		mockPathname: { current: "/admin/ventes/commandes" },
-	}));
+const {
+	mockRouterPush,
+	mockRouterPrefetch,
+	mockHaptic,
+	mockSearchParams,
+	mockPathname,
+	mockHasFinePointer,
+} = vi.hoisted(() => ({
+	mockRouterPush: vi.fn(),
+	mockRouterPrefetch: vi.fn(),
+	mockHaptic: vi.fn(),
+	mockSearchParams: { current: new URLSearchParams() },
+	mockPathname: { current: "/admin/ventes/commandes" },
+	mockHasFinePointer: { current: true },
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -32,6 +39,10 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic,
 	triggerHaptic: mockHaptic,
+}));
+
+vi.mock("@/shared/hooks/use-media-query", () => ({
+	useMediaQuery: () => mockHasFinePointer.current,
 }));
 
 vi.mock("@/shared/components/ui/button-group", () => ({
@@ -117,6 +128,8 @@ describe("CursorPagination", () => {
 		vi.clearAllMocks();
 		mockSearchParams.current = new URLSearchParams();
 		mockPathname.current = "/admin/ventes/commandes";
+		// Defaults: simulate desktop (fine pointer) to keep existing tests stable.
+		mockHasFinePointer.current = true;
 	});
 
 	afterEach(cleanup);
@@ -223,10 +236,25 @@ describe("CursorPagination", () => {
 			expect(screen.getByRole("navigation", { name: "Pagination" })).toBeInTheDocument();
 		});
 
-		it("renders keyboard shortcuts description", () => {
+		it("renders keyboard shortcuts description when pointer is fine (desktop)", () => {
+			mockHasFinePointer.current = true;
 			renderPagination();
 			const desc = screen.getByText(/Raccourcis.*Alt\+Flèche/);
 			expect(desc).toBeInTheDocument();
+		});
+
+		// P1-3 : pas de bruit SR sur mobile (pointer coarse)
+		it("does NOT render keyboard shortcuts description when pointer is coarse (mobile)", () => {
+			mockHasFinePointer.current = false;
+			renderPagination();
+			expect(screen.queryByText(/Raccourcis.*Alt\+Flèche/)).not.toBeInTheDocument();
+		});
+
+		it("omits aria-describedby on nav when pointer is coarse (mobile)", () => {
+			mockHasFinePointer.current = false;
+			renderPagination();
+			const nav = screen.getByRole("navigation");
+			expect(nav).not.toHaveAttribute("aria-describedby");
 		});
 	});
 

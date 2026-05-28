@@ -2,7 +2,7 @@ import { use } from "react";
 import { Package } from "lucide-react";
 import Link from "next/link";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
-import { AdminMobileStickyPagination } from "@/shared/components/cursor-pagination";
+import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
 import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
@@ -91,7 +91,7 @@ export function ProductsMobileList({
 						))}
 					</ItemGroup>
 
-					<AdminMobileStickyPagination
+					<AdminMobileListPagination
 						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}

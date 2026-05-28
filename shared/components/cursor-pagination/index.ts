@@ -5,5 +5,5 @@ export * from "./cursor-pagination";
 export * from "./constants";
 // Export skeleton component
 export * from "./cursor-pagination-skeleton";
-// Export admin mobile sticky wrapper
-export * from "./admin-mobile-sticky-pagination";
+// Export admin mobile list wrapper
+export * from "./admin-mobile-list-pagination";

@@ -256,12 +256,13 @@ describe("retryFailedWebhooks", () => {
 		});
 		mockDispatchEvent.mockResolvedValue({ skipped: false });
 
-		// Date.now() climbs ~30s per call → after iter 1 the deadline (initialAt + 45s)
-		// is already in the past, so iter 2 should break before any work.
+		// Date.now() climbs ~15s per call. Iter 1 stays under the deadline at both
+		// the loop guard (line 89) and the Stripe-timeout guard (line 123).
+		// Iter 2's loop guard reads ≥ deadline → break before dispatching again.
 		let virtualNow = 1_700_000_000_000;
 		const spy = vi.spyOn(Date, "now").mockImplementation(() => {
 			const t = virtualNow;
-			virtualNow += 30_000;
+			virtualNow += 15_000;
 			return t;
 		});
 

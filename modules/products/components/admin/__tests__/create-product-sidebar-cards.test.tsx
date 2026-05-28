@@ -75,6 +75,16 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 		asChild ? <>{children}</> : <div>{children}</div>,
 }));
 
+vi.mock("@/shared/components/ui/alert", () => ({
+	Alert: ({ children, ...props }: { children: React.ReactNode }) => (
+		<div data-testid="form-alert" {...props}>
+			{children}
+		</div>
+	),
+	AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	AlertTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 vi.mock("@/modules/colors/components/color-form-dialog", () => ({
 	COLOR_DIALOG_ID: "color-dialog",
 	ColorFormDialog: () => null,
@@ -205,6 +215,26 @@ function createMockForm(overrides?: Record<string, unknown>) {
 		state: { values: defaultValues },
 		setFieldValue: vi.fn(),
 		getFieldValue: vi.fn((name: string) => defaultValues[name as keyof typeof defaultValues]),
+		Subscribe: ({
+			selector,
+			children,
+		}: {
+			selector: (state: { values: Record<string, unknown> }) => unknown;
+			children: (selected: unknown) => React.ReactNode;
+		}) => {
+			const nestedValues = {
+				status: defaultValues.status,
+				initialSku: {
+					colorIds: defaultValues["initialSku.colorIds"],
+					materialIds: defaultValues["initialSku.materialIds"],
+					size: defaultValues["initialSku.size"],
+					priceInclTaxEuros: defaultValues["initialSku.priceInclTaxEuros"],
+					compareAtPriceEuros: defaultValues["initialSku.compareAtPriceEuros"],
+					inventory: defaultValues["initialSku.inventory"],
+				},
+			};
+			return <>{children(selector({ values: nestedValues }))}</>;
+		},
 		AppField: ({
 			name,
 			children,

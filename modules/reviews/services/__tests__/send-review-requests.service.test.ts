@@ -118,9 +118,11 @@ describe("sendReviewRequests", () => {
 			to: "marie@example.com",
 			customerName: "Marie",
 			orderNumber: "SYN-2026-00001",
-			unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 			idempotencyKey: "review-request:order-1",
 		});
+		expect(args.unsubscribeUrl).toMatch(
+			/^https:\/\/synclune\.fr\/notifications\/desinscription\?email=marie%40example\.com&token=[a-f0-9]+$/,
+		);
 		expect(args.items).toHaveLength(1);
 		expect(args.items[0]).toMatchObject({
 			productTitle: "Bague Éternité",

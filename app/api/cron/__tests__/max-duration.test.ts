@@ -27,10 +27,10 @@ function listCronRoutes(): string[] {
 describe("cron routes maxDuration export", () => {
 	const routeFiles = listCronRoutes();
 
-	it("discovers all 22 cron routes", () => {
+	it("discovers all 23 cron routes", () => {
 		// Tripwire : a different count means a cron was added/removed without
 		// updating vercel.json or the docs. Adjust this number deliberately.
-		expect(routeFiles).toHaveLength(22);
+		expect(routeFiles).toHaveLength(23);
 	});
 
 	it.each(routeFiles)("%s exports maxDuration >= 60", (routePath) => {

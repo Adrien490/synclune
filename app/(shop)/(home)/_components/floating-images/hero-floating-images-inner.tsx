@@ -134,9 +134,7 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 				const pos = IMAGE_POSITIONS[index];
 				if (!pos) return null;
 
-				return (
-					<FloatingImage key={image.slug} image={image} position={pos} preload={index === 0} />
-				);
+				return <FloatingImage key={image.slug} image={image} position={pos} />;
 			})}
 		</div>
 	);

@@ -3,7 +3,7 @@ import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/cli
 import Link from "next/link";
 import { ReceiptText } from "lucide-react";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
-import { AdminMobileStickyPagination } from "@/shared/components/cursor-pagination";
+import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
 import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
@@ -109,7 +109,7 @@ export function RefundsMobileList({
 						))}
 					</ItemGroup>
 
-					<AdminMobileStickyPagination
+					<AdminMobileListPagination
 						perPage={perPage}
 						hasNextPage={pagination.hasNextPage}
 						hasPreviousPage={pagination.hasPreviousPage}

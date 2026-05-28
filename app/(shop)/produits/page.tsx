@@ -51,6 +51,11 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 	const hasActiveFilters = Object.keys(searchParamsData).some(
 		(key) => !["cursor", "direction", "perPage", "sortBy", "search"].includes(key),
 	);
+	// P2-2 : pages cursor (`?cursor=...`) = duplicate content vs canonical
+	// `/produits` → noindex pour préserver le crawl budget Google. Le `follow`
+	// reste actif (PageRank diffuse via les liens pagination rel=prev/next).
+	const isPaginated = !!searchParamsData.cursor;
+	const shouldNoindex = hasActiveFilters || isPaginated;
 
 	return {
 		title: DEFAULT_METADATA.title,
@@ -59,7 +64,7 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 		alternates: {
 			canonical: "/produits",
 		},
-		robots: hasActiveFilters ? { index: false, follow: true } : undefined,
+		robots: shouldNoindex ? { index: false, follow: true } : undefined,
 		openGraph: {
 			title: "Tous mes bijoux colorés | Synclune",
 			description:

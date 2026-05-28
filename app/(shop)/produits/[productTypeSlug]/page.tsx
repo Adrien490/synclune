@@ -73,6 +73,9 @@ export async function generateMetadata({
 	const hasAdditionalFilters = Object.keys(searchParamsData).some(
 		(key) => !["cursor", "direction", "perPage", "sortBy", "search"].includes(key),
 	);
+	// P2-2 : pages cursor noindex (duplicate content vs canonical catégorie)
+	const isPaginated = !!searchParamsData.cursor;
+	const shouldNoindex = hasAdditionalFilters || isPaginated;
 
 	const title = `${productType.label} artisanaux faits main | Synclune`;
 	const description =
@@ -86,8 +89,8 @@ export async function generateMetadata({
 		alternates: {
 			canonical: `/produits/${productTypeSlug}`,
 		},
-		// Indexer la page catégorie, noindex si filtres additionnels
-		robots: hasAdditionalFilters ? { index: false, follow: true } : undefined,
+		// Indexer la page catégorie, noindex si filtres additionnels ou pagination
+		robots: shouldNoindex ? { index: false, follow: true } : undefined,
 		openGraph: {
 			title: `${productType.label} | Synclune`,
 			description,

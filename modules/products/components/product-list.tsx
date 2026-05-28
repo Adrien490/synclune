@@ -4,6 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
@@ -175,6 +176,7 @@ export function ProductList({
 					nextCursor={nextCursor}
 					prevCursor={prevCursor}
 					totalCount={totalCount}
+					perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
 				/>
 			</div>
 		</div>

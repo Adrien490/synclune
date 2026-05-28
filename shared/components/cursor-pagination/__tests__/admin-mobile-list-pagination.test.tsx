@@ -1,11 +1,11 @@
 /**
- * @regression admin-mobile-sticky-pagination
+ * @regression admin-mobile-list-pagination
  *
- * Verrouille le comportement du wrapper `AdminMobileStickyPagination` (P1-4) :
- * - Hide pendant `selectionMode` actif (priorité MobileSelectionBottomBar)
- * - Sticky bottom au-dessus de `--bottom-bar-height`
+ * Verrouille le comportement du wrapper `AdminMobileListPagination` :
  * - md:hidden (desktop a sa propre pagination via AdminDataTable)
+ * - Hide pendant `selectionMode` actif (priorité MobileSelectionBottomBar)
  * - Fallback non-régressif hors BulkSelectionProvider (toujours visible)
+ * - Pas de positionnement sticky (rendu en flux normal en bas de liste)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
@@ -27,7 +27,7 @@ vi.mock("../cursor-pagination", () => ({
 	),
 }));
 
-import { AdminMobileStickyPagination } from "../admin-mobile-sticky-pagination";
+import { AdminMobileListPagination } from "../admin-mobile-list-pagination";
 
 const defaultProps = {
 	perPage: 20,
@@ -38,7 +38,7 @@ const defaultProps = {
 	prevCursor: null,
 };
 
-describe("AdminMobileStickyPagination", () => {
+describe("AdminMobileListPagination", () => {
 	beforeEach(() => {
 		mockSelectionMode.current = false;
 	});
@@ -46,35 +46,40 @@ describe("AdminMobileStickyPagination", () => {
 	afterEach(cleanup);
 
 	it("renders CursorPagination when no selection mode is active", () => {
-		render(<AdminMobileStickyPagination {...defaultProps} />);
+		render(<AdminMobileListPagination {...defaultProps} />);
 		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 	});
 
 	it("returns null when selectionMode is true (MobileSelectionBottomBar takes precedence)", () => {
 		mockSelectionMode.current = true;
-		const { container } = render(<AdminMobileStickyPagination {...defaultProps} />);
+		const { container } = render(<AdminMobileListPagination {...defaultProps} />);
 		expect(container.firstChild).toBeNull();
 		expect(screen.queryByTestId("cursor-pagination")).not.toBeInTheDocument();
 	});
 
 	it("renders even when outside BulkSelectionProvider (fallback non-régressif)", () => {
 		mockSelectionMode.current = null;
-		render(<AdminMobileStickyPagination {...defaultProps} />);
+		render(<AdminMobileListPagination {...defaultProps} />);
 		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 	});
 
-	it("applies md:hidden + sticky bottom + backdrop-blur classes to wrapper", () => {
-		const { container } = render(<AdminMobileStickyPagination {...defaultProps} />);
-		const wrapper = container.querySelector("[data-admin-mobile-sticky-pagination]");
+	it("applies md:hidden class to wrapper", () => {
+		const { container } = render(<AdminMobileListPagination {...defaultProps} />);
+		const wrapper = container.querySelector("[data-admin-mobile-list-pagination]");
 		expect(wrapper).toBeInTheDocument();
 		expect(wrapper).toHaveClass("md:hidden");
-		expect(wrapper?.className).toMatch(/sticky/);
-		expect(wrapper?.className).toMatch(/bottom-\[var\(--bottom-bar-height,5rem\)\]/);
-		expect(wrapper?.className).toMatch(/backdrop-blur/);
+	});
+
+	it("does not apply sticky positioning, backdrop-blur, or negative margin bleed", () => {
+		const { container } = render(<AdminMobileListPagination {...defaultProps} />);
+		const wrapper = container.querySelector("[data-admin-mobile-list-pagination]");
+		expect(wrapper?.className ?? "").not.toMatch(/sticky/);
+		expect(wrapper?.className ?? "").not.toMatch(/backdrop-blur/);
+		expect(wrapper?.className ?? "").not.toMatch(/-mx-/);
 	});
 
 	it("forwards all pagination props (perPage, cursors, totalCount, etc.) to CursorPagination", () => {
-		render(<AdminMobileStickyPagination {...defaultProps} totalCount={127} />);
+		render(<AdminMobileListPagination {...defaultProps} totalCount={127} />);
 		const target = screen.getByTestId("cursor-pagination");
 		const props = JSON.parse(target.getAttribute("data-props") ?? "{}");
 		expect(props.perPage).toBe(20);
@@ -86,9 +91,9 @@ describe("AdminMobileStickyPagination", () => {
 
 	it("accepts wrapperClassName override", () => {
 		const { container } = render(
-			<AdminMobileStickyPagination {...defaultProps} wrapperClassName="custom-class" />,
+			<AdminMobileListPagination {...defaultProps} wrapperClassName="custom-class" />,
 		);
-		const wrapper = container.querySelector("[data-admin-mobile-sticky-pagination]");
+		const wrapper = container.querySelector("[data-admin-mobile-list-pagination]");
 		expect(wrapper).toHaveClass("custom-class");
 	});
 });

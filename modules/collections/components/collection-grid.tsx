@@ -1,5 +1,6 @@
 import { Stagger } from "@/shared/components/animations";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { PUBLIC_PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
@@ -133,6 +134,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 					nextCursor={nextCursor}
 					prevCursor={prevCursor}
 					totalCount={totalCount}
+					perPageOptions={PUBLIC_PER_PAGE_OPTIONS}
 				/>
 			</div>
 		</div>

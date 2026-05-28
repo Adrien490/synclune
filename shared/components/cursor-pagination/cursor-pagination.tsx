@@ -25,14 +25,17 @@ import { Button } from "../ui/button";
 import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
 import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
+// `focus-ring` SSOT (`app/globals.css`) hérité du `<Button>` parent — pas de
+// surcharge `focus-visible:ring-*` ici (drift convention repo).
+// `can-hover:` préfixe anti sticky-hover iOS (hover figé après tap).
 const PAGINATION_BUTTON_CLASSES = [
 	"backdrop-blur-sm",
 	"border-primary/20",
-	"hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-	"motion-safe:hover:scale-[1.02]",
-	"focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+	"can-hover:hover:bg-primary/10 can-hover:hover:text-primary can-hover:hover:border-primary/40",
+	"motion-safe:can-hover:hover:scale-[1.02]",
 	"motion-safe:active:scale-[0.98]",
 	"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none",
 ] as const;
@@ -54,6 +57,10 @@ function CursorPaginationInner({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	// P1-3 : annonce SR des raccourcis clavier (Alt+Flèche) uniquement quand le
+	// device a un pointer fine (souris/trackpad). Sur tactile, les raccourcis
+	// n'existent pas → bruit cognitif pour VoiceOver iOS.
+	const hasFinePointer = useMediaQuery("(pointer: fine)");
 	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
 	// Avoids spurious scroll-to-top on first render when cursor is also undefined
 	// eslint-disable-next-line react-hooks/refs
@@ -287,13 +294,15 @@ function CursorPaginationInner({
 			{canNavigate && (
 				<nav
 					aria-label="Pagination"
-					aria-describedby="pagination-shortcuts"
+					aria-describedby={hasFinePointer ? "pagination-shortcuts" : undefined}
 					className="flex items-center gap-2"
 				>
-					<span id="pagination-shortcuts" className="sr-only">
-						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
-						suivante
-					</span>
+					{hasFinePointer && (
+						<span id="pagination-shortcuts" className="sr-only">
+							Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
+							suivante
+						</span>
+					)}
 					{/* Bouton retour au début - toujours affiché pour éviter layout shift */}
 					<Button
 						variant="outline"
