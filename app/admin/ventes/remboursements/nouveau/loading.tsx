@@ -1,3 +1,4 @@
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -106,10 +107,9 @@ export default function NewRefundLoading() {
 						</CardContent>
 					</Card>
 
-					{/* Sticky footer — mirror AdminFormFooter */}
-					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
+					<AdminFormFooter>
 						<Skeleton className="h-11 w-full" />
-					</div>
+					</AdminFormFooter>
 				</div>
 			</div>
 		</div>

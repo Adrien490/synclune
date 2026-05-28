@@ -1,3 +1,5 @@
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function AdjustStockLoading() {
@@ -6,10 +8,10 @@ export default function AdjustStockLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du formulaire de stock"
-			className="space-y-4"
+			className="space-y-6"
 		>
 			<span className="sr-only">Chargement du formulaire de stock…</span>
-			<Skeleton className="hidden h-7 w-44 md:block" />
+			<PageHeaderSkeleton variant="compact" hasDescription={false} className="hidden md:block" />
 			<div className="max-w-2xl space-y-4">
 				<div className="space-y-2">
 					<Skeleton className="h-4 w-32" />
@@ -19,7 +21,11 @@ export default function AdjustStockLoading() {
 					<Skeleton className="h-4 w-40" />
 					<Skeleton className="h-20 w-full" />
 				</div>
-				<Skeleton className="h-10 w-32" />
+				<AdminFormFooter>
+					<div className="flex justify-end">
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-32" />
+					</div>
+				</AdminFormFooter>
 			</div>
 		</div>
 	);

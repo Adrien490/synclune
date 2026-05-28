@@ -24,7 +24,7 @@ export default function ReviewsAdminLoading() {
 							<p className="text-muted-foreground text-sm font-medium">Total avis</p>
 							<Skeleton className="mt-1 h-8 w-16" />
 						</div>
-						<MessageSquare className="text-muted-foreground size-8" />
+						<MessageSquare className="text-muted-foreground size-8" aria-hidden="true" />
 					</div>
 				</div>
 
@@ -34,7 +34,7 @@ export default function ReviewsAdminLoading() {
 							<p className="text-muted-foreground text-sm font-medium">Publiés</p>
 							<Skeleton className="mt-1 h-8 w-12" />
 						</div>
-						<CircleCheck className="text-secondary-foreground size-8" />
+						<CircleCheck className="text-secondary-foreground size-8" aria-hidden="true" />
 					</div>
 				</div>
 
@@ -44,7 +44,7 @@ export default function ReviewsAdminLoading() {
 							<p className="text-muted-foreground text-sm font-medium">Masqués</p>
 							<Skeleton className="mt-1 h-8 w-12" />
 						</div>
-						<EyeOff className="text-muted-foreground size-8" />
+						<EyeOff className="text-muted-foreground size-8" aria-hidden="true" />
 					</div>
 				</div>
 
@@ -54,7 +54,7 @@ export default function ReviewsAdminLoading() {
 							<p className="text-muted-foreground text-sm font-medium">Note moyenne</p>
 							<Skeleton className="mt-1 h-8 w-16" />
 						</div>
-						<Star className="text-muted-foreground size-8" />
+						<Star className="text-muted-foreground size-8" aria-hidden="true" />
 					</div>
 				</div>
 			</div>

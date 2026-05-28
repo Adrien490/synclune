@@ -9,7 +9,7 @@ export function ProductsMobileListSkeleton({
 	hasActiveFilters,
 }: ProductsMobileListSkeletonProps = {}) {
 	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0">
 			{/* Reserve l'espace du MobileSelectionHeader (bouton "Selectionner") pour eviter
 			    le jump 44px à l'apparition (CLS parite avec products-mobile-list runtime). */}
 			<div className="flex items-center justify-end">

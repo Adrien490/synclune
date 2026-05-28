@@ -27,7 +27,7 @@ export default function DashboardLoading() {
 				actions={
 					<>
 						<div
-							className="hidden w-full items-center gap-2 md:flex md:w-auto md:justify-end"
+							className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end"
 							aria-hidden="true"
 						>
 							<Skeleton shape="rounded" className="h-9 w-32" />

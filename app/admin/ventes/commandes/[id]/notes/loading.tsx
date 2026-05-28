@@ -1,3 +1,5 @@
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function OrderNotesLoading() {
@@ -9,13 +11,14 @@ export default function OrderNotesLoading() {
 			className="flex h-full min-h-0 flex-col gap-4"
 		>
 			<span className="sr-only">Chargement des notes…</span>
-			<div className="hidden md:block">
-				<Skeleton className="h-7 w-44" />
-				<Skeleton className="mt-2 h-4 w-56" />
-			</div>
+			<PageHeaderSkeleton variant="compact" hasDescription className="hidden md:block" />
 			<div className="max-w-2xl space-y-3">
 				<Skeleton className="h-40 w-full" />
-				<Skeleton className="h-10 w-32" />
+				<AdminFormFooter>
+					<div className="flex justify-end">
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-32" />
+					</div>
+				</AdminFormFooter>
 			</div>
 		</div>
 	);

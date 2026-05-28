@@ -1,3 +1,5 @@
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function ShippingAddressLoading() {
@@ -6,10 +8,10 @@ export default function ShippingAddressLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de l'adresse de livraison"
-			className="space-y-4"
+			className="space-y-6"
 		>
 			<span className="sr-only">Chargement de l&apos;adresse de livraison…</span>
-			<Skeleton className="hidden h-7 w-80 md:block" />
+			<PageHeaderSkeleton variant="compact" hasDescription={false} className="hidden md:block" />
 			<div className="max-w-2xl space-y-4">
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					{Array.from({ length: 2 }).map((_, i) => (
@@ -25,7 +27,11 @@ export default function ShippingAddressLoading() {
 						<Skeleton className="h-10 w-full" />
 					</div>
 				))}
-				<Skeleton className="h-10 w-32" />
+				<AdminFormFooter>
+					<div className="flex justify-end">
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-32" />
+					</div>
+				</AdminFormFooter>
 			</div>
 		</div>
 	);

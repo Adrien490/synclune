@@ -121,7 +121,7 @@ export default function AdminDiscountDetailLoading() {
 			<div className="space-y-6">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div>
-						<Skeleton className="h-9 w-40 sm:h-12 sm:w-56" />
+						<Skeleton className="h-7 w-48 sm:h-9 sm:w-64 lg:h-10" />
 						<Skeleton className="mt-2 hidden h-4 w-72 md:block" />
 					</div>
 					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">

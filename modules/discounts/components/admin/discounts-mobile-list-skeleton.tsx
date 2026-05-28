@@ -13,7 +13,7 @@ export function DiscountsMobileListSkeleton({
 }: DiscountsMobileListSkeletonProps = {}) {
 	const reduced = useReducedMotion();
 	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0">
 			<div className="flex items-center justify-end">
 				<Skeleton shape="rounded" className="h-11 w-32" />
 			</div>

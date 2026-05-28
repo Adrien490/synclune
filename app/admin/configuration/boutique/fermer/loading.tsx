@@ -1,3 +1,4 @@
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { PageHeader } from "@/shared/components/page-header";
 import {
 	Breadcrumb,
@@ -57,12 +58,11 @@ export default function CloseStoreLoading() {
 					<Skeleton className="h-4 w-72" />
 				</div>
 
-				{/* Sticky footer — mirror AdminFormFooter */}
-				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] mt-2 px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
+				<AdminFormFooter className="mt-2 md:mt-0">
 					<div className="flex md:justify-end">
 						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-56" />
 					</div>
-				</div>
+				</AdminFormFooter>
 			</div>
 		</div>
 	);

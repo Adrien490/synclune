@@ -1,52 +1,12 @@
-import { PageHeader } from "@/shared/components/page-header";
-import { Card, CardHeader } from "@/shared/components/ui/card";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SectionNavigationLoading } from "@/app/admin/_components/section-navigation-loading";
 
-/**
- * Loading state for catalog section navigation page
- * Structure alignee avec SectionNavigation:
- * - PageHeader
- * - Grid de cards navigation (5 liens en 3 colonnes)
- */
 export default function CatalogLoading() {
 	return (
-		<div role="status" aria-busy="true" aria-label="Chargement du catalogue">
-			<span className="sr-only">Chargement du catalogue…</span>
-
-			{/* Page Header (desktop) */}
-			<PageHeader
-				variant="compact"
-				title="Catalogue"
-				description="Gérez vos bijoux, collections et tout ce qui compose votre catalogue"
-				className="hidden md:block"
-			/>
-
-			{/* Mobile description (mirror SectionNavigation: title covered by AdminMobileHeader) */}
-			<div className="mb-4 md:hidden">
-				<Skeleton className="h-4 w-72 max-w-full" />
-			</div>
-
-			{/* Navigation Cards Grid - matches SectionNavigation structure */}
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{Array.from({ length: 5 }).map((_, i) => (
-					<Card key={i} className="h-full">
-						<CardHeader>
-							<div className="flex items-start justify-between">
-								<div className="flex items-center gap-3">
-									{/* Icon placeholder */}
-									<Skeleton className="size-10 rounded-lg" />
-									<div className="space-y-2">
-										{/* Title */}
-										<Skeleton className="h-5 w-24" />
-										{/* Description */}
-										<Skeleton className="h-4 w-40" />
-									</div>
-								</div>
-							</div>
-						</CardHeader>
-					</Card>
-				))}
-			</div>
-		</div>
+		<SectionNavigationLoading
+			title="Catalogue"
+			description="Gérez vos bijoux, collections et tout ce qui compose votre catalogue"
+			columns={3}
+			count={5}
+		/>
 	);
 }
