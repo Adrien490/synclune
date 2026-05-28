@@ -286,7 +286,7 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByText("Confiez jusqu'à 10 clichés de votre bijou à l'atelier"),
+				screen.getByText("Confiez jusqu'à 10 médias de votre bijou à l'atelier"),
 			).toBeInTheDocument();
 		});
 

@@ -97,7 +97,7 @@ describe("PendingUploadsGrid", () => {
 			render(<PendingUploadsGrid files={[file1, file2]} {...noopHandlers} />);
 
 			expect(screen.getByText("2 fichiers en attente")).toBeTruthy();
-			expect(screen.getByRole("button", { name: "Ajouter 2 fichiers" })).toBeTruthy();
+			expect(screen.getByRole("button", { name: "Téléverser 2 fichiers" })).toBeTruthy();
 		});
 	});
 
