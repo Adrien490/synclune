@@ -212,6 +212,7 @@ vi.mock("@/modules/payments/utils/parse-full-name", () => ({
 import { confirmCheckout } from "../confirm-checkout";
 import type { ConfirmCheckoutData } from "../../schemas/checkout.schema";
 import StripeModule from "stripe";
+import { BusinessError } from "@/shared/lib/actions";
 
 // ============================================================================
 // TEST DATA
@@ -1081,6 +1082,26 @@ describe("confirmCheckout", () => {
 			expect(result).toEqual({
 				success: false,
 				error: "Une erreur est survenue lors de la validation de la commande.",
+			});
+		});
+
+		/**
+		 * @regression biz-bug-007
+		 * Les rejets métier (code promo expiré entre validation panier et paiement,
+		 * stock insuffisant, produit indisponible, zone non livrée) sont des
+		 * BusinessError au message actionnable : ils doivent être surfacés au client
+		 * tels quels, et NON masqués par le message d'erreur générique.
+		 */
+		it("[regression biz-bug-007] surfaces BusinessError message from createOrderInTransaction", async () => {
+			mockCreateOrderInTransaction.mockRejectedValue(
+				new BusinessError("Ce code promo a atteint sa limite d'utilisation"),
+			);
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result).toEqual({
+				success: false,
+				error: "Ce code promo a atteint sa limite d'utilisation",
 			});
 		});
 	});

@@ -1,8 +1,8 @@
 import { Construction } from "lucide-react";
 import Link from "next/link";
 
+import { formatParisDateTime } from "@/modules/store-settings/utils/paris-datetime";
 import { ROUTES } from "@/shared/constants/urls";
-import { formatDateTime } from "@/shared/utils/dates";
 
 interface MaintenanceBannerProps {
 	closureMessage: string | null;
@@ -28,7 +28,7 @@ export function MaintenanceBanner({ closureMessage, reopensAt }: MaintenanceBann
 					</span>
 					{reopensAt && (
 						<span className="ml-1 hidden md:inline">
-							· Réouverture le {formatDateTime(reopensAt)}
+							· Réouverture le {formatParisDateTime(reopensAt)}
 						</span>
 					)}
 					{closureMessage && <span className="ml-1 hidden lg:inline">: {closureMessage}</span>}

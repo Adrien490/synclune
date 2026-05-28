@@ -62,6 +62,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PAID: "PAID",
 		FAILED: "FAILED",
 		EXPIRED: "EXPIRED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
 	},
 	FulfillmentStatus: {
@@ -82,6 +83,9 @@ vi.mock("@/app/generated/prisma/client", () => ({
 }));
 
 import { fetchDashboardKpis } from "../get-kpis";
+import { parisWallTimeToUtc } from "@/shared/utils/timezone";
+
+const ENCAISSED_STATUSES = { in: ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"] };
 
 function makeAggregateResult(total: number | null, count = 0, discountAmount: number | null = 0) {
 	return { _sum: { total, discountAmount }, _count: count };
@@ -93,15 +97,20 @@ function makeRefundAggregateResult(amount: number | null, count = 0) {
 
 /**
  * Sets up all mocks in the order they are called by Promise.all:
- * 1. order.aggregate (current)
- * 2. order.aggregate (previous)
- * 3. order.count (current totalOrders)
- * 4. order.count (previous totalOrders)
- * 5. order.count (pending shipment)
- * 6. refund.aggregate (current)
- * 7. refund.aggregate (previous)
- * 8. order.findMany (current shipped)
- * 9. order.findMany (previous shipped)
+ * 1. order.aggregate (current revenue)
+ * 2. order.aggregate (previous revenue)
+ * 3. order.count (current totalOrders — createdAt)
+ * 4. order.count (previous totalOrders — createdAt)
+ * 5. order.count (current paid-created — conversion numerator)
+ * 6. order.count (previous paid-created)
+ * 7. order.count (pending shipment)
+ * 8. refund.aggregate (current — processedAt)
+ * 9. refund.aggregate (previous)
+ * 10. order.findMany (current shipped)
+ * 11. order.findMany (previous shipped)
+ *
+ * `currentPaidCreated`/`lastPaidCreated` (conversion numerator, ANALYTICS-AUDIT-006)
+ * default to `currentCount`/`lastCount` to keep legacy assertions stable.
  */
 function setupDefaultMocks({
 	currentTotal = 10000,
@@ -112,6 +121,8 @@ function setupDefaultMocks({
 	lastDiscount = 100,
 	currentTotalOrders = 6,
 	lastTotalOrders = 5,
+	currentPaidCreated,
+	lastPaidCreated,
 	pendingShipment = 2,
 	currentRefundAmount = 500,
 	currentRefundCount = 1,
@@ -128,6 +139,8 @@ function setupDefaultMocks({
 	lastDiscount?: number | null;
 	currentTotalOrders?: number;
 	lastTotalOrders?: number;
+	currentPaidCreated?: number;
+	lastPaidCreated?: number;
 	pendingShipment?: number;
 	currentRefundAmount?: number | null;
 	currentRefundCount?: number;
@@ -143,6 +156,8 @@ function setupDefaultMocks({
 	mockPrismaOrderCount
 		.mockResolvedValueOnce(currentTotalOrders)
 		.mockResolvedValueOnce(lastTotalOrders)
+		.mockResolvedValueOnce(currentPaidCreated ?? currentCount)
+		.mockResolvedValueOnce(lastPaidCreated ?? lastCount)
 		.mockResolvedValueOnce(pendingShipment);
 
 	mockPrismaRefundAggregate
@@ -216,13 +231,14 @@ describe("fetchDashboardKpis", () => {
 		expect(result.conversionRate.previousVolume).toBe(80);
 	});
 
-	it("issues 2 aggregate, 3 count, 2 refund aggregate, and 2 findMany queries", async () => {
+	it("issues 2 aggregate, 5 count, 2 refund aggregate, and 2 findMany queries", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		expect(mockPrismaOrderAggregate).toHaveBeenCalledTimes(2);
-		expect(mockPrismaOrderCount).toHaveBeenCalledTimes(3);
+		// 5 counts: total created (×2) + paid-created conversion numerator (×2) + pending shipment
+		expect(mockPrismaOrderCount).toHaveBeenCalledTimes(5);
 		expect(mockPrismaRefundAggregate).toHaveBeenCalledTimes(2);
 		expect(mockPrismaOrderFindMany).toHaveBeenCalledTimes(2);
 	});
@@ -385,6 +401,54 @@ describe("fetchDashboardKpis", () => {
 		expect(result.conversionRate.abandoned).toBe(0);
 	});
 
+	/**
+	 * @regression ANALYTICS-AUDIT-006
+	 *
+	 * Le taux de conversion doit utiliser le numérateur « commandes créées dans la
+	 * période ET payées » (cohorte createdAt), PAS le compte de commandes payées par
+	 * paidAt (qui mélange les cohortes et peut dépasser 100 %).
+	 */
+	it("conversion uses the paid-created cohort, not the paidAt revenue count", async () => {
+		// 10 commandes payées par paidAt (revenue cohort) MAIS seulement 3 des 10 commandes
+		// créées dans la période ont été payées → conversion = 3/10, pas 10/10.
+		setupDefaultMocks({ currentCount: 10, currentTotalOrders: 10, currentPaidCreated: 3 });
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.conversionRate.rate).toBeCloseTo(30);
+		expect(result.conversionRate.abandoned).toBe(7);
+		// Le compte de commandes (revenue) reste sur la cohorte paidAt.
+		expect(result.monthlyOrders.count).toBe(10);
+	});
+
+	it("conversion numerator query filters createdAt + encaissed statuses (ANALYTICS-AUDIT-006)", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		// 3ème count (index 2) = numérateur de conversion (current paid-created).
+		const paidCreatedCall = mockPrismaOrderCount.mock.calls[2]![0];
+		expect(paidCreatedCall.where.createdAt).toBeDefined();
+		expect(paidCreatedCall.where.paymentStatus).toEqual(ENCAISSED_STATUSES);
+	});
+
+	/**
+	 * @regression ANALYTICS-AUDIT-007
+	 *
+	 * Les remboursements de la période courante sont bucketés sur `processedAt`
+	 * (date de décaissement Stripe), cohérent avec le CA cash-basis — pas `createdAt`.
+	 */
+	it("buckets current-period refunds on processedAt, not createdAt", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		const currentRefundCall = mockPrismaRefundAggregate.mock.calls[0]![0];
+		expect(currentRefundCall.where.processedAt).toBeDefined();
+		expect(currentRefundCall.where.createdAt).toBeUndefined();
+		expect(currentRefundCall.where.status).toBe("COMPLETED");
+	});
+
 	it("returns pending shipment count", async () => {
 		setupDefaultMocks({ pendingShipment: 7 });
 
@@ -398,11 +462,13 @@ describe("fetchDashboardKpis", () => {
 
 		await fetchDashboardKpis();
 
-		const pendingCall = mockPrismaOrderCount.mock.calls[2]![0];
+		// Pending shipment is the 5th count query (index 4) after the 2 total + 2 paid-created.
+		const pendingCall = mockPrismaOrderCount.mock.calls[4]![0];
 		expect(pendingCall.where.fulfillmentStatus).toEqual({
 			in: ["UNFULFILLED", "PROCESSING"],
 		});
-		expect(pendingCall.where.paymentStatus).toBe("PAID");
+		// "À expédier" : argent encore (au moins partiellement) acquis → exclut REFUNDED.
+		expect(pendingCall.where.paymentStatus).toEqual({ in: ["PAID", "PARTIALLY_REFUNDED"] });
 	});
 
 	it("returns discount impact amount", async () => {
@@ -414,37 +480,37 @@ describe("fetchDashboardKpis", () => {
 		expect(result.discountImpact.evolution).toBeCloseTo(66.67, 0);
 	});
 
-	it("queries with PaymentStatus.PAID filter for revenue aggregates", async () => {
+	it("queries with encaissed statuses (PAID + refunded) for revenue aggregates", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		const aggregateCalls = mockPrismaOrderAggregate.mock.calls;
 		for (const [args] of aggregateCalls) {
-			expect(args.where.paymentStatus).toBe("PAID");
+			expect(args.where.paymentStatus).toEqual(ENCAISSED_STATUSES);
 		}
 	});
 
-	it("scopes current month queries from the first day of current UTC month", async () => {
+	it("scopes current month queries from the first day of the current Paris month", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		const firstCall = mockPrismaOrderAggregate.mock.calls[0]![0];
-		const expectedCurrentMonthStart = new Date(Date.UTC(2026, 1, 1));
-		expect(firstCall.where.paidAt.gte).toEqual(expectedCurrentMonthStart);
+		// 1er février 2026 00:00 Paris (= 2026-01-31T23:00:00Z en hiver, ANALYTICS-AUDIT-005).
+		expect(firstCall.where.paidAt.gte).toEqual(parisWallTimeToUtc(2026, 1, 1));
 	});
 
-	it("scopes last month queries with correct gte and lte bounds", async () => {
+	it("scopes last month queries with correct gte and lte bounds (Paris)", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		const lastMonthAggregate = mockPrismaOrderAggregate.mock.calls[1]![0];
-		const expectedLastMonthStart = new Date(Date.UTC(2026, 0, 1));
-		const expectedLastMonthEnd = new Date(Date.UTC(2026, 1, 0, 23, 59, 59, 999));
-		expect(lastMonthAggregate.where.paidAt.gte).toEqual(expectedLastMonthStart);
-		expect(lastMonthAggregate.where.paidAt.lte).toEqual(expectedLastMonthEnd);
+		expect(lastMonthAggregate.where.paidAt.gte).toEqual(parisWallTimeToUtc(2026, 0, 1));
+		expect(lastMonthAggregate.where.paidAt.lte).toEqual(
+			parisWallTimeToUtc(2026, 1, 0, 23, 59, 59, 999),
+		);
 	});
 
 	it("queries refunds with COMPLETED status", async () => {
@@ -476,8 +542,8 @@ describe("fetchDashboardKpis", () => {
 			expect(lastMonthCall).toBeDefined();
 			const previousStart = lastMonthCall.where.paidAt.gte as Date;
 
-			expect(previousStart.getUTCFullYear()).toBe(2026);
-			expect(previousStart.getUTCMonth()).toBe(0);
+			// Janvier 2026 00:00 Paris (mois précédent de février).
+			expect(previousStart).toEqual(parisWallTimeToUtc(2026, 0, 1));
 		});
 
 		it("uses previousYearStart/End when mode is 'yoy'", async () => {
@@ -489,8 +555,8 @@ describe("fetchDashboardKpis", () => {
 			expect(lastYearCall).toBeDefined();
 			const previousStart = lastYearCall.where.paidAt.gte as Date;
 
-			expect(previousStart.getUTCFullYear()).toBe(2025);
-			expect(previousStart.getUTCMonth()).toBe(1);
+			// Février 2025 00:00 Paris (même mois, année précédente).
+			expect(previousStart).toEqual(parisWallTimeToUtc(2025, 1, 1));
 		});
 
 		it("computes evolution against YoY data when mode is 'yoy'", async () => {
@@ -514,7 +580,8 @@ describe("fetchDashboardKpis", () => {
 			await fetchDashboardKpis("month", "yoy");
 
 			const lastYearRefundCall = mockPrismaRefundAggregate.mock.calls[1]?.[0];
-			const refundStart = lastYearRefundCall.where.createdAt.gte as Date;
+			// Refunds bucketés sur processedAt (date de décaissement, ANALYTICS-AUDIT-007).
+			const refundStart = lastYearRefundCall.where.processedAt.gte as Date;
 
 			expect(refundStart.getUTCFullYear()).toBe(2025);
 		});

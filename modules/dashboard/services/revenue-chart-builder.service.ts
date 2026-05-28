@@ -2,6 +2,7 @@ import { addDays, addMonths, addWeeks, format, startOfISOWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import type { RevenueDataPoint, RevenueRow } from "../types/dashboard.types";
 import type { ChartGranularity } from "../constants/period.constants";
+import { parisDateKey } from "@/shared/utils/timezone";
 
 // ============================================================================
 // REVENUE CHART BUILDER SERVICE
@@ -44,15 +45,19 @@ export function buildRevenueMap(rows: RevenueRow[]): RevenueMaps {
 function getDateKey(date: Date, granularity: ChartGranularity): string {
 	switch (granularity) {
 		case "daily":
-			return date.toISOString().split("T")[0]!;
+			// Clé en heure de Paris pour matcher TO_CHAR(... AT TIME ZONE 'Europe/Paris') SQL.
+			return parisDateKey(date);
 		case "weekly": {
-			const weekStart = startOfISOWeek(date);
+			// ISO week de la date *locale Paris* (ancrage midi UTC pour lever toute ambiguïté).
+			const parisNoon = new Date(`${parisDateKey(date)}T12:00:00Z`);
+			const weekStart = startOfISOWeek(parisNoon);
 			const isoYear = format(weekStart, "RRRR", { locale: fr });
 			const isoWeek = format(weekStart, "II", { locale: fr });
 			return `${isoYear}-${isoWeek}`;
 		}
 		case "monthly":
-			return format(date, "yyyy-MM");
+			// "YYYY-MM" dérivé de la date locale Paris.
+			return parisDateKey(date).slice(0, 7);
 	}
 }
 

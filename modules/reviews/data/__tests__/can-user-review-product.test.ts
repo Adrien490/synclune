@@ -49,14 +49,18 @@ describe("canUserReviewProduct", () => {
 		expect(result.existingReviewId).toBe("rev-1");
 	});
 
-	it("should allow review when existing review is soft-deleted", async () => {
+	// REVIEW-AUDIT-003 : un avis par produit et par utilisateur, définitivement.
+	// Même soft-deleted, l'avis verrouille la paire (userId, productId) au niveau DB —
+	// renvoyer canReview=true menait à un échec P2002 + message "no_purchase" trompeur.
+	it("should return already_reviewed even when existing review is soft-deleted (no existingReviewId)", async () => {
 		mockPrisma.productReview.findUnique.mockResolvedValue({ id: "rev-1", deletedAt: new Date() });
-		mockPrisma.orderItem.findFirst.mockResolvedValueOnce({ id: "item-2" });
 
 		const result = await canUserReviewProduct(VALID_USER_ID, VALID_PRODUCT_ID);
 
-		expect(result.canReview).toBe(true);
-		expect(result.orderItemId).toBe("item-2");
+		expect(result.canReview).toBe(false);
+		expect(result.reason).toBe("already_reviewed");
+		// id d'un avis supprimé non exposé (lien UI mort)
+		expect(result.existingReviewId).toBeUndefined();
 	});
 
 	it("should return order_not_delivered when order exists but not yet delivered", async () => {

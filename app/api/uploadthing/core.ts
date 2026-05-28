@@ -11,6 +11,7 @@ import {
 	validateImageDimensions,
 } from "@/modules/media/services/validate-image-dimensions.service";
 import { stripImageMetadata } from "@/modules/media/services/strip-image-metadata.service";
+import { isHeicMimeType, reencodeHeicToWebp } from "@/modules/media/services/reencode-heic.service";
 import { utapi } from "@/shared/lib/uploadthing";
 import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
 
@@ -65,6 +66,44 @@ async function rejectImageBomb(file: { ufsUrl: string; key: string; name: string
 		Sentry.captureException(err, {
 			tags: { source: "uploadthing", step: "dimensions-validation", fileKey: file.key },
 		});
+	}
+}
+
+/**
+ * MEDIA-AUDIT-006: convertit un HEIC/HEIF brut en WebP web-safe, ou rejette
+ * l'upload + supprime le blob orphelin si la conversion échoue. On ne persiste
+ * jamais une URL HEIC publique (non décodable hors Safari).
+ *
+ * Retourne l'URL/clé effective à utiliser en aval. `converted: true` indique que
+ * le fichier a été re-encodé (déjà EXIF-strippé → strip ultérieur inutile).
+ */
+async function reencodeHeicOrReject(file: {
+	ufsUrl: string;
+	key: string;
+	name: string;
+	type: string;
+}): Promise<{ url: string; key: string; converted: boolean }> {
+	if (!isHeicMimeType(file.type)) {
+		return { url: file.ufsUrl, key: file.key, converted: false };
+	}
+
+	try {
+		const result = await reencodeHeicToWebp(file);
+		return { url: result.url, key: result.key, converted: true };
+	} catch (err) {
+		try {
+			await utapi.deleteFiles([file.key]);
+		} catch (deleteErr) {
+			Sentry.captureException(deleteErr, {
+				tags: { source: "uploadthing", step: "heic-reject-cleanup", fileKey: file.key },
+			});
+		}
+		Sentry.captureException(err, {
+			tags: { source: "uploadthing", step: "heic-reencode", fileKey: file.key },
+		});
+		throw new UploadThingError(
+			`Image HEIC non convertie: ${file.name}. Veuillez réessayer ou utiliser un format JPEG/PNG.`,
+		);
 	}
 }
 
@@ -202,18 +241,31 @@ export const ourFileRouter = {
 			try {
 				const isImage = file.type.startsWith("image/");
 
-				// Pour les images: rejeter les image-bombs, stripper EXIF/GPS (RGPD), puis generer le blur placeholder
+				// Pour les images: rejeter les image-bombs, convertir le HEIC brut en
+				// WebP (MEDIA-AUDIT-006), stripper EXIF/GPS (RGPD), puis generer le blur.
 				if (isImage) {
 					await rejectImageBomb(file);
+					// HEIC brut → WebP web-safe, ou rejet + cleanup si conversion impossible.
+					const safe = await reencodeHeicOrReject(file);
+					if (safe.converted) {
+						// Re-encode Sharp = EXIF/GPS déjà strippés → on génère directement le blur.
+						const blurDataUrl = await generateBlurSafe(safe.url);
+						return {
+							url: safe.url,
+							thumbnailUrl: null,
+							blurDataUrl,
+							uploadedBy: metadata.userId,
+						};
+					}
 					// RGPD: strip EXIF/GPS metadata avant exposition sur CDN public.
 					// Best-effort: si le strip échoue, on conserve l'URL d'origine.
 					const stripped = await stripImageMetadata({
-						ufsUrl: file.ufsUrl,
-						key: file.key,
+						ufsUrl: safe.url,
+						key: safe.key,
 						name: file.name,
 						type: file.type,
 					});
-					const finalUrl = stripped?.url ?? file.ufsUrl;
+					const finalUrl = stripped?.url ?? safe.url;
 					const blurDataUrl = await generateBlurSafe(finalUrl);
 					return {
 						url: finalUrl,
@@ -292,15 +344,25 @@ export const ourFileRouter = {
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
 			try {
-				// Rejeter les image-bombs, stripper EXIF/GPS (RGPD critique — photos clients iPhone), puis generer le blur
+				// Rejeter les image-bombs, convertir le HEIC brut (photos clients iPhone)
+				// en WebP (MEDIA-AUDIT-006), stripper EXIF/GPS (RGPD critique), puis blur.
 				await rejectImageBomb(file);
+				const safe = await reencodeHeicOrReject(file);
+				if (safe.converted) {
+					const blurDataUrl = await generateBlurSafe(safe.url);
+					return {
+						url: safe.url,
+						blurDataUrl,
+						uploadedBy: metadata.userId,
+					};
+				}
 				const stripped = await stripImageMetadata({
-					ufsUrl: file.ufsUrl,
-					key: file.key,
+					ufsUrl: safe.url,
+					key: safe.key,
 					name: file.name,
 					type: file.type,
 				});
-				const finalUrl = stripped?.url ?? file.ufsUrl;
+				const finalUrl = stripped?.url ?? safe.url;
 				const blurDataUrl = await generateBlurSafe(finalUrl);
 
 				return {

@@ -16,10 +16,37 @@
  * (cf. CLAUDE.md § Emails).
  */
 import * as Sentry from "@sentry/nextjs";
+import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { verifyUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
 import { BRAND } from "@/shared/constants/brand";
 import { logger } from "@/shared/lib/logger";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+
+/**
+ * RATE-AUDIT-003 : rate limit IP avant toute vérification HMAC.
+ *
+ * L'endpoint est public, exécute un HMAC-SHA256 par requête (CPU gratuit pour
+ * un attaquant) et émet un événement Sentry + un log par token valide. Sans
+ * borne, un porteur de lien (réutilisable indéfiniment par design RFC 8058)
+ * peut noyer Sentry/les logs d'alertes opt-out. 20 req/min/IP couvre largement
+ * un usage légitime (1 clic humain ou 1 POST one-click par client mail).
+ * Retourne une `Response` 429 si dépassé, sinon `null`.
+ */
+async function enforceUnsubscribeRateLimit(): Promise<Response | null> {
+	const headersList = await headers();
+	const ip = await getClientIp(headersList);
+	const rateLimit = await checkRateLimit(
+		`unsubscribe:${ip ?? "unknown"}`,
+		{ limit: 20, windowMs: 60_000 },
+		ip ?? undefined,
+	);
+	if (rateLimit.success) return null;
+	return new Response(null, {
+		status: 429,
+		headers: { "Retry-After": String(rateLimit.retryAfter ?? 60) },
+	});
+}
 
 function extractParams(
 	req: NextRequest,
@@ -84,6 +111,9 @@ function renderHtmlPage({ success, email }: { success: boolean; email: string | 
 }
 
 export async function GET(req: NextRequest): Promise<Response> {
+	const limited = await enforceUnsubscribeRateLimit();
+	if (limited) return limited;
+
 	const { email, token } = extractParams(req);
 	const valid = verifyUnsubscribeToken(email, token);
 	if (valid && email) {
@@ -96,6 +126,9 @@ export async function GET(req: NextRequest): Promise<Response> {
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
+	const limited = await enforceUnsubscribeRateLimit();
+	if (limited) return limited;
+
 	let formData: FormData | undefined;
 	try {
 		formData = await req.formData();

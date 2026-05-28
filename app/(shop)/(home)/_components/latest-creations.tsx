@@ -22,7 +22,7 @@ export async function LatestCreations({
 	return (
 		<section
 			id="latest-creations"
-			className={`bg-primary/5 relative overflow-hidden mask-t-from-95% mask-t-to-100% mask-b-from-95% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-90% ${SECTION_SPACING.section}`}
+			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 			style={{ viewTransitionName: "latest-creations" }}

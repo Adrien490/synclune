@@ -1,15 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockAccountStatus } = vi.hoisted(() => ({
+const { mockAccountStatus, mockReviewStatus, mockRecompute } = vi.hoisted(() => ({
 	mockAccountStatus: {
 		PENDING_DELETION: "PENDING_DELETION",
 		ANONYMIZED: "ANONYMIZED",
 		ACTIVE: "ACTIVE",
 	},
+	mockReviewStatus: {
+		PUBLISHED: "PUBLISHED",
+		HIDDEN: "HIDDEN",
+	},
+	mockRecompute: vi.fn(),
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: mockAccountStatus,
+	ReviewStatus: mockReviewStatus,
+}));
+
+vi.mock("@/modules/reviews/services/review-stats.service", () => ({
+	recomputeProductReviewStatsBatch: mockRecompute,
 }));
 
 vi.mock("../../utils/anonymization.utils", () => ({
@@ -30,7 +40,7 @@ function createMockTx() {
 		cart: { deleteMany: vi.fn() },
 		wishlist: { deleteMany: vi.fn() },
 		reviewMedia: { deleteMany: vi.fn() },
-		productReview: { updateMany: vi.fn() },
+		productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 		order: { updateMany: vi.fn() },
 	};
 }
@@ -130,7 +140,9 @@ describe("anonymizeUserInTransaction", () => {
 		});
 	});
 
-	it("should anonymize review content", async () => {
+	// REVIEW-AUDIT-005 : l'avis est masqué (HIDDEN) en plus d'être anonymisé, pour le
+	// retirer du storefront et des stats (l'auteur n'existe plus).
+	it("should hide and anonymize review content", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
 		await anonymizeUserInTransaction(mockTx as never, "user_abc");
@@ -138,10 +150,30 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.productReview.updateMany).toHaveBeenCalledWith({
 			where: { userId: "user_abc" },
 			data: {
+				status: "HIDDEN",
 				content: "Contenu supprimé suite à la suppression du compte.",
 				title: null,
 			},
 		});
+	});
+
+	// REVIEW-AUDIT-002 / 005 : les stats des produits concernés sont recalculées
+	// (les avis masqués ne comptent plus dans la moyenne).
+	it("should recompute review stats for the user's reviewed products", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
+		mockTx.productReview.findMany.mockResolvedValue([
+			{ productId: "prod-1" },
+			{ productId: "prod-2" },
+		]);
+
+		await anonymizeUserInTransaction(mockTx as never, "user_abc");
+
+		expect(mockTx.productReview.findMany).toHaveBeenCalledWith({
+			where: { userId: "user_abc", productId: { not: null } },
+			select: { productId: true },
+			distinct: ["productId"],
+		});
+		expect(mockRecompute).toHaveBeenCalledWith(mockTx, ["prod-1", "prod-2"]);
 	});
 
 	it("should anonymize order PII while preserving financial data", async () => {

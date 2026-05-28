@@ -40,6 +40,22 @@ export const AUTH_SESSION_CONFIG = {
 // REGLES DE RATE LIMITING
 // ============================================
 
+/**
+ * RATE-AUDIT-006 : double enforcement intentionnel (défense en profondeur).
+ *
+ * Ces règles sont la PREMIÈRE ligne de défense, appliquées par Better Auth sur
+ * le handler brut `/api/auth/[...all]` (POST directs, fenêtre 60 s par IP par
+ * endpoint). Le handler étant publiquement atteignable, il court-circuite le
+ * rate limit des Server Actions — ces règles sont donc indispensables.
+ *
+ * La SECONDE ligne est le rate limit applicatif des Server Actions
+ * (`AUTH_LIMITS.*` dans `shared/lib/rate-limit-config.ts`, fenêtres min/h par
+ * user/IP), appliqué via `enforceRateLimitForCurrentUser` sur le chemin UI.
+ *
+ * Granularités et fenêtres divergent volontairement (IP/60 s ici vs user/15min-1h
+ * côté action). NE PAS « harmoniser » ou supprimer l'une des deux couches : elles
+ * protègent deux chemins d'accès distincts. cf. CLAUDE.md § Security.
+ */
 export const AUTH_RATE_LIMIT_RULES = {
 	"/sign-in/email": {
 		window: 60,

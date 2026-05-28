@@ -6,7 +6,7 @@ import { FieldLabel } from "@/shared/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { InputGroupAddon } from "@/shared/components/ui/input-group";
 
-import { MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
 
 const COMPARE_AT_PRICE_ERROR = "Le prix comparé doit être supérieur ou égal au prix de vente";
 
@@ -47,7 +47,7 @@ export function PricingCard({
 		<Card
 			role="region"
 			aria-label="Tarification"
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">

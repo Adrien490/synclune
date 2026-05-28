@@ -304,4 +304,135 @@ describe("SerwistProvider (serwist-client)", () => {
 			expect(registerMock).not.toHaveBeenCalled();
 		});
 	});
+
+	// --------------------------------------------------------------------------
+	// SW update handling (PWA-AUDIT-005)
+	// --------------------------------------------------------------------------
+
+	describe("service worker update handling (PWA-AUDIT-005)", () => {
+		function makeSwMock(controller: object | null) {
+			const target = new EventTarget();
+			return Object.assign(target, {
+				register: vi.fn().mockResolvedValue(undefined),
+				controller,
+			});
+		}
+
+		function stubReload(): { reloadSpy: ReturnType<typeof vi.fn>; restore: () => void } | null {
+			const reloadSpy = vi.fn();
+			const original = Object.getOwnPropertyDescriptor(window, "location");
+			try {
+				Object.defineProperty(window, "location", {
+					configurable: true,
+					value: { ...window.location, reload: reloadSpy },
+				});
+			} catch {
+				return null;
+			}
+			return {
+				reloadSpy,
+				restore: () => {
+					if (original) Object.defineProperty(window, "location", original);
+				},
+			};
+		}
+
+		async function importProductionProvider() {
+			(process.env as Record<string, string>).NODE_ENV = "production";
+			const mod = await import("../serwist-client");
+			return mod.SerwistProvider;
+		}
+
+		it("reloads once when a new SW takes control and a controller already existed", async () => {
+			const reload = stubReload();
+			if (!reload) return; // environment does not allow overriding location — skip
+			const sw = makeSwMock({}); // existing controller => this is an update
+			Object.defineProperty(navigator, "serviceWorker", {
+				value: sw,
+				writable: true,
+				configurable: true,
+			});
+
+			const SerwistProvider = await importProductionProvider();
+			await act(async () => {
+				render(
+					<SerwistProvider swUrl="/sw.js">
+						<div>child</div>
+					</SerwistProvider>,
+				);
+				await Promise.resolve();
+			});
+
+			await act(async () => {
+				sw.dispatchEvent(new Event("controllerchange"));
+				sw.dispatchEvent(new Event("controllerchange"));
+			});
+
+			expect(reload.reloadSpy).toHaveBeenCalledTimes(1);
+			reload.restore();
+		});
+
+		it("does NOT reload on first install (no prior controller)", async () => {
+			const reload = stubReload();
+			if (!reload) return;
+			const sw = makeSwMock(null); // no controller yet => initial clientsClaim
+			Object.defineProperty(navigator, "serviceWorker", {
+				value: sw,
+				writable: true,
+				configurable: true,
+			});
+
+			const SerwistProvider = await importProductionProvider();
+			await act(async () => {
+				render(
+					<SerwistProvider swUrl="/sw.js">
+						<div>child</div>
+					</SerwistProvider>,
+				);
+				await Promise.resolve();
+			});
+
+			await act(async () => {
+				sw.dispatchEvent(new Event("controllerchange"));
+			});
+
+			expect(reload.reloadSpy).not.toHaveBeenCalled();
+			reload.restore();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Sensitive cache purge on logout (PWA-AUDIT-010)
+	// --------------------------------------------------------------------------
+
+	describe("clearSensitiveCaches (PWA-AUDIT-010)", () => {
+		it("deletes the navigation caches when Cache Storage is available", async () => {
+			const deleteMock = vi.fn().mockResolvedValue(true);
+			vi.stubGlobal("caches", { delete: deleteMock });
+
+			const { clearSensitiveCaches } = await import("../serwist-client");
+			await clearSensitiveCaches();
+
+			expect(deleteMock).toHaveBeenCalledWith("navigations");
+			expect(deleteMock).toHaveBeenCalledWith("api-responses");
+
+			vi.unstubAllGlobals();
+		});
+
+		it("resolves without throwing when Cache Storage is unavailable", async () => {
+			vi.unstubAllGlobals(); // ensure `caches` is undefined
+			const { clearSensitiveCaches } = await import("../serwist-client");
+			await expect(clearSensitiveCaches()).resolves.toBeUndefined();
+		});
+
+		it("swallows Cache Storage errors (logout is never blocked)", async () => {
+			const deleteMock = vi.fn().mockRejectedValue(new Error("quota"));
+			vi.stubGlobal("caches", { delete: deleteMock });
+
+			const { clearSensitiveCaches } = await import("../serwist-client");
+			await expect(clearSensitiveCaches()).resolves.toBeUndefined();
+
+			vi.unstubAllGlobals();
+		});
+	});
 });

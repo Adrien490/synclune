@@ -12,7 +12,7 @@ import { processOrderFromPaymentIntent } from "@/modules/webhooks/services/check
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import {
@@ -68,6 +68,8 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			orderNumber: true,
 			stripePaymentIntentId: true,
 			paymentStatus: true,
+			// CACHE-AUDIT-004 : nécessaire pour invalider les tags user-scopés.
+			userId: true,
 		},
 		take: BATCH_SIZE_MEDIUM,
 	});
@@ -120,6 +122,11 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 				await processOrderFromPaymentIntent(order.id, paymentIntent, paymentMethod);
 				await ensureInvoiceNumberPersisted(order.id);
 				await recordSalesEReporting(order.id);
+				// CACHE-AUDIT-004 : invalider les tags user-scopés + détail commande
+				// (sinon l'espace client affiche encore PENDING après confirmation async).
+				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+					tagsToInvalidate.add(tag);
+				}
 				updated++;
 			} else if (
 				paymentIntent.status === "canceled" ||
@@ -160,6 +167,10 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 				}
 				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
+				// CACHE-AUDIT-004 : idem branche succès.
+				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+					tagsToInvalidate.add(tag);
+				}
 				updated++;
 			}
 			// Other statuses (processing, requires_action) are still pending

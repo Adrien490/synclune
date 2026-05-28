@@ -106,7 +106,8 @@ export async function updateProduct(
 						id: true,
 						isActive: true,
 						inventory: true,
-						images: { where: { isPrimary: true }, select: { id: true } },
+						// MEDIA-AUDIT-002 : type de chaque media pour exiger une vraie image.
+						images: { select: { mediaType: true } },
 					},
 				},
 			},
@@ -150,8 +151,10 @@ export async function updateProduct(
 							id: s.id,
 							isActive: validatedData.defaultSku.isActive,
 							inventory: validatedData.defaultSku.inventory,
-							// Le schema Zod garantit deja media.length > 0 sur defaultSku
-							images: validatedData.defaultSku.media.length > 0 ? [{ id: "_" } as const] : [],
+							// Le schema Zod garantit media.length > 0 ET premier media = IMAGE sur
+							// defaultSku (updateProductSchema refines) → presence d'image garantie.
+							images:
+								validatedData.defaultSku.media.length > 0 ? [{ mediaType: "IMAGE" as const }] : [],
 						}
 					: s,
 			);
@@ -359,11 +362,46 @@ export async function updateProduct(
 			}
 		}
 
-		// 11. Delete removed images from UploadThing storage
+		// 11. Delete removed images from UploadThing storage.
+		// MEDIA-AUDIT-003 : ne jamais supprimer un fichier encore référencé par un
+		// snapshot de commande (OrderItem.productImageUrl / skuImageUrl) — sinon
+		// l'historique client afficherait une image 404 (rétention légale 10 ans).
+		// Les URLs préservées seront ramassées plus tard par cleanup-orphan-media
+		// SI plus aucune commande n'y fait référence (le cron est OrderItem-aware).
 		if (deletedImageUrls.length > 0) {
-			deleteUploadThingFilesFromUrls(deletedImageUrls).catch((e) => {
-				logger.error("Failed to delete UploadThing files", e, { action: "updateProduct" });
-			});
+			void (async () => {
+				try {
+					const referencingItems = await prisma.orderItem.findMany({
+						where: {
+							OR: [
+								{ productImageUrl: { in: deletedImageUrls } },
+								{ skuImageUrl: { in: deletedImageUrls } },
+							],
+						},
+						select: { productImageUrl: true, skuImageUrl: true },
+					});
+					const referencedUrls = new Set<string>();
+					for (const item of referencingItems) {
+						if (item.productImageUrl) referencedUrls.add(item.productImageUrl);
+						if (item.skuImageUrl) referencedUrls.add(item.skuImageUrl);
+					}
+					const deletableUrls = deletedImageUrls.filter((url) => !referencedUrls.has(url));
+					if (referencedUrls.size > 0) {
+						logger.info("Preserved order-referenced media from deletion", {
+							action: "updateProduct",
+							preserved: referencedUrls.size,
+							deleted: deletableUrls.length,
+						});
+					}
+					if (deletableUrls.length > 0) {
+						await deleteUploadThingFilesFromUrls(deletableUrls);
+					}
+				} catch (e) {
+					// En cas d'erreur on NE supprime PAS (préservation de l'historique) ;
+					// cleanup-orphan-media ramassera les vrais orphelins ultérieurement.
+					logger.error("Failed to delete UploadThing files", e, { action: "updateProduct" });
+				}
+			})();
 		}
 
 		// 12. Audit log

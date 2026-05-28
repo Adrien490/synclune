@@ -3,7 +3,8 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
 import { persistPdpTransmission } from "@/modules/orders/services/persist-pdp-transmission.service";
-import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
+import { withDeadline } from "@/modules/invoices/services/submit-ereporting-batch.service";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 
 /**
@@ -53,17 +54,38 @@ export async function reconcileInvoiceStatuses(): Promise<CronResult> {
 		return { processed: 0, errored: 0, skipped: 0 };
 	}
 
+	// Garde deadline : le polling provider peut hang (PDP lent). On race chaque
+	// appel contre le deadline global et on s'arrête net avant le SIGTERM Vercel
+	// 60s, en signalant hasMore pour reprise au run suivant. Cf. CRON-AUDIT-001.
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
+
 	let processed = 0;
 	let errored = 0;
 	let skipped = 0;
+	let deadlineHit = false;
 
 	for (const candidate of candidates) {
+		if (Date.now() >= deadline) {
+			deadlineHit = true;
+			logger.warn("Deadline reached, deferring remaining invoices", {
+				cronJob: "reconcile-invoice-statuses",
+				processed,
+				errored,
+				skipped,
+				remaining: candidates.length - processed - errored - skipped,
+			});
+			break;
+		}
 		if (!candidate.pdpProviderRef) {
 			skipped++;
 			continue;
 		}
 		try {
-			const snapshot = await provider.getInvoiceStatus(candidate.pdpProviderRef);
+			const snapshot = await withDeadline(
+				provider.getInvoiceStatus(candidate.pdpProviderRef),
+				deadline,
+				`reconcile-invoice-statuses:getInvoiceStatus:${candidate.id}`,
+			);
 			if (snapshot.status === "SUBMITTED" || snapshot.status === "PENDING_SUBMISSION") {
 				skipped++;
 				continue;
@@ -95,6 +117,6 @@ export async function reconcileInvoiceStatuses(): Promise<CronResult> {
 		processed,
 		errored,
 		skipped,
-		hasMore: candidates.length === BATCH_SIZE_MEDIUM,
+		hasMore: deadlineHit || candidates.length === BATCH_SIZE_MEDIUM,
 	};
 }

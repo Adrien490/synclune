@@ -1,4 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -11,6 +12,7 @@ export type OrderForExport = Awaited<
 const EXPORT_SELECT = {
 	orderNumber: true,
 	invoiceNumber: true,
+	creditNoteNumber: true,
 	createdAt: true,
 	paidAt: true,
 	customerName: true,
@@ -22,6 +24,12 @@ const EXPORT_SELECT = {
 	paymentMethod: true,
 	paymentStatus: true,
 	status: true,
+	// Remboursements effectifs (ANALYTICS-AUDIT-003) : permet la colonne "Remboursé"
+	// et le calcul du net dans le livre de recettes.
+	refunds: {
+		where: { status: RefundStatus.COMPLETED },
+		select: { amount: true },
+	},
 } as const satisfies Prisma.OrderSelect;
 
 /**

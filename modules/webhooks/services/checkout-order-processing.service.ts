@@ -1,9 +1,17 @@
 import type Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
-import { type Prisma, type PaymentMethod } from "@/app/generated/prisma/client";
+import {
+	type Prisma,
+	type PaymentMethod,
+	type OrderStatus,
+	type PaymentStatus,
+	HistorySource,
+	OrderAction,
+} from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import {
 	getShippingMethodFromRate,
 	getShippingCarrierFromRate,
@@ -178,6 +186,34 @@ async function processOrderAtomically(
 		);
 	}
 
+	// 2c. BIZ-BUG-005 : la garde ci-dessus est unidirectionnelle (sous-facturation).
+	// Une SURfacturation (Stripe encaisse plus que le total commande) ne doit PAS
+	// bloquer le traitement — le client a payé, on honore — mais elle signale une
+	// divergence PI/order anormale à investiguer (remboursement partiel manuel ?).
+	// Alerte non bloquante.
+	if (typeof expectedAmountReceived === "number" && expectedAmountReceived > order.total) {
+		logger.error(
+			`⚠️ [WEBHOOK] Overbilling detected for order ${orderId} (${flowLabel}): Stripe received ${expectedAmountReceived} but order.total is ${order.total}`,
+			undefined,
+			{ service: "webhook" },
+		);
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setTag("webhook", "amount-overbilling");
+			scope.setFingerprint(["webhook", "amount-overbilling"]);
+			scope.setContext("order", {
+				orderId,
+				flowLabel,
+				orderTotal: order.total,
+				amountReceived: expectedAmountReceived,
+			});
+			Sentry.captureMessage(
+				`Overbilling: Stripe captured ${expectedAmountReceived} > order.total ${order.total} for order ${orderId}`,
+				"error",
+			);
+		});
+	}
+
 	// 3. Re-validate all items INSIDE the transaction to prevent race conditions
 	logger.info(
 		`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId} (${flowLabel})`,
@@ -249,6 +285,28 @@ async function processOrderAtomically(
 	await tx.order.update({
 		where: { id: orderId },
 		data: orderUpdateData,
+	});
+
+	// 5a. BIZ-BUG-003 : tracer l'encaissement dans l'audit trail immuable.
+	// La transition automatique PENDING → PAID/PROCESSING (webhook PI/CS ET cron
+	// sync-async-payments, qui partagent ce chemin) est l'événement métier le plus
+	// important et n'était jusqu'ici jamais consigné dans OrderHistory, contrairement
+	// à toutes les actions admin. Conformité audit trail Art. L123-22 C. com.
+	// Idempotent : le guard `paymentStatus === "PAID"` (étape 2) court-circuite avant.
+	const newStatus = (orderUpdateData.status as OrderStatus | undefined) ?? order.status;
+	const newPaymentStatus =
+		(orderUpdateData.paymentStatus as PaymentStatus | undefined) ?? order.paymentStatus;
+	await createOrderAuditTx(tx, {
+		orderId,
+		action: OrderAction.PAID,
+		source: HistorySource.SYSTEM,
+		authorName: `Système (webhook ${flowLabel})`,
+		note: "Paiement encaissé — commande passée en traitement",
+		previousStatus: order.status !== newStatus ? order.status : undefined,
+		newStatus: order.status !== newStatus ? newStatus : undefined,
+		previousPaymentStatus:
+			order.paymentStatus !== newPaymentStatus ? order.paymentStatus : undefined,
+		newPaymentStatus: order.paymentStatus !== newPaymentStatus ? newPaymentStatus : undefined,
 	});
 
 	// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)

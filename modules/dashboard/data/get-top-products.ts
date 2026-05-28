@@ -9,6 +9,7 @@ import {
 	type DashboardPeriod,
 } from "@/modules/dashboard/constants/period.constants";
 import { getPeriodBoundaries } from "@/modules/dashboard/services/period-boundaries.service";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
 import type {
 	GetTopProductsReturn,
 	TopProductItem,
@@ -60,7 +61,7 @@ export async function fetchDashboardTopProducts(
 				FROM "OrderItem" oi
 				INNER JOIN "Order" o ON o.id = oi."orderId"
 				LEFT JOIN "Product" p ON p.id = oi."productId" AND p."deletedAt" IS NULL
-				WHERE o."paymentStatus" = 'PAID'
+				WHERE o."paymentStatus" = ANY(${[...PAID_REVENUE_STATUSES]}::"PaymentStatus"[])
 					AND o."paidAt" >= ${currentStart}
 					AND o."paidAt" <= ${currentEnd}
 					AND o."deletedAt" IS NULL

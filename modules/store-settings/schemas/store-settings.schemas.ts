@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
 
+import { parseParisDateTimeLocal } from "../utils/paris-datetime";
+
 export const closeStoreSchema = z
 	.object({
 		closureMessage: z
@@ -13,7 +15,7 @@ export const closeStoreSchema = z
 			.string()
 			.optional()
 			.default("")
-			.transform((val) => (val === "" ? null : new Date(val))),
+			.transform((val) => parseParisDateTimeLocal(val)),
 	})
 	.refine(
 		(data) => {
@@ -40,7 +42,7 @@ export const updateReopensAtSchema = z
 			.string()
 			.optional()
 			.default("")
-			.transform((val) => (val === "" ? null : new Date(val))),
+			.transform((val) => parseParisDateTimeLocal(val)),
 	})
 	.refine(
 		(data) => {
@@ -76,12 +78,12 @@ export const updateAnnouncementSchema = z
 			.string()
 			.optional()
 			.default("")
-			.transform((val) => (val === "" ? null : new Date(val))),
+			.transform((val) => parseParisDateTimeLocal(val)),
 		endsAt: z
 			.string()
 			.optional()
 			.default("")
-			.transform((val) => (val === "" ? null : new Date(val))),
+			.transform((val) => parseParisDateTimeLocal(val)),
 		isActive: z
 			.union([z.boolean(), z.string()])
 			.optional()

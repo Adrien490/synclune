@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import type { Prisma } from "@/app/generated/prisma/client";
+import { type Prisma, ProductStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendBackInStockEmail } from "@/modules/emails/services/wishlist-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -64,6 +64,9 @@ async function sendNotification(item: NotifyItem, productId: string): Promise<bo
 			productImageUrl,
 			productUrl,
 			unsubscribeUrl,
+			// EMAIL-AUDIT-102 : backstop dedup Resend 24h par item, complète le flag
+			// DB `backInStockNotifiedAt` posé après l'envoi (non-atomique).
+			idempotencyKey: `back-in-stock:${item.id}`,
 		});
 
 		return result.success;
@@ -111,6 +114,14 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 						where: {
 							productId,
 							backInStockNotifiedAt: null,
+							// BIZ-BUG-002 : ne notifier que pour un produit réellement
+							// achetable. Un produit archivé/brouillon/soft-deleted dont un
+							// SKU est restocké ne doit pas générer d'email « revenu en
+							// stock » (lien produit ⇒ 404, atteinte image).
+							product: {
+								status: ProductStatus.PUBLIC,
+								deletedAt: null,
+							},
 							wishlist: {
 								userId: { not: null },
 								user: { deletedAt: null },

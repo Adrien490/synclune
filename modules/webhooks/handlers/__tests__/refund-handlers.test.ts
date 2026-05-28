@@ -58,13 +58,12 @@ vi.mock("../../services/refund.service", () => ({
 	markRefundAsFailed: mockMarkRefundAsFailed,
 }));
 
-vi.mock("@/modules/orders/constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-}));
+vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
+	// CACHE-AUDIT-003/006 : vrai helper getOrderInvalidationTags + tags DETAIL/HISTORY.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+	const actual = await importOriginal<typeof import("@/modules/orders/constants/cache")>();
+	return actual;
+});
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
@@ -257,6 +256,9 @@ describe("handleChargeRefunded", () => {
 		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("orders-user-user-1");
+			// CACHE-AUDIT-003 : le détail commande reflète paymentStatus=REFUNDED.
+			expect(cacheTask.tags).toContain("order-detail-order-1");
+			expect(cacheTask.tags).toContain("order-refunds-order-1");
 		}
 	});
 

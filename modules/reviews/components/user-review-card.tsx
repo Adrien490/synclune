@@ -34,8 +34,8 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 	return (
 		<article>
 			<div className="flex flex-col sm:flex-row">
-				{/* Image produit */}
-				<div className="relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
+				{/* Image produit — bg-muted = fallback zéro-JS si l'URL 404 */}
+				<div className="bg-muted relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
 					{productImage ? (
 						<Image
 							src={productImage.url}
@@ -54,7 +54,7 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 gap-y-3 p-4">
+				<div className="flex flex-1 flex-col gap-3 p-4">
 					{/* En-tête: titre produit + statut */}
 					<div className="flex items-start justify-between gap-2">
 						<div className="min-w-0">

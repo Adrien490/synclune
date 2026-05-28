@@ -69,14 +69,14 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 		mockPrisma.eReportingBatch.findMany.mockResolvedValue([{ id: "b1" }]);
 		mockSubmitEReportingBatchById.mockResolvedValue({ batchId: "b1", status: "SENT" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 1, errored: 0, skipped: 0 });
+		expect(result).toEqual({ processed: 1, errored: 0, skipped: 0, hasMore: false });
 	});
 
 	it("counts ACCEPTED as processed", async () => {
 		mockPrisma.eReportingBatch.findMany.mockResolvedValue([{ id: "b1" }]);
 		mockSubmitEReportingBatchById.mockResolvedValue({ batchId: "b1", status: "ACCEPTED" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 1, errored: 0, skipped: 0 });
+		expect(result).toEqual({ processed: 1, errored: 0, skipped: 0, hasMore: false });
 	});
 
 	it("counts SKIPPED_BACKOFF / SKIPPED_DRY_RUN / NOT_FOUND / NOT_ELIGIBLE as skipped", async () => {
@@ -92,7 +92,7 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 			.mockResolvedValueOnce({ batchId: "b3", status: "NOT_FOUND" })
 			.mockResolvedValueOnce({ batchId: "b4", status: "NOT_ELIGIBLE" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 0, errored: 0, skipped: 4 });
+		expect(result).toEqual({ processed: 0, errored: 0, skipped: 4, hasMore: false });
 	});
 
 	it("counts REJECTED / RETRYING / ABANDONED as errored", async () => {
@@ -106,7 +106,7 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 			.mockResolvedValueOnce({ batchId: "b2", status: "RETRYING", retryCount: 2 })
 			.mockResolvedValueOnce({ batchId: "b3", status: "ABANDONED", retryCount: 6 });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 0, errored: 3, skipped: 0 });
+		expect(result).toEqual({ processed: 0, errored: 3, skipped: 0, hasMore: false });
 	});
 
 	it("aggregates mixed statuses correctly", async () => {
@@ -122,7 +122,25 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 			.mockResolvedValueOnce({ batchId: "b3", status: "RETRYING", retryCount: 1 })
 			.mockResolvedValueOnce({ batchId: "b4", status: "ACCEPTED" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 2, errored: 1, skipped: 1 });
+		expect(result).toEqual({ processed: 2, errored: 1, skipped: 1, hasMore: false });
+	});
+});
+
+describe("transmitEReportingBatch — resumabilité (CRON-AUDIT-002)", () => {
+	it("hasMore=true quand le batch sature le cap de 50 (backlog DGFiP non silencieux)", async () => {
+		const candidates = Array.from({ length: 50 }, (_, i) => ({ id: `b${i}` }));
+		mockPrisma.eReportingBatch.findMany.mockResolvedValue(candidates);
+		mockSubmitEReportingBatchById.mockResolvedValue({ batchId: "b", status: "SENT" });
+		const result = await transmitEReportingBatch();
+		expect(result.processed).toBe(50);
+		expect(result.hasMore).toBe(true);
+	});
+
+	it("hasMore=false quand moins de 50 candidats", async () => {
+		mockPrisma.eReportingBatch.findMany.mockResolvedValue([{ id: "b1" }, { id: "b2" }]);
+		mockSubmitEReportingBatchById.mockResolvedValue({ batchId: "b", status: "SENT" });
+		const result = await transmitEReportingBatch();
+		expect(result.hasMore).toBe(false);
 	});
 });
 

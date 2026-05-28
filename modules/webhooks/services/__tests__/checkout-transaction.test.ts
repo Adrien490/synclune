@@ -19,6 +19,8 @@ const { mockPrisma, mockTx } = vi.hoisted(() => {
 		cartItem: {
 			deleteMany: vi.fn(),
 		},
+		// BIZ-BUG-003 : processOrderAtomically écrit désormais un audit PAID via createOrderAuditTx
+		orderHistory: { create: vi.fn() },
 	};
 
 	const mockPrisma = {

@@ -1,10 +1,10 @@
 import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
 import { transformRecentOrders } from "../services/recent-orders-transformer.service";
 
 import {
@@ -32,7 +32,9 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 	return Sentry.startSpan({ name: "dashboard.fetchRecentOrders", op: "db.read" }, async () => {
 		const orders = await prisma.order.findMany({
 			where: {
-				paymentStatus: PaymentStatus.PAID,
+				// Inclut les commandes remboursées (encaissées) — ANALYTICS-AUDIT-001.
+				// Le badge `paymentStatus` rend la distinction visible dans la liste.
+				paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 				...notDeleted,
 			},
 			take: DASHBOARD_RECENT_ORDERS_LIMIT,

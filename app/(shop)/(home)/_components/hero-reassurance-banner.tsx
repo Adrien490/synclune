@@ -58,7 +58,7 @@ export function HeroReassuranceBanner() {
 	return (
 		<section
 			aria-labelledby="reassurance-heading"
-			className="bg-primary/5 border-primary/25 hidden border-y md:block"
+			className="bg-primary/5 border-primary/25 border-y"
 			style={{ viewTransitionName: "reassurance-banner" }}
 		>
 			<h2 id="reassurance-heading" className="sr-only">
@@ -73,7 +73,7 @@ export function HeroReassuranceBanner() {
 							{href ? (
 								<Link
 									href={href}
-									className="hover:bg-muted/30 focus-visible:ring-ring -mx-2 -my-1 block rounded-md px-2 py-1 outline-none focus-visible:ring-2 motion-safe:transition-colors"
+									className="hover:bg-muted/30 focus-ring -mx-2 -my-1 block rounded-md px-2 py-1 motion-safe:transition-colors"
 								>
 									<ItemBody title={title} description={description} />
 								</Link>

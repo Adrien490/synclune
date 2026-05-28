@@ -57,12 +57,15 @@ describe("checkReviewEligibility", () => {
 		expect(mockClient.orderItem.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("allows review when previous review is soft-deleted", async () => {
+	// REVIEW-AUDIT-003 : un avis par produit et par utilisateur, définitivement.
+	// Un avis soft-deleted verrouille toujours la paire (userId, productId) au niveau DB
+	// (`@@unique` non partielle) — renvoyer canReview=true menait à un échec P2002 +
+	// message "no_purchase" trompeur. On court-circuite donc avant toute requête OrderItem.
+	it("returns already_reviewed even when previous review is soft-deleted (no existingReviewId)", async () => {
 		mockClient.productReview.findUnique.mockResolvedValue({
 			id: "rev-1",
 			deletedAt: new Date(),
 		});
-		mockClient.orderItem.findFirst.mockResolvedValueOnce({ id: "item-2" });
 
 		const result = await checkReviewEligibility(
 			mockClient as never,
@@ -70,8 +73,10 @@ describe("checkReviewEligibility", () => {
 			VALID_PRODUCT_ID,
 		);
 
-		expect(result.canReview).toBe(true);
-		expect(result.orderItemId).toBe("item-2");
+		expect(result.canReview).toBe(false);
+		expect(result.reason).toBe("already_reviewed");
+		expect(result.existingReviewId).toBeUndefined();
+		expect(mockClient.orderItem.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("returns order_not_delivered when only pending orders match", async () => {

@@ -78,7 +78,7 @@ export function ProductPriceDisplay({
 					)}
 					<p
 						id="product-price-title"
-						className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl"
+						className="text-foreground text-2xl font-semibold tracking-tight sm:text-3xl"
 						aria-label={
 							priceInfo.minPrice > 0
 								? `Prix à partir de ${formatEuro(priceInfo.minPrice)}`
@@ -114,7 +114,7 @@ export function ProductPriceDisplay({
 				{/* Prix principal */}
 				<p
 					id="product-price-selected"
-					className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl"
+					className="text-foreground text-2xl font-semibold tracking-tight sm:text-3xl"
 					aria-label={`Prix ${formatEuro(selectedSku.priceInclTax)}${hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}`}
 				>
 					{formatEuro(selectedSku.priceInclTax)}

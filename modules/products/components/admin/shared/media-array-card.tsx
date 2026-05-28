@@ -23,6 +23,8 @@ import {
 	type UploadProgressShape,
 } from "../product-media-card-shared";
 
+import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
+
 /**
  * Carte « Médias » partagée entre les formulaires Créer/Éditer Produit et Créer/Éditer
  * Variante. Encapsule la mécanique commune (compteur, banner offline, banner erreur,
@@ -114,13 +116,11 @@ export function MediaArrayCard({
 		<Card
 			role="region"
 			aria-label={ariaLabel}
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className="text-muted-foreground lg:text-foreground text-sm font-semibold tracking-wide uppercase lg:text-base lg:font-semibold lg:tracking-normal lg:normal-case">
-					Médias
-				</CardTitle>
+				<CardTitle className={MOBILE_SECTION_TITLE}>Médias</CardTitle>
 			</CardHeader>
 			<CardContent className="px-0 pb-[max(0px,env(safe-area-inset-bottom))] sm:px-0 sm:pb-0 lg:px-6">
 				<form.Field

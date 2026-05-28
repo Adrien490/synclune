@@ -1,10 +1,14 @@
-import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { FulfillmentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import {
+	PAID_REVENUE_STATUSES,
+	SHIPPABLE_PAYMENT_STATUSES,
+} from "@/modules/orders/constants/revenue-status.constants";
 import type {
 	ComparisonMode,
 	DashboardPeriod,
@@ -56,16 +60,20 @@ export async function fetchDashboardKpis(
 				lastMonth,
 				currentTotalOrders,
 				lastTotalOrders,
+				currentPaidCreated,
+				lastPaidCreated,
 				pendingShipmentCount,
 				currentRefunds,
 				lastRefunds,
 				currentShipped,
 				lastShipped,
 			] = await Promise.all([
+				// Revenu encaissé (ANALYTICS-AUDIT-001) : inclut PARTIALLY_REFUNDED / REFUNDED,
+				// les remboursements sont déduits séparément ci-dessous.
 				prisma.order.aggregate({
 					where: {
 						paidAt: { gte: currentStart },
-						paymentStatus: PaymentStatus.PAID,
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 						...notDeleted,
 					},
 					_sum: { total: true, discountAmount: true },
@@ -74,12 +82,14 @@ export async function fetchDashboardKpis(
 				prisma.order.aggregate({
 					where: {
 						paidAt: { gte: previousStart, lte: previousEnd },
-						paymentStatus: PaymentStatus.PAID,
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 						...notDeleted,
 					},
 					_sum: { total: true, discountAmount: true },
 					_count: true,
 				}),
+				// Taux de conversion (ANALYTICS-AUDIT-006) : numérateur ET dénominateur
+				// sur la même cohorte `createdAt` (commandes créées dans la période).
 				prisma.order.count({
 					where: { createdAt: { gte: currentStart }, ...notDeleted },
 				}),
@@ -91,17 +101,34 @@ export async function fetchDashboardKpis(
 				}),
 				prisma.order.count({
 					where: {
-						paymentStatus: PaymentStatus.PAID,
+						createdAt: { gte: currentStart },
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
+						...notDeleted,
+					},
+				}),
+				prisma.order.count({
+					where: {
+						createdAt: { gte: previousStart, lte: previousEnd },
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
+						...notDeleted,
+					},
+				}),
+				// "À expédier" : argent encore (au moins partiellement) acquis → exclut REFUNDED.
+				prisma.order.count({
+					where: {
+						paymentStatus: { in: [...SHIPPABLE_PAYMENT_STATUSES] },
 						fulfillmentStatus: {
 							in: [FulfillmentStatus.UNFULFILLED, FulfillmentStatus.PROCESSING],
 						},
 						...notDeleted,
 					},
 				}),
+				// Remboursements (ANALYTICS-AUDIT-007) : bucketés sur `processedAt`
+				// (date de décaissement Stripe), cohérent avec le CA cash-basis.
 				prisma.refund.aggregate({
 					where: {
 						status: RefundStatus.COMPLETED,
-						createdAt: { gte: currentStart },
+						processedAt: { gte: currentStart },
 					},
 					_sum: { amount: true },
 					_count: true,
@@ -109,7 +136,7 @@ export async function fetchDashboardKpis(
 				prisma.refund.aggregate({
 					where: {
 						status: RefundStatus.COMPLETED,
-						createdAt: { gte: previousStart, lte: previousEnd },
+						processedAt: { gte: previousStart, lte: previousEnd },
 					},
 					_sum: { amount: true },
 					_count: true,
@@ -119,7 +146,7 @@ export async function fetchDashboardKpis(
 					where: {
 						shippedAt: { not: null },
 						paidAt: { gte: currentStart },
-						paymentStatus: PaymentStatus.PAID,
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 						...notDeleted,
 					},
 				}),
@@ -128,7 +155,7 @@ export async function fetchDashboardKpis(
 					where: {
 						shippedAt: { not: null },
 						paidAt: { gte: previousStart, lte: previousEnd },
-						paymentStatus: PaymentStatus.PAID,
+						paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 						...notDeleted,
 					},
 				}),
@@ -151,8 +178,9 @@ export async function fetchDashboardKpis(
 			const currentAov = currentCount > 0 ? currentRevenue / currentCount : 0;
 			const lastAov = lastCount > 0 ? lastRevenue / lastCount : 0;
 
-			const currentRate = currentTotalOrders > 0 ? (currentCount / currentTotalOrders) * 100 : 0;
-			const lastRate = lastTotalOrders > 0 ? (lastCount / lastTotalOrders) * 100 : 0;
+			const currentRate =
+				currentTotalOrders > 0 ? (currentPaidCreated / currentTotalOrders) * 100 : 0;
+			const lastRate = lastTotalOrders > 0 ? (lastPaidCreated / lastTotalOrders) * 100 : 0;
 
 			const currentDiscount = currentMonth._sum.discountAmount ?? 0;
 			const lastDiscount = lastMonth._sum.discountAmount ?? 0;
@@ -183,7 +211,7 @@ export async function fetchDashboardKpis(
 				conversionRate: {
 					rate: currentRate,
 					evolution: computeEvolution(currentRate, lastRate),
-					abandoned: currentTotalOrders - currentCount,
+					abandoned: currentTotalOrders - currentPaidCreated,
 					previousVolume: lastTotalOrders,
 				},
 				pendingShipment: {

@@ -72,7 +72,11 @@ vi.mock("@/modules/dashboard/services/revenue-chart-builder.service", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	PaymentStatus: { PAID: "PAID" },
+	PaymentStatus: {
+		PAID: "PAID",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+		REFUNDED: "REFUNDED",
+	},
 }));
 
 import { fetchDashboardRevenueChart } from "../get-revenue-chart";

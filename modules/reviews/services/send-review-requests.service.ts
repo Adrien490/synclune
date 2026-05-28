@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FulfillmentStatus } from "@/app/generated/prisma/client";
+import { FulfillmentStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails";
@@ -18,6 +18,10 @@ const emailSchema = z.string().email();
  *  - Order.actualDelivery < now - 7 jours
  *  - Order.reviewRequestSentAt IS NULL  (dedup natif via colonne dédiée)
  *  - Order.userId IS NOT NULL           (seuls les comptes peuvent laisser un avis)
+ *  - Order.status != CANCELLED          (BIZ-BUG-001 : ne pas solliciter un avis sur une commande annulée)
+ *  - Order.paymentStatus ∉ {REFUNDED, FAILED, EXPIRED} (BIZ-BUG-001 : un client
+ *    intégralement remboursé/échoué ne reçoit pas de demande d'avis. On garde
+ *    PARTIALLY_REFUNDED : le client peut légitimement noter la partie conservée.)
  *  - notDeleted
  *
  * Idempotence (best-effort, "1 email max") :
@@ -42,6 +46,13 @@ export async function sendReviewRequests(): Promise<CronResult> {
 			actualDelivery: { lt: cutoff, not: null },
 			reviewRequestSentAt: null,
 			userId: { not: null },
+			// BIZ-BUG-001 : exclure les commandes annulées ou intégralement
+			// remboursées/échouées — solliciter un avis dans ces cas est incohérent
+			// métier et pollue les notes. PARTIALLY_REFUNDED reste éligible.
+			status: { not: OrderStatus.CANCELLED },
+			paymentStatus: {
+				notIn: [PaymentStatus.REFUNDED, PaymentStatus.FAILED, PaymentStatus.EXPIRED],
+			},
 			...notDeleted,
 		},
 		select: {

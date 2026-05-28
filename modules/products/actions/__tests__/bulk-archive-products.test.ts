@@ -152,7 +152,7 @@ describe("bulkArchiveProducts", () => {
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		expect(mockUpdateTag).toHaveBeenCalled();
 		expect(r.status).toBe("SUCCESS");
-		expect(r.data).toEqual({ count: 1, targetStatus: "ARCHIVED" });
+		expect(r.data).toEqual({ count: 1, skippedCount: 0, targetStatus: "ARCHIVED" });
 	});
 
 	it("restores products to PUBLIC when targetStatus is PUBLIC", async () => {
@@ -166,6 +166,14 @@ describe("bulkArchiveProducts", () => {
 				status: "ARCHIVED",
 				title: "A",
 				collections: [],
+				skus: [
+					{
+						id: "sku-a",
+						isActive: true,
+						inventory: 5,
+						images: [{ mediaType: "IMAGE" }],
+					},
+				],
 			},
 		]);
 		mockPrisma.$transaction.mockImplementation(
@@ -177,5 +185,51 @@ describe("bulkArchiveProducts", () => {
 		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
 		expect(r.status).toBe("SUCCESS");
 		expect(r.message).toMatch(/restauré/i);
+	});
+
+	// MEDIA-AUDIT-001 : restaurer en PUBLIC doit passer validateProductForPublication.
+	it("refuses to restore to PUBLIC a product without an image", async () => {
+		mockValidateInput.mockReturnValue({
+			data: { productIds: PRODUCT_IDS, targetStatus: "PUBLIC" },
+		});
+		mockPrisma.product.findMany.mockResolvedValue([
+			{
+				id: PRODUCT_IDS[0],
+				slug: "a",
+				status: "ARCHIVED",
+				title: "A",
+				collections: [],
+				// SKU actif avec stock mais aucune image → publication refusée.
+				skus: [{ id: "sku-a", isActive: true, inventory: 5, images: [] }],
+			},
+		]);
+
+		const r = await bulkArchiveProducts(undefined, makeFd("PUBLIC"));
+
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(r.status).toBe("ERROR");
+		expect(r.message).toMatch(/prêt à être publié/i);
+	});
+
+	// MEDIA-AUDIT-001 : une video isPrimary ne suffit pas à publier.
+	it("refuses to restore to PUBLIC a product whose only media is a video", async () => {
+		mockValidateInput.mockReturnValue({
+			data: { productIds: PRODUCT_IDS, targetStatus: "PUBLIC" },
+		});
+		mockPrisma.product.findMany.mockResolvedValue([
+			{
+				id: PRODUCT_IDS[0],
+				slug: "a",
+				status: "ARCHIVED",
+				title: "A",
+				collections: [],
+				skus: [{ id: "sku-a", isActive: true, inventory: 5, images: [{ mediaType: "VIDEO" }] }],
+			},
+		]);
+
+		const r = await bulkArchiveProducts(undefined, makeFd("PUBLIC"));
+
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(r.status).toBe("ERROR");
 	});
 });

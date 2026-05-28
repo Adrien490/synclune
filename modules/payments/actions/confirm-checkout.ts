@@ -20,6 +20,7 @@ import { saveAddressInTransaction } from "@/modules/addresses/services/save-addr
 import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
+import { BusinessError } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import Stripe from "stripe";
@@ -268,6 +269,18 @@ export async function confirmCheckout(
 				...(v.saveInfo && userId && { addressSaved }),
 			};
 		} catch (e) {
+			// BIZ-BUG-007 : les rejets métier de createOrderInTransaction (code promo
+			// expiré entre validation panier et paiement, stock insuffisant, produit
+			// indisponible, zone non livrée) sont des BusinessError au message
+			// actionnable. Les surfacer tels quels au lieu du message générique —
+			// sinon le client voit « Une erreur est survenue » sans savoir quoi corriger.
+			if (e instanceof BusinessError) {
+				logger.info("Checkout rejected (business rule)", {
+					service: "checkout",
+					reason: e.message,
+				});
+				return { success: false, error: e.message };
+			}
 			const { kind, severity, code } = classifyStripeError(e);
 			if (severity === "info") {
 				// User-facing error (card decline) — keep out of Sentry to avoid on-call noise.

@@ -75,6 +75,20 @@ describe("closeStoreSchema", () => {
 		});
 		expect(result.success).toBe(false);
 	});
+
+	it("interprets a bare datetime-local reopensAt as Europe/Paris (STORE-AUDIT-001)", () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
+		// 10:00 heure de Paris l'été (CEST, UTC+2) = 08:00 UTC.
+		const result = closeStoreSchema.safeParse({
+			closureMessage: "Congés d'été",
+			reopensAt: "2026-07-01T10:00",
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.reopensAt?.toISOString()).toBe("2026-07-01T08:00:00.000Z");
+		}
+	});
 });
 
 // ============================================================================

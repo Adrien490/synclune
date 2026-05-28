@@ -142,7 +142,7 @@ function CartSheetBody({
 							role="alert"
 							aria-label="Problèmes de stock dans le panier"
 						>
-							<p className="text-destructive text-xs font-medium">
+							<p className="text-destructive text-sm font-medium">
 								Ajustez votre panier pour continuer
 							</p>
 							<ul className="text-destructive/80 mt-1 space-y-0.5 text-xs">
@@ -288,7 +288,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							aria-busy={isPending}
 							onOverlayClick={handleOverlayClick}
 						>
-							<DrawerHeader className="relative shrink-0 border-b px-6 py-3">
+							<DrawerHeader className="relative shrink-0 border-b px-6 py-4">
 								<DrawerTitle
 									aria-label={
 										hasItems

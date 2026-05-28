@@ -14,7 +14,10 @@ type ProductForPublicationCheck = {
 		id: string;
 		isActive: boolean;
 		inventory: number;
-		images: { id: string }[];
+		// `mediaType` permet de distinguer une vraie image d'une video : une video
+		// `isPrimary` ne suffit PAS a publier (la vitrine affiche un placeholder).
+		// Cf MEDIA-AUDIT-002.
+		images: { mediaType: string }[];
 	}[];
 };
 
@@ -61,8 +64,11 @@ export function validateProductForPublication(
 		};
 	}
 
-	// Regle 4: Au moins 1 SKU actif avec image principale
-	const hasImage = activeSkus.some((sku) => sku.images.length > 0);
+	// Regle 4: Au moins 1 SKU actif avec une image (media de type IMAGE).
+	// Aligne sur la logique d'affichage (`extractImageFromSku` ne retourne que des
+	// medias IMAGE) : un SKU dont les seuls medias sont des videos afficherait le
+	// placeholder en vitrine. Une video marquee `isPrimary` ne compte donc pas.
+	const hasImage = activeSkus.some((sku) => sku.images.some((img) => img.mediaType === "IMAGE"));
 	if (!hasImage) {
 		return {
 			isValid: false,
@@ -76,7 +82,14 @@ export function validateProductForPublication(
 
 /**
  * Verifie si un produit PUBLIC peut etre cree avec le SKU initial fourni
- * Version simplifiee pour la creation (pas encore de SKU en DB)
+ * Version simplifiee pour la creation (pas encore de SKU en DB).
+ *
+ * NOTE (MEDIA-AUDIT-007) : la presence d'au moins une image (media IMAGE) est
+ * garantie en amont par `createProductSchema` — refines inconditionnels
+ * `initialSku.media.length > 0` + premier media force a IMAGE
+ * (`product-mutation.schemas.ts`). Cette garantie est verrouillee par un test
+ * de regression dedie ; ne pas dupliquer un controle d'URL ici (le service
+ * pur n'a pas connaissance des extensions).
  */
 export function validatePublicProductCreation(
 	sku: SkuForPublicCheck,

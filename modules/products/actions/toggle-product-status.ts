@@ -66,10 +66,10 @@ export async function toggleProductStatus(
 						id: true,
 						isActive: true,
 						inventory: true,
-						images: {
-							where: { isPrimary: true },
-							select: { id: true },
-						},
+						// MEDIA-AUDIT-002 : on charge le type de chaque media (pas seulement
+						// l'image primaire) pour que validateProductForPublication exige une
+						// vraie image (mediaType IMAGE), pas une video isPrimary.
+						images: { select: { mediaType: true } },
 					},
 				},
 			},

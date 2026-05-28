@@ -159,4 +159,22 @@ describe("reconcileInvoiceStatuses (OPS-AUDIT-002)", () => {
 		const result = await reconcileInvoiceStatuses();
 		expect(result.hasMore).toBe(true);
 	});
+
+	it("s'arrête sur deadline sans appeler le provider et signale hasMore (CRON-AUDIT-001)", async () => {
+		mockPrisma.order.findMany.mockResolvedValueOnce([buildCandidate()]);
+		// cutoff(1000), deadline(1000 → +45s = 46000), loop-check(1_000_000 ≥ 46000 → break)
+		const nowSpy = vi
+			.spyOn(Date, "now")
+			.mockReturnValueOnce(1_000)
+			.mockReturnValueOnce(1_000)
+			.mockReturnValue(1_000_000);
+
+		const result = await reconcileInvoiceStatuses();
+
+		expect(mockProvider.getInvoiceStatus).not.toHaveBeenCalled();
+		expect(result.processed).toBe(0);
+		expect(result.hasMore).toBe(true);
+		expect(mockLogger.warn).toHaveBeenCalled();
+		nowSpy.mockRestore();
+	});
 });

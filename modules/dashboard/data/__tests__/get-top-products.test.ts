@@ -208,15 +208,21 @@ describe("fetchDashboardTopProducts", () => {
 		expect(values).toContain(5);
 	});
 
-	it("filters on PAID payment status, soft-delete, and non-null productId snapshot", async () => {
+	it("filters on encaissed payment statuses, soft-delete, and non-null productId snapshot", async () => {
 		await fetchDashboardTopProducts();
 
 		const sqlStrings = (mockPrismaQueryRaw.mock.calls[0]?.[0] ?? []) as string[];
 		const sql = sqlStrings.join("?");
-		expect(sql).toContain(`"paymentStatus" = 'PAID'`);
+		// Statuts encaissés (ANALYTICS-AUDIT-001) interpolés via = ANY(...) sans cast ::text.
+		expect(sql).toContain(`"paymentStatus" = ANY(`);
+		expect(sql).toContain(`::"PaymentStatus"[]`);
 		expect(sql).toContain(`o."deletedAt" IS NULL`);
 		expect(sql).toContain(`p."deletedAt" IS NULL`);
 		expect(sql).toContain(`ORDER BY revenue DESC`);
+
+		// La liste de statuts est interpolée comme valeur (param), pas dans la chaîne SQL.
+		const values = mockPrismaQueryRaw.mock.calls[0]?.slice(1) ?? [];
+		expect(values).toContainEqual(["PAID", "PARTIALLY_REFUNDED", "REFUNDED"]);
 	});
 
 	// -------------------------------------------------------------------------

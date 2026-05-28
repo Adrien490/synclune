@@ -293,7 +293,12 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 
 		const result = await restoreStockForOrder("missing");
 
-		expect(result).toEqual({ shouldRestore: false, itemCount: 0, restoredSkuIds: [] });
+		expect(result).toEqual({
+			shouldRestore: false,
+			itemCount: 0,
+			restoredSkuIds: [],
+			userId: null,
+		});
 	});
 });
 

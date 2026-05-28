@@ -9,7 +9,7 @@ import { FieldLabel } from "@/shared/components/forms";
 import { ColorMultiSelectField } from "@/modules/colors/components/admin/color-multi-select-field";
 import { MaterialMultiSelectField } from "@/modules/materials/components/admin/material-multi-select-field";
 
-import { MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
 
 type ColorOption = { id: string; name: string; hex: string };
 type MaterialOption = { id: string; name: string };
@@ -48,7 +48,7 @@ export function VariantCard({
 		<Card
 			role="region"
 			aria-label={ariaLabel}
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">

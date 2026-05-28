@@ -37,7 +37,7 @@ pnpm prisma migrate dev     # Create/apply migrations
 ```
 app/
 ├── (auth)/                  # Connexion, inscription, mot-de-passe, verification email
-├── (boutique)/              # Storefront (accueil, produits, collections, personnalisation, compte, legal, newsletter)
+├── (boutique)/              # Storefront (accueil, produits, collections, personnalisation, compte, legal)
 ├── admin/                   # Dashboard admin (catalogue, commandes, marketing, contenu)
 ├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
 ├── paiement/                # Pages paiement (confirmation, annulation, retour)
@@ -183,6 +183,8 @@ async function fetchCart(userId?: string) {
 | `catalog`   | 15m   | 5m         | Products, SKUs, related products                            |
 | `reference` | 7d    | 24h        | Legal, collections, materials, colors, FAQs, store settings |
 
+**Invalidation des statuts commande (CACHE-AUDIT-010)** : toute mutation de `Order.status`/`paymentStatus` (Server Action, webhook handler, cron) DOIT invalider via `getOrderInvalidationTags(userId, orderId)` (`modules/orders/constants/cache.ts`) — jamais une liste de tags écrite à la main. Le helper couvre les tags user-scopés (`USER_ORDERS`, `LAST_ORDER`, `ACCOUNT_STATS`) et par-commande (`DETAIL`, `CONFIRMATION`, `HISTORY`) ; une liste partielle (`[LIST, ADMIN_ORDERS_LIST, ADMIN_BADGES]`) laisse l'espace client + le détail commande stale jusqu'à l'expiration du profil `user` (~10 min). Résoudre `userId` (ajouter `userId: true` au `select`) quand absent. Tags de cache toujours via une constante SSOT du module, jamais en littéral template.
+
 ## Module Layers Pattern
 
 Chaque module suit une architecture en couches pour la separation des responsabilites:
@@ -278,20 +280,18 @@ Ces reads sont atomiques avec la mutation et ne beneficieraient pas du cache (do
 
 Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce sont des services transactionnels appeles depuis plusieurs contextes (cron, webhooks, server components) ou la logique doit rester atomique:
 
-| Fichier                                                   | Raison                                                                                |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `reviews/services/send-review-request-email.service.ts`   | Partage entre cron + webhooks + actions                                               |
-| `payments/services/stripe-customer.service.ts`            | Paire atomique Stripe + DB pour checkout                                              |
-| `payments/services/order-creation.service.ts`             | Transaction atomique stock lock + order + discount usage                              |
-| `wishlist/services/notify-back-in-stock.ts`               | Notification atomique apres restock                                                   |
-| `newsletter/services/subscribe-to-newsletter-internal.ts` | Partage entre subscribe + toggle actions                                              |
-| `newsletter/services/confirm-newsletter-subscription.ts`  | Appele depuis server component (sans formulaire)                                      |
-| `newsletter/services/unsubscribe-newsletter.ts`           | Appele depuis server component (sans formulaire)                                      |
-| `newsletter/services/create-newsletter-promo-code.ts`     | Appele depuis confirm-newsletter-subscription                                         |
-| `cart/services/sku-validation.service.ts`                 | Validation DB reads partagees entre actions + SKU selector                            |
-| `reviews/services/send-review-requests.service.ts`        | Cron job — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email |
-| `users/services/refresh-customer-routing.service.ts`      | Cron job — `user.update` pour rafraichir `customerRoutingKey` apres expiration TTL    |
-| `store-settings/services/auto-reopen.service.ts`          | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues       |
+| Fichier                                                | Raison                                                                                                                                                                                                            |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `payments/services/stripe-customer.service.ts`         | Paire atomique Stripe + DB pour checkout                                                                                                                                                                          |
+| `payments/services/order-creation.service.ts`          | Transaction atomique stock lock + order + discount usage                                                                                                                                                          |
+| `wishlist/services/notify-back-in-stock.ts`            | Notification atomique apres restock                                                                                                                                                                               |
+| `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                        |
+| `reviews/services/send-review-requests.service.ts`     | Cron job — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email                                                                                                                             |
+| `refunds/services/send-refund-confirmation.service.ts` | Émetteur unique email remboursement — `refund.updateMany` claim atomique (`confirmationEmailSentAt`) partagé entre cron `reconcile-refunds` + webhook `charge.refunded` + action `processRefund` (ORD-STRIPE-005) |
+| `users/services/refresh-customer-routing.service.ts`   | Cron job — `user.update` pour rafraichir `customerRoutingKey` apres expiration TTL                                                                                                                                |
+| `store-settings/services/auto-reopen.service.ts`       | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues                                                                                                                                   |
+| `orders/services/persist-pdp-transmission.service.ts`  | E-invoicing — `OrderHistory` create + flags transmission PDP (immuable, Art. L123-22)                                                                                                                             |
+| `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                             |
 
 ## API Routes
 

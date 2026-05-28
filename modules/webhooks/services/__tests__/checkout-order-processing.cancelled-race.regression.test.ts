@@ -131,6 +131,7 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 					$queryRaw: vi.fn().mockResolvedValue([]),
 					productSku: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
 					cartItem: { deleteMany: vi.fn() },
+					orderHistory: { create: vi.fn() },
 				};
 				return cb(tx as unknown as typeof mockPrisma);
 			});

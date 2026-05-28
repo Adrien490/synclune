@@ -47,6 +47,13 @@ vi.mock("@/modules/orders/services/persist-pdp-transmission.service", () => ({
 	persistPdpTransmission: (...args: unknown[]) => mockPersistPdpTransmission(...args),
 }));
 
+// withDeadline est importé pour borner l'appel provider (CRON-AUDIT-001). On
+// passe-plat ici pour éviter de charger le vrai module (qui touche EReportingStatus
+// au top-level, absent du mock prisma-client partiel de ce fichier).
+vi.mock("@/modules/invoices/services/submit-ereporting-batch.service", () => ({
+	withDeadline: <T>(p: Promise<T>) => p,
+}));
+
 vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_ADMIN: { id: true, invoiceNumber: true },
 }));
@@ -192,5 +199,26 @@ describe("retryInvoiceTransmissions", () => {
 		expect(result.abandoned).toBe(1);
 		const updateCall = mockOrderUpdate.mock.calls[0]?.[0];
 		expect(updateCall.data.pdpStatus).toBe("ABANDONED");
+	});
+
+	it("s'arrête sur deadline sans transmettre et signale hasMore (CRON-AUDIT-001)", async () => {
+		mockOrderFindMany.mockResolvedValueOnce([
+			{
+				id: "ord_1",
+				pdpRetryCount: 0,
+				pdpLastRetryAt: null,
+				pdpRejectionCode: "TIMEOUT",
+				total: 5000,
+			},
+		]);
+		// deadline(1000 → +45s = 46000), loop-check(1_000_000 ≥ 46000 → break)
+		const nowSpy = vi.spyOn(Date, "now").mockReturnValueOnce(1_000).mockReturnValue(1_000_000);
+
+		const result = await retryInvoiceTransmissions();
+
+		expect(mockProvider.submitInvoice).not.toHaveBeenCalled();
+		expect(result.processed).toBe(0);
+		expect(result.hasMore).toBe(true);
+		nowSpy.mockRestore();
 	});
 });

@@ -5,6 +5,7 @@ const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } = vi.ho
 		skuMedia: { findMany: vi.fn() },
 		reviewMedia: { findMany: vi.fn() },
 		user: { findMany: vi.fn() },
+		orderItem: { findMany: vi.fn() },
 	},
 	mockListFiles: vi.fn(),
 	mockDeleteFiles: vi.fn(),
@@ -43,6 +44,7 @@ describe("cleanupOrphanMedia", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.user.findMany.mockResolvedValue([]);
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
 
 		mockListFiles.mockResolvedValue({ files: [] });
 		mockDeleteFiles.mockResolvedValue({ success: true });
@@ -131,6 +133,36 @@ describe("cleanupOrphanMedia", () => {
 		expect(result.filesScanned).toBe(5);
 		expect(result.orphansDeleted).toBe(1);
 		expect(mockDeleteFiles).toHaveBeenCalledWith(["orphan-file"]);
+	});
+
+	// MEDIA-AUDIT-003 : un fichier encore référencé par un snapshot de commande
+	// (OrderItem.productImageUrl / skuImageUrl) ne doit jamais être supprimé, même
+	// si sa ligne SkuMedia source a disparu.
+	it("should not delete files referenced only by an OrderItem snapshot", async () => {
+		const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+		// Aucun SkuMedia/ReviewMedia/User ne référence ces fichiers : seuls des
+		// snapshots de commande les pointent.
+		mockPrisma.orderItem.findMany.mockResolvedValue([
+			{
+				productImageUrl: "https://utfs.io/f/order-snapshot-1",
+				skuImageUrl: "https://utfs.io/f/order-snapshot-2",
+			},
+		]);
+
+		mockListFiles.mockResolvedValue({
+			files: [
+				{ key: "order-snapshot-1", uploadedAt: twoDaysAgo },
+				{ key: "order-snapshot-2", uploadedAt: twoDaysAgo },
+				{ key: "true-orphan", uploadedAt: twoDaysAgo },
+			],
+		});
+
+		const result = await cleanupOrphanMedia();
+
+		expect(result.filesScanned).toBe(3);
+		expect(result.orphansDeleted).toBe(1);
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["true-orphan"]);
 	});
 
 	it("should handle UploadThing deleteFiles errors gracefully", async () => {

@@ -2,7 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { Prisma } from "@/app/generated/prisma/client";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
@@ -96,8 +96,28 @@ export async function createReview(
 			return forbidden(message);
 		}
 
-		// 6. Vérifier que l'orderItemId fourni correspond à celui éligible
-		if (eligibility.orderItemId !== orderItemId) {
+		// 6. Vérifier que l'orderItemId soumis est lui-même un OrderItem éligible de
+		// l'utilisateur pour ce produit (livré, payé non remboursé, pas encore noté).
+		// `checkReviewEligibility` ne renvoie que le plus récent ; on valide ici l'item
+		// réellement soumis pour supporter les achats répétés (≥2 OrderItems livrés du
+		// même produit) sans rejeter à tort « Référence de commande invalide ».
+		// Cf. REVIEW-AUDIT-006 (+ exclusion remboursé/annulé, REVIEW-AUDIT-004).
+		const submittedItemEligible = await prisma.orderItem.findFirst({
+			where: {
+				id: orderItemId,
+				order: {
+					userId,
+					fulfillmentStatus: "DELIVERED",
+					status: { not: "CANCELLED" },
+					paymentStatus: { notIn: ["REFUNDED", "FAILED", "EXPIRED"] },
+					...notDeleted,
+				},
+				sku: { productId, ...notDeleted },
+				review: null,
+			},
+			select: { id: true },
+		});
+		if (!submittedItemEligible) {
 			return validationError("Référence de commande invalide");
 		}
 

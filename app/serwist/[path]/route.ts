@@ -15,8 +15,11 @@ try {
 		additionalPrecacheEntries: [{ url: "/~offline", revision }],
 		swSrc: "app/sw.ts",
 		useNativeEsbuild: false,
-		// Allow large lazy-loaded chunks (e.g. recharts bundle ~2.7 MB) in precache
-		maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+		// Keep heavy admin-only chunks (e.g. recharts ~2.7 MB) OUT of the precache
+		// (PWA-AUDIT-008): they would otherwise be downloaded by every PWA install,
+		// including storefront-only customers who never open them. Chunks above this
+		// size are fetched on demand and runtime-cached by `defaultCache` instead.
+		maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
 	});
 } catch (error) {
 	Sentry.captureException(error, { tags: { component: "serwist-route" } });

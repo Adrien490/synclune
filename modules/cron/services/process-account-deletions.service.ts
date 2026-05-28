@@ -7,9 +7,18 @@ import {
 	deleteUploadThingFileFromUrl,
 	deleteUploadThingFilesFromUrls,
 } from "@/modules/media/services/delete-uploadthing-files.service";
-import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
+import {
+	BATCH_DEADLINE_MS,
+	BATCH_SIZE_MEDIUM,
+	RETENTION,
+	STRIPE_TIMEOUT_MS,
+} from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
+import {
+	PRODUCTS_CACHE_TAGS,
+	RECENT_PRODUCTS_CACHE_TAGS,
+} from "@/modules/products/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
@@ -78,6 +87,18 @@ export async function processAccountDeletions(): Promise<CronResult> {
 			});
 			const reviewMediaUrls = reviewMedias.map((m) => m.url);
 
+			// Collect distinct productIds of the user's reviews for cache invalidation:
+			// anonymization hides them (HIDDEN) + recomputes stats, so the storefront
+			// review list / stats / product-card caches must be purged. Cf. REVIEW-AUDIT-002.
+			const reviewedProducts = await prisma.productReview.findMany({
+				where: { userId: user.id, productId: { not: null } },
+				select: { productId: true },
+				distinct: ["productId"],
+			});
+			const reviewedProductIds = reviewedProducts
+				.map((r) => r.productId)
+				.filter((id): id is string => id !== null);
+
 			await prisma.$transaction(
 				async (tx) => {
 					await anonymizeUserInTransaction(tx, user.id);
@@ -98,6 +119,9 @@ export async function processAccountDeletions(): Promise<CronResult> {
 					to: emailBeforeAnonymization,
 					userName: nameBeforeAnonymization,
 					deletionDate,
+					// EMAIL-AUDIT-107 : backstop dedup Resend 24h si le cron rejoue
+					// cross-instance (le flag anonymizedAt gate déjà la re-sélection).
+					idempotencyKey: `account-deletion:${user.id}`,
 				});
 			} catch {
 				// Non-blocking: continue even if email fails
@@ -112,12 +136,31 @@ export async function processAccountDeletions(): Promise<CronResult> {
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
 
+			// Avis anonymisés/masqués : purger les caches storefront concernés
+			// (liste d'avis + stats par produit + cards qui embarquent reviewStats).
+			// Cf. REVIEW-AUDIT-002.
+			for (const productId of reviewedProductIds) {
+				updateTag(REVIEWS_CACHE_TAGS.PRODUCT(productId));
+				updateTag(REVIEWS_CACHE_TAGS.STATS(productId));
+			}
+			if (reviewedProductIds.length > 0) {
+				updateTag(REVIEWS_CACHE_TAGS.HOMEPAGE);
+				updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
+				updateTag(PRODUCTS_CACHE_TAGS.LIST);
+				updateTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
+				updateTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
+			}
+
 			// Delete Stripe customer AFTER successful transaction (RGPD Art. 17)
 			if (stripeCustomerId) {
 				try {
 					const stripe = getStripeClient();
 					if (stripe) {
-						await stripe.customers.del(stripeCustomerId);
+						// Timeout cron-aligné (5s) plutôt que le défaut SDK 10s, pour
+						// cohérence avec les autres crons. Cf. CRON-AUDIT-005.
+						await stripe.customers.del(stripeCustomerId, undefined, {
+							timeout: STRIPE_TIMEOUT_MS,
+						});
 					}
 				} catch {
 					// Non-blocking: Stripe customer becomes orphan

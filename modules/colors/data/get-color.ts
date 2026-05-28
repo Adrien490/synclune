@@ -5,7 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
-import { cacheColorDetail } from "../constants/cache";
+import { cacheColorDetail, COLORS_CACHE_TAGS } from "../constants/cache";
 
 import { GET_COLOR_SELECT } from "../constants/color.constants";
 import { getColorSchema } from "../schemas/color.schemas";
@@ -183,7 +183,7 @@ export async function getColorDistinctProductCount(colorId: string): Promise<num
 async function fetchColorDistinctProductCount(colorId: string): Promise<number> {
 	"use cache";
 	cacheLife("user");
-	cacheTag(`color-${colorId}-product-count`);
+	cacheTag(COLORS_CACHE_TAGS.PRODUCT_COUNT(colorId));
 
 	try {
 		// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure

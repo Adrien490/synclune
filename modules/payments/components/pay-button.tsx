@@ -126,6 +126,17 @@ export function PayButton({
 			data-hide-on-keyboard=""
 			className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none"
 		>
+			{/*
+			 * Région live des phases de paiement (A11Y-AUDIT-001).
+			 * Le texte visible du bouton change selon `phase`, mais un élément déjà
+			 * focusé ne réémet pas son nom au changement → les SR n'annoncent pas la
+			 * progression. Cette région sr-only annonce "Validation…", "Création de
+			 * la commande…", etc. La phase 3DS garde en plus son Alert visible ci-dessous.
+			 */}
+			<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+				{phaseMessage}
+			</span>
+
 			{isAwaiting3ds && (
 				<Alert role="status" aria-live="polite">
 					<ShieldCheck className="size-4" />

@@ -73,13 +73,11 @@ vi.mock("../../services/refund.service", () => ({
 	markRefundAsFailed: mockMarkRefundAsFailed,
 }));
 
-vi.mock("@/modules/orders/constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-}));
+vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+	const actual = await importOriginal<typeof import("@/modules/orders/constants/cache")>();
+	return actual;
+});
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges", ADMIN_ORDERS_LIST: "admin-orders-list" },

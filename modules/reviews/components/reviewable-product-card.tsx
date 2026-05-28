@@ -51,8 +51,8 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 			className={cn("border-border/60 overflow-hidden rounded-lg border", className)}
 		>
 			<div className="flex flex-col sm:flex-row">
-				{/* Image produit */}
-				<div className="relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
+				{/* Image produit — bg-muted = fallback zéro-JS si l'URL 404 */}
+				<div className="bg-muted relative aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32">
 					{product.productImage ? (
 						<Image
 							src={product.productImage.url}
@@ -71,7 +71,7 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 gap-y-3 p-4">
+				<div className="flex flex-1 flex-col gap-3 p-4">
 					{/* Titre produit */}
 					<div>
 						<Link

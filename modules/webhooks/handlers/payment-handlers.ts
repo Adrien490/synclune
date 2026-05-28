@@ -10,11 +10,11 @@ import {
 } from "../services/payment-intent.service";
 import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
-import type { WebhookHandlerResult } from "../types/webhook.types";
+import { buildUrl, getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import type { PostWebhookTask, WebhookHandlerResult } from "../types/webhook.types";
 import {
 	processOrderFromPaymentIntent,
 	buildPostCheckoutTasksFromPI,
@@ -152,7 +152,7 @@ export async function handlePaymentFailure(
 		});
 
 		// 2. Restore stock if necessary
-		const { restoredSkuIds } = await restoreStockForOrder(orderId);
+		const { restoredSkuIds, userId } = await restoreStockForOrder(orderId);
 
 		// 3. Mark order as failed
 		await markOrderAsFailed(orderId, paymentIntent.id, failureDetails);
@@ -183,19 +183,41 @@ export async function handlePaymentFailure(
 		logger.info(`❌ [WEBHOOK] Order ${orderId} payment failed`, { service: "webhook" });
 
 		// 5. Build cache invalidation tasks
-		const cacheTags: string[] = [
-			ORDERS_CACHE_TAGS.LIST,
-			SHARED_CACHE_TAGS.ADMIN_BADGES,
-			SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-		];
+		// CACHE-AUDIT-002 : passe par le helper canonique pour couvrir les tags
+		// user-scopés (USER_ORDERS, LAST_ORDER, ACCOUNT_STATS) et le détail
+		// (DETAIL/CONFIRMATION/HISTORY) — sinon l'espace client affiche encore
+		// la commande en PENDING/PROCESSING jusqu'à l'expiration du profil `user`.
+		const cacheTags: string[] = [...getOrderInvalidationTags(userId ?? undefined, orderId)];
 		for (const skuId of restoredSkuIds) {
 			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 		}
 
-		return {
-			success: true,
-			tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }],
-		};
+		const tasks: PostWebhookTask[] = [{ type: "INVALIDATE_CACHE", tags: cacheTags }];
+
+		// 6. BIZ-BUG-004 : notifier le client de l'échec, à parité avec le flux
+		// async (handleAsyncPaymentFailed). Sur un refus carte synchrone l'erreur
+		// remonte déjà dans l'UI, mais `payment_intent.payment_failed` peut aussi
+		// survenir en différé (client absent) — l'email reste utile et l'idempotency
+		// key Resend protège du doublon.
+		const failedOrder = await prisma.order.findFirst({
+			where: { id: orderId, ...notDeleted },
+			select: { orderNumber: true, customerEmail: true, customerName: true },
+		});
+		if (failedOrder?.customerEmail) {
+			tasks.push({
+				type: "PAYMENT_FAILED_EMAIL",
+				data: {
+					to: failedOrder.customerEmail,
+					customerName: failedOrder.customerName,
+					orderNumber: failedOrder.orderNumber,
+					retryUrl: `${getBaseUrl()}${ROUTES.SHOP.CHECKOUT}`,
+					// dedup cross-instance Resend 24h sur retries (cf. ORD-STRIPE-008).
+					idempotencyKey: `payment-failed-${orderId}`,
+				},
+			});
+		}
+
+		return { success: true, tasks };
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error, {
 			service: "webhook",
@@ -231,7 +253,7 @@ export async function handlePaymentCanceled(
 
 	try {
 		// 1. Restore stock if it was decremented (order was PROCESSING/PAID)
-		const { restoredSkuIds } = await restoreStockForOrder(orderId);
+		const { restoredSkuIds, userId } = await restoreStockForOrder(orderId);
 
 		// 2. Mark order as cancelled
 		await markOrderAsCancelled(orderId, paymentIntent.id);
@@ -261,11 +283,8 @@ export async function handlePaymentCanceled(
 		logger.info(`⚠️ [WEBHOOK] Order ${orderId} payment canceled`, { service: "webhook" });
 
 		// 4. Build cache invalidation tasks
-		const cacheTags: string[] = [
-			ORDERS_CACHE_TAGS.LIST,
-			SHARED_CACHE_TAGS.ADMIN_BADGES,
-			SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-		];
+		// CACHE-AUDIT-002 : helper canonique (cf. handlePaymentFailure).
+		const cacheTags: string[] = [...getOrderInvalidationTags(userId ?? undefined, orderId)];
 		for (const skuId of restoredSkuIds) {
 			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 		}

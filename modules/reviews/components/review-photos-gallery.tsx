@@ -82,7 +82,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 							type="button"
 							onClick={() => openAtIndex(index)}
 							aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}`}
-							className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
+							className="focus-ring group bg-muted relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-offset-2"
 						>
 							<Image
 								src={photo.url}

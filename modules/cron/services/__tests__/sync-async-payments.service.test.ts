@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { updateTag } from "next/cache";
 
 const {
 	mockPrisma,
@@ -148,6 +149,27 @@ describe("syncAsyncPayments", () => {
 		expect(result!.updated).toBe(1);
 		expect(result!.checked).toBe(1);
 		expect(result!.hasMore).toBe(false);
+	});
+
+	// CACHE-AUDIT-004 : confirmation async → l'espace client doit refléter PAID
+	// immédiatement (tags user-scopés + détail), pas après expiration du profil.
+	it("CACHE-AUDIT-004: should invalidate user-scoped + order-detail tags on success", async () => {
+		const order = {
+			id: "order-1",
+			orderNumber: "SYN-001",
+			stripePaymentIntentId: "pi_success",
+			paymentStatus: "PENDING",
+			userId: "user-9",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: "pi_success", status: "succeeded" });
+
+		await syncAsyncPayments();
+
+		const invalidated = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+		expect(invalidated).toContain("order-detail-order-1");
+		expect(invalidated).toContain("orders-user-user-9");
+		expect(invalidated).toContain("last-order-user-user-9");
 	});
 
 	// ORD-STRIPE-001 régression : si le webhook async_payment_succeeded est perdu,

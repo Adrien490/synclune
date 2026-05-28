@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -251,5 +251,25 @@ describe("PayButton", () => {
 		const button = screen.getByRole("button");
 		await userEvent.click(button);
 		expect(button).toHaveAttribute("aria-busy", "true");
+	});
+
+	// ─── A11Y-AUDIT-001: phase announcements ──────────────────────────────────
+
+	it("exposes an empty polite live region for payment phases when idle", () => {
+		render(<PayButton {...defaultProps} />);
+		const liveRegion = screen.getByRole("status");
+		expect(liveRegion).toHaveAttribute("aria-live", "polite");
+		expect(liveRegion).toHaveTextContent("");
+	});
+
+	it("announces the payment phase to screen readers via the live region while processing", async () => {
+		// confirmCheckout stays pending so the "creating-order" phase persists and
+		// the 3DS Alert (also role="status") never mounts → single live region.
+		mockConfirmCheckout.mockImplementation(() => new Promise<never>(() => {}));
+		render(<PayButton {...defaultProps} />);
+		await userEvent.click(screen.getByRole("button"));
+		await waitFor(() =>
+			expect(screen.getByRole("status")).toHaveTextContent(/Validation|Création de la commande/),
+		);
 	});
 });

@@ -47,6 +47,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PAID: "PAID",
 		FAILED: "FAILED",
 		EXPIRED: "EXPIRED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
 	},
 }));
@@ -154,13 +155,13 @@ describe("fetchDashboardRecentOrders", () => {
 	// Prisma query filters
 	// -------------------------------------------------------------------------
 
-	it("should filter by PaymentStatus.PAID", async () => {
+	it("should filter by encaissed statuses (PAID + refunded — ANALYTICS-AUDIT-001)", async () => {
 		await fetchDashboardRecentOrders();
 
 		expect(mockPrismaOrderFindMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: expect.objectContaining({
-					paymentStatus: "PAID",
+					paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"] },
 				}),
 			}),
 		);

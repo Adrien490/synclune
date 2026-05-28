@@ -5,7 +5,8 @@ import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
 import { persistPdpTransmission } from "@/modules/orders/services/persist-pdp-transmission.service";
 import { shouldTransmitInvoice } from "@/modules/invoices/services/should-transmit-invoice";
-import { BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
+import { withDeadline } from "@/modules/invoices/services/submit-ereporting-batch.service";
+import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 import { GET_ORDER_SELECT_ADMIN } from "@/modules/orders/constants/order.constants";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
@@ -90,12 +91,30 @@ export async function retryInvoiceTransmissions(): Promise<CronResult> {
 		return { processed: 0, errored: 0, skipped: 0 };
 	}
 
+	// Garde deadline : l'appel `provider.submitInvoice` peut hang (PDP lent). On
+	// race chaque transmission contre le deadline global et on s'arrête avant le
+	// SIGTERM Vercel 60s, en signalant hasMore pour reprise. Cf. CRON-AUDIT-001.
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
+
 	let processed = 0;
 	let errored = 0;
 	let skipped = 0;
 	let abandoned = 0;
+	let deadlineHit = false;
 
 	for (const candidate of candidates) {
+		if (Date.now() >= deadline) {
+			deadlineHit = true;
+			logger.warn("Deadline reached, deferring remaining transmissions", {
+				cronJob: "retry-invoice-transmissions",
+				processed,
+				errored,
+				skipped,
+				abandoned,
+			});
+			break;
+		}
+
 		const retryCount = candidate.pdpRetryCount;
 		const lastRetry = candidate.pdpLastRetryAt ?? null;
 		const backoffMs = computeBackoffMs(retryCount);
@@ -137,11 +156,15 @@ export async function retryInvoiceTransmissions(): Promise<CronResult> {
 			}
 
 			const invoiceData = buildInvoiceData(order as GetOrderReturn);
-			const result = await provider.submitInvoice({
-				invoiceData,
-				pdfBuffer: null,
-				xmlBuffer: null,
-			});
+			const result = await withDeadline(
+				provider.submitInvoice({
+					invoiceData,
+					pdfBuffer: null,
+					xmlBuffer: null,
+				}),
+				deadline,
+				`retry-invoice-transmissions:submitInvoice:${candidate.id}`,
+			);
 
 			await persistPdpTransmission({
 				orderId: candidate.id,
@@ -175,7 +198,7 @@ export async function retryInvoiceTransmissions(): Promise<CronResult> {
 		processed,
 		errored,
 		skipped,
-		hasMore: candidates.length === BATCH_SIZE_MEDIUM,
+		hasMore: deadlineHit || candidates.length === BATCH_SIZE_MEDIUM,
 		abandoned,
 	};
 }

@@ -45,8 +45,12 @@ export function buildPostCheckoutTasks(
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 	}
 
-	// 2. Customer confirmation email
-	const customerEmail = session.customer_email ?? session.customer_details?.email;
+	// 2. Customer confirmation email — fallback to Order.customerEmail (BIZ-BUG-006).
+	// Aligne le flux Checkout Session sur le flux PI : si Stripe ne renvoie pas
+	// d'email dans la session (guest mal renseigné), on retombe sur l'email figé
+	// sur la commande pour ne pas priver le client de sa confirmation.
+	const customerEmail =
+		session.customer_email ?? session.customer_details?.email ?? order.customerEmail;
 	if (customerEmail) {
 		const trackingUrl = `${baseUrl}/orders`;
 		const invoiceUrl = buildInvoiceUrl(baseUrl, order.id, order.orderNumber);

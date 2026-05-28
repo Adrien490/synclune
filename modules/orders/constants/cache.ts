@@ -3,6 +3,7 @@
  */
 
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 
 // ============================================
 // CACHE TAGS
@@ -59,8 +60,8 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
 			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
 			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId),
-			// Page admin détail user : compteur de commandes (cf. modules/users/data/get-user-detail-admin.ts)
-			`user-orders-count-${userId}`,
+			// CACHE-AUDIT-008 : SSOT (cf. modules/users/data/get-user-detail-admin.ts)
+			USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId),
 		);
 	}
 

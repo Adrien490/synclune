@@ -40,7 +40,12 @@ export async function fetchSession(
 	params: GetSessionParams,
 	context: FetchSessionContext,
 ): Promise<GetSessionReturn | null> {
-	"use cache";
+	// CACHE-AUDIT-001 : cache PRIVÉ. La clé `cacheAuthSession(params.id)` n'inclut
+	// pas le contexte (admin vs user), or le WHERE en dépend (un admin ne filtre
+	// pas par `userId`). En cache partagé, un résultat admin non-scopé pourrait
+	// être servi à un user (IDOR-via-cache). `"use cache: private"` scope l'entrée
+	// par requête/session et neutralise le risque.
+	"use cache: private";
 	cacheAuthSession(params.id);
 
 	const where: { id: string; userId?: string } = {

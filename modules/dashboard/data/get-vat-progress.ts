@@ -1,10 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
+import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 import type { GetVatProgressReturn } from "../types/dashboard.types";
 
@@ -45,12 +46,16 @@ export async function fetchDashboardVatProgress(): Promise<GetVatProgressReturn>
 
 	return Sentry.startSpan({ name: "dashboard.fetchVatProgress", op: "db.read" }, async () => {
 		const now = new Date();
-		const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+		const { year } = getParisDateParts(now);
+		const yearStart = parisWallTimeToUtc(year, 0, 1);
 
 		const aggregate = await prisma.order.aggregate({
 			where: {
 				paidAt: { gte: yearStart },
-				paymentStatus: PaymentStatus.PAID,
+				// CA encaissé = inclut les commandes remboursées (ANALYTICS-AUDIT-004) :
+				// le seuil de franchise se mesure sur l'encaissement brut, exclure les
+				// remboursées sous-estimerait le CA et retarderait l'alerte de bascule TVA.
+				paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 				...notDeleted,
 			},
 			_sum: { total: true },
@@ -64,7 +69,7 @@ export async function fetchDashboardVatProgress(): Promise<GetVatProgressReturn>
 			ytdRevenue,
 			threshold,
 			progress,
-			year: now.getUTCFullYear(),
+			year,
 		};
 	});
 }

@@ -69,7 +69,8 @@ export async function bulkChangeProductStatus(
 						id: true,
 						isActive: true,
 						inventory: true,
-						images: { where: { isPrimary: true }, select: { id: true } },
+						// MEDIA-AUDIT-002 : type de chaque media pour exiger une vraie image.
+						images: { select: { mediaType: true } },
 					},
 				},
 			},

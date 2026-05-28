@@ -93,15 +93,25 @@ export async function sendAccountDeletionEmail({
 	to,
 	userName,
 	deletionDate,
+	idempotencyKey,
 }: {
 	to: string;
 	userName: string;
 	deletionDate: string;
+	/**
+	 * EMAIL-AUDIT-107 : dedup cross-instance Resend 24h. Le flag DB
+	 * `User.anonymizedAt` exclut déjà le compte des runs suivants, mais si le cron
+	 * `process-account-deletions` est rejoué sur une autre instance avant que l'état
+	 * DB ne soit visible, cette clé (`account-deletion:${userId}`) empêche un second
+	 * email de confirmation de suppression.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(AccountDeletionEmail({ userName, deletionDate }), {
 		to,
 		subject: EMAIL_SUBJECTS.ACCOUNT_DELETED,
 		replyTo: EMAIL_CONTACT,
 		tags: [{ name: "category", value: "auth" }],
+		...(idempotencyKey ? { idempotencyKey } : {}),
 	});
 }

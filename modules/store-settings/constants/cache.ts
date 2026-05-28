@@ -24,9 +24,17 @@ const STORE_SETTINGS_CACHE_TAGS = {
 // CACHE CONFIGURATION
 // ============================================================================
 
-/** Cache for store status (storefront) - 7d stale / 24h revalidate */
+/**
+ * Cache for store status (storefront + checkout guard) — `checkout` profile
+ * (1m stale / 30s revalidate). Plus court que `reference` car `getStoreStatus`
+ * sert de garde de sécurité au checkout (`assertStoreOpen`) : on borne la
+ * fenêtre de staleness si une invalidation `updateTag` est manquée (restore
+ * Neon PITR, lag de propagation) plutôt que de risquer 24h de checkout actif
+ * sur une boutique fermée. Le fallback eventual-consistency de `getStoreStatus`
+ * ne couvre que fermé→ouvert, jamais ouvert→fermé (STORE-AUDIT-002).
+ */
 export function cacheStoreStatus() {
-	cacheLife("reference");
+	cacheLife("checkout");
 	cacheTag(STORE_SETTINGS_CACHE_TAGS.STATUS);
 }
 

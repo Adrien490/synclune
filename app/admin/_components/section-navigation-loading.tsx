@@ -47,7 +47,7 @@ export function SectionNavigationLoading({
 				{Array.from({ length: count }).map((_, i) => (
 					<Card key={i} className="h-full">
 						<CardHeader>
-							<div className="flex items-start justify-between">
+							<div className="flex items-center justify-between gap-3">
 								<div className="flex items-center gap-3">
 									<Skeleton className="size-10 rounded-lg" />
 									<div className="space-y-2">
@@ -55,6 +55,7 @@ export function SectionNavigationLoading({
 										<Skeleton className="h-4 w-40" />
 									</div>
 								</div>
+								<Skeleton className="size-5 shrink-0 rounded-sm" />
 							</div>
 						</CardHeader>
 					</Card>

@@ -8,7 +8,7 @@ import {
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
@@ -49,6 +49,9 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 			id: true,
 			orderNumber: true,
 			createdAt: true,
+			// CACHE-AUDIT-005 : invalider les tags user-scopés pour les pending
+			// abandonnés d'un client connecté.
+			userId: true,
 			items: { select: { id: true, skuId: true, quantity: true } },
 		},
 		take: BATCH_SIZE_LARGE,
@@ -141,6 +144,10 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 			);
 
+			// CACHE-AUDIT-005 : tags user-scopés + détail commande (helper canonique).
+			for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+				tagsToInvalidate.add(tag);
+			}
 			processed++;
 		} catch (error) {
 			errored++;

@@ -41,11 +41,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 	return (
 		<section
 			id="reviews"
-			className={cn(
-				"bg-primary/5 relative overflow-hidden",
-				"mask-t-from-95% mask-t-to-100% mask-b-from-95% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-90%",
-				SECTION_SPACING.section,
-			)}
+			className={cn("bg-background relative overflow-hidden", SECTION_SPACING.section)}
 			aria-labelledby="reviews-title"
 			aria-describedby="reviews-subtitle"
 		>

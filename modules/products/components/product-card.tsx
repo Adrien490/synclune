@@ -274,6 +274,8 @@ export function ProductCard({
 				/>
 
 				<div className="absolute inset-0">
+					{/* MEDIA-AUDIT-005 : fallback zéro-JS = le conteneur `bg-muted` ci-dessus
+					    reste visible si l'URL CDN 404 (pas d'îlot client sur le hot path). */}
 					<Image
 						src={primaryImage.url}
 						alt={primaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}

@@ -87,7 +87,11 @@ export function CartItemQuantitySelector({
 	}
 
 	return (
-		<div role="group" aria-label={`Quantité de l'article, actuellement ${optimisticQuantity}`}>
+		<div
+			role="group"
+			aria-label={`Quantité de l'article, actuellement ${optimisticQuantity}`}
+			aria-busy={isLoading}
+		>
 			<ButtonGroup aria-label="Quantité">
 				<Button
 					type="button"

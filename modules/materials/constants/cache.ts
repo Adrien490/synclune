@@ -15,6 +15,9 @@ export const MATERIALS_CACHE_TAGS = {
 
 	/** Détail d'un matériau spécifique */
 	DETAIL: (slug: string) => `material-${slug}`,
+
+	/** Nombre de produits distincts référençant ce matériau (clé par id). */
+	PRODUCT_COUNT: (materialId: string) => `material-${materialId}-product-count`,
 } as const;
 
 // ============================================

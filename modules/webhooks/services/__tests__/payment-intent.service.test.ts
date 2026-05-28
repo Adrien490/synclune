@@ -261,7 +261,12 @@ describe("restoreStockForOrder", () => {
 
 		const result = await restoreStockForOrder("nonexistent-order");
 
-		expect(result).toEqual({ shouldRestore: false, itemCount: 0, restoredSkuIds: [] });
+		expect(result).toEqual({
+			shouldRestore: false,
+			itemCount: 0,
+			restoredSkuIds: [],
+			userId: null,
+		});
 	});
 
 	it("should group quantities by skuId when the same SKU appears in multiple items", async () => {

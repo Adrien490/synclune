@@ -30,5 +30,10 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/refunds/actions/process-refund.ts",
   "modules/refunds/actions/reject-refund.ts",
   "modules/refunds/actions/retry-failed-refund.ts",
+  "modules/store-settings/actions/close-store.ts",
+  "modules/store-settings/actions/reopen-store.ts",
+  "modules/store-settings/actions/update-announcement.ts",
+  "modules/store-settings/actions/update-closure-message.ts",
+  "modules/store-settings/actions/update-reopens-at.ts",
 ]
 `;

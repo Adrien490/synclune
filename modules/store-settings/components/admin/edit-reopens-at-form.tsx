@@ -12,7 +12,7 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 import { updateReopensAt } from "../../actions/update-reopens-at";
-import { formatDateForInput } from "../../utils/format-date-for-input";
+import { formatParisDateForInput } from "../../utils/paris-datetime";
 
 interface EditReopensAtFormProps {
 	currentReopensAt: Date | null;
@@ -20,7 +20,7 @@ interface EditReopensAtFormProps {
 
 export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) {
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
-	const initialValue = formatDateForInput(currentReopensAt);
+	const initialValue = formatParisDateForInput(currentReopensAt);
 
 	const form = useAppForm({
 		defaultValues: { reopensAt: initialValue },

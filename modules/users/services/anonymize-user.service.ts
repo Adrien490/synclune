@@ -1,4 +1,5 @@
-import { AccountStatus, type Prisma } from "@/app/generated/prisma/client";
+import { AccountStatus, ReviewStatus, type Prisma } from "@/app/generated/prisma/client";
+import { recomputeProductReviewStatsBatch } from "@/modules/reviews/services/review-stats.service";
 import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 
 /**
@@ -81,19 +82,37 @@ export async function anonymizeUserInTransaction(
 		where: { userId },
 	});
 
-	// 7. Delete review media (potential PII: faces, identifiable decor)
+	// 7. Récupérer les produits concernés avant mutation (recompute stats ci-dessous ;
+	// l'invalidation de cache produit côté appelant est gérée par le cron). Cf. REVIEW-AUDIT-002.
+	const reviewedProducts = await tx.productReview.findMany({
+		where: { userId, productId: { not: null } },
+		select: { productId: true },
+		distinct: ["productId"],
+	});
+	const reviewedProductIds = reviewedProducts
+		.map((r) => r.productId)
+		.filter((id): id is string => id !== null);
+
+	// 8. Delete review media (potential PII: faces, identifiable decor)
 	await tx.reviewMedia.deleteMany({
 		where: { review: { userId } },
 	});
 
-	// 8. Anonymize review content
+	// 9. Masquer + anonymiser les avis. HIDDEN les retire du storefront ET des stats :
+	// l'auteur n'existe plus, et un avis « Contenu supprimé » publié n'a aucune valeur.
+	// Cf. REVIEW-AUDIT-005.
 	await tx.productReview.updateMany({
 		where: { userId },
 		data: {
+			status: ReviewStatus.HIDDEN,
 			content: "Contenu supprimé suite à la suppression du compte.",
 			title: null,
 		},
 	});
+
+	// 10. Recalculer les stats des produits concernés (les avis masqués ne comptent plus).
+	// Cf. REVIEW-AUDIT-002 / REVIEW-AUDIT-005.
+	await recomputeProductReviewStatsBatch(tx, reviewedProductIds);
 
 	// 9. Anonymize PII denormalized in orders
 	// Legal retention 10 years (Art. L123-22 Code de Commerce):

@@ -34,10 +34,15 @@ vi.mock("@/modules/orders/constants/cache", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	PaymentStatus: { PAID: "PAID" },
+	PaymentStatus: {
+		PAID: "PAID",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+		REFUNDED: "REFUNDED",
+	},
 }));
 
 import { fetchDashboardVatProgress } from "../get-vat-progress";
+import { parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 describe("fetchDashboardVatProgress", () => {
 	const ORIGINAL_ENV = process.env.VAT_FRANCHISE_THRESHOLD_EUR;
@@ -68,17 +73,18 @@ describe("fetchDashboardVatProgress", () => {
 		expect(result.year).toBe(2026);
 	});
 
-	it("scopes the aggregate query from the first day of the current UTC year", async () => {
+	it("scopes the aggregate query from the first day of the current Paris year", async () => {
 		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
 
 		await fetchDashboardVatProgress();
 
 		const call = mockOrderAggregate.mock.calls[0]![0];
 		const yearStart = call.where.paidAt.gte as Date;
-		expect(yearStart.getUTCFullYear()).toBe(2026);
-		expect(yearStart.getUTCMonth()).toBe(0);
-		expect(yearStart.getUTCDate()).toBe(1);
-		expect(call.where.paymentStatus).toBe("PAID");
+		// 1er janvier 2026 00:00 Paris (= 2025-12-31T23:00:00Z en hiver, ANALYTICS-AUDIT-005).
+		expect(yearStart).toEqual(parisWallTimeToUtc(2026, 0, 1));
+		expect(call.where.paymentStatus).toEqual({
+			in: ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"],
+		});
 		expect(call.where.deletedAt).toBeNull();
 	});
 

@@ -1,8 +1,10 @@
 "use client";
 
 import { PageHeader } from "@/shared/components/page-header";
+import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -52,16 +54,17 @@ export function SectionNavigation({
 					<Link key={link.href} href={link.href} className="focus-ring block rounded-lg">
 						<Card
 							className={cn(
-								"can-hover:hover:shadow-md can-hover:hover:border-primary/50 h-full",
+								"group relative h-full",
+								"can-hover:hover:shadow-md can-hover:hover:border-primary/50 can-hover:hover:-translate-y-0.5",
 								"motion-safe:transition-all motion-safe:duration-200",
 								"motion-safe:active:scale-[0.98]",
 							)}
 						>
 							<CardHeader>
-								<div className="flex items-start justify-between">
+								<div className="flex items-center justify-between gap-3">
 									<div className="flex items-center gap-3">
 										{link.icon && (
-											<div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
+											<div className="bg-primary/15 text-primary border-primary/30 can-hover:group-hover:scale-110 flex size-10 items-center justify-center rounded-lg border transition-transform duration-300">
 												{link.icon}
 											</div>
 										)}
@@ -74,11 +77,13 @@ export function SectionNavigation({
 											)}
 										</div>
 									</div>
-									{link.badge && (
-										<span className="bg-primary/10 text-primary rounded-full px-2 py-1 text-xs font-medium">
-											{link.badge}
-										</span>
-									)}
+									<div className="flex shrink-0 items-center gap-2">
+										{link.badge && <Badge variant="secondary">{link.badge}</Badge>}
+										<ChevronRight
+											className="text-muted-foreground/70 group-hover:text-primary size-5 shrink-0 transition-[transform,color] group-hover:translate-x-0.5"
+											aria-hidden="true"
+										/>
+									</div>
 								</div>
 							</CardHeader>
 						</Card>

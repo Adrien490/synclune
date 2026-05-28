@@ -105,6 +105,27 @@ describe("sendReviewRequests", () => {
 		});
 	});
 
+	/**
+	 * @regression biz-bug-001
+	 * Une demande d'avis ne doit jamais cibler une commande annulée ou
+	 * intégralement remboursée/échouée. Le filtre vit dans la clause `where`
+	 * Prisma (pas en JS) — on verrouille sa présence.
+	 */
+	it("[regression biz-bug-001] excludes cancelled / fully-refunded / failed / expired orders via where clause", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([]);
+
+		await sendReviewRequests();
+
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
+		expect(call.where.status).toEqual({ not: "CANCELLED" });
+		expect(call.where.paymentStatus).toEqual({
+			notIn: ["REFUNDED", "FAILED", "EXPIRED"],
+		});
+		// PARTIALLY_REFUNDED reste éligible (client peut noter la partie conservée).
+		expect(call.where.paymentStatus.notIn).not.toContain("PARTIALLY_REFUNDED");
+		expect(call.where.paymentStatus.notIn).not.toContain("PAID");
+	});
+
 	it("sends one email per eligible order then flags reviewRequestSentAt", async () => {
 		const order = buildOrder();
 		mockPrisma.order.findMany.mockResolvedValue([order]);

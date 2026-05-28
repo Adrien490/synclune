@@ -21,6 +21,7 @@ const {
 	mockSanitizeText,
 	mockGetProductInvalidationTags,
 	mockGetCollectionInvalidationTags,
+	mockDeleteUTFiles,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		product: { findUnique: vi.fn(), update: vi.fn() },
@@ -31,6 +32,7 @@ const {
 		collection: { findMany: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findUnique: vi.fn() },
+		orderItem: { findMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -46,6 +48,7 @@ const {
 	mockSanitizeText: vi.fn(),
 	mockGetProductInvalidationTags: vi.fn(),
 	mockGetCollectionInvalidationTags: vi.fn(),
+	mockDeleteUTFiles: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
@@ -98,7 +101,7 @@ vi.mock("@/modules/collections/utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
-	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+	deleteUploadThingFilesFromUrls: mockDeleteUTFiles,
 }));
 
 import { updateProduct } from "../update-product";
@@ -204,6 +207,9 @@ describe("updateProduct", () => {
 		mockPrisma.collection.findMany.mockResolvedValue([{ id: "col_1", slug: "col-1" }]);
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findUnique.mockResolvedValue(null);
+		// MEDIA-AUDIT-003 : par défaut aucune commande ne référence les médias supprimés.
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
+		mockDeleteUTFiles.mockResolvedValue({ deleted: 0, failed: 0 });
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -279,5 +285,56 @@ describe("updateProduct", () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await updateProduct(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	// MEDIA-AUDIT-003 : un média encore référencé par un snapshot de commande ne
+	// doit jamais être supprimé de UploadThing (sinon 404 dans l'historique 10 ans).
+	describe("MEDIA-AUDIT-003: order snapshot media preservation", () => {
+		const URL_REFERENCED = "https://utfs.io/f/used-in-order";
+		const URL_FREE = "https://utfs.io/f/safe-to-delete";
+
+		/** Laisse l'IIFE fire-and-forget de suppression (étape 11) se résoudre. */
+		const flushMicrotasks = () => new Promise((r) => setTimeout(r, 0));
+
+		function formDataWithDeletions() {
+			return createMockFormData({
+				productId: VALID_CUID,
+				title: "Bracelet Lune Updated",
+				description: "Updated description",
+				typeId: "type_123",
+				collectionIds: JSON.stringify(["col_1"]),
+				status: "PUBLIC",
+				"defaultSku.skuId": "sku_1",
+				"defaultSku.priceInclTaxEuros": "59.99",
+				"defaultSku.inventory": "15",
+				deletedImageUrls: JSON.stringify([URL_REFERENCED, URL_FREE]),
+			});
+		}
+
+		it("deletes only the URLs not referenced by any OrderItem snapshot", async () => {
+			mockPrisma.orderItem.findMany.mockResolvedValue([
+				{ productImageUrl: URL_REFERENCED, skuImageUrl: null },
+			]);
+
+			const result = await updateProduct(undefined, formDataWithDeletions());
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).toHaveBeenCalledTimes(1);
+			expect(mockDeleteUTFiles).toHaveBeenCalledWith([URL_FREE]);
+		});
+
+		it("does not call UploadThing delete when all deleted URLs are still referenced", async () => {
+			mockPrisma.orderItem.findMany.mockResolvedValue([
+				{ productImageUrl: URL_REFERENCED, skuImageUrl: null },
+				{ productImageUrl: null, skuImageUrl: URL_FREE },
+			]);
+
+			await updateProduct(undefined, formDataWithDeletions());
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).not.toHaveBeenCalled();
+		});
 	});
 });

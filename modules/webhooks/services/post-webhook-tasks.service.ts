@@ -3,20 +3,9 @@ import type { Prisma } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
-import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
-import {
-	sendAdminNewOrderEmail,
-	sendAdminRefundFailedAlert,
-	sendAdminDisputeAlert,
-	sendAdminInvoiceFailedAlert,
-	sendAdminOrderProcessingFailedAlert,
-	sendAdminDashboardRefundAttentionAlert,
-	sendWebhookFailedAlertEmail,
-} from "@/modules/emails/services/admin-emails";
-import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
-import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
-import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
+import { sendWebhookFailedAlertEmail } from "@/modules/emails/services/admin-emails";
 import { MAX_POST_WEBHOOK_RETRY_ATTEMPTS } from "../constants/webhook.constants";
+import { CRITICAL_EMAIL_TASKS, dispatchEmailTask } from "../utils/dispatch-email-task";
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /**
@@ -32,65 +21,6 @@ import type { PostWebhookTask } from "../types/webhook.types";
  *      chaque task et update status en DB.
  *   3. `retryPendingPostWebhookTasks()` — cron 5min, repop PENDING + FAILED.
  */
-
-const CRITICAL_EMAIL_TASKS = new Set([
-	"ORDER_CONFIRMATION_EMAIL",
-	"ADMIN_NEW_ORDER_EMAIL",
-	"REFUND_CONFIRMATION_EMAIL",
-	"PAYMENT_FAILED_EMAIL",
-	"ADMIN_ORDER_PROCESSING_FAILED_ALERT",
-]);
-
-type EmailTask = Exclude<PostWebhookTask, { type: "INVALIDATE_CACHE" }>;
-
-async function dispatchEmailTask(task: EmailTask): Promise<void> {
-	switch (task.type) {
-		case "ORDER_CONFIRMATION_EMAIL":
-			await sendOrderConfirmationEmail(task.data);
-			break;
-		case "ADMIN_NEW_ORDER_EMAIL":
-			await sendAdminNewOrderEmail(task.data);
-			break;
-		case "REFUND_CONFIRMATION_EMAIL":
-			// ORD-STRIPE-005 : si le payload contient refundId, on passe par
-			// sendRefundConfirmationOnce qui pose `Refund.confirmationEmailSentAt`
-			// atomiquement → bloque SAGA admin / cron qui auraient envoyé un 2e mail.
-			if (task.data.refundId) {
-				await sendRefundConfirmationOnce({
-					refundId: task.data.refundId,
-					to: task.data.to,
-					orderNumber: task.data.orderNumber,
-					customerName: task.data.customerName,
-					refundAmount: task.data.refundAmount,
-					reason: task.data.reason as Parameters<typeof sendRefundConfirmationOnce>[0]["reason"],
-					orderDetailsUrl: task.data.orderDetailsUrl,
-					invoiceNumber: task.data.invoiceNumber ?? null,
-					creditNoteNumber: task.data.creditNoteNumber ?? null,
-				});
-			} else {
-				await sendRefundConfirmationEmail(task.data);
-			}
-			break;
-		case "PAYMENT_FAILED_EMAIL":
-			await sendPaymentFailedEmail(task.data);
-			break;
-		case "ADMIN_REFUND_FAILED_ALERT":
-			await sendAdminRefundFailedAlert(task.data);
-			break;
-		case "ADMIN_DISPUTE_ALERT":
-			await sendAdminDisputeAlert(task.data);
-			break;
-		case "ADMIN_INVOICE_FAILED_ALERT":
-			await sendAdminInvoiceFailedAlert(task.data);
-			break;
-		case "ADMIN_ORDER_PROCESSING_FAILED_ALERT":
-			await sendAdminOrderProcessingFailedAlert(task.data);
-			break;
-		case "ADMIN_DASHBOARD_REFUND_ALERT":
-			await sendAdminDashboardRefundAttentionAlert(task.data);
-			break;
-	}
-}
 
 /**
  * Extrait la clé d'idempotence applicative d'une tâche, si présente.

@@ -124,16 +124,34 @@ describe("buildPostCheckoutTasks", () => {
 		expect(email.data.to).toBe("details@example.test");
 	});
 
-	it("skips customer email task when no email anywhere", () => {
-		const order = makeOrder();
+	it("skips customer email task when no email anywhere (session AND order)", () => {
+		// BIZ-BUG-006 : « no email anywhere » exige désormais aussi order.customerEmail null,
+		// puisque le flux CS retombe sur l'email figé de la commande.
+		const order = makeOrder({ customerEmail: null });
 		const session = makeSession({ customer_email: null, customer_details: null });
 
 		const tasks = buildPostCheckoutTasks(order, session);
 		expect(tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL")).toBeUndefined();
 	});
 
+	/**
+	 * @regression biz-bug-006
+	 * Parité avec le flux Payment Intent : si Stripe ne fournit pas d'email dans
+	 * la session, on retombe sur Order.customerEmail pour ne pas priver le client
+	 * de sa confirmation de commande payée.
+	 */
+	it("[regression biz-bug-006] falls back to order.customerEmail when session has no email", () => {
+		const order = makeOrder({ customerEmail: "fallback@example.test" });
+		const session = makeSession({ customer_email: null, customer_details: null });
+
+		const tasks = buildPostCheckoutTasks(order, session);
+		const email = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
+		if (email?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task");
+		expect(email.data.to).toBe("fallback@example.test");
+	});
+
 	it("always emits ADMIN_NEW_ORDER_EMAIL even without customer email", () => {
-		const order = makeOrder();
+		const order = makeOrder({ customerEmail: null });
 		const session = makeSession({ customer_email: null, customer_details: null });
 
 		const tasks = buildPostCheckoutTasks(order, session);

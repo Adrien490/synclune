@@ -48,17 +48,18 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 											Photos jointes
 										</h3>
 										<div className="flex flex-wrap gap-2">
-											{review.medias.map((media) => (
+											{review.medias.map((media, index) => (
 												<a
 													key={media.id}
 													href={media.url}
 													target="_blank"
 													rel="noopener noreferrer"
+													aria-label={`Voir la photo ${index + 1} en grand`}
 													className="relative size-20 overflow-hidden rounded-lg transition-opacity hover:opacity-80"
 												>
 													<Image
 														src={media.url}
-														alt={media.altText ?? "Photo de l'avis"}
+														alt={media.altText ?? `Photo ${index + 1} de l'avis`}
 														fill
 														className="object-cover"
 														sizes="80px"
@@ -66,6 +67,7 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 														placeholder={media.blurDataUrl ? "blur" : "empty"}
 														blurDataURL={media.blurDataUrl ?? undefined}
 													/>
+													<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 												</a>
 											))}
 										</div>

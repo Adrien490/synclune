@@ -337,6 +337,34 @@ describe("sendAdminCronFailedAlert", () => {
 		expect(callArgs.subject).toBe("[Admin] Cron sync-async-payments — 12 erreur(s)");
 	});
 
+	it("CRON-AUDIT-003 : idempotencyKey bucket horaire stable dans la même heure", async () => {
+		// 2 appels dans la même fenêtre horaire → même clé → Resend dédoublonne
+		// (1 alerte max/h/cron, évite le spam d'un cron 5-min en échec).
+		const nowSpy = vi.spyOn(Date, "now").mockReturnValue(3_600_000 * 471_000 + 123_456);
+		const bucket = Math.floor((3_600_000 * 471_000 + 123_456) / 3_600_000);
+
+		await sendAdminCronFailedAlert({ job: "retry-post-webhook-tasks", errors: 1, details: {} });
+		await sendAdminCronFailedAlert({ job: "retry-post-webhook-tasks", errors: 9, details: {} });
+
+		const key1 = mockRenderAndSend.mock.calls[0]![1].idempotencyKey;
+		const key2 = mockRenderAndSend.mock.calls[1]![1].idempotencyKey;
+		expect(key1).toBe(`alert:cron-failed:retry-post-webhook-tasks:${bucket}`);
+		expect(key2).toBe(key1);
+		nowSpy.mockRestore();
+	});
+
+	it("CRON-AUDIT-003 : idempotencyKey diffère par cron (un cron cassé n'éteint pas l'alerte d'un autre)", async () => {
+		const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1_000_000_000);
+
+		await sendAdminCronFailedAlert({ job: "cron-a", errors: 1, details: {} });
+		await sendAdminCronFailedAlert({ job: "cron-b", errors: 1, details: {} });
+
+		const keyA = mockRenderAndSend.mock.calls[0]![1].idempotencyKey;
+		const keyB = mockRenderAndSend.mock.calls[1]![1].idempotencyKey;
+		expect(keyA).not.toBe(keyB);
+		nowSpy.mockRestore();
+	});
+
 	it("should return the result from renderAndSend", async () => {
 		const result = await sendAdminCronFailedAlert({
 			job: "cleanup-carts",

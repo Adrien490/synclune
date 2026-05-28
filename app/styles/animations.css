@@ -350,7 +350,10 @@
 		}
 
 		.animate-pulse,
-		.animate-sparkle-pulse {
+		.animate-sparkle-pulse,
+		/* heart-beat = pulsation infinie de l'icône toast erreur, appliquée sans
+		   motion-safe: au call-site (toast-icons.tsx) — A11Y-AUDIT-005 */
+		.animate-heart-beat {
 			animation: none;
 		}
 

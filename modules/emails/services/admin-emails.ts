@@ -259,6 +259,11 @@ export async function sendAdminCronFailedAlert({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Cron ${job} — ${errors} erreur(s)`,
 			tags: [{ name: "category", value: "admin" }],
+			// Bucket horaire : 1 alerte max/heure/cron. Un cron persistant en échec
+			// (ex: retry-post-webhook-tasks toutes les 5 min) sinon spamme l'admin
+			// jusqu'à 288 mails/j → désensibilisation. Le bucket borne la fenêtre
+			// tout en laissant remonter la persistance heure par heure. Cf. CRON-AUDIT-003.
+			idempotencyKey: `alert:cron-failed:${job}:${Math.floor(Date.now() / 3_600_000)}`,
 		},
 	);
 }
@@ -671,7 +676,10 @@ export async function sendAdminEReportingStuckAlert({
 			tags: [{ name: "category", value: "admin" }],
 			// 1 alerte par "cohorte" hebdo : si le hash des IDs change, c'est une
 			// nouvelle situation a signaler.
-			idempotencyKey: `alert:ereporting-stuck:${stuckBatches.map((b) => b.id).join(",")}`,
+			// EMAIL-AUDIT-105 : tri des IDs avant jointure — sinon une même cohorte
+			// retournée dans un ordre différent produit une clé différente ⇒ alerte
+			// dupliquée pour la même situation.
+			idempotencyKey: `alert:ereporting-stuck:${[...stuckBatches.map((b) => b.id)].sort().join(",")}`,
 		},
 	);
 }

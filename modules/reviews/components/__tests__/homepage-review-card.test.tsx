@@ -204,12 +204,14 @@ describe("HomepageReviewCard", () => {
 			});
 			render(<HomepageReviewCard review={review} />);
 			expect(screen.getByText("Merci beaucoup !")).toBeInTheDocument();
-			expect(screen.getByRole("note", { name: "Réponse de Synclune" })).toBeInTheDocument();
+			expect(
+				screen.getByRole("complementary", { name: "Réponse de Synclune" }),
+			).toBeInTheDocument();
 		});
 
 		it("does not render response section when response is null", () => {
 			render(<HomepageReviewCard review={createReview({ response: null })} />);
-			expect(screen.queryByRole("note")).toBeNull();
+			expect(screen.queryByRole("complementary")).toBeNull();
 		});
 	});
 });

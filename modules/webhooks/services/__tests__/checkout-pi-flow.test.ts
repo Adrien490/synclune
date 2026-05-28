@@ -19,6 +19,8 @@ const {
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
 		$queryRaw: vi.fn(),
 		cartItem: { deleteMany: vi.fn() },
+		// BIZ-BUG-003 : processOrderAtomically écrit désormais un audit PAID via createOrderAuditTx
+		orderHistory: { create: vi.fn() },
 	};
 	return {
 		mockPrisma: {
@@ -95,6 +97,7 @@ vi.mock("@/shared/lib/logger", () => ({
 import { processOrderFromPaymentIntent } from "../checkout-order-processing.service";
 import { buildPostCheckoutTasksFromPI } from "../checkout-post-tasks.service";
 import type { OrderWithItems } from "../../types/checkout.types";
+import { logger } from "@/shared/lib/logger";
 
 // ============================================================================
 // Fixtures
@@ -243,6 +246,62 @@ describe("processOrderFromPaymentIntent", () => {
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 		const updateCall = mockTx.order.update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
 		expect(updateCall.data.stripeCustomerId).toBeNull();
+	});
+
+	/**
+	 * @regression biz-bug-003
+	 * L'encaissement (PENDING → PAID/PROCESSING) doit laisser une trace dans
+	 * l'audit trail immuable, au même titre que les actions admin. Verrouille
+	 * l'écriture OrderHistory action=PAID source=SYSTEM dans la transaction.
+	 */
+	it("[regression biz-bug-003] writes a PAID OrderHistory audit entry inside the transaction", async () => {
+		const paymentIntent = makePaymentIntent({ id: "pi_audit" });
+
+		await processOrderFromPaymentIntent("order-1", paymentIntent);
+
+		expect(mockTx.orderHistory.create).toHaveBeenCalledTimes(1);
+		const auditCall = mockTx.orderHistory.create.mock.calls[0]![0] as {
+			data: Record<string, unknown>;
+		};
+		expect(auditCall.data).toMatchObject({
+			orderId: "order-1",
+			action: "PAID",
+			source: "SYSTEM",
+			newPaymentStatus: "PAID",
+			previousPaymentStatus: "PENDING",
+		});
+	});
+
+	/**
+	 * @regression biz-bug-005
+	 * Une SURfacturation (Stripe encaisse plus que order.total) ne bloque pas le
+	 * traitement (le client a payé) mais doit être signalée pour investigation.
+	 */
+	it("[regression biz-bug-005] logs an overbilling alert when amount_received exceeds order.total", async () => {
+		// makeOrderRow().total = 8600 ; on encaisse 9000 → surfacturation.
+		const paymentIntent = makePaymentIntent({ id: "pi_over", amount_received: 9000 });
+
+		await processOrderFromPaymentIntent("order-1", paymentIntent);
+
+		// Non bloquant : la commande passe quand même PAID.
+		expect(mockTx.order.update).toHaveBeenCalled();
+		expect(logger.error).toHaveBeenCalledWith(
+			expect.stringContaining("Overbilling detected"),
+			undefined,
+			expect.objectContaining({ service: "webhook" }),
+		);
+	});
+
+	/**
+	 * @regression biz-bug-005
+	 * Garde unidirectionnelle préservée : la sous-facturation throw toujours.
+	 */
+	it("[regression biz-bug-005] still throws on underbilling (amount_received below order.total)", async () => {
+		const paymentIntent = makePaymentIntent({ id: "pi_under", amount_received: 1000 });
+
+		await expect(processOrderFromPaymentIntent("order-1", paymentIntent)).rejects.toThrow(
+			/Amount mismatch/,
+		);
 	});
 
 	it("clears guest cart when metadata.guestSessionId is present and order has no userId", async () => {

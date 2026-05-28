@@ -32,6 +32,7 @@ interface StaleOrderFixture {
 	id: string;
 	orderNumber: string;
 	createdAt: Date;
+	userId: string | null;
 	items: Array<{ id: string; skuId: string; quantity: number }>;
 }
 
@@ -40,6 +41,7 @@ function buildStaleOrder(overrides: Partial<StaleOrderFixture> = {}): StaleOrder
 		id: overrides.id ?? "order-1",
 		orderNumber: overrides.orderNumber ?? "SYN-001",
 		createdAt: overrides.createdAt ?? new Date("2026-02-07T12:00:00Z"),
+		userId: overrides.userId ?? null,
 		items: overrides.items ?? [{ id: "item-1", skuId: "sku-1", quantity: 2 }],
 	};
 }
@@ -189,6 +191,18 @@ describe("cleanupPendingOrders", () => {
 				"sku-stock-sku-1",
 			]),
 		);
+	});
+
+	// CACHE-AUDIT-005 : un pending abandonné d'un client connecté doit invalider
+	// ses tags user-scopés + le détail commande.
+	it("invalidates user-scoped + order-detail tags when the cancelled order belongs to a user", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([buildStaleOrder({ userId: "user-7" })]);
+		mockTransactionResolves();
+
+		await cleanupPendingOrders();
+
+		const tags = mockUpdateTag.mock.calls.map((c) => c[0]);
+		expect(tags).toEqual(expect.arrayContaining(["orders-user-user-7", "order-detail-order-1"]));
 	});
 
 	it("counts errors when a transaction throws and continues with the next order", async () => {

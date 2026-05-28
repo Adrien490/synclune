@@ -37,6 +37,8 @@ const {
 		discount: {
 			update: vi.fn(),
 		},
+		// BIZ-BUG-003 : processOrderAtomically écrit désormais un audit PAID via createOrderAuditTx
+		orderHistory: { create: vi.fn() },
 	};
 
 	const mockPrisma = {
@@ -598,7 +600,8 @@ describe("buildPostCheckoutTasks", () => {
 	});
 
 	it("should not include ORDER_CONFIRMATION_EMAIL task when no customer email is available", () => {
-		const order = makeOrderWithItems();
+		// BIZ-BUG-006 : « no email » exige aussi order.customerEmail null (fallback CS).
+		const order = makeOrderWithItems({ customerEmail: null });
 		const session = makeStripeSession({ customer_email: null, customer_details: null });
 
 		const tasks = buildPostCheckoutTasks(order, session);

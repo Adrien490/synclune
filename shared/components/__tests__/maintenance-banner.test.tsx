@@ -27,8 +27,8 @@ vi.mock("lucide-react", () => ({
 	}) => <span data-testid="construction-icon" className={className} aria-hidden={ariaHidden} />,
 }));
 
-vi.mock("@/shared/utils/dates", () => ({
-	formatDateTime: (date: Date) => `FORMATTED:${date.toISOString()}`,
+vi.mock("@/modules/store-settings/utils/paris-datetime", () => ({
+	formatParisDateTime: (date: Date) => `FORMATTED:${date.toISOString()}`,
 }));
 
 import { MaintenanceBanner } from "../maintenance-banner";

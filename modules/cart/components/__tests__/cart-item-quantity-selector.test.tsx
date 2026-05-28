@@ -193,6 +193,19 @@ describe("CartItemQuantitySelector", () => {
 		expect(group).toBeInTheDocument();
 	});
 
+	it("marks the group as not busy when idle", () => {
+		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
+		const group = screen.getByRole("group", { name: /Quantité de l'article/ });
+		expect(group).toHaveAttribute("aria-busy", "false");
+	});
+
+	it("marks the group as busy while a quantity update is pending", () => {
+		mockIsPending.value = true;
+		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
+		const group = screen.getByRole("group", { name: /Quantité de l'article/ });
+		expect(group).toHaveAttribute("aria-busy", "true");
+	});
+
 	it("input has correct aria-label with min and max bounds", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 8 });
 		const input = screen.getByTestId("quantity-input");

@@ -5,6 +5,11 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
+import {
+	PRODUCTS_CACHE_TAGS,
+	RECENT_PRODUCTS_CACHE_TAGS,
+} from "@/modules/products/constants/cache";
+
 import { REVIEWS_CACHE_TAGS, getReviewInvalidationTags, getReviewModerationTags } from "../cache";
 
 // ============================================================================
@@ -71,6 +76,16 @@ describe("getReviewInvalidationTags", () => {
 		expect(tags).toContain(REVIEWS_CACHE_TAGS.STATS("prod-1"));
 	});
 
+	// REVIEW-AUDIT-001 : les product cards embarquent reviewStats (note + compteur)
+	// cachées sous les tags produits — un nouvel avis doit les purger.
+	it("includes product listing tags (cards embed reviewStats) when productId is provided", () => {
+		const tags = getReviewInvalidationTags("prod-1", "user-1");
+
+		expect(tags).toContain(PRODUCTS_CACHE_TAGS.LIST);
+		expect(tags).toContain(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
+		expect(tags).toContain(RECENT_PRODUCTS_CACHE_TAGS.LIST);
+	});
+
 	it("excludes product and stats tags when productId is null", () => {
 		const tags = getReviewInvalidationTags(null, "user-1");
 
@@ -79,6 +94,9 @@ describe("getReviewInvalidationTags", () => {
 		// Should not contain any product-prefixed tags
 		expect(tags.filter((t) => t.startsWith("reviews-product-"))).toHaveLength(0);
 		expect(tags.filter((t) => t.startsWith("reviews-stats-"))).toHaveLength(0);
+		// Aucun produit → pas de purge des listings produits
+		expect(tags).not.toContain(PRODUCTS_CACHE_TAGS.LIST);
+		expect(tags).not.toContain(RECENT_PRODUCTS_CACHE_TAGS.LIST);
 	});
 
 	it("includes detail and admin detail tags when reviewId is provided", () => {
@@ -122,6 +140,15 @@ describe("getReviewModerationTags", () => {
 
 		expect(tags).toContain(REVIEWS_CACHE_TAGS.PRODUCT("prod-1"));
 		expect(tags).toContain(REVIEWS_CACHE_TAGS.STATS("prod-1"));
+	});
+
+	// REVIEW-AUDIT-001 : masquer/republier change la note affichée dans les cards.
+	it("includes product listing tags when productId is provided", () => {
+		const tags = getReviewModerationTags("prod-1", "rev-1");
+
+		expect(tags).toContain(PRODUCTS_CACHE_TAGS.LIST);
+		expect(tags).toContain(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
+		expect(tags).toContain(RECENT_PRODUCTS_CACHE_TAGS.LIST);
 	});
 
 	it("excludes product and stats tags when productId is null", () => {

@@ -1,10 +1,12 @@
 import type { Prisma } from "@/app/generated/prisma/client";
-import { InvoiceStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { InvoiceStatus } from "@/app/generated/prisma/client";
+import { PAID_REVENUE_STATUSES } from "../constants/revenue-status.constants";
 import type { ExportInvoicesInput } from "../schemas/order.schemas";
 
 interface ExportableOrder {
 	orderNumber: string;
 	invoiceNumber: string | null;
+	creditNoteNumber: string | null;
 	createdAt: Date;
 	paidAt: Date | null;
 	customerName: string;
@@ -16,6 +18,7 @@ interface ExportableOrder {
 	paymentMethod: string;
 	paymentStatus: string;
 	status: string;
+	refunds: { amount: number }[];
 }
 
 /**
@@ -27,10 +30,16 @@ interface ExportableOrder {
  * CGI), le CA est compté à l'encaissement : une commande créée en décembre et
  * payée en janvier doit apparaître dans l'export janvier. NE PAS basculer ce
  * filtre sur `createdAt` sous peine de discordance avec le livre de recettes.
+ *
+ * IMPORTANT (ANALYTICS-AUDIT-003) : le statut inclut PARTIALLY_REFUNDED /
+ * REFUNDED. Une commande remboursée a bien été encaissée et possède un
+ * `invoiceNumber` — l'exclure créerait des trous dans la séquence du livre de
+ * recettes (Art. 286 CGI). Le remboursement est rendu visible par les colonnes
+ * "Remboursé" / "Net encaissé" / "N° Avoir".
  */
 export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.OrderWhereInput {
 	const where: Prisma.OrderWhereInput = {
-		paymentStatus: PaymentStatus.PAID,
+		paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
 		deletedAt: null,
 	};
 
@@ -69,6 +78,7 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 
 	const headers = [
 		"N° Facture",
+		"N° Avoir",
 		"N° Commande",
 		"Date paiement",
 		"Client",
@@ -77,25 +87,34 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 		"Réduction",
 		"Livraison",
 		"Total",
+		"Remboursé",
+		"Net encaissé",
 		"Moyen de paiement",
 		"Statut paiement",
 		"Statut commande",
 	];
 
-	const rows = orders.map((order) => [
-		order.invoiceNumber ?? "",
-		order.orderNumber,
-		order.paidAt ? formatDateCsv(order.paidAt) : "",
-		escapeCsv(order.customerName),
-		order.customerEmail,
-		formatEuroCsv(order.subtotal),
-		formatEuroCsv(order.discountAmount),
-		formatEuroCsv(order.shippingCost),
-		formatEuroCsv(order.total),
-		order.paymentMethod,
-		order.paymentStatus,
-		order.status,
-	]);
+	const rows = orders.map((order) => {
+		const refundedAmount = order.refunds.reduce((sum, refund) => sum + refund.amount, 0);
+		const netAmount = order.total - refundedAmount;
+		return [
+			order.invoiceNumber ?? "",
+			order.creditNoteNumber ?? "",
+			order.orderNumber,
+			order.paidAt ? formatDateCsv(order.paidAt) : "",
+			escapeCsv(order.customerName),
+			order.customerEmail,
+			formatEuroCsv(order.subtotal),
+			formatEuroCsv(order.discountAmount),
+			formatEuroCsv(order.shippingCost),
+			formatEuroCsv(order.total),
+			formatEuroCsv(refundedAmount),
+			formatEuroCsv(netAmount),
+			order.paymentMethod,
+			order.paymentStatus,
+			order.status,
+		];
+	});
 
 	const csvContent = [headers.join(SEP), ...rows.map((row) => row.join(SEP))].join("\n");
 

@@ -13,7 +13,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 import { updateAnnouncement } from "../../actions/update-announcement";
 import type { StoreSettingsAdmin } from "../../types/store-settings.types";
-import { formatDateForInput } from "../../utils/format-date-for-input";
+import { formatParisDateForInput } from "../../utils/paris-datetime";
 
 type AnnouncementFormProps = Pick<
 	StoreSettingsAdmin,
@@ -30,8 +30,8 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 	const initial = {
 		message: props.announcementMessage ?? "",
 		link: props.announcementLink ?? "",
-		startsAt: formatDateForInput(props.announcementStartsAt),
-		endsAt: formatDateForInput(props.announcementEndsAt),
+		startsAt: formatParisDateForInput(props.announcementStartsAt),
+		endsAt: formatParisDateForInput(props.announcementEndsAt),
 		isActive: props.announcementIsActive,
 	};
 

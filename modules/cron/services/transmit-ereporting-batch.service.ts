@@ -45,6 +45,8 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 	// Sélection éligible : PENDING (retryCount=0) ou RETRYING avec backoff respecté.
 	// On charge plus large que nécessaire puis on filtre par updatedAt côté service,
 	// le SQL devient illisible avec CASE WHEN sur backoff variable.
+	const BATCH_CAP = 50; // hard cap : on évite de bombarder la PA à chaque run
+
 	const candidates = await prisma.eReportingBatch.findMany({
 		where: {
 			status: { in: [EReportingStatus.PENDING, EReportingStatus.RETRYING] },
@@ -52,7 +54,7 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 		},
 		select: { id: true },
 		orderBy: { periodFrom: "asc" },
-		take: 50, // hard cap : on évite de bombarder la PA à chaque run
+		take: BATCH_CAP,
 	});
 
 	if (candidates.length === 0) {
@@ -63,9 +65,11 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 	let processed = 0;
 	let errored = 0;
 	let skipped = 0;
+	let deadlineHit = false;
 
 	for (const candidate of candidates) {
 		if (Date.now() >= deadline) {
+			deadlineHit = true;
 			logger.warn("Deadline reached, deferring remaining batches", {
 				cronJob: "transmit-ereporting-batch",
 				processed,
@@ -108,5 +112,13 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 		skipped,
 	});
 
-	return { processed, errored, skipped };
+	// hasMore : reprise au prochain run si on a saturé le cap (>50 batches
+	// éligibles) ou interrompu sur deadline. Évite un backlog e-reporting DGFiP
+	// silencieux entre deux runs. Cf. CRON-AUDIT-002.
+	return {
+		processed,
+		errored,
+		skipped,
+		hasMore: deadlineHit || candidates.length === BATCH_CAP,
+	};
 }

@@ -9,6 +9,7 @@ const {
 	mockPrisma: {
 		user: { findMany: vi.fn() },
 		reviewMedia: { findMany: vi.fn() },
+		productReview: { findMany: vi.fn().mockResolvedValue([]) },
 		$transaction: vi.fn(),
 	},
 	mockDeleteUploadThingFileFromUrl: vi.fn(),
@@ -52,6 +53,8 @@ describe("processAccountDeletions", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-09T05:00:00Z"));
+		// REVIEW-AUDIT-002 : le cron collecte les productIds des avis avant la tx.
+		mockPrisma.productReview.findMany.mockResolvedValue([]);
 	});
 
 	it("should return zero counts when no accounts are pending deletion", async () => {
@@ -114,7 +117,7 @@ describe("processAccountDeletions", () => {
 			cart: { deleteMany: vi.fn() },
 			wishlist: { deleteMany: vi.fn() },
 			reviewMedia: { deleteMany: vi.fn() },
-			productReview: { updateMany: vi.fn() },
+			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -174,7 +177,7 @@ describe("processAccountDeletions", () => {
 			cart: { deleteMany: vi.fn() },
 			wishlist: { deleteMany: vi.fn() },
 			reviewMedia: { deleteMany: vi.fn() },
-			productReview: { updateMany: vi.fn() },
+			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -213,7 +216,10 @@ describe("processAccountDeletions", () => {
 
 		await processAccountDeletions();
 
-		expect(mockStripeCustomersDel).toHaveBeenCalledWith("cus_test123");
+		// CRON-AUDIT-005 : timeout cron-aligné (5s) passé en 3e arg RequestOptions.
+		expect(mockStripeCustomersDel).toHaveBeenCalledWith("cus_test123", undefined, {
+			timeout: 5000,
+		});
 	});
 
 	it("should not fail if Stripe customer deletion fails (non-blocking)", async () => {

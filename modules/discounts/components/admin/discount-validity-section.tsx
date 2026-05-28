@@ -1,11 +1,12 @@
 "use client";
 
+import {
+	FORM_SECTION_CARD_CLASS,
+	FORM_SECTION_TITLE_CLASS,
+} from "@/shared/components/forms/form-section-styles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
 import { type DiscountFormInstance } from "../../hooks/use-discount-form";
-
-const MOBILE_SECTION_TITLE =
-	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
 
 interface DiscountValiditySectionProps {
 	form: DiscountFormInstance;
@@ -17,11 +18,11 @@ export function DiscountValiditySection({ form, isPending }: DiscountValiditySec
 		<Card
 			role="region"
 			aria-label="Période de validité"
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={{ viewTransitionName: "discount-validity-section" }}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Période de validité</CardTitle>
+				<CardTitle className={FORM_SECTION_TITLE_CLASS}>Période de validité</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
 				<div className="grid grid-cols-1 gap-6 md:grid-cols-2">

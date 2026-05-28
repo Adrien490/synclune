@@ -5,10 +5,10 @@ import {
 	NetworkFirst,
 	StaleWhileRevalidate,
 	ExpirationPlugin,
-	BackgroundSyncPlugin,
 	NetworkOnly,
 	Serwist,
 } from "serwist";
+import { isApiPath, isSensitiveNavigationPath, isStripeHost } from "./sw-routing";
 
 declare global {
 	interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -18,20 +18,45 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-// Background Sync queue for cart mutations — retries failed POSTs when
-// connectivity returns (max 24h in-queue, max 50 attempts per entry).
-// Covers: add-to-cart, update-quantity, remove-item, apply-discount, etc.
-const cartMutationsSync = new BackgroundSyncPlugin("synclune-cart-mutations", {
-	maxRetentionTime: 60 * 24, // minutes (24h)
-});
+/** A document or RSC navigation request (used for offline fallback routing). */
+function isNavigationRequest(request: Request): boolean {
+	return request.destination === "document" || request.headers.get("RSC") === "1";
+}
 
-// Background Sync queue for wishlist mutations (toggle items).
-const wishlistMutationsSync = new BackgroundSyncPlugin("synclune-wishlist-mutations", {
-	maxRetentionTime: 60 * 24,
-});
-
-// Custom runtime caching strategies per resource type
+// Custom runtime caching strategies per resource type.
+//
+// ORDER MATTERS: the first matching entry wins. NetworkOnly guards (Stripe, API,
+// sensitive navigations) are declared BEFORE the cacheable fallbacks so that
+// authenticated / payment-critical traffic can never be served stale from disk.
 const runtimeCaching: RuntimeCaching[] = [
+	// Stripe.js + Stripe API — NetworkOnly (PWA-AUDIT-009).
+	// Caching Stripe.js is forbidden and a stale copy breaks the payment form.
+	{
+		matcher({ url }) {
+			return isStripeHost(url.hostname);
+		},
+		handler: new NetworkOnly(),
+	},
+	// Same-origin API routes — NetworkOnly (PWA-AUDIT-001).
+	// Never persist authenticated/sensitive payloads (admin export, invoice &
+	// credit-note PDFs, order status, auth session, many `Cache-Control: no-store`)
+	// to Cache Storage, and never serve them stale offline.
+	{
+		matcher({ url, sameOrigin }) {
+			return sameOrigin && isApiPath(url.pathname);
+		},
+		handler: new NetworkOnly(),
+	},
+	// Admin + checkout navigations — NetworkOnly (PWA-AUDIT-003 / PWA-AUDIT-004).
+	// Avoid serving a stale admin view or a stale checkout page (expired
+	// PaymentIntent clientSecret) and avoid persisting authenticated HTML/RSC.
+	// Offline failures still resolve to the `/~offline` fallback below.
+	{
+		matcher({ url, request, sameOrigin }) {
+			return sameOrigin && isNavigationRequest(request) && isSensitiveNavigationPath(url.pathname);
+		},
+		handler: new NetworkOnly(),
+	},
 	// UploadThing CDN images — CacheFirst (immutable, content-addressed)
 	{
 		matcher: /^https:\/\/(utfs\.io|.*\.ufs\.sh)\/.*/i,
@@ -39,26 +64,6 @@ const runtimeCaching: RuntimeCaching[] = [
 			cacheName: "uploadthing-images",
 			plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 })],
 		}),
-	},
-	// Cart mutations — Background Sync retry when offline
-	{
-		matcher({ url, request, sameOrigin }) {
-			return (
-				sameOrigin &&
-				request.method === "POST" &&
-				(url.pathname.startsWith("/api/cart") || url.searchParams.has("_rsc"))
-			);
-		},
-		method: "POST",
-		handler: new NetworkOnly({ plugins: [cartMutationsSync] }),
-	},
-	// Wishlist mutations — Background Sync retry
-	{
-		matcher({ url, request, sameOrigin }) {
-			return sameOrigin && request.method === "POST" && url.pathname.startsWith("/api/wishlist");
-		},
-		method: "POST",
-		handler: new NetworkOnly({ plugins: [wishlistMutationsSync] }),
 	},
 	// Next.js image optimization — StaleWhileRevalidate
 	{
@@ -86,21 +91,11 @@ const runtimeCaching: RuntimeCaching[] = [
 			],
 		}),
 	},
-	// API routes — NetworkFirst (fresh data preferred, offline fallback)
-	{
-		matcher({ url, sameOrigin }) {
-			return sameOrigin && url.pathname.startsWith("/api/");
-		},
-		handler: new NetworkFirst({
-			cacheName: "api-responses",
-			networkTimeoutSeconds: 5,
-			plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 })],
-		}),
-	},
-	// Navigation requests (HTML pages + RSC fetches) — NetworkFirst for offline support
+	// Public navigation requests (HTML pages + RSC fetches) — NetworkFirst for
+	// offline support. Admin/checkout/API are handled by the NetworkOnly guards above.
 	{
 		matcher({ request }) {
-			return request.destination === "document" || request.headers.get("RSC") === "1";
+			return isNavigationRequest(request);
 		},
 		handler: new NetworkFirst({
 			cacheName: "navigations",
@@ -142,75 +137,8 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
-// ---------------------------------------------------------------------------
-// Push notifications (wishlist restock, order updates)
-// Requires VAPID keys in env + server endpoint /api/push/subscribe + /api/push/send.
-// ---------------------------------------------------------------------------
-
-interface SynclunePushPayload {
-	title: string;
-	body: string;
-	url?: string;
-	icon?: string;
-	badge?: string;
-	tag?: string;
-}
-
-self.addEventListener("push", (event) => {
-	if (!event.data) return;
-	let payload: SynclunePushPayload;
-	try {
-		payload = event.data.json() as SynclunePushPayload;
-	} catch {
-		payload = { title: "Synclune", body: event.data.text() };
-	}
-
-	const promise = self.registration.showNotification(payload.title, {
-		body: payload.body,
-		icon: payload.icon ?? "/icons/icon-192x192.png",
-		badge: payload.badge ?? "/icons/android-icon-96x96.png",
-		tag: payload.tag,
-		data: { url: payload.url ?? "/" },
-	});
-	event.waitUntil(promise);
-});
-
-self.addEventListener("notificationclick", (event) => {
-	event.notification.close();
-	const targetUrl = (event.notification.data as { url?: string } | null)?.url ?? "/";
-
-	event.waitUntil(
-		(async () => {
-			const windowClients = await self.clients.matchAll({
-				type: "window",
-				includeUncontrolled: true,
-			});
-			for (const client of windowClients) {
-				if ("focus" in client) {
-					const clientUrl = new URL(client.url);
-					if (clientUrl.pathname === targetUrl) {
-						return client.focus();
-					}
-				}
-			}
-			return self.clients.openWindow(targetUrl);
-		})(),
-	);
-});
-
-// ---------------------------------------------------------------------------
-// Periodic Background Sync — refresh wishlist restock status in the background
-// Browsers currently supporting this: Chrome/Edge Android only.
-// Requires a /api/wishlist/sync endpoint to exist on the origin.
-// ---------------------------------------------------------------------------
-
-self.addEventListener("periodicsync", (event) => {
-	const periodicEvent = event as ExtendableEvent & { tag: string };
-	if (periodicEvent.tag === "wishlist-restock-sync") {
-		periodicEvent.waitUntil(
-			fetch("/api/wishlist/sync", { method: "POST", credentials: "include" }).catch(
-				() => undefined,
-			),
-		);
-	}
-});
+// NOTE: push notifications and Periodic Background Sync handlers were removed
+// (PWA-AUDIT-006 / PWA-AUDIT-007): they targeted endpoints that do not exist
+// (`/api/push/*`, `/api/wishlist/sync`) and had no client-side subscription/
+// registration, so they were dead code. Re-introduce them together with the
+// server endpoints + a client subscription flow if/when push is implemented.

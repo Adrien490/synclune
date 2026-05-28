@@ -90,7 +90,7 @@ describe("Button", () => {
 
 	it("applies ghost variant class", () => {
 		render(<Button variant="ghost">Ghost</Button>);
-		expect(screen.getByRole("button")).toHaveClass("hover:bg-accent");
+		expect(screen.getByRole("button")).toHaveClass("can-hover:hover:bg-accent");
 	});
 
 	it("applies link variant class", () => {

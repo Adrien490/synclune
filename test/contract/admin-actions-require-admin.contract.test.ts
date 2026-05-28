@@ -31,6 +31,7 @@ const ADMIN_ACTION_DIRS = [
 	"modules/orders/actions",
 	"modules/refunds/actions",
 	"modules/invoices/actions",
+	"modules/store-settings/actions",
 ];
 
 /**

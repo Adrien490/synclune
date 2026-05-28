@@ -16,7 +16,7 @@ function Card({
 				// Desktop (>= md): Card classique
 				"bg-card text-card-foreground flex flex-col gap-6 rounded-none border-0 py-4 shadow-none md:rounded-xl md:border md:py-6 md:shadow-md",
 				interactive &&
-					"focus-visible:ring-ring cursor-pointer transition-shadow focus-visible:ring-2 focus-visible:ring-offset-2 md:hover:shadow-lg",
+					"focus-visible:ring-ring can-hover:md:hover:shadow-lg cursor-pointer transition-shadow focus-visible:ring-2 focus-visible:ring-offset-2",
 				className,
 			)}
 			{...props}

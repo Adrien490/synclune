@@ -104,6 +104,21 @@ export default defineConfig({
 			testMatch: /authenticated\/user-checkout-flow|authenticated\/user-auth-flows/,
 			dependencies: ["setup"],
 		},
+
+		// Authenticated tests (user) - Mobile (iPhone 14)
+		// Couvre les flows connectés conversion-critiques en viewport mobile :
+		// les autres projets `authenticated-user*` ne tournent qu'en desktop, donc
+		// une régression mobile sur panier/checkout/wishlist passait inaperçue.
+		{
+			name: "authenticated-user-mobile",
+			use: {
+				...devices["iPhone 14"],
+				storageState: "e2e/.auth/user.json",
+			},
+			testMatch:
+				/authenticated\/user-checkout-flow|authenticated\/user-cart-management|authenticated\/user-wishlist/,
+			dependencies: ["setup"],
+		},
 	],
 	webServer: {
 		command: process.env.CI ? "pnpm start" : "pnpm dev",

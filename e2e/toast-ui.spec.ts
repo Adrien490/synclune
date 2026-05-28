@@ -94,4 +94,22 @@ test.describe("Toast — Reduced motion", { tag: ["@regression"] }, () => {
 		});
 		expect(matches).toBe(true);
 	});
+
+	// A11Y-AUDIT-005 — l'icône du toast erreur (.animate-heart-beat) est appliquée
+	// sans préfixe motion-safe: au call-site ; le bloc reduced-motion doit la neutraliser.
+	test("neutralise l'animation heart-beat de l'icône toast erreur", async ({ page }) => {
+		await page.emulateMedia({ reducedMotion: "reduce" });
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		const animationName = await page.evaluate(() => {
+			const el = document.createElement("div");
+			el.className = "animate-heart-beat";
+			document.body.appendChild(el);
+			const name = getComputedStyle(el).animationName;
+			el.remove();
+			return name;
+		});
+		expect(animationName).toBe("none");
+	});
 });

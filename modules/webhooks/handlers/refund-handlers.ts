@@ -10,8 +10,7 @@ import {
 	updateRefundStatus,
 	markRefundAsFailed,
 } from "../services/refund.service";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { captureWebhookError } from "../utils/capture-webhook-error";
@@ -170,15 +169,14 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// 5. Build post-tasks (email + cache invalidation)
 		const tasks: PostWebhookTask[] = [];
 
+		// CACHE-AUDIT-003 : le remboursement modifie order.paymentStatus —
+		// passer par le helper canonique pour invalider aussi DETAIL(orderId),
+		// LAST_ORDER et ACCOUNT_STATS (la liste manuelle omettait DETAIL → page
+		// détail commande stale jusqu'à expiration du profil `user`).
 		const cacheTags = [
-			ORDERS_CACHE_TAGS.LIST,
+			...getOrderInvalidationTags(order.userId ?? undefined, order.id),
 			ORDERS_CACHE_TAGS.REFUNDS(order.id),
-			SHARED_CACHE_TAGS.ADMIN_BADGES,
-			SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
 		];
-		if (order.userId) {
-			cacheTags.push(ORDERS_CACHE_TAGS.USER_ORDERS(order.userId));
-		}
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
 		// ORD-STRIPE-006 : alerte admin temps réel pour chaque Dashboard refund
@@ -355,7 +353,14 @@ export async function handleRefundUpdated(
 				tasks: [
 					{
 						type: "INVALIDATE_CACHE",
-						tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
+						// CACHE-AUDIT-006 : le changement de statut refund + l'audit
+						// OrderHistory s'affichent sur le détail commande → invalider
+						// DETAIL et HISTORY en plus de la liste des refunds.
+						tags: [
+							ORDERS_CACHE_TAGS.REFUNDS(refund.orderId),
+							ORDERS_CACHE_TAGS.DETAIL(refund.orderId),
+							ORDERS_CACHE_TAGS.HISTORY(refund.orderId),
+						],
 					},
 				],
 			};
@@ -405,7 +410,12 @@ export async function handleRefundFailed(
 
 		tasks.push({
 			type: "INVALIDATE_CACHE",
-			tags: [ORDERS_CACHE_TAGS.REFUNDS(refund.orderId)],
+			// CACHE-AUDIT-006 : idem handleRefundUpdated (statut refund + audit).
+			tags: [
+				ORDERS_CACHE_TAGS.REFUNDS(refund.orderId),
+				ORDERS_CACHE_TAGS.DETAIL(refund.orderId),
+				ORDERS_CACHE_TAGS.HISTORY(refund.orderId),
+			],
 		});
 
 		const baseUrl = getBaseUrl();

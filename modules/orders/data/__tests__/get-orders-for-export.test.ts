@@ -76,6 +76,7 @@ describe("getOrdersForExport", () => {
 				select: {
 					orderNumber: true,
 					invoiceNumber: true,
+					creditNoteNumber: true,
 					createdAt: true,
 					paidAt: true,
 					customerName: true,
@@ -87,6 +88,10 @@ describe("getOrdersForExport", () => {
 					paymentMethod: true,
 					paymentStatus: true,
 					status: true,
+					refunds: {
+						where: { status: "COMPLETED" },
+						select: { amount: true },
+					},
 				},
 			}),
 		);

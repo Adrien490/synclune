@@ -25,6 +25,7 @@ const {
 	mockPrisma: {
 		productReview: { create: vi.fn() },
 		reviewMedia: { createMany: vi.fn() },
+		orderItem: { findFirst: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAuth: vi.fn(),
@@ -42,7 +43,7 @@ const {
 	mockGetReviewInvalidationTags: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAuth: mockRequireAuth }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
@@ -161,6 +162,8 @@ describe("createReview", () => {
 		);
 		mockPrisma.productReview.create.mockResolvedValue({ id: "review-1", productId: VALID_CUID });
 		mockPrisma.reviewMedia.createMany.mockResolvedValue({ count: 0 });
+		// REVIEW-AUDIT-006 : l'OrderItem soumis est validé directement (éligible par défaut)
+		mockPrisma.orderItem.findFirst.mockResolvedValue({ id: "item-1" });
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -208,6 +211,16 @@ describe("createReview", () => {
 		const result = await createReview(undefined, validFormData);
 		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	// REVIEW-AUDIT-006 : l'orderItemId soumis doit être un OrderItem éligible de
+	// l'utilisateur (livré, payé non remboursé, pas encore noté), pas seulement le plus
+	// récent renvoyé par checkReviewEligibility. Un item non éligible est rejeté.
+	it("should reject when the submitted orderItem is not eligible", async () => {
+		mockPrisma.orderItem.findFirst.mockResolvedValue(null);
+		const result = await createReview(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("should update product review stats after creation", async () => {

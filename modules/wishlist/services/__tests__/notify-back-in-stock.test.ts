@@ -95,6 +95,22 @@ describe("notifyBackInStock", () => {
 		expect(call.orderBy).toEqual({ id: "asc" });
 	});
 
+	/**
+	 * @regression biz-bug-002
+	 * Ne jamais envoyer d'email « revenu en stock » pour un produit non
+	 * achetable (archivé, brouillon, soft-deleted) — le lien produit mènerait
+	 * à une 404. Le filtre vit dans la clause `where` Prisma.
+	 */
+	it("[regression biz-bug-002] restricts to PUBLIC, non-deleted products via where clause", async () => {
+		await notifyBackInStock("prod-1");
+
+		const call = mockPrisma.wishlistItem.findMany.mock.calls[0]![0];
+		expect(call.where.product).toEqual({
+			status: "PUBLIC",
+			deletedAt: null,
+		});
+	});
+
 	it("sends email to all eligible wishlist users", async () => {
 		const items = [
 			makeWishlistItem({ id: "wi-1" }),

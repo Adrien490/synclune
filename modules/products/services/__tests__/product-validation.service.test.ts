@@ -13,7 +13,7 @@ describe("validateProductForPublication", () => {
 				id: "sku-1",
 				isActive: true,
 				inventory: 5,
-				images: [{ id: "img-1" }],
+				images: [{ mediaType: "IMAGE" }],
 			},
 		],
 	};
@@ -38,7 +38,7 @@ describe("validateProductForPublication", () => {
 	it("should reject product with no active SKUs", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [{ id: "sku-1", isActive: false, inventory: 5, images: [{ id: "img-1" }] }],
+			skus: [{ id: "sku-1", isActive: false, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
 		});
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("variante active");
@@ -53,7 +53,7 @@ describe("validateProductForPublication", () => {
 	it("should reject product with no stock on active SKUs", () => {
 		const result = validateProductForPublication({
 			...validProduct,
-			skus: [{ id: "sku-1", isActive: true, inventory: 0, images: [{ id: "img-1" }] }],
+			skus: [{ id: "sku-1", isActive: true, inventory: 0, images: [{ mediaType: "IMAGE" }] }],
 		});
 		expect(result.isValid).toBe(false);
 		expect(result.errorMessage).toContain("stock");
@@ -72,8 +72,34 @@ describe("validateProductForPublication", () => {
 		const result = validateProductForPublication({
 			...validProduct,
 			skus: [
-				{ id: "sku-1", isActive: false, inventory: 10, images: [{ id: "img-1" }] },
-				{ id: "sku-2", isActive: true, inventory: 3, images: [{ id: "img-2" }] },
+				{ id: "sku-1", isActive: false, inventory: 10, images: [{ mediaType: "IMAGE" }] },
+				{ id: "sku-2", isActive: true, inventory: 3, images: [{ mediaType: "IMAGE" }] },
+			],
+		});
+		expect(result.isValid).toBe(true);
+	});
+
+	// MEDIA-AUDIT-002 : une video ne compte pas comme image principale.
+	it("should reject an active SKU whose only media is a video", () => {
+		const result = validateProductForPublication({
+			...validProduct,
+			skus: [{ id: "sku-1", isActive: true, inventory: 5, images: [{ mediaType: "VIDEO" }] }],
+		});
+		expect(result.isValid).toBe(false);
+		expect(result.errorMessage).toContain("image");
+	});
+
+	// MEDIA-AUDIT-002 : un SKU avec video + image reste publiable (l'image suffit).
+	it("should accept an active SKU mixing a video and an image", () => {
+		const result = validateProductForPublication({
+			...validProduct,
+			skus: [
+				{
+					id: "sku-1",
+					isActive: true,
+					inventory: 5,
+					images: [{ mediaType: "VIDEO" }, { mediaType: "IMAGE" }],
+				},
 			],
 		});
 		expect(result.isValid).toBe(true);

@@ -46,7 +46,9 @@ export async function getCurrentUser(): Promise<GetCurrentUserReturn> {
  */
 export async function fetchCurrentUser(userId: string): Promise<GetCurrentUserReturn> {
 	"use cache: private";
-	cacheLife("checkout");
+	// CACHE-AUDIT-007 : profil `user` (2m/1m) cohérent avec les autres données
+	// user-scopées. `checkout` (1m/30s) était plus agressif sans raison.
+	cacheLife("user");
 	cacheTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 	const user = await prisma.user.findUnique({
 		where: {

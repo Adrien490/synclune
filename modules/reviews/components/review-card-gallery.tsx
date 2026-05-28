@@ -42,7 +42,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 						type="button"
 						onClick={() => openLightbox(index)}
 						aria-label={`Voir la photo ${index + 1} de l'avis`}
-						className="group focus-visible:ring-ring relative size-20 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 md:size-24"
+						className="focus-ring group bg-muted relative size-20 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-offset-2 md:size-24"
 					>
 						{/* Skeleton shimmer while loading (only when no blur placeholder) */}
 						{!loadedImages.has(media.id) && !media.blurDataUrl && (

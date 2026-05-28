@@ -61,11 +61,13 @@ vi.mock("../../services/checkout.service", () => ({
 	buildPostCheckoutTasksFromPI: mockBuildPostCheckoutTasksFromPI,
 }));
 
-vi.mock("@/modules/orders/constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-	},
-}));
+vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
+	// CACHE-AUDIT-002 : on garde le vrai getOrderInvalidationTags (pas de drift
+	// sur les noms de tags user-scopés / détail).
+	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+	const actual = await importOriginal<typeof import("@/modules/orders/constants/cache")>();
+	return actual;
+});
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
@@ -90,10 +92,14 @@ vi.mock("@/modules/products/constants/cache", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
+	getBaseUrl: vi.fn(() => "https://synclune.fr"),
 	ROUTES: {
 		ADMIN: {
 			ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
 			ORDERS: "/admin/ventes/commandes",
+		},
+		SHOP: {
+			CHECKOUT: "/paiement",
 		},
 	},
 }));
@@ -218,7 +224,7 @@ describe("handlePaymentFailure", () => {
 			declineCode: "insufficient_funds",
 			message: "Your card was declined.",
 		});
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
 		mockMarkOrderAsFailed.mockResolvedValue(undefined);
 	});
 
@@ -280,8 +286,53 @@ describe("handlePaymentFailure", () => {
 		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
 	});
 
+	/**
+	 * @regression biz-bug-004
+	 * Parité avec le flux async : un échec de paiement PI doit notifier le client
+	 * (email PAYMENT_FAILED_EMAIL) quand l'email de la commande est connu.
+	 */
+	it("[regression biz-bug-004] emits PAYMENT_FAILED_EMAIL task when order has a customer email", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue({
+			orderNumber: "SYN-2026-00042",
+			customerEmail: "client@example.com",
+			customerName: "Camille",
+		});
+
+		const result = await handlePaymentFailure(makePaymentIntent());
+
+		const emailTask = result.tasks?.find((t) => t.type === "PAYMENT_FAILED_EMAIL");
+		expect(emailTask).toBeDefined();
+		if (emailTask?.type !== "PAYMENT_FAILED_EMAIL") throw new Error("type guard");
+		expect(emailTask.data).toMatchObject({
+			to: "client@example.com",
+			customerName: "Camille",
+			orderNumber: "SYN-2026-00042",
+			retryUrl: "https://synclune.fr/paiement",
+			idempotencyKey: "payment-failed-order-1",
+		});
+	});
+
+	/**
+	 * @regression biz-bug-004
+	 * Aucun email si la commande n'a pas d'email (rien à notifier) — pas de crash.
+	 */
+	it("[regression biz-bug-004] skips PAYMENT_FAILED_EMAIL when order has no email", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue({
+			orderNumber: "SYN-2026-00042",
+			customerEmail: null,
+			customerName: "Camille",
+		});
+
+		const result = await handlePaymentFailure(makePaymentIntent());
+
+		expect(result.tasks?.find((t) => t.type === "PAYMENT_FAILED_EMAIL")).toBeUndefined();
+	});
+
 	it("should include restored SKU ids in cache tags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: ["sku-1", "sku-2"] });
+		mockRestoreStockForOrder.mockResolvedValue({
+			restoredSkuIds: ["sku-1", "sku-2"],
+			userId: "user-1",
+		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());
 
@@ -289,6 +340,22 @@ describe("handlePaymentFailure", () => {
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("sku-stock-sku-1");
 			expect(cacheTask.tags).toContain("sku-stock-sku-2");
+		}
+	});
+
+	// CACHE-AUDIT-002 : l'espace client + le détail commande doivent refléter
+	// CANCELLED immédiatement, pas après expiration du profil `user`.
+	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
+
+		const result = await handlePaymentFailure(makePaymentIntent());
+
+		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
+		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
+		if (cacheTask?.type === "INVALIDATE_CACHE") {
+			expect(cacheTask.tags).toContain("order-detail-order-1");
+			expect(cacheTask.tags).toContain("orders-user-user-1");
+			expect(cacheTask.tags).toContain("last-order-user-user-1");
 		}
 	});
 });
@@ -300,7 +367,7 @@ describe("handlePaymentFailure", () => {
 describe("handlePaymentCanceled", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
 		mockMarkOrderAsCancelled.mockResolvedValue(undefined);
 	});
 
@@ -367,13 +434,27 @@ describe("handlePaymentCanceled", () => {
 	});
 
 	it("should include restored SKU ids in cache tags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: ["sku-3"] });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: ["sku-3"], userId: "user-1" });
 
 		const result = await handlePaymentCanceled(makePaymentIntent());
 
 		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("sku-stock-sku-3");
+		}
+	});
+
+	// CACHE-AUDIT-002 : idem handlePaymentFailure.
+	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
+
+		const result = await handlePaymentCanceled(makePaymentIntent());
+
+		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
+		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
+		if (cacheTask?.type === "INVALIDATE_CACHE") {
+			expect(cacheTask.tags).toContain("order-detail-order-1");
+			expect(cacheTask.tags).toContain("orders-user-user-1");
 		}
 	});
 });

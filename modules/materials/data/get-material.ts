@@ -6,7 +6,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
-import { cacheMaterialDetail } from "../constants/cache";
+import { cacheMaterialDetail, MATERIALS_CACHE_TAGS } from "../constants/cache";
 
 import { GET_MATERIAL_SELECT } from "../constants/materials.constants";
 import { getMaterialSchema } from "../schemas/materials.schemas";
@@ -178,7 +178,7 @@ export async function getMaterialDistinctProductCount(materialId: string): Promi
 async function fetchMaterialDistinctProductCount(materialId: string): Promise<number> {
 	"use cache";
 	cacheLife("user");
-	cacheTag(`material-${materialId}-product-count`);
+	cacheTag(MATERIALS_CACHE_TAGS.PRODUCT_COUNT(materialId));
 
 	try {
 		// M2M : on cherche les SKUs actifs liés à ce matériau via la jointure

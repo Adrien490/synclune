@@ -14,6 +14,7 @@ interface StoreClosurePageProps {
 }
 
 const reopensAtFormatter = new Intl.DateTimeFormat("fr-FR", {
+	timeZone: "Europe/Paris",
 	dateStyle: "long",
 	timeStyle: "short",
 });

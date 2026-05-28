@@ -97,7 +97,7 @@ export function ReviewResponseForm({
 					aria-describedby="response-error response-counter"
 				/>
 				<div className="text-muted-foreground flex justify-between text-xs">
-					<span id="response-error" role="alert" aria-live="polite">
+					<span id="response-error" aria-live="polite">
 						{content.length > 0 && content.length < REVIEW_CONFIG.MIN_RESPONSE_LENGTH && (
 							<span className="text-destructive">
 								Minimum {REVIEW_CONFIG.MIN_RESPONSE_LENGTH} caractères

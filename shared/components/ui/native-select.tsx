@@ -6,7 +6,7 @@ import { cn } from "@/shared/utils/cn";
 
 const nativeSelectVariants = cva(
 	cn(
-		"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground w-full min-w-0 appearance-none bg-none rounded-md border bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed",
+		"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground can-hover:hover:border-ring/70 w-full min-w-0 appearance-none bg-none rounded-md border bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed",
 		"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
 		"aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
 	),
@@ -43,7 +43,7 @@ function NativeSelect({
 				{...props}
 			/>
 			<ChevronDownIcon
-				className="text-muted-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 opacity-70 select-none"
+				className="text-muted-foreground can-hover:group-hover/native-select:text-foreground pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 opacity-70 transition-colors select-none"
 				aria-hidden="true"
 				data-slot="native-select-icon"
 			/>

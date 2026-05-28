@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
-import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
@@ -48,9 +48,13 @@ export async function fetchDashboardRevenueChart(
 		async () => {
 			const periodLabel = DASHBOARD_PERIODS[period].label;
 
+			// Buckets en heure de Paris (ANALYTICS-AUDIT-005) : double conversion
+			// timestamp(UTC) → timestamptz → wall-clock Paris avant TO_CHAR.
+			// Statuts encaissés (ANALYTICS-AUDIT-001) : inclut PARTIALLY_REFUNDED /
+			// REFUNDED via = ANY(...) sans cast ::text (préserve l'usage d'index, A-008).
 			const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
 				SELECT
-					TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat}) as date,
+					TO_CHAR(("paidAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Paris', ${chartConfig.sqlDateFormat}) as date,
 					COALESCE(SUM(total), 0) as revenue,
 					COUNT(*) as orders,
 					COALESCE(SUM(subtotal), 0) as subtotal,
@@ -58,7 +62,7 @@ export async function fetchDashboardRevenueChart(
 					COALESCE(SUM("shippingCost"), 0) as shipping
 				FROM "Order"
 				WHERE "paidAt" >= ${chartConfig.startDate}
-					AND "paymentStatus"::text = ${PaymentStatus.PAID}
+					AND "paymentStatus" = ANY(${[...PAID_REVENUE_STATUSES]}::"PaymentStatus"[])
 					AND "deletedAt" IS NULL
 				GROUP BY date
 				ORDER BY date ASC

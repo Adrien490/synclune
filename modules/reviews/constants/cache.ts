@@ -4,6 +4,11 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 
+import {
+	PRODUCTS_CACHE_TAGS,
+	RECENT_PRODUCTS_CACHE_TAGS,
+} from "@/modules/products/constants/cache";
+
 // ============================================
 // CACHE TAGS
 // ============================================
@@ -116,6 +121,10 @@ export function getReviewInvalidationTags(
 	if (productId) {
 		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId));
 		tags.push(REVIEWS_CACHE_TAGS.STATS(productId));
+		// La note moyenne + le compteur d'avis sont joints (reviewStats) dans les
+		// product cards, cachées sous des tags produit distincts. Sans ces purges,
+		// les cards affichent une note périmée jusqu'à expiration (~6h). Cf. REVIEW-AUDIT-001.
+		tags.push(...getProductListingReviewTags());
 	}
 
 	if (reviewId) {
@@ -144,7 +153,26 @@ export function getReviewModerationTags(productId: string | null, reviewId: stri
 	if (productId) {
 		tags.push(REVIEWS_CACHE_TAGS.PRODUCT(productId));
 		tags.push(REVIEWS_CACHE_TAGS.STATS(productId));
+		// Idem création/suppression : la modération change la note affichée dans les
+		// product cards (reviewStats joint). Cf. REVIEW-AUDIT-001.
+		tags.push(...getProductListingReviewTags());
 	}
 
 	return tags;
+}
+
+/**
+ * Tags des listings produits qui embarquent `reviewStats` (note + compteur) et
+ * doivent donc être purgés quand une note de produit change.
+ *
+ * Note : `related-products-user-${id}` et `related-products-contextual-${slug}`
+ * sont paramétrés (non énumérables ici) — leur fraîcheur (profil relatedProducts,
+ * ~3h) est acceptée. On couvre les surfaces publiques globales.
+ */
+function getProductListingReviewTags(): string[] {
+	return [
+		PRODUCTS_CACHE_TAGS.LIST,
+		PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
+		RECENT_PRODUCTS_CACHE_TAGS.LIST,
+	];
 }

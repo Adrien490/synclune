@@ -13,6 +13,7 @@ export async function sendBackInStockEmail({
 	productImageUrl,
 	productUrl,
 	unsubscribeUrl,
+	idempotencyKey,
 }: {
 	to: string;
 	customerName: string;
@@ -20,6 +21,15 @@ export async function sendBackInStockEmail({
 	productImageUrl?: string | null;
 	productUrl: string;
 	unsubscribeUrl: string;
+	/**
+	 * EMAIL-AUDIT-102 : dedup cross-instance Resend 24h. Le flag DB
+	 * `WishlistItem.backInStockNotifiedAt` n'est posé qu'APRÈS l'envoi (en batch) ;
+	 * un crash entre send réussi et écriture du flag, ou deux événements restock
+	 * concurrents, pourraient re-sélectionner l'item et renvoyer l'email. Cette clé
+	 * (`back-in-stock:${wishlistItemId}`) garantit qu'un même item ne déclenche
+	 * qu'un seul envoi réel côté Resend dans la fenêtre 24h.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		BackInStockEmail({ customerName, productTitle, productImageUrl, productUrl, unsubscribeUrl }),
@@ -29,6 +39,7 @@ export async function sendBackInStockEmail({
 			replyTo: EMAIL_CONTACT,
 			unsubscribeUrl,
 			tags: [{ name: "category", value: "marketing" }],
+			...(idempotencyKey ? { idempotencyKey } : {}),
 		},
 	);
 }

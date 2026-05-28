@@ -215,6 +215,13 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  * - catalogMedia        → SkuMedia (url, thumbnailUrl)
  * - reviewMedia         → ReviewMedia (url)
  * - (user avatars)      → User.image
+ * - order snapshots     → OrderItem (productImageUrl, skuImageUrl)
+ *
+ * MEDIA-AUDIT-003 : les snapshots de commande (`OrderItem.productImageUrl` /
+ * `skuImageUrl`) figent l'URL du media au checkout. Si la ligne `SkuMedia`
+ * source disparait, le fichier ne doit PAS être supprimé tant qu'une commande
+ * y fait référence — sinon l'historique client afficherait une image 404
+ * (rétention légale 10 ans).
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
@@ -284,6 +291,36 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 			for (const user of batch) {
 				if (user.image) {
 					const key = extractFileKeyFromUrl(user.image);
+					if (key) keys.add(key);
+				}
+			}
+		},
+	});
+
+	// 4. Order snapshots (MEDIA-AUDIT-003) — productImageUrl + skuImageUrl.
+	// Protège l'intégrité historique : un fichier encore référencé par une
+	// commande passée ne doit jamais être considéré orphelin.
+	await paginateCursor({
+		jobName,
+		step: "orderItem-snapshot-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.orderItem.findMany({
+				where: { OR: [{ productImageUrl: { not: null } }, { skuImageUrl: { not: null } }] },
+				select: { id: true, productImageUrl: true, skuImageUrl: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const item of batch) {
+				if (item.productImageUrl) {
+					const key = extractFileKeyFromUrl(item.productImageUrl);
+					if (key) keys.add(key);
+				}
+				if (item.skuImageUrl) {
+					const key = extractFileKeyFromUrl(item.skuImageUrl);
 					if (key) keys.add(key);
 				}
 			}

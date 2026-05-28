@@ -3,15 +3,16 @@
 import { Euro, Percent } from "lucide-react";
 
 import { FieldLabel } from "@/shared/components/forms";
+import {
+	FORM_SECTION_CARD_CLASS,
+	FORM_SECTION_TITLE_CLASS,
+} from "@/shared/components/forms/form-section-styles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { InputGroupAddon } from "@/shared/components/ui/input-group";
 
 import { DISCOUNT_TYPE_LABELS } from "../../constants/discount.constants";
 import { type DiscountFormInstance } from "../../hooks/use-discount-form";
 import { validateDiscountCodeField } from "../../utils/validate-discount-code-field";
-
-const MOBILE_SECTION_TITLE =
-	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
 
 interface DiscountCodeSectionProps {
 	form: DiscountFormInstance;
@@ -23,11 +24,11 @@ export function DiscountCodeSection({ form, isPending }: DiscountCodeSectionProp
 		<Card
 			role="region"
 			aria-label="Code et type de réduction"
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={{ viewTransitionName: "discount-code-section" }}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Code et type de réduction</CardTitle>
+				<CardTitle className={FORM_SECTION_TITLE_CLASS}>Code et type de réduction</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
 				<form.AppField

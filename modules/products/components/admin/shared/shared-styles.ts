@@ -1,7 +1,11 @@
 /**
  * Style partagé entre les sub-cards des formulaires Créer/Éditer Produit et
- * Créer/Éditer Variante (sidebar). Le titre est mobile-first (uppercase tracking-wide
- * petit) avec un override desktop (lg:) qui revient à la typographie standard.
+ * Créer/Éditer Variante (sidebar). Re-export de la SSOT cross-module
+ * `@/shared/components/forms/form-section-styles` (partagée avec discounts).
+ *
+ * `MOBILE_SECTION_TITLE` conserve son nom historique pour stabilité des imports.
  */
-export const MOBILE_SECTION_TITLE =
-	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
+export {
+	FORM_SECTION_CARD_CLASS,
+	FORM_SECTION_TITLE_CLASS as MOBILE_SECTION_TITLE,
+} from "@/shared/components/forms/form-section-styles";

@@ -149,7 +149,7 @@ describe("fetchCurrentUser", () => {
 	it("calls cacheLife with session profile", async () => {
 		await fetchCurrentUser("user-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with user-specific current-user tag", async () => {

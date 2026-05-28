@@ -4,7 +4,7 @@ import { FieldLabel } from "@/shared/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
-import { MOBILE_SECTION_TITLE } from "./shared-styles";
+import { FORM_SECTION_CARD_CLASS, MOBILE_SECTION_TITLE } from "./shared-styles";
 
 type RadioOption = { value: string; label: string };
 
@@ -57,7 +57,7 @@ export function StatusCard({
 		<Card
 			role="region"
 			aria-label={cardAriaLabel}
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">

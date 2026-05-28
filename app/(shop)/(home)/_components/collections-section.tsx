@@ -138,11 +138,7 @@ export async function CollectionsSection() {
 					</Reveal>
 				</div>
 
-				<div
-					id="collections-cta"
-					tabIndex={-1}
-					className="focus-visible:ring-ring focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-				>
+				<div id="collections-cta" tabIndex={-1} className="focus-ring focus-visible:rounded-md">
 					<Fade
 						y={MOTION_CONFIG.section.cta.y}
 						delay={MOTION_CONFIG.section.cta.delay}

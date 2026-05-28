@@ -39,6 +39,11 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag(`material-${slug}`, "materials-list");
 	},
+	MATERIALS_CACHE_TAGS: {
+		LIST: "materials-list",
+		DETAIL: (slug: string) => `material-${slug}`,
+		PRODUCT_COUNT: (materialId: string) => `material-${materialId}-product-count`,
+	},
 }));
 
 vi.mock("../../constants/materials.constants", () => ({

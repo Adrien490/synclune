@@ -1,5 +1,6 @@
 "use server";
 
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -55,6 +56,7 @@ export async function exportSingleOrder(
 			select: {
 				orderNumber: true,
 				invoiceNumber: true,
+				creditNoteNumber: true,
 				createdAt: true,
 				paidAt: true,
 				customerName: true,
@@ -66,6 +68,10 @@ export async function exportSingleOrder(
 				paymentMethod: true,
 				paymentStatus: true,
 				status: true,
+				refunds: {
+					where: { status: RefundStatus.COMPLETED },
+					select: { amount: true },
+				},
 			},
 		});
 

@@ -55,11 +55,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 
 				{/* Brand response (condensed) */}
 				{review.response && (
-					<aside
-						role="note"
-						aria-label="Réponse de Synclune"
-						className="border-border border-t pt-2"
-					>
+					<aside aria-label="Réponse de Synclune" className="border-border border-t pt-2">
 						<div className="bg-muted/50 border-primary/30 rounded-md border-l-2 p-2.5">
 							<span className="text-foreground mb-1 text-xs font-medium">Synclune</span>
 							<p className="text-muted-foreground line-clamp-2 text-xs">
@@ -83,7 +79,8 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								width={48}
 								height={48}
 								sizes="(min-width: 640px) 48px, 40px"
-								className="size-10 rounded-md object-cover sm:size-12"
+								// bg-muted = fallback zéro-JS si l'URL 404 (boîte neutre sous l'img)
+								className="bg-muted size-10 rounded-md object-cover sm:size-12"
 								placeholder={productImage.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={productImage.blurDataUrl ?? undefined}
 								aria-hidden="true"

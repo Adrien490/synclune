@@ -5,11 +5,12 @@ import { Euro } from "lucide-react";
 import { FieldLabel } from "@/shared/components/forms";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { InputGroupAddon } from "@/shared/components/ui/input-group";
+import {
+	FORM_SECTION_CARD_CLASS,
+	FORM_SECTION_TITLE_CLASS,
+} from "@/shared/components/forms/form-section-styles";
 
 import { type DiscountFormInstance } from "../../hooks/use-discount-form";
-
-const MOBILE_SECTION_TITLE =
-	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
 
 interface DiscountConditionsSectionProps {
 	form: DiscountFormInstance;
@@ -21,11 +22,11 @@ export function DiscountConditionsSection({ form, isPending }: DiscountCondition
 		<Card
 			role="region"
 			aria-label="Conditions d'utilisation"
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			className={FORM_SECTION_CARD_CLASS}
 			style={{ viewTransitionName: "discount-conditions-section" }}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Conditions d&apos;utilisation</CardTitle>
+				<CardTitle className={FORM_SECTION_TITLE_CLASS}>Conditions d&apos;utilisation</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
 				<form.AppField name="minOrderAmountEuros">

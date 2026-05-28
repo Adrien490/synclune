@@ -113,9 +113,14 @@ export function extractPaymentFailureDetails(
 /**
  * Restaure le stock pour une commande dont le paiement a échoué
  */
-export async function restoreStockForOrder(
-	orderId: string,
-): Promise<{ shouldRestore: boolean; itemCount: number; restoredSkuIds: string[] }> {
+export async function restoreStockForOrder(orderId: string): Promise<{
+	shouldRestore: boolean;
+	itemCount: number;
+	restoredSkuIds: string[];
+	// CACHE-AUDIT-002 : exposé pour que le handler invalide les tags user-scopés
+	// (USER_ORDERS, LAST_ORDER…) via getOrderInvalidationTags sans re-fetch.
+	userId: string | null;
+}> {
 	// All reads and writes inside the transaction to prevent double restoration on concurrent retries
 	return prisma.$transaction(
 		async (tx) => {
@@ -126,6 +131,7 @@ export async function restoreStockForOrder(
 					orderNumber: true,
 					status: true,
 					paymentStatus: true,
+					userId: true,
 					items: {
 						select: {
 							skuId: true,
@@ -139,14 +145,14 @@ export async function restoreStockForOrder(
 				logger.error(`[WEBHOOK] Order ${orderId} not found for stock restoration`, undefined, {
 					service: "webhook",
 				});
-				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [], userId: null };
 			}
 
 			// Only restore if stock was decremented (PROCESSING status = payment had succeeded)
 			const shouldRestore = order.status === "PROCESSING" || order.paymentStatus === "PAID";
 
 			if (!shouldRestore || order.items.length === 0) {
-				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [] };
+				return { shouldRestore: false, itemCount: 0, restoredSkuIds: [], userId: order.userId };
 			}
 
 			// Group quantities by skuId in case multiple items share the same SKU
@@ -185,7 +191,12 @@ export async function restoreStockForOrder(
 				`[WEBHOOK] Stock restored for ${order.items.length} items on order ${order.orderNumber}`,
 				{ service: "webhook" },
 			);
-			return { shouldRestore: true, itemCount: order.items.length, restoredSkuIds: skuIds };
+			return {
+				shouldRestore: true,
+				itemCount: order.items.length,
+				restoredSkuIds: skuIds,
+				userId: order.userId,
+			};
 		},
 		// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },

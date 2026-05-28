@@ -38,21 +38,33 @@ export async function checkReviewEligibility(
 		select: { id: true, deletedAt: true },
 	});
 
-	if (existingReview && !existingReview.deletedAt) {
+	// Un avis — même soft-deleted — verrouille définitivement la paire (userId, productId)
+	// au niveau DB (`@@unique` non partielle) ET l'OrderItem associé (`orderItemId @unique`).
+	// On applique donc la règle "un avis par produit et par utilisateur, définitivement" :
+	// pour changer d'avis, l'utilisateur édite le sien (updateReview). Renvoyer ici un
+	// `canReview: true` après suppression était trompeur — la création échouait ensuite en
+	// P2002 avec un message "no_purchase" incohérent. Cf. REVIEW-AUDIT-003.
+	if (existingReview) {
 		return {
 			canReview: false,
 			orderItemId: null,
 			reason: "already_reviewed",
-			existingReviewId: existingReview.id,
+			// Ne pas exposer l'id d'un avis supprimé (lien UI mort)
+			...(existingReview.deletedAt ? {} : { existingReviewId: existingReview.id }),
 		};
 	}
 
 	// 2. Trouver un OrderItem livré sans avis associé
+	// Exclut les commandes annulées / intégralement remboursées / échouées — solliciter
+	// ou autoriser un avis dans ces cas est incohérent métier (cohérent avec le cron
+	// send-review-requests, biz-bug-001). PARTIALLY_REFUNDED reste éligible. Cf. REVIEW-AUDIT-004.
 	const eligibleOrderItem = await client.orderItem.findFirst({
 		where: {
 			order: {
 				userId,
 				fulfillmentStatus: "DELIVERED",
+				status: { not: "CANCELLED" },
+				paymentStatus: { notIn: ["REFUNDED", "FAILED", "EXPIRED"] },
 				...notDeleted,
 			},
 			sku: {
