@@ -16,6 +16,7 @@ import {
 	Megaphone,
 	Store,
 	Users,
+	Landmark,
 } from "lucide-react";
 
 // ============================================================================
@@ -81,6 +82,12 @@ const VENTES_GROUP: NavGroup = {
 			title: "Remboursements",
 			url: "/admin/ventes/remboursements",
 			icon: ReceiptText,
+		},
+		{
+			id: "invoicing",
+			title: "Facturation",
+			url: "/admin/ventes/facturation",
+			icon: Landmark,
 		},
 	],
 };
