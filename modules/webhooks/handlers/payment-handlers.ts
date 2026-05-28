@@ -22,6 +22,7 @@ import {
 } from "../services/checkout.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
+import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
 
 /**
  * Resolves orderId from PI metadata.
@@ -76,6 +77,10 @@ export async function handlePaymentSuccess(
 			const order = await processOrderFromPaymentIntent(orderId, paymentIntent);
 			// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
 			await ensureInvoiceNumberPersisted(orderId);
+			// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
+			// feature-flagged via INVOICE_ENABLE_EREPORTING — fail-closed quand
+			// la transmission DGFiP n'est pas encore configurée.
+			await recordSalesEReporting(orderId);
 			const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 			return { success: true, tasks };
 		} catch (error) {
@@ -117,6 +122,8 @@ export async function handlePaymentSuccess(
 	// Génération facture eager si checkout.session.completed n'a pas encore tourné
 	// (idempotent — noop si déjà persistée par l'autre handler).
 	await ensureInvoiceNumberPersisted(orderId);
+	// E-reporting B2C — idempotent + feature-flagged (cf. recordSalesEReporting).
+	await recordSalesEReporting(orderId);
 	return { success: true };
 }
 

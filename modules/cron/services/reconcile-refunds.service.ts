@@ -23,6 +23,7 @@ import { canTransition } from "@/modules/refunds/services/refund-state-machine.s
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 const RECONCILE_AUDIT_AUTHOR = "Système (reconcile-refunds)";
@@ -146,6 +147,12 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					if (refund.order.userId) {
 						tagsToInvalidate.add(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.userId));
 					}
+
+					// E-reporting DGFiP (Phase 4 wiring, EINV-AUDIT-004).
+					// L'admin path `processRefund` a déjà créé la transaction si
+					// son Step 3 a réussi ; ici on rattrape le cas DLQ pur
+					// (idempotence assurée par recordRefundEReporting).
+					await recordRefundEReporting(refund.id);
 
 					// ORD-STRIPE-007 : email confirmation client. Si l'admin path
 					// (`processRefund`) avait abort en Step 3, l'email n'a pas

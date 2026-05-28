@@ -22,6 +22,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
@@ -410,6 +411,12 @@ export async function processRefund(
 				}
 			}
 			// Audit log
+
+			// E-reporting B2C (Phase 4, EINV-AUDIT-004) — feature-flagged,
+			// idempotent + best-effort. Crée la transaction REFUND avec amount
+			// négatif pour la transmission DGFiP périodique. Ne bloque jamais le
+			// process-refund : un échec ici est rattrapable via le reconcile cron.
+			await recordRefundEReporting(id);
 
 			// Envoyer l'email de confirmation au client (non bloquant)
 			// Le webhook charge.refunded sert de filet de sécurité — la
