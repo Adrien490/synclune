@@ -152,7 +152,7 @@ describe("ProductDetailMediaCard", () => {
 		const images = screen.getAllByTestId("next-image");
 		// Primary en premier (rendu hors des galeries)
 		expect(images[0]).toHaveAttribute("src", "https://cdn/b.jpg");
-		// Toutes les URLs doivent apparaître au moins une fois (mobile strip + desktop grid)
+		// Toutes les URLs doivent apparaître au moins une fois
 		const urls = images.map((img) => img.getAttribute("src"));
 		expect(urls).toContain("https://cdn/b.jpg");
 		expect(urls.some((u) => u === "https://cdn/a.jpg")).toBe(true);

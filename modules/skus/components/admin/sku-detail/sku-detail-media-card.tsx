@@ -79,15 +79,15 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 							type="button"
 							onClick={() => openAt(0)}
 							aria-label={`Agrandir l'image principale${primary.altText ? ` : ${primary.altText}` : ""}`}
-							className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-lg border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
+							className="focus-visible:ring-ring relative block aspect-square w-full max-w-sm cursor-zoom-in overflow-hidden rounded-lg border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
 						>
 							<Image
 								src={primary.url}
 								alt={primary.altText ?? fallbackAlt}
 								fill
-								sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 600px"
+								sizes="(max-width: 768px) 100vw, 384px"
 								className="object-cover"
-								priority
+								preload
 								{...(primary.blurDataUrl
 									? { placeholder: "blur" as const, blurDataURL: primary.blurDataUrl }
 									: {})}
