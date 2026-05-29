@@ -36,7 +36,7 @@ export function OrderNotesDialog() {
 				{isOpen && data?.orderId ? (
 					<OrderNotesPanel key={data.orderId} orderId={data.orderId} onClose={close} />
 				) : (
-					<div className="flex shrink-0 justify-end border-t pt-4">
+					<div className="flex shrink-0 justify-end pt-4">
 						<Button variant="outline" onClick={close}>
 							Fermer
 						</Button>

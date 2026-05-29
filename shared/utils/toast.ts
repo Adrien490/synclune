@@ -184,6 +184,16 @@ type ExternalToastOptionsWithMicroVariant = ExternalToastOptions & {
 const ACTION_MIN_DURATION_MS = 6000;
 
 /**
+ * Référence sentinelle retournée par `toast.loading()` sur mobile (la pastille
+ * `<MicroToast />` est single-slot, pas d'id Sonner). Doit rester **truthy** :
+ * `withCallbacks` (`shared/utils/with-callbacks.ts`) n'appelle `onEnd` que si
+ * `onStart` a renvoyé une valeur truthy. `toast.dismiss(MICRO_LOADING_REF)` est
+ * alors un **no-op** : le toast terminal (success/error) morphe la pastille en
+ * place (cf. store `morph`), et le plafond de sécurité couvre le cas sans terminal.
+ */
+const MICRO_LOADING_REF = "__synclune_micro_loading__";
+
+/**
  * Convertit une `action` Sonner ({ label, onClick }) en `MicroToastAction` pour la
  * pastille mobile (F5). Retourne `null` si l'action n'est pas exploitable côté pastille
  * (ReactNode custom, label non-string) — on reste alors fire-and-forget.
@@ -328,25 +338,43 @@ export const toast = {
 	message: ((...args: Parameters<SonnerToast["message"]>) =>
 		sonnerToast.message(...args)) as SonnerToast["message"],
 	loading: ((...args: Parameters<SonnerToast["loading"]>) => {
-		// Mobile : pas de toast loading, l'état pending du bouton suffit.
-		if (isMobileViewport()) return undefined as never;
+		// Mobile : pastille loader top-center persistante (morphe en success/error via
+		// le toast terminal). Sur desktop, Sonner garde son spinner natif.
+		if (isMobileViewport()) {
+			const [message] = args;
+			if (typeof message === "string") {
+				useMicroToastStore.getState().show(message, "loading");
+			}
+			return MICRO_LOADING_REF as never;
+		}
 		return sonnerToast.loading(...args);
 	}) as SonnerToast["loading"],
-	dismiss: ((...args: Parameters<SonnerToast["dismiss"]>) =>
-		sonnerToast.dismiss(...args)) as SonnerToast["dismiss"],
+	dismiss: ((...args: Parameters<SonnerToast["dismiss"]>) => {
+		// La pastille loading mobile n'est PAS fermée par dismiss : `onEnd(dismiss)`
+		// s'exécute AVANT `onSuccess(show)` dans withCallbacks, donc un hide() ici
+		// provoquerait un flicker. On laisse le toast terminal morpher la capsule
+		// (ou le plafond de sécurité la fermer si aucun terminal ne suit).
+		if (args[0] === MICRO_LOADING_REF) return undefined as never;
+		return sonnerToast.dismiss(...args);
+	}) as SonnerToast["dismiss"],
 	/**
 	 * `toast.promise(promise, { loading, success, error })` morph le toast
 	 * loading → success/error sans unmount/mount (pattern Dynamic Island iOS 18).
 	 * Le wrapper ajoute : haptic success/error, sanitize error, sr-only announce.
 	 *
-	 * Mobile : on bypass Sonner, on déclenche success/error manuellement après
-	 * résolution. Le bouton appelant porte déjà l'état pending visible.
+	 * Mobile : pastille loader top-center pendant la promesse, puis morph en
+	 * success/error (le toast terminal réutilise le slot via le store). Si aucun
+	 * message terminal n'est fourni, on ferme la pastille (`hide`) au settle.
 	 */
 	promise: ((promise: Promise<unknown> | (() => Promise<unknown>), opts) => {
 		const origSuccess = opts?.success;
 		const origError = opts?.error;
 
 		if (isMobileViewport()) {
+			const loadingMessage = opts?.loading;
+			if (typeof loadingMessage === "string") {
+				useMicroToastStore.getState().show(loadingMessage, "loading");
+			}
 			const p = (typeof promise === "function" ? promise() : promise) as Promise<unknown>;
 			p.then(
 				(data) => {
@@ -355,6 +383,7 @@ export const toast = {
 							? (origSuccess as (d: unknown) => unknown)(data)
 							: origSuccess;
 					if (typeof msg === "string") toast.success(msg);
+					else useMicroToastStore.getState().hide();
 				},
 				(err) => {
 					const msg =
@@ -362,6 +391,7 @@ export const toast = {
 							? (origError as (e: unknown) => unknown)(err)
 							: origError;
 					if (typeof msg === "string") toast.error(msg);
+					else useMicroToastStore.getState().hide();
 				},
 			);
 			return p as never;

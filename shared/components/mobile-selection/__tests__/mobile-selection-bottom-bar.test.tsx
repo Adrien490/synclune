@@ -100,7 +100,7 @@ describe("MobileSelectionBottomBar", () => {
 		expect(screen.getByTestId("bulk-action")).toBeInTheDocument();
 	});
 
-	it("uses 'Actions groupées' as default aria-label and reports height 112 in action mode", () => {
+	it("uses 'Actions groupées' as default aria-label and reports height 76 in action mode", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a"]}>
 				<EnterModeAndSelect ids={["a"]} />
@@ -112,7 +112,7 @@ describe("MobileSelectionBottomBar", () => {
 
 		const bar = screen.getByTestId("bottom-bar");
 		expect(bar).toHaveAttribute("aria-label", "Actions groupées");
-		expect(bar).toHaveAttribute("data-height", "112");
+		expect(bar).toHaveAttribute("data-height", "76");
 	});
 
 	it("renders compact hint (64px) when selectionMode is ON but selectedCount is 0", () => {
@@ -144,23 +144,26 @@ describe("MobileSelectionBottomBar", () => {
 		expect(screen.getByText("Tape sur les bijoux à sélectionner")).toBeInTheDocument();
 	});
 
-	it("compact mode exposes a 'Annuler' button that exits selection mode", () => {
+	it("compact mode exposes a 'Tout sélectionner' button that selects the whole page", () => {
 		render(
-			<BulkSelectionProvider pageItemIds={["a"]}>
+			<BulkSelectionProvider pageItemIds={["a", "b"]}>
 				<EnterModeOnMount />
 				<MobileSelectionBottomBar>
-					<button>Action</button>
+					<button data-testid="bulk-action">Action</button>
 				</MobileSelectionBottomBar>
 			</BulkSelectionProvider>,
 		);
 
-		const cancelBtn = screen.getByRole("button", { name: "Annuler" });
-		expect(cancelBtn).toBeInTheDocument();
+		// Compact mode (0 selected) : pas d'« Annuler » dupliqué, mais l'action utile.
+		expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
+		const selectAllBtn = screen.getByRole("button", { name: "Tout sélectionner" });
+		expect(selectAllBtn).toBeInTheDocument();
 
-		fireEvent.click(cancelBtn);
+		fireEvent.click(selectAllBtn);
 
-		// After exit, bottom-bar should disappear (selectionMode flips back to OFF)
-		expect(screen.queryByTestId("bottom-bar")).not.toBeInTheDocument();
+		// La page entière sélectionnée → la barre bascule en mode action (children rendus).
+		expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-height", "76");
+		expect(screen.getByTestId("bulk-action")).toBeInTheDocument();
 	});
 
 	it("forwards a custom aria-label", () => {

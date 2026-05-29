@@ -1,16 +1,8 @@
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { parseEstimatedDays } from "@/modules/orders/services/shipping.service";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Truck } from "lucide-react";
-
-/**
- * Parse "X-Y jours ouvrés" into [minDays, maxDays]
- */
-function parseEstimatedDays(estimatedDays: string): [number, number] {
-	const match = estimatedDays.match(/(\d+)\s*[-àa]\s*(\d+)/);
-	if (!match) return [3, 5];
-	return [Number(match[1]), Number(match[2])];
-}
 
 /**
  * DeliveryEstimator - Estimated delivery date range on product page

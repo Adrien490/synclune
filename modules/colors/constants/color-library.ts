@@ -3,6 +3,12 @@ export interface ColorLibraryEntry {
 	hex: string;
 	description: string | null;
 	category: "metaux" | "pierres-precieuses" | "pierres-semi" | "organiques" | "neutres";
+	/**
+	 * Couleur épinglée : affichée en accès rapide sous l'input hex du formulaire
+	 * (« Suggestions bijouterie »). SSOT — les suggestions inline sont dérivées de
+	 * la library, jamais re-hardcodées, pour garantir l'alignement nom/hex/desc.
+	 */
+	featured?: boolean;
 }
 
 export const COLOR_LIBRARY: ColorLibraryEntry[] = [
@@ -12,6 +18,7 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 		hex: "#D4AF37",
 		description: "Or 18 carats, fini brillant classique",
 		category: "metaux",
+		featured: true,
 	},
 	{
 		name: "Or jaune 14K",
@@ -24,6 +31,7 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 		hex: "#B76E79",
 		description: "Alliage or-cuivre, ton romantique",
 		category: "metaux",
+		featured: true,
 	},
 	{
 		name: "Or blanc",
@@ -36,6 +44,7 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 		hex: "#C0C0C0",
 		description: "Argent sterling, finition polie",
 		category: "metaux",
+		featured: true,
 	},
 	{
 		name: "Argent vieilli",
@@ -58,14 +67,32 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 
 	// Pierres précieuses
 	{ name: "Rubis", hex: "#9B111E", description: null, category: "pierres-precieuses" },
-	{ name: "Saphir", hex: "#0F52BA", description: null, category: "pierres-precieuses" },
-	{ name: "Émeraude", hex: "#50C878", description: null, category: "pierres-precieuses" },
+	{
+		name: "Saphir",
+		hex: "#0F52BA",
+		description: null,
+		category: "pierres-precieuses",
+		featured: true,
+	},
+	{
+		name: "Émeraude",
+		hex: "#50C878",
+		description: null,
+		category: "pierres-precieuses",
+		featured: true,
+	},
 	{ name: "Améthyste", hex: "#9966CC", description: null, category: "pierres-precieuses" },
 	{ name: "Topaze", hex: "#FFC87C", description: null, category: "pierres-precieuses" },
 	{ name: "Citrine", hex: "#E4D00A", description: null, category: "pierres-precieuses" },
 
 	// Pierres semi-précieuses
-	{ name: "Quartz rose", hex: "#F7CAC9", description: null, category: "pierres-semi" },
+	{
+		name: "Quartz rose",
+		hex: "#F7CAC9",
+		description: null,
+		category: "pierres-semi",
+		featured: true,
+	},
 	{ name: "Turquoise", hex: "#40E0D0", description: null, category: "pierres-semi" },
 	{ name: "Lapis-lazuli", hex: "#1B3A6B", description: null, category: "pierres-semi" },
 	{ name: "Onyx", hex: "#1A1A1A", description: null, category: "pierres-semi" },
@@ -80,6 +107,7 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 		hex: "#FAFAFA",
 		description: "Nacre naturelle d'eau douce",
 		category: "organiques",
+		featured: true,
 	},
 	{
 		name: "Perle noire",
@@ -96,7 +124,7 @@ export const COLOR_LIBRARY: ColorLibraryEntry[] = [
 	{ name: "Corail", hex: "#FF6F61", description: null, category: "organiques" },
 
 	// Couleurs neutres
-	{ name: "Noir mat", hex: "#1A1A1A", description: null, category: "neutres" },
+	{ name: "Noir mat", hex: "#1A1A1A", description: null, category: "neutres", featured: true },
 	{ name: "Blanc cassé", hex: "#F5F5DC", description: null, category: "neutres" },
 	{ name: "Champagne", hex: "#F7E7CE", description: null, category: "neutres" },
 ];
@@ -111,3 +139,11 @@ export const COLOR_LIBRARY_CATEGORIES = [
 ] as const;
 
 export type ColorLibraryCategory = (typeof COLOR_LIBRARY_CATEGORIES)[number]["value"];
+
+/**
+ * Couleurs épinglées affichées en accès rapide sous l'input hex (« Suggestions
+ * bijouterie »). Dérivées de COLOR_LIBRARY (SSOT) — l'ordre suit celui de la
+ * library. Garantit l'alignement nom/hex/description avec la bibliothèque
+ * complète et le raccourci `libraryMatch` du formulaire.
+ */
+export const FEATURED_COLORS: ColorLibraryEntry[] = COLOR_LIBRARY.filter((e) => e.featured);

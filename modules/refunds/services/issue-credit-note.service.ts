@@ -12,6 +12,7 @@ import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
 import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
+import { getParisDateParts } from "@/shared/utils/timezone";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { REFUNDS_CACHE_TAGS } from "../constants/cache";
@@ -141,10 +142,12 @@ export async function issueCreditNoteForRefund(
 
 				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
 				// (advisory lock 2_000_000+year + lookup UNION) — unicité
-				// cross-table garantie (EINV-PRISMA-001).
-				const year = new Date().getFullYear();
-				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
+				// cross-table garantie (EINV-PRISMA-001). Millésime en heure de
+				// Paris (pas UTC) pour rester cohérent avec la facture au passage
+				// d'année (EINV-SEQ-002 / Art. 286).
 				const now = new Date();
+				const year = getParisDateParts(now).year;
+				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 
 				const updated = await tx.refund.update({
 					where: { id: refundId },
@@ -241,7 +244,7 @@ export async function issueCreditNoteForRefund(
 			});
 			if (e instanceof BusinessError && e.code === "CREDIT_NOTE_SEQUENCE_OVERFLOW") {
 				await sendAdminSequenceOverflowAlert({
-					year: new Date().getFullYear(),
+					year: getParisDateParts(new Date()).year,
 					documentType: "credit-note",
 				}).catch((alertError) =>
 					logger.error("sendAdminSequenceOverflowAlert threw", alertError, {

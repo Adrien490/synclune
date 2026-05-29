@@ -9,7 +9,6 @@ import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Link from "next/link";
-import { useId } from "react";
 import type { CollectionImage } from "../types/collection.types";
 import { CollectionImagesGrid } from "./collection-images-grid";
 
@@ -35,8 +34,10 @@ interface CollectionCardProps {
  * Card de collection - Design coherent avec ProductCard via CARD_SURFACE_*.
  *
  * Pattern stretched-link : <article relative> wrappe la carte, <Link> entoure
- * uniquement le titre avec ::after qui couvre toute la carte. Permet d'ajouter
- * des CTA secondaires (wishlist collection, partage) sans imbriquer button dans anchor.
+ * uniquement le titre avec ::after qui couvre toute la carte. Le reste du contenu
+ * (description, prix, compteur, cue « Decouvrir ») est decoratif/non-interactif et
+ * reste cliquable via le ::after — la structure permet d'ajouter un futur CTA
+ * secondaire (couche z-30) sans imbriquer button dans anchor.
  */
 export function CollectionCard({
 	slug,
@@ -49,8 +50,11 @@ export function CollectionCard({
 	priceRange,
 	disablePreload = false,
 }: CollectionCardProps) {
-	const titleId = `collection-title-${useId()}`;
+	const titleId = `collection-title-${slug}`;
 	const isAboveFold = !disablePreload && index !== undefined && index < ABOVE_FOLD_THRESHOLD;
+	// LCP candidate : seule la 1re carte priorise son image principale (fetchPriority=high)
+	// pour eviter la concurrence bande passante sur 4G (cf ProductCard).
+	const isLcpCandidate = !disablePreload && index === 0;
 
 	const collectionUrl = `/collections/${slug}`;
 	const hasImages = images !== undefined && images.length > 0;
@@ -65,7 +69,6 @@ export function CollectionCard({
 				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
 				CARD_SURFACE_FOCUS,
 				"active:scale-[0.98] active:transition-transform active:duration-75",
-				"can-hover:group-hover:will-change-transform",
 			)}
 		>
 			{/* Images Bento Grid (ou placeholder) */}
@@ -74,6 +77,7 @@ export function CollectionCard({
 					images={images}
 					collectionName={name}
 					isAboveFold={isAboveFold}
+					isLcpCandidate={isLcpCandidate}
 					collectionSlug={slug}
 				/>
 			) : (
@@ -118,36 +122,56 @@ export function CollectionCard({
 					</HeadingTag>
 				</Link>
 
-				{/* Description : visible desktop, lue par SR sur mobile (a11y) */}
+				{/* Description : visible sur tous les viewports */}
 				{description && (
-					<p className="text-muted-foreground sr-only mt-1.5 line-clamp-2 text-xs sm:not-sr-only sm:block">
-						{description}
-					</p>
+					<p className="text-muted-foreground mt-1.5 line-clamp-2 text-xs">{description}</p>
 				)}
 
-				{/* Price range */}
+				{/* From-price — signal de scan prioritaire (apres le titre, cf Baymard) */}
 				{priceRange && (
-					<p className="text-foreground/80 mt-1.5 text-xs font-medium">
-						<span className="sr-only">{COLLECTION_TEXTS.PRICING.PRICE_LABEL}</span>
-						{priceRange.min === priceRange.max ? (
-							formatEuro(priceRange.min, { compact: true })
-						) : (
-							<>
-								{formatEuro(priceRange.min, { compact: true })}
-								<span aria-hidden="true"> – </span>
-								<span className="sr-only"> à </span>
-								{formatEuro(priceRange.max, { compact: true })}
-							</>
-						)}
+					<p className="text-foreground mt-2 text-sm font-medium">
+						<span className="text-muted-foreground font-normal">
+							{COLLECTION_TEXTS.PRICING.FROM_LABEL}{" "}
+						</span>
+						{formatEuro(priceRange.min, { compact: true })}
 					</p>
 				)}
 
-				{/* Product count — signal e-commerce mis en avant */}
-				{productCount !== undefined && productCount > 0 && (
-					<p className="text-foreground/70 mt-2 text-sm font-medium">
-						{COLLECTION_TEXTS.PRODUCT_COUNT(productCount)}
-					</p>
-				)}
+				{/* Product count — meta discrete (ou signal « Bientot » si 0 produit) */}
+				{productCount !== undefined &&
+					(productCount > 0 ? (
+						<p className="text-muted-foreground mt-1 text-xs">
+							{COLLECTION_TEXTS.PRODUCT_COUNT(productCount)}
+						</p>
+					) : (
+						<p className="text-muted-foreground/80 mt-1 text-xs italic">
+							{COLLECTION_TEXTS.PRODUCT_COUNT_EMPTY}
+						</p>
+					))}
+
+				{/* Cue de clic decoratif : visible sur tactile, revele au hover/focus sur desktop */}
+				<p
+					aria-hidden="true"
+					className={cn(
+						"text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium",
+						"transition-[opacity,transform] duration-300",
+						// Tactile / sans hover : toujours visible
+						"translate-x-0 opacity-100",
+						// Appareils hover-capables : masque jusqu'au survol
+						"can-hover:opacity-0 motion-safe:can-hover:-translate-x-1",
+						"can-hover:group-hover:opacity-100 motion-safe:can-hover:group-hover:translate-x-0",
+						// Focus clavier : toujours revele
+						"group-focus-within:translate-x-0 group-focus-within:opacity-100",
+					)}
+				>
+					Découvrir
+					<span
+						aria-hidden="true"
+						className="motion-safe:can-hover:group-hover:translate-x-0.5 transition-transform duration-300"
+					>
+						→
+					</span>
+				</p>
 			</div>
 		</article>
 	);

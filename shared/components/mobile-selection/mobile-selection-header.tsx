@@ -4,7 +4,7 @@ import { useDeferredValue, useRef } from "react";
 import { CheckSquare } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
-import { useBulkSelectionContext } from "@/shared/components/data-table";
+import { formatSelectionCount, useBulkSelectionContext } from "@/shared/components/data-table";
 import { useEscapeKey } from "@/shared/hooks/use-escape-key";
 import { cn } from "@/shared/utils/cn";
 
@@ -66,7 +66,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 			? "Aucun élément sélectionné"
 			: hasOffPageSelection
 				? `${selectedCount} ${label} (${selectedOnPage} sur cette page)`
-				: `${selectedCount} ${label} sélectionné${selectedCount > 1 ? "s" : ""}`;
+				: formatSelectionCount(selectedCount, itemsLabel);
 
 	// Évite le spam d'annonces aria-live au tap rapide en mode sélection (React 19).
 	// Hoisté avant les early returns pour respecter les Rules of Hooks.

@@ -106,3 +106,23 @@ export function VisualViewportBridge() {
 	useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 	return null;
 }
+
+/**
+ * Réactif : `true` quand le clavier mobile est ouvert (visualViewport rétréci
+ * au-delà de {@link KEYBOARD_THRESHOLD_PX}).
+ *
+ * À utiliser quand un composant **animé inline** (Framer Motion) doit se masquer
+ * sous le clavier : son `transform` inline écrase la règle CSS
+ * `[data-keyboard="open"] [data-hide-on-keyboard]`, donc l'attribut CSS seul ne
+ * suffit pas — il faut plier `keyboardOpen` dans la cible d'animation.
+ *
+ * SSR / pas de support visualViewport → `false`. Nécessite que
+ * {@link VisualViewportBridge} soit monté à la racine de la surface.
+ */
+export function useKeyboardOpen(): boolean {
+	return useSyncExternalStore(
+		subscribe,
+		() => getSnapshot().keyboardOpen,
+		() => false,
+	);
+}

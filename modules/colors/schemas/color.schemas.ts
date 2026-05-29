@@ -93,6 +93,7 @@ export const updateColorSchema = z.object({
 	name: colorNameSchema,
 	hex: hexColorSchema,
 	description: colorDescriptionSchema,
+	isActive: z.boolean().optional(),
 });
 
 export const deleteColorSchema = z.object({

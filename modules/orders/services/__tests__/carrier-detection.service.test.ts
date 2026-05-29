@@ -34,6 +34,31 @@ describe("getTrackingUrl", () => {
 		expect(url).toBe("https://trace.dpd.fr/fr/trace/12345678901234");
 	});
 
+	it("should return GLS URL", () => {
+		const url = getTrackingUrl("gls", "ABC123456");
+		expect(url).toBe("https://gls-group.com/FR/fr/suivi-colis?match=ABC123456");
+	});
+
+	it("should return DHL URL", () => {
+		const url = getTrackingUrl("dhl", "1234567890");
+		expect(url).toBe("https://www.dhl.com/fr-fr/home/tracking.html?tracking-id=1234567890");
+	});
+
+	it("should return UPS URL", () => {
+		const url = getTrackingUrl("ups", "1Z999AA10123456784");
+		expect(url).toBe("https://www.ups.com/track?loc=fr_FR&tracknum=1Z999AA10123456784");
+	});
+
+	it("should return FedEx URL", () => {
+		const url = getTrackingUrl("fedex", "123456789012");
+		expect(url).toBe("https://www.fedex.com/fedextrack/?trknbr=123456789012");
+	});
+
+	it("should return Relais Colis URL", () => {
+		const url = getTrackingUrl("relais_colis", "RC123456");
+		expect(url).toBe("https://www.relaiscolis.com/suivi-de-colis/?numeroColis=RC123456");
+	});
+
 	it("should return null for 'autre' carrier", () => {
 		expect(getTrackingUrl("autre", "UNKNOWN123")).toBeNull();
 	});

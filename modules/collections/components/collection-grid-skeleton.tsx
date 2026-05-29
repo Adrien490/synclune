@@ -11,16 +11,20 @@ export function CollectionGridSkeleton() {
 						{/* Image skeleton - aspect-square comme dans CollectionCard */}
 						<Skeleton className="aspect-square w-full rounded-lg lg:rounded-xl" />
 
-						{/* Contenu */}
-						<div className="space-y-2">
+						{/* Contenu — centré comme CollectionCard */}
+						<div className="flex flex-col items-center gap-2 px-4 pb-4">
+							{/* Divider skeleton (h-0.5 w-16 mx-auto) */}
+							<Skeleton className="mb-1 h-0.5 w-16" />
+
 							{/* Title skeleton - 2 lines (line-clamp-2) */}
-							<div className="space-y-2">
-								<Skeleton className="h-6 w-full" />
-								<Skeleton className="h-6 w-3/4" />
-							</div>
+							<Skeleton className="h-6 w-3/4" />
+							<Skeleton className="h-6 w-1/2" />
+
+							{/* Price skeleton (from-price) */}
+							<Skeleton className="h-4 w-24" />
 
 							{/* Product count skeleton */}
-							<Skeleton className="h-4 w-16" />
+							<Skeleton className="h-3 w-16" />
 						</div>
 					</div>
 				))}

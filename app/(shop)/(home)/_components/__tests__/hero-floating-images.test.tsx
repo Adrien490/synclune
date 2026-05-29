@@ -99,8 +99,9 @@ import HeroFloatingImagesInner from "../floating-images/hero-floating-images-inn
 import type { HeroProductImage } from "../../_utils/extract-hero-images";
 
 // ---------------------------------------------------------------------------
-// matchMedia helper — the component reads `(prefers-reduced-motion: reduce)`
-// and `(hover: hover) and (pointer: fine)` to gate the desktop mouse listener.
+// matchMedia helper — kept for tests that simulate reduced-motion / pointer
+// capabilities. The container no longer attaches a window pointermove listener
+// (the cursor-follow depth parallax was removed — see regression lock below).
 // ---------------------------------------------------------------------------
 
 const ORIGINAL_MATCH_MEDIA = window.matchMedia;
@@ -253,25 +254,19 @@ describe("HeroFloatingImagesInner", () => {
 		}
 	});
 
-	it("attaches a window pointermove listener when fine pointer + motion enabled", () => {
+	/**
+	 * @regression no-cursor-follow-2026-05-29
+	 * User explicit refusal (2026-05-29 « je n'aime pas que les images suivent
+	 * la souris »): the hero floating images must NOT translate with the cursor.
+	 * The pointer-reactive depth parallax (window `pointermove` → `--hero-pointer-x/y`
+	 * → `.hero-image-pointer` translate) was removed entirely. Only the per-image
+	 * hover spotlight (`--mx`/`--my`, asserted above) tracks the pointer.
+	 * Do NOT reintroduce a window pointermove listener or `.hero-image-pointer`.
+	 */
+	it("does NOT attach a window pointermove listener (no cursor-follow depth)", () => {
 		mockMatchMedia((query) => query === "(hover: hover) and (pointer: fine)");
 		const addSpy = vi.spyOn(window, "addEventListener");
 
-		const { unmount } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
-
-		const pointerMoveCalls = addSpy.mock.calls.filter(
-			(call) => (call[0] as string) === "pointermove",
-		);
-		expect(pointerMoveCalls.length).toBe(1);
-
-		unmount();
-		addSpy.mockRestore();
-	});
-
-	it("does not attach window pointermove listener when reduced motion is enabled", () => {
-		mockMatchMedia((query) => query === "(prefers-reduced-motion: reduce)");
-		const addSpy = vi.spyOn(window, "addEventListener");
-
 		render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const pointerMoveCalls = addSpy.mock.calls.filter(
@@ -282,18 +277,9 @@ describe("HeroFloatingImagesInner", () => {
 		addSpy.mockRestore();
 	});
 
-	it("does not attach window pointermove listener on coarse pointers (touch devices)", () => {
-		// Default test setup returns matches: false for all queries — coarse pointer listener stays off.
-		const addSpy = vi.spyOn(window, "addEventListener");
-
-		render(<HeroFloatingImagesInner images={makeImages(4)} />);
-
-		const pointerMoveCalls = addSpy.mock.calls.filter(
-			(call) => (call[0] as string) === "pointermove",
-		);
-		expect(pointerMoveCalls.length).toBe(0);
-
-		addSpy.mockRestore();
+	it("does NOT render the `.hero-image-pointer` depth layer", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		expect(container.querySelector(".hero-image-pointer")).toBeNull();
 	});
 });
 
@@ -311,6 +297,27 @@ describe("HeroFloatingImagesInner — regression lock", () => {
 	it("does NOT render light reflection overlay (bg-linear-to-b)", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 		expect(container.querySelector("[class*='bg-linear-to-b']")).toBeNull();
+	});
+
+	/**
+	 * @regression hover-glow-via-box-shadow-2026-05-29
+	 * The hover glow is delivered by the colored `box-shadow` (`--img-glow`),
+	 * which blooms OUTWARD past the card. The old `blur-xl` glow div was clipped
+	 * by the Link's `overflow-hidden` and painted UNDER the opaque image → dead
+	 * paint (filter recomputed on hover for nothing). `backdrop-blur-sm` was
+	 * likewise occluded by the opaque object-cover image (only a 1px border ring
+	 * showed it) while forcing a per-frame full-card backdrop blur over the
+	 * animated particles. Do NOT reintroduce either layer.
+	 */
+	it("does NOT render an occluded blur glow div or backdrop-blur", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+		expect(container.querySelector("[class*='blur-xl']")).toBeNull();
+		expect(container.querySelector("[class*='backdrop-blur']")).toBeNull();
+		// The visible hover glow (colored box-shadow) is still present on each link.
+		const links = container.querySelectorAll("a[href^='/creations/']");
+		for (const link of links) {
+			expect(link.className).toContain("hover:shadow-[0_8px_30px_var(--img-glow)");
+		}
 	});
 
 	/**
@@ -345,10 +352,12 @@ describe("HeroFloatingImagesInner — regression lock", () => {
 	/**
 	 * @regression analytics-tracking-2026-05-19
 	 * Each floating image click fires `hero_floating_image_click` with slug
-	 * + position (idleAnimation key) for conversion measurement. The funnel is
-	 * gated by RGPD consent inside trackEvent itself.
+	 * + position for conversion measurement. The `position` dimension is the
+	 * semantic slot key (`top-left` etc.) — NOT the keyframe name — so the funnel
+	 * answers "which emplacement converts". The funnel is gated by RGPD consent
+	 * inside trackEvent itself.
 	 */
-	it("fires trackEvent on image click with slug + position", () => {
+	it("fires trackEvent on image click with slug + semantic position slot", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const firstLink = container.querySelector<HTMLAnchorElement>("a[href='/creations/product-0']");
@@ -358,7 +367,7 @@ describe("HeroFloatingImagesInner — regression lock", () => {
 
 		expect(trackEventMock).toHaveBeenCalledWith("hero_floating_image_click", {
 			slug: "product-0",
-			position: "hero-idle-float-1",
+			position: "top-left",
 		});
 	});
 

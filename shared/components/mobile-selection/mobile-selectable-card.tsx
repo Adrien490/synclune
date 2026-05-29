@@ -29,8 +29,9 @@ interface MobileSelectableCardProps {
 	/**
 	 * Affiche un MoreVertical discret en haut-droite de la card pour signaler
 	 * la disponibilité du long-press menu (découvrabilité). Caché en
-	 * `selectionMode` (la checkbox prend le relais visuel). Default `true`.
-	 * Ignoré si `longPressProps` est omis (pas de menu à signaler).
+	 * `selectionMode` (la checkbox prend le relais visuel). Default `false`
+	 * (jugé confusant côté admin mobile — le long-press reste actif sans
+	 * affordance visible). Ignoré si `longPressProps` est omis.
 	 */
 	showAffordance?: boolean;
 	children: ReactNode;
@@ -62,7 +63,7 @@ export function MobileSelectableCard({
 	id,
 	itemLabel,
 	longPressProps,
-	showAffordance = true,
+	showAffordance = false,
 	children,
 }: MobileSelectableCardProps) {
 	const ctx = useBulkSelectionContextOptional();

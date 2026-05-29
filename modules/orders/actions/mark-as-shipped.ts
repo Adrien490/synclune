@@ -1,5 +1,7 @@
 "use server";
 
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -30,6 +32,7 @@ import { markAsShippedSchema } from "../schemas/order.schemas";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsShipped } from "../services/order-status-validation.service";
+import { estimateDeliveryDate } from "../services/shipping.service";
 
 /**
  * Marque une commande comme expédiée
@@ -78,6 +81,10 @@ export async function markAsShipped(
 		const finalTrackingUrl =
 			validated.data.trackingUrl ?? getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
+		// Date estimée de livraison, calculée dans la transaction (dépend du pays)
+		// puis réutilisée pour l'email de confirmation post-commit.
+		let estimatedDeliveryForEmail: Date | undefined;
+
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
 			const found = await tx.order.findUnique({
@@ -109,6 +116,11 @@ export async function markAsShipped(
 				return { ...found, _error: shipValidation.reason };
 			}
 
+			// Date estimée de livraison = expédition + borne haute du délai transport
+			// (jours ouvrés) selon la zone de destination.
+			const shippedAt = new Date();
+			const estimatedDelivery = estimateDeliveryDate(shippedAt, found.shippingCountry);
+
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -117,9 +129,13 @@ export async function markAsShipped(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier ?? null,
-					shippedAt: new Date(),
+					shippedAt,
+					estimatedDelivery,
 				},
 			});
+
+			// Remonté hors transaction pour l'email de confirmation (cf. plus bas).
+			estimatedDeliveryForEmail = estimatedDelivery;
 
 			// ORD-BIZ-012 : `emailRequested` capture l'intention admin (case cochée
 			// dans le dialog). Le résultat réel de l'envoi (post-commit) est tracé
@@ -180,6 +196,9 @@ export async function markAsShipped(
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
+					estimatedDelivery: estimatedDeliveryForEmail
+						? format(estimatedDeliveryForEmail, "d MMMM yyyy", { locale: fr })
+						: null,
 					shippingAddress: {
 						firstName: order.shippingFirstName || "",
 						lastName: order.shippingLastName || "",

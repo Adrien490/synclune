@@ -6,11 +6,7 @@ import { BRAND } from "@/shared/constants/brand";
 
 // Admin link lives in MenuSheetNav's dedicated section for better discoverability.
 // Footer stays focused on social + copyright.
-interface MenuSheetFooterProps {
-	isAdmin?: boolean;
-}
-
-export function MenuSheetFooter(_props: MenuSheetFooterProps) {
+export function MenuSheetFooter() {
 	return (
 		<footer className="relative z-10 shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
 			<div className="flex items-center gap-3">

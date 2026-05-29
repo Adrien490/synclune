@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { useKeyboardOpen } from "@/shared/components/visual-viewport-bridge";
 import { useBottomBarHeight } from "@/shared/hooks";
 import { cn } from "@/shared/utils/cn";
 
@@ -166,6 +167,11 @@ interface BottomBarProps {
  * themselves above it. Handles iOS safe-area-inset-bottom, backdrop blur with
  * a solid fallback, slide-out hide state (with `inert`), and entrance spring.
  *
+ * Slides out automatically when the soft keyboard opens (via {@link useKeyboardOpen},
+ * folded into the animation target — the CSS `[data-hide-on-keyboard]` rule alone
+ * cannot win against Framer's inline transform). Requires `<VisualViewportBridge />`
+ * mounted at the surface root.
+ *
  * **Composition tips:**
  * - If you want vertical dividers between items, wrap children in a flex
  *   container with `divide-x divide-border/30`.
@@ -191,6 +197,13 @@ export function BottomBar({
 }: BottomBarProps) {
 	useBottomBarHeight(height, enabled && !isHidden);
 	const prefersReducedMotion = useReducedMotion();
+	// Soft-keyboard open → slide out. The CSS `[data-hide-on-keyboard]` rule is
+	// overridden by Framer's inline `transform` in the motion path, so we must
+	// fold `keyboardOpen` into the React-driven animation target instead of
+	// relying on the attribute alone. (`data-hide-on-keyboard` is kept as a
+	// harmless belt-and-suspenders for the reduced-motion path.)
+	const keyboardOpen = useKeyboardOpen();
+	const hidden = isHidden || keyboardOpen;
 
 	const sharedClassName = cn(
 		breakpointClass,
@@ -202,18 +215,19 @@ export function BottomBar({
 		"bg-background/80 backdrop-blur-xl",
 		"border-border/60 border-t",
 		"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
-		isHidden && "pointer-events-none",
+		hidden && "pointer-events-none",
 		className,
 	);
 
 	// Reduced-motion: skip Framer entirely. No entrance spring, no diff/animate
-	// overhead; `hidden` attribute snaps the bar instantly when isHidden flips.
+	// overhead; `hidden` attribute snaps the bar instantly when hidden flips
+	// (covers isHidden + soft-keyboard).
 	if (prefersReducedMotion) {
 		const commonProps = {
 			"aria-label": ariaLabel,
 			"data-hide-on-keyboard": "",
-			hidden: isHidden,
-			...(isHidden && { inert: true }),
+			hidden,
+			...(hidden && { inert: true }),
 			className: sharedClassName,
 		};
 		return as === "nav" ? (
@@ -227,12 +241,12 @@ export function BottomBar({
 
 	return (
 		<Component
-			initial={{ y: 100, opacity: 0 }}
-			animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
+			initial={{ y: "100%", opacity: 0 }}
+			animate={hidden ? { y: "100%", opacity: 0 } : { y: 0, opacity: 1 }}
 			transition={MOTION_CONFIG.spring.bar}
 			aria-label={ariaLabel}
 			data-hide-on-keyboard=""
-			{...(isHidden && { inert: true })}
+			{...(hidden && { inert: true })}
 			className={sharedClassName}
 		>
 			{children}

@@ -82,6 +82,7 @@ vi.mock("@/shared/components/ui/toast-icons", () => ({
 		info: <span data-testid="icon-info" />,
 		warning: <span data-testid="icon-warning" />,
 		error: <span data-testid="icon-error" />,
+		loading: <span data-testid="icon-loading" />,
 		wishlist: <span data-testid="icon-wishlist" />,
 		cart: <span data-testid="icon-cart" />,
 		discount: <span data-testid="icon-discount" />,
@@ -137,6 +138,7 @@ describe("<MicroToast />", () => {
 		["info", "icon-info"],
 		["warning", "icon-warning"],
 		["error", "icon-error"],
+		["loading", "icon-loading"],
 		["wishlist", "icon-wishlist"],
 		["cart", "icon-cart"],
 		["discount", "icon-discount"],
@@ -201,7 +203,7 @@ describe("<MicroToast />", () => {
 			useMicroToastStore.setState({
 				visible: true,
 				message: "Notif",
-				variant: "success",
+				variant: "error",
 				key: 1,
 				count: 1,
 				currentDuration: 1200,
@@ -210,7 +212,20 @@ describe("<MicroToast />", () => {
 			expect(screen.queryByText(/×/)).toBeNull();
 		});
 
-		it("renders the ×N badge when count > 1", () => {
+		it("renders the ×N badge when count > 1 on the error pill (présent treatment)", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Une erreur est survenue",
+				variant: "error",
+				key: 1,
+				count: 3,
+				currentDuration: 1200,
+			});
+			render(<MicroToast />);
+			expect(screen.getByText("×3")).toBeTruthy();
+		});
+
+		it("does NOT render a visible ×N badge on a discreet variant, but keeps it in the accessible label", () => {
 			useMicroToastStore.setState({
 				visible: true,
 				message: "Ajouté aux favoris",
@@ -220,7 +235,10 @@ describe("<MicroToast />", () => {
 				currentDuration: 1200,
 			});
 			render(<MicroToast />);
-			expect(screen.getByText("×3")).toBeTruthy();
+			// Pas de pastille ×N visible en capsule discrète…
+			expect(screen.queryByText("×3")).toBeNull();
+			// …mais l'info de coalescing reste annoncée pour les lecteurs d'écran.
+			expect(screen.getByRole("button", { name: /^Ajouté aux favoris \(×3\)$/i })).toBeTruthy();
 		});
 
 		it("includes the count in the accessible label when > 1", () => {
@@ -238,12 +256,47 @@ describe("<MicroToast />", () => {
 		});
 	});
 
-	describe("progress bar", () => {
-		it("starts the progress animation when the toast becomes visible", () => {
+	describe("discreet capsule vs error pill shape", () => {
+		it.each(["success", "info", "warning", "loading", "wishlist", "cart", "discount"] as const)(
+			"renders the %s variant as a rounded-full discreet capsule",
+			(variant) => {
+				useMicroToastStore.setState({
+					visible: true,
+					message: "Test",
+					variant,
+					key: 1,
+					count: 1,
+					currentDuration: 1200,
+				});
+				render(<MicroToast />);
+				const btn = screen.getByRole("button");
+				expect(btn.className).toContain("rounded-full");
+				expect(btn.className).not.toContain("rounded-2xl");
+			},
+		);
+
+		it("renders the error variant as the rounded-2xl présent pill", () => {
 			useMicroToastStore.setState({
 				visible: true,
-				message: "Test",
-				variant: "success",
+				message: "Une erreur est survenue",
+				variant: "error",
+				key: 1,
+				count: 1,
+				currentDuration: 1200,
+			});
+			render(<MicroToast />);
+			const btn = screen.getByRole("button");
+			expect(btn.className).toContain("rounded-2xl");
+			expect(btn.className).not.toContain("rounded-full");
+		});
+	});
+
+	describe("progress bar (error pill only)", () => {
+		it("starts the progress animation when the error toast becomes visible", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Une erreur est survenue",
+				variant: "error",
 				key: 1,
 				count: 1,
 				currentDuration: 1500,
@@ -256,12 +309,26 @@ describe("<MicroToast />", () => {
 			});
 		});
 
+		it("does NOT start the progress animation for a discreet variant (no countdown on a passive success)", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Ajouté",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 1500,
+			});
+			render(<MicroToast />);
+			expect(mockControls.set).not.toHaveBeenCalled();
+			expect(mockControls.start).not.toHaveBeenCalled();
+		});
+
 		it("does NOT start the progress animation under reduced-motion", () => {
 			mockReducedMotion.value = true;
 			useMicroToastStore.setState({
 				visible: true,
 				message: "Reduced",
-				variant: "info",
+				variant: "error",
 				key: 1,
 				count: 1,
 				currentDuration: 1200,
@@ -272,8 +339,8 @@ describe("<MicroToast />", () => {
 		});
 	});
 
-	describe("inline action variant (F5 — undo mobile)", () => {
-		it("renders the action button and a dismiss button when action is set", () => {
+	describe("inline action variant (undo mobile — discreet capsule)", () => {
+		it("renders the « Annuler » button and NO dedicated dismiss « × » (discretion)", () => {
 			useMicroToastStore.setState({
 				visible: true,
 				message: "Article archivé",
@@ -285,7 +352,8 @@ describe("<MicroToast />", () => {
 			});
 			render(<MicroToast />);
 			expect(screen.getByRole("button", { name: "Annuler" })).toBeTruthy();
-			expect(screen.getByRole("button", { name: /fermer la notification/i })).toBeTruthy();
+			// Plus de croix « × » : fermeture via swipe-up / auto-dismiss.
+			expect(screen.queryByRole("button", { name: /fermer la notification/i })).toBeNull();
 		});
 
 		it("calls action.onClick then hides when the action button is tapped", () => {
@@ -306,7 +374,7 @@ describe("<MicroToast />", () => {
 			expect(useMicroToastStore.getState().visible).toBe(false);
 		});
 
-		it("hides (without firing the action) when the dismiss button is tapped", () => {
+		it("dismisses via swipe-up WITHOUT firing the action", () => {
 			const onClick = vi.fn();
 			useMicroToastStore.setState({
 				visible: true,
@@ -317,9 +385,9 @@ describe("<MicroToast />", () => {
 				currentDuration: 6000,
 				action: { label: "Annuler", onClick },
 			});
-			const { rerender } = render(<MicroToast />);
-			fireEvent.click(screen.getByRole("button", { name: /fermer la notification/i }));
-			rerender(<MicroToast />);
+			render(<MicroToast />);
+			expect(capturedDragProps.onDragEnd).not.toBeNull();
+			capturedDragProps.onDragEnd?.(null, { offset: { y: -60 }, velocity: { y: 0 } });
 			expect(onClick).not.toHaveBeenCalled();
 			expect(useMicroToastStore.getState().visible).toBe(false);
 		});
@@ -337,6 +405,64 @@ describe("<MicroToast />", () => {
 			render(<MicroToast />);
 			expect(capturedDragProps.onDragEnd).not.toBeNull();
 			capturedDragProps.onDragEnd?.(null, { offset: { y: -60 }, velocity: { y: 0 } });
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+	});
+
+	describe("contrast / forced-colors robustness (WCAG 1.4.11)", () => {
+		it("ships opaque-background fallbacks for high-contrast and forced-colors modes", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Ajouté",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 1200,
+			});
+			render(<MicroToast />);
+			const cls = screen.getByRole("button").className;
+			// prefers-contrast: more → fond opaque + bordure franche
+			expect(cls).toContain("contrast-more:bg-background");
+			expect(cls).toContain("contrast-more:border-foreground/40");
+			// forced-colors (Windows High Contrast) → couleurs système
+			expect(cls).toContain("forced-colors:bg-[Canvas]");
+			expect(cls).toContain("forced-colors:text-[CanvasText]");
+		});
+	});
+
+	describe("reduced-motion keeps swipe-to-dismiss (non-destructive close for undo)", () => {
+		it("still dismisses the passive capsule via swipe-up under reduced-motion", () => {
+			mockReducedMotion.value = true;
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Ajouté",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 1200,
+			});
+			render(<MicroToast />);
+			expect(capturedDragProps.onDragEnd).not.toBeNull();
+			capturedDragProps.onDragEnd?.(null, { offset: { y: -60 }, velocity: { y: 0 } });
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+
+		it("lets the undo variant be dismissed by swipe WITHOUT firing the action under reduced-motion", () => {
+			mockReducedMotion.value = true;
+			const onClick = vi.fn();
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Article archivé",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 6000,
+				action: { label: "Annuler", onClick },
+			});
+			render(<MicroToast />);
+			expect(capturedDragProps.onDragEnd).not.toBeNull();
+			capturedDragProps.onDragEnd?.(null, { offset: { y: -60 }, velocity: { y: 0 } });
+			expect(onClick).not.toHaveBeenCalled();
 			expect(useMicroToastStore.getState().visible).toBe(false);
 		});
 	});

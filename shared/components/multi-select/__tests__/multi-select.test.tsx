@@ -197,7 +197,7 @@ describe("MultiSelect — interactions", () => {
 	it("clears the entire selection via the trigger X button", () => {
 		const onValueChange = vi.fn();
 		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={onValueChange} />);
-		fireEvent.click(screen.getByLabelText("Effacer les 2 options sélectionnées"));
+		fireEvent.click(screen.getByLabelText("Tout effacer"));
 		expect(onValueChange).toHaveBeenCalledWith([]);
 	});
 });
@@ -277,7 +277,7 @@ describe("MultiSelect — haptic", () => {
 
 	it("triggers haptic 'medium' on clear", () => {
 		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={vi.fn()} />);
-		fireEvent.click(screen.getByLabelText("Effacer les 2 options sélectionnées"));
+		fireEvent.click(screen.getByLabelText("Tout effacer"));
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
 	});
 
@@ -319,7 +319,7 @@ describe("MultiSelect — a11y live region", () => {
 		const { container } = render(
 			<MultiSelect options={OPTIONS} value={["a"]} onValueChange={vi.fn()} />,
 		);
-		fireEvent.click(screen.getByLabelText("Effacer les 1 options sélectionnées"));
+		fireEvent.click(screen.getByLabelText("Tout effacer"));
 		expect(findLiveRegion(container)?.textContent).toContain("Sélection vidée");
 	});
 });
@@ -371,5 +371,152 @@ describe("MultiSelect — listbox", () => {
 		const trigger = screen.getByRole("combobox");
 		const listbox = screen.getByRole("listbox");
 		expect(trigger.getAttribute("aria-controls")).toBe(listbox.id);
+	});
+
+	it("renders each option with role=option and aria-selected", () => {
+		render(<MultiSelect options={OPTIONS} value={["a"]} onValueChange={vi.fn()} />);
+		const options = screen.getAllByRole("option");
+		expect(options).toHaveLength(3);
+		expect(options[0]!.getAttribute("aria-selected")).toBe("true");
+		expect(options[1]!.getAttribute("aria-selected")).toBe("false");
+	});
+
+	it("toggles an option via click on the option row", () => {
+		const onValueChange = vi.fn();
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={onValueChange} />);
+		fireEvent.click(screen.getAllByRole("option")[1]!);
+		expect(onValueChange).toHaveBeenCalledWith(["b"]);
+	});
+});
+
+describe("MultiSelect — keyboard navigation (roving)", () => {
+	it("listbox is focusable when no search input is shown", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByRole("listbox").getAttribute("tabindex")).toBe("0");
+	});
+
+	it("ArrowDown sets aria-activedescendant to the first option", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const listbox = screen.getByRole("listbox");
+		fireEvent.keyDown(listbox, { key: "ArrowDown" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-0`);
+	});
+
+	it("ArrowDown then ArrowUp moves the active descendant", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const listbox = screen.getByRole("listbox");
+		fireEvent.keyDown(listbox, { key: "ArrowDown" });
+		fireEvent.keyDown(listbox, { key: "ArrowDown" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-1`);
+		fireEvent.keyDown(listbox, { key: "ArrowUp" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-0`);
+	});
+
+	it("End activates the last option, Home the first", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const listbox = screen.getByRole("listbox");
+		fireEvent.keyDown(listbox, { key: "End" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-2`);
+		fireEvent.keyDown(listbox, { key: "Home" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-0`);
+	});
+
+	it("Enter toggles the active option without closing", () => {
+		const onValueChange = vi.fn();
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={onValueChange} />);
+		const listbox = screen.getByRole("listbox");
+		fireEvent.keyDown(listbox, { key: "ArrowDown" });
+		fireEvent.keyDown(listbox, { key: "Enter" });
+		expect(onValueChange).toHaveBeenCalledWith(["a"]);
+	});
+
+	it("ArrowDown skips disabled options", () => {
+		const opts = [
+			{ value: "a", label: "Alpha", disabled: true },
+			{ value: "b", label: "Beta" },
+		];
+		render(<MultiSelect options={opts} value={[]} onValueChange={vi.fn()} />);
+		const listbox = screen.getByRole("listbox");
+		fireEvent.keyDown(listbox, { key: "ArrowDown" });
+		expect(listbox.getAttribute("aria-activedescendant")).toBe(`${listbox.id}-opt-1`);
+	});
+
+	it("search input carries aria-activedescendant on ArrowDown", () => {
+		render(<MultiSelect options={MANY_OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const searchbox = screen.getByRole("searchbox");
+		fireEvent.keyDown(searchbox, { key: "ArrowDown" });
+		expect(searchbox.getAttribute("aria-activedescendant")).toBeTruthy();
+		// listbox is not tab-focusable when search drives navigation
+		expect(screen.getByRole("listbox").getAttribute("tabindex")).toBe("-1");
+	});
+});
+
+describe("MultiSelect — badge overflow", () => {
+	it("collapses extra badges into a +N summary", () => {
+		render(
+			<MultiSelect
+				options={OPTIONS}
+				value={["a", "b", "c"]}
+				onValueChange={vi.fn()}
+				maxVisibleBadges={2}
+			/>,
+		);
+		const badges = screen.getAllByTestId("badge");
+		// 2 visible badges + 1 "+1" summary badge
+		expect(badges).toHaveLength(3);
+		expect(badges[2]!.textContent).toContain("+1");
+	});
+
+	it("shows all badges when under the cap", () => {
+		render(
+			<MultiSelect
+				options={OPTIONS}
+				value={["a", "b"]}
+				onValueChange={vi.fn()}
+				maxVisibleBadges={2}
+			/>,
+		);
+		expect(screen.getAllByTestId("badge")).toHaveLength(2);
+	});
+});
+
+describe("MultiSelect — search clear", () => {
+	it("renders a clear button when the search has text and resets it", () => {
+		render(<MultiSelect options={MANY_OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const searchbox = screen.getByRole("searchbox") as HTMLInputElement;
+		fireEvent.change(searchbox, { target: { value: "Option 1" } });
+		const clearBtn = screen.getByLabelText("Effacer la recherche");
+		fireEvent.click(clearBtn);
+		expect((screen.getByRole("searchbox") as HTMLInputElement).value).toBe("");
+	});
+});
+
+describe("MultiSelect — select all", () => {
+	it("does not render the select-all row by default", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.queryByText("Tout sélectionner")).toBeNull();
+	});
+
+	it("selects every activable option when toggled on", () => {
+		const onValueChange = vi.fn();
+		render(
+			<MultiSelect options={OPTIONS} value={[]} onValueChange={onValueChange} showSelectAll />,
+		);
+		fireEvent.click(screen.getByText("Tout sélectionner"));
+		expect(onValueChange).toHaveBeenCalledWith(["a", "b", "c"]);
+	});
+
+	it("deselects everything when all are selected", () => {
+		const onValueChange = vi.fn();
+		render(
+			<MultiSelect
+				options={OPTIONS}
+				value={["a", "b", "c"]}
+				onValueChange={onValueChange}
+				showSelectAll
+			/>,
+		);
+		fireEvent.click(screen.getByText("Tout désélectionner"));
+		expect(onValueChange).toHaveBeenCalledWith([]);
 	});
 });

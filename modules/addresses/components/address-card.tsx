@@ -17,14 +17,27 @@ function formatPhone(phone: string, country: string): string {
 
 interface AddressCardProps {
 	address: UserAddress;
+	/** Override optimiste du statut « par défaut » (sinon `address.isDefault`). */
+	isDefault?: boolean;
+	/** Callback optimiste de définition par défaut, fourni par `AddressGrid`. */
+	onSetDefault?: (addressId: string) => void;
+	/** Indique qu'une définition par défaut est en cours (désactive les actions). */
+	isSettingDefault?: boolean;
 }
 
-export function AddressCard({ address }: AddressCardProps) {
+export function AddressCard({
+	address,
+	isDefault,
+	onSetDefault,
+	isSettingDefault,
+}: AddressCardProps) {
+	const showDefault = isDefault ?? address.isDefault;
+
 	return (
 		<div
 			className={cn(
 				"bg-card flex h-full flex-col gap-3 rounded-xl border p-4 transition-colors",
-				address.isDefault ? "border-primary/50 bg-primary/5" : "hover:bg-accent/50",
+				showDefault ? "border-primary/50 bg-primary/5" : "hover:bg-accent/50",
 			)}
 		>
 			{/* Header : Nom et Actions */}
@@ -33,14 +46,18 @@ export function AddressCard({ address }: AddressCardProps) {
 					<p className="text-foreground truncate font-medium">
 						{address.firstName} {address.lastName}
 					</p>
-					{address.isDefault && (
+					{showDefault && (
 						<Badge variant="secondary" className="h-5 shrink-0 px-1.5">
 							<Star className="mr-1 size-3 fill-current" aria-hidden="true" />
 							<span className="text-xs">Par défaut</span>
 						</Badge>
 					)}
 				</div>
-				<AddressCardActions address={address} />
+				<AddressCardActions
+					address={{ ...address, isDefault: showDefault }}
+					onSetDefault={onSetDefault}
+					isSettingDefault={isSettingDefault}
+				/>
 			</div>
 
 			{/* Adresse complète */}
@@ -55,7 +72,12 @@ export function AddressCard({ address }: AddressCardProps) {
 			{/* Téléphone */}
 			<div className="text-muted-foreground border-border/50 flex items-center gap-1.5 border-t pt-2 text-sm">
 				<Phone className="size-3.5" aria-hidden="true" />
-				<span className="truncate">{formatPhone(address.phone, address.country)}</span>
+				<span
+					className="truncate"
+					aria-label={`Téléphone : ${formatPhone(address.phone, address.country)}`}
+				>
+					{formatPhone(address.phone, address.country)}
+				</span>
 			</div>
 		</div>
 	);

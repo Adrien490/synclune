@@ -4,16 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockSendBackInStockEmail, mockLogger, mockCaptureWishlistError } = vi.hoisted(
-	() => ({
+const { mockPrisma, mockSendBackInStockEmail, mockLogger, mockCaptureWishlistError, mockDelay } =
+	vi.hoisted(() => ({
 		mockPrisma: {
 			wishlistItem: { findMany: vi.fn(), updateMany: vi.fn() },
 		},
 		mockSendBackInStockEmail: vi.fn(),
 		mockLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 		mockCaptureWishlistError: vi.fn(),
-	}),
-);
+		// Throttle anti-rate-limit : mocké en no-op pour ne pas ralentir la suite.
+		mockDelay: vi.fn().mockResolvedValue(undefined),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -33,6 +34,9 @@ vi.mock("@/shared/lib/logger", () => ({
 }));
 vi.mock("@/modules/wishlist/utils/capture-wishlist-error", () => ({
 	captureWishlistError: mockCaptureWishlistError,
+}));
+vi.mock("@/shared/utils/delay", () => ({
+	delay: mockDelay,
 }));
 vi.mock("@sentry/nextjs", () => ({
 	// startSpan executes the callback with a no-op span so attributes are recorded harmlessly
@@ -75,6 +79,22 @@ describe("notifyBackInStock", () => {
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
 		mockPrisma.wishlistItem.updateMany.mockResolvedValue({ count: 0 });
 		mockSendBackInStockEmail.mockResolvedValue({ success: true });
+		mockDelay.mockResolvedValue(undefined);
+	});
+
+	it("throttle les envois (pause entre items, sautée sur le dernier du lot)", async () => {
+		const items = [
+			makeWishlistItem({ id: "wi-1" }),
+			makeWishlistItem({ id: "wi-2" }),
+			makeWishlistItem({ id: "wi-3" }),
+		];
+		mockPrisma.wishlistItem.findMany.mockResolvedValueOnce(items).mockResolvedValueOnce([]);
+
+		await notifyBackInStock("prod-1");
+
+		// 3 envois → 2 pauses (pas de pause après le dernier).
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(3);
+		expect(mockDelay).toHaveBeenCalledTimes(2);
 	});
 
 	it("returns early when no wishlist items found", async () => {

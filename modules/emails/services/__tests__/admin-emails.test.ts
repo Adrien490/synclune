@@ -166,6 +166,27 @@ describe("sendWebhookFailedAlertEmail", () => {
 
 		expect(result).toEqual({ success: true, data: { id: "email-3" } });
 	});
+
+	it("idempotencyKey stable par eventId quel que soit attempts (anti-spam redélivrances Stripe)", async () => {
+		await sendWebhookFailedAlertEmail({
+			eventId: "evt_same",
+			eventType: "payment_intent.succeeded",
+			attempts: 2,
+			error: "Error",
+		});
+		await sendWebhookFailedAlertEmail({
+			eventId: "evt_same",
+			eventType: "payment_intent.succeeded",
+			attempts: 7,
+			error: "Error",
+		});
+
+		const key1 = mockRenderAndSend.mock.calls[0]![1].idempotencyKey;
+		const key2 = mockRenderAndSend.mock.calls[1]![1].idempotencyKey;
+		expect(key1).toBe("alert:webhook-failed:evt_same");
+		expect(key2).toBe("alert:webhook-failed:evt_same");
+		expect(key1).toBe(key2);
+	});
 });
 
 describe("sendAdminCronFailedAlert", () => {

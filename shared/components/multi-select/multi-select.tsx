@@ -41,6 +41,10 @@ export interface MultiSelectProps extends Omit<
 	maxHeight?: number;
 	haptic?: HapticPattern | false;
 	emptyText?: string;
+	/** Plafond de badges affichés sur le trigger ; au-delà, un badge « +N » résume le reste. */
+	maxVisibleBadges?: number;
+	/** Affiche une ligne « Tout sélectionner / Tout désélectionner » en tête de liste. */
+	showSelectAll?: boolean;
 	id?: string;
 	"aria-describedby"?: string;
 	"aria-invalid"?: boolean;
@@ -58,6 +62,8 @@ export const MultiSelect = ({
 	maxHeight = 320,
 	haptic = "selection",
 	emptyText = "Aucune option disponible",
+	maxVisibleBadges,
+	showSelectAll = false,
 	className,
 	id,
 	"aria-describedby": ariaDescribedBy,
@@ -68,10 +74,17 @@ export const MultiSelect = ({
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [search, setSearch] = React.useState("");
 	const [announcement, setAnnouncement] = React.useState("");
+	const [activeIndex, setActiveIndex] = React.useState(-1);
 	const isMobile = useIsMobile();
 	const triggerHaptic = useHaptic();
 	const listboxId = React.useId();
 	const searchId = React.useId();
+	const listRef = React.useRef<HTMLUListElement>(null);
+	const searchRef = React.useRef<HTMLInputElement>(null);
+	const typeahead = React.useRef<{ buffer: string; timer: ReturnType<typeof setTimeout> | null }>({
+		buffer: "",
+		timer: null,
+	});
 
 	const selected = value;
 
@@ -96,9 +109,8 @@ export const MultiSelect = ({
 		const count = next.length;
 		const verb = wasSelected ? "désélectionné" : "sélectionné";
 		const sCount = count > 1 ? "s" : "";
-		const sTotal = total > 1 ? "s" : "";
 		setAnnouncement(
-			`${labelOf(val)} ${verb}. ${count} sur ${total} option${sTotal} sélectionnée${sCount}.`,
+			`${labelOf(val)} ${verb}. ${count} option${sCount} sélectionnée${sCount} sur ${total}.`,
 		);
 	};
 
@@ -110,7 +122,9 @@ export const MultiSelect = ({
 	};
 
 	const handleOpenChange = (open: boolean) => {
+		if (disabled) return;
 		setIsOpen(open);
+		setActiveIndex(-1);
 		if (!open) setSearch("");
 	};
 
@@ -120,6 +134,127 @@ export const MultiSelect = ({
 		showSearch && normalizedSearch
 			? options.filter((o) => o.label.toLowerCase().includes(normalizedSearch))
 			: options;
+
+	// --- Sélection globale (opt-in) -------------------------------------------
+	const activableValues = options.filter((o) => !o.disabled).map((o) => o.value);
+	const allSelected =
+		activableValues.length > 0 && activableValues.every((v) => selected.includes(v));
+
+	const handleSelectAll = () => {
+		if (disabled) return;
+		fireHaptic("medium");
+		if (allSelected) {
+			onValueChange(selected.filter((v) => !activableValues.includes(v)));
+			setAnnouncement("Toutes les options désélectionnées.");
+		} else {
+			onValueChange(Array.from(new Set([...selected, ...activableValues])));
+			setAnnouncement(`${activableValues.length} options sélectionnées.`);
+		}
+	};
+
+	// --- Navigation clavier (pattern WAI-ARIA listbox + aria-activedescendant) -
+	const firstActivable = () => filteredOptions.findIndex((o) => !o.disabled);
+	const lastActivable = () => {
+		for (let i = filteredOptions.length - 1; i >= 0; i--) {
+			if (!filteredOptions[i]!.disabled) return i;
+		}
+		return -1;
+	};
+	const nextActivable = (from: number) => {
+		for (let i = from + 1; i < filteredOptions.length; i++) {
+			if (!filteredOptions[i]!.disabled) return i;
+		}
+		return from;
+	};
+	const prevActivable = (from: number) => {
+		for (let i = from - 1; i >= 0; i--) {
+			if (!filteredOptions[i]!.disabled) return i;
+		}
+		return from;
+	};
+
+	const runTypeahead = (char: string) => {
+		if (typeahead.current.timer) clearTimeout(typeahead.current.timer);
+		typeahead.current.buffer += char.toLowerCase();
+		const buf = typeahead.current.buffer;
+		const idx = filteredOptions.findIndex(
+			(o) => !o.disabled && o.label.toLowerCase().startsWith(buf),
+		);
+		if (idx >= 0) setActiveIndex(idx);
+		typeahead.current.timer = setTimeout(() => {
+			typeahead.current.buffer = "";
+		}, 600);
+	};
+
+	// fromInput=true : focus dans le champ recherche → Home/End/typeahead réservés
+	// à l'édition de texte ; seules les flèches + Enter pilotent la liste.
+	const handleNav = (e: React.KeyboardEvent, fromInput: boolean) => {
+		if (disabled) return;
+		switch (e.key) {
+			case "ArrowDown":
+				e.preventDefault();
+				setActiveIndex((cur) => (cur < 0 ? firstActivable() : nextActivable(cur)));
+				break;
+			case "ArrowUp":
+				e.preventDefault();
+				setActiveIndex((cur) => (cur < 0 ? lastActivable() : prevActivable(cur)));
+				break;
+			case "Home":
+				if (!fromInput) {
+					e.preventDefault();
+					setActiveIndex(firstActivable());
+				}
+				break;
+			case "End":
+				if (!fromInput) {
+					e.preventDefault();
+					setActiveIndex(lastActivable());
+				}
+				break;
+			case "Enter":
+				if (activeIndex >= 0 && filteredOptions[activeIndex]) {
+					e.preventDefault();
+					toggle(filteredOptions[activeIndex]!.value);
+				}
+				break;
+			case " ":
+				if (!fromInput && activeIndex >= 0 && filteredOptions[activeIndex]) {
+					e.preventDefault();
+					toggle(filteredOptions[activeIndex]!.value);
+				}
+				break;
+			default:
+				if (!fromInput && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+					runTypeahead(e.key);
+				}
+		}
+	};
+
+	const activeDescendant = activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined;
+
+	// Focus initial : champ recherche piloté par Radix (1er focusable) ; sinon on
+	// donne le focus au listbox roving. Sur mobile (drawer) on n'auto-focus pas
+	// pour éviter d'ouvrir le clavier dès l'ouverture.
+	React.useEffect(() => {
+		if (!isOpen || isMobile || showSearch) return;
+		listRef.current?.focus();
+	}, [isOpen, isMobile, showSearch]);
+
+	// Garde l'option active visible.
+	React.useEffect(() => {
+		if (activeIndex < 0) return;
+		const el = document.getElementById(`${listboxId}-opt-${activeIndex}`);
+		if (el && typeof el.scrollIntoView === "function") {
+			el.scrollIntoView({ block: "nearest" });
+		}
+	}, [activeIndex, listboxId]);
+
+	// Plafond de badges sur le trigger : au-delà, on résume le surplus par « +N ».
+	const visibleSelected =
+		maxVisibleBadges != null && selected.length > maxVisibleBadges
+			? selected.slice(0, maxVisibleBadges)
+			: selected;
+	const hiddenBadgeCount = selected.length - visibleSelected.length;
 
 	const trigger = (
 		<div
@@ -152,12 +287,18 @@ export const MultiSelect = ({
 			{selected.length === 0 ? (
 				<>
 					<span className="text-muted-foreground mx-3 text-sm">{placeholder}</span>
-					<ChevronDown className="text-muted-foreground mx-2 size-4" aria-hidden="true" />
+					<ChevronDown
+						className={cn(
+							"text-muted-foreground mx-2 size-4 motion-safe:transition-transform",
+							isOpen && "rotate-180",
+						)}
+						aria-hidden="true"
+					/>
 				</>
 			) : (
 				<>
 					<div className="flex flex-1 flex-wrap items-center gap-1">
-						{selected.map((val) => (
+						{visibleSelected.map((val) => (
 							<Badge key={val} className="bg-card text-foreground border-foreground/10 m-0.5">
 								<span className="max-w-[12rem] truncate sm:max-w-[16rem]">{labelOf(val)}</span>
 								<button
@@ -182,6 +323,14 @@ export const MultiSelect = ({
 								</button>
 							</Badge>
 						))}
+						{hiddenBadgeCount > 0 && (
+							<Badge
+								aria-hidden="true"
+								className="bg-muted text-muted-foreground border-foreground/10 m-0.5"
+							>
+								+{hiddenBadgeCount}
+							</Badge>
+						)}
 					</div>
 					<div className="flex shrink-0 items-center">
 						<button
@@ -199,13 +348,19 @@ export const MultiSelect = ({
 									clear();
 								}
 							}}
-							aria-label={`Effacer les ${selected.length} options sélectionnées`}
+							aria-label="Tout effacer"
 							className="text-muted-foreground hover:text-foreground focus:ring-ring mx-1 flex size-8 cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:outline-hidden disabled:cursor-not-allowed"
 						>
 							<X className="size-4" aria-hidden="true" />
 						</button>
 						<Separator orientation="vertical" className="h-6" />
-						<ChevronDown className="text-muted-foreground mx-2 size-4" aria-hidden="true" />
+						<ChevronDown
+							className={cn(
+								"text-muted-foreground mx-2 size-4 motion-safe:transition-transform",
+								isOpen && "rotate-180",
+							)}
+							aria-hidden="true"
+						/>
 					</div>
 				</>
 			)}
@@ -219,63 +374,114 @@ export const MultiSelect = ({
 				aria-hidden="true"
 			/>
 			<input
+				ref={searchRef}
 				id={searchId}
 				type="search"
 				value={search}
-				onChange={(e) => setSearch(e.target.value)}
+				onChange={(e) => {
+					setSearch(e.target.value);
+					setActiveIndex(-1);
+				}}
+				onKeyDown={(e) => handleNav(e, true)}
 				placeholder={searchPlaceholder}
 				aria-label="Rechercher dans les options"
 				aria-controls={listboxId}
+				aria-activedescendant={activeDescendant}
 				autoCapitalize="none"
 				autoCorrect="off"
 				spellCheck={false}
-				className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-10 w-full rounded-md border bg-transparent pr-3 pl-9 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+				className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-10 w-full rounded-md border bg-transparent pr-9 pl-9 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
 			/>
+			{search.length > 0 && (
+				<button
+					type="button"
+					onClick={() => {
+						setSearch("");
+						setActiveIndex(-1);
+						searchRef.current?.focus();
+					}}
+					aria-label="Effacer la recherche"
+					className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-hidden"
+				>
+					<X className="size-4" aria-hidden="true" />
+				</button>
+			)}
 		</div>
 	) : null;
 
+	const selectAllRow =
+		showSelectAll && options.length > 0 ? (
+			<button
+				type="button"
+				tabIndex={-1}
+				onClick={handleSelectAll}
+				aria-pressed={allSelected}
+				className="hover:bg-accent flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-medium"
+			>
+				<Checkbox
+					checked={allSelected}
+					tabIndex={-1}
+					aria-hidden="true"
+					className="pointer-events-none"
+				/>
+				<span>{allSelected ? "Tout désélectionner" : "Tout sélectionner"}</span>
+			</button>
+		) : null;
+
 	const optionsList = (
 		<ul
+			ref={listRef}
 			id={listboxId}
-			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- ARIA listbox pattern: <ul role="listbox"> + <li role="presentation"> > <label> avec Checkbox est l'idiome WAI-ARIA pour un multiselect listbox.
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- ARIA listbox pattern: <ul role="listbox"> est l'idiome WAI-ARIA pour un multiselect.
 			role="listbox"
 			aria-multiselectable="true"
 			aria-label="Options disponibles"
-			className="flex flex-col gap-0.5"
+			tabIndex={showSearch ? -1 : 0}
+			aria-activedescendant={showSearch ? undefined : activeDescendant}
+			onKeyDown={showSearch ? undefined : (e) => handleNav(e, false)}
+			className="flex flex-col gap-0.5 outline-none"
 		>
 			{filteredOptions.length === 0 ? (
 				<li role="presentation" className="text-muted-foreground py-6 text-center text-sm">
 					{showSearch && normalizedSearch ? `Aucun résultat pour « ${search.trim()} »` : emptyText}
 				</li>
 			) : (
-				filteredOptions.map((option) => {
+				filteredOptions.map((option, index) => {
 					const isSelected = selected.includes(option.value);
 					const isOptDisabled = !!option.disabled;
+					/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-to-interactive-role -- pattern aria-activedescendant : le clavier est géré au niveau du listbox (onKeyDown sur input/ul) ; les <li role="option"> ne portent que le clic souris. */
 					return (
-						<li key={option.value} role="presentation">
-							<label
-								aria-disabled={isOptDisabled || undefined}
-								data-state={isSelected ? "checked" : "unchecked"}
-								className={cn(
-									"hover:bg-accent focus-within:bg-accent flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3",
-									"data-[state=checked]:bg-accent/60",
-									isOptDisabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
-								)}
-							>
-								<Checkbox
-									checked={isSelected}
-									disabled={isOptDisabled || disabled}
-									onCheckedChange={() => toggle(option.value)}
-									className="pointer-events-none"
-								/>
-								{option.prefix}
-								<span className="flex-1 truncate text-sm">{option.label}</span>
-								{isSelected && (
-									<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
-								)}
-							</label>
+						<li
+							key={option.value}
+							id={`${listboxId}-opt-${index}`}
+							role="option"
+							aria-selected={isSelected}
+							aria-disabled={isOptDisabled || undefined}
+							data-active={index === activeIndex || undefined}
+							onClick={() => toggle(option.value)}
+							onPointerEnter={() => {
+								if (!isOptDisabled) setActiveIndex(index);
+							}}
+							className={cn(
+								"hover:bg-accent flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 text-sm",
+								"data-[active=true]:bg-accent",
+								isSelected && "bg-accent/60",
+								isOptDisabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
+							)}
+						>
+							<Checkbox
+								checked={isSelected}
+								disabled={isOptDisabled || disabled}
+								tabIndex={-1}
+								aria-hidden="true"
+								className="pointer-events-none"
+							/>
+							{option.prefix}
+							<span className="flex-1 truncate">{option.label}</span>
+							{isSelected && <Check className="text-primary size-4 shrink-0" aria-hidden="true" />}
 						</li>
 					);
+					/* eslint-enable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-to-interactive-role */
 				})
 			)}
 		</ul>
@@ -312,6 +518,7 @@ export const MultiSelect = ({
 							className="overscroll-contain"
 							data-vaul-no-drag
 						>
+							{selectAllRow}
 							{optionsList}
 						</DrawerBody>
 					</DrawerContent>
@@ -331,6 +538,7 @@ export const MultiSelect = ({
 					sideOffset={4}
 				>
 					{showSearch && <div className="px-1 pt-1 pb-2">{searchInput}</div>}
+					{selectAllRow}
 					<div
 						style={{ maxHeight: `${maxHeight}px` }}
 						className="overflow-y-auto overscroll-contain"

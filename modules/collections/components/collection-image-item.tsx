@@ -14,6 +14,12 @@ interface CollectionImageItemProps {
 	collectionName: string;
 	index: number;
 	isAboveFold?: boolean;
+	/**
+	 * Carte candidate LCP (1re de la liste). Seule l'image principale (index 0) d'une
+	 * telle carte recoit fetchPriority=high — evite la concurrence bande passante 4G
+	 * quand plusieurs cartes above-fold s'affichent simultanement.
+	 */
+	isLcpCandidate?: boolean;
 	sizes: string;
 	staggerIndex?: number;
 	/** Collection slug used as view-transition-name key (only applied on index 0). */
@@ -37,6 +43,7 @@ export function CollectionImageItem({
 	collectionName,
 	index,
 	isAboveFold = false,
+	isLcpCandidate = false,
 	sizes,
 	staggerIndex = 0,
 	collectionSlug,
@@ -45,6 +52,9 @@ export function CollectionImageItem({
 	const altText = image.alt ?? `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
 
 	const delayClass = STAGGER_DELAYS[staggerIndex % STAGGER_DELAYS.length];
+
+	// fetchPriority=high reserve a l'image LCP (1re carte, image principale).
+	const isHighPriority = isAboveFold && isLcpCandidate && index === 0;
 
 	return (
 		<Image
@@ -67,7 +77,7 @@ export function CollectionImageItem({
 			}
 			sizes={sizes}
 			loading={isAboveFold ? "eager" : "lazy"}
-			fetchPriority={isAboveFold ? "high" : "auto"}
+			fetchPriority={isHighPriority ? "high" : "auto"}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={image.blurDataUrl ?? undefined}
 			quality={index === 0 ? COLLECTION_IMAGE_QUALITY : SECONDARY_IMAGE_QUALITY}

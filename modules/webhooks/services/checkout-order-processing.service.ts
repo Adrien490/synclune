@@ -12,10 +12,6 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import {
-	getShippingMethodFromRate,
-	getShippingCarrierFromRate,
-} from "@/modules/orders/constants/stripe-shipping-rates";
 import type { OrderWithItems } from "../types/checkout.types";
 import { initiateAutomaticRefund } from "./payment-intent.service";
 
@@ -354,7 +350,8 @@ export async function processOrderTransaction(
 	orderId: string,
 	session: Stripe.Checkout.Session,
 	shippingCost: number,
-	shippingRateId: string | undefined,
+	// Conservé pour compat de signature (CS flow legacy) — non persisté : offre unique.
+	_shippingRateId: string | undefined,
 ): Promise<OrderWithItems> {
 	// ORD-BIZ-011 : pré-check CANCELLED hors transaction pour court-circuiter
 	// avant FOR UPDATE + auto-refund le paiement tardif (throws CancelledOrderRaceError).
@@ -373,8 +370,9 @@ export async function processOrderTransaction(
 					stripeCheckoutSessionId: session.id,
 					stripeCustomerId: (session.customer as string) || null,
 					shippingCost,
-					shippingMethod: getShippingMethodFromRate(shippingRateId ?? ""),
-					shippingCarrier: getShippingCarrierFromRate(shippingRateId ?? ""),
+					// Offre unique : livraison standard Colissimo (cf. SHIPPING_RATES).
+					shippingMethod: "STANDARD",
+					shippingCarrier: "colissimo",
 				},
 				session.metadata?.guestSessionId,
 				"CS flow",

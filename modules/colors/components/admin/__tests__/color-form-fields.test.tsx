@@ -10,16 +10,19 @@ vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: () => mockHaptic }));
 function Harness({
 	defaultValues,
 	isPending = false,
+	showStatus = false,
 }: {
-	defaultValues?: { name?: string; hex?: string; description?: string };
+	defaultValues?: { name?: string; hex?: string; description?: string; isActive?: boolean };
 	isPending?: boolean;
+	showStatus?: boolean;
 }) {
 	const form = useColorForm({
 		name: defaultValues?.name ?? "",
 		hex: defaultValues?.hex ?? "#000000",
 		description: defaultValues?.description ?? "",
+		isActive: defaultValues?.isActive ?? true,
 	});
-	return <ColorFormFields form={form} isPending={isPending} />;
+	return <ColorFormFields form={form} isPending={isPending} showStatus={showStatus} />;
 }
 
 afterEach(() => {
@@ -49,7 +52,9 @@ describe("ColorFormFields", () => {
 
 	it("clicking a suggestion updates the hex and triggers haptic", () => {
 		render(<Harness />);
-		const goldButton = screen.getByRole("button", { name: /^Sélectionner Or jaune \(#D4AF37\)/ });
+		const goldButton = screen.getByRole("button", {
+			name: /^Sélectionner Or jaune 18K \(#D4AF37\)/,
+		});
 		fireEvent.click(goldButton);
 		expect(mockHaptic).toHaveBeenCalledWith("light");
 		expect(screen.getByText("#D4AF37")).toBeInTheDocument();
@@ -153,5 +158,35 @@ describe("ColorFormFields", () => {
 		expect(
 			screen.getByRole("button", { name: /^Sélectionner Émeraude \(#50C878\)/ }),
 		).toBeInTheDocument();
+	});
+
+	it("renders a contrast WCAG badge for a valid hex", () => {
+		render(<Harness defaultValues={{ name: "Noir", hex: "#000000" }} />);
+		// Black on white → ratio 21:1 (Excellent / AAA)
+		expect(screen.getByText(/21\.0:1 · Excellent/)).toBeInTheDocument();
+	});
+
+	it("shows the dark-color hint for very dark hex (symmetric with light hint)", () => {
+		render(<Harness defaultValues={{ name: "Onyx", hex: "#0A0A0A" }} />);
+		expect(
+			screen.getByText(/Couleur foncée — restera visible sur les fonds sombres/),
+		).toBeInTheDocument();
+	});
+
+	it("does not render the isActive toggle when showStatus is false (create mode)", () => {
+		render(<Harness />);
+		expect(screen.queryByRole("switch", { name: /Couleur active/ })).not.toBeInTheDocument();
+	});
+
+	it("renders the isActive toggle when showStatus is true (edit mode)", () => {
+		render(<Harness showStatus defaultValues={{ name: "Or", hex: "#D4AF37", isActive: true }} />);
+		const toggle = screen.getByRole("switch", { name: /Couleur active/ });
+		expect(toggle).toBeInTheDocument();
+		expect(toggle).toBeChecked();
+	});
+
+	it("reflects isActive=false on the toggle", () => {
+		render(<Harness showStatus defaultValues={{ name: "Or", hex: "#D4AF37", isActive: false }} />);
+		expect(screen.getByRole("switch", { name: /Couleur active/ })).not.toBeChecked();
 	});
 });

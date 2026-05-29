@@ -8,23 +8,11 @@ export const DEFAULT_COLORS = [
 	"var(--color-particle-lavender)",
 ];
 
-/** Max parallax offset in pixels for the closest particles */
-export const PARALLAX_STRENGTH = 20;
-
-/** Duration in ms for the parallax lerp-to-zero reset on mouseleave */
-export const LERP_RESET_DURATION = 600;
-
 /** Upper bound for particle count to prevent excessive DOM nodes */
 export const MAX_PARTICLES = 30;
 
 /** Max vertical offset in pixels for scroll parallax (closest particles) */
 export const SCROLL_PARALLAX_RANGE = 40;
-
-/** Default repulsion offset in pixels when not overridden via props */
-export const DEFAULT_REPULSION_STRENGTH = 30;
-
-/** Default repulsion radius as fraction of container diagonal (0-1) */
-export const DEFAULT_REPULSION_RADIUS = 0.15;
 
 /** Base animation duration in seconds (multiplied by depth + speed factors) */
 export const DEFAULT_DURATION = 20;
@@ -138,6 +126,17 @@ export const ANIMATION_PRESETS: Record<AnimationStyle, AnimationPreset> = {
 		y: ["-10%", "110%"],
 		x: ["0%", "8%", "-5%", "3%", "0%"],
 		opacity: [0, p.opacity, p.opacity, p.opacity * 0.8, 0],
+		...subtleRotate(p),
+	}),
+	twinkle: (p) => ({
+		scale: [1, 1.15, 0.95, 1.1, 1],
+		opacity: [
+			p.opacity * 0.4,
+			Math.min(p.opacity * 1.4, 1),
+			p.opacity * 0.5,
+			Math.min(p.opacity * 1.2, 1),
+			p.opacity * 0.4,
+		],
 		...subtleRotate(p),
 	}),
 };

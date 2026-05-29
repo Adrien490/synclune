@@ -501,7 +501,8 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			const toggle = screen.getByRole("button", { expanded: true });
+			// Replié par défaut (F6) : le mini-total reste visible dans le header collapsed.
+			const toggle = screen.getByRole("button", { expanded: false });
 			expect(toggle.textContent).toContain("3 articles");
 		});
 	});

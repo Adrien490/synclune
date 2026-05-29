@@ -12,7 +12,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { Label } from "@/shared/components/ui/label";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -66,7 +66,9 @@ export function RejectRefundAlertDialog() {
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<div className="my-4 space-y-2">
-						<Label htmlFor="reject-reason">Raison du refus (optionnel)</Label>
+						<FieldLabel htmlFor="reject-reason" optional>
+							Raison du refus
+						</FieldLabel>
 						<Textarea
 							id="reject-reason"
 							name="reason"

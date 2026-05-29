@@ -229,14 +229,16 @@ describe("LatestCreations", () => {
 		});
 	});
 
-	it("ProductCard receives incremental index, sectionId='latest' and disablePreload (below-fold)", async () => {
+	it("ProductCard receives incremental index, sectionId='latest'; only the first card enables preload (mobile LCP)", async () => {
 		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		mockProducts.forEach((product, i) => {
 			const card = screen.getByTestId(`product-card-${product.id}`);
 			expect(card.getAttribute("data-index")).toBe(String(i));
 			expect(card.getAttribute("data-section-id")).toBe("latest");
-			expect(card.getAttribute("data-disable-preload")).toBe("true");
+			// Floating hero images are hidden on mobile → ProductCard[0] is the mobile
+			// LCP and must preload; the rest stay disabled to avoid 4G preload contention.
+			expect(card.getAttribute("data-disable-preload")).toBe(i === 0 ? "false" : "true");
 		});
 	});
 });

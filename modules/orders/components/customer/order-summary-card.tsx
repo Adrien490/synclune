@@ -49,7 +49,7 @@ export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 						<span>{formatEuro(order.subtotal)}</span>
 					</div>
 					{order.discountAmount > 0 && (
-						<div className="flex justify-between text-green-600">
+						<div className="text-success flex justify-between">
 							<span>
 								Réduction
 								{order.discountUsages &&

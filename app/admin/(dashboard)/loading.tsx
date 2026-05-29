@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { DashboardAmbientBackground } from "@/modules/dashboard/components/dashboard-ambient-background";
 import {
@@ -20,30 +19,23 @@ export default function DashboardLoading() {
 
 			<DashboardAmbientBackground />
 
-			<PageHeader
-				variant="compact"
-				title="Ton atelier"
-				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
-				actions={
-					<>
-						<div
-							className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end"
-							aria-hidden="true"
-						>
-							<Skeleton shape="rounded" className="h-9 w-32" />
-							<Skeleton shape="rounded" className="h-9 w-24" />
-							<Skeleton shape="rounded" className="h-9 w-28" />
-						</div>
-						<div className="flex w-full items-center gap-2 md:hidden" aria-hidden="true">
-							<Skeleton shape="rounded" className="h-11 flex-1" />
-							<Skeleton shape="rounded" className="size-11" />
-							<Skeleton shape="rounded" className="size-11" />
-						</div>
-					</>
-				}
-			/>
-
-			<div aria-hidden="true" className="-mt-2 mb-6 h-6 sm:h-7" />
+			<header className="mb-4 md:mb-6">
+				<div
+					className="flex w-full flex-wrap items-center justify-start gap-3 md:justify-end"
+					aria-hidden="true"
+				>
+					<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
+						<Skeleton shape="rounded" className="h-9 w-32" />
+						<Skeleton shape="rounded" className="h-9 w-24" />
+						<Skeleton shape="rounded" className="h-9 w-28" />
+					</div>
+					<div className="flex w-full items-center gap-2 md:hidden">
+						<Skeleton shape="rounded" className="h-11 flex-1" />
+						<Skeleton shape="rounded" className="size-11" />
+						<Skeleton shape="rounded" className="size-11" />
+					</div>
+				</div>
+			</header>
 
 			<div className="space-y-8">
 				{/* DashboardAlerts placeholder (réserve la hauteur de l'alert si présente) */}

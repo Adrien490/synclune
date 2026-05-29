@@ -273,7 +273,9 @@ export function CheckoutSummary({
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 	const haptic = useHaptic();
-	const [isMobileOpen, setIsMobileOpen] = useState(true);
+	// Replié par défaut sur mobile (F6) : réduit le scroll jusqu'au formulaire.
+	// Le header collapsed garde le mini-total visible (nb articles + montant).
+	const [isMobileOpen, setIsMobileOpen] = useState(false);
 
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -297,7 +299,8 @@ export function CheckoutSummary({
 
 	return (
 		<>
-			{/* Mobile: collapsible summary (open by default so users see their cart).
+			{/* Mobile: collapsible summary (collapsed by default — F6 — pour réduire le scroll
+			    jusqu'au formulaire ; le mini-total reste visible dans le header).
 			    Content is conditionally rendered to avoid mounting <Image> requests when collapsed. */}
 			<section className="md:hidden" aria-label="Récapitulatif de votre commande">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>

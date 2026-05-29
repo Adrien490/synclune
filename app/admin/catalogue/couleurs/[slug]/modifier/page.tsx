@@ -32,6 +32,7 @@ export default async function EditColorPage({ params }: EditColorPageProps) {
 					slug: color.slug,
 					hex: color.hex,
 					description: color.description,
+					isActive: color.isActive,
 				}}
 				className="max-w-2xl"
 			/>

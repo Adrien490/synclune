@@ -123,11 +123,25 @@ describe("CollectionImageItem", () => {
 		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "75");
 	});
 
-	it("sets loading=eager + fetchPriority=high when isAboveFold is true", () => {
-		renderItem({ isAboveFold: true });
+	it("sets loading=eager + fetchPriority=high for the LCP candidate's main image (above-fold + isLcpCandidate + index 0)", () => {
+		renderItem({ isAboveFold: true, isLcpCandidate: true, index: 0 });
 		const img = screen.getByTestId("collection-image");
 		expect(img).toHaveAttribute("data-loading", "eager");
 		expect(img).toHaveAttribute("data-fetch-priority", "high");
+	});
+
+	it("keeps fetchPriority=auto when above-fold but NOT the LCP candidate (avoids bandwidth contention)", () => {
+		renderItem({ isAboveFold: true, isLcpCandidate: false, index: 0 });
+		const img = screen.getByTestId("collection-image");
+		// Still eager-loaded above the fold, but not high priority.
+		expect(img).toHaveAttribute("data-loading", "eager");
+		expect(img).toHaveAttribute("data-fetch-priority", "auto");
+	});
+
+	it("keeps fetchPriority=auto for a secondary image (index > 0) even on the LCP candidate", () => {
+		renderItem({ isAboveFold: true, isLcpCandidate: true, index: 1 });
+		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-fetch-priority", "auto");
 	});
 
 	it("sets loading=lazy + fetchPriority=auto when isAboveFold is false", () => {

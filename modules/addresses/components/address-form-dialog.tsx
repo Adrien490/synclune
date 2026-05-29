@@ -1,6 +1,5 @@
 "use client";
 
-import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -10,16 +9,13 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
-import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
+import { useAddressForm } from "@/modules/addresses/hooks/use-address-form";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
-import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
@@ -29,7 +25,7 @@ import {
 	ADDRESS_DIALOG_ID,
 	DISCARD_ADDRESS_CHANGES_DIALOG_ID,
 } from "../constants/dialog.constants";
-import { addressFormSchema, addressFormDefaultValues } from "../schemas/address-form.schema";
+import { AddressFormFields } from "./address-form-fields";
 import { DiscardAddressChangesAlertDialog } from "./discard-address-changes-alert-dialog";
 
 interface AddressDialogData extends Record<string, unknown> {
@@ -83,38 +79,8 @@ interface AddressFormContentProps {
 function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContentProps) {
 	const mode = address ? "edit" : "create";
 
-	// TanStack Form setup avec validation Zod - defaultValues basées sur l'address
-	const form = useAppForm({
-		defaultValues: address
-			? {
-					firstName: address.firstName,
-					lastName: address.lastName,
-					address1: address.address1,
-					address2: address.address2 ?? undefined,
-					postalCode: address.postalCode,
-					city: address.city,
-					country: address.country,
-					phone: address.phone,
-				}
-			: addressFormDefaultValues,
-		validators: {
-			onChange: addressFormSchema,
-		},
-	});
-
-	// Live address autocomplete (account CRUD is FR-only — country field disabled).
-	const address1Value = useStore(form.store, (s) => s.values.address1);
-	const {
-		suggestions: addressSuggestions,
-		isSearching: isPendingAddress,
-		error: addressSearchErrorMessage,
-	} = useAddressAutocomplete(address1Value, "FR");
-
-	const triggerHaptic = useHaptic();
-	const handleManualEntry = () => {
-		triggerHaptic("light");
-		document.querySelector<HTMLInputElement>('input[name="postalCode"]')?.focus();
-	};
+	// TanStack Form setup avec validation Zod (hook partagé dialog + page mobile)
+	const { form } = useAddressForm(address);
 
 	// Address hooks with success callback to close dialog
 	const createHook = useCreateAddress({
@@ -190,172 +156,12 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 							</Alert>
 						)}
 
-					<RequiredFieldsNote />
-
-					<div className="space-y-4">
-						{/* Nom et Prénom */}
-						<div className="grid gap-4 sm:grid-cols-2">
-							<form.AppField name="firstName">
-								{(field) => (
-									<field.InputField
-										label="Prénom"
-										type="text"
-										autoComplete="given-name"
-										autoCapitalize="words"
-										enterKeyHint="next"
-										disabled={isPending}
-										required
-									/>
-								)}
-							</form.AppField>
-
-							<form.AppField name="lastName">
-								{(field) => (
-									<field.InputField
-										label="Nom"
-										type="text"
-										autoComplete="family-name"
-										autoCapitalize="words"
-										enterKeyHint="next"
-										disabled={isPending}
-										required
-									/>
-								)}
-							</form.AppField>
-						</div>
-
-						{/* Adresse avec autocomplétion */}
-						<form.AppField name="address1">
-							{(field) => (
-								<field.AutocompleteField<SearchAddressResult>
-									label="Adresse"
-									required
-									onSelect={(selectedAddress) => {
-										// Remplir automatiquement les champs avec l'adresse sélectionnée
-										field.handleChange(
-											selectedAddress.street && selectedAddress.housenumber
-												? `${selectedAddress.housenumber} ${selectedAddress.street}`
-												: selectedAddress.label,
-										);
-
-										// Mise à jour des autres champs
-										if (selectedAddress.postcode) {
-											form.setFieldValue("postalCode", selectedAddress.postcode);
-										}
-										if (selectedAddress.city) {
-											form.setFieldValue("city", selectedAddress.city);
-										}
-									}}
-									items={addressSuggestions}
-									getItemLabel={(item) => item.label}
-									getItemDescription={(item) =>
-										item.postcode && item.city ? `${item.postcode} ${item.city}` : item.city || null
-									}
-									placeholder="Rechercher une adresse…"
-									isLoading={isPendingAddress}
-									disabled={isPending}
-									error={addressSearchErrorMessage ?? undefined}
-									noResultsMessage="Aucune adresse trouvée"
-									noResultsDescription="Essayez avec un autre nom de rue ou de ville"
-									emptyStateAction={
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											className="min-h-11"
-											onClick={handleManualEntry}
-											disabled={isPending}
-										>
-											Saisir manuellement
-										</Button>
-									}
-									autoComplete="street-address"
-									minQueryLength={2}
-									debounceMs={300}
-								/>
-							)}
-						</form.AppField>
-
-						{/* Complément d'adresse */}
-						<form.AppField name="address2">
-							{(field) => (
-								<div className="space-y-2">
-									<field.InputField
-										label="Complément d'adresse (optionnel)"
-										type="text"
-										autoComplete="address-line2"
-										enterKeyHint="next"
-										disabled={isPending}
-									/>
-									<p className="text-muted-foreground text-xs">Appartement, bâtiment, etc.</p>
-								</div>
-							)}
-						</form.AppField>
-
-						{/* Code postal et Ville */}
-						<div className="grid gap-4 sm:grid-cols-2">
-							<form.AppField name="postalCode">
-								{(field) => (
-									<field.InputField
-										label="Code postal"
-										type="text"
-										inputMode="numeric"
-										autoComplete="postal-code"
-										pattern="[0-9]{5}"
-										enterKeyHint="next"
-										disabled={isPending}
-										maxLength={5}
-										description="5 chiffres (ex. 44000), sans espace ni tiret."
-										required
-									/>
-								)}
-							</form.AppField>
-
-							<form.AppField name="city">
-								{(field) => (
-									<field.InputField
-										label="Ville"
-										type="text"
-										autoComplete="address-level2"
-										autoCapitalize="words"
-										enterKeyHint="next"
-										disabled={isPending}
-										required
-									/>
-								)}
-							</form.AppField>
-						</div>
-
-						{/* Pays */}
-						<form.AppField name="country">
-							{(field) => (
-								<div className="space-y-2">
-									<field.InputField label="Pays" type="text" disabled={true} required />
-									<p className="text-muted-foreground text-xs">
-										Actuellement, seules les livraisons en France sont disponibles
-									</p>
-								</div>
-							)}
-						</form.AppField>
-
-						{/* Téléphone */}
-						<form.AppField name="phone">
-							{(field) => (
-								<field.PhoneField
-									label="Téléphone"
-									required
-									defaultCountry="FR"
-									placeholder="06 12 34 56 78"
-									disabled={isPending}
-								/>
-							)}
-						</form.AppField>
-					</div>
+					<AddressFormFields form={form} isPending={isPending} />
 				</div>
 				{/* Fin du contenu scrollable */}
 
 				{/* Footer fixe */}
-				<div className="mt-4 flex shrink-0 justify-end border-t pt-4 pb-[max(0px,env(safe-area-inset-bottom))]">
+				<div className="mt-4 flex shrink-0 justify-end pt-4 pb-[max(0px,env(safe-area-inset-bottom))]">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">

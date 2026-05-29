@@ -43,7 +43,7 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 
 					{emailVerified ? (
 						<div className="flex items-center gap-2">
-							<CircleCheck className="size-4 text-emerald-600" aria-hidden="true" />
+							<CircleCheck className="text-success size-4" aria-hidden="true" />
 							<p className="text-muted-foreground text-sm">Email vérifiée</p>
 						</div>
 					) : (

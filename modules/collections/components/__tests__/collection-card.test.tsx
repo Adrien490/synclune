@@ -131,9 +131,10 @@ describe("CollectionCard", () => {
 		expect(screen.getByText("1 article")).toBeInTheDocument();
 	});
 
-	it("does not render product count when productCount is 0", () => {
+	it("renders 'Bientôt' instead of an article count when productCount is 0", () => {
 		renderCard({ productCount: 0 });
 		expect(screen.queryByText(/article/)).toBeNull();
+		expect(screen.getByText("Bientôt")).toBeInTheDocument();
 	});
 
 	it("renders description text", () => {
@@ -141,12 +142,14 @@ describe("CollectionCard", () => {
 		expect(screen.getByText("Bijoux faits à la main")).toBeInTheDocument();
 	});
 
-	it("renders price range when min and max differ", () => {
+	it("renders the minimum as a from-price when min and max differ", () => {
 		renderCard({ priceRange: { min: 2000, max: 5000 } });
-		expect(screen.getByText(/20\.00 €.*50\.00 €/)).toBeInTheDocument();
+		// From-price framing: only the min is shown, the max is omitted.
+		expect(screen.getByText("20.00 €")).toBeInTheDocument();
+		expect(screen.queryByText("50.00 €")).toBeNull();
 	});
 
-	it("renders single price when min equals max", () => {
+	it("renders the price when min equals max", () => {
 		renderCard({ priceRange: { min: 3000, max: 3000 } });
 		expect(screen.getByText("30.00 €")).toBeInTheDocument();
 	});
@@ -209,56 +212,105 @@ describe("CollectionCard", () => {
 		});
 	});
 
-	describe("productCount prominence (P2.2)", () => {
-		it("renders productCount with text-sm font-medium (promoted from text-xs muted)", () => {
+	describe("visual hierarchy: price prioritized over count (audit 2026-05-29 F3)", () => {
+		it("renders price as the primary signal (text-sm font-medium)", () => {
+			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
+			// Price <p> is the one wrapping the visible "À partir de" prefix.
+			const fromPrefix = Array.from(container.querySelectorAll("span")).find((s) =>
+				s.textContent.includes("À partir de"),
+			);
+			const price = fromPrefix?.closest("p");
+			expect(price).not.toBeNull();
+			expect(price!.className).toMatch(/text-sm/);
+			expect(price!.className).toMatch(/font-medium/);
+		});
+
+		it("renders productCount as discrete meta (text-xs muted, no font-medium)", () => {
 			renderCard({ productCount: 42 });
 			const count = screen.getByText("42 articles");
-			expect(count.className).toMatch(/text-sm/);
-			expect(count.className).toMatch(/font-medium/);
+			expect(count.className).toMatch(/text-xs/);
+			expect(count.className).toMatch(/text-muted-foreground/);
+			expect(count.className).not.toMatch(/font-medium/);
 		});
 	});
 
-	describe("description visibility (P3.3)", () => {
+	describe("description visibility (audit 2026-05-29 F7)", () => {
 		/**
-		 * @regression collection-card-description-sr-only-mobile
-		 * Audit 2026-05-24: description passe de `hidden sm:block` à `sr-only sm:not-sr-only sm:block`.
-		 * Visuel inchangé (cachée mobile, visible desktop) mais lue par SR mobile (a11y +).
+		 * @regression collection-card-description-visible-all-viewports
+		 * Audit 2026-05-29: la description, auparavant `sr-only sm:not-sr-only`, est désormais
+		 * visible sur tous les viewports (mobile inclus). Décision user explicite.
 		 */
-		it("description is sr-only on mobile and visible on desktop", () => {
+		it("description is visible on all viewports (no sr-only / hidden gating)", () => {
 			renderCard({ description: "Bijoux faits à la main" });
 			const desc = screen.getByText("Bijoux faits à la main");
-			expect(desc.className).toMatch(/sr-only/);
-			expect(desc.className).toMatch(/sm:not-sr-only/);
-			expect(desc.className).toMatch(/sm:block/);
+			expect(desc.className).not.toMatch(/sr-only/);
 			expect(desc.className).not.toMatch(/(?<![a-z:])hidden/);
+			expect(desc.className).toMatch(/line-clamp-2/);
 		});
 	});
 
-	describe("price range SR clarity (audit 2026-05-24)", () => {
-		/**
-		 * @regression collection-card-range-sr-only-a
-		 * L'en-dash U+2013 est lu « tiret demi-cadratin » par NVDA fr. Pattern WAI :
-		 * marquer le tiret aria-hidden + ajouter un sr-only « à » pour clarté SR.
-		 */
-		it("emits sr-only 'à' between min and max for SR clarity", () => {
+	describe("discovery cue (audit 2026-05-29 F4 + 10/10 touch)", () => {
+		it("renders a decorative aria-hidden 'Découvrir' cue", () => {
+			const { container } = renderCard({});
+			const cue = Array.from(container.querySelectorAll('p[aria-hidden="true"]')).find((p) =>
+				p.textContent.includes("Découvrir"),
+			);
+			expect(cue).toBeDefined();
+			// Visible by default (touch), hidden until hover only on hover-capable devices,
+			// and always revealed on keyboard focus.
+			expect(cue!.className).toMatch(/(?<![:-])opacity-100/);
+			expect(cue!.className).toMatch(/can-hover:opacity-0/);
+			expect(cue!.className).toMatch(/can-hover:group-hover:opacity-100/);
+			expect(cue!.className).toMatch(/group-focus-within:opacity-100/);
+		});
+	});
+
+	describe("from-price framing (audit 2026-05-29 10/10)", () => {
+		it("renders an 'À partir de' prefix followed by the minimum price", () => {
 			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
-			const srOnlySpans = container.querySelectorAll("span.sr-only");
-			const texts = Array.from(srOnlySpans).map((s) => s.textContent.trim());
-			expect(texts).toContain("à");
+			const fromPrefix = Array.from(container.querySelectorAll("span")).find((s) =>
+				s.textContent.includes("À partir de"),
+			);
+			expect(fromPrefix).toBeDefined();
+			const price = fromPrefix!.closest("p");
+			// Shows the min (20.00 €), never the max (50.00 €).
+			expect(price!.textContent).toContain("20.00");
+			expect(price!.textContent).not.toContain("50.00");
 		});
 
-		it("hides the dash separator from SR via aria-hidden", () => {
-			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });
-			const ariaHiddenSpans = container.querySelectorAll('span[aria-hidden="true"]');
-			const dashSpan = Array.from(ariaHiddenSpans).find((s) => s.textContent.includes("–"));
-			expect(dashSpan).toBeDefined();
-		});
-
-		it("does NOT emit sr-only 'à' when min equals max (single price)", () => {
+		it("uses the same 'À partir de' framing when min equals max", () => {
 			const { container } = renderCard({ priceRange: { min: 3000, max: 3000 } });
-			const srOnlySpans = container.querySelectorAll("span.sr-only");
-			const texts = Array.from(srOnlySpans).map((s) => s.textContent.trim());
-			expect(texts).not.toContain("à");
+			const price = Array.from(container.querySelectorAll("p")).find((p) =>
+				p.textContent.includes("À partir de"),
+			);
+			expect(price).toBeDefined();
+			expect(price!.textContent).toContain("30.00");
+		});
+
+		it("does NOT render a price block when priceRange is absent", () => {
+			const { container } = renderCard({});
+			const hasFrom = Array.from(container.querySelectorAll("p")).some((p) =>
+				p.textContent.includes("À partir de"),
+			);
+			expect(hasFrom).toBe(false);
+		});
+	});
+
+	describe("empty state (audit 2026-05-29 F6)", () => {
+		it("renders the 'Bientôt' signal when productCount is 0", () => {
+			renderCard({ productCount: 0 });
+			expect(screen.getByText("Bientôt")).toBeInTheDocument();
+		});
+
+		it("renders the article count (not 'Bientôt') when productCount > 0", () => {
+			renderCard({ productCount: 5 });
+			expect(screen.getByText("5 articles")).toBeInTheDocument();
+			expect(screen.queryByText("Bientôt")).not.toBeInTheDocument();
+		});
+
+		it("renders neither count nor 'Bientôt' when productCount is undefined", () => {
+			renderCard({});
+			expect(screen.queryByText("Bientôt")).not.toBeInTheDocument();
 		});
 	});
 });

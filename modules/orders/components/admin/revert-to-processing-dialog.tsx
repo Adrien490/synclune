@@ -63,9 +63,15 @@ export function RevertToProcessingDialog() {
 								<strong>{dialog.data?.orderNumber}</strong> ?
 							</p>
 							{dialog.data?.trackingNumber && (
-								<p className="mt-2 text-amber-600">
-									Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
-								</p>
+								<>
+									<p className="mt-2 text-amber-600">
+										Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
+									</p>
+									<p className="mt-2 text-amber-600">
+										⚠️ Le client a reçu un email d'expédition. Pensez à le prévenir manuellement que
+										son numéro de suivi n'est plus valide.
+									</p>
+								</>
 							)}
 						</div>
 					</ResponsiveDialogDescription>

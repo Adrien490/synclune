@@ -248,6 +248,20 @@ describe("Fab", () => {
 			// tooltip title only appears in the visible container
 			expect(screen.queryByText("Actions rapides")).not.toBeInTheDocument();
 		});
+
+		it("collapsed toggle exposes a 44px hit area and accessible resting opacity", () => {
+			render(<Fab {...DEFAULT_PROPS} initialHidden />);
+
+			const toggleButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === DEFAULT_PROPS.showTooltip);
+			expect(toggleButton).toBeDefined();
+			// F2: hit-area expansion to ~44px (WCAG 2.5.5), aligned with the X button pattern
+			expect(toggleButton!.className).toContain("after:inset-[-4px]");
+			// F3: resting opacity raised to 60% for non-text contrast (WCAG 1.4.11)
+			expect(toggleButton!.className).toContain("opacity-60");
+			expect(toggleButton!.className).not.toContain("opacity-40");
+		});
 	});
 
 	describe("href vs onClick variants", () => {

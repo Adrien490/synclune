@@ -17,14 +17,29 @@ import type { UserAddress } from "../types/user-addresses.types";
 
 interface AddressCardActionsProps {
 	address: UserAddress;
+	/**
+	 * Callback optimiste fourni par `AddressGrid`. Si absent (usage standalone),
+	 * le composant retombe sur le hook interne `useSetDefaultAddress`.
+	 */
+	onSetDefault?: (addressId: string) => void;
+	isSettingDefault?: boolean;
 }
 
-export function AddressCardActions({ address }: AddressCardActionsProps) {
+export function AddressCardActions({
+	address,
+	onSetDefault,
+	isSettingDefault: isSettingDefaultProp,
+}: AddressCardActionsProps) {
 	const editDialog = useDialog(ADDRESS_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_ADDRESS_DIALOG_ID);
-	const { handle: handleSetDefault, isPending: isSettingDefault } = useSetDefaultAddress();
+	const { handle: handleSetDefaultHook, isPending: isSettingDefaultHook } = useSetDefaultAddress();
 
-	const isPending = isSettingDefault;
+	const setDefault = (addressId: string) => {
+		if (onSetDefault) onSetDefault(addressId);
+		else handleSetDefaultHook(addressId);
+	};
+
+	const isPending = isSettingDefaultProp ?? isSettingDefaultHook;
 
 	return (
 		<DropdownMenu>
@@ -45,7 +60,7 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 					<DropdownMenuItem
 						onClick={() => {
 							triggerHaptic("selection");
-							handleSetDefault(address.id);
+							setDefault(address.id);
 						}}
 						disabled={isPending}
 					>

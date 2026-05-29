@@ -6,10 +6,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRouterPush, mockFormState, mockAction, mockIsPending, mockForm } = vi.hoisted(() => ({
+const {
+	mockRouterPush,
+	mockFormState,
+	mockAction,
+	mockIsPending,
+	mockGetFieldValue,
+	mockSetFieldValue,
+	mockHandleSubmit,
+	useCreateRefundFormMock,
+	getDefaultRestockMock,
+	getAvailableQuantityMock,
+} = vi.hoisted(() => ({
 	mockRouterPush: vi.fn(),
 	mockFormState: {
 		reason: "CUSTOMER_REQUEST",
+		note: "",
+		acceptCancelledOrder: false,
+		isDirty: false,
+		submissionAttempts: 0,
+		fieldMeta: {} as Record<string, { errors?: unknown[] }>,
 		items: [] as { orderItemId: string; selected: boolean; quantity: number; restock: boolean }[],
 		selectedItems: [] as {
 			orderItemId: string;
@@ -19,19 +35,15 @@ const { mockRouterPush, mockFormState, mockAction, mockIsPending, mockForm } = v
 		}[],
 		totalAmount: 0,
 		itemsForAction: [] as unknown[],
-		note: "",
 	},
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
-	mockForm: {
-		store: {},
-		getFieldValue: vi.fn((field: string) => {
-			if (field === "items") return [];
-			if (field === "reason") return "CUSTOMER_REQUEST";
-			return undefined;
-		}),
-		setFieldValue: vi.fn(),
-	},
+	mockGetFieldValue: vi.fn(),
+	mockSetFieldValue: vi.fn(),
+	mockHandleSubmit: vi.fn(() => Promise.resolve()),
+	useCreateRefundFormMock: vi.fn(),
+	getDefaultRestockMock: vi.fn((reason: string) => reason === "CUSTOMER_REQUEST"),
+	getAvailableQuantityMock: vi.fn(() => 1),
 }));
 
 // ============================================================================
@@ -43,22 +55,25 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/modules/refunds/hooks/use-create-refund-form", () => ({
-	useCreateRefundForm: vi.fn(() => ({
-		form: mockForm,
-		action: mockAction,
-		isPending: mockIsPending.value,
-		reason: mockFormState.reason,
-		items: mockFormState.items,
-		selectedItems: mockFormState.selectedItems,
-		totalAmount: mockFormState.totalAmount,
-		itemsForAction: mockFormState.itemsForAction,
-	})),
-	getDefaultRestock: vi.fn((reason: string) => reason === "CUSTOMER_REQUEST"),
-	getAvailableQuantity: vi.fn(() => 1),
+	useCreateRefundForm: useCreateRefundFormMock,
+	getDefaultRestock: getDefaultRestockMock,
+	getAvailableQuantity: getAvailableQuantityMock,
 }));
 
+// useStore lit le store du formulaire via le sélecteur fourni — on le branche
+// directement sur mockFormState (valeurs + isDirty).
 vi.mock("@tanstack/react-form-nextjs", () => ({
-	useStore: vi.fn(() => mockFormState.note),
+	useStore: (_store: unknown, selector: (s: unknown) => unknown) =>
+		selector({
+			values: {
+				reason: mockFormState.reason,
+				note: mockFormState.note,
+				acceptCancelledOrder: mockFormState.acceptCancelledOrder,
+			},
+			isDirty: mockFormState.isDirty,
+			submissionAttempts: mockFormState.submissionAttempts,
+			fieldMeta: mockFormState.fieldMeta,
+		}),
 }));
 
 vi.mock("@/modules/refunds/services/refund-calculation.service", () => ({
@@ -145,67 +160,14 @@ vi.mock("@/shared/components/ui/card", () => ({
 	CardDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
-// selectOnValueChange is captured at mock registration time so SelectItem
-// buttons can invoke it without needing a shared ref.
-let capturedOnValueChange: ((v: string) => void) | undefined;
-
-vi.mock("@/shared/components/ui/select", () => ({
-	Select: ({
-		children,
-		value,
-		onValueChange,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		value?: string;
-		onValueChange?: (v: string) => void;
-		disabled?: boolean;
-	}) => {
-		capturedOnValueChange = onValueChange;
-		return (
-			<div data-testid="select" data-value={value} data-disabled={String(disabled)}>
-				{children}
-			</div>
-		);
-	},
-	SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="select-trigger">{children}</div>
-	),
-	SelectValue: () => <span data-testid="select-value" />,
-	SelectContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="select-content">{children}</div>
-	),
-	SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
-		<button data-testid={`select-item-${value}`} onClick={() => capturedOnValueChange?.(value)}>
-			{children}
-		</button>
-	),
-}));
-
 vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: () => <hr data-testid="separator" />,
 }));
 
-vi.mock("@/shared/components/ui/textarea", () => ({
-	Textarea: ({
-		value,
-		onChange,
-		placeholder,
-		disabled,
-	}: {
-		value?: string;
-		onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
-		placeholder?: string;
-		disabled?: boolean;
-	}) => (
-		<textarea
-			data-testid="note-textarea"
-			value={value}
-			onChange={onChange}
-			placeholder={placeholder}
-			disabled={disabled}
-		/>
-	),
+vi.mock("@/shared/components/ui/tooltip", () => ({
+	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("next/link", () => ({
@@ -248,7 +210,142 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 
 import { CreateRefundForm } from "../create-refund-form";
 import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.service";
-import { getDefaultRestock } from "@/modules/refunds/hooks/use-create-refund-form";
+
+// ============================================================================
+// FAKE FORM INSTANCE
+//
+// Le composant utilise désormais les primitives TanStack Form (AppField,
+// AppForm, Subscribe) + les field components partagés (SelectField,
+// TextareaField, CheckboxField). On fournit un faux formulaire qui rend des
+// éléments natifs porteurs de testids équivalents, et route handleChange vers
+// mockFormState + les listeners (pour le recalcul restock au changement de
+// motif).
+// ============================================================================
+
+type AppFieldChildren = (field: Record<string, unknown>) => React.ReactNode;
+
+function buildFakeFieldComponents(
+	name: string,
+	value: unknown,
+	handleChange: (v: unknown) => void,
+) {
+	return {
+		SelectField: ({
+			label,
+			options,
+			disabled,
+		}: {
+			label?: string;
+			options: { value: string; label: string }[];
+			disabled?: boolean;
+		}) => (
+			<>
+				{label ? <span data-testid="select-label">{label}</span> : null}
+				<select
+					data-testid="select"
+					data-value={value as string}
+					data-disabled={String(Boolean(disabled))}
+					value={value as string}
+					disabled={disabled}
+					onChange={(e) => handleChange(e.target.value)}
+					aria-label={label ?? "Motif du remboursement"}
+				>
+					{options.map((option) => (
+						<option key={option.value} value={option.value}>
+							{option.label}
+						</option>
+					))}
+				</select>
+			</>
+		),
+		TextareaField: ({
+			label,
+			optional,
+			placeholder,
+			disabled,
+		}: {
+			label?: string;
+			optional?: boolean;
+			placeholder?: string;
+			disabled?: boolean;
+		}) => (
+			<>
+				{label ? (
+					<span data-testid="note-label">
+						{label}
+						{optional ? " (Optionnel)" : null}
+					</span>
+				) : null}
+				<textarea
+					data-testid="note-textarea"
+					value={value as string}
+					placeholder={placeholder}
+					disabled={disabled}
+					onChange={(e) => handleChange(e.target.value)}
+				/>
+			</>
+		),
+		CheckboxField: ({ label }: { label?: React.ReactNode }) => (
+			<label>
+				<input
+					type="checkbox"
+					data-testid="accept-cancelled"
+					checked={Boolean(value)}
+					onChange={(e) => handleChange(e.target.checked)}
+				/>
+				{label}
+			</label>
+		),
+	};
+}
+
+function createFakeForm() {
+	const form = {
+		store: {},
+		state: { isValid: true, isSubmitting: false },
+		getFieldValue: mockGetFieldValue,
+		setFieldValue: mockSetFieldValue,
+		handleSubmit: mockHandleSubmit,
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		Subscribe: ({
+			selector,
+			children,
+		}: {
+			selector: (s: unknown) => unknown;
+			children: (v: unknown) => React.ReactNode;
+		}) =>
+			children(
+				selector({
+					submissionAttempts: mockFormState.submissionAttempts,
+					fieldMeta: mockFormState.fieldMeta,
+				}),
+			),
+		AppField: ({
+			name,
+			listeners,
+			children,
+		}: {
+			name: string;
+			listeners?: { onChange?: (e: { value: unknown }) => void };
+			children: AppFieldChildren;
+		}) => {
+			const value = (mockFormState as Record<string, unknown>)[name];
+			const handleChange = (v: unknown) => {
+				(mockFormState as Record<string, unknown>)[name] = v;
+				listeners?.onChange?.({ value: v });
+			};
+			const field = {
+				name,
+				state: { value, meta: { errors: [] as string[] } },
+				handleChange,
+				handleBlur: vi.fn(),
+				...buildFakeFieldComponents(name, value, handleChange),
+			};
+			return children(field);
+		},
+	};
+	return form;
+}
 
 // ============================================================================
 // TEST DATA
@@ -259,6 +356,7 @@ function createMockOrder(overrides = {}) {
 		id: "order-1",
 		orderNumber: "CMD-2026-0001",
 		customerName: "Marie Dupont",
+		status: "DELIVERED",
 		subtotal: 10000,
 		discountAmount: 0,
 		total: 10000,
@@ -278,7 +376,7 @@ function createMockOrder(overrides = {}) {
 			},
 		],
 		...overrides,
-	} as any;
+	} as never;
 }
 
 afterEach(cleanup);
@@ -292,23 +390,38 @@ describe("CreateRefundForm", () => {
 		vi.clearAllMocks();
 		mockIsPending.value = false;
 		mockFormState.reason = "CUSTOMER_REQUEST";
+		mockFormState.note = "";
+		mockFormState.acceptCancelledOrder = false;
+		mockFormState.isDirty = false;
+		mockFormState.submissionAttempts = 0;
+		mockFormState.fieldMeta = {};
 		mockFormState.items = [];
 		mockFormState.selectedItems = [];
 		mockFormState.totalAmount = 0;
-		mockFormState.note = "";
 		mockFormState.itemsForAction = [];
-		mockForm.getFieldValue.mockImplementation((field: string) => {
-			if (field === "items") return [];
-			if (field === "reason") return "CUSTOMER_REQUEST";
+
+		mockGetFieldValue.mockImplementation((field: string) => {
+			if (field === "items") return mockFormState.items;
+			if (field === "reason") return mockFormState.reason;
 			return undefined;
 		});
-		mockForm.setFieldValue.mockReset();
-		// canSubmitRefund defaults to true across tests
+		mockSetFieldValue.mockReset();
+		mockHandleSubmit.mockImplementation(() => Promise.resolve());
+
+		useCreateRefundFormMock.mockImplementation(() => ({
+			form: createFakeForm(),
+			action: mockAction,
+			isPending: mockIsPending.value,
+			reason: mockFormState.reason,
+			items: mockFormState.items,
+			selectedItems: mockFormState.selectedItems,
+			totalAmount: mockFormState.totalAmount,
+			itemsForAction: mockFormState.itemsForAction,
+		}));
+
 		vi.mocked(canSubmitRefund).mockReturnValue(true);
-		// getDefaultRestock: true for CUSTOMER_REQUEST, false otherwise
-		vi.mocked(getDefaultRestock).mockImplementation(
-			(reason: string) => reason === "CUSTOMER_REQUEST",
-		);
+		getDefaultRestockMock.mockImplementation((reason: string) => reason === "CUSTOMER_REQUEST");
+		getAvailableQuantityMock.mockReturnValue(1);
 	});
 
 	// ─── Header ───────────────────────────────────────────────────────────────
@@ -374,9 +487,11 @@ describe("CreateRefundForm", () => {
 		expect(screen.getByTestId("note-textarea")).toBeInTheDocument();
 	});
 
-	it("renders the 'Note (optionnel)' section", () => {
+	it("renders the note field with an accessible optional label", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("(optionnel)")).toBeInTheDocument();
+		// F1 : le label vit désormais sur le champ (TextareaField), plus dans un CardTitle.
+		expect(screen.getByText(/Note/)).toBeInTheDocument();
+		expect(screen.getByText(/\(Optionnel\)/)).toBeInTheDocument();
 	});
 
 	// ─── Summary ──────────────────────────────────────────────────────────────
@@ -508,13 +623,13 @@ describe("CreateRefundForm", () => {
 	it("calls form.getFieldValue and form.setFieldValue when RefundItemRow onToggle fires", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: false, quantity: 0, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		await user.click(screen.getByTestId("toggle-item-1"));
 
-		expect(mockForm.getFieldValue).toHaveBeenCalledWith("items");
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockGetFieldValue).toHaveBeenCalledWith("items");
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ orderItemId: "item-1", selected: true })]),
 		);
@@ -523,12 +638,12 @@ describe("CreateRefundForm", () => {
 	it("calls form.setFieldValue with valid quantity when RefundItemRow onQuantityChange fires", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: true, quantity: 1, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		await user.click(screen.getByTestId("qty-item-1"));
 
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ orderItemId: "item-1" })]),
 		);
@@ -537,12 +652,12 @@ describe("CreateRefundForm", () => {
 	it("calls form.setFieldValue when RefundItemRow onRestockToggle fires", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: true, quantity: 1, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		await user.click(screen.getByTestId("restock-item-1"));
 
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ orderItemId: "item-1", restock: false })]),
 		);
@@ -553,13 +668,13 @@ describe("CreateRefundForm", () => {
 	it("calls form.getFieldValue and form.setFieldValue when 'Tout sélectionner' is clicked", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: false, quantity: 0, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		await user.click(screen.getByText("Tout sélectionner"));
 
-		expect(mockForm.getFieldValue).toHaveBeenCalledWith("items");
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockGetFieldValue).toHaveBeenCalledWith("items");
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ orderItemId: "item-1", selected: true })]),
 		);
@@ -568,13 +683,13 @@ describe("CreateRefundForm", () => {
 	it("sets quantity to available quantity when 'Tout sélectionner' is clicked", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: false, quantity: 0, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		await user.click(screen.getByText("Tout sélectionner"));
 
 		// getAvailableQuantity mock returns 1 by default
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ quantity: 1 })]),
 		);
@@ -582,31 +697,70 @@ describe("CreateRefundForm", () => {
 
 	// ─── handleReasonChange ───────────────────────────────────────────────────
 
-	it("calls form.setFieldValue for reason and items when a reason SelectItem is clicked", async () => {
+	it("recomputes item restock (form.setFieldValue items) when reason changes", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: false, quantity: 0, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
-		await user.click(screen.getByTestId("select-item-DEFECTIVE"));
+		await user.selectOptions(screen.getByTestId("select"), "DEFECTIVE");
 
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith("reason", "DEFECTIVE");
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith("items", expect.any(Array));
+		expect(mockSetFieldValue).toHaveBeenCalledWith("items", expect.any(Array));
 	});
 
-	it("updates restock on all items when reason changes", async () => {
+	it("updates restock on all items when reason changes to a non-restock reason", async () => {
 		const user = userEvent.setup();
 		const currentItems = [{ orderItemId: "item-1", selected: false, quantity: 0, restock: true }];
-		mockForm.getFieldValue.mockReturnValue(currentItems as any);
+		mockGetFieldValue.mockReturnValue(currentItems);
 
 		render(<CreateRefundForm order={createMockOrder()} />);
 		// DEFECTIVE → getDefaultRestock returns false
-		await user.click(screen.getByTestId("select-item-DEFECTIVE"));
+		await user.selectOptions(screen.getByTestId("select"), "DEFECTIVE");
 
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith(
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
 			"items",
 			expect.arrayContaining([expect.objectContaining({ restock: false })]),
 		);
+	});
+
+	// F4 : un toggle restock manuel marque restockTouched pour protéger l'override.
+	it("flags restockTouched when onRestockToggle fires (F4)", async () => {
+		const user = userEvent.setup();
+		const currentItems = [{ orderItemId: "item-1", selected: true, quantity: 1, restock: true }];
+		mockGetFieldValue.mockReturnValue(currentItems);
+
+		render(<CreateRefundForm order={createMockOrder()} />);
+		await user.click(screen.getByTestId("restock-item-1"));
+
+		expect(mockSetFieldValue).toHaveBeenCalledWith(
+			"items",
+			expect.arrayContaining([
+				expect.objectContaining({ orderItemId: "item-1", restock: false, restockTouched: true }),
+			]),
+		);
+	});
+
+	// F4 : changer de motif ne doit PAS écraser le restock d'un bijou touché manuellement.
+	it("preserves manually-toggled restock when reason changes (F4)", async () => {
+		const user = userEvent.setup();
+		const currentItems = [
+			{ orderItemId: "item-1", selected: true, quantity: 1, restock: true, restockTouched: true },
+			{ orderItemId: "item-2", selected: true, quantity: 1, restock: true },
+		];
+		mockGetFieldValue.mockReturnValue(currentItems);
+
+		render(<CreateRefundForm order={createMockOrder()} />);
+		// DEFECTIVE → getDefaultRestock renvoie false
+		await user.selectOptions(screen.getByTestId("select"), "DEFECTIVE");
+
+		const updatedItems = mockSetFieldValue.mock.calls
+			.filter(([field]) => field === "items")
+			.at(-1)?.[1] as { orderItemId: string; restock: boolean }[];
+		const item1 = updatedItems.find((i) => i.orderItemId === "item-1");
+		const item2 = updatedItems.find((i) => i.orderItemId === "item-2");
+		// item-1 (touché) garde son restock=true ; item-2 (non touché) passe au défaut=false
+		expect(item1?.restock).toBe(true);
+		expect(item2?.restock).toBe(false);
 	});
 
 	it("shows 'Stock restauré par défaut' hint when reason is CUSTOMER_REQUEST", () => {
@@ -623,14 +777,6 @@ describe("CreateRefundForm", () => {
 	});
 
 	// ─── Note textarea ────────────────────────────────────────────────────────
-
-	it("calls form.setFieldValue with 'note' when textarea changes", async () => {
-		const user = userEvent.setup();
-		render(<CreateRefundForm order={createMockOrder()} />);
-		const textarea = screen.getByTestId("note-textarea");
-		await user.type(textarea, "Remboursement urgent");
-		expect(mockForm.setFieldValue).toHaveBeenCalledWith("note", expect.any(String));
-	});
 
 	it("renders textarea with current note value from store", () => {
 		mockFormState.note = "Note existante";
@@ -652,11 +798,14 @@ describe("CreateRefundForm", () => {
 
 	// ─── Submit button disabled state ─────────────────────────────────────────
 
-	it("disables submit button when canSubmitRefund returns false", () => {
+	it("keeps submit button enabled when canSubmitRefund returns false so validation can surface (F2)", () => {
+		// F2 : le bouton n'est plus désactivé sur l'état invalide — un clic déclenche
+		// form.handleSubmit() qui incrémente submissionAttempts et affiche l'ErrorSummary.
 		vi.mocked(canSubmitRefund).mockReturnValue(false);
+		mockIsPending.value = false;
 		render(<CreateRefundForm order={createMockOrder()} />);
 		const submitBtn = screen.getByRole("button", { name: /Créer la demande/ });
-		expect(submitBtn).toBeDisabled();
+		expect(submitBtn).not.toBeDisabled();
 	});
 
 	it("enables submit button when canSubmitRefund returns true", () => {
@@ -684,22 +833,6 @@ describe("CreateRefundForm", () => {
 		expect(hiddenOrderId.value).toBe("order-1");
 	});
 
-	it("renders hidden field for reason with current reason value", () => {
-		mockFormState.reason = "WRONG_ITEM";
-		render(<CreateRefundForm order={createMockOrder()} />);
-		const hiddenReason = document.querySelector('input[name="reason"]') as HTMLInputElement;
-		expect(hiddenReason).not.toBeNull();
-		expect(hiddenReason.value).toBe("WRONG_ITEM");
-	});
-
-	it("renders hidden field for note with current note value", () => {
-		mockFormState.note = "Note test";
-		render(<CreateRefundForm order={createMockOrder()} />);
-		const hiddenNote = document.querySelector('input[name="note"]') as HTMLInputElement;
-		expect(hiddenNote).not.toBeNull();
-		expect(hiddenNote.value).toBe("Note test");
-	});
-
 	it("renders hidden field for items as JSON of itemsForAction", () => {
 		mockFormState.itemsForAction = [{ orderItemId: "item-1", quantity: 1, restock: true }];
 		render(<CreateRefundForm order={createMockOrder()} />);
@@ -710,13 +843,17 @@ describe("CreateRefundForm", () => {
 		]);
 	});
 
+	it("does not render a separate hidden input for reason (submitted by the SelectField)", () => {
+		render(<CreateRefundForm order={createMockOrder()} />);
+		expect(document.querySelector('input[type="hidden"][name="reason"]')).toBeNull();
+	});
+
 	// ─── Selected items count in summary ─────────────────────────────────────
 
 	it("shows selected items count of 0 when no items are selected", () => {
 		mockFormState.selectedItems = [];
 		render(<CreateRefundForm order={createMockOrder()} />);
 		expect(screen.getByText("Bijoux sélectionnés")).toBeInTheDocument();
-		// Count is shown next to the label
 		const summarySection = screen.getByText("Bijoux sélectionnés").closest("div");
 		expect(summarySection?.textContent).toContain("0");
 	});
@@ -791,6 +928,19 @@ describe("CreateRefundForm", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
 		const selectEl = screen.getByTestId("select");
 		expect(selectEl).toHaveAttribute("data-disabled", "false");
+	});
+
+	// ─── Cancelled order confirmation (ORD-REFUND-AUDIT-003) ──────────────────
+
+	it("renders the cancelled-order confirmation checkbox when order is CANCELLED", () => {
+		render(<CreateRefundForm order={createMockOrder({ status: "CANCELLED" })} />);
+		expect(screen.getByTestId("accept-cancelled")).toBeInTheDocument();
+		expect(screen.getByText(/Cette commande est annulée/)).toBeInTheDocument();
+	});
+
+	it("does not render the cancelled-order confirmation for a non-cancelled order", () => {
+		render(<CreateRefundForm order={createMockOrder()} />);
+		expect(screen.queryByTestId("accept-cancelled")).not.toBeInTheDocument();
 	});
 
 	// ─── Submit button amount label ───────────────────────────────────────────

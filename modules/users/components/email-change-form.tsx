@@ -46,6 +46,11 @@ export function EmailChangeForm() {
 				)}
 			</form.AppField>
 
+			<p className="text-muted-foreground text-xs">
+				Un email de confirmation sera envoyé à la nouvelle adresse. Le changement ne sera effectif
+				qu&apos;après validation depuis ce lien.
+			</p>
+
 			<form.Subscribe selector={(s) => [s.canSubmit]}>
 				{([canSubmit]) => (
 					<Button type="submit" variant="outline" size="sm" disabled={!canSubmit || isPending}>

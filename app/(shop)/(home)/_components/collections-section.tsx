@@ -55,7 +55,12 @@ export async function CollectionsSection() {
 			<SkipLink targetId="collections-cta" label="Aller au lien Explorer les collections" />
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				<header className="mb-10 text-center lg:mb-14">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+					<Fade
+						y={MOTION_CONFIG.section.title.y}
+						duration={MOTION_CONFIG.section.title.duration}
+						inView
+						once
+					>
 						<SectionTitle id="collections-title">Les dernières collections</SectionTitle>
 						<HandDrawnUnderline
 							delay={MOTION_CONFIG.section.underline.delay}
@@ -66,6 +71,8 @@ export async function CollectionsSection() {
 						y={MOTION_CONFIG.section.subtitle.y}
 						delay={MOTION_CONFIG.section.subtitle.delay}
 						duration={MOTION_CONFIG.section.subtitle.duration}
+						inView
+						once
 					>
 						<p
 							id="collections-subtitle"

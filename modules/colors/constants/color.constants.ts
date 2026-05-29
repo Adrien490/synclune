@@ -37,6 +37,7 @@ export const GET_COLOR_SELECT = {
 	name: true,
 	hex: true,
 	description: true,
+	isActive: true,
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.ColorSelect;

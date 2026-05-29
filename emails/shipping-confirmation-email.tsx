@@ -12,6 +12,7 @@ interface ShippingConfirmationEmailProps {
 	trackingNumber: string;
 	trackingUrl: string | null;
 	carrierLabel: string;
+	estimatedDelivery?: string | null;
 	shippingAddress: {
 		firstName: string;
 		lastName: string;
@@ -29,6 +30,7 @@ export const ShippingConfirmationEmail = ({
 	trackingNumber,
 	trackingUrl,
 	carrierLabel,
+	estimatedDelivery,
 	shippingAddress,
 }: ShippingConfirmationEmailProps) => {
 	return (
@@ -44,7 +46,11 @@ export const ShippingConfirmationEmail = ({
 			</Section>
 
 			<Section style={{ marginBottom: "24px" }}>
-				<TrackingInfo carrierLabel={carrierLabel} trackingNumber={trackingNumber} />
+				<TrackingInfo
+					carrierLabel={carrierLabel}
+					trackingNumber={trackingNumber}
+					estimatedDelivery={estimatedDelivery}
+				/>
 			</Section>
 
 			<Section style={{ marginBottom: "24px" }}>
@@ -82,6 +88,7 @@ ShippingConfirmationEmail.PreviewProps = {
 	trackingNumber: "8N00234567890",
 	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
 	carrierLabel: "Colissimo",
+	estimatedDelivery: "12 juin 2026",
 	shippingAddress: {
 		firstName: "Marie",
 		lastName: "Dupont",

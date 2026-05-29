@@ -21,7 +21,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Changer le mot de passe</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Pour changer votre mot de passe, il faut qu&apos;il contienne au moins 6 caractères.
+						Pour changer votre mot de passe, il faut qu&apos;il contienne au moins 8 caractères.
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 				<ChangePasswordForm onOpenChange={onOpenChange} />

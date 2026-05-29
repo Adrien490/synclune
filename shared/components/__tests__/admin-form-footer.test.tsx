@@ -78,21 +78,20 @@ describe("AdminFormFooter", () => {
 	});
 
 	describe("layout classes", () => {
-		it("is a sticky bar with a separating border on mobile", () => {
+		it("is a sticky, borderless bar on mobile", () => {
 			render(<AdminFormFooter />);
 
 			const root = getFooterRoot();
 			expect(root).toHaveClass("sticky");
-			expect(root).toHaveClass("border-t");
+			expect(root).not.toHaveClass("border-t");
 			expect(root).toHaveClass("backdrop-blur-md");
 		});
 
-		it("resets to a static, borderless wrapper on desktop", () => {
+		it("resets to a static, transparent wrapper on desktop", () => {
 			render(<AdminFormFooter />);
 
 			const root = getFooterRoot();
 			expect(root).toHaveClass("md:static");
-			expect(root).toHaveClass("md:border-t-0");
 			expect(root).toHaveClass("md:bg-transparent");
 		});
 	});

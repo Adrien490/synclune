@@ -23,6 +23,7 @@ export type MicroToastVariant =
 	| "info"
 	| "warning"
 	| "error"
+	| "loading"
 	| "wishlist"
 	| "cart"
 	| "discount";
@@ -30,6 +31,18 @@ export type MicroToastVariant =
 const MAX_MESSAGE_LENGTH = 48;
 const DEFAULT_DURATION_MS = 1200;
 export const COALESCE_WINDOW_MS = 600;
+
+/**
+ * Plafond de sécurité pour la pastille `loading` (départ assumé du design
+ * fire-and-forget — câblage mobile de `toast.loading`/`toast.promise`).
+ *
+ * Une pastille `loading` est **persistante** (pas d'auto-dismiss à `duration`) :
+ * elle vit jusqu'à ce qu'un toast terminal la **morphe** (success/error réutilisent
+ * le `key` → swap icône/message sans remount) ou qu'un `hide()` explicite la ferme.
+ * Ce plafond garantit qu'une pastille orpheline (action sans toast terminal, ex.
+ * `showSuccessToast: false` sans message) ne reste jamais bloquée indéfiniment.
+ */
+export const MICRO_TOAST_LOADING_MAX_MS = 12000;
 
 function truncate(message: string): string {
 	if (message.length <= MAX_MESSAGE_LENGTH) return message;
@@ -91,7 +104,16 @@ export const useMicroToastStore = create<MicroToastState>()(
 					return;
 				}
 
-				const shouldCoalesce = within && current.visible && signature === lastShowSignature;
+				// Le loading n'est jamais coalescé (capsule persistante, pas une notif répétée).
+				const shouldCoalesce =
+					within && current.visible && variant !== "loading" && signature === lastShowSignature;
+
+				// Morph in-place : un toast terminal (success/error/…) qui remplace une
+				// pastille `loading` visible réutilise le `key` courant → la même capsule
+				// swap icône + message sans exit/enter `AnimatePresence` (pattern Dynamic
+				// Island). Sans ça, le changement de `key` re-mount = flicker.
+				const morphsFromLoading =
+					current.visible && current.variant === "loading" && variant !== "loading";
 
 				if (dismissTimer !== null) clearTimeout(dismissTimer);
 
@@ -111,23 +133,27 @@ export const useMicroToastStore = create<MicroToastState>()(
 							visible: true,
 							message: truncated,
 							variant,
-							key: now,
+							key: morphsFromLoading ? current.key : now,
 							count: 1,
 							currentDuration: duration,
 							action,
 						},
 						false,
-						"show",
+						morphsFromLoading ? "morph" : "show",
 					);
 				}
 
 				lastShowAt = now;
 				lastShowSignature = signature;
 
+				// Pastille `loading` : persistante (pas d'auto-dismiss à `duration`), bornée
+				// par un plafond de sécurité. Tout autre variant garde l'auto-dismiss normal.
+				const dismissDelay = variant === "loading" ? MICRO_TOAST_LOADING_MAX_MS : duration;
+
 				dismissTimer = setTimeout(() => {
 					set({ visible: false }, false, "auto-hide");
 					dismissTimer = null;
-				}, duration);
+				}, dismissDelay);
 			},
 			hide: () => {
 				if (dismissTimer !== null) {

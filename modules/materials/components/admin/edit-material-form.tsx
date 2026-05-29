@@ -12,6 +12,7 @@ import { ErrorSummary } from "@/shared/components/forms/error-summary";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -43,10 +44,6 @@ const FIELD_LABELS: Record<string, string> = {
 	description: "Description",
 };
 
-function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
-	withViewTransition(() => router.push(path));
-}
-
 export function EditMaterialForm({
 	material,
 	onSuccess,
@@ -77,7 +74,7 @@ export function EditMaterialForm({
 				successAction: redirectOnSuccess
 					? {
 							label: "Voir les matériaux",
-							onClick: () => navigateWithTransition(router, LIST_PATH),
+							onClick: () => withViewTransition(() => router.push(LIST_PATH)),
 						}
 					: undefined,
 				onSuccess: () => {
@@ -97,46 +94,15 @@ export function EditMaterialForm({
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || !form.state.canSubmit) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				form.state.isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, LIST_PATH);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, haptic, router, allowNavigation]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: LIST_PATH,
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		getCanSubmit: () => form.state.canSubmit,
+	});
 
 	return (
 		<form

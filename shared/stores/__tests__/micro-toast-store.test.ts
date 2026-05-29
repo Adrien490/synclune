@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	COALESCE_WINDOW_MS,
 	MICRO_TOAST_DURATION_MS,
+	MICRO_TOAST_LOADING_MAX_MS,
 	useMicroToastStore,
 } from "@/shared/stores/micro-toast-store";
 
@@ -198,6 +199,54 @@ describe("useMicroToastStore", () => {
 			useMicroToastStore.getState().show("Ajouté", "success");
 			expect(useMicroToastStore.getState().variant).toBe("success");
 			expect(useMicroToastStore.getState().visible).toBe(true);
+		});
+	});
+
+	describe("loading variant (pastille loader mobile)", () => {
+		it("does NOT auto-dismiss at the default duration (persistant)", () => {
+			useMicroToastStore.getState().show("Chargement…", "loading");
+			expect(useMicroToastStore.getState().visible).toBe(true);
+			expect(useMicroToastStore.getState().variant).toBe("loading");
+			vi.advanceTimersByTime(MICRO_TOAST_DURATION_MS * 3);
+			expect(useMicroToastStore.getState().visible).toBe(true);
+		});
+
+		it("is eventually hidden by the safety cap", () => {
+			useMicroToastStore.getState().show("Chargement…", "loading");
+			vi.advanceTimersByTime(MICRO_TOAST_LOADING_MAX_MS - 1);
+			expect(useMicroToastStore.getState().visible).toBe(true);
+			vi.advanceTimersByTime(1);
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+
+		it("morphs in place to a terminal variant, reusing the same key", () => {
+			useMicroToastStore.getState().show("Enregistrement…", "loading");
+			const loadingKey = useMicroToastStore.getState().key;
+
+			useMicroToastStore.getState().show("Enregistré", "success");
+			const state = useMicroToastStore.getState();
+			expect(state.variant).toBe("success");
+			expect(state.message).toBe("Enregistré");
+			expect(state.key).toBe(loadingKey); // morph : pas de remount
+		});
+
+		it("arms the normal auto-dismiss timer after morphing to success", () => {
+			useMicroToastStore.getState().show("Enregistrement…", "loading");
+			useMicroToastStore.getState().show("Enregistré", "success");
+			// Le success morphé reprend l'auto-dismiss normal (plus le cap loading).
+			vi.advanceTimersByTime(MICRO_TOAST_DURATION_MS - 1);
+			expect(useMicroToastStore.getState().visible).toBe(true);
+			vi.advanceTimersByTime(1);
+			expect(useMicroToastStore.getState().visible).toBe(false);
+		});
+
+		it("is never coalesced even when re-shown within the window", () => {
+			useMicroToastStore.getState().show("Chargement…", "loading");
+			const firstKey = useMicroToastStore.getState().key;
+			vi.advanceTimersByTime(100);
+			useMicroToastStore.getState().show("Chargement…", "loading");
+			expect(useMicroToastStore.getState().count).toBe(1);
+			expect(useMicroToastStore.getState().key).not.toBe(firstKey);
 		});
 	});
 

@@ -1,16 +1,21 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 import { BottomBar } from "@/shared/components/bottom-bar";
 import { useBulkSelectionContext } from "@/shared/components/data-table";
 import { Button } from "@/shared/components/ui/button";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 
 const COMPACT_BAR_HEIGHT = 64;
-const ACTION_BAR_HEIGHT = 112;
+// Une seule rangée de boutons `h-11` (44px) + padding vertical. Dimensionné au plus
+// juste : une hauteur excessive laissait les boutons flotter en haut d'une bande vide
+// (l'ancien 112px prévoyait une 2e ligne de count, absente en présentation bottom-bar).
+const ACTION_BAR_HEIGHT = 76;
 
 interface MobileSelectionBottomBarProps {
 	children: ReactNode;
@@ -35,9 +40,11 @@ interface MobileSelectionBottomBarProps {
  *   offsetter le contenu (FAB, sticky CTAs).
  * - **Deux états visuels** :
  *   - `selectedCount === 0` → mode compact (64px) : hint contextuel +
- *     bouton « Annuler ». Évite d'occuper 112px d'espace pour des boutons grisés.
- *   - `selectedCount > 0` → mode action (112px) : rend `children` (boutons
- *     bulk fournis par le module).
+ *     bouton « Tout sélectionner » (thumb-zone). Évite d'occuper plus d'espace
+ *     pour des boutons grisés. La sortie du mode passe par le header / back-button
+ *     / swipe-right / Escape (« Annuler » n'est pas dupliqué ici).
+ *   - `selectedCount > 0` → mode action (76px) : rend `children` (boutons bulk
+ *     fournis par le module), centrés verticalement sur une seule rangée.
  * - Hijack du back-button hardware Android / swipe-back iOS via `useBackButtonClose`
  *   → un retour quitte le mode sélection au lieu de la page.
  *
@@ -50,8 +57,9 @@ export function MobileSelectionBottomBar({
 	"aria-label": ariaLabel = "Actions groupées",
 	emptyHint = "Tape sur les éléments à sélectionner",
 }: MobileSelectionBottomBarProps) {
-	const { selectionMode, exitSelectionMode, pageItemIds, selectedCount } =
+	const { selectionMode, exitSelectionMode, pageItemIds, selectedCount, selectAllVisible } =
 		useBulkSelectionContext();
+	const mounted = useMounted();
 
 	const isActive = selectionMode && pageItemIds.length > 0;
 	const noSelection = selectedCount === 0;
@@ -70,9 +78,14 @@ export function MobileSelectionBottomBar({
 	// dérouterait l'attention pendant la sélection en cours.
 	useEdgeSwipe(exitSelectionMode, !isActive, { side: "right" });
 
-	if (!isActive) return null;
+	// Portalisée dans `document.body` — parité avec `AdminMobileBottomBar` (qu'elle
+	// remplace) qui est elle aussi portalisée. Garantit l'ancrage au viewport
+	// (`position: fixed`) quel que soit un éventuel containing-block ancêtre
+	// (transform/filter/contain) dans le layout admin. `useMounted` évite tout
+	// mismatch d'hydratation (document indisponible côté serveur).
+	if (!isActive || !mounted) return null;
 
-	return (
+	return createPortal(
 		<BottomBar
 			as="div"
 			breakpointClass="md:hidden"
@@ -90,20 +103,25 @@ export function MobileSelectionBottomBar({
 						<p className="text-muted-foreground truncate text-sm" aria-live="polite">
 							{emptyHint}
 						</p>
+						{/* Zone du pouce : à 0 sélectionné la 1re action utile est de
+						    commencer à sélectionner, pas d'annuler — « Annuler » reste
+						    accessible via le header sticky + back-button + swipe-right +
+						    Escape. `selectAllVisible` est idempotent (toggle page). */}
 						<Button
 							type="button"
 							variant="ghost"
 							size="sm"
-							onClick={exitSelectionMode}
+							onClick={selectAllVisible}
 							className="min-h-11 shrink-0 px-3"
 						>
-							Annuler
+							Tout sélectionner
 						</Button>
 					</div>
 				) : (
-					children
+					<div className="flex h-full items-center">{children}</div>
 				)}
 			</div>
-		</BottomBar>
+		</BottomBar>,
+		document.body,
 	);
 }

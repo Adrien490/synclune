@@ -20,9 +20,10 @@ import { ParticleBackground } from "./hero-decorations";
  * rotating word requires client JS. Decorative animations
  * (particles, scroll indicator) are dynamically imported.
  *
- * Awaits `productsPromise` inline (no Suspense) so the LCP image
- * `<link rel="preload">` is hoisted into the initial HTML head by
- * React 19 — saves ~2s LCP mobile vs streaming the hero in later.
+ * Awaits `productsPromise` inline (no Suspense) so the hero — title
+ * LCP text + desktop floating images — is in the initial SSR HTML
+ * rather than streamed in later. The mobile LCP image preload lives
+ * in LatestCreations (floating images are hidden on mobile).
  */
 export async function HeroSection({
 	productsPromise,
@@ -57,8 +58,11 @@ export async function HeroSection({
 							"radial-gradient(closest-side, var(--color-glow-lavender), transparent 70%)",
 					}}
 				/>
-				{/* Single instance — component handles responsive internally
-            (desktop: count particles, mobile: ceil(count * mobileCountRatio) with reduced blur) */}
+				{/* Single instance — handles desktop + mobile internally:
+            - desktop: `count` particules ; mobile: ceil(count * mobileCountRatio) + blur réduit
+            - particules purement ambiantes (aucun suivi de la souris)
+            - `adaptive` (défaut) réduit count + blur sur appareils contraints / Save-Data
+            - `gradient` donne du volume (dégradé radial) aux perles, gouttes et cœurs */}
 				<ParticleBackground
 					shape={["heart", "pearl", "drop", "diamond", "circle"]}
 					colors={[
@@ -72,14 +76,17 @@ export async function HeroSection({
 					opacity={[0.45, 0.8]}
 					blur={[4, 14]}
 					animationStyle="drift"
-					depthParallax={true}
+					depthParallax
+					gradient
 					mobileCountRatio={0.5}
 				/>
 				<div className="bg-background/5 absolute inset-0" />
 			</div>
 
-			{/* Floating product images - Desktop only. Server-rendered with LCP image
-			    inside so React 19 emits `<link rel="preload">` in the initial HTML. */}
+			{/* Floating product images - Desktop only (`hidden md:block`). Server-rendered
+			    in the initial HTML but lazy-loaded (no preload): preloading them would
+			    waste ~119 KiB on mobile where they're never painted (cf.
+			    hero-floating-images.test.tsx @regression mobile-lcp-preload-2026-05-24). */}
 			<HeroFloatingImages images={heroImages} />
 
 			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">

@@ -66,16 +66,29 @@ vi.mock("@/shared/components/forms", () => {
 						type?: string;
 						disabled?: boolean;
 					}) => <input type={type ?? "text"} placeholder={label} disabled={disabled} />,
+					PasswordInputField: ({ label, disabled }: { label: string; disabled?: boolean }) => (
+						<input type="password" placeholder={label} disabled={disabled} />
+					),
 					CheckboxField: ({ label, disabled }: { label: React.ReactNode; disabled?: boolean }) => (
 						<MockCheckboxField label={label} disabled={disabled} name={name} />
 					),
 				}),
-			Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
-				children([true]),
+			Subscribe: ({
+				children,
+				selector,
+			}: {
+				children: (value: unknown) => React.ReactNode;
+				selector?: (state: { canSubmit: boolean; values: { newPassword: string } }) => unknown;
+			}) =>
+				children(selector ? selector({ canSubmit: true, values: { newPassword: "" } }) : [true]),
 			handleSubmit: vi.fn(),
 		})),
 	};
 });
+
+vi.mock("@/shared/components/forms/password-strength-indicator", () => ({
+	PasswordStrengthIndicator: () => <div data-testid="password-strength" />,
+}));
 
 vi.mock("@/shared/components/ui/alert", () => ({
 	Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
@@ -205,9 +218,9 @@ describe("ChangePasswordForm", () => {
 		expect(screen.getByPlaceholderText("Confirmer le mot de passe")).toBeInTheDocument();
 	});
 
-	it("renders the password hint text for minimum length", () => {
+	it("renders the password strength indicator under the new password field", () => {
 		render(<ChangePasswordForm />);
-		expect(document.body.textContent).toContain("Minimum 6 caractères, maximum 128 caractères");
+		expect(screen.getByTestId("password-strength")).toBeInTheDocument();
 	});
 
 	it("renders a hidden input for revokeOtherSessions", () => {
@@ -252,6 +265,9 @@ describe("ChangePasswordForm", () => {
 						type?: string;
 						disabled?: boolean;
 					}) => <input type={type ?? "text"} placeholder={label} disabled={disabled} />,
+					PasswordInputField: ({ label, disabled }: { label: string; disabled?: boolean }) => (
+						<input type="password" placeholder={label} disabled={disabled} />
+					),
 					CheckboxField: ({ label, disabled }: { label: React.ReactNode; disabled?: boolean }) => (
 						<div>
 							<input type="checkbox" disabled={disabled} />
@@ -260,8 +276,14 @@ describe("ChangePasswordForm", () => {
 						</div>
 					),
 				}),
-			Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
-				children([false]),
+			Subscribe: ({
+				children,
+				selector,
+			}: {
+				children: (value: unknown) => React.ReactNode;
+				selector?: (state: { canSubmit: boolean; values: { newPassword: string } }) => unknown;
+			}) =>
+				children(selector ? selector({ canSubmit: false, values: { newPassword: "" } }) : [false]),
 			handleSubmit: vi.fn(),
 		} as unknown as ReturnType<typeof useAppForm>);
 		render(<ChangePasswordForm />);

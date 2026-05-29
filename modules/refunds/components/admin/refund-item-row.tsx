@@ -84,6 +84,7 @@ export function RefundItemRow({
 						<Input
 							id={`qty-${orderItem.id}`}
 							type="number"
+							inputMode="numeric"
 							min={1}
 							max={availableQty}
 							value={quantity}

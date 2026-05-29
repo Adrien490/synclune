@@ -14,6 +14,7 @@ import {
 	BusinessError,
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
 import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
@@ -117,9 +118,10 @@ export async function adjustSkuStock(
 
 		const previousInventory = newInventory - adjustment;
 
-		// 8. Back-in-stock notifications (fire-and-forget)
+		// 8. Back-in-stock notifications (background via `after()` : le throttle
+		// interne rallonge le travail, `after()` le préserve du freeze serverless)
 		if (previousInventory === 0 && newInventory > 0) {
-			void notifyBackInStock(sku.productId);
+			after(() => notifyBackInStock(sku.productId));
 		}
 
 		// 9. Audit log

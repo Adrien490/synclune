@@ -4,10 +4,9 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form-nextjs";
-import { ArrowLeft, Package, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 
 import { type RefundReason } from "@/app/generated/prisma/browser";
-import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import {
 	useCreateRefundForm,
@@ -18,25 +17,7 @@ import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.s
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary, type ErrorSummaryField } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
-import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Kbd } from "@/shared/components/ui/kbd";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
-import { Separator } from "@/shared/components/ui/separator";
-import { Textarea } from "@/shared/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -45,7 +26,8 @@ import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
-import { RefundItemRow } from "./refund-item-row";
+import { RefundItemsCard } from "./refund-items-card";
+import { RefundSidebarCards } from "./refund-sidebar-cards";
 
 interface CreateRefundFormProps {
 	order: OrderForRefund;
@@ -87,41 +69,10 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			},
 		});
 
-	const note = useStore(form.store, (s) => s.values.note);
 	const acceptCancelledOrder = useStore(form.store, (s) => s.values.acceptCancelledOrder);
-	const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts);
-	const fieldMeta = useStore(form.store, (s) => s.fieldMeta);
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 	// ORD-REFUND-AUDIT-003 : refund sur commande déjà annulée requiert checkbox.
 	const isCancelledOrder = order.status === "CANCELLED";
-
-	const fieldErrors: ErrorSummaryField[] = [];
-	if (submissionAttempts > 0) {
-		if (selectedItems.length === 0) {
-			fieldErrors.push({
-				name: "refund-items",
-				label: FIELD_LABELS["refund-items"]!,
-				message: "Sélectionne au moins un bijou",
-			});
-		} else if (totalAmount > maxRefundable) {
-			fieldErrors.push({
-				name: "refund-items",
-				label: FIELD_LABELS["refund-items"]!,
-				message: "Le montant dépasse le maximum remboursable",
-			});
-		}
-		for (const [name, meta] of Object.entries(fieldMeta)) {
-			const errors = (meta as { errors?: unknown[] }).errors ?? [];
-			const message = errors[0];
-			if (typeof message === "string" && message.length > 0) {
-				fieldErrors.push({
-					name,
-					label: FIELD_LABELS[name] ?? name,
-					message,
-				});
-			}
-		}
-	}
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
@@ -150,7 +101,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			const target = event.target as HTMLElement | null;
 			if (
 				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[role='dialog']",
 				)
 			) {
 				return;
@@ -170,14 +121,19 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		return () => window.removeEventListener("keydown", handler);
 	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, orderDetailPath]);
 
+	// Le motif détermine le restock par défaut : recalcule les items au changement.
+	// `reason` est déjà mis à jour par field.handleChange ; on ne touche qu'aux items.
+	// Les bijoux dont le restock a été basculé manuellement (restockTouched) sont
+	// préservés pour ne pas écraser le choix de l'admin.
 	const handleReasonChange = (value: RefundReason) => {
 		haptic("selection");
-		form.setFieldValue("reason", value);
 		const defaultRestock = getDefaultRestock(value);
 		const currentItems = form.getFieldValue("items");
 		form.setFieldValue(
 			"items",
-			currentItems.map((item) => ({ ...item, restock: defaultRestock })),
+			currentItems.map((item) =>
+				item.restockTouched ? item : { ...item, restock: defaultRestock },
+			),
 		);
 	};
 
@@ -220,7 +176,9 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		form.setFieldValue(
 			"items",
 			currentItems.map((item) =>
-				item.orderItemId === orderItemId ? { ...item, restock: checked } : item,
+				item.orderItemId === orderItemId
+					? { ...item, restock: checked, restockTouched: true }
+					: item,
 			),
 		);
 	};
@@ -298,7 +256,6 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							"bg-muted flex items-center justify-between rounded-md px-3 py-2 text-sm",
 							totalAmount > maxRefundable && "bg-destructive/10 text-destructive",
 						)}
-						aria-live="polite"
 					>
 						<span>
 							{selectedItems.length} bijou{selectedItems.length > 1 ? "x" : ""} sélectionné
@@ -311,34 +268,67 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 
 			<form
 				ref={formRef}
-				action={action}
 				aria-label="Formulaire de remboursement"
+				aria-busy={isPending}
 				onInvalidCapture={onInvalidCapture}
 				onSubmit={(event) => {
-					if (!canSubmit) {
-						event.preventDefault();
-						focusFirstInvalid();
-					}
+					event.preventDefault();
+					if (isPending || form.state.isSubmitting) return;
+					const formData = new FormData(event.currentTarget);
+					void form.handleSubmit().then(() => {
+						if (form.state.isValid && canSubmit) {
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					});
 				}}
 				className="space-y-6"
 			>
-				{/* Hidden fields */}
+				{/* Hidden fields — reason/note/acceptCancelledOrder sont soumis par les field components */}
 				<input type="hidden" name="orderId" value={order.id} />
-				<input type="hidden" name="reason" value={reason} />
-				<input type="hidden" name="note" value={note} />
 				<input type="hidden" name="items" value={JSON.stringify(itemsForAction)} />
-				<input
-					type="hidden"
-					name="acceptCancelledOrder"
-					value={acceptCancelledOrder ? "true" : "false"}
-				/>
 
-				{fieldErrors.length > 0 && (
-					<ErrorSummary
-						fieldErrors={fieldErrors}
-						ariaLive={totalAmount > maxRefundable ? "assertive" : "polite"}
-					/>
-				)}
+				{/* Résumé d'erreurs — après une tentative de soumission */}
+				<form.Subscribe
+					selector={(state) => ({
+						submissionAttempts: state.submissionAttempts,
+						fieldMeta: state.fieldMeta,
+					})}
+				>
+					{({ submissionAttempts, fieldMeta }) => {
+						if (!submissionAttempts) return null;
+						const fieldErrors: ErrorSummaryField[] = [];
+						if (selectedItems.length === 0) {
+							fieldErrors.push({
+								name: "refund-items",
+								label: FIELD_LABELS["refund-items"]!,
+								message: "Sélectionne au moins un bijou",
+							});
+						} else if (totalAmount > maxRefundable) {
+							fieldErrors.push({
+								name: "refund-items",
+								label: FIELD_LABELS["refund-items"]!,
+								message: "Le montant dépasse le maximum remboursable",
+							});
+						}
+						for (const [name, meta] of Object.entries(
+							fieldMeta as Record<string, { errors?: unknown[] }>,
+						)) {
+							const message = (meta.errors ?? [])[0];
+							if (typeof message === "string" && message.length > 0) {
+								fieldErrors.push({ name, label: FIELD_LABELS[name] ?? name, message });
+							}
+						}
+						if (fieldErrors.length === 0) return null;
+						return (
+							<ErrorSummary
+								fieldErrors={fieldErrors}
+								ariaLive={totalAmount > maxRefundable ? "assertive" : "polite"}
+							/>
+						);
+					}}
+				</form.Subscribe>
 
 				{isCancelledOrder && (
 					<div
@@ -352,223 +342,87 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 								qu&apos;un voidInvoice ou un avoir n&apos;a pas déjà été émis depuis
 								l&apos;annulation.
 							</p>
-							<label
-								htmlFor="accept-cancelled-order"
-								className="mt-2 flex cursor-pointer items-center gap-2 text-xs font-medium"
+							<form.AppField
+								name="acceptCancelledOrder"
+								listeners={{ onChange: () => haptic("selection") }}
 							>
-								<Checkbox
-									id="accept-cancelled-order"
-									checked={acceptCancelledOrder}
-									onCheckedChange={(checked) => {
-										haptic("selection");
-										form.setFieldValue("acceptCancelledOrder", checked === true);
-									}}
-								/>
-								<span>Je confirme vouloir rembourser cette commande annulée</span>
-							</label>
+								{(field) => (
+									<field.CheckboxField label="Je confirme vouloir rembourser cette commande annulée" />
+								)}
+							</form.AppField>
 						</div>
 					</div>
 				)}
 
-				<fieldset disabled={isPending} className="grid gap-6 lg:grid-cols-3">
+				<fieldset disabled={isPending} className="grid gap-6 lg:grid-cols-3 lg:items-start">
 					{/* Left column - Items selection */}
 					<div className="space-y-6 lg:col-span-2">
-						<Card style={{ viewTransitionName: "refund-items-card" }}>
-							<CardHeader className="flex flex-row items-center justify-between gap-3">
-								<div id="refund-items">
-									<CardTitle className="font-display flex items-center gap-2 italic">
-										<Package className="size-5" aria-hidden="true" />
-										Bijoux à rembourser
-									</CardTitle>
-									<CardDescription>Choisis ce qui retourne à l&apos;atelier.</CardDescription>
-								</div>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={handleSelectToggle}
-									className="touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
-								>
-									{allSelected ? "Tout désélectionner" : "Tout sélectionner"}
-								</Button>
-							</CardHeader>
-							<CardContent>
-								<div className="space-y-4">
-									{order.items.map((orderItem) => (
-										<RefundItemRow
-											key={orderItem.id}
-											orderItem={orderItem}
-											itemState={items.find((i) => i.orderItemId === orderItem.id)}
-											isPending={isPending}
-											onToggle={handleItemToggle}
-											onQuantityChange={handleQuantityChange}
-											onRestockToggle={handleRestockToggle}
-										/>
-									))}
-								</div>
-							</CardContent>
-						</Card>
+						<RefundItemsCard
+							orderItems={order.items}
+							itemStates={items}
+							isPending={isPending}
+							allSelected={allSelected}
+							onSelectToggle={handleSelectToggle}
+							onItemToggle={handleItemToggle}
+							onQuantityChange={handleQuantityChange}
+							onRestockToggle={handleRestockToggle}
+						/>
 					</div>
 
 					{/* Right column - Sidebar (Reason + Note + Recap) */}
-					<div className="space-y-6">
-						<Card style={{ viewTransitionName: "refund-reason-card" }}>
-							<CardHeader>
-								<div className="flex items-center justify-between gap-2">
-									<CardTitle className="font-display text-base italic">
-										Motif du remboursement
-									</CardTitle>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<button
-												type="button"
-												aria-label="En savoir plus sur le restockage par motif"
-												className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
-											>
-												Restockage ?
-											</button>
-										</TooltipTrigger>
-										<TooltipContent side="bottom" className="max-w-xs">
-											Le motif détermine si le stock est restauré par défaut. Tu peux ajuster
-											manuellement par bijou ci-contre.
-										</TooltipContent>
-									</Tooltip>
-								</div>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<Select
-									value={reason}
-									onValueChange={(value) => handleReasonChange(value as RefundReason)}
-									disabled={isPending}
-								>
-									<SelectTrigger>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										{Object.entries(REFUND_REASON_LABELS).map(([value, label]) => (
-											<SelectItem key={value} value={value}>
-												{label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-
-								<div
-									className={cn(
-										"rounded p-2 text-xs",
-										restockByDefault
-											? "bg-emerald-50 text-emerald-700"
-											: "bg-amber-50 text-amber-700",
-									)}
-								>
-									{restockByDefault
-										? "Stock restauré par défaut (bijou récupéré)."
-										: "Stock non restauré par défaut (bijou perdu ou cassé)."}
-								</div>
-							</CardContent>
-						</Card>
-
-						<Card>
-							<CardHeader>
-								<CardTitle className="font-display text-base italic">
-									Note{" "}
-									<span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<Textarea
-									value={note}
-									onChange={(e) => form.setFieldValue("note", e.target.value)}
-									placeholder="Détails supplémentaires…"
-									rows={3}
-									disabled={isPending}
-								/>
-							</CardContent>
-						</Card>
-
-						<Card style={{ viewTransitionName: "refund-summary-card" }}>
-							<CardHeader>
-								<CardTitle className="font-display text-base italic">Récapitulatif</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-3">
-								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">Bijoux sélectionnés</span>
-									<span className="tabular-nums">{selectedItems.length}</span>
-								</div>
-								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">Montant du remboursement</span>
-									<span
-										className={cn(
-											"font-medium tabular-nums motion-safe:transition-colors",
-											totalAmount > maxRefundable && "text-destructive",
-										)}
-										aria-live="polite"
-									>
-										{formatEuro(totalAmount)}
-									</span>
-								</div>
-								<Separator />
-								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">Déjà remboursé</span>
-									<span className="tabular-nums">{formatEuro(alreadyRefunded)}</span>
-								</div>
-								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">Max remboursable</span>
-									<span className="tabular-nums">{formatEuro(maxRefundable)}</span>
-								</div>
-								{totalAmount > maxRefundable && (
-									<p className="text-destructive text-xs">
-										Le montant dépasse le maximum remboursable.
-									</p>
-								)}
-							</CardContent>
-						</Card>
-
-						<p className="text-muted-foreground text-center text-xs">
-							On préviendra Adrien et le client : remboursement traité sous 48h.
-						</p>
-					</div>
+					<RefundSidebarCards
+						form={form}
+						isPending={isPending}
+						restockByDefault={restockByDefault}
+						onReasonChange={handleReasonChange}
+						selectedCount={selectedItems.length}
+						totalAmount={totalAmount}
+						alreadyRefunded={alreadyRefunded}
+						maxRefundable={maxRefundable}
+					/>
 				</fieldset>
 
-				<AdminFormFooter pending={isPending}>
-					<div className="flex justify-end">
-						<Button
-							type="submit"
-							size="input"
-							disabled={!canSubmit || isPending}
-							onClick={() => haptic("medium")}
-							className={cn(
-								"w-full sm:w-auto sm:min-w-56",
-								canSubmit &&
-									!isPending &&
-									"data-[disabled=false]:shadow-[0_0_24px_var(--color-glow-pink,theme(colors.pink.300))] motion-safe:transition-shadow",
-							)}
-						>
-							{isPending ? (
-								<>
-									<RotateCcw className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									<span>Création…</span>
-								</>
-							) : (
-								<>
-									<RotateCcw className="size-4" aria-hidden="true" />
-									<span>
-										Créer la demande
-										{selectedItems.length > 0 ? ` · ${formatEuro(totalAmount)}` : ""}
-									</span>
-								</>
-							)}
-							{!isPending && (
-								<Kbd
-									aria-hidden="true"
-									className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-								>
-									⌘S
-								</Kbd>
-							)}
-						</Button>
-					</div>
-				</AdminFormFooter>
+				<form.AppForm>
+					<AdminFormFooter pending={isPending}>
+						<div className="flex justify-end">
+							<Button
+								type="submit"
+								size="input"
+								disabled={isPending}
+								onClick={() => haptic("medium")}
+								className={cn(
+									"w-full sm:w-auto sm:min-w-56",
+									canSubmit &&
+										!isPending &&
+										"data-[disabled=false]:shadow-[0_0_24px_var(--color-glow-pink,theme(colors.pink.300))] motion-safe:transition-shadow",
+								)}
+							>
+								{isPending ? (
+									<>
+										<RotateCcw className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+										<span>Création…</span>
+									</>
+								) : (
+									<>
+										<RotateCcw className="size-4" aria-hidden="true" />
+										<span>
+											Créer la demande
+											{selectedItems.length > 0 ? ` · ${formatEuro(totalAmount)}` : ""}
+										</span>
+									</>
+								)}
+								{!isPending && (
+									<Kbd
+										aria-hidden="true"
+										className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
+									>
+										⌘S
+									</Kbd>
+								)}
+							</Button>
+						</div>
+					</AdminFormFooter>
+				</form.AppForm>
 			</form>
 		</div>
 	);

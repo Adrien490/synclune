@@ -6,9 +6,19 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { logger } from "@/shared/lib/logger";
 import { captureWishlistError } from "@/modules/wishlist/utils/capture-wishlist-error";
 import { generateUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
+import { delay } from "@/shared/utils/delay";
 
 /** Number of wishlist items processed per batch to bound Resend API latency */
 const NOTIFY_BATCH_SIZE = 50;
+
+/**
+ * Pause entre deux envois pour rester sous le rate-limit Resend (2 req/s par
+ * défaut) sur un restock populaire (N wishlists → N emails séquentiels). Évite
+ * la rafale de 429 qui ouvrirait le circuit breaker (`resendCircuitBreaker`),
+ * lequel se mettrait alors à droper les emails. ~2,8 envois/s avec le coût
+ * render+réseau déjà présent. Sautée après le dernier item d'une boucle.
+ */
+const NOTIFY_SEND_INTERVAL_MS = 350;
 
 const NOTIFY_ITEM_SELECT = {
 	id: true,
@@ -138,7 +148,8 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 					batchesScanned += 1;
 					const notifiedItemIds: string[] = [];
 
-					for (const item of wishlistItems) {
+					for (let i = 0; i < wishlistItems.length; i++) {
+						const item = wishlistItems[i]!;
 						const success = await sendNotification(item, productId);
 						if (success) {
 							notifiedItemIds.push(item.id);
@@ -146,6 +157,9 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 						} else {
 							failedItems.push(item);
 						}
+						// Throttle entre envois (sauf le dernier du lot) pour ne pas
+						// saturer le rate-limit Resend.
+						if (i < wishlistItems.length - 1) await delay(NOTIFY_SEND_INTERVAL_MS);
 					}
 
 					if (notifiedItemIds.length > 0) {
@@ -172,7 +186,8 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 
 					const retrySuccessIds: string[] = [];
 
-					for (const item of failedItems) {
+					for (let i = 0; i < failedItems.length; i++) {
+						const item = failedItems[i]!;
 						const success = await sendNotification(item, productId);
 						if (success) {
 							retrySuccessIds.push(item.id);
@@ -190,6 +205,8 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 								},
 							);
 						}
+						// Throttle entre envois (sauf le dernier) — idem boucle principale.
+						if (i < failedItems.length - 1) await delay(NOTIFY_SEND_INTERVAL_MS);
 					}
 
 					if (retrySuccessIds.length > 0) {

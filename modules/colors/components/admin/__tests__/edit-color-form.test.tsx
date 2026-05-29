@@ -50,6 +50,7 @@ const baseColor = {
 	slug: "or-rose-18k",
 	hex: "#B76E79",
 	description: "Or alliage cuivre" as string | null,
+	isActive: true,
 };
 
 describe("EditColorForm", () => {

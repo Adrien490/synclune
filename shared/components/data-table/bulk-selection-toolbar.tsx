@@ -6,6 +6,7 @@ import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { useDeferredValue, type ReactNode } from "react";
 import { useBulkSelectionContext } from "./bulk-selection-context";
+import { formatSelectionCount } from "./format-selection-count";
 
 interface BulkSelectionToolbarProps {
 	itemsLabel: { singular: string; plural: string };
@@ -41,8 +42,7 @@ export function BulkSelectionToolbar({
 	"aria-busy": ariaBusy,
 }: BulkSelectionToolbarProps) {
 	const { selectedCount, clear } = useBulkSelectionContext();
-	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
-	const countText = `${selectedCount} ${label} sélectionné${selectedCount > 1 ? "s" : ""}`;
+	const countText = formatSelectionCount(selectedCount, itemsLabel);
 	// Débouncer les annonces SR sur tap rapide (pattern identique à MobileSelectionHeader).
 	// Hook avant tout early-return (Rules of Hooks).
 	const deferredCountText = useDeferredValue(countText);

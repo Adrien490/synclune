@@ -181,24 +181,59 @@ describe("LongPressMenuLink", () => {
 		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 
-	it("does NOT open the menu when disabled", () => {
+	it("opens the menu via the ContextMenu key (keyboard escape hatch)", () => {
 		render(
 			<LongPressMenuLink
 				href="/admin/items/1"
 				ariaLabel="Item 1"
 				sections={SECTIONS}
 				menuTitle="Actions"
-				disabled
 			>
 				<span>card</span>
 			</LongPressMenuLink>,
 		);
 
 		const link = screen.getByRole("link", { name: "Item 1" });
-		fireEvent.touchStart(link, { touches: touch(0, 0) });
-		act(() => {
-			vi.advanceTimersByTime(500);
-		});
+		fireEvent.keyDown(link, { key: "ContextMenu" });
+
+		expect(screen.getByRole("menu", { name: "Actions" })).toBeInTheDocument();
+		expect(mockHaptic).toHaveBeenCalledTimes(1);
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("opens the menu via Shift+F10 (keyboard escape hatch)", () => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+
+		const link = screen.getByRole("link", { name: "Item 1" });
+		fireEvent.keyDown(link, { key: "F10", shiftKey: true });
+
+		expect(screen.getByRole("menu", { name: "Actions" })).toBeInTheDocument();
+	});
+
+	it("does NOT open the menu on unrelated key presses", () => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+
+		const link = screen.getByRole("link", { name: "Item 1" });
+		fireEvent.keyDown(link, { key: "F10" }); // sans shift
+		fireEvent.keyDown(link, { key: "Enter" });
 
 		expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 	});

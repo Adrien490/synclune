@@ -151,10 +151,12 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 
 interface DiscoverSectionProps extends SectionProps {
 	homeItem?: { href: string; label: string };
+	aboutItem?: { href: string; label: string };
 }
 
 export function DiscoverSection({
 	homeItem,
+	aboutItem,
 	isMenuItemActive,
 	itemVariants,
 	delay,
@@ -173,6 +175,16 @@ export function DiscoverSection({
 				>
 					{homeItem.label}
 				</NavLink>
+				{aboutItem && (
+					<NavLink
+						href={aboutItem.href}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(70, 1)}
+					>
+						{aboutItem.label}
+					</NavLink>
+				)}
 			</ul>
 		</section>
 	);

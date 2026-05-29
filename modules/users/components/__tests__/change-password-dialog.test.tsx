@@ -18,6 +18,9 @@ vi.mock("@/shared/components/forms", () => ({
 		AppField: ({ children }: { name: string; children: (f: unknown) => React.ReactNode }) =>
 			children({
 				InputField: ({ label }: { label: string }) => <input aria-label={label} />,
+				PasswordInputField: ({ label }: { label: string }) => (
+					<input type="password" aria-label={label} />
+				),
 				CheckboxField: ({ label }: { label: React.ReactNode }) => (
 					<div>
 						<input type="checkbox" />
@@ -25,9 +28,13 @@ vi.mock("@/shared/components/forms", () => ({
 					</div>
 				),
 			}),
-		Subscribe: ({ children }: { children: (v: unknown[]) => React.ReactNode }) => children([true]),
+		Subscribe: ({ children }: { children: (v: unknown) => React.ReactNode }) => children([true]),
 		handleSubmit: vi.fn(),
 	})),
+}));
+
+vi.mock("@/shared/components/forms/password-strength-indicator", () => ({
+	PasswordStrengthIndicator: () => <div data-testid="password-strength" />,
 }));
 
 vi.mock("@/shared/components/ui/alert", () => ({
@@ -113,9 +120,9 @@ describe("ChangePasswordDialog", () => {
 		expect(screen.getByRole("heading", { name: /Changer le mot de passe/i })).toBeInTheDocument();
 	});
 
-	it("renders the dialog description mentioning 6 characters minimum", () => {
+	it("renders the dialog description mentioning 8 characters minimum", () => {
 		render(<ChangePasswordDialog open={true} onOpenChange={vi.fn()} />);
-		expect(document.body.textContent).toContain("6 caractères");
+		expect(document.body.textContent).toContain("8 caractères");
 	});
 
 	it("renders the ChangePasswordForm inside the dialog", () => {

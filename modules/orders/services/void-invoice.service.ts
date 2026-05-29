@@ -8,6 +8,7 @@ import {
 	sendAdminSequenceOverflowAlert,
 } from "@/modules/emails/services/admin-emails";
 import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
+import { getParisDateParts } from "@/shared/utils/timezone";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
 
@@ -147,9 +148,12 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 				// (advisory lock 2_000_000+year + lookup UNION). Garantit l'unicité
 				// cross-table que les CHECK/UNIQUE par table ne couvrent pas
 				// (EINV-PRISMA-001).
-				const year = new Date().getFullYear();
-				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
+				// Millésime dérivé de l'heure de Paris (pas UTC) : un void à
+				// 2026-12-31 23:30 UTC = 2027-01-01 Paris doit porter A-2027,
+				// cohérent avec la numérotation facture (EINV-SEQ-002 / Art. 286).
 				const now = new Date();
+				const year = getParisDateParts(now).year;
+				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 
 				const updated = await tx.order.update({
 					where: { id: orderId },
@@ -235,7 +239,7 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 			const errorMessage = e instanceof Error ? e.message : String(e);
 			if (e instanceof BusinessError && e.code === "CREDIT_NOTE_SEQUENCE_OVERFLOW") {
 				await sendAdminSequenceOverflowAlert({
-					year: new Date().getFullYear(),
+					year: getParisDateParts(new Date()).year,
 					documentType: "credit-note",
 				}).catch((alertError) =>
 					logger.error("sendAdminSequenceOverflowAlert threw", alertError, {

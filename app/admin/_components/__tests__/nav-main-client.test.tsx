@@ -65,6 +65,19 @@ vi.mock("@/shared/components/ui/sidebar", () => ({
 			{children}
 		</div>
 	),
+	SidebarMenuBadge: ({
+		children,
+		className,
+		...rest
+	}: {
+		children: React.ReactNode;
+		className?: string;
+		[key: string]: unknown;
+	}) => (
+		<div data-testid="sidebar-menu-badge" className={className} {...rest}>
+			{children}
+		</div>
+	),
 }));
 
 import { NavMainClient } from "../nav-main-client";
@@ -151,6 +164,63 @@ describe("NavMainClient", () => {
 			expect(button.className).toMatch(/data-\[active=true\]:bg-primary\/10/);
 			expect(button.className).toMatch(/data-\[active=true\]:\[&_svg\]:text-primary/);
 			expect(button.className).toMatch(/motion-safe:before:transition-opacity/);
+		});
+	});
+
+	describe("badge (N1 — parité compteurs desktop)", () => {
+		it("does not render a badge when badge is undefined", () => {
+			render(<NavMainClient {...defaultProps} />);
+			expect(screen.queryByTestId("sidebar-menu-badge")).not.toBeInTheDocument();
+		});
+
+		it("does not render a badge when badge is 0", () => {
+			render(<NavMainClient {...defaultProps} badge={0} />);
+			expect(screen.queryByTestId("sidebar-menu-badge")).not.toBeInTheDocument();
+		});
+
+		it("renders the count when badge > 0 (visual badge is decorative)", () => {
+			render(<NavMainClient {...defaultProps} badge={5} />);
+			const badge = screen.getByTestId("sidebar-menu-badge");
+			expect(badge).toHaveTextContent("5");
+			// Le badge visuel est aria-hidden : l'info passe par le nom du lien.
+			expect(badge).toHaveAttribute("aria-hidden", "true");
+		});
+
+		it("exposes the count inside the link's accessible name", () => {
+			render(<NavMainClient {...defaultProps} badge={5} />);
+			// Le nom du lien combine le label visible + le sr-only.
+			expect(screen.getByRole("link", { name: /Commandes.*5 en attente/ })).toBeInTheDocument();
+		});
+
+		it('clamps the visual count to "99+" while keeping the exact count in the name', () => {
+			render(<NavMainClient {...defaultProps} badge={250} />);
+			expect(screen.getByTestId("sidebar-menu-badge")).toHaveTextContent("99+");
+			expect(screen.getByRole("link", { name: /Commandes.*250 en attente/ })).toBeInTheDocument();
+		});
+
+		it("renders the collapsed-mode alert dot (N2) only when badged", () => {
+			const { container, rerender } = render(<NavMainClient {...defaultProps} />);
+			expect(
+				container.querySelector("span.group-data-\\[collapsible\\=icon\\]\\:block"),
+			).not.toBeInTheDocument();
+
+			rerender(<NavMainClient {...defaultProps} badge={3} />);
+			expect(
+				container.querySelector("span.group-data-\\[collapsible\\=icon\\]\\:block"),
+			).toBeInTheDocument();
+		});
+
+		it("enriches the tooltip with the pending count when badged (N3)", () => {
+			render(<NavMainClient {...defaultProps} badge={3} />);
+			expect(screen.getByTestId("sidebar-menu-button")).toHaveAttribute(
+				"title",
+				"Commandes (3 en attente)",
+			);
+		});
+
+		it("keeps the plain tooltip when not badged", () => {
+			render(<NavMainClient {...defaultProps} />);
+			expect(screen.getByTestId("sidebar-menu-button")).toHaveAttribute("title", "Commandes");
 		});
 	});
 });

@@ -9,6 +9,8 @@ interface CollectionImagesGridProps {
 	images: CollectionImage[];
 	collectionName: string;
 	isAboveFold?: boolean;
+	/** LCP candidate (1re carte) — seule l'image principale recoit fetchPriority=high. */
+	isLcpCandidate?: boolean;
 	variant?: CollectionImagesVariant;
 	/** Collection slug — forwarded to the first image as view-transition-name key. */
 	collectionSlug?: string;
@@ -27,6 +29,7 @@ export function CollectionImagesGrid({
 	images,
 	collectionName,
 	isAboveFold = false,
+	isLcpCandidate = false,
 	variant = "default",
 	collectionSlug,
 }: CollectionImagesGridProps) {
@@ -39,6 +42,7 @@ export function CollectionImagesGrid({
 				image={images[0]!}
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
+				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
 				collectionSlug={collectionSlug}
@@ -52,6 +56,7 @@ export function CollectionImagesGrid({
 				images={images}
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
+				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
 				collectionSlug={collectionSlug}
@@ -65,6 +70,7 @@ export function CollectionImagesGrid({
 				images={images}
 				collectionName={collectionName}
 				isAboveFold={isAboveFold}
+				isLcpCandidate={isLcpCandidate}
 				ariaLabel={ariaLabel}
 				variant={variant}
 				collectionSlug={collectionSlug}
@@ -77,6 +83,7 @@ export function CollectionImagesGrid({
 			images={images}
 			collectionName={collectionName}
 			isAboveFold={isAboveFold}
+			isLcpCandidate={isLcpCandidate}
 			ariaLabel={ariaLabel}
 			variant={variant}
 			collectionSlug={collectionSlug}
@@ -91,6 +98,7 @@ export function CollectionImagesGrid({
 interface LayoutProps {
 	collectionName: string;
 	isAboveFold: boolean;
+	isLcpCandidate: boolean;
 	ariaLabel: string;
 	variant: CollectionImagesVariant;
 	collectionSlug?: string;
@@ -101,6 +109,7 @@ function SingleImageLayout({
 	image,
 	collectionName,
 	isAboveFold,
+	isLcpCandidate,
 	ariaLabel,
 	variant,
 	collectionSlug,
@@ -121,6 +130,7 @@ function SingleImageLayout({
 				collectionName={collectionName}
 				index={0}
 				isAboveFold={isAboveFold}
+				isLcpCandidate={isLcpCandidate}
 				sizes={sizes}
 				staggerIndex={0}
 				collectionSlug={collectionSlug}
@@ -134,6 +144,7 @@ function TwoImagesLayout({
 	images,
 	collectionName,
 	isAboveFold,
+	isLcpCandidate,
 	ariaLabel,
 	variant,
 	collectionSlug,
@@ -156,6 +167,7 @@ function TwoImagesLayout({
 						collectionName={collectionName}
 						index={i}
 						isAboveFold={isAboveFold && i === 0}
+						isLcpCandidate={isLcpCandidate && i === 0}
 						sizes={sizes}
 						staggerIndex={i}
 						collectionSlug={collectionSlug}
@@ -171,6 +183,7 @@ function ThreeImagesLayout({
 	images,
 	collectionName,
 	isAboveFold,
+	isLcpCandidate,
 	ariaLabel,
 	variant,
 	collectionSlug,
@@ -197,6 +210,7 @@ function ThreeImagesLayout({
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
+					isLcpCandidate={isLcpCandidate}
 					sizes={mainSizes}
 					staggerIndex={0}
 					collectionSlug={collectionSlug}
@@ -223,6 +237,7 @@ function BentoGridLayout({
 	images,
 	collectionName,
 	isAboveFold,
+	isLcpCandidate,
 	ariaLabel,
 	variant,
 	collectionSlug,
@@ -259,6 +274,7 @@ function BentoGridLayout({
 					collectionName={collectionName}
 					index={0}
 					isAboveFold={isAboveFold}
+					isLcpCandidate={isLcpCandidate}
 					sizes={mainSizes}
 					staggerIndex={0}
 					collectionSlug={collectionSlug}

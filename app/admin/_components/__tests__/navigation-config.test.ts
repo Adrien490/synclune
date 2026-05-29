@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	badgeAriaLabel,
 	getAllNavItems,
 	getQuickAccessItems,
 	navigationData,
@@ -121,5 +122,25 @@ describe("getQuickAccessItems", () => {
 			expect(item).toHaveProperty("url");
 			expect(item).toHaveProperty("icon");
 		}
+	});
+});
+
+describe("badgeAriaLabel", () => {
+	it("uses the singular noun for a count of 1", () => {
+		expect(badgeAriaLabel("orders", 1)).toBe("1 commande en attente");
+		expect(badgeAriaLabel("refunds", 1)).toBe("1 remboursement en attente");
+	});
+
+	it("uses the plural noun for counts > 1", () => {
+		expect(badgeAriaLabel("orders", 5)).toBe("5 commandes en attente");
+		expect(badgeAriaLabel("refunds", 12)).toBe("12 remboursements en attente");
+	});
+
+	it("keeps the exact count even beyond the visual 99+ clamp", () => {
+		expect(badgeAriaLabel("orders", 250)).toBe("250 commandes en attente");
+	});
+
+	it("falls back to a generic label for unknown ids", () => {
+		expect(badgeAriaLabel("products", 3)).toBe("3 en attente");
 	});
 });

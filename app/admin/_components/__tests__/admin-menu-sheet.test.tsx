@@ -11,6 +11,7 @@ const {
 	mockOpenMenu,
 	mockCloseMenu,
 	mockUsePathname,
+	mockRouterPush,
 	mockTriggerHaptic,
 	mockSheetContentProps,
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
 	mockOpenMenu: vi.fn(),
 	mockCloseMenu: vi.fn(),
 	mockUsePathname: vi.fn(() => "/admin"),
+	mockRouterPush: vi.fn(),
 	mockTriggerHaptic: vi.fn(),
 	// Capture handler props passed to SheetContent so tests can invoke them with a
 	// synthetic event (otherwise unreachable without a real Vaul portal).
@@ -43,6 +45,7 @@ vi.mock("lucide-react", async (importOriginal) => {
 
 vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
+	useRouter: () => ({ push: mockRouterPush }),
 }));
 
 vi.mock("next/link", () => ({
@@ -253,9 +256,19 @@ describe("AdminMenuSheet", () => {
 
 		it("renders external link to site", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			const link = screen.getByLabelText("Voir le site (nouvel onglet)");
+			const link = screen.getByRole("link", { name: /Voir le site/ });
 			expect(link).toHaveAttribute("href", "/");
 			expect(link).toHaveAttribute("target", "_blank");
+		});
+
+		it("announces the new-tab behaviour to screen readers (WCAG 2.5.3)", () => {
+			render(<AdminMenuSheet user={defaultUser} />);
+			// Visible label stays "Voir le site"; the sr-only suffix makes the
+			// accessible name "Voir le site (ouvre dans un nouvel onglet)".
+			const link = screen.getByRole("link", {
+				name: /Voir le site.*ouvre dans un nouvel onglet/,
+			});
+			expect(link).toBeInTheDocument();
 		});
 	});
 
@@ -368,6 +381,38 @@ describe("AdminMenuSheet", () => {
 		});
 	});
 
+	describe("search Enter navigation (Lot C)", () => {
+		it("navigates to the first filtered result on Enter", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "command" } });
+			fireEvent.keyDown(input, { key: "Enter" });
+
+			expect(mockRouterPush).toHaveBeenCalledWith("/admin/ventes/commandes");
+			expect(mockCloseMenu).toHaveBeenCalled();
+		});
+
+		it("does nothing on Enter when there are no results", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "xyznope" } });
+			fireEvent.keyDown(input, { key: "Enter" });
+
+			expect(mockRouterPush).not.toHaveBeenCalled();
+		});
+
+		it('exposes enterKeyHint="go" only when results exist', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			expect(input).toHaveAttribute("enterkeyhint", "done");
+			fireEvent.change(input, { target: { value: "command" } });
+			expect(input).toHaveAttribute("enterkeyhint", "go");
+		});
+	});
+
 	describe("scroll fade (P2.4)", () => {
 		it("wraps nav in ScrollFade with vertical axis and fadeFromClass=from-muted", () => {
 			mockIsOpen.current = true;
@@ -443,6 +488,22 @@ describe("AdminMenuSheet", () => {
 			expect(opening).toHaveAttribute("aria-live", "polite");
 		});
 
+		it("surfaces the actionable pending total when badges are present", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 3, refunds: 2 }} />);
+			const statusNodes = screen.getAllByRole("status");
+			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
+			expect(opening?.textContent).toMatch(/5 éléments à traiter/);
+		});
+
+		it("omits the pending total when there is nothing to handle", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 0 }} />);
+			const statusNodes = screen.getAllByRole("status");
+			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
+			expect(opening?.textContent).not.toMatch(/à traiter/);
+		});
+
 		it("hides the opening live region while searching", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
@@ -504,7 +565,7 @@ describe("AdminMenuSheet", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 			mockTriggerHaptic.mockClear();
 
-			fireEvent.click(screen.getByLabelText("Voir le site (nouvel onglet)"));
+			fireEvent.click(screen.getByRole("link", { name: /Voir le site/ }));
 			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 		});
 	});
@@ -602,7 +663,7 @@ describe("AdminMenuSheet", () => {
 		it('passes prefetch={false} on the "Voir le site" external link', () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			const external = screen.getByLabelText("Voir le site (nouvel onglet)");
+			const external = screen.getByRole("link", { name: /Voir le site/ });
 			expect(external).toHaveAttribute("data-prefetch", "false");
 		});
 	});

@@ -192,7 +192,8 @@ describe("RejectRefundAlertDialog", () => {
 	it("shows label associated with rejection reason textarea", () => {
 		render(<RejectRefundAlertDialog />);
 
-		expect(screen.getByText("Raison du refus (optionnel)")).toBeInTheDocument();
+		expect(screen.getByText(/Raison du refus/)).toBeInTheDocument();
+		expect(screen.getByText("(Optionnel)")).toBeInTheDocument();
 	});
 
 	it("disables textarea when isPending is true", () => {

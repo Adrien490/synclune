@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	mockPrisma,
@@ -380,6 +380,64 @@ describe("voidInvoice", () => {
 			expect(result.kind).toBe("voided");
 			if (result.kind !== "voided") throw new Error("expected voided");
 			expect(result.creditNoteNumber).toBe(`A-${year}-99999`);
+		});
+	});
+
+	/**
+	 * @regression credit-note-year-boundary-paris-2026-05-29
+	 *
+	 * F1 (audit e-invoicing 2026-05-29) : le millésime de l'avoir est dérivé de
+	 * l'heure de Paris (`getParisDateParts`), pas de l'UTC. Un void à
+	 * 2026-12-31 23:30 UTC = 2027-01-01 00:30 Paris (+1h hiver) doit consommer
+	 * la séquence A-2027, cohérent avec la numérotation facture (Art. 286 CGI).
+	 */
+	describe("millésime avoir en Europe/Paris (F1)", () => {
+		beforeEach(() => {
+			vi.useFakeTimers();
+		});
+
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		it("emits A-2027 for a void at 2026-12-31 23:30 UTC (= 2027 Paris)", async () => {
+			vi.setSystemTime(new Date("2026-12-31T23:30:00Z"));
+
+			const tx = makeTx();
+			tx.order.findUnique.mockResolvedValue({
+				id: "order-ny",
+				userId: "user-1",
+				invoiceNumber: "F-2026-00200",
+				invoiceStatus: "GENERATED",
+				invoiceVoidedAt: null,
+				creditNoteNumber: null,
+			});
+			// Aucun avoir 2027 préexistant → séquence repart à 00001.
+			tx.$queryRaw.mockResolvedValue([]);
+			tx.order.update.mockResolvedValue({
+				invoiceVoidedAt: new Date(),
+				creditNoteNumber: "A-2027-00001",
+				creditNoteGeneratedAt: new Date(),
+				userId: "user-1",
+			});
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: FakeTx) => Promise<unknown>) =>
+				fn(tx),
+			);
+
+			const result = await voidInvoice({ orderId: "order-ny", ...AUTHOR });
+
+			expect(result.kind).toBe("voided");
+			if (result.kind !== "voided") throw new Error("expected voided");
+			// Le numéro passé à l'update porte bien le millésime Paris (2027).
+			expect(tx.order.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ creditNoteNumber: "A-2027-00001" }),
+				}),
+			);
+			// Le lookup de séquence interroge le préfixe A-2027 (pas A-2026).
+			const queryArgs = tx.$queryRaw.mock.calls[0]?.[0];
+			expect(String(queryArgs)).toContain("A-2027-");
+			expect(String(queryArgs)).not.toContain("A-2026-");
 		});
 	});
 });

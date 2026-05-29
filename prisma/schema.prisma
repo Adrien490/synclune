@@ -631,6 +631,7 @@ enum OrderAction {
   PDF_ARCHIVE_FAILED // Echec upload UploadThing du PDF facture (audit monitoring 2026-05-28)
   CREDIT_NOTE_FAILED // Echec emission avoir post-refund (intervention admin requise)
   CREDIT_NOTE_GENERATED // Avoir emis (refund partiel ou total) — distinct de INVOICE_VOIDED (full void)
+  CREDIT_NOTE_ARCHIVED // PDF avoir uploade sur UploadThing (snapshot immuable L102 B LPF — symetrie INVOICE_ARCHIVED)
   INVOICE_RECONCILED // Anomalie facture rattrapee par cron reconcile-invoices
   INVOICE_DOWNLOADED // Telechargement PDF facture (audit RGPD Art. 32 - EINV-SEC-002)
   BULK_EXPORT // Export CSV de masse (audit RGPD Art. 30 / livre de recettes - EINV-SEC-005)

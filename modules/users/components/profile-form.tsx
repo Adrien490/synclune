@@ -31,7 +31,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 	});
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-6">
 			<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
 				<RequiredFieldsNote />
 
@@ -62,17 +62,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
 					)}
 				</form.AppField>
 
-				<div className="space-y-2">
-					<Label htmlFor="email">Email actuel</Label>
-					<Input
-						id="email"
-						type="email"
-						value={user?.email ?? ""}
-						disabled
-						className="bg-muted cursor-not-allowed"
-					/>
-				</div>
-
 				<form.Subscribe selector={(s) => [s.canSubmit]}>
 					{([canSubmit]) => (
 						<Button type="submit" disabled={!canSubmit || isPending}>
@@ -82,7 +71,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
 				</form.Subscribe>
 			</form>
 
-			<EmailChangeForm />
+			<div className="border-border/60 space-y-3 border-t pt-4">
+				<p className="text-sm font-medium">Adresse email</p>
+				<div className="space-y-2">
+					<Label htmlFor="email" className="text-muted-foreground text-xs">
+						Email actuel
+					</Label>
+					<Input id="email" type="email" value={user?.email ?? ""} disabled />
+				</div>
+
+				<EmailChangeForm />
+			</div>
 		</div>
 	);
 }

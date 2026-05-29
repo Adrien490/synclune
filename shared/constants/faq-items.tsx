@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { BRAND } from "@/shared/constants/brand";
+import { formatEuro } from "@/shared/utils/format-euro";
 
 /**
  * SSOT des items FAQ, partagés entre la home (`HomeFaq`) et la page d'aide (`/aide`).
@@ -102,15 +104,15 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		id: "delai",
 		section: "livraison",
 		question: "Quel est le délai de livraison en France ?",
-		answerText:
-			"Les commandes sont expédiées sous 1 à 3 jours ouvrés. La livraison France métropolitaine prend ensuite 2 à 4 jours ouvrés via Colissimo (4,99 €). L'Union Européenne est livrée en 5 à 7 jours ouvrés (9,50 €).",
+		answerText: `Les commandes sont expédiées sous 1 à 3 jours ouvrés. La livraison France métropolitaine prend ensuite ${SHIPPING_RATES.FR.estimatedDays} via Colissimo (${formatEuro(SHIPPING_RATES.FR.amount)}). L'Union Européenne est livrée en ${SHIPPING_RATES.EU.estimatedDays} (${formatEuro(SHIPPING_RATES.EU.amount)}).`,
 		answer: (
 			<>
 				Les commandes sont expédiées sous{" "}
 				<strong className="text-foreground font-semibold">1 à 3 jours ouvrés</strong>. La livraison
 				France métropolitaine prend ensuite{" "}
-				<strong className="text-foreground font-semibold">2 à 4 jours ouvrés</strong> via Colissimo
-				(4,99 €). L&apos;Union Européenne est livrée en 5 à 7 jours ouvrés (9,50 €).
+				<strong className="text-foreground font-semibold">{SHIPPING_RATES.FR.estimatedDays}</strong>{" "}
+				via Colissimo ({formatEuro(SHIPPING_RATES.FR.amount)}). L&apos;Union Européenne est livrée
+				en {SHIPPING_RATES.EU.estimatedDays} ({formatEuro(SHIPPING_RATES.EU.amount)}).
 			</>
 		),
 	},

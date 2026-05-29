@@ -81,7 +81,7 @@ vi.mock("@/shared/hooks/use-mounted", () => ({
 }));
 
 // Now import the component after mocks are set up
-const { useReducedMotion, useInView, useMotionValue } = await import("motion/react");
+const { useReducedMotion, useInView } = await import("motion/react");
 const { useIsTouchDevice } = await import("@/shared/hooks/use-touch-device");
 const { useMounted } = await import("@/shared/hooks/use-mounted");
 const { ParticleBackground } = await import("./particle-background");
@@ -361,12 +361,57 @@ describe("ParticleBackground", () => {
 		expect(() => render(<ParticleBackground count={3} scrollParallax />)).not.toThrow();
 	});
 
-	it("renders with interactive prop without crashing", () => {
-		expect(() => render(<ParticleBackground count={3} interactive />)).not.toThrow();
-	});
-
 	it("renders with combined scrollFade and scrollParallax props", () => {
 		expect(() => render(<ParticleBackground count={3} scrollFade scrollParallax />)).not.toThrow();
+	});
+
+	// ─── Phase 3 new features ──────────────────────────────────────────
+
+	it("renders twinkle animation style without crashing", () => {
+		const { container } = render(<ParticleBackground count={3} animationStyle="twinkle" />);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(3);
+	});
+
+	it("renders with gradient enabled without crashing", () => {
+		// The radial-gradient fill content is asserted in utils.test.ts (getShapeStyles);
+		// jsdom does not reliably serialize color-mix()/radial-gradient inline styles.
+		const { container } = render(<ParticleBackground count={2} gradient shape="circle" />);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(2);
+	});
+
+	it("renders a constellation overlay (svg with preserveAspectRatio=none) when connect is set", () => {
+		const { container } = render(
+			<ParticleBackground count={10} connect={{ maxDistance: 100 }} shape="circle" />,
+		);
+		const root = container.firstElementChild!;
+		const overlay = root.querySelector('svg[preserveAspectRatio="none"]');
+		expect(overlay).toBeTruthy();
+		// maxDistance=100 (whole container) → every pair is linked → lines present
+		expect(overlay!.querySelectorAll("line").length).toBeGreaterThan(0);
+	});
+
+	it("does NOT render the constellation overlay under reduced motion", () => {
+		vi.mocked(useReducedMotion).mockReturnValue(true);
+		const { container } = render(
+			<ParticleBackground count={10} connect={{ maxDistance: 100 }} shape="circle" />,
+		);
+		const root = container.firstElementChild!;
+		expect(root.querySelector('svg[preserveAspectRatio="none"]')).toBeNull();
+		vi.mocked(useReducedMotion).mockReturnValue(false);
+	});
+
+	it("caps particle count to 12 when constellation mode is active", () => {
+		const { container } = render(
+			<ParticleBackground count={30} connect={{ maxDistance: 100 }} shape="circle" />,
+		);
+		const root = container.firstElementChild!;
+		expect(root.querySelectorAll("span.absolute").length).toBe(12);
+	});
+
+	it("renders with density prop without crashing (falls back to count until measured)", () => {
+		expect(() => render(<ParticleBackground count={4} density={20} />)).not.toThrow();
 	});
 });
 
@@ -391,367 +436,29 @@ describe("scrollFade opacity mapping", () => {
 		expect(mappingCall![2]).toEqual([0, 1, 1, 0]);
 	});
 
-	it("always computes scrollOpacity even without scrollFade prop", async () => {
+	it("does NOT compute scrollOpacity when no scroll feature is enabled (F5: scroll pipeline gated)", async () => {
 		const { useTransform } = await import("motion/react");
 		vi.mocked(useTransform).mockClear();
 
 		render(<ParticleBackground count={1} />);
 
-		// The mapping is always created (scrollFade only controls whether it's passed to ParticleSet)
+		// Without scrollFade/scrollParallax, useScrollFade (and its array-mapping useTransform)
+		// is never mounted — the scroll listener pipeline stays off.
+		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
+			Array.isArray(args[1]),
+		);
+		expect(mappingCall).toBeUndefined();
+	});
+
+	it("computes scrollOpacity when scrollParallax is enabled", async () => {
+		const { useTransform } = await import("motion/react");
+		vi.mocked(useTransform).mockClear();
+
+		render(<ParticleBackground count={1} scrollParallax />);
+
 		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
 			Array.isArray(args[1]),
 		);
 		expect(mappingCall).toBeDefined();
-	});
-});
-
-// ─── Parallax & mouse interaction tests ─────────────────────────────
-
-describe("ParticleBackground parallax", () => {
-	let motionValues: { initial: unknown; value: unknown; setFn: ReturnType<typeof vi.fn> }[];
-
-	beforeEach(() => {
-		mockMatchMedia({
-			"(prefers-contrast: more)": false,
-			"(forced-colors: active)": false,
-			"(min-width: 768px)": true,
-		});
-
-		// Track all useMotionValue instances to capture mouseX/mouseY
-		motionValues = [];
-		vi.mocked(useMotionValue).mockImplementation((initial) => {
-			const mv = {
-				initial,
-				value: initial,
-				get: () => mv.value,
-				set: vi.fn((v: number) => {
-					mv.value = v;
-				}),
-				setFn: vi.fn((v: number) => {
-					mv.value = v;
-				}),
-			};
-			// Wire set to also call setFn for tracking
-			mv.set = mv.setFn;
-			motionValues.push(mv);
-			return mv as any;
-		});
-	});
-
-	afterEach(() => {
-		vi.mocked(useMotionValue).mockImplementation(
-			(initial) =>
-				({
-					get: () => initial,
-					set: vi.fn(),
-				}) as any,
-		);
-	});
-
-	it("sets parallax offset on mousemove", () => {
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		// mouseX = motionValues[0], mouseY = motionValues[1] (first two useMotionValue calls)
-		const mouseXMv = motionValues[0]!;
-		const mouseYMv = motionValues[1]!;
-
-		// Mock getBoundingClientRect on the container (cached at effect setup)
-		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 0,
-			top: 0,
-			width: 200,
-			height: 200,
-			right: 200,
-			bottom: 200,
-			x: 0,
-			y: 0,
-			toJSON: () => ({}),
-		} as DOMRect);
-
-		// Mark rect as stale so it refreshes on next mousemove
-		act(() => {
-			window.dispatchEvent(new Event("scroll"));
-		});
-
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", {
-					clientX: 150,
-					clientY: 100,
-					bubbles: true,
-				}),
-			);
-		});
-
-		// mouseX = ((150 - 0) / 200 - 0.5) * 2 * 20 = 0.25 * 40 = 10
-		expect(mouseXMv.setFn).toHaveBeenCalledWith(10);
-		// mouseY = ((100 - 0) / 200 - 0.5) * 2 * 20 = 0 * 40 = 0
-		expect(mouseYMv.setFn).toHaveBeenCalledWith(0);
-	});
-
-	it("starts lerp reset on mouseleave", () => {
-		const rafCallbacks: FrameRequestCallback[] = [];
-		vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-			rafCallbacks.push(cb);
-			return rafCallbacks.length;
-		});
-		vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
-
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		const mouseXMv = motionValues[0]!;
-		const mouseYMv = motionValues[1]!;
-
-		// Set initial parallax values
-		mouseXMv.value = 10;
-		mouseYMv.value = 5;
-
-		const callsBefore = rafCallbacks.length;
-
-		act(() => {
-			root.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
-		});
-
-		// mouseleave should have scheduled a RAF callback for the lerp animation
-		expect(rafCallbacks.length).toBeGreaterThan(callsBefore);
-
-		vi.mocked(window.requestAnimationFrame).mockRestore();
-		vi.mocked(window.cancelAnimationFrame).mockRestore();
-	});
-
-	it("lerp animation converges values toward zero", () => {
-		const rafCallbacks: FrameRequestCallback[] = [];
-		let rafCounter = 1;
-		vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-			rafCallbacks.push(cb);
-			return rafCounter++;
-		});
-		vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
-		vi.spyOn(performance, "now").mockReturnValue(0);
-
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		const mouseXMv = motionValues[0]!;
-		const mouseYMv = motionValues[1]!;
-
-		// Set non-zero parallax values
-		mouseXMv.value = 10;
-		mouseYMv.value = -8;
-
-		act(() => {
-			root.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
-		});
-
-		// Run the first RAF step at t=300ms (halfway through 600ms LERP_RESET_DURATION)
-		vi.spyOn(performance, "now").mockReturnValue(300);
-		const leaveCallback = rafCallbacks[rafCallbacks.length - 1]!;
-		act(() => {
-			leaveCallback(300);
-		});
-
-		// At t=300, t_norm = 0.5, easeOutQuad = 1 - (0.5)^2 = 0.75
-		// mouseX should be 10 * (1 - 0.75) = 2.5
-		expect(mouseXMv.value).toBeCloseTo(2.5, 1);
-		// mouseY should be -8 * (1 - 0.75) = -2
-		expect(mouseYMv.value).toBeCloseTo(-2, 1);
-
-		// Run the final RAF step at t=600ms (end of lerp)
-		vi.spyOn(performance, "now").mockReturnValue(600);
-		const nextCallback = rafCallbacks[rafCallbacks.length - 1]!;
-		act(() => {
-			nextCallback(600);
-		});
-
-		// At t=600, t_norm = 1, ease = 1, values should be 0
-		expect(mouseXMv.value).toBeCloseTo(0, 5);
-		expect(mouseYMv.value).toBeCloseTo(0, 5);
-
-		vi.mocked(window.requestAnimationFrame).mockRestore();
-		vi.mocked(window.cancelAnimationFrame).mockRestore();
-		vi.mocked(performance.now).mockRestore();
-	});
-
-	it("cancels previous lerp when a new mousemove occurs", () => {
-		const cancelSpy = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
-		vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 42);
-
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		motionValues[0]!.value = 10;
-		motionValues[1]!.value = 5;
-
-		// Start a lerp
-		act(() => {
-			root.dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
-		});
-
-		// mousemove should cancel the ongoing lerp
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", {
-					clientX: 50,
-					clientY: 50,
-					bubbles: true,
-				}),
-			);
-		});
-
-		expect(cancelSpy).toHaveBeenCalled();
-
-		cancelSpy.mockRestore();
-		vi.mocked(window.requestAnimationFrame).mockRestore();
-	});
-
-	it("does not update parallax values when disableOnTouch + touch device", () => {
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-		// Component returns null — no container to interact with
-		const { container } = render(<ParticleBackground count={2} disableOnTouch />);
-		expect(container.firstElementChild).toBeNull();
-
-		// No motion values should have been created (component returned null before hooks)
-		expect(motionValues).toHaveLength(0);
-
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
-	});
-
-	it("skips mouse listeners on touch devices even without disableOnTouch", () => {
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(true);
-
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		// Component renders but mouse listeners should not be attached
-		expect(root).toBeTruthy();
-
-		// mouseX/mouseY should stay at 0 after mousemove (no listener attached)
-		const mouseXMv = motionValues[0]!;
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", { clientX: 100, clientY: 100, bubbles: true }),
-			);
-		});
-		expect(mouseXMv.value).toBe(0);
-
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
-	});
-
-	it("does not update cursor MotionValues when interactive=false", () => {
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		// useParticleParallax allocates 4 MotionValues: mouseX, mouseY, cursorX, cursorY
-		const cursorXMv = motionValues[2]!;
-		const cursorYMv = motionValues[3]!;
-		expect(cursorXMv.initial).toBe(0.5);
-		expect(cursorYMv.initial).toBe(0.5);
-
-		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 0,
-			top: 0,
-			width: 200,
-			height: 200,
-			right: 200,
-			bottom: 200,
-			x: 0,
-			y: 0,
-			toJSON: () => ({}),
-		} as DOMRect);
-
-		act(() => {
-			window.dispatchEvent(new Event("scroll"));
-		});
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", { clientX: 150, clientY: 100, bubbles: true }),
-			);
-		});
-
-		// mouseX/mouseY DO update (basic parallax always on desktop)
-		expect(motionValues[0]!.setFn).toHaveBeenCalled();
-
-		// But cursorX/cursorY should stay at their initial 0.5 (no repulsion → no cursor tracking)
-		expect(cursorXMv.value).toBe(0.5);
-		expect(cursorYMv.value).toBe(0.5);
-	});
-
-	it("updates cursor MotionValues when interactive=true on desktop", () => {
-		const { container } = render(<ParticleBackground count={2} interactive />);
-		const root = container.firstElementChild as HTMLElement;
-
-		const cursorXMv = motionValues[2]!;
-		const cursorYMv = motionValues[3]!;
-
-		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 0,
-			top: 0,
-			width: 200,
-			height: 200,
-			right: 200,
-			bottom: 200,
-			x: 0,
-			y: 0,
-			toJSON: () => ({}),
-		} as DOMRect);
-
-		act(() => {
-			window.dispatchEvent(new Event("scroll"));
-		});
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", { clientX: 150, clientY: 100, bubbles: true }),
-			);
-		});
-
-		// cursorX = 150/200 = 0.75, cursorY = 100/200 = 0.5
-		expect(cursorXMv.setFn).toHaveBeenCalledWith(0.75);
-		expect(cursorYMv.setFn).toHaveBeenCalledWith(0.5);
-	});
-
-	it("marks rect as stale on scroll and refreshes on next mousemove", () => {
-		const { container } = render(<ParticleBackground count={2} />);
-		const root = container.firstElementChild as HTMLElement;
-
-		const mouseXMv = motionValues[0]!;
-
-		// Initial rect (from effect setup with default jsdom values)
-		const rectSpy = vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
-			left: 100,
-			top: 0,
-			width: 200,
-			height: 200,
-			right: 300,
-			bottom: 200,
-			x: 100,
-			y: 0,
-			toJSON: () => ({}),
-		} as DOMRect);
-
-		// Scroll marks rect stale (cheap — no getBoundingClientRect call)
-		act(() => {
-			window.dispatchEvent(new Event("scroll"));
-		});
-
-		// Next mousemove refreshes the rect and uses the new position
-		act(() => {
-			root.dispatchEvent(
-				new MouseEvent("mousemove", {
-					clientX: 200,
-					clientY: 100,
-					bubbles: true,
-				}),
-			);
-		});
-
-		// getBoundingClientRect should have been called during mousemove (stale refresh)
-		expect(rectSpy).toHaveBeenCalled();
-		// mouseX = ((200 - 100) / 200 - 0.5) * 2 * 20 = 0 * 40 = 0 (center of container)
-		expect(mouseXMv.value).toBeCloseTo(0, 1);
-
-		rectSpy.mockRestore();
 	});
 });

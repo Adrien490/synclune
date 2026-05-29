@@ -19,6 +19,9 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/webhooks/services/payment-intent.service.ts",
   ],
   "CREATED": [],
+  "CREDIT_NOTE_ARCHIVED": [
+    "modules/orders/services/archive-credit-note-pdf.service.ts",
+  ],
   "CREDIT_NOTE_FAILED": [
     "modules/orders/services/void-invoice.service.ts",
   ],
@@ -62,6 +65,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/webhooks/services/payment-intent.service.ts",
   ],
   "PDF_ARCHIVE_FAILED": [
+    "modules/orders/services/archive-credit-note-pdf.service.ts",
     "modules/orders/services/archive-invoice-pdf.service.ts",
     "modules/refunds/services/archive-credit-note-pdf.service.ts",
   ],

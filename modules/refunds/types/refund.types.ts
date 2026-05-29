@@ -74,6 +74,12 @@ export interface RefundItemValue {
 	quantity: number;
 	restock: boolean;
 	selected: boolean;
+	/**
+	 * UI-only : `true` quand l'admin a basculé manuellement le restock de ce
+	 * bijou. Empêche un changement de motif d'écraser l'override. Non transmis
+	 * à la server action (cf. `formatItemsForAction`).
+	 */
+	restockTouched?: boolean;
 }
 
 /** Valeurs du formulaire de création de remboursement */

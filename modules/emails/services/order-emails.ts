@@ -75,6 +75,7 @@ export async function sendShippingConfirmationEmail({
 	trackingNumber,
 	trackingUrl,
 	carrierLabel,
+	estimatedDelivery,
 	shippingAddress,
 	idempotencyKey,
 }: {
@@ -84,6 +85,8 @@ export async function sendShippingConfirmationEmail({
 	trackingNumber: string;
 	trackingUrl: string | null;
 	carrierLabel: string;
+	/** Date de livraison estimée pré-formatée (ex: "12 juin 2026"). */
+	estimatedDelivery?: string | null;
 	shippingAddress: ShippingAddress;
 	/** EMAIL-AUDIT-003 : dedup Resend 24h. Convention `order-shipped:${orderId}`. */
 	idempotencyKey?: string;
@@ -95,6 +98,7 @@ export async function sendShippingConfirmationEmail({
 			trackingNumber,
 			trackingUrl,
 			carrierLabel,
+			estimatedDelivery,
 			shippingAddress,
 		}),
 		{

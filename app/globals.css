@@ -38,6 +38,9 @@ html {
 	--navbar-height: 4rem;
 	--ab-height: 56px;
 	--announcement-bar-height: 0px;
+	/* MicroToast (pastille mobile top-center) : top par défaut, surchargé par layout
+	 * ci-dessous pour se décaler sous le header fixe (admin/shop). */
+	--toast-safe-top: max(0.5rem, env(safe-area-inset-top));
 	position: relative;
 }
 
@@ -48,6 +51,31 @@ html:has([data-admin-layout]) {
 	scroll-padding-top: calc(
 		var(--admin-header-height, 3.5rem) + env(safe-area-inset-top, 0px) + 1rem
 	);
+}
+
+/* MicroToast : décale la pastille mobile sous le header fixe pour ne pas le recouvrir
+ * (z-microtoast 200 > z-40 → sinon la pastille masque logo/menu/titre). Miroir des
+ * scroll-padding-top header-aware. Sélecteurs mutuellement exclusifs (admin n'a pas
+ * data-home-navbar) ; /auth + /paiement (sans header) gardent le défaut. */
+html:has([data-admin-layout]) {
+	--toast-safe-top: calc(
+		var(--admin-header-height, 3.5rem) + env(safe-area-inset-top, 0px) + 0.5rem
+	);
+}
+html:has(header[data-home-navbar]) {
+	--toast-safe-top: calc(var(--navbar-height) + var(--announcement-bar-height, 0px) + 0.5rem);
+}
+
+/* Empilement coin bas-droit (desktop) : quand le FAB admin est VISIBLE, il publie sa
+ * présence via [data-fab-container] (uniquement la branche visible — pas l'onglet replié).
+ * On expose alors --fab-corner-clearance pour que ScrollToTop se décale au-dessus du FAB
+ * au lieu de le chevaucher. Le coin bas-gauche est réservé au cookie-banner (md:left-6),
+ * donc l'empilement vertical est la seule cohabitation propre. Mobile : FAB hideOnMobile
+ * + ScrollToTop md:flex → non concernés (var non posée hors md). */
+@media (min-width: 768px) {
+	html:has([data-fab-container]) {
+		--fab-corner-clearance: 4.75rem;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -178,6 +206,8 @@ main#main-content {
 	--z-overlay: 75;
 	--z-bar: 70;
 	--z-bar-desktop: 70;
+	/* FAB volontairement sous --z-bar (70) : desktop-only vs bottom-bar mobile-only (mutuellement exclusifs) */
+	--z-fab: 45;
 	--z-alert: 80;
 	--z-skip: 100;
 	--z-microtoast: 200;

@@ -9,7 +9,7 @@ import {
 import type { UserAddress } from "../types/user-addresses.types";
 import { MapPin } from "lucide-react";
 import { use } from "react";
-import { AddressCard } from "./address-card";
+import { AddressGrid } from "./address-grid";
 import { CreateAddressButton } from "./create-address-button";
 
 interface AddressListProps {
@@ -42,11 +42,7 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 					<div className="flex justify-end">
 						<CreateAddressButton size="sm">Ajouter</CreateAddressButton>
 					</div>
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-						{addresses.map((address) => (
-							<AddressCard key={address.id} address={address} />
-						))}
-					</div>
+					<AddressGrid addresses={addresses} />
 				</>
 			)}
 		</section>

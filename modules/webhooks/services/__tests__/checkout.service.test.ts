@@ -9,8 +9,6 @@ const {
 	mockPrisma,
 	mockStripe,
 	mockGetShippingRateName,
-	mockGetShippingMethodFromRate,
-	mockGetShippingCarrierFromRate,
 	mockGetCartInvalidationTags,
 	mockGetOrderInvalidationTags,
 	mockProductsCacheTags,
@@ -67,8 +65,6 @@ const {
 		mockPrisma,
 		mockStripe,
 		mockGetShippingRateName: vi.fn(),
-		mockGetShippingMethodFromRate: vi.fn(),
-		mockGetShippingCarrierFromRate: vi.fn(),
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetOrderInvalidationTags: vi.fn(),
 		mockProductsCacheTags: {
@@ -102,8 +98,6 @@ vi.mock("@/shared/lib/stripe", () => ({
 
 vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
 	getShippingRateName: mockGetShippingRateName,
-	getShippingMethodFromRate: mockGetShippingMethodFromRate,
-	getShippingCarrierFromRate: mockGetShippingCarrierFromRate,
 }));
 
 vi.mock("@/modules/cart/constants/cache", () => ({
@@ -329,8 +323,6 @@ describe("processOrderTransaction", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockGetShippingMethodFromRate.mockReturnValue("STANDARD");
-		mockGetShippingCarrierFromRate.mockReturnValue("autre");
 		// Default: transaction executes its callback
 		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
 			fn(mockTx),

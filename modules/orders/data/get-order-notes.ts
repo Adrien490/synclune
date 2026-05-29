@@ -54,6 +54,9 @@ async function fetchOrderNotes(orderId: string): Promise<OrderNoteItem[]> {
 			...notDeleted,
 		},
 		orderBy: { createdAt: "desc" },
+		// Borne la requête (alignement avec get-order-history) pour éviter une
+		// lecture non bornée sur une commande au volume de notes inhabituel.
+		take: 100,
 		select: {
 			id: true,
 			content: true,

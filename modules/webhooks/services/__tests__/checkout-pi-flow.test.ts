@@ -7,8 +7,6 @@ import type Stripe from "stripe";
 
 const {
 	mockPrisma,
-	mockGetShippingMethodFromRate,
-	mockGetShippingCarrierFromRate,
 	mockGetCartInvalidationTags,
 	mockGetOrderInvalidationTags,
 	mockProductsCacheTags,
@@ -35,8 +33,6 @@ const {
 			$transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
 			_mockTx: mockTx,
 		},
-		mockGetShippingMethodFromRate: vi.fn(),
-		mockGetShippingCarrierFromRate: vi.fn(),
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetOrderInvalidationTags: vi.fn(),
 		mockProductsCacheTags: {
@@ -62,10 +58,6 @@ vi.mock("@sentry/nextjs", () => ({
 	captureMessage: vi.fn(),
 	captureException: vi.fn(),
 	addBreadcrumb: vi.fn(),
-}));
-vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
-	getShippingMethodFromRate: mockGetShippingMethodFromRate,
-	getShippingCarrierFromRate: mockGetShippingCarrierFromRate,
 }));
 vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,

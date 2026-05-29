@@ -167,10 +167,13 @@ export async function sendWebhookFailedAlertEmail({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Webhook ${eventType} échoué (${attempts} tentatives)`,
 			tags: [{ name: "category", value: "admin" }],
-			// `:${attempts}` permet une nouvelle alerte par seuil franchi (1→2→3
-			// tentatives) sans spammer si le même attempt rejoue (audit monitoring
-			// 2026-05-28 EINV-OPS-009).
-			idempotencyKey: `alert:webhook-failed:${eventId}:${attempts}`,
+			// Clé stable par eventId (sans `:${attempts}`) : 1 alerte max/24h par
+			// webhook défaillant, quelle que soit la cascade de redélivrances Stripe
+			// (le compteur dépasse largement le seuil de 3, donc `:${attempts}`
+			// générait ~10-15 emails). Le nb de tentatives reste dans le corps du mail
+			// + Sentry → aucune perte d'info actionnable (anti-spam, infléchit
+			// EINV-OPS-009 en servant mieux son objectif déclaré).
+			idempotencyKey: `alert:webhook-failed:${eventId}`,
 		},
 	);
 }
@@ -459,6 +462,49 @@ export async function sendAdminPdfArchiveFailedAlert({
 			subject: `[Admin] Échec archivage PDF facture — ${orderNumber} (${invoiceNumber})`,
 			tags: [{ name: "category", value: "admin" }],
 			idempotencyKey: `alert:pdf-archive-failed:${orderId}`,
+		},
+	);
+}
+
+/**
+ * Alerte admin : Echec archivage PDF avoir (Art. L102 B LPF - conservation 10 ans)
+ *
+ * Symetrie de `sendAdminPdfArchiveFailedAlert` pour les avoirs (Art. 272-I CGI).
+ * Declenchee par `archive-credit-note-pdf.service.ts` quand UploadThing retourne
+ * une erreur ou ne fournit pas d'URL. Le fallback est la regeneration a chaque
+ * download — risque de drift template. Cf. audit e-invoicing 2026-05-29 (F2).
+ */
+export async function sendAdminCreditNotePdfArchiveFailedAlert({
+	orderId,
+	orderNumber,
+	creditNoteNumber,
+	errorMessage,
+}: {
+	orderId: string;
+	orderNumber: string;
+	creditNoteNumber: string;
+	errorMessage: string;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes/${orderId}`;
+	const contextLines = [
+		`Commande   : ${orderNumber}`,
+		`Avoir      : ${creditNoteNumber}`,
+		`Order ID   : ${orderId}`,
+	];
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: contextLines.join("\n"),
+			summary: `L'archivage immuable du PDF avoir ${creditNoteNumber} sur UploadThing a échoué. L'avoir est actuellement régénéré à chaque téléchargement — risque de drift template. Vérifier UploadThing puis relancer un téléchargement de l'avoir.`,
+			stackTrace: truncateStackTrace(errorMessage),
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Échec archivage PDF avoir — ${orderNumber} (${creditNoteNumber})`,
+			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey: `alert:credit-note-archive-failed:${orderId}`,
 		},
 	);
 }

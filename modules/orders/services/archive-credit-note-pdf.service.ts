@@ -1,7 +1,56 @@
 import { createHash } from "node:crypto";
+import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { utapi } from "@/shared/lib/uploadthing";
+import { sendAdminCreditNotePdfArchiveFailedAlert } from "@/modules/emails/services/admin-emails";
+import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
+
+/**
+ * Trace audit immuable + alerte admin pour échec archivage avoir. Best-effort,
+ * jamais bloquant. Le flag `invoiceRetryDeferred=true` permet au cron
+ * `reconcile-invoices` de rejouer l'archivage. Symétrie avec
+ * `flagPdfArchiveFailure` (archive-invoice-pdf) — audit e-invoicing 2026-05-29 (F2).
+ */
+async function flagCreditNotePdfArchiveFailure(
+	orderId: string,
+	creditNoteNumber: string,
+	errorMessage: string,
+): Promise<void> {
+	try {
+		const order = await prisma.order.update({
+			where: { id: orderId },
+			data: { invoiceRetryDeferred: true },
+			select: { orderNumber: true },
+		});
+
+		await createOrderAudit({
+			orderId,
+			action: OrderAction.PDF_ARCHIVE_FAILED,
+			source: HistorySource.SYSTEM,
+			authorName: "Système (archive-credit-note-pdf)",
+			note: `Archivage PDF avoir UploadThing échoué — flag invoiceRetryDeferred posé`,
+			metadata: {
+				creditNoteNumber,
+				errorMessage: errorMessage.slice(0, 500),
+				deferredAt: new Date().toISOString(),
+			},
+		});
+
+		await sendAdminCreditNotePdfArchiveFailedAlert({
+			orderId,
+			orderNumber: order.orderNumber,
+			creditNoteNumber,
+			errorMessage,
+		});
+	} catch (sideEffectError) {
+		logger.error("flagCreditNotePdfArchiveFailure threw — alert/audit partial", sideEffectError, {
+			service: "archive-credit-note-pdf",
+			orderId,
+			creditNoteNumber,
+		});
+	}
+}
 
 interface ArchiveResult {
 	creditNotePdfUrl: string;
@@ -17,7 +66,9 @@ interface ArchiveResult {
  *
  * Idempotent : si l'order a déjà un `creditNotePdfUrl`, return sans rien faire.
  * Best-effort : un échec d'archivage ne bloque pas le download (la route
- * `/credit-note` régénérera le PDF au prochain appel et retentera l'archivage).
+ * `/credit-note` régénérera le PDF au prochain appel et retentera l'archivage),
+ * mais il est désormais tracé (OrderHistory) + alerte admin + flag
+ * `invoiceRetryDeferred` — symétrie avec la facture (audit 2026-05-29, F2).
  */
 export async function archiveCreditNotePdf(
 	orderId: string,
@@ -55,21 +106,54 @@ export async function archiveCreditNotePdf(
 				orderId,
 				creditNoteNumber,
 			});
+			await flagCreditNotePdfArchiveFailure(
+				orderId,
+				creditNoteNumber,
+				"UploadThing returned no URL",
+			);
 			return null;
 		}
 
-		await prisma.order.update({
-			where: { id: orderId },
-			data: { creditNotePdfUrl: data.ufsUrl, creditNotePdfHash: hash },
+		// Audit-tracé : CREDIT_NOTE_ARCHIVED dans la même tx que l'update Order
+		// (Art. L123-22 : mutations critiques du dossier comptable visibles dans
+		// OrderHistory, ici l'archivage du PDF avoir).
+		await prisma.$transaction(async (tx) => {
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					creditNotePdfUrl: data.ufsUrl,
+					creditNotePdfHash: hash,
+					// Relâche le flag retry si un run précédent l'avait posé.
+					invoiceRetryDeferred: false,
+				},
+			});
+
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.CREDIT_NOTE_ARCHIVED,
+				source: HistorySource.SYSTEM,
+				authorName: "Système (archive-credit-note-pdf)",
+				note: `Avoir ${creditNoteNumber} archivé sur UploadThing`,
+				metadata: {
+					creditNoteNumber,
+					creditNotePdfHash: hash,
+				},
+			});
 		});
 
 		return { creditNotePdfUrl: data.ufsUrl, creditNotePdfHash: hash };
 	} catch (error) {
+		// Best-effort : un échec d'archivage ne doit PAS bloquer le download.
 		logger.error("archiveCreditNotePdf threw", error, {
 			service: "archive-credit-note-pdf",
 			orderId,
 			creditNoteNumber,
 		});
+		await flagCreditNotePdfArchiveFailure(
+			orderId,
+			creditNoteNumber,
+			error instanceof Error ? error.message : String(error),
+		);
 		return null;
 	}
 }

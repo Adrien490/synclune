@@ -20,11 +20,12 @@ export type AnimationStyle =
 	| "orbit"
 	| "breathe"
 	| "sparkle"
-	| "cascade";
+	| "cascade"
+	| "twinkle";
 
 /** Props du composant ParticleBackground */
 export interface ParticleBackgroundProps {
-	/** Nombre de particules (défaut: 6, mobile: divisé par 2) */
+	/** Nombre de particules (défaut: 6 ; sur mobile: ceil(count * mobileCountRatio), défaut ratio 0.5) */
 	count?: number;
 	/** Taille min/max en pixels (défaut: [8, 64]) */
 	size?: [number, number];
@@ -52,23 +53,42 @@ export interface ParticleBackgroundProps {
 	speed?: number;
 	/** Désactiver sur appareils tactiles - rend null (défaut: false) */
 	disableOnTouch?: boolean;
-	/** Fade progressif des particules au scroll au lieu du on/off binaire (défaut: false) */
-	scrollFade?: boolean;
-	/** Parallax scroll vertical proportionnel à la profondeur (défaut: false) */
-	scrollParallax?: boolean;
-	/** Repulsion magnetique des particules au curseur, desktop uniquement (défaut: false) */
-	interactive?: boolean;
 	/**
-	 * Paramètres de la repulsion magnetique (actif uniquement si `interactive`).
-	 * - `radius` : rayon d'influence, fraction de la diagonale du container (0-1, défaut: 0.15)
-	 * - `strength` : force maximale du déplacement en pixels (défaut: 30)
+	 * Fade progressif des particules au scroll au lieu du on/off binaire (défaut: false).
+	 * ⚠️ Nécessite un conteneur dans le flux de scroll : sans effet si le conteneur est `fixed`.
 	 */
-	repulsion?: { radius?: number; strength?: number };
+	scrollFade?: boolean;
+	/**
+	 * Parallax scroll vertical proportionnel à la profondeur (défaut: false).
+	 * ⚠️ Nécessite un conteneur dans le flux de scroll : sans effet si le conteneur est `fixed`.
+	 */
+	scrollParallax?: boolean;
 	/**
 	 * Ratio du nombre de particules sur mobile par rapport au desktop.
 	 * Défaut: 0.5 (count/2). Clamp à [0.25, 1].
 	 */
 	mobileCountRatio?: number;
+	/**
+	 * Adaptativité hardware : réduit automatiquement le nombre de particules et le blur
+	 * sur appareils contraints (deviceMemory/cœurs faibles, Save-Data / prefers-reduced-data).
+	 * Défaut: true. Mettre `false` pour forcer le rendu complet.
+	 */
+	adaptive?: boolean;
+	/** Remplissage radial dégradé des particules (volume/profondeur) (défaut: false) */
+	gradient?: boolean;
+	/**
+	 * Mode constellation : trace des lignes entre particules proches (effet réseau).
+	 * Desktop uniquement, désactivé en reduced-motion. Le nombre de particules est plafonné
+	 * (≤12) quand activé, car le calcul des liens est en O(n²).
+	 * - `maxDistance` : distance max entre 2 particules pour les relier, en % du conteneur (défaut: 25)
+	 * - `color` : couleur CSS des lignes (défaut: var(--color-particle-lavender))
+	 */
+	connect?: { maxDistance?: number; color?: string };
+	/**
+	 * Densité automatique : dérive le nombre de particules de l'aire du conteneur
+	 * (particules par mégapixel). Prioritaire sur `count` quand défini. Clamp à MAX_PARTICLES.
+	 */
+	density?: number;
 }
 
 /** Données d'une particule générée */
@@ -100,9 +120,6 @@ export interface ParticleSetProps {
 	isInView: boolean;
 	reducedMotion: boolean | null;
 	animationStyle: AnimationStyle;
-	/** Mouse position as pixel offset for parallax, range ±PARALLAX_STRENGTH (desktop only) */
-	mouseX?: MotionValue<number>;
-	mouseY?: MotionValue<number>;
 	/** High contrast mode: reduce opacity 50%, increase blur 50% */
 	highContrast?: boolean;
 	/** Scroll-linked opacity (0-1) for progressive fade. When provided, multiplies particle opacity. */
@@ -111,16 +128,8 @@ export interface ParticleSetProps {
 	scrollYProgress?: MotionValue<number>;
 	/** Whether scroll parallax is active (controls computation, not just MotionValue presence) */
 	scrollParallax?: boolean;
-	/** Enable magnetic repulsion from cursor */
-	interactive?: boolean;
-	/** Normalized cursor X position (0-1) for repulsion */
-	cursorX?: MotionValue<number>;
-	/** Normalized cursor Y position (0-1) for repulsion */
-	cursorY?: MotionValue<number>;
-	/** Repulsion radius as fraction of container diagonal (0-1) */
-	repulsionRadius?: number;
-	/** Repulsion strength in pixels */
-	repulsionStrength?: number;
+	/** Radial-gradient fill for CSS/clipPath shapes (adds volume/depth) */
+	gradient?: boolean;
 }
 
 /** Type pour les presets d'animation */

@@ -144,6 +144,27 @@ describe("ScrollToTop", () => {
 	});
 
 	// ============================================================================
+	// POSITION / FAB CORNER STACKING
+	// ============================================================================
+
+	it("anchors to the bottom-right corner (bottom-left reserved for the cookie banner)", () => {
+		render(<ScrollToTop />);
+		simulateScroll(1500);
+		const button = screen.getByLabelText("Retour en haut de la page");
+		expect(button.className).toContain("right-[max(1.5rem,env(safe-area-inset-right))]");
+		expect(button.className).not.toContain("left-[max(1.5rem,env(safe-area-inset-left))]");
+	});
+
+	it("stacks above the admin FAB via --fab-corner-clearance (desktop)", () => {
+		render(<ScrollToTop />);
+		simulateScroll(1500);
+		const button = screen.getByLabelText("Retour en haut de la page");
+		// Desktop bottom offset reads the clearance var (0px fallback when no FAB present),
+		// published by `html:has([data-fab-container])` in globals.css.
+		expect(button.className).toContain("var(--fab-corner-clearance,0px)");
+	});
+
+	// ============================================================================
 	// SCROLL RING
 	// ============================================================================
 

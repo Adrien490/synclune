@@ -44,7 +44,7 @@ afterEach(cleanup);
 
 describe("MenuSheetFooter", () => {
 	it("renders social links with correct accessibility attributes", () => {
-		render(<MenuSheetFooter isAdmin={false} />);
+		render(<MenuSheetFooter />);
 
 		const instagramLink = screen.getByLabelText(/Instagram/);
 		expect(instagramLink.getAttribute("target")).toBe("_blank");
@@ -55,27 +55,22 @@ describe("MenuSheetFooter", () => {
 		expect(tiktokLink.getAttribute("rel")).toBe("noopener noreferrer");
 	});
 
-	it("does not render admin link when isAdmin is false", () => {
-		render(<MenuSheetFooter isAdmin={false} />);
-
-		expect(screen.queryByLabelText(/administrateur/)).toBeNull();
-	});
-
-	it("does not render admin link even when isAdmin is true (admin link lives in MenuSheetNav)", () => {
-		render(<MenuSheetFooter isAdmin />);
+	// Admin link lives in MenuSheetNav, never in the footer.
+	it("does not render an admin link", () => {
+		render(<MenuSheetFooter />);
 
 		expect(screen.queryByLabelText(/administrateur/)).toBeNull();
 	});
 
 	it("renders copyright with current year", () => {
-		render(<MenuSheetFooter isAdmin={false} />);
+		render(<MenuSheetFooter />);
 
 		const year = new Date().getFullYear().toString();
 		expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
 	});
 
 	it("renders in a footer element", () => {
-		render(<MenuSheetFooter isAdmin={false} />);
+		render(<MenuSheetFooter />);
 
 		const footer = document.querySelector("footer");
 		expect(footer).toBeInTheDocument();

@@ -151,9 +151,7 @@ vi.mock("./menu-sheet-nav", () => ({
 }));
 
 vi.mock("./menu-sheet-footer", () => ({
-	MenuSheetFooter: ({ isAdmin }: { isAdmin: boolean }) => (
-		<div data-testid="menu-sheet-footer" data-admin={isAdmin} />
-	),
+	MenuSheetFooter: () => <div data-testid="menu-sheet-footer" />,
 }));
 
 // Mock EdgeSwipeIndicator — expose progress + hidden as data attributes
@@ -264,11 +262,17 @@ describe("MenuSheet", () => {
 			).toBeInTheDocument();
 		});
 
-		it("passes isAdmin to footer", () => {
-			render(<MenuSheet {...baseProps} isAdmin />);
+		it("renders footer", () => {
+			render(<MenuSheet {...baseProps} />);
 
-			const footer = screen.getByTestId("menu-sheet-footer");
-			expect(footer.getAttribute("data-admin")).toBe("true");
+			expect(screen.getByTestId("menu-sheet-footer")).toBeInTheDocument();
+		});
+
+		it("renders the brand title as a link to the home page (closes sheet on tap)", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			const brandLink = screen.getByRole("link", { name: /Synclune/ });
+			expect(brandLink.getAttribute("href")).toBe("/");
 		});
 
 		it("renders nav component", () => {

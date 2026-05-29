@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatedHeartIcon } from "@/shared/components/icons/animated-heart-icon";
+import { HeartBurst } from "@/shared/components/animations/heart-burst";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
@@ -27,10 +29,10 @@ interface WishlistButtonProps {
 	enableUndoToast?: boolean;
 }
 
-const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string }> = {
-	sm: { button: "size-9", icon: "size-4" },
-	md: { button: "size-11", icon: "size-5" },
-	lg: { button: "size-14", icon: "size-8 sm:size-7" },
+const sizeConfig: Record<WishlistButtonSize, { button: string; icon: string; burst: number }> = {
+	sm: { button: "size-9", icon: "size-4", burst: 0.85 },
+	md: { button: "size-11", icon: "size-5", burst: 1 },
+	lg: { button: "size-14", icon: "size-8 sm:size-7", burst: 1.25 },
 };
 
 /**
@@ -55,13 +57,17 @@ export function WishlistButton({
 	size = "md",
 	enableUndoToast = false,
 }: WishlistButtonProps) {
+	// Compteur incrémenté à chaque ajout pour remonter (= re-jouer) le burst de cœurs.
+	const [burstKey, setBurstKey] = useState(0);
+
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
 		enableUndoToast,
 		productTitle,
+		onOptimisticAdd: () => setBurstKey((k) => k + 1),
 	});
 
-	const { button: buttonSize, icon: iconSize } = sizeConfig[size];
+	const { button: buttonSize, icon: iconSize, burst: burstScale } = sizeConfig[size];
 
 	const ariaLabel = isInWishlist
 		? productTitle
@@ -107,14 +113,19 @@ export function WishlistButton({
 	return (
 		<form action={action} className={className}>
 			<input type="hidden" name="productId" value={productId} />
-			<Tooltip delayDuration={500}>
-				<TooltipTrigger asChild>{button}</TooltipTrigger>
-				{/* `can-hover:block hidden` masque le tooltip sur touch (pointer:coarse) pour éviter
-				    un flash au tap mobile, tout en gardant l'aide desktop hover/focus. */}
-				<TooltipContent side="bottom" className="can-hover:block hidden">
-					{tooltipText}
-				</TooltipContent>
-			</Tooltip>
+			{/* Conteneur relatif pour ancrer le burst de cœurs centré sur l'icône, sans
+			    toucher au positionnement du `<form>` (parfois absolu, posé par le parent). */}
+			<span className="relative inline-flex">
+				<Tooltip delayDuration={500}>
+					<TooltipTrigger asChild>{button}</TooltipTrigger>
+					{/* `can-hover:block hidden` masque le tooltip sur touch (pointer:coarse) pour éviter
+					    un flash au tap mobile, tout en gardant l'aide desktop hover/focus. */}
+					<TooltipContent side="bottom" className="can-hover:block hidden">
+						{tooltipText}
+					</TooltipContent>
+				</Tooltip>
+				{burstKey > 0 && <HeartBurst key={burstKey} seed={burstKey} scale={burstScale} />}
+			</span>
 		</form>
 	);
 }

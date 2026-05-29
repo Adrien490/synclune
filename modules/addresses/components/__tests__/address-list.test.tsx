@@ -30,6 +30,12 @@ vi.mock("../create-address-button", () => ({
 	),
 }));
 
+// AddressGrid (rendu par AddressList) importe useSetDefaultAddress → action serveur.
+// On mocke le hook pour éviter l'import server-only (prisma) en jsdom.
+vi.mock("../../hooks/use-set-default-address", () => ({
+	useSetDefaultAddress: () => ({ action: vi.fn(), handle: vi.fn(), isPending: false }),
+}));
+
 import { AddressList } from "../address-list";
 
 afterEach(() => {

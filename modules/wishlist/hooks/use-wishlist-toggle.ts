@@ -21,6 +21,12 @@ interface UseWishlistToggleOptions {
 	enableUndoToast?: boolean;
 	/** Titre du produit injecté dans les toasts undo. */
 	productTitle?: string;
+	/**
+	 * Callback déclenché de façon **optimiste** au moment de l'ajout (dès le clic,
+	 * dans la transition), pas après confirmation serveur. Utilisé pour jouer une
+	 * micro-célébration (burst de cœurs). Non appelé sur retrait.
+	 */
+	onOptimisticAdd?: () => void;
 }
 
 /**
@@ -34,6 +40,7 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		onSuccess,
 		enableUndoToast = false,
 		productTitle,
+		onOptimisticAdd,
 	} = options ?? {};
 	const router = useRouter();
 	const pathname = usePathname();
@@ -155,6 +162,8 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
 			if (newState) {
 				incrementWishlist();
+				// Micro-célébration optimiste (burst de cœurs) — uniquement sur ajout
+				onOptimisticAdd?.();
 			} else {
 				decrementWishlist();
 				// Notifier la liste parente pour suppression visuelle immédiate

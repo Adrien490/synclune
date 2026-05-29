@@ -85,6 +85,12 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 						</p>
 					</div>
 				)}
+				{order.estimatedDelivery && !order.actualDelivery && (
+					<div>
+						<p className="text-muted-foreground text-sm">Livraison estimée</p>
+						<p>{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}</p>
+					</div>
+				)}
 			</CardContent>
 		</Card>
 	);

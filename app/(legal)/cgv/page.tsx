@@ -1,3 +1,4 @@
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
@@ -154,9 +155,9 @@ export default async function CGVPage() {
 							<p>
 								Les livraisons sont assurées par <strong>Colissimo</strong> (La Poste). Les délais
 								de livraison sont communiqués à titre indicatif lors de la commande et varient
-								généralement entre <strong>2 à 3 jours ouvrés pour la France</strong> et{" "}
-								<strong>4 à 7 jours ouvrés pour l'Union Européenne</strong> après confirmation de
-								paiement.
+								généralement entre <strong>{SHIPPING_RATES.FR.estimatedDays} pour la France</strong>{" "}
+								et <strong>{SHIPPING_RATES.EU.estimatedDays} pour l'Union Européenne</strong> après
+								confirmation de paiement.
 							</p>
 							<p>
 								Conformément à l'article L216-1 du Code de la consommation, à défaut de délai

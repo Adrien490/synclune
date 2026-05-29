@@ -167,13 +167,14 @@ describe("DesktopNav", () => {
 	});
 
 	describe("keyboard navigation", () => {
-		it("navigates on Enter key press on dropdown trigger", () => {
+		it("does not navigate on Enter key press (Radix opens the mega menu)", () => {
+			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
 			fireEvent.keyDown(trigger, { key: "Enter" });
 
-			expect(mockPush).toHaveBeenCalledWith("/produits");
+			expect(mockPush).not.toHaveBeenCalled();
 		});
 
 		it("does not navigate on Space key press (toggles dropdown)", () => {
@@ -186,22 +187,32 @@ describe("DesktopNav", () => {
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
+		it("does not navigate on keyboard-triggered click (detail === 0, opens panel)", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.click(trigger, { detail: 0 });
+
+			expect(mockPush).not.toHaveBeenCalled();
+		});
+
 		it("navigates on mouse click on dropdown trigger", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			fireEvent.click(trigger);
+			fireEvent.click(trigger, { detail: 1 });
 
 			expect(mockPush).toHaveBeenCalledWith("/produits");
 		});
 
-		it("calls preventDefault on click to skip Radix's onItemSelect toggle", () => {
+		it("calls preventDefault on mouse click to skip Radix's onItemSelect toggle", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
-			const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+			const event = new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 });
 			trigger.dispatchEvent(event);
 
 			expect(event.defaultPrevented).toBe(true);

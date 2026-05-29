@@ -100,8 +100,26 @@ export function generateParticles(
 	return particles;
 }
 
-/** Retourne les styles CSS pour une forme de particule */
-export function getShapeStyles(shape: ParticleShape, color: string): CSSProperties {
+/**
+ * Remplissage radial doux (volume) réutilisé par le mode `gradient` des particules.
+ * Lumière en haut-gauche → couleur de base → légère ombre, comme la perle mais générique.
+ */
+function radialFill(color: string): string {
+	return `radial-gradient(circle at 35% 30%,
+		color-mix(in oklch, ${color}, white 28%) 0%,
+		${color} 55%,
+		color-mix(in oklch, ${color}, black 12%) 100%)`;
+}
+
+/**
+ * Retourne les styles CSS pour une forme de particule.
+ * @param gradient - si `true`, applique un remplissage radial dégradé (sauf SVG, géré dans le composant)
+ */
+export function getShapeStyles(
+	shape: ParticleShape,
+	color: string,
+	gradient = false,
+): CSSProperties {
 	const config = SHAPE_CONFIGS[shape];
 
 	if (config.type === "css") {
@@ -117,11 +135,15 @@ export function getShapeStyles(shape: ParticleShape, color: string): CSSProperti
 				`,
 			};
 		}
-		return { backgroundColor: color, ...config.styles };
+		return gradient
+			? { background: radialFill(color), ...config.styles }
+			: { backgroundColor: color, ...config.styles };
 	}
 
 	if (config.type === "clipPath") {
-		return { backgroundColor: color, clipPath: config.clipPath };
+		return gradient
+			? { background: radialFill(color), clipPath: config.clipPath }
+			: { backgroundColor: color, clipPath: config.clipPath };
 	}
 
 	// SVG - rendu dans le composant
@@ -151,6 +173,28 @@ const PARTICLE_EASINGS: Easing[] = [
 	[0.4, 0, 1, 1], // easeIn
 	[0.33, 1, 0.68, 1], // easeOutCubic
 ];
+
+/** Durée de l'animation d'entrée (fade + scale in) en secondes */
+const ENTRANCE_DURATION = 0.5;
+
+/** Pas de stagger entre particules pour l'entrée (secondes par id) */
+const ENTRANCE_STAGGER = 0.05;
+
+/** Délai d'entrée maximum pour éviter qu'une particule tardive paraisse manquante */
+const ENTRANCE_MAX_DELAY = 1;
+
+/**
+ * Transition d'entrée courte et légèrement décalée, indépendante de la boucle.
+ * Découple la première apparition (fade+scale ~0.5s) du `delay` multi-secondes de la boucle,
+ * pour éviter qu'une particule reste invisible plusieurs secondes avant de « pop ».
+ */
+export function getEntranceTransition(particle: Particle): Transition {
+	return {
+		duration: ENTRANCE_DURATION,
+		delay: Math.min(particle.id * ENTRANCE_STAGGER, ENTRANCE_MAX_DELAY),
+		ease: [0, 0, 0.2, 1], // easeOut
+	};
+}
 
 /** Retourne la transition Framer Motion avec easing varié et repeatDelay */
 export function getTransition(particle: Particle, animationStyle?: AnimationStyle): Transition {

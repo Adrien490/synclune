@@ -143,6 +143,12 @@ const ACTION_CONFIG: Record<
 		label: "Avoir émis",
 		symbol: "↺",
 	},
+	CREDIT_NOTE_ARCHIVED: {
+		icon: FileText,
+		color: "text-amber-600",
+		label: "PDF avoir archivé",
+		symbol: "🔒",
+	},
 	INVOICE_ARCHIVED: {
 		icon: FileText,
 		color: "text-emerald-500",

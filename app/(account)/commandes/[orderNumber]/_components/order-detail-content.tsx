@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 import { getOrder } from "@/modules/orders/data/get-order";
 import { OrderItemsList } from "@/modules/orders/components/customer/order-items-list";
@@ -31,25 +33,36 @@ export async function OrderDetailContent({ orderNumber }: OrderDetailContentProp
 	const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
 
 	return (
-		<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-			<div className="space-y-6 md:col-span-2">
-				<OrderItemsList items={order.items} />
-				{order.refunds.length > 0 && <OrderRefundsCard refunds={order.refunds} />}
-				<OrderStatusTimeline order={order} />
-				<OrderTracking order={order} />
-			</div>
+		<div className="space-y-6">
+			<Link
+				href="/commandes"
+				className="text-muted-foreground hover:text-foreground focus-ring -ml-1 inline-flex items-center gap-1 rounded-md text-sm"
+			>
+				<ChevronLeft className="size-4" aria-hidden="true" />
+				Mes commandes
+			</Link>
 
-			<div className="space-y-6 md:col-span-1">
-				<OrderSummaryCard order={order} />
-				<OrderAddressesCard order={order} />
-				{order.paymentStatus === "PAID" && (
-					<DownloadInvoiceButton orderNumber={order.orderNumber} />
-				)}
-				{canRequestReturn && (
-					<RequestReturnButton orderId={order.id} daysRemaining={daysRemaining} />
-				)}
-				{order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
-				{order.status === "DELIVERED" && <ReorderButton orderId={order.id} />}
+			<div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+				{/* Récap + actions : en tête sur mobile, colonne droite sur desktop */}
+				<div className="order-first space-y-6 md:order-last md:col-span-1">
+					<OrderSummaryCard order={order} />
+					{order.paymentStatus === "PAID" && (
+						<DownloadInvoiceButton orderNumber={order.orderNumber} />
+					)}
+					{canRequestReturn && (
+						<RequestReturnButton orderId={order.id} daysRemaining={daysRemaining} />
+					)}
+					{order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
+					{order.status === "DELIVERED" && <ReorderButton orderId={order.id} />}
+					<OrderAddressesCard order={order} />
+				</div>
+
+				<div className="space-y-6 md:order-first md:col-span-2">
+					<OrderItemsList items={order.items} />
+					{order.refunds.length > 0 && <OrderRefundsCard refunds={order.refunds} />}
+					<OrderStatusTimeline order={order} />
+					<OrderTracking order={order} />
+				</div>
 			</div>
 		</div>
 	);

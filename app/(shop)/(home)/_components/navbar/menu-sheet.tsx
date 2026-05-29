@@ -7,6 +7,7 @@ import ScrollFade from "@/shared/components/scroll-fade";
 import { HamburgerIcon } from "@/shared/components/icons/hamburger-icon";
 import {
 	Sheet,
+	SheetClose,
 	SheetContent,
 	SheetDescription,
 	SheetHeader,
@@ -14,6 +15,8 @@ import {
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
+import { ROUTES } from "@/shared/constants/urls";
+import Link from "next/link";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -34,9 +37,10 @@ const triggerClassName = cn(
 );
 
 /**
- * navItems (flat list from getMobileNavItems) drives the mobile sheet's link rendering,
- * while productTypes/collections provide hierarchical data for sectioned display.
- * Both are needed because the flat list lacks the grouping structure required by sections.
+ * navItems (flat list from getMobileNavItems) is used to resolve the top-level
+ * destinations by href (home, about, account, favorites). productTypes/collections
+ * are consumed directly by their respective sections for hierarchical display —
+ * the children embedded in navItems are not used by the sheet.
  */
 interface MenuSheetProps {
 	navItems: ReturnType<typeof getMobileNavItems>;
@@ -142,7 +146,7 @@ export function MenuSheet({
 					<button
 						type="button"
 						className={triggerClassName}
-						aria-label="Menu de navigation"
+						aria-label={isOpen ? "Fermer le menu de navigation" : "Menu de navigation"}
 						aria-haspopup="dialog"
 						aria-expanded={isOpen}
 						aria-controls={sheetId}
@@ -158,7 +162,16 @@ export function MenuSheet({
 				>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
 						<SheetTitle className="font-cursive flex h-9 items-center text-xl font-bold">
-							Synclune
+							<SheetClose asChild>
+								<Link
+									href={ROUTES.SHOP.HOME}
+									prefetch={null}
+									className="focus-ring rounded-md"
+									aria-label="Synclune - Retour à l'accueil"
+								>
+									Synclune
+								</Link>
+							</SheetClose>
 						</SheetTitle>
 						<SheetDescription className="sr-only">
 							Menu de navigation - Découvrez nos bijoux et collections
@@ -179,7 +192,7 @@ export function MenuSheet({
 						</ScrollFade>
 					</div>
 
-					<MenuSheetFooter isAdmin={isAdmin} />
+					<MenuSheetFooter />
 				</SheetContent>
 			</Sheet>
 

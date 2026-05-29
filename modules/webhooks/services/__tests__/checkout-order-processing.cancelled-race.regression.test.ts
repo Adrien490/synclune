@@ -36,11 +36,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	PaymentMethod: { CARD: "CARD" },
 }));
 
-vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
-	getShippingMethodFromRate: vi.fn().mockReturnValue("STANDARD"),
-	getShippingCarrierFromRate: vi.fn().mockReturnValue("colissimo"),
-}));
-
 vi.mock("../payment-intent.service", () => ({
 	initiateAutomaticRefund: mockInitiateAutomaticRefund,
 }));

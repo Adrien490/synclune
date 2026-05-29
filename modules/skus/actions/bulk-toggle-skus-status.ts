@@ -1,6 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -146,15 +147,17 @@ export async function bulkToggleSkusStatus(
 		}
 		tags.forEach((tag) => updateTag(tag));
 
-		// Back-in-stock notifications (fire-and-forget) when reactivating SKUs with
-		// inventory > 0. Idempotent via wishlist.backInStockNotifiedAt. Dedupe per product.
+		// Back-in-stock notifications (background via `after()`) when reactivating
+		// SKUs with inventory > 0. Le throttle interne rallonge le travail, `after()`
+		// le préserve du freeze serverless. Idempotent via wishlist.backInStockNotifiedAt.
+		// Dedupe per product.
 		if (targetIsActive) {
 			const productsToNotify = new Set<string>();
 			for (const s of safeEligible) {
 				if (s.inventory > 0) productsToNotify.add(s.productId);
 			}
 			for (const productId of productsToNotify) {
-				void notifyBackInStock(productId);
+				after(() => notifyBackInStock(productId));
 			}
 		}
 

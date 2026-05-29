@@ -92,6 +92,7 @@ const baseNavItems = [
 		icon: "folder-open" as const,
 		hasDropdown: true,
 	},
+	{ href: "/a-propos", label: "L'atelier", icon: "info" as const }, // ROUTES.SHOP.ABOUT
 	{ href: "/commandes", label: "Mon compte", icon: "user" as const },
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];
@@ -112,6 +113,24 @@ describe("MenuSheetNav", () => {
 			expect(screen.getByText("Nos créations")).toBeInTheDocument();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
 			expect(screen.getByText("Compte")).toBeInTheDocument();
+		});
+
+		// @regression menu-mobile-atelier-link
+		// "L'atelier" (ROUTES.SHOP.ABOUT) was present in getMobileNavItems but never
+		// rendered by MenuSheetNav, making the brand-story page unreachable from the
+		// mobile hamburger. It now renders inside the "Découvrir" section.
+		it("renders the 'L'atelier' link in the discover section", () => {
+			render(
+				<MenuSheetNav
+					navItems={baseNavItems}
+					productTypes={productTypes}
+					collections={collections}
+					session={null}
+				/>,
+			);
+
+			const atelierLink = screen.getByRole("link", { name: "L'atelier" });
+			expect(atelierLink.getAttribute("href")).toBe("/a-propos");
 		});
 
 		it("renders product type links using ROUTES", () => {
@@ -143,6 +162,30 @@ describe("MenuSheetNav", () => {
 
 			const mariageLink = screen.getByRole("link", { name: /Mariage/ });
 			expect(mariageLink.getAttribute("href")).toBe("/collections/mariage");
+		});
+	});
+
+	describe("focus management", () => {
+		// @regression menu-mobile-focus-preventscroll
+		// applyFocus() centers the active item then focuses the first link. Without
+		// preventScroll, focus() re-scrolls to top and negates the centering. The
+		// first link must be focused with { preventScroll: true }.
+		it("focuses the first nav link with preventScroll (preserves scroll-to-active)", () => {
+			const focusSpy = vi.spyOn(HTMLAnchorElement.prototype, "focus");
+			try {
+				render(
+					<MenuSheetNav
+						navItems={baseNavItems}
+						productTypes={productTypes}
+						collections={collections}
+						session={null}
+					/>,
+				);
+
+				expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
+			} finally {
+				focusSpy.mockRestore();
+			}
 		});
 	});
 

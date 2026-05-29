@@ -20,6 +20,13 @@ vi.mock("@/modules/users/hooks/use-delete-account", () => ({
 	})),
 }));
 
+vi.mock("@/modules/users/hooks/use-export-user-data", () => ({
+	useExportUserData: vi.fn(() => ({
+		exportData: vi.fn(),
+		isPending: false,
+	})),
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: vi.fn(() => ({
 		isOpen: false,
@@ -127,6 +134,18 @@ describe("GdprSection", () => {
 	it("shows 30-day delay description when status is ACTIVE", () => {
 		render(<GdprSection accountStatus="ACTIVE" daysRemaining={0} />);
 		expect(document.body.textContent).toContain("30 jours");
+	});
+
+	// ─── Data export (RGPD portability) ──────────────────────────────────────
+
+	it("renders the export data button (RGPD portability)", () => {
+		render(<GdprSection accountStatus="ACTIVE" daysRemaining={0} />);
+		expect(screen.getByRole("button", { name: /Exporter mes données/i })).toBeInTheDocument();
+	});
+
+	it("renders the export data button even when status is PENDING_DELETION", () => {
+		render(<GdprSection accountStatus="PENDING_DELETION" daysRemaining={15} />);
+		expect(screen.getByRole("button", { name: /Exporter mes données/i })).toBeInTheDocument();
 	});
 
 	it("does not show CancelDeletionBanner when status is ACTIVE", () => {

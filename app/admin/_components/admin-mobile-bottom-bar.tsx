@@ -24,6 +24,7 @@ import { Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import {
 	ADMIN_MENU_SHEET_CONTENT_ID,
+	badgeAriaLabel,
 	getQuickAccessItems,
 	type NavItem,
 } from "./navigation-config";
@@ -72,7 +73,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 							className={bottomBarBadgeClass}
 							role="status"
 							aria-live="polite"
-							aria-label={`${badgeCount} commande${badgeCount > 1 ? "s" : ""} en attente`}
+							aria-label={badgeAriaLabel("orders", badgeCount)}
 						>
 							{badgeCount > 99 ? "99+" : badgeCount}
 						</span>

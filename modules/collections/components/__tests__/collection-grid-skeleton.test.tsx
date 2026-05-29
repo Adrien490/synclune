@@ -35,11 +35,10 @@ describe("CollectionGridSkeleton", () => {
 
 	it("renders 8 skeleton grid items", () => {
 		render(<CollectionGridSkeleton />);
-		// Each item has multiple skeletons; check the grid container children
-		// 8 items, each with: image skeleton + 2 title lines + 1 count = 4 skeletons each = 32 total
+		// Each item mirrors CollectionCard: image + divider + 2 title lines + price + count
+		// = 6 skeletons each. 8 items * 6 = 48 total.
 		const skeletons = screen.getAllByTestId("skeleton");
-		// 8 items * 4 skeletons each = 32
-		expect(skeletons).toHaveLength(32);
+		expect(skeletons).toHaveLength(48);
 	});
 
 	it("renders the cursor pagination skeleton", () => {

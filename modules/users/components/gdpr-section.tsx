@@ -1,6 +1,7 @@
 import type { AccountStatus } from "@/app/generated/prisma/client";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import { CancelDeletionBanner } from "./cancel-deletion-banner";
+import { ExportDataButton } from "./export-data-button";
 
 interface GdprSectionProps {
 	accountStatus: AccountStatus;
@@ -11,7 +12,11 @@ export function GdprSection({ accountStatus, daysRemaining }: GdprSectionProps) 
 	const isPendingDeletion = accountStatus === "PENDING_DELETION";
 
 	return (
-		<section className="space-y-4" aria-labelledby="gdpr-heading">
+		<section
+			id="donnees-personnelles"
+			className="scroll-mt-24 space-y-4"
+			aria-labelledby="gdpr-heading"
+		>
 			<h2 id="gdpr-heading" className="text-base font-semibold">
 				Données personnelles
 			</h2>
@@ -20,8 +25,13 @@ export function GdprSection({ accountStatus, daysRemaining }: GdprSectionProps) 
 					<CancelDeletionBanner daysRemaining={daysRemaining} />
 				)}
 
+				<div>
+					<h4 className="mb-2 font-medium">Exporter mes données</h4>
+					<ExportDataButton />
+				</div>
+
 				{!isPendingDeletion && (
-					<div>
+					<div className="border-border/60 border-t pt-6">
 						<h4 className="mb-2 font-medium">Supprimer mon compte</h4>
 						<p className="text-muted-foreground mb-4 text-sm">
 							Délai de 30 jours avant suppression définitive.

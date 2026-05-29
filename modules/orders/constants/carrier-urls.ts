@@ -40,6 +40,41 @@ export const CARRIER_TRACKING_URLS = {
 	 */
 	DPD: (trackingNumber: string) =>
 		`https://trace.dpd.fr/fr/trace/${encodeURIComponent(trackingNumber)}`,
+
+	/**
+	 * GLS tracking (France)
+	 * Format: https://gls-group.com/FR/fr/suivi-colis?match=XXX
+	 */
+	GLS: (trackingNumber: string) =>
+		`https://gls-group.com/FR/fr/suivi-colis?match=${encodeURIComponent(trackingNumber)}`,
+
+	/**
+	 * DHL tracking
+	 * Format: https://www.dhl.com/fr-fr/home/tracking.html?tracking-id=XXX
+	 */
+	DHL: (trackingNumber: string) =>
+		`https://www.dhl.com/fr-fr/home/tracking.html?tracking-id=${encodeURIComponent(trackingNumber)}`,
+
+	/**
+	 * UPS tracking
+	 * Format: https://www.ups.com/track?loc=fr_FR&tracknum=XXX
+	 */
+	UPS: (trackingNumber: string) =>
+		`https://www.ups.com/track?loc=fr_FR&tracknum=${encodeURIComponent(trackingNumber)}`,
+
+	/**
+	 * FedEx tracking
+	 * Format: https://www.fedex.com/fedextrack/?trknbr=XXX
+	 */
+	FEDEX: (trackingNumber: string) =>
+		`https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(trackingNumber)}`,
+
+	/**
+	 * Relais Colis tracking
+	 * Format: https://www.relaiscolis.com/suivi-de-colis/?numeroColis=XXX
+	 */
+	RELAIS_COLIS: (trackingNumber: string) =>
+		`https://www.relaiscolis.com/suivi-de-colis/?numeroColis=${encodeURIComponent(trackingNumber)}`,
 } as const;
 
 // ============================================================================

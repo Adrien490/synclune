@@ -83,15 +83,19 @@ export function CreativeProcessTimeline() {
 						<li
 							key={step.id}
 							id={`creative-step-${step.id}`}
-							className="group relative -m-2 flex items-start gap-4 rounded-xl p-2"
+							className="group mobile-step-scroll relative -m-2 flex items-start gap-4 rounded-xl p-2"
 							aria-describedby={`creative-step-${step.id}-desc`}
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
-							{/* Desktop (sm-lg): icon circles */}
+							{/* Icon circle with hand-drawn illustration (all mobile sizes).
+							    The per-step reveal lives on the <li> (mobile-step-scroll) so the
+							    circle's hover scale/rotate stays conflict-free with the scroll
+							    animation. The step number is conveyed via the sr-only label above
+							    and the visible "N." prefix in the heading. */}
 							<div
 								className={cn(
-									"relative z-20 hidden size-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
+									"relative z-20 flex size-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate] motion-safe:duration-[var(--duration-slow)] lg:hidden",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,
@@ -108,22 +112,9 @@ export function CreativeProcessTimeline() {
 								)}
 							</div>
 
-							{/* Mobile: number circles - CSS scroll-driven animation */}
-							<div
-								aria-hidden="true"
-								className={cn(
-									"mobile-step-scroll flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:hidden",
-									step.color,
-									step.intensity.ring,
-									step.intensity.shadow,
-								)}
-							>
-								{index + 1}
-							</div>
-
 							<div className="flex-1 pb-8">
 								<h3 className="text-foreground mb-2 text-xl/7 font-medium tracking-tight antialiased">
-									<span className="hidden sm:inline lg:hidden" aria-hidden="true">
+									<span className="inline lg:hidden" aria-hidden="true">
 										{index + 1}.{" "}
 									</span>
 									{step.title}

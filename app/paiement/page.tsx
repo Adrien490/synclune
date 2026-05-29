@@ -136,13 +136,8 @@ export default async function CheckoutPage() {
 
 	return (
 		<div className="relative min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
-			{/* Decorative background — légèrement renforcé pour signature visuelle Synclune */}
-			<div
-				className="from-primary/5 to-secondary/5 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
-				style={{ viewTransitionName: "none" }}
-			/>
-
-			<section className="py-4 pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
+			{/* Decorative background fourni par layout.tsx (SSOT) — pas de duplication ici. */}
+			<section className="py-4 pb-[calc(theme(spacing.8)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="mb-4 sm:mb-6">
 						<h1 className="font-display text-xl font-normal tracking-wide max-sm:text-center sm:text-3xl">

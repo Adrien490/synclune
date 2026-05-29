@@ -5,6 +5,7 @@
  * Les constantes (tarifs) sont dans @/modules/orders/constants/shipping-rates
  */
 
+import { addBusinessDays } from "date-fns";
 import { SHIPPING_RATES, type ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
@@ -122,7 +123,7 @@ export function calculateShipping(
  * ```typescript
  * const info = getShippingInfo("FR");
  * console.log(info.amount); // 499
- * console.log(info.displayName); // "Livraison France (2-3 jours)"
+ * console.log(info.displayName); // "Livraison France"
  *
  * const corsica = getShippingInfo("FR", "20000");
  * // Returns null — shipping not available for Corsica
@@ -158,4 +159,38 @@ export function getShippingInfo(
  */
 export function isCountrySupported(countryCode: string): countryCode is ShippingCountry {
 	return isShippingCountry(countryCode);
+}
+
+// ============================================================================
+// DELIVERY ESTIMATION
+// ============================================================================
+
+/**
+ * Parse une chaîne de délai "X-Y jours ouvrés" (ou "X à Y") en tuple [min, max].
+ *
+ * @param estimatedDays - Délai au format SHIPPING_RATES (ex: "2-4 jours ouvrés")
+ * @returns Tuple [minDays, maxDays] ; fallback [3, 5] si le format est inattendu
+ */
+export function parseEstimatedDays(estimatedDays: string): [number, number] {
+	const match = estimatedDays.match(/(\d+)\s*[-àa]\s*(\d+)/);
+	if (!match) return [3, 5];
+	return [Number(match[1]), Number(match[2])];
+}
+
+/**
+ * Calcule la date estimée de livraison à partir de la date d'expédition,
+ * en ajoutant la borne haute du délai transport (jours ouvrés, week-ends exclus).
+ *
+ * @param shippedAt - Date d'expédition réelle
+ * @param countryCode - Code pays de destination (détermine le tarif/délai)
+ * @returns Date estimée de livraison
+ *
+ * @example
+ * ```typescript
+ * estimateDeliveryDate(new Date("2026-06-01"), "FR"); // shippedAt + 4 jours ouvrés
+ * ```
+ */
+export function estimateDeliveryDate(shippedAt: Date, countryCode: string): Date {
+	const [, maxDays] = parseEstimatedDays(getShippingRate(countryCode).estimatedDays);
+	return addBusinessDays(shippedAt, maxDays);
 }

@@ -321,3 +321,21 @@ describe("mergeColorsSchema", () => {
 		expect(result.success).toBe(false);
 	});
 });
+
+describe("updateColorSchema — isActive (P3-a)", () => {
+	const VALID_ID = "tz4a98xxat96iws9zmbrgj3a";
+	it("accepts an isActive boolean", () => {
+		const r = updateColorSchema.safeParse({
+			id: VALID_ID,
+			name: "Or",
+			hex: "#FFFFFF",
+			isActive: false,
+		});
+		expect(r.success).toBe(true);
+		if (r.success) expect(r.data.isActive).toBe(false);
+	});
+	it("is valid without isActive (optional)", () => {
+		const r = updateColorSchema.safeParse({ id: VALID_ID, name: "Or", hex: "#FFFFFF" });
+		expect(r.success).toBe(true);
+	});
+});

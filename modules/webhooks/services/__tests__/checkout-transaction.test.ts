@@ -64,8 +64,6 @@ vi.mock("@/shared/lib/stripe", () => ({
 
 vi.mock("@/modules/orders/constants/stripe-shipping-rates", () => ({
 	getShippingRateName: vi.fn().mockReturnValue("Livraison standard"),
-	getShippingMethodFromRate: vi.fn().mockReturnValue("STANDARD"),
-	getShippingCarrierFromRate: vi.fn().mockReturnValue("autre"),
 }));
 
 vi.mock("@/modules/cart/constants/cache", () => ({

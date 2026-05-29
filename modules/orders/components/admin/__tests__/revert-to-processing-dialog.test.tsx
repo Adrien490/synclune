@@ -105,6 +105,24 @@ describe("RevertToProcessingDialog", () => {
 		expect(screen.queryByText(/numéro de suivi/)).toBeNull();
 	});
 
+	it("reminds admin to notify the customer when a tracking number exists", () => {
+		mockDialog.isOpen = true;
+		mockDialog.data = {
+			orderId: "order-1",
+			orderNumber: "CMD-042",
+			trackingNumber: "1Z999AA10123456784",
+		};
+		render(<RevertToProcessingDialog />);
+		expect(screen.getByText(/Pensez à le prévenir manuellement/)).toBeInTheDocument();
+	});
+
+	it("hides the customer-notification reminder when trackingNumber is null", () => {
+		mockDialog.isOpen = true;
+		mockDialog.data = { orderId: "order-1", orderNumber: "CMD-042", trackingNumber: null };
+		render(<RevertToProcessingDialog />);
+		expect(screen.queryByText(/Pensez à le prévenir manuellement/)).toBeNull();
+	});
+
 	it("shows the reason textarea", () => {
 		mockDialog.isOpen = true;
 		mockDialog.data = { orderId: "order-1", orderNumber: "CMD-042" };

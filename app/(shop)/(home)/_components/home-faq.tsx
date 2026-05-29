@@ -23,7 +23,12 @@ export function HomeFaq() {
 		>
 			<div className={CONTAINER_CLASS}>
 				<header className="mb-10 text-center lg:mb-14">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+					<Fade
+						y={MOTION_CONFIG.section.title.y}
+						duration={MOTION_CONFIG.section.title.duration}
+						inView
+						once
+					>
 						<SectionTitle id="home-faq-title">Questions fréquentes</SectionTitle>
 						<HandDrawnUnderline
 							delay={MOTION_CONFIG.section.underline.delay}
@@ -34,6 +39,8 @@ export function HomeFaq() {
 						y={MOTION_CONFIG.section.subtitle.y}
 						delay={MOTION_CONFIG.section.subtitle.delay}
 						duration={MOTION_CONFIG.section.subtitle.duration}
+						inView
+						once
 					>
 						<p
 							id="home-faq-subtitle"

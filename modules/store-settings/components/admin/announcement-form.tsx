@@ -127,7 +127,7 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 				)}
 			</form.Subscribe>
 
-			<div className="flex justify-end border-t pt-4">
+			<div className="flex justify-end pt-4">
 				<Button
 					type="submit"
 					size="sm"

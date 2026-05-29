@@ -84,7 +84,6 @@ function renderButton(overrides: Partial<React.ComponentProps<typeof CartItemRem
 		cartItemId: "item-1",
 		itemName: "Bague Lune",
 		quantity: 2,
-		isPending: false,
 		...overrides,
 	};
 	return render(<CartItemRemoveButton {...props} />);
@@ -124,25 +123,14 @@ describe("CartItemRemoveButton", () => {
 		expect(mockHaptic).toHaveBeenCalledWith("light");
 	});
 
-	it("is disabled when isPending is true", () => {
-		renderButton({ isPending: true });
-		expect(screen.getByRole("button")).toBeDisabled();
-	});
-
-	it("sets data-pending attribute when isPending is true", () => {
-		renderButton({ isPending: true });
-		const button = screen.getByRole("button");
-		expect(button.dataset.pending).toBe("");
-	});
-
-	it("does not set data-pending attribute when isPending is false", () => {
-		renderButton({ isPending: false });
-		const button = screen.getByRole("button");
-		expect(button.dataset.pending).toBeUndefined();
-	});
-
-	it("is enabled by default (isPending defaults to false)", () => {
+	it("is never disabled (removal is optimistic, no pending state)", () => {
 		renderButton();
 		expect(screen.getByRole("button")).not.toBeDisabled();
+	});
+
+	it("does not set a data-pending attribute", () => {
+		renderButton();
+		const button = screen.getByRole("button");
+		expect(button.dataset.pending).toBeUndefined();
 	});
 });

@@ -11,21 +11,20 @@ interface CartItemRemoveButtonProps {
 	skuId?: string;
 	itemName: string;
 	quantity: number;
-	isPending?: boolean;
 }
 
 /**
  * Client Component pour le lien de suppression d'un article du panier
  * Compatible Next.js 16 + React 19.2
  *
- * Ouvre un AlertDialog de confirmation avant suppression
+ * Ouvre un AlertDialog de confirmation avant suppression.
+ * Pas de state disabled/loader : la suppression est optimistic.
  */
 export function CartItemRemoveButton({
 	cartItemId,
 	skuId,
 	itemName,
 	quantity,
-	isPending = false,
 }: CartItemRemoveButtonProps) {
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 	const haptic = useHaptic();
@@ -42,11 +41,9 @@ export function CartItemRemoveButton({
 
 	return (
 		<Button
-			data-pending={isPending ? "" : undefined}
 			type="button"
 			variant="link"
 			onClick={handleRemove}
-			disabled={isPending}
 			className="text-foreground hover:text-destructive active:text-destructive/80 min-h-11 min-w-11 px-2 text-sm"
 			aria-label={`Supprimer ${itemName} du panier`}
 		>

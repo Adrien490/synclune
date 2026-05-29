@@ -247,3 +247,27 @@ export function getQuickAccessItems(): NavItem[] {
 		(item): item is NavItem => item !== undefined,
 	);
 }
+
+// ============================================================================
+// BADGES (aria-label SSOT — partagé sidebar desktop + bottom-bar + menu sheet)
+// ============================================================================
+
+/**
+ * Noms typés par item pour l'aria-label du badge (sinon générique « en attente »).
+ * Seuls les items réellement badgés (cf. getAdminNavBadges → { orders, refunds })
+ * ont une entrée.
+ */
+const BADGE_NOUNS: Record<string, { one: string; many: string }> = {
+	orders: { one: "commande en attente", many: "commandes en attente" },
+	refunds: { one: "remboursement en attente", many: "remboursements en attente" },
+};
+
+/**
+ * Label accessible exact d'un badge de compteur (le visuel clamp à « 99+ »
+ * mais le SR doit garder le compte réel). Parité desktop/mobile.
+ */
+export function badgeAriaLabel(itemId: string, count: number): string {
+	const noun = BADGE_NOUNS[itemId];
+	if (!noun) return `${count} en attente`;
+	return `${count} ${count > 1 ? noun.many : noun.one}`;
+}

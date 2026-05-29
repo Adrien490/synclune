@@ -61,6 +61,7 @@ export function MenuSheetNav({
 
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
+	const aboutItem = navItems.find((item) => item.href === ROUTES.SHOP.ABOUT);
 	const accountItem = navItems.find(
 		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
 	);
@@ -83,7 +84,9 @@ export function MenuSheetNav({
 			if (!n) return;
 			const activePage = n.querySelector<HTMLElement>('[aria-current="page"]');
 			activePage?.scrollIntoView({ block: "center", behavior: "smooth" });
-			n.querySelector<HTMLAnchorElement>("a")?.focus();
+			// preventScroll: focusing the first link must not undo the scroll-to-active
+			// above (default focus() scrolls the target into view → jumps back to top).
+			n.querySelector<HTMLAnchorElement>("a")?.focus({ preventScroll: true });
 		}
 
 		if (shouldReduceMotion) {
@@ -135,7 +138,7 @@ export function MenuSheetNav({
 				</m.div>
 			)}
 
-			<DiscoverSection homeItem={homeItem} {...sectionProps} />
+			<DiscoverSection homeItem={homeItem} aboutItem={aboutItem} {...sectionProps} />
 
 			<CreationsSection productTypes={productTypes} {...sectionProps} />
 

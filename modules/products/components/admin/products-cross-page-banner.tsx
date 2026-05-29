@@ -98,7 +98,7 @@ export function ProductsCrossPageBanner({
 				onClick={handleSelectAll}
 				disabled={isFetching}
 				className={cn(
-					"text-primary inline-flex min-h-9 shrink-0 items-center gap-1 rounded px-2 text-sm font-medium",
+					"text-primary inline-flex min-h-11 shrink-0 items-center gap-1 rounded px-2 text-sm font-medium",
 					"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
 					"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
 					"touch-manipulation [-webkit-tap-highlight-color:transparent]",

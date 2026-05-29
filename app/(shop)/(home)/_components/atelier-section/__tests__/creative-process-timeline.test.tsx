@@ -172,14 +172,21 @@ describe("CreativeProcessTimeline", () => {
 		}
 	});
 
-	it("mobile number circles show step numbers 1 through 4", () => {
+	it("mobile steps render hand-drawn illustrations with a visible number prefix", () => {
 		const { container } = render(<CreativeProcessTimeline />);
 
 		const mobileList = container.querySelector(".lg\\:hidden ol");
-		const numberCircles = mobileList!.querySelectorAll(".mobile-step-scroll");
+		// The scroll-driven reveal now lives on the <li> (one per step)
+		const rows = mobileList!.querySelectorAll("li.mobile-step-scroll");
+		expect(rows).toHaveLength(4);
 
-		expect(numberCircles).toHaveLength(4);
-		const numbers = Array.from(numberCircles).map((el) => el.textContent);
-		expect(numbers).toEqual(["1", "2", "3", "4"]);
+		const stepIds = ["idea", "drawing", "assembly", "finishing"];
+		rows.forEach((row, i) => {
+			// Hand-drawn illustration is rendered on all mobile sizes (no more bare number circle)
+			expect(row.querySelector(`[data-testid='illustration-${stepIds[i]}']`)).not.toBeNull();
+			// Step number stays discoverable via the "N." prefix in the heading
+			const heading = row.querySelector("h3");
+			expect(heading?.textContent).toContain(`${i + 1}.`);
+		});
 	});
 });

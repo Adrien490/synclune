@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import {
 	ResponsiveActionMenu,
@@ -27,12 +27,13 @@ export interface LongPressMenuLinkProps {
 	menuDescription?: string;
 	/** Classes Tailwind appliquées au Link wrapper. */
 	className?: string;
-	/** Contenu visuel de la card. */
+	/**
+	 * Contenu visuel de la card. Rendu **à l'intérieur du `<Link>` (`<a>`)** :
+	 * ne doit donc contenir aucun élément interactif (button, a, input) — ce
+	 * serait du HTML invalide et casserait le tap. Les actions vivent dans le
+	 * menu (`sections`), rendu en portail (Drawer/DropdownMenu), donc exempt.
+	 */
 	children: ReactNode;
-	/** Désactive l'ouverture du menu au long-press. @default false */
-	disabled?: boolean;
-	/** Forwarded à `<Link prefetch>`. */
-	prefetch?: boolean | null;
 	/** Nom de View Transition propagé sur le Link pour morph card → page détail. */
 	viewTransitionName?: string;
 	/**
@@ -52,6 +53,12 @@ export interface LongPressMenuLinkProps {
  * Le `firedRef` interne du hook `useLongPress` supprime automatiquement le
  * synthetic click qui suit un long-press (`preventDefault()` + `stopPropagation()`),
  * donc `onClick` ne se déclenche que sur les vrais taps.
+ *
+ * **Accessibilité — tactile-first.** Le long-press est tactile (`useLongPress`).
+ * Au clavier, le menu s'ouvre via les raccourcis OS standard `ContextMenu` /
+ * `Shift+F10` (cf. `handleKeyDown`). Les mêmes actions restent par ailleurs
+ * opérables sans tactile via la page détail (`*-detail-header.tsx`) et la table
+ * desktop (`*-row-actions.tsx`) — toutes alimentées par le même hook `use*Actions`.
  */
 export function LongPressMenuLink({
 	href,
@@ -61,32 +68,34 @@ export function LongPressMenuLink({
 	menuDescription,
 	className,
 	children,
-	disabled = false,
-	prefetch,
 	viewTransitionName,
 	affordance,
 }: LongPressMenuLinkProps) {
 	const [open, setOpen] = useState(false);
 	const haptic = useHaptic();
 
-	const { bind } = useLongPress(
-		() => {
-			if (disabled) return;
+	const { bind } = useLongPress(() => setOpen(true), {
+		haptic: "medium",
+		onClick: () => haptic("light"),
+	});
+
+	// Escape clavier : raccourcis OS standard d'ouverture de menu contextuel
+	// (WAI-ARIA). preventDefault pour bloquer le menu natif du navigateur.
+	const handleKeyDown = (e: KeyboardEvent) => {
+		if (e.key === "ContextMenu" || (e.shiftKey && e.key === "F10")) {
+			e.preventDefault();
+			haptic("medium");
 			setOpen(true);
-		},
-		{
-			haptic: "medium",
-			onClick: () => haptic("light"),
-		},
-	);
+		}
+	};
 
 	return (
 		<>
 			<Link
 				href={href}
 				aria-label={ariaLabel}
-				prefetch={prefetch}
 				{...bind}
+				onKeyDown={handleKeyDown}
 				style={viewTransitionName ? { ...bind.style, viewTransitionName } : bind.style}
 				className={cn(
 					"focus-visible:ring-primary relative block w-full rounded-lg",

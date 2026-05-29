@@ -32,6 +32,16 @@ export function getTrackingUrl(carrier: Carrier, trackingNumber: string): string
 			return CARRIER_TRACKING_URLS.MONDIAL_RELAY(cleanNumber);
 		case "dpd":
 			return CARRIER_TRACKING_URLS.DPD(cleanNumber);
+		case "gls":
+			return CARRIER_TRACKING_URLS.GLS(cleanNumber);
+		case "dhl":
+			return CARRIER_TRACKING_URLS.DHL(cleanNumber);
+		case "ups":
+			return CARRIER_TRACKING_URLS.UPS(cleanNumber);
+		case "fedex":
+			return CARRIER_TRACKING_URLS.FEDEX(cleanNumber);
+		case "relais_colis":
+			return CARRIER_TRACKING_URLS.RELAIS_COLIS(cleanNumber);
 		case "autre":
 		default:
 			return null;

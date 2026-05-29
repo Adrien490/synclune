@@ -86,7 +86,7 @@ export function OrderNotesPanel({ orderId, onClose, className }: OrderNotesPanel
 			</div>
 
 			{onClose && (
-				<div className="flex shrink-0 justify-end border-t pt-4">
+				<div className="flex shrink-0 justify-end pt-4">
 					<Button variant="outline" onClick={onClose}>
 						Fermer
 					</Button>

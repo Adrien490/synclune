@@ -1,5 +1,6 @@
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SkipLink } from "@/shared/components/skip-link";
+import { getAdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { Metadata } from "next";
@@ -50,6 +51,11 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 		image: result.user.image,
 	};
 
+	// Compteurs de files actionnables (commandes à préparer, remboursements en
+	// attente) — pastilles de navigation mobile. Cache partagé tagué ADMIN_BADGES,
+	// déjà invalidé par les mutations orders/refunds.
+	const badges = await getAdminNavBadges();
+
 	return (
 		<SidebarProvider>
 			<SkipLink targetId="admin-main-content" />
@@ -58,7 +64,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<VisualViewportBridge />
 			<SentryUserBridge userId={result.user.id} role={result.user.role} />
 			<Suspense fallback={<AdminSidebarSkeleton />}>
-				<AdminSidebar user={user} />
+				<AdminSidebar user={user} badges={badges} />
 			</Suspense>
 			<SidebarInset data-admin-layout>
 				<DashboardHeaderWrapper />
@@ -71,9 +77,9 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				>
 					<Suspense fallback={<AdminContentSkeleton />}>{children}</Suspense>
 				</main>
-				<AdminMobileBottomBar />
+				<AdminMobileBottomBar badges={badges} />
 			</SidebarInset>
-			<AdminMenuSheet user={user} />
+			<AdminMenuSheet user={user} badges={badges} />
 			<KeyboardShortcutsDialog />
 		</SidebarProvider>
 	);

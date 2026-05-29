@@ -57,7 +57,12 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 						<p className="text-muted-foreground font-display mb-3 text-xs italic">
 							Pièces récentes de l&apos;atelier
 						</p>
-						<div className="grid grid-cols-2 gap-4">
+						<div
+							className={cn(
+								"grid gap-4",
+								featuredProducts.length === 1 ? "grid-cols-1" : "grid-cols-2",
+							)}
+						>
 							{featuredProducts.map((product) => (
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
@@ -65,6 +70,9 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 										className={cn(
 											"group/product flex flex-col gap-2",
 											"rounded-lg p-1.5",
+											// Single product: cap width so the square image doesn't balloon
+											// across the full 360px right zone.
+											featuredProducts.length === 1 && "max-w-[170px]",
 											"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 											"hover:bg-accent/50",
 											"focus-ring",

@@ -31,11 +31,13 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 
 		// 3. Extract data from FormData
 		const rawDescription = sanitizeText(safeFormGet(formData, "description") ?? "");
+		const rawIsActive = formData.get("isActive");
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
 			description: rawDescription.length > 0 ? rawDescription : undefined,
+			isActive: rawIsActive === null ? undefined : rawIsActive === "true",
 		};
 
 		// Validate data
@@ -87,6 +89,9 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 				? await generateSlug(prisma, "color", validatedData.name)
 				: existingColor.slug;
 
+		// isActive : ne s'applique que si transmis (édition). Création force true.
+		const nextIsActive = validatedData.isActive ?? existingColor.isActive;
+
 		// Update the color
 		await prisma.color.update({
 			where: { id: validatedData.id },
@@ -95,13 +100,17 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 				slug,
 				hex: validatedData.hex,
 				description: validatedData.description ?? null,
+				isActive: nextIsActive,
 			},
 		});
 
-		// Cascade : si name/hex change, les pages produit qui montrent cette
-		// couleur (swatch + nom dans les SKUs) doivent être réinvalidées.
+		// Cascade : si name/hex/isActive change, les pages produit qui montrent
+		// cette couleur (swatch + nom dans les SKUs) ou sa disponibilité doivent
+		// être réinvalidées.
 		const nameOrHexChanged =
-			validatedData.name !== existingColor.name || validatedData.hex !== existingColor.hex;
+			validatedData.name !== existingColor.name ||
+			validatedData.hex !== existingColor.hex ||
+			nextIsActive !== existingColor.isActive;
 
 		const affectedProductSlugs: string[] = [];
 		if (nameOrHexChanged) {

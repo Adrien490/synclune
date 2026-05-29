@@ -29,8 +29,8 @@ export function AdminFormFooter({
 	return (
 		<div
 			className={cn(
-				"bg-background/80 border-border/60 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md",
-				"md:static md:m-0 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none",
+				"bg-background/80 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md",
+				"md:static md:m-0 md:bg-transparent md:p-0 md:backdrop-blur-none",
 				className,
 			)}
 			{...props}

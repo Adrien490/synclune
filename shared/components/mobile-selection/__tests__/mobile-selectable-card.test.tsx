@@ -157,12 +157,27 @@ describe("MobileSelectableCard", () => {
 		expect(screen.getByTestId("card-content")).toBeInTheDocument();
 	});
 
-	it("renders a discoverability affordance (MoreVertical) by default in OFF mode", () => {
+	it("omits the discoverability affordance (MoreVertical) by default in OFF mode", () => {
 		render(
 			<MobileSelectableCard
 				id="p-1"
 				itemLabel="Produit Anneau doré"
 				longPressProps={longPressProps}
+			>
+				<span>Card content</span>
+			</MobileSelectableCard>,
+		);
+
+		expect(screen.queryByTestId("more-vertical-icon")).not.toBeInTheDocument();
+	});
+
+	it("renders the affordance only when explicitly opted in via showAffordance", () => {
+		render(
+			<MobileSelectableCard
+				id="p-1"
+				itemLabel="Produit Anneau doré"
+				longPressProps={longPressProps}
+				showAffordance
 			>
 				<span>Card content</span>
 			</MobileSelectableCard>,

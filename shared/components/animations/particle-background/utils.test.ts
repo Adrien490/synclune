@@ -5,6 +5,7 @@ import { seededRandom } from "@/shared/utils/seeded-random";
 import {
 	clearParticleCache,
 	generateParticles,
+	getEntranceTransition,
 	getShapeStyles,
 	getSvgConfig,
 	getTransition,
@@ -242,6 +243,69 @@ describe("getShapeStyles", () => {
 		const styles = getShapeStyles("diamond", "blue");
 		expect(styles).toHaveProperty("backgroundColor", "blue");
 		expect(styles).toHaveProperty("rotate", "45deg");
+	});
+
+	// ─── gradient mode (Phase 3) ──────────────────────────────────────
+
+	it("applies a radial-gradient background for CSS shapes when gradient=true", () => {
+		const styles = getShapeStyles("circle", "red", true) as { background?: string };
+		expect(styles.background).toBeDefined();
+		expect(styles.background).toContain("radial-gradient");
+		expect(styles.background).toContain("red");
+		expect(styles).not.toHaveProperty("backgroundColor");
+		// Shape geometry is preserved
+		expect(styles).toHaveProperty("borderRadius", "50%");
+	});
+
+	it("applies a radial-gradient background for clipPath shapes when gradient=true", () => {
+		const styles = getShapeStyles("heart", "pink", true) as { background?: string };
+		expect(styles.background).toContain("radial-gradient");
+		expect(styles).toHaveProperty("clipPath");
+		expect(styles).not.toHaveProperty("backgroundColor");
+	});
+
+	it("keeps the solid backgroundColor when gradient=false (default)", () => {
+		expect(getShapeStyles("circle", "red")).toHaveProperty("backgroundColor", "red");
+		expect(getShapeStyles("heart", "red", false)).toHaveProperty("backgroundColor", "red");
+	});
+});
+
+// ─── getEntranceTransition (F2) ──────────────────────────────────────
+
+describe("getEntranceTransition", () => {
+	const makeParticle = (overrides: Partial<Particle> = {}): Particle => ({
+		id: 0,
+		size: 32,
+		opacity: 0.3,
+		x: 50,
+		y: 50,
+		color: "red",
+		duration: 28,
+		delay: 9,
+		blur: 10,
+		depthFactor: 0.5,
+		shape: "circle",
+		...overrides,
+	});
+
+	it("uses a short fixed duration, decoupled from the loop duration", () => {
+		const t = getEntranceTransition(makeParticle({ duration: 28 }));
+		expect(t.duration).toBe(0.5);
+	});
+
+	it("does not repeat (entrance plays once)", () => {
+		const t = getEntranceTransition(makeParticle());
+		expect(t.repeat).toBeUndefined();
+	});
+
+	it("staggers the delay by particle id, independent of the loop delay", () => {
+		// id 0 → 0, id 4 → 0.2, regardless of the (large) loop delay
+		expect(getEntranceTransition(makeParticle({ id: 0, delay: 9 })).delay).toBe(0);
+		expect(getEntranceTransition(makeParticle({ id: 4, delay: 9 })).delay).toBeCloseTo(0.2, 10);
+	});
+
+	it("caps the entrance delay at 1s for high ids", () => {
+		expect(getEntranceTransition(makeParticle({ id: 100 })).delay).toBe(1);
 	});
 });
 
@@ -535,6 +599,24 @@ describe("ANIMATION_PRESETS", () => {
 	it("cascade preset omits rotation for round shapes", () => {
 		const result = ANIMATION_PRESETS.cascade(makeParticle({ shape: "circle" }));
 		expect(result.rotate).toBeUndefined();
+	});
+
+	// ─── twinkle (Phase 3) ─────────────────────────────────────────
+
+	it("twinkle preset pulses scale and opacity (poussière d'étoiles)", () => {
+		const p = makeParticle({ opacity: 0.3 });
+		const result = ANIMATION_PRESETS.twinkle(p);
+		expect(result.scale).toEqual([1, 1.15, 0.95, 1.1, 1]);
+		const opacities = result.opacity as number[];
+		expect(opacities).toHaveLength(5);
+		// Dims at the extremes, brightens in between
+		expect(opacities[0]).toBeCloseTo(0.3 * 0.4, 10);
+		expect(opacities[1]).toBeCloseTo(Math.min(0.3 * 1.4, 1), 10);
+	});
+
+	it("twinkle preset clamps boosted opacity to 1", () => {
+		const result = ANIMATION_PRESETS.twinkle(makeParticle({ opacity: 0.9 }));
+		expect((result.opacity as number[])[1]).toBe(1);
 	});
 
 	it("all presets return valid TargetAndTransition objects", () => {

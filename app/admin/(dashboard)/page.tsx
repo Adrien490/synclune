@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { Suspense } from "react";
 import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
@@ -7,7 +6,6 @@ import { SectionHeading } from "./_components/section-heading";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
-import { DashboardGreeting } from "@/modules/dashboard/components/dashboard-greeting";
 import { DashboardAmbientBackground } from "@/modules/dashboard/components/dashboard-ambient-background";
 import { DashboardScrollRestore } from "@/modules/dashboard/components/dashboard-scroll-restore";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -69,30 +67,26 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 		<section aria-label="Tableau de bord" className="relative isolate">
 			<DashboardAmbientBackground />
 			<DashboardScrollRestore />
-			<PageHeader
-				variant="compact"
-				title="Ton atelier"
-				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
-				actions={
-					<>
-						<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
-							<DashboardFreshness />
-							<PeriodSelector />
-							<ExportRevenueButton period={period} />
-							<RefreshDashboardButton />
-						</div>
-						<DashboardMobileActions period={period} className="md:hidden" />
-					</>
-				}
-			/>
+			<h1 className="sr-only">Tableau de bord</h1>
+			<header className="mb-4 md:mb-6">
+				<div
+					role="group"
+					aria-label="Actions du tableau de bord"
+					className="flex w-full flex-wrap items-center justify-start gap-3 md:justify-end"
+				>
+					<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
+						<DashboardFreshness />
+						<PeriodSelector />
+						<ExportRevenueButton period={period} />
+						<RefreshDashboardButton />
+					</div>
+					<DashboardMobileActions period={period} className="md:hidden" />
+				</div>
+			</header>
 
 			<div className="space-y-8">
 				<Suspense>
 					<AlertsWrapper />
-				</Suspense>
-
-				<Suspense fallback={<DashboardGreetingFallback />}>
-					<DashboardGreeting period={period} comparisonMode={comparisonMode} />
 				</Suspense>
 
 				<DashboardFreshness className="md:hidden" />
@@ -157,10 +151,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 			</div>
 		</section>
 	);
-}
-
-function DashboardGreetingFallback() {
-	return <div aria-hidden="true" className="h-6 sm:h-7" />;
 }
 
 async function KpisWrapper({

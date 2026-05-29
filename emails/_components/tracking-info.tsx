@@ -6,9 +6,15 @@ import { EmailSummaryRow } from "./email-summary-row";
 interface TrackingInfoProps {
 	carrierLabel: string;
 	trackingNumber: string;
+	/** Date de livraison estimée pré-formatée (ex: "12 juin 2026"). */
+	estimatedDelivery?: string | null;
 }
 
-export const TrackingInfo = ({ carrierLabel, trackingNumber }: TrackingInfoProps) => {
+export const TrackingInfo = ({
+	carrierLabel,
+	trackingNumber,
+	estimatedDelivery,
+}: TrackingInfoProps) => {
 	return (
 		<EmailCard>
 			<EmailSummaryRow
@@ -29,11 +35,18 @@ export const TrackingInfo = ({ carrierLabel, trackingNumber }: TrackingInfoProps
 				}
 			/>
 			<EmailSummaryRow
-				style={{ marginBottom: "0" }}
+				style={{ marginBottom: estimatedDelivery ? "8px" : "0" }}
 				label="Numéro de suivi"
 				value={trackingNumber}
 				variant="mono"
 			/>
+			{estimatedDelivery && (
+				<EmailSummaryRow
+					style={{ marginBottom: "0" }}
+					label="Livraison estimée"
+					value={estimatedDelivery}
+				/>
+			)}
 		</EmailCard>
 	);
 };

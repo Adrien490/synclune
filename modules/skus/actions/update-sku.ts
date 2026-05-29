@@ -8,6 +8,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validationError } from "@/shared/lib/actions";
@@ -254,13 +255,15 @@ export async function updateProductSku(
 			});
 		}
 
-		// 9.b Back-in-stock notifications (fire-and-forget):
-		// trigger when transitioning from unavailable (out of stock OR inactive) to
-		// available (inventory > 0 AND active). Idempotent via wishlist.backInStockNotifiedAt.
+		// 9.b Back-in-stock notifications (background, survives the response via
+		// `after()`): trigger when transitioning from unavailable (out of stock OR
+		// inactive) to available (inventory > 0 AND active). Le throttle interne
+		// (NOTIFY_SEND_INTERVAL_MS) rallonge le travail ; `after()` évite qu'il soit
+		// tué par le freeze serverless. Idempotent via wishlist.backInStockNotifiedAt.
 		const wasUnavailable = previousInventory === 0 || !previousIsActive;
 		const isNowAvailable = validatedData.inventory > 0 && validatedData.isActive;
 		if (wasUnavailable && isNowAvailable) {
-			void notifyBackInStock(productSku.productId);
+			after(() => notifyBackInStock(productSku.productId));
 		}
 
 		// 10. Build success message

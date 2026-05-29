@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
+import type { AdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
 import { CollapsibleNavGroup } from "./collapsible-nav-group";
@@ -24,9 +25,11 @@ interface AdminSidebarProps {
 		email: string;
 		image?: string | null;
 	};
+	/** Compteurs de files actionnables (commandes/remboursements en attente). */
+	badges?: AdminNavBadges;
 }
 
-export function AdminSidebar({ user }: AdminSidebarProps) {
+export function AdminSidebar({ user, badges }: AdminSidebarProps) {
 	return (
 		<Sidebar variant="floating" disableMobileSheet>
 			<SidebarHeader>
@@ -54,7 +57,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 					return (
 						<Fragment key={group.label}>
 							{group.collapsible ? (
-								<CollapsibleNavGroup groupLabel={group.label} groupId={groupId} />
+								<CollapsibleNavGroup groupLabel={group.label} groupId={groupId} badges={badges} />
 							) : (
 								<SidebarGroup role="group" aria-labelledby={groupId}>
 									<SidebarGroupLabel
@@ -72,7 +75,11 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 											const Icon = item.icon;
 											return (
 												<SidebarMenuItem key={item.id}>
-													<NavMainClient url={item.url} tooltip={item.title}>
+													<NavMainClient
+														url={item.url}
+														tooltip={item.title}
+														badge={badges?.[item.id]}
+													>
 														<Icon className="size-5 shrink-0" aria-hidden="true" />
 														<span className="flex-1">{item.title}</span>
 													</NavMainClient>

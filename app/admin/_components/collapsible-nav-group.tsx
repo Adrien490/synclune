@@ -12,15 +12,18 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@/shared/components/ui/sidebar";
+import type { AdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
 import { NavMainClient } from "./nav-main-client";
 import { navigationData } from "./navigation-config";
 
 interface CollapsibleNavGroupProps {
 	groupLabel: string;
 	groupId: string;
+	/** Compteurs de files actionnables (aucun item collapsible n'est badgé à ce jour). */
+	badges?: AdminNavBadges;
 }
 
-export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroupProps) {
+export function CollapsibleNavGroup({ groupLabel, groupId, badges }: CollapsibleNavGroupProps) {
 	const group = navigationData.navGroups.find((g) => g.label === groupLabel);
 
 	if (!group) return null;
@@ -50,7 +53,7 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 							const Icon = item.icon;
 							return (
 								<SidebarMenuItem key={item.id}>
-									<NavMainClient url={item.url} tooltip={item.title}>
+									<NavMainClient url={item.url} tooltip={item.title} badge={badges?.[item.id]}>
 										<Icon className="size-5 shrink-0" aria-hidden="true" />
 										<span className="flex-1">{item.title}</span>
 									</NavMainClient>

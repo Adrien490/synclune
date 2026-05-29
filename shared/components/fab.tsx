@@ -285,7 +285,7 @@ export function Fab({
 						transition={transition}
 						className={cn(
 							visibilityClass,
-							"fixed right-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-45",
+							"fixed right-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-(--z-fab)",
 							containerClassName,
 						)}
 					>
@@ -304,10 +304,12 @@ export function Fab({
 								className={cn(
 									"rounded-l-full rounded-r-none",
 									"size-9 p-0",
+									// 44px hit area (WCAG 2.5.5) — visuel 36px + 8px via after, aligné sur le bouton X
+									"relative after:absolute after:inset-[-4px] after:content-['']",
 									"bg-background",
 									"border-r-0",
 									"shadow-sm",
-									"opacity-40 hover:opacity-100 focus-visible:opacity-100",
+									"opacity-60 hover:opacity-100 focus-visible:opacity-100",
 									"hover:bg-accent",
 									"motion-safe:transition-[transform,opacity,background-color] motion-safe:duration-150",
 									"active:scale-95",
@@ -335,7 +337,7 @@ export function Fab({
 						transition={transition}
 						className={cn(
 							visibilityClass,
-							"group fixed right-[max(1.5rem,env(safe-area-inset-right,0px))] bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-45",
+							"group fixed right-[max(1.5rem,env(safe-area-inset-right,0px))] bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-(--z-fab)",
 							containerClassName,
 						)}
 					>

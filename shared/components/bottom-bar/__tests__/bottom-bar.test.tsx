@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type * as UseBottomBarHeightModule from "@/shared/hooks/use-bottom-bar-height";
 
 // Hoisted mocks (vi.mock factories are hoisted above variable declarations)
-const { useReducedMotionMock, useBottomBarHeightMock } = vi.hoisted(() => ({
+const { useReducedMotionMock, useBottomBarHeightMock, useKeyboardOpenMock } = vi.hoisted(() => ({
 	useReducedMotionMock: vi.fn(() => false),
 	useBottomBarHeightMock: vi.fn(),
+	useKeyboardOpenMock: vi.fn(() => false),
 }));
 
 // Mock cn utility
@@ -23,13 +24,15 @@ vi.mock("motion/react", async () => {
 		({
 			layoutId,
 			transition,
-			initial: _initial,
-			animate: _animate,
+			initial,
+			animate,
 			...rest
 		}: Record<string, unknown> & { children?: React.ReactNode }) => {
 			const extras: Record<string, string> = {};
 			if (layoutId !== undefined) extras["data-layout-id"] = String(layoutId);
 			if (transition !== undefined) extras["data-transition"] = JSON.stringify(transition);
+			if (initial !== undefined) extras["data-initial"] = JSON.stringify(initial);
+			if (animate !== undefined) extras["data-animate"] = JSON.stringify(animate);
 			return createElement(tag, { ...rest, ...extras });
 		};
 
@@ -54,6 +57,11 @@ vi.mock("motion/react", async () => {
 // Mock useBottomBarHeight to track calls
 vi.mock("@/shared/hooks", () => ({
 	useBottomBarHeight: useBottomBarHeightMock,
+}));
+
+// Mock soft-keyboard observer — controllable per test.
+vi.mock("@/shared/components/visual-viewport-bridge", () => ({
+	useKeyboardOpen: useKeyboardOpenMock,
 }));
 
 // Mock motion config — include `snappy` used by BottomBarActivePill
@@ -245,6 +253,68 @@ describe("BottomBar", () => {
 		expect(el).toHaveAttribute("aria-label", "bar");
 		// Native path: no Framer data attrs forwarded.
 		expect(el).not.toHaveAttribute("data-transition");
+	});
+
+	it("animates to y:'100%' when hidden (full slide-out, robust to safe-area)", () => {
+		render(
+			<BottomBar isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(JSON.parse(el.getAttribute("data-animate")!)).toMatchObject({ y: "100%", opacity: 0 });
+		// Initial entrance also offscreen via percentage (not a fixed 100px).
+		expect(JSON.parse(el.getAttribute("data-initial")!)).toMatchObject({ y: "100%" });
+	});
+
+	it("animates to y:0 when visible", () => {
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(JSON.parse(el.getAttribute("data-animate")!)).toMatchObject({ y: 0, opacity: 1 });
+	});
+
+	it("slides out + becomes inert when the soft keyboard opens (motion path)", () => {
+		useKeyboardOpenMock.mockReturnValueOnce(true);
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(JSON.parse(el.getAttribute("data-animate")!)).toMatchObject({ y: "100%", opacity: 0 });
+		expect(el).toHaveAttribute("inert");
+		expect(el.className).toContain("pointer-events-none");
+	});
+
+	it("snaps hidden via `hidden` attribute when keyboard opens (reduced motion)", () => {
+		useReducedMotionMock.mockReturnValueOnce(true);
+		useKeyboardOpenMock.mockReturnValueOnce(true);
+		const { container } = render(
+			<BottomBar as="nav" aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = container.querySelector("nav")!;
+		expect(el).toHaveAttribute("hidden");
+		expect(el).toHaveAttribute("inert");
+	});
+
+	it("does not register height while hidden (keyboard does not thrash layout offset)", () => {
+		// Height stays tied to isHidden only, not the transient keyboard state.
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, true);
 	});
 });
 

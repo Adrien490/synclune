@@ -8,6 +8,7 @@ import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
 import { cn } from "@/shared/utils/cn";
+import { isRecent } from "@/shared/utils/dates";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
@@ -15,13 +16,8 @@ import { iconButtonClassName } from "./navbar-styles";
 import { NavbarIconButtons } from "./navbar-icon-buttons";
 import { NavbarWrapper } from "./navbar-wrapper";
 
-const NEW_BADGE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
-
-/** "Nouveau" badge eligibility — published within the last 14 days. */
-function isProductNew(createdAt: Date | string | null | undefined): boolean {
-	if (!createdAt) return false;
-	return Date.now() - new Date(createdAt).getTime() < NEW_BADGE_WINDOW_MS;
-}
+/** "Nouveau" badge eligibility window — published within the last N days. */
+const NEW_PRODUCT_BADGE_DAYS = 14;
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
@@ -67,7 +63,7 @@ export async function Navbar() {
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
 	// Featured products for the mega menu (up to 2 recent products with images).
-	// "Nouveau" badge eligibility computed via isProductNew helper.
+	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
 	// recentProducts is already capped to 2 via getRecentProducts({ limit: 2 }) above.
 	const featuredProducts = recentProducts
 		.map((p) => {
@@ -78,7 +74,7 @@ export async function Navbar() {
 				priceInclTax: sku?.priceInclTax ?? 0,
 				imageUrl: image?.url ?? "",
 				blurDataUrl: image?.blurDataUrl ?? null,
-				isNew: isProductNew(p.createdAt),
+				isNew: isRecent(p.createdAt, NEW_PRODUCT_BADGE_DAYS),
 			};
 		})
 		.filter((p) => p.imageUrl);

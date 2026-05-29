@@ -88,17 +88,14 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
 								onClick={(e) => {
-									// Click navigates to the section page; hover (pointerMove) still
-									// opens the mega menu via Radix. preventDefault skips Radix's
-									// onItemSelect toggle through composeEventHandlers' defaultPrevented check.
+									// Pointer click (detail >= 1) navigates to the section page; hover
+									// (pointerMove) still opens the mega menu via Radix. Keyboard
+									// activation (Enter/Space) synthesizes a click with detail === 0 —
+									// let it fall through to Radix's toggle so the mega-menu panel opens,
+									// keeping its links reachable for keyboard / screen-reader users.
+									if (e.detail === 0) return;
 									e.preventDefault();
 									router.push(item.href);
-								}}
-								onKeyDown={(e) => {
-									if (e.key === "Enter") {
-										e.preventDefault();
-										router.push(item.href);
-									}
 								}}
 							>
 								{item.label}

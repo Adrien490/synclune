@@ -6,9 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDialogOpen, mockUseDialog } = vi.hoisted(() => ({
+const { mockDialogOpen, mockUseDialog, mockUseIsMobile, mockRouterPush } = vi.hoisted(() => ({
 	mockDialogOpen: vi.fn(),
 	mockUseDialog: vi.fn(),
+	mockUseIsMobile: vi.fn(),
+	mockRouterPush: vi.fn(),
 }));
 
 // ============================================================================
@@ -20,6 +22,14 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: mockUseDialog,
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: mockUseIsMobile,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockRouterPush }),
 }));
 
 vi.mock("@/modules/addresses/constants/dialog.constants", () => ({
@@ -63,6 +73,8 @@ describe("CreateAddressButton", () => {
 			isOpen: false,
 			data: null,
 		});
+		// Desktop par défaut (la dialog reste le comportement par défaut des tests).
+		mockUseIsMobile.mockReturnValue(false);
 	});
 
 	it("renders a button", () => {
@@ -90,9 +102,19 @@ describe("CreateAddressButton", () => {
 		expect(mockUseDialog).toHaveBeenCalledWith("address-form");
 	});
 
-	it("calls dialog.open() when clicked", async () => {
+	it("calls dialog.open() when clicked on desktop", async () => {
+		mockUseIsMobile.mockReturnValue(false);
 		render(<CreateAddressButton />);
 		await userEvent.click(screen.getByRole("button"));
 		expect(mockDialogOpen).toHaveBeenCalledOnce();
+		expect(mockRouterPush).not.toHaveBeenCalled();
+	});
+
+	it("navigates to the dedicated page (not the dialog) when clicked on mobile", async () => {
+		mockUseIsMobile.mockReturnValue(true);
+		render(<CreateAddressButton />);
+		await userEvent.click(screen.getByRole("button"));
+		expect(mockRouterPush).toHaveBeenCalledWith("/adresses/nouvelle");
+		expect(mockDialogOpen).not.toHaveBeenCalled();
 	});
 });

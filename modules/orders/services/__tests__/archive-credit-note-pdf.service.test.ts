@@ -1,11 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { OrderAction } from "@/app/generated/prisma/client";
 
-const { mockPrisma, mockUtapi, mockLogger } = vi.hoisted(() => ({
+const {
+	mockPrisma,
+	mockUtapi,
+	mockLogger,
+	mockCreateOrderAuditTx,
+	mockCreateOrderAudit,
+	mockSendAdminAlert,
+} = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
 			findUnique: vi.fn(),
-			update: vi.fn().mockResolvedValue({ id: "order-1" }),
+			update: vi.fn().mockResolvedValue({ orderNumber: "SYN-001" }),
 		},
+		orderHistory: { create: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockUtapi: {
 		uploadFiles: vi.fn(),
@@ -15,11 +25,21 @@ const { mockPrisma, mockUtapi, mockLogger } = vi.hoisted(() => ({
 		warn: vi.fn(),
 		error: vi.fn(),
 	},
+	mockCreateOrderAuditTx: vi.fn(),
+	mockCreateOrderAudit: vi.fn(),
+	mockSendAdminAlert: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/uploadthing", () => ({ utapi: mockUtapi }));
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAudit: mockCreateOrderAudit,
+	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminCreditNotePdfArchiveFailedAlert: mockSendAdminAlert,
+}));
 
 import { archiveCreditNotePdf } from "../archive-credit-note-pdf.service";
 
@@ -31,14 +51,22 @@ const sampleBytes = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
  * Verrouille l'archivage immuable du PDF avoir sur UploadThing (Art. L102 B LPF —
  * symétrique à `archiveInvoicePdf`). L'avoir doit être restituable bit-à-bit
  * sur 10 ans au même titre que la facture (Art. 272-I CGI).
+ *
+ * Étendu 2026-05-29 (F2) : audit trail CREDIT_NOTE_ARCHIVED (Art. L123-22) +
+ * flag `invoiceRetryDeferred` + alerte admin sur échec (symétrie facture).
  */
 describe("archiveCreditNotePdf", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.order.update.mockResolvedValue({ id: "order-1" });
+		mockPrisma.order.update.mockResolvedValue({ orderNumber: "SYN-001" });
+		// $transaction exécute le handler avec tx === mockPrisma pour que
+		// order.update / createOrderAuditTx soient observés via les mêmes mocks.
+		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) =>
+			cb(mockPrisma),
+		);
 	});
 
-	it("uploads to UploadThing + persists URL + SHA-256 hash on first call", async () => {
+	it("uploads to UploadThing + persists URL + SHA-256 hash + audit on first call", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			creditNotePdfUrl: null,
 			creditNotePdfHash: null,
@@ -57,12 +85,23 @@ describe("archiveCreditNotePdf", () => {
 				data: expect.objectContaining({
 					creditNotePdfUrl: "https://ufs.example/cn-1.pdf",
 					creditNotePdfHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+					invoiceRetryDeferred: false,
 				}),
 			}),
 		);
+		// F2 : audit trail CREDIT_NOTE_ARCHIVED émis dans la même tx.
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			mockPrisma,
+			expect.objectContaining({
+				orderId: "order-1",
+				action: OrderAction.CREDIT_NOTE_ARCHIVED,
+				metadata: expect.objectContaining({ creditNoteNumber: "A-2026-00001" }),
+			}),
+		);
+		expect(mockSendAdminAlert).not.toHaveBeenCalled();
 	});
 
-	it("is idempotent — returns existing URL/hash without re-uploading", async () => {
+	it("is idempotent — returns existing URL/hash without re-uploading or auditing", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			creditNotePdfUrl: "https://ufs.example/existing-cn.pdf",
 			creditNotePdfHash: "b".repeat(64),
@@ -75,10 +114,11 @@ describe("archiveCreditNotePdf", () => {
 			creditNotePdfHash: "b".repeat(64),
 		});
 		expect(mockUtapi.uploadFiles).not.toHaveBeenCalled();
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
 
-	it("returns null when UploadThing returns no ufsUrl", async () => {
+	it("flags retry + alerts admin when UploadThing returns no ufsUrl", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			creditNotePdfUrl: null,
 			creditNotePdfHash: null,
@@ -88,11 +128,17 @@ describe("archiveCreditNotePdf", () => {
 		const result = await archiveCreditNotePdf("order-3", "A-2026-00003", sampleBytes);
 
 		expect(result).toBeNull();
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 		expect(mockLogger.error).toHaveBeenCalled();
+		// F2 : flag invoiceRetryDeferred posé + alerte admin.
+		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+			expect.objectContaining({ data: { invoiceRetryDeferred: true } }),
+		);
+		expect(mockSendAdminAlert).toHaveBeenCalledWith(
+			expect.objectContaining({ creditNoteNumber: "A-2026-00003" }),
+		);
 	});
 
-	it("does not throw when UploadThing crashes — best-effort archive", async () => {
+	it("does not throw + flags retry when UploadThing crashes — best-effort archive", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue({
 			creditNotePdfUrl: null,
 			creditNotePdfHash: null,
@@ -101,6 +147,9 @@ describe("archiveCreditNotePdf", () => {
 
 		await expect(archiveCreditNotePdf("order-4", "A-2026-00004", sampleBytes)).resolves.toBeNull();
 		expect(mockLogger.error).toHaveBeenCalled();
+		expect(mockSendAdminAlert).toHaveBeenCalledWith(
+			expect.objectContaining({ creditNoteNumber: "A-2026-00004" }),
+		);
 	});
 
 	it("accepts ArrayBuffer input (e.g. jsPDF output)", async () => {

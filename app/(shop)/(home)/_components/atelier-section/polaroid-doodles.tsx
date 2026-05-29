@@ -1,5 +1,11 @@
 import { cn } from "@/shared/utils/cn";
 
+// Normalise chaque tracé à une longueur logique unique via l'attribut SVG
+// `pathLength` : le dessin scroll-driven (stroke-dashoffset) reste exact quelle
+// que soit la géométrie réelle (cœur ≠ étoile ≠ flèche), sans estimer la
+// longueur à la main (ancien `--path-length: 200` fixe = majorant approximatif).
+const NORMALIZED_PATH_LENGTH = 100;
+
 // SVG path data from shared/components/animations/hand-drawn-accent.tsx
 const PATHS = {
 	heart: {
@@ -41,6 +47,7 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 		>
 			<path
 				d={config.d}
+				pathLength={NORMALIZED_PATH_LENGTH}
 				stroke={color}
 				strokeWidth={2}
 				strokeLinecap="round"
@@ -50,7 +57,7 @@ function Doodle({ variant, color, width, height, delay, className }: DoodleProps
 				className="doodle-draw doodle-draw-scroll"
 				style={
 					{
-						"--path-length": "200",
+						"--path-length": String(NORMALIZED_PATH_LENGTH),
 						"--draw-delay": `${delay}s`,
 					} as React.CSSProperties
 				}

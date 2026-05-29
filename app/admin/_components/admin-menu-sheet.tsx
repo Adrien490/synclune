@@ -23,11 +23,16 @@ import {
 	SearchX,
 	X,
 } from "lucide-react";
-import { useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ADMIN_MENU_SHEET_CONTENT_ID, getAllNavItems, navigationData } from "./navigation-config";
+import {
+	ADMIN_MENU_SHEET_CONTENT_ID,
+	badgeAriaLabel,
+	getAllNavItems,
+	navigationData,
+} from "./navigation-config";
 
 interface AdminMenuSheetProps {
 	user: {
@@ -75,7 +80,23 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const navRef = useRef<HTMLElement>(null);
 	const pathname = usePathname();
+	const router = useRouter();
 	const shouldReduceMotion = useReducedMotion();
+
+	// Stagger léger des cartes de la vue par défaut (fade + slide-up 8px), no-op
+	// si prefers-reduced-motion. Parité menu-sheet-nav.tsx storefront (delay 20ms/index).
+	const fadeUp = (index: number) =>
+		shouldReduceMotion
+			? {}
+			: {
+					initial: { opacity: 0, y: 8 },
+					animate: { opacity: 1, y: 0 },
+					transition: {
+						duration: 0.25,
+						delay: (60 + index * 20) / 1000,
+						ease: "easeOut" as const,
+					},
+				};
 
 	// Close on navigation
 	useEffect(() => {
@@ -183,6 +204,10 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const normalizedQuery = stripDiacritics((isOpen ? searchQuery : "").trim());
 	const isSearching = normalizedQuery.length > 0;
 
+	// Total des files actionnables (commandes + remboursements) pour l'annonce
+	// d'ouverture lecteur d'écran — surface l'info badge dès l'ouverture.
+	const pendingTotal = Object.values(badges ?? {}).reduce((sum, n) => sum + n, 0);
+
 	// Filter nav items when searching
 	const filteredItems = isSearching
 		? allNavItems.filter(
@@ -191,6 +216,19 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 					(item.shortTitle && stripDiacritics(item.shortTitle).includes(normalizedQuery)),
 			)
 		: [];
+
+	const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		// Entrée → navigue vers le 1er résultat filtré (gain mobile :
+		// taper « comm » + Entrée → Commandes sans viser la cible).
+		if (e.key !== "Enter") return;
+		const first = filteredItems[0];
+		if (!first) return;
+		e.preventDefault();
+		triggerHaptic("selection");
+		setSearchQuery("");
+		closeMenu();
+		router.push(first.url);
+	};
 
 	return (
 		<>
@@ -231,12 +269,16 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 						<p role="status" aria-live="polite" className="sr-only">
 							Menu ouvert, {allNavItems.length} option
 							{allNavItems.length > 1 ? "s" : ""} de navigation
+							{pendingTotal > 0
+								? `, ${pendingTotal} élément${pendingTotal > 1 ? "s" : ""} à traiter`
+								: ""}
 						</p>
 					)}
 
-					{/* Search bar — filtre uniquement les pages de navigation.
-					 * Pour rechercher des commandes, produits, clients ou déclencher des
-					 * actions rapides : utiliser la command palette (FAB Sparkles / Cmd+K). */}
+					{/* Search bar — filtre la liste des pages de navigation admin
+					 * (titre + shortTitle, accent-insensitive). Ce n'est PAS une
+					 * recherche de contenu : pour trouver une commande/produit/client,
+					 * ouvrir la page concernée et utiliser sa recherche dédiée. */}
 					<div className="px-4 pb-2">
 						<div className="relative">
 							<Search
@@ -247,11 +289,13 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 								ref={searchInputRef}
 								type="search"
 								inputMode="search"
-								// "done" ferme le clavier mobile (pas de submit câblé : filtre live).
-								enterKeyHint="done"
+								// "go" si un résultat existe (Entrée navigue), sinon "done" ferme
+								// juste le clavier (filtre live, pas de submit classique).
+								enterKeyHint={isSearching && filteredItems.length > 0 ? "go" : "done"}
 								data-vaul-no-drag
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
+								onKeyDown={handleSearchKeyDown}
 								placeholder="Filtrer les pages…"
 								aria-label="Filtrer les pages de navigation"
 								className={cn(
@@ -361,7 +405,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 																{badgeCount != null && badgeCount > 0 && (
 																	<span
 																		className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-																		aria-label={`${badgeCount} en attente`}
+																		aria-label={badgeAriaLabel(item.id, badgeCount)}
 																	>
 																		{badgeCount > 99 ? "99+" : badgeCount}
 																	</span>
@@ -389,7 +433,8 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 										</div>
 
 										{/* Dashboard — standalone prominent card */}
-										<div
+										<motion.div
+											{...fadeUp(0)}
 											className={cn(
 												"bg-background mb-3 overflow-hidden rounded-xl border",
 												isDashboardActive && "ring-border ring-2",
@@ -433,11 +478,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													aria-hidden="true"
 												/>
 											</Link>
-										</div>
+										</motion.div>
 
 										{/* Navigation groups — iOS Settings style */}
-										{navigationData.navGroups.map((group) => (
-											<div key={group.label} className="mb-3">
+										{navigationData.navGroups.map((group, groupIndex) => (
+											<motion.div key={group.label} {...fadeUp(groupIndex + 1)} className="mb-3">
 												<p className="text-muted-foreground mb-1 px-1 text-xs font-medium">
 													{group.label}
 												</p>
@@ -483,7 +528,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 																	{badgeCount != null && badgeCount > 0 && (
 																		<span
 																			className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-																			aria-label={`${badgeCount} en attente`}
+																			aria-label={badgeAriaLabel(item.id, badgeCount)}
 																		>
 																			{badgeCount > 99 ? "99+" : badgeCount}
 																		</span>
@@ -497,13 +542,13 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 														);
 													})}
 												</ul>
-											</div>
+											</motion.div>
 										))}
 
 										{/* Actions card */}
-										{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
-										<ul
+										<motion.ul
 											role="list"
+											{...fadeUp(navigationData.navGroups.length + 1)}
 											className="bg-background mt-1 overflow-hidden rounded-xl border"
 										>
 											<li>
@@ -517,13 +562,15 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 														"border-border/60 active:bg-accent flex items-center gap-3 border-b px-4 py-3 transition-colors",
 														NAV_ITEM_TACTILE_CLASS,
 													)}
-													aria-label="Voir le site (nouvel onglet)"
 												>
 													<ExternalLink
 														className="text-muted-foreground size-5 shrink-0"
 														aria-hidden="true"
 													/>
-													<span className="flex-1 text-sm font-medium">Voir le site</span>
+													<span className="flex-1 text-sm font-medium">
+														Voir le site
+														<span className="sr-only"> (ouvre dans un nouvel onglet)</span>
+													</span>
 													<ChevronRight
 														className="text-muted-foreground/50 size-4 shrink-0"
 														aria-hidden="true"
@@ -548,7 +595,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													</span>
 												</button>
 											</li>
-										</ul>
+										</motion.ul>
 									</>
 								)}
 							</nav>

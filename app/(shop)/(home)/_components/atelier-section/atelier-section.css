@@ -125,7 +125,8 @@
 			animation-range: entry 35% entry 80%;
 		}
 
-		/* Mobile step circle scroll-driven (replaces JS MobileStepCircle) */
+		/* Mobile step row scroll-driven reveal (carried by the <li>, so the inner
+		   illustration circle keeps a conflict-free hover scale/rotate) */
 		.mobile-step-scroll {
 			animation: step-reveal linear both;
 			animation-timeline: view();
@@ -195,12 +196,35 @@
 	   ~equivalent at zero per-frame cost. The @property defs above are kept so
 	   the custom properties resolve to their typed initial values. */
 	.confession-glow {
+		position: relative;
+		isolation: isolate; /* contient le glow z-index:-1 au-dessus du bg de section */
+	}
+
+	/* Glow décolé du flux du texte : le pseudo porte le dégradé + le mask, donc
+	   le texte (enfants en flux, au-dessus) n'est jamais rogné par le mask. */
+	.confession-glow::before {
+		content: "";
+		position: absolute;
+		/* "padding" : le glow déborde la box du texte → respiration autour du texte.
+		   Plus généreux verticalement (le texte est haut et étroit). */
+		inset: -2.5rem -1.5rem;
+		z-index: -1;
+		pointer-events: none;
 		background: radial-gradient(
 			ellipse at 50% 50%,
 			var(--confession-glow-a) 0%,
 			var(--confession-glow-b) 50%,
 			transparent 80%
 		);
+		/* "mask" : adoucit les bords du glow indépendamment des color-stops */
+		-webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 45%, transparent 78%);
+		mask-image: radial-gradient(ellipse at 50% 50%, #000 45%, transparent 78%);
+	}
+
+	@media (min-width: 640px) {
+		.confession-glow::before {
+			inset: -3.5rem -2.5rem; /* plus de respiration sur ≥ sm */
+		}
 	}
 
 	/* ==========================================

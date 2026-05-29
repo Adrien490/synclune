@@ -20,6 +20,9 @@ export const processSteps: ProcessStep[] = [
 		iconHoverClass:
 			"group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-yellow)]",
+		// Étape 1 volontairement plate : ring/shadow montent progressivement
+		// d'une étape à l'autre (idée → finition) pour suggérer la matière qui prend
+		// forme. Les chaînes vides sont filtrées par `cn()`.
 		intensity: { ring: "", shadow: "" },
 	},
 	{

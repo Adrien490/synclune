@@ -282,10 +282,34 @@ describe("toast wrapper", () => {
 			vi.unstubAllGlobals();
 		});
 
-		it("loading() returns undefined and does not call sonner on mobile", () => {
+		it("loading() shows a persistent loading pastille and returns a truthy ref on mobile", () => {
 			stubMatchMedia(true);
-			expect(toast.loading("Chargement…")).toBeUndefined();
+			useMicroToastStore.setState({
+				visible: false,
+				message: "",
+				variant: "success",
+				action: null,
+			});
+
+			const ref = toast.loading("Chargement…");
+
+			// Référence truthy (withCallbacks n'appelle onEnd que si onStart renvoie truthy).
+			expect(ref).toBeTruthy();
 			expect(mockSonner.loading).not.toHaveBeenCalled();
+			const state = useMicroToastStore.getState();
+			expect(state.visible).toBe(true);
+			expect(state.variant).toBe("loading");
+			expect(state.message).toBe("Chargement…");
+		});
+
+		it("dismiss(loadingRef) is a no-op on mobile (terminal toast morphs the pastille)", () => {
+			stubMatchMedia(true);
+			const ref = toast.loading("Chargement…");
+			toast.dismiss(ref);
+			// Ni forward Sonner, ni fermeture : la pastille loading reste visible.
+			expect(mockSonner.dismiss).not.toHaveBeenCalled();
+			expect(useMicroToastStore.getState().visible).toBe(true);
+			expect(useMicroToastStore.getState().variant).toBe("loading");
 		});
 
 		it("loading() forwards to sonner on desktop", () => {
@@ -305,6 +329,54 @@ describe("toast wrapper", () => {
 			// <MicroToast /> (cf shared/stores/micro-toast-store). On vérifie
 			// seulement que sonner.promise ET sonner.success ne sont PAS appelés.
 			expect(mockSonner.success).not.toHaveBeenCalled();
+		});
+
+		it("promise() shows a loading pastille that morphs in place to success on mobile", async () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({
+				visible: false,
+				message: "",
+				variant: "success",
+				action: null,
+			});
+
+			const p = Promise.resolve("data");
+			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
+
+			// Pendant la promesse : pastille loading visible.
+			let state = useMicroToastStore.getState();
+			expect(state.visible).toBe(true);
+			expect(state.variant).toBe("loading");
+			const loadingKey = state.key;
+
+			await p;
+			await Promise.resolve();
+
+			// Après résolution : morph in-place (même key) vers success.
+			state = useMicroToastStore.getState();
+			expect(state.variant).toBe("success");
+			expect(state.message).toBe("Réussi");
+			expect(state.key).toBe(loadingKey);
+			expect(mockSonner.promise).not.toHaveBeenCalled();
+		});
+
+		it("promise() hides the loading pastille when no terminal message is provided on mobile", async () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({
+				visible: false,
+				message: "",
+				variant: "success",
+				action: null,
+			});
+
+			const p = Promise.resolve("data");
+			toast.promise(p, { loading: "Chargement…" });
+			expect(useMicroToastStore.getState().visible).toBe(true);
+
+			await p;
+			await Promise.resolve();
+
+			expect(useMicroToastStore.getState().visible).toBe(false);
 		});
 
 		it("promise() rejects manually with toast.error on mobile (routes to MicroToast, function error msg)", async () => {

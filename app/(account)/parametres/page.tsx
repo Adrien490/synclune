@@ -8,6 +8,7 @@ import { getUserProviders } from "@/modules/auth/data/get-user-providers";
 import { ProfileForm } from "@/modules/users/components/profile-form";
 import { SecuritySection } from "@/modules/users/components/security-section";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
+import { AccountSummaryCard } from "@/modules/users/components/account-summary-card";
 import { LogoutCard } from "@/modules/auth/components/logout-card";
 export const metadata: Metadata = {
 	title: "Paramètres",
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
 	return (
 		<>
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-				<div className="space-y-6 lg:col-span-2">
+				<div className="space-y-6 lg:order-first lg:col-span-2">
 					<section className="space-y-4" aria-labelledby="profile-heading">
 						<h2 id="profile-heading" className="text-base font-semibold">
 							Profil
@@ -39,7 +40,8 @@ export default async function SettingsPage() {
 					<GdprSection accountStatus={user.accountStatus} daysRemaining={daysRemaining} />
 				</div>
 
-				<div className="space-y-6">
+				<div className="order-first space-y-6 lg:order-last">
+					<AccountSummaryCard name={user.name} email={user.email} createdAt={user.createdAt} />
 					<LogoutCard />
 				</div>
 			</div>

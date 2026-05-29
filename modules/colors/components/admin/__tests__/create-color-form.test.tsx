@@ -88,6 +88,8 @@ describe("CreateColorForm", () => {
 		render(<CreateColorForm />);
 		const nameInput = screen.getByLabelText(/^Nom/, { selector: "input" });
 		fireEvent.change(nameInput, { target: { value: "Or rose 18K" } });
+		// hex starts empty (P2-a empty-state) → pick a valid hex via a suggestion
+		fireEvent.click(screen.getByRole("button", { name: /^Sélectionner Or jaune 18K/ }));
 
 		const button = screen.getByRole("button", { name: /Créer/ });
 		fireEvent.click(button);

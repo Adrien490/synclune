@@ -34,12 +34,12 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 			{isPendingDeletion && (
 				<div
 					role="status"
-					className="mb-6 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+					className="border-warning/30 bg-warning/10 text-warning mb-6 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm"
 				>
 					<TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
 					<p>
 						Votre compte est en cours de suppression. Vous pouvez annuler cette demande depuis vos{" "}
-						<Link href="/parametres" className="font-medium underline">
+						<Link href="/parametres#donnees-personnelles" className="font-medium underline">
 							paramètres
 						</Link>
 						.

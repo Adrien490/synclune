@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
@@ -58,9 +59,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 					}}
 				>
 					{(field) => (
-						<field.InputField
+						<field.PasswordInputField
 							label="Mot de passe actuel"
-							type="password"
 							autoComplete="current-password"
 							enterKeyHint="next"
 							disabled={isPending || state?.status === ActionStatus.SUCCESS}
@@ -76,8 +76,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						onChangeListenTo: ["currentPassword"],
 						onChange: ({ value, fieldApi }) => {
 							if (!value) return "Le nouveau mot de passe est requis";
-							if (value.length < 6) {
-								return "Le mot de passe doit contenir au moins 6 caractères";
+							if (value.length < 8) {
+								return "Le mot de passe doit contenir au moins 8 caractères";
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
@@ -91,18 +91,17 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 					}}
 				>
 					{(field) => (
-						<div className="space-y-1.5">
-							<field.InputField
+						<div className="space-y-2">
+							<field.PasswordInputField
 								label="Nouveau mot de passe"
-								type="password"
 								autoComplete="new-password"
 								enterKeyHint="next"
 								disabled={isPending || state?.status === ActionStatus.SUCCESS}
 								required
 							/>
-							<p className="text-muted-foreground text-xs">
-								Minimum 6 caractères, maximum 128 caractères
-							</p>
+							<form.Subscribe selector={(s) => s.values.newPassword}>
+								{(newPassword) => <PasswordStrengthIndicator password={newPassword} />}
+							</form.Subscribe>
 						</div>
 					)}
 				</form.AppField>
@@ -114,8 +113,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 						onChangeListenTo: ["newPassword"],
 						onChange: ({ value, fieldApi }) => {
 							if (!value) return "La confirmation du mot de passe est requise";
-							if (value.length < 6) {
-								return "Le mot de passe doit contenir au moins 6 caractères";
+							if (value.length < 8) {
+								return "Le mot de passe doit contenir au moins 8 caractères";
 							}
 							if (value.length > 128) {
 								return "Le mot de passe ne doit pas dépasser 128 caractères";
@@ -128,9 +127,8 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 					}}
 				>
 					{(field) => (
-						<field.InputField
+						<field.PasswordInputField
 							label="Confirmer le mot de passe"
-							type="password"
 							autoComplete="new-password"
 							enterKeyHint="done"
 							disabled={isPending || state?.status === ActionStatus.SUCCESS}

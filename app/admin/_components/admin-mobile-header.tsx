@@ -41,11 +41,10 @@ function isDetailRoute(pathname: string): boolean {
  * - `data-scrolled` exposé pour des animations enfants éventuelles.
  *
  * Navigation redundancies by design:
- * - Bottom bar covers primary nav (Accueil, Commandes, Produits, Menu + FAB command palette)
+ * - Bottom bar covers primary nav (Accueil, Commandes, Produits, Menu sheet).
  * - Back button (here) appears on detail routes — backup for non-standalone browsers
  *   where SwipeBackProvider is a no-op. Fallback `router.push(parentHref)` quand
  *   `history.length <= 1` (deep-link / nouvel onglet).
- * - Search icon mirrors the FAB command palette for thumb-reach users at the top
  */
 export function AdminMobileHeader() {
 	const pathname = usePathname();
