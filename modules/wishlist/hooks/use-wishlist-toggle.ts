@@ -153,17 +153,23 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		const currentState = isInWishlistRef.current;
 		const newState = !currentState;
 
-		startTransition(() => {
-			triggerHaptic(newState ? "medium" : "light");
+		// Feedback immédiat HORS transition (mise à jour urgente). Un `setState`
+		// régulier (burstKey) déclenché DANS une transition asynchrone n'est commit
+		// qu'à la résolution de l'action serveur → le burst jouait « après coup ».
+		// Hors transition, il s'affiche instantanément au clic. Idem haptic.
+		triggerHaptic(newState ? "medium" : "light");
+		if (newState) {
+			// Micro-célébration optimiste (burst de cœurs) — uniquement sur ajout
+			onOptimisticAdd?.();
+		}
 
+		startTransition(() => {
 			// Mise à jour optimistic de l'icône coeur
 			setOptimisticIsInWishlist(newState);
 
 			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
 			if (newState) {
 				incrementWishlist();
-				// Micro-célébration optimiste (burst de cœurs) — uniquement sur ajout
-				onOptimisticAdd?.();
 			} else {
 				decrementWishlist();
 				// Notifier la liste parente pour suppression visuelle immédiate

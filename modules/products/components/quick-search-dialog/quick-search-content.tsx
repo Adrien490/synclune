@@ -87,11 +87,12 @@ export function QuickSearchContent({
 									aria-selected={false}
 									tabIndex={-1}
 									aria-label={`Rechercher ${suggestion}`}
+									data-active={undefined}
 									onClick={() => {
 										triggerHaptic("selection");
 										onSearch(suggestion);
 									}}
-									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring data-[active=true]:ring-ring/50 rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none data-[active=true]:ring-2 data-[active=true]:ring-offset-2"
 								>
 									{suggestion}
 								</button>

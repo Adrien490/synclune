@@ -5,7 +5,10 @@ import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/webhooks/constants/webhook.constants";
+import {
+	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
+} from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import {
 	persistPostWebhookTasks,
@@ -109,13 +112,25 @@ export async function POST(req: Request) {
 		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
-			select: { id: true, status: true },
+			select: { id: true, status: true, receivedAt: true },
 		});
+
+		// WEBHOOK-AUDIT-001 : un PROCESSING « frais » signale un traitement live
+		// concurrent (autre instance Vercel) → on court-circuite pour éviter le
+		// double-dispatch. Mais un PROCESSING « périmé » (> STALE_PROCESSING_THRESHOLD_MS,
+		// soit bien au-delà du maxDuration=60s de la route) trahit une lambda crashée
+		// en plein dispatch : si on renvoyait 200 "duplicate", on AVALERAIT le retry
+		// légitime de Stripe (Stripe considère l'event traité et arrête de réessayer),
+		// laissant la commande/refund/litige bloqué jusqu'au reset 24h du cron. On
+		// laisse donc l'upsert ci-dessous reprendre la main sur un PROCESSING périmé.
+		const isStaleProcessing =
+			existingEvent?.status === WebhookEventStatus.PROCESSING &&
+			Date.now() - existingEvent.receivedAt.getTime() > STALE_PROCESSING_THRESHOLD_MS;
 
 		if (
 			existingEvent?.status === WebhookEventStatus.COMPLETED ||
 			existingEvent?.status === WebhookEventStatus.SKIPPED ||
-			existingEvent?.status === WebhookEventStatus.PROCESSING
+			(existingEvent?.status === WebhookEventStatus.PROCESSING && !isStaleProcessing)
 		) {
 			logger.info("Event already processed, skipping", {
 				correlationId,

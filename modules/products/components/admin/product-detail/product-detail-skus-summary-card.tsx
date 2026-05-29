@@ -8,20 +8,10 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
-import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import { buildVariantLabel } from "@/modules/skus/utils/sku-variant-label";
+import type { GetProductReturn } from "@/modules/products/types/product.types";
 
 const PREVIEW_LIMIT = 3;
-
-function buildVariantLabel(sku: ProductSku): string {
-	const parts: string[] = [];
-	const colorsLabel = sku.colors.map((c) => c.color.name).join(" + ");
-	if (colorsLabel) parts.push(colorsLabel);
-	const materialsLabel = getSkuMaterialsLabel(sku.materials);
-	if (materialsLabel) parts.push(materialsLabel);
-	if (sku.size) parts.push(sku.size);
-	return parts.join(" · ");
-}
 
 const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 	style: "currency",
@@ -45,6 +35,9 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 	const minPrice = prices.length > 0 ? Math.min(...prices) : null;
 	const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
 	const outOfStockCount = skus.filter((sku) => sku.inventory === 0).length;
+	const promoCount = skus.filter(
+		(sku) => sku.compareAtPrice !== null && sku.compareAtPrice > sku.priceInclTax,
+	).length;
 
 	const sortedSkus = skus.toSorted((a, b) => {
 		if (a.isDefault && !b.isDefault) return -1;
@@ -92,7 +85,17 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 					</div>
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Prix</dt>
-						<dd className="font-medium">{priceLabel}</dd>
+						<dd className="flex items-center gap-2">
+							{promoCount > 0 ? (
+								<Badge
+									variant="destructive"
+									aria-label={`${promoCount} variante${promoCount > 1 ? "s" : ""} en promotion`}
+								>
+									Promo
+								</Badge>
+							) : null}
+							<span className="font-medium">{priceLabel}</span>
+						</dd>
 					</div>
 				</dl>
 
@@ -108,6 +111,11 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 						{previewSkus.map((sku) => {
 							const label = buildVariantLabel(sku) || sku.sku;
 							const isOutOfStock = sku.inventory === 0;
+							const isOnPromo =
+								sku.compareAtPrice !== null && sku.compareAtPrice > sku.priceInclTax;
+							const discountPercent = isOnPromo
+								? Math.round((1 - sku.priceInclTax / sku.compareAtPrice!) * 100)
+								: 0;
 							return (
 								<li
 									key={sku.id}
@@ -122,13 +130,22 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 										) : null}
 										<span className="truncate">{label}</span>
 									</div>
-									<Badge
-										variant={isOutOfStock ? "destructive" : "secondary"}
-										className="shrink-0"
-										aria-label={`${sku.inventory} en stock`}
-									>
-										{isOutOfStock ? "Rupture" : `${sku.inventory}`}
-									</Badge>
+									<div className="flex shrink-0 items-center gap-1.5">
+										{isOnPromo ? (
+											<Badge
+												variant="destructive"
+												aria-label={`En promotion, -${discountPercent}%`}
+											>
+												-{discountPercent}%
+											</Badge>
+										) : null}
+										<Badge
+											variant={isOutOfStock ? "destructive" : "secondary"}
+											aria-label={`${sku.inventory} en stock`}
+										>
+											{isOutOfStock ? "Rupture" : `${sku.inventory}`}
+										</Badge>
+									</div>
 								</li>
 							);
 						})}

@@ -1,12 +1,15 @@
 import { Fraunces, Figtree, Caveat } from "next/font/google";
 
 // Fraunces — Serif display "Old Style" aux terminaisons organiques
-// Axe SOFT pour courbes lunaires, WONK pour irrégularité artisanale
-// Dramatic et expressive à grande taille, chaleureuse et humaine
+// `opsz` (optical sizing) reste actif via `font-optical-sizing: auto` (défaut).
+// PERF : les axes `SOFT`/`WONK` ont été retirés — aucun `font-variation-settings`
+// ne les pilote dans le CSS (ils restaient figés à leur défaut 0), si bien qu'ils
+// n'apportaient aucun rendu visible mais alourdissaient le woff2 variable (~122 KiB)
+// sur le chemin critique LCP. Sans eux, le rendu est strictement identique.
 export const fraunces = Fraunces({
 	subsets: ["latin"],
 	display: "swap",
-	axes: ["opsz", "SOFT", "WONK"],
+	axes: ["opsz"],
 	variable: "--font-display",
 	// Hero h1 uses Fraunces above-fold; without preload the woff2 fetched in ~3s on desktop, blocking LCP element render.
 	preload: true,

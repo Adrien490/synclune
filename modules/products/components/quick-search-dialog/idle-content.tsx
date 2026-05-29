@@ -34,6 +34,12 @@ interface IdleContentProps {
 	onUndoTombstone?: (term: string) => void;
 	/** Expire le tombstone : déclenche le remove() effectif. */
 	onExpireTombstone?: (term: string) => void;
+	/** « Effacer » : pastille unique couvrant TOUTES les recherches (5s avant clear()). */
+	isBulkTombstoned?: boolean;
+	/** Annule la suppression groupée. */
+	onUndoBulkTombstone?: () => void;
+	/** Expire la suppression groupée : déclenche le clear() effectif. */
+	onExpireBulkTombstone?: () => void;
 }
 
 export function IdleContent({
@@ -48,6 +54,9 @@ export function IdleContent({
 	tombstonedTerms,
 	onUndoTombstone,
 	onExpireTombstone,
+	isBulkTombstoned = false,
+	onUndoBulkTombstone,
+	onExpireBulkTombstone,
 }: IdleContentProps) {
 	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0;
 	const router = useRouter();
@@ -133,96 +142,108 @@ export function IdleContent({
 				)}
 
 				{/* Recent Searches */}
-				{searches.length > 0 && (
-					<section aria-labelledby="recent-searches-heading">
-						<div className="mb-3 flex items-center justify-between">
-							<h2
-								id="recent-searches-heading"
-								className="font-display text-muted-foreground text-base font-medium tracking-wide"
-							>
-								Recherches récentes
-							</h2>
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => {
-									triggerHaptic("medium");
-									onClearSearches();
-								}}
-								disabled={isPending}
-								className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
-								aria-label="Effacer toutes les recherches récentes"
-							>
-								Effacer
-							</Button>
-						</div>
-						<div role="list" className="space-y-1">
-							<AnimatePresence mode="popLayout">
-								{searches.map((term) => {
-									const isTombstoned = tombstonedTerms?.has(term) ?? false;
-									return (
-										<m.div
-											key={term}
-											role="listitem"
-											layout
-											initial={{ opacity: 1, height: "auto" }}
-											exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-											transition={{ duration: MOTION_CONFIG.duration.normal }}
-											className="group/item flex items-center gap-1"
-										>
-											{isTombstoned && onUndoTombstone && onExpireTombstone ? (
-												<Tombstone
-													className="w-full"
-													message={`« ${term} » supprimée`}
-													onUndo={() => onUndoTombstone(term)}
-													onExpire={() => onExpireTombstone(term)}
-													undoAriaLabel={`Annuler la suppression de ${term}`}
-												/>
-											) : (
-												<>
-													<Tap className="min-w-0 flex-1" scale={0.97}>
+				{searches.length > 0 &&
+					(isBulkTombstoned && onUndoBulkTombstone && onExpireBulkTombstone ? (
+						/* Bulk clear : une seule pastille undo pour toutes les recherches (F2) */
+						<section aria-label="Recherches récentes">
+							<Tombstone
+								className="w-full"
+								message={`${searches.length} recherche${searches.length > 1 ? "s" : ""} supprimée${searches.length > 1 ? "s" : ""}`}
+								onUndo={onUndoBulkTombstone}
+								onExpire={onExpireBulkTombstone}
+								undoAriaLabel="Annuler la suppression des recherches récentes"
+							/>
+						</section>
+					) : (
+						<section aria-labelledby="recent-searches-heading">
+							<div className="mb-3 flex items-center justify-between">
+								<h2
+									id="recent-searches-heading"
+									className="font-display text-muted-foreground text-base font-medium tracking-wide"
+								>
+									Recherches récentes
+								</h2>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => {
+										triggerHaptic("medium");
+										onClearSearches();
+									}}
+									disabled={isPending}
+									className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
+									aria-label="Effacer toutes les recherches récentes"
+								>
+									Effacer
+								</Button>
+							</div>
+							<div role="list" className="space-y-1">
+								<AnimatePresence mode="popLayout">
+									{searches.map((term) => {
+										const isTombstoned = tombstonedTerms?.has(term) ?? false;
+										return (
+											<m.div
+												key={term}
+												role="listitem"
+												layout
+												initial={{ opacity: 1, height: "auto" }}
+												exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+												transition={{ duration: MOTION_CONFIG.duration.normal }}
+												className="group/item flex items-center gap-1"
+											>
+												{isTombstoned && onUndoTombstone && onExpireTombstone ? (
+													<Tombstone
+														className="w-full"
+														message={`« ${term} » supprimée`}
+														onUndo={() => onUndoTombstone(term)}
+														onExpire={() => onExpireTombstone(term)}
+														undoAriaLabel={`Annuler la suppression de ${term}`}
+													/>
+												) : (
+													<>
+														<Tap className="min-w-0 flex-1" scale={0.97}>
+															<button
+																type="button"
+																onClick={() => onRecentSearch(term)}
+																disabled={isPending}
+																data-active={undefined}
+																role="option"
+																aria-selected={false}
+																// Reached via arrow keys, not Tab (combobox pattern).
+																tabIndex={-1}
+																className={cn(
+																	"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
+																	"hover:bg-muted touch-manipulation",
+																	"focus-ring",
+																	"disabled:opacity-50",
+																	"data-[active=true]:bg-muted",
+																)}
+															>
+																<Search
+																	className="text-muted-foreground size-4 shrink-0"
+																	aria-hidden="true"
+																/>
+																<span className="flex-1 truncate">{term}</span>
+															</button>
+														</Tap>
 														<button
 															type="button"
-															onClick={() => onRecentSearch(term)}
+															onClick={() => onRemoveSearch(term)}
 															disabled={isPending}
-															data-active={undefined}
-															role="option"
-															aria-selected={false}
-															// Reached via arrow keys, not Tab (combobox pattern).
-															tabIndex={-1}
-															className={cn(
-																"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
-																"hover:bg-muted touch-manipulation",
-																"focus-ring",
-																"disabled:opacity-50",
-																"data-[active=true]:bg-muted",
-															)}
+															className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
+															aria-label={`Supprimer "${term}"`}
 														>
-															<Search
-																className="text-muted-foreground size-4 shrink-0"
-																aria-hidden="true"
-															/>
-															<span className="flex-1 truncate">{term}</span>
+															<X className="size-5 sm:size-4" />
 														</button>
-													</Tap>
-													<button
-														type="button"
-														onClick={() => onRemoveSearch(term)}
-														disabled={isPending}
-														className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
-														aria-label={`Supprimer "${term}"`}
-													>
-														<X className="size-5 sm:size-4" />
-													</button>
-												</>
-											)}
-										</m.div>
-									);
-								})}
-							</AnimatePresence>
-						</div>
-					</section>
-				)}
+													</>
+												)}
+											</m.div>
+										);
+									})}
+								</AnimatePresence>
+							</div>
+						</section>
+					))}
 
 				{/* Collections */}
 				{collections.length > 0 && (

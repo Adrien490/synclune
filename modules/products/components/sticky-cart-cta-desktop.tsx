@@ -24,8 +24,9 @@ interface StickyCartCTADesktopProps {
  * StickyCartCTADesktop - Barre sticky desktop pour l'ajout rapide au panier
  *
  * Se déclenche quand le CTA principal sort du viewport. Ancrée sous la navbar
- * (top-[var(--navbar-height)]). Desktop uniquement (hidden lg:block) — la version
- * mobile (`sticky-cart-cta.tsx`) gère le bas de l'écran avec safe-area.
+ * (top-[var(--navbar-height)]). Desktop uniquement (hidden lg:block) — il n'y a
+ * volontairement PAS d'équivalent sticky mobile câblé sur la PDP (le CTA principal
+ * reste accessible au scroll ; décision produit assumée).
  *
  * Pattern éditorial : thumbnail + variant summary (couleur · taille) + prix + CTA.
  */

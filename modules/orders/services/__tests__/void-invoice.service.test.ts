@@ -6,6 +6,8 @@ const {
 	mockCreateOrderAuditTx,
 	mockLogger,
 	mockGetOrderInvalidationTags,
+	mockSendAdminSequenceOverflowAlert,
+	mockSendAdminCreditNoteFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		$transaction: vi.fn(),
@@ -15,6 +17,8 @@ const {
 	mockCreateOrderAuditTx: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 	mockGetOrderInvalidationTags: vi.fn(() => ["tag-1", "tag-2"]),
+	mockSendAdminSequenceOverflowAlert: vi.fn().mockResolvedValue(undefined),
+	mockSendAdminCreditNoteFailedAlert: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/app/generated/prisma/client", () => {
@@ -46,6 +50,12 @@ vi.mock("../../constants/cache", () => ({
 }));
 vi.mock("../../utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
+	createOrderAudit: vi.fn(),
+}));
+// Fix C — assertion de l'alerte overflow (sous-type sequence-overflow, avoir).
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminSequenceOverflowAlert: mockSendAdminSequenceOverflowAlert,
+	sendAdminCreditNoteFailedAlert: mockSendAdminCreditNoteFailedAlert,
 }));
 
 import { voidInvoice } from "../void-invoice.service";
@@ -330,6 +340,11 @@ describe("voidInvoice", () => {
 				}),
 				expect.objectContaining({ service: "void-invoice", orderId: "order-overflow" }),
 			);
+			// Fix C : l'admin est alerté (sequence-overflow, documentType credit-note).
+			expect(mockSendAdminSequenceOverflowAlert).toHaveBeenCalledWith({
+				year,
+				documentType: "credit-note",
+			});
 		});
 
 		it("does NOT retry on overflow (BusinessError ≠ P2002)", async () => {

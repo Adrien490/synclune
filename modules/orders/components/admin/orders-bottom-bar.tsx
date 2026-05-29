@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
-import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
+import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
@@ -24,9 +24,8 @@ const IDS = getAdminDrawerIds("orders");
  * 3 actions : Trier | Rechercher | Filtrer.
  */
 function OrdersBottomBarInner() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-	const { hasActiveSearch, searchValue, hasActiveSort, hasActiveFilter, activeFilterCount } =
-		useActiveListControls();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
+	const { hasActiveSort, hasActiveFilter, activeFilterCount } = useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -40,20 +39,6 @@ function OrdersBottomBarInner() {
 			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
-		},
-		{
-			key: "search",
-			icon: Search,
-			label: "Rechercher",
-			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchValue}". Modifier la recherche`
-				: "Ouvrir la recherche",
-			onClick: () => open("search"),
-			active: hasActiveSearch,
-			haspopup: "dialog",
-			controls: IDS.search,
-			expanded: isOpen("search"),
-			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 		{
 			key: "filter",
@@ -71,7 +56,19 @@ function OrdersBottomBarInner() {
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Tri, recherche et filtres" />
+			<StickyActionBar
+				items={items}
+				ariaLabel="Recherche, tri et filtres"
+				search={
+					<SearchInput
+						size="sm"
+						paramName="search"
+						placeholder="Numéro, email, client…"
+						aria-label="Rechercher une commande par numéro, email ou client"
+						className="w-full"
+					/>
+				}
+			/>
 
 			<SortDrawer
 				open={isOpen("sort")}
@@ -79,15 +76,6 @@ function OrdersBottomBarInner() {
 				options={SORT_OPTIONS}
 				showResetOption
 				id={IDS.sort}
-			/>
-
-			<AdminSearchDrawerTop
-				open={isOpen("search")}
-				onOpenChange={onOpenChange("search")}
-				title="Filtrer les commandes"
-				placeholder="Numéro, email, client…"
-				ariaLabel="Rechercher une commande par numéro, email ou client"
-				id={IDS.search}
 			/>
 
 			<OrdersFilterDrawer

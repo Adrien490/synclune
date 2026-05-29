@@ -34,6 +34,13 @@ interface InputProps extends Omit<React.ComponentProps<"input">, "size"> {
 	startIcon?: React.ReactNode;
 	/** Icône affichée à la fin du champ (élément SVG 16x16). Note : masquée si clearable est actif et le champ a une valeur. */
 	endIcon?: React.ReactNode;
+	/**
+	 * `true` quand `endIcon` est un contrôle focusable (ex : bouton afficher/masquer
+	 * le mot de passe). Le wrapper n'applique alors PAS `aria-hidden`, sinon le
+	 * contrôle resterait atteignable au clavier tout en étant masqué aux lecteurs
+	 * d'écran (WCAG 4.1.2 — audit `aria-hidden-focus`). Défaut `false` (icône décorative).
+	 */
+	endIconInteractive?: boolean;
 	/** Affiche un bouton pour effacer le contenu. Prioritaire sur endIcon quand le champ a une valeur. */
 	clearable?: boolean;
 	/** Callback appelé lors du clic sur le bouton effacer */
@@ -49,6 +56,7 @@ function Input({
 	size,
 	startIcon,
 	endIcon,
+	endIconInteractive = false,
 	clearable,
 	onClear,
 	value,
@@ -107,7 +115,7 @@ function Input({
 							<X className="size-4" aria-hidden="true" />
 						</button>
 					) : hasEndIcon ? (
-						<div className="[&>svg]:size-4" aria-hidden="true">
+						<div className="[&>svg]:size-4" aria-hidden={endIconInteractive ? undefined : "true"}>
 							{endIcon}
 						</div>
 					) : null}

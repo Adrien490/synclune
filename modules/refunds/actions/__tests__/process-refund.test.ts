@@ -17,6 +17,7 @@ const {
 	mockUpdateTag,
 	mockSendRefundConfirmationEmail,
 	mockBuildUrl,
+	mockNotifyBackInStock,
 } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
@@ -56,8 +57,16 @@ const {
 		mockUpdateTag: vi.fn(),
 		mockSendRefundConfirmationEmail: vi.fn(),
 		mockBuildUrl: vi.fn(),
+		mockNotifyBackInStock: vi.fn(),
 	};
 });
+
+// Back-in-stock : `after()` exécute le callback de façon synchrone en test pour
+// pouvoir asserter l'appel à notifyBackInStock.
+vi.mock("next/server", () => ({ after: (cb: () => unknown) => cb() }));
+vi.mock("@/modules/wishlist/services/notify-back-in-stock", () => ({
+	notifyBackInStock: mockNotifyBackInStock,
+}));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdminWithUser,
@@ -493,6 +502,56 @@ describe("processRefund", () => {
 			where: { id: "sku-1" },
 			data: { inventory: { increment: 2 } },
 		});
+	});
+
+	it("notifies back-in-stock when a restocked SKU goes 0→N", async () => {
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		mockTx.$queryRaw
+			.mockResolvedValueOnce([makeRefundRow()])
+			.mockResolvedValueOnce([{ id: "ri-1", quantity: 2, restock: true, sku_id: "sku-1" }])
+			.mockResolvedValueOnce([]);
+
+		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
+
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		// 1er findMany = snapshot pré-restock (stock 0 → produit épuisé) ;
+		// 2e findMany = résolution productId/slug pour invalidation cache.
+		mockPrisma.productSku.findMany
+			.mockResolvedValueOnce([{ id: "sku-1", inventory: 0, productId: "prod-1" }])
+			.mockResolvedValueOnce([{ productId: "prod-1", product: { slug: "bracelet-lune" } }]);
+
+		await processRefund(undefined, makeFormData());
+
+		expect(mockNotifyBackInStock).toHaveBeenCalledWith("prod-1");
+		expect(mockNotifyBackInStock).toHaveBeenCalledTimes(1);
+	});
+
+	it("does NOT notify back-in-stock when the restocked SKU was already in stock", async () => {
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		mockTx.$queryRaw
+			.mockResolvedValueOnce([makeRefundRow()])
+			.mockResolvedValueOnce([{ id: "ri-1", quantity: 2, restock: true, sku_id: "sku-1" }])
+			.mockResolvedValueOnce([]);
+
+		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
+
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		// Pré-restock stock > 0 → pas de transition 0→N → aucun faux mail "revenu en stock".
+		mockPrisma.productSku.findMany
+			.mockResolvedValueOnce([{ id: "sku-1", inventory: 3, productId: "prod-1" }])
+			.mockResolvedValueOnce([{ productId: "prod-1", product: { slug: "bracelet-lune" } }]);
+
+		await processRefund(undefined, makeFormData());
+
+		expect(mockNotifyBackInStock).not.toHaveBeenCalled();
 	});
 
 	it("should skip restock gracefully if SKU is deleted", async () => {

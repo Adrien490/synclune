@@ -162,22 +162,21 @@ describe("ORD-BIZ-007 — mark-as-paid annule le PaymentIntent Stripe", () => {
 		});
 	});
 
-	it("ne fait PAS d'appel Stripe quand stripePaymentIntentId est null", async () => {
+	it("rejette (no_stripe_proof) et ne fait PAS d'appel Stripe quand stripePaymentIntentId est null", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue(
 			createPendingOrder({
 				id: VALID_CUID,
+				// EINV-CASH-001 : depuis le retrait du flow Checkout Session hosted, le
+				// PaymentIntent est l'unique preuve Stripe. Une commande sans PI est
+				// refusée (no_stripe_proof) AVANT toute logique ⇒ aucun appel cancel.
 				stripePaymentIntentId: null,
-				// EINV-CASH-001 : preuve Stripe via Checkout Session (paiement carte
-				// dont le PI n'a pas été persisté) — le garde `no_stripe_proof` passe,
-				// et l'absence de PI ⇒ aucun appel paymentIntents.cancel.
-				stripeCheckoutSessionId: "cs_no_pi",
 				items: [],
 			}),
 		);
 
 		const result = await markAsPaid(undefined, validFormData);
 
-		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockStripePaymentIntentsCancel).not.toHaveBeenCalled();
 	});
 

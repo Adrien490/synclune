@@ -7,12 +7,18 @@ import {
 	sendAdminStuckOrdersAlert,
 	sendAdminEReportingStuckAlert,
 	sendAdminInvoiceFailedAlert,
+	sendAdminOrderProcessingFailedAlert,
 } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl } from "@/shared/constants/urls";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 
 const STUCK_INVOICE_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours — défense en profondeur cron daily F4
 const STUCK_EREPORTING_BATCH_MS = 48 * 60 * 60 * 1000; // 48h — audit monitoring 2026-05-28 EINV-OPS-010
+// ORD-STRIPE-009 : filet dernier recours pour les commandes PENDING avec un
+// PaymentIntent dont le webhook de finalisation a échoué durablement (débit
+// orphelin). Seuil > 10j (max settlement SEPA, cf. ASYNC_PAYMENT_MAX_AGE_MS) pour
+// ne PAS alerter sur un paiement async légitime encore en cours. 14j = anomalie.
+const STUCK_PENDING_PAYMENT_MS = 14 * 24 * 60 * 60 * 1000;
 
 const CRON_JOB = "alert-stuck-orders";
 
@@ -61,73 +67,96 @@ export async function alertStuckOrders(): Promise<CronResult> {
 	const shippedCutoff = new Date(Date.now() - THRESHOLDS.STUCK_SHIPPED_MS);
 	const invoiceStuckCutoff = new Date(Date.now() - STUCK_INVOICE_MS);
 	const ereportingStuckCutoff = new Date(Date.now() - STUCK_EREPORTING_BATCH_MS);
+	const pendingPaymentCutoff = new Date(Date.now() - STUCK_PENDING_PAYMENT_MS);
 
-	const [processingRaw, shippedRaw, invoiceStuckRaw, ereportingStuckRaw] = await Promise.all([
-		prisma.order.findMany({
-			where: {
-				status: OrderStatus.PROCESSING,
-				paymentStatus: PaymentStatus.PAID,
-				paidAt: { lt: processingCutoff, not: null },
-				...notDeleted,
-			},
-			select: { id: true, orderNumber: true, total: true, paidAt: true },
-			take: BATCH_SIZE_LARGE,
-			orderBy: { paidAt: "asc" },
-		}),
-		prisma.order.findMany({
-			where: {
-				status: OrderStatus.SHIPPED,
-				shippedAt: { lt: shippedCutoff, not: null },
-				actualDelivery: null,
-				...notDeleted,
-			},
-			select: { id: true, orderNumber: true, total: true, shippedAt: true },
-			take: BATCH_SIZE_LARGE,
-			orderBy: { shippedAt: "asc" },
-		}),
-		// Audit monitoring 2026-05-28 EINV-OPS-011 : factures bloquées 7j (filet
-		// hebdo redondant du cron daily reconcile-invoices F4).
-		prisma.order.findMany({
-			where: {
-				paymentStatus: PaymentStatus.PAID,
-				invoiceNumber: null,
-				paidAt: { lt: invoiceStuckCutoff, not: null },
-				...notDeleted,
-			},
-			select: {
-				id: true,
-				orderNumber: true,
-				customerEmail: true,
-				total: true,
-				stripePaymentIntentId: true,
-				paidAt: true,
-			},
-			take: BATCH_SIZE_LARGE,
-			orderBy: { paidAt: "asc" },
-		}),
-		// EINV-OPS-010 + EINV-EREPORT-004 : batches e-reporting bloqués > 48h.
-		// REJECTED inclus : un rejet PA n'est jamais re-tenté automatiquement et
-		// reste non transmis à la DGFiP jusqu'à action admin (retryEReportingBatch).
-		// ABANDONED inclus (EINV-CRON-005) : épuisement des retries = données fiscales
-		// définitivement non transmises ; le Sentry one-shot émis à l'abandon peut
-		// être manqué → rappel hebdo idempotent indispensable.
-		prisma.eReportingBatch.findMany({
-			where: {
-				status: {
-					in: [
-						EReportingStatus.PENDING,
-						EReportingStatus.RETRYING,
-						EReportingStatus.REJECTED,
-						EReportingStatus.ABANDONED,
-					],
+	const [processingRaw, shippedRaw, invoiceStuckRaw, ereportingStuckRaw, orphanPendingRaw] =
+		await Promise.all([
+			prisma.order.findMany({
+				where: {
+					status: OrderStatus.PROCESSING,
+					paymentStatus: PaymentStatus.PAID,
+					paidAt: { lt: processingCutoff, not: null },
+					...notDeleted,
 				},
-				createdAt: { lt: ereportingStuckCutoff },
-			},
-			select: { id: true, status: true, createdAt: true },
-			take: BATCH_SIZE_LARGE,
-			orderBy: { createdAt: "asc" },
-		}),
-	]);
+				select: { id: true, orderNumber: true, total: true, paidAt: true },
+				take: BATCH_SIZE_LARGE,
+				orderBy: { paidAt: "asc" },
+			}),
+			prisma.order.findMany({
+				where: {
+					status: OrderStatus.SHIPPED,
+					shippedAt: { lt: shippedCutoff, not: null },
+					actualDelivery: null,
+					...notDeleted,
+				},
+				select: { id: true, orderNumber: true, total: true, shippedAt: true },
+				take: BATCH_SIZE_LARGE,
+				orderBy: { shippedAt: "asc" },
+			}),
+			// Audit monitoring 2026-05-28 EINV-OPS-011 : factures bloquées 7j (filet
+			// hebdo redondant du cron daily reconcile-invoices F4).
+			prisma.order.findMany({
+				where: {
+					paymentStatus: PaymentStatus.PAID,
+					invoiceNumber: null,
+					paidAt: { lt: invoiceStuckCutoff, not: null },
+					...notDeleted,
+				},
+				select: {
+					id: true,
+					orderNumber: true,
+					customerEmail: true,
+					total: true,
+					stripePaymentIntentId: true,
+					paidAt: true,
+				},
+				take: BATCH_SIZE_LARGE,
+				orderBy: { paidAt: "asc" },
+			}),
+			// EINV-OPS-010 + EINV-EREPORT-004 : batches e-reporting bloqués > 48h.
+			// REJECTED inclus : un rejet PA n'est jamais re-tenté automatiquement et
+			// reste non transmis à la DGFiP jusqu'à action admin (retryEReportingBatch).
+			// ABANDONED inclus (EINV-CRON-005) : épuisement des retries = données fiscales
+			// définitivement non transmises ; le Sentry one-shot émis à l'abandon peut
+			// être manqué → rappel hebdo idempotent indispensable.
+			prisma.eReportingBatch.findMany({
+				where: {
+					status: {
+						in: [
+							EReportingStatus.PENDING,
+							EReportingStatus.RETRYING,
+							EReportingStatus.REJECTED,
+							EReportingStatus.ABANDONED,
+						],
+					},
+					createdAt: { lt: ereportingStuckCutoff },
+				},
+				select: { id: true, status: true, createdAt: true },
+				take: BATCH_SIZE_LARGE,
+				orderBy: { createdAt: "asc" },
+			}),
+			// ORD-STRIPE-009 : commandes PENDING avec un PaymentIntent posé depuis > 14j.
+			// Cas pathologique = débit orphelin (webhook de finalisation échoué durablement
+			// malgré refund auto + sync-async-payments). Au-delà de 14j, un paiement async
+			// légitime (SEPA ≤ 10j) est exclu. Read-only : l'admin rembourse/répare à la main.
+			prisma.order.findMany({
+				where: {
+					paymentStatus: PaymentStatus.PENDING,
+					stripePaymentIntentId: { not: null },
+					createdAt: { lt: pendingPaymentCutoff },
+					...notDeleted,
+				},
+				select: {
+					id: true,
+					orderNumber: true,
+					customerEmail: true,
+					total: true,
+					stripePaymentIntentId: true,
+				},
+				take: BATCH_SIZE_LARGE,
+				orderBy: { createdAt: "asc" },
+			}),
+		]);
 
 	const processingOrders = processingRaw
 		.filter((o): o is typeof o & { paidAt: Date } => o.paidAt !== null)
@@ -140,6 +169,7 @@ export async function alertStuckOrders(): Promise<CronResult> {
 	const totalStuck = processingOrders.length + shippedOrders.length;
 	const invoiceStuckCount = invoiceStuckRaw.length;
 	const ereportingStuckCount = ereportingStuckRaw.length;
+	const orphanPendingCount = orphanPendingRaw.length;
 
 	logger.info("Stuck orders scan completed", {
 		cronJob: CRON_JOB,
@@ -148,6 +178,7 @@ export async function alertStuckOrders(): Promise<CronResult> {
 		totalStuck,
 		invoiceStuckCount,
 		ereportingStuckCount,
+		orphanPendingCount,
 	});
 
 	let errored = 0;
@@ -204,6 +235,29 @@ export async function alertStuckOrders(): Promise<CronResult> {
 		}
 	}
 
+	// ORD-STRIPE-009 : rappel par-commande des débits orphelins PENDING+PI > 14j.
+	// `idempotencyKey` Resend (24h) dédup les retries mais laisse passer le rappel
+	// hebdo. La commande exige un remboursement/réparation manuel (le refund auto a
+	// échoué ou n'a jamais pu s'exécuter).
+	for (const order of orphanPendingRaw) {
+		try {
+			await sendAdminOrderProcessingFailedAlert({
+				orderNumber: order.orderNumber,
+				customerEmail: order.customerEmail,
+				total: order.total,
+				errorMessage:
+					"Détectée par cron alert-stuck-orders : commande PENDING avec paiement Stripe non finalisé > 14j (débit potentiellement orphelin).",
+				paymentIntentId: order.stripePaymentIntentId ?? "inconnu",
+			});
+		} catch (error) {
+			errored++;
+			logger.error("Failed to send orphan pending payment reminder", error, {
+				cronJob: CRON_JOB,
+				orderId: order.id,
+			});
+		}
+	}
+
 	if (ereportingStuckCount > 0) {
 		try {
 			const stuckBatches = ereportingStuckRaw.map((b) => ({
@@ -225,7 +279,7 @@ export async function alertStuckOrders(): Promise<CronResult> {
 		}
 	}
 
-	const processedItems = totalStuck + invoiceStuckCount + ereportingStuckCount;
+	const processedItems = totalStuck + invoiceStuckCount + ereportingStuckCount + orphanPendingCount;
 	return {
 		processed: errored === 0 ? processedItems : 0,
 		errored,
@@ -234,5 +288,6 @@ export async function alertStuckOrders(): Promise<CronResult> {
 		shippedStuck: shippedOrders.length,
 		invoiceStuck: invoiceStuckCount,
 		ereportingStuck: ereportingStuckCount,
+		orphanPendingStuck: orphanPendingCount,
 	};
 }

@@ -78,8 +78,10 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 		"sticky top-0 z-(--z-bar) -mx-3 px-3 supports-[backdrop-filter]:bg-background/80 bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)]";
 
 	if (!selectionMode) {
+		// Bouton d'entrée : flux normal (pas de sticky). Il défile avec la liste —
+		// l'épingler n'apporte rien tant qu'on n'est pas en mode sélection.
 		return (
-			<div className={cn(stickyShell, "flex items-center justify-end md:hidden", className)}>
+			<div className={cn("flex items-center justify-end md:hidden", className)}>
 				<SelectionModeAnnouncer />
 				<Button
 					ref={enterButtonRef}

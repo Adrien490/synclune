@@ -25,11 +25,14 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 	const { action, isPending, state } = useAddToCart({ showErrorToast: false });
 	const searchParams = useSearchParams();
 
-	// Validation des variantes pour message explicite
+	// Validation des variantes pour message explicite.
+	// La couleur est pilotée par `?variant=<comboKey>` (M2M depuis 2026-05-15) ;
+	// lire `color` ici reviendrait à valider un param mort (toujours absent).
+	const colorParam = searchParams.get("variant") ?? searchParams.get("color");
 	const { requiresColor, requiresMaterial, requiresSize } = useVariantValidation({
 		product,
 		selection: {
-			color: searchParams.get("color"),
+			color: colorParam,
 			material: searchParams.get("material"),
 			size: searchParams.get("size"),
 		},
@@ -38,7 +41,7 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 	// Message specifique selon les options manquantes
 	const getMissingOptionsMessage = () => {
 		const missing: string[] = [];
-		if (requiresColor && !searchParams.get("color")) missing.push("la couleur");
+		if (requiresColor && !colorParam) missing.push("la couleur");
 		if (requiresMaterial && !searchParams.get("material")) missing.push("le matériau");
 		if (requiresSize && !searchParams.get("size")) missing.push("la taille");
 

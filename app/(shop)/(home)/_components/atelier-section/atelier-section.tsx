@@ -6,8 +6,8 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { cacheLife, cacheTag } from "next/cache";
-import { ParallaxImage } from "../parallax-image";
 import { ATELIER_CONTENT } from "./atelier-content";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { PolaroidGallery } from "./polaroid-gallery";
@@ -126,15 +126,10 @@ export async function AtelierSection() {
 
 				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 					<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
-						<ParallaxImage
-							src={IMAGES.ATELIER}
-							alt={ATELIER_CONTENT.heroImageAlt}
-							blurDataURL={IMAGES.ATELIER_BLUR}
-							containerClassName="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
-							className="object-cover"
-							intensity={7}
-							sizes="(max-width: 1024px) 100vw, 56rem"
-							quality={75}
+						<PlaceholderImage
+							preserveAspect
+							label={ATELIER_CONTENT.heroImageAlt}
+							className="aspect-[4/3] w-full rounded-2xl sm:aspect-[16/7]"
 						/>
 					</div>
 				</Fade>

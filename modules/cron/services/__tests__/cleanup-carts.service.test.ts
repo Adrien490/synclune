@@ -75,17 +75,32 @@ describe("cleanupExpiredCarts", () => {
 		});
 	});
 
-	it("should hard-delete guest carts past grace period (expiresAt < now - 23j, userId null)", async () => {
+	it("should hard-delete guest carts past grace period (expiresAt < now - 23j OR null+old, userId null)", async () => {
 		await cleanupExpiredCarts();
 
 		const expectedCutoff = new Date(new Date("2026-02-16T10:00:00Z").getTime() - GRACE_PERIOD_MS);
 		expect(mockPrisma.cart.findMany).toHaveBeenCalledWith({
 			where: {
-				expiresAt: { lt: expectedCutoff },
 				userId: null,
+				OR: [
+					{ expiresAt: { lt: expectedCutoff } },
+					{ expiresAt: null, createdAt: { lt: expectedCutoff } },
+				],
 			},
 			select: { id: true },
 			take: 1000,
+		});
+	});
+
+	it("RGPD-AUDIT F4: captures guest carts with NULL expiresAt created before the cutoff", async () => {
+		await cleanupExpiredCarts();
+
+		const expectedCutoff = new Date(new Date("2026-02-16T10:00:00Z").getTime() - GRACE_PERIOD_MS);
+		const orBranches = mockPrisma.cart.findMany.mock.calls[0]![0].where.OR;
+		// SQL `expiresAt < cutoff` ne matche jamais les rows NULL — la 2e branche les capture.
+		expect(orBranches).toContainEqual({
+			expiresAt: null,
+			createdAt: { lt: expectedCutoff },
 		});
 	});
 

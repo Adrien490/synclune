@@ -7,7 +7,10 @@ import {
 	sendAdminCreditNoteFailedAlert,
 	sendAdminSequenceOverflowAlert,
 } from "@/modules/emails/services/admin-emails";
-import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
+import {
+	acquireCreditNoteLockTx,
+	nextCreditNoteNumberTx,
+} from "@/modules/invoices/services/credit-note-sequence.service";
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
@@ -115,6 +118,21 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
 			const result = await prisma.$transaction(async (tx) => {
+				// EINV-SEQ-006 — acquérir le lock avoir AVANT la garde de doublon.
+				// Sinon TOCTOU : deux voids concurrents de la MÊME commande (webhook
+				// charge.refunded + admin mark-as-fully-refunded, ou retry Stripe)
+				// lisent tous deux `creditNoteNumber=null` avant que l'un commit,
+				// passent la garde `already-voided`, puis se sérialisent dans
+				// `nextCreditNoteNumberTx` → le 2e ÉCRASE le creditNoteNumber posé par
+				// le 1er en l'orphelinisant (= gap A-YYYY, interdit Art. 286). En
+				// prenant le lock ici, la re-lecture ci-dessous est sérialisée : le 2e
+				// entrant voit le numéro posé par le 1er → noop `already-voided`.
+				// Millésime = date du void (Paris), cohérent avec nextCreditNoteNumberTx
+				// (qui ré-acquiert le même lock xact — idempotent).
+				const now = new Date();
+				const year = getParisDateParts(now).year;
+				await acquireCreditNoteLockTx(tx, year);
+
 				const order = await tx.order.findUnique({
 					where: { id: orderId },
 					select: {
@@ -147,12 +165,8 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
 				// (advisory lock 2_000_000+year + lookup UNION). Garantit l'unicité
 				// cross-table que les CHECK/UNIQUE par table ne couvrent pas
-				// (EINV-PRISMA-001).
-				// Millésime dérivé de l'heure de Paris (pas UTC) : un void à
-				// 2026-12-31 23:30 UTC = 2027-01-01 Paris doit porter A-2027,
-				// cohérent avec la numérotation facture (EINV-SEQ-002 / Art. 286).
-				const now = new Date();
-				const year = getParisDateParts(now).year;
+				// (EINV-PRISMA-001). Le lock a déjà été pris ci-dessus (EINV-SEQ-006) ;
+				// `nextCreditNoteNumberTx` le ré-acquiert (no-op xact) puis lit le MAX.
 				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 
 				const updated = await tx.order.update({

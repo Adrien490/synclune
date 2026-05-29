@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("lucide-react", () => ({
+	ArrowLeft: () => <svg data-testid="icon-arrow-left" />,
 	Ellipsis: () => <svg data-testid="icon-ellipsis" />,
 	Pencil: () => <svg data-testid="icon-pencil" />,
 }));
@@ -117,6 +118,12 @@ describe("ProductDetailHeader", () => {
 		render(<ProductDetailHeader product={baseProduct} />);
 		const heading = screen.getByRole("heading", { level: 1 });
 		expect(heading).toHaveTextContent("Anneau Lune");
+	});
+
+	it("expose un lien retour mobile vers la liste des produits", () => {
+		render(<ProductDetailHeader product={baseProduct} />);
+		const back = screen.getByRole("link", { name: /^Produits$/ });
+		expect(back).toHaveAttribute("href", "/admin/catalogue/produits");
 	});
 
 	it("expose un bouton primaire 'Modifier' qui pointe vers /modifier", () => {

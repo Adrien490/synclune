@@ -54,11 +54,13 @@ function makeEvent(key: string) {
 	return { key, preventDefault: vi.fn() } as unknown as React.KeyboardEvent<HTMLDivElement>;
 }
 
+// Arrow-key roving is scoped to [role="option"] (see FOCUSABLE_SELECTOR), so the
+// navigable children must carry role="option" — mirroring the real options.
 function defaultChildren() {
 	return [
-		createElement("button", { key: "a" }, "A"),
-		createElement("a", { key: "b", href: "#" }, "B"),
-		createElement("button", { key: "c" }, "C"),
+		createElement("button", { key: "a", role: "option" }, "A"),
+		createElement("a", { key: "b", href: "#", role: "option" }, "B"),
+		createElement("button", { key: "c", role: "option" }, "C"),
 	];
 }
 

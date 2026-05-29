@@ -175,6 +175,10 @@ export function EditProductVariantForm({
 			onInvalidCapture={onInvalidCapture}
 		>
 			<input type="hidden" name="skuId" value={sku.id} />
+			{/* Stock rendu à l'ouverture : permet à l'action de calculer un delta
+			    relatif (au lieu d'un set absolu) et de ne pas écraser les ventes
+			    concurrentes (décréments webhook) survenues pendant l'édition. */}
+			<input type="hidden" name="originalInventory" value={sku.inventory} />
 
 			<form.Subscribe
 				selector={(state) => ({

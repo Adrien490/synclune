@@ -201,6 +201,16 @@ export const exportUserDataResponseSchema = z.object({
 				postalCode: z.string(),
 				country: z.string(),
 			}),
+			refunds: z.array(
+				z.object({
+					amount: z.number(),
+					currency: z.string(),
+					reason: z.string(),
+					status: z.string(),
+					requestedAt: z.string().datetime(),
+					processedAt: z.string().datetime().nullable(),
+				}),
+			),
 		}),
 	),
 	wishlist: z.array(

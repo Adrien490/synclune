@@ -188,11 +188,12 @@ describe("markAsPaid", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	it("should reject an order without any Stripe proof (EINV-CASH-001)", async () => {
-		// Commande sans PaymentIntent NI Checkout Session = aucune preuve PSP.
+	it("should reject an order without a PaymentIntent (EINV-CASH-001)", async () => {
+		// Commande sans PaymentIntent = aucune preuve PSP (le PaymentIntent est l'unique
+		// preuve Stripe depuis le retrait du flow Checkout Session hosted).
 		// markAsPaid doit refuser (anti encaissement fictif / logiciel de caisse).
 		mockPrisma.order.findUnique.mockResolvedValue(
-			createPendingOrder({ stripePaymentIntentId: null, stripeCheckoutSessionId: null }),
+			createPendingOrder({ stripePaymentIntentId: null }),
 		);
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
@@ -200,19 +201,12 @@ describe("markAsPaid", () => {
 		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
-	it("should decrement stock for orders without Stripe session", async () => {
+	it("should decrement stock when marking a recoverable order as paid", async () => {
+		// Flow Elements : le stock n'est décrémenté qu'au passage à PAID, donc une
+		// commande recoverable a toujours son stock à décrémenter ici.
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockPrisma.productSku.updateMany).toHaveBeenCalled();
-	});
-
-	it("should skip stock decrement when Stripe session exists", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			createPendingOrder({ stripeCheckoutSessionId: "cs_test_123" }),
-		);
-		const result = await markAsPaid(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

@@ -1,0 +1,40 @@
+{
+	"id": "evt_test_dispute_funds_withdrawn",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "charge.dispute.funds_withdrawn",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "du_test_funds_withdrawn",
+			"object": "dispute",
+			"amount": 10500,
+			"currency": "eur",
+			"charge": "ch_test_disputed",
+			"payment_intent": "pi_test_disputed",
+			"reason": "fraudulent",
+			"status": "needs_response",
+			"balance_transactions": [
+				{
+					"id": "txn_test_withdrawn",
+					"object": "balance_transaction",
+					"amount": -10500,
+					"fee": 1500,
+					"net": -12000,
+					"currency": "eur",
+					"type": "adjustment"
+				}
+			],
+			"evidence_details": {
+				"due_by": 1718352000,
+				"has_evidence": false,
+				"past_due": false,
+				"submission_count": 0
+			},
+			"metadata": { "orderId": "order_test_dispute" }
+		}
+	}
+}

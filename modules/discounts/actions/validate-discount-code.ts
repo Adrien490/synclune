@@ -16,6 +16,7 @@ import { calculateDiscountWithExclusion } from "../services/discount-calculation
 import { checkDiscountEligibility } from "../services/discount-eligibility.service";
 import { getDiscountUsageCounts } from "../data/get-discount-usage-counts";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireActiveAccountIfAuthenticated } from "@/modules/auth/lib/require-auth";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type {
@@ -137,6 +138,13 @@ export async function validateDiscountCode(
 		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 		if ("error" in rateCheck)
 			return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
+
+		// AUTHZ-1 : un invité passe ; une session dont le compte n'est pas ACTIVE
+		// (suspendu/INACTIVE/PENDING_DELETION) est rejetée (money-neutral, rejet direct).
+		const accountGate = await requireActiveAccountIfAuthenticated();
+		if ("error" in accountGate) {
+			return { valid: false, error: accountGate.error.message };
+		}
 
 		// Read userId from session server-side (never trust client-provided value)
 		const session = await getSession();

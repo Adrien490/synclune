@@ -16,7 +16,7 @@ export default function RefundsAdminLoading() {
 
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
-			<StickyActionBarSkeleton itemCount={3} />
+			<StickyActionBarSkeleton itemCount={2} withSearch />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
 

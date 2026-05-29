@@ -194,22 +194,65 @@ describeIntegration("persistInvoiceNumber — concurrence Postgres réelle (EINV
 		expect(result1?.invoiceNumber).not.toBe(result2?.invoiceNumber);
 	});
 
-	it("idempotence : 2e appel sur ordre déjà GENERATED (ensure-invoice-number pattern) — overflow de la séquence évité", async () => {
+	it("idempotence séquentielle (EINV-SEQ-006) : 2e appel sur order déjà GENERATED retourne le MÊME numéro (pas d'overwrite ni de gap)", async () => {
 		const user = await createTestUser();
 		const product = await createTestProduct();
 		const sku = await createTestSku(product.id);
 
 		const order = await createPaidOrder(prisma, user.id, sku.id, `IDEMP-${Date.now()}`);
 
-		// 1er appel
+		// 1er appel — attribue F-YYYY-NNNNN.
 		const result1 = await persistInvoiceNumber(order.id, user.id);
 		expect(result1?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 
-		// 2e appel : crée une NOUVELLE séquence (persistInvoiceNumber est bas-niveau,
-		// l'idempotence est gérée par ensure-invoice-number.service.ts en amont).
-		// Garantie : pas de crash, juste un 2e numéro différent.
+		// 2e appel : la garde d'idempotence SOUS le lock re-lit le numéro de cette
+		// commande et le retourne tel quel — il NE doit PAS générer un nouveau
+		// numéro (sinon mutation Art. 286 + orphelinisation du 1er = gap).
 		const result2 = await persistInvoiceNumber(order.id, user.id);
-		expect(result2?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
-		expect(result2?.invoiceNumber).not.toBe(result1?.invoiceNumber);
+		expect(result2?.invoiceNumber).toBe(result1?.invoiceNumber);
+
+		// L'order conserve le numéro initial.
+		const persisted = await prisma.order.findUniqueOrThrow({
+			where: { id: order.id },
+			select: { invoiceNumber: true },
+		});
+		expect(persisted.invoiceNumber).toBe(result1?.invoiceNumber);
+
+		// Exactement UNE entrée d'audit INVOICE_GENERATED (le noop n'en crée pas).
+		const histories = await prisma.orderHistory.findMany({
+			where: { orderId: order.id, action: "INVOICE_GENERATED" },
+		});
+		expect(histories).toHaveLength(1);
+	});
+
+	it("idempotence concurrente (EINV-SEQ-006) : N persistInvoiceNumber parallèles sur le MÊME order → 1 seul numéro, 0 gap (race eager webhook + lazy download)", async () => {
+		const user = await createTestUser();
+		const product = await createTestProduct();
+		const sku = await createTestSku(product.id);
+
+		const order = await createPaidOrder(prisma, user.id, sku.id, `RACE-${Date.now()}`);
+
+		// 5 appels concurrents simulant webhook eager + fallback lazy route + retry
+		// Stripe + cron sync-async tombant ensemble dans la fenêtre PAID-sans-numéro.
+		const results = await Promise.all(
+			Array.from({ length: 5 }, () => persistInvoiceNumber(order.id, user.id)),
+		);
+
+		// Tous réussissent et retournent le MÊME numéro (un seul gagnant écrit, les
+		// autres re-lisent sous lock et renvoient l'existant).
+		expect(results.every((r) => r !== null)).toBe(true);
+		const numbers = new Set(results.map((r) => r!.invoiceNumber));
+		expect(numbers.size).toBe(1);
+
+		// 1 seul numéro persisté + 1 seule entrée d'audit (pas d'overwrite/gap).
+		const persisted = await prisma.order.findUniqueOrThrow({
+			where: { id: order.id },
+			select: { invoiceNumber: true },
+		});
+		expect(persisted.invoiceNumber).toBe([...numbers][0]);
+		const histories = await prisma.orderHistory.findMany({
+			where: { orderId: order.id, action: "INVOICE_GENERATED" },
+		});
+		expect(histories).toHaveLength(1);
 	});
 });

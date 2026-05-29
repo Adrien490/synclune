@@ -15,7 +15,8 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
  * Affiche un petit encart en bas à gauche avec 2 choix simples : accepter ou refuser.
  * Conforme CNIL :
  * - Choix simple, explicite et clair (aucun dismiss implicite via Escape)
- * - Boutons de poids visuel équivalent (Accepter=default, Refuser=outline)
+ * - Boutons de poids visuel équivalent (Accepter et Refuser tous deux en variant
+ *   secondary : deux boutons pleins neutres, aucune option privilégiée — reco CNIL)
  * - Durée: 6 mois
  *
  * Accessibilité :
@@ -43,7 +44,7 @@ export function CookieBanner() {
 	}
 
 	return (
-		<AnimatePresence mode="wait">
+		<AnimatePresence>
 			{shouldShow && (
 				<m.div
 					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
@@ -55,6 +56,7 @@ export function CookieBanner() {
 					}}
 					className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] left-4 z-(--z-alert) w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
 					role="region"
+					aria-live="polite"
 					aria-labelledby="cookie-title"
 					aria-describedby="cookie-description"
 				>
@@ -91,7 +93,7 @@ export function CookieBanner() {
 						<div className="flex gap-2">
 							<Button
 								onClick={acceptCookies}
-								variant="default"
+								variant="secondary"
 								size="sm"
 								className="min-h-11 flex-1"
 							>
@@ -99,7 +101,7 @@ export function CookieBanner() {
 							</Button>
 							<Button
 								onClick={rejectCookies}
-								variant="outline"
+								variant="secondary"
 								size="sm"
 								className="min-h-11 flex-1"
 							>

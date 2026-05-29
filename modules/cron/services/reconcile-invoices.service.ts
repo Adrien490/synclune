@@ -1,4 +1,5 @@
 import { updateTag } from "next/cache";
+import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
 	OrderAction,
@@ -8,9 +9,11 @@ import {
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { getParisDateParts } from "@/shared/utils/timezone";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { checkSequenceContinuity } from "@/modules/invoices/services/check-sequence-continuity.service";
 import {
 	persistInvoiceNumber,
 	backfillInvoiceDataSnapshot,
@@ -34,6 +37,8 @@ interface ReconcileBreakdown {
 	pdfArchiveRecovered: number;
 	creditNoteRecovered: number;
 	escalated: number;
+	/** EINV-SEQ-007 — nombre d'anomalies de continuité de séquence détectées (Art. 286 CGI). */
+	continuityIssues: number;
 }
 
 /**
@@ -98,6 +103,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		pdfArchiveRecovered: 0,
 		creditNoteRecovered: 0,
 		escalated: 0,
+		continuityIssues: 0,
 	};
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
@@ -138,6 +144,13 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	for (const tag of tagsToInvalidate) {
 		updateTag(tag);
 	}
+
+	// Passe 4 (EINV-SEQ-007) : contrôle de continuité gap-free — défense en
+	// profondeur Art. 286 CGI. Lecture seule, hors deadline batch (2 requêtes
+	// légères), jamais bloquant. Détecte trous + doublons que la construction
+	// MAX+1-sous-lock est censée empêcher. Années couvertes : courante + N-1
+	// jusqu'à fin mars (période de clôture comptable où des avoirs N-1 sortent).
+	breakdown.continuityIssues = await runContinuityCheck(now);
 
 	logger.info("Invoice reconciliation completed", {
 		cronJob: CRON_JOB,
@@ -359,4 +372,80 @@ async function escalate(orderId: string, orderNumber: string, attempts: number):
 			orderId,
 		}),
 	);
+}
+
+/**
+ * EINV-SEQ-007 — contrôle de continuité gap-free (Art. 286 CGI). Lecture seule,
+ * jamais bloquant : toute exception est avalée (le cœur du cron a déjà tourné).
+ * Sentry fingerprinté par séquence+année + UNE alerte admin agrégée (l'idempotency
+ * key horaire de `sendAdminCronFailedAlert` collapse de toute façon les envois du
+ * même cron sur la même heure → on agrège pour ne pas perdre de détail).
+ *
+ * @returns nombre d'anomalies détectées (0 = séquences saines).
+ */
+async function runContinuityCheck(now: number): Promise<number> {
+	try {
+		const { year, month } = getParisDateParts(new Date(now));
+		// month 0-indexé : 0=jan … 2=mars → couvre N-1 jusqu'au 31 mars.
+		const years = month <= 2 ? [year, year - 1] : [year];
+
+		const issues = await checkSequenceContinuity(years);
+		if (issues.length === 0) return 0;
+
+		for (const issue of issues) {
+			logger.error("Sequence continuity breach detected", undefined, {
+				cronJob: CRON_JOB,
+				kind: issue.kind,
+				year: issue.year,
+				prefix: issue.prefix,
+				max: issue.max,
+				count: issue.count,
+				missingCount: issue.missing.length,
+				duplicateCount: issue.duplicates.length,
+			});
+			Sentry.withScope((scope) => {
+				scope.setLevel("error");
+				scope.setFingerprint(["invoice", "sequence-continuity", issue.kind, String(issue.year)]);
+				scope.setContext("sequence-continuity", {
+					kind: issue.kind,
+					year: issue.year,
+					prefix: issue.prefix,
+					max: issue.max,
+					count: issue.count,
+					missing: issue.missing.slice(0, 50),
+					duplicates: issue.duplicates.slice(0, 50),
+				});
+				Sentry.captureMessage(
+					`Séquence ${issue.kind} ${issue.prefix} non-contiguë — ${issue.missing.length} trou(s), ${issue.duplicates.length} doublon(s) (Art. 286 CGI)`,
+					"error",
+				);
+			});
+		}
+
+		await sendAdminCronFailedAlert({
+			job: CRON_JOB,
+			errors: issues.length,
+			details: {
+				type: "sequence-continuity-breach",
+				issues: issues.map((i) => ({
+					sequence: i.kind,
+					year: i.year,
+					prefix: i.prefix,
+					max: i.max,
+					count: i.count,
+					missing: i.missing.slice(0, 50),
+					duplicates: i.duplicates.slice(0, 50),
+				})),
+				action:
+					"Trou/doublon de séquence légale (Art. 286 CGI) — investigation immédiate, voir docs/RUNBOOK-INVOICING.md",
+			},
+		}).catch((alertError) =>
+			logger.error("Failed to send continuity breach alert", alertError, { cronJob: CRON_JOB }),
+		);
+
+		return issues.length;
+	} catch (e) {
+		logger.error("Sequence continuity check threw", e, { cronJob: CRON_JOB });
+		return 0;
+	}
 }

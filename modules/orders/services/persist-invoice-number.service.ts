@@ -20,8 +20,12 @@ import type { GetOrderReturn } from "../types/order.types";
 interface PersistInvoiceNumberResult {
 	invoiceNumber: string;
 	invoiceGeneratedAt: Date;
-	/** SHA-256 du snapshot InvoiceData figé (canonical-JSON, clés triées). */
-	invoiceDataHash: string;
+	/**
+	 * SHA-256 du snapshot InvoiceData figé (canonical-JSON, clés triées). `null`
+	 * uniquement dans le retour idempotent (EINV-SEQ-006) si le numéro existait
+	 * déjà sur une facture legacy sans snapshot (rattrapée par `reconcile-invoices`).
+	 */
+	invoiceDataHash: string | null;
 }
 
 interface PersistInvoiceNumberOptions {
@@ -130,6 +134,31 @@ export async function persistInvoiceNumber(
 					Prisma.sql`SELECT pg_advisory_xact_lock(${invoiceAdvisoryLockKey(year)})`,
 				);
 
+				// EINV-SEQ-006 — idempotence par commande SOUS le lock. Les callers
+				// (webhook eager `ensure-invoice-number`, fallback lazy de la route
+				// download, cron `sync-async-payments`) pré-vérifient `invoiceNumber`
+				// HORS lock → TOCTOU : deux chemins concurrents passent tous deux leur
+				// garde puis se sérialisent ici. Sans cette re-lecture sous lock, le 2e
+				// entrant calculerait MAX+1 et ÉCRASERAIT le numéro déjà émis par le 1er
+				// (mutation d'une facture émise — Art. 286) en orphelinisant ce 1er
+				// numéro (= gap, interdit Art. 286). On retourne donc l'existant en noop.
+				const existing = await tx.order.findUnique({
+					where: { id: orderId },
+					select: {
+						invoiceNumber: true,
+						invoiceGeneratedAt: true,
+						invoiceDataHash: true,
+					},
+				});
+				if (existing?.invoiceNumber) {
+					return {
+						invoiceNumber: existing.invoiceNumber,
+						invoiceGeneratedAt: existing.invoiceGeneratedAt,
+						invoiceDataHash: existing.invoiceDataHash,
+						idempotent: true as const,
+					};
+				}
+
 				const lastRow = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
 					Prisma.sql`SELECT "invoiceNumber" FROM "Order"
 						WHERE "invoiceNumber" LIKE ${prefix + "%"}
@@ -232,7 +261,11 @@ export async function persistInvoiceNumber(
 				return { ...updated, invoiceDataHash };
 			});
 
-			getOrderInvalidationTags(userId ?? undefined, orderId).forEach((tag) => updateTag(tag));
+			// Pas d'invalidation cache sur le noop idempotent (EINV-SEQ-006) : rien
+			// n'a muté, et un download concurrent ne doit pas churner le cache.
+			if (!("idempotent" in result)) {
+				getOrderInvalidationTags(userId ?? undefined, orderId).forEach((tag) => updateTag(tag));
+			}
 
 			return {
 				invoiceNumber: result.invoiceNumber!,

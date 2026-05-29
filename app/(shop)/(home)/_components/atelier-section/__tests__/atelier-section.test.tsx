@@ -101,11 +101,6 @@ vi.mock("../polaroid-gallery", () => ({
 	PolaroidGallery: () => <div data-testid="polaroid-gallery" />,
 }));
 
-vi.mock("../../parallax-image", () => ({
-	// eslint-disable-next-line @next/next/no-img-element
-	ParallaxImage: ({ alt }: { alt: string }) => <img data-testid="parallax-image" alt={alt} />,
-}));
-
 import { processSteps } from "../process-steps";
 
 afterEach(() => {

@@ -3,13 +3,10 @@ import type { WebhookHandlerResult, SupportedStripeEvent } from "../types/webhoo
 
 // Import handlers
 import {
-	handleCheckoutSessionCompleted,
-	handleCheckoutSessionExpired,
-} from "../handlers/checkout-handlers";
-import {
 	handlePaymentSuccess,
 	handlePaymentFailure,
 	handlePaymentCanceled,
+	handlePaymentProcessing,
 	handleInvoicePaymentFailed,
 } from "../handlers/payment-handlers";
 import {
@@ -18,11 +15,8 @@ import {
 	handleRefundFailed,
 } from "../handlers/refund-handlers";
 import {
-	handleAsyncPaymentSucceeded,
-	handleAsyncPaymentFailed,
-} from "../handlers/async-payment-handlers";
-import {
 	handleDisputeCreated,
+	handleDisputeUpdated,
 	handleDisputeClosed,
 	handleDisputeFundsWithdrawn,
 	handleDisputeFundsReinstated,
@@ -36,10 +30,6 @@ type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null
  * Ces assertions sont nécessaires et sûres car Stripe garantit le type par événement
  * @see https://stripe.com/docs/api/events/types
  */
-function getCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session {
-	return event.data.object as Stripe.Checkout.Session;
-}
-
 function getPaymentIntent(event: Stripe.Event): Stripe.PaymentIntent {
 	return event.data.object as Stripe.PaymentIntent;
 }
@@ -66,14 +56,14 @@ function getInvoice(event: Stripe.Event): Stripe.Invoice {
  * Les extracteurs (getCheckoutSession, etc.) documentent le type attendu par événement
  */
 const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
-	// === CHECKOUT ===
-	"checkout.session.completed": async (e) => handleCheckoutSessionCompleted(getCheckoutSession(e)),
-	"checkout.session.expired": async (e) => handleCheckoutSessionExpired(getCheckoutSession(e)),
-
 	// === PAYMENT INTENT ===
+	// Flow réel = Stripe Elements (PaymentIntents). Aucun Checkout Session n'est créé
+	// (cf. initialize-payment.ts), donc aucun event `checkout.session.*` n'est émis —
+	// les paiements différés (3DS, processing) transitent par `payment_intent.*`.
 	"payment_intent.succeeded": async (e) => handlePaymentSuccess(getPaymentIntent(e)),
 	"payment_intent.payment_failed": async (e) => handlePaymentFailure(getPaymentIntent(e)),
 	"payment_intent.canceled": async (e) => handlePaymentCanceled(getPaymentIntent(e)),
+	"payment_intent.processing": async (e) => handlePaymentProcessing(getPaymentIntent(e)),
 
 	// === REFUND ===
 	"charge.refunded": async (e) => handleChargeRefunded(getCharge(e)),
@@ -81,14 +71,9 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"refund.updated": async (e) => handleRefundUpdated(getRefund(e)),
 	"refund.failed": async (e) => handleRefundFailed(getRefund(e)),
 
-	// === ASYNC PAYMENT (SEPA, Sofort, etc.) ===
-	"checkout.session.async_payment_succeeded": async (e) =>
-		handleAsyncPaymentSucceeded(getCheckoutSession(e)),
-	"checkout.session.async_payment_failed": async (e) =>
-		handleAsyncPaymentFailed(getCheckoutSession(e)),
-
 	// === DISPUTE (chargebacks) ===
 	"charge.dispute.created": async (e) => handleDisputeCreated(getDispute(e)),
+	"charge.dispute.updated": async (e) => handleDisputeUpdated(getDispute(e)),
 	"charge.dispute.closed": async (e) => handleDisputeClosed(getDispute(e)),
 	"charge.dispute.funds_withdrawn": async (e) => handleDisputeFundsWithdrawn(getDispute(e)),
 	"charge.dispute.funds_reinstated": async (e) => handleDisputeFundsReinstated(getDispute(e)),
@@ -112,4 +97,13 @@ export async function dispatchEvent(event: Stripe.Event): Promise<WebhookHandler
  */
 export function isEventSupported(eventType: string): eventType is SupportedStripeEvent {
 	return eventType in eventHandlers;
+}
+
+/**
+ * Liste exhaustive des types d'événements réellement dispatchés par le registry.
+ * Exposé pour le contract test (garde de complétude : tout type enregistré doit
+ * avoir une fixture + un handler attendu testés, cf. test/contract/stripe-events.test.ts).
+ */
+export function getRegisteredEventTypes(): SupportedStripeEvent[] {
+	return Object.keys(eventHandlers) as SupportedStripeEvent[];
 }

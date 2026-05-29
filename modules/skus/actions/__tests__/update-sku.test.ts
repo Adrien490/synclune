@@ -31,6 +31,7 @@ const {
 		color: { findUnique: vi.fn() },
 		material: { findMany: vi.fn() },
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -139,6 +140,9 @@ describe("updateProductSku", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
+		// SELECT inventory ... FOR UPDATE (verrou ligne avant écriture delta).
+		// Doit refléter le même stock que findUnique (5) pour le gate back-in-stock.
+		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 5 }]);
 		mockPrisma.productSku.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			sku: "BRC-01",

@@ -55,7 +55,10 @@ const {
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
+}));
 
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,
@@ -797,6 +800,23 @@ describe("initializePayment", () => {
 			expect(result.success).toBe(true);
 			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalled();
+		});
+	});
+
+	describe("account suspension gate (AUTHZ-1)", () => {
+		it("rejects an authenticated session whose account is not ACTIVE — no PaymentIntent created", async () => {
+			mockGetSession.mockResolvedValue({
+				user: { id: "user-123", email: "marie@example.com" },
+			});
+			// DB filter (suspendedAt/accountStatus) excludes the row → gate rejects
+			// pre-payment, so no orphan charge can occur.
+			mockPrisma.user.findUnique.mockResolvedValue(null);
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(false);
+			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
+			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
 		});
 	});
 });

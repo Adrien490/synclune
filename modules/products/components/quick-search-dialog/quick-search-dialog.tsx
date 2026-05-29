@@ -72,7 +72,7 @@ export function QuickSearchDialog({
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
 	});
-	const { searches, remove } = useRecentSearches({
+	const { searches, remove, clear } = useRecentSearches({
 		initialSearches,
 		onRemoveError: () => toast.error("Erreur lors de la suppression"),
 		onClearError: () => toast.error("Erreur lors de la suppression"),
@@ -88,6 +88,15 @@ export function QuickSearchDialog({
 		tombstonedRef.current = tombstonedTerms;
 	}, [tombstonedTerms]);
 
+	// Bulk tombstone : « Effacer » consolide la suppression de TOUTES les
+	// recherches en une seule pastille undo (5s) + un seul appel `clear()` —
+	// au lieu d'empiler N pastilles et de tirer N `remove()`. Cf F2.
+	const [isBulkTombstoned, setIsBulkTombstoned] = useState(false);
+	const bulkTombstonedRef = useRef(false);
+	useEffect(() => {
+		bulkTombstonedRef.current = isBulkTombstoned;
+	}, [isBulkTombstoned]);
+
 	const handleRemoveRecent = (term: string) => {
 		setTombstonedTerms((prev) => {
 			if (prev.has(term)) return prev;
@@ -99,11 +108,18 @@ export function QuickSearchDialog({
 
 	const handleClearRecent = () => {
 		if (searches.length === 0) return;
-		setTombstonedTerms((prev) => {
-			const next = new Set(prev);
-			for (const term of searches) next.add(term);
-			return next;
-		});
+		// Subsume any per-term tombstones into the single bulk one.
+		setTombstonedTerms(new Set());
+		setIsBulkTombstoned(true);
+	};
+
+	const handleUndoBulkTombstone = () => {
+		setIsBulkTombstoned(false);
+	};
+
+	const handleExpireBulkTombstone = () => {
+		setIsBulkTombstoned(false);
+		clear();
 	};
 
 	const handleUndoTombstone = (term: string) => {
@@ -147,14 +163,20 @@ export function QuickSearchDialog({
 	// `handleClose` (sélection d'un résultat, « Voir les résultats »…).
 	useEffect(() => {
 		if (isOpen) return;
-		const pending = tombstonedRef.current;
-		if (pending.size > 0) {
-			for (const term of pending) remove(term);
-			setTombstonedTerms(new Set());
+		// Flush a pending bulk clear first (it subsumes any per-term tombstones).
+		if (bulkTombstonedRef.current) {
+			clear();
+			setIsBulkTombstoned(false);
+		} else {
+			const pending = tombstonedRef.current;
+			if (pending.size > 0) {
+				for (const term of pending) remove(term);
+				setTombstonedTerms(new Set());
+			}
 		}
 		reset();
-		// On veut déclencher SEULEMENT à la fermeture du dialog. `remove` et
-		// `reset` sont stables en pratique (call-sites stables).
+		// On veut déclencher SEULEMENT à la fermeture du dialog. `remove`, `clear`
+		// et `reset` sont stables en pratique (call-sites stables).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen]);
 
@@ -352,11 +374,13 @@ export function QuickSearchDialog({
 							onEscape={handleClose}
 							onValueChange={handleInputValueChange}
 							onSubmit={handleEnterKey}
-							aria-activedescendant={activeDescendantId}
-							// The listbox popup is always rendered while the dialog is open
-							// (idle suggestions or live results), so the combobox is expanded.
-							aria-expanded
-							aria-controls={RESULTS_CONTAINER_ID}
+							// Combobox listbox semantics apply only in search mode (the results
+							// container is then a valid listbox of options). In idle mode the
+							// panel is a browse surface (sections, recent searches, collections),
+							// so the popup is collapsed and exposes no active descendant.
+							aria-activedescendant={isSearchMode ? activeDescendantId : undefined}
+							aria-expanded={isSearchMode}
+							aria-controls={isSearchMode ? RESULTS_CONTAINER_ID : undefined}
 							// ARIA 1.2 combobox: the input keeps focus, so arrow/Home/End/Enter
 							// navigation must be handled here — not on the listbox container.
 							onKeyDown={handleArrowNavigation}
@@ -419,16 +443,22 @@ export function QuickSearchDialog({
 					)}
 				</div>
 
-				{/* Content — ARIA 1.2 combobox pattern: listbox is a presentational
-					 container, the input owns focus and announces the active option via
-					 aria-activedescendant (keyboard navigation is wired on the input).
+				{/* Content — ARIA 1.2 combobox pattern: in SEARCH mode this is the
+					 listbox popup (options only), the input owns focus and announces the
+					 active option via aria-activedescendant. In IDLE mode it is a neutral
+					 browse panel (sections/landmarks), so we drop the listbox role to avoid
+					 nesting <section>/role=list/headings under an invalid listbox.
 					 tabIndex={-1} makes it programmatically focusable to satisfy jsx-a11y
 					 while keeping it out of the Tab order. */}
+				{/* eslint-disable jsx-a11y/no-static-element-interactions --
+					 onMouseLeave only clears the roving keyboard highlight (a pointer-only
+					 affordance; arrow-key navigation works without it). In idle mode the
+					 container intentionally has no interactive role (F3). */}
 				<div
 					ref={contentRef}
 					id={RESULTS_CONTAINER_ID}
-					role="listbox"
-					aria-label="Résultats de recherche"
+					role={isSearchMode ? "listbox" : undefined}
+					aria-label={isSearchMode ? "Résultats de recherche" : undefined}
 					tabIndex={-1}
 					className={cn(
 						"min-h-0 flex-1 overflow-hidden overscroll-contain",
@@ -487,10 +517,41 @@ export function QuickSearchDialog({
 									tombstonedTerms={tombstonedTerms}
 									onUndoTombstone={handleUndoTombstone}
 									onExpireTombstone={handleExpireTombstone}
+									isBulkTombstoned={isBulkTombstoned}
+									onUndoBulkTombstone={handleUndoBulkTombstone}
+									onExpireBulkTombstone={handleExpireBulkTombstone}
 								/>
 							</Fade>
 						)}
 					</AnimatePresence>
+				</div>
+				{/* eslint-enable jsx-a11y/no-static-element-interactions */}
+
+				{/* Keyboard hints — desktop only, purely decorative (the shortcuts work
+					 regardless; this just surfaces them since results are reached via
+					 arrow keys, not Tab). */}
+				<div
+					aria-hidden="true"
+					className="border-border text-muted-foreground hidden shrink-0 items-center justify-center gap-4 border-t px-4 py-2 text-xs md:flex"
+				>
+					<span className="flex items-center gap-1.5">
+						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
+							↑↓
+						</kbd>
+						naviguer
+					</span>
+					<span className="flex items-center gap-1.5">
+						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
+							↵
+						</kbd>
+						ouvrir
+					</span>
+					<span className="flex items-center gap-1.5">
+						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
+							esc
+						</kbd>
+						fermer
+					</span>
 				</div>
 
 				{/* Safe area bottom spacer */}

@@ -219,6 +219,16 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
 	.extend({
 		// SKU ID (required - on modifie un SKU existant)
 		skuId: z.cuid2({ message: "ID variante invalide" }),
+		// Stock affiché à l'ouverture du formulaire (champ caché). Sert à calculer
+		// un DELTA relatif côté action plutôt qu'un set absolu last-write-wins :
+		// `inventory - originalInventory` est appliqué en increment sous FOR UPDATE,
+		// ce qui préserve les décréments webhook commités pendant l'édition.
+		// Default = inventory (compat : si absent, delta = 0, aucun écrasement).
+		originalInventory: z.coerce
+			.number()
+			.int({ error: "Le stock d'origine doit être un entier" })
+			.nonnegative({ error: "Le stock d'origine doit être positif ou nul" })
+			.optional(),
 	})
 	.refine(refineMediaMinOne, MEDIA_REQUIRED_ERROR)
 	.refine(refineFirstMediaNotVideo, FIRST_MEDIA_NOT_VIDEO_ERROR)

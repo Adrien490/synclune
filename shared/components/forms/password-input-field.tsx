@@ -100,6 +100,7 @@ export const PasswordInputField = ({
 				autoComplete={autoComplete}
 				className={cn("pr-10", className)}
 				endIcon={toggleButton}
+				endIconInteractive
 				{...rest}
 			/>
 			{description && (

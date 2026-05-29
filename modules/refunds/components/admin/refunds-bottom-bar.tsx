@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
-import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
+import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
@@ -24,9 +24,8 @@ const IDS = getAdminDrawerIds("refunds");
  * 3 actions : Filtrer | Rechercher | Trier.
  */
 function RefundsBottomBarInner() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-	const { hasActiveSearch, searchValue, hasActiveSort, activeFilterCount } =
-		useActiveListControls();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
+	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -45,20 +44,6 @@ function RefundsBottomBarInner() {
 					: undefined,
 		},
 		{
-			key: "search",
-			icon: Search,
-			label: "Rechercher",
-			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchValue}". Modifier la recherche`
-				: "Ouvrir la recherche",
-			onClick: () => open("search"),
-			active: hasActiveSearch,
-			haspopup: "dialog",
-			controls: IDS.search,
-			expanded: isOpen("search"),
-			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
-		},
-		{
 			key: "sort",
 			icon: ArrowUpDown,
 			label: "Trier",
@@ -74,7 +59,19 @@ function RefundsBottomBarInner() {
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Filtres, recherche et tri" />
+			<StickyActionBar
+				items={items}
+				ariaLabel="Recherche, filtres et tri"
+				search={
+					<SearchInput
+						size="sm"
+						paramName="search"
+						placeholder="Numéro de commande, email…"
+						aria-label="Rechercher un remboursement"
+						className="w-full"
+					/>
+				}
+			/>
 
 			<RefundsFilterSheet
 				open={isOpen("filter")}
@@ -89,14 +86,6 @@ function RefundsBottomBarInner() {
 				options={SORT_OPTIONS}
 				showResetOption
 				id={IDS.sort}
-			/>
-
-			<AdminSearchDrawerTop
-				open={isOpen("search")}
-				onOpenChange={onOpenChange("search")}
-				placeholder="Numéro de commande, email…"
-				ariaLabel="Rechercher un remboursement"
-				id={IDS.search}
 			/>
 		</>
 	);

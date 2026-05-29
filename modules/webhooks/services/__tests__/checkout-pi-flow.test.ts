@@ -339,7 +339,7 @@ describe("processOrderFromPaymentIntent", () => {
 		]);
 		const paymentIntent = makePaymentIntent();
 		await expect(processOrderFromPaymentIntent("order-1", paymentIntent)).rejects.toThrow(
-			/Invalid item/,
+			/Oversell on order/,
 		);
 	});
 });

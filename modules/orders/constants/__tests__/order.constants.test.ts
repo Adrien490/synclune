@@ -15,14 +15,9 @@ import {
  * - Pas de history.authorName (fuite identité admin interne).
  */
 describe("GET_ORDER_SELECT_CUSTOMER", () => {
-	it("does not expose stripePaymentIntentId / stripeCustomerId / stripeInvoiceId", () => {
+	it("does not expose stripePaymentIntentId / stripeCustomerId", () => {
 		expect(GET_ORDER_SELECT_CUSTOMER).not.toHaveProperty("stripePaymentIntentId");
 		expect(GET_ORDER_SELECT_CUSTOMER).not.toHaveProperty("stripeCustomerId");
-		expect(GET_ORDER_SELECT_CUSTOMER).not.toHaveProperty("stripeInvoiceId");
-	});
-
-	it("keeps stripeCheckoutSessionId (needed for receipt URL)", () => {
-		expect(GET_ORDER_SELECT_CUSTOMER.stripeCheckoutSessionId).toBe(true);
 	});
 
 	it("does not expose history.metadata or history.authorName", () => {
@@ -47,11 +42,9 @@ describe("GET_ORDER_SELECT (alias)", () => {
 });
 
 describe("GET_ORDER_SELECT_ADMIN", () => {
-	it("exposes all Stripe IDs (admin scope)", () => {
-		expect(GET_ORDER_SELECT_ADMIN.stripeCheckoutSessionId).toBe(true);
+	it("exposes the Stripe IDs (admin scope)", () => {
 		expect(GET_ORDER_SELECT_ADMIN.stripePaymentIntentId).toBe(true);
 		expect(GET_ORDER_SELECT_ADMIN.stripeCustomerId).toBe(true);
-		expect(GET_ORDER_SELECT_ADMIN.stripeInvoiceId).toBe(true);
 	});
 
 	it("exposes history.metadata + history.authorName (admin scope)", () => {

@@ -90,7 +90,7 @@ export function ProductPriceDisplay({
 				</div>
 				{priceInfo.hasMultiplePrices && (
 					<p className="text-muted-foreground text-xs" role="status">
-						Sélectionnez vos options pour voir le prix exact
+						Choisissez vos options pour voir le prix exact
 					</p>
 				)}
 			</div>

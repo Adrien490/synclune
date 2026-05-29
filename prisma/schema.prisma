@@ -405,10 +405,11 @@ model ProductSku {
 
   isDefault Boolean @default(false)
 
-  images     SkuMedia[]
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-  createdAt  DateTime    @default(now())
+  images         SkuMedia[]
+  orderItems     OrderItem[]
+  cartItems      CartItem[]
+  stockMovements StockMovement[]
+  createdAt      DateTime        @default(now())
   updatedAt  DateTime    @updatedAt
   deletedAt  DateTime? // Soft delete pour preserver historique commandes
 
@@ -430,6 +431,49 @@ model ProductSku {
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   ProductSku_inventory_non_negative      CHECK (inventory >= 0)
   //   ProductSku_priceInclTax_positive       CHECK ("priceInclTax" > 0)
+}
+
+enum StockMovementSource {
+  MANUAL_ADJUST // Formulaire admin d'ajustement de stock
+  SKU_UPDATE // Réservé : delta inventaire via update-sku (non câblé)
+  ORDER // Réservé : décrément à la vente
+  WEBHOOK // Réservé : ajustement via webhook Stripe
+  SYSTEM // Réservé : ajustement système (cron, reconcile)
+}
+
+/// Audit append-only des mouvements de stock SKU.
+/// Immuable : pas de `updatedAt`, pas de `deletedAt` (cf. OrderHistory, Art. L123-22).
+/// `createdById` est un String simple (PAS de relation User) + `createdByName`
+/// dénormalisé, aligné sur OrderHistory.authorId/authorName : conserve l'audit
+/// même si l'admin est supprimé/anonymisé (RGPD).
+model StockMovement {
+  id String @id @default(cuid())
+
+  skuId String
+  sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+
+  /// Dénormalisé pour les requêtes/agrégations par produit sans join SKU
+  productId String
+
+  previousInventory Int
+  newInventory      Int
+  delta             Int // = newInventory - previousInventory (signé)
+
+  reason String? @db.VarChar(500) // aligné sur adjustSkuStockSchema.reason.max(500)
+
+  source StockMovementSource @default(MANUAL_ADJUST)
+
+  createdById   String? // id admin (null = action système future)
+  createdByName String? @db.VarChar(100) // dénormalisé audit
+
+  createdAt DateTime @default(now())
+
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   StockMovement_delta_consistent        CHECK ("newInventory" = "previousInventory" + "delta")
+  //   StockMovement_inventory_non_negative  CHECK ("previousInventory" >= 0 AND "newInventory" >= 0)
+  @@index([skuId, createdAt(sort: Desc)])
+  @@index([productId, createdAt(sort: Desc)])
+  @@index([createdById])
 }
 
 model SkuMedia {
@@ -500,6 +544,13 @@ model Cart {
   // Tant qu'aucun cron de relance n'existe, aucun index dedie n'est maintenu
   // (userId a deja son index via @unique). Recreer les index composites le jour
   // ou le cron sera cable.
+  //
+  // ⚠️ GARDE RGPD (cf. RGPD-AUDIT F4) : ne PAS activer la relance (peupler guestEmail
+  // /guestPhone/marketingConsent) sans d'abord (1) un endpoint de retrait de consentement
+  // (Art. 7 RGPD — retrait aussi simple que l'octroi) et (2) la confirmation que
+  // `cleanup-carts` purge bien ces PII (il capture déjà les guests à expiresAt NULL).
+  // Capturer un email + consentement marketing sans mécanisme de retrait = violation
+  // Art. 5/7 RGPD.
 }
 
 model CartItem {
@@ -691,10 +742,11 @@ model Order {
   user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   // === IDENTIFIANTS STRIPE (CRITIQUES) ===
-  stripeCheckoutSessionId String? @unique // cs_xxx
-  stripePaymentIntentId   String? @unique // pi_xxx
-  stripeCustomerId        String? @db.VarChar(50) // cus_xxx
-  stripeInvoiceId         String? @unique // in_xxx
+  // Flow Elements (PaymentIntents) uniquement — pas de Checkout Session hosted ni
+  // de Stripe Invoicing : les colonnes stripeCheckoutSessionId / stripeInvoiceId
+  // ont été retirées (jamais peuplées en prod). Cf. migration drop_stripe_cs_invoice.
+  stripePaymentIntentId String? @unique // pi_xxx
+  stripeCustomerId      String? @db.VarChar(50) // cus_xxx
 
   // === INFORMATIONS CLIENT ===
   customerEmail String  @db.VarChar(255)
@@ -836,6 +888,16 @@ model Order {
   invoiceRetryDeferred     Boolean @default(false)
   invoiceReconcileAttempts Int     @default(0)
 
+  // === PURGE PII À 10 ANS (RGPD Art. 5.1.e — limitation de conservation) ===
+  // La commande n'est JAMAIS supprimée physiquement (Art. L123-22), mais la base
+  // légale de conservation de la PII (facture portant l'identité — Art. 289 CGI,
+  // exemption à l'effacement Art. 17(3)(b) RGPD) expire à paidAt + 10 ans. Au-delà,
+  // le cron hard-delete-retention scrubbe les snapshots PII (invoiceDataSnapshot,
+  // billing*/customer*/shipping*) et supprime les PDF facture/avoir d'UploadThing,
+  // en conservant les données comptables non-PII (numéros, montants, dates).
+  // Ce timestamp marque que la purge a eu lieu (évite le retraitement).
+  piiPurgedAt DateTime?
+
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
@@ -855,6 +917,7 @@ model Order {
   @@index([customerType, paidAt(sort: Desc)]) // Admin: dashboard CA, e-reporting B2C agregat
   @@index([invoiceStatus, invoiceArchivedAt], map: "Order_invoiceStatus_invoicePdfUrl_idx") // cron archive-unarchived (filtre GENERATED + url NULL)
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx") // Cron reconcile-invoices : index partiel SQL (WHERE invoiceRetryDeferred = true)
+  @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx") // Cron hard-delete-retention : purge PII à paidAt+10 ans (WHERE piiPurgedAt IS NULL)
   // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
   // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
 

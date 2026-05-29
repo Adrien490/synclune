@@ -5,7 +5,9 @@
 			"startServerReadyPattern": "Ready in",
 			"url": [
 				"http://localhost:3000/",
-				"http://localhost:3000/boutique",
+				"http://localhost:3000/produits",
+				"http://localhost:3000/creations/boucles-raisins-bleu-roi",
+				"http://localhost:3000/collections/raisins",
 				"http://localhost:3000/connexion"
 			],
 			"numberOfRuns": 3,

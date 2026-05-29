@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -763,5 +763,93 @@ describe("StickyActionBar", () => {
 		fireEvent.keyDown(sortBtnAfter, { key: "ArrowRight" });
 		const searchBtnAfter = screen.getByLabelText("Ouvrir la recherche");
 		expect(document.activeElement).toBe(searchBtnAfter);
+	});
+
+	describe("mode compact (slot search)", () => {
+		function compactItems(): StickyActionBarItem[] {
+			return [
+				{
+					key: "filter",
+					icon: SlidersHorizontal,
+					label: "Filtrer",
+					ariaLabel: "Ouvrir les filtres",
+					onClick: vi.fn(),
+					badgeCount: 2,
+				},
+				{
+					key: "sort",
+					icon: ArrowUpDown,
+					label: "Trier",
+					ariaLabel: "Ouvrir le tri",
+					onClick: vi.fn(),
+				},
+			];
+		}
+
+		it("rend le slot search en tete de barre", () => {
+			render(
+				<StickyActionBar
+					items={compactItems()}
+					ariaLabel="Recherche, filtres et tri"
+					search={<input aria-label="Rechercher" data-testid="search-slot" />}
+				/>,
+			);
+			expect(screen.getByTestId("search-slot")).toBeInTheDocument();
+			// Le champ est rendu DIRECTEMENT (pas derriere un trigger/dialog).
+			expect(screen.getByLabelText("Rechercher")).toBeInTheDocument();
+		});
+
+		it("ne rend AUCUN item Rechercher (la recherche n'est plus un bouton)", () => {
+			render(
+				<StickyActionBar
+					items={compactItems()}
+					ariaLabel="Recherche, filtres et tri"
+					search={<input aria-label="Rechercher" />}
+				/>,
+			);
+			expect(screen.queryByRole("button", { name: /ouvrir la recherche/i })).toBeNull();
+		});
+
+		it("rend les items en icone-only : label visuellement masque mais aria-label conserve", () => {
+			render(
+				<StickyActionBar
+					items={compactItems()}
+					ariaLabel="Recherche, filtres et tri"
+					search={<input aria-label="Rechercher" />}
+				/>,
+			);
+			// aria-label (nom accessible) toujours present
+			const filterBtn = screen.getByRole("button", { name: "Ouvrir les filtres" });
+			expect(filterBtn).toBeInTheDocument();
+			// le label "Filtrer" n'est present qu'en sr-only (pas de texte visible tronque)
+			const label = within(filterBtn).getByText("Filtrer");
+			expect(label.className).toContain("sr-only");
+		});
+
+		it("conserve le badge numerique et son annonce sr-only en mode compact", () => {
+			render(
+				<StickyActionBar
+					items={compactItems()}
+					ariaLabel="Recherche, filtres et tri"
+					search={<input aria-label="Rechercher" />}
+				/>,
+			);
+			expect(screen.getByText("2")).toBeInTheDocument();
+			expect(screen.getByText(/éléments actifs/)).toBeInTheDocument();
+		});
+
+		it("garde la navigation roving entre les boutons (le champ search est un tab-stop separe)", () => {
+			render(
+				<StickyActionBar
+					items={compactItems()}
+					ariaLabel="Recherche, filtres et tri"
+					search={<input aria-label="Rechercher" />}
+				/>,
+			);
+			const filterBtn = screen.getByRole("button", { name: "Ouvrir les filtres" });
+			filterBtn.focus();
+			fireEvent.keyDown(filterBtn, { key: "ArrowRight" });
+			expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ouvrir le tri" }));
+		});
 	});
 });

@@ -41,6 +41,7 @@ function createMockTx() {
 		wishlist: { deleteMany: vi.fn() },
 		reviewMedia: { deleteMany: vi.fn() },
 		productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
+		reviewResponse: { updateMany: vi.fn() },
 		order: { updateMany: vi.fn() },
 	};
 }
@@ -196,6 +197,30 @@ describe("anonymizeUserInTransaction", () => {
 				shippingPhone: "0000000000",
 				stripeCustomerId: null,
 			}),
+		});
+	});
+
+	it("should NOT scrub billing* (invoice legal identity kept until 10y purge)", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
+
+		await anonymizeUserInTransaction(mockTx as never, "user_abc");
+
+		// billing* = identité de facturation (Art. 289 CGI), conservée jusqu'à
+		// paidAt+10ans (verrouillé par la régression preserves-invoice-snapshot).
+		const orderData = mockTx.order.updateMany.mock.calls[0]?.[0]?.data ?? {};
+		expect(orderData).not.toHaveProperty("billingFirstName");
+		expect(orderData).not.toHaveProperty("billingAddress1");
+		expect(orderData).not.toHaveProperty("invoiceDataSnapshot");
+	});
+
+	it("should anonymize public ReviewResponse author name to the brand", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
+
+		await anonymizeUserInTransaction(mockTx as never, "user_abc");
+
+		expect(mockTx.reviewResponse.updateMany).toHaveBeenCalledWith({
+			where: { authorId: "user_abc" },
+			data: { authorName: "Synclune" },
 		});
 	});
 

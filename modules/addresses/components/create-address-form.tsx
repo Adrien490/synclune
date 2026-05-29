@@ -18,14 +18,14 @@ import { AddressFormFields } from "./address-form-fields";
 const LIST_PATH = "/adresses";
 
 /**
- * Formulaire de création d'adresse en page dédiée (mobile).
+ * Formulaire de création d'adresse (mobile).
  *
- * Équivalent pleine page de `AddressFormDialog` : même hook de formulaire et
+ * Équivalent pleine largeur de `AddressFormDialog` : même hook de formulaire et
  * mêmes champs partagés (`AddressFormFields`), mais redirige vers la liste des
  * adresses après succès au lieu de fermer une dialog. Le bouton mobile
  * `CreateAddressButton` navigue ici ; le desktop garde la dialog.
  */
-export function CreateAddressPageForm() {
+export function CreateAddressForm() {
 	const router = useRouter();
 	const haptic = useHaptic();
 	const { form } = useAddressForm();

@@ -1781,17 +1781,16 @@ async function main(): Promise<void> {
 
 		const orderDate = randomRecentDate();
 
-		// Stripe IDs for paid/refunded orders + checkout session for pending
+		// Stripe IDs (flow Elements : PaymentIntent uniquement). Les commandes PENDING
+		// portent aussi un PaymentIntent (créé dès confirmCheckout, avant capture).
 		const stripeIds =
 			paymentStatus === PaymentStatus.PAID || paymentStatus === PaymentStatus.REFUNDED
 				? {
-						stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}`,
 						stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}`,
 						stripeCustomerId: customerId ? userStripeCustomerMap.get(customerId)! : null,
-						stripeInvoiceId: sampleBoolean(0.3) ? `in_${faker.string.alphanumeric(24)}` : null,
 					}
 				: paymentStatus === PaymentStatus.PENDING
-					? { stripeCheckoutSessionId: `cs_test_${faker.string.alphanumeric(24)}` }
+					? { stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}` }
 					: {};
 
 		// Post-delivery email tracking for delivered orders

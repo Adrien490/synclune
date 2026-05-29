@@ -19,6 +19,10 @@ import {
 	processOrderFromPaymentIntent,
 	buildPostCheckoutTasksFromPI,
 } from "../services/checkout.service";
+import {
+	OversellError,
+	CancelledOrderRaceError,
+} from "../services/checkout-order-processing.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
@@ -80,6 +84,35 @@ export async function handlePaymentSuccess(
 
 	try {
 		const order = await processOrderFromPaymentIntent(orderId, paymentIntent, paymentMethod);
+
+		// Audit F2 (2026-05-29) : sur-facturation détectée APRÈS traitement réussi.
+		// `processOrderAtomically` honore la commande (le client a payé) mais ne
+		// rembourse PAS le delta automatiquement — un refund auto créerait une
+		// transaction REFUND e-reporting fantôme (Invariant 9 CLAUDE.md) divergente
+		// de la DGFiP. On émet donc une alerte admin ACTIONNABLE (PI + delta) pour
+		// refund manuel + ajustement e-reporting. Best-effort, ne bloque pas le flow.
+		if (paymentIntent.amount_received > order.total) {
+			const delta = paymentIntent.amount_received - order.total;
+			logger.error(
+				`⚠️ [WEBHOOK] Overbilling on order ${order.orderNumber}: captured ${paymentIntent.amount_received} > total ${order.total} (delta ${delta})`,
+				undefined,
+				{ service: "webhook" },
+			);
+			try {
+				await sendAdminOrderProcessingFailedAlert({
+					orderNumber: order.orderNumber,
+					customerEmail: order.customerEmail ?? "Email non disponible",
+					total: order.total,
+					errorMessage: `Sur-facturation : Stripe a encaissé ${(paymentIntent.amount_received / 100).toFixed(2)}€ pour une commande à ${(order.total / 100).toFixed(2)}€ (delta ${(delta / 100).toFixed(2)}€). Action requise : remboursement manuel du delta + ajustement e-reporting (PAS d'avoir automatique).`,
+					paymentIntentId: paymentIntent.id,
+				});
+			} catch (alertError) {
+				logger.error("Failed to send overbilling admin alert", alertError, {
+					service: "webhook",
+				});
+			}
+		}
+
 		// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
 		await ensureInvoiceNumberPersisted(orderId);
 		// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
@@ -89,6 +122,28 @@ export async function handlePaymentSuccess(
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 		return { success: true, tasks };
 	} catch (error) {
+		// ORD-STRIPE-009 : oversell (perdant d'une race sur le dernier exemplaire).
+		// Le paiement est encaissé mais le stock est indisponible — un retry Stripe
+		// ne résoudra rien (le stock ne reviendra pas). On rembourse automatiquement,
+		// on marque la commande FAILED (ce qui libère aussi le code promo attaché,
+		// cf. drift usageCount) et on renvoie 200 pour stopper les retries.
+		if (error instanceof OversellError) {
+			return handleOversell(orderId, paymentIntent);
+		}
+		// ORD-STRIPE-009 : paiement tardif sur commande déjà annulée (admin/cron).
+		// `detectCancelledOrderRace` a déjà initié l'auto-refund idempotent avant de
+		// throw — renvoyer SKIPPED (200) au lieu de rethrow évite un 500-retry-loop
+		// Stripe (le refund ne sera jamais "réussi" du point de vue du traitement order).
+		if (error instanceof CancelledOrderRaceError) {
+			logger.warn(
+				`⚠️ [WEBHOOK] PI succeeded on cancelled order ${orderId} — refund already initiated`,
+				{
+					service: "webhook",
+					paymentIntentId: paymentIntent.id,
+				},
+			);
+			return { success: true, skipped: true, reason: "cancelled_order_race" };
+		}
 		logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
 			service: "webhook",
 		});
@@ -120,6 +175,96 @@ export async function handlePaymentSuccess(
 		}
 		throw error;
 	}
+}
+
+/**
+ * ORD-STRIPE-009 — oversell remediation.
+ *
+ * Le perdant d'une race sur le dernier exemplaire : le paiement Stripe est
+ * encaissé mais la re-validation FOR UPDATE au webhook a trouvé le stock
+ * indisponible (`OversellError`), AVANT tout décrément → rien à restaurer côté
+ * loser. On :
+ *   1. marque la commande FAILED (idempotent) — ce qui libère aussi le code promo
+ *      attaché (`releaseOrderDiscountUsageTx`), sinon `usageCount` dérive sur une
+ *      commande fantôme jamais servie ;
+ *   2. déclenche un remboursement automatique Stripe (idempotent via clé
+ *      `auto-refund-${paymentIntentId}`) ;
+ *   3. alerte l'admin + invalide les caches order ;
+ *   4. renvoie 200 (success) pour stopper les retries Stripe — le stock ne
+ *      reviendra pas, retry inutile.
+ */
+async function handleOversell(
+	orderId: string,
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
+	logger.warn(`⚠️ [WEBHOOK] Oversell detected for order ${orderId} — auto-refunding`, {
+		service: "webhook",
+		paymentIntentId: paymentIntent.id,
+	});
+
+	const order = await prisma.order.findFirst({
+		where: { id: orderId, ...notDeleted },
+		select: { orderNumber: true, customerEmail: true, total: true, userId: true },
+	});
+
+	// 1. Marquer FAILED (libère le discount). Idempotent.
+	await markOrderAsFailed(orderId, paymentIntent.id, {
+		code: "oversell",
+		declineCode: null,
+		message: "Stock indisponible au moment de l'encaissement — remboursement automatique",
+	});
+
+	// 2. Remboursement automatique (idempotent).
+	const refundResult = await initiateAutomaticRefund(
+		paymentIntent.id,
+		orderId,
+		"Oversell — stock indisponible au webhook",
+	);
+	if (!refundResult.success && refundResult.error) {
+		await sendRefundFailureAlert(orderId, paymentIntent.id, "other", refundResult.error.message);
+	}
+
+	// 3. Alerte admin (visibilité même si le refund a réussi : incident métier).
+	if (order) {
+		await sendAdminOrderProcessingFailedAlert({
+			orderNumber: order.orderNumber,
+			customerEmail: order.customerEmail,
+			total: order.total,
+			errorMessage: `Oversell : stock indisponible à l'encaissement. Remboursement automatique ${
+				refundResult.success ? "initié" : "ÉCHOUÉ — intervention manuelle requise"
+			}.`,
+			paymentIntentId: paymentIntent.id,
+		});
+	}
+
+	// 4. Invalidation cache (la commande passe CANCELLED côté espace client).
+	const cacheTags = [...getOrderInvalidationTags(order?.userId ?? undefined, orderId)];
+	return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }] };
+}
+
+/**
+ * Handles `payment_intent.processing` — le paiement est accepté mais le
+ * règlement bancaire est en cours (rare en card-only capture automatique ;
+ * certaines cartes/3DS transitent par cet état).
+ *
+ * F3 (2026-05-29) : on souscrit explicitement l'événement pour la traçabilité
+ * (avant, il tombait dans le `SKIPPED` générique « unsupported event »). On NE
+ * mute PAS `paymentStatus` : la commande reste PENDING jusqu'à l'événement
+ * terminal `payment_intent.succeeded` (→ PAID) ou `payment_intent.payment_failed`
+ * (→ FAILED) qui pilotent la transition. `sync-async-payments` laisse également
+ * les PI `processing` en PENDING (repris au run suivant). Retour `skipped` avec
+ * raison explicite — aucune tâche post-webhook.
+ */
+export async function handlePaymentProcessing(
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
+	const orderId = resolveOrderId(paymentIntent.metadata);
+	logger.info(`⏳ [WEBHOOK] Payment processing (bank settlement in progress)`, {
+		service: "webhook",
+		orderId,
+		paymentIntentId: paymentIntent.id,
+	});
+	return { success: true, skipped: true, reason: "payment_processing" };
 }
 
 /**

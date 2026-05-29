@@ -9,7 +9,7 @@ import type { UserAddress } from "../types/user-addresses.types";
  * Hook partagé qui instancie le formulaire d'adresse (TanStack Form + Zod).
  *
  * Utilisé à la fois par la dialog desktop (`AddressFormDialog`) et la page
- * dédiée mobile (`CreateAddressPageForm`) pour garantir des `defaultValues` et
+ * dédiée mobile (`CreateAddressForm`) pour garantir des `defaultValues` et
  * une validation strictement identiques côté création/édition.
  */
 export function useAddressForm(address?: UserAddress) {

@@ -18,7 +18,7 @@ const {
 		order: { findMany: vi.fn() },
 	},
 	mockStripe: {
-		paymentIntents: { retrieve: vi.fn() },
+		paymentIntents: { retrieve: vi.fn(), cancel: vi.fn() },
 	},
 	mockGetStripeClient: vi.fn(),
 	mockProcessOrderFromPaymentIntent: vi.fn(),
@@ -79,6 +79,7 @@ describe("syncAsyncPayments", () => {
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
+		mockStripe.paymentIntents.cancel.mockResolvedValue({ status: "canceled" });
 		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockProcessOrderFromPaymentIntent.mockResolvedValue(undefined);
@@ -109,7 +110,7 @@ describe("syncAsyncPayments", () => {
 		expect(result).toMatchObject({ checked: 0, updated: 0, errors: 0, hasMore: false });
 	});
 
-	it("should query orders with correct time window", async () => {
+	it("F4: should query PENDING+PI orders older than 1h with NO upper age bound, oldest first", async () => {
 		mockPrisma.order.findMany.mockResolvedValue([]);
 
 		await syncAsyncPayments();
@@ -120,9 +121,11 @@ describe("syncAsyncPayments", () => {
 		expect(call.where.deletedAt).toBeNull();
 
 		const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
-		const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
-		expect(call.where.createdAt.gte.getTime()).toBe(maxAge.getTime());
 		expect(call.where.createdAt.lt.getTime()).toBe(minAge.getTime());
+		// F4 : la borne haute (10j) est retirée — un PI succeeded de tout âge doit
+		// être réconcilié (débit orphelin sinon). On traite les plus anciens d'abord.
+		expect(call.where.createdAt.gte).toBeUndefined();
+		expect(call.orderBy).toEqual({ createdAt: "asc" });
 	});
 
 	it("should process order via the webhook path when Stripe shows succeeded", async () => {
@@ -236,6 +239,104 @@ describe("syncAsyncPayments", () => {
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-3");
 		expect(result!.updated).toBe(1);
 		expect(result!.hasMore).toBe(false);
+	});
+
+	// F1 (2026-05-29) : PI 3DS abandonné / jamais confirmé → cancel Stripe PUIS FAILED.
+	it("F1: should cancel the PI then mark FAILED when Stripe shows requires_action", async () => {
+		const order = {
+			id: "order-3ds",
+			orderNumber: "SYN-3DS",
+			stripePaymentIntentId: "pi_requires_action",
+			paymentStatus: "PENDING",
+			userId: "user-3ds",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({
+			id: "pi_requires_action",
+			status: "requires_action",
+		});
+		mockExtractPaymentFailureDetails.mockReturnValue({});
+
+		const result = await syncAsyncPayments();
+
+		expect(mockStripe.paymentIntents.cancel).toHaveBeenCalledWith("pi_requires_action");
+		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-3ds");
+		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith("order-3ds", "pi_requires_action", {});
+		expect(result!.updated).toBe(1);
+		expect(result!.errors).toBe(0);
+	});
+
+	it("F1: should cancel the PI then mark FAILED when Stripe shows requires_confirmation", async () => {
+		const order = {
+			id: "order-rc",
+			orderNumber: "SYN-RC",
+			stripePaymentIntentId: "pi_requires_confirmation",
+			paymentStatus: "PENDING",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({
+			id: "pi_requires_confirmation",
+			status: "requires_confirmation",
+		});
+		mockExtractPaymentFailureDetails.mockReturnValue({});
+
+		const result = await syncAsyncPayments();
+
+		expect(mockStripe.paymentIntents.cancel).toHaveBeenCalledWith("pi_requires_confirmation");
+		expect(mockMarkOrderAsFailed).toHaveBeenCalled();
+		expect(result!.updated).toBe(1);
+	});
+
+	// F1 race : le PI passe succeeded entre le retrieve et le cancel → on encaisse.
+	it("F1: should process as PAID when cancel races a late succeeded PI", async () => {
+		const order = {
+			id: "order-race",
+			orderNumber: "SYN-RACE",
+			stripePaymentIntentId: "pi_race",
+			paymentStatus: "PENDING",
+			userId: "user-race",
+		};
+		const succeededPi = { id: "pi_race", status: "succeeded" };
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve
+			.mockResolvedValueOnce({ id: "pi_race", status: "requires_action" })
+			.mockResolvedValueOnce(succeededPi);
+		mockStripe.paymentIntents.cancel.mockRejectedValue(
+			new Error("PaymentIntent already succeeded"),
+		);
+
+		const result = await syncAsyncPayments();
+
+		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith(
+			"order-race",
+			succeededPi,
+			undefined,
+		);
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(result!.updated).toBe(1);
+		expect(result!.errors).toBe(0);
+	});
+
+	// F1 : si le cancel échoue ET le PI n'est pas succeeded, on garde PENDING.
+	it("F1: should keep order PENDING (errors++) when cancel fails and PI not succeeded", async () => {
+		const order = {
+			id: "order-cancel-fail",
+			orderNumber: "SYN-CF",
+			stripePaymentIntentId: "pi_cf",
+			paymentStatus: "PENDING",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve
+			.mockResolvedValueOnce({ id: "pi_cf", status: "requires_action" })
+			.mockResolvedValueOnce({ id: "pi_cf", status: "requires_action" });
+		mockStripe.paymentIntents.cancel.mockRejectedValue(new Error("Stripe down"));
+
+		const result = await syncAsyncPayments();
+
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(mockProcessOrderFromPaymentIntent).not.toHaveBeenCalled();
+		expect(result!.updated).toBe(0);
+		expect(result!.errors).toBe(1);
 	});
 
 	it("should not update orders still in processing state", async () => {

@@ -118,6 +118,7 @@ describe("processAccountDeletions", () => {
 			wishlist: { deleteMany: vi.fn() },
 			reviewMedia: { deleteMany: vi.fn() },
 			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
+			reviewResponse: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -178,6 +179,7 @@ describe("processAccountDeletions", () => {
 			wishlist: { deleteMany: vi.fn() },
 			reviewMedia: { deleteMany: vi.fn() },
 			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
+			reviewResponse: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 

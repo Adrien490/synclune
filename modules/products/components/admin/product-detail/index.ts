@@ -3,5 +3,6 @@ export { ProductDetailHeader } from "./product-detail-header";
 export { ProductDetailInfoCard } from "./product-detail-info-card";
 export { ProductDetailMediaCard } from "./product-detail-media-card";
 export { ProductDetailPage } from "./product-detail-page";
+export { ProductDetailReviewsCard } from "./product-detail-reviews-card";
 export { ProductDetailSkusSummaryCard } from "./product-detail-skus-summary-card";
 export { ProductDetailStorefrontLinkCard } from "./product-detail-storefront-link-card";

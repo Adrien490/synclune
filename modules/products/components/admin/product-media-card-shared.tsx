@@ -1,22 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ImagePlus, Upload } from "lucide-react";
 
+import { NativeDropzone } from "@/shared/components/media-upload/native-dropzone";
 import { PendingUploadsGrid } from "@/shared/components/media-upload/pending-uploads-grid";
 import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
 import {
 	UploadProgress as UploadProgressBar,
 	type UploadPhase,
 } from "@/shared/components/media-upload/upload-progress";
+import {
+	IMAGE_FORMATS_LABEL,
+	VIDEO_FORMATS_LABEL,
+} from "@/modules/media/constants/media-limits.constants";
 import type { FileProgress } from "@/modules/media/types/hooks.types";
-import { UploadDropzone } from "@/modules/media/utils/uploadthing";
+import { MEDIA_SIZE_LIMITS } from "@/modules/media/utils/validate-media-file";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import type { MediaArrayField } from "@/modules/products/types/media-field.types";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { toast } from "@/shared/utils/toast";
 
-export const ACCEPTED_MEDIA_MIME = "image/*,video/*,.heic,.heif";
+// SSOT upload-zone copy derived from the size + format constants (F3).
+const IMAGE_MAX_MB = Math.round(MEDIA_SIZE_LIMITS.CATALOG_IMAGE / 1024 / 1024);
+const VIDEO_MAX_MB = Math.round(MEDIA_SIZE_LIMITS.VIDEO / 1024 / 1024);
+/** Long format+size hint (empty-state dropzone). */
+const MEDIA_FORMATS_HINT = `Images ${IMAGE_FORMATS_LABEL} (max ${IMAGE_MAX_MB} Mo) · Vidéos ${VIDEO_FORMATS_LABEL} (max ${VIDEO_MAX_MB} Mo)`;
+/** Short size hint (action-sheet trigger description). */
+const MEDIA_SIZE_HINT = `Image (${IMAGE_MAX_MB} Mo) / Vidéo (${VIDEO_MAX_MB} Mo)`;
+/** Shared accept filter for catalog media (images + videos). */
+const CATALOG_ACCEPT = "image/*,video/*";
 
 export interface UploadProgressShape {
 	phase: UploadPhase | string;
@@ -37,74 +49,6 @@ export interface UploadProgressShape {
 export function progressPercent(progress: UploadProgressShape | null): number {
 	if (!progress || progress.total === 0) return 0;
 	return Math.min(100, Math.round((progress.completed / progress.total) * 100));
-}
-
-/**
- * Patches the UploadThing dropzone <input type="file"> with explicit `accept`
- * MIME so the browser picker filters correctly on desktop and iOS.
- *
- * One-shot après mount : l'input UploadThing est rendu de façon stable dans le
- * cycle de vie du composant. Si l'input arrive tardivement (rare), un MutationObserver
- * one-shot avec `subtree: true` patche puis se déconnecte immédiatement — pas de coût permanent.
- */
-export function useDropzoneAccept(containerRef: React.RefObject<HTMLDivElement | null>) {
-	useEffect(() => {
-		const container = containerRef.current;
-		if (!container) return;
-
-		const apply = (): boolean => {
-			const input = container.querySelector<HTMLInputElement>('input[type="file"]');
-			if (!input) return false;
-			if (input.getAttribute("accept") !== ACCEPTED_MEDIA_MIME) {
-				input.setAttribute("accept", ACCEPTED_MEDIA_MIME);
-			}
-			return true;
-		};
-
-		if (apply()) return;
-
-		const observer = new MutationObserver(() => {
-			if (apply()) observer.disconnect();
-		});
-		observer.observe(container, { childList: true, subtree: true });
-		return () => observer.disconnect();
-	}, [containerRef]);
-}
-
-/**
- * Intercepte les paste de fichiers image/vidéo au niveau de la fenêtre et redirige
- * vers le pipeline unifié `useMediaUpload` (au lieu de `appendOnPaste` UploadThing qui
- * court-circuiterait compression HEIC / bytes-progress / retry / offline queue).
- *
- * Skip si le focus est sur un input/textarea/contenteditable — l'utilisateur colle
- * du texte, pas une image.
- */
-export function useDropzoneNativePaste(enabled: boolean, onFiles: (files: File[]) => void): void {
-	const onFilesRef = useRef(onFiles);
-	useEffect(() => {
-		onFilesRef.current = onFiles;
-	});
-
-	useEffect(() => {
-		if (!enabled) return;
-		const handler = (e: ClipboardEvent) => {
-			const target = e.target as HTMLElement | null;
-			if (target) {
-				const tag = target.tagName;
-				if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
-			}
-			const items = e.clipboardData?.files;
-			if (!items || items.length === 0) return;
-			const files = Array.from(items).filter(
-				(f) => f.type.startsWith("image/") || f.type.startsWith("video/"),
-			);
-			if (files.length === 0) return;
-			e.preventDefault();
-			onFilesRef.current(files);
-		};
-		window.addEventListener("paste", handler);
-		return () => window.removeEventListener("paste", handler);
-	}, [enabled]);
 }
 
 // ============================================================================
@@ -135,16 +79,12 @@ export function EmptyMediaState({
 	onCancel,
 	onCancelOne,
 }: EmptyMediaStateProps) {
-	const dropzoneRef = useRef<HTMLDivElement>(null);
-	const isMobile = useIsMobile();
 	const remaining = Math.max(0, maxMediaCount - (currentCount ?? field.state.value.length));
 	const remainingLabel = `${remaining} restant${remaining > 1 ? "s" : ""}`;
-	const pendingMode = isMobile && !isAtLimit && !isMediaUploading;
+	// Pending-preview (review-before-send) on both mobile and desktop (F2).
+	const pendingMode = !isAtLimit && !isMediaUploading;
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 	const cappedRemaining = Math.max(0, remaining - pendingFiles.length);
-
-	useDropzoneAccept(dropzoneRef);
-	useDropzoneNativePaste(!isAtLimit && !isMediaUploading, (files) => handleUpload(files, field));
 
 	const onPickerFiles = (files: File[]) => {
 		if (!pendingMode) {
@@ -193,7 +133,7 @@ export function EmptyMediaState({
 				</div>
 			)}
 
-			{/* Pending uploads (mobile) — preview avant upload effectif (P0 G6) */}
+			{/* Pending uploads — preview avant upload effectif, mobile + desktop (F2) */}
 			{pendingMode && pendingFiles.length > 0 && (
 				<PendingUploadsGrid
 					files={pendingFiles}
@@ -219,80 +159,28 @@ export function EmptyMediaState({
 					)}
 
 					<UploadActionSheet
-						accept="image/*,video/*"
+						accept={CATALOG_ACCEPT}
 						multiple
 						disabled={isMediaUploading}
 						onFilesSelected={onPickerFiles}
 						triggerLabel="Ajouter des médias"
-						triggerDescription={`${remainingLabel} • Image (16 Mo) / Vidéo (512 Mo)`}
+						triggerDescription={`${remainingLabel} • ${MEDIA_SIZE_HINT}`}
 						sheetTitle="Ajouter des médias"
 						sheetDescription="Sélectionnez les images qui mettront votre pièce en lumière"
 						showCamera
 						desktopFallback={
-							<div ref={dropzoneRef}>
-								<UploadDropzone
-									endpoint="catalogMedia"
-									onChange={(files) => handleUpload(files, field)}
-									onUploadError={(error) => {
-										toast.error(`Erreur: ${error.message}`);
-									}}
-									config={{ mode: "auto" }}
-									aria-label="Zone d'upload des médias du bijou"
-									className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
-									appearance={{
-										container: ({ isDragActive }) => ({
-											border: "2px dashed",
-											borderColor: isDragActive
-												? "var(--primary)"
-												: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-											borderRadius: "0.75rem",
-											backgroundColor: isDragActive
-												? "color-mix(in oklch, var(--primary) 5%, transparent)"
-												: "color-mix(in oklch, var(--muted) 30%, transparent)",
-											padding: isMediaUploading ? "1rem" : "1.5rem",
-											minHeight: isMediaUploading ? "80px" : "160px",
-											maxHeight: isMediaUploading ? "120px" : "260px",
-											display: "flex",
-											flexDirection: "column",
-											alignItems: "center",
-											justifyContent: "center",
-											gap: "0.5rem",
-											cursor: "pointer",
-										}),
-										uploadIcon: () => ({ display: "none" }),
-										label: () => ({ display: "none" }),
-										allowedContent: () => ({
-											display: "none",
-										}),
-										button: () => ({ display: "none" }),
-									}}
-									content={{
-										uploadIcon: () => (
-											<Upload
-												className={
-													isMediaUploading ? "text-primary/50 size-8" : "text-primary/70 size-12"
-												}
-											/>
-										),
-										label: ({ isDragActive }) => (
-											<div className="space-y-1 text-center">
-												<p className={isMediaUploading ? "text-sm" : "font-medium"}>
-													{isDragActive
-														? "Relâchez"
-														: isMediaUploading
-															? "Ajouter d'autres médias"
-															: "Cliquez ou glissez-déposez vos médias"}
-												</p>
-												{!isMediaUploading && (
-													<p className="text-muted-foreground text-xs">
-														Images JPEG/PNG/WebP/HEIC (max 16 Mo) · Vidéos MP4 (max 512 Mo)
-													</p>
-												)}
-											</div>
-										),
-									}}
-								/>
-							</div>
+							<NativeDropzone
+								accept={CATALOG_ACCEPT}
+								multiple
+								disabled={isMediaUploading}
+								onFiles={onPickerFiles}
+								ariaLabel="Zone d'upload des médias du bijou"
+								primaryLabel="Cliquez ou glissez-déposez vos médias"
+								dropLabel="Relâchez pour ajouter"
+								hint={MEDIA_FORMATS_HINT}
+								icon={<Upload className="text-primary/70 size-12" aria-hidden="true" />}
+								className="min-h-40 rounded-xl"
+							/>
 						}
 					/>
 				</div>
@@ -331,17 +219,14 @@ export function InlineUploadZone({
 	maxMediaCount,
 	currentCount,
 }: InlineUploadZoneProps) {
-	const dropzoneRef = useRef<HTMLDivElement>(null);
-	const isMobile = useIsMobile();
-	useDropzoneAccept(dropzoneRef);
-	useDropzoneNativePaste(!isMediaUploading, (files) => handleUpload(files, field));
 	const remaining =
 		maxMediaCount !== undefined
 			? Math.max(0, maxMediaCount - (currentCount ?? field.state.value.length))
 			: null;
 	const remainingLabel =
 		remaining !== null ? `${remaining} restant${remaining > 1 ? "s" : ""}` : undefined;
-	const pendingMode = isMobile && !isMediaUploading;
+	// Pending-preview on both mobile and desktop (F2).
+	const pendingMode = !isMediaUploading;
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 	const cappedRemaining = remaining !== null ? Math.max(0, remaining - pendingFiles.length) : null;
 
@@ -396,7 +281,7 @@ export function InlineUploadZone({
 				/>
 			)}
 			<UploadActionSheet
-				accept="image/*,video/*"
+				accept={CATALOG_ACCEPT}
 				multiple
 				disabled={isMediaUploading}
 				onFilesSelected={onPickerFiles}
@@ -406,48 +291,17 @@ export function InlineUploadZone({
 				sheetTitle="Ajouter des médias"
 				showCamera
 				desktopFallback={
-					<div ref={dropzoneRef} className="flex h-full min-h-0 w-full flex-1 flex-col gap-1">
-						<UploadDropzone
-							endpoint="catalogMedia"
-							onChange={(files) => handleUpload(files, field)}
-							onUploadError={(error) => {
-								toast.error(`Erreur: ${error.message}`);
-							}}
-							config={{ mode: "auto" }}
-							className="h-full min-h-0 w-full flex-1"
-							appearance={{
-								container: ({ isDragActive }) => ({
-									height: "100%",
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									justifyContent: "center",
-									cursor: "pointer",
-									backgroundColor: isDragActive
-										? "color-mix(in oklch, var(--primary) 5%, transparent)"
-										: "transparent",
-								}),
-								uploadIcon: () => ({
-									display: "none",
-								}),
-								label: () => ({
-									display: "none",
-								}),
-								allowedContent: () => ({
-									display: "none",
-								}),
-								button: () => ({
-									display: "none",
-								}),
-							}}
-							content={{
-								uploadIcon: () => <Upload className="text-muted-foreground/50 size-6" />,
-								label: () => (
-									<p className="text-muted-foreground mt-1 text-center text-xs">Ajouter</p>
-								),
-							}}
-						/>
-					</div>
+					<NativeDropzone
+						accept={CATALOG_ACCEPT}
+						multiple
+						disabled={isMediaUploading}
+						onFiles={onPickerFiles}
+						ariaLabel="Zone d'upload des médias du bijou"
+						primaryLabel="Ajouter"
+						dropLabel="Relâchez"
+						icon={<Upload className="text-muted-foreground/50 size-6" aria-hidden="true" />}
+						className="h-full min-h-0 w-full flex-1 gap-1 border-0 p-2"
+					/>
 				}
 			/>
 		</div>

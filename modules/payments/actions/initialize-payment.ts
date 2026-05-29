@@ -1,6 +1,7 @@
 "use server";
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { requireActiveAccountIfAuthenticated } from "@/modules/auth/lib/require-auth";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -64,6 +65,15 @@ export async function initializePayment(
 					success: false,
 					error: rateLimit.error ?? "Trop de tentatives. Veuillez réessayer plus tard.",
 				};
+			}
+
+			// AUTHZ-1 : gate pré-paiement. Un invité passe ; une session dont le compte
+			// n'est pas ACTIVE (suspendu/INACTIVE/PENDING_DELETION) est rejetée AVANT
+			// la création du PaymentIntent → aucun débit orphelin possible. Ferme la
+			// fenêtre cookie-cache Better Auth (~5 min) post-suspension.
+			const accountGate = await requireActiveAccountIfAuthenticated();
+			if ("error" in accountGate) {
+				return { success: false, error: accountGate.error.message };
 			}
 
 			// Block payment if store is closed (admin bypass for live checkout testing)

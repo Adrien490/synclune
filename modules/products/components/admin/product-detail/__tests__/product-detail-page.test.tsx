@@ -23,6 +23,12 @@ vi.mock("../product-detail-collections-card", () => ({
 	ProductDetailCollectionsCard: () => <section data-testid="collections-card" />,
 }));
 
+vi.mock("../product-detail-reviews-card", () => ({
+	ProductDetailReviewsCard: ({ productTitle }: { productTitle: string }) => (
+		<section data-testid="reviews-card" data-product-title={productTitle} />
+	),
+}));
+
 vi.mock("../product-detail-storefront-link-card", () => ({
 	ProductDetailStorefrontLinkCard: ({ slug, status }: { slug: string; status: string }) => (
 		<section data-testid="storefront-card" data-slug={slug} data-status={status} />
@@ -44,23 +50,31 @@ const product = {
 	collections: [],
 } as any;
 
+const reviewStats = { totalCount: 0, averageRating: 0, distribution: [] } as any;
+
 describe("ProductDetailPage", () => {
 	afterEach(cleanup);
 
-	it("monte les 6 sous-composants attendus", () => {
-		render(<ProductDetailPage product={product} />);
+	it("monte les 7 sous-composants attendus", () => {
+		render(<ProductDetailPage product={product} reviewStats={reviewStats} />);
 		expect(screen.getByTestId("header")).toBeInTheDocument();
 		expect(screen.getByTestId("media-card")).toBeInTheDocument();
 		expect(screen.getByTestId("info-card")).toBeInTheDocument();
 		expect(screen.getByTestId("skus-card")).toBeInTheDocument();
+		expect(screen.getByTestId("reviews-card")).toBeInTheDocument();
 		expect(screen.getByTestId("collections-card")).toBeInTheDocument();
 		expect(screen.getByTestId("storefront-card")).toBeInTheDocument();
 	});
 
 	it("transmet slug + status à la storefront card", () => {
-		render(<ProductDetailPage product={product} />);
+		render(<ProductDetailPage product={product} reviewStats={reviewStats} />);
 		const card = screen.getByTestId("storefront-card");
 		expect(card).toHaveAttribute("data-slug", "anneau-lune");
 		expect(card).toHaveAttribute("data-status", "PUBLIC");
+	});
+
+	it("transmet le titre produit à la reviews card", () => {
+		render(<ProductDetailPage product={product} reviewStats={reviewStats} />);
+		expect(screen.getByTestId("reviews-card")).toHaveAttribute("data-product-title", "Anneau Lune");
 	});
 });

@@ -22,6 +22,7 @@ Les jobs e-invoicing (4 jobs marqués `e-invoicing` ci-dessous, scope **e-report
 | `cleanup-pending-orders`    | `30 4 * * *`   | 05:30 / 06:30             | quotidien         | revenue     | `modules/cron/services/cleanup-pending-orders.service.ts`    |
 | `process-account-deletions` | `0 5 * * *`    | 06:00 / 07:00             | quotidien         | RGPD        | `modules/cron/services/process-account-deletions.service.ts` |
 | `reconcile-voided-invoices` | `0 7 * * *`    | 08:00 / 09:00             | quotidien         | e-invoicing | `modules/cron/services/reconcile-voided-invoices.service.ts` |
+| `alert-dispute-deadlines`   | `0 8 * * *`    | 09:00 / 10:00             | quotidien         | monitoring  | `modules/cron/services/alert-dispute-deadlines.service.ts`   |
 | `send-review-requests`      | `0 10 * * *`   | 11:00 / 12:00             | quotidien         | engagement  | `modules/cron/services/send-review-requests.service.ts`      |
 | `alert-stuck-orders`        | `0 9 * * 1`    | 10:00 / 11:00 lundi       | hebdo (lundi)     | monitoring  | `modules/cron/services/alert-stuck-orders.service.ts`        |
 | `cleanup-webhook-events`    | `0 3 1 * *`    | 04:00 / 05:00 le 1er      | mensuel (1er)     | retention   | `modules/cron/services/cleanup-webhook-events.service.ts`    |

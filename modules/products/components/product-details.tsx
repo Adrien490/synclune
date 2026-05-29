@@ -88,10 +88,24 @@ export function ProductDetails({
 			{/* 4. Estimation livraison dynamique */}
 			<DeliveryEstimator />
 
-			{/* 5. Réassurance (après CTA - "decision support") */}
+			{/* 5. Description produit — remontée près du CTA pour valoriser le storytelling
+			    artisanal (levier de conversion), surtout sur mobile. */}
+			{product.description && (
+				<div
+					id="product-description"
+					className="text-muted-foreground max-w-prose space-y-3 text-base leading-relaxed tracking-normal antialiased"
+				>
+					<h2 className="sr-only">Description</h2>
+					{product.description.split("\n").map((line, i) => (
+						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
+					))}
+				</div>
+			)}
+
+			{/* 6. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
-			{/* 6. Caractéristiques principales. */}
+			{/* 7. Caractéristiques principales. */}
 			<AnimatePresence mode="popLayout">
 				<m.div
 					key={`chars-${currentSku.id || "no-sku"}`}
@@ -110,21 +124,8 @@ export function ProductDetails({
 
 			<Separator />
 
-			{/* 7. Highlights produit (après CTA - pattern Etsy) */}
+			{/* 8. Highlights produit (après CTA - pattern Etsy) */}
 			<ProductHighlights product={product} />
-
-			{/* 8. Description produit (après CTA - pattern Etsy) */}
-			{product.description && (
-				<div
-					id="product-description"
-					className="text-muted-foreground max-w-prose space-y-3 text-base leading-relaxed tracking-normal antialiased"
-				>
-					<h2 className="sr-only">Description</h2>
-					{product.description.split("\n").map((line, i) => (
-						<p key={`desc-line-${i}`}>{line || "\u00A0"}</p>
-					))}
-				</div>
-			)}
 
 			{/* 9. Entretien et livraison (reste en bas) */}
 			<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />

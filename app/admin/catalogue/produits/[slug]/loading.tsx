@@ -107,13 +107,53 @@ function SkusSummaryCardSkeleton() {
 						<Skeleton className="h-4 w-24" />
 					</div>
 				</div>
-				{/* Default variant block */}
-				<div className="space-y-2 border-t pt-4">
-					<div className="flex items-center gap-2">
-						<Skeleton className="h-6 w-24 rounded-full" />
+				{/* Aperçu variantes : jusqu'à 3 lignes (label + badge stock) */}
+				<div className="-mx-2 space-y-0.5 border-t pt-3">
+					<div className="flex items-center justify-between gap-3 px-2 py-1.5">
 						<Skeleton className="h-4 w-32" />
+						<Skeleton className="h-6 w-10 rounded-full" />
 					</div>
-					<Skeleton className="h-3 w-40" />
+					<div className="flex items-center justify-between gap-3 px-2 py-1.5">
+						<Skeleton className="h-4 w-28" />
+						<Skeleton className="h-6 w-10 rounded-full" />
+					</div>
+					<div className="flex items-center justify-between gap-3 px-2 py-1.5">
+						<Skeleton className="h-4 w-24" />
+						<Skeleton className="h-6 w-10 rounded-full" />
+					</div>
+				</div>
+				{/* 2 boutons : Nouvelle variante + Gérer */}
+				<div className="flex flex-col gap-2 sm:flex-row">
+					<Skeleton className="h-10 flex-1" />
+					<Skeleton className="h-10 flex-1" />
+				</div>
+			</CardContent>
+		</Card>
+	);
+}
+
+function ReviewsCardSkeleton() {
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitleSkeleton width="w-16" />
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{/* Résumé : étoiles + note + nb */}
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-4 w-8" />
+					<Skeleton className="h-4 w-14" />
+				</div>
+				{/* 5 lignes de distribution */}
+				<div className="space-y-1.5">
+					{Array.from({ length: 5 }).map((_, i) => (
+						<div key={i} className="flex items-center gap-2">
+							<Skeleton className="h-3 w-6" />
+							<Skeleton className="h-1.5 flex-1 rounded-full" />
+							<Skeleton className="h-3 w-6" />
+						</div>
+					))}
 				</div>
 				<Skeleton className="h-10 w-full" />
 			</CardContent>
@@ -185,6 +225,7 @@ export default function AdminProductDetailLoading() {
 					<div className="space-y-6">
 						<StorefrontLinkCardSkeleton />
 						<SkusSummaryCardSkeleton />
+						<ReviewsCardSkeleton />
 						<CollectionsCardSkeleton />
 					</div>
 				</div>

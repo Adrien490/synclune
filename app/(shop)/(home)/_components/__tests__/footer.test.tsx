@@ -242,16 +242,20 @@ describe("Footer", () => {
 		expect(links[0]).toHaveAttribute("href", "https://www.instagram.com/synclune.bijoux/");
 		expect(links[0]).toHaveAttribute("target", "_blank");
 		expect(links[0]).toHaveAttribute("rel", "noopener noreferrer");
+		// WCAG 2.5.3 (Label in Name) : le nom accessible contient le texte visible (le handle)
 		expect(links[0]).toHaveAttribute(
 			"aria-label",
-			"Suivre Synclune sur Instagram (nouvelle fenêtre)",
+			"@synclune.bijoux — Instagram de Synclune (nouvelle fenêtre)",
 		);
 		expect(within(links[0]!).getByText("@synclune.bijoux")).toBeInTheDocument();
 
 		// TikTok
 		expect(links[1]).toHaveAttribute("href", "https://www.tiktok.com/@synclune");
 		expect(links[1]).toHaveAttribute("target", "_blank");
-		expect(links[1]).toHaveAttribute("aria-label", "Suivre Synclune sur TikTok (nouvelle fenêtre)");
+		expect(links[1]).toHaveAttribute(
+			"aria-label",
+			"@synclune — TikTok de Synclune (nouvelle fenêtre)",
+		);
 		expect(within(links[1]!).getByText("@synclune")).toBeInTheDocument();
 	});
 
@@ -332,10 +336,10 @@ describe("Footer", () => {
 		const links = within(legalNav).getAllByRole("link");
 		expect(links).toHaveLength(6);
 
-		// CGV has ariaLabel
+		// CGV has ariaLabel — WCAG 2.5.3 : le nom accessible contient le texte visible ("CGV")
 		const cgv = links[0];
 		expect(cgv).toHaveTextContent("CGV");
-		expect(cgv).toHaveAttribute("aria-label", "Conditions Générales de Vente");
+		expect(cgv).toHaveAttribute("aria-label", "CGV — Conditions Générales de Vente");
 
 		// Others
 		expect(links[1]).toHaveTextContent("Mentions légales");

@@ -82,7 +82,6 @@ export async function markAsPaid(
 					shippingPostalCode: true,
 					shippingCity: true,
 					shippingCountry: true,
-					stripeCheckoutSessionId: true,
 					stripePaymentIntentId: true,
 					items: {
 						select: {
@@ -117,12 +116,13 @@ export async function markAsPaid(
 			}
 
 			// EINV-CASH-001 : preuve Stripe obligatoire. Une commande marquée payée
-			// DOIT être née d'un checkout Stripe (PaymentIntent ou Checkout Session).
-			// Sans cette preuve PSP, mark-as-paid fabriquerait un encaissement fictif
-			// → facture fiscale + e-reporting SALES sans contrepartie réelle, ce qui
-			// expose Synclune à une qualification "logiciel de caisse" non conforme
-			// (invariant CLAUDE.md #8 — « pas de commande payée sans PaymentIntent »).
-			if (!found.stripePaymentIntentId && !found.stripeCheckoutSessionId) {
+			// DOIT être née d'un checkout Stripe (PaymentIntent — seul flow émis depuis
+			// le retrait du Checkout Session hosted). Sans cette preuve PSP, mark-as-paid
+			// fabriquerait un encaissement fictif → facture fiscale + e-reporting SALES
+			// sans contrepartie réelle, ce qui expose Synclune à une qualification
+			// "logiciel de caisse" non conforme (invariant CLAUDE.md #8 — « pas de
+			// commande payée sans PaymentIntent »).
+			if (!found.stripePaymentIntentId) {
 				return { ...found, _error: "no_stripe_proof" as const };
 			}
 
@@ -147,11 +147,16 @@ export async function markAsPaid(
 				}
 			}
 
-			// Stock reservation check
-			const stockAlreadyReserved = !!found.stripeCheckoutSessionId;
+			// Stock decrement.
+			// Flow Elements : le stock n'est JAMAIS décrémenté avant le passage à PAID
+			// (order-creation vérifie FOR UPDATE mais ne décrémente pas ; le décrément
+			// a lieu dans processOrderFromPaymentIntent au webhook `payment_intent.succeeded`).
+			// Une commande PENDING/FAILED/EXPIRED — seuls états recoverables ici — a donc
+			// toujours son stock à décrémenter au moment du mark-as-paid manuel.
+			const stockAdjusted = found.items.length > 0;
 
 			// Atomic stock decrement with conditional WHERE (prevents overselling)
-			if (!stockAlreadyReserved && found.items.length > 0) {
+			if (stockAdjusted) {
 				for (const item of found.items) {
 					const result = await tx.productSku.updateMany({
 						where: {
@@ -196,13 +201,13 @@ export async function markAsPaid(
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
-					stockAdjusted: !stockAlreadyReserved,
+					stockAdjusted,
 					itemsCount: found.items.length,
 					...(isRecovery && { recoveredFrom: found.paymentStatus }),
 				},
 			});
 
-			return { ...found, _stockAlreadyReserved: stockAlreadyReserved };
+			return { ...found, _stockAdjusted: stockAdjusted };
 		});
 
 		if (!order) {
@@ -322,7 +327,7 @@ export async function markAsPaid(
 		}
 
 		const stockMessage =
-			!order._stockAlreadyReserved && order.items.length > 0
+			order._stockAdjusted && order.items.length > 0
 				? ` Stock décrémenté pour ${order.items.length} article(s).`
 				: "";
 

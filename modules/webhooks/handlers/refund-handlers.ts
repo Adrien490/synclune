@@ -16,6 +16,7 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
+import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
@@ -172,6 +173,24 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					);
 				}
 			}
+		}
+
+		// 4d. EINV-EREPORT — e-reporting REFUND (Phase 4 wiring, EINV-AUDIT-004).
+		// `recordRefundEReporting` n'est appelé par ailleurs que depuis les chemins
+		// admin (`processRefund` Step 3, `mark-as-fully-refunded`) et le cron
+		// `reconcile-refunds` (qui ne sélectionne que les refunds APPROVED +
+		// processedAt=null). Les refunds créés/finalisés COMPLETED par CE webhook —
+		// refunds Dashboard Stripe (`upsertDashboard`) OU refunds admin finalisés
+		// ici après abort du SAGA Step 3 — ont `processedAt` posé et sont donc
+		// exclus du reconcile : sans ce hook, leur ligne DGFiP négative n'est jamais
+		// créée et l'agrégat B2C surévalue le CA net. Best-effort + idempotent
+		// (unique index `EReportingTransaction_refundId_type_key` + findFirst).
+		const completedRefunds = await prisma.refund.findMany({
+			where: { orderId: order.id, status: RefundStatus.COMPLETED, ...notDeleted },
+			select: { id: true },
+		});
+		for (const r of completedRefunds) {
+			await recordRefundEReporting(r.id);
 		}
 
 		// 5. Build post-tasks (email + cache invalidation)

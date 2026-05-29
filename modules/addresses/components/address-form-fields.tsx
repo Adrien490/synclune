@@ -16,7 +16,8 @@ interface AddressFormFieldsProps {
 
 /**
  * Champs du formulaire d'adresse — partagés entre la dialog desktop
- * (`AddressFormDialog`) et la page dédiée mobile (`CreateAddressPageForm`).
+ * (`AddressFormDialog`) et les formulaires pleine largeur mobile
+ * (`CreateAddressForm` / `EditAddressForm`).
  *
  * Inclut la note des champs obligatoires + l'autocomplétion d'adresse (FR only,
  * le champ pays est désactivé). N'affiche PAS les alertes succès/erreur ni le

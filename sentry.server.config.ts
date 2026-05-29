@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
+import { scrubSentryEvent } from "@/shared/lib/sentry-scrub";
 
 const PROD_DEFAULT_SAMPLE_RATE = 0.15;
 const PROD_CRON_SAMPLE_RATE = 1.0;
@@ -36,12 +37,12 @@ Sentry.init({
 				error.code === "INVOICE_SEQUENCE_OVERFLOW" ||
 				error.code === "CREDIT_NOTE_SEQUENCE_OVERFLOW"
 			) {
-				return event;
+				return scrubSentryEvent(event);
 			}
 			return null;
 		}
 
-		return event;
+		return scrubSentryEvent(event);
 	},
 
 	ignoreErrors: ["NEXT_REDIRECT", "NEXT_NOT_FOUND", "CircuitBreakerError", "DYNAMIC_SERVER_USAGE"],

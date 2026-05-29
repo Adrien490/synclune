@@ -277,6 +277,7 @@ export async function sendAdminDisputeAlert({
 	deadline,
 	dashboardUrl,
 	stripeDashboardUrl,
+	idempotencyKey,
 }: {
 	orderNumber: string;
 	customerEmail: string;
@@ -286,6 +287,12 @@ export async function sendAdminDisputeAlert({
 	deadline: string | null;
 	dashboardUrl: string;
 	stripeDashboardUrl: string;
+	/**
+	 * Clé d'idempotence Resend (dédup 24h cross-instance) + dédup DB
+	 * (post-webhook-tasks). Ex: `alert:dispute-open:${id}` à l'ouverture,
+	 * `alert:dispute-double-reclaim:${id}` sur double reprise de fonds.
+	 */
+	idempotencyKey?: string;
 }): Promise<EmailResult> {
 	const contextLines = [
 		`Commande        : ${orderNumber}`,
@@ -311,6 +318,7 @@ export async function sendAdminDisputeAlert({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] Litige commande ${orderNumber} — Action requise`,
 			tags: [{ name: "category", value: "admin" }],
+			...(idempotencyKey ? { idempotencyKey } : {}),
 		},
 	);
 }

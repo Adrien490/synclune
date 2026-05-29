@@ -1,3 +1,4 @@
+import "server-only";
 import Stripe from "stripe";
 import { stripeCircuitBreaker, CircuitBreakerError } from "./circuit-breaker";
 import { logger } from "./logger";

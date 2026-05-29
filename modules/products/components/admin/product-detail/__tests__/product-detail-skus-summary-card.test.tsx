@@ -64,6 +64,7 @@ import { ProductDetailSkusSummaryCard } from "../product-detail-skus-summary-car
 
 type SkuInput = {
 	priceInclTax: number;
+	compareAtPrice?: number | null;
 	inventory: number;
 	isDefault?: boolean;
 	color?: { name: string } | null;
@@ -86,6 +87,7 @@ const makeProduct = (skus: Array<SkuInput>) =>
 			id: `sku-${i}`,
 			sku: s.sku ?? `SKU-${i}`,
 			priceInclTax: s.priceInclTax,
+			compareAtPrice: s.compareAtPrice ?? null,
 			inventory: s.inventory,
 			isDefault: s.isDefault ?? i === 0,
 			colors: s.color ? [{ color: s.color, position: 0 }] : [],
@@ -258,5 +260,47 @@ describe("ProductDetailSkusSummaryCard", () => {
 			.getAllByTestId("badge")
 			.filter((b) => /Rupture/.test(String(b.textContent)));
 		expect(ruptureBadges.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("affiche un badge -X% sur une variante en promotion dans la preview", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{
+						priceInclTax: 4000,
+						compareAtPrice: 5000,
+						inventory: 10,
+						color: { name: "Or" },
+						size: "50",
+					},
+				])}
+			/>,
+		);
+		// -20% (1 - 4000/5000)
+		expect(screen.getByLabelText("En promotion, -20%")).toHaveTextContent("-20%");
+	});
+
+	it("indique 'Promo' à côté du prix quand au moins une variante est en promotion", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4000, compareAtPrice: 5000, inventory: 10 },
+					{ priceInclTax: 6000, inventory: 5 },
+				])}
+			/>,
+		);
+		expect(screen.getByLabelText(/1 variante en promotion/)).toBeInTheDocument();
+	});
+
+	it("n'affiche aucun badge promo quand compareAtPrice est absent ou inférieur au prix", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 10 },
+					{ priceInclTax: 4500, compareAtPrice: 4000, inventory: 5 },
+				])}
+			/>,
+		);
+		expect(screen.queryByLabelText(/en promotion/)).not.toBeInTheDocument();
 	});
 });

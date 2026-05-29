@@ -71,7 +71,7 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 			if (validationErrors.length > 0) {
 				return validationErrors[0];
 			}
-			return "Selectionnez vos options pour voir la disponibilite";
+			return "Choisissez vos options pour voir la disponibilité";
 		}
 		const prefix = getSelectedVariantPrefix();
 		if (selectedSku.inventory === 0 || !selectedSku.isActive) {
@@ -87,10 +87,10 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 	const getDescription = () => {
 		const parts = [];
 		if (variantInfo.availableColors.length > 0) parts.push("la couleur");
-		if (variantInfo.availableMaterials.length > 1) parts.push("le materiau");
+		if (variantInfo.availableMaterials.length > 1) parts.push("le matériau");
 		if (requiresSize && variantInfo.availableSizes.length > 0) parts.push("la taille");
 		if (parts.length === 0) return "";
-		return `Selectionnez ${parts.join(" et ")} pour continuer`;
+		return `Choisissez ${parts.join(" et ")} pour continuer`;
 	};
 
 	// Vérifier si on doit afficher le sélecteur (plusieurs SKUs)
@@ -114,7 +114,7 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 					Choisissez vos options
 				</CardTitle>
 				<CardDescription className="text-sm/6 tracking-normal antialiased">
-					{getDescription() || "Selectionnez vos options"}
+					{getDescription() || "Choisissez la variante de votre choix"}
 				</CardDescription>
 				{/* ARIA live region pour annoncer les changements de disponibilite */}
 				<div aria-live="polite" aria-atomic="true" className="sr-only">

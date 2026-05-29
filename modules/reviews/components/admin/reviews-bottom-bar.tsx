@@ -2,9 +2,9 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
-import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
+import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
@@ -28,8 +28,8 @@ const REVIEW_FILTER_KEYS = ["status", "rating", "hasResponse"] as const;
  * 3 actions : Filtrer | Rechercher | Trier.
  */
 function ReviewsBottomBarInner() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-	const { hasActiveSearch, searchValue, hasActiveSort } = useActiveListControls();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
+	const { hasActiveSort } = useActiveListControls();
 
 	// Reviews use bare keys (status/rating/hasResponse) instead of the filter_* prefix.
 	const searchParams = useSearchParams();
@@ -52,20 +52,6 @@ function ReviewsBottomBarInner() {
 					: undefined,
 		},
 		{
-			key: "search",
-			icon: Search,
-			label: "Rechercher",
-			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchValue}". Modifier la recherche`
-				: "Ouvrir la recherche",
-			onClick: () => open("search"),
-			active: hasActiveSearch,
-			haspopup: "dialog",
-			controls: IDS.search,
-			expanded: isOpen("search"),
-			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
-		},
-		{
 			key: "sort",
 			icon: ArrowUpDown,
 			label: "Trier",
@@ -81,7 +67,19 @@ function ReviewsBottomBarInner() {
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Filtres, recherche et tri" />
+			<StickyActionBar
+				items={items}
+				ariaLabel="Recherche, filtres et tri"
+				search={
+					<SearchInput
+						size="sm"
+						paramName="search"
+						placeholder="Client, produit, contenu…"
+						aria-label="Rechercher un avis"
+						className="w-full"
+					/>
+				}
+			/>
 
 			<ReviewsFilterSheet
 				open={isOpen("filter")}
@@ -96,14 +94,6 @@ function ReviewsBottomBarInner() {
 				options={SORT_OPTIONS}
 				showResetOption
 				id={IDS.sort}
-			/>
-
-			<AdminSearchDrawerTop
-				open={isOpen("search")}
-				onOpenChange={onOpenChange("search")}
-				placeholder="Client, produit, contenu…"
-				ariaLabel="Rechercher un avis"
-				id={IDS.search}
 			/>
 		</>
 	);

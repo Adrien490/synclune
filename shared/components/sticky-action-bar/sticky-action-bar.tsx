@@ -2,7 +2,14 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useRef, type CSSProperties, type MouseEvent } from "react";
+import {
+	useEffect,
+	useId,
+	useRef,
+	type CSSProperties,
+	type MouseEvent,
+	type ReactNode,
+} from "react";
 
 import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { useRovingTabIndex } from "@/shared/hooks/use-roving-tab-index";
@@ -77,6 +84,14 @@ interface StickyActionBarProps {
 	items: StickyActionBarItem[];
 	/** Accessible name for the `<nav>` + `<toolbar>` wrapper. */
 	ariaLabel: string;
+	/**
+	 * Optional persistent leading slot (typically a `<SearchInput size="sm" />`).
+	 * When provided, the bar switches to **compact mode**: the slot is rendered
+	 * flex-1 on the left, and every item collapses to an icon-only square button
+	 * (the visible label is moved to `sr-only`; `ariaLabel` remains the accessible
+	 * name). Lets admin lists show search inline instead of behind a drawer.
+	 */
+	search?: ReactNode;
 	/** Extra classes merged onto the nav. */
 	className?: string;
 	/**
@@ -96,6 +111,18 @@ const baseItemClasses = cn(
 	"flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
 	"text-xs font-medium text-muted-foreground",
 	"hover:text-foreground",
+	"active:bg-primary/5 data-[state=open]:bg-primary/5 motion-safe:active:scale-[0.98]",
+	"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+	"disabled:opacity-50 disabled:pointer-events-none",
+	"touch-manipulation [-webkit-tap-highlight-color:transparent]",
+);
+
+// Bouton icône-only (mode compact, à côté du champ de recherche persistant).
+// Cible tactile 44px (WCAG 2.5.5), `relative` pour ancrer le badge en overlay.
+const compactItemClasses = cn(
+	"relative flex size-11 shrink-0 items-center justify-center rounded-md",
+	"text-muted-foreground hover:text-foreground",
 	"active:bg-primary/5 data-[state=open]:bg-primary/5 motion-safe:active:scale-[0.98]",
 	"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
@@ -133,9 +160,12 @@ function isDisabledItem(item: StickyActionBarItem): boolean {
  *     petit dot. Annonce textuelle via `announcement` dans la live region.
  *
  * **`controls`** : passer l'`id` DOM du popup pour câbler `aria-controls`
- * quand `haspopup` est défini. Les drawers (`SortDrawer`,
- * `AdminSearchDrawerTop`, `*-FilterSheet`) acceptent une prop `id` ;
- * partager la constante entre le drawer et l'item.
+ * quand `haspopup` est défini. Les drawers (`SortDrawer`, `*-FilterSheet`)
+ * acceptent une prop `id` ; partager la constante entre le drawer et l'item.
+ *
+ * **`search`** : slot optionnel (typiquement `<SearchInput size="sm" />`) qui,
+ * lorsqu'il est fourni, bascule la barre en mode compact — champ flex-1 + items
+ * réduits en boutons icône-only. Remplace l'ancien drawer de recherche admin.
  *
  * **Haptic** : pattern `"selection"` (5ms) déclenché au tap par défaut.
  * Opt-out par item via `haptic: false`. Respecte `prefers-reduced-motion`
@@ -186,10 +216,14 @@ function isDisabledItem(item: StickyActionBarItem): boolean {
 export function StickyActionBar({
 	items,
 	ariaLabel,
+	search,
 	className,
 	stickyTopVar = "--admin-header-height",
 	testId = "sticky-action-bar",
 }: StickyActionBarProps) {
+	// Compact mode : un slot `search` persistant occupe la rangée, les items se
+	// réduisent à des boutons icône-only (label en sr-only).
+	const compact = search != null;
 	const { getTabIndex, setFocusedIndex, itemRefs, onKeyDown } = useRovingTabIndex<
 		StickyActionBarItem,
 		HTMLButtonElement | HTMLAnchorElement
@@ -251,8 +285,13 @@ export function StickyActionBar({
 				role="toolbar"
 				aria-orientation="horizontal"
 				aria-labelledby={toolbarLabelId}
-				className="divide-border/30 flex items-stretch divide-x pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
+				className={cn(
+					compact
+						? "flex items-center gap-1 py-1.5 pr-[max(0.75rem,env(safe-area-inset-right))] pl-[max(0.75rem,env(safe-area-inset-left))]"
+						: "divide-border/30 flex items-stretch divide-x pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]",
+				)}
 			>
+				{compact ? <div className="min-w-0 flex-1">{search}</div> : null}
 				{items.map((item, index) => {
 					const Icon = item.icon;
 					const commonA11y = {
@@ -262,7 +301,10 @@ export function StickyActionBar({
 						...(item.haspopup && item.controls && { "aria-controls": item.controls }),
 					};
 					const isActive = isItemActive(item);
-					const itemClassName = cn(baseItemClasses, isActive && activeItemClasses);
+					const itemClassName = cn(
+						compact ? compactItemClasses : baseItemClasses,
+						isActive && activeItemClasses,
+					);
 					const dataAttrs = {
 						"data-active": isActive ? "" : undefined,
 						...(typeof item.expanded === "boolean" && {
@@ -273,7 +315,10 @@ export function StickyActionBar({
 						item.badgeCount && item.badgeCount > 0 ? (
 							<>
 								<span
-									className="bg-primary text-primary-foreground text-2xs inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-bold"
+									className={cn(
+										"bg-primary text-primary-foreground text-2xs inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-bold",
+										compact && "absolute -top-0.5 -right-0.5",
+									)}
 									aria-hidden="true"
 								>
 									{item.badgeCount > 99 ? "99+" : item.badgeCount}
@@ -284,10 +329,28 @@ export function StickyActionBar({
 								</span>
 							</>
 						) : item.active ? (
-							<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
+							<span
+								className={cn(
+									"bg-primary size-1.5 shrink-0 rounded-full",
+									compact && "absolute top-1 right-1",
+								)}
+								aria-hidden="true"
+							/>
 						) : null;
 
-					const children = (
+					const children = compact ? (
+						<>
+							<Icon
+								className={cn(
+									"size-5 shrink-0 motion-safe:transition-colors",
+									isActive && "text-primary",
+								)}
+								aria-hidden="true"
+							/>
+							<span className="sr-only">{item.label}</span>
+							{indicator}
+						</>
+					) : (
 						<>
 							<Icon
 								className={cn(

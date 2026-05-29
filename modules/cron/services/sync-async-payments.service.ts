@@ -1,3 +1,4 @@
+import type Stripe from "stripe";
 import { updateTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -48,17 +49,20 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		};
 	}
 
-	// Find PENDING orders created between 1h and 10 days ago
-	// (SEPA Direct Debit can take up to 10 business days)
+	// Find PENDING orders with a PI, older than 1h.
+	// F4 (2026-05-29) : la borne haute (10 jours) a été retirée. Elle laissait
+	// figer définitivement une commande dont le PI passe `succeeded` après J+10
+	// avec un webhook raté = débit encaissé sans Order traitée, sans facture
+	// (viole l'émission à l'encaissement, Art. 289-I CGI). Le pool reste borné
+	// car la branche F1 (cancel + FAILED des PI durablement non finalisés) draine
+	// les PENDING abandonnés ; on traite les plus anciens d'abord (les plus à risque).
 	const minAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MIN_AGE_MS);
-	const maxAge = new Date(Date.now() - THRESHOLDS.ASYNC_PAYMENT_MAX_AGE_MS);
 
 	const pendingOrders = await prisma.order.findMany({
 		where: {
 			paymentStatus: PaymentStatus.PENDING,
 			stripePaymentIntentId: { not: null },
 			createdAt: {
-				gte: maxAge,
 				lt: minAge,
 			},
 			...notDeleted,
@@ -72,6 +76,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			userId: true,
 		},
 		take: BATCH_SIZE_MEDIUM,
+		orderBy: { createdAt: "asc" },
 	});
 
 	logger.info("Found pending orders to check", {
@@ -88,6 +93,45 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		orderNumber: string;
 		error: string;
 	}> = [];
+
+	// Webhook raté : un PI confirmé `succeeded` qu'on rejoue via le même chemin
+	// que le webhook (décrément stock + désactivation SKU + clear cart + facture
+	// + e-reporting). Idempotent via le guard `paymentStatus === "PAID"`.
+	const processPaidOrder = async (
+		orderId: string,
+		pi: Stripe.PaymentIntent,
+		userId: string | null,
+	): Promise<void> => {
+		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
+		await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
+		await ensureInvoiceNumberPersisted(orderId);
+		await recordSalesEReporting(orderId);
+		// CACHE-AUDIT-004 : tags user-scopés + détail commande.
+		for (const tag of getOrderInvalidationTags(userId ?? undefined, orderId)) {
+			tagsToInvalidate.add(tag);
+		}
+	};
+
+	// Échec/abandon paiement : restore stock (no-op si jamais décrémenté) PUIS
+	// markOrderAsFailed. OPS-AUDIT-003 : restore d'abord — si ça throw, on garde
+	// la commande PENDING pour le prochain run (retry atomique sans flag DB).
+	const failOrder = async (
+		orderId: string,
+		piId: string,
+		pi: Stripe.PaymentIntent,
+	): Promise<{ ok: true; restoredSkuIds: string[] } | { ok: false; error: string }> => {
+		let stockResult: Awaited<ReturnType<typeof restoreStockForOrder>>;
+		try {
+			stockResult = await restoreStockForOrder(orderId);
+		} catch (stockError) {
+			return {
+				ok: false,
+				error: stockError instanceof Error ? stockError.message : String(stockError),
+			};
+		}
+		await markOrderAsFailed(orderId, piId, extractPaymentFailureDetails(pi));
+		return { ok: true, restoredSkuIds: stockResult.restoredSkuIds };
+	};
 
 	for (const order of pendingOrders) {
 		if (Date.now() > deadline) {
@@ -107,50 +151,73 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 				},
 			);
 
-			if (paymentIntent.status === "succeeded") {
-				// Payment succeeded but webhook was missed
+			const status = paymentIntent.status;
+
+			if (status === "succeeded") {
+				// Payment succeeded but webhook was missed (ORD-STRIPE-001).
 				logger.info("Order payment succeeded (webhook missed)", {
 					cronJob: "sync-async-payments",
 					orderNumber: order.orderNumber,
 				});
-				// ORD-STRIPE-001: utiliser le même chemin que le webhook pour garantir
-				// le décrément stock + désactivation SKU épuisés + clear cart + facture
-				// + e-reporting. processOrderFromPaymentIntent est idempotent (guard
-				// paymentStatus === "PAID" dans checkout-order-processing.service.ts).
-				const paymentMethod =
-					(await extractPaymentMethodFromPaymentIntent(paymentIntent)) ?? undefined;
-				await processOrderFromPaymentIntent(order.id, paymentIntent, paymentMethod);
-				await ensureInvoiceNumberPersisted(order.id);
-				await recordSalesEReporting(order.id);
-				// CACHE-AUDIT-004 : invalider les tags user-scopés + détail commande
-				// (sinon l'espace client affiche encore PENDING après confirmation async).
-				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
-					tagsToInvalidate.add(tag);
-				}
+				await processPaidOrder(order.id, paymentIntent, order.userId);
 				updated++;
-			} else if (
-				paymentIntent.status === "canceled" ||
-				paymentIntent.status === "requires_payment_method"
+				continue;
+			}
+
+			// F1 (2026-05-29) : un PI durablement non finalisé — 3DS abandonné
+			// (`requires_action`) ou jamais confirmé (`requires_confirmation`) —
+			// n'émet aucun webhook terminal. Le cron ne sélectionnant que des
+			// commandes > 1h (ASYNC_PAYMENT_MIN_AGE_MS), un tel PI est abandonné :
+			// on l'annule côté Stripe AVANT de marquer FAILED, sinon un client qui
+			// revient finaliser le 3DS plus tard provoquerait un débit surprise sur
+			// une commande déjà annulée (rattrapé seulement par detectCancelledOrderRace
+			// + auto-refund). Sans ce correctif, ces commandes restaient PENDING
+			// indéfiniment au-delà de la fenêtre de poll.
+			if (status === "requires_action" || status === "requires_confirmation") {
+				try {
+					await stripe.paymentIntents.cancel(order.stripePaymentIntentId);
+				} catch (cancelError) {
+					// Race : le PI a pu passer `succeeded` entre le retrieve et le cancel.
+					const fresh = await stripe.paymentIntents.retrieve(
+						order.stripePaymentIntentId,
+						undefined,
+						{
+							timeout: STRIPE_TIMEOUT_MS,
+						},
+					);
+					if (fresh.status === "succeeded") {
+						logger.info("PI succeeded during cancel race — processing as paid", {
+							cronJob: "sync-async-payments",
+							orderNumber: order.orderNumber,
+						});
+						await processPaidOrder(order.id, fresh, order.userId);
+						updated++;
+						continue;
+					}
+					logger.error("Failed to cancel stale PI — order kept PENDING for next run", cancelError, {
+						cronJob: "sync-async-payments",
+						orderNumber: order.orderNumber,
+						orderId: order.id,
+					});
+					errors++;
+					continue;
+				}
+			}
+
+			if (
+				status === "canceled" ||
+				status === "requires_payment_method" ||
+				status === "requires_action" ||
+				status === "requires_confirmation"
 			) {
-				// Payment failed
-				logger.info("Order payment failed", {
+				logger.info("Order payment failed/abandoned", {
 					cronJob: "sync-async-payments",
 					orderNumber: order.orderNumber,
-					stripeStatus: paymentIntent.status,
+					stripeStatus: status,
 				});
-				const failureDetails = extractPaymentFailureDetails(paymentIntent);
-				// OPS-AUDIT-003 : restore stock FIRST. If it throws, we skip the
-				// markOrderAsFailed call → order stays PENDING → re-picked on
-				// next 4h run (atomic retry without an extra DB flag). Handles
-				// the race where a PAID webhook moved status to PROCESSING
-				// between the findMany and this code path.
-				let stockResult: Awaited<ReturnType<typeof restoreStockForOrder>>;
-				try {
-					stockResult = await restoreStockForOrder(order.id);
-				} catch (stockError) {
-					const stockErrorMessage =
-						stockError instanceof Error ? stockError.message : String(stockError);
-					logger.error("Stock restore failed — order kept PENDING for next run", stockError, {
+				const result = await failOrder(order.id, order.stripePaymentIntentId, paymentIntent);
+				if (!result.ok) {
+					logger.error("Stock restore failed — order kept PENDING for next run", undefined, {
 						cronJob: "sync-async-payments",
 						orderNumber: order.orderNumber,
 						orderId: order.id,
@@ -158,22 +225,23 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					stockRestoreFailures.push({
 						orderId: order.id,
 						orderNumber: order.orderNumber,
-						error: stockErrorMessage,
+						error: result.error,
 					});
 					errors++;
 					continue;
 				}
-				for (const skuId of stockResult.restoredSkuIds) {
+				for (const skuId of result.restoredSkuIds) {
 					tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 				}
-				await markOrderAsFailed(order.id, order.stripePaymentIntentId, failureDetails);
-				// CACHE-AUDIT-004 : idem branche succès.
+				// CACHE-AUDIT-004 : tags user-scopés + détail commande.
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
 				}
 				updated++;
+				continue;
 			}
-			// Other statuses (processing, requires_action) are still pending
+			// Autres statuts (`processing`) : paiement réellement en cours côté
+			// banque → laissé PENDING, repris au prochain run.
 		} catch (error) {
 			logger.error("Error checking order", error, {
 				cronJob: "sync-async-payments",

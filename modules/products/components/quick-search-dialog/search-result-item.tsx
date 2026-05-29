@@ -212,7 +212,7 @@ export function HighlightMatch({
 				i % 2 === 1 ? (
 					<mark
 						key={`highlight-${i}`}
-						className="bg-primary/15 text-foreground rounded-sm font-medium"
+						className="bg-primary/25 text-foreground rounded-sm font-medium"
 					>
 						{part}
 					</mark>

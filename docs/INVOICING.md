@@ -283,10 +283,53 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
 | Art. L102 B LPF — immutabilité 10 ans (facture) | `archive-invoice-pdf.service.ts` (ORD-COMPLY-005)               | ✓                                                |
 | Art. L102 B LPF — immutabilité 10 ans (avoir)   | `archive-credit-note-pdf.service.ts` (EINV-CREDIT-002)          | ✓ livré 2026-05-28                               |
 | Art. L123-22 C. com. — audit trail              | `OrderHistory` + `createOrderAuditTx`                           | ✓                                                |
+| RGPD Art. 17(3)(b) — exemption effacement       | PII facture conservée (cf. § Rétention PII vs RGPD)             | ✓                                                |
+| RGPD Art. 5.1.e — purge à 10 ans                | `hard-delete-retention.service.ts` (`purgeExpiredOrderPii`)     | ✓ livré 2026-05-29                               |
 | Art. 50-0 CGI — CA à l'encaissement             | `export-orders-csv.service.ts` filtre `paidAt` (ORD-COMPLY-007) | ✓                                                |
 | EU 2014/55 — facture structurée                 | `render-facturx.ts` profil MINIMUM                              | ✓ partiel (MINIMUM, pas BASIC/EN16931/EXTENDED)  |
 | Réforme 2026/2027 — émission structurée B2B     | (Phase 5 + provider PDP)                                        | 🔒                                               |
 | Réforme 2026/2027 — e-reporting B2C             | (Phase 3+4 + provider PDP)                                      | ⏳ infrastructure prête, transmission en attente |
+
+---
+
+## Rétention PII vs RGPD (conflit effacement / conservation 10 ans)
+
+Une facture **doit** porter l'identité du client (Art. 289 CGI) et être conservée
+10 ans (Art. L102 B LPF, L123-22 C. com.). Cette obligation légale fonde une
+**exemption au droit à l'effacement** (RGPD Art. 17(3)(b)). Le conflit avec le droit
+à l'oubli est résolu par un cycle de vie en deux temps :
+
+**1. À l'anonymisation du compte** (`anonymize-user.service.ts`, cron
+`process-account-deletions` après 30 j de grâce) — on scrubbe uniquement les
+surfaces **opérationnelles** non requises par la facture :
+
+- `customerEmail` / `customerName` / `customerPhone`
+- adresse de **livraison** (`shipping*`) — ne figure pas comme identité légale sur la facture
+- `User.image`, sessions, OAuth, adresses, panier, wishlist (hard delete)
+- `ProductReview` masqué + contenu effacé ; `ReviewMedia` supprimés d'UploadThing
+- `ReviewResponse.authorName` (contenu public) → rebasculé sur la marque « Synclune »
+
+On **conserve délibérément** (verrouillé par la régression
+`rgpd-anonymize-preserves-invoice-snapshot-2026-05-28`) :
+
+- adresse de **facturation** (`billing*`) = identité légale du client sur la facture
+- `invoiceDataSnapshot` / `invoiceDataHash` + PDF facture/avoir (`invoicePdfUrl`,
+  `creditNotePdfUrl`) = facture figée immuable (un PDF régénéré doit rester
+  bit-identique à l'archive)
+- `OrderHistory.authorName` / `OrderNote.authorName` = audit trail comptable interne
+  (Art. L123-22), non purgés
+
+**2. À l'expiration de la base légale** (`paidAt + 10 ans`) — le cron
+`hard-delete-retention` (`purgeExpiredOrderPii`) scrubbe la PII facture restante
+(`billing*`, `customer*`, `shipping*`, `invoiceDataSnapshot`/`Hash`) et supprime les
+PDF facture/avoir d'UploadThing, en **conservant** les données comptables non-PII
+(numéros de facture/avoir, montants, dates). Le marqueur `Order.piiPurgedAt` garantit
+l'idempotence. C'est le respect de la limitation de conservation (RGPD Art. 5.1.e)
+une fois l'obligation légale éteinte.
+
+> **Portabilité (Art. 15/20)** : `build-user-data-export.service.ts` exporte profil,
+> adresses, commandes (+ items + **remboursements**), wishlist, codes promo, avis,
+> sessions.
 
 ---
 

@@ -54,8 +54,7 @@ export const GET_ORDERS_SELECT = {
 //   - GET_ORDER_SELECT_CUSTOMER : minimisation RGPD pour l'espace client
 //
 // Différences customer vs admin :
-//   - stripePaymentIntentId / stripeCustomerId / stripeInvoiceId : retirés
-//     (cross-order fingerprint inutile, seul stripeCheckoutSessionId sert au receipt)
+//   - stripePaymentIntentId / stripeCustomerId : retirés (cross-order fingerprint inutile)
 //   - history.metadata : retiré (peut contenir des PII, ex: previous.email sur ADDRESS_UPDATED)
 //   - history.authorName : retiré (fuite identité admin interne)
 //
@@ -66,10 +65,8 @@ export const GET_ORDER_SELECT_ADMIN = {
 	id: true,
 	orderNumber: true,
 	userId: true,
-	stripeCheckoutSessionId: true,
 	stripePaymentIntentId: true,
 	stripeCustomerId: true,
-	stripeInvoiceId: true,
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,
@@ -233,7 +230,6 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	id: true,
 	orderNumber: true,
 	userId: true,
-	stripeCheckoutSessionId: true,
 	customerEmail: true,
 	customerName: true,
 	customerPhone: true,

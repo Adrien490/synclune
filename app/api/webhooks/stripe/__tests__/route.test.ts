@@ -19,6 +19,7 @@ const {
 	mockCheckRateLimit,
 	mockGetClientIp,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
 	WebhookEventStatus,
 } = vi.hoisted(() => {
 	const constructEvent = vi.fn();
@@ -54,6 +55,7 @@ const {
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
+		STALE_PROCESSING_THRESHOLD_MS: 15 * 60 * 1000,
 		WebhookEventStatus: {
 			PENDING: "PENDING",
 			PROCESSING: "PROCESSING",
@@ -103,6 +105,7 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
@@ -535,7 +538,7 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 
 		expect(mockPrisma.webhookEvent.findUnique).toHaveBeenCalledWith({
 			where: { stripeEventId: "evt_unique_123" },
-			select: { id: true, status: true },
+			select: { id: true, status: true, receivedAt: true },
 		});
 	});
 
@@ -552,10 +555,12 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		expect(response.status).toBe(200);
 	});
 
-	it("should skip when event status is PROCESSING (concurrent webhook)", async () => {
+	it("should skip when event status is PROCESSING (concurrent webhook, fresh)", async () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_1",
 			status: WebhookEventStatus.PROCESSING,
+			// Reçu il y a 5s → traitement live concurrent → court-circuit légitime.
+			receivedAt: new Date(FIXED_NOW_MS - 5_000),
 		});
 
 		const req = makeRequest();
@@ -563,6 +568,63 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 
 		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
 		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
+	});
+});
+
+// ============================================================================
+// 4b. Stale PROCESSING recovery (WEBHOOK-AUDIT-001)
+// ============================================================================
+
+/**
+ * @regression webhook-stale-processing-2026-05-29 (WEBHOOK-AUDIT-001)
+ *
+ * Une lambda crashée/timeout en plein dispatch laisse le WebhookEvent figé en
+ * PROCESSING. Avant ce correctif, le pré-check d'idempotence renvoyait 200
+ * "duplicate" pour TOUT PROCESSING → la redélivrance légitime de Stripe était
+ * avalée (Stripe considère l'event traité et arrête de réessayer), bloquant la
+ * commande/refund/litige jusqu'au reset 24h du cron retry-webhooks.
+ *
+ * Garde-fou : un PROCESSING « frais » (< STALE_PROCESSING_THRESHOLD_MS, traitement
+ * concurrent) est toujours court-circuité ; un PROCESSING « périmé » (au-delà,
+ * crash certain car maxDuration=60s) doit être REPRIS (upsert + dispatch), pas
+ * court-circuité. Ne PAS revenir à un skip inconditionnel sur PROCESSING.
+ */
+describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
+	it("reprocesses a stale PROCESSING event instead of swallowing Stripe's retry", async () => {
+		// Reçu il y a 20 min (> seuil 15 min) → lambda crashée → reprenable.
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_stale",
+			status: WebhookEventStatus.PROCESSING,
+			receivedAt: new Date(FIXED_NOW_MS - 20 * 60 * 1000),
+		});
+		mockPrisma.webhookEvent.upsert.mockResolvedValue(
+			makeWebhookRecord({ id: "wh_stale", attempts: 1 }),
+		);
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		// Pas de court-circuit : l'upsert reprend la main + dispatch ré-exécuté.
+		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockDispatchEvent).toHaveBeenCalled();
+		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "processed" });
+	});
+
+	it("still skips a PROCESSING event right at the freshness boundary", async () => {
+		// Reçu il y a 14 min (< seuil 15 min) → encore considéré « frais ».
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_fresh_boundary",
+			status: WebhookEventStatus.PROCESSING,
+			receivedAt: new Date(FIXED_NOW_MS - 14 * 60 * 1000),
+		});
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
 });

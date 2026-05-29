@@ -21,6 +21,18 @@ const USER_DATA_EXPORT_INCLUDE = {
 					quantity: true,
 				},
 			},
+			refunds: {
+				where: { deletedAt: null },
+				select: {
+					amount: true,
+					currency: true,
+					reason: true,
+					status: true,
+					createdAt: true,
+					processedAt: true,
+				},
+				orderBy: { createdAt: "desc" as const },
+			},
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
@@ -110,6 +122,14 @@ export async function buildUserDataExport(userId: string): Promise<UserDataExpor
 				postalCode: order.shippingPostalCode,
 				country: order.shippingCountry,
 			},
+			refunds: order.refunds.map((refund) => ({
+				amount: refund.amount / 100,
+				currency: refund.currency.toUpperCase(),
+				reason: refund.reason,
+				status: refund.status,
+				requestedAt: refund.createdAt.toISOString(),
+				processedAt: refund.processedAt?.toISOString() ?? null,
+			})),
 		})),
 		wishlist:
 			user.wishlist?.items

@@ -137,6 +137,52 @@ export async function requireAuthAllowPendingDeletion(): Promise<
 }
 
 /**
+ * Autorise les invités (aucune session) MAIS rejette une session dont le
+ * compte n'est pas `ACTIVE` (suspendu / INACTIVE / PENDING_DELETION / supprimé).
+ *
+ * À utiliser dans les flux commerce optionnellement authentifiés (checkout,
+ * validation de code promo) où `requireAuth()` est trop strict (il refuse les
+ * invités). Ferme la fenêtre cookie-cache Better Auth (~5 min) pendant laquelle
+ * un compte fraîchement suspendu garde un `session.user.id` exploitable :
+ * `fetchUserForAuth` re-vérifie le statut en DB.
+ *
+ * @returns `{ ok: true }` (invité OU compte actif) ou une erreur ActionState.
+ *
+ * @example
+ * ```ts
+ * const gate = await requireActiveAccountIfAuthenticated();
+ * if ("error" in gate) return gate.error;
+ * ```
+ */
+export async function requireActiveAccountIfAuthenticated(): Promise<
+	{ ok: true } | { error: ActionState }
+> {
+	const session = await getSession();
+
+	// Invité : pas de session → autorisé (le flux gère le cas userId=null).
+	if (!session?.user.id) {
+		return { ok: true };
+	}
+
+	const user = await fetchUserForAuth(session.user.id);
+
+	if (!user) {
+		logger.warn("Active-account gate denied - authenticated session on non-active account", {
+			service: "require-auth",
+			userId: session.user.id,
+		});
+		return {
+			error: {
+				status: ActionStatus.FORBIDDEN,
+				message: "Votre compte n'est pas autorisé à effectuer cette action.",
+			},
+		};
+	}
+
+	return { ok: true };
+}
+
+/**
  * Vérifie que l'utilisateur est admin
  *
  * @returns true si admin, ou une erreur ActionState

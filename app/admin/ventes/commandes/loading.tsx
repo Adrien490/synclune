@@ -11,7 +11,7 @@ export default function OrdersAdminLoading() {
 
 			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 
-			<StickyActionBarSkeleton itemCount={3} />
+			<StickyActionBarSkeleton itemCount={2} withSearch />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={3} className="hidden md:flex" />
 

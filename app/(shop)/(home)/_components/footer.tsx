@@ -187,7 +187,7 @@ export async function Footer() {
 										target="_blank"
 										rel="noopener noreferrer"
 										className="group can-hover:hover:bg-accent inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
-										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
+										aria-label={`${BRAND.social.instagram.handle} — Instagram de ${BRAND.name} (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
 											decorative
@@ -206,7 +206,7 @@ export async function Footer() {
 										target="_blank"
 										rel="noopener noreferrer"
 										className="group can-hover:hover:bg-accent inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
-										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
+										aria-label={`${BRAND.social.tiktok.handle} — TikTok de ${BRAND.name} (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
 											decorative

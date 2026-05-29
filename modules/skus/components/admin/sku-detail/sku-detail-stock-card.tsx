@@ -8,7 +8,11 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
+import {
+	getStockAriaLabel,
+	getStockStatusLabel,
+	getStockVariant,
+} from "@/shared/utils/stock-variant";
 import { ADJUST_STOCK_DIALOG_ID } from "@/modules/skus/components/admin/adjust-stock-dialog";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 
@@ -54,13 +58,7 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 							aria-label={getStockAriaLabel(sku.inventory)}
 							style={{ viewTransitionName: `sku-stock-${sku.id}` }}
 						>
-							{sku.inventory === 0
-								? "Rupture"
-								: stockVariant === "destructive"
-									? "Critique"
-									: stockVariant === "warning"
-										? "Faible"
-										: "OK"}
+							{getStockStatusLabel(sku.inventory)}
 						</Badge>
 					</div>
 					{orderItemsCount > 0 ? (

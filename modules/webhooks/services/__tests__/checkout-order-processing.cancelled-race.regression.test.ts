@@ -1,8 +1,8 @@
 /**
  * @regression ORD-BIZ-011
  *
- * Garantit que `processOrderTransaction` / `processOrderFromPaymentIntent`
- * détectent un webhook `payment_intent.succeeded` arrivant APRÈS qu'un cancel
+ * Garantit que `processOrderFromPaymentIntent`
+ * détecte un webhook `payment_intent.succeeded` arrivant APRÈS qu'un cancel
  * admin a déjà marqué la commande CANCELLED, et lancent un auto-refund Stripe
  * + throw `CancelledOrderRaceError` pour court-circuiter la chain post-paiement.
  *
@@ -50,7 +50,6 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 import {
-	processOrderTransaction,
 	processOrderFromPaymentIntent,
 	CancelledOrderRaceError,
 } from "../checkout-order-processing.service";
@@ -61,38 +60,11 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 		mockInitiateAutomaticRefund.mockResolvedValue({ success: true, refundId: "re_auto_1" });
 	});
 
-	describe("processOrderTransaction (CS flow)", () => {
-		it("throw CancelledOrderRaceError + auto-refund quand commande CANCELLED", async () => {
-			mockPrisma.order.findUnique.mockResolvedValue({
-				id: "order-1",
-				orderNumber: "SYN-2026-0001",
-				status: "CANCELLED",
-			});
-
-			const session = {
-				id: "cs_1",
-				payment_intent: "pi_late_1",
-				amount_total: 5000,
-				metadata: {},
-			} as unknown as Stripe.Checkout.Session;
-
-			await expect(processOrderTransaction("order-1", session, 0, undefined)).rejects.toThrow(
-				CancelledOrderRaceError,
-			);
-
-			expect(mockInitiateAutomaticRefund).toHaveBeenCalledWith(
-				"pi_late_1",
-				"order-1",
-				"cancelled-before-confirmation",
-			);
-			// Pas de transaction ouverte si CANCELLED détecté
-			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-		});
-
+	describe("processOrderFromPaymentIntent (PI flow)", () => {
 		it("ne triggers PAS l'auto-refund si commande PENDING (flow normal)", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue({
-				id: "order-1",
-				orderNumber: "SYN-2026-0001",
+				id: "order-ok",
+				orderNumber: "SYN-2026-0099",
 				status: "PENDING",
 			});
 			// Mock transaction returns minimal order
@@ -100,8 +72,8 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 				const tx = {
 					order: {
 						findUnique: vi.fn().mockResolvedValue({
-							id: "order-1",
-							orderNumber: "SYN-2026-0001",
+							id: "order-ok",
+							orderNumber: "SYN-2026-0099",
 							userId: null,
 							customerEmail: null,
 							shippingFirstName: null,
@@ -131,21 +103,18 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 				return cb(tx as unknown as typeof mockPrisma);
 			});
 
-			const session = {
-				id: "cs_1",
-				payment_intent: "pi_normal_1",
-				amount_total: 5000,
+			const paymentIntent = {
+				id: "pi_normal_1",
+				amount_received: 5000,
 				metadata: {},
 				customer: null,
-			} as unknown as Stripe.Checkout.Session;
+			} as unknown as Stripe.PaymentIntent;
 
-			await processOrderTransaction("order-1", session, 0, undefined);
+			await processOrderFromPaymentIntent("order-ok", paymentIntent);
 
 			expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
 		});
-	});
 
-	describe("processOrderFromPaymentIntent (PI flow)", () => {
 		it("throw CancelledOrderRaceError + auto-refund quand commande CANCELLED", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue({
 				id: "order-2",

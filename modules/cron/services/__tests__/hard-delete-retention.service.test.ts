@@ -7,6 +7,7 @@ const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls, mockLogge
 			product: { findMany: vi.fn(), deleteMany: vi.fn() },
 			reviewMedia: { findMany: vi.fn() },
 			skuMedia: { findMany: vi.fn() },
+			order: { findMany: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockUpdateTag: vi.fn(),
@@ -51,6 +52,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.order.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([{ count: 0 }, { count: 0 }]);
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0 });
 	});
@@ -214,6 +216,38 @@ describe("hardDeleteExpiredRecords", () => {
 		);
 
 		vi.spyOn(Date, "now").mockRestore();
+	});
+
+	it("purges order PII past 10-year retention: scrubs fields, deletes PDFs, sets piiPurgedAt", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([
+			{
+				id: "order-1",
+				invoicePdfUrl: "https://utfs.io/f/invoice-1",
+				creditNotePdfUrl: "https://utfs.io/f/credit-1",
+			},
+			{ id: "order-2", invoicePdfUrl: "https://utfs.io/f/invoice-2", creditNotePdfUrl: null },
+		]);
+		// purge tx runs first → single { count }, then the review/product tx → array.
+		mockPrisma.$transaction
+			.mockResolvedValueOnce({ count: 2 })
+			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 3 });
+
+		const result = await hardDeleteExpiredRecords();
+
+		// Selection: only paid orders past cutoff, not yet purged.
+		const orderCall = mockPrisma.order.findMany.mock.calls[0]![0];
+		expect(orderCall.where.piiPurgedAt).toBeNull();
+		expect(orderCall.where.paidAt.lt).toBeInstanceOf(Date);
+
+		// Archived PDFs (invoice + credit note) deleted from UploadThing.
+		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
+			"https://utfs.io/f/invoice-1",
+			"https://utfs.io/f/credit-1",
+			"https://utfs.io/f/invoice-2",
+		]);
+
+		expect(result).toMatchObject({ ordersPurged: 2, orderPdfsDeleted: 3 });
 	});
 
 	it("does not throw when UploadThing rejects (non-blocking with logger.warn)", async () => {

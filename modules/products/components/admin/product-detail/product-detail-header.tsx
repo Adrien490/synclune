@@ -2,7 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Ellipsis, Pencil } from "lucide-react";
+import { ArrowLeft, Ellipsis, Pencil } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -42,6 +42,14 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 	return (
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div className="min-w-0">
+				<Link
+					href="/admin/catalogue/produits"
+					onClick={() => haptic("light")}
+					className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mb-1 -ml-2 inline-flex min-h-11 touch-manipulation items-center gap-1 rounded-md px-2 text-sm transition-colors outline-none focus-visible:ring-2 md:hidden"
+				>
+					<ArrowLeft className="size-4" aria-hidden="true" />
+					Produits
+				</Link>
 				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					{product.title}
 				</h1>

@@ -92,4 +92,30 @@ describe("QuickSearchTrigger", () => {
 		render(<QuickSearchTrigger />);
 		expect(vi.mocked(useDialog)).toHaveBeenCalledWith("quick-search");
 	});
+
+	describe("bar variant (F5)", () => {
+		it("renders a button with the same accessible name and dialog semantics", () => {
+			render(<QuickSearchTrigger variant="bar" />);
+			const button = screen.getByRole("button", { name: "Ouvrir la recherche rapide" });
+			expect(button).toHaveAttribute("aria-haspopup", "dialog");
+			expect(button).toHaveAttribute("aria-expanded", "false");
+		});
+
+		it("surfaces the 'Rechercher' label and a keyboard shortcut hint", () => {
+			const { container } = render(<QuickSearchTrigger variant="bar" />);
+			expect(screen.getByText("Rechercher")).toBeInTheDocument();
+			expect(container.querySelector("kbd")).toBeInTheDocument();
+		});
+
+		it("opens the dialog when clicked", async () => {
+			render(<QuickSearchTrigger variant="bar" />);
+			await userEvent.click(screen.getByRole("button"));
+			expect(mockOpen).toHaveBeenCalledOnce();
+		});
+
+		it("applies custom className", () => {
+			render(<QuickSearchTrigger variant="bar" className="my-bar-class" />);
+			expect(screen.getByRole("button")).toHaveClass("my-bar-class");
+		});
+	});
 });

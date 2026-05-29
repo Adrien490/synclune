@@ -92,7 +92,7 @@ const baseNavItems = [
 		icon: "folder-open" as const,
 		hasDropdown: true,
 	},
-	{ href: "/a-propos", label: "L'atelier", icon: "info" as const }, // ROUTES.SHOP.ABOUT
+	// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems.
 	{ href: "/commandes", label: "Mon compte", icon: "user" as const },
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];
@@ -115,11 +115,9 @@ describe("MenuSheetNav", () => {
 			expect(screen.getByText("Compte")).toBeInTheDocument();
 		});
 
-		// @regression menu-mobile-atelier-link
-		// "L'atelier" (ROUTES.SHOP.ABOUT) was present in getMobileNavItems but never
-		// rendered by MenuSheetNav, making the brand-story page unreachable from the
-		// mobile hamburger. It now renders inside the "Découvrir" section.
-		it("renders the 'L'atelier' link in the discover section", () => {
+		// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems
+		// (à réintégrer plus tard) → ne doit plus apparaître dans le menu mobile.
+		it("does not render the 'L'atelier' link", () => {
 			render(
 				<MenuSheetNav
 					navItems={baseNavItems}
@@ -129,8 +127,7 @@ describe("MenuSheetNav", () => {
 				/>,
 			);
 
-			const atelierLink = screen.getByRole("link", { name: "L'atelier" });
-			expect(atelierLink.getAttribute("href")).toBe("/a-propos");
+			expect(screen.queryByRole("link", { name: "L'atelier" })).toBeNull();
 		});
 
 		it("renders product type links using ROUTES", () => {

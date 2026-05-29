@@ -17,7 +17,7 @@ export default function ColorsLoading() {
 				className="hidden md:block"
 			/>
 
-			<StickyActionBarSkeleton itemCount={4} />
+			<StickyActionBarSkeleton itemCount={3} withSearch />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 

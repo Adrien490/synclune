@@ -18,6 +18,11 @@ test-results/
 playwright-report/
 e2e/.auth/
 
+# lighthouse
+.lighthouseci/
+.lh-baseline/
+.lhci/
+
 # next.js
 /.next/
 /out/

@@ -11,7 +11,10 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
-import { nextCreditNoteNumberTx } from "@/modules/invoices/services/credit-note-sequence.service";
+import {
+	acquireCreditNoteLockTx,
+	nextCreditNoteNumberTx,
+} from "@/modules/invoices/services/credit-note-sequence.service";
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
@@ -78,6 +81,19 @@ export async function issueCreditNoteForRefund(
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
 			const result = await prisma.$transaction(async (tx) => {
+				// EINV-SEQ-006 — acquérir le lock avoir AVANT la garde `already-issued`.
+				// Sinon TOCTOU : deux émissions concurrentes pour le MÊME refund
+				// (admin processRefund + webhook charge.refunded partiel, ou retry)
+				// lisent toutes deux `creditNoteNumber=null`, passent la garde, puis se
+				// sérialisent dans `nextCreditNoteNumberTx` → la 2e ÉCRASE le numéro
+				// posé par la 1re en l'orphelinisant (= gap A-YYYY, Art. 286). Lock pris
+				// ici → la re-lecture du refund est sérialisée : la 2e voit le numéro
+				// posé par la 1re → noop `already-issued`. Le helper ré-acquiert le même
+				// lock xact (idempotent). Millésime = date d'émission (Paris).
+				const now = new Date();
+				const year = getParisDateParts(now).year;
+				await acquireCreditNoteLockTx(tx, year);
+
 				const refund = await tx.refund.findUnique({
 					where: { id: refundId },
 					select: {
@@ -142,11 +158,9 @@ export async function issueCreditNoteForRefund(
 
 				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
 				// (advisory lock 2_000_000+year + lookup UNION) — unicité
-				// cross-table garantie (EINV-PRISMA-001). Millésime en heure de
-				// Paris (pas UTC) pour rester cohérent avec la facture au passage
-				// d'année (EINV-SEQ-002 / Art. 286).
-				const now = new Date();
-				const year = getParisDateParts(now).year;
+				// cross-table garantie (EINV-PRISMA-001). Le lock a déjà été pris
+				// ci-dessus (EINV-SEQ-006) ; `nextCreditNoteNumberTx` le ré-acquiert
+				// (no-op xact) puis lit le MAX.
 				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 
 				const updated = await tx.refund.update({

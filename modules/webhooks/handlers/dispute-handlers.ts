@@ -1,9 +1,11 @@
 import type Stripe from "stripe";
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import {
 	DisputeReason,
 	DisputeStatus,
 	HistorySource,
+	InvoiceStatus,
 	OrderAction,
 	PaymentStatus,
 	RefundReason,
@@ -12,10 +14,13 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import type { WebhookHandlerResult } from "../types/webhook.types";
+import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
+import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
+import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 
@@ -214,6 +219,9 @@ export async function handleDisputeCreated(
 							: null,
 						dashboardUrl,
 						stripeDashboardUrl,
+						// LOW-2 : dédup Resend 24h + DB (1 alerte d'ouverture par litige,
+						// en plus de l'anti-replay OrderNote ci-dessus — ceinture+bretelles).
+						idempotencyKey: `alert:dispute-open:${dispute.id}`,
 					},
 				},
 				{
@@ -267,6 +275,10 @@ export async function handleDisputeClosed(
 				orderNumber: true,
 				paymentStatus: true,
 				total: true,
+				// CACHE-AUDIT-010 : requis pour invalider les tags user-scopés
+				// (USER_ORDERS/LAST_ORDER/ACCOUNT_STATS) quand un chargeback perdu
+				// mute paymentStatus → REFUNDED/PARTIALLY_REFUNDED.
+				userId: true,
 			},
 		});
 
@@ -299,7 +311,7 @@ export async function handleDisputeClosed(
 		// Update Dispute record, create OrderNote, and update order status atomically
 		const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
 
-		await prisma.$transaction(
+		const lostOutcome = await prisma.$transaction(
 			async (tx) => {
 				// Update Dispute record if it exists
 				const existingDispute = await tx.dispute.findUnique({
@@ -351,8 +363,10 @@ export async function handleDisputeClosed(
 					});
 
 					const totalAfter = alreadyRefunded + dispute.amount;
-					const computedStatus =
-						totalAfter >= order.total ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
+					const isFullReclaim = totalAfter >= order.total;
+					const computedStatus = isFullReclaim
+						? PaymentStatus.REFUNDED
+						: PaymentStatus.PARTIALLY_REFUNDED;
 
 					// Ne pas rétrograder REFUNDED → PARTIALLY_REFUNDED (sticky state).
 					const newPaymentStatus =
@@ -389,24 +403,28 @@ export async function handleDisputeClosed(
 							totalAfter,
 						},
 					});
-				} else {
-					// Won: pas de mutation Order, juste audit trail
-					await createOrderAuditTx(tx, {
-						orderId: order.id,
-						action: OrderAction.DISPUTE_RESOLVED,
-						source: HistorySource.WEBHOOK,
-						authorId: SYSTEM_AUTHOR_ID,
-						authorName: SYSTEM_AUTHOR_NAME,
-						note: noteContent,
-						metadata: {
-							disputeId: existingDispute?.id ?? null,
-							stripeDisputeId: dispute.id,
-							won: true,
-							amount: dispute.amount,
-							fee: dispute.balance_transactions[0]?.fee ?? 0,
-						},
-					});
+
+					return { chargebackRefundId: chargebackRefund.id, isFullReclaim, alreadyRefunded };
 				}
+
+				// Won: pas de mutation Order, juste audit trail
+				await createOrderAuditTx(tx, {
+					orderId: order.id,
+					action: OrderAction.DISPUTE_RESOLVED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
+					note: noteContent,
+					metadata: {
+						disputeId: existingDispute?.id ?? null,
+						stripeDisputeId: dispute.id,
+						won: true,
+						amount: dispute.amount,
+						fee: dispute.balance_transactions[0]?.fee ?? 0,
+					},
+				});
+
+				return null;
 			},
 			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
@@ -417,10 +435,172 @@ export async function handleDisputeClosed(
 			{ service: "webhook" },
 		);
 
-		// Pas d'alerte admin à la clôture du litige : l'admin a déjà été notifié à
-		// l'ouverture (handleDisputeCreated) et l'issue (gagné/perdu) est tracée en
-		// OrderNote + OrderHistory, consultable sur le dashboard. On évite un 2e mail
-		// par litige (réduction du volume d'alertes admin).
+		const tasks: PostWebhookTask[] = [];
+
+		// Chargeback PERDU : un chargeback reprend des fonds sur une commande
+		// facturée → traiter comptablement comme un remboursement (Art. 272-I CGI),
+		// en miroir du handler `charge.refunded`. Best-effort, hors transaction,
+		// idempotent (mêmes services que le chemin refund).
+		if (lostOutcome) {
+			const { chargebackRefundId, isFullReclaim, alreadyRefunded } = lostOutcome;
+
+			// (a) Avoir Art. 272-I : reprise TOTALE → voidInvoice (avoir canonique
+			// sur Order.creditNoteNumber + facture VOIDED) ; reprise PARTIELLE →
+			// avoir sur Refund.creditNoteNumber. Invariant CLAUDE.md #2 : le numéro
+			// d'avoir n'est posé que par void-invoice.service / issue-credit-note.
+			if (isFullReclaim) {
+				const invoiceState = await prisma.order.findUnique({
+					where: { id: order.id },
+					select: { invoiceStatus: true, invoiceNumber: true },
+				});
+				if (invoiceState?.invoiceStatus === InvoiceStatus.GENERATED && invoiceState.invoiceNumber) {
+					const voided = await voidInvoice({
+						orderId: order.id,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
+						source: HistorySource.WEBHOOK,
+						reason: `Avoir émis suite à chargeback perdu (litige Stripe ${dispute.id})`,
+					});
+					if (voided.kind === "failed") {
+						Sentry.withScope((scope) => {
+							scope.setLevel("error");
+							scope.setTag("invoicing", "void-invoice-failed");
+							scope.setTag("source", "webhook-dispute-lost");
+							scope.setFingerprint(["void-invoice", "max-retries", order.id]);
+							scope.setContext("order", {
+								orderId: order.id,
+								orderNumber: order.orderNumber,
+								stripeDisputeId: dispute.id,
+							});
+							Sentry.captureMessage(
+								"voidInvoice failed on charge.dispute.closed (chargeback perdu) — facture stale",
+								"error",
+							);
+						});
+					}
+				}
+			} else {
+				const creditNoteResult = await issueCreditNoteForRefund({
+					refundId: chargebackRefundId,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: SYSTEM_AUTHOR_NAME,
+				});
+				if (creditNoteResult.kind === "failed") {
+					logger.warn(
+						`charge.dispute.closed — credit note emission failed for refund ${chargebackRefundId}: ${creditNoteResult.error}`,
+						{ service: "webhook", orderId: order.id, refundId: chargebackRefundId },
+					);
+				}
+			}
+
+			// (b) E-reporting REFUND DGFiP (EINV-AUDIT-004). Le chargebackRefund est
+			// créé COMPLETED + processedAt → exclu du cron `reconcile-refunds`
+			// (qui ne reprend que les APPROVED/processedAt=null). Sans ce hook, la
+			// ligne négative DGFiP n'est jamais créée et l'agrégat B2C surévalue le
+			// CA net. Best-effort + idempotent (unique index + findFirst).
+			await recordRefundEReporting(chargebackRefundId);
+
+			// MEDIUM-2 : double reprise de fonds (refund admin + chargeback) → le
+			// cumul COMPLETED dépasse le total commande. Le booking est fidèle (les
+			// fonds sont réellement partis 2×), mais c'est une perte/fraude probable
+			// à instruire : alerte admin dédiée (dédup par dispute).
+			if (alreadyRefunded + dispute.amount > order.total) {
+				const baseUrl = getBaseUrl();
+				tasks.push({
+					type: "ADMIN_DISPUTE_ALERT",
+					data: {
+						orderNumber: order.orderNumber,
+						customerEmail: "Voir commande",
+						amount: dispute.amount,
+						reason: `[DOUBLE REPRISE DE FONDS — suspicion fraude] Le cumul remboursé (${((alreadyRefunded + dispute.amount) / 100).toFixed(2)} €) dépasse le total commande (${(order.total / 100).toFixed(2)} €). Vérifier remboursement manuel + chargeback.`,
+						disputeId: dispute.id,
+						deadline: null,
+						dashboardUrl: `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`,
+						stripeDashboardUrl: EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id),
+						idempotencyKey: `alert:dispute-double-reclaim:${dispute.id}`,
+					},
+				});
+			}
+		}
+
+		// Pas de 2e mail d'issue (gagné/perdu) systématique : l'admin a été notifié à
+		// l'ouverture (handleDisputeCreated) et l'issue est tracée en OrderNote +
+		// OrderHistory, consultable sur le dashboard (réduction du volume d'alertes).
+		// CACHE-AUDIT-010 : sur un chargeback perdu, `paymentStatus` passe
+		// REFUNDED/PARTIALLY_REFUNDED (cf. lostOutcome) → passer par le helper
+		// canonique pour couvrir le détail commande (DETAIL/CONFIRMATION/HISTORY)
+		// ET l'espace client user-scopé (USER_ORDERS/LAST_ORDER/ACCOUNT_STATS).
+		// Une liste manuelle laissait la commande affichée PAID côté client jusqu'à
+		// l'expiration du profil `user` (~10 min). NOTES n'est pas couvert par le
+		// helper (audit interne) → ajouté explicitement.
+		tasks.push({
+			type: "INVALIDATE_CACHE",
+			tags: [
+				...getOrderInvalidationTags(order.userId ?? undefined, order.id),
+				ORDERS_CACHE_TAGS.NOTES(order.id),
+			],
+		});
+
+		return { success: true, tasks };
+	} catch (error) {
+		captureWebhookError(error, {
+			handler: "handleDisputeClosed",
+			eventType: "charge.dispute.closed",
+			stripeDisputeId: dispute.id,
+			paymentIntentId,
+		});
+		throw error;
+	}
+}
+
+/**
+ * Handles charge.dispute.updated — Stripe émet cet event quand le litige évolue
+ * en cours de vie (preuves soumises → `under_review`, mise à jour montant, etc.).
+ *
+ * Handler minimal : on rafraîchit `Dispute.status` + `dueBy` pour que le
+ * dashboard reflète l'état réel (sans ça, un litige reste figé `NEEDS_RESPONSE`
+ * jusqu'à la clôture même après soumission de preuves). Aucune mutation business
+ * (pas de chargebackRefund, pas de paymentStatus) : ces transitions restent
+ * exclusivement dans `charge.dispute.closed`. Idempotent (update par
+ * stripeDisputeId, noop si le Dispute n'existe pas encore).
+ */
+export async function handleDisputeUpdated(
+	dispute: Stripe.Dispute,
+): Promise<WebhookHandlerResult | null> {
+	try {
+		const existing = await prisma.dispute.findUnique({
+			where: { stripeDisputeId: dispute.id },
+			select: { id: true, orderId: true, status: true },
+		});
+
+		if (!existing) {
+			// L'event updated peut précéder created (ordre de livraison Stripe non
+			// garanti) : on laisse created poser l'état initial.
+			return { success: true, skipped: true, reason: "Dispute not yet created" };
+		}
+
+		const nextStatus = mapStripeDisputeStatus(dispute.status);
+		const nextDueBy = dispute.evidence_details.due_by
+			? new Date(dispute.evidence_details.due_by * 1000)
+			: null;
+
+		if (existing.status === nextStatus && nextDueBy === null) {
+			return { success: true, skipped: true, reason: "No status change" };
+		}
+
+		await prisma.dispute.update({
+			where: { stripeDisputeId: dispute.id },
+			data: {
+				status: nextStatus,
+				...(nextDueBy ? { dueBy: nextDueBy } : {}),
+			},
+		});
+
+		logger.info(`[WEBHOOK] Dispute ${dispute.id} updated → status ${nextStatus}`, {
+			service: "webhook",
+		});
+
 		return {
 			success: true,
 			tasks: [
@@ -428,7 +608,7 @@ export async function handleDisputeClosed(
 					type: "INVALIDATE_CACHE",
 					tags: [
 						ORDERS_CACHE_TAGS.LIST,
-						ORDERS_CACHE_TAGS.NOTES(order.id),
+						ORDERS_CACHE_TAGS.NOTES(existing.orderId),
 						SHARED_CACHE_TAGS.ADMIN_BADGES,
 					],
 				},
@@ -436,10 +616,9 @@ export async function handleDisputeClosed(
 		};
 	} catch (error) {
 		captureWebhookError(error, {
-			handler: "handleDisputeClosed",
-			eventType: "charge.dispute.closed",
+			handler: "handleDisputeUpdated",
+			eventType: "charge.dispute.updated",
 			stripeDisputeId: dispute.id,
-			paymentIntentId,
 		});
 		throw error;
 	}

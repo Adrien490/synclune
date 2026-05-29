@@ -5,11 +5,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockUseDialog, mockUseAlertDialog, mockHandleSetDefault } = vi.hoisted(() => ({
-	mockUseDialog: vi.fn(),
-	mockUseAlertDialog: vi.fn(),
-	mockHandleSetDefault: vi.fn(),
-}));
+const { mockUseDialog, mockUseAlertDialog, mockHandleSetDefault, mockUseIsMobile, mockRouterPush } =
+	vi.hoisted(() => ({
+		mockUseDialog: vi.fn(),
+		mockUseAlertDialog: vi.fn(),
+		mockHandleSetDefault: vi.fn(),
+		mockUseIsMobile: vi.fn(),
+		mockRouterPush: vi.fn(),
+	}));
 
 // Mock Radix DropdownMenu to render children directly
 vi.mock("@/shared/components/ui/dropdown-menu", () => ({
@@ -39,6 +42,14 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: mockUseAlertDialog,
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: mockUseIsMobile,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockRouterPush }),
 }));
 
 vi.mock("../../hooks/use-set-default-address", () => ({
@@ -74,7 +85,7 @@ function createAddress(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function setupMocks() {
+function setupMocks({ isMobile = false }: { isMobile?: boolean } = {}) {
 	const mockOpen = vi.fn();
 	const mockDeleteOpen = vi.fn();
 
@@ -85,6 +96,7 @@ function setupMocks() {
 		isOpen: false,
 		data: null,
 	});
+	mockUseIsMobile.mockReturnValue(isMobile);
 
 	return { mockOpen, mockDeleteOpen };
 }
@@ -140,8 +152,8 @@ describe("AddressCardActions", () => {
 		expect(mockHandleSetDefault).toHaveBeenCalledWith("addr-42");
 	});
 
-	it("opens edit dialog with address data when clicking modify", () => {
-		const { mockOpen } = setupMocks();
+	it("opens edit dialog with address data when clicking modify on desktop", () => {
+		const { mockOpen } = setupMocks({ isMobile: false });
 		const address = createAddress();
 
 		render(<AddressCardActions address={address} />);
@@ -149,6 +161,18 @@ describe("AddressCardActions", () => {
 		screen.getByText("Modifier").closest("button")?.click();
 
 		expect(mockOpen).toHaveBeenCalledWith({ address });
+		expect(mockRouterPush).not.toHaveBeenCalled();
+	});
+
+	it("navigates to the dedicated edit page when clicking modify on mobile", () => {
+		const { mockOpen } = setupMocks({ isMobile: true });
+
+		render(<AddressCardActions address={createAddress({ id: "addr-1" })} />);
+
+		screen.getByText("Modifier").closest("button")?.click();
+
+		expect(mockRouterPush).toHaveBeenCalledWith("/adresses/addr-1/modifier");
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 
 	it("opens delete dialog with address info when clicking delete", () => {

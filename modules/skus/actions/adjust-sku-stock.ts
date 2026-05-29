@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -17,6 +17,7 @@ import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
+import { recordStockMovementTx } from "../services/stock-movement.service";
 import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 type AffectedRow = { inventory: number };
@@ -31,8 +32,9 @@ export async function adjustSkuStock(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const admin = auth.user;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_ADJUST_STOCK_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -52,16 +54,30 @@ export async function adjustSkuStock(
 		});
 		if ("error" in validation) return validation.error;
 
-		const { skuId } = validation.data;
+		const { skuId, reason: validatedReason } = validation.data;
 
-		// 5. Atomic conditional update using RETURNING to capture the new inventory value
-		// in the same statement — eliminates the race condition between the update and
-		// a subsequent read used for the error/success message.
-		let newInventory: number;
+		// 5. Métadonnées SKU AVANT l'update : fail-fast « Variante non trouvée » +
+		// `productId` requis pour l'enregistrement du mouvement de stock.
+		const sku = await prisma.productSku.findUnique({
+			where: { id: skuId },
+			select: {
+				id: true,
+				sku: true,
+				productId: true,
+				product: { select: { slug: true } },
+			},
+		});
 
-		if (adjustment < 0) {
-			newInventory = await prisma.$transaction(async (tx) => {
-				const updated = await tx.$queryRaw<AffectedRow[]>`
+		if (!sku) return error("Variante non trouvée");
+
+		// 6. Update atomique + audit StockMovement dans la MÊME transaction.
+		// `RETURNING` capture le nouvel inventaire dans le même statement (pas de race
+		// entre l'update et un read ultérieur) ; le mouvement est écrit atomiquement.
+		const newInventory = await prisma.$transaction(async (tx) => {
+			let updated: AffectedRow[];
+
+			if (adjustment < 0) {
+				updated = await tx.$queryRaw<AffectedRow[]>`
 					UPDATE "ProductSku"
 					SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
 					WHERE "id" = ${skuId}
@@ -80,37 +96,31 @@ export async function adjustSkuStock(
 						`Stock insuffisant. Stock actuel: ${existing[0]!.inventory}, ajustement demandé: ${adjustment}`,
 					);
 				}
+			} else {
+				updated = await tx.$queryRaw<AffectedRow[]>`
+					UPDATE "ProductSku"
+					SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
+					WHERE "id" = ${skuId}
+					RETURNING "inventory"
+				`;
 
-				return updated[0]!.inventory;
-			});
-		} else {
-			const updated = await prisma.$queryRaw<AffectedRow[]>`
-				UPDATE "ProductSku"
-				SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
-				WHERE "id" = ${skuId}
-				RETURNING "inventory"
-			`;
-
-			if (updated.length === 0) {
-				return error("Variante non trouvée");
+				if (updated.length === 0) throw new BusinessError("Variante non trouvée");
 			}
 
-			newInventory = updated[0]!.inventory;
-		}
+			const nextInventory = updated[0]!.inventory;
 
-		// 6. Fetch SKU metadata for cache invalidation and response
-		// inventory is sourced from RETURNING above for accuracy
-		const sku = await prisma.productSku.findUnique({
-			where: { id: skuId },
-			select: {
-				id: true,
-				sku: true,
-				productId: true,
-				product: { select: { slug: true } },
-			},
+			await recordStockMovementTx(tx, {
+				skuId: sku.id,
+				productId: sku.productId,
+				previousInventory: nextInventory - adjustment,
+				newInventory: nextInventory,
+				reason: validatedReason ?? null,
+				createdById: admin.id,
+				createdByName: admin.name ?? null,
+			});
+
+			return nextInventory;
 		});
-
-		if (!sku) return error("Variante non trouvée");
 
 		// 7. Invalider le cache avec les tags appropriés
 		const tags = getInventoryInvalidationTags(sku.product.slug, sku.productId, [sku.id]);
@@ -123,8 +133,6 @@ export async function adjustSkuStock(
 		if (previousInventory === 0 && newInventory > 0) {
 			after(() => notifyBackInStock(sku.productId));
 		}
-
-		// 9. Audit log
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return success(

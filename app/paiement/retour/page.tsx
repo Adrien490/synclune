@@ -11,11 +11,6 @@ const piSearchParamsSchema = z.object({
 	order_id: z.string().cuid(),
 });
 
-const sessionSearchParamsSchema = z.object({
-	session_id: z.string().min(1),
-	order_id: z.string().cuid().optional(),
-});
-
 export const metadata: Metadata = {
 	title: "Vérification du paiement | Synclune",
 	robots: {
@@ -28,7 +23,6 @@ interface CheckoutReturnPageProps {
 	searchParams: Promise<{
 		payment_intent?: string;
 		redirect_status?: string;
-		session_id?: string;
 		order_id?: string;
 	}>;
 }
@@ -55,7 +49,7 @@ async function withStripeDeadline<T>(promise: Promise<T>, timeoutMs: number): Pr
 }
 
 /**
- * Payment return page — handles both PI flow and legacy Checkout Session flow.
+ * Payment return page — PaymentIntent flow (Stripe Elements).
  * Verifies payment status and redirects to the appropriate page.
  */
 export default async function CheckoutReturnPage({ searchParams }: CheckoutReturnPageProps) {
@@ -80,7 +74,11 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 			const orderNumber = pi.metadata.orderNumber;
 			const cancelSuffix = orderNumber ? `&order_number=${orderNumber}` : "";
 
-			if (redirectStatus === "succeeded" || pi.status === "succeeded") {
+			// La décision « succès » s'appuie EXCLUSIVEMENT sur `pi.status` retrieve
+			// serveur — jamais sur `redirect_status`, qui provient de l'URL et est
+			// donc manipulable. La page de confirmation re-vérifie de toute façon le
+			// statut DB (posé par le webhook), mais cette page reste auto-suffisante.
+			if (pi.status === "succeeded") {
 				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
 			} else if (pi.status === "processing" || pi.status === "requires_action") {
 				// Async payment in progress (SEPA, Klarna, etc.)
@@ -97,38 +95,6 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 		redirect(redirectUrl);
 	}
 
-	// === Legacy Checkout Session flow (encore utilisé par modules/webhooks/services/checkout.service.ts) ===
-	const sessionValidation = sessionSearchParamsSchema.safeParse(params);
-	if (!sessionValidation.success) {
-		redirect("/");
-	}
-
-	const { session_id: sessionId, order_id: orderId } = sessionValidation.data;
-
-	let redirectUrl: string;
-
-	try {
-		const session = await withStripeDeadline(
-			stripe.checkout.sessions.retrieve(sessionId),
-			STRIPE_RETRIEVE_TIMEOUT_MS,
-		);
-		const orderNumber = session.metadata?.orderNumber;
-		const cancelSuffix = orderNumber ? `&order_number=${orderNumber}` : "";
-
-		if (session.payment_status === "paid") {
-			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
-		} else if (session.status === "open") {
-			redirectUrl = `/paiement?retry=true&order_id=${orderId}`;
-		} else if (session.payment_status === "unpaid" && session.status === "complete") {
-			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
-		} else if (session.status === "expired") {
-			redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=expired`;
-		} else {
-			redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=processing_error`;
-		}
-	} catch {
-		redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
-	}
-
-	redirect(redirectUrl);
+	// Aucun `payment_intent` valide dans l'URL de retour → rien à vérifier.
+	redirect("/");
 }

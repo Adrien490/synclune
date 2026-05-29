@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
+import { scrubSentryEvent } from "@/shared/lib/sentry-scrub";
 
 const SHARED_IGNORE_ERRORS = [
 	"NEXT_REDIRECT",
@@ -25,7 +26,7 @@ const initSentry = () => {
 		beforeSend(event, hint) {
 			const error = hint.originalException;
 			if (error instanceof BusinessError) return null;
-			return event;
+			return scrubSentryEvent(event);
 		},
 
 		ignoreErrors: SHARED_IGNORE_ERRORS,

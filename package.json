@@ -17,6 +17,8 @@
 		"email:dev": "email dev --dir emails --port 3001",
 		"db:studio": "prisma studio",
 		"analyse": "next experimental-analyse",
+		"lighthouse:desktop": "pnpm dlx @lhci/cli@0.15.x autorun --config=lighthouserc.json",
+		"lighthouse:mobile": "pnpm dlx @lhci/cli@0.15.x autorun --config=lighthouserc.mobile.json",
 		"test": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"test:critical": "vitest run modules/cart modules/orders modules/payments modules/webhooks modules/auth modules/discounts modules/refunds modules/invoices app/api/webhooks/stripe test/contract",

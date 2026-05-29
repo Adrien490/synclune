@@ -162,6 +162,10 @@ export function ProductCatalog({
 						/>
 					)}
 
+					{/* H2 sr-only — comble le saut h1 → h3 (titres des cartes produit) pour
+					    une hiérarchie séquentielle (WCAG 1.3.1, audit `heading-order`). */}
+					<h2 className="sr-only">Liste des créations</h2>
+
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList
 							productsPromise={productsPromise}

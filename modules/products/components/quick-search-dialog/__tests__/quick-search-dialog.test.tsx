@@ -476,10 +476,23 @@ describe("QuickSearchDialog", () => {
 			expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
 		});
 
-		it("renders results container with role='listbox' and correct aria-label", () => {
-			render(<QuickSearchDialog {...defaultProps} />);
-			const listbox = screen.getByRole("listbox", { name: "Résultats de recherche" });
-			expect(listbox).toBeInTheDocument();
+		it("exposes the results container as a listbox only in search mode (F3)", () => {
+			// Idle mode: neutral browse panel, no listbox role (avoids nesting
+			// sections/lists/headings under an invalid listbox).
+			mockIsSearchMode.current = false;
+			const { rerender } = render(<QuickSearchDialog {...defaultProps} />);
+			expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+			// Search mode: the container becomes a valid listbox of options.
+			mockIsSearchMode.current = true;
+			mockSearchResults.current = {
+				kind: "success",
+				products: [],
+				totalCount: 0,
+				suggestion: null,
+			};
+			rerender(<QuickSearchDialog {...defaultProps} />);
+			expect(screen.getByRole("listbox", { name: "Résultats de recherche" })).toBeInTheDocument();
 		});
 
 		it("renders search role on the search input area", () => {

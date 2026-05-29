@@ -28,10 +28,8 @@ export const MAX_COLLECTIONS_IN_MENU = 3;
  *    → Mon compte / Se connecter
  *    → Tableau de bord (si admin)
  *
- * 📖 EN SAVOIR PLUS (découverte de l'atelier)
- *    → L'atelier
- *
  * Note: "Panier" supprimé (redondant avec header)
+ * Note: "L'atelier" retiré temporairement du menu mobile (à réintégrer plus tard)
  *
  * @param session - Session de l'utilisateur (null si non connecté)
  * @param productTypes - Types de produits actifs
@@ -101,8 +99,8 @@ export function getMobileNavItems(
 		bijouxItem,
 		collectionsItem,
 
-		// 🏡 L'ATELIER - Page à propos
-		{ href: ROUTES.SHOP.ABOUT, label: "L'atelier", icon: "info" },
+		// 🏡 L'ATELIER - Page à propos : retiré temporairement du menu mobile
+		// (à réintégrer plus tard). DiscoverSection rend l'item s'il est fourni.
 
 		// 👤 COMPTE - Gestion utilisateur
 		session
@@ -210,7 +208,8 @@ export const footerNavItems = [
 
 // Liens légaux
 export const legalLinks = [
-	{ label: "CGV", href: ROUTES.LEGAL.CGV, ariaLabel: "Conditions Générales de Vente" },
+	// WCAG 2.5.3 (Label in Name) : le nom accessible doit contenir le texte visible ("CGV").
+	{ label: "CGV", href: ROUTES.LEGAL.CGV, ariaLabel: "CGV — Conditions Générales de Vente" },
 	{ label: "Mentions légales", href: ROUTES.LEGAL.LEGAL_NOTICE },
 	{ label: "Politique de confidentialité", href: ROUTES.LEGAL.PRIVACY },
 	{ label: "Gestion des cookies", href: ROUTES.LEGAL.COOKIES },

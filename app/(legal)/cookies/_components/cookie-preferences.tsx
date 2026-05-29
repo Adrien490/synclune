@@ -61,10 +61,10 @@ export function CookiePreferences() {
 
 			{/* Boutons d'action */}
 			<div className="flex flex-col gap-3 sm:flex-row">
-				<Button onClick={handleAccept} className="flex-1">
+				<Button onClick={handleAccept} variant="secondary" className="flex-1">
 					Accepter les cookies
 				</Button>
-				<Button onClick={handleReject} variant="outline" className="flex-1">
+				<Button onClick={handleReject} variant="secondary" className="flex-1">
 					Refuser les cookies
 				</Button>
 			</div>

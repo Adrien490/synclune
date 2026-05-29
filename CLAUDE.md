@@ -128,9 +128,13 @@ export async function createSomething(
 
 **Auth helpers** (`modules/auth/lib/require-auth`):
 
-- `requireAuth()` - Verifies user authenticated + exists in DB
-- `requireAdmin()` - Verifies ADMIN role (session only)
-- `requireAdminWithUser()` - Verifies admin + returns user object
+- `requireAuth()` - Verifies user authenticated + exists in DB (filtre `suspendedAt:null` + `accountStatus=ACTIVE`)
+- `requireAdmin()` - Verifies ADMIN role **avec re-vérification DB** (bloque admin rétrogradé/supprimé/suspendu) ; ne renvoie pas l'objet user
+- `requireAdminWithUser()` - Idem `requireAdmin()` (re-check DB) + renvoie l'objet user
+- `requireAdminApiRoute()` - Variante route handler (renvoie une `Response` HTTP) ; re-check DB du rôle
+- `requireActiveAccountIfAuthenticated()` - Autorise les invités (pas de session) mais rejette une session dont le compte n'est pas `ACTIVE` (suspendu/INACTIVE/PENDING_DELETION). Pour les flux commerce optionnellement authentifiés (checkout, discount)
+
+> ⚠️ Ne JAMAIS faire confiance à `session.user.role` pour un chemin de privilège (cookie-cache Better Auth stale ~5 min). Toujours passer par un helper `requireAdmin*` qui re-vérifie en DB.
 
 **Action helpers** (`shared/lib/actions/`):
 
@@ -299,7 +303,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-19 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing (e-reporting B2C uniquement) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
+20 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing (e-reporting B2C uniquement) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
 
 | Job                         | Schedule           | Catégorie   |
 | --------------------------- | ------------------ | ----------- |
@@ -317,6 +321,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `cleanup-pending-orders`    | Daily 4:30         | revenue     |
 | `process-account-deletions` | Daily 5:00         | RGPD        |
 | `reconcile-voided-invoices` | Daily 7:00         | e-invoicing |
+| `alert-dispute-deadlines`   | Daily 8:00         | monitoring  |
 | `send-review-requests`      | Daily 10:00        | engagement  |
 | `alert-stuck-orders`        | Weekly Monday 9:00 | monitoring  |
 | `cleanup-webhook-events`    | Monthly 1st 7:00   | retention   |
@@ -400,6 +405,7 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année.
 8. **Pas de vente manuelle / pas de caisse.** Aucune Server Action ne doit créer une commande payée sans passer par Stripe (PaymentIntent). Tout flow alternatif (`recordCashSale`, `createManualOrder`, etc.) requiert validation comptable préalable — sinon risque "logiciel de caisse" NF 525 non conforme.
 9. **Pas de mutation manuelle des modèles `EReportingTransaction` / `EReportingBatch`.** Seuls `record-ereporting.service.ts` (hook SALES + REFUND) et les services cron `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` peuvent écrire. Aucune Server Action admin ne doit poser un `status: ACCEPTED` manuel ni créer un batch fictif — risque divergence DGFiP + invalidation idempotence transmission.
+10. **Rétention PII vs RGPD (cycle en 2 temps).** À l'anonymisation d'un compte (`anonymize-user.service.ts`), on scrubbe seulement les surfaces _opérationnelles_ (`customer*`, `shipping*`) et NON l'identité légale de la facture (`billing*`, `invoiceDataSnapshot`, PDF) — conservée au titre de l'exemption RGPD Art. 17(3)(b) (obligation Art. 289 CGI / L102 B LPF). Cette identité n'est purgée qu'à `paidAt + 10 ans` par `hard-delete-retention` (`purgeExpiredOrderPii`, marqueur `Order.piiPurgedAt`), respectant la limitation de conservation RGPD Art. 5.1.e. Ne JAMAIS scrubber `billing*` à l'anonymisation (régression `rgpd-anonymize-preserves-invoice-snapshot`). Détails : [`docs/INVOICING.md § Rétention PII vs RGPD`](docs/INVOICING.md).
 
 ### Tests régression dédiés
 

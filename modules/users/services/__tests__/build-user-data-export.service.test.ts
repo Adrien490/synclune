@@ -52,6 +52,7 @@ function buildOrder(overrides: Record<string, unknown> = {}) {
 		shippingPostalCode: "75001",
 		shippingCountry: "FR",
 		items: [],
+		refunds: [],
 		...overrides,
 	};
 }
@@ -202,6 +203,63 @@ describe("buildUserDataExport", () => {
 			postalCode: "75001",
 			country: "FR",
 		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Refunds mapping (Art. 15/20 — portabilité)
+	// -------------------------------------------------------------------------
+
+	it("should map order refunds with amounts in euros and ISO dates", async () => {
+		const order = buildOrder({
+			refunds: [
+				{
+					amount: 1500,
+					currency: "eur",
+					reason: "DEFECTIVE",
+					status: "COMPLETED",
+					createdAt: BASE_DATE,
+					processedAt: LATER_DATE,
+				},
+				{
+					amount: 500,
+					currency: "eur",
+					reason: "OTHER",
+					status: "PENDING",
+					createdAt: BASE_DATE,
+					processedAt: null,
+				},
+			],
+		});
+		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ orders: [order] }));
+
+		const result = await buildUserDataExport("user_1");
+
+		expect(result!.orders[0]!.refunds).toEqual([
+			{
+				amount: 15,
+				currency: "EUR",
+				reason: "DEFECTIVE",
+				status: "COMPLETED",
+				requestedAt: BASE_DATE.toISOString(),
+				processedAt: LATER_DATE.toISOString(),
+			},
+			{
+				amount: 5,
+				currency: "EUR",
+				reason: "OTHER",
+				status: "PENDING",
+				requestedAt: BASE_DATE.toISOString(),
+				processedAt: null,
+			},
+		]);
+	});
+
+	it("should return an empty refunds array when the order has no refund", async () => {
+		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ orders: [buildOrder()] }));
+
+		const result = await buildUserDataExport("user_1");
+
+		expect(result!.orders[0]!.refunds).toEqual([]);
 	});
 
 	// -------------------------------------------------------------------------

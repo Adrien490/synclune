@@ -59,6 +59,10 @@
 			"schedule": "0 9 * * 1"
 		},
 		{
+			"path": "/api/cron/alert-dispute-deadlines",
+			"schedule": "0 8 * * *"
+		},
+		{
 			"path": "/api/cron/send-review-requests",
 			"schedule": "0 10 * * *"
 		},

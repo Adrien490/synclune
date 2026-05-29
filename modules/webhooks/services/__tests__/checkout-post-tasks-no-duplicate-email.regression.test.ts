@@ -2,13 +2,13 @@
  * @regression webhook-double-fire-no-duplicate-email
  *
  * Garde-fou EMAIL-AUDIT-002 + EMAIL-AUDIT-010 :
- * Si `buildPostCheckoutTasks` ou `buildPostCheckoutTasksFromPI` est appelé 2× sur la
- * même commande (cas réel : `cron retry-webhooks` rejoue checkout.session.completed),
- * la task ORDER_CONFIRMATION_EMAIL doit porter une `idempotencyKey` STABLE — Resend
+ * Si `buildPostCheckoutTasksFromPI` est appelé 2× sur la même commande (cas réel :
+ * `cron retry-webhooks` rejoue payment_intent.succeeded), la task
+ * ORDER_CONFIRMATION_EMAIL doit porter une `idempotencyKey` STABLE — Resend
  * dédupera côté serveur sur 24 h — et apparaître EXACTEMENT une fois par build.
  *
  * Verrouille aussi le retrait de l'email admin « nouvelle commande » : aucune task
- * ADMIN_NEW_ORDER_EMAIL ne doit plus être émise par ces builders.
+ * ADMIN_NEW_ORDER_EMAIL ne doit plus être émise par ce builder.
  *
  * Si quelqu'un supprime l'`idempotencyKey`, le rend variable (timestamp, nonce…),
  * duplique la confirmation client, ou réintroduit l'email admin, ce test échoue et
@@ -30,10 +30,7 @@ vi.mock("@/modules/orders/utils/invoice-token", () => ({
 	generateInvoiceAccessToken: () => "token-stub",
 }));
 
-import {
-	buildPostCheckoutTasks,
-	buildPostCheckoutTasksFromPI,
-} from "../checkout-post-tasks.service";
+import { buildPostCheckoutTasksFromPI } from "../checkout-post-tasks.service";
 import type { OrderWithItems } from "../../types/checkout.types";
 
 function makeOrder(overrides: Partial<OrderWithItems> = {}): OrderWithItems {
@@ -71,16 +68,6 @@ function makeOrder(overrides: Partial<OrderWithItems> = {}): OrderWithItems {
 	};
 }
 
-function makeSession(overrides: Partial<Stripe.Checkout.Session> = {}): Stripe.Checkout.Session {
-	return {
-		id: "cs_test_1",
-		customer_email: "buyer@example.test",
-		customer_details: null,
-		metadata: {},
-		...overrides,
-	} as unknown as Stripe.Checkout.Session;
-}
-
 function makePaymentIntent(overrides: Partial<Stripe.PaymentIntent> = {}): Stripe.PaymentIntent {
 	return {
 		id: "pi_test_1",
@@ -92,28 +79,6 @@ function makePaymentIntent(overrides: Partial<Stripe.PaymentIntent> = {}): Strip
 
 describe("checkout-post-tasks — webhook double-fire no duplicate email", () => {
 	it("emits ORDER_CONFIRMATION_EMAIL exactly once with a stable idempotencyKey across two builds", () => {
-		const order = makeOrder();
-		const a = buildPostCheckoutTasks(order, makeSession());
-		const b = buildPostCheckoutTasks(order, makeSession());
-		const emailsA = a.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
-		const emailsB = b.filter((t) => t.type === "ORDER_CONFIRMATION_EMAIL");
-		expect(emailsA).toHaveLength(1);
-		expect(emailsB).toHaveLength(1);
-		const taskA = emailsA[0];
-		const taskB = emailsB[0];
-		if (taskA?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task A");
-		if (taskB?.type !== "ORDER_CONFIRMATION_EMAIL") throw new Error("expected email task B");
-		expect(taskA.data.idempotencyKey).toBe("order-confirm-order_42");
-		expect(taskB.data.idempotencyKey).toBe(taskA.data.idempotencyKey);
-	});
-
-	it("never emits an admin new-order task (removed)", () => {
-		const order = makeOrder();
-		const tasks = buildPostCheckoutTasks(order, makeSession());
-		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");
-	});
-
-	it("PI flow emits ORDER_CONFIRMATION_EMAIL exactly once with the same stable idempotencyKey", () => {
 		const order = makeOrder();
 		const a = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
 		const b = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
@@ -129,7 +94,7 @@ describe("checkout-post-tasks — webhook double-fire no duplicate email", () =>
 		expect(taskB.data.idempotencyKey).toBe(taskA.data.idempotencyKey);
 	});
 
-	it("PI flow never emits an admin new-order task (removed)", () => {
+	it("never emits an admin new-order task (removed)", () => {
 		const order = makeOrder();
 		const tasks = buildPostCheckoutTasksFromPI(order, makePaymentIntent());
 		expect(tasks.map((t) => t.type as string)).not.toContain("ADMIN_NEW_ORDER_EMAIL");

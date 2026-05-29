@@ -6,7 +6,7 @@
  * post-paiement quand Stripe est indisponible/lent (timeout Vercel 10-30s).
  *
  * Si ce test casse : ne PAS retirer le Promise.race. Le SDK Stripe ne supporte
- * pas de deadline native sur paymentIntents.retrieve / sessions.retrieve.
+ * pas de deadline native sur paymentIntents.retrieve.
  */
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -22,12 +22,6 @@ describe("checkout return Stripe timeout (regression)", () => {
 	it("borne paymentIntents.retrieve via withStripeDeadline", () => {
 		expect(returnPage).toMatch(
 			/withStripeDeadline\(\s*stripe\.paymentIntents\.retrieve\(piId\),\s*STRIPE_RETRIEVE_TIMEOUT_MS/,
-		);
-	});
-
-	it("borne checkout.sessions.retrieve via withStripeDeadline", () => {
-		expect(returnPage).toMatch(
-			/withStripeDeadline\(\s*stripe\.checkout\.sessions\.retrieve\(sessionId\),\s*STRIPE_RETRIEVE_TIMEOUT_MS/,
 		);
 	});
 

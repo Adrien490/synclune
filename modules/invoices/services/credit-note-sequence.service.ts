@@ -34,6 +34,25 @@ export function creditNoteAdvisoryLockKey(year: number): number {
 }
 
 /**
+ * Acquiert l'advisory lock avoir (`pg_advisory_xact_lock`) DANS une transaction.
+ * SSOT de l'acquisition : `void-invoice` et `issue-credit-note` l'appellent pour
+ * prendre le lock AVANT leur garde de doublon (EINV-SEQ-006), sans réintroduire
+ * le SQL `pg_advisory_xact_lock` dans leur source (anti-régression
+ * `credit-note-sequence.regression` — le lock reste centralisé ici).
+ *
+ * Idempotent : un lock xact déjà détenu se ré-acquiert sans coût (re-appelé par
+ * `nextCreditNoteNumberTx`), relâché une seule fois au commit.
+ */
+export async function acquireCreditNoteLockTx(
+	tx: Prisma.TransactionClient,
+	year: number,
+): Promise<void> {
+	await tx.$executeRaw(
+		Prisma.sql`SELECT pg_advisory_xact_lock(${creditNoteAdvisoryLockKey(year)})`,
+	);
+}
+
+/**
  * Acquiert l'advisory lock avoir puis calcule le prochain numéro
  * `A-YYYY-NNNNN` en lisant le `MAX` sur l'**UNION (Order ∪ Refund)**.
  * À appeler DANS une transaction Prisma (le lock est `xact`-scopé).
@@ -46,9 +65,7 @@ export async function nextCreditNoteNumberTx(
 ): Promise<string> {
 	const prefix = `A-${year}-`;
 
-	await tx.$executeRaw(
-		Prisma.sql`SELECT pg_advisory_xact_lock(${creditNoteAdvisoryLockKey(year)})`,
-	);
+	await acquireCreditNoteLockTx(tx, year);
 
 	// Lookup MAX(A-YYYY-NNNNN) sur les DEUX tables (Order + Refund) — la séquence
 	// est partagée pour garantir l'unicité globale cross-table (EINV-PRISMA-001).

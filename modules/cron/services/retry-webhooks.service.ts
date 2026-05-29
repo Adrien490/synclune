@@ -8,7 +8,10 @@ import {
 	persistPostWebhookTasks,
 	executePersistedTasksForEvent,
 } from "@/modules/webhooks/services/post-webhook-tasks.service";
-import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/webhooks/constants/webhook.constants";
+import {
+	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
+} from "@/modules/webhooks/constants/webhook.constants";
 import {
 	BATCH_DEADLINE_MS,
 	BATCH_SIZE_MEDIUM,
@@ -50,12 +53,16 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 		};
 	}
 
-	// Reset stale PROCESSING events (worker crashed mid-flight) so they retry next time
-	const staleProcessingCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+	// Reset stale PROCESSING events (worker crashed mid-flight) so they retry next time.
+	// WEBHOOK-AUDIT-001 : seuil abaissé de 24h → STALE_PROCESSING_THRESHOLD_MS (15min,
+	// bien au-delà du maxDuration=60s de la route) pour récupérer rapidement un event
+	// figé par une lambda crashée. PROCESSING n'a pas de processedAt (posé seulement au
+	// statut terminal) → on filtre sur receivedAt.
+	const staleProcessingCutoff = new Date(Date.now() - STALE_PROCESSING_THRESHOLD_MS);
 	await prisma.webhookEvent.updateMany({
 		where: {
 			status: WebhookEventStatus.PROCESSING,
-			processedAt: { lt: staleProcessingCutoff },
+			receivedAt: { lt: staleProcessingCutoff },
 		},
 		data: { status: WebhookEventStatus.FAILED },
 	});

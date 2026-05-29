@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
 	experimental: {
 		authInterrupts: true,
 		turbopackFileSystemCacheForBuild: true,
+		// NOTE PERF : `inlineCss: true` a été testé (audit Lighthouse 2026-05-29) et
+		// REJETÉ — inliner le bundle CSS (~64 KiB) dans le <head> gonfle le document
+		// critique et dégrade nettement le FCP mobile sur 4G (/produits +19 %,
+		// /creations +27 %). À ne pas réactiver sans re-mesure mobile.
 		optimizePackageImports: [
 			"motion/react",
 			"lucide-react",

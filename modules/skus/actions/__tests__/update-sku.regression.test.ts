@@ -33,6 +33,7 @@ const {
 		color: { findUnique: vi.fn(), findMany: vi.fn() },
 		material: { findUnique: vi.fn(), findMany: vi.fn() },
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -167,6 +168,9 @@ describe("updateProductSku — regression hardening", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
+		// SELECT inventory ... FOR UPDATE (verrou avant écriture delta) — aligné sur
+		// buildSkuMock.inventory (5).
+		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 5 }]);
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.update.mockResolvedValue({
@@ -286,6 +290,66 @@ describe("updateProductSku — regression hardening", () => {
 
 			const result = await updateProductSku(undefined, formData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);
+		});
+	});
+
+	// STOCK-INTEGRITY: l'écriture inventory admin applique un DELTA relatif à la
+	// valeur affichée (originalInventory) sous FOR UPDATE, jamais un set absolu.
+	// Garde contre l'écrasement des décréments webhook commités pendant l'édition.
+	describe("STOCK-INTEGRITY: inventory delta sous verrou", () => {
+		it("champ inchangé (delta 0) ne réécrit pas le stock même si des ventes ont décrémenté la DB", async () => {
+			// Admin a vu 15, soumet 15 ; mais 3 ventes ont fait passer la DB à 12.
+			mockSafeParse.mockReturnValue({
+				success: true,
+				data: { ...buildValidatedData({}), inventory: 15, originalInventory: 15 },
+			});
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({}));
+			mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 12 }]); // stock réel verrouillé
+
+			const result = await updateProductSku(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			// delta = 15 - 15 = 0 → DB reste 12, les ventes ne sont PAS écrasées.
+			expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ inventory: { increment: 0 } }),
+				}),
+			);
+		});
+
+		it("baisse volontaire applique le delta relatif (préserve les ventes concurrentes)", async () => {
+			// Admin a vu 15, recompte et soumet 5 (intention −10) ; DB déjà à 12.
+			mockSafeParse.mockReturnValue({
+				success: true,
+				data: { ...buildValidatedData({}), inventory: 5, originalInventory: 15 },
+			});
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({}));
+			mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 12 }]);
+
+			const result = await updateProductSku(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			// delta = 5 - 15 = -10 → 12 + (-10) = 2, pas un set absolu à 5.
+			expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ inventory: { increment: -10 } }),
+				}),
+			);
+		});
+
+		it("rejette si le delta ferait passer le stock sous zéro (stock changé entre-temps)", async () => {
+			// Admin a vu 15, soumet 5 (−10) ; mais des ventes ont vidé la DB à 3.
+			mockSafeParse.mockReturnValue({
+				success: true,
+				data: { ...buildValidatedData({}), inventory: 5, originalInventory: 15 },
+			});
+			mockPrisma.productSku.findUnique.mockResolvedValue(buildSkuMock({}));
+			mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 3 }]); // 3 + (-10) = -7 < 0
+
+			const result = await updateProductSku(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
 		});
 	});
 });

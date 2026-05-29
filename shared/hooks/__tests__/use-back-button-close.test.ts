@@ -1,7 +1,12 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, act, cleanup } from "@testing-library/react";
+import { afterEach, describe, it, expect, vi, beforeEach } from "vitest";
 
 import { useBackButtonClose } from "../use-back-button-close";
+
+// Le hook coordonne désormais les overlays imbriqués via une pile LIFO partagée
+// (module-level). On démonte les hooks entre chaque test pour drainer cette pile
+// (le cleanup de démontage retire l'entrée + reset le compteur de suppression).
+afterEach(cleanup);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -336,6 +341,59 @@ describe("useBackButtonClose", () => {
 			});
 
 			expect(onClose).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Nested overlays (LIFO coordination) — fixes the admin selection-mode bugs:
+	// closing a child drawer (history.back) must not close the parent overlay,
+	// and a hardware back must only close the topmost overlay.
+	// -------------------------------------------------------------------------
+
+	describe("nested overlays", () => {
+		// @regression nested-overlay-programmatic-close-keeps-parent
+		// Un drawer enfant fermé via handleClose (→ history.back) ne doit PAS
+		// fermer l'overlay parent resté ouvert (ex. drawer d'actions groupées
+		// au-dessus du mode sélection admin).
+		it("closing a child via handleClose does NOT close the still-open parent", () => {
+			const parentClose = vi.fn();
+			const childClose = vi.fn();
+
+			// Parent ouvert en premier (ex. bottom-bar du mode sélection)
+			renderHook(() => useBackButtonClose({ isOpen: true, onClose: parentClose, id: "parent" }));
+			// Enfant ouvert par-dessus (ex. drawer « ... »)
+			const child = renderHook(() =>
+				useBackButtonClose({ isOpen: true, onClose: childClose, id: "child" }),
+			);
+
+			// Fermeture programmatique de l'enfant → history.back() → popstate
+			act(() => {
+				child.result.current.handleClose();
+			});
+			act(() => {
+				firePopstate();
+			});
+
+			expect(childClose).toHaveBeenCalledTimes(1);
+			// Le parent NE doit PAS s'être fermé.
+			expect(parentClose).not.toHaveBeenCalled();
+		});
+
+		// @regression nested-overlay-hardware-back-closes-top-only
+		// Un back matériel ferme uniquement l'overlay au sommet de la pile.
+		it("a hardware back closes only the topmost overlay", () => {
+			const parentClose = vi.fn();
+			const childClose = vi.fn();
+
+			renderHook(() => useBackButtonClose({ isOpen: true, onClose: parentClose, id: "parent" }));
+			renderHook(() => useBackButtonClose({ isOpen: true, onClose: childClose, id: "child" }));
+
+			act(() => {
+				firePopstate();
+			});
+
+			expect(childClose).toHaveBeenCalledTimes(1);
+			expect(parentClose).not.toHaveBeenCalled();
 		});
 	});
 });

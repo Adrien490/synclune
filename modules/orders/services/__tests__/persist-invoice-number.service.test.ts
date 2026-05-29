@@ -5,30 +5,32 @@ import { Prisma } from "@/app/generated/prisma/client";
 // Mocks
 // ============================================================================
 
-const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
-	const mockTx = {
-		$executeRaw: vi.fn(),
-		$queryRaw: vi.fn(),
-		order: {
-			update: vi.fn(),
-			findUnique: vi.fn(),
-		},
-		orderHistory: {
-			create: vi.fn(),
-		},
-	};
-	return {
-		mockTx,
-		mockPrisma: {
-			$transaction: vi.fn(),
-			// EINV-SEQ-002 : lookup hors transaction de paidAt/createdAt pour dériver
-			// le millésime de la séquence (Europe/Paris).
-			order: { findUnique: vi.fn() },
-		},
-		mockUpdateTag: vi.fn(),
-		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-	};
-});
+const { mockTx, mockPrisma, mockUpdateTag, mockLogger, mockSendAdminSequenceOverflowAlert } =
+	vi.hoisted(() => {
+		const mockTx = {
+			$executeRaw: vi.fn(),
+			$queryRaw: vi.fn(),
+			order: {
+				update: vi.fn(),
+				findUnique: vi.fn(),
+			},
+			orderHistory: {
+				create: vi.fn(),
+			},
+		};
+		return {
+			mockTx,
+			mockPrisma: {
+				$transaction: vi.fn(),
+				// EINV-SEQ-002 : lookup hors transaction de paidAt/createdAt pour dériver
+				// le millésime de la séquence (Europe/Paris).
+				order: { findUnique: vi.fn() },
+			},
+			mockUpdateTag: vi.fn(),
+			mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+			mockSendAdminSequenceOverflowAlert: vi.fn().mockResolvedValue(undefined),
+		};
+	});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -47,6 +49,12 @@ vi.mock("../../constants/cache", () => ({
 		"orders-list",
 		"order-detail",
 	]),
+}));
+
+// Fix C — l'alerte overflow (sous-type sequence-overflow) doit être assertée :
+// sans mock + assertion, supprimer le câblage laisserait les tests verts.
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminSequenceOverflowAlert: mockSendAdminSequenceOverflowAlert,
 }));
 
 import { persistInvoiceNumber } from "../persist-invoice-number.service";
@@ -484,6 +492,56 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		});
 	});
 
+	/**
+	 * @regression invoice-idempotent-under-lock-2026-05-29
+	 *
+	 * EINV-SEQ-006 — race eager (webhook) vs lazy (route download) : les callers
+	 * pré-vérifient `invoiceNumber` HORS du lock advisory. Sous concurrence, deux
+	 * chemins passent leur garde puis se sérialisent dans la tx. Sans re-lecture
+	 * SOUS le lock, le 2e écraserait le numéro émis (mutation Art. 286) en
+	 * orphelinisant le 1er (gap). La garde re-lit `invoiceNumber` après le lock et
+	 * retourne l'existant en noop (pas de MAX+1, pas d'UPDATE, pas d'audit).
+	 */
+	describe("idempotence sous lock (EINV-SEQ-006)", () => {
+		it("retourne le numéro existant sans réémettre quand invoiceNumber est déjà posé", async () => {
+			runTx();
+			const existingDate = new Date("2026-05-28T10:00:00Z");
+			// Re-lecture SOUS le lock : la commande a déjà un numéro (posé par un
+			// chemin concurrent qui a commit en premier).
+			mockTx.order.findUnique.mockResolvedValue({
+				invoiceNumber: "F-2026-00007",
+				invoiceGeneratedAt: existingDate,
+				invoiceDataHash: "a".repeat(64),
+			});
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe("F-2026-00007");
+			expect(result?.invoiceDataHash).toBe("a".repeat(64));
+			// Pas de génération : ni lookup MAX, ni UPDATE, ni audit.
+			expect(mockTx.$queryRaw).not.toHaveBeenCalled();
+			expect(mockTx.order.update).not.toHaveBeenCalled();
+			expect(mockTx.orderHistory.create).not.toHaveBeenCalled();
+			// Pas d'invalidation cache sur le noop.
+			expect(mockUpdateTag).not.toHaveBeenCalled();
+		});
+
+		it("le lock advisory est tout de même acquis avant la re-lecture (sérialisation)", async () => {
+			runTx();
+			mockTx.order.findUnique.mockResolvedValue({
+				invoiceNumber: "F-2026-00007",
+				invoiceGeneratedAt: new Date(),
+				invoiceDataHash: "b".repeat(64),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
+			const lockText = mockTx.$executeRaw.mock.calls[0]![0].strings.join("");
+			expect(lockText).toContain("pg_advisory_xact_lock");
+		});
+	});
+
 	describe("retry on P2002 unique violation", () => {
 		it("retries the full tx on P2002 and succeeds on second attempt", async () => {
 			mockPrisma.$transaction
@@ -585,6 +643,19 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				}),
 				expect.objectContaining({ service: "persist-invoice-number" }),
 			);
+		});
+
+		it("alerte l'admin (sequence-overflow, documentType invoice) sur saturation — Fix C", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockSendAdminSequenceOverflowAlert).toHaveBeenCalledWith({
+				year,
+				documentType: "invoice",
+			});
 		});
 
 		it("does NOT retry on overflow (BusinessError ≠ P2002)", async () => {

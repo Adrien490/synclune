@@ -66,6 +66,9 @@ export async function updateProductSku(
 				? Number(formData.get("compareAtPriceEuros"))
 				: undefined,
 			inventory: Number(formData.get("inventory")) || 0,
+			originalInventory: formData.get("originalInventory")
+				? Number(formData.get("originalInventory"))
+				: undefined,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
 			// Couleurs M2M sérialisées en JSON (1re = principale)
@@ -107,6 +110,7 @@ export async function updateProductSku(
 			productSku,
 			oldMediaUrls,
 			previousInventory,
+			newInventory,
 			previousIsActive,
 			previousColors,
 			previousMaterials,
@@ -193,12 +197,31 @@ export async function updateProductSku(
 				where: { skuId: validatedData.skuId },
 			});
 
+			// Verrou ligne + lecture du stock RÉEL pour appliquer un DELTA relatif à
+			// la valeur affichée à l'admin (originalInventory), au lieu d'un set
+			// absolu last-write-wins. Sérialise avec le FOR UPDATE du webhook
+			// (checkout-order-processing.service) → les décréments de vente commités
+			// pendant l'édition du formulaire ne sont PAS écrasés (anti stock fantôme).
+			const lockedRows = await tx.$queryRaw<{ inventory: number }[]>`
+				SELECT "inventory" FROM "ProductSku" WHERE "id" = ${validatedData.skuId} FOR UPDATE
+			`;
+			const lockedInventory = lockedRows[0]?.inventory ?? existingSku.inventory;
+			// Fallback : si le champ caché manque, baseline = cible → delta 0, aucun écrasement.
+			const baselineInventory = validatedData.originalInventory ?? validatedData.inventory;
+			const inventoryDelta = validatedData.inventory - baselineInventory;
+			const targetInventory = lockedInventory + inventoryDelta;
+			if (targetInventory < 0) {
+				throw new BusinessError(
+					"Le stock a changé depuis l'ouverture du formulaire. Rechargez la fiche et réessayez.",
+				);
+			}
+
 			const updatedSku = await tx.productSku.update({
 				where: { id: validatedData.skuId },
 				data: {
 					priceInclTax: priceInclTaxCents,
 					compareAtPrice: compareAtPriceCents,
-					inventory: validatedData.inventory,
+					inventory: { increment: inventoryDelta },
 					isActive: validatedData.isActive,
 					isDefault: validatedData.isDefault,
 					size: refs.size,
@@ -239,7 +262,11 @@ export async function updateProductSku(
 			return {
 				productSku: updatedSku,
 				oldMediaUrls: existingSku.images.map((m) => m.url),
-				previousInventory: existingSku.inventory,
+				// Stock verrouillé (réel) avant écriture + stock résultant après delta :
+				// base du gate back-in-stock pour refléter l'état DB exact, pas la
+				// valeur form potentiellement périmée.
+				previousInventory: lockedInventory,
+				newInventory: targetInventory,
 				previousIsActive: existingSku.isActive,
 				previousColors: existingSku.colors,
 				previousMaterials: existingSku.materials,
@@ -261,7 +288,7 @@ export async function updateProductSku(
 		// (NOTIFY_SEND_INTERVAL_MS) rallonge le travail ; `after()` évite qu'il soit
 		// tué par le freeze serverless. Idempotent via wishlist.backInStockNotifiedAt.
 		const wasUnavailable = previousInventory === 0 || !previousIsActive;
-		const isNowAvailable = validatedData.inventory > 0 && validatedData.isActive;
+		const isNowAvailable = newInventory > 0 && validatedData.isActive;
 		if (wasUnavailable && isNowAvailable) {
 			after(() => notifyBackInStock(productSku.productId));
 		}

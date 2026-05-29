@@ -22,7 +22,7 @@ export default function DiscountsLoading() {
 				className="hidden md:block"
 			/>
 
-			<StickyActionBarSkeleton itemCount={4} />
+			<StickyActionBarSkeleton itemCount={3} withSearch />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
 

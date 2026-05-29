@@ -1,0 +1,31 @@
+{
+	"id": "evt_test_invoice_payment_failed",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "invoice.payment_failed",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "in_test_payment_failed",
+			"object": "invoice",
+			"number": "SYN-DRAFT-0001",
+			"currency": "eur",
+			"amount_due": 4998,
+			"amount_paid": 0,
+			"amount_remaining": 4998,
+			"customer": "cus_test_1",
+			"customer_email": "client@example.com",
+			"status": "open",
+			"livemode": false,
+			"last_finalization_error": {
+				"code": "payment_intent_authentication_failure",
+				"message": "The payment failed because authentication was not completed.",
+				"type": "invalid_request_error"
+			},
+			"metadata": { "orderId": "clord00000000000000000004" }
+		}
+	}
+}

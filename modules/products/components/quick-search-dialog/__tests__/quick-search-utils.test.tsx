@@ -119,7 +119,7 @@ describe("HighlightMatch", () => {
 	it("applies correct CSS classes to mark elements", () => {
 		const { container } = render(<HighlightMatch text="Boucles" query="Bou" />);
 		const mark = container.querySelector("mark");
-		expect(mark).toHaveClass("bg-primary/15", "text-foreground", "font-medium", "rounded-sm");
+		expect(mark).toHaveClass("bg-primary/25", "text-foreground", "font-medium", "rounded-sm");
 	});
 
 	it("handles partial word matches", () => {
@@ -199,27 +199,45 @@ describe("HighlightMatch", () => {
 
 // ─── FOCUSABLE_SELECTOR ──────────────────────────────────────────
 
+// Arrow-key roving is scoped to [role="option"] (F1): only the selectable
+// options are navigable; auxiliary controls (delete ×, "Effacer", "Voir tout",
+// "Réessayer") are deliberately excluded and remain reachable via Tab.
 describe("FOCUSABLE_SELECTOR", () => {
 	afterEach(() => {
 		document.body.innerHTML = "";
 	});
 
-	it("matches enabled buttons", () => {
+	it("matches elements with role='option' regardless of tag", () => {
 		document.body.innerHTML = `
 			<div>
-				<button>Click me</button>
-				<button type="submit">Submit</button>
+				<button role="option">Option button</button>
+				<a href="/test" role="option">Option link</a>
+				<div role="option">Option div</div>
 			</div>
 		`;
 		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(2);
+		expect(focusable).toHaveLength(3);
 	});
 
-	it("excludes disabled buttons", () => {
+	it("excludes auxiliary controls without role='option' (the F1 fix)", () => {
 		document.body.innerHTML = `
 			<div>
-				<button>Enabled</button>
-				<button disabled>Disabled</button>
+				<button role="option">Recent search</button>
+				<button aria-label="Supprimer">×</button>
+				<button>Effacer</button>
+				<a href="/collections">Voir toutes les collections</a>
+			</div>
+		`;
+		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
+		expect(focusable).toHaveLength(1);
+		expect(focusable[0]?.textContent).toBe("Recent search");
+	});
+
+	it("excludes aria-disabled options", () => {
+		document.body.innerHTML = `
+			<div>
+				<button role="option">Enabled</button>
+				<button role="option" aria-disabled="true">Aria Disabled</button>
 			</div>
 		`;
 		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
@@ -227,110 +245,29 @@ describe("FOCUSABLE_SELECTOR", () => {
 		expect(focusable[0]?.textContent).toBe("Enabled");
 	});
 
-	it("excludes aria-disabled buttons", () => {
-		document.body.innerHTML = `
-			<div>
-				<button>Enabled</button>
-				<button aria-disabled="true">Aria Disabled</button>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(1);
-		expect(focusable[0]?.textContent).toBe("Enabled");
-	});
-
-	it("matches links", () => {
-		document.body.innerHTML = `
-			<div>
-				<a href="/test">Link 1</a>
-				<a href="/test2">Link 2</a>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(2);
-	});
-
-	it("excludes elements with tabindex=-1 (except buttons/links which match earlier rules)", () => {
-		const container = document.createElement("div");
-		container.innerHTML = `
-			<button>Normal button</button>
-			<button tabindex="-1">Button with tabindex -1</button>
-			<a href="/test" tabindex="-1">Link with tabindex -1</a>
-			<div tabindex="-1">Excluded div</div>
-		`;
-		const focusable = container.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(3); // All buttons and links (tabindex=-1 on button/link doesn't exclude them), div with tabindex=-1 IS excluded
-	});
-
-	it("excludes search inputs with tabindex", () => {
-		document.body.innerHTML = `
-			<div>
-				<input type="text" tabindex="0" />
-				<input type="search" tabindex="0" />
-				<button>Button</button>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(2); // text input + button (search excluded)
-	});
-
-	it("matches elements with positive tabindex", () => {
-		document.body.innerHTML = `
-			<div>
-				<div tabindex="0">Focusable div</div>
-				<span tabindex="1">Focusable span</span>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(2);
-	});
-
-	it("matches mix of buttons, links, and tabindex elements", () => {
-		const container = document.createElement("div");
-		container.innerHTML = `
-			<button>Button</button>
-			<a href="/test">Link</a>
-			<div tabindex="0">Focusable div</div>
-			<button disabled>Disabled</button>
-			<button tabindex="-1">Button with -1</button>
-			<input type="search" tabindex="0" />
-		`;
-		const focusable = container.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(4); // button + link + div + button (tabindex=-1 doesn't exclude buttons; excludes disabled, search)
-	});
-
-	it("handles aria-disabled on links", () => {
-		document.body.innerHTML = `
-			<div>
-				<a href="/test">Enabled link</a>
-				<a href="/test" aria-disabled="true">Disabled link</a>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(1);
-		expect(focusable[0]?.textContent).toBe("Enabled link");
-	});
-
-	it("excludes disabled attribute on links (non-standard but handled)", () => {
-		document.body.innerHTML = `
-			<div>
-				<a href="/test">Enabled link</a>
-				<a href="/test" disabled>Disabled link</a>
-			</div>
-		`;
-		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(1);
-		expect(focusable[0]?.textContent).toBe("Enabled link");
-	});
-
-	it("allows search input without tabindex", () => {
+	it("does not match the search input or plain buttons", () => {
 		document.body.innerHTML = `
 			<div>
 				<input type="search" />
-				<button>Button</button>
+				<button>Plain button</button>
+				<a href="/x">Plain link</a>
 			</div>
 		`;
 		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
-		expect(focusable).toHaveLength(1); // Only button (search has no tabindex so not matched by [tabindex])
+		expect(focusable).toHaveLength(0);
+	});
+
+	it("preserves DOM order of options", () => {
+		document.body.innerHTML = `
+			<div>
+				<a href="/1" role="option">First</a>
+				<button>not an option</button>
+				<a href="/2" role="option">Second</a>
+			</div>
+		`;
+		const focusable = document.querySelectorAll(FOCUSABLE_SELECTOR);
+		expect(focusable).toHaveLength(2);
+		expect(focusable[0]?.textContent).toBe("First");
+		expect(focusable[1]?.textContent).toBe("Second");
 	});
 });

@@ -22,6 +22,9 @@ const {
 		discount: {
 			findUnique: vi.fn(),
 		},
+		user: {
+			findUnique: vi.fn(),
+		},
 	},
 	mockHeaders: vi.fn(),
 	mockGetClientIp: vi.fn(),
@@ -170,6 +173,18 @@ describe("validateDiscountCode", () => {
 
 		// Default: no session (guest checkout)
 		mockGetSession.mockResolvedValue(null);
+
+		// Default: authenticated lookups resolve to an ACTIVE user (gate AUTHZ-1).
+		// Tests that exercise a session rely on this; guest tests skip the lookup.
+		mockPrisma.user.findUnique.mockResolvedValue({
+			id: "user-1",
+			email: "user@test.com",
+			name: "Test",
+			role: "USER",
+			image: null,
+			emailVerified: true,
+			stripeCustomerId: null,
+		});
 
 		// Default: cart with items (subtotal = 5000)
 		mockGetCart.mockResolvedValue(mockCart);
@@ -442,6 +457,20 @@ describe("validateDiscountCode", () => {
 				userId: "clxxxxxxxxxxxxxxxxxxxxxxx",
 			}),
 		);
+	});
+
+	it("(AUTHZ-1) rejects a session whose account is not ACTIVE (suspended/INACTIVE)", async () => {
+		mockGetSession.mockResolvedValue({
+			user: { id: "clxxxxxxxxxxxxxxxxxxxxxxx", email: "user@test.com" },
+		});
+		// DB filter (suspendedAt/accountStatus) excludes the row → gate rejects.
+		mockPrisma.user.findUnique.mockResolvedValue(null);
+
+		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+
+		expect(result.valid).toBe(false);
+		// Discount lookup must never run once the gate rejects.
+		expect(mockPrisma.discount.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("should prefer session email over provided customerEmail", async () => {

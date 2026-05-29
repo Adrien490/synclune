@@ -35,9 +35,10 @@ interface CollectionCardProps {
  *
  * Pattern stretched-link : <article relative> wrappe la carte, <Link> entoure
  * uniquement le titre avec ::after qui couvre toute la carte. Le reste du contenu
- * (description, prix, compteur, cue « Decouvrir ») est decoratif/non-interactif et
- * reste cliquable via le ::after — la structure permet d'ajouter un futur CTA
- * secondaire (couche z-30) sans imbriquer button dans anchor.
+ * (description, prix, compteur) est decoratif/non-interactif et reste cliquable via
+ * le ::after — aucun element decoratif positionne/transforme ne doit le recouvrir.
+ * La structure permet d'ajouter un futur CTA secondaire (couche z-30) sans imbriquer
+ * button dans anchor.
  */
 export function CollectionCard({
 	slug,
@@ -103,12 +104,12 @@ export function CollectionCard({
 					aria-hidden="true"
 				/>
 
-				{/* Stretched link: titre enveloppe par Link avec ::after couvrant la carte */}
+				{/* Stretched link: titre enveloppe par Link avec ::after couvrant la carte.
+				    Aligne sur ProductCard : aucun element decoratif positionne/transforme
+				    ne doit se superposer au ::after (z-10) sous peine de capter les clics. */}
 				<Link
 					href={collectionUrl}
-					className={cn(
-						"focus-ring block after:absolute after:inset-0 after:z-10 after:rounded-lg after:lg:rounded-xl",
-					)}
+					className="focus-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
 					<HeadingTag
 						id={titleId}
@@ -149,28 +150,19 @@ export function CollectionCard({
 						</p>
 					))}
 
-				{/* Cue de clic decoratif : visible sur tactile, revele au hover/focus sur desktop */}
+				{/* Discovery cue — decoratif (aria-hidden). Visible par defaut (tactile),
+				    masque puis revele au hover sur les devices hover-capable, et toujours
+				    revele au focus clavier. Reste sous le ::after (z-10) du stretched-link. */}
 				<p
 					aria-hidden="true"
 					className={cn(
-						"text-primary mt-2 inline-flex items-center gap-1 text-xs font-medium",
-						"transition-[opacity,transform] duration-300",
-						// Tactile / sans hover : toujours visible
-						"translate-x-0 opacity-100",
-						// Appareils hover-capables : masque jusqu'au survol
-						"can-hover:opacity-0 motion-safe:can-hover:-translate-x-1",
-						"can-hover:group-hover:opacity-100 motion-safe:can-hover:group-hover:translate-x-0",
-						// Focus clavier : toujours revele
-						"group-focus-within:translate-x-0 group-focus-within:opacity-100",
+						"text-primary mt-2 text-xs font-medium",
+						"opacity-100 transition-opacity duration-300",
+						"can-hover:opacity-0 can-hover:group-hover:opacity-100",
+						"group-focus-within:opacity-100",
 					)}
 				>
-					Découvrir
-					<span
-						aria-hidden="true"
-						className="motion-safe:can-hover:group-hover:translate-x-0.5 transition-transform duration-300"
-					>
-						→
-					</span>
+					{COLLECTION_TEXTS.DISCOVER}
 				</p>
 			</div>
 		</article>

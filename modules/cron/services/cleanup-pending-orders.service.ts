@@ -21,9 +21,15 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
  * Scope: orders where status=PENDING + paymentStatus=PENDING + stripePaymentIntentId IS NULL
  * older than PENDING_ORDER_TIMEOUT_MS (24h).
  *
- * Why we exclude orders with stripePaymentIntentId: those are async payment
- * flows (SEPA, Sofort) handled by sync-async-payments which polls Stripe up
- * to 10 days. Touching them here would race with that cron.
+ * Why we exclude orders with stripePaymentIntentId: dans le flux Elements actuel,
+ * TOUTE commande créée par `confirmCheckout` porte un `stripePaymentIntentId`
+ * (order-creation.service.ts) — c'est `sync-async-payments` qui est désormais
+ * propriétaire de leur réconciliation : il interroge Stripe et résout les PI
+ * `succeeded` (→ PAID) comme les PI durablement non finalisés / abandonnés
+ * (`requires_action`/`requires_confirmation`/`requires_payment_method`/`canceled`
+ * → cancel + FAILED, cf. F1 2026-05-29). Y toucher ici racerait ce cron.
+ * Ce cron ne couvre donc que les éventuelles commandes legacy à PI nul (aucune
+ * dans la config actuelle — filet de sécurité conservé sans coût).
  *
  * Effects per order (atomic):
  *  - status → CANCELLED

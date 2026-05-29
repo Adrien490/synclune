@@ -45,8 +45,6 @@ const confirmationParamsSchema = z.object({
 	orderNumber: z.string().min(1),
 });
 
-const sessionIdSchema = z.string().min(1).max(255);
-
 export type OrderForConfirmation = NonNullable<
 	Awaited<ReturnType<typeof fetchOrderForConfirmation>>
 >;
@@ -107,34 +105,6 @@ async function fetchOrderForConfirmation(orderId: string, orderNumber: string) {
 	} catch (error) {
 		logger.error("Failed to fetch order for confirmation", error, {
 			service: "getOrderForConfirmation",
-		});
-		return null;
-	}
-}
-
-/**
- * Fallback lookup pour la page de confirmation quand le user atterrit avec
- * `session_id+pending=true` (paiement async SEPA ou webhook en retard
- * > findOrderWithRetry 1.5s dans /paiement/retour).
- *
- * NON CACHÉ on purpose : la donnée bascule null → Order rapidement à l'arrivée
- * du webhook ; un F5 doit refléter immédiatement l'Order fraîchement créée.
- */
-export async function getOrderBySessionId(sessionId: string) {
-	const validation = sessionIdSchema.safeParse(sessionId);
-	if (!validation.success) return null;
-
-	try {
-		return await prisma.order.findFirst({
-			where: {
-				stripeCheckoutSessionId: validation.data,
-				...notDeleted,
-			},
-			select: CONFIRMATION_ORDER_SELECT,
-		});
-	} catch (error) {
-		logger.error("Failed to fetch order by session id", error, {
-			service: "getOrderBySessionId",
 		});
 		return null;
 	}

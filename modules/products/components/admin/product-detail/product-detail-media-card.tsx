@@ -8,11 +8,13 @@ import { useReducedMotion } from "motion/react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useLightbox } from "@/shared/hooks/use-lightbox";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
+import { buildVariantLabel } from "@/modules/skus/utils/sku-variant-label";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
-import type { GetProductReturn } from "@/modules/products/types/product.types";
+import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
@@ -22,15 +24,16 @@ interface ProductDetailMediaCardProps {
 	product: GetProductReturn;
 }
 
-function pickGalleryImages(product: GetProductReturn): ProductImage[] {
-	const defaultSku = product.skus.find((sku) => sku.isDefault) ?? product.skus[0];
-	if (!defaultSku) return [];
-	const sorted = defaultSku.images.toSorted((a, b) => {
+function sortImages(images: readonly ProductImage[]): ProductImage[] {
+	return images.toSorted((a, b) => {
 		if (a.isPrimary && !b.isPrimary) return -1;
 		if (!a.isPrimary && b.isPrimary) return 1;
 		return 0;
 	});
-	return sorted;
+}
+
+function pickInitialSku(skusWithImages: ProductSku[]): ProductSku | undefined {
+	return skusWithImages.find((sku) => sku.isDefault) ?? skusWithImages[0];
 }
 
 function toProductMedia(image: ProductImage, fallbackAlt: string): ProductMedia {
@@ -50,13 +53,27 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 	const prefersReducedMotion = useReducedMotion();
 	const [activeIndex, setActiveIndex] = useState(0);
 
-	const images = pickGalleryImages(product);
+	const skusWithImages = product.skus.filter((sku) => sku.images.length > 0);
+	const initialSku = pickInitialSku(skusWithImages);
+	const [selectedSkuId, setSelectedSkuId] = useState(initialSku?.id ?? null);
+
+	// Le SKU sélectionné peut disparaître (improbable sur une fiche statique) → fallback.
+	const selectedSku = skusWithImages.find((sku) => sku.id === selectedSkuId) ?? initialSku;
+	const showVariantSelector = skusWithImages.length > 1;
+
+	const images = selectedSku ? sortImages(selectedSku.images) : [];
 	const [primary, ...rest] = images;
 
 	const slides = buildLightboxSlides(
 		images.map((image) => toProductMedia(image, product.title)),
 		prefersReducedMotion ?? false,
 	);
+
+	const selectSku = (skuId: string) => {
+		haptic("light");
+		setSelectedSkuId(skuId);
+		setActiveIndex(0);
+	};
 
 	const openAt = (index: number) => {
 		haptic("light");
@@ -73,6 +90,47 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3">
+				{showVariantSelector ? (
+					<div
+						className="flex flex-wrap gap-2"
+						role="group"
+						aria-label="Choisir la variante à prévisualiser"
+					>
+						{skusWithImages.map((sku) => {
+							const isSelected = sku.id === selectedSku?.id;
+							const label = buildVariantLabel(sku) || sku.sku;
+							return (
+								<button
+									key={sku.id}
+									type="button"
+									onClick={() => selectSku(sku.id)}
+									aria-pressed={isSelected}
+									aria-label={`Variante : ${label} (${sku.images.length} image${sku.images.length > 1 ? "s" : ""})`}
+									className={cn(
+										"focus-visible:ring-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors outline-none focus-visible:ring-2 sm:min-h-9",
+										isSelected
+											? "border-primary bg-primary text-primary-foreground"
+											: "bg-background hover:bg-muted/50",
+									)}
+								>
+									{sku.colors.length > 0 ? (
+										<span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
+											{sku.colors.slice(0, 3).map((entry) => (
+												<span
+													key={entry.colorId}
+													className="border-background size-3 rounded-full border"
+													style={{ backgroundColor: entry.color.hex }}
+												/>
+											))}
+										</span>
+									) : null}
+									<span className="max-w-32 truncate">{label}</span>
+								</button>
+							);
+						})}
+					</div>
+				) : null}
+
 				{primary ? (
 					<>
 						<button

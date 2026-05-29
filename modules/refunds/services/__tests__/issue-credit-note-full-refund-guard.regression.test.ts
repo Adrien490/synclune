@@ -46,7 +46,12 @@ vi.mock("@/app/generated/prisma/client", () => {
 		}
 	}
 	return {
-		Prisma: { PrismaClientKnownRequestError: FakePrismaClientKnownRequestError },
+		Prisma: {
+			PrismaClientKnownRequestError: FakePrismaClientKnownRequestError,
+			// EINV-SEQ-006 : le service acquiert le lock avoir via Prisma.sql avant
+			// la garde de doublon. Tagged-template mock minimal.
+			sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values }),
+		},
 		HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
 		OrderAction: { CREDIT_NOTE_GENERATED: "CREDIT_NOTE_GENERATED" },
 		RefundStatus: {
@@ -85,6 +90,9 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 }));
 vi.mock("@/modules/invoices/services/credit-note-sequence.service", () => ({
 	nextCreditNoteNumberTx: mockNextCreditNoteNumberTx,
+	// EINV-SEQ-006 : le service prend le lock avoir via ce helper SSOT avant la
+	// garde de doublon (plus de SQL pg_advisory_xact_lock inline dans le service).
+	acquireCreditNoteLockTx: async () => {},
 }));
 
 import { issueCreditNoteForRefund } from "../issue-credit-note.service";

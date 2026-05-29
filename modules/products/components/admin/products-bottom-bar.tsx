@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
-import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
+import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
@@ -48,9 +48,8 @@ function ProductsBottomBarInner({
 	materials,
 	maxPriceInCents,
 }: ProductsBottomBarProps) {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-	const { hasActiveSearch, searchValue, hasActiveSort, activeFilterCount } =
-		useActiveListControls();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
+	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -67,20 +66,6 @@ function ProductsBottomBarInner({
 				activeFilterCount > 0
 					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
 					: undefined,
-		},
-		{
-			key: "search",
-			icon: Search,
-			label: "Rechercher",
-			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchValue}". Modifier la recherche`
-				: "Ouvrir la recherche",
-			onClick: () => open("search"),
-			active: hasActiveSearch,
-			haspopup: "dialog",
-			controls: IDS.search,
-			expanded: isOpen("search"),
-			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 		{
 			kind: "link",
@@ -107,7 +92,19 @@ function ProductsBottomBarInner({
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Filtres, recherche, ajout et tri" />
+			<StickyActionBar
+				items={items}
+				ariaLabel="Recherche, filtres, ajout et tri"
+				search={
+					<SearchInput
+						size="sm"
+						paramName="search"
+						placeholder="Un bijou par titre…"
+						aria-label="Rechercher un bijou par titre"
+						className="w-full"
+					/>
+				}
+			/>
 
 			<ProductsFilterSheet
 				open={isOpen("filter")}
@@ -127,14 +124,6 @@ function ProductsBottomBarInner({
 				options={SORT_OPTIONS}
 				showResetOption
 				id={IDS.sort}
-			/>
-
-			<AdminSearchDrawerTop
-				open={isOpen("search")}
-				onOpenChange={onOpenChange("search")}
-				placeholder="Un bijou par titre…"
-				ariaLabel="Rechercher un bijou par titre"
-				id={IDS.search}
 			/>
 		</>
 	);

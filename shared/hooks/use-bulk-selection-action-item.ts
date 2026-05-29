@@ -24,6 +24,12 @@ export function useBulkSelectionActionItem(id: string): ActionMenuItem | null {
 		label: selected ? "Retirer de la sélection" : "Sélectionner",
 		icon: selected ? Square : CheckSquare,
 		haptic: "selection",
+		// Ne PAS fermer le drawer via `<DrawerClose>` (→ `history.back()`). En entrant
+		// en mode sélection, la card mobile bascule en checkbox et démonte elle-même
+		// le drawer long-press : un `history.back()` concurrent émettrait un `popstate`
+		// parasite que la bottom-bar fraîchement montée interpréterait comme « sortir
+		// du mode sélection » (item coché en arrière-plan mais mode non activé).
+		closesMenu: false,
 		onSelect: () => {
 			if (!ctx.selectionMode) ctx.enterSelectionMode();
 			ctx.toggle(id);

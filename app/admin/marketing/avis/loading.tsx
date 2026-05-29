@@ -14,7 +14,7 @@ export default function ReviewsAdminLoading() {
 
 			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
 
-			<StickyActionBarSkeleton itemCount={3} />
+			<StickyActionBarSkeleton itemCount={2} withSearch />
 
 			{/* Statistiques (4 cards : Total / Publiés / Masqués / Note moyenne) */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

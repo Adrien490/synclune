@@ -155,8 +155,8 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 
 	it("mark-as-paid action enforces existing PaymentIntent (no cash sale shortcut)", () => {
 		// L'admin ne doit JAMAIS créer une commande PAID ex nihilo. mark-as-paid
-		// suppose une Order existante avec stripeCheckoutSessionId (preuve Stripe)
-		// — sinon le stock n'est pas réservé, le PaymentIntent n'existe pas, et
+		// suppose une Order existante née d'un PaymentIntent Stripe (seule preuve
+		// de paiement depuis le retrait du flow Checkout Session hosted) — sinon
 		// l'invariant #8 saute (logiciel de caisse).
 		const content = readFileSync(
 			join(REPO_ROOT, "modules/orders/actions/mark-as-paid.ts"),
@@ -167,15 +167,13 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		// Doit refuser si commande CANCELLED — preuve qu'on opère sur une Order
 		// existante (pas de création de toute pièce).
 		expect(content).toMatch(/cancelled/);
-		// Doit lire `stripeCheckoutSessionId` pour décider de la décrémentation
-		// stock — confirme que l'Order doit avoir transité par Stripe Checkout.
-		expect(content).toMatch(/stripeCheckoutSessionId/);
+		// Doit lire `stripePaymentIntentId` — confirme que l'Order doit avoir
+		// transité par un PaymentIntent Stripe.
+		expect(content).toMatch(/stripePaymentIntentId/);
 		// EINV-CASH-001 : doit REFUSER explicitement toute Order sans preuve Stripe
-		// (ni PaymentIntent ni Checkout Session) — empêche un encaissement fictif.
+		// (PaymentIntent absent) — empêche un encaissement fictif.
 		expect(content).toMatch(/no_stripe_proof/);
-		expect(content).toMatch(
-			/!\s*found\.stripePaymentIntentId\s*&&\s*!\s*found\.stripeCheckoutSessionId/,
-		);
+		expect(content).toMatch(/if\s*\(\s*!\s*found\.stripePaymentIntentId\s*\)/);
 	});
 
 	it("markOrderAsPaid (déprécié) has no production call-site outside its definition", () => {

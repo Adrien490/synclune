@@ -6,7 +6,6 @@ import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
-import { ShortcutKbd } from "@/shared/components/ui/shortcut-kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { iconButtonClassName } from "./navbar-styles";
@@ -46,16 +45,8 @@ export function NavbarIconButtons({
 				<TooltipContent className="hidden lg:block">Favoris</TooltipContent>
 			</Tooltip>
 
-			{/* Recherche globale (visible sur desktop seulement) */}
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<QuickSearchTrigger className="hidden sm:inline-flex" />
-				</TooltipTrigger>
-				<TooltipContent className="hidden items-center gap-2 lg:inline-flex">
-					<span>Rechercher</span>
-					<ShortcutKbd keyLabel="K" />
-				</TooltipContent>
-			</Tooltip>
+			{/* Recherche globale (desktop) — icône compacte sous lg, barre « Rechercher ⌘K » à partir de lg */}
+			<QuickSearchTrigger variant="bar" className="hidden sm:inline-flex" />
 
 			{/* Menu compte (dropdown si connecté, lien sinon) — desktop seulement */}
 			<UserMenu

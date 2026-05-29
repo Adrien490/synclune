@@ -15,8 +15,9 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { ActionStatus } from "@/shared/types/server-action";
 import type { ActionState } from "@/shared/types/server-action";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { retryInvoiceGeneration } from "@/modules/invoices/actions/retry-invoice-generation";
 import type {
 	InvoiceAnomaly,
@@ -81,8 +82,13 @@ export function AnomaliesSection({ anomalies }: AnomaliesSectionProps) {
 }
 
 function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
-	const [state, formAction, pending] = useActionState<ActionState | undefined, FormData>(
-		retryInvoiceGeneration,
+	// Feedback aligné sur le reste de l'admin : loader (spinner bouton) +
+	// toast (→ pastille MicroToast sur mobile) au lieu d'un statut inline.
+	const [, formAction, pending] = useActionState<ActionState | undefined, FormData>(
+		withCallbacks(
+			retryInvoiceGeneration,
+			createToastCallbacks({ loadingMessage: "Relance en cours…" }),
+		),
 		undefined,
 	);
 
@@ -122,16 +128,6 @@ function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
 						<span className="ml-1.5">Relancer</span>
 					</Button>
 				</form>
-				{state?.status === ActionStatus.SUCCESS && (
-					<p className="text-success mt-1 text-xs" role="status">
-						{state.message}
-					</p>
-				)}
-				{state?.status === ActionStatus.ERROR && (
-					<p className="text-destructive mt-1 text-xs" role="alert">
-						{state.message}
-					</p>
-				)}
 			</TableCell>
 		</TableRow>
 	);

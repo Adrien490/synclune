@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
@@ -10,6 +10,7 @@ import {
 	UploadErrorBanner,
 } from "@/shared/components/media-upload/upload-progress";
 import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
+import { NativeDropzone } from "@/shared/components/media-upload/native-dropzone";
 import { PendingUploadsGrid } from "@/shared/components/media-upload/pending-uploads-grid";
 import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
@@ -21,7 +22,6 @@ import ScrollFade from "@/shared/components/scroll-fade";
 import { cn } from "@/shared/utils/cn";
 
 import { REVIEW_CONFIG } from "../constants/review.constants";
-import { NativeReviewDropzone } from "./review-native-dropzone";
 
 export interface ReviewMediaItem {
 	url: string;
@@ -58,8 +58,6 @@ export function ReviewMediaUpload({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-	const [isDropTarget, setIsDropTarget] = useState(false);
-	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const remaining = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length;
 	const canAddMore = remaining > 0 && !disabled;
@@ -292,17 +290,16 @@ export function ReviewMediaUpload({
 					sheetDescription="Capturez votre bijou ou choisissez un cliché de votre galerie"
 					showCamera
 					desktopFallback={
-						<NativeReviewDropzone
-							remaining={remaining}
-							isDropTarget={isDropTarget}
-							setIsDropTarget={setIsDropTarget}
+						<NativeDropzone
+							accept="image/*"
+							multiple={remaining > 1}
 							disabled={disabled}
-							fileInputRef={fileInputRef}
-							onPaste={(files) => {
-								handleFilesSelected(files);
-							}}
-							onPickFiles={() => fileInputRef.current?.click()}
 							onFiles={handleFilesSelected}
+							pasteFilter={(f) => f.type.startsWith("image/")}
+							ariaLabel="Zone d'upload des photos pour l'avis (glissez ou cliquez)"
+							primaryLabel="Glissez vos photos ou cliquez"
+							dropLabel="Relâchez pour ajouter"
+							hint={`${remaining} restante${remaining > 1 ? "s" : ""} (max 4 Mo) — collez aussi avec Ctrl/Cmd+V`}
 						/>
 					}
 				/>

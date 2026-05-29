@@ -29,6 +29,27 @@ export class CancelledOrderRaceError extends Error {
 }
 
 /**
+ * ORD-STRIPE-009 : thrown when the post-payment FOR UPDATE re-validation finds a
+ * SKU oversold (stock insuffisant / SKU désactivé / produit retiré) — typiquement
+ * le perdant d'une race sur le dernier exemplaire (réservation optimiste :
+ * `order-creation.service.ts` ne décrémente pas, deux checkouts concurrents
+ * passent tous deux la vérif). Le paiement Stripe est DÉJÀ encaissé pour cette
+ * commande. Le caller (`handlePaymentSuccess`) catch ce type pour déclencher un
+ * remboursement automatique + marquer la commande FAILED au lieu de rethrow-pour-
+ * retry-Stripe-infini (le stock ne reviendra pas → retry inutile et nuisible).
+ */
+export class OversellError extends Error {
+	constructor(
+		public readonly orderId: string,
+		public readonly skuId: string,
+		public readonly reason: string,
+	) {
+		super(`Oversell on order ${orderId}: ${reason} (SKU: ${skuId})`);
+		this.name = "OversellError";
+	}
+}
+
+/**
  * ORD-BIZ-011 : détection pré-transaction d'un payment_intent.succeeded tardif
  * sur commande CANCELLED. Déclenche un auto-refund Stripe idempotent et throw
  * pour que le caller skip toute mutation/chain post-paiement.
@@ -139,6 +160,7 @@ async function processOrderAtomically(
 	guestSessionId: string | undefined,
 	flowLabel: string,
 	expectedAmountReceived?: number | null,
+	expectedCurrency?: string | null,
 ): Promise<OrderWithItems> {
 	// 1. Fetch order with items and SKUs
 	const order = await tx.order.findUnique({
@@ -171,6 +193,18 @@ async function processOrderAtomically(
 			service: "webhook",
 		});
 		return mapToOrderWithItems(order);
+	}
+
+	// 2a-bis. Defense-in-depth: refuse to process if Stripe settled in a different
+	// currency than the order. Without this, the amount guards below compare bare
+	// integer cents across currency units (a "100" JPY capture would satisfy a
+	// "100" EUR order). EUR-only today (CHECK Order_currency_eur_check + PI created
+	// `currency:"eur"`), but this protects any future multi-currency PI. Mirrors the
+	// refund-path guard (modules/refunds/lib/stripe-refund.ts) — audit F1, 2026-05-29.
+	if (expectedCurrency && expectedCurrency.toUpperCase() !== order.currency) {
+		throw new Error(
+			`Currency mismatch for order ${orderId} (${flowLabel}): Stripe settled in ${expectedCurrency.toUpperCase()} but order.currency is ${order.currency}`,
+		);
 	}
 
 	// 2b. Defense-in-depth: refuse to mark the order PAID if Stripe captured less
@@ -255,9 +289,11 @@ async function processOrderAtomically(
 				undefined,
 				{ service: "webhook" },
 			);
-			throw new Error(
-				`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
-			);
+			// ORD-STRIPE-009 : erreur typée pour que le caller distingue l'oversell
+			// (paiement encaissé mais stock indisponible → refund auto) d'une erreur
+			// transitoire (DB down → rethrow pour retry). Le throw interrompt la
+			// transaction AVANT tout décrément, donc aucun stock à restaurer côté loser.
+			throw new OversellError(orderId, item.skuId, reason);
 		}
 	}
 
@@ -344,48 +380,6 @@ async function processOrderAtomically(
 }
 
 /**
- * Processes order from a Checkout Session in an atomic transaction.
- */
-export async function processOrderTransaction(
-	orderId: string,
-	session: Stripe.Checkout.Session,
-	shippingCost: number,
-	// Conservé pour compat de signature (CS flow legacy) — non persisté : offre unique.
-	_shippingRateId: string | undefined,
-): Promise<OrderWithItems> {
-	// ORD-BIZ-011 : pré-check CANCELLED hors transaction pour court-circuiter
-	// avant FOR UPDATE + auto-refund le paiement tardif (throws CancelledOrderRaceError).
-	await detectCancelledOrderRace(orderId, session.payment_intent as string, "CS flow");
-
-	return prisma.$transaction(
-		async (tx: Prisma.TransactionClient) => {
-			return processOrderAtomically(
-				tx,
-				orderId,
-				{
-					status: "PROCESSING",
-					paymentStatus: "PAID",
-					paidAt: new Date(),
-					stripePaymentIntentId: session.payment_intent as string,
-					stripeCheckoutSessionId: session.id,
-					stripeCustomerId: (session.customer as string) || null,
-					shippingCost,
-					// Offre unique : livraison standard Colissimo (cf. SHIPPING_RATES).
-					shippingMethod: "STANDARD",
-					shippingCarrier: "colissimo",
-				},
-				session.metadata?.guestSessionId,
-				"CS flow",
-				session.amount_total,
-			);
-		},
-		// ORD-STRIPE-004 : tx FOR UPDATE sur SKU + Order — sans maxWait override
-		// le défaut Prisma (2s) génère P2024 sous contention multi-webhooks.
-		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-	);
-}
-
-/**
  * Processes order from a Payment Intent (new PI flow).
  * Shipping info is already stored in the Order (set during confirmCheckout).
  *
@@ -419,6 +413,7 @@ export async function processOrderFromPaymentIntent(
 				paymentIntent.metadata.guestSessionId,
 				"PI flow",
 				paymentIntent.amount_received,
+				paymentIntent.currency,
 			);
 		},
 		// ORD-STRIPE-004 : tx FOR UPDATE sur SKU + Order — sans maxWait override

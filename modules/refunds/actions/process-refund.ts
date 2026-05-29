@@ -18,8 +18,11 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
+import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
@@ -308,6 +311,21 @@ export async function processRefund(
 				restockBySkuId.set(item.sku_id, (restockBySkuId.get(item.sku_id) ?? 0) + item.quantity);
 			}
 		}
+
+		// Snapshot du stock AVANT restock : sert à ne déclencher la notif
+		// back-in-stock que pour les SKU passant réellement 0→N (gate 0→N
+		// obligatoire côté appelant — notifyBackInStock ne re-check pas inventory>0
+		// et notifierait sinon les favoris ajoutés produit-en-stock).
+		const preRestockInventory = new Map<string, { inventory: number; productId: string }>();
+		if (restockBySkuId.size > 0) {
+			const rows = await prisma.productSku.findMany({
+				where: { id: { in: [...restockBySkuId.keys()] } },
+				select: { id: true, inventory: true, productId: true },
+			});
+			for (const r of rows) {
+				preRestockInventory.set(r.id, { inventory: r.inventory, productId: r.productId });
+			}
+		}
 		// P2.1: compteur réel mis à jour quand l'update réussit
 		let actualRestockedCount = 0;
 		// ORD-REFUND-AUDIT-001 : tracer les SKU manqués (catalogue refactor /
@@ -428,20 +446,18 @@ export async function processRefund(
 				});
 			}
 
-			// Invalider le cache commandes et badges (paymentStatus a changé)
-			updateTag(ORDERS_CACHE_TAGS.LIST);
+			// Invalider le cache commandes (paymentStatus a changé).
+			// CACHE-AUDIT-010 : passer par le helper canonique pour couvrir aussi
+			// DETAIL/HISTORY/CONFIRMATION(orderId) + USER_ORDERS_COUNT — une liste
+			// manuelle laissait la page détail commande + historique stale jusqu'à
+			// l'expiration du profil `user` (~10 min).
+			getOrderInvalidationTags(
+				refundData.refund.order_user_id ?? undefined,
+				refundData.refund.order_id,
+			).forEach((tag) => updateTag(tag));
 			updateTag(REFUNDS_CACHE_TAGS.LIST);
 			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
-			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-			updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
-
-			// Invalider le cache user (commandes, stats)
-			if (refundData.refund.order_user_id) {
-				updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
-				updateTag(ORDERS_CACHE_TAGS.LAST_ORDER(refundData.refund.order_user_id));
-				updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(refundData.refund.order_user_id));
-			}
 
 			// Invalider le cache d'inventaire et vitrine si des articles ont été restockés.
 			// On utilise actualRestockedCount (P2.1) pour distinguer "demandé" vs "réussi"
@@ -467,6 +483,21 @@ export async function processRefund(
 				}
 				for (const slug of uniqueSlugs) {
 					updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
+				}
+
+				// Back-in-stock : notifier les favoris des produits dont AU MOINS un
+				// SKU repasse 0→N grâce au restock (parité avec update-sku /
+				// adjust-sku-stock / bulk-toggle-skus-status). `after()` survit au
+				// freeze serverless ; idempotence via `backInStockNotifiedAt` + Resend.
+				const reopenedProductIds = new Set<string>();
+				for (const skuId of restockedSkuIds) {
+					const pre = preRestockInventory.get(skuId);
+					if (pre && pre.inventory === 0) {
+						reopenedProductIds.add(pre.productId);
+					}
+				}
+				for (const productId of reopenedProductIds) {
+					after(() => notifyBackInStock(productId));
 				}
 			}
 			// Audit log

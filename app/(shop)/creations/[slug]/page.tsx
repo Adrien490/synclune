@@ -48,6 +48,9 @@ export async function generateStaticParams() {
 
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
+	/** Combo couleur M2M (norme depuis 2026-05-15, ex: "argent__or-rose") */
+	variant?: string;
+	/** @deprecated Slug couleur legacy — encore lu pour les liens/bookmarks anciens */
 	color?: string;
 	material?: string;
 	size?: string;
@@ -97,8 +100,12 @@ export default async function ProductPage({
 		notFound();
 	}
 
-	// Préparer les variants depuis searchParams
+	// Préparer les variants depuis searchParams.
+	// `variant` (combo M2M) prime sur `color` legacy — matchColor applique colorCombo
+	// en priorité (set égalité strict). Sans ce champ, un deep-link `?variant=` rendrait
+	// le SKU par défaut côté serveur (flash de couleur à l'hydratation).
 	const urlVariants = {
+		colorCombo: urlParams.variant,
 		colorSlug: urlParams.color,
 		materialSlug: urlParams.material,
 		size: urlParams.size,

@@ -5,52 +5,67 @@ import type Stripe from "stripe";
 // Hoisted mocks - must be declared before any imports
 // ============================================================================
 
-const { mockTx, mockPrisma, mockGetBaseUrl, mockROUTES, mockCreateOrderAuditTx } = vi.hoisted(
-	() => {
-		const mockTx = {
+const {
+	mockTx,
+	mockPrisma,
+	mockGetBaseUrl,
+	mockROUTES,
+	mockCreateOrderAuditTx,
+	mockVoidInvoice,
+	mockIssueCreditNoteForRefund,
+	mockRecordRefundEReporting,
+} = vi.hoisted(() => {
+	const mockTx = {
+		dispute: {
+			create: vi.fn(),
+			findUnique: vi.fn(),
+			update: vi.fn(),
+		},
+		order: {
+			update: vi.fn(),
+		},
+		orderNote: {
+			create: vi.fn(),
+		},
+		refund: {
+			aggregate: vi.fn(),
+			create: vi.fn(),
+		},
+		orderHistory: {
+			create: vi.fn(),
+		},
+	};
+
+	return {
+		mockTx,
+		mockPrisma: {
+			$transaction: vi.fn(),
 			dispute: {
-				create: vi.fn(),
 				findUnique: vi.fn(),
 				update: vi.fn(),
 			},
 			order: {
+				findFirst: vi.fn(),
+				findUnique: vi.fn(),
 				update: vi.fn(),
 			},
 			orderNote: {
+				findFirst: vi.fn(),
 				create: vi.fn(),
 			},
-			refund: {
-				aggregate: vi.fn(),
-				create: vi.fn(),
+		},
+		mockGetBaseUrl: vi.fn(),
+		mockROUTES: {
+			ADMIN: {
+				ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
 			},
-			orderHistory: {
-				create: vi.fn(),
-			},
-		};
-
-		return {
-			mockTx,
-			mockPrisma: {
-				$transaction: vi.fn(),
-				order: {
-					findFirst: vi.fn(),
-					update: vi.fn(),
-				},
-				orderNote: {
-					findFirst: vi.fn(),
-					create: vi.fn(),
-				},
-			},
-			mockGetBaseUrl: vi.fn(),
-			mockROUTES: {
-				ADMIN: {
-					ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
-				},
-			},
-			mockCreateOrderAuditTx: vi.fn(),
-		};
-	},
-);
+		},
+		mockCreateOrderAuditTx: vi.fn(),
+		mockVoidInvoice: vi.fn(),
+		mockIssueCreditNoteForRefund: vi.fn(),
+		mockRecordRefundEReporting: vi.fn(),
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -71,6 +86,28 @@ vi.mock("@/modules/orders/constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
 		LIST: "orders-list",
 		NOTES: (orderId: string) => `order-notes-${orderId}`,
+	},
+	// CACHE-AUDIT-010 : miroir de l'implémentation réelle (cf.
+	// modules/orders/constants/cache.ts) pour vérifier que le chargeback perdu
+	// invalide bien les tags user-scopés + détail commande, pas une liste partielle.
+	getOrderInvalidationTags: (userId?: string, orderId?: string) => {
+		const tags = ["orders-list", "admin-badges", "admin-orders-list"];
+		if (userId) {
+			tags.push(
+				`orders-user-${userId}`,
+				`last-order-user-${userId}`,
+				`account-stats-${userId}`,
+				`user-orders-count-${userId}`,
+			);
+		}
+		if (orderId) {
+			tags.push(
+				`order-history-${orderId}`,
+				`order-confirmation-${orderId}`,
+				`order-detail-${orderId}`,
+			);
+		}
+		return tags;
 	},
 }));
 
@@ -99,6 +136,11 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		CHARGE_REFUNDED: "CHARGE_REFUNDED",
 	},
 	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
+	InvoiceStatus: {
+		PENDING: "PENDING",
+		GENERATED: "GENERATED",
+		VOIDED: "VOIDED",
+	},
 	OrderAction: {
 		REFUND_CREATED: "REFUND_CREATED",
 		REFUND_COMPLETED: "REFUND_COMPLETED",
@@ -124,7 +166,35 @@ vi.mock("@/modules/orders/utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
 }));
 
-import { handleDisputeCreated, handleDisputeClosed } from "../dispute-handlers";
+vi.mock("@/modules/orders/services/void-invoice.service", () => ({
+	voidInvoice: mockVoidInvoice,
+}));
+
+vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
+	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
+}));
+
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordRefundEReporting: mockRecordRefundEReporting,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	withScope: (cb: (scope: Record<string, () => void>) => void) =>
+		cb({
+			setLevel: vi.fn(),
+			setTag: vi.fn(),
+			setFingerprint: vi.fn(),
+			setContext: vi.fn(),
+		}),
+	captureException: vi.fn(),
+	captureMessage: vi.fn(),
+}));
+
+import {
+	handleDisputeCreated,
+	handleDisputeClosed,
+	handleDisputeUpdated,
+} from "../dispute-handlers";
 
 // ============================================================================
 // Helpers
@@ -164,6 +234,7 @@ function makeOrder(
 		customerEmail: "client@test.com",
 		paymentStatus: "PAID",
 		total: 5000,
+		userId: "user-1",
 		...overrides,
 	};
 }
@@ -365,6 +436,12 @@ describe("handleDisputeClosed", () => {
 		// ORD-REFUND-010: chargeback materialization needs aggregate + create
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
+		// Post-tx accounting wiring : par défaut pas de facture active (void skip),
+		// services best-effort résolus en noop.
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
+		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
+		mockRecordRefundEReporting.mockResolvedValue("skipped");
 	});
 
 	it("should create a won note, update Dispute, and NOT update paymentStatus when dispute is won", async () => {
@@ -476,9 +553,22 @@ describe("handleDisputeClosed", () => {
 		const result = await handleDisputeClosed(dispute);
 
 		const cacheTask = result?.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
+		// CACHE-AUDIT-010 : helper canonique (user-scopé + détail) + NOTES.
 		expect(cacheTask).toEqual({
 			type: "INVALIDATE_CACHE",
-			tags: ["orders-list", "order-notes-order-1", "admin-badges"],
+			tags: [
+				"orders-list",
+				"admin-badges",
+				"admin-orders-list",
+				"orders-user-user-1",
+				"last-order-user-user-1",
+				"account-stats-user-1",
+				"user-orders-count-user-1",
+				"order-history-order-1",
+				"order-confirmation-order-1",
+				"order-detail-order-1",
+				"order-notes-order-1",
+			],
 		});
 	});
 
@@ -595,5 +685,176 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 				data: expect.objectContaining({ reason: "GENERAL" }),
 			}),
 		);
+	});
+
+	it("should attach a stable idempotencyKey to the opening admin alert (LOW-2)", async () => {
+		const dispute = makeDispute();
+
+		const result = await handleDisputeCreated(dispute);
+
+		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
+		expect(alertTask?.data).toMatchObject({
+			idempotencyKey: "alert:dispute-open:dp_test_1",
+		});
+	});
+});
+
+// ============================================================================
+// @regression dispute-lost-accounting-2026-05-29
+// Un chargeback PERDU reprend des fonds sur une commande facturée : il doit être
+// traité comptablement comme un remboursement (avoir Art. 272-I + e-reporting
+// REFUND DGFiP), en miroir de `charge.refunded`. Une régression cassant ce
+// câblage = facture stale + agrégat DGFiP surévalué (risque réglementaire).
+// ============================================================================
+
+describe("handleDisputeClosed — accounting wiring (regression)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
+		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
+			cb(mockTx),
+		);
+		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
+		mockTx.dispute.update.mockResolvedValue({});
+		mockTx.order.update.mockResolvedValue({});
+		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
+		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
+		mockRecordRefundEReporting.mockResolvedValue("skipped");
+	});
+
+	it("HIGH-1: records a REFUND e-reporting transaction for the chargeback refund when lost", async () => {
+		const dispute = makeDispute({ status: "lost" });
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockRecordRefundEReporting).toHaveBeenCalledWith("ref-chargeback-1");
+	});
+
+	it("HIGH-1: does NOT record e-reporting when won", async () => {
+		const dispute = makeDispute({ status: "won" });
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockRecordRefundEReporting).not.toHaveBeenCalled();
+		expect(mockVoidInvoice).not.toHaveBeenCalled();
+		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
+	});
+
+	it("HIGH-2 (full reclaim): voids the invoice when reclaim covers the full order and invoice is GENERATED", async () => {
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceStatus: "GENERATED",
+			invoiceNumber: "F-2026-00042",
+		});
+		const dispute = makeDispute({ status: "lost", amount: 5000 }); // total 5000 → full
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockVoidInvoice).toHaveBeenCalledWith(
+			expect.objectContaining({ orderId: "order-1", source: "WEBHOOK" }),
+		);
+		// Full reclaim → l'avoir canonique est porté par voidInvoice, PAS un 2e avoir Refund.
+		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
+	});
+
+	it("HIGH-2 (full reclaim): skips void when no active GENERATED invoice", async () => {
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceStatus: "VOIDED",
+			invoiceNumber: "F-2026-00042",
+		});
+		const dispute = makeDispute({ status: "lost", amount: 5000 });
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockVoidInvoice).not.toHaveBeenCalled();
+	});
+
+	it("HIGH-2 (partial reclaim): issues a Refund credit note (not a void) when reclaim is partial", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 10000 }));
+		const dispute = makeDispute({ status: "lost", amount: 3000 }); // 3000 < 10000 → partiel
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockIssueCreditNoteForRefund).toHaveBeenCalledWith(
+			expect.objectContaining({ refundId: "ref-chargeback-1", source: "WEBHOOK" }),
+		);
+		expect(mockVoidInvoice).not.toHaveBeenCalled();
+	});
+
+	it("MEDIUM-2: emits a double-reclaim admin alert when refunds + chargeback exceed the order total", async () => {
+		// Déjà remboursé 5000 + chargeback 5000 = 10000 > total 5000 → double reprise.
+		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
+		mockPrisma.order.findFirst.mockResolvedValue(
+			makeOrder({ total: 5000, paymentStatus: "REFUNDED" }),
+		);
+		const dispute = makeDispute({ status: "lost", amount: 5000 });
+
+		const result = await handleDisputeClosed(dispute);
+
+		const alert = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
+		expect(alert).toBeDefined();
+		expect(alert?.data).toMatchObject({
+			disputeId: "dp_test_1",
+			idempotencyKey: "alert:dispute-double-reclaim:dp_test_1",
+		});
+		expect(alert?.data.reason).toContain("DOUBLE REPRISE DE FONDS");
+	});
+
+	it("MEDIUM-2: no double-reclaim alert when refunds + chargeback stay within the order total", async () => {
+		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		const dispute = makeDispute({ status: "lost", amount: 5000 }); // total 5000, exactement
+
+		const result = await handleDisputeClosed(dispute);
+
+		expect(result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT")).toBeUndefined();
+	});
+});
+
+// ============================================================================
+// handleDisputeUpdated (LOW-1)
+// ============================================================================
+
+describe("handleDisputeUpdated", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockPrisma.dispute.findUnique.mockResolvedValue({
+			id: "dispute-1",
+			orderId: "order-1",
+			status: "NEEDS_RESPONSE",
+		});
+		mockPrisma.dispute.update.mockResolvedValue({});
+	});
+
+	it("updates the dispute status + dueBy and invalidates cache", async () => {
+		const dispute = makeDispute({ status: "under_review" });
+
+		const result = await handleDisputeUpdated(dispute);
+
+		expect(mockPrisma.dispute.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { stripeDisputeId: "dp_test_1" },
+				data: expect.objectContaining({ status: "UNDER_REVIEW" }),
+			}),
+		);
+		expect(result?.tasks?.[0]?.type).toBe("INVALIDATE_CACHE");
+	});
+
+	it("skips (no mutation) when the dispute does not exist yet", async () => {
+		mockPrisma.dispute.findUnique.mockResolvedValue(null);
+		const dispute = makeDispute({ status: "under_review" });
+
+		const result = await handleDisputeUpdated(dispute);
+
+		expect(mockPrisma.dispute.update).not.toHaveBeenCalled();
+		expect(result).toEqual({
+			success: true,
+			skipped: true,
+			reason: "Dispute not yet created",
+		});
 	});
 });

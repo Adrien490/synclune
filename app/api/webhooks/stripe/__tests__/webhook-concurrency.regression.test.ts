@@ -36,6 +36,7 @@ const {
 	mockExecutePersistedTasksForEvent,
 	mockSendWebhookFailedAlert,
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
 	WebhookEventStatus,
 	PrismaClientKnownRequestError,
 } = vi.hoisted(() => {
@@ -78,6 +79,9 @@ const {
 		mockExecutePersistedTasksForEvent: vi.fn(),
 		mockSendWebhookFailedAlert: vi.fn(),
 		MAX_WEBHOOK_RETRY_ATTEMPTS: 3,
+		// Route lit cette constante (WEBHOOK-AUDIT-001). Doit être exportée par le
+		// mock sinon l'accès throw "No export defined" → 500. 15 min comme en prod.
+		STALE_PROCESSING_THRESHOLD_MS: 15 * 60 * 1000,
 		WebhookEventStatus: {
 			PENDING: "PENDING",
 			PROCESSING: "PROCESSING",
@@ -109,6 +113,7 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 }));
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
+	STALE_PROCESSING_THRESHOLD_MS,
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	WebhookEventStatus,
@@ -141,6 +146,10 @@ function makeWebhookRecord(overrides: Record<string, unknown> = {}) {
 		eventType: "checkout.session.completed",
 		status: "PROCESSING",
 		attempts: 0,
+		// Colonne DB (default now()) lue par la route depuis WEBHOOK-AUDIT-001
+		// (détection PROCESSING périmé). Fraîche par défaut (fake timers = FIXED_NOW_MS)
+		// → PROCESSING traité comme "live concurrent", pas comme stale.
+		receivedAt: new Date(),
 		...overrides,
 	};
 }

@@ -114,9 +114,32 @@ export async function anonymizeUserInTransaction(
 	// Cf. REVIEW-AUDIT-002 / REVIEW-AUDIT-005.
 	await recomputeProductReviewStatsBatch(tx, reviewedProductIds);
 
-	// 9. Anonymize PII denormalized in orders
-	// Legal retention 10 years (Art. L123-22 Code de Commerce):
-	// keep amounts and accounting IDs, anonymize personal data
+	// 11. Anonymiser le nom dénormalisé de l'auteur sur les réponses d'avis PUBLIQUES.
+	// Contrairement à OrderHistory/OrderNote.authorName (audit trail comptable interne,
+	// base Art. L123-22, conservés), une ReviewResponse est du contenu marketing affiché
+	// publiquement sur le storefront : le nom d'un admin/staff anonymisé ne doit pas y
+	// rester visible. On rebascule sur la marque (valeur de fallback déjà utilisée à la
+	// création). Cf. RGPD-AUDIT F3.
+	await tx.reviewResponse.updateMany({
+		where: { authorId: userId },
+		data: { authorName: "Synclune" },
+	});
+
+	// 12. Anonymise la PII dénormalisée des commandes — UNIQUEMENT les surfaces
+	// opérationnelles non requises par la facture légale (admin UI, étiquettes
+	// d'expédition, espace client) : email/nom/téléphone client + adresse de LIVRAISON.
+	//
+	// IMPORTANT — surfaces délibérément CONSERVÉES (NE PAS scrubber ici, verrouillé par
+	// la régression `rgpd-anonymize-preserves-invoice-snapshot-2026-05-28`) :
+	//   - `billing*` : adresse de FACTURATION = identité légale du client sur la facture
+	//     (Art. 289 CGI). La franchise de l'effacement RGPD vaut tant que la base légale
+	//     de conservation court (Art. 17(3)(b) RGPD).
+	//   - `invoiceDataSnapshot`/`invoiceDataHash` + PDF facture/avoir (`invoicePdfUrl`,
+	//     `creditNotePdfUrl`) : facture figée immuable (Art. L102 B LPF) — un PDF régénéré
+	//     doit rester bit-identique à l'archive.
+	// Ces surfaces sont conservées jusqu'à `paidAt + 10 ans` puis purgées par le cron
+	// `hard-delete-retention` (RGPD Art. 5.1.e une fois la base légale expirée).
+	// Cf. docs/INVOICING.md § Rétention PII vs RGPD / RGPD-AUDIT F1+F2.
 	await tx.order.updateMany({
 		where: { userId },
 		data: {

@@ -33,6 +33,7 @@ import {
 	requireAdmin,
 	requireAdminWithUser,
 	requireAuthAllowPendingDeletion,
+	requireActiveAccountIfAuthenticated,
 } from "../require-auth";
 import { ActionStatus } from "@/shared/types/server-action";
 import { AccountStatus } from "@/app/generated/prisma/client";
@@ -228,6 +229,74 @@ describe("requireAuthAllowPendingDeletion", () => {
 		expect("user" in result).toBe(true);
 		if ("user" in result) {
 			expect(result.user.id).toBe(user.id);
+		}
+	});
+});
+
+// ============================================================================
+// requireActiveAccountIfAuthenticated (AUTHZ-1)
+// ============================================================================
+
+describe("requireActiveAccountIfAuthenticated", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("allows guests (no session) without hitting the DB", async () => {
+		mockGetSession.mockResolvedValue(null);
+
+		const result = await requireActiveAccountIfAuthenticated();
+
+		expect(result).toEqual({ ok: true });
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("allows guests (session without user.id)", async () => {
+		mockGetSession.mockResolvedValue({ user: {} });
+
+		const result = await requireActiveAccountIfAuthenticated();
+
+		expect(result).toEqual({ ok: true });
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("allows an authenticated ACTIVE account", async () => {
+		mockGetSession.mockResolvedValue(makeSession());
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser());
+
+		const result = await requireActiveAccountIfAuthenticated();
+
+		expect(result).toEqual({ ok: true });
+	});
+
+	it("filters by suspendedAt = null AND accountStatus = ACTIVE", async () => {
+		mockGetSession.mockResolvedValue(makeSession());
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser());
+
+		await requireActiveAccountIfAuthenticated();
+
+		expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					deletedAt: null,
+					suspendedAt: null,
+					accountStatus: { in: [AccountStatus.ACTIVE] },
+				}),
+			}),
+		);
+	});
+
+	it("returns FORBIDDEN when the authenticated account is not ACTIVE (suspended/INACTIVE/PENDING_DELETION)", async () => {
+		// DB returns null because the active-only filter excludes the row,
+		// even though the session cookie is still valid (cookie-cache window).
+		mockGetSession.mockResolvedValue(makeSession());
+		mockPrisma.user.findUnique.mockResolvedValue(null);
+
+		const result = await requireActiveAccountIfAuthenticated();
+
+		expect("error" in result).toBe(true);
+		if ("error" in result) {
+			expect(result.error.status).toBe(ActionStatus.FORBIDDEN);
 		}
 	});
 });

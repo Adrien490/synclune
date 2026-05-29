@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { getStockVariant, getStockAriaLabel } from "../stock-variant";
+import { getStockVariant, getStockAriaLabel, getStockStatusLabel } from "../stock-variant";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 describe("getStockVariant", () => {
@@ -49,5 +49,21 @@ describe("getStockAriaLabel", () => {
 	it("announces the raw count above LOW", () => {
 		expect(getStockAriaLabel(10)).toBe("10 en stock");
 		expect(getStockAriaLabel(150)).toBe("150 en stock");
+	});
+});
+
+describe("getStockStatusLabel", () => {
+	it("returns 'Rupture' for zero inventory", () => {
+		expect(getStockStatusLabel(0)).toBe("Rupture");
+	});
+
+	it("returns 'Faible' at or below the LOW threshold", () => {
+		expect(getStockStatusLabel(1)).toBe("Faible");
+		expect(getStockStatusLabel(STOCK_THRESHOLDS.LOW)).toBe("Faible");
+	});
+
+	it("returns 'OK' above the LOW threshold", () => {
+		expect(getStockStatusLabel(STOCK_THRESHOLDS.LOW + 1)).toBe("OK");
+		expect(getStockStatusLabel(100)).toBe("OK");
 	});
 });

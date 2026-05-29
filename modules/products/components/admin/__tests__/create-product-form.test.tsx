@@ -349,11 +349,13 @@ describe("CreateProductForm", () => {
 			expect(screen.getByTestId("media-counter")).toBeInTheDocument();
 		});
 
-		it("renders upload dropzone when no media", () => {
+		it("renders the native dropzone when no media", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByTestId("upload-dropzone")).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+			).toBeInTheDocument();
 		});
 
 		it("renders price fields", () => {
@@ -700,12 +702,14 @@ describe("CreateProductForm", () => {
 	// --------------------------------------------------------------------------
 
 	describe("media upload section", () => {
-		it("renders upload dropzone with correct endpoint", () => {
+		it("renders the native dropzone with the accepted formats hint", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			const dropzone = screen.getByTestId("upload-dropzone");
-			expect(dropzone).toHaveAttribute("data-endpoint", "catalogMedia");
+			expect(
+				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+			).toBeInTheDocument();
+			expect(screen.getByText(/AVIF/)).toBeInTheDocument();
 		});
 
 		it("renders media upload zone container", () => {

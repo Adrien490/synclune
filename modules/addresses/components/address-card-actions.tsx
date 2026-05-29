@@ -8,9 +8,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Star, Pencil, Trash2, LoaderCircle, EllipsisVertical } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useSetDefaultAddress } from "../hooks/use-set-default-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { ADDRESS_DIALOG_ID, DELETE_ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
 import type { UserAddress } from "../types/user-addresses.types";
@@ -32,11 +34,23 @@ export function AddressCardActions({
 }: AddressCardActionsProps) {
 	const editDialog = useDialog(ADDRESS_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_ADDRESS_DIALOG_ID);
+	const isMobile = useIsMobile();
+	const router = useRouter();
 	const { handle: handleSetDefaultHook, isPending: isSettingDefaultHook } = useSetDefaultAddress();
 
 	const setDefault = (addressId: string) => {
 		if (onSetDefault) onSetDefault(addressId);
 		else handleSetDefaultHook(addressId);
+	};
+
+	// Mobile : page dédiée pleine largeur (parité avec « Ajouter »).
+	// Desktop : dialog en overlay (comportement historique conservé).
+	const handleEdit = () => {
+		if (isMobile) {
+			router.push(`/adresses/${address.id}/modifier`);
+			return;
+		}
+		editDialog.open({ address });
 	};
 
 	const isPending = isSettingDefaultProp ?? isSettingDefaultHook;
@@ -71,7 +85,7 @@ export function AddressCardActions({
 				<DropdownMenuItem
 					onClick={() => {
 						triggerHaptic("selection");
-						editDialog.open({ address });
+						handleEdit();
 					}}
 					disabled={isPending}
 				>

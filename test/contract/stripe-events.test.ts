@@ -16,41 +16,35 @@ import { join } from "node:path";
 import type Stripe from "stripe";
 
 const {
-	mockHandleCheckoutCompleted,
-	mockHandleCheckoutExpired,
-	mockHandleAsyncSucceeded,
-	mockHandleAsyncFailed,
 	mockHandleChargeRefunded,
 	mockHandleRefundUpdated,
 	mockHandleRefundFailed,
 	mockHandleDisputeCreated,
+	mockHandleDisputeUpdated,
 	mockHandleDisputeClosed,
+	mockHandleDisputeFundsWithdrawn,
+	mockHandleDisputeFundsReinstated,
 	mockHandlePaymentSuccess,
 	mockHandlePaymentFailure,
 	mockHandlePaymentCanceled,
+	mockHandlePaymentProcessing,
+	mockHandleInvoicePaymentFailed,
 } = vi.hoisted(() => ({
-	mockHandleCheckoutCompleted: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleCheckoutExpired: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleAsyncSucceeded: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleAsyncFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleChargeRefunded: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleRefundUpdated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleRefundFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeCreated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandleDisputeUpdated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeClosed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandleDisputeFundsWithdrawn: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandleDisputeFundsReinstated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentSuccess: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentFailure: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentCanceled: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	mockHandlePaymentProcessing: vi.fn().mockResolvedValue({ success: true, skipped: true }),
+	mockHandleInvoicePaymentFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 }));
 
-vi.mock("@/modules/webhooks/handlers/checkout-handlers", () => ({
-	handleCheckoutSessionCompleted: mockHandleCheckoutCompleted,
-	handleCheckoutSessionExpired: mockHandleCheckoutExpired,
-}));
-vi.mock("@/modules/webhooks/handlers/async-payment-handlers", () => ({
-	handleAsyncPaymentSucceeded: mockHandleAsyncSucceeded,
-	handleAsyncPaymentFailed: mockHandleAsyncFailed,
-}));
 vi.mock("@/modules/webhooks/handlers/refund-handlers", () => ({
 	handleChargeRefunded: mockHandleChargeRefunded,
 	handleRefundUpdated: mockHandleRefundUpdated,
@@ -58,33 +52,42 @@ vi.mock("@/modules/webhooks/handlers/refund-handlers", () => ({
 }));
 vi.mock("@/modules/webhooks/handlers/dispute-handlers", () => ({
 	handleDisputeCreated: mockHandleDisputeCreated,
+	handleDisputeUpdated: mockHandleDisputeUpdated,
 	handleDisputeClosed: mockHandleDisputeClosed,
+	handleDisputeFundsWithdrawn: mockHandleDisputeFundsWithdrawn,
+	handleDisputeFundsReinstated: mockHandleDisputeFundsReinstated,
 }));
 vi.mock("@/modules/webhooks/handlers/payment-handlers", () => ({
 	handlePaymentSuccess: mockHandlePaymentSuccess,
 	handlePaymentFailure: mockHandlePaymentFailure,
 	handlePaymentCanceled: mockHandlePaymentCanceled,
-	handleInvoicePaymentFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
+	handlePaymentProcessing: mockHandlePaymentProcessing,
+	handleInvoicePaymentFailed: mockHandleInvoicePaymentFailed,
 }));
 
-import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
+import {
+	dispatchEvent,
+	isEventSupported,
+	getRegisteredEventTypes,
+} from "@/modules/webhooks/utils/event-registry";
 
 const FIXTURES_DIR = join(__dirname, "..", "fixtures", "stripe");
 
 const EXPECTED_HANDLERS: Record<string, ReturnType<typeof vi.fn>> = {
-	"checkout.session.completed": mockHandleCheckoutCompleted,
-	"checkout.session.expired": mockHandleCheckoutExpired,
-	"checkout.session.async_payment_succeeded": mockHandleAsyncSucceeded,
-	"checkout.session.async_payment_failed": mockHandleAsyncFailed,
 	"charge.refunded": mockHandleChargeRefunded,
 	"refund.created": mockHandleRefundUpdated,
 	"refund.updated": mockHandleRefundUpdated,
 	"refund.failed": mockHandleRefundFailed,
 	"charge.dispute.created": mockHandleDisputeCreated,
+	"charge.dispute.updated": mockHandleDisputeUpdated,
 	"charge.dispute.closed": mockHandleDisputeClosed,
+	"charge.dispute.funds_withdrawn": mockHandleDisputeFundsWithdrawn,
+	"charge.dispute.funds_reinstated": mockHandleDisputeFundsReinstated,
 	"payment_intent.succeeded": mockHandlePaymentSuccess,
 	"payment_intent.payment_failed": mockHandlePaymentFailure,
 	"payment_intent.canceled": mockHandlePaymentCanceled,
+	"payment_intent.processing": mockHandlePaymentProcessing,
+	"invoice.payment_failed": mockHandleInvoicePaymentFailed,
 };
 
 function loadFixtures(): Array<{ name: string; event: Stripe.Event }> {
@@ -111,6 +114,21 @@ describe("Stripe webhook contract — fixture shape validation", () => {
 		const expectedTypes = Object.keys(EXPECTED_HANDLERS);
 		for (const type of expectedTypes) {
 			expect(fixtureTypes, `missing fixture for ${type}`).toContain(type);
+		}
+	});
+
+	// Garde de complétude (audit webhooks 2026-05-29) : tout type RÉELLEMENT
+	// dispatché par le registry doit être couvert ici (fixture + handler attendu).
+	// Sans cette garde, ajouter un handler au registry sans fixture laisse le
+	// contract test vert → régression de routage silencieuse en prod.
+	it("every event type dispatched by the registry is covered by a fixture + expected handler", () => {
+		const registered = getRegisteredEventTypes().sort();
+		const expected = Object.keys(EXPECTED_HANDLERS).sort();
+		expect(expected).toEqual(registered);
+
+		const fixtureTypes = new Set(fixtures.map((f) => f.event.type));
+		for (const type of registered) {
+			expect(fixtureTypes, `registry dispatches "${type}" but no fixture exists`).toContain(type);
 		}
 	});
 
@@ -154,24 +172,6 @@ describe("Stripe webhook contract — registry routing", () => {
 
 describe("Stripe webhook contract — payload semantics per type", () => {
 	const byType = (type: string) => loadFixtures().find((f) => f.event.type === type)!.event;
-
-	it("checkout.session.completed carries metadata.cartId required for Order creation", () => {
-		const event = byType("checkout.session.completed");
-		const session = event.data.object as Stripe.Checkout.Session;
-		expect(session.metadata?.cartId).toBeTruthy();
-	});
-
-	it("checkout.session.async_payment_succeeded has payment_status='paid'", () => {
-		const event = byType("checkout.session.async_payment_succeeded");
-		const session = event.data.object as Stripe.Checkout.Session;
-		expect(session.payment_status).toBe("paid");
-	});
-
-	it("checkout.session.async_payment_failed has payment_status='unpaid'", () => {
-		const event = byType("checkout.session.async_payment_failed");
-		const session = event.data.object as Stripe.Checkout.Session;
-		expect(session.payment_status).toBe("unpaid");
-	});
 
 	it("charge.refunded carries amount_refunded and payment_intent for reconciliation", () => {
 		const event = byType("charge.refunded");

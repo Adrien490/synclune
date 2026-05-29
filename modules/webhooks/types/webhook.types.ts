@@ -82,18 +82,16 @@ export interface WebhookHandlerResult {
  * Types d'événements Stripe supportés
  */
 export type SupportedStripeEvent =
-	| "checkout.session.completed"
-	| "checkout.session.expired"
 	| "payment_intent.succeeded"
 	| "payment_intent.payment_failed"
 	| "payment_intent.canceled"
+	| "payment_intent.processing"
 	| "charge.refunded"
 	| "refund.created"
 	| "refund.updated"
 	| "refund.failed"
-	| "checkout.session.async_payment_succeeded"
-	| "checkout.session.async_payment_failed"
 	| "charge.dispute.created"
+	| "charge.dispute.updated"
 	| "charge.dispute.closed"
 	| "charge.dispute.funds_withdrawn"
 	| "charge.dispute.funds_reinstated"

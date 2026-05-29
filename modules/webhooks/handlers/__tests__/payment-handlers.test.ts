@@ -19,6 +19,7 @@ const {
 	mockEnsureInvoiceNumberPersisted,
 	mockRecordSalesEReporting,
 	mockExtractPaymentMethod,
+	mockSendAdminOrderProcessingFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn() },
@@ -36,6 +37,7 @@ const {
 	mockEnsureInvoiceNumberPersisted: vi.fn().mockResolvedValue(undefined),
 	mockRecordSalesEReporting: vi.fn().mockResolvedValue("skipped"),
 	mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
+	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -122,7 +124,7 @@ vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
-	sendAdminOrderProcessingFailedAlert: vi.fn(),
+	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
 }));
 
 import type Stripe from "stripe";
@@ -130,6 +132,7 @@ import {
 	handlePaymentSuccess,
 	handlePaymentFailure,
 	handlePaymentCanceled,
+	handlePaymentProcessing,
 	handleInvoicePaymentFailed,
 } from "../payment-handlers";
 
@@ -197,6 +200,47 @@ describe("handlePaymentSuccess", () => {
 		await handlePaymentSuccess(pi);
 
 		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, "SEPA_DEBIT");
+	});
+
+	/**
+	 * @regression overbilling-admin-alert-2026-05-29
+	 * Audit F2 : une sur-facturation (Stripe encaisse plus que order.total) ne
+	 * rembourse PAS automatiquement (un avoir auto créerait une transaction
+	 * REFUND e-reporting fantôme, Invariant 9 CLAUDE.md) — elle émet une alerte
+	 * admin ACTIONNABLE pour refund manuel + ajustement e-reporting.
+	 */
+	it("[F2] emits an actionable admin alert on overbilling without auto-refunding", async () => {
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({
+			id: "order-1",
+			orderNumber: "SYN-001",
+			customerEmail: "client@example.com",
+			total: 5000,
+			items: [],
+		});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
+
+		// amount_received 6000 > total 5000 → sur-facturation de 1000c.
+		await handlePaymentSuccess(makePaymentIntent({ amount_received: 6000 }));
+
+		expect(mockSendAdminOrderProcessingFailedAlert).toHaveBeenCalledTimes(1);
+		const alertArg = mockSendAdminOrderProcessingFailedAlert.mock.calls[0]![0];
+		expect(alertArg).toMatchObject({ orderNumber: "SYN-001", paymentIntentId: "pi_123" });
+		expect(alertArg.errorMessage).toContain("Sur-facturation");
+	});
+
+	it("[F2] does NOT alert when captured amount equals order.total", async () => {
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({
+			id: "order-1",
+			orderNumber: "SYN-001",
+			customerEmail: "client@example.com",
+			total: 5000,
+			items: [],
+		});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
+
+		await handlePaymentSuccess(makePaymentIntent({ amount_received: 5000 }));
+
+		expect(mockSendAdminOrderProcessingFailedAlert).not.toHaveBeenCalled();
 	});
 
 	it("should warn and skip when no orderId in metadata", async () => {
@@ -456,6 +500,39 @@ describe("handlePaymentCanceled", () => {
 			expect(cacheTask.tags).toContain("order-detail-order-1");
 			expect(cacheTask.tags).toContain("orders-user-user-1");
 		}
+	});
+});
+
+// ============================================================================
+// handlePaymentProcessing (F3)
+// ============================================================================
+
+describe("handlePaymentProcessing", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("F3: should ack without mutating order state (skipped + reason)", async () => {
+		const pi = makePaymentIntent({ status: "processing", metadata: { orderId: "order-1" } });
+
+		const result = await handlePaymentProcessing(pi);
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "payment_processing" });
+		// Aucune mutation : pas de fail/cancel/refund/process.
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(mockMarkOrderAsCancelled).not.toHaveBeenCalled();
+		expect(mockProcessOrderFromPaymentIntent).not.toHaveBeenCalled();
+		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
+		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("F3: should not throw when orderId is absent from metadata", async () => {
+		const pi = makePaymentIntent({ status: "processing", metadata: {} });
+
+		const result = await handlePaymentProcessing(pi);
+
+		expect(result.success).toBe(true);
+		expect(result.skipped).toBe(true);
 	});
 });
 

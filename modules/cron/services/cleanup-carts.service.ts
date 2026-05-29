@@ -45,11 +45,15 @@ export async function cleanupExpiredCarts(): Promise<CronResult> {
 	// and the admin alert via `withCronGuard` reports both partial counts.
 
 	// 1. Trouver les paniers guest expirés depuis > grace period (bounded)
+	// Garde RGPD art. 5.1.e : `expiresAt < cutoff` rate les rows `expiresAt IS NULL`
+	// (sémantique SQL : NULL < x = UNKNOWN). Un panier guest sans expiry (legacy, edge
+	// case) survivrait alors indéfiniment. On capture donc aussi les guests sans expiry
+	// créés avant le cutoff. Cf. RGPD-AUDIT F4.
 	try {
 		const cartsToDelete = await prisma.cart.findMany({
 			where: {
-				expiresAt: { lt: cutoff },
 				userId: null,
+				OR: [{ expiresAt: { lt: cutoff } }, { expiresAt: null, createdAt: { lt: cutoff } }],
 			},
 			select: { id: true },
 			take: CLEANUP_DELETE_LIMIT,

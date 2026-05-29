@@ -59,9 +59,13 @@ interface CreateOrderResult {
  * (`webhooks/services/checkout.service.ts` → `processOrderAtomically`) after payment
  * confirmation. This means two concurrent orders for the last item can both pass
  * verification, but only the first will succeed at webhook processing — the second
- * will fail the webhook's own FOR UPDATE re-validation and be cleaned up by the
- * `cleanup-pending-orders` cron job. This trade-off avoids complex rollback logic
- * for failed payments and is acceptable at current order volume.
+ * fails the webhook's own FOR UPDATE re-validation with an `OversellError`.
+ *
+ * ⚠️ Le perdant a DÉJÀ encaissé son paiement Stripe. Il n'est PAS récupéré par
+ * `cleanup-pending-orders` (ce cron exclut les commandes avec `stripePaymentIntentId`).
+ * C'est `handlePaymentSuccess` → `handleOversell` (ORD-STRIPE-009) qui le rembourse
+ * automatiquement + marque la commande FAILED (libérant le code promo). Ce trade-off
+ * évite la logique de rollback complexe et est acceptable au volume actuel.
  *
  * Called from confirmCheckout before Stripe PI update.
  * On Stripe failure, the caller is responsible for rolling back via cleanupFailedCheckout.

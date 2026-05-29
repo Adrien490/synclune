@@ -19,9 +19,18 @@ export type QuickSearchProductType = {
 
 export const QUICK_SEARCH_DIALOG_ID = "quick-search";
 
-/** CSS selector for focusable elements inside the search results area */
-export const FOCUSABLE_SELECTOR =
-	'button:not([disabled]):not([aria-disabled="true"]), a:not([disabled]):not([aria-disabled="true"]), [tabindex]:not([tabindex="-1"]):not([type="search"])';
+/**
+ * CSS selector for arrow-key-navigable elements inside the results area.
+ *
+ * Scoped to `[role="option"]` so ↑/↓ roving traverses *only* the selectable
+ * options (products, collection/category cards, recent searches, recently
+ * viewed, spell suggestion, "view all results"). Auxiliary controls — per-item
+ * delete (×), "Effacer", "Voir toutes les collections", "Réessayer" — are
+ * deliberately excluded: they are NOT options and stay reachable via Tab (real
+ * focus). This prevents the roving highlight from landing on invisible /
+ * unstyled controls (the × buttons are `md:opacity-0` until hover/focus).
+ */
+export const FOCUSABLE_SELECTOR = '[role="option"]:not([aria-disabled="true"])';
 
 /** Max matched collections shown in search results */
 export const MAX_MATCHED_COLLECTIONS = 2;

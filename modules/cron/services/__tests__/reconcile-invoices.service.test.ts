@@ -12,9 +12,11 @@ const {
 	mockCreateOrderAudit,
 	mockUpdateTag,
 	mockLogger,
+	mockCheckSequenceContinuity,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+		refund: { findMany: vi.fn() },
 	},
 	mockPersistInvoiceNumber: vi.fn(),
 	mockBackfillInvoiceDataSnapshot: vi.fn(),
@@ -26,6 +28,7 @@ const {
 	mockCreateOrderAudit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	mockCheckSequenceContinuity: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -74,6 +77,10 @@ vi.mock("@/modules/orders/constants/order.constants", () => ({
 	GET_ORDER_SELECT_ADMIN: { id: true },
 }));
 
+vi.mock("@/modules/invoices/services/check-sequence-continuity.service", () => ({
+	checkSequenceContinuity: mockCheckSequenceContinuity,
+}));
+
 import { reconcileInvoices } from "../reconcile-invoices.service";
 
 function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
@@ -108,6 +115,8 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockArchiveInvoicePdf.mockResolvedValue({ url: "https://utfs.io/x.pdf" });
 		// Resolve to undefined so `await fn().catch(...)` in escalate() works
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
+		// EINV-SEQ-007 : continuité saine par défaut (passe 4 isolée — testée à part).
+		mockCheckSequenceContinuity.mockResolvedValue([]);
 	});
 
 	it("returns zeros + hasMore=false when no candidates", async () => {
@@ -385,5 +394,49 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 				data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
 			}),
 		);
+	});
+
+	describe("Passe 4 — contrôle de continuité (EINV-SEQ-007)", () => {
+		it("alerte l'admin + remonte continuityIssues quand un trou de séquence est détecté", async () => {
+			mockCheckSequenceContinuity.mockResolvedValue([
+				{
+					kind: "invoice",
+					year: 2026,
+					prefix: "F-2026-",
+					max: 3,
+					count: 2,
+					missing: [2],
+					duplicates: [],
+				},
+			]);
+
+			const result = await reconcileInvoices();
+
+			expect(result.continuityIssues).toBe(1);
+			expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
+				expect.objectContaining({
+					job: "reconcile-invoices",
+					details: expect.objectContaining({ type: "sequence-continuity-breach" }),
+				}),
+			);
+		});
+
+		it("ne mute rien et n'alerte pas quand les séquences sont saines", async () => {
+			mockCheckSequenceContinuity.mockResolvedValue([]);
+
+			const result = await reconcileInvoices();
+
+			expect(result.continuityIssues).toBe(0);
+			expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+		});
+
+		it("ne casse jamais le cron si le contrôle de continuité throw", async () => {
+			mockCheckSequenceContinuity.mockRejectedValue(new Error("DB down"));
+
+			const result = await reconcileInvoices();
+
+			expect(result.continuityIssues).toBe(0);
+			expect(result.processed).toBe(0);
+		});
 	});
 });

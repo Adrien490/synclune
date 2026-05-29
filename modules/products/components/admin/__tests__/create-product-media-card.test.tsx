@@ -296,19 +296,19 @@ describe("CreateProductMediaCard", () => {
 			expect(screen.getByTestId("icon-image-plus")).toBeInTheDocument();
 		});
 
-		it("renders upload dropzone in empty state", () => {
+		it("renders the native dropzone in empty state", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("upload-dropzone")).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: /Zone d'upload des médias du bijou/i }),
+			).toBeInTheDocument();
 		});
 
-		it("renders upload dropzone with catalogMedia endpoint", () => {
+		it("shows the accepted formats hint (incl. AVIF) in empty state", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("upload-dropzone")).toHaveAttribute(
-				"data-endpoint",
-				"catalogMedia",
-			);
+			expect(screen.getByText(/AVIF/)).toBeInTheDocument();
+			expect(screen.getByText(/Vidéos MP4/)).toBeInTheDocument();
 		});
 
 		it("does not render MediaUploadGrid when empty", () => {
@@ -516,7 +516,7 @@ describe("CreateProductMediaCard", () => {
 		});
 	});
 
-	describe("upload action sheet (drawer mobile + dropzone desktop)", () => {
+	describe("upload action sheet (drawer mobile + native dropzone desktop)", () => {
 		it("renders UploadActionSheet wrapping the dropzone", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
@@ -530,11 +530,13 @@ describe("CreateProductMediaCard", () => {
 			expect(sheet).toHaveAttribute("data-trigger-label", "Ajouter des médias");
 		});
 
-		it("UploadActionSheet exposes UploadDropzone as desktop fallback", () => {
+		it("UploadActionSheet exposes the native dropzone as desktop fallback", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			const sheet = screen.getByTestId("upload-action-sheet");
-			expect(sheet.querySelector("[data-testid='upload-dropzone']")).not.toBeNull();
+			expect(
+				sheet.querySelector('[aria-label="Zone d\'upload des médias du bijou"]'),
+			).not.toBeNull();
 		});
 	});
 });

@@ -17,7 +17,7 @@ import {
 	THRESHOLDS,
 } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
-import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { REFUNDS_CACHE_TAGS } from "@/modules/refunds/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
@@ -171,8 +171,15 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					processed++;
 					tagsToInvalidate.add(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
-					if (refund.order.userId) {
-						tagsToInvalidate.add(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.userId));
+					// CACHE-AUDIT-010 : finalizeRefund mute Order.paymentStatus — passer
+					// par le helper canonique pour couvrir DETAIL/HISTORY/CONFIRMATION(orderId)
+					// + LAST_ORDER/ACCOUNT_STATS/USER_ORDERS_COUNT, sinon la page détail
+					// commande + l'historique restent stale après le rattrapage DLQ.
+					for (const tag of getOrderInvalidationTags(
+						refund.order.userId ?? undefined,
+						refund.orderId,
+					)) {
+						tagsToInvalidate.add(tag);
 					}
 
 					// E-reporting DGFiP (Phase 4 wiring, EINV-AUDIT-004).

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("lucide-react", () => ({
@@ -70,7 +70,16 @@ vi.mock("motion/react", () => ({
 
 import { ProductDetailMediaCard } from "../product-detail-media-card";
 
-const makeProduct = (skus: Array<{ isDefault: boolean; images: unknown[] }>) =>
+type SkuInput = {
+	isDefault: boolean;
+	images: unknown[];
+	colors?: Array<{ colorId: string; color: { name: string; hex: string } }>;
+	materials?: Array<{ material: { name: string } }>;
+	size?: string | null;
+	sku?: string;
+};
+
+const makeProduct = (skus: Array<SkuInput>) =>
 	({
 		id: "p-1",
 		slug: "anneau-lune",
@@ -80,7 +89,15 @@ const makeProduct = (skus: Array<{ isDefault: boolean; images: unknown[] }>) =>
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		type: null,
-		skus,
+		skus: skus.map((s, i) => ({
+			id: `sku-${i}`,
+			sku: s.sku ?? `SKU-${i}`,
+			isDefault: s.isDefault,
+			images: s.images,
+			colors: s.colors ?? [],
+			materials: s.materials ?? [],
+			size: s.size ?? null,
+		})),
 		collections: [],
 	}) as any;
 
@@ -178,6 +195,82 @@ describe("ProductDetailMediaCard", () => {
 		render(<ProductDetailMediaCard product={product} />);
 		const images = screen.getAllByTestId("next-image");
 		expect(images[0]).toHaveAttribute("src", "https://cdn/x.jpg");
+	});
+
+	const img = (id: string, url: string, isPrimary = true) => ({
+		id,
+		url,
+		thumbnailUrl: null,
+		blurDataUrl: null,
+		altText: null,
+		mediaType: "IMAGE",
+		isPrimary,
+	});
+
+	it("n'affiche pas le sélecteur de variante s'il n'y a qu'un seul SKU avec images", () => {
+		const product = makeProduct([{ isDefault: true, images: [img("i-1", "https://cdn/a.jpg")] }]);
+		render(<ProductDetailMediaCard product={product} />);
+		expect(
+			screen.queryByRole("group", { name: /Choisir la variante à prévisualiser/i }),
+		).not.toBeInTheDocument();
+	});
+
+	it("affiche un sélecteur de variante quand ≥ 2 SKU ont des images", () => {
+		const product = makeProduct([
+			{
+				isDefault: true,
+				images: [img("i-1", "https://cdn/or.jpg")],
+				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
+			},
+			{
+				isDefault: false,
+				images: [img("i-2", "https://cdn/argent.jpg")],
+				colors: [{ colorId: "c-arg", color: { name: "Argent", hex: "#C0C0C0" } }],
+			},
+		]);
+		render(<ProductDetailMediaCard product={product} />);
+		const group = screen.getByRole("group", { name: /Choisir la variante à prévisualiser/i });
+		expect(group).toBeInTheDocument();
+		// Le SKU par défaut (Or) est sélectionné → son image principale est affichée
+		expect(screen.getAllByTestId("next-image")[0]).toHaveAttribute("src", "https://cdn/or.jpg");
+	});
+
+	it("bascule la galerie sur le SKU sélectionné au clic", () => {
+		const product = makeProduct([
+			{
+				isDefault: true,
+				images: [img("i-1", "https://cdn/or.jpg")],
+				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
+			},
+			{
+				isDefault: false,
+				images: [img("i-2", "https://cdn/argent.jpg")],
+				colors: [{ colorId: "c-arg", color: { name: "Argent", hex: "#C0C0C0" } }],
+			},
+		]);
+		render(<ProductDetailMediaCard product={product} />);
+		fireEvent.click(screen.getByRole("button", { name: /Variante : Argent/i }));
+		expect(screen.getAllByTestId("next-image")[0]).toHaveAttribute("src", "https://cdn/argent.jpg");
+	});
+
+	it("ignore les SKU sans image dans le sélecteur", () => {
+		const product = makeProduct([
+			{
+				isDefault: true,
+				images: [img("i-1", "https://cdn/or.jpg")],
+				colors: [{ colorId: "c-or", color: { name: "Or", hex: "#FFD700" } }],
+			},
+			{
+				isDefault: false,
+				images: [],
+				colors: [{ colorId: "c-x", color: { name: "Vide", hex: "#000" } }],
+			},
+		]);
+		render(<ProductDetailMediaCard product={product} />);
+		// Un seul SKU a des images → pas de sélecteur
+		expect(
+			screen.queryByRole("group", { name: /Choisir la variante à prévisualiser/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it("alt fallback sur le titre si altText absent pour l'image principale", () => {
