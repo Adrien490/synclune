@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { Trash2 } from "lucide-react";
 import {
 	useSwipeToRemove,
@@ -9,10 +8,6 @@ import {
 } from "@/modules/wishlist/hooks/use-swipe-to-remove";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
-import { addToWishlist } from "@/modules/wishlist/actions/add-to-wishlist";
-import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
 
 interface SwipeableWishlistItemProps {
 	productId: string;
@@ -28,46 +23,15 @@ interface SwipeableWishlistItemProps {
  * - Only active on touch devices via @media(hover: none)
  * - Snaps back if threshold not met
  *
- * Post-suppression : si le contexte `WishlistListOptimisticContext` est dispo,
- * l'item passe en `Tombstone` inline 5s (bouton Annuler) avant retrait visuel.
- * Sinon (cas isolé), fallback historique : pas de feedback inline (le toast
- * mobile a été supprimé pour ne pas masquer la bottom-bar).
+ * Suppression directe : le retrait est appliqué optimistiquement via
+ * `WishlistListOptimisticContext` (`onItemRemoved`), sans fenêtre d'annulation.
  */
-export function SwipeableWishlistItem({
-	productId,
-	itemName,
-	children,
-}: SwipeableWishlistItemProps) {
+export function SwipeableWishlistItem({ productId, children }: SwipeableWishlistItemProps) {
 	const itemRef = useRef<HTMLDivElement>(null);
-	const router = useRouter();
 	const wishlistListOptimistic = useWishlistListOptimistic();
-	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
-	const [, startUndoTransition] = useTransition();
-
-	const handleUndo = () => {
-		wishlistListOptimistic?.cancelTombstone(productId);
-		incrementWishlist();
-		const fd = new FormData();
-		fd.set("productId", productId);
-		startUndoTransition(async () => {
-			const result = await addToWishlist(undefined, fd);
-			if (result.status === ActionStatus.SUCCESS) {
-				router.refresh();
-			} else {
-				toast.error(result.message);
-			}
-		});
-	};
 
 	const { action } = useRemoveFromWishlist({
-		onSuccess: () => {
-			if (wishlistListOptimistic) {
-				wishlistListOptimistic.markAsTombstone(productId, {
-					onUndo: handleUndo,
-					displayName: itemName ?? "Article",
-				});
-			}
-		},
+		onOptimisticRemove: (id) => wishlistListOptimistic?.onItemRemoved(id),
 	});
 
 	const handleRemove = () => {

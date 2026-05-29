@@ -1,7 +1,9 @@
+import { createHash } from "node:crypto";
 import * as Sentry from "@sentry/nextjs";
 import { CustomerType, EReportingTransactionType, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { canonicalJsonStringify } from "../utils/canonical-json";
 import { INVOICE_FEATURE_FLAGS } from "../constants/feature-flags";
 import {
 	buildSalesTransaction,
@@ -229,6 +231,18 @@ export async function recordRefundEReporting(
 	}
 }
 
+/**
+ * SHA-256 canonical-JSON du payloadSnapshot e-reporting — audit-vérifiable, par
+ * symétrie exacte avec `Order.invoiceDataHash` (cf. `verify-invoice-snapshot.ts`).
+ * Permet de détecter toute altération du snapshot figé après écriture
+ * (Art. L102 B LPF). Fonction PURE (pas un write path EReporting* → n'enfreint
+ * pas l'invariant 9). Exportée pour permettre un recalcul à l'identique côté
+ * vérification / test.
+ */
+export function hashEReportingPayload(snapshot: unknown): string {
+	return createHash("sha256").update(canonicalJsonStringify(snapshot)).digest("hex");
+}
+
 async function persistTransaction(payload: EReportingTransactionPayload): Promise<string> {
 	const created = await prisma.eReportingTransaction.create({
 		data: {
@@ -241,8 +255,13 @@ async function persistTransaction(payload: EReportingTransactionPayload): Promis
 			amountIncTax: payload.amountIncTax,
 			amountExclTax: payload.amountExclTax,
 			taxAmount: payload.taxAmount,
+			// Ventilation TVA (DORMANT) : DbNull en franchise (vatBreakdown === null)
+			// → SQL NULL, pas un JSON `null`. CHECK DB `jsonb_typeof = 'array'`.
+			vatBreakdown: payload.vatBreakdown ?? Prisma.DbNull,
+			operationCategory: payload.operationCategory,
 			currency: payload.currency,
 			payloadSnapshot: payload.payloadSnapshot as object,
+			payloadHash: hashEReportingPayload(payload.payloadSnapshot),
 		},
 		select: { id: true },
 	});

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ============================================================================
@@ -113,6 +114,11 @@ import { GET } from "../route";
 // ============================================================================
 
 const ORDER_NUMBER = "SYN-2026-0001";
+
+// Octets PDF par défaut renvoyés par `mockRenderInvoicePdf` + leur SHA-256. Sert à
+// piloter les chemins de vérification d'intégrité (EINV-PDF-006) de façon déterministe.
+const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+const PDF_HASH = createHash("sha256").update(PDF_BYTES).digest("hex");
 
 function makeReq() {
 	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/invoice`);
@@ -297,7 +303,9 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 
 	/**
 	 * @regression ORD-COMPLY-005 (audit conformité 2026-05-27)
-	 * Verrouille le service archivé du PDF (Art. L102 B LPF — facture immuable).
+	 * @regression invoice-serves-archive-first
+	 * Verrouille le service archivé du PDF (Art. L102 B LPF — facture immuable) :
+	 * archive présente ⇒ servie en priorité, jamais de régénération.
 	 */
 	describe("archived PDF serving", () => {
 		it("calls archiveInvoicePdf after regeneration when no archive exists", async () => {
@@ -452,6 +460,63 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 					signal: expect.any(AbortSignal),
 				}),
 			);
+			fetchSpy.mockRestore();
+		});
+	});
+
+	/**
+	 * @regression invoice-archive-hash-mismatch-falls-back
+	 *
+	 * EINV-PDF-006 — le `invoicePdfHash` doit garder sa valeur de preuve d'intégrité
+	 * sur le CHEMIN DE LECTURE réel (octets effectivement servis depuis UploadThing),
+	 * pas seulement sur le fallback de régénération (EINV-PDF-002). Si l'artefact
+	 * archivé diverge de son empreinte (corruption/altération CDN), on NE le sert
+	 * PAS : on bascule sur la régénération depuis le snapshot figé (Art. L102 B LPF)
+	 * et on trace (Sentry `invoice-pdf-archive-hash-mismatch`).
+	 */
+	describe("intégrité de l'archive servie (EINV-PDF-006)", () => {
+		it("sert l'octet archivé tel quel si son hash matche le hash stocké (pas de régénération)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/inv-1.pdf",
+				invoicePdfHash: PDF_HASH,
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response(PDF_BYTES, { status: 200 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(mockRenderInvoicePdf).not.toHaveBeenCalled();
+			expect(mockSentry.captureMessage).not.toHaveBeenCalledWith(
+				"invoice-pdf-archive-hash-mismatch",
+				expect.anything(),
+			);
+			fetchSpy.mockRestore();
+		});
+
+		it("bascule sur la régénération + trace Sentry si l'octet servi diverge du hash archivé (self-heal)", async () => {
+			// Archive corrompue : le hash stocké est celui du PDF d'origine (PDF_HASH,
+			// = ce que la régénération depuis le snapshot reproduit), mais UploadThing
+			// renvoie d'autres octets. On doit refuser de servir l'octet douteux.
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/inv-1.pdf",
+				invoicePdfHash: PDF_HASH,
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response(new Uint8Array([0xde, 0xad, 0xbe, 0xef]), { status: 200 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			// L'octet douteux n'est jamais servi : on a basculé sur la régénération...
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				"invoice-pdf-archive-hash-mismatch",
+				expect.objectContaining({ level: "error" }),
+			);
+			// ...qui reproduit le PDF d'origine (hash == PDF_HASH) → servi 200 (self-heal).
+			expect(res.status).toBe(200);
 			fetchSpy.mockRestore();
 		});
 	});

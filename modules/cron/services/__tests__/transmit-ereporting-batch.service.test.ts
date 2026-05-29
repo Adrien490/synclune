@@ -79,20 +79,22 @@ describe("transmitEReportingBatch — aggregation by service result", () => {
 		expect(result).toEqual({ processed: 1, errored: 0, skipped: 0, hasMore: false });
 	});
 
-	it("counts SKIPPED_BACKOFF / SKIPPED_DRY_RUN / NOT_FOUND / NOT_ELIGIBLE as skipped", async () => {
+	it("counts SKIPPED_BACKOFF / SKIPPED_DRY_RUN / SKIPPED_EMPTY / NOT_FOUND / NOT_ELIGIBLE as skipped", async () => {
 		mockPrisma.eReportingBatch.findMany.mockResolvedValue([
 			{ id: "b1" },
 			{ id: "b2" },
 			{ id: "b3" },
 			{ id: "b4" },
+			{ id: "b5" },
 		]);
 		mockSubmitEReportingBatchById
 			.mockResolvedValueOnce({ batchId: "b1", status: "SKIPPED_BACKOFF" })
 			.mockResolvedValueOnce({ batchId: "b2", status: "SKIPPED_DRY_RUN" })
 			.mockResolvedValueOnce({ batchId: "b3", status: "NOT_FOUND" })
-			.mockResolvedValueOnce({ batchId: "b4", status: "NOT_ELIGIBLE" });
+			.mockResolvedValueOnce({ batchId: "b4", status: "NOT_ELIGIBLE" })
+			.mockResolvedValueOnce({ batchId: "b5", status: "SKIPPED_EMPTY" });
 		const result = await transmitEReportingBatch();
-		expect(result).toEqual({ processed: 0, errored: 0, skipped: 4, hasMore: false });
+		expect(result).toEqual({ processed: 0, errored: 0, skipped: 5, hasMore: false });
 	});
 
 	it("counts REJECTED / ABANDONED as errored, RETRYING as skipped (EINV-CRON-004)", async () => {

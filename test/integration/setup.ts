@@ -60,6 +60,7 @@ beforeEach(async () => {
 			"ProductSku", "ProductImage", "ProductMaterial", "ProductColor",
 			"Product", "Collection", "Material", "Color",
 			"OrderNote", "WebhookEvent",
+			"EReportingTransaction", "EReportingBatch", "EReportingPeriod",
 			"Account", "Session", "User"
 		RESTART IDENTITY CASCADE
 	`);

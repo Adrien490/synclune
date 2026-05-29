@@ -9,6 +9,9 @@ const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 		eReportingBatch: {
 			create: vi.fn(),
 		},
+		eReportingPeriod: {
+			upsert: vi.fn(),
+		},
 		$transaction: vi.fn(),
 	},
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -65,6 +68,11 @@ describe("buildEReportingBatch — split by MAX_BATCH_TRANSACTIONS (EINV-EREPORT
 			async (args: { data: { transactionCount: number } }) => ({
 				id: `batch-${Math.random().toString(36).slice(2, 8)}`,
 				...args.data,
+			}),
+		);
+		mockPrisma.eReportingPeriod.upsert.mockImplementation(
+			async (args: { create: { periodFrom: Date } }) => ({
+				id: `period-${args.create.periodFrom.toISOString()}`,
 			}),
 		);
 		mockPrisma.eReportingTransaction.updateMany.mockResolvedValue({ count: 0 });
@@ -139,9 +147,11 @@ describe("buildEReportingBatch — split by MAX_BATCH_TRANSACTIONS (EINV-EREPORT
 
 		await buildEReportingBatch();
 
+		// Le grouping est désormais period-aware : la clé/log est le periodFrom ISO
+		// (sous DAILY = minuit UTC du jour) et non plus le YYYY-MM-DD.
 		expect(mockLogger.info).toHaveBeenCalledWith(
 			expect.stringContaining("split into 2 batches"),
-			expect.objectContaining({ day: "2026-05-26", chunkCount: 2 }),
+			expect.objectContaining({ day: "2026-05-26T00:00:00.000Z", chunkCount: 2 }),
 		);
 	});
 

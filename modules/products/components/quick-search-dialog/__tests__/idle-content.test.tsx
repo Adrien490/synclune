@@ -69,30 +69,6 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
 }));
 
-// Tombstone is exercised in its own suite; here we stub it to a minimal shape
-// exposing the message + undo/expire affordances so we can assert wiring.
-vi.mock("@/shared/components/ui/tombstone", () => ({
-	Tombstone: ({
-		message,
-		onUndo,
-		onExpire,
-	}: {
-		message: string;
-		onUndo: () => void;
-		onExpire: () => void;
-	}) => (
-		<div data-testid="tombstone">
-			<span>{message}</span>
-			<button onClick={onUndo} data-testid="tombstone-undo">
-				Annuler
-			</button>
-			<button onClick={onExpire} data-testid="tombstone-expire">
-				Expire
-			</button>
-		</div>
-	),
-}));
-
 // Motion mocks — AnimatePresence and m.div just render children
 vi.mock("motion/react", () => ({
 	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -361,63 +337,6 @@ describe("IdleContent", () => {
 		it("remove button has descriptive aria-label with term name", () => {
 			render(<IdleContent {...defaultProps} searches={["bague argent"]} />);
 			expect(screen.getByRole("button", { name: 'Supprimer "bague argent"' })).toBeInTheDocument();
-		});
-	});
-
-	// ─── Bulk tombstone (F2) ───────────────────────────────────────────────────
-
-	describe("bulk tombstone (clear all)", () => {
-		const bulkProps = {
-			isBulkTombstoned: true,
-			onUndoBulkTombstone: vi.fn(),
-			onExpireBulkTombstone: vi.fn(),
-		};
-
-		it("renders a single tombstone covering all searches when bulk tombstoned", () => {
-			render(
-				<IdleContent
-					{...defaultProps}
-					{...bulkProps}
-					searches={["bague", "collier", "bracelet"]}
-				/>,
-			);
-			const tombstones = screen.getAllByTestId("tombstone");
-			expect(tombstones).toHaveLength(1);
-			expect(screen.getByText("3 recherches supprimées")).toBeInTheDocument();
-			// The per-term list/buttons are not rendered while bulk tombstoned.
-			expect(screen.queryByText("bague")).not.toBeInTheDocument();
-			expect(
-				screen.queryByRole("button", { name: "Effacer toutes les recherches récentes" }),
-			).not.toBeInTheDocument();
-		});
-
-		it("uses singular wording for a single search", () => {
-			render(<IdleContent {...defaultProps} {...bulkProps} searches={["bague"]} />);
-			expect(screen.getByText("1 recherche supprimée")).toBeInTheDocument();
-		});
-
-		it("calls onUndoBulkTombstone / onExpireBulkTombstone", async () => {
-			const onUndoBulkTombstone = vi.fn();
-			const onExpireBulkTombstone = vi.fn();
-			render(
-				<IdleContent
-					{...defaultProps}
-					isBulkTombstoned
-					onUndoBulkTombstone={onUndoBulkTombstone}
-					onExpireBulkTombstone={onExpireBulkTombstone}
-					searches={["bague", "collier"]}
-				/>,
-			);
-			await userEvent.click(screen.getByTestId("tombstone-undo"));
-			expect(onUndoBulkTombstone).toHaveBeenCalledOnce();
-			await userEvent.click(screen.getByTestId("tombstone-expire"));
-			expect(onExpireBulkTombstone).toHaveBeenCalledOnce();
-		});
-
-		it("renders the normal per-term list when not bulk tombstoned", () => {
-			render(<IdleContent {...defaultProps} searches={["bague", "collier"]} />);
-			expect(screen.queryByTestId("tombstone")).not.toBeInTheDocument();
-			expect(screen.getByText("bague")).toBeInTheDocument();
 		});
 	});
 

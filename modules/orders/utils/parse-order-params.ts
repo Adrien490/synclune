@@ -1,5 +1,9 @@
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
-import { GET_ORDERS_SORT_FIELDS } from "../constants/order.constants";
+import {
+	GET_ORDERS_DEFAULT_PER_PAGE,
+	GET_ORDERS_MAX_RESULTS_PER_PAGE,
+	GET_ORDERS_SORT_FIELDS,
+} from "../constants/order.constants";
 
 /**
  * Parse and validate order search parameters from URL
@@ -9,7 +13,11 @@ export function parseOrderParams(searchParams: { [key: string]: string | string[
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),
 		direction: searchParamParsers.direction(searchParams.direction),
-		perPage: searchParamParsers.perPage(searchParams.perPage, 10, 100),
+		perPage: searchParamParsers.perPage(
+			searchParams.perPage,
+			GET_ORDERS_DEFAULT_PER_PAGE,
+			GET_ORDERS_MAX_RESULTS_PER_PAGE,
+		),
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			GET_ORDERS_SORT_FIELDS,

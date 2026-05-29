@@ -1,16 +1,18 @@
 "use client";
 
 import { Suspense } from "react";
-import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
 import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { SORT_LABELS } from "../../constants/refund.constants";
 import { RefundsFilterSheet } from "./refunds-filter-sheet";
+import { REFUND_ORDER_PICKER_DIALOG_ID } from "./refund-order-picker-dialog";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -26,6 +28,7 @@ const IDS = getAdminDrawerIds("refunds");
 function RefundsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
 	const { hasActiveSort, activeFilterCount } = useActiveListControls();
+	const { open: openOrderPicker } = useDialog(REFUND_ORDER_PICKER_DIALOG_ID);
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -42,6 +45,14 @@ function RefundsBottomBarInner() {
 				activeFilterCount > 0
 					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
 					: undefined,
+		},
+		{
+			key: "create",
+			icon: Plus,
+			label: "Rembourser",
+			ariaLabel: "Créer un remboursement",
+			onClick: () => openOrderPicker(),
+			haspopup: "dialog",
 		},
 		{
 			key: "sort",

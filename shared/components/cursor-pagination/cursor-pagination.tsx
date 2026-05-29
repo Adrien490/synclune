@@ -41,7 +41,7 @@ const PAGINATION_BUTTON_CLASSES = [
 ] as const;
 
 function CursorPaginationInner({
-	perPage: _perPageProp,
+	perPage: perPageProp,
 	hasNextPage,
 	hasPreviousPage,
 	currentPageSize,
@@ -71,7 +71,10 @@ function CursorPaginationInner({
 	// false naturellement à la fin de la transition donc le spinner disparaît).
 	const [lastAction, setLastAction] = useState<"prev" | "next" | "reset" | "perPage" | null>(null);
 
-	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
+	// Sans `?perPage` en URL, on reflète la valeur réellement résolue côté serveur
+	// (prop) plutôt qu'un défaut global codé en dur — sinon le select se désync du
+	// nombre réellement chargé (ex. Clients=50, listes admin=20).
+	const perPage = Number(searchParams.get("perPage")) || perPageProp || DEFAULT_PER_PAGE;
 	const cursor = searchParams.get("cursor") ?? undefined;
 
 	const onCursorChange = useEffectEvent(() => {

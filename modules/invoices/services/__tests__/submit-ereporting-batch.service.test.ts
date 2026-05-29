@@ -10,6 +10,9 @@ const { mockPrisma, mockLogger, mockProvider, mockSentry, mockFeatureFlags } = v
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		// Transactions interactives (configurées en beforeEach pour exécuter le
+		// callback avec `tx === mockPrisma`).
+		$transaction: vi.fn(),
 	},
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	mockProvider: {
@@ -88,7 +91,25 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	vi.setSystemTime(new Date("2026-05-28T12:00:00Z"));
 	mockFeatureFlags.enable_ereporting = true;
-	mockPrisma.eReportingTransaction.findMany.mockResolvedValue([]);
+	// Par défaut un batch non vide : la garde "batch vide → SKIPPED_EMPTY" ne doit
+	// pas court-circuiter les tests qui attendent un appel provider. Les tests qui
+	// veulent l'inverse override avec `mockResolvedValue([])`.
+	mockPrisma.eReportingTransaction.findMany.mockResolvedValue([
+		{
+			occurredAt: new Date("2026-05-27T10:00:00Z"),
+			countryCode: "FR",
+			amountIncTax: 1000,
+			amountExclTax: 1000,
+			taxAmount: 0,
+			paymentMethod: "CARD",
+			currency: "EUR",
+			type: "SALES",
+		},
+	]);
+	// Exécute le callback de transaction avec tx === mockPrisma.
+	mockPrisma.$transaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
+		cb(mockPrisma),
+	);
 });
 
 describe("submitEReportingBatchById — feature flag", () => {
@@ -411,7 +432,21 @@ describe("submitEReportingBatchById — non-terminal provider status (fail-safe)
 	it("never writes status SENT for any non-terminal provider status", async () => {
 		for (const badStatus of ["RETRYING", "ABANDONED", "PENDING_SUBMISSION"]) {
 			vi.clearAllMocks();
-			mockPrisma.eReportingTransaction.findMany.mockResolvedValue([]);
+			mockPrisma.eReportingTransaction.findMany.mockResolvedValue([
+				{
+					occurredAt: new Date("2026-05-27T10:00:00Z"),
+					countryCode: "FR",
+					amountIncTax: 1000,
+					amountExclTax: 1000,
+					taxAmount: 0,
+					paymentMethod: "CARD",
+					currency: "EUR",
+					type: "SALES",
+				},
+			]);
+			mockPrisma.$transaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
+				cb(mockPrisma),
+			);
 			mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
 			mockProvider.submitEReportingBatch.mockResolvedValue({
 				providerBatchId: `pa-${badStatus}`,

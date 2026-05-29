@@ -9,6 +9,9 @@ const { mockPrisma, mockLogger } = vi.hoisted(() => ({
 		eReportingBatch: {
 			create: vi.fn(),
 		},
+		eReportingPeriod: {
+			upsert: vi.fn(),
+		},
 		$transaction: vi.fn(),
 	},
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -78,6 +81,11 @@ describe("buildEReportingBatch — aggregation", () => {
 			async (args: { data: { transactionCount: number } }) => ({
 				id: `batch-${Math.random().toString(36).slice(2, 8)}`,
 				...args.data,
+			}),
+		);
+		mockPrisma.eReportingPeriod.upsert.mockImplementation(
+			async (args: { create: { periodFrom: Date } }) => ({
+				id: `period-${args.create.periodFrom.toISOString()}`,
 			}),
 		);
 		mockPrisma.eReportingTransaction.updateMany.mockResolvedValue({ count: 0 });
@@ -232,6 +240,11 @@ describe("buildEReportingBatch — error handling", () => {
 
 		mockPrisma.$transaction.mockImplementation(
 			async (cb: (tx: typeof mockPrisma) => Promise<unknown>) => cb(mockPrisma),
+		);
+		mockPrisma.eReportingPeriod.upsert.mockImplementation(
+			async (args: { create: { periodFrom: Date } }) => ({
+				id: `period-${args.create.periodFrom.toISOString()}`,
+			}),
 		);
 		mockPrisma.eReportingTransaction.updateMany.mockResolvedValue({ count: 0 });
 	});

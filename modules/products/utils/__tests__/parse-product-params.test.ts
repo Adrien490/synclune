@@ -71,9 +71,9 @@ describe("parseProductParams", () => {
 
 	// ---- PerPage ----
 
-	it("defaults perPage to 10", () => {
+	it("defaults perPage to 20", () => {
 		const result = parseProductParams({});
-		expect(result.perPage).toBe(10);
+		expect(result.perPage).toBe(20);
 	});
 
 	it("parses custom perPage value", () => {

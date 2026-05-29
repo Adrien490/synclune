@@ -64,7 +64,6 @@ export function WishlistButton({
 		initialIsInWishlist,
 		enableUndoToast,
 		productTitle,
-		onOptimisticAdd: () => setBurstKey((k) => k + 1),
 	});
 
 	const { button: buttonSize, icon: iconSize, burst: burstScale } = sizeConfig[size];
@@ -86,6 +85,10 @@ export function WishlistButton({
 			size="icon"
 			onClick={(e) => {
 				e.stopPropagation();
+				// Burst urgent (hors transition de la form action) → joue au clic, pas
+				// après le serveur. Un setState dans l'action de formulaire ne serait commit
+				// qu'à la résolution serveur ; ici l'événement discret commit immédiatement.
+				if (!isInWishlist) setBurstKey((k) => k + 1);
 			}}
 			className={cn(
 				buttonSize,

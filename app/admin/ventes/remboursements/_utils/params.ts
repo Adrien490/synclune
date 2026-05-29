@@ -1,5 +1,9 @@
 import type { RefundFilters } from "@/modules/refunds/types/refund.types";
-import { SORT_OPTIONS } from "@/modules/refunds/constants/refund.constants";
+import {
+	GET_REFUNDS_DEFAULT_PER_PAGE,
+	GET_REFUNDS_MAX_RESULTS_PER_PAGE,
+	SORT_OPTIONS,
+} from "@/modules/refunds/constants/refund.constants";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { getFirstParam } from "@/shared/utils/params";
 
@@ -14,7 +18,11 @@ export function parseRefundParams(searchParams: { [key: string]: string | string
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),
 		direction: searchParamParsers.direction(searchParams.direction),
-		perPage: searchParamParsers.perPage(searchParams.perPage, 10, 100),
+		perPage: searchParamParsers.perPage(
+			searchParams.perPage,
+			GET_REFUNDS_DEFAULT_PER_PAGE,
+			GET_REFUNDS_MAX_RESULTS_PER_PAGE,
+		),
 		sortBy: searchParamParsers.sortBy(
 			searchParams.sortBy,
 			REFUND_SORT_FIELDS,

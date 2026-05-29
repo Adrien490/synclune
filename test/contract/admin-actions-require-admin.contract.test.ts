@@ -52,6 +52,11 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	"modules/orders/actions/get-filtered-order-ids.ts",
 	// Customer-facing : utilitaire de filtrage (IDs uniquement, pas de mutation).
 	"modules/refunds/actions/get-filtered-refund-ids.ts",
+	// Admin read utility : retour custom (RefundableOrderOption[]), pas ActionState,
+	// donc incompatible avec l'early-return canonique `return admin.error`. L'auth
+	// admin est bien vérifiée (requireAdmin en tête + re-check DB via getOrders) ;
+	// sur échec on renvoie une liste vide. Exempt du contrat ActionState, pas de l'auth.
+	"modules/refunds/actions/search-refundable-orders.ts",
 ]);
 
 interface ActionFile {

@@ -15,7 +15,7 @@ import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
-import { fraunces, figtree, caveat } from "@/shared/styles/fonts";
+import { fraunces, figtree, sacramento } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
@@ -31,7 +31,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="fr"
-			className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}
+			className={`${figtree.variable} ${fraunces.variable} ${sacramento.variable}`}
 			data-scroll-behavior="smooth"
 			suppressHydrationWarning
 		>

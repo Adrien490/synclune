@@ -56,14 +56,14 @@ export const EMAIL_COLORS_DARK = {
 
 /**
  * Font families pour les emails — alignées sur la marque storefront (Fraunces serif,
- * Figtree sans, Caveat cursive). Les web fonts sont chargées via @import Google Fonts
- * dans EMAIL_HEAD_STYLES. Outlook Desktop ignore @import et tombe sur les fallbacks
- * (Georgia/Brush Script MT) — dégradation gracieuse.
+ * Figtree sans, Sacramento script signature). Les web fonts sont chargées via @import
+ * Google Fonts dans EMAIL_HEAD_STYLES. Outlook Desktop ignore @import et tombe sur les
+ * fallbacks (Georgia/Brush Script MT) — dégradation gracieuse.
  */
 export const EMAIL_FONT_FAMILY = {
 	body: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
 	display: "'Fraunces', Georgia, 'Times New Roman', serif",
-	cursive: "'Caveat', 'Brush Script MT', 'Lucida Handwriting', cursive",
+	cursive: "'Sacramento', 'Brush Script MT', 'Lucida Handwriting', cursive",
 } as const;
 
 /**

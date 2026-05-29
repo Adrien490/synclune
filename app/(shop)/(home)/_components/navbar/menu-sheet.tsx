@@ -161,7 +161,7 @@ export function MenuSheet({
 					onOverlayClick={() => haptic("light")}
 				>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
-						<SheetTitle className="font-cursive flex h-9 items-center text-xl font-bold">
+						<SheetTitle className="font-cursive flex h-9 items-center text-xl">
 							<SheetClose asChild>
 								<Link
 									href={ROUTES.SHOP.HOME}

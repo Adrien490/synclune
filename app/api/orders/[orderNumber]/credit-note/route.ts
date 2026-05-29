@@ -185,16 +185,53 @@ export async function GET(
 			});
 			if (archived.ok) {
 				const buffer = await archived.arrayBuffer();
-				Sentry.setTag("credit_note_path", creditNotePath);
-				await recordCreditNoteDownload({
-					orderId: order.id,
-					creditNoteNumber: order.creditNoteNumber,
-					authorId: auditAuthorId,
-					source: auditSource,
-				});
-				return new Response(buffer, {
-					headers: buildPdfHeaders(order.creditNoteNumber, orderNumber),
-				});
+				// EINV-PDF-006 : re-vérifier l'empreinte de l'artefact servi contre le hash
+				// archivé (Art. L102 B LPF) — cohérent avec /invoice. Le `creditNotePdfHash`
+				// n'était vérifié que sur le fallback regen (:249) ; ici on couvre le chemin
+				// de lecture réel contre une corruption/altération CDN. Divergence : on NE
+				// sert PAS l'octet douteux → bascule régénération (re-vérifiée plus bas,
+				// 503 si elle diverge). Archives legacy sans hash : servies telles quelles.
+				const servedHash =
+					archive.creditNotePdfHash != null
+						? createHash("sha256").update(new Uint8Array(buffer)).digest("hex")
+						: null;
+				if (servedHash !== null && servedHash !== archive.creditNotePdfHash) {
+					logger.error(
+						"Archived credit note PDF hash mismatch — falling back to regeneration",
+						undefined,
+						{
+							service: "credit-note-route",
+							orderId: order.id,
+							creditNoteNumber: order.creditNoteNumber,
+							archivedHash: archive.creditNotePdfHash,
+							servedHash,
+						},
+					);
+					Sentry.captureMessage("credit-note-pdf-archive-hash-mismatch", {
+						level: "error",
+						fingerprint: ["credit-note", "archive-hash-mismatch", order.creditNoteNumber],
+						tags: { service: "credit-note-route" },
+						extra: {
+							orderId: order.id,
+							creditNoteNumber: order.creditNoteNumber,
+							archivedHash: archive.creditNotePdfHash,
+							servedHash,
+						},
+					});
+					creditNotePath = "lazy_regenerate";
+					// Pas de return : on tombe dans le bloc de régénération existant plus bas.
+				} else {
+					Sentry.setTag("credit_note_path", creditNotePath);
+					await recordCreditNoteDownload({
+						orderId: order.id,
+						creditNoteNumber: order.creditNoteNumber,
+						authorId: auditAuthorId,
+						source: auditSource,
+					});
+					return new Response(buffer, {
+						headers: buildPdfHeaders(order.creditNoteNumber, orderNumber),
+					});
+				}
 			}
 			creditNotePath = "lazy_regenerate";
 			logger.warn(

@@ -89,6 +89,7 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 				break;
 			case "SKIPPED_BACKOFF":
 			case "SKIPPED_DRY_RUN":
+			case "SKIPPED_EMPTY":
 			case "NOT_FOUND":
 			case "NOT_ELIGIBLE":
 				skipped++;

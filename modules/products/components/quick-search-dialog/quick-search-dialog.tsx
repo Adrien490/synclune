@@ -78,67 +78,14 @@ export function QuickSearchDialog({
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	});
 
-	// Tombstone state : termes en attente de remove() effectif (5s).
-	// Remplace le toast undo en bas d'écran. Cf `Tombstone` SSOT.
-	// Cleanup : à la fermeture du dialog, on flush les pendings via `remove()`
-	// pour éviter qu'un terme reste indéfiniment dans `useRecentSearches`.
-	const [tombstonedTerms, setTombstonedTerms] = useState<ReadonlySet<string>>(() => new Set());
-	const tombstonedRef = useRef<ReadonlySet<string>>(tombstonedTerms);
-	useEffect(() => {
-		tombstonedRef.current = tombstonedTerms;
-	}, [tombstonedTerms]);
-
-	// Bulk tombstone : « Effacer » consolide la suppression de TOUTES les
-	// recherches en une seule pastille undo (5s) + un seul appel `clear()` —
-	// au lieu d'empiler N pastilles et de tirer N `remove()`. Cf F2.
-	const [isBulkTombstoned, setIsBulkTombstoned] = useState(false);
-	const bulkTombstonedRef = useRef(false);
-	useEffect(() => {
-		bulkTombstonedRef.current = isBulkTombstoned;
-	}, [isBulkTombstoned]);
-
+	// Suppression directe : retrait immédiat du terme / de toutes les recherches.
 	const handleRemoveRecent = (term: string) => {
-		setTombstonedTerms((prev) => {
-			if (prev.has(term)) return prev;
-			const next = new Set(prev);
-			next.add(term);
-			return next;
-		});
+		remove(term);
 	};
 
 	const handleClearRecent = () => {
 		if (searches.length === 0) return;
-		// Subsume any per-term tombstones into the single bulk one.
-		setTombstonedTerms(new Set());
-		setIsBulkTombstoned(true);
-	};
-
-	const handleUndoBulkTombstone = () => {
-		setIsBulkTombstoned(false);
-	};
-
-	const handleExpireBulkTombstone = () => {
-		setIsBulkTombstoned(false);
 		clear();
-	};
-
-	const handleUndoTombstone = (term: string) => {
-		setTombstonedTerms((prev) => {
-			if (!prev.has(term)) return prev;
-			const next = new Set(prev);
-			next.delete(term);
-			return next;
-		});
-	};
-
-	const handleExpireTombstone = (term: string) => {
-		setTombstonedTerms((prev) => {
-			if (!prev.has(term)) return prev;
-			const next = new Set(prev);
-			next.delete(term);
-			return next;
-		});
-		remove(term);
 	};
 
 	const { contentRef, handleArrowNavigation, resetActiveIndex, activeDescendantId } =
@@ -156,27 +103,14 @@ export function QuickSearchDialog({
 		reset,
 	} = useQuickSearch({ searchInputRef, resetActiveIndex });
 
-	// Cleanup à la fermeture du dialog : (1) flush les tombstones en attente via
-	// `remove()` pour ne pas perdre l'intention utilisateur si le dialog se ferme
-	// avant l'expiration des 5s ; (2) `reset()` l'état de recherche pour qu'une
+	// Cleanup à la fermeture du dialog : `reset()` l'état de recherche pour qu'une
 	// réouverture reparte propre — couvre les fermetures qui contournent
 	// `handleClose` (sélection d'un résultat, « Voir les résultats »…).
 	useEffect(() => {
 		if (isOpen) return;
-		// Flush a pending bulk clear first (it subsumes any per-term tombstones).
-		if (bulkTombstonedRef.current) {
-			clear();
-			setIsBulkTombstoned(false);
-		} else {
-			const pending = tombstonedRef.current;
-			if (pending.size > 0) {
-				for (const term of pending) remove(term);
-				setTombstonedTerms(new Set());
-			}
-		}
 		reset();
-		// On veut déclencher SEULEMENT à la fermeture du dialog. `remove`, `clear`
-		// et `reset` sont stables en pratique (call-sites stables).
+		// On veut déclencher SEULEMENT à la fermeture du dialog. `reset` est stable
+		// en pratique (call-sites stables).
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isOpen]);
 
@@ -514,12 +448,6 @@ export function QuickSearchDialog({
 									onRemoveSearch={handleRemoveRecent}
 									onClearSearches={handleClearRecent}
 									isPending={isPending}
-									tombstonedTerms={tombstonedTerms}
-									onUndoTombstone={handleUndoTombstone}
-									onExpireTombstone={handleExpireTombstone}
-									isBulkTombstoned={isBulkTombstoned}
-									onUndoBulkTombstone={handleUndoBulkTombstone}
-									onExpireBulkTombstone={handleExpireBulkTombstone}
 								/>
 							</Fade>
 						)}

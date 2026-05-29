@@ -14,6 +14,7 @@ import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/l
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { checkSequenceContinuity } from "@/modules/invoices/services/check-sequence-continuity.service";
+import { checkEReportingOrphanTransactions } from "@/modules/invoices/services/check-ereporting-period-continuity.service";
 import {
 	persistInvoiceNumber,
 	backfillInvoiceDataSnapshot,
@@ -39,6 +40,8 @@ interface ReconcileBreakdown {
 	escalated: number;
 	/** EINV-SEQ-007 — nombre d'anomalies de continuité de séquence détectées (Art. 286 CGI). */
 	continuityIssues: number;
+	/** EINV-EREPORT-008 — nombre de transactions e-reporting orphelines (période close, jamais batchées). */
+	ereportingOrphans: number;
 }
 
 /**
@@ -104,6 +107,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		creditNoteRecovered: 0,
 		escalated: 0,
 		continuityIssues: 0,
+		ereportingOrphans: 0,
 	};
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
@@ -151,6 +155,13 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	// MAX+1-sous-lock est censée empêcher. Années couvertes : courante + N-1
 	// jusqu'à fin mars (période de clôture comptable où des avoirs N-1 sortent).
 	breakdown.continuityIssues = await runContinuityCheck(now);
+
+	// Passe 5 (EINV-EREPORT-008) : contrôle de continuité anti-trou e-reporting —
+	// défense en profondeur. L'exclusion constraint garantit le non-recouvrement
+	// des périodes mais PAS l'absence de trou ; ce contrôle détecte les
+	// transactions PENDING dont la période est close depuis > grâce et qui n'ont
+	// jamais été batchées (sous-déclaration DGFiP). Lecture seule, jamais bloquant.
+	breakdown.ereportingOrphans = await runEReportingOrphanCheck(new Date(now));
 
 	logger.info("Invoice reconciliation completed", {
 		cronJob: CRON_JOB,
@@ -446,6 +457,70 @@ async function runContinuityCheck(now: number): Promise<number> {
 		return issues.length;
 	} catch (e) {
 		logger.error("Sequence continuity check threw", e, { cronJob: CRON_JOB });
+		return 0;
+	}
+}
+
+/**
+ * EINV-EREPORT-008 — contrôle de continuité anti-trou des périodes e-reporting.
+ *
+ * Détecte les transactions PENDING non rattachées dont la période est close
+ * depuis plus que le délai de grâce (= jamais batchées, sous-déclaration DGFiP).
+ * Lecture seule, jamais bloquant : log + Sentry fingerprinté + UNE alerte admin
+ * agrégée. Calqué sur `runContinuityCheck`.
+ *
+ * @returns nombre de transactions orphelines (0 = sain).
+ */
+async function runEReportingOrphanCheck(now: Date): Promise<number> {
+	try {
+		const report = await checkEReportingOrphanTransactions(now);
+		if (!report) return 0;
+
+		logger.error("E-reporting orphan transactions detected", undefined, {
+			cronJob: CRON_JOB,
+			orphanCount: report.orphanCount,
+			oldestOccurredAt: report.oldestOccurredAt,
+			oldestPeriodTo: report.oldestPeriodTo,
+		});
+
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setFingerprint(["ereporting", "orphan-transactions"]);
+			scope.setContext("ereporting-orphans", {
+				orphanCount: report.orphanCount,
+				oldestOccurredAt: report.oldestOccurredAt,
+				oldestPeriodTo: report.oldestPeriodTo,
+				sampleIds: report.sampleIds,
+			});
+			Sentry.captureMessage(
+				`${report.orphanCount} transaction(s) e-reporting orpheline(s) — période close jamais batchée (sous-déclaration DGFiP)`,
+				"error",
+			);
+		});
+
+		await sendAdminCronFailedAlert({
+			// Label distinct du contrôle de numérotation : l'idempotency key de
+			// sendAdminCronFailedAlert est bucketée par heure ET par `job` — un même
+			// `CRON_JOB` collapserait l'alerte orphelins avec une éventuelle alerte de
+			// continuité de numérotation dans la même heure. On veut les deux.
+			job: `${CRON_JOB}:ereporting-orphans`,
+			errors: 1,
+			details: {
+				type: "ereporting-orphan-transactions",
+				orphanCount: report.orphanCount,
+				oldestOccurredAt: report.oldestOccurredAt,
+				oldestPeriodTo: report.oldestPeriodTo,
+				sampleIds: report.sampleIds,
+				action:
+					"Transactions e-reporting non rattachées à un batch au-delà du délai — vérifier build-ereporting-batch, voir docs/RUNBOOK-INVOICING.md",
+			},
+		}).catch((alertError) =>
+			logger.error("Failed to send e-reporting orphan alert", alertError, { cronJob: CRON_JOB }),
+		);
+
+		return report.orphanCount;
+	} catch (e) {
+		logger.error("E-reporting orphan check threw", e, { cronJob: CRON_JOB });
 		return 0;
 	}
 }

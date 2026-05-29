@@ -7,7 +7,7 @@ vi.mock("next/font/google", () => {
 		variable: "--mock-font",
 		style: { fontFamily: "mock" },
 	});
-	return { Figtree: fontMock, Fraunces: fontMock, Caveat: fontMock };
+	return { Figtree: fontMock, Fraunces: fontMock, Sacramento: fontMock };
 });
 
 import { NavbarWrapper } from "./navbar-wrapper";

@@ -13,6 +13,7 @@ import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/re
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
 import { RefundsFilterSheet } from "@/modules/refunds/components/admin/refunds-filter-sheet";
 import { RefundsSortBadge } from "@/modules/refunds/components/admin/refunds-sort-badge";
+import { CreateRefundButton } from "@/modules/refunds/components/admin/create-refund-button";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 
 const RefundsBottomBar = dynamic(() =>
@@ -67,7 +68,12 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
+			<PageHeader
+				variant="compact"
+				title="Remboursements"
+				className="hidden md:block"
+				actions={<CreateRefundButton />}
+			/>
 
 			<div className="space-y-6">
 				<RefundsBottomBar />

@@ -354,7 +354,7 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 // PAGINATION & SORTING
 // ============================================================================
 
-export const GET_ORDERS_DEFAULT_PER_PAGE = 10;
+export const GET_ORDERS_DEFAULT_PER_PAGE = 20;
 export const GET_ORDERS_MAX_RESULTS_PER_PAGE = 100;
 
 /**

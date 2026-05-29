@@ -14,7 +14,7 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("@/shared/styles/fonts", () => ({
-	caveat: { className: "font-cursive" },
+	sacramento: { className: "font-cursive" },
 }));
 
 // Import AFTER mocks
@@ -159,7 +159,7 @@ describe("PolaroidFrame", () => {
 			expect(figcaption.tagName).toBe("FIGCAPTION");
 		});
 
-		it("applies caveat font class to the figcaption", () => {
+		it("applies cursive font class to the figcaption", () => {
 			render(<PolaroidFrame caption="Belle photo">content</PolaroidFrame>);
 
 			expect(screen.getByText("Belle photo")).toHaveClass("font-cursive");

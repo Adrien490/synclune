@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
@@ -94,6 +95,11 @@ vi.mock("@/app/generated/prisma/client", () => ({
 import { GET } from "../route";
 
 const ORDER_NUMBER = "SYN-2026-0001";
+
+// Octets PDF par défaut renvoyés par `mockRenderInvoicePdf` + leur SHA-256, pour
+// piloter les chemins de vérification d'intégrité (EINV-PDF-006) de façon déterministe.
+const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+const PDF_HASH = createHash("sha256").update(PDF_BYTES).digest("hex");
 
 function makeReq() {
 	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/credit-note`);
@@ -295,15 +301,21 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 		});
 	});
 
+	/**
+	 * @regression credit-note-serves-archive-first
+	 * Archive présente ⇒ servie en priorité (Art. L102 B LPF), jamais de régénération.
+	 */
 	describe("archived PDF serving", () => {
 		it("streams archived PDF from UploadThing when creditNotePdfUrl is set (no regeneration)", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue({
 				creditNotePdfUrl: "https://ufs.example/archived-cn.pdf",
-				creditNotePdfHash: "a".repeat(64),
+				// Hash concordant avec les octets servis : la vérification d'intégrité
+				// EINV-PDF-006 passe et l'archive est servie sans régénération.
+				creditNotePdfHash: PDF_HASH,
 			});
 			const fetchSpy = vi
 				.spyOn(globalThis, "fetch")
-				.mockResolvedValue(new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200 }));
+				.mockResolvedValue(new Response(PDF_BYTES, { status: 200 }));
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -366,6 +378,38 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 
 			expect(res.status).toBe(500);
 			expect(fetchSpy).not.toHaveBeenCalled();
+
+			fetchSpy.mockRestore();
+		});
+	});
+
+	/**
+	 * @regression credit-note-archive-hash-mismatch-falls-back
+	 *
+	 * EINV-PDF-006 — symétrique de la facture : le `creditNotePdfHash` protège le
+	 * chemin de lecture réel (octets servis depuis UploadThing). Archive divergente
+	 * ⇒ on NE sert PAS l'octet douteux, on bascule sur la régénération (Art. L102 B
+	 * LPF) et on trace (Sentry `credit-note-pdf-archive-hash-mismatch`).
+	 */
+	describe("intégrité de l'archive servie (EINV-PDF-006)", () => {
+		it("bascule sur la régénération + trace Sentry si l'octet servi diverge du hash archivé", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				creditNotePdfUrl: "https://utfs.io/f/cn-1.pdf",
+				creditNotePdfHash: PDF_HASH,
+			});
+			const fetchSpy = vi
+				.spyOn(globalThis, "fetch")
+				.mockResolvedValue(new Response(new Uint8Array([0xde, 0xad, 0xbe, 0xef]), { status: 200 }));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				"credit-note-pdf-archive-hash-mismatch",
+				expect.objectContaining({ level: "error" }),
+			);
+			// La régénération reproduit l'avoir d'origine (hash == PDF_HASH) → 200.
+			expect(res.status).toBe(200);
 
 			fetchSpy.mockRestore();
 		});

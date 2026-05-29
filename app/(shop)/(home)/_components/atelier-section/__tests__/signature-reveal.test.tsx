@@ -7,7 +7,7 @@ import type React from "react";
 // ---------------------------------------------------------------------------
 
 vi.mock("@/shared/styles/fonts", () => ({
-	caveat: { className: "font-cursive" },
+	sacramento: { className: "font-cursive" },
 }));
 
 // ---------------------------------------------------------------------------

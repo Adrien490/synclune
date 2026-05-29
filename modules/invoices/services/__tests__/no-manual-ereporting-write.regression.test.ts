@@ -84,6 +84,18 @@ describe("E-reporting — pas de création ni mutation manuelle des modèles", (
 		expect(writers).toEqual(["modules/cron/services/build-ereporting-batch.service.ts"]);
 	});
 
+	it("only build-ereporting-batch.service.ts writes EReportingPeriod (create/upsert)", () => {
+		// EINV-EREPORT-006 : la table EReportingPeriod porte l'exclusion constraint de
+		// non-recouvrement. C'est un nouveau chemin d'écriture EReporting* — il doit
+		// rester confiné au cron d'agrégation (writer autorisé invariant 9). Aucune
+		// Server Action ne doit créer une période fictive (briserait l'alignement +
+		// la garantie no-gap/no-overlap).
+		const writers = findWriters(
+			/\b(?:prisma|tx)\.eReportingPeriod\.(?:create|upsert|update|updateMany|delete|deleteMany)\s*\(/,
+		);
+		expect(writers).toEqual(["modules/cron/services/build-ereporting-batch.service.ts"]);
+	});
+
 	it("only cron services + submit service call prisma.eReportingTransaction.updateMany", () => {
 		const writers = findWriters(/\b(?:prisma|tx)\.eReportingTransaction\.updateMany\s*\(/);
 		expect(writers.sort()).toEqual(
@@ -179,7 +191,7 @@ describe("E-reporting — pas de création ni mutation manuelle des modèles", (
 			.filter((f) => {
 				const content = readFileSync(f, "utf-8");
 				const stripped = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-				return /\b(?:prisma|tx)\.(?:eReportingBatch|eReportingTransaction)\.(?:create|upsert|delete|deleteMany)\s*\(/.test(
+				return /\b(?:prisma|tx)\.(?:eReportingBatch|eReportingTransaction|eReportingPeriod)\.(?:create|upsert|delete|deleteMany)\s*\(/.test(
 					stripped,
 				);
 			})

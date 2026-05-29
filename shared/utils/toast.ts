@@ -28,8 +28,7 @@ import {
  *    `<MicroToast />` pastille top-center (feedback unifié, F1). `error` y persiste
  *    5s+ (computeDuration) et reste "sticky" : un success ne peut pas l'enterrer
  *    (cf micro-toast-store). Un `opts.action` passé en mode mobile est propagé à
- *    la pastille (bouton inline, F5) ; les flux undo legacy peuvent aussi utiliser
- *    le pattern tombstone inline (cf `shared/components/ui/tombstone.tsx`).
+ *    la pastille (bouton inline, F5).
  */
 
 const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Merci de réessayer.";

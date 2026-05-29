@@ -1,5 +1,96 @@
-import type { EReportingTransactionType, PaymentMethod } from "@/app/generated/prisma/enums";
+import { z } from "zod";
+import type {
+	EReportingOperationCategory,
+	EReportingTransactionType,
+	PaymentMethod,
+} from "@/app/generated/prisma/client";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+
+// ============================================================================
+// Ventilation TVA (DORMANT — préparation sortie de franchise). EINV-EREPORT-007.
+// ============================================================================
+//
+// En franchise art. 293 B (TVA = 0), `vatBreakdown` reste null : aucune
+// ventilation à déclarer (comportement historique inchangé). À la sortie de
+// franchise, les lignes par taux proviendront de la donnée source
+// (OrderItem.taxRate/taxAmount, à réintroduire — docs/INVOICING.md L424). AUCUN
+// taux n'est codé en dur ici : le format ci-dessous est data-driven.
+//
+// `rate` en POINTS DE BASE (cohérent avec InvoiceLine.taxRate : 2000 = 20 %).
+// `baseExclTax` / `taxAmount` en centimes, SIGNÉS (négatifs pour un REFUND).
+const vatBreakdownLineSchema = z.object({
+	rate: z.number().int().min(0),
+	baseExclTax: z.number().int(),
+	taxAmount: z.number().int(),
+});
+
+export const vatBreakdownSchema = z.array(vatBreakdownLineSchema);
+export type VatBreakdownLine = z.infer<typeof vatBreakdownLineSchema>;
+
+/**
+ * Catégorie d'opération par défaut. Synclune vend des biens physiques → GOODS.
+ *
+ * ⚠️ À CONFIRMER / dériver à la sortie de franchise : un produit atelier/
+ * personnalisation relèverait de SERVICES, un panier mixte de MIXED. Tant que
+ * le catalogue est 100 % biens, GOODS est exact et n'introduit aucune régression.
+ */
+export const DEFAULT_OPERATION_CATEGORY: EReportingOperationCategory = "GOODS";
+
+/**
+ * Construit la ventilation TVA d'une transaction. DORMANT : tant que la donnée
+ * per-taux n'est pas câblée (franchise, `taxAmount === 0`), renvoie null — aucune
+ * ligne fictive, snapshot et hash inchangés.
+ *
+ * À l'activation (régime réel), le caller passe `perRateLines` issues de la
+ * donnée source (OrderItem.taxRate/taxAmount). AUCUN taux n'est inféré ici.
+ */
+export function buildVatBreakdown(
+	taxAmount: number,
+	perRateLines?: VatBreakdownLine[] | null,
+): VatBreakdownLine[] | null {
+	if (taxAmount === 0) return null; // franchise art. 293 B
+	if (!perRateLines || perRateLines.length === 0) return null;
+	return perRateLines;
+}
+
+/**
+ * Parse une valeur JSON `vatBreakdown` lue en DB en `VatBreakdownLine[]`.
+ * Renvoie null pour null/absent/forme invalide (legacy ou corruption — traité
+ * comme « pas de ventilation », sans crasher l'agrégation batch).
+ */
+export function parseVatBreakdown(value: unknown): VatBreakdownLine[] | null {
+	if (value == null) return null;
+	const parsed = vatBreakdownSchema.safeParse(value);
+	if (!parsed.success || parsed.data.length === 0) return null;
+	return parsed.data;
+}
+
+/**
+ * Fusionne plusieurs ventilations (transactions d'un batch) en sommant par taux.
+ * Renvoie null si aucune ligne (cas franchise : toutes les entrées sont null).
+ * Tri par taux croissant pour une sortie déterministe.
+ */
+export function mergeVatBreakdowns(
+	breakdowns: Array<VatBreakdownLine[] | null>,
+): VatBreakdownLine[] | null {
+	const byRate = new Map<number, { baseExclTax: number; taxAmount: number }>();
+	for (const lines of breakdowns) {
+		if (!lines) continue;
+		for (const line of lines) {
+			const acc = byRate.get(line.rate);
+			if (acc) {
+				acc.baseExclTax += line.baseExclTax;
+				acc.taxAmount += line.taxAmount;
+			} else {
+				byRate.set(line.rate, { baseExclTax: line.baseExclTax, taxAmount: line.taxAmount });
+			}
+		}
+	}
+	if (byRate.size === 0) return null;
+	return [...byRate.entries()]
+		.map(([rate, v]) => ({ rate, baseExclTax: v.baseExclTax, taxAmount: v.taxAmount }))
+		.sort((a, b) => a.rate - b.rate);
+}
 
 /**
  * Construit le payload d'une `EReportingTransaction` à partir d'un `Order` (SALES)
@@ -45,6 +136,12 @@ export interface EReportingTransactionPayload {
 	amountIncTax: number;
 	amountExclTax: number;
 	taxAmount: number;
+	// Ventilation TVA par taux (DORMANT) : null en franchise. Persisté en colonne
+	// top-level — PAS dans payloadSnapshot (forme figée + hashée, cf. test
+	// build-ereporting-snapshot-frozen). L'enrichissement du snapshot transmis
+	// fera partie de l'activation, hors scope dormant.
+	vatBreakdown: VatBreakdownLine[] | null;
+	operationCategory: EReportingOperationCategory;
 	currency: string;
 	payloadSnapshot: PayloadSnapshot;
 }
@@ -99,6 +196,10 @@ export function buildSalesTransaction(
 		amountIncTax: order.total,
 		amountExclTax,
 		taxAmount: order.taxAmount,
+		// DORMANT : null tant que franchise (order.taxAmount === 0). À l'activation,
+		// passer les lignes per-taux dérivées d'OrderItem.taxRate en 2e argument.
+		vatBreakdown: buildVatBreakdown(order.taxAmount),
+		operationCategory: DEFAULT_OPERATION_CATEGORY,
 		currency: order.currency,
 		payloadSnapshot: {
 			orderNumber: order.orderNumber,
@@ -198,6 +299,10 @@ export function buildRefundTransaction(
 		amountIncTax: amountIncTaxNegative,
 		amountExclTax: amountExclTaxNegative,
 		taxAmount: refundTaxAmount,
+		// DORMANT : null tant que franchise (refundTaxAmount === 0). À l'activation,
+		// les lignes per-taux d'un avoir se dérivent de RefundItem.taxAmount.
+		vatBreakdown: buildVatBreakdown(refundTaxAmount),
+		operationCategory: DEFAULT_OPERATION_CATEGORY,
 		currency: refund.currency,
 		payloadSnapshot: {
 			orderNumber: order.orderNumber,

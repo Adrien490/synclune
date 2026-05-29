@@ -38,7 +38,7 @@ export function SignatureReveal() {
 			</svg>
 			{/* Name appears after dash draws */}
 			<span className="relative inline-block">
-				<span className="font-cursive signature-name text-foreground text-shadow-glow text-lg italic md:text-xl">
+				<span className="font-cursive signature-name text-foreground text-shadow-glow text-lg md:text-xl">
 					Léane
 				</span>
 				<HandDrawnAccent

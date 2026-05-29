@@ -183,7 +183,7 @@ export const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 // PAGINATION & SORTING
 // ============================================================================
 
-export const GET_REFUNDS_DEFAULT_PER_PAGE = 10;
+export const GET_REFUNDS_DEFAULT_PER_PAGE = 20;
 export const GET_REFUNDS_MAX_RESULTS_PER_PAGE = 100;
 
 /**

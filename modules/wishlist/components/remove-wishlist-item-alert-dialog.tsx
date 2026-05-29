@@ -15,13 +15,7 @@ import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { type AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
-import { addToWishlist } from "@/modules/wishlist/actions/add-to-wishlist";
-import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
 import { LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 
 type RemoveWishlistItemData = AlertDialogData & {
 	productId: string;
@@ -31,43 +25,18 @@ type RemoveWishlistItemData = AlertDialogData & {
 /**
  * Dialog de confirmation pour supprimer un article de la wishlist
  *
- * Après succès, l'item passe en `Tombstone` inline (5s avec bouton Annuler)
- * dans la liste — remplace le toast undo mobile qui masquait la bottom-bar.
+ * Suppression directe : à la confirmation, l'item est retiré optimistiquement
+ * via `WishlistListOptimisticContext` (`onItemRemoved`), sans fenêtre d'annulation.
  */
 export function RemoveWishlistItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveWishlistItemData>(WISHLIST_DIALOG_IDS.REMOVE_ITEM);
-	const router = useRouter();
-	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
-	const [, startUndoTransition] = useTransition();
 
 	const wishlistListOptimistic = useWishlistListOptimistic();
 
-	const buildUndoHandler = (productId: string) => () => {
-		wishlistListOptimistic?.cancelTombstone(productId);
-		incrementWishlist();
-		const fd = new FormData();
-		fd.set("productId", productId);
-		startUndoTransition(async () => {
-			const result = await addToWishlist(undefined, fd);
-			if (result.status === ActionStatus.SUCCESS) {
-				router.refresh();
-			} else {
-				toast.error(result.message);
-			}
-		});
-	};
-
 	const { action, isPending } = useRemoveFromWishlist({
+		onOptimisticRemove: (id) => wishlistListOptimistic?.onItemRemoved(id),
 		onSuccess: () => {
-			const productId = removeDialog.data?.productId;
-			const itemName = removeDialog.data?.itemName ?? "Article";
 			removeDialog.close();
-			if (productId && wishlistListOptimistic) {
-				wishlistListOptimistic.markAsTombstone(productId, {
-					onUndo: buildUndoHandler(productId),
-					displayName: itemName,
-				});
-			}
 		},
 	});
 

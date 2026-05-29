@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { EReportingStatus } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
@@ -90,6 +91,7 @@ export type SubmitBatchStatus =
 	| "SKIPPED_FLAG_OFF"
 	| "SKIPPED_BACKOFF"
 	| "SKIPPED_DRY_RUN"
+	| "SKIPPED_EMPTY"
 	| "NOT_FOUND"
 	| "NOT_ELIGIBLE"
 	| "SENT"
@@ -123,6 +125,30 @@ const ELIGIBLE_STATUSES: ReadonlySet<EReportingStatus> = new Set([
 	EReportingStatus.PENDING,
 	EReportingStatus.RETRYING,
 ]);
+
+/**
+ * Re-queue les transactions d'un batch qui vient d'échouer terminalement
+ * (REJECTED / ABANDONED) : on les **détache** (`batchId = null`) et on les
+ * repasse `PENDING` pour que le prochain run de `build-ereporting-batch` les
+ * ré-agrège dans un **nouveau** batch — jamais orphelines (cf. invariant
+ * e-reporting #9 + objectif EINV-EREPORT-REQUEUE).
+ *
+ * On réutilise la MÊME ligne transaction (updateMany, jamais create) → le unique
+ * `[orderId,type]`/`[refundId,type]` n'est par construction jamais sollicité.
+ * `payloadSnapshot` et les montants restent intacts (snapshot figé, Art. L102 B).
+ *
+ * Le batch lui-même reste un **tombstone immuable** (status terminal +
+ * rejectionReason conservés) pour l'audit comptable. Seuls les enfants bougent.
+ */
+function requeueBatchTransactions(
+	client: Prisma.TransactionClient,
+	batchId: string,
+): Promise<{ count: number }> {
+	return client.eReportingTransaction.updateMany({
+		where: { batchId },
+		data: { batchId: null, status: EReportingStatus.PENDING },
+	});
+}
 
 export async function submitEReportingBatchById(
 	batchId: string,
@@ -192,6 +218,20 @@ export async function submitEReportingBatchById(
 			},
 		});
 
+		// Garde batch vide : un batch éligible (PENDING/RETRYING) sans transaction
+		// vivante ne doit JAMAIS être transmis à la PA — sinon on déclare un batch
+		// fantôme à la DGFiP (intégrité fiscale). Cas concret : un tombstone
+		// REJECTED/ABANDONED dont les transactions ont déjà été re-queuées
+		// (détachées) puis dont le batch aurait été remis PENDING. On skip sans
+		// toucher au status terminal.
+		if (transactions.length === 0) {
+			logger.warn(`Batch ${batch.id} has no live transactions, skipping transmission`, {
+				service: "submit-ereporting-batch",
+				batchId: batch.id,
+			});
+			return { batchId, status: "SKIPPED_EMPTY" };
+		}
+
 		const result = await withDeadline(
 			provider.submitEReportingBatch({
 				batch: {
@@ -251,30 +291,40 @@ export async function submitEReportingBatchById(
 					? EReportingStatus.SENT
 					: EReportingStatus.REJECTED;
 
-		await prisma.eReportingBatch.update({
-			where: { id: batch.id },
-			data: {
-				status: targetStatus,
-				providerBatchId: result.providerBatchId,
-				providerResponse: result as object,
-				...(targetStatus === EReportingStatus.SENT && { sentAt: result.submittedAt }),
-				...(targetStatus === EReportingStatus.ACCEPTED && {
-					sentAt: result.submittedAt,
-					acceptedAt: result.submittedAt,
-				}),
-				...(targetStatus === EReportingStatus.REJECTED && {
-					rejectedAt: result.submittedAt,
-					rejectionReason: (
-						result.rejectionReason ?? "Provider returned REJECTED without reason"
-					).slice(0, 1000),
-				}),
-			},
-		});
+		// Update batch + sort des transactions enfants atomiquement :
+		//  - SENT/ACCEPTED  → propager le status aux enfants (restent rattachés).
+		//  - REJECTED       → re-queue : détacher + repasser PENDING pour que
+		//                     `build` les ré-agrège dans un nouveau batch (jamais
+		//                     orphelines). Le batch reste un tombstone REJECTED.
+		await prisma.$transaction(async (tx) => {
+			await tx.eReportingBatch.update({
+				where: { id: batch.id },
+				data: {
+					status: targetStatus,
+					providerBatchId: result.providerBatchId,
+					providerResponse: result as object,
+					...(targetStatus === EReportingStatus.SENT && { sentAt: result.submittedAt }),
+					...(targetStatus === EReportingStatus.ACCEPTED && {
+						sentAt: result.submittedAt,
+						acceptedAt: result.submittedAt,
+					}),
+					...(targetStatus === EReportingStatus.REJECTED && {
+						rejectedAt: result.submittedAt,
+						rejectionReason: (
+							result.rejectionReason ?? "Provider returned REJECTED without reason"
+						).slice(0, 1000),
+					}),
+				},
+			});
 
-		// Propager le status aux transactions enfants.
-		await prisma.eReportingTransaction.updateMany({
-			where: { batchId: batch.id },
-			data: { status: targetStatus },
+			if (targetStatus === EReportingStatus.REJECTED) {
+				await requeueBatchTransactions(tx, batch.id);
+			} else {
+				await tx.eReportingTransaction.updateMany({
+					where: { batchId: batch.id },
+					data: { status: targetStatus },
+				});
+			}
 		});
 
 		logger.info(`Batch ${batch.id} transmitted → ${targetStatus}`, {
@@ -319,13 +369,18 @@ async function handleTransmitError(
 	// Erreur métier 4xx → REJECTED direct (pas de retry, correction admin requise).
 	if (isBusinessError) {
 		const reason = error.message.slice(0, 1000);
-		await prisma.eReportingBatch.update({
-			where: { id: batchId },
-			data: {
-				status: EReportingStatus.REJECTED,
-				rejectedAt: new Date(),
-				rejectionReason: reason,
-			},
+		// REJECTED + re-queue atomique des enfants (détache + PENDING) pour
+		// ré-agrégation au prochain build. Le batch reste un tombstone REJECTED.
+		await prisma.$transaction(async (tx) => {
+			await tx.eReportingBatch.update({
+				where: { id: batchId },
+				data: {
+					status: EReportingStatus.REJECTED,
+					rejectedAt: new Date(),
+					rejectionReason: reason,
+				},
+			});
+			await requeueBatchTransactions(tx, batchId);
 		});
 		logger.error(`Batch ${batchId} REJECTED (business error)`, error, {
 			service: "submit-ereporting-batch",
@@ -341,14 +396,30 @@ async function handleTransmitError(
 	const finalStatus =
 		nextRetryCount > MAX_RETRY ? EReportingStatus.ABANDONED : EReportingStatus.RETRYING;
 
-	await prisma.eReportingBatch.update({
-		where: { id: batchId },
-		data: {
-			status: finalStatus,
-			retryCount: nextRetryCount,
-			...(finalStatus === EReportingStatus.ABANDONED && { rejectedAt: new Date() }),
-		},
-	});
+	// ABANDONED = échec définitif → re-queue atomique des enfants (détache +
+	// PENDING) pour ré-agrégation au prochain build, jamais orphelines. RETRYING
+	// reste un retry niveau batch (enfants rattachés, re-soumission du même batch).
+	if (finalStatus === EReportingStatus.ABANDONED) {
+		await prisma.$transaction(async (tx) => {
+			await tx.eReportingBatch.update({
+				where: { id: batchId },
+				data: {
+					status: EReportingStatus.ABANDONED,
+					retryCount: nextRetryCount,
+					rejectedAt: new Date(),
+				},
+			});
+			await requeueBatchTransactions(tx, batchId);
+		});
+	} else {
+		await prisma.eReportingBatch.update({
+			where: { id: batchId },
+			data: {
+				status: EReportingStatus.RETRYING,
+				retryCount: nextRetryCount,
+			},
+		});
+	}
 
 	if (finalStatus === EReportingStatus.ABANDONED) {
 		Sentry.withScope((scope) => {

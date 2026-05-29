@@ -259,22 +259,66 @@ export async function GET(
 			});
 			if (archived.ok) {
 				const buffer = await archived.arrayBuffer();
-				Sentry.setTag("invoice_path", invoicePath);
-				Sentry.addBreadcrumb({
-					category: "invoice",
-					level: "info",
-					message: `Invoice served via ${invoicePath}`,
-					data: { orderId: order.id, invoicePath },
-				});
-				await recordInvoiceDownload({
-					orderId: order.id,
-					invoiceNumber: invoiceOrder.invoiceNumber,
-					authorId: auditAuthorId,
-					source: auditSource,
-				});
-				return new Response(buffer, {
-					headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
-				});
+				// EINV-PDF-006 : re-vérifier l'empreinte de l'artefact effectivement servi
+				// contre le hash archivé (Art. L102 B LPF). Jusqu'ici le `invoicePdfHash`
+				// n'avait de valeur de preuve d'intégrité que sur le fallback de
+				// régénération (:339) — le chemin de lecture réel (octets UploadThing)
+				// n'était jamais vérifié. On garde donc ce chemin contre une corruption
+				// ou altération silencieuse côté CDN. En cas de divergence : on NE sert
+				// PAS l'octet douteux — on bascule sur la régénération depuis le snapshot
+				// figé (elle-même re-vérifiée vs ce hash plus bas, 503 si elle diverge
+				// aussi). Archives legacy sans hash : servies telles quelles (pas de régression).
+				const servedHash =
+					archive.invoicePdfHash != null
+						? createHash("sha256").update(new Uint8Array(buffer)).digest("hex")
+						: null;
+				if (servedHash !== null && servedHash !== archive.invoicePdfHash) {
+					logger.error(
+						"Archived invoice PDF hash mismatch — falling back to regeneration",
+						undefined,
+						{
+							service: "invoice-route",
+							orderId: order.id,
+							invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
+							archivedHash: archive.invoicePdfHash,
+							servedHash,
+						},
+					);
+					Sentry.captureMessage("invoice-pdf-archive-hash-mismatch", {
+						level: "error",
+						fingerprint: [
+							"invoice",
+							"archive-hash-mismatch",
+							invoiceOrder.invoiceNumber ?? "unknown",
+						],
+						tags: { service: "invoice-route" },
+						extra: {
+							orderId: order.id,
+							invoiceNumber: invoiceOrder.invoiceNumber,
+							archivedHash: archive.invoicePdfHash,
+							servedHash,
+						},
+					});
+					invoicePath = "lazy_regenerate";
+					// Pas de return : on tombe dans le bloc de régénération existant (:297+).
+				} else {
+					Sentry.setTag("invoice_path", invoicePath);
+					Sentry.addBreadcrumb({
+						category: "invoice",
+						level: "info",
+						message: `Invoice served via ${invoicePath}`,
+						data: { orderId: order.id, invoicePath },
+					});
+					await recordInvoiceDownload({
+						orderId: order.id,
+						invoiceNumber: invoiceOrder.invoiceNumber,
+						authorId: auditAuthorId,
+						source: auditSource,
+					});
+					return new Response(buffer, {
+						headers: buildPdfHeaders(invoiceOrder.invoiceNumber, orderNumber),
+					});
+				}
 			}
 			invoicePath = "lazy_regenerate";
 			logger.warn(

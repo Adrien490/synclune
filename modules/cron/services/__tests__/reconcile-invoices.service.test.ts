@@ -13,6 +13,7 @@ const {
 	mockUpdateTag,
 	mockLogger,
 	mockCheckSequenceContinuity,
+	mockCheckEReportingOrphans,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
@@ -29,6 +30,7 @@ const {
 	mockUpdateTag: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	mockCheckSequenceContinuity: vi.fn(),
+	mockCheckEReportingOrphans: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -81,6 +83,10 @@ vi.mock("@/modules/invoices/services/check-sequence-continuity.service", () => (
 	checkSequenceContinuity: mockCheckSequenceContinuity,
 }));
 
+vi.mock("@/modules/invoices/services/check-ereporting-period-continuity.service", () => ({
+	checkEReportingOrphanTransactions: mockCheckEReportingOrphans,
+}));
+
 import { reconcileInvoices } from "../reconcile-invoices.service";
 
 function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
@@ -117,6 +123,8 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		// EINV-SEQ-007 : continuité saine par défaut (passe 4 isolée — testée à part).
 		mockCheckSequenceContinuity.mockResolvedValue([]);
+		// EINV-EREPORT-008 : aucune orpheline par défaut (passe 5 isolée — testée à part).
+		mockCheckEReportingOrphans.mockResolvedValue(null);
 	});
 
 	it("returns zeros + hasMore=false when no candidates", async () => {
@@ -396,6 +404,15 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		);
 	});
 
+	/**
+	 * @regression invoice-sequence-gap-alerts-admin
+	 *
+	 * EINV-SEQ-007 / Art. 286 CGI : un TROU de séquence (numéro sauté, pas seulement
+	 * un doublon que le @unique+CHECK rejettent) DOIT remonter une alerte admin via
+	 * `sendAdminCronFailedAlert` (`type: "sequence-continuity-breach"`). Ce verrou
+	 * garde le wiring détection → alerte ; la détection elle-même est couverte par
+	 * `check-sequence-continuity.service.test.ts`.
+	 */
 	describe("Passe 4 — contrôle de continuité (EINV-SEQ-007)", () => {
 		it("alerte l'admin + remonte continuityIssues quand un trou de séquence est détecté", async () => {
 			mockCheckSequenceContinuity.mockResolvedValue([

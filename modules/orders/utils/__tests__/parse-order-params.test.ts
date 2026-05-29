@@ -10,7 +10,7 @@ describe("parseOrderParams", () => {
 		const result = parseOrderParams({});
 
 		expect(result.direction).toBe("forward");
-		expect(result.perPage).toBe(10);
+		expect(result.perPage).toBe(20);
 		expect(result.sortBy).toBe("created-descending");
 		expect(result.search).toBeUndefined();
 		expect(result.cursor).toBeUndefined();

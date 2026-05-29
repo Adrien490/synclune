@@ -106,13 +106,31 @@ GET /api/orders/[orderNumber]/invoice
 Cron 1h UTC daily: build-ereporting-batch
   │
   ├─→ findMany EReportingTransaction PENDING + batchId=null + occurredAt < today
-  ├─→ group by UTC day
-  └─→ for each day:
+  ├─→ group by PÉRIODE (computeEReportingPeriod, EREPORTING_PERIOD_LENGTH, défaut DAILY)
+  └─→ for each période CLOSE (periodTo ≤ now — sinon différée) :
         ├─→ prisma.$transaction:
-        │     ├─ create EReportingBatch (status=PENDING)
+        │     ├─ upsert EReportingPeriod (periodFrom @unique, idempotent)
+        │     ├─ create EReportingBatch (status=PENDING, periodId)
         │     └─ updateMany transactions batchId=batch.id (filter batchId=null)
         └─→ (transmission DGFiP = futur transmit-ereporting-batch cron + PDP signé)
 ```
+
+#### Non-recouvrement vs anti-trou des périodes (EINV-EREPORT-006/008)
+
+L'exclusion constraint Postgres `EReportingPeriod_no_overlap`
+(`EXCLUDE USING gist (tsrange(periodFrom, periodTo, '[)') WITH &&)`) garantit le
+**NON-RECOUVREMENT** des périodes (aucun double dépôt DGFiP) — et **rien d'autre** :
+elle est parfaitement satisfaite si l'on saute une période contiguë, donc elle ne
+protège **pas** contre un TROU. L'**absence de trou** (toute transaction encaissée
+finit dans une période donc dans un batch) repose sur deux mécanismes hors schéma :
+
+1. `build-ereporting-batch` crée (upsert) la période contiguë de **toute** période
+   ayant des transactions — une période sans vente est légitimement absente.
+2. **Passe 5 de `reconcile-invoices`** (`check-ereporting-period-continuity.service.ts`,
+   EINV-EREPORT-008) : détecte les `EReportingTransaction` PENDING dont la période est
+   close depuis > `EREPORTING_ORPHAN_GRACE_MS` (48h) et jamais batchées (= sous-déclaration),
+   puis alerte l'admin (`sendAdminCronFailedAlert` + Sentry). Lecture seule, jamais bloquant.
+   Symétrie volontaire avec la détection de gap de numérotation (Passe 4, Art. 286).
 
 ### Flux d'un remboursement
 
@@ -351,13 +369,20 @@ Fix : vérifier le statut de paiement Stripe, attendre webhook ou faire tourner 
 
 Tant que le provider PDP n'est pas configuré, **c'est attendu**. Le cron `build-ereporting-batch` crée les batches mais n'a personne à qui les transmettre. Dès qu'un provider concret remplacera `LocalPdfProvider`, le futur cron `transmit-ereporting-batch` consommera la file (ordre `periodFrom asc`).
 
-### Batch `REJECTED`
+### Batch `REJECTED` / `ABANDONED` — re-queue automatique
 
-Voir l'alerte rouge en haut du dashboard. Le `rejectionReason` est stocké sur le batch ; les détails d'API sont dans la table `providerResponse` (Json). Workflow :
+Voir l'alerte rouge en haut du dashboard. Le `rejectionReason` est stocké sur le batch ; les détails d'API sont dans la table `providerResponse` (Json).
 
-1. Lire la raison, corriger le payload côté Order (souvent un champ manquant).
-2. Re-créer une `EReportingTransaction` pour les transactions impactées (script ad-hoc — pas encore d'UI).
-3. Le prochain run de `build-ereporting-batch` les ré-agrège dans un nouveau batch.
+**Re-queue automatique des transactions.** Quand `submit-ereporting-batch.service.ts` fait passer un batch en `REJECTED` (ACK synchrone PA ou erreur métier 4xx) ou `ABANDONED` (retries réseau épuisés), il **détache** atomiquement ses `EReportingTransaction` (`batchId = null`, `status = PENDING`) — le batch lui-même reste un **tombstone immuable** (status terminal + `rejectionReason` conservés pour l'audit). Le prochain run de `build-ereporting-batch` les **ré-agrège dans un nouveau batch** : aucune transaction n'est jamais orpheline. On réutilise la MÊME ligne transaction (jamais de `create`), donc le unique `[orderId,type]`/`[refundId,type]` n'est pas sollicité. Verrouillé par `ereporting-requeue-on-terminal-failure.regression.test.ts` (+ `ereporting-requeue-rebuild.integration.test.ts`).
+
+**Garde batch vide.** Un batch éligible (PENDING/RETRYING) sans transaction vivante n'est jamais transmis (`SKIPPED_EMPTY`) → pas de batch fantôme déclaré à la DGFiP. Le bouton admin « Relancer » refuse de même un tombstone déjà re-queué (0 transaction).
+
+Workflow admin pour un `REJECTED` métier (donnée invalide) :
+
+1. Lire la raison, **corriger le payload côté Order** (souvent un champ manquant).
+2. La correction faite, le re-queue automatique + `build` reprennent les transactions au prochain cycle — aucune action manuelle requise.
+
+> ⚠️ **Limitation (à confirmer contre l'arrêté final / la spec de la PA).** Re-queuer un `REJECTED` 4xx signifie qu'une donnée structurellement invalide est ré-agrégée puis re-rejetée à **chaque** run de `build` une fois une **vraie PA branchée** (boucle de re-rejet quotidienne + alerte Sentry, jusqu'à correction de l'Order). Sans danger tant que `INVOICE_ENABLE_EREPORTING` est OFF (`LocalPdfProvider` = dry-run PENDING, jamais REJECTED). **Mitigation au go-live PA** : ajouter un cap de tentatives **par transaction** (champ `requeueCount` → migration) qui bascule en état terminal « intervention manuelle » après N rejets. **Non figé ici** — paramètre réglementaire à arbitrer.
 
 ### Erreur `INVOICE_SEQUENCE_OVERFLOW` (99999/an)
 
@@ -418,6 +443,6 @@ INVOICE_TRANSMISSION_MIN_AMOUNT=0               # centimes (0 = pas de seuil)
 
 1. **Choix plateforme agréée (PDP / PA)** — débloque la transmission e-reporting et l'émission B2B structurée. Critères à arbitrer : prix, support B2C-only, intégration API/webhook, certification DGFiP.
 2. **Profil Factur-X cible pour B2B** : MINIMUM (livré) suffit ? ou BASIC/EN16931 ? Dépend de ce que la PDP exige.
-3. **Périodicité e-reporting B2C** : décret final pas encore publié (mai 2026). Daily aggregation est notre défaut prudent.
+3. **Périodicité e-reporting B2C** : décret final pas encore publié (mai 2026). La cadence franchise (Art. 293 B) est de nature **bimestrielle** (dépôt au plus tard 25-30 du mois suivant le bimestre). `EREPORTING_PERIOD_LENGTH` est désormais branché de bout en bout (`DAILY` / `MONTHLY` / `BIMONTHLY` — `computeEReportingPeriod` + grouping period-aware dans `build-ereporting-batch`), **défaut `DAILY`** prudent. Passer à `BIMONTHLY` le jour où la spec PA est fixée n'est qu'un changement de variable d'env (la PA peut aussi agréger elle-même — à confirmer contre sa spec).
 4. **TVA franchise dans Factur-X** : code UNTDID 5305 retenu = `ZB` (zéro pour franchise). À valider avec un expert-comptable que ce mapping est accepté par la DGFiP.
 5. **Bascule régime réel TVA** : si Synclune dépasse 37 500 € en services, recalibrer `OrderItem.taxRate`/`taxAmount` au checkout et reprendre la numérotation depuis le compteur courant (pas de reset).

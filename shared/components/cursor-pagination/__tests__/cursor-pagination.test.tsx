@@ -145,6 +145,22 @@ describe("CursorPagination", () => {
 			expect(select).toHaveAttribute("data-value", "20");
 		});
 
+		it("reflects the server-resolved perPage prop when no ?perPage in URL", () => {
+			// Régression : le select doit refléter la valeur réellement résolue
+			// serveur (prop), pas un DEFAULT_PER_PAGE codé en dur. Ex. Clients=50.
+			mockSearchParams.current = new URLSearchParams();
+			renderPagination({ perPage: 50, currentPageSize: 50 });
+			const select = screen.getByTestId("select");
+			expect(select).toHaveAttribute("data-value", "50");
+		});
+
+		it("prioritizes ?perPage from URL over the prop", () => {
+			mockSearchParams.current = new URLSearchParams("perPage=100");
+			renderPagination({ perPage: 50, currentPageSize: 50 });
+			const select = screen.getByTestId("select");
+			expect(select).toHaveAttribute("data-value", "100");
+		});
+
 		it("renders result count with plural", () => {
 			renderPagination({ currentPageSize: 15 });
 			expect(screen.getByText("15")).toBeInTheDocument();

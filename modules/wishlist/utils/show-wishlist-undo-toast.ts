@@ -15,8 +15,8 @@ interface ShowWishlistUndoToastOptions {
  * - **Desktop** : toast Sonner persistant 5s avec action « Annuler » inline +
  *   description guidante (pattern undo classique).
  * - **Mobile** : pastille `<MicroToast />` brève sans action — l'undo n'a pas
- *   de sens sur PDP (un tap re-toggle l'état). La page `/favoris` gère son
- *   propre undo via `WishlistListOptimisticContext` + `<Tombstone />` inline.
+ *   de sens sur PDP (un tap re-toggle l'état). La page `/favoris` applique une
+ *   suppression directe via `WishlistListOptimisticContext` (retrait optimiste).
  *
  * Réutilisé entre `SwipeableWishlistItem` (desktop) et `WishlistButton`
  * (PDP via `enableUndoToast`).

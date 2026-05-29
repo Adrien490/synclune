@@ -53,7 +53,12 @@ export async function retryEReportingBatch(
 
 		const batch = await prisma.eReportingBatch.findUnique({
 			where: { id: validation.data.id },
-			select: { id: true, status: true, retryCount: true },
+			select: {
+				id: true,
+				status: true,
+				retryCount: true,
+				_count: { select: { transactions: true } },
+			},
 		});
 		if (!batch) {
 			return error("Batch introuvable");
@@ -62,6 +67,21 @@ export async function retryEReportingBatch(
 		if (batch.status !== EReportingStatus.REJECTED && batch.status !== EReportingStatus.ABANDONED) {
 			return error(
 				`Statut ${batch.status} non éligible. Seuls REJECTED ou ABANDONED peuvent être relancés.`,
+			);
+		}
+
+		// Un batch terminal (REJECTED/ABANDONED) voit désormais ses transactions
+		// re-queuées automatiquement (détachées + PENDING) par
+		// `submit-ereporting-batch.service.ts` → elles seront ré-agrégées dans un
+		// nouveau batch au prochain run de `build-ereporting-batch`. Remettre CE
+		// batch (vidé) en PENDING transmettrait un batch fantôme (0 transaction) à
+		// la DGFiP. On bloque donc le reset quand il ne reste aucune transaction
+		// vivante. (Les batches legacy rejetés AVANT ce comportement conservent
+		// leurs transactions rattachées et restent relançables.)
+		if (batch._count.transactions === 0) {
+			return success(
+				"Les transactions de ce batch ont déjà été re-mises en file automatiquement. " +
+					"Elles seront ré-agrégées dans un nouveau batch au prochain run de build-ereporting-batch — aucune action requise.",
 			);
 		}
 

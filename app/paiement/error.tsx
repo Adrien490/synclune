@@ -42,10 +42,7 @@ export default function CheckoutError({
 					}
 					title={
 						<>
-							<p
-								aria-hidden="true"
-								className="font-cursive text-muted-foreground mb-1 text-lg italic"
-							>
+							<p aria-hidden="true" className="font-cursive text-muted-foreground mb-1 text-lg">
 								Petit imprévu —
 							</p>
 							<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">

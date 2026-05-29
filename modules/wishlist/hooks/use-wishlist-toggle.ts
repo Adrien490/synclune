@@ -21,12 +21,6 @@ interface UseWishlistToggleOptions {
 	enableUndoToast?: boolean;
 	/** Titre du produit injecté dans les toasts undo. */
 	productTitle?: string;
-	/**
-	 * Callback déclenché de façon **optimiste** au moment de l'ajout (dès le clic,
-	 * dans la transition), pas après confirmation serveur. Utilisé pour jouer une
-	 * micro-célébration (burst de cœurs). Non appelé sur retrait.
-	 */
-	onOptimisticAdd?: () => void;
 }
 
 /**
@@ -40,7 +34,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		onSuccess,
 		enableUndoToast = false,
 		productTitle,
-		onOptimisticAdd,
 	} = options ?? {};
 	const router = useRouter();
 	const pathname = usePathname();
@@ -153,15 +146,10 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		const currentState = isInWishlistRef.current;
 		const newState = !currentState;
 
-		// Feedback immédiat HORS transition (mise à jour urgente). Un `setState`
-		// régulier (burstKey) déclenché DANS une transition asynchrone n'est commit
-		// qu'à la résolution de l'action serveur → le burst jouait « après coup ».
-		// Hors transition, il s'affiche instantanément au clic. Idem haptic.
+		// Haptique synchrone (pas une mise à jour d'état React → non affectée par la
+		// transition de la form action). Le burst de cœurs optimiste est, lui, déclenché
+		// côté composant dans le `onClick` du bouton (événement discret = commit immédiat).
 		triggerHaptic(newState ? "medium" : "light");
-		if (newState) {
-			// Micro-célébration optimiste (burst de cœurs) — uniquement sur ajout
-			onOptimisticAdd?.();
-		}
 
 		startTransition(() => {
 			// Mise à jour optimistic de l'icône coeur

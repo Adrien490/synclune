@@ -32,7 +32,7 @@ interface EmailLayoutProps {
  * que les clients email n'arrivent pas à toucher autrement.
  */
 const EMAIL_HEAD_STYLES = `
-	@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Caveat:wght@400&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400&family=Sacramento&display=swap');
 	:root { color-scheme: light dark; }
 	@media (prefers-color-scheme: dark) {
 		body { background-color: ${EMAIL_COLORS_DARK.background.main} !important; }

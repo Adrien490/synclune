@@ -76,11 +76,12 @@ describe("retryEReportingBatch — éligibilité statut", () => {
 		}
 	});
 
-	it("accepts REJECTED batch", async () => {
+	it("accepts REJECTED batch (legacy : transactions encore rattachées)", async () => {
 		mockPrisma.eReportingBatch.findUnique.mockResolvedValue({
 			id: "batch-1",
 			status: "REJECTED",
 			retryCount: 2,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 
@@ -90,17 +91,36 @@ describe("retryEReportingBatch — éligibilité statut", () => {
 		expect(mockPrisma.eReportingBatch.update).toHaveBeenCalled();
 	});
 
-	it("accepts ABANDONED batch", async () => {
+	it("accepts ABANDONED batch (legacy : transactions encore rattachées)", async () => {
 		mockPrisma.eReportingBatch.findUnique.mockResolvedValue({
 			id: "batch-1",
 			status: "ABANDONED",
 			retryCount: 6,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 
 		const result = await retryEReportingBatch(undefined, makeFormData("batch-1"));
 
 		expect(result.status).toBe("success");
+	});
+
+	it("ne reset PAS un tombstone déjà re-queué (0 transaction vivante) — message info", async () => {
+		// Les transactions ont déjà été détachées + repassées PENDING par le
+		// service submit (re-queue auto). Remettre ce batch vidé en PENDING
+		// transmettrait un batch fantôme : on bloque le reset.
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue({
+			id: "batch-empty",
+			status: "REJECTED",
+			retryCount: 2,
+			_count: { transactions: 0 },
+		});
+
+		const result = await retryEReportingBatch(undefined, makeFormData("batch-empty"));
+
+		expect(result.status).toBe("success");
+		expect(result.message).toMatch(/re-mises en file automatiquement/i);
+		expect(mockPrisma.eReportingBatch.update).not.toHaveBeenCalled();
 	});
 
 	it("returns error when batch is missing", async () => {
@@ -119,6 +139,7 @@ describe("retryEReportingBatch — reset retryCount=0 (EINV-AUDIT-005)", () => {
 			id: "batch-abandoned",
 			status: "ABANDONED",
 			retryCount: 6,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 
@@ -140,6 +161,7 @@ describe("retryEReportingBatch — reset retryCount=0 (EINV-AUDIT-005)", () => {
 			id: "batch-rejected",
 			status: "REJECTED",
 			retryCount: 3,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 
@@ -156,6 +178,7 @@ describe("retryEReportingBatch — reset retryCount=0 (EINV-AUDIT-005)", () => {
 			id: "batch-1",
 			status: "REJECTED",
 			retryCount: 1,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 
@@ -169,6 +192,7 @@ describe("retryEReportingBatch — reset retryCount=0 (EINV-AUDIT-005)", () => {
 			id: "batch-1",
 			status: "ABANDONED",
 			retryCount: 6,
+			_count: { transactions: 2 },
 		});
 		mockPrisma.eReportingBatch.update.mockResolvedValue({});
 

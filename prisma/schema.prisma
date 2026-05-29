@@ -1596,8 +1596,66 @@ enum EReportingStatus {
   ABANDONED // Échec définitif (escalade admin)
 }
 
+// Catégorie d'opération e-reporting (DORMANT — préparation sortie de franchise).
+// L'e-reporting B2C distingue la livraison de biens de la prestation de services
+// (règles d'exigibilité TVA différentes : livraison vs encaissement). Synclune
+// vend des biens physiques → GOODS par défaut (réalité actuelle, zéro régression).
+// SERVICES (atelier/personnalisation) et MIXED (panier biens+services) à dériver
+// à la sortie de franchise.
+//
+// ⚠️ À CONFIRMER contre l'arrêté final / la spec de la PA : la liste exacte des
+// catégories d'opération de l'e-reporting B2C n'est pas figée — ces valeurs sont
+// une hypothèse de travail, pas une valeur réglementaire gravée.
+enum EReportingOperationCategory {
+  GOODS // Livraison de biens
+  SERVICES // Prestation de services
+  MIXED // Panier mixte biens + services
+}
+
+// Unité réglementaire de non-recouvrement (EINV-EREPORT-006). Une période
+// e-reporting couvre un intervalle [periodFrom, periodTo) aligné sur la longueur
+// configurable `EREPORTING_PERIOD_LENGTH` (défaut DAILY). C'est CETTE table qui
+// porte l'exclusion constraint Postgres `EReportingPeriod_no_overlap`.
+//
+// ⚠️ Portée EXACTE de l'EXCLUDE : il garantit le NON-RECOUVREMENT (aucune période
+// n'en chevauche une autre → pas de double déclaration DGFiP). Il NE garantit PAS
+// l'absence de TROU : insérer [J1,J2) puis [J3,J4) en sautant [J2,J3) le satisfait.
+// L'absence de trou (= toute transaction encaissée finit dans une période donc dans
+// un batch) repose sur DEUX mécanismes hors schéma : (a) `build-ereporting-batch`
+// crée toujours la période contiguë de TOUTE période ayant des transactions, et
+// (b) le contrôle de continuité `check-ereporting-period-continuity.service.ts`
+// (Passe 5 de `reconcile-invoices`) alerte sur toute transaction PENDING dont la
+// période est close mais jamais batchée — symétrie avec la détection de gap de
+// numérotation (Art. 286). Une période sans vente est légitimement absente.
+//
+// Une période donnée peut porter PLUSIEURS batches (cap-split EINV-EREPORT-005 quand
+// une période > MAX_BATCH_TRANSACTIONS) : les splits partagent UNE ligne période →
+// aucun conflit d'exclusion.
+//
+// La contrainte d'exclusion (EXCLUDE USING gist (tsrange(...) WITH &&)) n'est pas
+// exprimable en Prisma — voir migration `20260529130000_add_ereporting_period_exclusion`.
+model EReportingPeriod {
+  id         String            @id @default(cuid())
+  // Bornes alignées sur EREPORTING_PERIOD_LENGTH. periodFrom est @unique : les
+  // périodes étant alignées + non-recouvrantes, la borne basse identifie la
+  // période → handle idempotent pour l'upsert dans build-ereporting-batch.
+  periodFrom DateTime          @unique
+  periodTo   DateTime
+  batches    EReportingBatch[]
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([periodFrom, periodTo])
+}
+
 model EReportingBatch {
   id                  String           @id @default(cuid())
+  // Période de rattachement (unité de non-recouvrement). Nullable pour compat avec
+  // les batches pré-migration ; toujours peuplé par build-ereporting-batch.service.
+  // SetNull pour conserver le batch même si la période est purgée.
+  periodId            String?
+  period              EReportingPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  // Snapshot dénormalisé des bornes (SSOT de non-recouvrement = EReportingPeriod).
   periodFrom          DateTime
   periodTo            DateTime
   status              EReportingStatus @default(PENDING)
@@ -1605,6 +1663,12 @@ model EReportingBatch {
   totalAmountIncTax   Int              @default(0) // centimes
   totalAmountExclTax  Int              @default(0)
   totalTaxAmount      Int              @default(0)
+  // Ventilation TVA par taux, agrégée depuis les transactions du batch (DORMANT).
+  // Tableau JSON `[{ rate, baseExclTax, taxAmount }]` (rate en points de base,
+  // ex 2000 = 20 %). null en franchise art. 293 B (TVA = 0). Voir
+  // docs/INVOICING.md L424 (réintroduction OrderItem.taxRate à la sortie de
+  // franchise). CHECK DB `jsonb_typeof = 'array'` (migration 20260529140000).
+  vatBreakdown        Json?
   currency            String           @default("EUR") @db.VarChar(3)
   // Identifiant retourné par la PDP/PA au dépôt. Unique pour idempotence :
   // un même batch ne peut pas être resoumis deux fois.
@@ -1621,6 +1685,7 @@ model EReportingBatch {
 
   @@index([status, periodFrom]) // cron transmit-ereporting-batch
   @@index([periodFrom, periodTo]) // dashboard fiscal admin
+  @@index([periodId])
 }
 
 model EReportingTransaction {
@@ -1630,7 +1695,9 @@ model EReportingTransaction {
   batchId         String?
   batch           EReportingBatch?          @relation(fields: [batchId], references: [id], onDelete: SetNull)
 
-  // Référence à la source — exactement l'un des deux (pas les deux).
+  // Référence à la source, COUPLÉE au type (CHECK `EReportingTransaction_source_xor`,
+  // migration 20260529120000) : SALES/PAYMENT ⇒ orderId set & refundId null ;
+  // REFUND ⇒ refundId set & orderId null. (Plus fort qu'un simple XOR.)
   orderId         String?
   order           Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
   refundId        String?
@@ -1643,10 +1710,23 @@ model EReportingTransaction {
   amountIncTax    Int // centimes — négatif pour les REFUND
   amountExclTax   Int
   taxAmount       Int                       @default(0) // toujours 0 en franchise art. 293 B
+  // Ventilation TVA par taux (DORMANT — préparation sortie de franchise).
+  // Tableau JSON `[{ rate, baseExclTax, taxAmount }]` (rate en points de base).
+  // null en franchise (taxAmount = 0) : aucune ventilation à déclarer. Renseigné
+  // uniquement quand la donnée per-taux existe (OrderItem.taxRate, à câbler à la
+  // sortie de franchise — docs/INVOICING.md L424). CHECK DB `jsonb_typeof = 'array'`.
+  vatBreakdown    Json?
+  // Catégorie d'opération DGFiP (biens/services). Défaut GOODS = réalité Synclune
+  // (biens physiques). Voir enum EReportingOperationCategory.
+  operationCategory EReportingOperationCategory @default(GOODS)
   currency        String                    @default("EUR") @db.VarChar(3)
   // Snapshot complet figé : tout ce qui sera transmis à la DGFiP, immuable
   // même si l'Order/Refund mute ensuite (anonymisation RGPD, etc.).
   payloadSnapshot Json
+  // SHA-256 canonical-JSON du payloadSnapshot (audit-vérifiable, symétrie
+  // Order.invoiceDataHash). Nullable pour compat avec les transactions
+  // pré-migration ; toujours peuplé par record-ereporting.service à l'écriture.
+  payloadHash     String?                   @db.VarChar(64)
   status          EReportingStatus          @default(PENDING)
   createdAt       DateTime                  @default(now())
 
@@ -1658,7 +1738,9 @@ model EReportingTransaction {
   // distinct dans un unique index, donc :
   // - SALES/PAYMENT (orderId set, refundId null) — unique sur (orderId, type)
   // - REFUND (orderId null, refundId set) — unique sur (refundId, type)
-  // La CHECK constraint `EReportingTransaction_source_xor` garantit l'XOR.
+  // La CHECK `EReportingTransaction_source_xor` (migration 20260529120000) COUPLE
+  // type↔source : SALES/PAYMENT ⇒ orderId set & refundId null ; REFUND ⇒ l'inverse.
+  // (Subsume l'ancien XOR « exactement une FK » — interdit aussi SALES+refundId.)
   @@unique([orderId, type], name: "EReportingTransaction_orderId_type_key")
   @@unique([refundId, type], name: "EReportingTransaction_refundId_type_key")
 }
