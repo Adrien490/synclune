@@ -155,7 +155,7 @@ describe("ProcessRefundAlertDialog", () => {
 	it("displays amount formatted from cents to euros", () => {
 		render(<ProcessRefundAlertDialog />);
 
-		expect(screen.getByText(/25\.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/25,00/)).toBeInTheDocument();
 	});
 
 	// ─── Order number ─────────────────────────────────────────────────────────

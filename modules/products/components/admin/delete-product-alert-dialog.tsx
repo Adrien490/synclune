@@ -2,6 +2,7 @@
 
 import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { useDeleteProduct } from "@/modules/products/hooks/use-delete-product";
 
 export const DELETE_PRODUCT_DIALOG_ID = "delete-product";
@@ -14,10 +15,12 @@ interface DeleteProductData {
 
 export function DeleteProductAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteProductData>(DELETE_PRODUCT_DIALOG_ID);
+	const backToList = useBackToListOnDelete("/admin/catalogue/produits");
 
 	const { action, isPending } = useDeleteProduct({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

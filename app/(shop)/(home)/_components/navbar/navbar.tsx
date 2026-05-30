@@ -1,5 +1,7 @@
 import { Logo } from "@/shared/components/logo";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
+import type { NavItemChild } from "@/shared/constants/navigation";
+import { ROUTES } from "@/shared/constants/urls";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
@@ -97,6 +99,18 @@ export async function Navbar() {
 		collections: menuCollections,
 	});
 
+	// Collection vedette (1re = plus de produits) — fallback éditorial du panneau Créations
+	// quand aucune nouveauté récente n'est disponible (évite un panneau déséquilibré).
+	const spotlightSource = menuCollections[0];
+	const spotlightCollection: NavItemChild | undefined = spotlightSource
+		? {
+				href: ROUTES.SHOP.COLLECTION(spotlightSource.slug),
+				label: spotlightSource.label,
+				description: spotlightSource.description,
+				images: spotlightSource.images,
+			}
+		: undefined;
+
 	return (
 		<BadgeCountsStoreProvider
 			initialWishlistCount={safeWishlistCount}
@@ -153,7 +167,11 @@ export async function Navbar() {
 							<div className="flex items-center justify-center lg:flex-1">
 								{/* Logo mobile centré (icône seule) */}
 								<Logo href="/" size={44} className="lg:hidden" shadow sizes="44px" />
-								<DesktopNav navItems={desktopNavItems} featuredProducts={featuredProducts} />
+								<DesktopNav
+									navItems={desktopNavItems}
+									featuredProducts={featuredProducts}
+									spotlightCollection={spotlightCollection}
+								/>
 							</div>
 
 							{/* Section droite: Favoris + Recherche + Compte + Panier */}

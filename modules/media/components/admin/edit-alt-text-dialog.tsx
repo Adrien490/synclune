@@ -113,7 +113,7 @@ function EditAltTextForm({ initialValue, isVideo, onCancel, onSave }: EditAltTex
 					maxLength={ALT_TEXT_MAX_LENGTH + 50}
 					aria-invalid={overLimit}
 					aria-describedby="alt-text-counter"
-					className="min-h-32"
+					className="min-h-32 resize-none"
 				/>
 				<p
 					id="alt-text-counter"

@@ -228,6 +228,7 @@ export function CreateProductTypeForm({
 								placeholder="Décrivez le type de produit…"
 								disabled={isPending}
 								rows={4}
+								className="resize-none"
 							/>
 						)}
 					</form.AppField>

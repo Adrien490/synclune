@@ -167,6 +167,7 @@ export function MarkAsFullyRefundedAlertDialog() {
 										rows={2}
 										disabled={isPending}
 										maxLength={500}
+										className="resize-none"
 									/>
 									<p className="text-muted-foreground text-xs">
 										Apparaîtra dans la timeline d&apos;audit et la note Refund.

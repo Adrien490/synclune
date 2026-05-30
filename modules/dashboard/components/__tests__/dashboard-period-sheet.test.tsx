@@ -77,6 +77,12 @@ vi.mock("../period-selector", () => ({
 	),
 }));
 
+vi.mock("../comparison-selector", () => ({
+	ComparisonSelector: ({ variant }: { variant?: string }) => (
+		<div data-testid="comparison-selector" data-variant={variant} />
+	),
+}));
+
 import { DashboardPeriodSheet } from "../dashboard-period-sheet";
 
 afterEach(() => {

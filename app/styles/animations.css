@@ -12,6 +12,18 @@
 		}
 	}
 
+	/* Shimmer ambiant du mot d'accent hero : balayage lent du dégradé.
+	   Appliqué via .text-gradient-multicolor (background-size: 200%).
+	   Désactivé sous prefers-reduced-motion / forced-colors / prefers-contrast. */
+	@keyframes hero-gradient-shimmer {
+		0% {
+			background-position: 0% center;
+		}
+		100% {
+			background-position: 100% center;
+		}
+	}
+
 	/* Animation sparkle */
 	@keyframes sparkle-pulse {
 		0%,

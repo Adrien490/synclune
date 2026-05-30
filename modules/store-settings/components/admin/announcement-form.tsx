@@ -72,6 +72,7 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 						disabled={isPending}
 						enterKeyHint="next"
 						autoCapitalize="sentences"
+						className="resize-none"
 					/>
 				)}
 			</form.AppField>

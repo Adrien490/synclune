@@ -1,8 +1,11 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteProductSku } from "@/modules/skus/hooks/use-delete-sku";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_PRODUCT_SKU_DIALOG_ID = "delete-product-sku";
 
@@ -15,10 +18,17 @@ interface DeleteProductSkuData {
 
 export function DeleteProductSkuAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteProductSkuData>(DELETE_PRODUCT_SKU_DIALOG_ID);
+	// Page détail variante = …/variantes/[skuId] ; on retire le segment skuId pour
+	// retrouver la liste des variantes. Sur la liste (…/variantes) le regex ne
+	// matche pas → href === pathname → le helper no-ope.
+	const pathname = usePathname();
+	const variantesListHref = pathname.replace(/\/variantes\/[^/]+$/, "/variantes");
+	const backToList = useBackToListOnDelete(variantesListHref);
 
 	const { action, isPending } = useDeleteProductSku({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

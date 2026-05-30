@@ -72,6 +72,7 @@ export function CloseStoreForm() {
 						disabled={isPending}
 						enterKeyHint="next"
 						autoCapitalize="sentences"
+						className="resize-none"
 					/>
 				)}
 			</form.AppField>

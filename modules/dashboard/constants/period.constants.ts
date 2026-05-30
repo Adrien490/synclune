@@ -50,6 +50,8 @@ export type ComparisonMode = "previous" | "yoy";
 
 export const DEFAULT_COMPARISON_MODE: ComparisonMode = "previous";
 
+export const COMPARISON_SEARCH_PARAM = "comparison";
+
 export const YOY_COMPARISON_LABELS: Record<DashboardPeriod, string> = {
 	"7d": "vs N-1 (7j)",
 	"30d": "vs N-1 (30j)",
@@ -61,6 +63,14 @@ export const YOY_COMPARISON_LABELS: Record<DashboardPeriod, string> = {
 export const COMPARISON_MODE_LABELS: Record<ComparisonMode, string> = {
 	previous: "Période précédente",
 	yoy: "Année précédente",
+};
+
+/**
+ * Short labels for the mobile segmented control (parity with DASHBOARD_PERIODS_SHORT)
+ */
+export const COMPARISON_MODE_SHORT_LABELS: Record<ComparisonMode, string> = {
+	previous: "Préc.",
+	yoy: "N-1",
 };
 
 /**

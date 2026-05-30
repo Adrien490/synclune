@@ -247,6 +247,15 @@ main#main-content {
 	--color-glow-yellow: oklch(0.92 0.09 86 / 0.5);
 
 	/* ==========================================
+	   HERO GRADIENT WORD (mot d'accent du h1 home)
+	   SSOT des 3 stops du dégradé multicolore rose → violet → menthe.
+	   Consommés par .text-gradient-multicolor (app/styles/utilities.css).
+	   ========================================== */
+	--gradient-hero-from: oklch(0.66 0.2 350); /* rose/magenta */
+	--gradient-hero-via: oklch(0.58 0.18 295); /* violet/lavande */
+	--gradient-hero-to: oklch(0.68 0.14 175); /* teal/menthe */
+
+	/* ==========================================
 	   PARTICLE COLORS (opaque, particles apply their own opacity)
 	   ========================================== */
 	--color-particle-blush: oklch(0.92 0.08 350);

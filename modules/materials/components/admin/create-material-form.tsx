@@ -197,6 +197,7 @@ export function CreateMaterialForm({
 								placeholder="Description du matériau (optionnel)"
 								disabled={isPending}
 								rows={3}
+								className="resize-none"
 							/>
 						)}
 					</form.AppField>

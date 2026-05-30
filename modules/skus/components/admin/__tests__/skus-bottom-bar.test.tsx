@@ -45,6 +45,7 @@ vi.mock("@/shared/components/sort-drawer", () => ({
 }));
 
 vi.mock("@/shared/components/sticky-action-bar", () => ({
+	useSelectionToggleItem: () => null,
 	StickyActionBar: ({
 		items,
 	}: {

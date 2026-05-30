@@ -1,5 +1,5 @@
 import { HeroFloatingImages } from "./floating-images";
-import { HeroRotatingWord } from "./hero-rotating-word";
+import { HeroGradientWord } from "./hero-gradient-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
@@ -12,13 +12,14 @@ import { ParticleBackground } from "./hero-decorations";
 /**
  * Homepage hero section.
  *
- * Displays rotating tagline, floating product images on desktop,
- * and particle background. Products come from the shared latest
- * creations fetch (no extra query).
+ * Displays the tagline ("Des bijoux colorés"), floating product images
+ * on desktop, and particle background. Products come from the shared
+ * latest creations fetch (no extra query).
  *
- * "Des bijoux" renders server-side for instant LCP — only the
- * rotating word requires client JS. Decorative animations
- * (particles, scroll indicator) are dynamically imported.
+ * The full title — including the multicolor gradient accent word
+ * "colorés" — renders server-side for instant LCP and requires no
+ * client JS. Decorative animations (particles, scroll indicator) are
+ * dynamically imported.
  *
  * Awaits `productsPromise` inline (no Suspense) so the hero — title
  * LCP text + desktop floating images — is in the initial SSR HTML
@@ -105,7 +106,7 @@ export async function HeroSection({
 							>
 								<span className="inline-flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-2">
 									<SplitTextCSS>Des bijoux</SplitTextCSS>{" "}
-									<HeroRotatingWord words={["colorés", "uniques"]} duration={3500} />
+									<HeroGradientWord>colorés</HeroGradientWord>
 								</span>
 							</SectionTitle>
 							<p

@@ -194,6 +194,7 @@ export function EditMaterialForm({
 								placeholder="Description du matériau (optionnel)"
 								disabled={isPending}
 								rows={3}
+								className="resize-none"
 							/>
 						)}
 					</form.AppField>

@@ -16,6 +16,7 @@ import { FieldLabel } from "@/shared/components/forms/field-label";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
 import { ActionStatus } from "@/shared/types/server-action";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { LoaderCircle, XCircle } from "lucide-react";
 
 export const REJECT_REFUND_DIALOG_ID = "reject-refund";
@@ -42,7 +43,7 @@ export function RejectRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
+	const formattedAmount = formatEuro(dialog.data?.amount ?? 0);
 
 	return (
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
@@ -56,8 +57,8 @@ export function RejectRefundAlertDialog() {
 						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
-									Refuser la demande de remboursement de <strong>{formattedAmount} €</strong> pour
-									la commande <strong>{dialog.data?.orderNumber}</strong> ?
+									Refuser la demande de remboursement de <strong>{formattedAmount}</strong> pour la
+									commande <strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
 									Cette action est définitive. La demande sera marquée comme refusée.
@@ -76,6 +77,7 @@ export function RejectRefundAlertDialog() {
 							rows={3}
 							maxLength={500}
 							disabled={isPending}
+							className="resize-none"
 						/>
 					</div>
 					{state?.status && state.status !== ActionStatus.SUCCESS && (

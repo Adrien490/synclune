@@ -1,6 +1,6 @@
 "use client";
 
-import type { NavItemWithChildren } from "@/shared/constants/navigation";
+import type { NavItemChild, NavItemWithChildren } from "@/shared/constants/navigation";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -11,6 +11,7 @@ import {
 	navigationMenuTriggerStyle,
 } from "@/shared/components/ui/navigation-menu";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,6 +23,8 @@ import { MegaMenuCollections } from "./mega-menu-collections";
 interface DesktopNavProps {
 	navItems: NavItemWithChildren[];
 	featuredProducts?: MegaMenuProduct[];
+	/** Collection vedette servant de fallback éditorial quand aucune nouveauté n'est dispo. */
+	spotlightCollection?: NavItemChild;
 }
 
 const linkClasses = cn(
@@ -42,9 +45,14 @@ const linkClasses = cn(
 	"motion-reduce:hover:after:scale-x-100 motion-reduce:data-[state=open]:after:scale-x-100",
 );
 
-export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
+export function DesktopNav({ navItems, featuredProducts, spotlightCollection }: DesktopNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
 	const router = useRouter();
+	// Sur écran tactile (laptops hybrides / tablettes ≥ lg sans hover), un tap doit OUVRIR
+	// le mega menu plutôt que naviguer directement vers la page section — sinon l'utilisateur
+	// ne voit jamais les catégories ni le cross-sell (F3). La navigation reste possible via
+	// le CTA "Toutes les créations / collections" à l'intérieur du panneau.
+	const isTouch = useIsTouchDevice();
 
 	return (
 		<NavigationMenu
@@ -88,12 +96,17 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
 								onClick={(e) => {
-									// Pointer click (detail >= 1) navigates to the section page; hover
-									// (pointerMove) still opens the mega menu via Radix. Keyboard
-									// activation (Enter/Space) synthesizes a click with detail === 0 —
-									// let it fall through to Radix's toggle so the mega-menu panel opens,
-									// keeping its links reachable for keyboard / screen-reader users.
+									// Keyboard activation (Enter/Space) synthesizes a click with
+									// detail === 0 — let it fall through to Radix's toggle so the
+									// mega-menu panel opens, keeping its links reachable for
+									// keyboard / screen-reader users.
 									if (e.detail === 0) return;
+									// Touch (coarse pointer, no hover): let the tap open the panel
+									// via Radix instead of navigating away — the in-panel CTA
+									// handles navigation to the section page (F3).
+									if (isTouch) return;
+									// Mouse click on a hover-capable pointer: go straight to the
+									// section page (hover already revealed the mega menu).
 									e.preventDefault();
 									router.push(item.href);
 								}}
@@ -111,8 +124,9 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 									"mt-0! rounded-none! p-0!",
 									// Subtle rose hairline at the top — atelier signature, brand identity touch
 									"bg-background border-b-border border-x-0! border-t border-b border-t-[var(--color-glow-pink)] shadow-md",
-									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-[var(--duration-normal)]",
-									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-[var(--duration-fast)]",
+									// Easing homogène (tokens) entrée/sortie pour adoucir le swap entre panneaux.
+									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-[var(--duration-normal)] data-[state=open]:[animation-timing-function:var(--ease-premium)]",
+									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-[var(--duration-fast)] data-[state=closed]:[animation-timing-function:var(--ease-premium)]",
 									"motion-reduce:animate-none",
 								)}
 							>
@@ -121,6 +135,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 										<MegaMenuCreations
 											productTypes={item.children}
 											featuredProducts={featuredProducts}
+											spotlightCollection={spotlightCollection}
 										/>
 									)}
 									{item.dropdownType === "collections" && (

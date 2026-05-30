@@ -31,10 +31,10 @@ vi.mock("@/shared/components/animations", () => ({
 	SplitTextCSS: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
-// Mock HeroRotatingWord
-vi.mock("../hero-rotating-word", () => ({
-	HeroRotatingWord: ({ words }: { words: string[] }) => (
-		<span data-testid="rotating-word">{words[0]}</span>
+// Mock HeroGradientWord
+vi.mock("../hero-gradient-word", () => ({
+	HeroGradientWord: ({ children }: { children: React.ReactNode }) => (
+		<span data-testid="gradient-word">{children}</span>
 	),
 }));
 
@@ -166,9 +166,9 @@ describe("HeroSection", () => {
 		expect(boutiqueLink.closest("a")).toHaveAttribute("href", "/produits");
 	});
 
-	it("renders the RotatingWord component", async () => {
+	it("renders the gradient accent word", async () => {
 		render(await HeroSection({ productsPromise: mockProductsPromise }));
-		expect(screen.getByTestId("rotating-word")).toBeInTheDocument();
+		expect(screen.getByTestId("gradient-word")).toHaveTextContent("colorés");
 	});
 
 	it("renders the ParticleBackground in a decorative container", async () => {

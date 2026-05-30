@@ -1,7 +1,6 @@
 "use client";
 
-import { useDeferredValue, useRef } from "react";
-import { CheckSquare } from "lucide-react";
+import { useDeferredValue } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { formatSelectionCount, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -18,13 +17,16 @@ interface MobileSelectionHeaderProps {
 /**
  * Header sticky mobile pour le mode "sélection multiple" (pattern Mail iOS).
  *
- * - Mode OFF : bouton "Sélectionner" à droite.
+ * - Mode OFF : ne rend rien. Le déclencheur « Sélectionner » vit désormais dans
+ *              la `StickyActionBar` (à droite du champ de recherche, avec
+ *              Filtrer/Trier) via `useSelectionToggleItem` — libère la hauteur
+ *              d'écran au-dessus de la liste.
  * - Mode ON  : bouton "Annuler" à gauche, count `aria-live="polite"` au centre,
  *              bouton "Tout sélectionner / Tout désélectionner" à droite. Escape
  *              clavier physique (iPad/laptop) quitte le mode.
  *
  * Sticky top + safe-area-inset-top pour suivre le scroll sur grandes listes.
- * Caché si la liste est vide (`pageItemIds.length === 0`).
+ * Caché si la liste est vide (`pageItemIds.length === 0`) ou hors mode sélection.
  *
  * @example
  * ```tsx
@@ -41,21 +43,14 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 		selectedOnPage,
 		pageItemIds,
 		pageState,
-		enterSelectionMode,
 		exitSelectionMode,
 		selectAllVisible,
 	} = useBulkSelectionContext();
 
-	const enterButtonRef = useRef<HTMLButtonElement>(null);
-
-	// Restaure le focus sur le bouton « Sélectionner » à la sortie du mode (WCAG 2.4.3).
-	// rAF garantit que le DOM a re-render et que le bouton est de nouveau dans l'arbre.
-	const handleExit = () => {
-		exitSelectionMode();
-		requestAnimationFrame(() => enterButtonRef.current?.focus());
-	};
-
-	useEscapeKey(handleExit, selectionMode);
+	// Le déclencheur d'entrée vit dans la `StickyActionBar` (hors de cet arbre) :
+	// la restauration de focus à la sortie n'a plus de cible locale, on quitte
+	// simplement le mode (le toggle de la barre reflète l'état via le store).
+	useEscapeKey(exitSelectionMode, selectionMode);
 
 	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
 	const allOnPageSelected = pageState === "all";
@@ -72,32 +67,12 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 	// Hoisté avant les early returns pour respecter les Rules of Hooks.
 	const deferredCountText = useDeferredValue(countText);
 
-	if (pageItemIds.length === 0) return null;
+	// Hors mode sélection : rien à rendre. Le bouton « Sélectionner » a migré dans
+	// la `StickyActionBar` (à droite de la recherche) — cf. `useSelectionToggleItem`.
+	if (pageItemIds.length === 0 || !selectionMode) return null;
 
 	const stickyShell =
 		"sticky top-0 z-(--z-bar) -mx-3 px-3 supports-[backdrop-filter]:bg-background/80 bg-background/95 backdrop-blur pt-[env(safe-area-inset-top)]";
-
-	if (!selectionMode) {
-		// Bouton d'entrée : flux normal (pas de sticky). Il défile avec la liste —
-		// l'épingler n'apporte rien tant qu'on n'est pas en mode sélection.
-		return (
-			<div className={cn("flex items-center justify-end md:hidden", className)}>
-				<SelectionModeAnnouncer />
-				<Button
-					ref={enterButtonRef}
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={enterSelectionMode}
-					className="min-h-11 gap-2 px-3"
-					style={{ viewTransitionName: "admin-list-selection-toggle" }}
-				>
-					<CheckSquare className="size-4" aria-hidden="true" />
-					Sélectionner
-				</Button>
-			</div>
-		);
-	}
 
 	return (
 		<div
@@ -113,7 +88,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 				type="button"
 				variant="ghost"
 				size="sm"
-				onClick={handleExit}
+				onClick={exitSelectionMode}
 				className="min-h-11 px-3"
 				style={{ viewTransitionName: "admin-list-selection-toggle" }}
 				aria-keyshortcuts="Escape"

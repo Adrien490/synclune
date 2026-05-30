@@ -14,6 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
 import { ActionStatus } from "@/shared/types/server-action";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { Banknote, LoaderCircle } from "lucide-react";
 
 export const PROCESS_REFUND_DIALOG_ID = "process-refund";
@@ -40,7 +41,7 @@ export function ProcessRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
+	const formattedAmount = formatEuro(dialog.data?.amount ?? 0);
 
 	return (
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="info">
@@ -54,10 +55,10 @@ export function ProcessRefundAlertDialog() {
 						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
-									Procéder au remboursement de <strong>{formattedAmount} €</strong> pour la commande{" "}
+									Procéder au remboursement de <strong>{formattedAmount}</strong> pour la commande{" "}
 									<strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
-								<p className="mt-4 text-sm text-amber-600">
+								<p className="text-warning-foreground mt-4 text-sm">
 									Cette action va effectuer le remboursement via Stripe. Le montant sera crédité sur
 									le moyen de paiement du client sous 5-10 jours ouvrés.
 								</p>

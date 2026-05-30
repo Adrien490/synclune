@@ -80,6 +80,7 @@ export function DeleteOrderAlertDialog() {
 							onChange={(e) => setReason(e.target.value)}
 							placeholder="Ex: commande de test, paiement abandonné, doublon créé par erreur…"
 							disabled={isPending}
+							className="resize-none"
 						/>
 						<p className="text-muted-foreground text-xs">
 							Tracée dans l&apos;audit trail (Art. L123-22, conservation 10 ans).

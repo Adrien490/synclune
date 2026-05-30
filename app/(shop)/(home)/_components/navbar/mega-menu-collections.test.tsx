@@ -134,7 +134,8 @@ describe("MegaMenuCollections", () => {
 	it("renders the heading with font-display and atelier subtitle", () => {
 		render(<MegaMenuCollections collections={collections} />);
 
-		const heading = screen.getByRole("heading", { level: 3, name: "Collections" });
+		// F6: panel root heading harmonisé en h2 (parité avec le panneau Créations).
+		const heading = screen.getByRole("heading", { level: 2, name: "Collections" });
 		expect(heading).toBeInTheDocument();
 		expect(heading.className).toMatch(/font-display/);
 		expect(screen.getByText("L'univers Synclune")).toBeInTheDocument();

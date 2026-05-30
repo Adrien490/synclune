@@ -45,7 +45,7 @@ vi.mock("recharts", () => ({
 			{children}
 		</div>
 	),
-	Line: () => <div data-testid="line" />,
+	Line: ({ dataKey }: { dataKey?: string }) => <div data-testid="line" data-key={dataKey} />,
 	XAxis: () => <div data-testid="x-axis" />,
 	YAxis: () => <div data-testid="y-axis" />,
 }));
@@ -111,6 +111,8 @@ function makeChartData(count = 5, baseRevenue = 100): GetRevenueChartReturn {
 			shipping: 0,
 		})),
 		periodLabel: "30 jours",
+		granularity: "daily",
+		hasComparison: false,
 	};
 }
 
@@ -125,6 +127,8 @@ function makeEmptyChartData(count = 5): GetRevenueChartReturn {
 			shipping: 0,
 		})),
 		periodLabel: "30 jours",
+		granularity: "daily",
+		hasComparison: false,
 	};
 }
 
@@ -140,7 +144,7 @@ describe("RevenueChart", () => {
 	it("renders the chart title", () => {
 		render(<RevenueChart chartData={makeChartData()} />);
 
-		expect(screen.getByText("Revenus des 30 derniers jours")).toBeInTheDocument();
+		expect(screen.getByText("Revenus - 30 jours")).toBeInTheDocument();
 	});
 
 	it("renders the chart description mentioning revenue and orders", () => {
@@ -229,6 +233,8 @@ describe("RevenueChart", () => {
 				{ date: "3 janv.", revenue: 100, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 
 		render(<RevenueChart chartData={chartData} />);
@@ -244,6 +250,8 @@ describe("RevenueChart", () => {
 				{ date: "3 janv.", revenue: 200, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 
 		render(<RevenueChart chartData={chartData} />);
@@ -278,7 +286,11 @@ describe("RevenueChart", () => {
 	// -------------------------------------------------------------------------
 
 	it("handles empty data array without crashing", () => {
-		render(<RevenueChart chartData={{ data: [], periodLabel: "" }} />);
+		render(
+			<RevenueChart
+				chartData={{ data: [], periodLabel: "", granularity: "daily", hasComparison: false }}
+			/>,
+		);
 
 		expect(screen.getByTestId("chart-empty")).toBeInTheDocument();
 	});
@@ -291,6 +303,8 @@ describe("RevenueChart", () => {
 						{ date: "1 janv.", revenue: 500, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 					],
 					periodLabel: "7 jours",
+					granularity: "daily",
+					hasComparison: false,
 				}}
 			/>,
 		);
@@ -317,6 +331,8 @@ describe("RevenueChart", () => {
 				},
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 
 		render(<RevenueChart chartData={chartData} />);
@@ -348,6 +364,8 @@ describe("RevenueChart", () => {
 				},
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
 		expect(screen.getByRole("button", { name: /vue simple/i })).toBeInTheDocument();
@@ -368,6 +386,8 @@ describe("RevenueChart", () => {
 				},
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 		render(<RevenueChart chartData={chartData} chartMode="simple" />);
 		fireEvent.click(screen.getByRole("button", { name: /détailler/i }));
@@ -390,6 +410,8 @@ describe("RevenueChart", () => {
 				},
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
 		fireEvent.click(screen.getByRole("button", { name: /vue simple/i }));
@@ -410,11 +432,82 @@ describe("RevenueChart", () => {
 				},
 			],
 			periodLabel: "30 jours",
+			granularity: "daily",
+			hasComparison: false,
 		};
 		render(<RevenueChart chartData={chartData} chartMode="detailed" />);
 		expect(screen.getByRole("button", { name: /vue simple/i })).toHaveAttribute(
 			"aria-pressed",
 			"true",
 		);
+	});
+
+	// -------------------------------------------------------------------------
+	// Comparison overlay (C4b)
+	// -------------------------------------------------------------------------
+
+	describe("comparison overlay", () => {
+		function makeComparisonData(): GetRevenueChartReturn {
+			return {
+				data: [
+					{
+						date: "1 janv.",
+						revenue: 500,
+						orders: 2,
+						subtotal: 0,
+						discounts: 0,
+						shipping: 0,
+						previousRevenue: 300,
+					},
+					{
+						date: "2 janv.",
+						revenue: 800,
+						orders: 3,
+						subtotal: 0,
+						discounts: 0,
+						shipping: 0,
+						previousRevenue: 600,
+					},
+				],
+				periodLabel: "30 jours",
+				granularity: "daily",
+				hasComparison: true,
+			};
+		}
+
+		it("renders the previousRevenue overlay line in simple mode when hasComparison", () => {
+			render(<RevenueChart chartData={makeComparisonData()} chartMode="simple" />);
+
+			const overlay = screen
+				.getAllByTestId("line")
+				.find((line) => line.getAttribute("data-key") === "previousRevenue");
+			expect(overlay).toBeDefined();
+		});
+
+		it("does NOT render the overlay when hasComparison is false", () => {
+			render(<RevenueChart chartData={makeChartData()} chartMode="simple" />);
+
+			const overlay = screen
+				.getAllByTestId("line")
+				.find((line) => line.getAttribute("data-key") === "previousRevenue");
+			expect(overlay).toBeUndefined();
+		});
+
+		it("does NOT render the overlay in detailed mode even with comparison data", () => {
+			render(<RevenueChart chartData={makeComparisonData()} chartMode="detailed" />);
+
+			const overlay = screen
+				.getAllByTestId("line")
+				.find((line) => line.getAttribute("data-key") === "previousRevenue");
+			expect(overlay).toBeUndefined();
+		});
+
+		it("exposes the comparison total in the sr-only summary", () => {
+			render(<RevenueChart chartData={makeComparisonData()} chartMode="simple" />);
+
+			expect(
+				screen.getByText(/Total revenus de la période de comparaison : 900.00 €/),
+			).toBeInTheDocument();
+		});
 	});
 });

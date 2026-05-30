@@ -16,6 +16,7 @@ vi.mock("lucide-react", () => ({
 	Star: () => <span data-testid="icon-star" />,
 	Mail: () => <span data-testid="icon-mail" />,
 	Clock: () => <span data-testid="icon-clock" />,
+	UserPlus: () => <span data-testid="icon-user-plus" />,
 }));
 
 const mockKpiCard = vi.fn();
@@ -50,6 +51,8 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 		pendingShipment: { count: 3 },
 		discountImpact: { amount: 150, evolution: 10.0, previousVolume: 50 },
 		avgFulfillmentTime: { hours: 24, evolution: 0, previousVolume: 50 },
+		newCustomers: { count: 12, evolution: 8.0, previousVolume: 50 },
+		sparklines: { revenue: [], orders: [] },
 		...overrides,
 	};
 }
@@ -60,10 +63,10 @@ const defaultReviewHealth: GetReviewHealthReturn = {
 };
 
 describe("DashboardKpis", () => {
-	it("renders 7 KPI cards (4 featured + 3 compact)", () => {
+	it("renders 8 KPI cards (4 featured + 4 compact)", () => {
 		render(<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
 	});
 
 	it("renders CA net du mois KPI with critical priority when refundRate < 10%", () => {
@@ -413,13 +416,13 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("renders compact KPIs in a 3-column grid on lg+", () => {
+	it("renders compact KPIs in a 4-column grid on lg+", () => {
 		const { container } = render(
 			<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />,
 		);
 
 		const grids = container.querySelectorAll(".grid");
-		expect(grids[0]).toHaveClass("lg:grid-cols-3");
+		expect(grids[0]).toHaveClass("lg:grid-cols-4");
 	});
 
 	it("passes tooltip to each KPI card", () => {
@@ -431,6 +434,40 @@ describe("DashboardKpis", () => {
 				tooltip: expect.stringContaining("net"),
 			}),
 		);
+	});
+
+	it("renders a 'Nouveaux clients' KPI card from newCustomers", () => {
+		render(
+			<DashboardKpis
+				kpis={makeKpis({ newCustomers: { count: 7, evolution: 40, previousVolume: 50 } })}
+				reviewHealth={defaultReviewHealth}
+			/>,
+		);
+
+		expect(mockKpiCard).toHaveBeenCalledWith(
+			expect.objectContaining({ title: "Nouveaux clients", value: "7" }),
+		);
+	});
+
+	it("passes a sparkline path to CA net & Commandes when the series has a trend", () => {
+		render(
+			<DashboardKpis
+				kpis={makeKpis({ sparklines: { revenue: [1, 2, 3], orders: [3, 1, 4] } })}
+				reviewHealth={defaultReviewHealth}
+			/>,
+		);
+
+		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];
+		const ordersCall = mockKpiCard.mock.calls.find(([p]) => p.title === "Commandes")?.[0];
+		expect(revenueCall?.sparklinePath).toMatch(/^M /);
+		expect(ordersCall?.sparklinePath).toMatch(/^M /);
+	});
+
+	it("passes a null sparkline path when the series is flat/empty", () => {
+		render(<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />);
+
+		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];
+		expect(revenueCall?.sparklinePath).toBeNull();
 	});
 
 	it("handles zero values without crashing", () => {
@@ -450,10 +487,12 @@ describe("DashboardKpis", () => {
 			pendingShipment: { count: 0 },
 			discountImpact: { amount: 0, evolution: 0, previousVolume: 0 },
 			avgFulfillmentTime: { hours: 0, evolution: 0, previousVolume: 0 },
+			newCustomers: { count: 0, evolution: 0, previousVolume: 0 },
+			sparklines: { revenue: [], orders: [] },
 		};
 
 		render(<DashboardKpis kpis={kpis} reviewHealth={{ averageRating: 0, totalReviews: 0 }} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
 	});
 });

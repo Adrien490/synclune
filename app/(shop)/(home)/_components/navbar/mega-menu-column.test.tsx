@@ -166,7 +166,7 @@ describe("MegaMenuColumn", () => {
 			expect(svg?.getAttribute("aria-hidden")).toBe("true");
 		});
 
-		it("falls back to Gem icon for unknown iconKey", () => {
+		it("renders no icon for an unknown iconKey (F4: no misleading generic fallback)", () => {
 			const itemsWithUnknown = [
 				{ href: "/produits", label: "Toutes les créations" },
 				{ href: "/produits/inconnu", label: "Inconnu", iconKey: "inconnu" },
@@ -174,7 +174,7 @@ describe("MegaMenuColumn", () => {
 			render(<MegaMenuColumn title="Créations" items={itemsWithUnknown} />);
 
 			const link = screen.getByRole("link", { name: /Inconnu/ });
-			expect(link.querySelector("svg")).toBeInTheDocument();
+			expect(link.querySelector("svg")).toBeNull();
 		});
 
 		it("renders no icon when iconKey is missing", () => {

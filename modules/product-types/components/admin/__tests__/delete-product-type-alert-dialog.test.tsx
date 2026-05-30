@@ -27,6 +27,10 @@ let mockDialogState = {
 
 let mockIsPending = false;
 
+vi.mock("@/shared/hooks/use-back-to-list-on-delete", () => ({
+	useBackToListOnDelete: () => vi.fn(),
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialogState,
 }));

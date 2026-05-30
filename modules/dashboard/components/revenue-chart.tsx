@@ -42,6 +42,13 @@ const simpleChartConfig = {
 	},
 } satisfies ChartConfig;
 
+const comparisonSeriesConfig = {
+	previousRevenue: {
+		label: "Période préc.",
+		color: "var(--muted-foreground)",
+	},
+} satisfies ChartConfig;
+
 const detailedChartConfig = {
 	subtotal: {
 		label: "Produits",
@@ -61,13 +68,22 @@ const detailedChartConfig = {
 	},
 } satisfies ChartConfig;
 
+const GRANULARITY_ADVERB: Record<GetRevenueChartReturn["granularity"], string> = {
+	daily: "quotidien",
+	weekly: "hebdomadaire",
+	monthly: "mensuel",
+};
+
 export function RevenueChart({
 	chartData,
 	periodLabel,
 	chartMode = DEFAULT_CHART_MODE,
 }: RevenueChartProps) {
-	const { data } = chartData;
-	const chartTitle = periodLabel ? `Revenus - ${periodLabel}` : "Revenus des 30 derniers jours";
+	const { data, granularity, hasComparison } = chartData;
+	const effectivePeriodLabel = periodLabel ?? chartData.periodLabel;
+	const periodCopy = effectivePeriodLabel || "la période";
+	const chartTitle = effectivePeriodLabel ? `Revenus - ${effectivePeriodLabel}` : "Revenus";
+	const granularityAdverb = GRANULARITY_ADVERB[granularity];
 
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -105,8 +121,18 @@ export function RevenueChart({
 		(max, item) => (item.orders > max.orders ? item : max),
 		data[0] ?? { date: "—", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
 	);
+	const totalPreviousRevenue = hasComparison
+		? data.reduce((sum, item) => sum + (item.previousRevenue ?? 0), 0)
+		: 0;
 
-	const chartConfig = isDetailed ? detailedChartConfig : simpleChartConfig;
+	// Overlay période précédente : uniquement en vue simple (la vue détaillée a déjà
+	// 3 séries empilées + commandes). Affiché seulement si des données existent.
+	const showComparison = !isDetailed && hasComparison;
+	const chartConfig = isDetailed
+		? detailedChartConfig
+		: showComparison
+			? { ...simpleChartConfig, ...comparisonSeriesConfig }
+			: simpleChartConfig;
 
 	return (
 		<section
@@ -149,8 +175,8 @@ export function RevenueChart({
 					>
 						<div id="revenue-chart-description" className="sr-only">
 							<p>
-								Graphique montrant l&apos;evolution du chiffre d&apos;affaires quotidien et du
-								nombre de commandes sur les 30 derniers jours.
+								Graphique montrant l&apos;évolution du chiffre d&apos;affaires {granularityAdverb}{" "}
+								et du nombre de commandes sur {periodCopy.toLowerCase()}.
 							</p>
 							<p>Total revenus sur la période : {totalRevenue.toFixed(2)} €.</p>
 							<p>Total commandes sur la période : {totalOrders}.</p>
@@ -160,6 +186,11 @@ export function RevenueChart({
 							<p>
 								Pic commandes : {peakOrders.orders} le {peakOrders.date}.
 							</p>
+							{showComparison && (
+								<p>
+									Total revenus de la période de comparaison : {totalPreviousRevenue.toFixed(2)} €.
+								</p>
+							)}
 						</div>
 						<ChartScrollContainer>
 							<ChartContainer
@@ -276,6 +307,19 @@ export function RevenueChart({
 											stroke="var(--color-revenue)"
 											fill="url(#revenueGradient)"
 											strokeWidth={2}
+										/>
+									)}
+
+									{showComparison && (
+										<Line
+											yAxisId="revenue"
+											dataKey="previousRevenue"
+											type="monotone"
+											stroke="var(--color-previousRevenue)"
+											strokeWidth={1.5}
+											strokeDasharray="5 3"
+											strokeOpacity={0.5}
+											dot={false}
 										/>
 									)}
 

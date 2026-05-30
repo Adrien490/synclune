@@ -87,6 +87,7 @@ export function CreateProductInfoCard({
 							enterKeyHint="done"
 							autoCapitalize="sentences"
 							spellCheck
+							className="resize-none"
 						/>
 					)}
 				</form.AppField>

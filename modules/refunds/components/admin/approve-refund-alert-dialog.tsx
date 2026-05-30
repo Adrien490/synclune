@@ -14,6 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
 import { ActionStatus } from "@/shared/types/server-action";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 
 export const APPROVE_REFUND_DIALOG_ID = "approve-refund";
@@ -40,7 +41,7 @@ export function ApproveRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
+	const formattedAmount = formatEuro(dialog.data?.amount ?? 0);
 
 	return (
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="success">
@@ -54,8 +55,8 @@ export function ApproveRefundAlertDialog() {
 						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
-									Approuver le remboursement de <strong>{formattedAmount} €</strong> pour la
-									commande <strong>{dialog.data?.orderNumber}</strong> ?
+									Approuver le remboursement de <strong>{formattedAmount}</strong> pour la commande{" "}
+									<strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
 									Après approbation, vous pourrez procéder au remboursement effectif via Stripe.

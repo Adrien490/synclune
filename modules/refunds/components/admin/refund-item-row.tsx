@@ -77,6 +77,12 @@ export function RefundItemRow({
 
 			{isSelected && availableQty > 0 && (
 				<div className="flex flex-col items-end gap-2">
+					<p className="text-muted-foreground text-xs">
+						Remboursé :{" "}
+						<span className="text-foreground font-medium tabular-nums">
+							{formatEuro(orderItem.price * quantity)}
+						</span>
+					</p>
 					<div className="flex items-center gap-2">
 						<Label htmlFor={`qty-${orderItem.id}`} className="text-muted-foreground text-xs">
 							Quantité

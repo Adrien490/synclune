@@ -5,13 +5,19 @@ const {
 	mockPrismaOrderCount,
 	mockPrismaOrderFindMany,
 	mockPrismaRefundAggregate,
+	mockPrismaQueryRaw,
 	mockCacheDefault,
+	mockBuildRevenueMap,
+	mockFillMissingDates,
 } = vi.hoisted(() => ({
 	mockPrismaOrderAggregate: vi.fn(),
 	mockPrismaOrderCount: vi.fn(),
 	mockPrismaOrderFindMany: vi.fn(),
 	mockPrismaRefundAggregate: vi.fn(),
+	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
+	mockBuildRevenueMap: vi.fn(),
+	mockFillMissingDates: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -24,6 +30,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 		refund: {
 			aggregate: mockPrismaRefundAggregate,
 		},
+		$queryRaw: mockPrismaQueryRaw,
 	},
 	notDeleted: { deletedAt: null },
 }));
@@ -40,6 +47,11 @@ vi.mock("@sentry/nextjs", () => ({
 
 vi.mock("@/shared/lib/cache", () => ({
 	cacheDashboard: mockCacheDefault,
+}));
+
+vi.mock("@/modules/dashboard/services/revenue-chart-builder.service", () => ({
+	buildRevenueMap: mockBuildRevenueMap,
+	fillMissingDates: mockFillMissingDates,
 }));
 
 vi.mock("@/modules/dashboard/constants/cache", () => ({
@@ -165,6 +177,15 @@ function setupDefaultMocks({
 		.mockResolvedValueOnce(makeRefundAggregateResult(lastRefundAmount, lastRefundCount));
 
 	mockPrismaOrderFindMany.mockResolvedValueOnce(currentShipped).mockResolvedValueOnce(lastShipped);
+
+	// 2 requêtes $queryRaw (ordre Promise.all) : 1) série sparkline 2) nouveaux clients.
+	mockPrismaQueryRaw
+		.mockResolvedValueOnce([])
+		.mockResolvedValueOnce([{ currentCount: 0n, previousCount: 0n }]);
+
+	// Builder de la sparkline (mocké) — série dense vide par défaut.
+	mockBuildRevenueMap.mockReturnValue({});
+	mockFillMissingDates.mockReturnValue([]);
 }
 
 describe("fetchDashboardKpis", () => {
@@ -190,7 +211,40 @@ describe("fetchDashboardKpis", () => {
 		expect(result).toHaveProperty("pendingShipment");
 		expect(result).toHaveProperty("discountImpact");
 		expect(result).toHaveProperty("avgFulfillmentTime");
+		expect(result).toHaveProperty("newCustomers");
+		expect(result).toHaveProperty("sparklines");
 		expect(result).not.toHaveProperty("reviewHealth");
+	});
+
+	it("returns new customers count + evolution from the raw query", async () => {
+		setupDefaultMocks();
+		// Override la 2ème $queryRaw (nouveaux clients) : 8 courant vs 4 précédent → +100%.
+		mockPrismaQueryRaw.mockReset();
+		mockPrismaQueryRaw
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([{ currentCount: 8n, previousCount: 4n }]);
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.newCustomers.count).toBe(8);
+		expect(result.newCustomers.previousVolume).toBe(4);
+		expect(result.newCustomers.evolution).toBeCloseTo(100);
+	});
+
+	it("builds sparkline arrays from the dense filled series", async () => {
+		setupDefaultMocks();
+		// La série dense (fillMissingDates) pilote les sparklines — espacement uniforme,
+		// jours creux à 0 inclus.
+		mockFillMissingDates.mockReturnValue([
+			{ date: "01 fév", revenue: 1000, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "02 fév", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "03 fév", revenue: 3000, orders: 5, subtotal: 0, discounts: 0, shipping: 0 },
+		]);
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.sparklines.revenue).toEqual([1000, 0, 3000]);
+		expect(result.sparklines.orders).toEqual([2, 0, 5]);
 	});
 
 	it("exposes refundRate on monthlyRevenue", async () => {

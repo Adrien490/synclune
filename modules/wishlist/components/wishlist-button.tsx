@@ -90,11 +90,16 @@ export function WishlistButton({
 				// qu'à la résolution serveur ; ici l'événement discret commit immédiatement.
 				if (!isInWishlist) setBurstKey((k) => k + 1);
 			}}
+			disabled={isPending}
 			className={cn(
 				buttonSize,
 				"rounded-full",
 				"can-hover:hover:scale-110 hover:bg-transparent active:scale-95",
 				"motion-safe:transition-all motion-safe:duration-200",
+				// Optimistic UI : le cœur reflète déjà le nouvel état → on garde le bouton
+				// vivant (pas de dim `opacity-50`) ; `disabled` ne sert qu'à bloquer le spam
+				// pendant la fenêtre pending (re-clics rapides) sans feedback visuel « chargement ».
+				"disabled:opacity-100",
 			)}
 			aria-label={ariaLabel}
 			aria-pressed={isInWishlist}

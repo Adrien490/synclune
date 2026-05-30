@@ -9,7 +9,7 @@ const mockPush = vi.hoisted(() => vi.fn());
 const mockGet = vi.hoisted(() => vi.fn((): string | null => null));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: mockPush }),
+	useRouter: () => ({ push: mockPush, replace: mockPush }),
 	useSearchParams: () => ({
 		get: mockGet,
 		toString: () => "",

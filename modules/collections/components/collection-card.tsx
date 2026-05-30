@@ -67,7 +67,9 @@ export function CollectionCard({
 				CARD_SURFACE_BASE,
 				"rounded-lg lg:rounded-xl",
 				CARD_SURFACE_HOVER,
-				"motion-safe:can-hover:hover:-translate-y-1.5 motion-safe:can-hover:hover:scale-[1.01]",
+				// Scale-only hover (origine centre, cf ProductCard) : pas de translate
+				// qui deplacerait la carte sous le curseur (oscillation hover => clic difficile).
+				"motion-safe:can-hover:hover:scale-[1.02]",
 				CARD_SURFACE_FOCUS,
 				"active:scale-[0.98] active:transition-transform active:duration-75",
 			)}
@@ -149,21 +151,6 @@ export function CollectionCard({
 							{COLLECTION_TEXTS.PRODUCT_COUNT_EMPTY}
 						</p>
 					))}
-
-				{/* Discovery cue — decoratif (aria-hidden). Visible par defaut (tactile),
-				    masque puis revele au hover sur les devices hover-capable, et toujours
-				    revele au focus clavier. Reste sous le ::after (z-10) du stretched-link. */}
-				<p
-					aria-hidden="true"
-					className={cn(
-						"text-primary mt-2 text-xs font-medium",
-						"opacity-100 transition-opacity duration-300",
-						"can-hover:opacity-0 can-hover:group-hover:opacity-100",
-						"group-focus-within:opacity-100",
-					)}
-				>
-					{COLLECTION_TEXTS.DISCOVER}
-				</p>
 			</div>
 		</article>
 	);

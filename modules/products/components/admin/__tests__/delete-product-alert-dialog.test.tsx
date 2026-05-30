@@ -21,6 +21,10 @@ const { mockDialog, mockDeleteProduct } = vi.hoisted(() => ({
 // MODULE MOCKS
 // ============================================================================
 
+vi.mock("@/shared/hooks/use-back-to-list-on-delete", () => ({
+	useBackToListOnDelete: () => vi.fn(),
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));

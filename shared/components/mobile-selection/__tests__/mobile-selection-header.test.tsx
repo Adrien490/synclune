@@ -1,16 +1,10 @@
 import type { ButtonHTMLAttributes } from "react";
 import { forwardRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
-}));
-
-vi.mock("lucide-react", () => ({
-	CheckSquare: (props: Record<string, unknown>) => (
-		<svg data-testid="check-square-icon" {...props} />
-	),
 }));
 
 type MockButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string };
@@ -28,10 +22,24 @@ vi.mock("@/shared/components/ui/button", () => ({
 	}),
 }));
 
-import { BulkSelectionProvider } from "@/shared/components/data-table";
+import { BulkSelectionProvider, useBulkSelectionContext } from "@/shared/components/data-table";
 import { MobileSelectionHeader } from "../mobile-selection-header";
 
 const itemsLabel = { singular: "produit", plural: "produits" };
+
+/**
+ * Le déclencheur d'entrée a migré dans la `StickyActionBar` (hors de ce header).
+ * Ce trigger de test pilote `enterSelectionMode` depuis le contexte pour simuler
+ * l'activation du mode sélection.
+ */
+function EnterTrigger() {
+	const { enterSelectionMode } = useBulkSelectionContext();
+	return (
+		<button type="button" onClick={enterSelectionMode}>
+			__enter__
+		</button>
+	);
+}
 
 afterEach(cleanup);
 
@@ -45,37 +53,26 @@ describe("MobileSelectionHeader", () => {
 		expect(container).toBeEmptyDOMElement();
 	});
 
-	it("renders only the 'Sélectionner' CTA in mode OFF", () => {
+	it("renders nothing in mode OFF (the trigger now lives in the StickyActionBar)", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a", "b"]}>
 				<MobileSelectionHeader itemsLabel={itemsLabel} />
 			</BulkSelectionProvider>,
 		);
 
-		expect(screen.getByRole("button", { name: "Sélectionner" })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Sélectionner" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
 	});
 
-	it("'Sélectionner' button uses outline variant + CheckSquare icon for affordance", () => {
+	it("shows the mode ON header once selection mode is active", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<EnterTrigger />
 				<MobileSelectionHeader itemsLabel={itemsLabel} />
 			</BulkSelectionProvider>,
 		);
 
-		const button = screen.getByRole("button", { name: "Sélectionner" });
-		expect(button).toHaveAttribute("data-variant", "outline");
-		expect(screen.getByTestId("check-square-icon")).toBeInTheDocument();
-	});
-
-	it("flips to mode ON header on Sélectionner click", () => {
-		render(
-			<BulkSelectionProvider pageItemIds={["a", "b"]}>
-				<MobileSelectionHeader itemsLabel={itemsLabel} />
-			</BulkSelectionProvider>,
-		);
-
-		fireEvent.click(screen.getByRole("button", { name: "Sélectionner" }));
+		fireEvent.click(screen.getByRole("button", { name: "__enter__" }));
 
 		expect(screen.getByRole("button", { name: "Annuler" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Tout sélectionner" })).toBeInTheDocument();
@@ -85,46 +82,30 @@ describe("MobileSelectionHeader", () => {
 	it("shows pluralized count and toggles to 'Tout désélectionner' when all selected", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<EnterTrigger />
 				<MobileSelectionHeader itemsLabel={itemsLabel} />
 			</BulkSelectionProvider>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "Sélectionner" }));
+		fireEvent.click(screen.getByRole("button", { name: "__enter__" }));
 		fireEvent.click(screen.getByRole("button", { name: "Tout sélectionner" }));
 
 		expect(screen.getByText("2 produits sélectionnés")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Tout désélectionner" })).toBeInTheDocument();
 	});
 
-	it("Annuler exits selection mode", () => {
+	it("Annuler exits selection mode (header collapses back to nothing)", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<EnterTrigger />
 				<MobileSelectionHeader itemsLabel={itemsLabel} />
 			</BulkSelectionProvider>,
 		);
 
-		fireEvent.click(screen.getByRole("button", { name: "Sélectionner" }));
+		fireEvent.click(screen.getByRole("button", { name: "__enter__" }));
 		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
 
-		expect(screen.getByRole("button", { name: "Sélectionner" })).toBeInTheDocument();
-	});
-
-	it("restores focus on the 'Sélectionner' trigger after Annuler (WCAG 2.4.3)", async () => {
-		render(
-			<BulkSelectionProvider pageItemIds={["a", "b"]}>
-				<MobileSelectionHeader itemsLabel={itemsLabel} />
-			</BulkSelectionProvider>,
-		);
-
-		fireEvent.click(screen.getByRole("button", { name: "Sélectionner" }));
-		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
-
-		// Flush requestAnimationFrame inside act so React has applied the state update.
-		await act(async () => {
-			await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-		});
-
-		const trigger = screen.getByRole("button", { name: "Sélectionner" });
-		expect(document.activeElement).toBe(trigger);
+		expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Tout sélectionner" })).not.toBeInTheDocument();
 	});
 });

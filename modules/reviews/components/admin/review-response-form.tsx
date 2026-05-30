@@ -95,6 +95,7 @@ export function ReviewResponseForm({
 					disabled={isPending}
 					aria-invalid={content.length > 0 && content.length < REVIEW_CONFIG.MIN_RESPONSE_LENGTH}
 					aria-describedby="response-error response-counter"
+					className="resize-none"
 				/>
 				<div className="text-muted-foreground flex justify-between text-xs">
 					<span id="response-error" aria-live="polite">

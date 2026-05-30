@@ -4,6 +4,7 @@ import { Package } from "lucide-react";
 
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
 import type { RefundItemValue } from "@/modules/refunds/types/refund.types";
+import { getAvailableQuantity } from "@/modules/refunds/services/refund-calculation.service";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
@@ -46,6 +47,8 @@ export function RefundItemsCard({
 	onQuantityChange,
 	onRestockToggle,
 }: RefundItemsCardProps) {
+	const hasRefundable = orderItems.some((oi) => getAvailableQuantity(oi) > 0);
+
 	return (
 		<Card
 			role="region"
@@ -66,12 +69,18 @@ export function RefundItemsCard({
 					variant="outline"
 					size="sm"
 					onClick={onSelectToggle}
+					disabled={isPending || !hasRefundable}
 					className="touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
 				>
 					{allSelected ? "Tout désélectionner" : "Tout sélectionner"}
 				</Button>
 			</CardHeader>
 			<CardContent className="px-0 sm:px-0 lg:px-6">
+				{!hasRefundable && (
+					<p className="text-muted-foreground mb-4 text-sm">
+						Tous les bijoux de cette commande ont déjà été remboursés.
+					</p>
+				)}
 				<div className="space-y-4">
 					{orderItems.map((orderItem) => (
 						<RefundItemRow

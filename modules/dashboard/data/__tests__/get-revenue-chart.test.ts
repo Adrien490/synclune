@@ -12,6 +12,7 @@ const {
 	mockFillMissingDates,
 	mockFormatChartData,
 	mockGetChartConfig,
+	mockGetPeriodBoundaries,
 } = vi.hoisted(() => ({
 	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
@@ -20,6 +21,7 @@ const {
 	mockFillMissingDates: vi.fn(),
 	mockFormatChartData: vi.fn(),
 	mockGetChartConfig: vi.fn(),
+	mockGetPeriodBoundaries: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -59,10 +61,12 @@ vi.mock("@/modules/dashboard/constants/period.constants", () => ({
 		year: { label: "Cette année", chartGranularity: "monthly" },
 	},
 	DEFAULT_PERIOD: "month",
+	DEFAULT_COMPARISON_MODE: "previous",
 }));
 
 vi.mock("@/modules/dashboard/services/period-boundaries.service", () => ({
 	getChartConfig: mockGetChartConfig,
+	getPeriodBoundaries: mockGetPeriodBoundaries,
 }));
 
 vi.mock("@/modules/dashboard/services/revenue-chart-builder.service", () => ({
@@ -121,6 +125,14 @@ describe("fetchDashboardRevenueChart", () => {
 		vi.resetAllMocks();
 
 		mockGetChartConfig.mockReturnValue(DEFAULT_CHART_CONFIG);
+		mockGetPeriodBoundaries.mockReturnValue({
+			currentStart: DEFAULT_START_DATE,
+			currentEnd: new Date("2026-02-15T00:00:00.000Z"),
+			previousStart: new Date("2026-01-01T00:00:00.000Z"),
+			previousEnd: new Date("2026-01-31T23:59:59.999Z"),
+			previousYearStart: new Date("2025-02-01T00:00:00.000Z"),
+			previousYearEnd: new Date("2025-02-15T00:00:00.000Z"),
+		});
 
 		const defaultRows = makeRevenueRows();
 		const defaultMaps = {
@@ -218,10 +230,10 @@ describe("fetchDashboardRevenueChart", () => {
 		expect(mockBuildRevenueMap).toHaveBeenCalledWith(rawRows);
 	});
 
-	it("should call buildRevenueMap exactly once", async () => {
+	it("should call buildRevenueMap twice (current + comparison series)", async () => {
 		await fetchDashboardRevenueChart();
 
-		expect(mockBuildRevenueMap).toHaveBeenCalledTimes(1);
+		expect(mockBuildRevenueMap).toHaveBeenCalledTimes(2);
 	});
 
 	// -------------------------------------------------------------------------
@@ -262,10 +274,10 @@ describe("fetchDashboardRevenueChart", () => {
 		);
 	});
 
-	it("should call fillMissingDates exactly once", async () => {
+	it("should call fillMissingDates twice (current + comparison series)", async () => {
 		await fetchDashboardRevenueChart();
 
-		expect(mockFillMissingDates).toHaveBeenCalledTimes(1);
+		expect(mockFillMissingDates).toHaveBeenCalledTimes(2);
 	});
 
 	// -------------------------------------------------------------------------

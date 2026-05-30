@@ -21,7 +21,8 @@ import {
 
 /**
  * Mapping iconKey (slug catégorie produit) → icône lucide.
- * Fallback `Gem` pour tout slug non listé (cohérent avec le branding bijoux).
+ * Pas de fallback générique : un slug non mappé n'affiche AUCUNE icône plutôt qu'une
+ * icône sémantiquement fausse (honnêteté visuelle — un nouveau type produit reste neutre).
  */
 const ITEM_ICON_MAP: Record<string, LucideIcon> = {
 	bagues: Circle,
@@ -126,7 +127,7 @@ export function MegaMenuColumn({
 			>
 				{restItems.map((item) => {
 					const isActive = pathname === item.href;
-					const Icon = item.iconKey ? (ITEM_ICON_MAP[item.iconKey] ?? Gem) : null;
+					const Icon = item.iconKey ? (ITEM_ICON_MAP[item.iconKey] ?? null) : null;
 					return (
 						<li key={item.href}>
 							<NavigationMenuLink asChild>

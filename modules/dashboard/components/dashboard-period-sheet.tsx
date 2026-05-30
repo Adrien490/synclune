@@ -17,6 +17,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { PeriodSelector } from "./period-selector";
+import { ComparisonSelector } from "./comparison-selector";
 
 interface DashboardPeriodSheetProps {
 	open: boolean;
@@ -104,7 +105,7 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 					</div>
 				</SheetHeader>
 
-				<div className="flex-1 gap-y-6 overflow-y-auto overscroll-contain p-6">
+				<div className="flex-1 space-y-6 overflow-y-auto overscroll-contain p-6">
 					<section className="space-y-3" aria-labelledby="period-section-period">
 						<h3
 							id="period-section-period"
@@ -114,6 +115,18 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 						</h3>
 						<div data-vaul-no-drag>
 							<PeriodSelector variant="segmented" />
+						</div>
+					</section>
+
+					<section className="space-y-3" aria-labelledby="period-section-comparison">
+						<h3
+							id="period-section-comparison"
+							className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase"
+						>
+							Mode de comparaison
+						</h3>
+						<div data-vaul-no-drag>
+							<ComparisonSelector variant="segmented" />
 						</div>
 					</section>
 				</div>

@@ -1,8 +1,9 @@
-import { Clock, Euro, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
+import { Clock, Euro, Package, Receipt, ShoppingBag, Star, Target, UserPlus } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
 import type { GetReviewHealthReturn } from "@/modules/dashboard/data/get-review-health";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { buildSparklinePath } from "../services/sparkline-path.service";
 import { KpiCard } from "./kpi-card";
 import { KpiCardAnimated } from "./kpi-card-animated";
 
@@ -20,9 +21,9 @@ interface DashboardKpisProps {
 }
 
 /**
- * Dashboard KPIs grid - 4 featured + 3 compact
+ * Dashboard KPIs grid - 4 featured + 4 compact
  * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
- * Row 2: Finalisation panier, Note moyenne, Délai d'expédition (2-col on mobile)
+ * Row 2: Finalisation panier, Note moyenne, Délai d'expédition, Nouveaux clients (2-col on mobile)
  *
  * Note: `reviewHealth` is fetched separately (cache profile `reference` 24h)
  * and passed as a prop to keep `kpis` cache (`user` 60s) lean.
@@ -50,6 +51,9 @@ export function DashboardKpis({
 
 	const revenuePriority: "critical" | "alert" = refundRate >= 10 ? "alert" : "critical";
 
+	const revenueSparkline = buildSparklinePath(kpis.sparklines.revenue);
+	const ordersSparkline = buildSparklinePath(kpis.sparklines.orders);
+
 	return (
 		<div className="space-y-4">
 			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+.
@@ -75,6 +79,7 @@ export function DashboardKpis({
 									icon={<Euro className="size-4" />}
 									size="featured"
 									priority={revenuePriority}
+									sparklinePath={revenueSparkline}
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
 									subtitle={revenueSubtitle}
 									badge={
@@ -101,6 +106,7 @@ export function DashboardKpis({
 									icon={<ShoppingBag className="size-4" />}
 									size="featured"
 									priority="critical"
+									sparklinePath={ordersSparkline}
 									tooltip="Nombre de commandes payées ce mois"
 								/>
 							</div>
@@ -142,8 +148,8 @@ export function DashboardKpis({
 				</ScrollFade>
 			</div>
 
-			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 3-col at lg+ (full card) */}
-			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-3">
+			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 4-col at lg+ (full card) */}
+			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-4">
 				<KpiCardAnimated index={4}>
 					<KpiCard
 						title="Finalisation panier"
@@ -202,6 +208,22 @@ export function DashboardKpis({
 						priority="operational"
 						flatOnMobile
 						tooltip="Délai moyen entre le paiement et l'expédition"
+					/>
+				</KpiCardAnimated>
+
+				<KpiCardAnimated index={7}>
+					<KpiCard
+						title="Nouveaux clients"
+						value={kpis.newCustomers.count.toString()}
+						numericValue={kpis.newCustomers.count}
+						evolution={kpis.newCustomers.evolution}
+						previousVolume={kpis.newCustomers.previousVolume}
+						comparisonLabel={comparisonLabel}
+						icon={<UserPlus className="size-4" />}
+						size="compact"
+						priority="info"
+						flatOnMobile
+						tooltip="Clients dont la première commande payée tombe dans la période"
 					/>
 				</KpiCardAnimated>
 			</div>

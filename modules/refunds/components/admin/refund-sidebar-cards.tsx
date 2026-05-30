@@ -82,7 +82,7 @@ export function RefundSidebarCards({
 							</TooltipTrigger>
 							<TooltipContent side="bottom" className="max-w-xs">
 								Le motif détermine si le stock est restauré par défaut. Tu peux ajuster manuellement
-								par bijou ci-contre.
+								sur chaque bijou.
 							</TooltipContent>
 						</Tooltip>
 					</div>
@@ -90,7 +90,9 @@ export function RefundSidebarCards({
 					<div
 						className={cn(
 							"rounded p-2 text-xs",
-							restockByDefault ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700",
+							restockByDefault
+								? "bg-success/10 text-success"
+								: "bg-warning/15 text-warning-foreground",
 						)}
 					>
 						{restockByDefault
@@ -116,6 +118,7 @@ export function RefundSidebarCards({
 								enterKeyHint="done"
 								autoCapitalize="sentences"
 								spellCheck
+								className="resize-none"
 							/>
 						)}
 					</form.AppField>
@@ -165,7 +168,7 @@ export function RefundSidebarCards({
 			</Card>
 
 			<p className="text-muted-foreground text-center text-xs">
-				On préviendra Adrien et le client : remboursement traité sous 48h.
+				On préviendra l&apos;atelier et le client : remboursement traité sous 48h.
 			</p>
 		</div>
 	);

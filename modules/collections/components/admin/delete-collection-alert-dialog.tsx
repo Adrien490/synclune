@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { LoaderCircle } from "lucide-react";
 
 export const DELETE_COLLECTION_DIALOG_ID = "delete-collection";
@@ -25,10 +26,12 @@ interface DeleteCollectionData {
 
 export function DeleteCollectionAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteCollectionData>(DELETE_COLLECTION_DIALOG_ID);
+	const backToList = useBackToListOnDelete("/admin/catalogue/collections");
 
 	const { action, isPending } = useDeleteCollection({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

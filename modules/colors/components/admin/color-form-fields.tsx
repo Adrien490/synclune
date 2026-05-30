@@ -303,6 +303,7 @@ export function ColorFormFields({ form, isPending, showStatus = false }: ColorFo
 						rows={3}
 						maxLength={500}
 						showCounter
+						className="resize-none"
 					/>
 				)}
 			</form.AppField>

@@ -45,7 +45,7 @@ describe("DeliveryEstimator", () => {
 
 	it("displays delivery date range text", () => {
 		render(<DeliveryEstimator />);
-		expect(screen.getByText(/livraison estimee entre le/i)).toBeInTheDocument();
+		expect(screen.getByText(/livraison estimée entre le/i)).toBeInTheDocument();
 	});
 
 	it("calculates correct min date (4 business days from Wednesday = next Tuesday)", () => {

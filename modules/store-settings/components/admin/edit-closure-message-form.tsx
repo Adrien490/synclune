@@ -67,6 +67,7 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 						disabled={isPending}
 						enterKeyHint="next"
 						autoCapitalize="sentences"
+						className="resize-none"
 					/>
 				)}
 			</form.AppField>

@@ -8,6 +8,59 @@
 		word-break: break-word;
 	}
 
+	/* Mot du hero : dégradé multicolore appliqué au texte (brand).
+	   Stops via tokens SSOT (--gradient-hero-* dans globals.css).
+	   Dégradé diagonal (110deg) en BOUCLE FERMÉE (rose→violet→menthe→violet→rose)
+	   étiré à 300% : permet un shimmer continu (animation `infinite`, sans
+	   `alternate`) qui coule sans « rewind » visible (cf. @keyframes
+	   hero-gradient-shimmer). Un glow brand teinté (drop-shadow) détache le mot
+	   du fond. */
+	.text-gradient-multicolor {
+		background: linear-gradient(
+			110deg,
+			var(--gradient-hero-from) 0%,
+			var(--gradient-hero-via) 25%,
+			var(--gradient-hero-to) 50%,
+			var(--gradient-hero-via) 75%,
+			var(--gradient-hero-from) 100%
+		);
+		background-size: 300% auto;
+		background-position: 0% center;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		filter: drop-shadow(0 2px 14px var(--color-glow-pink));
+		animation: hero-gradient-shimmer 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+	}
+
+	/* Respect du confort de mouvement : pas de balayage si réduit */
+	@media (prefers-reduced-motion: reduce) {
+		.text-gradient-multicolor {
+			animation: none;
+		}
+	}
+
+	/* Fallback contraste forcé (Windows high-contrast) : restaure un texte plein */
+	@media (forced-colors: active) {
+		.text-gradient-multicolor {
+			background: none;
+			color: CanvasText;
+			filter: none;
+			animation: none;
+		}
+	}
+
+	/* Fallback contraste renforcé : texte plein brand (≥ seuil large-text)
+	   pour les utilisateurs demandant plus de contraste (miroir de forced-colors). */
+	@media (prefers-contrast: more) {
+		.text-gradient-multicolor {
+			background: none;
+			color: var(--primary);
+			filter: none;
+			animation: none;
+		}
+	}
+
 	/* Gradient Hero avec couleurs logo */
 	.bg-linear-organic {
 		background: linear-gradient(

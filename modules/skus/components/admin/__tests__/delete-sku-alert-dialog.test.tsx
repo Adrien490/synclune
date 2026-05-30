@@ -22,6 +22,14 @@ let mockDialogState = {
 
 let mockIsPending = false;
 
+vi.mock("next/navigation", () => ({
+	usePathname: () => "/admin/catalogue/produits/bague-or/variantes",
+}));
+
+vi.mock("@/shared/hooks/use-back-to-list-on-delete", () => ({
+	useBackToListOnDelete: () => vi.fn(),
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialogState,
 }));

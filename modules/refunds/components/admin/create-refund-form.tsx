@@ -333,11 +333,11 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				{isCancelledOrder && (
 					<div
 						role="alert"
-						className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900"
+						className="border-warning/40 bg-warning/10 text-warning-foreground flex items-start gap-3 rounded-md border p-4"
 					>
 						<div className="flex-1 space-y-2">
 							<p className="text-sm font-semibold">Cette commande est annulée</p>
-							<p className="text-xs text-amber-800">
+							<p className="text-warning-foreground/80 text-xs">
 								Le remboursement reste possible si le paiement a été capturé, mais vérifie
 								qu&apos;un voidInvoice ou un avoir n&apos;a pas déjà été émis depuis
 								l&apos;annulation.

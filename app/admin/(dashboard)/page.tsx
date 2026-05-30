@@ -14,6 +14,7 @@ import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-l
 import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
+import { ComparisonSelector } from "@/modules/dashboard/components/comparison-selector";
 import { ExportRevenueButton } from "@/modules/dashboard/components/export-revenue-button";
 import { DashboardMobileActions } from "@/modules/dashboard/components/dashboard-mobile-actions";
 import { DashboardFreshness } from "@/modules/dashboard/components/dashboard-freshness";
@@ -77,6 +78,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
 						<DashboardFreshness />
 						<PeriodSelector />
+						<ComparisonSelector />
 						<ExportRevenueButton period={period} />
 						<RefreshDashboardButton />
 					</div>
@@ -127,7 +129,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 							/>
 						}
 					>
-						<RevenueChartWrapper period={period} chartMode={chartMode} />
+						<RevenueChartWrapper
+							period={period}
+							chartMode={chartMode}
+							comparisonMode={comparisonMode}
+						/>
 					</Suspense>
 				</section>
 
@@ -218,13 +224,15 @@ async function VatProgressWrapper() {
 async function RevenueChartWrapper({
 	period,
 	chartMode,
+	comparisonMode,
 }: {
 	period: DashboardPeriod;
 	chartMode: ChartMode;
+	comparisonMode: ComparisonMode;
 }) {
 	let chartData;
 	try {
-		chartData = await fetchDashboardRevenueChart(period);
+		chartData = await fetchDashboardRevenueChart(period, comparisonMode);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (

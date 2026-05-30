@@ -3,6 +3,7 @@
 import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteMaterial } from "@/modules/materials/hooks/use-delete-material";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_MATERIAL_DIALOG_ID = "delete-material";
 
@@ -14,9 +15,11 @@ interface DeleteMaterialData {
 
 export function DeleteMaterialAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteMaterialData>(DELETE_MATERIAL_DIALOG_ID);
+	const backToList = useBackToListOnDelete("/admin/catalogue/materiaux");
 	const { action, isPending } = useDeleteMaterial({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

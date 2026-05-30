@@ -155,10 +155,10 @@ describe("ApproveRefundAlertDialog", () => {
 	it("displays amount formatted from cents to euros", () => {
 		render(<ApproveRefundAlertDialog />);
 
-		expect(screen.getByText(/25\.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/25,00/)).toBeInTheDocument();
 	});
 
-	it("displays 0.00 € when amount is missing", () => {
+	it("displays 0,00 € when amount is missing", () => {
 		mockDialogState = {
 			...mockDialogState,
 			data: { refundId: "refund_1", amount: 0, orderNumber: "CMD-2026-0042" },
@@ -166,7 +166,7 @@ describe("ApproveRefundAlertDialog", () => {
 
 		render(<ApproveRefundAlertDialog />);
 
-		expect(screen.getByText(/0\.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/0,00/)).toBeInTheDocument();
 	});
 
 	// ─── Order number ─────────────────────────────────────────────────────────

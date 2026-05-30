@@ -169,15 +169,11 @@ describe("CursorPagination", () => {
 		});
 
 		it("renders result count with singular", () => {
-			renderPagination({ currentPageSize: 1, hasNextPage: false, hasPreviousPage: false });
+			// hasPreviousPage:true → multi-pages, donc la barre (compteur inclus) est rendue.
+			renderPagination({ currentPageSize: 1, hasNextPage: false, hasPreviousPage: true });
 			expect(screen.getByText("1")).toBeInTheDocument();
 			const matches = screen.getAllByText(/résultat/);
 			expect(matches.length).toBeGreaterThanOrEqual(1);
-		});
-
-		it("renders 'Aucun résultat' when currentPageSize is 0", () => {
-			renderPagination({ currentPageSize: 0, hasNextPage: false, hasPreviousPage: false });
-			expect(screen.getByText("Aucun résultat")).toBeInTheDocument();
 		});
 
 		// ====================================================================
@@ -193,10 +189,17 @@ describe("CursorPagination", () => {
 			expect(screen.getAllByText(/sur/).length).toBeGreaterThanOrEqual(2);
 		});
 
-		it("does NOT render 'sur N' when totalCount equals currentPageSize (fits on one page)", () => {
-			renderPagination({ currentPageSize: 5, totalCount: 5, hasNextPage: false });
-			expect(screen.getByText("5")).toBeInTheDocument();
-			expect(screen.queryByText(/sur/)).not.toBeInTheDocument();
+		it("renders nothing when the dataset fits on one page (no next/prev)", () => {
+			// Tient sur une page (totalCount === currentPageSize, ni next ni prev) →
+			// barre entièrement masquée (décision UX), donc pas de compteur ni de « sur N ».
+			const { container } = renderPagination({
+				currentPageSize: 5,
+				totalCount: 5,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			});
+			expect(container).toBeEmptyDOMElement();
+			expect(screen.queryByTestId("select")).not.toBeInTheDocument();
 		});
 
 		it("does NOT render 'sur N' when totalCount is undefined", () => {
@@ -210,7 +213,13 @@ describe("CursorPagination", () => {
 		});
 
 		it("uses plural 'résultats' based on totalCount when provided", () => {
-			renderPagination({ currentPageSize: 1, totalCount: 50, hasNextPage: false });
+			// hasPreviousPage:true → multi-pages, la barre est rendue.
+			renderPagination({
+				currentPageSize: 1,
+				totalCount: 50,
+				hasNextPage: false,
+				hasPreviousPage: true,
+			});
 			// Plural based on totalCount=50, not currentPageSize=1
 			const matches = screen.getAllByText(/résultats/);
 			expect(matches.length).toBeGreaterThanOrEqual(1);
@@ -395,13 +404,15 @@ describe("CursorPagination", () => {
 			expect(status).toHaveAttribute("aria-atomic", "true");
 		});
 
-		it("announces empty results", () => {
-			renderPagination({
+		it("renders nothing when empty and single page", () => {
+			// Liste vide tenant sur une page → barre entièrement masquée (le vide est
+			// géré par l'état vide parent, ex. TableEmptyState).
+			const { container } = renderPagination({
 				currentPageSize: 0,
 				hasNextPage: false,
 				hasPreviousPage: false,
 			});
-			expect(screen.getByText("Aucun résultat.")).toBeInTheDocument();
+			expect(container).toBeEmptyDOMElement();
 		});
 
 		it("announces result count and position on first page", () => {
@@ -421,14 +432,14 @@ describe("CursorPagination", () => {
 			expect(screen.getByText("Dernière page")).toBeInTheDocument();
 		});
 
-		it("announces single page", () => {
-			renderPagination({
+		it("renders nothing on a single page", () => {
+			// Page unique (ni next ni prev) → composant rend null (ni barre ni nav).
+			const { container } = renderPagination({
 				currentPageSize: 5,
 				hasNextPage: false,
 				hasPreviousPage: false,
 			});
-			expect(screen.getByText("Page chargée, 5 résultats.")).toBeInTheDocument();
-			// Nav (avec "Page unique") n'est pas rendu quand !canNavigate.
+			expect(container).toBeEmptyDOMElement();
 			expect(screen.queryByRole("navigation")).not.toBeInTheDocument();
 		});
 

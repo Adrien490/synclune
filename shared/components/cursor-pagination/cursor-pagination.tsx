@@ -207,6 +207,11 @@ function CursorPaginationInner({
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
 
+	// Une seule page (ni précédent ni suivant) : rien à paginer → ne rien rendre
+	// (décision UX). Placé après tous les hooks/effects pour respecter les règles
+	// des hooks. Masque toute la barre (sélecteur « par page » + compteur + nav).
+	if (!canNavigate) return null;
+
 	// Build rel="prev"/"next" URLs for SEO crawl hints
 	const buildPaginationUrl = (paginationCursor: string | null, direction: string) => {
 		if (!paginationCursor) return null;
@@ -238,7 +243,7 @@ function CursorPaginationInner({
 	return (
 		<div
 			className={cn(
-				"flex flex-row items-center justify-between gap-2 sm:gap-3",
+				"flex flex-row items-center justify-center gap-2 sm:justify-between sm:gap-3",
 				// Opacity réduite pendant le chargement avec transition smooth pour UX fluide
 				// opacity-80 (au lieu de 70) pour meilleur contraste WCAG AA (4.5:1)
 				isPending && "pointer-events-none opacity-80 transition-opacity duration-200",
@@ -251,8 +256,9 @@ function CursorPaginationInner({
 			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{ariaLiveMessage}
 			</div>
-			{/* Informations sur la pagination */}
-			<div className="flex items-center gap-2 text-sm sm:gap-3">
+			{/* Informations sur la pagination — masquées sur mobile (le compteur est
+			    déjà rendu au-dessus des listes), nav seule centrée < sm. */}
+			<div className="hidden items-center gap-2 text-sm sm:flex sm:gap-3">
 				<div className="flex items-center gap-1.5 sm:gap-2">
 					<label htmlFor={perPageId} className="text-muted-foreground hidden text-xs sm:block">
 						Par page
@@ -293,90 +299,89 @@ function CursorPaginationInner({
 				</span>
 			</div>
 
-			{/* Contrôles de pagination */}
-			{canNavigate && (
-				<nav
-					aria-label="Pagination"
-					aria-describedby={hasFinePointer ? "pagination-shortcuts" : undefined}
-					className="flex items-center gap-2"
+			{/* Contrôles de pagination — `canNavigate` est toujours vrai ici
+			    (early-return ci-dessus quand il n'y a qu'une page). */}
+			<nav
+				aria-label="Pagination"
+				aria-describedby={hasFinePointer ? "pagination-shortcuts" : undefined}
+				className="flex items-center gap-2"
+			>
+				{hasFinePointer && (
+					<span id="pagination-shortcuts" className="sr-only">
+						Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
+						suivante
+					</span>
+				)}
+				{/* Bouton retour au début - toujours affiché pour éviter layout shift */}
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={isFirstPage || isPending}
+					onClick={onReset}
+					className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
+					aria-label="Retour au début"
 				>
-					{hasFinePointer && (
-						<span id="pagination-shortcuts" className="sr-only">
-							Raccourcis : Alt+Flèche gauche pour page précédente, Alt+Flèche droite pour page
-							suivante
-						</span>
+					{isPending && lastAction === "reset" ? (
+						<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+					) : (
+						<ChevronsLeft className="size-5 md:size-4" />
 					)}
-					{/* Bouton retour au début - toujours affiché pour éviter layout shift */}
+					<span className="hidden sm:inline">Début</span>
+				</Button>
+
+				<ButtonGroup>
+					{/* Bouton précédent */}
 					<Button
 						variant="outline"
-						size="sm"
-						disabled={isFirstPage || isPending}
-						onClick={onReset}
-						className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
-						aria-label="Retour au début"
+						size="icon"
+						disabled={!hasPreviousPage || isPending}
+						onClick={onPrevious}
+						className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
+						aria-label="Page précédente"
 					>
-						{isPending && lastAction === "reset" ? (
+						{isPending && lastAction === "prev" ? (
 							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
 						) : (
-							<ChevronsLeft className="size-5 md:size-4" />
+							<ChevronLeft className="size-5 md:size-4" />
 						)}
-						<span className="hidden sm:inline">Début</span>
 					</Button>
 
-					<ButtonGroup>
-						{/* Bouton précédent */}
-						<Button
-							variant="outline"
-							size="icon"
-							disabled={!hasPreviousPage || isPending}
-							onClick={onPrevious}
-							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
-							aria-label="Page précédente"
-						>
-							{isPending && lastAction === "prev" ? (
-								<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
-							) : (
-								<ChevronLeft className="size-5 md:size-4" />
-							)}
-						</Button>
+					<div
+						className={cn(
+							"bg-muted/50 flex items-center justify-center px-3 text-center text-xs sm:text-sm",
+							PAGE_INDICATOR_SIZE,
+						)}
+						role="status"
+						aria-label="Position actuelle dans la pagination"
+					>
+						<span className="text-foreground font-medium">
+							{!hasPreviousPage && !hasNextPage
+								? "Page unique"
+								: !hasPreviousPage
+									? "Première page"
+									: !hasNextPage
+										? "Dernière page"
+										: "Suite"}
+						</span>
+					</div>
 
-						<div
-							className={cn(
-								"bg-muted/50 flex items-center justify-center px-3 text-center text-xs sm:text-sm",
-								PAGE_INDICATOR_SIZE,
-							)}
-							role="status"
-							aria-label="Position actuelle dans la pagination"
-						>
-							<span className="text-foreground font-medium">
-								{!hasPreviousPage && !hasNextPage
-									? "Page unique"
-									: !hasPreviousPage
-										? "Première page"
-										: !hasNextPage
-											? "Dernière page"
-											: "Suite"}
-							</span>
-						</div>
-
-						{/* Bouton suivant */}
-						<Button
-							variant="outline"
-							size="icon"
-							disabled={!hasNextPage || isPending}
-							onClick={onNext}
-							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
-							aria-label="Page suivante"
-						>
-							{isPending && lastAction === "next" ? (
-								<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
-							) : (
-								<ChevronRight className="size-5 md:size-4" />
-							)}
-						</Button>
-					</ButtonGroup>
-				</nav>
-			)}
+					{/* Bouton suivant */}
+					<Button
+						variant="outline"
+						size="icon"
+						disabled={!hasNextPage || isPending}
+						onClick={onNext}
+						className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
+						aria-label="Page suivante"
+					>
+						{isPending && lastAction === "next" ? (
+							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+						) : (
+							<ChevronRight className="size-5 md:size-4" />
+						)}
+					</Button>
+				</ButtonGroup>
+			</nav>
 		</div>
 	);
 }

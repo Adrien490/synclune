@@ -43,6 +43,7 @@ vi.mock("@/shared/components/search-input", () => ({
 }));
 
 vi.mock("@/shared/components/sticky-action-bar", () => ({
+	useSelectionToggleItem: () => null,
 	StickyActionBar: ({
 		items,
 		search,

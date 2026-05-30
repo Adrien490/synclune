@@ -3,6 +3,7 @@
 import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_COLOR_DIALOG_ID = "delete-color";
 
@@ -14,9 +15,11 @@ interface DeleteColorData {
 
 export function DeleteColorAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteColorData>(DELETE_COLOR_DIALOG_ID);
+	const backToList = useBackToListOnDelete("/admin/catalogue/couleurs");
 	const { action, isPending } = useDeleteColor({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

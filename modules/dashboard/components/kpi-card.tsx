@@ -140,7 +140,7 @@ export function KpiCard({
 							strokeLinejoin="round"
 						/>
 					</svg>
-					<span className="sr-only">Tendance sur les 7 derniers jours</span>
+					<span className="sr-only">Tendance sur la période</span>
 				</>
 			)}
 

@@ -84,6 +84,7 @@ export function EditProductInfoCard({ form, productTypes, collections }: EditPro
 							enterKeyHint="done"
 							autoCapitalize="sentences"
 							spellCheck
+							className="resize-none"
 						/>
 					)}
 				</form.AppField>

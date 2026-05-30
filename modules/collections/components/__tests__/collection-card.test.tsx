@@ -249,22 +249,6 @@ describe("CollectionCard", () => {
 		});
 	});
 
-	describe("discovery cue (audit 2026-05-29 F4 + 10/10 touch)", () => {
-		it("renders a decorative aria-hidden 'Découvrir' cue", () => {
-			const { container } = renderCard({});
-			const cue = Array.from(container.querySelectorAll('p[aria-hidden="true"]')).find((p) =>
-				p.textContent.includes("Découvrir"),
-			);
-			expect(cue).toBeDefined();
-			// Visible by default (touch), hidden until hover only on hover-capable devices,
-			// and always revealed on keyboard focus.
-			expect(cue!.className).toMatch(/(?<![:-])opacity-100/);
-			expect(cue!.className).toMatch(/can-hover:opacity-0/);
-			expect(cue!.className).toMatch(/can-hover:group-hover:opacity-100/);
-			expect(cue!.className).toMatch(/group-focus-within:opacity-100/);
-		});
-	});
-
 	describe("from-price framing (audit 2026-05-29 10/10)", () => {
 		it("renders an 'À partir de' prefix followed by the minimum price", () => {
 			const { container } = renderCard({ priceRange: { min: 2000, max: 5000 } });

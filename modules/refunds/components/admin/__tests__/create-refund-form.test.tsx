@@ -78,6 +78,7 @@ vi.mock("@tanstack/react-form-nextjs", () => ({
 
 vi.mock("@/modules/refunds/services/refund-calculation.service", () => ({
 	canSubmitRefund: vi.fn(() => true),
+	getAvailableQuantity: vi.fn((item: { quantity?: number }) => item.quantity ?? 1),
 }));
 
 vi.mock("@/modules/refunds/components/admin/refund-item-row", () => ({

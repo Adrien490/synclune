@@ -89,9 +89,18 @@ vi.mock("@/shared/hooks/use-active-navbar-item", () => ({
 	}),
 }));
 
+// Mock useIsTouchDevice — toggled per test to exercise the F3 touch branch
+let mockIsTouch = false;
+vi.mock("@/shared/hooks/use-touch-device", () => ({
+	useIsTouchDevice: () => mockIsTouch,
+}));
+
 import { DesktopNav } from "./desktop-nav";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	mockIsTouch = false;
+});
 
 const navItems = [
 	{
@@ -205,6 +214,19 @@ describe("DesktopNav", () => {
 			fireEvent.click(trigger, { detail: 1 });
 
 			expect(mockPush).toHaveBeenCalledWith("/produits");
+		});
+
+		it("does not navigate on touch tap — lets Radix open the panel (F3)", () => {
+			mockIsTouch = true;
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			// Touch tap fires a click with detail >= 1, but on a coarse pointer we must
+			// open the mega menu instead of navigating away.
+			fireEvent.click(trigger, { detail: 1 });
+
+			expect(mockPush).not.toHaveBeenCalled();
 		});
 
 		it("calls preventDefault on mouse click to skip Radix's onItemSelect toggle", () => {

@@ -88,6 +88,7 @@ export function RevertToProcessingDialog() {
 						onChange={(e) => setReason(e.target.value)}
 						rows={3}
 						disabled={isPending}
+						className="resize-none"
 					/>
 					<p className="text-muted-foreground text-xs">
 						Cette raison sera enregistrée dans l'historique de la commande.

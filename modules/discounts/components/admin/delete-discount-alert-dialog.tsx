@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 
@@ -27,11 +28,13 @@ interface DeleteDiscountData {
 export function DeleteDiscountAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteDiscountData>(DELETE_DISCOUNT_DIALOG_ID);
 	const haptic = useHaptic();
+	const backToList = useBackToListOnDelete("/admin/marketing/discounts");
 
 	const { action, isPending } = useDeleteDiscount({
 		onSuccess: () => {
 			haptic("success");
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

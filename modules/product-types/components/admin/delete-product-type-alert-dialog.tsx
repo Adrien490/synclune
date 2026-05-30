@@ -3,6 +3,7 @@
 import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
 import { useDeleteProductType } from "@/modules/product-types/hooks/use-delete-product-type";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_PRODUCT_TYPE_DIALOG_ID = "delete-product-type";
 
@@ -15,10 +16,12 @@ interface DeleteProductTypeData {
 
 export function DeleteProductTypeAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteProductTypeData>(DELETE_PRODUCT_TYPE_DIALOG_ID);
+	const backToList = useBackToListOnDelete("/admin/catalogue/types-de-produits");
 
 	const { action, isPending } = useDeleteProductType({
 		onSuccess: () => {
 			deleteDialog.close();
+			backToList();
 		},
 	});
 

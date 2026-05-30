@@ -5,7 +5,11 @@ import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import {
+	StickyActionBar,
+	type StickyActionBarItem,
+	useSelectionToggleItem,
+} from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
@@ -26,6 +30,8 @@ const IDS = getAdminDrawerIds("orders");
 function OrdersBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
 	const { hasActiveSort, hasActiveFilter, activeFilterCount } = useActiveListControls();
+
+	const selectItem = useSelectionToggleItem();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -52,6 +58,7 @@ function OrdersBottomBarInner() {
 			expanded: isOpen("filter"),
 			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
 		},
+		...(selectItem ? [selectItem] : []),
 	];
 
 	return (

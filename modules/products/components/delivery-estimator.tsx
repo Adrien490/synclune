@@ -29,7 +29,7 @@ export function DeliveryEstimator() {
 		<div className="text-muted-foreground flex items-center gap-2.5 text-sm">
 			<Truck className="text-foreground size-4 shrink-0" aria-hidden="true" />
 			<p>
-				Livraison estimee entre le{" "}
+				Livraison estimée entre le{" "}
 				<span className="text-foreground font-medium">{formatDeliveryDate(minDate)}</span> et le{" "}
 				<span className="text-foreground font-medium">{formatDeliveryDate(maxDate)}</span>
 			</p>

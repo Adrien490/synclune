@@ -175,4 +175,48 @@ describe("MegaMenuCreations", () => {
 		const heading = document.getElementById(headingId!);
 		expect(heading?.textContent).toBe("Créations");
 	});
+
+	describe("spotlight fallback (F1 balance)", () => {
+		const spotlightCollection = {
+			href: "/collections/mariage",
+			label: "Mariage",
+			description: "Pièces délicates pour le grand jour",
+			images: [{ url: "/mariage.jpg", blurDataUrl: null, alt: "Mariage" }],
+		};
+
+		it("renders the spotlight collection when no featured products", () => {
+			render(
+				<MegaMenuCreations productTypes={productTypes} spotlightCollection={spotlightCollection} />,
+			);
+
+			expect(screen.getByText("À découvrir")).toBeInTheDocument();
+			expect(screen.getByText("Mariage")).toBeInTheDocument();
+			expect(screen.getByText("Découvrir la collection")).toBeInTheDocument();
+			expect(screen.queryByText("Nouveautés")).toBeNull();
+		});
+
+		it("prefers featured products over the spotlight fallback", () => {
+			render(
+				<MegaMenuCreations
+					productTypes={productTypes}
+					featuredProducts={featuredProducts}
+					spotlightCollection={spotlightCollection}
+				/>,
+			);
+
+			expect(screen.getByText("Nouveautés")).toBeInTheDocument();
+			expect(screen.queryByText("À découvrir")).toBeNull();
+		});
+
+		it("does not render a spotlight when the collection has no images", () => {
+			render(
+				<MegaMenuCreations
+					productTypes={productTypes}
+					spotlightCollection={{ href: "/collections/x", label: "X", images: [] }}
+				/>,
+			);
+
+			expect(screen.queryByText("À découvrir")).toBeNull();
+		});
+	});
 });

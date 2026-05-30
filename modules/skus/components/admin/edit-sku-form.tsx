@@ -233,35 +233,30 @@ export function EditProductVariantForm({
 				}}
 			</form.Subscribe>
 
-			<fieldset
-				disabled={isPending}
-				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
-			>
-				<div className="space-y-6 lg:col-span-2">
-					<SkuMediaCard
-						form={form as unknown as SkuFormInstance}
-						isMediaUploading={isMediaUploading}
-						uploadProgress={uploadProgress}
-						handleUpload={handleUpload}
-						setDeletedImageUrls={setDeletedImageUrls}
-						failedFiles={failedMediaUploads}
-						onCancel={cancelMediaUpload}
-						onCancelOne={cancelOneMediaUpload}
-						onRetry={() => {
-							void retryFailedMediaUploads();
-						}}
-						onRetryOne={(file) => {
-							void retrySingleMediaUpload(file);
-						}}
-						onDismissErrors={clearFailedMediaUploads}
-						offlineContextKey={`edit-sku-${sku.id}`}
-						onReplayOffline={async (files) => {
-							await uploadMedia(files);
-						}}
-						viewTransitionPrefix="sku-edit"
-						skipUtapiDelete
-					/>
-				</div>
+			<fieldset disabled={isPending} className="space-y-6">
+				<SkuMediaCard
+					form={form as unknown as SkuFormInstance}
+					isMediaUploading={isMediaUploading}
+					uploadProgress={uploadProgress}
+					handleUpload={handleUpload}
+					setDeletedImageUrls={setDeletedImageUrls}
+					failedFiles={failedMediaUploads}
+					onCancel={cancelMediaUpload}
+					onCancelOne={cancelOneMediaUpload}
+					onRetry={() => {
+						void retryFailedMediaUploads();
+					}}
+					onRetryOne={(file) => {
+						void retrySingleMediaUpload(file);
+					}}
+					onDismissErrors={clearFailedMediaUploads}
+					offlineContextKey={`edit-sku-${sku.id}`}
+					onReplayOffline={async (files) => {
+						await uploadMedia(files);
+					}}
+					viewTransitionPrefix="sku-edit"
+					skipUtapiDelete
+				/>
 
 				<SkuSidebarCards
 					form={form as unknown as SkuFormInstance}

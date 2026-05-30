@@ -10,6 +10,4 @@ export const COLLECTION_TEXTS = {
 	PRODUCT_COUNT: (count: number) => `${count} article${count > 1 ? "s" : ""}`,
 	/** Signal neutre pour une collection sans produit publié (0 article). */
 	PRODUCT_COUNT_EMPTY: "Bientôt",
-	/** Cue de découverte décoratif (visible tactile, révélé au hover/focus desktop). */
-	DISCOVER: "Découvrir →",
 } as const;

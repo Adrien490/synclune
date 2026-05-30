@@ -68,6 +68,23 @@ export type GetKpisReturn = {
 		evolution: number;
 		previousVolume: number;
 	};
+	/**
+	 * Nouveaux clients : clients dont la 1ʳᵉ commande payée tombe dans la période
+	 * (clé client = COALESCE userId, customerEmail). Évolution vs période de comparaison.
+	 */
+	newCustomers: {
+		count: number;
+		evolution: number;
+		previousVolume: number;
+	};
+	/**
+	 * Compact daily series (current period, Paris wall-clock) feeding the
+	 * KpiCard background sparkline. Empty arrays when no data.
+	 */
+	sparklines: {
+		revenue: number[];
+		orders: number[];
+	};
 };
 
 // ============================================================================
@@ -118,11 +135,20 @@ export type RevenueDataPoint = {
 	subtotal: number;
 	discounts: number;
 	shipping: number;
+	/**
+	 * Revenue of the comparison period (previous / YoY) aligned by ordinal bucket
+	 * index. Present on every point only when comparison data exists.
+	 */
+	previousRevenue?: number;
 };
 
 export type GetRevenueChartReturn = {
 	data: RevenueDataPoint[];
 	periodLabel: string;
+	/** Bucket granularity — drives accurate sr-only copy ("quotidien"/"hebdomadaire"/"mensuel") */
+	granularity: "daily" | "weekly" | "monthly";
+	/** True when a comparison series was joined onto `data` (overlay line) */
+	hasComparison: boolean;
 };
 
 // ============================================================================

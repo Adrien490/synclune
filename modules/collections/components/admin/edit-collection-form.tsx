@@ -240,6 +240,7 @@ export function EditCollectionForm({
 							placeholder="Décrivez cette collection…"
 							disabled={isPending}
 							rows={4}
+							className="resize-none"
 						/>
 					)}
 				</form.AppField>

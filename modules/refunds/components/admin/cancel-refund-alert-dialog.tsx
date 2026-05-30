@@ -14,6 +14,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
 import { ActionStatus } from "@/shared/types/server-action";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { Ban, LoaderCircle } from "lucide-react";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
@@ -40,7 +41,7 @@ export function CancelRefundAlertDialog() {
 		}
 	};
 
-	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
+	const formattedAmount = formatEuro(dialog.data?.amount ?? 0);
 
 	return (
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
@@ -56,8 +57,8 @@ export function CancelRefundAlertDialog() {
 						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
-									Annuler la demande de remboursement de <strong>{formattedAmount} €</strong> pour
-									la commande <strong>{dialog.data?.orderNumber}</strong> ?
+									Annuler la demande de remboursement de <strong>{formattedAmount}</strong> pour la
+									commande <strong>{dialog.data?.orderNumber}</strong> ?
 								</p>
 								<p className="text-muted-foreground mt-4 text-sm">
 									La demande sera supprimée. Vous pourrez en créer une nouvelle si nécessaire.

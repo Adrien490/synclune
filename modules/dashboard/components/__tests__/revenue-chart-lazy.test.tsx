@@ -38,6 +38,8 @@ function makeChartData(count = 3): GetRevenueChartReturn {
 			shipping: 0,
 		})),
 		periodLabel: "30 jours",
+		granularity: "daily",
+		hasComparison: false,
 	};
 }
 
@@ -65,7 +67,11 @@ describe("LazyRevenueChart", () => {
 	});
 
 	it("renders with empty data", () => {
-		render(<LazyRevenueChart chartData={{ data: [], periodLabel: "" }} />);
+		render(
+			<LazyRevenueChart
+				chartData={{ data: [], periodLabel: "", granularity: "daily", hasComparison: false }}
+			/>,
+		);
 
 		expect(screen.getByTestId("revenue-chart")).toHaveAttribute("data-count", "0");
 	});
