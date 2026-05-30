@@ -76,7 +76,7 @@ export function AdminDataTable({
 	return (
 		<Card className={cn("hidden md:block", className)}>
 			<CardContent>
-				<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<BulkSelectionProvider pageItemIds={pageItemIds} bridgeToToolbar={false}>
 					{bulkActionsBar}
 					<TableScrollContainer label={caption}>
 						<Table

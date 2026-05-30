@@ -13,7 +13,7 @@
 	   Dégradé diagonal (110deg) en BOUCLE FERMÉE (rose→violet→menthe→violet→rose)
 	   étiré à 300% : permet un shimmer continu (animation `infinite`, sans
 	   `alternate`) qui coule sans « rewind » visible (cf. @keyframes
-	   hero-gradient-shimmer). Un glow brand teinté (drop-shadow) détache le mot
+	   hero-gradient-shimmer). Un glow brand teinté (text-shadow) détache le mot
 	   du fond. */
 	.text-gradient-multicolor {
 		background: linear-gradient(
@@ -29,7 +29,15 @@
 		-webkit-background-clip: text;
 		background-clip: text;
 		color: transparent;
-		filter: drop-shadow(0 2px 14px var(--color-glow-pink));
+		/* iOS Safari : requis pour que le clip-text peigne réellement le glyphe.
+		   Sans -webkit-text-fill-color, certaines versions WebKit ignorent le
+		   background-clip et le mot disparaît (transparent) sur mobile. */
+		-webkit-text-fill-color: transparent;
+		/* Glow brand via text-shadow (PAS filter: drop-shadow) : sur iOS Safari,
+		   un `filter` posé sur un élément `background-clip: text` casse le rendu
+		   et rend le mot invisible. text-shadow suit le glyphe sans déclencher ce
+		   bug, tout en gardant le même halo rose. */
+		text-shadow: 0 2px 14px var(--color-glow-pink);
 		animation: hero-gradient-shimmer 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 	}
 
@@ -45,7 +53,8 @@
 		.text-gradient-multicolor {
 			background: none;
 			color: CanvasText;
-			filter: none;
+			-webkit-text-fill-color: CanvasText;
+			text-shadow: none;
 			animation: none;
 		}
 	}
@@ -56,7 +65,8 @@
 		.text-gradient-multicolor {
 			background: none;
 			color: var(--primary);
-			filter: none;
+			-webkit-text-fill-color: var(--primary);
+			text-shadow: none;
 			animation: none;
 		}
 	}

@@ -63,6 +63,22 @@ const BulkSelectionContext = createContext<BulkSelectionContextValue | null>(nul
 interface BulkSelectionProviderProps {
 	pageItemIds: ReadonlyArray<string>;
 	children: ReactNode;
+	/**
+	 * Publie le control de ce provider dans `useAdminListSelectionStore` pour
+	 * piloter le toggle « Sélectionner » de la `StickyActionBar` mobile
+	 * (cf. `useSelectionToggleItem`). Défaut `true` car la quasi-totalité des
+	 * usages directs sont des listes mobiles.
+	 *
+	 * **⚠️ Slot unique** : le store ne retient qu'UN control à la fois. Sur une
+	 * même page, la liste mobile (`md:hidden`) ET la table desktop
+	 * (`hidden md:block` via `AdminDataTable`) montent toutes deux un provider —
+	 * si les deux bridgent, le dernier effet `register()` écrase l'autre. Sur
+	 * mobile, le provider desktop (rendu après dans le JSX) volait le control et
+	 * le toggle pilotait alors une liste invisible (« rien ne se passe »).
+	 * `AdminDataTable` passe donc `bridgeToToolbar={false}` : la table desktop a
+	 * ses propres checkboxes toujours visibles et n'a jamais besoin du toggle.
+	 */
+	bridgeToToolbar?: boolean;
 }
 
 /**
@@ -75,7 +91,11 @@ interface BulkSelectionProviderProps {
  * Usage : wrap autour de la liste, puis `useBulkSelectionContext()` dans le
  * checkbox de chaque ligne et le toolbar.
  */
-export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionProviderProps) {
+export function BulkSelectionProvider({
+	pageItemIds,
+	children,
+	bridgeToToolbar = true,
+}: BulkSelectionProviderProps) {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 	const [selectionMode, setSelectionMode] = useState(false);
 
@@ -160,6 +180,9 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 	// dans la bottom-bar globale. Une seule liste est active à la fois sur mobile.
 	const pageHasItems = pageItemIds.length > 0;
 	useEffect(() => {
+		// Slot unique : seul le provider mobile bridge. La table desktop opte-out
+		// (`bridgeToToolbar={false}`) pour ne pas écraser le control mobile.
+		if (!bridgeToToolbar) return;
 		const { register, unregister } = useAdminListSelectionStore.getState();
 		register({
 			selectionMode,
@@ -170,7 +193,7 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 		return () => {
 			unregister();
 		};
-	}, [selectionMode, pageHasItems]);
+	}, [selectionMode, pageHasItems, bridgeToToolbar]);
 
 	return <BulkSelectionContext.Provider value={value}>{children}</BulkSelectionContext.Provider>;
 }

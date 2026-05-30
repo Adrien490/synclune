@@ -17,8 +17,9 @@ interface HeroGradientWordProps {
  * The gradient lives in the `.text-gradient-multicolor` utility (app/styles/utilities.css),
  * whose stops come from the brand tokens `--gradient-hero-*` (globals.css). The diagonal gradient
  * is a closed loop (rose→violet→mint→violet→rose) so the ambient shimmer flows continuously
- * (`infinite`, no visible rewind). A brand-tinted `drop-shadow` glow lifts the word off the soft
- * hero background. The utility also carries `forced-colors` / `prefers-contrast: more` fallbacks to
+ * (`infinite`, no visible rewind). A brand-tinted `text-shadow` glow lifts the word off the soft
+ * hero background (NOT `filter: drop-shadow`, which breaks `background-clip: text` on iOS Safari and
+ * makes the word vanish on mobile). The utility also carries `forced-colors` / `prefers-contrast: more` fallbacks to
  * a solid brand color (glow dropped), and disables the shimmer under `prefers-reduced-motion`.
  *
  * Font weight is inherited from the parent title (`SectionTitle weight="light"`); this component
