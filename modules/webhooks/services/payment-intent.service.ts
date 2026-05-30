@@ -19,7 +19,14 @@ import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { PaymentFailureDetails } from "../types/webhook.types";
 
-const AUTO_REFUND_NOTE_PREFIX = "Auto-refund payment_failed webhook";
+/**
+ * Préfixe de note posé sur tout Refund auto (oversell / payment_failed /
+ * payment_canceled). Exporté pour que le cron `reconcile-refunds` puisse
+ * repêcher les auto-refunds dont la *création* Stripe a échoué (AM-1) :
+ * ils restent en APPROVED + `stripeRefundId IS NULL` et ne sont sinon
+ * jamais retentés (le filet existant exige `stripeRefundId NOT NULL`).
+ */
+export const AUTO_REFUND_NOTE_PREFIX = "Auto-refund payment_failed webhook";
 
 // Re-export types for backwards compatibility
 export type { PaymentFailureDetails };

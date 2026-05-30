@@ -118,7 +118,17 @@ describe("GalleryHoverZoom", () => {
 			);
 			const wrapper = container.firstChild as HTMLElement;
 			expect(wrapper.className).not.toContain("overflow-hidden");
-			expect(wrapper.className).not.toContain("cursor-crosshair");
+			expect(wrapper.className).not.toContain("cursor-zoom-in");
+		});
+
+		it("reduced motion disables the zoom container entirely (static render)", () => {
+			mockReducedMotion.value = true;
+			const { container } = render(
+				<GalleryHoverZoom src="/test.jpg" alt="Reduced zoom" enabled={true} />,
+			);
+			const wrapper = container.firstChild as HTMLElement;
+			expect(wrapper.className).not.toContain("overflow-hidden");
+			expect(wrapper.className).not.toContain("cursor-zoom-in");
 		});
 
 		it("enabled mode has overflow-hidden class", () => {
@@ -143,12 +153,12 @@ describe("GalleryHoverZoom", () => {
 			expect(img).toHaveAttribute("data-blur-data-url", blur);
 		});
 
-		it("enabled mode has cursor-crosshair class", () => {
+		it("enabled mode has cursor-zoom-in class (cohérent avec l'ouverture plein écran)", () => {
 			const { container } = render(
 				<GalleryHoverZoom src="/test.jpg" alt="Cursor test" enabled={true} />,
 			);
 			const wrapper = container.firstChild as HTMLElement;
-			expect(wrapper.className).toContain("cursor-crosshair");
+			expect(wrapper.className).toContain("cursor-zoom-in");
 		});
 
 		it("applies transition-transform class when prefersReducedMotion=false", () => {

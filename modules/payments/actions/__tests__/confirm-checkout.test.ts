@@ -15,13 +15,17 @@ const {
 	mockHeaders,
 	mockUpdateTag,
 	mockGetSkuDetails,
-	mockGetOrCreateStripeCustomer,
+	mockEnrichStripeCustomer,
+	mockAfter,
 	mockCreateOrderInTransaction,
 	mockBuildStripeLineItems,
 	mockStripe,
 	mockCircuitBreakerErrorClass,
 	mockSentryStartSpan,
 	mockSentryCaptureException,
+	mockSentryWithScope,
+	mockSentryCaptureMessage,
+	mockRequireActiveAccount,
 } = vi.hoisted(() => {
 	const CircuitBreakerErrorClass = class CircuitBreakerError extends Error {
 		constructor(name: string) {
@@ -38,6 +42,7 @@ const {
 			},
 			user: {
 				findUnique: vi.fn(),
+				updateMany: vi.fn(),
 			},
 			discount: {
 				updateMany: vi.fn(),
@@ -60,7 +65,8 @@ const {
 		mockHeaders: vi.fn(),
 		mockUpdateTag: vi.fn(),
 		mockGetSkuDetails: vi.fn(),
-		mockGetOrCreateStripeCustomer: vi.fn(),
+		mockEnrichStripeCustomer: vi.fn(),
+		mockAfter: vi.fn(),
 		mockCreateOrderInTransaction: vi.fn(),
 		mockBuildStripeLineItems: vi.fn(),
 		mockStripe: {
@@ -72,6 +78,9 @@ const {
 		mockCircuitBreakerErrorClass: CircuitBreakerErrorClass,
 		mockSentryStartSpan: vi.fn(),
 		mockSentryCaptureException: vi.fn(),
+		mockSentryWithScope: vi.fn(),
+		mockSentryCaptureMessage: vi.fn(),
+		mockRequireActiveAccount: vi.fn(),
 	};
 });
 
@@ -118,7 +127,16 @@ vi.mock("@/modules/cart/services/sku-validation.service", () => ({
 }));
 
 vi.mock("@/modules/payments/services/stripe-customer.service", () => ({
-	getOrCreateStripeCustomer: mockGetOrCreateStripeCustomer,
+	enrichStripeCustomer: mockEnrichStripeCustomer,
+}));
+
+vi.mock("next/server", () => ({
+	after: mockAfter,
+}));
+
+// AUTHZ-1 gate (require-auth) — authorise par défaut (compte ACTIF / invité).
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireActiveAccountIfAuthenticated: mockRequireActiveAccount,
 }));
 
 vi.mock("@/modules/payments/services/order-creation.service", () => ({
@@ -164,6 +182,8 @@ vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 vi.mock("@sentry/nextjs", () => ({
 	startSpan: mockSentryStartSpan,
 	captureException: mockSentryCaptureException,
+	withScope: mockSentryWithScope,
+	captureMessage: mockSentryCaptureMessage,
 }));
 
 vi.mock("@/shared/constants/countries", () => ({
@@ -292,11 +312,24 @@ function setupDefaults() {
 			setAttribute: vi.fn(),
 		}),
 	);
+	// Sentry.withScope: run the callback with a stub scope so cleanupFailedCheckout's
+	// anti-race alert (ORD-STRIPE-004) can execute without throwing.
+	mockSentryWithScope.mockImplementation((fn: (scope: unknown) => unknown) =>
+		fn({
+			setLevel: vi.fn(),
+			setTag: vi.fn(),
+			setFingerprint: vi.fn(),
+			setContext: vi.fn(),
+		}),
+	);
 
 	// Auth: authenticated user
 	mockGetSession.mockResolvedValue({
 		user: { id: "user-123", email: "marie@example.com" },
 	});
+
+	// AUTHZ-1 gate: account active by default
+	mockRequireActiveAccount.mockResolvedValue({ ok: true });
 
 	// DB: user has no existing Stripe customer
 	mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: null });
@@ -313,8 +346,13 @@ function setupDefaults() {
 	// SKU details
 	mockGetSkuDetails.mockResolvedValue(MOCK_SKU_RESULT);
 
-	// Stripe customer
-	mockGetOrCreateStripeCustomer.mockResolvedValue({ customerId: "cus_new_001" });
+	// Stripe customer enrichment (best-effort, deferred via after())
+	mockEnrichStripeCustomer.mockResolvedValue(undefined);
+	mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
+	// Execute after() callbacks immediately so deferred work is observable in tests.
+	mockAfter.mockImplementation((cb: () => Promise<void> | void) => {
+		void Promise.resolve(cb());
+	});
 
 	// Line items
 	mockBuildStripeLineItems.mockReturnValue({
@@ -328,8 +366,12 @@ function setupDefaults() {
 	// Stripe PI retrieve (modifiable state)
 	mockStripe.paymentIntents.retrieve.mockResolvedValue(MOCK_PAYMENT_INTENT);
 
-	// Stripe PI update
-	mockStripe.paymentIntents.update.mockResolvedValue({ ...MOCK_PAYMENT_INTENT, amount: 5090 });
+	// Stripe PI update — returns the PI with its attached customer (set at init)
+	mockStripe.paymentIntents.update.mockResolvedValue({
+		...MOCK_PAYMENT_INTENT,
+		amount: 5090,
+		customer: "cus_init_001",
+	});
 
 	// Cart cache
 	mockGetCartInvalidationTags.mockReturnValue(["cart-user-user-123"]);
@@ -357,11 +399,28 @@ describe("confirmCheckout", () => {
 	// Happy path — authenticated user
 	// ──────────────────────────────────────────────────────────────
 
+	// AM-3 : la garde compte-actif (AUTHZ-1) est rejouée dans confirmCheckout, pas
+	// seulement dans initializePayment — un compte suspendu entre le montage de la
+	// page et le clic Payer ne doit pas pouvoir faire créer une commande payée.
+	describe("AUTHZ-1 account-active gate (AM-3)", () => {
+		it("rejects a non-active account and never creates an order", async () => {
+			mockRequireActiveAccount.mockResolvedValue({
+				error: { message: "Votre compte n'est pas autorisé à effectuer cette action." },
+			});
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result).toEqual({
+				success: false,
+				error: "Votre compte n'est pas autorisé à effectuer cette action.",
+			});
+			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
+			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("happy path (authenticated user)", () => {
 		it("should return success with orderId, orderNumber, and finalAmount", async () => {
-			mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
-			mockGetOrCreateStripeCustomer.mockResolvedValue({ customerId: "cus_existing" });
-
 			const result = await confirmCheckout(createValidData());
 
 			expect(result).toEqual({
@@ -372,30 +431,44 @@ describe("confirmCheckout", () => {
 			});
 		});
 
-		it("should fetch user stripeCustomerId from DB when authenticated", async () => {
-			mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
-
+		it("should enrich the PI's Stripe customer with the real billing identity", async () => {
 			await confirmCheckout(createValidData());
 
-			expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-				where: { id: "user-123" },
-				select: {
-					stripeCustomerId: true,
-				},
+			await vi.waitFor(() => {
+				expect(mockEnrichStripeCustomer).toHaveBeenCalledWith(
+					"cus_init_001",
+					expect.objectContaining({
+						name: "Marie Dupont",
+						address: VALID_SHIPPING_ADDRESS,
+						phoneNumber: "+33612345678",
+					}),
+				);
 			});
 		});
 
-		it("should pass existing stripeCustomerId to getOrCreateStripeCustomer", async () => {
-			mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
-
+		it("should backfill User.stripeCustomerId (no-op guard) for authenticated users", async () => {
 			await confirmCheckout(createValidData());
 
-			expect(mockGetOrCreateStripeCustomer).toHaveBeenCalledWith(
-				"cus_existing",
-				expect.objectContaining({
-					email: "marie@example.com",
-				}),
-			);
+			await vi.waitFor(() => {
+				expect(mockPrisma.user.updateMany).toHaveBeenCalledWith({
+					where: { id: "user-123", stripeCustomerId: null },
+					data: { stripeCustomerId: "cus_init_001" },
+				});
+			});
+		});
+
+		it("should not enrich when the PI carries no customer", async () => {
+			mockStripe.paymentIntents.update.mockResolvedValue({
+				...MOCK_PAYMENT_INTENT,
+				amount: 5090,
+				customer: null,
+			});
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(true);
+			expect(mockEnrichStripeCustomer).not.toHaveBeenCalled();
+			expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
 		});
 
 		it("should use session email when no email provided in data", async () => {
@@ -491,6 +564,15 @@ describe("confirmCheckout", () => {
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
 			expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+		});
+
+		it("should enrich the customer but never backfill a User for guests", async () => {
+			await confirmCheckout(createValidData({ email: "guest@example.com" }));
+
+			await vi.waitFor(() => {
+				expect(mockEnrichStripeCustomer).toHaveBeenCalledWith("cus_init_001", expect.any(Object));
+			});
+			expect(mockPrisma.user.updateMany).not.toHaveBeenCalled();
 		});
 
 		it("should call getOrCreateCartSessionId for guest rate limiting", async () => {
@@ -993,6 +1075,45 @@ describe("confirmCheckout", () => {
 			expect(mockPrisma.order.delete).toHaveBeenCalledWith({
 				where: { id: "order-001" },
 			});
+		});
+
+		// ORD-STRIPE-004 régression : entre la création de l'order (step 8) et l'échec
+		// de `stripe.paymentIntents.update` (step 9), le webhook payment_intent.succeeded
+		// peut avoir déjà marqué la commande PAID. cleanupFailedCheckout DOIT alors
+		// abandonner (PAS de hard-delete d'une commande payée → carte débitée sans trace
+		// DB) et alerter Sentry pour réconciliation manuelle.
+		// @regression confirm-checkout-cleanup-aborts-on-paid
+		it("ORD-STRIPE-004: aborts cleanup (no delete) + alerts Sentry when order already PAID by concurrent webhook", async () => {
+			// 1er findUnique = idempotence (null) ; 2nd findUnique = dans cleanup (PAID).
+			mockPrisma.order.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({ paymentStatus: "PAID", stripePaymentIntentId: "pi_123" });
+			mockStripe.paymentIntents.update.mockRejectedValue(new Error("Stripe API error"));
+
+			await confirmCheckout(createValidData());
+
+			// La commande payée n'est PAS supprimée et aucune transaction de rollback ne tourne.
+			expect(mockPrisma.order.delete).not.toHaveBeenCalled();
+			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+			// Alerte Sentry pour intervention admin (refund Stripe / réconciliation).
+			expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
+				"cleanupFailedCheckout aborted: order already PAID by concurrent webhook",
+				"error",
+			);
+		});
+
+		// ORD-STRIPE-004 : si la commande n'est PAS payée, cleanup hard-delete normalement
+		// (contraste avec le cas PAID ci-dessus — garantit que la garde ne sur-bloque pas).
+		it("ORD-STRIPE-004: still hard-deletes the orphan order when not PAID", async () => {
+			mockPrisma.order.findUnique
+				.mockResolvedValueOnce(null)
+				.mockResolvedValueOnce({ paymentStatus: "PENDING", stripePaymentIntentId: "pi_123" });
+			mockStripe.paymentIntents.update.mockRejectedValue(new Error("Stripe API error"));
+
+			await confirmCheckout(createValidData());
+
+			expect(mockPrisma.order.delete).toHaveBeenCalledWith({ where: { id: "order-001" } });
+			expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
 		});
 	});
 

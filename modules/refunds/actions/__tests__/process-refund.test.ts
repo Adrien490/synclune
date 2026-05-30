@@ -21,7 +21,15 @@ const {
 } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
-		refund: { update: vi.fn(), updateMany: vi.fn() },
+		refund: {
+			update: vi.fn(),
+			updateMany: vi.fn(),
+			// P1-REVALIDATE : garde montant global (somme refunds actifs ≤ total).
+			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
+		},
+		// P1-REVALIDATE : re-validation quantités/montant sous le FOR UPDATE.
+		refundItem: { findMany: vi.fn().mockResolvedValue([]) },
+		orderItem: { findMany: vi.fn().mockResolvedValue([]) },
 		productSku: { update: vi.fn() },
 		order: { update: vi.fn() },
 		// ORD-STRIPE-007 : dispute.findFirst utilisé dans Step 1 pour bloquer le
@@ -193,6 +201,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 	},
 	RefundStatus: {
+		PENDING: "PENDING",
 		FAILED: "FAILED",
 		COMPLETED: "COMPLETED",
 		APPROVED: "APPROVED",
@@ -224,6 +233,12 @@ vi.mock("../../services/issue-credit-note.service", () => ({
 // EINV-CREDIT-001 : recordRefundEReporting est appelé best-effort.
 vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
 	recordRefundEReporting: vi.fn().mockResolvedValue("skipped"),
+}));
+
+// EINV-EREPORT-009 : process-refund passe par le wrapper deferrable (flag de
+// rattrapage Refund.ereportingRetryDeferred sur échec, consommé par reconcile).
+vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
+	recordRefundEReportingDeferrable: vi.fn().mockResolvedValue("skipped"),
 }));
 
 import { processRefund } from "../process-refund";

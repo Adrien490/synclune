@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -32,51 +32,41 @@ describe("GalleryCounter", () => {
 
 	describe("rendering", () => {
 		it("displays 1-indexed current value (current=0 shows '1 / 5')", () => {
-			render(<GalleryCounter current={0} total={5} />);
+			const { container } = render(<GalleryCounter current={0} total={5} />);
 
-			expect(screen.getByRole("status")).toHaveTextContent("1 / 5");
+			expect(container).toHaveTextContent("1 / 5");
 		});
 
 		it("displays correct total", () => {
-			render(<GalleryCounter current={2} total={8} />);
+			const { container } = render(<GalleryCounter current={2} total={8} />);
 
-			expect(screen.getByRole("status")).toHaveTextContent("3 / 8");
+			expect(container).toHaveTextContent("3 / 8");
 		});
 
 		it("displays last image correctly", () => {
-			render(<GalleryCounter current={4} total={5} />);
+			const { container } = render(<GalleryCounter current={4} total={5} />);
 
-			expect(screen.getByRole("status")).toHaveTextContent("5 / 5");
+			expect(container).toHaveTextContent("5 / 5");
 		});
 	});
 
 	// ============================================================================
-	// Accessibility
+	// Accessibility — badge visuel only (l'annonce SR vit dans la galerie, région unique)
 	// ============================================================================
 
 	describe("accessibility", () => {
-		it("has role='status'", () => {
-			render(<GalleryCounter current={0} total={3} />);
+		it("the badge is aria-hidden (pas de live region dupliquée)", () => {
+			const { container } = render(<GalleryCounter current={0} total={3} />);
 
-			expect(screen.getByRole("status")).toBeInTheDocument();
+			const badge = container.querySelector("[aria-hidden='true']");
+			expect(badge).not.toBeNull();
+			expect(badge).toHaveTextContent("1 / 3");
 		});
 
-		it("has aria-live='polite'", () => {
-			render(<GalleryCounter current={0} total={3} />);
+		it("does not expose a status role (single live region pattern)", () => {
+			const { queryByRole } = render(<GalleryCounter current={0} total={3} />);
 
-			expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
-		});
-
-		it("aria-label uses 1-indexed current value", () => {
-			render(<GalleryCounter current={0} total={5} />);
-
-			expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Image 1 sur 5");
-		});
-
-		it("aria-label updates when current changes", () => {
-			render(<GalleryCounter current={3} total={5} />);
-
-			expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Image 4 sur 5");
+			expect(queryByRole("status")).not.toBeInTheDocument();
 		});
 	});
 
@@ -86,9 +76,9 @@ describe("GalleryCounter", () => {
 
 	describe("responsive", () => {
 		it("wrapper is hidden on mobile (hidden sm:block)", () => {
-			render(<GalleryCounter current={0} total={3} />);
+			const { container } = render(<GalleryCounter current={0} total={3} />);
 
-			const wrapper = screen.getByRole("status").parentElement;
+			const wrapper = container.firstElementChild;
 			expect(wrapper?.className).toContain("hidden");
 			expect(wrapper?.className).toContain("sm:block");
 		});

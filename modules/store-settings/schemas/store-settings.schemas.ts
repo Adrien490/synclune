@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import {
+	ANNOUNCEMENT_VARIANTS,
+	DEFAULT_ANNOUNCEMENT_VARIANT,
+} from "@/shared/constants/announcement";
 import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
 
 import { parseParisDateTimeLocal } from "../utils/paris-datetime";
@@ -89,6 +93,7 @@ export const updateAnnouncementSchema = z
 			.optional()
 			.default(false)
 			.transform((val) => val === true || val === "true" || val === "on"),
+		variant: z.enum(ANNOUNCEMENT_VARIANTS).optional().default(DEFAULT_ANNOUNCEMENT_VARIANT),
 	})
 	.refine(
 		(data) => {

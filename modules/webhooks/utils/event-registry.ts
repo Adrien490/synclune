@@ -69,6 +69,11 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"charge.refunded": async (e) => handleChargeRefunded(getCharge(e)),
 	"refund.created": async (e) => handleRefundUpdated(getRefund(e)),
 	"refund.updated": async (e) => handleRefundUpdated(getRefund(e)),
+	// Alias legacy : `charge.refund.updated` porte un objet Refund identique à
+	// `refund.updated`. On le route vers le même handler pour ne pas dépendre de la
+	// version d'API souscrite par l'endpoint Stripe (sinon désync silencieuse des
+	// remboursements émis depuis le Dashboard — cf. audit webhooks 2026-05-30).
+	"charge.refund.updated": async (e) => handleRefundUpdated(getRefund(e)),
 	"refund.failed": async (e) => handleRefundFailed(getRefund(e)),
 
 	// === DISPUTE (chargebacks) ===

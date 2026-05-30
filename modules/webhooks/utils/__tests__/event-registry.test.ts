@@ -325,6 +325,7 @@ describe("isEventSupported", () => {
 			"charge.refunded",
 			"refund.created",
 			"refund.updated",
+			"charge.refund.updated",
 			"refund.failed",
 			"charge.dispute.created",
 			"charge.dispute.closed",

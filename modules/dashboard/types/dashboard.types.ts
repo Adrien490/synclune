@@ -103,7 +103,7 @@ export type GetReviewHealthReturn = {
 export type GetVatProgressReturn = {
 	/** Cumul du chiffre d'affaires payé depuis le 1er janvier de l'année en cours */
 	ytdRevenue: number;
-	/** Seuil de franchise applicable (37 500 € prestations / 85 000 € ventes) */
+	/** Seuil de franchise applicable — défaut 85 000 € (ventes de biens, cas Synclune ; 37 500 € prestations de services) */
 	threshold: number;
 	/** Pourcentage du seuil atteint (0–100+) */
 	progress: number;

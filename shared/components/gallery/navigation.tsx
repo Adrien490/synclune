@@ -28,6 +28,8 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
+					// WCAG 2.4.7 — visible au focus clavier (et révélé à l'arrivée du focus dans la galerie)
+					"sm:group-focus-within:opacity-100 sm:focus-visible:opacity-100",
 					transitionClass,
 				)}
 				onClick={onPrev}
@@ -45,6 +47,8 @@ export function GalleryNavigation({ onPrev, onNext }: GalleryNavigationProps) {
 					"hover:bg-primary/90",
 					scaleClass,
 					"hidden sm:flex sm:opacity-0 sm:group-hover:opacity-100",
+					// WCAG 2.4.7 — visible au focus clavier (et révélé à l'arrivée du focus dans la galerie)
+					"sm:group-focus-within:opacity-100 sm:focus-visible:opacity-100",
 					transitionClass,
 				)}
 				onClick={onNext}

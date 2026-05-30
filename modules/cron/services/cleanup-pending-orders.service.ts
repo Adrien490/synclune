@@ -14,6 +14,21 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, THRESHOLDS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
+import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+
+/**
+ * AM-5 — seuil de détection SPOF `sync-async-payments`.
+ *
+ * Toute commande `PENDING` portant un `stripePaymentIntentId` est censée être
+ * réconciliée par `sync-async-payments` (poll Stripe dès 1h, toutes les 4h).
+ * Si une telle commande dépasse ce seuil (7 jours, très au-delà de la portée du
+ * poll), c'est que `sync-async-payments` est en panne durable — et comme
+ * `cleanup-pending-orders` exclut volontairement les commandes à PI (pour ne pas
+ * racer ce cron), aucun second filet ne les ferme. On émet donc une alerte
+ * monitoring (lecture seule, zéro mutation → race-safe par construction) pour
+ * transformer ce SPOF silencieux en signal actionnable.
+ */
+const SYNC_ASYNC_SPOF_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Cancels stale PENDING orders left behind by abandoned checkouts.
@@ -171,10 +186,47 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 		}
 	}
 
+	// AM-5 — tripwire SPOF : détecte les commandes PENDING à PI anormalement
+	// vieilles, signe que `sync-async-payments` (leur unique filet) est en panne.
+	// Lecture seule : on n'agit jamais sur ces commandes ici (cela racerait
+	// sync-async). On compte et on alerte l'admin.
+	const spofCutoff = new Date(Date.now() - SYNC_ASYNC_SPOF_THRESHOLD_MS);
+	const stalePiPendingCount = await prisma.order.count({
+		where: {
+			status: OrderStatus.PENDING,
+			paymentStatus: PaymentStatus.PENDING,
+			stripePaymentIntentId: { not: null },
+			createdAt: { lt: spofCutoff },
+			...notDeleted,
+		},
+	});
+	if (stalePiPendingCount > 0) {
+		logger.error(
+			`${stalePiPendingCount} PENDING order(s) with a PaymentIntent older than 7 days — sync-async-payments likely failing`,
+			undefined,
+			{ cronJob: "cleanup-pending-orders", stalePiPendingCount },
+		);
+		await sendAdminCronFailedAlert({
+			job: "sync-async-payments (SPOF tripwire)",
+			errors: stalePiPendingCount,
+			details: {
+				issue: "stale-pending-pi-orders",
+				thresholdDays: 7,
+				count: stalePiPendingCount,
+				hint: "Vérifier que le cron sync-async-payments s'exécute (Vercel) — il est le seul filet de réconciliation des commandes PENDING à PaymentIntent.",
+			},
+		}).catch((e) =>
+			logger.error("Failed to send SPOF tripwire alert", e, {
+				cronJob: "cleanup-pending-orders",
+			}),
+		);
+	}
+
 	logger.info("Cleanup completed", {
 		cronJob: "cleanup-pending-orders",
 		processed,
 		errored,
+		stalePiPendingCount,
 	});
 
 	return {

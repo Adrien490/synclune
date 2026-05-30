@@ -64,17 +64,35 @@ export async function getOrCreateStripeCustomer(
 					{ idempotencyKey: customerIdempotencyKey },
 				);
 
+				// Persist the customer id on the User in its own try/catch: the Stripe
+				// customer already exists at this point, so a DB write failure must NOT
+				// discard `customer.id` (that would create an orphan cus_xxx and drop the
+				// customer link on the PaymentIntent for this whole checkout). We still
+				// return the id; the next checkout — or the confirm-step backfill — heals
+				// the persistence.
 				if (params.userId) {
-					await prisma.user.update({
-						where: { id: params.userId },
-						data: { stripeCustomerId: customer.id },
-					});
+					try {
+						await prisma.user.update({
+							where: { id: params.userId },
+							data: { stripeCustomerId: customer.id },
+						});
+					} catch (persistError) {
+						logger.warn("[STRIPE_CUSTOMER] Stripe customer created but failed to persist on User", {
+							userId: params.userId,
+							customerId: customer.id,
+							error: persistError instanceof Error ? persistError.message : String(persistError),
+						});
+						Sentry.captureException(persistError, {
+							tags: { scope: "stripe-customer-persist" },
+							extra: { userId: params.userId, customerId: customer.id },
+						});
+					}
 				}
 
 				return { customerId: customer.id };
 			} catch (e) {
 				if (e instanceof Stripe.errors.StripeInvalidRequestError) {
-					return { customerId: null, error: "Email invalide pour la creation du profil client." };
+					return { customerId: null, error: "Impossible de créer le profil client de paiement." };
 				}
 				// Transient error: continue without a Stripe customer
 				logger.warn(
@@ -88,4 +106,53 @@ export async function getOrCreateStripeCustomer(
 			}
 		},
 	);
+}
+
+interface EnrichStripeCustomerParams {
+	name: string;
+	address: {
+		addressLine1: string;
+		addressLine2?: string | null;
+		postalCode: string;
+		city: string;
+		country?: string | null;
+	};
+	phoneNumber?: string | null;
+}
+
+/**
+ * Enriches an existing Stripe customer with the real billing identity
+ * (name / address / phone) collected at checkout confirmation.
+ *
+ * The customer is created email-only at `initializePayment` (we don't yet have
+ * the shipping address there), then enriched here via `customers.update` —
+ * NOT a second `customers.create`, which would clash with the email-based
+ * idempotency key from init and fail for guests.
+ *
+ * Best-effort by design: the Stripe customer object is cosmetic (the legal
+ * invoice identity lives on the immutable Order snapshot, Art. 289 CGI), so an
+ * enrichment failure must never break checkout. Errors are logged, swallowed.
+ */
+export async function enrichStripeCustomer(
+	customerId: string,
+	params: EnrichStripeCustomerParams,
+): Promise<void> {
+	try {
+		await stripe.customers.update(customerId, {
+			...(params.name && { name: params.name }),
+			address: {
+				line1: params.address.addressLine1,
+				line2: params.address.addressLine2 ?? undefined,
+				postal_code: params.address.postalCode,
+				city: params.address.city,
+				country: params.address.country ?? "FR",
+			},
+			...(params.phoneNumber && { phone: params.phoneNumber }),
+		});
+	} catch (e) {
+		logger.warn("[STRIPE_CUSTOMER] Failed to enrich Stripe customer", {
+			customerId,
+			error: e instanceof Error ? e.message : String(e),
+		});
+	}
 }

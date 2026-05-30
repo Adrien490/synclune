@@ -1,5 +1,6 @@
 import { DiscountType } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { BusinessError } from "@/shared/lib/actions";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import {
@@ -88,8 +89,12 @@ export async function createOrderInTransaction(
 
 	return prisma.$transaction(
 		async (tx) => {
-			// Verify stock with row locking to prevent race conditions (double-sell, oversell)
-			for (const cartItem of cartItems) {
+			// Verify stock with row locking to prevent race conditions (double-sell, oversell).
+			// Lock SKUs in a deterministic order (sorted by skuId) so two concurrent checkouts
+			// sharing the same SKUs in a different cart order can never deadlock (40P01) on the
+			// FOR UPDATE row locks — Postgres would otherwise abort one and fail the checkout.
+			const lockOrderedItems = [...cartItems].sort((a, b) => a.skuId.localeCompare(b.skuId));
+			for (const cartItem of lockOrderedItems) {
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId,
 				);
@@ -268,7 +273,7 @@ export async function createOrderInTransaction(
 			}
 
 			// Micro-entreprise: TVA non applicable (art. 293 B du CGI)
-			// Seuil franchise TVA 2024-2025 : 37 500 € (prestations) / 85 000 € (ventes)
+			// Seuil franchise TVA 2026 : 85 000 € (ventes de biens — cas Synclune) / 37 500 € (prestations)
 			const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
 			const taxAmount = 0;
 			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
@@ -358,6 +363,6 @@ export async function createOrderInTransaction(
 
 			return { order: newOrder, appliedDiscountId, discountAmount, appliedDiscountCode };
 		},
-		{ timeout: 30000, maxWait: 30000 },
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 }

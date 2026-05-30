@@ -8,7 +8,10 @@ import {
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../services/payment-intent.service";
-import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
+import {
+	sendAdminOrderProcessingFailedAlert,
+	sendWebhookFailedAlertEmail,
+} from "@/modules/emails/services/admin-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -22,10 +25,11 @@ import {
 import {
 	OversellError,
 	CancelledOrderRaceError,
+	AmountMismatchError,
 } from "../services/checkout-order-processing.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 
 /**
@@ -70,10 +74,79 @@ export async function handlePaymentSuccess(
 				{ service: "webhook", orderId, paymentIntentId: paymentIntent.id },
 			);
 		} else {
-			logger.warn(
-				`⚠️ [WEBHOOK] payment_intent.succeeded without orderId in metadata (PI: ${paymentIntent.id})`,
+			// Audit P2.1 / ORD-STRIPE-010 — encaissement ORPHELIN. Un
+			// `payment_intent.succeeded` qui ne se résout NI via `metadata.orderId`
+			// NI via la clé unique `stripePaymentIntentId` signifie qu'aucune commande
+			// n'existe pour ce paiement (ex: PI confirmé hors-bande avec le
+			// `client_secret` exposé au create, AVANT `confirmCheckout`, ou stock chuté
+			// avant le lock de `createOrderInTransaction`). Le client a été débité mais
+			// ne recevra rien et la somme n'est rattachée à aucune commande.
+			//
+			// Remédiation AUTOMATIQUE : on tente un remboursement idempotent. C'est sûr
+			// vis-à-vis de l'e-reporting (Invariant 9) — sans commande, aucune
+			// transaction SALES n'a été enregistrée (le flow s'arrête ici, avant
+			// `recordSalesEReporting`) et `recordRefundEReporting` opère sur un orderId
+			// inexistant : ce refund est donc neutre pour la DGFiP, contrairement au
+			// remboursement d'une commande honorée. On émet quand même Sentry + alerte
+			// admin (le refund peut échouer, et un encaissement orphelin reste un
+			// incident à investiguer). On renvoie 200 (skipped) : un retry Stripe ne
+			// ferait pas apparaître la commande.
+			logger.error(
+				`⚠️ [WEBHOOK] ORPHAN payment_intent.succeeded — no order resolvable (PI: ${paymentIntent.id})`,
+				undefined,
 				{ service: "webhook" },
 			);
+
+			let orphanRefundOutcome: string;
+			if (paymentIntent.amount_received > 0) {
+				try {
+					const { stripe } = await import("@/shared/lib/stripe");
+					const refund = await stripe.refunds.create(
+						{
+							payment_intent: paymentIntent.id,
+							reason: "requested_by_customer",
+							metadata: { reason: "orphan_charge_no_order" },
+						},
+						{ idempotencyKey: `orphan-refund-${paymentIntent.id}` },
+					);
+					orphanRefundOutcome = `Remboursement automatique initié (${refund.id}). À vérifier dans Stripe.`;
+					logger.info(
+						`💰 [WEBHOOK] Orphan charge auto-refunded (refund ${refund.id}, PI ${paymentIntent.id})`,
+						{ service: "webhook" },
+					);
+				} catch (refundError) {
+					orphanRefundOutcome = `ÉCHEC du remboursement automatique — rembourser MANUELLEMENT ce PaymentIntent dans Stripe.`;
+					logger.error("Failed to auto-refund orphan charge", refundError, {
+						service: "webhook",
+						paymentIntentId: paymentIntent.id,
+					});
+				}
+			} else {
+				orphanRefundOutcome = `Aucun montant encaissé (amount_received = 0) — rien à rembourser.`;
+			}
+
+			captureWebhookError(
+				new Error(
+					`Orphan payment captured: payment_intent.succeeded with no resolvable order (PI ${paymentIntent.id}). ${orphanRefundOutcome}`,
+				),
+				{
+					handler: "handlePaymentSuccess",
+					eventType: "payment_intent.succeeded",
+					paymentIntentId: paymentIntent.id,
+				},
+			);
+			try {
+				await sendWebhookFailedAlertEmail({
+					eventId: paymentIntent.id,
+					eventType: "payment_intent.succeeded (orphan charge)",
+					attempts: 1,
+					error: `Encaissement de ${(paymentIntent.amount_received / 100).toFixed(2)}€ sans commande rattachée (ni metadata.orderId ni stripePaymentIntentId). ${orphanRefundOutcome}`,
+				});
+			} catch (alertError) {
+				logger.error("Failed to send orphan-charge admin alert", alertError, {
+					service: "webhook",
+				});
+			}
 			return { success: true, skipped: true, reason: "no_order_id" };
 		}
 	}
@@ -93,6 +166,21 @@ export async function handlePaymentSuccess(
 		// refund manuel + ajustement e-reporting. Best-effort, ne bloque pas le flow.
 		if (paymentIntent.amount_received > order.total) {
 			const delta = paymentIntent.amount_received - order.total;
+			// AM-2 : persiste le trop-perçu (boucle de réconciliation fermée), pour que
+			// l'incident ne dépende plus d'un email volatil. Le guard
+			// `overbilledAmountCents: null` rend l'écriture idempotente sur les retries
+			// webhook. Le cron alert-overbilled-orders ré-alerte tant que non résolu et
+			// auto-résout dès qu'un refund COMPLETED couvre le delta.
+			try {
+				await prisma.order.updateMany({
+					where: { id: order.id, overbilledAmountCents: null },
+					data: { overbilledAmountCents: delta },
+				});
+			} catch (persistError) {
+				logger.error("Failed to persist overbilling delta", persistError, {
+					service: "webhook",
+				});
+			}
 			logger.error(
 				`⚠️ [WEBHOOK] Overbilling on order ${order.orderNumber}: captured ${paymentIntent.amount_received} > total ${order.total} (delta ${delta})`,
 				undefined,
@@ -117,8 +205,11 @@ export async function handlePaymentSuccess(
 		await ensureInvoiceNumberPersisted(orderId);
 		// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
 		// feature-flagged via INVOICE_ENABLE_EREPORTING — fail-closed quand
-		// la transmission DGFiP n'est pas encore configurée.
-		await recordSalesEReporting(orderId);
+		// la transmission DGFiP n'est pas encore configurée. EINV-EREPORT-009 :
+		// variante "deferrable" — si l'enregistrement échoue ("error"), pose le
+		// flag Order.ereportingRetryDeferred pour rattrapage par reconcile-invoices
+		// (sinon la vente n'est jamais reportée, l'event webhook étant COMPLETED).
+		await recordSalesEReportingDeferrable(orderId);
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 		return { success: true, tasks };
 	} catch (error) {
@@ -129,6 +220,14 @@ export async function handlePaymentSuccess(
 		// cf. drift usageCount) et on renvoie 200 pour stopper les retries.
 		if (error instanceof OversellError) {
 			return handleOversell(orderId, paymentIntent);
+		}
+		// P2-1 (audit 2026-05-30) : sous-facturation détectée au webhook (Stripe a
+		// encaissé moins que `order.total`). Comme l'oversell, un retry ne corrigera
+		// rien — on rembourse le montant encaissé, marque FAILED, alerte, et renvoie
+		// 200. Sans ce traitement, le throw générique provoquait un retry-Stripe
+		// infini laissant un client débité sans commande PAID ni refund automatique.
+		if (error instanceof AmountMismatchError) {
+			return handleAmountMismatch(orderId, paymentIntent);
 		}
 		// ORD-STRIPE-009 : paiement tardif sur commande déjà annulée (admin/cron).
 		// `detectCancelledOrderRace` a déjà initié l'auto-refund idempotent avant de
@@ -238,6 +337,72 @@ async function handleOversell(
 	}
 
 	// 4. Invalidation cache (la commande passe CANCELLED côté espace client).
+	const cacheTags = [...getOrderInvalidationTags(order?.userId ?? undefined, orderId)];
+	return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }] };
+}
+
+/**
+ * P2-1 (audit 2026-05-30) — sous-facturation détectée au webhook.
+ *
+ * `processOrderAtomically` a trouvé `amount_received < order.total` (AVANT tout
+ * décrément stock / passage PAID). Le client a été débité d'un montant inférieur
+ * au total commande. Comme l'oversell, un retry Stripe ne corrigera rien. On :
+ *   1. marque la commande FAILED (idempotent) — libère aussi le code promo attaché ;
+ *   2. rembourse automatiquement le montant encaissé (idempotent via clé
+ *      `auto-refund-${paymentIntentId}`) ;
+ *   3. alerte l'admin (incident métier — divergence PI/order à investiguer) ;
+ *   4. renvoie 200 pour stopper les retries Stripe.
+ *
+ * Sûreté e-reporting (Invariant 9) : le throw amont précède
+ * `recordSalesEReportingDeferrable` → aucune transaction SALES n'a été
+ * enregistrée, le refund est donc neutre pour la DGFiP (comme l'oversell).
+ */
+async function handleAmountMismatch(
+	orderId: string,
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
+	logger.error(
+		`⚠️ [WEBHOOK] Underbilling detected for order ${orderId} — auto-refunding (captured ${paymentIntent.amount_received})`,
+		undefined,
+		{ service: "webhook", paymentIntentId: paymentIntent.id },
+	);
+
+	const order = await prisma.order.findFirst({
+		where: { id: orderId, ...notDeleted },
+		select: { orderNumber: true, customerEmail: true, total: true, userId: true },
+	});
+
+	// 1. Marquer FAILED (libère le discount). Idempotent.
+	await markOrderAsFailed(orderId, paymentIntent.id, {
+		code: "amount_mismatch",
+		declineCode: null,
+		message: "Montant encaissé inférieur au total commande — remboursement automatique",
+	});
+
+	// 2. Remboursement automatique (idempotent).
+	const refundResult = await initiateAutomaticRefund(
+		paymentIntent.id,
+		orderId,
+		"Sous-facturation — montant encaissé inférieur au total commande",
+	);
+	if (!refundResult.success && refundResult.error) {
+		await sendRefundFailureAlert(orderId, paymentIntent.id, "other", refundResult.error.message);
+	}
+
+	// 3. Alerte admin (visibilité même si le refund a réussi : incident métier).
+	if (order) {
+		await sendAdminOrderProcessingFailedAlert({
+			orderNumber: order.orderNumber,
+			customerEmail: order.customerEmail,
+			total: order.total,
+			errorMessage: `Sous-facturation : Stripe a encaissé ${(paymentIntent.amount_received / 100).toFixed(2)}€ pour une commande à ${(order.total / 100).toFixed(2)}€. Commande marquée FAILED. Remboursement automatique ${
+				refundResult.success ? "initié" : "ÉCHOUÉ — intervention manuelle requise"
+			}.`,
+			paymentIntentId: paymentIntent.id,
+		});
+	}
+
+	// 4. Invalidation cache (la commande passe FAILED côté espace client).
 	const cacheTags = [...getOrderInvalidationTags(order?.userId ?? undefined, orderId)];
 	return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }] };
 }

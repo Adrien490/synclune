@@ -356,15 +356,15 @@ await prisma.sku.update({
 
 ## Conformité fiscale & légale FR
 
-| Sujet                           | Règle                                                                                                       |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| TVA franchise art. 293 B        | Seuil 37 500 € (env `VAT_FRANCHISE_THRESHOLD_EUR`). Bandeau warning ≥ 80%, critical ≥ 100% (cf. dashboard). |
-| URSSAF échéances trimestrielles | 30/04, 31/07, 31/10, 31/01 N+1 (rollover). Bandeau J-15.                                                    |
-| Numérotation factures           | Séquentielle, immuable, sans trou (loi anti-fraude TVA). Format `FAC-YYYY-NNNNNN`. Lock atomique counter.   |
-| Droit rétractation              | 14 jours (conso e-commerce). Refunds tracked dans audit log.                                                |
-| RGPD                            | Soft delete 10 ans (factures), grace period 30j (account deletion), export complet, consent tracking.       |
-| PSD2 / SCA                      | 3DS2 obligatoire > 30€ Stripe (handler `requires_action`).                                                  |
-| Cookies                         | Banner consent before non-essential. Cookie consent store Zustand.                                          |
+| Sujet                           | Règle                                                                                                                                                                  |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TVA franchise art. 293 B        | Seuil 85 000 € ventes de biens (env `VAT_FRANCHISE_THRESHOLD_EUR`, défaut ; 37 500 € prestations de services). Bandeau warning ≥ 80%, critical ≥ 100% (cf. dashboard). |
+| URSSAF échéances trimestrielles | 30/04, 31/07, 31/10, 31/01 N+1 (rollover). Bandeau J-15.                                                                                                               |
+| Numérotation factures           | Séquentielle, immuable, sans trou (loi anti-fraude TVA). Format `FAC-YYYY-NNNNNN`. Lock atomique counter.                                                              |
+| Droit rétractation              | 14 jours (conso e-commerce). Refunds tracked dans audit log.                                                                                                           |
+| RGPD                            | Soft delete 10 ans (factures), grace period 30j (account deletion), export complet, consent tracking.                                                                  |
+| PSD2 / SCA                      | 3DS2 obligatoire > 30€ Stripe (handler `requires_action`).                                                                                                             |
+| Cookies                         | Banner consent before non-essential. Cookie consent store Zustand.                                                                                                     |
 
 ## Memory feedbacks (règles owner)
 

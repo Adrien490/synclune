@@ -90,7 +90,10 @@ const nextConfig: NextConfig = {
 					},
 					{
 						key: "Permissions-Policy",
-						value: "camera=(), microphone=(), geolocation=()",
+						// `payment` délégué à l'origine Stripe : sans cette délégation, la Payment Request API
+						// (Apple Pay / Google Pay via <ExpressCheckoutElement>) est bloquée dans l'iframe cross-origin Stripe.
+						value:
+							'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com")',
 					},
 					{
 						key: "Content-Security-Policy",
@@ -100,8 +103,8 @@ const nextConfig: NextConfig = {
 							"style-src 'self' 'unsafe-inline'",
 							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:",
 							"font-src 'self'",
-							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
-							"frame-src https://*.stripe.com",
+							"connect-src 'self' https://*.stripe.com https://m.stripe.network https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+							"frame-src https://*.stripe.com https://m.stripe.network",
 							"media-src 'self' https://*.ufs.sh https://utfs.io",
 							"worker-src 'self' blob:",
 							"object-src 'none'",

@@ -238,6 +238,14 @@ export function buildRelatedFieldsSearchConditions(words: string[]): Prisma.Prod
 export function buildProductFilterConditions(filters: ProductFilters): Prisma.ProductWhereInput[] {
 	const conditions: Prisma.ProductWhereInput[] = [];
 
+	// Contraintes au niveau variante (couleur + matériau + prix) accumulées dans
+	// UN SEUL `skus: { some }` : une même variante active doit satisfaire TOUS ces
+	// critères. Sinon (conditions `some` séparées) un produit matcherait via des
+	// SKU différents — ex: variante or à 150€ + variante argent à 30€ matcherait
+	// `color=or&priceMax=50` alors qu'aucune variante or n'est ≤ 50€ (audit filtres S1).
+	const skuSome: Prisma.ProductSkuWhereInput = { isActive: true };
+	let hasSkuConstraint = false;
+
 	if (filters.status !== undefined) {
 		const statuses = (Array.isArray(filters.status) ? filters.status : [filters.status]).filter(
 			Boolean,
@@ -260,26 +268,15 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 
 	if (filters.color !== undefined) {
 		const colors = (Array.isArray(filters.color) ? filters.color : [filters.color]).filter(Boolean);
-		// Filtre M2M tolérant : un produit match si au moins un de ses SKU actifs
-		// contient au moins une des couleurs sélectionnées.
+		// Multi-valeurs tolérant au sein d'UNE variante : la variante doit porter
+		// au moins une des couleurs sélectionnées (la contrainte « même variante »
+		// vient de la fusion dans skuSome — cf. note en tête de fonction).
 		if (colors.length === 1) {
-			conditions.push({
-				skus: {
-					some: {
-						isActive: true,
-						colors: { some: { color: { slug: colors[0] } } },
-					},
-				},
-			});
+			skuSome.colors = { some: { color: { slug: colors[0] } } };
+			hasSkuConstraint = true;
 		} else if (colors.length > 1) {
-			conditions.push({
-				skus: {
-					some: {
-						isActive: true,
-						colors: { some: { color: { slug: { in: colors } } } },
-					},
-				},
-			});
+			skuSome.colors = { some: { color: { slug: { in: colors } } } };
+			hasSkuConstraint = true;
 		}
 	}
 
@@ -288,23 +285,11 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 			Array.isArray(filters.material) ? filters.material : [filters.material]
 		).filter(Boolean);
 		if (materials.length === 1) {
-			conditions.push({
-				skus: {
-					some: {
-						isActive: true,
-						materials: { some: { material: { slug: materials[0] } } },
-					},
-				},
-			});
+			skuSome.materials = { some: { material: { slug: materials[0] } } };
+			hasSkuConstraint = true;
 		} else if (materials.length > 1) {
-			conditions.push({
-				skus: {
-					some: {
-						isActive: true,
-						materials: { some: { material: { slug: { in: materials } } } },
-					},
-				},
-			});
+			skuSome.materials = { some: { material: { slug: { in: materials } } } };
+			hasSkuConstraint = true;
 		}
 	}
 
@@ -343,36 +328,20 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		conditions.push({ slug: { in: filters.slugs } });
 	}
 
-	// Validation bounds: price must be >= 0
+	// Validation bounds: price must be >= 0. Fusionné dans skuSome pour que la
+	// variante dans le budget soit la MÊME que celle qui porte la couleur/matériau
+	// filtré(e) (audit filtres S1).
 	const validPriceMin =
 		typeof filters.priceMin === "number" && filters.priceMin >= 0 ? filters.priceMin : undefined;
 	const validPriceMax =
 		typeof filters.priceMax === "number" && filters.priceMax >= 0 ? filters.priceMax : undefined;
 
-	if (validPriceMin !== undefined && validPriceMax !== undefined) {
-		conditions.push({
-			skus: {
-				some: {
-					isActive: true,
-					priceInclTax: { gte: validPriceMin, lte: validPriceMax },
-				},
-			},
-		});
-	} else {
-		if (validPriceMin !== undefined) {
-			conditions.push({
-				skus: {
-					some: { isActive: true, priceInclTax: { gte: validPriceMin } },
-				},
-			});
-		}
-		if (validPriceMax !== undefined) {
-			conditions.push({
-				skus: {
-					some: { isActive: true, priceInclTax: { lte: validPriceMax } },
-				},
-			});
-		}
+	if (validPriceMin !== undefined || validPriceMax !== undefined) {
+		skuSome.priceInclTax = {
+			...(validPriceMin !== undefined ? { gte: validPriceMin } : {}),
+			...(validPriceMax !== undefined ? { lte: validPriceMax } : {}),
+		};
+		hasSkuConstraint = true;
 	}
 
 	if (filters.createdAfter instanceof Date) {
@@ -446,6 +415,11 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 				averageRating: { gte: filters.ratingMin },
 			},
 		});
+	}
+
+	// Pousse l'unique contrainte variante (couleur + matériau + prix fusionnés).
+	if (hasSkuConstraint) {
+		conditions.push({ skus: { some: skuSome } });
 	}
 
 	return conditions;

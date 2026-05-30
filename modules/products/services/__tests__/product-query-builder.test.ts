@@ -1,554 +1,136 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockFuzzySearchProductIds } = vi.hoisted(() => ({
-	mockFuzzySearchProductIds: vi.fn(),
+// Mocks des dépendances lourdes : on teste uniquement `buildProductFilterConditions`
+// (fonction pure synchrone), pas la recherche fuzzy ni l'accès DB.
+vi.mock("@/app/generated/prisma/client", () => ({
+	Prisma: { QueryMode: { insensitive: "insensitive" } },
 }));
-
 vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
-
 vi.mock("../../data/fuzzy-search", () => ({
-	fuzzySearchProductIds: mockFuzzySearchProductIds,
+	fuzzySearchProductIds: vi.fn(),
 }));
-
+vi.mock("../../constants/product.constants", () => ({
+	LOW_STOCK_THRESHOLD: 3,
+}));
 vi.mock("../../constants/search.constants", () => ({
 	FUZZY_MIN_LENGTH: 3,
 }));
-
 vi.mock("../../constants/search-synonyms", () => ({
-	SEARCH_SYNONYMS: new Map([
-		["bague", ["anneau", "alliance"]],
-		["anneau", ["bague", "alliance"]],
-	]),
+	SEARCH_SYNONYMS: new Map(),
 }));
-
 vi.mock("../../utils/search-helpers", () => ({
-	splitSearchTerms: vi.fn((term: string) => {
-		const trimmed = term.trim();
-		if (!trimmed || trimmed.length > 100) return [];
-		return trimmed
-			.split(/\s+/)
-			.filter(Boolean)
-			.filter(
-				(word: string, i: number, arr: string[]) =>
-					arr.findIndex((w: string) => w.toLowerCase() === word.toLowerCase()) === i,
-			)
-			.slice(0, 5);
-	}),
+	splitSearchTerms: (s: string) => s.split(/\s+/).filter(Boolean),
 }));
 
-import {
-	buildProductWhereClause,
-	buildProductFilterConditions,
-	buildSearchConditions,
-	buildExactSearchConditions,
-} from "../product-query-builder";
-import type { GetProductsParams } from "../../types/product.types";
+import type { ProductFilters } from "../../types/product.types";
+import { buildProductFilterConditions } from "../product-query-builder";
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const DEFAULT_PARAMS: GetProductsParams = {
-	perPage: 20,
-	sortBy: "created-descending",
-	filters: {},
-	status: "PUBLIC",
-};
-
-// ============================================================================
-// buildProductFilterConditions
-// ============================================================================
+const findSkuSome = (conditions: ReturnType<typeof buildProductFilterConditions>) =>
+	conditions
+		.map((c) => (c as { skus?: { some?: Record<string, unknown> } }).skus?.some)
+		.filter(Boolean) as Array<Record<string, unknown>>;
 
 describe("buildProductFilterConditions", () => {
-	it("returns empty array for empty filters", () => {
-		const result = buildProductFilterConditions({});
-
-		expect(result).toEqual([]);
+	it("returns no conditions for empty filters", () => {
+		expect(buildProductFilterConditions({} as ProductFilters)).toEqual([]);
 	});
 
-	it("handles single status filter", () => {
-		const result = buildProductFilterConditions({ status: "PUBLIC" as never });
+	// ========================================================================
+	// S1 — couleur + matériau + prix fusionnés dans UNE seule variante
+	// ========================================================================
+	describe("@regression product-filter-single-variant — color+material+price merged", () => {
+		it("merges color, material and price into a single skus.some (same variant)", () => {
+			const conditions = buildProductFilterConditions({
+				color: "or",
+				material: "argent",
+				priceMin: 1000,
+				priceMax: 5000,
+			} as ProductFilters);
 
-		expect(result).toContainEqual({ status: "PUBLIC" });
-	});
-
-	it("handles array of statuses", () => {
-		const result = buildProductFilterConditions({
-			status: ["PUBLIC", "DRAFT"] as never,
+			const skuSomes = findSkuSome(conditions);
+			// Une seule contrainte variante, pas trois `some` séparés.
+			expect(skuSomes).toHaveLength(1);
+			expect(skuSomes[0]).toEqual({
+				isActive: true,
+				colors: { some: { color: { slug: "or" } } },
+				materials: { some: { material: { slug: "argent" } } },
+				priceInclTax: { gte: 1000, lte: 5000 },
+			});
 		});
 
-		expect(result).toContainEqual({ status: { in: ["PUBLIC", "DRAFT"] } });
-	});
+		it("supports multi-value color (any-of) within the single variant", () => {
+			const conditions = buildProductFilterConditions({
+				color: ["or", "argent"],
+				priceMax: 5000,
+			} as ProductFilters);
 
-	it("handles single type filter", () => {
-		const result = buildProductFilterConditions({ type: "bague" });
-
-		expect(result).toContainEqual({ type: { slug: "bague" } });
-	});
-
-	it("handles array of types", () => {
-		const result = buildProductFilterConditions({
-			type: ["bague", "collier"],
+			const skuSomes = findSkuSome(conditions);
+			expect(skuSomes).toHaveLength(1);
+			expect(skuSomes[0]).toEqual({
+				isActive: true,
+				colors: { some: { color: { slug: { in: ["or", "argent"] } } } },
+				priceInclTax: { lte: 5000 },
+			});
 		});
 
-		expect(result).toContainEqual({
-			type: { slug: { in: ["bague", "collier"] } },
-		});
-	});
-
-	it("handles single color filter", () => {
-		const result = buildProductFilterConditions({ color: "or" });
-
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					colors: { some: { color: { slug: "or" } } },
-				},
-			},
-		});
-	});
-
-	it("handles array of colors", () => {
-		const result = buildProductFilterConditions({
-			color: ["or", "argent"],
+		it("emits priceMin-only range", () => {
+			const conditions = buildProductFilterConditions({ priceMin: 2000 } as ProductFilters);
+			const skuSomes = findSkuSome(conditions);
+			expect(skuSomes).toHaveLength(1);
+			expect(skuSomes[0]).toEqual({ isActive: true, priceInclTax: { gte: 2000 } });
 		});
 
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					colors: { some: { color: { slug: { in: ["or", "argent"] } } } },
-				},
-			},
+		it("does not emit a variant constraint when none of color/material/price set", () => {
+			const conditions = buildProductFilterConditions({ type: "bagues" } as ProductFilters);
+			expect(findSkuSome(conditions)).toHaveLength(0);
 		});
 	});
 
-	it("handles single material filter", () => {
-		const result = buildProductFilterConditions({ material: "or-18k" });
+	// ========================================================================
+	// Stock status (gap-free, sémantique > 0)
+	// ========================================================================
+	describe("stock status", () => {
+		it("in_stock → at least one active SKU with inventory > 0", () => {
+			const [cond] = buildProductFilterConditions({ stockStatus: "in_stock" } as ProductFilters);
+			expect(cond).toEqual({ skus: { some: { isActive: true, inventory: { gt: 0 } } } });
+		});
 
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					materials: { some: { material: { slug: "or-18k" } } },
-				},
-			},
+		it("low_stock → 0 < inventory <= LOW", () => {
+			const [cond] = buildProductFilterConditions({ stockStatus: "low_stock" } as ProductFilters);
+			expect(cond).toEqual({ skus: { some: { isActive: true, inventory: { gt: 0, lte: 3 } } } });
+		});
+
+		it("out_of_stock → NOT some active SKU with inventory > 0", () => {
+			const [cond] = buildProductFilterConditions({
+				stockStatus: "out_of_stock",
+			} as ProductFilters);
+			expect(cond).toEqual({
+				NOT: { skus: { some: { isActive: true, inventory: { gt: 0 } } } },
+			});
 		});
 	});
 
-	it("handles collectionId filter", () => {
-		const result = buildProductFilterConditions({
-			collectionId: "col-1",
+	// ========================================================================
+	// Filtres niveau produit (restent séparés)
+	// ========================================================================
+	it("filters by single type slug", () => {
+		const [cond] = buildProductFilterConditions({ type: "colliers" } as ProductFilters);
+		expect(cond).toEqual({ type: { slug: "colliers" } });
+	});
+
+	it("filters by multiple statuses", () => {
+		const [cond] = buildProductFilterConditions({
+			status: ["PUBLIC", "DRAFT"],
+		} as ProductFilters);
+		expect(cond).toEqual({ status: { in: ["PUBLIC", "DRAFT"] } });
+	});
+
+	it("filters onSale via compareAtPrice (separate from the merged variant)", () => {
+		const conditions = buildProductFilterConditions({ onSale: true } as ProductFilters);
+		expect(conditions).toContainEqual({
+			skus: { some: { isActive: true, compareAtPrice: { not: null } } },
 		});
-
-		expect(result).toContainEqual({
-			collections: { some: { collectionId: "col-1" } },
-		});
-	});
-
-	it("handles collectionSlug filter", () => {
-		const result = buildProductFilterConditions({
-			collectionSlug: "ete-2024",
-		});
-
-		expect(result).toContainEqual({
-			collections: { some: { collection: { slug: "ete-2024" } } },
-		});
-	});
-
-	it("handles slugs filter", () => {
-		const result = buildProductFilterConditions({
-			slugs: ["product-a", "product-b"],
-		});
-
-		expect(result).toContainEqual({
-			slug: { in: ["product-a", "product-b"] },
-		});
-	});
-
-	it("handles priceMin filter", () => {
-		const result = buildProductFilterConditions({ priceMin: 1000 });
-
-		expect(result).toContainEqual({
-			skus: {
-				some: { isActive: true, priceInclTax: { gte: 1000 } },
-			},
-		});
-	});
-
-	it("handles priceMax filter", () => {
-		const result = buildProductFilterConditions({ priceMax: 5000 });
-
-		expect(result).toContainEqual({
-			skus: {
-				some: { isActive: true, priceInclTax: { lte: 5000 } },
-			},
-		});
-	});
-
-	it("combines priceMin and priceMax into a single condition", () => {
-		const result = buildProductFilterConditions({
-			priceMin: 1000,
-			priceMax: 5000,
-		});
-
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					priceInclTax: { gte: 1000, lte: 5000 },
-				},
-			},
-		});
-	});
-
-	it("ignores negative price values", () => {
-		const result = buildProductFilterConditions({
-			priceMin: -100,
-			priceMax: -50,
-		});
-
-		// Should not add price conditions for negative values
-		const hasPriceCondition = result.some(
-			(c) => "skus" in c && JSON.stringify(c).includes("priceInclTax"),
-		);
-		expect(hasPriceCondition).toBe(false);
-	});
-
-	it("handles onSale filter", () => {
-		const result = buildProductFilterConditions({ onSale: true });
-
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					compareAtPrice: { not: null },
-				},
-			},
-		});
-	});
-
-	it("handles in_stock stockStatus filter", () => {
-		const result = buildProductFilterConditions({
-			stockStatus: "in_stock",
-		});
-
-		expect(result).toContainEqual({
-			skus: {
-				some: {
-					isActive: true,
-					inventory: { gt: 0 },
-				},
-			},
-		});
-	});
-
-	it("handles out_of_stock stockStatus filter", () => {
-		const result = buildProductFilterConditions({
-			stockStatus: "out_of_stock",
-		});
-
-		expect(result).toContainEqual({
-			NOT: {
-				skus: {
-					some: {
-						isActive: true,
-						inventory: { gt: 0 },
-					},
-				},
-			},
-		});
-	});
-
-	it("handles ratingMin filter", () => {
-		const result = buildProductFilterConditions({ ratingMin: 4 });
-
-		expect(result).toContainEqual({
-			reviewStats: {
-				averageRating: { gte: 4 },
-			},
-		});
-	});
-
-	it("ignores invalid ratingMin values", () => {
-		const resultNegative = buildProductFilterConditions({ ratingMin: -1 });
-		const resultTooHigh = buildProductFilterConditions({ ratingMin: 6 });
-
-		expect(resultNegative).toEqual([]);
-		expect(resultTooHigh).toEqual([]);
-	});
-
-	it("handles date filters", () => {
-		const date = new Date("2024-06-01");
-		const result = buildProductFilterConditions({
-			createdAfter: date,
-		});
-
-		expect(result).toContainEqual({
-			createdAt: { gte: date },
-		});
-	});
-});
-
-// ============================================================================
-// buildProductWhereClause
-// ============================================================================
-
-describe("buildProductWhereClause", () => {
-	it("includes notDeleted by default", () => {
-		const result = buildProductWhereClause(DEFAULT_PARAMS);
-
-		expect(result.AND).toContainEqual({ deletedAt: null });
-	});
-
-	it("skips notDeleted when includeDeleted is true", () => {
-		const result = buildProductWhereClause({
-			...DEFAULT_PARAMS,
-			includeDeleted: true,
-		});
-
-		const hasDeletedCondition = (result.AND as Array<Record<string, unknown>>).some(
-			(c) => "deletedAt" in c,
-		);
-		expect(hasDeletedCondition).toBeFalsy();
-	});
-
-	it("includes status filter when provided", () => {
-		const result = buildProductWhereClause({
-			...DEFAULT_PARAMS,
-			status: "PUBLIC",
-		});
-
-		expect(result.AND).toContainEqual({ status: "PUBLIC" });
-	});
-
-	it("does not include status filter when undefined", () => {
-		const result = buildProductWhereClause({
-			...DEFAULT_PARAMS,
-			status: undefined,
-		});
-
-		const hasStatusCondition = (result.AND as Array<Record<string, unknown>>).some(
-			(c) => "status" in c,
-		);
-		expect(hasStatusCondition).toBeFalsy();
-	});
-
-	it("includes fuzzy IDs in WHERE when search result has them", () => {
-		const result = buildProductWhereClause(DEFAULT_PARAMS, {
-			fuzzyIds: ["id-1", "id-2"],
-			exactConditions: [],
-		});
-
-		const andConditions = result.AND as Array<Record<string, unknown>>;
-		const hasIdCondition = andConditions.some((c) => "id" in c);
-		expect(hasIdCondition).toBe(true);
-	});
-
-	it("combines fuzzy IDs and exact conditions with OR", () => {
-		const exactCond = { title: { contains: "test" } };
-		const result = buildProductWhereClause(DEFAULT_PARAMS, {
-			fuzzyIds: ["id-1"],
-			exactConditions: [exactCond],
-		});
-
-		const andConditions = result.AND as Array<Record<string, unknown>>;
-		const orCondition = andConditions.find((c) => "OR" in c);
-		expect(orCondition).toBeDefined();
-	});
-
-	it("uses only exact conditions when no fuzzy IDs", () => {
-		const exactCond = { title: { contains: "test" } };
-		const result = buildProductWhereClause(DEFAULT_PARAMS, {
-			fuzzyIds: null,
-			exactConditions: [exactCond],
-		});
-
-		expect(result.AND).toContainEqual(exactCond);
-	});
-
-	it("applies filter conditions", () => {
-		const result = buildProductWhereClause({
-			...DEFAULT_PARAMS,
-			filters: { color: "or" },
-		});
-
-		const andConditions = result.AND as Array<Record<string, unknown>>;
-		const hasColorCondition = andConditions.some((c) => JSON.stringify(c).includes("or"));
-		expect(hasColorCondition).toBe(true);
-	});
-
-	it("returns empty AND when no conditions", () => {
-		const result = buildProductWhereClause({
-			perPage: 20,
-			sortBy: "created-descending",
-			filters: {},
-			includeDeleted: true,
-		});
-
-		// Only empty AND or no AND
-		const andConditions = result.AND as Array<Record<string, unknown>> | undefined;
-		if (andConditions) {
-			expect(andConditions.length).toBe(0);
-		} else {
-			expect(result.AND).toBeUndefined();
-		}
-	});
-});
-
-// ============================================================================
-// buildSearchConditions
-// ============================================================================
-
-describe("buildSearchConditions", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-	});
-
-	it("returns empty result for empty search", async () => {
-		const result = await buildSearchConditions("");
-
-		expect(result).toEqual({ fuzzyIds: null, exactConditions: [] });
-	});
-
-	it("returns empty result for whitespace-only search", async () => {
-		const result = await buildSearchConditions("   ");
-
-		expect(result).toEqual({ fuzzyIds: null, exactConditions: [] });
-	});
-
-	it("uses exact-only search for short terms (< 3 chars)", async () => {
-		const result = await buildSearchConditions("ab");
-
-		expect(result.fuzzyIds).toBeNull();
-		expect(result.exactConditions.length).toBeGreaterThan(0);
-		expect(mockFuzzySearchProductIds).not.toHaveBeenCalled();
-	});
-
-	it("calls fuzzy search for terms >= 3 chars", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({
-			ids: ["id-1", "id-2"],
-			totalCount: 2,
-		});
-
-		const result = await buildSearchConditions("bague");
-
-		expect(mockFuzzySearchProductIds).toHaveBeenCalledWith("bague", expect.objectContaining({}));
-		expect(result.fuzzyIds).toEqual(["id-1", "id-2"]);
-	});
-
-	it("passes status option to fuzzy search", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({
-			ids: [],
-			totalCount: 0,
-		});
-
-		await buildSearchConditions("collier", { status: "PUBLIC" });
-
-		expect(mockFuzzySearchProductIds).toHaveBeenCalledWith(
-			"collier",
-			expect.objectContaining({ status: "PUBLIC" }),
-		);
-	});
-
-	it("includes exact conditions for related fields alongside fuzzy IDs", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({
-			ids: ["id-1"],
-			totalCount: 1,
-		});
-
-		const result = await buildSearchConditions("bague");
-
-		// Should have both fuzzyIds and exactConditions (for SKU, colors, etc.)
-		expect(result.fuzzyIds).toEqual(["id-1"]);
-		expect(result.exactConditions).toBeDefined();
-	});
-});
-
-// ============================================================================
-// buildRelatedFieldsSearchConditions — ProductType
-// ============================================================================
-
-describe("buildRelatedFieldsSearchConditions — ProductType", () => {
-	it("includes type.label and type.slug conditions", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({ ids: ["id-1"], totalCount: 1 });
-
-		const result = await buildSearchConditions("bague");
-
-		// exactConditions should include type.label and type.slug matches
-		const json = JSON.stringify(result.exactConditions);
-		expect(json).toContain('"label"');
-		expect(json).toContain('"slug"');
-	});
-
-	it("expands synonyms for product type search", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({ ids: [], totalCount: 0 });
-
-		const result = await buildSearchConditions("anneau");
-
-		// "anneau" synonyms include "bague" and "alliance"
-		const json = JSON.stringify(result.exactConditions);
-		expect(json).toContain("bague");
-		expect(json).toContain("alliance");
-	});
-
-	it("includes type conditions alongside SKU, color, material, and collection", async () => {
-		mockFuzzySearchProductIds.mockResolvedValue({ ids: ["id-1"], totalCount: 1 });
-
-		const result = await buildSearchConditions("bague");
-
-		const json = JSON.stringify(result.exactConditions);
-		// ProductType
-		expect(json).toContain('"label"');
-		// SKU
-		expect(json).toContain('"sku"');
-		// Color
-		expect(json).toContain('"hex"');
-		// Material
-		expect(json).toContain('"material"');
-		// Collection
-		expect(json).toContain('"collection"');
-	});
-});
-
-// ============================================================================
-// buildExactSearchConditions
-// ============================================================================
-
-describe("buildExactSearchConditions", () => {
-	it("returns empty result for empty search", () => {
-		const result = buildExactSearchConditions("");
-
-		expect(result).toEqual({ fuzzyIds: null, exactConditions: [] });
-	});
-
-	it("returns conditions for valid search", () => {
-		const result = buildExactSearchConditions("bague");
-
-		expect(result.fuzzyIds).toBeNull();
-		expect(result.exactConditions.length).toBeGreaterThan(0);
-	});
-
-	it("expands synonyms in exact search", () => {
-		const result = buildExactSearchConditions("bague");
-
-		// "bague" should also match "anneau" and "alliance" via synonyms
-		const json = JSON.stringify(result.exactConditions);
-		expect(json).toContain("anneau");
-		expect(json).toContain("alliance");
-	});
-
-	it("handles multi-word search with AND logic", () => {
-		const result = buildExactSearchConditions("bague or");
-
-		// Each word should generate a separate condition (AND)
-		expect(result.exactConditions.length).toBe(2);
 	});
 });

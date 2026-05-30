@@ -23,6 +23,16 @@ import {
  * où `build-ereporting-batch` n'a pas tourné / a sauté une période. Câblé dans le
  * cron `reconcile-invoices` (Passe 5).
  *
+ * ⚠️ PORTÉE : ce contrôle ne voit QUE les transactions **créées-mais-non-batchées**.
+ * Une transaction **jamais créée** (recordSalesEReporting/recordRefundEReporting a
+ * échoué sur le hot path → aucune ligne `EReportingTransaction`) est invisible ici
+ * et NE constitue PAS un orphelin. Ce cas — sous-déclaration encore plus grave car
+ * silencieuse — est couvert par un mécanisme distinct : le DLQ EINV-EREPORT-009
+ * (flags `Order.ereportingRetryDeferred` / `Refund.ereportingRetryDeferred` +
+ * Passes SALES/REFUND de `reconcile-invoices`). La continuité de période suppose
+ * donc que toute vente/remboursement PAID a bien produit sa transaction — ce
+ * prérequis est garanti par EINV-EREPORT-009, pas par ce contrôle.
+ *
  * Symétrie volontaire avec `check-sequence-continuity.service.ts` (R6, Art. 286).
  */
 

@@ -29,6 +29,7 @@ async function fetchActiveAnnouncement(): Promise<PublicAnnouncement | null> {
 				announcementStartsAt: true,
 				announcementEndsAt: true,
 				announcementIsActive: true,
+				announcementVariant: true,
 			},
 		});
 
@@ -53,6 +54,7 @@ async function fetchActiveAnnouncement(): Promise<PublicAnnouncement | null> {
 			link: settings.announcementLink,
 			endsAt: settings.announcementEndsAt,
 			hash: hashAnnouncementMessage(settings.announcementMessage),
+			variant: settings.announcementVariant,
 		};
 	} catch (err) {
 		logger.error("Failed to fetch active announcement", err, {

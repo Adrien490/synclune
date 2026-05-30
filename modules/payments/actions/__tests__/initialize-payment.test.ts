@@ -240,12 +240,12 @@ describe("initializePayment", () => {
 			);
 		});
 
-		it("should create Payment Intent with automatic payment methods (card + wallets + Link, no redirects)", async () => {
+		it("should create Payment Intent restricted to card only (no wallets-as-redirect, no Link/SEPA/Klarna)", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+					payment_method_types: ["card"],
 				}),
 				expect.anything(),
 			);

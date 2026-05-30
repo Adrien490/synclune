@@ -6,12 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * Verrouille l'invariant de flux exclusif : une transaction e-reporting de
  * transactions (SALES/REFUND) n'est créée QUE pour `customerType === "B2C"`.
  *
- * Le B2B/B2G domestique relève de la facturation électronique (e-invoice
- * transmise à la PDP via `submit-invoice-by-id.service.ts` / credit note via
- * `void-invoice.service.ts`). Créer en plus une transaction e-reporting pour
- * ces commandes doublonnerait la déclaration DGFiP des mêmes montants
- * (e-invoice ⊕ e-reporting). Toute modification du gate `customerType` dans
- * `record-ereporting.service.ts` doit passer par une review explicite.
+ * Le B2B/B2G domestique relèverait de la facturation électronique structurée
+ * (e-invoice transmise à une PDP) : créer en plus une transaction e-reporting
+ * pour ces commandes doublonnerait la déclaration DGFiP des mêmes montants
+ * (e-invoice ⊕ e-reporting). NB : Synclune est 100 % B2C — le flux B2B/B2G a été
+ * supprimé du code au recentrage B2C (2026-05-28), ce gate reste un filet.
+ * Toute modification du gate `customerType` dans `record-ereporting.service.ts`
+ * doit passer par une review explicite.
  */
 
 const { mockPrisma, mockLogger, mockFeatureFlags } = vi.hoisted(() => ({

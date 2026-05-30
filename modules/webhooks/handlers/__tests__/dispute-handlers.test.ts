@@ -188,6 +188,8 @@ vi.mock("@sentry/nextjs", () => ({
 		}),
 	captureException: vi.fn(),
 	captureMessage: vi.fn(),
+	// logger.warn (skip order-introuvable, ORD-STRIPE-DISPUTE-001) émet un breadcrumb.
+	addBreadcrumb: vi.fn(),
 }));
 
 import {
@@ -316,14 +318,15 @@ describe("handleDisputeCreated", () => {
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("should throw an error when no order is found for the payment intent", async () => {
+	it("should skip gracefully (no throw) when no order is found for the payment intent", async () => {
 		mockPrisma.order.findFirst.mockResolvedValue(null);
 		const dispute = makeDispute();
 
-		await expect(handleDisputeCreated(dispute)).rejects.toThrow(
-			"No order found for dispute dp_test_1 (PI: pi_test_1)",
-		);
+		// ORD-STRIPE-DISPUTE-001 : skip propre (200) plutôt que throw → pas de
+		// tempête de retries Stripe ni d'alerte « max retries exhausted ».
+		const result = await handleDisputeCreated(dispute);
 
+		expect(result).toEqual({ success: true, skipped: true, reason: "Order not found" });
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -522,14 +525,14 @@ describe("handleDisputeClosed", () => {
 		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 	});
 
-	it("should throw an error when no order is found for the payment intent", async () => {
+	it("should skip gracefully (no throw) when no order is found for the payment intent", async () => {
 		mockPrisma.order.findFirst.mockResolvedValue(null);
 		const dispute = makeDispute({ status: "won" });
 
-		await expect(handleDisputeClosed(dispute)).rejects.toThrow(
-			"No order found for closed dispute dp_test_1 (PI: pi_test_1)",
-		);
+		// ORD-STRIPE-DISPUTE-001 : skip propre (200) plutôt que throw.
+		const result = await handleDisputeClosed(dispute);
 
+		expect(result).toEqual({ success: true, skipped: true, reason: "Order not found" });
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -606,6 +609,69 @@ describe("handleDisputeClosed", () => {
 		expect(mockTx.dispute.update).not.toHaveBeenCalled();
 		// Note should still be created
 		expect(mockTx.orderNote.create).toHaveBeenCalledTimes(1);
+	});
+});
+
+// @regression dispute-closed-non-loss-no-phantom-refund-2026-05-30
+// P1-A : SEUL un litige `lost` reprend des fonds. Un statut de clôture ≠ lost
+// (notamment `warning_closed` = inquiry/retrieval close SANS débit, ou
+// `charge_refunded` = déjà remboursé via charge.refunded) ne doit JAMAIS
+// matérialiser un Refund fantôme, muter paymentStatus, voider la facture ni
+// émettre une ligne DGFiP. L'ancien binaire `won = status === "won"` bookait
+// tout ≠ won comme une perte totale → remboursement + avoir + e-reporting faux.
+describe("handleDisputeClosed — non-loss closures emit no accounting (regression P1-A)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
+		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx),
+		);
+		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
+		mockTx.dispute.update.mockResolvedValue({});
+		mockTx.order.update.mockResolvedValue({});
+		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
+		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
+		mockRecordRefundEReporting.mockResolvedValue("skipped");
+	});
+
+	it("warning_closed (inquiry, no debit) → no Refund, no paymentStatus mutation, no void/credit-note", async () => {
+		const dispute = makeDispute({ status: "warning_closed" as Stripe.Dispute["status"] });
+
+		const result = await handleDisputeClosed(dispute);
+
+		// Dispute marqué terminal (WON), mais AUCUNE compta
+		expect(mockTx.dispute.update).toHaveBeenCalledWith({
+			where: { stripeDisputeId: "dp_test_1" },
+			data: { status: "WON", resolvedAt: expect.any(Date) },
+		});
+		expect(mockTx.refund.create).not.toHaveBeenCalled();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockVoidInvoice).not.toHaveBeenCalled();
+		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
+
+		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
+		expect(createCall.data.content).toContain(
+			"[LITIGE CLOTURE] Litige dp_test_1 clôturé: clôturé sans débit",
+		);
+		expect(createCall.data.content).not.toContain("Le montant a été débité par Stripe.");
+		expect(result?.success).toBe(true);
+	});
+
+	it("charge_refunded (already refunded) → no second phantom Refund", async () => {
+		const dispute = makeDispute({ status: "charge_refunded" as Stripe.Dispute["status"] });
+
+		await handleDisputeClosed(dispute);
+
+		expect(mockTx.refund.create).not.toHaveBeenCalled();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockVoidInvoice).not.toHaveBeenCalled();
+		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 	});
 });
 
@@ -855,6 +921,24 @@ describe("handleDisputeUpdated", () => {
 			success: true,
 			skipped: true,
 			reason: "Dispute not yet created",
+		});
+	});
+
+	// @regression dispute-updated-terminal-status-owned-by-closed-2026-05-30
+	// P2-D : un statut terminal (lost/won/charge_refunded) livré via
+	// charge.dispute.updated NE doit PAS muter le Dispute ici — sinon le guard
+	// `hasOpenDispute` le verrait terminal et débloquerait refund/cancel/fulfillment
+	// AVANT que la compta de clôture (charge.dispute.closed) ait tourné.
+	it("does NOT mutate on a terminal status (lost) — owned by charge.dispute.closed", async () => {
+		const dispute = makeDispute({ status: "lost" });
+
+		const result = await handleDisputeUpdated(dispute);
+
+		expect(mockPrisma.dispute.update).not.toHaveBeenCalled();
+		expect(result).toEqual({
+			success: true,
+			skipped: true,
+			reason: "Terminal status owned by charge.dispute.closed",
 		});
 	});
 });

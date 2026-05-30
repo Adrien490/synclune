@@ -19,6 +19,7 @@ describe("updateAnnouncementSchema", () => {
 				startsAt: null,
 				endsAt: null,
 				isActive: false,
+				variant: "PROMO",
 			});
 		}
 	});

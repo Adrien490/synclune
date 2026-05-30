@@ -36,6 +36,18 @@ import { INVOICE_FEATURE_FLAGS } from "@/modules/invoices/constants/feature-flag
 export const MAX_RETRY = 5;
 
 /**
+ * EINV-EREPORT-009 : cap de re-queues par transaction. Au-delà, une transaction
+ * dont le batch est REJECTED/ABANDONED n'est plus détachée+PENDING (donc plus
+ * ré-agrégée par `build-ereporting-batch`) mais figée ABANDONED sur son tombstone
+ * batch → intervention admin requise. Empêche qu'une donnée structurellement
+ * invalide (REJECTED 4xx d'une vraie PA) reboucle quotidiennement build→transmit→rejet.
+ *
+ * Une transaction est re-queuée MAX_REQUEUE_ATTEMPTS fois (requeueCount 0→…→3),
+ * puis figée au rejet suivant (requeueCount >= MAX_REQUEUE_ATTEMPTS).
+ */
+export const MAX_REQUEUE_ATTEMPTS = 3;
+
+/**
  * Délais minimum (en ms) entre 2 tentatives selon le retryCount courant.
  * Index 0 utilisé après le 1er échec, etc. Au-delà du dernier index, on
  * passe en ABANDONED.
@@ -139,15 +151,33 @@ const ELIGIBLE_STATUSES: ReadonlySet<EReportingStatus> = new Set([
  *
  * Le batch lui-même reste un **tombstone immuable** (status terminal +
  * rejectionReason conservés) pour l'audit comptable. Seuls les enfants bougent.
+ *
+ * EINV-EREPORT-009 — cap anti-boucle : chaque enfant voit `requeueCount`
+ * incrémenté. Les enfants ayant déjà atteint `MAX_REQUEUE_ATTEMPTS` ne sont PAS
+ * re-queués : ils restent **attachés** au tombstone batch et passent ABANDONED
+ * (terminal). Étant attachés (`batchId != null`) et non-PENDING, ils ne sont ni
+ * ré-agrégés par `build-ereporting-batch` ni retransmis (batch en statut terminal),
+ * mais restent visibles via `alert-stuck-orders` (scan ABANDONED/REJECTED). Le
+ * caller alerte (`captureRequeueCapExceeded`) quand `capped > 0`.
  */
-function requeueBatchTransactions(
+async function requeueBatchTransactions(
 	client: Prisma.TransactionClient,
 	batchId: string,
-): Promise<{ count: number }> {
-	return client.eReportingTransaction.updateMany({
-		where: { batchId },
-		data: { batchId: null, status: EReportingStatus.PENDING },
+): Promise<{ requeued: number; capped: number }> {
+	// Cap atteint → figées ABANDONED, RESTENT attachées au tombstone (visibles
+	// monitoring, jamais ré-agrégées ni retransmises). Incrément du compteur pour
+	// l'audit du nombre de tentatives.
+	const capped = await client.eReportingTransaction.updateMany({
+		where: { batchId, requeueCount: { gte: MAX_REQUEUE_ATTEMPTS } },
+		data: { status: EReportingStatus.ABANDONED, requeueCount: { increment: 1 } },
 	});
+	// Sous le cap → re-queue normal : détache + PENDING pour ré-agrégation au
+	// prochain build. Disjoint des capped par le partitionnement requeueCount.
+	const requeued = await client.eReportingTransaction.updateMany({
+		where: { batchId, requeueCount: { lt: MAX_REQUEUE_ATTEMPTS } },
+		data: { batchId: null, status: EReportingStatus.PENDING, requeueCount: { increment: 1 } },
+	});
+	return { requeued: requeued.count, capped: capped.count };
 }
 
 export async function submitEReportingBatchById(
@@ -296,7 +326,7 @@ export async function submitEReportingBatchById(
 		//  - REJECTED       → re-queue : détacher + repasser PENDING pour que
 		//                     `build` les ré-agrège dans un nouveau batch (jamais
 		//                     orphelines). Le batch reste un tombstone REJECTED.
-		await prisma.$transaction(async (tx) => {
+		const requeueOutcome = await prisma.$transaction(async (tx) => {
 			await tx.eReportingBatch.update({
 				where: { id: batch.id },
 				data: {
@@ -318,14 +348,20 @@ export async function submitEReportingBatchById(
 			});
 
 			if (targetStatus === EReportingStatus.REJECTED) {
-				await requeueBatchTransactions(tx, batch.id);
-			} else {
-				await tx.eReportingTransaction.updateMany({
-					where: { batchId: batch.id },
-					data: { status: targetStatus },
-				});
+				return requeueBatchTransactions(tx, batch.id);
 			}
+			await tx.eReportingTransaction.updateMany({
+				where: { batchId: batch.id },
+				data: { status: targetStatus },
+			});
+			return null;
 		});
+
+		// EINV-EREPORT-009 : alerte si des transactions ont atteint le cap de re-queue
+		// (figées ABANDONED → intervention admin). Hors transaction (best-effort).
+		if (requeueOutcome && requeueOutcome.capped > 0) {
+			captureRequeueCapExceeded(batch.id, requeueOutcome.capped);
+		}
 
 		logger.info(`Batch ${batch.id} transmitted → ${targetStatus}`, {
 			service: "submit-ereporting-batch",
@@ -371,7 +407,7 @@ async function handleTransmitError(
 		const reason = error.message.slice(0, 1000);
 		// REJECTED + re-queue atomique des enfants (détache + PENDING) pour
 		// ré-agrégation au prochain build. Le batch reste un tombstone REJECTED.
-		await prisma.$transaction(async (tx) => {
+		const requeueOutcome = await prisma.$transaction(async (tx) => {
 			await tx.eReportingBatch.update({
 				where: { id: batchId },
 				data: {
@@ -380,7 +416,7 @@ async function handleTransmitError(
 					rejectionReason: reason,
 				},
 			});
-			await requeueBatchTransactions(tx, batchId);
+			return requeueBatchTransactions(tx, batchId);
 		});
 		logger.error(`Batch ${batchId} REJECTED (business error)`, error, {
 			service: "submit-ereporting-batch",
@@ -389,6 +425,7 @@ async function handleTransmitError(
 		// EINV-EREPORT-004 : rejet métier 4xx = blocage fiscal nécessitant correction
 		// admin (jamais re-tenté automatiquement). Alerte Sentry warning.
 		captureRejectedBatch(batchId, reason);
+		if (requeueOutcome.capped > 0) captureRequeueCapExceeded(batchId, requeueOutcome.capped);
 		return { batchId, status: "REJECTED", rejectionReason: reason };
 	}
 
@@ -399,8 +436,9 @@ async function handleTransmitError(
 	// ABANDONED = échec définitif → re-queue atomique des enfants (détache +
 	// PENDING) pour ré-agrégation au prochain build, jamais orphelines. RETRYING
 	// reste un retry niveau batch (enfants rattachés, re-soumission du même batch).
+	let abandonRequeueOutcome: { requeued: number; capped: number } | null = null;
 	if (finalStatus === EReportingStatus.ABANDONED) {
-		await prisma.$transaction(async (tx) => {
+		abandonRequeueOutcome = await prisma.$transaction(async (tx) => {
 			await tx.eReportingBatch.update({
 				where: { id: batchId },
 				data: {
@@ -409,7 +447,7 @@ async function handleTransmitError(
 					rejectedAt: new Date(),
 				},
 			});
-			await requeueBatchTransactions(tx, batchId);
+			return requeueBatchTransactions(tx, batchId);
 		});
 	} else {
 		await prisma.eReportingBatch.update({
@@ -436,6 +474,9 @@ async function handleTransmitError(
 			batchId,
 			retryCount: nextRetryCount,
 		});
+		if (abandonRequeueOutcome && abandonRequeueOutcome.capped > 0) {
+			captureRequeueCapExceeded(batchId, abandonRequeueOutcome.capped);
+		}
 		return { batchId, status: "ABANDONED", retryCount: nextRetryCount };
 	}
 
@@ -464,4 +505,33 @@ function captureRejectedBatch(batchId: string, reason: string): void {
 		scope.setLevel("warning");
 		Sentry.captureException(new Error(`E-reporting batch ${batchId} REJECTED: ${reason}`));
 	});
+}
+
+/**
+ * EINV-EREPORT-009 : émet une alerte Sentry `error` quand des transactions
+ * atteignent le cap de re-queue (`MAX_REQUEUE_ATTEMPTS`). Elles sont figées
+ * ABANDONED sur leur tombstone batch (plus jamais ré-agrégées automatiquement) :
+ * une donnée e-reporting structurellement invalide reste non déclarée à la DGFiP
+ * jusqu'à correction manuelle de l'Order/Refund source + re-queue admin. Niveau
+ * `error` (vs `warning` pour un simple REJECTED) car la boucle de rattrapage
+ * automatique est rompue. Fingerprint dédié.
+ */
+function captureRequeueCapExceeded(batchId: string, cappedCount: number): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("service", "submit-ereporting-batch");
+		scope.setTag("batchId", batchId);
+		scope.setFingerprint(["ereporting", "requeue-cap-exceeded"]);
+		scope.setLevel("error");
+		scope.setContext("requeue-cap", { batchId, cappedCount, maxAttempts: MAX_REQUEUE_ATTEMPTS });
+		Sentry.captureException(
+			new Error(
+				`${cappedCount} e-reporting transaction(s) reached requeue cap (${MAX_REQUEUE_ATTEMPTS}) on batch ${batchId} — frozen ABANDONED, manual admin fix required`,
+			),
+		);
+	});
+	logger.error(
+		`E-reporting requeue cap exceeded on batch ${batchId} (${cappedCount} transaction(s) frozen ABANDONED)`,
+		undefined,
+		{ service: "submit-ereporting-batch", batchId, cappedCount },
+	);
 }

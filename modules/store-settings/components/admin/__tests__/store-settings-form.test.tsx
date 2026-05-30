@@ -57,6 +57,7 @@ function makeSettings(overrides: Partial<StoreSettingsAdmin> = {}): StoreSetting
 		announcementStartsAt: null,
 		announcementEndsAt: null,
 		announcementIsActive: false,
+		announcementVariant: "PROMO",
 		clickAndCollectEnabled: false,
 		...overrides,
 	};

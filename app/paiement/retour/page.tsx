@@ -80,11 +80,16 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 			// statut DB (posé par le webhook), mais cette page reste auto-suffisante.
 			if (pi.status === "succeeded") {
 				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
+			} else if (redirectStatus === "failed" || pi.status === "canceled") {
+				// Échec explicite testé AVANT le bucket « en attente » : un 3DS échoué
+				// peut laisser le PI en `requires_action` tout en renvoyant
+				// `redirect_status=failed` — on route alors vers l'annulation plutôt que
+				// d'afficher une attente trompeuse (`pending=true`). Un paiement
+				// asynchrone légitime (`processing`) ne renvoie jamais `failed`.
+				redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=payment_failed`;
 			} else if (pi.status === "processing" || pi.status === "requires_action") {
 				// Async payment in progress (SEPA, Klarna, etc.)
 				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
-			} else if (redirectStatus === "failed" || pi.status === "canceled") {
-				redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=payment_failed`;
 			} else {
 				redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=processing_error`;
 			}

@@ -11,7 +11,7 @@ import {
 } from "@/modules/webhooks/services/payment-intent.service";
 import { processOrderFromPaymentIntent } from "@/modules/webhooks/services/checkout.service";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -25,6 +25,8 @@ import {
 } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Synchronizes async payment statuses by polling Stripe.
@@ -74,6 +76,10 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			paymentStatus: true,
 			// CACHE-AUDIT-004 : nécessaire pour invalider les tags user-scopés.
 			userId: true,
+			// P2-1 : notifier le client à l'échec/abandon (parité avec le webhook
+			// handlePaymentFailure qui envoie déjà PAYMENT_FAILED_EMAIL).
+			customerEmail: true,
+			customerName: true,
 		},
 		take: BATCH_SIZE_MEDIUM,
 		orderBy: { createdAt: "asc" },
@@ -105,7 +111,8 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
 		await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
 		await ensureInvoiceNumberPersisted(orderId);
-		await recordSalesEReporting(orderId);
+		// EINV-EREPORT-009 : deferrable — flag de rattrapage si l'enregistrement échoue.
+		await recordSalesEReportingDeferrable(orderId);
 		// CACHE-AUDIT-004 : tags user-scopés + détail commande.
 		for (const tag of getOrderInvalidationTags(userId ?? undefined, orderId)) {
 			tagsToInvalidate.add(tag);
@@ -236,6 +243,28 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 				// CACHE-AUDIT-004 : tags user-scopés + détail commande.
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
+				}
+				// P2-1 : notifier le client (paiement non finalisé / 3DS abandonné).
+				// Best-effort — un échec d'email ne doit jamais faire échouer le cron ni
+				// re-PENDING la commande (déjà FAILED + stock restauré). idempotencyKey
+				// identique à celle du webhook handlePaymentFailure ⇒ Resend dédoublonne
+				// (24h) si les deux chemins se déclenchent pour la même commande.
+				if (order.customerEmail) {
+					try {
+						await sendPaymentFailedEmail({
+							to: order.customerEmail,
+							customerName: order.customerName,
+							orderNumber: order.orderNumber,
+							retryUrl: `${getBaseUrl()}${ROUTES.SHOP.CHECKOUT}`,
+							idempotencyKey: `payment-failed-${order.id}`,
+						});
+					} catch (emailError) {
+						logger.error("Failed to send payment-failed email", emailError, {
+							cronJob: "sync-async-payments",
+							orderNumber: order.orderNumber,
+							orderId: order.id,
+						});
+					}
 				}
 				updated++;
 				continue;

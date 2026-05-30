@@ -112,13 +112,17 @@ describe("retryFailedWebhooks", () => {
 	it("flips stale PROCESSING events back to FAILED before retrying", async () => {
 		await retryFailedWebhooks();
 
-		// WEBHOOK-AUDIT-001 : filtre sur receivedAt (toujours posé, @default(now()))
-		// et non processedAt (null tant que l'event n'a pas atteint un statut terminal,
-		// donc l'ancien filtre processedAt ne matchait JAMAIS un PROCESSING).
+		// WEBHOOK-AUDIT-002 : filtre sur processingStartedAt (début du traitement
+		// courant, (re)posé à chaque PROCESSING) avec fallback receivedAt pour les
+		// lignes legacy (processingStartedAt NULL). Et non processedAt (null tant que
+		// l'event n'a pas atteint un statut terminal → ne matchait JAMAIS un PROCESSING).
 		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
 			where: expect.objectContaining({
 				status: "PROCESSING",
-				receivedAt: expect.objectContaining({ lt: expect.any(Date) }),
+				OR: [
+					{ processingStartedAt: { lt: expect.any(Date) } },
+					{ processingStartedAt: null, receivedAt: { lt: expect.any(Date) } },
+				],
 			}),
 			data: { status: "FAILED" },
 		});
@@ -152,6 +156,8 @@ describe("retryFailedWebhooks", () => {
 			data: {
 				status: "PROCESSING",
 				attempts: { increment: 1 },
+				// WEBHOOK-AUDIT-002 : redémarre l'horloge de fraîcheur du traitement.
+				processingStartedAt: expect.any(Date),
 			},
 		});
 		expect(mockDispatchEvent).toHaveBeenCalledWith(

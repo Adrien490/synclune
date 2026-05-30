@@ -538,7 +538,7 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 
 		expect(mockPrisma.webhookEvent.findUnique).toHaveBeenCalledWith({
 			where: { stripeEventId: "evt_unique_123" },
-			select: { id: true, status: true, receivedAt: true },
+			select: { id: true, status: true, receivedAt: true, processingStartedAt: true },
 		});
 	});
 
@@ -627,6 +627,65 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 		expect(mockDispatchEvent).not.toHaveBeenCalled();
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
+
+	/**
+	 * @regression webhook-cron-stripe-concurrent-2026-05-30 (WEBHOOK-AUDIT-002)
+	 *
+	 * Bug : la fraîcheur d'un PROCESSING était mesurée sur `receivedAt` (1ère
+	 * réception, jamais rafraîchie). Quand le cron retry-webhooks reprenait un event
+	 * FAILED, il le passait en PROCESSING mais laissait `receivedAt` ancien. Une
+	 * redélivrance Stripe concurrente du même event voyait alors `receivedAt` > seuil
+	 * → le considérait « périmé » → barge-in et DOUBLE-DISPATCH pendant que le cron
+	 * le traitait encore (gardes aval @unique sauvaient l'intégrité, mais double
+	 * email + travail dupliqué).
+	 *
+	 * Fix : la fraîcheur se lit sur `processingStartedAt` (début du traitement
+	 * courant, (re)posé à chaque passage en PROCESSING par la route ET le cron). Un
+	 * PROCESSING fraîchement repris (processingStartedAt récent) est court-circuité
+	 * même si `receivedAt` est ancien.
+	 *
+	 * Garde-fou : ne PAS revenir à `receivedAt` pour la détection de fraîcheur.
+	 */
+	it("skips a freshly-reclaimed PROCESSING (recent processingStartedAt) despite an old receivedAt", async () => {
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_cron_reclaimed",
+			status: WebhookEventStatus.PROCESSING,
+			// 1ère réception il y a 1h (event repris plusieurs fois)…
+			receivedAt: new Date(FIXED_NOW_MS - 60 * 60 * 1000),
+			// …mais le cron vient de relancer le traitement il y a 5s → frais.
+			processingStartedAt: new Date(FIXED_NOW_MS - 5_000),
+		});
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		// Court-circuit : on ne barge PAS in sur le traitement concurrent du cron.
+		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
+		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
+	});
+
+	it("reprocesses when processingStartedAt itself is stale (genuine crash)", async () => {
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_stale_processing_started",
+			status: WebhookEventStatus.PROCESSING,
+			receivedAt: new Date(FIXED_NOW_MS - 60 * 60 * 1000),
+			// Traitement courant démarré il y a 20 min (> seuil 15 min) → lambda crashée.
+			processingStartedAt: new Date(FIXED_NOW_MS - 20 * 60 * 1000),
+		});
+		mockPrisma.webhookEvent.upsert.mockResolvedValue(
+			makeWebhookRecord({ id: "wh_stale_processing_started", attempts: 1 }),
+		);
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockDispatchEvent).toHaveBeenCalled();
+		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "processed" });
+	});
 });
 
 // ============================================================================
@@ -647,10 +706,13 @@ describe("POST /api/webhooks/stripe - upsert PROCESSING record", () => {
 				stripeEventId: "evt_upsert_test",
 				eventType: "payment_intent.succeeded",
 				status: WebhookEventStatus.PROCESSING,
+				// WEBHOOK-AUDIT-002 : horloge de fraîcheur du traitement courant.
+				processingStartedAt: expect.any(Date),
 			},
 			update: {
 				attempts: { increment: 1 },
 				status: WebhookEventStatus.PROCESSING,
+				processingStartedAt: expect.any(Date),
 			},
 		});
 	});

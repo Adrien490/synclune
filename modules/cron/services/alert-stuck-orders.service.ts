@@ -119,12 +119,17 @@ export async function alertStuckOrders(): Promise<CronResult> {
 			// ABANDONED inclus (EINV-CRON-005) : épuisement des retries = données fiscales
 			// définitivement non transmises ; le Sentry one-shot émis à l'abandon peut
 			// être manqué → rappel hebdo idempotent indispensable.
+			// SENT inclus (EINV-CRON-003) : faute de cron de réconciliation SENT→ACCEPTED
+			// (acceptation DGFiP asynchrone), un batch transmis mais jamais accusé resterait
+			// invisible. Un SENT > 48h sans ACCEPTED = accusé en souffrance à investiguer
+			// côté portail PA. Inerte tant que LocalPdfProvider (dry-run, jamais SENT).
 			prisma.eReportingBatch.findMany({
 				where: {
 					status: {
 						in: [
 							EReportingStatus.PENDING,
 							EReportingStatus.RETRYING,
+							EReportingStatus.SENT,
 							EReportingStatus.REJECTED,
 							EReportingStatus.ABANDONED,
 						],

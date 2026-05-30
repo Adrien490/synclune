@@ -117,6 +117,8 @@ export const GET_ORDER_SELECT_ADMIN = {
 	// DLQ facturation (EINV-UI-105) — escalade archivage/avoir en échec
 	invoiceRetryDeferred: true,
 	invoiceReconcileAttempts: true,
+	// DLQ e-reporting SALES (EINV-EREPORT-009) — consommé par reconcile-invoices Passe SALES
+	ereportingRetryDeferred: true,
 	// Archivage PDF immuable (Art. L102 B LPF) — admin only (URL/hash sensibles)
 	invoicePdfUrl: true,
 	invoicePdfHash: true,

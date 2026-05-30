@@ -165,6 +165,26 @@ export async function updatePaymentAmount(
 			span.setAttribute("checkout.has_postal_code", postalCode.length > 0);
 
 			if (!shippingUnavailable) {
+				// Audit P2.2 — garde TOCTOU. Entre le retrieve de l'étape 5 et ce
+				// `update`, `confirmCheckout` (step 9) a pu lier la commande au PI et
+				// poser le montant AUTORITAIRE (`order.total`). `discountAmount` étant
+				// une valeur client (non adossée à un code promo revalidé ici), écraser
+				// le montant maintenant permettrait une sous-facturation : le client
+				// confirmerait un montant inférieur à `order.total`. C'est rattrapé en
+				// dernier ressort par la garde montant du webhook
+				// (checkout-order-processing.service.ts:213) — mais au prix d'une charge
+				// erronée + commande bloquée + retries Stripe. On re-vérifie donc juste
+				// avant l'update et on refuse si la commande est déjà initiée.
+				const fresh = await withStripeCircuitBreaker(() =>
+					stripe.paymentIntents.retrieve(paymentIntentId),
+				);
+				if (fresh.metadata.orderId) {
+					return {
+						success: false,
+						error: "Commande déjà initiée — actualisez la page.",
+					};
+				}
+
 				await withStripeCircuitBreaker(() =>
 					stripe.paymentIntents.update(paymentIntentId, {
 						amount: newTotal,

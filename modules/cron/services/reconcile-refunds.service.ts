@@ -2,6 +2,7 @@ import { updateTag } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
+	InvoiceStatus,
 	OrderAction,
 	PaymentStatus,
 	RefundStatus,
@@ -27,8 +28,26 @@ import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refu
 import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
+import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
+import {
+	AUTO_REFUND_NOTE_PREFIX,
+	initiateAutomaticRefund,
+	sendRefundFailureAlert,
+} from "@/modules/webhooks/services/payment-intent.service";
 
 const RECONCILE_AUDIT_AUTHOR = "Système (reconcile-refunds)";
+
+/**
+ * AM-1 — nombre max de tentatives de (re)création Stripe d'un auto-refund dont
+ * le premier `stripe.refunds.create` a échoué (panne Stripe transitoire). Au-delà,
+ * on arrête de retenter et on alerte l'admin pour intervention manuelle (le client
+ * est débité, l'argent doit être restitué). Borne anti-boucle si l'échec est
+ * permanent (PI non remboursable, charge déjà remboursée hors-bande, etc.).
+ */
+const AUTO_REFUND_MAX_CREATE_ATTEMPTS = 5;
 
 /**
  * DLQ refund reconciler.
@@ -167,7 +186,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					orderTotal: refund.order.total,
 					refundAmount: refund.amount,
 				});
-				if (finalized) {
+				if (finalized.finalized) {
 					processed++;
 					tagsToInvalidate.add(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
@@ -180,6 +199,41 @@ export async function reconcileRefunds(): Promise<CronResult> {
 						refund.orderId,
 					)) {
 						tagsToInvalidate.add(tag);
+					}
+
+					// P2-1 (audit refunds 2026-05-30) : invalidation caches inventaire /
+					// vitrine + notif back-in-stock pour les SKU restockés par
+					// finalizeRefund (parité process-refund Step 3). Le cron DLQ est le
+					// finaliseur réel des refunds admin dont le SAGA a échoué, donc c'est
+					// lui qui restaure réellement l'inventory.
+					if (finalized.restockedSkuIds.length > 0) {
+						tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
+						for (const skuId of finalized.restockedSkuIds) {
+							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+						}
+						const restockedSkus = await prisma.productSku.findMany({
+							where: { id: { in: finalized.restockedSkuIds } },
+							select: { productId: true, product: { select: { slug: true } } },
+						});
+						for (const productId of new Set(restockedSkus.map((sku) => sku.productId))) {
+							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKUS(productId));
+						}
+						for (const slug of new Set(restockedSkus.map((sku) => sku.product.slug))) {
+							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.DETAIL(slug));
+						}
+					}
+					// Notifier les favoris des produits repassant 0→N (await direct :
+					// contexte cron, pas de latence utilisateur à protéger).
+					for (const productId of finalized.reopenedProductIds) {
+						try {
+							await notifyBackInStock(productId);
+						} catch (notifyError) {
+							logger.error("notifyBackInStock failed during DLQ reconcile", notifyError, {
+								cronJob: "reconcile-refunds",
+								refundId: refund.id,
+								productId,
+							});
+						}
 					}
 
 					// E-reporting DGFiP (Phase 4 wiring, EINV-AUDIT-004).
@@ -200,6 +254,47 @@ export async function reconcileRefunds(): Promise<CronResult> {
 							`reconcile-refunds — credit note emission failed for refund ${refund.id}: ${creditNoteResult.error}`,
 							{ cronJob: "reconcile-refunds", refundId: refund.id },
 						);
+					}
+
+					// P2-2 (audit refunds 2026-05-30) : refund TOTAL finalisé par le cron
+					// → voidInvoice fallback (idempotent). issueCreditNoteForRefund noop
+					// sur un full refund (defer voidInvoice, EINV-SEQ-001). Sans ce
+					// fallback, l'avoir d'annulation (Order.creditNoteNumber) dépend
+					// uniquement du webhook charge.refunded — perdu en cas de double
+					// panne → facture stale (Art. 272-I CGI).
+					if (finalized.isFullyRefunded) {
+						const invoiceState = await prisma.order.findUnique({
+							where: { id: refund.orderId },
+							select: { invoiceStatus: true, invoiceNumber: true },
+						});
+						if (
+							invoiceState?.invoiceStatus === InvoiceStatus.GENERATED &&
+							invoiceState.invoiceNumber
+						) {
+							const voided = await voidInvoice({
+								orderId: refund.orderId,
+								authorId: SYSTEM_AUTHOR_ID,
+								authorName: RECONCILE_AUDIT_AUTHOR,
+								source: HistorySource.SYSTEM,
+								reason: "Avoir émis suite à remboursement total (réconciliation DLQ)",
+							});
+							if (voided.kind === "failed") {
+								Sentry.withScope((scope) => {
+									scope.setLevel("error");
+									scope.setTag("invoicing", "void-invoice-failed");
+									scope.setTag("source", "reconcile-refunds");
+									scope.setFingerprint(["void-invoice", "max-retries", refund.orderId]);
+									scope.setContext("order", {
+										orderId: refund.orderId,
+										orderNumber: refund.order.orderNumber,
+									});
+									Sentry.captureMessage(
+										"voidInvoice failed during DLQ reconcile (full refund) — facture stale",
+										"error",
+									);
+								});
+							}
+						}
 					}
 
 					// ORD-STRIPE-005 : émetteur centralisé. Pose
@@ -296,6 +391,15 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		}
 	}
 
+	// AM-1 — 2ᵉ phase : repêche les auto-refunds dont la *création* Stripe a
+	// échoué (APPROVED + stripeRefundId NULL). Le filet principal ci-dessus exige
+	// `stripeRefundId NOT NULL`, donc ces refunds n'étaient sinon jamais retentés —
+	// client débité (oversell / payment_failed) sans remboursement émis.
+	const retryStats = await retryStuckAutoRefundCreations({ minAge, maxAge, deadline });
+	processed += retryStats.retried;
+	errored += retryStats.errored;
+	skipped += retryStats.skipped;
+
 	if (tagsToInvalidate.size > 0) {
 		tagsToInvalidate.add(REFUNDS_CACHE_TAGS.LIST);
 		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
@@ -322,19 +426,182 @@ export async function reconcileRefunds(): Promise<CronResult> {
 }
 
 /**
+ * AM-1 — retente la création Stripe des auto-refunds bloqués.
+ *
+ * Cible : `Refund` APPROVED, `stripeRefundId IS NULL`, note préfixée
+ * `AUTO_REFUND_NOTE_PREFIX` (donc émis automatiquement par un handler webhook),
+ * dans la fenêtre [maxAge, minAge[ et sous le plafond de tentatives.
+ *
+ * Réutilise `initiateAutomaticRefund` (idempotent : retrouve le Refund local
+ * existant et rappelle `stripe.refunds.create` avec la clé d'idempotence
+ * `auto-refund-${paymentIntentId}` — Stripe renvoie le même `re_*` s'il avait
+ * en fait été créé). En cas de succès, `stripeRefundId` est posé et la phase 1
+ * du prochain run (ou le webhook `charge.refunded`) finalise le refund.
+ *
+ * `attemptCount` borne les retries : au plafond, on alerte l'admin (refund
+ * manuel requis) et on cesse de retenter.
+ */
+async function retryStuckAutoRefundCreations(params: {
+	minAge: Date;
+	maxAge: Date;
+	deadline: number;
+}): Promise<{ retried: number; errored: number; skipped: number }> {
+	const { minAge, maxAge, deadline } = params;
+
+	const stuck = await prisma.refund.findMany({
+		where: {
+			status: RefundStatus.APPROVED,
+			stripeRefundId: null,
+			note: { startsWith: AUTO_REFUND_NOTE_PREFIX },
+			attemptCount: { lt: AUTO_REFUND_MAX_CREATE_ATTEMPTS },
+			createdAt: { gte: maxAge, lt: minAge },
+			...notDeleted,
+		},
+		select: {
+			id: true,
+			orderId: true,
+			attemptCount: true,
+			order: {
+				select: { stripePaymentIntentId: true, orderNumber: true },
+			},
+		},
+		take: BATCH_SIZE_MEDIUM,
+		orderBy: { createdAt: "asc" },
+	});
+
+	if (stuck.length === 0) {
+		return { retried: 0, errored: 0, skipped: 0 };
+	}
+
+	logger.info("Found stuck auto-refunds without stripeRefundId", {
+		cronJob: "reconcile-refunds",
+		count: stuck.length,
+	});
+
+	let retried = 0;
+	let errored = 0;
+	let skipped = 0;
+
+	for (const refund of stuck) {
+		if (Date.now() > deadline) {
+			logger.warn("Approaching timeout, stopping auto-refund retry phase early", {
+				cronJob: "reconcile-refunds",
+			});
+			break;
+		}
+
+		const paymentIntentId = refund.order.stripePaymentIntentId;
+		if (!paymentIntentId) {
+			// Sans PI on ne peut pas appeler stripe.refunds.create — anomalie
+			// (un auto-refund n'existe que sur une commande payée par PI).
+			logger.error(
+				`Stuck auto-refund ${refund.id} on order without stripePaymentIntentId — manual intervention`,
+				undefined,
+				{ cronJob: "reconcile-refunds", refundId: refund.id },
+			);
+			skipped++;
+			continue;
+		}
+
+		// Incrémente AVANT l'appel pour borner même si l'appel throw/timeout.
+		await prisma.refund.update({
+			where: { id: refund.id },
+			data: { attemptCount: { increment: 1 } },
+		});
+		const attemptsAfter = refund.attemptCount + 1;
+
+		// Throttle uniforme (cap burst Stripe), comme la phase 1.
+		await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
+
+		const result = await initiateAutomaticRefund(
+			paymentIntentId,
+			refund.orderId,
+			"DLQ retry — création auto-refund échouée",
+		);
+
+		if (result.success) {
+			retried++;
+			logger.info(`Auto-refund creation succeeded on DLQ retry for refund ${refund.id}`, {
+				cronJob: "reconcile-refunds",
+				refundId: refund.id,
+				attempt: attemptsAfter,
+			});
+			continue;
+		}
+
+		errored++;
+		// Au plafond : on alerte l'admin (le client reste débité), on cesse de
+		// retenter (la prochaine sélection exclut attemptCount >= plafond).
+		if (attemptsAfter >= AUTO_REFUND_MAX_CREATE_ATTEMPTS) {
+			await sendRefundFailureAlert(
+				refund.orderId,
+				paymentIntentId,
+				"other",
+				`Auto-refund Stripe création échouée après ${attemptsAfter} tentatives (DLQ reconcile-refunds). ${result.error?.message ?? ""}`,
+			);
+			Sentry.withScope((scope) => {
+				scope.setLevel("error");
+				scope.setTag("cron", "reconcile-refunds");
+				scope.setTag("anomaly", "auto-refund-create-exhausted");
+				scope.setFingerprint(["reconcile-refunds", "auto-refund-create-exhausted"]);
+				scope.setContext("refund", {
+					refundId: refund.id,
+					orderNumber: refund.order.orderNumber,
+					attempts: attemptsAfter,
+				});
+				Sentry.captureMessage(
+					"Auto-refund creation exhausted retries (manual refund required)",
+					"error",
+				);
+			});
+		}
+	}
+
+	logger.info("Stuck auto-refund retry phase completed", {
+		cronJob: "reconcile-refunds",
+		retried,
+		errored,
+		skipped,
+	});
+
+	return { retried, errored, skipped };
+}
+
+interface FinalizeRefundResult {
+	/** false si le refund n'était plus APPROVED (race webhook / admin). */
+	finalized: boolean;
+	/** true si cette finalisation rend la commande totalement remboursée. */
+	isFullyRefunded: boolean;
+	/** SKU dont l'inventory a réellement été incrémenté (restock=true + SKU vivant). */
+	restockedSkuIds: string[];
+	/** productId des SKU repassant 0→N (gate notif back-in-stock). */
+	reopenedProductIds: string[];
+}
+
+const FINALIZE_NOOP: FinalizeRefundResult = {
+	finalized: false,
+	isFullyRefunded: false,
+	restockedSkuIds: [],
+	reopenedProductIds: [],
+};
+
+/**
  * Finalise un refund APPROVED → COMPLETED dans une transaction atomique :
  * - update Refund (status, processedAt) avec guard TOCTOU
+ * - restocke l'inventory des RefundItem `restock=true` (P2-1, parité
+ *   process-refund Step 3) — le cron DLQ est le finaliseur réel des refunds
+ *   admin dont le SAGA a échoué, donc sans ça l'inventory n'est jamais restauré
  * - recalcule le paymentStatus de l'order
  *
- * Returns false if the refund was no longer APPROVED (concurrent state change
- * by webhook / admin action).
+ * Retourne `finalized: false` si le refund n'était plus APPROVED (changement
+ * d'état concurrent par webhook / action admin).
  */
 async function finalizeRefund(params: {
 	refundId: string;
 	orderId: string;
 	orderTotal: number;
 	refundAmount: number;
-}): Promise<boolean> {
+}): Promise<FinalizeRefundResult> {
 	const { refundId, orderId, orderTotal, refundAmount } = params;
 
 	return prisma.$transaction(async (tx) => {
@@ -356,7 +623,45 @@ async function finalizeRefund(params: {
 					currentStatus: current.status,
 				});
 			}
-			return false;
+			return FINALIZE_NOOP;
+		}
+
+		// P2-1 : restock inventory pour les articles `restock=true`. Idempotent :
+		// seul le chemin qui gagne le guard `status: APPROVED` ci-dessus exécute
+		// ce bloc (process-refund Step 3 et ce cron sont mutuellement exclusifs).
+		// Coalesce par skuId (parité process-refund). Un SKU supprimé entre la
+		// création du refund et la réconciliation est skippé silencieusement.
+		const refundItems = await tx.refundItem.findMany({
+			where: { refundId, restock: true },
+			select: { quantity: true, orderItem: { select: { skuId: true } } },
+		});
+		const restockBySkuId = new Map<string, number>();
+		for (const ri of refundItems) {
+			const skuId = ri.orderItem.skuId;
+			if (skuId) {
+				restockBySkuId.set(skuId, (restockBySkuId.get(skuId) ?? 0) + ri.quantity);
+			}
+		}
+		const restockedSkuIds: string[] = [];
+		const reopenedProductIds = new Set<string>();
+		if (restockBySkuId.size > 0) {
+			const skuRows = await tx.productSku.findMany({
+				where: { id: { in: [...restockBySkuId.keys()] } },
+				select: { id: true, inventory: true, productId: true },
+			});
+			const preById = new Map(skuRows.map((row) => [row.id, row]));
+			for (const [skuId, qty] of restockBySkuId) {
+				const pre = preById.get(skuId);
+				if (!pre) continue; // SKU supprimé entre create et reconcile
+				await tx.productSku.update({
+					where: { id: skuId },
+					data: { inventory: { increment: qty } },
+				});
+				restockedSkuIds.push(skuId);
+				if (pre.inventory === 0) {
+					reopenedProductIds.add(pre.productId);
+				}
+			}
 		}
 
 		// Recalcule total COMPLETED après cette finalisation
@@ -365,9 +670,10 @@ async function finalizeRefund(params: {
 			_sum: { amount: true },
 		});
 		const totalRefunded = completedAggregate._sum.amount ?? refundAmount;
+		const isFullyRefunded = totalRefunded >= orderTotal;
 
 		let newPaymentStatus: PaymentStatus | undefined;
-		if (totalRefunded >= orderTotal) {
+		if (isFullyRefunded) {
 			newPaymentStatus = PaymentStatus.REFUNDED;
 		} else if (totalRefunded > 0) {
 			newPaymentStatus = PaymentStatus.PARTIALLY_REFUNDED;
@@ -397,10 +703,16 @@ async function finalizeRefund(params: {
 				refundAmount,
 				totalRefunded,
 				orderTotal,
+				restockedSkuCount: restockedSkuIds.length,
 				reason: "stripe_dlq_reconcile",
 			},
 		});
 
-		return true;
+		return {
+			finalized: true,
+			isFullyRefunded,
+			restockedSkuIds,
+			reopenedProductIds: [...reopenedProductIds],
+		};
 	});
 }

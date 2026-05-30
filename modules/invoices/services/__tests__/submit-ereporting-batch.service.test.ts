@@ -106,6 +106,9 @@ beforeEach(() => {
 			type: "SALES",
 		},
 	]);
+	// requeueBatchTransactions lit `.count` du retour updateMany (cap EINV-EREPORT-009).
+	// Défaut : 0 transaction cappée → pas d'alerte de cap parasite.
+	mockPrisma.eReportingTransaction.updateMany.mockResolvedValue({ count: 0 });
 	// Exécute le callback de transaction avec tx === mockPrisma.
 	mockPrisma.$transaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
 		cb(mockPrisma),

@@ -50,6 +50,35 @@ export class OversellError extends Error {
 }
 
 /**
+ * P2-1 (audit 2026-05-30) : levée quand la garde post-paiement trouve que Stripe
+ * a encaissé MOINS que `order.total`. Défense en profondeur — `confirmCheckout`
+ * pose le montant du PI à `order.total` avant la capture, donc ce cas ne devrait
+ * jamais survenir au happy-path. S'il survient (régression amont, ou confirmation
+ * client hors-ordre à un montant minoré), le client a été débité d'un montant
+ * inférieur au total : la commande ne DOIT PAS passer PAID. Le caller
+ * (`handlePaymentSuccess`) catch ce type pour rembourser automatiquement le
+ * montant encaissé + marquer la commande FAILED + alerter l'admin, au lieu de
+ * rethrow-pour-retry-Stripe-infini (le montant ne se corrigera pas tout seul →
+ * retry inutile et nuisible). Calque OversellError.
+ *
+ * Sûreté e-reporting (Invariant 9) : le throw interrompt le flow AVANT
+ * `recordSalesEReportingDeferrable` (aucune transaction SALES enregistrée) → le
+ * refund est neutre pour la DGFiP, comme le chemin oversell.
+ */
+export class AmountMismatchError extends Error {
+	constructor(
+		public readonly orderId: string,
+		public readonly expectedTotal: number,
+		public readonly amountReceived: number,
+	) {
+		super(
+			`Amount mismatch on order ${orderId}: Stripe received ${amountReceived} but order.total is ${expectedTotal}`,
+		);
+		this.name = "AmountMismatchError";
+	}
+}
+
+/**
  * ORD-BIZ-011 : détection pré-transaction d'un payment_intent.succeeded tardif
  * sur commande CANCELLED. Déclenche un auto-refund Stripe idempotent et throw
  * pour que le caller skip toute mutation/chain post-paiement.
@@ -209,11 +238,18 @@ async function processOrderAtomically(
 
 	// 2b. Defense-in-depth: refuse to mark the order PAID if Stripe captured less
 	// than the order total. Guards against any client-side underbilling regression
-	// (audit P1.5 / P0.1, 2026-05-11).
+	// (audit P1.5 / P0.1, 2026-05-11). P2-1 (2026-05-30) : erreur typée
+	// `AmountMismatchError` (au lieu d'un Error générique) pour que le caller
+	// `handlePaymentSuccess` distingue la sous-facturation et déclenche un
+	// remboursement auto + FAILED + alerte (comme l'oversell), au lieu d'un
+	// retry-Stripe-infini laissant un client débité sans commande ni refund.
 	if (typeof expectedAmountReceived === "number" && expectedAmountReceived < order.total) {
-		throw new Error(
-			`Amount mismatch for order ${orderId} (${flowLabel}): Stripe received ${expectedAmountReceived} but order.total is ${order.total}`,
+		logger.error(
+			`⚠️ [WEBHOOK] Underbilling for order ${orderId} (${flowLabel}): Stripe received ${expectedAmountReceived} but order.total is ${order.total}`,
+			undefined,
+			{ service: "webhook" },
 		);
+		throw new AmountMismatchError(orderId, order.total, expectedAmountReceived);
 	}
 
 	// 2c. BIZ-BUG-005 : la garde ci-dessus est unidirectionnelle (sous-facturation).

@@ -81,4 +81,23 @@ export interface InvoiceProvider {
 		batch: EReportingBatchPayload;
 		idempotencyKey: string;
 	}): Promise<SubmitEReportingBatchResult>;
+
+	/**
+	 * EINV-CRON-003 (stub différé) — interroge le statut DGFiP d'un batch déjà
+	 * transmis (`SENT`), pour les PA dont l'acceptation est **asynchrone** (la
+	 * soumission renvoie `SENT`, l'ACCEPTED/REJECTED arrive plus tard par
+	 * webhook ou polling).
+	 *
+	 * **Optionnel et NON appelé en l'état** : aucune PA concrète n'est branchée et
+	 * `LocalPdfProvider` ne produit jamais de `SENT` (dry-run). Au branchement
+	 * d'une PA à acceptation asynchrone, implémenter cette méthode PUIS créer le
+	 * cron `reconcile-ereporting-statuses` qui applique `SENT → ACCEPTED/REJECTED`
+	 * (en attendant, `alert-stuck-orders` remonte déjà tout batch `SENT` > 48h).
+	 * Laissé en stub volontaire (recentrage B2C KISS — pas d'orchestration
+	 * spéculative tant que la sémantique d'ACK de la PA n'est pas connue).
+	 */
+	getEReportingBatchStatus?(providerBatchId: string): Promise<{
+		status: EReportingStatus;
+		rejectionReason?: string;
+	}>;
 }

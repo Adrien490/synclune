@@ -177,27 +177,25 @@ export const buildFilterConditions = (
 	}
 
 	// Stock status composite filter
+	// Sémantique alignée sur le filtre produit (product-query-builder.ts) afin que
+	// le libellé « En stock » / « Stock faible » signifie la même chose dans la liste
+	// SKU et dans la liste produits (cf. audit filtres A1) :
+	//   - in_stock     : au moins une unité (inventory > 0, inclut le stock faible)
+	//   - low_stock    : 0 < inventory <= LOW (stock faible, sous-ensemble de in_stock)
+	//   - out_of_stock : inventory <= 0
 	if (filters.stockStatus && filters.stockStatus !== "all") {
 		if (filters.stockStatus === "in_stock") {
 			conditions.push({
 				inventory: {
-					gte: STOCK_THRESHOLDS.LOW,
+					gt: 0,
 				},
 			});
 		} else if (filters.stockStatus === "low_stock") {
 			conditions.push({
-				AND: [
-					{
-						inventory: {
-							gte: STOCK_THRESHOLDS.CRITICAL,
-						},
-					},
-					{
-						inventory: {
-							lt: STOCK_THRESHOLDS.LOW,
-						},
-					},
-				],
+				inventory: {
+					gt: 0,
+					lte: STOCK_THRESHOLDS.LOW,
+				},
 			});
 		} else {
 			conditions.push({

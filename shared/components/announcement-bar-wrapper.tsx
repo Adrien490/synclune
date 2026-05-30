@@ -20,11 +20,23 @@ export async function AnnouncementBarWrapper() {
 	}
 
 	return (
-		<AnnouncementBar
-			message={announcement.message}
-			link={announcement.link}
-			endsAt={announcement.endsAt}
-			hash={announcement.hash}
-		/>
+		<>
+			{/*
+			 * Pose `--announcement-bar-height` dès le SSR (avant hydratation) pour que
+			 * la navbar — qui s'offsette via translateY(var(--announcement-bar-height)) —
+			 * démarre déjà décalée sous le bandeau. Évite le saut de layout / chevauchement
+			 * du premier paint (la version client de cette var n'arrivait qu'après l'effet).
+			 */}
+			<style>
+				{`:root{--announcement-bar-height:calc(var(--ab-height) + env(safe-area-inset-top, 0px))}`}
+			</style>
+			<AnnouncementBar
+				message={announcement.message}
+				link={announcement.link}
+				endsAt={announcement.endsAt}
+				hash={announcement.hash}
+				variant={announcement.variant}
+			/>
+		</>
 	);
 }

@@ -13,11 +13,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * à un batch mort que `build` ne reprend jamais : il filtre `batchId IS NULL`).
  *
  * Garde-fous verrouillés ici :
- *  - REJECTED (sync) + REJECTED (4xx) + ABANDONED → re-queue (batchId:null, PENDING).
+ *  - REJECTED (sync) + REJECTED (4xx) + ABANDONED → re-queue (batchId:null, PENDING)
+ *    + incrément `requeueCount` (cap anti-boucle EINV-EREPORT-009).
  *  - SENT / ACCEPTED → JAMAIS re-queue (transactions rattachées, status propagé).
  *  - RETRYING → JAMAIS re-queue (retry niveau batch, enfants rattachés).
  *  - Batch sans transaction vivante → SKIPPED_EMPTY, provider non appelé (pas de
  *    transmission d'un batch fantôme à la DGFiP).
+ *  - Cap atteint (`requeueCount >= MAX_REQUEUE_ATTEMPTS`) → figées ABANDONED,
+ *    RESTENT attachées (jamais détachées), alerte Sentry `requeue-cap-exceeded`.
  *
  * Cf. CLAUDE.md § "Facturation électronique — invariants" #9 + objectif re-queue.
  */
@@ -46,12 +49,14 @@ const { mockPrisma, mockLogger, mockProvider, mockSentry, mockFeatureFlags } = v
 					setTag: typeof vi.fn;
 					setFingerprint: typeof vi.fn;
 					setLevel: typeof vi.fn;
+					setContext: typeof vi.fn;
 				}) => void,
 			) =>
 				cb({
 					setTag: vi.fn(),
 					setFingerprint: vi.fn(),
 					setLevel: vi.fn(),
+					setContext: vi.fn(),
 				}),
 		),
 		captureException: vi.fn(),
@@ -88,6 +93,7 @@ import {
 	submitEReportingBatchById,
 	ProviderBusinessError,
 	MAX_RETRY,
+	MAX_REQUEUE_ATTEMPTS,
 } from "../submit-ereporting-batch.service";
 
 function makeBatch(overrides: Record<string, unknown> = {}) {
@@ -129,12 +135,26 @@ const LIVE_TRANSACTIONS = [
 	},
 ];
 
-/** Capture l'unique appel updateMany sur les transactions (ou undefined). */
+/**
+ * Capture le DERNIER appel updateMany sur les transactions. Sur le chemin
+ * re-queue, c'est l'appel « requeued » (détache + PENDING, filtre `lt cap`) car
+ * `requeueBatchTransactions` traite le cap (`gte cap`) en premier.
+ */
 function lastTransactionUpdateMany():
 	| { where: unknown; data: Record<string, unknown> }
 	| undefined {
 	const calls = mockPrisma.eReportingTransaction.updateMany.mock.calls;
 	return calls.at(-1)?.[0] as { where: unknown; data: Record<string, unknown> } | undefined;
+}
+
+/** Premier appel updateMany = branche « capped » (fige ABANDONED, filtre `gte cap`). */
+function cappedTransactionUpdateMany():
+	| { where: Record<string, unknown>; data: Record<string, unknown> }
+	| undefined {
+	const calls = mockPrisma.eReportingTransaction.updateMany.mock.calls;
+	return calls[0]?.[0] as
+		| { where: Record<string, unknown>; data: Record<string, unknown> }
+		| undefined;
 }
 
 beforeEach(() => {
@@ -143,6 +163,9 @@ beforeEach(() => {
 	vi.setSystemTime(new Date("2026-05-28T12:00:00Z"));
 	mockFeatureFlags.enable_ereporting = true;
 	mockPrisma.eReportingTransaction.findMany.mockResolvedValue(LIVE_TRANSACTIONS);
+	// requeueBatchTransactions lit `.count` du retour updateMany. Défaut : aucune
+	// transaction cappée (count 0) → pas d'alerte parasite sur les cas nominaux.
+	mockPrisma.eReportingTransaction.updateMany.mockResolvedValue({ count: 0 });
 	mockPrisma.$transaction.mockImplementation(async (cb: (tx: unknown) => unknown) =>
 		cb(mockPrisma),
 	);
@@ -161,10 +184,10 @@ describe("re-queue — REJECTED / ABANDONED détache et repasse PENDING", () => 
 		const result = await submitEReportingBatchById("batch-1");
 
 		expect(result.status).toBe("REJECTED");
-		// Re-queue, PAS propagation status=REJECTED.
+		// Re-queue (détache + PENDING) + incrément requeueCount, filtre sous le cap.
 		expect(lastTransactionUpdateMany()).toEqual({
-			where: { batchId: "batch-1" },
-			data: { batchId: null, status: "PENDING" },
+			where: { batchId: "batch-1", requeueCount: { lt: MAX_REQUEUE_ATTEMPTS } },
+			data: { batchId: null, status: "PENDING", requeueCount: { increment: 1 } },
 		});
 		// Le batch reste un tombstone REJECTED.
 		const batchUpdate = mockPrisma.eReportingBatch.update.mock.calls[0]?.[0] as {
@@ -183,8 +206,8 @@ describe("re-queue — REJECTED / ABANDONED détache et repasse PENDING", () => 
 
 		expect(result.status).toBe("REJECTED");
 		expect(lastTransactionUpdateMany()).toEqual({
-			where: { batchId: "batch-1" },
-			data: { batchId: null, status: "PENDING" },
+			where: { batchId: "batch-1", requeueCount: { lt: MAX_REQUEUE_ATTEMPTS } },
+			data: { batchId: null, status: "PENDING", requeueCount: { increment: 1 } },
 		});
 	});
 
@@ -198,8 +221,8 @@ describe("re-queue — REJECTED / ABANDONED détache et repasse PENDING", () => 
 
 		expect(result.status).toBe("ABANDONED");
 		expect(lastTransactionUpdateMany()).toEqual({
-			where: { batchId: "batch-1" },
-			data: { batchId: null, status: "PENDING" },
+			where: { batchId: "batch-1", requeueCount: { lt: MAX_REQUEUE_ATTEMPTS } },
+			data: { batchId: null, status: "PENDING", requeueCount: { increment: 1 } },
 		});
 	});
 });
@@ -246,6 +269,69 @@ describe("re-queue — états non terminaux/succès ne re-queuent JAMAIS", () =>
 
 		expect(result.status).toBe("RETRYING");
 		expect(mockPrisma.eReportingTransaction.updateMany).not.toHaveBeenCalled();
+	});
+});
+
+describe("cap anti-boucle (EINV-EREPORT-009)", () => {
+	it("capped updateMany fige ABANDONED (rattaché) sans détacher, filtre >= cap", async () => {
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+		mockProvider.submitEReportingBatch.mockResolvedValue({
+			providerBatchId: "pa-reject",
+			status: "REJECTED",
+			submittedAt: new Date("2026-05-28T12:00:00Z"),
+			rejectionReason: "INVALID_BATCH_FORMAT",
+		});
+
+		await submitEReportingBatchById("batch-1");
+
+		// 1er updateMany = branche capped : status ABANDONED, PAS de batchId:null
+		// (reste attaché au tombstone → visible alert-stuck-orders), incrément.
+		expect(cappedTransactionUpdateMany()).toEqual({
+			where: { batchId: "batch-1", requeueCount: { gte: MAX_REQUEUE_ATTEMPTS } },
+			data: { status: "ABANDONED", requeueCount: { increment: 1 } },
+		});
+		expect(cappedTransactionUpdateMany()?.data.batchId).toBeUndefined();
+	});
+
+	it("capped > 0 → alerte Sentry `requeue-cap-exceeded` + logger.error", async () => {
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+		mockProvider.submitEReportingBatch.mockResolvedValue({
+			providerBatchId: "pa-reject",
+			status: "REJECTED",
+			submittedAt: new Date("2026-05-28T12:00:00Z"),
+			rejectionReason: "INVALID_BATCH_FORMAT",
+		});
+		// Le 1er updateMany (capped) rapporte 1 transaction figée.
+		mockPrisma.eReportingTransaction.updateMany.mockResolvedValueOnce({ count: 1 });
+
+		await submitEReportingBatchById("batch-1");
+
+		const capError = mockSentry.captureException.mock.calls
+			.map((c) => c[0] as Error)
+			.find((e) => /requeue cap/i.test(e.message));
+		expect(capError).toBeDefined();
+		expect(
+			mockLogger.error.mock.calls.some((c) => /requeue cap exceeded/i.test(String(c[0]))),
+		).toBe(true);
+	});
+
+	it("capped = 0 (cas nominal) → aucune alerte de cap", async () => {
+		mockPrisma.eReportingBatch.findUnique.mockResolvedValue(makeBatch());
+		mockProvider.submitEReportingBatch.mockResolvedValue({
+			providerBatchId: "pa-reject",
+			status: "REJECTED",
+			submittedAt: new Date("2026-05-28T12:00:00Z"),
+			rejectionReason: "INVALID_BATCH_FORMAT",
+		});
+		// updateMany défaut {count:0} → aucune transaction cappée.
+
+		await submitEReportingBatchById("batch-1");
+
+		expect(
+			mockSentry.captureException.mock.calls
+				.map((c) => c[0] as Error)
+				.some((e) => /requeue cap/i.test(e.message)),
+		).toBe(false);
 	});
 });
 

@@ -27,6 +27,7 @@ validateAuthEnvironment();
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: "2026-05-27.dahlia",
 	maxNetworkRetries: 2,
+	timeout: 10_000,
 });
 
 export const auth = betterAuth({

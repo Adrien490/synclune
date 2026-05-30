@@ -61,13 +61,15 @@ export const productSkuFiltersSchema = z
 		hasOrders: z.boolean().optional(),
 	})
 	.refine((data) => {
-		if (data.priceMin && data.priceMax) {
+		// `!== undefined` (et non truthy) pour ne pas sauter la vérif quand une borne
+		// vaut 0 — aligné sur productFiltersSchema (audit filtres K1).
+		if (data.priceMin !== undefined && data.priceMax !== undefined) {
 			return data.priceMin <= data.priceMax;
 		}
 		return true;
 	}, "Le prix minimum doit être inférieur ou égal au prix maximum")
 	.refine((data) => {
-		if (data.inventoryMin && data.inventoryMax) {
+		if (data.inventoryMin !== undefined && data.inventoryMax !== undefined) {
 			return data.inventoryMin <= data.inventoryMax;
 		}
 		return true;

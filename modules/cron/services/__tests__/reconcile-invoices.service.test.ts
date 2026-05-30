@@ -14,10 +14,12 @@ const {
 	mockLogger,
 	mockCheckSequenceContinuity,
 	mockCheckEReportingOrphans,
+	mockRecordSalesEReporting,
+	mockRecordRefundEReporting,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
-		refund: { findMany: vi.fn() },
+		refund: { findMany: vi.fn(), update: vi.fn() },
 	},
 	mockPersistInvoiceNumber: vi.fn(),
 	mockBackfillInvoiceDataSnapshot: vi.fn(),
@@ -31,6 +33,8 @@ const {
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	mockCheckSequenceContinuity: vi.fn(),
 	mockCheckEReportingOrphans: vi.fn(),
+	mockRecordSalesEReporting: vi.fn(),
+	mockRecordRefundEReporting: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -87,6 +91,11 @@ vi.mock("@/modules/invoices/services/check-ereporting-period-continuity.service"
 	checkEReportingOrphanTransactions: mockCheckEReportingOrphans,
 }));
 
+vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
+	recordSalesEReporting: mockRecordSalesEReporting,
+	recordRefundEReporting: mockRecordRefundEReporting,
+}));
+
 import { reconcileInvoices } from "../reconcile-invoices.service";
 
 function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
@@ -125,6 +134,11 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockCheckSequenceContinuity.mockResolvedValue([]);
 		// EINV-EREPORT-008 : aucune orpheline par défaut (passe 5 isolée — testée à part).
 		mockCheckEReportingOrphans.mockResolvedValue(null);
+		// EINV-EREPORT-009 : succès e-reporting par défaut (passes SALES/REFUND).
+		mockRecordSalesEReporting.mockResolvedValue("etx-sales");
+		mockRecordRefundEReporting.mockResolvedValue("etx-refund");
+		mockPrisma.refund.findMany.mockResolvedValue([]);
+		mockPrisma.refund.update.mockResolvedValue({});
 	});
 
 	it("returns zeros + hasMore=false when no candidates", async () => {
@@ -337,6 +351,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		expect(resetCall?.[0]?.data).toEqual({
 			invoiceRetryDeferred: false,
 			invoiceReconcileAttempts: 0,
+			ereportingRetryDeferred: false,
 		});
 		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -357,6 +372,8 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 				{
 					OR: [
 						{ invoiceRetryDeferred: true },
+						// EINV-EREPORT-009 : DLQ e-reporting SALES.
+						{ ereportingRetryDeferred: true },
 						// EINV-PDF-005 : facture legacy à snapshot manquant.
 						{ invoiceNumber: { not: null }, invoiceDataSnapshot: expect.anything() },
 					],
@@ -399,9 +416,119 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		expect(result.skipped).toBe(1);
 		expect(mockPrisma.order.update).toHaveBeenCalledWith(
 			expect.objectContaining({
-				data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
+				data: {
+					invoiceRetryDeferred: false,
+					invoiceReconcileAttempts: 0,
+					ereportingRetryDeferred: false,
+				},
 			}),
 		);
+	});
+
+	/**
+	 * @regression ereporting-dlq-recovery-2026-05-30
+	 *
+	 * EINV-EREPORT-009 : les Passes SALES/REFUND drainent le DLQ e-reporting
+	 * (`Order/Refund.ereportingRetryDeferred`). Une transaction DGFiP jamais créée
+	 * (échec hot path) DOIT être retentée puis le flag levé — sinon sous/sur-déclaration
+	 * silencieuse (Art. 286 CGI) que la continuité de période ne détecte pas.
+	 */
+	describe("Passes SALES/REFUND — DLQ e-reporting (EINV-EREPORT-009)", () => {
+		it("Passe SALES : retente recordSalesEReporting + lève le flag quand ereportingRetryDeferred + PAID", async () => {
+			mockPrisma.order.findMany.mockResolvedValueOnce([
+				buildCandidate({
+					// Facture saine — seul le flag e-reporting motive la candidature.
+					invoiceNumber: "F-2026-00050",
+					invoiceStatus: "GENERATED",
+					invoicePdfUrl: "https://utfs.io/x.pdf",
+					invoiceDataSnapshot: { invoiceNumber: "F-2026-00050" },
+					paymentStatus: "PAID",
+					invoiceRetryDeferred: false,
+					ereportingRetryDeferred: true,
+				}),
+			]);
+			mockRecordSalesEReporting.mockResolvedValue("etx-sales-1");
+
+			const result = await reconcileInvoices();
+
+			expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
+			expect(result.ereportingSalesRecovered).toBe(1);
+			expect(result.processed).toBe(1);
+			// Flag levé dans le reset succès.
+			const resetCall = mockPrisma.order.update.mock.calls.find(
+				(c) => c[0]?.data?.ereportingRetryDeferred === false,
+			);
+			expect(resetCall).toBeDefined();
+			expect(mockCreateOrderAudit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					metadata: expect.objectContaining({ ereportingSalesRecovered: true }),
+				}),
+			);
+		});
+
+		it("Passe SALES : 'error' persistant ⇒ anyFailure (incrémente invoiceReconcileAttempts, ne lève PAS le flag)", async () => {
+			mockPrisma.order.findMany.mockResolvedValueOnce([
+				buildCandidate({
+					invoiceNumber: "F-2026-00051",
+					invoiceStatus: "GENERATED",
+					invoicePdfUrl: "https://utfs.io/x.pdf",
+					invoiceDataSnapshot: { invoiceNumber: "F-2026-00051" },
+					paymentStatus: "PAID",
+					invoiceRetryDeferred: false,
+					ereportingRetryDeferred: true,
+				}),
+			]);
+			mockRecordSalesEReporting.mockResolvedValue("error");
+			mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 1 });
+
+			const result = await reconcileInvoices();
+
+			expect(result.ereportingSalesRecovered).toBe(0);
+			// anyFailure → increment, jamais de reset (flag conservé pour prochain run).
+			const incrementCall = mockPrisma.order.update.mock.calls.find(
+				(c) => c[0]?.data?.invoiceReconcileAttempts?.increment === 1,
+			);
+			expect(incrementCall).toBeDefined();
+			const resetCall = mockPrisma.order.update.mock.calls.find(
+				(c) => c[0]?.data?.ereportingRetryDeferred === false,
+			);
+			expect(resetCall).toBeUndefined();
+		});
+
+		it("Sweep REFUND : draine les refunds COMPLETED flagués + lève le flag", async () => {
+			mockPrisma.refund.findMany.mockResolvedValueOnce([{ id: "refund-1" }, { id: "refund-2" }]);
+			mockRecordRefundEReporting.mockResolvedValue("etx-refund-1");
+
+			const result = await reconcileInvoices();
+
+			expect(mockRecordRefundEReporting).toHaveBeenCalledWith("refund-1");
+			expect(mockRecordRefundEReporting).toHaveBeenCalledWith("refund-2");
+			expect(result.ereportingRefundRecovered).toBe(2);
+			expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+				where: { id: "refund-1" },
+				data: { ereportingRetryDeferred: false },
+			});
+		});
+
+		it("Sweep REFUND : 'error' conserve le flag (pas d'update)", async () => {
+			mockPrisma.refund.findMany.mockResolvedValueOnce([{ id: "refund-9" }]);
+			mockRecordRefundEReporting.mockResolvedValue("error");
+
+			const result = await reconcileInvoices();
+
+			expect(result.ereportingRefundRecovered).toBe(0);
+			expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		});
+
+		it("Sweep REFUND : ne sélectionne que les COMPLETED flagués", async () => {
+			await reconcileInvoices();
+			const refundFindManyArgs = mockPrisma.refund.findMany.mock.calls[0]?.[0];
+			expect(refundFindManyArgs?.where).toMatchObject({
+				ereportingRetryDeferred: true,
+				status: "COMPLETED",
+				deletedAt: null,
+			});
+		});
 	});
 
 	/**

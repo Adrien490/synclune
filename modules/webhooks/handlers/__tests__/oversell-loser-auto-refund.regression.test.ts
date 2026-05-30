@@ -32,6 +32,7 @@ const {
 	mockLogger,
 	OversellError,
 	CancelledOrderRaceError,
+	AmountMismatchError,
 } = vi.hoisted(() => {
 	// Vraies subclasses — `instanceof` doit résoudre truthy dans le handler.
 	class OversellError extends Error {
@@ -50,6 +51,16 @@ const {
 			this.name = "CancelledOrderRaceError";
 		}
 	}
+	class AmountMismatchError extends Error {
+		constructor(
+			public readonly orderId: string,
+			public readonly expectedTotal: number,
+			public readonly amountReceived: number,
+		) {
+			super(`Amount mismatch on order ${orderId}`);
+			this.name = "AmountMismatchError";
+		}
+	}
 	return {
 		mockPrisma: { order: { findFirst: vi.fn() } },
 		mockMarkOrderAsFailed: vi.fn(),
@@ -64,6 +75,7 @@ const {
 		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 		OversellError,
 		CancelledOrderRaceError,
+		AmountMismatchError,
 	};
 });
 
@@ -85,6 +97,7 @@ vi.mock("../../services/checkout.service", () => ({
 vi.mock("../../services/checkout-order-processing.service", () => ({
 	OversellError,
 	CancelledOrderRaceError,
+	AmountMismatchError,
 }));
 vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-imports

@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockUpdateTag, mockCreateOrderAuditTx } = vi.hoisted(() => ({
-	mockPrisma: {
-		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
-		productSku: { update: vi.fn() },
-		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
-		discount: { update: vi.fn() },
-		$transaction: vi.fn(),
-	},
-	mockUpdateTag: vi.fn(),
-	mockCreateOrderAuditTx: vi.fn(),
-}));
+const { mockPrisma, mockUpdateTag, mockCreateOrderAuditTx, mockSendAdminCronFailedAlert } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
+			productSku: { update: vi.fn() },
+			discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
+			discount: { update: vi.fn() },
+			$transaction: vi.fn(),
+		},
+		mockUpdateTag: vi.fn(),
+		mockCreateOrderAuditTx: vi.fn(),
+		mockSendAdminCronFailedAlert: vi.fn(),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -23,6 +25,11 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/modules/orders/utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
+}));
+
+// AM-5 : tripwire SPOF sync-async-payments.
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminCronFailedAlert: mockSendAdminCronFailedAlert,
 }));
 
 import { cleanupPendingOrders } from "../cleanup-pending-orders.service";
@@ -63,6 +70,9 @@ describe("cleanupPendingOrders", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
+		// AM-5 : par défaut aucun PENDING PI anormalement vieux (tripwire silencieux).
+		mockPrisma.order.count.mockResolvedValue(0);
+		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 	});
 
 	it("returns zero counts when no candidates exist", async () => {
@@ -203,6 +213,37 @@ describe("cleanupPendingOrders", () => {
 
 		const tags = mockUpdateTag.mock.calls.map((c) => c[0]);
 		expect(tags).toEqual(expect.arrayContaining(["orders-user-user-7", "order-detail-order-1"]));
+	});
+
+	// === AM-5 : tripwire SPOF sync-async-payments ===
+
+	it("does NOT alert when no PENDING PaymentIntent order is abnormally old", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.order.count.mockResolvedValue(0);
+
+		await cleanupPendingOrders();
+
+		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+	});
+
+	it("alerts admin when PENDING PaymentIntent orders are older than 7 days (sync-async SPOF)", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.order.count.mockResolvedValue(3);
+
+		await cleanupPendingOrders();
+
+		// Tripwire en lecture seule : compte les PENDING à PI > 7j, n'agit pas dessus.
+		const countCall = mockPrisma.order.count.mock.calls[0]![0];
+		expect(countCall.where.status).toBe("PENDING");
+		expect(countCall.where.paymentStatus).toBe("PENDING");
+		expect(countCall.where.stripePaymentIntentId).toEqual({ not: null });
+
+		expect(mockSendAdminCronFailedAlert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				errors: 3,
+				details: expect.objectContaining({ issue: "stale-pending-pi-orders" }),
+			}),
+		);
 	});
 
 	it("counts errors when a transaction throws and continues with the next order", async () => {

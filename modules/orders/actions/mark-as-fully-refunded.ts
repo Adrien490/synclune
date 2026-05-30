@@ -24,7 +24,7 @@ import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { voidInvoice } from "../services/void-invoice.service";
-import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 
 /**
  * Marque une commande comme entièrement remboursée
@@ -274,7 +274,8 @@ export async function markAsFullyRefunded(
 		// rattaché au Refund, indépendant de la numérotation de l'avoir.
 		const createdRefundId = "_createdRefundId" in order ? order._createdRefundId : null;
 		if (createdRefundId) {
-			await recordRefundEReporting(createdRefundId);
+			// EINV-EREPORT-009 : deferrable — flag de rattrapage si échec.
+			await recordRefundEReportingDeferrable(createdRefundId);
 		}
 
 		// Émission avoir VOID (Art. 272-I CGI) si la facture était active.

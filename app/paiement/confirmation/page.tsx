@@ -13,7 +13,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateLong } from "@/shared/utils/dates";
-import { Clock, Heart, Package, Sparkles, TruckIcon, UserPlus } from "lucide-react";
+import { Clock, Heart, Home, Package, Sparkles, TruckIcon, UserPlus } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -205,6 +205,11 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 													<p className="font-medium tabular-nums">
 														{formatEuro(item.price * item.quantity)}
 													</p>
+													{item.quantity > 1 && (
+														<p className="text-muted-foreground text-xs tabular-nums">
+															{formatEuro(item.price)} × {item.quantity}
+														</p>
+													)}
 												</div>
 											</li>
 										))}
@@ -226,7 +231,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<dd className="tabular-nums">{formatEuro(order.subtotal)}</dd>
 									</div>
 									{order.discountAmount > 0 && (
-										<div className="flex justify-between text-green-600">
+										<div className="text-success flex justify-between">
 											<dt>Réduction</dt>
 											<dd className="tabular-nums">-{formatEuro(order.discountAmount)}</dd>
 										</div>
@@ -327,7 +332,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 								) : (
 									<Button asChild size="lg" className="flex-1">
 										<Link href={ROUTES.SHOP.HOME}>
-											<Package className="mr-2 size-4" />
+											<Home className="mr-2 size-4" />
 											Retour à l&apos;accueil
 										</Link>
 									</Button>

@@ -30,8 +30,9 @@ interface CheckoutStripeSectionProps {
 /**
  * Stripe card block: <Elements> wrapper, standard PaymentElement, PayButton and trust badges.
  *
- * Le paiement express (Apple Pay / Google Pay / Link) est désormais affiché EN HAUT
- * du checkout via `CheckoutExpressTop` (découvrabilité P1-a) — il n'est plus rendu ici.
+ * Carte uniquement : le PaymentIntent est restreint à `payment_method_types: ["card"]`
+ * côté serveur (`initialize-payment.ts`). Aucun paiement express (Apple Pay / Google Pay /
+ * Link) n'est proposé.
  *
  * Isolated in its own file so `checkout-form.tsx` can load it via `next/dynamic`
  * and keep the ~100KB `@stripe/react-stripe-js` bundle off the critical path.

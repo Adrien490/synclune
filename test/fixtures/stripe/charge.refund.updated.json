@@ -1,0 +1,23 @@
+{
+	"id": "evt_test_charge_refund_updated",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "charge.refund.updated",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "re_test_legacy_updated",
+			"object": "refund",
+			"amount": 5000,
+			"currency": "eur",
+			"charge": "ch_test_partial",
+			"payment_intent": "pi_test_partial",
+			"reason": "requested_by_customer",
+			"status": "succeeded",
+			"metadata": { "orderId": "order_test_partial" }
+		}
+	}
+}

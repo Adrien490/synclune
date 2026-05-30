@@ -42,10 +42,19 @@ export const maxDuration = 60;
  *
  *  3. **Anti-replay applicatif** (par `event.id`). `WebhookEvent.stripeEventId`
  *     est UNIQUE en DB. Un même `evt_xxx` n'est traité qu'une fois (status
- *     PROCESSING/COMPLETED/SKIPPED → skip). Couvre aussi bien :
+ *     PROCESSING frais/COMPLETED/SKIPPED → skip). Couvre :
  *       - le replay malveillant pendant la fenêtre 5min
  *       - les retries Stripe légitimes après timeout 200
- *       - les doublons cross-instance Vercel (race-guard post-upsert L138-145)
+ *       - les doublons cross-instance Vercel concurrents via deux gardes ciblées :
+ *         (a) catch P2002 sur l'`upsert` quand deux threads tentent la branche
+ *             CREATE simultanément (1ère insertion) ;
+ *         (b) race-guard post-upsert (`existingEvent === null && attempts >= 1`)
+ *             quand un thread a inséré entre le findUnique et l'upsert d'un autre.
+ *       - la reprise d'un PROCESSING périmé (lambda crashée) sans avaler le retry
+ *         Stripe NI barger-in sur un traitement concurrent : la fraîcheur est
+ *         mesurée sur `processingStartedAt` (WEBHOOK-AUDIT-002), (re)posé à chaque
+ *         passage en PROCESSING par la route ET le cron retry-webhooks, de sorte
+ *         qu'une reprise fraîche court-circuite les arrivants pendant son exécution.
  *
  *  4. **Idempotence métier** (downstream) :
  *       - `Order.stripePaymentIntentId @unique` → pas de double order par PI
@@ -112,20 +121,30 @@ export async function POST(req: Request) {
 		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
-			select: { id: true, status: true, receivedAt: true },
+			select: { id: true, status: true, receivedAt: true, processingStartedAt: true },
 		});
 
 		// WEBHOOK-AUDIT-001 : un PROCESSING « frais » signale un traitement live
-		// concurrent (autre instance Vercel) → on court-circuite pour éviter le
-		// double-dispatch. Mais un PROCESSING « périmé » (> STALE_PROCESSING_THRESHOLD_MS,
-		// soit bien au-delà du maxDuration=60s de la route) trahit une lambda crashée
-		// en plein dispatch : si on renvoyait 200 "duplicate", on AVALERAIT le retry
-		// légitime de Stripe (Stripe considère l'event traité et arrête de réessayer),
-		// laissant la commande/refund/litige bloqué jusqu'au reset 24h du cron. On
-		// laisse donc l'upsert ci-dessous reprendre la main sur un PROCESSING périmé.
+		// concurrent (autre instance Vercel ou cron retry-webhooks) → on court-circuite
+		// pour éviter le double-dispatch. Mais un PROCESSING « périmé »
+		// (> STALE_PROCESSING_THRESHOLD_MS, soit bien au-delà du maxDuration=60s de la
+		// route) trahit une lambda crashée en plein dispatch : si on renvoyait 200
+		// "duplicate", on AVALERAIT le retry légitime de Stripe (Stripe considère l'event
+		// traité et arrête de réessayer), laissant la commande/refund/litige bloqué
+		// jusqu'au reset du cron. On laisse donc l'upsert ci-dessous reprendre la main.
+		//
+		// WEBHOOK-AUDIT-002 : la fraîcheur se mesure sur `processingStartedAt` (DÉBUT du
+		// traitement courant, (re)posé à chaque passage en PROCESSING), PAS sur
+		// `receivedAt` (1ère réception, jamais rafraîchie). Sinon un PROCESSING
+		// fraîchement repris par le cron retry-webhooks (receivedAt ancien) était vu
+		// « périmé » par une redélivrance Stripe concurrente, qui barge-in et
+		// double-dispatchait l'event pendant que le cron le traitait encore. Fallback
+		// `receivedAt` pour les lignes legacy (processingStartedAt NULL avant migration).
+		const processingSince = existingEvent?.processingStartedAt ?? existingEvent?.receivedAt ?? null;
 		const isStaleProcessing =
 			existingEvent?.status === WebhookEventStatus.PROCESSING &&
-			Date.now() - existingEvent.receivedAt.getTime() > STALE_PROCESSING_THRESHOLD_MS;
+			processingSince !== null &&
+			Date.now() - processingSince.getTime() > STALE_PROCESSING_THRESHOLD_MS;
 
 		if (
 			existingEvent?.status === WebhookEventStatus.COMPLETED ||
@@ -152,10 +171,16 @@ export async function POST(req: Request) {
 					stripeEventId: event.id,
 					eventType: event.type,
 					status: WebhookEventStatus.PROCESSING,
+					// WEBHOOK-AUDIT-002 : démarre l'horloge de fraîcheur du traitement courant.
+					processingStartedAt: new Date(),
 				},
 				update: {
 					attempts: { increment: 1 },
 					status: WebhookEventStatus.PROCESSING,
+					// WEBHOOK-AUDIT-002 : une reprise (PROCESSING périmé / FAILED) redémarre
+					// l'horloge → une redélivrance Stripe concurrente la verra fraîche et
+					// court-circuitera au lieu de double-dispatcher.
+					processingStartedAt: new Date(),
 				},
 			});
 		} catch (e) {

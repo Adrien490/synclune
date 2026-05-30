@@ -112,18 +112,18 @@ describe("buildFilterConditions", () => {
 	// Stock status composite filter
 	// ========================================================================
 
-	it("should handle stockStatus: in_stock", () => {
+	// Sémantique alignée sur le filtre produit (audit filtres A1) : « En stock »
+	// = au moins une unité (gt 0), pas seulement le stock sain (>= LOW).
+	it("should handle stockStatus: in_stock (inventory > 0)", () => {
 		const result = buildFilterConditions({ stockStatus: "in_stock" } as ProductSkuFilters);
 
-		expect(result).toContainEqual({ inventory: { gte: 3 } });
+		expect(result).toContainEqual({ inventory: { gt: 0 } });
 	});
 
-	it("should handle stockStatus: low_stock", () => {
+	it("should handle stockStatus: low_stock (0 < inventory <= LOW)", () => {
 		const result = buildFilterConditions({ stockStatus: "low_stock" } as ProductSkuFilters);
 
-		expect(result).toContainEqual({
-			AND: [{ inventory: { gte: 1 } }, { inventory: { lt: 3 } }],
-		});
+		expect(result).toContainEqual({ inventory: { gt: 0, lte: 3 } });
 	});
 
 	it("should handle stockStatus: out_of_stock", () => {
@@ -136,6 +136,36 @@ describe("buildFilterConditions", () => {
 		const result = buildFilterConditions({ stockStatus: "all" } as ProductSkuFilters);
 
 		expect(result).toEqual([]);
+	});
+
+	// Garde anti-régression : couverture totale et cohérente avec le filtre
+	// produit, sans trou ni double définition de « En stock » entre la table
+	// produits et la table SKU. Frontières (LOW = 3) :
+	//   inventory 0 -> out_of_stock seul ; 1 et 3 -> in_stock ET low_stock ;
+	//   4 -> in_stock seul.
+	describe("@regression sku-stock-status-semantics — boundaries", () => {
+		const matches = (
+			status: "in_stock" | "low_stock" | "out_of_stock",
+			inventory: number,
+		): boolean => {
+			const [cond] = buildFilterConditions({ stockStatus: status } as ProductSkuFilters) as Array<{
+				inventory: { gt?: number; lte?: number };
+			}>;
+			if (!cond) return false;
+			const { gt, lte } = cond.inventory;
+			return (gt === undefined || inventory > gt) && (lte === undefined || inventory <= lte);
+		};
+
+		it.each([
+			[0, { in_stock: false, low_stock: false, out_of_stock: true }],
+			[1, { in_stock: true, low_stock: true, out_of_stock: false }],
+			[3, { in_stock: true, low_stock: true, out_of_stock: false }],
+			[4, { in_stock: true, low_stock: false, out_of_stock: false }],
+		] as const)("inventory %i classified correctly", (inventory, expected) => {
+			expect(matches("in_stock", inventory)).toBe(expected.in_stock);
+			expect(matches("low_stock", inventory)).toBe(expected.low_stock);
+			expect(matches("out_of_stock", inventory)).toBe(expected.out_of_stock);
+		});
 	});
 
 	// ========================================================================

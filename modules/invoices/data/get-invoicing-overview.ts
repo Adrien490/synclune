@@ -4,6 +4,7 @@ import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getFranchiseThresholdCents } from "@/shared/constants/vat-franchise";
 
 /**
  * Vue d'ensemble du module facturation pour le dashboard admin
@@ -47,7 +48,7 @@ export type InvoicingOverview = {
 	};
 	/**
 	 * EINV-GLOBAL-011 : surveillance du seuil franchise TVA art. 293 B CGI
-	 * (37 500 € HT/an pour ventes de biens). Pré-alerte UI à 30 000 € (~80 %)
+	 * (85 000 € HT/an pour ventes de biens — cas Synclune). Pré-alerte UI à ~80 %
 	 * pour planifier la migration régime réel (recalcul TVA OrderItem +
 	 * mentions PDF). Ne bloque jamais l'émission — signal d'anticipation.
 	 */
@@ -111,11 +112,13 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 	const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
 	// EINV-GLOBAL-011 : seuil franchise TVA art. 293 B CGI. Exonération TVA
-	// jusqu'à 37 500 € HT/an (vente de biens). Pré-alerte à 30 000 € (80 %)
-	// pour planifier le passage au régime réel : recalcul TVA OrderItem,
+	// jusqu'à 85 000 € HT/an (vente de biens — cas Synclune ; 37 500 € pour les
+	// prestations de services). SSOT unique partagée avec le bandeau dashboard
+	// (`get-vat-progress`), ajustable via `VAT_FRANCHISE_THRESHOLD_EUR`. Pré-alerte
+	// à 80 % pour planifier le passage au régime réel : recalcul TVA OrderItem,
 	// mention "TVA non applicable art. 293 B" retirée du PDF.
-	const FRANCHISE_THRESHOLD_CENTS = 3_750_000;
-	const FRANCHISE_WARNING_CENTS = 3_000_000;
+	const FRANCHISE_THRESHOLD_CENTS = getFranchiseThresholdCents();
+	const FRANCHISE_WARNING_CENTS = Math.round(FRANCHISE_THRESHOLD_CENTS * 0.8);
 
 	// Compteurs Order.invoiceStatus — exclut les commandes soft-deleted.
 	const invoiceGroups = await prisma.order.groupBy({

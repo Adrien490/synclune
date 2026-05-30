@@ -10,15 +10,17 @@ import { prisma } from "@/shared/lib/prisma";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { parseFullName } from "@/modules/payments/utils/parse-full-name";
-import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
+import { enrichStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { createOrderInTransaction } from "@/modules/payments/services/order-creation.service";
 import { buildStripeLineItems } from "@/modules/payments/services/checkout-line-items.service";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { saveAddressInTransaction } from "@/modules/addresses/services/save-address.service";
 import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
+import { requireActiveAccountIfAuthenticated } from "@/modules/auth/lib/require-auth";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { BusinessError } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
@@ -50,6 +52,16 @@ export async function confirmCheckout(
 			const userEmail = session?.user.email ?? null;
 
 			span.setAttribute("checkout.is_guest", !userId);
+
+			// 1b. AUTHZ-1 (AM-3) : re-vérifie en DB que le compte est ACTIVE.
+			// `initializePayment` posait déjà cette garde avant de créer le PI, mais
+			// un compte suspendu/INACTIVE entre le montage de la page et le clic Payer
+			// pouvait encore faire créer une commande payée. On rejoue donc la garde
+			// ici, avant la création de l'Order (les invités passent — pas de session).
+			const accountGate = await requireActiveAccountIfAuthenticated();
+			if ("error" in accountGate) {
+				return { success: false, error: accountGate.error.message };
+			}
 
 			// 2. Store-open guard (admin bypass for live checkout testing)
 			if (session?.user.role !== "ADMIN") {
@@ -119,30 +131,11 @@ export async function confirmCheckout(
 
 			const { firstName, lastName } = parseFullName(v.shippingAddress.fullName);
 
-			// 5. Get or create Stripe customer + résoudre le snapshot e-invoicing B2B/B2G.
-			// Le même `User` porte le `stripeCustomerId` et l'identité fiscale figée
-			// au checkout (Art. 289 CGI). Les invités restent B2C (pas de compte → pas
-			// d'identifiants entreprise).
-			let stripeCustomerId: string | null = null;
-			if (userId) {
-				const user = await prisma.user.findUnique({
-					where: { id: userId },
-					select: { stripeCustomerId: true },
-				});
-				stripeCustomerId = user?.stripeCustomerId ?? null;
-			}
-
-			const customerResult = await getOrCreateStripeCustomer(stripeCustomerId, {
-				email: finalEmail,
-				firstName,
-				lastName,
-				address: v.shippingAddress,
-				phoneNumber: v.shippingAddress.phoneNumber,
-				userId,
-			});
-			if (!("error" in customerResult) || !customerResult.error) {
-				stripeCustomerId = customerResult.customerId;
-			}
+			// 5. Le client Stripe est créé (idempotent par email) et rattaché au
+			// PaymentIntent dès `initializePayment`. On l'enrichit avec l'identité de
+			// facturation réelle (nom/adresse) à l'étape 9bis, après l'update du PI —
+			// best-effort et hors du chemin critique du paiement. Les invités restent
+			// B2C (pas de compte → pas d'identifiants entreprise).
 
 			// 6. Re-validate cart (stock + prices)
 			const skuDetailsResults = await Promise.all(
@@ -196,8 +189,9 @@ export async function confirmCheckout(
 			}
 
 			// 9. Update PI with order metadata (single call, no retrieve race condition)
+			let updatedPaymentIntent: Stripe.Response<Stripe.PaymentIntent>;
 			try {
-				await withStripeCircuitBreaker(() =>
+				updatedPaymentIntent = await withStripeCircuitBreaker(() =>
 					stripe.paymentIntents.update(v.paymentIntentId, {
 						amount: order.total,
 						receipt_email: finalEmail,
@@ -232,6 +226,39 @@ export async function confirmCheckout(
 					};
 				}
 				throw stripeError;
+			}
+
+			// 9bis. Enrich the Stripe customer (created email-only at init) with the
+			// real billing identity, now that the order exists and the PI carries the
+			// customer id. Deferred post-response via `after()` so it never adds latency
+			// before the front confirms the payment. Best-effort — failures are logged.
+			const piCustomerId =
+				typeof updatedPaymentIntent.customer === "string" ? updatedPaymentIntent.customer : null;
+			if (piCustomerId) {
+				after(async () => {
+					await enrichStripeCustomer(piCustomerId, {
+						name: `${firstName} ${lastName}`.trim(),
+						address: v.shippingAddress,
+						phoneNumber: v.shippingAddress.phoneNumber,
+					});
+					// Self-heal: backfill User.stripeCustomerId if init created the
+					// customer but its DB write failed (transient). The `stripeCustomerId:
+					// null` guard makes this a no-op when already set and never clobbers
+					// an existing value (the column is @unique).
+					if (userId) {
+						try {
+							await prisma.user.updateMany({
+								where: { id: userId, stripeCustomerId: null },
+								data: { stripeCustomerId: piCustomerId },
+							});
+						} catch (e) {
+							logger.warn("[STRIPE_CUSTOMER] Failed to backfill User.stripeCustomerId", {
+								userId,
+								error: e instanceof Error ? e.message : String(e),
+							});
+						}
+					}
+				});
 			}
 
 			// 10. Save address if requested (non-blocking, logged on failure)

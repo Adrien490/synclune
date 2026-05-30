@@ -5,6 +5,17 @@ import { getFirstParam } from "@/shared/utils/params";
 
 import type { ProductSearchParams } from "./types";
 
+/**
+ * Parser de filtres du STOREFRONT (clés nues : `color`, `material`, `priceMin`…).
+ *
+ * Dette assumée (audit filtres S4) : il existe trois conventions de filtres
+ * produits dans le repo —
+ *   1. ce parser storefront (clés nues + `product-filter-params.service.ts` + form TanStack) ;
+ *   2. le parser admin `app/admin/catalogue/produits/_utils/params.ts` (clés préfixées `filter_`) ;
+ *   3. le hook générique `shared/hooks/use-filter.ts` (clés `filter_`).
+ * Le storefront ne passe PAS par `useFilter`. Toute évolution des clés doit être
+ * répercutée sur les surfaces concernées. À unifier si la maintenance le justifie.
+ */
 export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 	// Pages publiques : toujours filtrer sur les produits PUBLIC uniquement
 	const filters: ProductFilters = {
@@ -86,14 +97,19 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 				}
 			}
 			// Stock status filter
+			// NB (audit filtres S2) : `out_of_stock` est accepté ici mais l'UI
+			// storefront n'émet que `in_stock` (toggle « En stock »). `out_of_stock`
+			// n'est atteignable que par URL forgée (afficherait les produits en
+			// rupture au public) — dette assumée, comportement conservé.
 			else if (key === "stockStatus") {
 				if (filterValue === "in_stock" || filterValue === "out_of_stock") {
 					filters.stockStatus = filterValue;
 				}
 			}
-			// On sale filter
+			// On sale filter — n'accepte que "true" (harmonisé avec l'admin, dont un
+			// test verrouille le rejet de "1" ; aucune UI n'émet "1"). Audit filtres A2.
 			else if (key === "onSale") {
-				if (filterValue === "true" || filterValue === "1") {
+				if (filterValue === "true") {
 					filters.onSale = true;
 				}
 			}

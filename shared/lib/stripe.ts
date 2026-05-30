@@ -5,8 +5,9 @@ import { logger } from "./logger";
 
 /**
  * Instance Stripe centralisée pour toute l'application
- * Utilise automatiquement la version API compatible avec le SDK Stripe (v21.x)
+ * - apiVersion épinglée explicitement ("2026-05-27.dahlia") pour neutraliser les breaking changes silencieux
  * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
+ * - timeout: 10s
  *
  * Note: Cette instance suppose que STRIPE_SECRET_KEY est défini.
  * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().

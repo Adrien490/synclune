@@ -133,7 +133,7 @@ Tous les acronymes, termes techniques et termes métier utilisés dans le framew
 - **3DS2** : _3-D Secure 2_ — protocole d'authentification forte cartes bancaires (SCA).
 - **Touch target** : zone tactile cliquable. Min 44×44px (WCAG 2.5.5 + Apple HIG).
 - **tsvector** : type Postgres pour full-text search indexable.
-- **TVA franchise art. 293 B 🟣** : régime fiscal FR exemptant de TVA en dessous d'un seuil (37 500 € HT pour prestations de service / vente bijoux artisanaux selon catégorie). Synclune surveille via env `VAT_FRANCHISE_THRESHOLD_EUR` + bandeau dashboard warning ≥ 80%, critical ≥ 100%.
+- **TVA franchise art. 293 B 🟣** : régime fiscal FR exemptant de TVA en dessous d'un seuil (**85 000 € HT pour les ventes de marchandises** — cas Synclune, bijoux ; 37 500 € pour les prestations de services). Synclune surveille via env `VAT_FRANCHISE_THRESHOLD_EUR` (défaut 85 000 €) + bandeau dashboard warning ≥ 80%, critical ≥ 100%.
 
 ## U
 

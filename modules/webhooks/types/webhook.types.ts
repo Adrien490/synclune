@@ -89,6 +89,9 @@ export type SupportedStripeEvent =
 	| "charge.refunded"
 	| "refund.created"
 	| "refund.updated"
+	// Alias legacy Stripe : certaines versions d'API / abonnements d'endpoint
+	// émettent encore `charge.refund.updated` au lieu de `refund.updated`.
+	| "charge.refund.updated"
 	| "refund.failed"
 	| "charge.dispute.created"
 	| "charge.dispute.updated"

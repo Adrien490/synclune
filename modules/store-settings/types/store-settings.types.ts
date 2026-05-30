@@ -1,3 +1,5 @@
+import type { AnnouncementVariant } from "@/shared/constants/announcement";
+
 /** Minimal store status for storefront gate */
 export interface StoreStatus {
 	isClosed: boolean;
@@ -23,6 +25,7 @@ export interface StoreSettingsAdmin extends StoreStatus {
 	announcementStartsAt: Date | null;
 	announcementEndsAt: Date | null;
 	announcementIsActive: boolean;
+	announcementVariant: AnnouncementVariant;
 
 	/** Feature gate : retrait en boutique activé (default false tant que logistique non opérationnelle). */
 	clickAndCollectEnabled: boolean;
@@ -34,4 +37,5 @@ export interface PublicAnnouncement {
 	link: string | null;
 	endsAt: Date | null;
 	hash: string;
+	variant: AnnouncementVariant;
 }

@@ -77,19 +77,6 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
-							{/* Référence commande (orderNumber préféré) */}
-							{displayReference && (
-								<Alert>
-									<Info className="size-4" />
-									<AlertDescription>
-										Référence de commande :{" "}
-										<span className="tabular-nums">
-											{orderNumber ? `#${orderNumber}` : displayReference}
-										</span>
-									</AlertDescription>
-								</Alert>
-							)}
-
 							{/* Conseil contextuel (colocalisé dans CHECKOUT_CANCEL_MESSAGES.advice) */}
 							{errorInfo.advice && (
 								<aside
@@ -110,6 +97,14 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								Ton panier et tes informations ont été sauvegardés. Tu peux réessayer immédiatement.
 							</p>
 
+							{/* Réassurance non-débit universelle (sauf "canceled" qui le mentionne déjà
+							    dans sa description, pour éviter le doublon) */}
+							{reason !== "canceled" && (
+								<p className="text-muted-foreground text-center text-sm">
+									Aucun montant n&apos;a été débité de ta carte.
+								</p>
+							)}
+
 							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button asChild size="lg" className="flex-1">
@@ -122,6 +117,16 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									<Link href={`mailto:${BRAND.contact.email}`}>M&apos;écrire</Link>
 								</Button>
 							</div>
+
+							{/* Référence commande — légende discrète (utile pour le support) */}
+							{displayReference && (
+								<p className="text-muted-foreground text-center text-xs">
+									Référence de commande :{" "}
+									<span className="text-foreground font-medium tabular-nums">
+										{orderNumber ? `#${orderNumber}` : displayReference}
+									</span>
+								</p>
+							)}
 						</CardContent>
 					</Card>
 				</div>

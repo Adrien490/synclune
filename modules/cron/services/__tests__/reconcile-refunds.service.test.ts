@@ -1,25 +1,39 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockPrisma, mockStripe, mockGetStripeClient, mockCanTransition, mockCaptureRefundError } =
-	vi.hoisted(() => ({
-		mockPrisma: {
-			refund: {
-				findMany: vi.fn(),
-				findUnique: vi.fn(),
-				updateMany: vi.fn(),
-				aggregate: vi.fn(),
-			},
-			order: { update: vi.fn() },
-			orderHistory: { create: vi.fn() },
-			$transaction: vi.fn(),
+const {
+	mockPrisma,
+	mockStripe,
+	mockGetStripeClient,
+	mockCanTransition,
+	mockCaptureRefundError,
+	mockInitiateAutomaticRefund,
+	mockSendRefundFailureAlert,
+} = vi.hoisted(() => ({
+	mockPrisma: {
+		refund: {
+			findMany: vi.fn(),
+			findUnique: vi.fn(),
+			updateMany: vi.fn(),
+			update: vi.fn(),
+			aggregate: vi.fn(),
 		},
-		mockStripe: {
-			refunds: { retrieve: vi.fn() },
-		},
-		mockGetStripeClient: vi.fn(),
-		mockCanTransition: vi.fn(() => true),
-		mockCaptureRefundError: vi.fn(),
-	}));
+		// finalizeRefund restocke désormais l'inventory (P2-1) : refundItem +
+		// productSku sont lus dans la transaction de finalisation.
+		refundItem: { findMany: vi.fn() },
+		productSku: { findMany: vi.fn() },
+		order: { update: vi.fn(), findUnique: vi.fn() },
+		orderHistory: { create: vi.fn() },
+		$transaction: vi.fn(),
+	},
+	mockStripe: {
+		refunds: { retrieve: vi.fn() },
+	},
+	mockGetStripeClient: vi.fn(),
+	mockCanTransition: vi.fn(() => true),
+	mockCaptureRefundError: vi.fn(),
+	mockInitiateAutomaticRefund: vi.fn(),
+	mockSendRefundFailureAlert: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -40,6 +54,14 @@ vi.mock("@/modules/refunds/services/refund-state-machine.service", () => ({
 
 vi.mock("@/modules/refunds/utils/capture-refund-error", () => ({
 	captureRefundError: mockCaptureRefundError,
+}));
+
+// AM-1 : la phase 2 (retry des auto-refunds bloqués sans stripeRefundId) emprunte
+// `initiateAutomaticRefund` et `sendRefundFailureAlert` du service paiement webhook.
+vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
+	AUTO_REFUND_NOTE_PREFIX: "Auto-refund payment_failed webhook",
+	initiateAutomaticRefund: mockInitiateAutomaticRefund,
+	sendRefundFailureAlert: mockSendRefundFailureAlert,
 }));
 
 import { reconcileRefunds } from "../reconcile-refunds.service";
@@ -66,9 +88,19 @@ describe("reconcileRefunds", () => {
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
+		// Défaut persistant : aucun candidat. Les tests de la phase 1 (finalisation)
+		// surchargent le PREMIER appel via `mockResolvedValueOnce`, de sorte que le
+		// 2ᵉ appel (phase 2 AM-1) retombe sur ce défaut vide → no-op.
 		mockPrisma.refund.findMany.mockResolvedValue([]);
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.refund.update.mockResolvedValue({});
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+		// Pas de restock par défaut (finalizeRefund P2-1) ni d'avoir fallback (P2-2).
+		mockPrisma.refundItem.findMany.mockResolvedValue([]);
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockInitiateAutomaticRefund.mockResolvedValue({ success: true, refundId: "re_retry" });
+		mockSendRefundFailureAlert.mockResolvedValue(undefined);
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => unknown) =>
 			fn(mockPrisma),
 		);
@@ -111,7 +143,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("finalises a refund to COMPLETED when Stripe says succeeded (partial refund → PARTIALLY_REFUNDED)", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 2000 } });
@@ -133,7 +165,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("flags the order as REFUNDED when totalRefunded reaches orderTotal", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
@@ -147,7 +179,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("marks refund FAILED locally when Stripe says failed", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: "expired_or_canceled_card",
@@ -164,7 +196,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("skips pending refunds (the webhook will pick them up)", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "pending" });
 
 		const result = await reconcileRefunds();
@@ -175,7 +207,7 @@ describe("reconcileRefunds", () => {
 
 	it("skips refund with null stripeRefundId without calling Stripe", async () => {
 		const candidate = buildCandidate();
-		mockPrisma.refund.findMany.mockResolvedValue([{ ...candidate, stripeRefundId: null }]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([{ ...candidate, stripeRefundId: null }]);
 
 		const result = await reconcileRefunds();
 
@@ -184,7 +216,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("counts as skipped when the optimistic guard misses (concurrent webhook reconciliation race)", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		// Simulates the webhook beating the cron : `status: APPROVED` no longer matches.
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
@@ -197,7 +229,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("captures and counts a Stripe API error as errored without aborting the batch", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([
+		mockPrisma.refund.findMany.mockResolvedValueOnce([
 			buildCandidate({ id: "r1", stripeRefundId: "re_err" }),
 			buildCandidate({ id: "r2", stripeRefundId: "re_ok" }),
 		]);
@@ -217,7 +249,7 @@ describe("reconcileRefunds", () => {
 		const candidates = Array.from({ length: 25 }, (_, i) =>
 			buildCandidate({ id: `r${i}`, stripeRefundId: `re_${i}` }),
 		);
-		mockPrisma.refund.findMany.mockResolvedValue(candidates);
+		mockPrisma.refund.findMany.mockResolvedValueOnce(candidates);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "pending" });
 
 		const result = await reconcileRefunds();
@@ -226,7 +258,7 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("writes a SYSTEM OrderHistory entry on successful COMPLETED finalisation (DLQ audit trail)", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
@@ -248,8 +280,79 @@ describe("reconcileRefunds", () => {
 		});
 	});
 
+	// === AM-1 : phase 2 — retry des auto-refunds dont la création Stripe a échoué ===
+
+	function buildStuckAutoRefund(
+		overrides: Partial<{
+			id: string;
+			attemptCount: number;
+			stripePaymentIntentId: string | null;
+		}> = {},
+	) {
+		return {
+			id: overrides.id ?? "refund-stuck",
+			orderId: "order-9",
+			attemptCount: overrides.attemptCount ?? 0,
+			order: {
+				stripePaymentIntentId:
+					overrides.stripePaymentIntentId === undefined ? "pi_9" : overrides.stripePaymentIntentId,
+				orderNumber: "SYN-009",
+			},
+		};
+	}
+
+	it("retries a stuck auto-refund (no stripeRefundId) via initiateAutomaticRefund", async () => {
+		// Phase 1 : aucun candidat ; phase 2 : un auto-refund bloqué.
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([buildStuckAutoRefund()]);
+
+		const result = await reconcileRefunds();
+
+		// Borne d'abord (increment attemptCount), puis appel Stripe via le helper.
+		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+			where: { id: "refund-stuck" },
+			data: { attemptCount: { increment: 1 } },
+		});
+		expect(mockInitiateAutomaticRefund).toHaveBeenCalledWith("pi_9", "order-9", expect.any(String));
+		expect(mockSendRefundFailureAlert).not.toHaveBeenCalled();
+		expect(result).toMatchObject({ processed: 1, errored: 0 });
+	});
+
+	it("alerts admin when a stuck auto-refund exhausts create retries", async () => {
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([buildStuckAutoRefund({ attemptCount: 4 })]);
+		mockInitiateAutomaticRefund.mockResolvedValue({
+			success: false,
+			error: new Error("Stripe unavailable"),
+		});
+
+		const result = await reconcileRefunds();
+
+		// attemptCount passe de 4 → 5 (= AUTO_REFUND_MAX_CREATE_ATTEMPTS) → alerte.
+		expect(mockSendRefundFailureAlert).toHaveBeenCalledWith(
+			"order-9",
+			"pi_9",
+			"other",
+			expect.stringContaining("après 5 tentatives"),
+		);
+		expect(result).toMatchObject({ errored: 1 });
+	});
+
+	it("skips a stuck auto-refund whose order has no PaymentIntent (anomaly, no Stripe call)", async () => {
+		mockPrisma.refund.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([buildStuckAutoRefund({ stripePaymentIntentId: null })]);
+
+		await reconcileRefunds();
+
+		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+	});
+
 	it("writes a SYSTEM OrderHistory entry on FAILED finalisation (DLQ audit trail)", async () => {
-		mockPrisma.refund.findMany.mockResolvedValue([buildCandidate()]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({
 			status: "failed",
 			failure_reason: "expired_or_canceled_card",

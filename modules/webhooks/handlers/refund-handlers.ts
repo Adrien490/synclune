@@ -167,10 +167,29 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					authorName: "Stripe",
 				});
 				if (creditNoteResult.kind === "failed") {
+					// P2-E (audit dispute 2026-05-30) : symétrie avec le full-reclaim
+					// (voidInvoice → Sentry). Un avoir partiel Art. 272-I manquant est un
+					// gap réglementaire → alerter Sentry, pas seulement un warn.
 					logger.warn(
 						`charge.refunded — credit note emission failed for refund ${r.id}: ${creditNoteResult.error}`,
 						{ service: "webhook", orderId: order.id, refundId: r.id },
 					);
+					Sentry.withScope((scope) => {
+						scope.setLevel("error");
+						scope.setTag("invoicing", "credit-note-failed");
+						scope.setTag("source", "webhook-charge-refunded");
+						scope.setFingerprint(["credit-note", "max-retries", r.id]);
+						scope.setContext("order", {
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							stripeChargeId: charge.id,
+							refundId: r.id,
+						});
+						Sentry.captureMessage(
+							"issueCreditNoteForRefund failed on charge.refunded (refund partiel) — avoir manquant",
+							"error",
+						);
+					});
 				}
 			}
 		}

@@ -5,6 +5,12 @@ import { useActionState } from "react";
 
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
+import {
+	ANNOUNCEMENT_VARIANTS,
+	ANNOUNCEMENT_VARIANT_CLASSES,
+	ANNOUNCEMENT_VARIANT_LABELS,
+	type AnnouncementVariant,
+} from "@/shared/constants/announcement";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
@@ -22,6 +28,7 @@ type AnnouncementFormProps = Pick<
 	| "announcementStartsAt"
 	| "announcementEndsAt"
 	| "announcementIsActive"
+	| "announcementVariant"
 >;
 
 export function AnnouncementForm(props: AnnouncementFormProps) {
@@ -33,6 +40,7 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 		startsAt: formatParisDateForInput(props.announcementStartsAt),
 		endsAt: formatParisDateForInput(props.announcementEndsAt),
 		isActive: props.announcementIsActive,
+		variant: props.announcementVariant,
 	};
 
 	const form = useAppForm({ defaultValues: initial });
@@ -92,6 +100,19 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 				)}
 			</form.AppField>
 
+			<form.AppField name="variant">
+				{(field) => (
+					<field.SelectField
+						label="Tonalité"
+						options={ANNOUNCEMENT_VARIANTS.map((value) => ({
+							value,
+							label: ANNOUNCEMENT_VARIANT_LABELS[value],
+						}))}
+						disabled={isPending}
+					/>
+				)}
+			</form.AppField>
+
 			<div className="grid gap-4 sm:grid-cols-2">
 				<form.AppField name="startsAt">
 					{(field) => (
@@ -124,7 +145,11 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 				})}
 			>
 				{({ values }) => (
-					<AnnouncementPreview message={values.message} isActive={values.isActive} />
+					<AnnouncementPreview
+						message={values.message}
+						isActive={values.isActive}
+						variant={values.variant}
+					/>
 				)}
 			</form.Subscribe>
 
@@ -145,7 +170,15 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 	);
 }
 
-function AnnouncementPreview({ message, isActive }: { message: string; isActive: boolean }) {
+function AnnouncementPreview({
+	message,
+	isActive,
+	variant,
+}: {
+	message: string;
+	isActive: boolean;
+	variant: AnnouncementVariant;
+}) {
 	const preview = message.trim() || "Votre message apparaîtra ici.";
 	return (
 		<div className="space-y-2">
@@ -156,7 +189,7 @@ function AnnouncementPreview({ message, isActive }: { message: string; isActive:
 			<div
 				className={cn(
 					"relative flex h-11 items-center justify-center overflow-hidden rounded-md px-10 text-center text-sm font-medium tracking-wide",
-					"bg-primary text-primary-foreground",
+					ANNOUNCEMENT_VARIANT_CLASSES[variant],
 					!isActive && "opacity-50",
 				)}
 			>

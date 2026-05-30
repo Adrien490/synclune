@@ -417,12 +417,24 @@ export const PAYMENT_UPDATE_AMOUNT_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour l'annulation d'un Payment Intent orphelin
+ *
+ * Déclenchée best-effort au re-init quand le hash panier change. Rare en usage
+ * normal — la limite borne surtout l'abus (spam de l'API Stripe `cancel`).
+ */
+export const PAYMENT_CANCEL_ORPHAN_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
  * Toutes les limites de paiement
  */
 export const PAYMENT_LIMITS = {
 	CREATE_SESSION: CHECKOUT_CREATE_SESSION_LIMIT,
 	VALIDATE_DISCOUNT: DISCOUNT_CODE_VALIDATE_LIMIT,
 	UPDATE_AMOUNT: PAYMENT_UPDATE_AMOUNT_LIMIT,
+	CANCEL_ORPHAN: PAYMENT_CANCEL_ORPHAN_LIMIT,
 } as const;
 
 /**
@@ -1720,12 +1732,21 @@ export const ADMIN_DASHBOARD_LIMITS = {
  * - Flooding de webhooks avec signatures invalides (CPU drain HMAC verify)
  * - Tentative d'épuisement de ressources avant `stripe.webhooks.constructEvent`
  *
- * Stripe légitime envoie ≤10 events/sec sur un webhook (test + prod combinés).
- * 100/min = ~6× headroom, suffisant pour absorber un burst legit sans bloquer.
- * Appliqué AVANT signature verify pour rejeter les attaquants au plus tôt.
+ * WEBHOOK-AUDIT-002 : Stripe peut burster jusqu'à ~10 events/sec (= 600/min) sur un
+ * endpoint, notamment lors d'un rejeu de backlog après incident ou d'un batch de
+ * remboursements. L'ancienne limite de 100/min (~1,67/s) était SOUS ce pic légitime
+ * → des events Stripe authentiques renvoyaient 429, retardant un traitement
+ * revenu-critique (confirmations, décréments stock, remboursements) que Stripe ne
+ * retente qu'en backoff. On monte à 1000/min : largement au-dessus du pic Stripe
+ * (10× headroom) tout en restant un garde-fou anti-CPU-drain (un attaquant floodant
+ * des signatures invalides reste plafonné ; le HMAC verify est de toute façon
+ * micro-coûteux). La vraie défense d'authenticité reste la signature, pas ce compteur.
+ * NB : compteur in-memory par instance Vercel (cf. CLAUDE.md § Security) → plafond
+ * effectif × N instances, best-effort.
+ * Appliqué AVANT signature verify pour rejeter les floods au plus tôt.
  */
 export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
-	limit: 100,
+	limit: 1000,
 	windowMs: minutes(1),
 };
 

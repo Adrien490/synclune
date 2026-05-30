@@ -13,6 +13,7 @@ const {
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
 	mockSendAdminCronFailedAlert,
+	mockSendPaymentFailedEmail,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
@@ -29,6 +30,7 @@ const {
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
 	mockSendAdminCronFailedAlert: vi.fn(),
+	mockSendPaymentFailedEmail: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -70,6 +72,10 @@ vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminCronFailedAlert: mockSendAdminCronFailedAlert,
 }));
 
+vi.mock("@/modules/emails/services/payment-emails", () => ({
+	sendPaymentFailedEmail: mockSendPaymentFailedEmail,
+}));
+
 import { syncAsyncPayments } from "../sync-async-payments.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -86,6 +92,7 @@ describe("syncAsyncPayments", () => {
 		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
 		mockRecordSalesEReporting.mockResolvedValue(undefined);
 		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
+		mockSendPaymentFailedEmail.mockResolvedValue(undefined);
 	});
 
 	it("should return skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
@@ -513,5 +520,82 @@ describe("syncAsyncPayments", () => {
 		await syncAsyncPayments();
 
 		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
+	});
+
+	// P2-1 : à l'abandon 3DS (requires_action → cancel → FAILED), le client doit être
+	// notifié (parité avec le webhook handlePaymentFailure). idempotencyKey identique
+	// au webhook ⇒ Resend dédoublonne si les deux chemins se déclenchent.
+	it("P2-1: should send payment-failed email to the customer when failing an abandoned order", async () => {
+		const order = {
+			id: "order-abandon",
+			orderNumber: "SYN-ABD",
+			stripePaymentIntentId: "pi_abandon",
+			paymentStatus: "PENDING",
+			userId: "user-abd",
+			customerEmail: "client@example.com",
+			customerName: "Camille",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({
+			id: "pi_abandon",
+			status: "requires_action",
+		});
+		mockExtractPaymentFailureDetails.mockReturnValue({});
+
+		const result = await syncAsyncPayments();
+
+		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith("order-abandon", "pi_abandon", {});
+		expect(mockSendPaymentFailedEmail).toHaveBeenCalledTimes(1);
+		expect(mockSendPaymentFailedEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: "client@example.com",
+				customerName: "Camille",
+				orderNumber: "SYN-ABD",
+				idempotencyKey: "payment-failed-order-abandon",
+			}),
+		);
+		expect(result!.updated).toBe(1);
+		expect(result!.errors).toBe(0);
+	});
+
+	// P2-1 : un échec d'email ne doit jamais faire échouer le cron ni re-PENDING la
+	// commande (déjà FAILED + stock restauré). Best-effort.
+	it("P2-1: should not error the cron when the customer email send throws", async () => {
+		const order = {
+			id: "order-mailfail",
+			orderNumber: "SYN-MF",
+			stripePaymentIntentId: "pi_mailfail",
+			paymentStatus: "PENDING",
+			customerEmail: "client@example.com",
+			customerName: "Camille",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ status: "canceled" });
+		mockExtractPaymentFailureDetails.mockReturnValue({});
+		mockSendPaymentFailedEmail.mockRejectedValue(new Error("Resend down"));
+
+		const result = await syncAsyncPayments();
+
+		expect(mockMarkOrderAsFailed).toHaveBeenCalled();
+		expect(result!.updated).toBe(1);
+		expect(result!.errors).toBe(0);
+	});
+
+	// P2-1 : pas d'email client sur un PI réconcilié comme succeeded (succès, pas échec).
+	it("P2-1: should NOT send a payment-failed email when Stripe shows succeeded", async () => {
+		const order = {
+			id: "order-paid",
+			orderNumber: "SYN-PAID",
+			stripePaymentIntentId: "pi_paid",
+			paymentStatus: "PENDING",
+			customerEmail: "client@example.com",
+			customerName: "Camille",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ id: "pi_paid", status: "succeeded" });
+
+		await syncAsyncPayments();
+
+		expect(mockSendPaymentFailedEmail).not.toHaveBeenCalled();
 	});
 });

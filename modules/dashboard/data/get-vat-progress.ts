@@ -5,31 +5,12 @@ import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
+import { getFranchiseThresholdCents } from "@/shared/constants/vat-franchise";
 import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 import type { GetVatProgressReturn } from "../types/dashboard.types";
 
 export type { GetVatProgressReturn } from "../types/dashboard.types";
-
-/**
- * Seuil de franchise en base TVA (article 293 B CGI), 2026.
- * Configurable via la variable d'environnement `VAT_FRANCHISE_THRESHOLD_EUR`
- * (en euros — le calcul se fait en cents pour cohérence Prisma/Stripe).
- *
- *  - 37 500 € : prestations de services (cas par défaut Synclune — bijoux artisanaux
- *    avec personnalisation = prestation au sens fiscal possible selon contrat)
- *  - 85 000 € : ventes de marchandises
- *
- * Si l'activité bascule en livraison de biens pure, ajuster la valeur env.
- */
-const DEFAULT_THRESHOLD_EUR = 37_500;
-
-function getThresholdCents(): number {
-	const raw = process.env.VAT_FRANCHISE_THRESHOLD_EUR;
-	const parsed = raw ? Number(raw) : DEFAULT_THRESHOLD_EUR;
-	const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_THRESHOLD_EUR;
-	return Math.round(safe * 100);
-}
 
 /**
  * Cumul YTD du chiffre d'affaires payé vs seuil de franchise en base TVA.
@@ -62,7 +43,7 @@ export async function fetchDashboardVatProgress(): Promise<GetVatProgressReturn>
 		});
 
 		const ytdRevenue = aggregate._sum.total ?? 0;
-		const threshold = getThresholdCents();
+		const threshold = getFranchiseThresholdCents();
 		const progress = threshold > 0 ? (ytdRevenue / threshold) * 100 : 0;
 
 		return {

@@ -303,30 +303,20 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-20 Vercel cron jobs defined in `vercel.json` (SSOT). Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets : [`docs/CRONS.md`](docs/CRONS.md). Les crons e-invoicing (e-reporting B2C uniquement) sont détaillés dans [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
+10 Vercel cron jobs defined in `vercel.json` (SSOT) — périmètre réduit le 2026-05-30 au cœur critique (revenu + RGPD légal) + monitoring + ops. Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets + liste des 11 crons retirés (routes supprimées, services conservés, réactivables) : [`docs/CRONS.md`](docs/CRONS.md). ⚠️ Les crons e-invoicing (`build/transmit-ereporting-batch`, `reconcile-invoices`, `reconcile-voided-invoices`) sont **retirés** et **à réactiver au go-live e-reporting (1ᵉʳ sept. 2027)** — cf. [`docs/INVOICING.md § Crons`](docs/INVOICING.md).
 
-| Job                         | Schedule           | Catégorie   |
-| --------------------------- | ------------------ | ----------- |
-| `retry-post-webhook-tasks`  | Every 5 min        | revenue     |
-| `reopen-store`              | Every 15 min       | ops         |
-| `retry-webhooks`            | Every 30 min       | revenue     |
-| `transmit-ereporting-batch` | Every 30 min       | e-invoicing |
-| `sync-async-payments`       | Every 4h           | revenue     |
-| `reconcile-refunds`         | Every 6h, H+30     | revenue     |
-| `build-ereporting-batch`    | Daily 1:00         | e-invoicing |
-| `reconcile-invoices`        | Daily 2:00         | e-invoicing |
-| `cleanup-wishlists`         | Daily 2:30         | retention   |
-| `cleanup-sessions`          | Daily 3:00         | retention   |
-| `cleanup-carts`             | Daily 3:30         | retention   |
-| `cleanup-pending-orders`    | Daily 4:30         | revenue     |
-| `process-account-deletions` | Daily 5:00         | RGPD        |
-| `reconcile-voided-invoices` | Daily 7:00         | e-invoicing |
-| `alert-dispute-deadlines`   | Daily 8:00         | monitoring  |
-| `send-review-requests`      | Daily 10:00        | engagement  |
-| `alert-stuck-orders`        | Weekly Monday 9:00 | monitoring  |
-| `cleanup-webhook-events`    | Monthly 1st 7:00   | retention   |
-| `hard-delete-retention`     | Monthly 1st 8:00   | RGPD        |
-| `cleanup-orphan-media`      | Monthly 1st 9:00   | retention   |
+| Job                         | Schedule           | Catégorie  |
+| --------------------------- | ------------------ | ---------- |
+| `retry-post-webhook-tasks`  | Every 5 min        | revenue    |
+| `reopen-store`              | Every 15 min       | ops        |
+| `retry-webhooks`            | Every 30 min       | revenue    |
+| `sync-async-payments`       | Every 4h           | revenue    |
+| `reconcile-refunds`         | Every 6h, H+30     | revenue    |
+| `process-account-deletions` | Daily 5:00         | RGPD       |
+| `alert-dispute-deadlines`   | Daily 8:00         | monitoring |
+| `alert-overbilled-orders`   | Daily 8:30         | monitoring |
+| `alert-stuck-orders`        | Weekly Monday 9:00 | monitoring |
+| `hard-delete-retention`     | Monthly 2nd 4:00   | RGPD       |
 
 ### Other API Routes
 
@@ -392,7 +382,7 @@ Sans override : risque P2024 timeout + rollback partiel.
 
 ## Facturation électronique — invariants
 
-Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). Calendrier réforme : émission obligatoire au **1ᵉʳ septembre 2027**, réception au **1ᵉʳ septembre 2026**. Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
+Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €). Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront ; cf. `docs/INVOICING.md § Réception`). Aucune **Plateforme Agréée (PA)** n'est encore branchée (dry-run intégral). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
 
 ### Invariants intangibles
 
@@ -409,16 +399,19 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 
 ### Tests régression dédiés
 
-| Test                                                                                                                 | Fichier                                                                                                                                              | Garde                                        |
-| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| OrderHistory n'a pas `deletedAt`                                                                                     | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                    | Audit trail immuable (Art. L123-22)          |
-| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                           | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                    | Invariant 1 + 2                              |
-| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                        | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                   | Invariant 7                                  |
-| Aucune Server Action ne crée/mute `EReporting*` directement                                                          | `modules/invoices/services/__tests__/no-manual-ereporting-write.regression.test.ts`                                                                  | Invariant 9                                  |
-| Batch REJECTED/ABANDONED ⇒ transactions re-queuées (détach + PENDING), jamais orphelines                             | `modules/invoices/services/__tests__/ereporting-requeue-on-terminal-failure.regression.test.ts` (+ `ereporting-requeue-rebuild.integration.test.ts`) | Re-queue e-reporting (build reprend)         |
-| Filet anti-trou e-reporting : transaction PENDING dont la période est close > grâce et jamais batchée ⇒ alerte admin | `modules/invoices/services/__tests__/check-ereporting-period-continuity.test.ts`                                                                     | Continuité périodes DGFiP (EINV-EREPORT-008) |
+| Test                                                                                                                                               | Fichier                                                                                                                                              | Garde                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| OrderHistory n'a pas `deletedAt`                                                                                                                   | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                    | Audit trail immuable (Art. L123-22)               |
+| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                                         | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                    | Invariant 1 + 2                                   |
+| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                                      | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                   | Invariant 7                                       |
+| Aucune Server Action ne crée/mute `EReporting*` directement                                                                                        | `modules/invoices/services/__tests__/no-manual-ereporting-write.regression.test.ts`                                                                  | Invariant 9                                       |
+| Batch REJECTED/ABANDONED ⇒ transactions re-queuées (détach + PENDING), jamais orphelines                                                           | `modules/invoices/services/__tests__/ereporting-requeue-on-terminal-failure.regression.test.ts` (+ `ereporting-requeue-rebuild.integration.test.ts`) | Re-queue e-reporting (build reprend)              |
+| Filet anti-trou e-reporting : transaction PENDING dont la période est close > grâce et jamais batchée ⇒ alerte admin                               | `modules/invoices/services/__tests__/check-ereporting-period-continuity.test.ts`                                                                     | Continuité périodes DGFiP (EINV-EREPORT-008)      |
+| DLQ e-reporting : `recordSales/RefundEReportingDeferrable` flague sur "error", `reconcile-invoices` Passes SALES/REFUND drainent et lèvent le flag | `modules/invoices/services/__tests__/defer-ereporting-retry.service.test.ts` (+ passes dans `reconcile-invoices.service.test.ts`)                    | Transaction DGFiP jamais-créée (EINV-EREPORT-009) |
 
-> ⚠️ **Périodes e-reporting — portée de l'EXCLUDE** : `EReportingPeriod_no_overlap` garantit le NON-RECOUVREMENT (pas de double déclaration) mais **PAS** l'absence de trou (sauter une période contiguë le satisfait). L'anti-trou repose sur (a) `build-ereporting-batch` qui crée la période contiguë de toute période ayant des transactions et (b) la **Passe 5** de continuité dans `reconcile-invoices` (`check-ereporting-period-continuity.service.ts`) qui alerte sur toute transaction close jamais batchée. Cadence : `EREPORTING_PERIOD_LENGTH` (DAILY/MONTHLY/BIMONTHLY) — défaut **DAILY** prudent tant que l'arrêté/PA n'est pas figé (la franchise est de nature bimestrielle).
+> ⚠️ **Périodes e-reporting — portée de l'EXCLUDE** : `EReportingPeriod_no_overlap` garantit le NON-RECOUVREMENT (pas de double déclaration) mais **PAS** l'absence de trou (sauter une période contiguë le satisfait). L'anti-trou repose sur (a) `build-ereporting-batch` qui crée la période contiguë de toute période ayant des transactions et (b) la **Passe 5** de continuité dans `reconcile-invoices` (`check-ereporting-period-continuity.service.ts`) qui alerte sur toute transaction close jamais batchée. Cadence : `EREPORTING_PERIOD_LENGTH` (DAILY/MONTHLY/BIMONTHLY) — défaut **DAILY** prudent tant que l'arrêté/PA n'est pas figé (la franchise est de nature bimestrielle). ⚠️ **Ne JAMAIS brancher `DAILY` sur une vraie PA** (cf. F4 `docs/INVOICING.md`) : une PA attend une **soumission bimestrielle contenant le détail journalier**, pas 60 batches séparés ; basculer `BIMONTHLY` (ou découpler période-de-données/fenêtre-de-transmission) au go-live.
+>
+> ⚠️ **Portée de la Passe 5 (EINV-EREPORT-008) vs DLQ (EINV-EREPORT-009)** : la Passe 5 ne détecte QUE les transactions **créées-mais-non-batchées**. Une transaction **jamais créée** (échec de `recordSalesEReporting`/`recordRefundEReporting` sur le hot path → aucune ligne) est invisible pour elle. Ce cas est couvert par le **DLQ EINV-EREPORT-009** : les wrappers `recordSales/RefundEReportingDeferrable` posent `Order.ereportingRetryDeferred` / `Refund.ereportingRetryDeferred` sur `"error"`, drainés par les **Passes SALES/REFUND** de `reconcile-invoices` (retente idempotente + lève le flag). Sur le **chemin webhook**, l'enregistrement passe par une PostWebhookTask persistée rejouée par `retry-post-webhook-tasks` (survit au crash). La continuité de période suppose donc que toute vente/remboursement PAID a produit sa transaction — prérequis garanti par EINV-EREPORT-009, pas par la Passe 5.
 
 ### Conformité réglementaire (référencement)
 

@@ -20,9 +20,11 @@ const {
 	mockRecordSalesEReporting,
 	mockExtractPaymentMethod,
 	mockSendAdminOrderProcessingFailedAlert,
+	mockSendWebhookFailedAlertEmail,
+	mockRefundsCreate,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findFirst: vi.fn() },
+		order: { findFirst: vi.fn(), updateMany: vi.fn() },
 	},
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
@@ -38,6 +40,8 @@ const {
 	mockRecordSalesEReporting: vi.fn().mockResolvedValue("skipped"),
 	mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
 	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
+	mockSendWebhookFailedAlertEmail: vi.fn(),
+	mockRefundsCreate: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -108,7 +112,7 @@ vi.mock("@/shared/constants/urls", () => ({
 
 // Mock stripe to avoid API key requirement
 vi.mock("@/shared/lib/stripe", () => ({
-	stripe: {},
+	stripe: { refunds: { create: mockRefundsCreate } },
 }));
 
 vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
@@ -125,6 +129,7 @@ vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
+	sendWebhookFailedAlertEmail: mockSendWebhookFailedAlertEmail,
 }));
 
 import type Stripe from "stripe";
@@ -226,6 +231,13 @@ describe("handlePaymentSuccess", () => {
 		const alertArg = mockSendAdminOrderProcessingFailedAlert.mock.calls[0]![0];
 		expect(alertArg).toMatchObject({ orderNumber: "SYN-001", paymentIntentId: "pi_123" });
 		expect(alertArg.errorMessage).toContain("Sur-facturation");
+
+		// AM-2 : le trop-perçu est persisté (boucle fermée), pas seulement alerté.
+		// Le guard `overbilledAmountCents: null` rend l'écriture idempotente.
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: "order-1", overbilledAmountCents: null },
+			data: { overbilledAmountCents: 1000 },
+		});
 	});
 
 	it("[F2] does NOT alert when captured amount equals order.total", async () => {
@@ -243,16 +255,75 @@ describe("handlePaymentSuccess", () => {
 		expect(mockSendAdminOrderProcessingFailedAlert).not.toHaveBeenCalled();
 	});
 
-	it("should warn and skip when no orderId in metadata", async () => {
+	it("[P2.1] alerts (Sentry + admin email) and skips on an orphan charge with no resolvable order", async () => {
 		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
-		const result = await handlePaymentSuccess(makePaymentIntent({ metadata: {} }));
+		mockRefundsCreate.mockResolvedValueOnce({ id: "re_orphan" });
+		const result = await handlePaymentSuccess(
+			makePaymentIntent({ metadata: {}, amount_received: 5000 }),
+		);
 
 		expect(mockProcessOrderFromPaymentIntent).not.toHaveBeenCalled();
 		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
-		expect(mockLogger.warn).toHaveBeenCalledWith(
-			expect.stringContaining("payment_intent.succeeded without orderId"),
+		// No silent warn anymore — orphan charge must be loud + actionable.
+		expect(mockLogger.error).toHaveBeenCalledWith(
+			expect.stringContaining("ORPHAN payment_intent.succeeded"),
+			undefined,
 			expect.objectContaining({ service: "webhook" }),
 		);
+		expect(mockSendWebhookFailedAlertEmail).toHaveBeenCalledTimes(1);
+		const alertArg = mockSendWebhookFailedAlertEmail.mock.calls[0]![0];
+		expect(alertArg.eventType).toContain("orphan");
+	});
+
+	/**
+	 * @regression orphan-charge-auto-refund-2026-05-30
+	 * ORD-STRIPE-010 : un encaissement orphelin (PI succeeded sans commande
+	 * résoluble) est remboursé AUTOMATIQUEMENT et idempotemment. Sûr pour
+	 * l'e-reporting (Invariant 9) car aucune transaction SALES/REFUND n'existe
+	 * sans commande. L'alerte admin reflète le succès du refund.
+	 */
+	it("[ORD-STRIPE-010] auto-refunds an orphan charge idempotently and reports it in the admin alert", async () => {
+		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+		mockRefundsCreate.mockResolvedValueOnce({ id: "re_orphan" });
+
+		const result = await handlePaymentSuccess(
+			makePaymentIntent({ id: "pi_orphan", metadata: {}, amount_received: 5000 }),
+		);
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockRefundsCreate).toHaveBeenCalledTimes(1);
+		expect(mockRefundsCreate).toHaveBeenCalledWith(
+			expect.objectContaining({ payment_intent: "pi_orphan" }),
+			expect.objectContaining({ idempotencyKey: "orphan-refund-pi_orphan" }),
+		);
+		const alertArg = mockSendWebhookFailedAlertEmail.mock.calls[0]![0];
+		expect(alertArg.error).toContain("re_orphan");
+	});
+
+	it("[ORD-STRIPE-010] does NOT attempt a refund on an orphan charge with amount_received = 0", async () => {
+		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+
+		const result = await handlePaymentSuccess(
+			makePaymentIntent({ metadata: {}, amount_received: 0 }),
+		);
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockRefundsCreate).not.toHaveBeenCalled();
+		expect(mockSendWebhookFailedAlertEmail).toHaveBeenCalledTimes(1);
+	});
+
+	it("[ORD-STRIPE-010] still alerts (manual fallback) when the orphan auto-refund fails", async () => {
+		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+		mockRefundsCreate.mockRejectedValueOnce(new Error("Stripe down"));
+
+		const result = await handlePaymentSuccess(
+			makePaymentIntent({ metadata: {}, amount_received: 5000 }),
+		);
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockSendWebhookFailedAlertEmail).toHaveBeenCalledTimes(1);
+		const alertArg = mockSendWebhookFailedAlertEmail.mock.calls[0]![0];
+		expect(alertArg.error).toContain("MANUELLEMENT");
 	});
 });
 

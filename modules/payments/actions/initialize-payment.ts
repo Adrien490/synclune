@@ -153,18 +153,38 @@ export async function initializePayment(
 				.map((i) => `${i.skuId}:${i.quantity}:${i.priceAtAdd}`)
 				.sort()
 				.join("|");
-			const idempotencyKey = `pi-init-${userId ?? sessionId}-${cartHash}`;
+
+			// Audit P2.4 : la clé d'idempotence doit refléter TOUS les paramètres
+			// mutables du `paymentIntents.create` — sinon réutiliser la même clé avec
+			// des paramètres différents fait échouer Stripe (« Keys for idempotent
+			// requests can only be used with the same parameters »).
+			//  - `ownerKey` : identifiant stable et NON vide (un `null`/`""` partagé
+			//    collisionnerait entre invités distincts → fuite de PI cross-guest).
+			//  - `customerKey` : un re-init du même panier après ajout d'email attache
+			//    un `customer` (param différent) → doit produire une clé différente.
+			//  - `total` : un changement de tarif d'expédition FR entre deux inits
+			//    change `amount` → doit produire une clé différente.
+			const ownerKey = userId ?? sessionId;
+			if (!ownerKey) {
+				return {
+					success: false,
+					error: "Session invalide. Veuillez actualiser la page.",
+				};
+			}
+			const customerKey = stripeCustomerId ?? "anon";
+			const idempotencyKey = `pi-init-${ownerKey}-${customerKey}-${total}-${cartHash}`;
 
 			// Create Payment Intent
-			// `automatic_payment_methods` with `allow_redirects: "never"` enables
-			// card wallets (Apple Pay, Google Pay) + Link while excluding redirect-based
-			// methods (SEPA debit, Klarna, Bancontact) that would bypass our checkout UX.
+			// Carte uniquement (décision produit). `payment_method_types: ["card"]`
+			// restreint le PI à la carte au niveau serveur — Apple Pay / Google Pay
+			// restent disponibles (wallets adossés au type `card`), Link et les
+			// méthodes à redirection (SEPA debit, Klarna, Bancontact) sont exclus.
 			const paymentIntent = await withStripeCircuitBreaker(() =>
 				stripe.paymentIntents.create(
 					{
 						amount: total,
 						currency: DEFAULT_CURRENCY.toLowerCase(),
-						automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+						payment_method_types: ["card"],
 						...(stripeCustomerId && { customer: stripeCustomerId }),
 						metadata: {
 							userId: userId ?? "guest",

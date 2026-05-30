@@ -28,7 +28,7 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
 import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
-import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
@@ -178,6 +178,74 @@ export async function processRefund(
 					AND status = 'COMPLETED'::"RefundStatus"
 					AND id != ${id}
 			`;
+
+			// ================================================================
+			// P1-REVALIDATE (audit refunds 2026-05-30) — dernière barrière
+			// anti double-remboursement, sous le FOR UPDATE de l'Order.
+			//
+			// `create-refund` valide quantités/montant À LA CRÉATION mais EXCLUT
+			// les refunds FAILED du décompte. Un refund FAILED ré-armé via
+			// `retryFailedRefund` (FAILED→APPROVED, sans re-validation) alors qu'un
+			// autre refund a entre-temps consommé le budget du même orderItem peut
+			// donc rembourser 2× le même article → perte cash + double avoir
+			// A-YYYY + double `recordRefundEReporting` (divergence DGFiP). Aucune
+			// contrainte DB ne l'empêche (`RefundItem.orderItemId` non `@unique`).
+			// On re-valide ici, juste avant l'appel Stripe (dernier point avant
+			// le mouvement d'argent), en ne comptant que les refunds ACTIFS
+			// (PENDING/APPROVED/COMPLETED, hors soft-deleted) — ce refund inclus.
+			const selfItems = await tx.refundItem.findMany({
+				where: { refundId: id },
+				select: { orderItemId: true, quantity: true },
+			});
+			const selfOrderItemIds = [...new Set(selfItems.map((ri) => ri.orderItemId))];
+
+			if (selfOrderItemIds.length > 0) {
+				const [orderedItems, activeRefundItems] = await Promise.all([
+					tx.orderItem.findMany({
+						where: { id: { in: selfOrderItemIds } },
+						select: { id: true, quantity: true },
+					}),
+					tx.refundItem.findMany({
+						where: {
+							orderItemId: { in: selfOrderItemIds },
+							refund: {
+								status: {
+									in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+								},
+								deletedAt: null,
+							},
+						},
+						select: { orderItemId: true, quantity: true },
+					}),
+				]);
+
+				const orderedQtyById = new Map(orderedItems.map((oi) => [oi.id, oi.quantity]));
+				const activeQtyById = new Map<string, number>();
+				for (const ri of activeRefundItems) {
+					activeQtyById.set(ri.orderItemId, (activeQtyById.get(ri.orderItemId) ?? 0) + ri.quantity);
+				}
+				for (const orderItemId of selfOrderItemIds) {
+					if ((activeQtyById.get(orderItemId) ?? 0) > (orderedQtyById.get(orderItemId) ?? 0)) {
+						throw new Error("ITEM_QUANTITY_EXCEEDS");
+					}
+				}
+			}
+
+			// Garde montant global : la somme des refunds ACTIFS (ce refund inclus)
+			// ne doit jamais dépasser le total de la commande.
+			const activeRefundsAgg = await tx.refund.aggregate({
+				where: {
+					orderId: refund.order_id,
+					status: {
+						in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+					},
+					deletedAt: null,
+				},
+				_sum: { amount: true },
+			});
+			if ((activeRefundsAgg._sum.amount ?? 0) > refund.order_total) {
+				throw new Error("AMOUNT_EXCEEDS_ORDER");
+			}
 
 			return {
 				refund,
@@ -505,8 +573,11 @@ export async function processRefund(
 			// E-reporting B2C (Phase 4, EINV-AUDIT-004) — feature-flagged,
 			// idempotent + best-effort. Crée la transaction REFUND avec amount
 			// négatif pour la transmission DGFiP périodique. Ne bloque jamais le
-			// process-refund : un échec ici est rattrapable via le reconcile cron.
-			await recordRefundEReporting(id);
+			// process-refund. EINV-EREPORT-009 : deferrable — flag de rattrapage
+			// (Refund.ereportingRetryDeferred) si l'enregistrement échoue, consommé
+			// par reconcile-refunds (le refund COMPLETED n'est plus re-sélectionné
+			// par le chemin de finalisation sinon).
+			await recordRefundEReportingDeferrable(id);
 
 			// EINV-CREDIT-001 : émission avoir séquentiel sur le Refund (Art. 272-I CGI).
 			// Best-effort hors transaction (advisory lock incompatible avec tx longue).
@@ -686,6 +757,18 @@ export async function processRefund(
 					return {
 						status: ActionStatus.ERROR,
 						message: REFUND_ERROR_MESSAGES.OPEN_DISPUTE,
+					};
+				// P1-REVALIDATE : la commande a déjà été (sur-)remboursée entre la
+				// création et le traitement (refund FAILED ré-armé + budget consommé).
+				case "ITEM_QUANTITY_EXCEEDS":
+					return {
+						status: ActionStatus.ERROR,
+						message: REFUND_ERROR_MESSAGES.QUANTITY_EXCEEDS_AVAILABLE,
+					};
+				case "AMOUNT_EXCEEDS_ORDER":
+					return {
+						status: ActionStatus.ERROR,
+						message: REFUND_ERROR_MESSAGES.AMOUNT_EXCEEDS_ORDER,
 					};
 			}
 		}

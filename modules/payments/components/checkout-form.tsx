@@ -43,7 +43,7 @@ interface CheckoutFormProps {
  * Single-page checkout form (Shopify-style).
  *
  * Sections: Contact, Livraison, Mode d'expédition, Code promo, Paiement.
- * Payment via Stripe PaymentElement + ExpressCheckoutElement (Apple Pay / Google Pay / Link).
+ * Payment via Stripe PaymentElement — carte uniquement (pas de paiement express).
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;

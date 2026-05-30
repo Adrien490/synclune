@@ -34,14 +34,6 @@ const CheckoutStripeSection = dynamic(
 	{ ssr: false, loading: () => <PaymentSectionSkeleton /> },
 );
 
-// Express wallets (Apple Pay / Google Pay / Link) surfaced at the top of the
-// checkout for one-glance discoverability (P1-a). Shares the same lazy Stripe
-// bundle as CheckoutStripeSection; self-hides when no wallet is available.
-const CheckoutExpressTop = dynamic(
-	() => import("./checkout-express-top").then((m) => m.CheckoutExpressTop),
-	{ ssr: false },
-);
-
 interface CheckoutFormBodyProps {
 	form: ReturnType<typeof useCheckoutForm>["form"];
 	formRef: React.RefObject<HTMLFormElement | null>;
@@ -86,7 +78,7 @@ export function CheckoutFormBody({
 	allowNavigation,
 }: CheckoutFormBodyProps) {
 	// Keep Stripe PaymentIntent amount in sync with country/postalCode/discount changes
-	// so wallet previews (Apple Pay / Google Pay / Link) display the correct total.
+	// so the card PaymentElement charges the correct total.
 	// `updateAmount` is debounced 500ms internally.
 	const syncStripeAmount = useEffectEvent(() => {
 		if (!pi.paymentIntentId || shippingUnavailable) return;
@@ -134,16 +126,6 @@ export function CheckoutFormBody({
 							</Button>
 						</AlertDescription>
 					</Alert>
-				)}
-
-				{/* Paiement express en haut (P1-a) — masqué proprement si aucun wallet. */}
-				{pi.clientSecret && !pi.isLoading && (
-					<CheckoutExpressTop
-						clientSecret={pi.clientSecret}
-						isOnline={isOnline}
-						getFormData={getFormData}
-						allowNavigation={allowNavigation}
-					/>
 				)}
 
 				<div className="space-y-8">

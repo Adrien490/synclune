@@ -68,8 +68,8 @@ describe("fetchDashboardVatProgress", () => {
 		const result = await fetchDashboardVatProgress();
 
 		expect(result.ytdRevenue).toBe(1500000);
-		expect(result.threshold).toBe(3750000);
-		expect(result.progress).toBeCloseTo(40);
+		expect(result.threshold).toBe(8500000);
+		expect(result.progress).toBeCloseTo(17.647);
 		expect(result.year).toBe(2026);
 	});
 
@@ -88,22 +88,23 @@ describe("fetchDashboardVatProgress", () => {
 		expect(call.where.deletedAt).toBeNull();
 	});
 
-	it("defaults the threshold to 37 500 € (services) when env var is unset", async () => {
+	it("defaults the threshold to 85 000 € (ventes de biens) when env var is unset", async () => {
 		delete process.env.VAT_FRANCHISE_THRESHOLD_EUR;
 		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 100000 } });
 
 		const result = await fetchDashboardVatProgress();
 
-		expect(result.threshold).toBe(3_750_000);
+		expect(result.threshold).toBe(8_500_000);
 	});
 
 	it("uses the configured threshold when env var is a positive number", async () => {
-		process.env.VAT_FRANCHISE_THRESHOLD_EUR = "85000";
+		// 37 500 € (prestations de services) override le défaut « ventes de biens ».
+		process.env.VAT_FRANCHISE_THRESHOLD_EUR = "37500";
 		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
 
 		const result = await fetchDashboardVatProgress();
 
-		expect(result.threshold).toBe(8_500_000);
+		expect(result.threshold).toBe(3_750_000);
 	});
 
 	it("falls back to the default when env var is invalid", async () => {
@@ -112,7 +113,7 @@ describe("fetchDashboardVatProgress", () => {
 
 		const result = await fetchDashboardVatProgress();
 
-		expect(result.threshold).toBe(3_750_000);
+		expect(result.threshold).toBe(8_500_000);
 	});
 
 	it("returns 0 progress when no orders are paid", async () => {
@@ -125,11 +126,12 @@ describe("fetchDashboardVatProgress", () => {
 	});
 
 	it("returns >100 progress when threshold is exceeded (no cap at fetcher level)", async () => {
-		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 4_000_000 } });
+		// 90 000 € > seuil ventes de biens 85 000 € → ~105,9 %.
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 9_000_000 } });
 
 		const result = await fetchDashboardVatProgress();
 
-		expect(result.progress).toBeCloseTo(106.67, 1);
+		expect(result.progress).toBeCloseTo(105.88, 1);
 	});
 
 	it("attaches dashboard + orders-list cache tags", async () => {

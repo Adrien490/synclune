@@ -77,6 +77,7 @@ const EXPECTED_HANDLERS: Record<string, ReturnType<typeof vi.fn>> = {
 	"charge.refunded": mockHandleChargeRefunded,
 	"refund.created": mockHandleRefundUpdated,
 	"refund.updated": mockHandleRefundUpdated,
+	"charge.refund.updated": mockHandleRefundUpdated,
 	"refund.failed": mockHandleRefundFailed,
 	"charge.dispute.created": mockHandleDisputeCreated,
 	"charge.dispute.updated": mockHandleDisputeUpdated,

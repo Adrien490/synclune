@@ -56,13 +56,20 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 	// Reset stale PROCESSING events (worker crashed mid-flight) so they retry next time.
 	// WEBHOOK-AUDIT-001 : seuil abaissé de 24h → STALE_PROCESSING_THRESHOLD_MS (15min,
 	// bien au-delà du maxDuration=60s de la route) pour récupérer rapidement un event
-	// figé par une lambda crashée. PROCESSING n'a pas de processedAt (posé seulement au
-	// statut terminal) → on filtre sur receivedAt.
+	// figé par une lambda crashée.
+	// WEBHOOK-AUDIT-002 : on filtre sur `processingStartedAt` (début du traitement
+	// courant, (re)posé à chaque passage en PROCESSING) plutôt que `receivedAt`
+	// (1ère réception) — sinon un event repris plusieurs fois resterait éligible au
+	// reset sur sa date d'origine. Fallback `receivedAt` pour les lignes legacy
+	// (processingStartedAt NULL écrites avant migration).
 	const staleProcessingCutoff = new Date(Date.now() - STALE_PROCESSING_THRESHOLD_MS);
 	await prisma.webhookEvent.updateMany({
 		where: {
 			status: WebhookEventStatus.PROCESSING,
-			receivedAt: { lt: staleProcessingCutoff },
+			OR: [
+				{ processingStartedAt: { lt: staleProcessingCutoff } },
+				{ processingStartedAt: null, receivedAt: { lt: staleProcessingCutoff } },
+			],
 		},
 		data: { status: WebhookEventStatus.FAILED },
 	});
@@ -112,6 +119,11 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				data: {
 					status: WebhookEventStatus.PROCESSING,
 					attempts: { increment: 1 },
+					// WEBHOOK-AUDIT-002 : démarre l'horloge de fraîcheur de CE traitement.
+					// Une redélivrance Stripe concurrente du même event verra ce PROCESSING
+					// frais (processingStartedAt récent) et court-circuitera au lieu de
+					// barger-in pendant que le cron dispatch encore.
+					processingStartedAt: new Date(),
 				},
 			});
 		} catch (e) {

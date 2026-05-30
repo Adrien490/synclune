@@ -52,6 +52,7 @@ async function AnnouncementFormSection() {
 			announcementStartsAt={settings?.announcementStartsAt ?? null}
 			announcementEndsAt={settings?.announcementEndsAt ?? null}
 			announcementIsActive={settings?.announcementIsActive ?? false}
+			announcementVariant={settings?.announcementVariant ?? "PROMO"}
 		/>
 	);
 }

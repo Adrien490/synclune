@@ -30,8 +30,7 @@ interface UseCheckoutSubmitParams {
 }
 
 /**
- * Shared checkout submission sequence for both PayButton (standard card flow)
- * and ExpressCheckoutSection (Apple Pay / Google Pay / Link).
+ * Checkout submission sequence for the PayButton (standard card flow).
  *
  * Steps:
  *  1. Resolve form data (returns null if form invalid → caller surfaces validation errors).

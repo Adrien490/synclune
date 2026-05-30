@@ -19,7 +19,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
-import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
@@ -53,15 +53,42 @@ const STRIPE_REASON_MAP: Record<string, DisputeReason> = {
 };
 
 /**
- * Map Stripe dispute status to our DisputeStatus enum
+ * Map a Stripe dispute reason to our RefundReason enum (P2-F, audit dispute
+ * 2026-05-30). Un chargeback perdu n'est PAS systématiquement une fraude :
+ * `product_not_received` / `subscription_canceled` ne doivent pas être étiquetés
+ * FRAUD (analytics + libellés email). FRAUD réservé aux raisons réellement
+ * frauduleuses ; fallback OTHER sinon.
+ */
+function mapDisputeReasonToRefundReason(stripeReason: string): RefundReason {
+	switch (stripeReason) {
+		case "fraudulent":
+		case "unrecognized":
+			return RefundReason.FRAUD;
+		case "product_not_received":
+		case "product_unacceptable":
+			return RefundReason.DEFECTIVE;
+		default:
+			return RefundReason.OTHER;
+	}
+}
+
+/**
+ * Map Stripe dispute status to our DisputeStatus enum.
+ *
+ * Les statuts d'inquiry/retrieval (`warning_*`) n'escaladent pas forcément en
+ * chargeback : `warning_closed` = inquiry close SANS débit → mappé WON (terminal,
+ * favorable marchand) pour ne pas laisser le litige "ouvert" côté guard. Cf. P1-A.
  */
 function mapStripeDisputeStatus(stripeStatus: string): DisputeStatus {
 	switch (stripeStatus) {
 		case "needs_response":
+		case "warning_needs_response":
 			return DisputeStatus.NEEDS_RESPONSE;
 		case "under_review":
+		case "warning_under_review":
 			return DisputeStatus.UNDER_REVIEW;
 		case "won":
+		case "warning_closed":
 			return DisputeStatus.WON;
 		case "lost":
 			return DisputeStatus.LOST;
@@ -109,10 +136,14 @@ export async function handleDisputeCreated(
 		});
 
 		if (!order) {
-			logger.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`, undefined, {
+			// ORD-STRIPE-DISPUTE-001 : aucune commande locale (PI d'un autre système, ou
+			// order hard-purgée). On skip proprement (200) au lieu de `throw` → évite une
+			// tempête de retries Stripe + une fausse alerte « max retries exhausted ».
+			// Aligné sur handleChargeRefunded (refund-handlers.ts) qui skip déjà ce cas.
+			logger.warn(`⚠️ [WEBHOOK] No order found for disputed PI ${paymentIntentId}, skipping`, {
 				service: "webhook",
 			});
-			throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
+			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
 		// ORD-REFUND-011: flag suspicious dispute (déjà remboursée → potentielle double dépense)
@@ -283,10 +314,14 @@ export async function handleDisputeClosed(
 		});
 
 		if (!order) {
-			logger.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`, undefined, {
-				service: "webhook",
-			});
-			throw new Error(`No order found for closed dispute ${dispute.id} (PI: ${paymentIntentId})`);
+			// ORD-STRIPE-DISPUTE-001 : skip propre (200) au lieu de `throw` — cf.
+			// handleDisputeCreated. Un litige clôturé sans commande locale ne doit pas
+			// boucler en 500 ni déclencher l'alerte admin de retries épuisés.
+			logger.warn(
+				`⚠️ [WEBHOOK] No order found for closed dispute PI ${paymentIntentId}, skipping`,
+				{ service: "webhook" },
+			);
+			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
 		// Prevent duplicate OrderNote on webhook replay
@@ -305,11 +340,32 @@ export async function handleDisputeClosed(
 			return { success: true, skipped: true, reason: "Dispute closed note already created" };
 		}
 
-		const won = dispute.status === "won";
-		const statusLabel = won ? "gagné" : "perdu";
+		// P1-A (audit dispute 2026-05-30) : SEUL `lost` reprend réellement des fonds.
+		// Les autres statuts de clôture ne débitent rien et ne doivent déclencher
+		// AUCUNE écriture comptable :
+		//   - `won` : litige gagné, fonds conservés.
+		//   - `warning_closed` : inquiry / retrieval request close sans escalade en
+		//     chargeback (aucun débit Stripe).
+		//   - `charge_refunded` : le charge a déjà été remboursé via `charge.refunded`
+		//     (l'avoir + l'e-reporting ont déjà été émis par ce chemin) → ne pas
+		//     créer un second Refund fantôme.
+		// L'ancien binaire `won = status === "won"` bookait tout ≠ won comme une
+		// perte totale → remboursement fantôme + facture VOIDED + ligne DGFiP fausse.
+		const isLoss = dispute.status === "lost";
+		const statusLabel =
+			dispute.status === "won"
+				? "gagné"
+				: dispute.status === "lost"
+					? "perdu"
+					: "clôturé sans débit";
 
 		// Update Dispute record, create OrderNote, and update order status atomically
-		const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
+		const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${isLoss ? " Le montant a été débité par Stripe." : ""}`;
+
+		// P2-C : la fee de litige (~15 €) se matérialise dans les balance_transactions
+		// au retrait des fonds, pas à la création. À la clôture, on la capte si
+		// présente (sans écraser une valeur déjà posée par funds_withdrawn).
+		const closedFee = dispute.balance_transactions[0]?.fee ?? 0;
 
 		const lostOutcome = await prisma.$transaction(
 			async (tx) => {
@@ -325,6 +381,8 @@ export async function handleDisputeClosed(
 						data: {
 							status: mapStripeDisputeStatus(dispute.status),
 							resolvedAt: new Date(),
+							// P2-C : ne pas écraser une fee déjà captée (funds_withdrawn) par 0.
+							...(closedFee > 0 ? { fee: closedFee } : {}),
 						},
 					});
 				}
@@ -339,10 +397,10 @@ export async function handleDisputeClosed(
 				});
 
 				// ORD-REFUND-010: matérialiser le chargeback perdu comme un Refund
-				// COMPLETED reason=FRAUD pour traçabilité comptable. Recalculer
-				// paymentStatus selon le cumul réel (un dispute perdu après refund
-				// partiel doit refléter le bon total).
-				if (!won) {
+				// COMPLETED pour traçabilité comptable. Recalculer paymentStatus selon
+				// le cumul réel (un dispute perdu après refund partiel doit refléter le
+				// bon total). N'EXÉCUTÉ QUE pour un litige réellement perdu (P1-A).
+				if (isLoss) {
 					const completedAggregate = await tx.refund.aggregate({
 						where: { orderId: order.id, status: RefundStatus.COMPLETED },
 						_sum: { amount: true },
@@ -354,7 +412,8 @@ export async function handleDisputeClosed(
 							orderId: order.id,
 							amount: dispute.amount,
 							currency: "EUR",
-							reason: RefundReason.FRAUD,
+							// P2-F : refléter la vraie raison du litige (pas FRAUD systématique).
+							reason: mapDisputeReasonToRefundReason(dispute.reason),
 							status: RefundStatus.COMPLETED,
 							note: `[CHARGEBACK PERDU] Litige Stripe ${dispute.id} — montant débité automatiquement par Stripe`,
 							processedAt: new Date(),
@@ -397,7 +456,7 @@ export async function handleDisputeClosed(
 							stripeDisputeId: dispute.id,
 							won: false,
 							amount: dispute.amount,
-							fee: dispute.balance_transactions[0]?.fee ?? 0,
+							fee: closedFee,
 							chargebackRefundId: chargebackRefund.id,
 							alreadyRefunded,
 							totalAfter,
@@ -407,7 +466,8 @@ export async function handleDisputeClosed(
 					return { chargebackRefundId: chargebackRefund.id, isFullReclaim, alreadyRefunded };
 				}
 
-				// Won: pas de mutation Order, juste audit trail
+				// Clôture sans débit (won / warning_closed / charge_refunded) : pas de
+				// mutation Order, juste audit trail. Aucun Refund/avoir/e-reporting (P1-A).
 				await createOrderAuditTx(tx, {
 					orderId: order.id,
 					action: OrderAction.DISPUTE_RESOLVED,
@@ -418,9 +478,10 @@ export async function handleDisputeClosed(
 					metadata: {
 						disputeId: existingDispute?.id ?? null,
 						stripeDisputeId: dispute.id,
-						won: true,
+						won: dispute.status === "won",
+						closedStatus: dispute.status,
 						amount: dispute.amount,
-						fee: dispute.balance_transactions[0]?.fee ?? 0,
+						fee: closedFee,
 					},
 				});
 
@@ -431,7 +492,7 @@ export async function handleDisputeClosed(
 		);
 
 		logger.info(
-			`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
+			`${isLoss ? "❌" : "✅"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
 			{ service: "webhook" },
 		);
 
@@ -487,19 +548,39 @@ export async function handleDisputeClosed(
 					authorName: SYSTEM_AUTHOR_NAME,
 				});
 				if (creditNoteResult.kind === "failed") {
+					// P2-E : symétrie avec le chemin full-reclaim (voidInvoice) — un avoir
+					// partiel Art. 272-I manquant est un gap réglementaire, pas un simple
+					// warn. Alerter Sentry pour un signal opérateur.
 					logger.warn(
 						`charge.dispute.closed — credit note emission failed for refund ${chargebackRefundId}: ${creditNoteResult.error}`,
 						{ service: "webhook", orderId: order.id, refundId: chargebackRefundId },
 					);
+					Sentry.withScope((scope) => {
+						scope.setLevel("error");
+						scope.setTag("invoicing", "credit-note-failed");
+						scope.setTag("source", "webhook-dispute-lost");
+						scope.setFingerprint(["credit-note", "max-retries", chargebackRefundId]);
+						scope.setContext("order", {
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							stripeDisputeId: dispute.id,
+							refundId: chargebackRefundId,
+						});
+						Sentry.captureMessage(
+							"issueCreditNoteForRefund failed on charge.dispute.closed (chargeback perdu partiel) — avoir manquant",
+							"error",
+						);
+					});
 				}
 			}
 
 			// (b) E-reporting REFUND DGFiP (EINV-AUDIT-004). Le chargebackRefund est
 			// créé COMPLETED + processedAt → exclu du cron `reconcile-refunds`
-			// (qui ne reprend que les APPROVED/processedAt=null). Sans ce hook, la
-			// ligne négative DGFiP n'est jamais créée et l'agrégat B2C surévalue le
-			// CA net. Best-effort + idempotent (unique index + findFirst).
-			await recordRefundEReporting(chargebackRefundId);
+			// (qui ne reprend que les APPROVED/processedAt=null). EINV-EREPORT-009 (P1-B) :
+			// via le wrapper `deferrable` — sur échec transitoire ("error"), pose le flag
+			// `Refund.ereportingRetryDeferred` (DLQ) rattrapé par reconcile-refunds, au
+			// lieu d'un appel inline best-effort définitivement perdu. Idempotent.
+			await recordRefundEReportingDeferrable(chargebackRefundId);
 
 			// MEDIUM-2 : double reprise de fonds (refund admin + chargeback) → le
 			// cumul COMPLETED dépasse le total commande. Le booking est fidèle (les
@@ -571,7 +652,7 @@ export async function handleDisputeUpdated(
 	try {
 		const existing = await prisma.dispute.findUnique({
 			where: { stripeDisputeId: dispute.id },
-			select: { id: true, orderId: true, status: true },
+			select: { id: true, orderId: true, status: true, dueBy: true },
 		});
 
 		if (!existing) {
@@ -581,11 +662,36 @@ export async function handleDisputeUpdated(
 		}
 
 		const nextStatus = mapStripeDisputeStatus(dispute.status);
+
+		// P2-D (audit dispute 2026-05-30) : les transitions TERMINALES (WON/LOST/
+		// CHARGE_REFUNDED) sont la propriété exclusive de `charge.dispute.closed`
+		// (compta : chargebackRefund, paymentStatus, avoir, e-reporting). Si Stripe
+		// livre un statut terminal via `updated` (ordre de livraison non garanti),
+		// on NE mute PAS le Dispute ici — sinon `hasOpenDispute` le verrait terminal
+		// et débloquerait refund/cancel/fulfillment AVANT que la compta de clôture
+		// ait tourné. `closed` posera l'état terminal + `resolvedAt`.
+		const TERMINAL_STATUSES: DisputeStatus[] = [
+			DisputeStatus.WON,
+			DisputeStatus.LOST,
+			DisputeStatus.CHARGE_REFUNDED,
+		];
+		if (TERMINAL_STATUSES.includes(nextStatus)) {
+			return {
+				success: true,
+				skipped: true,
+				reason: "Terminal status owned by charge.dispute.closed",
+			};
+		}
+
 		const nextDueBy = dispute.evidence_details.due_by
 			? new Date(dispute.evidence_details.due_by * 1000)
 			: null;
 
-		if (existing.status === nextStatus && nextDueBy === null) {
+		// P2-G : comparer ET écrire `dueBy` inconditionnellement (y compris `null`)
+		// pour refléter une deadline effacée/prolongée par Stripe.
+		const dueByChanged = (existing.dueBy?.getTime() ?? null) !== (nextDueBy?.getTime() ?? null);
+
+		if (existing.status === nextStatus && !dueByChanged) {
 			return { success: true, skipped: true, reason: "No status change" };
 		}
 
@@ -593,7 +699,7 @@ export async function handleDisputeUpdated(
 			where: { stripeDisputeId: dispute.id },
 			data: {
 				status: nextStatus,
-				...(nextDueBy ? { dueBy: nextDueBy } : {}),
+				dueBy: nextDueBy,
 			},
 		});
 
@@ -678,6 +784,11 @@ async function handleDisputeFundsFlow(
 			return { success: true, skipped: true, reason: `Dispute ${flow} note already created` };
 		}
 
+		// P2-C : la fee de litige (~15 €) se matérialise dans les balance_transactions
+		// au RETRAIT des fonds (`funds_withdrawn`), pas à la création (où le tableau
+		// est vide → l'ancien code laissait `Dispute.fee` à 0 à vie). On la capte ici.
+		const withdrawnFee = flow === "withdrawn" ? (dispute.balance_transactions[0]?.fee ?? 0) : 0;
+
 		await prisma.$transaction(
 			async (tx) => {
 				await tx.orderNote.create({
@@ -688,6 +799,14 @@ async function handleDisputeFundsFlow(
 						authorName: SYSTEM_AUTHOR_NAME,
 					},
 				});
+				// P2-C : updateMany (no-op si le Dispute n'est pas encore créé — l'event
+				// funds_withdrawn peut précéder created). N'écrase pas une fee déjà posée.
+				if (withdrawnFee > 0) {
+					await tx.dispute.updateMany({
+						where: { stripeDisputeId: dispute.id, fee: 0 },
+						data: { fee: withdrawnFee },
+					});
+				}
 				await createOrderAuditTx(tx, {
 					orderId: order.id,
 					action: OrderAction.DISPUTE_RESOLVED,

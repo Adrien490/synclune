@@ -89,7 +89,14 @@ export function fetchProducts(
 }
 
 /**
- * Compte le nombre de filtres actifs
+ * Compte le nombre de filtres actifs (côté RSC : reçoit l'objet `searchParams`
+ * brut + les filtres déjà parsés, et gère `excludeType` pour les pages catégorie).
+ *
+ * NB (audit filtres S3) : il existe un jumeau CÔTÉ CLIENT dans
+ * `modules/products/services/product-filter-params.service.ts` (`countActiveFilters`,
+ * signature `(URLSearchParams)`), utilisé par les composants client
+ * (`product-filter-trigger`, `product-sort-bar`). Les deux doivent rester
+ * cohérents : toute évolution de la logique de comptage est à répercuter ici ET là.
  */
 export function countActiveFilters(
 	searchParamsData: ProductSearchParams,

@@ -30,10 +30,11 @@ export async function updateAnnouncement(
 			startsAt: formData.get("startsAt") ?? "",
 			endsAt: formData.get("endsAt") ?? "",
 			isActive: formData.get("isActive") ?? false,
+			variant: formData.get("variant") ?? undefined,
 		});
 		if ("error" in validated) return validated.error;
 
-		const { message, link, startsAt, endsAt, isActive } = validated.data;
+		const { message, link, startsAt, endsAt, isActive, variant } = validated.data;
 
 		const existing = await prisma.storeSettings.findUnique({
 			where: { id: STORE_SETTINGS_SINGLETON_ID },
@@ -49,6 +50,7 @@ export async function updateAnnouncement(
 				announcementStartsAt: startsAt,
 				announcementEndsAt: endsAt,
 				announcementIsActive: isActive,
+				announcementVariant: variant,
 			},
 		});
 

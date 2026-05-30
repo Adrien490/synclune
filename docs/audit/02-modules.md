@@ -282,7 +282,7 @@ Spécificités :
 7. Types orphelins / cache tags morts : audit a nettoyé, vérifier régression.
 8. Role-based filtering : si multi-admin, scope par rôle.
 9. Export CSV : si présent, encoding UTF-8 BOM, séparateur `;` (Excel FR), escape quotes.
-10. Conformité fiscale (TVA 37 500 €, URSSAF échéances) : env vars typées Zod.
+10. Conformité fiscale (TVA franchise 85 000 € ventes de biens / 37 500 € services, URSSAF échéances) : env vars typées Zod.
 11. Sentry latency spans : `Sentry.startSpan` sur 5 fetchers principaux.
 12. Layering : data/ pour fetchers cachés, services/ pour calculs purs.
 13. Tests edge cases : 0 commande, 1 commande, masse, données corrompues.

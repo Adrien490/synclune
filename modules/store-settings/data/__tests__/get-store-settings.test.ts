@@ -75,6 +75,7 @@ describe("getStoreSettings", () => {
 				announcementStartsAt: true,
 				announcementEndsAt: true,
 				announcementIsActive: true,
+				announcementVariant: true,
 				clickAndCollectEnabled: true,
 			},
 		});

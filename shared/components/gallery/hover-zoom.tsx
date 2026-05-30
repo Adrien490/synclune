@@ -41,9 +41,12 @@ export function GalleryHoverZoom({
 	const rafRef = useRef<number | null>(null);
 	const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-	// Debounced resize listener pour éviter le jank (seulement si enabled)
+	// Sous prefers-reduced-motion, on désactive complètement le zoom (contrat "moins de mouvement").
+	const interactive = enabled && !prefersReduced;
+
+	// Debounced resize listener pour éviter le jank (seulement si interactif)
 	useEffect(() => {
-		if (!enabled) return;
+		if (!interactive) return;
 
 		const updateRect = () => {
 			if (containerRef.current) {
@@ -67,7 +70,7 @@ export function GalleryHoverZoom({
 				clearTimeout(resizeTimeoutRef.current);
 			}
 		};
-	}, [enabled]);
+	}, [interactive]);
 
 	// RAF-only throttle (plus efficace que Date.now + RAF)
 	const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -87,11 +90,18 @@ export function GalleryHoverZoom({
 		});
 	};
 
-	const handleMouseEnter = () => {
-		setIsZooming(true);
+	const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
 		if (containerRef.current) {
 			rectRef.current = containerRef.current.getBoundingClientRect();
 		}
+		// Recale l'origine sur le point d'entrée du curseur AVANT d'activer le scale,
+		// sinon le zoom démarre sur la dernière origine du survol précédent (saut visuel).
+		if (imageRef.current && rectRef.current) {
+			const x = ((e.clientX - rectRef.current.left) / rectRef.current.width) * 100;
+			const y = ((e.clientY - rectRef.current.top) / rectRef.current.height) * 100;
+			imageRef.current.style.transformOrigin = `${x}% ${y}%`;
+		}
+		setIsZooming(true);
 	};
 
 	const handleMouseLeave = () => {
@@ -111,9 +121,9 @@ export function GalleryHoverZoom({
 		};
 	}, []);
 
-	const transitionClass = prefersReduced ? "" : "transition-transform duration-300 ease-out";
+	const transitionClass = "transition-transform duration-300 ease-out";
 
-	if (!enabled) {
+	if (!interactive) {
 		return (
 			<div className={cn("relative h-full w-full", className)}>
 				<Image
@@ -138,7 +148,8 @@ export function GalleryHoverZoom({
 			ref={containerRef}
 			className={cn(
 				"group/zoom relative h-full w-full overflow-hidden",
-				"cursor-crosshair",
+				// Cohérent avec l'action au clic (ouverture plein écran) — cf. wrapper <button> du slide
+				"cursor-zoom-in",
 				className,
 			)}
 			onMouseMove={handleMouseMove}

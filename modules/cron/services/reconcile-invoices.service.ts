@@ -5,6 +5,7 @@ import {
 	OrderAction,
 	PaymentStatus,
 	InvoiceStatus,
+	RefundStatus,
 	Prisma,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -15,6 +16,10 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { checkSequenceContinuity } from "@/modules/invoices/services/check-sequence-continuity.service";
 import { checkEReportingOrphanTransactions } from "@/modules/invoices/services/check-ereporting-period-continuity.service";
+import {
+	recordSalesEReporting,
+	recordRefundEReporting,
+} from "@/modules/invoices/services/record-ereporting.service";
 import {
 	persistInvoiceNumber,
 	backfillInvoiceDataSnapshot,
@@ -42,6 +47,10 @@ interface ReconcileBreakdown {
 	continuityIssues: number;
 	/** EINV-EREPORT-008 — nombre de transactions e-reporting orphelines (période close, jamais batchées). */
 	ereportingOrphans: number;
+	/** EINV-EREPORT-009 — nombre de commandes dont la transaction SALES e-reporting a été rattrapée. */
+	ereportingSalesRecovered: number;
+	/** EINV-EREPORT-009 — nombre de refunds dont la transaction REFUND e-reporting a été rattrapée. */
+	ereportingRefundRecovered: number;
 }
 
 /**
@@ -75,6 +84,9 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 					OR: [
 						// DLQ : anomalie facturation déjà flaguée.
 						{ invoiceRetryDeferred: true },
+						// EINV-EREPORT-009 : DLQ e-reporting SALES — recordSalesEReporting
+						// a échoué ("error") sur le hot path. Drainé par la Passe SALES.
+						{ ereportingRetryDeferred: true },
 						// EINV-PDF-005 : facture legacy à snapshot comptable manquant
 						// (numéro émis avant l'introduction du snapshot figé).
 						{
@@ -108,6 +120,8 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		escalated: 0,
 		continuityIssues: 0,
 		ereportingOrphans: 0,
+		ereportingSalesRecovered: 0,
+		ereportingRefundRecovered: 0,
 	};
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
@@ -126,6 +140,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				if (recovered.invoiceNumberRecovered) breakdown.invoiceNumberRecovered++;
 				if (recovered.pdfArchiveRecovered) breakdown.pdfArchiveRecovered++;
 				if (recovered.creditNoteRecovered) breakdown.creditNoteRecovered++;
+				if (recovered.ereportingSalesRecovered) breakdown.ereportingSalesRecovered++;
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
 				}
@@ -163,6 +178,17 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	// jamais été batchées (sous-déclaration DGFiP). Lecture seule, jamais bloquant.
 	breakdown.ereportingOrphans = await runEReportingOrphanCheck(new Date(now));
 
+	// Passe 6 (EINV-EREPORT-009) : drainage du DLQ e-reporting REFUND. Un refund
+	// COMPLETED dont recordRefundEReporting a échoué ("error") porte
+	// Refund.ereportingRetryDeferred=true (posé par recordRefundEReportingDeferrable
+	// depuis process-refund / mark-as-fully-refunded). Le chemin de finalisation
+	// (webhook / SAGA) ne le re-sélectionne plus → sans ce filet, sa ligne DGFiP
+	// négative ne serait jamais créée (sur-déclaration : vente reportée, remboursement
+	// non reporté — Art. 286 CGI). On retente (idempotent) puis on lève le flag au
+	// succès. Hébergé ici (et non dans reconcile-refunds) pour regrouper toute la
+	// réconciliation e-reporting/facture dans un seul cron.
+	breakdown.ereportingRefundRecovered = await runRefundEReportingDeferredSweep(deadline);
+
 	logger.info("Invoice reconciliation completed", {
 		cronJob: CRON_JOB,
 		processed,
@@ -187,6 +213,7 @@ export type ReconcileOutcome =
 			invoiceNumberRecovered: boolean;
 			pdfArchiveRecovered: boolean;
 			creditNoteRecovered: boolean;
+			ereportingSalesRecovered: boolean;
 	  }
 	| { kind: "escalated" }
 	| { kind: "skipped" };
@@ -210,6 +237,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	let invoiceNumberRecovered = false;
 	let pdfArchiveRecovered = false;
 	let creditNoteRecovered = false;
+	let ereportingSalesRecovered = false;
 	let anyFailure = false;
 
 	// Passe 0 : snapshot comptable manquant sur facture déjà émise (legacy
@@ -301,6 +329,22 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		// noop = facture déjà voided ou rien à voider → on laisse anyFailure=false
 	}
 
+	// Passe SALES (EINV-EREPORT-009) : transaction SALES e-reporting non enregistrée.
+	// Drapeau posé par recordSalesEReportingDeferrable quand l'enregistrement a
+	// échoué ("error") sur le hot path. On retente l'enregistrement (idempotent :
+	// findFirst + unique index). Un "error" persistant ⇒ anyFailure → escalade via
+	// le compteur partagé invoiceReconcileAttempts. "skipped" (flag e-reporting OFF,
+	// déjà enregistrée, hors B2C) ⇒ succès, on lèvera le flag.
+	const withFlags = order as GetOrderReturn & { ereportingRetryDeferred?: boolean };
+	if (withFlags.ereportingRetryDeferred && order.paymentStatus === PaymentStatus.PAID) {
+		const result = await recordSalesEReporting(order.id);
+		if (result === "error") {
+			anyFailure = true;
+		} else {
+			ereportingSalesRecovered = true;
+		}
+	}
+
 	if (anyFailure) {
 		// Increment compteur + decide d'escalader
 		const updated = await prisma.order.update({
@@ -319,13 +363,19 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		!snapshotBackfilled &&
 		!invoiceNumberRecovered &&
 		!pdfArchiveRecovered &&
-		!creditNoteRecovered
+		!creditNoteRecovered &&
+		!ereportingSalesRecovered
 	) {
 		// Rien à faire : drapeau posé sur une commande qui n'a finalement pas
-		// d'anomalie (déjà rattrapée par lazy fallback). On le baisse.
+		// d'anomalie (déjà rattrapée par lazy fallback). On le baisse — y compris
+		// le flag e-reporting (EINV-EREPORT-009).
 		await prisma.order.update({
 			where: { id: order.id },
-			data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
+			data: {
+				invoiceRetryDeferred: false,
+				invoiceReconcileAttempts: 0,
+				ereportingRetryDeferred: false,
+			},
 		});
 		return { kind: "skipped" };
 	}
@@ -333,7 +383,11 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	// Reset flags après succès complet + audit trail
 	await prisma.order.update({
 		where: { id: order.id },
-		data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
+		data: {
+			invoiceRetryDeferred: false,
+			invoiceReconcileAttempts: 0,
+			ereportingRetryDeferred: false,
+		},
 	});
 	await createOrderAudit({
 		orderId: order.id,
@@ -346,6 +400,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 			invoiceNumberRecovered,
 			pdfArchiveRecovered,
 			creditNoteRecovered,
+			ereportingSalesRecovered,
 		},
 	});
 	return {
@@ -354,6 +409,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		invoiceNumberRecovered,
 		pdfArchiveRecovered,
 		creditNoteRecovered,
+		ereportingSalesRecovered,
 	};
 }
 
@@ -521,6 +577,57 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
 		return report.orphanCount;
 	} catch (e) {
 		logger.error("E-reporting orphan check threw", e, { cronJob: CRON_JOB });
+		return 0;
+	}
+}
+
+/**
+ * Passe 6 (EINV-EREPORT-009) — drainage du DLQ e-reporting REFUND.
+ *
+ * Sélectionne les Refund COMPLETED flagués `ereportingRetryDeferred=true` (posé par
+ * `recordRefundEReportingDeferrable` quand l'enregistrement a échoué sur le hot path
+ * admin) et retente `recordRefundEReporting` (idempotent : findFirst + unique index).
+ * Au succès ("skipped" ou id créé) on lève le flag ; sur "error" persistant on le
+ * laisse pour le prochain run (Sentry déjà émis par recordRefundEReporting). Borné
+ * par BATCH_SIZE_MEDIUM + la deadline batch. Jamais bloquant.
+ *
+ * @returns nombre de refunds dont la transaction REFUND a été (ré)enregistrée.
+ */
+async function runRefundEReportingDeferredSweep(deadline: number): Promise<number> {
+	try {
+		const deferred = await prisma.refund.findMany({
+			where: {
+				ereportingRetryDeferred: true,
+				status: RefundStatus.COMPLETED,
+				...notDeleted,
+			},
+			select: { id: true },
+			take: BATCH_SIZE_MEDIUM,
+			orderBy: { processedAt: "asc" },
+		});
+
+		let recovered = 0;
+		for (const refund of deferred) {
+			if (Date.now() > deadline) {
+				logger.warn("Approaching timeout, stopping refund e-reporting sweep early", {
+					cronJob: CRON_JOB,
+				});
+				break;
+			}
+			const result = await recordRefundEReporting(refund.id);
+			if (result === "error") continue; // flag conservé → prochain run
+			await prisma.refund.update({
+				where: { id: refund.id },
+				data: { ereportingRetryDeferred: false },
+			});
+			recovered++;
+		}
+		if (recovered > 0) {
+			logger.info("Refund e-reporting DLQ drained", { cronJob: CRON_JOB, recovered });
+		}
+		return recovered;
+	} catch (e) {
+		logger.error("Refund e-reporting deferred sweep threw", e, { cronJob: CRON_JOB });
 		return 0;
 	}
 }
