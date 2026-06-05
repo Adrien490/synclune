@@ -154,8 +154,19 @@ export async function GET(
 
 	const archive = await prisma.order.findUnique({
 		where: { id: order.id },
-		select: { creditNotePdfUrl: true, creditNotePdfHash: true },
+		select: { creditNotePdfUrl: true, creditNotePdfHash: true, piiPurgedAt: true },
 	});
+
+	// F6 (RGPD-PII-AUDIT 2026-05-30) : symétrie avec la route facture — après la purge
+	// PII à 10 ans (hard-delete-retention), l'avoir n'est plus reconstituable (snapshot +
+	// PDF archivé effacés, base légale expirée RGPD Art. 5.1.e). On renvoie 410 Gone au
+	// lieu de régénérer depuis des colonnes Order scrubées.
+	if (archive?.piiPurgedAt) {
+		return new Response(
+			"Ce document n'est plus disponible : la durée légale de conservation (10 ans) a expiré.",
+			{ status: 410 },
+		);
+	}
 	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
 	const auditAuthorId = session?.user.id;
 

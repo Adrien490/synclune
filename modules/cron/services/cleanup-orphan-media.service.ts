@@ -216,12 +216,19 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  * - reviewMedia         → ReviewMedia (url)
  * - (user avatars)      → User.image
  * - order snapshots     → OrderItem (productImageUrl, skuImageUrl)
+ * - invoice archives    → Order (invoicePdfUrl, creditNotePdfUrl)
  *
  * MEDIA-AUDIT-003 : les snapshots de commande (`OrderItem.productImageUrl` /
  * `skuImageUrl`) figent l'URL du media au checkout. Si la ligne `SkuMedia`
  * source disparait, le fichier ne doit PAS être supprimé tant qu'une commande
  * y fait référence — sinon l'historique client afficherait une image 404
  * (rétention légale 10 ans).
+ *
+ * RGPD-AUDIT F-C : les PDF de facture/avoir archivés (`Order.invoicePdfUrl` /
+ * `creditNotePdfUrl`) sont des archives légales immuables conservées 10 ans
+ * (Art. L102 B LPF). SANS ce scan, ce cron les classerait orphelins et les
+ * supprimerait dès 24h — destruction d'archives fiscales encore dans leur
+ * rétention. Ce scan DOIT précéder toute réactivation du cron (actuellement retiré).
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
@@ -321,6 +328,37 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 				}
 				if (item.skuImageUrl) {
 					const key = extractFileKeyFromUrl(item.skuImageUrl);
+					if (key) keys.add(key);
+				}
+			}
+		},
+	});
+
+	// 5. Order invoice/credit-note PDF archives (RGPD-AUDIT F-C) — immutable legal
+	// documents kept 10 years (Art. L102 B LPF). They are deleted ONLY by the
+	// `hard-delete-retention` cron at paidAt+10y; until then they must never be
+	// classified as orphans.
+	await paginateCursor({
+		jobName,
+		step: "orderInvoicePdf-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.order.findMany({
+				where: { OR: [{ invoicePdfUrl: { not: null } }, { creditNotePdfUrl: { not: null } }] },
+				select: { id: true, invoicePdfUrl: true, creditNotePdfUrl: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const order of batch) {
+				if (order.invoicePdfUrl) {
+					const key = extractFileKeyFromUrl(order.invoicePdfUrl);
+					if (key) keys.add(key);
+				}
+				if (order.creditNotePdfUrl) {
+					const key = extractFileKeyFromUrl(order.creditNotePdfUrl);
 					if (key) keys.add(key);
 				}
 			}

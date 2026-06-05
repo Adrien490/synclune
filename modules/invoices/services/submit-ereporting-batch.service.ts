@@ -5,6 +5,15 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getInvoiceProvider } from "@/modules/invoices/providers/factory";
 import { INVOICE_FEATURE_FLAGS } from "@/modules/invoices/constants/feature-flags";
+import {
+	EREPORTING_ALLOW_DAILY_TRANSMISSION,
+	EREPORTING_PERIOD_LENGTH,
+} from "@/modules/invoices/constants/ereporting-period";
+import {
+	computeDailyAggregates,
+	parseVatBreakdown,
+	toTransmittedVatBreakdown,
+} from "@/modules/invoices/services/build-ereporting-transaction";
 
 /**
  * Pousse un `EReportingBatch` individuel vers la Plateforme Agréée (PA)
@@ -103,6 +112,7 @@ export type SubmitBatchStatus =
 	| "SKIPPED_FLAG_OFF"
 	| "SKIPPED_BACKOFF"
 	| "SKIPPED_DRY_RUN"
+	| "SKIPPED_CADENCE_GUARD"
 	| "SKIPPED_EMPTY"
 	| "NOT_FOUND"
 	| "NOT_ELIGIBLE"
@@ -137,6 +147,22 @@ const ELIGIBLE_STATUSES: ReadonlySet<EReportingStatus> = new Set([
 	EReportingStatus.PENDING,
 	EReportingStatus.RETRYING,
 ]);
+
+/**
+ * EINV-EREPORT-010 — Vrai SSI le provider transmet RÉELLEMENT vers une PA
+ * (`capabilities.eReporting === true`, hors `mock` de staging) ET la cadence est
+ * `DAILY` ET l'acquittement explicite `EREPORTING_ALLOW_DAILY_TRANSMISSION` est
+ * absent. Pure (testable sans env) — tolère un provider sans `capabilities`
+ * (dry-run `local`/mock de test → `?.` ⇒ non bloquant).
+ */
+export function isDailyTransmissionBlocked(
+	provider: { id: string; capabilities?: { eReporting?: boolean } },
+	periodLength: string,
+	allowDaily: boolean,
+): boolean {
+	const transmitsForReal = provider.capabilities?.eReporting === true && provider.id !== "mock";
+	return transmitsForReal && periodLength === "DAILY" && !allowDaily;
+}
 
 /**
  * Re-queue les transactions d'un batch qui vient d'échouer terminalement
@@ -195,6 +221,28 @@ export async function submitEReportingBatchById(
 	const deadline = options.deadline ?? Date.now() + DEFAULT_DEADLINE_MS;
 	const provider = getInvoiceProvider();
 
+	// EINV-EREPORT-010 — Garde cadence fail-closed : un provider qui transmet
+	// RÉELLEMENT (hors dry-run `local` et hors `mock`) ne doit pas pousser des
+	// batches journaliers vers une PA en franchise (dépôt bimestriel attendu) sans
+	// acquittement explicite. Bloque le piège « vraie PA branchée + cadence DAILY
+	// oubliée → ~60 batches/bimestre ». Sans effet en dry-run / staging mock.
+	if (
+		isDailyTransmissionBlocked(
+			provider,
+			EREPORTING_PERIOD_LENGTH,
+			EREPORTING_ALLOW_DAILY_TRANSMISSION,
+		)
+	) {
+		captureCadenceGuard(batchId, provider.id);
+		logger.error(
+			`Batch ${batchId} transmission blocked: provider "${provider.id}" transmits in DAILY cadence — ` +
+				`set EREPORTING_PERIOD_LENGTH=BIMONTHLY (or EREPORTING_ALLOW_DAILY_TRANSMISSION=true if the PA spec confirms daily)`,
+			undefined,
+			{ service: "submit-ereporting-batch", batchId, providerId: provider.id },
+		);
+		return { batchId, status: "SKIPPED_CADENCE_GUARD" };
+	}
+
 	const batch = await prisma.eReportingBatch.findUnique({
 		where: { id: batchId },
 		select: {
@@ -208,6 +256,7 @@ export async function submitEReportingBatchById(
 			totalAmountIncTax: true,
 			totalAmountExclTax: true,
 			totalTaxAmount: true,
+			vatBreakdown: true,
 		},
 	});
 
@@ -245,6 +294,10 @@ export async function submitEReportingBatchById(
 				paymentMethod: true,
 				currency: true,
 				type: true,
+				// EINV-EREPORT-007/F1+F3 : catégorie d'opération (biens/services) transmise
+				// par transaction. GOODS aujourd'hui (franchise, 100 % biens) ; dérivée des
+				// lignes à la sortie de franchise (cf. deriveOperationCategory).
+				operationCategory: true,
 			},
 		});
 
@@ -271,6 +324,15 @@ export async function submitEReportingBatchById(
 					totalAmountIncTax: batch.totalAmountIncTax,
 					totalAmountExclTax: batch.totalAmountExclTax,
 					totalTaxAmount: batch.totalTaxAmount,
+					// EINV-EREPORT-010 — ventilation par taux transmise MÊME en franchise
+					// (ligne unique taux 0) + détail journalier dérivé des transactions.
+					// Dérivé à l'émission, snapshot stocké inchangé (Art. L102 B).
+					vatBreakdown: toTransmittedVatBreakdown(
+						parseVatBreakdown(batch.vatBreakdown),
+						batch.totalAmountExclTax,
+						batch.totalTaxAmount,
+					),
+					dailyAggregates: computeDailyAggregates(transactions),
 					transactions,
 				},
 				// EINV-EREPORT-003 : clé d'idempotence déterministe = batch.id. La PA
@@ -504,6 +566,29 @@ function captureRejectedBatch(batchId: string, reason: string): void {
 		scope.setFingerprint(["service", "submit-ereporting-batch", "rejected"]);
 		scope.setLevel("warning");
 		Sentry.captureException(new Error(`E-reporting batch ${batchId} REJECTED: ${reason}`));
+	});
+}
+
+/**
+ * EINV-EREPORT-010 : alerte Sentry `error` quand la garde cadence bloque une
+ * transmission (provider réel + cadence DAILY sans acquittement). C'est une
+ * mauvaise configuration de go-live (risque de dépôt non conforme à la cadence
+ * réglementaire bimestrielle) — l'e-reporting ne progresse plus tant qu'elle n'est
+ * pas corrigée. Fingerprint dédié.
+ */
+function captureCadenceGuard(batchId: string, providerId: string): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("service", "submit-ereporting-batch");
+		scope.setTag("batchId", batchId);
+		scope.setTag("providerId", providerId);
+		scope.setFingerprint(["ereporting", "cadence-guard-daily"]);
+		scope.setLevel("error");
+		Sentry.captureException(
+			new Error(
+				`E-reporting transmission blocked for batch ${batchId}: provider "${providerId}" would transmit ` +
+					`DAILY batches — set EREPORTING_PERIOD_LENGTH=BIMONTHLY or EREPORTING_ALLOW_DAILY_TRANSMISSION=true`,
+			),
+		);
 	});
 }
 

@@ -23,6 +23,10 @@
 			"schedule": "30 */6 * * *"
 		},
 		{
+			"path": "/api/cron/reconcile-invoices",
+			"schedule": "0 2 * * *"
+		},
+		{
 			"path": "/api/cron/alert-dispute-deadlines",
 			"schedule": "0 8 * * *"
 		},

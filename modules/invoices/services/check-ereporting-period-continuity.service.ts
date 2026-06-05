@@ -38,6 +38,18 @@ import {
 
 const SAMPLE_CAP = 50;
 
+/**
+ * Borne dure du scan PENDING non rattaché. Le `findMany` n'a pas de `take` SQL par
+ * défaut ; or ce contrôle existe précisément pour le cas où `build-ereporting-batch`
+ * est en panne — scénario où le backlog PENDING gonfle sans borne. Sans cap, on
+ * chargerait tout en mémoire dans le mode de défaillance même qu'on détecte. On tire
+ * les `ORPHAN_SCAN_CAP` plus anciennes (orderBy occurredAt asc) — les orphelines sont
+ * par construction les plus anciennes (période close) — et on signale `capped` quand
+ * la borne est atteinte (il y a au moins ce nombre d'orphelines potentielles).
+ * Cf. audit e-reporting 2026-05-30 (P2-3).
+ */
+const ORPHAN_SCAN_CAP = 10_000;
+
 export interface EReportingOrphanReport {
 	/** Nombre de transactions orphelines (PENDING, sans batch, période close > grâce). */
 	orphanCount: number;
@@ -47,6 +59,11 @@ export interface EReportingOrphanReport {
 	oldestPeriodTo: string;
 	/** Échantillon d'ids (cap 50) pour l'investigation admin. */
 	sampleIds: string[];
+	/**
+	 * `true` si le scan a atteint `ORPHAN_SCAN_CAP` : `orphanCount` est alors un
+	 * minorant (il y a potentiellement davantage d'orphelines non scannées).
+	 */
+	capped: boolean;
 }
 
 /**
@@ -56,19 +73,31 @@ export interface EReportingOrphanReport {
 export async function checkEReportingOrphanTransactions(
 	now: Date,
 ): Promise<EReportingOrphanReport | null> {
-	// On tire toutes les PENDING non rattachées (volume attendu faible : le cron
-	// build les vide quotidiennement) puis on filtre par clôture de période en
+	// On tire les PENDING non rattachées les plus anciennes (volume attendu faible :
+	// le cron build les vide à chaque période) puis on filtre la clôture de période en
 	// mémoire — la borne dépend de EREPORTING_PERIOD_LENGTH, non exprimable en SQL.
+	// Cap dur ORPHAN_SCAN_CAP : voir constante (panne build = backlog non borné).
 	const pending = await prisma.eReportingTransaction.findMany({
 		where: { status: EReportingStatus.PENDING, batchId: null },
-		select: { id: true, occurredAt: true },
+		// `updatedAt` est re-horodaté au re-queue (REJECTED/ABANDONED → détache +
+		// PENDING). Une transaction re-queuée d'une période close depuis longtemps est
+		// légitimement en attente du prochain build : la grâce doit repartir de son
+		// passage en PENDING, pas de la clôture de période — sinon faux positif
+		// systématique sous MONTHLY/BIMONTHLY. Cf. audit P2-2.
+		select: { id: true, occurredAt: true, updatedAt: true },
 		orderBy: { occurredAt: "asc" },
+		take: ORPHAN_SCAN_CAP,
 	});
 
 	const nowMs = now.getTime();
 	const orphans = pending.filter((tx) => {
 		const { periodTo } = computeEReportingPeriod(tx.occurredAt);
-		return periodTo.getTime() + EREPORTING_ORPHAN_GRACE_MS < nowMs;
+		// Orpheline ssi la période est close ET la ligne est restée non rattachée
+		// (non touchée) depuis plus que la grâce. `max(periodTo, updatedAt)` traite
+		// uniformément une tx fraîche (updatedAt ≈ createdAt ≤ periodTo → borne =
+		// periodTo) et une tx re-queuée (updatedAt récent → la grâce redémarre).
+		const graceFrom = Math.max(periodTo.getTime(), tx.updatedAt.getTime());
+		return graceFrom + EREPORTING_ORPHAN_GRACE_MS < nowMs;
 	});
 
 	if (orphans.length === 0) return null;
@@ -82,5 +111,6 @@ export async function checkEReportingOrphanTransactions(
 		oldestOccurredAt: oldest.occurredAt.toISOString(),
 		oldestPeriodTo: oldestPeriodTo.toISOString(),
 		sampleIds: orphans.slice(0, SAMPLE_CAP).map((t) => t.id),
+		capped: pending.length === ORPHAN_SCAN_CAP,
 	};
 }

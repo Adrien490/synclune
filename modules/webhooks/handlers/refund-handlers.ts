@@ -16,7 +16,7 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
-import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
+import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { HistorySource, InvoiceStatus, RefundStatus } from "@/app/generated/prisma/client";
 
@@ -107,6 +107,12 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// 4b. Cycle VOIDED facture (Art. 272-I CGI) si remboursement total après émission.
 		// Idempotent : noop si déjà VOIDED ou si pas de facture active.
 		// EINV-CREDIT-008 : Sentry alerte sur `failed` (full refund → facture stale).
+		// EINV-CREDIT-015 : détecte le sur-crédit (avoir total + partiels) — voir 4b-bis.
+		let creditNoteOverlapAlert: {
+			invoiceNumber: string | null;
+			creditNoteNumber: string;
+			partialCreditNoteCount: number;
+		} | null = null;
 		if (isFullyRefunded) {
 			const invoiceState = await prisma.order.findUnique({
 				where: { id: order.id },
@@ -136,6 +142,43 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 							"error",
 						);
 					});
+				} else if (voided.kind === "voided") {
+					// 4b-bis. EINV-CREDIT-015 (audit couverture facturation 2026-05-30, P1-B).
+					// Un avoir TOTAL vient d'être émis (annulation de la facture). Si des
+					// avoirs PARTIELS ont déjà été émis sur des Refund de cette commande
+					// (remboursement partiel antérieur puis complémentaire portant le cumul
+					// au total), les documents d'avoir se chevauchent sur le montant déjà
+					// crédité → sur-crédit (Art. 272-I CGI : avoirs > réduction réelle).
+					// L'e-reporting reste juste (enregistrement par Refund, étape 4d) ; seul
+					// le niveau document/PDF doit être réconcilié manuellement. Le traitement
+					// comptable (avoir complémentaire vs nette) est un arbitrage hors code →
+					// on alerte plutôt que de sur-créditer silencieusement.
+					const partialCreditNoteCount = await prisma.refund.count({
+						where: { orderId: order.id, creditNoteNumber: { not: null }, ...notDeleted },
+					});
+					if (partialCreditNoteCount > 0) {
+						Sentry.withScope((scope) => {
+							scope.setLevel("warning");
+							scope.setTag("invoicing", "credit-note-overlap");
+							scope.setTag("source", "webhook-charge-refunded");
+							scope.setFingerprint(["credit-note-overlap", order.id]);
+							scope.setContext("order", {
+								orderId: order.id,
+								orderNumber: order.orderNumber,
+								creditNoteNumber: voided.creditNoteNumber,
+								partialCreditNoteCount,
+							});
+							Sentry.captureMessage(
+								"Avoir total émis avec avoir(s) partiel(s) préexistant(s) — sur-crédit potentiel",
+								"warning",
+							);
+						});
+						creditNoteOverlapAlert = {
+							invoiceNumber: invoiceState.invoiceNumber,
+							creditNoteNumber: voided.creditNoteNumber,
+							partialCreditNoteCount,
+						};
+					}
 				}
 			}
 		}
@@ -204,12 +247,22 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// exclus du reconcile : sans ce hook, leur ligne DGFiP négative n'est jamais
 		// créée et l'agrégat B2C surévalue le CA net. Best-effort + idempotent
 		// (unique index `EReportingTransaction_refundId_type_key` + findFirst).
+		//
+		// EINV-EREPORT-009 : variante `deferrable`. `recordRefundEReporting` est
+		// best-effort (retourne "error" SANS throw) et son retour est ignoré ici ;
+		// le webhook est ensuite marqué COMPLETED → Stripe ne rejoue pas. Comme
+		// reconcile-refunds exclut ces refunds (COMPLETED + processedAt posé), un
+		// échec transitoire (timeout DB, build payload) laissait la ligne DGFiP
+		// négative définitivement perdue — sous-déclaration du net. Le wrapper pose
+		// `Refund.ereportingRetryDeferred` (DLQ) sur "error", drainé par la passe
+		// REFUND de reconcile-refunds. Aligne ce hot path sur les 3 autres chemins
+		// refund (process-refund, mark-as-fully-refunded, dispute-closed).
 		const completedRefunds = await prisma.refund.findMany({
 			where: { orderId: order.id, status: RefundStatus.COMPLETED, ...notDeleted },
 			select: { id: true },
 		});
 		for (const r of completedRefunds) {
-			await recordRefundEReporting(r.id);
+			await recordRefundEReportingDeferrable(r.id);
 		}
 
 		// 5. Build post-tasks (email + cache invalidation)
@@ -224,6 +277,20 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			ORDERS_CACHE_TAGS.REFUNDS(order.id),
 		];
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
+
+		// EINV-CREDIT-015 : alerte admin sur-crédit (avoir total + partiels), détectée en 4b-bis.
+		if (creditNoteOverlapAlert) {
+			tasks.push({
+				type: "ADMIN_CREDIT_NOTE_OVERLAP_ALERT",
+				data: {
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					invoiceNumber: creditNoteOverlapAlert.invoiceNumber,
+					creditNoteNumber: creditNoteOverlapAlert.creditNoteNumber,
+					partialCreditNoteCount: creditNoteOverlapAlert.partialCreditNoteCount,
+				},
+			});
+		}
 
 		// ORD-STRIPE-006 : alerte admin temps réel pour chaque Dashboard refund
 		// nouvellement créé (admin doit vérifier le restock manuel + traçabilité).

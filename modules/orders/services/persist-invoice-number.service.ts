@@ -48,7 +48,10 @@ const MAX_RETRIES = 5;
  *
  * À 99 999 : alerter d'urgence. Élargir la regex en migration (`{5,6}`) prend
  * 10 min mais nécessite un déploiement → mieux vaut le faire avant que ça
- * casse en prod.
+ * casse en prod. NB : le SELECT du dernier numéro trie déjà NUMÉRIQUEMENT le
+ * suffixe (`split_part(...)::int`), donc l'extension à 6 chiffres ne nécessite
+ * QUE la migration de la regex — pas de réécriture de la requête (un tri
+ * lexicographique placerait `F-YYYY-100000` avant `F-YYYY-99999` → boucle P2002).
  */
 const MAX_SEQUENCE_PER_YEAR = 99_999;
 
@@ -160,9 +163,14 @@ export async function persistInvoiceNumber(
 				}
 
 				const lastRow = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
+					// Tri NUMÉRIQUE sur le suffixe (pas lexicographique) : indispensable si
+					// la regex CHECK est un jour étendue à 6 chiffres ({5,6}). En
+					// lexicographique, `F-YYYY-100000` < `F-YYYY-99999` ⇒ le MAX renverrait
+					// 99999 et on re-générerait 100000 en boucle (P2002 → émission bloquée).
+					// `split_part(x,'-',3)` isole NNNNN (format garanti par le CHECK DB).
 					Prisma.sql`SELECT "invoiceNumber" FROM "Order"
 						WHERE "invoiceNumber" LIKE ${prefix + "%"}
-						ORDER BY "invoiceNumber" DESC
+						ORDER BY CAST(split_part("invoiceNumber", '-', 3) AS INTEGER) DESC
 						LIMIT 1`,
 				);
 

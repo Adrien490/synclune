@@ -330,13 +330,13 @@ describe("CreateCollectionForm", () => {
 
 	// ─── Hidden status input ───────────────────────────────────────────────────
 
-	it("renders a hidden input with name='status' and default value 'DRAFT'", () => {
+	it("renders a hidden input with name='status' and default value 'PUBLIC'", () => {
 		render(<CreateCollectionForm />);
 		const hiddenInput = document.querySelector(
 			'input[type="hidden"][name="status"]',
 		) as HTMLInputElement;
 		expect(hiddenInput).not.toBeNull();
-		expect(hiddenInput.value).toBe("DRAFT");
+		expect(hiddenInput.value).toBe("PUBLIC");
 	});
 
 	// ─── Form element ─────────────────────────────────────────────────────────

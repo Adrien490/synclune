@@ -72,7 +72,9 @@ describe("Facturation — pas de création manuelle de facture ou d'avoir", () =
 			.map(relPath);
 		expect(writers.sort()).toEqual(
 			[
-				"modules/orders/services/invoice-number.service.ts", // legacy/orphan (0 consumer)
+				// Émetteur unique du template F-YYYY-NNNNN sous advisory lock (Art. 286 CGI).
+				// L'ancien `invoice-number.service.ts` (générateur orphelin sans lock, 0
+				// consumer) a été supprimé — audit séquences 2026-05-30 (fail-unsafe si câblé).
 				"modules/orders/services/persist-invoice-number.service.ts",
 			].sort(),
 		);

@@ -10,6 +10,17 @@ import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
  * aucun champ n'est dérivé à la lecture (Art. L102 B LPF : immuabilité de
  * la facture archivée bit-à-bit).
  *
+ * ⚠️ INVARIANT « ENTIERS SEULS » (EINV-PDF-008) — tous les montants/taux/quantités
+ * DOIVENT rester des **entiers** (centimes, points de base, unités). Le snapshot est
+ * persisté en JSONB puis son intégrité re-vérifiée à chaque lecture via
+ * `sha256(canonicalJsonStringify(snapshot_relu)) === invoiceDataHash`
+ * (verify-invoice-snapshot.ts). Ce contrôle ne tient que si le round-trip JSONB
+ * Postgres est byte-stable, ce qui est garanti pour entiers/strings/bool/null/arrays
+ * mais PAS pour les flottants (ex. `5.50`→`5.5`, dérive de précision/notation).
+ * Introduire un champ flottant casserait l'égalité de hash et lèverait
+ * `InvoiceSnapshotIntegrityError` (503) sur TOUTES les factures concernées.
+ * Un taux fractionnaire doit être encodé en points de base entiers (5,5 % = `550`).
+ *
  * Conformité réglementaire :
  *  - Art. 286 CGI (numérotation séquentielle) → `invoiceNumber`
  *  - Art. 289 CGI (mentions obligatoires) → `seller`, `buyer`, `lines`

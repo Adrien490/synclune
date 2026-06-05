@@ -40,6 +40,23 @@ export const RETENTION = {
 
 	/** Years for legal data retention (French Commercial Code Art. L123-22) */
 	LEGAL_RETENTION_YEARS: 10,
+
+	/**
+	 * Days to keep PII on orders that were NEVER paid (paidAt IS NULL — abandoned /
+	 * cancelled / failed checkouts) before scrubbing the customer/shipping fields.
+	 *
+	 * These orders carry no fiscal obligation (no invoice was ever emitted, so the
+	 * Art. 289 CGI / Art. 17(3)(b) RGPD retention exemption does NOT apply) yet they
+	 * are never reached by the 10-year `paidAt`-keyed purge and never hard-deleted.
+	 * Without this window their customer PII would be retained indefinitely
+	 * (RGPD Art. 5.1.e storage-limitation breach — RGPD-AUDIT F-A).
+	 *
+	 * Default 3 years: comfortably covers card-chargeback (~540 d) and fraud-analysis
+	 * windows while staying well under the 5-year civil prescription (Art. 2224 C. civ.).
+	 * ⚠️ Hors code → arbitrage comptable/ops : ajuster selon la politique de rétention
+	 * des commandes non abouties.
+	 */
+	UNPAID_ORDER_PII_RETENTION_DAYS: 1095,
 } as const;
 
 /**
@@ -93,6 +110,21 @@ export const DB_QUERY_BATCH_SIZE = 500;
  * Cf. EINV-EREPORT-005.
  */
 export const MAX_BATCH_TRANSACTIONS = 1000;
+
+/**
+ * Nombre maximum de transactions PENDING tirées par run de `build-ereporting-batch`.
+ *
+ * ⚠️ DOIT rester ≥ `MAX_BATCH_TRANSACTIONS`, sinon le cap-split (EINV-EREPORT-005)
+ * devient INATTEIGNABLE : une période ne pourrait jamais contenir plus de tx que ce
+ * cap, donc jamais > `MAX_BATCH_TRANSACTIONS`, et chaque run émettrait un batch
+ * minuscule par période. Avant correctif ce cap valait `BATCH_SIZE_MEDIUM` (25) :
+ * un Black-Friday fragmentait en ~200 micro-batches de 25 tous estampillés de la même
+ * période — l'opposé de ce qu'attend une PA bimestrielle (1 dépôt/période). On tire
+ * désormais 5× le cap de batch : une période très volumineuse est agrégée en un run
+ * en chunks de `MAX_BATCH_TRANSACTIONS`, et le `hasMore` reprend le reliquat au run
+ * suivant. Cf. audit e-reporting 2026-05-30 (P2-1).
+ */
+export const EREPORTING_BUILD_CANDIDATE_CAP = 5 * MAX_BATCH_TRANSACTIONS;
 
 /**
  * Time thresholds in milliseconds

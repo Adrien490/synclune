@@ -40,7 +40,7 @@ vi.mock("@/shared/lib/logger", () => ({
 }));
 
 vi.mock("@/modules/cron/constants/limits", () => ({
-	BATCH_SIZE_MEDIUM: 100,
+	EREPORTING_BUILD_CANDIDATE_CAP: 100,
 	MAX_BATCH_TRANSACTIONS: 1000,
 }));
 
@@ -190,7 +190,7 @@ describe("buildEReportingBatch — aggregation", () => {
 		expect(created.data.totalAmountIncTax).toBe(7500);
 	});
 
-	it("hasMore=true when BATCH_SIZE_MEDIUM is reached", async () => {
+	it("hasMore=true when EREPORTING_BUILD_CANDIDATE_CAP is reached", async () => {
 		const transactions = Array.from({ length: 100 }, (_, i) =>
 			makeTransaction(`t${i}`, new Date("2026-05-26T08:00:00Z"), 100),
 		);
@@ -200,7 +200,7 @@ describe("buildEReportingBatch — aggregation", () => {
 		expect(result.hasMore).toBe(true);
 	});
 
-	it("hasMore=false when fewer than BATCH_SIZE_MEDIUM transactions returned", async () => {
+	it("hasMore=false when fewer than EREPORTING_BUILD_CANDIDATE_CAP transactions returned", async () => {
 		mockPrisma.eReportingTransaction.findMany.mockResolvedValue([
 			makeTransaction("t1", new Date("2026-05-26T08:00:00Z")),
 		]);

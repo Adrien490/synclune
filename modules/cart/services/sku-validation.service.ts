@@ -136,6 +136,9 @@ export async function validateSkuAndStock(input: {
 						title: sku.product.title,
 						slug: sku.product.slug,
 						description: sku.product.description ?? null,
+						// EINV-EREPORT-007/F3 — catégorie d'opération e-reporting (GOODS par
+						// défaut si le type n'en porte pas), snapshotée sur l'OrderItem.
+						operationCategory: sku.product.type?.operationCategory ?? "GOODS",
 					},
 					images: sku.images.map((img) => ({
 						url: img.url,

@@ -71,6 +71,7 @@ describe("recordSalesEReporting — happy path", () => {
 			shippingCountry: "FR",
 			customerType: "B2C",
 			stripePaymentIntentId: "pi_test_1",
+			items: [{ operationCategory: "GOODS" }],
 		});
 		mockPrisma.eReportingTransaction.create.mockResolvedValue({ id: "tx-new" });
 
@@ -138,6 +139,7 @@ describe("recordSalesEReporting — idempotence", () => {
 			shippingCountry: "FR",
 			customerType: "B2C",
 			stripePaymentIntentId: null,
+			items: [{ operationCategory: "GOODS" }],
 		});
 		mockPrisma.eReportingTransaction.create.mockResolvedValue({ id: "tx-new" });
 
@@ -230,6 +232,7 @@ describe("recordRefundEReporting — happy path", () => {
 				stripePaymentIntentId: "pi_test_1",
 				total: 2500,
 				taxAmount: 0,
+				items: [{ operationCategory: "GOODS" }],
 			},
 		});
 		mockPrisma.eReportingTransaction.create.mockResolvedValue({ id: "tx-refund-new" });

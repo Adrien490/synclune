@@ -563,6 +563,58 @@ export async function sendAdminCreditNoteFailedAlert({
 }
 
 /**
+ * Alerte admin : sur-crédit potentiel (avoir total + avoir(s) partiel(s))
+ *
+ * Déclenchée par `void-invoice` / le handler `charge.refunded` quand une facture
+ * est annulée par un avoir TOTAL alors que des avoir(s) PARTIEL(s) ont déjà été
+ * émis sur des Refund de la même commande (typiquement : remboursement partiel
+ * puis remboursement complémentaire portant le cumul au total). Les documents
+ * d'avoir se chevauchent alors sur le montant déjà crédité (Art. 272-I CGI :
+ * le total des avoirs dépasse la réduction réelle). L'e-reporting reste juste
+ * (enregistrement par Refund), mais la comptabilité PDF doit être réconciliée
+ * manuellement. Le traitement comptable (avoir complémentaire vs nette) est un
+ * arbitrage hors code. Cf. audit couverture facturation 2026-05-30 (finding P1-B).
+ */
+export async function sendAdminCreditNoteOverlapAlert({
+	orderId,
+	orderNumber,
+	invoiceNumber,
+	creditNoteNumber,
+	partialCreditNoteCount,
+}: {
+	orderId: string;
+	orderNumber: string;
+	invoiceNumber?: string | null;
+	creditNoteNumber: string;
+	partialCreditNoteCount: number;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes/${orderId}`;
+	const contextLines = [
+		`Commande        : ${orderNumber}`,
+		`Facture         : ${invoiceNumber ?? "—"}`,
+		`Avoir total     : ${creditNoteNumber}`,
+		`Avoirs partiels : ${partialCreditNoteCount}`,
+		`Order ID        : ${orderId}`,
+	];
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "invoice",
+			context: contextLines.join("\n"),
+			summary: `Un avoir TOTAL (${creditNoteNumber}) a été émis sur la commande ${orderNumber} alors que ${partialCreditNoteCount} avoir(s) partiel(s) existaient déjà. Les avoirs se chevauchent sur le montant déjà remboursé (sur-crédit potentiel, Art. 272-I CGI). À réconcilier manuellement. Voir docs/RUNBOOK-INVOICING.md.`,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Avoir total + partiels — sur-crédit potentiel ${orderNumber}`,
+			tags: [{ name: "category", value: "admin" }],
+			// 1 alerte par commande (idempotent cross-retry webhook).
+			idempotencyKey: `alert:credit-note-overlap:${orderId}`,
+		},
+	);
+}
+
+/**
  * Alerte admin URGENT : Saturation sequence facture/avoir (Art. 286 CGI)
  *
  * Declenchee quand le compteur sequentiel annuel atteint 99 999 (limite CHECK

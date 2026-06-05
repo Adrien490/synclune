@@ -27,9 +27,8 @@ export const processSteps: ProcessStep[] = [
 	},
 	{
 		id: "drawing",
-		title: "Le dessin et la peinture",
-		description:
-			"Je dessine sur du plastique fou, puis je peins à l'acrylique. Chaque trait compte, chaque couleur est choisie avec soin.",
+		title: "Le choix du matériel",
+		description: "Chaque élément est choisi avec soin dans mon atelier.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-pink)]",
@@ -39,7 +38,7 @@ export const processSteps: ProcessStep[] = [
 		id: "assembly",
 		title: "La cuisson et l'assemblage",
 		description:
-			"Le plastique rétrécit 7 fois au four ! Vernissage, montage… parfois le résultat surprend, c'est le charme artisanal.",
+			"Chaque bijou possède un processus de fabrication différent, donnant naissance à des pièces uniques.",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-lavender)]",
@@ -49,7 +48,7 @@ export const processSteps: ProcessStep[] = [
 		id: "finishing",
 		title: "La touche finale",
 		description:
-			"Je polis, vérifie chaque détail, assemble les perles. Emballage avec amour dans sa pochette.",
+			"Je polis et vérifie chaque détail, puis je place le bijou dans une pochette, avec amour.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-mint)]",

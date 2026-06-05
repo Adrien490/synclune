@@ -23,19 +23,45 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * paidAt + 10 years, after which the PII is scrubbed (RGPD Art. 5.1.e storage
  * limitation) while the non-PII accounting fields survive. See `purgeExpiredOrderPii`.
  *
+ * Never-paid orders (abandoned/cancelled checkouts, paidAt IS NULL) carry no invoice
+ * and so are NEVER reached by the paidAt-keyed purge above; their operational PII is
+ * scrubbed on a separate, shorter window by `purgeAbandonedOrderPii` (RGPD-AUDIT F-A).
+ *
  * Tables handled:
  * - Product (and ProductSku, SkuMedia, etc. via cascade) — hard delete
  * - ProductReview, ReviewResponse, ReviewMedia (via cascade) — hard delete
- * - Order — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
+ * - Order (paid) — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
+ * - Order (never paid) — customer/shipping PII purge past the unpaid-retention window
  */
 
-/** PII scrub payload applied to orders past the 10-year legal retention. */
-const ORDER_PII_SCRUB = {
+/**
+ * PII scrub payload applied to orders past the 10-year legal retention.
+ *
+ * Exported for the regression test `purge-pii-scrub-contract` which locks both
+ * halves of the invariant: (a) the PII surfaces (billing, invoice snapshot,
+ * archived PDF pointers) ARE scrubbed (RGPD Art. 5.1.e once the legal basis
+ * expires), and (b) the non-PII accounting fields (invoiceNumber,
+ * creditNoteNumber, total, subtotal, taxAmount, paidAt) are NEVER in this
+ * payload (Art. L123-22 — the accounting row survives).
+ */
+/**
+ * Operational PII (admin UI, shipping labels, customer space). Scrubbed by BOTH the
+ * 10-year paid-order purge (`ORDER_PII_SCRUB`) and the unpaid-order purge
+ * (`UNPAID_ORDER_PII_SCRUB`, RGPD-AUDIT F-A). Single source so the two payloads never
+ * drift apart.
+ */
+const CUSTOMER_SHIPPING_PII_SCRUB = {
 	// customerEmail n'a pas de contrainte UNIQUE → une constante suffit (≠ anonymisation
 	// compte qui dérive l'email du userId). Cf. RGPD-AUDIT F2.
 	customerEmail: "purge-10y@deleted.synclune.local",
 	customerName: "Client supprimé",
 	customerPhone: null,
+	// F4 (RGPD-PII-AUDIT 2026-05-30) : aligné sur l'anonymisation compte
+	// (anonymize-user.service nulle déjà ce champ). `cus_xxx` est un identifiant
+	// pseudonyme rattachable à une personne via Stripe — il doit disparaître à la
+	// purge comme à l'anonymisation, sinon une commande invité jamais anonymisée
+	// le conserverait au-delà des 10 ans.
+	stripeCustomerId: null,
 	shippingFirstName: "X",
 	shippingLastName: "X",
 	shippingAddress1: "Adresse supprimée",
@@ -43,6 +69,10 @@ const ORDER_PII_SCRUB = {
 	shippingPostalCode: "00000",
 	shippingCity: "Supprimé",
 	shippingPhone: "0000000000",
+} as const;
+
+export const ORDER_PII_SCRUB = {
+	...CUSTOMER_SHIPPING_PII_SCRUB,
 	billingFirstName: "X",
 	billingLastName: "X",
 	billingAddress1: "Adresse supprimée",
@@ -62,13 +92,28 @@ const ORDER_PII_SCRUB = {
 } as const;
 
 /**
+ * Operational-PII scrub for orders that were NEVER paid (paidAt IS NULL). No invoice
+ * exists, so there is nothing legal to preserve — only `customer*`/`shipping*` carry
+ * PII (billing fields, snapshot and PDF are empty on unpaid orders). Cf. RGPD-AUDIT F-A.
+ */
+const UNPAID_ORDER_PII_SCRUB = {
+	...CUSTOMER_SHIPPING_PII_SCRUB,
+} as const;
+
+/**
  * Purges PII from orders whose 10-year legal retention has elapsed (paidAt + 10y).
  *
  * The order row is KEPT (Art. L123-22 — numéros/montants/dates non-PII), only the
- * personal data is scrubbed and the archived invoice/credit-note PDFs are deleted
- * from UploadThing. Idempotent via the `piiPurgedAt` sentinel. Self-bounded by
- * `BATCH_SIZE_LARGE`; PDF deletion is best-effort and skipped near the deadline
- * (the now-orphan files are mopped up by `cleanup-orphan-media`).
+ * personal data is scrubbed and the archived invoice/credit-note PDFs are deleted.
+ * Idempotent via the `piiPurgedAt` sentinel. Self-bounded by `BATCH_SIZE_LARGE`.
+ *
+ * ⚠️ ORDER OF OPERATIONS (RGPD-AUDIT F-B): the archived PDFs ARE the most sensitive
+ * PII (buyer identity), so we delete them FIRST and only then scrub the DB row +
+ * stamp `piiPurgedAt`. If PDF deletion fails or is skipped near the deadline we do
+ * NOT scrub: the row keeps its pointers and `piiPurgedAt = NULL`, so the next monthly
+ * run retries. Scrubbing first would null the pointers and lose the file reference
+ * forever (and `cleanup-orphan-media` — the previously-assumed safety net — is a
+ * retired cron, so this job is the ONLY deleter of these PDFs).
  */
 async function purgeExpiredOrderPii(
 	deadline: number,
@@ -90,7 +135,46 @@ async function purgeExpiredOrderPii(
 		[o.invoicePdfUrl, o.creditNotePdfUrl].filter((u): u is string => u !== null),
 	);
 
-	// 1. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
+	// 1. Delete the archived PDFs FIRST so we never null the DB pointer before the
+	// file is actually gone. Only a fully-clean deletion authorises the scrub below.
+	let orderPdfsDeleted = 0;
+	let pdfsCleared = true;
+	if (pdfUrls.length > 0) {
+		if (Date.now() > deadline) {
+			pdfsCleared = false; // near deadline — defer the whole batch to next run
+		} else {
+			try {
+				const result = await deleteUploadThingFilesFromUrls(pdfUrls);
+				orderPdfsDeleted = result.deleted;
+				// Any file we couldn't delete → defer the scrub (don't lose the pointer).
+				if (result.failed > 0) {
+					pdfsCleared = false;
+				}
+				logger.info("Deleted invoice/credit-note PDFs from UploadThing", {
+					cronJob: "hard-delete-retention",
+					count: result.deleted,
+				});
+			} catch (_error) {
+				pdfsCleared = false;
+				logger.error("Failed to delete invoice/credit-note PDFs — deferring PII scrub", _error, {
+					cronJob: "hard-delete-retention",
+					orderCount: orderIds.length,
+				});
+			}
+		}
+	}
+
+	if (!pdfsCleared) {
+		// Leave `piiPurgedAt = NULL` + pointers intact so the next run retries both the
+		// file deletion and the column scrub together (compliance-consistent).
+		logger.warn("Order PII scrub deferred — PDF deletion incomplete, will retry next run", {
+			cronJob: "hard-delete-retention",
+			ordersDeferred: orderIds.length,
+		});
+		return { ordersPurged: 0, orderPdfsDeleted, ordersHasMore };
+	}
+
+	// 2. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
 	const purged = await prisma.$transaction(
 		async (tx) =>
 			tx.order.updateMany({
@@ -105,24 +189,52 @@ async function purgeExpiredOrderPii(
 		ordersPurged: purged.count,
 	});
 
-	// 2. Delete archived PDFs from UploadThing (best-effort, deadline-aware).
-	let orderPdfsDeleted = 0;
-	if (pdfUrls.length > 0 && Date.now() <= deadline) {
-		try {
-			const result = await deleteUploadThingFilesFromUrls(pdfUrls);
-			orderPdfsDeleted = result.deleted;
-			logger.info("Deleted invoice/credit-note PDFs from UploadThing", {
-				cronJob: "hard-delete-retention",
-				count: result.deleted,
-			});
-		} catch (_error) {
-			logger.warn("Failed to delete invoice/credit-note PDFs from UploadThing", {
-				cronJob: "hard-delete-retention",
-			});
-		}
+	return { ordersPurged: purged.count, orderPdfsDeleted, ordersHasMore };
+}
+
+/**
+ * Purges operational PII from orders that were NEVER paid (paidAt IS NULL) past
+ * `UNPAID_ORDER_PII_RETENTION_DAYS`. Cf. RGPD-AUDIT F-A.
+ *
+ * Such orders (abandoned/cancelled/failed checkouts) carry no invoice, so the
+ * `paidAt`-keyed 10-year purge never reaches them and the row is never hard-deleted —
+ * their `customer*`/`shipping*` PII would otherwise be retained forever (RGPD
+ * Art. 5.1.e). No status filter: at this age (default 3y) a still-unpaid order is
+ * definitively dead (async payments cap out at 10 days), so the PII must go whatever
+ * the status. Reuses the `piiPurgedAt` sentinel for idempotence. No PDF handling —
+ * unpaid orders have no archived invoice.
+ */
+async function purgeAbandonedOrderPii(
+	cutoff: Date,
+): Promise<{ abandonedOrdersPurged: number; abandonedHasMore: boolean }> {
+	const orders = await prisma.order.findMany({
+		where: { paidAt: null, createdAt: { lt: cutoff }, piiPurgedAt: null },
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
+	});
+
+	if (orders.length === 0) {
+		return { abandonedOrdersPurged: 0, abandonedHasMore: false };
 	}
 
-	return { ordersPurged: purged.count, orderPdfsDeleted, ordersHasMore };
+	const abandonedHasMore = orders.length === BATCH_SIZE_LARGE;
+	const orderIds = orders.map((o) => o.id);
+
+	const purged = await prisma.$transaction(
+		async (tx) =>
+			tx.order.updateMany({
+				where: { id: { in: orderIds }, paidAt: null, piiPurgedAt: null },
+				data: { ...UNPAID_ORDER_PII_SCRUB, piiPurgedAt: new Date() },
+			}),
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
+
+	logger.info("Unpaid-order PII purged past retention window", {
+		cronJob: "hard-delete-retention",
+		abandonedOrdersPurged: purged.count,
+	});
+
+	return { abandonedOrdersPurged: purged.count, abandonedHasMore };
 }
 
 export async function hardDeleteExpiredRecords(): Promise<CronResult> {
@@ -140,13 +252,41 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 
 	const retentionWhere = { deletedAt: { lt: retentionDate } };
 
-	// 0. Purge PII from orders past 10-year retention (row kept, PII scrubbed + PDFs deleted).
-	// Runs first so the compliance-critical DB scrub always commits, even if the
-	// media-deletion steps below skip on deadline. Cf. RGPD-AUDIT F2.
-	const { ordersPurged, orderPdfsDeleted, ordersHasMore } = await purgeExpiredOrderPii(
-		deadline,
-		retentionDate,
+	// 0a. Purge PII from PAID orders past 10-year retention (row kept, PII scrubbed +
+	// PDFs deleted). Runs first so the compliance-critical scrub gets the most runway.
+	// Cf. RGPD-AUDIT F2 / F-B.
+	//
+	// F5 (RGPD-PII-AUDIT 2026-05-30) : on draine PLUSIEURS batchs par run (borné par le
+	// deadline) au lieu d'un seul. Un seul batch/mois (BATCH_SIZE_LARGE) ferait accumuler
+	// un retard permanent dès que le volume mensuel échu dépasse la taille de batch →
+	// PII conservée au-delà des 10 ans (RGPD Art. 5.1.e). On sort dès que tout est drainé
+	// OU qu'un batch n'a rien purgé (lot différé : suppression PDF échouée / deadline) pour
+	// ne pas boucler indéfiniment sur le même lot bloquant — il sera retenté au run suivant.
+	let ordersPurged = 0;
+	let orderPdfsDeleted = 0;
+	let ordersHasMore = false;
+	while (Date.now() <= deadline) {
+		const batch = await purgeExpiredOrderPii(deadline, retentionDate);
+		ordersPurged += batch.ordersPurged;
+		orderPdfsDeleted += batch.orderPdfsDeleted;
+		ordersHasMore = batch.ordersHasMore;
+		if (!batch.ordersHasMore || batch.ordersPurged === 0) break;
+	}
+
+	// 0b. Purge operational PII from NEVER-PAID orders (abandoned/cancelled checkouts)
+	// past `UNPAID_ORDER_PII_RETENTION_DAYS` — these never reach the paidAt-keyed purge
+	// above and are never hard-deleted. Cf. RGPD-AUDIT F-A. F5 : même boucle de drainage.
+	const unpaidPiiCutoff = new Date(
+		Date.now() - RETENTION.UNPAID_ORDER_PII_RETENTION_DAYS * 24 * 60 * 60 * 1000,
 	);
+	let abandonedOrdersPurged = 0;
+	let abandonedHasMore = false;
+	while (Date.now() <= deadline) {
+		const batch = await purgeAbandonedOrderPii(unpaidPiiCutoff);
+		abandonedOrdersPurged += batch.abandonedOrdersPurged;
+		abandonedHasMore = batch.abandonedHasMore;
+		if (!batch.abandonedHasMore || batch.abandonedOrdersPurged === 0) break;
+	}
 
 	// 1. Find IDs to delete (batched to prevent timeout)
 	const [reviewIds, productIds] = await Promise.all([
@@ -165,6 +305,7 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	// Check if any model hit the batch limit (more records may remain)
 	const hasMore =
 		ordersHasMore ||
+		abandonedHasMore ||
 		reviewIds.length === BATCH_SIZE_LARGE ||
 		productIds.length === BATCH_SIZE_LARGE;
 
@@ -234,12 +375,13 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 			{ cronJob: "hard-delete-retention" },
 		);
 		return {
-			processed: productsResult.count + reviewsResult.count + ordersPurged,
+			processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
 			errored: 0,
 			skipped: 0,
 			productsDeleted: productsResult.count,
 			reviewsDeleted: reviewsResult.count,
 			ordersPurged,
+			abandonedOrdersPurged,
 			orderPdfsDeleted,
 			uploadthingSkipped: true,
 			hasMore,
@@ -281,12 +423,13 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	logger.info("Retention cleanup completed", { cronJob: "hard-delete-retention" });
 
 	return {
-		processed: productsResult.count + reviewsResult.count + ordersPurged,
+		processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
 		errored: 0,
 		skipped: 0,
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,
 		ordersPurged,
+		abandonedOrdersPurged,
 		orderPdfsDeleted,
 		hasMore,
 	};

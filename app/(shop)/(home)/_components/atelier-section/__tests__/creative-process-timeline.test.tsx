@@ -130,7 +130,7 @@ describe("CreativeProcessTimeline", () => {
 
 		// Titles appear in both desktop and mobile
 		expect(screen.getAllByText("D'abord, une idée").length).toBeGreaterThan(0);
-		expect(screen.getAllByText("Le dessin et la peinture").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("Le choix du matériel").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("La cuisson et l'assemblage").length).toBeGreaterThan(0);
 		expect(screen.getAllByText("La touche finale").length).toBeGreaterThan(0);
 	});

@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -45,5 +45,69 @@ describe("OrderHistory — audit trail immutability", () => {
 		const history = extractModel("OrderHistory");
 		expect(order).toMatch(/^\s*deletedAt\s+DateTime\?/m);
 		expect(history).not.toMatch(/^\s*deletedAt\b/m);
+	});
+});
+
+/**
+ * Seconde moitié de l'invariant #3 (audit couverture facturation 2026-05-30,
+ * finding #6) : le schéma ne suffit pas. Aucun code applicatif ne doit MUTER une
+ * ligne `OrderHistory` (`update`/`delete`/`updateMany`/`deleteMany`) — seuls des
+ * `create` (append-only) sont permis. Sans cette garde, un futur
+ * `prisma.orderHistory.update(...)` masquerait/réécrirait un audit trail comptable
+ * (Art. L123-22) tout en laissant le test au vert.
+ */
+describe("OrderHistory — pas de mutation côté code (append-only)", () => {
+	const REPO_ROOT = process.cwd();
+
+	function walkTs(dir: string, out: string[] = []): string[] {
+		for (const entry of readdirSync(dir)) {
+			if (
+				entry === "node_modules" ||
+				entry === ".next" ||
+				entry === "dist" ||
+				entry === "generated" ||
+				entry.startsWith(".")
+			) {
+				continue;
+			}
+			const full = join(dir, entry);
+			if (statSync(full).isDirectory()) {
+				walkTs(full, out);
+			} else if (
+				(entry.endsWith(".ts") || entry.endsWith(".tsx")) &&
+				!entry.endsWith(".test.ts") &&
+				!entry.endsWith(".test.tsx") &&
+				!entry.endsWith(".d.ts") &&
+				!full.includes("/__tests__/") &&
+				!full.includes("/__mocks__/")
+			) {
+				out.push(full);
+			}
+		}
+		return out;
+	}
+
+	const sourceFiles = [
+		...walkTs(join(REPO_ROOT, "modules")),
+		...walkTs(join(REPO_ROOT, "app")),
+		...walkTs(join(REPO_ROOT, "shared")),
+	].filter((f) => !f.replaceAll("\\", "/").includes("/app/generated/")); // client Prisma = autorisé
+
+	function relPath(abs: string): string {
+		return relative(REPO_ROOT, abs).replaceAll("\\", "/");
+	}
+
+	it("no source file mutates orderHistory (update/delete/updateMany/deleteMany)", () => {
+		const mutation =
+			/\b(?:prisma|tx)\.orderHistory\.(?:update|delete|updateMany|deleteMany|upsert)\s*\(/;
+		const offenders = sourceFiles
+			.filter((f) => {
+				const content = readFileSync(f, "utf-8");
+				const stripped = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+				return mutation.test(stripped);
+			})
+			.map(relPath)
+			.sort();
+		expect(offenders).toEqual([]);
 	});
 });

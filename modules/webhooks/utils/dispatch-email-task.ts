@@ -5,6 +5,7 @@ import {
 	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
 	sendAdminDashboardRefundAttentionAlert,
+	sendAdminCreditNoteOverlapAlert,
 } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
@@ -78,6 +79,9 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 			break;
 		case "ADMIN_DASHBOARD_REFUND_ALERT":
 			await sendAdminDashboardRefundAttentionAlert(task.data);
+			break;
+		case "ADMIN_CREDIT_NOTE_OVERLAP_ALERT":
+			await sendAdminCreditNoteOverlapAlert(task.data);
 			break;
 	}
 }

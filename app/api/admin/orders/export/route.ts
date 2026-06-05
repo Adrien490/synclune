@@ -58,9 +58,14 @@ export async function GET(request: Request) {
 		const filename = `livre-recettes-${dateStr}.csv`;
 
 		// EINV-SEC-005 : audit-trail RGPD Art. 30 sur l'export massif (insider threat).
-		// Best-effort : échec audit n'empêche pas la réponse.
-		// orderId NULL accepté (OrderHistory.orderId String?) : c'est un audit "global"
-		// non rattaché à une commande spécifique.
+		// FAIL-CLOSED (audit 2026-05-30) : l'export sort l'intégralité des données
+		// clients (livre de recettes). Si la trace Art. 30 ne peut PAS être écrite,
+		// on REFUSE l'export — un téléchargement de masse non journalisé est
+		// précisément ce que le registre doit empêcher. L'admin réessaiera (action
+		// idempotente, aucune mutation comptable). Contrairement au téléchargement
+		// d'UNE facture par son propriétaire (droit client → best-effort), l'export
+		// admin de TOUTES les commandes ne souffre aucun trou de traçabilité.
+		// orderId NULL accepté (OrderHistory.orderId String?) : audit "global".
 		try {
 			await prisma.orderHistory.create({
 				data: {
@@ -89,11 +94,21 @@ export async function GET(request: Request) {
 				data: { adminUserId: admin.user.id, rowCount: orders.length },
 			});
 		} catch (auditError) {
-			logger.warn("Failed to record BULK_EXPORT audit (best-effort)", {
+			logger.error("BULK_EXPORT audit write failed — export aborted (Art. 30)", auditError, {
 				service: "admin-orders-export",
 				adminUserId: admin.user.id,
-				error: auditError instanceof Error ? auditError.message : String(auditError),
 			});
+			Sentry.captureException(auditError, {
+				level: "error",
+				tags: { feature: "rgpd-audit", action: "BULK_EXPORT" },
+				extra: { adminUserId: admin.user.id, rowCount: orders.length },
+			});
+			return new Response(
+				JSON.stringify({
+					error: "Export refusé : la journalisation d'audit a échoué. Réessayez.",
+				}),
+				{ status: 503, headers: { "Content-Type": "application/json" } },
+			);
 		}
 
 		return new Response(csv, {

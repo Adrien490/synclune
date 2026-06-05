@@ -504,6 +504,21 @@ Tant que `LocalPdfProvider` retourne PENDING (dry-run), ces mécanismes sont ine
    Avec `BIMONTHLY`, le cron toutes les 30 min reste un simple _détecteur de batchs prêts_
    et n'émet qu'à la **clôture** de la période bimestrielle.
 
+   **Garde fail-closed (EINV-EREPORT-010)** : `submit-ereporting-batch` REFUSE désormais
+   de transmettre (`status: "SKIPPED_CADENCE_GUARD"` + alerte Sentry `error`) si le provider
+   transmet réellement (`capabilities.eReporting === true`, hors `mock`) ET la cadence est
+   `DAILY` ET l'acquittement explicite `EREPORTING_ALLOW_DAILY_TRANSMISSION` est absent. Le
+   piège « vraie PA branchée + cadence DAILY oubliée » est donc bloqué par le code, pas
+   seulement par cette doc. Sans effet en dry-run (`local`) ni en staging (`mock`).
+
+   **Payload transmis enrichi (EINV-EREPORT-010, P2-2/P2-3)** : le batch transmis porte
+   désormais (a) une **ventilation par taux** (`vatBreakdown`) — MÊME en franchise, ligne
+   unique `rate: 0` portant tout le HT (référentiel : ventilation à transmettre même à 0) —
+   et (b) des **agrégats journaliers** (`dailyAggregates`) dérivés des transactions. Ces
+   champs sont calculés **à l'émission** depuis les totaux/transactions déjà persistés : le
+   snapshot stocké reste figé (Art. L102 B, régression `ereporting-vat-breakdown` intacte —
+   stockage toujours `null` en franchise).
+
 ### Invariants à respecter
 
 - Aucun `process.env.INVOICE_PROVIDER` ailleurs que dans `factory.ts`.
@@ -520,11 +535,12 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
 (`shared/schemas/env.schema.ts`). **Fail-closed** : une valeur autre que
 `true|1|yes` (insensible casse) = OFF.
 
-| Variable                    | Effet quand ON                                                             | Effet quand OFF (défaut)                 |
-| --------------------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
-| `INVOICE_PROVIDER`          | `local` (défaut, dry-run) \| `mock` (CI/E2E, transmet)                     | n/a (`local`)                            |
-| `INVOICE_ENABLE_EREPORTING` | `recordSalesEReporting` / `recordRefundEReporting` créent les transactions | Hooks répondent `"skipped"` (rien en DB) |
-| `EREPORTING_PERIOD_LENGTH`  | Cadence d'agrégation `DAILY` \| `MONTHLY` \| `BIMONTHLY`                   | `DAILY`                                  |
+| Variable                              | Effet quand ON                                                                      | Effet quand OFF (défaut)                              |
+| ------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `INVOICE_PROVIDER`                    | `local` (défaut, dry-run) \| `mock` (CI/E2E, transmet)                              | n/a (`local`)                                         |
+| `INVOICE_ENABLE_EREPORTING`           | `recordSalesEReporting` / `recordRefundEReporting` créent les transactions          | Hooks répondent `"skipped"` (rien en DB)              |
+| `EREPORTING_PERIOD_LENGTH`            | Cadence d'agrégation `DAILY` \| `MONTHLY` \| `BIMONTHLY`                            | `DAILY`                                               |
+| `EREPORTING_ALLOW_DAILY_TRANSMISSION` | Acquitte la transmission `DAILY` vers une vraie PA (lève la garde EINV-EREPORT-010) | OFF ⇒ transmission `DAILY` BLOQUÉE pour une PA réelle |
 
 **Recommandation de roll-out** (étape N exige N-1) :
 
@@ -546,6 +562,13 @@ Pilotés par variables d'environnement, validés au boot via `envSchema`
 | `transmit-ereporting-batch` | `*/30 * * * *` | `modules/cron/services/transmit-ereporting-batch.service.ts` | ✓ livré (dry-run tant que `provider=local`)     |
 | `reconcile-invoices`        | `0 2 * * *`    | `modules/cron/services/reconcile-invoices.service.ts`        | ✓ livré (DLQ + continuité numéros & périodes)   |
 | `reconcile-voided-invoices` | `0 7 * * *`    | `modules/cron/services/reconcile-voided-invoices.service.ts` | ✓ livré (rattrape avoirs manquants post-refund) |
+
+⚠️ **« ✓ livré » = service `modules/` présent et testé, PAS forcément route planifiée.**
+Au 2026-05-30, seul **`reconcile-invoices` est effectivement planifié dans `vercel.json`**
+(`0 2 * * *`) car son DLQ facture (Passes 0-3) est une obligation **LIVE** (Art. 286/289-I).
+Les trois autres (`build-ereporting-batch`, `transmit-ereporting-batch`,
+`reconcile-voided-invoices`) ont leur **route supprimée** et sont **à réactiver au go-live
+e-reporting (1ᵉʳ sept. 2027)** — les schedules ci-dessus sont les valeurs cibles à recréer.
 
 SSOT des schedules : `vercel.json`. Cf. `docs/CRONS.md` pour la liste complète des
 crons Synclune (incl. crons non liés à la facturation).
@@ -622,6 +645,9 @@ EREPORTING_PERIOD_LENGTH=DAILY      # DAILY (défaut) | MONTHLY | BIMONTHLY
                                     # ⚠️ NE JAMAIS laisser DAILY sur une vraie PA (cf. F4) :
                                     # passer BIMONTHLY au go-live (transmission bimestrielle,
                                     # détail journalier).
+EREPORTING_ALLOW_DAILY_TRANSMISSION= # vide = OFF (garde EINV-EREPORT-010 : transmission DAILY
+                                    # BLOQUÉE pour une vraie PA). "true" UNIQUEMENT si la spec
+                                    # PA confirme accepter le détail journalier en transmission.
 
 # Surveillance franchise TVA (SSOT shared/constants/vat-franchise.ts)
 VAT_FRANCHISE_THRESHOLD_EUR=85000   # défaut 85 000 € (ventes de biens — cas Synclune ;

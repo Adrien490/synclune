@@ -83,30 +83,35 @@ describe("anonymize-user — preserves invoice snapshot fields", () => {
 	);
 	const source = readFileSync(servicePath, "utf-8");
 
-	// Extract the `tx.order.updateMany({ ... data: { ... } })` block to inspect.
-	const orderUpdateBlock = source.match(
-		/tx\.order\.updateMany\([\s\S]*?data:\s*\{([\s\S]*?)\}[\s\S]*?\}\s*\);/,
-	);
+	// Durcissement (audit couverture facturation 2026-05-30, finding P2) : on
+	// extrait TOUS les `data:{...}` de TOUTE écriture `tx.order.update|updateMany|
+	// upsert`, pas seulement la 1ʳᵉ. Sinon un 2ᵉ statement (ou un `tx.order.update`
+	// singulier) scrubant `billing*` échapperait à la garde. Les blocs concaténés
+	// donnent la surface réellement écrite sur Order pendant l'anonymisation.
+	const orderWriteBlocks = [
+		...source.matchAll(
+			/tx\.order\.(?:update|updateMany|upsert)\([\s\S]*?data:\s*\{([\s\S]*?)\}[\s\S]*?\}\s*\);/g,
+		),
+	].map((m) => m[1] ?? "");
+	const combinedOrderWrites = orderWriteBlocks.join("\n");
 
-	it("contains a tx.order.updateMany block (regression — anonymization must run)", () => {
-		expect(orderUpdateBlock).not.toBeNull();
+	it("écrit au moins un bloc tx.order.update* (régression — l'anonymisation doit tourner)", () => {
+		expect(orderWriteBlocks.length).toBeGreaterThan(0);
 	});
 
 	it.each(FORBIDDEN_KEYS_IN_ANONYMIZE_UPDATE)(
-		"does not assign Order.%s during anonymization",
+		"n'assigne Order.%s dans AUCUN bloc d'écriture pendant l'anonymisation",
 		(field) => {
-			const block = orderUpdateBlock?.[1] ?? "";
 			// Match `<field>:` or `<field> :` — both forms are valid TypeScript.
-			expect(block).not.toMatch(new RegExp(`\\b${field}\\s*:`, "u"));
+			expect(combinedOrderWrites).not.toMatch(new RegExp(`\\b${field}\\s*:`, "u"));
 		},
 	);
 
-	it("does anonymize customerEmail / customerName / customerPhone / shipping* (positive control)", () => {
-		const block = orderUpdateBlock?.[1] ?? "";
-		expect(block).toMatch(/\bcustomerEmail\s*:/);
-		expect(block).toMatch(/\bcustomerName\s*:/);
-		expect(block).toMatch(/\bcustomerPhone\s*:/);
-		expect(block).toMatch(/\bshippingFirstName\s*:/);
-		expect(block).toMatch(/\bshippingAddress1\s*:/);
+	it("anonymise customerEmail / customerName / customerPhone / shipping* (contrôle positif)", () => {
+		expect(combinedOrderWrites).toMatch(/\bcustomerEmail\s*:/);
+		expect(combinedOrderWrites).toMatch(/\bcustomerName\s*:/);
+		expect(combinedOrderWrites).toMatch(/\bcustomerPhone\s*:/);
+		expect(combinedOrderWrites).toMatch(/\bshippingFirstName\s*:/);
+		expect(combinedOrderWrites).toMatch(/\bshippingAddress1\s*:/);
 	});
 });

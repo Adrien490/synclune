@@ -27,10 +27,12 @@ function listCronRoutes(): string[] {
 describe("cron routes maxDuration export", () => {
 	const routeFiles = listCronRoutes();
 
-	it("discovers all 10 cron routes", () => {
+	it("discovers all 11 cron routes", () => {
 		// Tripwire : a different count means a cron was added/removed without
 		// updating vercel.json or the docs. Adjust this number deliberately.
-		expect(routeFiles).toHaveLength(10);
+		// 2026-05-30 : 10 → 11, réintégration de `reconcile-invoices` (DLQ facture
+		// Art. 286/289-I, obligation LIVE indépendante du go-live e-reporting).
+		expect(routeFiles).toHaveLength(11);
 	});
 
 	it.each(routeFiles)("%s exports maxDuration >= 60", (routePath) => {

@@ -8,6 +8,7 @@ import { INVOICE_FEATURE_FLAGS } from "../constants/feature-flags";
 import {
 	buildSalesTransaction,
 	buildRefundTransaction,
+	deriveOperationCategory,
 	type EReportingTransactionPayload,
 } from "./build-ereporting-transaction";
 
@@ -85,6 +86,9 @@ export async function recordSalesEReporting(
 				shippingCountry: true,
 				customerType: true,
 				stripePaymentIntentId: true,
+				// EINV-EREPORT-007/F3 — catégories d'opération snapshotées des lignes,
+				// pour dériver la catégorie de la transaction e-reporting.
+				items: { select: { operationCategory: true } },
 			},
 		});
 		if (!order || !order.paidAt) {
@@ -108,7 +112,10 @@ export async function recordSalesEReporting(
 			return "skipped";
 		}
 
-		const payload = buildSalesTransaction({ order });
+		const payload = buildSalesTransaction({
+			order,
+			operationCategory: deriveOperationCategory(order.items.map((i) => i.operationCategory)),
+		});
 		return await persistTransaction(payload);
 	} catch (e) {
 		// Race entre findFirst + create : un webhook concurrent vient d'écrire la
@@ -173,6 +180,9 @@ export async function recordRefundEReporting(
 						// au prorata (0 en franchise, calculé sinon).
 						total: true,
 						taxAmount: true,
+						// EINV-EREPORT-007/F3 — l'avoir hérite de la catégorie d'opération
+						// de la vente d'origine (dérivée des lignes de la commande parente).
+						items: { select: { operationCategory: true } },
 					},
 				},
 			},
@@ -205,6 +215,9 @@ export async function recordRefundEReporting(
 				reason: refund.reason,
 			},
 			order: refund.order,
+			operationCategory: deriveOperationCategory(
+				refund.order.items.map((i) => i.operationCategory),
+			),
 		});
 		return await persistTransaction(payload);
 	} catch (e) {

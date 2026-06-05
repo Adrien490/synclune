@@ -344,6 +344,10 @@ export async function createOrderInTransaction(
 						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,
 						quantity: cartItem.quantity,
+						// EINV-EREPORT-007/F3 — snapshot figé de la catégorie d'opération
+						// e-reporting (GOODS par défaut). Dérivée plus tard par
+						// record-ereporting pour la transaction DGFiP.
+						operationCategory: product.operationCategory ?? "GOODS",
 					},
 				});
 			}

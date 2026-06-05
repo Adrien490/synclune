@@ -186,6 +186,13 @@ export const envSchema = z.object({
 	// in-memory pour staging/CI.
 	INVOICE_PROVIDER: z.enum(["local", "mock"]).optional().default("local"),
 	INVOICE_ENABLE_EREPORTING: z.string().optional(),
+	// Cadence d'agrégation e-reporting. Défaut prudent `DAILY` ; basculer
+	// `BIMONTHLY` (cadence réglementaire franchise) au branchement d'une PA réelle.
+	EREPORTING_PERIOD_LENGTH: z.enum(["DAILY", "MONTHLY", "BIMONTHLY"]).optional(),
+	// EINV-EREPORT-010 — acquittement explicite pour transmettre en cadence DAILY
+	// vers une PA qui transmet réellement (hors dry-run/mock). Par défaut absent
+	// ⇒ `submit-ereporting-batch` refuse (fail-closed) la transmission journalière.
+	EREPORTING_ALLOW_DAILY_TRANSMISSION: z.string().optional(),
 
 	// ========================================
 	// Node

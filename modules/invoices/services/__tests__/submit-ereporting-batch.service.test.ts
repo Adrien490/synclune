@@ -17,6 +17,7 @@ const { mockPrisma, mockLogger, mockProvider, mockSentry, mockFeatureFlags } = v
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 	mockProvider: {
 		id: "mock-pa",
+		capabilities: { eReporting: false },
 		submitEReportingBatch: vi.fn(),
 	},
 	mockSentry: {
@@ -68,6 +69,7 @@ import {
 	submitEReportingBatchById,
 	ProviderBusinessError,
 	MAX_RETRY,
+	isDailyTransmissionBlocked,
 } from "../submit-ereporting-batch.service";
 
 function makeBatch(overrides: Record<string, unknown> = {}) {
@@ -91,6 +93,11 @@ beforeEach(() => {
 	vi.useFakeTimers();
 	vi.setSystemTime(new Date("2026-05-28T12:00:00Z"));
 	mockFeatureFlags.enable_ereporting = true;
+	// Par défaut le provider ne transmet pas réellement (dry-run) → la garde cadence
+	// EINV-EREPORT-010 reste inerte pour les autres tests. Les tests de garde
+	// l'overrident explicitement.
+	mockProvider.capabilities.eReporting = false;
+	mockProvider.id = "mock-pa";
 	// Par défaut un batch non vide : la garde "batch vide → SKIPPED_EMPTY" ne doit
 	// pas court-circuiter les tests qui attendent un appel provider. Les tests qui
 	// veulent l'inverse override avec `mockResolvedValue([])`.
@@ -120,6 +127,51 @@ describe("submitEReportingBatchById — feature flag", () => {
 		mockFeatureFlags.enable_ereporting = false;
 		const result = await submitEReportingBatchById("batch-1");
 		expect(result).toEqual({ batchId: "batch-1", status: "SKIPPED_FLAG_OFF" });
+		expect(mockPrisma.eReportingBatch.findUnique).not.toHaveBeenCalled();
+		expect(mockProvider.submitEReportingBatch).not.toHaveBeenCalled();
+	});
+});
+
+describe("isDailyTransmissionBlocked — garde cadence EINV-EREPORT-010 (pure)", () => {
+	const realPa = { id: "chorus-pro", capabilities: { eReporting: true } };
+	const dryRun = { id: "local", capabilities: { eReporting: false } };
+	const mock = { id: "mock", capabilities: { eReporting: true } };
+
+	it("vraie PA + DAILY + non acquitté → bloqué", () => {
+		expect(isDailyTransmissionBlocked(realPa, "DAILY", false)).toBe(true);
+	});
+
+	it("vraie PA + DAILY + acquitté explicite → autorisé", () => {
+		expect(isDailyTransmissionBlocked(realPa, "DAILY", true)).toBe(false);
+	});
+
+	it("vraie PA + BIMONTHLY → autorisé (cadence réglementaire)", () => {
+		expect(isDailyTransmissionBlocked(realPa, "BIMONTHLY", false)).toBe(false);
+	});
+
+	it("vraie PA + MONTHLY → autorisé", () => {
+		expect(isDailyTransmissionBlocked(realPa, "MONTHLY", false)).toBe(false);
+	});
+
+	it("provider dry-run (local, eReporting false) + DAILY → jamais bloqué", () => {
+		expect(isDailyTransmissionBlocked(dryRun, "DAILY", false)).toBe(false);
+	});
+
+	it("provider mock (staging/CI) + DAILY → jamais bloqué (exempté par id)", () => {
+		expect(isDailyTransmissionBlocked(mock, "DAILY", false)).toBe(false);
+	});
+
+	it("provider sans capabilities (mock de test) → non bloquant", () => {
+		expect(isDailyTransmissionBlocked({ id: "mock-pa" }, "DAILY", false)).toBe(false);
+	});
+});
+
+describe("submitEReportingBatchById — garde cadence (intégration)", () => {
+	it("vraie PA transmettant en DAILY → SKIPPED_CADENCE_GUARD sans requête DB", async () => {
+		mockProvider.capabilities.eReporting = true;
+		mockProvider.id = "chorus-pro";
+		const result = await submitEReportingBatchById("batch-1");
+		expect(result).toEqual({ batchId: "batch-1", status: "SKIPPED_CADENCE_GUARD" });
 		expect(mockPrisma.eReportingBatch.findUnique).not.toHaveBeenCalled();
 		expect(mockProvider.submitEReportingBatch).not.toHaveBeenCalled();
 	});

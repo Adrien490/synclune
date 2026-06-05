@@ -450,4 +450,28 @@ describe("GET /api/orders/[orderNumber]/credit-note", () => {
 			);
 		});
 	});
+
+	/**
+	 * @regression credit-note-410-after-pii-purge
+	 *
+	 * F6 (RGPD-PII-AUDIT 2026-05-30) : symétrie avec /invoice — après la purge PII à
+	 * 10 ans (hard-delete-retention pose `piiPurgedAt`), l'avoir n'est plus
+	 * reconstituable. La route renvoie 410 Gone au lieu de régénérer depuis des
+	 * colonnes Order scrubées.
+	 */
+	describe("purge PII 10 ans (F6)", () => {
+		it("returns 410 (Gone) when order PII has been purged (piiPurgedAt set)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				creditNotePdfUrl: null,
+				creditNotePdfHash: null,
+				piiPurgedAt: new Date("2036-05-30"),
+			});
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(410);
+			expect(mockRenderInvoicePdf).not.toHaveBeenCalled();
+			expect(mockArchiveCreditNotePdf).not.toHaveBeenCalled();
+		});
+	});
 });

@@ -7,6 +7,8 @@ import { AnimatedNumber } from "@/shared/components/animations/animated-number";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { CartPromoCodeForm } from "./cart-promo-code-form";
+import { ORDERS_AVAILABLE } from "@/shared/constants/orders-availability";
+import { OrdersClosedNotice } from "@/modules/store-settings/components/orders-closed-notice";
 import Link from "next/link";
 
 interface CartSheetFooterProps {
@@ -74,7 +76,20 @@ export function CartSheetFooter({
 				</div>
 
 				{/* Primary CTA */}
-				{hasStockIssues ? (
+				{!ORDERS_AVAILABLE ? (
+					<div className="space-y-2">
+						<Button
+							size="lg"
+							className="w-full"
+							disabled
+							aria-disabled="true"
+							aria-describedby="orders-paused-hint"
+						>
+							Passer commande
+						</Button>
+						<OrdersClosedNotice id="orders-paused-hint" />
+					</div>
+				) : hasStockIssues ? (
 					<Button
 						size="lg"
 						className="w-full"

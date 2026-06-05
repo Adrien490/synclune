@@ -110,6 +110,7 @@ describe("@regression einv-ereport-001 — e-reporting réservé au B2C", () => 
 			shippingCountry: "FR",
 			customerType: "B2C",
 			stripePaymentIntentId: "pi_b2c",
+			items: [{ operationCategory: "GOODS" }],
 		});
 		mockPrisma.eReportingTransaction.create.mockResolvedValue({ id: "tx-b2c" });
 

@@ -9,6 +9,7 @@ const {
 	mockBuildInvoiceData,
 	mockRenderInvoicePdf,
 	mockPersistInvoiceNumber,
+	mockFlagInvoiceFailure,
 	mockArchiveInvoicePdf,
 	mockGetSession,
 	mockCheckRateLimit,
@@ -24,6 +25,7 @@ const {
 	mockBuildInvoiceData: vi.fn(),
 	mockRenderInvoicePdf: vi.fn(),
 	mockPersistInvoiceNumber: vi.fn(),
+	mockFlagInvoiceFailure: vi.fn(),
 	mockArchiveInvoicePdf: vi.fn(),
 	mockGetSession: vi.fn(),
 	mockCheckRateLimit: vi.fn(),
@@ -67,6 +69,9 @@ vi.mock("@/modules/invoices/services/render-invoice-pdf", () => ({
 }));
 vi.mock("@/modules/orders/services/persist-invoice-number.service", () => ({
 	persistInvoiceNumber: mockPersistInvoiceNumber,
+}));
+vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
+	flagInvoiceFailureForReconcile: mockFlagInvoiceFailure,
 }));
 vi.mock("@/modules/orders/services/archive-invoice-pdf.service", () => ({
 	archiveInvoicePdf: mockArchiveInvoicePdf,
@@ -254,13 +259,20 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			);
 		});
 
-		it("falls back to orderNumber when no invoice number is set", async () => {
+		it("returns 503 + flags DLQ when lazy invoice generation fails (P2 fail-closed)", async () => {
+			// persistInvoiceNumber renvoie null par défaut (beforeEach) ⇒ échec de la
+			// génération lazy. On ne sert JAMAIS une facture sans numéro (Art. 242 nonies A) :
+			// on pose le flag DLQ `invoiceRetryDeferred` (rattrapage cron reconcile-invoices)
+			// et on renvoie un 503 explicite avec Retry-After.
 			mockPrisma.order.findFirst.mockResolvedValue({ ...PAID_ORDER, invoiceNumber: null });
 
 			const res = await GET(makeReq(), makeParams());
 
-			expect(res.headers.get("Content-Disposition")).toBe(
-				`attachment; filename="facture-${ORDER_NUMBER}.pdf"`,
+			expect(res.status).toBe(503);
+			expect(res.headers.get("Retry-After")).toBe("60");
+			expect(mockFlagInvoiceFailure).toHaveBeenCalledWith(
+				PAID_ORDER.id,
+				expect.stringContaining("lazy"),
 			);
 		});
 
@@ -518,6 +530,32 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 			// ...qui reproduit le PDF d'origine (hash == PDF_HASH) → servi 200 (self-heal).
 			expect(res.status).toBe(200);
 			fetchSpy.mockRestore();
+		});
+	});
+
+	/**
+	 * @regression invoice-410-after-pii-purge
+	 *
+	 * F6 (RGPD-PII-AUDIT 2026-05-30) : une fois la PII purgée à `paidAt + 10 ans`
+	 * (hard-delete-retention pose `piiPurgedAt`, efface snapshot + PDF archivé), la
+	 * facture n'est plus reconstituable (base légale expirée, RGPD Art. 5.1.e). La
+	 * route renvoie 410 Gone — JAMAIS un PDF régénéré depuis les colonnes scrubées.
+	 */
+	describe("purge PII 10 ans (F6)", () => {
+		it("returns 410 (Gone) when order PII has been purged (piiPurgedAt set)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: null,
+				invoicePdfHash: null,
+				invoiceDataSnapshot: null,
+				invoiceDataHash: null,
+				piiPurgedAt: new Date("2036-05-30"),
+			});
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(410);
+			expect(mockRenderInvoicePdf).not.toHaveBeenCalled();
+			expect(mockArchiveInvoicePdf).not.toHaveBeenCalled();
 		});
 	});
 });

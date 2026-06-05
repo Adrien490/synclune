@@ -6,11 +6,14 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { cacheLife, cacheTag } from "next/cache";
 import { ATELIER_CONTENT } from "./atelier-content";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
-import { PolaroidGallery } from "./polaroid-gallery";
+// TODO(photos-atelier): réactiver quand les vraies photos de l'atelier seront prêtes.
+// Imports désactivés temporairement (blocs visuels masqués plus bas) — voir les blocs
+// commentés "image héro" + "Polaroid gallery" dans le JSX.
+// import { PlaceholderImage } from "@/shared/components/placeholder-image";
+// import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
 import { SignatureReveal } from "./signature-reveal";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
@@ -124,6 +127,9 @@ export async function AtelierSection() {
 					</Fade>
 				</header>
 
+				{/* TODO(photos-atelier): image héro masquée temporairement tant que la vraie
+					    photo de l'atelier n'est pas prête (évite un bloc placeholder vide pour les
+					    visiteurs). Pour réactiver : décommenter ce bloc + l'import PlaceholderImage en tête.
 				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 					<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
 						<PlaceholderImage
@@ -133,6 +139,7 @@ export async function AtelierSection() {
 						/>
 					</div>
 				</Fade>
+				*/}
 
 				{/* Confession text with progressive reveal */}
 				<Fade
@@ -168,7 +175,11 @@ export async function AtelierSection() {
 				</div>
 
 				{/* Polaroid gallery */}
+				{/* TODO(photos-atelier): galerie polaroid masquée temporairement (placeholders vides
+					    tant que les photos de l'atelier ne sont pas prêtes). Pour réactiver :
+					    décommenter + restaurer l'import PolaroidGallery en tête de fichier.
 				<PolaroidGallery />
+				*/}
 			</div>
 		</section>
 	);

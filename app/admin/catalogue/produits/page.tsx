@@ -20,7 +20,7 @@ import { Suspense } from "react";
 
 import { ProductsAdminDialogs } from "./_components/products-admin-dialogs";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
-import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
+import { ProductsListSkeleton } from "@/modules/products/components/admin/products-list-skeleton";
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
 import { ProductsBottomBar } from "@/modules/products/components/admin/products-bottom-bar";
 import { ProductsMobileList } from "@/modules/products/components/admin/products-mobile-list";
@@ -85,7 +85,7 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 				}
 			/>
 
-			<Suspense fallback={<ProductsDataTableSkeleton />}>
+			<Suspense fallback={<ProductsListSkeleton />}>
 				<ProductsContent searchParams={searchParams} />
 			</Suspense>
 

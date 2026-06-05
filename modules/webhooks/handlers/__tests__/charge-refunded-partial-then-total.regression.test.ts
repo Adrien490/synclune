@@ -47,6 +47,9 @@ const {
 			// ORD-REFUND-AUDIT-007 : lookup Refund local par stripeRefundId pour
 			// aligner l'idempotencyKey email. Null par défaut → fallback charge-based.
 			findUnique: vi.fn().mockResolvedValue(null),
+			// EINV-CREDIT-015 : compte des avoirs partiels préexistants après void
+			// total (détection sur-crédit). 0 par défaut → pas d'alerte parasite.
+			count: vi.fn().mockResolvedValue(0),
 		},
 	},
 	mockSyncStripeRefunds: vi.fn(),
@@ -269,5 +272,57 @@ describe("@regression charge-refunded-partial-then-total — EINV-TEST-009", () 
 		await handleChargeRefunded(makeCharge(10000, "total-no-invoice"));
 
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
+	});
+
+	/**
+	 * EINV-CREDIT-015 (audit couverture facturation 2026-05-30, finding P1-B) :
+	 * coexistence avoir partiel réel + avoir total. Un avoir PARTIEL a déjà été émis
+	 * sur un Refund (event antérieur), puis un remboursement complémentaire porte le
+	 * cumul au total → `voidInvoice` émet un avoir TOTAL. Les deux documents se
+	 * chevauchent sur le montant déjà crédité (sur-crédit Art. 272-I). Le handler doit
+	 * émettre une alerte admin de réconciliation (la voie automatique ne doit jamais
+	 * sur-créditer silencieusement).
+	 */
+	it("avoir partiel préexistant + void total → tâche ADMIN_CREDIT_NOTE_OVERLAP_ALERT émise", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceStatus: "GENERATED",
+			invoiceNumber: INVOICE_NUMBER,
+		});
+		// 1 avoir partiel déjà émis sur un Refund de cette commande.
+		mockPrisma.refund.count.mockResolvedValue(1);
+
+		const result = await handleChargeRefunded(makeCharge(10000, "total-after-partial"));
+
+		expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
+		const overlapTask = result.tasks?.find((t) => t.type === "ADMIN_CREDIT_NOTE_OVERLAP_ALERT");
+		expect(overlapTask).toBeDefined();
+		expect(overlapTask).toMatchObject({
+			type: "ADMIN_CREDIT_NOTE_OVERLAP_ALERT",
+			data: {
+				orderId: ORDER_ID,
+				creditNoteNumber: "A-2026-00007",
+				invoiceNumber: INVOICE_NUMBER,
+				partialCreditNoteCount: 1,
+			},
+		});
+	});
+
+	it("void total SANS avoir partiel préexistant (count=0) → aucune tâche de sur-crédit", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+		mockPrisma.order.findUnique.mockResolvedValue({
+			invoiceStatus: "GENERATED",
+			invoiceNumber: INVOICE_NUMBER,
+		});
+		// Aucun avoir partiel (explicite : clearAllMocks ne réinitialise pas
+		// l'implémentation mockResolvedValue posée par un test précédent).
+		mockPrisma.refund.count.mockResolvedValue(0);
+
+		const result = await handleChargeRefunded(makeCharge(10000, "total-clean"));
+
+		expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
+		expect(result.tasks?.some((t) => t.type === "ADMIN_CREDIT_NOTE_OVERLAP_ALERT")).toBe(false);
 	});
 });

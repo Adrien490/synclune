@@ -1,8 +1,10 @@
 # Cron jobs Synclune
 
-10 cron jobs Vercel pilotés par `vercel.json` (SSOT). Tous les schedules sont en **UTC** (Vercel n'accepte pas d'autre TZ). Cette table donne les équivalents France pour faciliter la lecture humaine.
+11 cron jobs Vercel pilotés par `vercel.json` (SSOT). Tous les schedules sont en **UTC** (Vercel n'accepte pas d'autre TZ). Cette table donne les équivalents France pour faciliter la lecture humaine.
 
-> **Périmètre réduit (2026-05-30)** : la liste a été ramenée de 21 → 10 crons pour ne conserver que le **cœur critique** (revenu + RGPD légal), le **monitoring** et l'**ops** (`reopen-store`). Les jobs retirés (e-invoicing, cleanup/rétention, `send-review-requests`, `cleanup-pending-orders`) ont vu leur **route `app/api/cron/<job>/` supprimée** mais **leurs services `modules/` conservés** (réactivables en recréant la route + l'entrée `vercel.json`). Détail en bas de page.
+> **Périmètre réduit (2026-05-30)** : la liste a été ramenée de 21 → 10 crons pour ne conserver que le **cœur critique** (revenu + RGPD légal), le **monitoring** et l'**ops** (`reopen-store`). Les jobs retirés (e-reporting, cleanup/rétention, `send-review-requests`, `cleanup-pending-orders`) ont vu leur **route `app/api/cron/<job>/` supprimée** mais **leurs services `modules/` conservés** (réactivables en recréant la route + l'entrée `vercel.json`). Détail en bas de page.
+>
+> **Correctif 2026-05-30 (10 → 11)** : `reconcile-invoices` a été **réintégré**. C'est le DLQ de facturation (Passes 0-3 : numéro de facture, snapshot, PDF, avoir) — une obligation **LIVE** (Art. 286 / 289-I CGI) qui avait été retirée à tort avec le lot e-reporting. Sans lui, un échec du chemin eager `ensureInvoiceNumberPersisted` (best-effort, renvoie 200 → Stripe ne rejoue pas) laissait une commande PAID sans facture jusqu'à l'alerte hebdo `alert-stuck-orders` (7 j) + action admin manuelle. Ses Passes e-reporting (SALES / 5 / 6) restent **no-op fail-safe** tant que `INVOICE_ENABLE_EREPORTING=false`.
 
 ## Schedules
 
@@ -13,6 +15,7 @@
 | `reopen-store`              | `*/15 * * * *` | toutes les 15 min         | toutes les 15 min | ops        | `modules/store-settings/services/auto-reopen.service.ts`     |
 | `sync-async-payments`       | `0 */4 * * *`  | toutes les 4h, H:00       | toutes les 4h     | revenue    | `modules/cron/services/sync-async-payments.service.ts`       |
 | `reconcile-refunds`         | `30 */6 * * *` | toutes les 6h, H+30       | toutes les 6h     | revenue    | `modules/cron/services/reconcile-refunds.service.ts`         |
+| `reconcile-invoices`        | `0 2 * * *`    | 03:00 / 04:00             | quotidien         | revenue    | `modules/cron/services/reconcile-invoices.service.ts`        |
 | `process-account-deletions` | `0 5 * * *`    | 06:00 / 07:00             | quotidien         | RGPD       | `modules/cron/services/process-account-deletions.service.ts` |
 | `alert-dispute-deadlines`   | `0 8 * * *`    | 09:00 / 10:00             | quotidien         | monitoring | `modules/cron/services/alert-dispute-deadlines.service.ts`   |
 | `alert-overbilled-orders`   | `30 8 * * *`   | 09:30 / 10:30             | quotidien         | monitoring | `modules/cron/services/alert-overbilled-orders.service.ts`   |
@@ -51,7 +54,6 @@ Routes `app/api/cron/<job>/` supprimées, **services `modules/` conservés**. Po
 | --------------------------- | ----------- | -------------------------------------------------------------------------------- |
 | `build-ereporting-batch`    | e-invoicing | **À réactiver au go-live e-reporting (1ᵉʳ sept. 2027)** — cf. `INVOICING.md`.    |
 | `transmit-ereporting-batch` | e-invoicing | Idem. No-op tant que `INVOICE_ENABLE_EREPORTING=OFF` / `INVOICE_PROVIDER=local`. |
-| `reconcile-invoices`        | e-invoicing | Idem. Porte aussi les passes SALES/REFUND DLQ + continuité périodes (Passe 5).   |
 | `reconcile-voided-invoices` | e-invoicing | Idem.                                                                            |
 | `cleanup-sessions`          | retention   | Housekeeping DB. Réactiver si bloat sessions.                                    |
 | `cleanup-carts`             | retention   | Housekeeping DB.                                                                 |

@@ -96,6 +96,15 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 					],
 				},
 				{ OR: [{ paidAt: { lt: minAge } }, { paidAt: null }] },
+				// F3 (RGPD-PII-AUDIT 2026-05-30) : exclure les commandes dont la PII a été
+				// purgée à 10 ans (hard-delete-retention pose `piiPurgedAt` + met
+				// `invoiceDataSnapshot = DbNull`). Sans cette garde, une commande purgée
+				// matcherait l'OR « invoiceNumber présent + snapshot DbNull » ci-dessus et
+				// la Passe 2 régénérerait un PDF depuis les colonnes Order désormais scrubées
+				// (« Client supprimé »/« Adresse supprimée ») → archive corrompue divergeant
+				// de la facture d'origine (atteinte intégrité Art. L102 B LPF). La facture
+				// n'est plus reconstituable après purge (base légale expirée) : on n'y touche plus.
+				{ piiPurgedAt: null },
 			],
 			...notDeleted,
 		},
@@ -537,6 +546,7 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
 			orphanCount: report.orphanCount,
 			oldestOccurredAt: report.oldestOccurredAt,
 			oldestPeriodTo: report.oldestPeriodTo,
+			capped: report.capped,
 		});
 
 		Sentry.withScope((scope) => {
@@ -547,6 +557,7 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
 				oldestOccurredAt: report.oldestOccurredAt,
 				oldestPeriodTo: report.oldestPeriodTo,
 				sampleIds: report.sampleIds,
+				capped: report.capped,
 			});
 			Sentry.captureMessage(
 				`${report.orphanCount} transaction(s) e-reporting orpheline(s) — période close jamais batchée (sous-déclaration DGFiP)`,
@@ -567,6 +578,7 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
 				oldestOccurredAt: report.oldestOccurredAt,
 				oldestPeriodTo: report.oldestPeriodTo,
 				sampleIds: report.sampleIds,
+				capped: report.capped,
 				action:
 					"Transactions e-reporting non rattachées à un batch au-delà du délai — vérifier build-ereporting-batch, voir docs/RUNBOOK-INVOICING.md",
 			},

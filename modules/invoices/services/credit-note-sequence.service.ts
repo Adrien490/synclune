@@ -67,17 +67,23 @@ export async function nextCreditNoteNumberTx(
 
 	await acquireCreditNoteLockTx(tx, year);
 
-	// Lookup MAX(A-YYYY-NNNNN) sur les DEUX tables (Order + Refund) — la séquence
-	// est partagée pour garantir l'unicité globale cross-table (EINV-PRISMA-001).
+	// Lookup du dernier A-YYYY-NNNNN sur les DEUX tables (Order + Refund) — la
+	// séquence est partagée pour garantir l'unicité globale cross-table
+	// (EINV-PRISMA-001). Tri NUMÉRIQUE sur le suffixe (`split_part(cn,'-',3)::int`)
+	// et non `MAX(cn)` lexicographique : ce dernier casserait à la migration
+	// 6 chiffres ({5,6}) car `A-YYYY-100000` < `A-YYYY-99999` en lexicographique
+	// (miroir du correctif côté persist-invoice-number.service.ts).
 	const lastRow = await tx.$queryRaw<Array<{ cn: string | null }>>(
 		Prisma.sql`
-			SELECT MAX(cn) AS cn FROM (
+			SELECT cn FROM (
 				SELECT "creditNoteNumber" AS cn FROM "Order"
 					WHERE "creditNoteNumber" LIKE ${prefix + "%"}
 				UNION ALL
 				SELECT "creditNoteNumber" AS cn FROM "Refund"
 					WHERE "creditNoteNumber" LIKE ${prefix + "%"}
 			) t
+			ORDER BY CAST(split_part(cn, '-', 3) AS INTEGER) DESC
+			LIMIT 1
 		`,
 	);
 

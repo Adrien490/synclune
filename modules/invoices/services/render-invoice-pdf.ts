@@ -13,7 +13,10 @@ import type { InvoiceData, StructuredAddress } from "../types/invoice-data";
  * **Déterminisme bit-à-bit (Art. L102 B LPF)** : deux appels avec le même
  * `InvoiceData` produisent le même SHA-256. Cf. `renderInvoicePdf.deterministic`
  * régression test. Les sources de non-déterminisme jsPDF sont neutralisées :
- *   - `/CreationDate` figée via `setCreationDate(data.issuedAt)`
+ *   - `/CreationDate` figée via `setCreationDate(derivePdfCreationDate(issuedAt))`
+ *     — string PDF-date composée en **UTC** (jsPDF `convertDateToPDFDate` utilise
+ *     sinon les composants LOCAUX + `getTimezoneOffset()` ⇒ hash couplé à
+ *     `process.env.TZ`, divergence si régénération hors-UTC).
  *   - `/ID` figé via `setFileId` dérivé md5(invoiceNumber + issuedAt)
  *   - Propriétés document figées (creator, producer, title)
  *   - Dates rendues via `formatDateDeterministic` sans `Intl` (drift ICU)
@@ -24,7 +27,12 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 
 	// === Métadonnées déterministes (avant tout write) ===
 	const issuedAt = coerceDate(data.issuedAt);
-	doc.setCreationDate(issuedAt);
+	// EINV-PDF-007 : on passe une string PDF-date pré-composée en UTC plutôt que
+	// l'instance `Date`. jsPDF dérive sinon `/CreationDate` des composants LOCAUX
+	// (`getFullYear/getMonth/...`) + `getTimezoneOffset()` → le SHA-256 du PDF
+	// dépendrait de `process.env.TZ` du runtime, et une régénération hors-UTC
+	// divergerait du hash archivé (503 EINV-PDF-002). En UTC fixe, identique partout.
+	doc.setCreationDate(derivePdfCreationDate(issuedAt));
 	doc.setFileId(deriveFileId(data.invoiceNumber, issuedAt));
 	doc.setProperties({
 		title: `${isCreditNote ? "Avoir" : "Facture"} ${data.invoiceNumber}`,
@@ -232,8 +240,12 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	);
 	y += 5;
 
-	// TVA : afficher "non applicable" en franchise, sinon le montant
-	if (data.totals.totalTax === 0) {
+	// TVA : "non applicable" piloté par le RÉGIME (franchise art. 293 B), pas par
+	// le montant (EINV-F3). `vatExemptionText` non vide ⟺ régime FRANCHISE_BASE
+	// (cf. buildSellerInfo) → cohérent avec la mention de pied de page. En régime
+	// réel (mention nulle), on affiche toujours le montant TVA, même s'il vaut 0
+	// (panier intégralement remisé) — évite une facture contradictoire.
+	if (data.seller.vatExemptionText) {
 		doc.text("TVA (non applicable)", totalsX, y);
 		doc.text("—", colX.total, y);
 	} else {
@@ -354,6 +366,27 @@ function formatDate(date: Date | string): string {
 
 function coerceDate(value: Date | string): Date {
 	return value instanceof Date ? value : new Date(value);
+}
+
+/**
+ * Compose une PDF-date `D:YYYYMMDDHHmmSS+00'00'` en **UTC** (Art. L102 B LPF).
+ *
+ * jsPDF accepte une string `D:...` (cf. `setCreationDate` → `regexPDFCreationDate`)
+ * et la stocke telle quelle, court-circuitant `convertDateToPDFDate` qui aurait
+ * sinon utilisé les composants locaux + l'offset du runtime. En forçant l'offset
+ * `+00'00'` et les composants `getUTC*`, le `/CreationDate` — et donc le SHA-256
+ * du PDF — devient indépendant de `process.env.TZ` : archive (prod UTC) et
+ * régénération (n'importe quel runtime) produisent le même octet.
+ */
+function derivePdfCreationDate(date: Date): string {
+	const pad = (n: number) => n.toString().padStart(2, "0");
+	const y = date.getUTCFullYear();
+	const mo = pad(date.getUTCMonth() + 1);
+	const d = pad(date.getUTCDate());
+	const h = pad(date.getUTCHours());
+	const mi = pad(date.getUTCMinutes());
+	const s = pad(date.getUTCSeconds());
+	return `D:${y}${mo}${d}${h}${mi}${s}+00'00'`;
 }
 
 /**

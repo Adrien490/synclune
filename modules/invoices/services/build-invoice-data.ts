@@ -1,4 +1,5 @@
 import { getVendorLegalInfo } from "@/shared/lib/stripe";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import {
 	DEFAULT_TAX_CATEGORY,
@@ -146,9 +147,13 @@ export function buildSellerInfo(order: GetOrderReturn): SellerInfo {
 		// Routing PDP émetteur : non utilisé en B2C franchise (config env uniquement).
 		eInvoicingAddress: vendor.einvoicing_address,
 		eInvoicingPlatformId: vendor.einvoicing_platform_id,
+		// EINV-F4 : la mention 293 B est DÉRIVÉE du régime figé (pas d'un flag
+		// indépendant). En franchise on garantit un libellé non vide (fallback SSOT)
+		// — jamais de mention manquante figée 10 ans (Art. L102 B LPF). Hors
+		// franchise (NORMAL/SIMPLIFIE), pas de mention d'exonération.
 		vatExemptionText:
 			order.vendorVatRegime === "FRANCHISE_BASE" || !order.vendorVatRegime
-				? vendor.vat_exemption
+				? vendor.vat_exemption.trim() || DEFAULT_FRANCHISE_VAT_MENTION
 				: null,
 		bankIban: normalizeIban(order.vendorBankIban ?? vendor.bank_iban),
 		bankBic: normalizeBic(order.vendorBankBic ?? vendor.bank_bic),

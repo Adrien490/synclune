@@ -11,9 +11,9 @@ export const ATELIER_CONTENT = {
 	confession: {
 		intro: "Je vais vous faire une confidence.",
 		paragraphs: [
-			"Quand j'ai commencé à créer des bijoux, c'était juste pour moi.",
-			"Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans mon petit atelier ! C'était pas prévu à la base.",
-			"Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs, assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de dix).",
+			"Lorsque j'ai commencé à créer des bijoux, c'était juste pour moi. Une véritable passion est née de ce passe-temps, grandissant au fil des ans.",
+			"J'ai créé des bijoux pour ma famille, puis pour des amies, des amies d'amies… Et c'est ainsi que l'atelier Synclune est né ! Rien de tout cela n'était prévu, pourtant cela sonne aujourd'hui comme une évidence.",
+			"Chaque bijou que vous retrouverez ici est une extension de la passion que j'éprouve lorsque je travaille sur mes créations. Chaque couleur, forme, ligne est pensée et choisie avec soin, pour donner vie à une pièce unique.",
 		],
 	},
 } as const;

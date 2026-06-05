@@ -39,6 +39,30 @@ export const EREPORTING_PERIOD_LENGTH: EReportingPeriodLength = parsePeriodLengt
 	process.env.EREPORTING_PERIOD_LENGTH,
 );
 
+function parseBoolEnv(value: string | undefined): boolean {
+	if (!value) return false;
+	const v = value.toLowerCase();
+	return v === "true" || v === "1" || v === "yes";
+}
+
+/**
+ * EINV-EREPORT-010 — Acquittement EXPLICITE pour transmettre en cadence `DAILY`
+ * vers une Plateforme Agréée (PA) qui transmet réellement (hors dry-run `local`
+ * et hors `mock`). Par défaut `false` : `submit-ereporting-batch` refuse
+ * (fail-closed) la transmission journalière, car une PA en franchise art. 293 B
+ * attend un **dépôt bimestriel** (cf. `EREPORTING_PERIOD_LENGTH` + référentiel).
+ *
+ * Le piège visé : brancher une vraie PA (`INVOICE_PROVIDER` réel +
+ * `INVOICE_ENABLE_EREPORTING=true`) en oubliant de passer la cadence en
+ * `BIMONTHLY` ⇒ ~60 batches journaliers envoyés à une PA qui en attend un seul.
+ *
+ * Mettre à `true` UNIQUEMENT si la spec de la PA confirme accepter le détail
+ * journalier en transmission. Sans effet en dry-run (`local`).
+ */
+export const EREPORTING_ALLOW_DAILY_TRANSMISSION: boolean = parseBoolEnv(
+	process.env.EREPORTING_ALLOW_DAILY_TRANSMISSION,
+);
+
 /**
  * Délai de grâce après la clôture d'une période avant qu'une transaction PENDING
  * non rattachée à un batch ne soit considérée comme orpheline (sous-déclaration

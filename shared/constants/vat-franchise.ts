@@ -17,6 +17,18 @@
 export const DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR = 85_000;
 
 /**
+ * Mention légale obligatoire de la franchise en base de TVA (Art. 293 B CGI) —
+ * SSOT du libellé. Doit figurer sur toute facture émise sous ce régime.
+ *
+ * Utilisée comme valeur par défaut de `VENDOR_VAT_EXEMPTION_TEXT`
+ * (`getVendorLegalInfo`) ET comme fallback non vide dans `buildSellerInfo` :
+ * tant que le régime figé est `FRANCHISE_BASE`, on garantit qu'une mention
+ * exacte est imprimée même si l'env est vide/blanc — jamais de mention
+ * manquante figée 10 ans dans le snapshot facture (Art. L102 B LPF).
+ */
+export const DEFAULT_FRANCHISE_VAT_MENTION = "TVA non applicable, art. 293 B du CGI";
+
+/**
  * Seuil de franchise applicable, en cents (cohérence Prisma/Stripe).
  *
  * Lit `VAT_FRANCHISE_THRESHOLD_EUR` (euros) si défini et valide, sinon retombe

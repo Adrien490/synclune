@@ -9,6 +9,8 @@ import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-ac
 import { ShoppingBag, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
+import { ORDERS_AVAILABLE } from "@/shared/constants/orders-availability";
+import { OrdersClosedNotice } from "@/modules/store-settings/components/orders-closed-notice";
 
 import type { Metadata } from "next";
 
@@ -33,6 +35,39 @@ export const metadata: Metadata = {
  * - Redirection vers Stripe Checkout après validation
  */
 export default async function CheckoutPage() {
+	// Pré-lancement : commandes pas encore ouvertes. On court-circuite AVANT toute
+	// initialisation paiement (le Server Action `initializePayment` est de toute
+	// façon bloqué côté serveur) et on affiche un message clair plutôt qu'un
+	// formulaire en erreur. La boutique reste navigable.
+	if (!ORDERS_AVAILABLE) {
+		return (
+			<div className="min-h-dvh" style={{ viewTransitionName: "shop-paiement" }}>
+				<section className="bg-background py-8 sm:py-10">
+					<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+						<div className="mb-6 sm:mb-8">
+							<h1 className="font-display text-xl font-normal tracking-tight sm:text-2xl">
+								Finaliser ma commande
+							</h1>
+						</div>
+						<Card className="border-primary/10 rounded-2xl shadow-md">
+							<CardContent className="space-y-6 p-6 sm:p-8">
+								<OrdersClosedNotice />
+								<div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+									<Button asChild size="lg">
+										<Link href="/produits">Voir les créations</Link>
+									</Button>
+									<Button asChild variant="outline" size="lg">
+										<Link href="/">Retour à l&apos;accueil</Link>
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</section>
+			</div>
+		);
+	}
+
 	// Charger en parallèle (getUserAddresses retourne null si non authentifié)
 	const [cart, session, addresses] = await Promise.all([
 		getCart(),

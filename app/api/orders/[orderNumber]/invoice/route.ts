@@ -5,6 +5,7 @@ import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve
 import { InvoiceSnapshotIntegrityError } from "@/modules/invoices/services/verify-invoice-snapshot";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
+import { flagInvoiceFailureForReconcile } from "@/modules/orders/services/ensure-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
 import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
@@ -30,7 +31,14 @@ const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
 /**
  * EINV-SEC-002 : audit-trail RGPD Art. 30/32 sur chaque accès facture réussi.
  *
- * Best-effort : échec audit ne bloque jamais le download. La source distingue :
+ * Non-bloquant : un échec d'audit ne prive jamais un client de SA facture (droit
+ * d'accès à sa propre pièce comptable). Mais — durcissement audit 2026-05-30 —
+ * l'échec est désormais escaladé en Sentry `captureException` (niveau error) et
+ * non plus avalé en simple `logger.warn` : un trou dans le registre Art. 30/32
+ * doit être VISIBLE et rattrapable, pas silencieux. (L'export admin de masse,
+ * lui, est fail-closed — cf. `app/api/admin/orders/export/route.ts`.)
+ *
+ * La source distingue :
  * - ADMIN : session admin (re-vérifiée DB côté caller via session.user.role)
  * - CUSTOMER : owner session ou guest token (`verifyInvoiceAccessToken`)
  * - SYSTEM : devrait être inatteignable ici, garde-fou
@@ -65,11 +73,15 @@ async function recordInvoiceDownload(params: {
 			},
 		});
 	} catch (error) {
-		logger.warn("Failed to record INVOICE_DOWNLOADED audit (best-effort)", {
+		logger.error("Failed to record INVOICE_DOWNLOADED audit (non-blocking)", error, {
 			service: "invoice-route",
 			orderId: params.orderId,
 			source: params.source,
-			error: error instanceof Error ? error.message : String(error),
+		});
+		Sentry.captureException(error, {
+			level: "error",
+			tags: { feature: "rgpd-audit", action: "INVOICE_DOWNLOADED" },
+			extra: { orderId: params.orderId, source: params.source },
 		});
 	}
 }
@@ -202,6 +214,22 @@ export async function GET(
 				invoiceStatus: "GENERATED" as const,
 				invoiceGeneratedAt: result.invoiceGeneratedAt,
 			};
+		} else {
+			// P2 (audit 2026-05-30) : la génération lazy a échoué (5 retries P2002
+			// épuisés, overflow séquence, ou throw). Sans numéro, `buildInvoiceData`
+			// lèverait plus bas → 500 opaque, ET l'ordre ne serait inscrit dans aucune
+			// file de rejeu (seul `alert-stuck-orders` le verrait après 7 j). On pose
+			// donc le flag DLQ `invoiceRetryDeferred` (rattrapage automatique par le
+			// cron `reconcile-invoices`) + alerte admin, et on renvoie un 503 explicite
+			// fail-closed (jamais de facture sans numéro servie — Art. 242 nonies A).
+			await flagInvoiceFailureForReconcile(
+				order.id,
+				"persistInvoiceNumber returned null on lazy invoice download",
+			);
+			return new Response(
+				"Facture en cours de génération, veuillez réessayer dans quelques instants.",
+				{ status: 503, headers: { "Retry-After": "60" } },
+			);
 		}
 	}
 
@@ -218,8 +246,24 @@ export async function GET(
 			// Pas dans GET_ORDER_SELECT_CUSTOMER (minimisation) — select ciblé ici.
 			invoiceDataSnapshot: true,
 			invoiceDataHash: true,
+			// F6 (RGPD-PII-AUDIT 2026-05-30) : marqueur de purge PII à 10 ans.
+			piiPurgedAt: true,
 		},
 	});
+
+	// F6 (RGPD-PII-AUDIT 2026-05-30) : une fois la PII purgée à `paidAt + 10 ans`
+	// (hard-delete-retention), la facture n'est plus reconstituable — snapshot et PDF
+	// archivé effacés (base légale de conservation expirée, RGPD Art. 5.1.e). Sans cette
+	// garde, on retomberait sur la régénération depuis les colonnes Order scrubées
+	// (« Client supprimé »/« Adresse supprimée ») → PDF corrompu ou 503 opaque. On renvoie
+	// un 410 Gone explicite : le document a légalement cessé d'exister.
+	if (archive?.piiPurgedAt) {
+		return new Response(
+			"Ce document n'est plus disponible : la durée légale de conservation (10 ans) a expiré.",
+			{ status: 410 },
+		);
+	}
+
 	// Source de l'audit-trail EINV-SEC-002.
 	const auditSource: HistorySource = isAdmin ? HistorySource.ADMIN : HistorySource.CUSTOMER;
 	const auditAuthorId = session?.user.id;

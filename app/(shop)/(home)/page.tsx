@@ -11,10 +11,12 @@ import { StructuredData } from "@/shared/components/structured-data";
 import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ORDERS_AVAILABLE } from "@/shared/constants/orders-availability";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
 import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
 import { HomeFaq } from "./_components/home-faq";
+import { OrdersPausedNotice } from "./_components/orders-paused-notice";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -79,6 +81,10 @@ export default async function Page() {
 					productsPromise={productsPromise}
 				/>
 			</Suspense>
+
+			{/* 0. Pré-lancement : commandes en pause. Visible dès l'arrivée, sans
+			    bloquer la navigation (créations + collections restent consultables). */}
+			{!ORDERS_AVAILABLE && <OrdersPausedNotice />}
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images.
 			    Rendered synchronously (no Suspense) so its SSR HTML — incl. the title

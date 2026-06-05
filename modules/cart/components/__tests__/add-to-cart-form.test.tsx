@@ -2,10 +2,28 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Hoisted mocks
-const { mockUseAddToCart, mockUseVariantValidation, mockSearchParams } = vi.hoisted(() => ({
-	mockUseAddToCart: vi.fn(),
-	mockUseVariantValidation: vi.fn(),
-	mockSearchParams: vi.fn(),
+const { mockUseAddToCart, mockUseVariantValidation, mockSearchParams, mockOrdersFlag } = vi.hoisted(
+	() => ({
+		mockUseAddToCart: vi.fn(),
+		mockUseVariantValidation: vi.fn(),
+		mockSearchParams: vi.fn(),
+		// Default: orders open (operational store). Flipped per-test for the paused state.
+		mockOrdersFlag: { available: true },
+	}),
+);
+
+// Mock orders-availability flag (pré-lancement). L'avis de pause est désormais
+// rendu via <OrdersClosedNotice />, qui lit ORDERS_PAUSED_NOTICE.
+vi.mock("@/shared/constants/orders-availability", () => ({
+	get ORDERS_AVAILABLE() {
+		return mockOrdersFlag.available;
+	},
+	ORDERS_PAUSED_SHORT_MESSAGE: "Les commandes ne sont pas encore ouvertes.",
+	ORDERS_PAUSED_NOTICE: {
+		title: "Le site est actuellement en pause.",
+		body: "Les commandes ne sont pas encore ouvertes. Vous pouvez me contacter par mail :",
+		email: "synclune@gmail.com",
+	},
 }));
 
 // Mock useAddToCart hook
@@ -58,10 +76,13 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-// Mock lucide-react LoaderCircle
+// Mock lucide-react icons (LoaderCircle pour le CTA, Info pour OrdersClosedNotice)
 vi.mock("lucide-react", () => ({
 	LoaderCircle: ({ className }: { className?: string }) => (
 		<svg data-testid="loader-icon" className={className} aria-hidden="true" />
+	),
+	Info: ({ className }: { className?: string }) => (
+		<svg data-testid="info-icon" className={className} aria-hidden="true" />
 	),
 }));
 
@@ -69,6 +90,10 @@ import { AddToCartForm } from "../add-to-cart-form";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 afterEach(cleanup);
+afterEach(() => {
+	// Restore operational store after any test that paused orders.
+	mockOrdersFlag.available = true;
+});
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────
 
@@ -267,6 +292,42 @@ describe("AddToCartForm", () => {
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
 			expect(screen.getByRole("button")).toBeDisabled();
+		});
+	});
+
+	describe("when orders are not available (ORDERS_AVAILABLE=false)", () => {
+		it("renders 'Commandes bientôt disponibles' even for a valid available SKU", () => {
+			setupDefaultMocks();
+			mockOrdersFlag.available = false;
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			expect(screen.getByText("Commandes bientôt disponibles")).toBeInTheDocument();
+		});
+
+		it("disables the submit button even for a valid available SKU", () => {
+			setupDefaultMocks();
+			mockOrdersFlag.available = false;
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			expect(screen.getByRole("button")).toBeDisabled();
+		});
+
+		it("surfaces the contact e-mail so a product-page visitor can still reach out", () => {
+			setupDefaultMocks();
+			mockOrdersFlag.available = false;
+			const product = createProduct({ skus: [createSku()] });
+			const selectedSku = createSku();
+
+			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
+
+			const mailLink = screen.getByRole("link", { name: "synclune@gmail.com" });
+			expect(mailLink).toHaveAttribute("href", "mailto:synclune@gmail.com");
 		});
 	});
 

@@ -36,10 +36,10 @@ vi.mock("@/shared/lib/prisma-tx-options", () => ({
 }));
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
-// Cap volontairement bas (3) pour vérifier le split. BATCH_SIZE_MEDIUM élevé
-// pour que findMany remonte toutes les transactions seedées.
+// Cap-split volontairement bas (3) pour vérifier le split. Candidate cap élevé
+// pour que findMany remonte toutes les transactions seedées en un run.
 vi.mock("@/modules/cron/constants/limits", () => ({
-	BATCH_SIZE_MEDIUM: 100,
+	EREPORTING_BUILD_CANDIDATE_CAP: 100,
 	MAX_BATCH_TRANSACTIONS: 3,
 }));
 

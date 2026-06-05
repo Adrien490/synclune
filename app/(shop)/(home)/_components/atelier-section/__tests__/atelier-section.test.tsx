@@ -244,10 +244,18 @@ describe("AtelierSection structure", () => {
 		expect(screen.getByText(/chaque bijou prend vie, un geste à la fois/i)).toBeInTheDocument();
 	});
 
-	it("renders timeline and polaroid gallery", async () => {
+	it("renders the timeline", async () => {
 		await renderAtelierSection();
 
 		expect(screen.getByTestId("timeline")).toBeInTheDocument();
-		expect(screen.getByTestId("polaroid-gallery")).toBeInTheDocument();
+	});
+
+	// TODO(photos-atelier): la galerie polaroid est masquée temporairement (placeholders
+	// vides tant que les vraies photos ne sont pas prêtes). Réactiver cette assertion en
+	// même temps que <PolaroidGallery /> dans atelier-section.tsx.
+	it("does not render the polaroid gallery while photos are pending", async () => {
+		await renderAtelierSection();
+
+		expect(screen.queryByTestId("polaroid-gallery")).not.toBeInTheDocument();
 	});
 });

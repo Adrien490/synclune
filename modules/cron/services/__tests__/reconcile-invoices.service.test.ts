@@ -379,6 +379,9 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 					],
 				},
 				{ OR: [{ paidAt: { lt: expect.any(Date) } }, { paidAt: null }] },
+				// F3 (RGPD-PII-AUDIT 2026-05-30) : exclut les commandes purgées à 10 ans
+				// (piiPurgedAt non null) — sinon régénération depuis colonnes scrubées.
+				{ piiPurgedAt: null },
 			],
 		});
 	});

@@ -2,6 +2,7 @@ import "server-only";
 import Stripe from "stripe";
 import { stripeCircuitBreaker, CircuitBreakerError } from "./circuit-breaker";
 import { logger } from "./logger";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 
 /**
  * Instance Stripe centralisée pour toute l'application
@@ -113,7 +114,7 @@ export function getVendorLegalInfo() {
 		insurance_company: process.env.VENDOR_INSURANCE_COMPANY ?? "En cours de souscription",
 		insurance_contact: process.env.VENDOR_INSURANCE_CONTACT ?? "contact@synclune.fr",
 		insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE ?? "France",
-		vat_exemption: process.env.VENDOR_VAT_EXEMPTION_TEXT ?? "TVA non applicable, art. 293 B du CGI",
+		vat_exemption: process.env.VENDOR_VAT_EXEMPTION_TEXT ?? DEFAULT_FRANCHISE_VAT_MENTION,
 		late_payment_penalty_rate: process.env.VENDOR_LATE_PAYMENT_PENALTY_RATE ?? "12,40%",
 		recovery_fee: process.env.VENDOR_RECOVERY_FEE ?? "40 €",
 		operation_nature: process.env.VENDOR_OPERATION_NATURE ?? "Livraison de biens",

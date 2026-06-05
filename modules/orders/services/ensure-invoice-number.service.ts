@@ -17,7 +17,7 @@ import type { GetOrderReturn } from "../types/order.types";
  * aucune ne doit casser le webhook caller. Cf. audit monitoring 2026-05-28
  * EINV-OPS-001 / EINV-OPS-004 / EINV-OPS-008.
  */
-async function flagInvoiceFailureForReconcile(
+export async function flagInvoiceFailureForReconcile(
 	orderId: string,
 	errorMessage: string,
 ): Promise<void> {

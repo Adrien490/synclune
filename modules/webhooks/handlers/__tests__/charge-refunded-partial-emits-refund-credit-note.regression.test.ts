@@ -51,6 +51,8 @@ const {
 			// ORD-REFUND-AUDIT-007 : lookup Refund local par stripeRefundId pour
 			// aligner l'idempotencyKey email. Null par défaut → fallback charge-based.
 			findUnique: vi.fn().mockResolvedValue(null),
+			// EINV-CREDIT-015 : détection sur-crédit après void total. 0 par défaut.
+			count: vi.fn().mockResolvedValue(0),
 		},
 	},
 	mockSyncStripeRefunds: vi.fn(),

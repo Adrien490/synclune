@@ -11,6 +11,12 @@
  * Spec : RFC 8785 simplifié — UTF-8, escape standard JSON, tri lexicographique
  * Unicode code-point. Pas de gestion des nombres flottants spéciaux (NaN, Infinity)
  * car interdits en JSON et absents de `InvoiceData`.
+ *
+ * ⚠️ Stabilité du hash (EINV-PDF-008) : l'égalité `hash(persist) === hash(relecture)`
+ * suppose que le round-trip JSONB Postgres ne réécrit pas les valeurs. Vrai pour
+ * entiers/strings/bool/null/arrays — FAUX pour les flottants (Postgres peut
+ * recanonicaliser `5.50`→`5.5`). Le payload `InvoiceData` est donc contraint à des
+ * entiers seuls (cf. invariant en tête de `types/invoice-data.ts`).
  */
 export function canonicalJsonStringify(value: unknown): string {
 	return JSON.stringify(toCanonical(value));

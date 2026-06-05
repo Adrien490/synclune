@@ -41,6 +41,7 @@ vi.mock("@/modules/invoices/constants/feature-flags", () => ({
 vi.mock("@/modules/invoices/services/build-ereporting-transaction", () => ({
 	buildSalesTransaction: vi.fn(),
 	buildRefundTransaction: mockBuildRefundTransaction,
+	deriveOperationCategory: vi.fn(() => "GOODS"),
 }));
 
 vi.mock("@/app/generated/prisma/client", () => {
@@ -99,6 +100,11 @@ describe("@regression charge-refunded-ereporting-idempotent — EINV-TEST-018", 
 				shippingCountry: "FR",
 				customerType: "B2C",
 				stripePaymentIntentId: "pi_xyz",
+				total: 4999,
+				taxAmount: 0,
+				// EINV-EREPORT-007/F3 — l'avoir hérite de la catégorie d'opération
+				// des lignes de la commande parente (dérivée via deriveOperationCategory).
+				items: [{ operationCategory: "GOODS" }],
 			},
 		});
 	});

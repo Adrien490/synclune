@@ -4,12 +4,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockGetStoreStatus } = vi.hoisted(() => ({
+const { mockGetStoreStatus, mockOrdersFlag } = vi.hoisted(() => ({
 	mockGetStoreStatus: vi.fn(),
+	// Default: orders open (operational). The pre-launch pause gate is tested explicitly below.
+	mockOrdersFlag: { available: true },
 }));
 
 vi.mock("../../data/get-store-status", () => ({
 	getStoreStatus: mockGetStoreStatus,
+}));
+
+vi.mock("@/shared/constants/orders-availability", () => ({
+	get ORDERS_AVAILABLE() {
+		return mockOrdersFlag.available;
+	},
+	ORDERS_PAUSED_SHORT_MESSAGE: "Les commandes ne sont pas encore ouvertes.",
 }));
 
 import { assertStoreOpen } from "../store-closure-guard";
@@ -21,6 +30,20 @@ import { assertStoreOpen } from "../store-closure-guard";
 describe("assertStoreOpen", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		mockOrdersFlag.available = true;
+	});
+
+	// ─── Pré-lancement : commandes en pause ───────────────────────────────
+
+	it("returns closed (pause message) when ORDERS_AVAILABLE is false, before consulting store status", async () => {
+		mockOrdersFlag.available = false;
+		const result = await assertStoreOpen();
+		expect(result).toEqual({
+			closed: true,
+			message: "Les commandes ne sont pas encore ouvertes.",
+		});
+		// Short-circuits: store status is irrelevant while orders are paused.
+		expect(mockGetStoreStatus).not.toHaveBeenCalled();
 	});
 
 	// ─── Store open ───────────────────────────────────────────────────────

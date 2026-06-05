@@ -207,6 +207,13 @@ model ProductType {
   isActive    Boolean @default(true)
   isSystem    Boolean @default(false) // Types systeme non modifiables/supprimables
 
+  // Catégorie d'opération e-reporting (EINV-EREPORT-007/F3). Défaut GOODS = réalité
+  // Synclune (bijoux = biens). Échappatoire à la sortie de franchise : taguer un
+  // type « atelier/personnalisation » en SERVICES suffira à dériver la bonne
+  // catégorie e-reporting (cf. deriveOperationCategory) sans toucher au hot path.
+  // L'arbitrage fiscal biens vs services reste hors code → comptable.
+  operationCategory EReportingOperationCategory @default(GOODS)
+
   products Product[]
 
   createdAt DateTime @default(now())
@@ -961,6 +968,7 @@ model Order {
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx") // Cron reconcile-invoices : index partiel SQL (WHERE invoiceRetryDeferred = true)
   @@index([ereportingRetryDeferred, paidAt], map: "Order_ereportingRetryDeferred_idx") // Cron reconcile-invoices Passe SALES (WHERE ereportingRetryDeferred = true)
   @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx") // Cron hard-delete-retention : purge PII à paidAt+10 ans (WHERE piiPurgedAt IS NULL)
+  @@index([piiPurgedAt, paidAt, createdAt], map: "Order_unpaid_pii_purge_idx") // Cron hard-delete-retention : purge PII commandes jamais payées (WHERE piiPurgedAt IS NULL AND paidAt IS NULL, range createdAt) — RGPD-AUDIT F-A
   @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx") // Cron alert-overbilled-orders (WHERE overbilledAmountCents IS NOT NULL AND overbillingResolvedAt IS NULL)
   // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
   // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
@@ -1057,6 +1065,12 @@ model OrderItem {
   // total ligne se derive de price * quantity. Pas de snapshot TVA par ligne.
   price    Int // Prix unitaire FINAL sans TVA en centimes
   quantity Int
+
+  // Snapshot figé de la catégorie d'opération e-reporting au moment de la commande
+  // (EINV-EREPORT-007/F3), copié depuis ProductType.operationCategory. Figé comme
+  // les autres snapshots (productTitle, price…) : une mutation ultérieure du
+  // ProductType ne doit pas réécrire une ligne déjà vendue. GOODS par défaut.
+  operationCategory EReportingOperationCategory @default(GOODS)
 
   // Relations
   refundItems RefundItem[]
@@ -1661,7 +1675,16 @@ model StoreSettings {
 enum EReportingTransactionType {
   SALES // Vente B2C (Order PAID)
   REFUND // Remboursement (Refund COMPLETED, montant négatif)
-  PAYMENT // Encaissement isolé (services autoliquidés, futur)
+  // RÉSERVÉ / non émis (EINV-EREPORT-007/F4). L'e-reporting comporte DEUX flux :
+  // (1) données de transaction (SALES/REFUND ci-dessus) et (2) « données de
+  // paiement » = e-reporting de l'ENCAISSEMENT, propre aux PRESTATIONS DE SERVICES
+  // soumises à la TVA sur les encaissements (Art. 269-2-c CGI). Pour de la VENTE DE
+  // BIENS (exigibilité à la livraison) ET en franchise art. 293 B (aucune TVA), ce
+  // flux n'est PAS dû → aucune transaction PAYMENT n'est créée (fail-safe assumé,
+  // pas un oubli). À n'activer QUE si l'activité bascule en prestation de services
+  // hors franchise (arbitrage hors code → comptable). NB : « encaissement » ≠
+  // « autoliquidation » (reverse-charge B2B), notions distinctes.
+  PAYMENT
 }
 
 enum EReportingStatus {

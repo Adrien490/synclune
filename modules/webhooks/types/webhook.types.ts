@@ -6,6 +6,7 @@ import type {
 	sendAdminInvoiceFailedAlert,
 	sendAdminOrderProcessingFailedAlert,
 	sendAdminDashboardRefundAttentionAlert,
+	sendAdminCreditNoteOverlapAlert,
 } from "@/modules/emails/services/admin-emails";
 import type { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
@@ -63,6 +64,12 @@ export type PostWebhookTask =
 			// ORD-STRIPE-006 : alerte admin pour Dashboard refunds nécessitant attention
 			type: "ADMIN_DASHBOARD_REFUND_ALERT";
 			data: Parameters<typeof sendAdminDashboardRefundAttentionAlert>[0];
+	  }
+	| {
+			// EINV-CREDIT-015 : avoir total émis alors que des avoirs partiels existent
+			// déjà → sur-crédit potentiel à réconcilier (audit couverture 2026-05-30 P1-B)
+			type: "ADMIN_CREDIT_NOTE_OVERLAP_ALERT";
+			data: Parameters<typeof sendAdminCreditNoteOverlapAlert>[0];
 	  }
 	| { type: "INVALIDATE_CACHE"; tags: string[] };
 

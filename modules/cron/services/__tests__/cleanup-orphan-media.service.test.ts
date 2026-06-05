@@ -6,6 +6,7 @@ const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } = vi.ho
 		reviewMedia: { findMany: vi.fn() },
 		user: { findMany: vi.fn() },
 		orderItem: { findMany: vi.fn() },
+		order: { findMany: vi.fn() },
 	},
 	mockListFiles: vi.fn(),
 	mockDeleteFiles: vi.fn(),
@@ -45,6 +46,7 @@ describe("cleanupOrphanMedia", () => {
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.user.findMany.mockResolvedValue([]);
 		mockPrisma.orderItem.findMany.mockResolvedValue([]);
+		mockPrisma.order.findMany.mockResolvedValue([]);
 
 		mockListFiles.mockResolvedValue({ files: [] });
 		mockDeleteFiles.mockResolvedValue({ success: true });
@@ -154,6 +156,34 @@ describe("cleanupOrphanMedia", () => {
 			files: [
 				{ key: "order-snapshot-1", uploadedAt: twoDaysAgo },
 				{ key: "order-snapshot-2", uploadedAt: twoDaysAgo },
+				{ key: "true-orphan", uploadedAt: twoDaysAgo },
+			],
+		});
+
+		const result = await cleanupOrphanMedia();
+
+		expect(result.filesScanned).toBe(3);
+		expect(result.orphansDeleted).toBe(1);
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["true-orphan"]);
+	});
+
+	// RGPD-AUDIT F-C : les PDF de facture/avoir archivés (Order.invoicePdfUrl /
+	// creditNotePdfUrl) sont des archives légales (Art. L102 B LPF, 10 ans). Ils ne
+	// doivent JAMAIS être considérés orphelins tant qu'ils sont dans leur rétention.
+	it("should not delete archived invoice/credit-note PDFs referenced by an Order", async () => {
+		const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+		mockPrisma.order.findMany.mockResolvedValue([
+			{
+				invoicePdfUrl: "https://utfs.io/f/invoice-pdf-1",
+				creditNotePdfUrl: "https://utfs.io/f/credit-note-pdf-1",
+			},
+		]);
+
+		mockListFiles.mockResolvedValue({
+			files: [
+				{ key: "invoice-pdf-1", uploadedAt: twoDaysAgo },
+				{ key: "credit-note-pdf-1", uploadedAt: twoDaysAgo },
 				{ key: "true-orphan", uploadedAt: twoDaysAgo },
 			],
 		});

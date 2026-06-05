@@ -350,8 +350,12 @@ describe("renderInvoicePdf — lines and totals", () => {
 	});
 
 	it("renders explicit TVA amount when totalTax > 0", () => {
+		const baseSeller = makeInvoice().seller;
 		renderInvoicePdf(
 			makeInvoice({
+				// Régime réel : aucune mention d'exonération → la ligne TVA affiche le
+				// montant, piloté par le régime et non par totalTax (EINV-F3).
+				seller: { ...baseSeller, vatExemptionText: null },
 				lines: [
 					{
 						lineNumber: 1,

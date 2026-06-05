@@ -1,14 +1,29 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Hoisted mocks must be declared before vi.mock calls
-const { mockAnimatedNumber, mockHaptic } = vi.hoisted(() => ({
+const { mockAnimatedNumber, mockHaptic, mockOrdersFlag } = vi.hoisted(() => ({
 	mockAnimatedNumber: vi.fn(
 		({ value, formatter }: { value: number; formatter: (n: number) => string }) => (
 			<span data-testid="animated-number">{formatter(value)}</span>
 		),
 	),
 	mockHaptic: vi.fn(),
+	mockOrdersFlag: { available: true },
+}));
+
+// Mock le SSOT de disponibilité des commandes (getter → override par test).
+// L'avis de pause est rendu via <OrdersClosedNotice />, qui lit ORDERS_PAUSED_NOTICE.
+vi.mock("@/shared/constants/orders-availability", () => ({
+	get ORDERS_AVAILABLE() {
+		return mockOrdersFlag.available;
+	},
+	ORDERS_PAUSED_SHORT_MESSAGE: "Les commandes ne sont pas encore ouvertes.",
+	ORDERS_PAUSED_NOTICE: {
+		title: "Le site est actuellement en pause.",
+		body: "Les commandes ne sont pas encore ouvertes. Vous pouvez me contacter par mail :",
+		email: "synclune@gmail.com",
+	},
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -99,6 +114,8 @@ import { CartSheetFooter } from "../cart-sheet-footer";
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	// Reset au défaut (commandes ouvertes) — les tests "pause" l'override localement.
+	mockOrdersFlag.available = true;
 });
 
 function createProps(overrides: Partial<React.ComponentProps<typeof CartSheetFooter>> = {}) {
@@ -185,6 +202,33 @@ describe("CartSheetFooter", () => {
 		const link = screen.getByRole("link", { name: /Passer commande/i });
 		link.click();
 		expect(mockHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	describe("when orders are not available (ORDERS_AVAILABLE=false)", () => {
+		beforeEach(() => {
+			mockOrdersFlag.available = false;
+		});
+
+		it("renders a disabled 'Passer commande' button instead of a checkout link", () => {
+			render(<CartSheetFooter {...createProps({ hasStockIssues: false })} />);
+			expect(screen.queryByRole("link", { name: /Passer commande/i })).toBeNull();
+			const button = screen.getByRole("button", { name: /Passer commande/i });
+			expect(button).toBeDisabled();
+			expect(button.getAttribute("aria-disabled")).toBe("true");
+		});
+
+		it("shows the orders-paused notice (title + contact e-mail)", () => {
+			render(<CartSheetFooter {...createProps({ hasStockIssues: false })} />);
+			expect(screen.getByText("Le site est actuellement en pause.")).toBeInTheDocument();
+			const mailLink = screen.getByRole("link", { name: "synclune@gmail.com" });
+			expect(mailLink).toHaveAttribute("href", "mailto:synclune@gmail.com");
+		});
+
+		it("takes precedence over the stock-issues state", () => {
+			render(<CartSheetFooter {...createProps({ hasStockIssues: true })} />);
+			const button = screen.getByRole("button", { name: /Passer commande/i });
+			expect(button.getAttribute("aria-describedby")).toBe("orders-paused-hint");
+		});
 	});
 
 	it("renders the sheet footer wrapper", () => {

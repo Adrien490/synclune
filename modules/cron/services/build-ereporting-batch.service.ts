@@ -2,7 +2,10 @@ import { EReportingStatus, Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { BATCH_SIZE_MEDIUM, MAX_BATCH_TRANSACTIONS } from "@/modules/cron/constants/limits";
+import {
+	EREPORTING_BUILD_CANDIDATE_CAP,
+	MAX_BATCH_TRANSACTIONS,
+} from "@/modules/cron/constants/limits";
 import { computeEReportingPeriod } from "@/modules/invoices/constants/ereporting-period";
 import {
 	mergeVatBreakdowns,
@@ -64,7 +67,10 @@ export async function buildEReportingBatch(): Promise<CronResult> {
 			vatBreakdown: true,
 		},
 		orderBy: { occurredAt: "asc" },
-		take: BATCH_SIZE_MEDIUM,
+		// ≥ MAX_BATCH_TRANSACTIONS : permet au cap-split (EINV-EREPORT-005) de se
+		// déclencher dans un seul run plutôt que de fragmenter une période en
+		// micro-batches sur plusieurs runs. Cf. audit P2-1.
+		take: EREPORTING_BUILD_CANDIDATE_CAP,
 	});
 
 	if (candidates.length === 0) {
@@ -198,7 +204,7 @@ export async function buildEReportingBatch(): Promise<CronResult> {
 			errored,
 			skipped,
 			batchCount: createdBatches.length,
-			hasMore: candidates.length === BATCH_SIZE_MEDIUM,
+			hasMore: candidates.length === EREPORTING_BUILD_CANDIDATE_CAP,
 		},
 	);
 
@@ -206,7 +212,7 @@ export async function buildEReportingBatch(): Promise<CronResult> {
 		processed,
 		errored,
 		skipped,
-		hasMore: candidates.length === BATCH_SIZE_MEDIUM,
+		hasMore: candidates.length === EREPORTING_BUILD_CANDIDATE_CAP,
 		batchCount: createdBatches.length,
 	};
 }

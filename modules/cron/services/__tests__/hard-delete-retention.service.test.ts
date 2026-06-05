@@ -54,7 +54,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.order.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([{ count: 0 }, { count: 0 }]);
-		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0 });
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
 	});
 
 	it("happy path: deletes batch of products and reviews, invalidates 7 cache tags, calls UploadThing twice", async () => {
@@ -218,20 +218,23 @@ describe("hardDeleteExpiredRecords", () => {
 		vi.spyOn(Date, "now").mockRestore();
 	});
 
-	it("purges order PII past 10-year retention: scrubs fields, deletes PDFs, sets piiPurgedAt", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([
-			{
-				id: "order-1",
-				invoicePdfUrl: "https://utfs.io/f/invoice-1",
-				creditNotePdfUrl: "https://utfs.io/f/credit-1",
-			},
-			{ id: "order-2", invoicePdfUrl: "https://utfs.io/f/invoice-2", creditNotePdfUrl: null },
-		]);
-		// purge tx runs first → single { count }, then the review/product tx → array.
+	it("purges order PII past 10-year retention: deletes PDFs FIRST, then scrubs + sets piiPurgedAt", async () => {
+		// 1st findMany = paid purge, 2nd findMany = unpaid (abandoned) purge → empty here.
+		mockPrisma.order.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "order-1",
+					invoicePdfUrl: "https://utfs.io/f/invoice-1",
+					creditNotePdfUrl: "https://utfs.io/f/credit-1",
+				},
+				{ id: "order-2", invoicePdfUrl: "https://utfs.io/f/invoice-2", creditNotePdfUrl: null },
+			])
+			.mockResolvedValueOnce([]);
+		// paid-purge scrub tx runs first → single { count }, then the review/product tx → array.
 		mockPrisma.$transaction
 			.mockResolvedValueOnce({ count: 2 })
 			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
-		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 3 });
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 3, failed: 0 });
 
 		const result = await hardDeleteExpiredRecords();
 
@@ -247,7 +250,82 @@ describe("hardDeleteExpiredRecords", () => {
 			"https://utfs.io/f/invoice-2",
 		]);
 
+		// F-B: PDF deletion must precede the scrub tx (so the pointer is never nulled
+		// before the file is gone). deleteUploadThing is invoked before the scrub $transaction.
+		const deleteOrder = mockDeleteUploadThingFilesFromUrls.mock.invocationCallOrder[0]!;
+		const scrubTxOrder = mockPrisma.$transaction.mock.invocationCallOrder[0]!;
+		expect(deleteOrder).toBeLessThan(scrubTxOrder);
+
 		expect(result).toMatchObject({ ordersPurged: 2, orderPdfsDeleted: 3 });
+	});
+
+	it("F-B: defers the PII scrub when PDF deletion fails (keeps pointers + piiPurgedAt NULL for retry)", async () => {
+		mockPrisma.order.findMany
+			.mockResolvedValueOnce([
+				{
+					id: "order-1",
+					invoicePdfUrl: "https://utfs.io/f/invoice-1",
+					creditNotePdfUrl: null,
+				},
+			])
+			.mockResolvedValueOnce([]);
+		// Only the review/product tx should run — the purge scrub must be skipped.
+		mockPrisma.$transaction.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 1 });
+
+		const result = await hardDeleteExpiredRecords();
+
+		// No scrub tx ran (only the review/product tx → single $transaction call).
+		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		expect(result).toMatchObject({ ordersPurged: 0 });
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("Order PII scrub deferred"),
+			expect.objectContaining({ cronJob: "hard-delete-retention" }),
+		);
+	});
+
+	it("F-B: defers the PII scrub when PDF deletion throws (logs error, no scrub)", async () => {
+		mockPrisma.order.findMany
+			.mockResolvedValueOnce([
+				{ id: "order-1", invoicePdfUrl: "https://utfs.io/f/invoice-1", creditNotePdfUrl: null },
+			])
+			.mockResolvedValueOnce([]);
+		mockPrisma.$transaction.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(new Error("UploadThing 500"));
+
+		const result = await hardDeleteExpiredRecords();
+
+		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		expect(result).toMatchObject({ ordersPurged: 0 });
+		expect(mockLogger.error).toHaveBeenCalledWith(
+			expect.stringContaining("Failed to delete invoice/credit-note PDFs"),
+			expect.any(Error),
+			expect.objectContaining({ cronJob: "hard-delete-retention" }),
+		);
+	});
+
+	it("F-A: purges customer/shipping PII from never-paid (abandoned) orders past the window", async () => {
+		// 1st findMany = paid purge → empty, 2nd findMany = unpaid purge → 2 abandoned orders.
+		mockPrisma.order.findMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([{ id: "abandoned-1" }, { id: "abandoned-2" }]);
+		// 1st tx = abandoned scrub → { count }, 2nd tx = review/product → array.
+		mockPrisma.$transaction
+			.mockResolvedValueOnce({ count: 2 })
+			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+
+		const result = await hardDeleteExpiredRecords();
+
+		// Unpaid selection: paidAt IS NULL + createdAt < cutoff + not yet purged.
+		const unpaidCall = mockPrisma.order.findMany.mock.calls[1]![0];
+		expect(unpaidCall.where.paidAt).toBeNull();
+		expect(unpaidCall.where.piiPurgedAt).toBeNull();
+		expect(unpaidCall.where.createdAt.lt).toBeInstanceOf(Date);
+
+		// No PDF deletion for unpaid orders (no archived invoice).
+		expect(mockDeleteUploadThingFilesFromUrls).not.toHaveBeenCalled();
+
+		expect(result).toMatchObject({ abandonedOrdersPurged: 2 });
 	});
 
 	it("does not throw when UploadThing rejects (non-blocking with logger.warn)", async () => {

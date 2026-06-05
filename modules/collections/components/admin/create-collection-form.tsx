@@ -60,7 +60,7 @@ export function CreateCollectionForm({
 		defaultValues: {
 			name: "",
 			description: "",
-			status: CollectionStatus.DRAFT as CollectionStatus,
+			status: CollectionStatus.PUBLIC as CollectionStatus,
 		},
 	});
 

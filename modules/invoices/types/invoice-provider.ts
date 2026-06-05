@@ -1,4 +1,8 @@
-import type { PaymentMethod, EReportingTransactionType } from "@/app/generated/prisma/enums";
+import type {
+	PaymentMethod,
+	EReportingTransactionType,
+	EReportingOperationCategory,
+} from "@/app/generated/prisma/enums";
 
 /**
  * Statut d'une transmission e-reporting (B2C) vers la DGFiP via la Plateforme
@@ -13,6 +17,29 @@ export type EReportingStatus =
 	| "ABANDONED";
 
 /**
+ * EINV-EREPORT-010 — Ligne de ventilation par taux de TVA transmise dans un batch.
+ * `rate` en points de base (2000 = 20 %), montants en centimes signés.
+ */
+export interface EReportingVatLine {
+	rate: number;
+	baseExclTax: number;
+	taxAmount: number;
+}
+
+/**
+ * EINV-EREPORT-010 — Agrégat journalier (HT/TTC + nb tx) transmis dans un batch.
+ * Le dépôt peut être bimestriel mais le référentiel attend le détail JOURNALIER.
+ */
+export interface EReportingDailyAggregate {
+	/** Jour UTC `YYYY-MM-DD`. */
+	day: string;
+	transactionCount: number;
+	totalAmountIncTax: number;
+	totalAmountExclTax: number;
+	totalTaxAmount: number;
+}
+
+/**
  * Batch d'e-reporting (B2C) — agrégat de transactions sur une période.
  */
 export interface EReportingBatchPayload {
@@ -22,6 +49,19 @@ export interface EReportingBatchPayload {
 	totalAmountIncTax: number;
 	totalAmountExclTax: number;
 	totalTaxAmount: number;
+	/**
+	 * EINV-EREPORT-010 — Ventilation par taux de TVA du batch. Toujours fournie par
+	 * le caller de prod (`submit-ereporting-batch`), MÊME en franchise (ligne unique
+	 * taux 0). Optionnelle sur le type pour rétro-compat des fixtures de test ; un
+	 * adaptateur PA réel la mappe vers le bloc TVA exigé par l'arrêté.
+	 */
+	vatBreakdown?: ReadonlyArray<EReportingVatLine>;
+	/**
+	 * EINV-EREPORT-010 — Agrégats journaliers (HT/TTC + nb tx) du batch. Le dépôt
+	 * peut être bimestriel mais le référentiel attend le détail JOURNALIER ; un
+	 * adaptateur PA réel les transmet dans le dépôt de période.
+	 */
+	dailyAggregates?: ReadonlyArray<EReportingDailyAggregate>;
 	transactions: ReadonlyArray<{
 		occurredAt: Date;
 		countryCode: string;
@@ -37,6 +77,13 @@ export interface EReportingBatchPayload {
 		currency: string;
 		/** SALES (montant positif) vs REFUND (montant négatif). */
 		type: EReportingTransactionType;
+		/**
+		 * EINV-EREPORT-007/F1+F3 — catégorie d'opération DGFiP (biens/services).
+		 * Fournie par le caller de prod (`submit-ereporting-batch`) ; GOODS aujourd'hui
+		 * (franchise, 100 % biens), dérivée des lignes à la sortie de franchise.
+		 * Optionnelle sur le type pour rétro-compat des fixtures de test.
+		 */
+		operationCategory?: EReportingOperationCategory;
 	}>;
 }
 

@@ -239,6 +239,32 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 		expect(sha256(a)).toBe(sha256(b));
 	});
 
+	it("est indépendant de process.env.TZ (EINV-PDF-007 — /CreationDate en UTC)", async () => {
+		// Régression : jsPDF `convertDateToPDFDate` dérive sinon /CreationDate des
+		// composants LOCAUX + getTimezoneOffset() → le hash du PDF dépendrait du TZ
+		// du runtime. On rend le MÊME InvoiceData sous deux TZ distincts et on exige
+		// un SHA-256 identique. `derivePdfCreationDate` force l'offset +00'00' en UTC.
+		const data = makeInvoice();
+
+		const renderUnderTz = async (tz: string): Promise<string> => {
+			const original = process.env.TZ;
+			process.env.TZ = tz;
+			try {
+				// Re-import isolé pour que toute lecture de TZ au module-load soit ré-évaluée.
+				const mod = await import("../render-invoice-pdf");
+				return sha256(mod.renderInvoicePdf(data));
+			} finally {
+				process.env.TZ = original;
+			}
+		};
+
+		const utc = await renderUnderTz("UTC");
+		const paris = await renderUnderTz("Europe/Paris");
+		const honolulu = await renderUnderTz("Pacific/Honolulu");
+		expect(paris).toBe(utc);
+		expect(honolulu).toBe(utc);
+	});
+
 	it("setCreationDate / setFileId / setProperties figent les sources jsPDF non-déterministes", () => {
 		// Régression : si quelqu'un supprime un de ces 3 calls, le PDF reprend
 		// CreationDate=now()/ID=random()/Producer=jsPDF_x.y.z → divergence hash.

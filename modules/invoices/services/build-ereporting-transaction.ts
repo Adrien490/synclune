@@ -5,6 +5,10 @@ import type {
 	PaymentMethod,
 } from "@/app/generated/prisma/client";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+import type {
+	EReportingDailyAggregate,
+	EReportingVatLine,
+} from "@/modules/invoices/types/invoice-provider";
 
 // ============================================================================
 // Ventilation TVA (DORMANT — préparation sortie de franchise). EINV-EREPORT-007.
@@ -35,6 +39,33 @@ export type VatBreakdownLine = z.infer<typeof vatBreakdownLineSchema>;
  * le catalogue est 100 % biens, GOODS est exact et n'introduit aucune régression.
  */
 export const DEFAULT_OPERATION_CATEGORY: EReportingOperationCategory = "GOODS";
+
+/**
+ * Dérive la catégorie d'opération e-reporting d'une commande à partir des
+ * catégories de ses lignes (snapshot `OrderItem`/`ProductType.operationCategory`).
+ *
+ * - 0 ligne → `GOODS` (défaut sûr, réalité Synclune actuelle).
+ * - Toutes GOODS → `GOODS` ; toutes SERVICES → `SERVICES`.
+ * - Mélange biens+services (ou une ligne déjà MIXED) → `MIXED`.
+ *
+ * Tant que le catalogue est 100 % biens (toutes les lignes héritent du défaut
+ * `GOODS`), renvoie `GOODS` → zéro régression. C'est l'échappatoire (EINV-EREPORT-
+ * 007/F3) qui permettra, à la sortie de franchise, de déclarer SERVICES/MIXED sans
+ * toucher au hot path : il suffira de taguer un `ProductType` (ex. atelier/
+ * personnalisation) en `SERVICES`. L'arbitrage fiscal biens vs services reste
+ * **hors code → comptable**.
+ */
+export function deriveOperationCategory(
+	itemCategories: ReadonlyArray<EReportingOperationCategory>,
+): EReportingOperationCategory {
+	if (itemCategories.length === 0) return DEFAULT_OPERATION_CATEGORY;
+	const hasMixed = itemCategories.some((c) => c === "MIXED");
+	const hasGoods = itemCategories.some((c) => c === "GOODS");
+	const hasServices = itemCategories.some((c) => c === "SERVICES");
+	if (hasMixed || (hasGoods && hasServices)) return "MIXED";
+	if (hasServices) return "SERVICES";
+	return "GOODS";
+}
 
 /**
  * Construit la ventilation TVA d'une transaction. DORMANT : tant que la donnée
@@ -92,6 +123,68 @@ export function mergeVatBreakdowns(
 		.sort((a, b) => a.rate - b.rate);
 }
 
+// ============================================================================
+// Couche TRANSMISSION (EINV-EREPORT-010) — dérivation au moment d'émettre vers la
+// PA. NE touche PAS aux données stockées (snapshot figé 10 ans, Art. L102 B LPF,
+// régression `ereporting-vat-breakdown`). Tout est dérivé des totaux/transactions
+// déjà persistés du batch.
+// ============================================================================
+
+/**
+ * Ventilation par taux de TVA **transmise**. Le référentiel e-reporting impose une
+ * ventilation par taux MÊME en franchise (art. 293 B, taux 0). On ne matérialise
+ * PAS cette ligne dans le snapshot stocké (forme figée) : on la dérive ici, à
+ * l'émission, depuis les totaux déjà calculés du batch.
+ *
+ *  - Régime réel (ventilation stockée non vide) → transmise telle quelle.
+ *  - Franchise (stockée null/vide) → ligne unique `rate: 0` portant tout le HT,
+ *    `taxAmount` = total TVA du batch (0 en franchise). AUCUN taux > 0 inventé.
+ */
+export function toTransmittedVatBreakdown(
+	stored: VatBreakdownLine[] | null,
+	totalAmountExclTax: number,
+	totalTaxAmount: number,
+): EReportingVatLine[] {
+	if (stored && stored.length > 0) return stored;
+	return [{ rate: 0, baseExclTax: totalAmountExclTax, taxAmount: totalTaxAmount }];
+}
+
+/**
+ * Calcule les agrégats JOURNALIERS d'un batch à partir de ses transactions,
+ * groupées par jour UTC de `occurredAt`. Pur, déterministe (tri jour croissant).
+ * Sous cadence `DAILY` il y a exactement un jour ; sous `MONTHLY`/`BIMONTHLY` le
+ * détail journalier reste présent dans le dépôt agrégé.
+ */
+export function computeDailyAggregates(
+	transactions: ReadonlyArray<{
+		occurredAt: Date;
+		amountIncTax: number;
+		amountExclTax: number;
+		taxAmount: number;
+	}>,
+): EReportingDailyAggregate[] {
+	const byDay = new Map<string, EReportingDailyAggregate>();
+	for (const t of transactions) {
+		const day = t.occurredAt.toISOString().slice(0, 10);
+		const acc = byDay.get(day);
+		if (acc) {
+			acc.transactionCount += 1;
+			acc.totalAmountIncTax += t.amountIncTax;
+			acc.totalAmountExclTax += t.amountExclTax;
+			acc.totalTaxAmount += t.taxAmount;
+		} else {
+			byDay.set(day, {
+				day,
+				transactionCount: 1,
+				totalAmountIncTax: t.amountIncTax,
+				totalAmountExclTax: t.amountExclTax,
+				totalTaxAmount: t.taxAmount,
+			});
+		}
+	}
+	return [...byDay.values()].sort((a, b) => a.day.localeCompare(b.day));
+}
+
 /**
  * Construit le payload d'une `EReportingTransaction` à partir d'un `Order` (SALES)
  * ou d'un `Refund` (REFUND). Fonction pure — aucun I/O, aucun write DB. Le
@@ -124,6 +217,12 @@ interface BuildSalesTransactionInput {
 		| "customerType"
 		| "stripePaymentIntentId"
 	>;
+	/**
+	 * Catégorie d'opération dérivée des lignes de la commande (EINV-EREPORT-007/F3,
+	 * cf. `deriveOperationCategory`). Optionnel : défaut `GOODS` si le caller ne la
+	 * dérive pas (rétro-compat tests + flux 100 % biens).
+	 */
+	operationCategory?: EReportingOperationCategory;
 }
 
 export interface EReportingTransactionPayload {
@@ -199,7 +298,7 @@ export function buildSalesTransaction(
 		// DORMANT : null tant que franchise (order.taxAmount === 0). À l'activation,
 		// passer les lignes per-taux dérivées d'OrderItem.taxRate en 2e argument.
 		vatBreakdown: buildVatBreakdown(order.taxAmount),
-		operationCategory: DEFAULT_OPERATION_CATEGORY,
+		operationCategory: input.operationCategory ?? DEFAULT_OPERATION_CATEGORY,
 		currency: order.currency,
 		payloadSnapshot: {
 			orderNumber: order.orderNumber,
@@ -237,6 +336,12 @@ interface BuildRefundTransactionInput {
 		| "total"
 		| "taxAmount"
 	>;
+	/**
+	 * Catégorie d'opération dérivée des lignes de la commande parente
+	 * (EINV-EREPORT-007/F3). Optionnel : défaut `GOODS`. Un avoir hérite de la
+	 * catégorie de la vente d'origine.
+	 */
+	operationCategory?: EReportingOperationCategory;
 }
 
 /**
@@ -302,7 +407,7 @@ export function buildRefundTransaction(
 		// DORMANT : null tant que franchise (refundTaxAmount === 0). À l'activation,
 		// les lignes per-taux d'un avoir se dérivent de RefundItem.taxAmount.
 		vatBreakdown: buildVatBreakdown(refundTaxAmount),
-		operationCategory: DEFAULT_OPERATION_CATEGORY,
+		operationCategory: input.operationCategory ?? DEFAULT_OPERATION_CATEGORY,
 		currency: refund.currency,
 		payloadSnapshot: {
 			orderNumber: order.orderNumber,

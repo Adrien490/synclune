@@ -19,6 +19,9 @@ const {
 		user: {
 			findUnique: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	},
 	mockBuildExportWhereClause: vi.fn(),
 	mockGenerateOrdersCsv: vi.fn(),
@@ -108,6 +111,7 @@ describe("GET /api/admin/orders/export", () => {
 		});
 		mockBuildExportWhereClause.mockReturnValue({ paymentStatus: "PAID" });
 		mockPrisma.order.findMany.mockResolvedValue(SAMPLE_ORDERS);
+		mockPrisma.orderHistory.create.mockResolvedValue({ id: "audit-1" });
 		mockGenerateOrdersCsv.mockReturnValue("CSV_CONTENT");
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 	});
@@ -349,6 +353,30 @@ describe("GET /api/admin/orders/export", () => {
 			const response = await GET(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(500);
+		});
+
+		// EINV-SEC-005 — fail-closed (audit 2026-05-30) : un export de masse non
+		// journalisé (registre RGPD Art. 30) doit être REFUSÉ, pas servi en silence.
+		it("returns 503 and does NOT serve the CSV when the BULK_EXPORT audit write fails", async () => {
+			mockPrisma.orderHistory.create.mockRejectedValue(new Error("DB down"));
+
+			const response = await GET(makeRequest({ periodType: "all" }));
+
+			expect(response.status).toBe(503);
+			expect(response.headers.get("Content-Type")).toBe("application/json");
+			const body = await response.json();
+			expect(body.error).toMatch(/journalisation/i);
+		});
+
+		it("serves the CSV (200) once the BULK_EXPORT audit is written", async () => {
+			const response = await GET(makeRequest({ periodType: "all" }));
+
+			expect(response.status).toBe(200);
+			expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ action: "BULK_EXPORT", authorId: "admin-1" }),
+				}),
+			);
 		});
 	});
 });
