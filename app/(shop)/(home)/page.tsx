@@ -88,8 +88,10 @@ export default async function Page() {
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images.
 			    Rendered synchronously (no Suspense) so its SSR HTML — incl. the title
-			    LCP text and the desktop floating images — is in the initial document. */}
-			<HeroSection productsPromise={productsPromise} />
+			    LCP text and the desktop floating images — is in the initial document.
+			    `noticeAbove` : quand OrdersPausedNotice précède le hero, c'est elle qui
+			    porte l'offset du navbar fixe → le hero retire son padding-top navbar. */}
+			<HeroSection productsPromise={productsPromise} noticeAbove={!ORDERS_AVAILABLE} />
 
 			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
 			<HeroReassuranceBanner />

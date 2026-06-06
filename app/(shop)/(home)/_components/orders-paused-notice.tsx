@@ -16,7 +16,13 @@ import { CONTAINER_CLASS } from "@/shared/constants/spacing";
  */
 export function OrdersPausedNotice() {
 	return (
-		<section aria-labelledby="orders-paused-title" className="bg-info/10 border-info/30 border-b">
+		<section
+			aria-labelledby="orders-paused-title"
+			// Première section de la page : réserve l'espace sous le navbar `fixed top-0 z-40`
+			// (+ AnnouncementBar éventuelle), sinon son contenu est masqué derrière le navbar.
+			// Même offset que les premières sections des autres pages storefront.
+			className="bg-info/10 border-info/30 border-b pt-[calc(var(--navbar-height)+var(--announcement-bar-height,0px))]"
+		>
 			<div className={CONTAINER_CLASS}>
 				<div className="flex flex-col gap-3 py-5 sm:flex-row sm:items-start sm:gap-4 sm:py-6">
 					<Info className="text-info-foreground/80 size-6 shrink-0 sm:mt-0.5" aria-hidden="true" />
