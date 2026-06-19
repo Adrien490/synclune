@@ -28,15 +28,8 @@ import { ParticleBackground } from "./hero-decorations";
  */
 export async function HeroSection({
 	productsPromise,
-	noticeAbove = false,
 }: {
 	productsPromise: Promise<GetProductsReturn>;
-	/**
-	 * `true` quand une section précède le hero (ex: `OrdersPausedNotice` en
-	 * pré-lancement). Cette section porte alors l'offset du navbar `fixed`, donc
-	 * le hero n'utilise qu'un padding-top standard pour ne pas créer un trou vide.
-	 */
-	noticeAbove?: boolean;
 }) {
 	const { products } = await productsPromise;
 	const heroImages = extractHeroImages(products);
@@ -47,11 +40,7 @@ export async function HeroSection({
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
 			style={{ viewTransitionName: "shop-hero" }}
-			className={
-				noticeAbove
-					? "relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-10 pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-14 sm:pb-16 md:pt-16 md:pb-24 lg:min-h-dvh max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
-					: "relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-dvh max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
-			}
+			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-dvh max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
