@@ -2,7 +2,6 @@
 // TYPES - SKU VALIDATION
 // ============================================================================
 
-import type { EReportingOperationCategory } from "@/app/generated/prisma/enums";
 
 /**
  * Donnees completes d'un SKU pour l'affichage et la validation
@@ -26,12 +25,6 @@ interface SkuData {
 		title: string;
 		slug: string;
 		description?: string | null;
-		/**
-		 * Catégorie d'opération e-reporting (EINV-EREPORT-007/F3), snapshotée sur
-		 * l'OrderItem au checkout. Optionnelle (rétro-compat fixtures) : le flux réel
-		 * la renseigne toujours via `ProductType.operationCategory`, sinon défaut GOODS.
-		 */
-		operationCategory?: EReportingOperationCategory;
 	};
 	images: Array<{
 		url: string;

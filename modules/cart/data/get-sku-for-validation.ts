@@ -39,9 +39,6 @@ export async function fetchSkuForValidation(skuId: string) {
 					status: true,
 					description: true,
 					deletedAt: true,
-					// EINV-EREPORT-007/F3 — catégorie d'opération e-reporting du type
-					// produit (GOODS par défaut), snapshotée sur l'OrderItem au checkout.
-					type: { select: { operationCategory: true } },
 				},
 			},
 			images: {

@@ -205,13 +205,6 @@ model ProductType {
   isActive    Boolean @default(true)
   isSystem    Boolean @default(false) // Types systeme non modifiables/supprimables
 
-  // Catégorie d'opération e-reporting (EINV-EREPORT-007/F3). Défaut GOODS = réalité
-  // Synclune (bijoux = biens). Échappatoire à la sortie de franchise : taguer un
-  // type « atelier/personnalisation » en SERVICES suffira à dériver la bonne
-  // catégorie e-reporting (cf. deriveOperationCategory) sans toucher au hot path.
-  // L'arbitrage fiscal biens vs services reste hors code → comptable.
-  operationCategory EReportingOperationCategory @default(GOODS)
-
   products Product[]
 
   createdAt DateTime @default(now())
@@ -1037,12 +1030,6 @@ model OrderItem {
   price    Int // Prix unitaire FINAL sans TVA en centimes
   quantity Int
 
-  // Snapshot figé de la catégorie d'opération e-reporting au moment de la commande
-  // (EINV-EREPORT-007/F3), copié depuis ProductType.operationCategory. Figé comme
-  // les autres snapshots (productTitle, price…) : une mutation ultérieure du
-  // ProductType ne doit pas réécrire une ligne déjà vendue. GOODS par défaut.
-  operationCategory EReportingOperationCategory @default(GOODS)
-
   // Relations
   refundItems RefundItem[]
 
@@ -1640,20 +1627,4 @@ model StoreSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-// Catégorie d'opération e-reporting (DORMANT — préparation sortie de franchise).
-// L'e-reporting B2C distingue la livraison de biens de la prestation de services
-// (règles d'exigibilité TVA différentes : livraison vs encaissement). Synclune
-// vend des biens physiques → GOODS par défaut (réalité actuelle, zéro régression).
-// SERVICES (atelier/personnalisation) et MIXED (panier biens+services) à dériver
-// à la sortie de franchise.
-//
-// ⚠️ À CONFIRMER contre l'arrêté final / la spec de la PA : la liste exacte des
-// catégories d'opération de l'e-reporting B2C n'est pas figée — ces valeurs sont
-// une hypothèse de travail, pas une valeur réglementaire gravée.
-enum EReportingOperationCategory {
-  GOODS // Livraison de biens
-  SERVICES // Prestation de services
-  MIXED // Panier mixte biens + services
 }

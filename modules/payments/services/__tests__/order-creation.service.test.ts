@@ -481,30 +481,6 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(itemCall.data.quantity).toBe(2);
 	});
 
-	// EINV-EREPORT-007/F3 — le snapshot operationCategory doit refléter le
-	// ProductType, pas retomber sur GOODS quand la donnée est présente.
-	it("should snapshot operationCategory from the product (SERVICES)", async () => {
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
-
-		const serviceSku = makeSkuResult({
-			product: { ...makeSku().product, operationCategory: "SERVICES" },
-		});
-
-		await createOrderInTransaction(makeParams({ skuDetailsResults: [serviceSku] }));
-
-		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
-		expect(itemCall.data.operationCategory).toBe("SERVICES");
-	});
-
-	it("should default operationCategory to GOODS when absent from sku details", async () => {
-		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
-
-		await createOrderInTransaction(makeParams());
-
-		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
-		expect(itemCall.data.operationCategory).toBe("GOODS");
-	});
-
 	it("should use primary image URL for order item", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockGetValidImageUrl.mockReturnValue("https://example.com/primary.jpg");

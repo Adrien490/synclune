@@ -9,8 +9,7 @@
  *  - 37 500 € : prestations de services (seuil majoré 41 250 €).
  *
  * ⚠️ Zone grise : le parcours `/personnalisation` (sur-mesure) peut requalifier
- * une partie de l'activité en prestation de services (seuil 37 500 €), ce qui
- * change AUSSI la catégorie e-reporting (`operationCategory` figée à GOODS).
+ * une partie de l'activité en prestation de services (seuil 37 500 €).
  * C'est un arbitrage à valider avec l'expert-comptable — pas dans le code.
  * Ajuster via `VAT_FRANCHISE_THRESHOLD_EUR` si l'activité bascule.
  */
