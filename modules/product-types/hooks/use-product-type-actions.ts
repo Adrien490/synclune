@@ -38,7 +38,7 @@ export function useProductTypeActions({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
-	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType({
+	const { duplicate, isPending: isDuplicating } = useDuplicateProductType({
 		onSuccess: (message, data) => {
 			haptic("success");
 			router.refresh();
@@ -90,7 +90,7 @@ export function useProductTypeActions({
 					label: "Dupliquer",
 					icon: Copy,
 					disabled: isDuplicating,
-					onSelect: () => duplicateProductType(productTypeId),
+					onSelect: () => duplicate(productTypeId),
 				},
 			],
 		},

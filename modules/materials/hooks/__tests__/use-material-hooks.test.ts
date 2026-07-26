@@ -267,7 +267,7 @@ describe("useDuplicateMaterial", () => {
 		expect(formData.get("materialId")).toBe("mat-123");
 	});
 
-	it("calls onSuccess with (message, { id, name, slug }) when action succeeds", async () => {
+	it("calls onSuccess with (message, { id, slug, displayName }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateMaterial({ onSuccess }));
 
@@ -277,8 +277,8 @@ describe("useDuplicateMaterial", () => {
 
 		expect(onSuccess).toHaveBeenCalledWith("Matériau dupliqué", {
 			id: "new-id",
-			name: "Or - Copie",
 			slug: "or-copie",
+			displayName: "Or - Copie",
 		});
 	});
 
@@ -357,31 +357,21 @@ describe("useDeleteMaterial", () => {
 		mockDeleteMaterial.mockResolvedValue({ ...SUCCESS, message: "Matériau supprimé" });
 	});
 
-	it("returns state, action, isPending, and handle", () => {
+	it("returns state, action and isPending", () => {
 		const { result } = renderHook(() => useDeleteMaterial());
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle appends id to FormData", async () => {
-		const { result } = renderHook(() => useDeleteMaterial());
-
-		await act(async () => {
-			result.current.handle("mat-123");
-		});
-
-		const formData = mockDeleteMaterial.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("id")).toBe("mat-123");
 	});
 
 	it("calls onSuccess with message when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDeleteMaterial({ onSuccess }));
 
+		const formData = new FormData();
+		formData.set("id", "mat-123");
 		await act(async () => {
-			result.current.handle("mat-123");
+			result.current.action(formData);
 		});
 
 		expect(onSuccess).toHaveBeenCalledWith("Matériau supprimé");
@@ -392,8 +382,10 @@ describe("useDeleteMaterial", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDeleteMaterial({ onSuccess }));
 
+		const formData = new FormData();
+		formData.set("id", "mat-123");
 		await act(async () => {
-			result.current.handle("mat-123");
+			result.current.action(formData);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

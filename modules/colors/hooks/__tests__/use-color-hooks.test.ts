@@ -200,7 +200,7 @@ describe("useDuplicateColor", () => {
 		expect(formData.get("colorId")).toBe("color-123");
 	});
 
-	it("calls onSuccess with (message, { id, name, slug }) when action succeeds", async () => {
+	it("calls onSuccess with (message, { id, slug, displayName }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateColor({ onSuccess }));
 
@@ -210,8 +210,8 @@ describe("useDuplicateColor", () => {
 
 		expect(onSuccess).toHaveBeenCalledWith("Couleur dupliquée", {
 			id: "new-id",
-			name: "Or - Copie",
 			slug: "or-copie",
+			displayName: "Or - Copie",
 		});
 	});
 

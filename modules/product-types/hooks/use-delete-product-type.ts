@@ -1,18 +1,8 @@
 "use client";
 
-import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { deleteProductType } from "@/modules/product-types/actions/delete-product-type";
+import { useTaxonomyDelete } from "@/modules/taxonomies/hooks/use-taxonomy-mutations";
 
-interface UseDeleteProductTypeOptions {
-	onSuccess?: (message: string) => void;
+export function useDeleteProductType(options?: { onSuccess?: (message: string) => void }) {
+	return useTaxonomyDelete(deleteProductType, options);
 }
-
-export const useDeleteProductType = (options?: UseDeleteProductTypeOptions) => {
-	return useActionWithToast(deleteProductType, {
-		onSuccess: (result) => {
-			if (result.message) {
-				options?.onSuccess?.(result.message);
-			}
-		},
-	});
-};
