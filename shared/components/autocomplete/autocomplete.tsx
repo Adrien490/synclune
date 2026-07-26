@@ -184,6 +184,12 @@ export function Autocomplete<T>({
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current);
 		}
+
+		// Rendre le focus au champ : le bouton d'effacement se démonte dès que la
+		// valeur est vide (`ui/input.tsx`), donc sans ceci le focus retombe sur
+		// <body> et l'utilisateur clavier perd sa position (WCAG 2.4.3). Même
+		// contrat que `SearchInput.handleClear`. Audit recherche 2026-07-26.
+		inputRef.current?.focus();
 	};
 
 	const handleItemSelect = (item: T) => {

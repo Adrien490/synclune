@@ -182,6 +182,11 @@ function createPermissions(overrides: Record<string, boolean> = {}) {
 		canMarkAsProcessing: false,
 		canRevertToProcessing: false,
 		canMarkAsReturned: false,
+		canMarkAsFullyRefunded: false,
+		// `canDelete` vient désormais de `getOrderPermissions` (SSOT) et non d'une règle
+		// dupliquée dans le hook : il DOIT figurer ici, sinon le destructuring donne
+		// `undefined` et l'item disparaît silencieusement de tous les tests.
+		canDelete: false,
 		...overrides,
 	};
 }
@@ -327,14 +332,18 @@ describe("OrderRowActions", () => {
 	});
 
 	describe("delete logic", () => {
-		it("shows 'Supprimer' when paymentStatus is PENDING (never paid)", () => {
-			setupMocks();
+		// La RÈGLE (jamais facturée + jamais encaissée) vit dans
+		// `getOrderPermissions().canDelete` et y est testée exhaustivement
+		// (order-status-validation.service.test.ts). Ici on vérifie seulement que ce
+		// composant respecte la permission qu'on lui donne.
+		it("shows 'Supprimer' when canDelete is granted", () => {
+			setupMocks({ canDelete: true });
 			render(<OrderRowActions order={createOrder({ paymentStatus: "PENDING" as const })} />);
 			expect(screen.getByText("Supprimer")).toBeInTheDocument();
 		});
 
-		it("hides 'Supprimer' when paymentStatus is PAID", () => {
-			setupMocks();
+		it("hides 'Supprimer' when canDelete is denied", () => {
+			setupMocks({ canDelete: false });
 			render(<OrderRowActions order={createOrder({ paymentStatus: "PAID" as const })} />);
 			expect(screen.queryByText("Supprimer")).not.toBeInTheDocument();
 		});

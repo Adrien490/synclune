@@ -1,6 +1,7 @@
 "use client";
 
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
@@ -38,7 +39,7 @@ function ParticleBackgroundInner({
 	seed = 0,
 }: ParticleBackgroundProps) {
 	const reducedMotion = useReducedMotion();
-	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const isDesktop = useMediaQuery(mediaAtLeast("md"));
 	const highContrast = useMediaQuery("(prefers-contrast: more)");
 
 	const { containerRef, isInView } = useParticleVisibility();

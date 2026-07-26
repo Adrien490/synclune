@@ -13,7 +13,7 @@ import {
 	success,
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
-import { deleteProductSkuSchema } from "../schemas/sku.schemas";
+import { setDefaultProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
@@ -39,7 +39,7 @@ export async function setDefaultSku(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Validate SKU ID with Zod (CUID2)
-		const validation = validateInput(deleteProductSkuSchema, {
+		const validation = validateInput(setDefaultProductSkuSchema, {
 			skuId: safeFormGet(formData, "skuId"),
 		});
 		if ("error" in validation) return validation.error;

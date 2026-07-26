@@ -74,6 +74,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				onClick={handleClick}
 				onPointerEnter={() => router.prefetch(href)}
 				data-active={undefined}
+				data-qs-option=""
 				role="option"
 				aria-selected={false}
 				// Out of the Tab order: reached via arrow keys (aria-activedescendant

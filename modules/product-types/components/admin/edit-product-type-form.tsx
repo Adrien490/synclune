@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -10,8 +9,6 @@ import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { Button } from "@/shared/components/ui/button";
-import { Kbd } from "@/shared/components/ui/kbd";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -212,32 +209,15 @@ export function EditProductTypeForm({
 
 			<form.AppForm>
 				<AdminFormFooter pending={isPending}>
-					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
-						{([canSubmit]) => (
-							<div className="flex justify-end">
-								<Button
-									type="submit"
-									size="input"
-									disabled={!canSubmit || isPending}
-									onClick={() => haptic("medium")}
-									className="w-full sm:w-auto sm:min-w-56"
-								>
-									{isPending && (
-										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									)}
-									<span>{isPending ? "Mise à jour…" : "Enregistrer"}</span>
-									{!isPending && (
-										<Kbd
-											aria-hidden="true"
-											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-										>
-											⌘S
-										</Kbd>
-									)}
-								</Button>
-							</div>
-						)}
-					</form.Subscribe>
+					<div className="flex justify-end">
+						<form.SubmitButton
+							isPending={isPending}
+							idleLabel="Enregistrer"
+							pendingLabel="Mise à jour…"
+							showKbdHint
+							className="w-full sm:w-auto sm:min-w-56"
+						/>
+					</div>
 				</AdminFormFooter>
 			</form.AppForm>
 		</form>

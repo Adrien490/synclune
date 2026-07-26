@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { MAX_UPLOAD_SIZE_VIDEO } from "@/modules/media/constants/upload-size-limits";
 import { isValidCuid, isValidUploadThingUrl, MEDIA_SIZE_LIMITS } from "../validate-media-file";
 
 // ============================================================================
@@ -14,7 +15,7 @@ describe("MEDIA_SIZE_LIMITS", () => {
 	it("reste aligné sur les plafonds des routes UploadThing", () => {
 		expect(MEDIA_SIZE_LIMITS.CATALOG_IMAGE).toBe(16 * 1024 * 1024);
 		expect(MEDIA_SIZE_LIMITS.REVIEW_IMAGE).toBe(4 * 1024 * 1024);
-		expect(MEDIA_SIZE_LIMITS.VIDEO).toBe(512 * 1024 * 1024);
+		expect(MEDIA_SIZE_LIMITS.VIDEO).toBe(MAX_UPLOAD_SIZE_VIDEO);
 	});
 });
 

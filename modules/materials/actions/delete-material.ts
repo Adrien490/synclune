@@ -52,7 +52,12 @@ export async function deleteMaterial(
 				include: {
 					_count: {
 						select: {
-							skuMaterials: true,
+							// Ne compter que les variantes VIVANTES : un lien porte par un SKU
+							// soft-deleted (produit supprime) renvoyait « utilise par N
+							// variante(s) » vers des variantes invisibles dans l'admin, rendant
+							// le materiau indelebile a jamais. Le vrai garde-fou reste la FK
+							// `ON DELETE RESTRICT`, rattrapee en P2003 plus bas.
+							skuMaterials: { where: { sku: { deletedAt: null } } },
 						},
 					},
 				},
@@ -84,11 +89,13 @@ export async function deleteMaterial(
 
 		return success("Matériau supprimé avec succès");
 	} catch (e) {
-		// P2003 : violation FK Restrict — un SKU a été créé en concurrence après
-		// la pré-vérification. Message aligné avec le BusinessError du pre-check.
+		// P2003 : violation FK Restrict. Deux causes possibles — un SKU cree en
+		// concurrence apres la pre-verification, ou un lien porte par une variante
+		// soft-deleted (le pre-check les ignore desormais, la FK non). Message
+		// explicite sur le second cas, sinon l'admin cherche une variante fantome.
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
 			return error(
-				"Ce materiau est utilise par au moins une variante. Veuillez modifier ces variantes avant de supprimer le materiau.",
+				"Ce matériau reste rattaché à au moins une variante (éventuellement celle d'un bijou supprimé). Il ne peut pas être supprimé — désactivez-le pour le retirer des choix proposés.",
 			);
 		}
 		return handleActionError(e, "Impossible de supprimer le materiau");

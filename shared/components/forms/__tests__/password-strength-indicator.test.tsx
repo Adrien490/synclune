@@ -43,7 +43,10 @@ describe("PasswordStrengthIndicator", () => {
 		render(<PasswordStrengthIndicator password="ab" />);
 		const progressbar = screen.getByRole("progressbar");
 		expect(progressbar).toHaveAttribute("aria-valuenow", "0");
-		expect(progressbar).toHaveAttribute("aria-label", "Force du mot de passe : Trop court");
+		expect(progressbar).toHaveAttribute("aria-label", "Force du mot de passe");
+		// `aria-valuetext` porte le libellé : sans lui l'échelle 0-3 serait
+		// vocalisée en chiffres bruts, dénués de sens.
+		expect(progressbar).toHaveAttribute("aria-valuetext", "Trop court");
 		expect(screen.getByText("Trop court")).toBeInTheDocument();
 	});
 
@@ -119,9 +122,24 @@ describe("PasswordStrengthIndicator", () => {
 	// ARIA-LIVE
 	// ============================================================================
 
-	it("has aria-live='polite' on container", () => {
+	/**
+	 * La région live est volontairement RESTREINTE au seul libellé de force.
+	 *
+	 * Elle enveloppait auparavant tout le widget, liste des 4 critères comprise ;
+	 * comme le composant est piloté par la valeur brute du champ, chaque frappe
+	 * reconstruisait l'annonce entière — un flot de parole continu pendant la
+	 * saisie d'un mot de passe sous VoiceOver/TalkBack.
+	 */
+	it("annonce le libellé de force via une région live dédiée", () => {
 		render(<PasswordStrengthIndicator password="abc" />);
-		const container = screen.getByRole("progressbar").closest("[aria-live]");
-		expect(container).toHaveAttribute("aria-live", "polite");
+		const label = screen.getByText("Trop court");
+		expect(label).toHaveAttribute("aria-live", "polite");
+		expect(label).toHaveAttribute("aria-atomic", "true");
+	});
+
+	it("ne place PAS la liste des critères dans une région live", () => {
+		render(<PasswordStrengthIndicator password="abc" />);
+		const criteria = screen.getByRole("list", { name: "Critères du mot de passe" });
+		expect(criteria.closest("[aria-live]")).toBeNull();
 	});
 });

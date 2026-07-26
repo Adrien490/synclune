@@ -14,8 +14,18 @@ export function openEntry<TData>(
 	return { ...entries, [id]: { isOpen: true, data } };
 }
 
+/**
+ * Ferme une entrée en CONSERVANT sa `data` : le contenu doit rester rendu
+ * pendant l'animation de sortie. Le nettoyage explicite est `clearEntry`.
+ *
+ * Fermer un id inconnu est un no-op — la version précédente créait une entrée
+ * `{ isOpen: false }` à partir de rien, faisant grossir la map d'ids jamais
+ * ouverts (les dialogues admin scopés par utilisateur en génèrent un par ligne).
+ */
 export function closeEntry<TData>(entries: OverlayMap<TData>, id: string): OverlayMap<TData> {
-	return { ...entries, [id]: { ...entries[id], isOpen: false } };
+	const entry = entries[id];
+	if (!entry) return entries;
+	return { ...entries, [id]: { ...entry, isOpen: false } };
 }
 
 export function toggleEntry<TData>(entries: OverlayMap<TData>, id: string): OverlayMap<TData> {

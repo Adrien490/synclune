@@ -128,7 +128,7 @@ export function FloatingImage({ image, position }: FloatingImageProps) {
 							height={position.height}
 							className="relative aspect-4/5 w-full object-cover"
 							sizes={position.sizes}
-							quality={IMAGE_QUALITY.HERO}
+							quality={IMAGE_QUALITY.STANDARD}
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl}
 						/>

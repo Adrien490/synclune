@@ -35,6 +35,14 @@ const querySchema = z.string().trim().max(200);
  * DB par `getOrders`. Retour custom (`RefundableOrderOption[]`, pas `ActionState`)
  * ⇒ sur échec d'auth ou de validation on renvoie une liste vide plutôt que
  * `admin.error` — d'où le safeParse direct au lieu de `validateInput`.
+ *
+ * RATE LIMIT — délégué, volontairement pas dupliqué ici : `getOrders()` applique
+ * `ADMIN_SEARCH_LIMIT` sur le chemin coûteux (recherche fuzzy sur les index GIN trgm,
+ * ≥ 3 caractères). Ajouter un second `enforceRateLimitForCurrentUser` sur le même
+ * profil ferait consommer deux jetons par frappe, donc réduirait de moitié le budget
+ * réel de la recherche admin. Les requêtes < 3 caractères ne sont pas bornées, comme
+ * toute lecture de `getOrders` : si on veut fermer ça, c'est au niveau de `getOrders`,
+ * pas ici (sinon la borne dépend du point d'entrée).
  */
 export async function searchRefundableOrders(query: string): Promise<RefundableOrderOption[]> {
 	const admin = await requireAdmin();

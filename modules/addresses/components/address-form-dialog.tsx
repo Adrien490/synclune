@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -50,7 +49,11 @@ function AddressFormDialogInner() {
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={handleOpenChange}>
-			<ResponsiveDialogContent className="flex max-h-[85vh] max-w-2xl flex-col">
+			{/* `--vvh` (viewport VISUEL, publié par VisualViewportBridge) plutôt que
+			    `vh` : sur mobile `vh` vaut le *large viewport*, donc clavier ouvert la
+			    dialog dépassait la zone réellement visible. Repli `85dvh` si l'API
+			    visualViewport est absente. */}
+			<ResponsiveDialogContent className="flex max-h-[min(85dvh,var(--vvh,85dvh))] max-w-2xl flex-col">
 				{/* Key pattern: remount form when address changes */}
 				<AddressFormContent
 					key={address?.id ?? "new"}
@@ -179,13 +182,17 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 
 				{/* Footer fixe */}
 				<div className="mt-4 flex shrink-0 justify-end pt-4 pb-[max(0px,env(safe-area-inset-bottom))]">
-					<form.Subscribe selector={(state) => [state.canSubmit]}>
-						{([canSubmit]) => (
-							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement…" : mode === "create" ? "Ajouter" : "Enregistrer"}
-							</Button>
-						)}
-					</form.Subscribe>
+					{/* Bouton partagé : aligne cette dialog sur les variantes page
+					    (`create-address-form` / `edit-address-form`), qui affichaient déjà
+					    un spinner + `aria-busy` — absents ici, sur la surface la plus
+					    susceptible d'être utilisée en connexion mobile lente. */}
+					<form.AppForm>
+						<form.SubmitButton
+							isPending={isPending}
+							idleLabel={mode === "create" ? "Ajouter" : "Enregistrer"}
+							pendingLabel="Enregistrement…"
+						/>
+					</form.AppForm>
 				</div>
 			</form>
 		</>

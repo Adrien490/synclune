@@ -1,6 +1,6 @@
 "use client";
 
-import { DoorOpen, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useActionState, useEffect } from "react";
 
 import {
@@ -11,7 +11,6 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -68,7 +67,6 @@ export function ReopenStoreDialog({ previousFocusRef, reopensAt }: ReopenStoreDi
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="success">
 			<ResponsiveAlertDialogContent>
 				<form action={formAction}>
-					<ResponsiveAlertDialogHeroIcon icon={DoorOpen} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Réouvrir la boutique</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>

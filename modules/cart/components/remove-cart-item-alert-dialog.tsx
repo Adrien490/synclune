@@ -42,10 +42,8 @@ export function RemoveCartItemAlertDialog() {
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 	const [, startUndoTransition] = useTransition();
 
-	// Undo via toast Sonner action (desktop) : l'item a déjà été supprimé
-	// optimistic + serveur dans handleSubmit. L'undo recrée l'item via `addToCart`
-	// et restaure le badge. Sur mobile, `toast.success` route vers MicroToast qui
-	// ignore l'action — l'AlertDialog de confirmation reste l'unique safety net.
+	// Undo via l'action du toast : l'item a déjà été supprimé optimistic + serveur
+	// dans handleSubmit. L'undo recrée l'item via `addToCart` et restaure le badge.
 	const buildToastUndoHandler = (skuId: string, quantity: number) => () => {
 		adjustCart(quantity);
 		const fd = new FormData();
@@ -67,7 +65,6 @@ export function RemoveCartItemAlertDialog() {
 	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
 		toast.success(`${itemName} retiré du panier`, {
 			duration: UNDO_TOAST_DURATION_MS,
-			microVariant: "cart",
 			action: {
 				label: "Annuler",
 				onClick: buildToastUndoHandler(skuId, quantity),

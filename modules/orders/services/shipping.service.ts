@@ -11,6 +11,49 @@ import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shippin
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { AllowedShippingCountry } from "../types/order.types";
+import type { ShippingZone } from "../types/shipping-zone.types";
+
+// ============================================================================
+// ZONE ELIGIBILITY
+// ============================================================================
+
+/**
+ * Zones françaises hors périmètre de livraison.
+ *
+ * `CORSE` et les DOM-TOM sont exclus par les CGV §5.1 (« France métropolitaine
+ * (hors DOM-TOM/DROM-COM) et Union Européenne »). `UNKNOWN` est refusé par
+ * prudence : un code postal ne correspondant à aucun département connu n'a pas
+ * de tarif applicable, et `getShippingRate` retomberait silencieusement sur le
+ * barème métropole.
+ */
+export const UNSHIPPABLE_ZONES = [
+	"CORSE",
+	"DOM",
+	"TOM",
+	"UNKNOWN",
+] as const satisfies readonly ShippingZone[];
+
+/**
+ * Vrai si la destination est hors périmètre de livraison.
+ *
+ * Garde UNIQUE consommée par `calculateShipping` ET `getShippingInfo` — les deux
+ * dupliquaient la même détection et ne testaient que `CORSE`, si bien qu'un CP
+ * `97400` (La Réunion) obtenait le tarif métropole (4,99 €) pour un envoi
+ * outre-mer, avec un délai estimé au barème métropole par-dessus. Toute
+ * évolution du périmètre passe désormais par `UNSHIPPABLE_ZONES` seul.
+ *
+ * Sans code postal (`calculateShipping("FR")`, montant provisoire du
+ * PaymentIntent avant saisie de l'adresse) la zone est indéterminable : on
+ * autorise, le refus intervient au recalcul une fois l'adresse connue.
+ */
+function isUnshippableDestination(countryCode: ShippingCountry, postalCode?: string): boolean {
+	if (countryCode !== "FR" || !postalCode) {
+		return false;
+	}
+
+	const { zone } = getShippingZoneFromPostalCode(postalCode);
+	return (UNSHIPPABLE_ZONES as readonly string[]).includes(zone);
+}
 
 // ============================================================================
 // RATE LOOKUP
@@ -78,14 +121,17 @@ export function formatShippingPrice(amountInCents: number): string {
  * Calcule les frais de port selon le pays et le code postal de destination
  *
  * @param countryCode - Code pays ISO 3166-1 alpha-2 (ex: "FR", "BE")
- * @param postalCode - Code postal optionnel pour détecter la Corse
- * @returns Montant des frais de port en centimes, or null if shipping unavailable (Corsica, unsupported country)
+ * @param postalCode - Code postal optionnel, requis pour écarter les zones non livrées
+ * @returns Montant des frais de port en centimes, ou `null` si la destination est
+ *          hors périmètre (Corse, DOM-TOM, zone indéterminée, pays non supporté)
  *
  * @example
  * ```typescript
  * calculateShipping();              // 499 (France metro par defaut)
  * calculateShipping("FR");          // 499 (France metro)
  * calculateShipping("FR", "20000"); // null (Corse - non disponible)
+ * calculateShipping("FR", "97400"); // null (DOM - non disponible)
+ * calculateShipping("FR", "98800"); // null (TOM - non disponible)
  * calculateShipping("BE");          // 950 (UE)
  * ```
  */
@@ -94,12 +140,9 @@ export function calculateShipping(
 	postalCode?: string,
 ): number | null {
 	try {
-		// Détection Corse — livraison non disponible
-		if (countryCode === "FR" && postalCode) {
-			const { zone } = getShippingZoneFromPostalCode(postalCode);
-			if (zone === "CORSE") {
-				return null;
-			}
+		// Corse + DOM-TOM + zone indéterminée — livraison non disponible
+		if (isUnshippableDestination(countryCode, postalCode)) {
+			return null;
 		}
 
 		const rate = getShippingRate(countryCode);
@@ -131,12 +174,9 @@ export function getShippingInfo(
 	countryCode: ShippingCountry = "FR",
 	postalCode?: string,
 ): ShippingRate | null {
-	// Détection Corse — livraison non disponible
-	if (countryCode === "FR" && postalCode) {
-		const { zone } = getShippingZoneFromPostalCode(postalCode);
-		if (zone === "CORSE") {
-			return null;
-		}
+	// Corse + DOM-TOM + zone indéterminée — livraison non disponible
+	if (isUnshippableDestination(countryCode, postalCode)) {
+		return null;
 	}
 
 	return getShippingRate(countryCode);

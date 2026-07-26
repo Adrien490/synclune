@@ -475,10 +475,19 @@ describe("CreateRefundForm", () => {
 		expect(screen.getByText(/Marie Dupont/)).toBeInTheDocument();
 	});
 
-	it("renders back link to the order page", () => {
+	it("links to the source order without a second back affordance", () => {
+		// Le bouton « Retour » a été retiré du formulaire : `AdminMobileHeader` porte
+		// déjà le chevron de retour sur cette route (pas de double affordance de retour
+		// en admin mobile). Le chemin vers la commande reste offert, mais par un lien
+		// CONTEXTUEL porté par la référence de commande.
 		render(<CreateRefundForm order={createMockOrder()} />);
-		const backLink = screen.getByText("Retour").closest("a");
-		expect(backLink).toHaveAttribute("href", "/admin/ventes/commandes/order-1");
+
+		expect(screen.queryByText("Retour")).not.toBeInTheDocument();
+
+		const orderLink = screen
+			.getAllByRole("link")
+			.find((a) => a.getAttribute("href") === "/admin/ventes/commandes/order-1");
+		expect(orderLink).toBeDefined();
 	});
 
 	// ─── Order items ──────────────────────────────────────────────────────────

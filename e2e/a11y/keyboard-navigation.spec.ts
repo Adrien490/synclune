@@ -6,7 +6,7 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		const menuButton = page.getByRole("button", { name: /Ouvrir le menu de navigation/i });
+		const menuButton = page.getByRole("button", { name: /Menu de navigation/i });
 		await menuButton.focus();
 		await expect(menuButton).toBeFocused();
 
@@ -55,119 +55,22 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 		await expect(cartPage.openButton).toBeFocused();
 	});
 
-	test("recherche - Tab vers searchbox, taper affiche les résultats", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		// Find the search input or search button
-		const searchInput = page.getByRole("searchbox").first();
-		const searchButton = page.getByRole("button", { name: /Rechercher/i }).first();
-
-		if ((await searchInput.count()) > 0) {
-			await searchInput.focus();
-			await expect(searchInput).toBeFocused();
-
-			await searchInput.fill("bijou");
-			// Wait for results to appear
-			const resultsContainer = page.locator('[role="listbox"], [data-search-results]');
-			await resultsContainer
-				.first()
-				.waitFor({ state: "visible", timeout: 3000 })
-				.catch(() => {});
-
-			// Results should appear (as links or list items)
-			const results = page.locator('[role="listbox"] [role="option"], [data-search-results] a');
-			if ((await results.count()) > 0) {
-				// Tab navigates to results
-				await page.keyboard.press("ArrowDown");
-				const _focusedResult = page.locator('[role="option"]:focus, [data-search-results] a:focus');
-				// At least verify results are visible
-				expect(await results.count()).toBeGreaterThan(0);
-			}
-		} else if ((await searchButton.count()) > 0) {
-			await searchButton.focus();
-			await expect(searchButton).toBeFocused();
-
-			// Clicking search button should open a search dialog/input
-			await page.keyboard.press("Enter");
-
-			const searchDialog = page.getByRole("dialog");
-			await searchDialog.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
-			if ((await searchDialog.count()) > 0) {
-				await expect(searchDialog).toBeVisible();
-				await page.keyboard.press("Escape");
-			}
-		}
-	});
-
-	test("recherche autocomplete - ArrowDown/Enter/Escape navigation complète", async ({ page }) => {
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		// Find the search input or search button
-		const searchInput = page.getByRole("searchbox").first();
-		const searchButton = page.getByRole("button", { name: /Rechercher/i }).first();
-
-		let input = searchInput;
-
-		if ((await searchInput.count()) === 0 && (await searchButton.count()) > 0) {
-			// Click search button to open search dialog
-			await searchButton.click();
-			input = page.getByRole("searchbox").first();
-			await input.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
-			if ((await input.count()) === 0) {
-				input = page.locator("input[type='search'], input[type='text']").last();
-			}
-		}
-
-		if ((await input.count()) === 0) {
-			test.skip(true, "Pas de champ de recherche trouvé");
-			return;
-		}
-
-		await input.focus();
-		await expect(input).toBeFocused();
-		await input.fill("bijou");
-
-		// Wait for autocomplete results to appear
-		const options = page.locator('[role="option"]');
-		await options
-			.first()
-			.waitFor({ state: "visible", timeout: 3000 })
-			.catch(() => {});
-		if ((await options.count()) === 0) {
-			// No results, skip deep navigation
-			return;
-		}
-
-		// ArrowDown navigates into results
-		await page.keyboard.press("ArrowDown");
-
-		// Check aria-activedescendant is set (if combobox pattern)
-		const activeDescendant = await input.getAttribute("aria-activedescendant");
-		if (activeDescendant) {
-			const activeElement = page.locator(`#${CSS.escape(activeDescendant)}`);
-			await expect(activeElement).toBeAttached();
-		}
-
-		// ArrowDown again
-		if ((await options.count()) > 1) {
-			await page.keyboard.press("ArrowDown");
-		}
-
-		// ArrowUp goes back
-		await page.keyboard.press("ArrowUp");
-
-		// Escape closes results
-		await page.keyboard.press("Escape");
-		const listbox = page.locator('[role="listbox"]');
-		if ((await listbox.count()) > 0) {
-			await expect(listbox).not.toBeVisible();
-		}
-
-		// Input should retain focus
-		await expect(input).toBeFocused();
-	});
+	/*
+	 * Retirés : « recherche - Tab vers searchbox » et « recherche autocomplete -
+	 * ArrowDown/Enter/Escape ».
+	 *
+	 * Les deux cherchaient un `searchbox` ou un bouton `/Rechercher/i` sur `/`, où
+	 * ni l'un ni l'autre n'existe : la home n'a pas de champ inline, et le nom
+	 * accessible du déclencheur est « Ouvrir la recherche rapide ». Résultat : le
+	 * premier passait avec ZÉRO assertion exécutée (toutes ses branches `if` étaient
+	 * fausses) et le second atteignait toujours `test.skip(true)`. La navigation aux
+	 * flèches de la recherche rapide n'avait donc, en pratique, aucune couverture E2E.
+	 *
+	 * Elle est désormais couverte pour de bon dans `e2e/quick-search.spec.ts`
+	 * (« ArrowDown moves aria-activedescendant… », « Enter on the active option… »,
+	 * « ArrowDown in idle mode moves real focus… ») — au bon endroit, avec les vrais
+	 * sélecteurs du dialog.
+	 */
 
 	test("formulaire Tab order - champs séquentiels sans saut", async ({ page }) => {
 		await page.goto("/inscription");

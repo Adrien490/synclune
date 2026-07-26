@@ -12,8 +12,11 @@ import {
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
+// Pas de variante `checkbox` : les listes admin n'ont plus de colonne de
+// sélection depuis le retrait du bulk. En laisser une ici rouvrait la porte à
+// un skeleton avec une colonne de plus que sa table (saut de colonnes au
+// remplacement du skeleton par les vraies données).
 type CellType =
-	| { type: "checkbox" }
 	| { type: "text"; width: string }
 	| { type: "badge"; width: string }
 	| { type: "image"; size?: number }
@@ -53,8 +56,6 @@ const alignClasses: Record<string, string> = {
 
 function renderCell(cell: CellType): ReactNode {
 	switch (cell.type) {
-		case "checkbox":
-			return <Skeleton className="size-4" />;
 		case "text":
 			return <Skeleton className={cn("h-4", cell.width)} />;
 		case "badge":

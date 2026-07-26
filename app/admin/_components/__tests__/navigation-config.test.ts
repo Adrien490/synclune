@@ -14,20 +14,25 @@ import {
 describe("navigationData", () => {
 	// Mode "boutique en ligne" (SHOP_LIVE=true) : 6 groupes complets.
 	// Si SHOP_LIVE repasse à false, restreindre à 2 groupes (Catalogue + Configuration).
-	it("has 6 navigation groups in shop-live mode", () => {
-		expect(navigationData.navGroups).toHaveLength(6);
+	it("has 5 navigation groups in shop-live mode", () => {
+		expect(navigationData.navGroups).toHaveLength(5);
 	});
 
-	it("includes all 6 groups in shop-live mode", () => {
+	/**
+	 * 5 groupes et non 6 : `Clients`, `Contenu` et `Configuration` étaient des
+	 * groupes MONO-ITEM — trois libellés et trois séparateurs de chrome pour trois
+	 * liens. `Clients` rejoint `Pilotage` (avec le tableau de bord, qui n'avait
+	 * aucune entrée nommée), `Contenu` + `Configuration` fusionnent en `Boutique`.
+	 * L'ordre suit la fréquence d'usage quotidienne décroissante.
+	 */
+	it("includes the 5 groups in shop-live mode, ordered by daily usage", () => {
 		const labels = navigationData.navGroups.map((g) => g.label);
-		expect(labels).toEqual([
-			"Ventes",
-			"Clients",
-			"Catalogue",
-			"Marketing",
-			"Contenu",
-			"Configuration",
-		]);
+		expect(labels).toEqual(["Pilotage", "Ventes", "Catalogue", "Marketing", "Boutique"]);
+	});
+
+	it("n'a plus aucun groupe mono-item", () => {
+		const singles = navigationData.navGroups.filter((g) => g.items.length < 2).map((g) => g.label);
+		expect(singles).toEqual([]);
 	});
 
 	it("has unique group labels", () => {
@@ -55,10 +60,11 @@ describe("navigationData", () => {
 		}
 	});
 
-	it("all URLs start with /admin/", () => {
+	// `/admin` (tableau de bord) est la racine : elle n'a pas de segment suivant.
+	it("all URLs are under /admin", () => {
 		const urls = navigationData.navGroups.flatMap((g) => g.items.map((i) => i.url));
 		for (const url of urls) {
-			expect(url).toMatch(/^\/admin\//);
+			expect(url).toMatch(/^\/admin(\/|$)/);
 		}
 	});
 
@@ -80,11 +86,15 @@ describe("navigationData", () => {
 });
 
 describe("getAllNavItems", () => {
-	it("returns a flat array of all nav items plus dashboard", () => {
+	// Plus de DASHBOARD_ITEM hors-groupe à concaténer : le tableau de bord vit dans
+	// `Pilotage`. Le concaténer en tête le dupliquerait dans la recherche du menu.
+	it("returns a flat array of exactly the group items (no duplicate)", () => {
 		const items = getAllNavItems();
 		const groupItemCount = navigationData.navGroups.reduce((acc, g) => acc + g.items.length, 0);
-		// +1 for DASHBOARD_ITEM
-		expect(items).toHaveLength(groupItemCount + 1);
+		expect(items).toHaveLength(groupItemCount);
+
+		const ids = items.map((i) => i.id);
+		expect(new Set(ids).size).toBe(ids.length);
 	});
 
 	it("has dashboard as the first item", () => {

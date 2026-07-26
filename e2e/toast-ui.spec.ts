@@ -84,16 +84,19 @@ test.describe("Toast — Mobile (iPhone viewport)", { tag: ["@regression"] }, ()
 test.describe("Toast — Reduced motion", { tag: ["@regression"] }, () => {
 	test.use({ viewport: MOBILE_VIEWPORT });
 
-	test("le Toaster respecte prefers-reduced-motion", async ({ page }) => {
-		await page.emulateMedia({ reducedMotion: "reduce" });
-		await page.goto("/");
-		await page.waitForLoadState("domcontentloaded");
-
-		const matches = await page.evaluate(() => {
-			return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-		});
-		expect(matches).toBe(true);
-	});
+	/*
+	 * Le test « le Toaster respecte prefers-reduced-motion » a été SUPPRIMÉ ici.
+	 *
+	 * Il appelait `page.emulateMedia({ reducedMotion: "reduce" })` puis assertait
+	 * `window.matchMedia("(prefers-reduced-motion: reduce)").matches === true` :
+	 * il vérifiait l'émulation de Playwright, pas le Toaster. Il passait sur
+	 * `about:blank`, et aurait passé avec le Toaster entièrement supprimé.
+	 *
+	 * Un test qui ne peut pas échouer est plus nuisible qu'absent — il crédite une
+	 * couverture inexistante. Le garde-fou réellement utile est celui qui suit :
+	 * il vérifie qu'une classe d'animation est bien neutralisée par le CSS du
+	 * projet sous reduced-motion.
+	 */
 
 	// A11Y-AUDIT-005 — garde générique : l'utilitaire `.animate-heart-beat` (appliqué
 	// sans préfixe motion-safe:) doit être neutralisé sous reduced-motion. Depuis F2,

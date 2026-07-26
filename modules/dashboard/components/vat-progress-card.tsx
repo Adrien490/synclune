@@ -7,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { Info } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import type { CSSProperties } from "react";
 import type { GetVatProgressReturn } from "@/modules/dashboard/data/get-vat-progress";
 
@@ -59,7 +58,6 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 						<TooltipTrigger asChild>
 							<button
 								type="button"
-								onClick={() => triggerHaptic("selection")}
 								className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help touch-manipulation items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 								aria-label="Info: Seuil TVA franchise"
 							>

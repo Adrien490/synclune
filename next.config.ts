@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { UPLOADTHING_APP_IDS } from "./shared/constants/uploadthing";
 
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
@@ -131,11 +132,11 @@ const nextConfig: NextConfig = {
 	],
 
 	images: {
-		// 3 paliers seulement (SSOT : IMAGE_QUALITY dans
+		// 2 paliers seulement (SSOT : IMAGE_QUALITY dans
 		// modules/media/constants/image-config.constants.ts). Vercel facture chaque
 		// couple (source, largeur, qualité) : 7 valeurs × 8 largeurs = jusqu'à 56
 		// variantes par image source, pour des écarts invisibles entre 70 et 75.
-		qualities: [65, 80, 90],
+		qualities: [65, 80],
 		// Déclaré explicitement pour retirer 3840 : `compress-image.ts` plafonne les
 		// uploads à 2048 px, donc demander 3840 ne fait que ré-encoder une source
 		// plus petite (Next n'upscale pas) tout en facturant une variante de plus.
@@ -151,15 +152,33 @@ const nextConfig: NextConfig = {
 			{ pathname: "/icons/**", search: "" },
 			{ pathname: "/splash/**", search: "" },
 		],
+		// ⚠️ SURFACE FACTURABLE — audit coûts P1-1. Chaque hôte listé ici autorise
+		// n'importe qui à faire transformer une image par l'optimiseur Vercel via
+		// `/_next/image?url=…`, route EXCLUE du matcher de `proxy.ts` donc sans
+		// rate limit. Le coût est facturé par couple (source, largeur, qualité) :
+		// un hôte multi-tenant = un nombre de sources non borné = une facture non
+		// bornée. N'autoriser que des hôtes dont Synclune contrôle le contenu.
 		remotePatterns: [
-			{ protocol: "https", hostname: "*.ufs.sh", pathname: "/f/**" },
+			// Épinglé sur les app-ids Synclune (SSOT `shared/constants/uploadthing`).
+			// `*.ufs.sh` a été retiré : le domaine est multi-tenant, le wildcard
+			// laissait passer les fichiers de n'importe quel compte UploadThing.
+			...UPLOADTHING_APP_IDS.map((appId) => ({
+				protocol: "https" as const,
+				hostname: `${appId}.ufs.sh`,
+				pathname: "/f/**" as const,
+			})),
+			// Hôte legacy v6, conservé pour les lignes média antérieures à la
+			// migration `<appId>.ufs.sh`. RÉSIDU ASSUMÉ : il est global à tous les
+			// tenants UploadThing et ne peut pas être scopé par app-id. À retirer
+			// une fois confirmé qu'aucune ligne `SkuMedia`/`Product` ne le référence
+			// (`SELECT count(*) … WHERE url LIKE 'https://utfs.io/%'`).
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
-			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
-			{
-				protocol: "https",
-				hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
-				pathname: "/**",
-			},
+			// `uploadthing.com/**` et le bucket S3 `uploadthing-prod…/**` ont été
+			// retirés de l'OPTIMISEUR : ce sont des hôtes partagés en `/**` (aucun
+			// préfixe de chemin contraignant) et aucun média servi par next/image
+			// n'en provient. Ils restent dans `img-src`/`media-src` de la CSP
+			// ci-dessus, où ils ne coûtent rien — une vidéo legacy ne passe pas par
+			// l'optimiseur.
 			// `prisma/seed.ts` pointe les produits de démo vers Unsplash (audit média
 			// M15 : retrait écarté pour ne pas casser le dev local). Restreint au
 			// NON-PRODUCTION : en prod l'hôte était inutile (absent de `img-src`, donc

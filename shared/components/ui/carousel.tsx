@@ -102,7 +102,14 @@ function Carousel({
 		}
 	};
 
-	const hasSelectedOnceRef = React.useRef(false);
+	// Embla émet `select` pour TOUT changement de slide : geste, clic sur flèche,
+	// clic sur pastille, navigation clavier, plugin `Autoplay`, et `reInit`
+	// (redimensionnement / rotation d'écran). Vibrer sur cet événement, c'est vibrer
+	// sur des changements que l'utilisateur n'a pas provoqués au doigt — et doubler
+	// l'haptique déjà émise par `scrollPrev`/`scrollNext`/`CarouselDots`.
+	// On ne vibre donc QUE sur un select consécutif à un drag (même modèle que
+	// `modules/media/components/gallery/gallery.tsx`).
+	const isDraggingRef = React.useRef(false);
 
 	// Effect Event pour gérer onSelect sans re-registration
 	const onSelect = useEffectEvent((carouselApi: CarouselApi) => {
@@ -110,12 +117,14 @@ function Carousel({
 		setCanScrollPrev(carouselApi.canScrollPrev());
 		setCanScrollNext(carouselApi.canScrollNext());
 		setSelectedIndex(carouselApi.selectedScrollSnap());
-		// Haptic feedback on slide change (skip first mount fire)
-		if (hasSelectedOnceRef.current) {
+		if (isDraggingRef.current) {
 			triggerHaptic("selection");
-		} else {
-			hasSelectedOnceRef.current = true;
+			isDraggingRef.current = false;
 		}
+	});
+
+	const onPointerDown = useEffectEvent(() => {
+		isDraggingRef.current = true;
 	});
 
 	// Effect Event pour gérer reInit sans re-registration
@@ -141,12 +150,15 @@ function Carousel({
 		// changement d'`api`).
 		const handleSelect = () => onSelect(api);
 		const handleReInit = () => onReInit(api);
+		const handlePointerDown = () => onPointerDown();
 		api.on("reInit", handleReInit);
 		api.on("select", handleSelect);
+		api.on("pointerDown", handlePointerDown);
 
 		return () => {
 			api.off("select", handleSelect);
 			api.off("reInit", handleReInit);
+			api.off("pointerDown", handlePointerDown);
 		};
 	}, [api]);
 
@@ -199,6 +211,10 @@ function CarouselContent({ className, showFade = false, ...props }: CarouselCont
 				id={`${carouselId}-content`}
 				className="overflow-hidden"
 				data-slot="carousel-content"
+				// Les slides atteignent le bord gauche de l'écran sur mobile, où vit le
+				// geste d'ouverture du menu (`useEdgeSwipe`). Sans opt-out, un drag vers
+				// la droite faisait défiler le carousel ET ouvrait le menu.
+				data-no-edge-swipe
 			>
 				<div
 					className={cn(

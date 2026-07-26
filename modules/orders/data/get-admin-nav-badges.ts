@@ -1,12 +1,8 @@
-import {
-	FulfillmentStatus,
-	OrderStatus,
-	PaymentStatus,
-	RefundStatus,
-} from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
+import { buildToShipWhereClause } from "../services/to-ship.service";
 
 /**
  * Compteurs de files d'attente actionnables affichés en pastille dans la
@@ -14,7 +10,7 @@ import { cacheLife, cacheTag } from "next/cache";
  *
  * Keyé par `NavItem.id` (cf. navigation-config) pour être consommé directement
  * comme `badges` prop. Seules les files réellement actionnables sont comptées :
- * - `orders`  : commandes payées non encore préparées (à expédier).
+ * - `orders`  : file « à expédier » — prédicat SSOT `buildToShipWhereClause()`.
  * - `refunds` : demandes de remboursement en attente de validation admin.
  *
  * Pas de compteur `reviews` : les avis sont auto-publiés (ReviewStatus =
@@ -39,15 +35,10 @@ export async function getAdminNavBadges(): Promise<AdminNavBadges> {
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 	const [orders, refunds] = await Promise.all([
-		// Commandes à traiter : payées, non encore préparées, hors annulées/supprimées.
-		prisma.order.count({
-			where: {
-				...notDeleted,
-				paymentStatus: PaymentStatus.PAID,
-				fulfillmentStatus: FulfillmentStatus.UNFULFILLED,
-				status: { not: OrderStatus.CANCELLED },
-			},
-		}),
+		// File « à expédier » — prédicat SSOT partagé avec le KPI du tableau de bord.
+		// Les deux divergeaient (PAID+UNFULFILLED ici vs SHIPPABLE+{UNFULFILLED,PROCESSING}
+		// là-bas) et affichaient donc deux nombres différents sur le même écran.
+		prisma.order.count({ where: buildToShipWhereClause() }),
 		// Remboursements en attente de validation (PENDING exclut déjà CANCELLED = soft delete).
 		prisma.refund.count({
 			where: { status: RefundStatus.PENDING },

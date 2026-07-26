@@ -89,6 +89,23 @@ vi.mock("@/shared/components/forms", () => ({
 		handleSubmit: vi.fn(),
 		setFieldValue: vi.fn(),
 		store: {},
+		// La dialog rend `<form.AppForm><form.SubmitButton …/></form.AppForm>`
+		// depuis l'alignement sur le bouton partagé (spinner + aria-busy) : sans
+		// ces entrées, le rendu échoue en « Element type is invalid ».
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+		}) => (
+			<button type="submit" disabled={isPending ?? false} aria-busy={isPending ?? false}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	}),
 }));
 

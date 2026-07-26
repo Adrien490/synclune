@@ -22,6 +22,9 @@ import { UsersBottomBar } from "@/modules/users/components/admin/users-bottom-ba
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 import { AccountStatus, type Role } from "@/app/generated/prisma/client";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export const metadata: Metadata = {
 	title: "Clients - Administration",
@@ -119,7 +122,16 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 		<>
 			<PageHeader variant="compact" title="Clients" className="hidden md:block" />
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={usersPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="client"
+						plural="clients"
+					/>
+				</Suspense>
+
 				<UsersBottomBar />
 
 				<Suspense

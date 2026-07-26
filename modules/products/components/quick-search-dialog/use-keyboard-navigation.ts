@@ -1,10 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
-
 import { FOCUSABLE_SELECTOR } from "./constants";
 
-export function useKeyboardNavigation() {
+interface UseKeyboardNavigationOptions {
+	/**
+	 * Mode recherche (≥ `MIN_SEARCH_LENGTH` caractères saisis).
+	 *
+	 * Détermine **le mécanisme de roving**, pas seulement l'habillage ARIA :
+	 * - `true` → combobox ARIA 1.2 : l'input garde le focus, l'option courante est
+	 *   désignée par `aria-activedescendant` + `aria-selected`.
+	 * - `false` → panneau de navigation ordinaire : les flèches déplacent le
+	 *   **focus DOM réel**, que les lecteurs d'écran annoncent nativement.
+	 */
+	isSearchMode: boolean;
+	/** Rend le focus au champ de recherche (retour à la frappe depuis la liste). */
+	focusSearchInput?: () => void;
+}
+
+/**
+ * Navigation clavier de la recherche rapide, en deux modes.
+ *
+ * Le mode idle n'utilise PAS `aria-activedescendant` : son conteneur n'est pas un
+ * `listbox` (choix F3 du 2026-05-29), or `aria-activedescendant` n'a de sens que
+ * dans un widget composite. Auparavant les items idle portaient `role="option"`
+ * sans listbox propriétaire et le roving n'était annoncé nulle part. Déplacer le
+ * focus réel est le pattern natif : zéro ARIA, annonce garantie, et `Enter`
+ * redevient l'activation native du lien/bouton.
+ */
+export function useKeyboardNavigation({
+	isSearchMode,
+	focusSearchInput,
+}: UseKeyboardNavigationOptions) {
 	const [activeIndex, setActiveIndex] = useState(-1);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const focusablesRef = useRef<HTMLElement[]>([]);
@@ -33,7 +59,13 @@ export function useKeyboardNavigation() {
 		return () => observer.disconnect();
 	}, []);
 
-	// Sync data-active attribute using cached list (O(1) swap instead of O(n) loop)
+	// Sync `data-active` (visuel) ET `aria-selected` (ARIA) sur l'option courante.
+	//
+	// `aria-selected` était figé à `false` sur les 7 sites d'option : l'état actif
+	// n'était porté que par un attribut `data-*`, invisible de l'arbre
+	// d'accessibilité. L'écrire ici plutôt que de faire descendre une prop
+	// `isActive` dans chaque composant tient en quelques lignes et couvre tous les
+	// sites d'un coup — la liste des options est déjà maintenue par ce hook.
 	useEffect(() => {
 		const container = contentRef.current;
 		if (!container) return;
@@ -41,17 +73,24 @@ export function useKeyboardNavigation() {
 		const prev = container.querySelector('[data-active="true"]');
 		if (prev) {
 			prev.removeAttribute("data-active");
+			if (prev.getAttribute("role") === "option") {
+				prev.setAttribute("aria-selected", "false");
+			}
 		}
 		const el = focusablesRef.current[activeIndex];
 		if (el) {
 			el.setAttribute("data-active", "true");
+			if (el.getAttribute("role") === "option") {
+				el.setAttribute("aria-selected", "true");
+			}
 		}
 	}, [activeIndex]);
 
-	// Delegated mouseover handler using cached data-qsNavId (no querySelectorAll)
+	// Survol : uniquement en mode recherche. En idle le roving pilote le focus
+	// réel — laisser la souris le voler ferait sauter le focus sous le curseur.
 	useEffect(() => {
 		const container = contentRef.current;
-		if (!container) return;
+		if (!container || !isSearchMode) return;
 
 		const handleMouseOver = (e: MouseEvent) => {
 			const target = (e.target as HTMLElement).closest<HTMLElement>(FOCUSABLE_SELECTOR);
@@ -65,7 +104,23 @@ export function useKeyboardNavigation() {
 
 		container.addEventListener("mouseover", handleMouseOver);
 		return () => container.removeEventListener("mouseover", handleMouseOver);
-	}, []);
+	}, [isSearchMode]);
+
+	/** Déplacement commun aux deux modes ; renvoie l'index retenu, ou `null`. */
+	const computeNextIndex = (key: string, count: number, current: number): number | null => {
+		switch (key) {
+			case "ArrowDown":
+				return current < count - 1 ? current + 1 : 0;
+			case "ArrowUp":
+				return current > 0 ? current - 1 : count - 1;
+			case "Home":
+				return 0;
+			case "End":
+				return count - 1;
+			default:
+				return null;
+		}
+	};
 
 	// Bound to the search <input> onKeyDown: the input keeps focus (ARIA 1.2
 	// combobox / aria-activedescendant pattern), so the handler must live on the
@@ -74,49 +129,74 @@ export function useKeyboardNavigation() {
 		const focusables = focusablesRef.current;
 		if (focusables.length === 0) return;
 
-		let nextIndex: number | null = null;
-
-		switch (e.key) {
-			case "ArrowDown":
+		// Mode recherche : Enter active l'option courante (le focus reste au champ).
+		// En idle, on ne l'intercepte pas : le focus est déjà SUR l'élément, donc
+		// Enter l'active nativement (lien ou bouton).
+		if (e.key === "Enter") {
+			if (isSearchMode && activeIndex >= 0 && focusables[activeIndex]) {
 				e.preventDefault();
-				nextIndex = activeIndex < focusables.length - 1 ? activeIndex + 1 : 0;
-				break;
-			case "ArrowUp":
-				e.preventDefault();
-				nextIndex = activeIndex > 0 ? activeIndex - 1 : focusables.length - 1;
-				break;
-			case "Home":
-				e.preventDefault();
-				nextIndex = 0;
-				break;
-			case "End":
-				e.preventDefault();
-				nextIndex = focusables.length - 1;
-				break;
-			case "Enter":
-				if (activeIndex >= 0 && focusables[activeIndex]) {
-					e.preventDefault();
-					focusables[activeIndex].click();
-					return;
-				}
-				break;
+				focusables[activeIndex].click();
+			}
+			return;
 		}
 
-		if (nextIndex !== null) {
+		// En idle, la position courante est celle du FOCUS, pas de `activeIndex` :
+		// ce dernier n'est jamais avancé dans ce mode (il pilote l'ARIA du combobox,
+		// absent ici). Le lire ferait retomber chaque flèche sur l'index 0. Dériver
+		// du focus est aussi plus robuste : si l'utilisateur clique ou tabule
+		// ailleurs, la reprise se fait au bon endroit.
+		const current = isSearchMode
+			? activeIndex
+			: focusables.findIndex((el) => el === document.activeElement);
+
+		const nextIndex = computeNextIndex(e.key, focusables.length, current);
+		if (nextIndex === null) return;
+		e.preventDefault();
+
+		// Pas d'haptique : c'est un déplacement au CLAVIER. Le retour tactile est
+		// réservé au doigt ; en plus, le key-repeat d'une flèche maintenue produisait
+		// une cascade que seul le cooldown de 80 ms amortissait.
+		const target = focusables[nextIndex];
+		if (isSearchMode) {
 			setActiveIndex(nextIndex);
-			triggerHaptic("selection");
-			focusables[nextIndex]?.scrollIntoView({ block: "nearest" });
+		} else {
+			// Focus réel : annoncé nativement, et le prochain Enter active l'élément.
+			target?.focus();
+		}
+		target?.scrollIntoView({ block: "nearest" });
+	};
+
+	/**
+	 * Posé sur le conteneur de résultats, pour le mode idle uniquement : une fois
+	 * le focus déplacé sur un item, les keydown n'atteignent plus l'input.
+	 */
+	const handleContentKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+		if (isSearchMode) return;
+
+		// Reprendre la frappe sans avoir à re-cliquer dans le champ. PAS de
+		// `preventDefault` : focaliser pendant le keydown redirige le `beforeinput`
+		// qui suit vers le champ nouvellement focus, donc le caractère y atterrit.
+		if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+			focusSearchInput?.();
+			return;
+		}
+
+		if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Home" || e.key === "End") {
+			handleArrowNavigation(e);
 		}
 	};
 
 	const resetActiveIndex = () => setActiveIndex(-1);
 
-	// Derive activeDescendantId from state only (avoid reading ref during render)
-	const activeDescendantId = activeIndex >= 0 ? `qs-nav-${activeIndex}` : undefined;
+	// Derive activeDescendantId from state only (avoid reading ref during render).
+	// En idle il n'y a pas de descendant actif : c'est le focus réel qui porte
+	// l'état, et le conteneur n'est pas un listbox.
+	const activeDescendantId = isSearchMode && activeIndex >= 0 ? `qs-nav-${activeIndex}` : undefined;
 
 	return {
 		contentRef,
 		handleArrowNavigation,
+		handleContentKeyDown,
 		resetActiveIndex,
 		activeDescendantId,
 	};

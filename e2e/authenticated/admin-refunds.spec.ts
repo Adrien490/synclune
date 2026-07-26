@@ -79,21 +79,6 @@ test.describe("Admin - Remboursements (actions)", { tag: ["@regression"] }, () =
 		expect(optionCount).toBeGreaterThan(0);
 	});
 
-	test("sélectionner une ligne affiche la toolbar de sélection", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun remboursement/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de remboursements dans la table");
-
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		const selectionToolbar = page.getByText(/sélectionné/i);
-		await expect(selectionToolbar).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-	});
-
 	test("la page de création requiert un orderId", async ({ page }) => {
 		// Navigate to create page without orderId - should redirect
 		await page.goto("/admin/ventes/remboursements/nouveau");

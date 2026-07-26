@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useEffectEvent } from "react";
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
+import { isOverlayInitiatedPop } from "@/shared/hooks/use-back-button-close";
 
 const DEFAULT_MESSAGE =
 	"Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter cette page ?";
@@ -43,7 +44,11 @@ interface UseUnsavedChangesReturn {
  * Protège contre :
  * - Fermeture/rafraîchissement de l'onglet (beforeunload)
  * - Boutons back/forward du navigateur (popstate)
- * - Navigation via Link et router.push (si NavigationGuardProvider est présent)
+ * - Navigation client-side, MAIS uniquement via `<GuardedLink>` : un `<Link>`
+ *   nu ou un `router.push()` direct ne consulte aucun guard. Le provider seul
+ *   ne suffit pas — il faut que la sortie soit câblée. Les sorties d'un
+ *   formulaire admin (chevron retour `PageHeader`, sidebar, bottom bar, menu
+ *   sheet) le sont ; toute nouvelle sortie doit l'être aussi.
  *
  * @param isDirty - Indique si le formulaire a des modifications non sauvegardées
  * @param enabled - Activer/désactiver la protection (default: true)
@@ -136,6 +141,13 @@ export function useUnsavedChanges(
 	// Effect Event pour popstate - accède à message, id, onBlock sans déclencher de re-registration
 	const onPopState = useEffectEvent(() => {
 		if (isBlockingPopstateRef.current || skipGuardRef.current) return;
+
+		// Ce `popstate` vient de la fermeture d'un overlay (`handleClose` →
+		// `history.back()`), pas d'un départ de page : l'entrée consommée est
+		// celle de l'overlay, la nôtre est toujours en place. Sans ce garde,
+		// fermer un drawer sur un formulaire dirty affichait un `confirm`
+		// « modifications non enregistrées » alors que rien ne quittait la page.
+		if (isOverlayInitiatedPop()) return;
 
 		// Afficher la confirmation native pour popstate
 		// (le modal du contexte ne fonctionne pas bien avec popstate car

@@ -176,21 +176,6 @@ test.describe("Admin - Matériaux (actions)", { tag: ["@regression"] }, () => {
 		const toast = page.getByText(/activé|désactivé|modifié|succès/i);
 		await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
-
-	test("sélectionner une ligne affiche la toolbar", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun matériau/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de matériaux dans la table");
-
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		const selectionToolbar = page.getByText(/sélectionné/i);
-		await expect(selectionToolbar).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-	});
 });
 
 test.describe("Admin - Matériaux (suppression)", { tag: ["@regression"] }, () => {

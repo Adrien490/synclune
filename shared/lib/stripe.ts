@@ -93,8 +93,10 @@ export function getStripeClient(): Stripe | null {
  * - VENDOR_BANK_BIC      (optionnel — BT-86 EN16931)
  * - VENDOR_VAT_REGIME    (FRANCHISE_BASE | NORMAL | SIMPLIFIE — figé sur Order via snapshot vendeur)
  * - VENDOR_LEGAL_FORM    (forme juridique — figé sur Order)
- * - VENDOR_EINVOICING_PLATFORM_ID  (identifiant emetteur annuaire central PDP — reforme 2026-2027)
- * - VENDOR_EINVOICING_ADDRESS      (adresse electronique de facturation emetteur)
+ *
+ * Note : les identifiants de routage PDP/annuaire central (émetteur et destinataire)
+ * ont été retirés avec l'e-reporting (2026-07-26) — à réintroduire au go-live contre
+ * l'arrêté définitif et une Plateforme Agréée réelle. Cf. docs/RUNBOOK.md.
  */
 export function getVendorLegalInfo() {
 	return {
@@ -109,8 +111,6 @@ export function getVendorLegalInfo() {
 		company_address:
 			process.env.VENDOR_FULL_ADDRESS ?? "77 Boulevard du Tertre, 44100 Nantes, France",
 		company_email: process.env.VENDOR_EMAIL ?? "contact@synclune.fr",
-		einvoicing_platform_id: process.env.VENDOR_EINVOICING_PLATFORM_ID ?? null,
-		einvoicing_address: process.env.VENDOR_EINVOICING_ADDRESS ?? null,
 		insurance_company: process.env.VENDOR_INSURANCE_COMPANY ?? "En cours de souscription",
 		insurance_contact: process.env.VENDOR_INSURANCE_CONTACT ?? "contact@synclune.fr",
 		insurance_coverage: process.env.VENDOR_INSURANCE_COVERAGE ?? "France",

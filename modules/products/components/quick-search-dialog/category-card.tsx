@@ -39,6 +39,7 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 				href={href}
 				onClick={handleClick}
 				data-active={undefined}
+				data-qs-option=""
 				role="option"
 				aria-selected={false}
 				// Out of the Tab order: reached via arrow keys (combobox pattern).

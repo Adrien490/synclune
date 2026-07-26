@@ -4,8 +4,12 @@
  * 1. Vérifie qu'`INTEGRATION_DATABASE_URL` est set (sinon skip la suite).
  * 2. Au boot du worker : `prisma db push --force-reset` pour avoir un schéma
  *    propre et à jour. Schéma isolé par worker via VITEST_WORKER_ID.
- * 3. `beforeEach` : `TRUNCATE ... CASCADE` sur toutes les tables modifiables
- *    pour repartir d'un état propre sans subir le coût d'un re-push.
+ * 3. Applique `prisma/sql/raw-guards.sql` — les CHECK / triggers / index
+ *    partiels que `db push` ne connaît pas. Sans cette étape, les tests
+ *    tourneraient contre une base sans contrainte et ne pourraient vérifier
+ *    aucun invariant DB.
+ * 4. `beforeEach` : `TRUNCATE ... CASCADE` sur toutes les tables, la liste
+ *    étant dérivée de `pg_tables` (jamais codée en dur — cf. commentaire).
  *
  * Convention : importer la connexion via `getIntegrationPrismaClient()` (cf
  * `./prisma-client.ts`) plutôt que `@/shared/lib/prisma` pour s'assurer que
@@ -43,25 +47,19 @@ beforeAll(async () => {
 		stdio: "pipe", // mute the noisy output, surface only on error
 	});
 
-	// `db push` ne rejoue PAS les migrations raw-SQL (triggers, CHECK non
-	// exprimables dans schema.prisma). On applique ici les gardes DB dont les
-	// suites d'intégration ont besoin — chaque fichier doit être idempotent
-	// (CREATE OR REPLACE / DROP IF EXISTS). SSOT = le fichier de migration.
-	const RAW_SQL_GUARD_MIGRATIONS = [
-		// Unicité cross-table Order/Refund des numéros d'avoir (EINV-PRISMA-001).
-		"prisma/migrations/20260709120000_add_credit_note_cross_table_unique_guard/migration.sql",
-		// Borne basse Discount.usageCount (DISC-USAGE-002) — `db push` ne rejoue pas
-		// les CHECK en SQL brut, il faut les appliquer explicitement.
-		"prisma/migrations/20260726120000_add_discount_usage_count_non_negative/migration.sql",
-	];
-	for (const file of RAW_SQL_GUARD_MIGRATIONS) {
-		// Prisma 7 : `db execute` lit l'URL via prisma.config.ts → env DATABASE_URL
-		// (pas de flag --url). Même mécanisme que le `db push` ci-dessus.
-		execSync(`pnpm prisma db execute --file ${file}`, {
-			env: { ...process.env, DATABASE_URL: url },
-			stdio: "pipe",
-		});
-	}
+	// `db push` ne rejoue PAS les gardes SQL bruts (CHECK, triggers, index
+	// partiels/expression — non exprimables dans schema.prisma). Sans eux, les
+	// tests d'intégration tournent contre une base SANS contrainte : ils ne
+	// peuvent alors vérifier AUCUN invariant DB.
+	//
+	// Avant l'audit schéma 2026-07-26, ce setup n'appliquait que 2 gardes sur 52
+	// — le format de numéro de facture (Art. 286 CGI), le format d'avoir
+	// (Art. 272-I) et 47 autres CHECK étaient absents. On applique désormais la
+	// SSOT complète, idempotente par construction.
+	execSync("pnpm prisma db execute --file prisma/sql/raw-guards.sql", {
+		env: { ...process.env, DATABASE_URL: url },
+		stdio: "pipe",
+	});
 });
 
 beforeEach(async () => {
@@ -69,19 +67,34 @@ beforeEach(async () => {
 
 	const prisma = getIntegrationPrismaClient();
 
-	// Truncate all user-modifiable tables. Faster than re-push between tests.
-	// Garde l'ordre des FK contraintes via CASCADE. Liste exhaustive à maintenir
-	// si de nouveaux modèles sont ajoutés.
+	// Truncate de toutes les tables entre chaque test (bien plus rapide qu'un
+	// re-push), l'ordre des FK étant géré par CASCADE.
+	//
+	// La liste est DÉRIVÉE de la base, jamais écrite à la main. Une liste
+	// codée en dur avait dérivé sans que personne ne le voie : elle citait 5
+	// tables disparues (`Review`, `DiscountException`, `ProductImage`,
+	// `ProductMaterial`, `ProductColor` — renommées par les migrations M2M) et
+	// en oubliait 16 vivantes. Effet : `TRUNCATE` échouait en 42P01 dans ce
+	// `beforeEach`, donc **toute** la suite d'intégration était rouge — les 15
+	// specs qui gardent la numérotation gap-free sous concurrence, le trigger
+	// cross-table et les locks FOR UPDATE ne tournaient plus. Audit schéma
+	// 2026-07-26.
+	//
+	// `_prisma_migrations` est exclue : bookkeeping Prisma, pas de la donnée de test.
 	await prisma.$executeRawUnsafe(`
-		TRUNCATE TABLE
-			"DiscountUsage", "OrderItem", "Order", "Refund", "Dispute",
-			"CartItem", "Cart", "WishlistItem", "Wishlist", "Review",
-			"DiscountException", "Discount",
-			"ProductSku", "ProductImage", "ProductMaterial", "ProductColor",
-			"Product", "Collection", "Material", "Color",
-			"OrderNote", "WebhookEvent",
-			"Account", "Session", "User"
-		RESTART IDENTITY CASCADE
+		DO $$
+		DECLARE tables text;
+		BEGIN
+			SELECT string_agg(format('%I.%I', schemaname, tablename), ', ')
+			INTO tables
+			FROM pg_tables
+			WHERE schemaname = current_schema()
+			  AND tablename <> '_prisma_migrations';
+
+			IF tables IS NOT NULL THEN
+				EXECUTE 'TRUNCATE TABLE ' || tables || ' RESTART IDENTITY CASCADE';
+			END IF;
+		END $$;
 	`);
 });
 

@@ -3,8 +3,9 @@
 import { Toaster as SonnerToaster } from "sonner";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
-import { MicroToast } from "@/shared/components/ui/micro-toast";
+import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { toastIcons } from "@/shared/components/ui/toast-icons";
+import { ANNOUNCE_REGION_IDS } from "@/shared/utils/announce";
 
 /**
  * Toaster responsive avec position et gestes adaptés mobile/desktop.
@@ -19,12 +20,11 @@ export function AppToaster() {
 	const isMobile = useIsMobile();
 	// Mobile portrait strict : 1 toast (espace vertical contraint, pattern iOS)
 	// Desktop / mobile landscape / tablette : stack 3 (pattern macOS/iPadOS)
-	const isLandscape = useMediaQuery("(orientation: landscape) and (min-width: 768px)");
+	const isLandscape = useMediaQuery(`(orientation: landscape) and ${mediaAtLeast("md")}`);
 	const visibleToasts = isMobile && !isLandscape ? 1 : 3;
 
 	return (
 		<>
-			<MicroToast />
 			<SonnerToaster
 				theme="light"
 				position={isMobile ? "bottom-center" : "top-center"}
@@ -42,17 +42,22 @@ export function AppToaster() {
 			{/*
 			 * Régions sr-only pour VoiceOver/TalkBack (WCAG 4.1.3 Status Messages).
 			 * Sonner 2.0 n'expose pas `aria-live` sur son conteneur — on double via
-			 * ces régions pilotées par `announceToScreenReader` dans shared/utils/toast.ts.
+			 * ces régions, pilotées par `announce()` (shared/utils/announce.ts).
+			 *
+			 * ⚠️ Ces deux nœuds sont le SEUL canal d'annonce garanti présent avant
+			 * toute interaction (layout racine). `announce()` est un no-op silencieux
+			 * s'ils disparaissent : les ids viennent d'une SSOT partagée et
+			 * `toaster.regression.test.tsx` verrouille leur présence + leurs attributs.
 			 */}
 			<div
-				id="toast-live-polite"
+				id={ANNOUNCE_REGION_IDS.polite}
 				role="status"
 				aria-live="polite"
 				aria-atomic="true"
 				className="sr-only"
 			/>
 			<div
-				id="toast-live-assertive"
+				id={ANNOUNCE_REGION_IDS.assertive}
 				role="alert"
 				aria-live="assertive"
 				aria-atomic="true"

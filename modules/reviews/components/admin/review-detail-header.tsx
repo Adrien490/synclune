@@ -17,17 +17,22 @@ import { Button } from "@/shared/components/ui/button";
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
 import { useReviewActions } from "../../hooks/use-review-actions";
 import type { ReviewAdmin } from "../../types/review.types";
+import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface ReviewDetailHeaderProps {
 	review: ReviewAdmin;
 }
 
 export function ReviewDetailHeader({ review }: ReviewDetailHeaderProps) {
+	// Titre lisible pour le header mobile (sinon : id opaque Title-Casé).
+	useSetAdminPageTitle(`Avis · ${review.product.title}`);
 	const { sections } = useReviewActions({ review });
 	const isPublished = review.status === "PUBLISHED";
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0">
 				<h1 className="font-display text-foreground flex flex-wrap items-center gap-2 text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					<MessageSquare className="size-6 shrink-0 sm:size-7" aria-hidden="true" />
@@ -79,7 +84,7 @@ export function ReviewDetailHeader({ review }: ReviewDetailHeaderProps) {
 				</div>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>
 						<Button
@@ -98,7 +103,7 @@ export function ReviewDetailHeader({ review }: ReviewDetailHeaderProps) {
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

@@ -37,8 +37,12 @@ const hookResultRef = { current: null as HookResult | null };
  * the contentRef div. Uses real React children instead of dangerouslySetInnerHTML
  * so that React preserves DOM nodes (and dynamically added attributes) across re-renders.
  */
-const Harness: FC<{ children?: ReactNode }> = ({ children }) => {
-	const nav = useKeyboardNavigation();
+const Harness: FC<{
+	children?: ReactNode;
+	isSearchMode?: boolean;
+	focusSearchInput?: () => void;
+}> = ({ children, isSearchMode = true, focusSearchInput }) => {
+	const nav = useKeyboardNavigation({ isSearchMode, focusSearchInput });
 	// eslint-disable-next-line react-hooks/immutability -- test harness pattern
 	hookResultRef.current = nav;
 	return createElement(
@@ -54,13 +58,22 @@ function makeEvent(key: string) {
 	return { key, preventDefault: vi.fn() } as unknown as React.KeyboardEvent<HTMLDivElement>;
 }
 
-// Arrow-key roving is scoped to [role="option"] (see FOCUSABLE_SELECTOR), so the
-// navigable children must carry role="option" — mirroring the real options.
+// Le roving est scopé à [data-qs-option] (cf. FOCUSABLE_SELECTOR) — DÉCOUPLÉ de
+// `role="option"`, qui n'existe qu'en mode recherche (dans un vrai listbox).
 function defaultChildren() {
 	return [
-		createElement("button", { key: "a", role: "option" }, "A"),
-		createElement("a", { key: "b", href: "#", role: "option" }, "B"),
-		createElement("button", { key: "c", role: "option" }, "C"),
+		createElement("button", { key: "a", role: "option", "data-qs-option": "" }, "A"),
+		createElement("a", { key: "b", href: "#", role: "option", "data-qs-option": "" }, "B"),
+		createElement("button", { key: "c", role: "option", "data-qs-option": "" }, "C"),
+	];
+}
+
+/** Items du mode idle : navigables, mais SANS `role="option"` (pas de listbox). */
+function idleChildren() {
+	return [
+		createElement("button", { key: "a", "data-qs-option": "" }, "A"),
+		createElement("a", { key: "b", href: "#", "data-qs-option": "" }, "B"),
+		createElement("button", { key: "c", "data-qs-option": "" }, "C"),
 	];
 }
 
@@ -68,6 +81,13 @@ function setup(children?: ReactNode) {
 	const { container } = render(createElement(Harness, null, children ?? defaultChildren()));
 	const wrapper = container.firstElementChild as HTMLDivElement;
 	return { container: wrapper };
+}
+
+function setupIdle(focusSearchInput?: () => void) {
+	const { container } = render(
+		createElement(Harness, { isSearchMode: false, focusSearchInput }, idleChildren()),
+	);
+	return { container: container.firstElementChild as HTMLDivElement };
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -262,5 +282,76 @@ describe("useKeyboardNavigation", () => {
 
 		expect(event.preventDefault).not.toHaveBeenCalled();
 		expect(hookResultRef.current!.activeDescendantId).toBeUndefined();
+	});
+
+	/**
+	 * Mode idle : le conteneur n'est PAS un listbox (F3), donc `aria-activedescendant`
+	 * n'a pas de sens. Le roving déplace le FOCUS DOM RÉEL — annoncé nativement par
+	 * les lecteurs d'écran, alors qu'auparavant les items portaient `role="option"`
+	 * sans listbox propriétaire et le déplacement était totalement silencieux.
+	 */
+	describe("mode idle (focus réel)", () => {
+		it("ArrowDown déplace le focus sur le premier item, sans activedescendant", () => {
+			const { container } = setupIdle();
+
+			act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
+
+			expect(document.activeElement).toBe(container.children[0]);
+			expect(hookResultRef.current!.activeDescendantId).toBeUndefined();
+		});
+
+		it("ArrowDown puis ArrowDown avance le focus", () => {
+			const { container } = setupIdle();
+
+			act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
+			act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
+
+			expect(document.activeElement).toBe(container.children[1]);
+		});
+
+		it("n'écrit pas data-active en idle (l'état est porté par le focus)", () => {
+			const { container } = setupIdle();
+
+			act(() => hookResultRef.current!.handleArrowNavigation(makeEvent("ArrowDown")));
+
+			expect(container.querySelector('[data-active="true"]')).toBeNull();
+		});
+
+		it("Enter n'est pas intercepté : l'activation est native", () => {
+			setupIdle();
+			const event = makeEvent("Enter");
+
+			act(() => hookResultRef.current!.handleArrowNavigation(event));
+
+			expect(event.preventDefault).not.toHaveBeenCalled();
+		});
+
+		it("taper un caractère rend le focus au champ de recherche", () => {
+			const focusSearchInput = vi.fn();
+			setupIdle(focusSearchInput);
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("b")));
+
+			expect(focusSearchInput).toHaveBeenCalledOnce();
+		});
+
+		it("une touche de navigation ne renvoie PAS au champ", () => {
+			const focusSearchInput = vi.fn();
+			const { container } = setupIdle(focusSearchInput);
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("ArrowDown")));
+
+			expect(focusSearchInput).not.toHaveBeenCalled();
+			expect(document.activeElement).toBe(container.children[0]);
+		});
+
+		it("handleContentKeyDown est inerte en mode recherche (l'input garde le focus)", () => {
+			const focusSearchInput = vi.fn();
+			setup();
+
+			act(() => hookResultRef.current!.handleContentKeyDown(makeEvent("b")));
+
+			expect(focusSearchInput).not.toHaveBeenCalled();
+		});
 	});
 });

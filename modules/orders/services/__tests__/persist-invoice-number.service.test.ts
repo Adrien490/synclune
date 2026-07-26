@@ -90,7 +90,6 @@ function makeOrderForSnapshot(): Record<string, unknown> {
 		customerEmail: "test@example.com",
 		customerName: "Alice Dupont",
 		customerPhone: null,
-		customerType: "B2C",
 		customerCompanyName: null,
 		customerCompanySiren: null,
 		customerCompanySiret: null,

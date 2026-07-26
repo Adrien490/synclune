@@ -24,15 +24,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
 		REFUNDED: "REFUNDED",
 	},
-	PdpTransmissionStatus: {
-		PENDING: "PENDING",
-		SENT: "SENT",
-		ACCEPTED: "ACCEPTED",
-		REJECTED: "REJECTED",
-		RETRYING: "RETRYING",
-		CANCELLED: "CANCELLED",
-		ABANDONED: "ABANDONED",
-	},
 }));
 
 vi.mock("@/modules/auth/utils/guards", () => ({ isAdmin: mockIsAdmin }));

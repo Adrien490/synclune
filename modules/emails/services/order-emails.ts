@@ -81,6 +81,7 @@ export async function sendShippingConfirmationEmail({
 	customerName,
 	trackingNumber,
 	trackingUrl,
+	orderTrackingUrl,
 	carrierLabel,
 	estimatedDelivery,
 	shippingAddress,
@@ -92,6 +93,8 @@ export async function sendShippingConfirmationEmail({
 	customerName: string;
 	trackingNumber: string;
 	trackingUrl: string | null;
+	/** Repli quand le transporteur n'a pas d'URL de suivi — cf. `buildOrderTrackingUrl`. */
+	orderTrackingUrl?: string | null;
 	carrierLabel: string;
 	/** Date de livraison estimée pré-formatée (ex: "12 juin 2026"). */
 	estimatedDelivery?: string | null;
@@ -110,6 +113,7 @@ export async function sendShippingConfirmationEmail({
 			customerName,
 			trackingNumber,
 			trackingUrl,
+			orderTrackingUrl,
 			carrierLabel,
 			estimatedDelivery,
 			shippingAddress,

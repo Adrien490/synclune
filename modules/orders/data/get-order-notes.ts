@@ -4,9 +4,9 @@ import { cacheLife, cacheTag } from "next/cache";
 import { z } from "zod";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
-import type { OrderNoteItem } from "../types/order-notes.types";
+import type { OrderNoteItem, OrderNoteRecord } from "../types/order-notes.types";
 
 const orderIdSchema = z.cuid2();
 
@@ -19,8 +19,8 @@ export async function getOrderNotes(
 	orderId: string,
 ): Promise<{ notes: OrderNoteItem[] } | { error: string }> {
 	try {
-		// 1. Vérification admin
-		const adminCheck = await requireAdmin();
+		// 1. Vérification admin (`WithUser` : `canDelete` par note a besoin de son id)
+		const adminCheck = await requireAdminWithUser();
 		if ("error" in adminCheck) {
 			return { error: adminCheck.error.message };
 		}
@@ -31,8 +31,15 @@ export async function getOrderNotes(
 			return { error: "ID commande invalide" };
 		}
 
-		// 3. Récupérer les notes via fonction cachée
-		const notes = await fetchOrderNotes(parsed.data);
+		// 3. Récupérer les notes via fonction cachée, puis décorer HORS cache.
+		// `canDelete` dépend du visiteur : le calculer dans `fetchOrderNotes` le ferait
+		// entrer dans une entrée de cache partagée par orderId, donc fuiter la capacité
+		// d'un admin vers un autre.
+		const records = await fetchOrderNotes(parsed.data);
+		const notes: OrderNoteItem[] = records.map((note) => ({
+			...note,
+			canDelete: note.authorId === adminCheck.user.id,
+		}));
 		return { notes };
 	} catch (error) {
 		logger.error("Failed to fetch order notes", error, { service: "getOrderNotes" });
@@ -43,7 +50,7 @@ export async function getOrderNotes(
 /**
  * Récupère les notes d'une commande depuis la DB avec "use cache"
  */
-async function fetchOrderNotes(orderId: string): Promise<OrderNoteItem[]> {
+async function fetchOrderNotes(orderId: string): Promise<OrderNoteRecord[]> {
 	"use cache";
 	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.NOTES(orderId));

@@ -46,9 +46,12 @@ function pickPrimaryImage(skus: ContextSku[]): ContextImage | null {
 }
 
 /**
- * Carte de contexte produit (mobile-only) en tête de la liste des variantes.
- * Rappelle quel produit on édite quand le breadcrumb header n'affiche que
- * « Variantes » + slug formaté.
+ * Carte de contexte produit (mobile-only) en tête de la liste des variantes :
+ * rappelle QUEL produit on édite (vignette, statut, nombre de variantes).
+ *
+ * Ce n'est PAS une affordance de retour — `AdminMobileHeader` porte le chevron
+ * « Retour » sur cette route. Son `aria-label` annonçait « Retour à la fiche
+ * produit », ce qui en faisait un second bouton retour pour un lecteur d'écran.
  */
 export function VariantsProductContext({ product }: VariantsProductContextProps) {
 	const image = pickPrimaryImage(product.skus);
@@ -62,7 +65,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 		<Link
 			href={`/admin/catalogue/produits/${product.slug}`}
 			className="bg-card text-card-foreground hover:bg-accent/40 focus-visible:ring-ring flex items-center gap-3 rounded-lg border p-3 transition-colors focus-visible:ring-2 focus-visible:outline-none md:hidden"
-			aria-label={`Retour à la fiche produit ${product.title}`}
+			aria-label={`Fiche produit ${product.title}`}
 		>
 			{image && thumbSrc ? (
 				<Image

@@ -17,7 +17,7 @@ export function HeroSectionSkeleton() {
 			{/* Floating image placeholders — diamond layout, matches hero-floating-images breakpoints */}
 			<HeroFloatingImagesSkeleton />
 
-			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">
+			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				<div className="flex flex-col items-center">
 					{/* Contenu centré */}
 					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10">

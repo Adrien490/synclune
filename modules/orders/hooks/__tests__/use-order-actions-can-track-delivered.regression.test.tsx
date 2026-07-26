@@ -35,10 +35,6 @@ vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: () => false,
 }));
 
-vi.mock("@/shared/hooks/use-bulk-selection-action-item", () => ({
-	useBulkSelectionActionItem: () => null,
-}));
-
 vi.mock("@/modules/orders/hooks/use-resend-order-email", () => ({
 	useResendOrderEmail: () => ({ resend: vi.fn(), isPending: false }),
 }));

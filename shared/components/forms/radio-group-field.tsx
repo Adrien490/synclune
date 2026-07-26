@@ -60,7 +60,10 @@ export const RadioGroupField = ({
 						<Label
 							key={option.value}
 							htmlFor={optionId}
-							className="-my-2 flex cursor-pointer items-center gap-2 py-2"
+							// `min-h-11` : la puce Radix fait 16px et le `py-2` ne portait la
+							// ligne qu'à ~32px, sous la cible tactile de 44px (WCAG 2.5.8).
+							// Aligné sur `RadioFilterItem`, qui traite déjà le même motif.
+							className="-mx-3 -my-2 flex min-h-11 cursor-pointer items-center gap-2 px-3 py-2"
 						>
 							<RadioGroupItem value={option.value} id={optionId} />
 							<span>{option.label}</span>

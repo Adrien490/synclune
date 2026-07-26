@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { PREPARATION_DELAY_LABEL, SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { BRAND } from "@/shared/constants/brand";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -104,15 +104,37 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		id: "delai",
 		section: "livraison",
 		question: "Quel est le délai de livraison en France ?",
-		answerText: `Les commandes sont expédiées sous 1 à 3 jours ouvrés. La livraison France métropolitaine prend ensuite ${SHIPPING_RATES.FR.estimatedDays} via Colissimo (${formatEuro(SHIPPING_RATES.FR.amount)}). L'Union Européenne est livrée en ${SHIPPING_RATES.EU.estimatedDays} (${formatEuro(SHIPPING_RATES.EU.amount)}).`,
+		answerText: `Les commandes sont expédiées sous ${PREPARATION_DELAY_LABEL}. La livraison France métropolitaine prend ensuite ${SHIPPING_RATES.FR.estimatedDays} en envoi suivi (${formatEuro(SHIPPING_RATES.FR.amount)}). L'Union Européenne est livrée en ${SHIPPING_RATES.EU.estimatedDays} (${formatEuro(SHIPPING_RATES.EU.amount)}).`,
 		answer: (
 			<>
 				Les commandes sont expédiées sous{" "}
-				<strong className="text-foreground font-semibold">1 à 3 jours ouvrés</strong>. La livraison
-				France métropolitaine prend ensuite{" "}
+				<strong className="text-foreground font-semibold">{PREPARATION_DELAY_LABEL}</strong>. La
+				livraison France métropolitaine prend ensuite{" "}
 				<strong className="text-foreground font-semibold">{SHIPPING_RATES.FR.estimatedDays}</strong>{" "}
-				via Colissimo ({formatEuro(SHIPPING_RATES.FR.amount)}). L&apos;Union Européenne est livrée
+				en envoi suivi ({formatEuro(SHIPPING_RATES.FR.amount)}). L&apos;Union Européenne est livrée
 				en {SHIPPING_RATES.EU.estimatedDays} ({formatEuro(SHIPPING_RATES.EU.amount)}).
+			</>
+		),
+	},
+	{
+		id: "zones",
+		section: "livraison",
+		question: "Livrez-vous partout ?",
+		answerText: `Je livre en France métropolitaine et dans l'Union Européenne. La Corse et les DOM-TOM ne sont pas desservis pour le moment : si c'est votre cas, écrivez-moi, je cherche une solution au cas par cas.`,
+		answer: (
+			<>
+				Je livre en <strong className="text-foreground font-semibold">France métropolitaine</strong>{" "}
+				et dans l&apos;<strong className="text-foreground font-semibold">Union Européenne</strong>.
+				La <strong className="text-foreground font-semibold">Corse</strong> et les{" "}
+				<strong className="text-foreground font-semibold">DOM-TOM</strong> ne sont pas desservis
+				pour le moment : si c&apos;est votre cas,{" "}
+				<a
+					href={`mailto:${BRAND.contact.email}?subject=Livraison%20hors%20zone`}
+					className="text-primary hover:text-primary/80 underline-offset-4 hover:underline focus-visible:underline"
+				>
+					écrivez-moi
+				</a>
+				, je cherche une solution au cas par cas.
 			</>
 		),
 	},
@@ -121,10 +143,10 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		section: "livraison",
 		question: "Que faire si mon colis n'arrive pas ?",
 		answerText:
-			"Suivez d'abord votre colis avec le numéro Colissimo reçu par email. Au-delà du délai annoncé, contactez-moi : j'ouvre une enquête La Poste et je vous tiens informé(e) jusqu'à la résolution.",
+			"Suivez d'abord votre colis avec le numéro de suivi reçu par email. Au-delà du délai annoncé, contactez-moi : j'ouvre une enquête auprès du transporteur et je vous tiens informé(e) jusqu'à la résolution.",
 		answer: (
 			<>
-				Suivez d&apos;abord votre colis avec le numéro Colissimo reçu par email. Au-delà du délai
+				Suivez d&apos;abord votre colis avec le numéro de suivi reçu par email. Au-delà du délai
 				annoncé,{" "}
 				<a
 					href={`mailto:${BRAND.contact.email}?subject=Probl%C3%A8me%20de%20livraison`}
@@ -132,8 +154,8 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 				>
 					contactez-moi
 				</a>{" "}
-				: j&apos;ouvre une enquête auprès de La Poste et je vous tiens informé(e) jusqu&apos;à la
-				résolution.
+				: j&apos;ouvre une enquête auprès du transporteur et je vous tiens informé(e) jusqu&apos;à
+				la résolution.
 			</>
 		),
 	},

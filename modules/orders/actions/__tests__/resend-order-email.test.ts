@@ -19,6 +19,9 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
+		// Un renvoi écrit désormais une entrée d'audit (avant : le tag HISTORY
+		// était invalidé sans qu'aucune ligne ne soit créée).
+		orderHistory: { create: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -86,6 +89,10 @@ vi.mock("next/cache", () => ({
 vi.mock("@/modules/orders/constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
 		HISTORY: (id: string) => `order-history-${id}`,
+		// La timeline de la page détail lit `order.history` via `getOrderById()`,
+		// tagué DETAIL — sans cette invalidation l'entrée d'audit qu'on vient
+		// d'écrire n'apparaîtrait pas.
+		DETAIL: (id: string) => `order-detail-${id}`,
 	},
 }));
 
@@ -217,6 +224,30 @@ describe("resendOrderEmail", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("confirmation");
+	});
+
+	it("écrit une entrée d'audit nommant l'admin sur un renvoi réussi", async () => {
+		await resendOrderEmail(VALID_CUID, "confirmation");
+
+		expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					orderId: VALID_CUID,
+					action: "CREATED",
+					authorId: "admin-1",
+					source: "ADMIN",
+					note: expect.stringContaining("renvoyé"),
+				}),
+			}),
+		);
+	});
+
+	it("n'écrit AUCUNE entrée d'audit quand l'envoi échoue", async () => {
+		mockSendOrderConfirmationEmail.mockResolvedValue({ success: false });
+
+		await resendOrderEmail(VALID_CUID, "confirmation");
+
+		expect(mockPrisma.orderHistory.create).not.toHaveBeenCalled();
 	});
 
 	// -----------------------------------------------------------------------

@@ -93,9 +93,14 @@ vi.mock("../../constants/cache", () => ({
 	},
 }));
 
+// ⚠️ Miroir COMPLET des clés touchées : `getOrderInvalidationTags()` lit
+// ADMIN_ORDERS_LIST. Une clé absente ici fait passer `undefined` à `updateTag`, ce qui
+// rend le test aveugle à une invalidation manquante (et fait planter tout filtre sur
+// `tag.startsWith(...)`).
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
 		ADMIN_BADGES: "admin-badges",
+		ADMIN_ORDERS_LIST: "admin-orders-list",
 	},
 }));
 

@@ -76,14 +76,51 @@ test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
 		expect(unexpectedErrors.length, `Console errors found: ${unexpectedErrors.join("\n")}`).toBe(0);
 	});
 
-	test("les routes admin protégées redirigent vers la connexion", async ({ page }) => {
-		const _response = await page.goto("/admin/catalogue/produits");
+	/*
+	 * L'assertion précédente était `expect(isOnAdmin || isOnLogin).toBe(true)` :
+	 * l'URL contient forcément `/admin` (on vient d'y naviguer) OU `/connexion`.
+	 * Le seul moyen d'échouer aurait été une redirection vers une troisième URL —
+	 * le test ne vérifiait donc PAS que l'accès était refusé.
+	 *
+	 * On vérifie maintenant le refus lui-même : un visiteur non authentifié ne doit
+	 * jamais voir le contenu admin.
+	 */
+	test("les routes admin protégées ne servent pas le contenu à un visiteur", async ({ page }) => {
+		await page.goto("/admin/catalogue/produits");
 		await page.waitForLoadState("domcontentloaded");
 
+		// Redirigé hors de l'admin, ou resté sur /admin sans en servir le contenu.
 		const url = page.url();
-		const isOnAdmin = url.includes("/admin");
-		const isOnLogin = url.includes("/connexion");
+		if (url.includes("/admin")) {
+			// Pas de shell admin rendu : ni sidebar, ni table produits.
+			await expect(page.getByRole("navigation", { name: /administration/i })).toHaveCount(0);
+			await expect(page.getByRole("button", { name: /Nouveau produit/i })).toHaveCount(0);
+		} else {
+			expect(url).toMatch(/\/connexion/);
+		}
+	});
 
-		expect(isOnAdmin || isOnLogin).toBe(true);
+	test("un 404 admin garde le chrome admin et non celui de la boutique", async ({ page }) => {
+		/*
+		 * `app/admin/not-found.tsx` — ajouté par l'audit « Système de feedback ».
+		 * Avant, `notFound()` (atteignable sur chaque détail `[slug]`/`[id]`)
+		 * retombait sur `app/not-found.tsx`, stylé boutique, avec des CTA vers `/` et
+		 * `/produits` : l'admin perdait son shell et sa navigation.
+		 *
+		 * Test volontairement tolérant à l'authentification : non connecté, on est
+		 * redirigé et il n'y a rien à vérifier (skip explicite plutôt qu'un faux
+		 * vert).
+		 */
+		await page.goto("/admin/catalogue/produits/slug-inexistant-e2e-xyz");
+		await page.waitForLoadState("domcontentloaded");
+
+		test.skip(!page.url().includes("/admin"), "Non authentifié — 404 admin non atteignable");
+
+		const body = await page.textContent("body");
+		expect(body).toMatch(/n'existe pas|introuvable/i);
+
+		// Le CTA doit ramener au tableau de bord, PAS à la boutique.
+		await expect(page.getByRole("link", { name: /tableau de bord/i })).toBeVisible();
+		await expect(page.getByRole("link", { name: /^Voir toutes les créations$/i })).toHaveCount(0);
 	});
 });

@@ -12,12 +12,18 @@ vi.mock("@/shared/components/data-table", () => ({
 	DataTableSkeleton: ({
 		className,
 		columns,
+		pagination,
 	}: {
 		className?: string;
 		columns: unknown[];
 		pagination?: string;
 	}) => (
-		<div data-testid="data-table-skeleton" className={className} data-columns={columns.length} />
+		<div
+			data-testid="data-table-skeleton"
+			className={className}
+			data-columns={columns.length}
+			data-pagination={pagination}
+		/>
 	),
 }));
 
@@ -50,8 +56,16 @@ describe("OrdersDataTableSkeleton", () => {
 		expect(screen.getByTestId("data-table-skeleton")).toHaveClass("hidden", "md:block");
 	});
 
-	it("passes 8 columns to DataTableSkeleton", () => {
+	// 7 = nombre de colonnes de `orders-data-table.tsx`. La 8ᵉ était une colonne
+	// `checkbox` fantôme, résidu du retrait du bulk : le skeleton affichait une
+	// colonne de plus que la table qui le remplaçait.
+	it("passes 7 columns to DataTableSkeleton (parité avec la table réelle)", () => {
 		render(<OrdersDataTableSkeleton />);
-		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "8");
+		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "7");
+	});
+
+	it("uses cursor pagination like the real table", () => {
+		render(<OrdersDataTableSkeleton />);
+		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-pagination", "cursor");
 	});
 });

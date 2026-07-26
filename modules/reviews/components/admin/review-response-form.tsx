@@ -113,7 +113,13 @@ export function ReviewResponseForm({
 							</span>
 						)}
 					</span>
-					<span id="response-counter" aria-live="polite">
+					{/*
+					 * Pas d'`aria-live` sur le compteur de caractères : il change à CHAQUE
+					 * frappe, donc la région interrompait la saisie en énonçant « 1/2000 »,
+					 * « 12/2000 »… Le compteur reste rattaché au champ via
+					 * `aria-describedby`, donc consultable à la demande.
+					 */}
+					<span id="response-counter">
 						{content.length}/{REVIEW_CONFIG.MAX_RESPONSE_LENGTH}
 					</span>
 				</div>

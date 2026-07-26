@@ -1,6 +1,7 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
+import { useRef } from "react";
 
 import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
 import type { AddressFormInstance } from "@/modules/addresses/hooks/use-address-form";
@@ -34,13 +35,28 @@ export function AddressFormFields({ form, isPending }: AddressFormFieldsProps) {
 	} = useAddressAutocomplete(address1Value, "FR");
 
 	const triggerHaptic = useHaptic();
+	const rootRef = useRef<HTMLDivElement>(null);
+
+	/**
+	 * « Saisir manuellement » → code postal.
+	 *
+	 * Scopé à `rootRef` et non au document : la dialog et la page peuvent coexister
+	 * dans l'arbre, et un `document.querySelector` global attrapait alors le champ
+	 * de l'AUTRE formulaire. `scrollIntoView` explicite car dans la dialog (scroller
+	 * interne) le focus programmatique seul ne suffit pas toujours à remonter le
+	 * champ au-dessus du clavier.
+	 */
 	const handleManualEntry = () => {
 		triggerHaptic("light");
-		document.querySelector<HTMLInputElement>('input[name="postalCode"]')?.focus();
+		const target = rootRef.current?.querySelector<HTMLInputElement>('input[name="postalCode"]');
+		if (!target) return;
+		const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		target.scrollIntoView({ block: "center", behavior: reduced ? "auto" : "smooth" });
+		target.focus({ preventScroll: true });
 	};
 
 	return (
-		<>
+		<div ref={rootRef} className="contents">
 			<RequiredFieldsNote />
 
 			<div className="space-y-4">
@@ -124,6 +140,14 @@ export function AddressFormFields({ form, isPending }: AddressFormFieldsProps) {
 								autoComplete="street-address"
 								minQueryLength={2}
 								debounceMs={300}
+								// Sans ces trois-là, les défauts « contexte recherche » de
+								// <Autocomplete> s'appliquent (inputMode/enterKeyHint "search",
+								// autoCapitalize "off") : clavier de recherche, touche Entrée
+								// « Rechercher » sur un champ qui n'est pas le dernier, et nom
+								// de rue tout en minuscules. Aligné sur le jumeau du checkout.
+								inputMode="text"
+								enterKeyHint="next"
+								autoCapitalize="words"
 							/>
 							<p className="text-muted-foreground text-xs">
 								Saisissez votre adresse pour la rechercher, ou complétez les champs manuellement
@@ -187,8 +211,15 @@ export function AddressFormFields({ form, isPending }: AddressFormFieldsProps) {
 				<form.AppField name="country">
 					{(field) => (
 						<div className="space-y-2">
-							{/* Un input disabled est exclu du FormData natif : le hidden porte la valeur soumise */}
-							<input type="hidden" name={field.name} value={field.state.value} />
+							{/* Un input disabled est exclu du FormData natif : le hidden porte la valeur soumise.
+							    `autoComplete="country"` (code ISO) sur le hidden : c'est lui qui porte
+							    « FR », l'input visible n'affiche que le libellé et est disabled. */}
+							<input
+								type="hidden"
+								name={field.name}
+								value={field.state.value}
+								autoComplete="country"
+							/>
 							<field.InputField
 								label="Pays"
 								type="text"
@@ -214,10 +245,12 @@ export function AddressFormFields({ form, isPending }: AddressFormFieldsProps) {
 							defaultCountry="FR"
 							placeholder="06 12 34 56 78"
 							disabled={isPending}
+							// Dernier champ du formulaire.
+							enterKeyHint="done"
 						/>
 					)}
 				</form.AppField>
 			</div>
-		</>
+		</div>
 	);
 }

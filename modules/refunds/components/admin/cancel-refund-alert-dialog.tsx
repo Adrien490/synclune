@@ -8,14 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
 import { ActionStatus } from "@/shared/types/server-action";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Ban, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
 
@@ -49,7 +48,6 @@ export function CancelRefundAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Ban} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Annuler la demande de remboursement

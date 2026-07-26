@@ -32,7 +32,7 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("@/modules/media/constants/image-config.constants", () => ({
-	MAIN_IMAGE_QUALITY: 90,
+	MAIN_IMAGE_QUALITY: 80,
 	GALLERY_MAIN_SIZES: "(min-width: 768px) 700px, 100vw",
 }));
 

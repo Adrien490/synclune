@@ -1,11 +1,12 @@
 "use client";
 
-import { ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, Keyboard, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
@@ -16,7 +17,11 @@ import {
 	useSidebar,
 } from "@/shared/components/ui/sidebar";
 
+import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
+import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";
 
 interface SidebarFooterUserProps {
 	user: {
@@ -37,6 +42,7 @@ function getInitials(name: string, email: string): string {
 
 export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 	const { isMobile } = useSidebar();
+	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
 	const initials = getInitials(user.name, user.email);
 
 	return (
@@ -71,6 +77,17 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 							align="end"
 							sideOffset={4}
 						>
+							{/* L'aide raccourcis n'était atteignable que par une icône du header
+							    dont seul le survol révélait la fonction, ou en connaissant `?`
+							    d'avance. Une entrée nommée dans le menu la rend découvrable. */}
+							<DropdownMenuItem className="cursor-pointer" onSelect={() => openShortcuts()}>
+								<Keyboard aria-hidden="true" />
+								Raccourcis clavier
+								<KbdGroup className="ml-auto">
+									<Kbd>?</Kbd>
+								</KbdGroup>
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
 							<LogoutAlertDialog>
 								<DropdownMenuItem preventDefault variant="destructive" className="cursor-pointer">
 									<LogOut aria-hidden="true" />

@@ -82,8 +82,8 @@ export function AnomaliesSection({ anomalies }: AnomaliesSectionProps) {
 }
 
 function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
-	// Feedback aligné sur le reste de l'admin : loader (spinner bouton) +
-	// toast (→ pastille MicroToast sur mobile) au lieu d'un statut inline.
+	// Feedback aligné sur le reste de l'admin : loader (spinner bouton) + toast
+	// au lieu d'un statut inline.
 	const [, formAction, pending] = useActionState<ActionState | undefined, FormData>(
 		withCallbacks(
 			retryInvoiceGeneration,

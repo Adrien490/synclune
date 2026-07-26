@@ -84,8 +84,10 @@ export function IdleContent({
 										<Link
 											href={`/creations/${product.slug}`}
 											onClick={handleNavigateClose}
-											role="option"
-											aria-selected={false}
+											// Pas de `role="option"` : en idle le conteneur n'est PAS un listbox
+											// (F3) — une option y serait orpheline. `data-qs-option` suffit à la
+											// navigation, qui déplace ici le focus DOM réel, annoncé nativement.
+											data-qs-option=""
 											// Reached via arrow keys, not Tab (combobox pattern).
 											tabIndex={-1}
 											className={cn(
@@ -166,8 +168,10 @@ export function IdleContent({
 												onClick={() => onRecentSearch(term)}
 												disabled={isPending}
 												data-active={undefined}
-												role="option"
-												aria-selected={false}
+												// Pas de `role="option"` : en idle le conteneur n'est PAS un listbox
+												// (F3) — une option y serait orpheline. `data-qs-option` suffit à la
+												// navigation, qui déplace ici le focus DOM réel, annoncé nativement.
+												data-qs-option=""
 												// Reached via arrow keys, not Tab (combobox pattern).
 												tabIndex={-1}
 												className={cn(
@@ -246,15 +250,21 @@ export function IdleContent({
 					<Stagger className="py-8 text-center" role="status" stagger={0.03} delay={0.05} y={10}>
 						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
 						<p className="text-muted-foreground text-sm">Trouvez votre prochain bijou</p>
-						<div className="mt-4">
-							<Button asChild variant="outline" className="min-h-11 touch-manipulation sm:min-h-10">
-								<Link href="/produits" onClick={handleViewAllProducts}>
-									Voir tous les produits
-								</Link>
-							</Button>
-						</div>
 					</Stagger>
 				)}
+
+				{/* Accès catalogue — rendu en PERMANENCE, pas seulement dans la branche
+					`!hasContent` (quasi morte en production : les collections sont
+					toujours chargées). Depuis que l'onglet 2 de la bottom-nav ouvre ce
+					dialog au lieu de pointer vers /produits, c'est le seul chemin mobile
+					vers le catalogue complet. Audit recherche 2026-07-26. */}
+				<div className="text-center">
+					<Button asChild variant="outline" className="min-h-11 touch-manipulation sm:min-h-10">
+						<Link href="/produits" onClick={handleViewAllProducts}>
+							Voir tous les produits
+						</Link>
+					</Button>
+				</div>
 			</div>
 		</ScrollFade>
 	);

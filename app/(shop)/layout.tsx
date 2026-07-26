@@ -10,9 +10,7 @@ import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
 import { CookieBannerLazy } from "@/shared/components/cookie-banner-lazy";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
-import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
-import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
@@ -77,8 +75,11 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 				<AdminDashboardFab />
 			</Suspense>
 			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
-			<PullToRefresh />
-			<VisualViewportBridge />
+			{/* Pas de pull-to-refresh sur le storefront : le contenu vient de caches longs
+			    (`catalog` 15 min, `reference` 24 h) qu'un `router.refresh()` ne renouvelle
+			    pas. Le geste n'y aurait rien à rafraîchir — il est réservé aux surfaces
+			    admin/compte, où il partage le chemin d'invalidation des boutons
+			    « Rafraîchir » (cf. `use-pull-to-refresh-handler`). */}
 			<SentryUserBridge userId={session?.user.id} role={session?.user.role} />
 			<CookieBannerLazy />
 		</>

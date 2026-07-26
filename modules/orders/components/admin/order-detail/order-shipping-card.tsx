@@ -11,6 +11,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { UPDATE_TRACKING_DIALOG_ID } from "../update-tracking-dialog";
 import { CopyButton } from "@/shared/components/copy-button";
+import { DetailInfoList, DetailInfoRow } from "@/shared/components/admin/detail-info-row";
 import type { OrderShippingCardProps } from "./types";
 
 export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCardProps) {
@@ -75,21 +76,24 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 						</div>
 					</div>
 				)}
-				{order.shippedAt && (
-					<div>
-						<p className="text-muted-foreground text-sm">Date d'expédition</p>
-						<p>
-							{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
-								locale: fr,
-							})}
-						</p>
-					</div>
-				)}
-				{order.estimatedDelivery && !order.actualDelivery && (
-					<div>
-						<p className="text-muted-foreground text-sm">Livraison estimée</p>
-						<p>{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}</p>
-					</div>
+				{/* Le bloc « Numéro de suivi » ci-dessus n'est PAS un `DetailInfoRow` :
+				    c'est une valeur + un sous-libellé transporteur + un groupe d'actions,
+				    pas une paire libellé/valeur. Seules les vraies paires sont migrées. */}
+				{(order.shippedAt ?? (order.estimatedDelivery && !order.actualDelivery)) && (
+					<DetailInfoList orientation="stacked">
+						{order.shippedAt && (
+							<DetailInfoRow label="Date d'expédition">
+								{format(order.shippedAt, "d MMMM yyyy 'à' HH'h'mm", {
+									locale: fr,
+								})}
+							</DetailInfoRow>
+						)}
+						{order.estimatedDelivery && !order.actualDelivery && (
+							<DetailInfoRow label="Livraison estimée">
+								{format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })}
+							</DetailInfoRow>
+						)}
+					</DetailInfoList>
 				)}
 			</CardContent>
 		</Card>

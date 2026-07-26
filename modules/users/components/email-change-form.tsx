@@ -2,7 +2,7 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
-import { Button } from "@/shared/components/ui/button";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useRequestEmailChange } from "@/modules/users/hooks/use-request-email-change";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
@@ -40,13 +40,16 @@ export function EmailChangeForm() {
 		<form ref={formRef} action={action} onSubmit={handleGatedSubmit} className="space-y-3">
 			<FormServerErrorAlert errors={serverErrors} />
 
+			<RequiredFieldsNote />
+
 			<form.AppField
 				name="newEmail"
 				validators={{
 					// SSOT : `emailSchema` (même validation que le serveur, trim/lowercase).
-					// Champ facultatif tant qu'il est vide — on ne valide qu'une saisie amorcée.
 					onChange: ({ value }: { value: string }) => {
-						if (!value) return undefined;
+						// Champ obligatoire : sans ça, `canSubmit` restait vrai à vide et le
+						// formulaire faisait un aller-retour serveur pour rien.
+						if (!value) return "Le nouvel email est requis";
 						const parsed = emailSchema.safeParse(value);
 						return parsed.success ? undefined : parsed.error.issues[0]?.message;
 					},
@@ -56,8 +59,12 @@ export function EmailChangeForm() {
 					<field.InputField
 						label="Nouvel email"
 						type="email"
+						required
 						disabled={isPending}
-						autoComplete="email"
+						// `off`, PAS `email` : il n'existe aucun jeton standard pour « nouvel
+						// email », et `email` fait proposer par le trousseau l'adresse
+						// ACTUELLE — la seule valeur garantie invalide sur ce champ.
+						autoComplete="off"
 						inputMode="email"
 						enterKeyHint="send"
 						autoCapitalize="none"
@@ -73,13 +80,15 @@ export function EmailChangeForm() {
 				qu&apos;après validation depuis ce lien.
 			</p>
 
-			<form.Subscribe selector={(s) => [s.canSubmit]}>
-				{([canSubmit]) => (
-					<Button type="submit" variant="outline" size="sm" disabled={!canSubmit || isPending}>
-						{isPending ? "Envoi…" : "Modifier l'email"}
-					</Button>
-				)}
-			</form.Subscribe>
+			<form.AppForm>
+				<form.SubmitButton
+					isPending={isPending}
+					idleLabel="Modifier l'email"
+					pendingLabel="Envoi…"
+					variant="outline"
+					size="sm"
+				/>
+			</form.AppForm>
 		</form>
 	);
 }

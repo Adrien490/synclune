@@ -244,8 +244,13 @@ describe("withCronGuard", () => {
 	// MON-03 — Sentry Cron Monitoring heartbeat
 	// ========================================================================
 	describe("Sentry cron heartbeat (MON-03)", () => {
-		// jobName réel présent dans CRON_SCHEDULES → check-ins émis.
-		const SCHEDULED_JOB = "reconcile-refunds";
+		// Job réel présent dans CRON_SCHEDULES **et** dans SENTRY_MONITORED_CRONS.
+		// Les deux conditions sont requises depuis l'audit coûts P2-1 : Sentry
+		// facture par monitor, seuls les jobs revenue/légal en obtiennent un.
+		const SCHEDULED_JOB = "reconcile-invoices";
+
+		/** Job planifié mais volontairement NON monitoré (catégorie ops). */
+		const UNMONITORED_JOB = "reopen-store";
 
 		it("émet in_progress puis ok sur un run réussi d'un job planifié", async () => {
 			const handler = withCronGuard({ jobName: SCHEDULED_JOB }, async () => ({
@@ -291,6 +296,38 @@ describe("withCronGuard", () => {
 			await handler();
 
 			expect(mockSentry.captureCheckIn).not.toHaveBeenCalled();
+		});
+
+		/**
+		 * Audit coûts P2-1 : le monitoring cron Sentry est facturé PAR MONITOR
+		 * (plan Developer : 1 inclus). Émettre un check-in pour les 11 jobs
+		 * réclamait 11 monitors — au-delà du quota, Sentry rejette les check-ins
+		 * surnuméraires et l'alerte « run manqué » ne fonctionne plus de façon
+		 * fiable sur AUCUN job. Un monitoring qu'on croit actif est pire que pas
+		 * de monitoring du tout.
+		 */
+		it("n'émet aucun check-in pour un job planifié mais hors périmètre monitoré", async () => {
+			const handler = withCronGuard({ jobName: UNMONITORED_JOB }, async () => ({
+				processed: 1,
+				errored: 0,
+				skipped: 0,
+			}));
+
+			await handler();
+
+			expect(mockSentry.captureCheckIn).not.toHaveBeenCalled();
+		});
+
+		it("garde la capture d'exception sur un job non monitoré", async () => {
+			// Le retrait du monitor ne doit PAS aveugler Sentry sur les erreurs :
+			// seule la détection de run manqué est abandonnée.
+			const handler = withCronGuard({ jobName: UNMONITORED_JOB }, async () => {
+				throw new Error("boom");
+			});
+
+			await handler();
+
+			expect(mockSentry.captureException).toHaveBeenCalled();
 		});
 	});
 });

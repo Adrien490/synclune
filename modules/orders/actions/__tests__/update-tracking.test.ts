@@ -17,7 +17,7 @@ const {
 	mockGetTrackingUrl,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -167,6 +167,7 @@ describe("updateTracking", () => {
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createShippedOrder());
 		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -234,9 +235,15 @@ describe("updateTracking", () => {
 		const result = await updateTracking(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: VALID_CUID },
+				// Garde atomique : le `where` ré-asserte le statut attendu, sinon un
+				// `revertToProcessing` concurrent voyait son nettoyage aussitôt défait.
+				where: {
+					id: VALID_CUID,
+					deletedAt: null,
+					status: { in: ["SHIPPED", "DELIVERED"] },
+				},
 				data: expect.objectContaining({
 					trackingNumber: "1Z999AA10123456784",
 				}),
@@ -279,7 +286,7 @@ describe("updateTracking", () => {
 		await updateTracking(undefined, validFormData);
 
 		expect(mockGetTrackingUrl).toHaveBeenCalledWith("colissimo", "1Z999AA10123456784");
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					trackingUrl: "https://tracking.colissimo.fr/1Z999AA10123456784",
@@ -302,7 +309,7 @@ describe("updateTracking", () => {
 
 		await updateTracking(undefined, validFormData);
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					trackingUrl: "https://custom-tracking.fr/1Z999",

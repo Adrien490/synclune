@@ -29,7 +29,7 @@ import type { GetUserOrdersReturn } from "@/modules/orders/types/user-orders.typ
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Eye, ShoppingBag } from "lucide-react";
+import { Eye, ShoppingBag, Truck } from "lucide-react";
 import Link from "next/link";
 
 interface CustomerOrdersTableProps {
@@ -125,7 +125,10 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 								<TableHead scope="col" className="w-[15%]">
 									Statut
 								</TableHead>
-								<TableHead scope="col" className="hidden w-[15%] lg:table-cell">
+								{/* Pas de `lg:` : la variante carte s'arrête à `sm`, donc masquer cette
+								    colonne jusqu'à `lg` laissait la plage sm–lg sans aucune information
+								    d'expédition. Le conteneur scrolle si nécessaire. */}
+								<TableHead scope="col" className="w-[15%]">
 									Livraison
 								</TableHead>
 								<TableHead scope="col" className="w-[10%] text-center">
@@ -160,7 +163,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 											{ORDER_STATUS_LABELS[order.status]}
 										</Badge>
 									</TableCell>
-									<TableCell className="hidden lg:table-cell">
+									<TableCell>
 										<Badge
 											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
 											className="whitespace-nowrap"
@@ -175,15 +178,33 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 										<span className="text-sm font-semibold">{formatEuro(order.total)}</span>
 									</TableCell>
 									<TableCell className="text-right">
-										<Button variant="ghost" size="sm" asChild>
-											<Link
-												href={`/commandes/${order.orderNumber}`}
-												aria-label={`Voir la commande #${order.orderNumber}`}
-											>
-												<Eye className="size-4 sm:mr-2" aria-hidden="true" />
-												<span className="hidden sm:inline">Voir</span>
-											</Link>
-										</Button>
+										<div className="flex items-center justify-end gap-1">
+											{/* `trackingUrl` était sélectionné par `GET_USER_ORDERS_SELECT` sans
+											    jamais être rendu : il fallait ouvrir le détail pour suivre son
+											    colis. */}
+											{order.trackingUrl && (
+												<Button variant="ghost" size="sm" asChild>
+													<a
+														href={order.trackingUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														aria-label={`Suivre le colis de la commande ${order.orderNumber} (nouvel onglet)`}
+													>
+														<Truck className="size-4 sm:mr-2" aria-hidden="true" />
+														<span className="hidden sm:inline">Suivre</span>
+													</a>
+												</Button>
+											)}
+											<Button variant="ghost" size="sm" asChild>
+												<Link
+													href={`/commandes/${order.orderNumber}`}
+													aria-label={`Voir la commande #${order.orderNumber}`}
+												>
+													<Eye className="size-4 sm:mr-2" aria-hidden="true" />
+													<span className="hidden sm:inline">Voir</span>
+												</Link>
+											</Button>
+										</div>
 									</TableCell>
 								</TableRow>
 							))}

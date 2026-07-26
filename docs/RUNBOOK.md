@@ -18,7 +18,11 @@
 
 ## Mensuel / trimestriel
 
-- **TCO** : relever les factures (Vercel, Neon, Stripe, UploadThing) et recalculer le coût en % du CA (cf. `BUSINESS.md`).
+- **TCO** : relever les factures (Vercel, Neon, Stripe, UploadThing) et recalculer le coût en % du CA (cf. `BUSINESS.md`). Attendu ≈ 40–52 €/mois, soit ~5 % du CA à 20 commandes/mois.
+- **Quotas** : trois jauges à regarder, dont deux peuvent **couper le service**.
+  - **Neon → compute-hours** : cible < 40 % de l'allocation. Au-delà de 100 %, la base est suspendue jusqu'au mois suivant = boutique KO. Si ça dérive sans hausse de trafic, chercher un cron trop fréquent (cf. § ci-dessous).
+  - **Resend → envois du jour** : le marketing est plafonné à 40/jour dans le code ; si le total quotidien approche 100, c'est le transactionnel qui va sauter.
+  - **Vercel → transformations d'images** : une hausse sans nouveau produit au catalogue signale un abus de `/_next/image` (cf. § ci-dessous).
 - **Seuils fiscaux** : avec le comptable, vérifier le CA cumulé vs **85 000 €** (franchise biens) **et** vs **10 000 €** de ventes à distance **intra-UE** (seuil OSS — voir ci-dessous).
 - Le bandeau dashboard de progression TVA (`get-vat-progress`) suit le seuil franchise national, **pas** le seuil OSS intra-UE.
 
@@ -87,3 +91,45 @@ Le millésime `F-YYYY` suit **la date d'encaissement** (`paidAt`, Europe/Paris �
 - **Usage attendu** : canal de **recovery exceptionnel** (paiement asynchrone jamais webhooké, client qui règle par virement après échec carte). Ce n'est PAS un canal de vente : un usage systématique reviendrait à un flux d'encaissement alternatif relevant de l'invariant CLAUDE.md #8 (« validation comptable préalable » — risque de qualification logiciel de caisse NF 525).
 - **À faire valider par le comptable** (point ouvert) : confirmer que ce canal d'attestation virement/chèque adossé à un PaymentIntent est acceptable en l'état, et à quel volume il devient un flux à déclarer/outiller autrement. En attendant : usage au cas par cas uniquement, chaque utilisation étant auditée dans `OrderHistory`.
 - **Contrôle périodique** (mensuel, avec les vérifs facturation) : compter les usages du mois — les entrées `OrderHistory` `action=PAID` dont `metadata.offStripeConfirmed=true`. Plus de quelques occurrences par mois ⇒ en parler au comptable avant de continuer.
+
+## § Coûts & quotas — que faire quand une jauge dérive
+
+> Issu de l'audit « Coûts, quotas & limites fournisseurs » (2026-07-26). Bornes de coût et tests qui les verrouillent : `BUSINESS.md § Postes qui grossissent tout seuls`.
+
+### Prérequis — le seul coupe-circuit réel
+
+**Vercel → Settings → Spend Management** : définir un plafond de dépense avec **pause automatique du projet**. Sans lui, aucune borne dans le code n'empêche une facture à quatre chiffres : le rate limiting est en mémoire par instance (assumé), et `/_next/image` n'y est même pas soumis. Avec lui, le pire cas devient « site en pause » au lieu de « facture surprise ». À vérifier après chaque changement de plan Vercel.
+
+### Les transformations d'images explosent
+
+Symptôme : le compteur Vercel grimpe sans nouveau produit au catalogue.
+
+1. Vérifier que `images.remotePatterns` (`next.config.ts`) ne contient **aucun wildcard** — `pnpm vitest run shared/constants/__tests__/image-remote-patterns.regression.test.ts`. `*.ufs.sh` est multi-tenant : le wildcard laisse n'importe quel compte UploadThing faire transformer ses fichiers aux frais de Synclune, sans rate limit (`/_next/image` est exclu du matcher de `proxy.ts`).
+2. Vérifier qu'aucun palier de qualité n'a été rajouté (2 attendus) : chaque palier multiplie la surface facturable par image source.
+3. Si l'abus est en cours : baisser le plafond Spend Management, puis retirer temporairement l'hôte visé de `remotePatterns`.
+
+Surface actuelle : 15 largeurs × 2 qualités × 2 formats = **60 transformations max par image source**, re-facturées ~12×/an (`minimumCacheTTL` = 31 j).
+
+### Le compute Neon dérive
+
+Symptôme : consommation qui monte sans hausse de trafic.
+
+La cause quasi certaine est un cron plus fréquent que l'autosuspend Neon (5 min) : la base ne se rendort alors jamais. `pnpm vitest run modules/cron/constants` échoue si une cadence passe sous 30 min ou si les réveils cessent d'être alignés. Cadence saine ≈ 2 réveils/heure (:00 et :30), soit ~16 % de l'allocation Free.
+
+Ne pas ajouter de cron pour une tâche quotidienne : l'ajouter en **passe** de `cleanup-pending-orders`, qui en porte déjà trois.
+
+### Le quota e-mail journalier est atteint
+
+Symptôme : 429 Resend, e-mails de confirmation manquants.
+
+Le marketing est plafonné à 40 envois/jour (`MARKETING_DAILY_EMAIL_BUDGET`), les 60 restants sont réservés au transactionnel. Si le plafond est quand même atteint :
+
+1. Vérifier qu'aucun nouvel émetteur marketing ne contourne le budget (il doit consulter `remainingMarketingBudget`, pas ouvrir son propre compteur).
+2. Le reliquat de retour-en-stock repart automatiquement le lendemain via la passe `drainBackInStockQueue()` — aucune action manuelle.
+3. Si le volume légitime dépasse durablement 100/jour, c'est le signal de passer au plan Resend payant, pas de relever `MARKETING_DAILY_EMAIL_BUDGET`.
+
+### Les minutes CI s'épuisent
+
+La CI tourne ~31 min par run sur 7 jobs, avec annulation automatique des runs superposés (`concurrency`). Si le quota se consomme trop vite : regrouper les pushes (chaque push relance tout), ou passer `e2e` en `workflow_dispatch` + exécution sur `main` uniquement.
+
+⚠️ Le job `e2e` cible `secrets.E2E_DATABASE_URL` avec repli sur `secrets.DATABASE_URL`. **Créer le secret `E2E_DATABASE_URL`** pointant vers un projet Neon dédié : tant qu'il n'existe pas, la CI `seed` (donc écrase) la base de production et consomme ses compute-hours.

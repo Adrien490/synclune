@@ -197,8 +197,35 @@ describe("LongPressMenuLink", () => {
 		fireEvent.keyDown(link, { key: "ContextMenu" });
 
 		expect(screen.getByRole("menu", { name: "Actions" })).toBeInTheDocument();
-		expect(mockHaptic).toHaveBeenCalledTimes(1);
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	/**
+	 * @regression no-haptic-on-keyboard-path
+	 * Les raccourcis `ContextMenu` / `Shift+F10` sont le chemin CLAVIER d'ouverture
+	 * du menu. Ils émettaient un `haptic("medium")` — un retour tactile sur une
+	 * entrée qui n'est pas tactile. Le retour haptique reste réservé au doigt
+	 * (long-press, tap).
+	 */
+	it.each([
+		["ContextMenu", { key: "ContextMenu" }],
+		["Shift+F10", { key: "F10", shiftKey: true }],
+	])("does not fire any haptic when the menu is opened with %s", (_label, keyInit) => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+
+		const link = screen.getByRole("link", { name: "Item 1" });
+		fireEvent.keyDown(link, keyInit);
+
+		expect(screen.getByRole("menu", { name: "Actions" })).toBeInTheDocument();
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("opens the menu via Shift+F10 (keyboard escape hatch)", () => {
@@ -359,6 +386,53 @@ describe("LongPressMenuLink", () => {
 
 		expect(screen.getByRole("menuitem", { name: "Modifier" })).toBeInTheDocument();
 		expect(screen.queryByRole("menuitem", { name: "Dupliquer" })).not.toBeInTheDocument();
+	});
+
+	/**
+	 * @regression long-press-affordance-by-default
+	 * L'indice visuel était un prop facultatif — construit, testé, documenté, et
+	 * passé par ZÉRO des 10 listes admin mobiles. Le menu d'actions n'y était donc
+	 * atteignable que par un appui long de 500 ms que rien n'annonçait. Un
+	 * mécanisme de découvrabilité qu'il faut penser à activer ne l'est jamais : il
+	 * est rendu par défaut, et son retrait doit être explicite.
+	 */
+	it("renders a default affordance when the consumer passes none", () => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+
+		const link = screen.getByRole("link", { name: "Item 1" });
+		const affordance = link.querySelector("svg[aria-hidden='true']");
+		expect(affordance).not.toBeNull();
+		// Purement visuel : ne doit jamais intercepter le tap ni être annoncé.
+		expect(affordance).toHaveClass("pointer-events-none");
+		// Réserve d'espace, sinon l'indice absolute chevauche le contenu de la carte.
+		expect(link).toHaveClass("pr-5");
+	});
+
+	it("allows opting out of the affordance with an explicit null", () => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+				affordance={null}
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+
+		const link = screen.getByRole("link", { name: "Item 1" });
+		expect(link.querySelector("svg[aria-hidden='true']")).toBeNull();
+		expect(link).not.toHaveClass("pr-5");
 	});
 
 	it("renders the optional affordance slot inside the Link wrapper", () => {

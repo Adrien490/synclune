@@ -2,23 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/shared/components/data-table", () => ({
-	AdminDataTable: ({
-		children,
-		pageItemIds,
-		bulkActionsBar,
-	}: {
-		children: React.ReactNode;
-		pageItemIds: string[];
-		bulkActionsBar: React.ReactNode;
-	}) => (
-		<table data-testid="data-table" data-page-item-ids={JSON.stringify(pageItemIds)}>
-			{children}
-			{bulkActionsBar}
-		</table>
-	),
-	BulkSelectionHeaderCheckbox: () => <input type="checkbox" aria-label="Tout sélectionner" />,
-	BulkSelectionRowCheckbox: ({ itemLabel }: { itemLabel: string }) => (
-		<input type="checkbox" aria-label={itemLabel} />
+	AdminDataTable: ({ children }: { children: React.ReactNode }) => (
+		<table data-testid="data-table">{children}</table>
 	),
 	TableEmptyState: ({ title }: { title: string }) => <div data-testid="empty-state">{title}</div>,
 }));
@@ -27,10 +12,6 @@ vi.mock("../order-row-actions", () => ({
 	OrderRowActions: ({ order }: { order: { orderNumber: string } }) => (
 		<button aria-label={`Actions ${order.orderNumber}`} />
 	),
-}));
-
-vi.mock("../orders-bulk-actions-bar", () => ({
-	OrdersBulkActionsBar: () => <div data-testid="bulk-bar" />,
 }));
 
 import { OrdersDataTable } from "../orders-data-table";

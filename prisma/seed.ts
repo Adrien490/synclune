@@ -1806,24 +1806,12 @@ async function main(): Promise<void> {
 					? { stripePaymentIntentId: `pi_${faker.string.alphanumeric(24)}` }
 					: {};
 
-		// Post-delivery email tracking for delivered orders
-		const emailTrackingData: Partial<Prisma.OrderCreateInput> = {};
-		if (status === OrderStatus.DELIVERED) {
-			const clampToNow = (date: Date) => new Date(Math.min(date.getTime(), Date.now()));
-			if (sampleBoolean(0.6)) {
-				emailTrackingData.reviewRequestSentAt = clampToNow(
-					new Date(orderDate.getTime() + 14 * 24 * 60 * 60 * 1000),
-				);
-			}
-		}
-
 		let trackingData: Partial<Prisma.OrderCreateInput> = {};
 		if (status === OrderStatus.SHIPPED || status === OrderStatus.DELIVERED) {
-			const shippingMethod = faker.helpers.weightedArrayElement([
-				{ weight: 6, value: "STANDARD" },
-				{ weight: 3, value: "EXPRESS" },
-				{ weight: 1, value: "POINT_RELAIS" },
-			]);
+			// Variable locale uniquement : `Order.shippingMethod` a été droppée
+			// (audit schéma 2026-07-26). On garde la notion pour faire varier
+			// l'estimation de livraison de façon réaliste dans le seed.
+			const isExpress = sampleBoolean(0.3);
 
 			const carrier = faker.helpers.weightedArrayElement([
 				{ weight: 6, value: "colissimo" },
@@ -1838,9 +1826,7 @@ async function main(): Promise<void> {
 			const estimatedDelivery = new Date(shippedAt);
 			estimatedDelivery.setDate(
 				estimatedDelivery.getDate() +
-					(shippingMethod === "EXPRESS"
-						? faker.number.int({ min: 1, max: 2 })
-						: faker.number.int({ min: 3, max: 7 })),
+					(isExpress ? faker.number.int({ min: 1, max: 2 }) : faker.number.int({ min: 3, max: 7 })),
 			);
 
 			const trackingNum = faker.string.alphanumeric({ length: 13, casing: "upper" });
@@ -1852,9 +1838,7 @@ async function main(): Promise<void> {
 			};
 
 			trackingData = {
-				shippingMethod,
 				shippingCarrier: carrier,
-				shippingRateId: sampleBoolean(0.5) ? `shr_${faker.string.alphanumeric(24)}` : null,
 				trackingNumber: trackingNum,
 				trackingUrl: trackingUrls[carrier],
 				shippedAt,
@@ -1886,7 +1870,6 @@ async function main(): Promise<void> {
 				createdAt: orderDate,
 				updatedAt: orderDate,
 				...trackingData,
-				...emailTrackingData,
 				items: {
 					create: itemsData,
 				},

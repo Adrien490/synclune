@@ -74,8 +74,7 @@ export interface UseLongPressReturn {
  * Long-press gesture hook (touch only — Pointer Events not supported by
  * design, scope = mobile/admin).
  *
- * - 500ms hold → fires `onLongPress` + haptic "medium" (cohérent avec
- *   `product-card-long-press.tsx` storefront).
+ * - 500ms hold → fires `onLongPress` + haptic "medium" (opt-out via `haptic: false`).
  * - 10px movement tolerance — cancels on scroll/pan.
  * - Wraps `options.onClick` to suppress the synthetic click that immediately
  *   follows a long-press (no escape hatch needed on the consumer side).

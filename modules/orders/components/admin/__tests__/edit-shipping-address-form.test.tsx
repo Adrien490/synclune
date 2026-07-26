@@ -19,7 +19,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
 vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: mockUseIsMobile,
-	MOBILE_BREAKPOINT: 768,
+	MOBILE_MEDIA_QUERY: "(width < 48rem)",
 }));
 vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,

@@ -1,5 +1,6 @@
 import { CustomerOrdersTable } from "@/modules/orders/components/customer/customer-orders-table";
 import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
+import { RefreshUserOrdersButton } from "@/modules/orders/components/customer/refresh-user-orders-button";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import {
@@ -45,6 +46,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
 	return (
 		<>
+			{/* Alternative visible au geste pull-to-refresh (monté sur le layout
+			    `(account)`) : les deux passent par la même Server Action d'invalidation. */}
+			<div className="flex justify-end">
+				<RefreshUserOrdersButton />
+			</div>
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
 				<CustomerOrdersTable ordersPromise={ordersPromise} perPage={perPage} />
 			</Suspense>

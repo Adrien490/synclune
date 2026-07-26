@@ -115,5 +115,4 @@ describe("getComparisonLabel", () => {
 		expect(getComparisonLabel("month")).toBe(COMPARISON_LABELS.month);
 		expect(getComparisonLabel("year")).toBe(COMPARISON_LABELS.year);
 	});
-
 });

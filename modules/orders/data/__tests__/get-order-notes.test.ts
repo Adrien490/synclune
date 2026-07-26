@@ -47,11 +47,14 @@ const VALID_ORDER_ID = "clzk2x8p40000abcd1234efgh";
 const VALID_ORDER_ID_2 = "clzk2x8p40000abcd1234ijkl";
 const VALID_ORDER_ID_3 = "clzk2x8p40000abcd1234mnop";
 
+// Auteur par défaut des notes de test = l'admin courant (donc `canDelete: true`).
+const ADMIN_ID = "admin-1";
+
 function makeNote(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "note-1",
 		content: "Test note content",
-		authorId: "admin-1",
+		authorId: ADMIN_ID,
 		authorName: "Admin User",
 		createdAt: new Date("2024-01-01T00:00:00Z"),
 		...overrides,
@@ -59,7 +62,10 @@ function makeNote(overrides: Record<string, unknown> = {}) {
 }
 
 function setupAdminSuccess() {
-	mockRequireAdmin.mockResolvedValue({ admin: true });
+	// `getOrderNotes` utilise `requireAdminWithUser` : `user.id` sert à calculer
+	// `canDelete` par note (l'auteur seul peut supprimer). Un mock sans `user` faisait
+	// throw dans le map et l'action retombait sur l'erreur générique.
+	mockRequireAdmin.mockResolvedValue({ admin: true, user: { id: ADMIN_ID } });
 	mockPrisma.orderNote.findMany.mockResolvedValue([makeNote()]);
 }
 
@@ -113,13 +119,33 @@ describe("getOrderNotes", () => {
 		expect(mockPrisma.orderNote.findMany).not.toHaveBeenCalled();
 	});
 
-	it("returns notes array for admin", async () => {
+	it("returns notes array for admin, decorated with canDelete", async () => {
 		const notes = [makeNote(), makeNote({ id: "note-2", content: "Second note" })];
 		mockPrisma.orderNote.findMany.mockResolvedValue(notes);
 
 		const result = await getOrderNotes(VALID_ORDER_ID);
 
-		expect(result).toEqual({ notes });
+		expect(result).toEqual({
+			notes: notes.map((note) => ({ ...note, canDelete: true })),
+		});
+	});
+
+	it("marks a colleague's note as non-deletable", async () => {
+		// `deleteOrderNote` renvoie FORBIDDEN à un non-auteur : l'UI ne doit pas offrir
+		// la corbeille sur la note d'un collègue.
+		mockPrisma.orderNote.findMany.mockResolvedValue([
+			makeNote({ id: "mine", authorId: ADMIN_ID }),
+			makeNote({ id: "theirs", authorId: "other-admin" }),
+		]);
+
+		const result = await getOrderNotes(VALID_ORDER_ID);
+
+		expect(result).toEqual({
+			notes: [
+				expect.objectContaining({ id: "mine", canDelete: true }),
+				expect.objectContaining({ id: "theirs", canDelete: false }),
+			],
+		});
 	});
 
 	it("returns empty notes array when no notes exist", async () => {

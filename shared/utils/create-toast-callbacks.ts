@@ -3,9 +3,6 @@ import { toast } from "@/shared/utils/toast";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
 
-const DEFAULT_UNDO_DURATION_MS = 5000;
-const DEFAULT_UNDO_LABEL = "Annuler";
-
 /**
  * Type guard pour vérifier si une valeur contient un message
  * @param value - La valeur à vérifier
@@ -53,7 +50,6 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 		onWarning: customOnWarning,
 		onError: customOnError,
 		successAction,
-		undoAction,
 	} = options;
 
 	return {
@@ -74,17 +70,7 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 
 			// Default toast behavior
 			if (showSuccessToast && hasMessage(result)) {
-				if (undoAction) {
-					toast.success(result.message, {
-						action: {
-							label: undoAction.label ?? DEFAULT_UNDO_LABEL,
-							onClick: () => {
-								void undoAction.onClick();
-							},
-						},
-						duration: undoAction.duration ?? DEFAULT_UNDO_DURATION_MS,
-					});
-				} else if (successAction) {
+				if (successAction) {
 					toast.success(result.message, {
 						action: successAction,
 					});

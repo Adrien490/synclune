@@ -94,14 +94,29 @@ export async function updateTracking(
 				}
 			}
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : le `where` ré-asserte le statut attendu (miroir du
+			// contrôle ci-dessus). count===0 ⇒ un writer concurrent a changé l'état
+			// entre le findUnique et l'update — le findUnique ne verrouille pas la
+			// ligne en read-committed, la transaction seule ne suffit pas. Sans elle,
+			// un `revertToProcessing` concurrent nullait les champs de suivi et cette
+			// action les repeuplait aussitôt sur une commande revenue en PROCESSING
+			// (la garde ORD-BIZ-006 des 30 jours subissait la même course).
+			// Aligné sur les 5 autres writers de fulfillment.
+			const updated = await tx.order.updateMany({
+				where: {
+					id,
+					...notDeleted,
+					status: { in: [OrderStatus.SHIPPED, OrderStatus.DELIVERED] },
+				},
 				data: {
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					shippingCarrier: validated.data.carrier ?? null,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			// Audit trail (Art. L123-22 Code de Commerce)
 			await createOrderAuditTx(tx, {
@@ -126,11 +141,14 @@ export async function updateTracking(
 		}
 
 		if ("_error" in order) {
-			const message =
-				order._error === "tracking_lock_window"
-					? "Impossible de modifier le suivi : la commande a été livrée il y a plus de 30 jours (préservation de la preuve de livraison)."
-					: "Impossible de modifier le suivi : la commande n'est pas expédiée.";
-			return error(message);
+			const NOT_SHIPPED = "Impossible de modifier le suivi : la commande n'est pas expédiée.";
+			const messages: Record<string, string> = {
+				tracking_lock_window:
+					"Impossible de modifier le suivi : la commande a été livrée il y a plus de 30 jours (préservation de la preuve de livraison).",
+				concurrent_change: ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE,
+				not_shipped: NOT_SHIPPED,
+			};
+			return error(messages[order._error] ?? NOT_SHIPPED);
 		}
 
 		// Invalider les caches (orders list admin + commandes user)

@@ -24,18 +24,23 @@ const emptyVariants = cva(
 
 type EmptyProps = React.ComponentProps<"div"> & VariantProps<typeof emptyVariants>;
 
-function Empty({
-	className,
-	variant = "default",
-	size = "default",
-	role = "status",
-	"aria-live": ariaLive = "polite",
-	...props
-}: EmptyProps) {
+/**
+ * ⚠️ Pas de `role="status"` / `aria-live="polite"` par défaut.
+ *
+ * Ces défauts existaient et ne pouvaient rien annoncer : un `Empty` est rendu
+ * **parce que** la liste est vide, donc il entre dans l'arbre d'accessibilité au
+ * même frame que son texte — cas où les lecteurs d'écran restent muets. Le seul
+ * effet réel était 22 régions live inertes dans le DOM, et un risque de relecture
+ * parasite à chaque re-render du parent.
+ *
+ * Les deux attributs restent transmissibles par prop pour les rares `Empty`
+ * réellement montés en permanence. Pour annoncer une **transition** vers l'état
+ * vide, utiliser `announce()` (`shared/utils/announce.ts`) depuis le parent —
+ * cf. `wishlist-list-content.tsx`.
+ */
+function Empty({ className, variant = "default", size = "default", ...props }: EmptyProps) {
 	return (
 		<div
-			role={role}
-			aria-live={ariaLive}
 			data-slot="empty"
 			data-variant={variant}
 			data-size={size}

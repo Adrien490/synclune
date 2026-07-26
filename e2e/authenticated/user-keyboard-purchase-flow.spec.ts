@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { VISIBLE_ALERT } from "../helpers/assertions";
 
 test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 	test("navigation clavier de la liste produits au checkout", async ({ page, cartPage }) => {
@@ -114,7 +115,7 @@ test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 		await page.waitForTimeout(500);
 
 		const focusedTag = await page.evaluate(() => document.activeElement?.tagName.toLowerCase());
-		const hasErrorMessage = await page.locator('[role="alert"], [aria-invalid="true"]').count();
+		const hasErrorMessage = await page.locator(`${VISIBLE_ALERT}, [aria-invalid="true"]`).count();
 
 		// Either focus moved to an input or error messages appeared
 		expect(

@@ -131,11 +131,15 @@ describe("CountBadge", () => {
 	// ACCESSIBILITY
 	// ============================================================================
 
-	it("announces singular for count = 1 via aria-live polite (without aria-atomic)", () => {
+	it("announces singular for count = 1 via aria-live polite + aria-atomic", () => {
 		render(<CountBadge {...defaultProps} count={1} />);
 		const live = screen.getByText("1 article dans votre panier");
 		expect(live).toHaveAttribute("aria-live", "polite");
-		expect(live).not.toHaveAttribute("aria-atomic");
+		// `aria-atomic="true"` : la région porte une phrase entière remplacée à
+		// chaque changement, il faut la relire en bloc et pas seulement le nœud
+		// texte modifié. Aligne `CountBadge` sur les autres compteurs du projet
+		// (`cursor-pagination.tsx`, `cart-sheet.tsx`, `product-list.tsx`).
+		expect(live).toHaveAttribute("aria-atomic", "true");
 	});
 
 	it("announces plural for count > 1", () => {

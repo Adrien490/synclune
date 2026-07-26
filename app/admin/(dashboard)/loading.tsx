@@ -54,7 +54,6 @@ export default function DashboardLoading() {
 					/>
 				</section>
 
-
 				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
 					<SectionHeading id="dashboard-section-activity" label="Activité" accent="heart" />
 					<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />

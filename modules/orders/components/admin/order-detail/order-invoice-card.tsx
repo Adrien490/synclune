@@ -9,6 +9,7 @@ import { InvoiceStatusBadge } from "@/modules/orders/components/admin/invoice-st
 import { DownloadAdminInvoiceButton } from "./download-admin-invoice-button";
 import { DownloadAdminCreditNoteButton } from "./download-admin-credit-note-button";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
+import { DetailInfoList, DetailInfoRow } from "@/shared/components/admin/detail-info-row";
 
 interface OrderInvoiceCardProps {
 	order: GetOrderReturn;
@@ -93,42 +94,45 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 
 				{hasInvoice && order.invoiceNumber && (
 					<div className="space-y-3">
-						<div>
-							<p className="text-muted-foreground text-sm">Numéro de facture</p>
-							<div className="mt-1 flex items-center gap-2">
-								<code
-									className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
-									aria-label={`Numéro de facture ${order.invoiceNumber}`}
-								>
-									{order.invoiceNumber}
-								</code>
-								<CopyButton
-									text={order.invoiceNumber}
-									label="Numéro de facture"
-									className="size-7 p-0"
-									size="icon"
-								/>
-							</div>
-						</div>
+						<DetailInfoList orientation="stacked">
+							<DetailInfoRow label="Numéro de facture">
+								<div className="mt-1 flex items-center gap-2">
+									<code
+										className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
+										aria-label={`Numéro de facture ${order.invoiceNumber}`}
+									>
+										{order.invoiceNumber}
+									</code>
+									<CopyButton
+										text={order.invoiceNumber}
+										label="Numéro de facture"
+										className="size-7 p-0"
+										size="icon"
+									/>
+								</div>
+							</DetailInfoRow>
 
-						{order.invoiceGeneratedAt && (
-							<div>
-								<p className="text-muted-foreground text-sm">Émise le</p>
-								<p className="mt-1 text-sm">{formatDateTime(order.invoiceGeneratedAt)}</p>
-							</div>
-						)}
+							{order.invoiceGeneratedAt && (
+								<DetailInfoRow label="Émise le" valueClassName="mt-1 text-sm">
+									{formatDateTime(order.invoiceGeneratedAt)}
+								</DetailInfoRow>
+							)}
 
-						{hashSuffix && (
-							<div>
-								<p className="text-muted-foreground text-sm">Empreinte SHA-256 (PDF immuable)</p>
-								<p
-									className="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums"
-									title="Art. L102 B LPF — archive immuable"
+							{hashSuffix && (
+								<DetailInfoRow
+									label="Empreinte SHA-256 (PDF immuable)"
+									valueClassName="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums"
 								>
-									<ShieldCheck className="text-success size-3.5" aria-hidden="true" />…{hashSuffix}
-								</p>
-							</div>
-						)}
+									<span
+										title="Art. L102 B LPF — archive immuable"
+										className="flex items-center gap-2"
+									>
+										<ShieldCheck className="text-success size-3.5" aria-hidden="true" />…
+										{hashSuffix}
+									</span>
+								</DetailInfoRow>
+							)}
+						</DetailInfoList>
 
 						<DownloadAdminInvoiceButton
 							orderNumber={order.orderNumber}
@@ -145,35 +149,42 @@ export function OrderInvoiceCard({ order }: OrderInvoiceCardProps) {
 								Avoir comptable émis (Art. 272-I CGI)
 							</p>
 						</div>
-						<div>
-							<p className="text-muted-foreground text-xs">Numéro d&apos;avoir</p>
-							<div className="mt-1 flex items-center gap-2">
-								<code
-									className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
-									aria-label={`Numéro d'avoir ${order.creditNoteNumber}`}
+						<DetailInfoList orientation="stacked">
+							<DetailInfoRow label="Numéro d'avoir" labelClassName="text-xs">
+								<div className="mt-1 flex items-center gap-2">
+									<code
+										className="bg-muted rounded px-1.5 py-0.5 font-mono text-sm tabular-nums"
+										aria-label={`Numéro d'avoir ${order.creditNoteNumber}`}
+									>
+										{order.creditNoteNumber}
+									</code>
+									<CopyButton
+										text={order.creditNoteNumber}
+										label="Numéro d'avoir"
+										className="size-7 p-0"
+										size="icon"
+									/>
+								</div>
+							</DetailInfoRow>
+							{order.creditNoteGeneratedAt && (
+								<DetailInfoRow
+									label="Émis le"
+									labelClassName="text-xs"
+									valueClassName="mt-1 text-sm"
 								>
-									{order.creditNoteNumber}
-								</code>
-								<CopyButton
-									text={order.creditNoteNumber}
-									label="Numéro d'avoir"
-									className="size-7 p-0"
-									size="icon"
-								/>
-							</div>
-						</div>
-						{order.creditNoteGeneratedAt && (
-							<div>
-								<p className="text-muted-foreground text-xs">Émis le</p>
-								<p className="mt-1 text-sm">{formatDateTime(order.creditNoteGeneratedAt)}</p>
-							</div>
-						)}
-						{order.invoiceVoidedAt && (
-							<div>
-								<p className="text-muted-foreground text-xs">Facture annulée le</p>
-								<p className="mt-1 text-sm">{formatDateTime(order.invoiceVoidedAt)}</p>
-							</div>
-						)}
+									{formatDateTime(order.creditNoteGeneratedAt)}
+								</DetailInfoRow>
+							)}
+							{order.invoiceVoidedAt && (
+								<DetailInfoRow
+									label="Facture annulée le"
+									labelClassName="text-xs"
+									valueClassName="mt-1 text-sm"
+								>
+									{formatDateTime(order.invoiceVoidedAt)}
+								</DetailInfoRow>
+							)}
+						</DetailInfoList>
 						<DownloadAdminCreditNoteButton
 							orderNumber={order.orderNumber}
 							creditNoteNumber={order.creditNoteNumber}

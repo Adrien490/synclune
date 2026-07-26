@@ -3,6 +3,12 @@
  *
  * @regression cat-audit-001 — status=PUBLIC doit passer validateProductForPublication
  * @regression cat-audit-003 — désactiver le SKU défaut bloqué (alignement update-sku-status)
+ * @regression product-type-deactivated-blocks-edit — `isActive` du type exigé UNIQUEMENT
+ *   s'il change. Avant : la transaction revalidait `productType.isActive` même quand
+ *   l'admin ne touchait pas au type, donc désactiver un type rendait TOUS les bijoux qui
+ *   le référencent inéditables (jusqu'au titre) — avec un message générique, le `throw`
+ *   étant un `Error` nu et non une `BusinessError`. Aggravé par `getProductTypeOptions`
+ *   qui filtre `isActive` : le select était vide, l'admin resoumettait un id invisible.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -77,6 +83,14 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	notFound: mockNotFound,
 	validationError: mockValidationError,
+	// Sous-classe reelle : `instanceof` doit fonctionner cote action, et le nom
+	// permet a mockHandleActionError de distinguer erreur metier / technique.
+	BusinessError: class BusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 }));
 vi.mock("@/shared/utils/generate-slug", () => ({ generateSlug: vi.fn() }));
 vi.mock("@/modules/media/utils/media-type-detection", () => ({
@@ -120,6 +134,7 @@ const formData = createMockFormData({
 
 function buildValidatedData(overrides: {
 	status?: "DRAFT" | "PUBLIC" | "ARCHIVED";
+	typeId?: string | null;
 	defaultSkuOverrides?: Partial<{
 		isActive: boolean;
 		inventory: number;
@@ -130,7 +145,7 @@ function buildValidatedData(overrides: {
 		productId: VALID_CUID,
 		title: "Bracelet Lune Updated",
 		description: "Updated",
-		typeId: "type_123",
+		typeId: overrides.typeId === undefined ? "type_123" : overrides.typeId,
 		collectionIds: [],
 		status: overrides.status ?? "PUBLIC",
 		defaultSku: {
@@ -156,12 +171,14 @@ function buildProductMock(
 		inventory: number;
 		images: Array<{ id: string }>;
 	}>,
+	overrides: { typeId?: string | null } = {},
 ) {
 	return {
 		id: VALID_CUID,
 		title: "Bracelet Lune Updated",
 		slug: "bracelet-lune",
 		status: "DRAFT",
+		typeId: overrides.typeId === undefined ? "type_123" : overrides.typeId,
 		collections: [],
 		skus,
 	};
@@ -216,9 +233,11 @@ describe("updateProduct — regression hardening", () => {
 			status: ActionStatus.VALIDATION_ERROR,
 			message: msg,
 		}));
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		// Reproduit le vrai handleActionError : seules les BusinessError exposent leur
+		// message, les erreurs techniques retombent sur le fallback.
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 	});
 
@@ -366,6 +385,92 @@ describe("updateProduct — regression hardening", () => {
 
 			const result = await updateProduct(undefined, formData);
 			expect(result.status).toBe(ActionStatus.SUCCESS);
+		});
+	});
+
+	// ===================================================================
+	// PRODUCT-TYPE-DEACTIVATED — isActive exigé uniquement si le type change
+	// ===================================================================
+
+	describe("PRODUCT-TYPE-DEACTIVATED: isActive du type exigé uniquement sur changement", () => {
+		/** Etat commun : SKU défaut sain, statut DRAFT (pas de validation publication). */
+		function arrange(opts: {
+			validatedTypeId?: string | null;
+			productTypeId?: string | null;
+			foundType: { id: string; isActive: boolean } | null;
+		}) {
+			mockValidateInput.mockReturnValue({
+				data: buildValidatedData({ status: "DRAFT", typeId: opts.validatedTypeId }),
+			});
+			mockPrisma.product.findUnique.mockResolvedValue(
+				buildProductMock(
+					[{ id: "sku_default", isActive: true, inventory: 10, images: [{ id: "img1" }] }],
+					{ typeId: opts.productTypeId },
+				),
+			);
+			mockPrisma.productSku.findFirst.mockResolvedValue({
+				id: "sku_default",
+				isDefault: true,
+				isActive: true,
+			});
+			mockPrisma.productType.findUnique.mockResolvedValue(opts.foundType);
+		}
+
+		it("autorise l'édition quand le type est désactivé mais INCHANGÉ", async () => {
+			arrange({
+				validatedTypeId: "type_123",
+				productTypeId: "type_123",
+				foundType: { id: "type_123", isActive: false },
+			});
+
+			const result = await updateProduct(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(mockPrisma.product.update).toHaveBeenCalled();
+		});
+
+		it("refuse le passage vers un type désactivé", async () => {
+			arrange({
+				validatedTypeId: "type_456",
+				productTypeId: "type_123",
+				foundType: { id: "type_456", isActive: false },
+			});
+
+			const result = await updateProduct(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(result.message).toContain("désactivé");
+			expect(mockHandleActionError).toHaveBeenCalledWith(
+				expect.objectContaining({ name: "BusinessError" }),
+				expect.any(String),
+			);
+			expect(mockPrisma.product.update).not.toHaveBeenCalled();
+		});
+
+		it("refuse un type inexistant même inchangé (existence inconditionnelle)", async () => {
+			arrange({ validatedTypeId: "type_123", productTypeId: "type_123", foundType: null });
+
+			const result = await updateProduct(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(result.message).toContain("n'existe pas");
+			expect(mockPrisma.product.update).not.toHaveBeenCalled();
+		});
+
+		it("charge typeId du produit pour pouvoir détecter le changement", async () => {
+			arrange({
+				validatedTypeId: "type_123",
+				productTypeId: "type_123",
+				foundType: { id: "type_123", isActive: true },
+			});
+
+			await updateProduct(undefined, formData);
+
+			expect(mockPrisma.product.findUnique).toHaveBeenCalledWith(
+				expect.objectContaining({
+					select: expect.objectContaining({ typeId: true }),
+				}),
+			);
 		});
 	});
 });

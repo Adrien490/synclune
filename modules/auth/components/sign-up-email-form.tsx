@@ -121,6 +121,9 @@ export function SignUpEmailForm() {
 								type="text"
 								autoComplete="given-name"
 								autoCapitalize="words"
+								// iOS « corrige » sinon les prénoms peu courants. `profile-form`
+								// posait déjà cet attribut — les deux surfaces divergeaient.
+								autoCorrect="off"
 								enterKeyHint="next"
 								disabled={isPending}
 								required

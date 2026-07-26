@@ -1,4 +1,7 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
+// `prisma/enums` et NON `prisma/client` : ce module est consommé par des composants
+// clients (tiroir de filtres commandes, via `to-ship`). Le client généré importe
+// `node:module` et casse le build s'il atterrit dans un chunk navigateur.
+import { PaymentStatus } from "@/app/generated/prisma/enums";
 
 /**
  * Statuts de paiement représentant un encaissement effectif (CA cash-basis,

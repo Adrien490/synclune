@@ -1515,7 +1515,6 @@ Tu audites une INTERFACE, pas seulement du code. Contraintes de méthode :
    - pas d'`autoFocus` dans les formulaires ;
    - pas de double bouton retour en admin mobile, pas de bouton Cancel sur les formulaires de
      création admin ;
-   - pas de pause/reprise au survol du MicroToast (bulle discrète, pas un toast classique) ;
    - pas d'icônes sur le bandeau de réassurance du Hero ;
    - haptique parcimonieuse : jamais sur une action passive ou un simple affichage ;
    - patterns natifs 2026 préférés aux rustines cosmétiques.
@@ -1575,7 +1574,7 @@ Note /100, liste les tokens manquants/morts/mal utilisés, et rends le verdict p
 Audit le point « Layout, couches fixes & z-index » dans Synclune.
 
 Le site empile beaucoup d'éléments fixes : bannière d'annonce, navbar (transparente sur l'accueil),
-bottom bar mobile, FAB, toasts, micro-toasts, overlays Radix/Vaul, header admin, sticky action bars.
+bottom bar mobile, FAB, toasts, overlays Radix/Vaul, header admin, sticky action bars.
 Vérifie que cet empilement est gouverné par les tokens `--z-*` et par les hauteurs déclarées
 (`--navbar-height`, `--announcement-bar-height`, `--bottom-bar-height`, `--admin-header-height`,
 `--fab-corner-clearance`, `--toast-safe-top`) et non par des `z-50` improvisés.
@@ -1626,7 +1625,7 @@ Note /100, classe toute impasse clavier en P0, et rends le verdict (garder / cor
 
 ---
 
-## 103 — Navigation storefront mobile
+## 103 — Navigation storefront mobile : DONE
 
 ```text
 Audit le point « Navigation storefront mobile » dans Synclune.
@@ -2005,7 +2004,7 @@ Note /100, rends le verdict storefront puis admin.
 
 ---
 
-## 117 — Recherche (UI/UX)
+## 117 — Recherche (UI/UX) : DONE
 
 ```text
 Audit le point « Recherche (UI/UX) » dans Synclune.
@@ -2031,7 +2030,7 @@ Note /100, rends le verdict pour le dialog et pour le champ inline.
 
 ---
 
-## 118 — Overlays : dialogs, sheets, drawers
+## 118 — Overlays : dialogs, sheets, drawers : DONE
 
 ```text
 Audit le point « Overlays : dialogs, sheets, drawers, alert-dialogs » dans Synclune.
@@ -2062,13 +2061,13 @@ Note /100, classe tout piège de focus ou overlay non fermable en P0, et rends l
 
 ---
 
-## 119 — Feedback : toasts, squelettes, états vides, erreurs
+## 119 — Feedback : toasts, squelettes, états vides, erreurs : DONE
 
 ```text
 Audit le point « Système de feedback » dans Synclune.
 
-Vérifie que chaque action donne une réponse proportionnée : toast classique, micro-toast (bulle
-discrète), état inline, ou rien du tout quand l'effet est déjà visible. Traque les deux excès
+Vérifie que chaque action donne une réponse proportionnée : toast, état inline, ou rien du tout
+quand l'effet est déjà visible. Traque les deux excès
 symétriques : action silencieuse (le client ne sait pas si ça a marché) et sur-notification (un toast
 pour une action dont le résultat est évident à l'écran).
 
@@ -2080,10 +2079,10 @@ Vérifie aussi :
 - pages `error.tsx` / `not-found.tsx` par route ;
 - `aria-live` pour les changements annoncés (compteur de résultats, ajout au panier, erreurs).
 
-Rappels : le MicroToast est une bulle discrète sans pause au survol ; l'haptique reste parcimonieuse.
+Rappel : l'haptique reste parcimonieuse.
 
-Inspecte `shared/components/ui/{toaster,micro-toast,toast-icons,skeleton,empty,spinner,progress}.tsx`,
-`shared/utils/toast.ts`, `shared/stores/micro-toast-store.ts`,
+Inspecte `shared/components/ui/{toaster,toast-icons,skeleton,empty,spinner,progress}.tsx`,
+`shared/utils/toast.ts`,
 `shared/hooks/{use-action-with-toast,use-action-state-with-toast,use-bulk-action-with-toast}.ts`,
 `shared/components/loaders/**`, tous les `app/**/loading.tsx`, `app/**/error.tsx`,
 `app/**/not-found.tsx`, `app/admin/_components/admin-{form,list}-error-boundary.tsx`,
@@ -2094,7 +2093,7 @@ Note /100, classe toute action critique sans feedback en P1, et rends le verdict
 
 ---
 
-## 120 — Formulaires : ergonomie mobile & clavier
+## 120 — Formulaires : ergonomie mobile & clavier : DONE
 
 ```text
 Audit le point « Ergonomie des formulaires (mobile & clavier) » dans Synclune.
@@ -2124,7 +2123,7 @@ Note /100, classe tout champ inatteignable derrière le clavier virtuel en P0/P1
 
 ---
 
-## 121 — Admin : shell & navigation
+## 121 — Admin : shell & navigation : DONE
 
 ```text
 Audit le point « Admin : shell & navigation » dans Synclune.
@@ -2156,7 +2155,7 @@ Note /100, rends le verdict desktop puis mobile.
 
 ---
 
-## 122 — Admin : listes, tableaux & actions groupées
+## 122 — Admin : listes, tableaux & actions groupées : DONE
 
 ```text
 Audit le point « Admin : listes, tableaux et actions groupées » dans Synclune.
@@ -2189,7 +2188,7 @@ Note /100, classe toute action groupée dont la portée est ambiguë en P1, et r
 
 ---
 
-## 123 — Admin : formulaires & pages de détail
+## 123 — Admin : formulaires & pages de détail : DONE
 
 ```text
 Audit le point « Admin : formulaires et pages de détail » dans Synclune.
@@ -2248,7 +2247,7 @@ Note /100, rends le verdict par bloc du dashboard, et dis lesquels supprimer.
 
 ---
 
-## 125 — Gestes tactiles & haptique
+## 125 — Gestes tactiles & haptique : DONE
 
 ```text
 Audit le point « Gestes tactiles et haptique » dans Synclune.
@@ -2281,7 +2280,7 @@ Note /100, classe tout geste sans alternative en P1, et rends le verdict geste p
 
 ---
 
-## 126 — Confort desktop : densité, largeurs, zoom
+## 126 — Confort desktop : densité, largeurs, zoom : DONE
 
 ```text
 Audit le point « Confort desktop et robustesse du responsive » dans Synclune.
@@ -3228,7 +3227,7 @@ numéro de facture après restauration en P0 s'il n'est pas traité.
 
 ---
 
-## 152 — Coûts, quotas & limites fournisseurs
+## 152 — Coûts, quotas & limites fournisseurs : DONE
 
 ```text
 Audit le point « Coûts, quotas et limites fournisseurs » dans Synclune.

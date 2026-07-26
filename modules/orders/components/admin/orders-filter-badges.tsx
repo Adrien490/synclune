@@ -47,21 +47,32 @@ function formatOrderFilter(
 	}
 
 	// Gestion du montant (grouper totalMin/totalMax)
-	if (filterKey === "totalMin") {
-		const priceMin = searchParams.get("filter_totalMin");
-		const priceMax = searchParams.get("filter_totalMax");
-		const minValue = priceMin ? parseInt(priceMin) : 0;
-		const maxValue = priceMax ? parseInt(priceMax) : 10000;
+	//
+	// ⚠️ `filter_total*` est en EUROS dans l'URL, `formatEuro` attend des CENTIMES :
+	// passer la valeur brute affichait le montant 100× trop petit (« 50 € – 200 € »
+	// rendu « 0,50 € - 2,00 € »). Les deux bornes sont désormais indépendantes, donc
+	// l'une peut être absente — on n'invente plus de plafond par défaut.
+	if (filterKey === "totalMin" || filterKey === "totalMax") {
+		// Une seule entrée pour la paire : ancrée sur totalMin quand il est présent.
+		if (filterKey === "totalMax" && searchParams.has("filter_totalMin")) {
+			return null;
+		}
 
-		return {
-			label: "Montant",
-			displayValue: `${formatEuro(minValue)} - ${formatEuro(maxValue)}`,
-		};
-	}
+		const euros = (raw: string | null) => (raw !== null && raw !== "" ? Number(raw) : null);
+		const minEuros = euros(searchParams.get("filter_totalMin"));
+		const maxEuros = euros(searchParams.get("filter_totalMax"));
+		const asCents = (value: number) => formatEuro(Math.round(value * 100));
 
-	// Ne pas afficher totalMax séparément (déjà géré avec totalMin)
-	if (filterKey === "totalMax") {
-		return null;
+		const displayValue =
+			minEuros !== null && maxEuros !== null
+				? `${asCents(minEuros)} - ${asCents(maxEuros)}`
+				: minEuros !== null
+					? `à partir de ${asCents(minEuros)}`
+					: maxEuros !== null
+						? `jusqu'à ${asCents(maxEuros)}`
+						: null;
+
+		return displayValue ? { label: "Montant", displayValue } : null;
 	}
 
 	// Gestion des dates (grouper createdAfter/createdBefore)

@@ -12,6 +12,7 @@ import type { AdminUserActiveSession } from "../../data/get-user-detail-admin";
 import { UserActiveSessionsSection } from "./user-active-sessions-section";
 import { UserAdminDialogs } from "./user-admin-dialogs";
 import { UserDetailHeader } from "./user-detail-header";
+import { DetailInfoList, DetailInfoRow } from "@/shared/components/admin/detail-info-row";
 
 interface UserDetailPageProps {
 	user: {
@@ -34,11 +35,13 @@ export function UserDetailPage({ user, orderCount, activeSessions }: UserDetailP
 	const isSuspended = !!user.suspendedAt;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 md:space-y-6">
 			<UserDetailHeader user={user} />
 
-			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-				<div className="space-y-6 lg:col-span-2">
+			{/* Traitement mobile edge-to-edge aligné sur `order-detail-page` (cf. le même
+			    commentaire dans `refund-detail-page`). */}
+			<div className="grid gap-0 md:gap-6 lg:grid-cols-3 lg:items-start">
+				<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0 lg:col-span-2">
 					<Card style={{ viewTransitionName: "user-detail-info" }}>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">
@@ -47,52 +50,51 @@ export function UserDetailPage({ user, orderCount, activeSessions }: UserDetailP
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
-							<dl className="grid gap-3 text-sm">
-								<div className="flex items-start justify-between gap-3">
-									<dt className="text-muted-foreground shrink-0 pt-1.5">Email</dt>
-									<dd className="flex min-w-0 items-start gap-1">
-										<span className="text-foreground/80 pt-1.5 text-xs break-all">
-											{user.email}
-										</span>
-										<CopyButton
-											text={user.email}
-											label="Email"
-											className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
-										/>
-									</dd>
-								</div>
-								<div className="flex items-center justify-between gap-3">
-									<dt className="text-muted-foreground">Rôle</dt>
-									<dd>
-										<Badge variant={isAdmin ? "default" : "secondary"}>
-											{isAdmin ? "Administrateur" : "Utilisateur"}
-										</Badge>
-									</dd>
-								</div>
-								<div className="flex items-center justify-between gap-3">
-									<dt className="text-muted-foreground">Statut</dt>
-									<dd>
-										{isDeleted ? (
-											<Badge variant="outline">Supprimé</Badge>
-										) : isSuspended ? (
-											<Badge variant="outline">Suspendu</Badge>
-										) : (
-											<Badge variant="default">Actif</Badge>
-										)}
-									</dd>
-								</div>
-								<div className="flex items-center justify-between gap-3">
-									<dt className="text-muted-foreground">Commandes</dt>
-									<dd className="font-medium">{orderCount}</dd>
-								</div>
-							</dl>
+							<DetailInfoList>
+								<DetailInfoRow
+									label="Email"
+									align="start"
+									labelClassName="shrink-0 pt-1.5"
+									valueClassName="flex min-w-0 items-start gap-1"
+								>
+									<span className="text-foreground/80 pt-1.5 text-xs break-all">{user.email}</span>
+									<CopyButton
+										text={user.email}
+										label="Email"
+										className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+									/>
+								</DetailInfoRow>
+								<DetailInfoRow label="Rôle">
+									<Badge variant={isAdmin ? "default" : "secondary"}>
+										{isAdmin ? "Administrateur" : "Utilisateur"}
+									</Badge>
+								</DetailInfoRow>
+								<DetailInfoRow label="Statut">
+									{isDeleted ? (
+										<Badge variant="outline">Supprimé</Badge>
+									) : isSuspended ? (
+										<Badge variant="outline">Suspendu</Badge>
+									) : (
+										<Badge variant="default">Actif</Badge>
+									)}
+								</DetailInfoRow>
+								<DetailInfoRow label="Commandes" valueClassName="font-medium">
+									{orderCount}
+								</DetailInfoRow>
+							</DetailInfoList>
 						</CardContent>
 					</Card>
 
-					<UserActiveSessionsSection sessions={activeSessions} />
+					{/* Ce bloc n'est pas une `Card` : il ne bénéficie donc pas du
+					    `px-[var(--admin-main-x)]` que `CardContent` réapplique pour compenser
+					    la marge négative de la colonne. Sans ce padding, son texte serait collé
+					    au bord de l'écran sur mobile. */}
+					<div className="px-[var(--admin-main-x,1.5rem)] py-4 md:px-0 md:py-0">
+						<UserActiveSessionsSection sessions={activeSessions} />
+					</div>
 				</div>
 
-				<div className="space-y-6">
+				<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0">
 					<Card style={{ viewTransitionName: "user-detail-orders" }}>
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2">

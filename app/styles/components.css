@@ -194,7 +194,11 @@
 	padding-top: max(1rem, env(safe-area-inset-top)) !important;
 }
 
-@media (max-width: 767px) {
+/* 64rem (`lg`) et non 48rem : la bottom-nav BOUTIQUE est active jusqu'à `lg`
+   (`BottomBar breakpoint="lg"`), donc entre 48rem et 64rem la variable valait
+   56px sans que ce bloc ne s'applique — le toaster se posait sous la barre.
+   Le fallback `0px` rend la règle inoffensive là où aucune barre n'existe. */
+@media (width < 64rem) {
 	[data-sonner-toaster] {
 		padding-bottom: calc(
 			var(--bottom-bar-height, 0px) + max(1rem, env(safe-area-inset-bottom))
@@ -334,7 +338,7 @@
 }
 
 /* Descriptions tronquées sur mobile */
-@media (max-width: 767px) {
+@media (width < 48rem) {
 	[data-sonner-toast] [data-description] {
 		display: -webkit-box;
 		-webkit-line-clamp: 2;

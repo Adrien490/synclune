@@ -230,13 +230,18 @@ describe("KpiCard", () => {
 			expect(label).toContain("Cliquer pour voir les détails");
 		});
 
-		it("triggers a 'light' haptic when the link is tapped", async () => {
+		/**
+		 * @regression no-haptic-on-passive-navigation
+		 * Un KPI cliquable est un lien de drill-down : navigation passive, pas de
+		 * retour haptique (cf. règle de parcimonie haptique du projet).
+		 */
+		it("fires no haptic when the link is tapped", async () => {
 			const { fireEvent } = await import("@testing-library/react");
 			render(<KpiCard title="CA du mois" value="1 500 €" href="/admin/ventes" />);
 
 			fireEvent.click(screen.getByRole("link"));
 
-			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 	});
 

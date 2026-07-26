@@ -4,7 +4,6 @@ import type { NavbarSessionData } from "@/shared/types/session.types";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
-import { SheetClose } from "@/shared/components/ui/sheet";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -20,7 +19,8 @@ import {
 	DiscoverSection,
 	UserHeader,
 } from "./menu-sheet-nav-sections";
-import { VAUL_EXIT_DURATION_MS } from "./navbar-styles";
+import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
+import { VAUL_TRANSITION_DURATION_MS } from "./navbar-styles";
 
 // Motion variants for staggered menu items (enter + exit)
 const itemVariants: Variants = {
@@ -58,6 +58,7 @@ export function MenuSheetNav({
 	const wishlistCount = useBadgeCountsStore((s) => s.wishlistCount);
 	const cartCount = useBadgeCountsStore((s) => s.cartCount);
 	const shouldReduceMotion = useReducedMotion();
+	const onNavigate = useMenuSheetNavigate();
 
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
@@ -108,8 +109,9 @@ export function MenuSheetNav({
 
 		sheetContent.addEventListener("transitionend", onTransitionEnd);
 		// Safety fallback: if transitionend never fires (interrupted by reflow),
-		// focus once Vaul's exit animation should have completed.
-		const fallback = setTimeout(applyFocus, VAUL_EXIT_DURATION_MS);
+		// focus once Vaul's ENTER animation should have completed. Same duration as
+		// the exit slide — d'où le nom neutre de la constante.
+		const fallback = setTimeout(applyFocus, VAUL_TRANSITION_DURATION_MS);
 		return () => {
 			sheetContent.removeEventListener("transitionend", onTransitionEnd);
 			clearTimeout(fallback);
@@ -175,21 +177,22 @@ export function MenuSheetNav({
 					variants={itemVariants}
 					custom={delay(170, 0)}
 				>
-					<SheetClose asChild>
-						<Link
-							href={ROUTES.ADMIN.ROOT}
-							prefetch={null}
-							className={cn(
-								"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
-								"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
-								"focus-ring",
-								"text-foreground/80 can-hover:hover:bg-accent can-hover:hover:text-foreground",
-								"motion-safe:active:scale-[0.97]",
-							)}
-						>
-							Tableau de bord
-						</Link>
-					</SheetClose>
+					{/* Pas de `<SheetClose asChild>` — cf. `menu-sheet-navigate-context`. */}
+					<Link
+						href={ROUTES.ADMIN.ROOT}
+						replace
+						prefetch={null}
+						onClick={onNavigate}
+						className={cn(
+							"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
+							"ease-out motion-safe:transition-[transform,color,background-color] motion-safe:duration-[var(--duration-slow)]",
+							"focus-ring",
+							"text-foreground/80 can-hover:hover:bg-accent can-hover:hover:text-foreground",
+							"motion-safe:active:scale-[0.97]",
+						)}
+					>
+						Tableau de bord
+					</Link>
 				</m.div>
 			)}
 		</m.nav>

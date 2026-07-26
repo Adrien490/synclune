@@ -1,3 +1,4 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 
@@ -7,24 +8,15 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
  */
 export default function CookiesLoading() {
 	return (
-		<>
-			{/* PageHeader skeleton */}
-			<div className="bg-background border-border relative border-b">
-				<div className="container mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-					{/* Breadcrumbs skeleton */}
-					<div className="mb-6 flex items-center gap-2">
-						<Skeleton className="bg-muted/40 h-4 w-16" />
-						<span className="text-muted-foreground">/</span>
-						<Skeleton className="bg-muted/40 h-4 w-20" />
-					</div>
+		<div
+			className="min-h-dvh"
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement de la politique de cookies"
+		>
+			<span className="sr-only">Chargement de la politique de cookies…</span>
 
-					{/* Title skeleton */}
-					<Skeleton className="bg-muted/50 mb-4 h-10 w-72" />
-
-					{/* Description skeleton */}
-					<Skeleton className="bg-muted/30 h-5 w-full max-w-2xl" />
-				</div>
-			</div>
+			<PageHeaderSkeleton hasBreadcrumbs />
 
 			{/* Content skeleton */}
 			<section className={`bg-background ${SECTION_SPACING.default}`}>
@@ -83,6 +75,6 @@ export default function CookiesLoading() {
 					</div>
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }

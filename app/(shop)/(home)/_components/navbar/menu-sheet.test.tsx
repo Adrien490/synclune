@@ -79,6 +79,8 @@ vi.mock("motion/react", () => {
 
 // Capture latest onOpenChange handler so tests can fire close events directly.
 let lastOnOpenChange: ((open: boolean) => void) | undefined;
+// Capture the onCloseAutoFocus handler (focus restoration on close).
+let lastOnCloseAutoFocus: ((event: Event) => void) | undefined;
 
 // Mock Sheet components — forward key props (scrollLockTimeout, onOpenChange,
 // onOverlayClick, id on SheetContent) so tests can assert on them.
@@ -106,19 +108,24 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetContent: ({
 		children,
 		onOverlayClick,
+		onCloseAutoFocus,
 		id,
 	}: {
 		children: React.ReactNode;
 		onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+		onCloseAutoFocus?: (event: Event) => void;
 		id?: string;
-	}) => (
-		<div data-testid="sheet-content" id={id} data-slot="sheet-content">
-			<button type="button" data-testid="sheet-overlay" onClick={onOverlayClick as never}>
-				overlay
-			</button>
-			{children}
-		</div>
-	),
+	}) => {
+		lastOnCloseAutoFocus = onCloseAutoFocus;
+		return (
+			<div data-testid="sheet-content" id={id} data-slot="sheet-content">
+				<button type="button" data-testid="sheet-overlay" onClick={onOverlayClick as never}>
+					overlay
+				</button>
+				{children}
+			</div>
+		);
+	},
 	SheetHeader: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
 		<div {...props}>{children}</div>
 	),
@@ -161,16 +168,18 @@ vi.mock("./edge-swipe-indicator", () => ({
 	),
 }));
 
-// Mock useEdgeSwipe — capture onProgress so tests can simulate drag
+// Mock useEdgeSwipe — capture onProgress so tests can simulate drag, et le
+// breakpoint pour vérifier qu'il reste aligné sur le seuil du trigger burger.
 let lastOnProgress: ((p: number) => void) | undefined;
+let lastDisabledFrom: string | undefined;
 vi.mock("@/shared/hooks/use-edge-swipe", () => ({
 	useEdgeSwipe: (
 		_onOpen: () => void,
 		_isOpen: boolean,
-		_maxWidth?: number,
-		onProgress?: (p: number) => void,
+		options?: { disabledFrom?: string; onProgress?: (p: number) => void },
 	) => {
-		lastOnProgress = onProgress;
+		lastOnProgress = options?.onProgress;
+		lastDisabledFrom = options?.disabledFrom;
 	},
 }));
 
@@ -240,6 +249,25 @@ describe("MenuSheet", () => {
 			const trigger = screen.getByRole("button", { name: "Menu de navigation" });
 			expect(trigger.className).toContain("touch-manipulation");
 			expect(trigger.className).toContain("active:scale-[0.95]");
+		});
+
+		it("restitue le focus sur le burger à la fermeture (WCAG 2.4.3)", () => {
+			// Régression : `onOpenChange(true)` blur `document.activeElement` avant que
+			// le SheetContent ne monte, donc le FocusScope de Radix ne mémorisait que
+			// `<body>` et le focus retombait là à la fermeture. `onCloseAutoFocus`
+			// réapplique explicitement le trigger conservé en ref.
+			render(<MenuSheet {...baseProps} />);
+
+			const trigger = screen.getByRole("button", { name: "Menu de navigation" });
+			expect(lastOnCloseAutoFocus).toBeTypeOf("function");
+
+			const event = new Event("closeAutoFocus", { cancelable: true });
+			act(() => lastOnCloseAutoFocus?.(event));
+
+			expect(document.activeElement).toBe(trigger);
+			// Le défaut Radix (focus sur l'élément mémorisé) doit être neutralisé,
+			// sinon il écraserait notre restitution.
+			expect(event.defaultPrevented).toBe(true);
 		});
 
 		it("wires aria-controls to the sheet content id (WCAG 4.1.2)", () => {
@@ -367,6 +395,16 @@ describe("MenuSheet", () => {
 
 			const indicator = screen.getByTestId("edge-swipe-indicator");
 			expect(indicator.getAttribute("data-progress")).toBe("0.5");
+		});
+
+		// Le geste doit être désactivé exactement là où le trigger burger disparaît
+		// (`lg:hidden`) et où `DesktopNav` prend le relais (`hidden lg:flex`). Un
+		// seuil divergent laisserait le swipe armé sur une largeur où le mega-menu
+		// est déjà affiché.
+		it("disables the edge swipe at the same breakpoint as the burger trigger", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			expect(lastDisabledFrom).toBe("lg");
 		});
 	});
 

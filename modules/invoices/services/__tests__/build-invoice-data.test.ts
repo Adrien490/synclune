@@ -39,7 +39,6 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		customerEmail: "alice@example.com",
 		customerName: "Alice Dupont",
 		customerPhone: "+33612345678",
-		customerType: "B2C",
 		subtotal: 9000,
 		discountAmount: 0,
 		shippingCost: 500,
@@ -63,9 +62,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
 		billingCity: null,
 		billingCountry: null,
 		billingPhone: null,
-		shippingMethod: "standard",
 		shippingCarrier: "colissimo",
-		shippingRateId: null,
 		trackingNumber: null,
 		trackingUrl: null,
 		actualDelivery: null,
@@ -160,17 +157,11 @@ describe("buildInvoiceData — B2C franchise", () => {
 
 	it("buyer info is B2C with null company fields", () => {
 		const data = buildInvoiceData(makeOrder());
-		expect(data.buyer.type).toBe("B2C");
 		expect(data.buyer.firstName).toBe("Alice");
 		expect(data.buyer.lastName).toBe("Dupont");
 		expect(data.buyer.legalName).toBeNull();
-		expect(data.buyer.siren).toBeNull();
 		expect(data.buyer.siret).toBeNull();
 		expect(data.buyer.vatNumber).toBeNull();
-		expect(data.buyer.eInvoicingAddress).toBeNull();
-		expect(data.buyer.eInvoicingPlatformId).toBeNull();
-		expect(data.buyer.publicEntityId).toBeNull();
-		expect(data.buyer.chorusServiceCode).toBeNull();
 	});
 
 	it("uses shipping address as billing when billingSameAsShipping=true", () => {
@@ -238,7 +229,8 @@ describe("buildInvoiceData — B2C franchise", () => {
 
 	it("invoiceFormat defaults to PDF; accepts override", () => {
 		expect(buildInvoiceData(makeOrder()).invoiceFormat).toBe("PDF");
-		expect(buildInvoiceData(makeOrder(), { format: "FACTURX" }).invoiceFormat).toBe("FACTURX");
+		// Seul "PDF" est un format valide : aucun renderer XML n'existe (cf. InvoiceFormat).
+		expect(buildInvoiceData(makeOrder(), { format: "PDF" }).invoiceFormat).toBe("PDF");
 	});
 
 	it("throws when invoiceNumber is missing (caller must persist first)", () => {

@@ -39,24 +39,44 @@ export default defineConfig({
 		{
 			name: "firefox",
 			use: { ...devices["Desktop Firefox"] },
-			testIgnore: /authenticated\//,
+			testIgnore: [/authenticated\//, /responsive-breakpoints/],
 		},
 		{
 			name: "webkit",
 			use: { ...devices["Desktop Safari"] },
-			testIgnore: /authenticated\//,
+			testIgnore: [/authenticated\//, /responsive-breakpoints/],
 		},
 
 		// Unauthenticated tests - Mobile
 		{
 			name: "mobile-chrome",
 			use: { ...devices["Pixel 7"] },
-			testIgnore: /authenticated\//,
+			testIgnore: [/authenticated\//, /responsive-breakpoints/],
 		},
 		{
 			name: "mobile-webkit",
 			use: { ...devices["iPhone 14"] },
-			testIgnore: /authenticated\//,
+			testIgnore: [/authenticated\//, /responsive-breakpoints/],
+		},
+
+		// Unauthenticated tests - Tablette
+		// La plage 48-64rem n'était couverte par AUCUN projet (le saut allait de
+		// 412px à 1280px), alors que c'est là que les deux barres de navigation
+		// basculent à des seuils différents : bottom-nav boutique à `lg`, sidebar
+		// admin à `md`. Scopés au responsive pour ne pas doubler la durée de la
+		// suite complète (audit responsive 2026-07-26).
+		{
+			name: "tablet-portrait",
+			use: { ...devices["iPad Mini"], viewport: { width: 768, height: 1024 } },
+			testMatch: /responsive-breakpoints/,
+		},
+		{
+			name: "tablet-landscape",
+			use: {
+				...devices["iPad Mini landscape"],
+				viewport: { width: 1024, height: 768 },
+			},
+			testMatch: /responsive-breakpoints|a11y\/zoom-a11y/,
 		},
 
 		// Authenticated tests (admin) - Chrome

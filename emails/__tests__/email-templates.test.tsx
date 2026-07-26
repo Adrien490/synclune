@@ -16,7 +16,7 @@ const baseShippingAddress: ShippingAddress = {
 	address1: "12 Rue de la Paix",
 	postalCode: "75002",
 	city: "Paris",
-	country: "France",
+	country: "FR",
 };
 
 const baseOrderItems: OrderItem[] = [
@@ -100,6 +100,15 @@ describe("OrderConfirmationEmail", () => {
 		const html = await render(<OrderConfirmationEmail {...baseProps} />);
 		expect(html).toContain("Paris");
 		expect(html).toContain("75002");
+	});
+
+	// Les émetteurs passent la colonne `shippingCountry` (VarChar(2)) telle quelle :
+	// l'email affichait « 75002 Paris, FR ». Le repli `|| "France"` des émetteurs ne
+	// se déclenchait jamais, la colonne étant non-nulle.
+	it("traduit le code pays ISO en nom français", async () => {
+		const html = await render(<OrderConfirmationEmail {...baseProps} />);
+		expect(html).toContain("France");
+		expect(html).not.toMatch(/75002 Paris,\s*FR\b/);
 	});
 
 	it("contains the Commande confirmée heading", async () => {
@@ -190,12 +199,57 @@ describe("ShippingConfirmationEmail", () => {
 		expect(html).not.toContain("Suivre mon colis");
 	});
 
+	// Sans URL transporteur (cas `autre`), l'email n'avait AUCUN CTA : le client
+	// apprenait que son colis est parti sans aucune surface pour le suivre.
+	it("retombe sur un lien vers la commande quand le transporteur n'a pas d'URL", async () => {
+		const html = await render(
+			<ShippingConfirmationEmail
+				{...baseProps}
+				trackingUrl={null}
+				orderTrackingUrl="https://synclune.fr/commandes/CMD-1730000000-ABCD"
+			/>,
+		);
+		expect(html).toContain("Voir ma commande");
+		expect(html).toContain("https://synclune.fr/commandes/CMD-1730000000-ABCD");
+	});
+
+	it("privilégie l'URL transporteur sur le lien de repli", async () => {
+		const html = await render(
+			<ShippingConfirmationEmail
+				{...baseProps}
+				orderTrackingUrl="https://synclune.fr/commandes/CMD-1730000000-ABCD"
+			/>,
+		);
+		expect(html).toContain("Suivre mon colis");
+		expect(html).not.toContain("Voir ma commande");
+	});
+
+	// `estimatedDelivery` était absent de `baseProps` : la ligne « Livraison
+	// estimée » de `TrackingInfo` n'était couverte par aucun test.
+	it("affiche la livraison estimée quand elle est fournie", async () => {
+		const html = await render(
+			<ShippingConfirmationEmail {...baseProps} estimatedDelivery="12 juin 2026" />,
+		);
+		expect(html).toContain("12 juin 2026");
+	});
+
+	it("n'affiche pas de ligne de livraison estimée sans la donnée", async () => {
+		const html = await render(<ShippingConfirmationEmail {...baseProps} />);
+		expect(html).not.toContain("estimée");
+	});
+
 	it("contains the shipping address", async () => {
 		const html = await render(<ShippingConfirmationEmail {...baseProps} />);
 		expect(html).toContain("Paris");
 		expect(html).toContain("75002");
 		expect(html).toContain("Marie");
 		expect(html).toContain("Dupont");
+	});
+
+	it("traduit le code pays ISO en nom français", async () => {
+		const html = await render(<ShippingConfirmationEmail {...baseProps} />);
+		expect(html).toContain("France");
+		expect(html).not.toMatch(/75002 Paris,\s*FR\b/);
 	});
 
 	it("contains the customer name in the greeting", async () => {

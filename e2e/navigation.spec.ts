@@ -84,8 +84,11 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Le bouton burger doit être visible sur mobile
-		const menuButton = page.getByRole("button", { name: /Ouvrir le menu de navigation/i });
+		// Le bouton burger doit être visible sur mobile.
+		// ⚠️ Le nom accessible est « Menu de navigation » (et « Fermer le menu de
+		// navigation » à l'état ouvert) — PAS « Ouvrir le menu… », qui n'a jamais
+		// existé côté boutique et laissait ce test échouer au timeout.
+		const menuButton = page.getByRole("button", { name: /Menu de navigation/i });
 		await expect(menuButton).toBeVisible();
 
 		// Ouvrir le menu
@@ -98,8 +101,9 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		// Le menu doit contenir les items de navigation
 		await expect(menuDialog.getByRole("link", { name: /Accueil/i })).toBeVisible();
 
-		// Fermer le menu via le bouton close (aria-label "Fermer")
-		const closeButton = page.getByRole("button", { name: /Fermer/i }).first();
+		// Fermer via le bouton X du panneau. Ciblé précisément : /Fermer/i matchait
+		// aussi le burger, dont le label devient « Fermer le menu de navigation ».
+		const closeButton = page.getByRole("button", { name: "Fermer le panneau" });
 		await closeButton.click();
 
 		// Le menu doit être fermé

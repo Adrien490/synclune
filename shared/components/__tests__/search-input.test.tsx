@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { createRef } from "react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -117,53 +118,74 @@ vi.mock("lucide-react", () => {
 	};
 });
 
+/**
+ * Mock minimal d'`useAppForm`.
+ *
+ * ⚠️ `AppField` et `Subscribe` doivent avoir une identité **stable** entre les
+ * rendus, comme le vrai `form.AppField`. Une version qui recrée la fonction à
+ * chaque rendu fait remonter le sous-arbre par React : le `<input>` est remplacé
+ * par un nœud NEUF, ce qui (a) perd le focus — rendant intestable toute logique
+ * de focus/blur — et (b) détache les handlers du nœud capturé par le test, si
+ * bien qu'un `fireEvent.keyDown` sur la référence gardée ne déclenche plus rien.
+ * D'où le couple ref + `forceRender`. Cf. le principe déjà noté sur cet audit :
+ * un mock plus permissif que le vrai composant masque des bugs.
+ */
 vi.mock("@/shared/components/forms", () => {
-	const { useState } = require("react");
+	const { useState, useRef, useReducer } = require("react");
 
-	// A minimal AppForm mock that tracks field state and exposes AppField + Subscribe
 	function useAppForm({ defaultValues }: { defaultValues: { search: string } }) {
-		const [value, setValue] = useState(defaultValues.search);
+		const valueRef = useRef(defaultValues.search);
+		const [, forceRender] = useReducer((x: number) => x + 1, 0);
+
+		const setValue = (v: string) => {
+			valueRef.current = v;
+			forceRender();
+		};
+
+		const [AppField] = useState(
+			() =>
+				function AppField({
+					children,
+					validators,
+				}: {
+					children: (field: {
+						state: { value: string };
+						handleChange: (v: string) => void;
+					}) => unknown;
+					validators?: {
+						onChangeAsync?: (opts: { value: string }) => Promise<undefined>;
+					};
+					name: string;
+				}) {
+					return children({
+						state: { value: valueRef.current },
+						handleChange: (v: string) => {
+							setValue(v);
+							// Invoke onChangeAsync if provided (simulate debounce immediately)
+							void validators?.onChangeAsync?.({ value: v });
+						},
+					}) as unknown;
+				},
+		);
+
+		const [Subscribe] = useState(
+			() =>
+				function Subscribe({
+					selector,
+					children,
+				}: {
+					selector: (state: { values: { search: string } }) => string;
+					children: (v: string) => unknown;
+				}) {
+					return children(selector({ values: { search: valueRef.current } })) as unknown;
+				},
+		);
 
 		return {
-			AppField: ({
-				children,
-				validators,
-				name: _name,
-			}: {
-				children: (field: {
-					state: { value: string };
-					handleChange: (v: string) => void;
-				}) => unknown;
-				validators?: unknown;
-				name: string;
-			}) => {
-				const field = {
-					state: { value },
-					handleChange: (v: string) => {
-						setValue(v);
-						// Invoke onChangeAsync if provided (simulate debounce immediately)
-						const v2 = validators as
-							| {
-									onChangeAsync?: (opts: { value: string }) => Promise<undefined>;
-							  }
-							| undefined;
-						void v2?.onChangeAsync?.({ value: v });
-					},
-				};
-				return children(field) as unknown;
-			},
-			Subscribe: ({
-				selector,
-				children,
-			}: {
-				selector: (state: { values: { search: string } }) => string;
-				children: (v: string) => unknown;
-			}) => {
-				const selected = selector({ values: { search: value } });
-				return children(selected) as unknown;
-			},
+			AppField,
+			Subscribe,
 			setFieldValue: (_name: string, v: string) => setValue(v),
-			getFieldValue: (_name: string) => value,
+			getFieldValue: (_name: string) => valueRef.current,
 		};
 	}
 
@@ -171,7 +193,7 @@ vi.mock("@/shared/components/forms", () => {
 });
 
 // Import AFTER mocks
-import { SearchInput } from "../search-input";
+import { SearchInput, type SearchInputHandle } from "../search-input";
 
 // ============================================================================
 // SETUP
@@ -254,5 +276,97 @@ describe("SearchInput", () => {
 		render(<SearchInput paramName="q" aria-label="Rechercher des bijoux" />);
 
 		expect(screen.getByLabelText("Rechercher des bijoux")).toBeInTheDocument();
+	});
+
+	/**
+	 * Escape en deux temps — contrat dont dépend le test E2E « Escape ferme le
+	 * dialog » : la 1ʳᵉ pression efface seulement (et stoppe la propagation, sinon
+	 * le `DismissableLayer` de Radix fermerait le dialog), la 2ᵈᵉ ferme.
+	 * 419 lignes de composant pour 8 tests : ce comportement, le plus subtil du
+	 * fichier, n'était couvert nulle part.
+	 */
+	describe("Escape en deux temps", () => {
+		it("efface la valeur sans appeler onEscape à la première pression", () => {
+			const onEscape = vi.fn();
+			render(<SearchInput paramName="q" onEscape={onEscape} />);
+
+			const input = screen.getByRole("searchbox");
+			fireEvent.change(input, { target: { value: "bague" } });
+			fireEvent.keyDown(input, { key: "Escape" });
+
+			expect(screen.getByRole("searchbox")).toHaveValue("");
+			expect(onEscape).not.toHaveBeenCalled();
+		});
+
+		it("appelle onEscape quand le champ est déjà vide", () => {
+			const onEscape = vi.fn();
+			render(<SearchInput paramName="q" onEscape={onEscape} />);
+
+			fireEvent.keyDown(screen.getByRole("searchbox"), { key: "Escape" });
+
+			expect(onEscape).toHaveBeenCalledOnce();
+		});
+	});
+
+	/**
+	 * @regression search-input-media-query-rem
+	 *
+	 * La fermeture du clavier mobile doit interroger `matchMedia` en **rem**, jamais
+	 * en px : Tailwind exprime ses breakpoints en rem, et un seuil px ne coïncide
+	 * avec eux que tant que la police racine vaut 16px. Le commentaire du composant
+	 * présentait déjà ce bug comme corrigé (audit responsive 2026-07-26) alors qu'il
+	 * n'était verrouillé nulle part.
+	 */
+	describe("fermeture du clavier mobile", () => {
+		const originalMatchMedia = window.matchMedia;
+
+		afterEach(() => {
+			window.matchMedia = originalMatchMedia;
+		});
+
+		function stubMatchMedia(matches: boolean) {
+			// Stub partiel : seul `.matches` est lu sur ce chemin.
+			const spy = vi.fn().mockReturnValue({ matches } as MediaQueryList);
+			window.matchMedia = spy;
+			return spy;
+		}
+
+		it("interroge une media query en rem, jamais en px", () => {
+			const spy = stubMatchMedia(false);
+			render(<SearchInput paramName="q" />);
+
+			fireEvent.change(screen.getByRole("searchbox"), { target: { value: "bague" } });
+
+			expect(spy).toHaveBeenCalledWith("(width < 48rem)");
+			for (const [query] of spy.mock.calls) {
+				expect(String(query)).not.toMatch(/\dpx/);
+			}
+		});
+
+		it("ne blur pas le champ quand preventMobileBlur est posé", () => {
+			stubMatchMedia(true);
+			render(<SearchInput paramName="q" preventMobileBlur />);
+
+			const input = screen.getByRole("searchbox") as HTMLInputElement;
+			input.focus();
+			fireEvent.change(input, { target: { value: "bague" } });
+
+			expect(document.activeElement).toBe(screen.getByRole("searchbox"));
+		});
+	});
+
+	/**
+	 * `setValue` est le contrat dont dépend `use-quick-search.ts` pour refléter dans
+	 * le champ un clic sur « Vouliez-vous dire … ».
+	 */
+	it("expose setValue via la ref, en notifiant onValueChange", () => {
+		const onValueChange = vi.fn();
+		const ref = createRef<SearchInputHandle>();
+		render(<SearchInput paramName="q" ref={ref} onValueChange={onValueChange} />);
+
+		act(() => ref.current?.setValue("bagues"));
+
+		expect(screen.getByRole("searchbox")).toHaveValue("bagues");
+		expect(onValueChange).toHaveBeenCalledWith("bagues");
 	});
 });

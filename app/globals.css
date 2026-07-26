@@ -39,32 +39,78 @@ html {
 	--navbar-height: 4rem;
 	--ab-height: 56px;
 	--announcement-bar-height: 0px;
-	/* MicroToast (pastille mobile top-center) : top par défaut, surchargé par layout
-	 * ci-dessous pour se décaler sous le header fixe (admin/shop). */
-	--toast-safe-top: max(0.5rem, env(safe-area-inset-top));
+	/* `--bottom-bar-height` n'est VOLONTAIREMENT pas déclarée ici.
+	 *
+	 * Elle est posée au runtime par `use-bottom-bar-height` avec la hauteur mesurée,
+	 * et RETIRÉE quand la barre se masque. ⚠️ Le périmètre diffère selon la surface :
+	 * l'ADMIN dépublie sur `isMenuOpen || hasOverlay` (`admin-mobile-bottom-bar`),
+	 * la BOUTIQUE seulement sur les routes de `HIDDEN_ROUTES` (checkout, auth) — un
+	 * cart sheet ouvert laisse donc la barre publiée à 56px. Le clavier logiciel
+	 * fait glisser la barre sans dépublier (cf. `bottom-bar.tsx`).
+	 * Son absence signifie donc « la barre n'occupe rien » : les consommateurs qui
+	 * veulent l'espace RÉELLEMENT occupé (toaster, cookie-banner, scroll-to-top)
+	 * comptent sur le fallback `0px`. La déclarer en CSS figerait 56px en permanence
+	 * et les décalerait au-dessus d'une barre absente.
+	 *
+	 * Les consommateurs qui RÉSERVENT la place (padding de contenu, barres sticky)
+	 * doivent tous utiliser le même fallback `56px` — trois valeurs divergentes
+	 * (0px / 56px / 5rem) coexistaient, et les 11 sites en `5rem` étaient exactement
+	 * les listes mobiles admin dont les squelettes utilisaient `56px` : 24px de saut
+	 * au streaming, puis re-saut à chaque ouverture du menu.
+	 * Verrouillé par `bottom-bar-height-fallback.regression.test.ts`. */
 	position: relative;
 }
 
-/* Admin layout : scroll-padding-top dérivé du header admin (mobile + safe-area).
- * Évite que les anchor links / scrollIntoView placent l'élément cible
- * derrière le AdminMobileHeader sticky (h-14 + notch). */
+/* Admin layout — hauteurs du chrome publiées sur `html`.
+ *
+ * ⚠️ Ces variables DOIVENT être déclarées ici, sur l'élément que ciblent les règles
+ * `html:has(...)` ci-dessous, et PAS seulement sur `[data-admin-layout]` (le
+ * `SidebarInset`, un descendant) : les custom properties héritent vers le BAS. Une
+ * règle posée sur `html` qui lit une variable déclarée sur un descendant ne la voit
+ * jamais et retombe silencieusement sur son fallback — c'était le cas de
+ * `scroll-padding-top`, correct seulement par coïncidence (le header mobile mesure
+ * bien 3.5rem, la valeur du fallback).
+ * `[data-admin-layout]` garde sa propre déclaration plus bas pour les descendants
+ * (StickyActionBar), avec le palier md à 4rem. */
 html:has([data-admin-layout]) {
+	--admin-header-height: 3.5rem;
+
+	/* Évite que les anchor links / scrollIntoView placent l'élément cible
+	 * derrière le AdminMobileHeader fixe (h-14 + notch). */
 	scroll-padding-top: calc(
 		var(--admin-header-height, 3.5rem) + env(safe-area-inset-top, 0px) + 1rem
 	);
+
+	/* Pendant bas : la bottom-bar admin est `fixed bottom-0` sous `md`. Sans ça,
+	 * tout scroll-into-view (focus clavier sur le dernier champ d'un formulaire
+	 * long, ancre) pouvait déposer la cible DERRIÈRE elle — le cas identique du
+	 * checkout est traité quelques lignes plus bas. */
+	scroll-padding-bottom: calc(var(--bottom-bar-height, 56px) + 1rem);
 }
 
-/* MicroToast : décale la pastille mobile sous le header fixe pour ne pas le recouvrir
- * (z-microtoast 200 > z-40 → sinon la pastille masque logo/menu/titre). Miroir des
- * scroll-padding-top header-aware. Sélecteurs mutuellement exclusifs (admin n'a pas
- * data-home-navbar) ; /auth + /paiement (sans header) gardent le défaut. */
-html:has([data-admin-layout]) {
-	--toast-safe-top: calc(
-		var(--admin-header-height, 3.5rem) + env(safe-area-inset-top, 0px) + 0.5rem
-	);
+@media (width >= 48rem) {
+	html:has([data-admin-layout]) {
+		--admin-header-height: 4rem;
+		/* Le header desktop est dans le flux normal (pas `fixed`) et la bottom-bar
+		 * est mobile-only : plus rien à réserver. */
+		scroll-padding-top: 0;
+		scroll-padding-bottom: 0;
+	}
 }
-html:has(header[data-home-navbar]) {
-	--toast-safe-top: calc(var(--navbar-height) + var(--announcement-bar-height, 0px) + 0.5rem);
+
+/* Checkout : la barre CTA « Commander et payer » est `fixed bottom-0` sous `md`.
+ * Sans scroll-padding-bottom, tout scroll-into-view (focus au clavier, ancre,
+ * focusFirstInvalid, onFocus du PaymentElement) peut déposer le champ ciblé
+ * DERRIÈRE elle. Hauteur réelle publiée par PayButton via ResizeObserver —
+ * elle varie avec les Alerts 3DS / carte refusée empilées dans la barre. */
+html:has([data-checkout-shell]) {
+	scroll-padding-bottom: calc(var(--pay-bar-height, 0px) + 1rem);
+}
+@media (width >= 48rem) {
+	/* `md:static` : la barre repasse en flux normal, plus rien à réserver. */
+	html:has([data-checkout-shell]) {
+		scroll-padding-bottom: 0;
+	}
 }
 
 /* Empilement coin bas-droit (desktop) : quand le FAB admin est VISIBLE, il publie sa
@@ -73,7 +119,7 @@ html:has(header[data-home-navbar]) {
  * au lieu de le chevaucher. Le coin bas-gauche est réservé au cookie-banner (md:left-6),
  * donc l'empilement vertical est la seule cohabitation propre. Mobile : FAB hideOnMobile
  * + ScrollToTop md:flex → non concernés (var non posée hors md). */
-@media (min-width: 768px) {
+@media (width >= 48rem) {
 	html:has([data-fab-container]) {
 		--fab-corner-clearance: 4.75rem;
 	}
@@ -85,7 +131,7 @@ html:has(header[data-home-navbar]) {
 	}
 }
 
-@media (min-width: 640px) {
+@media (width >= 40rem) {
 	html {
 		--navbar-height: 5rem;
 		--ab-height: 44px;
@@ -109,7 +155,7 @@ main#main-content {
 	transition-timing-function: var(--ease-spring);
 }
 
-@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+@media (width < 64rem) and (prefers-reduced-motion: no-preference) {
 	html[data-sheet-open] main#main-content {
 		transform: scale(0.97);
 	}
@@ -127,10 +173,10 @@ main#main-content {
 		transform var(--duration-normal) var(--ease-spring),
 		opacity var(--duration-normal) ease-out;
 }
-/* Scoped to mobile widths only: above `md:` (768px) components opting into this
+/* Scoped to mobile widths only: above `md:` (48rem) components opting into this
  * attribute (PayButton, BottomBar) switch to non-fixed layouts, so translating
  * them would shift content in normal flow (iPad landscape + hw keyboard). */
-@media (max-width: 767px) {
+@media (width < 48rem) {
 	html[data-keyboard="open"] [data-hide-on-keyboard] {
 		transform: translateY(100%);
 		opacity: 0;
@@ -149,7 +195,7 @@ main#main-content {
 	--admin-header-height: 3.5rem;
 }
 
-@media (min-width: 768px) {
+@media (width >= 48rem) {
 	[data-admin-layout] {
 		--admin-header-height: 4rem;
 	}
@@ -157,11 +203,16 @@ main#main-content {
 
 @theme inline {
 	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, mini Android).
-	 * Usage : préfixe `xs:` Tailwind sur classes qui doivent s'activer dès 375px
-	 * (avant le `sm:` standard à 640px). Réservé aux composants où le viewport
-	 * 360-374px nécessite un fallback distinct (announcement-bar, empty state,
-	 * input-group small variant, media-upload-grid, skeleton xs). */
-	--breakpoint-xs: 375px;
+	 * Usage : préfixe `xs:` Tailwind sur classes qui doivent s'activer dès
+	 * 23.4375rem (375px à police racine par défaut), avant le `sm:` standard à
+	 * 40rem. Réservé aux composants où le viewport 360-374px nécessite un
+	 * fallback distinct (announcement-bar, empty state, input-group small
+	 * variant, media-upload-grid, skeleton xs).
+	 *
+	 * En rem, comme toute l'échelle — voir `shared/constants/breakpoints.ts`.
+	 * Un breakpoint en px se désynchronise des seuils JS et des autres variants
+	 * Tailwind dès que la police racine change (audit responsive 2026-07-26). */
+	--breakpoint-xs: 23.4375rem;
 
 	--font-sans: var(--font-sans);
 	--font-display: var(--font-display);
@@ -211,7 +262,6 @@ main#main-content {
 	--z-fab: 45;
 	--z-alert: 80;
 	--z-skip: 100;
-	--z-microtoast: 200;
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);

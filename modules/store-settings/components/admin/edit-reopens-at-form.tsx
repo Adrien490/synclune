@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
@@ -29,7 +30,15 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 	const [state, formAction, isPending] = useActionState(
 		withCallbacks(
 			updateReopensAt,
-			createToastCallbacks({ loadingMessage: "Mise à jour de la date…" }),
+			createToastCallbacks({
+				loadingMessage: "Mise à jour de la date…",
+				onSuccess: () => {
+					// Le champ reste « dirty » vis-à-vis de `defaultValues` après save (pas
+					// de `form.reset()` : il rétablirait l'ancienne valeur) — sans ceci la
+					// garde prompterait alors que tout est enregistré.
+					allowNavigation();
+				},
+			}),
 		),
 		undefined,
 	);
@@ -48,7 +57,9 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 		context: "EditReopensAtForm",
 	});
 
-	useUnsavedChanges(form.state.isDirty, !isPending);
+	// `allowNavigation` récupéré (et non jeté) : la garde est désormais effective
+	// sur la navigation client-side, elle doit pouvoir être relâchée après save.
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	return (
 		<form
@@ -61,10 +72,6 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 			data-pending={isPending ? "true" : undefined}
 		>
 			<FormServerErrorAlert errors={serverErrors} />
-
-			<span className="sr-only" role="status" aria-live="polite">
-				{isPending ? "Mise à jour de la date en cours…" : ""}
-			</span>
 
 			<form.AppField name="reopensAt">
 				{(field) => (
@@ -80,18 +87,20 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 
 			<form.Subscribe selector={(state) => state.values.reopensAt !== initialValue}>
 				{(isDirty) => (
-					<div className="sm:flex sm:justify-end">
-						<form.AppForm>
-							<form.SubmitButton
-								isPending={isPending}
-								idleLabel="Mettre à jour la date"
-								pendingLabel="Mise à jour…"
-								variant="outline"
-								disabled={!isDirty}
-								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
-							/>
-						</form.AppForm>
-					</div>
+					<AdminFormFooter pending={isPending}>
+						<div className="sm:flex sm:justify-end">
+							<form.AppForm>
+								<form.SubmitButton
+									isPending={isPending}
+									idleLabel="Mettre à jour la date"
+									pendingLabel="Mise à jour…"
+									variant="outline"
+									disabled={!isDirty}
+									className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
+								/>
+							</form.AppForm>
+						</div>
+					</AdminFormFooter>
 				)}
 			</form.Subscribe>
 		</form>

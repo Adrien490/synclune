@@ -6,10 +6,33 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { logger } from "@/shared/lib/logger";
 import { captureWishlistError } from "@/modules/wishlist/utils/capture-wishlist-error";
 import { generateUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
+import { MARKETING_DAILY_EMAIL_BUDGET } from "@/modules/emails/constants/email-budget";
 import { delay } from "@/shared/utils/delay";
 
 /** Number of wishlist items processed per batch to bound Resend API latency */
 const NOTIFY_BATCH_SIZE = 50;
+
+/**
+ * Envois marketing restants pour la journée en cours (audit coûts P1-3).
+ *
+ * Compte les notifications déjà émises depuis minuit UTC — `backInStockNotifiedAt`
+ * fait office de journal d'envoi, aucune table supplémentaire n'est nécessaire.
+ * La fenêtre est UTC comme le quota Resend.
+ *
+ * Approximation assumée : un item retiré de la wishlist après notification
+ * disparaît du compte, ce qui peut sous-estimer marginalement les envois du jour.
+ * Le budget (40/100) laisse une marge très supérieure à ce biais.
+ */
+async function remainingMarketingBudget(): Promise<number> {
+	const startOfUtcDay = new Date();
+	startOfUtcDay.setUTCHours(0, 0, 0, 0);
+
+	const sentToday = await prisma.wishlistItem.count({
+		where: { backInStockNotifiedAt: { gte: startOfUtcDay } },
+	});
+
+	return Math.max(0, MARKETING_DAILY_EMAIL_BUDGET - sentToday);
+}
 
 /**
  * Pause entre deux envois pour rester sous le rate-limit Resend (2 req/s par
@@ -104,8 +127,15 @@ async function sendNotification(item: NotifyItem, productId: string): Promise<bo
  * Failed-email recovery: items whose first send fails are queued for a single
  * retry pass after the main loop completes. Permanent failures stay in the
  * `backInStockNotifiedAt: null` queue for a subsequent restock event.
+ *
+ * Borné par le budget marketing quotidien (audit coûts P1-3) : au-delà, la
+ * boucle s'arrête et les inscrits restants gardent `backInStockNotifiedAt: null`.
+ * Ils sont repris le lendemain par `drainBackInStockQueue()` — rien n'est perdu,
+ * l'envoi est étalé pour ne pas priver le transactionnel du quota Resend du jour.
+ *
+ * @returns le nombre d'emails effectivement envoyés (budget consommé).
  */
-export async function notifyBackInStock(productId: string): Promise<void> {
+export async function notifyBackInStock(productId: string): Promise<number> {
 	return Sentry.startSpan(
 		{ name: "wishlist.notify-back-in-stock", attributes: { productId } },
 		async (span) => {
@@ -114,12 +144,30 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 			let errored = 0;
 			let retryRecovered = 0;
 			let batchesScanned = 0;
+			let budgetRemaining = 0;
+			let budgetExhausted = false;
 
 			try {
+				budgetRemaining = await remainingMarketingBudget();
+
+				if (budgetRemaining === 0) {
+					logger.info("Back-in-stock notifications deferred: daily marketing budget spent", {
+						service: "back-in-stock",
+						productId,
+					});
+					span.setAttribute("budget_exhausted", true);
+					return 0;
+				}
+
 				let cursor: string | undefined;
 				let hasMore = true;
 
-				while (hasMore) {
+				while (hasMore && budgetRemaining > 0) {
+					// Ne charger que ce que le budget du jour permet d'envoyer : au-delà
+					// on rendrait des emails qu'on jetterait, et le curseur avancerait
+					// au-delà d'inscrits jamais notifiés.
+					const take = Math.min(NOTIFY_BATCH_SIZE, budgetRemaining);
+
 					const wishlistItems = await prisma.wishlistItem.findMany({
 						where: {
 							productId,
@@ -140,7 +188,7 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 							},
 						},
 						select: NOTIFY_ITEM_SELECT,
-						take: NOTIFY_BATCH_SIZE,
+						take,
 						...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
 						orderBy: { id: "asc" },
 					});
@@ -153,9 +201,12 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 					for (let i = 0; i < wishlistItems.length; i++) {
 						const item = wishlistItems[i]!;
 						const success = await sendNotification(item, productId);
+						// Un envoi refusé par Resend ne consomme pas de quota : seuls les
+						// succès décrémentent le budget.
 						if (success) {
 							notifiedItemIds.push(item.id);
 							processed += 1;
+							budgetRemaining -= 1;
 						} else {
 							failedItems.push(item);
 						}
@@ -171,8 +222,23 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 						});
 					}
 
-					hasMore = wishlistItems.length === NOTIFY_BATCH_SIZE;
+					// Comparer à `take`, pas à NOTIFY_BATCH_SIZE : quand c'est le budget
+					// qui borne la requête, un lot « plein » fait la taille du budget.
+					// Comparer à la constante conclurait à tort que la file est vide.
+					hasMore = wishlistItems.length === take;
 					cursor = wishlistItems[wishlistItems.length - 1]!.id;
+				}
+
+				// Budget épuisé alors que la file n'est pas vide : le reliquat part
+				// demain via `drainBackInStockQueue()`. Tracé pour que l'étalement soit
+				// visible plutôt que silencieux.
+				if (budgetRemaining === 0 && hasMore) {
+					budgetExhausted = true;
+					logger.info("Back-in-stock notifications truncated by daily marketing budget", {
+						service: "back-in-stock",
+						productId,
+						sent: processed,
+					});
 				}
 
 				// Single retry pass for items whose first send failed.
@@ -189,12 +255,20 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 					const retrySuccessIds: string[] = [];
 
 					for (let i = 0; i < failedItems.length; i++) {
+						// Le retry consomme le même quota Resend que l'envoi initial : il
+						// s'arrête aussi au budget. Les items non retentés restent en file
+						// (`backInStockNotifiedAt: null`) pour le drainage du lendemain.
+						if (budgetRemaining === 0) {
+							budgetExhausted = true;
+							break;
+						}
 						const item = failedItems[i]!;
 						const success = await sendNotification(item, productId);
 						if (success) {
 							retrySuccessIds.push(item.id);
 							retryRecovered += 1;
 							processed += 1;
+							budgetRemaining -= 1;
 						} else {
 							errored += 1;
 							captureWishlistError(
@@ -232,7 +306,10 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 				span.setAttribute("errored_count", errored);
 				span.setAttribute("retry_recovered_count", retryRecovered);
 				span.setAttribute("batches_scanned", batchesScanned);
+				span.setAttribute("budget_exhausted", budgetExhausted);
 			}
+
+			return processed;
 		},
 	);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -22,6 +22,10 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 	const haptic = useHaptic();
 	const [liveMessage, setLiveMessage] = useState("");
 	const [isApplying, setIsApplying] = useState(false);
+	// Verrou de ré-entrance. Le state `isApplying` ne bascule qu'au re-render
+	// suivant : insuffisant pour bloquer deux appels dans le même tick (Entrée
+	// maintenue / double-tap). Même raisonnement que `useGatedFormSubmit`.
+	const isApplyingRef = useRef(false);
 
 	return (
 		<>
@@ -63,8 +67,17 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 					async function validateAndApply(rawCode: string) {
 						const code = rawCode.trim().toUpperCase();
 						if (!code) return;
+						// Garde posée DANS la fonction, pas seulement sur le bouton : le
+						// handler Entrée du champ appelle `validateAndApply` directement,
+						// sans passer par le `disabled={isApplying}` du bouton — des
+						// pressions répétées lançaient autant d'appels concurrents à
+						// `validateDiscountCode`, avec application de la dernière réponse
+						// arrivée (pas forcément la dernière émise).
+						if (isApplyingRef.current) return;
+						isApplyingRef.current = true;
 						setIsApplying(true);
 						const result = await validateDiscountCode(code);
+						isApplyingRef.current = false;
 						setIsApplying(false);
 						if (result.valid && result.discount) {
 							form.setFieldValue("_appliedDiscount", result.discount);

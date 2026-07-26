@@ -49,6 +49,11 @@ export function QuickSearchTrigger({ className, ref, variant = "icon" }: QuickSe
 				aria-label="Ouvrir la recherche rapide"
 				aria-expanded={isOpen}
 				aria-haspopup="dialog"
+				// `aria-label` écrase le `<kbd>` : sans ceci, ⌘K n'est jamais annoncé.
+				// `aria-keyshortcuts` est l'attribut dédié (annoncé par NVDA/JAWS/VO) et
+				// évite de mettre un libellé dépendant de la plateforme dans le nom
+				// accessible. Le badge visuel reste `lg`-only, faute de place à 44px.
+				aria-keyshortcuts="Meta+K Control+K"
 				className={cn(
 					"group touch-manipulation transition-all duration-300 ease-out",
 					// < lg : square icon button
@@ -76,6 +81,7 @@ export function QuickSearchTrigger({ className, ref, variant = "icon" }: QuickSe
 			aria-label="Ouvrir la recherche rapide"
 			aria-expanded={isOpen}
 			aria-haspopup="dialog"
+			aria-keyshortcuts="Meta+K Control+K"
 		>
 			<Search className="size-5" />
 		</Button>

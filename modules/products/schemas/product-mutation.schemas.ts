@@ -246,7 +246,7 @@ export const updateProductSchema = z
 	);
 
 // ============================================================================
-// LIFECYCLE / BULK
+// LIFECYCLE
 // ============================================================================
 
 export const deleteProductSchema = z.object({

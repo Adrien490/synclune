@@ -25,7 +25,7 @@ export interface UseMediaUploadOptions {
 	endpoint?: "catalogMedia" | "reviewMedia";
 	/** Max size for images in bytes (default: 16MB) */
 	maxSizeImage?: number;
-	/** Max size for videos in bytes (default: 512MB) */
+	/** Max size for videos in bytes (default: SSOT `upload-size-limits.ts`) */
 	maxSizeVideo?: number;
 	/** Max number of files (default: 6) */
 	maxFiles?: number;

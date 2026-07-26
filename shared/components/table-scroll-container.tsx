@@ -13,6 +13,16 @@ interface TableScrollContainerProps {
 	 * fallback générique).
 	 */
 	label?: string;
+	/**
+	 * Borne la hauteur du conteneur et active le scroll vertical interne, ce qui
+	 * permet à un `<thead>` en `position: sticky` de coller.
+	 *
+	 * Nécessaire parce que `overflow-x: auto` fait déjà de ce conteneur un
+	 * contexte de défilement : un `<thead>` sticky s'y ancre, pas au scroll de la
+	 * page. Sans hauteur bornée, il n'y a jamais de défilement interne et le
+	 * sticky ne se déclenche donc jamais.
+	 */
+	maxHeightClassName?: string;
 }
 
 /**
@@ -24,6 +34,7 @@ export function TableScrollContainer({
 	children,
 	className,
 	label = "Tableau avec scroll horizontal",
+	maxHeightClassName,
 }: TableScrollContainerProps) {
 	const scrollRef = useRef<HTMLDivElement>(null);
 	const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -71,7 +82,14 @@ export function TableScrollContainer({
 			{/* Container scrollable */}
 			<div
 				ref={scrollRef}
-				className="focus-visible:ring-ring overflow-x-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+				className={cn(
+					"focus-visible:ring-ring overflow-x-auto focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+					maxHeightClassName && `${maxHeightClassName} overflow-y-auto`,
+				)}
+				// Défilement horizontal jusqu'au bord gauche de l'écran, où vit le geste
+				// d'ouverture du menu (`useEdgeSwipe`) : sans opt-out, faire défiler la
+				// table depuis ce bord ouvrait aussi le menu.
+				data-no-edge-swipe
 				// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 				tabIndex={0}
 				role="region"

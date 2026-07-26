@@ -9,6 +9,7 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
 import { useEffect } from "react";
 import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";
 
@@ -22,11 +23,24 @@ interface ShortcutGroup {
 	items: ReadonlyArray<ShortcutEntry>;
 }
 
+/**
+ * Inventaire des raccourcis réellement enregistrés. Chaque entrée doit correspondre
+ * à un listener existant — et réciproquement : ⌘K et ⌘⏎ existaient sans être
+ * documentés ici, donc introuvables autrement qu'en lisant le code.
+ *
+ * Sites d'enregistrement :
+ *  - ⌘B  → `shared/components/ui/sidebar.tsx`
+ *  - ?   → ce fichier
+ *  - ⌥←/⌥→ → `shared/components/cursor-pagination/cursor-pagination.tsx`
+ *  - ⌘S / Echap → `shared/hooks/use-admin-form-keyboard.ts`
+ *  - ⌘K  → `modules/products/components/quick-search-dialog/quick-search-keyboard-shortcut.tsx`
+ *  - ⌘⏎  → `shared/components/filter-sheet-wrapper.tsx`
+ */
 const SHORTCUT_GROUPS: ReadonlyArray<ShortcutGroup> = [
 	{
 		title: "Navigation",
 		items: [
-			{ keys: ["⌘", "B"], label: "Afficher / masquer la barre latérale" },
+			{ keys: ["⌘", "B"], label: "Réduire / déployer la barre latérale" },
 			{ keys: ["?"], label: "Afficher cette aide" },
 			{ keys: ["Echap"], label: "Fermer le dialogue ou le menu actif" },
 		],
@@ -36,31 +50,34 @@ const SHORTCUT_GROUPS: ReadonlyArray<ShortcutGroup> = [
 		items: [
 			{ keys: ["⌥", "←"], label: "Page précédente" },
 			{ keys: ["⌥", "→"], label: "Page suivante" },
+			{ keys: ["⌘", "⏎"], label: "Appliquer les filtres (feuille de filtres ouverte)" },
 		],
 	},
 	{
 		title: "Formulaires",
 		items: [
-			{ keys: ["⌘", "S"], label: "Enregistrer (création / édition produit)" },
+			// Le hook `useAdminFormKeyboard` est générique (produits, couleurs,
+			// matériaux, remises…) — l'intitulé « produit » le sous-vendait.
+			{ keys: ["⌘", "S"], label: "Enregistrer le formulaire courant" },
 			{ keys: ["Echap"], label: "Annuler la saisie en cours" },
 		],
 	},
 	{
 		title: "Recherche",
 		items: [
+			// Pas de ⌘K ici : `QuickSearchDialogAsync` n'est monté que dans
+			// `app/(shop)/layout.tsx`. Le raccourci annoncé n'avait aucun listener sous
+			// /admin — fossile du retrait d'`AdminQuickSearchDialog`. On ne monte pas le
+			// dialog boutique en admin (il précharge collections + types de la BOUTIQUE
+			// à chaque page et renvoie vers /produits), et on garde ⌘K libre pour une
+			// éventuelle palette de commandes admin. Audit recherche 2026-07-26.
 			{
 				keys: [],
-				label: "Recherche rapide via la barre d'actions (haut mobile, bas listes admin)",
+				label: "Recherche dans une liste admin : bouton dédié de la barre d'actions",
 			},
 		],
 	},
 ];
-
-function isInteractiveTarget(target: EventTarget | null): boolean {
-	if (!(target instanceof HTMLElement)) return false;
-	const tag = target.tagName;
-	return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
-}
 
 /**
  * Aide raccourcis clavier admin.

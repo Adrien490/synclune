@@ -8,7 +8,6 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
@@ -57,7 +56,7 @@ const STATUS_CONFIG: Record<
 		tone: "warning",
 		icon: Archive,
 		description:
-			"Le bijou sera archivé. Il ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez le restaurer à tout moment.",
+			"Le bijou sera archivé. Il ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Toutes ses variantes seront désactivées. Vous pourrez le restaurer à tout moment (il reviendra en brouillon).",
 	},
 };
 
@@ -93,7 +92,6 @@ export function ChangeProductStatusAlertDialog() {
 					<input type="hidden" name="currentStatus" value={currentStatus} />
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
-					<ResponsiveAlertDialogHeroIcon icon={config.icon} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Changer le statut en &quot;{config.label}&quot;

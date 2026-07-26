@@ -39,10 +39,13 @@ describe("DEVICE_SIZES", () => {
  *
  * Vercel facture chaque couple (source, largeur, qualité) distinct. Le catalogue
  * utilisait 7 valeurs de qualité pour des écarts visuels imperceptibles, soit
- * jusqu'à 56 variantes facturées par image source. Trois paliers suffisent.
+ * jusqu'à 56 variantes facturées par image source. Ramené à 3, puis à **2** par
+ * l'audit coûts (P2-5) : `STANDARD` (80) et `HERO` (90) couvraient les mêmes
+ * sources aux mêmes largeurs — une image produit est à la fois carte de grille
+ * et image principale PDP — donc chaque source était transformée deux fois.
  *
  * Ce test échoue si un palier sort de `images.qualities` (l'optimiseur répondrait
- * 400 à l'exécution, invisible au build) ou si un 4ᵉ palier apparaît sans
+ * 400 à l'exécution, invisible au build) ou si un 3ᵉ palier réapparaît sans
  * justification de coût.
  */
 describe("IMAGE_QUALITY", () => {
@@ -55,9 +58,19 @@ describe("IMAGE_QUALITY", () => {
 		}
 	});
 
-	it("reste limité à 3 paliers (garde-fou coût transformations)", () => {
-		expect(Object.keys(IMAGE_QUALITY)).toHaveLength(3);
-		expect(nextConfig.images?.qualities).toHaveLength(3);
+	it("reste limité à 2 paliers (garde-fou coût transformations)", () => {
+		expect(Object.keys(IMAGE_QUALITY)).toHaveLength(2);
+		expect(nextConfig.images?.qualities).toHaveLength(2);
+	});
+
+	it("ne déclare aucun palier orphelin dans next.config", () => {
+		// L'inverse du test précédent : une qualité déclarée mais inutilisée ouvre
+		// une variante facturable de plus, atteignable via `/_next/image?q=…`
+		// par n'importe qui, sans qu'aucun composant ne la demande.
+		const tiers = Object.values(IMAGE_QUALITY) as number[];
+		for (const declared of nextConfig.images?.qualities ?? []) {
+			expect(tiers).toContain(declared);
+		}
 	});
 
 	it("aligne la qualité de l'image principale PDP sur celle de la lightbox", () => {

@@ -1,7 +1,7 @@
 "use server";
 
-import { OrderStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { OrderStatus, HistorySource } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	sendOrderConfirmationEmail,
@@ -19,7 +19,10 @@ import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracki
 import { buildUrl } from "@/shared/constants/urls";
 import { updateTag } from "next/cache";
 import { z } from "zod";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import type { ResendEmailType } from "../types/email.types";
+import { createOrderAudit } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 
 // Re-export du type pour compatibilité
@@ -45,9 +48,10 @@ export async function resendOrderEmail(
 	emailType: ResendEmailType,
 ): Promise<ActionState> {
 	try {
-		// 1. Vérification admin
-		const auth = await requireAdmin();
+		// 1. Vérification admin (`WithUser` : l'entrée d'audit du renvoi nomme l'auteur)
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.RESEND_EMAIL);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -88,6 +92,9 @@ export async function resendOrderEmail(
 				shippingCarrier: true,
 				trackingNumber: true,
 				trackingUrl: true,
+				// Sans cette colonne le renvoi perdait la ligne « Livraison estimée » :
+				// le mail renvoyé n'était pas une copie fidèle de l'original.
+				estimatedDelivery: true,
 				items: {
 					select: {
 						productTitle: true,
@@ -162,7 +169,13 @@ export async function resendOrderEmail(
 					customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),
 					trackingNumber: order.trackingNumber,
 					trackingUrl: order.trackingUrl,
+					// Repli si le transporteur n'expose pas d'URL de suivi ("autre").
+					orderTrackingUrl: buildOrderTrackingUrl(order),
 					carrierLabel,
+					// Parité avec le premier envoi (`mark-as-shipped`) : même format.
+					estimatedDelivery: order.estimatedDelivery
+						? format(order.estimatedDelivery, "d MMMM yyyy", { locale: fr })
+						: null,
 					shippingAddress: {
 						firstName: order.shippingFirstName || "",
 						lastName: order.shippingLastName || "",
@@ -187,7 +200,34 @@ export async function resendOrderEmail(
 		}
 
 		if (actionResult.status === ActionStatus.SUCCESS) {
+			// Un renvoi est une action client-facing : elle doit laisser une trace,
+			// sinon l'invalidation du tag HISTORY ci-dessous ne recharge rien.
+			// `OrderAction` n'a pas de valeur « EMAIL_RESENT » et en ajouter une
+			// imposerait de recréer le type Postgres sur un historique baseliné :
+			// on réutilise l'action du domaine + une note, comme le fait déjà la
+			// trace post-commit de `mark-as-shipped`.
+			await createOrderAudit({
+				orderId,
+				action: emailType === "shipping" ? "SHIPPED" : "CREATED",
+				note:
+					emailType === "shipping"
+						? "Email d'expédition renvoyé manuellement au client"
+						: "Email de confirmation renvoyé manuellement au client",
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Admin",
+				source: HistorySource.ADMIN,
+				// Pas de clé `emailType` : `sanitizeAuditMetadata` la rejette (motif
+				// PII-like « email »), à raison — `OrderHistory.metadata` est exposée au
+				// client et jamais scrubée. Le type est déjà porté par `note` + `action`.
+				metadata: { resent: true },
+			});
+
+			// HISTORY() ne tague que `getOrderHistory()`. La timeline de la page détail lit
+			// `order.history` via `GET_ORDER_SELECT_ADMIN` dans `getOrderById()`, dont le
+			// cache est tagué DETAIL(id) : sans cette seconde invalidation, l'entrée
+			// d'audit qu'on vient d'écrire n'apparaissait pas sur la page.
 			updateTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
+			updateTag(ORDERS_CACHE_TAGS.DETAIL(orderId));
 		}
 
 		return actionResult;

@@ -8,7 +8,9 @@ import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
-import type { OrderNoteItem } from "../types/order-notes.types";
+// Lecture CLIENT : `canDelete` (capacité admin auteur) n'a pas de sens ici, d'où
+// `OrderNoteRecord` et non `OrderNoteItem`.
+import type { OrderNoteRecord } from "../types/order-notes.types";
 
 const orderIdSchema = z.cuid2();
 
@@ -29,7 +31,7 @@ const orderIdSchema = z.cuid2();
  */
 export async function getOrderNotesForUser(
 	orderId: string,
-): Promise<{ notes: OrderNoteItem[] } | { error: string }> {
+): Promise<{ notes: OrderNoteRecord[] } | { error: string }> {
 	try {
 		const auth = await requireAuth();
 		if ("error" in auth) {
@@ -63,7 +65,7 @@ export async function getOrderNotesForUser(
 	}
 }
 
-async function fetchOrderNotesPublic(orderId: string): Promise<OrderNoteItem[]> {
+async function fetchOrderNotesPublic(orderId: string): Promise<OrderNoteRecord[]> {
 	"use cache";
 	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.NOTES(orderId));

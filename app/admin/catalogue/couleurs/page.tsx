@@ -26,6 +26,9 @@ import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-c
 import { ColorsBottomBar } from "@/modules/colors/components/admin/colors-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export const metadata: Metadata = {
 	title: "Couleurs - Administration",
@@ -71,7 +74,16 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={colorsPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="couleur"
+						plural="couleurs"
+					/>
+				</Suspense>
+
 				<ColorsBottomBar />
 
 				<Suspense

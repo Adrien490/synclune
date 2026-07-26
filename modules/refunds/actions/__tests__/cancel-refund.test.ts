@@ -92,9 +92,14 @@ vi.mock("../../constants/cache", () => ({
 	},
 }));
 
+// ⚠️ Miroir COMPLET des clés touchées : `getOrderInvalidationTags()` lit
+// ADMIN_ORDERS_LIST. Une clé absente ici fait passer `undefined` à `updateTag`, ce qui
+// rend le test aveugle à une invalidation manquante (et fait planter tout filtre sur
+// `tag.startsWith(...)`).
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
 		ADMIN_BADGES: "admin-badges",
+		ADMIN_ORDERS_LIST: "admin-orders-list",
 	},
 }));
 
@@ -325,19 +330,32 @@ describe("cancelRefund", () => {
 		);
 	});
 
-	it("should invalidate all 6 cache tags when order has a user", async () => {
+	it("should invalidate the order detail + history tags when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.updateMany.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+		// Tags propres au module remboursement
 		expect(mockUpdateTag).toHaveBeenCalledWith("refunds-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("refund-refund-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
+
+		// CACHE-AUDIT-010 : tags de la commande, via le helper SSOT. DETAIL et HISTORY
+		// manquaient de la liste manuelle alors que l'action écrit un OrderHistory
+		// affiché sur la page détail — celle-ci restait périmée.
+		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-orders-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("order-detail-order-1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("order-history-order-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(6);
+
+		// Pas de comptage exact : il verrouillait la liste manuelle incomplète.
+		// À la place : aucun tag ne doit être `undefined` (mock de tags incomplet).
+		for (const [tag] of mockUpdateTag.mock.calls) {
+			expect(tag).toBeTypeOf("string");
+		}
 	});
 
 	it("should invalidate user-specific cache tag when order has a user", async () => {

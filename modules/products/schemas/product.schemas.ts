@@ -1,7 +1,7 @@
 /**
  * Façade rétro-compatible — les schémas sont définis dans :
  * - `product-query.schemas.ts`    (get/filters/listing)
- * - `product-mutation.schemas.ts` (create/update/delete/bulk/toggle/collections)
+ * - `product-mutation.schemas.ts` (create/update/delete/toggle/collections)
  * - `product-media.schemas.ts`    (imageSchema partagé)
  *
  * Les anciens imports `from "@/modules/products/schemas/product.schemas"`

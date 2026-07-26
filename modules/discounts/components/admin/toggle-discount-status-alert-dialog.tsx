@@ -8,13 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
-import { LoaderCircle, ToggleLeft, ToggleRight } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const TOGGLE_DISCOUNT_STATUS_DIALOG_ID = "toggle-discount-status";
 
@@ -55,7 +54,6 @@ export function ToggleDiscountStatusAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.discountId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={isActive ? ToggleLeft : ToggleRight} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActive ? "Désactiver" : "Activer"} le code promo

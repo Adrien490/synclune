@@ -91,9 +91,11 @@ describe("RefundsDataTableSkeleton", () => {
 		expect(screen.getByTestId("data-table-skeleton")).toBeInTheDocument();
 	});
 
-	it("uses offset pagination", () => {
+	// La table réelle est en pagination curseur : le skeleton annonçait `offset`,
+	// donc des placeholders de barre offset remplacés par une barre curseur.
+	it("uses cursor pagination like the real table", () => {
 		render(<RefundsDataTableSkeleton />);
-		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-pagination", "offset");
+		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-pagination", "cursor");
 	});
 
 	it("passes the expected number of column definitions", () => {

@@ -131,7 +131,7 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					customerEmail: "client@example.com",
 				}),
 			);
-			mockSendShippingEmail.mockResolvedValue(undefined);
+			mockSendShippingEmail.mockResolvedValue({ success: true, data: { id: "email_1" } });
 
 			await markAsShipped(undefined, makeForm());
 
@@ -147,7 +147,17 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 			expect(initialAudit?.metadata.emailSent).toBeUndefined();
 		});
 
-		it("crée une 2e OrderHistory post-commit si l'email échoue", async () => {
+		/**
+		 * ⚠️ Le mode d'échec est `{ success: false }`, PAS un throw.
+		 * `sendShippingConfirmationEmail` n'échoue jamais par exception : circuit
+		 * breaker ouvert, `RESEND_API_KEY` absente, échec de rendu et 4xx Resend
+		 * sont tous interceptés par `send-email.ts` et rapportés dans le résultat.
+		 * Ce test simulait un `mockRejectedValue` — une condition impossible en
+		 * production — ce qui le rendait vert alors que `emailSent = true` était
+		 * posé inconditionnellement et que la garantie ORD-BIZ-012 était vide.
+		 * Ne pas revenir à un rejet de promesse : ce serait re-perdre la couverture.
+		 */
+		it("crée une 2e OrderHistory post-commit si l'email est rejeté", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
 				createMockOrder({
 					id: VALID_CUID,
@@ -157,7 +167,7 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					customerEmail: "client@example.com",
 				}),
 			);
-			mockSendShippingEmail.mockRejectedValue(new Error("Resend down"));
+			mockSendShippingEmail.mockResolvedValue({ success: false, error: "Resend down" });
 
 			const result = await markAsShipped(undefined, makeForm());
 
@@ -173,6 +183,29 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 			);
 		});
 
+		// Filet séparé : un throw inattendu doit rester tracé de la même façon.
+		it("crée une 2e OrderHistory post-commit si l'email throw", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					id: VALID_CUID,
+					status: "PROCESSING",
+					paymentStatus: "PAID",
+					fulfillmentStatus: "PROCESSING",
+					customerEmail: "client@example.com",
+				}),
+			);
+			mockSendShippingEmail.mockRejectedValue(new Error("render crash"));
+
+			const result = await markAsShipped(undefined, makeForm());
+
+			expect(result.status).toBe(ActionStatus.WARNING);
+			expect(mockCreateOrderAudit).toHaveBeenCalledWith(
+				expect.objectContaining({
+					metadata: expect.objectContaining({ emailDeliveryFailed: true }),
+				}),
+			);
+		});
+
 		it("ne crée PAS d'audit post-commit si l'email passe", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(
 				createMockOrder({
@@ -183,7 +216,7 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 					customerEmail: "client@example.com",
 				}),
 			);
-			mockSendShippingEmail.mockResolvedValue(undefined);
+			mockSendShippingEmail.mockResolvedValue({ success: true, data: { id: "email_1" } });
 
 			await markAsShipped(undefined, makeForm());
 

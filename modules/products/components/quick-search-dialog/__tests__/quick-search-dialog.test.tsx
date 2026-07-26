@@ -165,6 +165,12 @@ vi.mock("../quick-search-content", () => ({
 		onViewAllResults: () => void;
 	}) => (
 		<div data-testid="quick-search-content" data-query={query}>
+			{/* Le vrai composant rend le `role="listbox"` sur un élément INTERNE
+				(`LISTBOX_ID`), qui n'enveloppe que des groupes d'options — le rôle ne
+				porte plus sur `#qs-results`, qui contient aussi l'état vide, la
+				suggestion, les erreurs et le CTA. Le mock doit refléter ce contrat,
+				sinon l'assertion F3 ci-dessous testerait le mock et non le composant. */}
+			<div id="qs-listbox" role="listbox" aria-label="Résultats de recherche" />
 			<button onClick={onClose} data-testid="content-close-button">
 				Fermer
 			</button>
@@ -477,6 +483,10 @@ describe("QuickSearchDialog", () => {
 		});
 
 		it("exposes the results container as a listbox only in search mode (F3)", () => {
+			// F3 (2026-05-29) préservé : aucun listbox en mode idle. Ce qui a changé,
+			// c'est OÙ vit le rôle en mode recherche — sur un élément interne ne
+			// contenant que des groupes d'options, plus sur `#qs-results` entier.
+			//
 			// Idle mode: neutral browse panel, no listbox role (avoids nesting
 			// sections/lists/headings under an invalid listbox).
 			mockIsSearchMode.current = false;

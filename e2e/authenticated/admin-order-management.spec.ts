@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { VISIBLE_ALERT, VISIBLE_STATUS } from "../helpers/assertions";
 
 test.describe("Admin - Gestion des commandes", { tag: ["@regression"] }, () => {
 	test("la page commandes affiche la liste avec les colonnes attendues", async ({
@@ -108,7 +109,7 @@ test.describe("Admin - Gestion des commandes", { tag: ["@regression"] }, () => {
 
 			// Wait for feedback: toast, alert, or status change
 			const feedback = page
-				.locator('[role="status"], [role="alert"]')
+				.locator(`${VISIBLE_STATUS}, ${VISIBLE_ALERT}`)
 				.or(page.getByText(/mis à jour|modifié|confirmé|expédié/i));
 			await expect(feedback.first()).toBeVisible({ timeout: 7000 });
 

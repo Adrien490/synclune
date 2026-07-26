@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ORDER_TOTAL_FILTER_MAX_EUROS } from "@/modules/orders/constants/order.constants";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -138,11 +140,28 @@ const fieldStateMap: Record<string, unknown> = {};
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: ({
 		defaultValues,
+		onSubmit,
 	}: {
 		defaultValues: Record<string, unknown>;
 		onSubmit: (args: { value: unknown }) => Promise<void>;
 	}) => ({
-		handleSubmit: mockHandleSubmit,
+		// `handleSubmit` doit RÉELLEMENT déclencher `onSubmit` : un mock inerte rendait
+		// `applyFilters` — donc toute l'écriture d'URL de la feuille — non testable, et
+		// c'est précisément là que vivait le bug de curseur non purgé.
+		handleSubmit: (...args: unknown[]) => {
+			mockHandleSubmit(...args);
+			const value = { ...defaultValues };
+			for (const [name, fieldValue] of Object.entries(fieldStateMap)) {
+				const parts = name.split(".");
+				const last = parts.pop()!;
+				const target = parts.reduce<any>((acc, key) => {
+					acc[key] = { ...(acc[key] as object) };
+					return acc[key];
+				}, value as any);
+				target[last] = fieldValue;
+			}
+			return onSubmit({ value });
+		},
 		reset: mockFormReset,
 		Field: ({
 			name,
@@ -527,16 +546,19 @@ describe("OrdersFilterSheet", () => {
 	// Amount range inputs
 	// --------------------------------------------------------------------------
 
-	it("passes maxPrice=500000 (5 000€) to AmountRangeInputs", () => {
+	it("passes the schema-derived max price (euros) to AmountRangeInputs", () => {
 		render(<OrdersFilterSheet />);
-		expect(screen.getByTestId("amount-range-inputs")).toHaveAttribute("data-maxprice", "500000");
+		expect(screen.getByTestId("amount-range-inputs")).toHaveAttribute(
+			"data-maxprice",
+			String(ORDER_TOTAL_FILTER_MAX_EUROS),
+		);
 	});
 
-	it("passes default price range [0, 500000] to AmountRangeInputs", () => {
+	it("passes default price range [0, max] to AmountRangeInputs", () => {
 		render(<OrdersFilterSheet />);
 		const el = screen.getByTestId("amount-range-inputs");
 		expect(el).toHaveAttribute("data-min", "0");
-		expect(el).toHaveAttribute("data-max", "500000");
+		expect(el).toHaveAttribute("data-max", String(ORDER_TOTAL_FILTER_MAX_EUROS));
 	});
 
 	it("calls handleChange when price range changes", () => {
@@ -702,7 +724,7 @@ describe("OrdersFilterSheet", () => {
 			invoiceAnomaly: false,
 			pdfNotArchived: false,
 			retryDeferred: false,
-			priceRange: [0, 500000],
+			priceRange: [0, ORDER_TOTAL_FILTER_MAX_EUROS],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
 		});
@@ -714,13 +736,33 @@ describe("OrdersFilterSheet", () => {
 		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("?"), { scroll: false });
 	});
 
-	it("resets page to 1 in URL when clearing filters", () => {
-		mockSearchParamsToString.mockReturnValue("page=3&filter_status=PENDING");
+	it("purges the cursor when APPLYING filters from a paginated page", () => {
+		// Le cas réellement vécu : l'admin est page 3, coche un filtre, applique.
+		mockSearchParamsToString.mockReturnValue(
+			"cursor=cm3x7k2ab0001qz8v4h2j9d3&direction=forward&page=3",
+		);
+		render(<OrdersFilterSheet />);
+		fireEvent.click(screen.getByTestId("apply-btn"));
+
+		const url = mockRouterPush.mock.calls[0]![0] as string;
+		expect(url).not.toContain("cursor=");
+		expect(url).not.toContain("direction=");
+		expect(url).not.toContain("page=");
+	});
+
+	it("purges the cursor (not a dead `page` param) when clearing filters", () => {
+		// Ces listes sont en pagination CURSEUR : `page` n'est lu par personne. Garder le
+		// curseur de l'ancien jeu produisait une tranche arbitraire du nouveau.
+		mockSearchParamsToString.mockReturnValue(
+			"page=3&cursor=cm3x7k2ab0001qz8v4h2j9d3&direction=forward&filter_status=PENDING",
+		);
 		render(<OrdersFilterSheet />);
 		fireEvent.click(screen.getByTestId("clear-all-btn"));
-		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("page=1"), {
-			scroll: false,
-		});
+
+		const url = mockRouterPush.mock.calls[0]![0] as string;
+		expect(url).not.toContain("cursor=");
+		expect(url).not.toContain("direction=");
+		expect(url).not.toContain("page=");
 	});
 
 	it("removes all filter keys from URL when clearing filters", () => {

@@ -98,6 +98,14 @@ export const PasswordInputField = ({
 				aria-describedby={describedBy}
 				aria-required={required}
 				autoComplete={autoComplete}
+				// Dévoiler le mot de passe bascule `type` en "text" : sans ces trois
+				// attributs, iOS/Android appliquent alors majuscule automatique,
+				// autocorrection et vérification orthographique à un mot de passe en
+				// clair — la saisie est réécrite sous les doigts de l'utilisateur, et
+				// le mot de passe atterrit dans le dictionnaire personnel du clavier.
+				autoCapitalize="none"
+				autoCorrect="off"
+				spellCheck={false}
 				className={cn("pr-10", className)}
 				endIcon={toggleButton}
 				endIconInteractive

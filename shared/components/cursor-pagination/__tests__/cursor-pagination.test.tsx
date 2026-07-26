@@ -564,4 +564,70 @@ describe("CursorPagination", () => {
 			expect(trigger).toBeInTheDocument();
 		});
 	});
+
+	// ========================================================================
+	// SCROLL / FOCUS AU CHANGEMENT DE CURSEUR
+	// ========================================================================
+
+	/**
+	 * @regression cursor-pagination-mount-scroll-2026-07-26
+	 *
+	 * Le scroll-to-top ne doit se déclencher QUE sur un vrai changement de
+	 * curseur. Une sentinelle initiale différente de toute valeur de curseur le
+	 * déclenchait à chaque montage : au retour navigateur depuis une page de
+	 * détail, Next.js restaurait la position de scroll puis le composant la
+	 * renvoyait immédiatement en haut (et volait le focus via `focusTargetRef`).
+	 */
+	describe("scroll au changement de curseur", () => {
+		let scrollSpy: ReturnType<typeof vi.fn>;
+
+		beforeEach(() => {
+			scrollSpy = vi.fn();
+			vi.stubGlobal("scrollTo", scrollSpy);
+			// `onCursorChange` lit prefers-reduced-motion avant de scroller.
+			vi.stubGlobal(
+				"matchMedia",
+				vi.fn(() => ({
+					matches: false,
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+				})),
+			);
+		});
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it("ne scrolle pas au montage sur la première page (pas de ?cursor)", () => {
+			renderPagination();
+			expect(scrollSpy).not.toHaveBeenCalled();
+		});
+
+		it("ne scrolle pas au montage sur une page profonde (retour navigateur)", () => {
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
+			renderPagination({ hasPreviousPage: true, prevCursor: "cm1zzz9yyy8xxx7www6vut" });
+			expect(scrollSpy).not.toHaveBeenCalled();
+		});
+
+		it("ne vole pas le focus au montage", () => {
+			const focusSpy = vi.fn();
+			const focusTargetRef = {
+				current: { focus: focusSpy } as unknown as HTMLElement,
+			};
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
+			renderPagination({ hasPreviousPage: true, focusTargetRef });
+			expect(focusSpy).not.toHaveBeenCalled();
+		});
+
+		it("scrolle en haut quand le curseur change après le montage", () => {
+			const { rerender } = renderPagination();
+			expect(scrollSpy).not.toHaveBeenCalled();
+
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
+			rerender(<CursorPagination {...defaultProps} hasPreviousPage />);
+
+			expect(scrollSpy).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+		});
+	});
 });

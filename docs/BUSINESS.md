@@ -20,21 +20,39 @@
 
 > À ~7-20k€ de CA total, les ventes intra-UE sont quasi certainement **< 10 000 €** : l'application est **conforme** en facturant 0 TVA. Le risque est latent, pas actuel. **Le suivi se fait au niveau comptable** (pas dans le code) tant que l'app n'intègre pas de calcul TVA-destination.
 
-## Coût de possession (TCO) — à chiffrer réellement
+## Coût de possession (TCO)
 
-Services externes utilisés (à compléter avec les factures réelles) :
+> Chiffré par l'audit « Coûts, quotas & limites fournisseurs » (2026-07-26). À confronter aux factures réelles chaque trimestre.
 
-| Service                               | Rôle                     | Plan visé (volume actuel)                                                                                                                             |
-| ------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Vercel                                | Hosting + crons          | Hobby/Pro — surveiller l'usage crons                                                                                                                  |
-| Neon                                  | PostgreSQL               | Free/Launch suffit à ce volume                                                                                                                        |
-| Stripe                                | Paiements                | 1,5 % + 0,25 € (CB EU) — variable                                                                                                                     |
-| Resend                                | E-mails transactionnels  | Free (3k mails/mois) suffit                                                                                                                           |
-| UploadThing                           | Médias produits/factures | Pay-as-you-go (volume images)                                                                                                                         |
-| **Sentry**                            | Suivi erreurs            | **Free tier (5k erreurs/mois)** — suffit largement. **Conservé** (audit) : seule visibilité sur les échecs paiement/webhook pour une opératrice solo. |
-| ~~Vercel Analytics + Speed Insights~~ | Métriques web            | **Retiré** (audit) — le dashboard Vercel suffit.                                                                                                      |
+| Service                               | Rôle                     | Plan                                     | €/mois     | Limite qui mord / au dépassement                                                              |
+| ------------------------------------- | ------------------------ | ---------------------------------------- | ---------- | --------------------------------------------------------------------------------------------- |
+| **Vercel**                            | Hosting + crons          | **Pro — obligatoire**                    | **20**     | Transformations d'images, bande passante → **facturation à l'usage, sans plafond par défaut** |
+| Neon                                  | PostgreSQL               | Free (0,25 CU, ~191,9 CU-h/mois, 0,5 Go) | 0          | Compute-hours → **compute SUSPENDU jusqu'au mois suivant = site KO**                          |
+| Stripe                                | Paiements                | Standard                                 | ~20 (var.) | Aucune — 1,5 % + 0,25 € (CB EEE), purement variable                                           |
+| Resend                                | E-mails                  | Free                                     | 0          | **3 000/mois ET 100/jour** → rejet 429 (pas de facturation)                                   |
+| UploadThing                           | Médias produits/factures | Free (2 Go)                              | 0          | Stockage → pay-as-you-go                                                                      |
+| **Sentry**                            | Suivi erreurs            | Developer/Free                           | 0          | 5k erreurs, 50 replays, **1 cron monitor** → événements droppés (pas de facturation)          |
+| GitHub Actions                        | CI                       | Free (2 000 min/mois)                    | 0–12       | Minutes → 0,008 $/min                                                                         |
+| ~~Vercel Analytics + Speed Insights~~ | Métriques web            | **Retiré**                               | 0          | Le dashboard Vercel suffit.                                                                   |
 
-**Objectif** : coût récurrent < 1 % du CA. À recalculer chaque trimestre (CA = commandes × panier moyen).
+**Total ≈ 40–52 €/mois**, dont **20 € de fixe** (Vercel Pro) et ~20 € de variable (Stripe).
+
+### Pourquoi Vercel Pro n'est pas un choix
+
+Le plan Hobby est **structurellement impossible** : (1) son ToS interdit l'usage commercial ; (2) il plafonne à **2 crons en déclenchement quotidien** alors que le projet en a 11, dont trois en demi-horaire. Le test `app/api/cron/__tests__/max-duration.test.ts` verrouille d'ailleurs déjà `maxDuration ≥ 60`, « the Pro plan ceiling we rely on ».
+
+### Objectif de coût
+
+**~5 % du CA** à 20 commandes/mois (~1 000 € de CA). L'ancienne cible « < 1 % » était **inatteignable** : Vercel Pro seul pèse 2 % à ce volume. Le ratio s'améliore mécaniquement avec le CA (à 100 commandes/mois il retombe sous 1 %). S'il reste durablement > 5 % **et** que le volume stagne, c'est le signal pour réévaluer une plateforme clé-en-main plutôt que pour raboter l'infra.
+
+### Garde-fous — à vérifier au dashboard
+
+Le dépôt ne peut pas configurer ces protections ; elles vivent dans les consoles fournisseurs.
+
+- [ ] **Vercel → Spend Management** : plafond de dépense avec **pause automatique du projet**. C'est le SEUL vrai coupe-circuit contre une facture surprise — sans lui, le pire cas d'une journée d'abus se chiffre en centaines/milliers d'euros. **Priorité absolue.**
+- [ ] **Neon → alerte d'usage** sur les compute-hours (l'épuisement coupe la base, donc la boutique).
+- [ ] **Sentry → Crons** : vérifier combien de monitors le plan autorise réellement. Le code n'en déclare plus que 5 (`SENTRY_MONITORED_CRONS`) au lieu de 11 ; si le plan n'en inclut qu'un, arbitrer entre payer ~0,78 $/monitor et se limiter à `reconcile-invoices`.
+- [ ] **GitHub → quota Actions** : alerte à 75 % des minutes incluses.
 
 ## Choix de périmètre assumés (≠ manques)
 
@@ -46,3 +64,16 @@ Services externes utilisés (à compléter avec les factures réelles) :
 ## Dépendance plateforme (lock-in)
 
 L'app repose sur Vercel (SSR/ISR + crons) + Neon. Migration hors Vercel = chantier non trivial. Acceptable au lancement ; réévaluer si la facture Vercel/Neon dérive ou si une alternative clé-en-main (Shopify, etc.) devient plus rentable au volume.
+
+## Postes qui grossissent tout seuls — invariants de coût
+
+Ces bornes sont verrouillées par des tests de régression. Les desserrer, c'est accepter une hausse de facture : le justifier explicitement.
+
+| Poste                           | Borne                                                          | Verrouillé par                                                               |
+| ------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Transformations d'images Vercel | Hôtes épinglés sur les app-ids Synclune ; 2 paliers de qualité | `image-remote-patterns.regression.test.ts`, `image-config.constants.test.ts` |
+| Compute Neon                    | Aucun cron sous 30 min ; réveils alignés (≤ 2/heure)           | `cron-wakeup-budget.regression.test.ts`                                      |
+| Quota e-mail Resend             | 40 envois marketing/jour max, 60 réservés au transactionnel    | `notify-back-in-stock.test.ts` (sous-suite budget)                           |
+| Stockage UploadThing            | 224 Mo max par upload (< 1/8 du quota gratuit)                 | `upload-size-limits.regression.test.ts`                                      |
+
+Deux d'entre eux sont des risques de **coupure de service**, pas seulement de facture : l'épuisement du compute Neon suspend la base (site KO), et l'épuisement du quota Resend journalier fait perdre les e-mails de confirmation de commande.

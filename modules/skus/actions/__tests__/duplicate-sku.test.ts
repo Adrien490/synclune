@@ -62,7 +62,7 @@ vi.mock("@/shared/lib/actions", () => ({
 vi.mock("@/shared/services/unique-name-generator.service", () => ({
 	generateUniqueTechnicalName: mockGenerateUniqueTechnicalName,
 }));
-vi.mock("../../schemas/sku.schemas", () => ({ deleteProductSkuSchema: {} }));
+vi.mock("../../schemas/sku.schemas", () => ({ duplicateProductSkuSchema: {} }));
 vi.mock("../../utils/cache.utils", () => ({
 	getSkuInvalidationTags: mockGetSkuInvalidationTags,
 }));

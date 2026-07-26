@@ -48,9 +48,10 @@ export function Logo({
 	ariaLabel,
 }: LogoProps) {
 	const effectiveMaxSize = sizeMd ?? size;
-	// Petits logos (≤40px) → palier vignette suffit ; sinon HERO (fidélité brand).
+	// Petits logos (≤40px) → palier vignette suffit ; sinon STANDARD, le palier
+	// partagé par le reste du site (aucun jeu de variantes facturé en plus).
 	const effectiveQuality =
-		quality ?? (effectiveMaxSize <= 40 ? IMAGE_QUALITY.THUMBNAIL : IMAGE_QUALITY.HERO);
+		quality ?? (effectiveMaxSize <= 40 ? IMAGE_QUALITY.THUMBNAIL : IMAGE_QUALITY.STANDARD);
 
 	// Taille du texte proportionnelle à la taille du logo (base la plus grande envisagée)
 	const textSizeClass =

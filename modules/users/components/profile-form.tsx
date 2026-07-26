@@ -3,12 +3,13 @@
 import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { useStore } from "@tanstack/react-form";
 import { useUpdateProfile } from "@/modules/users/hooks/use-update-profile";
 import { EmailChangeForm } from "@/modules/users/components/email-change-form";
 import type { GetCurrentUserReturn } from "@/modules/users/types/current-user.types";
@@ -39,6 +40,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
 	const serverErrors = useServerFieldErrors({ state });
 
 	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// Un prénom modifié mais non enregistré partait sans un mot sur un retour
+	// arrière ou une fermeture d'onglet. Convention checkout (`checkout-form.tsx`),
+	// surface client : pas d'exclusion mobile — celle des formulaires admin existe
+	// pour ne pas entrer en conflit avec le geste de retour natif du navigateur.
+	// `mergeForm` réinitialise l'état après succès, donc `isDirty` retombe seul.
+	useUnsavedChanges(
+		useStore(form.store, (s) => s.isDirty),
+		!isPending,
+		{
+			message: "Votre profil n'est pas enregistré. Quitter la page ?",
+		},
+	);
 
 	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
 	// une resoumission en vol (touche Entrée) est ignorée.
@@ -84,13 +98,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
 					)}
 				</form.AppField>
 
-				<form.Subscribe selector={(s) => [s.canSubmit]}>
-					{([canSubmit]) => (
-						<Button type="submit" disabled={!canSubmit || isPending}>
-							{isPending ? "Enregistrement…" : "Enregistrer les modifications"}
-						</Button>
-					)}
-				</form.Subscribe>
+				<form.AppForm>
+					<form.SubmitButton
+						isPending={isPending}
+						idleLabel="Enregistrer les modifications"
+						pendingLabel="Enregistrement…"
+					/>
+				</form.AppForm>
 			</form>
 
 			<div className="border-border/60 space-y-3 border-t pt-4">

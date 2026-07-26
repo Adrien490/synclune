@@ -8,7 +8,7 @@ import type { FilterDefinition, FilterValue, UseFilterOptions } from "@/shared/t
 export type { FilterDefinition } from "@/shared/types/hook.types";
 
 export function useFilter(options: UseFilterOptions = {}) {
-	const { filterPrefix = "filter_", preservePage = false } = options;
+	const { filterPrefix = "filter_", preservePagination = false } = options;
 
 	const router = useRouter();
 	const pathname = usePathname();
@@ -84,6 +84,20 @@ export function useFilter(options: UseFilterOptions = {}) {
 		return params.toString() ? `${pathname}?${params.toString()}` : pathname;
 	};
 
+	/**
+	 * Repartir du début de la liste après un changement de filtre.
+	 *
+	 * Les listes du projet sont en pagination **curseur** : il faut supprimer
+	 * `cursor` + `direction`, pas poser `page=1` (que plus personne ne lit).
+	 * Garder le curseur de l'ancien jeu de résultats produit une tranche
+	 * arbitraire dans le nouveau, sans erreur ni signal visible.
+	 */
+	const resetPaginationParams = (params: URLSearchParams): void => {
+		if (preservePagination) return;
+		params.delete("cursor");
+		params.delete("direction");
+	};
+
 	// Préserver les paramètres existants (sauf filtres)
 	const preserveNonFilterParams = (): URLSearchParams => {
 		const params = new URLSearchParams();
@@ -96,10 +110,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 			params.append(key, value);
 		});
 
-		// Remettre la page à 1 si nécessaire
-		if (!preservePage) {
-			params.set("page", "1");
-		}
+		resetPaginationParams(params);
 
 		return params;
 	};
@@ -221,10 +232,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 				params.delete(filterKey);
 			}
 
-			// Remettre la page à 1
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params));
 		});
@@ -239,9 +247,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 			filterKeys.forEach((key) => params.delete(key));
 
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params));
 		});
@@ -260,9 +266,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 			filterKeys.forEach((key) => params.delete(key));
 
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params), { scroll: false });
 		});
@@ -284,9 +288,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 			});
 			keysToDelete.forEach((key) => params.delete(key));
 
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params));
 		});
@@ -317,9 +319,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 				params.delete(filterKey);
 			}
 
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params), { scroll: false });
 		});
@@ -344,9 +344,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 			});
 			keysToDelete.forEach((key) => params.delete(key));
 
-			if (!preservePage) {
-				params.set("page", "1");
-			}
+			resetPaginationParams(params);
 
 			router.replace(buildUrl(params), { scroll: false });
 		});

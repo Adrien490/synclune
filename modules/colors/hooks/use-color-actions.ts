@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink, SquarePen, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Power, PowerOff, SquarePen, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -15,6 +15,7 @@ import { DELETE_COLOR_DIALOG_ID } from "../components/admin/delete-color-alert-d
 import { COLOR_DIALOG_ID } from "../components/color-form-dialog";
 
 import { useDuplicateColor } from "./use-duplicate-color";
+import { useToggleColorStatus } from "./use-toggle-color-status";
 
 interface UseColorActionsParams {
 	colorId: string;
@@ -22,6 +23,11 @@ interface UseColorActionsParams {
 	colorHex: string;
 	colorSlug: string;
 	colorDescription?: string | null;
+	/**
+	 * Pilote l'item Activer/Désactiver. Optionnel : `undefined` masque l'item, pour
+	 * les surfaces qui ne connaissent pas l'état (rien ne doit deviner un booléen).
+	 */
+	colorIsActive?: boolean;
 }
 
 export function useColorActions({
@@ -30,6 +36,7 @@ export function useColorActions({
 	colorHex,
 	colorSlug,
 	colorDescription = null,
+	colorIsActive,
 }: UseColorActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openDialog } = useDialog(COLOR_DIALOG_ID);
 	const { open: openAlert } = useAlertDialog(DELETE_COLOR_DIALOG_ID);
@@ -51,6 +58,8 @@ export function useColorActions({
 			});
 		},
 	});
+
+	const { toggleStatus, isPending: isToggling } = useToggleColorStatus();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -89,6 +98,21 @@ export function useColorActions({
 					icon: ExternalLink,
 					href: `/admin/catalogue/inventaire?colorId=${colorId}`,
 				},
+				// En mobile, la liste n'affiche l'état que sous forme de badge en lecture
+				// seule : sans cet item, activer/désactiver une couleur y était
+				// IMPOSSIBLE (l'interrupteur ne vit que dans le tableau desktop).
+				// Parité avec `use-material-actions`.
+				...(colorIsActive === undefined
+					? []
+					: [
+							{
+								key: "toggle",
+								label: colorIsActive ? "Désactiver" : "Activer",
+								icon: colorIsActive ? PowerOff : Power,
+								disabled: isToggling,
+								onSelect: () => toggleStatus(colorId, !colorIsActive),
+							},
+						]),
 			],
 		},
 		{

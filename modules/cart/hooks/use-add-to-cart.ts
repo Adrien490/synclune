@@ -8,6 +8,7 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { FUNNEL_EVENTS, trackEvent } from "@/shared/lib/analytics/track";
+import { announce } from "@/shared/utils/announce";
 import type { ActionState } from "@/shared/types/server-action";
 
 interface UseAddToCartOptions {
@@ -50,6 +51,19 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 					showErrorToast: options?.showErrorToast ?? true,
 					onSuccess: (result: unknown) => {
 						triggerHaptic("success");
+						/*
+						 * Pas de toast : l'ouverture du cart sheet EST le feedback visible
+						 * (`showSuccessToast: false` ci-dessus). Mais un lecteur d'écran ne
+						 * « voit » pas ce sheet comme une confirmation d'ajout, et les deux
+						 * autres canaux échouaient :
+						 *  - la région de `cart-sheet.tsx` se monte AVEC le sheet, donc au
+						 *    même frame que son texte → jamais vocalisée ;
+						 *  - celle de `CountBadge` était gatée sur `count > 0`, donc muette
+						 *    au tout premier ajout (corrigé, mais elle annonce un total de
+						 *    panier, pas l'ajout lui-même).
+						 * D'où l'annonce explicite dans le canal global toujours monté.
+						 */
+						announce("Article ajouté au panier");
 						if (shouldOpenSheet) {
 							openSheet("cart");
 						}

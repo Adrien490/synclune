@@ -49,9 +49,11 @@ describe("Spinner", () => {
 		expect(icon).toHaveAttribute("aria-hidden", "true");
 	});
 
-	it("icon has animate-spin class", () => {
+	it("icon has motion-safe:animate-spin class", () => {
 		render(<Spinner />);
-		expect(screen.getByTestId("loader-icon")).toHaveClass("animate-spin");
+		// Préfixe `motion-safe:` : l'animation était inconditionnelle, contrairement
+		// à `Skeleton`. Sous `prefers-reduced-motion` l'icône reste visible, statique.
+		expect(screen.getByTestId("loader-icon")).toHaveClass("motion-safe:animate-spin");
 	});
 
 	it("applies custom className to the icon", () => {

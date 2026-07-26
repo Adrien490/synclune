@@ -26,8 +26,10 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 		}
 	}
 
+	// `data-checkout-shell` : cible du `scroll-padding-bottom` de globals.css, qui
+	// réserve la hauteur de la barre CTA fixe (publiée par PayButton) sous `md`.
 	return (
-		<div className="bg-background flex min-h-dvh flex-col">
+		<div data-checkout-shell className="bg-background flex min-h-dvh flex-col">
 			{/* Preconnect to Stripe — only needed on checkout pages */}
 			<link rel="dns-prefetch" href="https://js.stripe.com" />
 			<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />

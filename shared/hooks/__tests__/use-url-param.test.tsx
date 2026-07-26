@@ -44,8 +44,8 @@ describe("useUrlParam", () => {
 	// update()
 	// ----------------------------------------------------------------
 
-	it("update() pushes a URL with the new param and resets page=1 by default", () => {
-		setSearchParams("sort=newest&page=4&q=test");
+	it("update() pushes a URL with the new param and drops the cursor by default", () => {
+		setSearchParams("sort=newest&cursor=tok_4&direction=forward&q=test");
 		const { result } = renderHook(() => useUrlParam("sort"));
 
 		act(() => {
@@ -56,7 +56,8 @@ describe("useUrlParam", () => {
 		const pushedUrl = mockPush.mock.calls[0]![0] as string;
 		const params = new URLSearchParams(pushedUrl.replace(/^\?/, ""));
 		expect(params.get("sort")).toBe("price-asc");
-		expect(params.get("page")).toBe("1"); // reset
+		expect(params.has("cursor")).toBe(false); // reset
+		expect(params.has("direction")).toBe(false);
 		expect(params.get("q")).toBe("test"); // preserved
 	});
 
@@ -70,9 +71,9 @@ describe("useUrlParam", () => {
 		expect(mockPush).toHaveBeenCalledWith(expect.any(String), { scroll: false });
 	});
 
-	it("update() with resetPage=false preserves the current page", () => {
-		setSearchParams("sort=newest&page=4");
-		const { result } = renderHook(() => useUrlParam("sort", { resetPage: false }));
+	it("update() with resetPagination=false preserves the current cursor", () => {
+		setSearchParams("sort=newest&cursor=tok_4");
+		const { result } = renderHook(() => useUrlParam("sort", { resetPagination: false }));
 
 		act(() => {
 			result.current.update("price-asc");
@@ -81,11 +82,11 @@ describe("useUrlParam", () => {
 		const pushedUrl = mockPush.mock.calls[0]![0] as string;
 		const params = new URLSearchParams(pushedUrl.replace(/^\?/, ""));
 		expect(params.get("sort")).toBe("price-asc");
-		expect(params.get("page")).toBe("4"); // preserved
+		expect(params.get("cursor")).toBe("tok_4"); // preserved
 	});
 
 	it("update() with empty string deletes the param from the URL", () => {
-		setSearchParams("sort=newest&page=2");
+		setSearchParams("sort=newest&cursor=tok_2");
 		const { result } = renderHook(() => useUrlParam("sort"));
 
 		act(() => {
@@ -95,7 +96,7 @@ describe("useUrlParam", () => {
 		const pushedUrl = mockPush.mock.calls[0]![0] as string;
 		const params = new URLSearchParams(pushedUrl.replace(/^\?/, ""));
 		expect(params.has("sort")).toBe(false);
-		expect(params.get("page")).toBe("1");
+		expect(params.has("cursor")).toBe(false);
 	});
 
 	it("update() preserves unrelated search params", () => {
@@ -116,8 +117,8 @@ describe("useUrlParam", () => {
 	// clear()
 	// ----------------------------------------------------------------
 
-	it("clear() removes the param and resets page=1", () => {
-		setSearchParams("sort=newest&page=4");
+	it("clear() removes the param and drops the cursor", () => {
+		setSearchParams("sort=newest&cursor=tok_4");
 		const { result } = renderHook(() => useUrlParam("sort"));
 
 		act(() => {
@@ -127,7 +128,7 @@ describe("useUrlParam", () => {
 		const pushedUrl = mockPush.mock.calls[0]![0] as string;
 		const params = new URLSearchParams(pushedUrl.replace(/^\?/, ""));
 		expect(params.has("sort")).toBe(false);
-		expect(params.get("page")).toBe("1");
+		expect(params.has("cursor")).toBe(false);
 	});
 
 	// ----------------------------------------------------------------

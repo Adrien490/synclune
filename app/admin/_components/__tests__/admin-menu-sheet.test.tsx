@@ -224,10 +224,13 @@ describe("AdminMenuSheet", () => {
 			expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
 		});
 
+		// `Configuration` et `Contenu` ont fusionné en `Boutique`, `Clients` a rejoint
+		// `Pilotage` : les 3 groupes mono-item ont disparu (cf. navigation-config).
 		it("renders navigation groups (shop-live mode)", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
+			expect(screen.getByText("Pilotage")).toBeInTheDocument();
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
-			expect(screen.getByText("Configuration")).toBeInTheDocument();
+			expect(screen.getByText("Boutique")).toBeInTheDocument();
 			// Visibles en mode boutique en ligne (SHOP_LIVE=true)
 			expect(screen.getByText("Ventes")).toBeInTheDocument();
 			expect(screen.getByText("Marketing")).toBeInTheDocument();

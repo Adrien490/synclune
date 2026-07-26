@@ -7,32 +7,36 @@ interface ShowWishlistUndoToastOptions {
 	productId: string;
 	productTitle?: string;
 	onRestored?: () => void;
+	/**
+	 * Expose l'action « Annuler » dans le toast mobile.
+	 *
+	 * Réservé aux retraits déclenchés depuis la **grille** des favoris (swipe) :
+	 * la carte disparaît, il n'y a donc plus rien à re-taper pour revenir en
+	 * arrière. Sur la fiche produit, le cœur reste à l'écran et un second tap
+	 * suffit — l'undo y serait redondant.
+	 * @default false
+	 */
+	allowUndoOnMobile?: boolean;
 }
 
 /**
  * Feedback de retrait wishlist avec stratégie responsive.
  *
- * - **Desktop** : toast Sonner persistant 5s avec action « Annuler » inline +
+ * - **Desktop** : toast persistant 5s avec action « Annuler » inline +
  *   description guidante (pattern undo classique).
- * - **Mobile** : pastille `<MicroToast />` brève sans action — l'undo n'a pas
- *   de sens sur PDP (un tap re-toggle l'état). La page `/favoris` applique une
- *   suppression directe via `WishlistListOptimisticContext` (retrait optimiste).
+ * - **Mobile** : même toast en version brève (pas de description — le toaster
+ *   mobile est `visibleToasts={1}` et bien plus étroit), avec l'undo seulement
+ *   si `allowUndoOnMobile`.
  *
- * Réutilisé entre `SwipeableWishlistItem` (desktop) et `WishlistButton`
+ * Réutilisé entre `SwipeableWishlistItem` (grille) et `WishlistButton`
  * (PDP via `enableUndoToast`).
  */
 export function showWishlistUndoToast({
 	productId,
 	productTitle,
 	onRestored,
+	allowUndoOnMobile = false,
 }: ShowWishlistUndoToastOptions): void {
-	if (isMobileViewport()) {
-		toast.success(productTitle ? `« ${productTitle} » retiré` : "Retiré des favoris", {
-			microVariant: "wishlist",
-		});
-		return;
-	}
-
 	const handleUndo = async () => {
 		useBadgeCountsStore.getState().incrementWishlist();
 		const fd = new FormData();
@@ -48,6 +52,15 @@ export function showWishlistUndoToast({
 			toast.error(result.message);
 		}
 	};
+
+	if (isMobileViewport()) {
+		toast.success(productTitle ? `« ${productTitle} » retiré` : "Retiré des favoris", {
+			// Le toast mobile porte l'undo uniquement quand le retrait vient d'un
+			// geste sur la grille : la carte a disparu, il n'y a plus rien à re-taper.
+			...(allowUndoOnMobile ? { action: { label: "Annuler", onClick: handleUndo } } : {}),
+		});
+		return;
+	}
 
 	toast.success(
 		productTitle ? `« ${productTitle} » retiré de vos favoris` : "Article retiré de vos favoris",

@@ -79,7 +79,6 @@ export const applyCartDiscountSchema = z.object({
 		.transform((v) => v.toUpperCase()),
 });
 
-
 /**
  * Schema pour supprimer plusieurs items en une fois
  */

@@ -131,16 +131,19 @@ describe("DataTableSkeleton", () => {
 
 	// ─── Cell types ────────────────────────────────────────────────────────
 
-	it("renders skeleton for checkbox cell type", () => {
+	it("renders skeleton for avatar cell type", () => {
 		render(
-			<DataTableSkeleton columns={[{ cell: { type: "checkbox" } }]} rows={1} pagination="none" />,
+			<DataTableSkeleton
+				columns={[{ cell: { type: "avatar", size: 8 } }]}
+				rows={1}
+				pagination="none"
+			/>,
 		);
 
 		const skeletons = screen.getAllByTestId("skeleton");
 		// 1 header skeleton + 1 body cell skeleton = 2
 		expect(skeletons.length).toBe(2);
-		// checkbox skeleton: size-4
-		const bodySkeletons = skeletons.filter((s) => s.className.includes("size-4"));
+		const bodySkeletons = skeletons.filter((s) => s.className.includes("rounded-full"));
 		expect(bodySkeletons.length).toBeGreaterThan(0);
 	});
 

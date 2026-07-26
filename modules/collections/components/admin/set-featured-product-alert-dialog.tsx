@@ -8,11 +8,10 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { LoaderCircle, Star, StarOff } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -60,7 +59,6 @@ export function SetFeaturedProductAlertDialog() {
 			tone={isFeatured ? "warning" : "info"}
 		>
 			<ResponsiveAlertDialogContent>
-				<ResponsiveAlertDialogHeroIcon icon={isFeatured ? StarOff : Star} />
 				<ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogTitle>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}

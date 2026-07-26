@@ -16,6 +16,7 @@ import { AnimatePresence, m, MotionConfig } from "motion/react";
 import { Search, X } from "lucide-react";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { mediaBelow } from "@/shared/constants/breakpoints";
 import { useAppForm } from "@/shared/components/forms";
 import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
 import { Button } from "@/shared/components/ui/button";
@@ -24,6 +25,12 @@ import { cn } from "@/shared/utils/cn";
 
 export interface SearchInputHandle {
 	setValue: (value: string) => void;
+	/**
+	 * Rend le focus au champ. Utilisé par la recherche rapide en mode idle : les
+	 * flèches y déplacent le focus DOM réel sur un item, et taper un caractère
+	 * doit ramener la saisie dans le champ.
+	 */
+	focus: () => void;
 }
 
 type SearchInputProps = {
@@ -59,6 +66,12 @@ type SearchInputProps = {
 	"aria-expanded"?: boolean;
 	/** ID of the element controlled by this input (for aria-controls) */
 	"aria-controls"?: string;
+	/**
+	 * Description supplémentaire. **Composée** avec la live region interne
+	 * (« Recherche en cours… ») au lieu de la remplacer : l'écraser rendrait le
+	 * champ muet pendant la recherche.
+	 */
+	"aria-describedby"?: string;
 	/** Additional keydown handler on the input (composed with internal handler) */
 	onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 	/** Imperative handle ref */
@@ -106,6 +119,7 @@ function SearchInputInner({
 	"aria-activedescendant": activeDescendantId,
 	"aria-expanded": ariaExpanded,
 	"aria-controls": ariaControls,
+	"aria-describedby": ariaDescribedBy,
 	onKeyDown: externalKeyDown,
 	ref,
 }: SearchInputProps) {
@@ -131,6 +145,7 @@ function SearchInputInner({
 			form.setFieldValue("search", value);
 			onValueChange?.(value);
 		},
+		focus: () => inputRef.current?.focus(),
 	}));
 
 	// Sync URL → form
@@ -146,9 +161,24 @@ function SearchInputInner({
 	});
 
 	useEffect(() => {
-		if (urlValue !== lastSyncedUrl.current) {
-			onUrlSync(urlValue);
-		}
+		if (urlValue === lastSyncedUrl.current) return;
+		// Ne JAMAIS réécrire le champ pendant que l'utilisateur y tape.
+		//
+		// `router.replace` part dans un `startTransition`, donc son atterrissage est
+		// différé : une URL PÉRIMÉE (« abc » alors que l'utilisateur en est déjà à
+		// « abcd ») arrive après coup et, comparée au seul `lastSyncedUrl`, passe
+		// pour un changement externe → le champ était réécrit et les caractères
+		// tapés entre-temps perdus. Revendiquer la valeur dans `handleSearch` ne
+		// suffit pas : l'écho périmé diffère aussi de la dernière revendication.
+		//
+		// Le focus est le discriminant fiable : la frappe a lieu champ focus, les
+		// navigations externes (bouton retour, badge de filtre, lien « effacer »)
+		// ont lieu champ non focus. Limite assumée : un retour navigateur déclenché
+		// pendant que le champ a le focus ne resynchronise pas — cas marginal, sans
+		// perte de données, contre une perte de frappe systématique sur connexion
+		// lente. Audit recherche 2026-07-26.
+		if (inputRef.current && document.activeElement === inputRef.current) return;
+		onUrlSync(urlValue);
 	}, [urlValue]);
 
 	// Clear the maxLength flash timer on unmount
@@ -183,12 +213,31 @@ function SearchInputInner({
 		newSearchParams.delete("cursor");
 		newSearchParams.delete("direction");
 
+		// Revendiquer la valeur AVANT la transition (et non dedans). `router.replace`
+		// est différé : sans ceci, `lastSyncedUrl` n'était jamais mis à jour quand le
+		// composant écrivait lui-même l'URL, seulement dans `onUrlSync`/`handleClear`.
+		// Séquence perdante : taper « abc » → debounce → replace différé ; l'utilisateur
+		// tape « d » ; la transition atterrit, `urlValue`("abc") ≠ `lastSyncedUrl`("")
+		// → l'effet de sync réécrivait le champ à « abc » et le « d » disparaissait.
+		// Un changement d'URL EXTERNE (bouton retour, badge de filtre) diffère toujours
+		// du ref, donc les syncs légitimes restent intactes.
+		// Audit recherche 2026-07-26.
+		lastSyncedUrl.current = trimmed;
+
 		startTransition(() => {
 			router.replace(`?${newSearchParams.toString()}`, { scroll: false });
 		});
 
-		// Close keyboard on mobile (skip in dialog contexts)
-		if (!preventMobileBlur && typeof window !== "undefined" && window.innerWidth < 768) {
+		// Close keyboard on mobile (skip in dialog contexts).
+		// `matchMedia` et non `innerWidth` : ce dernier inclut la scrollbar, donc le
+		// clavier logiciel restait ouvert sur la bande 768-783px où le layout est
+		// encore mobile (audit responsive 2026-07-26, P2).
+		if (
+			!preventMobileBlur &&
+			typeof window !== "undefined" &&
+			typeof window.matchMedia === "function" &&
+			window.matchMedia(mediaBelow("md")).matches
+		) {
 			inputRef.current?.blur();
 		}
 	};
@@ -265,6 +314,14 @@ function SearchInputInner({
 							{isPending ? (
 								<m.span
 									key="loader"
+									// `aria-hidden` retire tout le sous-arbre de l'arbre d'accessibilité,
+									// dont le `role="status"` interne de `MiniDotsLoader` : sans ça, DEUX
+									// live regions parlaient à chaque frappe (le loader + la région
+									// sr-only « Recherche en cours… » ci-dessous), et
+									// `searchForm.locator('[role="status"]')` était ambigu côté E2E.
+									// Le loader est purement visuel ici — l'annonce est portée par la
+									// région sr-only, seule SSOT.
+									aria-hidden="true"
 									className="flex items-center"
 									initial={{ opacity: 0 }}
 									animate={{ opacity: 1 }}
@@ -335,7 +392,7 @@ function SearchInputInner({
 									placeholder={placeholder}
 									aria-label={ariaLabel ?? placeholder}
 									aria-busy={isPending}
-									aria-describedby={statusId}
+									aria-describedby={[statusId, ariaDescribedBy].filter(Boolean).join(" ")}
 								/>
 
 								<AnimatePresence mode="wait">

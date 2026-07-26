@@ -106,15 +106,22 @@ export function ReviewsList({
 
 			{/* Toolbar: filtre actif + tri + CTA avis */}
 			<div className="flex items-center justify-between gap-4">
-				{/* Indicateur de filtre actif */}
-				{isFiltered ? (
-					<p className="text-muted-foreground text-sm" role="status" aria-live="polite">
-						{totalCount} avis à {ratingFilter} étoile{ratingFilter > 1 ? "s" : ""} sur{" "}
-						{stats.totalCount} au total
-					</p>
-				) : (
-					<div />
-				)}
+				{/*
+				 * Indicateur de filtre actif — région montée en permanence, texte vide
+				 * hors filtrage.
+				 *
+				 * ⚠️ NE PAS remettre le ternaire qui ne rendait le `<p role="status">`
+				 * que `isFiltered` : la région entrait dans l'arbre d'accessibilité au
+				 * même frame que son texte, donc la **première** application d'un filtre
+				 * étoiles n'était jamais annoncée. Le `<div />` de l'ancienne branche
+				 * `else` servait à préserver le `justify-between` : on garde ce rôle en
+				 * laissant le `<p>` vide occuper la première cellule.
+				 */}
+				<p className="text-muted-foreground text-sm" role="status" aria-live="polite">
+					{isFiltered
+						? `${totalCount} avis à ${ratingFilter} étoile${ratingFilter > 1 ? "s" : ""} sur ${stats.totalCount} au total`
+						: ""}
+				</p>
 
 				{/* Tri des avis */}
 				{stats.totalCount > 1 && <ReviewSortSelect />}

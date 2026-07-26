@@ -23,9 +23,12 @@ import { isSearchError, useQuickSearch } from "../use-quick-search";
 
 const mockResetActiveIndex = vi.fn();
 const mockSetValue = vi.fn();
+const mockFocus = vi.fn();
 
 function createSearchInputRef() {
-	return { current: { setValue: mockSetValue } };
+	// `focus` fait partie du contrat `SearchInputHandle` depuis que le mode idle
+	// rend la main au champ quand l'utilisateur retape (lot E).
+	return { current: { setValue: mockSetValue, focus: mockFocus } };
 }
 
 function makeResult(

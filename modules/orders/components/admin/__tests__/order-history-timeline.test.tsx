@@ -13,6 +13,12 @@ vi.mock("date-fns/locale", () => ({
 	fr: {},
 }));
 
+// `formatDateTime` (horodatage absolu du `<time title>`) passe par `date-fns.format`,
+// absent du mock ci-dessus : on stubbe l'utilitaire plutôt que d'élargir le mock.
+vi.mock("@/shared/utils/dates", () => ({
+	formatDateTime: () => "2 janvier 2026 à 10:30",
+}));
+
 vi.mock("lucide-react", () => ({
 	AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
 	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
@@ -305,5 +311,59 @@ describe("OrderHistoryTimeline", () => {
 
 		expect(screen.getByText("Voir 3 entrées plus anciennes")).toBeInTheDocument();
 		expect(screen.queryByText("Réduire")).not.toBeInTheDocument();
+	});
+
+	describe("horodatage (audit trail 10 ans, Art. L123-22)", () => {
+		it("expose la date absolue en dateTime + title, pas seulement le relatif", () => {
+			render(<OrderHistoryTimeline history={[createEntry()]} />);
+
+			const time = screen.getByText("il y a 2 heures");
+			expect(time.tagName).toBe("TIME");
+			expect(time).toHaveAttribute("dateTime", "2026-03-20T10:00:00.000Z");
+			expect(time).toHaveAttribute("title", "2 janvier 2026 à 10:30");
+		});
+	});
+
+	describe("métadonnées non rendues", () => {
+		it("annonce le NOMBRE de champs techniques sans exposer leurs valeurs", () => {
+			render(
+				<OrderHistoryTimeline
+					history={[
+						createEntry({
+							metadata: {
+								invoiceNumber: "F-2026-00042",
+								// Non whitelistés : le compte doit apparaître, jamais les valeurs.
+								stripePaymentIntentId: "pi_secret_123",
+								adminEmail: "admin@example.com",
+							},
+						}),
+					]}
+				/>,
+			);
+
+			expect(screen.getByText("F-2026-00042")).toBeInTheDocument();
+			expect(screen.getByText(/\+ 2 champs techniques tracés/)).toBeInTheDocument();
+			// `OrderHistory` n'est jamais scrubée à l'anonymisation (invariant 9) : rien
+			// d'arbitraire ne doit atteindre le DOM.
+			expect(screen.queryByText(/pi_secret_123/)).toBeNull();
+			expect(screen.queryByText(/admin@example.com/)).toBeNull();
+		});
+
+		it("accorde le singulier pour un seul champ écarté", () => {
+			render(<OrderHistoryTimeline history={[createEntry({ metadata: { attempts: 3 } })]} />);
+			expect(screen.getByText(/\+ 1 champ technique tracé/)).toBeInTheDocument();
+		});
+
+		it("n'affiche rien quand tous les champs sont rendus ou que metadata est absent", () => {
+			render(
+				<OrderHistoryTimeline
+					history={[
+						createEntry({ id: "a", metadata: { invoiceNumber: "F-2026-00001" } }),
+						createEntry({ id: "b", metadata: null }),
+					]}
+				/>,
+			);
+			expect(screen.queryByText(/champ.? technique/)).toBeNull();
+		});
 	});
 });

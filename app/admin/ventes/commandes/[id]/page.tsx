@@ -10,6 +10,13 @@ const CancelOrderAlertDialog = dynamic(() =>
 		(mod) => mod.CancelOrderAlertDialog,
 	),
 );
+// `useOrderActions` expose l'item « Supprimer » aussi depuis le détail (il n'est pas
+// dans DETAIL_HIDDEN_KEYS) : sans ce montage, le clic était un no-op silencieux.
+const DeleteOrderAlertDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/delete-order-alert-dialog").then(
+		(mod) => mod.DeleteOrderAlertDialog,
+	),
+);
 const MarkAsPaidAlertDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then(
 		(mod) => mod.MarkAsPaidAlertDialog,
@@ -137,6 +144,7 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 
 			{/* Dialogs */}
 			<CancelOrderAlertDialog />
+			<DeleteOrderAlertDialog successPath="/admin/ventes/commandes" />
 			<MarkAsPaidAlertDialog />
 			<MarkAsShippedDialog />
 			<MarkAsDeliveredAlertDialog />

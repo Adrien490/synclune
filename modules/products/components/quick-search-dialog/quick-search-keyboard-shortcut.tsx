@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
-import { lastTrigger } from "./last-trigger";
+import { setLastTrigger } from "./last-trigger";
 
 /**
  * Lightweight listener for the global ⌘K / Ctrl+K shortcut.
@@ -18,16 +18,41 @@ import { lastTrigger } from "./last-trigger";
 export function QuickSearchKeyboardShortcut() {
 	const { isOpen, open, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
+	// Préchauffe le chunk du dialog pendant un temps mort, pour que le tout
+	// premier ⌘K / tap n'attende pas le réseau. `loading: () => null` côté
+	// `dynamic()` ne donne AUCUN retour visuel entre l'ouverture et l'arrivée du
+	// chunk ; un skeleton, lui, ajouterait un flash sur le chemin courant (chunk
+	// déjà en cache). Audit recherche 2026-07-26.
+	useEffect(() => {
+		const prefetch = () => {
+			void import("./quick-search-dialog");
+		};
+		if (typeof window.requestIdleCallback === "function") {
+			const handle = window.requestIdleCallback(prefetch, { timeout: 3000 });
+			return () => window.cancelIdleCallback(handle);
+		}
+		const timer = window.setTimeout(prefetch, 2000);
+		return () => window.clearTimeout(timer);
+	}, []);
+
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+			// ⌥⌘K est une combinaison OS/navigateur sur certaines plateformes.
+			if (e.altKey) return;
+			// `toLowerCase()` : avec Shift ou CapsLock, `e.key` vaut "K" — ⇧⌘K ne
+			// faisait rien.
+			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+				// Volontairement PAS de garde `isInteractiveTarget` ici (contrairement à
+				// la cheatsheet admin, qui écoute la touche `?` nue et collisionne donc
+				// vraiment avec la frappe) : ⌘K est un accélérateur modifié, et le
+				// bloquer dans les champs casserait « sélectionner du texte puis ⌘K ».
 				e.preventDefault();
 				if (isOpen) {
 					close();
 				} else {
 					// Remember the focused element so focus returns there on close.
 					if (document.activeElement instanceof HTMLElement) {
-						lastTrigger.el = document.activeElement;
+						setLastTrigger(document.activeElement);
 					}
 					open();
 				}

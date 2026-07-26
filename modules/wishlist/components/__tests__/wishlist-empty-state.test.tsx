@@ -73,24 +73,27 @@ describe("WishlistEmptyState", () => {
 		expect(collectionsLink).toHaveAttribute("href", "/collections");
 	});
 
-	it("does NOT render the live region when liveAnnouncement is omitted", () => {
-		render(<WishlistEmptyState />);
+	/**
+	 * @regression empty-state-no-dead-live-region
+	 *
+	 * Le composant portait une prop `liveAnnouncement` qui rendait
+	 * `<div role="status" aria-live="polite">` **conditionnellement**, dans un
+	 * composant lui-même monté au moment où la liste devient vide. La région
+	 * entrait donc dans l'arbre d'accessibilité au même frame que son texte : cas
+	 * où aucun lecteur d'écran n'annonce. La prop donnait une fausse confiance —
+	 * trois tests la vérifiaient, aucun ne pouvait détecter qu'elle était inerte.
+	 *
+	 * L'annonce de la transition appartient désormais à
+	 * `wishlist-list-content.tsx`, qui appelle `announce()` sur les régions
+	 * globales montées par `AppToaster` (donc présentes AVANT le changement).
+	 *
+	 * ⚠️ Ne pas réintroduire de région live ici.
+	 */
+	it("ne rend AUCUNE région live (l'annonce appartient au parent)", () => {
+		const { container } = render(<WishlistEmptyState />);
 
 		expect(screen.queryByRole("status")).not.toBeInTheDocument();
-	});
-
-	it("renders a polite live region when liveAnnouncement is provided", () => {
-		render(<WishlistEmptyState liveAnnouncement="Votre liste de favoris est maintenant vide" />);
-
-		const liveRegion = screen.getByRole("status");
-		expect(liveRegion).toHaveAttribute("aria-live", "polite");
-		expect(liveRegion).toHaveClass("sr-only");
-		expect(liveRegion).toHaveTextContent("Votre liste de favoris est maintenant vide");
-	});
-
-	it("does not set aria-atomic on the live region (audit feedback transverse)", () => {
-		render(<WishlistEmptyState liveAnnouncement="…" />);
-
-		expect(screen.getByRole("status")).not.toHaveAttribute("aria-atomic");
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(container.querySelector("[aria-live]")).toBeNull();
 	});
 });

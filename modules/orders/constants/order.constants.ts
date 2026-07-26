@@ -18,7 +18,6 @@ export const GET_ORDERS_SELECT = {
 	status: true,
 	paymentStatus: true,
 	fulfillmentStatus: true,
-	shippingMethod: true,
 	shippingCarrier: true,
 	trackingNumber: true,
 	trackingUrl: true,
@@ -70,7 +69,6 @@ export const GET_ORDER_SELECT_ADMIN = {
 	customerName: true,
 	customerPhone: true,
 	// Discriminant e-reporting B2C (toujours B2C — micro-entreprise franchise)
-	customerType: true,
 	subtotal: true,
 	discountAmount: true,
 	shippingCost: true,
@@ -94,9 +92,7 @@ export const GET_ORDER_SELECT_ADMIN = {
 	billingCity: true,
 	billingCountry: true,
 	billingPhone: true,
-	shippingMethod: true,
 	shippingCarrier: true,
-	shippingRateId: true,
 	trackingNumber: true,
 	trackingUrl: true,
 	actualDelivery: true,
@@ -255,9 +251,7 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 	billingCity: true,
 	billingCountry: true,
 	billingPhone: true,
-	shippingMethod: true,
 	shippingCarrier: true,
-	shippingRateId: true,
 	trackingNumber: true,
 	trackingUrl: true,
 	actualDelivery: true,
@@ -356,6 +350,26 @@ export const GET_ORDER_SELECT_CUSTOMER = {
 export const GET_ORDERS_DEFAULT_PER_PAGE = 20;
 export const GET_ORDERS_MAX_RESULTS_PER_PAGE = 100;
 
+// ============================================================================
+// FILTRE MONTANT — SSOT de l'unité
+// ============================================================================
+
+/**
+ * Plafond du filtre de montant, **en centimes** (unité de `Order.total`).
+ *
+ * ⚠️ La frontière d'unité est ici, et une seule fois. L'URL (`filter_totalMin` /
+ * `filter_totalMax`) et les inputs admin sont en **euros** ; `parseFilters` convertit
+ * en centimes avant le schéma. Ce plafond avait été dupliqué en trois endroits avec
+ * trois unités différentes — un `MAX_PRICE = 500_000` commenté « en centimes » mais
+ * poussé tel quel dans un champ en euros, ×100 par `parseFilters` = 50 000 000
+ * centimes, soit 5× le plafond du schéma : saisir un montant minimum faisait
+ * **planter la liste** (error boundary). Dériver les euros d'ici, jamais l'inverse.
+ */
+export const ORDER_TOTAL_FILTER_MAX_CENTS = 10_000_000;
+
+/** Même plafond exprimé en euros — valeur à passer aux inputs et au schéma d'URL. */
+export const ORDER_TOTAL_FILTER_MAX_EUROS = ORDER_TOTAL_FILTER_MAX_CENTS / 100;
+
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	CREATED_ASC: "created-ascending",
@@ -404,8 +418,6 @@ export const ORDER_ERROR_MESSAGES = {
 	CANNOT_DELETE_PAID:
 		"Cette commande ne peut pas être supprimée car elle a été payée. " +
 		"Annulez la commande et procédez à un remboursement à la place.",
-	BULK_DELETE_NONE_ELIGIBLE:
-		"Aucune commande ne peut être supprimée (toutes ont des factures ou sont payées).",
 	// Mark as paid
 	MARK_AS_PAID_FAILED: "Erreur lors du marquage de la commande comme payée.",
 	ALREADY_PAID: "Cette commande est déjà payée.",

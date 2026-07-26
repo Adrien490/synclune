@@ -2,7 +2,7 @@
 
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowLeft, Ellipsis, Pencil } from "lucide-react";
+import { Ellipsis, Pencil } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -13,10 +13,13 @@ import {
 	ResponsiveActionMenuTrigger,
 } from "@/shared/components/responsive-action-menu";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
 
 import { useProductActions } from "../../../hooks/use-product-actions";
 
 import { PRODUCT_STATUS_CONFIG } from "./product-detail-status.constants";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface ProductDetailHeaderProps {
 	product: {
@@ -31,6 +34,8 @@ interface ProductDetailHeaderProps {
 
 export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 	const haptic = useHaptic();
+	// Le header mobile affiche ce libellé plutôt que le slug Title-Casé.
+	useSetAdminPageTitle(product.title);
 	const status = PRODUCT_STATUS_CONFIG[product.status];
 	const { sections } = useProductActions({
 		productId: product.id,
@@ -40,16 +45,12 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 	});
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0">
-				<Link
-					href="/admin/catalogue/produits"
-					onClick={() => haptic("light")}
-					className="text-muted-foreground hover:text-foreground focus-visible:ring-ring mb-1 -ml-2 inline-flex min-h-11 touch-manipulation items-center gap-1 rounded-md px-2 text-sm transition-colors outline-none focus-visible:ring-2 md:hidden"
-				>
-					<ArrowLeft className="size-4" aria-hidden="true" />
-					Produits
-				</Link>
+				{/* Aucun lien de retour ici : `AdminMobileHeader` porte déjà le chevron
+				    « Retour » + l'eyebrow « Produits » sur cette route. Les deux ensemble
+				    faisaient trois affordances de retour empilées sur un même écran, et
+				    aucune des ~10 autres ressources admin ne les duplique. */}
 				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					{product.title}
 				</h1>
@@ -74,7 +75,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 				</p>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<Button
 					asChild
 					size="sm"
@@ -106,7 +107,7 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

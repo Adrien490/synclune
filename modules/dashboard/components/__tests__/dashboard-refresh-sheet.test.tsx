@@ -123,16 +123,20 @@ describe("DashboardRefreshSheet", () => {
 		expect(screen.getByText(/met à jour les kpis/i)).toBeInTheDocument();
 	});
 
-
-
-	it("calls refresh + fires 'medium' haptic when primary button is clicked", async () => {
+	/**
+	 * @regression single-haptic-per-intent
+	 * Le `medium` au clic et le `success` d'`onSuccess` sont séparés par un
+	 * aller-retour serveur, donc hors du cooldown de 80 ms : deux vibrations pour
+	 * un seul appui. Seule celle qui informe (« données à jour ») est conservée.
+	 */
+	it("calls refresh without firing a haptic on click", async () => {
 		const user = userEvent.setup();
 		render(<DashboardRefreshSheet open onOpenChange={() => {}} />);
 
 		await user.click(screen.getByRole("button", { name: /rafraîchir maintenant/i }));
 
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
 		expect(mockRefresh).toHaveBeenCalledTimes(1);
+		expect(mockHaptic).not.toHaveBeenCalledWith("medium");
 	});
 
 	it("disables primary button when isPending=true", () => {

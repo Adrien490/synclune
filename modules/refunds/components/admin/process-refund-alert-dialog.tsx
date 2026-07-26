@@ -8,14 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
 import { ActionStatus } from "@/shared/types/server-action";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Banknote, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const PROCESS_REFUND_DIALOG_ID = "process-refund";
 
@@ -49,7 +48,6 @@ export function ProcessRefundAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Banknote} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Traiter le remboursement</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

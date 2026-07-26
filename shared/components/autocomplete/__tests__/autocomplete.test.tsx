@@ -691,6 +691,18 @@ describe("Autocomplete", () => {
 			fireEvent.click(screen.getByRole("button", { name: /Effacer/i }));
 			expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
 		});
+
+		/**
+		 * Le bouton d'effacement se démonte dès que la valeur est vide : sans remise
+		 * du focus au champ, le focus retombe sur <body> et l'utilisateur clavier
+		 * perd sa position (WCAG 2.4.3). `SearchInput.handleClear` le faisait déjà,
+		 * pas celui-ci. Audit recherche 2026-07-26.
+		 */
+		it("rend le focus au champ après effacement", () => {
+			renderAutocomplete({ value: "ab", showClearButton: true });
+			fireEvent.click(screen.getByRole("button", { name: /Effacer/i }));
+			expect(document.activeElement).toBe(getInput());
+		});
 	});
 
 	// --------------------------------------------------------------------------

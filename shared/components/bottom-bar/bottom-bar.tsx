@@ -5,6 +5,8 @@ import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useKeyboardOpen } from "@/shared/components/visual-viewport-bridge";
 import { useBottomBarHeight } from "@/shared/hooks";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { mediaBelow } from "@/shared/constants/breakpoints";
 import { cn } from "@/shared/utils/cn";
 // Les constantes de classes vivent dans `./bottom-bar.styles` : un fichier de
 // composants qui exporte aussi des non-composants casse le Fast Refresh
@@ -90,8 +92,19 @@ interface BottomBarProps {
 	children: ReactNode;
 	/** HTML element to render. @default "div" */
 	as?: "div" | "nav";
-	/** Tailwind responsive-hide class. @default "md:hidden" */
-	breakpointClass?: string;
+	/**
+	 * Breakpoint at and above which the bar is hidden. Drives BOTH the Tailwind
+	 * hide class (`md:hidden` / `lg:hidden`) and the `matchMedia` query used to
+	 * decide whether to publish `--bottom-bar-height` — the two must never be
+	 * derived independently, see {@link mediaBelow}.
+	 *
+	 * - `"md"` (admin) : la sidebar prend le relais à 48rem.
+	 * - `"lg"` (boutique) : la nav desktop prend le relais à 64rem, la bottom-nav
+	 *   couvre donc l'iPad portrait (audit responsive 2026-07-26).
+	 *
+	 * @default "md"
+	 */
+	breakpoint?: "md" | "lg";
 	/** z-index class. @default "z-(--z-bar)" */
 	zIndex?: string;
 	/** Bar height in px (reported to useBottomBarHeight). @default 56 */
@@ -132,7 +145,7 @@ interface BottomBarProps {
 export function BottomBar({
 	children,
 	as = "div",
-	breakpointClass = "md:hidden",
+	breakpoint = "md",
 	zIndex = "z-(--z-bar)",
 	height = 56,
 	enabled = true,
@@ -140,7 +153,13 @@ export function BottomBar({
 	className,
 	"aria-label": ariaLabel,
 }: BottomBarProps) {
-	useBottomBarHeight(height, enabled && !isHidden);
+	// La barre n'est masquée qu'en CSS (`md:hidden`), donc le composant reste
+	// monté à toutes les largeurs. Sans cette garde, `--bottom-bar-height` était
+	// publiée à 56px sur desktop pour une barre invisible : chaque consommateur
+	// devait la neutraliser avec un override `md:` codé en dur, et le premier qui
+	// l'oubliait héritait de 56px fantômes (audit responsive 2026-07-26).
+	const isBarVisible = useMediaQuery(mediaBelow(breakpoint));
+	useBottomBarHeight(height, enabled && !isHidden && isBarVisible);
 	const prefersReducedMotion = useReducedMotion();
 	// Soft-keyboard open → slide out. The CSS `[data-hide-on-keyboard]` rule is
 	// overridden by Framer's inline `transform` in the motion path, so we must
@@ -151,7 +170,8 @@ export function BottomBar({
 	const hidden = isHidden || keyboardOpen;
 
 	const sharedClassName = cn(
-		breakpointClass,
+		// Littéraux statiques : Tailwind ne scanne pas les classes construites.
+		breakpoint === "lg" ? "lg:hidden" : "md:hidden",
 		"fixed right-0 bottom-0 left-0",
 		zIndex,
 		"pb-[env(safe-area-inset-bottom)]",

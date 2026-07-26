@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { SELECTORS } from "../constants";
+import { SELECTORS, VIEWPORTS } from "../constants";
 
 export class SearchPage {
 	readonly searchForm: Locator;
@@ -12,11 +12,16 @@ export class SearchPage {
 		this.searchForm = page.locator('form[role="search"]');
 		this.searchInput = page.getByRole("searchbox");
 		this.clearButton = page.getByLabel("Effacer la recherche");
-		this.statusRegion = this.searchForm.locator('[role="status"]');
+		// `MiniDotsLoader` porte lui aussi `role="status"` dans ce même form pendant
+		// le pending : un `[role="status"]` nu est ambigu. On cible la live region
+		// sr-only, seule annonceuse depuis le lot D.
+		this.statusRegion = this.searchForm.locator('span[role="status"].sr-only');
 	}
 
 	async open() {
-		// The search input is typically visible on /produits
+		// Le champ inline est dans une toolbar `hidden md:flex` (product-catalog.tsx).
+		// Sans viewport épinglé, il n'existe pas sur les projets mobiles.
+		await this.page.setViewportSize(VIEWPORTS.DESKTOP);
 		await this.page.goto("/produits");
 		await this.page.waitForLoadState("domcontentloaded");
 	}

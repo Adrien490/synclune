@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { VISIBLE_ALERT } from "../helpers/assertions";
 
 test.describe("Parametres du compte", { tag: ["@regression"] }, () => {
 	test("la page parametres est accessible", async ({ page }) => {
@@ -45,7 +46,7 @@ test.describe("Parametres du compte", { tag: ["@regression"] }, () => {
 		// Wait for feedback
 		const feedback = page
 			.getByText(/enregistré|mis à jour|sauvegardé/i)
-			.or(page.locator('[role="alert"]'));
+			.or(page.locator(VISIBLE_ALERT));
 		await expect(feedback.first()).toBeVisible({ timeout: 5000 });
 
 		// Restore original name

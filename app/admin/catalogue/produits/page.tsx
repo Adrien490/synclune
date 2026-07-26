@@ -29,6 +29,9 @@ import { ProductsFilterSheet } from "@/modules/products/components/admin/product
 import { ProductsSortBadge } from "@/modules/products/components/admin/products-sort-badge";
 import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
 import { parseFilters } from "./_utils/params";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export type ProductFiltersSearchParams = {
 	filter_priceMin?: string;
@@ -149,7 +152,19 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 	const materials = materialsData;
 
 	return (
-		<div className="space-y-6">
+		<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+			{/* Annonce le nombre de résultats après une recherche inline. Sans elle, la
+				barre `CursorPagination` — seule porteuse d'une live region — disparaît
+				(`if (!canNavigate) return null`) dès que la liste tient sur une page,
+				soit l'issue normale d'une recherche : le lecteur d'écran entendait
+				« Recherche en cours… » puis plus rien. Audit recherche 2026-07-26. */}
+			<ResultCountLiveRegion
+				totalCount={productsData.totalCount}
+				query={search}
+				singular="produit"
+				plural="produits"
+			/>
+
 			<ProductsBottomBar
 				productTypes={productTypes}
 				collections={collections}

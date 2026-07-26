@@ -182,18 +182,13 @@ export async function deleteProductSku(
 					select: { id: true, sku: true },
 				});
 
-				// If no active SKU found, take any non-deleted SKU
-				const fallbackSku =
-					candidateSku ??
-					(await tx.productSku.findFirst({
-						where: {
-							productId: existingSku.productId,
-							id: { not: validatedSkuId },
-							deletedAt: null,
-						},
-						orderBy: [{ createdAt: "asc" }],
-						select: { id: true, sku: true },
-					}));
+				// Aucun repli sur un SKU INACTIF : `set-default-sku.ts`,
+				// `update-sku-status.ts` et `update-product.ts` refusent tous les trois
+				// l'etat « defaut inactif ». Promouvoir un inactif ici fabriquait donc un
+				// etat que le reste du module traite comme invalide. Sans candidat actif,
+				// le produit reste sans defaut — reparable via « Definir par defaut »
+				// apres reactivation d'une variante.
+				const fallbackSku = candidateSku;
 
 				if (fallbackSku) {
 					await tx.productSku.update({

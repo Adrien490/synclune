@@ -16,6 +16,7 @@ import {
 	FULFILLMENT_STATUS_LABELS,
 	INVOICE_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
+import { ORDER_TOTAL_FILTER_MAX_EUROS } from "@/modules/orders/constants/order.constants";
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -43,7 +44,11 @@ interface FilterFormData {
 	showDeleted?: "all" | "active" | "deleted";
 }
 
-const MAX_PRICE = 500_000; // 5 000€ in cents — couvre la fourchette bijoux artisanaux haut-de-gamme
+// Plafond du filtre montant, en EUROS (les inputs et l'URL sont en euros ;
+// `parseFilters` convertit en centimes). Dérivé du plafond du schéma : coder une
+// valeur en dur ici avait produit un plafond 5× supérieur à ce que le schéma accepte,
+// et donc un crash de la liste dès qu'on renseignait un montant.
+const MAX_PRICE = ORDER_TOTAL_FILTER_MAX_EUROS;
 const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
 
 function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
@@ -137,8 +142,16 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			params.delete(key);
 		});
 
-		// Reset to page 1
-		params.set("page", "1");
+		// Repartir du début du nouveau jeu de résultats.
+		//
+		// ⚠️ Ces listes sont en pagination CURSEUR : `page` n'est lu par personne, et
+		// conserver le `cursor` de l'ancien jeu fait repositionner Prisma sur cet id dans
+		// le nouveau `where` (+ `skip: 1`) → tranche arbitraire, sans erreur ni signal
+		// visible. Cf. le commentaire de `shared/hooks/use-filter.ts`. Le tiroir mobile
+		// fait déjà ce nettoyage.
+		params.delete("cursor");
+		params.delete("direction");
+		params.delete("page"); // résidu offset : plus personne ne le lit
 
 		// Add statuses
 		if (formData.statuses.length > 0) {
@@ -177,12 +190,14 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			params.set("filter_retryDeferred", "true");
 		}
 
-		// Add price range (convert euros to cents)
-		if (
-			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
-			formData.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
-		) {
+		// Fourchette de montant, en euros (parseFilters convertit en centimes).
+		// Chaque borne est écrite INDÉPENDAMMENT : émettre systématiquement les deux
+		// poussait le plafond par défaut dans l'URL, ce qui suffisait à faire échouer la
+		// validation et à planter la liste alors que l'admin n'avait rempli que « Min ».
+		if (formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0]) {
 			params.set("filter_totalMin", formData.priceRange[0].toString());
+		}
+		if (formData.priceRange[1] !== DEFAULT_PRICE_RANGE[1]) {
 			params.set("filter_totalMax", formData.priceRange[1].toString());
 		}
 
@@ -238,7 +253,10 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		filterKeys.forEach((key) => {
 			params.delete(key);
 		});
-		params.set("page", "1");
+		// Cf. applyFilters : pagination curseur, donc purger le curseur et non `page`.
+		params.delete("cursor");
+		params.delete("direction");
+		params.delete("page");
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });

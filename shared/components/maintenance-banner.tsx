@@ -17,7 +17,11 @@ export function MaintenanceBanner({ closureMessage, reopensAt }: MaintenanceBann
 	return (
 		<section
 			aria-label="Statut de la boutique"
-			className="border-warning-foreground/20 bg-warning/95 text-warning-foreground fixed inset-x-0 bottom-0 z-(--z-bar) border-t px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-md:bottom-[calc(var(--bottom-bar-height,0px)+env(safe-area-inset-bottom,0px))] max-md:pb-2.5"
+			// Offset piloté par la seule variable, sans préfixe de breakpoint : elle
+			// n'est publiée que lorsqu'une barre est visible (0 sinon), et la
+			// bottom-nav boutique va désormais jusqu'à 64rem. Un `max-md:` figeait
+			// le seuil et laissait le bandeau passer sous la barre en iPad portrait.
+			className="border-warning-foreground/20 bg-warning/95 text-warning-foreground fixed inset-x-0 bottom-[calc(var(--bottom-bar-height,0px)+env(safe-area-inset-bottom,0px))] z-(--z-bar) border-t px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-md:pb-2.5"
 		>
 			<div className="mx-auto flex items-center justify-center gap-2">
 				<Construction className="size-4 shrink-0" aria-hidden="true" />

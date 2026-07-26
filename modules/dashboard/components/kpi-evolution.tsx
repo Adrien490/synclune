@@ -3,7 +3,6 @@
 import { ArrowDown, ArrowUp, Info } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { CHART_STYLES } from "../constants/chart-styles";
 import { LOW_VOLUME_THRESHOLD } from "../constants/dashboard.constants";
@@ -35,7 +34,6 @@ export function KpiEvolution({
 				<TooltipTrigger asChild>
 					<button
 						type="button"
-						onClick={() => triggerHaptic("selection")}
 						className="focus-visible:ring-ring inline-flex touch-manipulation rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 						aria-label="Comparaison non significative — données insuffisantes"
 					>

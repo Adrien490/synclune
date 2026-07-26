@@ -35,6 +35,9 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 		colorHex: color.hex,
 		colorSlug: color.slug,
 		colorDescription: color.description,
+		// La liste mobile n'a pas d'interrupteur (badge en lecture seule) : l'item de
+		// menu Activer/Désactiver est la SEULE surface de bascule ici.
+		colorIsActive: color.isActive,
 	});
 
 	return (

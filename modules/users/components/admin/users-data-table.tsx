@@ -36,8 +36,6 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 		);
 	}
 
-	// Exclure utilisateurs supprimés ou suspendus du bulk
-
 	return (
 		<AdminDataTable
 			caption="Liste des clients"
@@ -53,12 +51,12 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[20%]">Nom</TableHead>
-					<TableHead className="w-[26%]">Email</TableHead>
-					<TableHead className="w-[10%]">Commandes</TableHead>
+					<TableHead className="w-[26%]">Nom</TableHead>
+					<TableHead className="w-[36%]">Email</TableHead>
+					<TableHead className="w-[12%]">Commandes</TableHead>
 					<TableHead className="w-[16%]">Inscription</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[10%] text-right"
 						aria-label="Actions disponibles pour chaque utilisateur"
 					>
 						Actions

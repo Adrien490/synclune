@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -14,6 +14,7 @@ import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { PRODUCT_TYPE_DIALOG_ID } from "../components/product-type-form-dialog";
 
 import { useDuplicateProductType } from "./use-duplicate-product-type";
+import { useToggleProductTypeStatus } from "./use-toggle-product-type-status";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "../components/admin/delete-product-type-alert-dialog";
 
 interface UseProductTypeActionsParams {
@@ -23,6 +24,11 @@ interface UseProductTypeActionsParams {
 	description?: string | null;
 	slug: string;
 	productsCount?: number;
+	/**
+	 * Pilote l'item Activer/Désactiver. Optionnel : `undefined` masque l'item, pour
+	 * les surfaces qui ne connaissent pas l'état (rien ne doit deviner un booléen).
+	 */
+	isActive?: boolean;
 }
 
 export function useProductTypeActions({
@@ -32,6 +38,7 @@ export function useProductTypeActions({
 	description,
 	slug,
 	productsCount = 0,
+	isActive,
 }: UseProductTypeActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
@@ -53,6 +60,8 @@ export function useProductTypeActions({
 			});
 		},
 	});
+
+	const { toggleStatus, isPending: isToggling } = useToggleProductTypeStatus();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -92,6 +101,22 @@ export function useProductTypeActions({
 					disabled: isDuplicating,
 					onSelect: () => duplicate(productTypeId),
 				},
+				// En mobile, la liste n'affiche l'état que sous forme de badge en lecture
+				// seule : sans cet item, activer/désactiver un type y était IMPOSSIBLE
+				// (l'interrupteur ne vit que dans le tableau desktop). Parité avec
+				// `use-material-actions`. Masqué pour les types système, que la DB refuse
+				// de basculer (`updateMany where isSystem: false`).
+				...(isActive === undefined || isSystem
+					? []
+					: [
+							{
+								key: "toggle",
+								label: isActive ? "Désactiver" : "Activer",
+								icon: isActive ? PowerOff : Power,
+								disabled: isToggling,
+								onSelect: () => toggleStatus(productTypeId, !isActive),
+							},
+						]),
 			],
 		},
 		{

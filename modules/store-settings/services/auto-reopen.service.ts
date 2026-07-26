@@ -16,7 +16,7 @@ interface AutoReopenResult extends CronResult {
  * Atomic check-and-set: `updateMany` with WHERE `isClosed=true AND reopensAt<=now`
  * guards against double-reopen if cron fires concurrently with admin manual reopen.
  *
- * Called from `/api/cron/reopen-store` (every 15 min). Idempotent: a second call
+ * Called from `/api/cron/reopen-store` (hourly). Idempotent: a second call
  * after success no-ops because WHERE clause filters out the already-open singleton.
  *
  * Exception services/ : transactional service partagé (cron + future contexts).

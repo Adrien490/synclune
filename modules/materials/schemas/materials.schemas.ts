@@ -94,13 +94,3 @@ export const toggleMaterialStatusSchema = z.object({
 export const duplicateMaterialSchema = z.object({
 	materialId: z.cuid2("ID de matériau invalide"),
 });
-
-export const mergeMaterialsSchema = z
-	.object({
-		sourceId: z.cuid2("ID de matériau source invalide"),
-		targetId: z.cuid2("ID de matériau cible invalide"),
-	})
-	.refine((data) => data.sourceId !== data.targetId, {
-		message: "Le matériau source et le matériau cible doivent être différents",
-		path: ["targetId"],
-	});

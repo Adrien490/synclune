@@ -55,6 +55,23 @@ vi.mock("@/shared/components/forms", () => ({
 		Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
 			children([true]),
 		handleSubmit: vi.fn(),
+		// Le formulaire rend `<form.AppForm><form.SubmitButton …/></form.AppForm>`
+		// depuis l'adoption du bouton partagé : sans ces entrées le rendu échoue en
+		// « Element type is invalid ». On reproduit son contrat (disabled + aria-busy).
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+		}) => (
+			<button type="submit" disabled={isPending ?? false} aria-busy={isPending ?? false}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	})),
 }));
 

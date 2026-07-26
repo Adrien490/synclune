@@ -40,7 +40,9 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 	cacheSkuDetailById(skuId);
 
 	return prisma.productSku.findUnique({
-		where: { id: skuId },
+		// Parité avec le pattern `notDeleted` : une variante soft-deleted appartient à
+		// un produit lui-même supprimé, il n'existe aucun écran légitime pour l'afficher.
+		where: { id: skuId, deletedAt: null },
 		select: {
 			...GET_PRODUCT_SKU_SELECT,
 			compareAtPrice: true,
@@ -87,7 +89,8 @@ async function fetchSkuDetailById(skuId: string) {
 	cacheSkuDetailById(skuId);
 
 	return prisma.productSku.findUnique({
-		where: { id: skuId },
+		// Idem `fetchSkuById` : pas d'écran pour une variante soft-deleted.
+		where: { id: skuId, deletedAt: null },
 		select: {
 			id: true,
 			sku: true,

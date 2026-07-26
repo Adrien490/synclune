@@ -145,7 +145,4 @@ export const THRESHOLDS = {
 
 	/** SHIPPED orders not yet DELIVERED past this age trigger a stuck-orders alert */
 	STUCK_SHIPPED_MS: 14 * 24 * 60 * 60 * 1000, // 14 days
-
-	/** Délai après livraison avant d'envoyer la demande d'avis (laisse le temps d'essayer la pièce) */
-	REVIEW_REQUEST_DELAY_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
 } as const;

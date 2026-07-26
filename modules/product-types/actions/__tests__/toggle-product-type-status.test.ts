@@ -23,6 +23,8 @@ const {
 			findUnique: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		// Compte d'usage informatif a la desactivation (avertir, pas bloquer).
+		product: { count: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -98,6 +100,9 @@ describe("toggleProductTypeStatus", () => {
 		// Happy path: updateMany affects 1 row, then findUnique returns label for audit
 		mockPrisma.productType.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productType.findUnique.mockResolvedValue({ label: "Bague" });
+		// Obligatoire : `resetAllMocks` ferait renvoyer `undefined`, et la comparaison
+		// `usageCount > 0` lirait alors une valeur non numerique.
+		mockPrisma.product.count.mockResolvedValue(0);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -192,6 +197,49 @@ describe("toggleProductTypeStatus", () => {
 		});
 		expect(mockSuccess).toHaveBeenCalledWith("Type désactivé avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	// ------------------------------------------------------------------
+	// Avertissement d'usage a la desactivation (audit catalogue 2026-07-26)
+	// La desactivation est le retrait DOUX : elle ne doit jamais bloquer, sinon
+	// les types justement utilises n'auraient plus aucun chemin de retrait
+	// (deleteProductType bloque deja sur les produits PUBLIC).
+	// ------------------------------------------------------------------
+
+	it("avertit sans bloquer quand des bijoux utilisent encore le type", async () => {
+		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: false } });
+		mockPrisma.product.count.mockResolvedValue(3);
+
+		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", false));
+
+		expect(mockPrisma.product.count).toHaveBeenCalledWith({
+			where: { typeId: "pt-1", deletedAt: null },
+		});
+		// La mutation a bien eu lieu : on avertit, on ne bloque pas.
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith({
+			where: { id: "pt-1", isSystem: false, isActive: { not: false } },
+			data: { isActive: false },
+		});
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("3 bijoux");
+	});
+
+	it("accorde l'avertissement au singulier", async () => {
+		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: false } });
+		mockPrisma.product.count.mockResolvedValue(1);
+
+		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", false));
+
+		expect(result.message).toContain("1 bijou l'utilise encore : il le conserve");
+		expect(result.message).not.toContain("1 bijoux");
+	});
+
+	it("ne compte pas les bijoux lors d'une activation", async () => {
+		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: true } });
+
+		await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
+
+		expect(mockPrisma.product.count).not.toHaveBeenCalled();
 	});
 
 	it("should invalidate cache after successful status update", async () => {

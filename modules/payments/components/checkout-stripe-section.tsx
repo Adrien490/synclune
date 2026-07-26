@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Elements, PaymentElement } from "@stripe/react-stripe-js";
 import Link from "next/link";
 import { ExternalLink, Lock } from "lucide-react";
@@ -57,6 +57,27 @@ export function CheckoutStripeSection({
 }: CheckoutStripeSectionProps) {
 	const [isPaymentReady, setIsPaymentReady] = useState(false);
 	const appearance = useStripeAppearance();
+	const cardContainerRef = useRef<HTMLDivElement>(null);
+
+	/**
+	 * Les champs carte vivent dans une iframe cross-origin : le focus à
+	 * l'intérieur ne déclenche AUCUN scroll du document parent. Or ce bloc est le
+	 * voisin immédiat de la barre CTA fixe sur mobile — au clavier ouvert il peut
+	 * rester intégralement masqué, sans que le navigateur ne corrige quoi que ce
+	 * soit. On remonte donc le conteneur nous-mêmes.
+	 *
+	 * `block: "nearest"` ne scrolle QUE si le bloc est hors de vue (pas de saut
+	 * parasite desktop, ni entre numéro → expiration → CVC), et respecte le
+	 * `scroll-padding-bottom` posé par `html:has([data-checkout-shell])` — c'est
+	 * ce qui l'empêche d'atterrir derrière la barre.
+	 */
+	const scrollCardIntoView = () => {
+		const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		cardContainerRef.current?.scrollIntoView({
+			block: "nearest",
+			behavior: reduce ? "auto" : "smooth",
+		});
+	};
 
 	return (
 		<Elements
@@ -75,8 +96,11 @@ export function CheckoutStripeSection({
 				{!isPaymentReady && <PaymentSectionSkeleton />}
 
 				<div className={cn("space-y-6", !isPaymentReady && "hidden")}>
-					<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm">
-						<PaymentElement onReady={() => setIsPaymentReady(true)} />
+					<div
+						ref={cardContainerRef}
+						className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm"
+					>
+						<PaymentElement onReady={() => setIsPaymentReady(true)} onFocus={scrollCardIntoView} />
 					</div>
 
 					{/* Trust strip — kept above the sticky CTA on mobile so it stays visible */}

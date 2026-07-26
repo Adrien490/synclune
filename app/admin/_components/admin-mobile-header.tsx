@@ -5,12 +5,17 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useAdminPageTitle } from "./admin-page-title-context";
 import { generateBreadcrumbs } from "./generate-breadcrumbs";
 
 const DETAIL_ROUTE_PATTERNS = [
 	// Catalogue — detail + edit + create (5 resources)
 	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/[^/]+(\/modifier)?$/,
 	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/nouveau$/,
+	// Catalogue — liste des variantes d'un produit : c'est une sous-page de la fiche
+	// produit, elle a donc besoin du retour. Elle portait à la place deux affordances
+	// dans le corps de page (carte de contexte + flèche), désormais retirées.
+	/^\/admin\/catalogue\/produits\/[^/]+\/variantes$/,
 	// Catalogue — SKU variantes (detail + edit + create + inline forms stock/prix)
 	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/(modifier|stock|prix))?)$/,
 	// Clients
@@ -42,16 +47,21 @@ function isDetailRoute(pathname: string): boolean {
  *
  * Navigation redundancies by design:
  * - Bottom bar covers primary nav (Accueil, Commandes, Produits, Menu sheet).
- * - Back button (here) appears on detail routes — backup for non-standalone browsers
- *   where SwipeBackProvider is a no-op. Fallback `router.push(parentHref)` quand
- *   `history.length <= 1` (deep-link / nouvel onglet).
+ * - Back button (here) appears on detail routes — l'alternative visible au geste de
+ *   retour natif du navigateur (swipe depuis le bord), qui n'est ni garanti ni
+ *   découvrable. Fallback `router.push(parentHref)` quand `history.length <= 1`
+ *   (deep-link / nouvel onglet).
  */
 export function AdminMobileHeader() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const isScrolled = useIsScrolled(20);
 	const breadcrumbs = generateBreadcrumbs(pathname);
-	const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
+	// Titre publié par la page de détail s'il existe, sinon dérivation breadcrumb.
+	// Sur les ressources à id opaque, le fallback affichait l'id Title-Casé.
+	const publishedTitle = useAdminPageTitle();
+	const pageTitle =
+		publishedTitle ?? breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
 
 	const showBack = isDetailRoute(pathname);
 	const parentSegment = breadcrumbs.length >= 2 ? breadcrumbs[breadcrumbs.length - 2] : null;
@@ -113,14 +123,18 @@ export function AdminMobileHeader() {
 							{parentLabel}
 						</p>
 					)}
-					<h1
+					{/* `<p>` et non `<h1>` : ce titre est du CHROME de navigation, pas la
+					    structure du document. Chacune des 11 fiches de détail rend déjà son
+					    propre `<h1>` — en émettre un second ici donnait deux h1 par page sur
+					    mobile. Le `role="status"` ci-dessous porte l'annonce de changement. */}
+					<p
 						className={cn(
 							"font-display min-w-0 truncate text-left leading-none font-normal tracking-normal",
 							showParent ? "text-base" : "text-lg",
 						)}
 					>
 						{pageTitle}
-					</h1>
+					</p>
 				</div>
 
 				<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">

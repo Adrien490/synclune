@@ -13,8 +13,8 @@ import { getInvoicingOverview } from "@/modules/invoices/data/get-invoicing-over
 import { InvoicingOverviewSection } from "@/modules/invoices/components/admin/invoicing-overview";
 
 export const metadata: Metadata = {
-	title: "Facturation électronique - Administration",
-	description: "État facturation, e-reporting DGFiP et batches transmission",
+	title: "Facturation - Administration",
+	description: "État des factures émises, anomalies et export comptable",
 };
 
 export default async function FacturationAdminPage() {
@@ -43,10 +43,13 @@ export default async function FacturationAdminPage() {
 				</BreadcrumbList>
 			</Breadcrumb>
 
+			{/* Plus de mention e-reporting : la machinerie DGFiP a été retirée du
+			    code le 2026-07-26 (à réécrire au go-live contre l'arrêté définitif
+			    et une Plateforme Agréée réelle — cf. docs/RUNBOOK.md). */}
 			<PageHeader
 				variant="compact"
-				title="Facturation électronique"
-				description="État des factures émises + e-reporting DGFiP (Art. 286 / 289-I / L102 B)"
+				title="Facturation"
+				description="Factures émises, anomalies et export comptable (Art. 286 / 289-I / L102 B)"
 			/>
 
 			<InvoicingOverviewSection overview={overview} />

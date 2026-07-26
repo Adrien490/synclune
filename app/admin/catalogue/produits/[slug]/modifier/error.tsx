@@ -1,19 +1,18 @@
 "use client";
 
-import { AdminListErrorBoundary } from "@/app/admin/_components/admin-list-error-boundary";
+import { AdminFormErrorBoundary } from "@/app/admin/_components/admin-form-error-boundary";
 
 export default function EditProductError(props: {
 	error: Error & { digest?: string };
 	reset: () => void;
 }) {
 	return (
-		<AdminListErrorBoundary
+		<AdminFormErrorBoundary
 			{...props}
-			emoji="🔧"
-			title="Le bijou n'a pas pu charger"
+			title="Le formulaire d'édition du bijou n'a pas pu charger"
 			route="admin.catalogue.produits.modifier"
-			fallbackHref="/admin/catalogue/produits"
-			fallbackLabel="Retour aux produits"
+			backHref="/admin/catalogue/produits"
+			backLabel="Retour aux produits"
 		/>
 	);
 }

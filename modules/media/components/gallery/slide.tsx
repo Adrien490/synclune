@@ -5,6 +5,7 @@ import { CircleAlert, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/shared/hooks";
+import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import {
@@ -111,7 +112,7 @@ export function GallerySlide({
 
 	// Détection desktop pour rendu conditionnel (évite double image dans DOM)
 	// Breakpoint md = 768px (cohérent avec la grille thumbnails)
-	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const isDesktop = useMediaQuery(mediaAtLeast("md"));
 
 	// Autoplay vidéo quand active (respect prefers-reduced-motion)
 	useEffect(() => {

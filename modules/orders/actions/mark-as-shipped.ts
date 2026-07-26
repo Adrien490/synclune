@@ -35,6 +35,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsShippedSchema } from "../schemas/order.schemas";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
+import { buildOrderTrackingUrl } from "../utils/build-order-tracking-url";
 import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsShipped } from "../services/order-status-validation.service";
 import { estimateDeliveryDate } from "../services/shipping.service";
@@ -208,12 +209,14 @@ export async function markAsShipped(
 			);
 
 			try {
-				await sendShippingConfirmationEmail({
+				const emailResult = await sendShippingConfirmationEmail({
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
 					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
+					// Repli si le transporteur n'expose pas d'URL de suivi ("autre").
+					orderTrackingUrl: buildOrderTrackingUrl(order),
 					carrierLabel,
 					estimatedDelivery: estimatedDeliveryForEmail
 						? format(estimatedDeliveryForEmail, "d MMMM yyyy", { locale: fr })
@@ -228,10 +231,25 @@ export async function markAsShipped(
 						country: order.shippingCountry || "France",
 					},
 					// EMAIL-AUDIT-003 : dedup Resend 24h contre double-clic admin.
-					idempotencyKey: `order-shipped:${order.id}`,
+					// Le numéro de suivi entre dans la clé : sans lui, corriger un
+					// suivi erroné (expédier → revertToProcessing → réexpédier) dans
+					// la fenêtre de 24h renvoyait l'email ORIGINAL depuis le cache
+					// Resend, laissant le client avec le mauvais numéro.
+					idempotencyKey: `order-shipped:${order.id}:${validated.data.trackingNumber}`,
 				});
-				emailSent = true;
+
+				// ORD-BIZ-012 : `sendShippingConfirmationEmail` NE THROW PAS — tout est
+				// intercepté en amont (circuit breaker, clé API absente, échec de rendu,
+				// 4xx Resend) et rapporté via `{ success: false }`. Un `emailSent = true`
+				// posé après l'`await` rendait donc la branche d'échec ci-dessous
+				// inatteignable : l'admin lisait « Email envoyé au client. » sur un envoi
+				// rejeté, sans warning ni entrée d'audit compensatoire.
+				emailSent = emailResult.success;
+				if (!emailResult.success) {
+					logger.error("Échec envoi email", emailResult.error, { action: "mark-as-shipped" });
+				}
 			} catch (emailError) {
+				// Filet pour un throw inattendu (bug de rendu hors du try interne, etc.).
 				logger.error("Échec envoi email", emailError, { action: "mark-as-shipped" });
 			}
 		}

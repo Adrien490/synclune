@@ -1,68 +1,38 @@
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { DataTableSkeleton } from "@/shared/components/data-table";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/shared/components/ui/table";
 
 /**
- * Skeleton de chargement pour la liste des avis admin
+ * Grille alignée sur `reviews-data-table.tsx` (7 colonnes, pagination curseur).
+ *
+ * Passe par `DataTableSkeleton` comme les 10 autres listes : la version faite
+ * main ne rendait aucun placeholder de pagination, ce qui décalait la carte au
+ * moment où la vraie barre curseur apparaissait.
  */
 export function ReviewsDataTableSkeleton() {
 	return (
-		<Card className="hidden md:block" aria-busy="true" aria-label="Chargement des avis">
-			<CardContent>
-				<Table aria-hidden="true">
-					<TableHeader>
-						<TableRow>
-							<TableHead className="w-[22%]">Produit</TableHead>
-							<TableHead className="w-[20%]">Client</TableHead>
-							<TableHead className="w-[10%]">Note</TableHead>
-							<TableHead className="w-[12%]">Statut</TableHead>
-							<TableHead className="w-[12%]">Date</TableHead>
-							<TableHead className="w-[8%]">Réponse</TableHead>
-							<TableHead className="w-[8%]">Actions</TableHead>
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{Array.from({ length: 10 }).map((_, i) => (
-							<TableRow key={i}>
-								<TableCell>
-									<Skeleton className="h-4 w-32" />
-								</TableCell>
-								<TableCell>
-									<div className="flex items-center gap-2">
-										<Skeleton className="size-8 rounded-full" />
-										<div className="space-y-1">
-											<Skeleton className="h-3 w-20" />
-											<Skeleton className="h-3 w-28" />
-										</div>
-									</div>
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-16" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-5 w-16" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-4 w-20" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="h-5 w-14" />
-								</TableCell>
-								<TableCell>
-									<Skeleton className="ml-auto size-8" />
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
-			</CardContent>
-		</Card>
+		<DataTableSkeleton
+			className="hidden md:block"
+			columns={[
+				{ width: "24%", cell: { type: "text", width: "w-32" } },
+				{
+					width: "18%",
+					cell: {
+						type: "custom",
+						render: () => (
+							<div className="space-y-1">
+								<Skeleton className="h-3 w-20" />
+								<Skeleton className="h-3 w-28" />
+							</div>
+						),
+					},
+				},
+				{ width: "10%", cell: { type: "text", width: "w-16" } },
+				{ width: "12%", cell: { type: "badge", width: "w-16" } },
+				{ width: "12%", cell: { type: "text", width: "w-20" } },
+				{ width: "12%", cell: { type: "badge", width: "w-14" } },
+				{ width: "12%", align: "right", cell: { type: "actions" } },
+			]}
+			pagination="cursor"
+		/>
 	);
 }

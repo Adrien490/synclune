@@ -16,7 +16,12 @@ const CRON_JOB = "retry-post-webhook-tasks";
  * dont le runner `after()` n'a pas pu marquer COMPLETED (lambda kill, panique
  * réseau, redémarrage Vercel).
  *
- * Cadence : toutes les 5 minutes (cf vercel.json).
+ * Cadence : toutes les 30 minutes (cf vercel.json). Ramenée de 5 à 30 min par
+ * l'audit coûts P1-2 : à 5 min la base Neon ne redescendait jamais sous son
+ * autosuspend (5 min), consommant 95 % de l'allocation compute du plan. Ce cron
+ * ne rattrape qu'un crash de lambda entre `after()` et l'envoi — le coût du
+ * ralentissement est au pire 25 min de retard supplémentaire sur un email, dans
+ * un scénario qui se produit très rarement à ~20 commandes/mois.
  * Bornes : MAX_POST_WEBHOOK_RETRY_ATTEMPTS (5) tentatives par task. Au-delà,
  * la task reste FAILED + alerte admin émise par `executeBatch` (cf
  * `post-webhook-tasks.service.ts` → CRITICAL_EMAIL_TASKS).

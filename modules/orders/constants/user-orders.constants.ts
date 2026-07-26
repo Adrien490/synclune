@@ -12,11 +12,11 @@ export const GET_USER_ORDERS_SELECT = {
 	status: true,
 	paymentStatus: true,
 	fulfillmentStatus: true,
-	shippingCarrier: true,
-	trackingNumber: true,
+	// Seul champ de suivi rendu par la liste (CTA « Suivre »). `shippingCarrier`,
+	// `trackingNumber`, `shippedAt` et `actualDelivery` étaient également
+	// sélectionnés sans qu'aucun rendu ne les lise — retirés. Le détail de
+	// commande a son propre select (`GET_ORDER_SELECT_CUSTOMER`) qui les porte.
 	trackingUrl: true,
-	shippedAt: true,
-	actualDelivery: true,
 	paymentMethod: true,
 	paidAt: true,
 	// ROADMAP: Invoices - add invoiceNumber, invoiceGeneratedAt, invoiceStatus, stripeInvoiceId

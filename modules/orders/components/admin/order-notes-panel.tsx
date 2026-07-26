@@ -135,20 +135,25 @@ function NotesList({
 								</span>
 							</div>
 						</div>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="text-destructive hover:text-destructive size-7 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
-							onClick={() => onDelete(note.id)}
-							disabled={isPendingDelete}
-							aria-label={`Supprimer la note ${note.authorName}`}
-						>
-							{isPendingDelete ? (
-								<LoaderCircle className="size-3.5 animate-spin" />
-							) : (
-								<Trash2 className="size-3.5" />
-							)}
-						</Button>
+						{/* `deleteOrderNote` n'autorise que l'auteur : rendre la corbeille sur la
+						    note d'un collègue offrait un bouton qui échouait toujours. La capacité
+						    est décidée côté serveur (`getOrderNotes`), pas re-dérivée ici. */}
+						{note.canDelete && (
+							<Button
+								variant="ghost"
+								size="icon"
+								className="text-destructive hover:text-destructive size-7 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+								onClick={() => onDelete(note.id)}
+								disabled={isPendingDelete}
+								aria-label={`Supprimer la note ${note.authorName}`}
+							>
+								{isPendingDelete ? (
+									<LoaderCircle className="size-3.5 animate-spin" />
+								) : (
+									<Trash2 className="size-3.5" />
+								)}
+							</Button>
+						)}
 					</div>
 				</div>
 			))}

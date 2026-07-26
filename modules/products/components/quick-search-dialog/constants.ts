@@ -22,15 +22,31 @@ export const QUICK_SEARCH_DIALOG_ID = "quick-search";
 /**
  * CSS selector for arrow-key-navigable elements inside the results area.
  *
- * Scoped to `[role="option"]` so ↑/↓ roving traverses *only* the selectable
- * options (products, collection/category cards, recent searches, recently
- * viewed, spell suggestion, "view all results"). Auxiliary controls — per-item
- * delete (×), "Effacer", "Voir toutes les collections", "Réessayer" — are
- * deliberately excluded: they are NOT options and stay reachable via Tab (real
- * focus). This prevents the roving highlight from landing on invisible /
- * unstyled controls (the × buttons are `md:opacity-0` until hover/focus).
+ * **`data-qs-option` est le marqueur de NAVIGATION ; `role="option"` est le
+ * marqueur ARIA. Les deux sont délibérément distincts.**
+ *
+ * Ils coïncidaient (`[role="option"]`), ce qui forçait les items du mode idle à
+ * porter `role="option"` uniquement pour rester navigables — alors qu'en idle le
+ * conteneur n'est pas un `listbox` (choix F3 du 2026-05-29, conservé). Résultat :
+ * des options orphelines, sans listbox propriétaire, et un `aria-activedescendant`
+ * supprimé — la navigation aux flèches était donc **silencieuse pour les lecteurs
+ * d'écran** en idle, alors que `data-active` la montrait visuellement.
+ *
+ * Depuis la séparation :
+ * - **mode recherche** : les items sont dans un vrai `role="listbox"` et portent
+ *   `role="option"` + `data-qs-option` ; le roving se fait par
+ *   `aria-activedescendant` (l'input garde le focus).
+ * - **mode idle** : les items portent seulement `data-qs-option` ; le roving
+ *   déplace le **focus DOM réel**, que tout lecteur d'écran annonce nativement,
+ *   sans une ligne d'ARIA.
+ *
+ * Restent exclus dans les deux modes : les contrôles auxiliaires (× de
+ * suppression, « Effacer », « Voir toutes les collections », « Réessayer »,
+ * suggestion orthographique, CTA de pied) — ils ne sont pas des options et
+ * restent atteignables au Tab. Cela évite que le surlignage atterrisse sur des
+ * contrôles invisibles (les × sont `md:opacity-0` jusqu'au hover/focus).
  */
-export const FOCUSABLE_SELECTOR = '[role="option"]:not([aria-disabled="true"])';
+export const FOCUSABLE_SELECTOR = "[data-qs-option]:not([aria-disabled='true'])";
 
 /** Max matched collections shown in search results */
 export const MAX_MATCHED_COLLECTIONS = 2;
@@ -59,5 +75,24 @@ export const PLACEHOLDER_CYCLE_MS = 3000;
 /** Branded error type replacing the raw "error" string literal */
 export type QuickSearchError = { type: "error" };
 
-/** ID for the results container (used by aria-controls) */
+/**
+ * ID du conteneur de résultats — **périmètre de NAVIGATION** (c'est lui que
+ * référence `contentRef`, et il englobe aussi bien le mode idle que le mode
+ * recherche). Ce n'est PAS le listbox : cf. `LISTBOX_ID`.
+ */
 export const RESULTS_CONTAINER_ID = "qs-results";
+
+/**
+ * ID du `role="listbox"` — **périmètre ARIA**, présent uniquement en mode
+ * recherche et n'enveloppant QUE des `role="group"` / `role="option"`.
+ *
+ * Distinct de `RESULTS_CONTAINER_ID` : le rôle listbox portait sur le conteneur
+ * entier, qui contient aussi des `<h3>`, des `<p>`, l'état vide (`role="status"`)
+ * et le CTA de pied — des enfants qu'un `listbox` n'a pas le droit de posséder
+ * (il n'accepte que `option` et `group`), et que certains lecteurs d'écran
+ * élaguent. C'est cet id que vise l'`aria-controls` du combobox.
+ */
+export const LISTBOX_ID = "qs-listbox";
+
+/** ID du hint « au moins N caractères » — cible de l'`aria-describedby` du champ. */
+export const MIN_LENGTH_HINT_ID = "qs-min-length-hint";

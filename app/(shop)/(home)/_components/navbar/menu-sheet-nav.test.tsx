@@ -41,11 +41,6 @@ vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 	LogoutAlertDialog: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock sub-components
-vi.mock("./collection-mini-grid", () => ({
-	CollectionMiniGrid: () => <div data-testid="collection-grid" />,
-}));
-
 vi.mock("./menu-sheet-nav-sections", async (importOriginal) => {
 	const original = (await importOriginal()) as Record<string, unknown>;
 	return {
@@ -67,6 +62,7 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 }));
 
 import { MenuSheetNav } from "./menu-sheet-nav";
+import { ROUTES } from "@/shared/constants/urls";
 
 afterEach(cleanup);
 
@@ -258,7 +254,7 @@ describe("MenuSheetNav", () => {
 			expect(badge.textContent).toBe("2");
 		});
 
-		it("renders orders and logout links", () => {
+		it("renders the logout button", () => {
 			render(
 				<MenuSheetNav
 					navItems={baseNavItems}
@@ -268,8 +264,41 @@ describe("MenuSheetNav", () => {
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "Mes commandes" })).toBeInTheDocument();
 			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeInTheDocument();
+		});
+
+		it("ne rend PAS d'entrée « Mes commandes » séparée quand elle double « Mon compte »", () => {
+			// `ROUTES.ACCOUNT.ROOT` et `ROUTES.ACCOUNT.ORDERS` valent tous deux
+			// « /commandes » : rendre les deux produisait deux entrées vers la même
+			// URL, toutes deux marquées `aria-current="page"` sur /commandes.
+			render(
+				<MenuSheetNav
+					navItems={baseNavItems}
+					productTypes={productTypes}
+					collections={collections}
+					session={session}
+				/>,
+			);
+
+			expect(screen.queryByRole("link", { name: "Mes commandes" })).not.toBeInTheDocument();
+
+			const accountLinks = screen
+				.getAllByRole("link")
+				.filter((l) => l.getAttribute("href") === ROUTES.ACCOUNT.ROOT);
+			expect(accountLinks).toHaveLength(1);
+		});
+
+		it("rend « Mes favoris » même sans session (parité bottom bar / navbar)", () => {
+			render(
+				<MenuSheetNav
+					navItems={baseNavItems}
+					productTypes={productTypes}
+					collections={collections}
+					session={null}
+				/>,
+			);
+
+			expect(screen.getByRole("link", { name: /Mes favoris/ })).toBeInTheDocument();
 		});
 	});
 });

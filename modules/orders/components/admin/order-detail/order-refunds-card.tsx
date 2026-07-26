@@ -11,20 +11,11 @@ import { formatDateShort } from "@/shared/utils/dates";
 import { RotateCcw, ExternalLink, Plus } from "lucide-react";
 import Link from "next/link";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { MarkAsFullyRefundedTrigger } from "./mark-as-fully-refunded-trigger";
 import type { OrderRefundsCardProps } from "./types";
 
-export function OrderRefundsCard({
-	refunds,
-	orderId,
-	orderNumber,
-	canRefund,
-	canMarkAsFullyRefunded,
-	invoiceStatus,
-	invoiceNumber,
-}: OrderRefundsCardProps) {
+export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCardProps) {
 	// Ne pas afficher si aucun remboursement et pas éligible
-	if (refunds.length === 0 && !canRefund && !canMarkAsFullyRefunded) {
+	if (refunds.length === 0 && !canRefund) {
 		return null;
 	}
 
@@ -40,24 +31,18 @@ export function OrderRefundsCard({
 						</Badge>
 					)}
 				</CardTitle>
-				<div className="flex flex-wrap items-center gap-2">
-					{canMarkAsFullyRefunded && (
-						<MarkAsFullyRefundedTrigger
-							orderId={orderId}
-							orderNumber={orderNumber}
-							invoiceStatus={invoiceStatus}
-							invoiceNumber={invoiceNumber}
-						/>
-					)}
-					{canRefund && (
-						<Button variant="outline" size="sm" asChild>
-							<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
-								<Plus className="size-4" aria-hidden="true" />
-								Créer
-							</Link>
-						</Button>
-					)}
-				</div>
+				{/* « Marquer remboursée » n'est PAS exposée ici : elle annule la facture et
+				    émet un avoir gap-free (irréversible), donc elle vit dans la section
+				    `danger` du menu d'actions, en rouge. « Créer » reste en `outline` : un
+				    remboursement Stripe est réversible et fréquent. */}
+				{canRefund && (
+					<Button variant="outline" size="sm" asChild>
+						<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
+							<Plus className="size-4" aria-hidden="true" />
+							Créer
+						</Link>
+					</Button>
+				)}
 			</CardHeader>
 			<CardContent>
 				{refunds.length === 0 ? (

@@ -46,7 +46,6 @@ interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
-	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
 }
 
 export async function ProductsDataTable({
@@ -90,12 +89,12 @@ export async function ProductsDataTable({
 			<TableHeader>
 				<TableRow>
 					<TableHead className="w-[8%]">Image</TableHead>
-					<TableHead className="w-[20%]">Titre</TableHead>
-					<TableHead className="w-[10%]">Statut</TableHead>
-					<TableHead className="w-[8%] text-center">Variantes</TableHead>
-					<TableHead className="w-[12%] text-right">Prix</TableHead>
-					<TableHead className="w-[8%] text-center">Stock</TableHead>
-					<TableHead className="w-[8%]" aria-label="Actions disponibles pour chaque produit">
+					<TableHead className="w-[32%]">Titre</TableHead>
+					<TableHead className="w-[14%]">Statut</TableHead>
+					<TableHead className="w-[10%] text-center">Variantes</TableHead>
+					<TableHead className="w-[14%] text-right">Prix</TableHead>
+					<TableHead className="w-[10%] text-center">Stock</TableHead>
+					<TableHead className="w-[12%]" aria-label="Actions disponibles pour chaque produit">
 						Actions
 					</TableHead>
 				</TableRow>

@@ -24,6 +24,19 @@ export const PUBLIC_PER_PAGE_OPTIONS = [20, 50] as const;
 export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**
+ * Options de pagination bornées par le plafond réel du module appelant.
+ *
+ * Trois listes admin plafonnent à 100 (`orders`, `refunds`, `discounts`) alors que
+ * `PER_PAGE_OPTIONS` en propose 200 : sélectionner « 200 » faisait échouer la borne du
+ * schéma, le parseur retombait sur la valeur par défaut (20) et l'utilisateur voyait
+ * **20 lignes avec « 200 » sélectionné** — précisément le clamp silencieux que le
+ * commentaire ci-dessus dit vouloir éviter.
+ */
+export function perPageOptionsUpTo(max: number): number[] {
+	return PER_PAGE_OPTIONS.filter((option) => option <= max);
+}
+
+/**
  * Helper to build cursor-based pagination for Prisma queries
  * More performant than offset-based pagination for large datasets
  *

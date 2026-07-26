@@ -8,12 +8,15 @@ import { ProductCard } from "@/modules/products/components/product-card";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Empty,
+	EmptyActions,
 	EmptyHeader,
 	EmptyMedia,
 	EmptyTitle,
 	EmptyDescription,
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ResetSearchFiltersAction } from "./reset-search-filters-action";
+import { SearchCorrectionSuggestion } from "./search-correction-suggestion";
 
 interface SearchFallbackSuggestionsProps {
 	/** Terme de recherche actuel (pour l'echo) */
@@ -74,12 +77,25 @@ export async function SearchFallbackSuggestions({
 					</EmptyTitle>
 					<EmptyDescription>
 						{suggestion ? (
-							<SuggestionLink suggestion={suggestion} />
+							// `SearchCorrectionSuggestion` et non un lien local : il clone les
+							// `searchParams` courants au lieu de reconstruire l'URL de zéro, donc
+							// accepter une correction ne fait plus perdre les filtres actifs.
+							// `announce={false}` : le `<Empty>` parent est déjà une live region.
+							<SearchCorrectionSuggestion suggestion={suggestion} announce={false} />
 						) : (
 							"Essayez de modifier vos filtres."
 						)}
 					</EmptyDescription>
 				</EmptyHeader>
+				{/*
+				 * L'état vide n'était pas un cul-de-sac visuel mais un cul-de-sac
+				 * fonctionnel : il conseillait de modifier ses filtres sans offrir aucun
+				 * moyen de le faire. Le composant se masque de lui-même quand il n'y a ni
+				 * filtre ni recherche à effacer (catalogue réellement vide).
+				 */}
+				<EmptyActions>
+					<ResetSearchFiltersAction />
+				</EmptyActions>
 			</Empty>
 
 			{/* Dernières créations */}
@@ -119,24 +135,6 @@ export async function SearchFallbackSuggestions({
 				</section>
 			)}
 		</div>
-	);
-}
-
-/**
- * Lien de suggestion de correction (Server Component)
- */
-function SuggestionLink({ suggestion }: { suggestion: string }) {
-	return (
-		<span>
-			Vouliez-vous dire :{" "}
-			<Link
-				href={`/produits?search=${encodeURIComponent(suggestion)}`}
-				className="font-medium underline underline-offset-4"
-			>
-				{suggestion}
-			</Link>{" "}
-			?
-		</span>
 	);
 }
 

@@ -168,7 +168,7 @@ function CartSheetBody({
 							{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
 							<ul role="list" className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
-									{items.map((item) => (
+									{items.map((item, index) => (
 										/* Pas d'animation de `height` (relayout à chaque frame) : `layout` +
 										   `mode="popLayout"` sortent l'item du flux et font glisser ses voisins
 										   via transform — même effet de collapse, sans jank. */
@@ -181,7 +181,12 @@ function CartSheetBody({
 											transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
 											className="origin-top overflow-hidden"
 										>
-											<CartSheetItemRow item={item} onClose={close} isMobile={isMobile} />
+											<CartSheetItemRow
+												item={item}
+												onClose={close}
+												isMobile={isMobile}
+												isFirst={index === 0}
+											/>
 										</m.li>
 									))}
 								</AnimatePresence>
@@ -284,7 +289,13 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		<CartCloseContext.Provider value={close}>
 			<CartOptimisticContext.Provider value={cartOptimisticValue}>
 				{isMobile ? (
-					<Drawer open={isOpen} onOpenChange={handleOpenChange}>
+					// `handleOnly` : trois gestes se disputaient les mêmes pixels — swipe
+					// horizontal de suppression d'article, scroll vertical de la liste, et
+					// drag-to-dismiss Vaul (déclenché dès 15 dvh via `closeThreshold: 0.15`).
+					// Le panier se fermait donc par accident pendant qu'on manipulait une
+					// ligne. La fermeture par geste passe désormais par la seule poignée
+					// visible ; le bouton de fermeture de l'en-tête reste l'alternative.
+					<Drawer open={isOpen} onOpenChange={handleOpenChange} handleOnly>
 						<DrawerContent
 							className="group/sheet mt-0 flex h-[var(--vvh,100dvh)] max-h-[var(--vvh,100dvh)] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
 							data-pending={isPending ? "" : undefined}

@@ -225,16 +225,16 @@ describe("Logo", () => {
 	});
 
 	// Paliers IMAGE_QUALITY (SSOT alignée sur `images.qualities` de next.config) :
-	// THUMBNAIL=65 / STANDARD=80 / HERO=90. Une valeur hors de cette liste
-	// ferait répondre 400 à `/_next/image`.
-	it("adapts quality based on size (≤40 → 65 THUMBNAIL, >40 → 90 HERO)", () => {
+	// THUMBNAIL=65 / STANDARD=80. Une valeur hors de cette liste ferait répondre
+	// 400 à `/_next/image` — d'où l'absence de palier « hero » à 90.
+	it("adapts quality based on size (≤40 → 65 THUMBNAIL, >40 → 80 STANDARD)", () => {
 		const { container: small } = render(<Logo size={32} />);
 		expect(small.querySelector("[data-testid='logo-image']")).toHaveAttribute("data-quality", "65");
 
 		cleanup();
 
 		const { container: large } = render(<Logo size={48} />);
-		expect(large.querySelector("[data-testid='logo-image']")).toHaveAttribute("data-quality", "90");
+		expect(large.querySelector("[data-testid='logo-image']")).toHaveAttribute("data-quality", "80");
 	});
 
 	it("respects explicit quality prop over adaptive default", () => {

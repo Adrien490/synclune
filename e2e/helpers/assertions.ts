@@ -3,6 +3,29 @@ import { expect } from "@playwright/test";
 import { TIMEOUTS } from "../constants";
 
 /**
+ * Sélecteurs de feedback **visible**, excluant les régions d'annonce sr-only.
+ *
+ * ⚠️ Pourquoi `:not(.sr-only)` est indispensable.
+ *
+ * `AppToaster` (layout racine, donc présent sur TOUTES les pages) monte
+ * `#toast-live-polite` avec `role="status"` et `#toast-live-assertive` avec
+ * `role="alert"`. Ces nœuds sont `.sr-only`, soit une boîte de 1×1 px — que
+ * Playwright considère **visible** (`sr-only` clippe, il ne met pas
+ * `visibility: hidden`).
+ *
+ * Conséquence : un `expect(page.locator('[role="alert"]').first()).toBeVisible()`
+ * passe sur n'importe quelle page, même sans le moindre feedback. L'audit
+ * « Système de feedback » a trouvé sept specs qui passaient à faux pour cette
+ * raison, dont deux helpers de ce fichier utilisés par une dizaine d'autres.
+ *
+ * Utiliser ces constantes pour toute assertion de feedback visible. Pour vérifier
+ * une **annonce** screen-reader, cibler au contraire les régions par id et
+ * asserter leur texte — cf. `e2e/a11y/live-regions.spec.ts`.
+ */
+export const VISIBLE_ALERT = '[role="alert"]:not(.sr-only)';
+export const VISIBLE_STATUS = '[role="status"]:not(.sr-only)';
+
+/**
  * Assert that a success toast/alert is visible on the page.
  * Matches common French success messages.
  */
@@ -14,7 +37,7 @@ export async function expectSuccessToast(page: Page, message?: string | RegExp) 
 				? new RegExp(message, "i")
 				: /succès|réussi|ajouté|enregistré|créé|modifié|supprimé|envoyé|confirmé/i;
 
-	const toast = page.getByText(pattern).or(page.locator('[role="status"]'));
+	const toast = page.getByText(pattern).or(page.locator(VISIBLE_STATUS));
 	await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 }
 
@@ -29,7 +52,7 @@ export async function expectFormError(page: Page, message?: string | RegExp) {
 				? new RegExp(message, "i")
 				: /obligatoire|requis|invalide|erreur|au moins/i;
 
-	const error = page.getByText(pattern).or(page.locator('[role="alert"]'));
+	const error = page.getByText(pattern).or(page.locator(VISIBLE_ALERT));
 	await expect(error.first()).toBeVisible({ timeout: TIMEOUTS.VALIDATION });
 }
 

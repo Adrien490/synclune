@@ -5,10 +5,9 @@ import { describe, it, expect, vi } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockUseAlertDialog, mockUseDialog, mockUseBulkSelectionActionItem } = vi.hoisted(() => ({
+const { mockUseAlertDialog, mockUseDialog } = vi.hoisted(() => ({
 	mockUseAlertDialog: vi.fn(),
 	mockUseDialog: vi.fn(),
-	mockUseBulkSelectionActionItem: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -17,10 +16,6 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: mockUseDialog,
-}));
-
-vi.mock("@/shared/hooks/use-bulk-selection-action-item", () => ({
-	useBulkSelectionActionItem: mockUseBulkSelectionActionItem,
 }));
 
 // Mock dialog files (containing only ID const) — évite la chaîne d'imports
@@ -57,7 +52,6 @@ function setupDialogMocks() {
 	const open = vi.fn();
 	mockUseAlertDialog.mockReturnValue({ open });
 	mockUseDialog.mockReturnValue({ open });
-	mockUseBulkSelectionActionItem.mockReturnValue(null);
 	return open;
 }
 

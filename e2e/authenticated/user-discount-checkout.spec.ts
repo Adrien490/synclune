@@ -1,5 +1,6 @@
 import { test, expect } from "../fixtures";
 import { requireSeedData } from "../constants";
+import { VISIBLE_ALERT } from "../helpers/assertions";
 
 test.describe("Checkout - Codes promo", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage, page }) => {
@@ -37,7 +38,7 @@ test.describe("Checkout - Codes promo", { tag: ["@regression"] }, () => {
 		// Should show error feedback
 		const errorFeedback = checkoutPage.discountError
 			.or(checkoutPage.page.getByText(/invalide|expiré|introuvable/i))
-			.or(checkoutPage.page.locator('[role="alert"]'));
+			.or(checkoutPage.page.locator(VISIBLE_ALERT));
 
 		await expect(errorFeedback.first()).toBeVisible({ timeout: 5000 });
 	});

@@ -25,7 +25,7 @@ export function AdminMobileListPagination({
 }: AdminMobileListPaginationProps) {
 	return (
 		<div data-admin-mobile-list-pagination className={cn("md:hidden", wrapperClassName)}>
-			<CursorPagination {...paginationProps} />
+			<CursorPagination {...paginationProps} showCount={false} secondary />
 		</div>
 	);
 }

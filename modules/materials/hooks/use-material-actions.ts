@@ -41,20 +41,15 @@ export function useMaterialActions({
 		onSuccess: (message, data) => {
 			haptic("success");
 			router.refresh();
-			toast.success(
-				message,
-				isMobile
-					? undefined
-					: {
-							action: {
-								label: "Voir le matériau",
-								onClick: () =>
-									withViewTransition(() =>
-										router.push(`/admin/catalogue/materiaux/${data.slug}/modifier`),
-									),
-							},
-						},
-			);
+			toast.success(message, {
+				action: {
+					label: "Voir le matériau",
+					onClick: () =>
+						withViewTransition(() =>
+							router.push(`/admin/catalogue/materiaux/${data.slug}/modifier`),
+						),
+				},
+			});
 		},
 	});
 	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();

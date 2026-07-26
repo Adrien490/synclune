@@ -43,7 +43,7 @@ afterEach(() => {
 // Import under test (after stubs are set up)
 // ---------------------------------------------------------------------------
 
-import { useIsMobile, MOBILE_BREAKPOINT } from "../use-mobile";
+import { useIsMobile, MOBILE_MEDIA_QUERY } from "../use-mobile";
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -51,15 +51,20 @@ import { useIsMobile, MOBILE_BREAKPOINT } from "../use-mobile";
 
 describe("useIsMobile", () => {
 	describe("constants", () => {
-		it("exports MOBILE_BREAKPOINT as 768", () => {
-			expect(MOBILE_BREAKPOINT).toBe(768);
+		// The threshold MUST stay in rem: a px threshold desynchronises from
+		// Tailwind's rem breakpoints as soon as the root font-size changes,
+		// which is what left /admin with zero navigation surface between
+		// 672px and 767px at a 14px root (responsive audit 2026-07-26).
+		it("exports MOBILE_MEDIA_QUERY in rem, matching Tailwind's md: (48rem)", () => {
+			expect(MOBILE_MEDIA_QUERY).toBe("(width < 48rem)");
+			expect(MOBILE_MEDIA_QUERY).not.toMatch(/px/);
 		});
 	});
 
 	describe("media query string", () => {
-		it("subscribes to (max-width: 767px) — one below the breakpoint", () => {
+		it("subscribes to the rem-based threshold", () => {
 			renderHook(() => useIsMobile());
-			expect(matchMediaSpy).toHaveBeenCalledWith("(max-width: 767px)");
+			expect(matchMediaSpy).toHaveBeenCalledWith("(width < 48rem)");
 		});
 	});
 

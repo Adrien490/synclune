@@ -37,6 +37,9 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 		description: productType.description,
 		slug: productType.slug,
 		productsCount,
+		// La liste mobile n'a pas d'interrupteur (badge en lecture seule) : l'item de
+		// menu Activer/Désactiver est la SEULE surface de bascule ici.
+		isActive: productType.isActive,
 	});
 
 	return (

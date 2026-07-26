@@ -18,7 +18,9 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 import { Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import {

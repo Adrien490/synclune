@@ -9,8 +9,10 @@ import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
@@ -21,6 +23,7 @@ import { closeStore } from "../../actions/close-store";
 
 export function CloseStoreForm() {
 	const router = useRouter();
+	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
@@ -55,6 +58,18 @@ export function CloseStoreForm() {
 	});
 
 	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+
+	// Échap ramène à la configuration boutique (d'où l'on vient), ⌘S soumet — ce
+	// formulaire était le seul avec `useUnsavedChanges` mais sans raccourcis.
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: "/admin/configuration/boutique",
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		getCanSubmit: () => form.state.canSubmit,
+	});
 
 	return (
 		<form

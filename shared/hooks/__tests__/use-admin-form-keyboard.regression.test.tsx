@@ -53,6 +53,33 @@ function Harness({ listPath }: { listPath?: string }) {
 	);
 }
 
+/**
+ * Confirmation Radix ouverte au-dessus du formulaire. `role="alertdialog"` et
+ * `data-state="open"` reproduisent fidèlement ce que rend `AlertDialogContent` —
+ * le rôle est le point du test (voir le bloc « confirmation » plus bas).
+ */
+function HarnessWithConfirm({ focusOnBody = false }: { focusOnBody?: boolean }) {
+	const formRef = { current: null } as React.RefObject<HTMLFormElement | null>;
+
+	useAdminFormKeyboard({
+		formRef,
+		isPending: false,
+		isMobile: false,
+		listPath: "/admin/liste",
+		allowNavigation: () => undefined,
+		getIsDirty: () => true,
+	});
+
+	return (
+		<div>
+			<div data-slot="alert-dialog-content" role="alertdialog" data-state="open">
+				{!focusOnBody && <button data-testid="confirm-cancel" type="button" />}
+			</div>
+			<input data-testid="plain-field" />
+		</div>
+	);
+}
+
 describe("@regression admin-form-escape-overlay", () => {
 	let confirmSpy: ReturnType<typeof vi.spyOn>;
 
@@ -98,6 +125,44 @@ describe("@regression admin-form-escape-overlay", () => {
 
 		expect(confirmSpy).toHaveBeenCalledOnce();
 		expect(mockPush).toHaveBeenCalledWith("/admin/liste");
+	});
+
+	// -------------------------------------------------------------------------
+	// Confirmations Radix — audit « Overlays » 2026-07-26 (P1-3).
+	//
+	// `AlertDialogContent` rend `role="alertdialog"`, PAS `role="dialog"` : le
+	// sélecteur ne l'attrapait donc pas. Échap sur une confirmation ouverte
+	// au-dessus d'un formulaire admin fermait la confirmation ET quittait la
+	// page. Cas le plus atteignable des 23 formulaires concernés : formulaire
+	// dirty → Échap → `UnsavedChangesDialog` (un AlertDialog) → Échap → Radix
+	// ferme pendant que ce raccourci redemande la navigation, qui le rouvre.
+	// -------------------------------------------------------------------------
+
+	it("lists alertdialog among the ignored overlays", () => {
+		expect(OVERLAY_SELECTOR).toContain("[role='alertdialog']");
+		expect(OVERLAY_SELECTOR).toContain("[data-slot='alert-dialog-content']");
+	});
+
+	it("does not navigate when Escape closes an open confirmation", () => {
+		const { getByTestId } = render(<HarnessWithConfirm />);
+
+		fireEvent.keyDown(getByTestId("confirm-cancel"), { key: "Escape", bubbles: true });
+
+		expect(confirmSpy).not.toHaveBeenCalled();
+		expect(mockPush).not.toHaveBeenCalled();
+	});
+
+	// Le test portait sur `event.target` seul : overlay ouvert mais focus resté
+	// sur `<body>` (confirmation sans élément focusable, focus perdu après une
+	// action), `closest()` renvoyait null et le raccourci se déclenchait
+	// par-dessus l'overlay. D'où le repli sur une requête DOM.
+	it("does not navigate when an overlay is open but focus sits on body", () => {
+		render(<HarnessWithConfirm focusOnBody />);
+
+		fireEvent.keyDown(document.body, { key: "Escape", bubbles: true });
+
+		expect(confirmSpy).not.toHaveBeenCalled();
+		expect(mockPush).not.toHaveBeenCalled();
 	});
 
 	it("disables the Escape shortcut entirely when no listPath is given", () => {

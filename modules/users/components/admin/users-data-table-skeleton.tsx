@@ -1,15 +1,15 @@
 import { DataTableSkeleton } from "@/shared/components/data-table";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
+/** Grille alignée sur `users-data-table.tsx` (5 colonnes, pagination curseur). */
 export function UsersDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
 			className="hidden md:block"
 			columns={[
-				{ width: "8%", cell: { type: "avatar" } },
-				{ width: "20%", cell: { type: "text", width: "w-28" } },
+				{ width: "26%", cell: { type: "text", width: "w-28" } },
 				{
-					width: "30%",
+					width: "36%",
 					cell: {
 						type: "custom",
 						render: () => (
@@ -21,8 +21,8 @@ export function UsersDataTableSkeleton() {
 					},
 				},
 				{ width: "12%", cell: { type: "text", width: "w-6" } },
-				{ width: "15%", cell: { type: "text", width: "w-20" } },
-				{ width: "5%", align: "right", cell: { type: "actions" } },
+				{ width: "16%", cell: { type: "text", width: "w-20" } },
+				{ width: "10%", align: "right", cell: { type: "actions" } },
 			]}
 			pagination="cursor"
 		/>

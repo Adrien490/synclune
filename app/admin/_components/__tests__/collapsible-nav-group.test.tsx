@@ -6,6 +6,14 @@ import type * as LucideReact from "lucide-react";
 // MODULE MOCKS
 // ============================================================================
 
+const { mockUsePathname } = vi.hoisted(() => ({
+	mockUsePathname: vi.fn(() => "/admin"),
+}));
+
+vi.mock("next/navigation", () => ({
+	usePathname: mockUsePathname,
+}));
+
 vi.mock("lucide-react", async (importOriginal) => {
 	const actual = await importOriginal<typeof LucideReact>();
 	return {
@@ -110,6 +118,7 @@ import { CollapsibleNavGroup } from "../collapsible-nav-group";
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockUsePathname.mockReturnValue("/admin");
 });
 
 afterEach(cleanup);
@@ -132,9 +141,22 @@ describe("CollapsibleNavGroup", () => {
 			expect(screen.getByTestId("collapsible")).toBeInTheDocument();
 		});
 
-		it("renders with defaultOpen", () => {
+		it("s'ouvre par défaut quand la route courante appartient au groupe", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
 			expect(screen.getByTestId("collapsible")).toHaveAttribute("data-default-open", "true");
+		});
+
+		it("s'ouvre aussi sur une sous-route d'un item du groupe (fiche produit)", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits/bague-lune");
+			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
+			expect(screen.getByTestId("collapsible")).toHaveAttribute("data-default-open", "true");
+		});
+
+		it("reste replié quand la route courante est hors du groupe", () => {
+			mockUsePathname.mockReturnValue("/admin/ventes/commandes");
+			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
+			expect(screen.getByTestId("collapsible")).toHaveAttribute("data-default-open", "false");
 		});
 
 		it("renders the group label text", () => {

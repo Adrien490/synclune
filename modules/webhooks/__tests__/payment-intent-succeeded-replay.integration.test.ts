@@ -36,7 +36,6 @@ async function createPaidOrder(
 			orderNumber: `SYN-RPLY-${Date.now()}`,
 			customerEmail: "replay@test.local",
 			customerName: "Replay Test",
-			customerType: "B2C",
 			shippingFirstName: "R",
 			shippingLastName: "Y",
 			shippingAddress1: "1 rue",

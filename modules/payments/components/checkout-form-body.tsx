@@ -23,8 +23,9 @@ import { ShippingMethodSection } from "./shipping-method-section";
 import { CheckoutContactSection } from "./checkout-contact-section";
 import { CheckoutAddressFields } from "./checkout-address-fields";
 import { CheckoutDiscountSection } from "./checkout-discount-section";
+import { CheckoutErrorSummary } from "./checkout-error-summary";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
-import { getIncompleteSections } from "../constants/checkout-fields";
+import { buildCheckoutFieldErrors, getIncompleteSections } from "../constants/checkout-fields";
 
 // Lazy-load the ~100 KB `@stripe/react-stripe-js` bundle. Keeps `/paiement`
 // initial JS below the 130 KB size-limit budget and lets the address/summary
@@ -111,9 +112,41 @@ export function CheckoutFormBody({
 			onSubmit={(e) => e.preventDefault()}
 			noValidate
 			aria-label="Formulaire de paiement"
-			className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0"
+			// Réserve = hauteur réelle de la barre CTA fixe (publiée par PayButton),
+			// pas une constante : la barre grossit quand une Alert s'y empile.
+			// Levée à `md:` — le breakpoint où la barre repasse `static` (l'ancien
+			// `lg:pb-0` laissait 8rem de vide entre 768px et 1024px).
+			className="grid gap-6 pb-[calc(var(--pay-bar-height,8rem)+1rem)] md:pb-0 lg:grid-cols-[1fr_360px] lg:gap-8"
 		>
 			<div className="space-y-8">
+				{/*
+				 * Résumé d'erreurs — en TÊTE de formulaire, au-dessus de la section
+				 * Contact. Il agrège les erreurs de TOUTES les sections (email compris) :
+				 * rendu plus bas, il se retrouvait sous les champs qu'il désigne.
+				 * Le focus part quand même sur le premier champ invalide
+				 * (`focusFirstInvalid`, WCAG 3.3.1) ; ce bloc est la vue d'ensemble
+				 * annoncée en `aria-live="assertive"` et le point d'entrée cliquable.
+				 */}
+				<form.Subscribe
+					selector={(s) => ({
+						submissionAttempts: s.submissionAttempts,
+						canSubmit: s.canSubmit,
+						fieldMeta: s.fieldMeta,
+					})}
+				>
+					{({ submissionAttempts, canSubmit, fieldMeta }) => {
+						if (submissionAttempts === 0 || canSubmit) return null;
+
+						return (
+							<CheckoutErrorSummary
+								fieldErrors={buildCheckoutFieldErrors(
+									fieldMeta as Record<string, { errors: string[] }>,
+								)}
+							/>
+						);
+					}}
+				</form.Subscribe>
+
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
 						<WifiOff className="size-4" />
@@ -172,8 +205,12 @@ export function CheckoutFormBody({
 							<CheckoutAddressFields form={form} session={session} addresses={addresses} />
 						</CheckoutSection>
 
-						{/* === SECTION 3: Shipping Method === */}
-						<CheckoutSection title="Mode d'expédition">
+						{/* === SECTION 3: Shipping cost & lead time === */}
+						{/* Pas « Mode d'expédition » : le tarif est unique par zone, la section
+						    est en lecture seule et n'offre aucun choix — le titre promettait une
+						    sélection inexistante. Pas « Livraison » non plus : la section 2
+						    (adresse) porte déjà ce titre. */}
+						<CheckoutSection title="Frais et délai de livraison">
 							<ShippingMethodSection
 								shipping={shipping}
 								shippingUnavailable={shippingUnavailable}

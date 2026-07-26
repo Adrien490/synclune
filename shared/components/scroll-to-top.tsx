@@ -119,7 +119,12 @@ export function ScrollToTop() {
 							// (publié par `html:has([data-fab-container])` dans globals.css quand le FAB est visible)
 							// pour éviter le chevauchement. Le coin bas-gauche est exclu car réservé au cookie-banner
 							// (md:left-6) → l'empilement vertical est la seule option sans collision.
-							"fixed right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] z-40 md:bottom-[calc(max(1.5rem,env(safe-area-inset-bottom))+var(--fab-corner-clearance,0px))]",
+							// `--bottom-bar-height` figure dans LES DEUX variantes : la variable
+							// n'est publiée que lorsqu'une barre est réellement visible, donc
+							// elle vaut 0 sur vrai desktop (no-op) mais 56px entre 48rem et
+							// 64rem, où la bottom-nav boutique est encore là. Sans elle dans la
+							// variante `md:`, le bouton se posait sur la barre en iPad portrait.
+							"fixed right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] z-40 md:bottom-[calc(var(--bottom-bar-height,0px)+max(1.5rem,env(safe-area-inset-bottom))+var(--fab-corner-clearance,0px))]",
 							"bg-background/90 size-12 rounded-full shadow-md backdrop-blur-md",
 							"hidden cursor-pointer items-center justify-center md:flex",
 							"hover:bg-background hover:shadow-lg",

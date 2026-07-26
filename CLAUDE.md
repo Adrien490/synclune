@@ -7,7 +7,7 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Storefront** (`/`, groupe de routes `(shop)`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
-- **Emails** - React Email + Resend (11 templates)
+- **Emails** - React Email + Resend (10 templates)
 
 ## Commands
 
@@ -73,7 +73,7 @@ shared/                      # Cross-cutting concerns
 ├── providers/               # Root providers, dialog/sheet/store providers
 ├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)
 ├── services/                # Shared business logic (unique name generator)
-├── stores/                  # Zustand stores (9 stores)
+├── stores/                  # Zustand stores (6 stores)
 ├── styles/                  # Global styles, fonts
 ├── types/                   # Shared types (server actions, sessions, pagination, errors)
 └── utils/                   # Formatting, slug, date, currency, password strength, seeded random
@@ -84,10 +84,79 @@ shared/                      # Cross-cutting concerns
 - **Auth**: Better Auth (email/password, Google)
 - **Database**: PostgreSQL (Neon) + Prisma 7
 - **Forms**: TanStack Form + `useAppForm` hook
-- **State**: Zustand (9 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, micro-toast, overlay-stack, admin-list-selection, admin-list-bulk-pending)
+- **State**: Zustand (6 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, overlay-stack)
 - **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
+
+### Breakpoints — rem partout, jamais px
+
+SSOT : `shared/constants/breakpoints.ts` (`BREAKPOINTS` + `mediaBelow()` / `mediaAtLeast()` / `mediaBetween()`). Échelle alignée sur les défauts Tailwind v4, **en rem** : `xs 23.4375` · `sm 40` · `md 48` · `lg 64` · `xl 80` · `2xl 96`.
+
+**Règle : aucune largeur en px dans un `matchMedia()`, ni dans une media query CSS écrite à la main, ni dans un `--breakpoint-*`.** Verrouillé repo-wide par `shared/constants/__tests__/no-px-media-query.regression.test.ts`.
+
+Pourquoi : Tailwind exprime ses breakpoints en rem. Un seuil JS en px coïncide avec eux uniquement tant que la police racine vaut 16px — dès que l'utilisateur change ce réglage (accessibilité, WCAG 1.4.4), les deux divergent. Les composants **hybrides** (branche choisie en JS, branche rendue avec une classe `md:`) tombent alors dans le vide : à police racine 14px, `md:` = 672px, et la plage 672-767px laissait `/admin` **sans aucune surface de navigation** — `useIsMobile()` disait « mobile » (sidebar → `null` via `disableMobileSheet`) pendant que le CSS disait déjà « desktop ». Audit responsive 2026-07-26, P1-1.
+
+Les media queries **sans largeur** (`prefers-reduced-motion`, `hover`, `pointer`, `orientation`, `forced-colors`) s'écrivent en clair — seules les largeurs se désynchronisent. La syntaxe range MQ4 (`(width < 48rem)`) est préférée à `(max-width: …)` : c'est l'équivalent exact de ce que Tailwind compile pour `max-md:`, sans la fenêtre de désaccord d'~1px sur les DPR fractionnaires.
+
+**Seuils de navigation** (décision explicite, pas un accident) :
+
+| Surface                    | Seuil | Relais au-dessus                |
+| -------------------------- | ----- | ------------------------------- |
+| Bottom-nav boutique        | `lg`  | `DesktopNav` (`hidden lg:flex`) |
+| Bottom bar + sidebar admin | `md`  | Sidebar (`hidden md:block`)     |
+
+La bottom-nav boutique suit `lg` pour couvrir l'iPad portrait (768×1024) : avec un seuil `md` la plage 48-64rem perdait le panier et les favoris sans gagner le mega-menu. `BottomBar` prend un prop `breakpoint: "md" | "lg"` d'où il dérive **à la fois** la classe Tailwind et la `matchMedia` — et ne publie `--bottom-bar-height` que lorsque la barre est réellement visible. Corollaire : les consommateurs de cette variable ne doivent **pas** préfixer leur offset d'un breakpoint (la variable vaut déjà 0 quand il n'y a pas de barre).
+
+### Largeurs de contenu et grilles
+
+| Surface    | Plafond                   | Note                                                                                                             |
+| ---------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Storefront | `max-w-6xl` (1152px)      | Appliqué page par page, pas par le layout. Aucun palier `2xl:` — le hero faisait exception et décrochait de 64px |
+| Checkout   | `max-w-5xl` (1024px)      | États intermédiaires en `max-w-3xl`                                                                              |
+| Admin      | `max-w-[100rem]` (1600px) | **Sans `mx-auto`** : centrer ferait varier la gouttière gauche avec la largeur de fenêtre                        |
+
+**Un palier de colonnes ne s'ajoute que si le conteneur grandit avec lui.** Les variants de grille se déclenchent sur la largeur du **viewport**, pas du conteneur : au-delà du plafond, une colonne de plus répartit le _même_ espace en plus de parts. `2xl:grid-cols-5` sur la grille produit faisait tomber les cartes de 248px à 192px (-22%) — retiré. Au-dessus du plafond, l'espace est de la marge, pas des colonnes.
+
+### Survol vs focus
+
+Toute affordance **porteuse d'information** révélée au survol doit l'être au focus clavier (WCAG 2.4.7) : soulignement de lien, chevron de navigation, bouton d'action qui s'éclaircit. Les effets purement décoratifs (scale d'image, halo) n'ont pas cette obligation.
+
+⚠️ **Ne jamais placer une règle de focus derrière `can-hover:`** — ce variant vaut `(hover: hover) and (pointer: fine)` et existe pour neutraliser le sticky-hover iOS ; une règle de focus derrière lui ne s'appliquerait jamais au clavier sur tactile. Le gate va sur le hover seul :
+
+```tsx
+"can-hover:group-hover:opacity-100 group-focus-visible:opacity-100";
+```
+
+Composants verrouillés par `shared/components/__tests__/hover-focus-parity.regression.test.ts` (liste à étendre, volontairement pas un scan repo-wide : un garde-fou qui hurle sur chaque `group-hover:scale-105` décoratif serait désactivé en une semaine).
+
+### Overlays — quelle primitive choisir
+
+| Besoin                                           | Primitive                                                                           | Rendu                                                |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Confirmer, action destructive                    | `ResponsiveAlertDialog`                                                             | Radix `AlertDialog`, **identique mobile et desktop** |
+| Formulaire, édition                              | `ResponsiveDialog`                                                                  | Vaul `Drawer` < `md`, Radix `Dialog` ≥ `md`          |
+| Navigation, filtres, panier — panneau persistant | `Sheet`                                                                             | Vaul, latéral par défaut                             |
+| Menu d'actions, picker, tri — feuille éphémère   | `Drawer`                                                                            | Vaul, bottom par défaut                              |
+| `Dialog` / `AlertDialog` Radix bruts             | seulement si la surface n'existe pas en mobile (raccourcis clavier, export desktop) |                                                      |
+
+⚠️ **`ResponsiveAlertDialog` ne bascule pas** malgré son préfixe : il rend du Radix sur tous les viewports (`tone` ne pilote que la couleur du bouton d'action et le pattern haptic). Seul `ResponsiveDialog` bascule, sur `useIsMobile()` = `mediaBelow("md")`.
+
+`Sheet` et `Drawer` enveloppent le **même** `vaul.Drawer` avec les mêmes défauts (`scrollLockTimeout=800`, `closeThreshold=0.15`). Le critère est l'intention, pas la technique : un panneau qu'on consulte (Sheet) vs une feuille qu'on referme aussitôt l'action faite (Drawer).
+
+**Les 4 familles passent par `@radix-ui/react-dialog`** (Vaul rend un `DialogPrimitive.Content`), donc un seul verrou de scroll `react-remove-scroll` avec compensation de gouttière — pas de double verrou concurrent, y compris sur un `AlertDialog` empilé dans un `Sheet`. `noBodyStyles` sur `Sheet` ne désactive que la couche iOS `position: fixed` supplémentaire de Vaul.
+
+**Imbrication** : un overlay ouvert depuis un `Sheet`/`Drawer` doit être rendu **dans** son arbre JSX — `vaul-nested-context` bascule alors sur `NestedRoot` (empilement natif, focus-trap chaîné). Ne jamais fermer le parent avant d'ouvrir l'enfant. Deux surfaces dérogent encore (`admin-menu-sheet`, `menu-sheet` diffèrent l'ouverture après la transition Vaul) — dette connue, pas un modèle à suivre.
+
+⚠️ **Jamais `<SheetClose asChild>` / `<DrawerClose asChild>` autour d'un `<Link>`.** Le Slot Radix fait atterrir le `onClick` du Close sur le `<Link>`, et Next l'invoque **avant** `linkClicked` : `onOpenChange(false)` → `handleClose()` → `history.back()` synchrone, qui race le `router.push` et annule la navigation (l'utilisateur reste sur la page, sans erreur). La garde `isTopOfHistory` ne couvre PAS ce cas — elle détecte « un push a eu lieu **pendant** l'ouverture », pas « le push est queué dans le même clic, après la fermeture », où `history.length` est encore intact.
+
+Fermer par la **prop contrôlée** à la place (`open={isOpen}` + un handler qui `close()`), ce qui court-circuite `onOpenChange`. Et naviguer en **`replace`** : l'entrée poussée à l'ouverture porte la même URL que la page, la consommer évite une pression de retour morte par cycle ouvrir → naviguer (cumulative). Deux régressions verrouillent le pattern : `responsive-action-menu/__tests__/link-history-back.regression.test.tsx` (2026-05-15) et `app/(shop)/(home)/_components/navbar/__tests__/menu-sheet-link-navigation.regression.test.tsx` (2026-07-26, monte le **vrai** `ui/sheet` — un mock du wrapper rend le test aveugle à cette chaîne). Cas non couverts restants : `dashboard-period-sheet`, `dashboard-refresh-sheet`, `filter-sheet-wrapper`.
+
+**Historique** : `useBackButtonClose` pousse une entrée à l'ouverture pour que le retour matériel ferme l'overlay. Les 4 wrappers reprennent cette entrée sur **toutes** les fermetures via `handleClose` — un wrapper qui l'oublierait laisserait une entrée orpheline de même URL, avalant une pression de retour par cycle. `handleClose` ne recule que si l'entrée est encore au sommet (`history.length` inchangée depuis le push) : sinon une navigation a eu lieu entre-temps et reculer la défairait.
+
+**`handleOnly`** : autorisé uniquement sur une collision de gestes constatée et décrite en commentaire sur le call site, jamais par défaut — il supprime le swipe-to-dismiss depuis le contenu. Verrouillé par `shared/components/ui/__tests__/handle-only-allowlist.regression.test.ts`.
+
+Autres partis pris : pas de `Drawer` pour une confirmation, pas de View Transition sur une fermeture Vaul.
 
 ### React 19 - NO MEMOIZATION
 
@@ -290,9 +359,8 @@ Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce so
 | `payments/services/order-creation.service.ts`          | Transaction atomique stock lock + order + discount usage                                                                                                                                                          |
 | `wishlist/services/notify-back-in-stock.ts`            | Notification atomique apres restock                                                                                                                                                                               |
 | `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                        |
-| `reviews/services/send-review-requests.service.ts`     | Service cron **dormant** (route retirée, réactivable) — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email                                                                                |
 | `refunds/services/send-refund-confirmation.service.ts` | Émetteur unique email remboursement — `refund.updateMany` claim atomique (`confirmationEmailSentAt`) partagé entre cron `reconcile-refunds` + webhook `charge.refunded` + action `processRefund` (ORD-STRIPE-005) |
-| `store-settings/services/auto-reopen.service.ts`       | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues                                                                                                                                   |
+| `store-settings/services/auto-reopen.service.ts`       | Cron job — `storeSettings.updateMany` pour clear `reopensAt` aux dates échues                                                                                                                                     |
 | `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                             |
 
 ## API Routes
@@ -305,19 +373,25 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 11 Vercel cron jobs définis dans `vercel.json` (autorité d'exécution réelle) et mirrorés dans `modules/cron/constants/schedules.ts` (SSOT consommé par `with-cron-guard` pour le **Sentry Cron Monitoring** — alerte si un run attendu n'arrive pas, MON-03) ; cohérence des deux verrouillée par `cron-schedules-match-vercel.test.ts`. Périmètre réduit au cœur critique (revenu + RGPD légal) + monitoring + ops. Logic in `modules/cron/services/` (or domain modules for transactional services). `reconcile-invoices` (Daily 2:00) assure la DLQ facture (numérotation / PDF / avoir — obligation **LIVE** Art. 286/289-I) + les passes de continuité de séquence et d'intégrité des PDF archivés.
 
-| Job                         | Schedule         | Catégorie  |
-| --------------------------- | ---------------- | ---------- |
-| `retry-post-webhook-tasks`  | Every 5 min      | revenue    |
-| `reopen-store`              | Every 15 min     | ops        |
-| `retry-webhooks`            | Every 30 min     | revenue    |
-| `sync-async-payments`       | Every 4h         | revenue    |
-| `reconcile-refunds`         | Every 6h, H+30   | revenue    |
-| `reconcile-invoices`        | Daily 2:00       | revenue    |
-| `cleanup-pending-orders`    | Daily 3:00       | ops        |
-| `process-account-deletions` | Daily 5:00       | RGPD       |
-| `alert-dispute-deadlines`   | Daily 8:00       | monitoring |
-| `hard-delete-retention`     | Monthly 2nd 4:00 | RGPD       |
-| `cleanup-orphan-media`      | Monthly 3rd 4:00 | ops        |
+| Job                         | Schedule         | Catégorie  | Sentry monitor |
+| --------------------------- | ---------------- | ---------- | -------------- |
+| `retry-post-webhook-tasks`  | Every 30 min     | revenue    | ✓              |
+| `retry-webhooks`            | Every 30 min     | revenue    | ✓              |
+| `reopen-store`              | Hourly (:00)     | ops        | —              |
+| `sync-async-payments`       | Every 4h         | revenue    | ✓              |
+| `reconcile-refunds`         | Every 6h, H+30   | revenue    | —              |
+| `reconcile-invoices`        | Daily 2:00       | revenue    | ✓              |
+| `cleanup-pending-orders`    | Daily 3:00       | ops        | —              |
+| `process-account-deletions` | Daily 5:00       | RGPD       | ✓              |
+| `alert-dispute-deadlines`   | Daily 8:00       | monitoring | —              |
+| `hard-delete-retention`     | Monthly 2nd 4:00 | RGPD       | —              |
+| `cleanup-orphan-media`      | Weekly Wed 4:00  | ops        | —              |
+
+**⚠️ Budget de réveils DB (audit coûts P1-2)** — chaque exécution réveille Neon, dont le scale-to-zero se déclenche après **5 min** d'inactivité. Un cron plus fréquent que ça maintient la base allumée 24/7 : à `*/5`, `retry-post-webhook-tasks` consommait à lui seul ~95 % des 191,9 compute-hours du plan Free, et au dépassement Neon **suspend la base — boutique KO**. Deux règles, verrouillées par `cron-wakeup-budget.regression.test.ts` : (1) jamais de cadence < 30 min ; (2) aligner les réveils sur les mêmes minutes (:00/:30) plutôt que de les décaler. Cadence actuelle ≈ 2 réveils/heure, ~16 % de l'allocation.
+
+**Monitors Sentry** — le monitoring cron est facturé **par monitor** (plan Developer : 1 seul inclus). Seuls les jobs revenue/légal en émettent (`SENTRY_MONITORED_CRONS` dans `schedules.ts`) ; les autres gardent la capture d'exception + l'alerte admin, mais pas la détection de run manqué.
+
+`cleanup-pending-orders` porte trois passes ops quotidiennes (commandes PENDING, paniers guest expirés, drainage de la file « retour en stock ») plutôt que trois crons — chaque cron supplémentaire est un réveil DB de plus.
 
 ### Other API Routes
 
@@ -326,17 +400,19 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ## Emails
 
-11 templates React Email + Resend (dont 1 polyvalent `AdminAlertEmail` couvrant 7 sous-types).
+10 templates React Email + Resend (dont 1 polyvalent `AdminAlertEmail` couvrant 7 sous-types).
 
-**Clients (10)** : order-confirmation, shipping-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed, back-in-stock, review-request (7 transactionnels/marketing) + account-deletion, verification, password-reset (3 auth/compte). _Retirés (volume e-mail) : tracking-update + delivery-confirmation (redondants/informatifs), welcome + oauth-account-linked (faible valeur)._
+**Clients (9)** : order-confirmation, shipping-confirmation, cancel-order-confirmation, refund-confirmed, payment-failed, back-in-stock (6 transactionnels/marketing) + account-deletion, verification, password-reset (3 auth/compte). _Retirés (volume e-mail) : tracking-update + delivery-confirmation (redondants/informatifs), welcome + oauth-account-linked (faible valeur), review-request (déclencheur dormant + colonne `Order.reviewRequestSentAt` absente en base — audit schéma 2026-07-26)._
 
 **Admin (1 template polyvalent)** : `admin-alert-email` paramétré par `type` (refund-failed, webhook-failed, order-processing, dispute, invoice, pdf-archive-failed, credit-note-failed, sequence-overflow, stuck-orders, cron). _Retirés : `admin-new-order-email` (1 mail/commande, dashboard suffit) + sous-type `checkout` (code mort). Le litige n'émet plus qu'une alerte à l'ouverture (pas à la clôture)._
 
 **Anti-doublon** : `idempotencyKey` Resend (24h cross-instance, ex: `order-confirm-${orderId}`, `order-cancel:${orderId}`) + cache LRU in-process 10 min via `send-email.ts`. Pas de flag DB côté Order (KISS).
 
-**Délivrabilité** : marketing emails (back-in-stock, review-request) ont `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` (RFC 8058) + `Precedence: bulk` + `Auto-Submitted: auto-generated` (RFC 3834).
+**Budget quotidien (audit coûts P1-3)** : Resend Free plafonne à 3 000 mails/mois **ET 100/jour**. Le marketing (back-in-stock) est borné à `MARKETING_DAILY_EMAIL_BUDGET` = 40/jour (`modules/emails/constants/email-budget.ts`), les 60 restants étant réservés au transactionnel — qui n'est jamais différable. Sans cette borne, un réassort sur un produit à forte demande consommait le quota du jour et faisait **rejeter en 429 la confirmation de commande** d'un client achetant le même jour (un 429 de quota journalier ne se résorbe pas dans la fenêtre de retry : l'e-mail est perdu). Le reliquat d'inscrits est repris le lendemain par la passe `drainBackInStockQueue()` de `cleanup-pending-orders` — rien n'est perdu, l'envoi est étalé. Tout nouvel émetteur marketing DOIT partager ce budget, pas en ouvrir un second.
 
-**Endpoint désinscription** : `/notifications/desinscription` (token HMAC stateless) — **persiste `User.marketingOptOutAt`** (Art. 21(3) RGPD) ; les émetteurs marketing (back-in-stock, review-request) filtrent ce flag dans leur `where`. Log + événement Sentry émis en signal secondaire seulement (l'email y est scrubé).
+**Délivrabilité** : les emails marketing (back-in-stock, seul émetteur à ce jour) ont `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` (RFC 8058) + `Precedence: bulk` + `Auto-Submitted: auto-generated` (RFC 3834).
+
+**Endpoint désinscription** : `/notifications/desinscription` (token HMAC stateless) — **persiste `User.marketingOptOutAt`** (Art. 21(3) RGPD) ; les émetteurs marketing (back-in-stock) filtrent ce flag dans leur `where`. Log + événement Sentry émis en signal secondaire seulement (l'email y est scrubé).
 
 Config: `shared/lib/email-config.ts`. Preview: `pnpm email:dev`.
 
@@ -359,6 +435,31 @@ await softDelete.order(orderId);
 Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20251124_add_inventory_non_negative_constraint/down.sql`.
 
 Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas de besoin de rollback historique : restore Neon PITR.
+
+#### Historique baseliné — une seule migration `0_init` (audit schéma 2026-07-26)
+
+`prisma/migrations/` ne contient **qu'une** migration, `0_init`, qui reconstruit toute la base. Les 143 migrations incrémentales sont archivées dans `prisma/migrations-archive/` — conservées comme documentation (chacune porte sa justification légale/technique), mais hors du chemin de Prisma.
+
+**Pourquoi** : l'historique incrémental n'était pas rejouable. 21 tables (`User`, `Session`, `Refund`, `Discount`, `SkuMedia`, `OrderHistory`…) étaient `ALTER`ées sans qu'aucune migration ne les `CREATE` — le renommage `user` → `User` avait été fait hors migrations, et `20260209_schema_sync_and_hardening` s'intitulait elle-même « Syncs schema.prisma with DB state ». `prisma migrate deploy` sur une base vide échouait, et le seul recovery était Neon PITR. Cause racine : `prisma migrate dev` est cassé ici (shadow DB, `P3006`), et le contournement `db execute` + `migrate resolve --applied` marque une migration appliquée **sans vérifier qu'elle reproduit le schéma**.
+
+**Structure de `0_init`** — deux parties, et la seconde est la plus importante :
+
+1. DDL généré par `prisma migrate diff --from-empty --to-schema` (tables, colonnes, enums, FK, index normaux).
+2. **Annexe des gardes bruts** — copie de `prisma/sql/raw-guards.sql` : 52 CHECK, 14 index partiels/expression, 2 extensions, 2 fonctions, 2 triggers. **`prisma migrate diff` n'en génère AUCUN.** Un baseline régénéré sans recoller cette annexe perdrait en silence le format de numéro de facture (Art. 286 CGI), le trigger d'unicité cross-table des avoirs, le CHECK singleton `StoreSettings`, la formule de total de commande…
+
+**`prisma/sql/raw-guards.sql` est la SSOT des gardes**, consommée par deux chemins qui doivent rester d'accord : l'annexe de `0_init`, et `test/integration/setup.ts` (appliqué après `db push`). Le fichier est **idempotent** (chaque garde précédé d'un `DROP … IF EXISTS`). Ajouter un garde là ne l'applique pas aux bases existantes : écrire aussi une migration normale.
+
+**Appliquer sur une base existante** (prod) — ne rien exécuter, juste marquer appliqué :
+
+```bash
+pnpm prisma migrate resolve --applied 0_init      # DATABASE_URL = endpoint Neon non-poolé
+```
+
+**Sur une base vide** (dev, staging, CI) : `pnpm prisma migrate deploy`.
+
+**Garde-fous** (`test/contract/schema-migration-parity.contract.test.ts`, 10 assertions) : parité bidirectionnelle colonne par colonne entre `schema.prisma` et `0_init` ; présence intégrale des gardes de la SSOT dans l'annexe ; chaque garde nommé dans un commentaire de `schema.prisma` ; idempotence de la SSOT ; ordre extensions → fonction → index GIN. Chacune a été prouvée en réintroduisant le défaut qu'elle attrape.
+
+⚠️ Les tests d'intégration appliquent `db push` (pas les migrations) : une colonne déclarée au schéma existe toujours chez eux, même si `0_init` ne la crée pas. C'est le contract test ci-dessus, pas la suite d'intégration, qui protège de ce drift.
 
 ### Transactions longues — timeouts explicites
 
@@ -398,26 +499,26 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 
 ### Tests régression dédiés
 
-| Test                                                                                                                                                                  | Fichier                                                                                                                                                                                                  | Garde                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| OrderHistory n'a pas `deletedAt`                                                                                                                                      | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                                                                        | Audit trail immuable (Art. L123-22)               |
-| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                                                            | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                                                                        | Invariant 1 + 2                                   |
-| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                                                         | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                                                                       | Invariant 7                                       |
-| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                                                                                  | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                                                                                 | Invariant 7 (EINV-PRISMA-001)                     |
-| Snapshots adresses Order : writers allowlistés (write-side) + aucun lecteur `Address` live dans les affichages commande (read-side) + isolation runtime Address→Order | `order-address-snapshot-immutability.regression.test.ts` + `modules/orders/constants/__tests__/order-address-read-snapshot-only.regression.test.ts` (+ `order-address-independence.integration.test.ts`) | Invariant 5                                       |
-| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes                                                           | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                                                                            | Invariant 9                                       |
+| Test                                                                                                                                                                  | Fichier                                                                                                                                                                                                  | Garde                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| OrderHistory n'a pas `deletedAt`                                                                                                                                      | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                                                                        | Audit trail immuable (Art. L123-22) |
+| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                                                            | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                                                                        | Invariant 1 + 2                     |
+| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                                                         | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                                                                       | Invariant 7                         |
+| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                                                                                  | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                                                                                 | Invariant 7 (EINV-PRISMA-001)       |
+| Snapshots adresses Order : writers allowlistés (write-side) + aucun lecteur `Address` live dans les affichages commande (read-side) + isolation runtime Address→Order | `order-address-snapshot-immutability.regression.test.ts` + `modules/orders/constants/__tests__/order-address-read-snapshot-only.regression.test.ts` (+ `order-address-independence.integration.test.ts`) | Invariant 5                         |
+| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes                                                           | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                                                                            | Invariant 9                         |
 
 ### Conformité réglementaire (référencement)
 
-| Article                                    | Localisation                                                                                                                                                            | Statut |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                                   | ✓      |
-| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                               | ✓      |
-| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                                       | ✓      |
-| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263`                                                                                                                                         | ✓      |
-| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                                 | ✓      |
-| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                                                                                                                   | ✓      |
-| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                                   | ✓      |
+| Article                                    | Localisation                                                          | Statut |
+| ------------------------------------------ | --------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                 | ✓      |
+| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)             | ✓      |
+| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                     | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263`                                       | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)               | ✓      |
+| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                 | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007) | ✓      |
 
 Modèle d'activité, seuils & périmètre assumé : [`docs/BUSINESS.md`](docs/BUSINESS.md). Procédures opérationnelles (crons, seuils TVA/OSS) : [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
@@ -442,7 +543,8 @@ const form = useAppForm<MyInput>({
 - **RGPD**: Soft deletes, consent tracking, data export
 - **Webhooks**: Stripe signature verification + idempotency + 5-minute anti-replay window
 - **Security headers** (next.config.ts): CSP, HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
-- **Uploads**: UploadThing (server-validated)
+- **Uploads**: UploadThing (server-validated). Plafonds SSOT dans `modules/media/constants/upload-size-limits.ts`, alignés sur le FileRouter par `upload-size-limits.regression.test.ts`.
+- **Optimiseur d'images**: `images.remotePatterns` (`next.config.ts`) est une **frontière de facturation autant que de sécurité** — `/_next/image` est exclu du matcher de `proxy.ts`, donc sans rate limit. Un hôte à wildcard (`*.ufs.sh` est multi-tenant) laisse n'importe qui faire transformer son contenu aux frais de Synclune. Épinglé sur `UPLOADTHING_APP_IDS` ; verrouillé par `image-remote-patterns.regression.test.ts`.
 
 ## Testing Strategy
 

@@ -32,6 +32,15 @@ const ADMIN_ACTION_DIRS = [
 	"modules/refunds/actions",
 	"modules/invoices/actions",
 	"modules/store-settings/actions",
+	// Catalogue (audit « Admin catalogue » 2026-07-26) : 54 actions admin vivaient
+	// hors de ce contrat. Toutes étaient gardées, mais rien ne l'imposait — une
+	// nouvelle action oubliant requireAdmin passait en silence.
+	"modules/products/actions",
+	"modules/skus/actions",
+	"modules/collections/actions",
+	"modules/colors/actions",
+	"modules/materials/actions",
+	"modules/product-types/actions",
 ];
 
 /**
@@ -46,15 +55,29 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	"modules/refunds/actions/request-return.ts",
 	// Customer-facing : refresh des données de la page commandes.
 	"modules/orders/actions/refresh-orders.ts",
+	// Customer-facing : rafraîchissement par le client de SES propres commandes
+	// (bouton « Actualiser » de l'espace client + geste pull-to-refresh). Scopé à
+	// `session.user.id`, aucun paramètre accepté.
+	"modules/orders/actions/refresh-user-orders.ts",
 	// Customer-facing : refresh des données de la page remboursements.
 	"modules/refunds/actions/refresh-refunds.ts",
-	// Customer-facing : utilitaire de filtrage (IDs uniquement, pas de mutation).
-	// Customer-facing : utilitaire de filtrage (IDs uniquement, pas de mutation).
 	// Admin read utility : retour custom (RefundableOrderOption[]), pas ActionState,
 	// donc incompatible avec l'early-return canonique `return admin.error`. L'auth
 	// admin est bien vérifiée (requireAdmin en tête + re-check DB via getOrders) ;
 	// sur échec on renvoie une liste vide. Exempt du contrat ActionState, pas de l'auth.
 	"modules/refunds/actions/search-refundable-orders.ts",
+	// --- Catalogue : surfaces storefront (aucune n'est admin) ---
+	// Recherche rapide publique de la boutique (lecture seule, retour custom
+	// QuickSearchResult, pas ActionState).
+	"modules/products/actions/quick-search.ts",
+	// Pagination « voir plus » du catalogue public (lecture seule).
+	"modules/products/actions/load-more-products.ts",
+	// Historique de recherche / produits vus du visiteur — stocké en cookie,
+	// scopé à son propre navigateur, aucune écriture DB.
+	"modules/products/actions/add-recent-search.ts",
+	"modules/products/actions/remove-recent-search.ts",
+	"modules/products/actions/clear-recent-searches.ts",
+	"modules/products/actions/add-recent-product.ts",
 ]);
 
 interface ActionFile {
@@ -100,14 +123,15 @@ const EARLY_RETURN_PATTERN = /if\s*\(\s*["']error["']\s+in\s+\w+\s*\)\s+return\s
 describe("@regression ord-test-008 — Auth bypass contract", () => {
 	const files = listActionFiles();
 
-	it("scans at least 20 action files across orders/refunds/invoices", () => {
+	it("scans at least 60 action files across orders/refunds/invoices/catalogue", () => {
 		// Sanity check : si un dev déplace tout le code ailleurs, le test
-		// passerait à vide. On force au moins 20 fichiers détectés.
-		expect(files.length).toBeGreaterThanOrEqual(20);
+		// passerait à vide. On force au moins 60 fichiers détectés (81 à ce jour,
+		// dont 54 pour le catalogue).
+		expect(files.length).toBeGreaterThanOrEqual(60);
 	});
 
 	it("snapshot the list of admin actions audited (drift detection)", () => {
-		// Toute nouvelle action sous orders/refunds/invoices/actions/ force
+		// Toute nouvelle action sous un dossier de ADMIN_ACTION_DIRS force
 		// update de ce snapshot, ce qui implique une review humaine pour
 		// décider si elle est admin (vérifiée par le contrat ci-dessous) ou
 		// publique (à ajouter à PUBLIC_OR_CUSTOMER_ACTIONS).

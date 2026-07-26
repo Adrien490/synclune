@@ -2,7 +2,6 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/shared/utils/toast";
@@ -17,23 +16,19 @@ interface CartItemMoveToWishlistProps {
  * Button to add a cart item's product to the wishlist (without removing from cart)
  * Compact design for the cart sheet
  *
- * Mobile : pas de bouton "Voir" dans le feedback (la pastille `<MicroToast />`
- * ne porte pas d'action — pour ne pas masquer la bottom-bar). Desktop : toast
- * Sonner classique avec navigation rapide vers /favoris.
+ * Feedback : toast Sonner avec navigation rapide vers /favoris. Sur mobile le
+ * toaster est décalé de `--bottom-bar-height`, l'action ne masque donc pas la
+ * bottom-bar.
  */
 export function CartItemMoveToWishlist({ productId, itemName }: CartItemMoveToWishlistProps) {
 	const router = useRouter();
-	const isMobile = useIsMobile();
 
 	const { action, isPending } = useActionWithToast(addToWishlist, {
 		toastOptions: { showSuccessToast: false },
 		onSuccess: (result) => {
-			toast.success(
-				result.message,
-				isMobile
-					? { microVariant: "wishlist" }
-					: { action: { label: "Voir", onClick: () => router.push("/favoris") } },
-			);
+			toast.success(result.message, {
+				action: { label: "Voir", onClick: () => router.push("/favoris") },
+			});
 		},
 	});
 

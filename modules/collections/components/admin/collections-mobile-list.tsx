@@ -10,6 +10,8 @@ import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { CreateCollectionButton } from "./create-collection-button";
 import { CollectionMobileItem } from "./collection-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface CollectionsMobileListProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
@@ -26,7 +28,7 @@ export function CollectionsMobileList({
 
 	if (collections.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={FolderOpen}
 					title="Aucune collection trouvée"
@@ -48,8 +50,18 @@ export function CollectionsMobileList({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={collections.length} singular="collection" plural="collections" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={collections.length}
+				singular="collection"
+				plural="collections"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Collections" className="gap-2">
 				{collections.map((collection, index) => (
 					<li key={collection.id}>

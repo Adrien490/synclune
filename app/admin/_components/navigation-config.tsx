@@ -12,12 +12,12 @@ import {
 	Mail,
 	MessageSquare,
 	Ticket,
-	FileText,
 	Megaphone,
 	Store,
 	Users,
 	Landmark,
 } from "lucide-react";
+import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
 // ============================================================================
 // CONSTANTS (shared between sheet content + bottom-bar trigger)
@@ -50,6 +50,14 @@ export interface NavItem {
 	shortTitle?: string; // Pour mobile (optionnel, sinon title)
 	url: string;
 	icon: LucideIcon;
+	/**
+	 * Destination de la PASTILLE quand elle diffère du lien nu.
+	 *
+	 * Le libellé mène à la liste complète (« Commandes »), mais cliquer le
+	 * compteur doit mener à la file qu'il compte — sinon l'admin arrive sur une
+	 * liste non filtrée et doit repérer à l'œil les lignes concernées.
+	 */
+	badgeUrl?: string;
 }
 
 export interface NavGroup {
@@ -75,12 +83,15 @@ const VENTES_GROUP: NavGroup = {
 			id: "orders",
 			title: "Commandes",
 			url: "/admin/ventes/commandes",
+			// La pastille compte la file « à expédier » — elle doit y mener.
+			badgeUrl: ORDERS_TO_SHIP_HREF,
 			icon: ShoppingBag,
 		},
 		{
 			id: "refunds",
 			title: "Remboursements",
 			url: "/admin/ventes/remboursements",
+			badgeUrl: "/admin/ventes/remboursements?filter_status=PENDING",
 			icon: ReceiptText,
 		},
 		{
@@ -92,10 +103,25 @@ const VENTES_GROUP: NavGroup = {
 	],
 };
 
-const CLIENTS_GROUP: NavGroup = {
-	label: "Clients",
-	icon: Users,
+/**
+ * Groupe « Pilotage » — le tableau de bord et la fiche clients.
+ *
+ * `Clients` occupait à lui seul un groupe (libellé + séparateur pour un unique
+ * lien) placé AVANT `Catalogue`, la deuxième surface la plus utilisée. Et
+ * `/admin` n'avait aucune entrée nommée : le seul retour au tableau de bord
+ * passait par le logo, non libellé.
+ */
+const PILOTAGE_GROUP: NavGroup = {
+	label: "Pilotage",
+	icon: LayoutDashboard,
 	items: [
+		{
+			id: "dashboard",
+			title: "Tableau de bord",
+			shortTitle: "Accueil",
+			url: "/admin",
+			icon: LayoutDashboard,
+		},
 		{
 			id: "customers",
 			title: "Clients",
@@ -166,10 +192,26 @@ const MARKETING_GROUP: NavGroup = {
 	],
 };
 
-const CONTENU_GROUP: NavGroup = {
-	label: "Contenu",
-	icon: FileText,
+/**
+ * Groupe « Boutique » — réglages et contenu éditorial.
+ *
+ * Fusionne les anciens groupes mono-item `Contenu` (Annonces) et `Configuration`
+ * (Boutique) : deux libellés de groupe et deux séparateurs pour deux liens, alors
+ * que les deux relèvent du même geste (paramétrer la vitrine) et sont consultés
+ * rarement. Les routes `/admin/contenu/**` et `/admin/configuration/**` sont
+ * inchangées — seul le regroupement visuel bouge.
+ */
+const BOUTIQUE_GROUP: NavGroup = {
+	label: "Boutique",
+	icon: Settings,
 	items: [
+		{
+			id: "store-settings",
+			title: "Réglages boutique",
+			shortTitle: "Réglages",
+			url: "/admin/configuration/boutique",
+			icon: Store,
+		},
 		{
 			id: "announcements",
 			title: "Annonces",
@@ -179,43 +221,25 @@ const CONTENU_GROUP: NavGroup = {
 	],
 };
 
-const CONFIG_GROUP: NavGroup = {
-	label: "Configuration",
-	icon: Settings,
-	items: [
-		{
-			id: "store-settings",
-			title: "Boutique",
-			url: "/admin/configuration/boutique",
-			icon: Store,
-		},
-	],
-};
-
 // ============================================================================
 // NAVIGATION DATA
 // ============================================================================
 
+/**
+ * Ordre = fréquence d'usage quotidienne décroissante : on pilote (tableau de bord),
+ * on traite les ventes, on entretient le catalogue, puis marketing et réglages.
+ *
+ * Quatre groupes au lieu de six : trois groupes mono-item (Clients, Contenu,
+ * Configuration) coûtaient trois libellés et trois séparateurs pour trois liens.
+ */
 export const navigationData: NavigationData = {
 	navGroups: [
-		...(SHOP_LIVE ? [VENTES_GROUP, CLIENTS_GROUP] : []),
+		PILOTAGE_GROUP,
+		...(SHOP_LIVE ? [VENTES_GROUP] : []),
 		CATALOGUE_GROUP,
-		...(SHOP_LIVE ? [MARKETING_GROUP, CONTENU_GROUP] : []),
-		CONFIG_GROUP,
+		...(SHOP_LIVE ? [MARKETING_GROUP] : []),
+		BOUTIQUE_GROUP,
 	],
-};
-
-// ============================================================================
-// STANDALONE ITEMS (not in navGroups — used only by Quick Access / helpers)
-// ============================================================================
-
-/** Dashboard item — rendered only in Quick Access, not in navGroups. */
-const DASHBOARD_ITEM: NavItem = {
-	id: "dashboard",
-	title: "Tableau de bord",
-	shortTitle: "Accueil",
-	url: "/admin",
-	icon: LayoutDashboard,
 };
 
 // ============================================================================
@@ -232,10 +256,14 @@ const QUICK_ACCESS_ITEM_IDS = SHOP_LIVE
 	: (["dashboard", "store-settings", "products"] as const);
 
 /**
- * Récupère tous les items de navigation (flat list), including standalone items.
+ * Récupère tous les items de navigation (liste plate).
+ *
+ * Plus de `DASHBOARD_ITEM` hors-groupe à concaténer : « Tableau de bord » vit
+ * désormais dans `PILOTAGE_GROUP`, donc il apparaît une seule fois (le
+ * concaténer en tête le dupliquerait dans la recherche du menu mobile).
  */
 export function getAllNavItems(): NavItem[] {
-	return [DASHBOARD_ITEM, ...navigationData.navGroups.flatMap((group) => group.items)];
+	return navigationData.navGroups.flatMap((group) => group.items);
 }
 
 /**
@@ -268,6 +296,19 @@ const BADGE_NOUNS: Record<string, { one: string; many: string }> = {
  */
 export function badgeAriaLabel(itemId: string, count: number): string {
 	const noun = BADGE_NOUNS[itemId];
-	if (!noun) return `${count} en attente`;
+	if (!noun) return badgePendingLabel(count);
 	return `${count} ${count > 1 ? noun.many : noun.one}`;
+}
+
+/**
+ * Variante SANS substantif, pour les contextes où le nom de l'item est déjà porté
+ * par le nom accessible auquel le compteur est rattaché — le lien de sidebar
+ * desktop annonce « Commandes (3 en attente) ». Y utiliser `badgeAriaLabel()`
+ * produirait « Commandes 3 commandes en attente ».
+ *
+ * Les deux formes vivent ici pour qu'un changement de formulation reste unique ;
+ * aucun composant ne doit fabriquer la chaîne à la main.
+ */
+export function badgePendingLabel(count: number): string {
+	return `${count} en attente`;
 }

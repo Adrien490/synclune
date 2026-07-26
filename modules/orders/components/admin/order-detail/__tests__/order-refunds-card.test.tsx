@@ -26,14 +26,6 @@ vi.mock("lucide-react", () => ({
 	Banknote: () => <svg aria-hidden="true" />,
 }));
 
-vi.mock("../mark-as-fully-refunded-trigger", () => ({
-	MarkAsFullyRefundedTrigger: ({ orderId }: { orderId: string }) => (
-		<button data-testid="mark-fully-refunded-trigger" data-order-id={orderId}>
-			Marquer remboursée
-		</button>
-	),
-}));
-
 vi.mock("next/link", () => ({
 	default: ({ children, href, ...props }: any) => (
 		<a href={href} {...props}>
@@ -103,30 +95,16 @@ function createRefund(overrides = {}) {
 	} as any;
 }
 
-const baseProps = {
-	orderNumber: "ORD-001",
-	canMarkAsFullyRefunded: false,
-	invoiceStatus: null,
-	invoiceNumber: null,
-} as const;
-
 describe("OrderRefundsCard", () => {
-	it("returns null when no refunds, no canRefund and no canMarkAsFullyRefunded", () => {
+	it("returns null when no refunds and no canRefund", () => {
 		const { container } = render(
-			<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={false} {...baseProps} />,
+			<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={false} />,
 		);
 		expect(container.innerHTML).toBe("");
 	});
 
 	it("renders title Remboursements when refunds exist", () => {
-		render(
-			<OrderRefundsCard
-				refunds={[createRefund()]}
-				orderId="order-1"
-				canRefund={false}
-				{...baseProps}
-			/>,
-		);
+		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={false} />);
 		expect(screen.getByText("Remboursements")).toBeInTheDocument();
 	});
 
@@ -136,37 +114,29 @@ describe("OrderRefundsCard", () => {
 				refunds={[createRefund(), createRefund({ id: "refund-2" })]}
 				orderId="order-1"
 				canRefund={false}
-				{...baseProps}
 			/>,
 		);
 		expect(screen.getByText("2")).toBeInTheDocument();
 	});
 
 	it("shows Créer button when canRefund is true", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} {...baseProps} />);
+		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} />);
 		expect(screen.getByText("Créer")).toBeInTheDocument();
 	});
 
 	it("Créer button links to create refund page with orderId", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-42" canRefund={true} {...baseProps} />);
+		render(<OrderRefundsCard refunds={[]} orderId="order-42" canRefund={true} />);
 		const link = screen.getByRole("link", { name: /Créer/ });
 		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements/nouveau?orderId=order-42");
 	});
 
 	it("hides Créer button when canRefund is false", () => {
-		render(
-			<OrderRefundsCard
-				refunds={[createRefund()]}
-				orderId="order-1"
-				canRefund={false}
-				{...baseProps}
-			/>,
-		);
+		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={false} />);
 		expect(screen.queryByText("Créer")).toBeNull();
 	});
 
 	it("shows Aucun remboursement text when refunds empty but canRefund is true", () => {
-		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} {...baseProps} />);
+		render(<OrderRefundsCard refunds={[]} orderId="order-1" canRefund={true} />);
 		expect(screen.getByText("Aucun remboursement pour cette commande.")).toBeInTheDocument();
 	});
 
@@ -176,37 +146,19 @@ describe("OrderRefundsCard", () => {
 				refunds={[createRefund({ status: "COMPLETED", amount: 2000 })]}
 				orderId="order-1"
 				canRefund={false}
-				{...baseProps}
 			/>,
 		);
 		expect(screen.getByText("Remboursé")).toBeInTheDocument();
 		expect(screen.getByText("20.00 €")).toBeInTheDocument();
 	});
 
-	it("renders MarkAsFullyRefundedTrigger when canMarkAsFullyRefunded is true", () => {
-		render(
-			<OrderRefundsCard
-				refunds={[]}
-				orderId="order-7"
-				canRefund={false}
-				{...baseProps}
-				canMarkAsFullyRefunded={true}
-			/>,
-		);
-		const trigger = screen.getByTestId("mark-fully-refunded-trigger");
-		expect(trigger).toBeInTheDocument();
-		expect(trigger).toHaveAttribute("data-order-id", "order-7");
-	});
-
-	it("hides MarkAsFullyRefundedTrigger when canMarkAsFullyRefunded is false", () => {
-		render(
-			<OrderRefundsCard
-				refunds={[createRefund()]}
-				orderId="order-1"
-				canRefund={false}
-				{...baseProps}
-			/>,
-		);
-		expect(screen.queryByTestId("mark-fully-refunded-trigger")).toBeNull();
+	// Audit 2026-07-26 : « Marquer remboursée » a été retirée du header de cette
+	// carte (bouton `outline`, même niveau visuel qu'un « Modifier ») pour la section
+	// `danger` du menu d'actions — elle annule la facture et émet un avoir gap-free.
+	it("n'expose PAS « Marquer remboursée » dans le header de la carte", () => {
+		render(<OrderRefundsCard refunds={[createRefund()]} orderId="order-1" canRefund={true} />);
+		expect(screen.queryByText(/Marquer rembours/i)).toBeNull();
+		// « Créer » (remboursement Stripe, réversible) reste bien exposée.
+		expect(screen.getByText("Créer")).toBeInTheDocument();
 	});
 });

@@ -278,8 +278,11 @@ describe("useFilter", () => {
 			expect(url).toContain("filter_type=ring");
 		});
 
-		it("resets page to 1 by default", () => {
-			setupParams([["page", "5"]]);
+		it("drops cursor and direction by default", () => {
+			setupParams([
+				["cursor", "tok_5"],
+				["direction", "forward"],
+			]);
 			const { result } = renderHook(() => useFilter());
 
 			act(() => {
@@ -287,20 +290,24 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
-			expect(url).not.toContain("page=5");
+			expect(url).not.toContain("cursor=");
+			expect(url).not.toContain("direction=");
 		});
 
-		it("preserves page when preservePage option is true", () => {
-			setupParams([["page", "5"]]);
-			const { result } = renderHook(() => useFilter({ preservePage: true }));
+		it("preserves the cursor when preservePagination option is true", () => {
+			setupParams([
+				["cursor", "tok_5"],
+				["direction", "forward"],
+			]);
+			const { result } = renderHook(() => useFilter({ preservePagination: true }));
 
 			act(() => {
 				result.current.setFilter("status", "ACTIVE");
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=5");
+			expect(url).toContain("cursor=tok_5");
+			expect(url).toContain("direction=forward");
 		});
 
 		it("does not add the filter for undefined values", () => {
@@ -328,7 +335,7 @@ describe("useFilter", () => {
 			expect(url).toContain("filter_status=PENDING");
 		});
 
-		it("preserves non-filter params (like cursor) in the URL", () => {
+		it("drops the cursor when setting a filter (cursor pagination restart)", () => {
 			setupParams([["cursor", "abc123"]]);
 			const { result } = renderHook(() => useFilter());
 
@@ -337,7 +344,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=abc123");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("drops previous filter params when setting a new one", () => {
@@ -399,10 +406,10 @@ describe("useFilter", () => {
 			expect(url).not.toContain("filter_status");
 		});
 
-		it("resets page to 1", () => {
+		it("drops the cursor so the list restarts from the beginning", () => {
 			setupParams([
 				["filter_status", "ACTIVE"],
-				["page", "3"],
+				["cursor", "tok_3"],
 			]);
 			const { result } = renderHook(() => useFilter());
 
@@ -411,7 +418,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("preserves unrelated params", () => {
@@ -426,7 +433,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=xyz");
+			expect(url).not.toContain("cursor=");
 		});
 	});
 
@@ -466,14 +473,14 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=abc");
+			expect(url).not.toContain("cursor=");
 			expect(url).toContain("search=lune");
 		});
 
-		it("resets page to 1", () => {
+		it("drops the cursor so the list restarts from the beginning", () => {
 			setupParams([
 				["filter_status", "ACTIVE"],
-				["page", "4"],
+				["cursor", "tok_4"],
 			]);
 			const { result } = renderHook(() => useFilter());
 
@@ -482,7 +489,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("produces a plain pathname URL when no params remain after clearing", () => {
@@ -571,7 +578,7 @@ describe("useFilter", () => {
 			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
-			expect(url).toContain("cursor=abc");
+			expect(url).not.toContain("cursor=");
 		});
 	});
 
@@ -580,7 +587,7 @@ describe("useFilter", () => {
 	// -------------------------------------------------------------------------
 
 	describe("non-filter param preservation", () => {
-		it("cursor param is preserved when setting a filter", () => {
+		it("cursor param is dropped when setting a filter", () => {
 			setupParams([["cursor", "token_123"]]);
 			const { result } = renderHook(() => useFilter());
 
@@ -589,7 +596,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=token_123");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("search param is preserved when setting a filter", () => {
@@ -617,7 +624,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=abc");
+			expect(url).not.toContain("cursor=");
 			expect(url).toContain("search=bague");
 			expect(url).toContain("perPage=20");
 		});
@@ -779,10 +786,10 @@ describe("useFilter", () => {
 			expect(url).toContain("filter_status=PENDING");
 		});
 
-		it("resets page to 1", () => {
+		it("drops the cursor so the list restarts from the beginning", () => {
 			setupParams([
 				["filter_status", "ACTIVE"],
-				["page", "3"],
+				["cursor", "tok_3"],
 			]);
 			const { result } = renderHook(() => useFilter());
 
@@ -791,7 +798,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("preserves unrelated params", () => {
@@ -806,7 +813,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("cursor=xyz");
+			expect(url).not.toContain("cursor=");
 		});
 	});
 
@@ -831,7 +838,7 @@ describe("useFilter", () => {
 			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).not.toContain("filter_status");
 			expect(url).not.toContain("filter_type");
-			expect(url).toContain("cursor=abc");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("passes scroll:false to router.replace", () => {
@@ -846,10 +853,10 @@ describe("useFilter", () => {
 			expect(options).toEqual({ scroll: false });
 		});
 
-		it("resets page to 1", () => {
+		it("drops the cursor so the list restarts from the beginning", () => {
 			setupParams([
 				["filter_status", "ACTIVE"],
-				["page", "4"],
+				["cursor", "tok_4"],
 			]);
 			const { result } = renderHook(() => useFilter());
 
@@ -858,7 +865,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
+			expect(url).not.toContain("cursor=");
 		});
 	});
 
@@ -910,13 +917,13 @@ describe("useFilter", () => {
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
 			expect(url).toContain("search=bague");
-			expect(url).toContain("cursor=abc");
+			expect(url).not.toContain("cursor=");
 		});
 
-		it("resets page to 1", () => {
+		it("drops the cursor so the list restarts from the beginning", () => {
 			setupParams([
 				["filter_status", "ACTIVE"],
-				["page", "5"],
+				["cursor", "tok_5"],
 			]);
 			const { result } = renderHook(() => useFilter());
 
@@ -925,7 +932,7 @@ describe("useFilter", () => {
 			});
 
 			const url: string = mockReplace.mock.calls[0]![0]!;
-			expect(url).toContain("page=1");
+			expect(url).not.toContain("cursor=");
 		});
 
 		it("respects the custom filterPrefix when clearing", () => {

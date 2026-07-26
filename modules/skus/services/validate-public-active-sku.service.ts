@@ -28,21 +28,6 @@ export function assertPublicProductKeepsActiveSku(
 	);
 }
 
-export type BulkProductActiveBreakdown = Map<
-	string,
-	{
-		productStatus: string;
-		activeTotal: number;
-		activeAffected: number;
-	}
->;
-
-export function assertBulkPublicProductsKeepActiveSku(breakdown: BulkProductActiveBreakdown): void {
-	for (const [, data] of breakdown) {
-		assertPublicProductKeepsActiveSku({
-			productStatus: data.productStatus,
-			activeTotal: data.activeTotal,
-			activeAffected: data.activeAffected,
-		});
-	}
-}
+// `assertBulkPublicProductsKeepActiveSku` + `BulkProductActiveBreakdown` retirés
+// (audit « Admin catalogue » 2026-07-26) : reliquat du retrait de la machinerie
+// bulk / multi-select, aucun appelant hors tests.

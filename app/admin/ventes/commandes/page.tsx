@@ -7,6 +7,8 @@ import { getOrders } from "@/modules/orders/data/get-orders";
 import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/order.constants";
 import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
 import { ExportOrdersButton } from "@/modules/orders/components/admin/export-orders-button";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
@@ -22,15 +24,21 @@ import { OrdersMobileListSkeleton } from "@/modules/orders/components/admin/orde
 import { parseFilters } from "./_utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 
 const OrdersBottomBar = dynamic(() =>
 	import("@/modules/orders/components/admin/orders-bottom-bar").then((mod) => mod.OrdersBottomBar),
 );
 
 export type OrderFiltersSearchParams = {
-	filter_status?: string;
-	filter_paymentStatus?: string;
-	filter_invoiceStatus?: string;
+	// Les 4 filtres d'énumération sont MULTI-SÉLECTION : la feuille écrit un
+	// `params.append()` par case cochée, donc l'URL peut porter plusieurs valeurs pour
+	// la même clé (`string[]`). Les déclarer `string` laissait `parseFilters` lire, via
+	// `getAllParams`, une forme que le type interdisait.
+	filter_status?: string | string[];
+	filter_paymentStatus?: string | string[];
+	filter_fulfillmentStatus?: string | string[];
+	filter_invoiceStatus?: string | string[];
 	filter_invoiceAnomaly?: string;
 	filter_pdfNotArchived?: string;
 	filter_retryDeferred?: string;
@@ -81,7 +89,16 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 		<>
 			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={ordersPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="commande"
+						plural="commandes"
+					/>
+				</Suspense>
+
 				<OrdersBottomBar />
 
 				<Suspense

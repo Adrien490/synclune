@@ -48,7 +48,6 @@ async function createPaidOrder(
 			orderNumber: `SYN-YB-${suffix}`,
 			customerEmail: "yearboundary@test.local",
 			customerName: "Test YearBoundary",
-			customerType: "B2C",
 			shippingFirstName: "Test",
 			shippingLastName: "YearBoundary",
 			shippingAddress1: "1 rue test",

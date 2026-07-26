@@ -36,6 +36,11 @@ const CUSTOMER_ACTION_ALLOWLIST = new Set<string>([
 	"cancel-order-customer.ts",
 	// Demande de retour initiée par le client
 	"request-return.ts",
+	// Rafraîchissement par le client de SES propres commandes (bouton « Actualiser »
+	// de l'espace client + geste pull-to-refresh). Strictement scopé à
+	// `session.user.id` : aucun paramètre accepté, donc aucun moyen d'invalider le
+	// cache d'un autre utilisateur.
+	"refresh-user-orders.ts",
 ]);
 
 const ADMIN_GUARD_PATTERNS = [

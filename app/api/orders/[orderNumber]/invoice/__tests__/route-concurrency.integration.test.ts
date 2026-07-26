@@ -39,7 +39,6 @@ async function createPaidOrderWithoutInvoice(
 			orderNumber: `SYN-RT-${Date.now()}`,
 			customerEmail: "rt@test.local",
 			customerName: "Route Test",
-			customerType: "B2C",
 			shippingFirstName: "Route",
 			shippingLastName: "Test",
 			shippingAddress1: "1 rue",

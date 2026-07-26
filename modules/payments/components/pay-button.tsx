@@ -64,6 +64,7 @@ export function PayButton({
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [error, setError] = useState<string | null>(null);
 	const errorRef = useRef<HTMLDivElement>(null);
+	const barRef = useRef<HTMLDivElement>(null);
 
 	const submit = useCheckoutSubmit({
 		getFormData,
@@ -82,6 +83,38 @@ export function PayButton({
 			errorRef.current.focus({ preventScroll: true });
 		}
 	}, [error]);
+
+	/**
+	 * Publie la hauteur RÉELLE de la barre fixe dans `--pay-bar-height`.
+	 *
+	 * Elle n'est pas constante : les Alerts 3DS / carte refusée et le hint
+	 * « À compléter… » s'empilent dedans et la font passer de ~72px à ~200px.
+	 * Une réserve figée (l'ancien `pb-32` du formulaire) est donc dépassée dès
+	 * la première erreur de paiement, et la barre recouvre le bas du formulaire.
+	 * Consommée par la réserve de `checkout-form-body` et par le
+	 * `scroll-padding-bottom` de `html:has([data-checkout-shell])`.
+	 */
+	useEffect(() => {
+		const el = barRef.current;
+		if (!el || typeof ResizeObserver === "undefined") return;
+
+		const root = document.documentElement;
+		const apply = () => {
+			root.style.setProperty(
+				"--pay-bar-height",
+				`${Math.round(el.getBoundingClientRect().height)}px`,
+			);
+		};
+
+		apply();
+		const observer = new ResizeObserver(apply);
+		observer.observe(el);
+
+		return () => {
+			observer.disconnect();
+			root.style.removeProperty("--pay-bar-height");
+		};
+	}, []);
 
 	const isProcessing = phase !== "idle";
 	const isAwaiting3ds = phase === "awaiting-3ds";
@@ -137,6 +170,7 @@ export function PayButton({
 
 	return (
 		<div
+			ref={barRef}
 			data-hide-on-keyboard=""
 			className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none"
 		>

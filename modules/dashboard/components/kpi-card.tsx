@@ -4,7 +4,6 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
@@ -150,8 +149,12 @@ export function KpiCard({
 			/>
 
 			{href && (
+				/* Le chevron signale que la carte navigue : c'est une affordance, pas
+				 * une décoration. `group-focus-within:` en parité du hover, sinon
+				 * l'utilisateur au clavier ne reçoit pas l'indication que la souris
+				 * reçoit (audit responsive 2026-07-26, P2). */
 				<ChevronRight
-					className="text-muted-foreground/70 group-hover:text-primary absolute right-3 bottom-3 size-4 transition-[transform,color] group-hover:translate-x-0.5"
+					className="text-muted-foreground/70 group-hover:text-primary group-focus-within:text-primary absolute right-3 bottom-3 size-4 transition-[transform,color] group-focus-within:translate-x-0.5 group-hover:translate-x-0.5"
 					aria-hidden="true"
 				/>
 			)}
@@ -240,7 +243,6 @@ export function KpiCard({
 			<Link
 				href={href}
 				className="block"
-				onClick={() => triggerHaptic("light")}
 				aria-label={accessibleLabel}
 				aria-describedby={tooltipDescriptionId}
 			>

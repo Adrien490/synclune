@@ -19,7 +19,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
 vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: mockUseIsMobile,
-	MOBILE_BREAKPOINT: 768,
+	MOBILE_MEDIA_QUERY: "(width < 48rem)",
 }));
 vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
@@ -87,10 +87,12 @@ describe("EditCustomerInfoForm", () => {
 		expect(screen.getByRole("button", { name: /Mise à jour/ })).toBeDisabled();
 	});
 
-	it("n'engage pas le guard de modifications non enregistrées sur mobile", () => {
+	// Audit 2026-07-26 : ce test verrouillait l'inverse (`enabled === false` sur
+	// mobile), laissant la saisie mobile sans aucune garde.
+	it("engage le guard de modifications non enregistrées sur mobile", () => {
 		mockUseIsMobile.mockReturnValue(true);
 		render(<EditCustomerInfoForm {...baseProps} />);
 		const calls = mockUseUnsavedChanges.mock.calls as unknown as Array<[boolean, boolean]>;
-		expect(calls[calls.length - 1]?.[1]).toBe(false);
+		expect(calls[calls.length - 1]?.[1]).toBe(true);
 	});
 });

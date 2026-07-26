@@ -41,7 +41,7 @@ const optionClicks = { first: vi.fn(), second: vi.fn(), footer: vi.fn() };
  */
 const Harness: FC = () => {
 	const { contentRef, handleArrowNavigation, resetActiveIndex, activeDescendantId } =
-		useKeyboardNavigation();
+		useKeyboardNavigation({ isSearchMode: true });
 	return (
 		<div>
 			<input
@@ -63,6 +63,7 @@ const Harness: FC = () => {
 				<a
 					href="#result-1"
 					role="option"
+					data-qs-option=""
 					aria-selected={false}
 					tabIndex={-1}
 					onClick={(e) => {
@@ -75,6 +76,7 @@ const Harness: FC = () => {
 				<a
 					href="#result-2"
 					role="option"
+					data-qs-option=""
 					aria-selected={false}
 					tabIndex={-1}
 					onClick={(e) => {
@@ -87,6 +89,7 @@ const Harness: FC = () => {
 				<button
 					type="button"
 					role="option"
+					data-qs-option=""
 					aria-selected={false}
 					tabIndex={-1}
 					onClick={() => optionClicks.footer()}

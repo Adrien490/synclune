@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import { formatCountryName } from "@/shared/constants/countries";
 
 interface OrderAddressesCardProps {
 	order: {
@@ -33,7 +34,10 @@ function formatAddress(address: {
 			<p className="text-muted-foreground">
 				{address.postalCode} {address.city}
 			</p>
-			<p className="text-muted-foreground">{address.country}</p>
+			{/* `shippingCountry` est un code ISO 2 lettres : sans conversion, la carte
+			    affichait « FR » là où /suivi-commande et la page de confirmation
+			    affichent déjà « France ». */}
+			<p className="text-muted-foreground">{formatCountryName(address.country)}</p>
 			{address.phone && <p className="text-muted-foreground mt-1">{address.phone}</p>}
 		</div>
 	);

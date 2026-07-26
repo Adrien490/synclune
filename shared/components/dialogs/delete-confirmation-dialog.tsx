@@ -8,13 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { LoaderCircle, Trash2 } from "lucide-react";
-import type { ComponentType, ReactNode } from "react";
+import { LoaderCircle } from "lucide-react";
+import type { ReactNode } from "react";
 
 interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
 	/** Unique dialog ID for the alert dialog store */
@@ -36,19 +35,20 @@ interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
 	submitLabel?: string;
 	/** Pending button text (default: "Suppression...") */
 	pendingLabel?: string;
-	/** Tonalité visuelle (default: "destructive" — pilote couleur hero icon + bouton + haptic) */
+	/** Tonalité visuelle (default: "destructive" — pilote couleur bouton + haptic) */
 	tone?: ResponsiveAlertTone;
-	/** Hero icon affiché en haut sur mobile (default: Trash2) */
-	icon?: ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
 }
 
 /**
  * Generic delete confirmation dialog.
  *
- * Hero icon centré (mobile) dans cercle tinted selon la tonalité, titre bold court,
- * description text-balance, boutons full-width empilés (action h-12 rounded-xl en haut,
- * cancel ghost en dessous). Le swipe-down + tap-overlay sont automatiquement bloqués
- * quand `tone="destructive"` (défaut) — fermeture obligatoire via "Annuler".
+ * Titre bold court, description text-balance, boutons full-width empilés (action
+ * h-12 rounded-xl en haut, cancel ghost en dessous).
+ *
+ * Rendu par `ResponsiveAlertDialog`, donc Radix `AlertDialog` sur TOUS les
+ * viewports (pas de bascule Vaul) : le tap sur le scrim ne ferme pas, mais
+ * Échap si. `tone` ne pilote que la couleur du bouton d'action et le pattern
+ * haptic — aucune logique de fermeture n'en dépend.
  *
  * @example
  * ```tsx
@@ -76,7 +76,6 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 	submitLabel = "Supprimer",
 	pendingLabel = "Suppression…",
 	tone = "destructive",
-	icon = Trash2,
 }: DeleteConfirmationDialogProps<T>) {
 	const dialog = useAlertDialog<T>(dialogId);
 
@@ -102,7 +101,6 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 						/>
 					))}
 
-					<ResponsiveAlertDialogHeroIcon icon={icon} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>{title}</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

@@ -81,7 +81,27 @@ export async function toggleProductTypeStatus(
 
 		getProductTypeInvalidationTags(updated?.slug).forEach((tag) => updateTag(tag));
 
-		return success(`Type ${isActive ? "activé" : "désactivé"} avec succès`);
+		// Avertir — pas bloquer. La desactivation EST le mecanisme de retrait doux :
+		// `getProductTypeOptions` filtre isActive, donc le type disparait des nouveaux
+		// bijoux tandis que les existants le conservent. Bloquer sur l'usage rendrait le
+		// retrait impossible pour les types justement utilises, alors que
+		// `deleteProductType` bloque deja sur les produits PUBLIC : l'admin n'aurait plus
+		// aucun chemin de retrait. Hors du updateMany atomique : purement informatif,
+		// un TOCTOU sur ce compte est sans consequence.
+		let usageWarning = "";
+		if (!isActive) {
+			const usageCount = await prisma.product.count({
+				where: { typeId: productTypeId, deletedAt: null },
+			});
+			if (usageCount > 0) {
+				usageWarning =
+					usageCount > 1
+						? ` ${usageCount} bijoux l'utilisent encore : ils le conservent, mais il ne sera plus proposé pour les nouveaux bijoux.`
+						: ` 1 bijou l'utilise encore : il le conserve, mais le type ne sera plus proposé pour les nouveaux bijoux.`;
+			}
+		}
+
+		return success(`Type ${isActive ? "activé" : "désactivé"} avec succès${usageWarning}`);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le statut");
 	}

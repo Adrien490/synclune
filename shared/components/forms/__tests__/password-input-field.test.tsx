@@ -250,4 +250,47 @@ describe("PasswordInputField", () => {
 			screen.getByRole("button", { name: "Masquer le mot de passe" }).getAttribute("aria-pressed"),
 		).toBe("true");
 	});
+
+	// ============================================================================
+	// ERGONOMIE CLAVIER MOBILE
+	// ============================================================================
+	//
+	// Les tests d'attributs des formulaires auth (sign-in, reset…) tournent contre
+	// un MOCK manuel de `@/shared/components/forms` : ils prouvent que le
+	// formulaire *passe* la prop, jamais que cette primitive la *forwarde*. Ils
+	// resteraient donc verts si le passthrough `...rest` disparaissait d'ici.
+	// C'est ce contrat-là que les cas ci-dessous verrouillent.
+
+	it("forwards autoComplete to the native input (current-password / new-password)", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		const { container } = render(<PasswordInputField autoComplete="new-password" />);
+		expect(container.querySelector("input")).toHaveAttribute("autocomplete", "new-password");
+	});
+
+	it("forwards enterKeyHint through the ...rest passthrough", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		const { container } = render(<PasswordInputField enterKeyHint="done" />);
+		expect(container.querySelector("input")).toHaveAttribute("enterkeyhint", "done");
+	});
+
+	it("neutralise majuscule auto / autocorrection / orthographe (mot de passe dévoilé)", () => {
+		// Au clic sur l'œil, `type` passe à "text" : sans ces attributs, iOS
+		// réécrit un mot de passe en clair sous les doigts de l'utilisateur et
+		// l'enregistre dans le dictionnaire du clavier.
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		const { container } = render(<PasswordInputField />);
+		const input = container.querySelector("input");
+
+		expect(input).toHaveAttribute("autocapitalize", "none");
+		expect(input).toHaveAttribute("autocorrect", "off");
+		expect(input).toHaveAttribute("spellcheck", "false");
+
+		fireEvent.click(screen.getByRole("button", { name: "Afficher le mot de passe" }));
+
+		const revealed = container.querySelector("input");
+		expect(revealed).toHaveAttribute("type", "text");
+		expect(revealed).toHaveAttribute("autocapitalize", "none");
+		expect(revealed).toHaveAttribute("autocorrect", "off");
+		expect(revealed).toHaveAttribute("spellcheck", "false");
+	});
 });

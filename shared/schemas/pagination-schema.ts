@@ -56,17 +56,40 @@ const PAGE_SPECIFIC_LIMITS = {
 // ============================================================================
 
 /**
- * Longueur standard d'un CUID Prisma
+ * Bornes de longueur d'un curseur.
+ *
+ * ⚠️ Un curseur est un **identifiant de base opaque** : son format appartient à qui
+ * le génère, pas à ce schéma. Il en existe déjà deux générateurs distincts ici :
+ *
+ * | Générateur                          | Modèles                          | Longueur | Alphabet    |
+ * | ----------------------------------- | -------------------------------- | -------- | ----------- |
+ * | Prisma `@default(cuid(2))`          | les 32 modèles applicatifs       | **24**   | `a-z0-9`    |
+ * | Better Auth `generateId()`          | `Session`, `Account`, `Verification` | **32** | `a-zA-Z0-9` |
+ *
+ * Ce schéma imposait `.length(25)` — une valeur qui ne correspond à **aucun** des
+ * deux (25 = cuid v1, jamais utilisé ici : zéro `@default(cuid())` au schéma). Tous
+ * les curseurs réels étaient donc rejetés, la validation retombait sur `undefined`,
+ * et le serveur renvoyait silencieusement la première page : « Page suivante » était
+ * un no-op sur les 11 listes admin et les listes boutique.
+ *
+ * D'où une validation volontairement **large** : on vérifie la forme (alphanumérique
+ * borné, pour ne pas transporter n'importe quoi jusqu'à Prisma) et on laisse la base
+ * arbitrer l'existence de l'id. Un curseur inconnu dégrade déjà proprement (le
+ * `try/catch` des fonctions `fetch*` renvoie une liste vide). Reserrer sur une
+ * longueur exacte est exactement ce qui a produit ce bug — ne pas le refaire.
  */
-export const CUID_LENGTH = 25;
+export const CURSOR_MIN_LENGTH = 20;
+export const CURSOR_MAX_LENGTH = 40;
 
 /**
- * Schema Zod pour valider un cursor (CUID de 25 caractères)
+ * Schema Zod pour valider un cursor (id opaque : cuid2 Prisma, id Better Auth, …)
  * Utilisable dans tous les schemas de modules
  */
 export const cursorSchema = z
 	.string()
-	.length(CUID_LENGTH, { message: "Cursor invalide" })
+	.regex(new RegExp(`^[A-Za-z0-9]{${CURSOR_MIN_LENGTH},${CURSOR_MAX_LENGTH}}$`), {
+		message: "Cursor invalide",
+	})
 	.optional();
 
 /**

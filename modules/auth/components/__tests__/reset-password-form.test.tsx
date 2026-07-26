@@ -51,6 +51,9 @@ vi.mock("@/shared/components/forms", () => ({
 							type="password"
 							disabled={props.disabled}
 							required={props.required}
+							// Relayés pour les assertions d'ergonomie clavier ci-dessous.
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
 						/>
 					</div>
 				),
@@ -314,5 +317,34 @@ describe("ResetPasswordForm", () => {
 		mockState.value = { status: "success", message: "Mot de passe mis à jour." };
 		render(<ResetPasswordForm token="abc123" />);
 		expect(screen.getByRole("status")).toBeDefined();
+	});
+	// ============================================================================
+	// ERGONOMIE CLAVIER MOBILE
+	// ============================================================================
+
+	it("les deux champs déclarent autoComplete='new-password'", () => {
+		render(<ResetPasswordForm token="abc123" />);
+		// `current-password` ici ferait proposer par le trousseau le mot de passe
+		// que l'utilisateur est précisément en train de remplacer.
+		expect(document.querySelector('input[name="password"]')).toHaveAttribute(
+			"autocomplete",
+			"new-password",
+		);
+		expect(document.querySelector('input[name="confirmPassword"]')).toHaveAttribute(
+			"autocomplete",
+			"new-password",
+		);
+	});
+
+	it("enchaîne next → done sur les deux champs", () => {
+		render(<ResetPasswordForm token="abc123" />);
+		expect(document.querySelector('input[name="password"]')).toHaveAttribute(
+			"enterkeyhint",
+			"next",
+		);
+		expect(document.querySelector('input[name="confirmPassword"]')).toHaveAttribute(
+			"enterkeyhint",
+			"done",
+		);
 	});
 });

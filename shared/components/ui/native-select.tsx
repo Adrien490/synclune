@@ -6,7 +6,13 @@ import { cn } from "@/shared/utils/cn";
 
 const nativeSelectVariants = cva(
 	cn(
-		"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground can-hover:hover:border-ring/70 w-full min-w-0 appearance-none bg-none rounded-md border bg-transparent px-3 py-2 pr-9 text-sm shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed",
+		// `text-base md:text-sm` (et non `text-sm` seul) : c'est la variante MOBILE
+		// de `SelectField`, et iOS zoome sur tout contrôle de formulaire dont la
+		// police est < 16px au focus. Le repo s'en sortait uniquement grâce à la
+		// règle globale `select { font-size: max(16px,1rem) }` de `pwa.css`, qui
+		// gagne parce que ce fichier est importé HORS `@layer` — couplage invisible
+		// qui casserait au premier déplacement de l'import dans un layer.
+		"border-input placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground can-hover:hover:border-ring/70 w-full min-w-0 appearance-none bg-none rounded-md border bg-transparent px-3 py-2 pr-9 text-base shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm",
 		"focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
 		"aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
 	),

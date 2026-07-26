@@ -1,7 +1,7 @@
 "use client";
 
-import { Search, SearchX } from "lucide-react";
-import { useState } from "react";
+import { Search, SearchX, X } from "lucide-react";
+import { useRef, useState } from "react";
 
 import {
 	Accordion,
@@ -16,6 +16,8 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { FAQ_SECTIONS, type FaqItem, type FaqSection } from "@/shared/constants/faq-items";
 
@@ -29,6 +31,7 @@ function normalize(value: string): string {
 
 export function AideSearchContent({ items }: AideSearchContentProps) {
 	const [query, setQuery] = useState("");
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const trimmed = query.trim();
 	const normalizedQuery = normalize(trimmed);
@@ -48,19 +51,45 @@ export function AideSearchContent({ items }: AideSearchContentProps) {
 					className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
 					aria-hidden="true"
 				/>
+				{/* Volontairement PAS `SearchInput` : celui-ci est piloté par paramètre
+					d'URL avec debounce et `router.replace`. Sur un filtre local d'une
+					vingtaine de constantes, le debounce n'ajouterait que de la latence et
+					le paramètre d'URL du bruit d'historique. On corrige donc les deux vrais
+					défauts sur place. Audit recherche 2026-07-26. */}
 				<Input
+					ref={inputRef}
 					type="search"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
 					placeholder="Rechercher dans l'aide…"
 					aria-label="Rechercher dans la FAQ"
-					className="pl-9"
+					// Supprime la croix native WebKit : sans ça Safari/Chrome en dessinent
+					// une à côté du bouton d'effacement ci-dessous (double affordance).
+					className="pr-11 pl-9 [&::-webkit-search-cancel-button]:appearance-none"
 				/>
-				<span className="sr-only" role="status" aria-live="polite">
-					{trimmed
-						? `${filtered.length} question${filtered.length > 1 ? "s" : ""} trouvée${filtered.length > 1 ? "s" : ""}`
-						: ""}
-				</span>
+				{query && (
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						onClick={() => {
+							setQuery("");
+							// Le bouton se démonte dès que la valeur est vide : sans remise du
+							// focus, celui-ci retombe sur <body> (WCAG 2.4.3).
+							inputRef.current?.focus();
+						}}
+						aria-label="Effacer la recherche"
+						className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0 size-11 -translate-y-1/2"
+					>
+						<X className="size-4" aria-hidden="true" />
+					</Button>
+				)}
+				<ResultCountLiveRegion
+					totalCount={filtered.length}
+					query={trimmed}
+					singular="question"
+					plural="questions"
+				/>
 			</div>
 
 			{filtered.length === 0 ? (

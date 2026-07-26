@@ -14,7 +14,9 @@ beforeEach(() => {
 	Object.defineProperty(window, "matchMedia", {
 		configurable: true,
 		value: (query: string) => ({
-			matches: false,
+			// Appareil tactile sans reduced-motion : `triggerHaptic` ne vibre que sur
+			// un pointeur grossier. Un mock uniformément `false` simulerait un desktop.
+			matches: query.includes("pointer: coarse"),
 			media: query,
 			addEventListener: vi.fn(),
 			removeEventListener: vi.fn(),

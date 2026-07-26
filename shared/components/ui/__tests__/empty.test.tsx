@@ -31,15 +31,33 @@ import {
 describe("Empty", () => {
 	afterEach(cleanup);
 
-	it("has role='status' by default", () => {
-		render(<Empty data-testid="empty">content</Empty>);
-		const el = screen.getByRole("status");
-		expect(el).toBeInTheDocument();
-	});
-
-	it("has aria-live='polite' by default", () => {
+	/**
+	 * @regression empty-state-no-dead-live-region
+	 *
+	 * `Empty` avait `role="status"` + `aria-live="polite"` par défaut. Ces défauts
+	 * ne pouvaient rien annoncer : un `Empty` est rendu **parce que** la liste est
+	 * vide, il entre donc dans l'arbre d'accessibilité au même frame que son texte
+	 * — cas où les lecteurs d'écran restent muets. Le seul effet réel était 22
+	 * régions live inertes dans le DOM et un risque de relecture parasite.
+	 *
+	 * Pour annoncer une transition vers l'état vide : `announce()`
+	 * (`shared/utils/announce.ts`) depuis le parent, cf. `wishlist-list-content.tsx`.
+	 */
+	it("n'a PAS de role/aria-live par défaut", () => {
 		render(<Empty data-testid="empty">content</Empty>);
 		const el = screen.getByTestId("empty");
+		expect(el).not.toHaveAttribute("role");
+		expect(el).not.toHaveAttribute("aria-live");
+	});
+
+	it("accepte role + aria-live en opt-in explicite", () => {
+		render(
+			<Empty data-testid="empty" role="status" aria-live="polite">
+				content
+			</Empty>,
+		);
+		const el = screen.getByTestId("empty");
+		expect(el).toHaveAttribute("role", "status");
 		expect(el).toHaveAttribute("aria-live", "polite");
 	});
 

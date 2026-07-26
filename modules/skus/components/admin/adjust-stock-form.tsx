@@ -89,7 +89,7 @@ export function AdjustStockForm({
 
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;

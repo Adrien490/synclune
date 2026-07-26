@@ -6,6 +6,7 @@ import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
+import { setLastTrigger } from "@/modules/products/components/quick-search-dialog/last-trigger";
 import {
 	PRODUCT_FILTER_DIALOG_ID,
 	PRODUCTS_SORT_LABELS,
@@ -48,7 +49,11 @@ const SORT_DRAWER_ID = "product-sort-drawer";
 function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
-	const { open: openSearch, close: closeSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const {
+		open: openSearch,
+		close: closeSearch,
+		isOpen: isSearchOpen,
+	} = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const { open: openFilter, close: closeFilter } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 
 	const searchParams = useSearchParams();
@@ -213,9 +218,13 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => {
+						onClick={(e) => {
 							triggerHaptic("selection");
 							setSortOpen(false);
+							// Sans ce handoff, `onCloseAutoFocus` refocalise le dernier
+							// déclencheur connu (souvent celui d'un autre breakpoint) ou laisse
+							// le focus sur <body>. Audit recherche 2026-07-26.
+							setLastTrigger(e.currentTarget);
 							openSearch();
 						}}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
@@ -228,6 +237,7 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 								: "Ouvrir la recherche"
 						}
 						aria-haspopup="dialog"
+						aria-expanded={isSearchOpen}
 					>
 						<Search className="size-4" aria-hidden="true" />
 						<span className="truncate">Rechercher</span>

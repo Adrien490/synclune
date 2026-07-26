@@ -18,6 +18,7 @@ import {
 	validationError,
 	handleActionError,
 	safeFormGetJSON,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { validatePublicProductCreation } from "../services/product-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -56,7 +57,10 @@ export async function createProduct(
 			description: formData.get("description"),
 			typeId: formData.get("typeId") ?? "",
 			collectionIds: safeFormGetJSON<string[]>(formData, "collectionIds") ?? [],
-			status: formData.get("status") ?? "PUBLIC",
+			// Champ absent => on laisse `undefined` pour que le `.default("DRAFT")` de
+			// `createProductSchema` s'applique. Un fallback `?? "PUBLIC"` ici masquait ce
+			// defaut sur : un appel sans champ `status` publiait immediatement le bijou.
+			status: formData.get("status") ?? undefined,
 			initialSku: {
 				sku: formData.get("initialSku.sku"),
 				priceInclTaxEuros: formData.get("initialSku.priceInclTaxEuros"),
@@ -127,8 +131,15 @@ export async function createProduct(
 					where: { id: normalizedTypeId },
 					select: { id: true, isActive: true },
 				});
-				if (!productType || !productType.isActive) {
-					throw new Error("Le type de produit spécifié n'existe pas ou n'est pas actif.");
+				// A la creation, le type est toujours « choisi » : exiger un type actif est
+				// correct ici (contrairement a updateProduct, ou un type reconduit passe).
+				if (!productType) {
+					throw new BusinessError("Le type de bijou sélectionné n'existe pas.");
+				}
+				if (!productType.isActive) {
+					throw new BusinessError(
+						"Le type de bijou sélectionné est désactivé. Choisissez un type actif.",
+					);
 				}
 			}
 

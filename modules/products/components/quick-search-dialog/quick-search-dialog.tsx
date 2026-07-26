@@ -10,6 +10,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input";
 import { Button } from "@/shared/components/ui/button";
+import { Kbd } from "@/shared/components/ui/kbd";
 import {
 	Dialog,
 	DialogContent,
@@ -27,6 +28,8 @@ import {
 	MIN_SEARCH_LENGTH,
 	PLACEHOLDER_CYCLE_MS,
 	QUICK_SEARCH_DIALOG_ID,
+	LISTBOX_ID,
+	MIN_LENGTH_HINT_ID,
 	RESULTS_CONTAINER_ID,
 	SEARCH_DEBOUNCE_MS,
 	SWIPE_CLOSE_THRESHOLD_PX,
@@ -41,6 +44,7 @@ import { lastTrigger } from "./last-trigger";
 import { IdleContent } from "./idle-content";
 import { QuickSearchContent } from "./quick-search-content";
 import { QuickTagPills } from "./quick-tag-pills";
+import { SearchErrorState } from "./search-error-state";
 import { SearchResultsSkeleton } from "./search-result-item";
 import { useKeyboardNavigation } from "./use-keyboard-navigation";
 import { isSearchError, useQuickSearch } from "./use-quick-search";
@@ -88,8 +92,15 @@ export function QuickSearchDialog({
 		clear();
 	};
 
-	const { contentRef, handleArrowNavigation, resetActiveIndex, activeDescendantId } =
-		useKeyboardNavigation();
+	/*
+	 * Les deux hooks se dépendent mutuellement : `useKeyboardNavigation` a besoin
+	 * d'`isSearchMode` **au rendu** (il détermine le mécanisme de roving et la
+	 * valeur d'`aria-activedescendant`), tandis que `useQuickSearch` appelle
+	 * `resetActiveIndex` à chaque frappe. On casse le cycle par un ref mis à jour
+	 * dans un effet — plutôt qu'une écriture en cours de rendu, que le compilateur
+	 * React refuse (`react-hooks/immutability`, cf. `setLastTrigger`).
+	 */
+	const resetActiveIndexRef = useRef<() => void>(() => {});
 
 	const {
 		inputValue,
@@ -101,7 +112,25 @@ export function QuickSearchDialog({
 		handleLiveSearch,
 		handleSearchFromSuggestion,
 		reset,
-	} = useQuickSearch({ searchInputRef, resetActiveIndex });
+	} = useQuickSearch({
+		searchInputRef,
+		resetActiveIndex: () => resetActiveIndexRef.current(),
+	});
+
+	const {
+		contentRef,
+		handleArrowNavigation,
+		handleContentKeyDown,
+		resetActiveIndex,
+		activeDescendantId,
+	} = useKeyboardNavigation({
+		isSearchMode,
+		focusSearchInput: () => searchInputRef.current?.focus(),
+	});
+
+	useEffect(() => {
+		resetActiveIndexRef.current = resetActiveIndex;
+	});
 
 	// Cleanup à la fermeture du dialog : `reset()` l'état de recherche pour qu'une
 	// réouverture reparte propre — couvre les fermetures qui contournent
@@ -308,13 +337,19 @@ export function QuickSearchDialog({
 							onEscape={handleClose}
 							onValueChange={handleInputValueChange}
 							onSubmit={handleEnterKey}
-							// Combobox listbox semantics apply only in search mode (the results
-							// container is then a valid listbox of options). In idle mode the
-							// panel is a browse surface (sections, recent searches, collections),
-							// so the popup is collapsed and exposes no active descendant.
-							aria-activedescendant={isSearchMode ? activeDescendantId : undefined}
+							// Sémantique combobox uniquement en mode recherche. En idle le panneau
+							// est une surface de navigation (sections, recherches récentes,
+							// collections) : le popup est réputé fermé, sans descendant actif —
+							// c'est l'état correct, pas un défaut. Les flèches y déplacent le
+							// focus DOM réel, que le lecteur d'écran annonce sans ARIA.
+							//
+							// `aria-controls` vise le LISTBOX (`LISTBOX_ID`), pas le conteneur de
+							// navigation : c'est le popup du combobox, et lui seul ne contient que
+							// des options.
+							aria-activedescendant={activeDescendantId}
 							aria-expanded={isSearchMode}
-							aria-controls={isSearchMode ? RESULTS_CONTAINER_ID : undefined}
+							aria-controls={isSearchMode ? LISTBOX_ID : undefined}
+							aria-describedby={hasPartialInput ? MIN_LENGTH_HINT_ID : undefined}
 							// ARIA 1.2 combobox: the input keeps focus, so arrow/Home/End/Enter
 							// navigation must be handled here — not on the listbox container.
 							onKeyDown={handleArrowNavigation}
@@ -356,9 +391,17 @@ export function QuickSearchDialog({
 					</div>
 				)}
 
-				{/* Hint when input is too short */}
+				{/* Hint when input is too short — live region ET `aria-describedby` du
+					champ. C'était un simple `<p>` : un utilisateur de lecteur d'écran qui
+					tapait « ba » n'entendait rien du tout, et n'avait aucun moyen de savoir
+					pourquoi aucun résultat n'arrivait. Audit recherche 2026-07-26. */}
 				{hasPartialInput && (
-					<p className="text-muted-foreground px-4 pb-2 text-xs">
+					<p
+						id={MIN_LENGTH_HINT_ID}
+						role="status"
+						aria-live="polite"
+						className="text-muted-foreground px-4 pb-2 text-xs"
+					>
 						Tapez au moins {MIN_SEARCH_LENGTH} caractères pour rechercher
 					</p>
 				)}
@@ -377,23 +420,26 @@ export function QuickSearchDialog({
 					)}
 				</div>
 
-				{/* Content — ARIA 1.2 combobox pattern: in SEARCH mode this is the
-					 listbox popup (options only), the input owns focus and announces the
-					 active option via aria-activedescendant. In IDLE mode it is a neutral
-					 browse panel (sections/landmarks), so we drop the listbox role to avoid
-					 nesting <section>/role=list/headings under an invalid listbox.
+				{/* Conteneur de résultats = **périmètre de NAVIGATION**, dans les deux
+					 modes. Il ne porte plus le `role="listbox"` : celui-ci vit désormais sur
+					 un élément interne (`LISTBOX_ID`, rendu par `QuickSearchContent`) qui
+					 n'enveloppe que des `group`/`option`. Le rôle portait ici sur un
+					 conteneur qui contient aussi l'état vide, la suggestion, les messages
+					 d'erreur et le CTA — des enfants qu'un listbox n'a pas le droit d'avoir.
+					 La décision F3 (« pas de listbox en idle ») est préservée, et même
+					 renforcée : il n'y a plus d'option orpheline nulle part.
+
 					 tabIndex={-1} makes it programmatically focusable to satisfy jsx-a11y
 					 while keeping it out of the Tab order. */}
 				{/* eslint-disable jsx-a11y/no-static-element-interactions --
 					 onMouseLeave only clears the roving keyboard highlight (a pointer-only
-					 affordance; arrow-key navigation works without it). In idle mode the
-					 container intentionally has no interactive role (F3). */}
+					 affordance; arrow-key navigation works without it). En idle, onKeyDown
+					 poursuit le roving au focus réel une fois que le focus a quitté l'input. */}
 				<div
 					ref={contentRef}
 					id={RESULTS_CONTAINER_ID}
-					role={isSearchMode ? "listbox" : undefined}
-					aria-label={isSearchMode ? "Résultats de recherche" : undefined}
 					tabIndex={-1}
+					onKeyDown={handleContentKeyDown}
 					className={cn(
 						"min-h-0 flex-1 overflow-hidden overscroll-contain",
 						"group-has-[[data-pending]]/search:opacity-50",
@@ -408,18 +454,10 @@ export function QuickSearchDialog({
 								{isSearching && (!searchResults || isSearchError(searchResults)) ? (
 									<SearchResultsSkeleton />
 								) : isSearchError(searchResults) ? (
-									<div className="flex h-full flex-col items-center justify-center gap-3 px-4 py-8">
-										<p className="text-muted-foreground text-sm">
-											La recherche est temporairement indisponible.
-										</p>
-										<Button
-											variant="outline"
-											size="sm"
-											onClick={() => handleLiveSearch(searchQuery)}
-										>
-											Réessayer
-										</Button>
-									</div>
+									// Erreur CLIENT/RÉSEAU. L'erreur SERVEUR (`kind: "error"`) est
+									// rendue par `QuickSearchContent` — deux chemins distincts,
+									// même UI, mutualisée pour qu'elle ne diverge plus.
+									<SearchErrorState onRetry={() => handleLiveSearch(searchQuery)} />
 								) : searchResults ? (
 									<QuickSearchContent
 										results={searchResults}
@@ -458,26 +496,25 @@ export function QuickSearchDialog({
 				{/* Keyboard hints — desktop only, purely decorative (the shortcuts work
 					 regardless; this just surfaces them since results are reached via
 					 arrow keys, not Tab). */}
+				{/* `Kbd` partagé plutôt qu'un `<kbd>` remis à la main trois fois.
+					 Volontairement `Kbd` et non `ShortcutKbd` : cette rangée est `aria-hidden`
+					 et décorative — la détection de plateforme de `ShortcutKbd` y serait payée
+					 pour rien. Les deux ont des rôles distincts (glyphe statique vs
+					 accélérateur vivant) et ne sont PAS des doublons. */}
 				<div
 					aria-hidden="true"
 					className="border-border text-muted-foreground hidden shrink-0 items-center justify-center gap-4 border-t px-4 py-2 text-xs md:flex"
 				>
 					<span className="flex items-center gap-1.5">
-						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
-							↑↓
-						</kbd>
+						<Kbd>↑↓</Kbd>
 						naviguer
 					</span>
 					<span className="flex items-center gap-1.5">
-						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
-							↵
-						</kbd>
+						<Kbd>↵</Kbd>
 						ouvrir
 					</span>
 					<span className="flex items-center gap-1.5">
-						<kbd className="bg-muted border-border rounded border px-1.5 py-0.5 font-sans text-[10px] leading-none">
-							esc
-						</kbd>
+						<Kbd>esc</Kbd>
 						fermer
 					</span>
 				</div>

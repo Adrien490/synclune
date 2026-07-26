@@ -1,34 +1,43 @@
 "use client";
 
-import { useRef } from "react";
 import { Trash2 } from "lucide-react";
-import {
-	useSwipeToRemove,
-	SWIPE_REMOVE_THRESHOLD,
-} from "@/modules/wishlist/hooks/use-swipe-to-remove";
+
+import { SwipeableCard } from "@/shared/components/swipeable-card";
+import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
 import { useRemoveFromWishlist } from "@/modules/wishlist/hooks/use-remove-from-wishlist";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
+import { showWishlistUndoToast } from "@/modules/wishlist/utils/show-wishlist-undo-toast";
 
 interface SwipeableWishlistItemProps {
 	productId: string;
 	itemName?: string;
+	/** Premier item de la grille → joue le « peek nudge » de découvrabilité, une fois par appareil. */
+	isFirst?: boolean;
 	children: React.ReactNode;
 }
 
 /**
- * Wrapper for wishlist grid items that adds swipe-to-remove on touch devices.
+ * Wrapper de carte favoris ajoutant le swipe-to-remove sur appareil tactile.
  *
- * - Left swipe reveals red delete zone beneath the card
- * - Exceeding threshold triggers direct removal (no confirmation dialog)
- * - Only active on touch devices via @media(hover: none)
- * - Snaps back if threshold not met
+ * **Bâti sur `SwipeableCard`** (et non sur une implémentation propre) : la
+ * primitive partagée apporte `touchcancel` — sans lui, un geste volé par l'OS
+ * (appel entrant, geste système) laissait la carte figée en cours de swipe —,
+ * un seuil adaptatif `min(80px, 30% de la largeur)`, le rubber-band, l'annonce
+ * `aria-live` et l'opt-out `data-no-swipe`.
  *
- * Suppression directe : le retrait est appliqué optimistiquement via
- * `WishlistListOptimisticContext` (`onItemRemoved`), sans fenêtre d'annulation.
+ * **Le retrait est annulable.** Il s'applique optimistiquement via
+ * `WishlistListOptimisticContext`, mais le geste ouvre un undo : la carte
+ * disparaît de la grille, il n'y a donc plus rien à re-taper pour revenir en
+ * arrière (contrairement au cœur de la fiche produit, où un second tap suffit).
  */
-export function SwipeableWishlistItem({ productId, children }: SwipeableWishlistItemProps) {
-	const itemRef = useRef<HTMLDivElement>(null);
+export function SwipeableWishlistItem({
+	productId,
+	itemName,
+	isFirst = false,
+	children,
+}: SwipeableWishlistItemProps) {
 	const wishlistListOptimistic = useWishlistListOptimistic();
+	const peek = useGestureHintOnce("wishlist-swipe-remove", { enabled: isFirst });
 
 	const { action } = useRemoveFromWishlist({
 		onOptimisticRemove: (id) => wishlistListOptimistic?.onItemRemoved(id),
@@ -38,37 +47,26 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 		const formData = new FormData();
 		formData.set("productId", productId);
 		action(formData);
+		// Pas de `onRestored` : le retrait optimiste passe par `useOptimistic`, qui se
+		// resynchronise seul sur les données serveur revalidées après le ré-ajout.
+		showWishlistUndoToast({
+			productId,
+			productTitle: itemName,
+			allowUndoOnMobile: true,
+		});
 	};
 
-	const { swipeOffset, isSwiping } = useSwipeToRemove({
-		elementRef: itemRef,
-		enabled: true,
-		onRemove: handleRemove,
-	});
-
-	// Progress toward threshold (0 to 1)
-	const progress = Math.min(1, Math.abs(swipeOffset) / SWIPE_REMOVE_THRESHOLD);
-
 	return (
-		<div ref={itemRef} className="relative touch-pan-y overflow-hidden rounded-lg">
-			{/* Delete zone revealed behind the card */}
-			<div
-				className="bg-destructive/90 absolute inset-0 flex items-center justify-end pr-6"
-				aria-hidden="true"
-				style={{ opacity: progress }}
-			>
-				<Trash2 className="text-destructive-foreground size-6" />
-			</div>
-
-			{/* Sliding card content */}
-			<div
-				style={{
-					transform: `translateX(${swipeOffset}px)`,
-					transition: isSwiping ? "none" : "transform var(--duration-normal) ease-out",
-				}}
-			>
-				{children}
-			</div>
-		</div>
+		<SwipeableCard
+			className="rounded-lg"
+			peek={peek}
+			leftAction={{
+				children: <Trash2 className="text-destructive-foreground size-5" aria-hidden="true" />,
+				label: itemName ? `${itemName} retiré des favoris` : "Article retiré des favoris",
+				onAction: handleRemove,
+			}}
+		>
+			{children}
+		</SwipeableCard>
 	);
 }

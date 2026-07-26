@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { lastTrigger } from "@/modules/products/components/quick-search-dialog/last-trigger";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -203,6 +205,32 @@ describe("ProductSortBar", () => {
 		it("renders search icon", () => {
 			renderDefault();
 			expect(screen.getByTestId("search-icon")).toBeInTheDocument();
+		});
+
+		/**
+		 * @regression sort-bar-search-focus-restore
+		 *
+		 * Ce bouton ouvrait le dialog sans jamais renseigner `lastTrigger` : à la
+		 * fermeture, `onCloseAutoFocus` refocalisait le dernier déclencheur connu
+		 * (souvent celui d'un autre breakpoint) ou laissait le focus sur <body>.
+		 */
+		it("enregistre le bouton comme dernier déclencheur (restauration du focus)", () => {
+			lastTrigger.el = null;
+			renderDefault();
+
+			const searchButton = screen.getByRole("button", { name: /ouvrir la recherche/i });
+			fireEvent.click(searchButton);
+
+			expect(lastTrigger.el).toBe(searchButton);
+		});
+
+		it("expose aria-expanded comme son frère « Trier »", () => {
+			renderDefault();
+
+			expect(screen.getByRole("button", { name: /ouvrir la recherche/i })).toHaveAttribute(
+				"aria-expanded",
+				"false",
+			);
 		});
 	});
 

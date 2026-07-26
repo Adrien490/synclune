@@ -142,7 +142,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										blurDataURL={product.image.blurDataUrl}
 										preload={index === 0}
 										fetchPriority={index === 0 ? "high" : "auto"}
-										quality={index === 0 ? IMAGE_QUALITY.HERO : IMAGE_QUALITY.STANDARD}
+										quality={IMAGE_QUALITY.STANDARD}
 										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
 									/>
 

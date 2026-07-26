@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 import { SkusAdminDialogs } from "./_components/skus-admin-dialogs";
 import { VariantsProductContext } from "./_components/variants-product-context";
@@ -21,7 +21,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getProductSkus } from "@/modules/skus/actions/get-skus";
+import { getProductSkus } from "@/modules/skus/data/get-skus-list";
 import { parseProductSkuParams } from "@/modules/skus/utils/parse-sku-params";
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
@@ -35,6 +35,8 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export type ProductVariantsSearchParams = {
 	cursor?: string;
@@ -113,6 +115,20 @@ export default async function ProductVariantsPage({
 	// Parse les filtres
 	const filters = parseVariantFilters(searchParamsData);
 
+	/*
+	 * Calculé une seule fois : l'expression était dupliquée trois fois plus bas
+	 * (skeleton mobile, liste mobile) et la table desktop, elle, ne la recevait
+	 * pas du tout — d'où un état vide desktop qui annonçait « Ce produit n'a pas
+	 * encore de variante » et proposait d'en créer une alors qu'un filtre était
+	 * actif. Seule table admin dans ce cas (audit « Système de feedback »).
+	 */
+	const hasActiveFilters =
+		Boolean(search) ||
+		Boolean(filters.stockStatus) ||
+		Boolean(filters.colorId?.length) ||
+		Boolean(filters.materialId?.length) ||
+		typeof filters.isActive === "boolean";
+
 	// Recuperer le produit
 	const product = await getProductBySlug({
 		slug,
@@ -143,7 +159,14 @@ export default async function ProductVariantsPage({
 	});
 
 	return (
-		<div className="space-y-6">
+		<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+			{/* ⚠️ Pas de `ResultCountLiveRegion` ici, contrairement aux 10 autres listes
+				admin : `GetProductSkusReturn` n'expose PAS de `totalCount` (curseur seul,
+				cf. `modules/skus/types/skus.types.ts`). Annoncer la taille de la page
+				courante serait faux dès qu'il y a plusieurs pages, et ajouter une requête
+				de comptage à un endpoint volontairement streamé mérite son propre arbitrage
+				perf. À traiter si `getProductSkus` gagne un total. Audit recherche 2026-07-26. */}
+
 			{/* Dialogs des actions long-press / row-actions (delete, adjust-stock, update-price) */}
 			<SkusAdminDialogs />
 
@@ -188,7 +211,9 @@ export default async function ProductVariantsPage({
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>
 							<Link href={`/admin/catalogue/produits/${slug}/modifier`}>
-								<ArrowLeft className="mr-2 size-4" />
+								{/* `Pencil` et non `ArrowLeft` : c'est une action d'édition, pas un
+								    retour — la flèche gauche annonçait un retour en arrière. */}
+								<Pencil className="mr-2 size-4" />
 								Modifier le produit
 							</Link>
 						</Button>
@@ -242,33 +267,16 @@ export default async function ProductVariantsPage({
 						skusPromise={skusPromise}
 						productSlug={slug}
 						perPage={perPage}
+						hasActiveFilters={hasActiveFilters}
 					/>
 				</Suspense>
 
-				<Suspense
-					fallback={
-						<SkusMobileListSkeleton
-							hasActiveFilters={
-								Boolean(search) ||
-								Boolean(filters.stockStatus) ||
-								Boolean(filters.colorId?.length) ||
-								Boolean(filters.materialId?.length) ||
-								typeof filters.isActive === "boolean"
-							}
-						/>
-					}
-				>
+				<Suspense fallback={<SkusMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
 					<SkusMobileList
 						skusPromise={skusPromise}
 						productSlug={slug}
 						perPage={perPage}
-						hasActiveFilters={
-							Boolean(search) ||
-							Boolean(filters.stockStatus) ||
-							Boolean(filters.colorId?.length) ||
-							Boolean(filters.materialId?.length) ||
-							typeof filters.isActive === "boolean"
-						}
+						hasActiveFilters={hasActiveFilters}
 					/>
 				</Suspense>
 			</div>

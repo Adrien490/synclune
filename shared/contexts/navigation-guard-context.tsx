@@ -136,20 +136,20 @@ export function NavigationGuardProvider({ children }: NavigationGuardProviderPro
 	};
 
 	const confirmNavigation = () => {
-		if (pendingNavigation) {
-			// Temporairement vider les guards pour permettre la navigation
-			const savedGuards = new Map(guardsRef.current);
-			guardsRef.current.clear();
+		if (!pendingNavigation) return;
 
-			// Procéder à la navigation
-			pendingNavigation.proceed();
+		// Vider les guards pour laisser passer la navigation.
+		//
+		// On ne les restaure PAS après `proceed()` : `proceed` est un `router.push`
+		// asynchrone, donc une restauration synchrone réarmerait le guard avant que
+		// la navigation aboutisse (la tentative suivante re-bloquerait), et pourrait
+		// annuler le `unregisterGuard` de la cleanup d'effet du formulaire démonté.
+		// Un guard toujours monté se ré-enregistre de lui-même via son effet.
+		guardsRef.current.clear();
 
-			// Restaurer les guards (au cas où la navigation échoue)
-			guardsRef.current = savedGuards;
+		pendingNavigation.proceed();
 
-			// Fermer le modal
-			setPendingNavigation(null);
-		}
+		setPendingNavigation(null);
 	};
 
 	const cancelNavigation = () => {

@@ -23,14 +23,13 @@ import {
 	sanitizeErrorMessage,
 	GENERIC_ERROR_MESSAGE,
 	computeDuration,
-	__resetDesktopCoalesce,
+	__resetToastCoalesce,
 } from "../toast";
-import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	// Évite la contamination inter-tests via le cache de dédup desktop (Date.now réel).
-	__resetDesktopCoalesce();
+	// Évite la contamination inter-tests via le cache de dédup (Date.now réel).
+	__resetToastCoalesce();
 });
 
 describe("sanitizeErrorMessage", () => {
@@ -118,10 +117,16 @@ describe("computeDuration", () => {
 
 describe("toast wrapper", () => {
 	describe("success", () => {
-		it("triggers success haptic and forwards to sonner with computed duration", () => {
+		/**
+		 * @regression no-haptic-on-desktop-toast
+		 * Un toast est un AFFICHAGE, et le desktop sert souris/clavier : y vibrer,
+		 * c'était un retour tactile sur une entrée qui n'est pas tactile. Le retour
+		 * haptique reste gaté sur le viewport mobile.
+		 */
+		it("forwards to sonner with computed duration and no haptic (desktop)", () => {
 			toast.success("Bijou créé");
 
-			expect(mockHaptic).toHaveBeenCalledWith("success");
+			expect(mockHaptic).not.toHaveBeenCalled();
 			expect(mockSonner.success).toHaveBeenCalledWith(
 				"Bijou créé",
 				expect.objectContaining({ duration: expect.any(Number) }),
@@ -140,10 +145,16 @@ describe("toast wrapper", () => {
 	});
 
 	describe("error", () => {
-		it("triggers error haptic", () => {
+		/**
+		 * @regression no-haptic-on-desktop-toast
+		 * Un toast est un AFFICHAGE, et le desktop sert souris/clavier : y vibrer,
+		 * c'était un retour tactile sur une entrée qui n'est pas tactile. Le retour
+		 * haptique reste gaté sur le viewport mobile.
+		 */
+		it("fires no haptic on the desktop branch", () => {
 			toast.error("Erreur");
 
-			expect(mockHaptic).toHaveBeenCalledWith("error");
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 
 		it("passes clean FR message through with error duration floor", () => {
@@ -190,10 +201,16 @@ describe("toast wrapper", () => {
 	});
 
 	describe("warning", () => {
-		it("triggers medium haptic and forwards message with warning duration floor", () => {
+		/**
+		 * @regression no-haptic-on-desktop-toast
+		 * Un toast est un AFFICHAGE, et le desktop sert souris/clavier : y vibrer,
+		 * c'était un retour tactile sur une entrée qui n'est pas tactile. Le retour
+		 * haptique reste gaté sur le viewport mobile.
+		 */
+		it("forwards message with warning duration floor and no haptic (desktop)", () => {
 			toast.warning("Attention");
 
-			expect(mockHaptic).toHaveBeenCalledWith("medium");
+			expect(mockHaptic).not.toHaveBeenCalled();
 			expect(mockSonner.warning).toHaveBeenCalledWith(
 				"Attention",
 				expect.objectContaining({ duration: expect.any(Number) }),
@@ -264,7 +281,7 @@ describe("toast wrapper", () => {
 		});
 	});
 
-	describe("mobile viewport — skip loading toasts", () => {
+	describe("mobile viewport", () => {
 		const stubMatchMedia = (matches: boolean) => {
 			vi.stubGlobal(
 				"matchMedia",
@@ -282,215 +299,75 @@ describe("toast wrapper", () => {
 			vi.unstubAllGlobals();
 		});
 
-		it("loading() shows a persistent loading pastille and returns a truthy ref on mobile", () => {
+		/**
+		 * Pendant positif du garde `no-haptic-on-desktop-toast` : l'haptique n'a pas
+		 * été supprimée, elle a été restreinte au doigt. Sans ce test, retirer aussi
+		 * la branche mobile passerait inaperçu.
+		 */
+		it.each([
+			["success", () => toast.success("Bijou créé"), "light"],
+			["error", () => toast.error("Erreur"), "error"],
+			["warning", () => toast.warning("Attention"), "medium"],
+		])("%s still fires its haptic on the mobile branch", (_label, fire, pattern) => {
 			stubMatchMedia(true);
-			useMicroToastStore.setState({
-				visible: false,
-				message: "",
-				variant: "success",
-				action: null,
-			});
 
-			const ref = toast.loading("Chargement…");
+			fire();
 
-			// Référence truthy (withCallbacks n'appelle onEnd que si onStart renvoie truthy).
-			expect(ref).toBeTruthy();
-			expect(mockSonner.loading).not.toHaveBeenCalled();
-			const state = useMicroToastStore.getState();
-			expect(state.visible).toBe(true);
-			expect(state.variant).toBe("loading");
-			expect(state.message).toBe("Chargement…");
+			expect(mockHaptic).toHaveBeenCalledWith(pattern);
 		});
 
-		it("dismiss(loadingRef) is a no-op on mobile (terminal toast morphs the pastille)", () => {
+		it("info() fires no haptic even on mobile (purement informatif)", () => {
 			stubMatchMedia(true);
-			const ref = toast.loading("Chargement…");
-			toast.dismiss(ref);
-			// Ni forward Sonner, ni fermeture : la pastille loading reste visible.
-			expect(mockSonner.dismiss).not.toHaveBeenCalled();
-			expect(useMicroToastStore.getState().visible).toBe(true);
-			expect(useMicroToastStore.getState().variant).toBe("loading");
+
+			toast.info("Info");
+
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 
-		it("loading() forwards to sonner on desktop", () => {
-			stubMatchMedia(false);
-			toast.loading("Chargement…");
-			expect(mockSonner.loading).toHaveBeenCalledWith("Chargement…");
-		});
-
-		it("promise() resolves manually with toast.success on mobile (no sonner.promise)", async () => {
+		/**
+		 * Un seul rendu mobile comme desktop : Sonner. Le toaster adapte position,
+		 * gestes et `visibleToasts` — le wrapper ne bifurque plus sur le viewport
+		 * (hors haptique).
+		 */
+		it.each([
+			["success", () => toast.success("Bijou créé"), () => mockSonner.success],
+			["error", () => toast.error("Stock insuffisant"), () => mockSonner.error],
+			["warning", () => toast.warning("Attention"), () => mockSonner.warning],
+			["info", () => toast.info("Info"), () => mockSonner.info],
+			["loading", () => toast.loading("Chargement…"), () => mockSonner.loading],
+		])("%s routes to sonner on mobile too", (_label, fire, getSpy) => {
 			stubMatchMedia(true);
-			const p = Promise.resolve("data");
-			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
-			await p;
-			await Promise.resolve();
-			expect(mockSonner.promise).not.toHaveBeenCalled();
-			// Sur mobile, `toast.success` ne route plus vers Sonner mais vers
-			// <MicroToast /> (cf shared/stores/micro-toast-store). On vérifie
-			// seulement que sonner.promise ET sonner.success ne sont PAS appelés.
-			expect(mockSonner.success).not.toHaveBeenCalled();
+
+			fire();
+
+			expect(getSpy()).toHaveBeenCalled();
 		});
 
-		it("promise() shows a loading pastille that morphs in place to success on mobile", async () => {
+		it("error() sanitizes on mobile as well", () => {
 			stubMatchMedia(true);
-			useMicroToastStore.setState({
-				visible: false,
-				message: "",
-				variant: "success",
-				action: null,
-			});
-
-			const p = Promise.resolve("data");
-			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
-
-			// Pendant la promesse : pastille loading visible.
-			let state = useMicroToastStore.getState();
-			expect(state.visible).toBe(true);
-			expect(state.variant).toBe("loading");
-			const loadingKey = state.key;
-
-			await p;
-			await Promise.resolve();
-
-			// Après résolution : morph in-place (même key) vers success.
-			state = useMicroToastStore.getState();
-			expect(state.variant).toBe("success");
-			expect(state.message).toBe("Réussi");
-			expect(state.key).toBe(loadingKey);
-			expect(mockSonner.promise).not.toHaveBeenCalled();
-		});
-
-		it("promise() hides the loading pastille when no terminal message is provided on mobile", async () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({
-				visible: false,
-				message: "",
-				variant: "success",
-				action: null,
-			});
-
-			const p = Promise.resolve("data");
-			toast.promise(p, { loading: "Chargement…" });
-			expect(useMicroToastStore.getState().visible).toBe(true);
-
-			await p;
-			await Promise.resolve();
-
-			expect(useMicroToastStore.getState().visible).toBe(false);
-		});
-
-		it("promise() rejects manually with toast.error on mobile (routes to MicroToast, function error msg)", async () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({
-				visible: false,
-				message: "",
-				variant: "success",
-				action: null,
-			});
-			const p = Promise.reject(new Error("boom"));
-			toast.promise(p, {
-				loading: "Chargement…",
-				success: "OK",
-				error: (e: unknown) => (e instanceof Error ? e.message : "fail"),
-			});
-			await p.catch(() => {});
-			await Promise.resolve();
-			expect(mockSonner.promise).not.toHaveBeenCalled();
-			// F1 : error sur mobile route vers la pastille MicroToast, pas Sonner.
-			expect(mockSonner.error).not.toHaveBeenCalled();
-			const state = useMicroToastStore.getState();
-			expect(state.visible).toBe(true);
-			expect(state.variant).toBe("error");
-			expect(state.message).toBe("boom");
-		});
-
-		it("promise() forwards to sonner on desktop", () => {
-			stubMatchMedia(false);
-			const p = Promise.resolve("data");
-			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
-			expect(mockSonner.promise).toHaveBeenCalled();
-		});
-
-		it("success() on mobile passes computeDuration to MicroToast store (not default 1200ms)", () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({ visible: false, message: "", currentDuration: 0, count: 1 });
-			const longMessage = "Nouveau bijou « Bague Saphir » dans l'atelier — publié";
-
-			toast.success(longMessage);
-
-			const state = useMicroToastStore.getState();
-			expect(state.visible).toBe(true);
-			expect(state.message).toContain("Nouveau bijou");
-			// computeDuration(8 mots, success) ≈ 3700ms, en tout cas > floor 2000
-			expect(state.currentDuration).toBe(computeDuration(longMessage, "success"));
-			expect(state.currentDuration).toBeGreaterThan(2000);
-		});
-
-		it("success() on mobile honors caller-provided duration override", () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({ visible: false, message: "", currentDuration: 0, count: 1 });
-
-			toast.success("Bijou créé", { duration: 800 });
-
-			expect(useMicroToastStore.getState().currentDuration).toBe(800);
-		});
-
-		it("error() on mobile routes to MicroToast (variant error) instead of Sonner (F1)", () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({
-				visible: false,
-				message: "",
-				variant: "success",
-				currentDuration: 0,
-				count: 1,
-				action: null,
-			});
-
-			toast.error("Stock insuffisant");
-
-			expect(mockSonner.error).not.toHaveBeenCalled();
-			const state = useMicroToastStore.getState();
-			expect(state.visible).toBe(true);
-			expect(state.variant).toBe("error");
-			expect(state.message).toBe("Stock insuffisant");
-			// floor erreur = 5000
-			expect(state.currentDuration).toBeGreaterThanOrEqual(5000);
-		});
-
-		it("error() on mobile sanitizes technical messages before showing the pastille", () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({ visible: false, message: "", action: null });
 
 			toast.error("TypeError: boom at app.js:1");
 
-			expect(useMicroToastStore.getState().message).toBe(GENERIC_ERROR_MESSAGE);
+			expect(mockSonner.error).toHaveBeenCalledWith(
+				GENERIC_ERROR_MESSAGE,
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
 
-		it("success() on mobile propagates the action to the pastille (F5)", () => {
+		it("promise() forwards to sonner on mobile", () => {
 			stubMatchMedia(true);
-			useMicroToastStore.setState({ visible: false, message: "", action: null });
-			const onClick = vi.fn();
 
-			toast.success("Archivé", { action: { label: "Annuler", onClick } });
+			toast.promise(Promise.resolve("data"), {
+				loading: "Chargement…",
+				success: "Réussi",
+				error: "Échec",
+			});
 
-			const { action } = useMicroToastStore.getState();
-			expect(action).not.toBeNull();
-			expect(action?.label).toBe("Annuler");
-			action?.onClick();
-			expect(onClick).toHaveBeenCalledTimes(1);
-		});
-
-		it("action on mobile extends the duration to at least 6000ms (time to tap)", () => {
-			stubMatchMedia(true);
-			useMicroToastStore.setState({ visible: false, message: "", action: null });
-
-			toast.success("OK", { action: { label: "Annuler", onClick: vi.fn() } });
-
-			expect(useMicroToastStore.getState().currentDuration).toBeGreaterThanOrEqual(6000);
+			expect(mockSonner.promise).toHaveBeenCalled();
 		});
 	});
 
-	describe("desktop coalescing (F4)", () => {
+	describe("coalescing (F4)", () => {
 		it("passes a stable id derived from (variant, message) so Sonner refreshes instead of stacking", () => {
 			toast.success("Ajouté au panier");
 			expect(mockSonner.success).toHaveBeenCalledWith(

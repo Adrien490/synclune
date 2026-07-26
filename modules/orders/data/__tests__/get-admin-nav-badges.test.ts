@@ -27,10 +27,17 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));
 
+// Enums complets sur les membres consommés par le prédicat SSOT `buildToShipWhereClause`
+// (via SHIPPABLE_PAYMENT_STATUSES) : un membre manquant se propageait en `undefined`
+// dans le `in: [...]` au lieu d'échouer franchement.
 vi.mock("@/app/generated/prisma/client", () => ({
-	FulfillmentStatus: { UNFULFILLED: "UNFULFILLED" },
+	FulfillmentStatus: { UNFULFILLED: "UNFULFILLED", PROCESSING: "PROCESSING" },
 	OrderStatus: { CANCELLED: "CANCELLED" },
-	PaymentStatus: { PAID: "PAID" },
+	PaymentStatus: {
+		PAID: "PAID",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+		REFUNDED: "REFUNDED",
+	},
 	RefundStatus: { PENDING: "PENDING" },
 }));
 
@@ -54,7 +61,13 @@ describe("getAdminNavBadges", () => {
 		expect(result).toEqual({ orders: 3, refunds: 2 });
 	});
 
-	it("counts only paid, unfulfilled, non-cancelled, non-deleted orders", async () => {
+	/**
+	 * Le prédicat vient du SSOT `buildToShipWhereClause()` — partagé avec le KPI
+	 * « À expédier » du tableau de bord. Les deux divergeaient (PAID+UNFULFILLED ici,
+	 * SHIPPABLE+{UNFULFILLED,PROCESSING} là-bas) et affichaient donc deux nombres
+	 * différents sur le même écran.
+	 */
+	it("compte la file « à expédier » via le prédicat SSOT partagé avec le KPI", async () => {
 		mockPrisma.order.count.mockResolvedValue(0);
 		mockPrisma.refund.count.mockResolvedValue(0);
 
@@ -63,8 +76,10 @@ describe("getAdminNavBadges", () => {
 		expect(mockPrisma.order.count).toHaveBeenCalledWith({
 			where: {
 				deletedAt: null,
-				paymentStatus: "PAID",
-				fulfillmentStatus: "UNFULFILLED",
+				// Une commande partiellement remboursée reste à expédier.
+				paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED"] },
+				// « En préparation » n'est pas « expédié ».
+				fulfillmentStatus: { in: ["UNFULFILLED", "PROCESSING"] },
 				status: { not: "CANCELLED" },
 			},
 		});

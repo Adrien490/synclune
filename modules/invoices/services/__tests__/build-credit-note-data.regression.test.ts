@@ -53,7 +53,6 @@ function makeOrder(): GetOrderReturn {
 		customerEmail: "alice@example.com",
 		customerName: "Alice Dupont",
 		customerPhone: "+33612345678",
-		customerType: "B2C",
 		subtotal: 9000,
 		discountAmount: 0,
 		shippingCost: 500,

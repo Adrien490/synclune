@@ -84,12 +84,6 @@ describe("Table", () => {
 		expect(region).toHaveAttribute("tabindex", "0");
 	});
 
-	it("applies stickyHeader class to region", () => {
-		const { container } = render(<Table stickyHeader />);
-		const region = container.querySelector("[role='region']");
-		expect(region?.className).toContain("max-h-[70vh]");
-	});
-
 	it("has data-slot=table", () => {
 		render(<Table />);
 		expect(screen.getByRole("table")).toHaveAttribute("data-slot", "table");
@@ -117,17 +111,6 @@ describe("TableHeader", () => {
 			</table>,
 		);
 		expect(document.querySelector("[data-slot='table-header']")).toBeInTheDocument();
-	});
-
-	it("applies sticky class when sticky=true", () => {
-		render(
-			<table>
-				<TableHeader sticky>
-					<tr />
-				</TableHeader>
-			</table>,
-		);
-		expect(document.querySelector("thead")?.className).toContain("sticky");
 	});
 });
 

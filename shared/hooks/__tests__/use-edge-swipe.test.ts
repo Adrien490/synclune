@@ -188,16 +188,18 @@ describe("useEdgeSwipe", () => {
 			expect(onOpen).not.toHaveBeenCalled();
 		});
 
-		it("uses custom maxWidth for the media query", () => {
-			renderHook(() => useEdgeSwipe(vi.fn(), false, 768));
+		it("uses the given breakpoint for the media query", () => {
+			renderHook(() => useEdgeSwipe(vi.fn(), false, { disabledFrom: "md" }));
 
-			expect(matchMediaMock).toHaveBeenCalledWith("(min-width: 768px)");
+			expect(matchMediaMock).toHaveBeenCalledWith("(width >= 48rem)");
 		});
 
-		it("defaults maxWidth to 1024", () => {
+		// En rem, jamais en px : un seuil px se désynchronise du variant Tailwind
+		// `lg:` qui masque le trigger burger dès que la police racine change.
+		it("defaults to lg, expressed in rem", () => {
 			renderHook(() => useEdgeSwipe(vi.fn(), false));
 
-			expect(matchMediaMock).toHaveBeenCalledWith("(min-width: 1024px)");
+			expect(matchMediaMock).toHaveBeenCalledWith("(width >= 64rem)");
 		});
 
 		it("reacts to viewport changes without remounting", () => {
@@ -348,6 +350,51 @@ describe("useEdgeSwipe", () => {
 			swipeFromEdge();
 
 			expect(onOpen).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("opt-out par sous-arbre (data-no-edge-swipe)", () => {
+		/**
+		 * @regression edge-swipe-target-blind
+		 * Le hook écoute au niveau `document` et ne regardait pas la cible : un drag
+		 * amorcé dans les 20px du bord gauche, sur un carousel ou une table à
+		 * défilement horizontal qui touche ce bord, faisait les DEUX à la fois —
+		 * défiler le contenu et ouvrir le menu.
+		 */
+		it("ignore un geste amorcé dans un sous-arbre data-no-edge-swipe", () => {
+			const host = document.createElement("div");
+			host.setAttribute("data-no-edge-swipe", "");
+			const child = document.createElement("span");
+			host.appendChild(child);
+			document.body.appendChild(host);
+
+			const onOpen = vi.fn();
+			renderHook(() => useEdgeSwipe(onOpen, false));
+
+			const start = new TouchEvent("touchstart", {
+				touches: [createTouch(10, 0)],
+				bubbles: true,
+			});
+			child.dispatchEvent(start);
+			fireTouchMove(70, 0);
+			fireTouchEnd();
+
+			expect(onOpen).not.toHaveBeenCalled();
+			document.body.removeChild(host);
+		});
+
+		it("laisse passer un geste amorcé hors de ce sous-arbre", () => {
+			const host = document.createElement("div");
+			host.setAttribute("data-no-edge-swipe", "");
+			document.body.appendChild(host);
+
+			const onOpen = vi.fn();
+			renderHook(() => useEdgeSwipe(onOpen, false));
+
+			swipeFromEdge();
+
+			expect(onOpen).toHaveBeenCalledTimes(1);
+			document.body.removeChild(host);
 		});
 	});
 });

@@ -119,7 +119,17 @@ export function CartItemQuantitySelector({
 					disabled={isInactive || isLoading}
 					className="h-11 min-h-0 w-14 p-0 text-center text-base"
 					aria-label={`Quantité, entre 1 et ${maxQuantity}`}
-					aria-live="polite"
+					/*
+					 * Pas d'`aria-live` sur un contrôle de formulaire focalisé : le lecteur
+					 * d'écran annonce déjà la valeur du champ, et la région live la répète
+					 * en parallèle — élocution doublée ou tronquée, et le comportement varie
+					 * d'un lecteur à l'autre.
+					 *
+					 * Le changement de quantité est déjà annoncé correctement par les régions
+					 * du panier, montées en permanence quand le sheet est ouvert :
+					 * `cart-sheet.tsx` (nombre d'articles + sous-total) et
+					 * `cart-sheet-footer.tsx` (sous-total).
+					 */
 				/>
 
 				<Button

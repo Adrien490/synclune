@@ -64,13 +64,13 @@ export async function ReviewsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[20%]">Produit</TableHead>
-					<TableHead className="w-[16%]">Client</TableHead>
+					<TableHead className="w-[24%]">Produit</TableHead>
+					<TableHead className="w-[18%]">Client</TableHead>
 					<TableHead className="w-[10%]">Note</TableHead>
 					<TableHead className="w-[12%]">Statut</TableHead>
 					<TableHead className="w-[12%]">Date</TableHead>
-					<TableHead className="w-[10%]">Réponse</TableHead>
-					<TableHead className="w-[10%] text-right" aria-label="Actions">
+					<TableHead className="w-[12%]">Réponse</TableHead>
+					<TableHead className="w-[12%] text-right" aria-label="Actions">
 						Actions
 					</TableHead>
 				</TableRow>

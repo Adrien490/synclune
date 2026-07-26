@@ -12,6 +12,8 @@ export default function OrdersAdminError(props: {
 			emoji="🧾"
 			title="Les commandes n'ont pas pu charger"
 			route="admin.ventes.commandes"
+			fallbackHref="/admin/ventes"
+			fallbackLabel="Retour aux ventes"
 		/>
 	);
 }

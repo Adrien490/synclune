@@ -78,17 +78,16 @@ export function CreateProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(
-				message || "Nouveau bijou dans l'atelier",
-				isMobile
-					? undefined
-					: {
-							action: {
-								label: "Voir les bijoux",
-								onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
-							},
-						},
-			);
+			// Action conservée sur TOUS les viewports : la création enchaîne (le
+			// formulaire est reset et re-focalisé ci-dessous), donc « Voir les bijoux »
+			// est la seule sortie vers la liste. La suppression sur mobile datait du
+			// MicroToast, qui ignorait les actions ; Sonner les rend sur tout viewport.
+			toast.success(message || "Nouveau bijou dans l'atelier", {
+				action: {
+					label: "Voir les bijoux",
+					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
+				},
+			});
 			form.reset();
 			setDeletedImageUrls([]);
 			clearFailedMediaUploads();

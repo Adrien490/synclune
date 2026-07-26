@@ -20,7 +20,7 @@ const SHIPPING_ADDRESS: ShippingAddress = {
 	address1: "12 Rue de la Paix",
 	postalCode: "75002",
 	city: "Paris",
-	country: "France",
+	country: "FR",
 };
 
 const ORDER_ITEMS: OrderItem[] = [

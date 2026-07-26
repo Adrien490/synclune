@@ -19,13 +19,49 @@ function firePopstate(): void {
 	window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+/**
+ * Attend qu'une traversée d'historique aboutisse : `history.back()` restaure
+ * `history.state` puis émet `popstate` de façon asynchrone, comme un navigateur.
+ *
+ * Renvoie `true` si un `popstate` a bien été observé. Les appelants DOIVENT
+ * l'asserter : sans ça, un test « l'overlay parent ne se ferme pas » passerait
+ * aussi bien parce que la traversée n'a jamais eu lieu — vert pour la mauvaise
+ * raison. (C'est exactement ce qui est arrivé avec une attente de 0 ms.)
+ */
+async function flushHistory(): Promise<boolean> {
+	let observed = false;
+
+	await act(async () => {
+		await new Promise<void>((resolve) => {
+			const done = () => {
+				window.removeEventListener("popstate", onPop);
+				clearTimeout(timer);
+				resolve();
+			};
+			const onPop = () => {
+				observed = true;
+				done();
+			};
+			// Ajouté en dernier : les écouteurs du hook ont déjà réagi quand on résout.
+			window.addEventListener("popstate", onPop);
+			const timer = setTimeout(done, 200);
+		});
+	});
+
+	return observed;
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe("useBackButtonClose", () => {
 	beforeEach(() => {
-		vi.spyOn(window.history, "pushState").mockImplementation(() => undefined);
+		// Espion *pass-through* : la vraie `pushState` de jsdom s'exécute, donc
+		// `history.state` et `history.length` sont réels. Le hook s'appuie sur les
+		// deux (jeton d'entrée, garde anti-annulation de navigation) — les figer
+		// avec un `mockImplementation` rendrait ces tests verts sans rien prouver.
+		vi.spyOn(window.history, "pushState");
 	});
 
 	// -------------------------------------------------------------------------
@@ -36,13 +72,19 @@ describe("useBackButtonClose", () => {
 		it("calls pushState with the default id when isOpen=true", () => {
 			renderHook(() => useBackButtonClose({ isOpen: true, onClose: vi.fn() }));
 
-			expect(window.history.pushState).toHaveBeenCalledWith({ modal: true }, "");
+			expect(window.history.pushState).toHaveBeenCalledWith(
+				expect.objectContaining({ modal: true }),
+				"",
+			);
 		});
 
 		it("uses the custom id in the pushed state object", () => {
 			renderHook(() => useBackButtonClose({ isOpen: true, onClose: vi.fn(), id: "cart-drawer" }));
 
-			expect(window.history.pushState).toHaveBeenCalledWith({ "cart-drawer": true }, "");
+			expect(window.history.pushState).toHaveBeenCalledWith(
+				expect.objectContaining({ "cart-drawer": true }),
+				"",
+			);
 		});
 
 		it("does NOT call pushState when isOpen=false initially", () => {
@@ -351,49 +393,81 @@ describe("useBackButtonClose", () => {
 	// -------------------------------------------------------------------------
 
 	describe("nested overlays", () => {
+		// Ces cas s'appuient sur la VRAIE traversée d'historique de jsdom (`back()`
+		// restaure `history.state` et émet `popstate` de façon asynchrone). Le
+		// discriminant du hook lit ce state : un `firePopstate()` synthétique
+		// laisserait `history.state` sur l'entrée de l'enfant et testerait une
+		// situation qui n'arrive jamais.
+		function openOverlay(id: string, onClose: () => void) {
+			return renderHook(() => useBackButtonClose({ isOpen: true, onClose, id }));
+		}
+
 		// @regression nested-overlay-programmatic-close-keeps-parent
 		// Un drawer enfant fermé via handleClose (→ history.back) ne doit PAS
 		// fermer l'overlay parent resté ouvert (ex. drawer d'actions groupées
 		// au-dessus du mode sélection admin).
-		it("closing a child via handleClose does NOT close the still-open parent", () => {
+		it("closing a child via handleClose does NOT close the still-open parent", async () => {
 			const parentClose = vi.fn();
 			const childClose = vi.fn();
 
 			// Parent ouvert en premier (ex. bottom-bar du mode sélection)
-			renderHook(() => useBackButtonClose({ isOpen: true, onClose: parentClose, id: "parent" }));
+			openOverlay("parent", parentClose);
 			// Enfant ouvert par-dessus (ex. drawer « ... »)
-			const child = renderHook(() =>
-				useBackButtonClose({ isOpen: true, onClose: childClose, id: "child" }),
-			);
+			const child = openOverlay("child", childClose);
 
-			// Fermeture programmatique de l'enfant → history.back() → popstate
 			act(() => {
 				child.result.current.handleClose();
 			});
-			act(() => {
-				firePopstate();
-			});
 
+			expect(await flushHistory(), "la traversée d'historique n'a pas eu lieu").toBe(true);
 			expect(childClose).toHaveBeenCalledTimes(1);
-			// Le parent NE doit PAS s'être fermé.
+			// Le parent se reconnaît à son jeton dans l'entrée atteinte → reste ouvert.
 			expect(parentClose).not.toHaveBeenCalled();
 		});
 
 		// @regression nested-overlay-hardware-back-closes-top-only
 		// Un back matériel ferme uniquement l'overlay au sommet de la pile.
-		it("a hardware back closes only the topmost overlay", () => {
+		it("a hardware back closes only the topmost overlay", async () => {
 			const parentClose = vi.fn();
 			const childClose = vi.fn();
 
-			renderHook(() => useBackButtonClose({ isOpen: true, onClose: parentClose, id: "parent" }));
-			renderHook(() => useBackButtonClose({ isOpen: true, onClose: childClose, id: "child" }));
+			openOverlay("parent", parentClose);
+			openOverlay("child", childClose);
 
 			act(() => {
-				firePopstate();
+				window.history.back();
 			});
 
+			expect(await flushHistory(), "la traversée d'historique n'a pas eu lieu").toBe(true);
 			expect(childClose).toHaveBeenCalledTimes(1);
 			expect(parentClose).not.toHaveBeenCalled();
+		});
+
+		// @regression nested-overlay-back-not-swallowed-after-child-close
+		// Le compteur `suppressNextPops` qu'on a remplacé « avalait » le pop suivant
+		// sans vérifier lequel : après la fermeture programmatique d'un enfant, un
+		// vrai retour matériel pouvait être absorbé et laisser le parent ouvert
+		// alors que l'utilisateur avait bien demandé à reculer.
+		it("a hardware back after a programmatic child close still closes the parent", async () => {
+			const parentClose = vi.fn();
+			const childClose = vi.fn();
+
+			openOverlay("parent", parentClose);
+			const child = openOverlay("child", childClose);
+
+			act(() => {
+				child.result.current.handleClose();
+			});
+			expect(await flushHistory()).toBe(true);
+			expect(parentClose).not.toHaveBeenCalled();
+
+			// Retour matériel authentique : le parent doit se fermer.
+			act(() => {
+				window.history.back();
+			});
+
+			expect(await flushHistory(), "la traversée d'historique n'a pas eu lieu").toBe(true);
+			expect(parentClose).toHaveBeenCalledTimes(1);
 		});
 	});
 });

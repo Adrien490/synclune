@@ -40,9 +40,11 @@ function readState(): VisualViewportState {
 function applySideEffects(state: VisualViewportState) {
 	if (typeof document === "undefined") return;
 	const root = document.documentElement;
+	// `--vvh-offset` (visualViewport.offsetTop) a été retiré : écrit à chaque
+	// resize/scroll, il n'avait aucun lecteur dans tout le repo. `offsetTop` reste
+	// exposé dans l'état du store pour `useKeyboardOpen` et un usage JS futur.
 	if (state.height > 0) {
 		root.style.setProperty("--vvh", `${state.height}px`);
-		root.style.setProperty("--vvh-offset", `${state.offsetTop}px`);
 	}
 	if (state.keyboardOpen) {
 		root.setAttribute("data-keyboard", "open");
@@ -94,9 +96,16 @@ function getServerSnapshot() {
 /**
  * Pure side-effect mount observing `window.visualViewport`.
  *
- * Mount once at the root of a client surface (admin layout) so the listener
- * installs on `window.visualViewport` and maintains the `--vvh` CSS var +
- * `[data-keyboard]` attribute on `<html>`. Renders nothing.
+ * Monté **une seule fois, dans `app/layout.tsx`** (racine applicative) : le
+ * listener s'installe sur `window.visualViewport` et maintient la var CSS
+ * `--vvh` + l'attribut `[data-keyboard]` sur `<html>`. Ne rend rien.
+ *
+ * ⚠️ Ne PAS le monter par route-group. Historiquement il ne vivait que dans
+ * `(shop)` et `admin`, ce qui laissait `/paiement` (segment **frère** de
+ * `(shop)`, pas enfant), `(auth)`, `(account)` et `/suivi-commande` sans
+ * `[data-keyboard]` — donc `data-hide-on-keyboard` inerte sur toute la route
+ * checkout, là où il est le plus critique. Verrouillé par
+ * `__tests__/visual-viewport-bridge-root-mount.regression.test.ts`.
  *
  * Consumers can react via CSS (`[data-keyboard="open"] ...`) without
  * subscribing to the hook — useful for fixed bars that should hide under

@@ -24,9 +24,30 @@ const SHIPPING_CARRIERS = {
 } as const;
 
 /**
+ * Délai de préparation atelier, en jours ouvrés — SSOT `[min, max]`.
+ *
+ * S'ajoute au délai de transport (`estimatedDays` ci-dessous) pour former la
+ * promesse de livraison affichée au client.
+ *
+ * **Pourquoi une constante.** Le délai vivait en trois exemplaires
+ * désynchronisés : la FAQ promettait « 1 à 3 jours ouvrés »,
+ * `DeliveryEstimator` codait `[2, 4]` en dur, et
+ * `PRODUCT_TEXTS.SHIPPING.PREPARATION` — la seule valeur qui se présentait comme
+ * la source — n'était référencée que dans un commentaire, jamais rendue. La
+ * boutique annonçait donc 4-8 jours ouvrés sur la fiche produit et 3-7 dans la
+ * FAQ. Valeur retenue : `[2, 4]`, la plus prudente et déjà la plus visible.
+ */
+export const PREPARATION_BUSINESS_DAYS = [2, 4] as const;
+
+/** Libellé dérivé de `PREPARATION_BUSINESS_DAYS` — les deux ne peuvent pas divorcer. */
+export const PREPARATION_DELAY_LABEL = `${PREPARATION_BUSINESS_DAYS[0]} à ${PREPARATION_BUSINESS_DAYS[1]} jours ouvrés`;
+
+/**
  * Tarifs de livraison France/Monaco et Union Européenne
  *
- * Note : La Corse n'est pas livrée (détection via shipping-zone.service.ts)
+ * Note : la Corse et les DOM-TOM ne sont pas livrés — le périmètre exclu est
+ * porté par `UNSHIPPABLE_ZONES` (shipping.service.ts), consommé par
+ * `calculateShipping` et `getShippingInfo`.
  */
 export const SHIPPING_RATES = {
 	/** France Métropolitaine (hors Corse) */

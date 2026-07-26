@@ -53,9 +53,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 import {
 	canMarkAsShipped,
 	canCancelOrder,
-	canRefundOrder,
 	getOrderPermissions,
-	canUpdateOrderTracking,
 	canMarkAsDelivered,
 	canMarkAsReturned,
 	canMarkAsProcessing,
@@ -159,46 +157,73 @@ describe("canCancelOrder", () => {
 });
 
 // ============================================================================
-// canRefundOrder
-// ============================================================================
-
-describe("canRefundOrder", () => {
-	it("should allow refund for a paid processing order", () => {
-		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "PAID" })).toBe(true);
-	});
-
-	it("should allow refund for a paid shipped order", () => {
-		expect(canRefundOrder({ status: "SHIPPED", paymentStatus: "PAID" })).toBe(true);
-	});
-
-	it("should allow refund for a paid delivered order", () => {
-		expect(canRefundOrder({ status: "DELIVERED", paymentStatus: "PAID" })).toBe(true);
-	});
-
-	it("should block refund for an unpaid order", () => {
-		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "PENDING" })).toBe(false);
-	});
-
-	it("should block refund for a cancelled order", () => {
-		expect(canRefundOrder({ status: "CANCELLED", paymentStatus: "PAID" })).toBe(false);
-	});
-
-	it("should block refund for an already refunded order", () => {
-		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "REFUNDED" })).toBe(false);
-	});
-
-	it("should allow refund for a partially refunded order", () => {
-		expect(canRefundOrder({ status: "PROCESSING", paymentStatus: "PARTIALLY_REFUNDED" })).toBe(
-			true,
-		);
-	});
-});
-
-// ============================================================================
 // getOrderPermissions
 // ============================================================================
 
 describe("getOrderPermissions", () => {
+	// canDelete — règle rapatriée depuis `use-order-actions.ts` (audit 2026-07-26).
+	// Miroir EXACT des gardes de `delete-order.ts` : jamais facturée + jamais encaissée.
+	describe("canDelete", () => {
+		it("autorise une commande jamais facturée et jamais encaissée", () => {
+			expect(getOrderPermissions({ status: "PENDING", paymentStatus: "PENDING" }).canDelete).toBe(
+				true,
+			);
+		});
+
+		it("refuse une commande facturée (Art. 286 CGI — la facture est immuable)", () => {
+			expect(
+				getOrderPermissions({
+					status: "PENDING",
+					paymentStatus: "PENDING",
+					invoiceNumber: "F-2026-00001",
+				}).canDelete,
+			).toBe(false);
+		});
+
+		it("refuse une commande PAID", () => {
+			expect(getOrderPermissions({ status: "PROCESSING", paymentStatus: "PAID" }).canDelete).toBe(
+				false,
+			);
+		});
+
+		it("refuse une commande REFUNDED", () => {
+			expect(
+				getOrderPermissions({ status: "CANCELLED", paymentStatus: "REFUNDED" }).canDelete,
+			).toBe(false);
+		});
+
+		it("autorise FAILED et EXPIRED (paiement jamais abouti)", () => {
+			expect(getOrderPermissions({ status: "PENDING", paymentStatus: "FAILED" }).canDelete).toBe(
+				true,
+			);
+			expect(getOrderPermissions({ status: "PENDING", paymentStatus: "EXPIRED" }).canDelete).toBe(
+				true,
+			);
+		});
+
+		it("laisse passer PARTIALLY_REFUNDED — miroir exact du serveur, borné par la facture", () => {
+			// `delete-order.ts` ne bloque QUE PAID et REFUNDED : PARTIALLY_REFUNDED n'est
+			// pas dans sa liste. On reproduit ce comportement à l'identique plutôt que de
+			// rendre l'UI plus stricte que l'action — une divergence, même dans le sens
+			// prudent, est exactement ce que cette rapatriation vise à supprimer.
+			//
+			// En pratique le cas est inatteignable : une commande partiellement remboursée
+			// a été encaissée, donc porte un `invoiceNumber` (émis à l'encaissement,
+			// Art. 289-I CGI), et c'est cette condition qui la rend non supprimable.
+			expect(
+				getOrderPermissions({ status: "PROCESSING", paymentStatus: "PARTIALLY_REFUNDED" })
+					.canDelete,
+			).toBe(true);
+			expect(
+				getOrderPermissions({
+					status: "PROCESSING",
+					paymentStatus: "PARTIALLY_REFUNDED",
+					invoiceNumber: "F-2026-00001",
+				}).canDelete,
+			).toBe(false);
+		});
+	});
+
 	it("should compute correct permissions for a PENDING + PAID order", () => {
 		const permissions = getOrderPermissions({
 			status: "PENDING",
@@ -332,42 +357,6 @@ describe("getOrderPermissions", () => {
 		).toBe(false);
 		expect(
 			getOrderPermissions({ status: "PROCESSING", paymentStatus: "FAILED" }).canMarkAsFullyRefunded,
-		).toBe(false);
-	});
-});
-
-// ============================================================================
-// canUpdateOrderTracking
-// ============================================================================
-
-describe("canUpdateOrderTracking", () => {
-	it("should return true for shipped order with tracking", () => {
-		expect(
-			canUpdateOrderTracking({
-				status: "SHIPPED",
-				paymentStatus: "PAID",
-				trackingNumber: "ABC123",
-			}),
-		).toBe(true);
-	});
-
-	it("should return false for shipped order without tracking", () => {
-		expect(
-			canUpdateOrderTracking({
-				status: "SHIPPED",
-				paymentStatus: "PAID",
-				trackingNumber: null,
-			}),
-		).toBe(false);
-	});
-
-	it("should return false for pending order", () => {
-		expect(
-			canUpdateOrderTracking({
-				status: "PENDING",
-				paymentStatus: "PAID",
-				trackingNumber: "ABC123",
-			}),
 		).toBe(false);
 	});
 });

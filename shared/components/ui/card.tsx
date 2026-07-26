@@ -24,6 +24,12 @@ function Card({
 	);
 }
 
+/**
+ * Note sur `--admin-main-x` : le fallback `1rem` des slots ci-dessous est
+ * VOLONTAIREMENT différent du `1.5rem` utilisé par les surfaces admin. `Card` est
+ * partagée avec le storefront, où la variable n'est jamais posée — `1rem` y est la
+ * gouttière voulue. Dans l'admin, `<main>` déclare la variable, qui gagne.
+ */
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div

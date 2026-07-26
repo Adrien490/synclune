@@ -66,9 +66,7 @@ describe("RefreshProductTypesButton", () => {
 
 	it("renders with label 'Rafraîchir types de bijoux'", () => {
 		render(<RefreshProductTypesButton />);
-		expect(
-			screen.getByRole("button", { name: "Rafraîchir types de bijoux" }),
-		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Rafraîchir types de bijoux" })).toBeInTheDocument();
 	});
 
 	it("renders with default outline variant", () => {

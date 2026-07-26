@@ -7,6 +7,8 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 export default function OrderDetailLoading() {
 	return (
@@ -18,10 +20,9 @@ export default function OrderDetailLoading() {
 		>
 			<span className="sr-only">Chargement de la commande…</span>
 
-			{/* Mobile back link (mirror page.tsx Link md:hidden) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-40" />
-			</div>
+			{/* Pas de skeleton de lien retour mobile : `page.tsx` n'en rend aucun (le
+			    chevron vient de l'`AdminMobileHeader`). Il provoquait un décalage de
+			    ~20 px à l'hydratation. */}
 
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
@@ -42,19 +43,22 @@ export default function OrderDetailLoading() {
 			{/* OrderDetailPage inner wrapper (space-y-6) */}
 			<div className="space-y-6">
 				{/* OrderHeader: h1+date hidden md:block + sticky action bar mobile */}
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<DetailHeaderShell>
 					<div className="hidden space-y-2 md:block">
 						<Skeleton className="h-8 w-48" />
 						<Skeleton className="h-4 w-72" />
 					</div>
-					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+					<DetailStickyActionBar>
 						<Skeleton className="h-11 flex-1 sm:h-9 md:w-28 md:flex-none" />
 						<Skeleton className="size-11 shrink-0 sm:size-9" />
-					</div>
-				</div>
+					</DetailStickyActionBar>
+				</DetailHeaderShell>
 
-				{/* Progress Stepper */}
-				<div className="flex items-center justify-between gap-2 overflow-x-auto py-2">
+				{/* Progress Stepper — `flex-1` sans `overflow-x-auto` : le vrai
+				    `OrderProgressStepper` masque ses libellés sous 400 px (`min-[400px]:block`)
+				    au lieu de scroller, donc un conteneur scrollable ici décalait la mise en
+				    page à l'hydratation. */}
+				<div className="flex items-center justify-between gap-2 py-2">
 					{Array.from({ length: 4 }).map((_, i) => (
 						<div key={i} className="flex items-center gap-2">
 							<Skeleton className="size-8 rounded-full" />
@@ -70,10 +74,12 @@ export default function OrderDetailLoading() {
 					<Skeleton className="h-6 w-20 rounded-full" />
 				</div>
 
-				{/* Grid 2/3 + 1/3 */}
-				<div className="grid gap-6 lg:grid-cols-3">
+				{/* Grid 2/3 + 1/3 — mêmes classes que `order-detail-page` (gap-0 + marges
+				    négatives + divide-y sous md), sinon la mise en page saute à l'hydratation
+				    sur mobile. */}
+				<div className="grid gap-0 md:gap-6 lg:grid-cols-3">
 					{/* Left column - 2/3: Items */}
-					<div className="space-y-6 lg:col-span-2">
+					<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0 lg:col-span-2">
 						<Card>
 							<CardHeader>
 								<Skeleton className="h-6 w-32" />
@@ -107,8 +113,8 @@ export default function OrderDetailLoading() {
 						</Card>
 					</div>
 
-					{/* Right column - 1/3: Customer, Refunds, Address, Payment, History */}
-					<div className="space-y-6">
+					{/* Right column - 1/3: Customer, Refunds, Address, Payment, Invoice, History */}
+					<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0">
 						<Card>
 							<CardHeader>
 								<Skeleton className="h-5 w-24" />
@@ -155,6 +161,19 @@ export default function OrderDetailLoading() {
 							</CardContent>
 						</Card>
 
+						{/* OrderInvoiceCard — slot manquant : le skeleton n'en comptait que 5 pour
+						    6 cartes rendues, la colonne s'allongeait donc à l'hydratation. */}
+						<Card>
+							<CardHeader>
+								<Skeleton className="h-5 w-32" />
+							</CardHeader>
+							<CardContent className="space-y-2">
+								<Skeleton className="h-4 w-36" />
+								<Skeleton className="h-9 w-full" />
+							</CardContent>
+						</Card>
+
+						{/* OrderHistoryTimeline */}
 						<Card>
 							<CardHeader>
 								<Skeleton className="h-5 w-28" />

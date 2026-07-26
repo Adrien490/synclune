@@ -12,7 +12,9 @@ import {
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
 import type { AdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 import { Fragment } from "react/jsx-runtime";
 import { CollapsibleNavGroup } from "./collapsible-nav-group";
 import { NavMainClient } from "./nav-main-client";
@@ -31,7 +33,11 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ user, badges }: AdminSidebarProps) {
 	return (
-		<Sidebar variant="floating" disableMobileSheet>
+		// `collapsible="icon"` : ⌘B réduit à un rail d'icônes (3rem) au lieu de faire
+		// disparaître toute la navigation. C'est ce que suppose tout le reste du code
+		// (tooltips enrichis du compteur, pastille d'alerte, masquage du label logo,
+		// espacement des séparateurs) — en `offcanvas` ces affordances étaient mortes.
+		<Sidebar variant="floating" collapsible="icon" disableMobileSheet>
 			<SidebarHeader>
 				<SidebarMenu
 					// iOS Safari + VO drop implicit list role when list-style:none
@@ -79,6 +85,7 @@ export function AdminSidebar({ user, badges }: AdminSidebarProps) {
 														url={item.url}
 														tooltip={item.title}
 														badge={badges?.[item.id]}
+														badgeUrl={item.badgeUrl}
 													>
 														<Icon className="size-5 shrink-0" aria-hidden="true" />
 														<span className="flex-1">{item.title}</span>

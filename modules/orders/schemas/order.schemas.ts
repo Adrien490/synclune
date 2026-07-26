@@ -16,6 +16,7 @@ import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_ORDERS_DEFAULT_PER_PAGE,
 	GET_ORDERS_MAX_RESULTS_PER_PAGE,
+	ORDER_TOTAL_FILTER_MAX_CENTS,
 	SORT_OPTIONS,
 } from "../constants/order.constants";
 
@@ -71,8 +72,9 @@ export const orderFiltersSchema = z
 		 * (invoiceRetryDeferred = true) — archivage PDF / avoir en échec escaladé.
 		 */
 		retryDeferred: formBooleanSchema.optional(),
-		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
-		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
+		// En centimes (cf. ORDER_TOTAL_FILTER_MAX_CENTS pour la frontière d'unité)
+		totalMin: z.coerce.number().int().nonnegative().max(ORDER_TOTAL_FILTER_MAX_CENTS).optional(),
+		totalMax: z.coerce.number().int().nonnegative().max(ORDER_TOTAL_FILTER_MAX_CENTS).optional(),
 		createdAfter: stringOrDateSchema,
 		createdBefore: stringOrDateSchema,
 		showDeleted: z.enum(["all", "active", "deleted"]).optional().default("active"),
@@ -301,13 +303,21 @@ export const markAsPaidSchema = z.object({
  * `z.url()` accepte `javascript:alert(1)` → XSS au clic depuis l'admin et
  * potentiellement depuis certains rendus email (preview inline JS).
  */
-const trackingUrlSchema = z
-	.url()
-	.refine((url) => /^https?:\/\//i.test(url), {
-		message: "L'URL de suivi doit commencer par http:// ou https://",
-	})
-	.optional()
-	.or(z.literal(""));
+const trackingUrlSchema = z.preprocess(
+	// Un champ vide (`<input type="hidden">` non renseigné) arrive en `""` via
+	// `safeFormGet`, jamais en `undefined`. Sans cette normalisation, le
+	// `validated.data.trackingUrl ?? getTrackingUrl(...)` des actions ne se
+	// déclenchait jamais (`??` ne couvre que `null | undefined`) : l'URL générée
+	// serveur était inatteignable depuis l'UI, et `""` était persisté là où les
+	// consommateurs — et `revertToProcessing` — attendent `null`.
+	(value) => (value === "" ? undefined : value),
+	z
+		.url()
+		.refine((url) => /^https?:\/\//i.test(url), {
+			message: "L'URL de suivi doit commencer par http:// ou https://",
+		})
+		.optional(),
+);
 
 // ============================================================================
 // CARRIER ENUM

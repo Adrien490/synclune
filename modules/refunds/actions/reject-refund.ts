@@ -19,7 +19,7 @@ import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
 import { canTransition } from "../services/refund-state-machine.service";
 
@@ -124,14 +124,16 @@ export async function rejectRefund(
 			});
 		});
 
-		updateTag(ORDERS_CACHE_TAGS.LIST);
+		// CACHE-AUDIT-010 : passer par le helper SSOT. La liste manuelle omettait
+		// DETAIL(orderId) / HISTORY(orderId) alors que cette action écrit une entrée
+		// d'OrderHistory affichée sur la page détail de la commande, et ne couvrait
+		// qu'USER_ORDERS parmi les tags user-scopés.
+		for (const tag of getOrderInvalidationTags(refund.order.user?.id, refund.order.id)) {
+			updateTag(tag);
+		}
 		updateTag(REFUNDS_CACHE_TAGS.LIST);
 		updateTag(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
-		if (refund.order.user?.id) {
-			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
-		}
 
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,

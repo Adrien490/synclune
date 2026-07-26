@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { type ReactNode } from "react";
 import { ChevronLeft } from "lucide-react";
+import { GuardedLink } from "@/shared/components/navigation/guarded-link";
 
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -178,7 +179,8 @@ export function PageHeader({
 							{/* Mobile avec breadcrumbs : Bouton retour + Titre + Actions inline */}
 							{breadcrumbs.length > 0 && (
 								<div className="flex items-center gap-1 sm:hidden">
-									<Link
+									{/* GuardedLink : sortie la plus probable d'un formulaire admin dirty. */}
+									<GuardedLink
 										href={
 											breadcrumbs.length > 1
 												? (breadcrumbs[breadcrumbs.length - 2]?.href ?? "/")
@@ -192,7 +194,7 @@ export function PageHeader({
 										}`}
 									>
 										<ChevronLeft className="size-5" />
-									</Link>
+									</GuardedLink>
 									<span
 										aria-hidden="true"
 										className="font-display text-foreground wrap-break-words min-w-0 flex-1 text-2xl font-normal tracking-normal"

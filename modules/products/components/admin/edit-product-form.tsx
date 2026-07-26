@@ -83,12 +83,10 @@ export function EditProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(message || "Bijou peaufiné", {
-				action: {
-					label: "Voir les bijoux",
-					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
-				},
-			});
+			// Pas d'action : la ligne suivante navigue déjà vers `PRODUCTS_LIST_PATH`,
+			// exactement la destination que proposait « Voir les bijoux ». L'utilisateur
+			// se retrouvait donc avec un bouton menant là où il venait d'arriver.
+			toast.success(message || "Bijou peaufiné");
 			navigateWithTransition(router, PRODUCTS_LIST_PATH);
 		},
 	});
@@ -242,7 +240,12 @@ export function EditProductForm({
 							await uploadMedia(files);
 						}}
 					/>
-					<EditProductInfoCard form={form} productTypes={productTypes} collections={collections} />
+					<EditProductInfoCard
+						form={form}
+						productTypes={productTypes}
+						collections={collections}
+						currentType={product.type}
+					/>
 				</div>
 
 				<EditProductSidebarCards form={form} colors={colors} materials={materials} />

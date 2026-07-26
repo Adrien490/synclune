@@ -159,21 +159,57 @@ describe("QuickSearchContent", () => {
 		expect(container.querySelector('a[href="/creations/collier-etoile"]')).toBeInTheDocument();
 	});
 
-	it('shows "Voir les X résultats" button when totalCount > 1', () => {
+	/**
+	 * Le libellé ne porte plus de nombre : `totalCount` sous-compte dès que la
+	 * branche floue sature ses 6 places, donc il pouvait contredire le compte de
+	 * /produits?search=.
+	 */
+	it("affiche un CTA sans nombre quand il y a des résultats", () => {
 		render(<QuickSearchContent results={makeResults({ totalCount: 5 })} {...defaultProps} />);
 
-		expect(screen.getByRole("option", { name: /voir les 5 résultats/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /voir tous les résultats/i })).toBeInTheDocument();
+		expect(screen.queryByText(/voir les 5 résultats/i)).not.toBeInTheDocument();
 	});
 
-	it('shows singular "Voir le résultat" when totalCount === 1', () => {
+	/**
+	 * Le CTA n'était rendu que si `totalCount > 0` : à zéro résultat, le dialog
+	 * n'offrait aucun chemin vers /produits?search= — donc la page de repli
+	 * `SearchFallbackSuggestions` était inatteignable depuis la recherche rapide.
+	 */
+	it("offre une sortie vers le catalogue même à zéro résultat", async () => {
+		const onViewAllResults = vi.fn();
 		render(
 			<QuickSearchContent
-				results={makeResults({ totalCount: 1, products: [mockProduct] })}
+				results={makeResults({ products: [], totalCount: 0 })}
 				{...defaultProps}
+				onViewAllResults={onViewAllResults}
+				query="zzzzz"
+				collections={[]}
+				productTypes={[]}
 			/>,
 		);
 
-		expect(screen.getByRole("option", { name: /voir le résultat/i })).toBeInTheDocument();
+		const cta = screen.getByRole("button", { name: /dans tout le catalogue/i });
+		await userEvent.click(cta);
+		expect(onViewAllResults).toHaveBeenCalledOnce();
+	});
+
+	it("n'affiche aucun CTA en erreur ou rate-limit (la recherche n'a pas abouti)", () => {
+		render(
+			<QuickSearchContent
+				results={makeResults({ products: [], totalCount: 0, error: true })}
+				{...defaultProps}
+				query="zzzzz"
+				collections={[]}
+				productTypes={[]}
+			/>,
+		);
+
+		expect(
+			screen.queryByRole("button", {
+				name: /catalogue|dans tout le catalogue|voir tous les résultats/i,
+			}),
+		).not.toBeInTheDocument();
 	});
 
 	it("shows empty state message when no products, no matched nav, no suggestion", () => {
@@ -241,7 +277,35 @@ describe("QuickSearchContent", () => {
 		);
 
 		expect(screen.getByText(/vouliez-vous dire/i)).toBeInTheDocument();
-		expect(screen.getByRole("option", { name: /rechercher bagues/i })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /rechercher bagues/i })).toBeInTheDocument();
+	});
+
+	/**
+	 * `showEmptyState` incluait `!suggestion` : dès qu'une correction existait, le
+	 * message « Aucun résultat pour X » disparaissait ENTIÈREMENT et l'utilisateur
+	 * ne voyait que « Vouliez-vous dire Y ? », sans savoir que sa requête n'avait
+	 * rien donné.
+	 */
+	it("affiche l'état vide ET la suggestion, dans cet ordre", () => {
+		const { container } = render(
+			<QuickSearchContent
+				results={makeResults({ products: [], totalCount: 0, suggestion: "bagues" })}
+				{...defaultProps}
+				query="bgue"
+				collections={[]}
+				productTypes={[]}
+			/>,
+		);
+
+		const emptyTitle = screen.getByText(/aucun résultat pour/i);
+		const suggestionText = screen.getByText(/vouliez-vous dire/i);
+		expect(emptyTitle).toBeInTheDocument();
+		expect(suggestionText).toBeInTheDocument();
+
+		// Ordre de lecture : « rien trouvé » AVANT « voici une alternative ».
+		const position = emptyTitle.compareDocumentPosition(suggestionText);
+		expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		expect(container).toBeTruthy();
 	});
 
 	it("calls onSearch when suggestion is clicked", async () => {
@@ -254,7 +318,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		const suggestionBtn = screen.getByRole("option", { name: /rechercher bagues/i });
+		const suggestionBtn = screen.getByRole("button", { name: /rechercher bagues/i });
 		await userEvent.click(suggestionBtn);
 
 		expect(onSearch).toHaveBeenCalledWith("bagues");
@@ -288,7 +352,7 @@ describe("QuickSearchContent", () => {
 		expect(status).toHaveTextContent("1 résultat trouvé.");
 	});
 
-	it('calls onViewAllResults when "Voir les résultats" button clicked', async () => {
+	it('calls onViewAllResults when "Voir tous les résultats" button clicked', async () => {
 		const onViewAllResults = vi.fn();
 		render(
 			<QuickSearchContent
@@ -298,7 +362,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		const button = screen.getByRole("option", { name: /voir les 2 résultats/i });
+		const button = screen.getByRole("button", { name: /voir tous les résultats/i });
 		await userEvent.click(button);
 
 		expect(onViewAllResults).toHaveBeenCalledOnce();

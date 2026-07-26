@@ -8,3 +8,15 @@
  * by the time the dialog mounts — hence this explicit handoff.
  */
 export const lastTrigger: { el: HTMLElement | null } = { el: null };
+
+/**
+ * Enregistre l'élément déclencheur. **Passer par ce setter plutôt que d'écrire
+ * `lastTrigger.el` directement** : selon l'endroit où l'affectation est écrite,
+ * le compilateur React la refuse (`react-hooks/immutability` — « Modifying a
+ * variable defined outside a component or hook is not allowed »). Un appel de
+ * fonction ne déclenche pas la règle, et tous les points d'entrée du dialog
+ * partagent ainsi un seul idiome.
+ */
+export function setLastTrigger(el: HTMLElement | null): void {
+	lastTrigger.el = el;
+}

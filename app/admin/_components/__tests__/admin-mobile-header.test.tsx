@@ -53,6 +53,13 @@ vi.mock("../generate-breadcrumbs", () => ({
 }));
 
 import { AdminMobileHeader } from "../admin-mobile-header";
+import { AdminPageTitleProvider, useSetAdminPageTitle } from "../admin-page-title-context";
+
+/** Page factice qui publie un titre, comme le font les detail headers. */
+function PublishingPage({ title }: { title: string }) {
+	useSetAdminPageTitle(title);
+	return null;
+}
 
 // ============================================================================
 // HELPERS
@@ -118,33 +125,83 @@ beforeEach(() => {
 
 describe("AdminMobileHeader", () => {
 	describe("title rendering", () => {
-		it("renders current breadcrumb label as <h1>", () => {
+		/**
+		 * Le titre du header est du CHROME de navigation : il ne doit PAS être un
+		 * `<h1>`. Chacune des 11 fiches de détail rend déjà son propre `<h1>` — en
+		 * émettre un second ici donnait deux h1 par page sur mobile.
+		 */
+		function title(name: string) {
+			return screen.getByText(name, { selector: "p" });
+		}
+
+		it("rend le libellé du breadcrumb courant", () => {
 			setup({ pathname: "/admin", segments: breadcrumbs.home() });
 			render(<AdminMobileHeader />);
-			expect(
-				screen.getByRole("heading", { level: 1, name: "Tableau de bord" }),
-			).toBeInTheDocument();
+			expect(title("Tableau de bord")).toBeInTheDocument();
+		});
+
+		it("n'émet AUCUN h1 — la structure du document appartient à la page", () => {
+			setup({ pathname: "/admin/clients/abc-123", segments: breadcrumbs.clientDetail() });
+			render(<AdminMobileHeader />);
+			expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
 		});
 
 		it("falls back to 'Administration' when breadcrumbs is empty", () => {
 			setup({ pathname: "/admin", segments: [] });
 			render(<AdminMobileHeader />);
-			expect(screen.getByRole("heading", { level: 1, name: "Administration" })).toBeInTheDocument();
+			expect(title("Administration")).toBeInTheDocument();
 		});
 
 		it("uses text-lg when no parent shown (list route)", () => {
 			setup({ pathname: "/admin/catalogue/produits", segments: breadcrumbs.list() });
 			render(<AdminMobileHeader />);
-			const h1 = screen.getByRole("heading", { level: 1, name: "Produits" });
-			expect(h1.className).toContain("text-lg");
-			expect(h1.className).not.toContain("text-base");
+			const heading = title("Produits");
+			expect(heading.className).toContain("text-lg");
+			expect(heading.className).not.toContain("text-base");
 		});
 
 		it("uses text-base when parent eyebrow shown (detail route)", () => {
 			setup({ pathname: "/admin/clients/abc-123", segments: breadcrumbs.clientDetail() });
 			render(<AdminMobileHeader />);
-			const h1 = screen.getByRole("heading", { level: 1, name: "abc-123" });
-			expect(h1.className).toContain("text-base");
+			expect(title("abc-123").className).toContain("text-base");
+		});
+
+		describe("titre publié par la page (ressources à id opaque)", () => {
+			it("préfère le titre publié au segment de breadcrumb dérivé de l'id", () => {
+				setup({ pathname: "/admin/clients/abc-123", segments: breadcrumbs.clientDetail() });
+				render(
+					<AdminPageTitleProvider>
+						<AdminMobileHeader />
+						<PublishingPage title="Camille Durand" />
+					</AdminPageTitleProvider>,
+				);
+
+				expect(title("Camille Durand")).toBeInTheDocument();
+				expect(screen.queryByText("abc-123", { selector: "p" })).not.toBeInTheDocument();
+			});
+
+			it("annonce le titre publié dans la live region, pas l'id", () => {
+				setup({ pathname: "/admin/clients/abc-123", segments: breadcrumbs.clientDetail() });
+				render(
+					<AdminPageTitleProvider>
+						<AdminMobileHeader />
+						<PublishingPage title="Camille Durand" />
+					</AdminPageTitleProvider>,
+				);
+
+				expect(screen.getByRole("status").textContent).toBe("Page actuelle : Camille Durand");
+			});
+
+			it("retombe sur le breadcrumb quand la page ne publie rien (listes)", () => {
+				setup({ pathname: "/admin/catalogue/produits", segments: breadcrumbs.list() });
+				render(
+					<AdminPageTitleProvider>
+						<AdminMobileHeader />
+					</AdminPageTitleProvider>,
+				);
+
+				expect(title("Produits")).toBeInTheDocument();
+			});
 		});
 	});
 

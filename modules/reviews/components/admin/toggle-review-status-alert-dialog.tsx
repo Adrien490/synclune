@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 import {
 	ResponsiveAlertDialog,
@@ -10,7 +10,6 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -43,7 +42,6 @@ export function ToggleReviewStatusAlertDialog() {
 			tone={isPublished ? "warning" : "success"}
 		>
 			<ResponsiveAlertDialogContent>
-				<ResponsiveAlertDialogHeroIcon icon={isPublished ? EyeOff : Eye} />
 				<ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogTitle>
 						{isPublished ? "Masquer cet avis ?" : "Publier cet avis ?"}

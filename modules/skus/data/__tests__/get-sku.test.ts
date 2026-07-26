@@ -104,14 +104,16 @@ describe("getSkuById", () => {
 		expect(result).toBeNull();
 	});
 
-	it("queries by id with correct where clause", async () => {
+	it("queries by id and excludes soft-deleted SKUs", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(makeSkuWithImages());
 
 		await getSkuById("sku-id-1");
 
+		// Parité `notDeleted` : une variante soft-deleted appartient à un produit
+		// supprimé, aucun écran ne doit la charger.
 		expect(mockPrisma.productSku.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: "sku-id-1" },
+				where: { id: "sku-id-1", deletedAt: null },
 			}),
 		);
 	});

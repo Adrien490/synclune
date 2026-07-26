@@ -9,12 +9,11 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 
@@ -56,7 +55,6 @@ export function ArchiveCollectionAlertDialog() {
 					<input type="hidden" name="id" value={archiveDialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
-					<ResponsiveAlertDialogHeroIcon icon={isArchiving ? Archive : ArchiveRestore} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver la collection" : "Restaurer la collection"}

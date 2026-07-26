@@ -100,7 +100,11 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		sortLabels: PRODUCT_TYPES_SORT_LABELS,
 		defaultSort: GET_PRODUCT_TYPES_DEFAULT_SORT_BY,
 		drawerNamespace: "product-types",
-		formFields: { duplicateId: "productTypeId", toggleId: "productTypeId", deleteId: "productTypeId" },
+		formFields: {
+			duplicateId: "productTypeId",
+			toggleId: "productTypeId",
+			deleteId: "productTypeId",
+		},
 		createButtonLabel: "Créer un type",
 		createAriaLabel: "Créer un nouveau type de bijou",
 		search: {

@@ -37,7 +37,6 @@ async function createPaidOrder(
 			orderNumber: `SYN-CONC-${suffix}`,
 			customerEmail: "concur@test.local",
 			customerName: "Test Concur",
-			customerType: "B2C",
 			shippingFirstName: "Test",
 			shippingLastName: "Concur",
 			shippingAddress1: "1 rue test",

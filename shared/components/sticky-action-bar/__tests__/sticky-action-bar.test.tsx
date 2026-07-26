@@ -21,8 +21,12 @@ beforeEach(() => {
 	} else {
 		(navigator.vibrate as unknown as ReturnType<typeof vi.fn>) = vi.fn().mockReturnValue(true);
 	}
+	// Appareil tactile sans reduced-motion : `triggerHaptic` interroge les DEUX
+	// media queries et ne vibre que sur un pointeur grossier — un mock qui renvoie
+	// `false` partout simule un desktop, où l'absence de vibration est le
+	// comportement attendu (et rendrait ces tests verts pour la mauvaise raison).
 	window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-		matches: false,
+		matches: query.includes("pointer: coarse"),
 		media: query,
 		onchange: null,
 		addEventListener: vi.fn(),
@@ -260,7 +264,9 @@ describe("StickyActionBar", () => {
 
 		it("ne declenche pas de vibration en prefers-reduced-motion: reduce", () => {
 			window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-				matches: query.includes("reduce"),
+				// Tactile ET reduced-motion : c'est bien le reduced-motion qui doit
+				// bloquer la vibration, pas l'absence de capacité tactile.
+				matches: query.includes("reduce") || query.includes("pointer: coarse"),
 				media: query,
 				onchange: null,
 				addEventListener: vi.fn(),

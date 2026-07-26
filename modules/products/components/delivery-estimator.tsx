@@ -1,4 +1,7 @@
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import {
+	PREPARATION_BUSINESS_DAYS,
+	SHIPPING_RATES,
+} from "@/modules/orders/constants/shipping-rates";
 import { parseEstimatedDays } from "@/modules/orders/services/shipping.service";
 import { addBusinessDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -14,8 +17,10 @@ import { Truck } from "lucide-react";
 export function DeliveryEstimator() {
 	const now = new Date();
 
-	// Preparation: 2-4 business days (from PRODUCT_TEXTS.SHIPPING.PREPARATION)
-	const [prepMin, prepMax] = [2, 4];
+	// Préparation atelier — SSOT partagée avec la FAQ et `PRODUCT_TEXTS`
+	// (auparavant codée en dur ici, avec un commentaire renvoyant à une constante
+	// que personne ne lisait).
+	const [prepMin, prepMax] = PREPARATION_BUSINESS_DAYS;
 
 	// Shipping: from SHIPPING_RATES (FR zone as default display)
 	const [shipMin, shipMax] = parseEstimatedDays(SHIPPING_RATES.FR.estimatedDays);

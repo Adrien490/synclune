@@ -12,6 +12,8 @@ export default function RefundDetailError(props: {
 			emoji="💸"
 			title="Ce remboursement n'a pas pu charger"
 			route="admin.ventes.remboursements.detail"
+			fallbackHref="/admin/ventes/remboursements"
+			fallbackLabel="Retour aux remboursements"
 		/>
 	);
 }

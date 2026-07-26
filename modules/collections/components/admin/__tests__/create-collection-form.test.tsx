@@ -171,6 +171,22 @@ vi.mock("@/shared/components/forms", () => ({
 			return <>{children(selector(fakeState))}</>;
 		},
 		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		// Le formulaire utilise `form.SubmitButton` (contrat partagé) et non un
+		// `<Button>` monté à la main : sans ce stub le rendu casse en « Element type
+		// is invalid ».
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+		}) => (
+			<button type="submit" disabled={!mockCanSubmit.value || isPending} aria-busy={isPending}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	})),
 }));
 

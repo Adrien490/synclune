@@ -27,6 +27,7 @@ import {
 } from "@/shared/components/gallery";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { mediaBelow } from "@/shared/constants/breakpoints";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
@@ -212,9 +213,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 				: PREFETCH_RANGE_FAST;
 		}
 
-		// Fallback: mobile without connection API = conservative (Safari iOS ~25% FR traffic)
-		if (typeof window !== "undefined" && window.innerWidth < 768) {
-			return PREFETCH_RANGE_SLOW;
+		// Fallback: mobile without connection API = conservative (Safari iOS ~25% FR traffic).
+		// `matchMedia` plutôt que `innerWidth` (qui inclut la scrollbar, ~15px de
+		// divergence avec le CSS) et seuil issu du SSOT en rem.
+		if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+			if (window.matchMedia(mediaBelow("md")).matches) {
+				return PREFETCH_RANGE_SLOW;
+			}
 		}
 
 		return PREFETCH_RANGE_FAST;

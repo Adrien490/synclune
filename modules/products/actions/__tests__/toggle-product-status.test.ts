@@ -100,7 +100,9 @@ const mockProduct = {
 			id: "sku_1",
 			isActive: true,
 			inventory: 5,
-			images: [{ id: "img_1" }],
+			// Le select reel ne charge que `mediaType` (MEDIA-AUDIT-002) : la regle 4 de
+			// validateProductForPublication exige une vraie IMAGE, pas juste un media.
+			images: [{ mediaType: "IMAGE" }],
 		},
 	],
 };
@@ -202,14 +204,49 @@ describe("toggleProductStatus", () => {
 		expect(mockValidateProductForPublication).not.toHaveBeenCalled();
 	});
 
-	it("should restore ARCHIVED to PUBLIC when no targetStatus", async () => {
+	it("should restore ARCHIVED to DRAFT when no targetStatus", async () => {
 		mockValidateInput.mockReturnValue({
 			data: { productId: VALID_CUID, currentStatus: "ARCHIVED", targetStatus: null },
 		});
-		mockPrisma.product.findUnique.mockResolvedValue({ ...mockProduct, status: "ARCHIVED" });
+		// Etat reel post-archivage : toutes les variantes ont ete desactivees.
+		mockPrisma.product.findUnique.mockResolvedValue({
+			...mockProduct,
+			status: "ARCHIVED",
+			skus: [{ id: "sku_1", isActive: false, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
+		});
+
 		const result = await toggleProductStatus(undefined, validFormData);
+
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockValidateProductForPublication).toHaveBeenCalled();
+		// La restauration ne passe PAS par la validation de publication : c'est ce qui
+		// la rendait impossible (aucune variante active apres archivage).
+		expect(mockValidateProductForPublication).not.toHaveBeenCalled();
+		expect(mockPrisma.product.update).toHaveBeenCalledWith({
+			where: { id: VALID_CUID },
+			data: { status: "DRAFT" },
+		});
+		// DRAFT n'est pas ARCHIVED : aucune desactivation de variante ici.
+		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("restaure même si le produit ne serait pas publiable", async () => {
+		mockValidateInput.mockReturnValue({
+			data: { productId: VALID_CUID, currentStatus: "ARCHIVED", targetStatus: null },
+		});
+		mockValidateProductForPublication.mockReturnValue({
+			isValid: false,
+			errorMessage: "aucune variante active",
+		});
+		mockPrisma.product.findUnique.mockResolvedValue({
+			...mockProduct,
+			status: "ARCHIVED",
+			skus: [{ id: "sku_1", isActive: false, inventory: 0, images: [] }],
+		});
+
+		const result = await toggleProductStatus(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("brouillon");
 	});
 
 	it("should use targetStatus directly when provided", async () => {

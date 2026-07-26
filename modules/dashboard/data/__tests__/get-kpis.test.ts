@@ -92,6 +92,15 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	// Consommé par le prédicat SSOT `buildToShipWhereClause()` (KPI « À expédier »),
+	// qui exclut désormais les commandes annulées.
+	OrderStatus: {
+		PENDING: "PENDING",
+		PROCESSING: "PROCESSING",
+		SHIPPED: "SHIPPED",
+		DELIVERED: "DELIVERED",
+		CANCELLED: "CANCELLED",
+	},
 }));
 
 import { fetchDashboardKpis } from "../get-kpis";

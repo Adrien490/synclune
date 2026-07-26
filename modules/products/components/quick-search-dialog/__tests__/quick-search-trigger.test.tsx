@@ -118,4 +118,27 @@ describe("QuickSearchTrigger", () => {
 			expect(screen.getByRole("button")).toHaveClass("my-bar-class");
 		});
 	});
+
+	/**
+	 * Le `<kbd>` est écrasé par `aria-label` dans le calcul du nom accessible :
+	 * sans `aria-keyshortcuts`, ⌘K n'était annoncé à aucun lecteur d'écran. Le
+	 * raccourci ne doit PAS être injecté dans le libellé (texte dépendant de la
+	 * plateforme dans un nom accessible statique).
+	 */
+	describe("annonce du raccourci", () => {
+		it.each(["icon", "bar"] as const)("expose aria-keyshortcuts sur la variante %s", (variant) => {
+			render(<QuickSearchTrigger variant={variant} />);
+			expect(screen.getByRole("button")).toHaveAttribute("aria-keyshortcuts", "Meta+K Control+K");
+		});
+
+		it.each(["icon", "bar"] as const)(
+			"laisse le nom accessible intact sur la variante %s",
+			(variant) => {
+				render(<QuickSearchTrigger variant={variant} />);
+				expect(
+					screen.getByRole("button", { name: "Ouvrir la recherche rapide" }),
+				).toBeInTheDocument();
+			},
+		);
+	});
 });

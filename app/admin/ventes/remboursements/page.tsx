@@ -25,6 +25,9 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
 import { RefundsAdminDialogs } from "./_components/refunds-admin-dialogs";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export type RefundFiltersSearchParams = {
 	filter_status?: string;
@@ -75,7 +78,16 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 				actions={<CreateRefundButton />}
 			/>
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={refundsPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="remboursement"
+						plural="remboursements"
+					/>
+				</Suspense>
+
 				<RefundsBottomBar />
 
 				<Suspense

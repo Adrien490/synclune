@@ -32,16 +32,20 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
 		label: string;
 		onClick: () => void;
 	};
-	/**
-	 * Action d'annulation (pattern native-like iOS/Android).
-	 * Si fourni, le toast de succès affichera un bouton pour annuler l'action
-	 * et prolongera la durée d'affichage pour laisser le temps d'agir.
+	/*
+	 * ⚠️ Pas de champ `undoAction` ici.
+	 *
+	 * Il a existé, avec sa branche dédiée dans `createToastCallbacks` (label
+	 * « Annuler » par défaut + durée prolongée à 5 s) — et **zéro appelant** sur
+	 * toute la durée de vie du code. Les trois undo réels du projet
+	 * (`remove-cart-item-alert-dialog.tsx`, `show-wishlist-undo-toast.ts`,
+	 * `media-upload-grid.tsx`) passent par un `toast.success(…, { action })` direct,
+	 * parce qu'ils ont besoin de piloter le rollback optimiste avant et après le
+	 * clic — ce qu'un champ d'options ne permet pas.
+	 *
+	 * Si un besoin d'undo générique réapparaît, préférer `successAction` plutôt que
+	 * de réintroduire un second chemin qui doublonne avec lui.
 	 */
-	undoAction?: {
-		label?: string;
-		onClick: () => void | Promise<void>;
-		duration?: number;
-	};
 };
 
 // =============================================================================

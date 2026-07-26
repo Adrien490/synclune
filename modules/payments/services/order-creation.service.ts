@@ -356,13 +356,10 @@ export async function createOrderInTransaction(
 					shippingCity: shippingAddress.city,
 					shippingCountry: shippingAddress.country as ShippingCountry,
 					shippingPhone: shippingAddress.phoneNumber ?? "",
-					shippingMethod: "STANDARD",
 					status: "PENDING",
 					paymentStatus: "PENDING",
 					fulfillmentStatus: "UNFULFILLED",
 					...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
-					// Synclune vend exclusivement en B2C : customerType prend le défaut
-					// schema (B2C), aucun identifiant société n'est capturé au checkout.
 				},
 			});
 

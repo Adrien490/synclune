@@ -18,6 +18,9 @@ import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { getSkuColorsDisplayLabel } from "@/modules/skus/utils/sku-colors-label";
+import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface SkuDetailHeaderProps {
 	sku: SkuDetailReturn;
@@ -34,6 +37,8 @@ function buildVariantLabel(sku: SkuDetailReturn): string {
 }
 
 export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
+	// Titre lisible pour le header mobile (sinon : id opaque Title-Casé).
+	useSetAdminPageTitle(sku.sku);
 	const haptic = useHaptic();
 	const { sections } = useSkuActions({
 		skuId: sku.id,
@@ -49,7 +54,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 	const subtitle = buildVariantLabel(sku);
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0 space-y-2">
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal break-all sm:text-3xl lg:text-4xl">
@@ -80,7 +85,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 				</p>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<Button
 					asChild
 					size="sm"
@@ -112,7 +117,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

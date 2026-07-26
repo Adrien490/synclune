@@ -16,6 +16,8 @@ const { mockUsePathname, mockIsRouteActive } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
+	// `GuardedLink` (utilisé à la place de next/link) appelle useRouter.
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("next/link", () => ({

@@ -64,6 +64,8 @@ vi.mock("@/shared/stores/use-admin-list-selection-store", () => ({}));
 
 vi.mock("next/navigation", () => ({
 	usePathname: () => "/admin/catalogue/produits",
+	// `GuardedLink` (utilisé à la place de next/link) appelle useRouter.
+	useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
 }));
 
 vi.mock("next/link", () => ({

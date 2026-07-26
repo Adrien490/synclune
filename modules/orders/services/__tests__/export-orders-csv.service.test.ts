@@ -288,5 +288,35 @@ describe("generateOrdersCsv", () => {
 			expect(dataRow).toContain(";Alice Martin;");
 			expect(dataRow).not.toContain("'Alice Martin");
 		});
+
+		// Audit \u00AB Admin commandes \u00BB 2026-07-26 (P2-3) : `escapeCsv` n'\u00E9tait appliqu\u00E9
+		// qu'\u00E0 `customerName`, ce qui rendait cette suite verte tout en laissant 14
+		// colonnes brutes. `customerEmail` est la plus expos\u00E9e \u2014 le client la saisit
+		// lui-m\u00EAme au checkout, et `z.email()` accepte `-x@example.com`.
+		it.each([
+			["customerEmail", { customerEmail: "-2+3@example.com" }],
+			["paymentMethod", { paymentMethod: "=cmd" }],
+			["orderNumber", { orderNumber: "@SYN-001" }],
+			["invoiceNumber", { invoiceNumber: "+F-2026-00001" }],
+			["creditNoteNumber", { creditNoteNumber: "-A-2026-00001" }],
+		])("escapes formula prefixes in %s", (_field, overrides) => {
+			const order = makeOrder(overrides);
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			const payload = Object.values(overrides)[0] as string;
+
+			expect(dataRow).toContain(`'${payload}`);
+		});
+
+		it("ne pr\u00E9fixe PAS les colonnes num\u00E9riques (un montant n\u00E9gatif reste un nombre)", () => {
+			// Un `'` devant `-12,50` en ferait du texte dans le tableur : les montants
+			// sont produits par nos formatters, pas par une saisie externe.
+			const order = makeOrder({ total: 1000, refunds: [{ amount: 2500 }] });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+
+			expect(dataRow).toContain("-15,00");
+			expect(dataRow).not.toContain("'-15,00");
+		});
 	});
 });

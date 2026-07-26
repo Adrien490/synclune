@@ -3,6 +3,8 @@
  * Centralisation pour éviter les hardcoded strings et faciliter l'i18n future
  */
 
+import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
+
 export const PRODUCT_TEXTS = {
 	// Descriptions par défaut
 	DEFAULT_DESCRIPTION:
@@ -10,7 +12,7 @@ export const PRODUCT_TEXTS = {
 
 	// Informations de livraison
 	SHIPPING: {
-		PREPARATION: "Préparation artisanale sous 2 à 4 jours ouvrés",
+		PREPARATION: `Préparation artisanale sous ${PREPARATION_DELAY_LABEL}`,
 		TRACKING: "Envoi suivi",
 		ZONES: "France et Union Européenne",
 	},

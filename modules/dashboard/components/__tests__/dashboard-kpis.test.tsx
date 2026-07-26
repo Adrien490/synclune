@@ -57,7 +57,6 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 	};
 }
 
-
 describe("DashboardKpis", () => {
 	it("renders 7 KPI cards (4 featured + 3 compact)", () => {
 		render(<DashboardKpis kpis={makeKpis()} />);
@@ -187,11 +186,7 @@ describe("DashboardKpis", () => {
 	});
 
 	it("renders À expédier KPI with warning when count > 0", () => {
-		render(
-			<DashboardKpis
-				kpis={makeKpis({ pendingShipment: { count: 5 } })}
-			/>,
-		);
+		render(<DashboardKpis kpis={makeKpis({ pendingShipment: { count: 5 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -204,11 +199,7 @@ describe("DashboardKpis", () => {
 	});
 
 	it("renders À expédier KPI with info priority when count is 0", () => {
-		render(
-			<DashboardKpis
-				kpis={makeKpis({ pendingShipment: { count: 0 } })}
-			/>,
-		);
+		render(<DashboardKpis kpis={makeKpis({ pendingShipment: { count: 0 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -369,12 +360,8 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-
-
 	it("renders compact KPIs in a 4-column grid on lg+", () => {
-		const { container } = render(
-			<DashboardKpis kpis={makeKpis()} />,
-		);
+		const { container } = render(<DashboardKpis kpis={makeKpis()} />);
 
 		const grids = container.querySelectorAll(".grid");
 		expect(grids[0]).toHaveClass("lg:grid-cols-4");
@@ -405,9 +392,7 @@ describe("DashboardKpis", () => {
 
 	it("passes a sparkline path to CA net & Commandes when the series has a trend", () => {
 		render(
-			<DashboardKpis
-				kpis={makeKpis({ sparklines: { revenue: [1, 2, 3], orders: [3, 1, 4] } })}
-			/>,
+			<DashboardKpis kpis={makeKpis({ sparklines: { revenue: [1, 2, 3], orders: [3, 1, 4] } })} />,
 		);
 
 		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];

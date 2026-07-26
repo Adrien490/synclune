@@ -8,9 +8,5 @@ export function useToggleProductTypeStatus(options?: {
 	onSuccess?: (message: string) => void;
 	onError?: () => void;
 }) {
-	return useTaxonomyToggleStatus(
-		toggleProductTypeStatus,
-		TAXONOMY_CONFIG["product-type"],
-		options,
-	);
+	return useTaxonomyToggleStatus(toggleProductTypeStatus, TAXONOMY_CONFIG["product-type"], options);
 }

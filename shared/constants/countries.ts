@@ -14,7 +14,7 @@
  */
 export const SHIPPING_COUNTRIES = [
 	"FR", // France métropolitaine
-	"MC", // Monaco (tarif Europe : 15€)
+	"MC", // Monaco (tarif zone EU — cf. SHIPPING_RATES.EU)
 	// --- Pays de l'UE ---
 	"BE", // Belgique
 	"DE", // Allemagne
@@ -51,6 +51,28 @@ export type ShippingCountry = (typeof SHIPPING_COUNTRIES)[number];
 // ==============================================================================
 // NOMS D'AFFICHAGE (Pour le menu déroulant Frontend)
 // ==============================================================================
+
+/**
+ * Nom français d'un pays à partir de son code ISO 3166-1 alpha-2.
+ *
+ * `Order.shippingCountry` est un `VarChar(2)` (défaut `"FR"`) : les surfaces qui
+ * rendaient la colonne brute affichaient « 75002 Paris, FR » — emails de
+ * confirmation et d'expédition, carte d'adresse de l'espace client. Le repli
+ * `order.shippingCountry || "France"` des émetteurs d'emails ne se déclenchait
+ * jamais, la colonne étant non-nulle.
+ *
+ * Les casts `COUNTRY_NAMES[code as ShippingCountry]` éparpillés renvoient
+ * `undefined` — donc n'affichent rien — sur un code hors périmètre (ligne
+ * historique, pays retiré de la liste) ; ce helper retombe sur le code lui-même,
+ * ce qui reste lisible.
+ */
+export function formatCountryName(code: string | null | undefined): string {
+	if (!code) return COUNTRY_NAMES.FR;
+	// Record élargi plutôt qu'un `as ShippingCountry` : le cast affirmerait que
+	// tout code est connu, ce qui masque le repli au type-checker.
+	const names: Record<string, string | undefined> = COUNTRY_NAMES;
+	return names[code] ?? code;
+}
 
 export const COUNTRY_NAMES: Record<ShippingCountry, string> = {
 	FR: "France",

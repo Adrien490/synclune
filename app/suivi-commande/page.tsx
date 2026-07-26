@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { OrderTrackingSkeleton } from "@/app/suivi-commande/_components/order-tracking-skeleton";
 import { getOrderForTracking } from "@/modules/orders/data/get-order-for-tracking";
 import { OrderItemsList } from "@/modules/orders/components/customer/order-items-list";
 import { OrderStatusTimeline } from "@/modules/orders/components/customer/order-status-timeline";
@@ -15,7 +16,7 @@ import { OrderSummaryCard } from "@/modules/orders/components/customer/order-sum
 import { OrderTracking } from "@/modules/orders/components/customer/order-tracking";
 import { OrderReturnGuidance } from "@/modules/orders/components/customer/order-return-guidance";
 import { orderNumberParamSchema } from "@/modules/orders/schemas/order-route-params.schema";
-import { COUNTRY_NAMES, type ShippingCountry } from "@/shared/constants/countries";
+import { formatCountryName } from "@/shared/constants/countries";
 import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
@@ -55,7 +56,7 @@ interface OrderTrackingPageProps {
 
 export default function OrderTrackingPage({ searchParams }: OrderTrackingPageProps) {
 	return (
-		<Suspense fallback={null}>
+		<Suspense fallback={<OrderTrackingSkeleton />}>
 			<OrderTrackingPageContent searchParams={searchParams} />
 		</Suspense>
 	);
@@ -227,9 +228,7 @@ function ShippingAddress({
 				<p className="text-muted-foreground">
 					{order.shippingPostalCode} {order.shippingCity}
 				</p>
-				<p className="text-muted-foreground">
-					{COUNTRY_NAMES[order.shippingCountry as ShippingCountry]}
-				</p>
+				<p className="text-muted-foreground">{formatCountryName(order.shippingCountry)}</p>
 			</div>
 		</section>
 	);

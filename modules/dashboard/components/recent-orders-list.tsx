@@ -18,7 +18,6 @@ import {
 	ItemTitle,
 } from "@/shared/components/ui/item";
 import { Fade } from "@/shared/components/animations/fade";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import type {
 	GetRecentOrdersReturn,
@@ -88,7 +87,6 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										<Item asChild size="sm">
 											<Link
 												href={buildOrderHref(order)}
-												onClick={() => triggerHaptic("light")}
 												aria-label={buildOrderAriaLabel(order)}
 												className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
 												style={{ viewTransitionName: `order-card-${order.id}` } as CSSProperties}
@@ -142,7 +140,6 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 						</ItemGroup>
 						<Link
 							href="/admin/ventes/commandes"
-							onClick={() => triggerHaptic("light")}
 							className="text-muted-foreground hover:text-foreground inline-flex h-11 w-full touch-manipulation items-center justify-center gap-1.5 text-sm active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150"
 						>
 							Voir toutes les commandes
@@ -165,43 +162,46 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 			<CardContent>
 				<div className="space-y-4">
 					{orders.map((order: RecentOrderItem, index) => (
-						<Fade
-							key={order.id}
-							y={6}
-							delay={index * 0.04}
-							inView
-							once
-							className="flex items-center justify-between rounded-lg border p-3"
-						>
-							<div className="min-w-0 flex-1 gap-y-1">
-								<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-									<p className="text-sm font-medium">#{order.orderNumber}</p>
-									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
-										{ORDER_STATUS_LABELS[order.status]}
-									</Badge>
-									<Badge
-										variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
-										className="xs:inline-flex hidden text-xs"
+						<Fade key={order.id} y={6} delay={index * 0.04} inView once>
+							{/* Ligne CLIQUABLE, comme la variante mobile plus haut. Le desktop
+							    rendait des `<div>` inertes : la surface listant le travail du jour
+							    n'avait aucune cible de clic, il fallait rejoindre la liste des
+							    commandes à la main puis y retrouver la ligne. */}
+							<Link
+								href={buildOrderHref(order)}
+								aria-label={buildOrderAriaLabel(order)}
+								className="can-hover:hover:bg-accent/40 focus-ring flex items-center justify-between rounded-lg border p-3 transition-colors"
+							>
+								<div className="min-w-0 flex-1 gap-y-1">
+									<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+										<p className="text-sm font-medium">#{order.orderNumber}</p>
+										<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
+											{ORDER_STATUS_LABELS[order.status]}
+										</Badge>
+										<Badge
+											variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
+											className="xs:inline-flex hidden text-xs"
+										>
+											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
+										</Badge>
+									</div>
+									<p
+										className="text-muted-foreground truncate text-sm"
+										title={`${order.customerName} • ${order.customerEmail}`}
 									>
-										{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
-									</Badge>
+										{order.customerName}
+										<span className="hidden sm:inline"> • {order.customerEmail}</span>
+									</p>
+									<p className="text-muted-foreground text-xs">
+										{format(new Date(order.createdAt), "dd/MM/yyyy à HH:mm", {
+											locale: fr,
+										})}
+									</p>
 								</div>
-								<p
-									className="text-muted-foreground truncate text-sm"
-									title={`${order.customerName} • ${order.customerEmail}`}
-								>
-									{order.customerName}
-									<span className="hidden sm:inline"> • {order.customerEmail}</span>
-								</p>
-								<p className="text-muted-foreground text-xs">
-									{format(new Date(order.createdAt), "dd/MM/yyyy à HH:mm", {
-										locale: fr,
-									})}
-								</p>
-							</div>
-							<div className="text-right">
-								<p className="font-bold tabular-nums">{formatEuro(order.total)}</p>
-							</div>
+								<div className="text-right">
+									<p className="font-bold tabular-nums">{formatEuro(order.total)}</p>
+								</div>
+							</Link>
 						</Fade>
 					))}
 					{orders.length === 0 && (

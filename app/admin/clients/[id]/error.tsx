@@ -12,6 +12,8 @@ export default function UserDetailError(props: {
 			emoji="👤"
 			title="Ce client n'a pas pu charger"
 			route="admin.clients.detail"
+			fallbackHref="/admin/clients"
+			fallbackLabel="Retour aux clients"
 		/>
 	);
 }

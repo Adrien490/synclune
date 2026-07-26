@@ -9,7 +9,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { ExternalLink, Keyboard } from "lucide-react";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 
 const iconButtonClass = cn(
 	"inline-flex size-8 shrink-0 items-center justify-center rounded-md",

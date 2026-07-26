@@ -9,6 +9,8 @@ import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetUsersReturn } from "@/modules/users/types/user.types";
 import { UserMobileItem } from "./user-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface UsersMobileListProps {
 	usersPromise: Promise<GetUsersReturn>;
@@ -21,7 +23,7 @@ export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: Use
 
 	if (users.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={Users}
 					title="Aucun client trouvé"
@@ -39,8 +41,18 @@ export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: Use
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={users.length} singular="client" plural="clients" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={users.length}
+				singular="client"
+				plural="clients"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Clients" className="gap-2">
 				{users.map((user) => (
 					<li key={user.id}>

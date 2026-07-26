@@ -7,14 +7,12 @@ import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { getRecentProducts } from "@/modules/products/data/get-recent-products";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
-import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
 import { cn } from "@/shared/utils/cn";
 import { isRecent } from "@/shared/utils/dates";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
-import { iconButtonClassName } from "./navbar-styles";
 import { NavbarIconButtons } from "./navbar-icon-buttons";
 import { NavbarWrapper } from "./navbar-wrapper";
 
@@ -144,8 +142,12 @@ export async function Navbar() {
 									session={sessionData}
 								/>
 
-								{/* Recherche mobile (juste à droite du menu) */}
-								<QuickSearchTrigger className={cn("inline-flex sm:hidden", iconButtonClassName)} />
+								{/* Pas de trigger recherche mobile ici : sous `sm`, l'entrée est
+									l'onglet « Rechercher » de la bottom-nav (zone du pouce). En
+									garder un second en haut d'écran ferait une double affordance
+									pour la même action. À partir de `sm`, c'est
+									`QuickSearchTrigger variant="bar"` dans `NavbarIconButtons`.
+									Audit recherche 2026-07-26. */}
 
 								<Logo
 									href="/"

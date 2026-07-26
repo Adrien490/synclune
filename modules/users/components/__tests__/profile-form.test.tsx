@@ -28,6 +28,13 @@ vi.mock("@/modules/users/components/email-change-form", () => ({
 	EmailChangeForm: () => <div data-testid="email-change-form" />,
 }));
 
+// `ProfileForm` lit l'état dirty via `useStore(form.store, …)` pour alimenter le
+// garde de modifications non enregistrées. Le mock de `useAppForm` ci-dessous ne
+// fournit pas de vrai `store` TanStack : on court-circuite le sélecteur.
+vi.mock("@tanstack/react-form", () => ({
+	useStore: () => false,
+}));
+
 // Mock useAppForm with a smart implementation that runs validators
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: vi.fn((config: { defaultValues: Record<string, string> }) => {
@@ -79,6 +86,23 @@ vi.mock("@/shared/components/forms", () => ({
 				selector: (state: { canSubmit: boolean }) => unknown[];
 			}) => children(selector({ canSubmit: true })),
 			handleSubmit: vi.fn(),
+			// Le formulaire rend `<form.AppForm><form.SubmitButton …/></form.AppForm>`
+			// depuis l'adoption du bouton partagé : sans ces entrées le rendu échoue
+			// en « Element type is invalid ». On reproduit son contrat.
+			AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+			SubmitButton: ({
+				isPending,
+				idleLabel,
+				pendingLabel,
+			}: {
+				isPending?: boolean;
+				idleLabel: string;
+				pendingLabel: string;
+			}) => (
+				<button type="submit" disabled={isPending ?? false} aria-busy={isPending ?? false}>
+					{isPending ? pendingLabel : idleLabel}
+				</button>
+			),
 		};
 	}),
 }));

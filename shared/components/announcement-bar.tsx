@@ -247,8 +247,9 @@ function useSwipeToDismiss(
 	const [isSwiping, setIsSwiping] = useState(false);
 	const touchStartYRef = useRef<number | null>(null);
 	const swipeOffsetRef = useRef(0);
-	// `useEffectEvent` plutôt qu'un latest-ref + effet de sync (cf. commentaire
-	// identique dans `use-swipe-to-remove`).
+	// `useEffectEvent` plutôt qu'un latest-ref + effet de sync : le callback est
+	// recréé à chaque rendu du parent, l'effet se réexécuterait donc systématiquement
+	// pour ne réassigner qu'une ref.
 	const emitDismiss = useEffectEvent(() => onDismiss());
 
 	useEffect(() => {

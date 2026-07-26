@@ -3,11 +3,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 import { useHaptic, triggerHaptic, __resetHapticCooldown } from "../use-haptic";
 
-function setMatchMedia(reduced: boolean) {
+/**
+ * Mock **query-aware** : `triggerHaptic` interroge deux media queries distinctes
+ * (capacité tactile + reduced-motion). Un mock qui renvoie le même `matches` pour
+ * toute requête ferait passer les tests pour la mauvaise raison — il masquerait
+ * notamment le garde tactile.
+ */
+function setMatchMedia({ reduced = false, touch = true }: { reduced?: boolean; touch?: boolean }) {
 	vi.stubGlobal(
 		"matchMedia",
-		vi.fn(() => ({
-			matches: reduced,
+		vi.fn((query: string) => ({
+			matches: query.includes("prefers-reduced-motion") ? reduced : touch,
 			addEventListener: vi.fn(),
 			removeEventListener: vi.fn(),
 		})),
@@ -31,7 +37,7 @@ function removeVibrate() {
 }
 
 beforeEach(() => {
-	setMatchMedia(false);
+	setMatchMedia({});
 	installVibrateStub(() => true);
 	__resetHapticCooldown();
 });
@@ -52,10 +58,39 @@ describe("useHaptic / triggerHaptic", () => {
 		it("returns false when prefers-reduced-motion: reduce", () => {
 			const vibrateSpy = vi.fn(() => true);
 			installVibrateStub(vibrateSpy);
-			setMatchMedia(true);
+			setMatchMedia({ reduced: true });
 
 			expect(triggerHaptic("medium")).toBe(false);
 			expect(vibrateSpy).not.toHaveBeenCalled();
+		});
+
+		/**
+		 * @regression haptic-touch-device-only
+		 * Un appareil hybride (portable tactile, Surface, iPad + trackpad) expose
+		 * `navigator.vibrate` tout en étant piloté à la souris/au clavier. Sans le
+		 * garde `(hover: none) and (pointer: coarse)`, un clic souris y vibrait.
+		 */
+		it("returns false on a non-touch device even when navigator.vibrate exists", () => {
+			const vibrateSpy = vi.fn(() => true);
+			installVibrateStub(vibrateSpy);
+			setMatchMedia({ touch: false });
+
+			expect(triggerHaptic("medium")).toBe(false);
+			expect(vibrateSpy).not.toHaveBeenCalled();
+		});
+
+		it("does not consume the cooldown when the device is not touch-capable", () => {
+			const vibrateSpy = vi.fn(() => true);
+			installVibrateStub(vibrateSpy);
+
+			setMatchMedia({ touch: false });
+			expect(triggerHaptic("medium")).toBe(false);
+
+			// Une tentative refusée ne doit pas armer le cooldown : le premier appel
+			// légitime qui suit doit passer.
+			setMatchMedia({ touch: true });
+			expect(triggerHaptic("medium")).toBe(true);
+			expect(vibrateSpy).toHaveBeenCalledTimes(1);
 		});
 	});
 

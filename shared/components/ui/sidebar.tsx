@@ -23,6 +23,7 @@ import {
 } from "@/shared/components/ui/tooltip";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
+import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -30,6 +31,8 @@ const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "min(18rem, 85vw)";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+/** Cible de `aria-controls` du trigger — le rapport expanded/collapsed doit désigner un élément. */
+const SIDEBAR_NAV_ID = "sidebar-nav";
 
 type SidebarContextProps = {
 	state: "expanded" | "collapsed";
@@ -67,6 +70,9 @@ function SidebarProvider({
 }) {
 	const isMobile = useIsMobile();
 	const [openMobile, setOpenMobile] = React.useState(false);
+	// La live region ne doit annoncer qu'un CHANGEMENT d'état. Rendue dès le HTML
+	// initial, elle faisait annoncer « Menu ouvert » à chaque chargement de page.
+	const [hasToggled, setHasToggled] = React.useState(false);
 
 	// This is the internal state of the sidebar.
 	// We use openProp and setOpenProp for control from outside the component.
@@ -79,6 +85,7 @@ function SidebarProvider({
 		} else {
 			_setOpen(openState);
 		}
+		setHasToggled(true);
 
 		// This sets the cookie to keep the sidebar state.
 		const isSecure = window.location.protocol === "https:";
@@ -92,10 +99,12 @@ function SidebarProvider({
 
 	// Effect Event: reads toggleSidebar without re-attaching the listener on isMobile changes
 	const onKeyDown = React.useEffectEvent((event: KeyboardEvent) => {
-		if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-			event.preventDefault();
-			toggleSidebar();
-		}
+		if (event.key !== SIDEBAR_KEYBOARD_SHORTCUT || !(event.metaKey || event.ctrlKey)) return;
+		// Garde SSOT partagée avec `?` et la pagination : ⌘B ne doit pas replier la
+		// navigation pendant une saisie (⌘B = gras dans un contenteditable).
+		if (isInteractiveTarget(event.target)) return;
+		event.preventDefault();
+		toggleSidebar();
 	});
 
 	// Adds a keyboard shortcut to toggle the sidebar.
@@ -139,7 +148,7 @@ function SidebarProvider({
 					{children}
 				</div>
 				<div aria-live="polite" aria-atomic="true" className="sr-only">
-					{state === "expanded" ? "Menu ouvert" : "Menu réduit"}
+					{hasToggled ? (state === "expanded" ? "Menu ouvert" : "Menu réduit") : ""}
 				</div>
 			</TooltipProvider>
 		</SidebarContext.Provider>
@@ -204,6 +213,7 @@ function Sidebar({
 
 	return (
 		<nav
+			id={SIDEBAR_NAV_ID}
 			aria-label="Navigation principale du tableau de bord"
 			className="group peer text-sidebar-foreground hidden md:block"
 			data-state={state}
@@ -226,6 +236,10 @@ function Sidebar({
 			/>
 			<div
 				data-slot="sidebar-container"
+				// En `offcanvas` replié, le conteneur est translaté hors écran mais reste
+				// dans le DOM : sans `inert`, Tab traverse tous les liens invisibles
+				// (WCAG 2.4.7). `inert` retire aussi le sous-arbre de l'arbre a11y.
+				inert={state === "collapsed" && collapsible === "offcanvas"}
 				className={cn(
 					"fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear motion-reduce:transition-none md:flex",
 					side === "left"
@@ -262,6 +276,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 			size="icon"
 			aria-label={state === "expanded" ? "Masquer le menu" : "Afficher le menu"}
 			aria-expanded={state === "expanded"}
+			aria-controls={SIDEBAR_NAV_ID}
 			className={cn("size-7 cursor-pointer", className)}
 			onClick={(event) => {
 				onClick?.(event);
@@ -305,11 +320,18 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 	);
 }
 
-function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+/**
+ * Conteneur du contenu à droite de la sidebar.
+ *
+ * Volontairement un `<div>` et non un `<main>` : le seul consommateur
+ * (`app/admin/layout.tsx`) niche son propre `<main id="admin-main-content">`
+ * ciblé par le `SkipLink`. Deux `<main>` imbriqués (dont un `id="main-content"`
+ * codé en dur, capté par le `querySelector` global de `announcement-bar`) est un
+ * défaut de structure, pas une commodité.
+ */
+function SidebarInset({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		<main
-			id="main-content"
-			tabIndex={-1}
+		<div
 			data-slot="sidebar-inset"
 			className={cn(
 				"bg-background relative flex w-full flex-1 flex-col",
@@ -666,5 +688,8 @@ export {
 	SidebarProvider,
 	SidebarSeparator,
 	SidebarTrigger,
+	// Exporté pour que la layout admin relise la préférence côté serveur
+	// (`SidebarProvider defaultOpen`) — sinon l'état replié est perdu au reload.
+	SIDEBAR_COOKIE_NAME,
 	useSidebar,
 };

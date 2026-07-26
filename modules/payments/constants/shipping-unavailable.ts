@@ -4,7 +4,7 @@
  * (3 phrasings différents pour la même condition).
  */
 export const SHIPPING_UNAVAILABLE = {
-	section: "Nous ne livrons pas encore dans cette zone.",
+	section: "Nous ne livrons pas encore la Corse ni les DOM-TOM.",
 	contactCta: "Écris-nous pour trouver une solution.",
 	payButton: "Cette zone n'est pas livrable pour le moment.",
 	summary: "Zone non livrable",

@@ -1,20 +1,14 @@
-import { FulfillmentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { RefundStatus } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import {
-	PAID_REVENUE_STATUSES,
-	SHIPPABLE_PAYMENT_STATUSES,
-} from "@/modules/orders/constants/revenue-status.constants";
-import type {
-	DashboardPeriod,
-} from "@/modules/dashboard/constants/period.constants";
-import {
-	DEFAULT_PERIOD,
-} from "@/modules/dashboard/constants/period.constants";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
+import { buildToShipWhereClause } from "@/modules/orders/services/to-ship.service";
+import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
+import { DEFAULT_PERIOD } from "@/modules/dashboard/constants/period.constants";
 import {
 	getChartConfig,
 	getPeriodBoundaries,
@@ -119,16 +113,10 @@ export async function fetchDashboardKpis(
 						...notDeleted,
 					},
 				}),
-				// "À expédier" : argent encore (au moins partiellement) acquis → exclut REFUNDED.
-				prisma.order.count({
-					where: {
-						paymentStatus: { in: [...SHIPPABLE_PAYMENT_STATUSES] },
-						fulfillmentStatus: {
-							in: [FulfillmentStatus.UNFULFILLED, FulfillmentStatus.PROCESSING],
-						},
-						...notDeleted,
-					},
-				}),
+				// "À expédier" — prédicat SSOT partagé avec la pastille de navigation
+				// (`getAdminNavBadges`). Les deux divergeaient : ce compteur n'excluait pas
+				// les commandes annulées, la pastille ignorait PARTIALLY_REFUNDED/PROCESSING.
+				prisma.order.count({ where: buildToShipWhereClause() }),
 				// Remboursements (ANALYTICS-AUDIT-007) : bucketés sur `processedAt`
 				// (date de décaissement Stripe), cohérent avec le CA cash-basis.
 				prisma.refund.aggregate({

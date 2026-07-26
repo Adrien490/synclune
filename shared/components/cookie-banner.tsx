@@ -54,7 +54,7 @@ export function CookieBanner() {
 						duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.slow,
 						ease: MOTION_CONFIG.easing.easeOut,
 					}}
-					className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] left-4 z-(--z-alert) w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-6 md:left-6 md:max-w-md"
+					className="fixed right-4 bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] left-4 z-(--z-alert) w-auto max-w-[calc(100vw-2rem)] md:right-auto md:bottom-[calc(var(--bottom-bar-height,0px)+max(1.5rem,env(safe-area-inset-bottom)))] md:left-6 md:max-w-md"
 					role="region"
 					aria-live="polite"
 					aria-labelledby="cookie-title"

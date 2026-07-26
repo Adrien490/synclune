@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { OrderStatus } from "@/app/generated/prisma/client";
 
 import { UpdateTrackingForm } from "@/modules/orders/components/admin/update-tracking-form";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
@@ -28,6 +29,23 @@ export default async function OrderTrackingPage({ params }: { params: OrderTrack
 	const order = await getOrderById({ id });
 
 	if (!order) {
+		notFound();
+	}
+
+	// Garde miroir de `updateTracking` (la Server Action) : les 3 sous-routes d'édition
+	// sœurs (client, adresse-livraison, adresse-facturation) gatent déjà, celle-ci non —
+	// le deep-link mobile émis par `order-shipping-card` rendait donc un formulaire de
+	// suivi complet sur une commande PENDING, que l'action refusait ensuite.
+	//
+	// ⚠️ On ne gate PAS sur `permissions.canUpdateTracking` : celui-ci exige en plus
+	// `hasTrackingNumber` (il pilote le bouton « Modifier » d'un suivi EXISTANT), alors
+	// que l'action accepte volontairement d'AJOUTER un suivi manquant à une commande
+	// expédiée. Gater dessus fermerait ce cas légitime. La fenêtre de verrouillage
+	// 30 jours après livraison reste portée par l'action, qui renvoie un message précis.
+	const canReachTrackingForm =
+		order.status === OrderStatus.SHIPPED || order.status === OrderStatus.DELIVERED;
+
+	if (!canReachTrackingForm) {
 		notFound();
 	}
 

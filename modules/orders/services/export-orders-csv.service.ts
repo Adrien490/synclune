@@ -105,22 +105,35 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 	const rows = orders.map((order) => {
 		const refundedAmount = order.refunds.reduce((sum, refund) => sum + refund.amount, 0);
 		const netAmount = order.total - refundedAmount;
+
+		// ⚠️ TOUTE colonne dont la valeur vient de la base passe par `escapeCsv`.
+		// `escapeCsv` n'était appliqué qu'à `customerName` : `customerEmail` est **saisi
+		// par le client au checkout** et `z.email()` accepte un local-part à tiret initial
+		// (`-x@example.com`), or `-` est justement dans la liste de préfixes de formule
+		// d'`escapeCsv`. `paymentMethod` vient de Stripe. Le test « CSV injection » ne
+		// couvrait que `customerName`, d'où une fausse impression de couverture.
+		//
+		// Les colonnes numériques et la date NE sont PAS échappées : elles sont produites
+		// par nos propres formatters, et préfixer un montant négatif (`-12,50`) d'une
+		// apostrophe le transformerait en texte dans le tableur.
+		const text = (value: string | null | undefined) => escapeCsv(value ?? "");
+
 		return [
-			order.invoiceNumber ?? "",
-			order.creditNoteNumber ?? "",
-			order.orderNumber,
+			text(order.invoiceNumber),
+			text(order.creditNoteNumber),
+			text(order.orderNumber),
 			order.paidAt ? formatDateCsv(order.paidAt) : "",
-			escapeCsv(order.customerName),
-			order.customerEmail,
+			text(order.customerName),
+			text(order.customerEmail),
 			formatEuroCsv(order.subtotal),
 			formatEuroCsv(order.discountAmount),
 			formatEuroCsv(order.shippingCost),
 			formatEuroCsv(order.total),
 			formatEuroCsv(refundedAmount),
 			formatEuroCsv(netAmount),
-			order.paymentMethod,
-			order.paymentStatus,
-			order.status,
+			text(order.paymentMethod),
+			text(order.paymentStatus),
+			text(order.status),
 		];
 	});
 

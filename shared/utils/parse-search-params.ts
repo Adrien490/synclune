@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CUID_LENGTH } from "@/shared/schemas/pagination-schema";
+import { cursorSchema } from "@/shared/schemas/pagination-schema";
 
 /**
  * Safely parse a search parameter with a Zod schema
@@ -27,10 +27,13 @@ export function parseSearchParam<T>(
  */
 export const searchParamParsers = {
 	/**
-	 * Parse cursor parameter (CUID)
+	 * Parse cursor parameter (id Prisma cuid2/cuid v1)
+	 *
+	 * Délègue à `cursorSchema` (SSOT) : dupliquer la contrainte de longueur ici avait
+	 * fait diverger ce parseur de la réalité des ids Prisma.
 	 */
 	cursor: (value: string | string[] | undefined): string | undefined => {
-		return parseSearchParam(value, z.string().length(CUID_LENGTH), undefined);
+		return parseSearchParam(value, cursorSchema, undefined);
 	},
 
 	/**

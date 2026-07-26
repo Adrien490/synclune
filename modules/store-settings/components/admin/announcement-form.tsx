@@ -3,6 +3,7 @@
 import { Megaphone } from "lucide-react";
 import { useActionState } from "react";
 
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import {
 	ANNOUNCEMENT_VARIANTS,
@@ -11,9 +12,12 @@ import {
 	type AnnouncementVariant,
 } from "@/shared/constants/announcement";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -65,6 +69,20 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 		context: "AnnouncementForm",
 	});
 
+	const isMobile = useIsMobile();
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+
+	// Pas de `listPath` : l'annonce est éditée en place dans /admin/contenu/annonces,
+	// il n'y a pas de liste parente vers laquelle Échap devrait ramener.
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		getCanSubmit: () => form.state.canSubmit,
+	});
+
 	return (
 		<form
 			ref={formRef}
@@ -90,7 +108,10 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 				{(field) => (
 					<field.TextareaField
 						label="Message"
-						placeholder="Livraison offerte dès 50 € jusqu'à dimanche"
+						// Pas de promesse de livraison offerte : le checkout ne connaît pas de
+						// seuil de gratuité, et un tarif à 0 casserait l'invariant
+						// `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`.
+						placeholder="Nouvelle collection en ligne jusqu'à dimanche"
 						maxLength={200}
 						showCounter
 						rows={2}
@@ -170,17 +191,22 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 				)}
 			</form.Subscribe>
 
-			<div className="flex justify-end pt-4">
-				<form.AppForm>
-					<form.SubmitButton
-						isPending={isPending}
-						idleLabel="Enregistrer"
-						pendingLabel="Enregistrement…"
-						size="sm"
-						className="min-h-11"
-					/>
-				</form.AppForm>
-			</div>
+			{/* `AdminFormFooter` et non un `flex justify-end` nu : ce formulaire compte
+			    6 champs + une prévisualisation, donc sur mobile le bouton passait sous la
+			    ligne de flottaison, derrière l'`AdminMobileBottomBar`. */}
+			<AdminFormFooter pending={isPending}>
+				<div className="flex justify-end">
+					<form.AppForm>
+						<form.SubmitButton
+							isPending={isPending}
+							idleLabel="Enregistrer"
+							pendingLabel="Enregistrement…"
+							showKbdHint
+							className="w-full sm:w-auto sm:min-w-56"
+						/>
+					</form.AppForm>
+				</div>
+			</AdminFormFooter>
 		</form>
 	);
 }

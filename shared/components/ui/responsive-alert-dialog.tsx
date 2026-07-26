@@ -95,17 +95,6 @@ function ResponsiveAlertDialogContent({
 	);
 }
 
-/**
- * No-op : conservé pour compatibilité avec les callsites existants.
- * Le hero icon n'est plus rendu (uniformisation AlertDialog Radix).
- */
-function ResponsiveAlertDialogHeroIcon(_: {
-	icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
-	className?: string;
-}) {
-	return null;
-}
-
 function ResponsiveAlertDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 	useResponsiveAlert("ResponsiveAlertDialogHeader");
 	return <AlertDialogHeader className={className} {...props} />;
@@ -185,7 +174,6 @@ export {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 	ResponsiveAlertDialogTrigger,
 };

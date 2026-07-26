@@ -7,6 +7,8 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { OrdersMobileListItem } from "./orders-mobile-list-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface OrdersMobileListProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -23,7 +25,7 @@ export function OrdersMobileList({
 
 	if (orders.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={ShoppingBag}
 					title="Aucune commande trouvée"
@@ -43,8 +45,18 @@ export function OrdersMobileList({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={orders.length}
+				singular="commande"
+				plural="commandes"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Commandes" className="gap-2">
 				{orders.map((order, index) => (
 					<li key={order.id}>

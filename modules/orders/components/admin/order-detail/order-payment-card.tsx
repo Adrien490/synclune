@@ -4,6 +4,7 @@ import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
+import { DetailInfoList, DetailInfoRow } from "@/shared/components/admin/detail-info-row";
 import type { OrderPaymentCardProps } from "./types";
 
 export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
@@ -15,47 +16,45 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 					Paiement
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-3">
-				<div>
-					<p className="text-muted-foreground text-sm">Méthode</p>
-					<p className="capitalize">{order.paymentMethod}</p>
-				</div>
-				{order.paidAt && (
-					<div>
-						<p className="text-muted-foreground text-sm">Date de paiement</p>
-						<p>
+			<CardContent>
+				{/* `stacked` : l'identifiant Stripe `pi_…` ne tient pas à côté de son libellé. */}
+				<DetailInfoList orientation="stacked">
+					<DetailInfoRow label="Méthode" valueClassName="capitalize">
+						{order.paymentMethod}
+					</DetailInfoRow>
+					{order.paidAt && (
+						<DetailInfoRow label="Date de paiement">
 							{format(order.paidAt, "d MMMM yyyy 'à' HH'h'mm", {
 								locale: fr,
 							})}
-						</p>
-					</div>
-				)}
-				{order.stripePaymentIntentId && (
-					<div>
-						<p className="text-muted-foreground text-sm">Stripe Payment Intent</p>
-						<div className="flex items-center gap-2">
-							<code className="bg-muted max-w-[150px] truncate rounded px-1.5 py-0.5 text-xs tabular-nums">
-								{order.stripePaymentIntentId}
-							</code>
-							<CopyButton
-								text={order.stripePaymentIntentId}
-								label="Payment Intent"
-								className="size-6 p-0"
-								size="icon"
-							/>
-							<Button variant="ghost" size="sm" className="size-6 p-0" asChild>
-								<a
-									href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
-									target="_blank"
-									rel="noopener noreferrer"
-									aria-label="Voir sur Stripe (s'ouvre dans un nouvel onglet)"
-								>
-									<ExternalLink className="size-3" aria-hidden="true" />
-								</a>
-							</Button>
-						</div>
-					</div>
-				)}
+						</DetailInfoRow>
+					)}
+					{order.stripePaymentIntentId && (
+						<DetailInfoRow label="Stripe Payment Intent">
+							<div className="flex items-center gap-2">
+								<code className="bg-muted max-w-[150px] truncate rounded px-1.5 py-0.5 text-xs tabular-nums">
+									{order.stripePaymentIntentId}
+								</code>
+								<CopyButton
+									text={order.stripePaymentIntentId}
+									label="Payment Intent"
+									className="size-6 p-0"
+									size="icon"
+								/>
+								<Button variant="ghost" size="sm" className="size-6 p-0" asChild>
+									<a
+										href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label="Voir sur Stripe (s'ouvre dans un nouvel onglet)"
+									>
+										<ExternalLink className="size-3" aria-hidden="true" />
+									</a>
+								</Button>
+							</div>
+						</DetailInfoRow>
+					)}
+				</DetailInfoList>
 			</CardContent>
 		</Card>
 	);

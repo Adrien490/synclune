@@ -83,7 +83,13 @@ describe("DashboardAlertLink", () => {
 		expect(link).toHaveAttribute("rel", "noopener noreferrer");
 	});
 
-	it("fires 'selection' haptic on click", async () => {
+	/**
+	 * @regression no-haptic-on-passive-navigation
+	 * Une pastille d'alerte est un LIEN. Le retour haptique est réservé aux
+	 * changements d'état signifiants (soumission, destruction, sélection, geste) ;
+	 * sur de la navigation il devient du bruit et dilue le signal.
+	 */
+	it("fires no haptic on click (navigation is passive)", async () => {
 		const user = userEvent.setup();
 		render(
 			<DashboardAlertLink
@@ -96,7 +102,7 @@ describe("DashboardAlertLink", () => {
 		);
 
 		await user.click(screen.getByRole("link", { name: /test/i }));
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("applies tone-based background classes", () => {

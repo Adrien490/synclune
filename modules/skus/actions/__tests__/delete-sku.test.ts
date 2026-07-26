@@ -278,14 +278,38 @@ describe("deleteProductSku", () => {
 		expect(result.message).toContain(fallback.sku);
 	});
 
-	it("should promote any SKU as fallback when no active SKU exists", async () => {
+	// Audit « Admin catalogue » 2026-07-26 : plus AUCUN repli sur un SKU inactif.
+	// `set-default-sku`, `update-sku-status` et `update-product` refusent tous les
+	// trois l'état « défaut inactif » — le fabriquer ici était incohérent.
+	it("ne promeut PAS de variante inactive quand aucune variante active n'existe", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDelete({ isDefault: true }));
-		// First findFirst (active) returns null, second findFirst (any) returns fallback
-		const fallback = { id: VALID_CUID_2, sku: "BRC-LUNE-AR-M" };
-		mockPrisma.productSku.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce(fallback);
+		// findFirst (candidat actif) ne trouve rien : aucune promotion ne doit suivre.
+		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 
 		const result = await deleteProductSku(undefined, validFormData);
+
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+		// Une seule interrogation : le second findFirst « n'importe quelle variante »
+		// a disparu.
+		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledTimes(1);
+	});
+
+	it("promeut la variante ACTIVE la plus ancienne quand le défaut est supprimé", async () => {
+		mockPrisma.productSku.findUnique.mockResolvedValue(createMockSkuForDelete({ isDefault: true }));
+		mockPrisma.productSku.findFirst.mockResolvedValue({
+			id: VALID_CUID_2,
+			sku: "BRC-LUNE-AR-M",
+		});
+
+		const result = await deleteProductSku(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSku.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({ isActive: true, deletedAt: null }),
+			}),
+		);
 		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
 			where: { id: VALID_CUID_2 },
 			data: { isDefault: true },

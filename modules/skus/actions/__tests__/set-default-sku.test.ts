@@ -63,7 +63,7 @@ vi.mock("@/shared/lib/actions", () => ({
 		data,
 	}),
 }));
-vi.mock("../../schemas/sku.schemas", () => ({ deleteProductSkuSchema: {} }));
+vi.mock("../../schemas/sku.schemas", () => ({ setDefaultProductSkuSchema: {} }));
 vi.mock("../../utils/cache.utils", () => ({
 	getSkuInvalidationTags: mockGetSkuInvalidationTags,
 }));

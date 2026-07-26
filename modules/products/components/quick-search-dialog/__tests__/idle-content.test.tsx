@@ -422,4 +422,45 @@ describe("IdleContent", () => {
 			expect(screen.getByText("Collections")).toBeInTheDocument();
 		});
 	});
+
+	/**
+	 * @regression qs-idle-has-no-orphan-options
+	 *
+	 * Les items du panneau idle portaient `role="option"` uniquement pour rester
+	 * navigables aux flèches — alors que le conteneur n'est PAS un listbox (F3).
+	 * Des options sans listbox propriétaire sont invalides, et `aria-activedescendant`
+	 * étant supprimé en idle, le déplacement était TOTALEMENT SILENCIEUX pour les
+	 * lecteurs d'écran pendant que `data-active` le montrait à l'écran.
+	 *
+	 * Depuis le lot E : `data-qs-option` porte la navigation (focus DOM réel,
+	 * annoncé nativement), `role="option"` reste réservé au vrai listbox.
+	 */
+	describe("sémantique ARIA du panneau idle", () => {
+		it("n'expose AUCUNE option (il n'y a pas de listbox propriétaire)", () => {
+			render(
+				<IdleContent
+					{...defaultProps}
+					searches={["bague", "collier"]}
+					recentlyViewed={[mockProduct]}
+					collections={mockCollections}
+				/>,
+			);
+
+			expect(screen.queryAllByRole("option")).toHaveLength(0);
+			expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+		});
+
+		it("marque tout de même les items comme navigables", () => {
+			const { container } = render(
+				<IdleContent
+					{...defaultProps}
+					searches={["bague"]}
+					recentlyViewed={[mockProduct]}
+					collections={mockCollections}
+				/>,
+			);
+
+			expect(container.querySelectorAll("[data-qs-option]").length).toBeGreaterThan(0);
+		});
+	});
 });

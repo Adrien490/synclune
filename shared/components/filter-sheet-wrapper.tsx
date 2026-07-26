@@ -28,6 +28,7 @@ import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { mediaBetween } from "@/shared/constants/breakpoints";
 import { Filter, LoaderCircle, X } from "lucide-react";
 import { useState } from "react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
@@ -58,9 +59,7 @@ export function FilterSheetWrapper({
 	const isMobile = useIsMobile();
 	// Tablette portrait (iPad 810×1080, Galaxy Tab) → bottom-sheet plus naturel
 	// qu'un right-side sheet de 400px. Desktop ≥1024 paysage inchangé.
-	const isTabletPortrait = useMediaQuery(
-		"(max-width: 1023px) and (min-width: 768px) and (orientation: portrait)",
-	);
+	const isTabletPortrait = useMediaQuery(`${mediaBetween("md", "lg")} and (orientation: portrait)`);
 	const useBottomSheet = isMobile || isTabletPortrait;
 
 	const [confirmClearOpen, setConfirmClearOpen] = useState(false);
@@ -123,20 +122,24 @@ export function FilterSheetWrapper({
 			<Filter className="size-4" aria-hidden="true" />
 			<span>Filtres</span>
 			{activeFiltersCount > 0 && (
-				<>
-					<Badge
-						variant="default"
-						className="animate-in zoom-in-50 absolute -top-2.5 -right-2.5 flex h-5 min-w-5 items-center justify-center px-1 text-xs font-bold shadow-sm duration-200"
-						aria-hidden="true"
-					>
-						{activeFiltersCount}
-					</Badge>
-					<span className="sr-only" aria-live="polite">
-						{activeFiltersCount} filtre{activeFiltersCount > 1 ? "s" : ""} actif
-						{activeFiltersCount > 1 ? "s" : ""}
-					</span>
-				</>
+				<Badge
+					variant="default"
+					className="animate-in zoom-in-50 absolute -top-2.5 -right-2.5 flex h-5 min-w-5 items-center justify-center px-1 text-xs font-bold shadow-sm duration-200"
+					aria-hidden="true"
+				>
+					{activeFiltersCount}
+				</Badge>
 			)}
+			{/*
+			 * Région sortie du bloc conditionnel : gatée sur `activeFiltersCount > 0`,
+			 * elle se montait avec son texte, donc la transition 0 → 1 filtre — la
+			 * seule qui informe vraiment — n'était jamais annoncée.
+			 */}
+			<span className="sr-only" aria-live="polite" aria-atomic="true">
+				{activeFiltersCount > 0
+					? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}`
+					: ""}
+			</span>
 		</Button>
 	);
 
@@ -147,6 +150,11 @@ export function FilterSheetWrapper({
 			onOpenChange={controlledOnOpenChange}
 			snapPoints={effectiveSnapPoints}
 			repositionInputs={useBottomSheet}
+			// Contenu dense et interactif (sliders de prix, accordéons, checkboxes) :
+			// chaque touch compte, et un drag sur un slider fermait la sheet. Restreint
+			// à la variante bottom, qui est la seule à rendre une `SheetHandle` — en
+			// latéral desktop le mode permissif reste correct.
+			handleOnly={useBottomSheet}
 		>
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 

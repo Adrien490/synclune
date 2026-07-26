@@ -5,6 +5,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { buildSparklinePath } from "../services/sparkline-path.service";
 import { KpiCard } from "./kpi-card";
 import { KpiCardAnimated } from "./kpi-card-animated";
+import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
 function formatFulfillmentTime(hours: number): string {
 	if (hours <= 0) return "—";
@@ -24,10 +25,7 @@ interface DashboardKpisProps {
  * Row 2: Finalisation panier, Note moyenne, Délai d'expédition, Nouveaux clients (2-col on mobile)
  *
  */
-export function DashboardKpis({
-	kpis,
-	comparisonLabel = "vs mois dernier",
-}: DashboardKpisProps) {
+export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
 	const refundRate = kpis.monthlyRevenue.refundRate;
@@ -51,10 +49,8 @@ export function DashboardKpis({
 
 	return (
 		<div className="space-y-4">
-			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+.
-			    `data-no-swipe-nav` opts this row out of the dashboard-level period-swipe
-			    wrapper so the native snap-x horizontal scroll isn't hijacked. */}
-			<div data-no-swipe-nav>
+			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+. */}
+			<div>
 				<ScrollFade
 					axis="horizontal"
 					className="overscroll-x-contain"
@@ -136,6 +132,12 @@ export function DashboardKpis({
 									priority={kpis.pendingShipment.count > 0 ? "alert" : "info"}
 									status={kpis.pendingShipment.count > 0 ? "warning" : "default"}
 									tooltip="Commandes payées en attente d'expédition"
+									// Le seul KPI qui désigne une FILE DE TRAVAIL et non une mesure :
+									// il doit mener aux commandes qu'il compte. Sans `href` (pourtant
+									// supporté par KpiCard), c'était un nombre mort — l'admin devait
+									// rejoindre la liste à la main puis repérer les lignes à l'œil.
+									// Pas de lien quand la file est vide : rien à aller voir.
+									href={kpis.pendingShipment.count > 0 ? ORDERS_TO_SHIP_HREF : undefined}
 								/>
 							</div>
 						</KpiCardAnimated>

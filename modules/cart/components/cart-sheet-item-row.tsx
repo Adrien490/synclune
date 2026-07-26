@@ -5,6 +5,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { SwipeableCard } from "@/shared/components/swipeable-card";
+import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
@@ -41,13 +42,29 @@ interface CartSheetItemRowProps {
 	 * Desktop keeps the click-remove button only.
 	 */
 	isMobile?: boolean;
+	/**
+	 * Premier article de la liste → joue le « peek nudge » de découvrabilité du
+	 * swipe-to-delete, une seule fois par appareil (`useGestureHintOnce`).
+	 */
+	isFirst?: boolean;
 }
 
 /**
  * Ligne d'article version compacte pour le cart sheet
  * Layout vertical optimise pour la largeur du sheet
  */
-export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetItemRowProps) {
+export function CartSheetItemRow({
+	item,
+	onClose,
+	isMobile = false,
+	isFirst = false,
+}: CartSheetItemRowProps) {
+	// Le swipe-to-delete n'avait aucun indice : `useGestureHintOnce` (le mécanisme
+	// prévu pour ça, et que `swipeable-card` recommande explicitement) n'était câblé
+	// que sur les commandes admin. Le hook est appelé inconditionnellement
+	// (rules-of-hooks) mais désactivé hors 1er article — pas de lecture localStorage
+	// superflue sur les autres lignes.
+	const peek = useGestureHintOnce("cart-swipe-delete", { enabled: isFirst && isMobile });
 	const subtotal = getCartItemSubtotal(item);
 	const isOutOfStock = isCartItemOutOfStock(item);
 	const isInactive = isCartItemInactive(item);
@@ -245,6 +262,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 	return (
 		<SwipeableCard
 			className="rounded-lg"
+			peek={peek}
 			leftAction={{
 				children: <Trash2 className="text-destructive-foreground size-5" aria-hidden="true" />,
 				label: `Supprimer ${item.sku.product.title} du panier`,

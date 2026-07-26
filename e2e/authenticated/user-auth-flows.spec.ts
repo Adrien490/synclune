@@ -1,5 +1,6 @@
 import { test, expect } from "../fixtures";
 import { TIMEOUTS } from "../constants";
+import { VISIBLE_ALERT } from "../helpers/assertions";
 
 test.describe("Flux d'authentification", { tag: ["@critical"] }, () => {
 	test(
@@ -36,7 +37,7 @@ test.describe("Flux d'authentification", { tag: ["@critical"] }, () => {
 		// Should show error message and stay on login page
 		const errorMessage = page
 			.getByText(/identifiants|incorrect|invalide|erreur/i)
-			.or(page.locator('[role="alert"]'));
+			.or(page.locator(VISIBLE_ALERT));
 		await expect(errorMessage.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 		await expect(page).toHaveURL(/\/connexion/);
 	});

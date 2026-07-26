@@ -55,8 +55,10 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 		previousFocusRef.current = null;
 	}, [open]);
 
+	// Pas d'haptique au clic : le `success` d'`onSuccess` arrive après un aller-retour
+	// serveur, donc hors du cooldown de 80 ms — c'étaient deux vibrations pour un
+	// seul appui. On garde celle qui informe (« données à jour »).
 	const handleRefresh = () => {
-		haptic("medium");
 		refresh();
 	};
 
@@ -123,8 +125,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 							aria-live="polite"
 							aria-atomic="true"
 							data-testid="dashboard-refresh-last-sync"
-						>
-						</p>
+						></p>
 					</div>
 
 					<p className="text-muted-foreground text-xs leading-relaxed">

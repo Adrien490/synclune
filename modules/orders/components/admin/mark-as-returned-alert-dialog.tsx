@@ -8,13 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
-import { LoaderCircle, RotateCcw, Undo2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
@@ -45,7 +44,6 @@ export function MarkAsReturnedAlertDialog() {
 		return (
 			<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="info">
 				<ResponsiveAlertDialogContent>
-					<ResponsiveAlertDialogHeroIcon icon={RotateCcw} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Commande retournée</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>
@@ -82,7 +80,6 @@ export function MarkAsReturnedAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Undo2} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Marquer comme retourné</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

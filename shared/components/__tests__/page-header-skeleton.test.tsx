@@ -85,7 +85,10 @@ describe("PageHeaderSkeleton", () => {
 		const { container } = render(<PageHeaderSkeleton hasActions />);
 
 		// The action div contains a h-9 w-32 placeholder
-		const actionPlaceholders = container.querySelectorAll(".h-9.w-32");
+		// `h-11` : taille par défaut de `Button`, alignée sur le vrai `PageHeader`.
+		// Le squelette réservait `h-9` (36 px au lieu de 44) — 8 px de décalage dans
+		// une rangée `md:flex-row`.
+		const actionPlaceholders = container.querySelectorAll(".h-11.w-32");
 		expect(actionPlaceholders.length).toBeGreaterThan(0);
 	});
 
@@ -99,7 +102,10 @@ describe("PageHeaderSkeleton", () => {
 	it("renders action area when hasActions=true (compact variant)", () => {
 		const { container } = render(<PageHeaderSkeleton variant="compact" hasActions />);
 
-		const actionPlaceholders = container.querySelectorAll(".h-9.w-32");
+		// `h-11` : taille par défaut de `Button`, alignée sur le vrai `PageHeader`.
+		// Le squelette réservait `h-9` (36 px au lieu de 44) — 8 px de décalage dans
+		// une rangée `md:flex-row`.
+		const actionPlaceholders = container.querySelectorAll(".h-11.w-32");
 		expect(actionPlaceholders.length).toBeGreaterThan(0);
 	});
 

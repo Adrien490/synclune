@@ -21,6 +21,9 @@ import { RefreshCollectionsButton } from "@/modules/collections/components/admin
 import { CollectionsAdminDialogs } from "./_components/collections-admin-dialogs";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters } from "./_utils/params";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 // Lazy loading - dialogs et bottom bar charges uniquement a l'ouverture
 const CollectionsBottomBar = dynamic(() =>
@@ -95,7 +98,16 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={collectionsPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="collection"
+						plural="collections"
+					/>
+				</Suspense>
+
 				<CollectionsBottomBar />
 
 				<Suspense

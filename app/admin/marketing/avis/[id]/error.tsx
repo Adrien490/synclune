@@ -12,6 +12,8 @@ export default function ReviewDetailError(props: {
 			emoji="⭐"
 			title="Cet avis n'a pas pu charger"
 			route="admin.marketing.avis.detail"
+			fallbackHref="/admin/marketing/avis"
+			fallbackLabel="Retour aux avis"
 		/>
 	);
 }

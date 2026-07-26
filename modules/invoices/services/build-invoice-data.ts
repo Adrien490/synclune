@@ -144,9 +144,6 @@ export function buildSellerInfo(order: GetOrderReturn): SellerInfo {
 		legalForm: order.vendorLegalForm ?? vendor.company_legal_form,
 		address,
 		email: order.vendorEmail ?? vendor.company_email,
-		// Routing PDP émetteur : non utilisé en B2C franchise (config env uniquement).
-		eInvoicingAddress: vendor.einvoicing_address,
-		eInvoicingPlatformId: vendor.einvoicing_platform_id,
 		// EINV-F4 : la mention 293 B est DÉRIVÉE du régime figé (pas d'un flag
 		// indépendant). En franchise on garantit un libellé non vide (fallback SSOT)
 		// — jamais de mention manquante figée 10 ans (Art. L102 B LPF). Hors
@@ -192,21 +189,15 @@ function parseVendorAddress(raw: string, recipientName: string): StructuredAddre
 export function buildBuyerInfo(order: GetOrderReturn): BuyerInfo {
 	const { firstName, lastName } = splitCustomerName(order.customerName);
 	// Synclune vend exclusivement en B2C (particuliers) : aucun identifiant
-	// société ni routing PDP n'est capturé au checkout.
+	// société n'est capturé au checkout.
 	return {
-		type: order.customerType,
 		legalName: null,
 		firstName,
 		lastName,
 		email: order.customerEmail,
 		phone: order.customerPhone,
-		siren: null,
 		siret: null,
 		vatNumber: null,
-		eInvoicingAddress: null,
-		eInvoicingPlatformId: null,
-		publicEntityId: null,
-		chorusServiceCode: null,
 	};
 }
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CustomerType, PaymentMethod } from "@/app/generated/prisma/enums";
+import { PaymentMethod } from "@/app/generated/prisma/enums";
 import { TAX_CATEGORY_CODES } from "@/shared/constants/tax-categories";
 
 /**
@@ -11,7 +11,9 @@ import { TAX_CATEGORY_CODES } from "@/shared/constants/tax-categories";
  * archivage immuable (Art. L102 B LPF).
  */
 
-const invoiceFormatSchema = z.enum(["PDF", "FACTURX", "UBL", "CII"]);
+// Seul format réellement rendu (cf. `InvoiceFormat`) : accepter FACTURX/UBL/CII
+// laissait le schéma valider une demande qu'aucun renderer ne pouvait honorer.
+const invoiceFormatSchema = z.enum(["PDF"]);
 
 const taxCategoryCodeSchema = z.enum([
 	TAX_CATEGORY_CODES.STANDARD,
@@ -45,8 +47,6 @@ const sellerSchema = z.object({
 	legalForm: z.string().min(1).max(100),
 	address: structuredAddressSchema,
 	email: z.email(),
-	eInvoicingAddress: z.string().max(255).nullable(),
-	eInvoicingPlatformId: z.string().max(100).nullable(),
 	vatExemptionText: z.string().max(255).nullable(),
 	bankIban: z
 		.string()
@@ -59,16 +59,11 @@ const sellerSchema = z.object({
 });
 
 const buyerSchema = z.object({
-	type: z.enum(CustomerType),
 	legalName: z.string().max(255).nullable(),
 	firstName: z.string().min(1).max(100),
 	lastName: z.string().min(1).max(100),
 	email: z.email(),
 	phone: z.string().max(20).nullable(),
-	siren: z
-		.string()
-		.regex(/^[0-9]{9}$/)
-		.nullable(),
 	siret: z
 		.string()
 		.regex(/^[0-9]{14}$/)
@@ -77,10 +72,6 @@ const buyerSchema = z.object({
 		.string()
 		.regex(/^[A-Z]{2}[A-Z0-9]{2,13}$/)
 		.nullable(),
-	eInvoicingAddress: z.string().max(255).nullable(),
-	eInvoicingPlatformId: z.string().max(100).nullable(),
-	publicEntityId: z.string().max(50).nullable(),
-	chorusServiceCode: z.string().max(100).nullable(),
 });
 
 const invoiceLineSchema = z.object({

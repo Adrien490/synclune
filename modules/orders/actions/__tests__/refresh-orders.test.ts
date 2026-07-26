@@ -47,8 +47,13 @@ vi.mock("../../constants/cache", () => ({
 	ORDERS_CACHE_TAGS: { LIST: "orders-list" },
 }));
 
+// ⚠️ Ce mock doit rester le miroir COMPLET de SHARED_CACHE_TAGS pour les tags que
+// l'action touche. Une clé absente ici (c'était le cas d'ADMIN_ORDERS_LIST) rend le
+// test structurellement incapable de voir qu'elle n'est pas invalidée : `updateTag`
+// reçoit `undefined` et l'assertion de comptage passe quand même.
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
+		ADMIN_ORDERS_LIST: "admin-orders-list",
 		ADMIN_CUSTOMERS_LIST: "admin-customers-list",
 		ADMIN_BADGES: "admin-badges",
 	},
@@ -121,6 +126,22 @@ describe("refreshOrders", () => {
 		await refreshOrders(undefined, makeFormData());
 
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+	});
+
+	it("invalidates the tag actually read by getOrders (admin-orders-list)", async () => {
+		// `getOrders()` tague son cache avec ADMIN_ORDERS_LIST, pas ORDERS_CACHE_TAGS.LIST :
+		// sans cette invalidation le bouton « Rafraîchir » était un no-op sur la liste.
+		await refreshOrders(undefined, makeFormData());
+
+		expect(mockUpdateTag).toHaveBeenCalledWith("admin-orders-list");
+	});
+
+	it("never calls updateTag with undefined (mock de tags incomplet)", async () => {
+		await refreshOrders(undefined, makeFormData());
+
+		for (const [tag] of mockUpdateTag.mock.calls) {
+			expect(tag).toBeTypeOf("string");
+		}
 	});
 
 	it("invalidates the admin customers list cache tag", async () => {

@@ -9,6 +9,8 @@ import { ItemGroup } from "@/shared/components/ui/item";
 
 import { agree } from "../config/taxonomy.config";
 import type { TaxonomyConfig } from "../types/taxonomy.types";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface TaxonomyPagination {
 	hasNextPage: boolean;
@@ -55,7 +57,7 @@ export function TaxonomyMobileList<T extends { id: string }>({
 
 	if (items.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={icon}
 					title={`${agree(config, "Aucun")} ${singular} ${agree(config, "trouvé")}`}
@@ -65,11 +67,7 @@ export function TaxonomyMobileList<T extends { id: string }>({
 							: emptyDescription
 					}
 					actionElement={
-						hasActiveFilters ? (
-							<EmptyResetFiltersAction href={config.basePath} />
-						) : (
-							createButton
-						)
+						hasActiveFilters ? <EmptyResetFiltersAction href={config.basePath} /> : createButton
 					}
 				/>
 			</div>
@@ -77,7 +75,12 @@ export function TaxonomyMobileList<T extends { id: string }>({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0">
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
 			<AdminListLiveCount
 				count={items.length}
 				singular={singular}

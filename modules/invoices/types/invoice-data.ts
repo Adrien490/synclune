@@ -1,4 +1,4 @@
-import type { CustomerType, PaymentMethod } from "@/app/generated/prisma/enums";
+import type { PaymentMethod } from "@/app/generated/prisma/enums";
 import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
 
 /**
@@ -81,10 +81,18 @@ export interface VoidedInfo {
  *
  * Synclune (micro-entreprise franchise TVA, B2C) ne produit que du **PDF**. Les
  * formats XML structurés (Factur-X / UBL / CII), réservés à la transmission
- * B2B/B2G sur PDP, ont été retirés (recentrage B2C 2026-05-28). La valeur reste
- * un union pour compat de signature mais seul `"PDF"` est émis.
+ * B2B/B2G sur PDP, ont été retirés (recentrage B2C 2026-05-28).
+ *
+ * Le type était resté un union de 4 valeurs « pour compat de signature », mais aucun
+ * appelant ne passait autre chose que `"PDF"` et aucun renderer n'existe pour les 3
+ * autres : le schéma Zod ACCEPTAIT donc `format: "FACTURX"` pour produire… un PDF.
+ * Restreint à `"PDF"` — c'est le seul format réellement rendu. À réélargir le jour où
+ * un renderer XML existe (go-live e-reporting, cf. docs/RUNBOOK.md), pas avant.
+ *
+ * ⚠️ Narrowing de TYPE uniquement : ni la forme de l'objet ni l'ordre des champs ne
+ * changent, donc `invoiceDataHash` (et les PDF archivés) restent inchangés.
  */
-export type InvoiceFormat = "PDF" | "FACTURX" | "UBL" | "CII";
+export type InvoiceFormat = "PDF";
 
 export interface SellerInfo {
 	legalName: string;
@@ -96,10 +104,6 @@ export interface SellerInfo {
 	legalForm: string;
 	address: StructuredAddress;
 	email: string;
-	/** Adresse électronique de facturation (annuaire DGFiP) — pour B2B futur. */
-	eInvoicingAddress: string | null;
-	/** Identifiant de la plateforme agréée émettrice — pour B2B futur. */
-	eInvoicingPlatformId: string | null;
 	/** Texte mention TVA si franchise (Art. 293 B CGI). */
 	vatExemptionText: string | null;
 	/** IBAN du vendeur (BT-84 EN16931) — affiché sur factures B2B viré. */
@@ -108,24 +112,26 @@ export interface SellerInfo {
 	bankBic: string | null;
 }
 
+/**
+ * Identité de l'acheteur figée sur la facture (Art. 289 CGI).
+ *
+ * Synclune vend exclusivement en B2C : `legalName`, `siret` et `vatNumber` sont
+ * toujours `null` à l'émission. Ils sont conservés parce que le renderer les lit
+ * (`render-invoice-pdf.ts`, branches gardées par `if`) : si un parcours B2B
+ * apparaît un jour, la facture porte déjà l'identité société sans toucher au
+ * template. Les identifiants de routage e-reporting (adresse électronique de
+ * facturation, PDP/PA, Chorus Pro) ont été retirés avec l'e-reporting — ils
+ * seront réintroduits contre l'arrêté définitif (cf. docs/RUNBOOK.md).
+ */
 export interface BuyerInfo {
-	type: CustomerType;
 	/** null pour B2C (particulier). */
 	legalName: string | null;
 	firstName: string;
 	lastName: string;
 	email: string;
 	phone: string | null;
-	siren: string | null;
 	siret: string | null;
 	vatNumber: string | null;
-	/** Adresse électronique de facturation (annuaire) — B2B futur. */
-	eInvoicingAddress: string | null;
-	/** PDP/PA identifier du client — B2B futur. */
-	eInvoicingPlatformId: string | null;
-	/** Identifiant entité publique pour Chorus Pro — B2G futur. */
-	publicEntityId: string | null;
-	chorusServiceCode: string | null;
 }
 
 export interface StructuredAddress {

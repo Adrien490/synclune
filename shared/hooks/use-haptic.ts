@@ -16,12 +16,17 @@
  *   haptic("light");
  *
  * Garanties :
+ *   - **Appareil tactile uniquement** (`(hover: none) and (pointer: coarse)`). Un
+ *     portable tactile piloté à la souris/au clavier expose `navigator.vibrate`
+ *     mais ne doit recevoir aucun retour tactile résiduel.
  *   - Respecte `prefers-reduced-motion` (no-op si reduce).
  *   - SSR-safe (no-op côté serveur).
  *   - iOS Safari : `navigator.vibrate` non supporté → no-op silencieux.
  *   - Cooldown 80ms anti-cascade : 2 appels rapprochés = 1 vibration unique
  *     (évite le ressenti "buzzy" Material 3 sur enchaînements apply→close).
  */
+
+import { TOUCH_MEDIA_QUERY } from "./use-touch-device";
 
 export type HapticPattern = "light" | "medium" | "heavy" | "error" | "success" | "selection";
 
@@ -43,9 +48,21 @@ function prefersReducedMotion(): boolean {
 	return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+/**
+ * Un appareil hybride (portable tactile, Surface, iPad + trackpad) expose
+ * `navigator.vibrate` tout en étant piloté à la souris. Sans ce garde, un clic
+ * souris ou une touche clavier y déclenche une vibration — un retour tactile sur
+ * une entrée qui n'est pas tactile.
+ */
+function isTouchDevice(): boolean {
+	if (typeof window === "undefined") return false;
+	return window.matchMedia(TOUCH_MEDIA_QUERY).matches;
+}
+
 function canVibrate(): boolean {
 	if (typeof window === "undefined") return false;
 	if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return false;
+	if (!isTouchDevice()) return false;
 	if (prefersReducedMotion()) return false;
 	return true;
 }

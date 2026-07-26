@@ -27,6 +27,9 @@ interface FilterFormData {
 
 const RATING_OPTIONS = [5, 4, 3, 2, 1] as const;
 
+/** Clés URL des filtres avis — préfixe `filter_` comme les 10 autres listes. */
+const FILTER_PARAM_KEYS = ["filter_status", "filter_rating", "filter_hasResponse"] as const;
+
 function ReviewsFilterSheetInner({
 	className,
 	open: controlledOpen,
@@ -43,9 +46,9 @@ function ReviewsFilterSheetInner({
 	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
 	const initialValues: FilterFormData = {
-		status: searchParams.get("status") ?? "",
-		rating: searchParams.get("rating") ?? "",
-		hasResponse: searchParams.get("hasResponse") ?? "",
+		status: searchParams.get("filter_status") ?? "",
+		rating: searchParams.get("filter_rating") ?? "",
+		hasResponse: searchParams.get("filter_hasResponse") ?? "",
 	};
 
 	const form = useAppForm({
@@ -58,13 +61,13 @@ function ReviewsFilterSheetInner({
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
-		["status", "rating", "hasResponse"].forEach((key) => params.delete(key));
+		FILTER_PARAM_KEYS.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
 
-		if (formData.status) params.set("status", formData.status);
-		if (formData.rating) params.set("rating", formData.rating);
-		if (formData.hasResponse) params.set("hasResponse", formData.hasResponse);
+		if (formData.status) params.set("filter_status", formData.status);
+		if (formData.rating) params.set("filter_rating", formData.rating);
+		if (formData.hasResponse) params.set("filter_hasResponse", formData.hasResponse);
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -75,7 +78,7 @@ function ReviewsFilterSheetInner({
 		form.reset({ status: "", rating: "", hasResponse: "" });
 
 		const params = new URLSearchParams(searchParams.toString());
-		["status", "rating", "hasResponse"].forEach((key) => params.delete(key));
+		FILTER_PARAM_KEYS.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
 
@@ -86,9 +89,9 @@ function ReviewsFilterSheetInner({
 
 	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
-		if (searchParams.has("status")) count++;
-		if (searchParams.has("rating")) count++;
-		if (searchParams.has("hasResponse")) count++;
+		if (searchParams.has("filter_status")) count++;
+		if (searchParams.has("filter_rating")) count++;
+		if (searchParams.has("filter_hasResponse")) count++;
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
 	})();
 

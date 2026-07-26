@@ -9,6 +9,35 @@ function prefersReducedMotion() {
 	return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+/** `true` si l'élément est effectivement rendu (pas d'ancêtre `display:none`). */
+function isRendered(element: HTMLElement): boolean {
+	// `checkVisibility` est la primitive dédiée dans les navigateurs modernes.
+	if (typeof element.checkVisibility === "function") return element.checkVisibility();
+	return element.getClientRects().length > 0;
+}
+
+/**
+ * Premier élément effectivement rendu de la liste.
+ *
+ * Plusieurs champs partagés rendent une variante mobile ET une variante desktop
+ * en permanence, la visibilité étant purement CSS (`md:hidden` / `hidden md:flex`
+ * — cf. `SelectField`). Focaliser ou scroller un `display:none` échoue en
+ * silence, d'où ce filtre.
+ *
+ * ⚠️ Repli sur le premier candidat quand AUCUN n'est jugé rendu : sous jsdom il
+ * n'y a pas de moteur de layout (`getClientRects()` renvoie toujours une liste
+ * vide, les classes Tailwind ne sont pas chargées), donc sans ce repli le hook
+ * cesserait de focaliser quoi que ce soit en test. Le repli préserve exactement
+ * le comportement historique dans cet environnement.
+ */
+export function findFirstVisible(elements: Iterable<HTMLElement>): HTMLElement | null {
+	const candidates = Array.from(elements);
+	for (const element of candidates) {
+		if (isRendered(element)) return element;
+	}
+	return candidates[0] ?? null;
+}
+
 /**
  * Finds the first field marked with `aria-invalid="true"` (or failing native
  * HTML5 validation), scrolls it into view, focuses it, and fires an `"error"`
@@ -17,8 +46,24 @@ function prefersReducedMotion() {
  * Works with both:
  * - TanStack Form validators — `aria-invalid="true"` is set on the input by
  *   the `InputField`, `SelectField`, etc. field components after validation.
- * - Native HTML5 `required` / `pattern` / `type="email"` — the `onInvalidCapture`
- *   handler catches the first invalid event bubbling up through the form.
+ *   C'est le chemin principal, celui qu'emprunte `useGatedFormSubmit`.
+ * - Native HTML5 constraints — `onInvalidCapture` attrape le premier événement
+ *   `invalid` qui remonte le formulaire (la validation native du navigateur
+ *   précède l'événement `submit`, donc ce chemin se déclenche AVANT `onSubmit`).
+ *
+ * ⚠️ Quelles contraintes natives atteignent réellement le DOM à travers les
+ * champs partagés — vérifié, non supposé :
+ * - `pattern`, `type="email"`, `min` / `step` : **oui**, `InputField` les
+ *   forwarde tels quels (ex. `pattern="[0-9]{5}"` sur le code postal des
+ *   formulaires adresse — c'est ce qui rend `onInvalidCapture` utile là-bas).
+ * - `required` sur un `<select>` natif : **oui** (`SelectField`).
+ * - `required` sur un `<input>` : **NON**. `InputField` consomme la prop pour
+ *   l'astérisque du label et `aria-required`, sans jamais poser l'attribut
+ *   natif — délibéré, sinon les bulles de validation du navigateur
+ *   doubleraient l'UI d'erreur maison. Ne pas conclure de cette absence que
+ *   `onInvalidCapture` est du code mort.
+ * - Un `<form noValidate>` (checkout) désactive tout ce chemin : là, seul
+ *   `focusFirstInvalid()` opère.
  *
  * Usage — TanStack Form (post-submit manual call):
  * ```tsx
@@ -77,7 +122,13 @@ export function useFocusFirstError() {
 	const focusFirstInvalid = () => {
 		const root = formRef.current;
 		if (!root) return false;
-		const first = root.querySelector<HTMLElement>('[aria-invalid="true"]');
+		// Premier invalide VISIBLE, pas simplement premier dans l'ordre du DOM :
+		// `SelectField` rend ses deux variantes en permanence (le <select> natif
+		// `md:hidden` d'abord, le trigger Radix `hidden md:flex` ensuite) et pose
+		// `aria-invalid` sur les deux. En desktop, cibler la première occurrence
+		// revenait à `focus()` + `scrollIntoView()` sur un `display:none` — deux
+		// no-op silencieux, le focus restait où il était.
+		const first = findFirstVisible(root.querySelectorAll<HTMLElement>('[aria-invalid="true"]'));
 		if (!first) return false;
 		focusElement(first);
 		return true;

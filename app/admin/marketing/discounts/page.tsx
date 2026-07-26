@@ -23,6 +23,9 @@ import type { DiscountType } from "@/app/generated/prisma/client";
 import { type Metadata } from "next";
 
 import { DiscountsAdminDialogs } from "./_components/discounts-admin-dialogs";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 const DiscountsBottomBar = dynamic(() =>
 	import("@/modules/discounts/components/admin/discounts-bottom-bar").then(
@@ -89,7 +92,16 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={discountsPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="remise"
+						plural="remises"
+					/>
+				</Suspense>
+
 				<DiscountsBottomBar />
 
 				<Suspense

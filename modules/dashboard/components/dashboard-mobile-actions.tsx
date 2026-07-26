@@ -91,7 +91,6 @@ function DashboardMobileActionsInner({ className }: DashboardMobileActionsProps)
 				>
 					<RefreshCw className="size-4" aria-hidden="true" />
 				</Button>
-
 			</div>
 
 			<DashboardPeriodSheet open={periodOpen} onOpenChange={setPeriodOpen} />

@@ -133,7 +133,10 @@ describe("markAsShipped", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockCanMarkAsShipped.mockReturnValue({ canShip: true });
 		mockCreateOrderAuditTx.mockResolvedValue(undefined);
-		mockSendShippingEmail.mockResolvedValue(undefined);
+		// `EmailResult` réel : le service NE THROW PAS, il rapporte
+		// `{ success }`. Un `mockResolvedValue(undefined)` faisait passer l'action
+		// pour un succès quelle que soit la réponse de Resend.
+		mockSendShippingEmail.mockResolvedValue({ success: true, data: { id: "email_1" } });
 		mockGetCarrierLabel.mockReturnValue("Colissimo");
 		mockGetTrackingUrl.mockReturnValue("https://tracking.example.com/1Z999");
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
@@ -230,10 +233,47 @@ describe("markAsShipped", () => {
 		expect(result.message).toContain("Email");
 	});
 
-	it("should return WARNING when email fails", async () => {
+	// Mode d'échec RÉEL : Resend rejette, le service retourne `{ success: false }`
+	// sans throw. C'est le seul chemin qu'on observe en production — le cas
+	// `mockRejectedValue` ci-dessous ne peut pas se produire.
+	it("should return WARNING when email is rejected ({ success: false })", async () => {
+		mockSendShippingEmail.mockResolvedValue({ success: false, error: "Resend 422" });
+		const result = await markAsShipped(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.WARNING);
+		expect(result.message).toContain("email n'a pas pu être envoyé");
+	});
+
+	it("ne prétend PAS « Email envoyé » quand l'envoi est rejeté", async () => {
+		mockSendShippingEmail.mockResolvedValue({ success: false, error: "Resend 422" });
+		const result = await markAsShipped(undefined, validFormData);
+		expect(result.message).not.toContain("Email envoyé au client");
+	});
+
+	// Filet : un throw inattendu (bug de rendu) reste traité comme un échec.
+	it("should return WARNING when email throws unexpectedly", async () => {
 		mockSendShippingEmail.mockRejectedValue(new Error("SMTP error"));
 		const result = await markAsShipped(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.WARNING);
+	});
+
+	// La clé porte le numéro de suivi : sinon un suivi corrigé dans les 24h
+	// renvoyait l'email ORIGINAL depuis le cache Resend.
+	it("dérive l'idempotencyKey du numéro de suivi, pas seulement de l'id", async () => {
+		await markAsShipped(undefined, validFormData);
+		expect(mockSendShippingEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				idempotencyKey: expect.stringContaining("1Z999"),
+			}),
+		);
+	});
+
+	// Repli quand le transporteur n'a pas d'URL de suivi ("autre") : sans lui,
+	// l'email n'avait aucun CTA.
+	it("passe un lien de repli vers la commande", async () => {
+		await markAsShipped(undefined, validFormData);
+		expect(mockSendShippingEmail).toHaveBeenCalledWith(
+			expect.objectContaining({ orderTrackingUrl: expect.any(String) }),
+		);
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

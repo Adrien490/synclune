@@ -8,14 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { Ban, FileWarning, LoaderCircle } from "lucide-react";
+import { FileWarning, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
@@ -52,17 +51,20 @@ export function CancelOrderAlertDialog() {
 	const invoiceNumber = cancelDialog.data?.invoiceNumber;
 
 	return (
+		// Tonalité alignée sur la gravité réelle : sur une commande FACTURÉE,
+		// l'annulation émet un avoir gap-free et devient irréversible (Art. 272-I CGI,
+		// cf. le texte du dialogue ci-dessous) → `destructive`. Sans facture, aucun
+		// artefact comptable n'est produit → `warning` reste juste.
 		<ResponsiveAlertDialog
 			open={cancelDialog.isOpen}
 			onOpenChange={handleOpenChange}
-			tone="warning"
+			tone={hasGeneratedInvoice ? "destructive" : "warning"}
 		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={cancelDialog.data?.orderId ?? ""} />
 					<input type="hidden" name="autoRefund" value={isPaid && autoRefund ? "true" : "false"} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Ban} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer l'annulation</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

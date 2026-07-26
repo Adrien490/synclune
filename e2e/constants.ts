@@ -12,6 +12,28 @@ export const TIMEOUTS = {
 	AUTH_REDIRECT: 15000,
 } as const;
 
+/**
+ * Viewports partagés. Étaient dupliqués littéralement dans 8 specs — un seuil
+ * changé d'un côté et pas de l'autre ne se voyait nulle part.
+ */
+export const VIEWPORTS = {
+	/** iPhone 14 portrait — référence mobile du repo. */
+	MOBILE: { width: 390, height: 844 },
+	/**
+	 * WCAG 1.4.10 Reflow : le critère exige 320 CSS px, pas moins. L'ancien
+	 * 195×422 (390 ÷ 2) était plus sévère que la norme sans en être un
+	 * sur-ensemble utile — il masquait les défauts qui n'apparaissent qu'entre
+	 * 195 et 320px sur une grille `grid-cols-2`.
+	 */
+	REFLOW_320: { width: 320, height: 512 },
+	/** iPad portrait — tombe dans la plage 48-64rem (bottom-nav boutique). */
+	TABLET_PORTRAIT: { width: 768, height: 1024 },
+	/** iPad paysage. */
+	TABLET_LANDSCAPE: { width: 1024, height: 768 },
+	/** Desktop de référence. */
+	DESKTOP: { width: 1280, height: 800 },
+} as const;
+
 /** Shared selectors used across page objects */
 export const SELECTORS = {
 	/** Product link pattern - matches /creations/{slug} */

@@ -28,8 +28,8 @@ import {
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 } from "@/modules/products/constants/product.constants";
 
-// CUID v1 : 25 chars (CUID_LENGTH de pagination-schema)
-const VALID_CURSOR = "cm3x7k2ab0001qz8v4h2j9d3e";
+// Id cuid2 Prisma : 24 chars (cf. cursorSchema de pagination-schema)
+const VALID_CURSOR = "cm3x7k2ab0001qz8v4h2j9d3";
 
 // Le type ProductSearchParams restreint `direction`, mais une URL réelle porte
 // n'importe quelle string — `forge` simule les searchParams bruts du réseau.
@@ -53,7 +53,7 @@ describe("parsePaginationParams — fail-safe (regression)", () => {
 		expect(parsePaginationParams({ cursor: "a".repeat(300) }).cursor).toBeUndefined();
 	});
 
-	it("cursor 25 chars valide préservé", () => {
+	it("cursor cuid2 valide préservé", () => {
 		expect(parsePaginationParams({ cursor: VALID_CURSOR }).cursor).toBe(VALID_CURSOR);
 	});
 

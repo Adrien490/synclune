@@ -8,12 +8,11 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
-import { Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";
 
@@ -40,13 +39,16 @@ export function ArchiveProductAlertDialog() {
 	};
 
 	const isArchiving = archiveDialog.data?.productStatus !== "ARCHIVED";
-	const targetStatus: "ARCHIVED" | "PUBLIC" = isArchiving ? "ARCHIVED" : "PUBLIC";
+	// Restauration -> DRAFT : l'archivage a desactive toutes les variantes, donc
+	// viser PUBLIC echouait systematiquement (validateProductForPublication exige
+	// >= 1 variante active). Cf. docstring de toggle-product-status.ts.
+	const targetStatus: "ARCHIVED" | "DRAFT" = isArchiving ? "ARCHIVED" : "DRAFT";
 
 	return (
 		<ResponsiveAlertDialog
 			open={archiveDialog.isOpen}
 			onOpenChange={handleOpenChange}
-			tone={isArchiving ? "warning" : "success"}
+			tone={isArchiving ? "warning" : "neutral"}
 		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
@@ -58,7 +60,6 @@ export function ArchiveProductAlertDialog() {
 					/>
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
-					<ResponsiveAlertDialogHeroIcon icon={isArchiving ? Archive : ArchiveRestore} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver le bijou" : "Désarchiver le bijou"}
@@ -76,7 +77,8 @@ export function ArchiveProductAlertDialog() {
 											dashboard.
 										</p>
 										<p className="text-muted-foreground text-xs">
-											Vous pourrez le restaurer à tout moment.
+											Ses variantes seront désactivées. Vous pourrez le restaurer à tout moment : il
+											reviendra en brouillon.
 										</p>
 									</>
 								) : (
@@ -86,8 +88,13 @@ export function ArchiveProductAlertDialog() {
 											<strong>&quot;{archiveDialog.data?.productTitle}&quot;</strong> ?
 										</p>
 										<p>
-											Le bijou sera remis en statut &quot;Public&quot; et redeviendra visible sur la
-											boutique.
+											Le bijou sera remis en statut &quot;Brouillon&quot;. Il ne sera pas visible
+											sur la boutique.
+										</p>
+										<p className="text-muted-foreground text-xs">
+											Ses variantes ont été désactivées lors de l&apos;archivage. Réactivez-en au
+											moins une (avec du stock et une image) depuis « Gérer variantes », puis
+											publiez-le.
 										</p>
 									</>
 								)}

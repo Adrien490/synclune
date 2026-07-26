@@ -129,6 +129,11 @@ export default function ScrollFade({
 				ref={containerRef}
 				data-slot="scroll-fade-container"
 				data-testid="scroll-fade-container"
+				// Un conteneur à défilement horizontal atteint souvent le bord gauche de
+				// l'écran, où vit le geste d'ouverture du menu (`useEdgeSwipe`, zone de
+				// 20px). Sans opt-out, un drag vers la droite faisait les deux à la
+				// fois : défiler le contenu ET ouvrir le menu.
+				data-no-edge-swipe={horizontal ? "" : undefined}
 				{...scrollRegionProps}
 				className={cn(
 					hideScrollbar &&

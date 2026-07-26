@@ -153,7 +153,12 @@ test.describe("Admin - Couleurs (actions)", { tag: ["@regression"] }, () => {
 		await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 
-	test("toggle le statut via les actions de ligne", async ({ page }) => {
+	// Le statut se bascule par l'interrupteur de la colonne « Actif »
+	// (`ColorActiveToggle` → `TaxonomyActiveToggle`), PAS par un item de menu :
+	// `use-color-actions.ts` n'en expose aucun. L'ancienne version cherchait un
+	// `menuitem /Activer|Désactiver/` puis s'auto-skippait sur son absence — verte
+	// en permanence, zéro couverture de l'activation d'une couleur.
+	test("bascule le statut via l'interrupteur de la colonne Actif", async ({ page }) => {
 		const table = page.locator("table");
 		const emptyState = page.getByText(/aucune couleur/i);
 		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
@@ -161,35 +166,16 @@ test.describe("Admin - Couleurs (actions)", { tag: ["@regression"] }, () => {
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de couleurs pour toggle");
 
-		const actionsButton = table
-			.locator("tbody tr")
-			.first()
-			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+		const toggle = table.locator("tbody tr").first().getByRole("switch");
+		await expect(toggle).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 
-		const toggleOption = page.getByRole("menuitem", { name: /Activer|Désactiver/i });
-		const hasToggle = (await toggleOption.count()) > 0;
-		test.skip(!hasToggle, "Pas d'option toggle statut");
-
-		await toggleOption.first().click();
+		const wasChecked = (await toggle.getAttribute("aria-checked")) === "true";
+		await toggle.click();
 
 		const toast = page.getByText(/activé|désactivé|modifié|succès/i);
 		await expect(toast.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-	});
-
-	test("sélectionner une ligne affiche la toolbar de sélection", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucune couleur/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de couleurs dans la table");
-
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		const selectionToolbar = page.getByText(/sélectionné/i);
-		await expect(selectionToolbar).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		// L'état doit avoir réellement changé, pas seulement afficher un toast.
+		await expect(toggle).toHaveAttribute("aria-checked", String(!wasChecked));
 	});
 });
 

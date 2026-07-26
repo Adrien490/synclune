@@ -5,10 +5,17 @@ import { useOptimistic, useTransition } from "react";
 
 interface UseUrlParamOptions {
 	/**
-	 * Reset `page=1` on value change to avoid empty pages when the result set shrinks.
+	 * Repartir du début de la liste quand la valeur change.
+	 *
+	 * Toutes les listes du projet sont en pagination **curseur** : « repartir du
+	 * début » veut donc dire supprimer `cursor` + `direction`, pas poser `page=1`.
+	 * Conserver un curseur en changeant le tri ou un filtre est silencieusement
+	 * faux — Prisma se repositionne sur cet id dans le NOUVEL `orderBy` et
+	 * `skip: 1`, ce qui rend une tranche arbitraire sans lever d'erreur.
+	 *
 	 * @default true
 	 */
-	resetPage?: boolean;
+	resetPagination?: boolean;
 	/**
 	 * Scroll-to-top after navigation. Defaults to `false` (preserve scroll
 	 * position — common for sort/filter where the user is mid-list). Set to
@@ -32,14 +39,17 @@ export function useUrlParam(paramKey: string, options?: UseUrlParamOptions) {
 	const currentValue = searchParams.get(paramKey) ?? "";
 	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
 
-	const resetPage = options?.resetPage ?? true;
+	const resetPagination = options?.resetPagination ?? true;
 	const scroll = options?.scroll ?? false;
 
 	const update = (value: string) => {
 		const params = new URLSearchParams(searchParams);
 		params.delete(paramKey);
 		if (value) params.set(paramKey, value);
-		if (resetPage) params.set("page", "1");
+		if (resetPagination) {
+			params.delete("cursor");
+			params.delete("direction");
+		}
 		startTransition(() => {
 			setOptimisticValue(value);
 			router.push(`?${params.toString()}`, { scroll });

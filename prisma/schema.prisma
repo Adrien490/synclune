@@ -29,19 +29,8 @@ enum AccountStatus {
   ANONYMIZED
 }
 
-// === TYPE DE CLIENT (discriminant e-reporting B2C) ===
-//
-// Synclune vend exclusivement en B2C (micro-entreprise franchise TVA). L'enum
-// conserve B2B/B2G pour le discriminant du payload e-reporting DGFiP, mais
-// aucun parcours d'achat ne produit de commande B2B/B2G aujourd'hui.
-enum CustomerType {
-  B2C
-  B2B
-  B2G
-}
-
 model User {
-  id               String    @id @default(cuid())
+  id               String    @id @default(cuid(2))
   role             Role      @default(USER)
   name             String?   @db.VarChar(100)
   email            String    @unique @db.VarChar(255)
@@ -78,6 +67,11 @@ model User {
 
   // Avis produits
   reviews ProductReview[]
+
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   User_name_unaccent_trgm_idx   GIN (immutable_unaccent(COALESCE(name, '')))
+  //   User_email_unaccent_trgm_idx  GIN (immutable_unaccent(email))
+  //     Recherche admin floue insensible aux diacritiques (index d'expression).
 
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
   @@index([role, deletedAt]) // admin count guard + listing role filter
@@ -131,7 +125,7 @@ model Verification {
 }
 
 model Address {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -150,6 +144,11 @@ model Address {
   updatedAt DateTime @updatedAt
   // Note: Contrainte unique partielle ajoutee via migration SQL brute
   // pour garantir qu'un seul enregistrement a isDefault: true par userId
+
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   Address_userId_isDefault_unique  UNIQUE ("userId") WHERE "isDefault" = true
+  //     Une seule adresse par defaut par client (index unique PARTIEL — non
+  //     exprimable en Prisma).
 
   @@index([userId, isDefault]) // Couvre aussi userId seul
 }
@@ -198,7 +197,7 @@ enum HistorySource {
 // ============================================================================
 
 model ProductType {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   slug        String  @unique
   label       String  @unique @db.VarChar(50)
   description String? @db.Text
@@ -214,7 +213,7 @@ model ProductType {
 }
 
 model Color {
-  id          String            @id @default(cuid())
+  id          String            @id @default(cuid(2))
   slug        String            @unique
   name        String            @unique @db.VarChar(100)
   hex         String            @db.VarChar(7)
@@ -229,7 +228,7 @@ model Color {
 }
 
 model Material {
-  id           String               @id @default(cuid())
+  id           String               @id @default(cuid(2))
   slug         String               @unique
   name         String               @unique @db.VarChar(100)
   description  String?              @db.Text
@@ -249,14 +248,14 @@ model Material {
 /// L'ordre (`position`) reflète la priorité : position=0 = couleur principale
 /// (utilisée pour vignette listing/PDP, snapshot OrderItem joint dans l'ordre).
 model ProductSkuColor {
-  id      String     @id @default(cuid())
+  id      String     @id @default(cuid(2))
   skuId   String
   sku     ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
   colorId String
   // onDelete: Restrict — préserve la protection anti-orphans (parité matériaux)
   color   Color      @relation(fields: [colorId], references: [id], onDelete: Restrict)
 
-  position Int      @default(0)
+  position Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -271,14 +270,14 @@ model ProductSkuColor {
 /// L'ordre (`position`) reflète la priorité : position=0 = matériau principal
 /// (utilisé pour SEO/care-tips, snapshot OrderItem joint dans l'ordre).
 model ProductSkuMaterial {
-  id         String     @id @default(cuid())
+  id         String     @id @default(cuid(2))
   skuId      String
   sku        ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
   materialId String
   // onDelete: Restrict — préserve la protection anti-orphans (audit 2026-05-11 P1.1)
   material   Material   @relation(fields: [materialId], references: [id], onDelete: Restrict)
 
-  position Int      @default(0)
+  position Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -293,7 +292,7 @@ model ProductSkuMaterial {
 // ============================================================================
 
 model Collection {
-  id          String           @id @default(cuid())
+  id          String           @id @default(cuid(2))
   name        String           @unique @db.VarChar(100)
   slug        String           @unique
   description String?          @db.Text
@@ -312,7 +311,7 @@ model Collection {
 /// Table de jointure explicite Product <-> Collection (many-to-many)
 /// Permet a un produit d'appartenir a plusieurs collections
 model ProductCollection {
-  id           String     @id @default(cuid())
+  id           String     @id @default(cuid(2))
   productId    String
   product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
   collectionId String
@@ -329,6 +328,11 @@ model ProductCollection {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   ProductCollection_collectionId_isFeatured_unique
+  //     UNIQUE ("collectionId") WHERE "isFeatured" = true
+  //     Un seul produit mis en avant par collection (hero/banner).
+
   /// Un produit ne peut appartenir qu'une seule fois a une collection
   @@unique([productId, collectionId])
   @@index([collectionId]) // FK reverse lookup
@@ -339,7 +343,7 @@ model ProductCollection {
 // ============================================================================
 
 model Product {
-  id          String        @id @default(cuid())
+  id          String        @id @default(cuid(2))
   slug        String        @unique
   title       String        @db.VarChar(200)
   description String?       @db.Text
@@ -364,13 +368,19 @@ model Product {
   // Wishlist
   wishlistItems WishlistItem[]
 
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   Product_title_unaccent_trgm_idx        GIN (immutable_unaccent(title))
+  //   Product_description_unaccent_trgm_idx  GIN (immutable_unaccent(description))
+  //     Recherche admin floue et insensible aux diacritiques (« creole » trouve
+  //     « creole »). Index d'EXPRESSION : non exprimables en Prisma.
+
   @@index([typeId])
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage catalogue par statut
   @@index([status, deletedAt]) // hard-delete-retention cron (soft-deleted ARCHIVED >= 10y)
 }
 
 model ProductSku {
-  id        String  @id @default(cuid())
+  id        String  @id @default(cuid(2))
   sku       String  @unique @db.VarChar(100)
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -406,13 +416,8 @@ model ProductSku {
   cartItems      CartItem[]
   stockMovements StockMovement[]
   createdAt      DateTime        @default(now())
-  updatedAt  DateTime    @updatedAt
-  deletedAt  DateTime? // Soft delete pour preserver historique commandes
-
-  // Index FK explicite : couvre les lookups par produit y compris SKU soft-deleted.
-  // Les index uniques partiels ci-dessous (WHERE "deletedAt" IS NULL) ne couvrent
-  // productId en prefixe que pour les lignes actives.
-  @@index([productId])
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime? // Soft delete pour preserver historique commandes
 
   // Note 2026-06-24 (AUDIT) : il n'existe PLUS d'index unique d'identité de variante
   // (productId × size). L'index partiel "ProductSku_productId_colorId_size_active_key"
@@ -421,32 +426,66 @@ model ProductSku {
   // coexister). L'unicité retombe sur `sku @unique` + la validation applicative à la
   // création — AUCUNE contrainte DB ne garantit l'unicité produit×taille.
   //
+  // DÉCISION ASSUMÉE (audit schéma 2026-07-26) : on ne la rétablit PAS en base.
+  // La vraie clé est (produit × taille × ENSEMBLE de couleurs) ; les couleurs
+  // vivant dans une table de jointure, un index Postgres ne peut pas l'exprimer
+  // sans dénormaliser (colonne de signature + trigger de maintenance) — de
+  // l'over-engineering à l'échelle de Synclune (une admin, ~20 cmd/mois).
+  // L'invariant repose donc sur `assertUniqueVariantCombination`
+  // (persist-sku-helpers.service.ts), qui prend un advisory lock transactionnel
+  // par produit AVANT de lire les candidats — donc résistant à la concurrence.
+  // Appelée par create-sku, update-sku, restore-sku ET update-sku-status
+  // (activation : `duplicate-sku` crée sciemment une copie d'identité identique
+  // en isActive:false, « Dupliquer puis Activer » la publiait sans contrôle).
+  // Verrouillé par test/contract/sku-variant-identity-guard.contract.test.ts
+  // + modules/skus/services/__tests__/variant-identity-lock.regression.test.ts.
+  //
   // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
   // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
   //
-  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
   //   ProductSku_inventory_non_negative      CHECK (inventory >= 0)
   //   ProductSku_priceInclTax_positive       CHECK ("priceInclTax" > 0)
+  //   ProductSku_compareAtPrice_valid        CHECK (compareAtPrice IS NULL OR compareAtPrice >= priceInclTax)
+  //     Un prix barré INFÉRIEUR au prix payé est une fausse remise (Omnibus /
+  //     art. L112-1-1 C. conso) : la base le refuse, pas seulement le formulaire.
+  //   ProductSku_productId_isDefault_unique  UNIQUE ("productId")
+  //     WHERE "isDefault" = true AND "deletedAt" IS NULL — un seul SKU par défaut
+  //     par produit, index unique PARTIEL (non exprimable en Prisma).
+
+  // Index FK explicite : couvre les lookups par produit y compris SKU soft-deleted.
+  // Les index uniques partiels ci-dessous (WHERE "deletedAt" IS NULL) ne couvrent
+  // productId en prefixe que pour les lignes actives.
+  @@index([productId])
 }
 
 enum StockMovementSource {
-  MANUAL_ADJUST // Formulaire admin d'ajustement de stock
-  SKU_UPDATE // Réservé : delta inventaire via update-sku (non câblé)
+  MANUAL_ADJUST // Câblé : formulaire admin d'ajustement de stock (adjust-sku-stock)
+  SKU_UPDATE // Câblé : delta inventaire saisi via le formulaire d'édition SKU (update-sku)
   ORDER // Réservé : décrément à la vente
   WEBHOOK // Réservé : ajustement via webhook Stripe
   SYSTEM // Réservé : ajustement système (cron, reconcile)
 }
 
 /// Audit append-only des mouvements de stock SKU.
-/// ⚠️ Journal des AJUSTEMENTS MANUELS uniquement (source MANUAL_ADJUST). Les 4 autres
-/// valeurs de StockMovementSource (SKU_UPDATE/ORDER/WEBHOOK/SYSTEM) sont RÉSERVÉES et
-/// non câblées : ce journal ne trace PAS les ventes ni les restocks (audit 2026-06-24).
+///
+/// ⚠️ Périmètre réel (audit schéma 2026-07-26) : ce journal ne trace que les
+/// ajustements d'inventaire SAISIS PAR L'ADMIN — `MANUAL_ADJUST` (adjust-sku-stock)
+/// et `SKU_UPDATE` (update-sku). Les 3 autres valeurs (ORDER/WEBHOOK/SYSTEM) restent
+/// RÉSERVÉES : ni les ventes ni les restocks automatiques n'écrivent ici.
+///
+/// ⚠️ WRITE-ONLY ASSUMÉ : aucune requête `data/` ne lit cette table et aucune UI ne
+/// l'affiche. C'est délibéré — sa valeur est d'exister le jour où un écart d'inventaire
+/// devra être expliqué (consultation via Prisma Studio / SQL), pas d'alimenter un écran.
+/// NE PAS la classer « table morte » : à ~20 commandes/mois, un ajustement manuel
+/// inexpliqué est la seule cause plausible d'un stock incohérent.
+///
 /// Immuable : pas de `updatedAt`, pas de `deletedAt` (cf. OrderHistory, Art. L123-22).
 /// `createdById` est un String simple (PAS de relation User) + `createdByName`
 /// dénormalisé, aligné sur OrderHistory.authorId/authorName : conserve l'audit
 /// même si l'admin est supprimé/anonymisé (RGPD).
 model StockMovement {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
@@ -470,13 +509,16 @@ model StockMovement {
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   StockMovement_delta_consistent        CHECK ("newInventory" = "previousInventory" + "delta")
   //   StockMovement_inventory_non_negative  CHECK ("previousInventory" >= 0 AND "newInventory" >= 0)
+  //
+  // Un seul index : la table n'a aucun lecteur applicatif (cf. docstring). Celui-ci
+  // sert la consultation manuelle « historique d'un SKU », le seul accès réaliste.
+  // Les index [productId, createdAt] et [createdById] ont été droppés (audit 2026-07-26) :
+  // aucun consommateur, présent ni possible sans surface de lecture.
   @@index([skuId, createdAt(sort: Desc)])
-  @@index([productId, createdAt(sort: Desc)])
-  @@index([createdById])
 }
 
 model SkuMedia {
-  id    String     @id @default(cuid())
+  id    String     @id @default(cuid(2))
   skuId String
   sku   ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
 
@@ -497,6 +539,11 @@ model SkuMedia {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   SkuMedia_dimensions_positive  CHECK (width/height NULL ou > 0)
+  //   SkuMedia_one_primary_per_sku  UNIQUE ("skuId") WHERE "isPrimary" = true
+  //     Un seul media principal par SKU (index unique PARTIEL).
+
   @@index([skuId, position])
   @@index([skuId, isPrimary])
 }
@@ -506,7 +553,7 @@ model SkuMedia {
 // ============================================================================
 
 model Cart {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   userId    String? @unique
   user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -523,11 +570,16 @@ model Cart {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   Cart_owner_required  CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL)
+  //     Un panier appartient soit a un compte, soit a une session invite — jamais
+  //     a personne (un panier orphelin serait invisible et increvable).
+
   @@index([expiresAt])
 }
 
 model CartItem {
-  id     String @id @default(cuid())
+  id     String @id @default(cuid(2))
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
@@ -544,12 +596,12 @@ model CartItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([cartId, skuId])
-  @@index([skuId])
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   CartItem_quantity_positive    CHECK (quantity >= 1)
   //   CartItem_priceAtAdd_positive  CHECK ("priceAtAdd" > 0)
+
+  @@unique([cartId, skuId])
+  @@index([skuId])
 }
 
 // ============================================================================
@@ -557,7 +609,7 @@ model CartItem {
 // ============================================================================
 
 model Wishlist {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Support utilisateur connecte OU session invite
   userId    String? @unique
@@ -568,10 +620,14 @@ model Wishlist {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   Wishlist_owner_required  CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL)
+  //     Symetrie Cart : compte OU session invite, jamais orpheline.
 }
 
 model WishlistItem {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   wishlistId String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
@@ -710,7 +766,7 @@ enum PaymentMethod {
 // ============================================================================
 
 model Order {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid(2))
   orderNumber String  @unique @db.VarChar(50)
   userId      String?
   user        User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -726,13 +782,6 @@ model Order {
   customerEmail String  @db.VarChar(255)
   customerName  String  @db.VarChar(100)
   customerPhone String? @db.VarChar(20)
-
-  // === TYPE DE CLIENT (discriminant e-reporting B2C) ===
-  //
-  // Synclune vend exclusivement en B2C (micro-entreprise franchise TVA). Le champ
-  // reste comme discriminant du payload e-reporting DGFiP (réforme 2026-2027) ;
-  // sa valeur est toujours B2C en l'absence de parcours B2B/B2G au checkout.
-  customerType CustomerType @default(B2C)
 
   // === ADRESSE DE LIVRAISON (DENORMALISEE - SNAPSHOT) ===
   shippingFirstName  String  @db.VarChar(50)
@@ -756,7 +805,14 @@ model Order {
   currency       String @default("EUR") @db.VarChar(3)
 
   // === ECHECS DE PAIEMENT ===
-  // Stocke les codes d'erreur du dernier echec (historique complet dans WebhookEvent)
+  // Codes d'erreur du DERNIER echec, ecrits par les webhooks payment_intent.payment_failed.
+  //
+  // ⚠️ WRITE-ONLY ASSUME (audit schema 2026-07-26) : aucune requete applicative ne
+  // les selectionne et aucune UI ne les affiche. On les garde DELIBEREMENT — c'est
+  // le seul endroit ou retrouver pourquoi une CB a ete refusee quand une cliente
+  // appelle, l'historique complet dans WebhookEvent etant purge par la passe de
+  // retention. Consultation via Prisma Studio / SQL. NE PAS les supprimer comme
+  // "colonnes mortes" : leur valeur est l'apres-coup, pas le runtime.
   paymentFailureCode    String? @db.VarChar(100) // Code Stripe: "card_declined", "expired_card", etc.
   paymentDeclineCode    String? @db.VarChar(100) // Code reseau detaille (Visa/MC)
   paymentFailureMessage String? @db.VarChar(500) // Message lisible pour debug
@@ -782,12 +838,12 @@ model Order {
   creditNoteGeneratedAt DateTime? // Date d'émission de l'avoir
   // Archivage PDF avoir (Art. L102 B LPF — symétrie facture). Lazy au 1er download
   // via /api/orders/[orderNumber]/credit-note, idempotent ensuite.
-  creditNotePdfUrl  String? @db.VarChar(2048)
-  creditNotePdfHash String? @db.VarChar(64)
+  creditNotePdfUrl      String?   @db.VarChar(2048)
+  creditNotePdfHash     String?   @db.VarChar(64)
 
   // === ARCHIVAGE PDF IMMUABLE (Art. L102 B LPF) ===
-  invoicePdfUrl  String? @db.VarChar(2048) // URL UploadThing du PDF archivé (immuable bit-à-bit)
-  invoicePdfHash String? @db.VarChar(64) // SHA-256 du PDF (empreinte audit fiscal)
+  invoicePdfUrl     String?   @db.VarChar(2048) // URL UploadThing du PDF archivé (immuable bit-à-bit)
+  invoicePdfHash    String?   @db.VarChar(64) // SHA-256 du PDF (empreinte audit fiscal)
   invoiceArchivedAt DateTime? // Horodatage d'upload UploadThing (cron archive-unarchived cible NULL)
 
   // === SNAPSHOT INVOICEDATA FIGÉ (Art. L102 B LPF — facture comme données) ===
@@ -795,7 +851,7 @@ model Order {
   // payload InvoiceData figé au moment de l'attribution du numéro. Tout futur
   // changement de template doit pouvoir régénérer un PDF identique à partir
   // de ce snapshot (déterminisme jsPDF garanti par renderInvoicePdf).
-  invoiceDataSnapshot Json?   // Payload InvoiceData complet (canonical-JSON, clés triées)
+  invoiceDataSnapshot Json? // Payload InvoiceData complet (canonical-JSON, clés triées)
   invoiceDataHash     String? @db.VarChar(64) // SHA-256 du snapshot (audit-vérifiable)
 
   // === SNAPSHOT VENDEUR (Facturation electronique 2026-2027) ===
@@ -814,25 +870,27 @@ model Order {
   vendorVatNumber String?    @db.VarChar(15)
   // Extension snapshot (EINV-FORMAT-007/008 — 2026-05-28). Drift acceptable
   // sur Order pre-migration (fallback env via getVendorLegalInfo()).
-  vendorEmail    String? @db.VarChar(255)
-  vendorApeCode  String? @db.VarChar(10)
-  vendorBankIban String? @db.VarChar(34)
-  vendorBankBic  String? @db.VarChar(11)
+  vendorEmail     String?    @db.VarChar(255)
+  vendorApeCode   String?    @db.VarChar(10)
+  vendorBankIban  String?    @db.VarChar(34)
+  vendorBankBic   String?    @db.VarChar(11)
   vendorVatRegime VatRegime?
   vendorLegalForm String?    @db.VarChar(100)
 
   // === LIVRAISON ===
-  shippingMethod    String?   @db.VarChar(20) // Type de livraison
-  shippingCarrier   String?   @db.VarChar(30) // Transporteur (valeurs: colissimo, chronopost, mondial_relay, dpd, lettre_suivie, autre)
-  shippingRateId    String? // ID du tarif Stripe utilise
+  // Note 2026-07-26 (AUDIT) : `shippingMethod` (toujours "STANDARD", jamais lu) et
+  // `shippingRateId` (vestige des Stripe Shipping Rates, abandonnees avec le flow
+  // Checkout Session hosted) ont ete droppes. Le transporteur reel est `shippingCarrier`.
+  // Transporteur — SSOT des valeurs : `CARRIERS` (modules/orders/utils/carrier.utils.ts).
+  // 11 valeurs : colissimo, lettre_suivie, mondial_relay, chronopost, dpd, gls, dhl,
+  // ups, fedex, relais_colis, autre. Aucune contrainte DB (VarChar libre) : la
+  // validation est portee par `carrierEnum` (Zod) sur les deux actions ecrivantes.
+  shippingCarrier   String?   @db.VarChar(30)
   trackingNumber    String?   @db.VarChar(50)
   trackingUrl       String?   @db.VarChar(2048) // URL de suivi
   estimatedDelivery DateTime? // Date estimee de livraison
   actualDelivery    DateTime? // Date reelle de livraison
   shippedAt         DateTime? // Date d'expedition
-
-  // === EMAILS POST-LIVRAISON ===
-  reviewRequestSentAt DateTime? // Date d'envoi de l'email de demande d'avis
 
   // === STATUTS ===
   status            OrderStatus       @default(PENDING)
@@ -844,12 +902,12 @@ model Order {
   paidAt        DateTime?
 
   // === RELATIONS ===
-  items                  OrderItem[]
-  discountUsages         DiscountUsage[]
-  refunds                Refund[]
-  notes                  OrderNote[]
-  history                OrderHistory[] // Audit trail (conformite legale)
-  disputes               Dispute[]
+  items          OrderItem[]
+  discountUsages DiscountUsage[]
+  refunds        Refund[]
+  notes          OrderNote[]
+  history        OrderHistory[] // Audit trail (conformite legale)
+  disputes       Dispute[]
 
   // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
   billingSameAsShipping Boolean @default(true)
@@ -907,6 +965,46 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
+  //   Order_subtotal_non_negative           CHECK (subtotal >= 0)
+  //   Order_total_non_negative              CHECK (total >= 0)
+  //   Order_discountAmount_non_negative     CHECK ("discountAmount" >= 0)
+  //   Order_shippingCost_non_negative       CHECK ("shippingCost" >= 0)
+  //   Order_taxAmount_non_negative          CHECK ("taxAmount" >= 0)
+  //   Order_currency_eur_check              CHECK (currency = 'EUR')
+  //   Order_invoiceNumber_format            CHECK ("invoiceNumber" IS NULL OR "invoiceNumber" ~ '^F-[0-9]{4}-[0-9]{5}$')
+  //   Order_creditNoteNumber_format_check   CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$')
+  //   Order_vendorSiren_format_check        CHECK ("vendorSiren" IS NULL OR "vendorSiren" ~ '^[0-9]{9}$')
+  //   Order_vendorSiret_format_check        CHECK ("vendorSiret" IS NULL OR "vendorSiret" ~ '^[0-9]{14}$')
+  //   Order_vendorVatNumber_format_check    CHECK ("vendorVatNumber" IS NULL OR "vendorVatNumber" ~ '^[A-Z]{2}[A-Z0-9]{2,13}$')
+  //   Order_invoicePdfHash_format_check     CHECK ("invoicePdfHash" IS NULL OR "invoicePdfHash" ~ '^[a-f0-9]{64}$')
+  //   Order_creditNotePdfHash_format_check  CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
+  //   Order_overbilledAmountCents_positive_check CHECK ("overbilledAmountCents" IS NULL OR "overbilledAmountCents" > 0)
+  //   Order_invoiceReconcileAttempts_check  CHECK ("invoiceReconcileAttempts" >= 0)
+  //   Order_vendorApeCode_format_check      CHECK ("vendorApeCode" ~ '^[0-9]{2}\.[0-9]{2}[A-Z]$')
+  //   Order_vendorBankIban_format_check     CHECK ("vendorBankIban" ~ '^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$')
+  //   Order_vendorBankBic_format_check      CHECK ("vendorBankBic" ~ '^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$')
+  //   Order_total_formula                   CHECK (total = GREATEST(0, subtotal - discountAmount + shippingCost))
+  //     ⚠️ L'invariant monétaire le plus fort du schéma : la base REFUSE une
+  //     commande dont le total ne dérive pas de ses composantes. Toute évolution
+  //     de la formule de prix (frais, taxes, arrondis) doit migrer ce CHECK.
+  //   Order_invoiceDataHash_format_check    CHECK ("invoiceDataHash" ~ '^[a-f0-9]{64}$')
+  //   Order_invoiceDataSnapshot_hash_coherence_check
+  //     CHECK (snapshot et hash tous deux NULL, ou tous deux NON NULL)
+  //     Interdit un snapshot de facture sans son empreinte (et l'inverse) : sans
+  //     ça, l'immutabilité Art. L102 B LPF ne serait plus vérifiable.
+  //
+  // Index spéciaux (DB, SQL brut — voir `prisma/sql/raw-guards.sql`) :
+  //   Order_customerName_unaccent_trgm_idx / Order_customerEmail_unaccent_trgm_idx
+  //     GIN d'expression : recherche admin floue insensible aux diacritiques.
+  //   Order_invoiceRetryDeferred_idx / Order_piiPurgedAt_paidAt_idx /
+  //   Order_unpaid_pii_purge_idx / Order_overbilling_unresolved_idx
+  //     Versions PARTIELLES (WHERE …) des @@index déclarés ci-dessus : ce sont
+  //     elles qui servent réellement les crons (prédicat très sélectif).
+  //
+  // Triggers (DB, SQL brut — non exprimables en Prisma) :
+  //   Order_creditNoteNumber_cross_unique   BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Refund (unicité cross-table séquence A-YYYY)
+
   // ⚠️ AUDIT 2026-06-24 — à ~20 cmd/mois (≤2400 lignes/10 ans) les index de tri/filtre
   // admin sont DÉCORATIFS (un seq scan + tri en mémoire est instantané). Ne comptent
   // vraiment que : les @unique (intégrité), les GIN trgm SQL (recherche admin), et les
@@ -925,25 +1023,6 @@ model Order {
   @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx") // Cron hard-delete-retention : purge PII à paidAt+10 ans (WHERE piiPurgedAt IS NULL)
   @@index([piiPurgedAt, paidAt, createdAt], map: "Order_unpaid_pii_purge_idx") // Cron hard-delete-retention : purge PII commandes jamais payées (WHERE piiPurgedAt IS NULL AND paidAt IS NULL, range createdAt) — RGPD-AUDIT F-A
   @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx") // dashboard get-action-items + passe reconcileOverbilledOrders (WHERE overbilledAmountCents IS NOT NULL AND overbillingResolvedAt IS NULL)
-
-  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
-  //   Order_subtotal_non_negative           CHECK (subtotal >= 0)
-  //   Order_total_non_negative              CHECK (total >= 0)
-  //   Order_discountAmount_non_negative     CHECK ("discountAmount" >= 0)
-  //   Order_shippingCost_non_negative       CHECK ("shippingCost" >= 0)
-  //   Order_taxAmount_non_negative          CHECK ("taxAmount" >= 0)
-  //   Order_currency_eur_check              CHECK (currency = 'EUR')
-  //   Order_invoiceNumber_format            CHECK ("invoiceNumber" IS NULL OR "invoiceNumber" ~ '^F-[0-9]{4}-[0-9]{5}$')
-  //   Order_creditNoteNumber_format_check   CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$')
-  //   Order_vendorSiren_format_check        CHECK ("vendorSiren" IS NULL OR "vendorSiren" ~ '^[0-9]{9}$')
-  //   Order_vendorSiret_format_check        CHECK ("vendorSiret" IS NULL OR "vendorSiret" ~ '^[0-9]{14}$')
-  //   Order_vendorVatNumber_format_check    CHECK ("vendorVatNumber" IS NULL OR "vendorVatNumber" ~ '^[A-Z]{2}[A-Z0-9]{2,13}$')
-  //   Order_invoicePdfHash_format_check     CHECK ("invoicePdfHash" IS NULL OR "invoicePdfHash" ~ '^[a-f0-9]{64}$')
-  //   Order_creditNotePdfHash_format_check  CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
-  //   Order_overbilledAmountCents_positive_check CHECK ("overbilledAmountCents" IS NULL OR "overbilledAmountCents" > 0)
-  //
-  // Triggers (DB, SQL brut — non exprimables en Prisma) :
-  //   Order_creditNoteNumber_cross_unique   BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Refund (unicité cross-table séquence A-YYYY)
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -951,7 +1030,7 @@ model Order {
 /// Conservation 10 ans avec la commande
 /// onDelete: SetNull pour preserver l'audit trail meme si commande supprimee
 model OrderHistory {
-  id      String  @id @default(cuid())
+  id      String  @id @default(cuid(2))
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
 
@@ -988,7 +1067,7 @@ model OrderHistory {
 }
 
 model OrderItem {
-  id      String @id @default(cuid())
+  id      String @id @default(cuid(2))
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -1008,13 +1087,13 @@ model OrderItem {
   productDescription String? @db.Text
   productImageUrl    String? @db.VarChar(2048)
 
-  skuSku       String? @db.VarChar(100) // Snapshot du code SKU au moment de la commande
-  skuColor     String? @db.VarChar(100)
+  skuSku        String? @db.VarChar(100) // Snapshot du code SKU au moment de la commande
+  skuColor      String? @db.VarChar(100)
   /// Snapshot des hex codes (CSV "#B76E79,#C0C0C0", ordre = position) pour rendu pastille email/facture.
   skuColorHexes String? @db.VarChar(200)
-  skuMaterial  String? @db.VarChar(100)
-  skuSize      String? @db.VarChar(50)
-  skuImageUrl  String? @db.VarChar(2048)
+  skuMaterial   String? @db.VarChar(100)
+  skuSize       String? @db.VarChar(50)
+  skuImageUrl   String? @db.VarChar(2048)
 
   // Prix et quantite
   // Micro-entreprise franchise TVA (Art. 293 B CGI) : TVA toujours nulle, le
@@ -1031,19 +1110,19 @@ model OrderItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([orderId])
-  @@index([skuId])
-  @@index([productId])
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   OrderItem_price_positive     CHECK (price > 0)
   //   OrderItem_quantity_positive  CHECK (quantity > 0)
+
+  @@index([orderId])
+  @@index([skuId])
+  @@index([productId])
 }
 
 /// Notes internes sur les commandes (visibles uniquement par les admins)
 /// Permet de documenter les echanges clients, incidents, ou actions speciales
 model OrderNote {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   orderId String?
   order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
@@ -1091,7 +1170,7 @@ enum RefundStatus {
 }
 
 model Refund {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Relation avec la commande (Restrict pour protection comptable)
   orderId String
@@ -1159,11 +1238,6 @@ model Refund {
   // Ne JAMAIS supprimer physiquement un remboursement (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
 
-  @@index([orderId])
-  @@index([status, processedAt]) // reconcile-refunds cron
-  @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
-  @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   Refund_amount_positive    CHECK (amount > 0)
   //   Refund_currency_eur_check CHECK (currency = 'EUR')
@@ -1172,10 +1246,15 @@ model Refund {
   //
   // Triggers (DB, SQL brut — non exprimables en Prisma) :
   //   Refund_creditNoteNumber_cross_unique  BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Order (unicité cross-table séquence A-YYYY)
+
+  @@index([orderId])
+  @@index([status, processedAt]) // reconcile-refunds cron
+  @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
+  @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
 }
 
 model RefundItem {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   refundId String
   refund   Refund @relation(fields: [refundId], references: [id], onDelete: Restrict)
@@ -1197,12 +1276,12 @@ model RefundItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([refundId])
-  @@index([orderItemId])
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   RefundItem_quantity_positive  CHECK (quantity >= 1)
   //   RefundItem_amount_positive    CHECK (amount > 0)
+
+  @@index([refundId])
+  @@index([orderItemId])
 }
 
 // ============================================================================
@@ -1231,7 +1310,7 @@ enum DisputeReason {
 /// Litige Stripe (chargeback) associe a une commande
 /// Permet de tracker les disputes de maniere structuree au lieu de notes texte libres
 model Dispute {
-  id              String @id @default(cuid())
+  id              String @id @default(cuid(2))
   stripeDisputeId String @unique // dp_xxx
 
   // Relation avec la commande (Restrict pour protection comptable)
@@ -1256,12 +1335,12 @@ model Dispute {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([orderId])
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   Dispute_amount_positive     CHECK (amount > 0)
   //   Dispute_fee_non_negative    CHECK (fee >= 0)
   //   Dispute_currency_eur_check  CHECK (currency = 'EUR')
+
+  @@index([orderId])
 }
 
 // ============================================================================
@@ -1274,7 +1353,7 @@ enum DiscountType {
 }
 
 model Discount {
-  id   String @id @default(cuid())
+  id   String @id @default(cuid(2))
   code String @unique @db.VarChar(30) // Ex: "BIENVENUE10", "ETE2025"
 
   // Type et valeur de la reduction
@@ -1311,10 +1390,13 @@ model Discount {
   //     borne basse : un décrément non gardé (release d'annulation) rendait le
   //     code redeemable au-delà de maxUsageCount. Libération toujours via
   //     `releaseOrderDiscountUsageTx`.
+  //   Discount_minOrderAmount_positive  CHECK (minOrderAmount IS NULL OR minOrderAmount > 0)
+  //   Discount_maxUsagePerUser_positive CHECK (maxUsagePerUser IS NULL OR maxUsagePerUser > 0)
+  //     NULL = pas de condition ; 0 serait un code inutilisable créé par erreur.
 }
 
 model DiscountUsage {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid(2))
   discountId String
   discount   Discount @relation(fields: [discountId], references: [id], onDelete: Restrict)
 
@@ -1348,8 +1430,20 @@ model DiscountUsage {
 /// Avis produit laisse par un acheteur verifie
 /// Un seul avis par utilisateur et par produit (pas par OrderItem)
 /// Permet de mettre a jour l'avis apres un nouvel achat
+///
+/// DÉCISION DE PÉRIMÈTRE (audit schéma 2026-07-26) — les 4 tables du module avis
+/// (`ProductReview`, `ReviewMedia`, `ReviewResponse`, `ProductReviewStats`) sont
+/// CONSERVÉES délibérément, malgré un volume d'avis qui restera faible et une
+/// surface client de dépôt aujourd'hui montée par aucune route (seul l'admin de
+/// modération est branché). Raisons : la feature est écrite, testée et
+/// fonctionnelle — la démonter coûte plus que la garder — et les avis sont un
+/// levier de conversion réel en bijoux artisanaux. `ProductReviewStats` n'est PAS
+/// une table morte : elle est lue par les cartes produit et le JSON-LD, et évite
+/// un COUNT/AVG par carte de listing.
+/// Ne pas reclasser ces tables en « poids mort » lors d'un futur right-sizing
+/// sans rouvrir cette décision.
 model ProductReview {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // === RELATIONS PRINCIPALES ===
   // Produit concerne (relation vers Product, pas ProductSku)
@@ -1386,6 +1480,8 @@ model ProductReview {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete RGPD (10 ans conservation)
 
+  // CHECK constraint (DB, SQL brut) : ProductReview_rating_range CHECK (rating >= 1 AND rating <= 5)
+
   // === CONTRAINTES ===
   // Un utilisateur ne peut laisser qu'un seul avis par produit
   // S'il rachete le produit, il peut modifier son avis existant
@@ -1395,14 +1491,12 @@ model ProductReview {
   // [productId] seul couvert en prefixe par l'index composite ci-dessous
   @@index([productId, status, deletedAt])
   @@index([deletedAt]) // hard-delete-retention cron (soft-deleted >= 10y, sans filtre product)
-
-  // CHECK constraint (DB, SQL brut) : ProductReview_rating_range CHECK (rating >= 1 AND rating <= 5)
 }
 
 /// Photo jointe a un avis produit
 /// Maximum 3 photos par avis (validation applicative)
 model ReviewMedia {
-  id       String        @id @default(cuid())
+  id       String        @id @default(cuid(2))
   reviewId String
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
@@ -1425,7 +1519,7 @@ model ReviewMedia {
 /// Reponse de l'admin/marque a un avis
 /// Une seule reponse possible par avis
 model ReviewResponse {
-  id       String        @id @default(cuid())
+  id       String        @id @default(cuid(2))
   reviewId String        @unique // Une seule reponse par avis
   review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
@@ -1447,7 +1541,7 @@ model ReviewResponse {
 /// Table de cache pour performances (evite COUNT/AVG a chaque requete)
 /// Mise a jour via trigger applicatif apres creation/modification/suppression d'avis
 model ProductReviewStats {
-  id        String  @id @default(cuid())
+  id        String  @id @default(cuid(2))
   productId String  @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
@@ -1485,7 +1579,7 @@ enum WebhookEventStatus {
 /// Evenements webhook Stripe
 /// Permet l'idempotence et l'audit trail des webhooks
 model WebhookEvent {
-  id            String             @id @default(cuid())
+  id            String             @id @default(cuid(2))
   stripeEventId String             @unique // evt_xxx - Cle d'idempotence
   eventType     String             @db.VarChar(100) // checkout.session.completed, etc.
   status        WebhookEventStatus @default(PENDING)
@@ -1530,7 +1624,7 @@ enum PostWebhookTaskStatus {
 /// Le cron `retry-post-webhook-tasks` (toutes les 30min) repop PENDING + FAILED
 /// dont `attempts < MAX_POST_WEBHOOK_RETRY_ATTEMPTS`.
 model PostWebhookTask {
-  id String @id @default(cuid())
+  id String @id @default(cuid(2))
 
   // Lien vers WebhookEvent (audit trail). SetNull pour préserver la task si
   // l'événement est purgé par la passe de rétention de `cleanup-pending-orders`.
@@ -1564,6 +1658,9 @@ model PostWebhookTask {
   // `status + attempts` et les 5 tentatives partaient en ~20 min à cadence fixe.
   // NULL = jamais tentée ⇒ éligible immédiatement (fail-open, lignes legacy).
   lastAttemptAt DateTime?
+
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   PostWebhookTask_attempts_non_negative  CHECK ("attempts" >= 0)
 
   @@index([status, attempts, createdAt]) // cron retry-post-webhook-tasks
   @@index([status, attempts, lastAttemptAt]) // sélection par paliers de backoff
@@ -1614,4 +1711,9 @@ model StoreSettings {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
+  //   StoreSettings_singleton_id  CHECK (id = 'store-settings-singleton')
+  //     C'est CE CHECK qui rend le singleton infranchissable : une 2e ligne avec
+  //     un autre id est rejetee par la base, pas seulement par le code.
 }

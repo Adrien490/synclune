@@ -18,8 +18,11 @@ const {
 	mockGetSkuInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		productSku: { findUnique: vi.fn(), update: vi.fn() },
+		// `findMany` + `$queryRaw` servent `assertUniqueVariantCombination` (advisory
+		// lock puis lecture des candidats en collision) appelée à l'activation.
+		productSku: { findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
 		$transaction: vi.fn(),
+		$queryRaw: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -75,6 +78,11 @@ function createMockExistingSku(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		isDefault: false,
 		productId: "prod-1",
+		// Lus par `assertUniqueVariantCombination` à l'ACTIVATION : publier une
+		// variante dont l'identité (produit × taille × set de couleurs) collisionne
+		// est interdit — cas produit par `duplicate-sku`. Audit schéma 2026-07-26.
+		size: "M",
+		colors: [{ colorId: "color-or" }],
 		product: {
 			slug: "bracelet-lune",
 			status: "DRAFT",
@@ -103,6 +111,9 @@ describe("updateProductSkuStatus", () => {
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockExistingSku());
 		mockPrisma.productSku.update.mockResolvedValue(createMockUpdatedSku(false));
+		// Aucun candidat en collision par défaut (garde d'identité de variante).
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
+		mockPrisma.$queryRaw.mockResolvedValue([]);
 		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
 			fn(mockPrisma),
 		);
@@ -184,6 +195,43 @@ describe("updateProductSkuStatus", () => {
 		expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
 			expect.objectContaining({ data: { isActive: true } }),
 		);
+	});
+
+	// @regression sku-variant-identity-guard — audit schéma 2026-07-26.
+	//
+	// `duplicate-sku` crée volontairement une copie à l'identité IDENTIQUE (même
+	// taille, même set de couleurs) en `isActive: false`. Rien n'obligeait l'admin
+	// à l'éditer : « Dupliquer » puis « Activer » publiait deux variantes
+	// indistinguables, rendant le sélecteur du storefront ambigu. Aucune
+	// contrainte DB ne peut l'empêcher (l'identité dépend d'une table de
+	// jointure) — la garde applicative à l'activation est le seul rempart.
+	it("refuse d'activer une variante dont l'identité collisionne (Dupliquer → Activer)", async () => {
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: true } });
+		mockPrisma.productSku.findUnique.mockResolvedValue(
+			createMockExistingSku({ isActive: false, size: "M", colors: [{ colorId: "color-or" }] }),
+		);
+		// L'original : même produit, même taille, même set de couleurs.
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ id: "sku-original", sku: "BRC-LUNE-OR-M", colors: [{ colorId: "color-or" }] },
+		]);
+
+		const result = await updateProductSkuStatus(undefined, activateFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("existe déjà");
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+	});
+
+	it("ne vérifie PAS l'identité de variante à la désactivation (jamais de collision)", async () => {
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
+		mockPrisma.productSku.findUnique.mockResolvedValue(createMockExistingSku({ isActive: true }));
+
+		await updateProductSkuStatus(undefined, deactivateFormData);
+
+		// Pas d'advisory lock pris : retirer une variante du storefront ne peut pas
+		// créer de doublon, et verrouiller le produit inutilement sérialiserait les
+		// désactivations.
+		expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
 	});
 
 	it("should invalidate cache tags after successful update", async () => {

@@ -157,6 +157,22 @@ export const deleteProductSkuSchema = z.object({
 	skuId: z.cuid2({ message: "ID variante invalide" }),
 });
 
+/**
+ * Même forme que `deleteProductSkuSchema`, nommés séparément.
+ *
+ * `duplicateSku` et `setDefaultSku` validaient littéralement avec le schéma de
+ * SUPPRESSION : ça marchait, mais le call site laissait croire à une suppression,
+ * et faire divergir l'un des trois (ajouter un champ à la duplication, par
+ * exemple) l'aurait fait divergir pour les trois.
+ */
+export const duplicateProductSkuSchema = z.object({
+	skuId: z.cuid2({ message: "ID variante invalide" }),
+});
+
+export const setDefaultProductSkuSchema = z.object({
+	skuId: z.cuid2({ message: "ID variante invalide" }),
+});
+
 export const updateProductSkuStatusSchema = z.object({
 	skuId: z.cuid2({ message: "ID variante invalide" }),
 	isActive: z.boolean(),

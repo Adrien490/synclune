@@ -11,6 +11,7 @@ import {
 	validationError,
 	handleActionError,
 	safeFormGetJSON,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -92,6 +93,9 @@ export async function updateProduct(
 				title: true,
 				slug: true,
 				status: true,
+				// Necessaire pour distinguer « le type change » de « le type est juste
+				// reconduit » : seul le premier cas exige un type actif (cf. etape 9).
+				typeId: true,
 				collections: {
 					select: {
 						collectionId: true,
@@ -142,7 +146,7 @@ export async function updateProduct(
 		// 5.5. Validation publication complete pour status=PUBLIC : projection de
 		// l'etat post-update du defaultSku sur le reste des SKUs du produit, puis
 		// passage dans validateProductForPublication (titre + >=1 SKU actif avec
-		// stock + image). Aligne updateProduct sur toggleProductStatus + bulk.
+		// stock + image). Aligne updateProduct sur toggleProductStatus.
 		if (validatedData.status === "PUBLIC") {
 			// Projection: le defaultSku herite des nouvelles valeurs envoyees
 			const projectedSkus = existingProduct.skus.map((s) =>
@@ -169,6 +173,11 @@ export async function updateProduct(
 
 		// 6. Normalize empty strings to null for optional foreign keys
 		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
+		// Un type desactive (retire de la taxonomie) ne doit pas bloquer l'edition des
+		// produits qui le referencent DEJA : `getProductTypeOptions` filtre isActive,
+		// donc le formulaire resoumet un id que l'admin ne voit meme pas dans le select.
+		// On n'exige un type actif que lorsqu'il CHANGE reellement.
+		const typeIdChanged = normalizedTypeId !== existingProduct.typeId;
 		const normalizedCollectionIds = validatedData.collectionIds;
 		// Dedupe (préserve l'ordre saisi, 1er = principal)
 		const normalizedColorIds = Array.from(new Set(validatedData.defaultSku.colorIds));
@@ -211,8 +220,15 @@ export async function updateProduct(
 					where: { id: normalizedTypeId },
 					select: { id: true, isActive: true },
 				});
-				if (!productType || !productType.isActive) {
-					throw new Error("Le type de produit spécifié n'existe pas ou n'est pas actif.");
+				// Existence : inconditionnelle (un id fantome est toujours une erreur).
+				if (!productType) {
+					throw new BusinessError("Le type de bijou sélectionné n'existe pas.");
+				}
+				// isActive : uniquement sur changement (cf. `typeIdChanged` etape 6).
+				if (typeIdChanged && !productType.isActive) {
+					throw new BusinessError(
+						"Le type de bijou sélectionné est désactivé. Choisissez un type actif.",
+					);
 				}
 			}
 

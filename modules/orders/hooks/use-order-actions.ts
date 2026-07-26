@@ -99,13 +99,10 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		canRevertToProcessing,
 		canMarkAsReturned,
 		canMarkAsFullyRefunded,
+		canDelete,
 	} = permissions;
 
 	const canTrack = (isShipped || isDelivered) && order.trackingUrl;
-	const canDelete =
-		!order.invoiceNumber &&
-		order.paymentStatus !== PaymentStatus.PAID &&
-		order.paymentStatus !== PaymentStatus.REFUNDED;
 
 	const open = (data: object) => ({ orderId: order.id, orderNumber: order.orderNumber, ...data });
 
@@ -222,10 +219,22 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					hidden: !canRefund,
 					href: `/admin/ventes/remboursements/nouveau?orderId=${order.id}`,
 				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
 				{
+					// Section `danger` et non `refund` : contrairement à « Créer un
+					// remboursement » (réversible, passe par Stripe), marquer une commande
+					// facturée comme remboursée hors Stripe ANNULE la facture et émet un
+					// avoir gap-free — irréversible, conséquence comptable (Art. 272-I CGI).
+					// Était en plus dupliqué en bouton `outline` dans le header de
+					// `OrderRefundsCard`, au même niveau visuel qu'un « Modifier ».
 					key: "mark-fully-refunded",
 					label: "Marquer comme remboursée (hors Stripe)",
 					icon: Banknote,
+					variant: "destructive",
 					hidden: !canMarkAsFullyRefunded,
 					closesMenu: false,
 					onSelect: () =>
@@ -236,11 +245,6 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 							}),
 						),
 				},
-			],
-		},
-		{
-			key: "danger",
-			items: [
 				{
 					key: "cancel",
 					label: "Annuler la commande",

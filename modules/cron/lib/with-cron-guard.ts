@@ -7,7 +7,7 @@ import {
 	cronError,
 } from "@/modules/cron/lib/verify-cron";
 import { CronDeadlineExceededError, type CronResult } from "@/modules/cron/lib/cron-result";
-import { CRON_SCHEDULES } from "@/modules/cron/constants/schedules";
+import { CRON_SCHEDULES, SENTRY_MONITORED_CRONS } from "@/modules/cron/constants/schedules";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { logger } from "@/shared/lib/logger";
 
@@ -30,9 +30,11 @@ function notifyAdmin(jobName: string, errors: number, details: Record<string, un
  * - Verifies CRON_SECRET (timing-safe).
  * - Opens a Sentry latency span (`cron.<jobName>`) with processed/errored/duration attributes.
  * - MON-03 : émet un check-in Sentry Cron Monitoring (`in_progress` → `ok`/`error`)
- *   quand le job a un planning connu (SSOT `CRON_SCHEDULES`). Sentry alerte alors si
+ *   pour les jobs listés dans `SENTRY_MONITORED_CRONS` (revenue/légal uniquement,
+ *   cf. audit coûts P2-1 — Sentry facture par monitor). Sentry alerte alors si
  *   un check-in attendu n'arrive pas (run manqué) — détecte un cron que Vercel a
  *   cessé d'invoquer, sinon totalement silencieux. No-op si Sentry DSN absent.
+ *   Les jobs non monitorés gardent la capture d'exception + l'alerte admin.
  * - Wraps handler in try/catch with admin alert + Sentry fingerprint per job.
  * - HTTP status codes :
  *     - 200 when fully successful, deadline-exceeded (resumable), or skipped (config).
@@ -87,7 +89,10 @@ export function withCronGuard<R extends CronJobResult | null>(
 		// `in_progress` au début puis `ok`/`error` à la fin. Sentry connaît le crontab
 		// attendu et alerte si un check-in n'arrive pas (run manqué) → détecte un cron
 		// que Vercel a cessé d'invoquer (sinon silencieux). No-op si DSN absent.
-		const schedule = CRON_SCHEDULES[jobName];
+		// Restreint aux jobs revenue/légal (audit coûts P2-1) : Sentry facture par
+		// monitor et le plan Developer n'en inclut qu'un. Au-delà du quota les
+		// check-ins sont rejetés, donnant l'illusion d'un monitoring actif.
+		const schedule = SENTRY_MONITORED_CRONS.has(jobName) ? CRON_SCHEDULES[jobName] : undefined;
 		const monitorConfig = schedule
 			? {
 					schedule: { type: "crontab" as const, value: schedule },

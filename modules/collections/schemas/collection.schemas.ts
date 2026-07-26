@@ -105,12 +105,6 @@ export const updateCollectionStatusSchema = z.object({
 	status: z.enum(CollectionStatus),
 });
 
-export const toggleCollectionStatusSchema = z.object({
-	id: z.cuid2("ID invalide"),
-	currentStatus: z.enum(CollectionStatus),
-	targetStatus: z.enum(CollectionStatus).optional(),
-});
-
 export const deleteCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
@@ -118,24 +112,4 @@ export const deleteCollectionSchema = z.object({
 export const setFeaturedProductSchema = z.object({
 	collectionId: z.cuid2("ID de collection invalide"),
 	productId: z.cuid2("ID de produit invalide"),
-});
-
-export const duplicateCollectionSchema = z.object({
-	collectionId: z.cuid2("ID de collection invalide"),
-});
-
-export const addProductsToCollectionSchema = z.object({
-	collectionId: z.cuid2("ID de collection invalide"),
-	productIds: z
-		.array(z.cuid2({ message: "ID de produit invalide" }))
-		.min(1, "Au moins un produit doit être sélectionné")
-		.max(200, "Trop de produits sélectionnés"),
-});
-
-export const removeProductsFromCollectionSchema = z.object({
-	collectionId: z.cuid2("ID de collection invalide"),
-	productIds: z
-		.array(z.cuid2({ message: "ID de produit invalide" }))
-		.min(1, "Au moins un produit doit être sélectionné")
-		.max(200, "Trop de produits sélectionnés"),
 });

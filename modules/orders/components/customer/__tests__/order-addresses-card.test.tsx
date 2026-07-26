@@ -36,7 +36,10 @@ function createOrder(
 		shippingAddress2: null,
 		shippingPostalCode: "75001",
 		shippingCity: "Paris",
-		shippingCountry: "France",
+		// Code ISO 2 lettres — la seule forme que `VarChar(2)` peut contenir.
+		// L'ancienne fixture "France" était impossible en base et masquait
+		// l'absence de conversion.
+		shippingCountry: "FR",
 		shippingPhone: "+33 6 12 34 56 78",
 		...overrides,
 	};
@@ -75,9 +78,24 @@ describe("OrderAddressesCard", () => {
 		expect(screen.getByText("75001 Paris")).toBeInTheDocument();
 	});
 
-	it("shows the shipping country", () => {
-		render(<OrderAddressesCard order={createOrder({ shippingCountry: "France" })} />);
+	// `shippingCountry` est un `VarChar(2)` : la carte rendait la colonne brute,
+	// donc « FR ». La fixture d'origine passait « France » — une valeur que la
+	// base ne peut pas contenir — et validait donc un bug.
+	it("traduit le code pays ISO en nom français", () => {
+		render(<OrderAddressesCard order={createOrder({ shippingCountry: "FR" })} />);
 		expect(screen.getByText("France")).toBeInTheDocument();
+		expect(screen.queryByText("FR")).not.toBeInTheDocument();
+	});
+
+	it("traduit aussi les autres pays livrés", () => {
+		render(<OrderAddressesCard order={createOrder({ shippingCountry: "BE" })} />);
+		expect(screen.getByText("Belgique")).toBeInTheDocument();
+	});
+
+	// Repli lisible plutôt qu'un `undefined` muet sur un code hors périmètre.
+	it("affiche le code brut si le pays est inconnu", () => {
+		render(<OrderAddressesCard order={createOrder({ shippingCountry: "ZZ" })} />);
+		expect(screen.getByText("ZZ")).toBeInTheDocument();
 	});
 
 	it("shows address line 2 when provided", () => {

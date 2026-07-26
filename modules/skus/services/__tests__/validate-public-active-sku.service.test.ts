@@ -16,9 +16,7 @@ vi.mock("@/shared/lib/actions", async (importOriginal) => {
 
 import {
 	assertPublicProductKeepsActiveSku,
-	assertBulkPublicProductsKeepActiveSku,
 	type ProductPublicActiveCheck,
-	type BulkProductActiveBreakdown,
 } from "../validate-public-active-sku.service";
 import { BusinessError } from "@/shared/lib/actions";
 
@@ -108,49 +106,5 @@ describe("assertPublicProductKeepsActiveSku", () => {
 			activeAffected: 0,
 		};
 		expect(() => assertPublicProductKeepsActiveSku(check)).not.toThrow();
-	});
-});
-
-// ============================================================================
-// Tests — assertBulkPublicProductsKeepActiveSku
-// ============================================================================
-
-describe("assertBulkPublicProductsKeepActiveSku", () => {
-	it("does nothing on empty breakdown", () => {
-		const breakdown: BulkProductActiveBreakdown = new Map();
-		expect(() => assertBulkPublicProductsKeepActiveSku(breakdown)).not.toThrow();
-	});
-
-	it("passes when every PUBLIC product keeps at least 1 SKU", () => {
-		const breakdown: BulkProductActiveBreakdown = new Map([
-			["prod-1", { productStatus: "PUBLIC", activeTotal: 3, activeAffected: 1 }],
-			["prod-2", { productStatus: "PUBLIC", activeTotal: 5, activeAffected: 2 }],
-			["prod-3", { productStatus: "DRAFT", activeTotal: 1, activeAffected: 1 }],
-		]);
-		expect(() => assertBulkPublicProductsKeepActiveSku(breakdown)).not.toThrow();
-	});
-
-	it("throws for the first PUBLIC product that would end up without active SKU", () => {
-		const breakdown: BulkProductActiveBreakdown = new Map([
-			["prod-ok", { productStatus: "PUBLIC", activeTotal: 3, activeAffected: 1 }],
-			["prod-broken", { productStatus: "PUBLIC", activeTotal: 1, activeAffected: 1 }],
-			["prod-never-checked", { productStatus: "PUBLIC", activeTotal: 1, activeAffected: 1 }],
-		]);
-		expect(() => assertBulkPublicProductsKeepActiveSku(breakdown)).toThrow(BusinessError);
-	});
-
-	it("ignores DRAFT / ARCHIVED products even when they lose all active SKUs", () => {
-		const breakdown: BulkProductActiveBreakdown = new Map([
-			["prod-draft", { productStatus: "DRAFT", activeTotal: 1, activeAffected: 1 }],
-			["prod-archived", { productStatus: "ARCHIVED", activeTotal: 1, activeAffected: 1 }],
-		]);
-		expect(() => assertBulkPublicProductsKeepActiveSku(breakdown)).not.toThrow();
-	});
-
-	it("does not throw when activeAffected = 0 on PUBLIC (no change)", () => {
-		const breakdown: BulkProductActiveBreakdown = new Map([
-			["prod-1", { productStatus: "PUBLIC", activeTotal: 1, activeAffected: 0 }],
-		]);
-		expect(() => assertBulkPublicProductsKeepActiveSku(breakdown)).not.toThrow();
 	});
 });

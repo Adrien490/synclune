@@ -1,5 +1,6 @@
 import { type ReviewStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -15,10 +16,11 @@ import { ReviewsAdminDialogs } from "./_components/reviews-admin-dialogs";
 import { ReviewsDataTable } from "@/modules/reviews/components/admin/reviews-data-table";
 import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/reviews-data-table-skeleton";
 import { ReviewsFilterBadges } from "@/modules/reviews/components/admin/reviews-filter-badges";
+import { ReviewsFilterSheet } from "@/modules/reviews/components/admin/reviews-filter-sheet";
+import { RefreshReviewsButton } from "@/modules/reviews/components/admin/refresh-reviews-button";
 import { ReviewsMobileList } from "@/modules/reviews/components/admin/reviews-mobile-list";
 import { ReviewsMobileListSkeleton } from "@/modules/reviews/components/admin/reviews-mobile-list-skeleton";
 import { ReviewsSortBadge } from "@/modules/reviews/components/admin/reviews-sort-badge";
-import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants";
 
 const ReviewsBottomBar = dynamic(() =>
 	import("@/modules/reviews/components/admin/reviews-bottom-bar").then(
@@ -30,6 +32,9 @@ import { formatRating } from "@/shared/utils/rating-utils";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { getFirstParam } from "@/shared/utils/params";
 import type { ReviewSortField } from "@/modules/reviews/types/review.types";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export const metadata: Metadata = {
 	title: "Avis clients | Dashboard",
@@ -51,15 +56,20 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 	const perPage = parseInt(getFirstParam(params.perPage) ?? "20", 10);
 	const cursor = getFirstParam(params.cursor);
 	const search = getFirstParam(params.search);
-	const statusFilter = getFirstParam(params.status) as ReviewStatus | undefined;
-	const ratingFilter = getFirstParam(params.rating)
-		? parseInt(getFirstParam(params.rating) ?? "", 10)
+	// Clés préfixées `filter_` comme les 10 autres listes admin : c'est ce que
+	// comptent `useActiveListControls()` (badge mobile) et `useFilter` (badges de
+	// filtres actifs).
+	const statusFilter = getFirstParam(params.filter_status) as ReviewStatus | undefined;
+	const ratingFilter = getFirstParam(params.filter_rating)
+		? parseInt(getFirstParam(params.filter_rating) ?? "", 10)
 		: undefined;
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy = (sortByParam ?? "createdAt-desc") as ReviewSortField;
-	const hasResponseParam = getFirstParam(params.hasResponse);
+	const hasResponseParam = getFirstParam(params.filter_hasResponse);
 	const hasResponse =
 		hasResponseParam === "true" ? true : hasResponseParam === "false" ? false : undefined;
+
+	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
 
 	const reviewsPromise = getReviews(
 		{
@@ -82,33 +92,25 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 		{ value: "rating-asc", label: "Notes les plus basses" },
 	];
 
-	// Options de statut
-	const statusOptions = [
-		{ value: "", label: "Tous les statuts" },
-		{ value: "PUBLISHED", label: REVIEW_STATUS_LABELS.PUBLISHED },
-		{ value: "HIDDEN", label: REVIEW_STATUS_LABELS.HIDDEN },
-	];
-
-	// Options de note
-	const ratingOptions = [
-		{ value: "", label: "Toutes les notes" },
-		{ value: "5", label: "5 étoiles" },
-		{ value: "4", label: "4 étoiles" },
-		{ value: "3", label: "3 étoiles" },
-		{ value: "2", label: "2 étoiles" },
-		{ value: "1", label: "1 étoile" },
-	];
-
-	// Options de réponse
-	const responseOptions = [
-		{ value: "", label: "Toutes les réponses" },
-		{ value: "true", label: "Avec réponse" },
-		{ value: "false", label: "Sans réponse" },
-	];
+	// Statut / note / réponse vivent désormais dans `ReviewsFilterSheet`, partagé
+	// entre desktop et mobile — un seul jeu de filtres, une seule définition.
 
 	return (
-		<>
+		// `display: contents` : cette page rend un fragment, il n'y a donc aucun
+		// conteneur où poser le groupe. Un wrapper `contents` est un ancêtre DOM
+		// (donc visible par le `:has()` de `group-has-*`) sans générer de boîte —
+		// l'espacement hérité du layout admin reste strictement identique.
+		<div className={cn(ADMIN_LIST_GROUP_CLASS, "contents")}>
 			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
+
+			<Suspense fallback={null}>
+				<ResultCountLiveRegion
+					totalCount={reviewsPromise.then((d) => d.totalCount)}
+					query={search}
+					singular="avis"
+					plural="avis"
+				/>
+			</Suspense>
 
 			<ReviewsBottomBar />
 
@@ -161,7 +163,9 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			</div>
 
 			{/* Toolbar */}
-			<Suspense fallback={<ToolbarSkeleton selectCount={4} className="hidden md:flex" />}>
+			<Suspense
+				fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+			>
 				<Toolbar
 					className="hidden md:flex"
 					ariaLabel="Barre d'outils de gestion des avis"
@@ -176,30 +180,6 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 					}
 				>
 					<SelectFilter
-						filterKey="status"
-						label="Statut"
-						options={statusOptions}
-						placeholder="Tous les statuts"
-						className="w-full sm:min-w-[150px]"
-						noPrefix
-					/>
-					<SelectFilter
-						filterKey="rating"
-						label="Note"
-						options={ratingOptions}
-						placeholder="Toutes les notes"
-						className="w-full sm:min-w-[150px]"
-						noPrefix
-					/>
-					<SelectFilter
-						filterKey="hasResponse"
-						label="Réponse"
-						options={responseOptions}
-						placeholder="Toutes les réponses"
-						className="w-full sm:min-w-[170px]"
-						noPrefix
-					/>
-					<SelectFilter
 						filterKey="sortBy"
 						label="Trier par"
 						options={sortOptions}
@@ -207,6 +187,10 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 						className="w-full sm:min-w-45"
 						noPrefix
 					/>
+					<ButtonGroup aria-label="Filtres et actions">
+						<ReviewsFilterSheet />
+						<RefreshReviewsButton />
+					</ButtonGroup>
 				</Toolbar>
 
 				{/* Badges de filtres actifs (visible mobile + desktop) */}
@@ -217,19 +201,11 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			<ReviewsSortBadge />
 
 			{/* Liste mobile */}
-			<Suspense
-				fallback={
-					<ReviewsMobileListSkeleton
-						hasActiveFilters={
-							!!search || !!params.status || !!params.rating || !!params.hasResponse
-						}
-					/>
-				}
-			>
+			<Suspense fallback={<ReviewsMobileListSkeleton hasActiveFilters={hasActiveFilters} />}>
 				<ReviewsMobileList
 					reviewsPromise={reviewsPromise}
 					perPage={perPage}
-					hasActiveFilters={!!search || !!params.status || !!params.rating || !!params.hasResponse}
+					hasActiveFilters={hasActiveFilters}
 				/>
 			</Suspense>
 
@@ -238,12 +214,12 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 				<ReviewsDataTable
 					reviewsPromise={reviewsPromise}
 					perPage={perPage}
-					hasActiveFilters={!!search || !!params.status || !!params.rating || !!params.hasResponse}
+					hasActiveFilters={hasActiveFilters}
 				/>
 			</Suspense>
 
 			{/* Dialogs des actions long-press / row-actions (toggle status) */}
 			<ReviewsAdminDialogs />
-		</>
+		</div>
 	);
 }

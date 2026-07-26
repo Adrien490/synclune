@@ -62,7 +62,6 @@ async function createPaidOrder(
 			orderNumber: `SYN-ARCH-${Date.now()}`,
 			customerEmail: "arch@test.local",
 			customerName: "Archive Test",
-			customerType: "B2C",
 			shippingFirstName: "Arc",
 			shippingLastName: "Hive",
 			shippingAddress1: "1 rue",

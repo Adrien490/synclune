@@ -28,23 +28,36 @@ export const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048] as const;
  * Paliers de qualité — SSOT alignée sur `images.qualities` de `next.config.ts`.
  *
  * ⚠️ COÛT : Vercel facture chaque couple (source, largeur, qualité) distinct.
- * Le catalogue utilisait 7 valeurs (60/65/70/75/80/85/90) × 8 largeurs, soit
- * jusqu'à 56 variantes facturées par image source, pour des écarts visuels
- * imperceptibles entre 70 et 75 ou entre 80 et 85. Trois paliers suffisent et
- * divisent la facture d'autant. N'AJOUTER une valeur qu'avec une raison mesurée,
- * et la déclarer aussi dans `next.config.ts` (sinon 400 sur `/_next/image`).
+ * Le catalogue utilisait 7 valeurs (60/65/70/75/80/85/90), ramenées à 3, puis à
+ * **2** par l'audit coûts (P2-5).
+ *
+ * Pourquoi supprimer le palier 90 plutôt qu'un autre : `STANDARD` (80) et
+ * `HERO` (90) s'appliquaient aux MÊMES sources aux MÊMES largeurs — une image
+ * produit est à la fois carte de grille (STANDARD) et image principale PDP
+ * (HERO), et `product-carousel-ui` demandait même les deux dans un seul
+ * composant. Chaque source était donc transformée deux fois pour un écart AVIF
+ * imperceptible. `THUMBNAIL` (65), lui, sert des largeurs disjointes (≤ 120 px)
+ * et ne double rien : le fusionner n'aurait presque rien économisé.
+ *
+ * Fusionner vers 80 plutôt que vers 90 réduit AUSSI les octets servis sur la
+ * PDP et la lightbox — le poste bande passante y gagne en même temps.
+ *
+ * N'AJOUTER une valeur qu'avec une raison mesurée, et la déclarer aussi dans
+ * `next.config.ts` (sinon 400 sur `/_next/image`).
  */
 export const IMAGE_QUALITY = {
 	/** Vignettes et miniatures (≤ 120 px) : la compression ne se voit pas. */
 	THUMBNAIL: 65,
-	/** Cartes produit, grilles, panier — le gros du catalogue. */
+	/**
+	 * Tout le reste — cartes produit, grilles, panier, image principale PDP,
+	 * lightbox, hero. Un seul palier pour que ces surfaces PARTAGENT leurs
+	 * variantes au lieu d'en facturer deux jeux.
+	 */
 	STANDARD: 80,
-	/** Image principale PDP, lightbox, hero : surfaces où le détail compte. */
-	HERO: 90,
 } as const;
 
-/** Quality for lightbox images (high quality) */
-export const LIGHTBOX_QUALITY = IMAGE_QUALITY.HERO;
+/** Quality for lightbox images. Partage les variantes du reste du catalogue. */
+export const LIGHTBOX_QUALITY = IMAGE_QUALITY.STANDARD;
 
 /** Quality for gallery thumbnails */
 export const THUMBNAIL_IMAGE_QUALITY = IMAGE_QUALITY.THUMBNAIL;
@@ -53,10 +66,9 @@ export const THUMBNAIL_IMAGE_QUALITY = IMAGE_QUALITY.THUMBNAIL;
  * Quality for the gallery main image.
  *
  * Aligné sur `LIGHTBOX_QUALITY` : l'image principale et la lightbox partagent
- * la même source, donc les mêmes variantes optimisées sont réutilisées au lieu
- * d'en générer un second jeu à 85.
+ * la même source, donc les mêmes variantes optimisées sont réutilisées.
  */
-export const MAIN_IMAGE_QUALITY = IMAGE_QUALITY.HERO;
+export const MAIN_IMAGE_QUALITY = IMAGE_QUALITY.STANDARD;
 
 // ============================================
 // PREFETCH

@@ -87,6 +87,8 @@ export interface OrderStateInput {
 	paymentStatus: PaymentStatus;
 	fulfillmentStatus?: FulfillmentStatus | null;
 	trackingNumber?: string | null;
+	/** Requis par `canDelete` : une commande facturée n'est plus supprimable. */
+	invoiceNumber?: string | null;
 }
 
 export interface OrderPermissions {
@@ -100,6 +102,7 @@ export interface OrderPermissions {
 	canRevertToProcessing: boolean;
 	canMarkAsReturned: boolean;
 	canMarkAsFullyRefunded: boolean;
+	canDelete: boolean;
 }
 
 // Validation result types for status transition functions

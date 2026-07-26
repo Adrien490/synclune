@@ -126,9 +126,20 @@ export function CountBadge({
 
 	return (
 		<>
-			{!silentLiveRegion && visible && (
-				<span aria-live="polite" className="sr-only">
-					{count === 1 ? `1 ${singularLabel}` : `${count} ${pluralLabel}`}
+			{/*
+			 * Région montée dès le premier rendu, texte vide quand `count === 0`.
+			 *
+			 * ⚠️ NE PAS remettre `&& visible` : une région `aria-live` n'est vocalisée
+			 * que si elle existait déjà dans l'arbre d'accessibilité au moment où son
+			 * contenu change. Gatée sur `visible`, elle disparaissait à 0 et
+			 * remontait avec son texte au premier article — donc le **premier** ajout
+			 * au panier ou aux favoris n'était jamais annoncé, précisément la
+			 * transition qui compte. `CartBadge` et `WishlistBadge` montent
+			 * `CountBadge` en permanence, la garantie tient donc de bout en bout.
+			 */}
+			{!silentLiveRegion && (
+				<span aria-live="polite" aria-atomic="true" className="sr-only">
+					{visible ? (count === 1 ? `1 ${singularLabel}` : `${count} ${pluralLabel}`) : ""}
 				</span>
 			)}
 

@@ -3,11 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type * as UseBottomBarHeightModule from "@/shared/hooks/use-bottom-bar-height";
 
 // Hoisted mocks (vi.mock factories are hoisted above variable declarations)
-const { useReducedMotionMock, useBottomBarHeightMock, useKeyboardOpenMock } = vi.hoisted(() => ({
-	useReducedMotionMock: vi.fn(() => false),
-	useBottomBarHeightMock: vi.fn(),
-	useKeyboardOpenMock: vi.fn(() => false),
-}));
+const { useReducedMotionMock, useBottomBarHeightMock, useKeyboardOpenMock, useMediaQueryMock } =
+	vi.hoisted(() => ({
+		useReducedMotionMock: vi.fn(() => false),
+		useBottomBarHeightMock: vi.fn(),
+		useKeyboardOpenMock: vi.fn(() => false),
+		// Défaut : viewport sous le breakpoint → la barre est visible.
+		useMediaQueryMock: vi.fn(() => true),
+	}));
 
 // Mock cn utility
 vi.mock("@/shared/utils/cn", () => ({
@@ -57,6 +60,11 @@ vi.mock("motion/react", async () => {
 // Mock useBottomBarHeight to track calls
 vi.mock("@/shared/hooks", () => ({
 	useBottomBarHeight: useBottomBarHeightMock,
+}));
+
+// Mock useMediaQuery — pilote la visibilité réelle de la barre.
+vi.mock("@/shared/hooks/use-media-query", () => ({
+	useMediaQuery: useMediaQueryMock,
 }));
 
 // Mock soft-keyboard observer — controllable per test.
@@ -160,9 +168,21 @@ describe("BottomBar", () => {
 		expect(el).not.toHaveAttribute("inert");
 	});
 
-	it("uses custom breakpointClass", () => {
+	it("hides at md by default", () => {
 		render(
-			<BottomBar breakpointClass="lg:hidden" aria-label="bar">
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(el.className).toContain("md:hidden");
+		expect(el.className).not.toContain("lg:hidden");
+	});
+
+	it('hides at lg when breakpoint="lg"', () => {
+		render(
+			<BottomBar breakpoint="lg" aria-label="bar">
 				<span>content</span>
 			</BottomBar>,
 		);
@@ -170,6 +190,29 @@ describe("BottomBar", () => {
 		const el = screen.getByLabelText("bar");
 		expect(el.className).toContain("lg:hidden");
 		expect(el.className).not.toContain("md:hidden");
+	});
+
+	// La classe Tailwind et la media query interrogée doivent dériver du MÊME
+	// prop : deux seuils indépendants, c'est la désynchronisation qui a laissé
+	// `--bottom-bar-height` à 56px pour une barre invisible.
+	it("derives the matchMedia query from the same breakpoint as the hide class", () => {
+		render(
+			<BottomBar breakpoint="lg" aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		expect(useMediaQueryMock).toHaveBeenCalledWith("(width < 64rem)");
+	});
+
+	it("uses a rem-based query for the default md breakpoint", () => {
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		expect(useMediaQueryMock).toHaveBeenCalledWith("(width < 48rem)");
 	});
 
 	it("uses default z-(--z-bar) zIndex", () => {
@@ -234,6 +277,23 @@ describe("BottomBar", () => {
 		);
 
 		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
+	});
+
+	// Régression : la barre n'est masquée qu'en CSS, donc le composant reste
+	// monté au-dessus du breakpoint. Publier `--bottom-bar-height` malgré tout
+	// réservait 56px pour une barre invisible, et chaque consommateur devait
+	// annuler l'offset avec un override de breakpoint codé en dur.
+	it("does not publish its height above the breakpoint (bar hidden by CSS)", () => {
+		useMediaQueryMock.mockReturnValue(false);
+
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
+		useMediaQueryMock.mockReturnValue(true);
 	});
 
 	it("renders native element with hidden attribute when reduced motion + isHidden", () => {

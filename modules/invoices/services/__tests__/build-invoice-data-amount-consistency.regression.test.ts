@@ -80,7 +80,6 @@ function makeOrderFixture(overrides: Partial<GetOrderReturn> = {}): GetOrderRetu
 		orderNumber: "CMD-FIX-001",
 		userId: null,
 		currency: "EUR",
-		customerType: "B2C",
 		customerEmail: "client@example.com",
 		customerName: "Marie Dupont",
 		customerPhone: null,

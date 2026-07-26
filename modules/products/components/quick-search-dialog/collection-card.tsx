@@ -19,6 +19,13 @@ interface CollectionCardProps {
 	variant?: "compact" | "full";
 	/** Search query for highlighting in compact mode */
 	query?: string;
+	/**
+	 * `true` quand la carte est rendue à l'intérieur du `role="listbox"` (mode
+	 * recherche) : elle prend alors `role="option"`. En idle le conteneur n'est
+	 * PAS un listbox, une option y serait orpheline — la carte reste un simple
+	 * lien, navigable via `data-qs-option` et le focus réel.
+	 */
+	inListbox?: boolean;
 }
 
 export function CollectionCard({
@@ -26,6 +33,7 @@ export function CollectionCard({
 	onSelect,
 	variant = "full",
 	query,
+	inListbox = false,
 }: CollectionCardProps) {
 	const isCompact = variant === "compact";
 	const router = useRouter();
@@ -46,8 +54,9 @@ export function CollectionCard({
 				href={href}
 				onClick={handleClick}
 				data-active={undefined}
-				role="option"
-				aria-selected={false}
+				data-qs-option=""
+				role={inListbox ? "option" : undefined}
+				aria-selected={inListbox ? false : undefined}
 				// Out of the Tab order: reached via arrow keys (combobox pattern).
 				tabIndex={-1}
 				className={cn(

@@ -17,6 +17,8 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface CollectionDetailHeaderProps {
 	collection: GetCollectionReturn;
@@ -40,7 +42,7 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 	});
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0">
 				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					{collection.name}
@@ -68,7 +70,7 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 				</p>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<Button
 					asChild
 					size="sm"
@@ -100,7 +102,7 @@ export function CollectionDetailHeader({ collection }: CollectionDetailHeaderPro
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

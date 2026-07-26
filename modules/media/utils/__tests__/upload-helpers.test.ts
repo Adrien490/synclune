@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { MAX_UPLOAD_SIZE_VIDEO } from "@/modules/media/constants/upload-size-limits";
 import {
 	DEFAULT_MAX_SIZE_IMAGE,
 	DEFAULT_MAX_SIZE_VIDEO,
@@ -18,8 +19,10 @@ describe("constants", () => {
 		expect(DEFAULT_MAX_SIZE_IMAGE).toBe(16 * 1024 * 1024);
 	});
 
-	it("DEFAULT_MAX_SIZE_VIDEO is 512MB", () => {
-		expect(DEFAULT_MAX_SIZE_VIDEO).toBe(512 * 1024 * 1024);
+	it("DEFAULT_MAX_SIZE_VIDEO suit la SSOT des plafonds d'upload", () => {
+		// Ramené de 512 Mo à 64 Mo (audit coûts P2-2) : 512 × 6 = 3 Go en un
+		// upload faisait sauter le quota UploadThing gratuit d'un coup.
+		expect(DEFAULT_MAX_SIZE_VIDEO).toBe(MAX_UPLOAD_SIZE_VIDEO);
 	});
 
 	it("DEFAULT_MAX_FILES is 6", () => {

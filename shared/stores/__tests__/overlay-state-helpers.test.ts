@@ -42,9 +42,16 @@ describe("overlay-state-helpers", () => {
 			expect(result["dialog-1"]).toEqual({ isOpen: false, data: { kept: true } });
 		});
 
-		it("handles non-existent entry gracefully", () => {
-			const result = closeEntry({}, "missing");
-			expect(result["missing"]).toEqual({ isOpen: false });
+		// Auparavant, fermer un id inconnu CRÉAIT `{ isOpen: false }`. Les dialogues
+		// admin scopés par utilisateur génèrent un id par ligne : la map accumulait
+		// des entrées pour des overlays jamais ouverts. C'est désormais un no-op,
+		// et l'identité de l'objet est conservée (pas de re-render inutile).
+		it("ignore un id inconnu sans créer d'entrée", () => {
+			const entries = { "dialog-1": { isOpen: true } };
+			const result = closeEntry(entries, "missing");
+
+			expect(result).toBe(entries);
+			expect(result["missing"]).toBeUndefined();
 		});
 	});
 

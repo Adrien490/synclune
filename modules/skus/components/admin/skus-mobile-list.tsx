@@ -11,6 +11,8 @@ import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 
 import { SkuMobileItem } from "./sku-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface SkusMobileListProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -29,7 +31,7 @@ export function SkusMobileList({
 
 	if (productSkus.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={Package}
 					title="Aucune variante"
@@ -58,7 +60,14 @@ export function SkusMobileList({
 	}
 
 	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			{/* Pas de `totalCount` : `getProductSkus` n'en expose pas (liste bornée
+			    aux variantes d'un seul produit). */}
 			<AdminListLiveCount count={productSkus.length} singular="variante" plural="variantes" />
 			<ItemGroup aria-label="Variantes" className="gap-2">
 				{productSkus.map((sku, index) => (

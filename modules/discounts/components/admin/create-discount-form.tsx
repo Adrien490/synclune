@@ -79,7 +79,7 @@ export function CreateDiscountForm({ className }: CreateDiscountFormProps) {
 	// Les messages discount ne sont pas path-préfixés → tout VALIDATION_ERROR serveur est global
 	const serverErrors = useServerFieldErrors({ state });
 
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;

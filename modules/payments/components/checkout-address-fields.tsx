@@ -12,8 +12,7 @@ import {
 import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { AddressSelector } from "./address-selector";
-import { CheckoutErrorSummary } from "./checkout-error-summary";
-import { CHECKOUT_FIELD_LABELS } from "../constants/checkout-fields";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PHONE_ERROR_MESSAGES } from "@/shared/schemas/phone.schemas";
 
@@ -78,6 +77,10 @@ function AddressAutocompleteField({
 					showEmptyState={false}
 					enterKeyHint="next"
 					autoCapitalize="words"
+					// Le défaut de <Autocomplete> est `search` (pensé pour la recherche
+					// produit) : sur iOS il sert un clavier de recherche là où l'on saisit
+					// une rue. On force le clavier texte standard.
+					inputMode="text"
 				/>
 			)}
 		</form.AppField>
@@ -95,32 +98,12 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 
 	return (
 		<fieldset className="space-y-5">
-			<p className="text-muted-foreground text-sm">
-				Les champs marqués d'un <span className="text-destructive">*</span> sont obligatoires.
-			</p>
-
-			{/* Error summary */}
-			<form.Subscribe
-				selector={(s) => ({
-					submissionAttempts: s.submissionAttempts,
-					canSubmit: s.canSubmit,
-					fieldMeta: s.fieldMeta,
-				})}
-			>
-				{({ submissionAttempts, canSubmit, fieldMeta }) => {
-					if (submissionAttempts === 0 || canSubmit) return null;
-
-					const fieldErrors = Object.entries(fieldMeta as Record<string, { errors: string[] }>)
-						.filter(([, meta]) => meta.errors.length > 0)
-						.map(([name, meta]) => ({
-							name,
-							label: CHECKOUT_FIELD_LABELS[name] ?? name,
-							message: meta.errors[0] as string,
-						}));
-
-					return <CheckoutErrorSummary fieldErrors={fieldErrors} />;
-				}}
-			</form.Subscribe>
+			{/*
+			 * Le résumé d'erreurs vit désormais en TÊTE de <form> (checkout-form-body),
+			 * pas ici : il liste aussi les erreurs de la section Contact, donc rendu
+			 * dans le fieldset Livraison il apparaissait SOUS le champ qu'il désignait.
+			 */}
+			<RequiredFieldsNote />
 
 			{/* Address selector for logged-in users with multiple addresses */}
 			{!isGuest && addresses && addresses.length > 1 && (
@@ -220,6 +203,9 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 										autoComplete="postal-code"
 										autoCorrect="off"
 										enterKeyHint="next"
+										// Aligné sur la borne haute du validateur (10) — sans ça le
+										// champ accepte une saisie que la validation rejettera.
+										maxLength={10}
 									/>
 								)}
 							</form.AppField>
@@ -243,6 +229,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 							label="Ville"
 							required
 							autoComplete="address-level2"
+							autoCapitalize="words"
 							enterKeyHint="next"
 						/>
 					)}
@@ -263,7 +250,11 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 						label="Pays"
 						required
 						options={countryOptions}
-						autoComplete="country-name"
+						// `country` (code ISO), PAS `country-name` : les options ont pour
+						// value un code (`countryOptions` ci-dessus). Avec `country-name`
+						// l'autofill d'adresse OS tente d'injecter « France » dans un select
+						// qui n'accepte que « FR » et échoue silencieusement.
+						autoComplete="country"
 					/>
 				)}
 			</form.AppField>
@@ -286,7 +277,10 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 									label="Téléphone"
 									required
 									defaultCountry={((country as string) || "FR") as ShippingCountry}
-									enterKeyHint={isGuest ? "done" : "next"}
+									// Dernier champ texte du formulaire dans les DEUX branches : la
+									// case « enregistrer mes informations » qui suit (connecté)
+									// n'est pas une saisie clavier — « done », jamais « next ».
+									enterKeyHint="done"
 								/>
 								<p className="text-muted-foreground text-sm">
 									Utilisé uniquement par le transporteur en cas de problème de livraison.

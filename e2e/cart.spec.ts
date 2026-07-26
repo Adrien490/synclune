@@ -53,6 +53,41 @@ test.describe("Panier", { tag: ["@critical"] }, () => {
 		await expect(cartPage.dialog).not.toBeVisible();
 	});
 
+	// Le retour matériel est la seule partie de la machinerie d'overlay qui n'est
+	// pas testable en jsdom : `history.pushState` / `back()` y sont mockés, donc
+	// la pile d'historique réelle n'existe pas. Audit « Overlays » 2026-07-26.
+
+	test("le retour navigateur ferme le cart sheet au lieu de quitter la page", async ({
+		page,
+		cartPage,
+	}) => {
+		await cartPage.open();
+
+		await page.goBack();
+
+		await expect(cartPage.dialog).not.toBeVisible();
+		await expect(page).toHaveURL("/");
+	});
+
+	// @regression overlay-history-entry — fermer par la croix reprend l'entrée
+	// d'historique poussée à l'ouverture. Sans ça, elle restait enterrée avec la
+	// MÊME URL que la page : le retour suivant n'affichait rien et l'utilisateur
+	// devait appuyer deux fois (une pression morte par cycle ouvrir/fermer).
+	test("fermer le sheet n'avale pas la pression suivante sur le retour", async ({
+		page,
+		cartPage,
+	}) => {
+		await page.goto("/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		await cartPage.open();
+		await cartPage.close();
+
+		await page.goBack();
+
+		await expect(page).toHaveURL("/");
+	});
+
 	test("l'attribut aria-expanded du bouton panier reflète l'état du sheet", async ({
 		cartPage,
 	}) => {

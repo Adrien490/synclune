@@ -80,13 +80,13 @@ export async function DiscountsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[16%]">Code</TableHead>
-					<TableHead className="w-[14%]">Type</TableHead>
-					<TableHead className="w-[12%]">Valeur</TableHead>
-					<TableHead className="w-[14%] text-center">Utilisations</TableHead>
-					<TableHead className="w-[10%] text-center">Statut</TableHead>
+					<TableHead className="w-[22%]">Code</TableHead>
+					<TableHead className="w-[16%]">Type</TableHead>
+					<TableHead className="w-[14%]">Valeur</TableHead>
+					<TableHead className="w-[18%] text-center">Utilisations</TableHead>
+					<TableHead className="w-[18%] text-center">Statut</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque code promo"
 					>
 						Actions
@@ -99,11 +99,15 @@ export async function DiscountsDataTable({
 						<TableCell>
 							<Link
 								href={`/admin/marketing/discounts/${discount.id}`}
-								className="focus-visible:ring-ring inline-block rounded outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+								className="focus-visible:ring-ring block min-w-0 rounded outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 								aria-label={`Voir le détail du code promo ${discount.code}`}
+								title={discount.code}
 							>
+								{/* `table-fixed` + `whitespace-nowrap` (défauts de `<TableCell>`) :
+								    sans `truncate`, un code long déborde visuellement sur la
+								    colonne voisine au lieu d'être coupé. */}
 								<code
-									className="bg-muted hover:bg-muted/70 rounded px-2 py-1 text-sm font-semibold transition-colors"
+									className="bg-muted hover:bg-muted/70 block truncate rounded px-2 py-1 text-sm font-semibold transition-colors"
 									style={{ viewTransitionName: `discount-code-${discount.id}` }}
 								>
 									{discount.code}

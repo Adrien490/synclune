@@ -23,6 +23,15 @@ import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-confi
 /**
  * Server Action pour basculer le statut d'un produit
  * DRAFT <-> PUBLIC (toggle simple)
+ * ARCHIVED -> DRAFT (restauration)
+ *
+ * La restauration vise DRAFT, jamais PUBLIC : l'archivage desactive TOUS les SKUs
+ * du produit (cf. etape 6), et `validateProductForPublication` exige >= 1 SKU actif
+ * avec stock et image. Viser PUBLIC rendait donc tout produit archive via l'UI
+ * definitivement irrecuperable (« aucune variante active »). DRAFT est le seul
+ * statut coherent avec les donnees post-archivage ; republier reste un geste
+ * explicite, apres reactivation manuelle d'au moins une variante.
+ *
  * Compatible avec useActionState de React 19
  */
 export async function toggleProductStatus(
@@ -54,7 +63,7 @@ export async function toggleProductStatus(
 		// (requete unique pour eviter N+1)
 		// deletedAt: null — un produit soft-deleted est ARCHIVED + deletedAt ; sans ce filtre,
 		// la transition ARCHIVED → PUBLIC le ressusciterait en gardant son deletedAt (état
-		// zombie visible dans les selects filtrés sur status seul). Parité bulk-change-product-status.
+		// zombie visible dans les selects filtrés sur status seul).
 		const existingProduct = await prisma.product.findUnique({
 			where: { id: productId, deletedAt: null },
 			select: {
@@ -89,12 +98,14 @@ export async function toggleProductStatus(
 			// Si un statut cible est fourni, l'utiliser directement
 			newStatus = targetStatus;
 		} else {
-			// Sinon, logique de toggle par defaut
+			// Sinon, logique de toggle par defaut. On se base sur le statut lu en DB et
+			// non sur le `currentStatus` fourni par le client : une ligne de liste
+			// perimee produirait sinon une transition identite refusee (5.4).
 			// DRAFT <-> PUBLIC (toggle)
-			// ARCHIVED -> PUBLIC (restore)
-			if (currentStatus === "ARCHIVED") {
-				newStatus = "PUBLIC";
-			} else if (currentStatus === "DRAFT") {
+			// ARCHIVED -> DRAFT (restauration, cf. docstring)
+			if (existingProduct.status === "ARCHIVED") {
+				newStatus = "DRAFT";
+			} else if (existingProduct.status === "DRAFT") {
 				newStatus = "PUBLIC";
 			} else {
 				newStatus = "DRAFT";
@@ -155,9 +166,14 @@ export async function toggleProductStatus(
 			);
 		}
 
-		// 8. Messages de succes contextuels
+		// 8. Messages de succes contextuels. La restauration a son propre libelle :
+		// arriver en brouillon sans savoir que les variantes ont ete desactivees
+		// laisserait l'admin devant un « Publier » qui echoue.
+		const isRestore = existingProduct.status === "ARCHIVED" && newStatus === "DRAFT";
 		const statusMessages: Record<typeof newStatus, string> = {
-			DRAFT: `"${existingProduct.title}" mis en brouillon`,
+			DRAFT: isRestore
+				? `"${existingProduct.title}" restaure en brouillon. Reactivez au moins une variante (stock + image) pour pouvoir le publier.`
+				: `"${existingProduct.title}" mis en brouillon`,
 			PUBLIC: `"${existingProduct.title}" publie`,
 			ARCHIVED: `"${existingProduct.title}" archive`,
 		};

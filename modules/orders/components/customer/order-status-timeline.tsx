@@ -11,7 +11,7 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/shared/utils/cn";
-import { CircleCheck, Clock, CreditCard, Package, Truck, CircleX } from "lucide-react";
+import { CircleCheck, Clock, CreditCard, Package, Truck, CircleX, Undo2 } from "lucide-react";
 
 interface OrderStatusTimelineProps {
 	order: {
@@ -26,6 +26,28 @@ interface OrderStatusTimelineProps {
 }
 
 export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
+	// Les étapes de progression dérivent d'`OrderStatus`, PAS de `fulfillmentStatus`.
+	//
+	// Le webhook `payment_intent.succeeded` écrit `status = PROCESSING` sans
+	// toucher `fulfillmentStatus` : la paire `(PROCESSING, UNFULFILLED)` est donc
+	// l'état NORMAL de toute commande payée. En lisant `fulfillmentStatus`, cette
+	// timeline laissait « En préparation » ni cochée ni active pour 100 % des
+	// clientes ayant payé — et l'admin ne pouvait pas corriger, `canMarkAsProcessing`
+	// exigeant `status === PENDING`. `status` est le SSOT du cycle de vie et reste
+	// toujours cohérent ; `fulfillmentStatus` n'est lu que pour `RETURNED`, seule
+	// information qu'`OrderStatus` ne porte pas.
+	const isShipped = order.status === "SHIPPED" || order.status === "DELIVERED";
+	const isDelivered = order.status === "DELIVERED";
+	const isReturned = order.fulfillmentStatus === "RETURNED";
+
+	// Un remboursement (total ou partiel) n'annule pas le fait que le paiement a
+	// été reçu : sans ces deux valeurs, l'étape « Paiement reçu » restait muette
+	// et sans date sur une commande remboursée.
+	const isPaid =
+		order.paymentStatus === "PAID" ||
+		order.paymentStatus === "REFUNDED" ||
+		order.paymentStatus === "PARTIALLY_REFUNDED";
+
 	const steps = [
 		{
 			label: "Commande passée",
@@ -37,31 +59,46 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			label: "Paiement reçu",
 			date: order.paidAt,
 			icon: CreditCard,
-			completed: order.paymentStatus === "PAID",
+			completed: isPaid,
 			failed: order.paymentStatus === "FAILED" || order.paymentStatus === "EXPIRED",
 		},
 		{
 			label: "En préparation",
-			date: order.paidAt,
+			// Pas de date : aucune colonne ne marque l'entrée en préparation, et
+			// réutiliser `paidAt` affichait l'horodatage du paiement deux étapes de
+			// suite sous un libellé qui ne le désigne pas.
+			date: null,
 			icon: Package,
-			completed:
-				order.fulfillmentStatus === "PROCESSING" ||
-				order.fulfillmentStatus === "SHIPPED" ||
-				order.fulfillmentStatus === "DELIVERED",
-			active: order.fulfillmentStatus === "PROCESSING",
+			completed: order.status === "PROCESSING" || isShipped,
+			active: order.status === "PROCESSING",
 		},
 		{
 			label: "Expédiée",
 			date: order.shippedAt,
 			icon: Truck,
-			completed: order.fulfillmentStatus === "SHIPPED" || order.fulfillmentStatus === "DELIVERED",
+			completed: isShipped,
+			active: order.status === "SHIPPED",
 		},
 		{
 			label: "Livrée",
 			date: order.actualDelivery,
 			icon: CircleCheck,
-			completed: order.fulfillmentStatus === "DELIVERED",
+			completed: isDelivered,
+			active: isDelivered && !isReturned,
 		},
+		// `markAsReturned` laisse `status = DELIVERED` : sans cette étape, le badge
+		// affichait « Livrée » pendant que la timeline ne mentionnait nulle part le
+		// retour.
+		...(isReturned
+			? [
+					{
+						label: "Retournée",
+						date: null,
+						icon: Undo2,
+						completed: true,
+					},
+				]
+			: []),
 	];
 
 	const isCancelled = order.status === "CANCELLED";

@@ -34,6 +34,30 @@ export interface CursorPaginationProps {
 	 * cursor-pagination opaque mid-navigation, d'où le format compact "X sur N".
 	 */
 	totalCount?: number;
+	/**
+	 * Afficher le compteur « X sur N résultats » dans la barre.
+	 *
+	 * `false` pour les listes admin : la barre entière disparaît quand il n'y a
+	 * qu'une page (cas normal à faible volume), le compteur y serait donc
+	 * invisible la plupart du temps. `AdminDataTable` le rend lui-même, hors de
+	 * la zone conditionnelle.
+	 *
+	 * @default true
+	 */
+	showCount?: boolean;
+	/**
+	 * Instance secondaire : rend les contrôles mais n'installe AUCUN effet
+	 * global (raccourcis clavier Alt+Flèche, `router.prefetch`, `<link rel>`).
+	 *
+	 * Les listes admin montent DEUX instances en permanence (la table desktop en
+	 * `hidden md:block` et la liste mobile en `md:hidden` sont toutes deux dans
+	 * le DOM à toutes les tailles). Sans ce drapeau, chaque Alt+Flèche déclenche
+	 * deux `router.push`, chaque page émet deux `<link rel="next">` et prefetch
+	 * deux fois.
+	 *
+	 * @default false
+	 */
+	secondary?: boolean;
 }
 
 /**

@@ -11,11 +11,16 @@ export default function AccountLoading() {
 		>
 			<span className="sr-only">Chargement de votre espace client…</span>
 
-			<div className="space-y-2">
-				<Skeleton className="h-7 w-48 sm:h-8" />
-				<Skeleton className="h-4 w-72 max-w-full" />
-			</div>
-
+			{/*
+			 * ⚠️ Plus de bloc titre + sous-titre ici : il n'existait sur AUCUNE page du
+			 * compte. Le `h1` et les onglets sont rendus par le layout
+			 * (`_components/espace-client-content.tsx`), donc ces deux lignes étaient
+			 * ~44 px de fantôme sur les trois routes.
+			 *
+			 * La grille `lg:grid-cols-3` ci-dessous ne correspond qu'à `/parametres`.
+			 * `/commandes` et `/adresses` ont désormais leur propre `loading.tsx`, ce
+			 * fichier ne sert donc plus que `/parametres` et ses sous-routes.
+			 */}
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<div className="space-y-6 lg:col-span-2">
 					{Array.from({ length: 2 }).map((_, i) => (

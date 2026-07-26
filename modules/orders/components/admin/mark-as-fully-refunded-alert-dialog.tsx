@@ -8,13 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsFullyRefunded } from "@/modules/orders/hooks/use-mark-as-fully-refunded";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { Banknote, FileWarning, LoaderCircle } from "lucide-react";
+import { FileWarning, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -77,7 +76,9 @@ export function MarkAsFullyRefundedAlertDialog() {
 	const invoiceNumber = dialog.data?.invoiceNumber;
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
+		// `destructive` et non `warning` : l'opération annule la facture et émet un
+		// avoir gap-free — irréversible, conséquence comptable (Art. 272-I CGI).
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="destructive">
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
@@ -85,7 +86,6 @@ export function MarkAsFullyRefundedAlertDialog() {
 					{reason.trim() ? <input type="hidden" name="reason" value={reason.trim()} /> : null}
 					<input type="hidden" name="manualRefundMethod" value={method} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Banknote} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Marquer comme entièrement remboursée
@@ -185,7 +185,14 @@ export function MarkAsFullyRefundedAlertDialog() {
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Fermer</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						{/* Le moyen est obligatoire (audit Art. L123-22) : le bloquer ici plutôt
+						    que de laisser la seule validation serveur refuser l'envoi, comme le
+						    fait déjà `delete-order-alert-dialog` pour son motif. */}
+						<ResponsiveAlertDialogAction
+							type="submit"
+							disabled={isPending || !method}
+							aria-busy={isPending}
+						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Marquage…" : "Marquer comme remboursée"}
 						</ResponsiveAlertDialogAction>

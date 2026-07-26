@@ -37,8 +37,11 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		});
 		await expect(bottomNav).toBeVisible();
 
+		// ⚠️ L'onglet 2 est un BOUTON « Rechercher » (il ouvre le quick-search), pas
+		// un lien « Produits » : ce test assertait un onglet retiré par l'audit
+		// recherche du 2026-07-26 et ne couvrait donc que 4 onglets sur 5.
 		await expect(bottomNav.getByRole("link", { name: /Accueil/i })).toBeVisible();
-		await expect(bottomNav.getByRole("link", { name: /Produits/i })).toBeVisible();
+		await expect(bottomNav.getByRole("button", { name: /Rechercher/i })).toBeVisible();
 		await expect(bottomNav.getByRole("link", { name: /Favoris/i })).toBeVisible();
 		await expect(bottomNav.getByRole("button", { name: /Panier/i })).toBeVisible();
 		await expect(bottomNav.getByRole("link", { name: /Compte/i })).toBeVisible();
@@ -57,17 +60,36 @@ test.describe("Shop - Mobile (viewport 390x844)", { tag: ["@regression"] }, () =
 		await expect(cartDialog).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 
-	test("bottom nav — l'onglet Produits navigue vers /produits", async ({ page }) => {
+	test("bottom nav — l'onglet Rechercher ouvre le quick-search", async ({ page }) => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		const productsTab = page
+		const searchTab = page
 			.getByRole("navigation", { name: /Navigation principale de la boutique/i })
-			.getByRole("link", { name: /Produits/i });
-		await productsTab.click();
+			.getByRole("button", { name: /Rechercher/i });
+		await expect(searchTab).toHaveAttribute("aria-expanded", "false");
+		await searchTab.click();
+
+		await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		await expect(searchTab).toHaveAttribute("aria-expanded", "true");
+	});
+
+	test("bottom nav — l'onglet Panier reflète l'ouverture du sheet dans aria-expanded", async ({
+		page,
+	}) => {
+		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		await expect(page).toHaveURL(/\/produits/);
+		const cartTab = page
+			.getByRole("navigation", { name: /Navigation principale de la boutique/i })
+			.getByRole("button", { name: /Panier/i });
+
+		// Régression : `aria-expanded` était figé à "false" (isActive: false en dur)
+		// alors que le bouton porte `aria-haspopup="dialog"`.
+		await expect(cartTab).toHaveAttribute("aria-expanded", "false");
+		await cartTab.click();
+		await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		await expect(cartTab).toHaveAttribute("aria-expanded", "true");
 	});
 
 	test("catalogue produits — grille mobile single-column, bouton filtres visible", async ({

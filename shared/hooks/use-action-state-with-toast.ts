@@ -31,8 +31,8 @@ interface UseActionStateWithToastOptions<TData> {
 /**
  * Wrapper réutilisable autour de `useActionState` + toast callbacks +
  * narrowing typé. Remplace les patterns dupliqués dans
- * `use-duplicate-product-type`, `use-merge-product-types`,
- * `use-toggle-product-type-status` (et leurs jumeaux `colors/`, `materials/`).
+ * `use-duplicate-product-type`, `use-toggle-product-type-status`
+ * (et leurs jumeaux `colors/`, `materials/`).
  *
  * @example
  * const { state, action, isPending } = useActionStateWithToast(duplicateProductType, {

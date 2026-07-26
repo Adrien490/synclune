@@ -2,14 +2,32 @@
 
 import { useEffect, useEffectEvent } from "react";
 
+import { type Breakpoint, mediaAtLeast } from "@/shared/constants/breakpoints";
+
 /** Horizontal distance (px) that fully arms the swipe; also the trigger threshold. */
 const SWIPE_THRESHOLD_PX = 30;
+
+/**
+ * Largeur (px) de la bande de bord dans laquelle un `touchstart` arme le geste.
+ * Volontairement en px et non en rem : c'est une cible de pouce physique, pas un
+ * seuil de mise en page — elle ne doit pas suivre la police racine (contraster
+ * avec `disabledFrom`, qui est bien un breakpoint).
+ */
+const EDGE_ZONE_PX = 20;
 
 interface UseEdgeSwipeOptions {
 	/** Bord déclencheur (mobile-native). @default "left" */
 	side?: "left" | "right";
-	/** Largeur max (px) en-dessous de laquelle le hook est actif. @default 1024 */
-	maxWidth?: number;
+	/**
+	 * Breakpoint à partir duquel le geste est **désactivé** (nav desktop
+	 * disponible). Nom de breakpoint et non largeur en px : un seuil px se
+	 * désynchronise des variants Tailwind dès que la police racine change — le
+	 * geste resterait armé sur une largeur où le menu desktop est déjà là, ou
+	 * l'inverse. Cf. `shared/constants/breakpoints.ts`.
+	 *
+	 * @default "lg"
+	 */
+	disabledFrom?: Breakpoint;
 	/**
 	 * Callback fired during the drag with a 0–1 value (|dx| / threshold).
 	 * Called with 0 when the gesture is cancelled or completed. Lets callers
@@ -29,21 +47,14 @@ interface UseEdgeSwipeOptions {
  * @param isActive - When `true`, the hook is **disabled** (gesture skipped) —
  *                   typique pour "skip when target already open" ou "skip hors mode".
  *                   Note : sémantique invariante des deux côtés (active = disabled).
- * @param options   - side / maxWidth / onProgress
+ * @param options   - side / disabledFrom / onProgress
  */
 export function useEdgeSwipe(
 	onTrigger: () => void,
 	isActive: boolean,
-	maxWidthOrOptions: number | UseEdgeSwipeOptions = 1024,
-	onProgressArg?: (progress: number) => void,
+	options: UseEdgeSwipeOptions = {},
 ) {
-	// Backward-compat overload : ancienne signature `(fn, isOpen, maxWidth, onProgress)`.
-	const opts: UseEdgeSwipeOptions =
-		typeof maxWidthOrOptions === "number"
-			? { maxWidth: maxWidthOrOptions, onProgress: onProgressArg }
-			: maxWidthOrOptions;
-
-	const { side = "left", maxWidth = 1024, onProgress } = opts;
+	const { side = "left", disabledFrom = "lg", onProgress } = options;
 
 	const onTriggerStable = useEffectEvent(onTrigger);
 	const onProgressStable = useEffectEvent((progress: number) => {
@@ -54,7 +65,7 @@ export function useEdgeSwipe(
 		if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
 		// WCAG 2.3.3 — users who prefer reduced motion skip gesture-triggered animations
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-		const mql = window.matchMedia(`(min-width: ${maxWidth}px)`);
+		const mql = window.matchMedia(mediaAtLeast(disabledFrom));
 
 		let startX = 0;
 		let startY = 0;
@@ -69,10 +80,16 @@ export function useEdgeSwipe(
 
 		function onTouchStart(e: TouchEvent) {
 			if (isActive || mql.matches) return;
+			// Le hook écoute au niveau `document` et ignorait la cible : un drag amorcé
+			// dans les 20px du bord gauche faisait défiler le carousel/la table qui
+			// touche ce bord ET ouvrait le menu. Les conteneurs à défilement horizontal
+			// se retirent du geste via `data-no-edge-swipe`.
+			if (e.target instanceof Element && e.target.closest("[data-no-edge-swipe]")) return;
 			const touch = e.touches[0];
 			if (!touch) return;
 			const winWidth = window.innerWidth;
-			const startsAtEdge = side === "left" ? touch.clientX <= 20 : touch.clientX >= winWidth - 20;
+			const startsAtEdge =
+				side === "left" ? touch.clientX <= EDGE_ZONE_PX : touch.clientX >= winWidth - EDGE_ZONE_PX;
 			if (startsAtEdge) {
 				startX = touch.clientX;
 				startY = touch.clientY;
@@ -122,5 +139,5 @@ export function useEdgeSwipe(
 			document.removeEventListener("touchend", onTouchEnd);
 			document.removeEventListener("touchcancel", onTouchEnd);
 		};
-	}, [isActive, maxWidth, side]);
+	}, [isActive, disabledFrom, side]);
 }

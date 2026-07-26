@@ -44,26 +44,18 @@ function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 				countryCode: "FR",
 			},
 			email: "contact@synclune.fr",
-			eInvoicingAddress: null,
-			eInvoicingPlatformId: null,
 			vatExemptionText: "TVA non applicable, art. 293 B du CGI",
 			bankIban: null,
 			bankBic: null,
 		},
 		buyer: {
-			type: "B2C",
 			legalName: null,
 			firstName: "Alice",
 			lastName: "Dupont",
 			email: "alice@example.com",
 			phone: null,
-			siren: null,
 			siret: null,
 			vatNumber: null,
-			eInvoicingAddress: null,
-			eInvoicingPlatformId: null,
-			publicEntityId: null,
-			chorusServiceCode: null,
 		},
 		shippingAddress: {
 			recipientName: "Alice Dupont",
@@ -148,19 +140,13 @@ describe("renderInvoicePdf — déterminisme bit-à-bit (Art. L102 B LPF)", () =
 	it("B2B avec TVA — déterministe", () => {
 		const data = makeInvoice({
 			buyer: {
-				type: "B2B",
 				legalName: "Acme SARL",
 				firstName: "Bob",
 				lastName: "Martin",
 				email: "bob@acme.com",
 				phone: null,
-				siren: "123456789",
 				siret: "12345678900012",
 				vatNumber: "FR00123456789",
-				eInvoicingAddress: null,
-				eInvoicingPlatformId: null,
-				publicEntityId: null,
-				chorusServiceCode: null,
 			},
 			lines: [
 				{

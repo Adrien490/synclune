@@ -87,12 +87,12 @@ export async function CollectionsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[23%]">Nom</TableHead>
-					<TableHead className="w-[12%]">Statut</TableHead>
-					<TableHead className="w-[23%]">Description</TableHead>
-					<TableHead className="w-[10%] text-center">Produits</TableHead>
+					<TableHead className="w-[30%]">Nom</TableHead>
+					<TableHead className="w-[14%]">Statut</TableHead>
+					<TableHead className="w-[32%]">Description</TableHead>
+					<TableHead className="w-[12%] text-center">Produits</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque collection"
 					>
 						Actions

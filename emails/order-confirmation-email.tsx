@@ -10,6 +10,7 @@ import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { EmailSummaryRow } from "./_components/email-summary-row";
 import { FlexRow } from "./_components/flex-row";
+import { formatCountryName } from "@/shared/constants/countries";
 
 interface OrderConfirmationEmailProps {
 	orderNumber: string;
@@ -197,7 +198,8 @@ export const OrderConfirmationEmail = ({
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
 					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
-						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
+						{shippingAddress.postalCode} {shippingAddress.city},{" "}
+						{formatCountryName(shippingAddress.country)}
 					</Text>
 				</EmailCard>
 			</Section>
@@ -288,7 +290,7 @@ OrderConfirmationEmail.PreviewProps = {
 		address2: "Appartement 4B",
 		postalCode: "75002",
 		city: "Paris",
-		country: "France",
+		country: "FR",
 	},
 	trackingUrl: "https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6",
 	invoiceUrl:

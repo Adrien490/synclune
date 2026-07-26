@@ -96,13 +96,3 @@ export const toggleProductTypeStatusSchema = z.object({
 export const duplicateProductTypeSchema = z.object({
 	productTypeId: z.cuid2("ID de type de produit invalide"),
 });
-
-export const mergeProductTypesSchema = z
-	.object({
-		sourceId: z.cuid2("ID source invalide"),
-		targetId: z.cuid2("ID cible invalide"),
-	})
-	.refine((data) => data.sourceId !== data.targetId, {
-		message: "Les types source et cible doivent être différents",
-		path: ["targetId"],
-	});

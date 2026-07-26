@@ -64,7 +64,6 @@ vi.mock("../dashboard-refresh-sheet", () => ({
 		open ? <div data-testid="refresh-sheet-open" /> : null,
 }));
 
-
 import { DashboardMobileActions } from "../dashboard-mobile-actions";
 
 afterEach(() => {
@@ -128,5 +127,4 @@ describe("DashboardMobileActions", () => {
 		expect(mockHaptic).toHaveBeenCalledWith("light");
 		expect(screen.getByTestId("refresh-sheet-open")).toBeInTheDocument();
 	});
-
 });

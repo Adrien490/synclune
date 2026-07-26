@@ -23,14 +23,10 @@ vi.mock("@/modules/orders/constants/shipping-rates", () => ({
 	},
 }));
 
-vi.mock("@/modules/orders/services/shipping-zone.service", () => ({
-	getShippingZoneFromPostalCode: (postalCode: string) => {
-		if (postalCode.startsWith("20")) {
-			return { zone: "CORSE" };
-		}
-		return { zone: "METROPOLE" };
-	},
-}));
+// `shipping-zone.service` n'est VOLONTAIREMENT pas mocké : c'est une fonction
+// pure sans dépendance, et le stub qui la remplaçait ne savait retourner que
+// `CORSE` — d'où l'impossibilité de voir que DOM/TOM/UNKNOWN étaient facturés au
+// tarif métropole. Le mock était la cause de l'angle mort, pas un détail.
 
 import {
 	getShippingRate,
@@ -145,6 +141,33 @@ describe("calculateShipping", () => {
 	it("should return EU rate for Italy", () => {
 		expect(calculateShipping("IT")).toBe(950);
 	});
+
+	// Les CGV §5.1 excluent les DOM-TOM. Avant correction, seule `CORSE` était
+	// testée : un CP `97400` créait une commande à 4,99 € pour un envoi outre-mer.
+	describe.each([
+		["97100", "Guadeloupe (DOM)"],
+		["97200", "Martinique (DOM)"],
+		["97400", "La Réunion (DOM)"],
+		["98800", "Nouvelle-Calédonie (TOM)"],
+		["98700", "Polynésie française (TOM)"],
+	])("DOM-TOM %s — %s", (postalCode) => {
+		it("is refused, not billed at the metropolitan rate", () => {
+			expect(calculateShipping("FR", postalCode)).toBeNull();
+		});
+	});
+
+	// Un CP hors département connu n'a pas de tarif applicable : le refuser évite
+	// que `getShippingRate` retombe silencieusement sur le barème métropole.
+	describe.each([["96000"], ["99000"], ["00000"]])("zone indéterminée %s", (postalCode) => {
+		it("is refused", () => {
+			expect(calculateShipping("FR", postalCode)).toBeNull();
+		});
+	});
+
+	it("ignores the postal code for non-FR countries (foreign formats)", () => {
+		// Un CP belge "9700" ne doit pas être lu comme un département français.
+		expect(calculateShipping("BE", "9700")).toBe(950);
+	});
 });
 
 // ============================================================================
@@ -169,6 +192,48 @@ describe("getShippingInfo", () => {
 		expect(info).not.toBeNull();
 		expect(info!.amount).toBe(950);
 		expect(info!.displayName).toContain("Europe");
+	});
+
+	it("should return null for DOM-TOM postal codes", () => {
+		expect(getShippingInfo("FR", "97400")).toBeNull();
+		expect(getShippingInfo("FR", "98800")).toBeNull();
+	});
+});
+
+// ============================================================================
+// Parité calculateShipping ↔ getShippingInfo
+// ============================================================================
+
+/**
+ * Les deux fonctions dupliquaient la même détection de zone, chacune avec sa
+ * propre copie du test `zone === "CORSE"` — une divergence ne coûtait qu'un
+ * oubli de synchronisation. Elles partagent désormais `isUnshippableDestination`,
+ * et ce test verrouille le fait qu'elles répondent toujours sur le même
+ * périmètre : l'une ne peut pas accepter ce que l'autre refuse.
+ */
+describe("calculateShipping / getShippingInfo parity", () => {
+	const POSTAL_CODES = [
+		"75001", // métropole
+		"13001", // métropole
+		"20000", // Corse 2A
+		"20200", // Corse 2B
+		"2A000", // Corse (forme département)
+		"2B000", // Corse (forme département)
+		"97100", // DOM
+		"97400", // DOM
+		"98800", // TOM
+		"96000", // indéterminé
+		"99000", // indéterminé
+	];
+
+	it.each(POSTAL_CODES)("agrees on availability for %s", (postalCode) => {
+		const amount = calculateShipping("FR", postalCode);
+		const info = getShippingInfo("FR", postalCode);
+
+		expect(amount === null).toBe(info === null);
+		if (info !== null) {
+			expect(amount).toBe(info.amount);
+		}
 	});
 });
 

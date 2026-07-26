@@ -11,9 +11,5 @@ export function useDuplicateProductType(options?: {
 	onSuccess?: (message: string, data: TaxonomyDuplicateSuccessData) => void;
 	onError?: (message: string) => void;
 }) {
-	return useTaxonomyDuplicate(
-		duplicateProductType,
-		TAXONOMY_CONFIG["product-type"],
-		options,
-	);
+	return useTaxonomyDuplicate(duplicateProductType, TAXONOMY_CONFIG["product-type"], options);
 }

@@ -16,18 +16,18 @@ const RATING_LABELS: Record<string, string> = {
 function formatReviewFilter(filter: FilterDefinition) {
 	const value = filter.value as string;
 
-	if (filter.key === "status") {
+	if (filter.key === "filter_status") {
 		const label = REVIEW_STATUS_LABELS[value as keyof typeof REVIEW_STATUS_LABELS] as
 			string | undefined;
 		return { label: "Statut", displayValue: label ?? value };
 	}
 
-	if (filter.key === "rating") {
+	if (filter.key === "filter_rating") {
 		const label = RATING_LABELS[value] as string | undefined;
 		return { label: "Note", displayValue: label ?? value };
 	}
 
-	if (filter.key === "hasResponse") {
+	if (filter.key === "filter_hasResponse") {
 		return {
 			label: "Réponse",
 			displayValue: value === "true" ? "Avec réponse" : "Sans réponse",
@@ -39,8 +39,14 @@ function formatReviewFilter(filter: FilterDefinition) {
 
 /**
  * Badges des filtres actifs pour la liste avis admin.
- * Reviews utilisent des clés brutes (status, rating, hasResponse) sans préfixe `filter_`.
+ *
+ * Préfixe `filter_` par défaut, comme les 10 autres listes. L'ancien
+ * `filterPrefix: ""` était doublement piégeux : il empêchait
+ * `useActiveListControls()` de compter les filtres actifs (badge mobile toujours
+ * vide), et dans `useFilter` un préfixe vide fait passer `key.startsWith(prefix)`
+ * à `true` pour TOUS les paramètres — retirer un badge emportait donc aussi
+ * `search`, `sortBy` et `perPage`.
  */
 export function ReviewsFilterBadges() {
-	return <FilterBadges formatFilter={formatReviewFilter} filterOptions={{ filterPrefix: "" }} />;
+	return <FilterBadges formatFilter={formatReviewFilter} />;
 }

@@ -10,9 +10,9 @@ vi.mock("@/modules/media/utils/media-utils", () => ({
 vi.mock("@/modules/media/constants/image-config.constants", () => ({
 	nextImageUrl: vi.fn(
 		(src: string, size: number, quality?: number) =>
-			`/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=${quality ?? 90}`,
+			`/_next/image?url=${encodeURIComponent(src)}&w=${size}&q=${quality ?? 80}`,
 	),
-	LIGHTBOX_QUALITY: 90,
+	LIGHTBOX_QUALITY: 80,
 	DEVICE_SIZES: [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const,
 }));
 

@@ -298,9 +298,17 @@ const f = createUploadthing({
 // Delete operations use Next.js Server Actions (built-in same-origin CSRF protection).
 export const ourFileRouter = {
 	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
+	//
+	// ⚠️ COÛT (audit coûts P2-2) : la vidéo était plafonnée à 512 Mo × 6, soit
+	// **3 Go en un seul upload** — le quota de stockage UploadThing (2 Go sur le
+	// plan gratuit) sautait d'un coup, par une action admin parfaitement
+	// légitime. Ramené à 64 Mo × 2 : très large pour une vidéo de présentation
+	// de bijou (quelques secondes en boucle), et le pire cas d'un upload passe
+	// de 3 Go à 128 Mo. Les uploads d'images restent inchangés (16 Mo × 6) —
+	// `compress-image.ts` les replafonne de toute façon à 2048 px.
 	catalogMedia: f({
 		image: { maxFileSize: "16MB", maxFileCount: 6 },
-		video: { maxFileSize: "512MB", maxFileCount: 6 },
+		video: { maxFileSize: "64MB", maxFileCount: 2 },
 	})
 		.middleware(async ({ files }) => {
 			try {

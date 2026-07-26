@@ -24,7 +24,7 @@ const {
 	mockGetOrderMetadataInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -97,6 +97,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 			fn(mockPrisma),
 		);
 		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	it("autorise modification si SHIPPED (actualDelivery encore null)", async () => {
@@ -175,7 +176,7 @@ describe("ORD-BIZ-006 — update-tracking refuse modification > 30j après livra
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/30 jours/i);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
 });

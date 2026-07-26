@@ -5,6 +5,7 @@ import * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
+import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import { cn } from "@/shared/utils/cn";
 
 function AlertDialog({
@@ -12,17 +13,29 @@ function AlertDialog({
 	onOpenChange,
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
-	useBackButtonClose({
+	// Bouton retour du navigateur (mobile) — ET reprise de l'entrée d'historique
+	// sur les autres fermetures (Annuler, Escape), sans quoi chaque confirmation
+	// affichée puis annulée laissait une entrée orpheline de même URL et avalait
+	// la pression suivante sur le retour matériel.
+	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
 		onClose: () => onOpenChange?.(false),
 		id: "alert-dialog",
 	});
 
+	const wrappedOnOpenChange = (newOpen: boolean) => {
+		if (!newOpen) {
+			handleClose();
+		} else {
+			onOpenChange?.(true);
+		}
+	};
+
 	return (
 		<AlertDialogPrimitive.Root
 			data-slot="alert-dialog"
 			open={open}
-			onOpenChange={onOpenChange}
+			onOpenChange={wrappedOnOpenChange}
 			{...props}
 		/>
 	);
@@ -58,19 +71,49 @@ function AlertDialogOverlay({
 	);
 }
 
+/**
+ * Rendu dans le Portal : il ne monte donc que pendant que la confirmation est
+ * ouverte. Même motif que `SheetContent` / `DrawerContent` — sans lui, une
+ * confirmation admin mobile laissait la bottom-bar visible et le pull-to-refresh
+ * armé derrière elle.
+ */
+function OverlayStackRegister({ enabled }: { enabled: boolean }) {
+	useRegisterOverlay(enabled);
+	return null;
+}
+
 function AlertDialogContent({
 	className,
 	children,
+	registerOverlay = true,
 	...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
+}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
+	/**
+	 * Quand `false`, cette confirmation ne s'empile pas sur la pile d'overlays
+	 * globale (l'UI ancrée en bas reste visible derrière elle).
+	 * @default true
+	 */
+	registerOverlay?: boolean;
+}) {
 	return (
 		<AlertDialogPortal>
+			<OverlayStackRegister enabled={registerOverlay} />
 			<AlertDialogOverlay />
 			<AlertDialogPrimitive.Content
 				data-slot="alert-dialog-content"
 				className={cn(
 					"fixed top-1/2 left-1/2 z-(--z-alert) w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 sm:max-w-105",
-					"flex max-h-[calc(100dvh-4rem)] flex-col overflow-hidden",
+					// `overflow-y-auto`, PAS `overflow-hidden` : sous `max-h`, un contenu
+					// trop haut (zoom texte 200%, paysage mobile, description longue)
+					// débordait sans scroll et se faisait couper. Le footer étant le
+					// dernier enfant, ce sont les boutons Annuler/Confirmer qui
+					// sortaient de l'écran — confirmation destructive inutilisable
+					// (audit responsive 2026-07-26). Le scroll est porté par le Content
+					// et non par un enfant : plusieurs callsites enveloppent header +
+					// footer dans un `<form>` (cf. delete-confirmation-dialog), donc
+					// aucune structure interne ne peut être présumée. Même contrat que
+					// `DialogContent` (`max-h-[90vh] overflow-y-auto`).
+					"max-h-[calc(100dvh-4rem)] overflow-y-auto",
 					"bg-card",
 					"border-primary/20 rounded-xl border",
 					"shadow-xl",
@@ -93,7 +136,7 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
 	return (
 		<div
 			data-slot="alert-dialog-header"
-			className={cn("flex shrink-0 flex-col gap-1.5 text-left", className)}
+			className={cn("flex flex-col gap-1.5 text-left", className)}
 			{...props}
 		/>
 	);
@@ -103,10 +146,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
 	return (
 		<div
 			data-slot="alert-dialog-footer"
-			className={cn(
-				"flex shrink-0 flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end",
-				className,
-			)}
+			className={cn("flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end", className)}
 			{...props}
 		/>
 	);

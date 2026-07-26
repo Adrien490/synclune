@@ -172,12 +172,16 @@ describe("RecentOrdersList — mobile", () => {
 		expect(link).toHaveAttribute("href", "/admin/ventes/commandes/abc-123");
 	});
 
-	it("fires 'light' haptic when a row is tapped", async () => {
+	/**
+	 * @regression no-haptic-on-passive-navigation
+	 * Chaque ligne est un lien vers le détail commande : navigation passive.
+	 */
+	it("fires no haptic when a row is tapped", async () => {
 		const user = userEvent.setup();
 		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
 
 		await user.click(screen.getAllByRole("link")[0]!);
-		expect(mockHaptic).toHaveBeenCalledWith("light");
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("attaches viewTransitionName: order-card-${id} to the row Link", () => {

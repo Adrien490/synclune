@@ -64,19 +64,36 @@ function Sheet({
 	 */
 	handleOnly?: boolean;
 	/**
-	 * Si `true`, Vaul repositionne l'input focusé au-dessus du clavier mobile
-	 * (au lieu de scroller la page). Active pour les sheets avec saisie texte
-	 * (search input, formulaire). Auto-activé si `snapPoints` est défini.
+	 * Repositionne l'input focusé au-dessus du clavier mobile (au lieu de
+	 * scroller la page).
+	 *
+	 * ⚠️ Le défaut Vaul est `true`, et ne rien passer forwarde `undefined` —
+	 * donc le comportement par défaut est ACTIF. Ne le passer explicitement que
+	 * pour le désactiver (`false`) ou pour documenter l'intention sur une sheet
+	 * de saisie.
 	 */
 	repositionInputs?: boolean;
 }) {
-	// Gère uniquement le bouton retour du navigateur (mobile)
-	// Les autres fermetures (X, overlay, etc.) passent directement par onOpenChange
-	useBackButtonClose({
+	// Bouton retour du navigateur (mobile) — ET reprise de l'entrée d'historique
+	// sur TOUTES les autres fermetures (X, scrim, Escape, swipe). Sans ce
+	// `handleClose`, chaque cycle ouvrir/fermer laissait derrière lui une entrée
+	// d'historique portant la même URL que la page : la pression suivante sur le
+	// retour matériel ne produisait rien de visible (un « back » mort par cycle,
+	// cumulatif). `handleClose` ne recule que si notre entrée est encore au
+	// sommet de l'historique — cf. use-back-button-close.
+	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
 		onClose: () => onOpenChange?.(false),
 		id: "sheet",
 	});
+
+	const wrappedOnOpenChange = (newOpen: boolean) => {
+		if (!newOpen) {
+			handleClose();
+		} else {
+			onOpenChange?.(true);
+		}
+	};
 
 	// Stacking : si on est déjà dans un Drawer/Sheet Vaul, on monte un
 	// `NestedRoot` (animation scale parent + focus-trap chaîné) au lieu d'un
@@ -93,7 +110,7 @@ function Sheet({
 					data-slot="sheet"
 					direction={direction}
 					open={open}
-					onOpenChange={onOpenChange}
+					onOpenChange={wrappedOnOpenChange}
 					scrollLockTimeout={scrollLockTimeout}
 					closeThreshold={closeThreshold}
 					handleOnly={handleOnly}
@@ -227,7 +244,7 @@ function SheetContent({
 				{showCloseButton && (
 					<SheetPrimitive.Close
 						aria-label="Fermer le panneau"
-						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
+						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>

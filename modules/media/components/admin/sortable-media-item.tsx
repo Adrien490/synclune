@@ -112,14 +112,16 @@ export function SortableMediaItem({
 	const [thumbnailError, setThumbnailError] = useState(false);
 	const showThumbnail = isVideo && media.thumbnailUrl && !thumbnailError;
 
-	// Haptic on drag start (enter drag source state)
+	// Haptique au DÉBUT du drag uniquement : c'est l'instant où l'utilisateur a
+	// besoin de savoir que la prise est acquise. La fin de drag n'en émet plus —
+	// avec le `selection` du drop (`media-upload-grid`), un simple réordonnancement
+	// produisait 3 vibrations.
 	const wasDragSourceRef = useRef(false);
 	useEffect(() => {
 		if (isDragSource && !wasDragSourceRef.current) {
 			haptic("medium");
 			wasDragSourceRef.current = true;
 		} else if (!isDragSource && wasDragSourceRef.current) {
-			haptic("light");
 			wasDragSourceRef.current = false;
 		}
 	}, [isDragSource, haptic]);

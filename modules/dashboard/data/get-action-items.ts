@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { DisputeStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
 import type { DashboardActionItems } from "../types/dashboard.types";
 
@@ -14,8 +15,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // fraîches à chaque chargement (PAS de "use cache" : on veut l'état courant, et
 // `Date.now()` est interdit dans un bloc "use cache").
 const DISPUTE_DEADLINE_SOON_MS = 2 * DAY_MS;
-const STUCK_PROCESSING_MS = 7 * DAY_MS;
-const STUCK_SHIPPED_MS = 14 * DAY_MS;
+// Réutilisés depuis `THRESHOLDS` plutôt que redéclarés : les deux définitions
+// portaient les mêmes valeurs sans lien, donc pouvaient divorcer en silence.
+const STUCK_PROCESSING_MS = THRESHOLDS.STUCK_PROCESSING_MS;
+const STUCK_SHIPPED_MS = THRESHOLDS.STUCK_SHIPPED_MS;
 const STUCK_INVOICE_MS = 7 * DAY_MS;
 const ORPHAN_PENDING_MS = 14 * DAY_MS;
 

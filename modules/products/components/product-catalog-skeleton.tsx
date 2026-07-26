@@ -25,7 +25,15 @@ export function ProductCatalogSkeleton({
 	hideHeaderOnMobile = true,
 }: ProductCatalogSkeletonProps = {}) {
 	return (
-		<div className="min-h-dvh">
+		/*
+		 * `role="status"` + `aria-busy` : ce squelette est le `loading.tsx` complet de
+		 * `/produits` et `/produits/[productTypeSlug]` (les deux fichiers ne rendent que
+		 * ce composant). Sans ces attributs, le chargement des deux routes catalogue —
+		 * les plus visitées du site — n'était annoncé d'aucune façon, alors que les ~70
+		 * autres `loading.tsx` le sont.
+		 */
+		<div className="min-h-dvh" role="status" aria-busy="true" aria-label="Chargement du catalogue">
+			<span className="sr-only">Chargement du catalogue…</span>
 			<PageHeaderSkeleton className={hideHeaderOnMobile ? "hidden sm:block" : undefined} />
 
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">

@@ -13,6 +13,8 @@ import {
 	SidebarMenuItem,
 } from "@/shared/components/ui/sidebar";
 import type { AdminNavBadges } from "@/modules/orders/data/get-admin-nav-badges";
+import { isRouteActive } from "@/shared/lib/navigation";
+import { usePathname } from "next/navigation";
 import { NavMainClient } from "./nav-main-client";
 import { navigationData } from "./navigation-config";
 
@@ -24,12 +26,18 @@ interface CollapsibleNavGroupProps {
 }
 
 export function CollapsibleNavGroup({ groupLabel, groupId, badges }: CollapsibleNavGroupProps) {
+	const pathname = usePathname();
 	const group = navigationData.navGroups.find((g) => g.label === groupLabel);
 
 	if (!group) return null;
 
+	// Ouvert par défaut si la route courante est dans le groupe, sinon replié :
+	// arriver sur /admin/catalogue/produits ne doit pas laisser « Catalogue »
+	// fermé, et à l'inverse un groupe hors contexte n'a pas à occuper la place.
+	const hasActiveItem = group.items.some((item) => isRouteActive(pathname, item.url));
+
 	return (
-		<Collapsible defaultOpen className="group/collapsible">
+		<Collapsible defaultOpen={hasActiveItem} className="group/collapsible">
 			<SidebarGroup role="group" aria-labelledby={groupId}>
 				<CollapsibleTrigger asChild>
 					<SidebarGroupLabel
@@ -53,7 +61,12 @@ export function CollapsibleNavGroup({ groupLabel, groupId, badges }: Collapsible
 							const Icon = item.icon;
 							return (
 								<SidebarMenuItem key={item.id}>
-									<NavMainClient url={item.url} tooltip={item.title} badge={badges?.[item.id]}>
+									<NavMainClient
+										url={item.url}
+										tooltip={item.title}
+										badge={badges?.[item.id]}
+										badgeUrl={item.badgeUrl}
+									>
 										<Icon className="size-5 shrink-0" aria-hidden="true" />
 										<span className="flex-1">{item.title}</span>
 									</NavMainClient>

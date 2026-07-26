@@ -9,7 +9,7 @@ export async function getStoreStatus(): Promise<StoreStatus> {
 	const cached = await fetchStoreStatus();
 
 	// Eventual-consistency fallback OUTSIDE cache: if reopensAt has passed, treat the
-	// store as open even before the cron `reopen-store` (every 15 min) flips the DB row.
+	// store as open even before the cron `reopen-store` (hourly) flips the DB row.
 	// Date.now() can NOT live inside the "use cache" body — it would be frozen at
 	// cache-write time and never re-evaluate.
 	if (cached.isClosed && cached.reopensAt && cached.reopensAt.getTime() <= Date.now()) {

@@ -78,7 +78,7 @@ test.describe("Accessibilité - Homepage", { tag: ["@slow"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		const menuButton = page.getByRole("button", { name: /Ouvrir le menu de navigation/i });
+		const menuButton = page.getByRole("button", { name: /Menu de navigation/i });
 		await menuButton.focus();
 		await expect(menuButton).toBeFocused();
 
@@ -179,12 +179,27 @@ test.describe("Accessibilité - Formulaires auth", { tag: ["@slow"] }, () => {
 		await authPage.emailInput.fill("invalide");
 		await authPage.emailInput.blur();
 
-		const errorMessage = page.getByText(/Format d'email invalide/i);
+		/*
+		 * Ce test était ROUGE, pour deux raisons indépendantes :
+		 *
+		 * 1. Il cherchait « Format d'email invalide », chaîne qui n'existe nulle part.
+		 *    Le message réel est `EMAIL_ERROR_MESSAGES.INVALID_FORMAT`
+		 *    (`shared/schemas/email.schemas.ts`).
+		 * 2. `errorMessage.locator("..")` remontait au PARENT du nœud portant le
+		 *    texte. Or `FieldError` (`shared/components/ui/field.tsx`) place
+		 *    `role="alert" aria-live="polite"` **sur** le nœud du texte ; le parent
+		 *    est le `div.min-h-0.overflow-hidden` qui gère le collapse et n'a aucun
+		 *    attribut aria. L'assertion échouait donc même avec le bon message.
+		 *
+		 * On cible désormais l'élément `[aria-live]` qui CONTIENT le message, ce qui
+		 * reste juste que `FieldError` rende une string ou une `<ul>` de plusieurs
+		 * erreurs.
+		 */
+		const errorMessage = page.getByText(/Vérifiez le format de votre email/i);
 		await expect(errorMessage).toBeVisible();
 
-		// Verify aria-live announcement for screen readers
-		const errorContainer = errorMessage.locator("..");
-		await expect(errorContainer).toHaveAttribute("aria-live", /(polite|assertive)/);
+		const liveContainer = page.locator("[aria-live]").filter({ has: errorMessage });
+		await expect(liveContainer.first()).toHaveAttribute("aria-live", /(polite|assertive)/);
 	});
 
 	test("les boutons de soumission ont des textes descriptifs", async ({ authPage }) => {

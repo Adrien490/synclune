@@ -14,6 +14,7 @@ import { useReducedMotion } from "motion/react";
 import { Keyboard } from "lucide-react";
 import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 
 interface MediaLightboxProps {
 	open: boolean;
@@ -44,6 +45,13 @@ export default function MediaLightbox({
 }: MediaLightboxProps) {
 	const prefersReducedMotion = useReducedMotion();
 	const haptic = useHaptic();
+	// La lightbox est un overlay modal en `position: fixed` : `window.scrollY` reste
+	// donc à 0 pendant qu'on la manipule, et le pull-to-refresh s'armait DESSOUS
+	// (un pan d'image zoomée vers le bas déclenchait un refresh de la page).
+	// L'enregistrer dans la pile d'overlays le désarme — et libère aussi le bord bas
+	// pour la barre admin, ce que ce hook fait déjà pour les Sheet/Drawer.
+	// `data-no-ptr` ne suffirait pas : YARL rend dans un portail hors de cet arbre.
+	useRegisterOverlay(open);
 	const previousActiveElementRef = useRef<HTMLElement | null>(null);
 	// Internal index tracks the slide effectively shown by the lightbox.
 	// Syncs with the `index` prop when it changes externally (controlled navigation).

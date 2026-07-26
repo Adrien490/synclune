@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
@@ -28,7 +29,15 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 	const [state, formAction, isPending] = useActionState(
 		withCallbacks(
 			updateClosureMessage,
-			createToastCallbacks({ loadingMessage: "Mise à jour du message…" }),
+			createToastCallbacks({
+				loadingMessage: "Mise à jour du message…",
+				onSuccess: () => {
+					// Le champ reste « dirty » vis-à-vis de `defaultValues` après save (pas
+					// de `form.reset()` : il rétablirait l'ancienne valeur) — sans ceci la
+					// garde prompterait alors que tout est enregistré.
+					allowNavigation();
+				},
+			}),
 		),
 		undefined,
 	);
@@ -47,7 +56,9 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 		context: "EditClosureMessageForm",
 	});
 
-	useUnsavedChanges(form.state.isDirty, !isPending);
+	// `allowNavigation` récupéré (et non jeté) : la garde est désormais effective
+	// sur la navigation client-side, elle doit pouvoir être relâchée après save.
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	return (
 		<form
@@ -60,10 +71,6 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 			data-pending={isPending ? "true" : undefined}
 		>
 			<FormServerErrorAlert errors={serverErrors} />
-
-			<span className="sr-only" role="status" aria-live="polite">
-				{isPending ? "Mise à jour du message en cours…" : ""}
-			</span>
 
 			<RequiredFieldsNote />
 
@@ -91,18 +98,20 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 				})}
 			>
 				{({ closureMessage, isDirty }) => (
-					<div className="sm:flex sm:justify-end">
-						<form.AppForm>
-							<form.SubmitButton
-								isPending={isPending}
-								idleLabel="Mettre à jour le message"
-								pendingLabel="Mise à jour…"
-								variant="outline"
-								disabled={!isDirty || !closureMessage.trim()}
-								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
-							/>
-						</form.AppForm>
-					</div>
+					<AdminFormFooter pending={isPending}>
+						<div className="sm:flex sm:justify-end">
+							<form.AppForm>
+								<form.SubmitButton
+									isPending={isPending}
+									idleLabel="Mettre à jour le message"
+									pendingLabel="Mise à jour…"
+									variant="outline"
+									disabled={!isDirty || !closureMessage.trim()}
+									className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
+								/>
+							</form.AppForm>
+						</div>
+					</AdminFormFooter>
 				)}
 			</form.Subscribe>
 		</form>

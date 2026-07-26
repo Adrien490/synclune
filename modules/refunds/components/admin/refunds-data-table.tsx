@@ -1,5 +1,7 @@
 import { RefundStatus, type RefundReason } from "@/app/generated/prisma/client";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
+import { perPageOptionsUpTo } from "@/shared/lib/pagination";
+import { GET_REFUNDS_MAX_RESULTS_PER_PAGE } from "@/modules/refunds/constants/refund.constants";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -61,6 +63,17 @@ export async function RefundsDataTable({
 				noItemsDescription="Aucun remboursement à traiter pour l'instant."
 				hasActiveFilters={hasActiveFilters}
 				resetFiltersHref="/admin/ventes/remboursements"
+				/*
+				 * `action` complète `resetFiltersHref` : `TableEmptyState` donne la
+				 * priorité au reset quand un filtre est actif, et retombe sur `action`
+				 * sinon. Sans ce prop, l'état vraiment-vide desktop était un cul-de-sac
+				 * alors que le pendant mobile (`refunds-mobile-list.tsx`) proposait bien
+				 * « Nouveau remboursement » — asymétrie desktop/mobile sans raison.
+				 */
+				action={{
+					label: "Nouveau remboursement",
+					href: "/admin/ventes/remboursements/nouveau",
+				}}
 			/>
 		);
 	}
@@ -78,18 +91,21 @@ export async function RefundsDataTable({
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
 				totalCount,
+				// Ce module plafonne sous MAX_ADMIN : ne pas proposer une valeur que le
+				// schéma refuserait (sinon 20 lignes affichées avec « 200 » sélectionné).
+				perPageOptions: perPageOptionsUpTo(GET_REFUNDS_MAX_RESULTS_PER_PAGE),
 			}}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[12%]">Commande</TableHead>
-					<TableHead className="w-[10%]">Date</TableHead>
-					<TableHead className="w-[20%]">Client</TableHead>
-					<TableHead className="w-[14%]">Raison</TableHead>
+					<TableHead className="w-[14%]">Commande</TableHead>
+					<TableHead className="w-[12%]">Date</TableHead>
+					<TableHead className="w-[24%]">Client</TableHead>
+					<TableHead className="w-[16%]">Raison</TableHead>
 					<TableHead className="w-[12%]">Statut</TableHead>
-					<TableHead className="w-[10%] text-right">Montant</TableHead>
+					<TableHead className="w-[12%] text-right">Montant</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[10%] text-right"
 						aria-label="Actions disponibles pour chaque remboursement"
 					>
 						Actions

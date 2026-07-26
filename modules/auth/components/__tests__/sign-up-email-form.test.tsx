@@ -43,6 +43,14 @@ vi.mock("@/shared/components/forms", () => ({
 							type={props.type ?? "text"}
 							disabled={props.disabled}
 							required={props.required}
+							// Relayés pour que les assertions d'ergonomie clavier
+							// ci-dessous portent sur ce que le formulaire passe réellement.
+							inputMode={props.inputMode}
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
+							autoCapitalize={props.autoCapitalize}
+							autoCorrect={props.autoCorrect}
+							spellCheck={props.spellCheck}
 						/>
 					</div>
 				),
@@ -55,6 +63,8 @@ vi.mock("@/shared/components/forms", () => ({
 							type="password"
 							disabled={props.disabled}
 							required={props.required}
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
 						/>
 					</div>
 				),
@@ -391,5 +401,44 @@ describe("SignUpEmailForm", () => {
 		// The form element is rendered; action is wired to the server action
 		const form = document.querySelector("form");
 		expect(form).not.toBeNull();
+	});
+	// ============================================================================
+	// ERGONOMIE CLAVIER MOBILE
+	// ============================================================================
+	//
+	// `new-password` sur l'inscription est la valeur la plus coûteuse à perdre
+	// silencieusement : sans elle, le gestionnaire de mots de passe ne propose pas
+	// d'en générer un, et peut au contraire pré-remplir un mot de passe existant.
+
+	it("le champ mot de passe déclare autoComplete='new-password' (pas current-password)", () => {
+		render(<SignUpEmailForm />);
+		const password = document.querySelector('input[name="password"]');
+		expect(password).toHaveAttribute("autocomplete", "new-password");
+	});
+
+	it("le champ email sert le clavier email + touche « suivant »", () => {
+		render(<SignUpEmailForm />);
+		const email = document.querySelector('input[name="email"]');
+		expect(email).toHaveAttribute("type", "email");
+		expect(email).toHaveAttribute("inputmode", "email");
+		expect(email).toHaveAttribute("autocomplete", "email");
+		expect(email).toHaveAttribute("enterkeyhint", "next");
+	});
+
+	it("le champ prénom déclare given-name et neutralise la correction automatique", () => {
+		render(<SignUpEmailForm />);
+		const name = document.querySelector('input[name="name"]');
+		expect(name).toHaveAttribute("autocomplete", "given-name");
+		expect(name).toHaveAttribute("autocapitalize", "words");
+		// iOS « corrigerait » sinon les prénoms peu courants.
+		expect(name).toHaveAttribute("autocorrect", "off");
+	});
+
+	it("le dernier champ porte enterKeyHint='done'", () => {
+		render(<SignUpEmailForm />);
+		expect(document.querySelector('input[name="password"]')).toHaveAttribute(
+			"enterkeyhint",
+			"done",
+		);
 	});
 });

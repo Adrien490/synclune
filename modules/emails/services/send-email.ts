@@ -194,7 +194,7 @@ export async function sendEmail(params: {
 	 *
 	 * Use for cron jobs where the same logical email can be retried across
 	 * serverless instances (the in-process dedup cache is per-instance).
-	 * Example : `review-request:${orderId}`.
+	 * Example : `refund-confirm:${refundId}`.
 	 */
 	idempotencyKey?: string;
 }): Promise<EmailResult> {

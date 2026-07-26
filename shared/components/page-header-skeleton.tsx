@@ -34,14 +34,24 @@ export function PageHeaderSkeleton({
 				aria-busy="true"
 				aria-label="Chargement de l'en-tête"
 			>
-				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+				{/*
+				 * `md:items-start` et `md:mt-1` sur les actions : parité avec le vrai
+				 * `PageHeader` compact (`page-header.tsx`). Le skeleton utilisait
+				 * `md:items-center` et n'avait pas le `md:mt-1`, donc titre et actions se
+				 * décalaient verticalement au rendu réel.
+				 *
+				 * Hauteurs : titre `text-2xl sm:text-3xl lg:text-4xl` (40 px de
+				 * line-height à `lg`) et boutons `h-11` (taille par défaut de `Button`) —
+				 * le skeleton réservait `h-9` pour les deux, soit 4 px de moins par ligne.
+				 */}
+				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
 					<div className="min-w-0 flex-1 gap-y-3">
-						<div className="bg-muted h-9 w-48 rounded" />
-						{hasDescription && <div className="bg-muted h-5 w-72 rounded" />}
+						<div className="bg-muted h-9 w-48 rounded lg:h-10" />
+						{hasDescription && <div className="bg-muted h-5 w-72 rounded lg:h-7" />}
 					</div>
 					{hasActions && (
-						<div className="w-full shrink-0 md:w-auto">
-							<div className="bg-muted h-9 w-32 rounded" />
+						<div className="w-full shrink-0 md:mt-1 md:w-auto">
+							<div className="bg-muted h-11 w-32 rounded" />
 						</div>
 					)}
 				</div>
@@ -79,7 +89,9 @@ export function PageHeaderSkeleton({
 					</div>
 					{hasActions && (
 						<div className="w-full shrink-0 sm:w-auto">
-							<div className="bg-muted h-9 w-32 rounded" />
+							{/* `h-11` comme la variante compact : les actions d'un `PageHeader` sont
+							    des `Button` de taille par défaut (44 px), pas 36. */}
+							<div className="bg-muted h-11 w-32 rounded" />
 						</div>
 					)}
 				</div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 type AlertTone = "info" | "warning";
@@ -24,8 +23,12 @@ const TONE_CLASSES: Record<AlertTone, string> = {
 
 /**
  * Tappable alert pill for the dashboard alerts banner.
- * Adds haptic `selection`, `touch-manipulation`, `active:scale` and a 44px
- * minimum touch target — keeps SSR-friendly (no `useState`).
+ * Adds `touch-manipulation`, `active:scale` and a 44px minimum touch target —
+ * keeps SSR-friendly (no `useState`).
+ *
+ * Pas d'haptique : c'est de la navigation. Le retour tactile est réservé aux
+ * changements d'état signifiants (soumission, destruction, sélection, geste) —
+ * sur un lien, il devient du bruit.
  */
 export function DashboardAlertLink({
 	href,
@@ -34,14 +37,9 @@ export function DashboardAlertLink({
 	children,
 	external = false,
 }: DashboardAlertLinkProps) {
-	function handleClick() {
-		triggerHaptic("selection");
-	}
-
 	return (
 		<Link
 			href={href}
-			onClick={handleClick}
 			{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
 			className={cn(
 				"focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 sm:min-h-9",

@@ -202,7 +202,7 @@ export function SkuSelectorFormContent({
 							placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={currentImage.blurDataUrl ?? undefined}
 							sizes="(min-width: 640px) 160px, 96px"
-							quality={IMAGE_QUALITY.HERO}
+							quality={IMAGE_QUALITY.STANDARD}
 						/>
 					</m.div>
 					<div className="flex flex-col justify-center">

@@ -7,7 +7,7 @@
  * Dans les deux cas :
  * 1. Le token HMAC est vérifié contre l'email.
  * 2. L'opposition est PERSISTÉE en DB (`User.marketingOptOutAt`, Art. 21(3) RGPD) —
- *    les émetteurs marketing (back-in-stock, review-request) filtrent ce flag,
+ *    les émetteurs marketing (back-in-stock) filtrent ce flag,
  *    aucune propagation manuelle n'est requise.
  * 3. Un log + événement Sentry `marketing-opt-out` restent émis comme signal
  *    secondaire (l'email est scrubé par `sentry-scrub` côté Sentry — le canal

@@ -14,6 +14,10 @@ export function DeleteProductTypeAlertDialog() {
 	const { action, isPending } = useDeleteProductType({ onSuccess: onDeleted });
 
 	return (
-		<TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG["product-type"]} action={action} isPending={isPending} />
+		<TaxonomyDeleteAlertDialog
+			config={TAXONOMY_CONFIG["product-type"]}
+			action={action}
+			isPending={isPending}
+		/>
 	);
 }

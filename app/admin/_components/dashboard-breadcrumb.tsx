@@ -15,9 +15,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Ellipsis } from "lucide-react";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+import { useAdminPageTitle } from "./admin-page-title-context";
 import {
 	generateBreadcrumbs,
 	MAX_VISIBLE_SEGMENTS,
@@ -35,7 +38,18 @@ import {
  */
 export function DashboardBreadcrumb() {
 	const pathname = usePathname();
-	const breadcrumbs = generateBreadcrumbs(pathname);
+	const publishedTitle = useAdminPageTitle();
+	const derived = generateBreadcrumbs(pathname);
+
+	// Dernier segment : titre publié par la page de détail quand il existe. Sans ça,
+	// une route à id opaque (`/admin/ventes/commandes/cm5abc…`) affichait l'id
+	// Title-Casé en bout de fil d'Ariane.
+	const breadcrumbs =
+		publishedTitle && derived.length > 1
+			? derived.map((segment, index) =>
+					index === derived.length - 1 ? { ...segment, label: publishedTitle } : segment,
+				)
+			: derived;
 
 	const shouldCollapse = breadcrumbs.length > MAX_VISIBLE_SEGMENTS;
 

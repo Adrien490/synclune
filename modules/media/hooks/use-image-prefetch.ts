@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+
+import { mediaBelow } from "@/shared/constants/breakpoints";
 import {
 	nextImageUrl,
 	MAIN_IMAGE_QUALITY,
@@ -50,12 +52,19 @@ const cancelIdleCallbackPolyfill =
 
 /**
  * Determines the optimal image size to prefetch based on viewport.
- * Mobile (<768px): 640px - matches 375-430px viewports
- * Desktop (>=768px): 1080px - matches desktop viewports
+ * Mobile (<48rem): 640px - matches 375-430px viewports
+ * Desktop (>=48rem): 1080px - matches desktop viewports
+ *
+ * `matchMedia` et non `window.innerWidth` : `innerWidth` inclut la barre de
+ * défilement (Windows/Linux, ~15px), donc les deux méthodes divergeaient sur la
+ * bande 768-783px — on préchargeait l'image desktop là où le CSS servait encore
+ * la mise en page mobile. Et le seuil vient du SSOT, en rem, pour suivre les
+ * variants Tailwind si la police racine change (audit responsive 2026-07-26).
  */
 function getPrefetchImageSize(): number {
 	if (typeof window === "undefined") return PREFETCH_SIZE_DESKTOP;
-	return window.innerWidth < 768 ? PREFETCH_SIZE_MOBILE : PREFETCH_SIZE_DESKTOP;
+	if (typeof window.matchMedia !== "function") return PREFETCH_SIZE_DESKTOP;
+	return window.matchMedia(mediaBelow("md")).matches ? PREFETCH_SIZE_MOBILE : PREFETCH_SIZE_DESKTOP;
 }
 
 /**

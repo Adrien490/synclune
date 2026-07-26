@@ -5,6 +5,7 @@ import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
+import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { UPLOADTHING_CDN_HOSTS } from "@/shared/constants/uploadthing";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
@@ -46,6 +47,10 @@ export default function RootLayout({
 			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
 				<SkipLink />
 				<IconSprite />
+				{/* Pont visualViewport → `--vvh` + `<html data-keyboard>`. Monté ici (et nulle
+				    part ailleurs) pour couvrir /paiement, (auth), (account) et /suivi-commande,
+				    qui ne sont pas enfants du route-group (shop). */}
+				<VisualViewportBridge />
 				<Suspense fallback={null}>
 					<UploadThingSSR />
 				</Suspense>

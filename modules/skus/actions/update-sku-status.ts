@@ -16,6 +16,7 @@ import {
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
+import { assertUniqueVariantCombination } from "../services/persist-sku-helpers.service";
 
 /**
  * Server Action pour mettre a jour le statut actif/inactif d'un SKU
@@ -55,6 +56,9 @@ export async function updateProductSkuStatus(
 					isActive: true,
 					isDefault: true,
 					productId: true,
+					// Requis par la garde d'identité de variante à l'activation (cf. plus bas).
+					size: true,
+					colors: { select: { colorId: true } },
 					product: {
 						select: {
 							slug: true,
@@ -86,6 +90,27 @@ export async function updateProductSkuStatus(
 					productStatus: existing.product.status,
 					activeTotal: existing.product._count.skus,
 					activeAffected: 1,
+				});
+			}
+
+			// ACTIVATION : re-vérifier l'identité de variante (produit × taille × set de
+			// couleurs). Aucune contrainte DB ne la garantit — elle dépend d'une table de
+			// jointure — donc c'est ce chemin applicatif ou rien.
+			//
+			// Pourquoi ici et pas seulement dans create/update-sku : `duplicate-sku`
+			// crée volontairement une copie à l'identité IDENTIQUE (même taille, même
+			// couleurs), simplement `isActive: false` — c'est un brouillon que l'admin
+			// est censé éditer. Rien ne l'y oblige : « Dupliquer » puis « Activer »
+			// suffisait à publier deux variantes indistinguables, et le sélecteur du
+			// storefront (qui filtre `isActive: true`) devenait ambigu.
+			// La désactivation, elle, ne peut jamais créer de collision → pas de garde.
+			// Audit schéma 2026-07-26.
+			if (validatedIsActive && !existing.isActive) {
+				await assertUniqueVariantCombination(tx, {
+					productId: existing.productId,
+					colorIds: existing.colors.map((c) => c.colorId),
+					size: existing.size,
+					excludeSkuId: existing.id,
 				});
 			}
 

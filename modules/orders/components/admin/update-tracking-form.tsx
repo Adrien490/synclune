@@ -12,7 +12,12 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
 import { CheckCircle2, ExternalLink, Link2, Loader2 } from "lucide-react";
 
-import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import {
+	CARRIERS,
+	detectCarrierAndUrl,
+	getTrackingUrl,
+	type Carrier,
+} from "@/modules/orders/utils/carrier.utils";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -114,7 +119,7 @@ export function UpdateTrackingForm({
 
 	const isUrlEditable = customUrlMode || carrier === "autre";
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
@@ -154,14 +159,10 @@ export function UpdateTrackingForm({
 		form.setFieldValue("carrier", value);
 
 		if (!customUrlMode && trackingNumber.length >= 8) {
-			if (value !== "autre") {
-				const { url } = detectCarrierAndUrl(trackingNumber);
-				if (url) {
-					form.setFieldValue("trackingUrl", url);
-				}
-			} else {
-				form.setFieldValue("trackingUrl", "");
-			}
+			// `getTrackingUrl(value, …)` et NON `detectCarrierAndUrl(trackingNumber)` :
+			// le choix explicite de l'admin prime sur la détection de format, qui ne
+			// couvre que 5 des 11 transporteurs (cf. mark-as-shipped-dialog).
+			form.setFieldValue("trackingUrl", getTrackingUrl(value, trackingNumber) ?? "");
 		}
 	};
 

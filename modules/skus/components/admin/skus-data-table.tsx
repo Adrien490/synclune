@@ -31,12 +31,22 @@ interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
 	productSlug: string;
 	perPage: number;
+	/**
+	 * Distingue « liste filtrée sans résultat » de « produit sans variante ».
+	 *
+	 * Sans ce prop, cette table était la seule des 11 listes admin à ignorer la
+	 * distinction : une recherche infructueuse affichait « Ce produit n'a pas encore
+	 * de variante » et proposait d'en créer une, au lieu de proposer d'effacer le
+	 * filtre. Le pendant mobile (`skus-mobile-list.tsx`) le faisait déjà.
+	 */
+	hasActiveFilters?: boolean;
 }
 
 export async function ProductVariantsDataTable({
 	skusPromise,
 	productSlug,
 	perPage,
+	hasActiveFilters = false,
 }: ProductVariantsDataTableProps) {
 	const { productSkus, pagination } = await skusPromise;
 
@@ -58,7 +68,10 @@ export async function ProductVariantsDataTable({
 					<TableEmptyState
 						icon={Package}
 						title="Aucune variante"
-						description="Ce produit n'a pas encore de variante. Créez-en une pour commencer."
+						description="Aucune variante ne correspond aux critères."
+						noItemsDescription="Ce produit n'a pas encore de variante. Créez-en une pour commencer."
+						hasActiveFilters={hasActiveFilters}
+						resetFiltersHref={`/admin/catalogue/produits/${productSlug}/variantes`}
 						action={{
 							label: "Créer une variante",
 							href: `/admin/catalogue/produits/${productSlug}/variantes/nouveau`,
@@ -83,15 +96,15 @@ export async function ProductVariantsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[8%]">Image</TableHead>
-					<TableHead className="w-[16%]">Référence</TableHead>
-					<TableHead className="w-[12%]">Couleur</TableHead>
-					<TableHead className="w-[12%]">Matériau</TableHead>
+					<TableHead className="w-[10%]">Image</TableHead>
+					<TableHead className="w-[20%]">Référence</TableHead>
+					<TableHead className="w-[14%]">Couleur</TableHead>
+					<TableHead className="w-[14%]">Matériau</TableHead>
 					<TableHead className="w-[8%]">Taille</TableHead>
-					<TableHead className="w-[12%]">Prix</TableHead>
-					<TableHead className="w-[10%] text-center">Stock</TableHead>
+					<TableHead className="w-[12%] text-right">Prix</TableHead>
+					<TableHead className="w-[12%] text-center">Stock</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[10%] text-right"
 						aria-label="Actions disponibles pour chaque variante"
 					>
 						Actions
@@ -105,17 +118,6 @@ export async function ProductVariantsDataTable({
 
 					return (
 						<TableRow key={sku.id}>
-							<TableCell>
-								{sku.isDefault ? (
-									<span
-										className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
-										aria-label="Variante par défaut, non sélectionnable"
-										title="Variante par défaut"
-									>
-										★
-									</span>
-								) : null}
-							</TableCell>
 							<TableCell className="py-3">
 								<div className="bg-muted relative size-20 shrink-0 rounded-md">
 									{primaryImage ? (
@@ -152,10 +154,13 @@ export async function ProductVariantsDataTable({
 								</div>
 							</TableCell>
 							<TableCell>
-								<div className="flex flex-col gap-1">
+								<div className="flex min-w-0 flex-col gap-1">
+									{/* `truncate` : `table-fixed` + `whitespace-nowrap` laisserait
+									    une référence longue déborder sur la colonne Couleur. */}
 									<Link
 										href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`}
-										className="hover:text-primary focus-visible:ring-ring rounded-md font-medium transition-colors outline-none focus-visible:ring-2"
+										className="hover:text-primary focus-visible:ring-ring truncate rounded-md font-medium transition-colors outline-none focus-visible:ring-2"
+										title={sku.sku}
 									>
 										{sku.sku}
 									</Link>
@@ -175,7 +180,7 @@ export async function ProductVariantsDataTable({
 										return <span className="text-muted-foreground text-sm">—</span>;
 									}
 									return (
-										<div className="flex items-center gap-2">
+										<div className="flex min-w-0 items-center gap-2">
 											<Tooltip>
 												<TooltipTrigger asChild>
 													<span
@@ -189,7 +194,9 @@ export async function ProductVariantsDataTable({
 													<p className="text-muted-foreground text-xs">{hexes.join(" / ")}</p>
 												</TooltipContent>
 											</Tooltip>
-											<span className="text-sm">{label}</span>
+											<span className="truncate text-sm" title={label}>
+												{label}
+											</span>
 										</div>
 									);
 								})()}
@@ -198,7 +205,9 @@ export async function ProductVariantsDataTable({
 								{(() => {
 									const label = getSkuMaterialsLabel(sku.materials);
 									return label ? (
-										<span className="text-sm">{label}</span>
+										<span className="block truncate text-sm" title={label}>
+											{label}
+										</span>
 									) : (
 										<span className="text-muted-foreground text-sm">—</span>
 									);
@@ -211,7 +220,7 @@ export async function ProductVariantsDataTable({
 									<span className="text-muted-foreground text-sm">—</span>
 								)}
 							</TableCell>
-							<TableCell>
+							<TableCell className="text-right">
 								<span className="text-sm font-bold">{formatEuro(sku.priceInclTax)}</span>
 							</TableCell>
 							<TableCell className="text-center">

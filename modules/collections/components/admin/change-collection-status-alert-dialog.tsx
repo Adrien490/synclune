@@ -9,7 +9,6 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
@@ -91,7 +90,6 @@ export function ChangeCollectionStatusAlertDialog() {
 					<input type="hidden" name="id" value={dialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
-					<ResponsiveAlertDialogHeroIcon icon={config.icon} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Changer le statut en &quot;{config.label}&quot;

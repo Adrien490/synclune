@@ -33,7 +33,7 @@ interface FilterBadgesProps {
 	 */
 	filterOptions?: {
 		filterPrefix?: string;
-		preservePage?: boolean;
+		preservePagination?: boolean;
 	};
 	/**
 	 * Nombre maximum de badges à afficher avant de montrer "Voir plus"

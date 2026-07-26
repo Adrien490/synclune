@@ -205,20 +205,6 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		await expect(editItem).toBeVisible();
 	});
 
-	test("sélectionner une ligne affiche la toolbar de sélection", async ({ page, adminPage }) => {
-		await adminPage.gotoProducts();
-
-		const table = page.getByRole("table");
-		await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({ timeout: 10000 });
-		test.skip(!(await table.isVisible()), "No products available");
-
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		const selectionToolbar = page.getByText(/sélectionné/i);
-		await expect(selectionToolbar).toBeVisible({ timeout: 5000 });
-	});
-
 	test("naviguer vers les variantes d'un produit", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 

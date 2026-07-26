@@ -1,5 +1,6 @@
 import { test, expect } from "./fixtures";
 import { requireSeedData } from "./constants";
+import { VISIBLE_ALERT } from "./helpers/assertions";
 
 test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 	test("la page 404 affiche un message utilisateur", async ({ page }) => {
@@ -96,7 +97,7 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 
 			// Should show error feedback to the user (toast, alert, or error message)
 			const errorFeedback = page
-				.locator('[role="alert"]')
+				.locator(VISIBLE_ALERT)
 				.or(page.getByText(/erreur|impossible|réessayer|échoué/i));
 			await expect(errorFeedback.first()).toBeVisible({ timeout: 5000 });
 		} finally {
@@ -104,28 +105,15 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 		}
 	});
 
-	test("les erreurs reseau sur la recherche sont gerees gracieusement", async ({
-		page,
-		productCatalogPage,
-	}) => {
-		await productCatalogPage.goto();
-
-		const searchCount = await productCatalogPage.searchInput.count();
-		test.skip(searchCount === 0, "No search input on products page");
-
-		// Intercept search API to simulate slow then failed response
-		await page.route("**/api/search**", (route) => route.abort("connectionrefused"));
-
-		try {
-			await productCatalogPage.searchInput.first().fill("bague");
-
-			// Page should not crash
-			const heading = page.getByRole("heading", { level: 1 });
-			await expect(heading).toBeVisible({ timeout: 5000 });
-		} finally {
-			await page.unroute("**/api/search**");
-		}
-	});
+	/*
+	 * Retiré : « les erreurs reseau sur la recherche sont gerees gracieusement ».
+	 * Le test interceptait `**​/api/search**`, or la recherche passe par une Server
+	 * Action (`modules/products/actions/quick-search.ts`) — la route ne matchait
+	 * jamais, et sa seule assertion (« le h1 est toujours visible ») était vide même
+	 * si elle avait matché. Ré-intercepter une Server Action est fragile (les ids
+	 * d'action sont hashés au build) ; la branche d'erreur est couverte en jsdom
+	 * (`isSearchError`) et par le test « Réessayer » de quick-search-content.
+	 */
 
 	test("la navigation fonctionne apres une erreur", async ({ page }) => {
 		// Trigger a 404

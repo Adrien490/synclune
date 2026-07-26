@@ -10,6 +10,8 @@ import type {} from "@/modules/discounts/types/discount.types";
 
 import { CreateDiscountButton } from "./create-discount-button";
 import { DiscountMobileItem } from "./discount-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface DiscountsMobileListProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
@@ -26,7 +28,7 @@ export function DiscountsMobileList({
 
 	if (discounts.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={Ticket}
 					title="Aucun code promo trouvé"
@@ -48,8 +50,18 @@ export function DiscountsMobileList({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={discounts.length}
+				singular="code promo"
+				plural="codes promo"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Codes promo" className="gap-2">
 				{discounts.map((discount) => (
 					<li key={discount.id}>

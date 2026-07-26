@@ -9,12 +9,13 @@ import { Button } from "@/shared/components/ui/button";
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductsReturn } from "@/modules/products/types/product.types";
 import { ProductMobileItem } from "./product-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface ProductsMobileListProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
-	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
 	/** Snapshot des filtres courants pour la sélection cross-page. */
 }
 
@@ -27,7 +28,7 @@ export function ProductsMobileList({
 
 	if (products.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={Package}
 					title="Aucun produit trouvé"
@@ -51,8 +52,18 @@ export function ProductsMobileList({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={products.length}
+				singular="produit"
+				plural="produits"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Produits" className="gap-2">
 				{products.map((product, index) => (
 					<li key={product.id}>

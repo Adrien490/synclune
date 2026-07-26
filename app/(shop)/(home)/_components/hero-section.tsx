@@ -90,7 +90,13 @@ export async function HeroSection({
 			    hero-floating-images.test.tsx @regression mobile-lcp-preload-2026-05-24). */}
 			<HeroFloatingImages images={heroImages} />
 
-			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">
+			{/* `max-w-6xl` sans palier `2xl:` — le hero était le SEUL conteneur du
+			 * storefront à s'élargir au-delà (`2xl:max-w-7xl`), ce qui produisait un
+			 * décrochement d'alignement de 64px de chaque côté avec tout le reste de
+			 * la page dès 1536px (audit responsive 2026-07-26, P2). La typographie
+			 * du sous-titre continue de grossir en `2xl:`, elle : c'est l'échelle de
+			 * texte qui doit suivre l'écran, pas la gouttière. */}
+			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				<div className="flex flex-col items-center">
 					{/* Centered content */}
 					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10 max-md:landscape:gap-y-3">

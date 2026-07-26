@@ -193,7 +193,7 @@ describe("ArchiveProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-description")).toHaveTextContent(
-				"Vous pourrez le restaurer à tout moment.",
+				"Vous pourrez le restaurer à tout moment : il reviendra en brouillon.",
 			);
 		});
 
@@ -268,11 +268,21 @@ describe("ArchiveProductAlertDialog", () => {
 			);
 		});
 
-		it("shows 'Public' restore message", () => {
+		it("shows 'Brouillon' restore message", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-description")).toHaveTextContent(
-				'remis en statut "Public"',
+				'remis en statut "Brouillon"',
+			);
+		});
+
+		it("explique qu'il faut réactiver une variante avant de publier", () => {
+			renderDialog();
+
+			// Sans cette phrase, l'admin arrive sur un brouillon dont le bouton
+			// « Publier » échoue, sans savoir pourquoi.
+			expect(screen.getByTestId("alert-dialog-description")).toHaveTextContent(
+				"Réactivez-en au moins une",
 			);
 		});
 
@@ -282,13 +292,15 @@ describe("ArchiveProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Désarchiver");
 		});
 
-		it("sets targetStatus hidden field to PUBLIC", () => {
+		// Viser PUBLIC ici rendait la restauration impossible : l'archivage a
+		// désactivé toutes les variantes (cf. @regression archived-restore-draft).
+		it("sets targetStatus hidden field to DRAFT", () => {
 			const { container } = renderDialog();
 
 			const targetStatusField = container.querySelector(
 				'input[name="targetStatus"]',
 			) as HTMLInputElement;
-			expect(targetStatusField.value).toBe("PUBLIC");
+			expect(targetStatusField.value).toBe("DRAFT");
 		});
 	});
 

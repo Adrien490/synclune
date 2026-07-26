@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Label } from "@/shared/components/ui/label";
 import {
 	ResponsiveAlertDialog,
@@ -27,14 +28,31 @@ interface DeleteOrderData {
 	[key: string]: unknown;
 }
 
-export function DeleteOrderAlertDialog() {
+interface DeleteOrderAlertDialogProps {
+	/**
+	 * Où aller après une suppression réussie.
+	 *
+	 * Requis quand le dialog est monté sur la page détail de la commande : celle-ci
+	 * porte l'entité qu'on vient de supprimer, donc rester dessus laisse l'admin sur
+	 * une page morte. Sur la page LISTE, ne rien passer — la liste se revalide seule.
+	 * `replace` (et non `push`) : l'URL du détail supprimé n'a rien à faire dans
+	 * l'historique de navigation.
+	 */
+	successPath?: string;
+}
+
+export function DeleteOrderAlertDialog({ successPath }: DeleteOrderAlertDialogProps = {}) {
 	const deleteDialog = useAlertDialog<DeleteOrderData>(DELETE_ORDER_DIALOG_ID);
+	const router = useRouter();
 	const [reason, setReason] = useState("");
 
 	const { state, action, isPending } = useDeleteOrder({
 		onSuccess: () => {
 			setReason("");
 			deleteDialog.close();
+			if (successPath) {
+				router.replace(successPath);
+			}
 		},
 	});
 
@@ -50,7 +68,14 @@ export function DeleteOrderAlertDialog() {
 	};
 
 	return (
-		<ResponsiveAlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
+		// `tone` absent = `neutral` = bouton d'action PRIMAIRE pour une suppression
+		// définitive. La friction était déjà correcte (motif obligatoire + bouton
+		// désactivé) ; seule la couleur mentait.
+		<ResponsiveAlertDialog
+			open={deleteDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone="destructive"
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<FormServerErrorAlert errors={serverErrors} className="mb-4" />

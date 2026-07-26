@@ -14,6 +14,8 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("motion/react", () => ({
+	// `MiniDotsLoader` gate désormais son animation sur `prefers-reduced-motion`.
+	useReducedMotion: () => false,
 	m: {
 		div: ({
 			children,

@@ -37,7 +37,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 
 	// Permissions calculées via state machine centralisée
 	const permissions = getOrderPermissions(order);
-	const { canRefund, canUpdateTracking, canMarkAsFullyRefunded } = permissions;
+	const { canRefund, canUpdateTracking } = permissions;
 
 	return (
 		<div className="space-y-4 md:space-y-6">
@@ -69,7 +69,7 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 
 			<div className="grid gap-0 md:gap-6 lg:grid-cols-3">
 				{/* Left column - 2/3 */}
-				<div className="-mx-[var(--admin-main-x,1rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0 lg:col-span-2">
+				<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0 lg:col-span-2">
 					<OrderItemsCard
 						items={order.items}
 						subtotal={order.subtotal}
@@ -85,18 +85,10 @@ export async function OrderDetailPage({ order }: OrderDetailPageProps) {
 				</div>
 
 				{/* Right column - 1/3 */}
-				<div className="-mx-[var(--admin-main-x,1rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0">
+				<div className="-mx-[var(--admin-main-x,1.5rem)] space-y-0 divide-y md:mx-0 md:space-y-6 md:divide-y-0">
 					<OrderCustomerCard order={order} />
 
-					<OrderRefundsCard
-						refunds={refunds}
-						orderId={order.id}
-						orderNumber={order.orderNumber}
-						canRefund={canRefund}
-						canMarkAsFullyRefunded={canMarkAsFullyRefunded}
-						invoiceStatus={order.invoiceStatus}
-						invoiceNumber={order.invoiceNumber}
-					/>
+					<OrderRefundsCard refunds={refunds} orderId={order.id} canRefund={canRefund} />
 
 					<OrderAddressCard order={order} />
 

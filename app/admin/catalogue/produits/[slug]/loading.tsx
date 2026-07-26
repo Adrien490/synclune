@@ -7,6 +7,8 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 function CardTitleSkeleton({ width }: { width: string }) {
 	return (
@@ -205,16 +207,16 @@ export default function AdminProductDetailLoading() {
 
 			<div className="space-y-6">
 				{/* Header — h1 + date + sticky action bar mobile (mirror ProductDetailHeader) */}
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<DetailHeaderShell>
 					<div>
 						<Skeleton className="h-7 w-56 sm:h-9 sm:w-72 lg:h-10" />
 						<Skeleton className="mt-1 hidden h-4 w-72 md:block" />
 					</div>
-					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+					<DetailStickyActionBar>
 						<Skeleton className="h-11 flex-1 sm:h-9 md:w-28 md:flex-none" />
 						<Skeleton className="size-11 shrink-0 sm:size-9" />
-					</div>
-				</div>
+					</DetailStickyActionBar>
+				</DetailHeaderShell>
 
 				{/* Grid 2/3 + sidebar */}
 				<div className="grid gap-6 lg:grid-cols-3 lg:items-start">

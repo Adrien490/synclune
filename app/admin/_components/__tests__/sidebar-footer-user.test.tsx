@@ -14,6 +14,17 @@ const { mockIsMobile } = vi.hoisted(() => ({
 // MODULE MOCKS
 // ============================================================================
 
+const { mockOpenShortcuts } = vi.hoisted(() => ({ mockOpenShortcuts: vi.fn() }));
+
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({ isOpen: false, open: mockOpenShortcuts, close: vi.fn() }),
+}));
+
+vi.mock("@/shared/components/ui/kbd", () => ({
+	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
+	KbdGroup: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+
 vi.mock("lucide-react", async (importOriginal) => {
 	const actual = await importOriginal<typeof LucideReact>();
 	return {
@@ -98,11 +109,13 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		className,
 		variant,
 		preventDefault,
+		onSelect,
 	}: {
 		children: React.ReactNode;
 		preventDefault?: boolean;
 		variant?: "default" | "destructive";
 		className?: string;
+		onSelect?: () => void;
 	}) => (
 		<button
 			data-testid="dropdown-item"
@@ -110,10 +123,12 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 			className={className}
 			data-variant={variant}
 			data-prevent-default={preventDefault ? "true" : undefined}
+			onClick={onSelect}
 		>
 			{children}
 		</button>
 	),
+	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
 	DropdownMenuTrigger: ({
 		children,
 		asChild: _asChild,
@@ -250,14 +265,53 @@ describe("SidebarFooterUser", () => {
 			expect(screen.getByTestId("logout-alert-dialog")).toBeInTheDocument();
 		});
 
+		// Le menu contient désormais plusieurs items (raccourcis + déconnexion) :
+		// cibler l'item par son libellé plutôt que par `getByTestId` au singulier.
+		function logoutItem() {
+			return screen.getByRole("menuitem", { name: /Déconnexion/ });
+		}
+
 		it("applies destructive variant to logout item", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
-			expect(screen.getByTestId("dropdown-item")).toHaveAttribute("data-variant", "destructive");
+			expect(logoutItem()).toHaveAttribute("data-variant", "destructive");
 		});
 
 		it("uses preventDefault on logout item to defer close to AlertDialog", () => {
 			render(<SidebarFooterUser user={defaultUser} />);
-			expect(screen.getByTestId("dropdown-item")).toHaveAttribute("data-prevent-default", "true");
+			expect(logoutItem()).toHaveAttribute("data-prevent-default", "true");
+		});
+	});
+
+	/**
+	 * L'aide raccourcis n'était atteignable que par une icône du header desktop
+	 * (fonction révélée au survol seulement) ou en connaissant `?` d'avance.
+	 */
+	describe("entrée « Raccourcis clavier »", () => {
+		it("expose une entrée nommée dans le menu utilisateur", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			expect(screen.getByRole("menuitem", { name: /Raccourcis clavier/ })).toBeInTheDocument();
+		});
+
+		it("affiche le raccourci ? à côté du libellé", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			const item = screen.getByRole("menuitem", { name: /Raccourcis clavier/ });
+			expect(item.textContent).toContain("?");
+		});
+
+		it("ouvre le dialogue de raccourcis à la sélection", async () => {
+			const { default: userEvent } = await import("@testing-library/user-event");
+			const user = userEvent.setup();
+			render(<SidebarFooterUser user={defaultUser} />);
+
+			await user.click(screen.getByRole("menuitem", { name: /Raccourcis clavier/ }));
+
+			expect(mockOpenShortcuts).toHaveBeenCalled();
+		});
+
+		it("n'est pas marquée destructive (ce n'est pas la déconnexion)", () => {
+			render(<SidebarFooterUser user={defaultUser} />);
+			const item = screen.getByRole("menuitem", { name: /Raccourcis clavier/ });
+			expect(item).not.toHaveAttribute("data-variant", "destructive");
 		});
 	});
 

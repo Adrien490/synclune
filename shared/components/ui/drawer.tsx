@@ -40,9 +40,12 @@ function Drawer({
 	 */
 	handleOnly?: boolean;
 	/**
-	 * Si `true`, Vaul repositionne l'input focusé au-dessus du clavier mobile
-	 * (au lieu de scroller la page). Active pour les drawers avec saisie texte
-	 * (search input, formulaire). Auto-activé si `snapPoints` est défini.
+	 * Repositionne l'input focusé au-dessus du clavier mobile (au lieu de
+	 * scroller la page).
+	 *
+	 * ⚠️ Le défaut Vaul est `true`, et ne rien passer forwarde `undefined` —
+	 * donc le comportement par défaut est ACTIF. Ne le passer explicitement que
+	 * pour le désactiver (`false`) ou pour documenter l'intention.
 	 */
 	repositionInputs?: boolean;
 }) {

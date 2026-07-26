@@ -1,3 +1,4 @@
+import { VIEWPORTS } from "./constants";
 import { test, expect } from "./fixtures";
 
 test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
@@ -139,7 +140,9 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		const searchButton = page.getByRole("button", { name: /Rechercher/i });
+		// Le nom accessible vient de `aria-label="Ouvrir la recherche rapide"`, qui
+		// écrase le texte visible « Rechercher » — /Rechercher/i ne matchait rien.
+		const searchButton = page.getByRole("button", { name: /ouvrir la recherche rapide/i });
 		await expect(searchButton.first()).toBeVisible();
 
 		await searchButton.first().click();
@@ -152,6 +155,9 @@ test.describe("Navigation catalogue produits", { tag: ["@critical"] }, () => {
 		page,
 		productCatalogPage,
 	}) => {
+		// La toolbar portant le champ inline est `hidden md:flex` (product-catalog.tsx) :
+		// sans viewport épinglé, ce test échoue sur mobile-chrome / mobile-webkit.
+		await page.setViewportSize(VIEWPORTS.DESKTOP);
 		await page.goto("/produits");
 		await page.waitForLoadState("domcontentloaded");
 

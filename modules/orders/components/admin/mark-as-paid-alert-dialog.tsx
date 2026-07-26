@@ -8,13 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsPaid } from "@/modules/orders/hooks/use-mark-as-paid";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { CreditCard, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const MARK_AS_PAID_DIALOG_ID = "mark-as-paid";
 
@@ -45,7 +44,6 @@ export function MarkAsPaidAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={CreditCard} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer le paiement manuel</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

@@ -28,7 +28,9 @@ export default function VentesPage() {
 				},
 				{
 					title: "Facturation",
-					description: "État facturation électronique + e-reporting DGFiP",
+					// L'e-reporting DGFiP a été retiré du code le 2026-07-26 (right-sizing,
+					// spec non figée + aucune Plateforme Agréée branchée) — cf. CLAUDE.md.
+					description: "État de la facturation électronique et des avoirs",
 					href: "/admin/ventes/facturation",
 					icon: <Landmark className="size-5" />,
 				},

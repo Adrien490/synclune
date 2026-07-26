@@ -9,6 +9,7 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
+import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
 import { ChevronLeft, ChevronRight, ChevronsLeft, LoaderCircle } from "lucide-react";
 import {
 	useEffect,
@@ -27,8 +28,6 @@ import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
-
-const UNINITIALIZED = Symbol("uninitialized");
 
 // `focus-ring` SSOT (`app/globals.css`) hérité du `<Button>` parent — pas de
 // surcharge `focus-visible:ring-*` ici (drift convention repo).
@@ -52,6 +51,8 @@ function CursorPaginationInner({
 	perPageOptions = PER_PAGE_OPTIONS,
 	focusTargetRef,
 	totalCount,
+	showCount = true,
+	secondary = false,
 }: CursorPaginationProps) {
 	const perPageId = useId();
 	const haptic = useHaptic();
@@ -63,12 +64,6 @@ function CursorPaginationInner({
 	// device a un pointer fine (souris/trackpad). Sur tactile, les raccourcis
 	// n'existent pas → bruit cognitif pour VoiceOver iOS.
 	const hasFinePointer = useMediaQuery("(pointer: fine)");
-	// Sentinelle : distingue « pas encore initialisé » de « cursor undefined »
-	// (évite un scroll-to-top parasite au premier rendu). Constante de module et
-	// non `useRef(Symbol(...))` : useRef ignore son argument après le premier
-	// rendu, le Symbol était donc recréé puis jeté à chaque rendu. La comparaison
-	// est une simple égalité d'identité, la partager entre instances est sûr.
-	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 	// Tracker du dernier bouton cliqué pour afficher un spinner ciblé pendant
 	// `isPending`. Lu pendant le render (la condition `isPending && ...` redevient
 	// false naturellement à la fin de la transition donc le spinner disparaît).
@@ -79,6 +74,19 @@ function CursorPaginationInner({
 	// nombre réellement chargé (ex. Clients=50, listes admin=20).
 	const perPage = Number(searchParams.get("perPage")) || perPageProp || DEFAULT_PER_PAGE;
 	const cursor = searchParams.get("cursor") ?? undefined;
+
+	// Initialisée à la valeur COURANTE du curseur (doit donc être déclarée APRÈS
+	// `cursor`) : le premier rendu est un no-op, seuls les changements ultérieurs
+	// déclenchent le scroll-to-top. `useRef` ignore son argument après le premier
+	// rendu, l'initialisation ne « suit » donc pas le curseur — c'est exactement
+	// le comportement voulu.
+	//
+	// Une sentinelle (différente de toute valeur de curseur par construction)
+	// faisait l'inverse de ce qu'annonçait son commentaire : elle GARANTISSAIT un
+	// scroll-to-top à chaque montage, y compris au retour navigateur depuis une
+	// page de détail — Next.js restaurait la position, le composant la renvoyait
+	// aussitôt en haut, et `focusTargetRef` volait le focus au passage.
+	const previousCursorRef = useRef<string | undefined>(cursor);
 
 	const onCursorChange = useEffectEvent(() => {
 		// Default behavior: scroll to top, respecting prefers-reduced-motion
@@ -129,10 +137,7 @@ function CursorPaginationInner({
 	}
 
 	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
-		const target = e.target as HTMLElement;
-		if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
-			return;
-		}
+		if (isInteractiveTarget(e.target)) return;
 
 		if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
 			e.preventDefault();
@@ -146,9 +151,10 @@ function CursorPaginationInner({
 	});
 
 	useEffect(() => {
+		if (secondary) return;
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, []);
+	}, [secondary]);
 
 	const onPrefetch = useEffectEvent((pCursor: string | null, direction: string) => {
 		if (!pCursor) return;
@@ -159,9 +165,10 @@ function CursorPaginationInner({
 	});
 
 	useEffect(() => {
+		if (secondary) return;
 		onPrefetch(nextCursor, "forward");
 		onPrefetch(prevCursor, "backward");
-	}, [nextCursor, prevCursor]);
+	}, [nextCursor, prevCursor, secondary]);
 
 	function handleNext() {
 		navigateNext(nextCursor);
@@ -252,9 +259,11 @@ function CursorPaginationInner({
 				isPending && "pointer-events-none opacity-80 transition-opacity duration-200",
 			)}
 		>
-			{/* SEO crawl hints — React 19 hoists these to <head> */}
-			{prevUrl && <link rel="prev" href={prevUrl} />}
-			{nextUrl && <link rel="next" href={nextUrl} />}
+			{/* SEO crawl hints — React 19 hoists these to <head>. Une seule
+			    instance les émet : deux `<link rel="next">` identiques dans le
+			    <head> sont du bruit pour les crawlers. */}
+			{!secondary && prevUrl && <link rel="prev" href={prevUrl} />}
+			{!secondary && nextUrl && <link rel="next" href={nextUrl} />}
 			{/* Live region pour screen readers */}
 			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{ariaLiveMessage}
@@ -284,22 +293,24 @@ function CursorPaginationInner({
 					</Select>
 				</div>
 
-				<span className="text-muted-foreground text-sm">
-					{currentPageSize > 0 ? (
-						<>
-							<span className="text-foreground font-medium">{currentPageSize}</span>
-							{showTotal && (
-								<>
-									<span> sur </span>
-									<span className="text-foreground font-medium">{totalCount}</span>
-								</>
-							)}
-							<span className="hidden sm:inline"> résultat{pluralRef > 1 ? "s" : ""}</span>
-						</>
-					) : (
-						<span className="hidden sm:inline">Aucun résultat</span>
-					)}
-				</span>
+				{showCount && (
+					<span className="text-muted-foreground text-sm">
+						{currentPageSize > 0 ? (
+							<>
+								<span className="text-foreground font-medium">{currentPageSize}</span>
+								{showTotal && (
+									<>
+										<span> sur </span>
+										<span className="text-foreground font-medium">{totalCount}</span>
+									</>
+								)}
+								<span className="hidden sm:inline"> résultat{pluralRef > 1 ? "s" : ""}</span>
+							</>
+						) : (
+							<span className="hidden sm:inline">Aucun résultat</span>
+						)}
+					</span>
+				)}
 			</div>
 
 			{/* Contrôles de pagination — `canNavigate` est toujours vrai ici

@@ -3,13 +3,13 @@
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import type { NavbarSessionData } from "@/shared/types/session.types";
 import { CountBadge } from "@/shared/components/ui/count-badge";
-import { SheetClose } from "@/shared/components/ui/sheet";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
 import Link from "next/link";
+import { useMenuSheetNavigate } from "./menu-sheet-navigate-context";
 
 // Shared link styles (must match menu-sheet-nav.tsx)
 const linkClassName = cn(
@@ -61,7 +61,10 @@ function SectionHeader({
 	);
 }
 
-// --- NavLink (shared pattern: m.li + SheetClose + Link + aria-current) ---
+// --- NavLink (shared pattern: m.li + Link + aria-current) ---
+//
+// ⚠️ PAS de `<SheetClose asChild>` ici : ce chemin déclenche `history.back()` et
+// annule la navigation. Voir `menu-sheet-navigate-context` pour le détail.
 
 interface NavLinkProps {
 	href: string;
@@ -73,6 +76,12 @@ interface NavLinkProps {
 	exact?: boolean;
 	/** Pass `null` to opt out of automatic prefetch on viewport-rare destinations. */
 	prefetch?: boolean | null;
+	/**
+	 * Nom accessible explicite. Nécessaire quand le contenu visible ne suffit pas
+	 * — typiquement un `CountBadge`, qui est `aria-hidden` : sans cela le lien
+	 * « Mes favoris » n'annonçait jamais son compteur.
+	 */
+	ariaLabel?: string;
 }
 
 function NavLink({
@@ -84,19 +93,23 @@ function NavLink({
 	className,
 	exact,
 	prefetch,
+	ariaLabel,
 }: NavLinkProps) {
+	const onNavigate = useMenuSheetNavigate();
+
 	return (
 		<m.li variants={itemVariants} custom={customDelay}>
-			<SheetClose asChild>
-				<Link
-					href={href}
-					prefetch={prefetch}
-					className={getLinkClass(href, isMenuItemActive, className, { exact })}
-					aria-current={isMenuItemActive(href, { exact }) ? "page" : undefined}
-				>
-					{children}
-				</Link>
-			</SheetClose>
+			<Link
+				href={href}
+				replace
+				prefetch={prefetch}
+				onClick={onNavigate}
+				className={getLinkClass(href, isMenuItemActive, className, { exact })}
+				aria-current={isMenuItemActive(href, { exact }) ? "page" : undefined}
+				aria-label={ariaLabel}
+			>
+				{children}
+			</Link>
 		</m.li>
 	);
 }
@@ -110,6 +123,7 @@ interface UserHeaderProps {
 }
 
 export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
+	const onNavigate = useMenuSheetNavigate();
 	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should also be treated as missing
 	const firstName = session.user.name?.split(" ")[0] || null;
 	const greeting = firstName ? `Bonjour ${firstName}` : "Bonjour";
@@ -117,32 +131,32 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 
 	return (
 		<div className="bg-primary/5 mb-4 rounded-xl p-4">
-			<SheetClose asChild>
-				<Link
-					href={ROUTES.ACCOUNT.ROOT}
-					prefetch={null}
-					className="group block"
-					aria-label={`Mon compte - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
-				>
-					<div>
-						<p className="text-foreground text-base font-semibold">{greeting}</p>
-						<p className="text-muted-foreground mt-0.5 text-sm">
-							{wishlistCount > 0 && (
-								<span>
-									{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
-								</span>
-							)}
-							{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
-							{cartCount > 0 && (
-								<span>
-									{cartCount} article{cartCount > 1 ? "s" : ""}
-								</span>
-							)}
-							{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
-						</p>
-					</div>
-				</Link>
-			</SheetClose>
+			<Link
+				href={ROUTES.ACCOUNT.ROOT}
+				replace
+				prefetch={null}
+				onClick={onNavigate}
+				className="group block"
+				aria-label={`Mon compte - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
+			>
+				<div>
+					<p className="text-foreground text-base font-semibold">{greeting}</p>
+					<p className="text-muted-foreground mt-0.5 text-sm">
+						{wishlistCount > 0 && (
+							<span>
+								{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
+							</span>
+						)}
+						{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
+						{cartCount > 0 && (
+							<span>
+								{cartCount} article{cartCount > 1 ? "s" : ""}
+							</span>
+						)}
+						{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
+					</p>
+				</div>
+			</Link>
 		</div>
 	);
 }
@@ -304,6 +318,13 @@ export function AccountSection({
 	itemVariants,
 	delay,
 }: AccountSectionProps) {
+	// `ROUTES.ACCOUNT.ROOT` et `ROUTES.ACCOUNT.ORDERS` valent tous deux
+	// « /commandes » : rendre les deux produisait deux entrées vers la même URL,
+	// toutes deux marquées `aria-current="page"` (double annonce). Comparaison
+	// dynamique plutôt que suppression sèche — si les deux routes divergent un
+	// jour, l'entrée « Mes commandes » réapparaît d'elle-même.
+	const showOrdersLink = isLoggedIn && accountItem?.href !== ROUTES.ACCOUNT.ORDERS;
+
 	return (
 		<section aria-labelledby="section-account">
 			<SectionHeader id="section-account">{isLoggedIn ? "Mon compte" : "Compte"}</SectionHeader>
@@ -320,14 +341,25 @@ export function AccountSection({
 					</NavLink>
 				)}
 
-				{/* Favorites with badge count */}
-				{favoritesItem && isLoggedIn && (
+				{/*
+				 * Favoris — accessible à TOUS, sans gate `isLoggedIn` : l'onglet de la
+				 * bottom bar et l'icône cœur de la navbar sont visibles pour les
+				 * invités, et la SSOT `getMobileNavItems` porte le commentaire
+				 * « Accessible à tous ». Le gate faisait du sheet la seule surface à
+				 * masquer les favoris. Le badge se masque seul à 0.
+				 */}
+				{favoritesItem && (
 					<NavLink
 						href={favoritesItem.href}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
 						customDelay={delay(150, 1)}
 						className="justify-between"
+						ariaLabel={
+							wishlistCount > 0
+								? `${favoritesItem.label}, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}`
+								: undefined
+						}
 					>
 						{favoritesItem.label}
 						<CountBadge
@@ -342,8 +374,8 @@ export function AccountSection({
 					</NavLink>
 				)}
 
-				{/* Orders (logged in only) */}
-				{isLoggedIn && (
+				{/* Orders — only when it is a distinct destination (cf. showOrdersLink) */}
+				{showOrdersLink && (
 					<NavLink
 						href={ROUTES.ACCOUNT.ORDERS}
 						isMenuItemActive={isMenuItemActive}

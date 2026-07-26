@@ -4,18 +4,83 @@ test.describe("Admin - Pagination cursor", { tag: ["@regression"] }, () => {
 	test("la pagination est visible sur la page produits", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 
-		// Pagination controls should be present
 		const pagination = page.getByRole("navigation", { name: /Pagination/i });
 		const paginationVisible = await pagination.isVisible().catch(() => false);
 
 		if (!paginationVisible) {
-			// Single page or empty — check that per-page select is still present
-			const perPageSelect = page.getByLabel(/Nombre de résultats par page/i);
-			await expect(perPageSelect).toBeVisible();
+			// Une seule page : `CursorPagination` retourne `null` et masque TOUTE la
+			// barre, sélecteur « par page » compris. L'ancienne version de ce test
+			// affirmait ici que le sélecteur restait visible — assertion impossible à
+			// satisfaire, qui échouait dès que le seed tenait sur une page.
+			await expect(page.getByLabel(/Nombre de résultats par page/i)).toBeHidden();
+			// Le compteur de résultats, lui, reste rendu par `AdminDataTable` hors de
+			// la zone conditionnelle : c'est tout l'intérêt de l'avoir sorti de la barre.
+			await expect(page.getByText(/\d+ résultats?/).first()).toBeVisible();
 			return;
 		}
 
 		await expect(pagination).toBeVisible();
+	});
+
+	test("le compteur de résultats est toujours affiché", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		// Rendu par `AdminDataTable`, donc indépendant du nombre de pages.
+		await expect(page.getByText(/\d+( sur \d+)? résultats?/).first()).toBeVisible();
+	});
+
+	test("changer le tri depuis la page 2 repart du debut (curseur purge)", async ({
+		page,
+		adminPage,
+	}) => {
+		await adminPage.gotoProducts();
+
+		const nextButton = page.getByRole("button", { name: /Page suivante/i });
+		const nextVisible = await nextButton.isVisible().catch(() => false);
+		test.skip(!nextVisible, "No next page button - not enough data for pagination");
+
+		await nextButton.click();
+		await page.waitForLoadState("domcontentloaded");
+		expect(page.url()).toContain("cursor=");
+
+		// Changer le tri depuis une page profonde doit purger cursor + direction :
+		// sinon Prisma se repositionne sur un id de l'ANCIEN tri et rend une
+		// tranche arbitraire, sans erreur ni signal visible.
+		const sortTrigger = page.getByLabel(/Trier par/i).first();
+		await sortTrigger.click();
+		const option = page.getByRole("option").nth(1);
+		await option.click();
+		await page.waitForLoadState("domcontentloaded");
+
+		expect(page.url()).not.toContain("cursor=");
+		expect(page.url()).not.toContain("direction=");
+	});
+
+	test("le retour navigateur conserve la position de scroll", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		// Il faut de quoi scroller pour que le test ait un sens.
+		const scrollable = await page.evaluate(
+			() => document.documentElement.scrollHeight > window.innerHeight + 300,
+		);
+		test.skip(!scrollable, "Page too short to scroll - not enough data");
+
+		await page.evaluate(() => window.scrollTo({ top: 300, behavior: "instant" }));
+		await page.waitForFunction(() => window.scrollY > 250);
+
+		const firstRowLink = page.getByRole("link", { name: /^Voir / }).first();
+		await firstRowLink.click();
+		await page.waitForLoadState("domcontentloaded");
+
+		await page.goBack();
+		await page.waitForLoadState("domcontentloaded");
+
+		// `CursorPagination` ne doit PAS forcer un scroll-to-top au montage : sa
+		// sentinelle d'initialisation le déclenchait à chaque retour arrière, juste
+		// après que Next.js ait restauré la position.
+		await expect
+			.poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 })
+			.toBeGreaterThan(100);
 	});
 
 	test("naviguer page suivante met a jour l'URL", async ({ page, adminPage }) => {

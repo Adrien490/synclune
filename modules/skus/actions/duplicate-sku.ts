@@ -8,7 +8,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { BusinessError, validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
-import { deleteProductSkuSchema } from "../schemas/sku.schemas";
+import { duplicateProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { updateTag } from "next/cache";
 
@@ -35,7 +35,7 @@ export async function duplicateSku(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Validation du skuId avec Zod (CUID2)
-		const validation = validateInput(deleteProductSkuSchema, {
+		const validation = validateInput(duplicateProductSkuSchema, {
 			skuId: safeFormGet(formData, "skuId"),
 		});
 		if ("error" in validation) return validation.error;

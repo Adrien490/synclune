@@ -9,7 +9,9 @@ import { useSyncExternalStore } from "react";
 // Limitation: does not detect switch/eye-tracking devices (pointer: none).
 // Users of these devices are expected to have prefers-reduced-motion enabled,
 // which disables motion-heavy effects independently.
-const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
+// Exportée : SSOT partagée avec `use-haptic.ts`, qui doit interroger la même
+// capacité sans pouvoir appeler un hook (`triggerHaptic` est une fonction module).
+export const TOUCH_MEDIA_QUERY = "(hover: none) and (pointer: coarse)";
 
 /**
  * Hook pour detecter si l'appareil est tactile (smartphone, tablette)

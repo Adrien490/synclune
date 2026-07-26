@@ -18,7 +18,7 @@
 - **Auth** : Better Auth (email/password, Google)
 - **Paiements** : Stripe
 - **Uploads** : UploadThing
-- **Emails** : React Email + Resend (11 templates)
+- **Emails** : React Email + Resend (10 templates)
 - **Monitoring** : Sentry
 
 ---
@@ -92,7 +92,7 @@ shared/                      # Cross-cutting concerns
 ├── lib/                     # Core: prisma, stripe, email, cache, rate-limit
 ├── providers/               # Root providers
 ├── schemas/                 # Shared Zod schemas
-├── stores/                  # Zustand stores (9 stores)
+├── stores/                  # Zustand stores (8 stores)
 └── utils/                   # Formatting, slug, date, currency
 ```
 

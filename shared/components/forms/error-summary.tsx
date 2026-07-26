@@ -3,6 +3,7 @@
 import { CircleAlert } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { findFirstVisible } from "@/shared/hooks/use-focus-first-error";
 
 export interface ErrorSummaryField {
 	/** Target element `id` — clicking the list item scrolls + focuses it. */
@@ -56,8 +57,16 @@ export function ErrorSummary({
 }: ErrorSummaryProps) {
 	const focusField = (name: string) => {
 		const scope = formId ? document.getElementById(formId) : document;
+		// `querySelectorAll` + filtre de visibilité, pas `getElementById` : `SelectField`
+		// rend ses deux variantes en permanence et porte `id={name}` sur le <select>
+		// natif (`md:hidden`), le trigger Radix utilisant `${name}-desktop`. En desktop,
+		// viser l'id brut renvoyait donc un `display:none` — scroll et focus no-op.
 		const el =
-			scope?.querySelector<HTMLElement>(`#${CSS.escape(name)}`) ?? document.getElementById(name);
+			findFirstVisible(
+				(scope ?? document).querySelectorAll<HTMLElement>(
+					`#${CSS.escape(name)}, #${CSS.escape(`${name}-desktop`)}`,
+				),
+			) ?? document.getElementById(name);
 		if (!el) return;
 		const reduced =
 			typeof window !== "undefined" &&

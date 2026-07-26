@@ -424,6 +424,10 @@ export function GalleryPinchZoom({
 		? `${alt}. Zoom ${Math.round(scale * 100)}%. Utilisez les flèches pour déplacer, Échap pour réinitialiser.`
 		: `${alt}. Double-tapez ou appuyez sur + pour zoomer. Entrée pour ouvrir en plein écran.`;
 
+	// `data-no-ptr` : le pull-to-refresh écoute sur `window` en mode passif, donc le
+	// `preventDefault()` de ce conteneur ne l'empêche PAS d'accumuler sa distance de
+	// tirage. Un pan vers le bas sur une image zoomée, page en haut de scroll, le
+	// déclenchait par-dessus le geste de déplacement.
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- false positive: role="application" is interactive per WAI-ARIA spec
 		<div
@@ -441,6 +445,7 @@ export function GalleryPinchZoom({
 				isZoomed ? "cursor-grab touch-none" : "cursor-zoom-in touch-manipulation",
 			)}
 			style={{ touchAction: isZoomed ? "none" : "manipulation" }}
+			data-no-ptr
 		>
 			{/* Transformable image container */}
 			<div

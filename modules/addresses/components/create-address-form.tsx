@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
+import { useStore } from "@tanstack/react-form";
+
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
 import { useAddressForm } from "@/modules/addresses/hooks/use-address-form";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
@@ -12,6 +14,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { ActionStatus } from "@/shared/types/server-action";
 
 import { AddressFormFields } from "./address-form-fields";
@@ -31,14 +34,37 @@ export function CreateAddressForm() {
 	const haptic = useHaptic();
 	const { form } = useAddressForm();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const isDirty = useStore(form.store, (s) => s.isDirty);
+
+	// `onSuccess` a besoin de `allowNavigation`, qui a besoin de `isPending`, qui
+	// vient de `useCreateAddress` : le cycle se casse par une ref (même idiome que
+	// les formulaires admin, cf. `create-color-form.tsx`).
+	const allowNavigationRef = useRef<(() => void) | null>(null);
 
 	const { action, isPending, state } = useCreateAddress({
 		onSuccess: () => {
 			haptic("success");
+			// Lever le garde AVANT de naviguer, sinon la redirection post-succès
+			// déclencherait elle-même le dialogue « modifications non enregistrées ».
+			allowNavigationRef.current?.();
 			// Native navigation (pas de withViewTransition : nav post-mutation racy).
 			router.push(LIST_PATH);
 		},
 	});
+
+	// Une adresse à moitié saisie (8 champs, dont une recherche d'adresse) était
+	// perdue sans le moindre avertissement sur un retour arrière ou une fermeture
+	// d'onglet. On suit la convention du checkout (`checkout-form.tsx`) — surface
+	// client, sans exclusion mobile : celle des formulaires admin
+	// (`!isPending && !isMobile`) existe pour ne pas entrer en conflit avec le geste
+	// de retour natif du navigateur sur mobile.
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending, {
+		message: "Cette adresse n'est pas enregistrée. Quitter la page ?",
+	});
+
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
 
 	// WCAG 3.3.1 — après une erreur serveur, focus l'alerte (les erreurs serveur
 	// ne sont pas mappées aux champs) avec fallback sur le premier champ invalide.

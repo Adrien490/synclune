@@ -24,7 +24,12 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import {
+	CARRIERS,
+	detectCarrierAndUrl,
+	getTrackingUrl,
+	type Carrier,
+} from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
 import { Link2, LoaderCircle, Mail, Truck } from "lucide-react";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
@@ -97,16 +102,12 @@ function MarkAsShippedFormContent({
 
 		// Re-générer l'URL si pas en mode custom
 		if (!customUrlMode && trackingNumber.length >= 8) {
-			// Utiliser l'URL du carrier sélectionné manuellement
-			if (value !== "autre") {
-				const { url } = detectCarrierAndUrl(trackingNumber);
-				if (url) {
-					form.setFieldValue("trackingUrl", url);
-				}
-			} else {
-				// Carrier "autre" = pas d'URL auto
-				form.setFieldValue("trackingUrl", "");
-			}
+			// `getTrackingUrl(value, …)` et NON `detectCarrierAndUrl(trackingNumber)` :
+			// un choix explicite de l'admin doit primer sur la détection de format.
+			// `CARRIER_PATTERNS` ne connaît que 5 des 11 transporteurs, si bien que
+			// re-dériver depuis le numéro laissait GLS/DHL/UPS/FedEx/Relais Colis
+			// sans URL (détectés "autre") — et l'email d'expédition sans lien de suivi.
+			form.setFieldValue("trackingUrl", getTrackingUrl(value, trackingNumber) ?? "");
 		}
 	};
 

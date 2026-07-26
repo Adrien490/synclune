@@ -4,6 +4,8 @@ import {
 	type FulfillmentStatus,
 } from "@/app/generated/prisma/client";
 import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
+import { perPageOptionsUpTo } from "@/shared/lib/pagination";
+import { GET_ORDERS_MAX_RESULTS_PER_PAGE } from "@/modules/orders/constants/order.constants";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -68,8 +70,6 @@ export async function OrdersDataTable({
 		);
 	}
 
-	// Seules les commandes PENDING non payées sont éligibles au bulk-cancel
-
 	return (
 		<AdminDataTable
 			caption="Liste des commandes"
@@ -81,18 +81,21 @@ export async function OrdersDataTable({
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
 				totalCount,
+				// Ce module plafonne sous MAX_ADMIN : ne pas proposer une valeur que le
+				// schéma refuserait (sinon 20 lignes affichées avec « 200 » sélectionné).
+				perPageOptions: perPageOptionsUpTo(GET_ORDERS_MAX_RESULTS_PER_PAGE),
 			}}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[12%]">Commande</TableHead>
-					<TableHead className="w-[15%]">Client</TableHead>
-					<TableHead className="w-[10%]">Date</TableHead>
-					<TableHead className="w-[12%]">Statut</TableHead>
-					<TableHead className="w-[12%]">Paiement</TableHead>
-					<TableHead className="w-[12%] text-right">Montant</TableHead>
+					<TableHead className="w-[14%]">Commande</TableHead>
+					<TableHead className="w-[22%]">Client</TableHead>
+					<TableHead className="w-[12%]">Date</TableHead>
+					<TableHead className="w-[14%]">Statut</TableHead>
+					<TableHead className="w-[14%]">Paiement</TableHead>
+					<TableHead className="w-[14%] text-right">Montant</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[10%] text-right"
 						aria-label="Actions disponibles pour chaque commande"
 					>
 						Actions
@@ -108,14 +111,17 @@ export async function OrdersDataTable({
 							<TableCell>
 								<Link
 									href={`/admin/ventes/commandes/${order.id}`}
-									className="text-foreground text-sm font-medium tabular-nums underline"
+									className="text-foreground block truncate text-sm font-medium tabular-nums underline"
 									aria-label={`Voir commande ${order.orderNumber}`}
+									title={order.orderNumber}
 								>
 									{order.orderNumber}
 								</Link>
 							</TableCell>
 							<TableCell>
-								<span className="block truncate text-sm font-medium">{userName}</span>
+								<span className="block truncate text-sm font-medium" title={userName}>
+									{userName}
+								</span>
 							</TableCell>
 							<TableCell className="text-muted-foreground text-sm">
 								<time dateTime={new Date(order.createdAt).toISOString()}>

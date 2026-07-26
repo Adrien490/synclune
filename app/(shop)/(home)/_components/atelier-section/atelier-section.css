@@ -140,7 +140,7 @@
 			animation-range: entry 5% entry 50%;
 		}
 
-		@media (min-width: 1024px) {
+		@media (width >= 64rem) {
 			.polaroid-scatter {
 				animation-name: polaroid-land;
 				animation-range: entry 10% entry 70%;
@@ -221,7 +221,7 @@
 		mask-image: radial-gradient(ellipse at 50% 50%, #000 45%, transparent 78%);
 	}
 
-	@media (min-width: 640px) {
+	@media (width >= 40rem) {
 		.confession-glow::before {
 			inset: -3.5rem -2.5rem; /* plus de respiration sur ≥ sm */
 		}

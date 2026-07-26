@@ -5,7 +5,9 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardDescription, CardHeader } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 import type { ReactNode } from "react";
 
 interface NavigationLink {

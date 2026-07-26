@@ -17,6 +17,7 @@ import { cn } from "@/shared/utils/cn";
 import {
 	ChevronRight,
 	ExternalLink,
+	Keyboard,
 	LayoutDashboard,
 	LogOut,
 	Search,
@@ -26,9 +27,12 @@ import {
 // `m` (et non `motion`) : l'app est enveloppée dans <LazyMotion> — importer
 // `motion` embarque le bundle complet des features (~30 kB) en plus.
 import { m, useReducedMotion } from "motion/react";
-import Link from "next/link";
+// GuardedLink : consulte le registre de NavigationGuardProvider avant de naviguer,
+// pour ne pas perdre la saisie d'un formulaire admin dirty (cf. audit 2026-07-26).
+import { GuardedLink as Link } from "@/shared/components/navigation/guarded-link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";
 import {
 	ADMIN_MENU_SHEET_CONTENT_ID,
 	badgeAriaLabel,
@@ -58,7 +62,7 @@ const VAUL_EXIT_DURATION_MS = 450;
 /**
  * Classes tactiles communes à tous les Links de navigation du menu :
  * touch-manipulation supprime le 300 ms delay tap mobile, scale active
- * fournit le feedback visuel (parité admin-menu-quick-access.tsx:33).
+ * fournit le feedback visuel.
  * focus-ring (app/globals.css:17) = SSOT anneau focus clavier WCAG 2.4.7.
  */
 const NAV_ITEM_TACTILE_CLASS =
@@ -76,8 +80,15 @@ const stripDiacritics = (s: string) =>
 
 export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
+	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
 	const [showLogout, setShowLogout] = useState(false);
-	const [pendingLogout, setPendingLogout] = useState(false);
+	/**
+	 * Action à exécuter APRÈS la fermeture du sheet. Généralisée depuis le seul cas
+	 * « logout » : tout dialogue ouvert depuis le sheet doit attendre la fin de la
+	 * transition Vaul, sinon les deux overlays se chevauchent et le scroll-lock du
+	 * sheet sortant casse celui du dialogue entrant.
+	 */
+	const [pendingAction, setPendingAction] = useState<"logout" | "shortcuts" | null>(null);
 	const [searchQuery, setSearchQuery] = useState("");
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const navRef = useRef<HTMLElement>(null);
@@ -151,21 +162,22 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		};
 	}, [isOpen, shouldReduceMotion]);
 
-	// Defer LogoutAlertDialog until Vaul finishes its exit transition. Écouter
+	// Defer the pending dialog until Vaul finishes its exit transition. Écouter
 	// transitionend (transform) sur sheet-content est plus robuste qu'un
 	// setTimeout fixe — le fallback couvre prefers-reduced-motion (Vaul peut
 	// court-circuiter la transition). Un seul sheet admin ouvert à la fois,
 	// donc querySelector est sûr.
 	useEffect(() => {
-		if (!pendingLogout || isOpen) return;
+		if (!pendingAction || isOpen) return;
 		const sheetContent = document.querySelector<HTMLElement>('[data-slot="sheet-content"]');
 		let done = false;
 		const finish = () => {
 			if (done) return;
 			done = true;
 			sheetContent?.removeEventListener("transitionend", onEnd);
-			setPendingLogout(false);
-			setShowLogout(true);
+			if (pendingAction === "logout") setShowLogout(true);
+			else openShortcuts();
+			setPendingAction(null);
 		};
 		const onEnd = (event: TransitionEvent) => {
 			if (event.propertyName === "transform" && event.target === sheetContent) finish();
@@ -176,12 +188,19 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 			sheetContent?.removeEventListener("transitionend", onEnd);
 			clearTimeout(fallback);
 		};
-	}, [pendingLogout, isOpen]);
+	}, [pendingAction, isOpen, openShortcuts]);
 
 	function handleLogoutClick() {
 		triggerHaptic("medium");
 		setSearchQuery("");
-		setPendingLogout(true);
+		setPendingAction("logout");
+		closeMenu();
+	}
+
+	function handleShortcutsClick() {
+		triggerHaptic("light");
+		setSearchQuery("");
+		setPendingAction("shortcuts");
 		closeMenu();
 	}
 
@@ -243,6 +262,10 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				// Sur iOS Safari, la search input prend le focus → clavier remonte sans
 				// repositionner le contenu Vaul : input masqué. repositionInputs corrige.
 				repositionInputs
+				// Navigation longue et scrollable sur 92 dvh : un scroll vers le bas
+				// depuis le haut de la liste fermait la sheet. La `SheetHandle` visible
+				// reste le seul point de drag.
+				handleOnly
 			>
 				<SheetContent
 					id={ADMIN_MENU_SHEET_CONTENT_ID}
@@ -578,6 +601,33 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 														aria-hidden="true"
 													/>
 												</Link>
+											</li>
+											{/* Aide raccourcis : le dialogue est monté globalement mais n'avait
+											    AUCUNE affordance sous `md` — l'icône clavier vit dans le header
+											    desktop, et `?` suppose de connaître le raccourci d'avance. Sur
+											    tablette avec clavier, l'aide était donc indécouvrable. */}
+											<li>
+												<button
+													type="button"
+													onClick={handleShortcutsClick}
+													aria-haspopup="dialog"
+													className={cn(
+														"border-border/60 active:bg-accent flex w-full items-center gap-3 border-b px-4 py-3 transition-colors",
+														NAV_ITEM_TACTILE_CLASS,
+													)}
+												>
+													<Keyboard
+														className="text-muted-foreground size-5 shrink-0"
+														aria-hidden="true"
+													/>
+													<span className="flex-1 text-left text-sm font-medium">
+														Raccourcis clavier
+													</span>
+													<ChevronRight
+														className="text-muted-foreground/50 size-4 shrink-0"
+														aria-hidden="true"
+													/>
+												</button>
 											</li>
 											<li>
 												<button

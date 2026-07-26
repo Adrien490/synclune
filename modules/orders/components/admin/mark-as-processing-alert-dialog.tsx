@@ -8,12 +8,11 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
-import { LoaderCircle, Package } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const MARK_AS_PROCESSING_DIALOG_ID = "mark-as-processing";
 
@@ -44,7 +43,6 @@ export function MarkAsProcessingAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={Package} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Passer en préparation</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

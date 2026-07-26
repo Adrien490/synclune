@@ -55,9 +55,9 @@ export async function checkReviewEligibility(
 	}
 
 	// 2. Trouver un OrderItem livré sans avis associé
-	// Exclut les commandes annulées / intégralement remboursées / échouées — solliciter
-	// ou autoriser un avis dans ces cas est incohérent métier (cohérent avec le cron
-	// send-review-requests, biz-bug-001). PARTIALLY_REFUNDED reste éligible. Cf. REVIEW-AUDIT-004.
+	// Exclut les commandes annulées / intégralement remboursées / échouées — autoriser
+	// un avis dans ces cas est incohérent métier (biz-bug-001). PARTIALLY_REFUNDED
+	// reste éligible. Cf. REVIEW-AUDIT-004.
 	const eligibleOrderItem = await client.orderItem.findFirst({
 		where: {
 			order: {

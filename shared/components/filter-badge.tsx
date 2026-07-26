@@ -151,13 +151,19 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 				)}
 			</span>
 
-			{/* X opacity: full on mobile (primary affordance, no hover), dimmed-at-rest on desktop. */}
+			{/* X opacity: full on mobile (primary affordance, no hover), dimmed-at-rest on desktop.
+			 * `group-focus-visible:` en parité du hover : le badge entier est un
+			 * `<button>`, et un utilisateur au clavier n'avait aucun renforcement
+			 * visuel de l'affordance de suppression là où la souris en recevait un
+			 * (audit responsive 2026-07-26, P2). Pas de gate `can-hover` ici — le
+			 * focus clavier existe aussi sur les appareils tactiles. */}
 			<span
 				aria-hidden="true"
 				className={cn(
 					"shrink-0",
 					"opacity-100 sm:opacity-60",
 					"can-hover:group-hover:opacity-100",
+					"group-focus-visible:opacity-100",
 					"motion-safe:transition-opacity motion-safe:duration-150",
 					"sm:flex sm:items-center sm:justify-center",
 					"sm:size-5 sm:rounded-full",

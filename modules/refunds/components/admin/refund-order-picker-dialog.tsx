@@ -15,6 +15,7 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { SearchInput } from "@/shared/components/search-input";
 import { Badge } from "@/shared/components/ui/badge";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -71,6 +72,8 @@ function RefundOrderPickerContent({ onSelect }: { onSelect: () => void }) {
 	const [results, setResults] = useState<RefundableOrderOption[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [hasLoaded, setHasLoaded] = useState(false);
+	// Dernière requête soumise — sert uniquement à l'annonce du nombre de résultats.
+	const [lastQuery, setLastQuery] = useState("");
 
 	// Garde anti-race : seule la dernière requête lancée met à jour l'état.
 	const requestSeq = useRef(0);
@@ -95,6 +98,7 @@ function RefundOrderPickerContent({ onSelect }: { onSelect: () => void }) {
 	const runSearch = (query: string) => {
 		const seq = ++requestSeq.current;
 		setIsLoading(true);
+		setLastQuery(query);
 		void searchRefundableOrders(query)
 			.then((orders) => {
 				if (seq !== requestSeq.current) return;
@@ -120,7 +124,17 @@ function RefundOrderPickerContent({ onSelect }: { onSelect: () => void }) {
 				aria-label="Rechercher une commande à rembourser"
 				className="w-full"
 				preventMobileBlur
+				// `isLoading` existait déjà mais n'était pas branché : le champ n'affichait
+				// donc ni son loader ni `aria-busy` pendant la recherche.
+				isPending={isLoading}
 				onLiveSearch={runSearch}
+			/>
+
+			<ResultCountLiveRegion
+				totalCount={results.length}
+				query={lastQuery}
+				singular="commande"
+				plural="commandes"
 			/>
 
 			<div

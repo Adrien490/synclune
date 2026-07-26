@@ -86,7 +86,11 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 								aria-hidden="true"
 							/>
 						)}
-						<span className="text-foreground can-hover:group-hover:underline truncate text-xs">
+						{/* Le soulignement est l'affordance « ceci est un lien » : il doit
+						 * apparaître au focus clavier comme au survol (P2 responsive
+						 * 2026-07-26). Le gate `can-hover` reste sur le hover seul — il
+						 * existe pour neutraliser le sticky-hover iOS, pas le focus. */}
+						<span className="text-foreground can-hover:group-hover:underline truncate text-xs group-focus-visible:underline">
 							{review.product.title}
 						</span>
 					</Link>

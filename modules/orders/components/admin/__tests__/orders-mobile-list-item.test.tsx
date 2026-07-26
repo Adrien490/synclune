@@ -1,20 +1,18 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockUseBulkCtx, mockUsePendingCtx, mockUseOrderActions } = vi.hoisted(() => ({
-	mockUseBulkCtx: vi.fn(),
+const { mockUsePendingCtx, mockUseOrderActions } = vi.hoisted(() => ({
 	mockUsePendingCtx: vi.fn(),
 	mockUseOrderActions: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
-vi.mock("@/shared/components/data-table", () => ({
-	useBulkSelectionContextOptional: () => mockUseBulkCtx(),
-}));
-
 vi.mock("@/shared/components/long-press-menu-link", () => ({
 	LinkPendingOverlay: () => null,
+	// Rendu (et non stubé à `null`) pour que le test d'affordance ci-dessous
+	// vérifie une présence réelle dans le `<Link>`.
+	DefaultLongPressAffordance: () => <svg data-testid="long-press-affordance" aria-hidden="true" />,
 }));
 
 vi.mock("@/shared/components/mobile-selection", () => ({
@@ -90,7 +88,6 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-	mockUseBulkCtx.mockReturnValue(null);
 	mockUsePendingCtx.mockReturnValue(null);
 	mockUseOrderActions.mockReturnValue({ sections: [] });
 });
@@ -106,5 +103,19 @@ describe("OrdersMobileListItem", () => {
 		expect(screen.getByText("Paiement en attente")).toBeInTheDocument();
 		expect(screen.getByText(/2 articles/)).toBeInTheDocument();
 		expect(screen.getByTestId("swipeable-card")).toBeInTheDocument();
+	});
+
+	/**
+	 * @regression long-press-affordance-by-default
+	 * Cette carte réimplémente le pattern long-press à la main (le `<Link>` doit
+	 * vivre DANS `SwipeableCard`), elle ne bénéficie donc pas du défaut de
+	 * `LongPressMenuLink`. Sans indice, le menu d'actions — seul chemin non gestuel
+	 * vers les notes depuis la liste — n'était annoncé par rien à l'écran.
+	 */
+	it("rend un indice visuel de long-press dans le lien de la carte", () => {
+		render(<OrdersMobileListItem order={makeOrder()} />);
+
+		const link = screen.getByRole("link", { name: /Commande SYN-2026-0001/ });
+		expect(link).toContainElement(screen.getByTestId("long-press-affordance"));
 	});
 });

@@ -20,6 +20,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
+import { formatDateTime } from "@/shared/utils/dates";
 import type { OrderAction, HistorySource } from "@/app/generated/prisma/enums";
 
 const VISIBLE_COUNT = 5;
@@ -185,6 +186,19 @@ const ACTION_CONFIG: Record<
 		label: "Export CSV admin",
 		symbol: "📊",
 	},
+	// ⚠️ RÉSERVÉ — BRANCHES INATTEIGNABLES à ce jour.
+	//
+	// L'e-reporting DGFiP a été retiré du code (recentrage B2C) : AUCUN writer n'émet
+	// ces 6 `OrderAction`, donc aucune entrée d'historique ne peut les porter. Elles
+	// restent ici uniquement parce que `ACTION_CONFIG` est un `Record<OrderAction, …>`
+	// exhaustif : les retirer imposerait de passer le type en `Partial` + fallback au
+	// point de lecture, ce qui SUPPRIMERAIT le garde-fou « toute nouvelle valeur d'enum
+	// doit avoir un rendu » (erreur de compilation aujourd'hui). Les valeurs d'enum
+	// Postgres sont elles-mêmes conservées (cf. prisma/schema.prisma : retirer une
+	// valeur impose de recréer le type).
+	//
+	// Ne pas en déduire que la transmission PDP existe : à réécrire au go-live contre
+	// l'arrêté définitif et une Plateforme Agréée réelle (cf. docs/RUNBOOK.md).
 	PDP_SUBMITTED: {
 		icon: FileText,
 		color: "text-sky-500",
@@ -228,17 +242,32 @@ const ACTION_CONFIG: Record<
  * affichage inline. Renvoie null si introuvable — l'entry reste rendue mais sans
  * code monospace. Cf. EINV-UI-009 (audit UI admin facturation 2026-05-28).
  */
+const RENDERED_METADATA_KEYS = ["invoiceNumber", "creditNoteNumber", "errorMessage"] as const;
+
 function extractInvoiceMetadata(metadata: unknown): {
 	invoiceNumber?: string;
 	creditNoteNumber?: string;
 	errorMessage?: string;
+	/**
+	 * Nombre de clés présentes dans `metadata` mais volontairement NON rendues.
+	 * On expose le compte, jamais les valeurs : `OrderHistory` est immuable et
+	 * n'est jamais scrubée à l'anonymisation, donc y afficher un blob arbitraire
+	 * risquerait de faire remonter de la PII (invariant 9 + régression
+	 * `order-history-no-customer-pii`). Sans ce compte, l'admin ne pouvait pas
+	 * savoir qu'il existe davantage d'informations tracées.
+	 */
+	droppedCount: number;
 } {
-	if (typeof metadata !== "object" || metadata === null) return {};
+	if (typeof metadata !== "object" || metadata === null) return { droppedCount: 0 };
 	const m = metadata as Record<string, unknown>;
+	const droppedCount = Object.keys(m).filter(
+		(k) => !RENDERED_METADATA_KEYS.includes(k as (typeof RENDERED_METADATA_KEYS)[number]),
+	).length;
 	return {
 		invoiceNumber: typeof m.invoiceNumber === "string" ? m.invoiceNumber : undefined,
 		creditNoteNumber: typeof m.creditNoteNumber === "string" ? m.creditNoteNumber : undefined,
 		errorMessage: typeof m.errorMessage === "string" ? m.errorMessage : undefined,
+		droppedCount,
 	};
 }
 
@@ -321,14 +350,22 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 
 									{/* Contenu */}
 									<div className="bg-muted/50 rounded-lg p-3">
-										<div className="mb-1 flex items-center justify-between">
+										<div className="mb-1 flex items-center justify-between gap-2">
 											<span className="text-sm font-medium">{config.label}</span>
-											<span className="text-muted-foreground text-xs">
+											{/* `<time>` + horodatage absolu : cet audit trail est conservé 10 ans
+											    (Art. L123-22) et « il y a 3 mois » n'y est pas exploitable. Le
+											    relatif reste affiché (lecture rapide), l'absolu est dans `title`
+											    + `dateTime` pour la machine et le survol. */}
+											<time
+												dateTime={new Date(entry.createdAt).toISOString()}
+												title={formatDateTime(entry.createdAt)}
+												className="text-muted-foreground shrink-0 text-xs"
+											>
 												{formatDistanceToNow(new Date(entry.createdAt), {
 													addSuffix: true,
 													locale: fr,
 												})}
-											</span>
+											</time>
 										</div>
 
 										{/* Numéro facture / avoir extrait du metadata (EINV-UI-009) */}
@@ -351,6 +388,15 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 										{invoiceMeta.errorMessage && (
 											<div className="text-destructive mt-1 text-xs">
 												Erreur : {invoiceMeta.errorMessage}
+											</div>
+										)}
+										{/* Compte seul, jamais les valeurs — cf. `extractInvoiceMetadata`. */}
+										{invoiceMeta.droppedCount > 0 && (
+											<div className="text-muted-foreground/70 mt-1 text-xs italic">
+												+ {invoiceMeta.droppedCount} champ
+												{invoiceMeta.droppedCount > 1 ? "s" : ""} technique
+												{invoiceMeta.droppedCount > 1 ? "s" : ""} tracé
+												{invoiceMeta.droppedCount > 1 ? "s" : ""}
 											</div>
 										)}
 

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form-nextjs";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 import { type RefundReason } from "@/app/generated/prisma/browser";
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
@@ -93,7 +93,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	// ORD-REFUND-AUDIT-003 : refund sur commande déjà annulée requiert checkbox.
 	const isCancelledOrder = order.status === "CANCELLED";
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
@@ -210,32 +210,35 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 
 	return (
 		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex items-center gap-4">
-				<Button
-					variant="ghost"
-					size="sm"
-					asChild
-					onClick={() => haptic("light")}
-					className="touch-manipulation"
-				>
-					<Link href={orderDetailPath}>
-						<ArrowLeft className="size-4" aria-hidden="true" />
-						Retour
+			{/* Header — PAS de bouton « Retour » ici : `AdminMobileHeader` porte déjà le
+			    chevron de retour sur cette route (`remboursements/nouveau`), et ce bouton
+			    n'était même pas borné en breakpoint. Le chemin vers la commande d'origine
+			    reste offert, mais porté par la référence de commande elle-même — un lien
+			    contextuel, pas une seconde affordance de retour. */}
+			<div>
+				<h1 className="text-2xl font-semibold tracking-tight">Nouveau remboursement</h1>
+				<p className="text-muted-foreground text-sm">
+					<Link
+						href={orderDetailPath}
+						onClick={() => haptic("light")}
+						className="hover:text-foreground focus-ring rounded-sm underline decoration-dotted underline-offset-2 transition-colors"
+					>
+						Commande {order.orderNumber}
 					</Link>
-				</Button>
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">Nouveau remboursement</h1>
-					<p className="text-muted-foreground text-sm">
-						Commande {order.orderNumber} • {order.customerName}
-					</p>
-				</div>
+					{" • "}
+					{order.customerName}
+				</p>
 			</div>
 
 			{/* Mobile sticky récap chip */}
 			{selectedItems.length > 0 && (
 				<div
-					className="bg-background/95 sticky top-[calc(var(--admin-mobile-header-height,56px)+env(safe-area-inset-top))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-2 backdrop-blur-md lg:hidden"
+					// `--admin-header-height` (déclarée) et non `--admin-mobile-header-height`
+					// (qui n'existait nulle part → fallback 56px permanent). Pas de
+					// `env(safe-area-inset-top)` : `body` porte déjà ce padding.
+					// `md:hidden` aligné sur le breakpoint du header mobile (était `lg:hidden`,
+					// donc la puce se collait sous un header absent entre 768 et 1024px).
+					className="bg-background/95 sticky top-[var(--admin-header-height,3.5rem)] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-2 backdrop-blur-md md:hidden"
 					style={{ viewTransitionName: "refund-mini-recap" }}
 				>
 					<div

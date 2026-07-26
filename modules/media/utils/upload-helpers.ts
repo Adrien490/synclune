@@ -4,18 +4,24 @@
  * Extracted from use-media-upload.ts to keep each file under 500 lines.
  */
 
+import {
+	MAX_UPLOAD_COUNT_IMAGE,
+	MAX_UPLOAD_SIZE_IMAGE,
+	MAX_UPLOAD_SIZE_VIDEO,
+} from "@/modules/media/constants/upload-size-limits";
+
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-/** Default max image size: 16MB */
-export const DEFAULT_MAX_SIZE_IMAGE = 16 * 1024 * 1024;
+/** Default max image size. SSOT: `constants/upload-size-limits.ts`. */
+export const DEFAULT_MAX_SIZE_IMAGE = MAX_UPLOAD_SIZE_IMAGE;
 
-/** Default max video size: 512MB */
-export const DEFAULT_MAX_SIZE_VIDEO = 512 * 1024 * 1024;
+/** Default max video size. SSOT: `constants/upload-size-limits.ts`. */
+export const DEFAULT_MAX_SIZE_VIDEO = MAX_UPLOAD_SIZE_VIDEO;
 
 /** Default max number of files per upload */
-export const DEFAULT_MAX_FILES = 6;
+export const DEFAULT_MAX_FILES = MAX_UPLOAD_COUNT_IMAGE;
 
 /** Default video upload concurrency */
 export const DEFAULT_VIDEO_CONCURRENCY = 2;
@@ -56,7 +62,7 @@ const FALLBACK_IMAGE_EXTENSIONS = [
 ];
 // `.mov` retiré (audit média M13) : le serveur n'accepte que `video/mp4`
 // (`ALLOWED_VIDEO_TYPES`). L'accepter côté client laissait l'utilisateur
-// téléverser un fichier entier — jusqu'à 512 Mo — avant un rejet serveur.
+// téléverser un fichier entier — jusqu'à 64 Mo — avant un rejet serveur.
 const FALLBACK_VIDEO_EXTENSIONS = [".mp4"];
 
 export function isValidMediaType(file: File): boolean {

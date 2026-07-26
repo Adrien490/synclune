@@ -4,7 +4,7 @@
 	"crons": [
 		{
 			"path": "/api/cron/retry-post-webhook-tasks",
-			"schedule": "*/5 * * * *"
+			"schedule": "*/30 * * * *"
 		},
 		{
 			"path": "/api/cron/retry-webhooks",
@@ -12,7 +12,7 @@
 		},
 		{
 			"path": "/api/cron/reopen-store",
-			"schedule": "*/15 * * * *"
+			"schedule": "0 * * * *"
 		},
 		{
 			"path": "/api/cron/sync-async-payments",

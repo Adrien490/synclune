@@ -17,7 +17,10 @@ interface UseUpdateSkuPriceOptions {
 export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 	const [isPending, startTransition] = useTransition();
 
-	const [, formAction] = useActionState(
+	// `state` exposé (et non ignoré) : sans lui, un refus du schéma serveur était
+	// muet côté UI — `createToastCallbacks` retire les VALIDATION_ERROR du toast en
+	// supposant un affichage inline.
+	const [state, formAction] = useActionState(
 		withCallbacks(
 			updateSkuPrice,
 			createToastCallbacks({
@@ -62,5 +65,6 @@ export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 	return {
 		updatePrice,
 		isPending,
+		state,
 	};
 }

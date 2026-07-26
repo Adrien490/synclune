@@ -124,10 +124,6 @@ vi.mock("@/shared/components/select-filter", () => ({
 	}) => <div data-testid="select-filter">{label}</div>,
 }));
 
-vi.mock("@/modules/products/components/clear-search-button", () => ({
-	ClearSearchButton: () => <button data-testid="clear-search-button">Effacer</button>,
-}));
-
 vi.mock("@/shared/components/search-input", () => ({
 	SearchInput: ({
 		placeholder,

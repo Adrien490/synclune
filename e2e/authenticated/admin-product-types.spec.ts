@@ -121,18 +121,21 @@ test.describe("Admin - Types de bijoux (modification)", { tag: ["@regression"] }
 		const tableVisible = await table.isVisible();
 		test.skip(!tableVisible, "Pas de types de bijoux à modifier");
 
-		// Open row actions dropdown for the first non-system row
-		const actionsButton = table
+		// Cibler une ligne NON SYSTÈME : un type système n'expose que « Voir (lecture
+		// seule) ». `.first()` tombait sur lui selon l'ordre de tri et le test
+		// s'auto-skippait — vert sans rien vérifier. On reconnaît un type système à son
+		// interrupteur « Actif » verrouillé.
+		const editableRow = table
 			.locator("tbody tr")
-			.first()
-			.getByRole("button", { name: /Actions/i });
-		await actionsButton.click();
+			.filter({ has: page.locator('[role="switch"]:not([disabled])') })
+			.first();
+		const hasEditableRow = (await editableRow.count()) > 0;
+		test.skip(!hasEditableRow, "Aucun type non-système à modifier");
 
-		// Click edit option
+		await editableRow.getByRole("button", { name: /Actions/i }).click();
+
 		const editOption = page.getByRole("menuitem", { name: /Éditer/i });
-		if ((await editOption.count()) === 0) {
-			test.skip(true, "La ligne est un type système (lecture seule)");
-		}
+		await expect(editOption).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 		await editOption.click();
 
 		// Dialog opens in update mode
@@ -227,68 +230,5 @@ test.describe("Admin - Types de bijoux (suppression)", { tag: ["@regression"] },
 
 		// Warning message about active products should be visible
 		await expect(confirmDialog.getByText(/produit(s) actif(s)|Impossible/i)).toBeVisible();
-	});
-});
-
-test.describe("Admin - Types de bijoux (opérations bulk)", { tag: ["@regression"] }, () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto(PRODUCT_TYPES_URL);
-		await page.waitForLoadState("domcontentloaded");
-	});
-
-	test("sélectionner une ligne affiche la toolbar de sélection", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de types de bijoux dans la table");
-
-		// Check first row checkbox
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		// Selection toolbar should appear
-		const selectionToolbar = page.getByText(/sélectionné/i);
-		await expect(selectionToolbar).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-	});
-
-	test("le menu bulk expose les actions activer / désactiver / supprimer", async ({ page }) => {
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun type/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de types de bijoux dans la table");
-
-		// Select first row
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-
-		// Open bulk actions menu
-		const bulkMenuButton = page
-			.getByRole("toolbar")
-			.getByRole("button", { name: /Ouvrir le menu/i })
-			.or(page.getByRole("button", { name: /Ouvrir le menu/i }).last());
-		await expect(bulkMenuButton).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-		await bulkMenuButton.click();
-
-		await expect(page.getByRole("menuitem", { name: /Activer/i })).toBeVisible();
-		await expect(page.getByRole("menuitem", { name: /Désactiver/i })).toBeVisible();
-		await expect(page.getByRole("menuitem", { name: /Supprimer/i })).toBeVisible();
-	});
-
-	test("désélectionner via 'Échapper' ferme la toolbar de sélection", async ({ page }) => {
-		const table = page.locator("table");
-		await expect(table).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
-		test.skip(!(await table.isVisible()), "Pas de types de bijoux dans la table");
-
-		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
-		await firstRowCheckbox.check();
-		await expect(page.getByText(/sélectionné/i)).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
-
-		// Uncheck the row
-		await firstRowCheckbox.uncheck();
-		await expect(page.getByText(/sélectionné/i)).not.toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 	});
 });

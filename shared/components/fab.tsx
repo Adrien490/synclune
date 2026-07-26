@@ -18,6 +18,7 @@ import {
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { mediaAtLeast } from "@/shared/constants/breakpoints";
 import { setFabVisibility } from "@/shared/actions/set-fab-visibility";
 import type { FabProps } from "@/shared/types/fab.types";
 import { toast } from "@/shared/utils/toast";
@@ -144,7 +145,7 @@ export function Fab({
 	const transition = maybeReduceMotion(MOTION_CONFIG.spring.snappy, reducedMotion);
 
 	// Skip Radix Tooltip on mobile to avoid focus-tap flash (150ms delay + blocks scroll)
-	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const isDesktop = useMediaQuery(mediaAtLeast("md"));
 
 	// Haptic feedback (no-op on iOS Safari, respects prefers-reduced-motion)
 	const haptic = useHaptic();

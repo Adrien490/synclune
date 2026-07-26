@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, LoaderCircle, RotateCcw, ShieldCheck, UserMinus, UserX } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 import {
 	ResponsiveAlertDialog,
@@ -10,7 +10,6 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -70,7 +69,6 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 				<ResponsiveAlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<ResponsiveAlertDialogHeroIcon icon={UserX} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Supprimer l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -104,7 +102,6 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 				<ResponsiveAlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<ResponsiveAlertDialogHeroIcon icon={Ban} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Suspendre l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -138,7 +135,6 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 				<ResponsiveAlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<ResponsiveAlertDialogHeroIcon icon={RotateCcw} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Restaurer l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -172,7 +168,6 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="ADMIN" />
-						<ResponsiveAlertDialogHeroIcon icon={ShieldCheck} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Promouvoir en administrateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -207,7 +202,6 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="USER" />
-						<ResponsiveAlertDialogHeroIcon icon={UserMinus} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Rétrograder en utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>

@@ -105,12 +105,26 @@ export default function CheckoutLoading() {
 				style={{ viewTransitionName: "none" }}
 			/>
 
-			<section className="py-4 pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
+			<section className="py-4 pb-[calc(theme(spacing.8)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-					{/* Title — hidden on mobile like the real page */}
-					<div className="mb-6 hidden sm:mb-8 sm:block">
-						<Skeleton className="h-8 w-56 sm:h-9 sm:w-72" />
-						<Skeleton className="mt-2 h-1.5 w-20 rounded-full" />
+					{/*
+					 * Titre rendu sur TOUS les viewports, comme la vraie page.
+					 *
+					 * Le commentaire « hidden on mobile like the real page » était faux :
+					 * `app/paiement/page.tsx` rend son `<h1>Finaliser ma commande</h1>` sans
+					 * aucun gate de breakpoint (`max-sm:text-center`). Le squelette le
+					 * masquait sous `sm`, donc tout le formulaire remontait d'environ 50 px
+					 * au moment du rendu réel.
+					 *
+					 * Hauteurs alignées sur `text-xl` (28 px de line-height) puis
+					 * `sm:text-3xl` (36 px). Le `pb` suit `theme(spacing.8)` de la page : il
+					 * était à `spacing.32`, soit 96 px de padding bas fantôme.
+					 */}
+					<div className="mb-4 sm:mb-6">
+						<Skeleton className="h-7 w-56 max-sm:mx-auto sm:h-9 sm:w-72" />
+						<div className="mt-2 max-sm:flex max-sm:justify-center">
+							<Skeleton className="h-1.5 w-15 rounded-full" />
+						</div>
 					</div>
 
 					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">

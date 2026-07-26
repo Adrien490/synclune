@@ -5,9 +5,17 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockClose, mockAction } = vi.hoisted(() => ({
+const { mockClose, mockAction, mockRouterReplace } = vi.hoisted(() => ({
 	mockClose: vi.fn(),
 	mockAction: vi.fn(),
+	mockRouterReplace: vi.fn(),
+}));
+
+// Le dialog navigue après suppression quand `successPath` est fourni (montage sur la
+// page détail, qui porte l'entité supprimée). Sans ce mock : « invariant expected app
+// router to be mounted ».
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ replace: mockRouterReplace, push: vi.fn() }),
 }));
 
 let mockDialogState = {
@@ -25,12 +33,19 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialogState,
 }));
 
+// On capture `onSuccess` pour pouvoir déclencher le chemin « suppression réussie »
+// depuis le test (c'est là que vit la redirection).
+const capturedOnSuccess: { current: (() => void) | undefined } = { current: undefined };
+
 vi.mock("@/modules/orders/hooks/use-delete-order", () => ({
-	useDeleteOrder: ({ onSuccess }: { onSuccess?: () => void } = {}) => ({
-		action: mockAction,
-		isPending: mockIsPending,
-		onSuccess,
-	}),
+	useDeleteOrder: ({ onSuccess }: { onSuccess?: () => void } = {}) => {
+		capturedOnSuccess.current = onSuccess;
+		return {
+			action: mockAction,
+			isPending: mockIsPending,
+			onSuccess,
+		};
+	},
 }));
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
@@ -172,5 +187,26 @@ describe("DeleteOrderAlertDialog", () => {
 		render(<DeleteOrderAlertDialog />);
 
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+	});
+
+	// ─── Redirection post-suppression ─────────────────────────────────────────
+
+	it("redirects to successPath after a successful delete (page détail)", () => {
+		// Monté sur la page détail, le dialog supprime l'entité que porte la page :
+		// rester dessus laisserait l'admin sur une page morte.
+		render(<DeleteOrderAlertDialog successPath="/admin/ventes/commandes" />);
+
+		capturedOnSuccess.current?.();
+
+		expect(mockRouterReplace).toHaveBeenCalledWith("/admin/ventes/commandes");
+	});
+
+	it("does not redirect when no successPath is given (page liste)", () => {
+		render(<DeleteOrderAlertDialog />);
+
+		capturedOnSuccess.current?.();
+
+		expect(mockRouterReplace).not.toHaveBeenCalled();
+		expect(mockClose).toHaveBeenCalled();
 	});
 });

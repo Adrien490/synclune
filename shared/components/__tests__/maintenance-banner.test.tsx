@@ -134,12 +134,19 @@ describe("MaintenanceBanner", () => {
 
 	// ─── Positioning ──────────────────────────────────────────────────────
 
-	it("is fixed at the bottom of the viewport", () => {
+	it("is fixed at the bottom of the viewport, above any bottom bar", () => {
 		render(<MaintenanceBanner closureMessage={null} reopensAt={null} />);
 
 		const banner = screen.getByRole("region", { name: "Statut de la boutique" });
 		expect(banner.className).toContain("fixed");
-		expect(banner.className).toContain("bottom-0");
+
+		// L'offset est piloté par `--bottom-bar-height` SANS préfixe de
+		// breakpoint : la variable n'est publiée que lorsqu'une barre est
+		// réellement visible (0 sinon), et la bottom-nav boutique va jusqu'à
+		// 64rem. Un `max-md:` figeait le seuil et laissait le bandeau passer
+		// sous la barre en iPad portrait (audit responsive 2026-07-26).
+		expect(banner.className).toContain("bottom-[calc(var(--bottom-bar-height,0px)");
+		expect(banner.className).not.toContain("max-md:bottom-");
 	});
 
 	// ─── Accessibility ────────────────────────────────────────────────────

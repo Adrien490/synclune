@@ -38,9 +38,11 @@ describe("DiscountsDataTableSkeleton", () => {
 		expect(screen.getByTestId("data-table-skeleton")).toBeInTheDocument();
 	});
 
-	it("passes 8 columns to DataTableSkeleton", () => {
+	// 6 = nombre de colonnes de `discounts-data-table.tsx` (le skeleton en
+	// déclarait 8 : une colonne `checkbox` fantôme + une colonne en trop).
+	it("passes 6 columns to DataTableSkeleton (parité avec la table réelle)", () => {
 		render(<DiscountsDataTableSkeleton />);
-		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "8");
+		expect(screen.getByTestId("data-table-skeleton")).toHaveAttribute("data-columns", "6");
 	});
 
 	it("uses cursor pagination type", () => {

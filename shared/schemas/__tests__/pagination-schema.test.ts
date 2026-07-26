@@ -2,17 +2,24 @@ import { describe, it, expect } from "vitest";
 import {
 	cursorSchema,
 	directionSchema,
-	CUID_LENGTH,
+	CURSOR_MIN_LENGTH,
+	CURSOR_MAX_LENGTH,
 	PAGINATION_LIMITS,
 	PAGINATION_DEFAULTS,
 } from "../pagination-schema";
 
-// Valid cursor: exactly 25 characters
-const VALID_CURSOR = "a".repeat(CUID_LENGTH);
+// Valid cursor: un id cuid2 Prisma (24 chars) — la longueur réellement émise
+const VALID_CURSOR = "a".repeat(24);
 
 describe("cursorSchema", () => {
-	it("should accept a string of exactly 25 characters", () => {
+	it("should accept a Prisma cuid2 id (24 characters)", () => {
 		const result = cursorSchema.safeParse(VALID_CURSOR);
+		expect(result.success).toBe(true);
+	});
+
+	it("should accept a Better Auth id (32 characters, mixed case)", () => {
+		// Session / Account / Verification : `generateId()` en "a-z A-Z 0-9", taille 32
+		const result = cursorSchema.safeParse("aB3".repeat(10) + "xy");
 		expect(result.success).toBe(true);
 	});
 
@@ -24,7 +31,7 @@ describe("cursorSchema", () => {
 		}
 	});
 
-	it("should reject a string shorter than 25 characters with Cursor invalide message", () => {
+	it("should reject a string shorter than the minimum with Cursor invalide message", () => {
 		const result = cursorSchema.safeParse("short");
 		expect(result.success).toBe(false);
 		if (!result.success) {
@@ -32,14 +39,26 @@ describe("cursorSchema", () => {
 		}
 	});
 
-	it("should reject a string longer than 25 characters", () => {
-		const result = cursorSchema.safeParse("a".repeat(CUID_LENGTH + 1));
+	it("should reject a string longer than the maximum", () => {
+		const result = cursorSchema.safeParse("a".repeat(CURSOR_MAX_LENGTH + 1));
 		expect(result.success).toBe(false);
 	});
 
 	it("should reject an empty string", () => {
 		const result = cursorSchema.safeParse("");
 		expect(result.success).toBe(false);
+	});
+
+	it("should reject non-alphanumeric payloads (SQL/paths must not reach Prisma)", () => {
+		for (const bad of ["a".repeat(23) + "-", "../".repeat(8) + "etc", "a".repeat(20) + " OR 1"]) {
+			expect(cursorSchema.safeParse(bad).success).toBe(false);
+		}
+	});
+
+	it("accepts the full documented length range", () => {
+		for (const len of [CURSOR_MIN_LENGTH, 24, 25, 32, CURSOR_MAX_LENGTH]) {
+			expect(cursorSchema.safeParse("a".repeat(len)).success).toBe(true);
+		}
 	});
 });
 

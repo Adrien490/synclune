@@ -13,6 +13,9 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 
 import { useUserActions } from "../../hooks/use-user-actions";
+import { useSetAdminPageTitle } from "@/app/admin/_components/admin-page-title-context";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface UserDetailHeaderProps {
 	user: {
@@ -40,6 +43,8 @@ export function UserDetailHeader({ user }: UserDetailHeaderProps) {
 	});
 
 	const displayName = user.name ?? user.email;
+	// Titre lisible pour le header mobile (sinon : id opaque Title-Casé).
+	useSetAdminPageTitle(displayName);
 	const isAdmin = user.role === "ADMIN";
 	const isDeleted = !!user.deletedAt;
 	const isSuspended = !!user.suspendedAt;
@@ -51,7 +56,7 @@ export function UserDetailHeader({ user }: UserDetailHeaderProps) {
 			: "default";
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0">
 				<h1 className="font-display text-foreground flex items-center gap-2 text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
 					<span className="truncate" style={{ viewTransitionName: `user-name-${user.id}` }}>
@@ -78,7 +83,7 @@ export function UserDetailHeader({ user }: UserDetailHeaderProps) {
 				</p>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>
 						<Button
@@ -97,7 +102,7 @@ export function UserDetailHeader({ user }: UserDetailHeaderProps) {
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

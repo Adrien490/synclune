@@ -12,6 +12,8 @@ export default function RefundsAdminError(props: {
 			emoji="↩️"
 			title="Les remboursements n'ont pas pu charger"
 			route="admin.ventes.remboursements"
+			fallbackHref="/admin/ventes"
+			fallbackLabel="Retour aux ventes"
 		/>
 	);
 }

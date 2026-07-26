@@ -23,8 +23,14 @@ export interface UseFilterOptions {
 	 */
 	filterPrefix?: string;
 	/**
-	 * Préserver la page actuelle lors de l'application des filtres
-	 * @default false (remet à la page 1)
+	 * Préserver la position de pagination lors de l'application des filtres.
+	 *
+	 * Par défaut `false` : `cursor` + `direction` sont supprimés, la liste
+	 * repart du début. Les listes du projet sont en pagination curseur —
+	 * conserver un curseur issu d'un autre jeu de résultats rend une tranche
+	 * arbitraire, sans erreur.
+	 *
+	 * @default false
 	 */
-	preservePage?: boolean;
+	preservePagination?: boolean;
 }

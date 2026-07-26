@@ -2,6 +2,8 @@
  * Thumbnail generation, video processing, and migration configuration
  */
 
+import { MAX_UPLOAD_SIZE_VIDEO } from "./upload-size-limits";
+
 // ============================================================================
 // THUMBNAIL CONFIGURATION
 // ============================================================================
@@ -113,8 +115,8 @@ export const VIDEO_MIGRATION_CONFIG = {
 	downloadTimeout: 60_000,
 	/** Timeout for FFmpeg commands (ms) */
 	ffmpegTimeout: 30_000,
-	/** Max video size in bytes (512 MB - aligned with UploadThing) */
-	maxVideoSize: 512 * 1024 * 1024,
+	/** Max video size in bytes — SSOT `upload-size-limits.ts` (aligné UploadThing) */
+	maxVideoSize: MAX_UPLOAD_SIZE_VIDEO,
 	/** Max recommended duration for product videos (seconds) */
 	maxVideoDuration: 120,
 	/** Allowed UploadThing domains for downloading */

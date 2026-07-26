@@ -41,9 +41,8 @@ import {
 	deleteColorSchema,
 	toggleColorStatusSchema,
 	getColorSchema,
-	mergeColorsSchema,
 } from "../color.schemas";
-import { VALID_CUID, VALID_CUID_2 } from "@/test/factories";
+import { VALID_CUID } from "@/test/factories";
 
 describe("hexColorSchema", () => {
 	it("should accept valid 6-digit hex color", () => {
@@ -263,40 +262,6 @@ describe("getColorSchema", () => {
 		const result = getColorSchema.safeParse({ slug: "rouge", includeInactive: true });
 
 		expect(result.success).toBe(true);
-	});
-});
-
-describe("mergeColorsSchema", () => {
-	it("should accept distinct sourceId and targetId", () => {
-		const result = mergeColorsSchema.safeParse({
-			sourceId: VALID_CUID,
-			targetId: VALID_CUID_2,
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	// Garde-fou : si la `.refine` est retirée, `mergeColors` tenterait un
-	// `delete` sur la couleur partagée après un `updateMany` no-op (perte data).
-	it("should reject merge when sourceId === targetId", () => {
-		const result = mergeColorsSchema.safeParse({
-			sourceId: VALID_CUID,
-			targetId: VALID_CUID,
-		});
-
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.path).toEqual(["targetId"]);
-		}
-	});
-
-	it("should reject invalid cuid2 format", () => {
-		const result = mergeColorsSchema.safeParse({
-			sourceId: "not-a-cuid",
-			targetId: VALID_CUID,
-		});
-
-		expect(result.success).toBe(false);
 	});
 });
 

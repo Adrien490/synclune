@@ -1,7 +1,8 @@
 "use client";
 
-import { useOptimistic } from "react";
+import { useEffect, useOptimistic, useRef } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { announce } from "@/shared/utils/announce";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ProductCard } from "@/modules/products/components/product-card";
@@ -57,11 +58,34 @@ export function WishlistListContent({
 	// Adjust totalCount for optimistic removals on the current page
 	const optimisticTotalCount = totalCount - (items.length - optimisticItems.length);
 
+	const isEmpty = optimisticItems.length === 0;
+
+	/*
+	 * Annonce du passage à l'état vide via le canal global (`announce`), PAS via
+	 * une région rendue dans `WishlistEmptyState`.
+	 *
+	 * ⚠️ Une région locale ne peut pas fonctionner ici : elle se monterait en même
+	 * temps que l'état vide, donc au même frame que son texte — les lecteurs
+	 * d'écran n'annoncent pas une région qui n'existait pas avant son contenu.
+	 * `WishlistEmptyState` portait exactement ce défaut, et sa JSDoc en faisait
+	 * pourtant sa raison d'être.
+	 *
+	 * `wasEmptyRef` restreint l'annonce à la **transition** : arriver sur une page
+	 * de favoris déjà vide ne doit rien annoncer (le contenu de la page le dit).
+	 */
+	const wasEmptyRef = useRef(isEmpty);
+	useEffect(() => {
+		if (isEmpty && !wasEmptyRef.current) {
+			announce("Votre liste de favoris est maintenant vide");
+		}
+		wasEmptyRef.current = isEmpty;
+	}, [isEmpty]);
+
 	// Empty state when all items have been optimistically removed
-	if (optimisticItems.length === 0) {
+	if (isEmpty) {
 		return (
 			<WishlistListOptimisticContext.Provider value={contextValue}>
-				<WishlistEmptyState liveAnnouncement="Votre liste de favoris est maintenant vide" />
+				<WishlistEmptyState />
 			</WishlistListOptimisticContext.Provider>
 		);
 	}
@@ -93,7 +117,11 @@ export function WishlistListContent({
 											}
 								}
 							>
-								<SwipeableWishlistItem productId={item.productId!} itemName={item.product?.title}>
+								<SwipeableWishlistItem
+									productId={item.productId!}
+									itemName={item.product?.title}
+									isFirst={index === 0}
+								>
 									<ProductCard
 										product={item.product!}
 										index={index}

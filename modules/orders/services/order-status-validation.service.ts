@@ -84,28 +84,11 @@ export function canCancelOrder(order: OrderForShipValidation): boolean {
 	return true;
 }
 
-/**
- * Vérifie si une commande peut être remboursée
- *
- * @param order - Commande à vérifier
- * @returns true si la commande peut être remboursée
- */
-export function canRefundOrder(order: OrderForShipValidation): boolean {
-	// Doit être payée (ou partiellement remboursée) pour être remboursée
-	if (
-		order.paymentStatus !== PaymentStatus.PAID &&
-		order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED
-	) {
-		return false;
-	}
-
-	// Ne peut pas rembourser si annulée
-	if (order.status === OrderStatus.CANCELLED) {
-		return false;
-	}
-
-	return true;
-}
+// `canRefundOrder()` a été SUPPRIMÉ (audit « Admin commandes » 2026-07-26) : il
+// autorisait une commande PENDING alors que `getOrderPermissions().canRefund` exige
+// PROCESSING|SHIPPED|DELIVERED. Deux définitions divergentes du même concept dans le
+// même fichier, dont une seule était consommée (l'autre n'avait que ses propres tests)
+// = piège de dérive garanti. La SSOT est `getOrderPermissions().canRefund`.
 
 // ============================================================================
 // STATUS TRANSITION VALIDATORS
@@ -190,6 +173,7 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isPaid = order.paymentStatus === PaymentStatus.PAID;
 	const isPartiallyRefunded = order.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 	const isPaidOrPartiallyRefunded = isPaid || isPartiallyRefunded;
+	const isRefunded = order.paymentStatus === PaymentStatus.REFUNDED;
 	const isPaymentPending = order.paymentStatus === PaymentStatus.PENDING;
 	const isPaymentFailed = order.paymentStatus === PaymentStatus.FAILED;
 	const isPaymentExpired = order.paymentStatus === PaymentStatus.EXPIRED;
@@ -198,6 +182,13 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isReturned = order.fulfillmentStatus === FulfillmentStatus.RETURNED;
 
 	return {
+		// Suppression (soft delete) possible seulement sur une commande jamais facturée
+		// et jamais encaissée — miroir EXACT des gardes de `delete-order.ts`.
+		// Cette règle vivait dupliquée dans `use-order-actions.ts` : la rapatrier ici
+		// évite qu'un des deux côtés dérive en silence (le SSOT des permissions, c'est
+		// cette fonction, consommée par les 3 surfaces UI).
+		canDelete: !order.invoiceNumber && !isPaid && !isRefunded,
+
 		// Remboursement possible si payé (ou partiellement remboursé) et pas annulé/retourné
 		canRefund: (isProcessing || isShipped || isDelivered) && isPaidOrPartiallyRefunded,
 
@@ -238,9 +229,9 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	};
 }
 
-/**
- * Vérifie si le suivi peut être mis à jour
- */
-export function canUpdateOrderTracking(order: OrderStateInput): boolean {
-	return getOrderPermissions(order).canUpdateTracking;
-}
+// `canUpdateOrderTracking()` a été SUPPRIMÉ : wrapper d'une ligne sans aucun appelant
+// (ses seules références étaient ses propres tests). Lire
+// `getOrderPermissions(order).canUpdateTracking` directement, comme le font les 3
+// surfaces UI. NB : la garde de la page `/[id]/suivi` n'utilise volontairement PAS
+// cette permission — elle inclut `hasTrackingNumber`, ce qui fermerait l'ajout d'un
+// suivi manquant à une commande expédiée (cf. commentaire de la page).

@@ -7,7 +7,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockPrisma, mockSendBackInStockEmail, mockLogger, mockCaptureWishlistError, mockDelay } =
 	vi.hoisted(() => ({
 		mockPrisma: {
-			wishlistItem: { findMany: vi.fn(), updateMany: vi.fn() },
+			// `count` alimente le budget marketing quotidien (audit coûts P1-3) :
+			// sans lui, `remainingMarketingBudget()` throw et TOUS les envois sont
+			// avalés par le catch externe — la suite passerait au vert sans qu'un
+			// seul email ne parte.
+			wishlistItem: { findMany: vi.fn(), updateMany: vi.fn(), count: vi.fn() },
 		},
 		mockSendBackInStockEmail: vi.fn(),
 		mockLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
@@ -48,6 +52,7 @@ vi.mock("@sentry/nextjs", () => ({
 	),
 }));
 
+import { MARKETING_DAILY_EMAIL_BUDGET } from "@/modules/emails/constants/email-budget";
 import { notifyBackInStock } from "../notify-back-in-stock";
 
 // ============================================================================
@@ -78,6 +83,8 @@ describe("notifyBackInStock", () => {
 		vi.resetAllMocks();
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
 		mockPrisma.wishlistItem.updateMany.mockResolvedValue({ count: 0 });
+		// Aucun envoi marketing encore effectué aujourd'hui => budget complet.
+		mockPrisma.wishlistItem.count.mockResolvedValue(0);
 		mockSendBackInStockEmail.mockResolvedValue({ success: true });
 		mockDelay.mockResolvedValue(undefined);
 	});
@@ -111,7 +118,9 @@ describe("notifyBackInStock", () => {
 		expect(call.where.backInStockNotifiedAt).toBeNull();
 		expect(call.where.wishlist.userId).toEqual({ not: null });
 		expect(call.where.wishlist.user.deletedAt).toBeNull();
-		expect(call.take).toBe(50);
+		// `take` = min(taille de lot, budget marketing restant). Le budget (40)
+		// étant inférieur à la taille de lot (50), c'est lui qui borne la requête.
+		expect(call.take).toBe(MARKETING_DAILY_EMAIL_BUDGET);
 		expect(call.orderBy).toEqual({ id: "asc" });
 	});
 
@@ -208,7 +217,8 @@ describe("notifyBackInStock", () => {
 		mockPrisma.wishlistItem.findMany.mockRejectedValue(new Error("DB connection lost"));
 
 		// Should not throw
-		await expect(notifyBackInStock("prod-1")).resolves.toBeUndefined();
+		// Ne throw jamais et renvoie 0 envoi (le compteur de budget consommé).
+		await expect(notifyBackInStock("prod-1")).resolves.toBe(0);
 	});
 
 	it("does not throw when individual email send throws", async () => {
@@ -216,7 +226,8 @@ describe("notifyBackInStock", () => {
 		mockSendBackInStockEmail.mockRejectedValue(new Error("SMTP down"));
 
 		// Should not throw
-		await expect(notifyBackInStock("prod-1")).resolves.toBeUndefined();
+		// Ne throw jamais et renvoie 0 envoi (le compteur de budget consommé).
+		await expect(notifyBackInStock("prod-1")).resolves.toBe(0);
 	});
 
 	it("continues processing remaining items when one email fails (no retry recovery)", async () => {
@@ -321,50 +332,107 @@ describe("notifyBackInStock", () => {
 		);
 	});
 
-	it("paginates through all users in batches of 50", async () => {
-		// First batch: 50 items (triggers next batch)
-		const batch1 = Array.from({ length: 50 }, (_, i) =>
+	/**
+	 * Le budget marketing quotidien (40) est INFÉRIEUR à la taille de lot (50) :
+	 * c'est donc toujours lui qui borne la requête, et un run ne pagine jamais.
+	 * La continuation se fait entre runs, pas dans un run — `backInStockNotifiedAt`
+	 * exclut les items déjà notifiés, si bien que le drainage du lendemain
+	 * re-interroge la file depuis le début et récupère naturellement le reliquat.
+	 *
+	 * La boucle de pagination reste en place (elle se réactive si le budget est
+	 * relevé au-dessus de la taille de lot) mais ne doit pas être testée par un
+	 * scénario que la configuration réelle rend inatteignable.
+	 */
+	it("ne fait qu'une page par run tant que le budget borne le lot", async () => {
+		const fullPage = Array.from({ length: MARKETING_DAILY_EMAIL_BUDGET }, (_, i) =>
 			makeWishlistItem({
 				id: `wi-${i + 1}`,
 				wishlist: { user: { email: `user${i + 1}@example.com`, name: `User ${i + 1}` } },
 			}),
 		);
-		// Second batch: 10 items (less than 50, stops pagination)
-		const batch2 = Array.from({ length: 10 }, (_, i) =>
-			makeWishlistItem({
-				id: `wi-${i + 51}`,
-				wishlist: { user: { email: `user${i + 51}@example.com`, name: `User ${i + 51}` } },
-			}),
-		);
+		mockPrisma.wishlistItem.findMany.mockResolvedValue(fullPage);
 
-		mockPrisma.wishlistItem.findMany.mockResolvedValueOnce(batch1).mockResolvedValueOnce(batch2);
+		const sent = await notifyBackInStock("prod-1");
 
-		await notifyBackInStock("prod-1");
-
-		// Should have made 2 findMany calls (pagination)
-		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledTimes(2);
-
-		// Second call should use cursor from last item of first batch
-		const secondCall = mockPrisma.wishlistItem.findMany.mock.calls[1]![0];
-		expect(secondCall.cursor).toEqual({ id: "wi-50" });
-		expect(secondCall.skip).toBe(1);
-
-		// All 60 emails should have been sent
-		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(60);
-
-		// Two updateMany calls (one per batch)
-		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledTimes(2);
+		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledTimes(1);
+		expect(sent).toBe(MARKETING_DAILY_EMAIL_BUDGET);
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledTimes(1);
 	});
 
-	it("stops pagination when batch returns fewer than 50 items", async () => {
+	it("stops pagination when a batch comes back incomplete", async () => {
 		const smallBatch = Array.from({ length: 3 }, (_, i) => makeWishlistItem({ id: `wi-${i + 1}` }));
 		mockPrisma.wishlistItem.findMany.mockResolvedValueOnce(smallBatch);
 
 		await notifyBackInStock("prod-1");
 
-		// Only one findMany call (batch < 50 = no more pages)
+		// Un seul findMany : le lot est plus court que le `take` demandé.
 		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledTimes(1);
 		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(3);
+	});
+
+	// ==========================================================================
+	// BUDGET MARKETING QUOTIDIEN — audit coûts P1-3
+	//
+	// Resend Free plafonne à 100 emails/JOUR, partagés avec le transactionnel.
+	// Sans borne, un réassort sur un produit à forte demande consommait le quota
+	// du jour et faisait rejeter en 429 la confirmation de commande d'un client
+	// achetant le même jour — email définitivement perdu (un 429 de quota
+	// journalier ne se résorbe pas dans la fenêtre de retry).
+	// ==========================================================================
+
+	it("ne dépasse jamais le budget marketing du jour", async () => {
+		// Bien plus d'inscrits que le budget ne permet d'en notifier.
+		const crowd = Array.from({ length: MARKETING_DAILY_EMAIL_BUDGET + 25 }, (_, i) =>
+			makeWishlistItem({
+				id: `wi-${i + 1}`,
+				wishlist: { user: { email: `user${i + 1}@example.com`, name: `User ${i + 1}` } },
+			}),
+		);
+		mockPrisma.wishlistItem.findMany.mockImplementation(
+			({ take }: { take: number }) => Promise.resolve(crowd.slice(0, take)) as never,
+		);
+
+		const sent = await notifyBackInStock("prod-1");
+
+		expect(sent).toBe(MARKETING_DAILY_EMAIL_BUDGET);
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(MARKETING_DAILY_EMAIL_BUDGET);
+	});
+
+	it("ne demande jamais plus d'items que le budget restant", async () => {
+		mockPrisma.wishlistItem.count.mockResolvedValue(MARKETING_DAILY_EMAIL_BUDGET - 5);
+		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
+
+		await notifyBackInStock("prod-1");
+
+		expect(mockPrisma.wishlistItem.findMany.mock.calls[0]![0].take).toBe(5);
+	});
+
+	it("n'envoie rien et ne requête pas la file quand le budget est épuisé", async () => {
+		mockPrisma.wishlistItem.count.mockResolvedValue(MARKETING_DAILY_EMAIL_BUDGET);
+
+		const sent = await notifyBackInStock("prod-1");
+
+		expect(sent).toBe(0);
+		expect(mockPrisma.wishlistItem.findMany).not.toHaveBeenCalled();
+		expect(mockSendBackInStockEmail).not.toHaveBeenCalled();
+	});
+
+	it("laisse les inscrits non notifiés en file (pas de flag posé)", async () => {
+		const crowd = Array.from({ length: MARKETING_DAILY_EMAIL_BUDGET + 10 }, (_, i) =>
+			makeWishlistItem({ id: `wi-${i + 1}` }),
+		);
+		mockPrisma.wishlistItem.findMany.mockImplementation(
+			({ take }: { take: number }) => Promise.resolve(crowd.slice(0, take)) as never,
+		);
+
+		await notifyBackInStock("prod-1");
+
+		// Seuls les items réellement envoyés sont flaggés : les autres restent
+		// `backInStockNotifiedAt: null` pour le drainage du lendemain.
+		const flagged = mockPrisma.wishlistItem.updateMany.mock.calls.flatMap(
+			(call) => (call[0] as { where: { id: { in: string[] } } }).where.id.in,
+		);
+		expect(flagged).toHaveLength(MARKETING_DAILY_EMAIL_BUDGET);
 	});
 
 	it("uses email as fallback when user has no name", async () => {

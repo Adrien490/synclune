@@ -8,7 +8,7 @@ import { ReceiptButton } from "./_components/receipt-button";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { getShippingInfo } from "@/modules/orders/services/shipping.service";
-import { COUNTRY_NAMES, type ShippingCountry } from "@/shared/constants/countries";
+import { formatCountryName, type ShippingCountry } from "@/shared/constants/countries";
 import { BRAND } from "@/shared/constants/brand";
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { ROUTES } from "@/shared/constants/urls";
@@ -277,7 +277,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<p>
 										{order.shippingPostalCode} {order.shippingCity}
 									</p>
-									<p>{COUNTRY_NAMES[(order.shippingCountry as ShippingCountry | null) ?? "FR"]}</p>
+									<p>{formatCountryName(order.shippingCountry)}</p>
 								</div>
 							</section>
 

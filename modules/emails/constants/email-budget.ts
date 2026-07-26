@@ -29,7 +29,7 @@ export const RESEND_DAILY_EMAIL_LIMIT = 100;
  * Le reliquat marketing est reporté au lendemain par la passe de drainage —
  * rien n'est perdu, seulement étalé.
  *
- * ⚠️ Si un second émetteur marketing est réactivé (`review-request`, dormant),
- * il DOIT partager ce budget et non en ouvrir un second.
+ * ⚠️ Le retour-en-stock est aujourd'hui le SEUL émetteur marketing. Tout nouvel
+ * émetteur DOIT partager ce budget et non en ouvrir un second.
  */
 export const MARKETING_DAILY_EMAIL_BUDGET = 40;

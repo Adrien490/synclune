@@ -85,6 +85,19 @@ vi.mock("@/shared/components/ui/button", () => ({
 	},
 }));
 
+/**
+ * `SearchCorrectionSuggestion` (client) lit `useSearchParams()` pour conserver
+ * les filtres actifs — sans ce mock, il n'y a pas de router en jsdom.
+ * `mockSearchParams` est réassignable pour tester la préservation des filtres.
+ */
+const { mockSearchParams } = vi.hoisted(() => ({
+	mockSearchParams: { current: new URLSearchParams() },
+}));
+
+vi.mock("next/navigation", () => ({
+	useSearchParams: () => mockSearchParams.current,
+}));
+
 vi.mock("@/shared/components/ui/empty", () => ({
 	Empty: ({ children }: { children: React.ReactNode }) => <div data-testid="empty">{children}</div>,
 	EmptyHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -98,6 +111,15 @@ vi.mock("@/shared/components/ui/empty", () => ({
 	),
 	EmptyDescription: ({ children }: { children: React.ReactNode }) => (
 		<p data-testid="empty-description">{children}</p>
+	),
+	EmptyActions: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="empty-actions">{children}</div>
+	),
+}));
+
+vi.mock("@/modules/products/components/reset-search-filters-action", () => ({
+	ResetSearchFiltersAction: () => (
+		<button data-testid="reset-search-filters">Réinitialiser les filtres</button>
 	),
 }));
 
@@ -255,7 +277,36 @@ describe("SearchFallbackSuggestions", () => {
 			);
 
 			const link = screen.getByRole("link", { name: "collier argent" });
-			expect(link).toHaveAttribute("href", "/produits?search=collier%20argent");
+			expect(link).toHaveAttribute("href", "/produits?search=collier+argent");
+		});
+
+		/**
+		 * @regression suggestion-preserves-filters
+		 *
+		 * Le `SuggestionLink` local reconstruisait `/produits?search=…` de zéro :
+		 * un client ayant filtré par couleur puis accepté la correction perdait
+		 * silencieusement son filtre. Le composant partagé clone les `searchParams`
+		 * courants et ne réinitialise que la pagination.
+		 */
+		it("conserve les filtres actifs et réinitialise la pagination", async () => {
+			mockSearchParams.current = new URLSearchParams(
+				"filter_color=or&sortBy=price-ascending&cursor=abc&direction=forward",
+			);
+			mockGetProducts.mockResolvedValue(makeProductsReturn());
+			mockGetProductTypes.mockResolvedValue(makeProductTypesReturn());
+
+			render(await SearchFallbackSuggestions({ searchTerm: "bageu", suggestion: "bague" }));
+
+			const href = screen.getByRole("link", { name: "bague" }).getAttribute("href") ?? "";
+			const params = new URLSearchParams(href.split("?")[1]);
+
+			expect(params.get("filter_color")).toBe("or");
+			expect(params.get("sortBy")).toBe("price-ascending");
+			expect(params.get("search")).toBe("bague");
+			expect(params.get("cursor")).toBeNull();
+			expect(params.get("direction")).toBeNull();
+
+			mockSearchParams.current = new URLSearchParams();
 		});
 	});
 

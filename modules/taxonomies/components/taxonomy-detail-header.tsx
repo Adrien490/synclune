@@ -18,6 +18,8 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 
 import { agree } from "../config/taxonomy.config";
 import type { TaxonomyConfig } from "../types/taxonomy.types";
+import { DetailStickyActionBar } from "@/shared/components/admin/detail-sticky-action-bar";
+import { DetailHeaderShell } from "@/shared/components/admin/detail-header-shell";
 
 interface TaxonomyDetailHeaderProps {
 	config: TaxonomyConfig;
@@ -65,7 +67,7 @@ export function TaxonomyDetailHeader({
 	const updated = agree(config, "mis") + " à jour";
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+		<DetailHeaderShell>
 			<div className="min-w-0">
 				<div className="flex flex-wrap items-center gap-3">
 					{visual}
@@ -96,7 +98,7 @@ export function TaxonomyDetailHeader({
 				</p>
 			</div>
 
-			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+			<DetailStickyActionBar>
 				<Button
 					asChild
 					size="sm"
@@ -136,7 +138,7 @@ export function TaxonomyDetailHeader({
 						sections={sections}
 					/>
 				</ResponsiveActionMenu>
-			</div>
-		</div>
+			</DetailStickyActionBar>
+		</DetailHeaderShell>
 	);
 }

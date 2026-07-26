@@ -43,7 +43,6 @@ describeIntegration(
 					orderNumber: `SYN-CUST-${Date.now()}`,
 					customerEmail: user.email,
 					customerName: "Marie Dupont", // Snapshot figé
-					customerType: "B2C",
 					shippingFirstName: "Marie",
 					shippingLastName: "Dupont",
 					shippingAddress1: "12 rue de la Paix",
@@ -118,7 +117,6 @@ describeIntegration(
 					orderNumber: `SYN-ADDR-${Date.now()}`,
 					customerEmail: user.email,
 					customerName: "Test Addr",
-					customerType: "B2C",
 					shippingFirstName: "Address",
 					shippingLastName: "Test",
 					shippingAddress1: "10 rue de la Paix",
@@ -185,7 +183,6 @@ describeIntegration(
 					orderNumber: `SYN-DEL-USR-${Date.now()}`,
 					customerEmail: user.email,
 					customerName: "À supprimer",
-					customerType: "B2C",
 					shippingFirstName: "Ship",
 					shippingLastName: "Side",
 					shippingAddress1: "1 rue ship",

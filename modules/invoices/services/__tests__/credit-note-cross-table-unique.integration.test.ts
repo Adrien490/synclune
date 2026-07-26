@@ -53,7 +53,6 @@ async function createPaidOrder(
 			orderNumber: `SYN-XTBL-${suffix}`,
 			customerEmail: "crosstable@test.local",
 			customerName: "Test CrossTable",
-			customerType: "B2C",
 			shippingFirstName: "Test",
 			shippingLastName: "CrossTable",
 			shippingAddress1: "1 rue test",

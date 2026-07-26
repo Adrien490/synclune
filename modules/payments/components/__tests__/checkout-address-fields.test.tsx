@@ -45,19 +45,9 @@ vi.mock("@/modules/payments/components/address-selector", () => ({
 	),
 }));
 
-vi.mock("@/modules/payments/components/checkout-error-summary", () => ({
-	CheckoutErrorSummary: ({
-		fieldErrors,
-	}: {
-		fieldErrors: { name: string; label: string; message: string }[];
-	}) => (
-		<div data-testid="checkout-error-summary" data-count={fieldErrors.length}>
-			{fieldErrors.map((e) => (
-				<span key={e.name}>{e.message}</span>
-			))}
-		</div>
-	),
-}));
+// NB : plus de mock de `CheckoutErrorSummary` ici — le résumé d'erreurs a été
+// remonté en tête de <form> (`CheckoutFormBody`). Sa projection fieldMeta →
+// entrées est couverte par `constants/__tests__/checkout-fields.test.ts`.
 
 vi.mock("@/shared/constants/countries", () => ({
 	SORTED_SHIPPING_COUNTRIES: ["FR", "BE", "DE"],
@@ -165,6 +155,13 @@ function createMockForm(
 						required={props.required as boolean}
 						type={(props.type as string) || "text"}
 						autoComplete={(props.autoComplete as string) || undefined}
+						// Relayés pour les assertions d'ergonomie clavier mobile.
+						inputMode={props.inputMode as React.HTMLAttributes<HTMLInputElement>["inputMode"]}
+						enterKeyHint={
+							props.enterKeyHint as React.HTMLAttributes<HTMLInputElement>["enterKeyHint"]
+						}
+						autoCapitalize={props.autoCapitalize as string}
+						maxLength={props.maxLength as number}
 					/>
 				),
 				SelectField: (props: Record<string, unknown>) => (
@@ -172,6 +169,7 @@ function createMockForm(
 						data-testid={`select-${name}`}
 						aria-label={(props.label as string) || name}
 						required={props.required as boolean}
+						autoComplete={props.autoComplete as string}
 					>
 						{(props.options as { value: string; label: string }[]).map((opt) => (
 							<option key={opt.value} value={opt.value}>
@@ -186,6 +184,9 @@ function createMockForm(
 						aria-label={(props.label as string) || name}
 						type="tel"
 						required={props.required as boolean}
+						enterKeyHint={
+							props.enterKeyHint as React.HTMLAttributes<HTMLInputElement>["enterKeyHint"]
+						}
 					/>
 				),
 				CheckboxField: (props: Record<string, unknown>) => (
@@ -200,6 +201,11 @@ function createMockForm(
 						data-testid={`autocomplete-${name}`}
 						aria-label={(props.label as string) || name}
 						type="text"
+						inputMode={props.inputMode as React.HTMLAttributes<HTMLInputElement>["inputMode"]}
+						enterKeyHint={
+							props.enterKeyHint as React.HTMLAttributes<HTMLInputElement>["enterKeyHint"]
+						}
+						autoCapitalize={props.autoCapitalize as string}
 					/>
 				),
 				state: { value: "", meta: { errors: [], isValidating: false } },
@@ -333,104 +339,6 @@ describe("CheckoutAddressFields", () => {
 		});
 	});
 
-	// ─── Error summary ────────────────────────────────────────────────────────
-
-	describe("error summary", () => {
-		it("does not show error summary when submissionAttempts is 0", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({ submissionAttempts: 0 })}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			expect(screen.queryByTestId("checkout-error-summary")).not.toBeInTheDocument();
-		});
-
-		it("does not show error summary when form can submit (no errors)", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({ submissionAttempts: 1, canSubmit: true })}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			expect(screen.queryByTestId("checkout-error-summary")).not.toBeInTheDocument();
-		});
-
-		it("shows error summary after submission attempt when form cannot submit", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({
-						submissionAttempts: 1,
-						canSubmit: false,
-						fieldMeta: {
-							email: { errors: ["L'email est requis"] },
-						},
-					})}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			expect(screen.getByTestId("checkout-error-summary")).toBeInTheDocument();
-		});
-
-		it("passes field errors with labels to CheckoutErrorSummary", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({
-						submissionAttempts: 1,
-						canSubmit: false,
-						fieldMeta: {
-							email: { errors: ["Champ requis"] },
-						},
-					})}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			expect(screen.getByText("Champ requis")).toBeInTheDocument();
-		});
-
-		it("maps known field names to French labels in the error summary", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({
-						submissionAttempts: 1,
-						canSubmit: false,
-						fieldMeta: {
-							"shipping.fullName": { errors: ["Requis"] },
-						},
-					})}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			// Error message is rendered by mock
-			expect(screen.getByText("Requis")).toBeInTheDocument();
-		});
-
-		it("ignores fields with no errors in the error summary", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm({
-						submissionAttempts: 1,
-						canSubmit: false,
-						fieldMeta: {
-							"shipping.fullName": { errors: [] },
-							email: { errors: ["Requis"] },
-						},
-					})}
-					session={null}
-					addresses={null}
-				/>,
-			);
-			const summary = screen.getByTestId("checkout-error-summary");
-			// Only 1 field has errors
-			expect(summary.getAttribute("data-count")).toBe("1");
-		});
-	});
-
 	// ─── Address selector (logged-in, multiple addresses) ─────────────────────
 
 	describe("address selector", () => {
@@ -537,6 +445,69 @@ describe("CheckoutAddressFields", () => {
 		it("marks phone number as required", () => {
 			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
 			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute("required");
+		});
+	});
+	// ─── Ergonomie clavier mobile ─────────────────────────────────────────────
+
+	describe("ergonomie clavier mobile", () => {
+		function renderGuest() {
+			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+		}
+
+		it("le pays déclare autoComplete='country' (code ISO), pas 'country-name'", () => {
+			// Les options ont pour `value` un code ISO ("FR"). Avec `country-name`,
+			// l'autofill d'adresse OS tente d'injecter « France » et échoue en silence.
+			renderGuest();
+			expect(screen.getByTestId("select-shipping.country")).toHaveAttribute(
+				"autocomplete",
+				"country",
+			);
+		});
+
+		it("le code postal sert un clavier numérique et borne la saisie", () => {
+			renderGuest();
+			const postalCode = screen.getByTestId("input-shipping.postalCode");
+			expect(postalCode).toHaveAttribute("inputmode", "numeric");
+			expect(postalCode).toHaveAttribute("autocomplete", "postal-code");
+			// Borne alignée sur le validateur (10) — sinon le champ accepte une
+			// saisie que la validation rejettera.
+			expect(postalCode).toHaveAttribute("maxlength", "10");
+		});
+
+		it("la ville met une majuscule automatique (aligné sur le formulaire adresse)", () => {
+			renderGuest();
+			expect(screen.getByTestId("input-shipping.city")).toHaveAttribute("autocapitalize", "words");
+		});
+
+		it("le champ adresse force le clavier texte plutôt que le défaut « recherche »", () => {
+			renderGuest();
+			const address = screen.getByTestId("autocomplete-shipping.addressLine1");
+			expect(address).toHaveAttribute("inputmode", "text");
+			expect(address).toHaveAttribute("enterkeyhint", "next");
+			expect(address).toHaveAttribute("autocapitalize", "words");
+		});
+
+		it("le téléphone porte enterKeyHint='done' — invité comme connecté", () => {
+			// Dernier champ texte dans les deux cas : la case « enregistrer mes
+			// informations » qui suit (connecté) n'est pas une saisie clavier.
+			renderGuest();
+			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute(
+				"enterkeyhint",
+				"done",
+			);
+			cleanup();
+
+			render(
+				<CheckoutAddressFields
+					form={createMockForm()}
+					session={createSession()}
+					addresses={null}
+				/>,
+			);
+			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute(
+				"enterkeyhint",
+				"done",
+			);
 		});
 	});
 });

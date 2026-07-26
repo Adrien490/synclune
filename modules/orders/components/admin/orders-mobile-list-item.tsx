@@ -7,7 +7,10 @@ import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
-import { LinkPendingOverlay } from "@/shared/components/long-press-menu-link";
+import {
+	DefaultLongPressAffordance,
+	LinkPendingOverlay,
+} from "@/shared/components/long-press-menu-link";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -98,10 +101,9 @@ function OrderCardContent({ order }: { order: Order }) {
 /**
  * Mobile item pour la liste des commandes.
  *
- * - **Mode OFF** :
- *   - Tap : navigation vers la page détail.
- *   - Long-press 500ms : ouvre le menu d'actions (parité row-actions desktop).
- *   - Swipe droit (→) : ouvre les notes internes (safe action).
+ * - Tap : navigation vers la page détail.
+ * - Long-press 500ms : ouvre le menu d'actions (parité row-actions desktop).
+ * - Swipe droit (→) : ouvre les notes internes (safe action).
  *
  * `isFirst` active le « peek nudge » de découvrabilité (cf. `useGestureHintOnce`) :
  * seul le premier item de la première page joue la démo de swipe, une fois par appareil.
@@ -155,11 +157,17 @@ export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst
 					{...bind}
 					style={{ ...bind.style, viewTransitionName: `order-card-${order.id}` }}
 					className={cn(
-						"focus-ring relative block w-full rounded-lg",
+						"focus-ring relative block w-full rounded-lg pr-5",
 						"transform-gpu motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.985]",
 					)}
 				>
 					<OrderCardContent order={order} />
+					{/* Même indice que les 10 autres listes admin : cette carte réimplémente
+					    le pattern à la main (le `<Link>` doit vivre DANS `SwipeableCard`),
+					    elle ne bénéficie donc pas du défaut de `LongPressMenuLink`. Sans
+					    lui, le menu d'actions — seul chemin non gestuel vers les notes
+					    depuis la liste — n'était annoncé par rien à l'écran. */}
+					<DefaultLongPressAffordance />
 					<LinkPendingOverlay />
 				</Link>
 			</SwipeableCard>

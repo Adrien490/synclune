@@ -85,17 +85,11 @@ export function CreateProductVariantForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(
-				message || "Variante créée avec succès",
-				isMobile
-					? undefined
-					: {
-							action: {
-								label: "Voir les variantes",
-								onClick: () => navigateWithTransition(router, variantsListPath),
-							},
-						},
-			);
+			// Pas d'action : la ligne suivante navigue déjà vers `variantsListPath`,
+			// exactement la destination que proposait « Voir les variantes ». Un bouton
+			// qui rejoue la navigation qu'on vient d'effectuer est de la
+			// sur-notification.
+			toast.success(message || "Variante créée avec succès");
 			navigateWithTransition(router, variantsListPath);
 		},
 	});

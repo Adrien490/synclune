@@ -11,7 +11,9 @@ export function ProductListSkeleton() {
 			</div>
 
 			{/* Grille des produits */}
-			<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5">
+			{/* Doit rester strictement aligné sur `product-list.tsx` — 4 colonnes max,
+			 * pas de palier `2xl:` (conteneur capé à max-w-6xl). */}
+			<div className="grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div
 						key={i}

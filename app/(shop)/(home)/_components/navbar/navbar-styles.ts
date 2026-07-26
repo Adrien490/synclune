@@ -10,8 +10,14 @@ export const iconButtonClassName = cn(
 );
 
 /**
- * Approximate Vaul exit-slide animation duration. Used as a safety fallback
- * when deferring follow-up overlays (logout dialog) or focus management until
- * after the sheet has finished closing. Source: Vaul defaults (~300ms) + margin.
+ * Approximate Vaul slide animation duration — identique à l'entrée et à la
+ * sortie. Sert de filet de sécurité quand on diffère un overlay de suite
+ * (dialogue de déconnexion) ou la gestion du focus jusqu'à la fin d'une
+ * transition du sheet. Source: Vaul defaults (~300ms) + marge.
+ *
+ * Nom volontairement neutre : la constante est utilisée pour l'ENTRÉE
+ * (`menu-sheet-nav`, focus après ouverture) autant que pour la SORTIE
+ * (`menu-sheet`, dialogue de déconnexion différé). L'ancien nom
+ * `VAUL_EXIT_DURATION_MS` laissait croire à un bug sur le call site d'entrée.
  */
-export const VAUL_EXIT_DURATION_MS = 450;
+export const VAUL_TRANSITION_DURATION_MS = 450;

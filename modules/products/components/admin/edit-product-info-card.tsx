@@ -17,13 +17,29 @@ interface EditProductInfoCardProps {
 	form: EditProductFormInstance;
 	productTypes: EditProductFormProps["productTypes"];
 	collections: EditProductFormProps["collections"];
+	/** Type actuel du bijou — peut avoir ete desactive depuis (cf. `typeOptions`). */
+	currentType?: { id: string; label: string } | null;
 }
 
-export function EditProductInfoCard({ form, productTypes, collections }: EditProductInfoCardProps) {
+export function EditProductInfoCard({
+	form,
+	productTypes,
+	collections,
+	currentType,
+}: EditProductInfoCardProps) {
 	const router = useRouter();
 	const haptic = useHaptic();
 	const typeDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const collectionDialog = useDialog(COLLECTION_DIALOG_ID);
+
+	// `getProductTypeOptions` ne renvoie que les types actifs : un bijou dont le type
+	// a ete desactive depuis affichait donc un select VIDE, alors que le formulaire
+	// resoumettait bien cet id (que l'admin ne pouvait ni voir ni changer). On
+	// reinjecte le type courant, signale comme desactive.
+	const typeOptions = productTypes.map((t) => ({ value: t.id, label: t.label }));
+	if (currentType && !productTypes.some((t) => t.id === currentType.id)) {
+		typeOptions.unshift({ value: currentType.id, label: `${currentType.label} (désactivé)` });
+	}
 
 	return (
 		<Card
@@ -99,10 +115,7 @@ export function EditProductInfoCard({ form, productTypes, collections }: EditPro
 								<div className="flex-1">
 									<field.SelectField
 										label=""
-										options={productTypes.map((t) => ({
-											value: t.id,
-											label: t.label,
-										}))}
+										options={typeOptions}
 										placeholder="Sélectionner un type"
 										clearable
 									/>

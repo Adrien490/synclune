@@ -8,12 +8,11 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
-	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
-import { LoaderCircle, PackageCheck } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
 
@@ -44,7 +43,6 @@ export function MarkAsDeliveredAlertDialog() {
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 
-					<ResponsiveAlertDialogHeroIcon icon={PackageCheck} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer la livraison</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

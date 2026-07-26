@@ -20,6 +20,29 @@ body {
 	padding-right: env(safe-area-inset-right, 0);
 }
 
+/* Réaffirme la safe area pendant qu'un overlay verrouille le scroll.
+ *
+ * `react-remove-scroll` (sous Radix, donc sous les 4 familles d'overlay — Vaul
+ * inclus, puisqu'il rend un `DialogPrimitive.Content`) injecte une feuille de
+ * style qui remet à zéro les paddings du body pour reporter ses marges :
+ *
+ *   body[data-scroll-locked] { padding-top: 0; padding-left: 0; padding-right: 0;
+ *                              margin-right: <largeur scrollbar> !important; }
+ *
+ * Sélecteur plus spécifique que le nôtre → à chaque ouverture d'overlay, le
+ * contenu derrière le scrim (translucide, `backdrop-blur`) sautait de la hauteur
+ * de l'encoche puis revenait à la fermeture. `viewportFit: "cover"` est actif
+ * (`shared/constants/root-metadata.ts`), donc `env()` est non nul sur iPhone.
+ *
+ * On ne touche PAS à `margin-right` : c'est la compensation de gouttière qui
+ * évite le décalage de largeur, et elle doit rester à react-remove-scroll. */
+body[data-scroll-locked] {
+	padding-top: env(safe-area-inset-top, 0) !important;
+	padding-bottom: env(safe-area-inset-bottom, 0) !important;
+	padding-left: env(safe-area-inset-left, 0) !important;
+	padding-right: env(safe-area-inset-right, 0) !important;
+}
+
 /* Optimisation touch pour éléments interactifs */
 a,
 button,

@@ -5,12 +5,20 @@ import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { TrackingInfo } from "./_components/tracking-info";
+import { formatCountryName } from "@/shared/constants/countries";
 
 interface ShippingConfirmationEmailProps {
 	orderNumber: string;
 	customerName: string;
 	trackingNumber: string;
 	trackingUrl: string | null;
+	/**
+	 * Repli quand le transporteur n'expose pas d'URL de suivi (`autre`) : lien
+	 * vers la commande, via `buildOrderTrackingUrl`. Sans lui, l'email était un
+	 * cul-de-sac — aucun CTA du tout, alors que le client vient d'apprendre que
+	 * son colis est parti.
+	 */
+	orderTrackingUrl?: string | null;
 	carrierLabel: string;
 	estimatedDelivery?: string | null;
 	shippingAddress: {
@@ -29,6 +37,7 @@ export const ShippingConfirmationEmail = ({
 	customerName,
 	trackingNumber,
 	trackingUrl,
+	orderTrackingUrl,
 	carrierLabel,
 	estimatedDelivery,
 	shippingAddress,
@@ -72,12 +81,19 @@ export const ShippingConfirmationEmail = ({
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
 					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
-						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
+						{shippingAddress.postalCode} {shippingAddress.city},{" "}
+						{formatCountryName(shippingAddress.country)}
 					</Text>
 				</EmailCard>
 			</Section>
 
-			{trackingUrl && <EmailCTA href={trackingUrl}>Suivre mon colis</EmailCTA>}
+			{/* Libellé honnête : sans URL transporteur, le lien mène à la commande,
+			    pas au suivi du colis. */}
+			{trackingUrl ? (
+				<EmailCTA href={trackingUrl}>Suivre mon colis</EmailCTA>
+			) : (
+				orderTrackingUrl && <EmailCTA href={orderTrackingUrl}>Voir ma commande</EmailCTA>
+			)}
 		</EmailLayout>
 	);
 };
@@ -96,7 +112,7 @@ ShippingConfirmationEmail.PreviewProps = {
 		address2: "Appartement 4B",
 		postalCode: "75002",
 		city: "Paris",
-		country: "France",
+		country: "FR",
 	},
 } as ShippingConfirmationEmailProps;
 

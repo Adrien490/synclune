@@ -12,6 +12,8 @@ export default function ReviewsAdminError(props: {
 			emoji="⭐"
 			title="Les avis n'ont pas pu charger"
 			route="admin.marketing.avis"
+			fallbackHref="/admin/marketing"
+			fallbackLabel="Retour au marketing"
 		/>
 	);
 }

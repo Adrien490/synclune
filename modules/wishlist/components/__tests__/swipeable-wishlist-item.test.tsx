@@ -1,27 +1,42 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction, mockSwipeOffset, mockIsSwiping, mockOnItemRemoved } = vi.hoisted(() => ({
+const { mockAction, mockOnItemRemoved, mockShowUndoToast, capturedSwipeProps } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
-	mockSwipeOffset: { value: 0 },
-	mockIsSwiping: { value: false },
 	mockOnItemRemoved: vi.fn(),
+	mockShowUndoToast: vi.fn(),
+	capturedSwipeProps: { current: null as Record<string, unknown> | null },
 }));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/modules/wishlist/hooks/use-swipe-to-remove", () => ({
-	useSwipeToRemove: vi.fn(() => ({
-		swipeOffset: mockSwipeOffset.value,
-		isSwiping: mockIsSwiping.value,
-	})),
-	SWIPE_REMOVE_THRESHOLD: 80,
+/**
+ * `SwipeableCard` est la primitive partagée : son comportement de geste
+ * (rubber-band, seuil adaptatif, touchcancel, aria-live) a sa propre suite de
+ * tests. Ici on ne vérifie que le CONTRAT du wrapper — ce qu'il lui passe.
+ */
+vi.mock("@/shared/components/swipeable-card", () => ({
+	SwipeableCard: (props: Record<string, unknown>) => {
+		capturedSwipeProps.current = props;
+		const left = props.leftAction as { children: React.ReactNode; label: string } | undefined;
+		return (
+			<div data-testid="swipeable-card">
+				<span data-testid="left-action-label">{left?.label}</span>
+				{left?.children}
+				{props.children as React.ReactNode}
+			</div>
+		);
+	},
+}));
+
+vi.mock("@/shared/hooks/use-gesture-hint-once", () => ({
+	useGestureHintOnce: vi.fn((_key: string, opts?: { enabled?: boolean }) => opts?.enabled === true),
 }));
 
 vi.mock("@/modules/wishlist/hooks/use-remove-from-wishlist", () => ({
@@ -38,21 +53,8 @@ vi.mock("@/modules/wishlist/contexts/wishlist-list-optimistic-context", () => ({
 	})),
 }));
 
-vi.mock("@/shared/utils/toast", () => ({
-	toast: { success: vi.fn(), error: vi.fn() },
-}));
-
-vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
-}));
-
-vi.mock("@/modules/wishlist/actions/add-to-wishlist", () => ({
-	addToWishlist: vi.fn(),
-}));
-
-vi.mock("@/shared/stores/badge-counts-store", () => ({
-	useBadgeCountsStore: (sel: (s: { incrementWishlist: () => void }) => unknown) =>
-		sel({ incrementWishlist: vi.fn() }),
+vi.mock("@/modules/wishlist/utils/show-wishlist-undo-toast", () => ({
+	showWishlistUndoToast: mockShowUndoToast,
 }));
 
 vi.mock("lucide-react", () => ({
@@ -67,133 +69,101 @@ import { SwipeableWishlistItem } from "../swipeable-wishlist-item";
 // TESTS
 // ============================================================================
 
-describe("SwipeableWishlistItem", () => {
-	afterEach(() => {
-		cleanup();
-		mockSwipeOffset.value = 0;
-		mockIsSwiping.value = false;
-	});
+function fireSwipeRemoval() {
+	const leftAction = capturedSwipeProps.current?.leftAction as { onAction: () => void };
+	leftAction.onAction();
+}
 
-	it("renders children", () => {
+describe("SwipeableWishlistItem", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		capturedSwipeProps.current = null;
+	});
+	afterEach(cleanup);
+
+	it("renders children inside the shared swipe primitive", () => {
 		render(
 			<SwipeableWishlistItem productId="prod-1">
 				<div data-testid="child">Product Card</div>
 			</SwipeableWishlistItem>,
 		);
 
+		expect(screen.getByTestId("swipeable-card")).toBeInTheDocument();
 		expect(screen.getByTestId("child")).toBeInTheDocument();
 	});
 
-	it("renders delete zone behind content", () => {
+	/**
+	 * @regression wishlist-swipe-uses-shared-primitive
+	 * Le swipe favoris était une SECONDE implémentation, doublant `SwipeableCard`
+	 * sans son `touchcancel` (geste volé par l'OS → carte figée en cours de swipe),
+	 * sans seuil adaptatif, sans annonce `aria-live` ni opt-out `data-no-swipe`.
+	 */
+	it("delegates the gesture to SwipeableCard with a destructive left action", () => {
 		render(
-			<SwipeableWishlistItem productId="prod-1">
+			<SwipeableWishlistItem productId="prod-1" itemName="Collier Lune">
 				<div>Content</div>
 			</SwipeableWishlistItem>,
 		);
 
 		expect(screen.getByTestId("trash-icon")).toBeInTheDocument();
+		// Le label alimente l'annonce `aria-live` de la primitive.
+		expect(screen.getByTestId("left-action-label")).toHaveTextContent(
+			"Collier Lune retiré des favoris",
+		);
 	});
 
-	it("hides delete zone with opacity 0 when not swiping", () => {
+	it("applies the optimistic removal when the swipe threshold fires", () => {
 		render(
-			<SwipeableWishlistItem productId="prod-1">
+			<SwipeableWishlistItem productId="prod-1" itemName="Collier Lune">
 				<div>Content</div>
 			</SwipeableWishlistItem>,
 		);
 
-		const deleteZone = screen.getByTestId("trash-icon").parentElement!;
-		expect(deleteZone).toHaveAttribute("aria-hidden", "true");
-		expect(deleteZone).toHaveStyle({ opacity: "0" });
+		fireSwipeRemoval();
+
+		expect(mockAction).toHaveBeenCalledTimes(1);
+		const formData = mockAction.mock.calls[0]![0] as FormData;
+		expect(formData.get("productId")).toBe("prod-1");
 	});
 
-	it("shows delete zone proportional to swipe progress", () => {
-		mockSwipeOffset.value = -40; // Half of threshold (80)
-
+	/**
+	 * @regression wishlist-swipe-destructive-without-undo
+	 * Le swipe supprimait définitivement, sans confirmation NI undo — alors que
+	 * `showWishlistUndoToast` existait déjà dans le module et servait au cœur de la
+	 * fiche produit. La carte disparaissant de la grille, il ne restait rien à
+	 * re-taper pour revenir en arrière.
+	 */
+	it("offers an undo — including on mobile, where the card is gone from the grid", () => {
 		render(
-			<SwipeableWishlistItem productId="prod-1">
+			<SwipeableWishlistItem productId="prod-1" itemName="Collier Lune">
 				<div>Content</div>
 			</SwipeableWishlistItem>,
 		);
 
-		const deleteZone = screen.getByTestId("trash-icon").parentElement!;
-		expect(deleteZone).toHaveStyle({ opacity: "0.5" });
+		fireSwipeRemoval();
+
+		expect(mockShowUndoToast).toHaveBeenCalledWith(
+			expect.objectContaining({
+				productId: "prod-1",
+				productTitle: "Collier Lune",
+				allowUndoOnMobile: true,
+			}),
+		);
 	});
 
-	it("caps delete zone opacity at 1", () => {
-		mockSwipeOffset.value = -160; // Double the threshold
-
-		render(
-			<SwipeableWishlistItem productId="prod-1">
+	it("plays the discoverability peek on the first card only", () => {
+		const { rerender } = render(
+			<SwipeableWishlistItem productId="prod-1" isFirst>
 				<div>Content</div>
 			</SwipeableWishlistItem>,
 		);
+		expect(capturedSwipeProps.current?.peek).toBe(true);
 
-		const deleteZone = screen.getByTestId("trash-icon").parentElement!;
-		expect(deleteZone).toHaveStyle({ opacity: "1" });
-	});
-
-	it("applies transform to sliding content based on swipe offset", () => {
-		mockSwipeOffset.value = -50;
-
-		render(
-			<SwipeableWishlistItem productId="prod-1">
-				<div data-testid="child">Content</div>
-			</SwipeableWishlistItem>,
-		);
-
-		const slidingContainer = screen.getByTestId("child").parentElement!;
-		expect(slidingContainer).toHaveStyle({ transform: "translateX(-50px)" });
-	});
-
-	it("disables transition when actively swiping", () => {
-		mockSwipeOffset.value = -30;
-		mockIsSwiping.value = true;
-
-		render(
-			<SwipeableWishlistItem productId="prod-1">
-				<div data-testid="child">Content</div>
-			</SwipeableWishlistItem>,
-		);
-
-		const slidingContainer = screen.getByTestId("child").parentElement!;
-		expect(slidingContainer).toHaveStyle({ transition: "none" });
-	});
-
-	it("enables snap-back transition when not swiping", () => {
-		mockSwipeOffset.value = 0;
-		mockIsSwiping.value = false;
-
-		render(
-			<SwipeableWishlistItem productId="prod-1">
-				<div data-testid="child">Content</div>
-			</SwipeableWishlistItem>,
-		);
-
-		const slidingContainer = screen.getByTestId("child").parentElement!;
-		expect(slidingContainer).toHaveStyle({
-			transition: "transform var(--duration-normal) ease-out",
-		});
-	});
-
-	it("has touch-pan-y class for scroll coexistence", () => {
-		const { container } = render(
-			<SwipeableWishlistItem productId="prod-1">
+		rerender(
+			<SwipeableWishlistItem productId="prod-2">
 				<div>Content</div>
 			</SwipeableWishlistItem>,
 		);
-
-		const wrapper = container.firstChild as HTMLElement;
-		expect(wrapper.className).toContain("touch-pan-y");
-	});
-
-	it("has overflow-hidden to clip sliding content", () => {
-		const { container } = render(
-			<SwipeableWishlistItem productId="prod-1">
-				<div>Content</div>
-			</SwipeableWishlistItem>,
-		);
-
-		const wrapper = container.firstChild as HTMLElement;
-		expect(wrapper.className).toContain("overflow-hidden");
+		expect(capturedSwipeProps.current?.peek).toBe(false);
 	});
 });

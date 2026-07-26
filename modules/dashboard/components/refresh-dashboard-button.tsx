@@ -16,12 +16,15 @@ export function RefreshDashboardButton({
 	variant = "outline",
 	iconOnly = false,
 }: RefreshDashboardButtonProps) {
+	// Une seule vibration par intention. Le `light` au clic et le `success` à
+	// l'arrivée des données sont séparés par un aller-retour serveur (bien au-delà
+	// du cooldown de 80 ms) : c'étaient deux vibrations réelles pour un seul appui.
+	// On garde celle qui porte l'information — « les données sont à jour ».
 	const { refresh, isPending } = useRefreshDashboard({
 		onSuccess: () => triggerHaptic("success"),
 	});
 
 	function handleRefresh() {
-		triggerHaptic("light");
 		refresh();
 	}
 

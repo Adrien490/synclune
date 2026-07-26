@@ -9,6 +9,7 @@ vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
 	Truck: () => <svg data-testid="icon-truck" />,
 	CircleX: () => <svg data-testid="icon-x-circle" />,
+	Undo2: () => <svg data-testid="icon-undo" />,
 }));
 
 // Mock Badge to render children with variant as a data attribute
@@ -57,6 +58,20 @@ const SHIPPED_DATE = new Date("2024-01-02T09:00:00Z");
 const DELIVERED_DATE = new Date("2024-01-03T14:00:00Z");
 
 type OrderInput = Parameters<typeof OrderStatusTimeline>[0]["order"];
+
+/**
+ * Libellé d'une étape de la timeline.
+ *
+ * Nécessaire depuis que les fixtures posent des paires (status, fulfillmentStatus)
+ * cohérentes : le badge d'en-tête rend `ORDER_STATUS_LABELS[status]`, qui collide
+ * avec le libellé de l'étape correspondante (« Expédiée », « Livrée »). Le badge
+ * est un `<span>`, les étapes des `<p>`.
+ */
+function stepLabel(label: string): HTMLElement {
+	const match = screen.getAllByText(label).find((el) => el.tagName === "P");
+	if (!match) throw new Error(`Étape « ${label} » introuvable dans la timeline`);
+	return match;
+}
 
 function createOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 	return {
@@ -188,11 +203,36 @@ describe("OrderStatusTimeline", () => {
 		});
 	});
 
+	// ⚠️ Les fixtures ci-dessous posent des paires (status, fulfillmentStatus)
+	// COHÉRENTES, telles que la production les produit. Les anciennes ne
+	// renseignaient que `fulfillmentStatus`, produisant des états impossibles
+	// (`status: PENDING` + `fulfillmentStatus: DELIVERED`) — c'est ce qui rendait
+	// invisible le fait que la timeline ignorait `status`.
 	describe("preparation step", () => {
-		it("shows preparation step as active (foreground text) when fulfillmentStatus is PROCESSING", () => {
+		// Le cas le plus important : l'état réel de toute commande fraîchement
+		// payée. Le webhook pose `status = PROCESSING` et laisse
+		// `fulfillmentStatus = UNFULFILLED`. Avant correction, l'étape restait
+		// grise pour 100 % des clientes ayant payé.
+		it("est active sur une commande payée dont le fulfillment est resté UNFULFILLED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "PROCESSING",
+						paymentStatus: "PAID",
+						paidAt: PAID_DATE,
+						fulfillmentStatus: "UNFULFILLED",
+					})}
+				/>,
+			);
+			const label = screen.getByText("En préparation");
+			expect(label.className).toContain("text-foreground");
+		});
+
+		it("shows preparation step as active when status is PROCESSING", () => {
+			render(
+				<OrderStatusTimeline
+					order={createOrder({
+						status: "PROCESSING",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "PROCESSING",
@@ -203,10 +243,11 @@ describe("OrderStatusTimeline", () => {
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows preparation step as completed when fulfillmentStatus is SHIPPED", () => {
+		it("shows preparation step as completed when status is SHIPPED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "SHIPPED",
@@ -218,10 +259,11 @@ describe("OrderStatusTimeline", () => {
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows preparation step as completed when fulfillmentStatus is DELIVERED", () => {
+		it("shows preparation step as completed when status is DELIVERED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "DELIVERED",
@@ -233,18 +275,35 @@ describe("OrderStatusTimeline", () => {
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows preparation step as pending when fulfillmentStatus is UNFULFILLED", () => {
-			render(<OrderStatusTimeline order={createOrder({ fulfillmentStatus: "UNFULFILLED" })} />);
+		it("shows preparation step as pending on an unpaid order", () => {
+			render(<OrderStatusTimeline order={createOrder({ status: "PENDING" })} />);
 			const label = screen.getByText("En préparation");
 			expect(label.className).toContain("text-muted-foreground");
+		});
+
+		// Pas de date : réutiliser `paidAt` affichait l'horodatage du paiement
+		// deux étapes de suite, sous un libellé qui ne le désigne pas.
+		it("n'affiche pas de date sous « En préparation »", () => {
+			render(
+				<OrderStatusTimeline
+					order={createOrder({
+						status: "PROCESSING",
+						paymentStatus: "PAID",
+						paidAt: PAID_DATE,
+					})}
+				/>,
+			);
+			const container = screen.getByText("En préparation").closest(".flex-1");
+			expect(container?.querySelectorAll("p").length).toBe(1);
 		});
 	});
 
 	describe("shipped step", () => {
-		it("shows shipped step as completed when fulfillmentStatus is SHIPPED", () => {
+		it("shows shipped step as completed when status is SHIPPED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "SHIPPED",
@@ -252,14 +311,15 @@ describe("OrderStatusTimeline", () => {
 					})}
 				/>,
 			);
-			const label = screen.getByText("Expédiée");
+			const label = stepLabel("Expédiée");
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows shipped step as completed when fulfillmentStatus is DELIVERED", () => {
+		it("shows shipped step as completed when status is DELIVERED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "DELIVERED",
@@ -268,30 +328,32 @@ describe("OrderStatusTimeline", () => {
 					})}
 				/>,
 			);
-			const label = screen.getByText("Expédiée");
+			const label = stepLabel("Expédiée");
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows shipped step as pending when fulfillmentStatus is PROCESSING", () => {
+		it("shows shipped step as pending when status is PROCESSING", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "PROCESSING",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "PROCESSING",
 					})}
 				/>,
 			);
-			const label = screen.getByText("Expédiée");
+			const label = stepLabel("Expédiée");
 			expect(label.className).toContain("text-muted-foreground");
 		});
 	});
 
 	describe("delivered step", () => {
-		it("shows delivered step as completed when fulfillmentStatus is DELIVERED", () => {
+		it("shows delivered step as completed when status is DELIVERED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "DELIVERED",
@@ -300,14 +362,15 @@ describe("OrderStatusTimeline", () => {
 					})}
 				/>,
 			);
-			const label = screen.getByText("Livrée");
+			const label = stepLabel("Livrée");
 			expect(label.className).toContain("text-foreground");
 		});
 
-		it("shows delivered step as pending when fulfillmentStatus is SHIPPED", () => {
+		it("shows delivered step as pending when status is SHIPPED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "SHIPPED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "SHIPPED",
@@ -315,14 +378,15 @@ describe("OrderStatusTimeline", () => {
 					})}
 				/>,
 			);
-			const label = screen.getByText("Livrée");
+			const label = stepLabel("Livrée");
 			expect(label.className).toContain("text-muted-foreground");
 		});
 
-		it("shows the delivery date when fulfillmentStatus is DELIVERED and actualDelivery is set", () => {
+		it("shows the delivery date when status is DELIVERED and actualDelivery is set", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "DELIVERED",
 						paymentStatus: "PAID",
 						paidAt: PAID_DATE,
 						fulfillmentStatus: "DELIVERED",
@@ -335,21 +399,86 @@ describe("OrderStatusTimeline", () => {
 			expect(screen.getAllByText("1 janvier 2024 à 10:00").length).toBeGreaterThan(0);
 		});
 
-		it("does not show a date under 'Livrée' when fulfillmentStatus is SHIPPED", () => {
+		it("does not show a date under 'Livrée' when status is SHIPPED", () => {
 			render(
 				<OrderStatusTimeline
 					order={createOrder({
+						status: "SHIPPED",
 						fulfillmentStatus: "SHIPPED",
 						shippedAt: SHIPPED_DATE,
 						actualDelivery: null,
 					})}
 				/>,
 			);
-			const deliveredLabel = screen.getByText("Livrée");
+			const deliveredLabel = stepLabel("Livrée");
 			const container = deliveredLabel.closest(".flex-1");
 			// The only child of .flex-1 should be the label paragraph; no date paragraph
 			const paragraphs = container?.querySelectorAll("p");
 			expect(paragraphs?.length).toBe(1);
 		});
+	});
+
+	// `markAsReturned` pose `fulfillmentStatus = RETURNED` en laissant
+	// `status = DELIVERED`. Avant correction, aucune branche ne traitait cette
+	// valeur : le badge affichait « Livrée » pendant que les trois étapes de
+	// fulfillment régressaient toutes en gris, sans mention du retour.
+	describe("returned order", () => {
+		function returnedOrder() {
+			return createOrder({
+				status: "DELIVERED",
+				paymentStatus: "PAID",
+				paidAt: PAID_DATE,
+				fulfillmentStatus: "RETURNED",
+				shippedAt: SHIPPED_DATE,
+				actualDelivery: DELIVERED_DATE,
+			});
+		}
+
+		it("affiche une étape « Retournée »", () => {
+			render(<OrderStatusTimeline order={returnedOrder()} />);
+			expect(screen.getByText("Retournée")).toBeInTheDocument();
+		});
+
+		it("conserve les étapes antérieures comme complétées", () => {
+			render(<OrderStatusTimeline order={returnedOrder()} />);
+			for (const label of ["En préparation", "Expédiée", "Livrée"]) {
+				expect(stepLabel(label).className).toContain("text-foreground");
+			}
+		});
+
+		it("n'affiche pas d'étape « Retournée » sur une commande normale", () => {
+			render(
+				<OrderStatusTimeline
+					order={createOrder({
+						status: "DELIVERED",
+						paymentStatus: "PAID",
+						fulfillmentStatus: "DELIVERED",
+					})}
+				/>,
+			);
+			expect(screen.queryByText("Retournée")).toBeNull();
+		});
+	});
+
+	// Un remboursement n'annule pas le fait que le paiement a été reçu. Avant
+	// correction, l'étape « Paiement reçu » d'une commande remboursée était ni
+	// complétée ni en échec : muette et sans date.
+	describe("refunded order", () => {
+		it.each(["REFUNDED", "PARTIALLY_REFUNDED"] as const)(
+			"marque « Paiement reçu » comme complété pour %s",
+			(paymentStatus) => {
+				render(
+					<OrderStatusTimeline
+						order={createOrder({
+							status: "DELIVERED",
+							paymentStatus,
+							paidAt: PAID_DATE,
+							fulfillmentStatus: "DELIVERED",
+						})}
+					/>,
+				);
+				expect(screen.getByText("Paiement reçu").className).toContain("text-foreground");
+			},
+		);
 	});
 });

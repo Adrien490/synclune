@@ -1,22 +1,21 @@
 "use client";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { m, useReducedMotion } from "motion/react";
 import { CircleCheck } from "lucide-react";
-import { useEffect } from "react";
 
 /**
  * Animated success icon for the order confirmation page.
  * Spring-based scale + rotate entrance for a celebratory feel.
  * Respects prefers-reduced-motion.
+ *
+ * Pas d'haptique : l'icône est un **affichage**. Le `useEffect` de montage qui
+ * vibrait ici se déclenchait à chaque rendu de la page — chargement, retour
+ * arrière, remount — et pas seulement au paiement réussi. Le retour tactile du
+ * paiement appartient au bouton de paiement, pas à sa page de confirmation.
  */
 export function SuccessIcon() {
 	const shouldReduceMotion = useReducedMotion();
-
-	useEffect(() => {
-		triggerHaptic("success");
-	}, []);
 
 	if (shouldReduceMotion) {
 		return (

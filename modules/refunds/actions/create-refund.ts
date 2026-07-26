@@ -21,7 +21,7 @@ import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { createRefundSchema } from "../schemas/refund.schemas";
 
 /** Active refund statuses that count toward refunded amounts/quantities */
@@ -99,6 +99,9 @@ export async function createRefund(
 				where: { id: orderId, ...notDeleted },
 				select: {
 					id: true,
+					// CACHE-AUDIT-010 : requis pour résoudre les tags user-scopés
+					// (USER_ORDERS / LAST_ORDER / USER_ORDERS_COUNT) via le helper SSOT.
+					userId: true,
 					orderNumber: true,
 					subtotal: true,
 					discountAmount: true,
@@ -297,12 +300,17 @@ export async function createRefund(
 				},
 			});
 
-			return { refund, totalAmount };
+			return { refund, totalAmount, userId: order.userId };
 		});
 
-		updateTag(ORDERS_CACHE_TAGS.LIST);
+		// CACHE-AUDIT-010 : passer par le helper SSOT. La liste manuelle omettait
+		// DETAIL(orderId) / HISTORY(orderId) alors que cette action écrit une entrée
+		// d'OrderHistory affichée sur la page détail de la commande — celle-ci restait
+		// périmée jusqu'à expiration du profil `user`.
+		for (const tag of getOrderInvalidationTags(result.userId ?? undefined, orderId)) {
+			updateTag(tag);
+		}
 		updateTag(REFUNDS_CACHE_TAGS.LIST);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 		return success(

@@ -17,7 +17,10 @@ import {
 } from "@/shared/components/bottom-bar";
 import { CountBadge } from "@/shared/components/ui/count-badge";
 import { LoadingIndicator } from "@/shared/components/navigation/loading-indicator";
+import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
+import { setLastTrigger } from "@/modules/products/components/quick-search-dialog/last-trigger";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
 import { useMounted } from "@/shared/hooks/use-mounted";
@@ -35,6 +38,21 @@ const HIDDEN_ROUTES = [
 	ROUTES.AUTH.SIGN_IN,
 	ROUTES.AUTH.SIGN_UP,
 ];
+
+/** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
+const CART_SHEET_ID = "cart" as const;
+
+// Pas d'`aria-controls` sur ces deux onglets (contrairement au bouton Menu de
+// l'admin) : le panier rend DEUX contenus selon le viewport (`Drawer` mobile /
+// `Sheet` desktop, `cart-sheet.tsx:298` et `:339`) et le quick-search un dialog
+// portalé. Désigner un id absent est plus nuisible que de l'omettre —
+// `aria-haspopup` + `aria-expanded` suffisent au pattern disclosure.
+
+/** Compteur → nom accessible, pour que l'onglet annonce son badge. */
+function tabAriaLabel(label: string, count: number, singular: string, plural: string): string {
+	if (count <= 0) return label;
+	return `${label}, ${count} ${count > 1 ? plural : singular}`;
+}
 
 interface ShopMobileBottomNavProps {
 	isAuthenticated: boolean;
@@ -56,6 +74,11 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 	const wishlistCount = useBadgeCountsStore((state) => state.wishlistCount);
 	const cartBump = useBadgeCountsStore((state) => state.cartBump);
 	const openSheet = useSheetStore((state) => state.open);
+	// L'état réel du panier, et non `false` en dur : l'onglet expose
+	// `aria-haspopup="dialog"`, donc son `aria-expanded` doit suivre l'ouverture du
+	// sheet (WCAG 4.1.2). Figé à `false`, il annonçait « replié » panier ouvert.
+	const isCartOpen = useSheetStore((state) => state.openSheet === CART_SHEET_ID);
+	const { open: openQuickSearch, isOpen: isQuickSearchOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
 	// Delay mount until after hydration to avoid createPortal SSR mismatch.
 	const mounted = useMounted();
@@ -91,6 +114,15 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 		prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
 	}, [cartCount, wishlistCount]);
 
+	const handleSearchClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+		// Handoff obligatoire : le dialog blur son déclencheur, donc
+		// `document.activeElement` n'est plus fiable quand `onCloseAutoFocus`
+		// cherche où rendre le focus.
+		setLastTrigger(e.currentTarget);
+		e.currentTarget.blur();
+		openQuickSearch();
+	};
+
 	const isHidden = HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 
 	const accountHref = isAuthenticated ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN;
@@ -105,15 +137,18 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			type: "link" as const,
 		},
 		{
-			id: "products",
-			label: "Produits",
-			href: ROUTES.SHOP.PRODUCTS,
+			// Une loupe dans la zone du pouce DOIT ouvrir la recherche. Cet onglet
+			// était un lien vers /produits : la seule affordance « recherche » de la
+			// zone du pouce n'ouvrait pas la recherche, et la vraie entrée était une
+			// icône nue sans libellé en haut de la navbar (audit recherche 2026-07-26).
+			// L'accès au catalogue est repris par le CTA permanent « Voir tous les
+			// produits » du panneau idle du dialog.
+			id: "search",
+			label: "Rechercher",
 			icon: Search,
-			isActive:
-				isRouteActive(pathname, ROUTES.SHOP.PRODUCTS) ||
-				pathname.startsWith(ROUTES.SHOP.PRODUCT_DETAIL_PREFIX) ||
-				pathname.startsWith(ROUTES.SHOP.COLLECTIONS),
-			type: "link" as const,
+			isActive: isQuickSearchOpen,
+			type: "button" as const,
+			onClick: handleSearchClick,
 		},
 		{
 			id: "wishlist",
@@ -122,6 +157,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			icon: Heart,
 			isActive: isRouteActive(pathname, ROUTES.ACCOUNT.FAVORITES),
 			type: "link" as const,
+			// `type: "dot"` n'affiche AUCUN chiffre : sans ce libellé, le nombre de
+			// favoris n'était exposé nulle part — ni à l'œil, ni au lecteur d'écran.
+			ariaLabel: tabAriaLabel("Favoris", wishlistCount, "favori", "favoris"),
 			badge: {
 				count: wishlistCount,
 				type: "dot" as const,
@@ -133,8 +171,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			id: "cart",
 			label: "Panier",
 			icon: ShoppingBag,
-			isActive: false,
+			isActive: isCartOpen,
 			type: "button" as const,
+			ariaLabel: tabAriaLabel("Panier", cartCount, "article", "articles"),
 			badge: {
 				count: cartCount,
 				type: "count" as const,
@@ -143,7 +182,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 				bumpKey: cartBump?.key,
 				bumpDelta: cartBump?.delta,
 			},
-			onClick: () => openSheet("cart"),
+			onClick: () => openSheet(CART_SHEET_ID),
 		},
 		{
 			id: "account",
@@ -158,7 +197,17 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 	if (!mounted) return null;
 
 	return createPortal(
-		<BottomBar as="nav" aria-label="Navigation principale de la boutique" isHidden={isHidden}>
+		// `lg` et non `md` : la nav desktop (`DesktopNav`, `hidden lg:flex`) ne prend
+		// le relais qu'à 64rem. Avec un seuil `md`, la plage 48–64rem — où tombe
+		// l'iPad portrait 768×1024 — perdait la bottom-nav sans rien gagner en
+		// échange : plus de panier ni de favoris à un tap, seulement le burger
+		// (audit responsive 2026-07-26).
+		<BottomBar
+			as="nav"
+			breakpoint="lg"
+			aria-label="Navigation principale de la boutique"
+			isHidden={isHidden}
+		>
 			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{announcement}
 			</div>
@@ -187,9 +236,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 							<button
 								key={tab.id}
 								type="button"
-								onClick={() => {
+								onClick={(e) => {
 									triggerHaptic("selection");
-									tab.onClick();
+									tab.onClick(e);
 								}}
 								className={cn(
 									bottomBarItemClass,
@@ -197,7 +246,8 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 									tab.isActive && bottomBarActiveItemClass,
 								)}
 								aria-haspopup="dialog"
-								aria-label={tab.label}
+								aria-expanded={tab.isActive}
+								aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
 							>
 								{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 								{iconEl}
@@ -216,6 +266,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 								tab.isActive && bottomBarActiveItemClass,
 							)}
 							aria-current={tab.isActive ? "page" : undefined}
+							aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
 						>
 							{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 							{iconEl}

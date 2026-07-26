@@ -10,7 +10,11 @@ interface ProductTypeActiveToggleProps {
 	isSystem?: boolean;
 }
 
-export function ProductTypeActiveToggle({ productTypeId, isActive, isSystem = false }: ProductTypeActiveToggleProps) {
+export function ProductTypeActiveToggle({
+	productTypeId,
+	isActive,
+	isSystem = false,
+}: ProductTypeActiveToggleProps) {
 	const { toggleStatus, isPending } = useToggleProductTypeStatus();
 
 	return (

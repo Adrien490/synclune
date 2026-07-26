@@ -11,6 +11,8 @@ import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
 
 import { RefundMobileItem } from "./refund-mobile-item";
+import { ADMIN_LIST_PENDING_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 interface RefundsMobileListProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -27,7 +29,7 @@ export function RefundsMobileList({
 
 	if (refunds.length === 0) {
 		return (
-			<div className="md:hidden">
+			<div className={cn(ADMIN_LIST_PENDING_CLASS, "md:hidden")}>
 				<TableEmptyState
 					icon={ReceiptText}
 					title="Aucun remboursement trouvé"
@@ -51,8 +53,18 @@ export function RefundsMobileList({
 	}
 
 	return (
-		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={refunds.length} singular="remboursement" plural="remboursements" />
+		<div
+			className={cn(
+				ADMIN_LIST_PENDING_CLASS,
+				"space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:hidden md:pb-0",
+			)}
+		>
+			<AdminListLiveCount
+				count={refunds.length}
+				singular="remboursement"
+				plural="remboursements"
+				totalCount={totalCount}
+			/>
 			<ItemGroup aria-label="Remboursements" className="gap-2">
 				{refunds.map((refund) => (
 					<li key={refund.id}>

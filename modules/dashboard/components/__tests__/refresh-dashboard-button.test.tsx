@@ -144,13 +144,21 @@ describe("RefreshDashboardButton", () => {
 	// Haptic feedback
 	// -------------------------------------------------------------------------
 
-	it("triggers a 'light' haptic when the user taps the refresh button", () => {
+	/**
+	 * @regression single-haptic-per-intent
+	 * Le `light` au clic et le `success` à l'arrivée des données sont séparés par
+	 * un aller-retour serveur, donc hors du cooldown de 80 ms : c'étaient deux
+	 * vibrations réelles pour un seul appui. Seule celle qui porte l'information
+	 * (« données à jour ») est conservée.
+	 */
+	it("fires no haptic on tap — only on refresh completion", () => {
 		mockUseRefreshDashboard.mockReturnValue({ refresh: mockRefresh, isPending: false });
 
 		render(<RefreshDashboardButton />);
 		screen.getByTestId("refresh-button").click();
 
-		expect(mockHaptic).toHaveBeenCalledWith("light");
+		expect(mockRefresh).toHaveBeenCalled();
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("wires onSuccess to a 'success' haptic", () => {

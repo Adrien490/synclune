@@ -28,6 +28,8 @@ import { ProductTypesSortBadge } from "@/modules/product-types/components/admin/
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters } from "./_utils/params";
+import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
+import { cn } from "@/shared/utils/cn";
 
 export type ProductTypeFiltersSearchParams = {
 	filter_isActive?: string;
@@ -46,6 +48,7 @@ export type ParsedProductTypeFilters = {
 	isActive?: boolean;
 };
 import { type Metadata } from "next";
+import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 
 export const metadata: Metadata = {
 	title: "Types de bijoux - Administration",
@@ -92,7 +95,16 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
+			<div className={cn(ADMIN_LIST_GROUP_CLASS, "space-y-6")}>
+				<Suspense fallback={null}>
+					<ResultCountLiveRegion
+						totalCount={productTypesPromise.then((d) => d.totalCount)}
+						query={search}
+						singular="type de produit"
+						plural="types de produits"
+					/>
+				</Suspense>
+
 				<ProductTypesBottomBar />
 
 				<Suspense

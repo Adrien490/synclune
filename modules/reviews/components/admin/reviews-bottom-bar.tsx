@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { SearchInput } from "@/shared/components/search-input";
@@ -21,19 +20,15 @@ const SORT_OPTIONS: SortOption[] = [
 	{ value: "rating-asc", label: "Notes les plus basses" },
 ];
 
-const REVIEW_FILTER_KEYS = ["status", "rating", "hasResponse"] as const;
-
 /**
  * Sous-header sticky (mobile, admin) pour la liste avis.
  * 3 actions : Filtrer | Rechercher | Trier.
  */
 function ReviewsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
-	const { hasActiveSort } = useActiveListControls();
-
-	// Reviews use bare keys (status/rating/hasResponse) instead of the filter_* prefix.
-	const searchParams = useSearchParams();
-	const activeFilterCount = REVIEW_FILTER_KEYS.filter((key) => searchParams.has(key)).length;
+	// Les filtres avis utilisent désormais le préfixe `filter_` comme les 10
+	// autres listes : plus besoin du comptage manuel qui doublonnait le hook.
+	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{

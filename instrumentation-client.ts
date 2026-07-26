@@ -19,8 +19,17 @@ const initSentry = () => {
 		environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
 
 		tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+		// Un replay est TOUJOURS capturé quand une erreur survient : c'est le cas
+		// d'usage qui a de la valeur pour une opératrice solo (reproduire un bug
+		// signalé par une cliente).
 		replaysOnErrorSampleRate: 1.0,
-		replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 0,
+		// 2 % de sessions sans erreur (audit coûts P3-1, ramené de 10 %). Le plan
+		// Sentry Developer n'inclut que **50 replays/mois** : à 10 %, quelques
+		// centaines de sessions consentantes épuisaient le quota en milieu de mois
+		// — et une fois épuisé, Sentry droppe TOUT, y compris les replays d'erreur
+		// qui sont les seuls réellement utiles. Échantillonner bas préserve donc
+		// la capture qui compte.
+		replaysSessionSampleRate: process.env.NODE_ENV === "production" ? 0.02 : 0,
 
 		sendDefaultPii: false,
 

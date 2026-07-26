@@ -44,6 +44,3 @@ export const updateSkuMediaAltTextSchema = z.object({
 /**
  * Restauration d'un SKU soft-deleted
  */
-export const restoreSkuSchema = z.object({
-	skuId: z.cuid2({ message: "ID variante invalide" }),
-});

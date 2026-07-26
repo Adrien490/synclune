@@ -12,6 +12,8 @@ export default function AnnouncementsAdminError(props: {
 			emoji="📣"
 			title="Les annonces n'ont pas pu charger"
 			route="admin.contenu.annonces"
+			fallbackHref="/admin/contenu"
+			fallbackLabel="Retour au contenu"
 		/>
 	);
 }

@@ -13,7 +13,6 @@ import { describe, expect, it } from "vitest";
  *  - invoiceNumber, invoiceStatus, invoiceGeneratedAt, invoicePdfUrl, invoicePdfHash
  *  - creditNoteNumber, creditNoteGeneratedAt, creditNotePdfUrl, creditNotePdfHash
  *  - billing* (snapshot adresse de facturation figé Art. 289 CGI)
- *  - customerType, customerCompany* (B2B/B2G snapshot)
  *  - paidAt, total, subtotal, discountAmount, shippingCost, taxAmount
  *  - vendor* snapshot (identité vendeur à T0)
  *
@@ -47,12 +46,6 @@ const FORBIDDEN_KEYS_IN_ANONYMIZE_UPDATE = [
 	"billingCity",
 	"billingCountry",
 	"billingSameAsShipping",
-	// Snapshots B2B/B2G (Art. 289 CGI)
-	"customerType",
-	"customerCompanyName",
-	"customerCompanySiren",
-	"customerCompanySiret",
-	"customerCompanyVatNumber",
 	// Snapshots monétaires (Art. L102 B LPF — facture reconstituable)
 	"subtotal",
 	"discountAmount",

@@ -1,4 +1,4 @@
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { PREPARATION_DELAY_LABEL, SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
@@ -98,8 +98,9 @@ export default async function CGVPage() {
 								applicable (art. 293 B du CGI - régime micro-entreprise).
 							</p>
 							<p>
-								Les frais de livraison sont indiqués avant la validation finale de la commande. Le
-								montant total à payer, incluant les frais de port, est récapitulé dans le panier.
+								Les frais de livraison sont calculés à l'étape de paiement, une fois l'adresse de
+								livraison renseignée. Le montant total à payer, incluant les frais de port, est
+								récapitulé avant la validation finale de la commande.
 							</p>
 							<p>
 								Synclune se réserve le droit de modifier ses prix à tout moment, étant entendu que
@@ -149,16 +150,24 @@ export default async function CGVPage() {
 							<h3 className="text-lg font-medium sm:text-xl">5.1 Zone de livraison</h3>
 							<p>
 								Les livraisons sont effectuées en{" "}
-								<strong>France métropolitaine (hors DOM-TOM/DROM-COM) et Union Européenne</strong>.
+								<strong>
+									France métropolitaine (hors Corse et hors DOM-TOM/DROM-COM) et Union Européenne
+								</strong>
+								. Les commandes à destination de la Corse et des DOM-TOM ne peuvent pas être
+								validées.
 							</p>
 
 							<h3 className="text-lg font-medium sm:text-xl">5.2 Transporteur et délais</h3>
 							<p>
-								Les livraisons sont assurées par <strong>Colissimo</strong> (La Poste). Les délais
-								de livraison sont communiqués à titre indicatif lors de la commande et varient
-								généralement entre <strong>{SHIPPING_RATES.FR.estimatedDays} pour la France</strong>{" "}
-								et <strong>{SHIPPING_RATES.EU.estimatedDays} pour l'Union Européenne</strong> après
-								confirmation de paiement.
+								Les livraisons sont assurées en <strong>envoi suivi</strong>, par un transporteur
+								choisi par le Vendeur (Colissimo, Mondial Relay, Chronopost ou équivalent) ; le
+								transporteur retenu et le numéro de suivi sont communiqués au Client par email lors
+								de l&apos;expédition. Les commandes sont préparées sous{" "}
+								<strong>{PREPARATION_DELAY_LABEL}</strong>. Les délais de livraison sont communiqués
+								à titre indicatif lors de la commande et varient généralement entre{" "}
+								<strong>{SHIPPING_RATES.FR.estimatedDays} pour la France</strong> et{" "}
+								<strong>{SHIPPING_RATES.EU.estimatedDays} pour l&apos;Union Européenne</strong>{" "}
+								après confirmation de paiement.
 							</p>
 							<p>
 								Conformément à l'article L216-1 du Code de la consommation, à défaut de délai
@@ -181,8 +190,7 @@ export default async function CGVPage() {
 							</p>
 							<p>
 								En cas d'absence lors de la livraison, un avis de passage sera laissé permettant de
-								récupérer le colis au bureau de poste le plus proche ou en point de retrait
-								Colissimo.
+								récupérer le colis au point de retrait indiqué par le transporteur.
 							</p>
 						</section>
 

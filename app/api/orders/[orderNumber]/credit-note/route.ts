@@ -129,6 +129,24 @@ export async function GET(
 		});
 	}
 
+	// Alerte proactive d'épuisement de quota admin (parité avec /invoice) : un admin
+	// qui s'approche de sa borne signale soit un script en boucle, soit un besoin
+	// légitime de relever la limite. Sans ça, on ne le découvrait qu'au premier 429.
+	if (isAdmin) {
+		const adminLimit = rateLimitConfig.limit ?? 200;
+		if (rateCheck.remaining <= Math.floor(adminLimit * 0.2)) {
+			Sentry.captureMessage("admin-credit-note-download-quota-warning", {
+				level: "warning",
+				tags: { route: "credit-note", actor: "admin" },
+				extra: {
+					adminUserId: session?.user.id,
+					remaining: rateCheck.remaining,
+					limit: adminLimit,
+				},
+			});
+		}
+	}
+
 	const order = (await prisma.order.findFirst({
 		where: { orderNumber, ...notDeleted },
 		select: GET_ORDER_SELECT_CUSTOMER,

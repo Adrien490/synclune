@@ -247,12 +247,11 @@ describe("processOrderFromPaymentIntent", () => {
 		);
 	});
 
-	it("does not set shippingCost/shippingMethod (already stored from confirmCheckout)", async () => {
+	it("does not set shippingCost/shippingCarrier (already stored from confirmCheckout)", async () => {
 		const paymentIntent = makePaymentIntent();
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 		const updateCall = mockTx.order.update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
 		expect(updateCall.data).not.toHaveProperty("shippingCost");
-		expect(updateCall.data).not.toHaveProperty("shippingMethod");
 		expect(updateCall.data).not.toHaveProperty("shippingCarrier");
 	});
 

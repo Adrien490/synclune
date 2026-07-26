@@ -116,7 +116,6 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 							<PeriodSelector variant="segmented" />
 						</div>
 					</section>
-
 				</div>
 
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">

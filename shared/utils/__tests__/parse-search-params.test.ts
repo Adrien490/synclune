@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
 import { parseSearchParam, searchParamParsers, getFirstParam } from "../parse-search-params";
-import { CUID_LENGTH } from "@/shared/schemas/pagination-schema";
+import { CURSOR_MAX_LENGTH } from "@/shared/schemas/pagination-schema";
 
-const VALID_CURSOR = "a".repeat(CUID_LENGTH);
+// Un id cuid2 Prisma : 24 chars, la longueur réellement émise en base
+const VALID_CURSOR = "a".repeat(24);
 
 describe("getFirstParam", () => {
 	it("should return the string as-is when given a string", () => {
@@ -51,7 +52,7 @@ describe("parseSearchParam", () => {
 });
 
 describe("searchParamParsers.cursor", () => {
-	it("should return a valid 25-character cursor", () => {
+	it("should return a valid cuid2 cursor (24 characters)", () => {
 		const result = searchParamParsers.cursor(VALID_CURSOR);
 		expect(result).toBe(VALID_CURSOR);
 	});
@@ -275,7 +276,7 @@ describe("searchParamParsers.boolean - edge cases", () => {
 
 describe("searchParamParsers.cursor - edge cases", () => {
 	it("should return undefined for cursor that is too long", () => {
-		const tooLong = "a".repeat(CUID_LENGTH + 1);
+		const tooLong = "a".repeat(CURSOR_MAX_LENGTH + 1);
 		expect(searchParamParsers.cursor(tooLong)).toBeUndefined();
 	});
 

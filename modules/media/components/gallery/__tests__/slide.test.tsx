@@ -34,7 +34,7 @@ vi.mock("@/modules/media/utils/media-utils", () => ({
 }));
 
 vi.mock("@/modules/media/constants/image-config.constants", () => ({
-	MAIN_IMAGE_QUALITY: 90,
+	MAIN_IMAGE_QUALITY: 80,
 }));
 
 vi.mock("@/modules/media/constants/gallery.constants", () => ({

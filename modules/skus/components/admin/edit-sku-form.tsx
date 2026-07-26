@@ -96,12 +96,9 @@ export function EditProductVariantForm({
 			const targetPath = data?.productSlug
 				? `/admin/catalogue/produits/${data.productSlug}/variantes`
 				: variantsListPath;
-			toast.success(message || "Variante mise à jour avec succès", {
-				action: {
-					label: "Voir les variantes",
-					onClick: () => navigateWithTransition(router, targetPath),
-				},
-			});
+			// Pas d'action : la ligne suivante navigue déjà vers `targetPath`, exactement
+			// la destination que proposait « Voir les variantes ».
+			toast.success(message || "Variante mise à jour avec succès");
 			navigateWithTransition(router, targetPath);
 		},
 	});

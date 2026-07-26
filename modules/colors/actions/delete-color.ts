@@ -49,7 +49,12 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 				include: {
 					_count: {
 						select: {
-							skuColors: true,
+							// Ne compter que les variantes VIVANTES : un lien porte par un SKU
+							// soft-deleted (produit supprime) renvoyait « utilisee par N
+							// variante(s) » vers des variantes invisibles dans l'admin, rendant
+							// la couleur indelebile a jamais. Le vrai garde-fou reste la FK
+							// `ON DELETE RESTRICT`, rattrapee en P2003 plus bas.
+							skuColors: { where: { sku: { deletedAt: null } } },
 						},
 					},
 				},
@@ -81,11 +86,13 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 
 		return success("Couleur supprimée avec succès");
 	} catch (e) {
-		// P2003 : violation FK Restrict — un SKU a été créé en concurrence après
-		// la pré-vérification. Message aligné avec le BusinessError du pre-check.
+		// P2003 : violation FK Restrict. Deux causes possibles — un SKU cree en
+		// concurrence apres la pre-verification, ou un lien porte par une variante
+		// soft-deleted (le pre-check les ignore desormais, la FK non). Message
+		// explicite sur le second cas, sinon l'admin cherche une variante fantome.
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
 			return error(
-				"Cette couleur est utilisee par au moins une variante. Veuillez modifier ces variantes avant de supprimer la couleur.",
+				"Cette couleur reste rattachée à au moins une variante (éventuellement celle d'un bijou supprimé). Elle ne peut pas être supprimée — désactivez-la pour la retirer des choix proposés.",
 			);
 		}
 		return handleActionError(e, "Impossible de supprimer la couleur");
