@@ -1,6 +1,5 @@
-import { Clock, Euro, Package, Receipt, ShoppingBag, Star, Target, UserPlus } from "lucide-react";
+import { Clock, Euro, Package, Receipt, ShoppingBag, Target, UserPlus } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
-import type { GetReviewHealthReturn } from "@/modules/dashboard/data/get-review-health";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { buildSparklinePath } from "../services/sparkline-path.service";
@@ -16,7 +15,6 @@ function formatFulfillmentTime(hours: number): string {
 
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
-	reviewHealth: GetReviewHealthReturn;
 	comparisonLabel?: string;
 }
 
@@ -25,12 +23,9 @@ interface DashboardKpisProps {
  * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
  * Row 2: Finalisation panier, Note moyenne, Délai d'expédition, Nouveaux clients (2-col on mobile)
  *
- * Note: `reviewHealth` is fetched separately (cache profile `reference` 24h)
- * and passed as a prop to keep `kpis` cache (`user` 60s) lean.
  */
 export function DashboardKpis({
 	kpis,
-	reviewHealth,
 	comparisonLabel = "vs mois dernier",
 }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
@@ -175,25 +170,6 @@ export function DashboardKpis({
 
 				<KpiCardAnimated index={5}>
 					<KpiCard
-						title="Note moyenne"
-						value={
-							reviewHealth.totalReviews > 0 ? `${reviewHealth.averageRating.toFixed(1)} / 5` : "—"
-						}
-						numericValue={reviewHealth.averageRating}
-						icon={<Star className="size-4" />}
-						size="compact"
-						priority="info"
-						flatOnMobile
-						href="/admin/marketing/avis"
-						tooltip="Note moyenne des avis clients publiés"
-						subtitle={
-							reviewHealth.totalReviews > 0 ? `${reviewHealth.totalReviews} avis` : "Aucun avis"
-						}
-					/>
-				</KpiCardAnimated>
-
-				<KpiCardAnimated index={6}>
-					<KpiCard
 						title="Délai d'expédition"
 						value={formatFulfillmentTime(kpis.avgFulfillmentTime.hours)}
 						numericValue={kpis.avgFulfillmentTime.hours}
@@ -211,7 +187,7 @@ export function DashboardKpis({
 					/>
 				</KpiCardAnimated>
 
-				<KpiCardAnimated index={7}>
+				<KpiCardAnimated index={6}>
 					<KpiCard
 						title="Nouveaux clients"
 						value={kpis.newCustomers.count.toString()}

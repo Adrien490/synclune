@@ -17,7 +17,6 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { PeriodSelector } from "./period-selector";
-import { ComparisonSelector } from "./comparison-selector";
 
 interface DashboardPeriodSheetProps {
 	open: boolean;
@@ -28,7 +27,7 @@ const MOBILE_SNAP_POINTS: (number | string)[] = [0.5];
 
 /**
  * Bottom-sheet (mobile) / right-sheet (desktop) grouping the dashboard
- * period + comparison mode selectors. Both selectors push URL search params
+ * period selector. Il pousse un search param d'URL
  * on change, so no "Apply" button is needed — changes are committed immediately.
  *
  * Pattern inspired by `FilterSheetWrapper` but lighter (no form submission).
@@ -118,17 +117,6 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 						</div>
 					</section>
 
-					<section className="space-y-3" aria-labelledby="period-section-comparison">
-						<h3
-							id="period-section-comparison"
-							className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase"
-						>
-							Mode de comparaison
-						</h3>
-						<div data-vaul-no-drag>
-							<ComparisonSelector variant="segmented" />
-						</div>
-					</section>
 				</div>
 
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">

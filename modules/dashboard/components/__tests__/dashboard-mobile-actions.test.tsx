@@ -64,13 +64,6 @@ vi.mock("../dashboard-refresh-sheet", () => ({
 		open ? <div data-testid="refresh-sheet-open" /> : null,
 }));
 
-vi.mock("../export-revenue-button", () => ({
-	ExportRevenueButton: ({ period, mode }: { period: string; mode?: string }) => (
-		<button data-testid="export-button" data-period={period} data-mode={mode}>
-			Export
-		</button>
-	),
-}));
 
 import { DashboardMobileActions } from "../dashboard-mobile-actions";
 
@@ -89,18 +82,17 @@ describe("DashboardMobileActions", () => {
 		mockSearchParamsGet.mockReturnValue(null);
 	});
 
-	it("renders 3 triggers (period, refresh, export) inside a labelled group", () => {
-		render(<DashboardMobileActions period="month" />);
+	it("renders 2 triggers (period, refresh) inside a labelled group", () => {
+		render(<DashboardMobileActions />);
 
 		const group = screen.getByRole("group", { name: /actions du tableau de bord/i });
 		expect(group).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /période/i })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /synchroniser les données/i })).toBeInTheDocument();
-		expect(screen.getByTestId("export-button")).toBeInTheDocument();
 	});
 
 	it("shows the current period label fallback when no search param is set", () => {
-		render(<DashboardMobileActions period="month" />);
+		render(<DashboardMobileActions />);
 
 		const periodButton = screen.getByRole("button", { name: /période/i });
 		expect(periodButton).toHaveAttribute("aria-haspopup", "dialog");
@@ -109,7 +101,7 @@ describe("DashboardMobileActions", () => {
 
 	it("reflects the search-param period when present", () => {
 		mockSearchParamsGet.mockReturnValue("7d");
-		render(<DashboardMobileActions period="7d" />);
+		render(<DashboardMobileActions />);
 
 		const periodButton = screen.getByRole("button", { name: /période/i });
 		expect(periodButton.textContent).toMatch(/7 jours/i);
@@ -117,7 +109,7 @@ describe("DashboardMobileActions", () => {
 
 	it("opens the period sheet + fires 'selection' haptic on period trigger click", async () => {
 		const user = userEvent.setup();
-		render(<DashboardMobileActions period="month" />);
+		render(<DashboardMobileActions />);
 
 		expect(screen.queryByTestId("period-sheet-open")).toBeNull();
 		await user.click(screen.getByRole("button", { name: /période/i }));
@@ -128,7 +120,7 @@ describe("DashboardMobileActions", () => {
 
 	it("opens the refresh sheet + fires 'light' haptic on refresh trigger click", async () => {
 		const user = userEvent.setup();
-		render(<DashboardMobileActions period="month" />);
+		render(<DashboardMobileActions />);
 
 		expect(screen.queryByTestId("refresh-sheet-open")).toBeNull();
 		await user.click(screen.getByRole("button", { name: /synchroniser les données/i }));
@@ -137,11 +129,4 @@ describe("DashboardMobileActions", () => {
 		expect(screen.getByTestId("refresh-sheet-open")).toBeInTheDocument();
 	});
 
-	it("forwards period prop + 'icon' mode to ExportRevenueButton", () => {
-		render(<DashboardMobileActions period="quarter" />);
-
-		const exportBtn = screen.getByTestId("export-button");
-		expect(exportBtn).toHaveAttribute("data-period", "quarter");
-		expect(exportBtn).toHaveAttribute("data-mode", "icon");
-	});
 });

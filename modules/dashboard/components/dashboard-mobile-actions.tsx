@@ -17,10 +17,8 @@ import {
 
 import { DashboardPeriodSheet } from "./dashboard-period-sheet";
 import { DashboardRefreshSheet } from "./dashboard-refresh-sheet";
-import { ExportRevenueButton } from "./export-revenue-button";
 
 interface DashboardMobileActionsProps {
-	period: DashboardPeriod;
 	className?: string;
 }
 
@@ -29,19 +27,18 @@ interface DashboardMobileActionsProps {
  * Renders 3 trigger buttons (44px WCAG) that open:
  * - Period sheet (Vaul bottom, snap [0.5, 0.92])
  * - Refresh sheet (Vaul bottom, snap [0.5], includes RelativeClock freshness)
- * - Export CSV (immediate, via ExportRevenueButton mode="icon")
  *
  * Wired in app/admin/(dashboard)/page.tsx — desktop keeps the inline 3-button row.
  */
-export function DashboardMobileActions({ period, className }: DashboardMobileActionsProps) {
+export function DashboardMobileActions({ className }: DashboardMobileActionsProps) {
 	return (
-		<Suspense fallback={<DashboardMobileActionsFallback period={period} className={className} />}>
-			<DashboardMobileActionsInner period={period} className={className} />
+		<Suspense fallback={<DashboardMobileActionsFallback className={className} />}>
+			<DashboardMobileActionsInner className={className} />
 		</Suspense>
 	);
 }
 
-function DashboardMobileActionsInner({ period, className }: DashboardMobileActionsProps) {
+function DashboardMobileActionsInner({ className }: DashboardMobileActionsProps) {
 	const [periodOpen, setPeriodOpen] = useState(false);
 	const [refreshOpen, setRefreshOpen] = useState(false);
 	const searchParams = useSearchParams();
@@ -95,7 +92,6 @@ function DashboardMobileActionsInner({ period, className }: DashboardMobileActio
 					<RefreshCw className="size-4" aria-hidden="true" />
 				</Button>
 
-				<ExportRevenueButton period={period} mode="icon" />
 			</div>
 
 			<DashboardPeriodSheet open={periodOpen} onOpenChange={setPeriodOpen} />
@@ -104,12 +100,11 @@ function DashboardMobileActionsInner({ period, className }: DashboardMobileActio
 	);
 }
 
-function DashboardMobileActionsFallback({ period, className }: DashboardMobileActionsProps) {
+function DashboardMobileActionsFallback({ className }: DashboardMobileActionsProps) {
 	return (
 		<div className={cn("flex w-full items-center gap-2", className)} aria-hidden="true">
 			<div className="bg-muted/40 h-11 flex-1 animate-pulse rounded-md" />
 			<div className="bg-muted/40 size-11 animate-pulse rounded-md" />
-			<ExportRevenueButton period={period} mode="icon" />
 		</div>
 	);
 }

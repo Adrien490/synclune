@@ -17,7 +17,6 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { useRefreshDashboard } from "@/modules/dashboard/hooks/use-refresh-dashboard";
-import { RelativeClock } from "@/modules/dashboard/components/relative-clock";
 
 interface DashboardRefreshSheetProps {
 	open: boolean;
@@ -36,7 +35,7 @@ const MOBILE_SNAP_POINTS: (number | string)[] = [0.5];
 export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSheetProps) {
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
-	const { refresh, isPending, lastRefreshedAt } = useRefreshDashboard({
+	const { refresh, isPending } = useRefreshDashboard({
 		onSuccess: () => {
 			haptic("success");
 			onOpenChange(false);
@@ -125,7 +124,6 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 							aria-atomic="true"
 							data-testid="dashboard-refresh-last-sync"
 						>
-							<RelativeClock from={lastRefreshedAt} paused={!open} />
 						</p>
 					</div>
 

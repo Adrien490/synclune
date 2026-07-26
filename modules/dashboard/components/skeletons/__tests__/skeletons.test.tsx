@@ -59,7 +59,6 @@ vi.mock("../../constants/chart-styles", () => ({
 }));
 
 import {
-	ChartSkeleton,
 	FulfillmentSkeleton,
 	KpiCardSkeleton,
 	KpisSkeleton,
@@ -140,43 +139,6 @@ describe("KpisSkeleton", () => {
 	it("uses a custom ariaLabel when provided", () => {
 		render(<KpisSkeleton ariaLabel="Chargement KPIs ventes" />);
 		expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Chargement KPIs ventes");
-	});
-});
-
-// ============================================================================
-// ChartSkeleton
-// ============================================================================
-
-describe("ChartSkeleton", () => {
-	it("renders with role='status' and aria-busy", () => {
-		render(<ChartSkeleton />);
-		const status = screen.getByRole("status");
-		expect(status).toBeInTheDocument();
-		expect(status).toHaveAttribute("aria-busy", "true");
-	});
-
-	it("uses the default aria-label", () => {
-		render(<ChartSkeleton />);
-		expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Chargement du graphique");
-	});
-
-	it("uses a custom ariaLabel when provided", () => {
-		render(<ChartSkeleton ariaLabel="Chargement courbe revenus" />);
-		expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Chargement courbe revenus");
-	});
-
-	it("sets the height style on the chart area div", () => {
-		const { container } = render(<ChartSkeleton height={400} />);
-		// The relative div wrapping chart area receives the inline height style
-		const heightDiv = container.querySelector('[style*="height"]');
-		expect(heightDiv).toBeInTheDocument();
-		expect(heightDiv).toHaveStyle({ height: "400px" });
-	});
-
-	it("uses default height of 250px when no height prop is provided", () => {
-		const { container } = render(<ChartSkeleton />);
-		const heightDiv = container.querySelector('[style*="height"]');
-		expect(heightDiv).toHaveStyle({ height: "250px" });
 	});
 });
 

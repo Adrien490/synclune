@@ -123,23 +123,7 @@ describe("DashboardRefreshSheet", () => {
 		expect(screen.getByText(/met à jour les kpis/i)).toBeInTheDocument();
 	});
 
-	it("shows 'Jamais dans cette session' when lastRefreshedAt is null", () => {
-		render(<DashboardRefreshSheet open onOpenChange={() => {}} />);
-		expect(screen.getByTestId("dashboard-refresh-last-sync")).toHaveTextContent(
-			/jamais dans cette session/i,
-		);
-	});
 
-	it("shows relative time when lastRefreshedAt is provided", () => {
-		mockUseRefreshDashboard.mockReturnValue({
-			refresh: mockRefresh,
-			isPending: false,
-			lastRefreshedAt: new Date(Date.now() - 30_000),
-		});
-		render(<DashboardRefreshSheet open onOpenChange={() => {}} />);
-		// Intl.RelativeTimeFormat FR returns something like "il y a 30 s"
-		expect(screen.getByTestId("dashboard-refresh-last-sync")).toHaveTextContent(/il y a/i);
-	});
 
 	it("calls refresh + fires 'medium' haptic when primary button is clicked", async () => {
 		const user = userEvent.setup();

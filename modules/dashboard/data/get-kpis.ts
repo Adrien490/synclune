@@ -10,11 +10,9 @@ import {
 	SHIPPABLE_PAYMENT_STATUSES,
 } from "@/modules/orders/constants/revenue-status.constants";
 import type {
-	ComparisonMode,
 	DashboardPeriod,
 } from "@/modules/dashboard/constants/period.constants";
 import {
-	DEFAULT_COMPARISON_MODE,
 	DEFAULT_PERIOD,
 } from "@/modules/dashboard/constants/period.constants";
 import {
@@ -43,12 +41,9 @@ type NewCustomersRow = { currentCount: bigint; previousCount: bigint };
  * Consolidated: parallel queries for revenue, orders, conversion, fulfillment, discounts, refunds.
  *
  * @param period - Period scope (e.g. "month", "year")
- * @param comparisonMode - "previous" (default) compares vs immediately preceding period.
- *                        "yoy" compares vs the same period one year earlier.
  */
 export async function fetchDashboardKpis(
 	period: DashboardPeriod = DEFAULT_PERIOD,
-	comparisonMode: ComparisonMode = DEFAULT_COMPARISON_MODE,
 ): Promise<GetKpisReturn> {
 	"use cache";
 
@@ -56,15 +51,13 @@ export async function fetchDashboardKpis(
 	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	return Sentry.startSpan(
-		{ name: "dashboard.fetchKpis", op: "db.read", attributes: { period, comparisonMode } },
+		{ name: "dashboard.fetchKpis", op: "db.read", attributes: { period } },
 		async () => {
 			const boundaries = getPeriodBoundaries(period);
 			const sparklineConfig = getChartConfig(period);
 			const currentStart = boundaries.currentStart;
-			const previousStart =
-				comparisonMode === "yoy" ? boundaries.previousYearStart : boundaries.previousStart;
-			const previousEnd =
-				comparisonMode === "yoy" ? boundaries.previousYearEnd : boundaries.previousEnd;
+			const previousStart = boundaries.previousStart;
+			const previousEnd = boundaries.previousEnd;
 
 			const [
 				currentMonth,

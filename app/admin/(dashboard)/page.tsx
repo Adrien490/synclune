@@ -6,51 +6,28 @@ import { SectionHeading } from "./_components/section-heading";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
-import { DashboardAmbientBackground } from "@/modules/dashboard/components/dashboard-ambient-background";
-import { DashboardScrollRestore } from "@/modules/dashboard/components/dashboard-scroll-restore";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
-import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
-import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
-import { ComparisonSelector } from "@/modules/dashboard/components/comparison-selector";
-import { ExportRevenueButton } from "@/modules/dashboard/components/export-revenue-button";
 import { DashboardMobileActions } from "@/modules/dashboard/components/dashboard-mobile-actions";
-import { DashboardFreshness } from "@/modules/dashboard/components/dashboard-freshness";
 import { VatProgressCard } from "@/modules/dashboard/components/vat-progress-card";
-import { EuOssProgressCard } from "@/modules/dashboard/components/eu-oss-progress-card";
 
 import {
 	KpisSkeleton,
-	ChartSkeleton,
 	ListSkeleton,
 	VatProgressSkeleton,
 } from "@/modules/dashboard/components/skeletons";
 
-import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
-import { fetchDashboardTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
 import { fetchDashboardActionItems } from "@/modules/dashboard/data/get-action-items";
-import { fetchDashboardReviewHealth } from "@/modules/dashboard/data/get-review-health";
 import { fetchDashboardVatProgress } from "@/modules/dashboard/data/get-vat-progress";
-import { fetchDashboardEuOssProgress } from "@/modules/dashboard/data/get-eu-oss-progress";
 import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadline.service";
 
-import {
-	DASHBOARD_PERIODS,
-	getComparisonLabel,
-	parseChartMode,
-	parseComparisonMode,
-	parsePeriod,
-} from "@/modules/dashboard/constants/period.constants";
-import type {
-	ChartMode,
-	ComparisonMode,
-	DashboardPeriod,
-} from "@/modules/dashboard/constants/period.constants";
+import { getComparisonLabel, parsePeriod } from "@/modules/dashboard/constants/period.constants";
+import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
@@ -58,19 +35,15 @@ export const metadata: Metadata = {
 };
 
 type AdminDashboardPageProps = {
-	searchParams: Promise<{ period?: string; comparison?: string; chartMode?: string }>;
+	searchParams: Promise<{ period?: string }>;
 };
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
 	const params = await searchParams;
 	const period = parsePeriod(params.period);
-	const comparisonMode = parseComparisonMode(params.comparison);
-	const chartMode = parseChartMode(params.chartMode);
 
 	return (
 		<section aria-label="Tableau de bord" className="relative isolate">
-			<DashboardAmbientBackground />
-			<DashboardScrollRestore />
 			<h1 className="sr-only">Tableau de bord</h1>
 			<header className="mb-4 md:mb-6">
 				<div
@@ -79,13 +52,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					className="flex w-full flex-wrap items-center justify-start gap-3 md:justify-end"
 				>
 					<div className="hidden w-full items-center gap-3 md:flex md:w-auto md:justify-end">
-						<DashboardFreshness />
 						<PeriodSelector />
-						<ComparisonSelector />
-						<ExportRevenueButton period={period} />
 						<RefreshDashboardButton />
 					</div>
-					<DashboardMobileActions period={period} className="md:hidden" />
+					<DashboardMobileActions className="md:hidden" />
 				</div>
 			</header>
 
@@ -93,8 +63,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				<Suspense>
 					<AlertsWrapper />
 				</Suspense>
-
-				<DashboardFreshness className="md:hidden" />
 
 				<section aria-labelledby="dashboard-section-performance" className="space-y-4">
 					<SectionHeading
@@ -104,10 +72,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					/>
 					<Suspense
 						fallback={
-							<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
+							<KpisSkeleton count={4} compactCount={3} ariaLabel="Chargement des indicateurs" />
 						}
 					>
-						<KpisWrapper period={period} comparisonMode={comparisonMode} />
+						<KpisWrapper period={period} />
 					</Suspense>
 				</section>
 
@@ -117,70 +85,28 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						label="Conformité fiscale"
 						accent="circle"
 					/>
-					<div className="grid gap-4 sm:grid-cols-2">
-						<Suspense fallback={<VatProgressSkeleton />}>
-							<VatProgressWrapper />
-						</Suspense>
-						<Suspense fallback={<VatProgressSkeleton />}>
-							<EuOssProgressWrapper />
-						</Suspense>
-					</div>
-				</section>
-
-				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
-					<SectionHeading id="dashboard-section-trends" label="Tendances" accent="arrow" />
-					<Suspense
-						fallback={
-							<ChartSkeleton
-								heightClassName="h-60 sm:h-72 md:h-75"
-								ariaLabel="Chargement du graphique des revenus"
-							/>
-						}
-					>
-						<RevenueChartWrapper
-							period={period}
-							chartMode={chartMode}
-							comparisonMode={comparisonMode}
-						/>
+					<Suspense fallback={<VatProgressSkeleton />}>
+						<VatProgressWrapper />
 					</Suspense>
 				</section>
 
 				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
 					<SectionHeading id="dashboard-section-activity" label="Activité" accent="heart" />
-					<div className="grid gap-6 lg:grid-cols-2">
-						<Suspense
-							fallback={
-								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
-							}
-						>
-							<RecentOrdersWrapper />
-						</Suspense>
-						<Suspense
-							fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement du top produits" />}
-						>
-							<TopProductsWrapper period={period} periodLabel={DASHBOARD_PERIODS[period].label} />
-						</Suspense>
-					</div>
+					<Suspense
+						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />}
+					>
+						<RecentOrdersWrapper />
+					</Suspense>
 				</section>
 			</div>
 		</section>
 	);
 }
 
-async function KpisWrapper({
-	period,
-	comparisonMode,
-}: {
-	period: DashboardPeriod;
-	comparisonMode: ComparisonMode;
-}) {
+async function KpisWrapper({ period }: { period: DashboardPeriod }) {
 	let kpis;
-	let reviewHealth;
 	try {
-		[kpis, reviewHealth] = await Promise.all([
-			fetchDashboardKpis(period, comparisonMode),
-			fetchDashboardReviewHealth(),
-		]);
+		kpis = await fetchDashboardKpis(period);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -191,13 +117,7 @@ async function KpisWrapper({
 			/>
 		);
 	}
-	return (
-		<DashboardKpis
-			kpis={kpis}
-			reviewHealth={reviewHealth}
-			comparisonLabel={getComparisonLabel(period, comparisonMode)}
-		/>
-	);
+	return <DashboardKpis kpis={kpis} comparisonLabel={getComparisonLabel(period)} />;
 }
 
 async function AlertsWrapper() {
@@ -235,47 +155,6 @@ async function VatProgressWrapper() {
 	return <VatProgressCard data={data} />;
 }
 
-async function EuOssProgressWrapper() {
-	let data;
-	try {
-		data = await fetchDashboardEuOssProgress();
-	} catch (error) {
-		Sentry.captureException(error);
-		return (
-			<ChartError
-				title="Erreur de chargement"
-				description="Impossible de charger le suivi du seuil OSS UE."
-				minHeight={120}
-			/>
-		);
-	}
-	return <EuOssProgressCard data={data} />;
-}
-
-async function RevenueChartWrapper({
-	period,
-	chartMode,
-	comparisonMode,
-}: {
-	period: DashboardPeriod;
-	chartMode: ChartMode;
-	comparisonMode: ComparisonMode;
-}) {
-	let chartData;
-	try {
-		chartData = await fetchDashboardRevenueChart(period, comparisonMode);
-	} catch (error) {
-		Sentry.captureException(error);
-		return (
-			<ChartError
-				title="Erreur de chargement"
-				description="Impossible de charger le graphique des revenus."
-			/>
-		);
-	}
-	return <LazyRevenueChart chartData={chartData} chartMode={chartMode} />;
-}
-
 async function RecentOrdersWrapper() {
 	let listData;
 	try {
@@ -290,26 +169,4 @@ async function RecentOrdersWrapper() {
 		);
 	}
 	return <RecentOrdersList listData={listData} />;
-}
-
-async function TopProductsWrapper({
-	period,
-	periodLabel,
-}: {
-	period: DashboardPeriod;
-	periodLabel?: string;
-}) {
-	let listData;
-	try {
-		listData = await fetchDashboardTopProducts(period);
-	} catch (error) {
-		Sentry.captureException(error);
-		return (
-			<ChartError
-				title="Erreur de chargement"
-				description="Impossible de charger le top des produits."
-			/>
-		);
-	}
-	return <TopProductsList listData={listData} periodLabel={periodLabel} />;
 }

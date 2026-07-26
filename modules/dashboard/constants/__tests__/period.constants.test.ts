@@ -2,12 +2,8 @@ import { describe, it, expect } from "vitest";
 
 import {
 	COMPARISON_LABELS,
-	COMPARISON_MODE_LABELS,
 	DASHBOARD_PERIODS,
-	DEFAULT_COMPARISON_MODE,
-	YOY_COMPARISON_LABELS,
 	getComparisonLabel,
-	parseComparisonMode,
 	parsePeriod,
 	type DashboardPeriod,
 } from "../period.constants";
@@ -111,77 +107,13 @@ describe("COMPARISON_LABELS", () => {
 });
 
 // ---------------------------------------------------------------------------
-// YOY_COMPARISON_LABELS
-// ---------------------------------------------------------------------------
-
-describe("YOY_COMPARISON_LABELS", () => {
-	it("has all 5 period keys", () => {
-		const keys = Object.keys(YOY_COMPARISON_LABELS) as DashboardPeriod[];
-
-		expect(keys).toHaveLength(5);
-		for (const k of ["7d", "30d", "month", "quarter", "year"] as const) {
-			expect(keys).toContain(k);
-		}
-	});
-
-	it("each YoY label is a non-empty string", () => {
-		for (const label of Object.values(YOY_COMPARISON_LABELS)) {
-			expect(typeof label).toBe("string");
-			expect(label.length).toBeGreaterThan(0);
-		}
-	});
-});
-
-// ---------------------------------------------------------------------------
-// COMPARISON_MODE_LABELS
-// ---------------------------------------------------------------------------
-
-describe("COMPARISON_MODE_LABELS", () => {
-	it("has both 'previous' and 'yoy' keys", () => {
-		expect(Object.keys(COMPARISON_MODE_LABELS).sort()).toEqual(["previous", "yoy"]);
-	});
-
-	it("DEFAULT_COMPARISON_MODE is 'previous'", () => {
-		expect(DEFAULT_COMPARISON_MODE).toBe("previous");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// parseComparisonMode
-// ---------------------------------------------------------------------------
-
-describe("parseComparisonMode", () => {
-	it("returns 'previous' for 'previous'", () => {
-		expect(parseComparisonMode("previous")).toBe("previous");
-	});
-
-	it("returns 'yoy' for 'yoy'", () => {
-		expect(parseComparisonMode("yoy")).toBe("yoy");
-	});
-
-	it("returns default 'previous' for undefined", () => {
-		expect(parseComparisonMode(undefined)).toBe("previous");
-	});
-
-	it("returns default 'previous' for invalid string", () => {
-		expect(parseComparisonMode("invalid")).toBe("previous");
-		expect(parseComparisonMode("")).toBe("previous");
-		expect(parseComparisonMode("YEAR")).toBe("previous");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // getComparisonLabel
 // ---------------------------------------------------------------------------
 
 describe("getComparisonLabel", () => {
-	it("returns previous-period label for 'previous' mode", () => {
-		expect(getComparisonLabel("month", "previous")).toBe(COMPARISON_LABELS.month);
-		expect(getComparisonLabel("year", "previous")).toBe(COMPARISON_LABELS.year);
+	it("returns the previous-period label for each period", () => {
+		expect(getComparisonLabel("month")).toBe(COMPARISON_LABELS.month);
+		expect(getComparisonLabel("year")).toBe(COMPARISON_LABELS.year);
 	});
 
-	it("returns YoY label for 'yoy' mode", () => {
-		expect(getComparisonLabel("month", "yoy")).toBe(YOY_COMPARISON_LABELS.month);
-		expect(getComparisonLabel("quarter", "yoy")).toBe(YOY_COMPARISON_LABELS.quarter);
-	});
 });

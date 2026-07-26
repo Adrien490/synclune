@@ -57,16 +57,12 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 	};
 }
 
-const defaultReviewHealth: GetReviewHealthReturn = {
-	averageRating: 4.5,
-	totalReviews: 10,
-};
 
 describe("DashboardKpis", () => {
-	it("renders 8 KPI cards (4 featured + 4 compact)", () => {
-		render(<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />);
+	it("renders 7 KPI cards (4 featured + 3 compact)", () => {
+		render(<DashboardKpis kpis={makeKpis()} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
 	});
 
 	it("renders CA net du mois KPI with critical priority when refundRate < 10%", () => {
@@ -83,7 +79,6 @@ describe("DashboardKpis", () => {
 						previousVolume: 50,
 					},
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -114,7 +109,6 @@ describe("DashboardKpis", () => {
 						previousVolume: 50,
 					},
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -140,7 +134,6 @@ describe("DashboardKpis", () => {
 						previousVolume: 50,
 					},
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -156,7 +149,6 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({ monthlyOrders: { count: 42, evolution: 8.3, previousVolume: 50 } })}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -178,7 +170,6 @@ describe("DashboardKpis", () => {
 				kpis={makeKpis({
 					averageOrderValue: { amount: 175.5, evolution: -2.1, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -199,7 +190,6 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({ pendingShipment: { count: 5 } })}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -217,7 +207,6 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({ pendingShipment: { count: 0 } })}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -237,7 +226,6 @@ describe("DashboardKpis", () => {
 				kpis={makeKpis({
 					conversionRate: { rate: 72.5, evolution: 5.0, abandoned: 12, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -260,7 +248,6 @@ describe("DashboardKpis", () => {
 				kpis={makeKpis({
 					conversionRate: { rate: 72.5, evolution: 5.0, abandoned: 12, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -278,7 +265,6 @@ describe("DashboardKpis", () => {
 				kpis={makeKpis({
 					conversionRate: { rate: 90.0, evolution: 0, abandoned: 1, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -296,7 +282,6 @@ describe("DashboardKpis", () => {
 				kpis={makeKpis({
 					conversionRate: { rate: 100, evolution: 0, abandoned: 0, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -322,7 +307,6 @@ describe("DashboardKpis", () => {
 						previousVolume: 50,
 					},
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -348,7 +332,6 @@ describe("DashboardKpis", () => {
 						previousVolume: 50,
 					},
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -375,7 +358,6 @@ describe("DashboardKpis", () => {
 					},
 					discountImpact: { amount: 200, evolution: 5, previousVolume: 50 },
 				})}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -387,38 +369,11 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("renders Note moyenne KPI from reviewHealth prop", () => {
-		render(
-			<DashboardKpis kpis={makeKpis()} reviewHealth={{ averageRating: 4.8, totalReviews: 42 }} />,
-		);
 
-		expect(mockKpiCard).toHaveBeenCalledWith(
-			expect.objectContaining({
-				title: "Note moyenne",
-				numericValue: 4.8,
-				subtitle: "42 avis",
-				href: "/admin/marketing/avis",
-			}),
-		);
-	});
-
-	it("renders Note moyenne with em-dash and 'Aucun avis' when no reviews", () => {
-		render(
-			<DashboardKpis kpis={makeKpis()} reviewHealth={{ averageRating: 0, totalReviews: 0 }} />,
-		);
-
-		expect(mockKpiCard).toHaveBeenCalledWith(
-			expect.objectContaining({
-				title: "Note moyenne",
-				value: "—",
-				subtitle: "Aucun avis",
-			}),
-		);
-	});
 
 	it("renders compact KPIs in a 4-column grid on lg+", () => {
 		const { container } = render(
-			<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />,
+			<DashboardKpis kpis={makeKpis()} />,
 		);
 
 		const grids = container.querySelectorAll(".grid");
@@ -426,7 +381,7 @@ describe("DashboardKpis", () => {
 	});
 
 	it("passes tooltip to each KPI card", () => {
-		render(<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />);
+		render(<DashboardKpis kpis={makeKpis()} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -440,7 +395,6 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({ newCustomers: { count: 7, evolution: 40, previousVolume: 50 } })}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -453,7 +407,6 @@ describe("DashboardKpis", () => {
 		render(
 			<DashboardKpis
 				kpis={makeKpis({ sparklines: { revenue: [1, 2, 3], orders: [3, 1, 4] } })}
-				reviewHealth={defaultReviewHealth}
 			/>,
 		);
 
@@ -464,7 +417,7 @@ describe("DashboardKpis", () => {
 	});
 
 	it("passes a null sparkline path when the series is flat/empty", () => {
-		render(<DashboardKpis kpis={makeKpis()} reviewHealth={defaultReviewHealth} />);
+		render(<DashboardKpis kpis={makeKpis()} />);
 
 		const revenueCall = mockKpiCard.mock.calls.find(([p]) => p.title === "CA net du mois")?.[0];
 		expect(revenueCall?.sparklinePath).toBeNull();
@@ -491,8 +444,8 @@ describe("DashboardKpis", () => {
 			sparklines: { revenue: [], orders: [] },
 		};
 
-		render(<DashboardKpis kpis={kpis} reviewHealth={{ averageRating: 0, totalReviews: 0 }} />);
+		render(<DashboardKpis kpis={kpis} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
 	});
 });
