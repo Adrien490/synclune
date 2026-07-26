@@ -176,7 +176,6 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
 
-
 vi.mock("@sentry/nextjs", () => ({
 	withScope: (cb: (scope: Record<string, () => void>) => void) =>
 		cb({

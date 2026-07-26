@@ -16,9 +16,5 @@ export {
 	deleteProductSchema,
 	duplicateProductSchema,
 	toggleProductStatusSchema,
-	bulkDeleteProductsSchema,
-	bulkArchiveProductsSchema,
-	bulkAttachCollectionProductsSchema,
-	bulkChangeProductStatusSchema,
 	updateProductCollectionsSchema,
 } from "./product-mutation.schemas";

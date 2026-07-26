@@ -130,7 +130,6 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

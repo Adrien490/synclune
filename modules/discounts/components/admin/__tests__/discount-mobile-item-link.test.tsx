@@ -5,15 +5,9 @@ const { capturedLongPressProps } = vi.hoisted(() => ({
 	capturedLongPressProps: { value: null as unknown },
 }));
 
-vi.mock("@/shared/components/mobile-selection", () => ({
-	MobileSelectableCard: ({
-		children,
-		longPressProps,
-	}: {
-		children: React.ReactNode;
-		longPressProps: unknown;
-	}) => {
-		capturedLongPressProps.value = longPressProps;
+vi.mock("@/shared/components/long-press-menu-link", () => ({
+	LongPressMenuLink: ({ children, ...props }: { children: React.ReactNode }) => {
+		capturedLongPressProps.value = props;
 		return <div data-testid="card">{children}</div>;
 	},
 }));
@@ -27,10 +21,6 @@ vi.mock("@/shared/components/ui/item", () => ({
 	ItemContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemTitle: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock("@/shared/contexts/admin-list-pending-context", () => ({
-	useAdminListPendingContextOptional: () => null,
 }));
 
 vi.mock("@/modules/discounts/hooks/use-discount-actions", () => ({
@@ -49,7 +39,7 @@ describe("DiscountMobileItem link target", () => {
 		cleanup();
 	});
 
-	it("longPressProps.href pointe vers la page détail (pas /modifier)", () => {
+	it("href pointe vers la page détail (pas /modifier)", () => {
 		const discount = {
 			id: "d-42",
 			code: "PROMO20",

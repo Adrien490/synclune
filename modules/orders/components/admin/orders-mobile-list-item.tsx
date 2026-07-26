@@ -2,14 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, StickyNote } from "lucide-react";
+import { StickyNote } from "lucide-react";
 import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
-import { useBulkSelectionContextOptional } from "@/shared/components/data-table";
 import { LinkPendingOverlay } from "@/shared/components/long-press-menu-link";
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -17,8 +15,6 @@ import {
 import { SwipeableCard } from "@/shared/components/swipeable-card";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { Badge } from "@/shared/components/ui/badge";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useGestureHintOnce } from "@/shared/hooks/use-gesture-hint-once";
 import { useLongPress } from "@/shared/hooks/use-long-press";
@@ -50,22 +46,13 @@ type Order = {
 	invoiceStatus?: InvoiceStatus | null;
 };
 
-function OrderCardContent({
-	order,
-	isPendingItem,
-	pendingLabel,
-}: {
-	order: Order;
-	isPendingItem?: boolean;
-	pendingLabel?: string | null;
-}) {
+function OrderCardContent({ order }: { order: Order }) {
 	return (
 		<Item
 			variant="outline"
 			size="sm"
-			className={cn("gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+			className={"gap-3 motion-safe:transition-opacity"}
 			aria-roledescription="carte commande"
-			aria-busy={isPendingItem ? true : undefined}
 		>
 			<ItemContent className="min-w-0">
 				<ItemTitle>
@@ -75,27 +62,20 @@ function OrderCardContent({
 					>
 						{order.orderNumber}
 					</span>
-					{isPendingItem ? (
-						<Badge variant="secondary" style={{ viewTransitionName: `order-status-${order.id}` }}>
-							<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-							{pendingLabel}
+					<>
+						<Badge
+							variant={ORDER_STATUS_VARIANTS[order.status]}
+							style={{ viewTransitionName: `order-status-${order.id}` }}
+						>
+							{ORDER_STATUS_LABELS[order.status]}
 						</Badge>
-					) : (
-						<>
-							<Badge
-								variant={ORDER_STATUS_VARIANTS[order.status]}
-								style={{ viewTransitionName: `order-status-${order.id}` }}
-							>
-								{ORDER_STATUS_LABELS[order.status]}
-							</Badge>
-							<Badge
-								variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
-								style={{ viewTransitionName: `order-payment-${order.id}` }}
-							>
-								{PAYMENT_STATUS_LABELS[order.paymentStatus]}
-							</Badge>
-						</>
-					)}
+						<Badge
+							variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
+							style={{ viewTransitionName: `order-payment-${order.id}` }}
+						>
+							{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+						</Badge>
+					</>
 				</ItemTitle>
 				<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 					<span>{order.customerName ?? order.customerEmail}</span>
@@ -122,22 +102,14 @@ function OrderCardContent({
  *   - Tap : navigation vers la page détail.
  *   - Long-press 500ms : ouvre le menu d'actions (parité row-actions desktop).
  *   - Swipe droit (→) : ouvre les notes internes (safe action).
- * - **Mode sélection ON** : SwipeableCard, swipe et long-press désactivés ;
- *   la card devient `<button role="checkbox">` qui toggle la sélection (pattern
- *   Mail iOS, géré via `MobileSelectableCard`).
  *
  * `isFirst` active le « peek nudge » de découvrabilité (cf. `useGestureHintOnce`) :
  * seul le premier item de la première page joue la démo de swipe, une fois par appareil.
  */
 export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst?: boolean }) {
-	const ctx = useBulkSelectionContextOptional();
 	// Hook appelé inconditionnellement (rules-of-hooks) mais désactivé hors 1er item :
 	// aucune lecture localStorage superflue sur les autres cartes.
 	const peek = useGestureHintOnce("admin-orders", { enabled: isFirst });
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(order.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 	const router = useRouter();
 	const [menuOpen, setMenuOpen] = useState(false);
 
@@ -164,17 +136,6 @@ export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst
 		router.push(`/admin/ventes/commandes/${order.id}/notes`);
 	};
 
-	if (ctx?.selectionMode) {
-		return (
-			<MobileSelectableCard
-				id={order.id}
-				itemLabel={`Commande ${order.orderNumber}, ${ORDER_STATUS_LABELS[order.status]}, ${PAYMENT_STATUS_LABELS[order.paymentStatus]}, ${formatEuro(order.total)}, ${order.customerName ?? order.customerEmail}`}
-			>
-				<OrderCardContent order={order} isPendingItem={isPendingItem} pendingLabel={pendingLabel} />
-			</MobileSelectableCard>
-		);
-	}
-
 	return (
 		<>
 			<SwipeableCard
@@ -198,11 +159,7 @@ export function OrdersMobileListItem({ order, isFirst }: { order: Order; isFirst
 						"transform-gpu motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.985]",
 					)}
 				>
-					<OrderCardContent
-						order={order}
-						isPendingItem={isPendingItem}
-						pendingLabel={pendingLabel}
-					/>
+					<OrderCardContent order={order} />
 					<LinkPendingOverlay />
 				</Link>
 			</SwipeableCard>

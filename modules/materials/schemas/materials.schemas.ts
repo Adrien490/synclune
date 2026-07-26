@@ -91,14 +91,6 @@ export const toggleMaterialStatusSchema = z.object({
 	isActive: z.boolean(),
 });
 
-export const bulkToggleMaterialStatusSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID invalide"))
-		.min(1, "Aucun matériau sélectionné")
-		.max(200, "Maximum 200 matériaux par opération"),
-	isActive: z.boolean(),
-});
-
 export const duplicateMaterialSchema = z.object({
 	materialId: z.cuid2("ID de matériau invalide"),
 });

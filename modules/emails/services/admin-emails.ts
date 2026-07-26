@@ -209,7 +209,7 @@ export async function sendAdminCronFailedAlert({
 			subject: `[Admin] Cron ${job} — ${errors} erreur(s)`,
 			tags: [{ name: "category", value: "admin" }],
 			// Bucket horaire : 1 alerte max/heure/cron. Un cron persistant en échec
-			// (ex: retry-post-webhook-tasks toutes les 5 min) sinon spamme l'admin
+			// (ex: retry-post-webhook-tasks toutes les 30 min) sinon spamme l'admin
 			// jusqu'à 288 mails/j → désensibilisation. Le bucket borne la fenêtre
 			// tout en laissant remonter la persistance heure par heure. Cf. CRON-AUDIT-003.
 			idempotencyKey: `alert:cron-failed:${job}:${Math.floor(Date.now() / 3_600_000)}`,
@@ -668,4 +668,3 @@ export async function sendAdminSequenceOverflowAlert({
 		},
 	);
 }
-

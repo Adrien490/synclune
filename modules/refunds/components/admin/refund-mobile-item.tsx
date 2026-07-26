@@ -1,10 +1,10 @@
 "use client";
 
-import { Loader2, ReceiptText } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enums";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -13,9 +13,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -43,11 +40,6 @@ interface RefundMobileItemProps {
 }
 
 export function RefundMobileItem({ refund }: RefundMobileItemProps) {
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(refund.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
-
 	const { sections } = useRefundActions({
 		refund: {
 			id: refund.id,
@@ -59,25 +51,20 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 	});
 
 	return (
-		<MobileSelectableCard
-			id={refund.id}
-			itemLabel={`Remboursement ${refund.order.orderNumber}, ${REFUND_STATUS_LABELS[refund.status]}, ${formatEuro(refund.amount)}, ${refund.order.customerName ?? refund.order.customerEmail}`}
-			longPressProps={{
-				href: `/admin/ventes/remboursements/${refund.id}`,
-				ariaLabel: `Remboursement ${refund.order.orderNumber}`,
-				sections,
-				menuTitle: "Actions remboursement",
-				menuDescription: refund.order.orderNumber,
-				className: "rounded-md text-left",
-				viewTransitionName: `refund-card-${refund.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/ventes/remboursements/${refund.id}`}
+			ariaLabel={`Remboursement ${refund.order.orderNumber}`}
+			sections={sections}
+			menuTitle="Actions remboursement"
+			menuDescription={refund.order.orderNumber}
+			className="rounded-md text-left"
+			viewTransitionName={`refund-card-${refund.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte remboursement"
-				aria-busy={isPendingItem || undefined}
 			>
 				<ItemMedia variant="icon">
 					<ReceiptText
@@ -94,22 +81,12 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 						>
 							{refund.order.orderNumber}
 						</span>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								style={{ viewTransitionName: `refund-status-${refund.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={REFUND_STATUS_VARIANTS[refund.status]}
-								style={{ viewTransitionName: `refund-status-${refund.id}` }}
-							>
-								{REFUND_STATUS_LABELS[refund.status]}
-							</Badge>
-						)}
+						<Badge
+							variant={REFUND_STATUS_VARIANTS[refund.status]}
+							style={{ viewTransitionName: `refund-status-${refund.id}` }}
+						>
+							{REFUND_STATUS_LABELS[refund.status]}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span>{refund.order.customerName ?? refund.order.customerEmail}</span>
@@ -127,6 +104,6 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

@@ -188,20 +188,6 @@ describe("useProductActions", () => {
 		);
 	});
 
-	it("inclut l'action bulk-selection en première position quand disponible", () => {
-		const bulkItem = { key: "select", label: "Sélectionner", icon: () => null };
-		mockUseAlertDialog.mockReturnValue({ open: vi.fn() });
-		mockUseDialog.mockReturnValue({ open: vi.fn() });
-		mockUseBulkSelectionActionItem.mockReturnValue(bulkItem);
-
-		const { result } = renderHook(() =>
-			useProductActions({ ...baseParams, productStatus: "PUBLIC" }),
-		);
-
-		const manageSection = result.current.sections.find((s) => s.key === "manage");
-		expect(manageSection?.items[0]).toBe(bulkItem);
-	});
-
 	it("expose Voir la fiche comme lien externe vers /creations/[slug]", () => {
 		setupDialogMocks();
 		const { result } = renderHook(() =>

@@ -2,8 +2,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as ReactDomModule from "react-dom";
 
-import type { AdminListSelectionControl } from "@/shared/types/store.types";
-
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -14,7 +12,6 @@ const {
 	mockUseMounted,
 	mockUseDialog,
 	mockUseHasOverlay,
-	mockUseAdminListSelectionStore,
 	mockEnter,
 	mockExit,
 } = vi.hoisted(() => ({
@@ -23,7 +20,6 @@ const {
 	mockUseMounted: vi.fn(),
 	mockUseDialog: vi.fn(),
 	mockUseHasOverlay: vi.fn(),
-	mockUseAdminListSelectionStore: vi.fn(),
 	mockEnter: vi.fn(),
 	mockExit: vi.fn(),
 }));
@@ -64,9 +60,7 @@ vi.mock("@/shared/stores/use-overlay-stack-store", () => ({
 	useHasOverlay: mockUseHasOverlay,
 }));
 
-vi.mock("@/shared/stores/use-admin-list-selection-store", () => ({
-	useAdminListSelectionStore: mockUseAdminListSelectionStore,
-}));
+vi.mock("@/shared/stores/use-admin-list-selection-store", () => ({}));
 
 vi.mock("next/navigation", () => ({
 	usePathname: () => "/admin/catalogue/produits",
@@ -119,27 +113,6 @@ import { AdminMobileBottomBar } from "../admin-mobile-bottom-bar";
 // HELPERS
 // ============================================================================
 
-function makeControl(
-	overrides: Partial<AdminListSelectionControl> = {},
-): AdminListSelectionControl {
-	return {
-		selectionMode: false,
-		pageHasItems: true,
-		enter: mockEnter,
-		exit: mockExit,
-		...overrides,
-	};
-}
-
-function setStoreSelector(control: AdminListSelectionControl | null) {
-	// Reproduit le pattern useStore((s) => s.control) en évaluant la fonction
-	// de selector côté mock avec un state minimal.
-	mockUseAdminListSelectionStore.mockImplementation(
-		(selector: (state: { control: AdminListSelectionControl | null }) => unknown) =>
-			selector({ control }),
-	);
-}
-
 // ============================================================================
 // SETUP
 // ============================================================================
@@ -149,7 +122,6 @@ beforeEach(() => {
 	mockUseMounted.mockReturnValue(true);
 	mockUseDialog.mockReturnValue({ isOpen: false, open: vi.fn(), close: vi.fn() });
 	mockUseHasOverlay.mockReturnValue(false);
-	setStoreSelector(null);
 });
 
 afterEach(() => {
@@ -160,43 +132,6 @@ afterEach(() => {
 // ============================================================================
 // TESTS
 // ============================================================================
-
-describe("AdminMobileBottomBar - mode sélection (tab Sélection retiré)", () => {
-	it("ne rend plus le tab Sélection même quand pageHasItems && !selectionMode", () => {
-		setStoreSelector(makeControl());
-
-		render(<AdminMobileBottomBar />);
-
-		expect(screen.queryByLabelText("Activer le mode sélection")).not.toBeInTheDocument();
-		expect(screen.queryByText("Sélection")).not.toBeInTheDocument();
-	});
-
-	it("n'expose plus de bouton qui appelle control.enter() depuis la bottom-bar", () => {
-		setStoreSelector(makeControl());
-
-		render(<AdminMobileBottomBar />);
-
-		expect(mockEnter).not.toHaveBeenCalled();
-	});
-
-	it("cache la bottom-bar globale (isHidden) quand le mode sélection est actif", () => {
-		setStoreSelector(makeControl({ selectionMode: true }));
-
-		render(<AdminMobileBottomBar />);
-
-		const nav = screen.getByLabelText("Navigation principale administration");
-		expect(nav).toHaveAttribute("data-hidden", "true");
-	});
-
-	it("garde la bottom-bar globale visible hors mode sélection", () => {
-		setStoreSelector(makeControl());
-
-		render(<AdminMobileBottomBar />);
-
-		const nav = screen.getByLabelText("Navigation principale administration");
-		expect(nav).toHaveAttribute("data-hidden", "false");
-	});
-});
 
 describe("AdminMobileBottomBar - bouton Menu (a11y trigger ↔ sheet)", () => {
 	it("expose aria-controls pointant vers l'id stable de la SheetContent admin", () => {

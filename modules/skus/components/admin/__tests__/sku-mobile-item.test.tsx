@@ -280,16 +280,4 @@ describe("SkuMobileItem", () => {
 		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
 		expect(screen.getByTestId("item")).toHaveAttribute("aria-roledescription", "carte variante");
 	});
-
-	it("remplace le badge stock par un badge pending quand bulk action en cours", () => {
-		pendingContextMock.current = {
-			isPending: (id: string) => id === "sku-1",
-			pendingKind: "status",
-		};
-		render(<SkuMobileItem sku={createSku({ inventory: 7 })} productSlug="bague-lune" />);
-
-		expect(screen.queryByLabelText("7 en stock")).not.toBeInTheDocument();
-		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
-		expect(screen.getByTestId("item")).toHaveAttribute("aria-busy", "true");
-	});
 });

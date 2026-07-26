@@ -148,13 +148,6 @@ export const retryFailedRefundSchema = z.object({
 // BULK APPROVE REFUNDS SCHEMA
 // ============================================================================
 
-export const bulkApproveRefundsSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins un remboursement doit être sélectionné")
-		.max(100, "Maximum 100 remboursements par opération"),
-});
-
 // ============================================================================
 // GET ORDER FOR REFUND SCHEMA
 // ============================================================================

@@ -8,12 +8,7 @@ import { Archive, FileEdit, Globe, Package, type LucideIcon } from "lucide-react
 import { ProductStatus } from "@/app/generated/prisma/client";
 
 // Shared components
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -40,7 +35,6 @@ import { getProductTotalStock } from "@/modules/products/utils/get-product-total
 // Local components
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
-import { ProductsBulkActionsBar } from "./products-bulk-actions-bar";
 
 const PRODUCT_STATUS_ICONS: Record<ProductStatus, LucideIcon> = {
 	[ProductStatus.PUBLIC]: Globe,
@@ -48,21 +42,17 @@ const PRODUCT_STATUS_ICONS: Record<ProductStatus, LucideIcon> = {
 	[ProductStatus.ARCHIVED]: Archive,
 };
 
-const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
-
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
 	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
-	collections?: Array<{ id: string; name: string }>;
 }
 
 export async function ProductsDataTable({
 	productsPromise,
 	perPage,
 	hasActiveFilters,
-	collections = EMPTY_COLLECTIONS,
 }: ProductsDataTableProps) {
 	const { products, pagination, totalCount } = await productsPromise;
 
@@ -84,12 +74,9 @@ export async function ProductsDataTable({
 		);
 	}
 
-	const pageItemIds = products.map((p) => p.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des bijoux"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -99,14 +86,9 @@ export async function ProductsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<ProductsBulkActionsBar collections={collections} />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="bijoux" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[8%]">Image</TableHead>
 					<TableHead className="w-[20%]">Titre</TableHead>
 					<TableHead className="w-[10%]">Statut</TableHead>
@@ -126,9 +108,6 @@ export async function ProductsDataTable({
 
 					return (
 						<TableRow key={product.id}>
-							<TableCell className="py-3">
-								<BulkSelectionRowCheckbox id={product.id} itemLabel={product.title} />
-							</TableCell>
 							<TableCell className="py-3">
 								<ProductImageCell
 									images={product.skus[0]?.images ?? []}

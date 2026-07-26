@@ -14,7 +14,6 @@ import {
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -58,7 +57,6 @@ export function useSkuActions({
 	const router = useRouter();
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
-	const selectActionItem = useBulkSelectionActionItem(skuId);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_SKU_DIALOG_ID);
 	const adjustStockDialog = useDialog(ADJUST_STOCK_DIALOG_ID);
 	const updatePriceDialog = useDialog(UPDATE_PRICE_DIALOG_ID);
@@ -86,7 +84,6 @@ export function useSkuActions({
 		{
 			key: "manage",
 			items: [
-				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "view",
 					label: "Voir les détails",

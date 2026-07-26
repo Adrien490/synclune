@@ -1,9 +1,4 @@
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
 	TableCell,
@@ -31,7 +26,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DiscountRowActions } from "./discount-row-actions";
-import { DiscountsBulkActionsBar } from "./discounts-bulk-actions-bar";
 import { CreateDiscountButton } from "./create-discount-button";
 import { getDiscountStatus } from "@/modules/discounts/services/discount-validation.service";
 
@@ -71,12 +65,9 @@ export async function DiscountsDataTable({
 		);
 	}
 
-	const pageItemIds = discounts.map((d) => d.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des codes promo"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -86,14 +77,9 @@ export async function DiscountsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<DiscountsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="codes promo" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[16%]">Code</TableHead>
 					<TableHead className="w-[14%]">Type</TableHead>
 					<TableHead className="w-[12%]">Valeur</TableHead>
@@ -110,9 +96,6 @@ export async function DiscountsDataTable({
 			<TableBody>
 				{discounts.map((discount) => (
 					<TableRow key={discount.id}>
-						<TableCell>
-							<BulkSelectionRowCheckbox id={discount.id} itemLabel={`Code ${discount.code}`} />
-						</TableCell>
 						<TableCell>
 							<Link
 								href={`/admin/marketing/discounts/${discount.id}`}

@@ -256,17 +256,6 @@ export const deleteOrderSchema = z.object({
 // BULK DELETE ORDERS SCHEMA
 // ============================================================================
 
-/**
- * Schema pour la suppression en masse de commandes
- * Seules les commandes éligibles seront supprimées
- */
-export const bulkDeleteOrdersSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(100, "Maximum 100 commandes par opération"),
-});
-
 // ============================================================================
 // CANCEL ORDER SCHEMA
 // ============================================================================
@@ -280,20 +269,6 @@ export const cancelOrderSchema = z.object({
 	id: z.cuid2(),
 	reason: z.string().max(500).optional(),
 	autoRefund: z.boolean().optional().default(false),
-});
-
-/**
- * Schema pour annulation en lot de commandes PENDING/UNPAID.
- * Ne s'applique qu'aux commandes pas encore payées (paymentStatus = PENDING).
- * Les commandes payées ou expédiées doivent être annulées individuellement
- * pour un traitement Stripe + remboursement spécifique.
- */
-export const bulkCancelOrdersSchema = z.object({
-	orderIds: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(50, "Maximum 50 commandes par opération"),
-	reason: z.string().max(500).optional(),
 });
 
 // ============================================================================

@@ -1,9 +1,4 @@
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
 	TableCell,
@@ -13,7 +8,6 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetMaterialsReturn } from "@/modules/materials/data/get-materials";
 import { MaterialActiveToggle } from "@/modules/materials/components/admin/material-active-toggle";
-import { MaterialsBulkActionsBar } from "@/modules/materials/components/admin/materials-bulk-actions-bar";
 import { Gem } from "lucide-react";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
@@ -47,12 +41,9 @@ export function MaterialsDataTable({
 		);
 	}
 
-	const pageItemIds = materials.map((m) => m.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des matériaux"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -62,14 +53,9 @@ export function MaterialsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<MaterialsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="matériaux" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[23%]">Nom</TableHead>
 					<TableHead className="w-[28%]">Description</TableHead>
 					<TableHead className="w-[10%] text-center">Statut</TableHead>
@@ -88,12 +74,6 @@ export function MaterialsDataTable({
 
 					return (
 						<TableRow key={material.id}>
-							<TableCell>
-								<BulkSelectionRowCheckbox
-									id={material.id}
-									itemLabel={`Matériau ${material.name}`}
-								/>
-							</TableCell>
 							<TableCell>
 								<div className="overflow-hidden">
 									<span

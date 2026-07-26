@@ -3,42 +3,24 @@ import { Gem } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
-import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import {
-	MobileSelectionBottomBar,
-	MobileSelectionHeader,
-} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
-import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
-import type {
-	GetMaterialsParams,
-	GetMaterialsReturn,
-	MaterialFilters,
-} from "@/modules/materials/types/materials.types";
+import type { GetMaterialsReturn } from "@/modules/materials/types/materials.types";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import { MaterialMobileItem } from "./material-mobile-item";
-import { MaterialsBulkActionsBar } from "./materials-bulk-actions-bar";
-import { MaterialsCrossPageBanner } from "./materials-cross-page-banner";
 
 interface MaterialsMobileListProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
-	filterParams?: {
-		search?: string;
-		sortBy?: GetMaterialsParams["sortBy"];
-		filters?: MaterialFilters;
-	};
 }
 
 export function MaterialsMobileList({
 	materialsPromise,
 	perPage,
 	hasActiveFilters,
-	filterParams,
 }: MaterialsMobileListProps) {
 	const { materials, pagination, totalCount } = use(materialsPromise);
 
@@ -65,39 +47,26 @@ export function MaterialsMobileList({
 		);
 	}
 
-	const pageItemIds = materials.map((m) => m.id);
-
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider itemsLabel={{ singular: "matériau", plural: "matériaux" }}>
-				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-					<MobileSelectionHeader itemsLabel={{ singular: "matériau", plural: "matériaux" }} />
-					{filterParams ? (
-						<MaterialsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
-					) : null}
-					<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
-					<ItemGroup aria-label="Materiaux" className="gap-2">
-						{materials.map((material) => (
-							<li key={material.id}>
-								<MaterialMobileItem material={material} />
-							</li>
-						))}
-					</ItemGroup>
+		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
+			<ItemGroup aria-label="Materiaux" className="gap-2">
+				{materials.map((material) => (
+					<li key={material.id}>
+						<MaterialMobileItem material={material} />
+					</li>
+				))}
+			</ItemGroup>
 
-					<AdminMobileListPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={materials.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-						totalCount={totalCount}
-					/>
-				</div>
-				<MobileSelectionBottomBar emptyHint="Tape sur les matières à l'établi">
-					<MaterialsBulkActionsBar presentation="bottom-bar" />
-				</MobileSelectionBottomBar>
-			</AdminListPendingProvider>
-		</BulkSelectionProvider>
+			<AdminMobileListPagination
+				perPage={perPage}
+				hasNextPage={pagination.hasNextPage}
+				hasPreviousPage={pagination.hasPreviousPage}
+				currentPageSize={materials.length}
+				nextCursor={pagination.nextCursor}
+				prevCursor={pagination.prevCursor}
+				totalCount={totalCount}
+			/>
+		</div>
 	);
 }

@@ -66,7 +66,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 
-
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminOrderProcessingFailedAlert: vi.fn(),
 }));

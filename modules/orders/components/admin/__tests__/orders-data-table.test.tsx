@@ -91,33 +91,4 @@ describe("OrdersDataTable", () => {
 		expect(screen.getByLabelText(/Statut : En attente/)).toBeInTheDocument();
 		expect(screen.getByLabelText(/Paiement : Paiement en attente/)).toBeInTheDocument();
 	});
-
-	it("n'expose une case à cocher que pour les commandes PENDING non payées (éligibles bulk-cancel)", async () => {
-		const el = await OrdersDataTable({
-			ordersPromise: makeResult([
-				makeOrder({
-					id: "elig",
-					orderNumber: "SYN-A",
-					status: "PENDING",
-					paymentStatus: "PENDING",
-				}),
-				makeOrder({
-					id: "paid",
-					orderNumber: "SYN-B",
-					status: "PROCESSING",
-					paymentStatus: "PAID",
-				}),
-			]),
-			perPage: 10,
-		});
-		render(el);
-
-		// Seule la commande éligible expose une row-checkbox.
-		expect(screen.getByRole("checkbox", { name: /Commande SYN-A/ })).toBeInTheDocument();
-		expect(screen.queryByRole("checkbox", { name: /Commande SYN-B/ })).not.toBeInTheDocument();
-
-		// pageItemIds passé à AdminDataTable = uniquement l'éligible.
-		const table = screen.getByTestId("data-table");
-		expect(JSON.parse(table.getAttribute("data-page-item-ids") ?? "[]")).toEqual(["elig"]);
-	});
 });

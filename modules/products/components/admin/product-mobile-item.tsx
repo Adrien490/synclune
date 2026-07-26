@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import Image from "next/image";
 
 import type { MediaType } from "@/app/generated/prisma/client";
@@ -8,12 +8,9 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
@@ -78,34 +75,24 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 		productStatus: product.status,
 	});
 
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(product.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
-
 	const stockVariant = getStockVariant(stock);
 	const stockAriaLabel = getStockAriaLabel(stock);
 
 	return (
-		<MobileSelectableCard
-			id={product.id}
-			itemLabel={`Produit ${product.title}, ${statusConfig.label}, ${stockAriaLabel}, ${priceDisplay}`}
-			longPressProps={{
-				href: `/admin/catalogue/produits/${product.slug}`,
-				ariaLabel: `Produit ${product.title}`,
-				sections,
-				menuTitle: "Actions",
-				menuDescription: product.title,
-				className: "text-left",
-				viewTransitionName: `product-card-${product.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/produits/${product.slug}`}
+			ariaLabel={`Produit ${product.title}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={product.title}
+			className="text-left"
+			viewTransitionName={`product-card-${product.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte produit"
-				aria-busy={isPendingItem || undefined}
 			>
 				{primaryImage && thumbSrc ? (
 					<Image
@@ -132,23 +119,12 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{product.title}</span>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								className="gap-1"
-								style={{ viewTransitionName: `product-status-${product.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={statusConfig.variant}
-								style={{ viewTransitionName: `product-status-${product.id}` }}
-							>
-								{statusConfig.label}
-							</Badge>
-						)}
+						<Badge
+							variant={statusConfig.variant}
+							style={{ viewTransitionName: `product-status-${product.id}` }}
+						>
+							{statusConfig.label}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{priceDisplay}</span>
@@ -176,6 +152,6 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

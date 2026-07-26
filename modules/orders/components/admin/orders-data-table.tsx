@@ -1,10 +1,9 @@
-import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/client";
 import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+	type OrderStatus,
+	type PaymentStatus,
+	type FulfillmentStatus,
+} from "@/app/generated/prisma/client";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -33,7 +32,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
-import { OrdersBulkActionsBar } from "./orders-bulk-actions-bar";
 
 const ORDER_STATUS_ICONS: Record<OrderStatus, LucideIcon> = {
 	PENDING: Clock,
@@ -71,14 +69,10 @@ export async function OrdersDataTable({
 	}
 
 	// Seules les commandes PENDING non payées sont éligibles au bulk-cancel
-	const pageItemIds = orders
-		.filter((o) => o.status === OrderStatus.PENDING && o.paymentStatus === PaymentStatus.PENDING)
-		.map((o) => o.id);
 
 	return (
 		<AdminDataTable
 			caption="Liste des commandes"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -88,14 +82,9 @@ export async function OrdersDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<OrdersBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="commandes éligibles" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[12%]">Commande</TableHead>
 					<TableHead className="w-[15%]">Client</TableHead>
 					<TableHead className="w-[10%]">Date</TableHead>
@@ -113,26 +102,9 @@ export async function OrdersDataTable({
 			<TableBody>
 				{orders.map((order) => {
 					const userName = order.user?.name ?? order.user?.email ?? "Invité";
-					const isCancelable =
-						order.status === OrderStatus.PENDING && order.paymentStatus === PaymentStatus.PENDING;
 
 					return (
 						<TableRow key={order.id}>
-							<TableCell>
-								{isCancelable ? (
-									<BulkSelectionRowCheckbox
-										id={order.id}
-										itemLabel={`Commande ${order.orderNumber}`}
-									/>
-								) : (
-									<span
-										className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
-										aria-label="Commande non annulable en lot — déjà payée ou expédiée, annuler individuellement"
-									>
-										—
-									</span>
-								)}
-							</TableCell>
 							<TableCell>
 								<Link
 									href={`/admin/ventes/commandes/${order.id}`}

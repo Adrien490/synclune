@@ -106,7 +106,6 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 					A-YYYY-NNNNN.
 				</p>
 			</section>
-
 		</div>
 	);
 }

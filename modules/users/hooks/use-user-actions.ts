@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { useExportUserDataAdmin } from "./use-export-user-data-admin";
@@ -39,7 +38,6 @@ export function useUserActions({ user }: UseUserActionsParams): {
 	const restoreDialog = useDialog(`restore-user-${user.id}`);
 	const promoteDialog = useDialog(`promote-user-${user.id}`);
 	const demoteDialog = useDialog(`demote-user-${user.id}`);
-	const selectActionItem = useBulkSelectionActionItem(user.id);
 
 	const { exportData, isPending: isExportPending } = useExportUserDataAdmin();
 	const { invalidate: invalidateSessions, isPending: isInvalidatePending } =
@@ -55,7 +53,6 @@ export function useUserActions({ user }: UseUserActionsParams): {
 		{
 			key: "navigate",
 			items: [
-				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "detail",
 					label: "Voir le détail",

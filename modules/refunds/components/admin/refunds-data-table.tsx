@@ -1,10 +1,5 @@
 import { RefundStatus, type RefundReason } from "@/app/generated/prisma/client";
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -33,7 +28,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { RefundRowActions } from "./refund-row-actions";
-import { RefundsBulkActionsBar } from "./refunds-bulk-actions-bar";
 
 const REFUND_STATUS_ICONS: Record<RefundStatus, LucideIcon> = {
 	[RefundStatus.PENDING]: Clock,
@@ -72,12 +66,10 @@ export async function RefundsDataTable({
 	}
 
 	// Seuls les refunds PENDING sont éligibles au bulk-approve
-	const pageItemIds = refunds.filter((r) => r.status === RefundStatus.PENDING).map((r) => r.id);
 
 	return (
 		<AdminDataTable
 			caption="Liste des remboursements"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -87,14 +79,9 @@ export async function RefundsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<RefundsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="remboursements en attente" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[12%]">Commande</TableHead>
 					<TableHead className="w-[10%]">Date</TableHead>
 					<TableHead className="w-[20%]">Client</TableHead>
@@ -111,26 +98,8 @@ export async function RefundsDataTable({
 			</TableHeader>
 			<TableBody>
 				{refunds.map((refund) => {
-					const isPending = refund.status === RefundStatus.PENDING;
-
 					return (
 						<TableRow key={refund.id}>
-							<TableCell>
-								{isPending ? (
-									<BulkSelectionRowCheckbox
-										id={refund.id}
-										itemLabel={`Remboursement commande ${refund.order.orderNumber}`}
-									/>
-								) : (
-									<span
-										className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
-										aria-label="Remboursement non en attente"
-										title="Statut non éligible au bulk-approve"
-									>
-										—
-									</span>
-								)}
-							</TableCell>
 							<TableCell>
 								<Link
 									href={`/admin/ventes/commandes/${refund.order.id}`}

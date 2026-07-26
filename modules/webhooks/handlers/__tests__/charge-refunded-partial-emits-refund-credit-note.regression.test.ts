@@ -107,7 +107,6 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
 
-
 import type Stripe from "stripe";
 import { handleChargeRefunded } from "../refund-handlers";
 

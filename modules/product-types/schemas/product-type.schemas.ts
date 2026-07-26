@@ -93,14 +93,6 @@ export const toggleProductTypeStatusSchema = z.object({
 	isActive: z.boolean(),
 });
 
-export const bulkToggleProductTypeStatusSchema = z.object({
-	productTypeIds: z
-		.array(z.cuid2("ID de type de produit invalide"))
-		.min(1, "Au moins un type est requis")
-		.max(100, "Maximum 100 types par opération"),
-	targetIsActive: z.boolean(),
-});
-
 export const duplicateProductTypeSchema = z.object({
 	productTypeId: z.cuid2("ID de type de produit invalide"),
 });

@@ -1,7 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
-import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -46,12 +44,6 @@ export const GET_MATERIAL_SELECT = {
 
 export const GET_MATERIALS_DEFAULT_PER_PAGE = 20;
 export const GET_MATERIALS_MAX_RESULTS_PER_PAGE = 200;
-
-/**
- * Cap des ids retournés par get-filtered-material-ids pour le banner
- * "Sélectionner les N filtrés" (parité produits, cf. BULK_PRODUCT_ACTION_LIMIT).
- */
-export const BULK_MATERIAL_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 // ============================================================================
 // SORT CONSTANTS

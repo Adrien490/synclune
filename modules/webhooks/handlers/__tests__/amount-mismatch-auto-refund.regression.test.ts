@@ -55,7 +55,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: ensureInvoiceNumberPersistedMock,
 }));
 
-
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		order: {

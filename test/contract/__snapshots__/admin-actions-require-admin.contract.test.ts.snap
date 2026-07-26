@@ -4,7 +4,6 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
 [
   "modules/invoices/actions/retry-invoice-generation.ts",
   "modules/orders/actions/add-order-note.ts",
-  "modules/orders/actions/bulk-cancel-orders.ts",
   "modules/orders/actions/cancel-order.ts",
   "modules/orders/actions/delete-order-note.ts",
   "modules/orders/actions/delete-order.ts",
@@ -23,7 +22,6 @@ exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list o
   "modules/orders/actions/update-order-shipping-address.ts",
   "modules/orders/actions/update-tracking.ts",
   "modules/refunds/actions/approve-refund.ts",
-  "modules/refunds/actions/bulk-approve-refunds.ts",
   "modules/refunds/actions/cancel-refund.ts",
   "modules/refunds/actions/create-refund.ts",
   "modules/refunds/actions/process-refund.ts",

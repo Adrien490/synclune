@@ -230,7 +230,6 @@ vi.mock("../../services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
 }));
 
-
 // EINV-EREPORT-009 : process-refund passe par le wrapper deferrable (flag de
 
 import { processRefund } from "../process-refund";

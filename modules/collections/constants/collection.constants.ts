@@ -1,8 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
-import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -221,12 +219,6 @@ export const GET_COLLECTIONS_SELECT = {
 export const GET_COLLECTIONS_DEFAULT_PER_PAGE = 20;
 export const GET_COLLECTIONS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_COLLECTIONS_DEFAULT_SORT_BY = "name-ascending";
-
-/**
- * Cap des ids retournés par get-filtered-collection-ids pour le banner
- * "Sélectionner les N filtrés" (parité produits, cf. BULK_PRODUCT_ACTION_LIMIT).
- */
-export const BULK_COLLECTION_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 export const GET_COLLECTIONS_SORT_FIELDS = [
 	"name-ascending",

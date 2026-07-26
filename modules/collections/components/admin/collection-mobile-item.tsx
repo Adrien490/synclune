@@ -1,16 +1,13 @@
 "use client";
 
-import { FolderOpen, Loader2 } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import Image from "next/image";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 
 import type { Collection } from "../../types/collection.types";
 import { useCollectionActions } from "../../hooks/use-collection-actions";
@@ -46,10 +43,6 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 	const productsCount = collection._count.products || 0;
 	const statusConfig = STATUS_CONFIG[collection.status];
 	const cover = getCoverImage(collection.products);
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(collection.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useCollectionActions({
 		collectionId: collection.id,
@@ -61,25 +54,20 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 	});
 
 	return (
-		<MobileSelectableCard
-			id={collection.id}
-			itemLabel={`Collection ${collection.name}, ${statusConfig.label}, ${productsCount} produit${productsCount !== 1 ? "s" : ""}`}
-			longPressProps={{
-				href: `/admin/catalogue/collections/${collection.slug}`,
-				ariaLabel: `Collection ${collection.name}`,
-				sections,
-				menuTitle: "Actions collection",
-				menuDescription: collection.name,
-				className: "text-left",
-				viewTransitionName: `collection-card-${collection.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/collections/${collection.slug}`}
+			ariaLabel={`Collection ${collection.name}`}
+			sections={sections}
+			menuTitle="Actions collection"
+			menuDescription={collection.name}
+			className="text-left"
+			viewTransitionName={`collection-card-${collection.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte collection"
-				aria-busy={isPendingItem || undefined}
 			>
 				{cover ? (
 					<Image
@@ -104,22 +92,12 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{collection.name}</span>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								style={{ viewTransitionName: `collection-status-${collection.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={statusConfig.variant}
-								style={{ viewTransitionName: `collection-status-${collection.id}` }}
-							>
-								{statusConfig.label}
-							</Badge>
-						)}
+						<Badge
+							variant={statusConfig.variant}
+							style={{ viewTransitionName: `collection-status-${collection.id}` }}
+						>
+							{statusConfig.label}
+						</Badge>
 					</ItemTitle>
 					{collection.description ? (
 						<ItemDescription className="line-clamp-1">{collection.description}</ItemDescription>
@@ -131,6 +109,6 @@ export function CollectionMobileItem({ collection, preload }: CollectionMobileIt
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

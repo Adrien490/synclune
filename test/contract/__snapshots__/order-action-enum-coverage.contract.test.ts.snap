@@ -12,7 +12,6 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   ],
   "CANCELLED": [
     "modules/cron/services/cleanup-pending-orders.service.ts",
-    "modules/orders/actions/bulk-cancel-orders.ts",
     "modules/orders/actions/cancel-order-customer.ts",
     "modules/orders/actions/cancel-order.ts",
     "modules/orders/actions/delete-order.ts",
@@ -87,7 +86,6 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   "REFUND_CREATED": [
     "modules/orders/actions/mark-as-fully-refunded.ts",
     "modules/refunds/actions/approve-refund.ts",
-    "modules/refunds/actions/bulk-approve-refunds.ts",
     "modules/refunds/actions/create-refund.ts",
     "modules/refunds/actions/request-return.ts",
     "modules/refunds/actions/retry-failed-refund.ts",

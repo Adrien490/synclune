@@ -14,13 +14,6 @@ const { mockSelectionMode } = vi.hoisted(() => ({
 	mockSelectionMode: { current: false as boolean | null },
 }));
 
-vi.mock("@/shared/components/data-table", () => ({
-	useBulkSelectionContextOptional: () =>
-		mockSelectionMode.current === null
-			? null
-			: { selectionMode: mockSelectionMode.current, selectedCount: 0, pageItemIds: [] },
-}));
-
 vi.mock("../cursor-pagination", () => ({
 	CursorPagination: (props: Record<string, unknown>) => (
 		<div data-testid="cursor-pagination" data-props={JSON.stringify(props)} />
@@ -48,13 +41,6 @@ describe("AdminMobileListPagination", () => {
 	it("renders CursorPagination when no selection mode is active", () => {
 		render(<AdminMobileListPagination {...defaultProps} />);
 		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
-	});
-
-	it("returns null when selectionMode is true (MobileSelectionBottomBar takes precedence)", () => {
-		mockSelectionMode.current = true;
-		const { container } = render(<AdminMobileListPagination {...defaultProps} />);
-		expect(container.firstChild).toBeNull();
-		expect(screen.queryByTestId("cursor-pagination")).not.toBeInTheDocument();
 	});
 
 	it("renders even when outside BulkSelectionProvider (fallback non-régressif)", () => {

@@ -5,11 +5,7 @@ import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
 import { SearchInput } from "@/shared/components/search-input";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	StickyActionBar,
-	type StickyActionBarItem,
-	useSelectionToggleItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -33,8 +29,6 @@ function RefundsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
 	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 	const { open: openOrderPicker } = useDialog(REFUND_ORDER_PICKER_DIALOG_ID);
-
-	const selectItem = useSelectionToggleItem();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -72,7 +66,6 @@ function RefundsBottomBarInner() {
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
-		...(selectItem ? [selectItem] : []),
 	];
 
 	return (

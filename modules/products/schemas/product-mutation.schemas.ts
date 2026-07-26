@@ -4,13 +4,7 @@ import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
 import { ARRAY_LIMITS, PRICE_LIMITS, TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
-import { BULK_PRODUCT_ACTION_LIMIT } from "../constants/product.constants";
 import { imageSchema } from "./product-media.schemas";
-
-const bulkProductIdsSchema = z
-	.array(z.cuid2())
-	.min(1, "Au moins un produit est requis")
-	.max(BULK_PRODUCT_ACTION_LIMIT, `Maximum ${BULK_PRODUCT_ACTION_LIMIT} produits par opération`);
 
 // ============================================================================
 // SKU SHARED
@@ -269,15 +263,6 @@ export const toggleProductStatusSchema = z.object({
 	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).optional(),
 });
 
-export const bulkDeleteProductsSchema = z.object({
-	productIds: bulkProductIdsSchema,
-});
-
-export const bulkArchiveProductsSchema = z.object({
-	productIds: bulkProductIdsSchema,
-	targetStatus: z.enum(["ARCHIVED", "PUBLIC"]).default("ARCHIVED"),
-});
-
 export const updateProductCollectionsSchema = z.object({
 	productId: z.cuid2({ message: "ID produit invalide" }),
 	collectionIds: z
@@ -286,14 +271,4 @@ export const updateProductCollectionsSchema = z.object({
 			error: `Un produit ne peut appartenir qu'à ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
 		})
 		.default([]),
-});
-
-export const bulkAttachCollectionProductsSchema = z.object({
-	productIds: bulkProductIdsSchema,
-	collectionId: z.cuid2({ message: "ID collection invalide" }),
-});
-
-export const bulkChangeProductStatusSchema = z.object({
-	productIds: bulkProductIdsSchema,
-	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
 });

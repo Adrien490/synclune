@@ -38,8 +38,6 @@ vi.mock("@/shared/utils/pagination", () => ({
 import {
 	createCollectionSchema,
 	updateCollectionSchema,
-	bulkDeleteCollectionsSchema,
-	bulkArchiveCollectionsSchema,
 	collectionFiltersSchema,
 	setFeaturedProductSchema,
 } from "../collection.schemas";
@@ -318,135 +316,9 @@ describe("updateCollectionSchema", () => {
 // bulkDeleteCollectionsSchema
 // ---------------------------------------------------------------------------
 
-describe("bulkDeleteCollectionsSchema", () => {
-	it("accepts an array with a single valid cuid2", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({ ids: [VALID_CUID] });
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts an array of exactly 200 valid cuid2s", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({ ids: makeCuids(200) });
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects an empty ids array (min 1)", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({ ids: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects an array with 201 ids (exceeds max of 200)", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({ ids: makeCuids(201) });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when any id is not a valid cuid2", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({
-			ids: [VALID_CUID, "not-a-cuid2"],
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when ids field is missing", () => {
-		const result = bulkDeleteCollectionsSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
-
 // ---------------------------------------------------------------------------
 // bulkArchiveCollectionsSchema
 // ---------------------------------------------------------------------------
-
-describe("bulkArchiveCollectionsSchema", () => {
-	const baseValid = {
-		collectionIds: [VALID_CUID],
-		targetStatus: "ARCHIVED",
-	};
-
-	describe("collectionIds field", () => {
-		it("accepts an array with a single valid cuid2", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse(baseValid);
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts an array of exactly 200 valid cuid2s", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				collectionIds: makeCuids(200),
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("rejects an empty collectionIds array (min 1)", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				collectionIds: [],
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects an array with 201 ids (exceeds max of 200)", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				collectionIds: makeCuids(201),
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects when any collectionId is not a valid cuid2", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				collectionIds: [VALID_CUID, "invalid-id"],
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects when collectionIds field is missing", () => {
-			const { collectionIds: _ids, ...withoutIds } = baseValid;
-			const result = bulkArchiveCollectionsSchema.safeParse(withoutIds);
-			expect(result.success).toBe(false);
-		});
-	});
-
-	describe("targetStatus field", () => {
-		it("accepts ARCHIVED as targetStatus", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				targetStatus: "ARCHIVED",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts PUBLIC as targetStatus", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				targetStatus: "PUBLIC",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("rejects DRAFT as targetStatus", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				targetStatus: "DRAFT",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects an invalid targetStatus value", () => {
-			const result = bulkArchiveCollectionsSchema.safeParse({
-				...baseValid,
-				targetStatus: "HIDDEN",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects when targetStatus is missing", () => {
-			const { targetStatus: _status, ...withoutStatus } = baseValid;
-			const result = bulkArchiveCollectionsSchema.safeParse(withoutStatus);
-			expect(result.success).toBe(false);
-		});
-	});
-});
 
 // ---------------------------------------------------------------------------
 // collectionFiltersSchema

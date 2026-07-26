@@ -26,7 +26,6 @@ import {
 	updateMaterialSchema,
 	deleteMaterialSchema,
 	toggleMaterialStatusSchema,
-	bulkToggleMaterialStatusSchema,
 	duplicateMaterialSchema,
 	getMaterialSchema,
 } from "../materials.schemas";
@@ -182,41 +181,6 @@ describe("toggleMaterialStatusSchema", () => {
 		});
 
 		expect(result.success).toBe(true);
-	});
-});
-
-describe("bulkToggleMaterialStatusSchema", () => {
-	it("should accept valid bulk toggle", () => {
-		const result = bulkToggleMaterialStatusSchema.safeParse({
-			ids: [VALID_CUID],
-			isActive: true,
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty ids array", () => {
-		const result = bulkToggleMaterialStatusSchema.safeParse({
-			ids: [],
-			isActive: true,
-		});
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject missing isActive", () => {
-		const result = bulkToggleMaterialStatusSchema.safeParse({
-			ids: [VALID_CUID],
-		});
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject more than 200 ids", () => {
-		const ids = Array.from({ length: 201 }, () => VALID_CUID);
-		const result = bulkToggleMaterialStatusSchema.safeParse({ ids, isActive: false });
-
-		expect(result.success).toBe(false);
 	});
 });
 

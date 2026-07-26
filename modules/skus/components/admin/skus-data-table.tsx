@@ -1,9 +1,4 @@
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -30,7 +25,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ProductSkuRowActions } from "./sku-row-actions";
-import { SkusBulkActionsBar } from "./skus-bulk-actions-bar";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface ProductVariantsDataTableProps {
@@ -75,12 +69,9 @@ export async function ProductVariantsDataTable({
 		);
 	}
 
-	const pageItemIds = productSkus.filter((s) => !s.isDefault).map((s) => s.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des variantes"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -89,14 +80,9 @@ export async function ProductVariantsDataTable({
 				nextCursor: pagination.nextCursor,
 				prevCursor: pagination.prevCursor,
 			}}
-			bulkActionsBar={<SkusBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="variantes" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[8%]">Image</TableHead>
 					<TableHead className="w-[16%]">Référence</TableHead>
 					<TableHead className="w-[12%]">Couleur</TableHead>
@@ -128,9 +114,7 @@ export async function ProductVariantsDataTable({
 									>
 										★
 									</span>
-								) : (
-									<BulkSelectionRowCheckbox id={sku.id} itemLabel={`Variante ${sku.sku}`} />
-								)}
+								) : null}
 							</TableCell>
 							<TableCell className="py-3">
 								<div className="bg-muted relative size-20 shrink-0 rounded-md">

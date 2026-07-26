@@ -2,7 +2,6 @@
 // TYPES - SKU VALIDATION
 // ============================================================================
 
-
 /**
  * Donnees completes d'un SKU pour l'affichage et la validation
  */

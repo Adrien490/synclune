@@ -10,11 +10,9 @@ vi.mock("@/app/generated/prisma/client", () => ({
 
 import {
 	deleteUserSchema,
-	bulkDeleteUsersSchema,
 	suspendUserSchema,
 	restoreUserSchema,
 	changeUserRoleSchema,
-	bulkChangeUserRoleSchema,
 	adminUserIdSchema,
 } from "../user-admin.schemas";
 
@@ -58,35 +56,6 @@ describe("deleteUserSchema", () => {
 // ============================================================================
 // bulkDeleteUsersSchema
 // ============================================================================
-
-describe("bulkDeleteUsersSchema", () => {
-	it("accepts an array with a single valid cuid2", () => {
-		const result = bulkDeleteUsersSchema.safeParse({ ids: [VALID_CUID] });
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts an array of multiple valid cuid2s", () => {
-		const result = bulkDeleteUsersSchema.safeParse({ ids: makeCuids(5) });
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects an empty ids array", () => {
-		const result = bulkDeleteUsersSchema.safeParse({ ids: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when any id is not a valid cuid2", () => {
-		const result = bulkDeleteUsersSchema.safeParse({
-			ids: [VALID_CUID, "not-a-cuid2"],
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when ids field is missing", () => {
-		const result = bulkDeleteUsersSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
 
 // ============================================================================
 // suspendUserSchema
@@ -182,63 +151,6 @@ describe("changeUserRoleSchema", () => {
 // ============================================================================
 // bulkChangeUserRoleSchema
 // ============================================================================
-
-describe("bulkChangeUserRoleSchema", () => {
-	const validInput = {
-		ids: [VALID_CUID],
-		role: "USER" as const,
-	};
-
-	it("accepts valid bulk input with USER role", () => {
-		const result = bulkChangeUserRoleSchema.safeParse(validInput);
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts valid bulk input with ADMIN role", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({
-			...validInput,
-			role: "ADMIN",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts multiple valid cuid2 ids", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({
-			ids: makeCuids(10),
-			role: "USER",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects empty ids array", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({
-			...validInput,
-			ids: [],
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects an invalid role", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({
-			...validInput,
-			role: "MODERATOR",
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when any id is not a valid cuid2", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({
-			ids: [VALID_CUID, "invalid-id"],
-			role: "USER",
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when ids field is missing", () => {
-		const result = bulkChangeUserRoleSchema.safeParse({ role: "USER" });
-		expect(result.success).toBe(false);
-	});
-});
 
 // ============================================================================
 // adminUserIdSchema

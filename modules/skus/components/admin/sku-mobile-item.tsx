@@ -1,14 +1,11 @@
 "use client";
 
-import { Loader2, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import Image from "next/image";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
@@ -41,11 +38,6 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 	const spokenTitle = getSkuDisplayTitleSpoken(sku);
 	const colorHexes = getColorHexes(sku.colors);
 
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(sku.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
-
 	const { sections } = useSkuActions({
 		skuId: sku.id,
 		skuName: sku.sku,
@@ -58,25 +50,20 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 	});
 
 	return (
-		<MobileSelectableCard
-			id={sku.id}
-			itemLabel={`Variante ${spokenTitle}, ${getStockAriaLabel(sku.inventory)}, ${formatEuro(sku.priceInclTax)}${sku.isDefault ? ", par défaut" : ""}${!sku.isActive ? ", inactive" : ""}`}
-			longPressProps={{
-				href: `/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`,
-				ariaLabel: `Variante : ${spokenTitle}`,
-				sections,
-				menuTitle: "Actions variante",
-				menuDescription: displayTitle,
-				className: "text-left",
-				viewTransitionName: `sku-card-${sku.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`}
+			ariaLabel={`Variante : ${spokenTitle}`}
+			sections={sections}
+			menuTitle="Actions variante"
+			menuDescription={displayTitle}
+			className="text-left"
+			viewTransitionName={`sku-card-${sku.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte variante"
-				aria-busy={isPendingItem || undefined}
 			>
 				{primaryImage && thumbSrc ? (
 					<Image
@@ -108,20 +95,13 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 						<span className="truncate font-semibold">{displayTitle}</span>
 						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
-						{isPendingItem ? (
-							<Badge variant="secondary" style={{ viewTransitionName: `sku-stock-${sku.id}` }}>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={stockVariant}
-								aria-label={getStockAriaLabel(sku.inventory)}
-								style={{ viewTransitionName: `sku-stock-${sku.id}` }}
-							>
-								{sku.inventory}
-							</Badge>
-						)}
+						<Badge
+							variant={stockVariant}
+							aria-label={getStockAriaLabel(sku.inventory)}
+							style={{ viewTransitionName: `sku-stock-${sku.id}` }}
+						>
+							{sku.inventory}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{formatEuro(sku.priceInclTax)}</span>
@@ -130,6 +110,6 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

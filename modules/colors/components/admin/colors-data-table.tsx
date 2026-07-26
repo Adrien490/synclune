@@ -1,9 +1,4 @@
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
 	TableCell,
@@ -15,7 +10,6 @@ import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import { Palette } from "lucide-react";
 import { use } from "react";
 import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
-import { ColorsBulkActionsBar } from "@/modules/colors/components/admin/colors-bulk-actions-bar";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 
@@ -47,12 +41,9 @@ export function ColorsDataTable({
 		);
 	}
 
-	const pageItemIds = colors.map((c) => c.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des couleurs"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -62,14 +53,9 @@ export function ColorsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<ColorsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="couleurs" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[8%]">Aperçu</TableHead>
 					<TableHead className="w-[36%]">Nom</TableHead>
 					<TableHead className="w-[10%] text-center">Variantes</TableHead>
@@ -88,9 +74,6 @@ export function ColorsDataTable({
 
 					return (
 						<TableRow key={color.id}>
-							<TableCell>
-								<BulkSelectionRowCheckbox id={color.id} itemLabel={`Couleur ${color.name}`} />
-							</TableCell>
 							<TableCell>
 								<div
 									className="border-border inline-flex size-[30px] rounded-full border"

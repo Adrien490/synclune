@@ -1,9 +1,8 @@
 "use client";
 
-import { ReviewStatus } from "@/app/generated/prisma/browser";
-import { CircleCheck, EyeOff, Loader2, Star } from "lucide-react";
+import { EyeOff, Star } from "lucide-react";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -12,9 +11,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import {
@@ -30,31 +26,22 @@ interface ReviewMobileItemProps {
 
 export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 	const { sections } = useReviewActions({ review });
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(review.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	return (
-		<MobileSelectableCard
-			id={review.id}
-			itemLabel={`Avis sur ${review.product.title}, ${review.rating} étoile${review.rating > 1 ? "s" : ""}, ${REVIEW_STATUS_LABELS[review.status]}${review.response ? ", répondu" : ""}, par ${review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}`}
-			longPressProps={{
-				href: `/admin/marketing/avis/${review.id}`,
-				ariaLabel: `Avis sur ${review.product.title}`,
-				sections,
-				menuTitle: "Actions avis",
-				menuDescription: review.product.title,
-				className: "rounded-md text-left",
-				viewTransitionName: `review-card-${review.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/marketing/avis/${review.id}`}
+			ariaLabel={`Avis sur ${review.product.title}`}
+			sections={sections}
+			menuTitle="Actions avis"
+			menuDescription={review.product.title}
+			className="rounded-md text-left"
+			viewTransitionName={`review-card-${review.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte avis"
-				aria-busy={isPendingItem || undefined}
 			>
 				<ItemMedia variant="icon">
 					<span
@@ -74,34 +61,14 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 						>
 							{review.product.title}
 						</span>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								className="gap-1"
-								style={{ viewTransitionName: `review-status-${review.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : review.status === ReviewStatus.PUBLISHED ? (
-							<Badge
-								variant="default"
-								className="gap-1"
-								style={{ viewTransitionName: `review-status-${review.id}` }}
-							>
-								<CircleCheck className="size-3" aria-hidden="true" />
-								{REVIEW_STATUS_LABELS.PUBLISHED}
-							</Badge>
-						) : (
-							<Badge
-								variant="secondary"
-								className="gap-1"
-								style={{ viewTransitionName: `review-status-${review.id}` }}
-							>
-								<EyeOff className="size-3" aria-hidden="true" />
-								{REVIEW_STATUS_LABELS.HIDDEN}
-							</Badge>
-						)}
+						<Badge
+							variant="secondary"
+							className="gap-1"
+							style={{ viewTransitionName: `review-status-${review.id}` }}
+						>
+							<EyeOff className="size-3" aria-hidden="true" />
+							{REVIEW_STATUS_LABELS.HIDDEN}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span>{review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}</span>
@@ -118,6 +85,6 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

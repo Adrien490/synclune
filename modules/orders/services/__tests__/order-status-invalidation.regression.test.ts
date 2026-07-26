@@ -122,7 +122,6 @@ function mutatesOrderStatusViaUpdate(content: string): boolean {
 const EXPECTED_STATUS_MUTATORS = [
 	"modules/cron/services/cleanup-pending-orders.service.ts",
 	"modules/cron/services/reconcile-refunds.service.ts",
-	"modules/orders/actions/bulk-cancel-orders.ts",
 	"modules/orders/actions/cancel-order-customer.ts",
 	"modules/orders/actions/cancel-order.ts",
 	"modules/orders/actions/mark-as-delivered.ts",

@@ -39,6 +39,23 @@ export function DeleteAccountDialog() {
 	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
 	const serverErrors = useServerFieldErrors({ state });
 
+	/**
+	 * Garde de resoumission — équivalent local de `useGatedFormSubmit`, qui n'est
+	 * pas applicable ici : ce formulaire n'a pas d'instance TanStack Form (pas de
+	 * `handleSubmit`/`state.isValid` à attendre), juste un `useActionState`.
+	 *
+	 * `disabled` sur `AlertDialogAction` ne couvre pas la touche Entrée depuis le
+	 * champ de confirmation, et `useActionState` sérialise les dispatchs au lieu
+	 * de les ignorer : sans ce garde, deux Entrée rapides = deux demandes de
+	 * suppression de compte. `action={action}` reste posé sur le <form> pour le
+	 * chemin sans JS.
+	 */
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (isPending || !isConfirmed) return;
+		action(new FormData(event.currentTarget));
+	};
+
 	const handleOpenChange = (newOpen: boolean) => {
 		if (isPending) return;
 		setOpen(newOpen);
@@ -74,12 +91,19 @@ export function DeleteAccountDialog() {
 					</p>
 				</div>
 
-				<form action={action}>
+				<form action={action} onSubmit={handleSubmit}>
 					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
 					<div className="space-y-2 py-4">
 						<Label htmlFor="confirmation">
 							Tapez <span className="font-mono font-bold">{CONFIRMATION_TEXT}</span> pour confirmer
 						</Label>
+						{/*
+						 * Champ sentinelle : la valeur doit correspondre EXACTEMENT à
+						 * CONFIRMATION_TEXT (comparaison stricte ci-dessus). Sans ces
+						 * attributs, iOS met une majuscule au premier caractère et
+						 * l'autocorrection réécrit le mot → l'utilisateur tape le bon
+						 * texte et le bouton reste grisé, sans explication possible.
+						 */}
 						<Input
 							id="confirmation"
 							name="confirmation"
@@ -87,6 +111,11 @@ export function DeleteAccountDialog() {
 							onChange={(e) => setConfirmation(e.target.value)}
 							placeholder={CONFIRMATION_TEXT}
 							disabled={isPending}
+							autoComplete="off"
+							autoCapitalize="none"
+							autoCorrect="off"
+							spellCheck={false}
+							enterKeyHint="done"
 						/>
 					</div>
 

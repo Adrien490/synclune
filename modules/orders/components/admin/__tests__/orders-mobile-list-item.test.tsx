@@ -107,23 +107,4 @@ describe("OrdersMobileListItem", () => {
 		expect(screen.getByText(/2 articles/)).toBeInTheDocument();
 		expect(screen.getByTestId("swipeable-card")).toBeInTheDocument();
 	});
-
-	it("rend une carte sélectionnable (pas de lien) en mode sélection", () => {
-		mockUseBulkCtx.mockReturnValue({ selectionMode: true });
-		render(<OrdersMobileListItem order={makeOrder()} />);
-
-		expect(screen.getByTestId("selectable-card")).toBeInTheDocument();
-		expect(screen.queryByRole("link")).not.toBeInTheDocument();
-	});
-
-	it("affiche un badge pending au lieu des badges statut quand l'item est en cours de mutation", () => {
-		mockUsePendingCtx.mockReturnValue({
-			isPending: (id: string) => id === "ord-1",
-			pendingKind: "cancel",
-		});
-		render(<OrdersMobileListItem order={makeOrder()} />);
-
-		// Les badges statut normaux disparaissent au profit du label pending.
-		expect(screen.queryByText("En attente")).not.toBeInTheDocument();
-	});
 });

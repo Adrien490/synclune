@@ -5,8 +5,6 @@ import { Table } from "@/shared/components/ui/table";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
-import { BulkSelectionProvider } from "./bulk-selection-context";
-
 interface AdminDataTablePagination {
 	perPage: number;
 	hasNextPage: boolean;
@@ -24,15 +22,8 @@ interface AdminDataTableProps {
 	 * scrollable. Doit décrire le contenu (ex: « Liste des commandes »).
 	 */
 	caption: string;
-	/** IDs visibles sur la page courante — câblés au `BulkSelectionProvider`. */
-	pageItemIds: ReadonlyArray<string>;
 	/** Métadonnées de pagination cursor pour `<CursorPagination>`. */
 	pagination: AdminDataTablePagination;
-	/**
-	 * Barre d'actions bulk rendue au-dessus de la table. Reçoit le provider
-	 * via context, donc gère son propre affichage conditionnel.
-	 */
-	bulkActionsBar?: ReactNode;
 	/**
 	 * `<TableHeader>` + `<TableBody>` de la table. Les colonnes restent
 	 * définies par chaque module pour autonomie sémantique.
@@ -43,7 +34,7 @@ interface AdminDataTableProps {
 }
 
 /**
- * Agrégateur des admin data-tables : absorbe Card + BulkSelectionProvider +
+ * Agrégateur des admin data-tables : absorbe Card +
  * TableScrollContainer + Table (caption/striped/noRegion/table-fixed) +
  * CursorPagination. Permet à chaque admin table de se concentrer sur ses
  * colonnes propres.
@@ -56,51 +47,39 @@ interface AdminDataTableProps {
  * ```tsx
  * <AdminDataTable
  *   caption="Liste des commandes"
- *   pageItemIds={pageItemIds}
  *   pagination={{ perPage, ...pagination, currentPageSize: orders.length }}
- *   bulkActionsBar={<OrdersBulkActionsBar />}
  * >
  *   <TableHeader>…</TableHeader>
  *   <TableBody>…</TableBody>
  * </AdminDataTable>
  * ```
  */
-export function AdminDataTable({
-	caption,
-	pageItemIds,
-	pagination,
-	bulkActionsBar,
-	children,
-	className,
-}: AdminDataTableProps) {
+export function AdminDataTable({ caption, pagination, children, className }: AdminDataTableProps) {
 	return (
 		<Card className={cn("hidden md:block", className)}>
 			<CardContent>
-				<BulkSelectionProvider pageItemIds={pageItemIds} bridgeToToolbar={false}>
-					{bulkActionsBar}
-					<TableScrollContainer label={caption}>
-						<Table
-							caption={caption}
-							striped
-							noRegion
-							className="min-w-full table-fixed [&>caption]:sr-only"
-						>
-							{children}
-						</Table>
-					</TableScrollContainer>
+				<TableScrollContainer label={caption}>
+					<Table
+						caption={caption}
+						striped
+						noRegion
+						className="min-w-full table-fixed [&>caption]:sr-only"
+					>
+						{children}
+					</Table>
+				</TableScrollContainer>
 
-					<div className="mt-4">
-						<CursorPagination
-							perPage={pagination.perPage}
-							hasNextPage={pagination.hasNextPage}
-							hasPreviousPage={pagination.hasPreviousPage}
-							currentPageSize={pagination.currentPageSize}
-							nextCursor={pagination.nextCursor}
-							prevCursor={pagination.prevCursor}
-							totalCount={pagination.totalCount}
-						/>
-					</div>
-				</BulkSelectionProvider>
+				<div className="mt-4">
+					<CursorPagination
+						perPage={pagination.perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={pagination.currentPageSize}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+						totalCount={pagination.totalCount}
+					/>
+				</div>
 			</CardContent>
 		</Card>
 	);

@@ -87,7 +87,6 @@ vi.mock("@/modules/invoices/services/check-sequence-continuity.service", () => (
 	checkSequenceContinuity: mockCheckSequenceContinuity,
 }));
 
-
 // EINV-CREDIT-020 : les services d'archivage eager d'avoir tirent la chaîne
 // UploadThing (utapi instancié au chargement) — mockés au niveau module.
 vi.mock("@/modules/orders/services/ensure-credit-note-archived.service", () => ({

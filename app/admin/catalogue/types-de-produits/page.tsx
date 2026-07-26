@@ -141,7 +141,6 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 						productTypesPromise={productTypesPromise}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

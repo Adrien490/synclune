@@ -177,7 +177,6 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, sortOrder, filters }}
 					/>
 				</Suspense>
 

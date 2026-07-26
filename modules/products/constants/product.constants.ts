@@ -1,7 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
-import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -362,14 +360,6 @@ export const GET_PRODUCTS_DEFAULT_PER_PAGE = 20;
 export const GET_PRODUCTS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_PRODUCTS_DEFAULT_SORT_BY = "created-descending";
 export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
-
-/**
- * Plafond du nombre d'items traités en une seule action bulk admin
- * (delete / archive / change-status / attach-collection) et limite de la
- * sélection cross-page filtrée. Au-delà, l'admin doit raffiner ses filtres —
- * garde-fou contre les transactions Prisma trop longues et les rate-limits.
- */
-export const BULK_PRODUCT_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 // SKU is considered low stock when inventory > 0 AND inventory <= threshold.
 // Shared between dashboard alerts and the admin products list filter.

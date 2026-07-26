@@ -14,7 +14,7 @@ import { useEffect, useEffectEvent } from "react";
  *
  * @example
  * ```tsx
- * const { selectionMode, exitSelectionMode } = useBulkSelectionContext();
+ * const { isOpen, close } = useDialog();
  * useEscapeKey(exitSelectionMode, selectionMode);
  * ```
  */

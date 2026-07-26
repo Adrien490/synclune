@@ -62,7 +62,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 
-
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethodFromPaymentIntent,
 }));

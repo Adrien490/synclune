@@ -3,47 +3,25 @@ import { Package } from "lucide-react";
 import Link from "next/link";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
-import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import {
-	MobileSelectionBottomBar,
-	MobileSelectionHeader,
-} from "@/shared/components/mobile-selection";
 import { Button } from "@/shared/components/ui/button";
 import { ItemGroup } from "@/shared/components/ui/item";
-import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
-import type {
-	GetProductsReturn,
-	ProductFilters,
-	SortField,
-} from "@/modules/products/types/product.types";
+import type { GetProductsReturn } from "@/modules/products/types/product.types";
 import { ProductMobileItem } from "./product-mobile-item";
-import { ProductsBulkActionsBar } from "./products-bulk-actions-bar";
-import { ProductsCrossPageBanner } from "./products-cross-page-banner";
 
 interface ProductsMobileListProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
 	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
-	collections?: Array<{ id: string; name: string }>;
 	/** Snapshot des filtres courants pour la sélection cross-page. */
-	filterParams?: {
-		search?: string;
-		sortBy?: SortField;
-		filters?: ProductFilters;
-	};
 }
-
-const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
 
 export function ProductsMobileList({
 	productsPromise,
 	perPage,
 	hasActiveFilters,
-	collections = EMPTY_COLLECTIONS,
-	filterParams,
 }: ProductsMobileListProps) {
 	const { products, pagination, totalCount } = use(productsPromise);
 
@@ -72,39 +50,26 @@ export function ProductsMobileList({
 		);
 	}
 
-	const pageItemIds = products.map((p) => p.id);
-
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider itemsLabel={{ singular: "produit", plural: "produits" }}>
-				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-					<MobileSelectionHeader itemsLabel={{ singular: "produit", plural: "produits" }} />
-					{filterParams ? (
-						<ProductsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
-					) : null}
-					<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
-					<ItemGroup aria-label="Produits" className="gap-2">
-						{products.map((product, index) => (
-							<li key={product.id}>
-								<ProductMobileItem product={product} preload={index === 0} />
-							</li>
-						))}
-					</ItemGroup>
+		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
+			<ItemGroup aria-label="Produits" className="gap-2">
+				{products.map((product, index) => (
+					<li key={product.id}>
+						<ProductMobileItem product={product} preload={index === 0} />
+					</li>
+				))}
+			</ItemGroup>
 
-					<AdminMobileListPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={products.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-						totalCount={totalCount}
-					/>
-				</div>
-				<MobileSelectionBottomBar emptyHint="Tape sur les bijoux à sélectionner">
-					<ProductsBulkActionsBar presentation="bottom-bar" collections={collections} />
-				</MobileSelectionBottomBar>
-			</AdminListPendingProvider>
-		</BulkSelectionProvider>
+			<AdminMobileListPagination
+				perPage={perPage}
+				hasNextPage={pagination.hasNextPage}
+				hasPreviousPage={pagination.hasPreviousPage}
+				currentPageSize={products.length}
+				nextCursor={pagination.nextCursor}
+				prevCursor={pagination.prevCursor}
+				totalCount={totalCount}
+			/>
+		</div>
 	);
 }

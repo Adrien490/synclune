@@ -4,7 +4,6 @@ import { Copy, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
@@ -27,7 +26,6 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 	const { open: openToggleDialog } = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
 	const router = useRouter();
 	const haptic = useHaptic();
-	const selectActionItem = useBulkSelectionActionItem(discount.id);
 	const { duplicate, isPending: isDuplicating } = useDuplicateDiscount({
 		onSuccess: (message, data) => {
 			haptic("success");
@@ -52,7 +50,6 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 		{
 			key: "manage",
 			items: [
-				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "edit",
 					label: "Modifier",

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -49,7 +48,6 @@ export function useProductActions({
 	const archiveDialog = useAlertDialog(ARCHIVE_PRODUCT_DIALOG_ID);
 	const duplicateDialog = useAlertDialog(DUPLICATE_PRODUCT_DIALOG_ID);
 	const collectionsDialog = useDialog(MANAGE_COLLECTIONS_DIALOG_ID);
-	const selectActionItem = useBulkSelectionActionItem(productId);
 
 	const isArchived = productStatus === "ARCHIVED";
 	const isDraft = productStatus === "DRAFT";
@@ -59,7 +57,6 @@ export function useProductActions({
 		{
 			key: "manage",
 			items: [
-				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "view",
 					label: "Voir la fiche",

@@ -1,8 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -11,9 +9,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 
 import { useColorActions } from "../../hooks/use-color-actions";
 
@@ -33,10 +28,6 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	const skuCount = color._count.skus || 0;
 	const statusLabel = color.isActive ? "● Actif" : "○ Inactif";
 	const hexUpper = color.hex.toUpperCase();
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(color.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useColorActions({
 		colorId: color.id,
@@ -47,25 +38,20 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	});
 
 	return (
-		<MobileSelectableCard
-			id={color.id}
-			itemLabel={`Couleur ${color.name}, ${statusLabel}, ${skuCount} variante${skuCount !== 1 ? "s" : ""}`}
-			longPressProps={{
-				href: `/admin/catalogue/couleurs/${color.slug}`,
-				ariaLabel: `Couleur ${color.name}`,
-				sections,
-				menuTitle: "Actions",
-				menuDescription: color.name,
-				className: "text-left",
-				viewTransitionName: `color-card-${color.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/couleurs/${color.slug}`}
+			ariaLabel={`Couleur ${color.name}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={color.name}
+			className="text-left"
+			viewTransitionName={`color-card-${color.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte couleur"
-				aria-busy={isPendingItem || undefined}
 			>
 				<ItemMedia variant="icon">
 					<span
@@ -80,19 +66,12 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
-						{isPendingItem ? (
-							<Badge variant="secondary" style={{ viewTransitionName: `color-status-${color.id}` }}>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={color.isActive ? "default" : "secondary"}
-								style={{ viewTransitionName: `color-status-${color.id}` }}
-							>
-								{statusLabel}
-							</Badge>
-						)}
+						<Badge
+							variant={color.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `color-status-${color.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="text-muted-foreground font-mono text-xs">{hexUpper}</span>
@@ -108,6 +87,6 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					)}
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

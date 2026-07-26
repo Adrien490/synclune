@@ -130,17 +130,6 @@ export const moderateReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-/**
- * Schéma pour masquer/afficher en lot plusieurs avis
- */
-export const bulkModerateReviewsSchema = z.object({
-	reviewIds: z
-		.array(z.cuid2("ID d'avis invalide"))
-		.min(1, "Au moins un avis est requis")
-		.max(100, "Maximum 100 avis par opération"),
-	targetStatus: z.enum(["PUBLISHED", "HIDDEN"]),
-});
-
 // ============================================================================
 // REVIEW RESPONSE SCHEMAS (Admin)
 // ============================================================================

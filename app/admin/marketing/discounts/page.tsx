@@ -145,7 +145,6 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

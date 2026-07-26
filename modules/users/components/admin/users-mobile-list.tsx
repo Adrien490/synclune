@@ -3,39 +3,20 @@ import { Users } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
-import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import {
-	MobileSelectionBottomBar,
-	MobileSelectionHeader,
-} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
-import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
-import type { GetUsersParams, GetUsersReturn, UserFilters } from "@/modules/users/types/user.types";
+import type { GetUsersReturn } from "@/modules/users/types/user.types";
 import { UserMobileItem } from "./user-mobile-item";
-import { UsersBulkActionsBar } from "./users-bulk-actions-bar";
-import { UsersCrossPageBanner } from "./users-cross-page-banner";
 
 interface UsersMobileListProps {
 	usersPromise: Promise<GetUsersReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
-	filterParams?: {
-		search?: string;
-		sortBy?: GetUsersParams["sortBy"];
-		sortOrder?: GetUsersParams["sortOrder"];
-		filters?: UserFilters;
-	};
 }
 
-export function UsersMobileList({
-	usersPromise,
-	perPage,
-	hasActiveFilters,
-	filterParams,
-}: UsersMobileListProps) {
+export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: UsersMobileListProps) {
 	const { users, pagination, totalCount } = use(usersPromise);
 
 	if (users.length === 0) {
@@ -57,39 +38,26 @@ export function UsersMobileList({
 		);
 	}
 
-	const pageItemIds = users.map((u) => u.id);
-
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider itemsLabel={{ singular: "client", plural: "clients" }}>
-				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-					<MobileSelectionHeader itemsLabel={{ singular: "client", plural: "clients" }} />
-					{filterParams ? (
-						<UsersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
-					) : null}
-					<AdminListLiveCount count={users.length} singular="client" plural="clients" />
-					<ItemGroup aria-label="Clients" className="gap-2">
-						{users.map((user) => (
-							<li key={user.id}>
-								<UserMobileItem user={user} />
-							</li>
-						))}
-					</ItemGroup>
+		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={users.length} singular="client" plural="clients" />
+			<ItemGroup aria-label="Clients" className="gap-2">
+				{users.map((user) => (
+					<li key={user.id}>
+						<UserMobileItem user={user} />
+					</li>
+				))}
+			</ItemGroup>
 
-					<AdminMobileListPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={users.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-						totalCount={totalCount}
-					/>
-				</div>
-				<MobileSelectionBottomBar emptyHint="Tape sur les clients à fidéliser">
-					<UsersBulkActionsBar presentation="bottom-bar" />
-				</MobileSelectionBottomBar>
-			</AdminListPendingProvider>
-		</BulkSelectionProvider>
+			<AdminMobileListPagination
+				perPage={perPage}
+				hasNextPage={pagination.hasNextPage}
+				hasPreviousPage={pagination.hasPreviousPage}
+				currentPageSize={users.length}
+				nextCursor={pagination.nextCursor}
+				prevCursor={pagination.prevCursor}
+				totalCount={totalCount}
+			/>
+		</div>
 	);
 }

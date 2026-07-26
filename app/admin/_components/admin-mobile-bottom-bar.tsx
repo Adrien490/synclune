@@ -16,7 +16,6 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
-import { useAdminListSelectionStore } from "@/shared/stores/use-admin-list-selection-store";
 import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -41,13 +40,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const pathname = usePathname();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const hasOverlay = useHasOverlay();
-	// Le mode sélection est désormais déclenché uniquement par les triggers de
-	// liste (long-press cards, bulk-actions desktop). La bottom-bar admin
-	// globale doit néanmoins se cacher quand il s'active, pour laisser
-	// MobileSelectionBottomBar prendre le relais sans empilement.
-	const inSelectionMode = useAdminListSelectionStore((s) => s.control?.selectionMode) === true;
-
-	const isHidden = isMenuOpen || hasOverlay || inSelectionMode;
+	const isHidden = isMenuOpen || hasOverlay;
 
 	function renderTab(tab: NavItem) {
 		const isActive = isRouteActive(pathname, tab.url);

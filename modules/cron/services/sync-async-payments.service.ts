@@ -142,7 +142,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		}
 		if (deferredTasks.length > 0) {
 			// Persistance seule (pas d'exécution inline) : `retry-post-webhook-tasks`
-			// (toutes les 5 min) sélectionne sur `status + attempts`, sans filtrer par
+			// (toutes les 30 min) sélectionne sur `status + attempts`, sans filtrer par
 			// `webhookEventId`, et les exécutera donc tout seul. La latence ajoutée est
 			// négligeable sur un chemin de rattrapage qui a déjà attendu ≥ 1 h, et la
 			// task survit à un crash du cron. `skipDuplicates` sur la clé

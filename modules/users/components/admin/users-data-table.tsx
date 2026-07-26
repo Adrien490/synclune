@@ -1,9 +1,4 @@
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
 	TableCell,
@@ -16,7 +11,6 @@ import { CircleCheck, Users } from "lucide-react";
 import { use } from "react";
 import Link from "next/link";
 import { formatDateShort } from "@/shared/utils/dates";
-import { UsersBulkActionsBar } from "./users-bulk-actions-bar";
 import { UsersRowActions } from "./users-row-actions";
 
 interface UsersDataTableProps {
@@ -43,12 +37,10 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 	}
 
 	// Exclure utilisateurs supprimés ou suspendus du bulk
-	const pageItemIds = users.filter((u) => !u.deletedAt && !u.suspendedAt).map((u) => u.id);
 
 	return (
 		<AdminDataTable
 			caption="Liste des clients"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -58,14 +50,9 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<UsersBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="utilisateurs actifs" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[20%]">Nom</TableHead>
 					<TableHead className="w-[26%]">Email</TableHead>
 					<TableHead className="w-[10%]">Commandes</TableHead>
@@ -82,23 +69,9 @@ export function UsersDataTable({ usersPromise, perPage, hasActiveFilters }: User
 				{users.map((user) => {
 					const orderCount = user._count.orders;
 					const displayName = user.name ?? "Utilisateur";
-					const isSelectable = !user.deletedAt && !user.suspendedAt;
 
 					return (
 						<TableRow key={user.id} className={user.deletedAt ? "opacity-50" : undefined}>
-							<TableCell>
-								{isSelectable ? (
-									<BulkSelectionRowCheckbox id={user.id} itemLabel={`Utilisateur ${displayName}`} />
-								) : (
-									<span
-										className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
-										aria-label="Utilisateur non sélectionnable"
-										title={user.deletedAt ? "Utilisateur supprimé" : "Utilisateur suspendu"}
-									>
-										—
-									</span>
-								)}
-							</TableCell>
 							<TableCell>
 								<div className="overflow-hidden">
 									<span

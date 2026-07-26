@@ -1,13 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 
 import {
 	DISCOUNT_STATUS_BADGE_CONFIG,
@@ -27,31 +22,22 @@ interface DiscountMobileItemProps {
 export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 	const status = DISCOUNT_STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
 	const { sections } = useDiscountActions({ discount });
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(discount.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	return (
-		<MobileSelectableCard
-			id={discount.id}
-			itemLabel={`Code promo ${discount.code}, ${status.label}, ${formatDiscountValue(discount.type, discount.value)}`}
-			longPressProps={{
-				href: `/admin/marketing/discounts/${discount.id}`,
-				ariaLabel: `Code promo ${discount.code}`,
-				sections,
-				menuTitle: "Actions",
-				menuDescription: discount.code,
-				className: "text-left",
-				viewTransitionName: `discount-card-${discount.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/marketing/discounts/${discount.id}`}
+			ariaLabel={`Code promo ${discount.code}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={discount.code}
+			className="text-left"
+			viewTransitionName={`discount-card-${discount.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte code promo"
-				aria-busy={isPendingItem || undefined}
 			>
 				<ItemContent className="min-w-0">
 					<ItemTitle>
@@ -61,22 +47,12 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 						>
 							{discount.code}
 						</code>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								style={{ viewTransitionName: `discount-status-${discount.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={status.variant}
-								style={{ viewTransitionName: `discount-status-${discount.id}` }}
-							>
-								{status.label}
-							</Badge>
-						)}
+						<Badge
+							variant={status.variant}
+							style={{ viewTransitionName: `discount-status-${discount.id}` }}
+						>
+							{status.label}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span>
@@ -91,6 +67,6 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

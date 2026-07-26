@@ -141,7 +141,6 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

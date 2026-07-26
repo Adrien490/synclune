@@ -1,8 +1,8 @@
 "use client";
 
-import { Loader2, Tag } from "lucide-react";
+import { Tag } from "lucide-react";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -11,9 +11,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 
 import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
@@ -32,12 +29,6 @@ interface ProductTypeMobileItemProps {
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
 	const productsCount = productType._count.products || 0;
 	const statusLabel = productType.isActive ? "● Actif" : "○ Inactif";
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(productType.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	// Items système ne sont jamais affectés par le bulk (filtrés serveur).
-	const showPending = isPendingItem && !productType.isSystem;
-	const pendingLabel = showPending ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useProductTypeActions({
 		productTypeId: productType.id,
@@ -49,25 +40,20 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 	});
 
 	return (
-		<MobileSelectableCard
-			id={productType.id}
-			itemLabel={`Type de bijou ${productType.label}, ${statusLabel}${productType.isSystem ? ", système" : ""}, ${productsCount} produit${productsCount !== 1 ? "s" : ""}`}
-			longPressProps={{
-				href: `/admin/catalogue/types-de-produits/${productType.slug}`,
-				ariaLabel: `Type de bijou ${productType.label}`,
-				sections,
-				menuTitle: "Actions",
-				menuDescription: productType.label,
-				className: "text-left",
-				viewTransitionName: `product-type-card-${productType.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/types-de-produits/${productType.slug}`}
+			ariaLabel={`Type de bijou ${productType.label}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={productType.label}
+			className="text-left"
+			viewTransitionName={`product-type-card-${productType.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", showPending && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte type de produit"
-				aria-busy={showPending || undefined}
 			>
 				<ItemMedia variant="icon">
 					<Tag
@@ -79,22 +65,12 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="min-w-0 flex-1 truncate font-semibold">{productType.label}</span>
-						{showPending ? (
-							<Badge
-								variant="secondary"
-								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={productType.isActive ? "default" : "secondary"}
-								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
-							>
-								{statusLabel}
-							</Badge>
-						)}
+						<Badge
+							variant={productType.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `product-type-status-${productType.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 						{productType.isSystem ? <Badge variant="outline">Système</Badge> : null}
 					</ItemTitle>
 					{productType.description ? (
@@ -107,6 +83,6 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

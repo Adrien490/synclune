@@ -3,42 +3,24 @@ import { Palette } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
-import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import {
-	MobileSelectionBottomBar,
-	MobileSelectionHeader,
-} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
-import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
-import type {
-	ColorFilters,
-	GetColorsParams,
-	GetColorsReturn,
-} from "@/modules/colors/types/color.types";
+import type { GetColorsReturn } from "@/modules/colors/types/color.types";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import { ColorMobileItem } from "./color-mobile-item";
-import { ColorsBulkActionsBar } from "./colors-bulk-actions-bar";
-import { ColorsCrossPageBanner } from "./colors-cross-page-banner";
 
 interface ColorsMobileListProps {
 	colorsPromise: Promise<GetColorsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
-	filterParams?: {
-		search?: string;
-		sortBy?: GetColorsParams["sortBy"];
-		filters?: ColorFilters;
-	};
 }
 
 export function ColorsMobileList({
 	colorsPromise,
 	perPage,
 	hasActiveFilters,
-	filterParams,
 }: ColorsMobileListProps) {
 	const { colors, pagination, totalCount } = use(colorsPromise);
 
@@ -65,39 +47,26 @@ export function ColorsMobileList({
 		);
 	}
 
-	const pageItemIds = colors.map((c) => c.id);
-
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<AdminListPendingProvider itemsLabel={{ singular: "couleur", plural: "couleurs" }}>
-				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-					<MobileSelectionHeader itemsLabel={{ singular: "couleur", plural: "couleurs" }} />
-					{filterParams ? (
-						<ColorsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
-					) : null}
-					<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
-					<ItemGroup aria-label="Couleurs" className="gap-2">
-						{colors.map((color) => (
-							<li key={color.id}>
-								<ColorMobileItem color={color} />
-							</li>
-						))}
-					</ItemGroup>
+		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
+			<ItemGroup aria-label="Couleurs" className="gap-2">
+				{colors.map((color) => (
+					<li key={color.id}>
+						<ColorMobileItem color={color} />
+					</li>
+				))}
+			</ItemGroup>
 
-					<AdminMobileListPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={colors.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-						totalCount={totalCount}
-					/>
-				</div>
-				<MobileSelectionBottomBar emptyHint="Tape sur les teintes de la palette">
-					<ColorsBulkActionsBar presentation="bottom-bar" />
-				</MobileSelectionBottomBar>
-			</AdminListPendingProvider>
-		</BulkSelectionProvider>
+			<AdminMobileListPagination
+				perPage={perPage}
+				hasNextPage={pagination.hasNextPage}
+				hasPreviousPage={pagination.hasPreviousPage}
+				currentPageSize={colors.length}
+				nextCursor={pagination.nextCursor}
+				prevCursor={pagination.prevCursor}
+				totalCount={totalCount}
+			/>
+		</div>
 	);
 }

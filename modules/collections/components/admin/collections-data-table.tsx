@@ -1,10 +1,5 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -26,7 +21,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
-import { CollectionsBulkActionsBar } from "./collections-bulk-actions-bar";
 import { CreateCollectionButton } from "./create-collection-button";
 
 // Labels, icônes et styles pour les badges de statut
@@ -78,12 +72,9 @@ export async function CollectionsDataTable({
 		);
 	}
 
-	const pageItemIds = collections.map((c) => c.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des collections"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -93,14 +84,9 @@ export async function CollectionsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<CollectionsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="collections" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[23%]">Nom</TableHead>
 					<TableHead className="w-[12%]">Statut</TableHead>
 					<TableHead className="w-[23%]">Description</TableHead>
@@ -122,12 +108,6 @@ export async function CollectionsDataTable({
 
 					return (
 						<TableRow key={collection.id}>
-							<TableCell>
-								<BulkSelectionRowCheckbox
-									id={collection.id}
-									itemLabel={`Collection ${collection.name}`}
-								/>
-							</TableCell>
 							<TableCell>
 								<div className="flex items-center gap-2 overflow-hidden">
 									<Link

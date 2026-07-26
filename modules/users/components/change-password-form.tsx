@@ -5,7 +5,6 @@ import { FormServerErrorAlert } from "@/shared/components/forms/form-server-erro
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -183,13 +182,13 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 
 			{/* Submit button */}
 			<div className="flex justify-end">
-				<form.Subscribe selector={(state) => [state.canSubmit]}>
-					{([canSubmit]) => (
-						<Button disabled={!canSubmit || isPending} type="submit">
-							{isPending ? "Changement en cours…" : "Changer le mot de passe"}
-						</Button>
-					)}
-				</form.Subscribe>
+				<form.AppForm>
+					<form.SubmitButton
+						isPending={isPending}
+						idleLabel="Changer le mot de passe"
+						pendingLabel="Changement en cours…"
+					/>
+				</form.AppForm>
 			</div>
 		</form>
 	);

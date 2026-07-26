@@ -1,11 +1,6 @@
 import Link from "next/link";
 
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import {
 	TableBody,
 	TableCell,
@@ -17,7 +12,6 @@ import type { GetProductTypesReturn } from "@/modules/product-types/data/get-pro
 import { Lock, Tags } from "lucide-react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
-import { ProductTypesBulkActionsBar } from "./product-types-bulk-actions-bar";
 import { CreateProductTypeButton } from "./create-product-type-button";
 
 interface ProductTypesDataTableProps {
@@ -48,12 +42,9 @@ export async function ProductTypesDataTable({
 		);
 	}
 
-	const pageItemIds = productTypes.filter((pt) => !pt.isSystem).map((pt) => pt.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des types de produits"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -63,14 +54,9 @@ export async function ProductTypesDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<ProductTypesBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="types" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[20%]">Label</TableHead>
 					<TableHead className="w-[28%]">Description</TableHead>
 					<TableHead className="w-[12%] text-center">Produits</TableHead>
@@ -95,12 +81,7 @@ export async function ProductTypesDataTable({
 										className="text-muted-foreground inline-block size-4"
 										aria-label="Type système verrouillé"
 									/>
-								) : (
-									<BulkSelectionRowCheckbox
-										id={productType.id}
-										itemLabel={`Type ${productType.label}`}
-									/>
-								)}
+								) : null}
 							</TableCell>
 							<TableCell>
 								<div className="overflow-hidden">

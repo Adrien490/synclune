@@ -4,19 +4,13 @@ import { Package } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { AdminMobileListPagination } from "@/shared/components/cursor-pagination";
-import { BulkSelectionProvider } from "@/shared/components/data-table";
 import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import {
-	MobileSelectionBottomBar,
-	MobileSelectionHeader,
-} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 
 import { SkuMobileItem } from "./sku-mobile-item";
-import { SkusBulkActionsBar } from "./skus-bulk-actions-bar";
 
 interface SkusMobileListProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -63,33 +57,25 @@ export function SkusMobileList({
 		);
 	}
 
-	const pageItemIds = productSkus.map((s) => s.id);
-
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "variante", plural: "variantes" }} />
-				<AdminListLiveCount count={productSkus.length} singular="variante" plural="variantes" />
-				<ItemGroup aria-label="Variantes" className="gap-2">
-					{productSkus.map((sku, index) => (
-						<li key={sku.id}>
-							<SkuMobileItem sku={sku} productSlug={productSlug} preload={index === 0} />
-						</li>
-					))}
-				</ItemGroup>
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={productSkus.length} singular="variante" plural="variantes" />
+			<ItemGroup aria-label="Variantes" className="gap-2">
+				{productSkus.map((sku, index) => (
+					<li key={sku.id}>
+						<SkuMobileItem sku={sku} productSlug={productSlug} preload={index === 0} />
+					</li>
+				))}
+			</ItemGroup>
 
-				<AdminMobileListPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={productSkus.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar emptyHint="Tape sur les variantes à sélectionner">
-				<SkusBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+			<AdminMobileListPagination
+				perPage={perPage}
+				hasNextPage={pagination.hasNextPage}
+				hasPreviousPage={pagination.hasPreviousPage}
+				currentPageSize={productSkus.length}
+				nextCursor={pagination.nextCursor}
+				prevCursor={pagination.prevCursor}
+			/>
+		</div>
 	);
 }

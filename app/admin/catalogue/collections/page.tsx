@@ -154,7 +154,6 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

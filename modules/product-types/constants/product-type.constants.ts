@@ -1,7 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
-import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -69,12 +67,6 @@ export const GET_PRODUCT_TYPE_SELECT = {
 
 export const GET_PRODUCT_TYPES_DEFAULT_PER_PAGE = 20;
 export const GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE = 200;
-
-/**
- * Cap des ids retournés par get-filtered-product-type-ids pour le banner
- * "Sélectionner les N filtrés" (parité produits, cf. BULK_PRODUCT_ACTION_LIMIT).
- */
-export const BULK_PRODUCT_TYPE_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 // ============================================================================
 // SORT CONSTANTS

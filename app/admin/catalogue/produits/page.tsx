@@ -221,8 +221,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					hasActiveFilters={
 						!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 					}
-					collections={collections}
-					filterParams={{ search, sortBy, filters: parseFilters(params) }}
 				/>
 			</Suspense>
 
@@ -231,7 +229,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				productsPromise={Promise.resolve(productsData)}
 				perPage={perPage}
 				hasActiveFilters={!!search || Object.keys(params).some((key) => key.startsWith("filter_"))}
-				collections={collections}
 			/>
 		</div>
 	);

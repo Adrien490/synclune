@@ -100,24 +100,9 @@ export const deleteColorSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
 
-export const bulkDeleteColorsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID invalide"))
-		.min(1, "Aucune couleur sélectionnée")
-		.max(200, "Maximum 200 couleurs par opération"),
-});
-
 export const toggleColorStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	isActive: z.boolean(),
-});
-
-export const bulkToggleColorsStatusSchema = z.object({
-	colorIds: z
-		.array(z.cuid2("ID invalide"))
-		.min(1, "Au moins une couleur est requise")
-		.max(200, "Maximum 200 couleurs par opération"),
-	targetIsActive: z.boolean(),
 });
 
 export const duplicateColorSchema = z.object({

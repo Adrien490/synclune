@@ -178,14 +178,6 @@ export const toggleDiscountStatusSchema = z.object({
 // BULK TOGGLE STATUS SCHEMA
 // ============================================================================
 
-export const bulkToggleDiscountsStatusSchema = z.object({
-	discountIds: z
-		.array(z.cuid2("ID invalide"))
-		.min(1, "Au moins un code promo est requis")
-		.max(100, "Maximum 100 codes promo par opération"),
-	targetIsActive: z.boolean(),
-});
-
 // ============================================================================
 // RESTORE SCHEMA
 // ============================================================================

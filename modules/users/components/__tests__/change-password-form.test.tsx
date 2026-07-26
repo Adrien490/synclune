@@ -46,6 +46,39 @@ vi.mock("@/shared/components/forms", () => {
 		);
 	}
 
+	/**
+	 * `AppForm` + `SubmitButton` : depuis l'adoption du bouton partagé
+	 * (`shared/components/forms/submit-button.tsx`), le formulaire rend
+	 * `<form.AppForm><form.SubmitButton …/></form.AppForm>`. Sans ces deux
+	 * entrées dans le mock, le rendu échoue en « Element type is invalid ».
+	 * On reproduit le contrat réel : `disabled = !canSubmit || isPending`,
+	 * `aria-busy`, et bascule idle/pending du libellé.
+	 */
+	function makeFormShell(canSubmit: boolean) {
+		return {
+			AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+			SubmitButton: ({
+				isPending,
+				idleLabel,
+				pendingLabel,
+				disabled,
+			}: {
+				isPending?: boolean;
+				idleLabel: string;
+				pendingLabel: string;
+				disabled?: boolean;
+			}) => (
+				<button
+					type="submit"
+					disabled={(disabled ?? false) || !canSubmit || (isPending ?? false)}
+					aria-busy={isPending ?? false}
+				>
+					{isPending ? pendingLabel : idleLabel}
+				</button>
+			),
+		};
+	}
+
 	return {
 		useAppForm: vi.fn(() => ({
 			AppField: ({
@@ -82,6 +115,7 @@ vi.mock("@/shared/components/forms", () => {
 			}) =>
 				children(selector ? selector({ canSubmit: true, values: { newPassword: "" } }) : [true]),
 			handleSubmit: vi.fn(),
+			...makeFormShell(true),
 		})),
 	};
 });
@@ -289,6 +323,13 @@ describe("ChangePasswordForm", () => {
 			}) =>
 				children(selector ? selector({ canSubmit: false, values: { newPassword: "" } }) : [false]),
 			handleSubmit: vi.fn(),
+			AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+			// canSubmit = false ⇒ le bouton partagé doit être désactivé même hors pending.
+			SubmitButton: ({ idleLabel }: { idleLabel: string }) => (
+				<button type="submit" disabled>
+					{idleLabel}
+				</button>
+			),
 		} as unknown as ReturnType<typeof useAppForm>);
 		render(<ChangePasswordForm />);
 		const button = screen.getByRole("button", { name: /Changer le mot de passe/i });

@@ -24,8 +24,6 @@ import {
 	deleteProductSchema,
 	toggleProductStatusSchema,
 	productFiltersSchema,
-	bulkDeleteProductsSchema,
-	bulkArchiveProductsSchema,
 } from "../product.schemas";
 
 // A valid cuid2 for test usage
@@ -624,62 +622,6 @@ describe("productFiltersSchema", () => {
 // bulkDeleteProductsSchema
 // ============================================================================
 
-describe("bulkDeleteProductsSchema", () => {
-	it("should accept an array with at least one valid cuid2", () => {
-		const result = bulkDeleteProductsSchema.safeParse({ productIds: [VALID_CUID] });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject an empty array", () => {
-		const result = bulkDeleteProductsSchema.safeParse({ productIds: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when productIds contains invalid cuid2", () => {
-		const result = bulkDeleteProductsSchema.safeParse({ productIds: ["not-a-cuid"] });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when productIds is missing", () => {
-		const result = bulkDeleteProductsSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
-
 // ============================================================================
 // bulkArchiveProductsSchema
 // ============================================================================
-
-describe("bulkArchiveProductsSchema", () => {
-	it("should accept valid data with ARCHIVED target status", () => {
-		const result = bulkArchiveProductsSchema.safeParse({
-			productIds: [VALID_CUID],
-			targetStatus: "ARCHIVED",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should default targetStatus to ARCHIVED when not provided", () => {
-		const result = bulkArchiveProductsSchema.safeParse({ productIds: [VALID_CUID] });
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.targetStatus).toBe("ARCHIVED");
-		}
-	});
-
-	it("should accept PUBLIC as targetStatus", () => {
-		const result = bulkArchiveProductsSchema.safeParse({
-			productIds: [VALID_CUID],
-			targetStatus: "PUBLIC",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject DRAFT as targetStatus", () => {
-		const result = bulkArchiveProductsSchema.safeParse({
-			productIds: [VALID_CUID],
-			targetStatus: "DRAFT",
-		});
-		expect(result.success).toBe(false);
-	});
-});

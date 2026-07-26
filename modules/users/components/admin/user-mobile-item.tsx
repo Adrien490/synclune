@@ -1,8 +1,8 @@
 "use client";
 
-import { CircleCheck, Loader2, Shield } from "lucide-react";
+import { CircleCheck, Shield } from "lucide-react";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -12,8 +12,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -49,28 +47,20 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 	const displayName = user.name ?? "Utilisateur";
 	const initials = getInitials(user.name, user.email);
 	const orderCount = user._count.orders;
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(user.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 	const isAdmin = user.role === "ADMIN";
 
 	const { sections } = useUserActions({ user });
 
 	return (
 		<>
-			<MobileSelectableCard
-				id={user.id}
-				itemLabel={`Client ${displayName}, ${user.email}${isAdmin ? ", admin" : ""}${user.deletedAt ? ", supprimé" : user.suspendedAt ? ", suspendu" : ""}, ${orderCount} commande${orderCount !== 1 ? "s" : ""}`}
-				longPressProps={{
-					href: `/admin/clients/${user.id}`,
-					ariaLabel: `Client ${displayName}`,
-					sections,
-					menuTitle: "Actions utilisateur",
-					menuDescription: displayName,
-					className: "text-left",
-					viewTransitionName: `user-card-${user.id}`,
-				}}
+			<LongPressMenuLink
+				href={`/admin/clients/${user.id}`}
+				ariaLabel={`Client ${displayName}`}
+				sections={sections}
+				menuTitle="Actions utilisateur"
+				menuDescription={displayName}
+				className="text-left"
+				viewTransitionName={`user-card-${user.id}`}
 			>
 				<Item
 					variant="outline"
@@ -78,10 +68,8 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					className={cn(
 						"w-full gap-3 motion-safe:transition-opacity",
 						user.deletedAt && "opacity-50",
-						isPendingItem && "opacity-60",
 					)}
 					aria-roledescription="carte client"
-					aria-busy={isPendingItem || undefined}
 				>
 					<ItemMedia variant="icon">
 						<Avatar
@@ -107,12 +95,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 									aria-label="Email vérifié"
 								/>
 							) : null}
-							{isPendingItem ? (
-								<Badge variant="secondary" style={{ viewTransitionName: `user-status-${user.id}` }}>
-									<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-									{pendingLabel}
-								</Badge>
-							) : isAdmin ? (
+							{isAdmin ? (
 								<Badge
 									variant="default"
 									className="gap-1"
@@ -135,7 +118,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 						</ItemDescription>
 					</ItemContent>
 				</Item>
-			</MobileSelectableCard>
+			</LongPressMenuLink>
 
 			<UserAdminDialogs user={{ id: user.id, name: user.name, email: user.email }} />
 		</>

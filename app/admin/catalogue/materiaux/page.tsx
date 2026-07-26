@@ -126,7 +126,6 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 						materialsPromise={materialsPromise}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

@@ -132,7 +132,6 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
-						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

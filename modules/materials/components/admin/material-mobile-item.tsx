@@ -1,8 +1,8 @@
 "use client";
 
-import { Gem, Loader2 } from "lucide-react";
+import { Gem } from "lucide-react";
 
-import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -11,9 +11,6 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
-import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
-import { cn } from "@/shared/utils/cn";
 
 import { useMaterialActions } from "../../hooks/use-material-actions";
 
@@ -31,10 +28,6 @@ interface MaterialMobileItemProps {
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const skuCount = material._count.skus;
 	const statusLabel = material.isActive ? "● Actif" : "○ Inactif";
-	const pendingCtx = useAdminListPendingContextOptional();
-	const isPendingItem = pendingCtx?.isPending(material.id) ?? false;
-	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useMaterialActions({
 		materialId: material.id,
@@ -45,25 +38,20 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	});
 
 	return (
-		<MobileSelectableCard
-			id={material.id}
-			itemLabel={`Matériau ${material.name}, ${statusLabel}, ${skuCount} variante${skuCount !== 1 ? "s" : ""}`}
-			longPressProps={{
-				href: `/admin/catalogue/materiaux/${material.slug}`,
-				ariaLabel: `Matériau ${material.name}`,
-				sections,
-				menuTitle: "Actions",
-				menuDescription: material.name,
-				className: "text-left",
-				viewTransitionName: `material-card-${material.id}`,
-			}}
+		<LongPressMenuLink
+			href={`/admin/catalogue/materiaux/${material.slug}`}
+			ariaLabel={`Matériau ${material.name}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={material.name}
+			className="text-left"
+			viewTransitionName={`material-card-${material.id}`}
 		>
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
+				className={"w-full gap-3 motion-safe:transition-opacity"}
 				aria-roledescription="carte matériau"
-				aria-busy={isPendingItem || undefined}
 			>
 				<ItemMedia variant="icon">
 					<Gem
@@ -75,22 +63,12 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{material.name}</span>
-						{isPendingItem ? (
-							<Badge
-								variant="secondary"
-								style={{ viewTransitionName: `material-status-${material.id}` }}
-							>
-								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
-								{pendingLabel}
-							</Badge>
-						) : (
-							<Badge
-								variant={material.isActive ? "default" : "secondary"}
-								style={{ viewTransitionName: `material-status-${material.id}` }}
-							>
-								{statusLabel}
-							</Badge>
-						)}
+						<Badge
+							variant={material.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `material-status-${material.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 					</ItemTitle>
 					{material.description ? (
 						<ItemDescription className="line-clamp-1">{material.description}</ItemDescription>
@@ -102,6 +80,6 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</MobileSelectableCard>
+		</LongPressMenuLink>
 	);
 }

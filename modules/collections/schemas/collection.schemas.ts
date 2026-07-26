@@ -115,21 +115,6 @@ export const deleteCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
 
-export const bulkDeleteCollectionsSchema = z.object({
-	ids: z
-		.array(z.cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit être sélectionnée")
-		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
-});
-
-export const bulkArchiveCollectionsSchema = z.object({
-	collectionIds: z
-		.array(z.cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit être sélectionnée")
-		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
-	targetStatus: z.enum([CollectionStatus.ARCHIVED, CollectionStatus.PUBLIC]),
-});
-
 export const setFeaturedProductSchema = z.object({
 	collectionId: z.cuid2("ID de collection invalide"),
 	productId: z.cuid2("ID de produit invalide"),

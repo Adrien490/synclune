@@ -59,7 +59,6 @@ import {
 	createRefundItemSchema,
 	approveRefundSchema,
 	rejectRefundSchema,
-	bulkApproveRefundsSchema,
 	requestReturnSchema,
 } from "../refund.schemas";
 import { VALID_CUID } from "@/test/factories";
@@ -316,29 +315,6 @@ describe("rejectRefundSchema", () => {
 			id: VALID_CUID,
 			reason: "a".repeat(501),
 		});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("bulkApproveRefundsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkApproveRefundsSchema.safeParse({
-			ids: [VALID_CUID],
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should require at least one id", () => {
-		const result = bulkApproveRefundsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject more than 100 ids", () => {
-		const ids = Array.from({ length: 101 }, () => VALID_CUID);
-		const result = bulkApproveRefundsSchema.safeParse({ ids });
 
 		expect(result.success).toBe(false);
 	});

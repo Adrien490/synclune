@@ -39,7 +39,6 @@ import {
 	createColorSchema,
 	updateColorSchema,
 	deleteColorSchema,
-	bulkDeleteColorsSchema,
 	toggleColorStatusSchema,
 	getColorSchema,
 	mergeColorsSchema,
@@ -227,27 +226,6 @@ describe("deleteColorSchema", () => {
 		const result = deleteColorSchema.safeParse({ id: VALID_CUID });
 
 		expect(result.success).toBe(true);
-	});
-});
-
-describe("bulkDeleteColorsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkDeleteColorsSchema.safeParse({ ids: [VALID_CUID] });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkDeleteColorsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject more than 200 ids", () => {
-		const ids = Array.from({ length: 201 }, () => VALID_CUID);
-		const result = bulkDeleteColorsSchema.safeParse({ ids });
-
-		expect(result.success).toBe(false);
 	});
 });
 

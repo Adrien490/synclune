@@ -26,7 +26,6 @@ import {
 	type InvoiceStatus,
 } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
-import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -75,7 +74,6 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 	const router = useRouter();
 	const isMobile = useIsMobile();
-	const selectActionItem = useBulkSelectionActionItem(order.id);
 
 	const openNotes = () => {
 		if (isMobile) {
@@ -115,7 +113,6 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		{
 			key: "info",
 			items: [
-				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "view",
 					label: "Voir les détails",

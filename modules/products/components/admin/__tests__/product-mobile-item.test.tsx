@@ -54,16 +54,7 @@ vi.mock("lucide-react", () => ({
 
 // Import après mocks
 import { ProductStatus } from "@/app/generated/prisma/enums";
-import { BulkSelectionProvider, useBulkSelectionContext } from "@/shared/components/data-table";
 import { ProductMobileItem } from "../product-mobile-item";
-
-function EnterSelectionModeOnMount() {
-	const { enterSelectionMode } = useBulkSelectionContext();
-	useEffect(() => {
-		enterSelectionMode();
-	}, [enterSelectionMode]);
-	return null;
-}
 
 // ============================================================================
 // FIXTURES
@@ -258,34 +249,5 @@ describe("ProductMobileItem", () => {
 
 		rerender(<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.ARCHIVED }} />);
 		expect(screen.getByText(/Archivé/)).toBeInTheDocument();
-	});
-
-	it("rend une checkbox (button role=checkbox) en mode sélection au lieu du Link", () => {
-		render(
-			<BulkSelectionProvider pageItemIds={[baseProduct.id]}>
-				<EnterSelectionModeOnMount />
-				<ProductMobileItem product={baseProduct} />
-			</BulkSelectionProvider>,
-		);
-
-		expect(
-			screen.getByRole("checkbox", { name: /^Sélectionner Produit Anneau doré/ }),
-		).toBeInTheDocument();
-		expect(screen.queryByRole("link", { name: "Produit Anneau doré" })).not.toBeInTheDocument();
-	});
-
-	it("toggle la sélection au tap en mode sélection", () => {
-		render(
-			<BulkSelectionProvider pageItemIds={[baseProduct.id]}>
-				<EnterSelectionModeOnMount />
-				<ProductMobileItem product={baseProduct} />
-			</BulkSelectionProvider>,
-		);
-
-		fireEvent.click(screen.getByRole("checkbox", { name: /^Sélectionner Produit Anneau doré/ }));
-
-		expect(
-			screen.getByRole("checkbox", { name: /^Désélectionner Produit Anneau doré/ }),
-		).toHaveAttribute("aria-checked", "true");
 	});
 });

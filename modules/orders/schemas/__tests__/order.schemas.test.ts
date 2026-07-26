@@ -82,7 +82,6 @@ import {
 	markAsShippedSchema,
 	carrierEnum,
 	addOrderNoteSchema,
-	bulkDeleteOrdersSchema,
 	exportInvoicesSchema,
 	markAsFullyRefundedSchema,
 	manualRefundMethodEnum,
@@ -401,40 +400,6 @@ describe("addOrderNoteSchema", () => {
 // ============================================================================
 // bulkDeleteOrdersSchema
 // ============================================================================
-
-describe("bulkDeleteOrdersSchema", () => {
-	it("accepts an array with a single valid cuid2", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({ ids: [VALID_CUID] });
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts an array of exactly 100 valid cuid2s (max)", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({ ids: makeCuids(100) });
-		expect(result.success).toBe(true);
-	});
-
-	it("rejects an empty ids array", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({ ids: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects an array with 101 ids (exceeds max of 100)", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({ ids: makeCuids(101) });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when any id is not a valid cuid2", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({
-			ids: [VALID_CUID, "not-a-cuid2"],
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when ids field is missing", () => {
-		const result = bulkDeleteOrdersSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
 
 // ============================================================================
 // exportInvoicesSchema

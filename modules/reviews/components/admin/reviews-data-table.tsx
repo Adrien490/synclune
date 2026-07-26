@@ -1,10 +1,5 @@
 import { ReviewStatus } from "@/app/generated/prisma/browser";
-import {
-	AdminDataTable,
-	BulkSelectionHeaderCheckbox,
-	BulkSelectionRowCheckbox,
-	TableEmptyState,
-} from "@/shared/components/data-table";
+import { AdminDataTable, TableEmptyState } from "@/shared/components/data-table";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	TableBody,
@@ -25,7 +20,6 @@ import {
 	REVIEW_STATUS_LABELS,
 } from "../../constants/review.constants";
 import { ReviewRowActions } from "./review-row-actions";
-import { ReviewsBulkActionsBar } from "./reviews-bulk-actions-bar";
 
 interface ReviewsDataTableProps {
 	reviewsPromise: Promise<GetReviewsReturn>;
@@ -55,12 +49,9 @@ export async function ReviewsDataTable({
 		);
 	}
 
-	const pageItemIds = adminReviews.map((r) => r.id);
-
 	return (
 		<AdminDataTable
 			caption="Liste des avis"
-			pageItemIds={pageItemIds}
 			pagination={{
 				perPage,
 				hasNextPage: pagination.hasNextPage,
@@ -70,14 +61,9 @@ export async function ReviewsDataTable({
 				prevCursor: pagination.prevCursor,
 				totalCount,
 			}}
-			bulkActionsBar={<ReviewsBulkActionsBar />}
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[4%]">
-						<BulkSelectionHeaderCheckbox itemsLabel="avis" />
-						<span className="sr-only">Sélection</span>
-					</TableHead>
 					<TableHead className="w-[20%]">Produit</TableHead>
 					<TableHead className="w-[16%]">Client</TableHead>
 					<TableHead className="w-[10%]">Note</TableHead>
@@ -92,12 +78,6 @@ export async function ReviewsDataTable({
 			<TableBody>
 				{adminReviews.map((review) => (
 					<TableRow key={review.id}>
-						<TableCell>
-							<BulkSelectionRowCheckbox
-								id={review.id}
-								itemLabel={`Avis de ${review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL} sur ${review.product.title}`}
-							/>
-						</TableCell>
 						{/* Produit */}
 						<TableCell>
 							<Link

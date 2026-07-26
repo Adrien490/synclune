@@ -1,6 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { DiscountType } from "@/app/generated/prisma/browser";
-import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -71,12 +70,6 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 
 export const GET_DISCOUNTS_DEFAULT_PER_PAGE = 20;
 export const GET_DISCOUNTS_MAX_RESULTS_PER_PAGE = 100;
-
-/**
- * Cap des ids retournés par get-filtered-discount-ids pour le banner
- * "Sélectionner les N filtrés" (parité produits).
- */
-export const BULK_DISCOUNT_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 export const DISCOUNTS_SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
