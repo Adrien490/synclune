@@ -10,10 +10,9 @@
  * Invariants :
  *   1. Un seul `invoiceNumber` persisté pour l'order (idempotence via
  *      `ensureInvoiceNumberPersisted` skip si déjà set)
- *   2. Un seul `EReportingTransaction` SALES créé (idempotence findFirst)
  *   3. Pas de P2002 surface au caller
  *
- * Ce test exerce les services réels (ensureInvoice + recordSalesEReporting)
+ * Ce test exerce le service réel `ensureInvoiceNumberPersisted`
  * sur DB Postgres avec advisory locks réels.
  */
 
@@ -21,7 +20,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { getIntegrationPrismaClient } from "@/test/integration/prisma-client";
 import { createTestUser, createTestProduct, createTestSku } from "@/test/integration/factories";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { recordSalesEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { OrderStatus, PaymentStatus, type Order } from "@/app/generated/prisma/client";
 
 const integrationEnabled = Boolean(process.env.INTEGRATION_DATABASE_URL);
@@ -98,33 +96,6 @@ describeIntegration("payment_intent.succeeded — replay idempotent (EINV-TEST-0
 		// Un seul invoiceNumber gagne, status GENERATED
 		expect(persisted.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 		expect(persisted.invoiceStatus).toBe("GENERATED");
-	});
-
-	it("5 replays recordSalesEReporting parallèles → 1 seule EReportingTransaction SALES", async () => {
-		const user = await createTestUser();
-		const product = await createTestProduct();
-		const sku = await createTestSku(product.id);
-		const order = await createPaidOrder(prisma, user.id, sku.id);
-
-		// Feature flag : recordSalesEReporting est gated. On skip si OFF.
-		const featureOff = process.env.INVOICE_ENABLE_EREPORTING !== "true";
-		if (featureOff) {
-			// Activé sur l'env du test seulement pour cette assertion.
-			process.env.INVOICE_ENABLE_EREPORTING = "true";
-		}
-
-		try {
-			await Promise.all(Array.from({ length: 5 }, () => recordSalesEReporting(order.id)));
-
-			const transactions = await prisma.eReportingTransaction.findMany({
-				where: { orderId: order.id, type: "SALES" },
-			});
-
-			// Idempotence : 1 seule transaction malgré 5 appels concurrents
-			expect(transactions).toHaveLength(1);
-		} finally {
-			if (featureOff) delete process.env.INVOICE_ENABLE_EREPORTING;
-		}
 	});
 
 	it("ensureInvoice puis 4 replays → noop sur les 4 (skip si déjà set)", async () => {

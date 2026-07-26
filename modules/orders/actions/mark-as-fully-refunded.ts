@@ -27,7 +27,6 @@ import { createOrderAuditTx } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { voidInvoice } from "../services/void-invoice.service";
-import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { sendAdminCreditNoteOverlapAlert } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -309,20 +308,12 @@ export async function markAsFullyRefunded(
 			return { status: ActionStatus.ERROR, message };
 		}
 
-		// EINV-CREDIT-004 : e-reporting du Refund manuel (Art. 272-I CGI).
-		// Best-effort hors transaction.
-		//
 		// EINV-SEQ-001 (audit séquences 2026-05-28, Option A) : ce flow est un
 		// remboursement TOTAL → l'avoir est émis par `voidInvoice` ci-dessous
 		// (`Order.creditNoteNumber`), émetteur unique. On NE pose donc PAS d'avoir
 		// par Refund (`issueCreditNoteForRefund`) ici, sinon deux numéros A-YYYY
-		// seraient consommés pour un seul remboursement. L'e-reporting REFUND reste
-		// rattaché au Refund, indépendant de la numérotation de l'avoir.
+		// seraient consommés pour un seul remboursement.
 		const createdRefundId = "_createdRefundId" in order ? order._createdRefundId : null;
-		if (createdRefundId) {
-			// EINV-EREPORT-009 : deferrable — flag de rattrapage si échec.
-			await recordRefundEReportingDeferrable(createdRefundId);
-		}
 
 		// Émission avoir VOID (Art. 272-I CGI) si la facture était active.
 		// Hors transaction principale : advisory lock Postgres pas safe imbriqué.

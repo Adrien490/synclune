@@ -25,7 +25,6 @@ const {
 	mockGetOrderInvalidationTags,
 	mockVoidInvoice,
 	mockIssueCreditNoteForRefund,
-	mockRecordRefundEReporting,
 	mockSendOverlapAlert,
 	mockSendRefundConfirmationOnce,
 } = vi.hoisted(() => ({
@@ -52,7 +51,6 @@ const {
 	// wrong reason » — il vérifie voidInvoice mais ignore l'émission d'avoir
 	// rattachée au Refund (Art. 272-I CGI) ET la transmission e-reporting B2C.
 	mockIssueCreditNoteForRefund: vi.fn(),
-	mockRecordRefundEReporting: vi.fn(),
 	// EINV-CREDIT-015 (AVOIR-01) : alerte sur-crédit (avoir total + avoirs partiels).
 	mockSendOverlapAlert: vi.fn(),
 	// Email client remboursement hors-Stripe — hoisted car resetAllMocks vide
@@ -150,9 +148,6 @@ vi.mock("../../services/void-invoice.service", () => ({
 vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: mockRecordRefundEReporting,
-}));
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminCreditNoteOverlapAlert: mockSendOverlapAlert,
 }));
@@ -199,7 +194,6 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			kind: "noop",
 			reason: "refund-not-completed",
 		});
-		mockRecordRefundEReporting.mockResolvedValue(undefined);
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-manual-1" });
 
 		setupOrderInTx({
@@ -289,7 +283,7 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			expect(result.message).toContain("A-2026-00099");
 		});
 
-		it("EINV-SEQ-001 : recordRefundEReporting appelé sur le Refund manuel, mais issueCreditNoteForRefund JAMAIS (avoir porté par voidInvoice)", async () => {
+		it("EINV-SEQ-001 : issueCreditNoteForRefund JAMAIS appelé (avoir porté par voidInvoice)", async () => {
 			// EINV-SEQ-001 (Option A) : ce flow est un remboursement TOTAL. L'avoir
 			// est émis exclusivement par voidInvoice (Order.creditNoteNumber). Émettre
 			// EN PLUS un avoir par Refund consommerait deux numéros A-YYYY pour un seul
@@ -304,7 +298,6 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			await markAsFullyRefunded(undefined, validFormData);
 
 			expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
-			expect(mockRecordRefundEReporting).toHaveBeenCalledTimes(1);
 			// voidInvoice reste l'émetteur unique de l'avoir pour le full refund.
 			expect(mockVoidInvoice).toHaveBeenCalledTimes(1);
 		});

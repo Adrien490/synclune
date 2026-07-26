@@ -20,7 +20,7 @@ Contexte rapide :
 - E-commerce de bijoux artisanaux.
 - Stack : Next.js 16, React 19, TypeScript, Prisma 7, PostgreSQL Neon, Stripe, Better Auth, TanStack Form, Zod, Zustand, shadcn/ui, Tailwind, Motion.
 - Modules critiques : cart, orders, payments, webhooks, auth, discounts, refunds, invoices, emails, cron, media, wishlist.
-- Points critiques : paiement Stripe, webhooks idempotents, stock, commandes, factures, avoirs, RGPD, e-reporting, emails transactionnels, admin, sécurité.
+- Points critiques : paiement Stripe, webhooks idempotents, stock, commandes, factures, avoirs, RGPD, emails transactionnels, admin, sécurité.
 
 ### Les 24 modules réels (`modules/`)
 
@@ -29,10 +29,10 @@ Contexte rapide :
 `reviews`, `skus`, `store-settings`, `users`, `webhooks`, `wishlist`.
 
 > ⚠️ Il n'existe **pas** de module `admin`, `catalog`, `search`, `shipping`, `stock`, `analytics`, `disputes`,
-> `account` ni `e-reporting`. L'admin est un **arbre de routes** (`app/admin/**`) qui consomme les modules
+> `account`. L'admin est un **arbre de routes** (`app/admin/**`) qui consomme les modules
 > métier ; l'analytics vit dans `modules/dashboard/**` ; le stock dans `modules/skus/**` ; la livraison, le
 > tracking et les litiges dans `modules/orders/**` + `modules/webhooks/**` + `modules/cron/**` ;
-> l'e-reporting dans `modules/invoices/**` ; l'espace client dans `app/(account)/**` + `modules/users/**`.
+> la facturation dans `modules/invoices/**` ; l'espace client dans `app/(account)/**` + `modules/users/**`.
 > **Le filesystem fait foi** : vérifie chaque chemin cité dans un prompt avant de t'y fier.
 
 ### Positionnement vs `docs/AUDIT-PROMPTS.md`
@@ -582,17 +582,12 @@ Note /100, propose corrections.
 
 ---
 
-## 39 — E-reporting B2C
+## 39 — E-reporting B2C ⏳ (à construire, pas à auditer)
 
-```text
-Audit le point « E-reporting B2C » dans Synclune.
-
-Vérifie transactions e-reporting, batchs, dry-run, flags, statuts, retries, no-op si désactivé, conformité biens/services et absence de mutation manuelle.
-
-Inspecte `modules/invoices/**` (services `record-ereporting`, `build-ereporting-batch`, `submit-ereporting-batch`), `modules/cron/**`, `app/admin/ventes/facturation/**`, `prisma/schema.prisma`, tests regression.
-
-Note /100, classe les risques conformité en P0/P1.
-```
+> ⚠️ **Retiré du code le 2026-07-26** (right-sizing) : l'implémentation était en dry-run intégral,
+> écrite contre une spec non figée. Ce prompt n'a plus d'objet tant que l'arrêté définitif n'est pas
+> publié et qu'aucune Plateforme Agréée n'est contractualisée. Voir la mission `INVOICE-GOLIVE` de
+> [`docs/AUDIT-PROMPTS.md`](AUDIT-PROMPTS.md) et [`docs/RUNBOOK.md § e-reporting`](RUNBOOK.md).
 
 ---
 
@@ -1315,7 +1310,7 @@ Note /100, propose corrections.
 ```text
 Audit le point « Admin refunds et avoirs » dans Synclune.
 
-Vérifie que l’admin peut rembourser correctement sans casser Stripe, statuts, facture, avoir, email, historique et e-reporting.
+Vérifie que l’admin peut rembourser correctement sans casser Stripe, statuts, facture, avoir, email et historique.
 
 Inspecte `modules/refunds/**`, `app/admin/ventes/remboursements/**`, `modules/invoices/**`.
 
@@ -2583,7 +2578,7 @@ Vérifie :
   Vercel dont l'heure locale se décale de mars à octobre (`reconcile-invoices` à 2:00, `hard-delete-retention`,
   `cleanup-pending-orders` à 3:00 — collision possible) ;
 - les échéances légales : rétention 10 ans (`paidAt + 10 ans`), délai de rétractation, dates de facture
-  et d'avoir, périodes e-reporting — toute erreur y est une erreur de conformité ;
+  et d'avoir — toute erreur y est une erreur de conformité ;
 - le rendu déterministe des PDF (un test de régression y veille déjà) ;
 - l'affichage client : dates au format FR, pas de `toLocaleDateString()` sans fuseau explicite (rendu
   serveur ≠ rendu client = erreur d'hydratation).
@@ -3330,7 +3325,7 @@ Vérifie :
   Art. 50-0 CGI) ? La zone grise du sur-mesure (prestation de service, seuil 37 500 €) est-elle
   identifiée comme telle ?
 - la préparation à la sortie de franchise : `shared/constants/tax-categories.ts`, la ventilation de TVA
-  et les catégories e-reporting existent-elles en dormance, prêtes à être activées, ou faudra-t-il
+  la ventilation par taux de TVA est-elle prête à être activée, ou faudra-t-il
   tout écrire en urgence ?
 - `shared/schemas/b2b-identifiers.schema.ts` : à quoi sert-il réellement ? S'il prépare un flux B2B
   (numéro de TVA intracommunautaire, SIRET), est-il cohérent avec un modèle assumé B2C — ou dormant ?
@@ -3409,7 +3404,7 @@ régression, TODO du code) et produis :
    données d'un autre, ou est-ce qu'une obligation légale est violée ? Tout le reste attend.
 3. LA DETTE ASSUMÉE : ce qu'on choisit de ne PAS corriger, avec la raison et le risque accepté. Un
    projet sain a une dette explicite ; ce repo a déjà des choix de ce type (limitation de débit en
-   mémoire par instance, pas de PWA, pas de dark mode, e-reporting en simulation jusqu'en 2027) —
+   mémoire par instance, pas de PWA, pas de dark mode, e-reporting à construire pour 2027) —
    liste-les comme des décisions, pas comme des défauts.
 4. L'ORDRE D'EXÉCUTION : séquence les chantiers en tenant compte des dépendances (ex. le cache avant
    la performance, les tests avant les refontes, les fondations UI avant les surfaces) et des conflits

@@ -19,7 +19,6 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
-import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
@@ -642,14 +641,6 @@ export async function handleDisputeClosed(
 					});
 				}
 			}
-
-			// (b) E-reporting REFUND DGFiP (EINV-AUDIT-004). Le chargebackRefund est
-			// créé COMPLETED + processedAt → exclu du cron `reconcile-refunds`
-			// (qui ne reprend que les APPROVED/processedAt=null). EINV-EREPORT-009 (P1-B) :
-			// via le wrapper `deferrable` — sur échec transitoire ("error"), pose le flag
-			// `Refund.ereportingRetryDeferred` (DLQ) rattrapé par reconcile-refunds, au
-			// lieu d'un appel inline best-effort définitivement perdu. Idempotent.
-			await recordRefundEReportingDeferrable(chargebackRefundId);
 
 			// MEDIUM-2 : double reprise de fonds (refund admin + chargeback) → le
 			// cumul COMPLETED dépasse le total commande. Le booking est fidèle (les

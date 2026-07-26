@@ -23,7 +23,6 @@ const {
 	processOrderFromPaymentIntentMock,
 	sendAdminOrderProcessingFailedAlertMock,
 	ensureInvoiceNumberPersistedMock,
-	recordSalesEReportingMock,
 } = vi.hoisted(() => ({
 	markOrderAsFailedMock: vi.fn(),
 	initiateAutomaticRefundMock: vi.fn(),
@@ -31,7 +30,6 @@ const {
 	processOrderFromPaymentIntentMock: vi.fn(),
 	sendAdminOrderProcessingFailedAlertMock: vi.fn(),
 	ensureInvoiceNumberPersistedMock: vi.fn(),
-	recordSalesEReportingMock: vi.fn(),
 }));
 
 vi.mock("../../services/payment-intent.service", () => ({
@@ -57,9 +55,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: ensureInvoiceNumberPersistedMock,
 }));
 
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordSalesEReportingDeferrable: recordSalesEReportingMock,
-}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -146,7 +141,6 @@ describe("@regression amount-mismatch-auto-refund", () => {
 		);
 		// Aucune facture émise / aucune vente e-reporting enregistrée
 		expect(ensureInvoiceNumberPersistedMock).not.toHaveBeenCalled();
-		expect(recordSalesEReportingMock).not.toHaveBeenCalled();
 		// Alerte admin actionnable
 		expect(sendAdminOrderProcessingFailedAlertMock).toHaveBeenCalledWith(
 			expect.objectContaining({ paymentIntentId: "pi_test_123" }),

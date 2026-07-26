@@ -1,43 +1,18 @@
 import Link from "next/link";
-import {
-	AlertTriangle,
-	CheckCircle2,
-	Clock,
-	FileWarning,
-	Receipt,
-	Send,
-	XCircle,
-} from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
+import { AlertTriangle, Clock, FileWarning, Receipt } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/shared/components/ui/table";
 import { formatEuro } from "@/shared/utils/format-euro";
-import {
-	INVOICE_FEATURE_FLAGS,
-	type InvoiceFeatureFlags,
-} from "@/modules/invoices/constants/feature-flags";
 import { ExportComptableForm } from "@/modules/invoices/components/admin/export-comptable-form";
 import { InvoicesListTable } from "@/modules/invoices/components/admin/invoices-list-table";
 import { AnomaliesSection } from "@/modules/invoices/components/admin/anomalies-section";
-import type {
-	BatchSummary,
-	InvoicingOverview,
-} from "@/modules/invoices/data/get-invoicing-overview";
+import type { InvoicingOverview } from "@/modules/invoices/data/get-invoicing-overview";
 
 interface InvoicingOverviewSectionProps {
 	overview: InvoicingOverview;
 }
 
 /**
- * Vue d'ensemble admin du module facturation — KPIs + e-reporting status.
+ * Vue d'ensemble admin du module facturation — KPIs factures.
  *
  * Server Component pur — toutes les données arrivent via props (calculées
  * dans `getInvoicingOverview`). Le wrapper page applique l'auth guard.
@@ -49,19 +24,11 @@ interface InvoicingOverviewSectionProps {
  *   - liste des 10 dernières factures émises
  */
 export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionProps) {
-	const featureFlags: InvoiceFeatureFlags = INVOICE_FEATURE_FLAGS;
-	const hasRejectedBatches = overview.rejectedBatches.length > 0;
 	const hasAnomaly = overview.invoiceAnomalyCount > 0;
 
 	return (
 		<div className="space-y-8">
-			{hasRejectedBatches && <RejectedBatchesAlert batches={overview.rejectedBatches} />}
-
 			<AnomaliesSection anomalies={overview.anomalies} />
-
-			<EReportingCoverageCard coverage={overview.eReportingCoverage} />
-
-			<FeatureFlagsCard flags={featureFlags} />
 
 			<section aria-labelledby="invoice-counters-heading" aria-live="polite" className="space-y-4">
 				<h2 id="invoice-counters-heading" className="text-foreground text-lg font-medium">
@@ -105,56 +72,6 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 				</div>
 			</section>
 
-			<section
-				aria-labelledby="ereporting-counters-heading"
-				aria-live="polite"
-				className="space-y-4"
-			>
-				<h2 id="ereporting-counters-heading" className="text-foreground text-lg font-medium">
-					E-reporting DGFiP
-				</h2>
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-					<CounterCard
-						compact
-						icon={<Clock className="text-muted-foreground size-4" aria-hidden="true" />}
-						label="En attente"
-						value={overview.batchCounters.PENDING}
-					/>
-					<CounterCard
-						compact
-						icon={<Send className="text-info size-4" aria-hidden="true" />}
-						label="Transmis"
-						value={overview.batchCounters.SENT}
-					/>
-					<CounterCard
-						compact
-						icon={<CheckCircle2 className="text-success size-4" aria-hidden="true" />}
-						label="Acceptés"
-						value={overview.batchCounters.ACCEPTED}
-					/>
-					<CounterCard
-						compact
-						icon={<XCircle className="text-destructive size-4" aria-hidden="true" />}
-						label="Rejetés"
-						value={overview.batchCounters.REJECTED}
-						danger={overview.batchCounters.REJECTED > 0}
-					/>
-					<CounterCard
-						compact
-						icon={<Clock className="text-warning size-4" aria-hidden="true" />}
-						label="Retry"
-						value={overview.batchCounters.RETRYING}
-					/>
-					<CounterCard
-						compact
-						icon={<AlertTriangle className="text-destructive size-4" aria-hidden="true" />}
-						label="Abandonnés"
-						value={overview.batchCounters.ABANDONED}
-						danger={overview.batchCounters.ABANDONED > 0}
-					/>
-				</div>
-			</section>
-
 			<section aria-labelledby="recent-activity-heading" className="space-y-4">
 				<h2 id="recent-activity-heading" className="text-foreground text-lg font-medium">
 					30 derniers jours
@@ -164,16 +81,6 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 						label="CA encaissé TTC"
 						value={formatEuro(overview.last30DaysRevenueCents)}
 						hint="Filtre paidAt (Art. 50-0 CGI — encaissement)"
-					/>
-					<CounterCard
-						label="Transactions ventes"
-						value={overview.last30DaysTransactionCount}
-						hint="SALES e-reporting créées"
-					/>
-					<CounterCard
-						label="Transactions refunds"
-						value={overview.last30DaysRefundCount}
-						hint="REFUND e-reporting créées (avoirs)"
 					/>
 				</div>
 			</section>
@@ -200,14 +107,6 @@ export function InvoicingOverviewSection({ overview }: InvoicingOverviewSectionP
 				</p>
 			</section>
 
-			{overview.pendingBatches.length > 0 && (
-				<section aria-labelledby="pending-batches-heading" className="space-y-4">
-					<h2 id="pending-batches-heading" className="text-foreground text-lg font-medium">
-						File de transmission ({overview.pendingBatches.length})
-					</h2>
-					<BatchesTable batches={overview.pendingBatches} showStatus />
-				</section>
-			)}
 		</div>
 	);
 }
@@ -256,164 +155,5 @@ function CounterCard({ icon, label, value, hint, compact, danger, href }: Counte
 		>
 			{card}
 		</Link>
-	);
-}
-
-function EReportingCoverageCard({
-	coverage,
-}: {
-	coverage: InvoicingOverview["eReportingCoverage"];
-}) {
-	const status = (ratio: number) => {
-		if (ratio >= 0.99) return { label: "OK", variant: "default" as const };
-		if (ratio >= 0.95) return { label: "À surveiller", variant: "secondary" as const };
-		return { label: "Critique", variant: "destructive" as const };
-	};
-	const salesStatus = status(coverage.sales);
-	const refundStatus = status(coverage.refund);
-	const pct = (r: number) => `${Math.round(r * 100)}%`;
-
-	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-sm">Couverture e-reporting 30j</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div className="grid gap-3 sm:grid-cols-2">
-					<div>
-						<div className="text-muted-foreground text-xs">SALES</div>
-						<div className="mt-1 flex items-center gap-2">
-							<span className="font-display text-2xl font-normal tabular-nums">
-								{pct(coverage.sales)}
-							</span>
-							<Badge variant={salesStatus.variant}>{salesStatus.label}</Badge>
-						</div>
-						<p className="text-muted-foreground mt-1 text-xs">
-							{coverage.paidOrders} commandes PAID 30j
-						</p>
-					</div>
-					<div>
-						<div className="text-muted-foreground text-xs">REFUND</div>
-						<div className="mt-1 flex items-center gap-2">
-							<span className="font-display text-2xl font-normal tabular-nums">
-								{pct(coverage.refund)}
-							</span>
-							<Badge variant={refundStatus.variant}>{refundStatus.label}</Badge>
-						</div>
-						<p className="text-muted-foreground mt-1 text-xs">
-							{coverage.paidRefunds} commandes remboursées 30j
-						</p>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
-	);
-}
-
-function RejectedBatchesAlert({ batches }: { batches: ReadonlyArray<BatchSummary> }) {
-	return (
-		<Alert variant="destructive">
-			<AlertTriangle className="size-4" aria-hidden="true" />
-			<AlertTitle>{batches.length} batch(es) e-reporting rejeté(s) par la DGFiP</AlertTitle>
-			<AlertDescription className="space-y-2">
-				<p>
-					Action requise — ouvrir le détail du batch pour consulter le motif de rejet DGFiP et la
-					réponse du provider, puis relancer la transmission après correction.
-				</p>
-				<ul className="space-y-1 text-sm">
-					{batches.slice(0, 3).map((batch) => (
-						<li key={batch.id}>
-							<Link href={`/admin/ventes/facturation/batches/${batch.id}`} className="underline">
-								Batch {batch.id.slice(0, 8)} — {batch.periodFrom.toISOString().slice(0, 10)}
-							</Link>
-						</li>
-					))}
-				</ul>
-			</AlertDescription>
-		</Alert>
-	);
-}
-
-function FeatureFlagsCard({ flags }: { flags: InvoiceFeatureFlags }) {
-	return (
-		<Card className="border-info/30 bg-info/5">
-			<CardHeader>
-				<CardTitle className="text-sm">État du module facturation</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<div className="flex flex-wrap gap-2 text-sm">
-					<Flag label="E-reporting B2C DGFiP" active={flags.enable_ereporting} />
-				</div>
-				<p className="text-muted-foreground mt-3 text-xs">
-					Les flags sont pilotés par les variables d&apos;environnement
-					<code className="bg-muted ml-1 rounded px-1 py-0.5">INVOICE_ENABLE_*</code>. Quand un flag
-					est OFF, les services associés répondent &quot;skipped&quot; silencieusement
-					(fail-closed).
-				</p>
-			</CardContent>
-		</Card>
-	);
-}
-
-function Flag({ label, active }: { label: string; active: boolean }) {
-	return (
-		<Badge variant={active ? "default" : "outline"} className="text-xs">
-			{active ? "ON" : "OFF"} · {label}
-		</Badge>
-	);
-}
-
-function BatchesTable({
-	batches,
-	showStatus,
-}: {
-	batches: ReadonlyArray<BatchSummary>;
-	showStatus?: boolean;
-}) {
-	return (
-		<div className="border-border rounded-md border">
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>Période</TableHead>
-						<TableHead className="text-right">Transactions</TableHead>
-						<TableHead className="text-right">Montant TTC</TableHead>
-						{showStatus && <TableHead>Statut</TableHead>}
-						<TableHead>Créé le</TableHead>
-						<TableHead className="text-right">Action</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{batches.map((batch) => (
-						<TableRow key={batch.id}>
-							<TableCell className="font-mono text-xs">
-								{batch.periodFrom.toISOString().slice(0, 10)}
-							</TableCell>
-							<TableCell className="text-right">{batch.transactionCount}</TableCell>
-							<TableCell className="text-right">{formatEuro(batch.totalAmountIncTax)}</TableCell>
-							{showStatus && (
-								<TableCell>
-									<Badge variant={batch.status === "REJECTED" ? "destructive" : "secondary"}>
-										{batch.status}
-									</Badge>
-								</TableCell>
-							)}
-							<TableCell className="text-muted-foreground text-xs">
-								{batch.createdAt.toISOString().slice(0, 16).replace("T", " ")}
-							</TableCell>
-							<TableCell className="text-right">
-								<Link
-									href={`/admin/ventes/facturation/batches/${batch.id}`}
-									className="text-sm underline"
-									aria-label={`Voir le détail du batch ${batch.id.slice(0, 8)}`}
-								>
-									Détail
-								</Link>
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		</div>
 	);
 }

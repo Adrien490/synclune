@@ -89,9 +89,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: vi.fn(),
 }));
 
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordSalesEReportingDeferrable: vi.fn(),
-}));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 	extractPaymentMethodFromPaymentIntent: vi.fn().mockResolvedValue(null),

@@ -61,9 +61,6 @@ vi.mock("@/modules/orders/services/void-invoice.service", () => ({ voidInvoice: 
 vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn(),
 }));
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordRefundEReportingDeferrable: vi.fn(),
-}));
 
 import { handleDisputeFundsWithdrawn, handleDisputeFundsReinstated } from "../dispute-handlers";
 

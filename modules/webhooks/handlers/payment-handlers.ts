@@ -28,7 +28,6 @@ import {
 } from "../services/checkout-order-processing.service";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 
@@ -85,15 +84,10 @@ export async function handlePaymentSuccess(
 			// avant le lock de `createOrderInTransaction`). Le client a été débité mais
 			// ne recevra rien et la somme n'est rattachée à aucune commande.
 			//
-			// Remédiation AUTOMATIQUE : on tente un remboursement idempotent. C'est sûr
-			// vis-à-vis de l'e-reporting (Invariant 9) — sans commande, aucune
-			// transaction SALES n'a été enregistrée (le flow s'arrête ici, avant
-			// `recordSalesEReporting`) et `recordRefundEReporting` opère sur un orderId
-			// inexistant : ce refund est donc neutre pour la DGFiP, contrairement au
-			// remboursement d'une commande honorée. On émet quand même Sentry + alerte
-			// admin (le refund peut échouer, et un encaissement orphelin reste un
-			// incident à investiguer). On renvoie 200 (skipped) : un retry Stripe ne
-			// ferait pas apparaître la commande.
+			// Remédiation AUTOMATIQUE : on tente un remboursement idempotent. On émet
+			// quand même Sentry + alerte admin (le refund peut échouer, et un
+			// encaissement orphelin reste un incident à investiguer). On renvoie 200
+			// (skipped) : un retry Stripe ne ferait pas apparaître la commande.
 			logger.error(
 				`⚠️ [WEBHOOK] ORPHAN payment_intent.succeeded — no order resolvable (PI: ${paymentIntent.id})`,
 				undefined,
@@ -234,13 +228,6 @@ export async function handlePaymentSuccess(
 
 		// Génération facture eager (Art. 289-I CGI, ORD-COMPLY-002).
 		await ensureInvoiceNumberPersisted(orderId);
-		// E-reporting B2C (Phase 4 wiring, EINV-AUDIT-004). Best-effort,
-		// feature-flagged via INVOICE_ENABLE_EREPORTING — fail-closed quand
-		// la transmission DGFiP n'est pas encore configurée. EINV-EREPORT-009 :
-		// variante "deferrable" — si l'enregistrement échoue ("error"), pose le
-		// flag Order.ereportingRetryDeferred pour rattrapage par reconcile-invoices
-		// (sinon la vente n'est jamais reportée, l'event webhook étant COMPLETED).
-		await recordSalesEReportingDeferrable(orderId);
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 		return { success: true, tasks };
 	} catch (error) {
@@ -384,10 +371,6 @@ async function handleOversell(
  *      `auto-refund-${paymentIntentId}`) ;
  *   3. alerte l'admin (incident métier — divergence PI/order à investiguer) ;
  *   4. renvoie 200 pour stopper les retries Stripe.
- *
- * Sûreté e-reporting (Invariant 9) : le throw amont précède
- * `recordSalesEReportingDeferrable` → aucune transaction SALES n'a été
- * enregistrée, le refund est donc neutre pour la DGFiP (comme l'oversell).
  */
 async function handleAmountMismatch(
 	orderId: string,

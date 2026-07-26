@@ -3,7 +3,7 @@
  *
  * Garantie Art. 289-I CGI (facturation à l'encaissement) :
  * Seul `payment_intent.succeeded` DOIT déclencher `ensureInvoiceNumberPersisted()`
- * et `recordSalesEReporting()`. Les events `payment_intent.payment_failed` et
+ * Les events `payment_intent.payment_failed` et
  * `payment_intent.canceled` NE DOIVENT JAMAIS émettre de facture (sinon
  * F-YYYY-NNNNN gap-free explose + reporting comptable faussé).
  *
@@ -26,7 +26,6 @@ const {
 	mockProcessOrderFromPaymentIntent,
 	mockBuildPostCheckoutTasksFromPI,
 	mockEnsureInvoiceNumberPersisted,
-	mockRecordSalesEReporting,
 } = vi.hoisted(() => ({
 	mockPrisma: { order: { findFirst: vi.fn() } },
 	mockExtractPaymentFailureDetails: vi.fn(),
@@ -40,7 +39,6 @@ const {
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockBuildPostCheckoutTasksFromPI: vi.fn(),
 	mockEnsureInvoiceNumberPersisted: vi.fn(),
-	mockRecordSalesEReporting: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -68,9 +66,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordSalesEReporting: mockRecordSalesEReporting,
-}));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminOrderProcessingFailedAlert: vi.fn(),
@@ -140,7 +135,6 @@ describe("@regression payment-failure-no-invoice — EINV-TEST-007", () => {
 		});
 		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
 		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
-		mockRecordSalesEReporting.mockResolvedValue({ status: "skipped", reason: "feature-flag-off" });
 	});
 
 	describe("payment_intent.payment_failed — INVARIANT no invoice", () => {
@@ -150,26 +144,18 @@ describe("@regression payment-failure-no-invoice — EINV-TEST-007", () => {
 			expect(mockEnsureInvoiceNumberPersisted).not.toHaveBeenCalled();
 		});
 
-		it("ne déclenche PAS recordSalesEReporting", async () => {
-			await handlePaymentFailure(makePaymentIntent());
-
-			expect(mockRecordSalesEReporting).not.toHaveBeenCalled();
-		});
-
 		it("ne déclenche AUCUN hook invoicing même si amount_received > 0 (refund auto attendu)", async () => {
 			mockInitiateAutomaticRefund.mockResolvedValue({ success: true });
 
 			await handlePaymentFailure(makePaymentIntent({ amount_received: 5000 }));
 
 			expect(mockEnsureInvoiceNumberPersisted).not.toHaveBeenCalled();
-			expect(mockRecordSalesEReporting).not.toHaveBeenCalled();
 		});
 
 		it("ne déclenche AUCUN hook invoicing même quand orderId est absent (skip path)", async () => {
 			await handlePaymentFailure(makePaymentIntent({ metadata: {} }));
 
 			expect(mockEnsureInvoiceNumberPersisted).not.toHaveBeenCalled();
-			expect(mockRecordSalesEReporting).not.toHaveBeenCalled();
 		});
 	});
 
@@ -180,33 +166,25 @@ describe("@regression payment-failure-no-invoice — EINV-TEST-007", () => {
 			expect(mockEnsureInvoiceNumberPersisted).not.toHaveBeenCalled();
 		});
 
-		it("ne déclenche PAS recordSalesEReporting", async () => {
-			await handlePaymentCanceled(makePaymentIntent({ status: "canceled" }));
-
-			expect(mockRecordSalesEReporting).not.toHaveBeenCalled();
-		});
-
 		it("ne déclenche AUCUN hook invoicing même si amount_received > 0", async () => {
 			mockInitiateAutomaticRefund.mockResolvedValue({ success: true });
 
 			await handlePaymentCanceled(makePaymentIntent({ status: "canceled", amount_received: 4999 }));
 
 			expect(mockEnsureInvoiceNumberPersisted).not.toHaveBeenCalled();
-			expect(mockRecordSalesEReporting).not.toHaveBeenCalled();
 		});
 	});
 
-	describe("CONTRÔLE — payment_intent.succeeded déclenche bien les deux hooks", () => {
-		it("appelle ensureInvoiceNumberPersisted + recordSalesEReporting (new PI flow)", async () => {
+	describe("CONTRÔLE — payment_intent.succeeded déclenche bien la facture", () => {
+		it("appelle ensureInvoiceNumberPersisted (new PI flow)", async () => {
 			await handlePaymentSuccess(
 				makePaymentIntent({ metadata: { orderId: "order-1" } /* pas de checkoutSessionId */ }),
 			);
 
 			expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
-			expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 		});
 
-		it("appelle ensureInvoiceNumberPersisted + recordSalesEReporting (old checkout session flow)", async () => {
+		it("appelle ensureInvoiceNumberPersisted (old checkout session flow)", async () => {
 			await handlePaymentSuccess(
 				makePaymentIntent({
 					metadata: { orderId: "order-1", checkoutSessionId: "cs_xyz" },
@@ -214,7 +192,6 @@ describe("@regression payment-failure-no-invoice — EINV-TEST-007", () => {
 			);
 
 			expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
-			expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 		});
 	});
 });

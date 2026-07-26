@@ -103,30 +103,6 @@ export const MAX_PAGES_PER_RUN = 5;
 export const DB_QUERY_BATCH_SIZE = 500;
 
 /**
- * Maximum transactions per EReportingBatch transmis à la DGFiP via PDP/PA.
- * Si une journée dépasse, le cron `build-ereporting-batch` splitte en plusieurs
- * batches (suffix -1, -2, ...). Valeur conservative — à ajuster selon le
- * contrat PA effectif (typique 1000-5000 transactions/batch).
- * Cf. EINV-EREPORT-005.
- */
-export const MAX_BATCH_TRANSACTIONS = 1000;
-
-/**
- * Nombre maximum de transactions PENDING tirées par run de `build-ereporting-batch`.
- *
- * ⚠️ DOIT rester ≥ `MAX_BATCH_TRANSACTIONS`, sinon le cap-split (EINV-EREPORT-005)
- * devient INATTEIGNABLE : une période ne pourrait jamais contenir plus de tx que ce
- * cap, donc jamais > `MAX_BATCH_TRANSACTIONS`, et chaque run émettrait un batch
- * minuscule par période. Avant correctif ce cap valait `BATCH_SIZE_MEDIUM` (25) :
- * un Black-Friday fragmentait en ~200 micro-batches de 25 tous estampillés de la même
- * période — l'opposé de ce qu'attend une PA bimestrielle (1 dépôt/période). On tire
- * désormais 5× le cap de batch : une période très volumineuse est agrégée en un run
- * en chunks de `MAX_BATCH_TRANSACTIONS`, et le `hasMore` reprend le reliquat au run
- * suivant. Cf. audit e-reporting 2026-05-30 (P2-1).
- */
-export const EREPORTING_BUILD_CANDIDATE_CAP = 5 * MAX_BATCH_TRANSACTIONS;
-
-/**
  * Time thresholds in milliseconds
  */
 export const THRESHOLDS = {

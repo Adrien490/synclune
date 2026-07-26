@@ -15,11 +15,6 @@ import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM } from "@/modules/cron/constants/l
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { checkSequenceContinuity } from "@/modules/invoices/services/check-sequence-continuity.service";
-import { checkEReportingOrphanTransactions } from "@/modules/invoices/services/check-ereporting-period-continuity.service";
-import {
-	recordSalesEReporting,
-	recordRefundEReporting,
-} from "@/modules/invoices/services/record-ereporting.service";
 import {
 	persistInvoiceNumber,
 	backfillInvoiceDataSnapshot,
@@ -56,12 +51,6 @@ interface ReconcileBreakdown {
 	escalated: number;
 	/** EINV-SEQ-007 — nombre d'anomalies de continuité de séquence détectées (Art. 286 CGI). */
 	continuityIssues: number;
-	/** EINV-EREPORT-008 — nombre de transactions e-reporting orphelines (période close, jamais batchées). */
-	ereportingOrphans: number;
-	/** EINV-EREPORT-009 — nombre de commandes dont la transaction SALES e-reporting a été rattrapée. */
-	ereportingSalesRecovered: number;
-	/** EINV-EREPORT-009 — nombre de refunds dont la transaction REFUND e-reporting a été rattrapée. */
-	ereportingRefundRecovered: number;
 }
 
 /**
@@ -73,9 +62,9 @@ interface ReconcileBreakdown {
  *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf (régénère PDF depuis snapshot)
  *   3. REFUNDED + invoiceStatus GENERATED + creditNoteNumber NULL → voidInvoice
  *   3b. creditNoteNumber + creditNotePdfUrl NULL → ensureOrderCreditNoteArchived (EINV-CREDIT-020)
- * Puis les passes globales : 4 (continuité séquences), 5 (orphelins e-reporting),
- * 6 (DLQ e-reporting REFUND), 7 (PDF avoirs Refund manquants, EINV-CREDIT-020),
- * 8 (intégrité proactive des PDF archivés + auto-réparation, Art. L102 B LPF).
+ * Puis les passes globales : 4 (continuité séquences), 7 (PDF avoirs Refund
+ * manquants, EINV-CREDIT-020), 8 (intégrité proactive des PDF archivés +
+ * auto-réparation, Art. L102 B LPF).
  *
  * Sélection : `invoiceRetryDeferred=true` (DLQ) OU facture legacy à snapshot
  * manquant (`invoiceNumber` présent + `invoiceDataSnapshot` NULL — EINV-PDF-005).
@@ -99,9 +88,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 					OR: [
 						// DLQ : anomalie facturation déjà flaguée.
 						{ invoiceRetryDeferred: true },
-						// EINV-EREPORT-009 : DLQ e-reporting SALES — recordSalesEReporting
-						// a échoué ("error") sur le hot path. Drainé par la Passe SALES.
-						{ ereportingRetryDeferred: true },
 						// EINV-PDF-005 : facture legacy à snapshot comptable manquant
 						// (numéro émis avant l'introduction du snapshot figé).
 						{
@@ -157,9 +143,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		pdfIntegrityUnrepaired: 0,
 		escalated: 0,
 		continuityIssues: 0,
-		ereportingOrphans: 0,
-		ereportingSalesRecovered: 0,
-		ereportingRefundRecovered: 0,
 	};
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
@@ -179,7 +162,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				if (recovered.pdfArchiveRecovered) breakdown.pdfArchiveRecovered++;
 				if (recovered.creditNoteRecovered) breakdown.creditNoteRecovered++;
 				if (recovered.creditNotePdfRecovered) breakdown.creditNotePdfRecovered++;
-				if (recovered.ereportingSalesRecovered) breakdown.ereportingSalesRecovered++;
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
 				}
@@ -209,24 +191,6 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	// MAX+1-sous-lock est censée empêcher. Années couvertes : courante + N-1
 	// jusqu'à fin mars (période de clôture comptable où des avoirs N-1 sortent).
 	breakdown.continuityIssues = await runContinuityCheck(now);
-
-	// Passe 5 (EINV-EREPORT-008) : contrôle de continuité anti-trou e-reporting —
-	// défense en profondeur. L'exclusion constraint garantit le non-recouvrement
-	// des périodes mais PAS l'absence de trou ; ce contrôle détecte les
-	// transactions PENDING dont la période est close depuis > grâce et qui n'ont
-	// jamais été batchées (sous-déclaration DGFiP). Lecture seule, jamais bloquant.
-	breakdown.ereportingOrphans = await runEReportingOrphanCheck(new Date(now));
-
-	// Passe 6 (EINV-EREPORT-009) : drainage du DLQ e-reporting REFUND. Un refund
-	// COMPLETED dont recordRefundEReporting a échoué ("error") porte
-	// Refund.ereportingRetryDeferred=true (posé par recordRefundEReportingDeferrable
-	// depuis process-refund / mark-as-fully-refunded). Le chemin de finalisation
-	// (webhook / SAGA) ne le re-sélectionne plus → sans ce filet, sa ligne DGFiP
-	// négative ne serait jamais créée (sur-déclaration : vente reportée, remboursement
-	// non reporté — Art. 286 CGI). On retente (idempotent) puis on lève le flag au
-	// succès. Hébergé ici (et non dans reconcile-refunds) pour regrouper toute la
-	// réconciliation e-reporting/facture dans un seul cron.
-	breakdown.ereportingRefundRecovered = await runRefundEReportingDeferredSweep(deadline);
 
 	// Passe 7 (EINV-CREDIT-020) : avoirs partiels (Refund) émis mais PDF jamais
 	// archivé — symétrie de la sélection Order `creditNoteNumber + creditNotePdfUrl
@@ -268,7 +232,6 @@ export type ReconcileOutcome =
 			pdfArchiveRecovered: boolean;
 			creditNoteRecovered: boolean;
 			creditNotePdfRecovered: boolean;
-			ereportingSalesRecovered: boolean;
 	  }
 	| { kind: "escalated" }
 	| { kind: "skipped" };
@@ -293,7 +256,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	let pdfArchiveRecovered = false;
 	let creditNoteRecovered = false;
 	let creditNotePdfRecovered = false;
-	let ereportingSalesRecovered = false;
 	let anyFailure = false;
 
 	// Passe 0 : snapshot comptable manquant sur facture déjà émise (legacy
@@ -408,32 +370,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		}
 	}
 
-	// Passe SALES (EINV-EREPORT-009) : transaction SALES e-reporting non enregistrée.
-	// Drapeau posé par recordSalesEReportingDeferrable quand l'enregistrement a
-	// échoué ("error") sur le hot path. On retente l'enregistrement (idempotent :
-	// findFirst + unique index). Un "error" persistant ⇒ anyFailure → escalade via
-	// le compteur partagé invoiceReconcileAttempts. "skipped" (flag e-reporting OFF,
-	// déjà enregistrée, hors B2C) ⇒ succès, on lèvera le flag.
-	const withFlags = order as GetOrderReturn & { ereportingRetryDeferred?: boolean };
-	// EINV-EREPORT-009 (fix) : garder sur `paidAt != null`, PAS sur
-	// `paymentStatus === PAID`. Un remboursement flippe paymentStatus en
-	// REFUNDED/PARTIALLY_REFUNDED ; avec l'ancienne garde, une commande flaguée
-	// (SALES jamais enregistrée car recordSalesEReporting avait renvoyé "error")
-	// puis remboursée AVANT drainage tombait dans la branche « rien à faire » qui
-	// baissait le flag SANS jamais créer la transaction SALES → sous-déclaration
-	// DGFiP silencieuse et définitive. La déclaration e-reporting est en DELTA : la
-	// ligne SALES doit exister même compensée par une ligne REFUND. `paidAt` reste
-	// non-null après remboursement (jamais effacé), et recordSalesEReporting lit les
-	// totaux d'origine de la commande → la vente est correctement (ré)enregistrée.
-	if (withFlags.ereportingRetryDeferred && order.paidAt != null) {
-		const result = await recordSalesEReporting(order.id);
-		if (result === "error") {
-			anyFailure = true;
-		} else {
-			ereportingSalesRecovered = true;
-		}
-	}
-
 	if (anyFailure) {
 		// Increment compteur + decide d'escalader
 		const updated = await prisma.order.update({
@@ -453,19 +389,13 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		!invoiceNumberRecovered &&
 		!pdfArchiveRecovered &&
 		!creditNoteRecovered &&
-		!creditNotePdfRecovered &&
-		!ereportingSalesRecovered
+		!creditNotePdfRecovered
 	) {
 		// Rien à faire : drapeau posé sur une commande qui n'a finalement pas
-		// d'anomalie (déjà rattrapée par lazy fallback). On le baisse — y compris
-		// le flag e-reporting (EINV-EREPORT-009).
+		// d'anomalie (déjà rattrapée par lazy fallback). On le baisse.
 		await prisma.order.update({
 			where: { id: order.id },
-			data: {
-				invoiceRetryDeferred: false,
-				invoiceReconcileAttempts: 0,
-				ereportingRetryDeferred: false,
-			},
+			data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
 		});
 		return { kind: "skipped" };
 	}
@@ -473,11 +403,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	// Reset flags après succès complet + audit trail
 	await prisma.order.update({
 		where: { id: order.id },
-		data: {
-			invoiceRetryDeferred: false,
-			invoiceReconcileAttempts: 0,
-			ereportingRetryDeferred: false,
-		},
+		data: { invoiceRetryDeferred: false, invoiceReconcileAttempts: 0 },
 	});
 	await createOrderAudit({
 		orderId: order.id,
@@ -491,7 +417,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 			pdfArchiveRecovered,
 			creditNoteRecovered,
 			creditNotePdfRecovered,
-			ereportingSalesRecovered,
 		},
 	});
 	return {
@@ -501,7 +426,6 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		pdfArchiveRecovered,
 		creditNoteRecovered,
 		creditNotePdfRecovered,
-		ereportingSalesRecovered,
 	};
 }
 
@@ -610,85 +534,6 @@ async function runContinuityCheck(now: number): Promise<number> {
 }
 
 /**
- * EINV-EREPORT-008 — contrôle de continuité anti-trou des périodes e-reporting.
- *
- * Détecte les transactions PENDING non rattachées dont la période est close
- * depuis plus que le délai de grâce (= jamais batchées, sous-déclaration DGFiP).
- * Lecture seule, jamais bloquant : log + Sentry fingerprinté + UNE alerte admin
- * agrégée. Calqué sur `runContinuityCheck`.
- *
- * @returns nombre de transactions orphelines (0 = sain).
- */
-async function runEReportingOrphanCheck(now: Date): Promise<number> {
-	try {
-		const report = await checkEReportingOrphanTransactions(now);
-		if (!report) return 0;
-
-		logger.error("E-reporting orphan transactions detected", undefined, {
-			cronJob: CRON_JOB,
-			orphanCount: report.orphanCount,
-			oldestOccurredAt: report.oldestOccurredAt,
-			oldestPeriodTo: report.oldestPeriodTo,
-			capped: report.capped,
-		});
-
-		Sentry.withScope((scope) => {
-			scope.setLevel("error");
-			scope.setFingerprint(["ereporting", "orphan-transactions"]);
-			scope.setContext("ereporting-orphans", {
-				orphanCount: report.orphanCount,
-				oldestOccurredAt: report.oldestOccurredAt,
-				oldestPeriodTo: report.oldestPeriodTo,
-				sampleIds: report.sampleIds,
-				capped: report.capped,
-			});
-			Sentry.captureMessage(
-				`${report.orphanCount} transaction(s) e-reporting orpheline(s) — période close jamais batchée (sous-déclaration DGFiP)`,
-				"error",
-			);
-		});
-
-		await sendAdminCronFailedAlert({
-			// Label distinct du contrôle de numérotation : l'idempotency key de
-			// sendAdminCronFailedAlert est bucketée par heure ET par `job` — un même
-			// `CRON_JOB` collapserait l'alerte orphelins avec une éventuelle alerte de
-			// continuité de numérotation dans la même heure. On veut les deux.
-			job: `${CRON_JOB}:ereporting-orphans`,
-			errors: 1,
-			details: {
-				type: "ereporting-orphan-transactions",
-				orphanCount: report.orphanCount,
-				oldestOccurredAt: report.oldestOccurredAt,
-				oldestPeriodTo: report.oldestPeriodTo,
-				sampleIds: report.sampleIds,
-				capped: report.capped,
-				action:
-					"Transactions e-reporting non rattachées à un batch au-delà du délai — vérifier build-ereporting-batch, voir docs/RUNBOOK.md",
-			},
-		}).catch((alertError) =>
-			logger.error("Failed to send e-reporting orphan alert", alertError, { cronJob: CRON_JOB }),
-		);
-
-		return report.orphanCount;
-	} catch (e) {
-		logger.error("E-reporting orphan check threw", e, { cronJob: CRON_JOB });
-		return 0;
-	}
-}
-
-/**
- * Passe 6 (EINV-EREPORT-009) — drainage du DLQ e-reporting REFUND.
- *
- * Sélectionne les Refund COMPLETED flagués `ereportingRetryDeferred=true` (posé par
- * `recordRefundEReportingDeferrable` quand l'enregistrement a échoué sur le hot path
- * admin) et retente `recordRefundEReporting` (idempotent : findFirst + unique index).
- * Au succès ("skipped" ou id créé) on lève le flag ; sur "error" persistant on le
- * laisse pour le prochain run (Sentry déjà émis par recordRefundEReporting). Borné
- * par BATCH_SIZE_MEDIUM + la deadline batch. Jamais bloquant.
- *
- * @returns nombre de refunds dont la transaction REFUND a été (ré)enregistrée.
- */
-/**
  * Passe 7 (EINV-CREDIT-020) — avoirs partiels (Refund) émis mais PDF jamais
  * archivé. L'archivage est normalement eager dans `issueCreditNoteForRefund` ;
  * cette passe rattrape un crash post-tx ou un échec d'upload. Borné par
@@ -736,41 +581,3 @@ async function runRefundCreditNotePdfSweep(deadline: number): Promise<number> {
 	}
 }
 
-async function runRefundEReportingDeferredSweep(deadline: number): Promise<number> {
-	try {
-		const deferred = await prisma.refund.findMany({
-			where: {
-				ereportingRetryDeferred: true,
-				status: RefundStatus.COMPLETED,
-				...notDeleted,
-			},
-			select: { id: true },
-			take: BATCH_SIZE_MEDIUM,
-			orderBy: { processedAt: "asc" },
-		});
-
-		let recovered = 0;
-		for (const refund of deferred) {
-			if (Date.now() > deadline) {
-				logger.warn("Approaching timeout, stopping refund e-reporting sweep early", {
-					cronJob: CRON_JOB,
-				});
-				break;
-			}
-			const result = await recordRefundEReporting(refund.id);
-			if (result === "error") continue; // flag conservé → prochain run
-			await prisma.refund.update({
-				where: { id: refund.id },
-				data: { ereportingRetryDeferred: false },
-			});
-			recovered++;
-		}
-		if (recovered > 0) {
-			logger.info("Refund e-reporting DLQ drained", { cronJob: CRON_JOB, recovered });
-		}
-		return recovered;
-	} catch (e) {
-		logger.error("Refund e-reporting deferred sweep threw", e, { cronJob: CRON_JOB });
-		return 0;
-	}
-}

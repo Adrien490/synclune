@@ -6,8 +6,8 @@ export const maxDuration = 60;
 /**
  * DLQ facturation (Art. 286 / 289-I CGI). Rattrape les Orders PAID sans numéro de
  * facture, snapshots/PDF manquants et avoirs post-remboursement manquants
- * (Passes 0-3). Drainent aussi le DLQ e-reporting (Passes SALES/5/6) — no-op
- * fail-safe tant que `INVOICE_ENABLE_EREPORTING=false`.
+ * (Passes 0-3b), puis contrôle la continuité des séquences (Passe 4), archive les
+ * PDF d'avoirs partiels (Passe 7) et vérifie l'intégrité des PDF archivés (Passe 8).
  *
  * Cron daily 02:00 (cf. vercel.json). Filet automatique en amont de l'alerte
  * hebdomadaire `alert-stuck-orders` (seuil 7 j) : sans ce cron, un échec du

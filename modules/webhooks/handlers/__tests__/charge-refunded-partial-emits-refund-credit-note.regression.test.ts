@@ -38,7 +38,6 @@ const {
 	mockGetBaseUrl,
 	mockVoidInvoice,
 	mockIssueCreditNoteForRefund,
-	mockRecordRefundEReporting,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
@@ -64,7 +63,6 @@ const {
 	mockGetBaseUrl: vi.fn(),
 	mockVoidInvoice: vi.fn(),
 	mockIssueCreditNoteForRefund: vi.fn(),
-	mockRecordRefundEReporting: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -109,9 +107,6 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
 
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: mockRecordRefundEReporting,
-}));
 
 import type Stripe from "stripe";
 import { handleChargeRefunded } from "../refund-handlers";
@@ -271,41 +266,6 @@ describe("@regression charge-refunded-partial-emits-refund-credit-note — EINV-
 					where: expect.objectContaining({ creditNoteNumber: null }),
 				}),
 			);
-		});
-	});
-
-	// EINV-EREPORT (étape 4d) : `recordRefundEReporting` n'est appelé par ailleurs
-	// que sur les chemins admin (processRefund/mark-as-fully-refunded) et le cron
-	// reconcile-refunds (candidats APPROVED + processedAt=null). Les refunds
-	// Dashboard Stripe — et les refunds admin finalisés par CE webhook — sont
-	// COMPLETED + processedAt posé, donc invisibles au reconcile : sans le hook 4d
-	// leur ligne DGFiP négative n'est jamais créée et l'agrégat B2C surévalue le CA.
-	describe("e-reporting REFUND (4d) — refunds Dashboard/webhook (EINV-EREPORT)", () => {
-		it("refund TOTAL Dashboard → recordRefundEReporting appelé pour chaque Refund COMPLETED", async () => {
-			mockPrisma.order.findFirst.mockResolvedValue(makeOrderWithInvoice());
-			mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
-			mockVoidInvoice.mockResolvedValue({
-				kind: "voided",
-				creditNoteNumber: "A-2026-00044",
-				creditNoteGeneratedAt: new Date(),
-				invoiceVoidedAt: new Date(),
-			});
-			mockPrisma.refund.findMany.mockResolvedValue([{ id: "refund-dash-full" }]);
-
-			await handleChargeRefunded(makeCharge({ amount_refunded: ORDER_TOTAL }));
-
-			expect(mockRecordRefundEReporting).toHaveBeenCalledWith("refund-dash-full");
-		});
-
-		it("refund PARTIEL → recordRefundEReporting appelé pour chaque Refund COMPLETED", async () => {
-			mockPrisma.order.findFirst.mockResolvedValue(makeOrderWithInvoice());
-			mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
-			mockPrisma.refund.findMany.mockResolvedValue([{ id: "refund-1" }, { id: "refund-2" }]);
-
-			await handleChargeRefunded(makeCharge({ amount_refunded: 2000 }));
-
-			expect(mockRecordRefundEReporting).toHaveBeenCalledWith("refund-1");
-			expect(mockRecordRefundEReporting).toHaveBeenCalledWith("refund-2");
 		});
 	});
 

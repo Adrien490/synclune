@@ -34,15 +34,25 @@
 - L'ordonnance 2025-1247 migre la référence vers l'**art. L.223-3 du CIBS** au 1ᵉʳ sept. 2026, avec **période de tolérance jusqu'au 31/12/2027** (les deux libellés restent valides d'ici là).
 - **Action** (avant fin 2027) : basculer la mention via la variable d'env `VENDOR_VAT_EXEMPTION_TEXT` (override sans déploiement) ou mettre à jour `DEFAULT_FRANCHISE_VAT_MENTION`. **Non urgent.**
 
-## § e-reporting DGFiP — go-live (obligation 1ᵉʳ sept. 2027)
+## § e-reporting DGFiP — à construire pour le 1ᵉʳ sept. 2027
 
-- **État** : machinerie complète mais **désactivée** (`INVOICE_ENABLE_EREPORTING=false`), provider `local`/`mock`, aucun cron de transmission dans `vercel.json`. Un test verrouille cet état OFF (voir `modules/invoices/constants/__tests__`).
+- **État : RETIRÉ du code le 2026-07-26** (right-sizing). Une implémentation complète existait —
+  modèles `EReportingTransaction`/`Batch`/`Period`, hooks SALES/REFUND sur le hot path, DLQ,
+  batching, contrôle de continuité, dashboard admin — mais elle tournait en **dry-run intégral**
+  (flag jamais activé, aucune Plateforme Agréée branchée) et était écrite contre une **spec non
+  figée** (arrêté à paraître). La maintenir 18 mois pour la réécrire au go-live n'avait pas de sens
+  à ce volume d'activité.
+- **Où la retrouver** : commit de retrait sur la branche `chore/remove-ereporting`
+  (migration `20260726190000_drop_ereporting` + son `down.sql`). Utile comme point de départ, pas
+  comme base à restaurer telle quelle.
 - **Go-live (cible T1 2027, ~6 mois avant l'échéance)** :
-  1. Choisir + contractualiser une **Plateforme Agréée (PA)**.
-  2. Implémenter le provider concret (`modules/invoices/providers/`).
-  3. Réactiver les routes cron `build-/transmit-ereporting-batch` (services déjà présents, sans route).
-  4. Passer la **cadence** de `DAILY` à `BIMONTHLY` (cf. `ereporting-period.ts`).
-  5. Passer `INVOICE_ENABLE_EREPORTING=true` et valider en pré-prod.
+  1. Choisir + contractualiser une **Plateforme Agréée (PA)** — c'est elle qui fixe le format réel.
+  2. Récupérer l'**arrêté définitif** (catégories d'opération, ventilation TVA, cadence).
+  3. Réimplémenter contre cette spec : modèle de transaction, agrégation périodique, transmission.
+  4. Cadence attendue : **bimestrielle contenant le détail journalier** — surtout pas un dépôt par
+     jour (l'ancienne implémentation avait ce défaut par prudence).
+- **Prérequis distinct, plus proche** : la **réception** des factures fournisseurs est obligatoire
+  au **1ᵉʳ sept. 2026** — c'est une démarche back-office (s'inscrire auprès d'une PA), sans code.
 
 ## Cron RGPD critique — `hard-delete-retention` (mensuel)
 
@@ -73,7 +83,7 @@ Le millésime `F-YYYY` suit **la date d'encaissement** (`paidAt`, Europe/Paris �
 
 ## § Encaissement hors Stripe — `mark-as-paid` avec attestation (EINV-CASH-002)
 
-- **Ce que c'est** : l'action admin « Marquer comme payée » permet, sur une commande née d'un checkout Stripe (PaymentIntent obligatoire — EINV-CASH-001), d'attester un encaissement **hors PSP** (virement, chèque) quand le PI n'a pas abouti. L'attestation (`offStripeConfirmed`) et le statut réel du PI (`piStatus`) sont consignés dans `OrderHistory` ; le PI résiduel est annulé (anti double-paiement, ORD-BIZ-007) ; la facture est émise eagerly et l'e-reporting SALES enregistré comme sur le chemin webhook (EINV-CASH-005).
+- **Ce que c'est** : l'action admin « Marquer comme payée » permet, sur une commande née d'un checkout Stripe (PaymentIntent obligatoire — EINV-CASH-001), d'attester un encaissement **hors PSP** (virement, chèque) quand le PI n'a pas abouti. L'attestation (`offStripeConfirmed`) et le statut réel du PI (`piStatus`) sont consignés dans `OrderHistory` ; le PI résiduel est annulé (anti double-paiement, ORD-BIZ-007) ; la facture est émise eagerly comme sur le chemin webhook (EINV-CASH-005).
 - **Usage attendu** : canal de **recovery exceptionnel** (paiement asynchrone jamais webhooké, client qui règle par virement après échec carte). Ce n'est PAS un canal de vente : un usage systématique reviendrait à un flux d'encaissement alternatif relevant de l'invariant CLAUDE.md #8 (« validation comptable préalable » — risque de qualification logiciel de caisse NF 525).
 - **À faire valider par le comptable** (point ouvert) : confirmer que ce canal d'attestation virement/chèque adossé à un PaymentIntent est acceptable en l'état, et à quel volume il devient un flux à déclarer/outiller autrement. En attendant : usage au cas par cas uniquement, chaque utilisation étant auditée dans `OrderHistory`.
 - **Contrôle périodique** (mensuel, avec les vérifs facturation) : compter les usages du mois — les entrées `OrderHistory` `action=PAID` dont `metadata.offStripeConfirmed=true`. Plus de quelques occurrences par mois ⇒ en parler au comptable avant de continuer.

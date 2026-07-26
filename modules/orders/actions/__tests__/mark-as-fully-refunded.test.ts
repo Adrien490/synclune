@@ -27,7 +27,6 @@ const {
 	// inline (`vi.fn().mockResolvedValue(...)` dans vi.mock) est vidé par reset
 	// et retourne undefined → `creditNoteResult.kind` throw TypeError ligne 275.
 	mockIssueCreditNoteForRefund,
-	mockRecordRefundEReporting,
 	mockSendRefundConfirmationOnce,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -53,7 +52,6 @@ const {
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
 	mockIssueCreditNoteForRefund: vi.fn(),
-	mockRecordRefundEReporting: vi.fn(),
 	mockSendRefundConfirmationOnce: vi.fn(),
 }));
 
@@ -153,9 +151,6 @@ vi.mock("../../services/void-invoice.service", () => ({
 vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: mockRecordRefundEReporting,
-}));
 
 vi.mock("../../schemas/order.schemas", () => ({
 	markAsFullyRefundedSchema: {},
@@ -200,7 +195,6 @@ describe("markAsFullyRefunded", () => {
 		mockPrisma.refund.count.mockResolvedValue(0);
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-manual-1" });
 		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
-		mockRecordRefundEReporting.mockResolvedValue("skipped");
 		// Idem : reset → undefined → `.catch` sur undefined → TypeError silencieuse.
 		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
 

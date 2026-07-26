@@ -184,13 +184,7 @@ vi.mock("@/shared/lib/stripe", () => ({ stripe: {} }));
 vi.mock("../../services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
 }));
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: vi.fn().mockResolvedValue("skipped"),
-}));
 // EINV-EREPORT-009 : process-refund passe par le wrapper deferrable.
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordRefundEReportingDeferrable: vi.fn().mockResolvedValue("skipped"),
-}));
 
 import { processRefund } from "../process-refund";
 

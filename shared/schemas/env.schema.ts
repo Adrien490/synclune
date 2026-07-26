@@ -177,23 +177,6 @@ export const envSchema = z.object({
 		.optional(),
 
 	// ========================================
-	// Facturation électronique — e-reporting B2C (réforme 2026-2027)
-	// ========================================
-	// Synclune (micro-entreprise franchise TVA, B2C) n'a pas de transmission de
-	// facture B2B/B2G : la seule couche structurée est l'e-reporting B2C agrégé.
-	// `local` (défaut) = PA en dry-run (PDF archivé UploadThing). `mock` = PA
-	// in-memory pour staging/CI.
-	INVOICE_PROVIDER: z.enum(["local", "mock"]).optional().default("local"),
-	INVOICE_ENABLE_EREPORTING: z.string().optional(),
-	// Cadence d'agrégation e-reporting. Défaut prudent `DAILY` ; basculer
-	// `BIMONTHLY` (cadence réglementaire franchise) au branchement d'une PA réelle.
-	EREPORTING_PERIOD_LENGTH: z.enum(["DAILY", "MONTHLY", "BIMONTHLY"]).optional(),
-	// EINV-EREPORT-010 — acquittement explicite pour transmettre en cadence DAILY
-	// vers une PA qui transmet réellement (hors dry-run/mock). Par défaut absent
-	// ⇒ `submit-ereporting-batch` refuse (fail-closed) la transmission journalière.
-	EREPORTING_ALLOW_DAILY_TRANSMISSION: z.string().optional(),
-
-	// ========================================
 	// Node
 	// ========================================
 	NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

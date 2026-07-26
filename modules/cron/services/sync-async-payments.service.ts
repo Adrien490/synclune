@@ -14,7 +14,6 @@ import { buildPostCheckoutTasksFromPI } from "@/modules/webhooks/services/checko
 import { persistPostWebhookTasks } from "@/modules/webhooks/services/post-webhook-tasks.service";
 import type { PostWebhookTask } from "@/modules/webhooks/types/webhook.types";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
-import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import {
@@ -108,8 +107,8 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 	}> = [];
 
 	// Webhook raté : un PI confirmé `succeeded` qu'on rejoue via le même chemin
-	// que le webhook (décrément stock + désactivation SKU + clear cart + facture
-	// + e-reporting). Idempotent via le guard `paymentStatus === "PAID"`.
+	// que le webhook (décrément stock + désactivation SKU + clear cart + facture).
+	// Idempotent via le guard `paymentStatus === "PAID"`.
 	const processPaidOrder = async (
 		orderId: string,
 		pi: Stripe.PaymentIntent,
@@ -118,8 +117,6 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
 		const order = await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
 		await ensureInvoiceNumberPersisted(orderId);
-		// EINV-EREPORT-009 : deferrable — flag de rattrapage si l'enregistrement échoue.
-		await recordSalesEReportingDeferrable(orderId);
 		// CACHE-AUDIT-004 : tags user-scopés + détail commande.
 		for (const tag of getOrderInvalidationTags(userId ?? undefined, orderId)) {
 			tagsToInvalidate.add(tag);

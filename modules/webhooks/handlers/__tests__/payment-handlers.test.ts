@@ -17,7 +17,6 @@ const {
 	mockProcessOrderFromPaymentIntent,
 	mockBuildPostCheckoutTasksFromPI,
 	mockEnsureInvoiceNumberPersisted,
-	mockRecordSalesEReporting,
 	mockExtractPaymentMethod,
 	mockSendAdminOrderProcessingFailedAlert,
 	mockSendWebhookFailedAlertEmail,
@@ -38,7 +37,6 @@ const {
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockBuildPostCheckoutTasksFromPI: vi.fn(),
 	mockEnsureInvoiceNumberPersisted: vi.fn().mockResolvedValue(undefined),
-	mockRecordSalesEReporting: vi.fn().mockResolvedValue("skipped"),
 	mockExtractPaymentMethod: vi.fn().mockResolvedValue(null),
 	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 	mockSendWebhookFailedAlertEmail: vi.fn(),
@@ -121,9 +119,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordSalesEReporting: mockRecordSalesEReporting,
-}));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethod,
@@ -197,7 +192,6 @@ describe("handlePaymentSuccess", () => {
 
 		expect(mockProcessOrderFromPaymentIntent).toHaveBeenCalledWith("order-1", pi, undefined);
 		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
-		expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 	});
 
 	it("propagates the extracted payment_method to processOrderFromPaymentIntent (EINV-EREPORT-001)", async () => {

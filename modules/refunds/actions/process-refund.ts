@@ -28,7 +28,6 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
 import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
-import { recordRefundEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
@@ -188,8 +187,8 @@ export async function processRefund(
 			// `retryFailedRefund` (FAILED→APPROVED, sans re-validation) alors qu'un
 			// autre refund a entre-temps consommé le budget du même orderItem peut
 			// donc rembourser 2× le même article → perte cash + double avoir
-			// A-YYYY + double `recordRefundEReporting` (divergence DGFiP). Aucune
-			// contrainte DB ne l'empêche (`RefundItem.orderItemId` non `@unique`).
+			// A-YYYY. Aucune contrainte DB ne l'empêche
+			// (`RefundItem.orderItemId` non `@unique`).
 			// On re-valide ici, juste avant l'appel Stripe (dernier point avant
 			// le mouvement d'argent), en ne comptant que les refunds ACTIFS
 			// (PENDING/APPROVED/COMPLETED, hors soft-deleted) — ce refund inclus.
@@ -588,15 +587,6 @@ export async function processRefund(
 				}
 			}
 			// Audit log
-
-			// E-reporting B2C (Phase 4, EINV-AUDIT-004) — feature-flagged,
-			// idempotent + best-effort. Crée la transaction REFUND avec amount
-			// négatif pour la transmission DGFiP périodique. Ne bloque jamais le
-			// process-refund. EINV-EREPORT-009 : deferrable — flag de rattrapage
-			// (Refund.ereportingRetryDeferred) si l'enregistrement échoue, consommé
-			// par reconcile-refunds (le refund COMPLETED n'est plus re-sélectionné
-			// par le chemin de finalisation sinon).
-			await recordRefundEReportingDeferrable(id);
 
 			// EINV-CREDIT-001 : émission avoir séquentiel sur le Refund (Art. 272-I CGI).
 			// Best-effort hors transaction (advisory lock incompatible avec tx longue).

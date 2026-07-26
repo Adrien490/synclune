@@ -230,16 +230,8 @@ vi.mock("../../services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
 }));
 
-// EINV-CREDIT-001 : recordRefundEReporting est appelé best-effort.
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: vi.fn().mockResolvedValue("skipped"),
-}));
 
 // EINV-EREPORT-009 : process-refund passe par le wrapper deferrable (flag de
-// rattrapage Refund.ereportingRetryDeferred sur échec, consommé par reconcile).
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordRefundEReportingDeferrable: vi.fn().mockResolvedValue("skipped"),
-}));
 
 import { processRefund } from "../process-refund";
 

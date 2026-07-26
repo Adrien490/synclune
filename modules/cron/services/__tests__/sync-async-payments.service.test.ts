@@ -7,7 +7,6 @@ const {
 	mockGetStripeClient,
 	mockProcessOrderFromPaymentIntent,
 	mockEnsureInvoiceNumberPersisted,
-	mockRecordSalesEReporting,
 	mockExtractPaymentMethodFromPaymentIntent,
 	mockMarkOrderAsFailed,
 	mockExtractPaymentFailureDetails,
@@ -26,7 +25,6 @@ const {
 	mockGetStripeClient: vi.fn(),
 	mockProcessOrderFromPaymentIntent: vi.fn(),
 	mockEnsureInvoiceNumberPersisted: vi.fn(),
-	mockRecordSalesEReporting: vi.fn(),
 	mockExtractPaymentMethodFromPaymentIntent: vi.fn(),
 	mockMarkOrderAsFailed: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
@@ -64,9 +62,6 @@ vi.mock("@/modules/orders/services/ensure-invoice-number.service", () => ({
 	ensureInvoiceNumberPersisted: mockEnsureInvoiceNumberPersisted,
 }));
 
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordSalesEReporting: mockRecordSalesEReporting,
-}));
 
 vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 	extractPaymentMethodFromPaymentIntent: mockExtractPaymentMethodFromPaymentIntent,
@@ -105,7 +100,6 @@ describe("syncAsyncPayments", () => {
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockProcessOrderFromPaymentIntent.mockResolvedValue(undefined);
 		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
-		mockRecordSalesEReporting.mockResolvedValue(undefined);
 		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
 		mockSendPaymentFailedEmail.mockResolvedValue(undefined);
 		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
@@ -172,7 +166,6 @@ describe("syncAsyncPayments", () => {
 			undefined,
 		);
 		expect(mockEnsureInvoiceNumberPersisted).toHaveBeenCalledWith("order-1");
-		expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
 		expect(result!.updated).toBe(1);
 		expect(result!.checked).toBe(1);
 		expect(result!.hasMore).toBe(false);

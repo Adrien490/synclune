@@ -25,7 +25,6 @@ import { canTransition } from "@/modules/refunds/services/refund-state-machine.s
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
-import { recordRefundEReporting } from "@/modules/invoices/services/record-ereporting.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
@@ -238,12 +237,6 @@ export async function reconcileRefunds(): Promise<CronResult> {
 							});
 						}
 					}
-
-					// E-reporting DGFiP (Phase 4 wiring, EINV-AUDIT-004).
-					// L'admin path `processRefund` a déjà créé la transaction si
-					// son Step 3 a réussi ; ici on rattrape le cas DLQ pur
-					// (idempotence assurée par recordRefundEReporting).
-					await recordRefundEReporting(refund.id);
 
 					// EINV-CREDIT-001 : rattrapage avoir si l'admin path a abort
 					// avant l'émission. Idempotent (noop si creditNoteNumber set).

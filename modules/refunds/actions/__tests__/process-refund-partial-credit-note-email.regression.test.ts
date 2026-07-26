@@ -143,9 +143,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 }));
 vi.mock("@/modules/orders/utils/order-audit", () => ({ createOrderAuditTx: vi.fn() }));
 vi.mock("@/shared/lib/stripe", () => ({ stripe: {} }));
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: vi.fn().mockResolvedValue(undefined),
-}));
 vi.mock("../../services/issue-credit-note.service", () => ({
 	// On simule l'émission réussie de l'avoir partiel — c'est l'effet observable
 	// (via prisma.refund.findUnique post-Step 3) qui est testé ici.

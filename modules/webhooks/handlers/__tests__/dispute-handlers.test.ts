@@ -13,8 +13,6 @@ const {
 	mockCreateOrderAuditTx,
 	mockVoidInvoice,
 	mockIssueCreditNoteForRefund,
-	mockRecordRefundEReporting,
-	mockRecordRefundEReportingDeferrable,
 } = vi.hoisted(() => {
 	const mockTx = {
 		// IDEM-DISPUTE-001 : `SELECT … FOR UPDATE` de sérialisation en tête des
@@ -69,8 +67,6 @@ const {
 		mockCreateOrderAuditTx: vi.fn(),
 		mockVoidInvoice: vi.fn(),
 		mockIssueCreditNoteForRefund: vi.fn(),
-		mockRecordRefundEReporting: vi.fn(),
-		mockRecordRefundEReportingDeferrable: vi.fn(),
 	};
 });
 
@@ -180,16 +176,6 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: mockIssueCreditNoteForRefund,
 }));
 
-vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
-	recordRefundEReporting: mockRecordRefundEReporting,
-}));
-
-// Le handler appelle `recordRefundEReportingDeferrable` (DLQ EINV-EREPORT-009),
-// PAS `recordRefundEReporting` directement. Sans ce mock, l'appel e-reporting du
-// chemin litige perdu n'était pas vérifiable (P1-3).
-vi.mock("@/modules/invoices/services/defer-ereporting-retry.service", () => ({
-	recordRefundEReportingDeferrable: mockRecordRefundEReportingDeferrable,
-}));
 
 vi.mock("@sentry/nextjs", () => ({
 	withScope: (cb: (scope: Record<string, () => void>) => void) =>
@@ -457,7 +443,6 @@ describe("handleDisputeClosed", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
 		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
-		mockRecordRefundEReporting.mockResolvedValue("skipped");
 	});
 
 	it("should create a won note, update Dispute, and NOT update paymentStatus when dispute is won", async () => {
@@ -649,7 +634,6 @@ describe("handleDisputeClosed — non-loss closures emit no accounting (regressi
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
 		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
-		mockRecordRefundEReporting.mockResolvedValue("skipped");
 	});
 
 	it("warning_closed (inquiry, no debit) → no Refund, no paymentStatus mutation, no void/credit-note", async () => {
@@ -803,25 +787,13 @@ describe("handleDisputeClosed — accounting wiring (regression)", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		mockVoidInvoice.mockResolvedValue({ kind: "noop", reason: "no-active-invoice" });
 		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
-		mockRecordRefundEReporting.mockResolvedValue("skipped");
 	});
 
-	it("HIGH-1: records a REFUND e-reporting transaction for the chargeback refund when lost", async () => {
-		const dispute = makeDispute({ status: "lost" });
-
-		await handleDisputeClosed(dispute);
-
-		// Le handler appelle le wrapper DEFERRABLE (DLQ EINV-EREPORT-009), pas
-		// recordRefundEReporting en direct — c'est CETTE fonction qu'on doit vérifier.
-		expect(mockRecordRefundEReportingDeferrable).toHaveBeenCalledWith("ref-chargeback-1");
-	});
-
-	it("HIGH-1: does NOT record e-reporting when won", async () => {
+	it("HIGH-1: does NOT void invoice nor issue credit note when won", async () => {
 		const dispute = makeDispute({ status: "won" });
 
 		await handleDisputeClosed(dispute);
 
-		expect(mockRecordRefundEReportingDeferrable).not.toHaveBeenCalled();
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
 		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 	});
@@ -960,11 +932,10 @@ describe("handleDisputeUpdated", () => {
 // ============================================================================
 // @regression dispute-chargeback-idempotence — P1-3
 //
-// Complète HIGH-1/HIGH-2 (qui couvrent void/avoir/e-reporting sur litige perdu) :
+// Complète HIGH-1/HIGH-2 (qui couvrent void/avoir sur litige perdu) :
 // sur une REDÉLIVRANCE du webhook charge.dispute.closed (note déjà créée), AUCUNE
 // écriture comptable irréversible ne doit être rejouée — ni avoir (voidInvoice /
-// issueCreditNoteForRefund), ni ligne e-reporting REFUND (recordRefundEReporting-
-// Deferrable). La garde de doublon court-circuite AVANT la transaction (donc avant
+// issueCreditNoteForRefund). La garde de doublon court-circuite AVANT la transaction (donc avant
 // la matérialisation du chargebackRefund). Verrou anti double-reprise de fonds.
 // ============================================================================
 describe("@regression dispute-chargeback-idempotence — P1-3", () => {
@@ -976,7 +947,7 @@ describe("@regression dispute-chargeback-idempotence — P1-3", () => {
 		mockPrisma.orderNote.findFirst.mockResolvedValue({ id: "note-existing" });
 	});
 
-	it("REDÉLIVRANCE (note déjà créée) → aucun avoir ni e-reporting (idempotence)", async () => {
+	it("REDÉLIVRANCE (note déjà créée) → aucun avoir (idempotence)", async () => {
 		const result = await handleDisputeClosed(makeDispute({ status: "lost", amount: 5000 }));
 
 		expect(result).toMatchObject({ skipped: true });
@@ -984,7 +955,6 @@ describe("@regression dispute-chargeback-idempotence — P1-3", () => {
 		expect(mockTx.refund.create).not.toHaveBeenCalled();
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
 		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
-		expect(mockRecordRefundEReportingDeferrable).not.toHaveBeenCalled();
 	});
 });
 
@@ -1034,7 +1004,6 @@ describe("@regression idem-dispute-001", () => {
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
 		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
-		expect(mockRecordRefundEReportingDeferrable).not.toHaveBeenCalled();
 	});
 
 	it("sérialise sur la ligne Order (SELECT … FOR UPDATE) avant de décider", async () => {
@@ -1056,7 +1025,6 @@ describe("@regression idem-dispute-001", () => {
 		expect(result).toMatchObject({ success: true });
 		expect(result).not.toMatchObject({ skipped: true });
 		expect(mockTx.refund.create).toHaveBeenCalledTimes(1);
-		expect(mockRecordRefundEReportingDeferrable).toHaveBeenCalledWith("ref-chargeback-1");
 	});
 
 	it("handleDisputeCreated : note apparue sous le verrou → pas de 2ᵉ Dispute ni 2ᵉ alerte", async () => {

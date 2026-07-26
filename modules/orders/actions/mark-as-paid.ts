@@ -251,7 +251,6 @@ export async function markAsPaid(
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					paidAt: new Date(),
 					invoiceRetryDeferred: true,
-					ereportingRetryDeferred: true,
 				},
 			});
 

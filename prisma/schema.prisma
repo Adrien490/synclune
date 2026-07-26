@@ -865,7 +865,6 @@ model Order {
   notes                  OrderNote[]
   history                OrderHistory[] // Audit trail (conformite legale)
   disputes               Dispute[]
-  eReportingTransactions EReportingTransaction[] // e-reporting B2C DGFiP (réforme 2026-2027)
 
   // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
   billingSameAsShipping Boolean @default(true)
@@ -885,18 +884,6 @@ model Order {
   // alerte admin si > 3. Reset a false apres succes.
   invoiceRetryDeferred     Boolean @default(false)
   invoiceReconcileAttempts Int     @default(0)
-
-  // === DLQ E-REPORTING SALES (Audit 2026-05-30 — EINV-EREPORT-009) ===
-  // Drapeau posé par recordSalesEReportingDeferrable quand recordSalesEReporting
-  // retourne "error" (échec transitoire) sur le hot path webhook/cron, alors que
-  // la commande est PAID + B2C. Sans ce filet, une vente encaissée + facturée mais
-  // jamais reportée à la DGFiP restait invisible (sous-déclaration silencieuse
-  // Art. 286 CGI) : le contrôle de continuité de période ne détecte QUE les
-  // transactions créées-mais-non-batchées, jamais les jamais-créées. Consommé par
-  // reconcile-invoices (Passe SALES) qui retente recordSalesEReporting (idempotent)
-  // et reset à false au succès. Jamais posé tant que enable_ereporting est OFF
-  // (recordSalesEReporting renvoie "skipped" sans toucher au flag).
-  ereportingRetryDeferred Boolean @default(false)
 
   // === SUR-FACTURATION (AM-2 — boucle de réconciliation fermée) ===
   // Posé par le webhook payment_intent.succeeded quand Stripe a encaissé PLUS que
@@ -950,7 +937,6 @@ model Order {
   @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
   @@index([invoiceStatus, invoiceArchivedAt], map: "Order_invoiceStatus_invoicePdfUrl_idx") // cron archive-unarchived (filtre GENERATED + url NULL)
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx") // Cron reconcile-invoices : index partiel SQL (WHERE invoiceRetryDeferred = true)
-  @@index([ereportingRetryDeferred, paidAt], map: "Order_ereportingRetryDeferred_idx") // Cron reconcile-invoices Passe SALES (WHERE ereportingRetryDeferred = true)
   @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx") // Cron hard-delete-retention : purge PII à paidAt+10 ans (WHERE piiPurgedAt IS NULL)
   @@index([piiPurgedAt, paidAt, createdAt], map: "Order_unpaid_pii_purge_idx") // Cron hard-delete-retention : purge PII commandes jamais payées (WHERE piiPurgedAt IS NULL AND paidAt IS NULL, range createdAt) — RGPD-AUDIT F-A
   @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx") // dashboard get-action-items + passe reconcileOverbilledOrders (WHERE overbilledAmountCents IS NOT NULL AND overbillingResolvedAt IS NULL)
@@ -1150,9 +1136,6 @@ model Refund {
   // Details des articles rembourses
   items RefundItem[]
 
-  // Phase 3 — chaque refund COMPLETED produit une transaction e-reporting REFUND
-  eReportingTransactions EReportingTransaction[]
-
   // Audit
   createdBy     String? // ID de l'admin qui a cree le remboursement
   createdByUser User?     @relation("RefundCreator", fields: [createdBy], references: [id], onDelete: SetNull)
@@ -1170,16 +1153,6 @@ model Refund {
   // suffit pas si les 3 chemins génèrent des clés différentes (incident).
   // Posé atomiquement avant envoi → si Resend échoue, retry possible via cron.
   confirmationEmailSentAt DateTime?
-
-  // === DLQ E-REPORTING REFUND (Audit 2026-05-30 — EINV-EREPORT-009) ===
-  // Symétrique du flag Order pour les ventes : posé par recordRefundEReportingDeferrable
-  // quand recordRefundEReporting retourne "error" sur un refund déjà COMPLETED — le
-  // webhook charge.refunded / la SAGA / reconcile-refunds (finalize) ne le
-  // re-sélectionnent plus, donc la transaction REFUND ne serait jamais rattrapée
-  // (sur-déclaration latente : vente reportée, remboursement non reporté — Art. 286
-  // CGI). Consommé par reconcile-refunds (passe de rattrapage e-reporting), reset
-  // à false au succès. Jamais posé tant que enable_ereporting est OFF.
-  ereportingRetryDeferred Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1209,7 +1182,6 @@ model Refund {
 
   @@index([orderId])
   @@index([status, processedAt]) // reconcile-refunds cron
-  @@index([ereportingRetryDeferred, processedAt], map: "Refund_ereportingRetryDeferred_idx") // reconcile-refunds : rattrapage e-reporting REFUND (WHERE ereportingRetryDeferred = true)
   @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
 
@@ -1670,42 +1642,6 @@ model StoreSettings {
   updatedAt DateTime @updatedAt
 }
 
-// ============================================================================
-// E-REPORTING B2C (Réforme facturation électronique 2026-2027)
-// ============================================================================
-//
-// Les ventes B2C ne suivent PAS la facturation électronique structurée — elles
-// alimentent l'e-reporting : transmission périodique à la DGFiP (via une PDP/
-// PA) des transactions agrégées. EReportingTransaction stocke chaque vente /
-// remboursement isolément ; EReportingBatch les regroupe pour transmission.
-//
-// Synclune émet aujourd'hui en franchise art. 293 B (TVA = 0), mais l'e-
-// reporting reste obligatoire au 1ᵉʳ septembre 2027. Cf. EINV-AUDIT-004.
-
-enum EReportingTransactionType {
-  SALES // Vente B2C (Order PAID)
-  REFUND // Remboursement (Refund COMPLETED, montant négatif)
-  // RÉSERVÉ / non émis (EINV-EREPORT-007/F4). L'e-reporting comporte DEUX flux :
-  // (1) données de transaction (SALES/REFUND ci-dessus) et (2) « données de
-  // paiement » = e-reporting de l'ENCAISSEMENT, propre aux PRESTATIONS DE SERVICES
-  // soumises à la TVA sur les encaissements (Art. 269-2-c CGI). Pour de la VENTE DE
-  // BIENS (exigibilité à la livraison) ET en franchise art. 293 B (aucune TVA), ce
-  // flux n'est PAS dû → aucune transaction PAYMENT n'est créée (fail-safe assumé,
-  // pas un oubli). À n'activer QUE si l'activité bascule en prestation de services
-  // hors franchise (arbitrage hors code → comptable). NB : « encaissement » ≠
-  // « autoliquidation » (reverse-charge B2B), notions distinctes.
-  PAYMENT
-}
-
-enum EReportingStatus {
-  PENDING // Créée localement, en attente d'agrégation
-  SENT // Batch transmis à la PDP/PA, en attente d'accusé DGFiP
-  ACCEPTED // Acceptée par la DGFiP
-  REJECTED // Rejetée (rejouer après correction)
-  RETRYING // Retransmission en cours
-  ABANDONED // Échec définitif (escalade admin)
-}
-
 // Catégorie d'opération e-reporting (DORMANT — préparation sortie de franchise).
 // L'e-reporting B2C distingue la livraison de biens de la prestation de services
 // (règles d'exigibilité TVA différentes : livraison vs encaissement). Synclune
@@ -1720,148 +1656,4 @@ enum EReportingOperationCategory {
   GOODS // Livraison de biens
   SERVICES // Prestation de services
   MIXED // Panier mixte biens + services
-}
-
-// Unité réglementaire de non-recouvrement (EINV-EREPORT-006). Une période
-// e-reporting couvre un intervalle [periodFrom, periodTo) aligné sur la longueur
-// configurable `EREPORTING_PERIOD_LENGTH` (défaut DAILY). C'est CETTE table qui
-// porte l'exclusion constraint Postgres `EReportingPeriod_no_overlap`.
-//
-// ⚠️ Portée EXACTE de l'EXCLUDE : il garantit le NON-RECOUVREMENT (aucune période
-// n'en chevauche une autre → pas de double déclaration DGFiP). Il NE garantit PAS
-// l'absence de TROU : insérer [J1,J2) puis [J3,J4) en sautant [J2,J3) le satisfait.
-// L'absence de trou (= toute transaction encaissée finit dans une période donc dans
-// un batch) repose sur DEUX mécanismes hors schéma : (a) `build-ereporting-batch`
-// crée toujours la période contiguë de TOUTE période ayant des transactions, et
-// (b) le contrôle de continuité `check-ereporting-period-continuity.service.ts`
-// (Passe 5 de `reconcile-invoices`) alerte sur toute transaction PENDING dont la
-// période est close mais jamais batchée — symétrie avec la détection de gap de
-// numérotation (Art. 286). Une période sans vente est légitimement absente.
-//
-// Une période donnée peut porter PLUSIEURS batches (cap-split EINV-EREPORT-005 quand
-// une période > MAX_BATCH_TRANSACTIONS) : les splits partagent UNE ligne période →
-// aucun conflit d'exclusion.
-//
-// La contrainte d'exclusion (EXCLUDE USING gist (tsrange(...) WITH &&)) n'est pas
-// exprimable en Prisma — voir migration `20260529130000_add_ereporting_period_exclusion`.
-model EReportingPeriod {
-  id         String            @id @default(cuid())
-  // Bornes alignées sur EREPORTING_PERIOD_LENGTH. periodFrom est @unique : les
-  // périodes étant alignées + non-recouvrantes, la borne basse identifie la
-  // période → handle idempotent pour l'upsert dans build-ereporting-batch.
-  periodFrom DateTime          @unique
-  periodTo   DateTime
-  batches    EReportingBatch[]
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-
-  @@index([periodFrom, periodTo])
-}
-
-model EReportingBatch {
-  id                  String           @id @default(cuid())
-  // Période de rattachement (unité de non-recouvrement). Nullable pour compat avec
-  // les batches pré-migration ; toujours peuplé par build-ereporting-batch.service.
-  // SetNull pour conserver le batch même si la période est purgée.
-  periodId            String?
-  period              EReportingPeriod? @relation(fields: [periodId], references: [id], onDelete: SetNull)
-  // Snapshot dénormalisé des bornes (SSOT de non-recouvrement = EReportingPeriod).
-  periodFrom          DateTime
-  periodTo            DateTime
-  status              EReportingStatus @default(PENDING)
-  transactionCount    Int              @default(0)
-  totalAmountIncTax   Int              @default(0) // centimes
-  totalAmountExclTax  Int              @default(0)
-  totalTaxAmount      Int              @default(0)
-  // Ventilation TVA par taux, agrégée depuis les transactions du batch (DORMANT).
-  // Tableau JSON `[{ rate, baseExclTax, taxAmount }]` (rate en points de base,
-  // ex 2000 = 20 %). null en franchise art. 293 B (TVA = 0). Voir
-  // docs/INVOICING.md L424 (réintroduction OrderItem.taxRate à la sortie de
-  // franchise). CHECK DB `jsonb_typeof = 'array'` (migration 20260529140000).
-  vatBreakdown        Json?
-  currency            String           @default("EUR") @db.VarChar(3)
-  // Identifiant retourné par la PDP/PA au dépôt. Unique pour idempotence :
-  // un même batch ne peut pas être resoumis deux fois.
-  providerBatchId     String?          @unique @db.VarChar(255)
-  providerResponse    Json?
-  sentAt              DateTime?
-  acceptedAt          DateTime?
-  rejectedAt          DateTime?
-  rejectionReason     String?          @db.Text
-  retryCount          Int              @default(0)
-  transactions        EReportingTransaction[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-
-  @@index([status, periodFrom]) // cron transmit-ereporting-batch
-  @@index([periodFrom, periodTo]) // dashboard fiscal admin
-  @@index([periodId])
-}
-
-model EReportingTransaction {
-  id              String                    @id @default(cuid())
-  // Batch d'appartenance (null tant que pas agrégé). SetNull pour conserver
-  // l'historique transaction même si le batch est purgé.
-  batchId         String?
-  batch           EReportingBatch?          @relation(fields: [batchId], references: [id], onDelete: SetNull)
-
-  // Référence à la source, COUPLÉE au type (CHECK `EReportingTransaction_source_xor`,
-  // migration 20260529120000) : SALES/PAYMENT ⇒ orderId set & refundId null ;
-  // REFUND ⇒ refundId set & orderId null. (Plus fort qu'un simple XOR.)
-  orderId         String?
-  order           Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  refundId        String?
-  refund          Refund?                   @relation(fields: [refundId], references: [id], onDelete: SetNull)
-
-  type            EReportingTransactionType
-  occurredAt      DateTime // Date d'encaissement (Order.paidAt) ou de remboursement (Refund.processedAt)
-  countryCode     String                    @db.VarChar(2) // ISO 3166-1 alpha-2 du buyer
-  paymentMethod   PaymentMethod
-  amountIncTax    Int // centimes — négatif pour les REFUND
-  amountExclTax   Int
-  taxAmount       Int                       @default(0) // toujours 0 en franchise art. 293 B
-  // Ventilation TVA par taux (DORMANT — préparation sortie de franchise).
-  // Tableau JSON `[{ rate, baseExclTax, taxAmount }]` (rate en points de base).
-  // null en franchise (taxAmount = 0) : aucune ventilation à déclarer. Renseigné
-  // uniquement quand la donnée per-taux existe (OrderItem.taxRate, à câbler à la
-  // sortie de franchise — docs/INVOICING.md L424). CHECK DB `jsonb_typeof = 'array'`.
-  vatBreakdown    Json?
-  // Catégorie d'opération DGFiP (biens/services). Défaut GOODS = réalité Synclune
-  // (biens physiques). Voir enum EReportingOperationCategory.
-  operationCategory EReportingOperationCategory @default(GOODS)
-  currency        String                    @default("EUR") @db.VarChar(3)
-  // Snapshot complet figé : tout ce qui sera transmis à la DGFiP, immuable
-  // même si l'Order/Refund mute ensuite (anonymisation RGPD, etc.).
-  payloadSnapshot Json
-  // SHA-256 canonical-JSON du payloadSnapshot (audit-vérifiable, symétrie
-  // Order.invoiceDataHash). Nullable pour compat avec les transactions
-  // pré-migration ; toujours peuplé par record-ereporting.service à l'écriture.
-  payloadHash     String?                   @db.VarChar(64)
-  status          EReportingStatus          @default(PENDING)
-  // Nombre de re-queues subis (détache + PENDING) après un batch REJECTED/ABANDONED.
-  // Cap anti-boucle (EINV-EREPORT-009) : au-delà de MAX_REQUEUE_ATTEMPTS, la
-  // transaction n'est plus ré-agrégée automatiquement — elle est figée ABANDONED
-  // sur son tombstone batch (visible via alert-stuck-orders) → intervention admin.
-  // Évite qu'une donnée structurellement invalide (REJECTED 4xx) reboucle chaque
-  // jour à la transmission d'une vraie PA. CHECK DB >= 0 (migration 20260530000000).
-  requeueCount    Int                       @default(0)
-  createdAt       DateTime                  @default(now())
-  // Horodatage du dernier changement de tracking de transmission (status,
-  // batchId, requeueCount). Le payload reste figé (payloadSnapshot/payloadHash) :
-  // updatedAt n'horodate QUE le cycle de vie DGFiP, pas la donnée comptable.
-  updatedAt       DateTime                  @updatedAt
-
-  @@index([status, occurredAt]) // cron build-ereporting-batch
-  @@index([batchId])
-  @@index([orderId])
-  @@index([refundId])
-  // EINV-GLOBAL-013 : anti-doublon e-reporting. Postgres traite NULL comme
-  // distinct dans un unique index, donc :
-  // - SALES/PAYMENT (orderId set, refundId null) — unique sur (orderId, type)
-  // - REFUND (orderId null, refundId set) — unique sur (refundId, type)
-  // La CHECK `EReportingTransaction_source_xor` (migration 20260529120000) COUPLE
-  // type↔source : SALES/PAYMENT ⇒ orderId set & refundId null ; REFUND ⇒ l'inverse.
-  // (Subsume l'ancien XOR « exactement une FK » — interdit aussi SALES+refundId.)
-  @@unique([orderId, type], name: "EReportingTransaction_orderId_type_key")
-  @@unique([refundId, type], name: "EReportingTransaction_refundId_type_key")
 }

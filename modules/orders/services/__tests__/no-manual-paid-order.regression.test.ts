@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
  * Risque réglementaire si la garde saute : une action `recordCashSale` ou
  * `createManualOrder` créerait une Order PAID sans PaymentIntent. Pas de hook
  * `payment_intent.succeeded` → pas de `persistInvoiceNumber` eager → pas de
- * `recordSalesEReporting` → divergence DGFiP + risque qualification "logiciel
+ * risque qualification "logiciel
  * de caisse" requérant validation NF 525 préalable.
  *
  * Allowlist documentée pour les TRANSITIONS PENDING → PAID (vs création PAID) :
@@ -175,7 +175,7 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 
 	it("markOrderAsPaid (déprécié, supprimé 2026-07-03) is not reintroduced anywhere", () => {
 		// EINV-CASH-003 : markOrderAsPaid écrivait `PAID + paidAt` SANS décrément stock,
-		// clear cart, persistInvoiceNumber ni recordSalesEReporting — une Order PAID
+		// clear cart ni persistInvoiceNumber — une Order PAID
 		// sans facture ni e-reporting → oversell + divergence DGFiP silencieuse
 		// (Art. 286 / 289-I CGI). La fonction a été SUPPRIMÉE (audit cache 2026-07-03,
 		// dernier mutateur de statut sans invalidation cache) ; ce test interdit sa

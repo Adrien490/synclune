@@ -18,7 +18,6 @@ export interface LogContext {
 	stripeRefundId?: string;
 	paymentIntentId?: string;
 	stripeEventId?: string;
-	eReportingBatchId?: string;
 	invoicePath?: "archived" | "lazy_regenerate" | "lazy_generate_number";
 	[key: string]: unknown;
 }
@@ -38,7 +37,6 @@ const SENTRY_TAG_KEYS = [
 	"stripeRefundId",
 	"paymentIntentId",
 	"stripeEventId",
-	"eReportingBatchId",
 	"invoicePath",
 ] as const satisfies ReadonlyArray<keyof LogContext>;
 

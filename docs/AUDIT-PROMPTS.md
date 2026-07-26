@@ -10,7 +10,7 @@ premium. **9 des 21 missions sont UI/UX** (design system, vitrine, PDP, tunnel d
 accès au compte, contenu éditorial, système de feedback), complétées par **1 mission Marque** (voix,
 emails, moments enchantés). Les autres couvrent la **Qualité** (accessibilité, performance, dette/tests,
 SEO, analytics, observabilité/monitoring), les **Données** (architecture du schéma Prisma & discipline des
-migrations), la **Sécurité/RGPD/conformité** (re-vérification + préparation du go-live e-reporting 2027) et
+migrations), la **Sécurité/RGPD/conformité** (re-vérification + construction de l'e-reporting pour 2027) et
 l'**Infra** (config/PWA/CI/docs). Le modèle a **carte blanche pour repenser** les interfaces, tant qu'il
 respecte la cohérence de marque, les invariants métier et les conventions du repo.
 
@@ -89,8 +89,6 @@ components,schemas,hooks,types,utils}` + `shared/`. **Lis `CLAUDE.md` avant de c
 >   `void-invoice.service.ts` (avoir) écrivent `invoiceNumber`/`creditNoteNumber`. **Aucune Server Action**.
 > - `OrderHistory` immuable (pas de `deletedAt`/`update`/`delete`). Snapshots OrderItem + adresses `billing*`/
 >   `shipping*` figés au checkout. PDF facture immuable (hash SHA-256, servi depuis l'archive en priorité).
-> - **5 writers e-reporting seulement** (SSOT = `no-manual-ereporting-write.regression.test.ts`) ; aucune
->   Server Action ne crée/mute `EReportingTransaction`/`EReportingBatch` ni ne pose un statut terminal manuel.
 > - Rétention PII RGPD : **ne jamais scrubber** `billing*`/`invoiceDataSnapshot` à l'anonymisation
 >   (`anonymize-user.service.ts`, exemption Art. 17(3)(b) ; cf. `anonymize-user-preserves-invoice.regression.test.ts`).
 > - **Pas de vente / pas de caisse manuelle** hors Stripe PaymentIntent (`recordCashSale`/`createManualOrder`
@@ -122,7 +120,7 @@ components,schemas,hooks,types,utils}` + `shared/`. **Lis `CLAUDE.md` avant de c
 > implémenté, les tests ajoutés/étendus, et les gates ci-dessus collés avec leur sortie réelle.
 >
 > **NE PAS casser ni re-implémenter à l'aveugle** (zones récemment durcies) : numérotation/immuabilité
-> facture, hooks e-reporting, purge PII RGPD, flow paiement carte/3DS, intégrité du montant PaymentIntent,
+> facture, purge PII RGPD, flow paiement carte/3DS, intégrité du montant PaymentIntent,
 > webhooks (idempotence/anti-replay 300s), atomicité `order-creation`. Tu peux **embellir l'UI** de ces flows,
 > mais pas en changer la logique métier sans un test prouvant la régression.
 
@@ -229,7 +227,7 @@ via,to}`, `--color-glow-{pink,lavender,mint,yellow}`, `--star-filled`/`--star-em
 | QUALITY        | Qualité    | Dette technique, tests & gates CI                                          | transversal                                                                                                                                                                                                               |
 | SCHEMA         | Données    | Architecture du schéma Prisma & discipline des migrations                  | `prisma/schema.prisma`, `prisma/migrations`, enums/contraintes, `shared/lib/prisma*`                                                                                                                                      |
 | GUARD          | Sécurité   | Sécurité, RGPD, conformité & cache (re-vérification)                       | transversal                                                                                                                                                                                                               |
-| INVOICE-GOLIVE | Conformité | Préparer le go-live e-reporting (2026-2027) ⏳                             | `modules/invoices`, flags e-reporting, providers/PA, crons e-reporting, `CLAUDE.md § Facturation` + `docs/RUNBOOK.md § e-reporting`                                                                                       |
+| INVOICE-GOLIVE | Conformité | Construire l'e-reporting B2C pour le go-live 2027 ⏳                      | `modules/invoices`, `prisma/schema.prisma`, `modules/cron`, `CLAUDE.md § Facturation` + `docs/RUNBOOK.md § e-reporting`                                                                                                   |
 | PRICE-COMPLY   | Conformité | Conformité des prix réduits (Directive Omnibus — prix de référence 30j) ⏱️ | `ProductSku.compareAtPrice`, historique de prix, `product-price-display.tsx`, migrations                                                                                                                                  |
 | INFRA          | Infra      | Env/flags, headers/CSP, pipeline CI & docs                                 | config, `.github`, `docs`                                                                                                                                                                                                 |
 | OBS            | Infra      | Observabilité, monitoring crons & santé production                         | `sentry.{server,edge}.config`, `instrumentation-client`, `next.config.ts` (Sentry), `api/{health,csp-report,cron}`, `vercel.json`, `circuit-breaker.ts`, runbooks                                                         |
@@ -404,9 +402,9 @@ Réduis la **dette réelle**, comble les **trous de couverture avérés** et **d
 
 > Colle le **Préambule partagé**.
 
-Le schéma Prisma a grossi par accrétion (~39 modèles, **28 enums**, une centaine de contraintes — à recompter sur le filesystem —, **126 migrations**) sans jamais d'audit de **cohérence d'ensemble**. **L'excellence = chaque champ libre survivant est un choix justifié (pas un enum oublié), chaque `onDelete` porte une raison métier, chaque index est justifié, et l'audit rend un verdict par axe — une carte de dette + les verrous qui comptent, pas une refonte.** Prends-en la responsabilité : hygiène des enums vs champs `String` libres (ex. `StockMovement.reason`, codes `Discount`), couverture réelle des contraintes (CHECK/UNIQUE/EXCLUDE — un seul EXCLUDE aujourd'hui, sur `EReportingPeriod`), discipline soft-delete (la JSDoc `shared/lib/prisma.ts:17-21` est **périmée** : elle liste 5 modèles vs les 9 réels à `deletedAt`), justification du mix `onDelete` (≈18 Cascade / 14 Restrict / 17 SetNull, aujourd'hui subi), qualité des index (ex. les `@@index` de `StockMovement`, un composite catalogue candidat). Statue notamment sur l'audit-trail `StockMovement` : il **est** peuplé par les ajustements admin (`stock-movement.service.ts` via `adjust-sku-stock.ts`) mais **absent du flux de vente** (le décrément checkout/webhook ne l'écrit pas) — décide s'il doit le couvrir (chevauche `GROWTH-LIFECYCLE`). À toi de juger dette à résorber vs invariant à verrouiller vs constat à documenter.
+Le schéma Prisma a grossi par accrétion (~39 modèles, **28 enums**, une centaine de contraintes — à recompter sur le filesystem —, **126 migrations**) sans jamais d'audit de **cohérence d'ensemble**. **L'excellence = chaque champ libre survivant est un choix justifié (pas un enum oublié), chaque `onDelete` porte une raison métier, chaque index est justifié, et l'audit rend un verdict par axe — une carte de dette + les verrous qui comptent, pas une refonte.** Prends-en la responsabilité : hygiène des enums vs champs `String` libres (ex. `StockMovement.reason`, codes `Discount`), couverture réelle des contraintes (CHECK/UNIQUE), discipline soft-delete (la JSDoc `shared/lib/prisma.ts:17-21` est **périmée** : elle liste 5 modèles vs les 9 réels à `deletedAt`), justification du mix `onDelete` (≈18 Cascade / 14 Restrict / 17 SetNull, aujourd'hui subi), qualité des index (ex. les `@@index` de `StockMovement`, un composite catalogue candidat). Statue notamment sur l'audit-trail `StockMovement` : il **est** peuplé par les ajustements admin (`stock-movement.service.ts` via `adjust-sku-stock.ts`) mais **absent du flux de vente** (le décrément checkout/webhook ne l'écrit pas) — décide s'il doit le couvrir (chevauche `GROWTH-LIFECYCLE`). À toi de juger dette à résorber vs invariant à verrouiller vs constat à documenter.
 
-> **Garde-fous** : les **invariants 1–10** priment sur toute simplification (numérotation gap-free, `OrderHistory` immuable, snapshots `OrderItem`/`billing*`/`shipping*` figés, modèles e-reporting, enums `PDP_*`/e-reporting **réservés** — ne drop pas un enum PG). Toute migration **pairée d'un `down.sql`**, jamais appliquée en prod par tes soins, pas de réécriture rétroactive (restore Neon PITR). Une contrainte nouvelle se justifie par un test qui échoue sans elle. Frontière : la structure ici, la **perf** des requêtes à `PERF`.
+> **Garde-fous** : les **invariants 1–9** priment sur toute simplification (numérotation gap-free, `OrderHistory` immuable, snapshots `OrderItem`/`billing*`/`shipping*` figés). Toute migration **pairée d'un `down.sql`**, jamais appliquée en prod par tes soins, pas de réécriture rétroactive (restore Neon PITR). Une contrainte nouvelle se justifie par un test qui échoue sans elle. Frontière : la structure ici, la **perf** des requêtes à `PERF`.
 
 ---
 
@@ -420,13 +418,13 @@ Re-vérifie que les fondations **sécurité / RGPD / conformité facturation / c
 
 ---
 
-### INVOICE-GOLIVE — Préparer le go-live e-reporting (2026-2027) ⏳ forward-looking
+### INVOICE-GOLIVE — Construire l'e-reporting B2C pour 2027 ⏳ forward-looking
 
 > Colle le **Préambule partagé**.
 
-Toute la plomberie e-reporting est **livrée mais en veille** : providers `local`/`mock` (le `factory.ts` **throw** sur `chorus-pro`/`pdp-*`, aucune PA réelle), `INVOICE_ENABLE_EREPORTING=false`, cadence `DAILY` par défaut + `EREPORTING_ALLOW_DAILY_TRANSMISSION` fail-closed, services `build-`/`transmit-ereporting-batch` **orphelins** (vivants mais sans route cron), `getEReportingBatchStatus` = **méthode optionnelle de l'interface, non implémentée** (à câbler si la PA acquitte en async). Le calendrier approche : **réception** fournisseurs au 1ᵉʳ sept. **2026** (obligation back-office, pas du code storefront), **émission/e-reporting B2C** au 1ᵉʳ sept. **2027**. Cette mission **prépare le go-live** là où `GUARD` se contente de re-vérifier : cartographie la séquence d'activation — implémenter une classe `<Pa>Provider` derrière l'interface `InvoiceProvider` + son case dans `factory.ts`, recréer les routes cron `build`/`transmit` vers les services existants (+ `vercel.json`), basculer `BIMONTHLY` selon la spec PA, préparer la sortie de franchise TVA (ventilation des taux, `operationCategory`). **L'excellence = un plan d'activation exécutable et prouvé en dry-run (provider mock branché de bout en bout, routes cron recréées et testées, bascule BIMONTHLY documentée), distinguant nettement ce qui est activable aujourd'hui de ce qui attend la PA et la validation comptable.**
+⚠️ **L'e-reporting a été RETIRÉ du code le 2026-07-26** (right-sizing) : une implémentation complète existait — modèles, hooks SALES/REFUND, DLQ, batching, contrôle de continuité, dashboard admin — mais en **dry-run intégral** (flag jamais activé, aucune PA branchée) et écrite contre une **spec non figée**. Elle est récupérable dans l'historique git (migration `20260726190000_drop_ereporting` + `down.sql`), comme référence, pas comme base à restaurer. Le calendrier : **réception** fournisseurs au 1ᵉʳ sept. **2026** (démarche back-office, pas du code), **émission/e-reporting B2C** au 1ᵉʳ sept. **2027**. Cette mission **construit** l'e-reporting, une fois l'arrêté définitif publié et une PA contractualisée : modèle de transaction, agrégation périodique, transmission idempotente, rattrapage des échecs, et sortie de franchise TVA si le seuil est franchi (ventilation par taux, catégorie d'opération biens/services). **L'excellence = une implémentation dimensionnée à la spec réelle et au volume réel — pas une reconstruction à l'identique de ce qui a été retiré, dont la sur-ingénierie était précisément le motif du retrait.**
 
-> **Garde-fous** : **rien en prod réelle sans validation comptable explicite et une PA contractualisée** — tout reste dry-run (flags fail-closed). Ne **jamais** câbler `DAILY` sur une vraie PA (dépôt bimestriel attendu). Invariants 1–10 + 5 writers e-reporting **intouchables** : tu prépares et instrumentes, tu ne contournes pas.
+> **Garde-fous** : **ne rien écrire tant que l'arrêté n'est pas publié et qu'aucune PA n'est contractualisée** — c'est l'erreur qui a coûté le premier build. Cadence attendue : **dépôt bimestriel contenant le détail journalier**, jamais un dépôt par jour. Invariants 1–9 **intouchables** (numérotation gap-free, PDF immuable, rétention 10 ans) : l'e-reporting se greffe à côté, il ne les modifie pas.
 
 ---
 
@@ -454,7 +452,7 @@ Durcis **configuration, CI et documentation** pour un déploiement reproductible
 
 > Colle le **Préambule partagé**.
 
-Rends Synclune **observable et alertable** : (1) **symétrise** la couverture Sentry — le `beforeSend` serveur whiteliste les `*_SEQUENCE_OVERFLOW` mais **pas** l'edge (`sentry.edge.config.ts`), qui ne distingue donc pas un overflow attendu d'un crash ordinaire ; (2) enrichis `app/api/health/route.ts` (DB/Stripe/Resend déjà là) avec la **profondeur des DLQ** (`postWebhookTask` FAILED, `Order.invoiceRetryDeferred`/`ereportingRetryDeferred`) et « dernier succès cron > seuil = dégradé » ; (3) **exploite** les rapports CSP (`app/api/csp-report` les `logger.warn` sans jamais les agréger/forwarder) ; (4) instrumente chaque cron (dernier succès/durée/streak d'échecs) ; (5) un **runbook santé & alerting** (absent). Aligne aussi le commentaire « 14 jobs » de `sentry.server.config.ts` (réels : 11). **L'excellence = aucun échec silencieux — un overflow edge, une DLQ qui se remplit, un cron muet depuis N heures déclenchent une alerte actionnable avant le client, et le runbook dit quoi faire pour chacun.**
+Rends Synclune **observable et alertable** : (1) **symétrise** la couverture Sentry — le `beforeSend` serveur whiteliste les `*_SEQUENCE_OVERFLOW` mais **pas** l'edge (`sentry.edge.config.ts`), qui ne distingue donc pas un overflow attendu d'un crash ordinaire ; (2) enrichis `app/api/health/route.ts` (DB/Stripe/Resend déjà là) avec la **profondeur des DLQ** (`postWebhookTask` FAILED, `Order.invoiceRetryDeferred`) et « dernier succès cron > seuil = dégradé » ; (3) **exploite** les rapports CSP (`app/api/csp-report` les `logger.warn` sans jamais les agréger/forwarder) ; (4) instrumente chaque cron (dernier succès/durée/streak d'échecs) ; (5) un **runbook santé & alerting** (absent). Aligne aussi le commentaire « 14 jobs » de `sentry.server.config.ts` (réels : 11). **L'excellence = aucun échec silencieux — un overflow edge, une DLQ qui se remplit, un cron muet depuis N heures déclenchent une alerte actionnable avant le client, et le runbook dit quoi faire pour chacun.**
 
 > **Garde-fous** : **aucune PII dans Sentry** (ne casse pas `beforeSend`/`scrubSentryEvent`) ; routes cron protégées (token Vercel) inchangées ; pas de dépendance lourde (préfère le natif Sentry). Le circuit-breaker couvre Stripe+Resend (pas UploadThing) ; signale l'absence de webhook Resend / gestion bounce (constat, coordonne avec `INFRA`).
 
@@ -502,7 +500,7 @@ Le catalogue se contente de filtrer et trier (`PRODUCTS_SORT_OPTIONS` n'a pas de
 
 > Colle le **Préambule partagé**.
 
-Quand il y aura du trafic réel, Synclune doit **apprendre de ses visiteurs et itérer** plutôt que deviner. **Prérequis absolu** : compléter le funnel — `begin_checkout` n'est pas émis aujourd'hui, donc la conversion n'est pas mesurable de bout en bout (ce câblage est le **périmètre d'`ANALYTICS`** ; séquence cette mission **après** lui — sans begin_checkout émis, elle ne peut rien prouver). Ensuite, donne à la boutique l'**approche A/B la plus légère** qui tienne pour une petite app : assignation déterministe par bucket de visiteur, mesure via les events déjà en place, respect strict du consentement — pas une usine à gaz (aucun framework d'expérimentation n'existe ; les seuls « flags » du repo sont ceux de l'e-reporting). **L'excellence = pouvoir trancher une vraie friction du funnel avec une confiance raisonnable, à partir des events déjà en place et sans dette d'infra.**
+Quand il y aura du trafic réel, Synclune doit **apprendre de ses visiteurs et itérer** plutôt que deviner. **Prérequis absolu** : compléter le funnel — `begin_checkout` n'est pas émis aujourd'hui, donc la conversion n'est pas mesurable de bout en bout (ce câblage est le **périmètre d'`ANALYTICS`** ; séquence cette mission **après** lui — sans begin_checkout émis, elle ne peut rien prouver). Ensuite, donne à la boutique l'**approche A/B la plus légère** qui tienne pour une petite app : assignation déterministe par bucket de visiteur, mesure via les events déjà en place, respect strict du consentement — pas une usine à gaz (aucun framework d'expérimentation n'existe, et le repo n'a plus de système de feature flags). **L'excellence = pouvoir trancher une vraie friction du funnel avec une confiance raisonnable, à partir des events déjà en place et sans dette d'infra.**
 
 > **Garde-fous** : consentement RGPD **inviolable** — toute assignation/mesure respecte `hasAnalyticsConsent()`, aucun event avant opt-in ni après opt-out, aucune PII. Ne **redéfinis pas** l'enum `FUNNEL_EVENTS` (propriété `ANALYTICS`) ni ne double le store de consentement ; ne court-circuite pas `ORDERS_AVAILABLE`.
 
@@ -561,7 +559,6 @@ La recherche trouve — mais classe-t-elle bien ? Quand le catalogue aura grandi
 > les quatre autres (`GROWTH-LIFECYCLE`, `GROWTH-MERCH`, `GROWTH-CRO`, `SEARCH-REL`) sont **gatées
 > post-lancement** (besoin de trafic / ventes / catalogue réels) — à dégainer quand `ORDERS_AVAILABLE=true`.
 >
-> `INVOICE-GOLIVE` est lui aussi **hors séquence de lancement** : chantier prospectif gaté par le calendrier
-> e-reporting (réception 1ᵉʳ sept. 2026, émission 1ᵉʳ sept. 2027) et la **contractualisation d'une Plateforme
-> Agréée** — à dégainer à l'approche de l'échéance, tant que `INVOICE_ENABLE_EREPORTING=false` et qu'aucune PA
-> réelle n'est branchée (tout reste dry-run d'ici là).
+> `INVOICE-GOLIVE` est lui aussi **hors séquence de lancement** : chantier gaté par le calendrier e-reporting
+> (réception 1ᵉʳ sept. 2026, émission 1ᵉʳ sept. 2027), la **publication de l'arrêté** et la **contractualisation
+> d'une Plateforme Agréée** — à dégainer à l'approche de l'échéance, pas avant.

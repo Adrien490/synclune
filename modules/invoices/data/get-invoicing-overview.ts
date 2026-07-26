@@ -1,5 +1,4 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { EReportingStatus } from "@/app/generated/prisma/client";
 import type { InvoiceStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -13,10 +12,7 @@ import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
  * `/admin/ventes/facturation`. Renvoie les compteurs et derniers événements
  * nécessaires au pilotage opérationnel :
  *  - compteurs par invoiceStatus (PENDING / GENERATED / VOIDED)
- *  - compteurs par EReportingBatch.status
- *  - 10 derniers batches REJECTED (alerte action requise)
- *  - 10 derniers batches PENDING/RETRYING (en attente de transmission PDP)
- *  - 30 derniers jours : CA TTC encaissé + nombre de transactions e-reporting
+ *  - 30 derniers jours : CA TTC encaissé
  *
  * Admin only — la vue est composée de KPIs comptables sensibles. Le wrapper
  * applique `isAdmin()` guard avant la fonction cachée pour éviter qu'un
@@ -25,12 +21,7 @@ import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 export type InvoicingOverview = {
 	invoiceCounters: Record<InvoiceStatus, number>;
-	batchCounters: Record<EReportingStatus, number>;
-	rejectedBatches: ReadonlyArray<BatchSummary>;
-	pendingBatches: ReadonlyArray<BatchSummary>;
 	last30DaysRevenueCents: number;
-	last30DaysTransactionCount: number;
-	last30DaysRefundCount: number;
 	/**
 	 * Nombre de commandes PAID sans invoiceNumber émis (anomalie Art. 286/289-I).
 	 * EINV-UI-005 audit 2026-05-28 — drillable depuis le dashboard via
@@ -41,13 +32,6 @@ export type InvoicingOverview = {
 	recentInvoices: ReadonlyArray<InvoiceSummary>;
 	/** Audit monitoring 2026-05-28 EINV-OPS-007 : commandes en anomalie actionnable (max 50). */
 	anomalies: ReadonlyArray<InvoiceAnomaly>;
-	/** EINV-OPS-012 : couverture e-reporting 30j (ratios entre 0 et 1). */
-	eReportingCoverage: {
-		sales: number;
-		refund: number;
-		paidOrders: number;
-		paidRefunds: number;
-	};
 	/**
 	 * EINV-GLOBAL-011 : surveillance du seuil franchise TVA art. 293 B CGI
 	 * (85 000 € HT/an pour ventes de biens — cas Synclune). Pré-alerte UI à ~80 %
@@ -72,18 +56,6 @@ export interface InvoiceAnomaly {
 	total: number;
 	invoiceNumber: string | null;
 	invoiceReconcileAttempts: number;
-}
-
-export interface BatchSummary {
-	id: string;
-	status: EReportingStatus;
-	periodFrom: Date;
-	periodTo: Date;
-	transactionCount: number;
-	totalAmountIncTax: number;
-	currency: string;
-	rejectionReason: string | null;
-	createdAt: Date;
 }
 
 export interface InvoiceSummary {
@@ -146,60 +118,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		}
 	}
 
-	// Compteurs EReportingBatch par statut (toutes périodes confondues).
-	const batchGroups = await prisma.eReportingBatch.groupBy({
-		by: ["status"],
-		_count: { status: true },
-	});
-
-	const batchCounters: Record<EReportingStatus, number> = {
-		PENDING: 0,
-		SENT: 0,
-		ACCEPTED: 0,
-		REJECTED: 0,
-		RETRYING: 0,
-		ABANDONED: 0,
-	};
-	for (const group of batchGroups) {
-		batchCounters[group.status] = group._count.status;
-	}
-
-	// 10 derniers batches REJECTED — actionnables (correction puis retry).
-	const rejectedBatches = await prisma.eReportingBatch.findMany({
-		where: { status: EReportingStatus.REJECTED },
-		orderBy: { rejectedAt: "desc" },
-		take: 10,
-		select: {
-			id: true,
-			status: true,
-			periodFrom: true,
-			periodTo: true,
-			transactionCount: true,
-			totalAmountIncTax: true,
-			currency: true,
-			rejectionReason: true,
-			createdAt: true,
-		},
-	});
-
-	// 10 derniers batches PENDING / RETRYING — file d'attente transmission.
-	const pendingBatches = await prisma.eReportingBatch.findMany({
-		where: { status: { in: [EReportingStatus.PENDING, EReportingStatus.RETRYING] } },
-		orderBy: { periodFrom: "asc" },
-		take: 10,
-		select: {
-			id: true,
-			status: true,
-			periodFrom: true,
-			periodTo: true,
-			transactionCount: true,
-			totalAmountIncTax: true,
-			currency: true,
-			rejectionReason: true,
-			createdAt: true,
-		},
-	});
-
 	// CA encaissé 30 derniers jours (filtre paidAt — Art. 50-0 CGI).
 	const last30DaysRevenue = await prisma.order.aggregate({
 		where: {
@@ -223,21 +141,6 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		_sum: { total: true },
 	});
 	const revenueYtdCents = ytdRevenue._sum.total ?? 0;
-
-	// Nombre de transactions e-reporting créées sur 30 jours.
-	const last30DaysTransactionCount = await prisma.eReportingTransaction.count({
-		where: {
-			type: "SALES",
-			occurredAt: { gte: thirtyDaysAgo, lte: now },
-		},
-	});
-
-	const last30DaysRefundCount = await prisma.eReportingTransaction.count({
-		where: {
-			type: "REFUND",
-			occurredAt: { gte: thirtyDaysAgo, lte: now },
-		},
-	});
 
 	// Anomalie : commandes PAID sans invoiceNumber (Art. 286 / 289-I CGI).
 	// EINV-UI-005 audit 2026-05-28 — drill-down depuis CounterCard "En attente".
@@ -330,43 +233,12 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		};
 	});
 
-	// Couverture e-reporting 30j (EINV-OPS-012). Ratio entre 0 et 1 ; le UI
-	// affiche un warning quand < 99%. Quand le module est inactif (feature flag
-	// OFF), `last30DaysTransactionCount` reste à 0 → ratio descend, alerte
-	// visible côté admin = signal de health attendu.
-	const paidOrders30d = await prisma.order.count({
-		where: {
-			paymentStatus: "PAID",
-			paidAt: { gte: thirtyDaysAgo, lte: now },
-			...notDeleted,
-		},
-	});
-	const refundedOrders30d = await prisma.order.count({
-		where: {
-			paymentStatus: { in: ["REFUNDED", "PARTIALLY_REFUNDED"] },
-			paidAt: { gte: thirtyDaysAgo, lte: now },
-			...notDeleted,
-		},
-	});
-	const eReportingCoverage = {
-		sales: paidOrders30d === 0 ? 1 : Math.min(1, last30DaysTransactionCount / paidOrders30d),
-		refund: refundedOrders30d === 0 ? 1 : Math.min(1, last30DaysRefundCount / refundedOrders30d),
-		paidOrders: paidOrders30d,
-		paidRefunds: refundedOrders30d,
-	};
-
 	return {
 		invoiceCounters,
-		batchCounters,
-		rejectedBatches,
-		pendingBatches,
 		last30DaysRevenueCents: last30DaysRevenue._sum.total ?? 0,
-		last30DaysTransactionCount,
-		last30DaysRefundCount,
 		invoiceAnomalyCount,
 		recentInvoices: recentInvoicesNormalized,
 		anomalies,
-		eReportingCoverage,
 		franchiseThreshold: {
 			revenueYtdCents,
 			thresholdCents: FRANCHISE_THRESHOLD_CENTS,

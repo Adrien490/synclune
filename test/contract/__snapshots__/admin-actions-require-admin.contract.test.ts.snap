@@ -2,7 +2,6 @@
 
 exports[`@regression ord-test-008 — Auth bypass contract > snapshot the list of admin actions audited (drift detection) 1`] = `
 [
-  "modules/invoices/actions/retry-ereporting-batch.ts",
   "modules/invoices/actions/retry-invoice-generation.ts",
   "modules/orders/actions/add-order-note.ts",
   "modules/orders/actions/bulk-cancel-orders.ts",

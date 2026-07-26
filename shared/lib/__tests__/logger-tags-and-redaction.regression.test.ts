@@ -65,7 +65,6 @@ describe("EINV-OPS-006 — Sentry tags first-class", () => {
 			refundId: "ref_1",
 			paymentIntentId: "pi_1",
 			stripeEventId: "evt_1",
-			eReportingBatchId: "batch_1",
 		});
 		const options = mockSentry.captureException.mock.calls[0]![1] as {
 			tags: Record<string, string>;
@@ -76,7 +75,6 @@ describe("EINV-OPS-006 — Sentry tags first-class", () => {
 			refundId: "ref_1",
 			paymentIntentId: "pi_1",
 			stripeEventId: "evt_1",
-			eReportingBatchId: "batch_1",
 		});
 	});
 

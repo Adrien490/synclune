@@ -428,35 +428,4 @@ describe("envSchema", () => {
 			expect(result.success).toBe(true);
 		});
 	});
-
-	// --------------------------------------------------------------------------
-	// INVOICE_PROVIDER (e-reporting B2C — réforme 2026-2027)
-	// --------------------------------------------------------------------------
-
-	describe("INVOICE_PROVIDER", () => {
-		it("defaults to 'local' when not provided", () => {
-			const result = envSchema.safeParse(validEnv());
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.data.INVOICE_PROVIDER).toBe("local");
-			}
-		});
-
-		it("accepts each supported provider id", () => {
-			for (const provider of ["local", "mock"]) {
-				const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: provider });
-				expect(result.success).toBe(true);
-			}
-		});
-
-		it("rejects an unknown provider id at boot (fail-fast)", () => {
-			const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: "garbage" });
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects a B2B/B2G provider id (transmission supprimée — scope B2C)", () => {
-			const result = envSchema.safeParse({ ...validEnv(), INVOICE_PROVIDER: "chorus-pro" });
-			expect(result.success).toBe(false);
-		});
-	});
 });

@@ -299,7 +299,6 @@ describe("markAsPaid", () => {
 				data: expect.objectContaining({
 					paymentStatus: "PAID",
 					invoiceRetryDeferred: true,
-					ereportingRetryDeferred: true,
 				}),
 			}),
 		);

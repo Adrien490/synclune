@@ -62,10 +62,6 @@ export class OversellError extends Error {
  * montant encaissé + marquer la commande FAILED + alerter l'admin, au lieu de
  * rethrow-pour-retry-Stripe-infini (le montant ne se corrigera pas tout seul →
  * retry inutile et nuisible). Calque OversellError.
- *
- * Sûreté e-reporting (Invariant 9) : le throw interrompt le flow AVANT
- * `recordSalesEReportingDeferrable` (aucune transaction SALES enregistrée) → le
- * refund est neutre pour la DGFiP, comme le chemin oversell.
  */
 export class AmountMismatchError extends Error {
 	constructor(
