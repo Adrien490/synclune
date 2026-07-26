@@ -1,4 +1,5 @@
 import { type z } from "zod";
+import { type banResultSchema } from "../schemas/geo-response.schema";
 import { type searchAddressSchema } from "../schemas/search-address.schema";
 
 // ============================================================================
@@ -6,53 +7,10 @@ import { type searchAddressSchema } from "../schemas/search-address.schema";
 // ============================================================================
 
 /**
- * Type représentant un résultat StreetAddress de l'API d'autocomplétion
+ * Résultat de l'API d'autocomplétion (StreetAddress | PositionOfInterest),
+ * validé au runtime par geo-response.schema
  */
-export type CompletionStreetAddress = {
-	country: "StreetAddress";
-	city: string;
-	oldcity?: string;
-	x: number; // longitude
-	y: number; // latitude
-	zipcode: string;
-	street: string;
-	metropole?: boolean;
-	classification: number;
-	kind: string;
-	fulltext: string;
-};
-
-/**
- * Type représentant un résultat PositionOfInterest de l'API d'autocomplétion
- */
-export type CompletionPositionOfInterest = {
-	country: "PositionOfInterest";
-	names: string[];
-	zipcode?: string;
-	zipcodes: string[];
-	metropole?: boolean;
-	city: string;
-	street: string;
-	poiType: string[];
-	kind: string;
-	fulltext: string;
-	classification: number;
-	x: number; // longitude
-	y: number; // latitude
-};
-
-/**
- * Type union des résultats possibles
- */
-export type CompletionResult = CompletionStreetAddress | CompletionPositionOfInterest;
-
-/**
- * Type représentant la réponse complète de l'API d'autocomplétion
- */
-export type CompletionApiResponse = {
-	status: "OK";
-	results: CompletionResult[];
-};
+export type CompletionResult = z.infer<typeof banResultSchema>;
 
 /**
  * Type des paramètres d'entrée pour la recherche d'adresse

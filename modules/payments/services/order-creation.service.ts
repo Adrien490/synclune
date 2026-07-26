@@ -15,6 +15,14 @@ import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
+import * as Sentry from "@sentry/nextjs";
+
+// CHECKOUT-TOTAL-005 : un cartItem sans skuDetailsResult correspondant signifie que
+// le subtotal (calculé par buildStripeLineItems sur les mêmes données) peut inclure
+// un article qui ne serait pas snapshoté — fail-closed, jamais de skip silencieux
+// sur un chemin de facturation.
+const CART_ITEM_MISMATCH_ERROR =
+	"Certains articles de votre panier sont introuvables. Veuillez actualiser la page.";
 
 function isDiscountType(value: string): value is DiscountType {
 	return value === DiscountType.PERCENTAGE || value === DiscountType.FIXED_AMOUNT;
@@ -68,6 +76,14 @@ interface CreateOrderResult {
  * automatiquement + marque la commande FAILED (libérant le code promo). Ce trade-off
  * évite la logique de rollback complexe et est acceptable au volume actuel.
  *
+ * **Pas d'entrée OrderHistory à la création (délibéré)** : une commande PENDING n'est
+ * pas encore une pièce comptable (ni facture, ni encaissement), et
+ * `cleanupFailedCheckout` peut la hard-delete si l'update du PI échoue — une entrée
+ * d'audit posée ici deviendrait orpheline (`OrderHistory.order` est `onDelete:
+ * SetNull`). La première entrée d'audit trail est posée à la transition PAID par le
+ * webhook (`createOrderAuditTx`, BIZ-BUG-003), dans la même transaction que le
+ * décrément de stock.
+ *
  * Called from confirmCheckout before Stripe PI update.
  * On Stripe failure, the caller is responsible for rolling back via cleanupFailedCheckout.
  */
@@ -87,6 +103,35 @@ export async function createOrderInTransaction(
 		paymentIntentId,
 	} = params;
 
+	// CHECKOUT-TOTAL-005 : invariant interne — le `subtotal` paramètre (pré-calculé
+	// hors transaction par buildStripeLineItems) doit égaler la somme des lignes qui
+	// seront réellement snapshotées ci-dessous (mêmes skuDetailsResults). Toute
+	// divergence (filtrage, arrondi) produirait un Order dont
+	// total ≠ Σ items + livraison − remise, indétectable en aval. Vérification pure,
+	// AVANT la transaction — aucun lock tenu si elle échoue.
+	let computedSubtotal = 0;
+	for (const cartItem of cartItems) {
+		const skuResult = skuDetailsResults.find((r) => r.success && r.data?.sku.id === cartItem.skuId);
+		if (!skuResult?.success || !skuResult.data) {
+			throw new BusinessError(CART_ITEM_MISMATCH_ERROR);
+		}
+		computedSubtotal += skuResult.data.sku.priceInclTax * cartItem.quantity;
+	}
+	if (computedSubtotal !== subtotal) {
+		// Bug interne (pas une erreur client) → Sentry, puis rejet fail-closed.
+		Sentry.withScope((scope) => {
+			scope.setLevel("error");
+			scope.setTag("checkout", "subtotal-mismatch");
+			scope.setFingerprint(["order-creation", "subtotal-mismatch"]);
+			scope.setContext("checkout", { subtotal, computedSubtotal });
+			Sentry.captureMessage(
+				"createOrderInTransaction: subtotal param diverges from line items sum",
+				"error",
+			);
+		});
+		throw new BusinessError("Le montant de votre panier a changé. Veuillez actualiser la page.");
+	}
+
 	return prisma.$transaction(
 		async (tx) => {
 			// Verify stock with row locking to prevent race conditions (double-sell, oversell).
@@ -98,7 +143,11 @@ export async function createOrderInTransaction(
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId,
 				);
-				if (!skuResult?.success || !skuResult.data) continue;
+				// Défense en profondeur : déjà garanti par la vérification pré-transaction
+				// (CHECKOUT-TOTAL-005) — fail-closed si le code amont évolue.
+				if (!skuResult?.success || !skuResult.data) {
+					throw new BusinessError(CART_ITEM_MISMATCH_ERROR);
+				}
 
 				const sku = skuResult.data.sku;
 				const currentSkuRows = await tx.$queryRaw<
@@ -276,6 +325,14 @@ export async function createOrderInTransaction(
 			// Seuil franchise TVA 2026 : 85 000 € (ventes de biens — cas Synclune) / 37 500 € (prestations)
 			const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
 			const taxAmount = 0;
+			// MIN-AMOUNT-DIVERGE-01 : `total` est le montant AUTORITAIRE posé sur le PI
+			// avant capture (confirm-checkout). Pas de plancher STRIPE_MIN_AMOUNT_EUR_CENTS
+			// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
+			// l'invariant qui le rend inutile : `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`
+			// (frais FR par défaut = 499 c, jamais null en métropole) ⇒ total >= shipping >= min.
+			// ⚠️ Si la gratuité de port ou un tarif < 50 c est introduit, ajouter ici un
+			// rejet métier explicite (PAS un clamp silencieux qui sur-facturerait le client) :
+			// Stripe refuserait sinon l'update et confirmCheckout ferait cleanupFailedCheckout.
 			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
 
 			// Create order with denormalized shipping address snapshot (legal compliance — immutable)
@@ -314,7 +371,12 @@ export async function createOrderInTransaction(
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId,
 				);
-				if (!skuResult?.success || !skuResult.data) continue;
+				// Défense en profondeur : déjà garanti par la vérification pré-transaction
+				// (CHECKOUT-TOTAL-005) — un skip silencieux ici facturerait un article
+				// absent de la commande.
+				if (!skuResult?.success || !skuResult.data) {
+					throw new BusinessError(CART_ITEM_MISMATCH_ERROR);
+				}
 
 				const sku = skuResult.data.sku;
 				const product = sku.product;
@@ -337,6 +399,7 @@ export async function createOrderInTransaction(
 						productTitle: product.title,
 						productDescription: product.description ?? null,
 						productImageUrl: imageUrl,
+						skuSku: sku.sku,
 						skuColor: sku.colors.map((c) => c.name).join(" · ") || null,
 						skuColorHexes: colorsHex || null,
 						skuMaterial: sku.material ?? null,

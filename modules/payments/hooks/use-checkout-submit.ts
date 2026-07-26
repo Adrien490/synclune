@@ -2,7 +2,6 @@
 
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import type { StripeError } from "@stripe/stripe-js";
-import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { confirmCheckout } from "../actions/confirm-checkout";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
@@ -27,6 +26,14 @@ interface UseCheckoutSubmitParams {
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	allowNavigation?: () => void;
 	onPhase?: (phase: "validating" | "creating-order" | "awaiting-3ds") => void;
+	/**
+	 * Appelé dès qu'une commande est liée au PaymentIntent (CHECKOUT-CONSENT-001).
+	 * À partir de là le montant est FIGÉ côté serveur : `updatePaymentAmount`
+	 * refuse toute mise à jour et `confirmCheckout` rejette une resoumission
+	 * divergente. Le caller s'en sert pour verrouiller l'affichage sur
+	 * `finalAmount` et geler les sections qui modifieraient le total.
+	 */
+	onOrderBound?: (finalAmount: number) => void;
 }
 
 /**
@@ -45,6 +52,7 @@ export function useCheckoutSubmit({
 	getFormData,
 	allowNavigation,
 	onPhase,
+	onOrderBound,
 }: UseCheckoutSubmitParams) {
 	const stripe = useStripe();
 	const elements = useElements();
@@ -76,6 +84,9 @@ export function useCheckoutSubmit({
 			return { status: "checkout-error", message: result.error };
 		}
 
+		// La commande est liée au PI : le montant ne bougera plus.
+		onOrderBound?.(result.finalAmount);
+
 		onPhase?.("awaiting-3ds");
 		allowNavigation?.();
 
@@ -92,9 +103,31 @@ export function useCheckoutSubmit({
 	};
 }
 
-function mapStripeErrorMessage(error: StripeError): string {
-	const { kind } = classifyStripeError(error);
-	return kind === "user"
-		? (error.message ?? "Erreur de paiement.")
-		: "Une erreur est survenue lors du paiement.";
+/**
+ * Maps a CLIENT-side Stripe error (from `stripe.confirmPayment`, SDK
+ * `@stripe/stripe-js`) to a user-facing message.
+ *
+ * ⚠️ Ne PAS réutiliser `classifyStripeError` ici : ce classifieur repose sur
+ * `instanceof Stripe.errors.*` (classes du SDK SERVEUR `stripe`). Le
+ * `confirmError` renvoyé par `stripe.confirmPayment` est un objet plat du SDK
+ * client (une `interface`, jamais une instance de ces classes) → il ressortirait
+ * toujours `kind: "unknown"` et MASQUERAIT le motif de refus de carte. En
+ * card-only, le refus de carte est le chemin d'erreur le plus fréquent : on doit
+ * afficher le message localisé fourni par Stripe (conçu pour l'utilisateur final).
+ *
+ * On discrimine donc sur `error.type` :
+ *  - `card_error`       : refus carte (insufficient_funds, incorrect_cvc, card_declined…)
+ *  - `validation_error` : champ de paiement invalide côté Stripe
+ * Pour ces deux types, `error.message` est sûr à afficher. Tout autre type
+ * (api_error, invalid_request_error…) reste un message générique.
+ */
+function mapStripeErrorMessage(error: StripeError | undefined): string {
+	// `redirect: "always"` (défaut) fait qu'un succès redirige : on ne repasse ici
+	// qu'avec une erreur. Garde défensive quand même — un `undefined` inattendu ne
+	// doit pas lever un TypeError qui masquerait l'état réel du paiement.
+	if (!error) return "Une erreur est survenue lors du paiement.";
+	if (error.type === "card_error" || error.type === "validation_error") {
+		return error.message ?? "Votre paiement a été refusé.";
+	}
+	return "Une erreur est survenue lors du paiement.";
 }

@@ -8,6 +8,7 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getAuthSessionInvalidationTags } from "@/modules/auth/utils/cache.utils";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
@@ -52,10 +53,12 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 			where: { userId },
 		});
 
-		// 6. Revalider le cache (incl. la liste de sessions affichée détail admin)
+		// 6. Revalider le cache (incl. les listes de sessions : détail admin
+		// `sessions-user-*` + surface auth `auth-sessions-*`)
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(SESSION_CACHE_TAGS.SESSIONS(userId));
+		getAuthSessionInvalidationTags(undefined, userId).forEach((tag) => updateTag(tag));
 		for (const tag of getUserFullInvalidationTags(userId)) {
 			updateTag(tag);
 		}

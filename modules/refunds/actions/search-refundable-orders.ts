@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { SORT_OPTIONS } from "@/modules/orders/constants/order.constants";
@@ -20,6 +21,9 @@ export interface RefundableOrderOption {
 /** Nombre de commandes proposées dans le sélecteur (recherche live). */
 const MAX_RESULTS = 8;
 
+/** Query vide autorisée (liste les commandes récentes), bornée comme les searchTerms catalogue. */
+const querySchema = z.string().trim().max(200);
+
 /**
  * Recherche les commandes remboursables pour le sélecteur « Créer un
  * remboursement ». Le filtre `PROCESSING|SHIPPED|DELIVERED × PAID|PARTIALLY_REFUNDED`
@@ -29,13 +33,16 @@ const MAX_RESULTS = 8;
  *
  * L'auth admin est vérifiée ici (`requireAdmin`, re-check DB) ET de nouveau en
  * DB par `getOrders`. Retour custom (`RefundableOrderOption[]`, pas `ActionState`)
- * ⇒ sur échec d'auth on renvoie une liste vide plutôt que `admin.error`.
+ * ⇒ sur échec d'auth ou de validation on renvoie une liste vide plutôt que
+ * `admin.error` — d'où le safeParse direct au lieu de `validateInput`.
  */
 export async function searchRefundableOrders(query: string): Promise<RefundableOrderOption[]> {
 	const admin = await requireAdmin();
 	if ("error" in admin) return [];
 
-	const trimmed = query.trim();
+	const validation = querySchema.safeParse(query);
+	if (!validation.success) return [];
+	const trimmed = validation.data;
 
 	try {
 		const { orders } = await getOrders({

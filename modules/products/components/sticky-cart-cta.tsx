@@ -9,8 +9,10 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useBottomBarHeight } from "@/shared/hooks";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import Image from "next/image";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface StickyCartCTAProps {
 	product: GetProductReturn;
@@ -48,6 +50,10 @@ export function StickyCartCTA({
 	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;
 
 	const canAddToCart = isAvailable;
+
+	// Une video sans poster n'est pas rendue par l'optimiseur -> pas de miniature
+	const primaryMedia = currentSku.images[0];
+	const thumbSrc = primaryMedia ? resolveMediaThumbSrc(primaryMedia) : null;
 
 	// Observer le bouton principal pour declencher l'affichage
 	useEffect(() => {
@@ -113,17 +119,20 @@ export function StickyCartCTA({
 						<input type="hidden" name="quantity" value="1" />
 
 						{/* Miniature du produit (decorative) */}
-						{currentSku.images[0]?.url && (
+						{thumbSrc && (
 							<div
 								className="border-border bg-muted relative size-10 shrink-0 overflow-hidden rounded-lg border"
 								aria-hidden="true"
 							>
 								<Image
-									src={currentSku.images[0].thumbnailUrl ?? currentSku.images[0].url}
+									src={thumbSrc}
 									alt=""
 									fill
 									className="object-cover"
 									sizes="40px"
+									quality={IMAGE_QUALITY.THUMBNAIL}
+									placeholder={primaryMedia?.blurDataUrl ? "blur" : "empty"}
+									blurDataURL={primaryMedia?.blurDataUrl ?? undefined}
 								/>
 							</div>
 						)}

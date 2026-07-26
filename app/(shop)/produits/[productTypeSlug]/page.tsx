@@ -75,7 +75,10 @@ export async function generateMetadata({
 	);
 	// P2-2 : pages cursor noindex (duplicate content vs canonical catégorie)
 	const isPaginated = !!searchParamsData.cursor;
-	const shouldNoindex = hasAdditionalFilters || isPaginated;
+	// Catégorie sans aucun produit visible = thin content → noindex (la page
+	// reste navigable avec son état vide, mais ne doit pas être indexée)
+	const isEmpty = productType._count.products === 0;
+	const shouldNoindex = hasAdditionalFilters || isPaginated || isEmpty;
 
 	const title = `${productType.label} artisanaux faits main | Synclune`;
 	const description =

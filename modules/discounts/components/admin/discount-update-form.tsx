@@ -1,6 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 
@@ -8,10 +7,11 @@ import { type DiscountType } from "@/app/generated/prisma/browser";
 import { updateDiscount } from "@/modules/discounts/actions/update-discount";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { Button } from "@/shared/components/ui/button";
-import { Kbd } from "@/shared/components/ui/kbd";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
@@ -22,6 +22,7 @@ import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { useDiscountForm } from "../../hooks/use-discount-form";
 import { DiscountFormFields } from "./discount-form-fields";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 interface DiscountUpdateFormProps {
 	discount: {
@@ -74,7 +75,7 @@ export function DiscountUpdateForm({ discount, className }: DiscountUpdateFormPr
 
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const [, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateDiscount,
 
@@ -94,68 +95,52 @@ export function DiscountUpdateForm({ discount, className }: DiscountUpdateFormPr
 		undefined,
 	);
 
+	// Les messages discount ne sont pas path-préfixés → tout VALIDATION_ERROR serveur est global
+	const serverErrors = useServerFieldErrors({ state });
+
 	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending && !isMobile);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || !form.state.canSubmit) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				form.state.isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, LIST_PATH);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, haptic, router, allowNavigation]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: LIST_PATH,
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		getCanSubmit: () => form.state.canSubmit,
+	});
 
 	return (
 		<form
 			ref={formRef}
-			action={action}
 			aria-label="Formulaire de modification de code promo"
+			aria-busy={isPending}
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={(event) => {
-				if (!form.state.canSubmit) {
-					event.preventDefault();
-					focusFirstInvalid();
-				}
+				event.preventDefault();
+				if (isPending || form.state.isSubmitting) return;
+				const formData = new FormData(event.currentTarget);
+				runAfterValidation(
+					form.handleSubmit(),
+					() => {
+						if (form.state.isValid) {
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					},
+					"DiscountUpdateForm",
+				);
 			}}
 		>
 			<input type="hidden" name="id" value={discount.id} />
+
+			<FormServerErrorAlert errors={serverErrors} />
 
 			<form.Subscribe
 				selector={(state) => ({
@@ -175,7 +160,7 @@ export function DiscountUpdateForm({ discount, className }: DiscountUpdateFormPr
 						.filter(
 							(item): item is { name: string; label: string; message: string } => item !== null,
 						);
-					if (fieldErrors.length < 2) return null;
+					if (fieldErrors.length === 0) return null;
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>
@@ -187,32 +172,15 @@ export function DiscountUpdateForm({ discount, className }: DiscountUpdateFormPr
 
 			<form.AppForm>
 				<AdminFormFooter pending={isPending}>
-					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
-						{([canSubmit]) => (
-							<div className="flex justify-end">
-								<Button
-									type="submit"
-									size="input"
-									disabled={!canSubmit || isPending}
-									onClick={() => haptic("medium")}
-									className="w-full sm:w-auto sm:min-w-56"
-								>
-									{isPending && (
-										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									)}
-									<span>{isPending ? "Mise à jour…" : "Enregistrer"}</span>
-									{!isPending && (
-										<Kbd
-											aria-hidden="true"
-											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-										>
-											⌘S
-										</Kbd>
-									)}
-								</Button>
-							</div>
-						)}
-					</form.Subscribe>
+					<div className="flex justify-end">
+						<form.SubmitButton
+							isPending={isPending}
+							idleLabel="Enregistrer"
+							pendingLabel="Mise à jour…"
+							showKbdHint
+							className="w-full sm:w-auto sm:min-w-56"
+						/>
+					</div>
 				</AdminFormFooter>
 			</form.AppForm>
 		</form>

@@ -22,6 +22,7 @@ const {
 	mockSendAdminOrderProcessingFailedAlert,
 	mockSendWebhookFailedAlertEmail,
 	mockRefundsCreate,
+	mockCaptureWebhookError,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findFirst: vi.fn(), updateMany: vi.fn() },
@@ -42,6 +43,7 @@ const {
 	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 	mockSendWebhookFailedAlertEmail: vi.fn(),
 	mockRefundsCreate: vi.fn(),
+	mockCaptureWebhookError: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -130,6 +132,10 @@ vi.mock("@/modules/payments/services/map-stripe-payment-method", () => ({
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
 	sendWebhookFailedAlertEmail: mockSendWebhookFailedAlertEmail,
+}));
+
+vi.mock("../../utils/capture-webhook-error", () => ({
+	captureWebhookError: mockCaptureWebhookError,
 }));
 
 import type Stripe from "stripe";
@@ -325,6 +331,67 @@ describe("handlePaymentSuccess", () => {
 		const alertArg = mockSendWebhookFailedAlertEmail.mock.calls[0]![0];
 		expect(alertArg.error).toContain("MANUELLEMENT");
 	});
+
+	it("[F5] captures in Sentry when the orphan-charge admin alert itself fails", async () => {
+		// L'alerte email est le seul déclencheur du refund manuel si l'auto-refund
+		// a échoué — son échec ne doit pas rester confiné aux logs.
+		mockPrisma.order.findFirst.mockResolvedValueOnce(null);
+		mockRefundsCreate.mockResolvedValueOnce({ id: "re_orphan" });
+		mockSendWebhookFailedAlertEmail.mockRejectedValueOnce(new Error("SMTP down"));
+
+		const result = await handlePaymentSuccess(
+			makePaymentIntent({ metadata: {}, amount_received: 5000 }),
+		);
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockCaptureWebhookError).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({ handler: "handlePaymentSuccess.orphanAlert" }),
+		);
+	});
+
+	it("[F5] captures in Sentry when persisting the overbilling delta fails", async () => {
+		// Sans overbilledAmountCents persisté, reconcileOverbilledOrders ne verra
+		// jamais le trop-perçu.
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({
+			id: "order-1",
+			orderNumber: "SYN-001",
+			customerEmail: "client@example.com",
+			total: 5000,
+			items: [],
+		});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
+		mockPrisma.order.updateMany.mockRejectedValueOnce(new Error("DB down"));
+
+		await handlePaymentSuccess(makePaymentIntent({ amount_received: 6000 }));
+
+		expect(mockCaptureWebhookError).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({ handler: "handlePaymentSuccess.overbillingPersist" }),
+		);
+	});
+
+	it("[F5] captures in Sentry when the overbilling admin alert fails", async () => {
+		mockProcessOrderFromPaymentIntent.mockResolvedValue({
+			id: "order-1",
+			orderNumber: "SYN-001",
+			customerEmail: "client@example.com",
+			total: 5000,
+			items: [],
+		});
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
+		mockSendAdminOrderProcessingFailedAlert.mockRejectedValueOnce(new Error("SMTP down"));
+
+		const result = await handlePaymentSuccess(makePaymentIntent({ amount_received: 6000 }));
+
+		// Le flow n'est pas bloqué (le client a payé, la commande est honorée)…
+		expect(result.success).toBe(true);
+		// …mais l'échec d'alerte remonte dans Sentry.
+		expect(mockCaptureWebhookError).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({ handler: "handlePaymentSuccess.overbillingAlert" }),
+		);
+	});
 });
 
 // ============================================================================
@@ -339,8 +406,13 @@ describe("handlePaymentFailure", () => {
 			declineCode: "insufficient_funds",
 			message: "Your card was declined.",
 		});
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
-		mockMarkOrderAsFailed.mockResolvedValue(undefined);
+		// Commande PENDING nominale (le handler fetch l'état avant de décider).
+		mockPrisma.order.findFirst.mockResolvedValue({
+			orderNumber: "SYN-2026-00042",
+			paymentStatus: "PENDING",
+			userId: "user-1",
+		});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	it("should skip gracefully when no order_id in metadata", async () => {
@@ -355,114 +427,96 @@ describe("handlePaymentFailure", () => {
 		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 	});
 
-	it("should call restoreStockForOrder and markOrderAsFailed in order", async () => {
+	// Audit webhooks 2026-07-02 (F1/F2) : payment_failed est NON-terminal — le PI
+	// repasse requires_payment_method et le client peut retenter le même PI.
+	// Aucune transition, aucun restock, aucun refund, aucun email : le fail est
+	// acté par le cron sync-async-payments (> 1h) ou payment_intent.canceled.
+	it("must NOT transition, restock, refund nor email the customer (non-terminal)", async () => {
+		const result = await handlePaymentFailure(makePaymentIntent({ amount_received: 0 }));
+
+		expect(result.success).toBe(true);
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
+		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
+		// Le task type PAYMENT_FAILED_EMAIL a été supprimé de l'union (jamais
+		// enqueued) — comparaison élargie pour garder l'assertion runtime.
+		expect(
+			result.tasks?.find((t) => (t.type as string) === "PAYMENT_FAILED_EMAIL"),
+		).toBeUndefined();
+	});
+
+	it("persists failure details via a PENDING-conditional updateMany (race-safe, no transition)", async () => {
 		await handlePaymentFailure(makePaymentIntent());
 
-		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-1");
-		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
-			"order-1",
-			"pi_123",
-			expect.objectContaining({ code: "card_declined" }),
-		);
-	});
-
-	it("should initiate auto refund when amount_received > 0", async () => {
-		mockInitiateAutomaticRefund.mockResolvedValue({ success: true });
-
-		await handlePaymentFailure(makePaymentIntent({ amount_received: 5000 }));
-
-		expect(mockInitiateAutomaticRefund).toHaveBeenCalledWith(
-			"pi_123",
-			"order-1",
-			"Payment failed, automatic refund",
-		);
-	});
-
-	it("should alert admin when auto refund fails", async () => {
-		mockInitiateAutomaticRefund.mockResolvedValue({
-			success: false,
-			error: { message: "Refund failed" },
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: "order-1", paymentStatus: "PENDING", deletedAt: null },
+			data: {
+				paymentFailureCode: "card_declined",
+				paymentDeclineCode: "insufficient_funds",
+				paymentFailureMessage: "Your card was declined.",
+			},
 		});
-		mockSendRefundFailureAlert.mockResolvedValue(undefined);
-
-		await handlePaymentFailure(makePaymentIntent({ amount_received: 5000 }));
-
-		expect(mockSendRefundFailureAlert).toHaveBeenCalledWith(
-			"order-1",
-			"pi_123",
-			"payment_failed",
-			"Refund failed",
-		);
 	});
 
-	it("should not initiate refund when amount_received is 0", async () => {
-		await handlePaymentFailure(makePaymentIntent({ amount_received: 0 }));
-
-		expect(mockInitiateAutomaticRefund).not.toHaveBeenCalled();
-	});
-
-	/**
-	 * @regression biz-bug-004
-	 * Parité avec le flux async : un échec de paiement PI doit notifier le client
-	 * (email PAYMENT_FAILED_EMAIL) quand l'email de la commande est connu.
-	 */
-	it("[regression biz-bug-004] emits PAYMENT_FAILED_EMAIL task when order has a customer email", async () => {
+	it("skips as stale when the order is already PAID (out-of-order delivery, F1)", async () => {
 		mockPrisma.order.findFirst.mockResolvedValue({
 			orderNumber: "SYN-2026-00042",
-			customerEmail: "client@example.com",
-			customerName: "Camille",
-		});
-
-		const result = await handlePaymentFailure(makePaymentIntent());
-
-		const emailTask = result.tasks?.find((t) => t.type === "PAYMENT_FAILED_EMAIL");
-		expect(emailTask).toBeDefined();
-		if (emailTask?.type !== "PAYMENT_FAILED_EMAIL") throw new Error("type guard");
-		expect(emailTask.data).toMatchObject({
-			to: "client@example.com",
-			customerName: "Camille",
-			orderNumber: "SYN-2026-00042",
-			retryUrl: "https://synclune.fr/paiement",
-			idempotencyKey: "payment-failed-order-1",
-		});
-	});
-
-	/**
-	 * @regression biz-bug-004
-	 * Aucun email si la commande n'a pas d'email (rien à notifier) — pas de crash.
-	 */
-	it("[regression biz-bug-004] skips PAYMENT_FAILED_EMAIL when order has no email", async () => {
-		mockPrisma.order.findFirst.mockResolvedValue({
-			orderNumber: "SYN-2026-00042",
-			customerEmail: null,
-			customerName: "Camille",
-		});
-
-		const result = await handlePaymentFailure(makePaymentIntent());
-
-		expect(result.tasks?.find((t) => t.type === "PAYMENT_FAILED_EMAIL")).toBeUndefined();
-	});
-
-	it("should include restored SKU ids in cache tags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({
-			restoredSkuIds: ["sku-1", "sku-2"],
+			paymentStatus: "PAID",
 			userId: "user-1",
 		});
 
 		const result = await handlePaymentFailure(makePaymentIntent());
 
-		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		if (cacheTask?.type === "INVALIDATE_CACHE") {
-			expect(cacheTask.tags).toContain("sku-stock-sku-1");
-			expect(cacheTask.tags).toContain("sku-stock-sku-2");
+		expect(result).toEqual({ success: true, skipped: true, reason: "stale_payment_failed" });
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("Stale payment_failed"),
+			expect.objectContaining({ service: "webhook" }),
+		);
+	});
+
+	it("skips as stale when the order is REFUNDED or PARTIALLY_REFUNDED", async () => {
+		for (const paymentStatus of ["REFUNDED", "PARTIALLY_REFUNDED"]) {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				orderNumber: "SYN-2026-00042",
+				paymentStatus,
+				userId: "user-1",
+			});
+
+			const result = await handlePaymentFailure(makePaymentIntent());
+
+			expect(result).toEqual({ success: true, skipped: true, reason: "stale_payment_failed" });
 		}
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("skips idempotently when the order is already FAILED (cron already acted)", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue({
+			orderNumber: "SYN-2026-00042",
+			paymentStatus: "FAILED",
+			userId: "user-1",
+		});
+
+		const result = await handlePaymentFailure(makePaymentIntent());
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "already_failed" });
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
+	});
+
+	it("skips when the order is not found", async () => {
+		mockPrisma.order.findFirst.mockResolvedValue(null);
+
+		const result = await handlePaymentFailure(makePaymentIntent());
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "order_not_found" });
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// CACHE-AUDIT-002 : l'espace client + le détail commande doivent refléter
-	// CANCELLED immédiatement, pas après expiration du profil `user`.
+	// les détails d'échec immédiatement, pas après expiration du profil `user`.
 	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
-
 		const result = await handlePaymentFailure(makePaymentIntent());
 
 		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
@@ -482,8 +536,9 @@ describe("handlePaymentFailure", () => {
 describe("handlePaymentCanceled", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
-		mockMarkOrderAsCancelled.mockResolvedValue(undefined);
+		// IDEM-CANCEL-002 : cancel + restock fusionnés — markOrderAsCancelled
+		// porte désormais le résultat restock (restoredSkus, userId).
+		mockMarkOrderAsCancelled.mockResolvedValue({ restoredSkus: [], userId: "user-1" });
 	});
 
 	it("should skip gracefully when no order_id in metadata", async () => {
@@ -498,11 +553,13 @@ describe("handlePaymentCanceled", () => {
 		expect(mockMarkOrderAsCancelled).not.toHaveBeenCalled();
 	});
 
-	it("should call restoreStockForOrder and markOrderAsCancelled", async () => {
+	it("should call markOrderAsCancelled (cancel + restock fusionnés, IDEM-CANCEL-002)", async () => {
 		await handlePaymentCanceled(makePaymentIntent());
 
-		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-1");
 		expect(mockMarkOrderAsCancelled).toHaveBeenCalledWith("order-1", "pi_123");
+		// Le restock séparé (2 transactions) est supprimé : un crash entre les
+		// deux commits permettait un double restock au retry cron.
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
 	});
 
 	it("should initiate auto refund when status is canceled and amount_received > 0", async () => {
@@ -514,6 +571,7 @@ describe("handlePaymentCanceled", () => {
 			"pi_123",
 			"order-1",
 			"Payment canceled, automatic refund",
+			5000,
 		);
 	});
 
@@ -549,7 +607,10 @@ describe("handlePaymentCanceled", () => {
 	});
 
 	it("should include restored SKU ids in cache tags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: ["sku-3"], userId: "user-1" });
+		mockMarkOrderAsCancelled.mockResolvedValue({
+			restoredSkus: [{ skuId: "sku-3" }],
+			userId: "user-1",
+		});
 
 		const result = await handlePaymentCanceled(makePaymentIntent());
 
@@ -561,7 +622,7 @@ describe("handlePaymentCanceled", () => {
 
 	// CACHE-AUDIT-002 : idem handlePaymentFailure.
 	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [], userId: "user-1" });
+		mockMarkOrderAsCancelled.mockResolvedValue({ restoredSkus: [], userId: "user-1" });
 
 		const result = await handlePaymentCanceled(makePaymentIntent());
 

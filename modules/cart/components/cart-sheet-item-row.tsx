@@ -10,6 +10,7 @@ import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import {
 	getSkuColorsDisplayLabel,
 	getColorHexes,
@@ -30,6 +31,7 @@ import {
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface CartSheetItemRowProps {
 	item: CartItem;
@@ -76,10 +78,8 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 		});
 	};
 
-	const thumbSrc =
-		primaryImage?.mediaType === "VIDEO"
-			? (primaryImage.thumbnailUrl ?? primaryImage.url)
-			: primaryImage?.url;
+	// Une video sans poster n'est pas decodable par l'optimiseur -> fallback "Pas d'image"
+	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 
 	const article = (
 		<article
@@ -103,7 +103,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 						fill
 						className="object-cover"
 						sizes="(min-width: 640px) 96px, 80px"
-						quality={80}
+						quality={IMAGE_QUALITY.STANDARD}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 					/>

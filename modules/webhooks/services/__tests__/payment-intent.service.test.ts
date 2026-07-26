@@ -11,10 +11,13 @@ const {
 	mockUpdateTag,
 } = vi.hoisted(() => {
 	const mockTx = {
+		// IDEM-AUTOREFUND-001 : `SELECT … FOR UPDATE` de sérialisation en tête de tx.
+		$queryRaw: vi.fn(),
 		order: {
 			findFirst: vi.fn(),
 			findUniqueOrThrow: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		productSku: {
 			findMany: vi.fn(),
@@ -42,6 +45,8 @@ const {
 			},
 			refund: {
 				update: vi.fn(),
+				// IDEM-AUTOREFUND-001 : claim conditionnel du lien stripeRefundId.
+				updateMany: vi.fn(),
 			},
 		},
 		mockStripeRefunds: {
@@ -94,7 +99,6 @@ vi.mock("next/cache", () => ({
 }));
 
 import {
-	markOrderAsPaid,
 	extractPaymentFailureDetails,
 	restoreStockForOrder,
 	markOrderAsFailed,
@@ -103,65 +107,6 @@ import {
 	sendRefundFailureAlert,
 } from "../payment-intent.service";
 import type { PaymentFailureDetails } from "../payment-intent.service";
-
-// ============================================================================
-// markOrderAsPaid
-// ============================================================================
-
-describe("markOrderAsPaid", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx),
-		);
-	});
-
-	it("should update order to PAID and PROCESSING on happy path", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
-
-		await markOrderAsPaid("order-1", "pi_abc123");
-
-		expect(mockTx.order.findFirst).toHaveBeenCalledWith({
-			where: { id: "order-1", deletedAt: null },
-			select: { status: true, paymentStatus: true },
-		});
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
-			data: expect.objectContaining({
-				status: "PROCESSING",
-				paymentStatus: "PAID",
-				stripePaymentIntentId: "pi_abc123",
-				paidAt: expect.any(Date),
-			}),
-		});
-		expect(mockTx.orderHistory.create).toHaveBeenCalledWith({
-			data: expect.objectContaining({
-				orderId: "order-1",
-				action: "PAID",
-				newPaymentStatus: "PAID",
-				source: "WEBHOOK",
-				authorName: "Stripe",
-			}),
-		});
-	});
-
-	it("should skip update when order is already PAID (idempotent)", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
-
-		await markOrderAsPaid("order-1", "pi_abc123");
-
-		expect(mockTx.order.update).not.toHaveBeenCalled();
-	});
-
-	it("should handle order not found gracefully without throwing", async () => {
-		mockTx.order.findFirst.mockResolvedValue(null);
-
-		await expect(markOrderAsPaid("nonexistent-order", "pi_abc123")).resolves.toBeUndefined();
-
-		expect(mockTx.order.update).not.toHaveBeenCalled();
-	});
-});
 
 // ============================================================================
 // extractPaymentFailureDetails
@@ -218,8 +163,8 @@ describe("restoreStockForOrder", () => {
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			items: [
-				{ skuId: "sku-a", quantity: 2 },
-				{ skuId: "sku-b", quantity: 1 },
+				{ skuId: "sku-a", quantity: 2, sku: { product: { id: "prod-a", slug: "produit-a" } } },
+				{ skuId: "sku-b", quantity: 1, sku: { product: { id: "prod-b", slug: "produit-b" } } },
 			],
 		};
 		mockTx.order.findFirst.mockResolvedValue(order);
@@ -233,8 +178,17 @@ describe("restoreStockForOrder", () => {
 
 		expect(result.shouldRestore).toBe(true);
 		expect(result.itemCount).toBe(2);
-		expect(result.restoredSkuIds).toContain("sku-a");
-		expect(result.restoredSkuIds).toContain("sku-b");
+		// CACHE-CATALOG-002 : le produit est propagé pour invalider la page vitrine
+		expect(result.restoredSkus).toContainEqual({
+			skuId: "sku-a",
+			productId: "prod-a",
+			productSlug: "produit-a",
+		});
+		expect(result.restoredSkus).toContainEqual({
+			skuId: "sku-b",
+			productId: "prod-b",
+			productSlug: "produit-b",
+		});
 		expect(mockTx.productSku.update).toHaveBeenCalledTimes(2);
 	});
 
@@ -252,7 +206,7 @@ describe("restoreStockForOrder", () => {
 
 		expect(result.shouldRestore).toBe(false);
 		expect(result.itemCount).toBe(0);
-		expect(result.restoredSkuIds).toEqual([]);
+		expect(result.restoredSkus).toEqual([]);
 		expect(mockTx.productSku.update).not.toHaveBeenCalled();
 	});
 
@@ -264,7 +218,7 @@ describe("restoreStockForOrder", () => {
 		expect(result).toEqual({
 			shouldRestore: false,
 			itemCount: 0,
-			restoredSkuIds: [],
+			restoredSkus: [],
 			userId: null,
 		});
 	});
@@ -276,9 +230,9 @@ describe("restoreStockForOrder", () => {
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			items: [
-				{ skuId: "sku-a", quantity: 2 },
-				{ skuId: "sku-a", quantity: 3 },
-				{ skuId: "sku-b", quantity: 1 },
+				{ skuId: "sku-a", quantity: 2, sku: { product: { id: "prod-a", slug: "produit-a" } } },
+				{ skuId: "sku-a", quantity: 3, sku: { product: { id: "prod-a", slug: "produit-a" } } },
+				{ skuId: "sku-b", quantity: 1, sku: { product: { id: "prod-b", slug: "produit-b" } } },
 			],
 		};
 		mockTx.order.findFirst.mockResolvedValue(order);
@@ -313,7 +267,7 @@ describe("restoreStockForOrder", () => {
 			}),
 		);
 
-		expect(result.restoredSkuIds).toHaveLength(2);
+		expect(result.restoredSkus).toHaveLength(2);
 		expect(result.itemCount).toBe(3);
 	});
 
@@ -324,8 +278,16 @@ describe("restoreStockForOrder", () => {
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			items: [
-				{ skuId: "sku-auto-deactivated", quantity: 1 },
-				{ skuId: "sku-manually-deactivated", quantity: 1 },
+				{
+					skuId: "sku-auto-deactivated",
+					quantity: 1,
+					sku: { product: { id: "prod-auto", slug: "produit-auto" } },
+				},
+				{
+					skuId: "sku-manually-deactivated",
+					quantity: 1,
+					sku: { product: { id: "prod-manual", slug: "produit-manual" } },
+				},
 			],
 		};
 		mockTx.order.findFirst.mockResolvedValue(order);
@@ -366,7 +328,7 @@ describe("markOrderAsFailed", () => {
 
 	it("should update order with FAILED payment status, CANCELLED status and failure details", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		const failureDetails: PaymentFailureDetails = {
 			code: "card_declined",
@@ -374,10 +336,17 @@ describe("markOrderAsFailed", () => {
 			message: "Your card was declined.",
 		};
 
-		await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
+		const result = await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
 
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		expect(result).toEqual({ transitioned: true });
+		// Garde anti-rétrogradation (audit webhooks 2026-07-02) : la transition
+		// n'est permise que depuis PENDING/EXPIRED, prédicat dans le WHERE.
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: {
+				id: "order-1",
+				paymentStatus: { in: ["PENDING", "EXPIRED"] },
+				deletedAt: null,
+			},
 			data: expect.objectContaining({
 				paymentStatus: "FAILED",
 				status: "CANCELLED",
@@ -398,9 +367,10 @@ describe("markOrderAsFailed", () => {
 			message: null,
 		};
 
-		await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
+		const result = await markOrderAsFailed("order-1", "pi_failed123", failureDetails);
 
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(result).toEqual({ transitioned: false });
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
 
@@ -413,14 +383,16 @@ describe("markOrderAsFailed", () => {
 			message: null,
 		};
 
-		await expect(markOrderAsFailed("nonexistent", "pi_x", failureDetails)).resolves.toBeUndefined();
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		await expect(markOrderAsFailed("nonexistent", "pi_x", failureDetails)).resolves.toEqual({
+			transitioned: false,
+		});
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
 
 	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_1", "disc_2"]);
 
 		await markOrderAsFailed("order-1", "pi_failed123", {
@@ -449,17 +421,44 @@ describe("markOrderAsCancelled", () => {
 	});
 
 	it("should update order to CANCELLED status with FAILED payment status", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.findFirst.mockResolvedValue({
+			status: "PENDING",
+			paymentStatus: "PENDING",
+			userId: null,
+			items: [],
+		});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
+		// IDEM-CANCEL-002 : le select embarque userId + items (restock atomique).
+		// CACHE-CATALOG-002 : + produit du SKU pour invalider la page vitrine.
 		expect(mockTx.order.findFirst).toHaveBeenCalledWith({
 			where: { id: "order-1", deletedAt: null },
-			select: { status: true, paymentStatus: true },
+			select: {
+				status: true,
+				paymentStatus: true,
+				userId: true,
+				items: {
+					select: {
+						skuId: true,
+						quantity: true,
+						sku: { select: { product: { select: { id: true, slug: true } } } },
+					},
+				},
+			},
 		});
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		// Garde anti-rétrogradation (audit webhooks 2026-07-02) : jamais depuis
+		// PAID/REFUNDED/PARTIALLY_REFUNDED, prédicat dans le WHERE.
+		// IDEM-CANCEL-003 (2026-07-26) : + `status: { not: CANCELLED }` pour rendre le
+		// claim SINGLE-WINNER (sinon un rejeu concurrent le regagne et restocke 2×).
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: {
+				id: "order-1",
+				paymentStatus: { notIn: ["PAID", "REFUNDED", "PARTIALLY_REFUNDED"] },
+				status: { not: "CANCELLED" },
+				deletedAt: null,
+			},
 			data: expect.objectContaining({
 				status: "CANCELLED",
 				paymentStatus: "FAILED",
@@ -473,24 +472,37 @@ describe("markOrderAsCancelled", () => {
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");
 
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
+	});
+
+	it("should not release discount nor audit when the guard blocks the write (count 0)", async () => {
+		mockTx.order.findFirst.mockResolvedValue({ status: "PROCESSING", paymentStatus: "PAID" });
+		mockTx.order.updateMany.mockResolvedValue({ count: 0 });
+
+		await markOrderAsCancelled("order-1", "pi_cancelled123");
+
+		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
+		expect(mockTx.orderHistory.create).not.toHaveBeenCalled();
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should handle order not found gracefully without throwing", async () => {
 		mockTx.order.findFirst.mockResolvedValue(null);
 
-		await expect(
-			markOrderAsCancelled("nonexistent-order", "pi_cancelled123"),
-		).resolves.toBeUndefined();
+		// IDEM-CANCEL-002 : retour combiné cancel+restock (rien restauré ici).
+		await expect(markOrderAsCancelled("nonexistent-order", "pi_cancelled123")).resolves.toEqual({
+			restoredSkus: [],
+			userId: null,
+		});
 
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockReleaseOrderDiscountUsageTx).not.toHaveBeenCalled();
 	});
 
 	it("releases attached discount usage and invalidates USAGE cache tag (CHECKOUT-AUDIT-001)", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 		mockReleaseOrderDiscountUsageTx.mockResolvedValue(["disc_42"]);
 
 		await markOrderAsCancelled("order-1", "pi_cancelled123");

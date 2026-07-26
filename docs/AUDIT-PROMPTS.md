@@ -51,7 +51,7 @@ respecte la cohérence de marque, les invariants métier et les conventions du r
 > **Projet** : Synclune — e-commerce de bijoux artisanaux. Stack : Next.js 16 (App Router, Turbopack,
 > Cache Components/PPR, React Compiler), React 19, TypeScript, Prisma 7 (Postgres/Neon), Stripe, Better
 > Auth, TanStack Form (`useAppForm`), Zustand, shadcn/ui + Tailwind 4 + Motion (`motion/react`), React
-> Email + Resend, Serwist (PWA), Sentry. Architecture DDD : `modules/<domaine>/{actions,data,services,
+> Email + Resend, Sentry. Architecture DDD : `modules/<domaine>/{actions,data,services,
 components,schemas,hooks,types,utils}` + `shared/`. **Lis `CLAUDE.md` avant de commencer.**
 >
 > **⚠️ Source de vérité = filesystem, pas la doc.** `CLAUDE.md` (l.40) cite encore le route group
@@ -115,7 +115,7 @@ components,schemas,hooks,types,utils}` + `shared/`. **Lis `CLAUDE.md` avant de c
 >   `pnpm test:coverage`, `pnpm test:integration` (DB locale via `INTEGRATION_DATABASE_URL`).
 > - Selon le périmètre : `pnpm build` (si tu touches pages/config/`next.config.ts`) · `pnpm size` (si tu
 >   touches le bundle) · `pnpm knip` (code/deps morts — gare aux faux positifs DDD) · `pnpm doctor`
->   (`react-doctor`, santé React) · `pnpm lighthouse:mobile`/`pnpm lighthouse:desktop` (CWV, missions perf/UI).
+>   (`react-doctor`, santé React) · `pnpm e2e e2e/performance.spec.ts` (budgets LCP/CLS/INP) · `pnpm check:media` (couverture blur/alt/dimensions).
 > - **Rapporte la SORTIE BRUTE de chaque gate exécuté** (copie le résultat réel, pas un « tout est vert »).
 >
 > **Livrables minimaux de toute mission** : un rapport classé P0→P3 (`fichier:ligne` à l'appui), le diff
@@ -198,13 +198,13 @@ via,to}`, `--color-glow-{pink,lavender,mint,yellow}`, `--star-filled`/`--star-em
 > - **Contraste AA** respecté (4.5:1 texte, 3:1 UI/large-text) et `focus-ring` présent sur tous les
 >   interactifs — vérifié via le harness axe (`test/a11y/axe.ts`) sur les pages touchées.
 > - **Aucune régression LCP/CLS** ni dépassement de budget : `pnpm size` vert sur les entrées impactées,
->   métriques `pnpm lighthouse:desktop`/`pnpm lighthouse:mobile` non dégradées sur les pages refondues.
+>   budgets `pnpm e2e e2e/performance.spec.ts` (LCP/CLS/INP) non dégradés sur les pages refondues.
 > - **Toute animation** ajoutée a un fallback `prefers-reduced-motion`/`forced-colors`.
 >
 > **Gates de référence du socle** (chaque mission `UIUX-*` ajoute les siens propres) : `pnpm lint` (0 warning) ·
 > `pnpm typecheck` · `pnpm format:check` · `pnpm test shared/components` · `pnpm build` (si pages/config) ·
 > `pnpm size` (si bundle) · harness axe (`test/a11y/axe.ts`) · `pnpm doctor` (santé React) ·
-> `pnpm lighthouse:desktop`/`pnpm lighthouse:mobile` (CWV des pages refondues). **Rapporte le résultat réel.**
+> `pnpm e2e e2e/performance.spec.ts` (budgets CWV des pages refondues). **Rapporte le résultat réel.**
 
 ---
 
@@ -213,7 +213,7 @@ via,to}`, `--color-glow-{pink,lavender,mint,yellow}`, `--star-filled`/`--star-em
 | ID             | Type       | Mission                                                                    | Périmètre principal                                                                                                                                                                                                       |
 | -------------- | ---------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | UIUX-01        | UI/UX      | Design system & identité de marque                                         | `shared/components/ui`, `globals.css`, tokens, Motion                                                                                                                                                                     |
-| FEEDBACK       | UI/UX      | Système de feedback — toasts, états vides & squelettes                     | `shared/components/ui/{toaster,micro-toast,empty,skeleton}`, `ui-copy.ts`, `loading.tsx`, `cookie-banner*`                                                                                                                |
+| FEEDBACK       | UI/UX      | Système de feedback — toasts, états vides & squelettes                     | `shared/components/ui/{toaster,micro-toast,empty,skeleton}`, `loading.tsx`, `cookie-banner*`                                                                                                                              |
 | UIUX-02        | UI/UX      | Vitrine & découverte (home, catalogue, collections, recherche)             | `app/(shop)`, `modules/products`                                                                                                                                                                                          |
 | UIUX-03        | UI/UX      | Page produit (PDP) — la page reine                                         | `app/(shop)/creations/[slug]`, `modules/products`, `modules/skus`, `modules/reviews`                                                                                                                                      |
 | UIUX-04        | UI/UX      | Tunnel d'achat & post-achat                                                | `modules/cart`, `modules/payments`, `app/paiement`, `app/(account)`                                                                                                                                                       |
@@ -229,9 +229,9 @@ via,to}`, `--color-glow-{pink,lavender,mint,yellow}`, `--star-filled`/`--star-em
 | QUALITY        | Qualité    | Dette technique, tests & gates CI                                          | transversal                                                                                                                                                                                                               |
 | SCHEMA         | Données    | Architecture du schéma Prisma & discipline des migrations                  | `prisma/schema.prisma`, `prisma/migrations`, enums/contraintes, `shared/lib/prisma*`                                                                                                                                      |
 | GUARD          | Sécurité   | Sécurité, RGPD, conformité & cache (re-vérification)                       | transversal                                                                                                                                                                                                               |
-| INVOICE-GOLIVE | Conformité | Préparer le go-live e-reporting (2026-2027) ⏳                             | `modules/invoices`, flags e-reporting, providers/PA, crons e-reporting, `docs/INVOICING.md`                                                                                                                               |
+| INVOICE-GOLIVE | Conformité | Préparer le go-live e-reporting (2026-2027) ⏳                             | `modules/invoices`, flags e-reporting, providers/PA, crons e-reporting, `CLAUDE.md § Facturation` + `docs/RUNBOOK.md § e-reporting`                                                                                       |
 | PRICE-COMPLY   | Conformité | Conformité des prix réduits (Directive Omnibus — prix de référence 30j) ⏱️ | `ProductSku.compareAtPrice`, historique de prix, `product-price-display.tsx`, migrations                                                                                                                                  |
-| INFRA          | Infra      | Env/flags, headers/PWA, pipeline CI & docs                                 | config, `.github`, `docs`                                                                                                                                                                                                 |
+| INFRA          | Infra      | Env/flags, headers/CSP, pipeline CI & docs                                 | config, `.github`, `docs`                                                                                                                                                                                                 |
 | OBS            | Infra      | Observabilité, monitoring crons & santé production                         | `sentry.{server,edge}.config`, `instrumentation-client`, `next.config.ts` (Sentry), `api/{health,csp-report,cron}`, `vercel.json`, `circuit-breaker.ts`, runbooks                                                         |
 
 **Track Croissance / Systèmes produit** (prompts _larges_, en fin de fichier — conçoivent du produit, pas du durcissement) :
@@ -264,7 +264,7 @@ Tu es la **fondation visuelle** de Synclune : le design system est déjà série
 
 > Colle le **Préambule partagé** + l'**Étoile du Nord design**.
 
-Unifie tout ce qui **répond à l'utilisateur** en une fondation cohérente, chaleureuse et sans saut de mise en page : toasts (`shared/components/ui/{toaster,micro-toast,toast-icons}.tsx` + leur CSS `app/styles/` via `[data-sonner-toaster]`, `micro-toast` piloté par un store Zustand), états vides (la primitive `shared/components/ui/empty.tsx`, recomposée surface par surface), squelettes (`skeleton.tsx` + **~70** `*-skeleton.tsx` + les `loading.tsx`), consentement de première visite (`cookie-banner.tsx` + sa variante lazy + `manage-cookies-button.tsx`), **et les surfaces de faillite** (`app/_components/not-found-shell.tsx` partagé par `not-found.tsx`/`forbidden.tsx`/`unauthorized.tsx` + les `not-found.tsx` **par route**, les `error.tsx`, `~offline/page.tsx`, `global-error.tsx`). ⚠️ Le SSOT éditorial `shared/constants/ui-copy.ts` existe mais n'est consommé par **aucune surface de production** (seul sa propre définition) — c'est un **SSOT dormant à activer**. Fais de l'ensemble un système réutilisable et fidèle à la voix lunaire. **L'excellence = plus jamais de page morte ni de copy ad hoc** : une fois `ui-copy.ts` activé, toute copie de vide/chargement/erreur de production en dérive (zéro chaîne FR ad hoc résiduelle dans le diff), reste rassurante et de marque, et ne ressemble jamais à un bug. À toi de décider de la forme, du ton et du périmètre.
+Unifie tout ce qui **répond à l'utilisateur** en une fondation cohérente, chaleureuse et sans saut de mise en page : toasts (`shared/components/ui/{toaster,micro-toast,toast-icons}.tsx` + leur CSS `app/styles/` via `[data-sonner-toaster]`, `micro-toast` piloté par un store Zustand), états vides (la primitive `shared/components/ui/empty.tsx`, recomposée surface par surface), squelettes (`skeleton.tsx` + **~70** `*-skeleton.tsx` + les `loading.tsx`), consentement de première visite (`cookie-banner.tsx` + sa variante lazy + `manage-cookies-button.tsx`), **et les surfaces de faillite** (`app/_components/not-found-shell.tsx` partagé par `not-found.tsx`/`forbidden.tsx`/`unauthorized.tsx` + les `not-found.tsx` **par route**, les `error.tsx`, `global-error.tsx`). ⚠️ Il n'existe **aucun SSOT éditorial** : toute la copy de vide/chargement/erreur est ad hoc, surface par surface (une première tentative, `shared/constants/ui-copy.ts`, n'a jamais été consommée et a été retirée) — **le SSOT est à créer**. Fais de l'ensemble un système réutilisable et fidèle à la voix lunaire. **L'excellence = plus jamais de page morte ni de copy ad hoc** : une fois le SSOT éditorial en place, toute copie de vide/chargement/erreur de production en dérive (zéro chaîne FR ad hoc résiduelle dans le diff), reste rassurante et de marque, et ne ressemble jamais à un bug. À toi de décider de la forme, du ton et du périmètre.
 
 > **Frontière** : `FEEDBACK` possède la **forme/ton/a11y** des surfaces de faillite, pas leur instrumentation Sentry (`OBS`) ni le cache offline / service worker (`INFRA`). `global-error.tsx` rend **hors router** Next : il reste self-contained (ses propres fonts/`globals.css`, liens `<a>` natifs). Skeletons aux dimensions **exactes** du contenu final (anti-CLS). La réouverture de la bannière après opt-out relève d'`ANALYTICS`, pas d'ici.
 
@@ -384,9 +384,9 @@ Complète un **funnel de conversion RGPD-clean** (view → add-to-cart → begin
 
 > Colle le **Préambule partagé**.
 
-Optimise le **ressenti** (LCP, CLS, INP) et l'**efficacité** (bundle, requêtes DB) de bout en bout, **mesures avant/après chiffrées à l'appui** (`pnpm lighthouse:mobile` + `pnpm analyse`, aujourd'hui non faites). Cherche les vrais gains : `GET_PRODUCTS_SELECT` charge `description` même hors PDP (`modules/products/constants/product.constants.ts:204` — un select PLP allégé gagnerait du payload) ; des N+1 **éventuels** dans les reads catalogue/panier (`get-related-products.ts` est réel ; ne présume pas que « recently-viewed » — client-side — ou des « recommandations panier » en soient) ; le CLS des sheets/modals. À l'inverse, **ne re-flague pas ce qui est déjà traité** : la galerie PDP LCP est optimisée (`isLCPCandidate` index 0 + `fetchPriority`), le CLS de l'`announcement-bar` est corrigé (audit 2026-05-30) — vérifie que ça **tient**. **L'excellence = le catalogue mobile se peint sans à-coup ni saut, aucune liste ne transporte de champ texte long inutile, et chaque gain est chiffré avant/après — sans régression LCP/CLS sur les pages déjà optimisées.**
+Optimise le **ressenti** (LCP, CLS, INP) et l'**efficacité** (bundle, requêtes DB) de bout en bout, **mesures avant/après chiffrées à l'appui** (`pnpm e2e e2e/performance.spec.ts` + `pnpm analyse`, aujourd'hui non faites). Cherche les vrais gains : `GET_PRODUCTS_SELECT` charge `description` même hors PDP (`modules/products/constants/product.constants.ts:204` — un select PLP allégé gagnerait du payload) ; des N+1 **éventuels** dans les reads catalogue/panier (`get-related-products.ts` est réel ; ne présume pas que « recently-viewed » — client-side — ou des « recommandations panier » en soient) ; le CLS des sheets/modals. À l'inverse, **ne re-flague pas ce qui est déjà traité** : la galerie PDP LCP est optimisée (`isLCPCandidate` index 0 + `fetchPriority`), le CLS de l'`announcement-bar` est corrigé (audit 2026-05-30) — vérifie que ça **tient**. **L'excellence = le catalogue mobile se peint sans à-coup ni saut, aucune liste ne transporte de champ texte long inutile, et chaque gain est chiffré avant/après — sans régression LCP/CLS sur les pages déjà optimisées.**
 
-> **Outils (sous-exploités) & garde-fous** : `pnpm analyse`/`size`/`lighthouse:mobile`/`knip`/`doctor`. **Aucune mémoïsation** (React Compiler) ; ne casse pas les décisions documentées (preload Fraunces sur le LCP, rejet d'`inlineCss`, profils `cacheLife`). Tout index DB pairé d'un `down.sql` non appliqué. Frontière : la **structure** du schéma est à `SCHEMA`, ici la **perf** des requêtes.
+> **Outils (sous-exploités) & garde-fous** : `pnpm analyse`/`size`/`check:media`/`knip`/`doctor` + `pnpm e2e e2e/performance.spec.ts`. **Aucune mémoïsation** (React Compiler) ; ne casse pas les décisions documentées (preload Fraunces sur le LCP, rejet d'`inlineCss`, profils `cacheLife`). Tout index DB pairé d'un `down.sql` non appliqué. Frontière : la **structure** du schéma est à `SCHEMA`, ici la **perf** des requêtes.
 
 ---
 
@@ -440,11 +440,11 @@ Synclune affiche déjà des prix barrés et des « -X% / Économisez Y€ » (`p
 
 ---
 
-### INFRA — Env/flags, headers/PWA, pipeline CI & docs
+### INFRA — Env/flags, headers/CSP, pipeline CI & docs
 
 > Colle le **Préambule partagé**.
 
-Durcis **configuration, PWA, CI et documentation** pour un déploiement reproductible, sans casser workflows ni headers. Le terrain réel : (1) **fail-closed à compléter** — `validateEnv()` est bien déclenché au boot (`instrumentation.ts` importe `shared/lib/env` côté nodejs), mais `VAT_FRANCHISE_THRESHOLD_EUR` est lu en `process.env` **brut** dans `vat-franchise.ts`, **hors** `env.schema.ts` : il échappe donc à la validation ; ajoute-le au schéma (et corrige `.env.example:157`, `37500` → `85000`) ; (2) **headers/CSP & PWA** — vérifie les invariants Serwist (`app/sw.ts`/`sw-routing.ts` : Stripe/`/api/`/`/admin`/`/paiement` jamais cachés) et les assets `manifest.ts` (déclarés vs présents) ; (3) gaps CI — `knip` et `test:integration` ne tournent dans aucun job, `lighthouse.yml` ne charge que le profil desktop (mobile orphelin) ; (4) docs — `docs/` ne contient plus que `AUDIT-PROMPTS.md` (les docs `CRONS.md`/`INVOICING.md`/`RUNBOOK-INVOICING.md`/`db.md`/`tech-debt.md`/`DEPLOY.md`/`docs/audit/*`/`docs/runbooks/*` ont été retirés) alors que `CLAUDE.md` les référence encore : **nettoie les références mortes** de `CLAUDE.md` (ou re-documente le strict nécessaire) ; documente la **délivrabilité DNS** (SPF/DKIM/DMARC) et `ORDERS_AVAILABLE` (constante de code, pas flag env) dans un nouveau `DEPLOY.md`. **L'excellence = un nouvel arrivant clone, lit `DEPLOY.md` et déploie sans surprise — schéma env complet (aucune variable métier hors validation), CI qui attrape ce qu'elle prétend attraper (knip/integration/mobile), zéro doc fantôme.**
+Durcis **configuration, CI et documentation** pour un déploiement reproductible, sans casser workflows ni headers. Le terrain réel : (1) **fail-closed à compléter** — `validateEnv()` est bien déclenché au boot (`instrumentation.ts` importe `shared/lib/env` côté nodejs), mais `VAT_FRANCHISE_THRESHOLD_EUR` est lu en `process.env` **brut** dans `vat-franchise.ts`, **hors** `env.schema.ts` : il échappe donc à la validation ; ajoute-le au schéma ; (2) **headers/CSP** — vérifie les directives CSP/HSTS/Permissions-Policy (`next.config.ts`). ⚠️ La **PWA (Serwist, `app/sw.ts`, `manifest.ts`) et Lighthouse CI ont été retirées** — ne pas re-documenter ; (3) gaps CI — `knip` et `test:integration` ne tournent dans aucun job ; (4) docs — `docs/` contient `AUDIT-PROMPTS.md` + `BUSINESS.md` + `RUNBOOK.md` ; les références mortes (docs `INVOICING.md`/`CRONS.md`/`RUNBOOK-INVOICING.md` supprimées) dans `CLAUDE.md`/`README`/`CHANGELOG` ont été **nettoyées (2026-06)** ; reste à documenter la **délivrabilité DNS** (SPF/DKIM/DMARC) et `ORDERS_AVAILABLE` (constante de code, pas flag env) dans un nouveau `DEPLOY.md`. **L'excellence = un nouvel arrivant clone, lit `DEPLOY.md` et déploie sans surprise — schéma env complet (aucune variable métier hors validation), CI qui attrape ce qu'elle prétend attraper (knip/integration), zéro doc fantôme.**
 
 > **Garde-fous & indices** : `validateEnv()` reste **fail-closed** — une variable métier hors schéma (comme le seuil de franchise aujourd'hui) est précisément le trou à fermer. Ne retire pas naïvement `'unsafe-inline'`/`'unsafe-eval'` (Next/Tailwind les exigent). **Vérifie chaque doc contre le filesystem** avant de la dire « à régénérer » : plusieurs n'existent pas. Les invariants facturation/RGPD restent en re-vérification (`GUARD`).
 
@@ -525,7 +525,7 @@ La recherche trouve — mais classe-t-elle bien ? Quand le catalogue aura grandi
 ## Séquencement suggéré
 
 1. **Fondation système** : `UIUX-01` (design system — tokens) puis `FEEDBACK` (primitives toasts/empties/
-   skeletons + `ui-copy.ts`). Ces deux missions posent ce que toutes les autres missions UI réutilisent ;
+   skeletons + SSOT éditorial). Ces deux missions posent ce que toutes les autres missions UI réutilisent ;
    inscrire « réutilise les empties/skeletons/toasts de FEEDBACK, pas de one-off » dans les suivantes.
 2. **Parcours d'achat** (impact business) : `UIUX-03` (PDP) → `UIUX-02` (vitrine) → `UIUX-04` (tunnel
    d'achat & post-achat). C'est `UIUX-04` qui fait la refonte UI de référence du panier/checkout/compte.
@@ -543,9 +543,9 @@ La recherche trouve — mais classe-t-elle bien ? Quand le catalogue aura grandi
 7. **Transversal UI** : `UIUX-06` (mobile) puis `A11Y` (passe WCAG appliquée après les refontes).
 8. **Admin** : `UIUX-05`.
 9. **Robustesse & exploitation** : `SCHEMA` (architecture du schéma & migrations — exécutable à tout
-   moment, sans dépendance UI), `PERF` (CWV/bundle/DB ; câble `pnpm lighthouse:*`), `QUALITY`
+   moment, sans dépendance UI), `PERF` (CWV/bundle/DB ; câble `pnpm e2e e2e/performance.spec.ts` + `pnpm size`), `QUALITY`
    (dette/tests/gates CI ; `knip`, `test:integration`, `doctor`), `GUARD` (re-vérification sécurité/RGPD/
-   conformité), puis l'infra : `INFRA` (env/flags, headers CSP/PWA, workflows, docs) et `OBS`
+   conformité), puis l'infra : `INFRA` (env/flags, headers CSP, workflows, docs) et `OBS`
    (Sentry/sourcemaps, santé, crons `vercel.json`, runbooks). `next.config.ts` et `.github/workflows`
    étant partagés (INFRA/OBS/QUALITY), coordonner et privilégier de petits diffs ciblés. `SCHEMA` et
    `PERF` se chevauchent sur la DB : `SCHEMA` possède la **structure** (modèles, contraintes, migrations),

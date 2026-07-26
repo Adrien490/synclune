@@ -41,7 +41,7 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 				aria-hidden="true"
 				className={cn(
 					"pointer-events-none absolute inset-0 -z-10",
-					"bg-background/95 border-border border-b shadow-lg shadow-black/8 backdrop-blur-md",
+					"bg-background/95 border-border shadow-header border-b backdrop-blur-md",
 					"opacity-0 motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
 					"group-data-[scrolled=true]:opacity-100",
 				)}

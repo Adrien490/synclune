@@ -44,7 +44,7 @@ const sellerSchema = z.object({
 	apeCode: z.string().regex(/^[0-9]{2}\.[0-9]{2}[A-Z]$/),
 	legalForm: z.string().min(1).max(100),
 	address: structuredAddressSchema,
-	email: z.string().email(),
+	email: z.email(),
 	eInvoicingAddress: z.string().max(255).nullable(),
 	eInvoicingPlatformId: z.string().max(100).nullable(),
 	vatExemptionText: z.string().max(255).nullable(),
@@ -63,7 +63,7 @@ const buyerSchema = z.object({
 	legalName: z.string().max(255).nullable(),
 	firstName: z.string().min(1).max(100),
 	lastName: z.string().min(1).max(100),
-	email: z.string().email(),
+	email: z.email(),
 	phone: z.string().max(20).nullable(),
 	siren: z
 		.string()
@@ -155,7 +155,7 @@ const voidedInfoSchema = z
 	.nullable();
 
 const invoiceMetaSchema = z.object({
-	orderId: z.string().min(1),
+	orderId: z.cuid2(),
 	orderNumber: z.string().min(1).max(50),
 	notes: z.string().nullable(),
 });
@@ -203,5 +203,3 @@ export const invoiceDataSchema = z
 				"Incohérence comptable : somme des lignes != totaux. Re-calculer dans buildInvoiceData.",
 		},
 	);
-
-export type InvoiceDataParsed = z.infer<typeof invoiceDataSchema>;

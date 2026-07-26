@@ -13,11 +13,15 @@
  *   - 400 si refund pas COMPLETED (avoir non émissible)
  *   - 404 si creditNoteNumber non encore généré
  *   - PDF archivé servi en priorité (immuable Art. L102 B LPF)
+ *   - Octets archivés re-hashés avant serving (EINV-PDF-006) : mismatch →
+ *     fallback régénération, jamais de bytes douteux servis ; legacy sans hash
+ *     servi tel quel
  *   - 503 si divergence hash archivé vs regénéré (EINV-PDF-002)
  *   - Régénération + archivage best-effort fallback
  *   - Audit INVOICE_DOWNLOADED avec metadata.artifactType = "credit-note"
  */
 
+import { createHash } from "node:crypto";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
@@ -112,8 +116,28 @@ vi.stubGlobal("fetch", mockFetch);
 import { GET } from "../route";
 
 const ORDER_NUMBER = "SYN-2026-9999";
-const REFUND_ID = "refund-cuid-1";
+// Format cuid2 (schéma F4 refundIdParamSchema rejette en 400 tout autre format)
+const REFUND_ID = "cm3refund0001qz8v4h2j9d3e";
 const ARCHIVED_URL = "https://utfs.io/cn-archived.pdf";
+
+function sha256hex(bytes: Uint8Array): string {
+	return createHash("sha256").update(bytes).digest("hex");
+}
+
+// Octets archivés « sains » servis par UploadThing + leur empreinte réelle
+// (EINV-PDF-006 : la route re-hashe les octets servis contre creditNotePdfHash).
+const ARCHIVED_BYTES = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+const ARCHIVED_HASH = sha256hex(ARCHIVED_BYTES);
+// Sortie du mock renderInvoicePdf (%PDF) — hash de la régénération.
+const REGEN_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+const REGEN_HASH = sha256hex(REGEN_BYTES);
+
+function okFetchResponse(bytes: Uint8Array = ARCHIVED_BYTES) {
+	return {
+		ok: true,
+		arrayBuffer: () => Promise.resolve(bytes.slice().buffer),
+	};
+}
 
 function makeReq() {
 	return new Request(`https://example.com/api/orders/${ORDER_NUMBER}/credit-note/${REFUND_ID}`);
@@ -203,12 +227,9 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ userId: "user-1" }));
 			mockPrisma.refund.findFirst.mockResolvedValue(
-				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: "h" }),
+				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: ARCHIVED_HASH }),
 			);
-			mockFetch.mockResolvedValue({
-				ok: true,
-				arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
-			});
+			mockFetch.mockResolvedValue(okFetchResponse());
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -267,14 +288,11 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
 		});
 
-		it("sert le PDF archivé sans régénération si creditNotePdfUrl présent", async () => {
+		it("sert le PDF archivé sans régénération si creditNotePdfUrl présent (hash conforme)", async () => {
 			mockPrisma.refund.findFirst.mockResolvedValue(
-				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: "hash" }),
+				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: ARCHIVED_HASH }),
 			);
-			mockFetch.mockResolvedValue({
-				ok: true,
-				arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
-			});
+			mockFetch.mockResolvedValue(okFetchResponse());
 
 			const res = await GET(makeReq(), makeParams());
 
@@ -314,6 +332,71 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 				"A-2026-00042",
 				expect.any(Uint8Array),
 			);
+		});
+	});
+
+	describe("Intégrité des octets archivés servis (EINV-PDF-006)", () => {
+		beforeEach(() => {
+			mockGetSession.mockResolvedValue({ user: { id: "user-1", role: "USER" } });
+			mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
+		});
+
+		it("hash mismatch → Sentry + fallback régénération (les octets corrompus ne sont jamais servis)", async () => {
+			// Archive corrompue côté UploadThing : le hash DB correspond à la
+			// régénération bit-identique (REGEN_HASH), pas aux octets servis.
+			mockPrisma.refund.findFirst.mockResolvedValue(
+				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: REGEN_HASH }),
+			);
+			mockFetch.mockResolvedValue(okFetchResponse(ARCHIVED_BYTES));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				"credit-note-pdf-archive-hash-mismatch",
+				expect.objectContaining({ level: "error" }),
+			);
+			// Fallback : régénération SSOT, re-vérifiée EINV-PDF-002 (match → 200).
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
+			expect(res.status).toBe(200);
+			const served = new Uint8Array(await res.arrayBuffer());
+			expect(sha256hex(served)).toBe(REGEN_HASH);
+		});
+
+		it("hash mismatch ET régénération divergente → 503 (aucun byte douteux servi)", async () => {
+			// Hash DB ne correspond ni aux octets archivés ni à la régénération :
+			// la route doit refuser de servir quoi que ce soit (fail-closed).
+			const foreignHash = sha256hex(new Uint8Array([9, 9, 9]));
+			mockPrisma.refund.findFirst.mockResolvedValue(
+				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: foreignHash }),
+			);
+			mockFetch.mockResolvedValue(okFetchResponse(ARCHIVED_BYTES));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(503);
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				"credit-note-pdf-archive-hash-mismatch",
+				expect.objectContaining({ level: "error" }),
+			);
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				"credit-note-pdf-hash-divergence",
+				expect.objectContaining({ level: "error" }),
+			);
+		});
+
+		it("archive legacy sans hash → servie telle quelle (pas de régénération, pas de Sentry)", async () => {
+			mockPrisma.refund.findFirst.mockResolvedValue(
+				makeRefund({ creditNotePdfUrl: ARCHIVED_URL, creditNotePdfHash: null }),
+			);
+			mockFetch.mockResolvedValue(okFetchResponse(ARCHIVED_BYTES));
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(mockRenderInvoicePdf).not.toHaveBeenCalled();
+			expect(mockSentry.captureMessage).not.toHaveBeenCalled();
+			const served = new Uint8Array(await res.arrayBuffer());
+			expect(sha256hex(served)).toBe(ARCHIVED_HASH);
 		});
 	});
 
@@ -386,6 +469,27 @@ describe("@regression credit-note-refund-route — EINV-CREDIT-011", () => {
 
 			expect(res.status).toBe(429);
 			expect(res.headers.get("Retry-After")).toBe("42");
+		});
+	});
+
+	describe("F4 (audit Zod) : params malformés coupés en 400 avant session/Prisma", () => {
+		it("refundId non-cuid → 400 sans getSession ni lookup", async () => {
+			const res = await GET(makeReq(), {
+				params: Promise.resolve({ orderNumber: ORDER_NUMBER, refundId: "refund-1'; DROP" }),
+			});
+
+			expect(res.status).toBe(400);
+			expect(mockGetSession).not.toHaveBeenCalled();
+			expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
+		});
+
+		it("orderNumber 65+ chars → 400", async () => {
+			const res = await GET(makeReq(), {
+				params: Promise.resolve({ orderNumber: "X".repeat(65), refundId: REFUND_ID }),
+			});
+
+			expect(res.status).toBe(400);
+			expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -103,4 +103,34 @@ describe("sendRefundConfirmationOnce", () => {
 
 		expect(result).toEqual({ sent: false, skipped: false, reason: "send_failed" });
 	});
+
+	it("resets the claim on provider failure so a later pass can retry the send", async () => {
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockSendRefundConfirmationEmail.mockRejectedValue(new Error("Resend down"));
+
+		await sendRefundConfirmationOnce(baseArgs);
+
+		// 1er appel = claim, 2e appel = reset compensatoire. Sans ce reset, tout
+		// re-passage (webhook, cron) skipperait en already_sent → email perdu.
+		expect(mockPrisma.refund.updateMany).toHaveBeenNthCalledWith(2, {
+			where: { id: "refund-1" },
+			data: { confirmationEmailSentAt: null },
+		});
+
+		// Le re-passage suivant peut re-claimer et envoyer.
+		mockSendRefundConfirmationEmail.mockResolvedValue(undefined);
+		const retry = await sendRefundConfirmationOnce(baseArgs);
+		expect(retry).toEqual({ sent: true, skipped: false });
+	});
+
+	it("still returns send_failed when the compensating reset itself fails", async () => {
+		mockPrisma.refund.updateMany
+			.mockResolvedValueOnce({ count: 1 })
+			.mockRejectedValueOnce(new Error("DB down"));
+		mockSendRefundConfirmationEmail.mockRejectedValue(new Error("Resend down"));
+
+		const result = await sendRefundConfirmationOnce(baseArgs);
+
+		expect(result).toEqual({ sent: false, skipped: false, reason: "send_failed" });
+	});
 });

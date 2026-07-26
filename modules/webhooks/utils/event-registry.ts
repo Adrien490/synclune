@@ -92,7 +92,16 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
  * @returns Le résultat du handler avec les tâches post-webhook, ou un résultat "skipped" si non géré
  */
 export async function dispatchEvent(event: Stripe.Event): Promise<WebhookHandlerResult | null> {
-	const handler = eventHandlers[event.type as SupportedStripeEvent];
+	// Le cast Partial reflète la réalité runtime : `event.type` est arbitraire,
+	// un type non enregistré résout `undefined` (le Record strict le masquerait).
+	const handler = (eventHandlers as Partial<Record<string, EventHandler>>)[event.type];
+
+	// Garde défensive (audit webhooks 2026-07-02) : les call-sites actuels (route,
+	// cron retry-webhooks) filtrent via isEventSupported AVANT — sans cette garde,
+	// un futur call-site qui l'oublierait provoquerait un TypeError opaque.
+	if (!handler) {
+		return { success: true, skipped: true, reason: "unsupported_event_type" };
+	}
 
 	return handler(event);
 }

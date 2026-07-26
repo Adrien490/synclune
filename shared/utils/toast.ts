@@ -173,7 +173,7 @@ type ExternalToastOptions = Parameters<SonnerToast["success"]>[1];
  * pour afficher une icône métier dédiée (cœur, sac, étiquette %).
  * Ignoré sur desktop : Sonner garde l'icône success/info/warning classique.
  */
-export type MicroVariantOverride = "wishlist" | "cart" | "discount";
+type MicroVariantOverride = "wishlist" | "cart" | "discount";
 
 type ExternalToastOptionsWithMicroVariant = ExternalToastOptions & {
 	microVariant?: MicroVariantOverride;
@@ -422,10 +422,4 @@ export const toast = {
 		sonnerToast.custom(...args)) as SonnerToast["custom"],
 };
 
-export {
-	sanitizeErrorMessage,
-	GENERIC_ERROR_MESSAGE,
-	computeDuration,
-	announceToScreenReader,
-	__resetDesktopCoalesce,
-};
+export { sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration, __resetDesktopCoalesce };

@@ -28,7 +28,9 @@ const {
 	mockVoidInvoice,
 } = vi.hoisted(() => {
 	const mockTx = {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany (précondition dans le
+		// where, retour { count }) remplace l'ancien order.update inconditionnel.
+		order: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
@@ -39,6 +41,8 @@ const {
 		},
 		// ORD-STRIPE-007 : dispute.findFirst dans cancelOrder Step initial
 		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
+		$queryRaw: vi.fn().mockResolvedValue([]),
 	};
 	return {
 		mockTx,
@@ -109,6 +113,7 @@ vi.mock("@/modules/orders/services/void-invoice.service", () => ({
 
 vi.mock("@/modules/orders/constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -162,7 +167,7 @@ describe("ORD-BIZ-009 — cancel-order refuse autoRefund=false sur PAID sans ref
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/payée/i);
 		expect(result.message).toMatch(/Auto-refund/i);
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 		expect(mockTx.refund.create).not.toHaveBeenCalled();
 	});
 
@@ -200,13 +205,13 @@ describe("ORD-BIZ-009 — cancel-order refuse autoRefund=false sur PAID sans ref
 		);
 		// Refund existant couvre tout le total
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		const formData = createMockFormData({ id: VALID_CUID, autoRefund: "false", reason: "test" });
 		const result = await cancelOrder(undefined, formData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockTx.order.update).toHaveBeenCalled();
+		expect(mockTx.order.updateMany).toHaveBeenCalled();
 	});
 
 	it("autorise l'annulation si autoRefund=true sur PAID (création Refund automatique)", async () => {
@@ -222,7 +227,7 @@ describe("ORD-BIZ-009 — cancel-order refuse autoRefund=false sur PAID sans ref
 		);
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-auto-1" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		const formData = createMockFormData({ id: VALID_CUID, autoRefund: "true", reason: "test" });
 		const result = await cancelOrder(undefined, formData);
@@ -243,7 +248,7 @@ describe("ORD-BIZ-009 — cancel-order refuse autoRefund=false sur PAID sans ref
 			}),
 		);
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		const formData = createMockFormData({ id: VALID_CUID, autoRefund: "false", reason: "test" });
 		const result = await cancelOrder(undefined, formData);

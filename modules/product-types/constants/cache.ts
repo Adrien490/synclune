@@ -15,11 +15,8 @@ export const PRODUCT_TYPES_CACHE_TAGS = {
 
 // Re-exports pour retrocompatibilite
 export {
-	cacheProductTypes,
 	cacheProductTypesAdmin,
 	cacheProductTypesPublic,
 	cacheProductTypeDetail,
 	cacheProductTypeCounts,
-	productTypeDetailTag,
-	productTypeCountsTag,
 } from "../utils/cache.utils";

@@ -9,16 +9,11 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { formatEuro } from "@/shared/utils/format-euro";
 
 interface MaterialDetailSkusUsageCardProps {
 	material: MaterialDetailReturn;
 }
-
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-const formatPrice = (cents: number) => PRICE_FORMATTER.format(cents / 100);
 
 export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsageCardProps) {
 	const haptic = useHaptic();
@@ -117,7 +112,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 											</p>
 										</div>
 										<span className="text-foreground shrink-0 text-sm font-medium">
-											{formatPrice(sku.priceInclTax)}
+											{formatEuro(sku.priceInclTax)}
 										</span>
 									</Link>
 								</li>

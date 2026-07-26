@@ -63,7 +63,9 @@ export function buildStripeLineItems(
 
 		lineItems.push({
 			price_data: {
-				currency: DEFAULT_CURRENCY,
+				// Lowercase pour Stripe (aligné sur le create PaymentIntent) ; les
+				// écritures DB (Order/Refund.currency) restent "EUR" (CHECK constraint).
+				currency: DEFAULT_CURRENCY.toLowerCase(),
 				product_data: {
 					name: productName,
 					images: imageUrl ? [imageUrl] : undefined,

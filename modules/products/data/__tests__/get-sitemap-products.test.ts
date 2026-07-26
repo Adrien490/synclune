@@ -38,6 +38,7 @@ function makeSitemapProduct(overrides: Record<string, unknown> = {}) {
 	return {
 		slug: "bracelet-lune",
 		title: "Bracelet Lune",
+		updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 		type: { label: "Bracelet" },
 		skus: [
 			{
@@ -100,6 +101,42 @@ describe("getSitemapProducts", () => {
 	});
 
 	// ─── Query filters ───────────────────────────────────────────────────────
+
+	it("propagates a DB error instead of returning an empty array", async () => {
+		// Un `[]` silencieux est indistinguable d'un catalogue vide : la route
+		// servait alors un <urlset> vide caché 24 h par le CDN (désindexation).
+		mockFindMany.mockRejectedValue(new Error("connection reset"));
+
+		await expect(getSitemapProducts()).rejects.toThrow("connection reset");
+	});
+
+	it("orders images with isPrimary first (Google uses the first <image:image>)", async () => {
+		await getSitemapProducts();
+
+		expect(mockFindMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				select: expect.objectContaining({
+					skus: expect.objectContaining({
+						select: expect.objectContaining({
+							images: expect.objectContaining({
+								orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
+							}),
+						}),
+					}),
+				}),
+			}),
+		);
+	});
+
+	it("selects updatedAt for <lastmod>", async () => {
+		await getSitemapProducts();
+
+		expect(mockFindMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				select: expect.objectContaining({ updatedAt: true }),
+			}),
+		);
+	});
 
 	it("filters by PUBLIC status", async () => {
 		await getSitemapProducts();

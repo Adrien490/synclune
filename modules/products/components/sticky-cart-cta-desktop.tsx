@@ -5,6 +5,7 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
@@ -12,6 +13,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface StickyCartCTADesktopProps {
 	product: GetProductReturn;
@@ -45,6 +47,10 @@ export function StickyCartCTADesktop({
 
 	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;
 	const canAddToCart = isAvailable;
+
+	// Une video sans poster n'est pas rendue par l'optimiseur -> pas de miniature
+	const primaryMedia = currentSku.images[0];
+	const thumbSrc = primaryMedia ? resolveMediaThumbSrc(primaryMedia) : null;
 
 	useEffect(() => {
 		const target = document.getElementById(targetId);
@@ -115,17 +121,20 @@ export function StickyCartCTADesktop({
 						<input type="hidden" name="quantity" value="1" />
 
 						{/* Miniature (décorative) */}
-						{currentSku.images[0]?.url && (
+						{thumbSrc && (
 							<div
 								className="border-border bg-muted relative size-10 shrink-0 overflow-hidden rounded-lg border"
 								aria-hidden="true"
 							>
 								<Image
-									src={currentSku.images[0].thumbnailUrl ?? currentSku.images[0].url}
+									src={thumbSrc}
 									alt=""
 									fill
 									className="object-cover"
 									sizes="40px"
+									quality={IMAGE_QUALITY.THUMBNAIL}
+									placeholder={primaryMedia?.blurDataUrl ? "blur" : "empty"}
+									blurDataURL={primaryMedia?.blurDataUrl ?? undefined}
 								/>
 							</div>
 						)}

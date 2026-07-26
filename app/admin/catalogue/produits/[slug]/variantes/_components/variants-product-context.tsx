@@ -2,7 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Package } from "lucide-react";
 
+import type { MediaType } from "@/app/generated/prisma/client";
 import { ProductStatus } from "@/app/generated/prisma/enums";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import { Badge } from "@/shared/components/ui/badge";
 
 type ContextImage = {
@@ -10,6 +12,7 @@ type ContextImage = {
 	thumbnailUrl?: string | null;
 	blurDataUrl?: string | null;
 	altText?: string | null;
+	mediaType: MediaType;
 	isPrimary?: boolean;
 };
 
@@ -49,6 +52,8 @@ function pickPrimaryImage(skus: ContextSku[]): ContextImage | null {
  */
 export function VariantsProductContext({ product }: VariantsProductContextProps) {
 	const image = pickPrimaryImage(product.skus);
+	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours
+	const thumbSrc = image ? resolveMediaThumbSrc(image) : null;
 	const statusConfig = STATUS_LABEL[product.status];
 	const count = product.skus.length;
 	const countLabel = count <= 1 ? "Variante unique" : `${count} variantes`;
@@ -59,9 +64,9 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 			className="bg-card text-card-foreground hover:bg-accent/40 focus-visible:ring-ring flex items-center gap-3 rounded-lg border p-3 transition-colors focus-visible:ring-2 focus-visible:outline-none md:hidden"
 			aria-label={`Retour à la fiche produit ${product.title}`}
 		>
-			{image ? (
+			{image && thumbSrc ? (
 				<Image
-					src={image.thumbnailUrl ?? image.url}
+					src={thumbSrc}
 					alt=""
 					width={48}
 					height={48}

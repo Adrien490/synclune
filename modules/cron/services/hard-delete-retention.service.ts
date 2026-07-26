@@ -1,11 +1,16 @@
 import { updateTag } from "next/cache";
-import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
+import {
+	ORDER_PII_SCRUB,
+	PURGED_ORDER_NOTE_CONTENT,
+	REFUND_PII_SCRUB,
+	UNPAID_ORDER_PII_SCRUB,
+} from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -31,74 +36,14 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * - Product (and ProductSku, SkuMedia, etc. via cascade) — hard delete
  * - ProductReview, ReviewResponse, ReviewMedia (via cascade) — hard delete
  * - Order (paid) — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
+ * - Refund — per-refund credit-note PDFs deleted + pointers/note scrubbed with the parent order
+ * - OrderNote — free-text content scrubbed with the parent order (row + staff author kept)
  * - Order (never paid) — customer/shipping PII purge past the unpaid-retention window
- */
-
-/**
- * PII scrub payload applied to orders past the 10-year legal retention.
  *
- * Exported for the regression test `purge-pii-scrub-contract` which locks both
- * halves of the invariant: (a) the PII surfaces (billing, invoice snapshot,
- * archived PDF pointers) ARE scrubbed (RGPD Art. 5.1.e once the legal basis
- * expires), and (b) the non-PII accounting fields (invoiceNumber,
- * creditNoteNumber, total, subtotal, taxAmount, paidAt) are NEVER in this
- * payload (Art. L123-22 — the accounting row survives).
+ * Scrub payloads (ORDER_PII_SCRUB, UNPAID_ORDER_PII_SCRUB, REFUND_PII_SCRUB) live in
+ * `modules/orders/constants/pii-scrub.ts` (SSOT, contrat verrouillé par le test
+ * `purge-pii-scrub-contract.regression.test.ts`).
  */
-/**
- * Operational PII (admin UI, shipping labels, customer space). Scrubbed by BOTH the
- * 10-year paid-order purge (`ORDER_PII_SCRUB`) and the unpaid-order purge
- * (`UNPAID_ORDER_PII_SCRUB`, RGPD-AUDIT F-A). Single source so the two payloads never
- * drift apart.
- */
-const CUSTOMER_SHIPPING_PII_SCRUB = {
-	// customerEmail n'a pas de contrainte UNIQUE → une constante suffit (≠ anonymisation
-	// compte qui dérive l'email du userId). Cf. RGPD-AUDIT F2.
-	customerEmail: "purge-10y@deleted.synclune.local",
-	customerName: "Client supprimé",
-	customerPhone: null,
-	// F4 (RGPD-PII-AUDIT 2026-05-30) : aligné sur l'anonymisation compte
-	// (anonymize-user.service nulle déjà ce champ). `cus_xxx` est un identifiant
-	// pseudonyme rattachable à une personne via Stripe — il doit disparaître à la
-	// purge comme à l'anonymisation, sinon une commande invité jamais anonymisée
-	// le conserverait au-delà des 10 ans.
-	stripeCustomerId: null,
-	shippingFirstName: "X",
-	shippingLastName: "X",
-	shippingAddress1: "Adresse supprimée",
-	shippingAddress2: null,
-	shippingPostalCode: "00000",
-	shippingCity: "Supprimé",
-	shippingPhone: "0000000000",
-} as const;
-
-export const ORDER_PII_SCRUB = {
-	...CUSTOMER_SHIPPING_PII_SCRUB,
-	billingFirstName: "X",
-	billingLastName: "X",
-	billingAddress1: "Adresse supprimée",
-	billingAddress2: null,
-	billingPostalCode: "00000",
-	billingCity: "Supprimé",
-	billingPhone: "0000000000",
-	// Snapshot facture figé : la base légale ayant expiré, on efface la PII qu'il
-	// contient (buyer + adresses). Les colonnes non-PII (numéros, montants) restent.
-	invoiceDataSnapshot: Prisma.DbNull,
-	invoiceDataHash: null,
-	// PDF immuables : on nulle les pointeurs (fichiers UploadThing supprimés hors tx).
-	invoicePdfUrl: null,
-	invoicePdfHash: null,
-	creditNotePdfUrl: null,
-	creditNotePdfHash: null,
-} as const;
-
-/**
- * Operational-PII scrub for orders that were NEVER paid (paidAt IS NULL). No invoice
- * exists, so there is nothing legal to preserve — only `customer*`/`shipping*` carry
- * PII (billing fields, snapshot and PDF are empty on unpaid orders). Cf. RGPD-AUDIT F-A.
- */
-const UNPAID_ORDER_PII_SCRUB = {
-	...CUSTOMER_SHIPPING_PII_SCRUB,
-} as const;
 
 /**
  * Purges PII from orders whose 10-year legal retention has elapsed (paidAt + 10y).
@@ -111,44 +56,76 @@ const UNPAID_ORDER_PII_SCRUB = {
  * PII (buyer identity), so we delete them FIRST and only then scrub the DB row +
  * stamp `piiPurgedAt`. If PDF deletion fails or is skipped near the deadline we do
  * NOT scrub: the row keeps its pointers and `piiPurgedAt = NULL`, so the next monthly
- * run retries. Scrubbing first would null the pointers and lose the file reference
- * forever (and `cleanup-orphan-media` — the previously-assumed safety net — is a
- * retired cron, so this job is the ONLY deleter of these PDFs).
+ * run retries. Scrubbing first would null the pointers and risk losing the file
+ * reference. This job is the PRIMARY deleter of these PDFs; `cleanup-orphan-media`
+ * (mensuel, actif) protège les PDF encore pointés (RGPD-AUDIT F-C) et ne sert de
+ * filet qu'aux fichiers dont le pointeur est déjà nullé.
+ *
+ * Les avoirs PARTIELS (`Refund.creditNotePdfUrl`, un par refund COMPLETED) portent
+ * la même identité acheteur que la facture : leurs fichiers sont supprimés dans le
+ * même lot et leurs pointeurs + note libre scrubés dans la même transaction
+ * (REFUND_PII_SCRUB). Les `OrderNote.content` (texte libre, PII potentielle) sont
+ * remplacés par `PURGED_ORDER_NOTE_CONTENT`.
  */
 async function purgeExpiredOrderPii(
 	deadline: number,
 	retentionDate: Date,
-): Promise<{ ordersPurged: number; orderPdfsDeleted: number; ordersHasMore: boolean }> {
+): Promise<{
+	ordersPurged: number;
+	orderPdfsDeleted: number;
+	ordersHasMore: boolean;
+	// true UNIQUEMENT quand la suppression des PDF a ÉCHOUÉ (≠ report pour deadline) :
+	// la base légale a expiré mais le scrub RGPD reste bloqué. Remonté en `errored`
+	// par l'appelant pour déclencher l'alerte admin (G3) — sinon échec silencieux.
+	pdfDeletionFailed: boolean;
+}> {
 	const orders = await prisma.order.findMany({
 		where: { paidAt: { lt: retentionDate }, piiPurgedAt: null },
-		select: { id: true, invoicePdfUrl: true, creditNotePdfUrl: true },
+		select: {
+			id: true,
+			invoicePdfUrl: true,
+			creditNotePdfUrl: true,
+			// Avoirs partiels par-refund : même identité acheteur, même échéance.
+			refunds: { select: { creditNotePdfUrl: true } },
+		},
 		take: BATCH_SIZE_LARGE,
 	});
 
 	if (orders.length === 0) {
-		return { ordersPurged: 0, orderPdfsDeleted: 0, ordersHasMore: false };
+		return { ordersPurged: 0, orderPdfsDeleted: 0, ordersHasMore: false, pdfDeletionFailed: false };
 	}
 
 	const ordersHasMore = orders.length === BATCH_SIZE_LARGE;
 	const orderIds = orders.map((o) => o.id);
 	const pdfUrls = orders.flatMap((o) =>
-		[o.invoicePdfUrl, o.creditNotePdfUrl].filter((u): u is string => u !== null),
+		[o.invoicePdfUrl, o.creditNotePdfUrl, ...o.refunds.map((r) => r.creditNotePdfUrl)].filter(
+			(u): u is string => u !== null,
+		),
 	);
 
 	// 1. Delete the archived PDFs FIRST so we never null the DB pointer before the
 	// file is actually gone. Only a fully-clean deletion authorises the scrub below.
 	let orderPdfsDeleted = 0;
 	let pdfsCleared = true;
+	// Distingue le report « deadline » (attendu, reprise au prochain run) du report
+	// « échec suppression PDF » (anormal → doit alerter l'admin, G3).
+	let pdfDeletionFailed = false;
 	if (pdfUrls.length > 0) {
 		if (Date.now() > deadline) {
 			pdfsCleared = false; // near deadline — defer the whole batch to next run
 		} else {
 			try {
-				const result = await deleteUploadThingFilesFromUrls(pdfUrls);
+				// Seul effaceur légitime des archives fiscales : la rétention légale de
+				// 10 ans est échue (Art. L102 B LPF). La garde par défaut du service
+				// bloque tous les autres chemins (audit média M7).
+				const result = await deleteUploadThingFilesFromUrls(pdfUrls, {
+					allowFiscalArchives: true,
+				});
 				orderPdfsDeleted = result.deleted;
 				// Any file we couldn't delete → defer the scrub (don't lose the pointer).
 				if (result.failed > 0) {
 					pdfsCleared = false;
+					pdfDeletionFailed = true;
 				}
 				logger.info("Deleted invoice/credit-note PDFs from UploadThing", {
 					cronJob: "hard-delete-retention",
@@ -156,6 +133,7 @@ async function purgeExpiredOrderPii(
 				});
 			} catch (_error) {
 				pdfsCleared = false;
+				pdfDeletionFailed = true;
 				logger.error("Failed to delete invoice/credit-note PDFs — deferring PII scrub", _error, {
 					cronJob: "hard-delete-retention",
 					orderCount: orderIds.length,
@@ -171,16 +149,28 @@ async function purgeExpiredOrderPii(
 			cronJob: "hard-delete-retention",
 			ordersDeferred: orderIds.length,
 		});
-		return { ordersPurged: 0, orderPdfsDeleted, ordersHasMore };
+		return { ordersPurged: 0, orderPdfsDeleted, ordersHasMore, pdfDeletionFailed };
 	}
 
 	// 2. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
+	// Refunds (avoirs partiels + note libre) et OrderNotes (texte libre) des mêmes
+	// commandes sont scrubés atomiquement avec la ligne Order : une purge partielle
+	// (Order scrubé mais avoir intact) serait invisible au retry (`piiPurgedAt` posé).
 	const purged = await prisma.$transaction(
-		async (tx) =>
-			tx.order.updateMany({
+		async (tx) => {
+			await tx.refund.updateMany({
+				where: { orderId: { in: orderIds } },
+				data: { ...REFUND_PII_SCRUB },
+			});
+			await tx.orderNote.updateMany({
+				where: { orderId: { in: orderIds } },
+				data: { content: PURGED_ORDER_NOTE_CONTENT },
+			});
+			return tx.order.updateMany({
 				where: { id: { in: orderIds }, piiPurgedAt: null },
 				data: { ...ORDER_PII_SCRUB, piiPurgedAt: new Date() },
-			}),
+			});
+		},
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 
@@ -189,7 +179,7 @@ async function purgeExpiredOrderPii(
 		ordersPurged: purged.count,
 	});
 
-	return { ordersPurged: purged.count, orderPdfsDeleted, ordersHasMore };
+	return { ordersPurged: purged.count, orderPdfsDeleted, ordersHasMore, pdfDeletionFailed: false };
 }
 
 /**
@@ -202,7 +192,8 @@ async function purgeExpiredOrderPii(
  * Art. 5.1.e). No status filter: at this age (default 3y) a still-unpaid order is
  * definitively dead (async payments cap out at 10 days), so the PII must go whatever
  * the status. Reuses the `piiPurgedAt` sentinel for idempotence. No PDF handling —
- * unpaid orders have no archived invoice.
+ * unpaid orders have no archived invoice. Les identifiants Stripe pseudonymes
+ * (`cus_xxx`, `pi_xxx`) partent aussi (UNPAID_ORDER_PII_SCRUB).
  */
 async function purgeAbandonedOrderPii(
 	cutoff: Date,
@@ -265,12 +256,25 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	let ordersPurged = 0;
 	let orderPdfsDeleted = 0;
 	let ordersHasMore = false;
+	// G3 (audit) : compte les batchs dont le scrub RGPD est bloqué par un ÉCHEC de
+	// suppression PDF (≠ report deadline). Remonté en `errored` pour que withCronGuard
+	// envoie l'alerte admin — sinon une purge PII bloquée passerait inaperçue (le cron
+	// renvoyait toujours errored:0). Ré-alerte chaque mois tant que l'échec persiste.
+	let pdfPurgeErrors = 0;
 	while (Date.now() <= deadline) {
 		const batch = await purgeExpiredOrderPii(deadline, retentionDate);
 		ordersPurged += batch.ordersPurged;
 		orderPdfsDeleted += batch.orderPdfsDeleted;
 		ordersHasMore = batch.ordersHasMore;
+		if (batch.pdfDeletionFailed) pdfPurgeErrors++;
 		if (!batch.ordersHasMore || batch.ordersPurged === 0) break;
+	}
+	if (pdfPurgeErrors > 0) {
+		logger.error(
+			"Purge PII 10 ans bloquée par échec suppression PDF — alerte admin requise",
+			new Error("hard-delete-retention: PII scrub blocked by PDF deletion failure"),
+			{ cronJob: "hard-delete-retention", pdfPurgeErrors },
+		);
 	}
 
 	// 0b. Purge operational PII from NEVER-PAID orders (abandoned/cancelled checkouts)
@@ -376,7 +380,7 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 		);
 		return {
 			processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
-			errored: 0,
+			errored: pdfPurgeErrors,
 			skipped: 0,
 			productsDeleted: productsResult.count,
 			reviewsDeleted: reviewsResult.count,
@@ -424,7 +428,7 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 
 	return {
 		processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
-		errored: 0,
+		errored: pdfPurgeErrors,
 		skipped: 0,
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,

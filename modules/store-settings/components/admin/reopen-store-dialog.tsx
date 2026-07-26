@@ -19,12 +19,15 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 import { reopenStore } from "../../actions/reopen-store";
+import { APP_TIME_ZONE } from "@/shared/utils/timezone";
 
 export const REOPEN_STORE_DIALOG_ID = "reopen-store";
 
+// `timeZone` explicite : sinon SSR (UTC) ≠ client (Paris) → mismatch d'hydratation.
 const reopensAtFormatter = new Intl.DateTimeFormat("fr-FR", {
 	dateStyle: "long",
 	timeStyle: "short",
+	timeZone: APP_TIME_ZONE,
 });
 
 interface ReopenStoreDialogProps {

@@ -6,6 +6,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { handleActionError } from "@/shared/lib/actions";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { detectPriceChanges } from "../services/cart-pricing-calculator.service";
@@ -135,11 +136,9 @@ export async function updateCartPrices(
 		if (increased.length > 0 && decreased.length > 0) {
 			message = `Prix mis à jour (${increased.length} hausse${increased.length > 1 ? "s" : ""}, ${decreased.length} baisse${decreased.length > 1 ? "s" : ""})`;
 		} else if (increased.length > 0) {
-			const formatted = (priceChanges.totalIncrease / 100).toFixed(2).replace(".", ",");
-			message = `${count} prix en hausse (+${formatted} €). Vérifiez votre panier.`;
+			message = `${count} prix en hausse (+${formatEuro(priceChanges.totalIncrease)}). Vérifiez votre panier.`;
 		} else {
-			const formatted = (priceChanges.totalSavings / 100).toFixed(2).replace(".", ",");
-			message = `Bonne nouvelle : ${count} prix en baisse (-${formatted} €)`;
+			message = `Bonne nouvelle : ${count} prix en baisse (-${formatEuro(priceChanges.totalSavings)})`;
 		}
 
 		return {

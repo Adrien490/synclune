@@ -75,7 +75,7 @@ export async function CartRecommendations({ limit = 4 }: CartRecommendationsProp
 				<div className="flex justify-center pt-8 lg:pt-10">
 					<Link
 						href="/produits"
-						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-all duration-200 hover:gap-3 hover:underline"
+						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-[gap] duration-200 hover:gap-3 hover:underline"
 					>
 						Découvrir toutes les créations
 						<span className="text-xs">→</span>

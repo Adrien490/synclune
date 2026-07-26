@@ -11,7 +11,7 @@ import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
-export interface MaterialOption {
+interface MaterialOption {
 	id: string;
 	name: string;
 }
@@ -57,6 +57,8 @@ export function MaterialMultiSelectField({
 	const materialDialog = useDialog(MATERIAL_DIALOG_ID);
 
 	const isAtCap = value.length >= maxSelected;
+	// `Set` hoisté : sinon un `.includes()` par option rescanne toute la sélection.
+	const selectedIds = new Set(value);
 
 	// Au cap : grise (disabled) les options non sélectionnées plutôt que de les retirer.
 	// L'utilisateur voit toujours le catalogue complet, comprend pourquoi il ne peut plus
@@ -64,7 +66,7 @@ export function MaterialMultiSelectField({
 	const mappedOptions = options.map((m) => ({
 		value: m.id,
 		label: m.name,
-		disabled: isAtCap && !value.includes(m.id),
+		disabled: isAtCap && !selectedIds.has(m.id),
 	}));
 
 	const handleValueChange = (ids: string[]) => {

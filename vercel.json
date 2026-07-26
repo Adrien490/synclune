@@ -27,24 +27,24 @@
 			"schedule": "0 2 * * *"
 		},
 		{
-			"path": "/api/cron/alert-dispute-deadlines",
-			"schedule": "0 8 * * *"
-		},
-		{
-			"path": "/api/cron/alert-overbilled-orders",
-			"schedule": "30 8 * * *"
-		},
-		{
 			"path": "/api/cron/process-account-deletions",
 			"schedule": "0 5 * * *"
 		},
 		{
-			"path": "/api/cron/alert-stuck-orders",
-			"schedule": "0 9 * * 1"
+			"path": "/api/cron/cleanup-pending-orders",
+			"schedule": "0 3 * * *"
+		},
+		{
+			"path": "/api/cron/alert-dispute-deadlines",
+			"schedule": "0 8 * * *"
 		},
 		{
 			"path": "/api/cron/hard-delete-retention",
 			"schedule": "0 4 2 * *"
+		},
+		{
+			"path": "/api/cron/cleanup-orphan-media",
+			"schedule": "0 4 * * 3"
 		}
 	]
 }

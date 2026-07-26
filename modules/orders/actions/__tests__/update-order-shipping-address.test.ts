@@ -347,7 +347,7 @@ describe("updateOrderShippingAddress", () => {
 	});
 
 	// Audit trail
-	it("should create audit trail with previous and new address", async () => {
+	it("should create audit trail with changedFields only (no address values — RGPD)", async () => {
 		await updateOrderShippingAddress(undefined, validFormData);
 
 		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
@@ -359,19 +359,17 @@ describe("updateOrderShippingAddress", () => {
 				authorName: "Admin",
 				note: "Adresse de livraison modifiee",
 				metadata: expect.objectContaining({
-					previousAddress: expect.objectContaining({
-						firstName: "Marie",
-						lastName: "Dupont",
-						address1: "12 Rue de la Paix",
-					}),
-					newAddress: expect.objectContaining({
-						shippingFirstName: "Jean",
-						shippingLastName: "Martin",
-						shippingAddress1: "5 Avenue des Champs",
-					}),
+					addressType: "shipping",
+					changedFields: expect.arrayContaining(["shippingFirstName", "shippingAddress1"]),
 				}),
 			}),
 		);
+
+		// RGPD (audit rétention 10 ans) : OrderHistory est immuable et jamais scrubé —
+		// aucune valeur d'adresse ne doit entrer dans le metadata.
+		const metadata = mockCreateOrderAuditTx.mock.calls[0]![1].metadata;
+		expect(metadata).not.toHaveProperty("previousAddress");
+		expect(metadata).not.toHaveProperty("newAddress");
 	});
 
 	// Cache invalidation

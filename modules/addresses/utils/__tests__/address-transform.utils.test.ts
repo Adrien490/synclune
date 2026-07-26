@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { transformCompletionResult } from "../address-transform.utils";
-import type {
-	CompletionStreetAddress,
-	CompletionPositionOfInterest,
-} from "../../types/search-address.types";
+import type { CompletionResult } from "../../types/search-address.types";
+
+type CompletionStreetAddress = Extract<CompletionResult, { country: "StreetAddress" }>;
+type CompletionPositionOfInterest = Extract<CompletionResult, { country: "PositionOfInterest" }>;
 
 const baseStreetAddress: CompletionStreetAddress = {
 	country: "StreetAddress",

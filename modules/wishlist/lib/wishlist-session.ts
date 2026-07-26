@@ -1,8 +1,5 @@
 import { cookies } from "next/headers";
-import {
-	WISHLIST_EXPIRATION_DAYS,
-	WISHLIST_EXPIRATION_MS,
-} from "@/modules/wishlist/constants/expiration.constants";
+import { WISHLIST_EXPIRATION_DAYS } from "@/modules/wishlist/constants/expiration.constants";
 
 /**
  * Nom du cookie pour l'identifiant de session de la wishlist
@@ -82,13 +79,4 @@ export async function getOrCreateWishlistSessionId(): Promise<string> {
 export async function clearWishlistSessionId(): Promise<void> {
 	const cookieStore = await cookies();
 	cookieStore.delete(WISHLIST_SESSION_COOKIE_NAME);
-}
-
-/**
- * Calcule la date d'expiration pour une wishlist visiteur (30 jours)
- * Utilise Date.now() pour éviter les problèmes de timezone
- * Utilise WISHLIST_EXPIRATION_MS pour cohérence avec le cleanup
- */
-export function getWishlistExpirationDate(): Date {
-	return new Date(Date.now() + WISHLIST_EXPIRATION_MS);
 }

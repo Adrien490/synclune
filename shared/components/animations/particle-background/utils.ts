@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Easing, Transition } from "motion/react";
 import { DEFAULT_DURATION, SHAPE_CONFIGS } from "./constants";
-import type { AnimationStyle, Particle, ParticleShape } from "./types";
+import type { Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
 /**
@@ -12,6 +12,9 @@ import { seededRandom } from "@/shared/utils/seeded-random";
  */
 const particleCache = new Map<string, Particle[]>();
 const MAX_CACHE_SIZE = 50;
+
+/** Large prime spreading instance seeds apart so layouts never collide between instances */
+const SEED_STRIDE = 100_003;
 
 /** Clear the particle cache (for tests only) */
 export function clearParticleCache() {
@@ -28,6 +31,7 @@ export function generateParticles(
 	depthParallax: boolean,
 	shapes: readonly ParticleShape[] = ["circle"],
 	baseDuration: number = DEFAULT_DURATION,
+	instanceSeed: number = 0,
 ): Particle[] {
 	// Normalize tuples so min <= max
 	const safeSize: [number, number] = [Math.min(size[0], size[1]), Math.max(size[0], size[1])];
@@ -45,6 +49,7 @@ export function generateParticles(
 		depthParallax,
 		shapes,
 		baseDuration,
+		instanceSeed,
 	]);
 	const cached = particleCache.get(cacheKey);
 	if (cached) return cached;
@@ -54,7 +59,7 @@ export function generateParticles(
 	const safeColors = colors.length > 0 ? colors : ["currentColor"];
 
 	const particles = Array.from({ length: count }, (_, i) => {
-		const seed = i * 1000;
+		const seed = i * 1000 + instanceSeed * SEED_STRIDE;
 		const rand = (offset: number) => seededRandom(seed + offset);
 
 		const particleSize = safeSize[0] + rand(1) * (safeSize[1] - safeSize[0]);
@@ -113,7 +118,7 @@ function radialFill(color: string): string {
 
 /**
  * Retourne les styles CSS pour une forme de particule.
- * @param gradient - si `true`, applique un remplissage radial dégradé (sauf SVG, géré dans le composant)
+ * @param gradient - si `true`, applique un remplissage radial dégradé
  */
 export function getShapeStyles(
 	shape: ParticleShape,
@@ -140,30 +145,9 @@ export function getShapeStyles(
 			: { backgroundColor: color, ...config.styles };
 	}
 
-	if (config.type === "clipPath") {
-		return gradient
-			? { background: radialFill(color), clipPath: config.clipPath }
-			: { backgroundColor: color, clipPath: config.clipPath };
-	}
-
-	// SVG - rendu dans le composant
-	return { backgroundColor: "transparent" };
-}
-
-/** Vérifie si une forme utilise le rendu SVG */
-export function isSvgShape(shape: ParticleShape): boolean {
-	return SHAPE_CONFIGS[shape].type === "svg";
-}
-
-/** Retourne la configuration SVG pour une forme */
-export function getSvgConfig(
-	shape: ParticleShape,
-): { viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" } | null {
-	const config = SHAPE_CONFIGS[shape];
-	if (config.type === "svg") {
-		return { viewBox: config.viewBox, path: config.path, fillRule: config.fillRule };
-	}
-	return null;
+	return gradient
+		? { background: radialFill(color), clipPath: config.clipPath }
+		: { backgroundColor: color, clipPath: config.clipPath };
 }
 
 /** Easings variés pour un mouvement plus organique */
@@ -197,13 +181,13 @@ export function getEntranceTransition(particle: Particle): Transition {
 }
 
 /** Retourne la transition Framer Motion avec easing varié et repeatDelay */
-export function getTransition(particle: Particle, animationStyle?: AnimationStyle): Transition {
+export function getTransition(particle: Particle): Transition {
 	return {
 		duration: particle.duration,
 		delay: particle.delay,
 		ease: PARTICLE_EASINGS[particle.id % PARTICLE_EASINGS.length],
 		repeat: Infinity,
-		repeatType: animationStyle === "cascade" ? ("loop" as const) : ("reverse" as const),
+		repeatType: "reverse",
 		repeatDelay: particle.delay * 0.2,
 	};
 }

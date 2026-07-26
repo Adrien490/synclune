@@ -146,31 +146,27 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 									</>
 								);
 								return (
-									<Fade
-										key={`${product.productId ?? "unknown"}-${rank}`}
-										y={6}
-										delay={index * 0.02}
-										inView
-										once
-									>
-										{index > 0 && <ItemSeparator />}
-										{href ? (
-											<Item asChild size="sm">
-												<Link
-													href={href}
-													onClick={() => triggerHaptic("light")}
-													aria-label={getAriaLabel(product, rank)}
-													className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
-												>
+									<li key={product.productId ?? product.title}>
+										<Fade y={6} delay={index * 0.02} inView once>
+											{index > 0 && <ItemSeparator />}
+											{href ? (
+												<Item asChild size="sm">
+													<Link
+														href={href}
+														onClick={() => triggerHaptic("light")}
+														aria-label={getAriaLabel(product, rank)}
+														className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
+													>
+														{inner}
+													</Link>
+												</Item>
+											) : (
+												<Item size="sm" aria-label={getAriaLabel(product, rank)}>
 													{inner}
-												</Link>
-											</Item>
-										) : (
-											<Item size="sm" aria-label={getAriaLabel(product, rank)}>
-												{inner}
-											</Item>
-										)}
-									</Fade>
+												</Item>
+											)}
+										</Fade>
+									</li>
 								);
 							})}
 						</ItemGroup>
@@ -229,7 +225,9 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 							);
 							const className =
 								"flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors";
-							const key = `${product.productId ?? "unknown"}-${rank}`;
+							// Clé dérivée du produit (et non du rang) : le rang vient de l'index et
+							// change dès que le classement bouge.
+							const key = product.productId ?? product.title;
 							if (href) {
 								return (
 									<Fade key={key} y={6} delay={index * 0.04} inView once>

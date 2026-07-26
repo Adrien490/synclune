@@ -117,9 +117,15 @@ export async function archiveCreditNotePdf(
 		// Audit-tracé : CREDIT_NOTE_ARCHIVED dans la même tx que l'update Order
 		// (Art. L123-22 : mutations critiques du dossier comptable visibles dans
 		// OrderHistory, ici l'archivage du PDF avoir).
-		await prisma.$transaction(async (tx) => {
-			await tx.order.update({
-				where: { id: orderId },
+		// IDEM-PDF-001 : claim conditionnel ré-évalué au lock de ligne — cf.
+		// archive-invoice-pdf.service.ts (course eager/lazy/cron = double upload
+		// + double audit sans ce claim). Le perdant supprime son upload orphelin.
+		const claim = await prisma.$transaction(async (tx) => {
+			const claimed = await tx.order.updateMany({
+				// IDEM-PDF-002 : prédicat aligné sur l'early-return (`url && hash`) — sinon
+				// une ligne `url` posée / `hash` NULL ne converge jamais (upload + delete à
+				// chaque appel, retour `null`).
+				where: { id: orderId, OR: [{ creditNotePdfUrl: null }, { creditNotePdfHash: null }] },
 				data: {
 					creditNotePdfUrl: data.ufsUrl,
 					creditNotePdfHash: hash,
@@ -127,6 +133,9 @@ export async function archiveCreditNotePdf(
 					invoiceRetryDeferred: false,
 				},
 			});
+			if (claimed.count === 0) {
+				return { won: false as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId,
@@ -139,7 +148,25 @@ export async function archiveCreditNotePdf(
 					creditNotePdfHash: hash,
 				},
 			});
+			return { won: true as const };
 		});
+
+		if (!claim.won) {
+			if (data.key) {
+				await utapi.deleteFiles([data.key]).catch(() => {});
+			}
+			const current = await prisma.order.findUnique({
+				where: { id: orderId },
+				select: { creditNotePdfUrl: true, creditNotePdfHash: true },
+			});
+			if (current?.creditNotePdfUrl && current.creditNotePdfHash) {
+				return {
+					creditNotePdfUrl: current.creditNotePdfUrl,
+					creditNotePdfHash: current.creditNotePdfHash,
+				};
+			}
+			return null;
+		}
 
 		return { creditNotePdfUrl: data.ufsUrl, creditNotePdfHash: hash };
 	} catch (error) {

@@ -12,7 +12,7 @@ vi.mock("lucide-react", () => ({
 	Keyboard: (props: Record<string, unknown>) => <svg data-testid="keyboard-icon" {...props} />,
 }));
 
-vi.mock("@/app/admin/_components/keyboard-shortcuts-dialog", () => ({
+vi.mock("@/app/admin/_components/keyboard-shortcuts.constants", () => ({
 	KEYBOARD_SHORTCUTS_DIALOG_ID: "admin-keyboard-shortcuts",
 }));
 

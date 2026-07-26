@@ -4,7 +4,7 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound, error } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -48,13 +48,22 @@ export async function setFeaturedProduct(
 					select: { slug: true, name: true },
 				},
 				product: {
-					select: { title: true },
+					select: { title: true, status: true, deletedAt: true },
 				},
 			},
 		});
 
 		if (!productCollection) {
 			return notFound("Produit dans cette collection");
+		}
+
+		// 3.1 Un produit vedette doit être visible sur le storefront (garde serveur :
+		// l'UI admin ne liste que les produits PUBLIC, mais l'action reste appelable
+		// directement — un vedette soft-deleted/non-PUBLIC casserait le hero collection)
+		if (productCollection.product.deletedAt || productCollection.product.status !== "PUBLIC") {
+			return error(
+				"Seul un produit publié (et non supprimé) peut être mis en avant dans une collection.",
+			);
 		}
 
 		// 4. Transaction interactive Serializable: deux admins concurrents sur la

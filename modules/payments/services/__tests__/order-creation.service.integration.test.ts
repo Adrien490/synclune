@@ -22,6 +22,10 @@
  *     par erreur ici.
  *  3. **Garde stock fonctionnelle** — quantity > inventory ⇒ BusinessError, prouvant
  *     que le SQL FOR UPDATE s'exécute réellement contre la DB.
+ *  4. **Rollback tout-ou-rien** — un échec en cours de transaction (stock insuffisant
+ *     sur le 2ᵉ item, ou violation FK APRÈS l'incrément raw SQL du usageCount) ne
+ *     laisse AUCUN résidu : ni Order, ni OrderItem, ni DiscountUsage, usageCount
+ *     inchangé (audit création-de-commande 2026-07-02).
  *
  * Pré-requis : `INTEGRATION_DATABASE_URL` (cf `test/integration/setup.ts`).
  * Skippé silencieusement si la variable est absente.
@@ -219,5 +223,109 @@ describeIntegration("createOrderInTransaction — real DB lock semantics", () =>
 				}),
 			),
 		).rejects.toThrow(/insuffisant/i);
+	});
+
+	it("rolls back everything (order, items, discount usage) when a later stock check fails mid-transaction", async () => {
+		const product = await createTestProduct();
+		const skuOk = await createTestSku(product.id, { inventory: 10, priceInclTax: 3_000 });
+		const skuLow = await createTestSku(product.id, { inventory: 1, priceInclTax: 2_000 });
+		const code = `RLBK${uniq()}`;
+		await prisma.discount.create({
+			data: {
+				code,
+				type: DiscountType.FIXED_AMOUNT,
+				value: 500,
+				usageCount: 0,
+				isActive: true,
+				startsAt: new Date("2020-01-01T00:00:00Z"),
+			},
+		});
+		const email = `rollback-${uniq()}@test.local`;
+
+		const detailsOk = buildSkuDetails({
+			id: skuOk.id,
+			sku: skuOk.sku,
+			priceInclTax: skuOk.priceInclTax,
+			compareAtPrice: skuOk.compareAtPrice,
+			product: { id: product.id, title: product.title, slug: product.slug },
+		});
+		const detailsLow = buildSkuDetails({
+			id: skuLow.id,
+			sku: skuLow.sku,
+			priceInclTax: skuLow.priceInclTax,
+			compareAtPrice: skuLow.compareAtPrice,
+			product: { id: product.id, title: product.title, slug: product.slug },
+		});
+
+		await expect(
+			createOrderInTransaction(
+				buildParams({
+					skuId: skuOk.id,
+					skuDetails: detailsOk,
+					priceInclTax: skuOk.priceInclTax,
+					cartItems: [
+						{ skuId: skuOk.id, quantity: 1 },
+						{ skuId: skuLow.id, quantity: 5 }, // > inventory=1 → BusinessError en cours de tx
+					],
+					skuDetailsResults: [detailsOk, detailsLow],
+					subtotal: 1 * 3_000 + 5 * 2_000,
+					discountCode: code,
+					finalEmail: email,
+				}),
+			),
+		).rejects.toThrow(/insuffisant/i);
+
+		// Tout-ou-rien : aucun résidu en DB.
+		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
+		expect(await prisma.discountUsage.count({ where: { discountCode: code } })).toBe(0);
+		const discount = await prisma.discount.findUnique({ where: { code } });
+		expect(discount?.usageCount).toBe(0);
+	});
+
+	it("rolls back the raw-SQL usageCount increment when a write fails AFTER it (FK violation on order item snapshot)", async () => {
+		const product = await createTestProduct();
+		const sku = await createTestSku(product.id, { inventory: 10, priceInclTax: 5_000 });
+		const code = `RLBKFK${uniq()}`;
+		await prisma.discount.create({
+			data: {
+				code,
+				type: DiscountType.FIXED_AMOUNT,
+				value: 500,
+				usageCount: 0,
+				isActive: true,
+				startsAt: new Date("2020-01-01T00:00:00Z"),
+			},
+		});
+		const email = `rollback-fk-${uniq()}@test.local`;
+
+		// productId inexistant dans le snapshot : le check stock passe (raw SQL par
+		// skuId + JOIN sur le VRAI productId), l'incrément usageCount passe, puis
+		// orderItem.create viole la FK productId → rollback INTÉGRAL de la tx,
+		// y compris l'UPDATE raw SQL du usageCount.
+		const poisonedDetails = buildSkuDetails({
+			id: sku.id,
+			sku: sku.sku,
+			priceInclTax: sku.priceInclTax,
+			compareAtPrice: sku.compareAtPrice,
+			product: { id: "prod_missing_fk", title: product.title, slug: product.slug },
+		});
+
+		await expect(
+			createOrderInTransaction(
+				buildParams({
+					skuId: sku.id,
+					skuDetails: poisonedDetails,
+					priceInclTax: sku.priceInclTax,
+					discountCode: code,
+					finalEmail: email,
+				}),
+			),
+		).rejects.toThrow();
+
+		// L'incrément raw SQL est bien annulé avec le reste.
+		const discount = await prisma.discount.findUnique({ where: { code } });
+		expect(discount?.usageCount).toBe(0);
+		expect(await prisma.discountUsage.count({ where: { discountCode: code } })).toBe(0);
+		expect(await prisma.order.count({ where: { customerEmail: email } })).toBe(0);
 	});
 });

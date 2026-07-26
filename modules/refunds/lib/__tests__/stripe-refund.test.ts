@@ -4,35 +4,70 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockStripe, MockStripeError, mockLogger } = vi.hoisted(() => {
-	class MockStripeError extends Error {
-		code?: string;
-		constructor(message: string) {
-			super(message);
-			this.name = "StripeError";
+const { mockStripe, MockStripeError, mockStripeErrorClasses, mockLogger, mockSentry } = vi.hoisted(
+	() => {
+		class MockStripeError extends Error {
+			code?: string;
+			constructor(message: string) {
+				super(message);
+				this.name = "StripeError";
+			}
 		}
-	}
+		// Sous-classes réelles requises : classifyStripeError (importé par
+		// stripe-refund) fait des instanceof sur chacune — un mock partiel
+		// (`errors: { StripeError }` seul) donnerait `instanceof undefined`.
+		class MockStripeCardError extends MockStripeError {}
+		class MockStripeRateLimitError extends MockStripeError {}
+		class MockStripeConnectionError extends MockStripeError {}
+		class MockStripeAPIError extends MockStripeError {}
+		class MockStripeAuthenticationError extends MockStripeError {}
+		class MockStripePermissionError extends MockStripeError {}
+		class MockStripeIdempotencyError extends MockStripeError {}
+		class MockStripeInvalidRequestError extends MockStripeError {}
 
-	return {
-		mockStripe: {
-			paymentIntents: {
-				retrieve: vi.fn(),
+		return {
+			mockStripe: {
+				paymentIntents: {
+					retrieve: vi.fn(),
+				},
+				refunds: {
+					create: vi.fn(),
+					list: vi.fn(),
+					retrieve: vi.fn(),
+				},
 			},
-			refunds: {
-				create: vi.fn(),
-				list: vi.fn(),
-				retrieve: vi.fn(),
+			MockStripeError,
+			mockStripeErrorClasses: {
+				StripeError: MockStripeError,
+				StripeCardError: MockStripeCardError,
+				StripeRateLimitError: MockStripeRateLimitError,
+				StripeConnectionError: MockStripeConnectionError,
+				StripeAPIError: MockStripeAPIError,
+				StripeAuthenticationError: MockStripeAuthenticationError,
+				StripePermissionError: MockStripePermissionError,
+				StripeIdempotencyError: MockStripeIdempotencyError,
+				StripeInvalidRequestError: MockStripeInvalidRequestError,
 			},
-		},
-		MockStripeError,
-		mockLogger: {
-			info: vi.fn(),
-			warn: vi.fn(),
-			error: vi.fn(),
-			debug: vi.fn(),
-		},
-	};
-});
+			mockLogger: {
+				info: vi.fn(),
+				warn: vi.fn(),
+				error: vi.fn(),
+				debug: vi.fn(),
+			},
+			mockSentry: {
+				withScope: vi.fn((cb: (scope: unknown) => void) =>
+					cb({
+						setLevel: vi.fn(),
+						setTag: vi.fn(),
+						setFingerprint: vi.fn(),
+						setContext: vi.fn(),
+					}),
+				),
+				captureMessage: vi.fn(),
+			},
+		};
+	},
+);
 
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: mockStripe,
@@ -40,9 +75,11 @@ vi.mock("@/shared/lib/stripe", () => ({
 
 vi.mock("stripe", () => ({
 	default: class Stripe {
-		static errors = { StripeError: MockStripeError };
+		static errors = mockStripeErrorClasses;
 	},
 }));
+
+vi.mock("@sentry/nextjs", () => mockSentry);
 
 vi.mock("@/shared/lib/circuit-breaker", () => ({
 	stripeCircuitBreaker: {
@@ -289,7 +326,11 @@ describe("createStripeRefund", () => {
 			expect(result.refundId).toBe("re_same_amount");
 		});
 
-		it("should fallback to first refund when no better match", async () => {
+		it("should NOT adopt an unrelated refund of a different amount (no first-refund fallback)", async () => {
+			// Un refund d'un montant différent (ex: full refund Dashboard) ne doit
+			// jamais servir d'anchor : stripeRefundId @unique lèverait P2002 s'il
+			// est déjà lié, et la traçabilité serait fausse. On finalise sans
+			// anchor + alerte Sentry pour vérification manuelle.
 			mockStripe.refunds.create.mockRejectedValue(
 				makeStripeError("charge_already_refunded", "Charge already refunded"),
 			);
@@ -310,7 +351,11 @@ describe("createStripeRefund", () => {
 			});
 
 			expect(result.success).toBe(true);
-			expect(result.refundId).toBe("re_first");
+			expect(result.refundId).toBeUndefined();
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				expect.stringContaining("sans anchor"),
+				"warning",
+			);
 		});
 
 		it("should warn when matching via fallback (no metadata)", async () => {
@@ -348,6 +393,10 @@ describe("createStripeRefund", () => {
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				"Could not recover existing refund ID",
 				expect.any(Object),
+			);
+			expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+				expect.stringContaining("sans anchor"),
+				"warning",
 			);
 		});
 
@@ -387,7 +436,41 @@ describe("createStripeRefund", () => {
 			amount: 5000,
 		});
 
-		expect(result).toEqual({ success: false, error: "Card was declined" });
+		expect(result).toEqual({
+			success: false,
+			error: "Card was declined",
+			// Instance de base StripeError (aucune sous-classe) → "unknown".
+			errorKind: "unknown",
+			retryable: false,
+		});
+	});
+
+	it("should classify a connection error as transient/retryable", async () => {
+		const err = new mockStripeErrorClasses.StripeConnectionError("Connection reset");
+		mockStripe.refunds.create.mockRejectedValue(err);
+
+		const result = await createStripeRefund({
+			paymentIntentId: "pi_123",
+			amount: 5000,
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.errorKind).toBe("transient");
+		expect(result.retryable).toBe(true);
+	});
+
+	it("should classify an invalid request error as bug/non-retryable", async () => {
+		const err = new mockStripeErrorClasses.StripeInvalidRequestError("No such payment_intent");
+		mockStripe.refunds.create.mockRejectedValue(err);
+
+		const result = await createStripeRefund({
+			paymentIntentId: "pi_123",
+			amount: 5000,
+		});
+
+		expect(result.success).toBe(false);
+		expect(result.errorKind).toBe("bug");
+		expect(result.retryable).toBe(false);
 	});
 
 	it("should return generic error for non-Stripe errors", async () => {
@@ -401,6 +484,8 @@ describe("createStripeRefund", () => {
 		expect(result).toEqual({
 			success: false,
 			error: "Erreur lors de la création du remboursement Stripe",
+			errorKind: "unknown",
+			retryable: false,
 		});
 	});
 });

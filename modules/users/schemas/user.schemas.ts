@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { emailSchema } from "@/shared/schemas/email.schemas";
 import { AccountStatus, Role } from "@/app/generated/prisma/client";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -39,13 +40,13 @@ export const userFiltersSchema = z
 		createdAfter: z.coerce
 			.date()
 			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.refine((d) => d <= new Date(), "Date cannot be in the future")
 			.optional(),
 		createdBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN, "Date too old").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(DATE_LIMITS.FILTERS_MIN, "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.refine((d) => d <= new Date(), "Date cannot be in the future")
 			.optional(),
 		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN, "Date too old").optional(),
 		hasOrders: z.boolean().optional(),
@@ -126,7 +127,7 @@ export const updateProfileSchema = z.object({
 // ============================================================================
 
 export const changeEmailSchema = z.object({
-	newEmail: z.string().email("Adresse email invalide").toLowerCase().trim(),
+	newEmail: emailSchema,
 });
 
 // ============================================================================
@@ -155,12 +156,14 @@ export const deleteAccountSchema = z.object({
  * Pas de validation nécessaire côté input, juste un type pour la réponse
  */
 export const exportUserDataResponseSchema = z.object({
-	exportedAt: z.string().datetime(),
+	exportedAt: z.iso.datetime(),
 	profile: z.object({
 		name: z.string().nullable(),
 		email: z.email(),
-		createdAt: z.string().datetime(),
-		termsAcceptedAt: z.string().datetime().nullable(),
+		createdAt: z.iso.datetime(),
+		termsAcceptedAt: z.iso.datetime().nullable(),
+		termsVersion: z.string().nullable(),
+		marketingOptOutAt: z.iso.datetime().nullable(),
 	}),
 	addresses: z.array(
 		z.object({
@@ -178,7 +181,7 @@ export const exportUserDataResponseSchema = z.object({
 	orders: z.array(
 		z.object({
 			orderNumber: z.string(),
-			date: z.string().datetime(),
+			date: z.iso.datetime(),
 			status: z.string(),
 			paymentStatus: z.string(),
 			total: z.number(),
@@ -207,8 +210,8 @@ export const exportUserDataResponseSchema = z.object({
 					currency: z.string(),
 					reason: z.string(),
 					status: z.string(),
-					requestedAt: z.string().datetime(),
-					processedAt: z.string().datetime().nullable(),
+					requestedAt: z.iso.datetime(),
+					processedAt: z.iso.datetime().nullable(),
 				}),
 			),
 		}),
@@ -216,14 +219,14 @@ export const exportUserDataResponseSchema = z.object({
 	wishlist: z.array(
 		z.object({
 			productTitle: z.string(),
-			addedAt: z.string().datetime(),
+			addedAt: z.iso.datetime(),
 		}),
 	),
 	discountUsages: z.array(
 		z.object({
 			code: z.string(),
 			amountApplied: z.number(),
-			usedAt: z.string().datetime(),
+			usedAt: z.iso.datetime(),
 		}),
 	),
 	reviews: z.array(
@@ -232,16 +235,16 @@ export const exportUserDataResponseSchema = z.object({
 			rating: z.number(),
 			title: z.string().nullable(),
 			content: z.string(),
-			createdAt: z.string().datetime(),
-			updatedAt: z.string().datetime(),
+			createdAt: z.iso.datetime(),
+			updatedAt: z.iso.datetime(),
 		}),
 	),
 	sessions: z.array(
 		z.object({
 			ipAddress: z.string().nullable(),
 			userAgent: z.string().nullable(),
-			createdAt: z.string().datetime(),
-			expiresAt: z.string().datetime(),
+			createdAt: z.iso.datetime(),
+			expiresAt: z.iso.datetime(),
 		}),
 	),
 });

@@ -27,6 +27,8 @@ function buildUser(overrides: Record<string, unknown> = {}) {
 		email: "alice@example.com",
 		createdAt: BASE_DATE,
 		termsAcceptedAt: LATER_DATE,
+		termsVersion: "2026-07-06",
+		marketingOptOutAt: null,
 		addresses: [],
 		orders: [],
 		wishlist: null,
@@ -109,7 +111,17 @@ describe("buildUserDataExport", () => {
 			email: "alice@example.com",
 			createdAt: BASE_DATE.toISOString(),
 			termsAcceptedAt: LATER_DATE.toISOString(),
+			termsVersion: "2026-07-06",
+			marketingOptOutAt: null,
 		});
+	});
+
+	it("should expose marketingOptOutAt as ISO string when the user opted out (RGPD-AUDIT P1-1)", async () => {
+		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ marketingOptOutAt: LATER_DATE }));
+
+		const result = await buildUserDataExport("user_1");
+
+		expect(result!.profile.marketingOptOutAt).toBe(LATER_DATE.toISOString());
 	});
 
 	it("should set termsAcceptedAt to null when not set", async () => {

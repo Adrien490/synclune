@@ -27,6 +27,21 @@ describe("addressSchema", () => {
 		}
 	});
 
+	it("should default country to FR when explicitly undefined", () => {
+		const result = addressSchema.safeParse({ ...validAddress, country: undefined });
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.country).toBe("FR");
+		}
+	});
+
+	// @regression address-country-hidden-input — .default() ne couvre PAS null :
+	// les actions doivent mapper safeFormGet(...) ?? undefined, jamais passer null.
+	it("should reject null country (default only applies to undefined)", () => {
+		const result = addressSchema.safeParse({ ...validAddress, country: null });
+		expect(result.success).toBe(false);
+	});
+
 	it("should accept an address with optional address2", () => {
 		const result = addressSchema.safeParse({
 			...validAddress,

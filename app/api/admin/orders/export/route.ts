@@ -12,7 +12,15 @@ import { prisma } from "@/shared/lib/prisma";
 import { OrderAction, HistorySource } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 
-export async function GET(request: Request) {
+/**
+ * POST (et non GET) : la route écrit une trace d'audit `BULK_EXPORT` (Art. 30
+ * RGPD) avant de servir le CSV. Un GET est préfetchable et déclenchable
+ * cross-origin (`<img src>`, lien préchargé) tant que le cookie admin est
+ * présent — l'attaquant ne lit pas la réponse mais pollue le registre d'audit
+ * et la DB. Le cookie de session étant SameSite=Lax, un POST cross-site
+ * n'emporte pas la session.
+ */
+export async function POST(request: Request) {
 	const admin = await requireAdminApiRoute();
 	if ("response" in admin) return admin.response;
 

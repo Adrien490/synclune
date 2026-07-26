@@ -1,10 +1,14 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useChangePassword } from "@/modules/auth/hooks/use-change-password";
@@ -26,8 +30,26 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 		},
 	});
 
+	// Les VALIDATION_ERROR sont exclues de l'alerte ci-dessous ET du toast
+	// (`createToastCallbacks`) : sans ce relais, elles seraient muettes.
+	const serverErrors = useServerFieldErrors({ state });
+
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "ChangePasswordForm",
+	});
+
 	return (
-		<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+		<form ref={formRef} action={action} className="space-y-6" onSubmit={handleGatedSubmit}>
+			<FormServerErrorAlert errors={serverErrors} />
+
 			{/* Messages */}
 			{state?.message && state.status !== ActionStatus.VALIDATION_ERROR && (
 				<>

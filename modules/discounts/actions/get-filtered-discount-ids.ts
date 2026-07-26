@@ -9,12 +9,6 @@ import { BULK_DISCOUNT_ACTION_LIMIT } from "../constants/discount.constants";
 import { buildDiscountWhereClause } from "../services/discount-query-builder";
 import type { GetDiscountsParams } from "../types/discount.types";
 
-export interface FilteredDiscountIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  */

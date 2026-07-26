@@ -10,9 +10,11 @@ import {
 	ColorFormSubmit,
 } from "@/modules/colors/components/admin/color-form-frame";
 import { useColorForm } from "@/modules/colors/hooks/use-color-form";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { pushRecentColor } from "@/shared/hooks/use-recent-colors";
@@ -21,6 +23,7 @@ import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 export interface EditableColor {
 	id: string;
@@ -61,7 +64,7 @@ export function EditColorForm({
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const [, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateColor,
 
@@ -84,6 +87,10 @@ export function EditColorForm({
 		),
 		undefined,
 	);
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
@@ -111,17 +118,23 @@ export function EditColorForm({
 				event.preventDefault();
 				if (isPending || form.state.isSubmitting) return;
 				const formData = new FormData(event.currentTarget);
-				void form.handleSubmit().then(() => {
-					if (form.state.isValid) {
-						formData.set("isActive", String(form.getFieldValue("isActive")));
-						action(formData);
-					} else {
-						requestAnimationFrame(() => focusFirstInvalid());
-					}
-				});
+				runAfterValidation(
+					form.handleSubmit(),
+					() => {
+						if (form.state.isValid) {
+							formData.set("isActive", String(form.getFieldValue("isActive")));
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					},
+					"EditColorForm",
+				);
 			}}
 		>
 			<input type="hidden" name="id" value={color.id} />
+
+			<FormServerErrorAlert errors={serverErrors} />
 
 			<ColorFormErrorSummary form={form} />
 

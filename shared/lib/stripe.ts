@@ -6,7 +6,7 @@ import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise"
 
 /**
  * Instance Stripe centralisée pour toute l'application
- * - apiVersion épinglée explicitement ("2026-05-27.dahlia") pour neutraliser les breaking changes silencieux
+ * - apiVersion épinglée explicitement ("2026-06-24.dahlia") pour neutraliser les breaking changes silencieux
  * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
  * - timeout: 10s
  *
@@ -14,7 +14,7 @@ import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise"
  * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-05-27.dahlia",
+	apiVersion: "2026-06-24.dahlia",
 	maxNetworkRetries: 2,
 	timeout: 10_000,
 });
@@ -61,7 +61,7 @@ export function getStripeClient(): Stripe | null {
 		return null;
 	}
 	_stripeClient = new Stripe(secretKey, {
-		apiVersion: "2026-05-27.dahlia",
+		apiVersion: "2026-06-24.dahlia",
 		maxNetworkRetries: 2,
 		timeout: 10_000,
 	});

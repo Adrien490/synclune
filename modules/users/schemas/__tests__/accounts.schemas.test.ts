@@ -5,7 +5,7 @@ import { z } from "zod";
 // Hoisted mocks — must be defined before any module under test is imported.
 // ---------------------------------------------------------------------------
 
-vi.mock("@/shared/constants/pagination", () => ({
+vi.mock("@/shared/schemas/pagination-schema", () => ({
 	cursorSchema: z.string().optional(),
 	directionSchema: z.enum(["forward", "backward"]).optional(),
 }));

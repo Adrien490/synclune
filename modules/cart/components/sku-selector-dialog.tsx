@@ -15,7 +15,9 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
 import { useAppForm } from "@/shared/components/forms";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
@@ -53,10 +55,14 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 		})) ?? [];
 
 	const { isOpen, data, close } = useDialog<SkuSelectorDialogData>(SKU_SELECTOR_DIALOG_ID);
-	const { action, isPending } = useAddToCart({
+	const { state, action, isPending } = useAddToCart({
 		openSheetOnSuccess: true,
 		onSuccess: close,
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus de `addToCartSchema` serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 	const shouldReduceMotion = useReducedMotion();
 
 	const form = useAppForm({
@@ -229,6 +235,8 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						className="flex min-h-0 flex-1 flex-col"
 						data-pending={isPending ? "" : undefined}
 					>
+						<FormServerErrorAlert errors={serverErrors} className="mb-4" />
+
 						{/* Variant fields subscribe -- isolated from quantity changes */}
 						<form.Subscribe selector={(state) => state.values}>
 							{(values) => (

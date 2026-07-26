@@ -13,6 +13,7 @@ const {
 	mockSuccess,
 	mockError,
 	mockUnauthorized,
+	mockHandleActionError,
 	mockPrismaUserUpdate,
 	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
@@ -27,6 +28,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
+	mockHandleActionError: vi.fn(),
 	mockPrismaUserUpdate: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 }));
@@ -48,6 +50,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	success: mockSuccess,
 	error: mockError,
 	unauthorized: mockUnauthorized,
+	handleActionError: mockHandleActionError,
 }));
 vi.mock("../schemas/auth.schemas", () => ({ signUpEmailSchema: {} }));
 vi.mock("@/shared/lib/prisma", () => ({
@@ -97,6 +100,10 @@ describe("signUpEmail", () => {
 		mockUnauthorized.mockImplementation((msg: string) => ({
 			status: ActionStatus.UNAUTHORIZED,
 			message: msg,
+		}));
+		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+			status: ActionStatus.ERROR,
+			message: fallback,
 		}));
 		mockPrismaUserUpdate.mockResolvedValue({});
 	});

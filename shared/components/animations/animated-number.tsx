@@ -85,19 +85,22 @@ export function AnimatedNumber({
 		return () => clearTimeout(timer);
 	}, [isInView, delay, value, shouldReduceMotion]);
 
-	// Detecter la fin de l'animation
+	// Detecter la fin de l'animation.
+	// Abonnement inconditionnel + `return unsubscribe` : aucun chemin de sortie ne
+	// peut laisser l'abonnement en vie (sous `prefers-reduced-motion` le spring
+	// n'est jamais lancé, il n'émet donc aucun "change" — le garde-fou dans le
+	// callback ne fait que l'expliciter).
 	useEffect(() => {
-		if (shouldReduceMotion) return;
-
 		const targetValue = direction === "down" ? startValue : value;
 		const unsubscribe = spring.on("change", (current) => {
+			if (shouldReduceMotion) return;
 			// Considerer l'animation terminee quand on est tres proche de la cible
 			if (Math.abs(current - targetValue) < 0.01) {
 				onComplete();
 			}
 		});
 
-		return () => unsubscribe();
+		return unsubscribe;
 	}, [spring, value, startValue, direction, shouldReduceMotion]);
 
 	// Si reduced motion, afficher directement la valeur finale

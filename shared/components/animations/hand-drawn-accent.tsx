@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 
-export type HandDrawnVariant = "underline" | "circle" | "star" | "heart" | "arrow";
+type HandDrawnVariant = "underline" | "circle" | "star" | "heart" | "arrow";
 
 /** Opacité de remplissage pour les variants pleins (star, heart) après dessin du contour. */
 const FILLED_VARIANT_OPACITY = 0.15;
@@ -139,9 +139,13 @@ export function HandDrawnAccent({
 
 /**
  * Composant raccourci pour souligner un titre.
+ *
+ * Le défaut hérite de l'accent de section (`--section-accent`, posé par
+ * `data-accent` — cf. app/styles/section-accents.css) et retombe sur le
+ * rose signature hors section accentuée.
  */
 export function HandDrawnUnderline({
-	color = "var(--primary)",
+	color = "var(--section-accent, var(--primary))",
 	className,
 	...props
 }: Omit<HandDrawnAccentProps, "variant">) {

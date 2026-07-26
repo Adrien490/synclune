@@ -1,7 +1,10 @@
 "use server";
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { requireActiveAccountIfAuthenticated } from "@/modules/auth/lib/require-auth";
+import {
+	isVerifiedAdmin,
+	requireActiveAccountIfAuthenticated,
+} from "@/modules/auth/lib/require-auth";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -15,13 +18,9 @@ import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-cu
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { headers } from "next/headers";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
+import { initializePaymentSchema } from "../schemas/checkout.schema";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
-
-interface InitializePaymentParams {
-	cartItems: Array<{ skuId: string; quantity: number; priceAtAdd: number }>;
-	email?: string;
-}
 
 interface InitializePaymentResult {
 	success: true;
@@ -38,16 +37,30 @@ interface InitializePaymentError {
 }
 
 export async function initializePayment(
-	params: InitializePaymentParams,
+	params: unknown,
 ): Promise<InitializePaymentResult | InitializePaymentError> {
 	return Sentry.startSpan({ name: "action.initializePayment", op: "checkout" }, async (span) => {
 		try {
+			// Validation de forme en tête — action publique appelée au montage de la
+			// page paiement. safeParse direct (pas validateInput) : retour custom
+			// InitializePaymentResult, pas un ActionState. L'email reste optionnel
+			// (invité pas encore saisi) — la garde « email requis invité » vit dans
+			// confirmCheckout.
+			const parsed = initializePaymentSchema.safeParse(params);
+			if (!parsed.success) {
+				return {
+					success: false as const,
+					error: parsed.error.issues[0]?.message ?? "Données invalides",
+				};
+			}
+			const input = parsed.data;
+
 			const session = await getSession();
 			const userId = session?.user.id ?? null;
 			const userEmail = session?.user.email ?? null;
 
 			span.setAttribute("checkout.is_guest", !userId);
-			span.setAttribute("checkout.item_count", params.cartItems.length);
+			span.setAttribute("checkout.item_count", input.cartItems.length);
 
 			// In-memory rate limiting
 			const headersList = await headers();
@@ -55,8 +68,8 @@ export async function initializePayment(
 			const ipAddress = await getClientIp(headersList);
 			const rateLimitId = userId
 				? `user:${userId}`
-				: params.email && ipAddress
-					? `guest:${params.email.toLowerCase().trim()}:${ipAddress}`
+				: input.email && ipAddress
+					? `guest:${input.email}:${ipAddress}`
 					: getRateLimitIdentifier(null, sessionId ?? null, ipAddress);
 
 			const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION, ipAddress);
@@ -76,8 +89,9 @@ export async function initializePayment(
 				return { success: false, error: accountGate.error.message };
 			}
 
-			// Block payment if store is closed (admin bypass for live checkout testing)
-			if (session?.user.role !== "ADMIN") {
+			// Block payment if store is closed (admin bypass for live checkout
+			// testing — rôle re-vérifié en DB, jamais le cookie seul)
+			if (!(await isVerifiedAdmin(session))) {
 				const storeCheck = await assertStoreOpen();
 				if (storeCheck) {
 					return { success: false, error: storeCheck.message };
@@ -86,7 +100,7 @@ export async function initializePayment(
 
 			// Validate cart items
 			const skuDetailsResults = await Promise.all(
-				params.cartItems.map((item) => getSkuDetails({ skuId: item.skuId })),
+				input.cartItems.map((item) => getSkuDetails({ skuId: item.skuId })),
 			);
 
 			const failedSkus = skuDetailsResults.filter((r) => !r.success);
@@ -95,7 +109,7 @@ export async function initializePayment(
 			}
 
 			// Verify prices
-			for (const cartItem of params.cartItems) {
+			for (const cartItem of input.cartItems) {
 				const skuResult = skuDetailsResults.find(
 					(r) => r.success && r.data?.sku.id === cartItem.skuId,
 				);
@@ -109,7 +123,7 @@ export async function initializePayment(
 			}
 
 			// Calculate subtotal
-			const subtotal = params.cartItems.reduce(
+			const subtotal = input.cartItems.reduce(
 				(sum, item) => sum + item.priceAtAdd * item.quantity,
 				0,
 			);
@@ -124,7 +138,7 @@ export async function initializePayment(
 			const total = subtotal + shipping;
 
 			// Get or create Stripe customer
-			const finalEmail = params.email ?? userEmail;
+			const finalEmail = input.email ?? userEmail;
 			let stripeCustomerId: string | null = null;
 
 			if (userId) {
@@ -149,7 +163,7 @@ export async function initializePayment(
 			}
 
 			// Generate a stable cart hash for idempotency
-			const cartHash = params.cartItems
+			const cartHash = input.cartItems
 				.map((i) => `${i.skuId}:${i.quantity}:${i.priceAtAdd}`)
 				.sort()
 				.join("|");
@@ -179,21 +193,41 @@ export async function initializePayment(
 			// restreint le PI à la carte au niveau serveur — Apple Pay / Google Pay
 			// restent disponibles (wallets adossés au type `card`), Link et les
 			// méthodes à redirection (SEPA debit, Klarna, Bancontact) sont exclus.
-			const paymentIntent = await withStripeCircuitBreaker(() =>
-				stripe.paymentIntents.create(
-					{
-						amount: total,
-						currency: DEFAULT_CURRENCY.toLowerCase(),
-						payment_method_types: ["card"],
-						...(stripeCustomerId && { customer: stripeCustomerId }),
-						metadata: {
-							userId: userId ?? "guest",
-							...(sessionId && { guestSessionId: sessionId }),
+			const createPaymentIntent = (key: string) =>
+				withStripeCircuitBreaker(() =>
+					stripe.paymentIntents.create(
+						{
+							amount: total,
+							currency: DEFAULT_CURRENCY.toLowerCase(),
+							payment_method_types: ["card"],
+							...(stripeCustomerId && { customer: stripeCustomerId }),
+							metadata: {
+								userId: userId ?? "guest",
+								...(sessionId && { guestSessionId: sessionId }),
+							},
 						},
-					},
-					{ idempotencyKey },
-				),
-			);
+						{ idempotencyKey: key },
+					),
+				);
+
+			let paymentIntent = await createPaymentIntent(idempotencyKey);
+
+			// CHECKOUT-REPLAY-001 : une clé d'idempotence Stripe rejoue la réponse
+			// d'origine pendant 24 h. Si le PI correspondant a été annulé entre-temps
+			// (`cancelOrphanPaymentIntent`, déclenché quand un re-init post-inactivité
+			// produit un PI différent), revenir au panier initial rejouait un
+			// `client_secret` MORT : Elements monte, la confirmation échoue, et
+			// « Réessayer » rejoue la même clé → impasse jusqu'à expiration. On
+			// détecte l'état terminal et on repart sur une clé salée (déterministe :
+			// deux montages concurrents convergent vers le même PI).
+			if (paymentIntent.status === "canceled" || paymentIntent.status === "succeeded") {
+				logger.warn("Idempotent replay returned a terminal PaymentIntent — creating a fresh one", {
+					service: "checkout",
+					paymentIntentId: paymentIntent.id,
+					paymentIntentStatus: paymentIntent.status,
+				});
+				paymentIntent = await createPaymentIntent(`${idempotencyKey}-r2`);
+			}
 
 			if (!paymentIntent.client_secret) {
 				throw new Error("Payment Intent created without client_secret");

@@ -86,6 +86,7 @@ vi.mock("../../constants/product-type.constants", () => ({
 				products: {
 					where: {
 						status: "PUBLIC",
+						deletedAt: null,
 						skus: { some: { isActive: true } },
 					},
 				},
@@ -347,6 +348,7 @@ describe("getProductTypes", () => {
 							products: {
 								where: {
 									status: "PUBLIC",
+									deletedAt: null,
 									skus: { some: { isActive: true } },
 								},
 							},

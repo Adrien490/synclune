@@ -5,6 +5,7 @@ const {
 	mockDeleteUploadThingFileFromUrl,
 	mockDeleteUploadThingFilesFromUrls,
 	mockStripeCustomersDel,
+	mockEnsureUserCreditNotesArchived,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findMany: vi.fn() },
@@ -15,6 +16,7 @@ const {
 	mockDeleteUploadThingFileFromUrl: vi.fn(),
 	mockDeleteUploadThingFilesFromUrls: vi.fn(),
 	mockStripeCustomersDel: vi.fn(),
+	mockEnsureUserCreditNotesArchived: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -45,6 +47,12 @@ vi.mock("@/modules/reviews/constants/cache", () => ({
 	},
 }));
 
+// EINV-CREDIT-020 : garde pré-anonymisation — mock module (la chaîne réelle
+// tire UploadThing instancié au chargement).
+vi.mock("@/modules/orders/services/ensure-user-credit-notes-archived.service", () => ({
+	ensureUserCreditNotesArchived: mockEnsureUserCreditNotesArchived,
+}));
+
 import { processAccountDeletions } from "../process-account-deletions.service";
 import { RETENTION } from "@/modules/cron/constants/limits";
 
@@ -55,6 +63,12 @@ describe("processAccountDeletions", () => {
 		vi.setSystemTime(new Date("2026-02-09T05:00:00Z"));
 		// REVIEW-AUDIT-002 : le cron collecte les productIds des avis avant la tx.
 		mockPrisma.productReview.findMany.mockResolvedValue([]);
+		// EINV-CREDIT-020 : avoirs archivés par défaut — la garde laisse passer.
+		mockEnsureUserCreditNotesArchived.mockResolvedValue({
+			ok: true,
+			orderFailures: [],
+			refundFailures: [],
+		});
 	});
 
 	it("should return zero counts when no accounts are pending deletion", async () => {
@@ -339,6 +353,52 @@ describe("processAccountDeletions", () => {
 		const result = await processAccountDeletions();
 
 		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
+	});
+
+	it("EINV-CREDIT-020 : skips anonymization (no transaction) when credit notes cannot be archived", async () => {
+		const mockUser = {
+			id: "user-1",
+			email: "user1@test.com",
+			name: "User One",
+			image: null,
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockEnsureUserCreditNotesArchived.mockResolvedValue({
+			ok: false,
+			orderFailures: ["order-1"],
+			refundFailures: [],
+		});
+
+		const result = await processAccountDeletions();
+
+		// Compte reporté au prochain run quotidien — le scrub n'a PAS eu lieu.
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(result).toMatchObject({ processed: 0, errors: 1 });
+	});
+
+	it("EINV-CREDIT-020 : the credit-note guard runs BEFORE the anonymization transaction", async () => {
+		const mockUser = {
+			id: "user-1",
+			email: "user1@test.com",
+			name: "User One",
+			image: null,
+		};
+		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		const callOrder: string[] = [];
+		mockEnsureUserCreditNotesArchived.mockImplementation(async () => {
+			callOrder.push("guard");
+			return { ok: true, orderFailures: [], refundFailures: [] };
+		});
+		mockPrisma.$transaction.mockImplementation(async () => {
+			callOrder.push("transaction");
+		});
+
+		await processAccountDeletions();
+
+		expect(mockEnsureUserCreditNotesArchived).toHaveBeenCalledWith("user-1");
+		expect(callOrder).toEqual(["guard", "transaction"]);
 	});
 
 	it("should count errors when transaction fails", async () => {

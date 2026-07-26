@@ -55,7 +55,7 @@ export function AnomaliesSection({ anomalies }: AnomaliesSectionProps) {
 					Le cron <code className="bg-destructive/10 rounded px-1 text-xs">reconcile-invoices</code>{" "}
 					(daily 02:00) rejoue automatiquement. Bouton "Relancer" pour intervention manuelle
 					immédiate. Voir{" "}
-					<code className="bg-destructive/10 rounded px-1 text-xs">docs/RUNBOOK-INVOICING.md</code>.
+					<code className="bg-destructive/10 rounded px-1 text-xs">docs/RUNBOOK.md</code>.
 				</AlertDescription>
 			</Alert>
 			<div className="border-border rounded-md border">

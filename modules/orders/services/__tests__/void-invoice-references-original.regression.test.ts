@@ -63,6 +63,9 @@ vi.mock("../../utils/order-audit", () => ({
 	createOrderAuditTx: mockCreateOrderAuditTx,
 	createOrderAudit: mockCreateOrderAudit,
 }));
+vi.mock("../ensure-credit-note-archived.service", () => ({
+	ensureOrderCreditNoteArchived: vi.fn().mockResolvedValue("archived"),
+}));
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminCreditNoteFailedAlert: mockSendAdminCreditNoteFailedAlert,
 	sendAdminSequenceOverflowAlert: mockSendAdminSequenceOverflowAlert,

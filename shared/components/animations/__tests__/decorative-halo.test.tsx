@@ -49,10 +49,10 @@ describe("DecorativeHalo", () => {
 		expect(classes).toContain("size-12");
 	});
 
-	it('variant="rose" applies bg-[color:var(--rose-300)] class', () => {
+	it('variant="rose" applies bg-primary (les anciens --rose-300 étaient indéfinis)', () => {
 		const { container } = render(<DecorativeHalo variant="rose" />);
 		const classes = (container.firstChild as HTMLElement).className;
-		expect(classes).toContain("bg-[color:var(--rose-300)]");
+		expect(classes).toContain("bg-primary");
 	});
 
 	it('position="top-right" applies -top-4 -right-4 class', () => {

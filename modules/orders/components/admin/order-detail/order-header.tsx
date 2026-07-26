@@ -134,13 +134,13 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			success: "Facture téléchargée",
 			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
 		});
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
 		try {
 			await task;
 		} catch {
 			// Surfaced by toast.promise
-		} finally {
-			setIsDownloadingInvoice(false);
 		}
+		setIsDownloadingInvoice(false);
 	}
 
 	// EINV-UI-101 : avoir comptable téléchargeable (Art. 272-I CGI) quand la
@@ -185,13 +185,13 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 			success: "Avoir téléchargé",
 			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
 		});
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
 		try {
 			await task;
 		} catch {
 			// Surfaced by toast.promise
-		} finally {
-			setIsDownloadingCreditNote(false);
 		}
+		setIsDownloadingCreditNote(false);
 	}
 
 	const sections: ActionMenuSection[] = baseSections

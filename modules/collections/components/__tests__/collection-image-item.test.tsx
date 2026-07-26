@@ -12,6 +12,7 @@ vi.mock("next/image", () => ({
 		fill,
 		className,
 		sizes,
+		preload,
 		loading,
 		fetchPriority,
 		placeholder,
@@ -23,6 +24,7 @@ vi.mock("next/image", () => ({
 		fill?: boolean;
 		className?: string;
 		sizes?: string;
+		preload?: boolean;
 		loading?: string;
 		fetchPriority?: string;
 		placeholder?: string;
@@ -36,6 +38,7 @@ vi.mock("next/image", () => ({
 			data-fill={fill ? "true" : undefined}
 			className={className}
 			data-sizes={sizes}
+			data-preload={preload ? "true" : "false"}
 			data-loading={loading}
 			data-fetch-priority={fetchPriority}
 			data-placeholder={placeholder}
@@ -50,8 +53,11 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+// Doit refléter le palier réel (IMAGE_QUALITY.STANDARD) : un littéral figé ici
+// laisserait passer une valeur absente de `images.qualities` (→ 400 sur
+// /_next/image en production).
 vi.mock("@/modules/collections/constants/image-sizes.constants", () => ({
-	COLLECTION_IMAGE_QUALITY: 85,
+	COLLECTION_IMAGE_QUALITY: 80,
 }));
 
 // ============================================================================
@@ -113,40 +119,47 @@ describe("CollectionImageItem", () => {
 		expect(screen.getByAltText("Bijou artisanal 3 de la collection Colliers")).toBeInTheDocument();
 	});
 
-	it("uses primary quality (85) for the first image (index=0)", () => {
+	it("uses the STANDARD tier (80) for the first image (index=0)", () => {
 		renderItem({ index: 0 });
-		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "85");
+		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "80");
 	});
 
-	it("uses secondary quality (75) for non-primary images (index>0)", () => {
+	it("uses the THUMBNAIL tier (65) for non-primary images (index>0)", () => {
 		renderItem({ index: 1 });
-		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "75");
+		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "65");
 	});
 
-	it("sets loading=eager + fetchPriority=high for the LCP candidate's main image (above-fold + isLcpCandidate + index 0)", () => {
+	// `preload` et `fetchPriority="high"` sont une PAIRE : `fetchPriority` seul
+	// n'emet aucun <link rel="preload">, et `preload` seul precharge en priorite
+	// basse (Next 16 passe fetchPriority verbatim, il ne le derive pas).
+	it("sets preload + loading=eager + fetchPriority=high for the LCP candidate's main image (above-fold + isLcpCandidate + index 0)", () => {
 		renderItem({ isAboveFold: true, isLcpCandidate: true, index: 0 });
 		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-preload", "true");
 		expect(img).toHaveAttribute("data-loading", "eager");
 		expect(img).toHaveAttribute("data-fetch-priority", "high");
 	});
 
-	it("keeps fetchPriority=auto when above-fold but NOT the LCP candidate (avoids bandwidth contention)", () => {
+	it("keeps preload=false + fetchPriority=auto when above-fold but NOT the LCP candidate (avoids bandwidth contention)", () => {
 		renderItem({ isAboveFold: true, isLcpCandidate: false, index: 0 });
 		const img = screen.getByTestId("collection-image");
 		// Still eager-loaded above the fold, but not high priority.
+		expect(img).toHaveAttribute("data-preload", "false");
 		expect(img).toHaveAttribute("data-loading", "eager");
 		expect(img).toHaveAttribute("data-fetch-priority", "auto");
 	});
 
-	it("keeps fetchPriority=auto for a secondary image (index > 0) even on the LCP candidate", () => {
+	it("keeps preload=false + fetchPriority=auto for a secondary image (index > 0) even on the LCP candidate", () => {
 		renderItem({ isAboveFold: true, isLcpCandidate: true, index: 1 });
 		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-preload", "false");
 		expect(img).toHaveAttribute("data-fetch-priority", "auto");
 	});
 
-	it("sets loading=lazy + fetchPriority=auto when isAboveFold is false", () => {
+	it("sets preload=false + loading=lazy + fetchPriority=auto when isAboveFold is false", () => {
 		renderItem({ isAboveFold: false });
 		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-preload", "false");
 		expect(img).toHaveAttribute("data-loading", "lazy");
 		expect(img).toHaveAttribute("data-fetch-priority", "auto");
 	});

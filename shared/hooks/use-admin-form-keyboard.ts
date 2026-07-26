@@ -6,6 +6,24 @@ import { useRouter } from "next/navigation";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
+/**
+ * Overlays qui consomment déjà Échap : le raccourci « retour à la liste » doit les
+ * ignorer, sinon fermer un Select ou un menu déclenche aussi le `confirm` des
+ * modifications non enregistrées PUIS la navigation. `select-content` et
+ * `dropdown-menu-content` manquaient — un Select dans un formulaire admin (type de
+ * remise, transporteur, pays…) faisait donc quitter la page.
+ *
+ * SSOT : à étendre ici, jamais recopiée dans un formulaire.
+ */
+export const OVERLAY_SELECTOR = [
+	"[data-slot='dialog-content']",
+	"[data-slot='sheet-content']",
+	"[data-slot='popover-content']",
+	"[data-slot='select-content']",
+	"[data-slot='dropdown-menu-content']",
+	"[role='dialog']",
+].join(",");
+
 interface UseAdminFormKeyboardOptions {
 	/** Ref vers le `<form>` à soumettre via ⌘S/Ctrl+S. */
 	formRef: React.RefObject<HTMLFormElement | null>;
@@ -13,8 +31,11 @@ interface UseAdminFormKeyboardOptions {
 	isPending: boolean;
 	/** Sur mobile, les raccourcis clavier sont désactivés. */
 	isMobile: boolean;
-	/** Route de la liste à atteindre via Échap. */
-	listPath: string;
+	/**
+	 * Route atteinte par Échap. Omettre (ou passer `undefined`) désactive le
+	 * raccourci — cas des formulaires en dialog, où Échap ferme la modale.
+	 */
+	listPath?: string;
 	/** Libère la garde `useUnsavedChanges` avant la navigation Échap. */
 	allowNavigation: () => void;
 	/** Lecture live de l'état dirty (pour la confirmation Échap). */
@@ -24,6 +45,11 @@ interface UseAdminFormKeyboardOptions {
 	 * valide. Omettre pour laisser le handler submit gérer la validation.
 	 */
 	getCanSubmit?: () => boolean;
+	/**
+	 * Occupation supplémentaire bloquant ⌘S (téléversement média en vol…). Distinct
+	 * de `isPending`, qui ne couvre que la Server Action.
+	 */
+	extraBusy?: boolean;
 }
 
 /**
@@ -44,6 +70,7 @@ export function useAdminFormKeyboard({
 	allowNavigation,
 	getIsDirty,
 	getCanSubmit,
+	extraBusy = false,
 }: UseAdminFormKeyboardOptions) {
 	const router = useRouter();
 	const haptic = useHaptic();
@@ -60,26 +87,22 @@ export function useAdminFormKeyboard({
 			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
 			if (!isSaveShortcut) return;
 			event.preventDefault();
-			if (isPending) return;
+			if (isPending || extraBusy) return;
 			if (liveRef.current.getCanSubmit && !liveRef.current.getCanSubmit()) return;
 			haptic("medium");
 			formRef.current?.requestSubmit();
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, formRef, haptic]);
+	}, [isMobile, isPending, extraBusy, formRef, haptic]);
 
 	// Échap → retour liste (confirm si dirty)
 	useEffect(() => {
-		if (isMobile) return;
+		if (isMobile || !listPath) return;
 		const handler = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || isPending) return;
 			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
-				)
-			) {
+			if (target?.closest(OVERLAY_SELECTOR)) {
 				return;
 			}
 			if (

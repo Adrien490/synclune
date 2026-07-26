@@ -311,7 +311,7 @@ describe("createDiscount", () => {
 
 		await createDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-new");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-new", "PROMO20");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-new");
 	});

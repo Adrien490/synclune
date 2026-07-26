@@ -74,6 +74,22 @@ describe("buildSalesTransaction", () => {
 		expect(result.payloadSnapshot.paymentMethod).toBe("CARD");
 	});
 
+	it("operationCategory est exposé en champ top-level (GOODS défaut), PAS dans le snapshot figé", () => {
+		// Décision verrouillée (Art. L102 B) : le snapshot reste minimal et figé ;
+		// operationCategory vit en colonne top-level + sera enrichie côté transmission
+		// à l'activation (cf. derive-operation-category.regression + ereporting-vat-breakdown).
+		const dflt = buildSalesTransaction({ order: makeSalesOrder() });
+		expect(dflt.operationCategory).toBe("GOODS");
+		expect(Object.keys(dflt.payloadSnapshot)).not.toContain("operationCategory");
+
+		const services = buildSalesTransaction({
+			order: makeSalesOrder(),
+			operationCategory: "SERVICES",
+		});
+		expect(services.operationCategory).toBe("SERVICES");
+		expect(Object.keys(services.payloadSnapshot)).not.toContain("operationCategory");
+	});
+
 	it("recomputes amountExclTax from total - taxAmount (regime reel preparation)", () => {
 		const result = buildSalesTransaction({
 			order: makeSalesOrder({ total: 12000, taxAmount: 2000 }),

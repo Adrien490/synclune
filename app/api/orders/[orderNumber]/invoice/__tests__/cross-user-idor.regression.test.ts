@@ -136,6 +136,12 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 	};
 }
 
+// Tokens au format réel (32 hex) : le schéma F4 rejette en 400 tout token
+// malformé AVANT le check HMAC — le 404 anti-énumération ne concerne que les
+// tokens bien formés dont la signature ne valide pas.
+const VALID_TOKEN = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+const TAMPERED_TOKEN = "ffffffffffffffffffffffffffffffff";
+
 async function callRoute(orderNumber: string, token?: string) {
 	const url = token
 		? `https://example.com/api/orders/${orderNumber}/invoice?token=${token}`
@@ -189,7 +195,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockGetSession.mockResolvedValue(null);
 		mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "tampered-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", TAMPERED_TOKEN);
 
 		expect(response.status).toBe(404);
 		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
@@ -211,7 +217,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
 
 		expect(response.status).toBe(200);
 	});
@@ -245,7 +251,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		// isInvoiceOwnerErased : le compte propriétaire a été anonymisé.
 		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ANONYMIZED" });
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
 
 		expect(response.status).toBe(410);
 		expect(mockCreateOrderAudit).not.toHaveBeenCalled();
@@ -257,7 +263,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
 		mockPrisma.user.findUnique.mockResolvedValue(null);
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
 
 		expect(response.status).toBe(410);
 	});
@@ -268,7 +274,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: OWNER_USER_ID }));
 		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
 
 		expect(response.status).toBe(200);
 	});
@@ -278,7 +284,7 @@ describe("EINV-SEC-012 — Cross-user IDOR regression on invoice route", () => {
 		mockVerifyInvoiceAccessToken.mockReturnValue(true);
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrderRow({ userId: null }));
 
-		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", "valid-token");
+		const response = await callRoute("CMD-1700000000000-AAAAAAAAAAAA", VALID_TOKEN);
 
 		expect(response.status).toBe(200);
 		// Pas de compte à effacer pour un guest → aucune lecture user.

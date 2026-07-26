@@ -4,6 +4,10 @@ import { MOTION_CONFIG } from "./motion.config";
 
 export interface StaggerGridProps extends React.AriaAttributes {
 	children: ReactNode;
+	/** Tag du conteneur (défaut `div`). `ul`/`ol` pour une vraie liste sémantique. */
+	as?: "div" | "ul" | "ol";
+	/** Tag du wrapper de chaque enfant (défaut `div`). Mettre `li` quand `as="ul"`. */
+	itemAs?: "div" | "li";
 	className?: string;
 	/** Stagger delay between items (default: 0.06) */
 	stagger?: number;
@@ -60,6 +64,8 @@ function getStableKey(child: ReactNode, index: number): Key {
 export function StaggerGrid({
 	children,
 	className,
+	as: Container = "div",
+	itemAs: ItemTag = "div",
 	stagger = MOTION_CONFIG.stagger.normal,
 	delay = 0,
 	y = 20,
@@ -75,9 +81,9 @@ export function StaggerGrid({
 	const itemClass = inView ? "enter-inview" : "enter-load";
 
 	return (
-		<div className={className} role={role} {...rest}>
+		<Container className={className} role={role} {...rest}>
 			{childrenArray.map((child, index) => (
-				<div
+				<ItemTag
 					key={getStableKey(child, index)}
 					className={itemClass}
 					style={
@@ -95,8 +101,8 @@ export function StaggerGrid({
 					}
 				>
 					{child}
-				</div>
+				</ItemTag>
 			))}
-		</div>
+		</Container>
 	);
 }

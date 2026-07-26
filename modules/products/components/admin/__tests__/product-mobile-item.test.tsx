@@ -84,6 +84,7 @@ const baseProduct = {
 					url: "https://cdn/img.jpg",
 					thumbnailUrl: "https://cdn/img-thumb.jpg",
 					blurDataUrl: "data:image/png;base64,xxx",
+					mediaType: "IMAGE" as const,
 					isPrimary: true,
 				},
 			],
@@ -107,6 +108,56 @@ describe("ProductMobileItem", () => {
 		render(<ProductMobileItem product={baseProduct} />);
 		expect(screen.getByText("Anneau doré")).toBeInTheDocument();
 		expect(screen.getByText(/Public/)).toBeInTheDocument();
+	});
+
+	it("ne rend AUCUNE image quand le média principal est une vidéo sans poster", () => {
+		// Une URL .mp4 passée à next/image produit une vignette cassée + une
+		// transformation facturée pour rien -> on retombe sur l'icône de secours.
+		const videoOnly = {
+			...baseProduct,
+			skus: [
+				{
+					priceInclTax: 4500,
+					inventory: 10,
+					images: [
+						{
+							url: "https://cdn/clip.mp4",
+							thumbnailUrl: null,
+							blurDataUrl: null,
+							mediaType: "VIDEO" as const,
+							isPrimary: true,
+						},
+					],
+				},
+			],
+		};
+		render(<ProductMobileItem product={videoOnly} />);
+		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
+		expect(screen.getByTestId("icon-package")).toBeInTheDocument();
+	});
+
+	it("utilise le poster quand le média principal est une vidéo qui en a un", () => {
+		const videoWithPoster = {
+			...baseProduct,
+			skus: [
+				{
+					priceInclTax: 4500,
+					inventory: 10,
+					images: [
+						{
+							url: "https://cdn/clip.mp4",
+							thumbnailUrl: "https://cdn/clip-poster.jpg",
+							blurDataUrl: null,
+							mediaType: "VIDEO" as const,
+							isPrimary: true,
+						},
+					],
+				},
+			],
+		};
+		render(<ProductMobileItem product={videoWithPoster} />);
+		const img = screen.getByTestId("product-image") as HTMLImageElement;
+		expect(img.src).toBe("https://cdn/clip-poster.jpg");
 	});
 
 	it("affiche la fourchette de prix min-max et le stock total", () => {
@@ -158,9 +209,11 @@ describe("ProductMobileItem", () => {
 	});
 
 	it("rend l'image principale quand disponible", () => {
+		// `thumbnailUrl` est le poster d'une VIDÉO (cf. schema.prisma) et vaut
+		// toujours NULL sur une IMAGE : une IMAGE se rend donc via son `url`.
 		render(<ProductMobileItem product={baseProduct} />);
 		const img = screen.getByTestId("product-image") as HTMLImageElement;
-		expect(img.src).toBe("https://cdn/img-thumb.jpg");
+		expect(img.src).toBe("https://cdn/img.jpg");
 	});
 
 	it("rend le placeholder Package si pas d'image principale", () => {

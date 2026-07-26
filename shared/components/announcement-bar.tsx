@@ -3,7 +3,15 @@
 import { X } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import {
+	useActionState,
+	useEffect,
+	useEffectEvent,
+	useOptimistic,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
 
 import { dismissAnnouncement } from "@/shared/actions/dismiss-announcement";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -239,15 +247,13 @@ function useSwipeToDismiss(
 	const [isSwiping, setIsSwiping] = useState(false);
 	const touchStartYRef = useRef<number | null>(null);
 	const swipeOffsetRef = useRef(0);
-	const onDismissRef = useRef(onDismiss);
+	// `useEffectEvent` plutôt qu'un latest-ref + effet de sync (cf. commentaire
+	// identique dans `use-swipe-to-remove`).
+	const emitDismiss = useEffectEvent(() => onDismiss());
 
 	useEffect(() => {
 		swipeOffsetRef.current = swipeOffset;
 	}, [swipeOffset]);
-
-	useEffect(() => {
-		onDismissRef.current = onDismiss;
-	}, [onDismiss]);
 
 	useEffect(() => {
 		const el = elementRef.current;
@@ -273,7 +279,7 @@ function useSwipeToDismiss(
 			setIsSwiping(false);
 			if (swipeOffsetRef.current < -SWIPE_DISMISS_THRESHOLD) {
 				triggerHaptic("medium");
-				onDismissRef.current();
+				emitDismiss();
 			}
 			setSwipeOffset(0);
 		}

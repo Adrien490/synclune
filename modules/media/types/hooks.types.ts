@@ -50,15 +50,14 @@ export interface MediaUploadResult {
 	blurDataUrl?: string;
 	/** Thumbnail URL (videos only) */
 	thumbnailUrl?: string;
+	/** Intrinsic width of the published image, or of the poster for a video */
+	width?: number;
+	/** Intrinsic height of the published image, or of the poster for a video */
+	height?: number;
 }
 
 export type FileProgressState =
-	| "queued"
-	| "validating"
-	| "compressing"
-	| "uploading"
-	| "done"
-	| "failed";
+	"queued" | "validating" | "compressing" | "uploading" | "done" | "failed";
 
 export interface FileProgress {
 	/** Original file name */
@@ -88,12 +87,7 @@ export interface UploadProgress {
 	queued: number;
 	/** Current phase */
 	phase:
-		| "validating"
-		| "compressing"
-		| "generating-thumbnails"
-		| "uploading"
-		| "finalizing"
-		| "done";
+		"validating" | "compressing" | "generating-thumbnails" | "uploading" | "finalizing" | "done";
 	/** Per-file progress entries (opt-in, keeps the total stable even after failures) */
 	files?: FileProgress[];
 	/** Total bytes to upload across all files in the active session */

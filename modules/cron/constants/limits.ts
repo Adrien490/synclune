@@ -139,6 +139,22 @@ export const THRESHOLDS = {
 	/** Time to wait before retrying failed webhooks */
 	WEBHOOK_RETRY_MIN_AGE_MS: 30 * 60 * 1000, // 30 minutes
 
+	/**
+	 * Rétention des artefacts webhook résolus (WEBHOOK-AUDIT-003).
+	 *
+	 * Le cron dédié `cleanup-webhook-events` a été retiré au right-sizing sans
+	 * remplaçant : `WebhookEvent` et `PostWebhookTask` croissaient donc sans borne,
+	 * alors que la table WebhookEvent est sur le chemin chaud de l'idempotence
+	 * (lookup `stripeEventId @unique` à chaque livraison Stripe). La purge est
+	 * désormais une passe de `cleanup-pending-orders`.
+	 *
+	 * 90 jours : très au-delà de la fenêtre de rejeu Stripe (3 j) et de tout
+	 * besoin de corrélation d'incident, tout en gardant les tables compactes.
+	 * Seules les lignes RÉSOLUES sont purgées — les FAILED sont conservées
+	 * indéfiniment (valeur d'investigation, volume négligeable).
+	 */
+	WEBHOOK_RECORD_RETENTION_MS: 90 * 24 * 60 * 60 * 1000, // 90 days
+
 	/** Time to wait after refund processing before reconciliation */
 	REFUND_RECONCILE_MIN_AGE_MS: 60 * 60 * 1000, // 1 hour
 

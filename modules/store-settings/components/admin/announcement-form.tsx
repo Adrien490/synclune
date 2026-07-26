@@ -1,18 +1,19 @@
 "use client";
 
-import { LoaderCircle, Megaphone } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import { useActionState } from "react";
 
 import { useAppForm } from "@/shared/components/forms";
-import { Button } from "@/shared/components/ui/button";
 import {
 	ANNOUNCEMENT_VARIANTS,
 	ANNOUNCEMENT_VARIANT_CLASSES,
 	ANNOUNCEMENT_VARIANT_LABELS,
 	type AnnouncementVariant,
 } from "@/shared/constants/announcement";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -45,20 +46,36 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 
 	const form = useAppForm({ defaultValues: initial });
 
-	const [, formAction, isPending] = useActionState(
+	const [state, formAction, isPending] = useActionState(
 		withCallbacks(updateAnnouncement, createToastCallbacks({ loadingMessage: "Enregistrement…" })),
 		undefined,
 	);
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
+	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action: formAction,
+		isPending,
+		focusFirstInvalid,
+		context: "AnnouncementForm",
+	});
 
 	return (
 		<form
 			ref={formRef}
 			action={formAction}
 			onInvalidCapture={onInvalidCapture}
-			onSubmit={() => queueMicrotask(focusFirstInvalid)}
+			onSubmit={handleGatedSubmit}
 			className="space-y-5"
 			aria-busy={isPending}
 		>
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<form.AppField name="isActive">
 				{(field) => (
 					<field.SwitchField
@@ -154,17 +171,15 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 			</form.Subscribe>
 
 			<div className="flex justify-end pt-4">
-				<Button
-					type="submit"
-					size="sm"
-					disabled={isPending}
-					aria-busy={isPending}
-					onClick={() => triggerHaptic("light")}
-					className="min-h-11"
-				>
-					{isPending && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-					{isPending ? "Enregistrement…" : "Enregistrer"}
-				</Button>
+				<form.AppForm>
+					<form.SubmitButton
+						isPending={isPending}
+						idleLabel="Enregistrer"
+						pendingLabel="Enregistrement…"
+						size="sm"
+						className="min-h-11"
+					/>
+				</form.AppForm>
 			</div>
 		</form>
 	);

@@ -36,6 +36,8 @@ function getStableKey(child: ReactNode, index: number): Key {
 export function Stagger({
 	children,
 	className,
+	as: Container = "div",
+	itemAs: ItemTag = "div",
 	stagger = MOTION_CONFIG.stagger.normal,
 	delay = 0,
 	duration = MOTION_CONFIG.duration.normal,
@@ -51,9 +53,9 @@ export function Stagger({
 	const itemClass = inView ? "enter-inview" : "enter-load";
 
 	return (
-		<div className={className} role={role} {...rest}>
+		<Container className={className} role={role} {...rest}>
 			{childrenArray.map((child, index) => (
-				<div
+				<ItemTag
 					key={getStableKey(child, index)}
 					className={itemClass}
 					style={
@@ -72,8 +74,8 @@ export function Stagger({
 					}
 				>
 					{child}
-				</div>
+				</ItemTag>
 			))}
-		</div>
+		</Container>
 	);
 }

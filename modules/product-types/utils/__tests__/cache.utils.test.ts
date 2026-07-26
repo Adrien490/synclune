@@ -98,6 +98,12 @@ describe("cacheProductTypeCounts", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("user");
 		expect(mockCacheTag).toHaveBeenCalledWith("product-type-pt-123-counts");
 	});
+
+	it("also tags products-list (cascade : les mutations produit invalident les counts)", () => {
+		cacheProductTypeCounts("pt-123");
+
+		expect(mockCacheTag).toHaveBeenCalledWith("products-list");
+	});
 });
 
 // ============================================================================
@@ -143,5 +149,18 @@ describe("getProductTypeInvalidationTags", () => {
 		const tags = getProductTypeInvalidationTags(undefined);
 
 		expect(tags).not.toContain("product-type-undefined");
+	});
+
+	it("includes counts tag when productTypeId is provided", () => {
+		const tags = getProductTypeInvalidationTags("bagues", "pt-123");
+
+		expect(tags).toContain("product-type-pt-123-counts");
+		expect(tags).toHaveLength(6);
+	});
+
+	it("omits counts tag when productTypeId is undefined", () => {
+		const tags = getProductTypeInvalidationTags("bagues");
+
+		expect(tags.some((t) => t.endsWith("-counts"))).toBe(false);
 	});
 });

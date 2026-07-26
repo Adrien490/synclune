@@ -25,7 +25,7 @@ vi.mock("../../constants/collection.constants", () => ({
 
 // Mock shared pagination helpers that would otherwise require the full
 // Next.js/Prisma environment at import time.
-vi.mock("@/shared/constants/pagination", () => ({
+vi.mock("@/shared/schemas/pagination-schema", () => ({
 	cursorSchema: z.string().optional(),
 	directionSchema: z.enum(["forward", "backward"]).optional(),
 }));

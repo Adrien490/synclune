@@ -162,10 +162,12 @@ describe("AtelierSectionSkeleton", () => {
 		expect(headerSkeletons).toHaveLength(2);
 	});
 
-	it("renders photo hero skeleton", () => {
+	it("does NOT reserve a photo hero block (image héro commentée — TODO photos-atelier)", () => {
 		const { container } = render(<AtelierSectionSkeleton />);
 
+		// Le skeleton ne doit réserver que ce que la section rend réellement :
+		// un bloc image fantôme créerait un CLS inverse au streaming.
 		const heroSkeleton = container.querySelector(".aspect-\\[4\\/3\\]");
-		expect(heroSkeleton).not.toBeNull();
+		expect(heroSkeleton).toBeNull();
 	});
 });

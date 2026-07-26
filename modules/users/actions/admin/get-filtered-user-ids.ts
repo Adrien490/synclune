@@ -9,12 +9,6 @@ import { BULK_USER_ACTION_LIMIT } from "../../constants/user.constants";
 import { buildUserWhereClause } from "../../services/user-query-builder";
 import type { GetUsersParams } from "../../types/user.types";
 
-export interface FilteredUserIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Note : les filtres self-skip et ≥1 admin sont appliqués serveur lors du

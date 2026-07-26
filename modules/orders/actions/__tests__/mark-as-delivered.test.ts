@@ -17,7 +17,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -103,7 +103,7 @@ describe("markAsDelivered", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createShippedOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 
@@ -159,8 +159,10 @@ describe("markAsDelivered", () => {
 	it("should succeed and mark the order as delivered", async () => {
 		const result = await markAsDelivered(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
+				// Garde atomique : le where ré-asserte SHIPPED
+				where: expect.objectContaining({ status: "SHIPPED" }),
 				data: expect.objectContaining({ status: "DELIVERED" }),
 			}),
 		);

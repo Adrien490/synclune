@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
 import { parseSearchParam, searchParamParsers, getFirstParam } from "../parse-search-params";
-import { CUID_LENGTH } from "@/shared/constants/pagination";
+import { CUID_LENGTH } from "@/shared/schemas/pagination-schema";
 
 const VALID_CURSOR = "a".repeat(CUID_LENGTH);
 

@@ -97,12 +97,22 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 								Ton panier et tes informations ont été sauvegardés. Tu peux réessayer immédiatement.
 							</p>
 
-							{/* Réassurance non-débit universelle (sauf "canceled" qui le mentionne déjà
-							    dans sa description, pour éviter le doublon) */}
-							{reason !== "canceled" && (
+							{/* 3DS-03 : réassurance de débit, nuancée par motif.
+							    - "payment_failed" peut résulter d'un remboursement automatique
+							      (oversell / sous-facturation : carte débitée PUIS remboursée par
+							      le webhook) → on ne peut pas affirmer « aucun débit ».
+							    - "canceled" le mentionne déjà dans sa description (anti-doublon). */}
+							{reason === "payment_failed" ? (
 								<p className="text-muted-foreground text-center text-sm">
-									Aucun montant n&apos;a été débité de ta carte.
+									Si un montant a été débité, il te sera intégralement remboursé sous quelques
+									jours.
 								</p>
+							) : (
+								reason !== "canceled" && (
+									<p className="text-muted-foreground text-center text-sm">
+										Aucun montant n&apos;a été débité de ta carte.
+									</p>
+								)
 							)}
 
 							{/* Actions */}

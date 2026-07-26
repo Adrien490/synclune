@@ -25,6 +25,7 @@ const {
 		productSku: { updateMany: vi.fn() },
 		cartItem: { findMany: vi.fn(), deleteMany: vi.fn() },
 		wishlistItem: { deleteMany: vi.fn() },
+		productCollection: { deleteMany: vi.fn() },
 		orderItem: { count: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -113,6 +114,7 @@ describe("deleteProduct", () => {
 		);
 		mockPrisma.cartItem.deleteMany.mockResolvedValue({});
 		mockPrisma.wishlistItem.deleteMany.mockResolvedValue({});
+		mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 		mockPrisma.productSku.updateMany.mockResolvedValue({});
 		mockPrisma.product.update.mockResolvedValue({});
 
@@ -172,6 +174,13 @@ describe("deleteProduct", () => {
 		const result = await deleteProduct(undefined, validFormData);
 		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("should purge collection memberships in the transaction", async () => {
+		await deleteProduct(undefined, validFormData);
+		expect(mockPrisma.productCollection.deleteMany).toHaveBeenCalledWith({
+			where: { productId: VALID_CUID },
+		});
 	});
 
 	it("should invalidate cache after deletion", async () => {

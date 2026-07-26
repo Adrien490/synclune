@@ -21,9 +21,8 @@ import { describe, expect, it } from "vitest";
  * de caisse" requérant validation NF 525 préalable.
  *
  * Allowlist documentée pour les TRANSITIONS PENDING → PAID (vs création PAID) :
- *  - `modules/webhooks/services/payment-intent.service.ts` : webhook Stripe
  *  - `modules/webhooks/services/checkout-order-processing.service.ts` : webhook
- *    Stripe checkout.session.completed
+ *    Stripe checkout.session.completed / payment_intent.succeeded
  *  - `modules/orders/actions/mark-as-paid.ts` : admin fallback pour commandes
  *    déjà passées au PaymentIntent (paiement asynchrone qui n'a pas webhook —
  *    SEPA, virements). L'Order existe déjà avec stripePaymentIntentId, donc
@@ -144,9 +143,7 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		const allowed = [
 			// Admin fallback pour paiements asynchrones non-webhookés (SEPA, etc.)
 			"modules/orders/actions/mark-as-paid.ts",
-			// Webhook Stripe payment_intent.succeeded
-			"modules/webhooks/services/payment-intent.service.ts",
-			// Webhook Stripe checkout.session.completed (cas paiement card + async)
+			// Webhook Stripe checkout.session.completed + payment_intent.succeeded
 			"modules/webhooks/services/checkout-order-processing.service.ts",
 		].sort();
 
@@ -176,20 +173,18 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		expect(content).toMatch(/if\s*\(\s*!\s*found\.stripePaymentIntentId\s*\)/);
 	});
 
-	it("markOrderAsPaid (déprécié) has no production call-site outside its definition", () => {
-		// EINV-CASH-003 : markOrderAsPaid écrit `PAID + paidAt` SANS décrément stock,
-		// clear cart, persistInvoiceNumber ni recordSalesEReporting. Il est allowlisté
-		// comme *writer* ci-dessus (rétro-compat tests d'idempotence), mais un nouveau
-		// call-site PRODUCTION produirait une Order PAID sans facture ni e-reporting →
-		// oversell + divergence DGFiP silencieuse (Art. 286 / 289-I CGI). On interdit
-		// donc tout usage hors tests + hors sa propre définition. Cette garde complète
-		// l'allowlist *writer* par une garde *call-site*.
-		const DEFINITION = "modules/webhooks/services/payment-intent.service.ts";
+	it("markOrderAsPaid (déprécié, supprimé 2026-07-03) is not reintroduced anywhere", () => {
+		// EINV-CASH-003 : markOrderAsPaid écrivait `PAID + paidAt` SANS décrément stock,
+		// clear cart, persistInvoiceNumber ni recordSalesEReporting — une Order PAID
+		// sans facture ni e-reporting → oversell + divergence DGFiP silencieuse
+		// (Art. 286 / 289-I CGI). La fonction a été SUPPRIMÉE (audit cache 2026-07-03,
+		// dernier mutateur de statut sans invalidation cache) ; ce test interdit sa
+		// réintroduction sous le même nom. Le remplaçant canonique est
+		// `processOrderFromPaymentIntent` (idempotent + décrément + facture).
 		const stripComments = (c: string) =>
 			c.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 		const offenders = allSourceFiles
 			.map(relPath)
-			.filter((rel) => rel !== DEFINITION)
 			.filter((rel) =>
 				/\bmarkOrderAsPaid\b/.test(stripComments(readFileSync(join(REPO_ROOT, rel), "utf-8"))),
 			)

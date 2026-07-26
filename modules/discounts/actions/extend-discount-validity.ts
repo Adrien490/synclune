@@ -74,7 +74,7 @@ export async function extendDiscountValidity(
 			data: { endsAt: newEndsAt },
 		});
 
-		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(id, discount.code).forEach((tag) => updateTag(tag));
 
 		return success(`Code "${discount.code}" prolongé de ${days} jour(s)`);
 	} catch (e) {

@@ -1,7 +1,7 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
 
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import { PRICE_LIMITS, DATE_LIMITS, TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { createPerPageSchema } from "@/shared/utils/pagination";
@@ -45,9 +45,20 @@ export const productFiltersSchema = z
 		slugs: z.array(z.string().min(1)).max(20).optional(),
 		priceMin: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
 		priceMax: z.number().int().nonnegative().max(PRICE_LIMITS.FILTER_MAX_CENTS).optional(),
-		createdAfter: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).max(new Date()).optional(),
+		// `refine` et non `.max(new Date())` : un `new Date()` au scope du module est figé
+		// au chargement, donc un process serveur long finirait par rejeter des dates
+		// pourtant passées. Ici le "maintenant" est évalué à chaque parse.
+		createdAfter: z.coerce
+			.date()
+			.min(DATE_LIMITS.FILTERS_MIN)
+			.refine((d) => d <= new Date(), "La date ne peut pas être dans le futur")
+			.optional(),
 		createdBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
-		updatedAfter: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).max(new Date()).optional(),
+		updatedAfter: z.coerce
+			.date()
+			.min(DATE_LIMITS.FILTERS_MIN)
+			.refine((d) => d <= new Date(), "La date ne peut pas être dans le futur")
+			.optional(),
 		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN).optional(),
 	})
 	.refine((data) => {

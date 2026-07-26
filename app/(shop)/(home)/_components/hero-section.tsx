@@ -5,8 +5,8 @@ import { SectionTitle } from "@/shared/components/section-title";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
-import { Heart } from "lucide-react";
 import { HeroCtaButtons } from "./hero-cta-buttons";
+import { HeroHeartEasterEgg } from "./hero-heart-easter-egg";
 import { ParticleBackground } from "./hero-decorations";
 
 /**
@@ -122,11 +122,8 @@ export async function HeroSection({
 								</span>
 								{/* sr-only describes the decorative Heart icon for screen readers */}
 								<span className="sr-only">avec amour</span>
-								<Heart
-									fill="currentColor"
-									className="text-primary inline-block size-[1.1em] align-[-0.15em]"
-									aria-hidden="true"
-								/>
+								{/* Easter egg : le cœur éclate au clic (île client décorative, hors LCP h1) */}
+								<HeroHeartEasterEgg />
 							</p>
 						</div>
 

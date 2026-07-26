@@ -1,7 +1,7 @@
 import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
-	entry: ["app/sw.ts", "emails/*.tsx"],
+	entry: ["emails/*.tsx"],
 
 	ignore: ["e2e/**", "scripts/**"],
 

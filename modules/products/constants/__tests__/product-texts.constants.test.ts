@@ -63,9 +63,10 @@ describe("product-texts.constants", () => {
 	});
 
 	describe("IMAGE_SIZES", () => {
+		// `PRODUCT_GALLERY` retiré : jamais consommé — la galerie PDP utilise
+		// `GALLERY_MAIN_SIZES` (modules/media/constants/image-config.constants).
 		it("has all required size strings", () => {
 			expect(typeof IMAGE_SIZES.PRODUCT_CARD).toBe("string");
-			expect(typeof IMAGE_SIZES.PRODUCT_GALLERY).toBe("string");
 			expect(typeof IMAGE_SIZES.PRODUCT_THUMBNAIL).toBe("string");
 		});
 

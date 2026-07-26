@@ -4,8 +4,8 @@ import {
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
-import { ActionStatus } from "@/shared/types/server-action";
 import { AccountStatus } from "@/app/generated/prisma/client";
+import { handlePostLoginMerges } from "./post-login-merge";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -25,7 +25,7 @@ validateAuthEnvironment();
 
 // Initialiser Stripe client avec valeur par défaut pour le build
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-05-27.dahlia",
+	apiVersion: "2026-06-24.dahlia",
 	maxNetworkRetries: 2,
 	timeout: 10_000,
 });
@@ -286,103 +286,11 @@ export const auth = betterAuth({
 				});
 			}
 		}),
+		// Rattachement des données invité post-login (merge panier/wishlist +
+		// liaison commandes guest). Corps extrait dans `post-login-merge.ts`
+		// pour testabilité (charger auth.ts exige toute la config Better Auth).
 		after: createAuthMiddleware(async (ctx) => {
-			const newSession = ctx.context.newSession;
-
-			// Vérifier qu'une nouvelle session a été créée (connexion/inscription réussie)
-			if (!newSession) {
-				return; // Pas de nouvelle session, rien à faire
-			}
-
-			// Skip merge cart/wishlist/orders si le compte n'est pas ACTIVE.
-			// Cas: un user PENDING_DELETION qui se reconnecte UNIQUEMENT pour annuler
-			// sa demande (cancelAccountDeletion) ne doit pas rattacher de nouvelles
-			// données (commandes guest, panier) à son compte mort.
-			const accountState = await prisma.user.findUnique({
-				where: { id: newSession.user.id },
-				select: { accountStatus: true },
-			});
-			if (accountState?.accountStatus !== AccountStatus.ACTIVE) {
-				return;
-			}
-
-			// Récupérer le cookie de session visiteur du panier (validation UUID v4 stricte)
-			const rawCartSessionId = ctx.getCookie("cart_session");
-			const { isValidCartSessionId } = await import("@/modules/cart/lib/cart-session");
-			const cartSessionId = isValidCartSessionId(rawCartSessionId) ? rawCartSessionId : null;
-
-			// 🛒 MERGE DU PANIER (import dynamique pour éviter le cycle de dépendances)
-			if (cartSessionId) {
-				try {
-					const { mergeCarts } = await import("@/modules/cart/actions/merge-carts");
-					const cartResult = await mergeCarts(newSession.user.id, cartSessionId);
-
-					if (cartResult.status === ActionStatus.SUCCESS) {
-						// ✅ Merge réussi : supprimer le cookie
-						ctx.setCookie("cart_session", "", {
-							maxAge: 0,
-							path: "/",
-						});
-					}
-				} catch (_error) {
-					// Ignore - Cookie preserved for retry
-				}
-			}
-
-			// ❤️ MERGE DE LA WISHLIST (import dynamique pour éviter le cycle de dépendances)
-			const wishlistSessionId = ctx.getCookie("wishlist_session");
-			const { isValidUuidV4 } = await import("@/modules/wishlist/lib/wishlist-session");
-			if (wishlistSessionId && isValidUuidV4(wishlistSessionId)) {
-				try {
-					const { mergeWishlists } = await import("@/modules/wishlist/actions/merge-wishlists");
-					const wishlistResult = await mergeWishlists(newSession.user.id, wishlistSessionId);
-
-					if (wishlistResult.status === ActionStatus.SUCCESS) {
-						// ✅ Merge réussi : supprimer le cookie
-						ctx.setCookie("wishlist_session", "", {
-							maxAge: 0,
-							path: "/",
-						});
-					}
-				} catch (error) {
-					// Log l'erreur pour debugging mais continue (cookie preserved for retry)
-					logger.error("Wishlist merge failed", error, {
-						service: "auth",
-						userId: newSession.user.id,
-					});
-				}
-			}
-
-			// 📦 LINK GUEST ORDERS (retroactive order linking by email)
-			// When a guest creates an account or signs in, link their previous
-			// guest orders (userId: null) to the new account by email match.
-			if (newSession.user.email) {
-				try {
-					const { count } = await prisma.order.updateMany({
-						where: {
-							userId: null,
-							customerEmail: newSession.user.email,
-							...notDeleted,
-						},
-						data: {
-							userId: newSession.user.id,
-						},
-					});
-
-					if (count > 0) {
-						// Invalidate user orders cache so they appear in the account
-						const { updateTag } = await import("next/cache");
-						const { ORDERS_CACHE_TAGS } = await import("@/modules/orders/constants/cache");
-						updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(newSession.user.id));
-						updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(newSession.user.id));
-					}
-				} catch (error) {
-					logger.error("Guest order linking failed", error, {
-						service: "auth",
-						userId: newSession.user.id,
-					});
-				}
-			}
+			await handlePostLoginMerges(ctx);
 		}),
 	},
 });

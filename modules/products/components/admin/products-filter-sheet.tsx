@@ -34,14 +34,7 @@ import type { ProductsFilterSheetProps, AdminFilterFormData } from "./products-f
 
 /** Sections possibles de l'Accordion (sert au focus management desktop). */
 type SectionValue =
-	| "status"
-	| "types"
-	| "price"
-	| "colors"
-	| "materials"
-	| "collections"
-	| "availability"
-	| "dates";
+	"status" | "types" | "price" | "colors" | "materials" | "collections" | "availability" | "dates";
 
 // ============================================================================
 // MAIN COMPONENT
@@ -301,9 +294,10 @@ function ProductsFilterSheetInner({
 		const prev = previousOpenSectionsRef.current;
 		previousOpenSectionsRef.current = values;
 		if (isMobile) return;
-		const newlyOpened = values.find(
-			(v) => !prev.includes(v) && renderedSections.includes(v as SectionValue),
-		) as SectionValue | undefined;
+		const previousSet = new Set(prev);
+		const renderedSet = new Set<string>(renderedSections);
+		const newlyOpened = values.find((v) => !previousSet.has(v) && renderedSet.has(v)) as
+			SectionValue | undefined;
 		if (!newlyOpened) return;
 		const index = renderedSections.indexOf(newlyOpened);
 		if (index < 0 || !accordionRef.current) return;

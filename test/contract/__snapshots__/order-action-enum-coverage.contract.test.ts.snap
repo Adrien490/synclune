@@ -21,6 +21,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   "CREATED": [],
   "CREDIT_NOTE_ARCHIVED": [
     "modules/orders/services/archive-credit-note-pdf.service.ts",
+    "modules/refunds/services/archive-credit-note-pdf.service.ts",
   ],
   "CREDIT_NOTE_FAILED": [
     "modules/orders/services/void-invoice.service.ts",
@@ -38,8 +39,8 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/webhooks/handlers/dispute-handlers.ts",
   ],
   "INVOICE_ARCHIVED": [
+    "modules/invoices/services/verify-pdf-archive-integrity.service.ts",
     "modules/orders/services/archive-invoice-pdf.service.ts",
-    "modules/refunds/services/archive-credit-note-pdf.service.ts",
   ],
   "INVOICE_DOWNLOADED": [
     "app/api/orders/[orderNumber]/credit-note/[refundId]/route.ts",
@@ -56,13 +57,12 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/cron/services/reconcile-invoices.service.ts",
   ],
   "INVOICE_VOIDED": [
-    "app/api/orders/[orderNumber]/credit-note/route.ts",
+    "modules/orders/services/render-order-credit-note.service.ts",
     "modules/orders/services/void-invoice.service.ts",
   ],
   "PAID": [
     "modules/orders/actions/mark-as-paid.ts",
     "modules/webhooks/services/checkout-order-processing.service.ts",
-    "modules/webhooks/services/payment-intent.service.ts",
   ],
   "PDF_ARCHIVE_FAILED": [
     "modules/orders/services/archive-credit-note-pdf.service.ts",

@@ -9,6 +9,10 @@ import { UploadErrorBanner } from "@/shared/components/media-upload/upload-progr
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import type { FailedUpload } from "@/modules/media/types/hooks.types";
 import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
+// Import statique : le module est déjà dans le bundle client via
+// `use-offline-upload-queue`, un `await import()` n'économisait rien et faisait
+// abandonner l'optimisation du composant au React Compiler.
+import { listEntries } from "@/modules/media/lib/offline-upload-queue";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import {
 	asMediaArrayField,
@@ -104,7 +108,6 @@ export function MediaArrayCard({
 		const files = await offlineQueue.drainAsFiles();
 		if (files.length === 0 || !onReplayOffline) return;
 		await onReplayOffline(files);
-		const { listEntries } = await import("@/modules/media/lib/offline-upload-queue");
 		const entries = await listEntries({
 			endpoint: "catalogMedia",
 			contextKey: offlineContextKey,

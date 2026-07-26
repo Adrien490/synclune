@@ -191,8 +191,7 @@ describe("MobileSelectionBottomBar", () => {
 
 		const calls = useBackButtonCloseMock.mock.calls;
 		const lastCall = calls.at(-1)?.[0] as
-			| { isOpen: boolean; id: string; onClose: () => void }
-			| undefined;
+			{ isOpen: boolean; id: string; onClose: () => void } | undefined;
 
 		expect(lastCall).toBeDefined();
 		expect(lastCall?.isOpen).toBe(true);

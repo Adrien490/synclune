@@ -6,6 +6,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 export type SitemapProduct = {
 	slug: string;
 	title: string;
+	updatedAt: Date;
 	type: { label: string } | null;
 	skus: Array<{
 		images: Array<{
@@ -19,6 +20,12 @@ export type SitemapProduct = {
 /**
  * Fetches public products with their SKU images for the image sitemap.
  * Cached with the sitemap-images tag for targeted invalidation.
+ *
+ * @throws Propage l'erreur DB au lieu de retourner `[]`. Un tableau vide était
+ * indistinguable d'un catalogue réellement vide : la route servait alors un
+ * `<urlset>` vide avec `s-maxage=86400`, désindexant tout le catalogue de Google
+ * Images pendant 24 h sur un simple incident DB. L'appelant répond 503 + no-store.
+ * `"use cache"` ne met pas en cache une promesse rejetée : le prochain hit retente.
  */
 export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 	"use cache";
@@ -34,6 +41,7 @@ export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 			select: {
 				slug: true,
 				title: true,
+				updatedAt: true,
 				type: {
 					select: {
 						label: true,
@@ -54,9 +62,10 @@ export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 								altText: true,
 								isPrimary: true,
 							},
-							orderBy: {
-								position: "asc",
-							},
+							// `isPrimary` d'abord : Google privilégie la première
+							// `<image:image>` d'une `<url>` comme visuel représentatif.
+							// `isPrimary` était sélectionné mais aucun tri ne l'exploitait.
+							orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }],
 						},
 					},
 				},
@@ -64,6 +73,7 @@ export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 		});
 	} catch (error) {
 		logger.error("Failed to fetch sitemap products", error, { service: "getSitemapProducts" });
-		return [];
+		// Rethrow : cf. JSDoc — un `[]` silencieux se ferait cacher 24 h par le CDN.
+		throw error;
 	}
 }

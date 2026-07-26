@@ -73,7 +73,16 @@ export const PRODUCT_CAROUSEL_SELECT = {
 			},
 			size: true,
 			images: {
-				where: { isPrimary: true },
+				// Filtre mediaType : une vidéo n'est pas rendue par l'optimiseur d'images.
+				// Sans ce filtre, un SKU dont le média `isPrimary` est une VIDÉO retournait
+				// 0 image et la carte tombait sur le SVG de secours malgré ses photos —
+				// le fallback "première IMAGE" de extractImageFromSku ne pouvait pas jouer.
+				where: { mediaType: "IMAGE" as const },
+				orderBy: [
+					{ isPrimary: "desc" as const },
+					{ position: "asc" as const },
+					{ id: "asc" as const },
+				],
 				take: 1,
 				select: {
 					id: true,
@@ -82,6 +91,8 @@ export const PRODUCT_CAROUSEL_SELECT = {
 					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
+					width: true,
+					height: true,
 					isPrimary: true,
 				},
 			},
@@ -160,11 +171,13 @@ export const GET_PRODUCT_SELECT = {
 					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
+					width: true,
+					height: true,
 					isPrimary: true,
 				},
-				orderBy: {
-					position: "asc" as const,
-				},
+				// Tiebreaker id : deux images à même position (reorder concurrent)
+				// doivent rendre un ordre stable entre requêtes (galerie déterministe)
+				orderBy: [{ position: "asc" as const }, { id: "asc" as const }],
 				take: 50,
 			},
 		},
@@ -239,11 +252,12 @@ export const GET_PRODUCTS_SELECT = {
 					blurDataUrl: true,
 					altText: true,
 					mediaType: true,
+					width: true,
+					height: true,
 					isPrimary: true,
 				},
-				orderBy: {
-					position: "asc",
-				},
+				// Tiebreaker id : ordre stable à positions égales (cf GET_PRODUCT_SELECT)
+				orderBy: [{ position: "asc" }, { id: "asc" }],
 			},
 			materials: {
 				select: {

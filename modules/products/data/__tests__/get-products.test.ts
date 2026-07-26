@@ -226,6 +226,66 @@ describe("getProducts", () => {
 		expect(mockBuildProductWhereClause).toHaveBeenCalled();
 	});
 
+	// ─── Status downgrade (CACHE-CATALOG-001) ────────────────────────────────
+	// Régression : filters.status est client-contrôlé (loadMoreProducts). Un
+	// non-admin ne doit jamais pouvoir lire DRAFT/ARCHIVED via le cache public.
+
+	it("forces status PUBLIC for non-admins even when DRAFT is requested", async () => {
+		setupValidParams({ status: "DRAFT", filters: { status: "DRAFT" } });
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getProducts({ ...DEFAULT_PARAMS, status: "DRAFT", filters: { status: "DRAFT" } });
+
+		expect(mockBuildProductWhereClause).toHaveBeenCalledWith(
+			expect.objectContaining({
+				status: "PUBLIC",
+				filters: expect.objectContaining({ status: "PUBLIC" }),
+			}),
+			undefined,
+		);
+	});
+
+	it("forces includeDeleted false for non-admins", async () => {
+		setupValidParams({ includeDeleted: true });
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getProducts({ ...DEFAULT_PARAMS, includeDeleted: true });
+
+		expect(mockBuildProductWhereClause).toHaveBeenCalledWith(
+			expect.objectContaining({ includeDeleted: false }),
+			undefined,
+		);
+	});
+
+	it("passes forced PUBLIC status to fuzzy search for non-admins", async () => {
+		setupValidParams({ search: "bracelet", status: "DRAFT", filters: { status: "DRAFT" } });
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getProducts({ ...DEFAULT_PARAMS, search: "bracelet", status: "DRAFT" });
+
+		expect(mockBuildSearchConditions).toHaveBeenCalledWith(
+			"bracelet",
+			expect.objectContaining({ status: "PUBLIC" }),
+		);
+	});
+
+	it("preserves the requested status filter for admins", async () => {
+		setupValidParams({ status: "DRAFT", filters: { status: "DRAFT" } });
+
+		await getProducts(
+			{ ...DEFAULT_PARAMS, status: "DRAFT", filters: { status: "DRAFT" } },
+			{ isAdmin: true },
+		);
+
+		expect(mockBuildProductWhereClause).toHaveBeenCalledWith(
+			expect.objectContaining({
+				status: "DRAFT",
+				filters: expect.objectContaining({ status: "DRAFT" }),
+			}),
+			undefined,
+		);
+	});
+
 	// ─── Search / fuzzy ──────────────────────────────────────────────────────
 
 	it("does not call buildSearchConditions when no search term", async () => {

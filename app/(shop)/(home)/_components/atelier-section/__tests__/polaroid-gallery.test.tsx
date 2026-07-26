@@ -10,10 +10,13 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("@/shared/components/placeholder-image", () => ({
-	PlaceholderImage: ({ label, className }: { label: string; className?: string }) => (
-		<div data-testid="placeholder-image" aria-label={label} className={className} />
-	),
+vi.mock("../polaroid-illustrations-map", () => ({
+	POLAROID_ILLUSTRATIONS: {
+		hands: () => <div data-testid="polaroid-illustration" data-scene="hands" />,
+		materials: () => <div data-testid="polaroid-illustration" data-scene="materials" />,
+		inspiration: () => <div data-testid="polaroid-illustration" data-scene="inspiration" />,
+		workspace: () => <div data-testid="polaroid-illustration" data-scene="workspace" />,
+	},
 }));
 
 vi.mock("@/shared/components/polaroid-frame", () => ({
@@ -51,7 +54,7 @@ describe("PolaroidGallery", () => {
 		render(<PolaroidGallery />);
 
 		const region = screen.getByRole("region", {
-			name: "Galerie photos de l'atelier Synclune",
+			name: "Galerie illustrée de l'atelier Synclune",
 		});
 		expect(region).toBeInTheDocument();
 	});
@@ -69,23 +72,16 @@ describe("PolaroidGallery", () => {
 		expect(frames).toHaveLength(4);
 	});
 
-	it("renders 4 PlaceholderImage components inside frames", () => {
+	it("renders the 4 illustrated scenes inside frames (one per polaroid id)", () => {
 		render(<PolaroidGallery />);
 
-		const images = screen.getAllByTestId("placeholder-image");
-		expect(images).toHaveLength(4);
-	});
+		const illustrations = screen.getAllByTestId("polaroid-illustration");
+		expect(illustrations).toHaveLength(4);
 
-	it("each polaroid has a descriptive label", () => {
-		render(<PolaroidGallery />);
-
-		const images = screen.getAllByTestId("placeholder-image");
-		const labels = images.map((img) => img.getAttribute("aria-label"));
-
-		expect(labels).toContain("Mains de Léane assemblant un bijou");
-		expect(labels).toContain("Perles et matériaux colorés Synclune");
-		expect(labels).toContain("Carnet d'inspiration de Léane, créatrice Synclune");
-		expect(labels).toContain("Vue de l'atelier Synclune");
+		const scenes = illustrations.map((el) => el.getAttribute("data-scene"));
+		expect(scenes).toEqual(
+			expect.arrayContaining(["hands", "materials", "inspiration", "workspace"]),
+		);
 	});
 
 	it("each polaroid frame has a caption", () => {

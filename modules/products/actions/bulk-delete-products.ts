@@ -99,6 +99,11 @@ export async function bulkDeleteProducts(
 				await tx.wishlistItem.deleteMany({
 					where: { productId: { in: deletableIds } },
 				});
+				// Parité delete-product : les lignes ProductCollection d'un produit
+				// soft-deleted ne servent plus qu'à fuir dans les selects collections.
+				await tx.productCollection.deleteMany({
+					where: { productId: { in: deletableIds } },
+				});
 				await tx.productSku.updateMany({
 					where: { productId: { in: deletableIds } },
 					data: { deletedAt: now },

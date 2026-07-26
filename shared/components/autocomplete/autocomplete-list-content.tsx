@@ -14,6 +14,7 @@ import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { AUTOCOMPLETE_ANIMATIONS } from "./constants";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface AutocompleteListContentProps<T> {
 	items: T[];
@@ -308,7 +309,7 @@ function AutocompleteItem<T>({
 							aria-hidden={!imageData.alt}
 							fill
 							sizes={`${effectiveImageSize}px`}
-							quality={80}
+							quality={IMAGE_QUALITY.STANDARD}
 							loading="lazy"
 							className="object-cover"
 							placeholder={imageData.blurDataURL ? "blur" : "empty"}

@@ -280,7 +280,7 @@ describe("deleteDiscount", () => {
 
 		await deleteDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "PROMO20");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
 	});

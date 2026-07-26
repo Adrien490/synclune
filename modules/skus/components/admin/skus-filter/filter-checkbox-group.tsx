@@ -3,7 +3,7 @@
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Label } from "@/shared/components/ui/label";
 
-export interface CheckboxOption {
+interface CheckboxOption {
 	id: string;
 	name: string;
 	hex?: string;

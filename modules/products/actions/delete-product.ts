@@ -108,6 +108,13 @@ export async function deleteProduct(
 				where: { productId },
 			});
 
+			// Remove collection memberships — pas de restore-product : les lignes
+			// ProductCollection d'un produit soft-deleted ne servent plus qu'à fuir
+			// dans les selects collections (filtrés sur status seul).
+			await tx.productCollection.deleteMany({
+				where: { productId },
+			});
+
 			const now = new Date();
 			await tx.productSku.updateMany({
 				where: { productId },

@@ -94,7 +94,11 @@ describe("buildReviewWhereClause (storefront)", () => {
 	it("should return minimal where clause with no params", () => {
 		const result = buildReviewWhereClause(params(), false);
 
-		expect(result).toEqual({ deletedAt: null, status: "PUBLISHED" });
+		expect(result).toEqual({
+			deletedAt: null,
+			status: "PUBLISHED",
+			product: { status: "PUBLIC", deletedAt: null },
+		});
 	});
 });
 

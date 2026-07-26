@@ -121,24 +121,35 @@ async function lookupAndValidate(
  * - customerEmail can be provided for guest checkout (validated by Zod)
  *
  * @param code - Le code promo saisi par l'utilisateur
- * @param _subtotal - IGNORED: subtotal is now computed server-side from the cart
  * @param customerEmail - L'email du client pour guest checkout (optionnel)
  *
  * @returns ValidateDiscountCodeReturn avec le resultat de la validation
  */
 export async function validateDiscountCode(
 	code: string,
-	_subtotal: number,
 	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
 	try {
-		// In-memory rate limiting
+		// In-memory rate limiting.
+		// Clé par IP **et** par utilisateur : une clé IP seule laissait un compte
+		// authentifié énumérer l'espace des codes (`[A-Z0-9-]{3,30}`) en changeant
+		// d'IP, et inversement plafonnait tous les clients d'un même NAT ensemble.
 		const headersList = await headers();
 		const ip = (await getClientIp(headersList)) ?? "unknown";
-		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
+		const sessionForLimit = await getSession();
+		const rateLimitKey = sessionForLimit?.user.id ? `user:${sessionForLimit.user.id}` : `ip:${ip}`;
+		const rateCheck = await enforceRateLimit(rateLimitKey, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 		if ("error" in rateCheck)
 			return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
 
+		// AUDIT-BIZ-001 — décision explicite : PAS de `assertStoreOpen()` ici,
+		// contrairement à `applyCartDiscount` / `addToCart` / `confirmCheckout`.
+		// Cette action est en LECTURE SEULE (aucune mutation panier ni commande) : elle
+		// répond « ce code est-il valide et combien il vaut ». La bloquer pendant une
+		// fermeture n'empêcherait aucun achat (le gate est déjà sur toutes les
+		// mutations) et dégraderait la validation du code saisi dans la cart-sheet.
+		// Ne PAS l'ajouter sans raison nouvelle.
+		//
 		// AUTHZ-1 : un invité passe ; une session dont le compte n'est pas ACTIVE
 		// (suspendu/INACTIVE/PENDING_DELETION) est rejetée (money-neutral, rejet direct).
 		const accountGate = await requireActiveAccountIfAuthenticated();

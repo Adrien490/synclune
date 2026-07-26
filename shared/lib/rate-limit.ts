@@ -130,7 +130,7 @@ export async function checkRateLimit(
 	config: RateLimitConfig = {},
 	ipAddress?: string | null,
 ): Promise<RateLimitResult> {
-	const { limit = 10, windowMs = 60000 } = config;
+	const { limit = 10, windowMs = 60000, skipGlobalIpLimit = false } = config;
 	const now = Date.now();
 
 	// Resolve effective IP: extract from identifier prefix OR use explicit param
@@ -154,7 +154,7 @@ export async function checkRateLimit(
 		};
 	}
 
-	return checkRateLimitInMemory(identifier, effectiveIp, limit, windowMs);
+	return checkRateLimitInMemory(identifier, effectiveIp, limit, windowMs, skipGlobalIpLimit);
 }
 
 // ============================================================================
@@ -166,12 +166,15 @@ function checkRateLimitInMemory(
 	ipAddress: string | null,
 	limit: number,
 	windowMs: number,
+	skipGlobalIpLimit = false,
 ): RateLimitResult {
 	const now = Date.now();
 	const key = `ratelimit:${identifier}`;
 
 	// Global IP limit — read/modify/write fully synchronous (no await between get/set)
-	if (ipAddress) {
+	// WEBHOOK-AUDIT-003 : les endpoints machine-to-machine (webhooks Stripe / PA) s'en
+	// exemptent via `skipGlobalIpLimit`, sinon leur `limit` propre est inatteignable.
+	if (ipAddress && !skipGlobalIpLimit) {
 		const globalKey = `global:ip:${ipAddress}`;
 		const existingGlobal = globalIpLimitStore.get(globalKey);
 		const globalEntry =

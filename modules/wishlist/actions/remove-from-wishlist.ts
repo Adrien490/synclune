@@ -9,10 +9,7 @@ import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { removeFromWishlistSchema } from "@/modules/wishlist/schemas/wishlist.schemas";
-import {
-	getWishlistSessionId,
-	getWishlistExpirationDate,
-} from "@/modules/wishlist/lib/wishlist-session";
+import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 import {
 	validateInput,
@@ -84,7 +81,6 @@ export async function removeFromWishlist(
 				where: { id: wishlist.id },
 				data: {
 					updatedAt: new Date(),
-					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
 			});
 

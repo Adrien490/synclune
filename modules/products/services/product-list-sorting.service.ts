@@ -31,14 +31,20 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 	const direction = getSortDirection(sortBy);
 	const multiplier = direction === "asc" ? 1 : -1;
 
+	// Précalcul O(n) des prix minimum : getMinPrice filtre+mappe les SKUs à chaque
+	// appel et le comparateur l'invoquerait O(n log n) fois sur un tri par prix.
+	const minPrices = sortBy.startsWith("price-")
+		? new Map(products.map((p) => [p.id, getMinPrice(p)]))
+		: null;
+
 	return [...products].sort((a, b) => {
 		if (sortBy.startsWith("title-")) {
 			return multiplier * a.title.localeCompare(b.title, "fr");
 		}
 
 		if (sortBy.startsWith("price-")) {
-			const priceA = getMinPrice(a);
-			const priceB = getMinPrice(b);
+			const priceA = minPrices?.get(a.id) ?? Infinity;
+			const priceB = minPrices?.get(b.id) ?? Infinity;
 			return multiplier * (priceA - priceB);
 		}
 

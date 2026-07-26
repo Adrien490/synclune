@@ -22,7 +22,7 @@
 
 import { useRef } from "react";
 
-export interface ActiveBatchInfo {
+interface ActiveBatchInfo {
 	mode: "image-batch" | "video-single";
 	fileNames: ReadonlySet<string>;
 }

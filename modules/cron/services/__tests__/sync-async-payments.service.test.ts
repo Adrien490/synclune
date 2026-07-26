@@ -14,6 +14,8 @@ const {
 	mockRestoreStockForOrder,
 	mockSendAdminCronFailedAlert,
 	mockSendPaymentFailedEmail,
+	mockBuildPostCheckoutTasksFromPI,
+	mockPersistPostWebhookTasks,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
@@ -31,6 +33,8 @@ const {
 	mockRestoreStockForOrder: vi.fn(),
 	mockSendAdminCronFailedAlert: vi.fn(),
 	mockSendPaymentFailedEmail: vi.fn(),
+	mockBuildPostCheckoutTasksFromPI: vi.fn(),
+	mockPersistPostWebhookTasks: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -76,6 +80,16 @@ vi.mock("@/modules/emails/services/payment-emails", () => ({
 	sendPaymentFailedEmail: mockSendPaymentFailedEmail,
 }));
 
+// WEBHOOK-AUDIT-003 : la reprise d'un webhook perdu rejoue désormais les post-tasks
+// du checkout (confirmation client) via ces deux services.
+vi.mock("@/modules/webhooks/services/checkout-post-tasks.service", () => ({
+	buildPostCheckoutTasksFromPI: mockBuildPostCheckoutTasksFromPI,
+}));
+
+vi.mock("@/modules/webhooks/services/post-webhook-tasks.service", () => ({
+	persistPostWebhookTasks: mockPersistPostWebhookTasks,
+}));
+
 import { syncAsyncPayments } from "../sync-async-payments.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -86,13 +100,16 @@ describe("syncAsyncPayments", () => {
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
 		mockStripe.paymentIntents.cancel.mockResolvedValue({ status: "canceled" });
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockMarkOrderAsFailed.mockResolvedValue({ transitioned: true });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkus: [] });
 		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 		mockProcessOrderFromPaymentIntent.mockResolvedValue(undefined);
 		mockEnsureInvoiceNumberPersisted.mockResolvedValue(undefined);
 		mockRecordSalesEReporting.mockResolvedValue(undefined);
 		mockExtractPaymentMethodFromPaymentIntent.mockResolvedValue(undefined);
 		mockSendPaymentFailedEmail.mockResolvedValue(undefined);
+		mockBuildPostCheckoutTasksFromPI.mockReturnValue([]);
+		mockPersistPostWebhookTasks.mockResolvedValue({ created: 0 });
 	});
 
 	it("should return skipped result with STRIPE_KEY_MISSING reason when Stripe is not configured", async () => {
@@ -182,6 +199,65 @@ describe("syncAsyncPayments", () => {
 		expect(invalidated).toContain("last-order-user-user-9");
 	});
 
+	// WEBHOOK-AUDIT-003 — ce cron est le filet d'un webhook `payment_intent.succeeded`
+	// définitivement perdu. Il rejouait le stock, la facture et l'e-reporting mais
+	// N'ÉMETTAIT AUCUNE confirmation : le client était débité et servi sans jamais
+	// recevoir d'email. On verrouille la reconstruction des post-tasks du checkout.
+	describe("WEBHOOK-AUDIT-003 — confirmation de commande sur reprise de webhook perdu", () => {
+		const succeededOrder = {
+			id: "order-1",
+			orderNumber: "SYN-001",
+			stripePaymentIntentId: "pi_success",
+			paymentStatus: "PENDING",
+			userId: "user-9",
+		};
+
+		it("persiste la task ORDER_CONFIRMATION_EMAIL construite depuis la commande traitée", async () => {
+			const processedOrder = { id: "order-1", orderNumber: "SYN-001", items: [] };
+			const paymentIntent = { id: "pi_success", status: "succeeded" };
+			const emailTask = {
+				type: "ORDER_CONFIRMATION_EMAIL",
+				data: { to: "client@example.com", idempotencyKey: "order-confirm-order-1" },
+			};
+			mockPrisma.order.findMany.mockResolvedValue([succeededOrder]);
+			mockStripe.paymentIntents.retrieve.mockResolvedValue(paymentIntent);
+			mockProcessOrderFromPaymentIntent.mockResolvedValue(processedOrder);
+			mockBuildPostCheckoutTasksFromPI.mockReturnValue([emailTask]);
+
+			await syncAsyncPayments();
+
+			// Construit depuis la commande RETOURNÉE par le traitement (état post-PAID),
+			// pas depuis le snapshot PENDING de la sélection.
+			expect(mockBuildPostCheckoutTasksFromPI).toHaveBeenCalledWith(processedOrder, paymentIntent);
+			// `webhookEventId` null : aucun WebhookEvent à rattacher sur ce chemin.
+			// `retry-post-webhook-tasks` sélectionne sur status+attempts et l'exécutera.
+			expect(mockPersistPostWebhookTasks).toHaveBeenCalledWith(expect.anything(), null, [
+				emailTask,
+			]);
+		});
+
+		it("ne persiste pas de task INVALIDATE_CACHE — ses tags partent par le flush du cron", async () => {
+			mockPrisma.order.findMany.mockResolvedValue([succeededOrder]);
+			mockStripe.paymentIntents.retrieve.mockResolvedValue({
+				id: "pi_success",
+				status: "succeeded",
+			});
+			mockProcessOrderFromPaymentIntent.mockResolvedValue({ id: "order-1", items: [] });
+			mockBuildPostCheckoutTasksFromPI.mockReturnValue([
+				{ type: "INVALIDATE_CACHE", tags: ["product-bague-lune", "cart-user-9"] },
+			]);
+
+			await syncAsyncPayments();
+
+			expect(mockPersistPostWebhookTasks).not.toHaveBeenCalled();
+			// Les tags panier/stock que la boucle historique n'invalidait pas sont
+			// désormais couverts.
+			const invalidated = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+			expect(invalidated).toContain("product-bague-lune");
+			expect(invalidated).toContain("cart-user-9");
+		});
+	});
+
 	// ORD-STRIPE-001 régression : si le webhook async_payment_succeeded est perdu,
 	// le cron doit déclencher le même flow que le webhook (décrément stock inclus).
 	it("ORD-STRIPE-001: should propagate the resolved paymentMethod to processOrderFromPaymentIntent", async () => {
@@ -223,11 +299,16 @@ describe("syncAsyncPayments", () => {
 
 		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith("order-2", "pi_canceled", failureDetails);
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-2");
+		// Audit webhooks 2026-07-02 : fail AVANT restore — le restore ne doit jamais
+		// précéder la transition gardée (sinon restock fantôme si le PI a payé entre-temps).
+		expect(mockMarkOrderAsFailed.mock.invocationCallOrder[0]).toBeLessThan(
+			mockRestoreStockForOrder.mock.invocationCallOrder[0]!,
+		);
 		expect(result!.updated).toBe(1);
 		expect(result!.hasMore).toBe(false);
 	});
 
-	it("should mark order as failed when Stripe shows requires_payment_method", async () => {
+	it("should cancel the PI then mark order as failed when Stripe shows requires_payment_method", async () => {
 		const order = {
 			id: "order-3",
 			orderNumber: "SYN-003",
@@ -242,10 +323,40 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
+		// Audit webhooks 2026-07-02 : payment_failed étant non-terminal côté webhook,
+		// ce cron acte l'échec d'un refus carte abandonné — il DOIT canceler le PI
+		// (sinon un client revenant à H+1h05 re-confirme un PI vivant → succeeded
+		// sur commande CANCELLED → débit + auto-refund).
+		expect(mockStripe.paymentIntents.cancel).toHaveBeenCalledWith("pi_needs_method");
 		expect(mockMarkOrderAsFailed).toHaveBeenCalled();
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-3");
 		expect(result!.updated).toBe(1);
 		expect(result!.hasMore).toBe(false);
+	});
+
+	// Audit webhooks 2026-07-02 : garde anti-PAID — le PI a été payé entre le
+	// retrieve du cron et le failOrder (ou un run concurrent a déjà FAILED).
+	// Ni restore, ni email, ni comptage : l'état réel fait foi.
+	it("should skip restore + email and not count the order when markOrderAsFailed reports transitioned: false", async () => {
+		const order = {
+			id: "order-race-paid",
+			orderNumber: "SYN-RACE-PAID",
+			stripePaymentIntentId: "pi_race_paid",
+			paymentStatus: "PENDING",
+			customerEmail: "client@example.com",
+			customerName: "Camille",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ status: "canceled" });
+		mockExtractPaymentFailureDetails.mockReturnValue({});
+		mockMarkOrderAsFailed.mockResolvedValue({ transitioned: false });
+
+		const result = await syncAsyncPayments();
+
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
+		expect(mockSendPaymentFailedEmail).not.toHaveBeenCalled();
+		expect(result!.updated).toBe(0);
+		expect(result!.errors).toBe(0);
 	});
 
 	// F1 (2026-05-29) : PI 3DS abandonné / jamais confirmé → cancel Stripe PUIS FAILED.
@@ -454,7 +565,7 @@ describe("syncAsyncPayments", () => {
 		expect(result!.hasMore).toBe(true);
 	});
 
-	it("OPS-AUDIT-003: should leave order PENDING (errors++) when restoreStockForOrder fails", async () => {
+	it("should count an error (order already FAILED) when restoreStockForOrder fails after the transition", async () => {
 		const order = {
 			id: "order-stock-fail",
 			orderNumber: "SYN-STOCK-FAIL",
@@ -471,10 +582,17 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		// OPS-AUDIT-003 : stock-first → skip markOrderAsFailed so order stays
-		// PENDING for the next 4h run (atomic retry).
-		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		// Audit webhooks 2026-07-02 (inverse OPS-AUDIT-003) : la transition gardée
+		// passe D'ABORD ; un échec du restore (no-op attendu : PENDING→FAILED implique
+		// stock jamais décrémenté) laisse la commande FAILED, compte une erreur et
+		// remonte l'alerte agrégée — pas d'email client, pas de comptage updated.
+		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
+			"order-stock-fail",
+			"pi_canceled",
+			failureDetails,
+		);
 		expect(mockRestoreStockForOrder).toHaveBeenCalledWith("order-stock-fail");
+		expect(mockSendPaymentFailedEmail).not.toHaveBeenCalled();
 		expect(result!.updated).toBe(0);
 		expect(result!.errors).toBe(1);
 		expect(result!.hasMore).toBe(false);

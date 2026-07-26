@@ -9,12 +9,10 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 // ============================================
 // CACHE PROFILES (definis dans next.config.ts)
 // ============================================
-// - products:        stale=15min, revalidate=5min, expire=6h   (listes produits)
-// - productDetail:   stale=15min, revalidate=5min, expire=6h   (detail produit/SKU)
-// - reference:       stale=7j, revalidate=24h, expire=30j      (prix max, donnees stables)
-// - dashboard:       stale=1min, revalidate=30s, expire=5min   (compteurs admin)
-// - relatedProducts: stale=30min, revalidate=10min, expire=3h  (produits similaires)
-// - realtime:        stale=30s, revalidate=15s, expire=1min    (donnees temps reel)
+// - catalog:   stale=15min, revalidate=5min, expire=6h  (produits, SKUs, related)
+// - checkout:  stale=1min, revalidate=30s, expire=5min  (stock, panier, confirmation)
+// - user:      stale=2min, revalidate=1min, expire=10min (dashboard admin, donnees user)
+// - reference: stale=7j, revalidate=24h, expire=30j     (prix max, donnees stables)
 
 // ============================================
 // CACHE TAGS

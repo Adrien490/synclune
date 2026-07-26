@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { orderNumberParamSchema } from "@/modules/orders/schemas/order-route-params.schema";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -30,13 +31,7 @@ const querySchema = z.object({
 interface StatusResponse {
 	paymentStatus: "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "REFUNDED" | "PARTIALLY_REFUNDED";
 	status:
-		| "PENDING"
-		| "PROCESSING"
-		| "SHIPPED"
-		| "DELIVERED"
-		| "CANCELLED"
-		| "RETURNED"
-		| "REFUNDED";
+		"PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "RETURNED" | "REFUNDED";
 }
 
 export async function GET(
@@ -54,7 +49,7 @@ export async function GET(
 	}
 	const { orderId } = queryValidation.data;
 
-	if (orderNumber.length === 0 || orderNumber.length > 64) {
+	if (!orderNumberParamSchema.safeParse(orderNumber).success) {
 		return NextResponse.json({ error: "Bad request" }, { status: 400 });
 	}
 

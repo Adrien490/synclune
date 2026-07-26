@@ -4,7 +4,7 @@
  */
 
 export const STEP_COLORS = {
-	/** Couleur primaire (rose profond) - Pour étapes signature */
+	/** Couleur primaire (rose clair signature) - Pour étapes signature */
 	primary: "bg-primary text-primary-foreground border-primary group-hover:border-primary/80",
 	/** Couleur secondaire (doré) - Pour étapes de création */
 	secondary:

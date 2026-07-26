@@ -28,5 +28,4 @@ export {
 	cacheUserAccounts,
 	getCurrentUserInvalidationTags,
 	getUserFullInvalidationTags,
-	getUserOrdersCountInvalidationTags,
 } from "../utils/cache.utils";

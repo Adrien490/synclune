@@ -1,16 +1,20 @@
 /**
  * @regression CHECKOUT-AUDIT-001
  *
- * Lock-in : un paiement échoué/annulé Stripe doit toujours libérer le code
+ * Lock-in : un paiement TERMINALEMENT échoué doit toujours libérer le code
  * promo (decrément `Discount.usageCount` + delete `DiscountUsage`). Sans cette
  * libération, le compteur dérive et sature `maxUsageCount` artificiellement.
  *
- * On vérifie l'ENCHAÎNEMENT depuis le handler (entry-point du dispatcher
- * webhook) — `releaseOrderDiscountUsageTx` doit être invoqué pour orderId,
- * même si le test mocke `markOrderAsFailed` au niveau service. Comme les
- * call-sites `payment_intent.payment_failed` et `payment_intent.canceled`
- * appellent ces marqueurs, on s'assure surtout que le handler ne les contourne
- * jamais (ex: skip silencieux si refund auto déclenché).
+ * Révision audit webhooks 2026-07-02 : `payment_intent.payment_failed` n'est
+ * PLUS un chemin de libération — l'événement est non-terminal (le PI repasse
+ * `requires_payment_method`, le client peut retenter le MÊME PI) et libérer le
+ * discount à ce moment le rendait réutilisable pendant que la commande pouvait
+ * encore aboutir (drift `usageCount` inverse). La libération est différée aux
+ * chemins réellement terminaux :
+ *  - cron `sync-async-payments` (PENDING + PI > 1h → markOrderAsFailed) ;
+ *  - `payment_intent.canceled` → markOrderAsCancelled.
+ * Ce test verrouille les DEUX sens : canceled libère toujours, payment_failed
+ * ne libère plus (n'invoque plus markOrderAsFailed du tout).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -21,21 +25,25 @@ const {
 	mockRestoreStockForOrder,
 	mockInitiateAutomaticRefund,
 	mockSendRefundFailureAlert,
+	mockOrderFindFirst,
+	mockOrderUpdateMany,
 } = vi.hoisted(() => ({
-	mockMarkOrderAsFailed: vi.fn().mockResolvedValue(undefined),
-	mockMarkOrderAsCancelled: vi.fn().mockResolvedValue(undefined),
+	mockMarkOrderAsFailed: vi.fn().mockResolvedValue({ transitioned: true }),
+	mockMarkOrderAsCancelled: vi.fn().mockResolvedValue({ restoredSkus: [], userId: null }),
 	mockExtractPaymentFailureDetails: vi.fn().mockReturnValue({
 		code: "card_declined",
 		declineCode: null,
 		message: null,
 	}),
-	mockRestoreStockForOrder: vi.fn().mockResolvedValue({ restoredSkuIds: [] }),
+	mockRestoreStockForOrder: vi.fn().mockResolvedValue({ restoredSkus: [] }),
 	mockInitiateAutomaticRefund: vi.fn().mockResolvedValue({ success: true }),
 	mockSendRefundFailureAlert: vi.fn().mockResolvedValue(undefined),
+	mockOrderFindFirst: vi.fn(),
+	mockOrderUpdateMany: vi.fn().mockResolvedValue({ count: 1 }),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
-	prisma: { order: { findFirst: vi.fn() } },
+	prisma: { order: { findFirst: mockOrderFindFirst, updateMany: mockOrderUpdateMany } },
 	notDeleted: { deletedAt: null },
 }));
 
@@ -44,7 +52,6 @@ vi.mock("@/shared/lib/logger", () => ({
 }));
 
 vi.mock("../../services/payment-intent.service", () => ({
-	markOrderAsPaid: vi.fn(),
 	markOrderAsFailed: mockMarkOrderAsFailed,
 	markOrderAsCancelled: mockMarkOrderAsCancelled,
 	extractPaymentFailureDetails: mockExtractPaymentFailureDetails,
@@ -116,17 +123,20 @@ describe("[regression] CHECKOUT-AUDIT-001 — discount released on payment_inten
 			declineCode: null,
 			message: null,
 		});
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkus: [] });
+		mockOrderFindFirst.mockResolvedValue({
+			orderNumber: "SYN-001",
+			paymentStatus: "PENDING",
+			userId: null,
+		});
+		mockOrderUpdateMany.mockResolvedValue({ count: 1 });
 	});
 
-	it("payment_intent.payment_failed → markOrderAsFailed is invoked (which releases discount internally)", async () => {
-		await handlePaymentFailure(makePaymentIntent());
+	it("payment_intent.payment_failed → must NOT invoke markOrderAsFailed (non-terminal, release deferred to cron/canceled — audit 2026-07-02)", async () => {
+		const result = await handlePaymentFailure(makePaymentIntent());
 
-		expect(mockMarkOrderAsFailed).toHaveBeenCalledWith(
-			"order-with-discount",
-			"pi_failed_release",
-			expect.any(Object),
-		);
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
+		expect(result.success).toBe(true);
 	});
 
 	it("payment_intent.canceled → markOrderAsCancelled is invoked (which releases discount internally)", async () => {

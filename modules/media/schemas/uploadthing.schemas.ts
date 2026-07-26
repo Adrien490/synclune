@@ -10,7 +10,6 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
  * Validates that the URL is well-formed and comes from an authorized UploadThing domain.
  */
 const uploadThingUrlSchema = z
-	.string()
 	.url({ message: "URL du fichier invalide" })
 	.refine(isValidUploadThingUrl, {
 		message: "L'URL doit provenir d'un domaine UploadThing autorisé (HTTPS)",

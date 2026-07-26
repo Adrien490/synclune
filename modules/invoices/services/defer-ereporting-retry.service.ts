@@ -15,9 +15,9 @@ import { recordSalesEReporting, recordRefundEReporting } from "./record-ereporti
  * transactions créées-mais-non-batchées, pas les jamais-créées.
  *
  * Ces wrappers posent un flag DLQ (`Order.ereportingRetryDeferred` /
- * `Refund.ereportingRetryDeferred`) que les crons `reconcile-invoices` (Passe SALES)
- * et `reconcile-refunds` (passe REFUND) consomment pour retenter (idempotent) puis
- * lever le flag au succès.
+ * `Refund.ereportingRetryDeferred`) que le cron `reconcile-invoices` consomme
+ * (Passes SALES et REFUND — PAS `reconcile-refunds`, qui ne lit jamais ce flag)
+ * pour retenter (idempotent) puis lever le flag au succès.
  *
  * Sémantique de go-live propre : le flag n'est posé QUE si le retour vaut `"error"`.
  * `"skipped"` (feature flag OFF, déjà enregistré, hors B2C) ne déclenche aucun
@@ -59,7 +59,7 @@ export async function recordRefundEReportingDeferrable(refundId: string): Promis
 			where: { id: refundId },
 			data: { ereportingRetryDeferred: true },
 		});
-		logger.warn("recordRefundEReporting deferred — flag posé pour reconcile-refunds", {
+		logger.warn("recordRefundEReporting deferred — flag posé pour reconcile-invoices", {
 			service: "defer-ereporting-retry",
 			refundId,
 		});

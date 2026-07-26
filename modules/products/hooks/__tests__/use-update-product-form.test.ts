@@ -115,14 +115,13 @@ describe("useUpdateProductForm", () => {
 		mockUpdateProduct.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useUpdateProductForm({ product: makeProduct() }));
 
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {
@@ -197,12 +196,6 @@ describe("useUpdateProductForm", () => {
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("formErrors is an array by default", () => {
-		const { result } = renderHook(() => useUpdateProductForm({ product: makeProduct() }));
-
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("works when product has no skus", () => {

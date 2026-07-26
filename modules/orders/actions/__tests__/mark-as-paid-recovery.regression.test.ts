@@ -34,6 +34,8 @@ const {
 		productSku: { updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		refund: { findFirst: vi.fn() },
+		// STOCK-02 : acquireOrderPaidLockTx fait un tx.$queryRaw (advisory lock).
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -106,6 +108,12 @@ vi.mock("@sentry/nextjs", () => ({
 	captureMessage: vi.fn(),
 	addBreadcrumb: vi.fn(),
 	startSpan: vi.fn((_o: unknown, cb: () => unknown) => cb()),
+}));
+
+// EINV-CASH-005 : import dynamique post-commit (émission eager facture) — mocké
+// (la chaîne d'archivage tire UploadThing à l'import).
+vi.mock("@/modules/cron/services/reconcile-invoices.service", () => ({
+	reconcileInvoiceOrder: vi.fn().mockResolvedValue({ kind: "recovered" }),
 }));
 
 import { markAsPaid } from "../mark-as-paid";

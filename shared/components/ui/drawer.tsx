@@ -248,7 +248,6 @@ export {
 	Drawer,
 	DrawerTrigger,
 	DrawerClose,
-	DrawerHandle,
 	DrawerContent,
 	DrawerHeader,
 	DrawerBody,

@@ -16,6 +16,7 @@ import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
@@ -99,8 +100,10 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 		isDirtyRef.current = isDirty;
 	}, [isDirty, isDirtyRef]);
 
-	// WCAG 3.3.1 — focus the first invalid field after a server-side error.
+	// WCAG 3.3.1 — après une erreur serveur, focus l'alerte (les erreurs serveur
+	// ne sont pas mappées aux champs) avec fallback sur le premier champ invalide.
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const errorRef = useRef<HTMLDivElement>(null);
 	const previousState = useRef(state);
 	useEffect(() => {
 		if (
@@ -109,10 +112,24 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 			state.status !== ActionStatus.SUCCESS &&
 			state.status !== ActionStatus.INITIAL
 		) {
-			focusFirstInvalid();
+			if (errorRef.current) {
+				errorRef.current.focus();
+			} else {
+				focusFirstInvalid();
+			}
 		}
 		previousState.current = state;
 	}, [state, focusFirstInvalid]);
+
+	// Gate de soumission : bloque l'aller-retour serveur sur formulaire invalide et
+	// la resoumission en vol (touche Entrée ⇒ deux adresses créées).
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: mode === "create" ? "CreateAddressDialog" : "EditAddressDialog",
+	});
 
 	return (
 		<>
@@ -131,7 +148,7 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 				ref={formRef}
 				action={action}
 				className="flex min-h-0 flex-1 flex-col"
-				onSubmit={() => form.handleSubmit()}
+				onSubmit={handleGatedSubmit}
 				onInvalidCapture={onInvalidCapture}
 			>
 				{/* Contenu scrollable */}
@@ -150,7 +167,7 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 					{state?.status !== ActionStatus.SUCCESS &&
 						state?.status !== ActionStatus.INITIAL &&
 						state?.message && (
-							<Alert variant="destructive">
+							<Alert ref={errorRef} tabIndex={-1} variant="destructive">
 								<CircleX aria-hidden="true" />
 								<AlertDescription className="font-medium">{state.message}</AlertDescription>
 							</Alert>

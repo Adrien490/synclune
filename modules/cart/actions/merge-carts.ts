@@ -11,6 +11,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { MAX_CART_ITEMS } from "@/modules/cart/constants/cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkMergeCartsRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { isValidCartSessionId, getCartSessionId } from "@/modules/cart/lib/cart-session";
 import type { MergeCartsResult, MergeCartTruncatedItem } from "../types/cart.types";
 import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/get-cart-for-merge";
 
@@ -33,10 +34,30 @@ import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/g
  */
 export async function mergeCarts(userId: string, sessionId: string): Promise<MergeCartsResult> {
 	try {
-		// 0a. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
+		// 0a. Validate sessionId format (prevent arbitrary session injection)
+		if (!isValidCartSessionId(sessionId)) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Non autorisé",
+			};
+		}
+
+		// 0a-bis. Vérification de sécurité: le userId doit correspondre à l'utilisateur connecté
 		// Empêche un attaquant de fusionner le panier d'un autre utilisateur
 		const currentSession = await getSession();
 		if (!currentSession?.user.id || currentSession.user.id !== userId) {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Non autorisé",
+			};
+		}
+
+		// 0a-ter. Ownership-of-cookie check: empêche un attaquant authentifié
+		// d'aspirer puis supprimer le panier guest d'une victime via RPC direct
+		// en passant un sessionId arbitraire. UUID v4 entropy mitige mais ne fixe
+		// pas la design flaw (IDOR OWASP A01). Miroir de merge-wishlists.
+		const cookieSessionId = await getCartSessionId();
+		if (cookieSessionId !== sessionId) {
 			return {
 				status: ActionStatus.ERROR,
 				message: "Non autorisé",

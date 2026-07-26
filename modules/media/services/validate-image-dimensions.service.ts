@@ -6,13 +6,15 @@
  * image header via Sharp metadata is cheap (no pixel decode) and lets us reject
  * abnormally large images before any downstream processing.
  *
+ * Buffer-first : l'appelant télécharge UNE fois (`downloadImage`) et fait
+ * circuler le buffer dans tout le pipeline `onUploadComplete` (audit média
+ * M6 — l'ancienne API par URL re-téléchargeait l'image à chaque étape).
+ *
  * @module modules/media/services/validate-image-dimensions.service
  */
 
 import sharp from "sharp";
-import { downloadImage } from "./image-downloader.service";
-import { isValidUploadThingUrl } from "../utils/validate-media-file";
-import { THUMBHASH_CONFIG } from "../constants/image-downloader.constants";
+import { ImageDecodeError } from "./image-downloader.service";
 
 /**
  * Maximum allowed pixel count (width × height).
@@ -38,30 +40,27 @@ export class ImageDimensionsTooLargeError extends Error {
 }
 
 /**
- * Reads the image header and verifies dimensions are within limits.
+ * Reads the image header from a buffer and verifies dimensions are within limits.
  *
  * @throws {ImageDimensionsTooLargeError} If width × height exceeds maxPixels.
- * @throws {Error} If the URL is not a trusted UploadThing domain or the image
- *   header cannot be parsed.
+ * @throws {ImageDecodeError} If the header cannot be parsed (spoofed MIME,
+ *   missing codec) — the caller MUST reject the upload.
  */
-export async function validateImageDimensions(
-	imageUrl: string,
+export async function assertImageDimensions(
+	buffer: Buffer,
 	maxPixels: number = MAX_IMAGE_PIXELS,
 ): Promise<{ width: number; height: number }> {
-	if (!isValidUploadThingUrl(imageUrl)) {
-		throw new Error(`Domaine non autorisé: ${new URL(imageUrl).hostname}`);
+	let width: number | undefined;
+	let height: number | undefined;
+
+	try {
+		({ width, height } = await sharp(buffer).metadata());
+	} catch (err) {
+		throw new ImageDecodeError(err);
 	}
 
-	const buffer = await downloadImage(imageUrl, {
-		downloadTimeout: THUMBHASH_CONFIG.downloadTimeout,
-		maxImageSize: THUMBHASH_CONFIG.maxImageSize,
-		userAgent: "Synclune-DimensionsCheck/1.0",
-	});
-
-	const { width, height } = await sharp(buffer).metadata();
-
 	if (typeof width !== "number" || typeof height !== "number" || width === 0 || height === 0) {
-		throw new Error("Impossible de lire les dimensions de l'image");
+		throw new ImageDecodeError(new Error("Dimensions absentes de l'en-tête image"));
 	}
 
 	if (width * height > maxPixels) {
@@ -69,4 +68,28 @@ export async function validateImageDimensions(
 	}
 
 	return { width, height };
+}
+
+/**
+ * Lit les dimensions d'un buffer image sans jamais échouer.
+ *
+ * À appeler sur le buffer FINAL (post strip EXIF / re-encode HEIC) : `sharp.rotate()`
+ * applique l'orientation EXIF et peut donc INTERVERTIR largeur et hauteur — les
+ * dimensions du buffer d'origine ne décrivent pas toujours l'image publiée.
+ *
+ * Contrairement à `assertImageDimensions`, un échec est non fatal (retourne `null`) :
+ * une dimension manquante dégrade le srcSet, elle ne doit pas perdre l'upload.
+ */
+export async function readImageDimensions(
+	buffer: Buffer,
+): Promise<{ width: number; height: number } | null> {
+	try {
+		const { width, height } = await sharp(buffer).metadata();
+		if (typeof width !== "number" || typeof height !== "number" || width <= 0 || height <= 0) {
+			return null;
+		}
+		return { width, height };
+	} catch {
+		return null;
+	}
 }

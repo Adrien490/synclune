@@ -3,12 +3,18 @@
 import { Send } from "lucide-react";
 import { useState } from "react";
 
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { cn } from "@/shared/utils/cn";
 
 import { useCreateReviewForm } from "../hooks/use-create-review-form";
 import { ReviewMediaField } from "./review-media-field";
 import { REVIEW_CONFIG } from "../constants/review.constants";
+
+/** Champs pouvant recevoir une erreur serveur path-préfixée (`create-review.ts`). */
+const SERVER_FIELD_NAMES = ["rating", "title", "content", "media"] as const;
 
 interface CreateReviewFormProps {
 	productId: string;
@@ -34,7 +40,7 @@ export function CreateReviewForm({
 }: CreateReviewFormProps) {
 	const [deletedMediaUrls, setDeletedMediaUrls] = useState<string[]>([]);
 
-	const { form, action, isPending } = useCreateReviewForm({
+	const { form, state, action, isPending } = useCreateReviewForm({
 		productId,
 		orderItemId,
 		onSuccess: () => {
@@ -42,9 +48,23 @@ export function CreateReviewForm({
 		},
 	});
 
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// `createReview` émet des messages path-préfixés ("content: trop court") et
+	// `createToastCallbacks` les retire du toast : on les remonte sur le champ
+	// ciblé, sinon en alerte globale.
+	const serverErrors = useServerFieldErrors({
+		state,
+		fieldNames: SERVER_FIELD_NAMES,
+		setFieldError: (field, message) =>
+			form.setFieldMeta(field, (prev) => ({ ...prev, errors: [message] })),
+		onFieldError: () => requestAnimationFrame(() => focusFirstInvalid()),
+	});
+
 	return (
 		<div className="group/form">
 			<form
+				ref={formRef}
 				action={action}
 				data-pending={isPending || undefined}
 				aria-busy={isPending}
@@ -60,6 +80,8 @@ export function CreateReviewForm({
 				{deletedMediaUrls.length > 0 && (
 					<input type="hidden" name="deletedMediaUrls" value={JSON.stringify(deletedMediaUrls)} />
 				)}
+
+				<FormServerErrorAlert errors={serverErrors} />
 
 				{/* Titre du formulaire */}
 				{productTitle && (

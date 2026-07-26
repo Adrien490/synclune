@@ -146,6 +146,18 @@ describe("MarkAsPaidAlertDialog", () => {
 		expect(screen.getByText(/paiements par virement ou chèque/)).toBeInTheDocument();
 	});
 
+	// ─── Attestation hors Stripe (EINV-CASH-002) ──────────────────────────────
+
+	it("renders a required off-Stripe attestation checkbox named confirmOffStripePayment", () => {
+		render(<MarkAsPaidAlertDialog />);
+
+		// Radix Checkbox : le bouton porte role="checkbox" ; name/required sont
+		// relayés au <input> caché soumis avec le formulaire.
+		const checkbox = screen.getByRole("checkbox");
+		expect(checkbox).toBeRequired();
+		expect(screen.getByText(/hors Stripe/)).toBeInTheDocument();
+	});
+
 	// ─── Hidden input ─────────────────────────────────────────────────────────
 
 	it("hidden input id contains the orderId", () => {

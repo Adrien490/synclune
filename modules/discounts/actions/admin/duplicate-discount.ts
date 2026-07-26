@@ -114,7 +114,7 @@ export async function duplicateDiscount(
 			select: { id: true, code: true },
 		});
 
-		getDiscountInvalidationTags(duplicate.id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(duplicate.id, duplicate.code).forEach((tag) => updateTag(tag));
 
 		return success(`Code promo duplique: ${duplicate.code}`, {
 			id: duplicate.id,

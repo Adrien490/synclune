@@ -692,4 +692,61 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
 	});
+
+	// EINV-SEQ-008 — garde interne « jamais encaissée » (Art. 289-I CGI).
+	// Défense en profondeur : les callers gatent déjà PAID, mais le service doit
+	// refuser par lui-même toute commande sans encaissement.
+	describe("never-paid guard (EINV-SEQ-008)", () => {
+		it("returns null WITHOUT opening a transaction when paidAt is null and status is not PAID", async () => {
+			runTx();
+			const order = makeOrderForSnapshot();
+			order.paidAt = null;
+			order.paymentStatus = "PENDING";
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining("never-paid"),
+				undefined,
+				expect.objectContaining({ orderId: "order-1" }),
+			);
+		});
+
+		it("still invoices when paidAt is set even if status moved past PAID (partial refund before invoice)", async () => {
+			runTx();
+			const order = makeOrderForSnapshot();
+			order.paymentStatus = "PARTIALLY_REFUNDED"; // paidAt reste non-null (makeOrderForSnapshot)
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			mockTx.order.findUnique.mockResolvedValue({ invoiceNumber: null });
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+			});
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe("F-2026-00001");
+		});
+
+		it("still invoices a plain PAID order (paymentStatus PAID)", async () => {
+			runTx();
+			const order = makeOrderForSnapshot();
+			order.paymentStatus = "PAID";
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			mockTx.order.findUnique.mockResolvedValue({ invoiceNumber: null });
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+			});
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe("F-2026-00001");
+		});
+	});
 });

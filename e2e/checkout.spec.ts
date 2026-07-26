@@ -116,6 +116,50 @@ test.describe("Parcours checkout complet", { tag: ["@critical"] }, () => {
 		});
 	});
 
+	// AUDIT-BIZ-001 — le suivi de commande invité. Le CTA « Suivre ma commande » de
+	// l'email de confirmation pointait vers un segment inexistant, et les invités
+	// (checkout sans compte, chemin de premier ordre) n'avaient AUCUNE surface de
+	// suivi. Sans commande réelle en E2E, on vérifie ce qui est vérifiable sans
+	// fixture : la route est bien SERVIE (elle n'est pas avalée par le default-deny
+	// du proxy) et elle est fail-closed sur un token invalide.
+	test.describe("Suivi de commande invité", () => {
+		test("/suivi-commande est servie et n'est pas redirigée par le default-deny du proxy", async ({
+			page,
+		}) => {
+			await page.goto(
+				"/suivi-commande?commande=CMD-0000000000000-AAAAAAAAAAAA&token=" + "a".repeat(32),
+			);
+			await page.waitForLoadState("domcontentloaded");
+
+			// Le default-deny du proxy renvoie vers `/`. Un 404 applicatif est le
+			// comportement ATTENDU ici (token qui ne correspond à rien) — ce qu'on
+			// refuse, c'est l'atterrissage sur l'accueil.
+			expect(new URL(page.url()).pathname).toBe("/suivi-commande");
+		});
+
+		test("/suivi-commande avec un token invalide ne divulgue rien (fail-closed)", async ({
+			page,
+		}) => {
+			await page.goto(
+				"/suivi-commande?commande=CMD-0000000000000-AAAAAAAAAAAA&token=" + "b".repeat(32),
+			);
+			await page.waitForLoadState("domcontentloaded");
+
+			const body = (await page.textContent("body")) ?? "";
+			// Pas d'oracle d'existence : aucun détail de commande ne doit fuiter.
+			expect(body).not.toMatch(/adresse de livraison/i);
+			expect(body).not.toMatch(/récapitulatif/i);
+		});
+
+		test("/suivi-commande sans token est rejetée", async ({ page }) => {
+			await page.goto("/suivi-commande?commande=CMD-0000000000000-AAAAAAAAAAAA");
+			await page.waitForLoadState("domcontentloaded");
+
+			const body = (await page.textContent("body")) ?? "";
+			expect(body).not.toMatch(/adresse de livraison/i);
+		});
+	});
+
 	test.describe("Page d'annulation", () => {
 		test("/paiement/annulation affiche un message de contexte", async ({ page }) => {
 			await page.goto("/paiement/annulation");

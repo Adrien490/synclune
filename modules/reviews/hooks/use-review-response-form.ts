@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { createReviewResponse } from "../actions/create-review-response";
 import { updateReviewResponse } from "../actions/update-review-response";
 import { deleteReviewResponse } from "../actions/delete-review-response";
@@ -12,6 +12,8 @@ interface UseReviewResponseFormOptions {
 	onSuccess?: () => void;
 }
 
+type ResponseAction = "create" | "edit" | "remove";
+
 /**
  * Hook pour gérer les réponses admin aux avis
  *
@@ -22,6 +24,7 @@ interface UseReviewResponseFormOptions {
  */
 export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 	const [isPending, startTransition] = useTransition();
+	const [lastAction, setLastAction] = useState<ResponseAction>("create");
 
 	const callbacks = createToastCallbacks<ActionState>({
 		loadingMessage: "Envoi de la réponse…",
@@ -30,22 +33,23 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 		},
 	});
 
-	const [, createFormAction, isCreatePending] = useActionState(
+	const [createState, createFormAction, isCreatePending] = useActionState(
 		withCallbacks(createReviewResponse, callbacks),
 		undefined,
 	);
 
-	const [, editFormAction, isEditPending] = useActionState(
+	const [editState, editFormAction, isEditPending] = useActionState(
 		withCallbacks(updateReviewResponse, callbacks),
 		undefined,
 	);
 
-	const [, removeFormAction, isRemovePending] = useActionState(
+	const [removeState, removeFormAction, isRemovePending] = useActionState(
 		withCallbacks(deleteReviewResponse, callbacks),
 		undefined,
 	);
 
 	const createResponse = (reviewId: string, content: string) => {
+		setLastAction("create");
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("reviewId", reviewId);
@@ -55,6 +59,7 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 	};
 
 	const editResponse = (responseId: string, content: string) => {
+		setLastAction("edit");
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("id", responseId);
@@ -64,6 +69,7 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 	};
 
 	const removeResponse = (responseId: string) => {
+		setLastAction("remove");
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("id", responseId);
@@ -71,10 +77,18 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 		});
 	};
 
+	// État de la dernière action déclenchée — les VALIDATION_ERROR sont retirées du
+	// toast par `createToastCallbacks`, le composant doit donc les rendre inline.
+	// On ne peut pas faire un simple `??` : les trois états coexistent une fois
+	// chacun invoqué, et un `??` renverrait un état périmé.
+	const state =
+		lastAction === "edit" ? editState : lastAction === "remove" ? removeState : createState;
+
 	return {
 		createResponse,
 		editResponse,
 		removeResponse,
+		state,
 		isPending: isPending || isCreatePending || isEditPending || isRemovePending,
 	};
 }

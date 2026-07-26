@@ -6,12 +6,16 @@
  * GPS pour les photos iPhone < 1 MB qui contournent la compression Canvas
  * cliente) atterrissent telles quelles sur une URL publique.
  *
- * Ce service télécharge le fichier depuis UploadThing, le re-encode via Sharp
- * (qui strip par défaut toutes les métadonnées si `withMetadata()` n'est pas
- * appelé), puis remplace le fichier d'origine en supprimant l'ancien blob et
- * en uploadant la version nettoyée.
+ * Ce service re-encode le buffer via Sharp (qui strip par défaut toutes les
+ * métadonnées si `withMetadata()` n'est pas appelé), puis remplace le fichier
+ * d'origine en uploadant la version nettoyée et en supprimant l'ancien blob.
  *
- * LAYER EXCEPTION: ce service contient des I/O (download + UTApi upload/delete).
+ * Le résultat est un statut EXPLICITE à trois branches (audit média M4) : un
+ * simple `null` confondait « rien à stripper » et « strip échoué », ce qui
+ * interdisait à l'appelant de bloquer la publication d'une photo encore
+ * porteuse de coordonnées GPS.
+ *
+ * LAYER EXCEPTION: ce service contient des I/O (UTApi upload/delete).
  * Documenté dans `01-conventions.md § Services transactionnels partagés` car
  * appelé depuis le route handler UploadThing (catalogMedia + reviewMedia
  * `onUploadComplete`).
@@ -21,14 +25,9 @@
 
 import sharp from "sharp";
 import * as Sentry from "@sentry/nextjs";
-import { downloadImage } from "./image-downloader.service";
 import { utapi } from "@/shared/lib/uploadthing";
-import { isValidUploadThingUrl } from "../utils/validate-media-file";
-import { THUMBHASH_CONFIG } from "../constants/image-downloader.constants";
 
 export interface StripImageMetadataInput {
-	/** UploadThing URL of the freshly uploaded image */
-	ufsUrl: string;
 	/** UploadThing key of the original blob (used for delete-after-replace) */
 	key: string;
 	/** Original filename, preserved on re-upload */
@@ -37,46 +36,40 @@ export interface StripImageMetadataInput {
 	type: string;
 }
 
-export interface StripImageMetadataResult {
-	/** New UploadThing URL after re-upload of the stripped buffer */
-	url: string;
-	/** New UploadThing key — replaces the original */
-	key: string;
-}
+export type StripImageMetadataResult =
+	/** Métadonnées retirées : le blob d'origine a été remplacé. */
+	| { status: "stripped"; url: string; key: string; buffer: Buffer }
+	/** Aucune métadonnée à retirer : le blob d'origine est déjà propre. */
+	| { status: "unchanged" }
+	/** Le strip a échoué : le blob d'origine porte peut-être encore de l'EXIF. */
+	| { status: "failed"; reason: unknown };
 
 /**
- * Re-encode an image to strip EXIF/GPS metadata, then replace the UploadThing
- * blob in-place (upload cleaned + delete original).
+ * Re-encode an image buffer to strip EXIF/GPS metadata, then replace the
+ * UploadThing blob in-place (upload cleaned + delete original).
  *
- * Best-effort: if any step fails (download, Sharp decode, re-upload), the
- * function returns `null` so the caller can fall back to the original URL.
- * Failures are captured in Sentry with the `strip-image-metadata` tag.
+ * `animated: true` : sans lui, libvips ne lit que la première page et un GIF /
+ * WebP animé serait ré-uploadé aplati en une seule image, l'original animé
+ * supprimé (audit média M5 — perte irréversible).
  *
  * Format preservation: Sharp `.toBuffer()` without explicit format conversion
  * keeps the input encoding (JPEG → JPEG, PNG → PNG, etc.). `rotate()` applies
- * EXIF orientation before strip so portrait/landscape stays correct.
+ * EXIF orientation before strip so portrait/landscape stays correct — il est
+ * volontairement omis sur les images multi-pages (libvips ne sait pas pivoter
+ * une séquence animée).
  */
 export async function stripImageMetadata(
+	buffer: Buffer,
 	file: StripImageMetadataInput,
-): Promise<StripImageMetadataResult | null> {
-	if (!isValidUploadThingUrl(file.ufsUrl)) {
-		return null;
-	}
-
+): Promise<StripImageMetadataResult> {
 	try {
-		const buffer = await downloadImage(file.ufsUrl, {
-			downloadTimeout: THUMBHASH_CONFIG.downloadTimeout,
-			maxImageSize: THUMBHASH_CONFIG.maxImageSize,
-			userAgent: "Synclune-MetadataStrip/1.0",
-		});
-
-		// rotate() applique l'EXIF orientation pour préserver l'orientation visuelle ;
-		// toBuffer() sans withMetadata() supprime tous les tags EXIF/GPS/XMP/ICC par défaut.
-		const cleaned = await sharp(buffer).rotate().toBuffer();
+		const image = sharp(buffer, { animated: true });
+		const { pages } = await image.metadata();
+		const cleaned = await (pages && pages > 1 ? image : image.rotate()).toBuffer();
 
 		// Si le strip n'a rien changé (pas d'EXIF à l'origine) on évite un re-upload inutile.
 		if (cleaned.length === buffer.length && cleaned.equals(buffer)) {
-			return null;
+			return { status: "unchanged" };
 		}
 
 		const cleanedFile = new File([new Uint8Array(cleaned)], file.name, { type: file.type });
@@ -88,7 +81,7 @@ export async function stripImageMetadata(
 				level: "warning",
 				tags: { service: "strip-image-metadata", originalKey: file.key },
 			});
-			return null;
+			return { status: "failed", reason: new Error("re-upload returned no URL") };
 		}
 
 		// Supprime l'original UNIQUEMENT après succès de l'upload (anti-perte de donnée).
@@ -107,11 +100,11 @@ export async function stripImageMetadata(
 			// `cleanup-orphan-media` (24h grace period).
 		}
 
-		return { url: uploaded.ufsUrl, key: uploaded.key };
+		return { status: "stripped", url: uploaded.ufsUrl, key: uploaded.key, buffer: cleaned };
 	} catch (err) {
 		Sentry.captureException(err, {
 			tags: { service: "strip-image-metadata", originalKey: file.key },
 		});
-		return null;
+		return { status: "failed", reason: err };
 	}
 }

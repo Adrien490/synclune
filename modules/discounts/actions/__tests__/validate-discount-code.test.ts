@@ -107,7 +107,6 @@ import { validateDiscountCode } from "../validate-discount-code";
 // ============================================================================
 
 const VALID_CODE = "PROMO20";
-const VALID_SUBTOTAL = 5000; // 50EUR in cents (passed but ignored)
 
 const mockDiscount = {
 	id: "disc-123",
@@ -214,7 +213,7 @@ describe("validateDiscountCode", () => {
 			error: { status: "ERROR", message: "Rate limited" },
 		});
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toContain("Trop de tentatives");
@@ -223,7 +222,7 @@ describe("validateDiscountCode", () => {
 	it("should use IP for rate limiting", async () => {
 		mockGetClientIp.mockResolvedValue("10.0.0.1");
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
 			"ip:10.0.0.1",
@@ -235,7 +234,7 @@ describe("validateDiscountCode", () => {
 	it("should use 'unknown' IP when getClientIp returns null", async () => {
 		mockGetClientIp.mockResolvedValue(null);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockEnforceRateLimit).toHaveBeenCalledWith("ip:unknown", "validate-discount", "unknown");
 	});
@@ -246,7 +245,7 @@ describe("validateDiscountCode", () => {
 
 	it("should compute subtotal from server-side cart, not from client parameter", async () => {
 		// Client passes a fake high subtotal
-		await validateDiscountCode(VALID_CODE, 999999);
+		await validateDiscountCode(VALID_CODE);
 
 		// checkDiscountEligibility should receive the real cart subtotal (2*2500 = 5000)
 		expect(mockCheckDiscountEligibility).toHaveBeenCalledWith(
@@ -259,7 +258,7 @@ describe("validateDiscountCode", () => {
 	it("should return error when cart is empty", async () => {
 		mockGetCart.mockResolvedValue({ ...mockCart, items: [] });
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Votre panier est vide");
@@ -268,7 +267,7 @@ describe("validateDiscountCode", () => {
 	it("should return error when cart is null", async () => {
 		mockGetCart.mockResolvedValue(null);
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Votre panier est vide");
@@ -279,14 +278,14 @@ describe("validateDiscountCode", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should return error for invalid code format", async () => {
-		const result = await validateDiscountCode("AB", VALID_SUBTOTAL);
+		const result = await validateDiscountCode("AB");
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Format de code invalide");
 	});
 
 	it("should normalize code to uppercase", async () => {
-		await validateDiscountCode("promo20", VALID_SUBTOTAL);
+		await validateDiscountCode("promo20");
 
 		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -304,14 +303,14 @@ describe("validateDiscountCode", () => {
 			user: { id: "not-a-cuid2", email: "user@test.com" },
 		});
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(true);
 		expect(mockPrisma.discount.findUnique).toHaveBeenCalled();
 	});
 
 	it("should return error for invalid customerEmail", async () => {
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "not-an-email");
+		const result = await validateDiscountCode(VALID_CODE, "not-an-email");
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Adresse email invalide");
@@ -328,7 +327,7 @@ describe("validateDiscountCode", () => {
 		};
 		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -344,14 +343,14 @@ describe("validateDiscountCode", () => {
 	it("should return error when discount not found", async () => {
 		mockPrisma.discount.findUnique.mockResolvedValue(null);
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Code promo introuvable");
 	});
 
 	it("should query with deletedAt: null", async () => {
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -370,7 +369,7 @@ describe("validateDiscountCode", () => {
 			error: "Ce code promo a expire",
 		});
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Ce code promo a expire");
@@ -383,7 +382,7 @@ describe("validateDiscountCode", () => {
 		};
 		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith({
 			discountId: "disc-123",
@@ -393,7 +392,7 @@ describe("validateDiscountCode", () => {
 	});
 
 	it("should NOT fetch usage counts when maxUsagePerUser is null", async () => {
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockGetDiscountUsageCounts).not.toHaveBeenCalled();
 	});
@@ -405,7 +404,7 @@ describe("validateDiscountCode", () => {
 	it("should return valid result with discount amount", async () => {
 		mockCalculateDiscountWithExclusion.mockReturnValue(1000);
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(true);
 		expect(result.discount).toEqual({
@@ -419,7 +418,7 @@ describe("validateDiscountCode", () => {
 	});
 
 	it("should pass cart items to calculateDiscountWithExclusion with excludeSaleItems: true", async () => {
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockCalculateDiscountWithExclusion).toHaveBeenCalledWith({
 			type: "PERCENTAGE",
@@ -450,7 +449,7 @@ describe("validateDiscountCode", () => {
 		};
 		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -466,7 +465,7 @@ describe("validateDiscountCode", () => {
 		// DB filter (suspendedAt/accountStatus) excludes the row → gate rejects.
 		mockPrisma.user.findUnique.mockResolvedValue(null);
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		// Discount lookup must never run once the gate rejects.
@@ -484,7 +483,7 @@ describe("validateDiscountCode", () => {
 		};
 		mockPrisma.discount.findUnique.mockResolvedValue(discountWithPerUser);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "guest@test.com");
+		await validateDiscountCode(VALID_CODE, "guest@test.com");
 
 		expect(mockGetDiscountUsageCounts).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -496,7 +495,7 @@ describe("validateDiscountCode", () => {
 	it("should work for guest checkout without session", async () => {
 		mockGetSession.mockResolvedValue(null);
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL, "guest@test.com");
+		const result = await validateDiscountCode(VALID_CODE, "guest@test.com");
 
 		expect(result.valid).toBe(true);
 	});
@@ -508,7 +507,7 @@ describe("validateDiscountCode", () => {
 	it("should catch generic errors and return validation error message", async () => {
 		mockHeaders.mockRejectedValue(new Error("Headers unavailable"));
 
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		const result = await validateDiscountCode(VALID_CODE);
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Erreur lors de la validation du code");
@@ -518,7 +517,7 @@ describe("validateDiscountCode", () => {
 		const dbError = new Error("DB outage");
 		mockHeaders.mockRejectedValue(dbError);
 
-		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+		await validateDiscountCode(VALID_CODE);
 
 		expect(mockSentryCaptureException).toHaveBeenCalledWith(
 			dbError,

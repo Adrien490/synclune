@@ -21,7 +21,7 @@ vi.mock("@/shared/components/animations/glitter-sparkles", () => ({
 	GlitterSparkles: () => <div data-testid="glitter-sparkles" />,
 }));
 
-vi.mock("../step-illustrations", () => ({
+vi.mock("../step-illustrations-map", () => ({
 	STEP_ILLUSTRATIONS: {
 		idea: () => <svg data-testid="illustration-idea" aria-hidden="true" />,
 		drawing: () => <svg data-testid="illustration-drawing" aria-hidden="true" />,

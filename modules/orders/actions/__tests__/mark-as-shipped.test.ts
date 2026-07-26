@@ -25,7 +25,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -143,7 +143,7 @@ describe("markAsShipped", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(order);
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 
 		mockValidateInput.mockReturnValue({
 			data: { id: VALID_CUID, trackingNumber: "1Z999", sendEmail: true },

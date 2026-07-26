@@ -7,14 +7,14 @@ import { Button } from "@/shared/components/ui/button";
 import { useInView } from "@/shared/hooks/use-in-view";
 import { toast } from "@/shared/utils/toast";
 
-export interface LoadMoreResult<TItem> {
+interface LoadMoreResult<TItem> {
 	items: TItem[];
 	nextCursor: string | null;
 	hasMore: boolean;
 	error?: string;
 }
 
-export interface LoadMoreProps<TItem> {
+interface LoadMoreProps<TItem> {
 	/** Initial cursor (last id of the server-rendered page). */
 	initialCursor: string | null;
 	/** Whether the server reports more pages available. */

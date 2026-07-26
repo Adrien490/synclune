@@ -3,15 +3,30 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ResetPasswordForm } from "../reset-password-form";
 
 // Hoisted mocks
-const { mockState, mockAction, mockIsPending, mockShake, mockCanSubmit, mockHandleSubmit } =
-	vi.hoisted(() => ({
-		mockState: { value: undefined as any },
-		mockAction: vi.fn(),
-		mockIsPending: { value: false },
-		mockShake: { shake: false, onShakeComplete: vi.fn() },
-		mockCanSubmit: { value: true },
-		mockHandleSubmit: vi.fn(),
-	}));
+const {
+	mockState,
+	mockAction,
+	mockIsPending,
+	mockShake,
+	mockCanSubmit,
+	mockHandleSubmit,
+	mockIsClientFormValid,
+} = vi.hoisted(() => ({
+	mockState: { value: undefined as any },
+	mockAction: vi.fn(),
+	mockIsPending: { value: false },
+	mockShake: { shake: false, onShakeComplete: vi.fn() },
+	mockCanSubmit: { value: true },
+	// Le vrai `form.handleSubmit()` renvoie une promesse, consommée par
+	// `runAfterValidation` — un mock `undefined` lèverait une unhandled exception.
+	mockHandleSubmit: vi.fn(() => Promise.resolve()),
+	mockIsClientFormValid: { value: true },
+}));
+
+vi.mock("@tanstack/react-form", () => ({
+	useStore: (_store: unknown, selector: (s: { isValid: boolean }) => unknown) =>
+		selector({ isValid: mockIsClientFormValid.value }),
+}));
 
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: () => ({
@@ -55,6 +70,8 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
+		state: { isValid: true },
+		store: {},
 	}),
 }));
 
@@ -137,6 +154,7 @@ beforeEach(() => {
 	mockIsPending.value = false;
 	mockShake.shake = false;
 	mockCanSubmit.value = true;
+	mockIsClientFormValid.value = true;
 });
 
 describe("ResetPasswordForm", () => {
@@ -211,10 +229,10 @@ describe("ResetPasswordForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Réinitialiser mon mot de passe' button text when pending", () => {
+	it("shows 'Réinitialisation…' button text when pending", () => {
 		mockIsPending.value = true;
 		render(<ResetPasswordForm token="abc123" />);
-		expect(screen.getByRole("button", { name: /réinitialiser mon mot de passe/i })).toBeDefined();
+		expect(screen.getByRole("button", { name: /réinitialisation/i })).toBeDefined();
 	});
 
 	it("disables submit button when isPending", () => {
@@ -237,11 +255,20 @@ describe("ResetPasswordForm", () => {
 
 	// ─── VALIDATION_ERROR filter ──────────────────────────────────────────────
 
-	it("does not show error alert for VALIDATION_ERROR status", () => {
+	it("does not show error alert for VALIDATION_ERROR status when client form is invalid (field errors already shown)", () => {
+		mockIsClientFormValid.value = false;
 		mockState.value = { status: "validation_error", message: "Champ invalide" };
 		render(<ResetPasswordForm token="abc123" />);
 		expect(screen.queryByTestId("error-alert")).toBeNull();
 		expect(screen.queryByTestId("success-alert")).toBeNull();
+	});
+
+	it("shows error alert for VALIDATION_ERROR status when client form is valid (client/server divergence)", () => {
+		mockIsClientFormValid.value = true;
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByTestId("error-alert")).toBeDefined();
+		expect(screen.getByText("Champ invalide")).toBeDefined();
 	});
 
 	// ─── canSubmit / SUCCESS disables button ──────────────────────────────────

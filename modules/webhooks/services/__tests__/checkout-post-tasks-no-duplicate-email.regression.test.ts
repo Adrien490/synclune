@@ -19,15 +19,27 @@ import type Stripe from "stripe";
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: () => "https://example.test",
+	buildUrl: (path: string) => `https://example.test${path}`,
 	ROUTES: {
 		ADMIN: {
 			ORDER_DETAIL: (id: string) => `/admin/ventes/commandes/${id}`,
 		},
+		// AUDIT-BIZ-001 : requis depuis que `trackingUrl` passe par le SSOT
+		// `buildOrderTrackingUrl`. Les VALEURS réelles de ces routes sont
+		// verrouillées séparément par `order-tracking-url.regression.test.ts` (qui
+		// n'a délibérément aucun mock de `urls`) — un stub ici ne peut donc pas
+		// masquer une route inexistante.
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/commandes/${n}` },
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
 	},
 }));
 
 vi.mock("@/modules/orders/utils/invoice-token", () => ({
 	generateInvoiceAccessToken: () => "token-stub",
+}));
+
+vi.mock("@/modules/orders/utils/tracking-token", () => ({
+	generateOrderTrackingToken: () => "tracking-token-stub",
 }));
 
 import { buildPostCheckoutTasksFromPI } from "../checkout-post-tasks.service";
@@ -61,7 +73,12 @@ function makeOrder(overrides: Partial<OrderWithItems> = {}): OrderWithItems {
 				quantity: 1,
 				price: 10_000,
 				skuId: "sku_1",
-				sku: { id: "sku_1", inventory: 0, sku: "ETO-OR-M" },
+				sku: {
+					id: "sku_1",
+					inventory: 0,
+					sku: "ETO-OR-M",
+					product: { id: "prod_1", slug: "collier-etoile" },
+				},
 			},
 		],
 		...overrides,

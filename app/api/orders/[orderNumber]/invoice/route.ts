@@ -8,6 +8,10 @@ import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-
 import { flagInvoiceFailureForReconcile } from "@/modules/orders/services/ensure-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
 import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import {
+	orderNumberParamSchema,
+	invoiceTokenSchema,
+} from "@/modules/orders/schemas/order-route-params.schema";
 import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
 import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
@@ -92,7 +96,15 @@ export async function GET(
 ) {
 	const { orderNumber } = await params;
 	const url = new URL(request.url);
-	const tokenFromQuery = url.searchParams.get("token");
+
+	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// (harmonisation avec status/route.ts). Échec → 400.
+	const orderNumberValidation = orderNumberParamSchema.safeParse(orderNumber);
+	const tokenValidation = invoiceTokenSchema.safeParse(url.searchParams.get("token"));
+	if (!orderNumberValidation.success || !tokenValidation.success) {
+		return new Response("Bad request", { status: 400 });
+	}
+	const tokenFromQuery = tokenValidation.data;
 
 	const session = await getSession();
 
@@ -388,12 +400,34 @@ export async function GET(
 	// `invoiceDataHash`) — EINV-PDF-003.
 	let pdfBuffer: ArrayBuffer;
 	try {
-		pdfBuffer = renderInvoicePdf(
-			resolveInvoiceDataForRender(invoiceOrder, {
-				invoiceDataSnapshot: archive?.invoiceDataSnapshot,
-				invoiceDataHash: archive?.invoiceDataHash,
-			}),
-		);
+		let invoiceData = resolveInvoiceDataForRender(invoiceOrder, {
+			invoiceDataSnapshot: archive?.invoiceDataSnapshot,
+			invoiceDataHash: archive?.invoiceDataHash,
+		});
+		// EINV-SEC-007 (fix régression) : le snapshot figé l'a été à l'état
+		// GENERATED (persist-invoice-number), donc `voidedInfo = null` par
+		// construction. `voidInvoice` ne réécrit jamais le snapshot. À la
+		// régénération d'une facture VOIDED, le resolver sert donc le snapshot tel
+		// quel → PDF SANS bandeau « FACTURE ANNULÉE », neutralisant l'intention de
+		// EINV-SEC-007 (bypass archive + bypass check hash plus haut). On ré-injecte
+		// `voidedInfo` dérivé des colonnes VIVANTES (creditNoteNumber/invoiceVoidedAt)
+		// — sans muter `invoiceDataSnapshot` ni `invoiceDataHash` : la donnée
+		// comptable figée (Art. L102 B LPF) reste intacte, seul le rendu est estampillé.
+		if (
+			isVoidedInvoice &&
+			invoiceData.voidedInfo === null &&
+			invoiceOrder.creditNoteNumber &&
+			invoiceOrder.invoiceVoidedAt
+		) {
+			invoiceData = {
+				...invoiceData,
+				voidedInfo: {
+					creditNoteNumber: invoiceOrder.creditNoteNumber,
+					voidedAt: invoiceOrder.invoiceVoidedAt,
+				},
+			};
+		}
+		pdfBuffer = renderInvoicePdf(invoiceData);
 	} catch (error) {
 		if (error instanceof InvoiceSnapshotIntegrityError) {
 			// Snapshot comptable corrompu/altéré : refuser de servir un document

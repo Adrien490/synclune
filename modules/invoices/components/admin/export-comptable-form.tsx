@@ -13,8 +13,15 @@ import {
 } from "@/shared/components/ui/select";
 import { toast } from "@/shared/utils/toast";
 
-const CURRENT_YEAR = new Date().getFullYear();
-const AVAILABLE_YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3];
+/**
+ * Années proposées à l'export. Calculé à l'appel (et non au scope du module) :
+ * un `new Date()` au chargement du module reste figé pour tout le process serveur
+ * — le 1ᵉʳ janvier, l'admin ne verrait pas la nouvelle année.
+ */
+function getAvailableYears(): number[] {
+	const currentYear = new Date().getFullYear();
+	return [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
+}
 
 type InvoiceStatusFilter = "all" | "sent" | "archived";
 
@@ -28,7 +35,8 @@ type InvoiceStatusFilter = "all" | "sent" | "archived";
  * pour rester compatible Art. 50-0 CGI (CA à l'encaissement).
  */
 export function ExportComptableForm() {
-	const [year, setYear] = useState(String(CURRENT_YEAR));
+	const availableYears = getAvailableYears();
+	const [year, setYear] = useState(String(availableYears[0]));
 	const [invoiceStatus, setInvoiceStatus] = useState<InvoiceStatusFilter>("sent");
 	const [isExporting, setIsExporting] = useState(false);
 
@@ -41,7 +49,9 @@ export function ExportComptableForm() {
 			invoiceStatus,
 		});
 		const task = (async () => {
-			const response = await fetch(`/api/admin/orders/export?${params.toString()}`);
+			const response = await fetch(`/api/admin/orders/export?${params.toString()}`, {
+				method: "POST",
+			});
 			if (!response.ok) {
 				const message =
 					response.status === 429
@@ -62,13 +72,13 @@ export function ExportComptableForm() {
 			success: "Export téléchargé",
 			error: (e) => (e instanceof Error ? e.message : "Export impossible"),
 		});
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
 		try {
 			await task;
 		} catch {
 			// surfaced by toast.promise
-		} finally {
-			setIsExporting(false);
 		}
+		setIsExporting(false);
 	}
 
 	return (
@@ -81,7 +91,7 @@ export function ExportComptableForm() {
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							{AVAILABLE_YEARS.map((y) => (
+							{availableYears.map((y) => (
 								<SelectItem key={y} value={String(y)}>
 									{y}
 								</SelectItem>

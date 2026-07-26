@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { emailSchema } from "@/shared/schemas/email.schemas";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
@@ -10,10 +11,12 @@ import { AUTH_ERROR_CODES } from "@/modules/auth/constants/error-messages";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useStore } from "@tanstack/react-form";
 import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
 
 export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
@@ -21,10 +24,24 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 	const errorRef = useRef<HTMLDivElement>(null);
 	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
+	// TanStack Form setup
+	const form = useAppForm({
+		defaultValues: {
+			email: "",
+			password: "",
+			callbackURL: callbackURL || "/",
+		},
+	});
+
+	const isClientFormValid = useStore(form.store, (s) => s.isValid);
+
+	// Une VALIDATION_ERROR serveur n'est masquée que si des erreurs de champ
+	// sont déjà affichées côté client ; si le client jugeait le form valide
+	// (divergence client/serveur), elle doit rester visible.
 	const isActionError =
 		!!state?.message &&
 		state.status !== ActionStatus.SUCCESS &&
-		state.status !== ActionStatus.VALIDATION_ERROR;
+		(state.status !== ActionStatus.VALIDATION_ERROR || isClientFormValid);
 
 	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
 
@@ -36,13 +53,15 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 		}
 	}, [state?.message, state?.status, isActionError]);
 
-	// TanStack Form setup
-	const form = useAppForm({
-		defaultValues: {
-			email: "",
-			password: "",
-			callbackURL: callbackURL || "/",
-		},
+	// Gate de soumission : rien ne part au serveur tant que le client est invalide
+	// (sinon chaque faute de frappe consommerait une tentative de rate limit) et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "SignInEmailForm",
 	});
 
 	return (
@@ -51,45 +70,40 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 				ref={formRef}
 				action={action}
 				className="space-y-6"
-				onSubmit={async () => {
+				onSubmit={(event) => {
 					triggerHaptic("medium");
-					await form.handleSubmit();
-					if (!form.state.isValid) {
-						focusFirstInvalid();
-					}
+					handleGatedSubmit(event);
 				}}
 			>
 				{/* Indication des champs obligatoires */}
 				<RequiredFieldsNote />
 
-				{/* Error message - Skip validation errors (handled by field validators) */}
-				{state?.status !== ActionStatus.SUCCESS &&
-					state?.status !== ActionStatus.VALIDATION_ERROR &&
-					state?.message && (
-						<Alert
-							ref={errorRef}
-							variant="destructive"
-							tabIndex={-1}
-							role="alert"
-							aria-live="assertive"
-						>
-							<AlertDescription>
-								{state.message === AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED ? (
-									<>
-										Votre email n'a pas été vérifié.{" "}
-										<Link
-											href="/renvoyer-verification"
-											className="font-medium underline hover:no-underline"
-										>
-											Renvoyer l'email de vérification
-										</Link>
-									</>
-								) : (
-									state.message
-								)}
-							</AlertDescription>
-						</Alert>
-					)}
+				{/* Error message */}
+				{isActionError && state.message && (
+					<Alert
+						ref={errorRef}
+						variant="destructive"
+						tabIndex={-1}
+						role="alert"
+						aria-live="assertive"
+					>
+						<AlertDescription>
+							{state.message === AUTH_ERROR_CODES.EMAIL_NOT_VERIFIED ? (
+								<>
+									Votre email n'a pas été vérifié.{" "}
+									<Link
+										href="/renvoyer-verification"
+										className="font-medium underline hover:no-underline"
+									>
+										Renvoyer l'email de vérification
+									</Link>
+								</>
+							) : (
+								state.message
+							)}
+						</AlertDescription>
+					</Alert>
+				)}
 
 				{/* Champs cachés */}
 				<input type="hidden" name="callbackURL" value={callbackURL} />
@@ -100,13 +114,10 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 						<form.AppField
 							name="email"
 							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value) return "L'email est requis";
-									if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-										return "Format d'email invalide";
-									}
-									return undefined;
-								},
+								// SSOT : même schéma que le serveur (`emailSchema`), qui trim/lowercase.
+								// La regex maison rejetait un email collé avec une espace de fin que
+								// l'action, elle, acceptait.
+								onChange: emailSchema,
 							}}
 						>
 							{(field) => (

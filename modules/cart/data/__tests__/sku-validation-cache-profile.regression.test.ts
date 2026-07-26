@@ -6,8 +6,8 @@ import { describe, expect, it } from "vitest";
  * @regression sku-validation-cache-profile-2026-05-28
  *
  * Garantit que le JSDoc des fonctions de validation SKU (`fetchSkuForValidation`,
- * `fetchSkusForBatchValidation`, `fetchSkusForCheckoutValidation`) référence
- * **exactement le même profile** que celui appliqué via `cacheLife(...)`.
+ * `fetchSkusForBatchValidation`) référence **exactement le même profile** que
+ * celui appliqué via `cacheLife(...)`.
  *
  * Historique : avant 2026-05-28, le JSDoc annonçait un profile "realtime"
  * (30s stale / 15s revalidate / 1min expire) qui n'existait pas dans

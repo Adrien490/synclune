@@ -58,24 +58,27 @@ export function checkDiscountEligibility(
 	}
 
 	// 5. Vérifier le nombre max d'utilisations par utilisateur
-	if (discount.maxUsagePerUser && usageCounts) {
+	//
+	// [[DISC-USAGE-001]] On teste TOUJOURS les deux compteurs, jamais l'un OU
+	// l'autre selon la présence de `userId`. Un usage invité est enregistré avec
+	// `userId: NULL` : brancher sur `userId` rendait cet usage invisible dès que
+	// le client se créait un compte avec le même email, offrant une redemption
+	// supplémentaire par code et par personne (fuite `maxUsagePerUser`).
+	//
+	// Chaque compteur vaut 0 quand l'identité correspondante est absente
+	// (l'appelant ne requête que ce qu'il peut résoudre) — le `max` reste donc
+	// correct dans les trois configurations (userId seul, email seul, les deux).
+	// Sans aucune identité on laisse passer : la vérification aura lieu à la
+	// création de la commande, avec l'email de commande.
+	if (discount.maxUsagePerUser && usageCounts && (userId || customerEmail)) {
 		const { userCount, emailCount } = usageCounts;
 
-		if (userId && userCount >= discount.maxUsagePerUser) {
+		if (Math.max(userCount, emailCount) >= discount.maxUsagePerUser) {
 			return {
 				eligible: false,
 				error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
 			};
 		}
-
-		if (!userId && customerEmail && emailCount >= discount.maxUsagePerUser) {
-			return {
-				eligible: false,
-				error: DISCOUNT_ERROR_MESSAGES.USER_MAX_USAGE_REACHED,
-			};
-		}
-		// Si ni userId ni customerEmail, on ne peut pas vérifier - on laisse passer
-		// (sera vérifié au moment du paiement avec l'email de la commande)
 	}
 
 	return { eligible: true };

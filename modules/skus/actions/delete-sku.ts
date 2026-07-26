@@ -13,6 +13,7 @@ import {
 	notFound,
 	safeFormGet,
 	validateInput,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
@@ -68,7 +69,7 @@ export async function deleteProductSku(
 					select: { colorId: true, color: { select: { slug: true } } },
 				},
 				materials: {
-					select: { material: { select: { slug: true } } },
+					select: { materialId: true, material: { select: { slug: true } } },
 				},
 				product: {
 					select: {
@@ -145,27 +146,50 @@ export async function deleteProductSku(
 		const imageUrls = existingSku.images.map((img) => img.url);
 
 		const promotedSkuSku = await prisma.$transaction(async (tx) => {
+			// Re-check sous transaction : un CartItem/OrderItem a pu apparaître entre
+			// les checks des étapes 7-8 (hors tx) et le DELETE. Sans ce re-check, la FK
+			// Restrict ferait échouer le delete en P2003 générique — on préfère refuser
+			// avec un message métier explicite.
+			const [orderItemsNow, cartItemsNow] = await Promise.all([
+				tx.orderItem.count({ where: { skuId: validatedSkuId } }),
+				tx.cartItem.count({ where: { skuId: validatedSkuId } }),
+			]);
+			if (orderItemsNow > 0) {
+				throw new BusinessError(
+					"Cette variante vient d'être associée à une commande. Pour conserver l'historique, veuillez la désactiver à la place.",
+				);
+			}
+			if (cartItemsNow > 0) {
+				throw new BusinessError(
+					"Cette variante vient d'être ajoutée à un panier. Veuillez la désactiver à la place.",
+				);
+			}
+
 			let promoted: string | null = null;
 
 			if (existingSku.isDefault && existingSku.product._count.skus > 1) {
-				// Find another active SKU to promote
+				// Find another active SKU to promote (never a soft-deleted one : il
+				// serait invisible du storefront et hors de l'index unique partiel
+				// ProductSku_productId_isDefault_unique, scoped deletedAt IS NULL)
 				const candidateSku = await tx.productSku.findFirst({
 					where: {
 						productId: existingSku.productId,
 						id: { not: validatedSkuId },
 						isActive: true,
+						deletedAt: null,
 					},
 					orderBy: [{ createdAt: "asc" }],
 					select: { id: true, sku: true },
 				});
 
-				// If no active SKU found, take any SKU
+				// If no active SKU found, take any non-deleted SKU
 				const fallbackSku =
 					candidateSku ??
 					(await tx.productSku.findFirst({
 						where: {
 							productId: existingSku.productId,
 							id: { not: validatedSkuId },
+							deletedAt: null,
 						},
 						orderBy: [{ createdAt: "asc" }],
 						select: { id: true, sku: true },
@@ -202,6 +226,7 @@ export async function deleteProductSku(
 			existingSku.colors.map((c) => c.color.slug),
 			existingSku.colors.map((c) => c.colorId),
 			existingSku.materials.map((m) => m.material.slug),
+			existingSku.materials.map((m) => m.materialId),
 		);
 		tags.forEach((tag) => updateTag(tag));
 

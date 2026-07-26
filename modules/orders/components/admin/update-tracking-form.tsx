@@ -16,6 +16,7 @@ import { CARRIERS, detectCarrierAndUrl, type Carrier } from "@/modules/orders/ut
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { CopyButton } from "@/shared/components/copy-button";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -29,9 +30,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
@@ -84,7 +87,7 @@ export function UpdateTrackingForm({
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 	const previousCarrierRef = useRef<Carrier | undefined>(initialCarrier);
 
-	const { form, action, isPending } = useUpdateTrackingForm({
+	const { form, state, action, isPending } = useUpdateTrackingForm({
 		orderId,
 		initialTrackingNumber,
 		initialTrackingUrl,
@@ -98,6 +101,10 @@ export function UpdateTrackingForm({
 			}
 		},
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus de `updateTrackingSchema` serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const trackingNumber = useStore(form.store, (state) => state.values.trackingNumber);
 	const carrier = useStore(form.store, (state) => state.values.carrier);
@@ -120,46 +127,15 @@ export function UpdateTrackingForm({
 		}
 	}, [carrier, haptic]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || !trackingNumber.trim()) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, trackingNumber, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile || !successPath) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, successPath);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, successPath]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: successPath,
+		allowNavigation,
+		getIsDirty: () => isDirty,
+		getCanSubmit: () => trackingNumber.trim().length > 0,
+	});
 
 	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
@@ -215,6 +191,8 @@ export function UpdateTrackingForm({
 			<p className="text-muted-foreground text-sm">
 				Commande <span className="text-foreground font-semibold">{orderNumber}</span>
 			</p>
+
+			<FormServerErrorAlert errors={serverErrors} />
 
 			<RequiredFieldsNote />
 

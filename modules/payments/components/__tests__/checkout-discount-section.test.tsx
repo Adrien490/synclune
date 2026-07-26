@@ -157,12 +157,12 @@ describe("CheckoutDiscountSection", () => {
 	// ─── No applied discount ──────────────────────────────────────────────────
 
 	it("renders collapsible trigger 'J'ai un code promo' when no discount applied", () => {
-		render(<CheckoutDiscountSection form={createMockForm(null)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(null)} />);
 		expect(screen.getByText(/code promo/i)).toBeInTheDocument();
 	});
 
 	it("shows chevron icon in trigger", () => {
-		render(<CheckoutDiscountSection form={createMockForm(null)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(null)} />);
 		expect(screen.getByTestId("icon-chevron")).toBeInTheDocument();
 	});
 
@@ -170,31 +170,31 @@ describe("CheckoutDiscountSection", () => {
 
 	it("shows applied discount code when discount is applied", () => {
 		const discount = { code: "PROMO10", discountAmount: 990 };
-		render(<CheckoutDiscountSection form={createMockForm(discount)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(discount)} />);
 		expect(screen.getByText("PROMO10")).toBeInTheDocument();
 	});
 
 	it("shows discount amount when applied", () => {
 		const discount = { code: "PROMO10", discountAmount: 990 };
-		render(<CheckoutDiscountSection form={createMockForm(discount)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(discount)} />);
 		expect(screen.getByText("-9.90 €")).toBeInTheDocument();
 	});
 
 	it("shows check icon when discount is applied", () => {
 		const discount = { code: "PROMO10", discountAmount: 990 };
-		render(<CheckoutDiscountSection form={createMockForm(discount)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(discount)} />);
 		expect(screen.getByTestId("icon-check")).toBeInTheDocument();
 	});
 
 	it("shows remove button (X) when discount is applied", () => {
 		const discount = { code: "PROMO10", discountAmount: 990 };
-		render(<CheckoutDiscountSection form={createMockForm(discount)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(discount)} />);
 		expect(screen.getByRole("button", { name: /Supprimer le code promo/i })).toBeInTheDocument();
 	});
 
 	it("does not show collapsible when discount is applied", () => {
 		const discount = { code: "PROMO10", discountAmount: 990 };
-		render(<CheckoutDiscountSection form={createMockForm(discount)} cart={createCart()} />);
+		render(<CheckoutDiscountSection form={createMockForm(discount)} />);
 		expect(screen.queryByTestId("collapsible")).not.toBeInTheDocument();
 	});
 });

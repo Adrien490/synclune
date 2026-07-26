@@ -130,7 +130,8 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	),
 }));
 
-import { DashboardBreadcrumb, generateBreadcrumbs } from "../dashboard-breadcrumb";
+import { DashboardBreadcrumb } from "../dashboard-breadcrumb";
+import { generateBreadcrumbs } from "../generate-breadcrumbs";
 
 // ============================================================================
 // SETUP

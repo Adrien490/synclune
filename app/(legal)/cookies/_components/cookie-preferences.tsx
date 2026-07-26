@@ -2,7 +2,15 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
+import { APP_TIME_ZONE } from "@/shared/utils/timezone";
 import { useEffect, useState } from "react";
+
+// `timeZone` explicite : sans lui, le rendu serveur (UTC) et le navigateur
+// (Paris) peuvent afficher deux jours différents → mismatch d'hydratation.
+const CONSENT_DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
+	dateStyle: "short",
+	timeZone: APP_TIME_ZONE,
+});
 
 export function CookiePreferences() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
@@ -47,7 +55,7 @@ export function CookiePreferences() {
 				</p>
 				{consentDate && (
 					<p className="text-muted-foreground mt-1 text-xs">
-						Dernière modification : {new Date(consentDate).toLocaleDateString("fr-FR")}
+						Dernière modification : {CONSENT_DATE_FORMATTER.format(new Date(consentDate))}
 					</p>
 				)}
 			</div>

@@ -22,14 +22,17 @@ import type { StoreSettingsAdmin } from "../../types/store-settings.types";
 import { EditClosureMessageForm } from "./edit-closure-message-form";
 import { EditReopensAtForm } from "./edit-reopens-at-form";
 import { REOPEN_STORE_DIALOG_ID, ReopenStoreDialog } from "./reopen-store-dialog";
+import { APP_TIME_ZONE } from "@/shared/utils/timezone";
 
 interface StoreSettingsFormProps {
 	settings: StoreSettingsAdmin;
 }
 
+// `timeZone` explicite : sinon SSR (UTC) ≠ client (Paris) → mismatch d'hydratation.
 const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
 	dateStyle: "medium",
 	timeStyle: "short",
+	timeZone: APP_TIME_ZONE,
 });
 
 export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {

@@ -19,9 +19,12 @@ export const EMAIL_ERROR_MESSAGES = {
  * Utilise pour la connexion, inscription, reset password, etc.
  */
 export const emailSchema = z
-	.string()
-	.min(1, EMAIL_ERROR_MESSAGES.REQUIRED)
-	.email(EMAIL_ERROR_MESSAGES.INVALID_FORMAT)
+	.email({
+		// z.email() n'a pas d'étage min(1) séparé : on restitue le message
+		// REQUIRED sur input vide, INVALID_FORMAT sinon (parité pré-migration).
+		error: (issue) =>
+			issue.input === "" ? EMAIL_ERROR_MESSAGES.REQUIRED : EMAIL_ERROR_MESSAGES.INVALID_FORMAT,
+	})
 	.toLowerCase()
 	.trim();
 
@@ -29,7 +32,6 @@ export const emailSchema = z
  * Schema email optionnel (pour les guests checkout, etc.)
  */
 export const emailOptionalSchema = z
-	.string()
 	.email(EMAIL_ERROR_MESSAGES.INVALID_FORMAT)
 	.toLowerCase()
 	.trim()

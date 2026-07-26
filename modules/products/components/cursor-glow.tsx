@@ -1,5 +1,7 @@
 "use client";
 
+import "./cursor-glow.css";
+
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 
 /**

@@ -26,6 +26,7 @@ const {
 		isDirty: false,
 		submissionAttempts: 0,
 		fieldMeta: {} as Record<string, { errors?: unknown[] }>,
+		serverState: undefined as { status: string; message: string } | undefined,
 		items: [] as { orderItemId: string; selected: boolean; quantity: number; restock: boolean }[],
 		selectedItems: [] as {
 			orderItemId: string;
@@ -181,6 +182,9 @@ vi.mock("lucide-react", () => ({
 	ArrowLeft: () => <svg data-testid="icon-arrow-left" />,
 	Package: () => <svg data-testid="icon-package" />,
 	RotateCcw: () => <svg data-testid="icon-rotate-ccw" />,
+	// Utilisée par `FormServerErrorAlert` (erreur serveur inline).
+	CircleX: () => <svg data-testid="icon-circle-x" />,
+	CircleAlert: () => <svg data-testid="icon-circle-alert" />,
 }));
 
 vi.mock("@/modules/refunds/constants/refund.constants", () => ({
@@ -396,6 +400,7 @@ describe("CreateRefundForm", () => {
 		mockFormState.isDirty = false;
 		mockFormState.submissionAttempts = 0;
 		mockFormState.fieldMeta = {};
+		mockFormState.serverState = undefined;
 		mockFormState.items = [];
 		mockFormState.selectedItems = [];
 		mockFormState.totalAmount = 0;
@@ -411,6 +416,7 @@ describe("CreateRefundForm", () => {
 
 		useCreateRefundFormMock.mockImplementation(() => ({
 			form: createFakeForm(),
+			state: mockFormState.serverState,
 			action: mockAction,
 			isPending: mockIsPending.value,
 			reason: mockFormState.reason,
@@ -423,6 +429,37 @@ describe("CreateRefundForm", () => {
 		vi.mocked(canSubmitRefund).mockReturnValue(true);
 		getDefaultRestockMock.mockImplementation((reason: string) => reason === "CUSTOMER_REQUEST");
 		getAvailableQuantityMock.mockReturnValue(1);
+	});
+
+	// ─── Erreur serveur (VALIDATION_ERROR) ────────────────────────────────────
+
+	/**
+	 * `createToastCallbacks` retire les VALIDATION_ERROR du toast en supposant un
+	 * affichage inline. Sans cette alerte, un refus de `createRefundSchema` était
+	 * totalement muet — sur une opération monétaire.
+	 */
+	it("surfaces a server VALIDATION_ERROR inline, focused and assertive", () => {
+		mockFormState.serverState = {
+			status: "validation_error",
+			message: "Le montant dépasse le maximum remboursable",
+		};
+
+		render(<CreateRefundForm order={createMockOrder()} />);
+
+		const alert = screen
+			.getAllByRole("alert")
+			.find((el) => el.textContent.includes("Le montant dépasse le maximum remboursable"));
+		expect(alert).toBeDefined();
+		expect(alert).toHaveAttribute("aria-live", "assertive");
+		expect(alert).toHaveFocus();
+	});
+
+	it("renders no server error alert when the action succeeded", () => {
+		mockFormState.serverState = { status: "success", message: "Remboursement créé" };
+
+		render(<CreateRefundForm order={createMockOrder()} />);
+
+		expect(document.body.textContent).not.toContain("Remboursement créé");
 	});
 
 	// ─── Header ───────────────────────────────────────────────────────────────

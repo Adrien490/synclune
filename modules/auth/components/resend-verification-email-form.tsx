@@ -1,14 +1,18 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { emailSchema } from "@/shared/schemas/email.schemas";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useResendCooldown } from "@/modules/auth/hooks/use-resend-cooldown";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleX, CircleCheck, Mail, LoaderCircle } from "lucide-react";
@@ -69,22 +73,37 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 		}
 	}, [state?.status, startCooldown]);
 
+	// Le gate ci-dessous empêche toute soumission client invalide : une
+	// VALIDATION_ERROR serveur signale donc une divergence client/serveur réelle et
+	// doit rester visible (elle est exclue du toast ET de l'alerte ci-dessus).
+	const serverErrors = useServerFieldErrors({ state });
+
+	// Gate de soumission : rien ne part au serveur tant que le client est invalide
+	// (sinon chaque faute de frappe consommerait une tentative de rate limit) et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "ResendVerificationEmailForm",
+	});
+
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
 			<form
 				ref={formRef}
 				action={action}
 				className="space-y-4"
-				onSubmit={async () => {
+				onSubmit={(event) => {
 					triggerHaptic("medium");
-					await form.handleSubmit();
-					if (!form.state.isValid) {
-						focusFirstInvalid();
-					}
+					handleGatedSubmit(event);
 				}}
 			>
 				{/* Indication des champs obligatoires */}
 				<RequiredFieldsNote />
+
+				<FormServerErrorAlert errors={serverErrors} />
 
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
@@ -116,13 +135,10 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 						<form.AppField
 							name="email"
 							validators={{
-								onChange: ({ value }: { value: string }) => {
-									if (!value) return "L'email est requis";
-									if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-										return "Format d'email invalide";
-									}
-									return undefined;
-								},
+								// SSOT : même schéma que le serveur (`emailSchema`), qui trim/lowercase.
+								// La regex maison rejetait un email collé avec une espace de fin que
+								// l'action, elle, acceptait.
+								onChange: emailSchema,
 							}}
 						>
 							{(field) => (

@@ -20,11 +20,17 @@ function captureStepError(error: unknown, step: string, context: Record<string, 
 /**
  * Cleans up expired guest carts.
  *
- * Hard-delete des paniers guest (userId null) passé leur expiresAt + grace period.
- * La grace period (23j post-expiresAt = ~30j depuis création) couvre les emails de
- * relance abandoned-cart et préserve le droit RGPD à la portabilité court terme.
+ * Invoqué comme passe secondaire de la route cron `cleanup-pending-orders`
+ * (pas de cron dédié — right-sizing 2026-06). Les paniers guest expirés sont
+ * déjà invisibles à la lecture (filtre `expiresAt` dans get-cart) ; cette passe
+ * évite seulement leur accumulation indéfinie en DB.
  *
- * Au-delà : conservation contrevient à RGPD art. 5.1.e (limitation conservation).
+ * Hard-delete des paniers guest (userId null) passé leur expiresAt + grace period.
+ * La grace period (23j post-expiresAt = ~30j depuis dernière interaction) laisse
+ * une marge confortable au-delà du maxAge du cookie `cart_session` (7j glissants).
+ *
+ * Les paniers user (`userId != null`, `expiresAt: null` par design) ne sont
+ * JAMAIS touchés.
  *
  * CartItems sont supprimés en cascade DB (Cart.items relation, onDelete: Cascade).
  */

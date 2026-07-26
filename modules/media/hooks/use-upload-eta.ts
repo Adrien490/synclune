@@ -23,7 +23,7 @@ const SAMPLE_BUFFER_CAP = 60;
 /** Trim down to this size when cap is reached (cheap GC + smooth window). */
 const SAMPLE_BUFFER_TRIM = 30;
 
-export interface EtaTick {
+interface EtaTick {
 	/** Octets téléversés depuis le début du run (cumul). */
 	bytesUploaded: number;
 	/** Octets totaux du run (somme des fichiers en cours). */

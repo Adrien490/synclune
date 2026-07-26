@@ -232,10 +232,14 @@ describe("HomeFaq", () => {
 	it("renders mailto CTA with encoded subject", () => {
 		render(<HomeFaq />);
 
-		const cta = screen.getByRole("link", { name: /Une autre question/i });
-		expect(cta.getAttribute("href")).toBe(
-			"mailto:contact@synclune.fr?subject=Une%20question%20sur%20Synclune",
-		);
+		// Deux instances : colonne gauche sticky desktop (lg) + CTA mobile sous l'accordion.
+		const ctas = screen.getAllByRole("link", { name: /Une autre question/i });
+		expect(ctas.length).toBeGreaterThanOrEqual(1);
+		for (const cta of ctas) {
+			expect(cta.getAttribute("href")).toBe(
+				"mailto:contact@synclune.fr?subject=Une%20question%20sur%20Synclune",
+			);
+		}
 	});
 
 	it("renders mailto link inside personnalisation answer", () => {

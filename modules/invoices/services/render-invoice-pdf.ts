@@ -25,6 +25,13 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	const isCreditNote = data.invoiceNumber.startsWith("A-");
 	const doc = new jsPDF({ unit: "mm", format: "a4" });
 
+	// PDF-01 : sur un AVOIR, les montants représentent un remboursement au client
+	// → affichés en NÉGATIF pour lever toute ambiguïté visuelle avec une facture.
+	// Le payload reste positif (convention EN16931 / Factur-X TypeCode 381) ; seul
+	// le rendu porte le signe (cf. commentaire `buildCreditNoteData`).
+	const formatSignedAmount = (value: number): string =>
+		isCreditNote ? `-${formatEuro(value)}` : formatEuro(value);
+
 	// === Métadonnées déterministes (avant tout write) ===
 	const issuedAt = coerceDate(data.issuedAt);
 	// EINV-PDF-007 : on passe une string PDF-date pré-composée en UTC plutôt que
@@ -64,6 +71,12 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	y += 4;
 	doc.text(`SIRET : ${formatSiretForDisplay(data.seller.siret)}`, margin, y);
 	y += 4;
+	// Art. 242 nonies A : code activité (APE/NAF) du vendeur. SIREN est inclus dans
+	// le SIRET (9 premiers chiffres) → non redoublé. Affiché si renseigné (PDF-05).
+	if (data.seller.apeCode) {
+		doc.text(`Code APE : ${data.seller.apeCode}`, margin, y);
+		y += 4;
+	}
 	if (data.seller.vatNumber) {
 		doc.text(`TVA intra. : ${data.seller.vatNumber}`, margin, y);
 		y += 4;
@@ -81,7 +94,9 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	doc.setFontSize(9);
 	doc.setFont("helvetica", "normal");
 	const refLine = `N° : ${data.invoiceNumber}`;
-	const dateLine = `Date : ${formatDate(data.issuedAt)}`;
+	const dateLine = isCreditNote
+		? `Date d'émission : ${formatDate(data.issuedAt)}`
+		: `Date : ${formatDate(data.issuedAt)}`;
 	const orderLine = `Commande : ${data.meta.orderNumber}`;
 	doc.text(refLine, pageWidth - margin - doc.getTextWidth(refLine), margin + 8);
 	doc.text(dateLine, pageWidth - margin - doc.getTextWidth(dateLine), margin + 12);
@@ -209,7 +224,7 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 		}
 		doc.text(String(line.quantity), colX.qty, y);
 		doc.text(formatEuro(line.unitPriceExclTax), colX.unitPrice, y);
-		doc.text(formatEuro(line.lineTotalInclTax), colX.total, y);
+		doc.text(formatSignedAmount(line.lineTotalInclTax), colX.total, y);
 		y += variant ? 9 : 6;
 	}
 
@@ -223,7 +238,7 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 	doc.setFontSize(9);
 
 	doc.text("Sous-total", totalsX, y);
-	doc.text(formatEuro(data.totals.subtotalExclTax), colX.total, y);
+	doc.text(formatSignedAmount(data.totals.subtotalExclTax), colX.total, y);
 	y += 5;
 
 	if (data.totals.totalDiscount > 0) {
@@ -261,8 +276,8 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 
 	doc.setFont("helvetica", "bold");
 	doc.setFontSize(11);
-	doc.text("Total", totalsX, y);
-	doc.text(formatEuro(data.totals.totalInclTax), colX.total, y);
+	doc.text(isCreditNote ? "Total de l'avoir" : "Total", totalsX, y);
+	doc.text(formatSignedAmount(data.totals.totalInclTax), colX.total, y);
 	y += 12;
 
 	// === Modalités de paiement (B2B : viré) — affiché seulement si renseigné ===
@@ -317,9 +332,11 @@ export function renderInvoicePdf(data: InvoiceData): ArrayBuffer {
 /**
  * Formate un montant en centimes au format français `N NNN,NN €` SANS `Intl`
  * (l'espace insécable Intl a basculé U+00A0 → U+202F entre versions Node, source
- * de divergence bit-à-bit du PDF archivé).
+ * de divergence bit-à-bit du PDF archivé). Ne PAS remplacer par le `formatEuro`
+ * partagé (Intl) : le hash SHA-256 du PDF (Art. L102 B LPF) exige un rendu
+ * byte-stable cross-environnement. Exporté pour tests d'arrondis uniquement.
  */
-function formatEuro(cents: number): string {
+export function formatEuro(cents: number): string {
 	const sign = cents < 0 ? "-" : "";
 	const abs = Math.abs(Math.round(cents));
 	const euros = Math.floor(abs / 100);

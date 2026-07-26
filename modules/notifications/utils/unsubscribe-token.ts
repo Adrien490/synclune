@@ -18,8 +18,8 @@ function getSigningSecret(): string {
  * valide indéfiniment (un user peut cliquer 2 ans après la réception).
  *
  * Pourquoi pas de scope (back-in-stock vs review) ? Désinscription = retrait
- * global du consentement marketing — le scope par catégorie est laissé à
- * l'admin (handling manuel, cf. EMAIL-AUDIT-001).
+ * global du consentement marketing — persisté sur `User.marketingOptOutAt`
+ * (RGPD-AUDIT P1-1), filtré par tous les émetteurs marketing.
  */
 export function generateUnsubscribeToken(email: string): string {
 	const payload = `${TOKEN_NAMESPACE}:${email.toLowerCase().trim()}`;

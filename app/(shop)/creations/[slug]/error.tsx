@@ -25,7 +25,7 @@ export default function ProductDetailError({
 
 	return (
 		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-[70vh] items-center justify-center bg-linear-to-br px-4">
-			<ParticleBackgroundError shape={["diamond", "heart"]} />
+			<ParticleBackgroundError />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={

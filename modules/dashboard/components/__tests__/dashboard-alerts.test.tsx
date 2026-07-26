@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { DashboardAlerts } from "../../types/dashboard.types";
+import type { DashboardActionItems, DashboardAlerts } from "../../types/dashboard.types";
 
 // ============================================================================
 // MOCKS
@@ -10,6 +10,8 @@ import type { DashboardAlerts } from "../../types/dashboard.types";
 vi.mock("lucide-react", () => ({
 	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
 	RotateCcw: () => <span data-testid="icon-rotate-ccw" />,
+	AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
+	Clock: () => <span data-testid="icon-clock" />,
 }));
 
 vi.mock("next/link", () => ({
@@ -39,6 +41,18 @@ afterEach(cleanup);
 function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 	return {
 		pendingRefunds: 0,
+		...overrides,
+	};
+}
+
+function makeActionItems(overrides: Partial<DashboardActionItems> = {}): DashboardActionItems {
+	return {
+		disputesNearDeadline: 0,
+		overbilledOrders: 0,
+		stuckProcessing: 0,
+		stuckShipped: 0,
+		stuckInvoices: 0,
+		orphanPending: 0,
 		...overrides,
 	};
 }
@@ -78,6 +92,40 @@ describe("DashboardAlerts", () => {
 
 		const container = screen.getByRole("region");
 		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant ton attention");
+	});
+
+	describe("action items (à traiter)", () => {
+		it("renders nothing when alerts and action items are all 0", () => {
+			const { container } = render(
+				<DashboardAlertsComponent alerts={makeAlerts()} actionItems={makeActionItems()} />,
+			);
+
+			expect(container.firstChild).toBeNull();
+		});
+
+		it("renders a pill per non-zero action item", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					actionItems={makeActionItems({ disputesNearDeadline: 1, stuckProcessing: 2 })}
+				/>,
+			);
+
+			expect(screen.getByText("1 litige à traiter (échéance proche)")).toBeInTheDocument();
+			expect(screen.getByText("2 commandes en préparation depuis +7 j")).toBeInTheDocument();
+		});
+
+		it("links the stuck-processing pill to the filtered orders page", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					actionItems={makeActionItems({ stuckProcessing: 1 })}
+				/>,
+			);
+
+			const link = screen.getByText("1 commande en préparation depuis +7 j").closest("a");
+			expect(link).toHaveAttribute("href", "/admin/ventes/commandes?filter_status=PROCESSING");
+		});
 	});
 
 	describe("URSSAF deadline alert", () => {

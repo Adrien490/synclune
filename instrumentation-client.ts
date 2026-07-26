@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
+import { COOKIE_CONSENT_CHANGE_EVENT, hasAnalyticsConsent } from "@/shared/lib/analytics/track";
 import { scrubSentryEvent } from "@/shared/lib/sentry-scrub";
 
 const SHARED_IGNORE_ERRORS = [
@@ -33,7 +34,15 @@ const initSentry = () => {
 	});
 };
 
+// Session Replay = traceur soumis à consentement (ePrivacy/CNIL) : contrairement
+// au monitoring d'erreurs (intérêt légitime, cf. /cookies), l'enregistrement de
+// session ne se charge QUE si l'utilisateur a accepté les cookies optionnels.
+let replayLoaded = false;
+let replayStopped = false;
+
 const initReplay = () => {
+	if (replayLoaded) return;
+	replayLoaded = true;
 	Sentry.addIntegration(
 		Sentry.replayIntegration({
 			maskAllText: true,
@@ -43,13 +52,33 @@ const initReplay = () => {
 	);
 };
 
+const syncReplayWithConsent = () => {
+	if (hasAnalyticsConsent()) {
+		if (!replayLoaded) {
+			initReplay();
+		} else if (replayStopped) {
+			// Ré-acceptation en cours de session après un retrait.
+			Sentry.getReplay()?.start();
+			replayStopped = false;
+		}
+	} else if (replayLoaded && !replayStopped) {
+		// Retrait du consentement en cours de session : arrêt de l'enregistrement.
+		void Sentry.getReplay()?.stop();
+		replayStopped = true;
+	}
+};
+
 if ("requestIdleCallback" in window) {
 	requestIdleCallback(() => void initSentry());
-	setTimeout(() => requestIdleCallback(() => void initReplay()), 5000);
+	setTimeout(() => requestIdleCallback(() => syncReplayWithConsent()), 5000);
 } else {
 	setTimeout(() => void initSentry(), 2000);
-	setTimeout(() => void initReplay(), 7000);
+	setTimeout(() => syncReplayWithConsent(), 7000);
 }
+
+// Acceptation/refus après le chargement initial (bannière cliquée en cours de
+// session) : le store cookie-consent émet cet événement à chaque choix.
+window.addEventListener(COOKIE_CONSENT_CHANGE_EVENT, () => syncReplayWithConsent());
 
 performance.mark("app-init");
 

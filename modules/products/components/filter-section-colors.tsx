@@ -41,6 +41,10 @@ export function ColorFilterSection({
 	const haptic = useHaptic();
 	if (colors.length === 0) return null;
 
+	// `Set` construit une fois : un `selectedValues.includes()` par ligne rescanne
+	// tout le tableau à chaque rendu de la liste.
+	const selectedSet = new Set(selectedValues);
+
 	return (
 		<>
 			{colors.length > SEARCH_THRESHOLD && (
@@ -55,7 +59,7 @@ export function ColorFilterSection({
 					<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 				) : (
 					filteredColors.map((color) => {
-						const isSelected = selectedValues.includes(color.slug);
+						const isSelected = selectedSet.has(color.slug);
 						const light = isLightColor(color.hex, 0.85);
 						return (
 							<CheckboxFilterItem

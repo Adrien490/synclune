@@ -9,9 +9,10 @@ const {
 	mockPrisma,
 	mockUpdateTag,
 	mockGetCartInvalidationTags,
-	mockGetSession,
+	mockRequireAuth,
 	mockGetCartExpirationDate,
 	mockGetOrCreateCartSessionId,
+	mockAssertStoreOpen,
 } = vi.hoisted(() => ({
 	mockCheckCartRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
@@ -25,9 +26,10 @@ const {
 	},
 	mockUpdateTag: vi.fn(),
 	mockGetCartInvalidationTags: vi.fn(),
-	mockGetSession: vi.fn(),
+	mockRequireAuth: vi.fn(),
 	mockGetCartExpirationDate: vi.fn(),
 	mockGetOrCreateCartSessionId: vi.fn(),
+	mockAssertStoreOpen: vi.fn(),
 }));
 
 vi.mock("@/modules/cart/lib/cart-rate-limit", () => ({
@@ -49,12 +51,15 @@ vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,
 	CART_CACHE_TAGS: { PRODUCT_CARTS: (id: string) => `product-carts-${id}` },
 }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({
-	getSession: mockGetSession,
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAuth: mockRequireAuth,
 }));
 vi.mock("@/modules/cart/lib/cart-session", () => ({
 	getCartExpirationDate: mockGetCartExpirationDate,
 	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+}));
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
 }));
 vi.mock("../../schemas/cart.schemas", () => ({
 	reorderFromOrderSchema: {},
@@ -98,7 +103,9 @@ function setupDefaults() {
 		success: true,
 		context: { userId: "user-1", sessionId: null },
 	});
-	mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
+	mockRequireAuth.mockResolvedValue({ user: { id: "user-1" } });
+	// AUDIT-BIZ-001 : `null` = boutique ouverte (contrat de `assertStoreOpen`).
+	mockAssertStoreOpen.mockResolvedValue(null);
 	mockValidateInput.mockReturnValue({ data: { orderId: "order-1" } });
 	mockPrisma.order.findFirst.mockResolvedValue({
 		id: "order-1",
@@ -128,9 +135,37 @@ describe("reorderFromOrder", () => {
 	});
 
 	it("rejects guests (auth required)", async () => {
-		mockGetSession.mockResolvedValue(null);
-		await reorderFromOrder(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalled();
+		mockRequireAuth.mockResolvedValue({
+			error: { status: "error", message: "Vous devez être connecté pour effectuer cette action." },
+		});
+		const result = await reorderFromOrder(undefined, makeFormData());
+		expect(result).toEqual({
+			status: "error",
+			message: "Vous devez être connecté pour effectuer cette action.",
+		});
+		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
+	});
+
+	// AUDIT-BIZ-001 — `reorderFromOrder` remplit le panier : c'est un chemin
+	// d'achat et il doit porter le même gate que `addToCart`. Il était le seul
+	// trou, et un trou VIVANT : le `ReorderButton` s'affiche dans l'espace client,
+	// dont le layout est volontairement sans gate de fermeture (« accessible to
+	// authenticated users even when the store is closed »).
+	it("rejects when the store is closed (same gate as addToCart)", async () => {
+		mockAssertStoreOpen.mockResolvedValue({
+			closed: true,
+			message: "Les commandes ne sont pas encore ouvertes.",
+		});
+
+		const result = await reorderFromOrder(undefined, makeFormData());
+
+		expect(result).toEqual({
+			status: "error",
+			message: "Les commandes ne sont pas encore ouvertes.",
+		});
+		// Court-circuit avant toute lecture de commande ou écriture panier.
+		expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("rejects orders not owned by user (ownership)", async () => {

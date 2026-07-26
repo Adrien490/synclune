@@ -1,6 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
+
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useRouter } from "next/navigation";
 import { RotateCcw, LoaderCircle } from "lucide-react";
 import { RefundReason } from "@/app/generated/prisma/enums";
@@ -43,7 +46,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 	const [open, setOpen] = useState(false);
 	const [reason, setReason] = useState("");
 
-	const [, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			requestReturn,
 			createToastCallbacks({
@@ -56,6 +59,10 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 		),
 		undefined,
 	);
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un motif de retour refusé serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	return (
 		<section className="space-y-4">
@@ -88,6 +95,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 					</ResponsiveDialogHeader>
 
 					<form action={action} className="space-y-4">
+						<FormServerErrorAlert errors={serverErrors} />
 						<input type="hidden" name="orderId" value={orderId} />
 						<input type="hidden" name="reason" value={reason} />
 

@@ -416,12 +416,13 @@ describe("updateRefundStatus — state transitions", () => {
 	});
 
 	it("should update PENDING to COMPLETED", async () => {
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded", "PENDING" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-1" },
+		// IDEM-REFUNDSTATUS-001 : le claim borne l'écriture au statut validé.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "ref-1", status: "PENDING" },
 			data: {
 				status: "COMPLETED",
 				processedAt: expect.any(Date),
@@ -432,21 +433,21 @@ describe("updateRefundStatus — state transitions", () => {
 	it("should reject invalid transition COMPLETED to PENDING", async () => {
 		await updateRefundStatus("ref-1", "PENDING" as never, "pending", "COMPLETED" as never);
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should allow FAILED to COMPLETED transition (retry succeeded)", async () => {
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded", "FAILED" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 	});
 
 	it("should reject REJECTED to COMPLETED transition", async () => {
 		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded", "REJECTED" as never);
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should fetch current status from DB when not provided", async () => {
@@ -456,7 +457,7 @@ describe("updateRefundStatus — state transitions", () => {
 			amount: 5000,
 			stripeRefundId: "re_1",
 		});
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await updateRefundStatus("ref-1", "COMPLETED" as never, "succeeded");
 
@@ -465,16 +466,17 @@ describe("updateRefundStatus — state transitions", () => {
 			where: { id: "ref-1" },
 			select: expect.objectContaining({ status: true }),
 		});
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 	});
 
 	it("should not set processedAt for non-COMPLETED status", async () => {
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await updateRefundStatus("ref-1", "FAILED" as never, "failed", "PENDING" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-1" },
+		// IDEM-REFUNDSTATUS-001 : claim borné au statut validé (PENDING ici).
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "ref-1", status: "PENDING" },
 			data: {
 				status: "FAILED",
 				processedAt: undefined,
@@ -496,12 +498,13 @@ describe("markRefundAsFailed", () => {
 	});
 
 	it("should set status to FAILED with reason", async () => {
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		await markRefundAsFailed("ref-1", "Stripe API timeout");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-1" },
+		// IDEM-REFUNDSTATUS-001 : FAILED terminal → claim { status: { not: FAILED } }.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "ref-1", status: { not: "FAILED" } },
 			data: {
 				status: "FAILED",
 				failureReason: "Stripe API timeout",
@@ -520,7 +523,7 @@ describe("resolveRefundByStripeId", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockTx.refund.findUnique.mockReset();
-		mockTx.refund.update.mockReset();
+		mockTx.refund.updateMany.mockReset();
 		// Restore $transaction to use mockTx (was reset to mockPrisma by prior describe)
 		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockTx) => Promise<unknown>) =>
 			fn(mockTx),
@@ -564,14 +567,15 @@ describe("resolveRefundByStripeId", () => {
 			},
 		};
 		mockTx.refund.findUnique.mockResolvedValueOnce(refundRecord);
-		mockTx.refund.update.mockResolvedValue({});
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		const result = await resolveRefundByStripeId("re_new", "ref-from-metadata");
 
 		expect(result).toEqual(refundRecord);
 		// Should link the stripeRefundId atomically inside transaction
-		expect(mockTx.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-from-metadata" },
+		// IDEM-REFUNDSTATUS-001 : claim conditionnel (n'écrase pas un lien existant).
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "ref-from-metadata", stripeRefundId: null },
 			data: { stripeRefundId: "re_new" },
 		});
 	});

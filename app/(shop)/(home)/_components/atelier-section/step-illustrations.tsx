@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
  * Uses doodle-draw / doodle-draw-scroll CSS animations for scroll-driven drawing.
  */
 
-interface StepIllustrationProps {
+export interface StepIllustrationProps {
 	className?: string;
 }
 
@@ -183,11 +183,3 @@ export function FinishingIllustration({ className }: StepIllustrationProps) {
 		</svg>
 	);
 }
-
-/** Map step IDs to their illustration components */
-export const STEP_ILLUSTRATIONS: Record<string, React.ComponentType<StepIllustrationProps>> = {
-	idea: IdeaIllustration,
-	drawing: DrawingIllustration,
-	assembly: AssemblyIllustration,
-	finishing: FinishingIllustration,
-};

@@ -9,6 +9,9 @@ import type { ReviewHomepage, GlobalReviewStats } from "@/modules/reviews/types/
 vi.mock("@/shared/components/animations", () => ({
 	Fade: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	HandDrawnUnderline: () => <div data-testid="underline" />,
+	HandDrawnAccent: ({ variant }: { variant?: string }) => (
+		<div data-testid="hand-drawn-accent" data-variant={variant} />
+	),
 	Reveal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	Stagger: ({
 		children,
@@ -261,17 +264,17 @@ describe("ReviewsSection", () => {
 		setupMockUse(mockReviews, mockStats);
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
 
-		const skipLink = screen.getByText("Aller au lien Voir les créations les mieux notées");
+		const skipLink = screen.getByText("Aller au lien Découvrir toutes les créations");
 		expect(skipLink).toBeInTheDocument();
 		expect(skipLink.getAttribute("href")).toBe("#reviews-cta");
 	});
 
-	it("CTA links to /produits?sortBy=rating-descending", () => {
+	it("CTA links to /produits (le rail Les mieux notées porte déjà le tri par note)", () => {
 		setupMockUse(mockReviews, mockStats);
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
 
-		const ctaLink = screen.getByText("Voir les créations les mieux notées");
-		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits?sortBy=rating-descending");
+		const ctaLink = screen.getByText("Découvrir toutes les créations");
+		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits");
 	});
 
 	it("mobile carousel has dynamic aria-label with review count", () => {

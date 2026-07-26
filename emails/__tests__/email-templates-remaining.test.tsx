@@ -17,7 +17,7 @@ describe("CancelOrderConfirmationEmail", () => {
 		orderTotal: 8990,
 		reason: "Demande client",
 		wasRefunded: true,
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
+		orderDetailsUrl: "https://synclune.fr/commandes/CMD-2024-ABCD1234",
 	};
 
 	it("renders without error", async () => {
@@ -89,7 +89,7 @@ describe("RefundConfirmedEmail", () => {
 		customerName: "Marie",
 		refundAmount: 8990,
 		reason: "CUSTOMER_REQUEST",
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
+		orderDetailsUrl: "https://synclune.fr/commandes/CMD-2024-ABCD1234",
 	};
 
 	it("renders without error", async () => {

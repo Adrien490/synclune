@@ -21,14 +21,17 @@ import { useEffect, useRef, useState } from "react";
 import { useUpdateOrderCustomerInfo } from "@/modules/orders/hooks/use-update-order-customer-info";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { CopyButton } from "@/shared/components/copy-button";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { Label } from "@/shared/components/ui/label";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
@@ -69,7 +72,7 @@ export function EditCustomerInfoForm({
 	const [isDirty, setIsDirty] = useState(false);
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const { action, isPending } = useUpdateOrderCustomerInfo(() => {
+	const { state, action, isPending } = useUpdateOrderCustomerInfo(() => {
 		haptic("success");
 		allowNavigationRef.current?.();
 		setIsDirty(false);
@@ -79,52 +82,24 @@ export function EditCustomerInfoForm({
 		}
 	});
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile || !successPath) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, successPath);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, successPath]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: successPath,
+		allowNavigation,
+		getIsDirty: () => isDirty,
+	});
 
 	return (
 		<form
@@ -150,6 +125,8 @@ export function EditCustomerInfoForm({
 				le nom, l&apos;email ou le téléphone du client. Bloqué après émission de la facture
 				(immutabilité comptable).
 			</p>
+
+			<FormServerErrorAlert errors={serverErrors} />
 
 			<RequiredFieldsNote />
 

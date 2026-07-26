@@ -11,6 +11,46 @@ import {
 import { CronDeadlineExceededError, type CronResult } from "@/modules/cron/lib/cron-result";
 import { paginateCursor } from "@/modules/cron/lib/paginate-cursor";
 
+/** Ligne singleton de `StoreSettings` — porte le curseur de reprise du balayage. */
+const STORE_SETTINGS_ID = "store-settings-singleton";
+
+/**
+ * Lit l'offset de reprise dans `utapi.listFiles` (audit média M2).
+ *
+ * Sans curseur persistant, chaque exécution repartait de 0 et ne balayait que
+ * les `MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT` premiers fichiers. Les
+ * archives PDF de facture — une par commande payée, toutes référencées —
+ * saturent progressivement cette fenêtre : passé ce volume, plus aucun orphelin
+ * n'était jamais atteint, sans erreur ni alerte.
+ */
+async function readScanOffset(): Promise<number> {
+	const settings = await prisma.storeSettings.findUnique({
+		where: { id: STORE_SETTINGS_ID },
+		select: { orphanMediaScanOffset: true },
+	});
+	return Math.max(0, settings?.orphanMediaScanOffset ?? 0);
+}
+
+/**
+ * Persiste l'offset de reprise. `0` signifie « repartir du début » : posé dès
+ * qu'une page incomplète signale la fin de la liste UploadThing (balayage
+ * cyclique). Best-effort : un échec d'écriture ne doit pas faire échouer un run
+ * qui a par ailleurs supprimé des orphelins.
+ */
+async function persistScanOffset(offset: number): Promise<void> {
+	try {
+		await prisma.storeSettings.update({
+			where: { id: STORE_SETTINGS_ID },
+			data: { orphanMediaScanOffset: offset },
+		});
+	} catch (error) {
+		logger.error("Failed to persist orphan scan offset", error, {
+			cronJob: "cleanup-orphan-media",
+			offset,
+		});
+	}
+}
+
 class UploadThingTimeoutError extends Error {
 	constructor(operation: string, timeoutMs: number) {
 		super(`UploadThing ${operation} exceeded deadline (${timeoutMs}ms)`);
@@ -30,7 +70,7 @@ class UploadThingTimeoutError extends Error {
  * spurious Vercel 60s timeout + admin alert.
  *
  * On timeout we throw a typed error caught upstream as a clean break with
- * `hasMore: true` — the next monthly run will pick up the orphans.
+ * `hasMore: true` — the next run resumes from the persisted offset.
  */
 async function withDeadline<T>(
 	promise: Promise<T>,
@@ -79,8 +119,11 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 			count: referencedKeys.size,
 		});
 
-		// 2. List UploadThing files with pagination
-		let offset = 0;
+		// 2. List UploadThing files with pagination, resuming where the previous
+		// run stopped (audit média M2 — sans reprise, tout fichier au-delà de
+		// MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT était hors d'atteinte).
+		let offset = await readScanOffset();
+		const startOffset = offset;
 		hasMore = true;
 		let pagesProcessed = 0;
 
@@ -116,7 +159,12 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 				offset,
 			});
 
-			if (files.length === 0) break;
+			if (files.length === 0) {
+				// Offset au-delà du dernier fichier : le balayage recommencera du début.
+				offset = 0;
+				hasMore = startOffset > 0;
+				break;
+			}
 
 			// 3. Identify orphan files in this page
 			// Skip files created in the last 24h to avoid race conditions
@@ -152,15 +200,23 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
 				}
 			}
 
-			hasMore = files.length === UPLOADTHING_LIST_LIMIT;
-			offset += files.length;
+			// Une page incomplète marque la fin de la liste UploadThing : on remet le
+			// curseur à 0 pour que le prochain run reparte du début (balayage cyclique).
+			const isLastPage = files.length < UPLOADTHING_LIST_LIMIT;
+			offset = isLastPage ? 0 : offset + files.length;
+			// Si on avait repris en cours de liste, la tête reste à balayer.
+			hasMore = isLastPage ? startOffset > 0 : true;
 			pagesProcessed++;
 		}
+
+		await persistScanOffset(offset);
 
 		logger.info("Orphan media scan completed", {
 			cronJob: "cleanup-orphan-media",
 			orphansDeleted,
 			filesScanned,
+			startOffset,
+			nextOffset: offset,
 		});
 	} catch (error) {
 		// Deadline hit during DB key scan : rethrow enriched with partial counts so
@@ -217,6 +273,7 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  * - (user avatars)      → User.image
  * - order snapshots     → OrderItem (productImageUrl, skuImageUrl)
  * - invoice archives    → Order (invoicePdfUrl, creditNotePdfUrl)
+ * - credit-note archives → Refund (creditNotePdfUrl) — avoirs PARTIELS par refund
  *
  * MEDIA-AUDIT-003 : les snapshots de commande (`OrderItem.productImageUrl` /
  * `skuImageUrl`) figent l'URL du media au checkout. Si la ligne `SkuMedia`
@@ -228,7 +285,8 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  * `creditNotePdfUrl`) sont des archives légales immuables conservées 10 ans
  * (Art. L102 B LPF). SANS ce scan, ce cron les classerait orphelins et les
  * supprimerait dès 24h — destruction d'archives fiscales encore dans leur
- * rétention. Ce scan DOIT précéder toute réactivation du cron (actuellement retiré).
+ * rétention. Ce scan DOIT rester en place tant que le cron tourne (réactivé
+ * 2026-07-01, audit catalogue P1-B — route /api/cron/cleanup-orphan-media, mensuel le 3).
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
@@ -359,6 +417,35 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 				}
 				if (order.creditNotePdfUrl) {
 					const key = extractFileKeyFromUrl(order.creditNotePdfUrl);
+					if (key) keys.add(key);
+				}
+			}
+		},
+	});
+
+	// 6. Refund credit-note PDF archives (audit rétention PII 2026-07-09) — les
+	// avoirs PARTIELS sont archivés PAR REFUND (`Refund.creditNotePdfUrl`, cf.
+	// modules/refunds/services/archive-credit-note-pdf.service.ts), pas seulement
+	// sur Order (full void). Mêmes archives légales immuables 10 ans (Art. L102 B
+	// LPF) : sans ce scan, ce cron les classerait orphelins et détruirait des
+	// avoirs fiscaux encore dans leur rétention.
+	await paginateCursor({
+		jobName,
+		step: "refundCreditNotePdf-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.refund.findMany({
+				where: { creditNotePdfUrl: { not: null } },
+				select: { id: true, creditNotePdfUrl: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const refund of batch) {
+				if (refund.creditNotePdfUrl) {
+					const key = extractFileKeyFromUrl(refund.creditNotePdfUrl);
 					if (key) keys.add(key);
 				}
 			}

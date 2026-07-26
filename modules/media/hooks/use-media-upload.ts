@@ -114,15 +114,16 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	// Throughput sampling + ETA ticker — extrait dans `useUploadEta` (audit P1.4 split).
 	const eta = useUploadEta();
 
+	// Latest-callback refs : écrites dans un effet post-render (jamais pendant le
+	// render — React peut rejouer/abandonner un render, la mutation fuirait).
 	const onProgressRef = useRef(onProgress);
-	// eslint-disable-next-line react-hooks/refs
-	onProgressRef.current = onProgress;
 	const onSuccessRef = useRef(onSuccess);
-	// eslint-disable-next-line react-hooks/refs
-	onSuccessRef.current = onSuccess;
 	const onErrorRef = useRef(onError);
-	// eslint-disable-next-line react-hooks/refs
-	onErrorRef.current = onError;
+	useEffect(() => {
+		onProgressRef.current = onProgress;
+		onSuccessRef.current = onSuccess;
+		onErrorRef.current = onError;
+	});
 
 	// UploadThing hook with batch-percent callback that we route to the active batch (P0.1)
 	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(endpoint, {
@@ -452,10 +453,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		videoFile: File,
 		signal: AbortSignal,
 	): Promise<MediaUploadResult | null> => {
-		const { thumbnailUrl, blurDataUrl } = await videoThumbnail.uploadThumbnailForVideo(
-			videoFile,
-			signal,
-		);
+		const { thumbnailUrl, blurDataUrl, width, height } =
+			await videoThumbnail.uploadThumbnailForVideo(videoFile, signal);
 
 		try {
 			const videoUploadResult = await withRetry(() => startUpload([videoFile]), {
@@ -472,6 +471,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					fileName: videoFile.name,
 					thumbnailUrl,
 					blurDataUrl,
+					width,
+					height,
 				};
 			}
 
@@ -503,6 +504,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			totalBytes: batchTotalBytes,
 		};
 
+		// `catch` + rethrow au lieu de `finally` : le React Compiler ne sait pas
+		// lower un TryStatement sans catch et abandonne l'optimisation du hook.
 		try {
 			const results = await withRetry(() => startUpload(imageFiles), {
 				maxAttempts: 3,
@@ -521,6 +524,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 						mediaType: "IMAGE",
 						fileName: imageFiles[i]!.name,
 						blurDataUrl: serverData.blurDataUrl ?? undefined,
+						width: serverData.width ?? undefined,
+						height: serverData.height ?? undefined,
 					});
 				}
 			}
@@ -531,9 +536,11 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				currentBatchRef.current,
 			);
 
-			return uploadResults;
-		} finally {
 			currentBatchRef.current = null;
+			return uploadResults;
+		} catch (error) {
+			currentBatchRef.current = null;
+			throw error;
 		}
 	};
 
@@ -567,6 +574,14 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					const onSubAbort = () => composite.abort();
 					signal.addEventListener("abort", onParentAbort);
 					subAbort.signal.addEventListener("abort", onSubAbort);
+					const releaseVideoBinding = () => {
+						currentBatchRef.current = null;
+						signal.removeEventListener("abort", onParentAbort);
+						subAbort.signal.removeEventListener("abort", onSubAbort);
+						cancellation.releaseVideo(file.name, subAbort);
+					};
+					// `catch` + rethrow au lieu de `finally` : bail-out React Compiler
+					// (TryStatement sans catch) sur tout le hook.
 					try {
 						currentBatchRef.current = {
 							mode: "video-single",
@@ -579,12 +594,11 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 							currentBatchRef.current.startBytes + file.size,
 							currentBatchRef.current,
 						);
+						releaseVideoBinding();
 						return r;
-					} finally {
-						currentBatchRef.current = null;
-						signal.removeEventListener("abort", onParentAbort);
-						subAbort.signal.removeEventListener("abort", onSubAbort);
-						cancellation.releaseVideo(file.name, subAbort);
+					} catch (error) {
+						releaseVideoBinding();
+						throw error;
 					}
 				}),
 			);
@@ -798,9 +812,15 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				bytesUploadedRef.current = 0;
 				bytesTotalRef.current = 0;
 			}, 1000);
-		} finally {
+
 			isProcessingRef.current = false;
 			stopEtaTicker();
+		} catch (error) {
+			// `catch` + rethrow au lieu de `finally` (bail-out React Compiler). Le
+			// `return` du chemin abort ci-dessus fait déjà ce cleanup inline.
+			isProcessingRef.current = false;
+			stopEtaTicker();
+			throw error;
 		}
 	};
 

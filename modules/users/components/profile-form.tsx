@@ -1,10 +1,14 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUpdateProfile } from "@/modules/users/hooks/use-update-profile";
 import { EmailChangeForm } from "@/modules/users/components/email-change-form";
 import type { GetCurrentUserReturn } from "@/modules/users/types/current-user.types";
@@ -30,9 +34,27 @@ export function ProfileForm({ user }: ProfileFormProps) {
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus de `updateProfileSchema` serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "ProfileForm",
+	});
+
 	return (
 		<div className="space-y-6">
-			<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
+			<form ref={formRef} action={action} onSubmit={handleGatedSubmit} className="space-y-4">
+				<FormServerErrorAlert errors={serverErrors} />
+
 				<RequiredFieldsNote />
 
 				<form.AppField

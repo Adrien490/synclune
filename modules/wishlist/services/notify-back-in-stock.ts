@@ -134,7 +134,9 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 							},
 							wishlist: {
 								userId: { not: null },
-								user: { deletedAt: null },
+								// Opposition marketing (Art. 21 RGPD) : un user désinscrit via
+								// /notifications/desinscription ne reçoit plus de back-in-stock.
+								user: { deletedAt: null, marketingOptOutAt: null },
 							},
 						},
 						select: NOTIFY_ITEM_SELECT,

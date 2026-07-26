@@ -4,7 +4,7 @@ import { type z } from "zod";
 import { type GET_USER_ORDERS_SELECT } from "../constants/user-orders.constants";
 import { type getUserOrdersSchema } from "../schemas/user-orders.schemas";
 
-export type UserOrder = Prisma.OrderGetPayload<{ select: typeof GET_USER_ORDERS_SELECT }>;
+type UserOrder = Prisma.OrderGetPayload<{ select: typeof GET_USER_ORDERS_SELECT }>;
 
 export type GetUserOrdersReturn = {
 	orders: UserOrder[];

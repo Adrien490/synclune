@@ -53,6 +53,11 @@ vi.mock("../../utils/order-audit", () => ({
 	createOrderAudit: vi.fn(),
 }));
 // Fix C — assertion de l'alerte overflow (sous-type sequence-overflow, avoir).
+vi.mock("../ensure-credit-note-archived.service", () => ({
+	// EINV-CREDIT-020 : archivage eager best-effort post-void — mocke pour ne
+	// pas tirer la chaîne UploadThing (UTApi server-only) en test unitaire.
+	ensureOrderCreditNoteArchived: vi.fn().mockResolvedValue("archived"),
+}));
 vi.mock("@/modules/emails/services/admin-emails", () => ({
 	sendAdminSequenceOverflowAlert: mockSendAdminSequenceOverflowAlert,
 	sendAdminCreditNoteFailedAlert: mockSendAdminCreditNoteFailedAlert,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { DiscountType } from "@/app/generated/prisma/enums";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,

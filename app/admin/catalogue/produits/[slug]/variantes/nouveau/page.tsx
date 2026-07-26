@@ -4,7 +4,6 @@ import { getMaterialOptions } from "@/modules/materials/data/get-material-option
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
-import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { PageHeader } from "@/shared/components/page-header";
 import {
@@ -95,7 +94,6 @@ export default async function NewProductVariantPage({
 				productSlug={slug}
 			/>
 
-			<DeletePrimaryImageAlertDialog />
 			<DeleteGalleryMediaAlertDialog />
 			<ColorFormDialog />
 			<MaterialFormDialog />

@@ -20,6 +20,7 @@ const {
 		orderItem: { groupBy: vi.fn() },
 		cartItem: { findMany: vi.fn(), deleteMany: vi.fn() },
 		wishlistItem: { deleteMany: vi.fn() },
+		productCollection: { deleteMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -143,6 +144,9 @@ describe("bulkDeleteProducts", () => {
 
 		const r = await bulkDeleteProducts(undefined, makeFd());
 
+		expect(mockPrisma.productCollection.deleteMany).toHaveBeenCalledWith({
+			where: { productId: { in: [PID_B] } },
+		});
 		expect(mockPrisma.productSku.updateMany).toHaveBeenCalledWith({
 			where: { productId: { in: [PID_B] } },
 			data: { deletedAt: expect.any(Date) },

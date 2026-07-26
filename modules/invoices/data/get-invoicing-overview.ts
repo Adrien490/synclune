@@ -5,6 +5,8 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { getFranchiseThresholdCents } from "@/shared/constants/vat-franchise";
+import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
+import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 /**
  * Vue d'ensemble du module facturation pour le dashboard admin
@@ -53,7 +55,7 @@ export type InvoicingOverview = {
 	 * mentions PDF). Ne bloque jamais l'émission — signal d'anticipation.
 	 */
 	franchiseThreshold: {
-		revenue12mCents: number;
+		revenueYtdCents: number;
 		thresholdCents: number;
 		warningCents: number;
 		reached: boolean;
@@ -109,7 +111,13 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 
 	const now = new Date();
 	const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-	const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+	// COMP-03 : la fenêtre du seuil de franchise est l'ANNÉE CIVILE en heure de
+	// Paris, IDENTIQUE à `get-vat-progress` (primitive SSOT = getParisDateParts +
+	// parisWallTimeToUtc). PAS un rolling 12 mois (le seuil art. 293 B s'apprécie
+	// par année civile, et N-1). Les deux surfaces DOIVENT rester alignées, sinon le
+	// dashboard affiche deux CA de référence différents.
+	const { year } = getParisDateParts(now);
+	const yearStart = parisWallTimeToUtc(year, 0, 1);
 
 	// EINV-GLOBAL-011 : seuil franchise TVA art. 293 B CGI. Exonération TVA
 	// jusqu'à 85 000 € HT/an (vente de biens — cas Synclune ; 37 500 € pour les
@@ -202,16 +210,19 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		_sum: { total: true },
 	});
 
-	// CA encaissé 12 derniers mois (surveillance seuil franchise TVA 293 B).
-	const last12MonthsRevenue = await prisma.order.aggregate({
+	// CA encaissé brut de l'année civile (surveillance seuil franchise TVA 293 B).
+	// Inclut les commandes remboursées (PAID_REVENUE_STATUSES) — le seuil se mesure
+	// sur l'encaissement BRUT ; exclure les remboursées sous-estimerait le CA et
+	// retarderait l'alerte de bascule (aligné sur get-vat-progress, ANALYTICS-AUDIT-004).
+	const ytdRevenue = await prisma.order.aggregate({
 		where: {
-			paymentStatus: "PAID",
-			paidAt: { gte: twelveMonthsAgo, lte: now },
+			paymentStatus: { in: [...PAID_REVENUE_STATUSES] },
+			paidAt: { gte: yearStart, lte: now },
 			...notDeleted,
 		},
 		_sum: { total: true },
 	});
-	const revenue12mCents = last12MonthsRevenue._sum.total ?? 0;
+	const revenueYtdCents = ytdRevenue._sum.total ?? 0;
 
 	// Nombre de transactions e-reporting créées sur 30 jours.
 	const last30DaysTransactionCount = await prisma.eReportingTransaction.count({
@@ -357,10 +368,10 @@ async function fetchInvoicingOverview(): Promise<InvoicingOverview> {
 		anomalies,
 		eReportingCoverage,
 		franchiseThreshold: {
-			revenue12mCents,
+			revenueYtdCents,
 			thresholdCents: FRANCHISE_THRESHOLD_CENTS,
 			warningCents: FRANCHISE_WARNING_CENTS,
-			reached: revenue12mCents >= FRANCHISE_WARNING_CENTS,
+			reached: revenueYtdCents >= FRANCHISE_WARNING_CENTS,
 		},
 	};
 }

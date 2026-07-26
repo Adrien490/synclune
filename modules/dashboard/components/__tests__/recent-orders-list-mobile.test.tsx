@@ -200,7 +200,8 @@ describe("RecentOrdersList — mobile", () => {
 		const link = screen.getAllByRole("link")[0]!;
 		expect(link.getAttribute("aria-label")).toMatch(/commande #syn-042/i);
 		expect(link.getAttribute("aria-label")).toMatch(/marie dupont/i);
-		expect(link.getAttribute("aria-label")).toMatch(/8500\.00/);
+		// total = centimes → formatEuro (8500 c = 85,00 €)
+		expect(link.getAttribute("aria-label")).toMatch(/85,00/);
 	});
 
 	it("renders a ChevronRight affordance icon", () => {

@@ -15,7 +15,8 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
+import { buildUrl } from "@/shared/constants/urls";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import type { ResendEmailType } from "../types/email.types";
@@ -31,6 +32,13 @@ export type { ResendEmailType } from "../types/email.types";
  * ce bouton précisément pour bypass la dedup (ex: client dit "je n'ai rien reçu").
  * Protection contre double-clic = rate-limit `ADMIN_ORDER_LIMITS.RESEND_EMAIL`
  * appliqué dès l'entrée.
+ *
+ * IDEM-EMAIL-001 (audit idempotence 2026-07-26) : omettre `idempotencyKey` ne
+ * suffisait PAS. Le cache de dédup IN-PROCESS de `send-email.ts` est indexé sur un
+ * hash de contenu (`to+subject+html[0:4096]`), pas sur la clé : sur une instance
+ * chaude, un renvoi < 10 min était court-circuité et renvoyait l'ancien `resendId`
+ * en `success` SANS réexpédier — l'admin voyait « email renvoyé », le client ne
+ * recevait rien. D'où `skipIdempotence: true` sur les deux branches.
  */
 export async function resendOrderEmail(
 	orderId: string,
@@ -61,6 +69,9 @@ export async function resendOrderEmail(
 				orderNumber: true,
 				status: true,
 				id: true,
+				// AUDIT-BIZ-001 : requis par `buildOrderTrackingUrl` pour router les
+				// commandes invité (userId null) vers le suivi tokenisé.
+				userId: true,
 				customerEmail: true,
 				customerName: true,
 				subtotal: true,
@@ -119,10 +130,12 @@ export async function resendOrderEmail(
 						city: order.shippingCity || "",
 						country: order.shippingCountry || "France",
 					},
-					trackingUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
+					trackingUrl: buildOrderTrackingUrl(order),
 					invoiceUrl: buildUrl(
 						`/api/orders/${encodeURIComponent(order.orderNumber)}/invoice?token=${generateInvoiceAccessToken(order.id, order.orderNumber)}`,
 					),
+					// IDEM-EMAIL-001 : renvoi explicite → contourner le cache in-process.
+					skipIdempotence: true,
 				});
 
 				actionResult = result.success
@@ -159,6 +172,8 @@ export async function resendOrderEmail(
 						city: order.shippingCity || "",
 						country: order.shippingCountry || "France",
 					},
+					// IDEM-EMAIL-001 : renvoi explicite → contourner le cache in-process.
+					skipIdempotence: true,
 				});
 
 				actionResult = result.success

@@ -45,14 +45,11 @@ export function useAdjustStockForm(options: UseAdjustStockFormOptions) {
 	const newStock = options.currentStock + adjustment;
 	const isValid = adjustment !== 0 && newStock >= 0;
 
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 		adjustment,
 		newStock,
 		isValid,

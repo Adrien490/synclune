@@ -169,12 +169,15 @@ function CartSheetBody({
 							<ul role="list" className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
 									{items.map((item) => (
+										/* Pas d'animation de `height` (relayout à chaque frame) : `layout` +
+										   `mode="popLayout"` sortent l'item du flux et font glisser ses voisins
+										   via transform — même effet de collapse, sans jank. */
 										<m.li
 											key={item.id}
 											layout
-											initial={{ opacity: 0, height: 0, scale: 0.95 }}
-											animate={{ opacity: 1, height: "auto", scale: 1 }}
-											exit={{ opacity: 0, height: 0, scale: 0.95 }}
+											initial={{ opacity: 0, scale: 0.95 }}
+											animate={{ opacity: 1, scale: 1 }}
+											exit={{ opacity: 0, scale: 0.95 }}
 											transition={shouldReduceMotion ? { duration: 0 } : MOTION_CONFIG.spring.list}
 											className="origin-top overflow-hidden"
 										>

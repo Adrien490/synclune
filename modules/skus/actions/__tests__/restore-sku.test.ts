@@ -28,6 +28,8 @@ const {
 				update: vi.fn(),
 			},
 			$transaction: vi.fn(),
+			// Advisory lock variant identity (assertUniqueVariantCombination)
+			$queryRaw: vi.fn(),
 		},
 		mockRequireAdmin: vi.fn(),
 		mockEnforceRateLimit: vi.fn(),

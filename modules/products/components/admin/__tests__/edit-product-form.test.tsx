@@ -256,6 +256,22 @@ function createMockForm(overrides: FormOverrides = {}) {
 			return <>{children(fieldStub)}</>;
 		},
 		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		// Mock fidèle du form.SubmitButton partagé (le vrai requiert le formContext)
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+			showKbdHint?: boolean;
+			className?: string;
+		}) => (
+			<button type="submit" disabled={!formState.canSubmit || isPending} aria-busy={isPending}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	};
 }
 

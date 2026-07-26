@@ -78,7 +78,7 @@ export async function bulkToggleDiscountsStatus(
 
 		const tags = new Set<string>();
 		for (const d of eligible) {
-			getDiscountInvalidationTags(d.id).forEach((tag) => tags.add(tag));
+			getDiscountInvalidationTags(d.id, d.code).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
 

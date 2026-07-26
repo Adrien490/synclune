@@ -14,6 +14,7 @@ import {
 	validateInput,
 } from "@/shared/lib/actions";
 import { restoreSkuSchema } from "../schemas/sku-media.schemas";
+import { assertUniqueVariantCombination } from "../services/persist-sku-helpers.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 /**
@@ -69,31 +70,14 @@ export async function restoreSku(
 				);
 			}
 
-			// Validation applicative de l'unicité (productId, set colorIds, size).
-			// Cf. assertUniqueVariantCombination dans persist-sku-helpers.service.ts.
-			const candidates = await tx.productSku.findMany({
-				where: {
-					productId: existing.productId,
-					size: existing.size,
-					deletedAt: null,
-					NOT: { id: skuId },
-				},
-				select: {
-					sku: true,
-					colors: { select: { colorId: true } },
-				},
+			// Validation applicative de l'unicité (productId, set colorIds, size),
+			// sérialisée par l'advisory lock produit du helper partagé.
+			await assertUniqueVariantCombination(tx, {
+				productId: existing.productId,
+				colorIds: existing.colors.map((c) => c.colorId),
+				size: existing.size,
+				excludeSkuId: skuId,
 			});
-
-			const targetSet = new Set(existing.colors.map((c) => c.colorId));
-			const conflict = candidates.find((s) => {
-				if (s.colors.length !== targetSet.size) return false;
-				return s.colors.every((c) => targetSet.has(c.colorId));
-			});
-			if (conflict) {
-				throw new BusinessError(
-					`Restauration impossible : une variante active utilise déjà cette combinaison (Ref : ${conflict.sku}).`,
-				);
-			}
 
 			return tx.productSku.update({
 				where: { id: skuId },

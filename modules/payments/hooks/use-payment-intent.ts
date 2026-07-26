@@ -158,7 +158,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
 	}, [state.paymentIntentId, router]);
 
-	function updateAmount(country: string, postalCode: string, discountAmount: number) {
+	function updateAmount(country: string, postalCode: string, discountCode: string | null) {
 		if (!state.paymentIntentId) return;
 
 		if (debounceTimerRef.current) {
@@ -167,12 +167,13 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 		const piIdAtSchedule = state.paymentIntentId;
 		debounceTimerRef.current = setTimeout(async () => {
-			// Subtotal is recomputed server-side from the authenticated cart — never trust client.
+			// Subtotal AND discount are recomputed server-side (audit F1) — the client
+			// only sends the applied promo code, never an amount.
 			const result = await updatePaymentAmount({
 				paymentIntentId: piIdAtSchedule,
 				country,
 				postalCode,
-				discountAmount,
+				discountCode,
 			});
 
 			if (result.success) {
@@ -181,8 +182,19 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 					subtotal: result.subtotal,
 					shipping: result.shipping,
 					total: result.newTotal,
+					error: null,
 				}));
+				return;
 			}
+
+			// AUDIT-BIZ-001 : l'échec était totalement avalé (pas de branche `else`).
+			// Le total AFFICHÉ reste juste — il est recalculé localement via le même
+			// SSOT `calculateShipping`, et `confirmCheckout` repose de toute façon le
+			// montant autoritaire sur le PI avant capture — mais le client pouvait
+			// rester sur un PI périmé sans aucun retour, notamment sur
+			// « Commande déjà initiée » (qui exige un vrai rechargement de page),
+			// le rate limit UPDATE_AMOUNT et le circuit breaker Stripe.
+			setState((prev) => ({ ...prev, error: result.error }));
 		}, 500);
 	}
 

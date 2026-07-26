@@ -3,7 +3,6 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { clearSensitiveCaches } from "@/shared/lib/serwist-client";
 import { useActionState, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { logout } from "../actions/logout";
@@ -26,9 +25,6 @@ export function useLogout(options?: UseLogoutOptions) {
 					// Reset badge counts (wishlist/cart) to prevent leak across users on shared devices
 					// Also clears the PWA app badge via AppBadgeSync subscription
 					useBadgeCountsStore.getState().reset();
-					// Purge navigation caches so a previous user's cached pages are not
-					// served on a shared device (PWA-AUDIT-010). Best-effort, non-blocking.
-					void clearSensitiveCaches();
 					options?.onSuccess?.();
 					// Redirection après un court délai pour feedback visuel
 					setTimeout(() => {

@@ -8,12 +8,15 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
+import { signUpEmailClientSchema } from "@/modules/auth/schemas/auth.schemas";
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useStore } from "@tanstack/react-form";
 
 export function SignUpEmailForm() {
 	const { state, action, isPending } = useSignUpEmail({
@@ -24,10 +27,29 @@ export function SignUpEmailForm() {
 	const errorRef = useRef<HTMLDivElement>(null);
 	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
+	// TanStack Form setup — validation dérivée du schéma serveur (F7, SSOT :
+	// signUpEmailClientSchema = signUpEmailSchema.shape.* + acceptTerms boolean)
+	const form = useAppForm({
+		defaultValues: {
+			email: "",
+			password: "",
+			name: "",
+			acceptTerms: false as boolean,
+		},
+		validators: {
+			onChange: signUpEmailClientSchema,
+		},
+	});
+
+	const isClientFormValid = useStore(form.store, (s) => s.isValid);
+
+	// Une VALIDATION_ERROR serveur n'est masquée que si des erreurs de champ
+	// sont déjà affichées côté client ; si le client jugeait le form valide
+	// (divergence client/serveur), elle doit rester visible.
 	const isActionError =
 		!!state?.message &&
 		state.status !== ActionStatus.SUCCESS &&
-		state.status !== ActionStatus.VALIDATION_ERROR;
+		(state.status !== ActionStatus.VALIDATION_ERROR || isClientFormValid);
 
 	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
 
@@ -45,14 +67,15 @@ export function SignUpEmailForm() {
 		}
 	}, [state?.status]);
 
-	// TanStack Form setup
-	const form = useAppForm({
-		defaultValues: {
-			email: "",
-			password: "",
-			name: "",
-			acceptTerms: false,
-		},
+	// Gate de soumission : rien ne part au serveur tant que le client est invalide
+	// (sinon chaque faute de frappe consommerait une tentative de rate limit) et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "SignUpEmailForm",
 	});
 
 	return (
@@ -61,17 +84,14 @@ export function SignUpEmailForm() {
 				ref={formRef}
 				action={action}
 				className="space-y-6"
-				onSubmit={async () => {
+				onSubmit={(event) => {
 					triggerHaptic("medium");
-					await form.handleSubmit();
-					if (!form.state.isValid) {
-						focusFirstInvalid();
-					}
+					handleGatedSubmit(event);
 				}}
 			>
 				<RequiredFieldsNote />
 
-				{state?.message && state.status !== ActionStatus.VALIDATION_ERROR && (
+				{state?.message && (state.status === ActionStatus.SUCCESS || isActionError) && (
 					<>
 						{state.status === ActionStatus.SUCCESS ? (
 							<Alert role="status" aria-live="polite">
@@ -94,21 +114,7 @@ export function SignUpEmailForm() {
 				)}
 
 				<div className="space-y-4">
-					<form.AppField
-						name="name"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "Le prénom est requis";
-								if (value.length < 2) {
-									return "Le prénom doit contenir au moins 2 caractères";
-								}
-								if (value.length > 100) {
-									return "Le prénom ne doit pas dépasser 100 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
+					<form.AppField name="name">
 						{(field) => (
 							<field.InputField
 								label="Prénom"
@@ -122,18 +128,7 @@ export function SignUpEmailForm() {
 						)}
 					</form.AppField>
 
-					<form.AppField
-						name="email"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "L'email est requis";
-								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Format d'email invalide";
-								}
-								return undefined;
-							},
-						}}
-					>
+					<form.AppField name="email">
 						{(field) => (
 							<field.InputField
 								label="Email"
@@ -150,21 +145,7 @@ export function SignUpEmailForm() {
 						)}
 					</form.AppField>
 
-					<form.AppField
-						name="password"
-						validators={{
-							onChange: ({ value }: { value: string }) => {
-								if (!value) return "Le mot de passe est requis";
-								if (value.length < 8) {
-									return "Le mot de passe doit contenir au moins 8 caractères";
-								}
-								if (value.length > 128) {
-									return "Le mot de passe ne doit pas dépasser 128 caractères";
-								}
-								return undefined;
-							},
-						}}
-					>
+					<form.AppField name="password">
 						{(field) => (
 							<div className="space-y-2">
 								<field.PasswordInputField
@@ -183,15 +164,7 @@ export function SignUpEmailForm() {
 					</form.AppField>
 				</div>
 
-				<form.AppField
-					name="acceptTerms"
-					validators={{
-						onChange: ({ value }: { value: boolean }) =>
-							value === true
-								? undefined
-								: "Vous devez accepter les CGV et la politique de confidentialité",
-					}}
-				>
+				<form.AppField name="acceptTerms">
 					{(field) => (
 						<field.CheckboxField
 							required

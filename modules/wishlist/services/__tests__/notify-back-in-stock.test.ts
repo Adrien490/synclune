@@ -115,6 +115,13 @@ describe("notifyBackInStock", () => {
 		expect(call.orderBy).toEqual({ id: "asc" });
 	});
 
+	it("excludes users who opted out of marketing (RGPD-AUDIT P1-1, Art. 21)", async () => {
+		await notifyBackInStock("prod-1");
+
+		const call = mockPrisma.wishlistItem.findMany.mock.calls[0]![0];
+		expect(call.where.wishlist.user.marketingOptOutAt).toBeNull();
+	});
+
 	/**
 	 * @regression biz-bug-002
 	 * Ne jamais envoyer d'email « revenu en stock » pour un produit non

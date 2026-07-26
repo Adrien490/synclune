@@ -63,7 +63,7 @@ export async function createProduct(
 				compareAtPriceEuros: formData.get("initialSku.compareAtPriceEuros"),
 				inventory: formData.get("initialSku.inventory"),
 				// Si le champ n'existe pas dans le FormData, utiliser true par defaut
-				// Car z.coerce.boolean(null) = false, ce qui n'est pas le comportement voulu
+				// (formBooleanSchema rejette null — le fallback boolean est couvert par l'union)
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
 				colorIds: initialSkuColorIds,
@@ -247,6 +247,8 @@ export async function createProduct(
 						blurDataUrl: image.blurDataUrl ?? null,
 						altText: image.altText ?? null,
 						mediaType: image.mediaType ?? detectMediaType(image.url),
+						width: image.width ?? null,
+						height: image.height ?? null,
 						isPrimary: image.isPrimary,
 						position: image.position,
 					};

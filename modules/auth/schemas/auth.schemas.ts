@@ -76,9 +76,8 @@ export const signInSocialSchema = z.object({
 // ============================================================================
 
 export const signUpEmailSchema = z.object({
-	email: z
-		.email({ message: "Vérifiez le format de votre email (ex: nom@domaine.com)" })
-		.transform((e) => e.toLowerCase()),
+	// SSOT partagé (F8) : même message INVALID_FORMAT + lowercase/trim
+	email: emailSchema,
 	password: newPasswordSchema,
 	name: z
 		.string()
@@ -88,6 +87,23 @@ export const signUpEmailSchema = z.object({
 		message: "Vous devez accepter les CGV et la politique de confidentialité",
 	}),
 	callbackURL: callbackURLSchema.optional(),
+});
+
+/**
+ * F7 (audit validation Zod 2026-07-06) — validator TanStack Form du sign-up,
+ * dérivé champ-à-champ du schéma serveur `signUpEmailSchema` (SSOT : plus de
+ * validators inline dupliqués avec regex email divergente dans le composant).
+ *
+ * Seule différence : `acceptTerms` — le form state est un boolean (checkbox)
+ * alors que le serveur reçoit la string FormData `"true"`.
+ */
+export const signUpEmailClientSchema = z.object({
+	email: signUpEmailSchema.shape.email,
+	password: signUpEmailSchema.shape.password,
+	name: signUpEmailSchema.shape.name,
+	acceptTerms: z.literal(true, {
+		message: "Vous devez accepter les CGV et la politique de confidentialité",
+	}),
 });
 
 // ============================================================================

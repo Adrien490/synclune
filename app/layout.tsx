@@ -8,13 +8,11 @@ import { AppToaster } from "@/shared/components/ui/toaster";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { UPLOADTHING_CDN_HOSTS } from "@/shared/constants/uploadthing";
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
-import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
-import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { fraunces, figtree, sacramento } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
@@ -46,30 +44,27 @@ export default function RootLayout({
 				))}
 			</head>
 			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
-				<SerwistProvider swUrl="/serwist/sw.js">
-					<SkipLink />
-					<IconSprite />
-					<Suspense fallback={null}>
-						<UploadThingSSR />
-					</Suspense>
-					<MotionProvider>
-						<CookieConsentStoreProvider>
-							<NavigationGuardProvider>
-								<DialogStoreProvider>
-									<SheetStoreProvider>
-										<AlertDialogStoreProvider>
-											{children}
-											<FlyToCartOverlay />
-											<UnsavedChangesDialog />
-										</AlertDialogStoreProvider>
-									</SheetStoreProvider>
-								</DialogStoreProvider>
-							</NavigationGuardProvider>
-							<ConditionalAnalytics />
-						</CookieConsentStoreProvider>
-						<AppToaster />
-					</MotionProvider>
-				</SerwistProvider>
+				<SkipLink />
+				<IconSprite />
+				<Suspense fallback={null}>
+					<UploadThingSSR />
+				</Suspense>
+				<MotionProvider>
+					<CookieConsentStoreProvider>
+						<NavigationGuardProvider>
+							<DialogStoreProvider>
+								<SheetStoreProvider>
+									<AlertDialogStoreProvider>
+										{children}
+										<FlyToCartOverlay />
+										<UnsavedChangesDialog />
+									</AlertDialogStoreProvider>
+								</SheetStoreProvider>
+							</DialogStoreProvider>
+						</NavigationGuardProvider>
+					</CookieConsentStoreProvider>
+					<AppToaster />
+				</MotionProvider>
 				<WebVitalsReporter />
 			</body>
 		</html>

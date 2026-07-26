@@ -94,7 +94,8 @@ describe("NavbarWrapper (scroll compact)", () => {
 		expect(layer).not.toBeNull();
 		const layerClassName = layer?.className ?? "";
 		expect(layerClassName).toContain("backdrop-blur-md");
-		expect(layerClassName).toContain("shadow-lg");
+		// Ombre tokenisée (--shadow-header, globals.css) — remplace shadow-lg shadow-black/8
+		expect(layerClassName).toContain("shadow-header");
 		expect(layerClassName).toContain("bg-background/95");
 		expect(layerClassName).toContain("group-data-[scrolled=true]:opacity-100");
 		expect(layerClassName).toContain("opacity-0");

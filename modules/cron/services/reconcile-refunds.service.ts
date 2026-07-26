@@ -135,7 +135,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 	// EINV-CREDIT-009 : alerte Sentry P1 si on atteint le batch max — indique
 	// soit un backlog anormal (incident production prolongé), soit un bug
 	// systémique (webhook charge.refunded en panne durable). Cas normal : on
-	// pick quelques unités/jour, jamais BATCH_SIZE_MEDIUM (=50).
+	// pick quelques unités/jour, jamais BATCH_SIZE_MEDIUM (=25).
 	if (candidates.length === BATCH_SIZE_MEDIUM) {
 		Sentry.withScope((scope) => {
 			scope.setLevel("warning");
@@ -160,6 +160,9 @@ export async function reconcileRefunds(): Promise<CronResult> {
 	const tagsToInvalidate = new Set<string>();
 
 	for (const refund of candidates) {
+		// Lu une fois : le numéro de commande sert dans 5 contextes Sentry/logs de
+		// cette itération.
+		const orderNumber = refund.order.orderNumber;
 		if (Date.now() > deadline) {
 			logger.warn("Approaching timeout, stopping batch early", {
 				cronJob: "reconcile-refunds",
@@ -192,7 +195,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
 					// CACHE-AUDIT-010 : finalizeRefund mute Order.paymentStatus — passer
 					// par le helper canonique pour couvrir DETAIL/HISTORY/CONFIRMATION(orderId)
-					// + LAST_ORDER/ACCOUNT_STATS/USER_ORDERS_COUNT, sinon la page détail
+					// + LAST_ORDER/USER_ORDERS_COUNT, sinon la page détail
 					// commande + l'historique restent stale après le rattrapage DLQ.
 					for (const tag of getOrderInvalidationTags(
 						refund.order.userId ?? undefined,
@@ -286,7 +289,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 									scope.setFingerprint(["void-invoice", "max-retries", refund.orderId]);
 									scope.setContext("order", {
 										orderId: refund.orderId,
-										orderNumber: refund.order.orderNumber,
+										orderNumber,
 									});
 									Sentry.captureMessage(
 										"voidInvoice failed during DLQ reconcile (full refund) — facture stale",
@@ -303,16 +306,27 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					if (refund.order.customerEmail) {
 						const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.orderId));
 						try {
+							// Re-fetch post-émission : l'avoir (issueCreditNoteForRefund /
+							// voidInvoice ci-dessus) vient d'être écrit — l'email doit
+							// porter les numéros de pièces comme le path admin.
+							const refundFacts = await prisma.refund.findUnique({
+								where: { id: refund.id },
+								select: {
+									creditNoteNumber: true,
+									order: { select: { invoiceNumber: true, creditNoteNumber: true } },
+								},
+							});
 							await sendRefundConfirmationOnce({
 								refundId: refund.id,
 								to: refund.order.customerEmail,
-								orderNumber: refund.order.orderNumber,
+								orderNumber,
 								customerName: refund.order.customerName || "Client",
 								refundAmount: refund.amount,
 								reason: refund.reason,
 								orderDetailsUrl,
-								invoiceNumber: null,
-								creditNoteNumber: null,
+								invoiceNumber: refundFacts?.order.invoiceNumber ?? null,
+								creditNoteNumber:
+									refundFacts?.creditNoteNumber ?? refundFacts?.order.creditNoteNumber ?? null,
 							});
 						} catch (emailError) {
 							logger.error(
@@ -321,7 +335,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 								{
 									cronJob: "reconcile-refunds",
 									refundId: refund.id,
-									orderNumber: refund.order.orderNumber,
+									orderNumber,
 								},
 							);
 							// Non-bloquant : refund finalisé en DB, alerte admin
@@ -331,7 +345,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 								refundId: refund.id,
 								stripeRefundId: refund.stripeRefundId,
 								orderId: refund.orderId,
-								orderNumber: refund.order.orderNumber,
+								orderNumber,
 							});
 						}
 					}
@@ -385,7 +399,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 				refundId: refund.id,
 				stripeRefundId: refund.stripeRefundId,
 				orderId: refund.orderId,
-				orderNumber: refund.order.orderNumber,
+				orderNumber,
 			});
 			errored++;
 		}
@@ -399,6 +413,20 @@ export async function reconcileRefunds(): Promise<CronResult> {
 	processed += retryStats.retried;
 	errored += retryStats.errored;
 	skipped += retryStats.skipped;
+
+	// OVERBILL-RESOLVE-01 : auto-résolution de la sur-facturation. Reprend la
+	// moitié « résolution » de l'ex-cron alert-overbilled-orders (supprimé au
+	// right-sizing) — qui était le SEUL writer de Order.overbillingResolvedAt.
+	// Sans ce rattrapage, une commande sur-facturée puis remboursée resterait
+	// affichée « à traiter » sur le dashboard à vie (compteur monotone, cry-wolf).
+	// La ré-alerte email n'est PAS restaurée : la surveillance est passée en PULL
+	// (dashboard get-action-items). Lecture + mutation minimale, jamais le montant.
+	const overbillStats = await reconcileOverbilledOrders();
+	processed += overbillStats.resolved;
+	errored += overbillStats.errored;
+	for (const tag of overbillStats.tags) {
+		tagsToInvalidate.add(tag);
+	}
 
 	if (tagsToInvalidate.size > 0) {
 		tagsToInvalidate.add(REFUNDS_CACHE_TAGS.LIST);
@@ -423,6 +451,105 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		skipped,
 		hasMore: candidates.length === BATCH_SIZE_MEDIUM,
 	};
+}
+
+/**
+ * OVERBILL-RESOLVE-01 — auto-résolution de la sur-facturation.
+ *
+ * Le webhook `payment_intent.succeeded` persiste `Order.overbilledAmountCents`
+ * quand Stripe encaisse plus que `order.total` (sans auto-rembourser — Invariant 9
+ * e-reporting). Le dashboard (`get-action-items`) liste ces commandes tant que
+ * `overbillingResolvedAt IS NULL`. Cette passe pose `overbillingResolvedAt` dès que
+ * les refunds COMPLETED de la commande couvrent le delta (l'admin a remboursé le
+ * trop-perçu via le flux refund normal) — quel que soit le chemin de complétion
+ * (webhook `charge.refunded`, action `processRefund`, ou la phase 1 de ce cron).
+ *
+ * Reprend la moitié « résolution » de l'ex-cron `alert-overbilled-orders` (supprimé
+ * au right-sizing), qui en était l'unique writer. La ré-alerte email n'est PAS
+ * restaurée (monitoring passé en PULL). Lecture + `overbillingResolvedAt` seulement —
+ * jamais le montant ni l'e-reporting (le remboursement reste une décision admin).
+ */
+async function reconcileOverbilledOrders(): Promise<{
+	resolved: number;
+	errored: number;
+	tags: string[];
+}> {
+	const candidates = await prisma.order.findMany({
+		where: {
+			overbilledAmountCents: { not: null },
+			overbillingResolvedAt: null,
+			...notDeleted,
+		},
+		select: { id: true, orderNumber: true, total: true, overbilledAmountCents: true, userId: true },
+		take: BATCH_SIZE_MEDIUM,
+		orderBy: { createdAt: "asc" },
+	});
+
+	if (candidates.length === 0) return { resolved: 0, errored: 0, tags: [] };
+
+	let resolved = 0;
+	let errored = 0;
+	// CACHE : la résolution change la fiche commande admin + le dashboard
+	// « À traiter » — invalider les tags par-commande/user via le helper SSOT,
+	// pas seulement les listes globales (sinon stale ~10 min profil `user`).
+	const tags = new Set<string>();
+
+	for (const order of candidates) {
+		const delta = order.overbilledAmountCents ?? 0;
+		try {
+			const completedRefunds = await prisma.refund.findMany({
+				where: { orderId: order.id, status: RefundStatus.COMPLETED, ...notDeleted },
+				select: { amount: true },
+			});
+			const totalRefunded = completedRefunds.reduce((sum, r) => sum + r.amount, 0);
+
+			// OVERBILL-RESOLVE-02 : un simple `totalRefunded >= delta` marquait
+			// « résolu » dès qu'un refund quelconque (retour produit, geste commercial)
+			// atteignait le delta, sans que le trop-perçu ait été restitué en tant que
+			// tel. Aucun lien causal refund↔overbilling n'existe en DB (les refunds
+			// Dashboard sont ré-alloués au pro-rata des items, la raison n'est pas
+			// discriminante, et tout refund est postérieur à la détection) — on retient
+			// donc deux signaux sans faux positif :
+			//   (a) un refund COMPLETED du montant EXACT du delta — le workflow
+			//       instruit par l'alerte admin (« remboursement manuel du delta ») ;
+			//   (b) cumul >= order.total + delta — les refunds produits ne peuvent
+			//       excéder order.total, donc le delta est nécessairement restitué.
+			// Faux négatif possible (delta remboursé en plusieurs fois) : la commande
+			// reste visible sur le dashboard « À traiter », jamais résolue à tort.
+			const hasExactDeltaRefund = completedRefunds.some((r) => r.amount === delta);
+			const isEverythingRefunded = totalRefunded >= order.total + delta;
+
+			if (hasExactDeltaRefund || isEverythingRefunded) {
+				// Guard `overbillingResolvedAt: null` → idempotent (pas de double-résolution
+				// si deux runs se chevauchent).
+				const { count } = await prisma.order.updateMany({
+					where: { id: order.id, overbillingResolvedAt: null },
+					data: { overbillingResolvedAt: new Date() },
+				});
+				if (count > 0) {
+					resolved++;
+					for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+						tags.add(tag);
+					}
+					logger.info(`Overbilling auto-resolved on order ${order.orderNumber}`, {
+						cronJob: "reconcile-refunds",
+						orderId: order.id,
+						deltaCents: delta,
+						totalRefunded,
+					});
+				}
+			}
+		} catch (error) {
+			errored++;
+			logger.error("Failed to reconcile overbilled order", error, {
+				cronJob: "reconcile-refunds",
+				orderId: order.id,
+				orderNumber: order.orderNumber,
+			});
+		}
+	}
+
+	return { resolved, errored, tags: [...tags] };
 }
 
 /**

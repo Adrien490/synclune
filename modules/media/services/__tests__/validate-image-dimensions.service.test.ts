@@ -4,31 +4,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ============================================================================
 
-const { mockDownloadImage, mockSharp, mockMetadata } = vi.hoisted(() => ({
-	mockDownloadImage: vi.fn(),
+const { mockSharp, mockMetadata } = vi.hoisted(() => ({
 	mockSharp: vi.fn(),
 	mockMetadata: vi.fn(),
 }));
 
 vi.mock("sharp", () => ({ default: mockSharp }));
 
-vi.mock("../image-downloader.service", async (importOriginal) => {
-	const actual = await importOriginal<Record<string, unknown>>();
-	return { ...actual, downloadImage: mockDownloadImage };
-});
-
-vi.mock("@/modules/media/utils/validate-media-file", () => ({
-	isValidUploadThingUrl: vi.fn(),
-}));
-
 import {
 	ImageDimensionsTooLargeError,
 	MAX_IMAGE_PIXELS,
-	validateImageDimensions,
+	assertImageDimensions,
 } from "../validate-image-dimensions.service";
-import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
+import { ImageDecodeError } from "../image-downloader.service";
 
-const VALID_URL = "https://utfs.io/f/abc123.jpg";
+const BUFFER = Buffer.alloc(1024);
 
 function setupSharp(width: number | undefined, height: number | undefined) {
 	mockMetadata.mockResolvedValue({ width, height });
@@ -37,15 +27,13 @@ function setupSharp(width: number | undefined, height: number | undefined) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	vi.mocked(isValidUploadThingUrl).mockReturnValue(true);
-	mockDownloadImage.mockResolvedValue(Buffer.alloc(1024));
 });
 
-describe("validateImageDimensions", () => {
+describe("assertImageDimensions", () => {
 	it("returns dimensions for a normal-sized image", async () => {
 		setupSharp(1920, 1080);
 
-		const result = await validateImageDimensions(VALID_URL);
+		const result = await assertImageDimensions(BUFFER);
 
 		expect(result).toEqual({ width: 1920, height: 1080 });
 	});
@@ -53,7 +41,7 @@ describe("validateImageDimensions", () => {
 	it("rejects an image-bomb (50000x50000 = 2.5 G pixels)", async () => {
 		setupSharp(50_000, 50_000);
 
-		await expect(validateImageDimensions(VALID_URL)).rejects.toBeInstanceOf(
+		await expect(assertImageDimensions(BUFFER)).rejects.toBeInstanceOf(
 			ImageDimensionsTooLargeError,
 		);
 	});
@@ -62,7 +50,7 @@ describe("validateImageDimensions", () => {
 		// Exactly 50 MP — must be accepted (boundary inclusive)
 		setupSharp(10_000, 5_000);
 
-		const result = await validateImageDimensions(VALID_URL);
+		const result = await assertImageDimensions(BUFFER);
 
 		expect(result.width * result.height).toBe(MAX_IMAGE_PIXELS);
 	});
@@ -70,7 +58,7 @@ describe("validateImageDimensions", () => {
 	it("rejects an image one pixel over the limit", async () => {
 		setupSharp(10_001, 5_000);
 
-		await expect(validateImageDimensions(VALID_URL)).rejects.toBeInstanceOf(
+		await expect(assertImageDimensions(BUFFER)).rejects.toBeInstanceOf(
 			ImageDimensionsTooLargeError,
 		);
 	});
@@ -78,34 +66,30 @@ describe("validateImageDimensions", () => {
 	it("respects a custom maxPixels threshold", async () => {
 		setupSharp(2000, 2000); // 4 MP
 
-		await expect(validateImageDimensions(VALID_URL, 1_000_000)).rejects.toBeInstanceOf(
+		await expect(assertImageDimensions(BUFFER, 1_000_000)).rejects.toBeInstanceOf(
 			ImageDimensionsTooLargeError,
 		);
 	});
 
-	it("rejects URLs from non-UploadThing domains (SSRF protection)", async () => {
-		vi.mocked(isValidUploadThingUrl).mockReturnValue(false);
-
-		await expect(validateImageDimensions("https://evil.example/x.jpg")).rejects.toThrow(
-			/Domaine non autorisé/,
-		);
-		expect(mockDownloadImage).not.toHaveBeenCalled();
-	});
-
-	it("throws when sharp cannot read dimensions", async () => {
+	// Audit média M1 : ces deux cas DOIVENT être des ImageDecodeError et non des
+	// Error génériques — le route handler ne rejette l'upload que sur ce type.
+	it("throws ImageDecodeError when sharp cannot read dimensions", async () => {
 		setupSharp(undefined, undefined);
 
-		await expect(validateImageDimensions(VALID_URL)).rejects.toThrow(
-			/Impossible de lire les dimensions/,
-		);
+		await expect(assertImageDimensions(BUFFER)).rejects.toBeInstanceOf(ImageDecodeError);
 	});
 
-	it("throws when width is 0 (corrupted header)", async () => {
+	it("throws ImageDecodeError when width is 0 (corrupted header)", async () => {
 		setupSharp(0, 1080);
 
-		await expect(validateImageDimensions(VALID_URL)).rejects.toThrow(
-			/Impossible de lire les dimensions/,
-		);
+		await expect(assertImageDimensions(BUFFER)).rejects.toBeInstanceOf(ImageDecodeError);
+	});
+
+	it("throws ImageDecodeError when sharp itself throws (spoofed MIME)", async () => {
+		mockMetadata.mockRejectedValue(new Error("Input buffer contains unsupported image format"));
+		mockSharp.mockReturnValue({ metadata: mockMetadata });
+
+		await expect(assertImageDimensions(BUFFER)).rejects.toBeInstanceOf(ImageDecodeError);
 	});
 });
 

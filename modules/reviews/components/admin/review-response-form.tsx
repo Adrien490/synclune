@@ -6,7 +6,9 @@ import { Send, Trash2, LoaderCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import {
 	ResponsiveAlertDialog,
 	ResponsiveAlertDialogAction,
@@ -46,9 +48,13 @@ export function ReviewResponseForm({
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
-	const { createResponse, editResponse, removeResponse, isPending } = useReviewResponseForm({
+	const { createResponse, editResponse, removeResponse, state, isPending } = useReviewResponseForm({
 		onSuccess,
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -81,6 +87,8 @@ export function ReviewResponseForm({
 			onInvalidCapture={onInvalidCapture}
 			className={cn("space-y-4", className)}
 		>
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<div className="space-y-2">
 				<Label htmlFor="response-content">
 					{existingResponse ? "Modifier votre réponse" : "Répondre à cet avis"}

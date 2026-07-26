@@ -17,6 +17,8 @@ const {
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
 		$queryRaw: vi.fn(),
 		cartItem: { deleteMany: vi.fn() },
+		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
+		cart: { updateMany: vi.fn() },
 		// BIZ-BUG-003 : processOrderAtomically écrit désormais un audit PAID via createOrderAuditTx
 		orderHistory: { create: vi.fn() },
 	};
@@ -37,6 +39,8 @@ const {
 		mockGetOrderInvalidationTags: vi.fn(),
 		mockProductsCacheTags: {
 			SKU_STOCK: vi.fn((skuId: string) => `sku-stock-${skuId}`),
+			DETAIL: vi.fn((slug: string) => `product-${slug}`),
+			SKUS: vi.fn((productId: string) => `product-skus-${productId}`),
 		},
 		mockGetBaseUrl: vi.fn(() => "https://synclune.fr"),
 	};
@@ -70,8 +74,15 @@ vi.mock("@/modules/products/constants/cache", () => ({
 }));
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	buildUrl: (path: string) => `https://example.test${path}`,
 	ROUTES: {
 		ADMIN: { ORDER_DETAIL: (id: string) => `/admin/ventes/commandes/${id}` },
+		// AUDIT-BIZ-001 : `trackingUrl` passe désormais par le SSOT
+		// `buildOrderTrackingUrl`. Les valeurs RÉELLES des routes sont éprouvées par
+		// `modules/orders/utils/__tests__/order-tracking-url.regression.test.ts`,
+		// qui ne mocke délibérément pas ce module.
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/commandes/${n}` },
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
 	},
 }));
 vi.mock("@/shared/lib/logger", () => ({
@@ -94,6 +105,10 @@ import { logger } from "@/shared/lib/logger";
 // ============================================================================
 // Fixtures
 // ============================================================================
+
+// UUID v4 valide : le parse Zod de la metadata (stripe-metadata.schema) droppe
+// tout guestSessionId non-UUID (champ d'ownership strict).
+const GUEST_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 function makePaymentIntent(overrides: Record<string, unknown> = {}): Stripe.PaymentIntent {
 	return {
@@ -135,7 +150,12 @@ function makeOrderRow(overrides: Record<string, unknown> = {}) {
 				skuColor: "Argent",
 				skuMaterial: "Argent 925",
 				skuSize: "Unique",
-				sku: { id: "sku-pi-1", inventory: 5, sku: "COL-AG-U" },
+				sku: {
+					id: "sku-pi-1",
+					inventory: 5,
+					sku: "COL-AG-U",
+					product: { id: "prod-pi-1", slug: "collier-argent" },
+				},
 			},
 		],
 		...overrides,
@@ -170,7 +190,12 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 				skuColor: "Argent",
 				skuMaterial: "Argent 925",
 				skuSize: "Unique",
-				sku: { id: "sku-pi-1", inventory: 5, sku: "COL-AG-U" },
+				sku: {
+					id: "sku-pi-1",
+					inventory: 5,
+					sku: "COL-AG-U",
+					product: { id: "prod-pi-1", slug: "collier-argent" },
+				},
 			},
 		],
 		...overrides,
@@ -298,12 +323,12 @@ describe("processOrderFromPaymentIntent", () => {
 
 	it("clears guest cart when metadata.guestSessionId is present and order has no userId", async () => {
 		mockTx.order.findUnique.mockResolvedValue(makeOrderRow({ userId: null, user: null }));
-		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: "guest-abc" } });
+		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
 		await processOrderFromPaymentIntent("order-1", paymentIntent);
 
 		expect(mockTx.cartItem.deleteMany).toHaveBeenCalledWith({
-			where: { cart: { sessionId: "guest-abc" } },
+			where: { cart: { sessionId: GUEST_SESSION_ID } },
 		});
 	});
 
@@ -376,8 +401,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
 		const emailTask = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL") as
-			| { type: string; data: { to: string } }
-			| undefined;
+			{ type: string; data: { to: string } } | undefined;
 		expect(emailTask?.data.to).toBe("receipt@example.com");
 	});
 
@@ -388,8 +412,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
 		const emailTask = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL") as
-			| { type: string; data: { to: string } }
-			| undefined;
+			{ type: string; data: { to: string } } | undefined;
 		expect(emailTask?.data.to).toBe("fallback@example.com");
 	});
 
@@ -403,13 +426,13 @@ describe("buildPostCheckoutTasksFromPI", () => {
 	});
 
 	it("uses guest session id from PaymentIntent metadata for cart invalidation when order has no userId", () => {
-		mockGetCartInvalidationTags.mockReturnValue(["cart-guest-abc"]);
+		mockGetCartInvalidationTags.mockReturnValue([`cart-${GUEST_SESSION_ID}`]);
 		const order = makeOrderWithItems({ userId: null });
-		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: "guest-abc" } });
+		const paymentIntent = makePaymentIntent({ metadata: { guestSessionId: GUEST_SESSION_ID } });
 
 		buildPostCheckoutTasksFromPI(order, paymentIntent);
 
-		expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(undefined, "guest-abc");
+		expect(mockGetCartInvalidationTags).toHaveBeenCalledWith(undefined, GUEST_SESSION_ID);
 	});
 
 	it("never emits an admin new-order task (removed)", () => {
@@ -428,8 +451,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
 		const emailTask = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL") as
-			| { type: string; data: { customerName: string } }
-			| undefined;
+			{ type: string; data: { customerName: string } } | undefined;
 		expect(emailTask?.data.customerName).toBe("Client");
 	});
 
@@ -444,7 +466,12 @@ describe("buildPostCheckoutTasksFromPI", () => {
 					quantity: 2,
 					price: 5000,
 					skuId: "sku-2",
-					sku: { id: "sku-2", inventory: 3, sku: "SKU-2" },
+					sku: {
+						id: "sku-2",
+						inventory: 3,
+						sku: "SKU-2",
+						product: { id: "prod-2", slug: "produit-2" },
+					},
 				},
 			],
 		});
@@ -453,8 +480,7 @@ describe("buildPostCheckoutTasksFromPI", () => {
 		const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
 
 		const emailTask = tasks.find((t) => t.type === "ORDER_CONFIRMATION_EMAIL") as
-			| { type: string; data: { items: Array<{ productTitle: string }> } }
-			| undefined;
+			{ type: string; data: { items: Array<{ productTitle: string }> } } | undefined;
 		expect(emailTask?.data.items[0]?.productTitle).toBe("Produit");
 	});
 });

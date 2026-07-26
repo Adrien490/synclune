@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
-import { createMockFormData, createMockOrder, VALID_CUID, VALID_USER_ID } from "@/test/factories";
+import {
+	createMockFormData,
+	createMockOrder,
+	VALID_CUID,
+	VALID_USER_ID,
+	VALID_ORDER_ID,
+} from "@/test/factories";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -22,14 +28,20 @@ const {
 	// et retourne undefined → `creditNoteResult.kind` throw TypeError ligne 275.
 	mockIssueCreditNoteForRefund,
 	mockRecordRefundEReporting,
+	mockSendRefundConfirmationOnce,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany (précondition
+		// paymentStatus PAID/PARTIALLY_REFUNDED dans le where, retour { count })
+		// remplace l'ancien order.update final.
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		refund: {
 			count: vi.fn().mockResolvedValue(0),
 			// EINV-CREDIT-004 : créé pour traçabilité du flux financier manuel.
 			create: vi.fn().mockResolvedValue({ id: "refund-manual-1" }),
 		},
+		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -42,6 +54,7 @@ const {
 	mockGetOrderInvalidationTags: vi.fn(),
 	mockIssueCreditNoteForRefund: vi.fn(),
 	mockRecordRefundEReporting: vi.fn(),
+	mockSendRefundConfirmationOnce: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -73,6 +86,14 @@ vi.mock("../../utils/order-audit", () => ({
 }));
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
+}));
+vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
+	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
+}));
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: (path: string) => `https://synclune.test${path}`,
+	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -170,7 +191,8 @@ describe("markAsFullyRefunded", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createMockOrder({ paymentStatus: "PAID" }));
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.$queryRaw.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		// EINV-CREDIT-004 : vi.resetAllMocks() reset les mockResolvedValue de la
 		// hoisted — il faut re-set ici. Sans ça, `tx.refund.create` retourne
 		// undefined → TypeError silencieuse sur `createdRefund.id` → tests "succeeds
@@ -179,6 +201,8 @@ describe("markAsFullyRefunded", () => {
 		mockPrisma.refund.create.mockResolvedValue({ id: "refund-manual-1" });
 		mockIssueCreditNoteForRefund.mockResolvedValue({ kind: "noop", reason: "missing" });
 		mockRecordRefundEReporting.mockResolvedValue("skipped");
+		// Idem : reset → undefined → `.catch` sur undefined → TypeError silencieuse.
+		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -247,11 +271,30 @@ describe("markAsFullyRefunded", () => {
 	it("succeeds when order is PAID", async () => {
 		const result = await markAsFullyRefunded(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		// IDEM-CANCEL-001 : claim atomique — le where porte la précondition
+		// PAID/PARTIALLY_REFUNDED, la data fait la transition REFUNDED.
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
+				where: expect.objectContaining({
+					id: VALID_CUID,
+					paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED"] },
+				}),
 				data: { paymentStatus: "REFUNDED" },
 			}),
 		);
+	});
+
+	// IDEM-CANCEL-001 : count===0 ⇒ un concurrent a déjà posé REFUNDED entre le
+	// findUnique et le claim → abort SANS créer de Refund doublon (200 % compta).
+	it("returns already-refunded error when the atomic claim matches no row", async () => {
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
+
+		const result = await markAsFullyRefunded(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("déjà");
+		expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 	});
 
 	it("succeeds when order is PARTIALLY_REFUNDED", async () => {
@@ -287,9 +330,70 @@ describe("markAsFullyRefunded", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
-	it("uses transaction for atomic operation", async () => {
+	// Audit statuts commande 2026-07-02 (F2a) : getOrderInvalidationTags omet
+	// volontairement REFUNDS — le Refund manuel créé doit invalider explicitement
+	// la liste des remboursements de la fiche admin (sinon stale ~10 min).
+	it("invalidates the order REFUNDS tag when a manual refund is created", async () => {
 		await markAsFullyRefunded(undefined, validFormData);
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+		expect(mockUpdateTag).toHaveBeenCalledWith(`order-refunds-${VALID_ORDER_ID}`);
+	});
+
+	// Audit statuts commande 2026-07-02 (F2b) : le client remboursé hors-Stripe
+	// (chèque, virement, geste) doit être notifié — même émetteur unique que le
+	// chemin Stripe/webhook/cron (ORD-STRIPE-005, claim atomique).
+	describe("email client remboursement hors-Stripe", () => {
+		it("envoie la confirmation via sendRefundConfirmationOnce avec le Refund créé", async () => {
+			await markAsFullyRefunded(undefined, validFormData);
+
+			expect(mockSendRefundConfirmationOnce).toHaveBeenCalledWith(
+				expect.objectContaining({
+					refundId: "refund-manual-1",
+					to: "client@example.com",
+					orderNumber: "SYN-2026-0001",
+					refundAmount: 4999,
+					reason: "OTHER",
+				}),
+			);
+		});
+
+		it("n'envoie RIEN quand aucun Refund n'est créé (solde déjà couvert)", async () => {
+			// Les refunds préexistants couvrent le total : pas de Refund manuel,
+			// le chemin Stripe a déjà notifié le client — pas de tag REFUNDS non plus.
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					paymentStatus: "PARTIALLY_REFUNDED",
+					refunds: [{ amount: 4999 }],
+				}),
+			);
+
+			const result = await markAsFullyRefunded(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+			expect(mockSendRefundConfirmationOnce).not.toHaveBeenCalled();
+			expect(mockUpdateTag).not.toHaveBeenCalledWith(`order-refunds-${VALID_ORDER_ID}`);
+		});
+
+		it("reste SUCCESS si l'envoi échoue (best-effort, transition déjà committée)", async () => {
+			mockSendRefundConfirmationOnce.mockRejectedValue(new Error("Resend down"));
+
+			const result = await markAsFullyRefunded(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+		});
+	});
+
+	it("uses transaction for atomic operation (with explicit advisory-lock timeouts)", async () => {
+		await markAsFullyRefunded(undefined, validFormData);
+		// IDEM-CANCEL-001 : l'attente derrière l'advisory lock compte dans le
+		// timeout de la tx → overrides explicites (cf. CLAUDE.md).
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(
+			expect.any(Function),
+			expect.objectContaining({
+				timeout: expect.any(Number),
+				maxWait: expect.any(Number),
+			}),
+		);
 	});
 
 	it("calls handleActionError on unexpected exception", async () => {
@@ -297,6 +401,102 @@ describe("markAsFullyRefunded", () => {
 		const result = await markAsFullyRefunded(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	describe("répartition proportionnelle du Refund manuel (arrondis)", () => {
+		function makeItem(id: string, price: number, quantity: number, refundItems: unknown[] = []) {
+			return { id, skuId: `sku-${id}`, quantity, price, refundItems };
+		}
+
+		function getCreatedRefundItems() {
+			expect(mockPrisma.refund.create).toHaveBeenCalledTimes(1);
+			const arg = mockPrisma.refund.create.mock.calls[0]![0] as {
+				data: { amount: number; items: { create: { amount: number; quantity: number }[] } };
+			};
+			return { total: arg.data.amount, items: arg.data.items.create };
+		}
+
+		it("le dernier item absorbe l'écart d'arrondi — sum(items) === remainingAmount", async () => {
+			// 3 items à 100 c chacun, 100 c restant à répartir : round(100/300*100)=33
+			// pour les 2 premiers, le dernier doit prendre 34 (pas 33) pour sommer à 100.
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					paymentStatus: "PAID",
+					total: 400,
+					refunds: [{ amount: 300 }],
+					items: [makeItem("i1", 100, 1), makeItem("i2", 100, 1), makeItem("i3", 100, 1)],
+				}),
+			);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			const { total, items } = getCreatedRefundItems();
+			expect(total).toBe(100);
+			expect(items.map((i) => i.amount)).toEqual([33, 33, 34]);
+			expect(items.reduce((s, i) => s + i.amount, 0)).toBe(100);
+		});
+
+		it("aucune part négative ou nulle quand les arrondis à ,5 sur-allouent", async () => {
+			// 4 items de même poids, 2 c restants : chaque part vaut round(0.5)=1 —
+			// sans clamp les 3 premières allouent 3 c et la dernière tomberait à -1
+			// (violation RefundItem_amount_positive). Le clamp plafonne au restant et
+			// les parts nulles sont écartées.
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					paymentStatus: "PAID",
+					total: 6,
+					refunds: [{ amount: 4 }],
+					items: [
+						makeItem("i1", 1, 1),
+						makeItem("i2", 1, 1),
+						makeItem("i3", 1, 1),
+						makeItem("i4", 1, 1),
+					],
+				}),
+			);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			const { total, items } = getCreatedRefundItems();
+			expect(total).toBe(2);
+			expect(items.reduce((s, i) => s + i.amount, 0)).toBe(2);
+			for (const item of items) {
+				expect(item.amount).toBeGreaterThan(0);
+			}
+		});
+
+		it("exclut les items déjà entièrement remboursés et répartit sur le reste", async () => {
+			// i1 déjà remboursé (qty 1/1) → exclu ; tout le restant va sur i2.
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					paymentStatus: "PAID",
+					total: 500,
+					refunds: [{ amount: 200 }],
+					items: [makeItem("i1", 200, 1, [{ quantity: 1, amount: 200 }]), makeItem("i2", 300, 1)],
+				}),
+			);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			const { total, items } = getCreatedRefundItems();
+			expect(total).toBe(300);
+			expect(items).toHaveLength(1);
+			expect(items[0]!.amount).toBe(300);
+		});
+
+		it("ne crée pas de Refund quand tout est déjà remboursé (remainingAmount <= 0)", async () => {
+			mockPrisma.order.findUnique.mockResolvedValue(
+				createMockOrder({
+					paymentStatus: "PARTIALLY_REFUNDED",
+					total: 400,
+					refunds: [{ amount: 400 }],
+					items: [makeItem("i1", 400, 1)],
+				}),
+			);
+			const result = await markAsFullyRefunded(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+		});
 	});
 
 	it("uses default note (including manualRefundMethod) when reason is not provided", async () => {

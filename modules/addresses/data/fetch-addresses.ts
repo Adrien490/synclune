@@ -1,9 +1,9 @@
 import { cacheAddressSearch } from "../constants/cache";
 import type {
-	CompletionApiResponse,
 	ValidatedSearchAddressParams,
 	SearchAddressReturn,
 } from "../types/search-address.types";
+import { banResultSchema, parseGeoResults } from "../schemas/geo-response.schema";
 import { buildApiUrl } from "../services/address-api.service";
 import { transformCompletionResult } from "../utils/address-transform.utils";
 
@@ -32,10 +32,10 @@ export async function fetchAddresses(
 		throw new Error(`Erreur API BAN: ${response.status} ${response.statusText}`);
 	}
 
-	const data = (await response.json()) as CompletionApiResponse;
+	const data: unknown = await response.json();
 
-	// Transformer les résultats en format simplifié
-	const addresses = data.results.map(transformCompletionResult);
+	// Validation fail-soft par résultat + transformation en format simplifié
+	const addresses = parseGeoResults(data, banResultSchema).map(transformCompletionResult);
 
 	return {
 		addresses,

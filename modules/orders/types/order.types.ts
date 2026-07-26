@@ -105,20 +105,16 @@ export interface OrderPermissions {
 // Validation result types for status transition functions
 type DeliveryBlockReason = "already_delivered" | "not_shipped";
 export type DeliveryValidationResult =
-	| { canDeliver: true }
-	| { canDeliver: false; reason: DeliveryBlockReason };
+	{ canDeliver: true } | { canDeliver: false; reason: DeliveryBlockReason };
 
 type ReturnBlockReason = "already_returned" | "not_delivered";
 export type ReturnValidationResult =
-	| { canReturn: true }
-	| { canReturn: false; reason: ReturnBlockReason };
+	{ canReturn: true } | { canReturn: false; reason: ReturnBlockReason };
 
 type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid";
 export type ProcessingValidationResult =
-	| { canProcess: true }
-	| { canProcess: false; reason: ProcessingBlockReason };
+	{ canProcess: true } | { canProcess: false; reason: ProcessingBlockReason };
 
 type RevertBlockReason = "not_shipped";
 export type RevertValidationResult =
-	| { canRevert: true }
-	| { canRevert: false; reason: RevertBlockReason };
+	{ canRevert: true } | { canRevert: false; reason: RevertBlockReason };

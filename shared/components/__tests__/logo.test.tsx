@@ -224,9 +224,12 @@ describe("Logo", () => {
 		expect(brandName.className).toContain("font-cursive");
 	});
 
-	it("adapts quality based on size (≤40 → 75, >40 → 90)", () => {
+	// Paliers IMAGE_QUALITY (SSOT alignée sur `images.qualities` de next.config) :
+	// THUMBNAIL=65 / STANDARD=80 / HERO=90. Une valeur hors de cette liste
+	// ferait répondre 400 à `/_next/image`.
+	it("adapts quality based on size (≤40 → 65 THUMBNAIL, >40 → 90 HERO)", () => {
 		const { container: small } = render(<Logo size={32} />);
-		expect(small.querySelector("[data-testid='logo-image']")).toHaveAttribute("data-quality", "75");
+		expect(small.querySelector("[data-testid='logo-image']")).toHaveAttribute("data-quality", "65");
 
 		cleanup();
 

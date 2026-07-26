@@ -23,7 +23,9 @@ import {
 	SearchX,
 	X,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+// `m` (et non `motion`) : l'app est enveloppée dans <LazyMotion> — importer
+// `motion` embarque le bundle complet des features (~30 kB) en plus.
+import { m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -433,7 +435,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 										</div>
 
 										{/* Dashboard — standalone prominent card */}
-										<motion.div
+										<m.div
 											{...fadeUp(0)}
 											className={cn(
 												"bg-background mb-3 overflow-hidden rounded-xl border",
@@ -478,11 +480,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													aria-hidden="true"
 												/>
 											</Link>
-										</motion.div>
+										</m.div>
 
 										{/* Navigation groups — iOS Settings style */}
 										{navigationData.navGroups.map((group, groupIndex) => (
-											<motion.div key={group.label} {...fadeUp(groupIndex + 1)} className="mb-3">
+											<m.div key={group.label} {...fadeUp(groupIndex + 1)} className="mb-3">
 												<p className="text-muted-foreground mb-1 px-1 text-xs font-medium">
 													{group.label}
 												</p>
@@ -542,11 +544,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 														);
 													})}
 												</ul>
-											</motion.div>
+											</m.div>
 										))}
 
 										{/* Actions card */}
-										<motion.ul
+										<m.ul
 											role="list"
 											{...fadeUp(navigationData.navGroups.length + 1)}
 											className="bg-background mt-1 overflow-hidden rounded-xl border"
@@ -595,7 +597,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													</span>
 												</button>
 											</li>
-										</motion.ul>
+										</m.ul>
 									</>
 								)}
 							</nav>

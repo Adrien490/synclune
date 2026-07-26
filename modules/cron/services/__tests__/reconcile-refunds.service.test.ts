@@ -8,6 +8,7 @@ const {
 	mockCaptureRefundError,
 	mockInitiateAutomaticRefund,
 	mockSendRefundFailureAlert,
+	mockSendRefundConfirmationOnce,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		refund: {
@@ -21,7 +22,7 @@ const {
 		// productSku sont lus dans la transaction de finalisation.
 		refundItem: { findMany: vi.fn() },
 		productSku: { findMany: vi.fn() },
-		order: { update: vi.fn(), findUnique: vi.fn() },
+		order: { update: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -33,6 +34,7 @@ const {
 	mockCaptureRefundError: vi.fn(),
 	mockInitiateAutomaticRefund: vi.fn(),
 	mockSendRefundFailureAlert: vi.fn(),
+	mockSendRefundConfirmationOnce: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -64,6 +66,21 @@ vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
 	sendRefundFailureAlert: mockSendRefundFailureAlert,
 }));
 
+// EINV-CREDIT-020 : voidInvoice / issueCreditNoteForRefund (importés réels par
+// ce cron) archivent désormais eagerly l'avoir via ces services, dont la chaîne
+// d'import instancie UploadThing au chargement — mock au niveau module.
+vi.mock("@/modules/orders/services/ensure-credit-note-archived.service", () => ({
+	ensureOrderCreditNoteArchived: vi.fn().mockResolvedValue("already-archived"),
+}));
+vi.mock("@/modules/refunds/services/ensure-credit-note-archived.service", () => ({
+	ensureRefundCreditNoteArchived: vi.fn().mockResolvedValue("already-archived"),
+}));
+
+vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
+	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
+}));
+
+import { updateTag } from "next/cache";
 import { reconcileRefunds } from "../reconcile-refunds.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -99,6 +116,9 @@ describe("reconcileRefunds", () => {
 		mockPrisma.refundItem.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockPrisma.order.findUnique.mockResolvedValue(null);
+		// OVERBILL-RESOLVE-01 : par défaut aucune commande sur-facturée à résoudre.
+		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
 		mockInitiateAutomaticRefund.mockResolvedValue({ success: true, refundId: "re_retry" });
 		mockSendRefundFailureAlert.mockResolvedValue(undefined);
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => unknown) =>
@@ -176,6 +196,77 @@ describe("reconcileRefunds", () => {
 			where: { id: "order-1" },
 			data: { paymentStatus: "REFUNDED" },
 		});
+	});
+
+	it("passes the freshly issued invoice/credit-note numbers to the confirmation email", async () => {
+		const candidate = buildCandidate();
+		mockPrisma.refund.findMany.mockResolvedValueOnce([
+			{
+				...candidate,
+				reason: "CUSTOMER_REQUEST",
+				order: {
+					...candidate.order,
+					customerEmail: "client@test.fr",
+					customerName: "Marie Dupont",
+				},
+			},
+		]);
+		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 2000 } });
+		// Re-fetch post-émission de l'avoir : l'email doit porter les numéros de
+		// pièces (F-/A-) comme le path admin, pas des null en dur.
+		mockPrisma.refund.findUnique.mockResolvedValue({
+			creditNoteNumber: "A-2026-00042",
+			order: { invoiceNumber: "F-2026-00007", creditNoteNumber: null },
+		});
+		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
+
+		await reconcileRefunds();
+
+		expect(mockSendRefundConfirmationOnce).toHaveBeenCalledWith(
+			expect.objectContaining({
+				refundId: "refund-1",
+				to: "client@test.fr",
+				invoiceNumber: "F-2026-00007",
+				creditNoteNumber: "A-2026-00042",
+			}),
+		);
+	});
+
+	it("falls back to the order credit note number for a full refund finalised by the cron", async () => {
+		const candidate = buildCandidate();
+		mockPrisma.refund.findMany.mockResolvedValueOnce([
+			{
+				...candidate,
+				reason: "CUSTOMER_REQUEST",
+				order: {
+					...candidate.order,
+					customerEmail: "client@test.fr",
+					customerName: "Marie Dupont",
+				},
+			},
+		]);
+		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
+		// Full refund : l'avoir vit sur Order.creditNoteNumber (voidInvoice),
+		// Refund.creditNoteNumber reste null (EINV-SEQ-001).
+		mockPrisma.refund.findUnique.mockResolvedValue({
+			creditNoteNumber: null,
+			order: { invoiceNumber: "F-2026-00007", creditNoteNumber: "A-2026-00043" },
+		});
+		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
+
+		await reconcileRefunds();
+
+		expect(mockSendRefundConfirmationOnce).toHaveBeenCalledWith(
+			expect.objectContaining({
+				refundId: "refund-1",
+				invoiceNumber: "F-2026-00007",
+				creditNoteNumber: "A-2026-00043",
+			}),
+		);
 	});
 
 	it("marks refund FAILED locally when Stripe says failed", async () => {
@@ -373,6 +464,136 @@ describe("reconcileRefunds", () => {
 					reason: "stripe_dlq_reconcile",
 				}),
 			}),
+		});
+	});
+
+	// ========================================================================
+	// OVERBILL-RESOLVE-01 — auto-résolution de la sur-facturation
+	// ========================================================================
+	describe("overbilling auto-resolution", () => {
+		it("scanne les commandes sur-facturées non résolues", async () => {
+			await reconcileRefunds();
+
+			const overbillCall = mockPrisma.order.findMany.mock.calls.find(
+				(c) => c[0]?.where?.overbilledAmountCents !== undefined,
+			);
+			expect(overbillCall).toBeDefined();
+			expect(overbillCall![0].where).toMatchObject({
+				overbilledAmountCents: { not: null },
+				overbillingResolvedAt: null,
+				deletedAt: null,
+			});
+		});
+
+		/**
+		 * OVERBILL-RESOLVE-02 : seul le refund.findMany de la passe overbilling
+		 * filtre `status: "COMPLETED"` (phase 1 = APPROVED, phase 2 AM-1 = FAILED) —
+		 * on discrimine dessus pour ne pas perturber les autres passes.
+		 */
+		function mockCompletedRefunds(refunds: Array<{ amount: number }>) {
+			mockPrisma.refund.findMany.mockImplementation(
+				async (args?: { where?: { status?: string } }) =>
+					args?.where?.status === "COMPLETED" ? refunds : [],
+			);
+		}
+
+		function mockOverbilledCandidate(overrides: Partial<{ total: number; delta: number }> = {}) {
+			mockPrisma.order.findMany.mockResolvedValueOnce([
+				{
+					id: "order-ob",
+					orderNumber: "SYN-OB",
+					total: overrides.total ?? 5000,
+					overbilledAmountCents: overrides.delta ?? 500,
+					userId: "user-ob",
+				},
+			]);
+		}
+
+		it("pose overbillingResolvedAt quand un refund COMPLETED du montant EXACT du delta existe", async () => {
+			mockOverbilledCandidate();
+			mockCompletedRefunds([{ amount: 500 }]);
+			mockPrisma.order.updateMany.mockResolvedValueOnce({ count: 1 });
+
+			const result = await reconcileRefunds();
+
+			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+				where: { id: "order-ob", overbillingResolvedAt: null },
+				data: { overbillingResolvedAt: expect.any(Date) },
+			});
+			expect(result.processed).toBeGreaterThanOrEqual(1);
+		});
+
+		it("pose overbillingResolvedAt quand le cumul remboursé couvre total + delta (tout restitué)", async () => {
+			mockOverbilledCandidate();
+			// 5000 (retour intégral) + 500 : le delta est nécessairement restitué.
+			mockCompletedRefunds([{ amount: 5000 }, { amount: 500 }]);
+			mockPrisma.order.updateMany.mockResolvedValueOnce({ count: 1 });
+
+			await reconcileRefunds();
+
+			expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+				where: { id: "order-ob", overbillingResolvedAt: null },
+				data: { overbillingResolvedAt: expect.any(Date) },
+			});
+		});
+
+		it("ne résout PAS tant que les refunds COMPLETED ne couvrent pas le delta", async () => {
+			mockOverbilledCandidate();
+			// Trop-perçu 500 mais seulement 200 remboursés → pas de résolution.
+			mockCompletedRefunds([{ amount: 200 }]);
+
+			await reconcileRefunds();
+
+			expect(mockPrisma.order.updateMany).not.toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: { overbillingResolvedAt: expect.any(Date) },
+				}),
+			);
+		});
+
+		// Audit statuts commande 2026-07-02 (F4) : la résolution change la fiche
+		// commande admin + le dashboard « À traiter » — les tags par-commande/user
+		// (getOrderInvalidationTags) doivent être flushés, pas seulement les
+		// listes globales (sinon stale ~10 min profil `user`).
+		it("invalide les tags par-commande/user à la résolution", async () => {
+			mockOverbilledCandidate();
+			mockCompletedRefunds([{ amount: 500 }]);
+			mockPrisma.order.updateMany.mockResolvedValueOnce({ count: 1 });
+
+			await reconcileRefunds();
+
+			const tags = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+			expect(tags).toEqual(
+				expect.arrayContaining(["order-detail-order-ob", "orders-user-user-ob"]),
+			);
+		});
+
+		it("n'invalide PAS les tags par-commande quand rien n'est résolu (count === 0)", async () => {
+			mockOverbilledCandidate();
+			mockCompletedRefunds([{ amount: 500 }]);
+			// Un run concurrent a déjà résolu : updateMany ne matche aucune ligne.
+			mockPrisma.order.updateMany.mockResolvedValueOnce({ count: 0 });
+
+			await reconcileRefunds();
+
+			const tags = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+			expect(tags).not.toContain("order-detail-order-ob");
+		});
+
+		it("ne résout PAS sur un refund non lié (retour produit ≥ delta mais ≠ delta) — OVERBILL-RESOLVE-02", async () => {
+			mockOverbilledCandidate();
+			// Retour produit de 2000 : couvre le delta (500) en cumul mais n'est ni un
+			// refund exact du delta ni une restitution totale (2000 < 5500). L'ancien
+			// critère `cumul >= delta` aurait résolu à tort.
+			mockCompletedRefunds([{ amount: 2000 }]);
+
+			await reconcileRefunds();
+
+			expect(mockPrisma.order.updateMany).not.toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: { overbillingResolvedAt: expect.any(Date) },
+				}),
+			);
 		});
 	});
 });

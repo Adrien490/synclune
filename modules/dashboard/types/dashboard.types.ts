@@ -112,6 +112,21 @@ export type GetVatProgressReturn = {
 };
 
 // ============================================================================
+// TYPES - EU OSS THRESHOLD (ventes à distance intra-UE — seuil 10 000 €)
+// ============================================================================
+
+export type GetEuOssProgressReturn = {
+	/** Cumul YTD des ventes payées vers des consommateurs d'autres États membres UE (hors FR/MC) */
+	ytdEuSales: number;
+	/** Seuil OSS unique UE — 10 000 € (cents) */
+	threshold: number;
+	/** Pourcentage du seuil atteint (0–100+) */
+	progress: number;
+	/** Année courante (utile pour libellé UI) */
+	year: number;
+};
+
+// ============================================================================
 // TYPES - REVENUE CHART (RAW SQL)
 // ============================================================================
 
@@ -215,4 +230,24 @@ export type GetTopProductsReturn = {
 
 export type DashboardAlerts = {
 	pendingRefunds: number;
+};
+
+/**
+ * Compteurs « à traiter » du dashboard (audit right-sizing §4.2).
+ * Remplacent les 3 crons d'alerte retirés (dispute-deadlines / overbilled-orders /
+ * stuck-orders) : un coup d'œil read-only à la connexion au lieu d'e-mails quotidiens.
+ */
+export type DashboardActionItems = {
+	/** Litiges Stripe NEEDS_RESPONSE dont la deadline tombe sous 2 jours. */
+	disputesNearDeadline: number;
+	/** Commandes sur-facturées non résolues (overbilledAmountCents non nul). */
+	overbilledOrders: number;
+	/** Commandes PAID en PROCESSING depuis plus de 7 jours. */
+	stuckProcessing: number;
+	/** Commandes SHIPPED depuis plus de 14 jours sans livraison confirmée. */
+	stuckShipped: number;
+	/** Commandes PAID sans numéro de facture depuis plus de 7 jours. */
+	stuckInvoices: number;
+	/** Paiements PENDING avec PaymentIntent orphelin depuis plus de 14 jours. */
+	orphanPending: number;
 };

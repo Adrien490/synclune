@@ -52,7 +52,7 @@ describe("OrderConfirmationEmail", () => {
 		shipping: 490,
 		total: 18390,
 		shippingAddress: baseShippingAddress,
-		trackingUrl: "https://synclune.fr/compte/commandes/example-order-id",
+		trackingUrl: "https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6",
 	};
 
 	it("renders without crashing", async () => {
@@ -93,7 +93,7 @@ describe("OrderConfirmationEmail", () => {
 
 	it("contains the tracking URL", async () => {
 		const html = await render(<OrderConfirmationEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/compte/commandes/example-order-id");
+		expect(html).toContain("https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6");
 	});
 
 	it("contains the shipping address city and postal code", async () => {

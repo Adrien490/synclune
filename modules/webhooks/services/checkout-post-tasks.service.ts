@@ -2,7 +2,9 @@ import type Stripe from "stripe";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { generateInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
+import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
+import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import type { PostWebhookTask } from "../types/webhook.types";
 import type { OrderWithItems } from "../types/checkout.types";
 import { getBaseUrl } from "@/shared/constants/urls";
@@ -30,17 +32,29 @@ export function buildPostCheckoutTasksFromPI(
 	if (order.userId) {
 		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));
 	} else {
-		const guestSessionId = paymentIntent.metadata.guestSessionId;
+		// Zod boundary : guestSessionId malformé droppé (fail-open par champ)
+		const guestSessionId = parsePaymentIntentMetadata(paymentIntent.metadata, {
+			paymentIntentId: paymentIntent.id,
+		}).guestSessionId;
 		if (guestSessionId) {
 			cacheTags.push(...getCartInvalidationTags(undefined, guestSessionId));
 		}
 	}
 
-	for (const item of order.items) {
-		if (item.sku?.id) {
-			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(item.sku.id));
-		}
-	}
+	// CACHE-CATALOG-002 : le décrément de stock doit invalider la page produit
+	// (tag `product-${slug}`, qui embarque skus.inventory) et l'inventaire admin,
+	// pas seulement SKU_STOCK — sinon vitrine périmée jusqu'à expiration `catalog`.
+	cacheTags.push(
+		...collectStockInvalidationTags(
+			order.items
+				.filter((item) => item.sku?.id)
+				.map((item) => ({
+					skuId: item.sku!.id,
+					productId: item.sku!.product.id,
+					productSlug: item.sku!.product.slug,
+				})),
+		),
+	);
 
 	if (cacheTags.length > 0) {
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
@@ -52,7 +66,16 @@ export function buildPostCheckoutTasksFromPI(
 		`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client";
 
 	if (customerEmail) {
-		const trackingUrl = `${baseUrl}/orders`;
+		// AUDIT-BIZ-001 : ce lien pointait vers un segment « orders » inexistant
+		// (l'espace client est ROUTES.ACCOUNT, soit « commandes ») — le CTA principal
+		// de l'email de confirmation était donc mort sur 100 % des commandes
+		// encaissées par Stripe, alors que les deux autres émetteurs du même email
+		// (mark-as-paid, resend-order-email) construisaient la bonne URL. SSOT unique
+		// désormais : `buildOrderTrackingUrl`, qui route aussi les invités
+		// (userId null) vers la page de suivi tokenisée au lieu du mur de connexion.
+		// Le garde-fou est `order-tracking-url.regression.test.ts` (il vérifie le
+		// segment contre les routes réellement servies, pas contre une constante).
+		const trackingUrl = buildOrderTrackingUrl(order);
 
 		tasks.push({
 			type: "ORDER_CONFIRMATION_EMAIL",

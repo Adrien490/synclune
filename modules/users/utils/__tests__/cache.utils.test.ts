@@ -23,9 +23,6 @@ import {
 	cacheCurrentUser,
 	cacheUserAccounts,
 	getCurrentUserInvalidationTags,
-	getUserSessionsInvalidationTags,
-	getUserAccountsInvalidationTags,
-	getAdminAccountsListInvalidationTags,
 	getUserFullInvalidationTags,
 } from "../cache.utils";
 
@@ -90,67 +87,29 @@ describe("getCurrentUserInvalidationTags", () => {
 });
 
 // ============================================================================
-// getUserSessionsInvalidationTags
-// ============================================================================
-
-describe("getUserSessionsInvalidationTags", () => {
-	it("returns SESSIONS tag for the given userId", () => {
-		const tags = getUserSessionsInvalidationTags("user-123");
-
-		expect(tags).toEqual(["sessions-user-user-123"]);
-	});
-
-	it("uses userId in the returned tag", () => {
-		const tags = getUserSessionsInvalidationTags("user-xyz");
-
-		expect(tags[0]).toBe("sessions-user-user-xyz");
-	});
-});
-
-// ============================================================================
-// getUserAccountsInvalidationTags
-// ============================================================================
-
-describe("getUserAccountsInvalidationTags", () => {
-	it("returns ACCOUNTS tag for the given userId", () => {
-		const tags = getUserAccountsInvalidationTags("user-123");
-
-		expect(tags).toEqual(["accounts-user-user-123"]);
-	});
-});
-
-// ============================================================================
-// getAdminAccountsListInvalidationTags
-// ============================================================================
-
-describe("getAdminAccountsListInvalidationTags", () => {
-	it("returns the accounts-list tag", () => {
-		const tags = getAdminAccountsListInvalidationTags();
-
-		expect(tags).toEqual(["accounts-list"]);
-	});
-});
-
-// ============================================================================
 // getUserFullInvalidationTags
 // ============================================================================
 
 describe("getUserFullInvalidationTags", () => {
-	it("returns CURRENT_USER, SESSION, SESSIONS, and USER_ORDERS_COUNT tags", () => {
+	it("returns CURRENT_USER, SESSIONS, and USER_ORDERS_COUNT tags", () => {
 		const tags = getUserFullInvalidationTags("user-123");
 
 		expect(tags).toContain("user-user-123");
-		expect(tags).toContain("session-user-123");
 		expect(tags).toContain("sessions-user-user-123");
 		expect(tags).toContain("user-orders-count-user-123");
-		expect(tags).toHaveLength(4);
+		expect(tags).toHaveLength(3);
 	});
 
 	it("uses userId in all dynamic tags", () => {
 		const tags = getUserFullInvalidationTags("user-abc");
 
 		expect(tags).toContain("user-user-abc");
-		expect(tags).toContain("session-user-abc");
 		expect(tags).toContain("sessions-user-user-abc");
+	});
+
+	it("does not reintroduce the orphan session-${userId} tag (no cacheTag reader poses it)", () => {
+		const tags = getUserFullInvalidationTags("user-123");
+
+		expect(tags).not.toContain("session-user-123");
 	});
 });

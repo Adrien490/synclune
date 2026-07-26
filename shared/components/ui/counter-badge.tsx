@@ -4,6 +4,10 @@ import type { LucideIcon } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
 
+// ≠ count-badge.tsx (compteur LIVE animé — pulse/flash motion — pour nav, panier,
+// wishlist). CounterBadge est un quota statique « count/max » à seuils colorés
+// (usage admin : upload média). Deux rôles distincts, pas un doublon.
+
 const counterBadgeVariants = cva("gap-1.5 border-2 px-3 py-1.5 text-sm font-semibold", {
 	variants: {
 		status: {

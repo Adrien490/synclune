@@ -29,7 +29,7 @@ interface UseApplyDiscountCodeOptions {
  * });
  *
  * const handleApply = () => {
- *   applyCode(code, subtotal, userId, customerEmail);
+ *   applyCode(code);
  * };
  * ```
  */
@@ -55,15 +55,18 @@ export function useApplyDiscountCode(options?: UseApplyDiscountCodeOptions) {
 	);
 
 	/**
-	 * Helper pour créer le FormData et appeler l'action
-	 * Gère le trim, uppercase et Math.round automatiquement
+	 * Helper pour créer le FormData et appeler l'action.
+	 * Gère le trim + uppercase.
+	 *
+	 * N'envoie QUE le code : `applyDiscountCode` ne lit rien d'autre. Le hook
+	 * appendait auparavant `subtotal`, `userId` et `customerEmail`, tous ignorés
+	 * côté serveur (sous-total recalculé depuis le panier en DB, identité prise
+	 * dans la session) — une signature qui laissait croire à tort que le client
+	 * pilotait le montant de la remise et son bénéficiaire.
 	 */
-	const applyCode = (code: string, subtotal: number, userId?: string, customerEmail?: string) => {
+	const applyCode = (code: string) => {
 		const formData = new FormData();
 		formData.append("code", code.trim().toUpperCase());
-		formData.append("subtotal", Math.round(subtotal).toString());
-		if (userId) formData.append("userId", userId);
-		if (customerEmail) formData.append("customerEmail", customerEmail);
 		startTransition(() => {
 			formAction(formData);
 		});

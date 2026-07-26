@@ -276,7 +276,9 @@ describe("ExportOrdersButton", () => {
 		const exportBtn = screen.getByText("Télécharger CSV");
 		await userEvent.click(exportBtn);
 
-		expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("periodType=all"));
+		expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("periodType=all"), {
+			method: "POST",
+		});
 		vi.unstubAllGlobals();
 	});
 

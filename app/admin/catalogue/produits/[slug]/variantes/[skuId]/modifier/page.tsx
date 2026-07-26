@@ -16,7 +16,6 @@ import { getMaterialOptions } from "@/modules/materials/data/get-material-option
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
-import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 
 const ColorFormDialog = dynamic(() =>
@@ -123,7 +122,6 @@ export default async function EditSkuPage({ params }: { params: EditSkuPageParam
 				sku={sku}
 			/>
 
-			<DeletePrimaryImageAlertDialog />
 			<DeleteGalleryMediaAlertDialog />
 			<ColorFormDialog />
 			<MaterialFormDialog />

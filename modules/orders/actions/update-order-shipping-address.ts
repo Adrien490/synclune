@@ -100,6 +100,11 @@ export async function updateOrderShippingAddress(
 			// Audit trail (Art. L123-22 Code de Commerce). ORD-BIZ-005 :
 			// `addressType: "shipping"` harmonise avec update-order-billing-address
 			// pour permettre les filtres d'audit par type d'adresse.
+			// ⚠️ RGPD (audit rétention 10 ans 2026-07-09) : ne JAMAIS écrire de
+			// valeurs d'adresse dans OrderHistory.metadata — la table est immuable
+			// 10 ans, jamais scrubée à l'anonymisation ni à la purge. `changedFields`
+			// trace qui/quand/quels champs (suffisant pour L123-22) ; les valeurs
+			// probantes vivent sur le snapshot Order et la facture figée.
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
@@ -108,16 +113,7 @@ export async function updateOrderShippingAddress(
 				note: "Adresse de livraison modifiee",
 				metadata: {
 					addressType: "shipping",
-					previousAddress: {
-						firstName: found.shippingFirstName,
-						lastName: found.shippingLastName,
-						address1: found.shippingAddress1,
-						address2: found.shippingAddress2,
-						postalCode: found.shippingPostalCode,
-						city: found.shippingCity,
-						country: found.shippingCountry,
-					},
-					newAddress: sanitizedData,
+					changedFields: Object.keys(sanitizedData),
 				},
 			});
 

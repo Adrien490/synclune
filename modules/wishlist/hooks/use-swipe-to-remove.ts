@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useEffectEvent, useRef } from "react";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 /** Minimum horizontal swipe distance (px) to trigger removal on mobile */
@@ -44,15 +44,14 @@ export function useSwipeToRemove({
 	const isTrackingRef = useRef(false);
 	const swipeOffsetRef = useRef(0);
 	const thresholdCrossedRef = useRef(false);
-	const onRemoveRef = useRef(onRemove);
+	// `useEffectEvent` plutôt qu'un latest-ref + effet de sync : le callback est
+	// recréé à chaque rendu du parent, l'effet `[onRemove]` se réexécutait donc
+	// systématiquement pour ne réassigner qu'une ref.
+	const emitRemove = useEffectEvent(() => onRemove());
 
 	useEffect(() => {
 		swipeOffsetRef.current = swipeOffset;
 	}, [swipeOffset]);
-
-	useEffect(() => {
-		onRemoveRef.current = onRemove;
-	}, [onRemove]);
 
 	useEffect(() => {
 		const el = elementRef.current;
@@ -100,7 +99,7 @@ export function useSwipeToRemove({
 			setIsSwiping(false);
 
 			if (isTrackingRef.current && swipeOffsetRef.current < -SWIPE_REMOVE_THRESHOLD) {
-				onRemoveRef.current();
+				emitRemove();
 			}
 
 			isTrackingRef.current = false;

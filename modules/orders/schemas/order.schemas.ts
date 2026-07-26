@@ -1,11 +1,16 @@
 import { z } from "zod";
+import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import {
 	OrderStatus,
 	PaymentStatus,
 	FulfillmentStatus,
 	InvoiceStatus,
 } from "@/app/generated/prisma/client";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
+import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
+import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "@/shared/constants/countries";
+import { emailSchema } from "@/shared/schemas/email.schemas";
+import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
@@ -55,17 +60,17 @@ export const orderFiltersSchema = z
 		 * Filtre les commandes `paymentStatus=PAID AND invoiceNumber IS NULL` —
 		 * cas critique Art. 286 CGI : commande encaissée sans facture émise.
 		 */
-		invoiceAnomaly: z.coerce.boolean().optional(),
+		invoiceAnomaly: formBooleanSchema.optional(),
 		/**
 		 * Preset "PDF non archivé" (EINV-UI-106) : facture GENERATED dont le PDF
 		 * immuable est absent (invoicePdfUrl IS NULL) — maintenance Art. L102 B LPF.
 		 */
-		pdfNotArchived: z.coerce.boolean().optional(),
+		pdfNotArchived: formBooleanSchema.optional(),
 		/**
 		 * Preset "retry escaladé" (EINV-UI-106) : DLQ facturation
 		 * (invoiceRetryDeferred = true) — archivage PDF / avoir en échec escaladé.
 		 */
-		retryDeferred: z.coerce.boolean().optional(),
+		retryDeferred: formBooleanSchema.optional(),
 		totalMin: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		totalMax: z.coerce.number().int().nonnegative().max(10000000).optional(),
 		createdAfter: stringOrDateSchema,
@@ -302,6 +307,10 @@ export const bulkCancelOrdersSchema = z.object({
 export const markAsPaidSchema = z.object({
 	id: z.cuid2(),
 	note: z.string().max(500).optional(),
+	// EINV-CASH-002 (audit montant 2026-07-02) : attestation explicite admin
+	// requise quand le PaymentIntent Stripe n'est PAS settled (paiement reçu
+	// hors Stripe — virement/chèque). Consignée dans l'audit trail OrderHistory.
+	confirmOffStripePayment: z.boolean().optional().default(false),
 });
 
 // ============================================================================
@@ -508,9 +517,9 @@ export const markAsFullyRefundedSchema = z.object({
  */
 export const updateOrderCustomerInfoSchema = z.object({
 	id: z.cuid2(),
-	customerEmail: z.email("Email invalide").max(255),
+	customerEmail: emailSchema,
 	customerName: z.string().min(1).max(100),
-	customerPhone: z.string().max(20).optional().or(z.literal("")),
+	customerPhone: phoneSchema.optional().or(z.literal("")),
 });
 
 /**
@@ -546,9 +555,15 @@ export const updateOrderShippingAddressSchema = z.object({
 	shippingLastName: z.string().min(1).max(50),
 	shippingAddress1: z.string().min(1).max(255),
 	shippingAddress2: z.string().max(255).optional().or(z.literal("")),
-	shippingPostalCode: z.string().min(1).max(10),
+	shippingPostalCode: z
+		.string()
+		.min(1)
+		.max(10)
+		.regex(ADDRESS_CONSTANTS.POSTAL_CODE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE),
 	shippingCity: z.string().min(1).max(100),
-	shippingCountry: z.string().length(2).default("FR"),
+	shippingCountry: z
+		.enum(SHIPPING_COUNTRIES, { message: COUNTRY_ERROR_MESSAGE })
+		.default(ADDRESS_CONSTANTS.DEFAULT_COUNTRY),
 });
 
 /**
@@ -563,10 +578,15 @@ export const updateOrderBillingAddressSchema = z
 		billingLastName: z.string().min(1).max(50).optional(),
 		billingAddress1: z.string().min(1).max(255).optional(),
 		billingAddress2: z.string().max(255).optional().or(z.literal("")),
-		billingPostalCode: z.string().min(1).max(10).optional(),
+		billingPostalCode: z
+			.string()
+			.min(1)
+			.max(10)
+			.regex(ADDRESS_CONSTANTS.POSTAL_CODE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE)
+			.optional(),
 		billingCity: z.string().min(1).max(100).optional(),
-		billingCountry: z.string().length(2).optional(),
-		billingPhone: z.string().min(1).max(20).optional(),
+		billingCountry: z.enum(SHIPPING_COUNTRIES, { message: COUNTRY_ERROR_MESSAGE }).optional(),
+		billingPhone: phoneSchema.optional(),
 	})
 	.refine(
 		(data) =>

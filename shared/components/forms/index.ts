@@ -13,6 +13,7 @@ import { PhoneField } from "./phone-field";
 import { RadioGroupField } from "./radio-group-field";
 import { RatingField } from "./rating-field";
 import { SelectField } from "./select-field";
+import { SubmitButton } from "./submit-button";
 import { SwitchField } from "./switch-field";
 import { TextareaField } from "./textarea-field";
 
@@ -40,5 +41,7 @@ export const { useAppForm } = createFormHook({
 		SwitchField,
 		TextareaField,
 	},
-	formComponents: {},
+	formComponents: {
+		SubmitButton,
+	},
 });

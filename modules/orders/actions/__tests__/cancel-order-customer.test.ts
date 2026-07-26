@@ -27,7 +27,9 @@ const {
 	mockBuildUrl,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany (précondition
+		// status=PENDING dans le where, retour { count }) remplace order.update.
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
@@ -157,7 +159,7 @@ describe("cancelOrderCustomer", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
@@ -222,7 +224,7 @@ describe("cancelOrderCustomer", () => {
 		const result = await cancelOrderCustomer(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// Already cancelled
@@ -245,8 +247,10 @@ describe("cancelOrderCustomer", () => {
 		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("attente"));
 	});
 
-	// Success: status updated and stock restored
-	it("should update order status and restore stock per item", async () => {
+	// STOCK-01 : cette action n'accepte QUE des commandes PENDING, dont le stock
+	// n'a JAMAIS été décrémenté (réservation optimiste). L'annulation met bien le
+	// statut à CANCELLED mais NE doit PAS restocker — sinon l'inventaire gonfle.
+	it("should cancel the order WITHOUT restoring stock (PENDING never decremented)", async () => {
 		const order = createPendingOrder({
 			items: [
 				{ skuId: "sku-1", quantity: 3 },
@@ -258,37 +262,55 @@ describe("cancelOrderCustomer", () => {
 		const result = await cancelOrderCustomer(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		// IDEM-CANCEL-001 : le where porte la précondition status=PENDING.
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: VALID_CUID },
+				where: expect.objectContaining({ id: VALID_CUID, status: "PENDING" }),
 				data: expect.objectContaining({ status: "CANCELLED" }),
 			}),
 		);
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: { id: "sku-1" },
-				data: { inventory: { increment: 3 } },
-			}),
-		);
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: { id: "sku-2" },
-				data: { inventory: { increment: 1 } },
-			}),
-		);
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
 	});
 
-	// PAID order → REFUNDED payment status
-	it("should set paymentStatus to REFUNDED when cancelling a PAID order", async () => {
+	// AUDIT-BIZ-001 — contrat INVERSÉ (ce test verrouillait auparavant
+	// « PAID → REFUNDED »).
+	//
+	// Cette action posait `paymentStatus: REFUNDED` sur une commande PENDING+PAID
+	// sans créer aucun refund Stripe ni aucune ligne `Refund`, et sans restocker
+	// (sa justification STOCK-01 — « une PENDING n'a jamais décrémenté son
+	// stock » — est fausse dès que le paiement est encaissé). Le résultat aurait
+	// été un client débité, une commande affichée « remboursée », et un stock
+	// fantôme. L'état est inatteignable par les chemins nominaux (toute
+	// transition PAID pose aussi `status = PROCESSING` : webhook
+	// `processOrderAtomically` + action admin `markAsPaid`) — on refuse donc au
+	// lieu de « réparer » l'incohérence par un flip d'enum mensonger.
+	it("refuses to cancel a PENDING order that is already PAID (no silent REFUNDED flip)", async () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingOrder({ paymentStatus: "PAID" }));
 
-		await cancelOrderCustomer(undefined, validFormData);
+		const result = await cancelOrderCustomer(undefined, validFormData);
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ paymentStatus: "REFUNDED" }),
-			}),
-		);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		// Aucune mutation : ni annulation, ni statut de paiement, ni restock.
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+		// Et surtout : jamais d'email « votre commande a été remboursée ».
+		expect(mockSendCancelEmail).not.toHaveBeenCalled();
+	});
+
+	// IDEM-CANCEL-001 : count===0 ⇒ un concurrent (double-clic) a déjà muté la
+	// commande entre le findUnique et le claim → abort avant libération des
+	// codes promo et avant l'audit.
+	it("should abort with not_pending error when the atomic claim matches no row", async () => {
+		mockPrisma.order.findUnique.mockResolvedValue(createPendingOrder());
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
+
+		const result = await cancelOrderCustomer(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("attente"));
+		expect(mockPrisma.discountUsage.findMany).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
+		expect(mockSendCancelEmail).not.toHaveBeenCalled();
 	});
 
 	// Audit trail

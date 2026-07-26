@@ -1,5 +1,7 @@
+import * as Sentry from "@sentry/nextjs";
 import { stripe } from "@/shared/lib/stripe";
 import { stripeCircuitBreaker } from "@/shared/lib/circuit-breaker";
+import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { logger } from "@/shared/lib/logger";
 import Stripe from "stripe";
@@ -65,6 +67,56 @@ export async function createStripeRefund(
 			}
 		}
 
+		// IDEM-REFUND-001 : sur un retry, adopter un refund Stripe déjà créé par
+		// une tentative antérieure dont la réponse a été perdue (marqué FAILED en
+		// DB sans anchor stripeRefundId). Sans cette adoption, la rotation de la
+		// clé d'idempotence (P0.2, voulue pour purger le cache d'erreur 24h de
+		// Stripe) autoriserait un 2ᵉ refund réel sur un remboursement partiel.
+		// Seuls les statuts vivants (succeeded/pending) sont adoptés — un refund
+		// failed/canceled est le cas légitime du retry et laisse place au create.
+		if (params.recoverExistingByMetadata && params.metadata?.refund_id) {
+			let adopted: Stripe.Refund | undefined;
+			try {
+				const existingRefunds = await stripeCircuitBreaker.execute(() =>
+					stripe.refunds.list({
+						...(params.chargeId ? { charge: params.chargeId } : {}),
+						...(params.paymentIntentId ? { payment_intent: params.paymentIntentId } : {}),
+						limit: 100,
+					}),
+				);
+				adopted = existingRefunds.data.find(
+					(r) =>
+						r.metadata?.refund_id === params.metadata?.refund_id &&
+						(r.status === "succeeded" || r.status === "pending"),
+				);
+			} catch (listError) {
+				// Fail-closed : impossible de garantir l'absence de refund existant →
+				// on ne crée RIEN (créer ici est exactement le double-débit qu'on ferme).
+				logger.error(
+					"IDEM-REFUND-001: Stripe refunds.list failed on retry — aborting without create",
+					listError,
+					{ service: "stripe-refund" },
+				);
+				return {
+					success: false,
+					error:
+						"Vérification des remboursements Stripe existants impossible — aucun remboursement créé, réessayez.",
+				};
+			}
+			if (adopted) {
+				logger.warn(
+					`IDEM-REFUND-001: adopted existing Stripe refund ${adopted.id} (status: ${adopted.status}) instead of creating a duplicate on retry`,
+					{ service: "stripe-refund" },
+				);
+				return {
+					success: adopted.status === "succeeded",
+					pending: adopted.status === "pending",
+					refundId: adopted.id,
+					status: (adopted.status ?? undefined) as StripeRefundStatus | undefined,
+				};
+			}
+		}
+
 		// Construire les paramètres du remboursement
 		const refundParams: Stripe.RefundCreateParams = {
 			amount: params.amount,
@@ -114,6 +166,28 @@ export async function createStripeRefund(
 				// Recover the existing refund ID from Stripe
 				// Fetch multiple refunds and match by metadata or amount to avoid
 				// returning an unrelated partial refund from the same charge
+
+				// La charge EST remboursée (succès idempotent) mais si aucun candidat
+				// fiable n'est identifiable, on finalise SANS anchor stripeRefundId :
+				// traçabilité reconcile dégradée → alerte Sentry pour vérification
+				// manuelle (un logger.warn seul ne déclenchait rien).
+				const captureAnchorlessRecovery = (reason: string) => {
+					Sentry.withScope((scope) => {
+						scope.setLevel("warning");
+						scope.setTag("refundAction", "charge-already-refunded-recovery");
+						scope.setFingerprint(["refund-anchorless", params.metadata?.refund_id ?? "unknown"]);
+						scope.setContext("refund", {
+							refundId: params.metadata?.refund_id ?? null,
+							amount: params.amount,
+							reason,
+						});
+						Sentry.captureMessage(
+							"Refund finalisé sans anchor stripeRefundId (charge_already_refunded) — vérification manuelle requise",
+							"warning",
+						);
+					});
+				};
+
 				let existingRefundId: string | undefined;
 				try {
 					const existingRefunds = await stripe.refunds.list({
@@ -141,6 +215,7 @@ export async function createStripeRefund(
 							`Multiple refunds match amount ${params.amount}, cannot safely determine which one. Manual verification required.`,
 							{ service: "stripe-refund" },
 						);
+						captureAnchorlessRecovery("multiple-amount-candidates");
 						// Still return success (charge IS refunded) but without a specific refundId
 						return {
 							success: true,
@@ -149,23 +224,28 @@ export async function createStripeRefund(
 						};
 					}
 
-					const matched = byMetadata ?? byAmountAndTime ?? byAmount ?? existingRefunds.data[0];
+					// Pas de fallback « premier refund de la liste » : sans match par
+					// metadata ni par montant, le candidat serait d'un montant DIFFÉRENT
+					// (ex: full refund Dashboard) — l'adopter lierait notre Refund à un
+					// refund Stripe étranger (et P2002 sur stripeRefundId @unique si
+					// déjà lié). Mieux vaut finaliser sans anchor + alerte.
+					const matched = byMetadata ?? byAmountAndTime ?? byAmount;
 					existingRefundId = matched?.id;
 
 					// Warn when using weak fallback matching (no metadata)
 					if (!byMetadata && existingRefundId) {
-						const matchType = byAmountAndTime
-							? "amount+time"
-							: byAmount
-								? "amount-only"
-								: "first-refund";
+						const matchType = byAmountAndTime ? "amount+time" : "amount-only";
 						logger.warn(
 							`Recovered refund via fallback (${matchType}): ${existingRefundId}. No metadata match available.`,
 							{ service: "stripe-refund" },
 						);
 					}
+					if (!existingRefundId) {
+						captureAnchorlessRecovery("no-candidate-match");
+					}
 				} catch {
 					logger.warn("Could not recover existing refund ID", { service: "stripe-refund" });
+					captureAnchorlessRecovery("refunds-list-failed");
 				}
 
 				return {
@@ -175,15 +255,22 @@ export async function createStripeRefund(
 				};
 			}
 
+			// Classifier pour que le caller distingue une erreur transiente
+			// (réseau, rate limit — retry admin pertinent) d'un échec définitif.
+			const classification = classifyStripeError(error);
 			return {
 				success: false,
 				error: error.message,
+				errorKind: classification.kind,
+				retryable: classification.retryable,
 			};
 		}
 
 		return {
 			success: false,
 			error: "Erreur lors de la création du remboursement Stripe",
+			errorKind: "unknown",
+			retryable: false,
 		};
 	}
 }

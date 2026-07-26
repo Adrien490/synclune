@@ -19,9 +19,6 @@ export const ORDERS_CACHE_TAGS = {
 	/** Dernière commande d'un utilisateur (page confirmation, espace client) */
 	LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
 
-	/** Statistiques du compte utilisateur (nb commandes, total dépensé) */
-	ACCOUNT_STATS: (userId: string) => `account-stats-${userId}`,
-
 	/** Historique d'une commande spécifique (audit trail) */
 	HISTORY: (orderId: string) => `order-history-${orderId}`,
 
@@ -59,7 +56,6 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 		tags.push(
 			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
 			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
-			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId),
 			// CACHE-AUDIT-008 : SSOT (cf. modules/users/data/get-user-detail-admin.ts)
 			USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId),
 		);

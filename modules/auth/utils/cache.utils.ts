@@ -59,13 +59,6 @@ export function getAuthSessionInvalidationTags(sessionId?: string, userId?: stri
 }
 
 /**
- * Retourne les tags à invalider pour une vérification
- */
-export function getAuthVerificationInvalidationTags(): string[] {
-	return [AUTH_CACHE_TAGS.VERIFICATIONS_LIST];
-}
-
-/**
  * Retourne les tags à invalider pour les providers OAuth d'un utilisateur
  */
 export function getUserProvidersInvalidationTags(userId: string): string[] {

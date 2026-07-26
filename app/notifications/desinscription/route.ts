@@ -1,19 +1,17 @@
 /**
- * EMAIL-AUDIT-001 : endpoint désinscription marketing.
+ * EMAIL-AUDIT-001 / RGPD-AUDIT P1-1 : endpoint désinscription marketing.
  *
- * Stratégie minimale (sans persistance DB) :
  * - GET  : page de confirmation HTML brandée (UX utilisateur)
  * - POST : 200 silencieux (RFC 8058 One-Click — appelé par les clients mail)
  *
  * Dans les deux cas :
  * 1. Le token HMAC est vérifié contre l'email.
- * 2. Un événement Sentry `marketing-opt-out` est émis avec l'email en tag.
- *    L'admin reçoit l'alerte via le pipeline Sentry standard et propage
- *    manuellement la désinscription (DB / Resend / suppression de la wishlist).
- *
- * Limitation MVP assumée : aucun flag DB ne bloque les futurs envois. Un user
- * désinscrit peut recevoir un nouvel email tant que l'admin n'a pas propagé
- * (cf. CLAUDE.md § Emails).
+ * 2. L'opposition est PERSISTÉE en DB (`User.marketingOptOutAt`, Art. 21(3) RGPD) —
+ *    les émetteurs marketing (back-in-stock, review-request) filtrent ce flag,
+ *    aucune propagation manuelle n'est requise.
+ * 3. Un log + événement Sentry `marketing-opt-out` restent émis comme signal
+ *    secondaire (l'email est scrubé par `sentry-scrub` côté Sentry — le canal
+ *    fiable est la DB, pas l'alerte).
  */
 import * as Sentry from "@sentry/nextjs";
 import { headers } from "next/headers";
@@ -21,6 +19,7 @@ import type { NextRequest } from "next/server";
 import { verifyUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
 import { BRAND } from "@/shared/constants/brand";
 import { logger } from "@/shared/lib/logger";
+import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 
 /**
@@ -58,9 +57,29 @@ function extractParams(
 	return { email, token };
 }
 
-function recordOptOut(email: string, source: "GET" | "POST"): void {
+async function recordOptOut(email: string, source: "GET" | "POST"): Promise<void> {
+	// Persistance Art. 21(3) RGPD — seul canal fiable. `updateMany` : no-op silencieux
+	// si l'email ne correspond à aucun compte (invité, compte anonymisé) — les emails
+	// marketing ne partent qu'à des comptes, il n'y a donc rien à bloquer côté DB.
+	// Idempotent volontairement non-conditionné : re-cliquer le lien rafraîchit la date.
+	try {
+		// Le token HMAC est vérifié sur l'email lowercase/trim — on matche la DB en
+		// insensible à la casse pour couvrir toute variante de casse dans l'URL.
+		await prisma.user.updateMany({
+			where: { email: { equals: email.trim(), mode: "insensitive" } },
+			data: { marketingOptOutAt: new Date() },
+		});
+	} catch (error) {
+		// L'utilisateur voit quand même la confirmation ; le log/Sentry ci-dessous
+		// permet à l'admin de propager manuellement si la persistance a échoué.
+		logger.error("[marketing-opt-out] Failed to persist opt-out flag", error, {
+			service: "notifications",
+			source,
+		});
+	}
+
 	logger.warn(
-		"[marketing-opt-out] User requested unsubscribe — admin must propagate to mailing list",
+		"[marketing-opt-out] User requested unsubscribe — persisted to User.marketingOptOutAt",
 		{
 			service: "notifications",
 			marketingOptOutEmail: email,
@@ -117,7 +136,7 @@ export async function GET(req: NextRequest): Promise<Response> {
 	const { email, token } = extractParams(req);
 	const valid = verifyUnsubscribeToken(email, token);
 	if (valid && email) {
-		recordOptOut(email, "GET");
+		await recordOptOut(email, "GET");
 	}
 	return new Response(renderHtmlPage({ success: valid, email }), {
 		status: valid ? 200 : 400,
@@ -138,7 +157,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 	const { email, token } = extractParams(req, formData);
 	const valid = verifyUnsubscribeToken(email, token);
 	if (valid && email) {
-		recordOptOut(email, "POST");
+		await recordOptOut(email, "POST");
 	}
 	// RFC 8058 §3.1 : One-Click POST doit toujours répondre 200 (pas de redirect, pas de body).
 	return new Response(null, { status: valid ? 200 : 400 });

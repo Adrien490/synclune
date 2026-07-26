@@ -29,6 +29,16 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		ABANDONED: "ABANDONED",
 	},
 	InvoiceStatus: { PENDING: "PENDING", GENERATED: "GENERATED", VOIDED: "VOIDED" },
+	// Requis transitivement par PAID_REVENUE_STATUSES (COMP-03 : fenêtre franchise
+	// alignée sur get-vat-progress = CA encaissé brut incluant les remboursées).
+	PaymentStatus: {
+		PENDING: "PENDING",
+		PAID: "PAID",
+		FAILED: "FAILED",
+		EXPIRED: "EXPIRED",
+		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
+		REFUNDED: "REFUNDED",
+	},
 	PdpTransmissionStatus: {
 		PENDING: "PENDING",
 		SENT: "SENT",

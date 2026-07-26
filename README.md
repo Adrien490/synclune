@@ -18,9 +18,8 @@
 - **Auth** : Better Auth (email/password, Google)
 - **Paiements** : Stripe
 - **Uploads** : UploadThing
-- **Emails** : React Email + Resend (16 templates)
-- **PWA** : Serwist
-- **Analytics** : Vercel Analytics + Speed Insights
+- **Emails** : React Email + Resend (11 templates)
+- **Monitoring** : Sentry
 
 ---
 
@@ -70,12 +69,12 @@ Ouvrir [http://localhost:3000](http://localhost:3000)
 ```
 app/
 ├── (auth)/                  # Connexion, inscription, mot de passe
-├── (boutique)/              # Storefront (accueil, produits, collections, compte)
+├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris)
+├── (account)/               # Espace client (compte, commandes)
+├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
 ├── admin/                   # Dashboard admin (catalogue, commandes, marketing)
 ├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
-├── paiement/                # Pages paiement (confirmation, annulation)
-├── serwist/                 # Service Worker PWA
-└── ~offline/                # Page offline PWA
+└── paiement/                # Pages paiement (confirmation, annulation)
 
 modules/                     # DDD - 24 modules metier
 ├── [module]/
@@ -108,12 +107,16 @@ pnpm dev                    # Serveur developpement
 pnpm build                  # Build production
 pnpm start                  # Serveur production
 pnpm lint                   # ESLint
+pnpm typecheck              # Verification types (tsc --noEmit)
 pnpm format                 # Prettier (format)
 pnpm format:check           # Prettier (check only)
 pnpm test                   # Tests Vitest
+pnpm test:critical          # Tests critical path (flows revenus/securite)
 pnpm test:coverage          # Tests avec couverture
+pnpm test:integration       # Tests integration DB (INTEGRATION_DATABASE_URL)
 pnpm e2e                    # Tests E2E Playwright
 pnpm e2e:ui                 # Playwright UI mode
+pnpm size                   # Bundle size check (size-limit)
 ```
 
 ### Database
@@ -174,7 +177,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 - **[CLAUDE.md](./CLAUDE.md)** — Architecture detaillee, patterns, cache profiles, conventions
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Guide de contribution (modules, Git workflow, tests)
-- **[docs/](./docs/)** — Audits UX/UI et specs fonctionnelles
+- **[docs/](./docs/)** — Modele d'activite ([BUSINESS.md](./docs/BUSINESS.md)), runbook operations ([RUNBOOK.md](./docs/RUNBOOK.md)), catalogue de missions ([AUDIT-PROMPTS.md](./docs/AUDIT-PROMPTS.md))
 
 ---
 
@@ -182,7 +185,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 Deploye sur [Vercel](https://vercel.com). Push sur `main` declenche le deploiement automatique.
 
-23 cron jobs definis dans `vercel.json` (voir [docs/CRONS.md](./docs/CRONS.md)).
+10 cron jobs definis dans `vercel.json` (mirror SSOT `modules/cron/constants/schedules.ts`, monitores via Sentry Cron).
 
 ---
 

@@ -1,7 +1,7 @@
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { cn } from "@/shared/utils/cn";
 import { processSteps } from "./process-steps";
-import { STEP_ILLUSTRATIONS } from "./step-illustrations";
+import { STEP_ILLUSTRATIONS } from "./step-illustrations-map";
 
 function StepIllustration({ stepId }: { stepId: string }) {
 	const Illustration = STEP_ILLUSTRATIONS[stepId];

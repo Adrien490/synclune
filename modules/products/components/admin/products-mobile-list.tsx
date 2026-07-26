@@ -85,9 +85,9 @@ export function ProductsMobileList({
 					<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
 					<ItemGroup aria-label="Produits" className="gap-2">
 						{products.map((product, index) => (
-							<div key={product.id} role="listitem">
+							<li key={product.id}>
 								<ProductMobileItem product={product} preload={index === 0} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

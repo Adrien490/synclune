@@ -65,14 +65,13 @@ describe("useCreateReviewForm", () => {
 
 	// ──────────── Return shape ────────────
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useCreateReviewForm(DEFAULT_OPTIONS));
 
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {
@@ -173,14 +172,6 @@ describe("useCreateReviewForm", () => {
 		const { result } = renderHook(() => useCreateReviewForm(DEFAULT_OPTIONS));
 
 		expect(result.current.form).not.toBeNull();
-	});
-
-	// ──────────── formErrors ────────────
-
-	it("formErrors is an empty array by default", () => {
-		const { result } = renderHook(() => useCreateReviewForm(DEFAULT_OPTIONS));
-
-		expect(result.current.formErrors).toEqual([]);
 	});
 
 	// ──────────── Multiple dispatches ────────────

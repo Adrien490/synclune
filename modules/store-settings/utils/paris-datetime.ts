@@ -13,6 +13,18 @@
  */
 import { APP_TIME_ZONE, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
+// Formatter hoisté : construire un `Intl.DateTimeFormat` charge les données de
+// locale, inutile de le refaire à chaque formatage de champ.
+const PARIS_INPUT_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+	timeZone: APP_TIME_ZONE,
+	hour12: false,
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+});
+
 const HAS_EXPLICIT_TZ = /[zZ]$|[+-]\d{2}:\d{2}$/;
 const BARE_LOCAL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
@@ -60,15 +72,7 @@ export function formatParisDateForInput(date: Date | string | null | undefined):
 	const d = date instanceof Date ? date : new Date(date);
 	if (Number.isNaN(d.getTime())) return "";
 
-	const parts = new Intl.DateTimeFormat("en-CA", {
-		timeZone: APP_TIME_ZONE,
-		hour12: false,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-		hour: "2-digit",
-		minute: "2-digit",
-	}).formatToParts(d);
+	const parts = PARIS_INPUT_FORMATTER.formatToParts(d);
 	const get = (type: Intl.DateTimeFormatPartTypes): string =>
 		parts.find((p) => p.type === type)?.value ?? "";
 	const hour = get("hour") === "24" ? "00" : get("hour");

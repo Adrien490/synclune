@@ -20,6 +20,7 @@ export async function sendOrderConfirmationEmail({
 	trackingUrl,
 	invoiceUrl,
 	idempotencyKey,
+	skipIdempotence,
 }: {
 	to: string;
 	orderNumber: string;
@@ -41,6 +42,11 @@ export async function sendOrderConfirmationEmail({
 	 * Évite double-envoi en cas de retry webhook (cron retry-webhooks).
 	 */
 	idempotencyKey?: string;
+	/**
+	 * IDEM-EMAIL-001 : court-circuite le cache de dédup in-process (10 min).
+	 * Réservé au renvoi explicite depuis l'admin — cf. `resendOrderEmail`.
+	 */
+	skipIdempotence?: boolean;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		OrderConfirmationEmail({
@@ -61,6 +67,7 @@ export async function sendOrderConfirmationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 			...(idempotencyKey && { idempotencyKey }),
+			...(skipIdempotence && { skipIdempotence }),
 		},
 	);
 }
@@ -78,6 +85,7 @@ export async function sendShippingConfirmationEmail({
 	estimatedDelivery,
 	shippingAddress,
 	idempotencyKey,
+	skipIdempotence,
 }: {
 	to: string;
 	orderNumber: string;
@@ -90,6 +98,11 @@ export async function sendShippingConfirmationEmail({
 	shippingAddress: ShippingAddress;
 	/** EMAIL-AUDIT-003 : dedup Resend 24h. Convention `order-shipped:${orderId}`. */
 	idempotencyKey?: string;
+	/**
+	 * IDEM-EMAIL-001 : court-circuite le cache de dédup in-process (10 min).
+	 * Réservé au renvoi explicite depuis l'admin — cf. `resendOrderEmail`.
+	 */
+	skipIdempotence?: boolean;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		ShippingConfirmationEmail({
@@ -107,6 +120,7 @@ export async function sendShippingConfirmationEmail({
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "order" }],
 			...(idempotencyKey && { idempotencyKey }),
+			...(skipIdempotence && { skipIdempotence }),
 		},
 	);
 }

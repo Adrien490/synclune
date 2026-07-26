@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
 import { ARRAY_LIMITS, PRICE_LIMITS, TEXT_LIMITS } from "@/shared/constants/validation-limits";
@@ -43,7 +44,7 @@ const baseSkuFields = {
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
-	isActive: z.coerce.boolean().default(true),
+	isActive: formBooleanSchema.default(true),
 
 	// Couleurs M2M : ordre = priorité (1re = principale pour vignette + snapshot facture)
 	colorIds: z
@@ -88,7 +89,7 @@ const skuPriceRefinement = <T extends { compareAtPriceEuros?: number; priceInclT
 const initialSkuSchema = z
 	.object({
 		...baseSkuFields,
-		isDefault: z.coerce.boolean().default(true),
+		isDefault: formBooleanSchema.default(true),
 	})
 	.refine(skuPriceRefinement, {
 		message: "Le prix comparé doit être supérieur ou égal au prix de vente",

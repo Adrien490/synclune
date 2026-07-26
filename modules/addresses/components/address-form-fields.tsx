@@ -7,6 +7,7 @@ import type { AddressFormInstance } from "@/modules/addresses/hooks/use-address-
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
+import { COUNTRY_NAMES } from "@/shared/constants/countries";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface AddressFormFieldsProps {
@@ -186,7 +187,17 @@ export function AddressFormFields({ form, isPending }: AddressFormFieldsProps) {
 				<form.AppField name="country">
 					{(field) => (
 						<div className="space-y-2">
-							<field.InputField label="Pays" type="text" disabled={true} required />
+							{/* Un input disabled est exclu du FormData natif : le hidden porte la valeur soumise */}
+							<input type="hidden" name={field.name} value={field.state.value} />
+							<field.InputField
+								label="Pays"
+								type="text"
+								disabled={true}
+								required
+								value={
+									(COUNTRY_NAMES as Record<string, string>)[field.state.value] ?? field.state.value
+								}
+							/>
 							<p className="text-muted-foreground text-xs">
 								Actuellement, seules les livraisons en France sont disponibles
 							</p>

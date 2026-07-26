@@ -1,4 +1,5 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
+import { OG_GRADIENT } from "@/shared/constants/brand-colors";
 import { ImageResponse } from "next/og";
 
 // Image metadata
@@ -16,7 +17,9 @@ export const contentType = "image/png";
  */
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
-	const product = await getProductBySlug({ slug });
+	// includeDraft explicite : cette route est publique et les OG images sont
+	// cachées par les crawlers — ne jamais dépendre du défaut Zod implicite.
+	const product = await getProductBySlug({ slug, includeDraft: false });
 
 	// Fallback if product not found
 	if (!product) {
@@ -24,7 +27,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 			<div
 				style={{
 					fontSize: 64,
-					background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+					background: OG_GRADIENT,
 					width: "100%",
 					height: "100%",
 					display: "flex",
@@ -50,7 +53,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	return new ImageResponse(
 		<div
 			style={{
-				background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+				background: OG_GRADIENT,
 				width: "100%",
 				height: "100%",
 				display: "flex",
@@ -123,6 +126,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 						lineHeight: 1.2,
 						maxWidth: "500px",
 						display: "flex",
+						textShadow: "0 2px 8px rgba(90,20,60,0.35)",
 					}}
 				>
 					{product.title}
@@ -136,6 +140,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 							fontWeight: 600,
 							marginBottom: "32px",
 							display: "flex",
+							textShadow: "0 2px 8px rgba(90,20,60,0.35)",
 						}}
 					>
 						{price}

@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
-import { formatPrice } from "@/modules/products/utils/format-price";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRight } from "lucide-react";
@@ -131,7 +131,7 @@ export function MegaMenuCreations({
 												{product.title}
 											</p>
 											<p className="text-muted-foreground text-xs">
-												{formatPrice(product.priceInclTax / 100)}
+												{formatEuro(product.priceInclTax, { compact: true })}
 											</p>
 										</div>
 									</Link>

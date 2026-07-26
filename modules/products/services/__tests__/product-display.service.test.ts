@@ -70,6 +70,8 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 				isPrimary: true,
 				mediaType: "IMAGE",
 				blurDataUrl: null,
+				width: null,
+				height: null,
 			},
 		],
 		...overrides,
@@ -425,6 +427,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: "blur-data",
+						width: null,
+						height: null,
 					},
 				],
 			});
@@ -452,6 +456,8 @@ describe("getProductCardData", () => {
 						isPrimary: false,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 			});
@@ -473,6 +479,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 				materials: [
@@ -522,6 +530,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 					{
 						id: "img-2",
@@ -531,6 +541,8 @@ describe("getProductCardData", () => {
 						isPrimary: false,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 			});
@@ -554,6 +566,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 			});
@@ -575,6 +589,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "VIDEO",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 					{
 						id: "img-1",
@@ -584,6 +600,8 @@ describe("getProductCardData", () => {
 						isPrimary: false,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 			});
@@ -708,6 +726,8 @@ describe("getProductCardData", () => {
 						isPrimary: true,
 						mediaType: "IMAGE",
 						blurDataUrl: null,
+						width: null,
+						height: null,
 					},
 				],
 			});

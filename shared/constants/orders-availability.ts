@@ -2,7 +2,9 @@
  * SSOT de la disponibilité des commandes (pré-lancement).
  *
  * Tant que `ORDERS_AVAILABLE === false` :
- * - un message d'information s'affiche sur la page d'accueil ;
+ * - l'avis `OrdersClosedNotice` s'affiche sous le hero de la page d'accueil
+ *   (en flux normal, pas en bannière haute — cf. conflit navbar transparente),
+ *   ainsi que sur la fiche produit, le footer du panier et la page paiement ;
  * - les boutons d'ajout au panier sont désactivés côté UI ;
  * - les Server Actions panier/paiement sont bloquées côté serveur via
  *   `assertStoreOpen()` (le vrai garde-fou — l'UI désactivée n'est qu'un confort).
@@ -20,7 +22,7 @@
 export const ORDERS_AVAILABLE: boolean = false;
 
 /** Adresse de contact affichée pendant la pause des commandes. */
-export const ORDERS_PAUSED_CONTACT_EMAIL = "synclune@gmail.com";
+const ORDERS_PAUSED_CONTACT_EMAIL = "synclune@gmail.com";
 
 /**
  * Message affiché aux visiteurs tant que les commandes ne sont pas ouvertes.

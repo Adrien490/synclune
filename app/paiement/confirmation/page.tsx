@@ -10,6 +10,7 @@ import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-con
 import { getShippingInfo } from "@/modules/orders/services/shipping.service";
 import { COUNTRY_NAMES, type ShippingCountry } from "@/shared/constants/countries";
 import { BRAND } from "@/shared/constants/brand";
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateLong } from "@/shared/utils/dates";
@@ -20,6 +21,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
@@ -150,7 +152,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* Pending payment state (webhook not yet acknowledged or async SEPA/Klarna) */}
+							{/* Pending payment state : webhook pas encore acquitté, ou carte 3DS en
+							    cours de settlement (card-only — pas de SEPA/Klarna). */}
 							{showPendingState && (
 								<Alert>
 									<Clock />
@@ -183,8 +186,10 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 															alt={item.productTitle}
 															fill
 															sizes="56px"
-															quality={70}
+															quality={IMAGE_QUALITY.THUMBNAIL}
 															className="object-cover"
+															placeholder="blur"
+															blurDataURL={IMAGE_BLUR_FALLBACK}
 														/>
 													) : (
 														<div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">

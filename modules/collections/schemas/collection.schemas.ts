@@ -1,6 +1,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	GET_COLLECTIONS_DEFAULT_PER_PAGE,
@@ -32,9 +32,7 @@ export const collectionFiltersSchema = z.object({
 			if (val === "false") return false;
 			return undefined;
 		}),
-	status: z
-		.union([z.nativeEnum(CollectionStatus), z.array(z.nativeEnum(CollectionStatus))])
-		.optional(),
+	status: z.union([z.enum(CollectionStatus), z.array(z.enum(CollectionStatus))]).optional(),
 });
 
 // ============================================================================
@@ -99,18 +97,18 @@ export const updateCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: collectionNameSchema,
 	description: collectionDescriptionSchema,
-	status: z.nativeEnum(CollectionStatus),
+	status: z.enum(CollectionStatus),
 });
 
 export const updateCollectionStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
-	status: z.nativeEnum(CollectionStatus),
+	status: z.enum(CollectionStatus),
 });
 
 export const toggleCollectionStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
-	currentStatus: z.nativeEnum(CollectionStatus),
-	targetStatus: z.nativeEnum(CollectionStatus).optional(),
+	currentStatus: z.enum(CollectionStatus),
+	targetStatus: z.enum(CollectionStatus).optional(),
 });
 
 export const deleteCollectionSchema = z.object({

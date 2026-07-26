@@ -24,9 +24,10 @@ const weightVariants = {
  * Composant de titre de section unifié pour l'application Synclune
  *
  * Style cohérent avec:
- * - Font display (Fraunces - serif artisanale)
- * - Italique + uppercase + tracking-wider
- * - Font-weight semibold
+ * - Font display (Fraunces - serif artisanale), jamais uppercase
+ * - Graisse paramétrable (`weight`, défaut `light`) — les h2 de la home
+ *   passent `normal` via SectionHeader pour contraster avec le h1 hero light
+ * - Italique optionnel (prop `italic`), tracking par taille (wide/wider)
  * - Progression responsive harmonisée
  * - Couleur foreground du thème
  *

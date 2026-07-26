@@ -7,7 +7,7 @@
 // LOCALSTORAGE KEYS
 // ============================================================================
 
-export const STORAGE_KEYS = {
+const STORAGE_KEYS = {
 	/**
 	 * Tracks if user has seen the long-press hint for media reordering
 	 * Used in: shared/components/media-upload/media-upload-grid.tsx

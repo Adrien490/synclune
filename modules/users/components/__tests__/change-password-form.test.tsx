@@ -91,8 +91,10 @@ vi.mock("@/shared/components/forms/password-strength-indicator", () => ({
 }));
 
 vi.mock("@/shared/components/ui/alert", () => ({
-	Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
-		<div role="alert" data-variant={variant}>
+	// Les props sont relayées (aria-live, tabIndex, ref) : `FormServerErrorAlert`
+	// s'appuie dessus pour l'annonce assertive + le focus programmatique.
+	Alert: ({ children, variant, ...props }: React.ComponentProps<"div"> & { variant?: string }) => (
+		<div role="alert" data-variant={variant} {...props}>
 			{children}
 		</div>
 	),
@@ -140,6 +142,8 @@ vi.mock("@/shared/components/ui/checkbox", () => ({
 vi.mock("lucide-react", () => ({
 	CircleAlert: () => <svg data-testid="icon-circle-alert" />,
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
+	// Utilisée par `FormServerErrorAlert` (erreurs serveur inline).
+	CircleX: () => <svg data-testid="icon-circle-x" />,
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
@@ -360,10 +364,15 @@ describe("ChangePasswordForm", () => {
 		expect(screen.queryByRole("alert")).toBeNull();
 	});
 
-	it("does not show alert when state.status is VALIDATION_ERROR", () => {
+	// Les VALIDATION_ERROR sont exclues du toast par `createToastCallbacks` : elles
+	// DOIVENT donc apparaître inline, sinon l'échec serveur est totalement muet
+	// (l'ancienne version de ce test verrouillait exactement ce bug).
+	it("surfaces a VALIDATION_ERROR inline instead of swallowing it", () => {
 		mockState.value = { status: ActionStatus.VALIDATION_ERROR, message: "Champ invalide" };
 		render(<ChangePasswordForm />);
-		expect(screen.queryByRole("alert")).toBeNull();
+		const alert = screen.getByRole("alert");
+		expect(alert).toHaveTextContent("Champ invalide");
+		expect(alert).toHaveAttribute("aria-live", "assertive");
 	});
 
 	// ─── Pending state ────────────────────────────────────────────────────────

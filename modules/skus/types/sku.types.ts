@@ -45,6 +45,9 @@ export interface ParsedMedia {
 	blurDataUrl?: string | null;
 	altText?: string | null;
 	mediaType?: "IMAGE" | "VIDEO";
+	/** Dimensions intrinseques lues a l'upload (absentes sur un media legacy) */
+	width?: number | null;
+	height?: number | null;
 }
 
 // ============================================================================

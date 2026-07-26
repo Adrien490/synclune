@@ -11,14 +11,18 @@ const {
 	mockHeaders,
 	mockVerifyToken,
 	mockLoggerWarn,
+	mockLoggerError,
 	mockCaptureMessage,
+	mockUserUpdateMany,
 } = vi.hoisted(() => ({
 	mockCheckRateLimit: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockHeaders: vi.fn(),
 	mockVerifyToken: vi.fn(),
 	mockLoggerWarn: vi.fn(),
+	mockLoggerError: vi.fn(),
 	mockCaptureMessage: vi.fn(),
+	mockUserUpdateMany: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -35,11 +39,15 @@ vi.mock("@/modules/notifications/utils/unsubscribe-token", () => ({
 }));
 
 vi.mock("@/shared/lib/logger", () => ({
-	logger: { warn: mockLoggerWarn },
+	logger: { warn: mockLoggerWarn, error: mockLoggerError },
 }));
 
 vi.mock("@sentry/nextjs", () => ({
 	captureMessage: mockCaptureMessage,
+}));
+
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: { user: { updateMany: mockUserUpdateMany } },
 }));
 
 import { GET, POST } from "../route";
@@ -75,6 +83,7 @@ describe("/notifications/desinscription — rate limiting (RATE-AUDIT-003)", () 
 		mockGetClientIp.mockResolvedValue("203.0.113.42");
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 19 });
 		mockVerifyToken.mockReturnValue(true);
+		mockUserUpdateMany.mockResolvedValue({ count: 1 });
 	});
 
 	it("uses unsubscribe:<ip> as the rate-limit key with 20/min", async () => {
@@ -130,5 +139,60 @@ describe("/notifications/desinscription — rate limiting (RATE-AUDIT-003)", () 
 		expect(mockVerifyToken).toHaveBeenCalledWith("jane@example.com", "abc");
 		expect(mockCaptureMessage).toHaveBeenCalledTimes(1);
 		expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+	});
+});
+
+// ============================================================================
+// Tests — persistance opposition marketing (RGPD-AUDIT P1-1, Art. 21(3))
+// ============================================================================
+
+describe("/notifications/desinscription — persistance opt-out (RGPD-AUDIT P1-1)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockHeaders.mockResolvedValue(new Map());
+		mockGetClientIp.mockResolvedValue("203.0.113.42");
+		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 19 });
+		mockVerifyToken.mockReturnValue(true);
+		mockUserUpdateMany.mockResolvedValue({ count: 1 });
+	});
+
+	it("GET persists marketingOptOutAt for the verified email", async () => {
+		await GET(makeGet());
+
+		expect(mockUserUpdateMany).toHaveBeenCalledWith({
+			where: { email: { equals: "jane@example.com", mode: "insensitive" } },
+			data: { marketingOptOutAt: expect.any(Date) },
+		});
+	});
+
+	it("POST (RFC 8058 One-Click) persists marketingOptOutAt too", async () => {
+		const res = await POST(makePost());
+
+		expect(res.status).toBe(200);
+		expect(mockUserUpdateMany).toHaveBeenCalledWith({
+			where: { email: { equals: "jane@example.com", mode: "insensitive" } },
+			data: { marketingOptOutAt: expect.any(Date) },
+		});
+	});
+
+	it("does NOT touch the DB when the token is invalid", async () => {
+		mockVerifyToken.mockReturnValue(false);
+
+		const res = await GET(makeGet());
+
+		expect(res.status).toBe(400);
+		expect(mockUserUpdateMany).not.toHaveBeenCalled();
+	});
+
+	it("still confirms to the user (200) and logs when the DB write fails", async () => {
+		mockUserUpdateMany.mockRejectedValue(new Error("db down"));
+
+		const res = await GET(makeGet());
+
+		expect(res.status).toBe(200);
+		expect(mockLoggerError).toHaveBeenCalledTimes(1);
+		// Signal secondaire (log + Sentry) toujours émis pour propagation manuelle.
+		expect(mockLoggerWarn).toHaveBeenCalledTimes(1);
+		expect(mockCaptureMessage).toHaveBeenCalledTimes(1);
 	});
 });

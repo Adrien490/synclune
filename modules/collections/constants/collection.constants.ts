@@ -23,9 +23,13 @@ export const GET_COLLECTION_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 	products: {
+		// deletedAt: null — le statut seul ne suffit pas : un produit soft-deleted reste
+		// référencé par ProductCollection et pourrait redevenir visible en cas de
+		// désynchronisation status/deletedAt (parité avec le pattern notDeleted du site).
 		where: {
 			product: {
 				status: ProductStatus.PUBLIC,
+				deletedAt: null,
 			},
 		},
 		select: {
@@ -58,6 +62,9 @@ export const GET_COLLECTION_SELECT = {
 							isDefault: true,
 							priceInclTax: true,
 							images: {
+								// Les surfaces collection ne rendent que des `next/image` :
+								// une URL vidéo n'y est pas décodable par l'optimiseur.
+								where: { mediaType: "IMAGE" as const },
 								select: {
 									id: true,
 									url: true,
@@ -83,6 +90,7 @@ export const GET_COLLECTION_SELECT = {
 				where: {
 					product: {
 						status: ProductStatus.PUBLIC,
+						deletedAt: null,
 					},
 				},
 			},
@@ -105,6 +113,7 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 		where: {
 			product: {
 				status: ProductStatus.PUBLIC,
+				deletedAt: null,
 			},
 		},
 		select: {
@@ -126,6 +135,8 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 							priceInclTax: true,
 							inventory: true,
 							images: {
+								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
+								where: { mediaType: "IMAGE" as const },
 								select: {
 									url: true,
 									altText: true,
@@ -159,6 +170,7 @@ export const GET_COLLECTIONS_SELECT = {
 		where: {
 			product: {
 				status: ProductStatus.PUBLIC,
+				deletedAt: null,
 			},
 		},
 		select: {
@@ -172,6 +184,8 @@ export const GET_COLLECTIONS_SELECT = {
 						select: {
 							priceInclTax: true,
 							images: {
+								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
+								where: { mediaType: "IMAGE" as const },
 								select: { url: true, altText: true, blurDataUrl: true },
 								orderBy: { position: "asc" },
 								take: 1,
@@ -192,6 +206,7 @@ export const GET_COLLECTIONS_SELECT = {
 				where: {
 					product: {
 						status: ProductStatus.PUBLIC,
+						deletedAt: null,
 					},
 				},
 			},

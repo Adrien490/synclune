@@ -46,7 +46,7 @@ export interface UploadProgressShape {
 /**
  * Computes the upload progress percentage (0-100) for shared <UploadProgress>.
  */
-export function progressPercent(progress: UploadProgressShape | null): number {
+function progressPercent(progress: UploadProgressShape | null): number {
 	if (!progress || progress.total === 0) return 0;
 	return Math.min(100, Math.round((progress.completed / progress.total) * 100));
 }

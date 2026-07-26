@@ -7,6 +7,8 @@ import { AlertTriangle, ArrowRight, Loader2, Minus, Plus, RotateCcw } from "luci
 
 import { useAdjustStockForm } from "@/modules/skus/hooks/use-adjust-stock-form";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -15,6 +17,7 @@ import { Label } from "@/shared/components/ui/label";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import {
@@ -67,7 +70,7 @@ export function AdjustStockForm({
 	const formRef = useRef<HTMLFormElement>(null);
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const { form, action, isPending, adjustment, newStock, isValid } = useAdjustStockForm({
+	const { form, state, action, isPending, adjustment, newStock, isValid } = useAdjustStockForm({
 		skuId,
 		currentStock,
 		onSuccess: () => {
@@ -80,6 +83,10 @@ export function AdjustStockForm({
 		},
 	});
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus de `adjustSkuStockSchema` serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
@@ -88,49 +95,15 @@ export function AdjustStockForm({
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || !isValid) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isValid, haptic]);
-
-	useEffect(() => {
-		if (isMobile || !successPath) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
-			// Select/dropdown menu) — otherwise closing a Select would also trigger the
-			// "unsaved changes" confirm and navigate away.
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, successPath);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, successPath]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: successPath,
+		allowNavigation,
+		getIsDirty: () => isDirty,
+		getCanSubmit: () => isValid,
+	});
 
 	const adjustBy = (delta: number) => {
 		haptic("light");
@@ -184,6 +157,8 @@ export function AdjustStockForm({
 			className={cn("space-y-6", className)}
 		>
 			<input type="hidden" name="skuId" value={skuId} />
+
+			<FormServerErrorAlert errors={serverErrors} />
 
 			<p className="text-muted-foreground text-sm">
 				Variante <span className="text-foreground font-semibold">« {skuName} »</span>

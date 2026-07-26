@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { BRAND_PINK } from "./brand-colors";
 import { SEO_DEFAULTS, SITE_URL } from "./seo-config";
 import { ICONS_CONFIG } from "./icons-config";
 
@@ -73,14 +74,10 @@ export const rootMetadata: Metadata = {
 			},
 		}),
 	},
-	appleWebApp: {
-		capable: true,
-		statusBarStyle: "black-translucent",
-		title: "Synclune",
-	},
 	icons: ICONS_CONFIG,
 	other: {
-		"msapplication-TileColor": "#F5B0C1",
+		// Synchroniser public/browserconfig.xml (fichier statique) à toute retouche.
+		"msapplication-TileColor": BRAND_PINK.theme,
 		"msapplication-TileImage": "/icons/ms-icon-144x144.png",
 		"msapplication-config": "/browserconfig.xml",
 	},
@@ -92,5 +89,5 @@ export const rootViewport: Viewport = {
 	maximumScale: 5,
 	userScalable: true,
 	viewportFit: "cover",
-	themeColor: "#e493b3",
+	themeColor: BRAND_PINK.theme,
 };

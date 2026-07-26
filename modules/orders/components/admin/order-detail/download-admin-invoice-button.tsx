@@ -46,13 +46,13 @@ export function DownloadAdminInvoiceButton({
 			success: "Facture téléchargée",
 			error: (e) => (e instanceof Error ? e.message : "Téléchargement impossible"),
 		});
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
 		try {
 			await task;
 		} catch {
 			// surfaced by toast.promise
-		} finally {
-			setIsDownloading(false);
 		}
+		setIsDownloading(false);
 	}
 
 	return (

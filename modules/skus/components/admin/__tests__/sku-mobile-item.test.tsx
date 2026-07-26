@@ -1,3 +1,4 @@
+import type * as MediaUtils from "@/modules/media/utils/media-utils";
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -28,7 +29,11 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 	STOCK_THRESHOLDS: { CRITICAL: 1, LOW: 3, NORMAL_MAX: 50 },
 }));
 
-vi.mock("@/modules/media/utils/media-utils", () => ({
+// Mock PARTIEL : `resolveMediaThumbSrc` est une fonction pure dont on veut le
+// comportement réel (un mock total la rendrait `undefined` et masquerait la
+// résolution poster/url — exactement le défaut que ce composant corrige).
+vi.mock("@/modules/media/utils/media-utils", async (importOriginal) => ({
+	...(await importOriginal<typeof MediaUtils>()),
 	getVideoMimeType: () => "video/mp4",
 }));
 
@@ -235,6 +240,8 @@ describe("SkuMobileItem", () => {
 							url: "https://example.com/img.jpg",
 							thumbnailUrl: null,
 							blurDataUrl: null,
+							width: null,
+							height: null,
 							altText: null,
 							isPrimary: true,
 							mediaType: "IMAGE",

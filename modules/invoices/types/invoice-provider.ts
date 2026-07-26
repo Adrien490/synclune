@@ -8,13 +8,7 @@ import type {
  * Statut d'une transmission e-reporting (B2C) vers la DGFiP via la Plateforme
  * Agréée (PA).
  */
-export type EReportingStatus =
-	| "PENDING"
-	| "SENT"
-	| "ACCEPTED"
-	| "REJECTED"
-	| "RETRYING"
-	| "ABANDONED";
+type EReportingStatus = "PENDING" | "SENT" | "ACCEPTED" | "REJECTED" | "RETRYING" | "ABANDONED";
 
 /**
  * EINV-EREPORT-010 — Ligne de ventilation par taux de TVA transmise dans un batch.

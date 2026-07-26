@@ -130,6 +130,10 @@ import { GET } from "../route";
 
 const ORDER_NUMBER = "SYN-2026-GUEST";
 
+// Tokens au format réel (32 hex) : cf. schéma F4 (order-route-params.schema)
+const VALID_TOKEN = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+const TAMPERED_TOKEN = "ffffffffffffffffffffffffffffffff";
+
 function makeReq(token?: string) {
 	const url = token
 		? `https://example.com/api/orders/${ORDER_NUMBER}/invoice?token=${token}`
@@ -197,13 +201,13 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(false);
 
-			const res = await GET(makeReq("tampered-token-xxxxx"), makeParams());
+			const res = await GET(makeReq(TAMPERED_TOKEN), makeParams());
 
 			expect(res.status).toBe(404);
 			expect(mockVerifyInvoiceAccessToken).toHaveBeenCalledWith(
 				GUEST_ORDER.id,
 				GUEST_ORDER.orderNumber,
-				"tampered-token-xxxxx",
+				TAMPERED_TOKEN,
 			);
 		});
 	});
@@ -213,7 +217,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 
-			const res = await GET(makeReq("valid-hmac-signed-token"), makeParams());
+			const res = await GET(makeReq(VALID_TOKEN), makeParams());
 
 			expect(res.status).toBe(200);
 			expect(res.headers.get("Content-Type")).toBe("application/pdf");
@@ -224,7 +228,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockGetClientIp.mockResolvedValue("203.0.113.42");
 
-			await GET(makeReq("valid-token"), makeParams());
+			await GET(makeReq(VALID_TOKEN), makeParams());
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
 				"invoice-token:203.0.113.42",
@@ -237,7 +241,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockGetClientIp.mockResolvedValue(null);
 
-			await GET(makeReq("valid-token"), makeParams());
+			await GET(makeReq(VALID_TOKEN), makeParams());
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith("invoice-token:unknown", expect.any(Object));
 		});
@@ -251,7 +255,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
 			mockPrisma.order.findFirst.mockResolvedValue({ ...GUEST_ORDER, userId: "other-user" });
 
-			const res = await GET(makeReq("any-token"), makeParams());
+			const res = await GET(makeReq(VALID_TOKEN), makeParams());
 
 			expect(res.status).toBe(200);
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
@@ -265,7 +269,9 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 		it("token query passé exactement comme reçu (pas de manipulation)", async () => {
 			mockGetSession.mockResolvedValue(null);
 			mockVerifyInvoiceAccessToken.mockReturnValue(true);
-			const RAW_TOKEN = "abc.def.signature_base64url_xxx";
+			// Format 32-hex requis par le schéma F4 — l'invariant testé reste le
+			// passage BRUT (non trimé/normalisé) du token au vérificateur HMAC.
+			const RAW_TOKEN = "0123456789abcdef0123456789abcdef";
 
 			await GET(makeReq(RAW_TOKEN), makeParams());
 
@@ -275,6 +281,26 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 				GUEST_ORDER.orderNumber,
 				RAW_TOKEN,
 			);
+		});
+	});
+
+	describe("F4 (audit Zod) : token malformé coupé en 400 avant le HMAC", () => {
+		it("token non-hex → 400 sans appel à verifyInvoiceAccessToken", async () => {
+			mockGetSession.mockResolvedValue(null);
+
+			const res = await GET(makeReq("abc.def.signature_base64url_xxx"), makeParams());
+
+			expect(res.status).toBe(400);
+			expect(mockVerifyInvoiceAccessToken).not.toHaveBeenCalled();
+		});
+
+		it("token 10 kB → 400 sans lookup Prisma", async () => {
+			mockGetSession.mockResolvedValue(null);
+
+			const res = await GET(makeReq("a".repeat(10_000)), makeParams());
+
+			expect(res.status).toBe(400);
+			expect(mockVerifyInvoiceAccessToken).not.toHaveBeenCalled();
 		});
 	});
 });

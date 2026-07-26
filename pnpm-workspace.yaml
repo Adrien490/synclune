@@ -1,0 +1,12 @@
+# Durcissement supply-chain (audit react-doctor `require-pnpm-hardening`).
+#
+# minimumReleaseAge : n'installe pas une version publiée depuis moins de 7 jours.
+#   La quasi-totalité des paquets npm compromis sont détectés et dépubliés dans
+#   les heures qui suivent — cette fenêtre nous en protège passivement.
+#   Pour forcer une version fraîche (patch de sécurité urgent) :
+#   `pnpm add <pkg> --config.minimumReleaseAge=0`.
+#
+# trustPolicy : refuse une mise à jour dont les signaux de confiance (provenance,
+#   signatures) se dégradent par rapport à la version installée.
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade

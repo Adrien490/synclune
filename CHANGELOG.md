@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Numérotation gap-free — durcissement (audit 2026-07-09)** : job CI `tests-integration` (service Postgres éphémère — les suites de concurrence advisory-lock tournent désormais sur chaque PR, adapter `@prisma/adapter-pg` sélectionné hors Neon) ; trigger DB `check_credit_note_cross_table_unique` (unicité cross-table Order↔Refund des numéros d'avoir, migration 20260709 + down.sql + test d'intégration) ; timeouts explicites `TX_TIMEOUT_LONG` sur les 3 transactions de séquence (l'attente advisory lock compte dans le timeout) ; retry élargi aux codes transitoires P2024/P2028 (`RETRYABLE_SEQUENCE_TX_ERROR_CODES`, sûr grâce à la garde d'idempotence sous lock)
+- **Right-sizing (audit 2026-06)** : SSOT des plannings cron `modules/cron/constants/schedules.ts` + monitoring **Sentry Cron** (alerte sur run manqué, MON-03) ; docs `docs/BUSINESS.md` (modèle / coûts / périmètre assumé) + `docs/RUNBOOK.md` (procédures ops solo) ; widget dashboard « À traiter » remplaçant les crons d'alerte e-mail
 - **E-invoicing Phase 2-4** (réforme française 2026/2027) :
   - Modèles B2B/B2G : champs `companyName/companyVatNumber/companySiren` sur `User` + snapshot `customerType` sur `Order` ; VAT par ligne sur `OrderItem`
   - Pivot `InvoiceData` (Zod-validé) consommé par `renderInvoicePdf` / `renderFacturXMinimum` (Factur-X CII XML minimal profile) / `renderUbl` (UBL 2.1)
@@ -18,9 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - PDF immuable post-paiement archivé sur UploadThing + SHA-256 (`Order.invoicePdfHash`)
   - E-reporting : modèles `EReportingTransaction` + `EReportingBatch`, hooks SALES/REFUND, agrégation quotidienne, transmission PDP (dry-run tant que flag OFF)
   - Admin dashboard `/admin/ventes/facturation` + admin invoice download + filter `invoiceStatus`
-  - 9 cron jobs : `transmit-invoices`, `transmit-ereporting-batch`, `retry-invoice-transmissions`, `reconcile-invoice-statuses`, `build-ereporting-batch`, `reconcile-invoices`, `reconcile-voided-invoices`, `refresh-stale-directory-entries`, `retry-post-webhook-tasks`
+  - E-reporting : services `build`/`transmit-ereporting-batch` présents mais **retirés de `vercel.json`** (standby, réactivables au go-live 2027) ; `reconcile-invoices` (DLQ facture, Passes 0-3) + `retry-post-webhook-tasks` actifs
   - Tests régression d'invariants : `no-manual-invoice-creation`, `no-manual-ereporting-write`, `order-history-immutability`, `persist-invoice-number` overflow
-  - Docs : [`INVOICING.md`](docs/INVOICING.md) + [`RUNBOOK-INVOICING.md`](docs/RUNBOOK-INVOICING.md) + section "Facturation électronique" dans `CLAUDE.md`
+  - Docs : section "Facturation électronique" dans `CLAUDE.md` + [`BUSINESS.md`](docs/BUSINESS.md) + [`RUNBOOK.md`](docs/RUNBOOK.md)
 - **Audits qualité** (mai 2026) : checkout adjacent pages, cron jobs full audit, rate-limit hardening, admin mobile header/bottom-bar/menu-sheet, home FAQ, latest-creations, footer
 - **Performance** : LCP hero CSS-only floating images, atelier entrance animations CSS-only, compositor-friendly animations, preconnect UploadThing, lazy-mount client modals, immutable cache + admin bypass on invoice route
 - **SEO** : OG image dynamique par catégorie produit
@@ -29,14 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test coverage for shared utilities
 - Error boundary for legal pages
 - Extended CODEOWNERS for all critical paths
-- Lighthouse CI thresholds (performance >= 90, a11y >= 95, SEO >= 95)
 - CHANGELOG.md and README.md
 
 ### Changed
 
-- **Counts realignment** : 24 DDD modules (was 26), 16 email templates (was 36), 23 cron jobs (was 18), 9 Zustand stores (was 5) — drift entre doc et code corrigé 2026-05-28
+- **Counts** : 24 modules DDD, 11 templates email, 10 cron jobs, 9 stores Zustand (réalignement doc ↔ code, 2026-06)
 - Resolved all TODO/FIXME/HACK comments across the codebase
-- Lighthouse assertions upgraded from `warn` to `error`
 
 ### Fixed
 
@@ -44,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cart : split tombstone undo (mobile cancelTombstone seul, pas de double quantity)
 - ResponsiveActionMenu Link history.back race (Vaul `<DrawerClose asChild>`)
 - Removed dead commented-out newsletter code from settings page
+
+### Removed
+
+- **Right-sizing (audit 2026-06)** : PWA/Serwist (service worker, page offline, manifest), Vercel Analytics + Speed Insights, Lighthouse CI (workflow + configs), crons `alert-overbilled-orders` + `alert-stuck-orders` (remplacés par le widget dashboard « À traiter »), crons `cleanup-*` (sessions/webhook-events/wishlists), actions panier `set-cart-notes` + `set-gift-options`
+- Docs obsolètes : `docs/INVOICING.md`, `docs/CRONS.md`, `docs/RUNBOOK-INVOICING.md`, `docs/audit/`, `docs/runbooks/` (connaissance conformité conservée inline dans `CLAUDE.md` ; ops dans `docs/RUNBOOK.md`)
 
 ## [0.1.0] - 2026-03-01
 

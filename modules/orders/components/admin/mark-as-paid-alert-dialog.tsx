@@ -13,6 +13,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsPaid } from "@/modules/orders/hooks/use-mark-as-paid";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { CreditCard, LoaderCircle } from "lucide-react";
 
 export const MARK_AS_PAID_DIALOG_ID = "mark-as-paid";
@@ -57,6 +58,20 @@ export function MarkAsPaidAlertDialog() {
 									Cette action est utilisée pour les paiements par virement ou chèque. La commande
 									passera en statut "En préparation".
 								</p>
+								{/* EINV-CASH-002 : attestation explicite d'encaissement hors Stripe,
+								    requise côté serveur quand le paiement Stripe n'a pas abouti. */}
+								<div className="mt-4 flex items-start gap-2 text-sm">
+									<Checkbox
+										id="confirm-off-stripe-payment"
+										name="confirmOffStripePayment"
+										required
+										className="mt-0.5"
+									/>
+									<label htmlFor="confirm-off-stripe-payment">
+										Je confirme avoir reçu le paiement <strong>hors Stripe</strong> (virement,
+										chèque). Cette attestation sera consignée dans l'historique de la commande.
+									</label>
+								</div>
 							</div>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>

@@ -56,8 +56,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	// Fetch products with filters
 	const cursor = getFirstParam(searchParamsData.cursor);
 	const direction = (getFirstParam(searchParamsData.direction) ?? "forward") as
-		| "forward"
-		| "backward";
+		"forward" | "backward";
 	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
 	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
 
@@ -76,9 +75,11 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 		{ label: collection.name, href: `/collections/${slug}` },
 	];
 
-	// Récupérer l'image du produit vedette pour le SEO
-	const featuredProduct = collection.products.find((pc) => pc.isFeatured);
-	const featuredImageUrl = featuredProduct?.product.skus[0]?.images[0]?.url ?? null;
+	// Récupérer l'image du produit vedette pour le SEO — fallback au premier produit
+	// avec image (l'orderBy isFeatured desc met la vedette en tête de liste)
+	const featuredImageUrl =
+		collection.products.find((pc) => pc.product.skus[0]?.images[0]?.url)?.product.skus[0]?.images[0]
+			?.url ?? null;
 
 	// Mapper les produits pour le mainEntity ItemList JSON-LD (Product+Offer enrichi).
 	// Limite à 30 entries pour controler la taille de la balise script (Google indexe ~25 items).

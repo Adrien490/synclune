@@ -2,26 +2,8 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Particle } from "./types";
 
-// ─── Capture useTransform callbacks for isolated math testing ────────
-
-let transformFns: { inputCount: number; fn: (value: number) => number }[] = [];
-
+// m.<tag> is proxied to the plain tag so animate/transition props never hit the DOM engine
 vi.mock("motion/react", () => ({
-	useMotionValue: vi.fn((initial: number) => ({
-		get: () => initial,
-		set: vi.fn(),
-	})),
-	useTransform: vi.fn((mvOrArray: unknown, fnOrInput: unknown) => {
-		if (typeof fnOrInput === "function") {
-			const inputCount = Array.isArray(mvOrArray) ? (mvOrArray as unknown[]).length : 1;
-			transformFns.push({ inputCount, fn: fnOrInput as (value: number) => number });
-			const def = Array.isArray(mvOrArray)
-				? (mvOrArray as { get?: () => number }[]).map((mv) => mv.get?.() ?? 0)
-				: 0;
-			return { get: () => (fnOrInput as (v: unknown) => number)(def), set: vi.fn() };
-		}
-		return { get: () => 0, set: vi.fn() };
-	}),
 	m: new Proxy(
 		{},
 		{
@@ -54,32 +36,8 @@ function makeParticle(overrides: Partial<Particle> = {}): Particle {
 	};
 }
 
-function makeMv(initial = 0) {
-	return { get: () => initial, set: vi.fn() } as any;
-}
-
-/** Render a single animated particle and return its scroll-parallax transform callback */
-function renderAnimatedParticle(particle: Particle, props: { scrollParallax?: boolean } = {}) {
-	transformFns = [];
-	const result = render(
-		<ParticleSet
-			particles={[particle]}
-			isInView={true}
-			reducedMotion={false}
-			animationStyle="float"
-			scrollYProgress={makeMv(0)}
-			{...props}
-		/>,
-	);
-
-	// AnimatedParticle creates exactly one useTransform per particle: the scroll parallax offset.
-	const scrollY = transformFns.find((t) => t.inputCount === 1);
-	return { result, scrollY: scrollY!.fn };
-}
-
 afterEach(() => {
 	cleanup();
-	transformFns = [];
 });
 
 // ─── StaticParticle (reducedMotion) ──────────────────────────────────
@@ -91,29 +49,21 @@ describe("StaticParticle", () => {
 		animationStyle: "float" as const,
 	};
 
-	it("renders SVG element for crescent (SVG shape)", () => {
-		const { container } = render(
-			<ParticleSet {...defaultProps} particles={[makeParticle({ shape: "crescent" })]} />,
-		);
-		const svgs = container.querySelectorAll("svg");
-		expect(svgs).toHaveLength(1);
-		expect(svgs[0]!.getAttribute("aria-hidden")).toBe("true");
-		expect(svgs[0]!.getAttribute("role")).toBe("presentation");
-		expect(svgs[0]!.querySelector("path")).toBeTruthy();
-	});
-
-	it("renders no SVG for circle (CSS shape)", () => {
+	it("renders a plain span for circle (CSS shape)", () => {
 		const { container } = render(
 			<ParticleSet {...defaultProps} particles={[makeParticle({ shape: "circle" })]} />,
 		);
-		expect(container.querySelectorAll("svg")).toHaveLength(0);
+		const innerSpan = container.querySelector("span.absolute span") as HTMLElement;
+		expect(innerSpan).toBeTruthy();
+		expect(innerSpan.style.borderRadius).toBe("50%");
 	});
 
-	it("renders no SVG for heart (clipPath shape)", () => {
+	it("renders a clipPath span for heart", () => {
 		const { container } = render(
 			<ParticleSet {...defaultProps} particles={[makeParticle({ shape: "heart" })]} />,
 		);
-		expect(container.querySelectorAll("svg")).toHaveLength(0);
+		const innerSpan = container.querySelector("span.absolute span") as HTMLElement;
+		expect(innerSpan.style.clipPath).toContain("polygon");
 	});
 
 	it("renders inner span with opacity for each particle", () => {
@@ -163,26 +113,6 @@ describe("StaticParticle", () => {
 		expect(container.querySelectorAll("span.absolute")).toHaveLength(3);
 	});
 
-	it("renders with scrollOpacity without crashing", () => {
-		expect(() =>
-			render(
-				<ParticleSet {...defaultProps} scrollOpacity={makeMv(1)} particles={[makeParticle()]} />,
-			),
-		).not.toThrow();
-	});
-
-	it("renders mixed SVG and CSS shapes", () => {
-		const particles = [
-			makeParticle({ id: 0, shape: "circle" }),
-			makeParticle({ id: 1, shape: "crescent" }),
-			makeParticle({ id: 2, shape: "heart" }),
-		];
-		const { container } = render(<ParticleSet {...defaultProps} particles={particles} />);
-		// Only crescent is SVG
-		expect(container.querySelectorAll("svg")).toHaveLength(1);
-		expect(container.querySelectorAll("span.absolute")).toHaveLength(3);
-	});
-
 	it("sets zIndex based on depthFactor (close particles on top)", () => {
 		const { container } = render(
 			<ParticleSet {...defaultProps} particles={[makeParticle({ depthFactor: 0.2 })]} />,
@@ -190,55 +120,6 @@ describe("StaticParticle", () => {
 		const outerSpan = container.querySelector("span.absolute") as HTMLElement;
 		// zIndex = Math.round((1 - 0.2) * 10) = 8
 		expect(outerSpan.style.zIndex).toBe("8");
-	});
-});
-
-// ─── AnimatedParticle: scrollParallax Y-offset (scroll-driven, not pointer) ───
-
-describe("scrollParallax Y-offset", () => {
-	const SCROLL_PARALLAX_RANGE = 40;
-
-	it("adds zero offset at scroll midpoint (scrollYProgress=0.5)", () => {
-		const p = makeParticle({ depthFactor: 0.5 }); // strength = 0.5
-		const { scrollY } = renderAnimatedParticle(p, { scrollParallax: true });
-		// (0.5 - 0.5) * 2 * 40 * 0.5 = 0
-		expect(scrollY(0.5)).toBeCloseTo(0, 10);
-	});
-
-	it("adds negative offset at scroll start (scrollYProgress=0)", () => {
-		const p = makeParticle({ depthFactor: 0 }); // strength = 1
-		const { scrollY } = renderAnimatedParticle(p, { scrollParallax: true });
-		// (0 - 0.5) * 2 * 40 * 1 = -40
-		expect(scrollY(0)).toBeCloseTo(-SCROLL_PARALLAX_RANGE, 10);
-	});
-
-	it("adds positive offset at scroll end (scrollYProgress=1)", () => {
-		const p = makeParticle({ depthFactor: 0 }); // strength = 1
-		const { scrollY } = renderAnimatedParticle(p, { scrollParallax: true });
-		// (1 - 0.5) * 2 * 40 * 1 = 40
-		expect(scrollY(1)).toBeCloseTo(SCROLL_PARALLAX_RANGE, 10);
-	});
-
-	it("scales offset by particle depth (far particles move less)", () => {
-		const pClose = makeParticle({ depthFactor: 0 }); // strength = 1
-		const pFar = makeParticle({ depthFactor: 0.8 }); // strength = 0.2
-
-		const { scrollY: closeY } = renderAnimatedParticle(pClose, { scrollParallax: true });
-		cleanup();
-		transformFns = [];
-		const { scrollY: farY } = renderAnimatedParticle(pFar, { scrollParallax: true });
-
-		// Close: 40 * 1 = 40, Far: 40 * 0.2 = 8
-		expect(closeY(1)).toBeCloseTo(40, 10);
-		expect(farY(1)).toBeCloseTo(8, 10);
-		expect(Math.abs(closeY(1))).toBeGreaterThan(Math.abs(farY(1)));
-	});
-
-	it("does not add scroll offset when scrollParallax is disabled", () => {
-		const p = makeParticle({ depthFactor: 0 });
-		const { scrollY } = renderAnimatedParticle(p, { scrollParallax: false });
-		// Even with scrollYProgress=1, no scroll offset should be added
-		expect(scrollY(1)).toBeCloseTo(0, 10);
 	});
 });
 
@@ -278,23 +159,20 @@ describe("ParticleSet", () => {
 				animationStyle="float"
 			/>,
 		);
-		// Should render (no useTransform calls for static particles)
 		expect(container.querySelectorAll("span.absolute")).toHaveLength(1);
-		expect(transformFns).toHaveLength(0);
 	});
 
-	it("renders animated particles when reducedMotion is false", () => {
-		transformFns = [];
+	it("positions particles via left/top percentages on the outer span", () => {
 		const { container } = render(
 			<ParticleSet
-				particles={[makeParticle()]}
+				particles={[makeParticle({ x: 25, y: 75 })]}
 				isInView={true}
 				reducedMotion={false}
 				animationStyle="float"
 			/>,
 		);
-		expect(container.querySelectorAll("span.absolute")).toHaveLength(1);
-		// AnimatedParticle creates exactly one useTransform per particle (scroll parallax offset)
-		expect(transformFns).toHaveLength(1);
+		const outerSpan = container.querySelector("span.absolute") as HTMLElement;
+		expect(outerSpan.style.left).toBe("25%");
+		expect(outerSpan.style.top).toBe("75%");
 	});
 });

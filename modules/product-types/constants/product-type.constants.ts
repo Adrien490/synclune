@@ -20,6 +20,10 @@ export const GET_PRODUCT_TYPES_SELECT = {
 			products: {
 				where: {
 					status: "PUBLIC",
+					// Explicite même si status=PUBLIC exclut déjà les soft-deleted
+					// aujourd'hui (deleteProduct force ARCHIVED) — ne pas dépendre
+					// de ce couplage pour le compte affiché.
+					deletedAt: null,
 					skus: {
 						some: {
 							isActive: true,
@@ -40,6 +44,23 @@ export const GET_PRODUCT_TYPE_SELECT = {
 	isSystem: true,
 	createdAt: true,
 	updatedAt: true,
+	// Compte des produits réellement visibles storefront (mêmes critères que
+	// GET_PRODUCT_TYPES_SELECT) — sert au noindex des pages catégorie vides.
+	_count: {
+		select: {
+			products: {
+				where: {
+					status: "PUBLIC",
+					deletedAt: null,
+					skus: {
+						some: {
+							isActive: true,
+						},
+					},
+				},
+			},
+		},
+	},
 } as const satisfies Prisma.ProductTypeSelect;
 
 // ============================================================================

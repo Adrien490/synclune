@@ -191,7 +191,7 @@ export interface TaxBreakdownLine {
 	exemptionReason: string | null;
 }
 
-export interface PaymentInfo {
+interface PaymentInfo {
 	method: PaymentMethod;
 	paidAt: Date | null;
 	stripePaymentIntentId: string | null;
@@ -204,7 +204,7 @@ export interface PrecedingInvoiceRef {
 	reason: string;
 }
 
-export interface InvoiceMeta {
+interface InvoiceMeta {
 	orderId: string;
 	orderNumber: string;
 	notes: string | null;

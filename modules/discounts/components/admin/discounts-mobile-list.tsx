@@ -74,9 +74,9 @@ export function DiscountsMobileList({
 					<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
 					<ItemGroup aria-label="Codes promo" className="gap-2">
 						{discounts.map((discount) => (
-							<div key={discount.id} role="listitem">
+							<li key={discount.id}>
 								<DiscountMobileItem discount={discount} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

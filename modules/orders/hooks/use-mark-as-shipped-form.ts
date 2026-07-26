@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/components/forms";
 import type { Carrier } from "@/modules/orders/utils/carrier.utils";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 
 interface UseMarkAsShippedFormOptions {
@@ -56,13 +56,10 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 		),
 	});
 
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

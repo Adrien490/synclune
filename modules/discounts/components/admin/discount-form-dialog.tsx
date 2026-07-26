@@ -1,6 +1,7 @@
 "use client";
 
 import { type DiscountType } from "@/app/generated/prisma/browser";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import {
 	ResponsiveDialog,
@@ -12,6 +13,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -49,7 +51,7 @@ export function DiscountFormDialog() {
 
 	const { form } = useDiscountForm();
 
-	const [, createAction, isCreatePending] = useActionState(
+	const [createState, createAction, isCreatePending] = useActionState(
 		withCallbacks(
 			createDiscount,
 			createToastCallbacks({
@@ -67,7 +69,7 @@ export function DiscountFormDialog() {
 		undefined,
 	);
 
-	const [, updateAction, isUpdatePending] = useActionState(
+	const [updateState, updateAction, isUpdatePending] = useActionState(
 		withCallbacks(
 			updateDiscount,
 			createToastCallbacks({
@@ -86,6 +88,12 @@ export function DiscountFormDialog() {
 
 	const isPending = isCreatePending || isUpdatePending;
 	const action = isUpdateMode ? updateAction : createAction;
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus de `createDiscountSchema` serait muet.
+	const serverErrors = useServerFieldErrors({
+		state: isUpdateMode ? updateState : createState,
+	});
 
 	// Reset form values when discount data changes (open/close + edit different discount)
 	useEffect(() => {
@@ -126,6 +134,8 @@ export function DiscountFormDialog() {
 				>
 					<div className="flex-1 gap-y-6 overflow-y-auto pr-2">
 						{isUpdateMode && <input type="hidden" name="id" value={discount!.id} />}
+
+						<FormServerErrorAlert errors={serverErrors} className="mb-4" />
 
 						<RequiredFieldsNote />
 

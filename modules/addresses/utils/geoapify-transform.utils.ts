@@ -1,29 +1,11 @@
+import { type z } from "zod";
 import type { SearchAddressResult } from "../types/search-address.types";
+import { type geoapifyResultSchema } from "../schemas/geo-response.schema";
 
 /**
- * Raw result from Geoapify Autocomplete API
+ * Raw result from Geoapify Autocomplete API (validated by geo-response.schema)
  */
-interface GeoapifyResult {
-	formatted: string;
-	address_line1?: string;
-	street?: string;
-	housenumber?: string;
-	postcode?: string;
-	city?: string;
-	lat: number;
-	lon: number;
-	rank?: {
-		confidence: number;
-	};
-	result_type?: string;
-}
-
-/**
- * Geoapify autocomplete API response
- */
-export interface GeoapifyApiResponse {
-	results: GeoapifyResult[];
-}
+type GeoapifyResult = z.infer<typeof geoapifyResultSchema>;
 
 /**
  * Transforms a Geoapify result into the unified SearchAddressResult type

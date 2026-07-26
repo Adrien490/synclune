@@ -64,6 +64,17 @@ vi.mock("../../constants/product-type.constants", () => ({
 		isSystem: true,
 		createdAt: true,
 		updatedAt: true,
+		_count: {
+			select: {
+				products: {
+					where: {
+						status: "PUBLIC",
+						deletedAt: null,
+						skus: { some: { isActive: true } },
+					},
+				},
+			},
+		},
 	},
 	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE: 20,
 	GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE: 200,
@@ -76,7 +87,7 @@ vi.mock("../../constants/product-type.constants", () => ({
 	],
 }));
 
-import { getProductTypeBySlug } from "../get-product-type";
+import { getProductTypeBySlug, getProductTypeDetailBySlug } from "../get-product-type";
 
 // ============================================================================
 // Factories
@@ -248,7 +259,88 @@ describe("getProductTypeBySlug", () => {
 					isSystem: true,
 					createdAt: true,
 					updatedAt: true,
+					_count: {
+						select: {
+							products: {
+								where: {
+									status: "PUBLIC",
+									deletedAt: null,
+									skus: { some: { isActive: true } },
+								},
+							},
+						},
+					},
 				},
+			}),
+		);
+	});
+});
+
+// ============================================================================
+// Tests: getProductTypeDetailBySlug
+// ============================================================================
+
+/**
+ * @regression catalog-selects-soft-delete
+ *
+ * Audit catalogue — le select inline de fetchProductTypeDetail (page admin
+ * détail) doit filtrer les produits soft-deleted : sans `deletedAt: null` sur
+ * `products.where`, la liste "5 derniers produits" affiche des produits
+ * supprimés, et sans le même filtre sur `_count`, le total diverge de la somme
+ * des counts par statut (getProductTypeProductCounts filtre déjà deletedAt).
+ */
+describe("getProductTypeDetailBySlug (@regression catalog-selects-soft-delete)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockIsAdmin.mockResolvedValue(true);
+		mockPrisma.productType.findUnique.mockResolvedValue(null);
+	});
+
+	it("returns null without querying when user is not admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		const result = await getProductTypeDetailBySlug({ slug: "bague" });
+
+		expect(result).toBeNull();
+		expect(mockPrisma.productType.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("returns null without querying when slug is missing", async () => {
+		const result = await getProductTypeDetailBySlug({});
+
+		expect(result).toBeNull();
+		expect(mockPrisma.productType.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("filters soft-deleted products in the detail select (products.where)", async () => {
+		await getProductTypeDetailBySlug({ slug: "bague" });
+
+		expect(mockPrisma.productType.findUnique).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { slug: "bague" },
+				select: expect.objectContaining({
+					products: expect.objectContaining({
+						where: { deletedAt: null },
+					}),
+				}),
+			}),
+		);
+	});
+
+	it("filters soft-deleted products in the detail _count", async () => {
+		await getProductTypeDetailBySlug({ slug: "bague" });
+
+		expect(mockPrisma.productType.findUnique).toHaveBeenCalledWith(
+			expect.objectContaining({
+				select: expect.objectContaining({
+					_count: {
+						select: {
+							products: {
+								where: { deletedAt: null },
+							},
+						},
+					},
+				}),
 			}),
 		);
 	});

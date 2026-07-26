@@ -44,7 +44,7 @@ function parseFilename(response: Response): string {
 }
 
 async function downloadCsv(url: string): Promise<void> {
-	const response = await fetch(url);
+	const response = await fetch(url, { method: "POST" });
 	if (!response.ok) {
 		const data = (await response.json().catch(() => null)) as { error?: string } | null;
 		throw new Error(data?.error ?? "Erreur lors de l'export");
@@ -75,14 +75,16 @@ export function ExportRevenueButton({ period, mode = "responsive" }: ExportReven
 			error: (err) => (err instanceof Error ? err.message : "Erreur lors de l'export"),
 		});
 
+		// Pas de `finally` : le React Compiler ne sait pas encore lower un
+		// TryStatement avec finalizer et abandonne l'optimisation du composant.
+		// Le catch n'échappe jamais, donc le code qui suit joue le rôle du finally.
 		try {
 			await task;
 			triggerHaptic("success");
 		} catch {
 			triggerHaptic("error");
-		} finally {
-			setIsExporting(false);
 		}
+		setIsExporting(false);
 	}
 
 	return (

@@ -112,6 +112,11 @@ export async function updateOrderBillingAddress(
 				data: newData,
 			});
 
+			// ⚠️ RGPD (audit rétention 10 ans 2026-07-09) : ne JAMAIS écrire de
+			// valeurs d'adresse dans OrderHistory.metadata — table immuable 10 ans,
+			// jamais scrubée. `changedFields` + flags sameAsShipping (booléens,
+			// non-PII) suffisent à l'audit L123-22 ; la facture figée reste la
+			// référence probante de l'identité de facturation.
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "ADDRESS_UPDATED",
@@ -120,18 +125,9 @@ export async function updateOrderBillingAddress(
 				note: "Adresse de facturation modifiee",
 				metadata: {
 					addressType: "billing",
-					previousAddress: {
-						sameAsShipping: found.billingSameAsShipping,
-						firstName: found.billingFirstName,
-						lastName: found.billingLastName,
-						address1: found.billingAddress1,
-						address2: found.billingAddress2,
-						postalCode: found.billingPostalCode,
-						city: found.billingCity,
-						country: found.billingCountry,
-						phone: found.billingPhone,
-					},
-					newAddress: newData,
+					previousSameAsShipping: found.billingSameAsShipping,
+					newSameAsShipping: billing.billingSameAsShipping,
+					changedFields: Object.keys(newData),
 				},
 			});
 

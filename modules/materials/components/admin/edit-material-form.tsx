@@ -9,11 +9,13 @@ import { Loader2 } from "lucide-react";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
@@ -65,7 +67,7 @@ export function EditMaterialForm({
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const [, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateMaterial,
 
@@ -87,6 +89,10 @@ export function EditMaterialForm({
 		),
 		undefined,
 	);
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
@@ -123,6 +129,8 @@ export function EditMaterialForm({
 			<input type="hidden" name="id" value={material.id} />
 			<input type="hidden" name="isActive" value={String(material.isActive)} />
 
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<form.Subscribe
 				selector={(state) => ({
 					submissionAttempts: state.submissionAttempts,
@@ -141,7 +149,7 @@ export function EditMaterialForm({
 						.filter(
 							(item): item is { name: string; label: string; message: string } => item !== null,
 						);
-					if (fieldErrors.length < 2) return null;
+					if (fieldErrors.length === 0) return null;
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>

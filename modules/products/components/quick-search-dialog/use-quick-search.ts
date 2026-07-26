@@ -58,7 +58,11 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 	const latestQueryRef = useRef("");
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const cacheRef = useRef<ReturnType<typeof createQuickSearchCache> | null>(null);
-	cacheRef.current ??= createQuickSearchCache();
+	// Lazy init null-guardée (pas `??=` : non supporté par le React Compiler).
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??=` non supporté par le React Compiler
+	if (cacheRef.current === null) {
+		cacheRef.current = createQuickSearchCache();
+	}
 
 	const isSearchMode = inputValue.trim().length >= MIN_SEARCH_LENGTH;
 

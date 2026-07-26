@@ -18,10 +18,10 @@ export interface PolaroidConfig {
 }
 
 export const GLOW_CLASSES: Record<GlowColor, string> = {
-	pink: "hover:shadow-[0_0_25px_var(--color-glow-pink),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
-	lavender: "hover:shadow-[0_0_25px_var(--color-glow-lavender),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
-	mint: "hover:shadow-[0_0_25px_var(--color-glow-mint),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
-	yellow: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
+	pink: "hover:shadow-[0_0_25px_var(--color-glow-pink),var(--shadow-lift)]",
+	lavender: "hover:shadow-[0_0_25px_var(--color-glow-lavender),var(--shadow-lift)]",
+	mint: "hover:shadow-[0_0_25px_var(--color-glow-mint),var(--shadow-lift)]",
+	yellow: "hover:shadow-[0_0_25px_var(--color-glow-yellow),var(--shadow-lift)]",
 };
 
 export const GLOW_CSS_VARS: Record<GlowColor, string> = {

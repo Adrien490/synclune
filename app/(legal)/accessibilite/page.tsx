@@ -6,6 +6,7 @@ import { Check } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Accessibilité - Synclune | Engagement pour un site accessible à tous",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
 export default async function AccessibilityPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu change rarement
-	cacheTag("accessibility-page");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.ACCESSIBILITY);
 
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 

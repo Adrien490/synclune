@@ -135,12 +135,18 @@ function Carousel({
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		onSelect(api);
 		setScrollSnaps(api.scrollSnapList());
-		api.on("reInit", () => onReInit(api));
-		api.on("select", () => onSelect(api));
+
+		// Handlers nommés obligatoires : Embla démonte par égalité de référence,
+		// une arrow inline au `off` ne retirait rien (listeners fuités à chaque
+		// changement d'`api`).
+		const handleSelect = () => onSelect(api);
+		const handleReInit = () => onReInit(api);
+		api.on("reInit", handleReInit);
+		api.on("select", handleSelect);
 
 		return () => {
-			api.off("select", () => onSelect(api));
-			api.off("reInit", () => onReInit(api));
+			api.off("select", handleSelect);
+			api.off("reInit", handleReInit);
 		};
 	}, [api]);
 

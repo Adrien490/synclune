@@ -132,13 +132,16 @@ import { initializePayment } from "../initialize-payment";
 // TEST DATA
 // ============================================================================
 
-const VALID_CART_ITEMS = [{ skuId: "sku-001", quantity: 2, priceAtAdd: 4500 }];
+// skuId au format cuid réel (F2 audit Zod : cartItemSchema.skuId = z.cuid2())
+const VALID_SKU_ID = "cm3sku00000001qz8v4h2j9d3";
+const VALID_SKU_ID_2 = "cm3sku00000002qz8v4h2j9d3";
+const VALID_CART_ITEMS = [{ skuId: VALID_SKU_ID, quantity: 2, priceAtAdd: 4500 }];
 
 const MOCK_SKU_RESULT = {
 	success: true,
 	data: {
 		sku: {
-			id: "sku-001",
+			id: VALID_SKU_ID,
 			priceInclTax: 4500,
 		},
 	},
@@ -466,8 +469,8 @@ describe("initializePayment", () => {
 
 		it("should return error when any SKU among multiple is unavailable", async () => {
 			const cartItems = [
-				{ skuId: "sku-001", quantity: 1, priceAtAdd: 4500 },
-				{ skuId: "sku-002", quantity: 1, priceAtAdd: 3000 },
+				{ skuId: VALID_SKU_ID, quantity: 1, priceAtAdd: 4500 },
+				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 3000 },
 			];
 
 			mockGetSkuDetails
@@ -483,20 +486,20 @@ describe("initializePayment", () => {
 
 		it("should call getSkuDetails for each cart item in parallel", async () => {
 			const cartItems = [
-				{ skuId: "sku-001", quantity: 1, priceAtAdd: 4500 },
-				{ skuId: "sku-002", quantity: 1, priceAtAdd: 3000 },
+				{ skuId: VALID_SKU_ID, quantity: 1, priceAtAdd: 4500 },
+				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 3000 },
 			];
 
 			mockGetSkuDetails.mockResolvedValueOnce(MOCK_SKU_RESULT).mockResolvedValueOnce({
 				success: true,
-				data: { sku: { id: "sku-002", priceInclTax: 3000 } },
+				data: { sku: { id: VALID_SKU_ID_2, priceInclTax: 3000 } },
 			});
 
 			await initializePayment({ cartItems });
 
 			expect(mockGetSkuDetails).toHaveBeenCalledTimes(2);
-			expect(mockGetSkuDetails).toHaveBeenCalledWith({ skuId: "sku-001" });
-			expect(mockGetSkuDetails).toHaveBeenCalledWith({ skuId: "sku-002" });
+			expect(mockGetSkuDetails).toHaveBeenCalledWith({ skuId: VALID_SKU_ID });
+			expect(mockGetSkuDetails).toHaveBeenCalledWith({ skuId: VALID_SKU_ID_2 });
 		});
 	});
 
@@ -510,7 +513,7 @@ describe("initializePayment", () => {
 				success: true,
 				data: {
 					sku: {
-						id: "sku-001",
+						id: VALID_SKU_ID,
 						priceInclTax: 5000, // Price changed from 4500
 					},
 				},
@@ -535,7 +538,7 @@ describe("initializePayment", () => {
 		it("should not call Stripe when a price mismatch is detected", async () => {
 			mockGetSkuDetails.mockResolvedValue({
 				success: true,
-				data: { sku: { id: "sku-001", priceInclTax: 9999 } },
+				data: { sku: { id: VALID_SKU_ID, priceInclTax: 9999 } },
 			});
 
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
@@ -551,18 +554,18 @@ describe("initializePayment", () => {
 	describe("subtotal calculation", () => {
 		it("should calculate subtotal as sum of priceAtAdd * quantity", async () => {
 			const cartItems = [
-				{ skuId: "sku-001", quantity: 3, priceAtAdd: 2000 },
-				{ skuId: "sku-002", quantity: 1, priceAtAdd: 5000 },
+				{ skuId: VALID_SKU_ID, quantity: 3, priceAtAdd: 2000 },
+				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 5000 },
 			];
 
 			mockGetSkuDetails
 				.mockResolvedValueOnce({
 					success: true,
-					data: { sku: { id: "sku-001", priceInclTax: 2000 } },
+					data: { sku: { id: VALID_SKU_ID, priceInclTax: 2000 } },
 				})
 				.mockResolvedValueOnce({
 					success: true,
-					data: { sku: { id: "sku-002", priceInclTax: 5000 } },
+					data: { sku: { id: VALID_SKU_ID_2, priceInclTax: 5000 } },
 				});
 
 			const result = await initializePayment({ cartItems });
@@ -753,6 +756,60 @@ describe("initializePayment", () => {
 		});
 	});
 
+	// ──────────────────────────────────────────────────────────────
+	// CHECKOUT-REPLAY-001 — rejeu d'idempotence sur un PI mort
+	// ──────────────────────────────────────────────────────────────
+
+	describe("idempotent replay of a terminal PaymentIntent", () => {
+		it("creates a fresh PI with a salted key when the replay returns a canceled one", async () => {
+			mockStripe.paymentIntents.create
+				.mockResolvedValueOnce({ ...MOCK_PAYMENT_INTENT, status: "canceled" })
+				.mockResolvedValueOnce({
+					id: "pi_fresh_456",
+					client_secret: "pi_fresh_secret",
+					status: "requires_payment_method",
+				});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(mockStripe.paymentIntents.create).toHaveBeenCalledTimes(2);
+			const firstKey = mockStripe.paymentIntents.create.mock.calls[0]![1].idempotencyKey;
+			const secondKey = mockStripe.paymentIntents.create.mock.calls[1]![1].idempotencyKey;
+			expect(secondKey).toBe(`${firstKey}-r2`);
+			expect(result).toMatchObject({
+				success: true,
+				paymentIntentId: "pi_fresh_456",
+				clientSecret: "pi_fresh_secret",
+			});
+			expect(mockLoggerWarn).toHaveBeenCalled();
+		});
+
+		it("also recovers from a replayed succeeded PI", async () => {
+			mockStripe.paymentIntents.create
+				.mockResolvedValueOnce({ ...MOCK_PAYMENT_INTENT, status: "succeeded" })
+				.mockResolvedValueOnce({
+					id: "pi_fresh_789",
+					client_secret: "pi_fresh_secret_2",
+					status: "requires_payment_method",
+				});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result).toMatchObject({ success: true, paymentIntentId: "pi_fresh_789" });
+		});
+
+		it("does not re-create when the PI is usable", async () => {
+			mockStripe.paymentIntents.create.mockResolvedValue({
+				...MOCK_PAYMENT_INTENT,
+				status: "requires_payment_method",
+			});
+
+			await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(mockStripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+		});
+	});
+
 	describe("store closure", () => {
 		it("should reject non-admin user when store is closed", async () => {
 			mockAssertStoreOpen.mockResolvedValue({
@@ -789,6 +846,12 @@ describe("initializePayment", () => {
 		it("should bypass closure check for ADMIN role", async () => {
 			mockGetSession.mockResolvedValue({
 				user: { id: "admin-1", email: "admin@example.com", role: "ADMIN" },
+			});
+			// isVerifiedAdmin re-vérifie le rôle en DB (cookie-cache Better Auth stale) —
+			// le mock doit refléter un admin réel, pas juste le stub par défaut.
+			mockPrisma.user.findUnique.mockResolvedValue({
+				role: "ADMIN",
+				stripeCustomerId: "cus_existing",
 			});
 			mockAssertStoreOpen.mockResolvedValue({
 				closed: true,

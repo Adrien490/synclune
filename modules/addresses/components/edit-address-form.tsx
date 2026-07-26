@@ -10,6 +10,7 @@ import { useAddressForm } from "@/modules/addresses/hooks/use-address-form";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { ActionStatus } from "@/shared/types/server-action";
 
@@ -45,7 +46,9 @@ export function EditAddressForm({ address }: EditAddressFormProps) {
 		},
 	});
 
-	// WCAG 3.3.1 — focus the first invalid field after a server-side error.
+	// WCAG 3.3.1 — après une erreur serveur, focus l'alerte (les erreurs serveur
+	// ne sont pas mappées aux champs) avec fallback sur le premier champ invalide.
+	const errorRef = useRef<HTMLDivElement>(null);
 	const previousState = useRef(state);
 	useEffect(() => {
 		if (
@@ -54,10 +57,24 @@ export function EditAddressForm({ address }: EditAddressFormProps) {
 			state.status !== ActionStatus.SUCCESS &&
 			state.status !== ActionStatus.INITIAL
 		) {
-			focusFirstInvalid();
+			if (errorRef.current) {
+				errorRef.current.focus();
+			} else {
+				focusFirstInvalid();
+			}
 		}
 		previousState.current = state;
 	}, [state, focusFirstInvalid]);
+
+	// Gate de soumission : bloque l'aller-retour serveur sur formulaire invalide et
+	// la resoumission en vol (touche Entrée ⇒ deux adresses créées).
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "EditAddressForm",
+	});
 
 	return (
 		<form
@@ -65,14 +82,14 @@ export function EditAddressForm({ address }: EditAddressFormProps) {
 			action={action}
 			aria-label="Formulaire de modification d'adresse"
 			className="space-y-6"
-			onSubmit={() => form.handleSubmit()}
+			onSubmit={handleGatedSubmit}
 			onInvalidCapture={onInvalidCapture}
 		>
 			{/* Error message — shadcn Alert ships role="alert" + aria-live (WCAG 4.1.3) */}
 			{state?.status !== ActionStatus.SUCCESS &&
 				state?.status !== ActionStatus.INITIAL &&
 				state?.message && (
-					<Alert variant="destructive">
+					<Alert ref={errorRef} tabIndex={-1} variant="destructive">
 						<CircleX aria-hidden="true" />
 						<AlertDescription className="font-medium">{state.message}</AlertDescription>
 					</Alert>
@@ -84,18 +101,14 @@ export function EditAddressForm({ address }: EditAddressFormProps) {
 				<Button asChild variant="outline" type="button" className="w-full sm:w-auto">
 					<Link href={LIST_PATH}>Annuler</Link>
 				</Button>
-				<form.Subscribe selector={(s) => [s.canSubmit]}>
-					{([canSubmit]) => (
-						<Button
-							type="submit"
-							disabled={!canSubmit || isPending}
-							onClick={() => haptic("medium")}
-							className="w-full sm:w-auto"
-						>
-							{isPending ? "Enregistrement…" : "Enregistrer les modifications"}
-						</Button>
-					)}
-				</form.Subscribe>
+				<form.AppForm>
+					<form.SubmitButton
+						isPending={isPending}
+						idleLabel="Enregistrer les modifications"
+						pendingLabel="Enregistrement…"
+						className="w-full sm:w-auto"
+					/>
+				</form.AppForm>
 			</div>
 		</form>
 	);

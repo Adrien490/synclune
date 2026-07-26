@@ -500,7 +500,7 @@ describe("resolveRefundByStripeId", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockTx.refund.findUnique.mockReset();
-		mockTx.refund.update.mockReset();
+		mockTx.refund.updateMany.mockReset();
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
@@ -524,7 +524,7 @@ describe("resolveRefundByStripeId", () => {
 		const expectedRefund = makeRefundRecord();
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(null); // direct lookup fails
 		mockTx.refund.findUnique.mockResolvedValueOnce(expectedRefund); // tx lookup succeeds
-		mockTx.refund.update.mockResolvedValue({});
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
 
 		const result = await resolveRefundByStripeId("re_new_stripe_1", "refund-1");
 
@@ -536,8 +536,9 @@ describe("resolveRefundByStripeId", () => {
 			where: { id: "refund-1" },
 			select: refundSelect,
 		});
-		expect(mockTx.refund.update).toHaveBeenCalledWith({
-			where: { id: "refund-1" },
+		// IDEM-REFUNDSTATUS-001 : claim conditionnel (n'écrase pas un lien existant).
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "refund-1", stripeRefundId: null },
 			data: { stripeRefundId: "re_new_stripe_1" },
 		});
 		expect(result).toEqual(expectedRefund);
@@ -559,7 +560,7 @@ describe("resolveRefundByStripeId", () => {
 
 		const result = await resolveRefundByStripeId("re_not_found_1", "also-not-found");
 
-		expect(mockTx.refund.update).not.toHaveBeenCalled();
+		expect(mockTx.refund.updateMany).not.toHaveBeenCalled();
 		expect(result).toBeNull();
 	});
 });
@@ -613,7 +614,7 @@ describe("updateRefundStatus", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-17T12:00:00Z"));
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		// ORD-REFUND-002: la fonction wrappe maintenant update + audit dans une
 		// $transaction atomique → mock le tx pour qu'il rebind sur mockPrisma.
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => Promise<void>) =>
@@ -624,8 +625,9 @@ describe("updateRefundStatus", () => {
 	it("should update refund status with a valid transition", async () => {
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded", "APPROVED" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "refund-1" },
+		// IDEM-REFUNDSTATUS-001 : le claim borne l'écriture au statut validé.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "refund-1", status: "APPROVED" },
 			data: {
 				status: "COMPLETED",
 				processedAt: new Date("2026-02-17T12:00:00Z"),
@@ -636,32 +638,32 @@ describe("updateRefundStatus", () => {
 	it("should skip invalid state transition (COMPLETED -> PENDING)", async () => {
 		await updateRefundStatus("refund-1", "PENDING" as never, "pending", "COMPLETED" as never);
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should skip invalid state transition (REJECTED -> any)", async () => {
 		await updateRefundStatus("refund-1", "APPROVED" as never, "pending", "REJECTED" as never);
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should skip invalid state transition (CANCELLED -> any)", async () => {
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded", "CANCELLED" as never);
 
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should set processedAt only when new status is COMPLETED", async () => {
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded", "APPROVED" as never);
 
-		const call = mockPrisma.refund.update.mock.calls[0]![0];
+		const call = mockPrisma.refund.updateMany.mock.calls[0]![0];
 		expect(call.data.processedAt).toEqual(new Date("2026-02-17T12:00:00Z"));
 	});
 
 	it("should not set processedAt when new status is not COMPLETED", async () => {
 		await updateRefundStatus("refund-1", "FAILED" as never, "failed", "APPROVED" as never);
 
-		const call = mockPrisma.refund.update.mock.calls[0]![0];
+		const call = mockPrisma.refund.updateMany.mock.calls[0]![0];
 		expect(call.data.processedAt).toBeUndefined();
 	});
 
@@ -679,8 +681,8 @@ describe("updateRefundStatus", () => {
 			where: { id: "refund-1" },
 			select: expect.objectContaining({ status: true }),
 		});
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "refund-1" },
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "refund-1", status: "APPROVED" },
 			data: {
 				status: "COMPLETED",
 				processedAt: new Date("2026-02-17T12:00:00Z"),
@@ -694,7 +696,7 @@ describe("updateRefundStatus", () => {
 		await updateRefundStatus("refund-1", "PENDING" as never, "pending");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalled();
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should proceed without validation when refund not found in DB and no currentStatus", async () => {
@@ -702,7 +704,8 @@ describe("updateRefundStatus", () => {
 
 		await updateRefundStatus("refund-1", "FAILED" as never, "failed");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		// Refund introuvable → pas de statut connu, le claim ne porte que sur l'id.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
 			where: { id: "refund-1" },
 			data: {
 				status: "FAILED",
@@ -714,13 +717,13 @@ describe("updateRefundStatus", () => {
 	it("should allow PENDING -> APPROVED transition", async () => {
 		await updateRefundStatus("refund-1", "APPROVED" as never, "pending", "PENDING" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 	});
 
 	it("should allow FAILED -> COMPLETED transition", async () => {
 		await updateRefundStatus("refund-1", "COMPLETED" as never, "succeeded", "FAILED" as never);
 
-		expect(mockPrisma.refund.update).toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalled();
 	});
 });
 
@@ -731,7 +734,7 @@ describe("updateRefundStatus", () => {
 describe("markRefundAsFailed", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		// ORD-REFUND-002: la fonction wrappe maintenant update + audit dans une
 		// $transaction atomique → mock le tx pour qu'il rebind sur mockPrisma.
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockPrisma) => Promise<void>) =>
@@ -742,8 +745,9 @@ describe("markRefundAsFailed", () => {
 	it("should update refund with FAILED status and failure reason", async () => {
 		await markRefundAsFailed("refund-1", "insufficient_funds");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "refund-1" },
+		// IDEM-REFUNDSTATUS-001 : FAILED est terminal → claim { status: { not: FAILED } }.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "refund-1", status: { not: "FAILED" } },
 			data: {
 				status: "FAILED",
 				failureReason: "insufficient_funds",
@@ -752,7 +756,7 @@ describe("markRefundAsFailed", () => {
 	});
 
 	it("should propagate DB errors", async () => {
-		mockPrisma.refund.update.mockRejectedValue(new Error("DB connection lost"));
+		mockPrisma.refund.updateMany.mockRejectedValue(new Error("DB connection lost"));
 
 		await expect(markRefundAsFailed("refund-1", "some_reason")).rejects.toThrow(
 			"DB connection lost",

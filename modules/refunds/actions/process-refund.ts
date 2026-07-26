@@ -274,6 +274,11 @@ export async function processRefund(
 			idempotencyKey: `refund_${id}_${refundData.refund.attempt_count}`,
 			// ORD-REFUND-008: skip retrieve PaymentIntent (devise déjà connue en DB)
 			expectedCurrency: refundData.refund.order_currency ?? undefined,
+			// IDEM-REFUND-001 : sur un retry (clé tournée), adopter un refund Stripe
+			// déjà créé par une tentative dont la réponse a été perdue — sinon
+			// double remboursement partiel réel. Le 1ᵉʳ essai (attempt_count=0)
+			// skip la vérification : zéro latence ajoutée sur le chemin nominal.
+			recoverExistingByMetadata: refundData.refund.attempt_count > 0,
 		});
 
 		// P0.1: Gérer les différents états de retour Stripe
@@ -282,13 +287,25 @@ export async function processRefund(
 			// Guard `status: APPROVED` empêche un cancelRefund concurrent (qui a
 			// passé le refund en CANCELLED entre Step 1 commit et l'appel Stripe)
 			// d'être écrasé par FAILED.
-			const failureMessage = stripeResult.error ?? REFUND_ERROR_MESSAGES.STRIPE_ERROR;
+			// Erreur transiente (rate limit, réseau — classifyStripeError) : un
+			// retry admin a de bonnes chances d'aboutir. Le préfixe [transient]
+			// dans failureReason oriente le tri des FAILED côté admin ; l'adoption
+			// IDEM-REFUND-001 rend le retry sûr même si Stripe avait en fait créé
+			// le refund.
+			const baseFailureMessage = stripeResult.error ?? REFUND_ERROR_MESSAGES.STRIPE_ERROR;
+			const failureMessage = stripeResult.retryable
+				? `[transient] ${baseFailureMessage}`
+				: baseFailureMessage;
 			const failTxResult = await prisma.$transaction(async (tx) => {
 				const updated = await tx.refund.updateMany({
 					where: { id, status: RefundStatus.APPROVED },
 					data: {
 						status: RefundStatus.FAILED,
 						failureReason: failureMessage,
+						// IDEM-REFUND-001 : persister l'anchor quand Stripe a renvoyé un
+						// refund (status failed/canceled) — traçabilité reconcile + la
+						// tentative suivante sait qu'un objet Stripe existe déjà.
+						...(stripeResult.refundId ? { stripeRefundId: stripeResult.refundId } : {}),
 					},
 				});
 				if (updated.count > 0) {
@@ -330,7 +347,9 @@ export async function processRefund(
 
 			return {
 				status: ActionStatus.ERROR,
-				message: failureMessage,
+				message: stripeResult.retryable
+					? `Erreur temporaire Stripe (${baseFailureMessage}). Réessayez le remboursement dans quelques instants.`
+					: failureMessage,
 			};
 		}
 
@@ -633,30 +652,38 @@ export async function processRefund(
 					// ORD-STRIPE-005 : émetteur centralisé qui pose
 					// `Refund.confirmationEmailSentAt` atomiquement avant envoi.
 					// Webhook + cron skip si déjà envoyé → plus de triple-email.
-					sendRefundConfirmationOnce({
-						refundId: refundData.refund.id,
-						to: customerInfo.email,
-						orderNumber: refundData.refund.order_number,
-						customerName: customerInfo.name ?? "Client",
-						refundAmount: refundData.refund.amount,
-						// reason vient d'un raw query `r.reason::text` → cast en RefundReason
-						// (les valeurs de la BDD sont garanties dans l'enum côté Prisma).
-						reason: refundData.refund.reason as RefundReason,
-						orderDetailsUrl,
-						creditNoteNumber,
-						invoiceNumber,
-					}).catch((emailError) => {
-						prisma.orderNote
-							.create({
-								data: {
-									orderId: refundData.refund.order_id,
-									content: `[EMAIL] Échec notification confirmation remboursement (commande ${refundData.refund.order_number}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
-									authorId: SYSTEM_AUTHOR_ID,
-									authorName: "Système (process-refund)",
-								},
-							})
-							.catch(() => {});
-					});
+					// Awaité : un fire-and-forget serait tué au freeze serverless
+					// post-réponse, potentiellement entre le claim et l'envoi.
+					try {
+						const emailResult = await sendRefundConfirmationOnce({
+							refundId: refundData.refund.id,
+							to: customerInfo.email,
+							orderNumber: refundData.refund.order_number,
+							customerName: customerInfo.name ?? "Client",
+							refundAmount: refundData.refund.amount,
+							// reason vient d'un raw query `r.reason::text` → cast en RefundReason
+							// (les valeurs de la BDD sont garanties dans l'enum côté Prisma).
+							reason: refundData.refund.reason as RefundReason,
+							orderDetailsUrl,
+							creditNoteNumber,
+							invoiceNumber,
+						});
+						if (emailResult.reason === "send_failed") {
+							await prisma.orderNote
+								.create({
+									data: {
+										orderId: refundData.refund.order_id,
+										content: `[EMAIL] Échec notification confirmation remboursement (commande ${refundData.refund.order_number}) — nouvel envoi tenté par le webhook ou le cron de réconciliation.`,
+										authorId: SYSTEM_AUTHOR_ID,
+										authorName: "Système (process-refund)",
+									},
+								})
+								.catch(() => {});
+						}
+					} catch {
+						// Échec inattendu (ex: claim DB) — non-bloquant, le refund est
+						// finalisé ; le webhook/cron retentera l'envoi.
+					}
 				}
 			}
 

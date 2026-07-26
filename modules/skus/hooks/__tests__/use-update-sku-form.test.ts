@@ -49,13 +49,12 @@ describe("useUpdateProductSkuForm", () => {
 		mockUpdateProductSku.mockResolvedValue({ status: "success" as const, message: "OK" });
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useUpdateProductSkuForm({ sku: MOCK_SKU }));
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(result.current.formErrors).toBeDefined();
 	});
 
 	it("calls onSuccess callback with message and data when action succeeds", async () => {

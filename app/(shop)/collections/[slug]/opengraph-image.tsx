@@ -1,5 +1,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { OG_GRADIENT } from "@/shared/constants/brand-colors";
 import { ImageResponse } from "next/og";
 
 // Image metadata
@@ -25,7 +26,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 			<div
 				style={{
 					fontSize: 64,
-					background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+					background: OG_GRADIENT,
 					width: "100%",
 					height: "100%",
 					display: "flex",
@@ -49,7 +50,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 	return new ImageResponse(
 		<div
 			style={{
-				background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+				background: OG_GRADIENT,
 				width: "100%",
 				height: "100%",
 				display: "flex",
@@ -86,6 +87,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
 					lineHeight: 1.2,
 					maxWidth: "900px",
 					display: "flex",
+					textShadow: "0 2px 8px rgba(90,20,60,0.35)",
 				}}
 			>
 				{collection.name}

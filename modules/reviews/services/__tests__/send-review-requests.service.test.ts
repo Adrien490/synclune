@@ -126,6 +126,15 @@ describe("sendReviewRequests", () => {
 		expect(call.where.paymentStatus.notIn).not.toContain("PAID");
 	});
 
+	it("excludes users who opted out of marketing (RGPD-AUDIT P1-1, Art. 21)", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([]);
+
+		await sendReviewRequests();
+
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
+		expect(call.where.user).toEqual({ marketingOptOutAt: null });
+	});
+
 	it("sends one email per eligible order then flags reviewRequestSentAt", async () => {
 		const order = buildOrder();
 		mockPrisma.order.findMany.mockResolvedValue([order]);

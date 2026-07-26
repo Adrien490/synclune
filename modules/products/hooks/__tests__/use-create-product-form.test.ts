@@ -88,14 +88,13 @@ describe("useCreateProductForm", () => {
 
 	// ──────────── Return shape ────────────
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useCreateProductForm());
 
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {
@@ -231,15 +230,10 @@ describe("useCreateProductForm", () => {
 		expect(onError).not.toHaveBeenCalled();
 	});
 
-	// ──────────── formErrors ────────────
-
-	it("formErrors is an empty array by default", () => {
-		const { result } = renderHook(() => useCreateProductForm());
-
-		expect(result.current.formErrors).toEqual([]);
-	});
-
-	it("formErrors exposes the server error message after a failed submission", async () => {
+	// Remplace l'ancienne assertion sur `formErrors` (retiré : agrégat mort) — le
+	// message d'erreur serveur reste exposé via `state`, que le composant rend avec
+	// `useServerFieldErrors` + `FormServerErrorAlert`.
+	it("exposes the server error message on state after a failed submission", async () => {
 		mockCreateProduct.mockResolvedValue(ERROR);
 		const { result } = renderHook(() => useCreateProductForm());
 
@@ -247,6 +241,6 @@ describe("useCreateProductForm", () => {
 			result.current.action(new FormData());
 		});
 
-		expect(result.current.formErrors).toContain("Erreur création");
+		expect(result.current.state).toMatchObject({ message: "Erreur création" });
 	});
 });

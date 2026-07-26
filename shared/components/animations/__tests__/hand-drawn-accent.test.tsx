@@ -85,9 +85,13 @@ describe("HandDrawnAccent", () => {
 });
 
 describe("HandDrawnUnderline", () => {
-	it('renders with variant="underline" and the default primary color', () => {
+	it('renders with variant="underline" and the section-accent default (fallback primary)', () => {
 		const { container } = render(<HandDrawnUnderline />);
 		expect(container.querySelector("svg")!).toHaveAttribute("viewBox", "0 0 120 20");
-		expect(container.querySelector("path")!).toHaveAttribute("stroke", "var(--primary)");
+		// Défaut cascadé : hérite de l'accent de section (data-accent), retombe sur le rose signature.
+		expect(container.querySelector("path")!).toHaveAttribute(
+			"stroke",
+			"var(--section-accent, var(--primary))",
+		);
 	});
 });

@@ -37,6 +37,7 @@ import {
 	FULFILLMENT_STATUS_LABELS,
 	FULFILLMENT_STATUS_VARIANTS,
 } from "../constants/order-status.constants";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 function buildOrderHref(order: RecentOrderItem): string {
@@ -44,7 +45,7 @@ function buildOrderHref(order: RecentOrderItem): string {
 }
 
 function buildOrderAriaLabel(order: RecentOrderItem): string {
-	return `Commande #${order.orderNumber}, ${order.customerName}, ${order.total.toFixed(2)} €, statut ${ORDER_STATUS_LABELS[order.status]}`;
+	return `Commande #${order.orderNumber}, ${order.customerName}, ${formatEuro(order.total)}, statut ${ORDER_STATUS_LABELS[order.status]}`;
 }
 
 interface RecentOrdersListProps {
@@ -81,58 +82,62 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 					<>
 						<ItemGroup aria-label="Dernières commandes">
 							{orders.map((order: RecentOrderItem, index) => (
-								<Fade key={order.id} y={6} delay={index * 0.02} inView once>
-									{index > 0 && <ItemSeparator />}
-									<Item asChild size="sm">
-										<Link
-											href={buildOrderHref(order)}
-											onClick={() => triggerHaptic("light")}
-											aria-label={buildOrderAriaLabel(order)}
-											className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
-											style={{ viewTransitionName: `order-card-${order.id}` } as CSSProperties}
-										>
-											<ItemContent>
-												<ItemTitle className="gap-1.5">
+								<li key={order.id}>
+									<Fade y={6} delay={index * 0.02} inView once>
+										{index > 0 && <ItemSeparator />}
+										<Item asChild size="sm">
+											<Link
+												href={buildOrderHref(order)}
+												onClick={() => triggerHaptic("light")}
+												aria-label={buildOrderAriaLabel(order)}
+												className="transform-gpu touch-manipulation active:scale-[0.99] motion-safe:transition-transform motion-safe:duration-150"
+												style={{ viewTransitionName: `order-card-${order.id}` } as CSSProperties}
+											>
+												<ItemContent>
+													<ItemTitle className="gap-1.5">
+														<span
+															className="text-sm font-medium"
+															style={
+																{ viewTransitionName: `order-number-${order.id}` } as CSSProperties
+															}
+														>
+															#{order.orderNumber}
+														</span>
+														<Badge
+															variant={ORDER_STATUS_VARIANTS[order.status]}
+															className="text-2xs"
+															style={
+																{ viewTransitionName: `order-status-${order.id}` } as CSSProperties
+															}
+														>
+															{ORDER_STATUS_LABELS[order.status]}
+														</Badge>
+													</ItemTitle>
+													<ItemDescription className="text-xs">
+														<span className="truncate">{order.customerName}</span>
+														<span className="text-2xs block">
+															{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
+														</span>
+													</ItemDescription>
+												</ItemContent>
+												<ItemActions className="shrink-0">
 													<span
-														className="text-sm font-medium"
+														className="text-foreground text-sm font-semibold tabular-nums"
 														style={
-															{ viewTransitionName: `order-number-${order.id}` } as CSSProperties
+															{ viewTransitionName: `order-total-${order.id}` } as CSSProperties
 														}
 													>
-														#{order.orderNumber}
+														{formatEuro(order.total)}
 													</span>
-													<Badge
-														variant={ORDER_STATUS_VARIANTS[order.status]}
-														className="text-2xs"
-														style={
-															{ viewTransitionName: `order-status-${order.id}` } as CSSProperties
-														}
-													>
-														{ORDER_STATUS_LABELS[order.status]}
-													</Badge>
-												</ItemTitle>
-												<ItemDescription className="text-xs">
-													<span className="truncate">{order.customerName}</span>
-													<span className="text-2xs block">
-														{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
-													</span>
-												</ItemDescription>
-											</ItemContent>
-											<ItemActions className="shrink-0">
-												<span
-													className="text-foreground text-sm font-semibold tabular-nums"
-													style={{ viewTransitionName: `order-total-${order.id}` } as CSSProperties}
-												>
-													{order.total.toFixed(2)} €
-												</span>
-												<ChevronRight
-													className="text-muted-foreground/60 size-4"
-													aria-hidden="true"
-												/>
-											</ItemActions>
-										</Link>
-									</Item>
-								</Fade>
+													<ChevronRight
+														className="text-muted-foreground/60 size-4"
+														aria-hidden="true"
+													/>
+												</ItemActions>
+											</Link>
+										</Item>
+									</Fade>
+								</li>
 							))}
 						</ItemGroup>
 						<Link
@@ -195,7 +200,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 								</p>
 							</div>
 							<div className="text-right">
-								<p className="font-bold tabular-nums">{order.total.toFixed(2)} €</p>
+								<p className="font-bold tabular-nums">{formatEuro(order.total)}</p>
 							</div>
 						</Fade>
 					))}

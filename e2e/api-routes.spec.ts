@@ -37,8 +37,8 @@ test.describe("API Routes - Endpoints publics", { tag: ["@regression"] }, () => 
 });
 
 test.describe("API Routes - Endpoints proteges (sans auth)", { tag: ["@regression"] }, () => {
-	test("GET /api/admin/orders/export sans auth retourne 401 ou 403", async ({ page }) => {
-		const response = await page.request.get("/api/admin/orders/export");
+	test("POST /api/admin/orders/export sans auth retourne 401 ou 403", async ({ page }) => {
+		const response = await page.request.post("/api/admin/orders/export");
 
 		// Should deny access
 		expect([401, 403]).toContain(response.status());
@@ -72,8 +72,8 @@ test.describe("API Routes - Endpoints proteges (avec auth admin)", { tag: ["@reg
 		}
 	});
 
-	test("GET /api/admin/orders/export avec auth retourne un CSV", async ({ page }) => {
-		const response = await page.request.get("/api/admin/orders/export?format=csv");
+	test("POST /api/admin/orders/export avec auth retourne un CSV", async ({ page }) => {
+		const response = await page.request.post("/api/admin/orders/export?format=csv");
 
 		// If authenticated as admin, should get CSV or empty response
 		if (response.status() === 200) {
@@ -88,7 +88,7 @@ test.describe("API Routes - Endpoints proteges (avec auth admin)", { tag: ["@reg
 
 test.describe("API Routes - Validation des entrees", { tag: ["@regression"] }, () => {
 	test("les routes cron sans CRON_SECRET retournent 401", async ({ page }) => {
-		const cronRoutes = ["/api/cron/cleanup-sessions", "/api/cron/cleanup-wishlists"];
+		const cronRoutes = ["/api/cron/reopen-store", "/api/cron/sync-async-payments"];
 
 		for (const route of cronRoutes) {
 			const response = await page.request.post(route, {
@@ -103,27 +103,7 @@ test.describe("API Routes - Validation des entrees", { tag: ["@regression"] }, (
 		}
 	});
 
-	test("GET /api/search sans query retourne un resultat vide ou une erreur", async ({ page }) => {
-		const response = await page.request.get("/api/search");
-
-		// Should either return empty results or a validation error
-		expect(response.status()).toBeLessThan(500);
-
-		if (response.status() === 200) {
-			const body = await response.json();
-			// Should have an empty or valid result structure
-			expect(body).toBeDefined();
-		}
-	});
-
-	test("GET /api/search avec query valide retourne des resultats", async ({ page }) => {
-		const response = await page.request.get("/api/search?q=bijou");
-
-		expect(response.status()).toBe(200);
-
-		const body = await response.json();
-		expect(body).toBeDefined();
-		// Should have results array or similar structure
-		expect(Array.isArray(body) || typeof body === "object").toBe(true);
-	});
+	// NOTE: il n'existe pas de route `/api/search`. La recherche passe par une Server Action
+	// (`modules/products/actions/quick-search.ts` + `modules/products/data/quick-search-products.ts`).
+	// Les tests qui interrogeaient `/api/search` ont été retirés : ils visaient une route inexistante.
 });

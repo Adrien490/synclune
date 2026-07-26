@@ -1,5 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { InvoiceStatus } from "@/app/generated/prisma/client";
+import { APP_TIME_ZONE, parisWallTimeToUtc } from "@/shared/utils/timezone";
 import { PAID_REVENUE_STATUSES } from "../constants/revenue-status.constants";
 import type { ExportInvoicesInput } from "../schemas/order.schemas";
 
@@ -43,15 +44,22 @@ export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.Order
 		deletedAt: null,
 	};
 
+	// ORD-COMPLY-007 (fix AUDIT-01) : bornes calculées en heure de PARIS, pas dans
+	// le fuseau du process (UTC sur Vercel). `new Date(year, 0, 1)` produisait
+	// 2026-01-01T00:00:00Z alors que l'année civile française commence à
+	// 2025-12-31T23:00:00Z (+1h hiver) — les commandes encaissées entre minuit et
+	// 1h du matin Paris au tournant du mois/de l'année étaient comptées sur la
+	// mauvaise période du livre de recettes (Art. 50-0 CGI). `parisWallTimeToUtc`
+	// est DST-aware (mois 0-indexé ; l'overflow `month=12` → janvier N+1).
 	if (input.periodType === "year" && input.year) {
 		where.paidAt = {
-			gte: new Date(input.year, 0, 1),
-			lt: new Date(input.year + 1, 0, 1),
+			gte: parisWallTimeToUtc(input.year, 0, 1),
+			lt: parisWallTimeToUtc(input.year + 1, 0, 1),
 		};
 	} else if (input.periodType === "month" && input.year && input.month) {
 		where.paidAt = {
-			gte: new Date(input.year, input.month - 1, 1),
-			lt: new Date(input.year, input.month, 1),
+			gte: parisWallTimeToUtc(input.year, input.month - 1, 1),
+			lt: parisWallTimeToUtc(input.year, input.month, 1),
 		};
 	} else if (input.periodType === "custom" && input.dateFrom && input.dateTo) {
 		where.paidAt = {
@@ -121,12 +129,17 @@ export function generateOrdersCsv(orders: ExportableOrder[]): string {
 	return BOM + csvContent;
 }
 
+// Formatter hoisté : appelé une fois par ligne de l'export (potentiellement des
+// milliers), et construire un `Intl.DateTimeFormat` coûte cher.
+const CSV_DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
+	day: "2-digit",
+	month: "2-digit",
+	year: "numeric",
+	timeZone: APP_TIME_ZONE,
+});
+
 function formatDateCsv(date: Date): string {
-	return new Intl.DateTimeFormat("fr-FR", {
-		day: "2-digit",
-		month: "2-digit",
-		year: "numeric",
-	}).format(date);
+	return CSV_DATE_FORMATTER.format(date);
 }
 
 function formatEuroCsv(cents: number): string {

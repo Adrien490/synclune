@@ -2,7 +2,7 @@
  * Utilitaires partagés pour les scripts de migration
  *
  * Ces utilitaires sont utilisés par:
- * - scripts/generate-blur-placeholders.ts
+ * - scripts/backfill-media-metadata.ts
  * - scripts/generate-video-thumbnails.ts
  *
  * @module scripts/lib/script-utils

@@ -2,7 +2,15 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, success, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
+import {
+	error,
+	handleActionError,
+	success,
+	unauthorized,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
+import { LEGAL_TERMS_VERSION } from "@/shared/constants/legal-versions";
 import { prisma } from "@/shared/lib/prisma";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -52,23 +60,29 @@ export const signUpEmail = async (
 				body: { email, password, name },
 			});
 
-			// Record GDPR consent timestamp for CGV + privacy policy acceptance
+			// Record GDPR consent timestamp + document version for CGV + privacy
+			// policy acceptance (accountability Art. 7 RGPD)
 			await prisma.user.update({
 				where: { email },
-				data: { termsAcceptedAt: new Date() },
+				data: { termsAcceptedAt: new Date(), termsVersion: LEGAL_TERMS_VERSION },
 			});
 
 			return success(
 				"Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte de réception pour activer votre compte.",
 			);
-		} catch {
-			// Message générique pour éviter l'énumération d'emails
-			return error(
+		} catch (err) {
+			// Message générique pour éviter l'énumération d'emails (handleActionError
+			// logue l'erreur technique côté serveur sans la surfacer)
+			return handleActionError(
+				err,
 				"Une erreur est survenue lors de l'inscription. Si cet email est déjà utilisé, essayez de vous connecter.",
+				{ service: "signUpEmail" },
 			);
 		}
-	} catch {
+	} catch (err) {
 		// Message generique pour eviter l'exposition d'erreurs techniques
-		return error("Une erreur inattendue est survenue. Veuillez réessayer.");
+		return handleActionError(err, "Une erreur inattendue est survenue. Veuillez réessayer.", {
+			service: "signUpEmail",
+		});
 	}
 };

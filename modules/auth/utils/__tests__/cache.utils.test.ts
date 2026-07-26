@@ -30,7 +30,6 @@ import {
 	cacheAuthSession,
 	cacheAuthVerifications,
 	getAuthSessionInvalidationTags,
-	getAuthVerificationInvalidationTags,
 	getUserProvidersInvalidationTags,
 } from "../cache.utils";
 
@@ -166,24 +165,6 @@ describe("getAuthSessionInvalidationTags", () => {
 		expect(tags[0]).toBe("auth-sessions-list");
 		expect(tags[1]).toBe("auth-session-s-1");
 		expect(tags[2]).toBe("auth-sessions-u-1");
-	});
-});
-
-// ============================================================================
-// getAuthVerificationInvalidationTags
-// ============================================================================
-
-describe("getAuthVerificationInvalidationTags", () => {
-	it("returns an array containing VERIFICATIONS_LIST", () => {
-		const tags = getAuthVerificationInvalidationTags();
-
-		expect(tags).toEqual(["auth-verifications-list"]);
-	});
-
-	it("returns exactly one tag", () => {
-		const tags = getAuthVerificationInvalidationTags();
-
-		expect(tags).toHaveLength(1);
 	});
 });
 

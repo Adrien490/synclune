@@ -1,6 +1,5 @@
 export type EmailResult =
-	| { success: true; data: { id: string } }
-	| { success: false; error: unknown };
+	{ success: true; data: { id: string } } | { success: false; error: unknown };
 
 export type ShippingAddress = {
 	firstName: string;
@@ -11,10 +10,6 @@ export type ShippingAddress = {
 	city: string;
 	country: string;
 	phone?: string;
-};
-
-export type AdminShippingAddress = ShippingAddress & {
-	phone: string;
 };
 
 export type OrderItem = {

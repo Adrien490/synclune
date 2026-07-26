@@ -2,7 +2,19 @@ import { createStore } from "zustand/vanilla";
 import { persist, createJSONStorage, devtools } from "zustand/middleware";
 
 import type { CookieConsentState, CookieConsentStore } from "@/shared/types/store.types";
+import { COOKIE_CONSENT_CHANGE_EVENT } from "@/shared/lib/analytics/track";
 import { noopStorage } from "./noop-storage";
+
+/**
+ * Notifie les consommateurs hors React (Sentry Replay dans
+ * `instrumentation-client.ts`) qu'un choix de consentement vient d'être fait.
+ * Le dispatch se fait APRÈS le `set()` zustand : le middleware persist a déjà
+ * écrit localStorage, les listeners peuvent donc relire l'état à jour.
+ */
+function emitConsentChange(accepted: boolean): void {
+	if (typeof window === "undefined") return;
+	window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_CHANGE_EVENT, { detail: { accepted } }));
+}
 
 export type { CookieConsentStore } from "@/shared/types/store.types";
 
@@ -54,6 +66,7 @@ export const createCookieConsentStore = (initState: CookieConsentState = default
 							consentDate: new Date().toISOString(),
 							policyVersion: CURRENT_POLICY_VERSION,
 						});
+						emitConsentChange(true);
 					},
 
 					rejectCookies: () => {
@@ -63,6 +76,7 @@ export const createCookieConsentStore = (initState: CookieConsentState = default
 							consentDate: new Date().toISOString(),
 							policyVersion: CURRENT_POLICY_VERSION,
 						});
+						emitConsentChange(false);
 					},
 
 					showBanner: () => {

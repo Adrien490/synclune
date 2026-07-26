@@ -20,7 +20,7 @@ function EnterModeOnMount() {
 afterEach(cleanup);
 
 describe("SelectionModeAnnouncer", () => {
-	it("renders an empty assertive live region when mode is OFF", () => {
+	it("renders an empty polite live region when mode is OFF", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a"]}>
 				<SelectionModeAnnouncer />
@@ -28,7 +28,9 @@ describe("SelectionModeAnnouncer", () => {
 		);
 
 		const region = screen.getByRole("status");
-		expect(region).toHaveAttribute("aria-live", "assertive");
+		// `polite` : un role="status" est consultatif — assertive interrompt la
+		// file de parole du lecteur d'écran (react-doctor no-assertive-status).
+		expect(region).toHaveAttribute("aria-live", "polite");
 		expect(region).toHaveAttribute("aria-atomic", "true");
 		expect(region).toHaveTextContent("");
 	});

@@ -6,6 +6,15 @@ import { type DayButton, DayPicker, getDefaultClassNames } from "react-day-picke
 
 import { Button, buttonVariants } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
+import { APP_TIME_ZONE } from "@/shared/utils/timezone";
+
+/** `data-day` déterministe (fr-CA ⇒ YYYY-MM-DD), identique serveur et client. */
+const DAY_ATTR_FORMATTER = new Intl.DateTimeFormat("fr-CA", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	timeZone: APP_TIME_ZONE,
+});
 
 const RTL_NEXT_BUTTON = String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`;
 const RTL_PREV_BUTTON = String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`;
@@ -160,7 +169,10 @@ function CalendarDayButton({
 			ref={ref}
 			variant="ghost"
 			size="icon"
-			data-day={day.date.toLocaleDateString()}
+			// Format ISO stable (et non `toLocaleDateString()` sans locale) : le
+			// serveur rendrait avec la locale/TZ Node et le navigateur avec celles de
+			// l'utilisateur → mismatch d'hydratation sur chaque jour du calendrier.
+			data-day={DAY_ATTR_FORMATTER.format(day.date)}
 			data-selected-single={
 				modifiers.selected &&
 				!modifiers.range_start &&

@@ -38,6 +38,10 @@ export interface RevealProps {
  */
 export interface StaggerProps {
 	children: ReactNode;
+	/** Tag du conteneur (défaut `div`). `ul`/`ol` pour une vraie liste sémantique. */
+	as?: "div" | "ul" | "ol";
+	/** Tag du wrapper de chaque enfant (défaut `div`). Mettre `li` quand `as="ul"`. */
+	itemAs?: "div" | "li";
 	className?: string;
 	stagger?: number;
 	delay?: number;

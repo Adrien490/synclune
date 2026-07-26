@@ -360,7 +360,7 @@ const CART_DISCOUNT_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour les metadonnees du panier (guest contact, notes, fulfillment, gift)
+ * Limite pour les metadonnees du panier (mode de fulfillment)
  *
  * Permissive car modifications fréquentes legitimes en checkout
  */
@@ -422,7 +422,7 @@ export const PAYMENT_UPDATE_AMOUNT_LIMIT: RateLimitConfig = {
  * Déclenchée best-effort au re-init quand le hash panier change. Rare en usage
  * normal — la limite borne surtout l'abus (spam de l'API Stripe `cancel`).
  */
-export const PAYMENT_CANCEL_ORPHAN_LIMIT: RateLimitConfig = {
+const PAYMENT_CANCEL_ORPHAN_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };
@@ -465,7 +465,7 @@ export const ORDER_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
  * fiscaux légitimes, mais une exfiltration massive (>200/h) déclenchera un 429.
  * En complément : Sentry.captureMessage à 80% du quota pour alerte proactive.
  */
-export const ADMIN_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
+const ADMIN_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
 	limit: 200, // 200 telechargements maximum
 	windowMs: hours(1), // par heure
 };
@@ -477,9 +477,23 @@ export const ADMIN_INVOICE_DOWNLOAD_LIMIT: RateLimitConfig = {
  * reste PENDING. 60/min couvre un polling intensif sur 30s + retry F5
  * raisonnable. Au-delà, on suspecte un client bogué ou un scraping.
  */
-export const ORDER_STATUS_POLL_LIMIT: RateLimitConfig = {
+const ORDER_STATUS_POLL_LIMIT: RateLimitConfig = {
 	limit: 60,
 	windowMs: minutes(1),
+};
+
+/**
+ * Limite pour la page de suivi de commande invité (AUDIT-BIZ-001)
+ *
+ * La page est authentifiée par un token HMAC dans l'URL, pas par une session :
+ * la limite est donc par IP. Généreuse (un client rafraîchit légitimement son
+ * suivi), mais elle borne le coût d'un scan de tokens — le token fait 32 hex
+ * (128 bits de recherche) ET l'`orderNumber` porte 48 bits d'entropie CSPRNG,
+ * donc le brute-force est déjà hors de portée ; ceci protège surtout la DB.
+ */
+const ORDER_TRACKING_VIEW_LIMIT: RateLimitConfig = {
+	limit: 60,
+	windowMs: hours(1),
 };
 
 export const ORDER_LIMITS = {
@@ -488,6 +502,7 @@ export const ORDER_LIMITS = {
 	INVOICE_DOWNLOAD: ORDER_INVOICE_DOWNLOAD_LIMIT,
 	ADMIN_INVOICE_DOWNLOAD: ADMIN_INVOICE_DOWNLOAD_LIMIT,
 	STATUS_POLL: ORDER_STATUS_POLL_LIMIT,
+	TRACKING_VIEW: ORDER_TRACKING_VIEW_LIMIT,
 } as const;
 
 // ========================================
@@ -552,7 +567,7 @@ export const ADMIN_ORDER_REFRESH_LIMIT: RateLimitConfig = {
  * 10/heure = headroom suffisant pour usage legitime, protege la DB d'un admin
  * compromis ou d'une boucle de script.
  */
-export const ADMIN_ORDER_EXPORT_LIMIT: RateLimitConfig = {
+const ADMIN_ORDER_EXPORT_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: hours(1),
 };
@@ -1598,7 +1613,7 @@ const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
  * Limite pour le rafraichissement du cache avis (admin) — utilisé par le
  * banner cross-page "Sélectionner les N filtrés".
  */
-export const ADMIN_REVIEW_REFRESH_LIMIT: RateLimitConfig = {
+const ADMIN_REVIEW_REFRESH_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(1),
 };
@@ -1748,6 +1763,12 @@ export const ADMIN_DASHBOARD_LIMITS = {
 export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
 	limit: 1000,
 	windowMs: minutes(1),
+	// WEBHOOK-AUDIT-003 : sans cette exemption, le relèvement 100 → 1000 ci-dessus est
+	// PUREMENT DÉCORATIF — `checkRateLimitInMemory` évalue le plafond transverse
+	// `GLOBAL_IP_LIMIT` (100/min/IP) AVANT la limite par action, et la route webhook lui
+	// passe explicitement l'IP. Le plafond effectif était donc resté à 100/min, très en
+	// dessous du pic Stripe que ce réglage prétendait absorber.
+	skipGlobalIpLimit: true,
 };
 
 /**
@@ -1756,8 +1777,14 @@ export const STRIPE_WEBHOOK_LIMIT: RateLimitConfig = {
  * Volume légitime attendu nettement plus faible que Stripe (≤1 event/facture
  * vs N events/order Stripe). On garde 100 req/min/IP comme garde-fou CPU-drain
  * (anti-bombardement de signatures invalides). Appliqué AVANT verify signature.
+ *
+ * WEBHOOK-AUDIT-003 : exempté du plafond transverse `GLOBAL_IP_LIMIT` comme le webhook
+ * Stripe. Sans le flag, le compteur global (partagé avec toutes les autres actions vues
+ * depuis cette IP) pourrait épuiser le budget de la PA avant même sa propre limite —
+ * qui vaut ici exactement 100/min, donc reste le seul plafond effectif.
  */
 export const PDP_WEBHOOK_LIMIT: RateLimitConfig = {
 	limit: 100,
 	windowMs: minutes(1),
+	skipGlobalIpLimit: true,
 };

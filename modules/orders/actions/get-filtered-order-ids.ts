@@ -9,12 +9,6 @@ import { BULK_ORDER_ACTION_LIMIT } from "../constants/order.constants";
 import { buildOrderWhereClause } from "../services/order-query-builder";
 import type { GetOrdersParams } from "../types/order.types";
 
-export interface FilteredOrderIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Note : seules les commandes PENDING/UNPAID sont éligibles à l'annulation

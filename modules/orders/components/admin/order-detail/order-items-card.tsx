@@ -2,8 +2,10 @@ import { Package } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItemsCardProps } from "./types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 export function OrderItemsCard({
 	items,
@@ -30,18 +32,26 @@ export function OrderItemsCard({
 
 						const imageAlt = variant ? `${item.productTitle} - ${variant}` : item.productTitle;
 
+						// `||` (et non `??`) : une chaine vide doit compter comme absente.
+						// L'ancien `item.skuImageUrl ?? item.productImageUrl ?? ""` pouvait
+						// livrer src="" a next/image (erreur runtime) quand skuImageUrl valait "".
+						// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `||` volontaire : une chaîne vide doit compter comme absente ; `??` la laisserait passer en src="" (erreur runtime next/image)
+						const imageUrl = item.skuImageUrl || item.productImageUrl;
+
 						return (
 							<div key={item.id} className="flex items-start gap-4 border-b py-3 last:border-0">
 								{/* Image */}
 								<div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-md border">
-									{item.skuImageUrl || item.productImageUrl ? (
+									{imageUrl ? (
 										<Image
-											src={item.skuImageUrl ?? item.productImageUrl ?? ""}
+											src={imageUrl}
 											alt={imageAlt}
 											fill
 											sizes="80px"
-											quality={80}
+											quality={IMAGE_QUALITY.STANDARD}
 											className="object-cover"
+											placeholder="blur"
+											blurDataURL={IMAGE_BLUR_FALLBACK}
 										/>
 									) : (
 										<div className="flex h-full w-full items-center justify-center">

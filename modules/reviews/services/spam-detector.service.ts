@@ -16,12 +16,8 @@ export interface SpamDetectionResult {
 	reasons: SpamReason[];
 }
 
-export type SpamReason =
-	| "external_url"
-	| "phone_number"
-	| "blacklisted_keyword"
-	| "excessive_caps"
-	| "repeated_chars";
+type SpamReason =
+	"external_url" | "phone_number" | "blacklisted_keyword" | "excessive_caps" | "repeated_chars";
 
 const ALLOWED_DOMAINS = ["synclune.fr", "www.synclune.fr", "localhost"];
 
@@ -129,11 +125,3 @@ export function detectReviewSpam(input: {
 		reasons,
 	};
 }
-
-export const SPAM_REASON_MESSAGES: Record<SpamReason, string> = {
-	external_url: "Les URLs externes ne sont pas autorisées dans les avis.",
-	phone_number: "Les numéros de téléphone ne sont pas autorisés dans les avis.",
-	blacklisted_keyword: "Votre avis contient des termes non autorisés.",
-	excessive_caps: "Évitez d'écrire en majuscules excessivement.",
-	repeated_chars: "Évitez les caractères répétés à l'excès.",
-};

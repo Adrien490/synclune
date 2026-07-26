@@ -48,7 +48,7 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
-vi.mock("../dashboard-breadcrumb", () => ({
+vi.mock("../generate-breadcrumbs", () => ({
 	generateBreadcrumbs: mockGenerateBreadcrumbs,
 }));
 

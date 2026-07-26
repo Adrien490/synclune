@@ -429,7 +429,10 @@ function GalleryContent({ product, title }: GalleryProps) {
 								<div className="flex h-full">
 									{images.map((media, index) => (
 										<GallerySlide
-											key={media.id}
+											// `url` dans la clé : si un média est remplacé en place, React remonte
+											// le slide et son `videoState` repart à "loading" — plus besoin d'un
+											// effet de reset côté enfant.
+											key={`${media.id}-${media.url}`}
 											id={`gallery-panel-${index}`}
 											media={media}
 											index={index}

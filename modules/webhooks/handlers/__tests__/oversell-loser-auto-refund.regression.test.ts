@@ -177,6 +177,7 @@ describe("[regression ord-stripe-009] oversell loser auto-refund", () => {
 			"pi_oversell",
 			"order-loser",
 			expect.stringContaining("Oversell"),
+			5000,
 		);
 		// pas de rethrow → 200 avec invalidation cache
 		expect(result.success).toBe(true);

@@ -28,7 +28,7 @@
 - [ ] axe-core 0 violation serious/critical sur pages touchées
 - [ ] Mobile réel testé (Safari iOS + Chrome Android)
 - [ ] Fixture Stripe `test/fixtures/stripe/<event>.json` à jour si un handler webhook a été modifié
-- [ ] Régression : si un bug locked (cf `docs/QA.md § Regression playbook`) est dans la zone touchée, le test `*.regression.test.*` correspondant passe toujours
+- [ ] Régression : si un bug locked (inventaire via `grep -rn "@regression" --include="*.test.ts*"`) est dans la zone touchée, le test `*.regression.test.*` correspondant passe toujours
 
 ## Checklist
 

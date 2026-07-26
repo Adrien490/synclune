@@ -84,9 +84,9 @@ export function ProductTypesMobileList({
 					/>
 					<ItemGroup aria-label="Types de bijoux" className="gap-2">
 						{productTypes.map((productType) => (
-							<div key={productType.id} role="listitem">
+							<li key={productType.id}>
 								<ProductTypeMobileItem productType={productType} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

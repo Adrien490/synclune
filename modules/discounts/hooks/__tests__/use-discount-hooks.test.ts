@@ -117,7 +117,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("  promo10  ", 5000);
+				result.current.applyCode("  promo10  ");
 			});
 
 			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
@@ -128,89 +128,30 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("SUMMER20", 5000);
+				result.current.applyCode("SUMMER20");
 			});
 
 			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
 			expect(formData.get("code")).toBe("SUMMER20");
 		});
 
-		it("rounds the subtotal to the nearest integer", async () => {
+		// N'envoie QUE le code : `applyDiscountCode` recalcule le sous-total depuis le
+		// panier en DB et lit l'identité dans la session. Envoyer `subtotal`/`userId`/
+		// `customerEmail` depuis le client laissait croire que celui-ci pilotait le
+		// montant de la remise et son bénéficiaire.
+		it("sends only the code — no client-controlled subtotal or identity", async () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("CODE", 4999.7);
+				result.current.applyCode("CODE");
 			});
 
 			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-			expect(formData.get("subtotal")).toBe("5000");
-		});
-
-		it("rounds down when subtotal decimal is below 0.5", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 1000.4);
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-			expect(formData.get("subtotal")).toBe("1000");
-		});
-
-		it("appends userId when provided", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 5000, "user-123");
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-			expect(formData.get("userId")).toBe("user-123");
-		});
-
-		it("omits userId when not provided", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 5000);
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("code")).toBe("CODE");
+			expect(formData.get("subtotal")).toBeNull();
 			expect(formData.get("userId")).toBeNull();
-		});
-
-		it("appends customerEmail when provided", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 5000, undefined, "guest@example.com");
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-			expect(formData.get("customerEmail")).toBe("guest@example.com");
-		});
-
-		it("omits customerEmail when not provided", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 5000);
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
 			expect(formData.get("customerEmail")).toBeNull();
-		});
-
-		it("appends both userId and customerEmail when both are provided", async () => {
-			const { result } = renderHook(() => useApplyDiscountCode());
-
-			await act(async () => {
-				result.current.applyCode("CODE", 5000, "user-1", "user@example.com");
-			});
-
-			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-			expect(formData.get("userId")).toBe("user-1");
-			expect(formData.get("customerEmail")).toBe("user@example.com");
+			expect([...formData.keys()]).toEqual(["code"]);
 		});
 	});
 
@@ -237,7 +178,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
 
 			await act(async () => {
-				result.current.applyCode("PROMO10", 5000);
+				result.current.applyCode("PROMO10");
 			});
 
 			expect(onSuccess).toHaveBeenCalledWith(discountData);
@@ -250,7 +191,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
 
 			await act(async () => {
-				result.current.applyCode("PROMO10", 5000);
+				result.current.applyCode("PROMO10");
 			});
 
 			expect(onSuccess).not.toHaveBeenCalled();
@@ -262,7 +203,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode({ onError }));
 
 			await act(async () => {
-				result.current.applyCode("INVALID", 5000);
+				result.current.applyCode("INVALID");
 			});
 
 			expect(onError).toHaveBeenCalled();
@@ -274,7 +215,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
 
 			await act(async () => {
-				result.current.applyCode("INVALID", 5000);
+				result.current.applyCode("INVALID");
 			});
 
 			expect(onSuccess).not.toHaveBeenCalled();
@@ -285,7 +226,7 @@ describe("useApplyDiscountCode", () => {
 
 			// Should not throw when no callbacks are provided
 			await act(async () => {
-				result.current.applyCode("CODE", 5000);
+				result.current.applyCode("CODE");
 			});
 
 			expect(mockApplyDiscountCode).toHaveBeenCalledTimes(1);
@@ -302,7 +243,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("CODE", 5000);
+				result.current.applyCode("CODE");
 			});
 
 			expect(mockToastSuccess).toHaveBeenCalledWith("Code appliqué");
@@ -313,7 +254,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("INVALID", 5000);
+				result.current.applyCode("INVALID");
 			});
 
 			expect(mockToastError).toHaveBeenCalledWith("Failed");
@@ -329,7 +270,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("CODE", 5000);
+				result.current.applyCode("CODE");
 			});
 
 			expect(result.current.state).toEqual(SUCCESS);
@@ -340,7 +281,7 @@ describe("useApplyDiscountCode", () => {
 			const { result } = renderHook(() => useApplyDiscountCode());
 
 			await act(async () => {
-				result.current.applyCode("BAD", 5000);
+				result.current.applyCode("BAD");
 			});
 
 			expect(result.current.state).toEqual(ERROR);

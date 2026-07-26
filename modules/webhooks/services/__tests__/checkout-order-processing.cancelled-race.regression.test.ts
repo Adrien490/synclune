@@ -137,6 +137,7 @@ describe("ORD-BIZ-011 — webhook payment_intent.succeeded race avec cancel-orde
 				"pi_late_2",
 				"order-2",
 				"cancelled-before-confirmation",
+				7500,
 			);
 			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 		});

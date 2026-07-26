@@ -110,7 +110,7 @@ export function FilterSheetWrapper({
 		<Button
 			variant="outline"
 			className={cn(
-				"border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 relative min-h-11 gap-2 px-4 text-sm font-medium transition-all duration-200",
+				"border-border/60 hover:border-border hover:bg-accent/30 hover:border-accent/50 relative min-h-11 gap-2 px-4 text-sm font-medium transition-colors duration-200",
 				activeFiltersCount > 0 && "border-primary/50 bg-primary/5 shadow-primary/10 shadow-sm",
 				triggerClassName,
 			)}

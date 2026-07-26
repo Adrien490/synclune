@@ -236,8 +236,7 @@ describe("ExportRevenueButton", () => {
 
 			await waitFor(() => expect(mockToastPromise).toHaveBeenCalled());
 			const opts = mockToastPromise.mock.calls[0]?.[1] as
-				| { error: (e: Error) => string }
-				| undefined;
+				{ error: (e: Error) => string } | undefined;
 			expect(opts?.error(new Error("Période invalide"))).toBe("Période invalide");
 		});
 

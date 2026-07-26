@@ -1,9 +1,19 @@
+import React from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
+
+// Pré-lancement, ORDERS_AVAILABLE === false force toutes les Offer JSON-LD à
+// OutOfStock via getOfferAvailability. On force le flag à true ici pour tester
+// la logique stock (comportement stable au go-live) ; le gating pré-lancement
+// est verrouillé par shared/utils/__tests__/offer-availability.test.ts.
+vi.mock("@/shared/constants/orders-availability", async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	ORDERS_AVAILABLE: true,
+}));
 
 vi.mock("next/link", () => ({
 	default: ({ href, children }: { href: string; children: React.ReactNode }) => (
@@ -17,16 +27,22 @@ vi.mock("@/shared/components/animations", () => ({
 		role,
 		"aria-label": ariaLabel,
 		className,
+		as: Container = "div",
+		itemAs: ItemTag = "div",
 	}: {
 		children: React.ReactNode;
 		role?: string;
 		"aria-label"?: string;
 		className?: string;
+		as?: "div" | "ul" | "ol";
+		itemAs?: "div" | "li";
 		[key: string]: unknown;
 	}) => (
-		<div role={role} aria-label={ariaLabel} className={className}>
-			{children}
-		</div>
+		<Container role={role} aria-label={ariaLabel} className={className}>
+			{React.Children.map(children, (child, index) => (
+				<ItemTag key={index}>{child}</ItemTag>
+			))}
+		</Container>
 	),
 }));
 

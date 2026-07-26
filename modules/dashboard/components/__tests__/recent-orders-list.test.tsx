@@ -220,7 +220,8 @@ describe("RecentOrdersList", () => {
 	it("renders order total formatted with 2 decimals", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder({ total: 8500 })] }} />);
 
-		expect(screen.getByText("8500.00 €")).toBeInTheDocument();
+		// total = centimes → affiché en euros via formatEuro (8500 c = 85,00 €)
+		expect(screen.getByText(/85,00\s?€/)).toBeInTheDocument();
 	});
 
 	it("renders order status badge", () => {

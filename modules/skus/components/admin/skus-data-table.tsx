@@ -22,6 +22,7 @@ import {
 	getSkuColorsDisplayLabel,
 } from "@/modules/skus/utils/sku-colors-label";
 import { buildSwatchStyle, getSwatchAriaLabel } from "@/modules/colors/utils/swatch-style";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
@@ -30,6 +31,7 @@ import Link from "next/link";
 
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { SkusBulkActionsBar } from "./skus-bulk-actions-bar";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -152,7 +154,7 @@ export async function ProductVariantsDataTable({
 												alt={primaryImage.altText ?? sku.sku}
 												fill
 												sizes="80px"
-												quality={80}
+												quality={IMAGE_QUALITY.STANDARD}
 												className="rounded-md object-cover"
 												placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 												blurDataURL={primaryImage.blurDataUrl ?? undefined}
@@ -226,7 +228,7 @@ export async function ProductVariantsDataTable({
 								)}
 							</TableCell>
 							<TableCell>
-								<span className="text-sm font-bold">{(sku.priceInclTax / 100).toFixed(2)} €</span>
+								<span className="text-sm font-bold">{formatEuro(sku.priceInclTax)}</span>
 							</TableCell>
 							<TableCell className="text-center">
 								<Badge

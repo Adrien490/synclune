@@ -2,7 +2,8 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { handleActionError, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { logger } from "@/shared/lib/logger";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -38,13 +39,19 @@ export const resendVerificationEmail = async (
 			return success(
 				"Si cet email est enregistré et non vérifié, vous recevrez un nouveau lien de vérification.",
 			);
-		} catch {
+		} catch (err) {
 			// Même en cas d'erreur, succès pour ne pas révéler d'information
+			// (anti-énumération) — mais on logue l'erreur technique côté serveur.
+			logger.error("Verification email resend failed", err, {
+				service: "resendVerificationEmail",
+			});
 			return success(
 				"Si cet email est enregistré et non vérifié, vous recevrez un nouveau lien de vérification.",
 			);
 		}
-	} catch {
-		return error("Une erreur inattendue est survenue");
+	} catch (err) {
+		return handleActionError(err, "Une erreur inattendue est survenue", {
+			service: "resendVerificationEmail",
+		});
 	}
 };

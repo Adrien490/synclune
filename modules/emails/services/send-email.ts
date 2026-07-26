@@ -171,9 +171,20 @@ export async function sendEmail(params: {
 	 */
 	unsubscribeUrl?: string;
 	/**
-	 * Skip cross-process idempotence via EmailLog. Use for broadcast emails
-	 * where dedup would prevent legitimate re-sends.
-	 * Default: false (idempotence enforced).
+	 * Court-circuite le cache de dédup IN-PROCESS (hash `to+subject+html[0:4096]`,
+	 * TTL 10 min). À utiliser quand un renvoi à l'identique est précisément
+	 * l'intention (action admin « renvoyer l'email »), sinon le cache renvoie
+	 * l'ancien `resendId` en succès SANS réexpédier — sur instance chaude.
+	 *
+	 * N'affecte PAS la dédup Resend 24h : celle-ci dépend d'`idempotencyKey`,
+	 * qu'il faut omettre séparément.
+	 *
+	 * Default: false (dédup active).
+	 *
+	 * NB : la JSDoc mentionnait une idempotence « cross-process via EmailLog ».
+	 * Aucune table `EmailLog` n'existe ni n'a existé — la dédup cross-process
+	 * repose uniquement sur `idempotencyKey` (Resend, 24h) et sur les flags DB
+	 * par entité (ex. `Refund.confirmationEmailSentAt`).
 	 */
 	skipIdempotence?: boolean;
 	/**

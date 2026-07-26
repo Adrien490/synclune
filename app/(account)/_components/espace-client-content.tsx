@@ -2,6 +2,7 @@ import Link from "next/link";
 import { unauthorized } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
+import { AcceptTermsBanner } from "@/modules/users/components/accept-terms-banner";
 import { AccountTabsNav } from "@/modules/users/components/account-tabs-nav";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { TriangleAlert } from "lucide-react";
@@ -28,6 +29,9 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 		user = null;
 	}
 	const isPendingDeletion = user?.accountStatus === "PENDING_DELETION";
+	// RGPD-AUDIT P1-3 : comptes OAuth (Google) sans acceptation CGV tracée —
+	// le flux email/password pose termsAcceptedAt, pas le flux OAuth.
+	const needsTermsAcceptance = user !== null && user.termsAcceptedAt === null;
 
 	return (
 		<div className="mx-auto max-w-6xl px-4 pt-20 pb-6 sm:px-6 sm:pt-28 lg:px-8 lg:pb-10">
@@ -44,6 +48,11 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 						</Link>
 						.
 					</p>
+				</div>
+			)}
+			{needsTermsAcceptance && (
+				<div className="mb-6">
+					<AcceptTermsBanner />
 				</div>
 			)}
 			<AccountTabsNav />

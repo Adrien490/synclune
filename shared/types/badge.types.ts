@@ -6,9 +6,4 @@
 
 /** Variante de style pour les badges (statuts, tags, etc.) */
 export type BadgeVariant =
-	| "default"
-	| "secondary"
-	| "destructive"
-	| "success"
-	| "warning"
-	| "outline";
+	"default" | "secondary" | "destructive" | "success" | "warning" | "outline";

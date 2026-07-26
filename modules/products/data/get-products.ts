@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { ProductStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
@@ -58,9 +59,16 @@ export async function getProducts(
 		let validatedParams = validation.data as GetProductsParams;
 		const admin = options?.isAdmin ?? (await isAdmin());
 
-		// Security: only admins can see soft-deleted products
-		if (validatedParams.includeDeleted && !admin) {
-			validatedParams = { ...validatedParams, includeDeleted: false };
+		// Security: only admins can see soft-deleted or non-PUBLIC products.
+		// status/filters.status are client-controlled (e.g. loadMoreProducts action):
+		// force PUBLIC here so no caller can leak DRAFT/ARCHIVED into the public cache.
+		if (!admin) {
+			validatedParams = {
+				...validatedParams,
+				includeDeleted: false,
+				status: ProductStatus.PUBLIC,
+				filters: { ...validatedParams.filters, status: ProductStatus.PUBLIC },
+			};
 		}
 
 		// Admin: use admin default sort if no explicit sort provided

@@ -99,6 +99,9 @@ async function fetchProductTypeDetail(slug: string) {
 				updatedAt: true,
 				products: {
 					take: 5,
+					// deletedAt: null — cohérence avec getProductTypeProductCounts (stats card) ;
+					// sans ce filtre, la liste "récents" affiche des produits soft-deleted.
+					where: { deletedAt: null },
 					orderBy: { updatedAt: "desc" },
 					select: {
 						id: true,
@@ -118,7 +121,8 @@ async function fetchProductTypeDetail(slug: string) {
 						},
 					},
 				},
-				_count: { select: { products: true } },
+				// Filtré deletedAt pour que le total égale la somme des counts par statut
+				_count: { select: { products: { where: { deletedAt: null } } } },
 			},
 		});
 	} catch (error) {

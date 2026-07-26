@@ -162,7 +162,9 @@ export async function requestReturn(
 				action: OrderAction.REFUND_CREATED,
 				source: HistorySource.CUSTOMER,
 				authorId: user.id,
-				authorName: user.name ?? user.email,
+				// RGPD-AUDIT P1-2 : jamais de nom/email client dans OrderHistory
+				// (immuable 10 ans, non scrubé à l'anonymisation). authorId suffit.
+				authorName: "Client",
 				note: sanitizedMessage ?? undefined,
 				metadata: {
 					refundId: refund.id,

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
-import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -17,11 +16,9 @@ import { Check, ChevronRight, LoaderCircle, X } from "lucide-react";
 
 interface CheckoutDiscountSectionProps {
 	form: CheckoutFormInstance;
-	cart: NonNullable<GetCartReturn>;
 }
 
-export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionProps) {
-	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
+export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) {
 	const haptic = useHaptic();
 	const [liveMessage, setLiveMessage] = useState("");
 	const [isApplying, setIsApplying] = useState(false);
@@ -67,7 +64,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 						const code = rawCode.trim().toUpperCase();
 						if (!code) return;
 						setIsApplying(true);
-						const result = await validateDiscountCode(code, subtotal);
+						const result = await validateDiscountCode(code);
 						setIsApplying(false);
 						if (result.valid && result.discount) {
 							form.setFieldValue("_appliedDiscount", result.discount);

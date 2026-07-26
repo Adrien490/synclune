@@ -11,8 +11,6 @@ export const CHECKOUT_CANCEL_REASONS = [
 	"canceled",
 ] as const;
 
-export type CheckoutCancelReason = (typeof CHECKOUT_CANCEL_REASONS)[number];
-
 interface CheckoutCancelMessage {
 	title: string;
 	description: string;

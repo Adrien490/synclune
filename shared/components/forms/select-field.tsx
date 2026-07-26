@@ -11,8 +11,8 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { NativeSelect, NativeSelectOption } from "@/shared/components/ui/native-select";
+import { Button } from "@/shared/components/ui/button";
 import { useFieldContext } from "@/shared/lib/form-context";
-import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 
 interface SelectFieldProps<T extends string> {
@@ -78,11 +78,15 @@ export const SelectField = <T extends string>({
 
 	const hasError = field.state.meta.errors.length > 0;
 	const selectedOption = options.find((opt) => opt.value === field.state.value);
+	// Le `htmlFor` cible le select natif (mobile), invisible au-delà de `md` : le
+	// trigger Radix desktop n'héritait donc d'AUCUN nom accessible. On expose le
+	// label par `id` pour le lier aux deux contrôles (WCAG 4.1.2 / 3.3.2).
+	const labelId = `${field.name}-label`;
 
 	return (
 		<Field data-invalid={hasError} className={className}>
 			{label && (
-				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
+				<FieldLabel id={labelId} htmlFor={field.name} required={required} optional={optional}>
 					{label}
 				</FieldLabel>
 			)}
@@ -123,7 +127,14 @@ export const SelectField = <T extends string>({
 			</div>
 
 			{/* Desktop: Radix Select */}
-			<div className="hidden md:block">
+			{/*
+			 * Le bouton « Effacer » est un FRÈRE du trigger, jamais un descendant :
+			 * imbriquer un contrôle interactif dans le `<button>` du SelectTrigger est
+			 * invalide en HTML, mal exposé aux lecteurs d'écran, et son handler
+			 * Espace/Entrée entrait en conflit avec l'ouverture du Select. Même
+			 * disposition que `DateTimeField`.
+			 */}
+			<div className="hidden items-center gap-2 md:flex">
 				<Select
 					name={field.name}
 					disabled={disabled}
@@ -137,64 +148,30 @@ export const SelectField = <T extends string>({
 					<SelectTrigger
 						ref={triggerRef}
 						id={`${field.name}-desktop`}
-						className="w-full"
+						className="w-full min-w-0 flex-1"
 						onBlur={field.handleBlur}
 						aria-invalid={hasError}
 						aria-describedby={hasError ? `${field.name}-error` : undefined}
 						aria-required={required}
+						aria-labelledby={label ? labelId : undefined}
 					>
-						<div className="flex w-full min-w-0 items-center">
-							<span className="flex-1 truncate text-left">
-								{field.state.value ? (
-									renderValue ? (
-										(renderValue(field.state.value) ?? selectedOption?.label ?? field.state.value)
-									) : selectedOption ? (
-										renderOption ? (
-											renderOption(selectedOption)
-										) : (
-											selectedOption.label
-										)
+						<span className="flex-1 truncate text-left">
+							{field.state.value ? (
+								renderValue ? (
+									(renderValue(field.state.value) ?? selectedOption?.label ?? field.state.value)
+								) : selectedOption ? (
+									renderOption ? (
+										renderOption(selectedOption)
 									) : (
-										<span className="text-muted-foreground">{field.state.value}</span>
+										selectedOption.label
 									)
 								) : (
-									<SelectValue placeholder={placeholder} />
-								)}
-							</span>
-							{clearable && field.state.value && (
-								<div
-									role="button"
-									tabIndex={0}
-									className={cn(
-										"-mr-2 inline-flex size-11 shrink-0 items-center justify-center rounded-md",
-										"hover:bg-accent hover:text-accent-foreground",
-										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-										"cursor-pointer",
-									)}
-									onPointerDown={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-									}}
-									onClick={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										field.handleChange(undefined);
-										triggerRef.current?.focus();
-									}}
-									onKeyDown={(e) => {
-										if (e.key === "Enter" || e.key === " ") {
-											e.preventDefault();
-											e.stopPropagation();
-											field.handleChange(undefined);
-											triggerRef.current?.focus();
-										}
-									}}
-									aria-label="Effacer la sélection"
-								>
-									<X className="size-4" />
-								</div>
+									<span className="text-muted-foreground">{field.state.value}</span>
+								)
+							) : (
+								<SelectValue placeholder={placeholder} />
 							)}
-						</div>
+						</span>
 					</SelectTrigger>
 					<SelectContent className="max-h-75 overflow-y-auto">
 						{options.map((option) => (
@@ -204,6 +181,21 @@ export const SelectField = <T extends string>({
 						))}
 					</SelectContent>
 				</Select>
+				{clearable && field.state.value && !disabled && (
+					<Button
+						type="button"
+						variant="outline"
+						size="icon"
+						className="min-h-11 shrink-0"
+						onClick={() => {
+							field.handleChange(undefined);
+							triggerRef.current?.focus();
+						}}
+						aria-label="Effacer la sélection"
+					>
+						<X className="size-4" aria-hidden="true" />
+					</Button>
+				)}
 			</div>
 
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />

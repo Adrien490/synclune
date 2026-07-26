@@ -126,3 +126,42 @@ export function getInventoryInvalidationTags(
 export function getSkuStockInvalidationTags(skuId: string): string[] {
 	return [PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId)];
 }
+
+/** SKU dont le stock a changé, avec son produit pour invalider la page vitrine. */
+export interface StockChangedSku {
+	skuId: string;
+	productId?: string | null;
+	productSlug?: string | null;
+}
+
+/**
+ * Tags à invalider quand le stock de plusieurs SKUs change (achat, restock).
+ *
+ * CACHE-CATALOG-002 : la page produit embarque `skus.inventory` sous le tag
+ * `product-${slug}` — invalider seulement SKU_STOCK laisse la vitrine et
+ * l'inventaire admin périmés jusqu'à expiration du profil `catalog`.
+ * Groupe par produit et délègue à getInventoryInvalidationTags ; retombe sur
+ * SKU_STOCK seul si le produit n'est pas résolu (SKU orphelin).
+ */
+export function collectStockInvalidationTags(skus: StockChangedSku[]): string[] {
+	const tags = new Set<string>();
+	const skuIdsByProduct = new Map<string, { slug: string; skuIds: string[] }>();
+
+	for (const { skuId, productId, productSlug } of skus) {
+		if (productId && productSlug) {
+			const entry = skuIdsByProduct.get(productId) ?? { slug: productSlug, skuIds: [] };
+			entry.skuIds.push(skuId);
+			skuIdsByProduct.set(productId, entry);
+		} else {
+			tags.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+		}
+	}
+
+	for (const [productId, { slug, skuIds }] of skuIdsByProduct) {
+		for (const tag of getInventoryInvalidationTags(slug, productId, skuIds)) {
+			tags.add(tag);
+		}
+	}
+
+	return Array.from(tags);
+}

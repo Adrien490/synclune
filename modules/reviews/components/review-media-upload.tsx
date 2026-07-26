@@ -15,6 +15,9 @@ import { PendingUploadsGrid } from "@/shared/components/media-upload/pending-upl
 import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
+// Import statique : module déjà présent dans le bundle client via
+// `use-offline-upload-queue` (un `await import()` faisait bail-out le React Compiler).
+import { listEntries } from "@/modules/media/lib/offline-upload-queue";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
@@ -114,7 +117,6 @@ export function ReviewMediaUpload({
 		const files = await offlineQueue.drainAsFiles();
 		if (files.length === 0) return;
 		await upload(files);
-		const { listEntries } = await import("@/modules/media/lib/offline-upload-queue");
 		const entries = await listEntries({
 			endpoint: "reviewMedia",
 			contextKey: REVIEW_OFFLINE_CONTEXT_KEY,
@@ -199,9 +201,8 @@ export function ReviewMediaUpload({
 	};
 
 	const thumbnails = media.map((m, index) => (
-		<div
+		<li
 			key={m.url}
-			role="listitem"
 			className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg border"
 		>
 			<Image
@@ -227,7 +228,7 @@ export function ReviewMediaUpload({
 			>
 				<X className="size-3.5" aria-hidden="true" />
 			</button>
-		</div>
+		</li>
 	));
 
 	return (
@@ -236,14 +237,14 @@ export function ReviewMediaUpload({
 				<>
 					{isMobile ? (
 						<ScrollFade axis="horizontal" fadeFromClass="from-background">
-							<div role="list" aria-label="Photos ajoutées" className="flex gap-2 pb-1">
+							<ul aria-label="Photos ajoutées" className="flex gap-2 pb-1">
 								{thumbnails}
-							</div>
+							</ul>
 						</ScrollFade>
 					) : (
-						<div role="list" aria-label="Photos ajoutées" className="flex flex-wrap gap-2">
+						<ul aria-label="Photos ajoutées" className="flex flex-wrap gap-2">
 							{thumbnails}
-						</div>
+						</ul>
 					)}
 				</>
 			)}

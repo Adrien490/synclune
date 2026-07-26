@@ -240,6 +240,38 @@ describe("renderInvoicePdf — facture vs avoir title", () => {
 		);
 		expect(calls).toContainEqual("Facture annulée : F-2026-00042");
 	});
+
+	/**
+	 * @regression credit-note-negative-amounts — PDF-01
+	 * Un avoir doit afficher ses montants en NÉGATIF + un total libellé « Total de
+	 * l'avoir » + une date d'émission, pour ne pas être confondu avec une facture.
+	 */
+	it("PDF-01 : avoir → montants signés négatifs + label 'Total de l'avoir' + date d'émission", () => {
+		renderInvoicePdf(
+			makeInvoice({
+				invoiceNumber: "A-2026-00009",
+				precedingInvoice: {
+					invoiceNumber: "F-2026-00009",
+					issuedAt: new Date("2026-05-26T10:00:00Z"),
+					reason: "Remboursement",
+				},
+			}),
+		);
+		const calls = getTextCalls();
+		expect(calls).toContainEqual("Total de l'avoir");
+		expect(calls.some((t) => typeof t === "string" && t.startsWith("Date d'émission :"))).toBe(
+			true,
+		);
+		// Au moins un montant rendu avec un préfixe négatif (sous-total / total / ligne).
+		expect(calls.some((t) => typeof t === "string" && /^-\s*\d/.test(t))).toBe(true);
+	});
+
+	it("FACTURE : montants positifs + label 'Total' (pas de signe négatif parasite)", () => {
+		renderInvoicePdf(makeInvoice());
+		const calls = getTextCalls();
+		expect(calls).toContainEqual("Total");
+		expect(calls).not.toContainEqual("Total de l'avoir");
+	});
 });
 
 describe("renderInvoicePdf — vendor mentions (Art. 289 CGI)", () => {
@@ -259,6 +291,11 @@ describe("renderInvoicePdf — vendor mentions (Art. 289 CGI)", () => {
 	it("renders SIRET formatted INSEE-style (NNN NNN NNN NNNNN)", () => {
 		renderInvoicePdf(makeInvoice());
 		expect(getTextCalls()).toContainEqual("SIRET : 839 183 027 00037");
+	});
+
+	it("renders APE code (Art. 242 nonies A) when present", () => {
+		renderInvoicePdf(makeInvoice());
+		expect(getTextCalls()).toContainEqual("Code APE : 47.91B");
 	});
 
 	it("renders VAT intra number when present", () => {

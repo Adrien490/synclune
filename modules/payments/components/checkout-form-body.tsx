@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent } from "react";
 import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { CircleAlert, WifiOff } from "lucide-react";
+import { CircleAlert, Lock, WifiOff } from "lucide-react";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -52,8 +52,11 @@ interface CheckoutFormBodyProps {
 	appliedDiscount: AppliedDiscount | null;
 	country: ShippingCountry;
 	postalCode: string;
+	/** Montant figé une fois la commande liée au PI (CHECKOUT-CONSENT-001). */
+	lockedAmount: number | null;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	allowNavigation: () => void;
+	onOrderBound: (finalAmount: number) => void;
 }
 
 export function CheckoutFormBody({
@@ -74,20 +77,33 @@ export function CheckoutFormBody({
 	appliedDiscount,
 	country,
 	postalCode,
+	lockedAmount,
 	getFormData,
 	allowNavigation,
+	onOrderBound,
 }: CheckoutFormBodyProps) {
 	// Keep Stripe PaymentIntent amount in sync with country/postalCode/discount changes
 	// so the card PaymentElement charges the correct total.
 	// `updateAmount` is debounced 500ms internally.
+	const appliedDiscountCode = appliedDiscount?.code ?? null;
+	const isAmountLocked = lockedAmount !== null;
 	const syncStripeAmount = useEffectEvent(() => {
-		if (!pi.paymentIntentId || shippingUnavailable) return;
-		pi.updateAmount(country, postalCode, discountAmount);
+		// Commande déjà liée au PI : le serveur refuse l'update (`metadata.orderId`),
+		// inutile de solliciter l'action.
+		if (!pi.paymentIntentId || shippingUnavailable || isAmountLocked) return;
+		pi.updateAmount(country, postalCode, appliedDiscountCode);
 	});
 
 	useEffect(() => {
 		syncStripeAmount();
-	}, [pi.paymentIntentId, country, postalCode, discountAmount, shippingUnavailable]);
+	}, [
+		pi.paymentIntentId,
+		country,
+		postalCode,
+		appliedDiscountCode,
+		shippingUnavailable,
+		isAmountLocked,
+	]);
 
 	return (
 		<form
@@ -129,25 +145,45 @@ export function CheckoutFormBody({
 				)}
 
 				<div className="space-y-8">
-					{/* === SECTION 1: Contact === */}
-					<CheckoutContactSection form={form} session={session} />
+					{isAmountLocked && (
+						<Alert role="status">
+							<Lock className="size-4" />
+							<AlertTitle>Montant verrouillé</AlertTitle>
+							<AlertDescription>
+								Ta commande est enregistrée : le montant à payer ne peut plus changer. Actualise la
+								page si tu veux modifier ta livraison ou ton code promo.
+							</AlertDescription>
+						</Alert>
+					)}
 
-					{/* === SECTION 2: Shipping Address === */}
-					<CheckoutSection title="Livraison">
-						<CheckoutAddressFields form={form} session={session} addresses={addresses} />
-					</CheckoutSection>
+					{/*
+					 * CHECKOUT-CONSENT-001 — une fois la commande liée au PaymentIntent, le
+					 * montant est figé côté serveur. On gèle donc nativement (fieldset
+					 * disabled) tout ce qui ferait varier le total ou la destination, plutôt
+					 * que d'afficher un récapitulatif qui ne correspondrait plus au débit.
+					 * `min-w-0` neutralise le `min-width: min-content` par défaut du fieldset.
+					 */}
+					<fieldset disabled={isAmountLocked} className="min-w-0 space-y-8">
+						{/* === SECTION 1: Contact === */}
+						<CheckoutContactSection form={form} session={session} />
 
-					{/* === SECTION 3: Shipping Method === */}
-					<CheckoutSection title="Mode d'expédition">
-						<ShippingMethodSection
-							shipping={shipping}
-							shippingUnavailable={shippingUnavailable}
-							shippingInfo={shippingInfo}
-						/>
-					</CheckoutSection>
+						{/* === SECTION 2: Shipping Address === */}
+						<CheckoutSection title="Livraison">
+							<CheckoutAddressFields form={form} session={session} addresses={addresses} />
+						</CheckoutSection>
 
-					{/* === SECTION 4: Discount Code === */}
-					<CheckoutDiscountSection form={form} cart={cart} />
+						{/* === SECTION 3: Shipping Method === */}
+						<CheckoutSection title="Mode d'expédition">
+							<ShippingMethodSection
+								shipping={shipping}
+								shippingUnavailable={shippingUnavailable}
+								shippingInfo={shippingInfo}
+							/>
+						</CheckoutSection>
+
+						{/* === SECTION 4: Discount Code === */}
+						<CheckoutDiscountSection form={form} />
+					</fieldset>
 
 					{/* === SECTION 5: Payment === */}
 					<CheckoutSection title="Paiement">
@@ -183,8 +219,10 @@ export function CheckoutFormBody({
 											}
 											billingName={(billingName as string) || undefined}
 											incompleteSections={incompleteSections}
+											lockedAmount={lockedAmount}
 											getFormData={getFormData}
 											allowNavigation={allowNavigation}
+											onOrderBound={onOrderBound}
 										/>
 									);
 								}}

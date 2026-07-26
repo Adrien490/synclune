@@ -15,6 +15,26 @@ import type { DownloadImageOptions, RetryOptions } from "../types/image-processi
 import { IMAGE_DOWNLOADER_CONFIG } from "../constants/image-downloader.constants";
 
 // ============================================================================
+// ERRORS
+// ============================================================================
+
+/**
+ * Le contenu téléchargé n'est PAS une image décodable (magic bytes invalides).
+ *
+ * Distinct d'une erreur réseau/timeout : signale un MIME spoofé (exécutable ou
+ * HTML renommé `.jpg`) ou un format sans codec disponible dans le build Sharp
+ * (HEIC sans libheif). Les appelants DOIVENT rejeter l'upload sur cette erreur —
+ * la traiter comme un incident transitoire laisserait passer le fichier.
+ */
+export class ImageDecodeError extends Error {
+	constructor(cause?: unknown) {
+		super("Contenu illisible : le fichier n'est pas une image décodable");
+		this.name = "ImageDecodeError";
+		this.cause = cause;
+	}
+}
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 
@@ -35,6 +55,9 @@ export function truncateUrl(url: string, maxLength: number = 50): string {
  */
 export function isRetryableError(error: unknown): boolean {
 	if (!(error instanceof Error)) return true; // Unknown error, retry
+
+	// Contenu non décodable : déterministe, re-télécharger ne changera rien.
+	if (error instanceof ImageDecodeError) return false;
 
 	const message = error.message.toLowerCase();
 
@@ -199,8 +222,14 @@ export async function downloadImage(
 			);
 		}
 
-		// Validate magic bytes via Sharp metadata (defense-in-depth beyond Content-Type header)
-		await sharp(buffer).metadata();
+		// Validate magic bytes via Sharp metadata (defense-in-depth beyond Content-Type header).
+		// Typé en ImageDecodeError pour que l'appelant distingue « MIME spoofé » (rejeter)
+		// de « incident réseau » (best-effort) — cf. app/api/uploadthing/core.ts.
+		try {
+			await sharp(buffer).metadata();
+		} catch (err) {
+			throw new ImageDecodeError(err);
+		}
 
 		return buffer;
 	} finally {

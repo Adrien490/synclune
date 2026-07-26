@@ -27,7 +27,9 @@ export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 		<Accordion
 			type="single"
 			collapsible
-			className="mx-auto max-w-3xl"
+			// max-w centré sur mobile (flux vertical) ; pleine largeur de colonne en
+			// layout 2 colonnes desktop (home-faq.tsx)
+			className="mx-auto max-w-3xl lg:mx-0 lg:max-w-none"
 			onValueChange={(value) => {
 				if (!value) return;
 				const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

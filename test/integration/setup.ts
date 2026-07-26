@@ -42,6 +42,26 @@ beforeAll(async () => {
 		env: { ...process.env, DATABASE_URL: url },
 		stdio: "pipe", // mute the noisy output, surface only on error
 	});
+
+	// `db push` ne rejoue PAS les migrations raw-SQL (triggers, CHECK non
+	// exprimables dans schema.prisma). On applique ici les gardes DB dont les
+	// suites d'intégration ont besoin — chaque fichier doit être idempotent
+	// (CREATE OR REPLACE / DROP IF EXISTS). SSOT = le fichier de migration.
+	const RAW_SQL_GUARD_MIGRATIONS = [
+		// Unicité cross-table Order/Refund des numéros d'avoir (EINV-PRISMA-001).
+		"prisma/migrations/20260709120000_add_credit_note_cross_table_unique_guard/migration.sql",
+		// Borne basse Discount.usageCount (DISC-USAGE-002) — `db push` ne rejoue pas
+		// les CHECK en SQL brut, il faut les appliquer explicitement.
+		"prisma/migrations/20260726120000_add_discount_usage_count_non_negative/migration.sql",
+	];
+	for (const file of RAW_SQL_GUARD_MIGRATIONS) {
+		// Prisma 7 : `db execute` lit l'URL via prisma.config.ts → env DATABASE_URL
+		// (pas de flag --url). Même mécanisme que le `db push` ci-dessus.
+		execSync(`pnpm prisma db execute --file ${file}`, {
+			env: { ...process.env, DATABASE_URL: url },
+			stdio: "pipe",
+		});
+	}
 });
 
 beforeEach(async () => {

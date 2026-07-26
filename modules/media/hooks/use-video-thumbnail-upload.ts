@@ -23,14 +23,22 @@ import type { VideoThumbnailResult } from "@/modules/media/types/hooks.types";
 import { deleteUploadThingFile } from "@/modules/media/actions/delete-uploadthing-file";
 import { withRetry } from "@/shared/utils/with-retry";
 
-export interface ThumbnailUploadResult {
+interface ThumbnailUploadResult {
 	thumbnailUrl?: string;
 	blurDataUrl?: string;
+	/** Dimensions du poster (le thumbnail est une image : le serveur les lit) */
+	width?: number;
+	height?: number;
 }
 
 export interface UseVideoThumbnailUploadOptions {
 	/** Injection : `startUpload` exposé par `useUploadThing` parent. */
-	startUpload: (files: File[]) => Promise<Array<{ serverData: { url: string } }> | undefined>;
+	startUpload: (files: File[]) => Promise<
+		| Array<{
+				serverData: { url: string; width?: number | null; height?: number | null };
+		  }>
+		| undefined
+	>;
 }
 
 export interface UseVideoThumbnailUploadReturn {
@@ -72,13 +80,21 @@ export function useVideoThumbnailUpload(
 				{ maxAttempts: 3, baseDelay: 500, signal },
 			);
 
-			const thumbnailUrl = thumbUploadResult?.[0]?.serverData.url;
+			const thumbServerData = thumbUploadResult?.[0]?.serverData;
+			const thumbnailUrl = thumbServerData?.url;
 
 			if (thumbnailResult.previewUrl) {
 				URL.revokeObjectURL(thumbnailResult.previewUrl);
 			}
 
-			return { thumbnailUrl, blurDataUrl };
+			// Le poster EST une image : ses dimensions décrivent le ratio de la vidéo,
+			// ce qui suffit à dimensionner la vignette côté client.
+			return {
+				thumbnailUrl,
+				blurDataUrl,
+				width: thumbServerData?.width ?? undefined,
+				height: thumbServerData?.height ?? undefined,
+			};
 		} catch (error) {
 			if (thumbnailResult?.previewUrl) {
 				URL.revokeObjectURL(thumbnailResult.previewUrl);

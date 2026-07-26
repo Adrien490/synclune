@@ -9,12 +9,6 @@ import { BULK_REFUND_ACTION_LIMIT } from "../constants/refund.constants";
 import { buildRefundWhereClause } from "../services/refund-query-builder";
 import type { GetRefundsParams } from "../types/refund.types";
 
-export interface FilteredRefundIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Note : seuls les remboursements PENDING sont éligibles à l'approbation bulk

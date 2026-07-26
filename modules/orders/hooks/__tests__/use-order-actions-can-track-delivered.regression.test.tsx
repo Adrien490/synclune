@@ -16,6 +16,9 @@ import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/p
 // HOISTED MOCKS — couper le graphe de dépendances `useOrderActions`
 // ============================================================================
 
+// La chaîne actions → void-invoice → ensure-credit-note-archived tire
+// UploadThing (UTApi server-only, throw en jsdom) — coupe à la racine.
+vi.mock("@/shared/lib/uploadthing", () => ({ utapi: {} }));
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
 }));

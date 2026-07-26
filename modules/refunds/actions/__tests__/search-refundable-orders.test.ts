@@ -72,6 +72,12 @@ describe("searchRefundableOrders", () => {
 		expect(mockedGetOrders.mock.calls[0]![0].search).toBeUndefined();
 	});
 
+	it("rejette une requête > 200 caractères sans toucher getOrders (C4 audit Zod 2026-07-09)", async () => {
+		const result = await searchRefundableOrders("a".repeat(201));
+		expect(result).toEqual([]);
+		expect(mockedGetOrders).not.toHaveBeenCalled();
+	});
+
 	it("projette les champs minimaux attendus par le sélecteur", async () => {
 		const result = await searchRefundableOrders("");
 		expect(result).toEqual([

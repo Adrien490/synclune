@@ -1,10 +1,8 @@
 import { cacheAddressSearch } from "../constants/cache";
 import type { SearchAddressReturn } from "../types/search-address.types";
+import { geoapifyResultSchema, parseGeoResults } from "../schemas/geo-response.schema";
 import { buildGeoapifyUrl } from "../services/geoapify-api.service";
-import {
-	transformGeoapifyResult,
-	type GeoapifyApiResponse,
-} from "../utils/geoapify-transform.utils";
+import { transformGeoapifyResult } from "../utils/geoapify-transform.utils";
 import { GEOAPIFY_DEFAULT_LIMIT } from "../constants/geoapify.constants";
 
 interface FetchGeoapifyParams {
@@ -37,9 +35,10 @@ export async function fetchGeoapifyAddresses(
 		throw new Error(`Geoapify API error: ${response.status} ${response.statusText}`);
 	}
 
-	const data = (await response.json()) as GeoapifyApiResponse;
+	const data: unknown = await response.json();
 
-	const addresses = data.results.map(transformGeoapifyResult);
+	// Validation fail-soft par résultat + transformation en format simplifié
+	const addresses = parseGeoResults(data, geoapifyResultSchema).map(transformGeoapifyResult);
 
 	return {
 		addresses,

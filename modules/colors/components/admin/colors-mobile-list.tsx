@@ -78,9 +78,9 @@ export function ColorsMobileList({
 					<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
 					<ItemGroup aria-label="Couleurs" className="gap-2">
 						{colors.map((color) => (
-							<div key={color.id} role="listitem">
+							<li key={color.id}>
 								<ColorMobileItem color={color} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

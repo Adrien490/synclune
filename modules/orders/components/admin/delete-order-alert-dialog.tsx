@@ -13,6 +13,8 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
 import { LoaderCircle } from "lucide-react";
@@ -29,12 +31,16 @@ export function DeleteOrderAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteOrderData>(DELETE_ORDER_DIALOG_ID);
 	const [reason, setReason] = useState("");
 
-	const { action, isPending } = useDeleteOrder({
+	const { state, action, isPending } = useDeleteOrder({
 		onSuccess: () => {
 			setReason("");
 			deleteDialog.close();
 		},
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {
@@ -47,6 +53,7 @@ export function DeleteOrderAlertDialog() {
 		<ResponsiveAlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
+					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
 					<input type="hidden" name="id" value={deleteDialog.data?.orderId ?? ""} />
 
 					<ResponsiveAlertDialogHeader>

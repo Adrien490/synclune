@@ -150,7 +150,7 @@ export async function getQueuedCount(): Promise<number> {
 	return requestToPromise(store.count());
 }
 
-export async function getQueuedBytes(): Promise<number> {
+async function getQueuedBytes(): Promise<number> {
 	const entries = await listEntries();
 	return entries.reduce((sum, e) => sum + e.file.size, 0);
 }
@@ -159,12 +159,6 @@ export async function removeEntry(id: string): Promise<void> {
 	if (!isIndexedDBAvailable()) return;
 	const { store } = await txStore("readwrite");
 	await requestToPromise(store.delete(id));
-}
-
-export async function clearAll(): Promise<void> {
-	if (!isIndexedDBAvailable()) return;
-	const { store } = await txStore("readwrite");
-	await requestToPromise(store.clear());
 }
 
 /**

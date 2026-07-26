@@ -16,11 +16,6 @@ import {
 	updateProductSkuSchema,
 	adjustSkuStockSchema,
 	updateSkuPriceSchema,
-	bulkActivateSkusSchema,
-	bulkDeactivateSkusSchema,
-	bulkDeleteSkusSchema,
-	bulkAdjustStockSchema,
-	bulkUpdatePriceSchema,
 } from "../sku.schemas";
 
 // ============================================================================
@@ -37,9 +32,6 @@ const validMedia = [
 		mediaType: "IMAGE" as const,
 	},
 ];
-
-/** A valid JSON array of cuid2 IDs for bulk schemas */
-const validIdsJson = JSON.stringify([VALID_CUID]);
 
 // ============================================================================
 // getProductSkuSchema
@@ -231,13 +223,29 @@ describe("createProductSkuSchema", () => {
 		}
 	});
 
-	it("should accept compareAtPrice equal to price", () => {
+	it("should reject compareAtPrice equal to price (prix barré mensonger)", () => {
 		const result = createProductSkuSchema.safeParse({
 			...validInput,
 			priceInclTaxEuros: 100,
 			compareAtPriceEuros: 100,
 		});
+		expect(result.success).toBe(false);
+	});
+
+	it("should trim whitespace from size", () => {
+		const result = createProductSkuSchema.safeParse({ ...validInput, size: "  M  " });
 		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.size).toBe("M");
+		}
+	});
+
+	it("should transform whitespace-only size to undefined", () => {
+		const result = createProductSkuSchema.safeParse({ ...validInput, size: "   " });
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.size).toBeUndefined();
+		}
 	});
 
 	it("should transform empty compareAtPriceEuros string to undefined", () => {
@@ -450,19 +458,19 @@ describe("updateSkuPriceSchema", () => {
 		if (!result.success) {
 			expect(
 				result.error.issues.some((i) =>
-					i.message.includes("Le prix comparé doit être supérieur ou égal au prix de vente"),
+					i.message.includes("Le prix comparé doit être strictement supérieur au prix de vente"),
 				),
 			).toBe(true);
 		}
 	});
 
-	it("should accept when compareAtPriceEuros >= priceInclTaxEuros", () => {
+	it("should reject compareAtPriceEuros equal to price and accept strictly greater", () => {
 		const equal = updateSkuPriceSchema.safeParse({
 			skuId: VALID_CUID,
 			priceInclTaxEuros: 30,
 			compareAtPriceEuros: 30,
 		});
-		expect(equal.success).toBe(true);
+		expect(equal.success).toBe(false);
 
 		const greater = updateSkuPriceSchema.safeParse({
 			skuId: VALID_CUID,
@@ -486,174 +494,6 @@ describe("updateSkuPriceSchema", () => {
 			priceInclTaxEuros: 0.01,
 		});
 		expect(exactlyOneCent.success).toBe(true);
-	});
-});
-
-// ============================================================================
-// bulkActivateSkusSchema / bulkDeactivateSkusSchema / bulkDeleteSkusSchema
-// ============================================================================
-
-describe("bulkActivateSkusSchema", () => {
-	it("should accept a valid JSON array of cuid2 ids", () => {
-		const result = bulkActivateSkusSchema.safeParse({ ids: validIdsJson });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject invalid JSON", () => {
-		const result = bulkActivateSkusSchema.safeParse({ ids: "not-json" });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject JSON that is not an array", () => {
-		const result = bulkActivateSkusSchema.safeParse({ ids: JSON.stringify({ id: VALID_CUID }) });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject array with invalid cuid2 format", () => {
-		const result = bulkActivateSkusSchema.safeParse({ ids: JSON.stringify(["not-a-cuid"]) });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when ids is missing", () => {
-		const result = bulkActivateSkusSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("bulkDeactivateSkusSchema", () => {
-	it("should accept a valid JSON array of cuid2 ids", () => {
-		const result = bulkDeactivateSkusSchema.safeParse({ ids: validIdsJson });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject invalid JSON string", () => {
-		const result = bulkDeactivateSkusSchema.safeParse({ ids: "{{invalid}}" });
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("bulkDeleteSkusSchema", () => {
-	it("should accept a valid JSON array of cuid2 ids", () => {
-		const result = bulkDeleteSkusSchema.safeParse({ ids: validIdsJson });
-		expect(result.success).toBe(true);
-	});
-});
-
-// ============================================================================
-// bulkAdjustStockSchema
-// ============================================================================
-
-describe("bulkAdjustStockSchema", () => {
-	it("should accept valid bulk stock adjustment with relative mode", () => {
-		const result = bulkAdjustStockSchema.safeParse({
-			ids: validIdsJson,
-			mode: "relative",
-			value: 5,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept valid bulk stock adjustment with absolute mode", () => {
-		const result = bulkAdjustStockSchema.safeParse({
-			ids: validIdsJson,
-			mode: "absolute",
-			value: 100,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should coerce string value to number", () => {
-		const result = bulkAdjustStockSchema.safeParse({
-			ids: validIdsJson,
-			mode: "relative",
-			value: "10",
-		});
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.value).toBe(10);
-		}
-	});
-
-	it("should reject invalid mode", () => {
-		const result = bulkAdjustStockSchema.safeParse({
-			ids: validIdsJson,
-			mode: "unknown",
-			value: 5,
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when mode is missing", () => {
-		const result = bulkAdjustStockSchema.safeParse({ ids: validIdsJson, value: 5 });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when value is missing", () => {
-		const result = bulkAdjustStockSchema.safeParse({ ids: validIdsJson, mode: "relative" });
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
-// bulkUpdatePriceSchema
-// ============================================================================
-
-describe("bulkUpdatePriceSchema", () => {
-	it("should accept valid bulk price update with percentage mode", () => {
-		const result = bulkUpdatePriceSchema.safeParse({
-			ids: validIdsJson,
-			mode: "percentage",
-			value: 10,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept valid bulk price update with absolute mode", () => {
-		const result = bulkUpdatePriceSchema.safeParse({
-			ids: validIdsJson,
-			mode: "absolute",
-			value: 49.99,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should default updateCompareAtPrice to false", () => {
-		const result = bulkUpdatePriceSchema.safeParse({
-			ids: validIdsJson,
-			mode: "percentage",
-			value: 10,
-		});
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.updateCompareAtPrice).toBe(false);
-		}
-	});
-
-	it("should coerce string updateCompareAtPrice to boolean", () => {
-		const result = bulkUpdatePriceSchema.safeParse({
-			ids: validIdsJson,
-			mode: "percentage",
-			value: 10,
-			updateCompareAtPrice: "true",
-		});
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.updateCompareAtPrice).toBe(true);
-		}
-	});
-
-	it("should reject invalid mode", () => {
-		const result = bulkUpdatePriceSchema.safeParse({
-			ids: validIdsJson,
-			mode: "fixed",
-			value: 10,
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when ids is missing", () => {
-		const result = bulkUpdatePriceSchema.safeParse({ mode: "percentage", value: 10 });
-		expect(result.success).toBe(false);
 	});
 });
 

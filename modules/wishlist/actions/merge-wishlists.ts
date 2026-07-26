@@ -106,7 +106,7 @@ export async function mergeWishlists(
 			const itemsSelect = { select: { productId: true } } as const;
 			try {
 				targetWishlist = await prisma.wishlist.create({
-					data: { userId, expiresAt: null },
+					data: { userId },
 					select: { id: true, items: itemsSelect },
 				});
 			} catch (e) {

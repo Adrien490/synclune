@@ -124,6 +124,8 @@ export async function duplicateProduct(
 							blurDataUrl: sourceImage.blurDataUrl,
 							altText: sourceImage.altText,
 							mediaType: sourceImage.mediaType,
+							width: sourceImage.width,
+							height: sourceImage.height,
 							isPrimary: sourceImage.isPrimary,
 							position: sourceImage.position,
 						},

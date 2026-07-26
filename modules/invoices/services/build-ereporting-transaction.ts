@@ -28,7 +28,7 @@ const vatBreakdownLineSchema = z.object({
 	taxAmount: z.number().int(),
 });
 
-export const vatBreakdownSchema = z.array(vatBreakdownLineSchema);
+const vatBreakdownSchema = z.array(vatBreakdownLineSchema);
 export type VatBreakdownLine = z.infer<typeof vatBreakdownLineSchema>;
 
 /**
@@ -250,7 +250,7 @@ export interface EReportingTransactionPayload {
  * volontairement minimal : la DGFiP n'attend que les agrégats, pas les détails
  * lignes (qui appartiennent à la facture, hors scope e-reporting).
  */
-export interface PayloadSnapshot {
+interface PayloadSnapshot {
 	orderNumber: string;
 	customerType: "B2C" | "B2B" | "B2G";
 	occurredAt: string; // ISO 8601

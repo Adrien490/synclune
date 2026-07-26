@@ -9,6 +9,7 @@ import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/componen
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
@@ -19,6 +20,7 @@ import {
 } from "@/modules/skus/utils/sku-display-title";
 import { getColorHexes } from "@/modules/skus/utils/sku-colors-label";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
 
@@ -29,15 +31,11 @@ interface SkuMobileItemProps {
 	preload?: boolean;
 }
 
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-
-const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
-
 export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps) {
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
+	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours.
+	// Remplace l'ancien `unoptimized` qui servait une URL .mp4 à `next/image`.
+	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 	const stockVariant = getStockVariant(sku.inventory);
 	const displayTitle = getSkuDisplayTitle(sku);
 	const spokenTitle = getSkuDisplayTitleSpoken(sku);
@@ -62,7 +60,7 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 	return (
 		<MobileSelectableCard
 			id={sku.id}
-			itemLabel={`Variante ${spokenTitle}, ${getStockAriaLabel(sku.inventory)}, ${formatPrice(sku.priceInclTax)}${sku.isDefault ? ", par défaut" : ""}${!sku.isActive ? ", inactive" : ""}`}
+			itemLabel={`Variante ${spokenTitle}, ${getStockAriaLabel(sku.inventory)}, ${formatEuro(sku.priceInclTax)}${sku.isDefault ? ", par défaut" : ""}${!sku.isActive ? ", inactive" : ""}`}
 			longPressProps={{
 				href: `/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`,
 				ariaLabel: `Variante : ${spokenTitle}`,
@@ -80,19 +78,14 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 				aria-roledescription="carte variante"
 				aria-busy={isPendingItem || undefined}
 			>
-				{primaryImage ? (
+				{primaryImage && thumbSrc ? (
 					<Image
-						src={
-							primaryImage.mediaType === "VIDEO"
-								? (primaryImage.thumbnailUrl ?? primaryImage.url)
-								: primaryImage.url
-						}
+						src={thumbSrc}
 						alt=""
 						width={48}
 						height={48}
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
-						unoptimized={primaryImage.mediaType === "VIDEO" && !primaryImage.thumbnailUrl}
 						{...(preload ? { preload: true } : {})}
 						{...(primaryImage.blurDataUrl
 							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
@@ -131,7 +124,7 @@ export function SkuMobileItem({ sku, productSlug, preload }: SkuMobileItemProps)
 						)}
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-						<span className="font-medium">{formatPrice(sku.priceInclTax)}</span>
+						<span className="font-medium">{formatEuro(sku.priceInclTax)}</span>
 						<span aria-hidden="true">·</span>
 						<span className="text-muted-foreground font-mono text-xs tabular-nums">{sku.sku}</span>
 					</ItemDescription>

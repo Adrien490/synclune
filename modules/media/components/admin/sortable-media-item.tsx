@@ -30,6 +30,7 @@ import {
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { MediaItem } from "@/modules/media/types/hooks.types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 export interface SortableMediaItemProps {
 	media: MediaItem;
@@ -335,7 +336,7 @@ export function SortableMediaItem({
 									isImageLoaded ? "opacity-100" : "opacity-0",
 								)}
 								sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-								quality={80}
+								quality={IMAGE_QUALITY.STANDARD}
 								decoding="async"
 								placeholder={media.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={media.blurDataUrl}
@@ -343,6 +344,11 @@ export function SortableMediaItem({
 								onError={() => setThumbnailError(true)}
 							/>
 						) : (
+							/* Pas de `poster` : cette branche ne joue QUE si thumbnailUrl manque
+							   ou a échoué, et `blurDataUrl` est un JPEG 8×8 (ou un ThumbHash) —
+							   étiré sur la tuile il est plus dégradé que la première frame que
+							   le navigateur décode via preload="metadata". Le conteneur
+							   `bg-muted` sert de fond en attendant. */
 							<video
 								src={media.url}
 								className="h-full w-full object-cover"
@@ -350,7 +356,6 @@ export function SortableMediaItem({
 								muted
 								playsInline
 								preload="metadata"
-								poster={media.blurDataUrl}
 								onTouchStart={(e) => {
 									const t = e.touches[0];
 									videoTouchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null;
@@ -433,7 +438,7 @@ export function SortableMediaItem({
 							isImageLoaded ? "opacity-100" : "opacity-0",
 						)}
 						sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-						quality={80}
+						quality={IMAGE_QUALITY.STANDARD}
 						loading={index > 0 ? "lazy" : undefined}
 						decoding="async"
 						placeholder={media.blurDataUrl ? "blur" : "empty"}

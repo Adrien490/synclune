@@ -223,19 +223,23 @@ describe("dispatchEvent - unsupported events", () => {
 		vi.clearAllMocks();
 	});
 
-	it("should throw for unknown event types (caller must guard with isEventSupported)", async () => {
+	it("should return a skipped result for unknown event types (defensive guard, audit 2026-07-02)", async () => {
 		// dispatchEvent looks up a handler by event type; for unsupported events the handler is
-		// undefined (event type is cast to SupportedStripeEvent but has no entry in eventHandlers),
-		// so calling it throws a TypeError. isEventSupported should be used before dispatchEvent.
+		// undefined. Les call-sites (route, cron) filtrent via isEventSupported AVANT, mais la
+		// garde interne évite un TypeError opaque si un futur call-site l'oubliait.
 		const event = makeEvent("customer.created");
 
-		await expect(dispatchEvent(event)).rejects.toThrow();
+		await expect(dispatchEvent(event)).resolves.toEqual({
+			success: true,
+			skipped: true,
+			reason: "unsupported_event_type",
+		});
 	});
 
 	it("should not call any handler for unsupported events", async () => {
 		const event = makeEvent("invoice.paid");
 
-		await expect(dispatchEvent(event)).rejects.toThrow();
+		await expect(dispatchEvent(event)).resolves.toMatchObject({ skipped: true });
 
 		expect(mockHandlePaymentSuccess).not.toHaveBeenCalled();
 		expect(mockHandlePaymentFailure).not.toHaveBeenCalled();

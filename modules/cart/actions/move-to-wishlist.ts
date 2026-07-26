@@ -16,7 +16,6 @@ import {
 import type { ActionState } from "@/shared/types/server-action";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
 import { moveToWishlistSchema } from "../schemas/cart.schemas";
-import { getWishlistExpirationDate } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
 import {
 	WISHLIST_ERROR_MESSAGES,
@@ -90,11 +89,8 @@ export async function moveToWishlist(
 				create: {
 					userId: userId ?? null,
 					sessionId: sessionId ?? null,
-					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
-				update: {
-					expiresAt: userId ? null : getWishlistExpirationDate(),
-				},
+				update: {},
 				select: { id: true },
 			});
 

@@ -70,6 +70,8 @@ export async function duplicateSku(
 							mediaType: true,
 							thumbnailUrl: true,
 							blurDataUrl: true,
+							width: true,
+							height: true,
 						},
 					},
 					product: {
@@ -129,6 +131,8 @@ export async function duplicateSku(
 							mediaType: img.mediaType,
 							thumbnailUrl: img.thumbnailUrl,
 							blurDataUrl: img.blurDataUrl,
+							width: img.width,
+							height: img.height,
 						})),
 					},
 				},

@@ -17,13 +17,13 @@
  * - UPLOADTHING_TOKEN: Token API UploadThing
  *
  * Usage:
- *   pnpm strip:video-audio                 # Traiter toutes les vidéos
- *   pnpm strip:video-audio --dry-run       # Simuler sans modification
- *   pnpm strip:video-audio --parallel=3    # Parallélisation (défaut: 3)
- *   pnpm strip:video-audio --check         # Health check uniquement
- *   pnpm strip:video-audio --json          # Logs JSON pour monitoring
+ *   pnpm exec tsx scripts/strip-video-audio.ts                 # Traiter toutes les vidéos
+ *   pnpm exec tsx scripts/strip-video-audio.ts --dry-run       # Simuler sans modification
+ *   pnpm exec tsx scripts/strip-video-audio.ts --parallel=3    # Parallélisation (défaut: 3)
+ *   pnpm exec tsx scripts/strip-video-audio.ts --check         # Health check uniquement
+ *   pnpm exec tsx scripts/strip-video-audio.ts --json          # Logs JSON pour monitoring
  *
- * @see modules/media/services/generate-video-thumbnail.ts
+ * @see scripts/generate-video-thumbnails.ts (generation ffmpeg des posters)
  */
 
 import { execFile, execSync, type ChildProcess } from "node:child_process";

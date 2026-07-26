@@ -81,3 +81,24 @@ describe("extractFileKeysFromUrls", () => {
 		expect(result.failedUrls).toEqual(["bad1", "bad2"]);
 	});
 });
+
+// ============================================================================
+// Ancrage du motif de chemin (audit média M16)
+// ============================================================================
+
+describe("extractFileKeyFromUrl — ancrage du chemin", () => {
+	it("rejette un chemin plus profond que /f/<clé>", () => {
+		// L'ancienne implémentation renvoyait "autre" (dernier segment).
+		expect(extractFileKeyFromUrl("https://utfs.io/f/vraie-cle.jpg/autre")).toBeNull();
+	});
+
+	it("rejette un préfixe autre que /f/", () => {
+		expect(extractFileKeyFromUrl("https://utfs.io/x/abc123.jpg")).toBeNull();
+	});
+
+	it("accepte toujours le format legacy S3 à segment unique", () => {
+		expect(
+			extractFileKeyFromUrl("https://uploadthing-prod.s3.us-west-2.amazonaws.com/myfile.webp"),
+		).toBe("myfile.webp");
+	});
+});

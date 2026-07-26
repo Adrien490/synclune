@@ -8,7 +8,7 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { generateUnsubscribeToken } from "@/modules/notifications/utils/unsubscribe-token";
 
-const emailSchema = z.string().email();
+const emailSchema = z.email();
 
 /**
  * Cron : envoie un email de demande d'avis J+7 après livraison.
@@ -53,6 +53,9 @@ export async function sendReviewRequests(): Promise<CronResult> {
 			paymentStatus: {
 				notIn: [PaymentStatus.REFUNDED, PaymentStatus.FAILED, PaymentStatus.EXPIRED],
 			},
+			// Opposition marketing (Art. 21 RGPD) : un user désinscrit via
+			// /notifications/desinscription ne reçoit plus de demande d'avis.
+			user: { marketingOptOutAt: null },
 			...notDeleted,
 		},
 		select: {

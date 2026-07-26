@@ -12,6 +12,12 @@ import { cn } from "@/shared/utils/cn";
 import { CircleHelp } from "lucide-react";
 
 interface FieldLabelProps {
+	/**
+	 * `id` posé sur le `<Label>` lui-même (pas le conteneur) — permet à un contrôle
+	 * non natif (trigger Radix Select / Popover) de s'y rattacher via
+	 * `aria-labelledby` quand `htmlFor` cible déjà la variante mobile du champ.
+	 */
+	id?: string;
 	htmlFor?: string;
 	children: React.ReactNode;
 	required?: boolean;
@@ -21,6 +27,7 @@ interface FieldLabelProps {
 }
 
 export function FieldLabel({
+	id,
 	htmlFor,
 	children,
 	required = false,
@@ -30,7 +37,7 @@ export function FieldLabel({
 }: FieldLabelProps) {
 	return (
 		<div className="flex items-center gap-2">
-			<Label htmlFor={htmlFor} className={cn("text-sm font-medium", className)}>
+			<Label id={id} htmlFor={htmlFor} className={cn("text-sm font-medium", className)}>
 				{children}
 				{required && (
 					<span className="text-destructive ml-1" aria-hidden="true">

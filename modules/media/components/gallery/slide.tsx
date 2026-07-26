@@ -128,13 +128,8 @@ export function GallerySlide({
 		}
 	}, [isActive, prefersReduced, videoState, media.url]);
 
-	// Reset state si l'URL change
-	useEffect(() => {
-		if (media.mediaType === "VIDEO") {
-			// eslint-disable-next-line react-hooks/set-state-in-effect
-			setVideoState("loading");
-		}
-	}, [media.url, media.mediaType]);
+	// Pas d'effet de reset sur changement d'URL : le parent inclut `media.url` dans
+	// la `key` du slide, React remonte donc le composant (`videoState` frais).
 
 	// Timeout pour éviter spinner infini
 	useEffect(() => {

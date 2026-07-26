@@ -2,7 +2,13 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
+import {
+	error,
+	handleActionError,
+	unauthorized,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -48,6 +54,12 @@ export const signInSocial = async (_: unknown, formData: FormData): Promise<Acti
 		unstable_rethrow(err);
 
 		// Message générique pour éviter l'exposition d'erreurs techniques
-		return error("Une erreur est survenue lors de la connexion. Veuillez réessayer.");
+		return handleActionError(
+			err,
+			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+			{
+				service: "signInSocial",
+			},
+		);
 	}
 };

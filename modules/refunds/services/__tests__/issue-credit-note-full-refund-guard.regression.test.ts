@@ -95,6 +95,12 @@ vi.mock("@/modules/invoices/services/credit-note-sequence.service", () => ({
 	acquireCreditNoteLockTx: async () => {},
 }));
 
+vi.mock("../ensure-credit-note-archived.service", () => ({
+	// EINV-CREDIT-020 : archivage eager best-effort post-tx — mocke pour ne pas
+	// tirer la chaîne UploadThing (UTApi server-only) dans les tests unitaires.
+	ensureRefundCreditNoteArchived: vi.fn().mockResolvedValue("archived"),
+}));
+
 import { issueCreditNoteForRefund } from "../issue-credit-note.service";
 
 interface FakeTx {

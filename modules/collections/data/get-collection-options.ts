@@ -16,7 +16,8 @@ const COLLECTION_ACTIVE_STATUSES = [CollectionStatus.DRAFT, CollectionStatus.PUB
  * Récupère toutes les collections actives (non archivées) pour les selects/filtres
  * Version simplifiée sans pagination
  *
- * Protection: Nécessite un compte ADMIN (session-only via isAdmin)
+ * Protection: Nécessite un compte ADMIN — `isAdmin()` re-vérifie le rôle en DB
+ * (pas de confiance au rôle du cookie de session, stale ~5 min).
  */
 export async function getCollectionOptions(): Promise<CollectionOption[]> {
 	const admin = await isAdmin();

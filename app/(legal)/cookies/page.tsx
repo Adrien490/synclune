@@ -5,6 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { CookiePreferences } from "./_components/cookie-preferences";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Gestion des cookies | Synclune",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
 export default async function CookiesPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
-	cacheTag("legal-cookies");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_COOKIES);
 	return (
 		<>
 			<PageHeader
@@ -171,15 +172,18 @@ export default async function CookiesPage() {
 							<p>Si vous acceptez les cookies optionnels, nous utilisons également :</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									<strong>Vercel Analytics</strong> : Statistiques anonymisées de navigation -
-									Collecte des données agrégées (pages vues, temps de visite, origine géographique)
-									pour améliorer l'expérience utilisateur. Ces données sont anonymes et ne
-									permettent pas de vous identifier personnellement.
+									<strong>Sentry Session Replay</strong> : Enregistrement anonymisé de sessions de
+									navigation - Rejoue le parcours d'un échantillon de visites (clics, défilement,
+									pages consultées) pour comprendre et corriger les problèmes d'ergonomie. Tous les
+									textes, champs de formulaire et médias sont masqués avant envoi : le contenu que
+									vous saisissez ou consultez n'est jamais transmis. Ce traceur n'est activé
+									qu'après votre consentement et s'arrête si vous le retirez.
 								</li>
 								<li>
-									<strong>Vercel Speed Insights</strong> : Mesures de performance - Collecte des
-									métriques Web Vitals (temps de chargement, interactivité) pour optimiser la
-									rapidité du site. Ces données sont anonymes.
+									<strong>Mesure d'audience</strong> : Statistiques de navigation agrégées (pages
+									vues, parcours d'achat) pour améliorer l'expérience utilisateur. Aucun outil de
+									mesure d'audience tiers n'est actuellement actif ; si un service est branché, il
+									respectera ce même consentement.
 								</li>
 							</ul>
 

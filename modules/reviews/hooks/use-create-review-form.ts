@@ -3,7 +3,7 @@
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { createReview } from "@/modules/reviews/actions/create-review";
 
@@ -53,13 +53,10 @@ export const useCreateReviewForm = (options: UseCreateReviewFormOptions) => {
 	});
 
 	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

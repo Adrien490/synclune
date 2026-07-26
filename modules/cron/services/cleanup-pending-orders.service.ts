@@ -4,14 +4,16 @@ import {
 	PaymentStatus,
 	HistorySource,
 	OrderAction,
+	PostWebhookTaskStatus,
+	WebhookEventStatus,
 } from "@/app/generated/prisma/client";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, THRESHOLDS } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -48,9 +50,12 @@ const SYNC_ASYNC_SPOF_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
  *
  * Effects per order (atomic):
  *  - status → CANCELLED
- *  - stock restored (inventory increment)
  *  - discount usages released (usageCount decrement + DiscountUsage delete)
  *  - audit trail (HistorySource.SYSTEM, OrderAction.CANCELLED)
+ *
+ * STOCK-01 : PAS de restock. Réservation optimiste — le stock n'est décrémenté
+ * qu'au passage PAID. Ces commandes sont PENDING/PENDING (et PI nul) → leur stock
+ * n'a jamais été décrémenté ; le restocker gonflerait l'inventaire (phantom stock).
  *
  * No email sent to the customer: the checkout session was abandoned, so there
  * is no reasonable expectation that a confirmation/cancellation would be useful.
@@ -124,27 +129,12 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 						data: { status: OrderStatus.CANCELLED },
 					});
 
-					for (const item of order.items) {
-						await tx.productSku.update({
-							where: { id: item.skuId },
-							data: { inventory: { increment: item.quantity } },
-						});
-						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(item.skuId));
-					}
+					// STOCK-01 : pas de restock (stock jamais décrémenté sur une PENDING).
 
-					const usages = await tx.discountUsage.findMany({
-						where: { orderId: order.id },
-						select: { id: true, discountId: true },
-					});
-					for (const usage of usages) {
-						await tx.discount.update({
-							where: { id: usage.discountId },
-							data: { usageCount: { decrement: 1 } },
-						});
-					}
-					if (usages.length > 0) {
-						await tx.discountUsage.deleteMany({ where: { orderId: order.id } });
-					}
+					// [[DISC-USAGE-002]] Toujours via le service canonique : son décrément est
+					// gardé par `usageCount > 0`, ce qu'un `update` direct ne fait pas (un
+					// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
+					const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, order.id);
 
 					await createOrderAuditTx(tx, {
 						orderId: order.id,
@@ -157,7 +147,7 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 						metadata: {
 							reason: "abandoned_checkout",
 							itemsCount: order.items.length,
-							releasedDiscountsCount: usages.length,
+							releasedDiscountsCount: releasedDiscountIds.length,
 							ageHours: Math.floor((Date.now() - order.createdAt.getTime()) / (60 * 60 * 1000)),
 						},
 					});
@@ -222,11 +212,28 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 		);
 	}
 
+	// WEBHOOK-AUDIT-003 — passe de rétention des artefacts webhook résolus.
+	// Le cron dédié `cleanup-webhook-events` a été retiré au right-sizing sans
+	// remplaçant : les deux tables croissaient sans borne, `WebhookEvent` étant de
+	// surcroît sur le chemin chaud de l'idempotence (lookup `stripeEventId @unique`
+	// à chaque livraison). Rattaché ici plutôt qu'à un 12ᵉ cron Vercel.
+	// Best-effort : un échec de purge ne doit jamais faire échouer l'annulation des
+	// commandes, qui est la raison d'être de ce cron.
+	let purgedWebhookRecords = 0;
+	try {
+		purgedWebhookRecords = await purgeExpiredWebhookRecords();
+	} catch (error) {
+		logger.error("Webhook retention pass failed", error, {
+			cronJob: "cleanup-pending-orders",
+		});
+	}
+
 	logger.info("Cleanup completed", {
 		cronJob: "cleanup-pending-orders",
 		processed,
 		errored,
 		stalePiPendingCount,
+		purgedWebhookRecords,
 	});
 
 	return {
@@ -236,4 +243,66 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 		hasMore: candidates.length === BATCH_SIZE_LARGE,
 		cancelled: processed,
 	};
+}
+
+/**
+ * WEBHOOK-AUDIT-003 — purge les artefacts webhook RÉSOLUS au-delà de
+ * `WEBHOOK_RECORD_RETENTION_MS` (90 j).
+ *
+ * Périmètre volontairement étroit :
+ *  - `PostWebhookTask` COMPLETED uniquement — une task FAILED (dead-letter épuisée)
+ *    est la seule trace d'un email jamais parti, on la conserve.
+ *  - `WebhookEvent` COMPLETED/SKIPPED uniquement — un FAILED reste éligible au cron
+ *    `retry-webhooks` ou documente un incident.
+ *  - Un `WebhookEvent` portant encore une task non-COMPLETED est épargné : sa
+ *    suppression déclencherait le `onDelete: SetNull` et couperait le lien d'audit
+ *    entre la task en souffrance et son événement d'origine.
+ *
+ * Batches bornés (`BATCH_SIZE_LARGE`) : le rattrapage s'étale sur plusieurs runs
+ * quotidiens plutôt que de tenir une transaction longue sur un backlog historique.
+ */
+async function purgeExpiredWebhookRecords(): Promise<number> {
+	const cutoff = new Date(Date.now() - THRESHOLDS.WEBHOOK_RECORD_RETENTION_MS);
+
+	// Les tasks d'abord : purger l'événement en premier nullifierait leur
+	// `webhookEventId` (SetNull) et rendrait la sélection ci-dessous inopérante.
+	const staleTasks = await prisma.postWebhookTask.findMany({
+		where: { status: PostWebhookTaskStatus.COMPLETED, createdAt: { lt: cutoff } },
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
+	});
+	let deleted = 0;
+	if (staleTasks.length > 0) {
+		const { count } = await prisma.postWebhookTask.deleteMany({
+			where: { id: { in: staleTasks.map((t) => t.id) } },
+		});
+		deleted += count;
+	}
+
+	const staleEvents = await prisma.webhookEvent.findMany({
+		where: {
+			status: { in: [WebhookEventStatus.COMPLETED, WebhookEventStatus.SKIPPED] },
+			receivedAt: { lt: cutoff },
+			postTasks: { none: { status: { not: PostWebhookTaskStatus.COMPLETED } } },
+		},
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
+	});
+	if (staleEvents.length > 0) {
+		const { count } = await prisma.webhookEvent.deleteMany({
+			where: { id: { in: staleEvents.map((e) => e.id) } },
+		});
+		deleted += count;
+	}
+
+	if (deleted > 0) {
+		logger.info("Purged expired webhook records", {
+			cronJob: "cleanup-pending-orders",
+			tasks: staleTasks.length,
+			events: staleEvents.length,
+			retentionDays: Math.round(THRESHOLDS.WEBHOOK_RECORD_RETENTION_MS / (24 * 60 * 60 * 1000)),
+		});
+	}
+
+	return deleted;
 }

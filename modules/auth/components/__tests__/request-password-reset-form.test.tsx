@@ -10,7 +10,8 @@ const { mockState, mockAction, mockIsPending, mockShake, mockCanSubmit, mockHand
 		mockIsPending: { value: false },
 		mockShake: { shake: false, onShakeComplete: vi.fn() },
 		mockCanSubmit: { value: true },
-		mockHandleSubmit: vi.fn(),
+		// Doit renvoyer une promesse : `useGatedFormSubmit` enchaîne dessus.
+		mockHandleSubmit: vi.fn(() => Promise.resolve()),
 	}));
 
 vi.mock("@/shared/components/forms", () => ({
@@ -63,7 +64,7 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
-		state: { isValid: true, values: { email: "" } },
+		state: { isValid: true, isSubmitting: false, values: { email: "" } },
 	}),
 }));
 
@@ -213,10 +214,15 @@ describe("RequestPasswordResetForm", () => {
 
 	// ─── VALIDATION_ERROR and INITIAL filters ─────────────────────────────────
 
-	it("does not show error alert for VALIDATION_ERROR status", () => {
+	// Le gate de soumission empêche tout envoi client invalide : une
+	// VALIDATION_ERROR serveur signale une divergence réelle et doit être visible
+	// inline (elle est exclue du toast par `createToastCallbacks`).
+	it("surfaces a VALIDATION_ERROR inline instead of swallowing it", () => {
 		mockState.value = { status: "validation_error", message: "Champ invalide" };
 		render(<RequestPasswordResetForm />);
-		expect(screen.queryByTestId("error-alert")).toBeNull();
+		const alert = screen.getByTestId("error-alert");
+		expect(alert).toHaveTextContent("Champ invalide");
+		expect(alert).toHaveAttribute("aria-live", "assertive");
 		expect(screen.queryByTestId("success-alert")).toBeNull();
 	});
 

@@ -87,6 +87,8 @@ export async function buildUserDataExport(userId: string): Promise<UserDataExpor
 			email: user.email,
 			createdAt: user.createdAt.toISOString(),
 			termsAcceptedAt: user.termsAcceptedAt?.toISOString() ?? null,
+			termsVersion: user.termsVersion,
+			marketingOptOutAt: user.marketingOptOutAt?.toISOString() ?? null,
 		},
 		addresses: user.addresses.map((addr) => ({
 			firstName: addr.firstName,

@@ -44,6 +44,11 @@ const {
 	mockGetBaseUrl: vi.fn(),
 }));
 
+vi.mock("@/modules/refunds/services/ensure-credit-note-archived.service", () => ({
+	// EINV-CREDIT-020 : archivage eager best-effort post-avoir — mocke pour ne
+	// pas tirer la chaîne UploadThing (UTApi server-only) en test unitaire.
+	ensureRefundCreditNoteArchived: vi.fn().mockResolvedValue("archived"),
+}));
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
@@ -95,6 +100,24 @@ vi.mock("@/shared/constants/urls", () => ({
 // Mock stripe to avoid API key requirement from transitive imports
 vi.mock("@/shared/lib/stripe", () => ({
 	stripe: {},
+}));
+
+// Audit F4 (2026-07-02) : capture de l'alerte over-refund (montant remboursé
+// Stripe > total + trop-perçu). withScope exécute le callback avec un scope
+// factice pour que setTag/setContext ne throw pas.
+const mockSentryCaptureMessage = vi.hoisted(() => vi.fn());
+vi.mock("@sentry/nextjs", () => ({
+	withScope: (cb: (scope: unknown) => void) =>
+		cb({
+			setLevel: vi.fn(),
+			setTag: vi.fn(),
+			setFingerprint: vi.fn(),
+			setContext: vi.fn(),
+		}),
+	captureMessage: mockSentryCaptureMessage,
+	captureException: vi.fn(),
+	// shared/lib/logger.ts pousse un breadcrumb Sentry sur warn/error.
+	addBreadcrumb: vi.fn(),
 }));
 
 // Mock voidInvoice (ORD-COMPLY-003 — cycle VOIDED post charge.refunded)
@@ -242,6 +265,50 @@ describe("handleChargeRefunded", () => {
 		await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
 
 		expect(mockUpdateOrderPaymentStatus).toHaveBeenCalledWith("order-1", 10000, 10000);
+	});
+
+	// Audit F4 (montant Stripe vs commande, 2026-07-02) : sur-remboursement =
+	// cumul remboursé Stripe > order.total + trop-perçu connu → alerte Sentry.
+	it("[F4] alerts (Sentry) when total refunded exceeds order.total + overbilled amount", async () => {
+		const order = makeOrder({ total: 10000, overbilledAmountCents: 500 });
+		mockPrisma.order.findFirst.mockResolvedValue(order);
+		mockSyncStripeRefunds.mockResolvedValue(undefined);
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+
+		await handleChargeRefunded(makeCharge({ amount_refunded: 11000 }));
+
+		expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
+			expect.stringContaining("Over-refund"),
+			"error",
+		);
+	});
+
+	it("[F4] does NOT alert when total refunded equals order.total + overbilled amount", async () => {
+		const order = makeOrder({ total: 10000, overbilledAmountCents: 500 });
+		mockPrisma.order.findFirst.mockResolvedValue(order);
+		mockSyncStripeRefunds.mockResolvedValue(undefined);
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+
+		await handleChargeRefunded(makeCharge({ amount_refunded: 10500 }));
+
+		expect(mockSentryCaptureMessage).not.toHaveBeenCalledWith(
+			expect.stringContaining("Over-refund"),
+			expect.anything(),
+		);
+	});
+
+	it("[F4] does NOT alert on a full refund without overbilling", async () => {
+		const order = makeOrder({ total: 10000, overbilledAmountCents: null });
+		mockPrisma.order.findFirst.mockResolvedValue(order);
+		mockSyncStripeRefunds.mockResolvedValue(undefined);
+		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
+
+		await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
+
+		expect(mockSentryCaptureMessage).not.toHaveBeenCalledWith(
+			expect.stringContaining("Over-refund"),
+			expect.anything(),
+		);
 	});
 
 	it("should include userId cache tag when userId exists", async () => {

@@ -63,7 +63,7 @@ export async function deleteDiscount(
 
 		await softDelete.discount(id);
 
-		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(discount.id, discount.code).forEach((tag) => updateTag(tag));
 
 		return success(`Code promo "${discount.code}" supprimé`);
 	} catch (e) {

@@ -2,7 +2,8 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { handleActionError, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -47,11 +48,15 @@ export const requestPasswordReset = async (
 			});
 
 			return success(GENERIC_SUCCESS_MESSAGE);
-		} catch {
+		} catch (err) {
 			// Succès même en cas d'erreur pour ne pas révéler d'information
+			// (anti-énumération) — mais on logue l'erreur technique côté serveur.
+			logger.error("Password reset request failed", err, { service: "requestPasswordReset" });
 			return success(GENERIC_SUCCESS_MESSAGE);
 		}
-	} catch {
-		return error("Une erreur inattendue est survenue");
+	} catch (err) {
+		return handleActionError(err, "Une erreur inattendue est survenue", {
+			service: "requestPasswordReset",
+		});
 	}
 };

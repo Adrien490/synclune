@@ -117,7 +117,6 @@ describe("clearCart", () => {
 				data: expect.objectContaining({
 					appliedDiscountCode: null,
 					discountAmountCache: null,
-					notes: null,
 				}),
 			}),
 		);

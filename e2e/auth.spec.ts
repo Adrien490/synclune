@@ -57,7 +57,7 @@ test.describe("Authentification - Connexion", { tag: ["@critical"] }, () => {
 		await authPage.emailInput.fill("invalide");
 		await authPage.emailInput.blur();
 
-		const errorMessage = page.getByText(/Format d'email invalide|email invalide/i);
+		const errorMessage = page.getByText(/Vérifiez le format de votre email|email invalide/i);
 		await expect(errorMessage).toBeVisible();
 	});
 
@@ -68,15 +68,47 @@ test.describe("Authentification - Connexion", { tag: ["@critical"] }, () => {
 		await authPage.emailInput.fill("ceci-nest-pas-un-email");
 		await authPage.emailInput.blur();
 
-		const errorMessage = page.getByText(/Format d'email invalide/i);
+		// Message du SSOT `emailSchema` (partagé avec la Server Action).
+		const errorMessage = page.getByText(/Vérifiez le format de votre email/i);
 		await expect(errorMessage).toBeVisible();
+	});
+
+	/**
+	 * @regression gated-form-submit — une soumission invalide ne consomme pas de
+	 * tentative de connexion.
+	 *
+	 * `sign-in-email.ts` applique son rate limit (5 essais / 15 min par IP) avant
+	 * toute validation : tant que le client laissait partir un formulaire invalide,
+	 * cinq fautes de frappe verrouillaient un utilisateur qui avait pourtant le bon
+	 * mot de passe.
+	 */
+	test("une soumission invalide n'envoie aucune requête au serveur", async ({ page, authPage }) => {
+		const serverActionRequests: string[] = [];
+		page.on("request", (request) => {
+			// Une Server Action est un POST sur l'URL de la page courante.
+			if (request.method() === "POST" && request.url().includes("/connexion")) {
+				serverActionRequests.push(request.url());
+			}
+		});
+
+		await authPage.emailInput.fill("pas-un-email");
+		await authPage.passwordInput.fill("motdepasse");
+
+		// Trois tentatives : sous l'ancien comportement, trois essais consommés.
+		for (let i = 0; i < 3; i++) {
+			await authPage.submitButton.click({ force: true });
+			await page.waitForTimeout(200);
+		}
+
+		expect(serverActionRequests).toHaveLength(0);
+		await expect(page).toHaveURL(/\/connexion/);
 	});
 
 	test("un email valide ne déclenche pas d'erreur de format", async ({ page, authPage }) => {
 		await authPage.emailInput.fill("test@example.com");
 		await authPage.emailInput.blur();
 
-		const errorMessage = page.getByText(/Format d'email invalide/i);
+		const errorMessage = page.getByText(/Vérifiez le format de votre email/i);
 		await expect(errorMessage).not.toBeVisible();
 	});
 });

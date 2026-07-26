@@ -149,7 +149,9 @@ export async function handleDisputeCreated(
 		// ORD-REFUND-011: flag suspicious dispute (déjà remboursée → potentielle double dépense)
 		const alreadyRefunded = order.paymentStatus === PaymentStatus.REFUNDED;
 
-		// Prevent duplicate OrderNote on webhook replay
+		// Fast path anti-rejeu : évite d'ouvrir une transaction sur une redélivrance
+		// séquentielle. NON autoritatif (lecture hors verrou) — la garde qui décide
+		// est rejouée sous `FOR UPDATE` dans la transaction (IDEM-DISPUTE-001).
 		const existingNote = await prisma.orderNote.findFirst({
 			where: {
 				orderId: order.id,
@@ -175,8 +177,25 @@ export async function handleDisputeCreated(
 			? new Date(dispute.evidence_details.due_by * 1000)
 			: null;
 
-		await prisma.$transaction(
+		const created = await prisma.$transaction(
 			async (tx) => {
+				// IDEM-DISPUTE-001 (audit idempotence 2026-07-26) : sérialise sur la ligne
+				// Order les dispatches concurrents du MÊME event (fenêtre route/cron sur un
+				// event FAILED, cf. IDEM-ROUTE-001), puis rejoue la garde SOUS le verrou.
+				// Sans ça, deux exécutions parallèles passaient toutes deux le findFirst
+				// hors-tx → 2 OrderNote + P2002 non catché sur Dispute.stripeDisputeId.
+				await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${order.id} FOR UPDATE`;
+
+				const concurrentNote = await tx.orderNote.findFirst({
+					where: {
+						orderId: order.id,
+						content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
+					},
+					select: { id: true },
+				});
+
+				if (concurrentNote) return null;
+
 				const createdDispute = await tx.dispute.create({
 					data: {
 						stripeDisputeId: dispute.id,
@@ -217,10 +236,22 @@ export async function handleDisputeCreated(
 						alreadyRefunded,
 					},
 				});
+
+				return { disputeId: createdDispute.id };
 			},
 			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
+
+		// IDEM-DISPUTE-001 : claim perdu sous le verrou → un dispatch concurrent a déjà
+		// tout écrit. Pas de 2ᵉ alerte admin (l'autre l'a émise).
+		if (!created) {
+			logger.info(
+				`[WEBHOOK] Dispute ${dispute.id} already recorded by a concurrent dispatch, skipping`,
+				{ service: "webhook" },
+			);
+			return { success: true, skipped: true, reason: "Dispute note already created" };
+		}
 
 		logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
 			service: "webhook",
@@ -307,7 +338,7 @@ export async function handleDisputeClosed(
 				paymentStatus: true,
 				total: true,
 				// CACHE-AUDIT-010 : requis pour invalider les tags user-scopés
-				// (USER_ORDERS/LAST_ORDER/ACCOUNT_STATS) quand un chargeback perdu
+				// (USER_ORDERS/LAST_ORDER) quand un chargeback perdu
 				// mute paymentStatus → REFUNDED/PARTIALLY_REFUNDED.
 				userId: true,
 			},
@@ -324,7 +355,10 @@ export async function handleDisputeClosed(
 			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
-		// Prevent duplicate OrderNote on webhook replay
+		// Fast path anti-rejeu : évite d'ouvrir une transaction sur une redélivrance
+		// séquentielle. NON autoritatif — la garde qui décide est rejouée sous
+		// `FOR UPDATE` dans la transaction (IDEM-DISPUTE-001), car c'est ici que se
+		// matérialisent le Refund chargeback, l'avoir et la ligne DGFiP.
 		const existingNote = await prisma.orderNote.findFirst({
 			where: {
 				orderId: order.id,
@@ -367,8 +401,28 @@ export async function handleDisputeClosed(
 		// présente (sans écraser une valeur déjà posée par funds_withdrawn).
 		const closedFee = dispute.balance_transactions[0]?.fee ?? 0;
 
-		const lostOutcome = await prisma.$transaction(
+		const outcome = await prisma.$transaction(
 			async (tx) => {
+				// IDEM-DISPUTE-001 (audit idempotence 2026-07-26) — P0. Cette transaction
+				// matérialise un Refund COMPLETED (donc un avoir A-YYYY + une ligne DGFiP,
+				// tous deux scopés AU REFUND et donc incapables de dédupliquer entre eux).
+				// Le seul garde-fou était un findFirst sur préfixe de note, HORS transaction :
+				// deux dispatches concurrents du même event (fenêtre route/cron, cf.
+				// IDEM-ROUTE-001) le passaient tous deux → 2 avoirs + 2 déclarations pour une
+				// seule reprise de fonds Stripe. On sérialise sur la ligne Order puis on
+				// rejoue la garde SOUS le verrou : un seul gagnant, sans migration.
+				await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${order.id} FOR UPDATE`;
+
+				const concurrentNote = await tx.orderNote.findFirst({
+					where: {
+						orderId: order.id,
+						content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
+					},
+					select: { id: true },
+				});
+
+				if (concurrentNote) return { skipped: true as const };
+
 				// Update Dispute record if it exists
 				const existingDispute = await tx.dispute.findUnique({
 					where: { stripeDisputeId: dispute.id },
@@ -463,7 +517,10 @@ export async function handleDisputeClosed(
 						},
 					});
 
-					return { chargebackRefundId: chargebackRefund.id, isFullReclaim, alreadyRefunded };
+					return {
+						skipped: false as const,
+						lost: { chargebackRefundId: chargebackRefund.id, isFullReclaim, alreadyRefunded },
+					};
 				}
 
 				// Clôture sans débit (won / warning_closed / charge_refunded) : pas de
@@ -485,11 +542,23 @@ export async function handleDisputeClosed(
 					},
 				});
 
-				return null;
+				return { skipped: false as const, lost: null };
 			},
 			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
+
+		// IDEM-DISPUTE-001 : garde perdue sous le verrou → un dispatch concurrent a déjà
+		// bookè la clôture. Ne PAS enchaîner avoir / e-reporting (ce serait le doublon).
+		if (outcome.skipped) {
+			logger.info(
+				`[WEBHOOK] Dispute ${dispute.id} closure already booked by a concurrent dispatch, skipping`,
+				{ service: "webhook" },
+			);
+			return { success: true, skipped: true, reason: "Dispute closed note already created" };
+		}
+
+		const lostOutcome = outcome.lost;
 
 		logger.info(
 			`${isLoss ? "❌" : "✅"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
@@ -611,7 +680,7 @@ export async function handleDisputeClosed(
 		// CACHE-AUDIT-010 : sur un chargeback perdu, `paymentStatus` passe
 		// REFUNDED/PARTIALLY_REFUNDED (cf. lostOutcome) → passer par le helper
 		// canonique pour couvrir le détail commande (DETAIL/CONFIRMATION/HISTORY)
-		// ET l'espace client user-scopé (USER_ORDERS/LAST_ORDER/ACCOUNT_STATS).
+		// ET l'espace client user-scopé (USER_ORDERS/LAST_ORDER).
 		// Une liste manuelle laissait la commande affichée PAID côté client jusqu'à
 		// l'expiration du profil `user` (~10 min). NOTES n'est pas couvert par le
 		// helper (audit interne) → ajouté explicitement.

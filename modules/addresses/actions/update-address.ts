@@ -47,7 +47,8 @@ export async function updateAddress(
 			address2: safeFormGet(formData, "address2") ?? null,
 			postalCode: safeFormGet(formData, "postalCode"),
 			city: safeFormGet(formData, "city"),
-			country: safeFormGet(formData, "country"),
+			// null (clé absente) ferait échouer z.enum ; undefined laisse jouer le .default("FR")
+			country: safeFormGet(formData, "country") ?? undefined,
 			phone: safeFormGet(formData, "phone"),
 		};
 

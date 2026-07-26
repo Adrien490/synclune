@@ -11,6 +11,7 @@ import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
 import { ProductsLoadMore } from "./products-load-more";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 import {
@@ -113,7 +114,7 @@ export function ProductList({
 						url,
 						price: (priceCents / 100).toFixed(2),
 						priceCurrency: "EUR",
-						availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+						availability: getOfferAvailability(inStock),
 						itemCondition: "https://schema.org/NewCondition",
 					},
 				}),
@@ -154,7 +155,8 @@ export function ProductList({
 			{/* P8: Grille des produits avec animation stagger */}
 			<StaggerGrid
 				id="products-list"
-				role="list"
+				as="ul"
+				itemAs="li"
 				aria-label="Liste des produits"
 				className="grid grid-cols-2 gap-4 transition-[opacity,filter,transform] duration-300 ease-out outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.98] group-has-[[data-pending]]/container:opacity-40 group-has-[[data-pending]]/container:blur-[2px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5"
 				inView={false}
@@ -162,7 +164,6 @@ export function ProductList({
 				{products.map((product, index) => (
 					<div
 						key={product.id}
-						role="listitem"
 						className="product-item"
 						style={{ "--item-index": index } as React.CSSProperties}
 					>

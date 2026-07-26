@@ -7,7 +7,9 @@ const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls, mockLogge
 			product: { findMany: vi.fn(), deleteMany: vi.fn() },
 			reviewMedia: { findMany: vi.fn() },
 			skuMedia: { findMany: vi.fn() },
-			order: { findMany: vi.fn() },
+			order: { findMany: vi.fn(), updateMany: vi.fn() },
+			refund: { updateMany: vi.fn() },
+			orderNote: { updateMany: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockUpdateTag: vi.fn(),
@@ -38,6 +40,11 @@ vi.mock("@/shared/lib/logger", () => ({
 
 import { hardDeleteExpiredRecords } from "../hard-delete-retention.service";
 import { BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
+import {
+	ORDER_PII_SCRUB,
+	PURGED_ORDER_NOTE_CONTENT,
+	REFUND_PII_SCRUB,
+} from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -53,6 +60,9 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.orderNote.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.$transaction.mockResolvedValue([{ count: 0 }, { count: 0 }]);
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
 	});
@@ -218,7 +228,7 @@ describe("hardDeleteExpiredRecords", () => {
 		vi.spyOn(Date, "now").mockRestore();
 	});
 
-	it("purges order PII past 10-year retention: deletes PDFs FIRST, then scrubs + sets piiPurgedAt", async () => {
+	it("purges order PII past 10-year retention: deletes PDFs FIRST (incl. per-refund credit notes), then scrubs Order+Refund+OrderNote + sets piiPurgedAt", async () => {
 		// 1st findMany = paid purge, 2nd findMany = unpaid (abandoned) purge → empty here.
 		mockPrisma.order.findMany
 			.mockResolvedValueOnce([
@@ -226,29 +236,49 @@ describe("hardDeleteExpiredRecords", () => {
 					id: "order-1",
 					invoicePdfUrl: "https://utfs.io/f/invoice-1",
 					creditNotePdfUrl: "https://utfs.io/f/credit-1",
+					// Avoir PARTIEL par-refund (audit rétention PII 2026-07-09) : son PDF
+					// porte l'identité acheteur et DOIT partir dans le même lot.
+					refunds: [{ creditNotePdfUrl: "https://utfs.io/f/refund-credit-1" }],
 				},
-				{ id: "order-2", invoicePdfUrl: "https://utfs.io/f/invoice-2", creditNotePdfUrl: null },
+				{
+					id: "order-2",
+					invoicePdfUrl: "https://utfs.io/f/invoice-2",
+					creditNotePdfUrl: null,
+					refunds: [{ creditNotePdfUrl: null }],
+				},
 			])
 			.mockResolvedValueOnce([]);
-		// paid-purge scrub tx runs first → single { count }, then the review/product tx → array.
+		// paid-purge scrub tx runs first (callback exécuté pour observer les scrubs
+		// internes Refund/OrderNote/Order), then the review/product tx → array.
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 2 });
 		mockPrisma.$transaction
-			.mockResolvedValueOnce({ count: 2 })
+			.mockImplementationOnce(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+				fn(mockPrisma),
+			)
 			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
-		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 3, failed: 0 });
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 4, failed: 0 });
 
 		const result = await hardDeleteExpiredRecords();
 
-		// Selection: only paid orders past cutoff, not yet purged.
+		// Selection: only paid orders past cutoff, not yet purged (+ per-refund PDFs).
 		const orderCall = mockPrisma.order.findMany.mock.calls[0]![0];
 		expect(orderCall.where.piiPurgedAt).toBeNull();
 		expect(orderCall.where.paidAt.lt).toBeInstanceOf(Date);
+		expect(orderCall.select.refunds).toEqual({ select: { creditNotePdfUrl: true } });
 
-		// Archived PDFs (invoice + credit note) deleted from UploadThing.
-		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
-			"https://utfs.io/f/invoice-1",
-			"https://utfs.io/f/credit-1",
-			"https://utfs.io/f/invoice-2",
-		]);
+		// Archived PDFs (invoice + credit note + refund credit notes) deleted from UploadThing.
+		// `allowFiscalArchives` est OBLIGATOIRE ici (audit média M7) : le service refuse
+		// par défaut de supprimer un PDF encore référencé par Order/Refund. Ce cron est
+		// le seul effaceur légitime — la rétention 10 ans (Art. L102 B LPF) est échue.
+		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith(
+			[
+				"https://utfs.io/f/invoice-1",
+				"https://utfs.io/f/credit-1",
+				"https://utfs.io/f/refund-credit-1",
+				"https://utfs.io/f/invoice-2",
+			],
+			{ allowFiscalArchives: true },
+		);
 
 		// F-B: PDF deletion must precede the scrub tx (so the pointer is never nulled
 		// before the file is gone). deleteUploadThing is invoked before the scrub $transaction.
@@ -256,7 +286,22 @@ describe("hardDeleteExpiredRecords", () => {
 		const scrubTxOrder = mockPrisma.$transaction.mock.invocationCallOrder[0]!;
 		expect(deleteOrder).toBeLessThan(scrubTxOrder);
 
-		expect(result).toMatchObject({ ordersPurged: 2, orderPdfsDeleted: 3 });
+		// Scrub atomique dans la tx : Refund (avoirs + note), OrderNote (texte libre),
+		// Order (payload complet + sentinel piiPurgedAt).
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { orderId: { in: ["order-1", "order-2"] } },
+			data: { ...REFUND_PII_SCRUB },
+		});
+		expect(mockPrisma.orderNote.updateMany).toHaveBeenCalledWith({
+			where: { orderId: { in: ["order-1", "order-2"] } },
+			data: { content: PURGED_ORDER_NOTE_CONTENT },
+		});
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["order-1", "order-2"] }, piiPurgedAt: null },
+			data: { ...ORDER_PII_SCRUB, piiPurgedAt: expect.any(Date) },
+		});
+
+		expect(result).toMatchObject({ ordersPurged: 2, orderPdfsDeleted: 4 });
 	});
 
 	it("F-B: defers the PII scrub when PDF deletion fails (keeps pointers + piiPurgedAt NULL for retry)", async () => {
@@ -266,6 +311,7 @@ describe("hardDeleteExpiredRecords", () => {
 					id: "order-1",
 					invoicePdfUrl: "https://utfs.io/f/invoice-1",
 					creditNotePdfUrl: null,
+					refunds: [],
 				},
 			])
 			.mockResolvedValueOnce([]);
@@ -277,7 +323,9 @@ describe("hardDeleteExpiredRecords", () => {
 
 		// No scrub tx ran (only the review/product tx → single $transaction call).
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-		expect(result).toMatchObject({ ordersPurged: 0 });
+		// G3 (audit) : un échec de suppression PDF doit remonter en `errored` pour
+		// déclencher l'alerte admin via withCronGuard (sinon échec silencieux).
+		expect(result).toMatchObject({ ordersPurged: 0, errored: 1 });
 		expect(mockLogger.warn).toHaveBeenCalledWith(
 			expect.stringContaining("Order PII scrub deferred"),
 			expect.objectContaining({ cronJob: "hard-delete-retention" }),
@@ -287,7 +335,12 @@ describe("hardDeleteExpiredRecords", () => {
 	it("F-B: defers the PII scrub when PDF deletion throws (logs error, no scrub)", async () => {
 		mockPrisma.order.findMany
 			.mockResolvedValueOnce([
-				{ id: "order-1", invoicePdfUrl: "https://utfs.io/f/invoice-1", creditNotePdfUrl: null },
+				{
+					id: "order-1",
+					invoicePdfUrl: "https://utfs.io/f/invoice-1",
+					creditNotePdfUrl: null,
+					refunds: [],
+				},
 			])
 			.mockResolvedValueOnce([]);
 		mockPrisma.$transaction.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
@@ -296,7 +349,8 @@ describe("hardDeleteExpiredRecords", () => {
 		const result = await hardDeleteExpiredRecords();
 
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-		expect(result).toMatchObject({ ordersPurged: 0 });
+		// G3 (audit) : un échec PDF (throw) doit aussi remonter en `errored`.
+		expect(result).toMatchObject({ ordersPurged: 0, errored: 1 });
 		expect(mockLogger.error).toHaveBeenCalledWith(
 			expect.stringContaining("Failed to delete invoice/credit-note PDFs"),
 			expect.any(Error),

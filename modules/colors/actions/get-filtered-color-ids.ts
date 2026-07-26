@@ -9,12 +9,6 @@ import { BULK_COLOR_ACTION_LIMIT } from "../constants/color.constants";
 import { buildColorWhereClause } from "../services/color-query-builder";
 import type { GetColorsParams } from "../types/color.types";
 
-export interface FilteredColorIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Bypass `getColors` (qui charge _count.skus) — ici on

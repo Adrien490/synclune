@@ -111,9 +111,22 @@ export async function archiveInvoicePdf(
 		// Audit-tracé : INVOICE_ARCHIVED dans la même tx que l'update Order.
 		// (EINV-PDF-006 — Art. L123-22 : mutations critiques du dossier comptable
 		// doivent apparaître dans OrderHistory, ici l'archivage du PDF).
-		await prisma.$transaction(async (tx) => {
-			await tx.order.update({
-				where: { id: orderId },
+		// IDEM-PDF-001 (audit idempotence 2026-07-02) : le check d'existence en
+		// tête de fonction est HORS transaction — une course eager (webhook) vs
+		// lazy (route download) vs Passe 2 cron uploadait deux fichiers puis
+		// écrasait la colonne (last-write-wins) + doublait l'audit
+		// INVOICE_ARCHIVED. Le claim `updateMany({invoicePdfUrl: null})`
+		// ré-évalue le prédicat au lock de ligne : un seul archiveur gagne,
+		// le perdant supprime son upload orphelin et sert l'archive gagnante.
+		const claim = await prisma.$transaction(async (tx) => {
+			const claimed = await tx.order.updateMany({
+				// IDEM-PDF-002 (audit idempotence 2026-07-26) : le prédicat doit couvrir les
+				// MÊMES cas que l'early-return d'entrée (`url && hash`). Avec `url: null`
+				// seul, une ligne mi-archivée (`url` posée, `hash` NULL — legacy ou crash
+				// entre deux écritures) échouait l'early-return, uploadait, perdait le claim,
+				// supprimait son upload et retournait `null` — à CHAQUE appel, sans jamais
+				// réparer le hash. En couvrant `hash: null`, le run répare.
+				where: { id: orderId, OR: [{ invoicePdfUrl: null }, { invoicePdfHash: null }] },
 				data: {
 					invoicePdfUrl: data.ufsUrl,
 					invoicePdfHash: hash,
@@ -123,6 +136,9 @@ export async function archiveInvoicePdf(
 					invoiceRetryDeferred: false,
 				},
 			});
+			if (claimed.count === 0) {
+				return { won: false as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId,
@@ -135,7 +151,27 @@ export async function archiveInvoicePdf(
 					invoicePdfHash: hash,
 				},
 			});
+			return { won: true as const };
 		});
+
+		if (!claim.won) {
+			// Un archiveur concurrent a gagné : notre fichier est orphelin.
+			// Suppression best-effort (cleanup-orphan-media rattrape sinon).
+			if (data.key) {
+				await utapi.deleteFiles([data.key]).catch(() => {});
+			}
+			const current = await prisma.order.findUnique({
+				where: { id: orderId },
+				select: { invoicePdfUrl: true, invoicePdfHash: true },
+			});
+			if (current?.invoicePdfUrl && current.invoicePdfHash) {
+				return {
+					invoicePdfUrl: current.invoicePdfUrl,
+					invoicePdfHash: current.invoicePdfHash,
+				};
+			}
+			return null;
+		}
 
 		return { invoicePdfUrl: data.ufsUrl, invoicePdfHash: hash };
 	} catch (error) {

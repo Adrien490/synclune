@@ -663,23 +663,17 @@ describe("useMarkAsShippedForm", () => {
 		mockMarkAsShipped.mockResolvedValue({ ...SUCCESS, message: "Commande expédiée" });
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending is false initially", () => {
 		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
 		expect(result.current.isPending).toBe(false);
-	});
-
-	it("formErrors is an empty array initially", () => {
-		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
-		expect(result.current.formErrors).toHaveLength(0);
 	});
 
 	it("accepts an onSuccess callback option without error", () => {
@@ -862,23 +856,17 @@ describe("useUpdateTrackingForm", () => {
 		mockUpdateTracking.mockResolvedValue({ ...SUCCESS, message: "Tracking mis à jour" });
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending is false initially", () => {
 		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
 		expect(result.current.isPending).toBe(false);
-	});
-
-	it("formErrors is an empty array initially", () => {
-		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
-		expect(result.current.formErrors).toHaveLength(0);
 	});
 
 	it("accepts initial tracking values without error", () => {

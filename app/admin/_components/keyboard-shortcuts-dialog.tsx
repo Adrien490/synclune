@@ -10,6 +10,7 @@ import {
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect } from "react";
+import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "./keyboard-shortcuts.constants";
 
 interface ShortcutEntry {
 	keys: ReadonlyArray<string>;
@@ -55,8 +56,6 @@ const SHORTCUT_GROUPS: ReadonlyArray<ShortcutGroup> = [
 	},
 ];
 
-const DIALOG_ID = "admin-keyboard-shortcuts";
-
 function isInteractiveTarget(target: EventTarget | null): boolean {
 	if (!(target instanceof HTMLElement)) return false;
 	const tag = target.tagName;
@@ -70,7 +69,7 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
  * Skip les inputs/textareas/contenteditable pour ne pas intercepter la saisie.
  */
 export function KeyboardShortcutsDialog() {
-	const { isOpen, open, close } = useDialog(DIALOG_ID);
+	const { isOpen, open, close } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
 
 	useEffect(() => {
 		function onKeyDown(event: KeyboardEvent) {
@@ -128,5 +127,3 @@ export function KeyboardShortcutsDialog() {
 		</Dialog>
 	);
 }
-
-export const KEYBOARD_SHORTCUTS_DIALOG_ID = DIALOG_ID;

@@ -10,8 +10,8 @@ import {
 	DrawingIllustration,
 	FinishingIllustration,
 	IdeaIllustration,
-	STEP_ILLUSTRATIONS,
 } from "../step-illustrations";
+import { STEP_ILLUSTRATIONS } from "../step-illustrations-map";
 
 afterEach(() => {
 	cleanup();

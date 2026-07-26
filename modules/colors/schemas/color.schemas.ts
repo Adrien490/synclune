@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
 	COLOR_SEARCH_MAX_LENGTH,

@@ -1,74 +1,42 @@
-import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const useInViewMock = vi.fn((..._args: unknown[]) => true);
 
 vi.mock("motion/react", () => ({
-	useInView: vi.fn(() => true),
+	useInView: (...args: unknown[]) => useInViewMock(...args),
 }));
 
 const { useParticleVisibility } = await import("../use-particle-visibility");
-
-beforeEach(() => {
-	Object.defineProperty(document, "visibilityState", {
-		value: "visible",
-		writable: true,
-		configurable: true,
-	});
-});
 
 afterEach(() => {
 	vi.clearAllMocks();
 });
 
 describe("useParticleVisibility", () => {
-	it("returns a containerRef and initial isInView=true (viewport mocked)", () => {
-		const { result } = renderHook(() => useParticleVisibility({ pauseWhenHidden: true }));
+	it("returns a containerRef and isInView from useInView", () => {
+		const { result } = renderHook(() => useParticleVisibility());
 		expect(result.current.containerRef).toBeDefined();
 		expect(result.current.isInView).toBe(true);
 	});
 
-	it("does not attach visibilitychange listener when pauseWhenHidden=false", () => {
-		const addSpy = vi.spyOn(document, "addEventListener");
-		renderHook(() => useParticleVisibility({ pauseWhenHidden: false }));
-		const calls = addSpy.mock.calls.filter(([evt]) => evt === "visibilitychange");
-		expect(calls).toHaveLength(0);
-		addSpy.mockRestore();
-	});
-
-	it("attaches visibilitychange listener when pauseWhenHidden=true", () => {
-		const addSpy = vi.spyOn(document, "addEventListener");
-		renderHook(() => useParticleVisibility({ pauseWhenHidden: true }));
-		const calls = addSpy.mock.calls.filter(([evt]) => evt === "visibilitychange");
-		expect(calls.length).toBeGreaterThan(0);
-		addSpy.mockRestore();
-	});
-
-	it("toggles isInView when document visibility changes (pauseWhenHidden=true)", () => {
-		const { result, rerender } = renderHook(() => useParticleVisibility({ pauseWhenHidden: true }));
-		expect(result.current.isInView).toBe(true);
-
-		act(() => {
-			Object.defineProperty(document, "visibilityState", {
-				value: "hidden",
-				writable: true,
-				configurable: true,
-			});
-			document.dispatchEvent(new Event("visibilitychange"));
-		});
-		rerender();
+	it("reflects useInView=false (container out of viewport)", () => {
+		useInViewMock.mockReturnValueOnce(false);
+		const { result } = renderHook(() => useParticleVisibility());
 		expect(result.current.isInView).toBe(false);
 	});
 
-	it("keeps isInView=true on tab hidden when pauseWhenHidden=false", () => {
-		const { result } = renderHook(() => useParticleVisibility({ pauseWhenHidden: false }));
+	it("does not shrink the viewport with a margin (no pop-out while partially visible)", () => {
+		renderHook(() => useParticleVisibility());
+		const options = useInViewMock.mock.calls[0]?.[1] as { margin?: string } | undefined;
+		expect(options?.margin).toBeUndefined();
+	});
 
-		act(() => {
-			Object.defineProperty(document, "visibilityState", {
-				value: "hidden",
-				writable: true,
-				configurable: true,
-			});
-			document.dispatchEvent(new Event("visibilitychange"));
-		});
-		expect(result.current.isInView).toBe(true);
+	it("does not attach a visibilitychange listener (rAF is already throttled in hidden tabs)", () => {
+		const addSpy = vi.spyOn(document, "addEventListener");
+		renderHook(() => useParticleVisibility());
+		const calls = addSpy.mock.calls.filter(([evt]) => evt === "visibilitychange");
+		expect(calls).toHaveLength(0);
+		addSpy.mockRestore();
 	});
 });

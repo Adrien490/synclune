@@ -14,6 +14,7 @@
  */
 import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
+import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ORDER_CANCEL_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -22,6 +23,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
@@ -99,43 +101,49 @@ export async function cancelOrderCustomer(
 				return { ...found, _error: errorType };
 			}
 
-			const newPaymentStatus =
-				found.paymentStatus === PaymentStatus.PAID ? PaymentStatus.REFUNDED : found.paymentStatus;
+			// AUDIT-BIZ-001 : cette action portait un `paymentStatus === PAID ?
+			// REFUNDED : …` qui aurait marqué la commande remboursée SANS créer de
+			// refund Stripe ni de ligne `Refund` — et sans restocker, la justification
+			// STOCK-01 ci-dessous (« une PENDING n'a jamais décrémenté ») étant fausse
+			// pour une PENDING+PAID. Le cas est aujourd'hui inatteignable (toute
+			// transition PAID pose aussi `status = PROCESSING` : webhook
+			// `processOrderAtomically` + action admin `markAsPaid`), donc plutôt que de
+			// « gérer » silencieusement un état incohérent avec un flip d'enum
+			// mensonger, on refuse et on alerte : un remboursement doit passer par le
+			// module `refunds`, jamais par une mutation de statut.
+			if (found.paymentStatus === PaymentStatus.PAID) {
+				return { ...found, _error: "pending_but_paid" as const };
+			}
+			const newPaymentStatus = found.paymentStatus;
 
-			// Update order status
-			await tx.order.update({
-				where: { id },
+			// Update order status.
+			// IDEM-CANCEL-001 : précondition status=PENDING ré-évaluée au lock de
+			// ligne — deux soumissions concurrentes (double-clic) passaient toutes
+			// deux la gate lue en read-committed et ré-appliquaient l'annulation
+			// (double décrément usageCount discount). count===0 ⇒ un concurrent a
+			// déjà muté la commande : abort avant libération des codes promo.
+			const claimed = await tx.order.updateMany({
+				where: { id, status: OrderStatus.PENDING },
 				data: {
 					status: OrderStatus.CANCELLED,
 					paymentStatus: newPaymentStatus,
 				},
 			});
-
-			// Restore stock (order is PENDING, no physical fulfillment)
-			for (const item of found.items) {
-				await tx.productSku.update({
-					where: { id: item.skuId },
-					data: {
-						inventory: { increment: item.quantity },
-					},
-				});
+			if (claimed.count === 0) {
+				return { ...found, _error: "not_pending" as const };
 			}
+
+			// STOCK-01 : NE PAS restocker. Cette action n'accepte QUE des commandes
+			// PENDING (gate ligne 94). En réservation optimiste, le stock n'est décrémenté
+			// qu'au passage PAID (webhook / mark-as-paid) — une commande PENDING n'a donc
+			// JAMAIS décrémenté son stock. Restocker ici gonflerait l'inventaire au-dessus
+			// du réel (phantom stock → survente future). Rien à restaurer.
 
 			// Release discount usages (free up promo codes).
-			// DiscountUsage @@unique([discountId, orderId]) → max 1 usage par discount/order,
-			// donc updateMany avec decrement 1 est correct (pas de double-decrement possible).
-			const discountUsages = await tx.discountUsage.findMany({
-				where: { orderId: id },
-				select: { id: true, discountId: true },
-			});
-
-			if (discountUsages.length > 0) {
-				await tx.discount.updateMany({
-					where: { id: { in: discountUsages.map((u) => u.discountId) } },
-					data: { usageCount: { decrement: 1 } },
-				});
-				await tx.discountUsage.deleteMany({ where: { orderId: id } });
-			}
+			// [[DISC-USAGE-002]] Toujours via le service canonique : son décrément est
+			// gardé par `usageCount > 0`, ce qu'un `updateMany` direct ne fait pas (un
+			// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
+			const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, id);
 
 			// Audit trail
 			await createOrderAuditTx(tx, {
@@ -146,12 +154,15 @@ export async function cancelOrderCustomer(
 				previousPaymentStatus: found.paymentStatus,
 				newPaymentStatus: newPaymentStatus,
 				authorId: user.id,
-				authorName: user.name ?? "Client",
+				// RGPD-AUDIT P1-2 : jamais de nom/email client dans OrderHistory
+				// (immuable 10 ans, non scrubé à l'anonymisation). authorId suffit.
+				authorName: "Client",
 				source: HistorySource.CUSTOMER,
 				metadata: {
-					stockRestored: true,
+					// PENDING-only : stock jamais décrémenté → rien restauré (STOCK-01).
+					stockRestored: false,
 					itemsCount: found.items.length,
-					releasedDiscountIds: discountUsages.map((u) => u.discountId),
+					releasedDiscountIds,
 				},
 			});
 
@@ -163,6 +174,28 @@ export async function cancelOrderCustomer(
 		}
 
 		if ("_error" in order) {
+			if (order._error === "pending_but_paid") {
+				// État incohérent (PENDING + PAID) : jamais produit par les chemins
+				// nominaux. On alerte pour investigation au lieu de le « réparer » par un
+				// flip de statut qui laisserait un client débité et non remboursé.
+				logger.error("cancelOrderCustomer refused: order is PENDING but already PAID", undefined, {
+					action: "cancel-order-customer",
+					orderId: order.id,
+				});
+				Sentry.withScope((scope) => {
+					scope.setLevel("error");
+					scope.setTag("orders", "pending-but-paid");
+					scope.setFingerprint(["cancel-order-customer", "pending-but-paid"]);
+					scope.setContext("order", { orderId: order.id, orderNumber: order.orderNumber });
+					Sentry.captureMessage(
+						`Order ${order.orderNumber} is PENDING with paymentStatus PAID — customer cancel refused`,
+						"error",
+					);
+				});
+				return error(
+					"Cette commande a déjà été payée et ne peut pas être annulée ici. Écris-moi et je m'en occupe.",
+				);
+			}
 			const message =
 				order._error === "already_cancelled"
 					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED

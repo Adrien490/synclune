@@ -5,6 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Mentions Légales | Synclune",
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 export default async function MentionsLegalesPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
-	cacheTag("legal-notice");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_NOTICE);
 
 	// Récupérer l'URL du site et l'email depuis les variables d'environnement
 	const siteUrl = process.env.BETTER_AUTH_URL ?? SITE_URL;

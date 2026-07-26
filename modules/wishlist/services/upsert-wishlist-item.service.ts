@@ -6,7 +6,6 @@ import {
 	WISHLIST_FULL_SENTINEL,
 } from "@/modules/wishlist/constants/error-messages";
 import { WISHLIST_MAX_ITEMS } from "@/modules/wishlist/constants/wishlist.constants";
-import { getWishlistExpirationDate } from "@/modules/wishlist/lib/wishlist-session";
 
 /**
  * Arguments shape acceptés par `addProductToWishlist`. Exactly one of
@@ -75,12 +74,8 @@ export async function addProductToWishlist(
 		create: {
 			userId: userId ?? null,
 			sessionId: sessionId ?? null,
-			expiresAt: userId ? null : getWishlistExpirationDate(),
 		},
-		update: {
-			// Rafraîchir l'expiration pour les visiteurs
-			expiresAt: userId ? null : getWishlistExpirationDate(),
-		},
+		update: {},
 		select: { id: true },
 	});
 

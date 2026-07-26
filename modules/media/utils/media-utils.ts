@@ -23,6 +23,27 @@ export function isImage(mediaType: MediaType): boolean {
 	return mediaType === "IMAGE";
 }
 
+/**
+ * Résout la source affichable d'un média pour un rendu `next/image`.
+ *
+ * Une vidéo n'est décodable par l'optimiseur d'images que via son poster
+ * (`thumbnailUrl`). Sans poster, retourner l'URL `.mp4` produirait une vignette
+ * cassée + une transformation facturée pour rien : on retourne `null` afin que
+ * l'appelant affiche un placeholder (cf. `gallery/thumbnail.tsx`).
+ *
+ * @returns L'URL à passer à `<Image src>`, ou `null` si aucun rendu image n'est possible
+ */
+export function resolveMediaThumbSrc(media: {
+	url: string;
+	thumbnailUrl?: string | null;
+	mediaType: MediaType;
+}): string | null {
+	if (media.mediaType === "VIDEO") {
+		return media.thumbnailUrl ?? null;
+	}
+	return media.url;
+}
+
 /** Video extension to MIME type mapping */
 const VIDEO_MIME_TYPES: Record<string, string> = {
 	mp4: "video/mp4",

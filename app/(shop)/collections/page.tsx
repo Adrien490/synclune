@@ -10,31 +10,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 
-export const metadata: Metadata = {
-	title: "Collections de bijoux artisanaux | Synclune",
-	description:
-		"Explorez toutes les collections de bijoux colorés et originaux faits main. Chaque collection a son univers : Pokémon, Van Gogh, et bien d'autres !",
-	keywords:
-		"collections bijoux, bijoux artisanaux, collections thématiques, bijoux faits main, créations uniques, bijoux pokemon, bijoux van gogh",
-	alternates: {
-		canonical: "/collections",
-	},
-	openGraph: {
-		title: "Collections de bijoux artisanaux | Synclune",
-		description:
-			"Explorez toutes les collections de bijoux colorés faits main. Chaque collection a son univers unique !",
-		url: `${SITE_URL}/collections`,
-		type: "website",
-		images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: "Les Collections | Synclune",
-		description:
-			"Collections de bijoux colorés faits main. Univers Pokémon, Van Gogh et bien d'autres !",
-	},
-};
-
 type CollectionsPageProps = {
 	searchParams: Promise<{
 		cursor?: string;
@@ -42,6 +17,41 @@ type CollectionsPageProps = {
 		perPage?: string;
 	}>;
 };
+
+export async function generateMetadata({ searchParams }: CollectionsPageProps): Promise<Metadata> {
+	const params = await searchParams;
+
+	// Pages cursor (`?cursor=...`) = duplicate content vs canonical `/collections`
+	// → noindex pour préserver le crawl budget (parité avec /produits, P2-2).
+	// Le `follow` laisse Google suivre les liens vers les collections.
+	const isPaginated = !!getFirstParam(params.cursor);
+
+	return {
+		title: "Collections de bijoux artisanaux | Synclune",
+		description:
+			"Explorez toutes les collections de bijoux colorés et originaux faits main. Chaque collection a son univers : Pokémon, Van Gogh, et bien d'autres !",
+		keywords:
+			"collections bijoux, bijoux artisanaux, collections thématiques, bijoux faits main, créations uniques, bijoux pokemon, bijoux van gogh",
+		alternates: {
+			canonical: "/collections",
+		},
+		robots: isPaginated ? { index: false, follow: true } : undefined,
+		openGraph: {
+			title: "Collections de bijoux artisanaux | Synclune",
+			description:
+				"Explorez toutes les collections de bijoux colorés faits main. Chaque collection a son univers unique !",
+			url: `${SITE_URL}/collections`,
+			type: "website",
+			images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: "Les Collections | Synclune",
+			description:
+				"Collections de bijoux colorés faits main. Univers Pokémon, Van Gogh et bien d'autres !",
+		},
+	};
+}
 
 export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
 	// Note: Pas de "use cache" ici car la page utilise searchParams (pagination)

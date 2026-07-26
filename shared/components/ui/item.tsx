@@ -5,9 +5,18 @@ import * as React from "react";
 import { cn } from "@/shared/utils/cn";
 import { Separator } from "@/shared/components/ui/separator";
 
-function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Conteneur de liste. `<ul>` natif (et non `<div role="list">`) : les lecteurs
+ * d'écran dérivent des sémantiques plus fiables du tag que du rôle ARIA.
+ * `role="list"` est conservé explicitement car iOS Safari + VoiceOver retirent
+ * le rôle implicite dès que `list-style: none` s'applique (reset Tailwind).
+ *
+ * ⚠️ Les enfants directs doivent être des `<li>` (HTML valide).
+ */
+function ItemGroup({ className, ...props }: React.ComponentProps<"ul">) {
 	return (
-		<div
+		// eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VoiceOver retirent le rôle implicite quand list-style:none s'applique
+		<ul
 			role="list"
 			data-slot="item-group"
 			className={cn("group/item-group flex flex-col", className)}

@@ -40,12 +40,7 @@ interface ActiveFiltersResult {
 
 /** Identifiants stables des sections de filtre (ordre du menu drill-down). */
 export type FilterSectionId =
-	| "types"
-	| "price"
-	| "colors"
-	| "materials"
-	| "rating"
-	| "availability";
+	"types" | "price" | "colors" | "materials" | "rating" | "availability";
 
 // ============================================================================
 // CONSTANTS

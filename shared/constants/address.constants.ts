@@ -14,7 +14,6 @@ export const ADDRESS_CONSTANTS = {
 	// Aligned with Prisma `Address.city VarChar(100)` and `Order.shippingCity VarChar(100)`.
 	MAX_CITY_LENGTH: 100,
 	POSTAL_CODE_REGEX: /^[A-Za-z0-9]{2,4}[\s-]?[A-Za-z0-9]{2,4}$/,
-	PHONE_REGEX: /^(\+33|0)[1-9](\d{2}){4}$/,
 	DEFAULT_COUNTRY: "FR",
 } as const;
 
@@ -32,7 +31,7 @@ export const ADDRESS_ERROR_MESSAGES = {
 	CITY_TOO_LONG: `La ville ne peut pas dépasser ${ADDRESS_CONSTANTS.MAX_CITY_LENGTH} caractères`,
 	INVALID_POSTAL_CODE: "Le code postal n'est pas valide",
 	PHONE_REQUIRED: "Le numéro de téléphone est requis",
-	INVALID_PHONE: "Le numéro de téléphone doit être au format français valide",
+	INVALID_PHONE: "Le numéro de téléphone n'est pas valide",
 	CREATE_FAILED: "Une erreur est survenue lors de la création de l'adresse",
 	UPDATE_FAILED: "Une erreur est survenue lors de la modification de l'adresse",
 	DELETE_FAILED: "Une erreur est survenue lors de la suppression de l'adresse",

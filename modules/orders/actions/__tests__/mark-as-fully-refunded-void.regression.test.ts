@@ -26,10 +26,16 @@ const {
 	mockVoidInvoice,
 	mockIssueCreditNoteForRefund,
 	mockRecordRefundEReporting,
+	mockSendOverlapAlert,
+	mockSendRefundConfirmationOnce,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany ({ count }) remplace
+		// l'ancien order.update final.
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		refund: { count: vi.fn().mockResolvedValue(0), create: vi.fn() },
+		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -47,6 +53,11 @@ const {
 	// rattachée au Refund (Art. 272-I CGI) ET la transmission e-reporting B2C.
 	mockIssueCreditNoteForRefund: vi.fn(),
 	mockRecordRefundEReporting: vi.fn(),
+	// EINV-CREDIT-015 (AVOIR-01) : alerte sur-crédit (avoir total + avoirs partiels).
+	mockSendOverlapAlert: vi.fn(),
+	// Email client remboursement hors-Stripe — hoisted car resetAllMocks vide
+	// un mockResolvedValue inline (→ `.catch` sur undefined → TypeError).
+	mockSendRefundConfirmationOnce: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -78,6 +89,14 @@ vi.mock("../../utils/order-audit", () => ({
 }));
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
+}));
+vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
+	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
+}));
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: (path: string) => `https://synclune.test${path}`,
+	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -134,6 +153,9 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
 	recordRefundEReporting: mockRecordRefundEReporting,
 }));
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminCreditNoteOverlapAlert: mockSendOverlapAlert,
+}));
 vi.mock("../../schemas/order.schemas", () => ({
 	markAsFullyRefundedSchema: {},
 }));
@@ -185,12 +207,49 @@ describe("@regression mark-as-fully-refunded-void-invoice — EINV-TEST-004", ()
 			invoiceStatus: "GENERATED",
 			invoiceNumber: "F-2026-00200",
 		});
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.$queryRaw.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.count.mockResolvedValue(0);
+		mockSendOverlapAlert.mockResolvedValue({ success: true });
+		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
 			message: fallback,
 		}));
+	});
+
+	/**
+	 * @regression credit-note-overlap-mark-as-fully-refunded — EINV-CREDIT-015 (AVOIR-01)
+	 * Symétrie avec le webhook charge.refunded : si des avoirs partiels existent déjà
+	 * et qu'on émet un avoir TOTAL, alerter l'admin du sur-crédit potentiel (Art. 272-I).
+	 */
+	describe("sur-crédit (avoir total + avoirs partiels préexistants) — AVOIR-01", () => {
+		// La requête de comptage des avoirs partiels se distingue de la requête
+		// "pending Stripe refunds" (qui n'a pas creditNoteNumber) par son where.
+		function countPartialCreditNotes(count: number) {
+			mockPrisma.refund.count.mockImplementation(
+				({ where }: { where?: { creditNoteNumber?: unknown } }) =>
+					Promise.resolve(where?.creditNoteNumber != null ? count : 0),
+			);
+		}
+
+		it("alerte l'admin quand des avoirs partiels préexistent (sur-crédit)", async () => {
+			countPartialCreditNotes(2);
+
+			await markAsFullyRefunded(undefined, validFormData);
+
+			expect(mockSendOverlapAlert).toHaveBeenCalledWith(
+				expect.objectContaining({ partialCreditNoteCount: 2, creditNoteNumber: "A-2026-00099" }),
+			);
+		});
+
+		it("n'alerte PAS quand aucun avoir partiel n'existe (cas nominal)", async () => {
+			countPartialCreditNotes(0);
+
+			await markAsFullyRefunded(undefined, validFormData);
+
+			expect(mockSendOverlapAlert).not.toHaveBeenCalled();
+		});
 	});
 
 	describe("invoice GENERATED — voidInvoice IS called", () => {

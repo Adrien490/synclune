@@ -10,7 +10,7 @@ import { handleActionError, safeFormGet, success } from "@/shared/lib/actions";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
-const optionalCuid2Schema = z.string().cuid2().optional();
+const optionalCuid2Schema = z.cuid2().optional();
 
 export async function refreshSkus(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {

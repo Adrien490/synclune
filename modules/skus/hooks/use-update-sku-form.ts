@@ -2,9 +2,8 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { extractServerErrors } from "@/shared/utils/extract-server-errors";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProductSku } from "@/modules/skus/actions/update-sku";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
@@ -65,15 +64,10 @@ export const useUpdateProductSkuForm = ({
 		),
 	});
 
-	const tanstackErrors = useStore(form.store, (formState) => formState.errors);
-	const serverErrors = extractServerErrors(state);
-	const formErrors = Array.from(new Set([...tanstackErrors, ...serverErrors]));
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

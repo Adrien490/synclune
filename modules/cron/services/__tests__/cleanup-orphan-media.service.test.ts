@@ -7,6 +7,9 @@ const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } = vi.ho
 		user: { findMany: vi.fn() },
 		orderItem: { findMany: vi.fn() },
 		order: { findMany: vi.fn() },
+		refund: { findMany: vi.fn() },
+		// Curseur de reprise du balayage UploadThing (audit média M2)
+		storeSettings: { findUnique: vi.fn(), update: vi.fn() },
 	},
 	mockListFiles: vi.fn(),
 	mockDeleteFiles: vi.fn(),
@@ -47,6 +50,9 @@ describe("cleanupOrphanMedia", () => {
 		mockPrisma.user.findMany.mockResolvedValue([]);
 		mockPrisma.orderItem.findMany.mockResolvedValue([]);
 		mockPrisma.order.findMany.mockResolvedValue([]);
+		mockPrisma.refund.findMany.mockResolvedValue([]);
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({ orphanMediaScanOffset: 0 });
+		mockPrisma.storeSettings.update.mockResolvedValue({});
 
 		mockListFiles.mockResolvedValue({ files: [] });
 		mockDeleteFiles.mockResolvedValue({ success: true });
@@ -195,6 +201,30 @@ describe("cleanupOrphanMedia", () => {
 		expect(mockDeleteFiles).toHaveBeenCalledWith(["true-orphan"]);
 	});
 
+	// Audit rétention PII 2026-07-09 : les avoirs PARTIELS sont archivés PAR REFUND
+	// (Refund.creditNotePdfUrl) — mêmes archives légales 10 ans (Art. L102 B LPF).
+	// Sans le scan Refund, ce cron les détruirait comme orphelins dès 24h.
+	it("should not delete per-refund credit-note PDFs referenced by a Refund", async () => {
+		const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+		mockPrisma.refund.findMany.mockResolvedValue([
+			{ id: "refund-1", creditNotePdfUrl: "https://utfs.io/f/refund-credit-note-1" },
+		]);
+
+		mockListFiles.mockResolvedValue({
+			files: [
+				{ key: "refund-credit-note-1", uploadedAt: twoDaysAgo },
+				{ key: "true-orphan", uploadedAt: twoDaysAgo },
+			],
+		});
+
+		const result = await cleanupOrphanMedia();
+
+		expect(result.filesScanned).toBe(2);
+		expect(result.orphansDeleted).toBe(1);
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["true-orphan"]);
+	});
+
 	it("should handle UploadThing deleteFiles errors gracefully", async () => {
 		const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -325,5 +355,63 @@ describe("cleanupOrphanMedia", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	/**
+	 * Audit média M2 : sans curseur persistant, `offset` repartait de 0 à chaque
+	 * exécution et rien au-delà de MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT
+	 * (2500 fichiers) n'était jamais balayé. Les archives PDF de facture — une par
+	 * commande payée, toutes référencées — saturent cette fenêtre à mesure que les
+	 * commandes s'accumulent, jusqu'à rendre la collecte d'orphelins inopérante
+	 * sans la moindre erreur remontée.
+	 */
+	describe("curseur de reprise (offset persistant)", () => {
+		it("reprend le balayage à l'offset persisté", async () => {
+			mockPrisma.storeSettings.findUnique.mockResolvedValue({ orphanMediaScanOffset: 2500 });
+			mockListFiles.mockResolvedValue({ files: [] });
+
+			await cleanupOrphanMedia();
+
+			expect(mockListFiles).toHaveBeenCalledWith(expect.objectContaining({ offset: 2500 }));
+		});
+
+		it("persiste l'offset atteint quand la liste n'est pas épuisée", async () => {
+			const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+			// Page pleine (= UPLOADTHING_LIST_LIMIT) → il reste des fichiers après.
+			const fullPage = Array.from({ length: 500 }, (_, i) => ({
+				key: `k${i}`,
+				uploadedAt: twoDaysAgo,
+			}));
+			mockPrisma.storeSettings.findUnique.mockResolvedValue({ orphanMediaScanOffset: 0 });
+			mockListFiles.mockResolvedValue({ files: fullPage });
+
+			const result = await cleanupOrphanMedia();
+
+			expect(result.hasMore).toBe(true);
+			expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith(
+				expect.objectContaining({ data: { orphanMediaScanOffset: 2500 } }),
+			);
+		});
+
+		it("remet le curseur à 0 en fin de liste (balayage cyclique)", async () => {
+			mockPrisma.storeSettings.findUnique.mockResolvedValue({ orphanMediaScanOffset: 1000 });
+			// Page incomplète → fin de liste atteinte.
+			mockListFiles.mockResolvedValue({
+				files: [{ key: "tail", uploadedAt: new Date().toISOString() }],
+			});
+
+			await cleanupOrphanMedia();
+
+			expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith(
+				expect.objectContaining({ data: { orphanMediaScanOffset: 0 } }),
+			);
+		});
+
+		it("ne fait pas échouer le run si la persistance du curseur échoue", async () => {
+			mockPrisma.storeSettings.update.mockRejectedValue(new Error("DB down"));
+			mockListFiles.mockResolvedValue({ files: [] });
+
+			await expect(cleanupOrphanMedia()).resolves.toMatchObject({ orphansDeleted: 0 });
+		});
 	});
 });

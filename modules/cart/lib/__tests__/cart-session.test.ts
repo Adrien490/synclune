@@ -297,6 +297,24 @@ describe("getOrCreateCartSessionId", () => {
 			expect.any(Object),
 		);
 	});
+
+	it("re-sets the existing cookie with a full maxAge (sliding expiration, aligned with Cart.expiresAt)", async () => {
+		const cookieStore = makeCookieStore(VALID_UUID_V4);
+		mockCookies.mockResolvedValue(cookieStore);
+
+		await getOrCreateCartSessionId();
+
+		expect(cookieStore.set).toHaveBeenCalledWith(
+			CART_SESSION_COOKIE_NAME,
+			VALID_UUID_V4,
+			expect.objectContaining({
+				maxAge: CART_SESSION_MAX_AGE,
+				httpOnly: true,
+				sameSite: "lax",
+				path: "/",
+			}),
+		);
+	});
 });
 
 // ============================================================================

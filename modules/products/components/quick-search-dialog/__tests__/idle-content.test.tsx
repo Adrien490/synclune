@@ -1,3 +1,4 @@
+import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -42,14 +43,22 @@ vi.mock("@/shared/components/animations/stagger", () => ({
 		children,
 		className,
 		role,
+		as: Container = "div",
+		itemAs: ItemTag = "div",
+		"aria-label": ariaLabel,
 	}: {
 		children: React.ReactNode;
 		className?: string;
 		role?: string;
+		as?: "div" | "ul" | "ol";
+		itemAs?: "div" | "li";
+		"aria-label"?: string;
 	}) => (
-		<div className={className} role={role}>
-			{children}
-		</div>
+		<Container className={className} role={role} aria-label={ariaLabel}>
+			{React.Children.map(children, (child, index) => (
+				<ItemTag key={index}>{child}</ItemTag>
+			))}
+		</Container>
 	),
 }));
 
@@ -87,6 +96,21 @@ vi.mock("motion/react", () => ({
 			<div className={className} role={role}>
 				{children}
 			</div>
+		),
+		li: ({
+			children,
+			className,
+			role,
+			..._rest
+		}: {
+			children: React.ReactNode;
+			className?: string;
+			role?: string;
+			[key: string]: unknown;
+		}) => (
+			<li className={className} role={role}>
+				{children}
+			</li>
 		),
 	},
 }));

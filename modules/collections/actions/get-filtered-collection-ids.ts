@@ -9,12 +9,6 @@ import { BULK_COLLECTION_ACTION_LIMIT } from "../constants/collection.constants"
 import { buildCollectionWhereClause } from "../services/collection-query-builder";
 import type { GetCollectionsParams } from "../types/collection.types";
 
-export interface FilteredCollectionIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Bypass `getCollections` (qui charge products+skus+images) — ici on

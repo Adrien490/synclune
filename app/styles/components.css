@@ -100,8 +100,8 @@
 		.polaroid-hover:hover {
 			transform: translateY(-8px) scale(1.04) rotate(calc(var(--polaroid-rotate) + 1deg));
 			box-shadow:
-				0 20px 40px -10px rgba(0, 0, 0, 0.18),
-				0 8px 16px -8px rgba(0, 0, 0, 0.1);
+				0 20px 40px -10px oklch(0 0 0 / 0.18),
+				0 8px 16px -8px oklch(0 0 0 / 0.1);
 		}
 	}
 

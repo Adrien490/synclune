@@ -5,6 +5,8 @@ import { updateTag } from "next/cache";
 import { HistorySource, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
+import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
+import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import {
 	error,
@@ -133,41 +135,40 @@ export async function bulkCancelOrders(
 			total: number;
 		}> = [];
 
+		const releasedDiscountIds = new Set<string>();
+
 		await prisma.$transaction(
 			async (tx) => {
-				// Agrège les decrements par discountId pour batcher en fin de transaction.
-				// Plusieurs orders peuvent partager le même discount → on doit décrémenter
-				// par le count total, pas par 1 (sinon perte d'usages).
-				const discountDecrements = new Map<string, number>();
-				const ordersWithUsages: string[] = [];
-
 				for (const order of orders) {
-					await tx.order.update({
-						where: { id: order.id },
+					// IDEM-CANCEL-001 : précondition ré-évaluée au lock de ligne — le
+					// filtre d'éligibilité (PENDING+PENDING) est lu HORS transaction ;
+					// un concurrent (2ᵉ bulk, cancel unitaire, webhook) peut avoir muté
+					// la commande entre-temps. count===0 ⇒ skip (pas de double release
+					// discount ni double audit CANCELLED).
+					const claimed = await tx.order.updateMany({
+						where: {
+							id: order.id,
+							status: OrderStatus.PENDING,
+							paymentStatus: PaymentStatus.PENDING,
+						},
 						data: { status: OrderStatus.CANCELLED },
 					});
+					if (claimed.count === 0) continue;
 
-					for (const item of order.items) {
-						await tx.productSku.update({
-							where: { id: item.skuId },
-							data: { inventory: { increment: item.quantity } },
-						});
-					}
+					// STOCK-01 : NE PAS restocker. Les commandes éligibles au bulk sont
+					// filtrées sur status=PENDING ET paymentStatus=PENDING (ligne 82). En
+					// réservation optimiste, le stock n'est décrémenté qu'au passage PAID —
+					// une PENDING n'a JAMAIS décrémenté son stock. Restocker ici (souvent en
+					// purge de paniers abandonnés, donc à l'échelle) gonflerait l'inventaire
+					// au-dessus du réel (phantom stock → survente future). Rien à restaurer.
 
-					const usages = await tx.discountUsage.findMany({
-						where: { orderId: order.id },
-						select: { id: true, discountId: true },
-					});
-
-					for (const usage of usages) {
-						discountDecrements.set(
-							usage.discountId,
-							(discountDecrements.get(usage.discountId) ?? 0) + 1,
-						);
-					}
-
-					if (usages.length > 0) {
-						ordersWithUsages.push(order.id);
+					// [[DISC-USAGE-002]] Libération par commande via le service canonique :
+					// son décrément est gardé par `usageCount > 0`. L'ancienne agrégation
+					// `decrement: count` par discountId n'avait aucune borne basse — un
+					// compteur négatif rendrait le code redeemable au-delà de
+					// `maxUsageCount` (ex. après un `resetDiscountCounter` admin).
+					for (const discountId of await releaseOrderDiscountUsageTx(tx, order.id)) {
+						releasedDiscountIds.add(discountId);
 					}
 
 					await createOrderAuditTx(tx, {
@@ -182,7 +183,8 @@ export async function bulkCancelOrders(
 						authorName: adminUser.name ?? "Admin",
 						source: HistorySource.ADMIN,
 						metadata: {
-							stockRestored: true,
+							// PENDING-only : stock jamais décrémenté → rien restauré (STOCK-01).
+							stockRestored: false,
 							itemsCount: order.items.length,
 							bulkOperation: true,
 						},
@@ -198,21 +200,6 @@ export async function bulkCancelOrders(
 						total: order.total,
 					});
 				}
-
-				// Batch decrement usageCount par discountId puis cleanup discount usages.
-				// Si N orders annulés partagent le même discount, decrement par N.
-				for (const [discountId, count] of discountDecrements) {
-					await tx.discount.update({
-						where: { id: discountId },
-						data: { usageCount: { decrement: count } },
-					});
-				}
-
-				if (ordersWithUsages.length > 0) {
-					await tx.discountUsage.deleteMany({
-						where: { orderId: { in: ordersWithUsages } },
-					});
-				}
 			},
 			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
@@ -220,6 +207,11 @@ export async function bulkCancelOrders(
 		const tags = new Set<string>();
 		for (const o of cancelledOrders) {
 			getOrderInvalidationTags(o.userId ?? undefined, o.id).forEach((tag) => tags.add(tag));
+		}
+		// Compteurs d'usage promo libérés : sans ça, la garde `maxUsagePerUser` du
+		// checkout reste sur des counts périmés jusqu'à l'expiration du profil.
+		for (const discountId of releasedDiscountIds) {
+			tags.add(DISCOUNT_CACHE_TAGS.USAGE(discountId));
 		}
 		tags.forEach((tag) => updateTag(tag));
 

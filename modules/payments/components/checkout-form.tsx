@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -71,11 +71,48 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		getOnlineStatusServerSnapshot,
 	);
 
+	// CHECKOUT-CONSENT-001 — montant figé dès qu'une commande est liée au
+	// PaymentIntent (premier `confirmCheckout` réussi, typiquement suivi d'un
+	// refus de carte). À partir de là le serveur refuse toute mise à jour du
+	// montant ET toute resoumission divergente : l'UI doit cesser d'afficher un
+	// total qui ne sera jamais débité, et geler ce qui le ferait varier.
+	const [lockedAmount, setLockedAmount] = useState<number | null>(null);
+
 	// Initialize Payment Intent
 	const pi = usePaymentIntent({
 		cartItems,
 		email: isGuest ? undefined : session.user.email || undefined,
 	});
+
+	// [[CART-DISCOUNT-002]] Reprise du code promo appliqué au panier.
+	// Sans ça, un code saisi dans le panier (« Réduction (SUMMER20) −20,00 € »
+	// affichée dans le cart-sheet) était PERDU à l'arrivée sur /paiement :
+	// `_appliedDiscount` démarrait à null, le PaymentIntent restait au plein
+	// tarif et le client payait sans remise s'il ne re-saisissait pas le code.
+	//
+	// On repasse volontairement par `validateDiscountCode` (au lieu de faire
+	// confiance au montant stocké sur le panier) : la remise est ainsi
+	// re-dérivée serveur, avec la session courante — donc les limites par
+	// utilisateur et l'éligibilité sont revérifiées ici aussi. Un code devenu
+	// invalide est simplement ignoré, sans bloquer le paiement.
+	const cartDiscountCode = cart.appliedDiscountCode;
+	const hydratedDiscountRef = useRef(false);
+
+	useEffect(() => {
+		if (hydratedDiscountRef.current || !cartDiscountCode) return;
+		hydratedDiscountRef.current = true;
+
+		let cancelled = false;
+		void validateDiscountCode(cartDiscountCode).then((result) => {
+			if (cancelled || !result.valid || !result.discount) return;
+			form.setFieldValue("_appliedDiscount", result.discount);
+			form.setFieldValue("_discountOpen", true);
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [cartDiscountCode, form]);
 
 	/**
 	 * Builds ConfirmCheckoutData from the current form state.
@@ -103,7 +140,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 		// If there's an unapplied discount code, validate it before submission
 		if (!appliedDiscount && rawDiscountCode) {
-			const result = await validateDiscountCode(rawDiscountCode, subtotal);
+			const result = await validateDiscountCode(rawDiscountCode);
 			if (result.valid && result.discount) {
 				appliedDiscount = result.discount;
 				form.setFieldValue("_appliedDiscount", result.discount);
@@ -121,6 +158,14 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 		const discountCode = appliedDiscount?.code ?? undefined;
 
+		// Montant réellement affiché sur le CTA au moment du clic — garde de
+		// consentement côté serveur (CHECKOUT-CONSENT-001), jamais une base de
+		// facturation. Recalculé ici avec les mêmes entrées que le récapitulatif.
+		const country = ((s.country as string) || "FR") as ShippingCountry;
+		const displayedShipping = calculateShipping(country, s.postalCode) ?? 0;
+		const displayedTotal =
+			lockedAmount ?? subtotal - (appliedDiscount?.discountAmount ?? 0) + displayedShipping;
+
 		return {
 			cartItems,
 			shippingAddress: {
@@ -136,6 +181,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			discountCode,
 			paymentIntentId: pi.paymentIntentId!,
 			saveInfo: values.saveInfo,
+			displayedTotal,
 		};
 	}
 
@@ -175,8 +221,10 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 						appliedDiscount={appliedDiscount as AppliedDiscount | null}
 						country={country}
 						postalCode={postalCode as string}
+						lockedAmount={lockedAmount}
 						getFormData={getFormData}
 						allowNavigation={allowNavigation}
+						onOrderBound={setLockedAmount}
 					/>
 				);
 			}}

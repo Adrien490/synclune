@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
 import {
@@ -47,13 +47,13 @@ export const accountFiltersSchema = z
 		createdAfter: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.refine((d) => d <= new Date(), "Date cannot be in the future")
 			.optional(),
 		createdBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 		updatedAfter: z.coerce
 			.date()
 			.min(new Date("2020-01-01"), "Date too old")
-			.max(new Date(), "Date cannot be in the future")
+			.refine((d) => d <= new Date(), "Date cannot be in the future")
 			.optional(),
 		updatedBefore: z.coerce.date().min(new Date("2020-01-01"), "Date too old").optional(),
 	})

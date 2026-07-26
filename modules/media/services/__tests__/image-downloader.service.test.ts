@@ -18,7 +18,12 @@ vi.mock("@/shared/utils/with-retry", () => ({
 	withRetry: vi.fn(async (fn: () => Promise<unknown>) => fn()),
 }));
 
-import { truncateUrl, isRetryableError, downloadImage } from "../image-downloader.service";
+import {
+	truncateUrl,
+	isRetryableError,
+	downloadImage,
+	ImageDecodeError,
+} from "../image-downloader.service";
 
 // ============================================================================
 // Setup
@@ -282,11 +287,21 @@ describe("downloadImage", () => {
 		await expect(downloadImage(PUBLIC_URL)).rejects.toThrow(/Image trop volumineuse/);
 	});
 
-	it("throws when sharp metadata validation fails (invalid image bytes)", async () => {
+	// Audit média M1 : l'échec de décodage doit être typé `ImageDecodeError` pour que
+	// le route handler puisse le distinguer d'un incident réseau (qu'il tolère) et
+	// rejeter l'upload. Un `Error` générique était avalé côté route.
+	it("throws a typed ImageDecodeError when sharp metadata validation fails", async () => {
 		mockSharpMetadata.mockRejectedValue(new Error("unsupported image format"));
 		global.fetch = vi.fn().mockResolvedValue(buildOkResponse());
 
-		await expect(downloadImage(PUBLIC_URL)).rejects.toThrow("unsupported image format");
+		const err = await downloadImage(PUBLIC_URL).catch((e: unknown) => e);
+
+		expect(err).toBeInstanceOf(ImageDecodeError);
+		expect((err as ImageDecodeError).cause).toEqual(new Error("unsupported image format"));
+	});
+
+	it("marks a decode failure as non-retryable (re-downloading changes nothing)", () => {
+		expect(isRetryableError(new ImageDecodeError())).toBe(false);
 	});
 
 	it("throws when fetch itself throws (network error)", async () => {

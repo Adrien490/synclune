@@ -19,7 +19,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -138,7 +138,7 @@ describe("markAsReturned", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(makeDeliveredOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	// Auth
@@ -192,7 +192,7 @@ describe("markAsReturned", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/déjà marquée comme retournée/);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// Cannot return — not delivered
@@ -204,7 +204,7 @@ describe("markAsReturned", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/Seule une commande livrée/);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// Happy path: status update
@@ -213,8 +213,14 @@ describe("markAsReturned", () => {
 
 		await markAsReturned(undefined, validFormData);
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
-			where: { id: VALID_CUID },
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			// Garde atomique : le where ré-asserte DELIVERED + pas déjà RETURNED
+			where: {
+				id: VALID_CUID,
+				deletedAt: null,
+				status: "DELIVERED",
+				fulfillmentStatus: { not: "RETURNED" },
+			},
 			data: { fulfillmentStatus: "RETURNED" },
 		});
 	});

@@ -250,7 +250,7 @@ describe("mergeWishlists", () => {
 		await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(mockPrisma.wishlist.create).toHaveBeenCalledWith({
-			data: { userId: VALID_USER_ID, expiresAt: null },
+			data: { userId: VALID_USER_ID },
 			select: { id: true, items: { select: { productId: true } } },
 		});
 	});

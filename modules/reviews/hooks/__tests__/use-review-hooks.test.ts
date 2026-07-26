@@ -145,7 +145,7 @@ describe("useCreateReviewForm", () => {
 		mockCreateReview.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() =>
 			useCreateReviewForm({ productId: "prod-1", orderItemId: "item-1" }),
 		);
@@ -153,7 +153,6 @@ describe("useCreateReviewForm", () => {
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {
@@ -292,13 +291,12 @@ describe("useUpdateReviewForm", () => {
 		mockUpdateReview.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useUpdateReviewForm(DEFAULT_OPTIONS));
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {

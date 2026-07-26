@@ -2,7 +2,6 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import {
 	extractPaymentFailureDetails,
-	restoreStockForOrder,
 	markOrderAsFailed,
 	markOrderAsCancelled,
 	initiateAutomaticRefund,
@@ -15,8 +14,8 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { buildUrl, getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { PostWebhookTask, WebhookHandlerResult } from "../types/webhook.types";
 import {
 	processOrderFromPaymentIntent,
@@ -31,13 +30,17 @@ import { captureWebhookError } from "../utils/capture-webhook-error";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
+import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 
 /**
  * Resolves orderId from PI metadata.
  * Supports both new flow (camelCase `orderId`) and old flow (snake_case `order_id`).
+ * Zod boundary (fail-open par champ) : un orderId malformé est droppé →
+ * fallback `stripePaymentIntentId` (handlePaymentSuccess) ou skip gracieux.
  */
 function resolveOrderId(metadata: Stripe.Metadata): string | undefined {
-	return metadata.orderId ?? metadata.order_id;
+	const parsed = parsePaymentIntentMetadata(metadata);
+	return parsed.orderId ?? parsed.order_id;
 }
 
 /**
@@ -143,8 +146,16 @@ export async function handlePaymentSuccess(
 					error: `Encaissement de ${(paymentIntent.amount_received / 100).toFixed(2)}€ sans commande rattachée (ni metadata.orderId ni stripePaymentIntentId). ${orphanRefundOutcome}`,
 				});
 			} catch (alertError) {
+				// Audit F5 : l'alerte email est le seul déclencheur du refund manuel si
+				// l'auto-refund a échoué — son échec doit remonter dans Sentry, pas
+				// seulement dans les logs.
 				logger.error("Failed to send orphan-charge admin alert", alertError, {
 					service: "webhook",
+				});
+				captureWebhookError(alertError, {
+					handler: "handlePaymentSuccess.orphanAlert",
+					eventType: "payment_intent.succeeded",
+					paymentIntentId: paymentIntent.id,
 				});
 			}
 			return { success: true, skipped: true, reason: "no_order_id" };
@@ -169,16 +180,29 @@ export async function handlePaymentSuccess(
 			// AM-2 : persiste le trop-perçu (boucle de réconciliation fermée), pour que
 			// l'incident ne dépende plus d'un email volatil. Le guard
 			// `overbilledAmountCents: null` rend l'écriture idempotente sur les retries
-			// webhook. Le cron alert-overbilled-orders ré-alerte tant que non résolu et
-			// auto-résout dès qu'un refund COMPLETED couvre le delta.
+			// webhook. La surface de suivi est le dashboard (get-action-items, en PULL) ;
+			// l'auto-résolution (poser `overbillingResolvedAt` sur refund COMPLETED du
+			// montant EXACT du delta, ou restitution totale — OVERBILL-RESOLVE-02) est
+			// faite par la passe `reconcileOverbilledOrders` du cron `reconcile-refunds`
+			// (OVERBILL-RESOLVE-01 — ex-cron alert-overbilled-orders, retiré au
+			// right-sizing). PAS d'avoir/refund automatique ici (Invariant 9).
 			try {
 				await prisma.order.updateMany({
 					where: { id: order.id, overbilledAmountCents: null },
 					data: { overbilledAmountCents: delta },
 				});
 			} catch (persistError) {
+				// Audit F5 : sans `overbilledAmountCents` persisté, la passe
+				// `reconcileOverbilledOrders` ne verra jamais le trop-perçu — Sentry requis.
 				logger.error("Failed to persist overbilling delta", persistError, {
 					service: "webhook",
+				});
+				captureWebhookError(persistError, {
+					handler: "handlePaymentSuccess.overbillingPersist",
+					eventType: "payment_intent.succeeded",
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					paymentIntentId: paymentIntent.id,
 				});
 			}
 			logger.error(
@@ -197,6 +221,13 @@ export async function handlePaymentSuccess(
 			} catch (alertError) {
 				logger.error("Failed to send overbilling admin alert", alertError, {
 					service: "webhook",
+				});
+				captureWebhookError(alertError, {
+					handler: "handlePaymentSuccess.overbillingAlert",
+					eventType: "payment_intent.succeeded",
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					paymentIntentId: paymentIntent.id,
 				});
 			}
 		}
@@ -318,6 +349,7 @@ async function handleOversell(
 		paymentIntent.id,
 		orderId,
 		"Oversell — stock indisponible au webhook",
+		paymentIntent.amount_received,
 	);
 	if (!refundResult.success && refundResult.error) {
 		await sendRefundFailureAlert(orderId, paymentIntent.id, "other", refundResult.error.message);
@@ -380,10 +412,13 @@ async function handleAmountMismatch(
 	});
 
 	// 2. Remboursement automatique (idempotent).
+	// Audit F2 : le Refund local doit porter le montant réellement capturé
+	// (amount_received < order.total dans ce chemin), pas `order.total`.
 	const refundResult = await initiateAutomaticRefund(
 		paymentIntent.id,
 		orderId,
 		"Sous-facturation — montant encaissé inférieur au total commande",
+		paymentIntent.amount_received,
 	);
 	if (!refundResult.success && refundResult.error) {
 		await sendRefundFailureAlert(orderId, paymentIntent.id, "other", refundResult.error.message);
@@ -433,8 +468,33 @@ export async function handlePaymentProcessing(
 }
 
 /**
- * Handles payment failure.
- * Restores reserved stock and initiates automatic refund if necessary.
+ * Handles `payment_intent.payment_failed` — NON-terminal (audit webhooks 2026-07-02, F1/F2).
+ *
+ * `payment_failed` n'est PAS un état terminal chez Stripe : le PI repasse
+ * `requires_payment_method` et reste re-confirmable — le client qui essuie un
+ * refus carte corrige sa saisie et re-soumet le MÊME PI depuis la page checkout
+ * (use-checkout-submit, confirmCheckout idempotent par stripePaymentIntentId).
+ * L'ancien comportement (restore stock + markOrderAsFailed + email) cassait ce
+ * flux courant :
+ *  - F2 : refus tentative 1 → le webhook annulait la commande PENDING en
+ *    secondes → le retry réussi tombait sur CANCELLED → detectCancelledOrderRace
+ *    → client débité puis auto-remboursé, commande perdue, discount libéré à tort ;
+ *  - F1 : un payment_failed d'une tentative antérieure livré APRÈS succeeded
+ *    (ordre Stripe non garanti) restockait une commande PAYÉE (restock fantôme)
+ *    et la rétrogradait PAID→FAILED sans refund (amount_received=0 dans le
+ *    snapshot stale) — client débité, commande annulée.
+ *
+ * Nouveau contrat : observabilité seulement. On persiste les détails d'échec
+ * (diagnostic admin pendant la fenêtre PENDING), AUCUNE transition d'état,
+ * aucun restock (réservation optimiste : une PENDING n'a jamais de stock
+ * décrémenté), aucun refund (payment_failed ⇒ amount_received=0 en card-only ;
+ * les anomalies d'encaissement sont couvertes par handleAmountMismatch /
+ * reconcile-refunds). Les chemins de fail restants :
+ *  - cron `sync-async-payments` (PENDING + PI > 1h : cancel PI + markOrderAsFailed) ;
+ *  - `payment_intent.canceled` → handlePaymentCanceled.
+ * L'email client (ex-BIZ-BUG-004) part désormais du cron UNIQUEMENT, au moment
+ * où l'échec est réellement acté (client parti depuis > 1h) — même clé Resend
+ * `payment-failed-${orderId}`, donc zéro doublon avec l'historique.
  */
 export async function handlePaymentFailure(
 	paymentIntent: Stripe.PaymentIntent,
@@ -443,7 +503,7 @@ export async function handlePaymentFailure(
 
 	if (!orderId) {
 		// PI failed before confirmCheckout added orderId to metadata (e.g. user abandoned).
-		// No order was created, so nothing to restore or refund — skip gracefully.
+		// No order was created, so nothing to record — skip gracefully.
 		logger.warn(
 			`⚠️ [WEBHOOK] payment_intent.payment_failed without orderId in metadata (PI: ${paymentIntent.id})`,
 			{ service: "webhook" },
@@ -452,7 +512,6 @@ export async function handlePaymentFailure(
 	}
 
 	try {
-		// 1. Extract failure details
 		const failureDetails = extractPaymentFailureDetails(paymentIntent);
 
 		logger.info(`[AUDIT] Payment failure detected`, {
@@ -461,71 +520,62 @@ export async function handlePaymentFailure(
 			failureCode: failureDetails.code,
 		});
 
-		// 2. Restore stock if necessary
-		const { restoredSkuIds, userId } = await restoreStockForOrder(orderId);
-
-		// 3. Mark order as failed
-		await markOrderAsFailed(orderId, paymentIntent.id, failureDetails);
-
-		// 4. Automatic refund if money was captured
-		if (paymentIntent.amount_received > 0) {
-			logger.info(
-				`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`,
-				{ service: "webhook" },
-			);
-
-			const refundResult = await initiateAutomaticRefund(
-				paymentIntent.id,
-				orderId,
-				"Payment failed, automatic refund",
-			);
-
-			if (!refundResult.success && refundResult.error) {
-				await sendRefundFailureAlert(
-					orderId,
-					paymentIntent.id,
-					"payment_failed",
-					refundResult.error.message,
-				);
-			}
-		}
-
-		logger.info(`❌ [WEBHOOK] Order ${orderId} payment failed`, { service: "webhook" });
-
-		// 5. Build cache invalidation tasks
-		// CACHE-AUDIT-002 : passe par le helper canonique pour couvrir les tags
-		// user-scopés (USER_ORDERS, LAST_ORDER, ACCOUNT_STATS) et le détail
-		// (DETAIL/CONFIRMATION/HISTORY) — sinon l'espace client affiche encore
-		// la commande en PENDING/PROCESSING jusqu'à l'expiration du profil `user`.
-		const cacheTags: string[] = [...getOrderInvalidationTags(userId ?? undefined, orderId)];
-		for (const skuId of restoredSkuIds) {
-			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-		}
-
-		const tasks: PostWebhookTask[] = [{ type: "INVALIDATE_CACHE", tags: cacheTags }];
-
-		// 6. BIZ-BUG-004 : notifier le client de l'échec, à parité avec le flux
-		// async (handleAsyncPaymentFailed). Sur un refus carte synchrone l'erreur
-		// remonte déjà dans l'UI, mais `payment_intent.payment_failed` peut aussi
-		// survenir en différé (client absent) — l'email reste utile et l'idempotency
-		// key Resend protège du doublon.
-		const failedOrder = await prisma.order.findFirst({
+		const order = await prisma.order.findFirst({
 			where: { id: orderId, ...notDeleted },
-			select: { orderNumber: true, customerEmail: true, customerName: true },
+			select: { orderNumber: true, paymentStatus: true, userId: true },
 		});
-		if (failedOrder?.customerEmail) {
-			tasks.push({
-				type: "PAYMENT_FAILED_EMAIL",
-				data: {
-					to: failedOrder.customerEmail,
-					customerName: failedOrder.customerName,
-					orderNumber: failedOrder.orderNumber,
-					retryUrl: `${getBaseUrl()}${ROUTES.SHOP.CHECKOUT}`,
-					// dedup cross-instance Resend 24h sur retries (cf. ORD-STRIPE-008).
-					idempotencyKey: `payment-failed-${orderId}`,
-				},
+
+		if (!order) {
+			logger.warn(`⚠️ [WEBHOOK] Order ${orderId} not found for payment_failed — skipping`, {
+				service: "webhook",
+				paymentIntentId: paymentIntent.id,
 			});
+			return { success: true, skipped: true, reason: "order_not_found" };
 		}
+
+		// F1 : événement stale d'une tentative antérieure, livré après succeeded
+		// (ou après refund). Comportement Stripe documenté — warn, pas Sentry
+		// (la garde markOrderAsFailed porte l'alerte si un appelant tente la
+		// rétrogradation malgré tout).
+		if (
+			order.paymentStatus === "PAID" ||
+			order.paymentStatus === "REFUNDED" ||
+			order.paymentStatus === "PARTIALLY_REFUNDED"
+		) {
+			logger.warn(
+				`⚠️ [WEBHOOK] Stale payment_failed on order ${order.orderNumber} (${order.paymentStatus}) — ignored`,
+				{ service: "webhook", orderId, paymentIntentId: paymentIntent.id },
+			);
+			return { success: true, skipped: true, reason: "stale_payment_failed" };
+		}
+
+		// Le cron sync-async-payments (ou payment_intent.canceled) a déjà acté
+		// l'échec — redélivrance, skip idempotent.
+		if (order.paymentStatus === "FAILED") {
+			return { success: true, skipped: true, reason: "already_failed" };
+		}
+
+		// Cas nominal (PENDING) : persister les détails d'échec SANS transition.
+		// updateMany conditionnel = race-safe : si succeeded commit entre le fetch
+		// et cet update, le prédicat (ré-évalué au lock de ligne) fait un no-op.
+		await prisma.order.updateMany({
+			where: { id: orderId, paymentStatus: "PENDING", ...notDeleted },
+			data: {
+				paymentFailureCode: failureDetails.code,
+				paymentDeclineCode: failureDetails.declineCode,
+				paymentFailureMessage: failureDetails.message,
+			},
+		});
+
+		logger.info(
+			`❌ [WEBHOOK] Payment attempt failed on order ${order.orderNumber} — kept PENDING (PI retryable)`,
+			{ service: "webhook", orderId, failureCode: failureDetails.code },
+		);
+
+		// CACHE-AUDIT-002 : helper canonique pour couvrir les tags user-scopés
+		// (USER_ORDERS, LAST_ORDER) et le détail commande.
+		const cacheTags: string[] = [...getOrderInvalidationTags(order.userId ?? undefined, orderId)];
+		const tasks: PostWebhookTask[] = [{ type: "INVALIDATE_CACHE", tags: cacheTags }];
 
 		return { success: true, tasks };
 	} catch (error) {
@@ -562,11 +612,10 @@ export async function handlePaymentCanceled(
 	}
 
 	try {
-		// 1. Restore stock if it was decremented (order was PROCESSING/PAID)
-		const { restoredSkuIds, userId } = await restoreStockForOrder(orderId);
-
-		// 2. Mark order as cancelled
-		await markOrderAsCancelled(orderId, paymentIntent.id);
+		// 1+2. Cancel + restore stock — UNE SEULE transaction (IDEM-CANCEL-002).
+		// Le restock est conditionné au gain du claim CANCELLED : un rejeu de
+		// l'event (crash → retry cron) perd le claim → aucun double restock.
+		const { restoredSkus, userId } = await markOrderAsCancelled(orderId, paymentIntent.id);
 
 		// 3. Automatic refund if payment was captured
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
@@ -578,6 +627,7 @@ export async function handlePaymentCanceled(
 				paymentIntent.id,
 				orderId,
 				"Payment canceled, automatic refund",
+				paymentIntent.amount_received,
 			);
 
 			if (!refundResult.success && refundResult.error) {
@@ -594,10 +644,12 @@ export async function handlePaymentCanceled(
 
 		// 4. Build cache invalidation tasks
 		// CACHE-AUDIT-002 : helper canonique (cf. handlePaymentFailure).
-		const cacheTags: string[] = [...getOrderInvalidationTags(userId ?? undefined, orderId)];
-		for (const skuId of restoredSkuIds) {
-			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-		}
+		// CACHE-CATALOG-002 : le restock invalide aussi la page produit + inventaire
+		// admin (pas seulement SKU_STOCK, jamais posé sur la vitrine).
+		const cacheTags: string[] = [
+			...getOrderInvalidationTags(userId ?? undefined, orderId),
+			...collectStockInvalidationTags(restoredSkus),
+		];
 
 		return {
 			success: true,

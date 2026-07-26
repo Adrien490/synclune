@@ -46,10 +46,12 @@ const sizeClasses = {
 	xl: "size-16",
 };
 
+// Le rose = --primary (SSOT), l'or = token brand (globals.css). Les anciens
+// `--rose-300`/`--gold-400` n'étaient définis nulle part : halos transparents.
 const variantClasses = {
-	rose: "bg-[color:var(--rose-300)]",
-	gold: "bg-[color:var(--gold-400)]",
-	mixed: "from-[color:var(--rose-300)] to-[color:var(--gold-400)]",
+	rose: "bg-primary",
+	gold: "bg-(--color-brand-sun)",
+	mixed: "from-primary to-(--color-brand-sun)",
 };
 
 const positionClasses = {

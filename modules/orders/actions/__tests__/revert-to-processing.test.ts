@@ -19,7 +19,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -141,7 +141,7 @@ describe("revertToProcessing", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(makeShippedOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	// Auth
@@ -193,7 +193,7 @@ describe("revertToProcessing", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/Seule une commande expédiée/);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// Happy path: status flip + tracking cleared
@@ -202,8 +202,9 @@ describe("revertToProcessing", () => {
 
 		await revertToProcessing(undefined, makeFd());
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
-			where: { id: VALID_CUID },
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			// Garde atomique : le where ré-asserte SHIPPED
+			where: { id: VALID_CUID, deletedAt: null, status: "SHIPPED" },
 			data: {
 				status: "PROCESSING",
 				fulfillmentStatus: "PROCESSING",

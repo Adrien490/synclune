@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardBreadcrumb } from "@/app/admin/_components/dashboard-breadcrumb";
-import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "@/app/admin/_components/keyboard-shortcuts-dialog";
+import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "@/app/admin/_components/keyboard-shortcuts.constants";
 import { Separator } from "@/shared/components/ui/separator";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";

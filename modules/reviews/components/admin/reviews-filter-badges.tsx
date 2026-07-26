@@ -18,8 +18,7 @@ function formatReviewFilter(filter: FilterDefinition) {
 
 	if (filter.key === "status") {
 		const label = REVIEW_STATUS_LABELS[value as keyof typeof REVIEW_STATUS_LABELS] as
-			| string
-			| undefined;
+			string | undefined;
 		return { label: "Statut", displayValue: label ?? value };
 	}
 

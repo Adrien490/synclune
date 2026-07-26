@@ -1,0 +1,34 @@
+/* ==========================================
+   SECTION ACCENTS — accent de marque par section de la home
+   Posé via data-accent sur une <section>, consommé en cascade par :
+   - SectionHalo (var(--section-glow))
+   - HandDrawnUnderline / HandDrawnAccent (défaut var(--section-accent))
+   - CursorGlow (var(--section-glow), cf. modules/products/components/cursor-glow.css)
+   - fonds teintés bg-(--section-soft)
+   Fil conducteur : la page traverse le dégradé du hero
+   (rose → lavande → menthe, + or « sun » pour les mieux notées).
+   Hors [data-accent], chaque consommateur retombe sur le rose signature.
+   ========================================== */
+@layer utilities {
+	[data-accent="rose"] {
+		/* L'accent rose EST --primary : dérivé, jamais dupliqué. */
+		--section-accent: var(--primary);
+		--section-glow: var(--color-glow-pink);
+		--section-soft: color-mix(in oklab, var(--primary) 5%, transparent);
+	}
+	[data-accent="lavender"] {
+		--section-accent: var(--color-brand-lavender);
+		--section-glow: var(--color-glow-lavender);
+		--section-soft: oklch(0.72 0.11 295 / 0.05);
+	}
+	[data-accent="mint"] {
+		--section-accent: var(--color-brand-mint);
+		--section-glow: var(--color-glow-mint);
+		--section-soft: oklch(0.78 0.11 165 / 0.05);
+	}
+	[data-accent="sun"] {
+		--section-accent: var(--color-brand-sun);
+		--section-glow: var(--color-glow-yellow);
+		--section-soft: oklch(0.85 0.11 86 / 0.06);
+	}
+}

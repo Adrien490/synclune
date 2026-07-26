@@ -45,13 +45,14 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 			error: (err) => (err instanceof Error ? err.message : "Impossible de télécharger la facture"),
 		});
 
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
+		// Le catch n'échappe jamais → le reset qui suit est équivalent.
 		try {
 			await task;
 		} catch {
 			// error surfaced by toast.promise (haptic déjà déclenché par wrapper toast.error)
-		} finally {
-			setIsDownloading(false);
 		}
+		setIsDownloading(false);
 	}
 
 	return (

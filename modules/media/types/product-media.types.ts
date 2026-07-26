@@ -15,6 +15,13 @@ export type ProductMedia = {
 	source?: "default" | "selected" | "sku";
 	skuId?: string;
 	mediaType: "IMAGE" | "VIDEO";
+	/**
+	 * Dimensions intrinsèques lues à l'upload. `null`/absentes sur les médias
+	 * antérieurs au backfill : tout consommateur doit gérer l'absence (le srcSet
+	 * lightbox omet alors `height` au lieu d'émettre 0).
+	 */
+	width?: number | null;
+	height?: number | null;
 	/** Internal flag used by gallery-builder to track DB-defined alt texts during second pass */
 	_hasCustomAlt?: boolean;
 };

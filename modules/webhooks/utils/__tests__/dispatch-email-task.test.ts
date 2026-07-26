@@ -15,7 +15,6 @@ const {
 	mockSendOrderConfirmationEmail,
 	mockSendRefundConfirmationEmail,
 	mockSendRefundConfirmationOnce,
-	mockSendPaymentFailedEmail,
 	mockSendAdminRefundFailedAlert,
 	mockSendAdminDisputeAlert,
 	mockSendAdminInvoiceFailedAlert,
@@ -25,7 +24,6 @@ const {
 	mockSendOrderConfirmationEmail: vi.fn(),
 	mockSendRefundConfirmationEmail: vi.fn(),
 	mockSendRefundConfirmationOnce: vi.fn(),
-	mockSendPaymentFailedEmail: vi.fn(),
 	mockSendAdminRefundFailedAlert: vi.fn(),
 	mockSendAdminDisputeAlert: vi.fn(),
 	mockSendAdminInvoiceFailedAlert: vi.fn(),
@@ -49,9 +47,6 @@ vi.mock("@/modules/emails/services/refund-emails", () => ({
 vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
 	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
 }));
-vi.mock("@/modules/emails/services/payment-emails", () => ({
-	sendPaymentFailedEmail: mockSendPaymentFailedEmail,
-}));
 
 import { dispatchEmailTask, CRITICAL_EMAIL_TASKS } from "../dispatch-email-task";
 import type { PostWebhookTask } from "../../types/webhook.types";
@@ -62,7 +57,6 @@ describe("dispatchEmailTask", () => {
 		mockSendOrderConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendRefundConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendRefundConfirmationOnce.mockResolvedValue({ success: true });
-		mockSendPaymentFailedEmail.mockResolvedValue({ success: true });
 		mockSendAdminRefundFailedAlert.mockResolvedValue({ success: true });
 		mockSendAdminDisputeAlert.mockResolvedValue({ success: true });
 		mockSendAdminInvoiceFailedAlert.mockResolvedValue({ success: true });
@@ -75,10 +69,6 @@ describe("dispatchEmailTask", () => {
 			[
 				{ type: "ORDER_CONFIRMATION_EMAIL", data: { d: 1 } } as unknown as PostWebhookTask,
 				() => expect(mockSendOrderConfirmationEmail).toHaveBeenCalledWith({ d: 1 }),
-			],
-			[
-				{ type: "PAYMENT_FAILED_EMAIL", data: { d: 4 } } as unknown as PostWebhookTask,
-				() => expect(mockSendPaymentFailedEmail).toHaveBeenCalledWith({ d: 4 }),
 			],
 			[
 				{ type: "ADMIN_REFUND_FAILED_ALERT", data: { d: 5 } } as unknown as PostWebhookTask,
@@ -140,6 +130,31 @@ describe("dispatchEmailTask", () => {
 			expect.objectContaining({ refundId: "rf_123", invoiceNumber: null, creditNoteNumber: null }),
 		);
 		expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+	});
+
+	it("throws when the atomic sender reports send_failed so the task is retried", async () => {
+		// Le service avale l'erreur Resend (et reset son claim) — le dispatcher
+		// doit throw pour que la PostWebhookTask reparte en FAILED → retry cron.
+		mockSendRefundConfirmationOnce.mockResolvedValue({
+			sent: false,
+			skipped: false,
+			reason: "send_failed",
+		});
+
+		await expect(
+			dispatchEmailTask({
+				type: "REFUND_CONFIRMATION_EMAIL",
+				data: {
+					refundId: "rf_123",
+					to: "c@test.com",
+					orderNumber: "SYN-1",
+					customerName: "Client",
+					refundAmount: 1000,
+					reason: "CUSTOMER_REQUEST",
+					orderDetailsUrl: "https://x/orders",
+				},
+			} as unknown as Exclude<PostWebhookTask, { type: "INVALIDATE_CACHE" }>),
+		).rejects.toThrow(/send_failed|failed for refund rf_123/);
 	});
 
 	it("CRITICAL_EMAIL_TASKS lists the customer-facing/revenue tasks", () => {

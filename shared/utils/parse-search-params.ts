@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CUID_LENGTH } from "@/shared/constants/pagination";
+import { CUID_LENGTH } from "@/shared/schemas/pagination-schema";
 
 /**
  * Safely parse a search parameter with a Zod schema
@@ -114,10 +114,7 @@ export const searchParamParsers = {
 	date: (value: string | string[] | undefined, defaultValue?: Date): Date | undefined => {
 		return parseSearchParam(
 			value,
-			z
-				.string()
-				.datetime()
-				.transform((s) => new Date(s)),
+			z.iso.datetime().transform((s) => new Date(s)),
 			defaultValue,
 		);
 	},

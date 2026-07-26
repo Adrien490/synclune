@@ -111,7 +111,8 @@ function makeValidB2cInvoice(): InvoiceData {
 		precedingInvoice: null,
 		voidedInfo: null,
 		meta: {
-			orderId: "order-1",
+			// cuid-like : orderId est validé en z.cuid2() (les IDs à tirets échouent)
+			orderId: "ckwq2x5g9000001mh2z3v8y1a",
 			orderNumber: "SYN-2026-0001",
 			notes: null,
 		},

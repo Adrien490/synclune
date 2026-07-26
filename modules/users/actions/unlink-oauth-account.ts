@@ -13,8 +13,9 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
+import { getUserProvidersInvalidationTags } from "@/modules/auth/utils/cache.utils";
 import { unlinkOAuthAccountSchema } from "../schemas/user-admin.schemas";
-import { USERS_CACHE_TAGS, getCurrentUserInvalidationTags } from "../constants/cache";
+import { USERS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * User self-service: unlink an OAuth provider from the account.
@@ -66,7 +67,9 @@ export async function unlinkOAuthAccount(
 
 		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 		updateTag(USERS_CACHE_TAGS.ACCOUNTS(userId));
-		for (const tag of getCurrentUserInvalidationTags(userId)) {
+		updateTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
+		// La liste des providers OAuth est cachée sous son propre tag (module auth)
+		for (const tag of getUserProvidersInvalidationTags(userId)) {
 			updateTag(tag);
 		}
 

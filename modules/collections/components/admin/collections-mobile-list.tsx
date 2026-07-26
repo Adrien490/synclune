@@ -82,9 +82,9 @@ export function CollectionsMobileList({
 					/>
 					<ItemGroup aria-label="Collections" className="gap-2">
 						{collections.map((collection, index) => (
-							<div key={collection.id} role="listitem">
+							<li key={collection.id}>
 								<CollectionMobileItem collection={collection} preload={index === 0} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

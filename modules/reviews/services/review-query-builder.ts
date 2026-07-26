@@ -54,9 +54,12 @@ export function buildReviewWhereClause(
 		where.rating = params.filterRating;
 	}
 
-	// Contexte storefront : uniquement les avis publiés
+	// Contexte storefront : uniquement les avis publiés, et uniquement pour un
+	// produit visible (défense en profondeur — les pages gardent déjà le statut,
+	// mais un nouveau call site sans garde ne doit pas fuir d'avis DRAFT/ARCHIVED/deleted)
 	if (!isAdminContext) {
 		where.status = "PUBLISHED";
+		where.product = { status: "PUBLIC", deletedAt: null };
 		return where;
 	}
 

@@ -15,6 +15,7 @@ const {
 	mockValidateInput,
 	mockSuccess,
 	mockError,
+	mockUpdateTag,
 } = vi.hoisted(() => ({
 	mockAuth: { api: { changePassword: vi.fn() } },
 	mockHeaders: vi.fn(),
@@ -24,6 +25,7 @@ const {
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
+	mockUpdateTag: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
@@ -44,14 +46,22 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,
+	handleActionError: (_err: unknown, msg: string) => ({
+		status: "error",
+		message: msg,
+	}),
 }));
 vi.mock("../schemas/auth.schemas", () => ({ changePasswordSchema: {} }));
 vi.mock("../../services/hibp.service", () => ({
 	checkPasswordBreached: vi.fn().mockResolvedValue(0),
 }));
-vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
+vi.mock("next/cache", () => ({
+	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
+}));
 vi.mock("@/shared/constants/cache-tags", () => ({
-	SESSION_CACHE_TAGS: { SESSION: (id: string) => `session-${id}` },
+	SESSION_CACHE_TAGS: { SESSIONS: (id: string) => `sessions-user-${id}` },
 }));
 
 import { changePassword } from "../change-password";
@@ -152,6 +162,27 @@ describe("changePassword", () => {
 		const result = await changePassword(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("incorrect");
+	});
+
+	it("should invalidate session list caches when revokeOtherSessions is true", async () => {
+		const formData = createMockFormData({
+			currentPassword: "OldP@ss123",
+			newPassword: "NewP@ss456",
+			confirmPassword: "NewP@ss456",
+			revokeOtherSessions: "true",
+		});
+		const result = await changePassword(undefined, formData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		// Tags réellement posés par les lecteurs : namespace auth + détail admin user
+		expect(mockUpdateTag).toHaveBeenCalledWith("auth-sessions-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith(`auth-sessions-${VALID_USER_ID}`);
+		expect(mockUpdateTag).toHaveBeenCalledWith(`sessions-user-${VALID_USER_ID}`);
+	});
+
+	it("should not invalidate session caches without revokeOtherSessions", async () => {
+		const result = await changePassword(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should handle unexpected error gracefully", async () => {

@@ -1,4 +1,5 @@
 import { getSitemapProducts } from "@/modules/products/data/get-sitemap-products";
+import { logger } from "@/shared/lib/logger";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { NextResponse } from "next/server";
 
@@ -7,8 +8,31 @@ import { NextResponse } from "next/server";
  * Format: Google Image Sitemap Extension
  * @see https://developers.google.com/search/docs/crawling-indexing/sitemaps/image-sitemaps
  */
+
+/**
+ * Plafond Google : 1000 `<image:image>` par `<url>`. Au-delà, Google ignore le
+ * surplus — on tronque explicitement et on le journalise (jamais de troncature
+ * silencieuse, qui se lirait comme « tout le catalogue est couvert »).
+ */
+const MAX_IMAGES_PER_URL = 1000;
+
 export async function GET() {
-	const products = await getSitemapProducts();
+	let products;
+	try {
+		products = await getSitemapProducts();
+	} catch (error) {
+		// Incident DB : répondre 503 sans cache plutôt que servir un `<urlset>` vide
+		// que le CDN garderait 24 h (désindexation silencieuse de Google Images).
+		logger.error("sitemap-images: lecture catalogue impossible", error, {
+			service: "sitemap-images",
+		});
+		return new NextResponse("Service Unavailable", {
+			status: 503,
+			headers: { "Content-Type": "text/plain", "Cache-Control": "no-store" },
+		});
+	}
+
+	let truncatedUrls = 0;
 
 	// Construire le XML
 	const urlEntries = products
@@ -33,7 +57,10 @@ export async function GET() {
 
 			if (images.length === 0) return null;
 
-			const imageElements = images
+			const kept = images.slice(0, MAX_IMAGES_PER_URL);
+			if (kept.length < images.length) truncatedUrls++;
+
+			const imageElements = kept
 				.map(
 					(img) => `
       <image:image>
@@ -46,11 +73,21 @@ export async function GET() {
 
 			return `
   <url>
-    <loc>${SITE_URL}/creations/${product.slug}</loc>${imageElements}
+    <loc>${escapeXml(`${SITE_URL}/creations/${product.slug}`)}</loc>
+    <lastmod>${product.updatedAt.toISOString()}</lastmod>${imageElements}
   </url>`;
 		})
 		.filter(Boolean)
 		.join("");
+
+	if (truncatedUrls > 0) {
+		logger.warn(
+			`sitemap-images: ${truncatedUrls} produit(s) tronqué(s) à ${MAX_IMAGES_PER_URL} images`,
+			{
+				service: "sitemap-images",
+			},
+		);
+	}
 
 	const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"

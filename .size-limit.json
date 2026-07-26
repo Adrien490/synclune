@@ -64,5 +64,17 @@
 		"path": ".next/static/chunks/app/(legal)/**/*.js",
 		"limit": "30 kB",
 		"gzip": true
+	},
+	{
+		"name": "Static images — splash screens",
+		"path": "public/splash/*.png",
+		"limit": "1900 kB",
+		"gzip": false
+	},
+	{
+		"name": "Static images — icons & favicons",
+		"path": "public/icons/*.png",
+		"limit": "400 kB",
+		"gzip": false
 	}
 ]

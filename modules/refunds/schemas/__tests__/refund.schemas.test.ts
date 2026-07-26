@@ -25,7 +25,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	RefundReason: mockRefundReason,
 }));
 
-vi.mock("@/shared/constants/pagination", () => ({
+vi.mock("@/shared/schemas/pagination-schema", () => ({
 	cursorSchema: z.string().optional(),
 	directionSchema: z.enum(["forward", "backward"]).default("forward"),
 }));

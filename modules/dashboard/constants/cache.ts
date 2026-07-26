@@ -19,4 +19,5 @@ export const DASHBOARD_CACHE_TAGS = {
 	TOP_PRODUCTS: "dashboard-top-products",
 	REVIEW_HEALTH: "dashboard-review-health",
 	VAT_PROGRESS: "dashboard-vat-progress",
+	EU_OSS_PROGRESS: "dashboard-eu-oss-progress",
 } as const;

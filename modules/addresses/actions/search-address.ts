@@ -42,18 +42,18 @@ export async function searchAddress(params: SearchAddressParams): Promise<Search
 		};
 	}
 
-	// Valider et appliquer les valeurs par défaut
-	const validatedParams = searchAddressSchema.parse(params);
-
 	try {
+		// Valider et appliquer les valeurs par défaut (dans le try : une ZodError
+		// sur payload malformé doit retourner le fallback, pas remonter brute)
+		const validatedParams = searchAddressSchema.parse(params);
 		return await fetchAddresses(validatedParams);
 	} catch (error) {
 		logger.error("Address search failed", error, { service: "searchAddress" });
 
 		return {
 			addresses: [],
-			query: validatedParams.text,
-			limit: validatedParams.maximumResponses,
+			query: params.text,
+			limit: params.maximumResponses ?? SEARCH_ADDRESS_DEFAULT_LIMIT,
 			error: true,
 		};
 	}

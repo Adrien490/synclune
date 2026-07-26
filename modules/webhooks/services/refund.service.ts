@@ -157,10 +157,15 @@ export async function syncStripeRefunds(
 	// ORD-STRIPE-006 : trace les Dashboard refunds créés pour alerte admin
 	const dashboardRefundsCreated: DashboardRefundSummary[] = [];
 
+	// Index construit une fois : un `find` par refund Stripe était quadratique.
+	const existingByStripeId = new Map(
+		existingRefunds.filter((r) => r.stripeRefundId != null).map((r) => [r.stripeRefundId, r]),
+	);
+
 	for (const stripeRefund of stripeRefunds) {
 		if (!stripeRefund.id) continue;
 
-		const existingRefund = existingRefunds.find((r) => r.stripeRefundId === stripeRefund.id);
+		const existingRefund = existingByStripeId.get(stripeRefund.id);
 
 		if (existingRefund) {
 			// ORD-STRIPE-002: si un SAGA processRefund est en cours (Step 2.5 a
@@ -499,31 +504,36 @@ export async function updateOrderPaymentStatus(
 	const isFullyRefunded = totalRefunded >= orderTotal;
 	const isPartiallyRefunded = totalRefunded > 0 && totalRefunded < orderTotal;
 
-	await prisma.$transaction(async (tx) => {
-		// Lock the order row to serialize concurrent refund webhook processing
-		await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
+	await prisma.$transaction(
+		async (tx) => {
+			// Lock the order row to serialize concurrent refund webhook processing
+			await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
 
-		const order = await tx.order.findUniqueOrThrow({
-			where: { id: orderId },
-			select: { paymentStatus: true },
-		});
+			const order = await tx.order.findUniqueOrThrow({
+				where: { id: orderId },
+				select: { paymentStatus: true },
+			});
 
-		if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.REFUNDED },
-			});
-		} else if (
-			isPartiallyRefunded &&
-			order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
-			order.paymentStatus !== PaymentStatus.REFUNDED
-		) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
-			});
-		}
-	});
+			if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
+				await tx.order.update({
+					where: { id: orderId },
+					data: { paymentStatus: PaymentStatus.REFUNDED },
+				});
+			} else if (
+				isPartiallyRefunded &&
+				order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
+				order.paymentStatus !== PaymentStatus.REFUNDED
+			) {
+				await tx.order.update({
+					where: { id: orderId },
+					data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+				});
+			}
+		},
+		// IDEM-TX-001 : le `FOR UPDATE` ci-dessus peut attendre un webhook concurrent —
+		// cette attente compte dans le timeout, les défauts 5s/2s sont trop serrés.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	return { isFullyRefunded, isPartiallyRefunded };
 }
@@ -568,21 +578,29 @@ export async function resolveRefundByStripeId(
 	// Fallback: find by metadata refund_id and link stripeRefundId atomically
 	if (!metadataRefundId) return null;
 
-	return prisma.$transaction(async (tx) => {
-		const found = await tx.refund.findUnique({
-			where: { id: metadataRefundId },
-			select: REFUND_RECORD_SELECT,
-		});
-
-		if (found) {
-			await tx.refund.update({
-				where: { id: found.id },
-				data: { stripeRefundId },
+	return prisma.$transaction(
+		async (tx) => {
+			const found = await tx.refund.findUnique({
+				where: { id: metadataRefundId },
+				select: REFUND_RECORD_SELECT,
 			});
-		}
 
-		return found;
-	});
+			if (found) {
+				// IDEM-REFUNDSTATUS-001 : claim conditionnel — deux événements refund.*
+				// concurrents (event.id distincts, dédup WebhookEvent inopérante) résolvaient
+				// tous deux le même refund et réécrivaient le lien. Le `stripeRefundId: null`
+				// borne l'écriture au 1ᵉʳ arrivé ; les suivants lisent la même valeur.
+				await tx.refund.updateMany({
+					where: { id: found.id, stripeRefundId: null },
+					data: { stripeRefundId },
+				});
+			}
+
+			return found;
+		},
+		// IDEM-TX-001 : aligné sur le reste du module.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 }
 
 /**
@@ -627,33 +645,60 @@ export async function updateRefundStatus(
 		return;
 	}
 
-	await prisma.$transaction(async (tx) => {
-		await tx.refund.update({
-			where: { id: refundId },
-			data: {
-				status: newStatus,
-				processedAt: newStatus === RefundStatus.COMPLETED ? new Date() : undefined,
-			},
-		});
-
-		if (refundForAudit && newStatus === RefundStatus.COMPLETED) {
-			await createOrderAuditTx(tx, {
-				orderId: refundForAudit.orderId,
-				action: OrderAction.REFUND_COMPLETED,
-				source: HistorySource.WEBHOOK,
-				authorId: SYSTEM_AUTHOR_ID,
-				authorName: WEBHOOK_AUDIT_AUTHOR,
-				note: `Refund completed via Stripe webhook (status: ${stripeStatus})`,
-				metadata: {
-					refundId,
-					stripeRefundId: refundForAudit.stripeRefundId,
-					amount: refundForAudit.amount,
-					previousStatus: statusToValidate,
-					stripeStatus,
+	await prisma.$transaction(
+		async (tx) => {
+			// IDEM-REFUNDSTATUS-001 (audit idempotence 2026-07-26) : claim conditionnel sur
+			// le statut LU. `refund.created`, `refund.updated` et `charge.refund.updated`
+			// sont trois types d'événements routés vers le même handler (alias legacy) :
+			// ce sont trois `event.id` DISTINCTS, que la dédup `WebhookEvent` ne couvre pas
+			// par construction. Avec un `update` inconditionnel sur un statut lu hors tx,
+			// deux d'entre eux en vol produisaient deux transitions → deux entrées
+			// `OrderHistory` REFUND_COMPLETED dans une table IMMUABLE (Art. L123-22) et un
+			// `processedAt` écrasé. Le perdant du claim ne journalise rien.
+			const claimed = await tx.refund.updateMany({
+				where: {
+					id: refundId,
+					// `statusToValidate` peut venir du caller (snapshot) ou de la relecture
+					// ci-dessus ; dans les deux cas c'est l'état sur lequel `canTransition`
+					// a statué, donc l'état qui doit encore être vrai à l'écriture.
+					...(statusToValidate ? { status: statusToValidate } : {}),
+				},
+				data: {
+					status: newStatus,
+					processedAt: newStatus === RefundStatus.COMPLETED ? new Date() : undefined,
 				},
 			});
-		}
-	});
+
+			if (claimed.count === 0) {
+				logger.info(
+					`⏭️ [WEBHOOK] Refund ${refundId} status already moved by a concurrent event, skipping`,
+					{ service: "webhook", refundId, attemptedStatus: newStatus },
+				);
+				return;
+			}
+
+			if (refundForAudit && newStatus === RefundStatus.COMPLETED) {
+				await createOrderAuditTx(tx, {
+					orderId: refundForAudit.orderId,
+					action: OrderAction.REFUND_COMPLETED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: WEBHOOK_AUDIT_AUTHOR,
+					note: `Refund completed via Stripe webhook (status: ${stripeStatus})`,
+					metadata: {
+						refundId,
+						stripeRefundId: refundForAudit.stripeRefundId,
+						amount: refundForAudit.amount,
+						previousStatus: statusToValidate,
+						stripeStatus,
+					},
+				});
+			}
+		},
+		// IDEM-TX-001 : aligné sur le reste du module (défauts Prisma 5s/2s trop courts
+		// sous contention multi-webhooks → P2024 + retry Stripe = plus de concurrence).
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	logger.info(`✅ [WEBHOOK] Refund ${refundId} status updated to ${newStatus}`, {
 		service: "webhook",
@@ -671,33 +716,49 @@ export async function markRefundAsFailed(refundId: string, failureReason: string
 		select: { orderId: true, amount: true, stripeRefundId: true, status: true },
 	});
 
-	await prisma.$transaction(async (tx) => {
-		await tx.refund.update({
-			where: { id: refundId },
-			data: {
-				status: RefundStatus.FAILED,
-				failureReason,
-			},
-		});
-
-		if (refundForAudit) {
-			await createOrderAuditTx(tx, {
-				orderId: refundForAudit.orderId,
-				action: OrderAction.REFUND_FAILED,
-				source: HistorySource.WEBHOOK,
-				authorId: SYSTEM_AUTHOR_ID,
-				authorName: WEBHOOK_AUDIT_AUTHOR,
-				note: `Refund failed via Stripe webhook: ${failureReason}`,
-				metadata: {
-					refundId,
-					stripeRefundId: refundForAudit.stripeRefundId,
-					amount: refundForAudit.amount,
-					previousStatus: refundForAudit.status,
+	await prisma.$transaction(
+		async (tx) => {
+			// IDEM-REFUNDSTATUS-001 : claim conditionnel — un `refund.failed` redélivré (ou
+			// son alias) ne doit pas réécrire FAILED et empiler une 2ᵉ entrée d'audit
+			// immuable. `status: { not: FAILED }` suffit : la cible est un état terminal
+			// unique, donc le 1ᵉʳ passage rend le prédicat définitivement faux.
+			const claimed = await tx.refund.updateMany({
+				where: { id: refundId, status: { not: RefundStatus.FAILED } },
+				data: {
+					status: RefundStatus.FAILED,
 					failureReason,
 				},
 			});
-		}
-	});
+
+			if (claimed.count === 0) {
+				logger.info(`⏭️ [WEBHOOK] Refund ${refundId} already FAILED, skipping audit`, {
+					service: "webhook",
+					refundId,
+				});
+				return;
+			}
+
+			if (refundForAudit) {
+				await createOrderAuditTx(tx, {
+					orderId: refundForAudit.orderId,
+					action: OrderAction.REFUND_FAILED,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: WEBHOOK_AUDIT_AUTHOR,
+					note: `Refund failed via Stripe webhook: ${failureReason}`,
+					metadata: {
+						refundId,
+						stripeRefundId: refundForAudit.stripeRefundId,
+						amount: refundForAudit.amount,
+						previousStatus: refundForAudit.status,
+						failureReason,
+					},
+				});
+			}
+		},
+		// IDEM-TX-001 : aligné sur le reste du module.
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	logger.info(`✅ [WEBHOOK] Refund ${refundId} marked as FAILED (reason: ${failureReason})`, {
 		service: "webhook",

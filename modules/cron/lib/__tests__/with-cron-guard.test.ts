@@ -18,6 +18,7 @@ const {
 				cb({ setTag: vi.fn(), setFingerprint: vi.fn(), setLevel: vi.fn() }),
 			),
 			captureException: vi.fn(),
+			captureCheckIn: vi.fn(() => "checkin-id-123"),
 			startSpan: vi.fn(
 				async (
 					_options: unknown,
@@ -237,5 +238,59 @@ describe("withCronGuard", () => {
 		expect(spanSetAttribute).toHaveBeenCalledWith("processed_count", 7);
 		expect(spanSetAttribute).toHaveBeenCalledWith("errored_count", 2);
 		expect(spanSetAttribute).toHaveBeenCalledWith("duration_ms", expect.any(Number));
+	});
+
+	// ========================================================================
+	// MON-03 — Sentry Cron Monitoring heartbeat
+	// ========================================================================
+	describe("Sentry cron heartbeat (MON-03)", () => {
+		// jobName réel présent dans CRON_SCHEDULES → check-ins émis.
+		const SCHEDULED_JOB = "reconcile-refunds";
+
+		it("émet in_progress puis ok sur un run réussi d'un job planifié", async () => {
+			const handler = withCronGuard({ jobName: SCHEDULED_JOB }, async () => ({
+				processed: 1,
+				errored: 0,
+				skipped: 0,
+			}));
+
+			await handler();
+
+			expect(mockSentry.captureCheckIn).toHaveBeenCalledWith(
+				{ monitorSlug: SCHEDULED_JOB, status: "in_progress" },
+				expect.objectContaining({ schedule: { type: "crontab", value: expect.any(String) } }),
+			);
+			expect(mockSentry.captureCheckIn).toHaveBeenCalledWith(
+				{ checkInId: "checkin-id-123", monitorSlug: SCHEDULED_JOB, status: "ok" },
+				expect.anything(),
+			);
+		});
+
+		it("clôture en status=error quand le run échoue totalement (errored>0, processed=0)", async () => {
+			const handler = withCronGuard({ jobName: SCHEDULED_JOB }, async () => ({
+				processed: 0,
+				errored: 3,
+				skipped: 0,
+			}));
+
+			await handler();
+
+			expect(mockSentry.captureCheckIn).toHaveBeenCalledWith(
+				{ checkInId: "checkin-id-123", monitorSlug: SCHEDULED_JOB, status: "error" },
+				expect.anything(),
+			);
+		});
+
+		it("n'émet AUCUN check-in pour un job sans planning connu", async () => {
+			const handler = withCronGuard({ jobName: "test" }, async () => ({
+				processed: 1,
+				errored: 0,
+				skipped: 0,
+			}));
+
+			await handler();
+
+			expect(mockSentry.captureCheckIn).not.toHaveBeenCalled();
+		});
 	});
 });

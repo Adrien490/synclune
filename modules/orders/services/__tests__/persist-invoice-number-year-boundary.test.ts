@@ -295,6 +295,11 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 		mockPrisma.order.findUnique.mockResolvedValue({
 			...makeOrderForSnapshot(),
 			paidAt: null,
+			// EINV-SEQ-008 : la garde never-paid exige paidAt != null OU
+			// paymentStatus PAID — le fallback createdAt ne s'applique qu'à une
+			// commande encaissée dont paidAt manque (état incohérent), pas à une
+			// commande jamais payée (refus, testé dans le service test parent).
+			paymentStatus: "PAID",
 			createdAt: new Date("2025-09-10T12:00:00Z"),
 		});
 		runTx();

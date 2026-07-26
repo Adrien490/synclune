@@ -6,20 +6,6 @@ import { error, handleActionError, success } from "@/shared/lib/actions";
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 import type { ActionState } from "@/shared/types/server-action";
 
-/**
- * Shape de réponse standard pour les actions « Sélectionner les N filtrés ».
- *
- * - `ids`       : liste des ids matching les filtres, capée à `cappedAt`.
- * - `totalCount`: nombre réel d'items matching (peut excéder `cappedAt`).
- * - `cappedAt`  : limite appliquée — affichée comme « (max) » dans le banner si
- *                 `totalCount > cappedAt`.
- */
-export interface FilteredIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 interface RunCrossPageIdsOptions<TWhere> {
 	/** Configuration de rate-limiting par module (admin-{entity}-refresh). */
 	rateLimitConfig: RateLimitConfig;

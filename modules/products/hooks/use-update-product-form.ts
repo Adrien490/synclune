@@ -2,9 +2,8 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { extractServerErrors } from "@/shared/utils/extract-server-errors";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProduct } from "@/modules/products/actions/update-product";
 import { editProductFormOpts } from "@/modules/products/constants/update-product-form-options";
@@ -96,15 +95,10 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 		),
 	});
 
-	const tanstackErrors = useStore(form.store, (formState) => formState.errors);
-	const serverErrors = extractServerErrors(state);
-	const formErrors = Array.from(new Set([...tanstackErrors, ...serverErrors]));
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

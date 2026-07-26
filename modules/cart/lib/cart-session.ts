@@ -18,9 +18,10 @@ export function isValidCartSessionId(value: string | null | undefined): value is
 }
 
 /**
- * Durée de vie du cookie : 7 jours
- * Cette durée est réinitialisée à chaque interaction avec le panier
- * Utilise CART_EXPIRATION_DAYS pour cohérence avec la durée de vie du panier
+ * Durée de vie du cookie : 7 jours, glissants — `getOrCreateCartSessionId()`
+ * re-pose le cookie à chaque interaction panier pour rafraîchir son maxAge,
+ * en cohérence avec `Cart.expiresAt` (lui aussi glissant, réécrit à chaque
+ * mutation du panier). Utilise CART_EXPIRATION_DAYS pour cohérence.
  */
 const CART_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * CART_EXPIRATION_DAYS; // 7 jours en secondes
 
@@ -46,6 +47,15 @@ export async function getCartSessionId(): Promise<string | null> {
  */
 export async function createCartSessionId(): Promise<string> {
 	const sessionId = crypto.randomUUID(); // UUID v4 sécurisé (ex: 550e8400-e29b-41d4-a716-446655440000)
+	await setCartSessionCookie(sessionId);
+	return sessionId;
+}
+
+/**
+ * Pose (ou re-pose) le cookie de session panier avec un maxAge complet.
+ * Re-poser un cookie existant rafraîchit son expiration (glissante).
+ */
+async function setCartSessionCookie(sessionId: string): Promise<void> {
 	const cookieStore = await cookies();
 
 	cookieStore.set(CART_SESSION_COOKIE_NAME, sessionId, {
@@ -55,16 +65,20 @@ export async function createCartSessionId(): Promise<string> {
 		maxAge: CART_SESSION_COOKIE_MAX_AGE,
 		path: "/",
 	});
-
-	return sessionId;
 }
 
 /**
  * Récupère l'identifiant de session existant ou en crée un nouveau
  *
+ * Un cookie existant est re-posé avec la même valeur pour rafraîchir son
+ * maxAge (expiration glissante, alignée sur `Cart.expiresAt` qui est réécrit
+ * à chaque mutation du panier). Sans cela, un invité actif > 7 jours perdrait
+ * son cookie alors que son panier DB est encore valide.
+ *
  * Note: En cas d'appels concurrents (rare), deux sessions peuvent être créées.
  * C'est acceptable car chaque UUID est unique et le cookie sera écrasé.
- * Le panier orphelin sera nettoyé par le cron job d'expiration.
+ * Le panier orphelin sera purgé par la passe paniers du cron
+ * `cleanup-pending-orders` (cleanup-carts.service.ts).
  *
  * @returns L'identifiant de session
  */
@@ -72,6 +86,7 @@ export async function getOrCreateCartSessionId(): Promise<string> {
 	const existingSessionId = await getCartSessionId();
 
 	if (existingSessionId) {
+		await setCartSessionCookie(existingSessionId);
 		return existingSessionId;
 	}
 
@@ -88,8 +103,10 @@ export async function clearCartSessionId(): Promise<void> {
 }
 
 /**
- * Calcule la date d'expiration pour un panier visiteur (7 jours)
- * Utilise CART_EXPIRATION_MS pour cohérence avec le cleanup
+ * Calcule la date d'expiration pour un panier visiteur (7 jours glissants,
+ * réécrite à chaque mutation du panier). Les paniers expirés sont ignorés à
+ * la lecture, puis purgés (après grâce) par la passe paniers du cron
+ * `cleanup-pending-orders`.
  */
 export function getCartExpirationDate(): Date {
 	const now = new Date();

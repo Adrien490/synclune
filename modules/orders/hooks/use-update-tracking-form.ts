@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/components/forms";
 import type { Carrier } from "@/modules/orders/utils/carrier.utils";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
+import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 
 interface UseUpdateTrackingFormOptions {
@@ -55,13 +55,10 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	return {
 		form,
 		state,
 		action,
 		isPending,
-		formErrors,
 	};
 };

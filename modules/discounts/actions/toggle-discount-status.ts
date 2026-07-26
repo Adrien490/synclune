@@ -55,7 +55,7 @@ export async function toggleDiscountStatus(
 			data: { isActive: newStatus },
 		});
 
-		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(discount.id, discount.code).forEach((tag) => updateTag(tag));
 
 		return success(
 			newStatus

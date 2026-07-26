@@ -151,7 +151,6 @@ describe("clearWishlist", () => {
 		expect(mockPrisma.wishlist.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: "wishlist-1" },
-				data: expect.objectContaining({ expiresAt: null }),
 			}),
 		);
 	});
@@ -174,7 +173,7 @@ describe("clearWishlist", () => {
 		expect(result.message).toBe("Favori supprime");
 	});
 
-	it("clears all items for a guest user and refreshes expiration", async () => {
+	it("clears all items for a guest user", async () => {
 		setupGuestUser();
 		mockPrisma.wishlist.findFirst.mockResolvedValue({
 			id: "guest-wishlist-1",
@@ -189,13 +188,9 @@ describe("clearWishlist", () => {
 		const result = await clearWishlist(undefined, undefined);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.wishlist.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({
-					expiresAt: new Date("2026-05-17"),
-				}),
-			}),
-		);
+		expect(mockPrisma.wishlistItem.deleteMany).toHaveBeenCalledWith({
+			where: { wishlistId: "guest-wishlist-1" },
+		});
 	});
 
 	it("invalidates 3 cache tags after success", async () => {

@@ -150,8 +150,24 @@ describe("getSkuInvalidationTags", () => {
 		expect(tags).toContain("material-argent-925");
 	});
 
+	it("cascades to material-${id}-product-count when affectedMaterialIds provided (parité couleur)", () => {
+		const tags = getSkuInvalidationTags(
+			"SKU-001",
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			["mat-cuid-1", "mat-cuid-2"],
+		);
+
+		expect(tags).toContain("material-mat-cuid-1-product-count");
+		expect(tags).toContain("material-mat-cuid-2-product-count");
+	});
+
 	it("skips cross-module cascade when arrays are empty", () => {
-		const tags = getSkuInvalidationTags("SKU-001", undefined, undefined, undefined, [], [], []);
+		const tags = getSkuInvalidationTags("SKU-001", undefined, undefined, undefined, [], [], [], []);
 
 		expect(tags).not.toContain("colors-list");
 		expect(tags).not.toContain("materials-list");

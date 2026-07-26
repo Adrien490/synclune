@@ -19,6 +19,7 @@ import { ExportRevenueButton } from "@/modules/dashboard/components/export-reven
 import { DashboardMobileActions } from "@/modules/dashboard/components/dashboard-mobile-actions";
 import { DashboardFreshness } from "@/modules/dashboard/components/dashboard-freshness";
 import { VatProgressCard } from "@/modules/dashboard/components/vat-progress-card";
+import { EuOssProgressCard } from "@/modules/dashboard/components/eu-oss-progress-card";
 
 import {
 	KpisSkeleton,
@@ -32,8 +33,10 @@ import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-
 import { fetchDashboardTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
+import { fetchDashboardActionItems } from "@/modules/dashboard/data/get-action-items";
 import { fetchDashboardReviewHealth } from "@/modules/dashboard/data/get-review-health";
 import { fetchDashboardVatProgress } from "@/modules/dashboard/data/get-vat-progress";
+import { fetchDashboardEuOssProgress } from "@/modules/dashboard/data/get-eu-oss-progress";
 import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadline.service";
 
 import {
@@ -114,9 +117,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						label="Conformité fiscale"
 						accent="circle"
 					/>
-					<Suspense fallback={<VatProgressSkeleton />}>
-						<VatProgressWrapper />
-					</Suspense>
+					<div className="grid gap-4 sm:grid-cols-2">
+						<Suspense fallback={<VatProgressSkeleton />}>
+							<VatProgressWrapper />
+						</Suspense>
+						<Suspense fallback={<VatProgressSkeleton />}>
+							<EuOssProgressWrapper />
+						</Suspense>
+					</div>
 				</section>
 
 				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
@@ -194,14 +202,20 @@ async function KpisWrapper({
 
 async function AlertsWrapper() {
 	let alerts;
+	let actionItems;
 	try {
-		alerts = await fetchDashboardAlerts();
+		[alerts, actionItems] = await Promise.all([
+			fetchDashboardAlerts(),
+			fetchDashboardActionItems(),
+		]);
 	} catch (error) {
 		Sentry.captureException(error);
 		return null;
 	}
 	const urssafDeadline = getNextUrssafDeadline();
-	return <DashboardAlerts alerts={alerts} urssafDeadline={urssafDeadline} />;
+	return (
+		<DashboardAlerts alerts={alerts} actionItems={actionItems} urssafDeadline={urssafDeadline} />
+	);
 }
 
 async function VatProgressWrapper() {
@@ -219,6 +233,23 @@ async function VatProgressWrapper() {
 		);
 	}
 	return <VatProgressCard data={data} />;
+}
+
+async function EuOssProgressWrapper() {
+	let data;
+	try {
+		data = await fetchDashboardEuOssProgress();
+	} catch (error) {
+		Sentry.captureException(error);
+		return (
+			<ChartError
+				title="Erreur de chargement"
+				description="Impossible de charger le suivi du seuil OSS UE."
+				minHeight={120}
+			/>
+		);
+	}
+	return <EuOssProgressCard data={data} />;
 }
 
 async function RevenueChartWrapper({

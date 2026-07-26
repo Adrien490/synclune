@@ -138,7 +138,6 @@ export const IMAGE_SIZES = {
 	// Card max width on desktop wide = 224px; hover scale x1.02 ≈ 228px. 256px covers retina (dpr 2 ≈ 512px source).
 	PRODUCT_CARD:
 		"(max-width: 767px) 45vw, (max-width: 1023px) 30vw, (max-width: 1279px) 22vw, 256px",
-	PRODUCT_GALLERY: "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px",
 	PRODUCT_THUMBNAIL: "120px",
 } as const;
 
@@ -152,5 +151,15 @@ export const IMAGE_SIZES = {
 /** Maximum number of color swatches to display on a product card */
 export const MAX_COLOR_SWATCHES = 5;
 
-/** Number of products considered above-fold for image preloading */
+/**
+ * Number of cards considered above-fold for eager image loading.
+ *
+ * SSOT partagée avec les collections (`modules/collections/constants/image-sizes.constants`
+ * la ré-exporte) : la valeur était dupliquée dans les deux modules et pouvait
+ * dériver silencieusement.
+ *
+ * ⚠️ Ce seuil ne pilote QUE `loading="eager"`. La priorité réseau
+ * (`preload` + `fetchPriority="high"`) est réservée au SEUL candidat LCP —
+ * l'accorder aux 4 cartes créait une contention de bande passante sur 4G.
+ */
 export const ABOVE_FOLD_THRESHOLD = 4;

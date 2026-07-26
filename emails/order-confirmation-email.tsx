@@ -290,7 +290,7 @@ OrderConfirmationEmail.PreviewProps = {
 		city: "Paris",
 		country: "France",
 	},
-	trackingUrl: "https://synclune.fr/compte/commandes/example-order-id",
+	trackingUrl: "https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6",
 	invoiceUrl:
 		"https://synclune.fr/api/orders/CMD-1730000000-ABCD/invoice?token=abc123def456abc123def456abc12345",
 } as OrderConfirmationEmailProps;

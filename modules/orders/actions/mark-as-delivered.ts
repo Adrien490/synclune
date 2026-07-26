@@ -70,14 +70,20 @@ export async function markAsDelivered(
 				return { ...found, _error: validation.reason };
 			}
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : ré-asserte SHIPPED (miroir de canMarkAsDelivered).
+			// count===0 ⇒ writer concurrent entre le findUnique et l'update — abort
+			// sans audit (le findUnique ne verrouille pas la ligne en read-committed).
+			const updated = await tx.order.updateMany({
+				where: { id, ...notDeleted, status: OrderStatus.SHIPPED },
 				data: {
 					status: OrderStatus.DELIVERED,
 					fulfillmentStatus: FulfillmentStatus.DELIVERED,
 					actualDelivery: deliveryDate,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId: id,
@@ -108,7 +114,9 @@ export async function markAsDelivered(
 			const message =
 				order._error === "already_delivered"
 					? ORDER_ERROR_MESSAGES.ALREADY_DELIVERED
-					: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED;
+					: order._error === "concurrent_change"
+						? ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE
+						: ORDER_ERROR_MESSAGES.CANNOT_DELIVER_NOT_SHIPPED;
 			return {
 				status: ActionStatus.ERROR,
 				message,

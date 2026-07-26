@@ -13,7 +13,9 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import {
 	Select,
 	SelectContent,
@@ -46,12 +48,16 @@ function MarkAsShippedFormContent({
 	onClose: () => void;
 	onPendingChange: (pending: boolean) => void;
 }) {
-	const { form, action, isPending } = useMarkAsShippedForm({
+	const { form, state, action, isPending } = useMarkAsShippedForm({
 		orderId,
 		onSuccess: () => {
 			onClose();
 		},
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	// Lift `isPending` au parent pour bloquer la fermeture du dialog
 	// pendant la mutation (click outside / Escape). Pattern aligné sur
@@ -121,6 +127,8 @@ function MarkAsShippedFormContent({
 				<input type="hidden" name="id" value={orderId} />
 				<input type="hidden" name="trackingUrl" value={trackingUrl} />
 				<input type="hidden" name="sendEmail" value={sendEmail ? "true" : "false"} />
+
+				<FormServerErrorAlert errors={serverErrors} />
 
 				<RequiredFieldsNote />
 

@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import type { ProductReviewStatistics, ReviewPublic } from "@/modules/reviews/types/review.types";
@@ -32,10 +33,7 @@ export function generateStructuredData({
 		? (selectedSku.priceInclTax / 100).toFixed(2)
 		: (minPrice / 100).toFixed(2);
 
-	const availability =
-		selectedSku && selectedSku.inventory > 0
-			? "https://schema.org/InStock"
-			: "https://schema.org/OutOfStock";
+	const availability = getOfferAvailability(!!selectedSku && selectedSku.inventory > 0);
 
 	// Dimensions standard pour les images produits (format carré e-commerce)
 	const PRODUCT_IMAGE_SIZE = 1200;

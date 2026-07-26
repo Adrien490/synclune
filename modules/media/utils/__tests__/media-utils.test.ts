@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isVideo, isImage, getVideoMimeType } from "../media-utils";
+import { isVideo, isImage, getVideoMimeType, resolveMediaThumbSrc } from "../media-utils";
 
 // ============================================================================
 // isVideo
@@ -56,5 +56,52 @@ describe("getVideoMimeType", () => {
 
 	it("falls back to video/mp4 for extensionless CDN URL", () => {
 		expect(getVideoMimeType("https://utfs.io/f/clabcdef123456789012345")).toBe("video/mp4");
+	});
+});
+
+// ============================================================================
+// resolveMediaThumbSrc
+// ============================================================================
+
+describe("resolveMediaThumbSrc", () => {
+	it("returns the url for an IMAGE", () => {
+		expect(resolveMediaThumbSrc({ url: "https://cdn/photo.jpg", mediaType: "IMAGE" })).toBe(
+			"https://cdn/photo.jpg",
+		);
+	});
+
+	it("ignores thumbnailUrl on an IMAGE (poster is a video-only field)", () => {
+		expect(
+			resolveMediaThumbSrc({
+				url: "https://cdn/photo.jpg",
+				thumbnailUrl: "https://cdn/poster.jpg",
+				mediaType: "IMAGE",
+			}),
+		).toBe("https://cdn/photo.jpg");
+	});
+
+	it("returns the poster for a VIDEO that has one", () => {
+		expect(
+			resolveMediaThumbSrc({
+				url: "https://cdn/clip.mp4",
+				thumbnailUrl: "https://cdn/poster.jpg",
+				mediaType: "VIDEO",
+			}),
+		).toBe("https://cdn/poster.jpg");
+	});
+
+	it("returns null for a VIDEO without poster — never the .mp4 URL", () => {
+		// Une URL .mp4 dans <Image src> = vignette cassée + transformation facturée
+		expect(resolveMediaThumbSrc({ url: "https://cdn/clip.mp4", mediaType: "VIDEO" })).toBeNull();
+	});
+
+	it("treats a null poster like an absent one", () => {
+		expect(
+			resolveMediaThumbSrc({
+				url: "https://cdn/clip.mp4",
+				thumbnailUrl: null,
+				mediaType: "VIDEO",
+			}),
+		).toBeNull();
 	});
 });

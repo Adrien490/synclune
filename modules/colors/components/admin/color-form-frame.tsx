@@ -1,12 +1,7 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
-import { Button } from "@/shared/components/ui/button";
-import { Kbd } from "@/shared/components/ui/kbd";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 
 import type { ColorFormInstance } from "../../hooks/use-color-form";
 
@@ -18,8 +13,8 @@ const FIELD_LABELS: Record<string, string> = {
 
 /**
  * Récapitulatif d'erreurs partagé entre create-color-form et edit-color-form.
- * N'apparaît qu'après une tentative de soumission et seulement si ≥ 2 champs
- * sont invalides (sinon l'erreur inline du champ suffit).
+ * N'apparaît qu'après une tentative de soumission, dès le premier champ
+ * invalide (deep-link scroll+focus, WCAG 3.3.1).
  */
 export function ColorFormErrorSummary({ form }: { form: ColorFormInstance }) {
 	return (
@@ -41,7 +36,7 @@ export function ColorFormErrorSummary({ form }: { form: ColorFormInstance }) {
 					.filter(
 						(item): item is { name: string; label: string; message: string } => item !== null,
 					);
-				if (fieldErrors.length < 2) return null;
+				if (fieldErrors.length === 0) return null;
 				return <ErrorSummary fieldErrors={fieldErrors} />;
 			}}
 		</form.Subscribe>
@@ -59,9 +54,9 @@ interface ColorFormSubmitProps {
 
 /**
  * Footer + bouton de soumission partagé entre create-color-form et
- * edit-color-form. Sticky bottom mobile (via AdminFormFooter), hint clavier ⌘S
- * desktop, spinner pending, haptic medium au clic. `disabled` reflète
- * `canSubmit` via Subscribe pour rester réactif sans re-render global.
+ * edit-color-form. Sticky bottom mobile (via AdminFormFooter), délègue le
+ * contrat submit (canSubmit + isPending + aria-busy + spinner + ⌘S + haptique)
+ * au `form.SubmitButton` partagé.
  */
 export function ColorFormSubmit({
 	form,
@@ -69,36 +64,18 @@ export function ColorFormSubmit({
 	idleLabel,
 	pendingLabel,
 }: ColorFormSubmitProps) {
-	const haptic = useHaptic();
 	return (
 		<form.AppForm>
 			<AdminFormFooter pending={isPending}>
-				<form.Subscribe selector={(state) => [state.canSubmit] as const}>
-					{([canSubmit]) => (
-						<div className="flex justify-end">
-							<Button
-								type="submit"
-								size="input"
-								disabled={!canSubmit || isPending}
-								onClick={() => haptic("medium")}
-								className="w-full sm:w-auto sm:min-w-56"
-							>
-								{isPending && (
-									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-								)}
-								<span>{isPending ? pendingLabel : idleLabel}</span>
-								{!isPending && (
-									<Kbd
-										aria-hidden="true"
-										className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-									>
-										⌘S
-									</Kbd>
-								)}
-							</Button>
-						</div>
-					)}
-				</form.Subscribe>
+				<div className="flex justify-end">
+					<form.SubmitButton
+						isPending={isPending}
+						idleLabel={idleLabel}
+						pendingLabel={pendingLabel}
+						showKbdHint
+						className="w-full sm:w-auto sm:min-w-56"
+					/>
+				</div>
 			</AdminFormFooter>
 		</form.AppForm>
 	);

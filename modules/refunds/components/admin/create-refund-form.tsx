@@ -16,10 +16,14 @@ import {
 import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.service";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary, type ErrorSummaryField } from "@/shared/components/forms/error-summary";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
@@ -28,6 +32,7 @@ import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { RefundItemsCard } from "./refund-items-card";
 import { RefundSidebarCards } from "./refund-sidebar-cards";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 interface CreateRefundFormProps {
 	order: OrderForRefund;
@@ -56,18 +61,32 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	const alreadyRefunded = order.refunds.reduce((sum, r) => sum + r.amount, 0);
 	const maxRefundable = order.total - alreadyRefunded;
 
-	const { form, action, isPending, reason, items, selectedItems, totalAmount, itemsForAction } =
-		useCreateRefundForm({
-			orderId: order.id,
-			orderItems: order.items,
-			subtotal: order.subtotal,
-			discountAmount: order.discountAmount,
-			onSuccess: () => {
-				haptic("success");
-				allowNavigationRef.current?.();
-				navigateWithTransition(router, LIST_PATH);
-			},
-		});
+	const {
+		form,
+		state,
+		action,
+		isPending,
+		reason,
+		items,
+		selectedItems,
+		totalAmount,
+		itemsForAction,
+	} = useCreateRefundForm({
+		orderId: order.id,
+		orderItems: order.items,
+		subtotal: order.subtotal,
+		discountAmount: order.discountAmount,
+		onSuccess: () => {
+			haptic("success");
+			allowNavigationRef.current?.();
+			navigateWithTransition(router, LIST_PATH);
+		},
+	});
+
+	// Les VALIDATION_ERROR serveur sont exclues du toast par `createToastCallbacks`
+	// (affichage inline supposé) : sans cette alerte, un refus de `createRefundSchema`
+	// serait totalement silencieux sur une opération monétaire.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const acceptCancelledOrder = useStore(form.store, (s) => s.values.acceptCancelledOrder);
 	const isDirty = useStore(form.store, (s) => s.isDirty);
@@ -80,46 +99,14 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, orderDetailPath);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, orderDetailPath]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: orderDetailPath,
+		allowNavigation,
+		getIsDirty: () => isDirty,
+	});
 
 	// Le motif détermine le restock par défaut : recalcule les items au changement.
 	// `reason` est déjà mis à jour par field.handleChange ; on ne touche qu'aux items.
@@ -275,19 +262,26 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					event.preventDefault();
 					if (isPending || form.state.isSubmitting) return;
 					const formData = new FormData(event.currentTarget);
-					void form.handleSubmit().then(() => {
-						if (form.state.isValid && canSubmit) {
-							action(formData);
-						} else {
-							requestAnimationFrame(() => focusFirstInvalid());
-						}
-					});
+					runAfterValidation(
+						form.handleSubmit(),
+						() => {
+							if (form.state.isValid && canSubmit) {
+								action(formData);
+							} else {
+								requestAnimationFrame(() => focusFirstInvalid());
+							}
+						},
+						"CreateRefundForm",
+					);
 				}}
 				className="space-y-6"
 			>
 				{/* Hidden fields — reason/note/acceptCancelledOrder sont soumis par les field components */}
 				<input type="hidden" name="orderId" value={order.id} />
 				<input type="hidden" name="items" value={JSON.stringify(itemsForAction)} />
+
+				{/* Erreur serveur globale (VALIDATION_ERROR retirée du toast) */}
+				<FormServerErrorAlert errors={serverErrors} />
 
 				{/* Résumé d'erreurs — après une tentative de soumission */}
 				<form.Subscribe
@@ -354,6 +348,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					</div>
 				)}
 
+				<RequiredFieldsNote />
+
 				<fieldset disabled={isPending} className="grid gap-6 lg:grid-cols-3 lg:items-start">
 					{/* Left column - Items selection */}
 					<div className="space-y-6 lg:col-span-2">
@@ -385,6 +381,9 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				<form.AppForm>
 					<AdminFormFooter pending={isPending}>
 						<div className="flex justify-end">
+							{/* Volontairement PAS de disabled={!canSubmit} : le bouton reste cliquable
+							    pour déclencher l'ErrorSummary (feedback explicite plutôt que bouton mort) ;
+							    la garde onSubmit bloque la soumission invalide. Ne pas « harmoniser ». */}
 							<Button
 								type="submit"
 								size="input"

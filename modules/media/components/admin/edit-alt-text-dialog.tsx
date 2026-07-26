@@ -12,9 +12,17 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { useState } from "react";
 
-const ALT_TEXT_MAX_LENGTH = 250;
+/**
+ * SSOT partagée avec le schéma Zod (`imageSchema.altText`) — audit média M3 :
+ * le dialogue bloquait à 250 alors que Zod rejette au-delà de 200, si bien qu'une
+ * description de 220 caractères affichait « Description mise à jour » puis faisait
+ * échouer la soumission du formulaire produit entier, sur une erreur portant sur
+ * un champ enfoui dans un tableau.
+ */
+const ALT_TEXT_MAX_LENGTH = TEXT_LIMITS.MEDIA_ALT_TEXT.max;
 
 interface EditAltTextDialogProps {
 	open: boolean;
@@ -110,6 +118,9 @@ function EditAltTextForm({ initialValue, isVideo, onCancel, onSave }: EditAltTex
 							? "Ex. Bracelet en or rose porté au poignet, vue de face."
 							: "Ex. Bague en argent ciselé, sertie d'une pierre verte, vue trois quarts."
 					}
+					// Marge volontaire au-delà du seuil : un collage plus long n'est pas
+					// tronqué en silence, le compteur affiche « N caractères en trop »
+					// et la soumission reste bloquée tant que la limite est dépassée.
 					maxLength={ALT_TEXT_MAX_LENGTH + 50}
 					aria-invalid={overLimit}
 					aria-describedby="alt-text-counter"

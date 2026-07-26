@@ -1,3 +1,4 @@
+import { OG_GRADIENT } from "@/shared/constants/brand-colors";
 import { BUSINESS_INFO } from "@/shared/constants/seo-config";
 import { ImageResponse } from "next/og";
 
@@ -20,7 +21,7 @@ export default async function Image() {
 	return new ImageResponse(
 		<div
 			style={{
-				background: "linear-gradient(135deg, #f0b4c8 0%, #e493b3 40%, #c75b8f 100%)",
+				background: OG_GRADIENT,
 				width: "100%",
 				height: "100%",
 				display: "flex",

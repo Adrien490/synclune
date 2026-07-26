@@ -15,6 +15,7 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
 
 import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
 import { ChartScrollContainer } from "./chart-scroll-container";
@@ -168,8 +169,9 @@ export function RevenueChart({
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
-					<div
-						role="figure"
+					// `<figure>` natif plutôt que `role="figure"` : sémantique plus fiable
+					// pour les lecteurs d'écran.
+					<figure
 						aria-labelledby="revenue-chart-title"
 						aria-describedby="revenue-chart-description"
 					>
@@ -178,17 +180,17 @@ export function RevenueChart({
 								Graphique montrant l&apos;évolution du chiffre d&apos;affaires {granularityAdverb}{" "}
 								et du nombre de commandes sur {periodCopy.toLowerCase()}.
 							</p>
-							<p>Total revenus sur la période : {totalRevenue.toFixed(2)} €.</p>
+							<p>Total revenus sur la période : {formatEuro(totalRevenue)}.</p>
 							<p>Total commandes sur la période : {totalOrders}.</p>
 							<p>
-								Pic revenus : {peakRevenue.revenue.toFixed(2)} € le {peakRevenue.date}.
+								Pic revenus : {formatEuro(peakRevenue.revenue)} le {peakRevenue.date}.
 							</p>
 							<p>
 								Pic commandes : {peakOrders.orders} le {peakOrders.date}.
 							</p>
 							{showComparison && (
 								<p>
-									Total revenus de la période de comparaison : {totalPreviousRevenue.toFixed(2)} €.
+									Total revenus de la période de comparaison : {formatEuro(totalPreviousRevenue)}.
 								</p>
 							)}
 						</div>
@@ -250,7 +252,7 @@ export function RevenueChart({
 													if (name === "orders") {
 														return `${Number(value)} commande${Number(value) > 1 ? "s" : ""}`;
 													}
-													return `${(Number(value) / 100).toFixed(2)} €`;
+													return formatEuro(Number(value));
 												}}
 											/>
 										}
@@ -338,7 +340,7 @@ export function RevenueChart({
 						<p className="text-muted-foreground text-2xs mt-2 md:hidden" aria-hidden="true">
 							Touchez le graphique pour voir le détail.
 						</p>
-					</div>
+					</figure>
 				)}
 			</div>
 		</section>

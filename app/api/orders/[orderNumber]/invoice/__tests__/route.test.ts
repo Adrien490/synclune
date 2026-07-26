@@ -314,6 +314,65 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 	});
 
 	/**
+	 * @regression voided-invoice-banner-from-snapshot — EINV-SEC-007
+	 *
+	 * Le snapshot comptable figé l'est à l'état GENERATED (voidedInfo=null) et
+	 * voidInvoice ne le réécrit jamais. Sans ré-injection, une facture VOIDED
+	 * régénérée sortait SANS le bandeau « FACTURE ANNULÉE », laissant un client
+	 * télécharger une facture annulée d'apparence valide. La route ré-injecte
+	 * voidedInfo depuis les colonnes vivantes (creditNoteNumber/invoiceVoidedAt)
+	 * SANS toucher au snapshot ni à son hash.
+	 */
+	describe("@regression voided-invoice-banner-from-snapshot — EINV-SEC-007", () => {
+		const VOIDED_ORDER = {
+			...PAID_ORDER,
+			invoiceStatus: "VOIDED" as const,
+			invoiceVoidedAt: new Date("2026-05-10"),
+			creditNoteNumber: "A-2026-00007",
+		};
+
+		beforeEach(() => {
+			mockPrisma.order.findFirst.mockResolvedValue(VOIDED_ORDER);
+			// archive sans snapshot → le resolver retombe sur buildInvoiceData (mocké),
+			// qui simule un snapshot figé à GENERATED (voidedInfo=null).
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/voided.pdf",
+				invoicePdfHash: null,
+				invoiceDataSnapshot: null,
+				invoiceDataHash: null,
+				piiPurgedAt: null,
+			});
+			mockBuildInvoiceData.mockReturnValue({ voidedInfo: null });
+		});
+
+		it("ré-injecte voidedInfo (colonnes vivantes) quand le rendu part d'un voidedInfo=null", async () => {
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(mockRenderInvoicePdf).toHaveBeenCalledWith(
+				expect.objectContaining({
+					voidedInfo: {
+						creditNoteNumber: "A-2026-00007",
+						voidedAt: VOIDED_ORDER.invoiceVoidedAt,
+					},
+				}),
+			);
+		});
+
+		it("ne sert PAS le PDF archivé pour une facture VOIDED (régénère pour estampiller)", async () => {
+			const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+			await GET(makeReq(), makeParams());
+
+			// VOIDED bypass (EINV-SEC-007) : aucune lecture de l'archive UploadThing.
+			expect(fetchSpy).not.toHaveBeenCalled();
+			expect(mockRenderInvoicePdf).toHaveBeenCalled();
+
+			fetchSpy.mockRestore();
+		});
+	});
+
+	/**
 	 * @regression ORD-COMPLY-005 (audit conformité 2026-05-27)
 	 * @regression invoice-serves-archive-first
 	 * Verrouille le service archivé du PDF (Art. L102 B LPF — facture immuable) :

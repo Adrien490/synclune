@@ -327,14 +327,34 @@ export async function sendAdminDisputeAlert({
  * Alerte admin : Commandes en attente prolongee (stuck orders)
  *
  * Aggrege en un seul email les commandes PROCESSING > 7j et SHIPPED > 14j
- * sans livraison confirmee. Envoye par le cron `alert-stuck-orders`.
+ * sans livraison confirmee.
+ *
+ * ⚠️ DORMANT — le cron `alert-stuck-orders` qui l'émettait a été retiré du
+ * périmètre (cf. table des crons dans CLAUDE.md) : cette fonction n'a AUCUN
+ * appelant aujourd'hui. Conservée car réactivable côté ops.
+ *
+ * IDEM-EMAIL-002 (audit idempotence 2026-07-26) : elle n'avait aucune
+ * `idempotencyKey`. Rebranchée telle quelle sur un cron, chaque run aurait
+ * réexpédié l'alerte (le cache in-process ne dédupe que 10 min et par instance).
+ * Clé désormais bornée au JOUR : une alerte par journée, quel que soit le nombre
+ * de runs, et le contenu peut évoluer d'un jour à l'autre sans être avalé.
+ * `alertDate` est injectée par l'appelant (jamais `new Date()` ici, pour rester
+ * testable et déterministe).
+ *
+ * @public Dormant volontaire (aucun appelant) — exempté du rapport knip.
  */
 export async function sendAdminStuckOrdersAlert({
 	processingOrders,
 	shippedOrders,
+	alertDate,
 }: {
 	processingOrders: Array<{ orderNumber: string; ageDays: number; total: number; orderId: string }>;
 	shippedOrders: Array<{ orderNumber: string; ageDays: number; total: number; orderId: string }>;
+	/**
+	 * Jour de l'alerte au format `YYYY-MM-DD`, fourni par l'appelant (cron).
+	 * Sert de borne à la clé d'idempotence Resend — cf. IDEM-EMAIL-002.
+	 */
+	alertDate: string;
 }): Promise<EmailResult> {
 	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes`;
 	const totalStuck = processingOrders.length + shippedOrders.length;
@@ -370,6 +390,7 @@ export async function sendAdminStuckOrdersAlert({
 			to: EMAIL_ADMIN,
 			subject: `[Admin] ${totalStuck} commande(s) en attente prolongée`,
 			tags: [{ name: "category", value: "admin" }],
+			idempotencyKey: `alert:stuck-orders:${alertDate}`,
 		},
 	);
 }
@@ -415,7 +436,7 @@ export async function sendAdminInvoiceFailedAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client. Voir docs/RUNBOOK-INVOICING.md.`,
+			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client. Voir docs/RUNBOOK.md.`,
 			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
@@ -548,7 +569,7 @@ export async function sendAdminCreditNoteFailedAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit. Voir docs/RUNBOOK-INVOICING.md.`,
+			summary: `L'émission de l'avoir post-remboursement pour la facture ${invoiceNumber} a échoué. État comptable incohérent : facture émise + remboursement enregistré + pas d'avoir. Le cron reconcile-invoices rejouera dans la nuit. Voir docs/RUNBOOK.md.`,
 			stackTrace: truncateStackTrace(errorMessage),
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
@@ -600,7 +621,7 @@ export async function sendAdminCreditNoteOverlapAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: contextLines.join("\n"),
-			summary: `Un avoir TOTAL (${creditNoteNumber}) a été émis sur la commande ${orderNumber} alors que ${partialCreditNoteCount} avoir(s) partiel(s) existaient déjà. Les avoirs se chevauchent sur le montant déjà remboursé (sur-crédit potentiel, Art. 272-I CGI). À réconcilier manuellement. Voir docs/RUNBOOK-INVOICING.md.`,
+			summary: `Un avoir TOTAL (${creditNoteNumber}) a été émis sur la commande ${orderNumber} alors que ${partialCreditNoteCount} avoir(s) partiel(s) existaient déjà. Les avoirs se chevauchent sur le montant déjà remboursé (sur-crédit potentiel, Art. 272-I CGI). À réconcilier manuellement. Voir docs/RUNBOOK.md.`,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",
 		}),
@@ -635,7 +656,7 @@ export async function sendAdminSequenceOverflowAlert({
 		AdminAlertEmail({
 			type: "invoice",
 			context: [`Type    : ${label}`, `Année   : ${year}`, `Limite  : 99 999`].join("\n"),
-			summary: `La séquence ${label} a atteint sa limite annuelle de 99 999. Toute nouvelle émission est bloquée. Action requise : étendre la CHECK regex DB à 6 chiffres puis déployer. Voir docs/RUNBOOK-INVOICING.md § Sequence Overflow.`,
+			summary: `La séquence ${label} a atteint sa limite annuelle de 99 999. Toute nouvelle émission est bloquée. Action requise : étendre la CHECK regex DB à 6 chiffres puis déployer. Voir docs/RUNBOOK.md.`,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir le dashboard",
 		}),
@@ -651,10 +672,22 @@ export async function sendAdminSequenceOverflowAlert({
 /**
  * Alerte admin : E-reporting batches stuck PENDING/RETRYING > 48h
  *
- * Declenchee par le cron `alert-stuck-orders` (hebdo) si des batches n'ont pas
- * ete transmis. A l'approche de la reforme (1er sept 2027 emission B2B/B2G),
- * un blocage de transmission DGFiP/PDP doit etre escalade rapidement.
+ * A l'approche de la reforme (1er sept 2027 emission B2B/B2G), un blocage de
+ * transmission DGFiP/PDP doit etre escalade rapidement.
  * Cf. audit monitoring 2026-05-28 EINV-OPS-010.
+ *
+ * ⚠️ DORMANT — aucun appelant : le cron émetteur a été retiré avec les crons
+ * e-reporting (`build/transmit-ereporting-batch`), à réactiver au go-live
+ * e-reporting du 1ᵉʳ sept. 2027 (cf. CLAUDE.md § Cron Jobs + docs/RUNBOOK.md).
+ * Conservée volontairement : elle fait partie du dispositif de surveillance à
+ * rebrancher, pas de code mort à supprimer.
+ *
+ * IDEM-EMAIL-002 (audit idempotence 2026-07-26) : clé d'idempotence VÉRIFIÉE
+ * saine — déterministe pour une cohorte donnée (tri des IDs, EMAIL-AUDIT-105) et
+ * volontairement renouvelée quand la cohorte change (nouvelle situation à
+ * signaler). Aucun correctif nécessaire.
+ *
+ * @public Dormant volontaire (aucun appelant) — exempté du rapport knip.
  */
 export async function sendAdminEReportingStuckAlert({
 	stuckBatches,
@@ -673,7 +706,7 @@ export async function sendAdminEReportingStuckAlert({
 				"",
 				...lines,
 			].join("\n"),
-			summary: `${stuckBatches.length} batch(es) e-reporting bloqués depuis plus de 48h (status PENDING/RETRYING). Vérifier la configuration provider PDP / Chorus Pro et débloquer via le dashboard. Voir docs/RUNBOOK-INVOICING.md.`,
+			summary: `${stuckBatches.length} batch(es) e-reporting bloqués depuis plus de 48h (status PENDING/RETRYING). Vérifier la configuration provider PDP / Chorus Pro et débloquer via le dashboard. Voir docs/RUNBOOK.md.`,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir les batches",
 		}),

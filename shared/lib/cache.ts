@@ -10,9 +10,9 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 /**
- * Configure le cache avec le profil dashboard (1min stale, 30s revalidate, 5min expire)
+ * Configure le cache avec le profil `user` (2min stale, 1min revalidate, 10min expire)
  *
- * Durée : 1min stale, 30s revalidate, 5min expire
+ * Utilisé par les fetchers du dashboard admin (données agrégées).
  *
  * @param tag - Tag de cache optionnel pour l'invalidation ciblée
  *

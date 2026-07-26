@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 
 type CollectionProduct = {
 	slug: string;
@@ -74,9 +75,7 @@ export function generateCollectionStructuredData(collection: Collection) {
 									"@type": "Offer",
 									priceCurrency: "EUR",
 									price: (product.priceInclTax / 100).toFixed(2),
-									availability: product.inStock
-										? "https://schema.org/InStock"
-										: "https://schema.org/OutOfStock",
+									availability: getOfferAvailability(!!product.inStock),
 									url: `${SITE_URL}/creations/${product.slug}`,
 								},
 							}),

@@ -7,13 +7,7 @@ import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 
 export type AdminAlertType =
-	| "cron"
-	| "dispute"
-	| "invoice"
-	| "order-processing"
-	| "refund"
-	| "stuck-orders"
-	| "webhook";
+	"cron" | "dispute" | "invoice" | "order-processing" | "refund" | "stuck-orders" | "webhook";
 
 interface AdminAlertEmailProps {
 	type: AdminAlertType;

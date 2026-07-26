@@ -156,6 +156,7 @@ vi.mock("@/shared/components/ui/alert", () => ({
 // ============================================================================
 
 import { CreateProductForm } from "../create-product-form";
+import { ActionStatus } from "@/shared/types/server-action";
 
 // ============================================================================
 // Fixtures
@@ -279,6 +280,22 @@ function createMockForm(overrides: FormOverrides = {}) {
 			return <>{children(fieldStub)}</>;
 		},
 		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		// Mock fidèle du form.SubmitButton partagé (le vrai requiert le formContext)
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+			showKbdHint?: boolean;
+			className?: string;
+		}) => (
+			<button type="submit" disabled={!formState.canSubmit || isPending} aria-busy={isPending}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	};
 }
 
@@ -519,13 +536,24 @@ describe("CreateProductForm", () => {
 	// Form errors
 	// --------------------------------------------------------------------------
 
-	describe("form errors", () => {
-		it("never renders global errors alert (errors display under fields)", () => {
-			setup({}, { formErrors: ["Le titre est déjà utilisé"] });
+	describe("server errors", () => {
+		// createToastCallbacks supprime les VALIDATION_ERROR du toast : sans alerte
+		// globale, une erreur serveur non mappée à un champ disparaissait en silence.
+		it("renders a global alert for a server VALIDATION_ERROR", () => {
+			setup(
+				{},
+				{ state: { status: ActionStatus.VALIDATION_ERROR, message: "Le titre est déjà utilisé" } },
+			);
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("form-alert")).toHaveTextContent("Le titre est déjà utilisé");
+		});
+
+		it("renders no global alert on SUCCESS or ERROR states (toast handles those)", () => {
+			setup({}, { state: { status: ActionStatus.ERROR, message: "Erreur serveur" } });
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(screen.queryByTestId("form-alert")).not.toBeInTheDocument();
-			expect(screen.queryByText("Le titre est déjà utilisé")).not.toBeInTheDocument();
 		});
 	});
 

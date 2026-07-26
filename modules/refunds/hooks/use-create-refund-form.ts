@@ -83,8 +83,6 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
-	const formErrors = useStore(form.store, (formState) => formState.errors);
-
 	// Valeurs observées du store
 	const reason = useStore(form.store, (s) => s.values.reason);
 	const items = useStore(form.store, (s) => s.values.items);
@@ -102,7 +100,6 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 		state,
 		action,
 		isPending,
-		formErrors,
 		// Valeurs calculées
 		reason,
 		items,

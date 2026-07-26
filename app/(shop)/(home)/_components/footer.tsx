@@ -9,21 +9,12 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
-import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
-import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { cacheLife, cacheTag } from "next/cache";
 import { ManageCookiesButton } from "@/shared/components/manage-cookies-button";
 import { FooterLink } from "./footer-link";
-
-const REASSURANCE_ITEMS: { title: string; description: string }[] = [
-	{
-		title: `Livraison France : ${formatShippingPrice(SHIPPING_RATES.FR.amount)}`,
-		description: `Livraison UE : ${formatShippingPrice(SHIPPING_RATES.EU.amount)}`,
-	},
-	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
-	{ title: "Paiement sécurisé", description: "CB, Visa, Mastercard" },
-];
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 /**
  * Lightweight skeleton matching Footer's outer shell to prevent CLS during streaming.
@@ -35,7 +26,7 @@ export function FooterSkeleton() {
 			aria-hidden="true"
 		>
 			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
-				<div className="min-h-[1100px] sm:min-h-[750px] lg:min-h-[550px]" />
+				<div className="min-h-[990px] sm:min-h-[640px] lg:min-h-[480px]" />
 			</div>
 		</footer>
 	);
@@ -50,7 +41,7 @@ export function FooterSkeleton() {
 export async function Footer() {
 	"use cache";
 	cacheLife("reference");
-	cacheTag("footer");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.FOOTER);
 	return (
 		<footer
 			className="pwa-footer from-primary/12 via-background to-primary/8 relative overflow-hidden bg-linear-to-b"
@@ -85,7 +76,7 @@ export async function Footer() {
 								<Logo
 									href="/"
 									size={40}
-									quality={75}
+									quality={IMAGE_QUALITY.STANDARD}
 									className="lg:[&_>_div]:size-12"
 									viewTransitionName="shop-logo-footer"
 								/>
@@ -222,23 +213,10 @@ export async function Footer() {
 						</nav>
 					</div>
 
-					{/* Reassurance - Baymard UX trust signals */}
-					<section aria-label="Engagements et garanties" className="mb-8 sm:mb-10">
-						{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
-						<ul role="list" className="grid gap-3 sm:grid-cols-3">
-							{REASSURANCE_ITEMS.map((item) => (
-								<li
-									key={item.title}
-									className="bg-card/50 border-border/60 motion-safe:can-hover:hover:scale-[1.01] rounded-xl border px-5 py-4 shadow-sm motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]"
-								>
-									<div className="text-sm">
-										<p className="text-foreground font-medium">{item.title}</p>
-										<p className="text-muted-foreground">{item.description}</p>
-									</div>
-								</li>
-							))}
-						</ul>
-					</section>
+					{/* Réassurance : SSOT = HeroReassuranceBanner (sous le hero, près du point de
+					    décision — Baymard). Le footer se spécialise sur la confiance
+					    transactionnelle (bloc Paiement sécurisé ci-dessous), sans dupliquer
+					    livraison/retours une seconde fois sur la même page. */}
 
 					{/* Paiement sécurisé */}
 					<section

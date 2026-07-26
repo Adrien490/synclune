@@ -11,6 +11,7 @@ const {
 	mockSentryStartSpan,
 	mockSentryWithScope,
 	mockSentryCaptureException,
+	mockSendWebhookFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		webhookEvent: { findMany: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
@@ -27,6 +28,11 @@ const {
 		cb({ setTag: vi.fn(), setLevel: vi.fn(), setFingerprint: vi.fn(), setContext: vi.fn() }),
 	),
 	mockSentryCaptureException: vi.fn(),
+	mockSendWebhookFailedAlert: vi.fn().mockResolvedValue({ success: true }),
+}));
+
+vi.mock("@/modules/webhooks/services/alert.service", () => ({
+	sendWebhookFailedAlert: mockSendWebhookFailedAlert,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -233,6 +239,59 @@ describe("retryFailedWebhooks", () => {
 			}),
 		});
 		expect(result).toMatchObject({ processed: 0, errored: 1, skipped: 0 });
+		// attempts passe 0 → 1 (< MAX 3) : pas encore d'alerte admin.
+		expect(mockSendWebhookFailedAlert).not.toHaveBeenCalled();
+	});
+
+	// Audit webhooks 2026-07-02 (F3) : l'alerte « max retries exhausted » était
+	// route-only — un event dont le DERNIER échec survient dans le cron sortait du
+	// filtre `attempts < MAX` et mourait FAILED sans email admin.
+	it("F3: sends the admin webhook-failed alert when the retry exhausts the max attempts", async () => {
+		mockPrisma.webhookEvent.findMany.mockResolvedValueOnce([
+			{
+				id: "wh-exhausted",
+				stripeEventId: "evt_exhausted",
+				eventType: "payment_intent.succeeded",
+				// attempts=2 → le cron incrémente à 3 = MAX_WEBHOOK_RETRY_ATTEMPTS.
+				attempts: 2,
+			},
+		]);
+		mockStripe.events.retrieve.mockResolvedValueOnce({
+			id: "evt_exhausted",
+			type: "payment_intent.succeeded",
+		});
+		mockDispatchEvent.mockRejectedValueOnce(new Error("still broken"));
+
+		const result = await retryFailedWebhooks();
+
+		expect(mockSendWebhookFailedAlert).toHaveBeenCalledWith({
+			eventId: "evt_exhausted",
+			eventType: "payment_intent.succeeded",
+			attempts: 3,
+			error: "still broken",
+		});
+		expect(result).toMatchObject({ processed: 0, errored: 1 });
+	});
+
+	it("F3: a failing alert send must not crash the cron run", async () => {
+		mockPrisma.webhookEvent.findMany.mockResolvedValueOnce([
+			{
+				id: "wh-alert-fail",
+				stripeEventId: "evt_alert_fail",
+				eventType: "charge.refunded",
+				attempts: 2,
+			},
+		]);
+		mockStripe.events.retrieve.mockResolvedValueOnce({
+			id: "evt_alert_fail",
+			type: "charge.refunded",
+		});
+		mockDispatchEvent.mockRejectedValueOnce(new Error("handler down"));
+		mockSendWebhookFailedAlert.mockRejectedValueOnce(new Error("Resend down"));
+
+		const result = await retryFailedWebhooks();
+
+		expect(result).toMatchObject({ errored: 1 });
 	});
 
 	it("hasMore: true when batch is full (BATCH_SIZE_MEDIUM=25)", async () => {

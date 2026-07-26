@@ -236,6 +236,31 @@ describe("getSkuDetails", () => {
 		expect(result.data?.sku.product.slug).toBe("bracelet-lune");
 	});
 
+	// EINV-EREPORT-007/F3 — la catégorie d'opération du ProductType doit traverser
+	// le mapper checkout, sinon le snapshot OrderItem retombe silencieusement sur
+	// GOODS et la transaction DGFiP est mal catégorisée.
+	it("should map operationCategory from ProductType", async () => {
+		mockFetchSkuForValidation.mockResolvedValue(
+			createSkuRow({
+				product: { ...createSkuRow().product, type: { operationCategory: "SERVICES" } },
+			}),
+		);
+
+		const result = await getSkuDetails({ skuId: SKU_ID });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.sku.product.operationCategory).toBe("SERVICES");
+	});
+
+	it("should default operationCategory to GOODS when product has no type", async () => {
+		mockFetchSkuForValidation.mockResolvedValue(createSkuRow());
+
+		const result = await getSkuDetails({ skuId: SKU_ID });
+
+		expect(result.success).toBe(true);
+		expect(result.data?.sku.product.operationCategory).toBe("GOODS");
+	});
+
 	it("should return error when SKU not found", async () => {
 		mockFetchSkuForValidation.mockResolvedValue(null);
 

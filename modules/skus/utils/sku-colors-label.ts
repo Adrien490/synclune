@@ -44,15 +44,6 @@ export function getSkuColorsDisplayLabel(colors: SkuColorsInput): string | null 
 }
 
 /**
- * Retourne la couleur principale (1re de la liste).
- *
- * @returns `null` si aucune couleur, sinon le nom de la 1re.
- */
-export function getPrimaryColorName(colors: SkuColorsInput): string | null {
-	return colors?.[0]?.color.name ?? null;
-}
-
-/**
  * Retourne la liste plate des noms de couleurs (ordre préservé).
  */
 export function getColorNames(colors: SkuColorsInput): string[] {

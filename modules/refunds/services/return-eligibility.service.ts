@@ -2,8 +2,8 @@ import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/
 
 /** 14-day withdrawal period (directive 2011/83/EU, art. L221-18) */
 export const WITHDRAWAL_PERIOD_DAYS = 14;
-export const MS_PER_DAY = 86_400_000;
-export const WITHDRAWAL_PERIOD_MS = WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY;
+const MS_PER_DAY = 86_400_000;
+const WITHDRAWAL_PERIOD_MS = WITHDRAWAL_PERIOD_DAYS * MS_PER_DAY;
 
 interface ReturnEligibilityOrder {
 	paymentStatus: PaymentStatus;
@@ -22,10 +22,7 @@ interface ReturnEligibilityOrder {
  * - `ALREADY_REQUESTED` : a PENDING or APPROVED refund already exists
  */
 export type ReturnIneligibilityReason =
-	| "NOT_PAID"
-	| "NOT_DELIVERED"
-	| "DEADLINE_EXCEEDED"
-	| "ALREADY_REQUESTED";
+	"NOT_PAID" | "NOT_DELIVERED" | "DEADLINE_EXCEEDED" | "ALREADY_REQUESTED";
 
 export function getReturnIneligibilityReason(
 	order: ReturnEligibilityOrder,

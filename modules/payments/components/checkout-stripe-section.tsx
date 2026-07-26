@@ -22,9 +22,13 @@ interface CheckoutStripeSectionProps {
 	billingName?: string;
 	/** Forwarded to PayButton — sections incomplètes affichées dans le hint disabled. */
 	incompleteSections?: string[];
+	/** Montant figé une fois la commande liée au PI (CHECKOUT-CONSENT-001). */
+	lockedAmount?: number | null;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
 	allowNavigation?: () => void;
+	/** Remonte `finalAmount` dès que la commande est liée au PI. */
+	onOrderBound?: (finalAmount: number) => void;
 }
 
 /**
@@ -46,8 +50,10 @@ export function CheckoutStripeSection({
 	email,
 	billingName,
 	incompleteSections,
+	lockedAmount,
 	getFormData,
 	allowNavigation,
+	onOrderBound,
 }: CheckoutStripeSectionProps) {
 	const [isPaymentReady, setIsPaymentReady] = useState(false);
 	const appearance = useStripeAppearance();
@@ -120,8 +126,10 @@ export function CheckoutStripeSection({
 							email={email}
 							billingName={billingName}
 							incompleteSections={incompleteSections}
+							lockedAmount={lockedAmount}
 							getFormData={getFormData}
 							allowNavigation={allowNavigation}
+							onOrderBound={onOrderBound}
 						/>
 					</div>
 				</div>

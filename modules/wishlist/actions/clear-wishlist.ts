@@ -8,10 +8,7 @@ import { getRateLimitIdentifier, getClientIp } from "@/shared/lib/rate-limit";
 import { WISHLIST_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
-import {
-	getWishlistSessionId,
-	getWishlistExpirationDate,
-} from "@/modules/wishlist/lib/wishlist-session";
+import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 import { handleActionError, success, enforceRateLimit } from "@/shared/lib/actions";
 
@@ -78,7 +75,6 @@ export async function clearWishlist(
 				where: { id: wishlist.id },
 				data: {
 					updatedAt: new Date(),
-					expiresAt: userId ? null : getWishlistExpirationDate(),
 				},
 			});
 

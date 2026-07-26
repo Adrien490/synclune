@@ -39,6 +39,36 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 	};
 }
 
+// jsdom does not implement window.scrollTo — the app calls it fire-and-forget
+// (products filter sheet, carousels). Stub it so the "Not implemented" line
+// stops flooding the test output; tests can still spy on it.
+if (typeof window !== "undefined") {
+	Object.defineProperty(window, "scrollTo", {
+		writable: true,
+		configurable: true,
+		value: () => undefined,
+	});
+}
+
+// jsdom does not implement HTMLMediaElement load()/pause() — video previews and
+// thumbnail generation (modules/media) call them on refs. Same rationale.
+if (typeof HTMLMediaElement !== "undefined") {
+	HTMLMediaElement.prototype.load = () => undefined;
+	HTMLMediaElement.prototype.pause = () => undefined;
+}
+
+// jsdom has no canvas backend (the `canvas` package is deliberately not installed).
+// It already returns null from both methods but logs a "Not implemented" line on
+// every call. Return the SAME values explicitly: the capability probes in
+// modules/media (`!!canvas.getContext("2d")`, `toDataURL(...).startsWith(...)`)
+// keep taking their unsupported/fallback path — only the noise disappears.
+if (typeof HTMLCanvasElement !== "undefined") {
+	HTMLCanvasElement.prototype.getContext = (() =>
+		null) as typeof HTMLCanvasElement.prototype.getContext;
+	HTMLCanvasElement.prototype.toDataURL = (() =>
+		null) as unknown as typeof HTMLCanvasElement.prototype.toDataURL;
+}
+
 // Global cleanup to prevent mock leaks between tests
 afterEach(() => {
 	vi.restoreAllMocks();

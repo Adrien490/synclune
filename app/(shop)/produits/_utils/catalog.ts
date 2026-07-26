@@ -4,11 +4,16 @@ import { getMaterialOptions } from "@/modules/materials/data/get-material-option
 import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
 import { getProducts } from "@/modules/products/data/get-products";
 import type { Product, SortField, ProductFilters } from "@/modules/products/data/get-products";
-import { GET_PRODUCTS_DEFAULT_PER_PAGE } from "@/modules/products/constants/product.constants";
+import {
+	GET_PRODUCTS_DEFAULT_PER_PAGE,
+	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
+} from "@/modules/products/constants/product.constants";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
 
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import { parseFilters } from "./params";
 import type { ProductSearchParams } from "./types";
 
@@ -50,13 +55,29 @@ export async function getCatalogData() {
 
 /**
  * Parse les paramètres de pagination et tri depuis les searchParams
+ *
+ * F6 (audit Zod) : parse FAIL-SAFE — une URL forgée (`?direction=foo`,
+ * cursor de longueur invalide, `perPage=99999`) retombe sur les defaults au
+ * lieu de faire échouer `getProductsSchema.safeParse` dans `getProducts`
+ * (throw "Invalid parameters" → 500). Le throw de `get-products.ts` reste en
+ * place comme garde des appels programmatiques.
  */
 export function parsePaginationParams(searchParamsData: ProductSearchParams) {
-	const cursor = getFirstParam(searchParamsData.cursor);
-	const direction = (getFirstParam(searchParamsData.direction) ?? "forward") as
-		| "forward"
-		| "backward";
-	const perPage = Number(getFirstParam(searchParamsData.perPage)) || GET_PRODUCTS_DEFAULT_PER_PAGE;
+	const rawCursor = getFirstParam(searchParamsData.cursor);
+	const cursorParsed = cursorSchema.safeParse(rawCursor ?? undefined);
+	const cursor = cursorParsed.success ? cursorParsed.data : undefined;
+
+	const direction = directionSchema
+		.catch("forward")
+		.parse(getFirstParam(searchParamsData.direction) ?? undefined);
+
+	const rawPerPage = Number(getFirstParam(searchParamsData.perPage));
+	const perPage = Number.isInteger(rawPerPage)
+		? Math.min(Math.max(rawPerPage, 1), GET_PRODUCTS_MAX_RESULTS_PER_PAGE)
+		: GET_PRODUCTS_DEFAULT_PER_PAGE;
+
+	// sortBy : déjà fail-safe côté schéma (z.preprocess avec fallback dans
+	// product-query.schemas.ts), pas de garde supplémentaire nécessaire.
 	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
 	const searchTerm =
 		typeof searchParamsData.search === "string" ? searchParamsData.search.slice(0, 200) : undefined;
@@ -165,8 +186,7 @@ function buildItemListProduct(product: Product) {
 		(sum, sku) => (sku.isActive ? sum + sku.inventory : sum),
 		0,
 	);
-	const availability =
-		totalInventory > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+	const availability = getOfferAvailability(totalInventory > 0);
 
 	return {
 		"@type": "Product",

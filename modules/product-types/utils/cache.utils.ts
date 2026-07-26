@@ -63,10 +63,16 @@ export function cacheProductTypeDetail(slug: string) {
 
 /**
  * Counts par statut produit pour un type donné.
+ *
+ * Pose aussi le tag `products-list` : les counts dépendent des produits
+ * (create/delete/changement de statut), et ces mutations invalident toutes
+ * `PRODUCTS_CACHE_TAGS.LIST` — cascade qui garantit la fraîcheur des counts
+ * sans exiger que chaque mutation produit connaisse le type concerné.
  */
 export function cacheProductTypeCounts(productTypeId: string) {
 	cacheLife("user");
 	cacheTag(productTypeCountsTag(productTypeId));
+	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 }
 
 // ============================================
@@ -82,8 +88,9 @@ export function cacheProductTypeCounts(productTypeId: string) {
  * - Le menu de navigation (navbar).
  * - La liste des produits (cascade : un type renommé impacte les cards produits).
  * - Si `slug` fourni : le tag détail granulaire `product-type-${slug}`.
+ * - Si `productTypeId` fourni : le tag counts par statut `product-type-${id}-counts`.
  */
-export function getProductTypeInvalidationTags(slug?: string): string[] {
+export function getProductTypeInvalidationTags(slug?: string, productTypeId?: string): string[] {
 	const tags: string[] = [
 		PRODUCT_TYPES_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
@@ -91,5 +98,6 @@ export function getProductTypeInvalidationTags(slug?: string): string[] {
 		PRODUCTS_CACHE_TAGS.LIST,
 	];
 	if (slug) tags.push(productTypeDetailTag(slug));
+	if (productTypeId) tags.push(productTypeCountsTag(productTypeId));
 	return tags;
 }

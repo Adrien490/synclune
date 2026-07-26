@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { trackEvent } from "@/shared/lib/analytics/track";
 import type { FloatingImageProps } from "./types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 /**
  * A single hero floating product image.
@@ -95,7 +96,7 @@ export function FloatingImage({ image, position }: FloatingImageProps) {
 						onPointerLeave={handlePointerLeave}
 						onPointerMove={handlePointerMove}
 						onClick={handleClick}
-						className="group relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] motion-safe:transition-[box-shadow,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-[3px] motion-safe:hover:scale-105 motion-safe:active:scale-[0.97]"
+						className="group shadow-floating relative block overflow-hidden rounded-2xl border border-white/20 hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] motion-safe:transition-[box-shadow,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-[3px] motion-safe:hover:scale-105 motion-safe:active:scale-[0.97]"
 						style={
 							{
 								"--img-glow": position.glowColor,
@@ -127,7 +128,7 @@ export function FloatingImage({ image, position }: FloatingImageProps) {
 							height={position.height}
 							className="relative aspect-4/5 w-full object-cover"
 							sizes={position.sizes}
-							quality={85}
+							quality={IMAGE_QUALITY.HERO}
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl}
 						/>

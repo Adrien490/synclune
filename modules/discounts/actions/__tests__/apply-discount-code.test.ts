@@ -86,20 +86,18 @@ describe("applyDiscountCode", () => {
 	// validateDiscountCode delegation
 	// ──────────────────────────────────────────────────────────────
 
-	it("should call validateDiscountCode with code and subtotal from formData", async () => {
-		const formData = createFormData({ code: "WINTER10", subtotal: "7500" });
+	it("should call validateDiscountCode with the code only (subtotal recalculé serveur, F9)", async () => {
+		const formData = createFormData({ code: "WINTER10" });
 		await applyDiscountCode(undefined, formData);
 
-		expect(mockValidateDiscountCode).toHaveBeenCalledWith("WINTER10", 7500);
+		expect(mockValidateDiscountCode).toHaveBeenCalledWith("WINTER10");
 	});
 
-	it("should correctly parse subtotal as number from formData", async () => {
+	it("ignores a client-forged subtotal field (dead input supprimé, F9)", async () => {
 		const formData = createFormData({ code: "SUMMER20", subtotal: "12345" });
 		await applyDiscountCode(undefined, formData);
 
-		const [, subtotalArg] = mockValidateDiscountCode.mock.calls[0]!;
-		expect(typeof subtotalArg).toBe("number");
-		expect(subtotalArg).toBe(12345);
+		expect(mockValidateDiscountCode).toHaveBeenCalledWith("SUMMER20");
 	});
 
 	// ──────────────────────────────────────────────────────────────

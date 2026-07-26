@@ -6,7 +6,7 @@ See [README.md](./README.md#demarrage-rapide) for initial setup.
 
 ## Architecture
 
-The codebase follows **Domain-Driven Design** with 26 modules under `modules/`. Each module has a layered structure:
+The codebase follows **Domain-Driven Design** with 24 modules under `modules/`. Each module has a layered structure:
 
 | Layer         | Purpose                    | Rules                                             |
 | ------------- | -------------------------- | ------------------------------------------------- |

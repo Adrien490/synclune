@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
 import { imageSchema } from "@/modules/products/schemas/product-media.schemas";
 import { TEXT_LIMITS, ARRAY_LIMITS, PRICE_LIMITS } from "@/shared/constants/validation-limits";
@@ -51,8 +52,8 @@ const baseSkuFieldsSchema = z.object({
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
-	isActive: z.coerce.boolean().default(true),
-	isDefault: z.coerce.boolean().default(false),
+	isActive: formBooleanSchema.default(true),
+	isDefault: formBooleanSchema.default(false),
 
 	// Couleurs M2M : ordre = priorité (1re = principale pour vignette + snapshot facture)
 	colorIds: z
@@ -72,6 +73,7 @@ const baseSkuFieldsSchema = z.object({
 		.default([]),
 	size: z
 		.string()
+		.trim()
 		.max(TEXT_LIMITS.SKU_SIZE.max)
 		.optional()
 		.or(z.literal(""))
@@ -111,11 +113,13 @@ function refineFirstMediaNotVideo(data: {
 }
 
 /**
- * Refinement: vérifier que compareAtPrice >= priceInclTax si present
+ * Refinement: vérifier que compareAtPrice > priceInclTax si present.
+ * Strict : un prix barré égal au prix de vente serait un affichage promo mensonger
+ * (aligné sur les forms admin ; le CHECK DB reste >=, plus laxiste).
  */
 function refineCompareAtPrice(data: { compareAtPriceEuros?: number; priceInclTaxEuros: number }) {
 	if (!data.compareAtPriceEuros) return true;
-	return data.compareAtPriceEuros >= data.priceInclTaxEuros;
+	return data.compareAtPriceEuros > data.priceInclTaxEuros;
 }
 
 const MEDIA_REQUIRED_ERROR = {
@@ -129,7 +133,7 @@ const FIRST_MEDIA_NOT_VIDEO_ERROR = {
 };
 
 const COMPARE_PRICE_ERROR = {
-	message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+	message: "Le prix comparé doit être strictement supérieur au prix de vente",
 	path: ["compareAtPriceEuros"],
 };
 
@@ -156,59 +160,6 @@ export const deleteProductSkuSchema = z.object({
 export const updateProductSkuStatusSchema = z.object({
 	skuId: z.cuid2({ message: "ID variante invalide" }),
 	isActive: z.boolean(),
-});
-
-/**
- * Helper pour parser et valider un tableau d'IDs depuis JSON
- * Rejette explicitement les erreurs au lieu de retourner un tableau vide
- */
-const cuid2Schema = z.cuid2({ message: "ID invalide dans le tableau" });
-
-const parseJsonIdsArray = z.string().transform((str, ctx): string[] | typeof z.NEVER => {
-	try {
-		const parsed: unknown = JSON.parse(str);
-		if (!Array.isArray(parsed)) {
-			ctx.addIssue({ code: "custom", message: "Format invalide: tableau attendu" });
-			return z.NEVER;
-		}
-		// Valider que chaque element est un CUID2 valide
-		const items = parsed as unknown as unknown[];
-		for (const id of items) {
-			if (typeof id !== "string" || !cuid2Schema.safeParse(id).success) {
-				ctx.addIssue({ code: "custom", message: "ID invalide dans le tableau" });
-				return z.NEVER;
-			}
-		}
-		return items as string[];
-	} catch {
-		ctx.addIssue({ code: "custom", message: "JSON invalide" });
-		return z.NEVER;
-	}
-});
-
-export const bulkActivateSkusSchema = z.object({
-	ids: parseJsonIdsArray,
-});
-
-export const bulkDeactivateSkusSchema = z.object({
-	ids: parseJsonIdsArray,
-});
-
-export const bulkDeleteSkusSchema = z.object({
-	ids: parseJsonIdsArray,
-});
-
-export const bulkAdjustStockSchema = z.object({
-	ids: parseJsonIdsArray,
-	mode: z.enum(["relative", "absolute"]),
-	value: z.coerce.number().int(),
-});
-
-export const bulkUpdatePriceSchema = z.object({
-	ids: parseJsonIdsArray,
-	mode: z.enum(["percentage", "absolute"]),
-	value: z.coerce.number(),
-	updateCompareAtPrice: z.coerce.boolean().default(false),
 });
 
 // ============================================================================

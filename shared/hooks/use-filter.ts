@@ -66,7 +66,8 @@ export function useFilter(options: UseFilterOptions = {}) {
 				return [...kept, ...action.filters];
 			}
 			if (action.type === "removeMany") {
-				return currentFilters.filter((f) => !action.keys.includes(f.key));
+				const removedKeys = new Set(action.keys);
+				return currentFilters.filter((f) => !removedKeys.has(f.key));
 			}
 			const { key, value } = action;
 			return currentFilters.filter((f) => {

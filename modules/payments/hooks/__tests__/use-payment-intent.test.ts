@@ -226,7 +226,7 @@ describe("usePaymentIntent", () => {
 
 		// Before initialization completes, paymentIntentId is null
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
+			result.current.updateAmount("FR", "75001", null);
 		});
 
 		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
@@ -246,7 +246,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 500);
+			result.current.updateAmount("FR", "75001", "WELCOME10");
 		});
 
 		// Not called yet — debounce pending
@@ -257,12 +257,13 @@ describe("usePaymentIntent", () => {
 			await Promise.resolve();
 		});
 
-		// Subtotal is recomputed server-side (audit P0.1) — client no longer passes it.
+		// Subtotal AND discount are recomputed server-side (audits P0.1 + F1) —
+		// the client only passes the applied promo code.
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledWith({
 			paymentIntentId: "pi_123",
 			country: "FR",
 			postalCode: "75001",
-			discountAmount: 500,
+			discountCode: "WELCOME10",
 		});
 
 		vi.useRealTimers();
@@ -278,9 +279,9 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
-			result.current.updateAmount("FR", "75001", 100);
-			result.current.updateAmount("FR", "75001", 200);
+			result.current.updateAmount("FR", "75001", null);
+			result.current.updateAmount("FR", "75001", "CODE1");
+			result.current.updateAmount("FR", "75001", "CODE2");
 		});
 
 		await act(async () => {
@@ -290,7 +291,7 @@ describe("usePaymentIntent", () => {
 
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledTimes(1);
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledWith(
-			expect.objectContaining({ discountAmount: 200 }),
+			expect.objectContaining({ discountCode: "CODE2" }),
 		);
 
 		vi.useRealTimers();
@@ -306,7 +307,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
+			result.current.updateAmount("FR", "75001", null);
 		});
 
 		act(() => {
@@ -332,7 +333,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
+			result.current.updateAmount("FR", "75001", null);
 		});
 
 		await act(async () => {
@@ -367,7 +368,7 @@ describe("usePaymentIntent", () => {
 		const initialTotal = result.current.total;
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
+			result.current.updateAmount("FR", "75001", null);
 		});
 
 		await act(async () => {
@@ -632,7 +633,7 @@ describe("usePaymentIntent", () => {
 		});
 
 		act(() => {
-			result.current.updateAmount("FR", "75001", 0);
+			result.current.updateAmount("FR", "75001", null);
 		});
 
 		// Unmount before debounce fires

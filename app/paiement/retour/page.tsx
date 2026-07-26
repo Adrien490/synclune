@@ -8,7 +8,7 @@ const STRIPE_RETRIEVE_TIMEOUT_MS = 5_000;
 const piSearchParamsSchema = z.object({
 	payment_intent: z.string().min(1),
 	redirect_status: z.string().min(1),
-	order_id: z.string().cuid(),
+	order_id: z.cuid(),
 });
 
 export const metadata: Metadata = {
@@ -88,7 +88,11 @@ export default async function CheckoutReturnPage({ searchParams }: CheckoutRetur
 				// asynchrone légitime (`processing`) ne renvoie jamais `failed`.
 				redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=payment_failed`;
 			} else if (pi.status === "processing" || pi.status === "requires_action") {
-				// Async payment in progress (SEPA, Klarna, etc.)
+				// CARDONLY-01 : en card-only, `processing`/`requires_action` provient d'une
+				// carte 3DS qui transite (settlement bancaire en cours), PAS d'un moyen
+				// asynchrone (SEPA/Klarna sont exclus de payment_method_types). On route vers
+				// un écran d'attente (le webhook finalisera). Toute réintroduction d'un moyen
+				// asynchrone nécessite une décision produit + ajout dans payment_method_types.
 				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
 			} else {
 				redirectUrl = `/paiement/annulation?order_id=${orderId}${cancelSuffix}&reason=processing_error`;

@@ -4,12 +4,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ============================================================================
 
-const { mockDeleteFiles, mockLogger } = vi.hoisted(() => ({
+const { mockDeleteFiles, mockLogger, mockPrisma } = vi.hoisted(() => ({
 	mockDeleteFiles: vi.fn(),
 	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	// Garde anti-suppression des archives fiscales (audit média M7)
+	mockPrisma: {
+		order: { findMany: vi.fn() },
+		refund: { findMany: vi.fn() },
+	},
 }));
 
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
+
+vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
+
+vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn(), captureMessage: vi.fn() }));
 
 vi.mock("uploadthing/server", () => ({
 	UTApi: class MockUTApi {
@@ -38,6 +47,9 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	// Par défaut aucune URL n'est une archive fiscale.
+	mockPrisma.order.findMany.mockResolvedValue([]);
+	mockPrisma.refund.findMany.mockResolvedValue([]);
 });
 
 // ============================================================================
@@ -150,7 +162,11 @@ describe("deleteUploadThingFilesFromUrls", () => {
 		});
 	});
 
-	it("handles partial deletion", async () => {
+	it("treats already-absent keys as cleared, not failed (deletedCount < keys, success=true)", async () => {
+		// UTApi.deleteFiles est un bulk sans rapport par clé : une clé inexistante
+		// (fichier déjà supprimé par un run interrompu) n'incrémente pas deletedCount
+		// mais n'est PAS un échec. Compter ces clés en `failed` bloquait
+		// définitivement la purge PII 10 ans au retry (audit rétention 2026-07-09).
 		vi.mocked(isValidUploadThingUrl).mockReturnValue(true);
 		vi.mocked(extractFileKeysFromUrls).mockReturnValue({
 			keys: ["abc.jpg", "def.jpg", "ghi.jpg"],
@@ -164,10 +180,11 @@ describe("deleteUploadThingFilesFromUrls", () => {
 			"https://utfs.io/f/ghi.jpg",
 		]);
 
-		expect(result).toEqual({ deleted: 2, failed: 1 });
-		expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining("Partial deletion: 2/3"), {
-			service: "delete-uploadthing-files",
-		});
+		expect(result).toEqual({ deleted: 2, failed: 0 });
+		expect(mockLogger.info).toHaveBeenCalledWith(
+			expect.stringContaining("2/3 file(s) deleted (1 already absent)"),
+			{ service: "delete-uploadthing-files" },
+		);
 	});
 
 	it("handles UTApi exception gracefully", async () => {
@@ -247,5 +264,78 @@ describe("deleteUploadThingFileFromUrl", () => {
 
 		const result = await deleteUploadThingFileFromUrl("https://utfs.io/f/abc123.jpg");
 		expect(result).toBe(false);
+	});
+});
+
+// ============================================================================
+// Garde archives fiscales
+// ============================================================================
+
+/**
+ * @regression media-delete-preserves-fiscal-archives
+ *
+ * Audit média M7 : les PDF de facture (`Order.invoicePdfUrl`), d'avoir sur
+ * commande (`Order.creditNotePdfUrl`) et d'avoir partiel
+ * (`Refund.creditNotePdfUrl`) vivent dans la MÊME app UploadThing que les médias
+ * catalogue. Rien n'empêchait ce service — appelé par les actions produit/SKU/
+ * avis et les actions admin de suppression média — d'effacer une archive
+ * immuable sous rétention 10 ans (Art. L102 B LPF). Le cron
+ * `cleanup-orphan-media` protégeait déjà ces clés côté balayage automatique ;
+ * cette garde ferme le chemin manuel.
+ *
+ * Seul `hard-delete-retention` peut passer outre, via `allowFiscalArchives`.
+ */
+describe("garde archives fiscales (facture / avoir)", () => {
+	const INVOICE_URL = "https://utfs.io/f/invoice-2026-00001.pdf";
+	const MEDIA_URL = "https://utfs.io/f/photo.jpg";
+
+	beforeEach(() => {
+		vi.mocked(isValidUploadThingUrl).mockReturnValue(true);
+		vi.mocked(extractFileKeysFromUrls).mockImplementation((urls: string[]) => ({
+			keys: urls.map((u) => u.split("/").pop()!),
+			failedUrls: [],
+		}));
+		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
+	});
+
+	it("refuse de supprimer un PDF de facture encore référencé", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([
+			{ invoicePdfUrl: INVOICE_URL, creditNotePdfUrl: null },
+		]);
+
+		const result = await deleteUploadThingFilesFromUrls([INVOICE_URL]);
+
+		expect(mockDeleteFiles).not.toHaveBeenCalled();
+		expect(result.deleted).toBe(0);
+	});
+
+	it("refuse de supprimer un avoir partiel (Refund.creditNotePdfUrl)", async () => {
+		mockPrisma.refund.findMany.mockResolvedValue([{ creditNotePdfUrl: INVOICE_URL }]);
+
+		await deleteUploadThingFilesFromUrls([INVOICE_URL]);
+
+		expect(mockDeleteFiles).not.toHaveBeenCalled();
+	});
+
+	it("supprime les médias ordinaires du même lot mais épargne l'archive", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([
+			{ invoicePdfUrl: INVOICE_URL, creditNotePdfUrl: null },
+		]);
+
+		await deleteUploadThingFilesFromUrls([MEDIA_URL, INVOICE_URL]);
+
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["photo.jpg"]);
+	});
+
+	it("laisse passer l'effaceur légitime de fin de rétention", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([
+			{ invoicePdfUrl: INVOICE_URL, creditNotePdfUrl: null },
+		]);
+
+		await deleteUploadThingFilesFromUrls([INVOICE_URL], { allowFiscalArchives: true });
+
+		expect(mockDeleteFiles).toHaveBeenCalledWith(["invoice-2026-00001.pdf"]);
+		// Pas même de requête de garde : le chemin est explicitement autorisé.
+		expect(mockPrisma.order.findMany).not.toHaveBeenCalled();
 	});
 });

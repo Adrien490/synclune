@@ -12,6 +12,7 @@ const {
 	mockValidateInput,
 	mockError,
 	mockUnauthorized,
+	mockHandleActionError,
 	mockRedirect,
 	mockUnstableRethrow,
 	mockEnforceRateLimit,
@@ -26,6 +27,7 @@ const {
 	mockValidateInput: vi.fn(),
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
+	mockHandleActionError: vi.fn(),
 	mockRedirect: vi.fn(),
 	mockUnstableRethrow: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	error: mockError,
 	unauthorized: mockUnauthorized,
+	handleActionError: mockHandleActionError,
 }));
 vi.mock("../schemas/auth.schemas", () => ({ signInEmailSchema: {} }));
 
@@ -92,6 +95,10 @@ describe("signInEmail", () => {
 		mockUnauthorized.mockImplementation((msg: string) => ({
 			status: ActionStatus.UNAUTHORIZED,
 			message: msg,
+		}));
+		mockHandleActionError.mockImplementation((_err: unknown, defaultMessage?: string) => ({
+			status: ActionStatus.ERROR,
+			message: defaultMessage ?? "Une erreur est survenue",
 		}));
 	});
 

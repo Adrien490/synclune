@@ -1,9 +1,14 @@
 import { createHash } from "node:crypto";
-import { Prisma, HistorySource } from "@/app/generated/prisma/client";
+import { Prisma, HistorySource, PaymentStatus } from "@/app/generated/prisma/client";
 import type { VatRegime } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
+import {
+	TX_TIMEOUT_LONG,
+	TX_MAX_WAIT_LONG,
+	RETRYABLE_SEQUENCE_TX_ERROR_CODES,
+} from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { getVendorLegalInfo } from "@/shared/lib/stripe";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
@@ -82,8 +87,9 @@ function invoiceAdvisoryLockKey(year: number): number {
  *   bare `SELECT ... FOR UPDATE LIMIT 1` would acquire no lock (no row matches).
  * - SELECT highest existing invoice for the year inside the same tx.
  * - UPDATE the order with the new number inside the same tx.
- * - On P2002 unique violation (rare cross-tx collision), retry the full tx
- *   up to MAX_RETRIES times.
+ * - On transient errors (P2002 rare cross-tx collision, P2024/P2028 timeouts
+ *   under lock-queue bursts), retry the full tx up to MAX_RETRIES times — safe
+ *   because the idempotency guard re-runs under the lock on every attempt.
  *
  * Returns the new invoice fields, or null if generation fails after retries.
  */
@@ -113,6 +119,33 @@ export async function persistInvoiceNumber(
 		return null;
 	}
 
+	// EINV-SEQ-008 — défense en profondeur Art. 289-I CGI (émission à
+	// l'encaissement) : JAMAIS de facture pour une commande jamais encaissée.
+	// Les 3 callers actuels (ensure-invoice-number, route lazy download,
+	// reconcile-invoices Passe 1) gatent déjà `paymentStatus === PAID`, mais un
+	// futur caller pourrait l'oublier — la garde vit désormais dans le service.
+	// `paidAt != null` couvre les statuts post-encaissement (PARTIALLY_REFUNDED /
+	// REFUNDED) où la facture reste légalement due si elle n'a jamais été émise
+	// (un remboursement exige facture + avoir, pas d'absence de facture).
+	if (order.paidAt == null && order.paymentStatus !== PaymentStatus.PAID) {
+		logger.error(
+			"persistInvoiceNumber — refusing to invoice a never-paid order (Art. 289-I CGI)",
+			undefined,
+			{
+				service: "persist-invoice-number",
+				orderId,
+				paymentStatus: order.paymentStatus,
+			},
+		);
+		Sentry.captureMessage("invoice-generation-blocked-never-paid-order", {
+			level: "error",
+			fingerprint: ["invoice", "never-paid-guard"],
+			tags: { service: "persist-invoice-number" },
+			extra: { orderId, paymentStatus: order.paymentStatus },
+		});
+		return null;
+	}
+
 	// EINV-SEQ-002 : le millésime de la séquence F-YYYY doit suivre la date
 	// d'ENCAISSEMENT (Art. 289-I / 286 CGI), PAS l'horloge de génération. Une
 	// génération tardive (fallback lazy download ou cron `reconcile-invoices`
@@ -128,146 +161,159 @@ export async function persistInvoiceNumber(
 
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
-			const result = await prisma.$transaction(async (tx) => {
-				const prefix = `F-${year}-`;
+			const result = await prisma.$transaction(
+				async (tx) => {
+					const prefix = `F-${year}-`;
 
-				// Advisory lock — serializes invoice generation per year, even when
-				// no row exists yet (first invoice of the year).
-				await tx.$executeRaw(
-					Prisma.sql`SELECT pg_advisory_xact_lock(${invoiceAdvisoryLockKey(year)})`,
-				);
+					// Advisory lock — serializes invoice generation per year, even when
+					// no row exists yet (first invoice of the year).
+					await tx.$executeRaw(
+						Prisma.sql`SELECT pg_advisory_xact_lock(${invoiceAdvisoryLockKey(year)})`,
+					);
 
-				// EINV-SEQ-006 — idempotence par commande SOUS le lock. Les callers
-				// (webhook eager `ensure-invoice-number`, fallback lazy de la route
-				// download, cron `sync-async-payments`) pré-vérifient `invoiceNumber`
-				// HORS lock → TOCTOU : deux chemins concurrents passent tous deux leur
-				// garde puis se sérialisent ici. Sans cette re-lecture sous lock, le 2e
-				// entrant calculerait MAX+1 et ÉCRASERAIT le numéro déjà émis par le 1er
-				// (mutation d'une facture émise — Art. 286) en orphelinisant ce 1er
-				// numéro (= gap, interdit Art. 286). On retourne donc l'existant en noop.
-				const existing = await tx.order.findUnique({
-					where: { id: orderId },
-					select: {
-						invoiceNumber: true,
-						invoiceGeneratedAt: true,
-						invoiceDataHash: true,
-					},
-				});
-				if (existing?.invoiceNumber) {
-					return {
-						invoiceNumber: existing.invoiceNumber,
-						invoiceGeneratedAt: existing.invoiceGeneratedAt,
-						invoiceDataHash: existing.invoiceDataHash,
-						idempotent: true as const,
-					};
-				}
+					// EINV-SEQ-006 — idempotence par commande SOUS le lock. Les callers
+					// (webhook eager `ensure-invoice-number`, fallback lazy de la route
+					// download, cron `sync-async-payments`) pré-vérifient `invoiceNumber`
+					// HORS lock → TOCTOU : deux chemins concurrents passent tous deux leur
+					// garde puis se sérialisent ici. Sans cette re-lecture sous lock, le 2e
+					// entrant calculerait MAX+1 et ÉCRASERAIT le numéro déjà émis par le 1er
+					// (mutation d'une facture émise — Art. 286) en orphelinisant ce 1er
+					// numéro (= gap, interdit Art. 286). On retourne donc l'existant en noop.
+					const existing = await tx.order.findUnique({
+						where: { id: orderId },
+						select: {
+							invoiceNumber: true,
+							invoiceGeneratedAt: true,
+							invoiceDataHash: true,
+						},
+					});
+					if (existing?.invoiceNumber) {
+						return {
+							invoiceNumber: existing.invoiceNumber,
+							// Legacy théorique : numéro présent sans `invoiceGeneratedAt`
+							// (écriture pré-service). Fallback sur la date d'encaissement
+							// (sémantiquement la plus proche de l'émission, Art. 289-I) pour
+							// honorer le contrat de retour `invoiceGeneratedAt: Date`.
+							invoiceGeneratedAt: existing.invoiceGeneratedAt ?? order.paidAt ?? order.createdAt,
+							invoiceDataHash: existing.invoiceDataHash,
+							idempotent: true as const,
+						};
+					}
 
-				const lastRow = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
-					// Tri NUMÉRIQUE sur le suffixe (pas lexicographique) : indispensable si
-					// la regex CHECK est un jour étendue à 6 chiffres ({5,6}). En
-					// lexicographique, `F-YYYY-100000` < `F-YYYY-99999` ⇒ le MAX renverrait
-					// 99999 et on re-générerait 100000 en boucle (P2002 → émission bloquée).
-					// `split_part(x,'-',3)` isole NNNNN (format garanti par le CHECK DB).
-					Prisma.sql`SELECT "invoiceNumber" FROM "Order"
+					const lastRow = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
+						// Tri NUMÉRIQUE sur le suffixe (pas lexicographique) : indispensable si
+						// la regex CHECK est un jour étendue à 6 chiffres ({5,6}). En
+						// lexicographique, `F-YYYY-100000` < `F-YYYY-99999` ⇒ le MAX renverrait
+						// 99999 et on re-générerait 100000 en boucle (P2002 → émission bloquée).
+						// `split_part(x,'-',3)` isole NNNNN (format garanti par le CHECK DB).
+						Prisma.sql`SELECT "invoiceNumber" FROM "Order"
 						WHERE "invoiceNumber" LIKE ${prefix + "%"}
 						ORDER BY CAST(split_part("invoiceNumber", '-', 3) AS INTEGER) DESC
 						LIMIT 1`,
-				);
-
-				let nextSequence = 1;
-				const lastInvoiceNumber = lastRow[0]?.invoiceNumber;
-				if (lastInvoiceNumber) {
-					const lastSequence = parseInt(lastInvoiceNumber.slice(prefix.length), 10);
-					if (!isNaN(lastSequence)) {
-						nextSequence = lastSequence + 1;
-					}
-				}
-
-				if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
-					throw new BusinessError(
-						`Séquence facture saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
-							`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
-						"INVOICE_SEQUENCE_OVERFLOW",
 					);
-				}
 
-				// EINV-GLOBAL-023 — pré-alerte 90% pour planifier la migration de la
-				// regex CHECK DB avant saturation. Sentry fingerprinté par année
-				// pour éviter le spam (un seul warning par jour côté Sentry).
-				if (nextSequence >= SEQUENCE_PREALERT_THRESHOLD) {
-					Sentry.withScope((scope) => {
-						scope.setLevel("warning");
-						scope.setTag("invoiceYear", String(year));
-						scope.setFingerprint(["invoice", "sequence-prealert", String(year)]);
-						scope.setContext("invoice-sequence", {
-							year,
-							nextSequence,
-							max: MAX_SEQUENCE_PER_YEAR,
-							threshold: SEQUENCE_PREALERT_THRESHOLD,
-							percentUsed: Math.round((nextSequence / MAX_SEQUENCE_PER_YEAR) * 100),
-						});
-						Sentry.captureMessage(
-							`Invoice sequence at ${nextSequence}/${MAX_SEQUENCE_PER_YEAR} (year ${year}) — extend CHECK regex before saturation`,
-							"warning",
+					let nextSequence = 1;
+					const lastInvoiceNumber = lastRow[0]?.invoiceNumber;
+					if (lastInvoiceNumber) {
+						const lastSequence = parseInt(lastInvoiceNumber.slice(prefix.length), 10);
+						if (!isNaN(lastSequence)) {
+							nextSequence = lastSequence + 1;
+						}
+					}
+
+					if (nextSequence > MAX_SEQUENCE_PER_YEAR) {
+						throw new BusinessError(
+							`Séquence facture saturée pour l'année ${year} (limite ${MAX_SEQUENCE_PER_YEAR}). ` +
+								`Étendre la regex CHECK DB à 6 chiffres avant nouvelle émission.`,
+							"INVOICE_SEQUENCE_OVERFLOW",
 						);
-					});
-				}
+					}
 
-				const invoiceNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
-				const now = new Date();
+					// EINV-GLOBAL-023 — pré-alerte 90% pour planifier la migration de la
+					// regex CHECK DB avant saturation. Sentry fingerprinté par année
+					// pour éviter le spam (un seul warning par jour côté Sentry).
+					if (nextSequence >= SEQUENCE_PREALERT_THRESHOLD) {
+						Sentry.withScope((scope) => {
+							scope.setLevel("warning");
+							scope.setTag("invoiceYear", String(year));
+							scope.setFingerprint(["invoice", "sequence-prealert", String(year)]);
+							scope.setContext("invoice-sequence", {
+								year,
+								nextSequence,
+								max: MAX_SEQUENCE_PER_YEAR,
+								threshold: SEQUENCE_PREALERT_THRESHOLD,
+								percentUsed: Math.round((nextSequence / MAX_SEQUENCE_PER_YEAR) * 100),
+							});
+							Sentry.captureMessage(
+								`Invoice sequence at ${nextSequence}/${MAX_SEQUENCE_PER_YEAR} (year ${year}) — extend CHECK regex before saturation`,
+								"warning",
+							);
+						});
+					}
 
-				// Fige le snapshot `InvoiceData` au moment précis de l'attribution
-				// du numéro (Art. L102 B LPF — la "facture" comptable EST le payload
-				// de données, pas son rendu PDF). Toute régénération future doit
-				// produire un PDF identique à partir de ce snapshot grâce au
-				// déterminisme de `renderInvoicePdf`. Construit à partir de l'order
-				// pré-lu hors lock (EINV-SEQ-005) : pas de findUnique dans la tx.
-				const orderForBuild = {
-					...order,
-					invoiceNumber,
-					invoiceStatus: "GENERATED",
-					invoiceGeneratedAt: now,
-					// Les vendor* sont écrits dans le même UPDATE — on les patche pour
-					// que `buildInvoiceData` voie l'état post-update et que le snapshot
-					// reflète l'identité figée du vendeur à T0.
-					...vendorSnapshotForOrderShape(vendorSnapshot),
-				} as GetOrderReturn;
-				const invoiceSnapshot = buildInvoiceData(orderForBuild);
-				const canonicalJson = canonicalJsonStringify(invoiceSnapshot);
-				const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
+					const invoiceNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
+					const now = new Date();
 
-				const updated = await tx.order.update({
-					where: { id: orderId },
-					data: {
+					// Fige le snapshot `InvoiceData` au moment précis de l'attribution
+					// du numéro (Art. L102 B LPF — la "facture" comptable EST le payload
+					// de données, pas son rendu PDF). Toute régénération future doit
+					// produire un PDF identique à partir de ce snapshot grâce au
+					// déterminisme de `renderInvoicePdf`. Construit à partir de l'order
+					// pré-lu hors lock (EINV-SEQ-005) : pas de findUnique dans la tx.
+					const orderForBuild = {
+						...order,
 						invoiceNumber,
 						invoiceStatus: "GENERATED",
 						invoiceGeneratedAt: now,
-						invoiceDataSnapshot: JSON.parse(canonicalJson) as Prisma.InputJsonValue,
-						invoiceDataHash,
-						...vendorSnapshot,
-					},
-					select: { invoiceNumber: true, invoiceGeneratedAt: true },
-				});
+						// Les vendor* sont écrits dans le même UPDATE — on les patche pour
+						// que `buildInvoiceData` voie l'état post-update et que le snapshot
+						// reflète l'identité figée du vendeur à T0.
+						...vendorSnapshotForOrderShape(vendorSnapshot),
+					} as GetOrderReturn;
+					const invoiceSnapshot = buildInvoiceData(orderForBuild);
+					const canonicalJson = canonicalJsonStringify(invoiceSnapshot);
+					const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
 
-				// Audit trail (Art. L123-22 Code de Commerce) — la génération de
-				// facture est une mutation critique qui doit apparaître dans la
-				// timeline OrderHistory au même titre que les transitions de statut.
-				await createOrderAuditTx(tx, {
-					orderId,
-					action: "INVOICE_GENERATED",
-					authorId,
-					authorName,
-					source,
-					note: `Facture ${invoiceNumber} générée`,
-					metadata: {
-						invoiceNumber,
-						invoiceGeneratedAt: now.toISOString(),
-						invoiceDataHash,
-					},
-				});
+					const updated = await tx.order.update({
+						where: { id: orderId },
+						data: {
+							invoiceNumber,
+							invoiceStatus: "GENERATED",
+							invoiceGeneratedAt: now,
+							invoiceDataSnapshot: JSON.parse(canonicalJson) as Prisma.InputJsonValue,
+							invoiceDataHash,
+							...vendorSnapshot,
+						},
+						select: { invoiceNumber: true, invoiceGeneratedAt: true },
+					});
 
-				return { ...updated, invoiceDataHash };
-			});
+					// Audit trail (Art. L123-22 Code de Commerce) — la génération de
+					// facture est une mutation critique qui doit apparaître dans la
+					// timeline OrderHistory au même titre que les transitions de statut.
+					await createOrderAuditTx(tx, {
+						orderId,
+						action: "INVOICE_GENERATED",
+						authorId,
+						authorName,
+						source,
+						note: `Facture ${invoiceNumber} générée`,
+						metadata: {
+							invoiceNumber,
+							invoiceGeneratedAt: now.toISOString(),
+							invoiceDataHash,
+						},
+					});
+
+					return { ...updated, invoiceDataHash };
+				},
+				{
+					// L'attente sur pg_advisory_xact_lock compte dans le timeout de la
+					// tx interactive (défaut 5s) : sous burst de paiements, les tx
+					// sérialisées en queue sur la même clé année expireraient (P2028).
+					timeout: TX_TIMEOUT_LONG,
+					maxWait: TX_MAX_WAIT_LONG,
+				},
+			);
 
 			// Pas d'invalidation cache sur le noop idempotent (EINV-SEQ-006) : rien
 			// n'a muté, et un download concurrent ne doit pas churner le cache.
@@ -283,7 +329,7 @@ export async function persistInvoiceNumber(
 		} catch (e) {
 			if (
 				e instanceof Prisma.PrismaClientKnownRequestError &&
-				e.code === "P2002" &&
+				RETRYABLE_SEQUENCE_TX_ERROR_CODES.has(e.code) &&
 				attempt < MAX_RETRIES - 1
 			) {
 				continue;

@@ -4,6 +4,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Politique de Confidentialité | Synclune",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 export default async function PrivacyPolicyPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
-	cacheTag("legal-privacy");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_PRIVACY);
 
 	return (
 		<>
@@ -414,12 +415,9 @@ export default async function PrivacyPolicyPage() {
 							</p>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
-									<strong>Vercel Analytics :</strong> statistiques anonymisées de navigation pour
-									améliorer le site
-								</li>
-								<li>
-									<strong>Vercel Speed Insights :</strong> mesures de performance (temps de
-									chargement, Web Vitals) pour optimiser la rapidité du site
+									<strong>Sentry Session Replay :</strong> enregistrement anonymisé d'un échantillon
+									de sessions de navigation (textes, saisies et médias masqués) pour corriger les
+									problèmes d'ergonomie
 								</li>
 							</ul>
 

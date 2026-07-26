@@ -2,8 +2,8 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-import { Prisma } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { Prisma, StockMovementSource } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
@@ -25,6 +25,7 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { logger } from "@/shared/lib/logger";
 import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
+import { recordStockMovementTx } from "../services/stock-movement.service";
 import {
 	assertColorsExist,
 	assertMaterialsExist,
@@ -49,8 +50,11 @@ export async function updateProductSku(
 ): Promise<ActionState> {
 	try {
 		// 1. Auth first (before rate limit to avoid non-admin token consumption)
-		const auth = await requireAdmin();
+		// requireAdminWithUser : l'identité admin est tracée dans le StockMovement
+		// écrit quand le stock change via ce formulaire.
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
+		const admin = auth.user;
 		// 2. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_UPDATE_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -253,6 +257,21 @@ export async function updateProductSku(
 				},
 			});
 
+			// Audit inventaire : le delta appliqué via ce formulaire est tracé comme les
+			// ajustements dédiés (adjust-sku-stock), source SKU_UPDATE. Atomique avec
+			// l'update ci-dessus (même transaction).
+			if (inventoryDelta !== 0) {
+				await recordStockMovementTx(tx, {
+					skuId: updatedSku.id,
+					productId: existingSku.productId,
+					previousInventory: lockedInventory,
+					newInventory: targetInventory,
+					source: StockMovementSource.SKU_UPDATE,
+					createdById: admin.id,
+					createdByName: admin.name ?? null,
+				});
+			}
+
 			if (allMedia.length > 0) {
 				await tx.skuMedia.createMany({
 					data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
@@ -321,6 +340,10 @@ export async function updateProductSku(
 			...previousMaterials.map((m) => m.material.slug),
 			...productSku.materials.map((m) => m.material.slug),
 		]);
+		const touchedMaterialIds = new Set<string>([
+			...previousMaterials.map((m) => m.materialId),
+			...productSku.materials.map((m) => m.materialId),
+		]);
 
 		const tags = getSkuInvalidationTags(
 			productSku.sku,
@@ -330,6 +353,7 @@ export async function updateProductSku(
 			Array.from(touchedColorSlugs),
 			Array.from(touchedColorIds),
 			Array.from(touchedMaterialSlugs),
+			Array.from(touchedMaterialIds),
 		);
 		tags.forEach((tag) => updateTag(tag));
 

@@ -181,6 +181,20 @@ describe("updateAddress", () => {
 		expect(mockError).toHaveBeenCalledWith("Adresse non trouvée");
 	});
 
+	// @regression address-country-hidden-input — le champ pays disabled est exclu
+	// du FormData ; l'action doit mapper la clé absente vers undefined (pas null)
+	// pour laisser jouer le .default("FR") du schéma.
+	it("should pass country as undefined (not null) when the FormData key is absent", async () => {
+		await updateAddress(ADDRESS_ID, undefined, validFormData);
+
+		expect(mockValidateInput).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ country: undefined }),
+		);
+		const rawData = mockValidateInput.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(rawData.country).not.toBeNull();
+	});
+
 	it("should return validation error for invalid form data", async () => {
 		const validationError = { status: ActionStatus.VALIDATION_ERROR, message: "Prenom invalide" };
 		mockValidateInput.mockReturnValue({ error: validationError });

@@ -33,13 +33,31 @@ export function buildLightboxSlides(
 			};
 		}
 
+		const src = nextImageUrl(
+			media.url,
+			LIGHTBOX_SRCSET_SIZES[LIGHTBOX_SRCSET_SIZES.length - 1]!,
+			LIGHTBOX_QUALITY,
+		);
+
+		// `ImageSource.height` est REQUIS par la lightbox et sert à calculer le ratio
+		// d'affichage. Sans dimensions connues (média antérieur au backfill), on omet
+		// le `srcSet` entier plutôt que de déclarer `height: 0` : un ratio impossible
+		// cassait le fit et le zoom. Le rendu retombe sur la seule `src` pleine taille.
+		if (!media.width || !media.height) {
+			return { src, alt: media.alt };
+		}
+
+		const aspectRatio = media.height / media.width;
+
 		return {
-			src: nextImageUrl(media.url, LIGHTBOX_SRCSET_SIZES[LIGHTBOX_SRCSET_SIZES.length - 1]!),
+			src,
 			alt: media.alt,
+			width: media.width,
+			height: media.height,
 			srcSet: LIGHTBOX_SRCSET_SIZES.map((size) => ({
 				src: nextImageUrl(media.url, size, LIGHTBOX_QUALITY),
 				width: size,
-				height: 0,
+				height: Math.round(size * aspectRatio),
 			})),
 		};
 	});

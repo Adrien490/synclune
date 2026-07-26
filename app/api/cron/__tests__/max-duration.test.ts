@@ -27,11 +27,19 @@ function listCronRoutes(): string[] {
 describe("cron routes maxDuration export", () => {
 	const routeFiles = listCronRoutes();
 
-	it("discovers all 11 cron routes", () => {
+	it("discovers all 10 cron routes", () => {
 		// Tripwire : a different count means a cron was added/removed without
 		// updating vercel.json or the docs. Adjust this number deliberately.
 		// 2026-05-30 : 10 → 11, réintégration de `reconcile-invoices` (DLQ facture
 		// Art. 286/289-I, obligation LIVE indépendante du go-live e-reporting).
+		// 2026-06 (audit right-sizing) : 11 → 8, retrait des 3 crons d'alerte
+		// (dispute-deadlines, overbilled-orders, stuck-orders) → widget dashboard "à traiter".
+		// 2026-06-24 (audit paiement) : 8 → 10, réactivation de `cleanup-pending-orders`
+		// (tripwire SPOF AM-5, MON-02) + `alert-dispute-deadlines` (rappel PUSH chargeback,
+		// MON-01). `overbilled`/`stuck-orders` restent en dashboard PULL.
+		// 2026-07-01 (audit catalogue) : 10 → 11, réactivation de `cleanup-orphan-media`
+		// (P1-B : les mutations médias admin comptent sur ce filet — sans lui, chaque
+		// remplacement d'image orpheline le fichier UploadThing définitivement).
 		expect(routeFiles).toHaveLength(11);
 	});
 

@@ -74,17 +74,15 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
+import { BottomBar, ActiveDot, BottomBarActivePill } from "../bottom-bar";
 import {
-	BottomBar,
-	ActiveDot,
-	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
 	bottomBarBadgeClass,
-} from "../bottom-bar";
+} from "../bottom-bar.styles";
 
 afterEach(() => {
 	cleanup();

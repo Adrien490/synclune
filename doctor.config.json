@@ -1,0 +1,207 @@
+{
+	"ignore": {
+		"rules": [
+			"react-doctor/server-auth-actions",
+			"react-doctor/rendering-hydration-mismatch-time",
+			"react-doctor/no-prevent-default",
+			"react-doctor/react-compiler-destructure-method",
+			"react-doctor/no-giant-component",
+			"react-doctor/no-generic-handler-names",
+			"react-doctor/no-many-boolean-props",
+			"react-doctor/design-no-default-tailwind-palette",
+			"react-doctor/design-no-em-dash-in-jsx-text",
+			"react-doctor/design-no-redundant-size-axes",
+			"react-doctor/design-no-redundant-padding-axes",
+			"react-doctor/design-no-space-on-flex-children",
+			"react-doctor/design-no-three-period-ellipsis",
+			"react-doctor/prefer-useReducer",
+			"react-doctor/no-cascading-set-state",
+			"react-doctor/no-derived-useState",
+			"react-doctor/no-effect-event-handler",
+			"react-doctor/async-await-in-loop",
+			"react-doctor/async-parallel",
+			"react-doctor/async-defer-await",
+			"react-doctor/nextjs-no-img-element",
+			"react-doctor/nextjs-no-a-element",
+			"react-doctor/js-combine-iterations",
+			"react-doctor/js-flatmap-filter",
+			"react-doctor/prefer-dynamic-import",
+			"react-doctor/rerender-state-only-in-handlers",
+			"react-doctor/rerender-defer-reads-hook",
+			"react-doctor/no-render-in-render",
+			"react-doctor/no-scale-from-zero",
+			"react-doctor/no-side-tab-border",
+			"react-doctor/server-sequential-independent-await",
+			"react-doctor/prefer-use-effect-event",
+			"react-doctor/no-prop-callback-in-effect",
+			"react-doctor/no-derived-state-effect",
+			"react-doctor/no-effect-chain",
+			"react-doctor/js-batch-dom-css"
+		],
+		"files": [
+			"e2e/**",
+			"**/__tests__/**",
+			"**/*.test.ts",
+			"**/*.test.tsx",
+			"emails/**",
+			"scripts/**",
+			".claude/**",
+			"shared/lib/__mocks__/**"
+		],
+		"overrides": [
+			{
+				"files": ["modules/**/actions/**", "shared/actions/**"],
+				"rules": ["react-doctor/nextjs-no-redirect-in-try-catch"]
+			},
+			{
+				"_comment": "instrumentation-client.ts est chargé UNIQUEMENT dans le navigateur (convention Next.js) : `window` au scope du module y est correct, jamais évalué pendant le SSR.",
+				"files": ["instrumentation-client.ts"],
+				"rules": ["react-doctor/no-unguarded-browser-global-at-module-scope"]
+			},
+			{
+				"_comment": "FAQ_DATE_MODIFIED alimente `dateModified` du JSON-LD FAQPage : la valeur DOIT être stable pour tout le déploiement (fallback build-time de VERCEL_GIT_COMMIT_AUTHOR_DATE), pas recalculée par requête.",
+				"files": ["shared/constants/faq-items.tsx"],
+				"rules": ["react-doctor/no-impure-call-at-module-scope"]
+			},
+			{
+				"files": [
+					"modules/skus/components/admin/skus-data-table.tsx",
+					"modules/products/components/admin/products-data-table.tsx",
+					"modules/products/components/price-range-inputs.tsx"
+				],
+				"rules": ["react-doctor/design-no-em-dash-in-jsx-text"]
+			},
+			{
+				"files": ["modules/media/components/gallery/pinch-zoom.tsx"],
+				"rules": [
+					"react-doctor/client-passive-event-listeners",
+					"react-doctor/no-permanent-will-change"
+				]
+			},
+			{
+				"files": ["**/opengraph-image.tsx"],
+				"rules": ["react-doctor/no-inline-exhaustive-style"]
+			},
+			{
+				"files": ["app/(shop)/creations/[slug]/page.tsx", "app/(shop)/collections/[slug]/page.tsx"],
+				"rules": ["react-doctor/nextjs-missing-metadata"]
+			},
+			{
+				"_comment": "Reste le seul `pnpm install` d'un job SANS aucun secret (job commitlint, permissions contents:read) : plus rien à isoler. Les jobs qui manipulent des secrets les déclarent step-par-step, l'install ne les voit jamais. `--ignore-scripts` n'est PAS une option : sharp/@tailwindcss/oxide/esbuild sont allowlistés dans .npmrc et ont besoin de leur build natif.",
+				"files": [".github/workflows/ci.yml"],
+				"rules": ["react-doctor/build-pipeline-secret-boundary"]
+			},
+			{
+				"_comment": "Faux positif : `MotionValue.on(\"change\", cb)` de Motion RETOURNE sa fonction de désabonnement, et c'est précisément cette fonction qui est renvoyée au cleanup de l'effet. La règle n'accepte que les paires `on`/`off` explicites (aucun `.off()` n'existe sur MotionValue).",
+				"files": ["shared/components/animations/animated-number.tsx"],
+				"rules": ["react-doctor/effect-needs-cleanup"]
+			},
+			{
+				"_comment": "Faux positif : ce sont des `String.prototype.includes` (recherche de sous-chaîne dans un titre de nav), pas des lookups de tableau — un Set n'a rien à y faire.",
+				"files": ["app/admin/_components/admin-menu-sheet.tsx"],
+				"rules": ["react-doctor/js-set-map-lookups"]
+			},
+			{
+				"_comment": "Faux positif : le `duration-200` de ces classes accompagne `animate-in`/`fade-in` (durée d'ANIMATION CSS via tailwindcss-animate), pas une transition — il n'y a aucun `transition-all` à nommer.",
+				"files": [
+					"shared/components/bottom-bar/bottom-bar.tsx",
+					"shared/components/bottom-bar/bottom-bar.styles.ts",
+					"shared/components/filter-sheet-wrapper.tsx",
+					"shared/components/long-press-menu-link/link-pending-overlay.tsx",
+					"shared/components/navigation/loading-indicator.tsx"
+				],
+				"rules": ["react-doctor/no-transition-all"]
+			},
+			{
+				"_comment": "Les previews ne sont pas un état dérivé mais des ressources navigateur (URL.createObjectURL) : leur création est un effet de bord interdit pendant le render, et leur cycle de vie exige une révocation au cleanup. L'état est le seul endroit où les stocker.",
+				"files": ["shared/components/media-upload/pending-uploads-grid.tsx"],
+				"rules": ["react-doctor/no-derived-state"]
+			},
+			{
+				"_comment": "SQL brut vérifié : `SET LOCAL statement_timeout` n'accepte pas de paramètre lié (valeur numérique clampée + Number.isFinite avant interpolation) ; `fuzzy-search` n'interpole que des identifiants table/colonne validés contre ALLOWED_FUZZY_COLUMNS, le terme utilisateur reste paramétré.",
+				"files": ["modules/products/utils/trigram-helpers.ts", "shared/lib/fuzzy-search.ts"],
+				"rules": ["react-doctor/raw-sql-injection-risk"]
+			},
+			{
+				"_comment": "`role=\"button\"` sur un span/div volontaire : ces deux contrôles sont IMBRIQUÉS dans un <button> (trigger d'accordéon, SelectTrigger Radix) — un <button> natif y serait du HTML invalide. tabIndex + onKeyDown Enter/Espace sont fournis.",
+				"files": [
+					"modules/products/components/admin/products-filter-sheet-ui.tsx",
+					"shared/components/forms/select-field.tsx"
+				],
+				"rules": ["react-doctor/prefer-tag-over-role"]
+			},
+			{
+				"_comment": "Object URLs à propriété transférée : `loadVideo` révoque dans `cleanupVideo`, et `previewUrl` est révoquée par l'appelant (`use-video-thumbnail-upload`, succès ET erreur). L'analyse ne suit pas le transfert entre fonctions.",
+				"files": ["modules/media/hooks/use-video-thumbnail.ts"],
+				"rules": ["react-doctor/no-create-object-url-without-revoke"]
+			},
+			{
+				"_comment": "Modale déjà piégée : FocusScope.Root de Radix (prop `trapped`) fournit le focus trap + la restauration, ce que l'analyse ne voit pas. Le <dialog> natif casserait le rendu plein écran (top-layer vs stacking des overlays Vaul empilés).",
+				"files": ["modules/media/components/media-lightbox.tsx"],
+				"rules": ["react-doctor/prefer-html-dialog"]
+			},
+			{
+				"_comment": "AnimatePresence : la frontière anime bien les entrées/sorties de ses enfants ; elle ne disparaît avec son dernier enfant que quand la SECTION entière est retirée (panier vidé → état vide, plus aucune recherche récente, placeholder animé désactivé) — cas où l'animation de sortie n'est pas souhaitée.",
+				"files": [
+					"modules/cart/components/cart-sheet.tsx",
+					"modules/products/components/quick-search-dialog/idle-content.tsx",
+					"modules/products/components/quick-search-dialog/quick-search-dialog.tsx"
+				],
+				"rules": ["react-doctor/motion-animate-presence-must-outlive-child"]
+			},
+			{
+				"_comment": "Remontée d'état vers le parent assumée : la donnée NAÎT dans l'enfant ou dans une source externe (api Embla créée par useEmblaCarousel, valeur d'URL, état d'action serveur, isPending d'une mutation locale au dialog) — le parent ne peut pas la posséder. Chaque site passe par useEffectEvent.",
+				"files": [
+					"shared/components/ui/carousel.tsx",
+					"shared/components/search-input.tsx",
+					"shared/hooks/use-server-field-errors.ts",
+					"modules/orders/components/admin/mark-as-shipped-dialog.tsx"
+				],
+				"rules": [
+					"react-doctor/no-pass-data-to-parent",
+					"react-doctor/no-pass-live-state-to-parent"
+				]
+			},
+			{
+				"_comment": "Polling client volontaire : le statut d'un PaymentIntent 3DS lent ne peut être suivi que côté navigateur (annulation via cancelledRef + pause sur onglet caché). Un Server Component ne peut pas rafraîchir sans rechargement.",
+				"files": ["app/paiement/confirmation/_components/pending-payment-watcher.tsx"],
+				"rules": ["react-doctor/no-fetch-in-effect"]
+			},
+			{
+				"_comment": "Synchronisations d'état délibérées avec une source EXTERNE (drag @dnd-kit, formulaire réinitialisé depuis l'URL à l'ouverture du sheet) : ni `key` ni dérivation au render ne s'appliquent, l'état ne vient pas d'un prop.",
+				"files": [
+					"modules/media/components/admin/sortable-media-item.tsx",
+					"modules/products/components/admin/products-filter-sheet.tsx"
+				],
+				"rules": ["react-doctor/no-adjust-state-on-prop-change"]
+			},
+			{
+				"_comment": "Primitives shadcn/ui : `buttonVariants`/`inputVariants`/les sous-composants de navigation-menu sont exportés à côté du composant par convention amont et importés partout — les déplacer casserait le chemin de mise à jour shadcn pour un gain limité au Fast Refresh en dev.",
+				"files": ["shared/components/ui/**"],
+				"rules": ["react-doctor/only-export-components"]
+			},
+			{
+				"_comment": "Fichiers `File[]` sans identifiant stable : deux fichiers homonymes de même mtime peuvent être mis en file d'attente, l'index sert d'unicité de clé (aucun id fourni par l'API File).",
+				"files": ["shared/components/media-upload/pending-uploads-grid.tsx"],
+				"rules": ["react-doctor/no-array-index-as-key"]
+			},
+			{
+				"files": [
+					"**/*skeleton*.tsx",
+					"**/*loader*.tsx",
+					"shared/components/animations/split-text.tsx",
+					"shared/components/animations/split-text-css.tsx",
+					"shared/components/ui/slider.tsx",
+					"shared/components/ui/carousel.tsx",
+					"shared/components/autocomplete/autocomplete-list-content.tsx",
+					"modules/products/components/product-card.tsx",
+					"modules/products/components/product-details.tsx",
+					"modules/products/components/quick-search-dialog/search-result-item.tsx",
+					"modules/collections/components/collection-images-grid.tsx"
+				],
+				"rules": ["react-doctor/no-array-index-as-key"]
+			}
+		]
+	},
+	"blocking": "none"
+}

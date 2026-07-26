@@ -6,11 +6,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } = vi.hoisted(() => {
 	const mockTx = {
+		// IDEM-AUTOREFUND-001 : `SELECT … FOR UPDATE` de sérialisation en tête de tx.
+		$queryRaw: vi.fn(),
 		order: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),
 			findUniqueOrThrow: vi.fn(),
 			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 		productSku: {
 			findMany: vi.fn(),
@@ -43,6 +46,8 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 			},
 			refund: {
 				update: vi.fn(),
+				// IDEM-AUTOREFUND-001 : claim conditionnel du lien stripeRefundId.
+				updateMany: vi.fn(),
 			},
 		},
 		mockStripeRefunds: {
@@ -75,81 +80,12 @@ vi.mock("@/shared/constants/urls", () => ({
 }));
 
 import {
-	markOrderAsPaid,
 	restoreStockForOrder,
 	markOrderAsFailed,
 	markOrderAsCancelled,
 	initiateAutomaticRefund,
 	sendRefundFailureAlert,
 } from "../payment-intent.service";
-
-// ============================================================================
-// markOrderAsPaid — Idempotency
-// ============================================================================
-
-describe("markOrderAsPaid — idempotency", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
-			cb(mockTx),
-		);
-	});
-
-	it("should mark order as PAID and set paidAt timestamp", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
-
-		await markOrderAsPaid("order-1", "pi_abc123");
-
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
-			data: expect.objectContaining({
-				status: "PROCESSING",
-				paymentStatus: "PAID",
-				stripePaymentIntentId: "pi_abc123",
-				paidAt: expect.any(Date),
-			}),
-		});
-	});
-
-	it("should be idempotent — already PAID order returns early without DB update", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
-
-		await markOrderAsPaid("order-1", "pi_abc123");
-
-		expect(mockTx.order.update).not.toHaveBeenCalled();
-	});
-
-	it("should not throw when order is not found", async () => {
-		mockTx.order.findFirst.mockResolvedValue(null);
-
-		await expect(markOrderAsPaid("missing", "pi_abc123")).resolves.toBeUndefined();
-
-		expect(mockTx.order.update).not.toHaveBeenCalled();
-	});
-
-	it("should process PENDING order on concurrent calls — only first updates", async () => {
-		let callCount = 0;
-		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<void>) => {
-			callCount++;
-			if (callCount === 1) {
-				mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
-			} else {
-				mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PAID" });
-			}
-			mockTx.order.update.mockResolvedValue({});
-			return cb(mockTx);
-		});
-
-		await Promise.all([
-			markOrderAsPaid("order-1", "pi_abc123"),
-			markOrderAsPaid("order-1", "pi_abc123"),
-		]);
-
-		// Only one update call (the second sees PAID and skips)
-		expect(mockTx.order.update).toHaveBeenCalledTimes(1);
-	});
-});
 
 // ============================================================================
 // restoreStockForOrder — Stock restoration
@@ -170,8 +106,8 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			items: [
-				{ skuId: "sku-1", quantity: 2 },
-				{ skuId: "sku-2", quantity: 3 },
+				{ skuId: "sku-1", quantity: 2, sku: { product: { id: "prod-1", slug: "produit-1" } } },
+				{ skuId: "sku-2", quantity: 3, sku: { product: { id: "prod-2", slug: "produit-2" } } },
 			],
 		});
 		mockTx.productSku.findMany.mockResolvedValue([
@@ -184,7 +120,9 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 
 		expect(result.shouldRestore).toBe(true);
 		expect(result.itemCount).toBe(2);
-		expect(result.restoredSkuIds).toEqual(expect.arrayContaining(["sku-1", "sku-2"]));
+		expect(result.restoredSkus.map((s) => s.skuId)).toEqual(
+			expect.arrayContaining(["sku-1", "sku-2"]),
+		);
 	});
 
 	it("should aggregate quantities when same SKU appears in multiple order items", async () => {
@@ -194,8 +132,8 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			status: "PROCESSING",
 			paymentStatus: "PAID",
 			items: [
-				{ skuId: "sku-1", quantity: 2 },
-				{ skuId: "sku-1", quantity: 3 },
+				{ skuId: "sku-1", quantity: 2, sku: { product: { id: "prod-1", slug: "produit-1" } } },
+				{ skuId: "sku-1", quantity: 3, sku: { product: { id: "prod-1", slug: "produit-1" } } },
 			],
 		});
 		mockTx.productSku.findMany.mockResolvedValue([{ id: "sku-1", inventory: 0, isActive: false }]);
@@ -250,7 +188,9 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
 			paymentStatus: "PAID",
-			items: [{ skuId: "sku-1", quantity: 1 }],
+			items: [
+				{ skuId: "sku-1", quantity: 1, sku: { product: { id: "prod-1", slug: "produit-1" } } },
+			],
 		});
 		mockTx.productSku.findMany.mockResolvedValue([{ id: "sku-1", inventory: 0, isActive: false }]);
 		mockTx.productSku.update.mockResolvedValue({});
@@ -272,7 +212,9 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			orderNumber: "SYN-001",
 			status: "PROCESSING",
 			paymentStatus: "PAID",
-			items: [{ skuId: "sku-1", quantity: 1 }],
+			items: [
+				{ skuId: "sku-1", quantity: 1, sku: { product: { id: "prod-1", slug: "produit-1" } } },
+			],
 		});
 		mockTx.productSku.findMany.mockResolvedValue([{ id: "sku-1", inventory: 3, isActive: false }]);
 		mockTx.productSku.update.mockResolvedValue({});
@@ -296,7 +238,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 		expect(result).toEqual({
 			shouldRestore: false,
 			itemCount: 0,
-			restoredSkuIds: [],
+			restoredSkus: [],
 			userId: null,
 		});
 	});
@@ -316,7 +258,7 @@ describe("markOrderAsFailed — idempotency", () => {
 
 	it("should store failure details on first call", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		await markOrderAsFailed("order-1", "pi_abc123", {
 			code: "card_declined",
@@ -324,8 +266,8 @@ describe("markOrderAsFailed — idempotency", () => {
 			message: "Your card was declined.",
 		});
 
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: expect.objectContaining({ id: "order-1" }),
 			data: expect.objectContaining({
 				paymentStatus: "FAILED",
 				status: "CANCELLED",
@@ -345,12 +287,12 @@ describe("markOrderAsFailed — idempotency", () => {
 			message: null,
 		});
 
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should handle null failure details gracefully", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		await markOrderAsFailed("order-1", "pi_abc123", {
 			code: null,
@@ -358,7 +300,7 @@ describe("markOrderAsFailed — idempotency", () => {
 			message: null,
 		});
 
-		expect(mockTx.order.update).toHaveBeenCalledWith(
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					paymentFailureCode: null,
@@ -384,12 +326,12 @@ describe("markOrderAsCancelled — idempotency", () => {
 
 	it("should cancel order on first call", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
 
-		expect(mockTx.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
+		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
+			where: expect.objectContaining({ id: "order-1" }),
 			data: {
 				status: "CANCELLED",
 				paymentStatus: "FAILED",
@@ -403,16 +345,16 @@ describe("markOrderAsCancelled — idempotency", () => {
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
 
-		expect(mockTx.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should still update if only status is CANCELLED but paymentStatus is not FAILED", async () => {
 		mockTx.order.findFirst.mockResolvedValue({ status: "CANCELLED", paymentStatus: "PENDING" });
-		mockTx.order.update.mockResolvedValue({});
+		mockTx.order.updateMany.mockResolvedValue({ count: 1 });
 
 		await markOrderAsCancelled("order-1", "pi_abc123");
 
-		expect(mockTx.order.update).toHaveBeenCalled();
+		expect(mockTx.order.updateMany).toHaveBeenCalled();
 	});
 });
 

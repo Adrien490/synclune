@@ -137,14 +137,17 @@ export const MultiSelect = ({
 
 	// --- Sélection globale (opt-in) -------------------------------------------
 	const activableValues = options.filter((o) => !o.disabled).map((o) => o.value);
+	// `Set` de la sélection : `every(... selected.includes(v))` était O(options × selected).
+	const selectedSet = new Set(selected);
 	const allSelected =
-		activableValues.length > 0 && activableValues.every((v) => selected.includes(v));
+		activableValues.length > 0 && activableValues.every((v) => selectedSet.has(v));
 
 	const handleSelectAll = () => {
 		if (disabled) return;
 		fireHaptic("medium");
 		if (allSelected) {
-			onValueChange(selected.filter((v) => !activableValues.includes(v)));
+			const activableSet = new Set(activableValues);
+			onValueChange(selected.filter((v) => !activableSet.has(v)));
 			setAnnouncement("Toutes les options désélectionnées.");
 		} else {
 			onValueChange(Array.from(new Set([...selected, ...activableValues])));
@@ -447,7 +450,7 @@ export const MultiSelect = ({
 				</li>
 			) : (
 				filteredOptions.map((option, index) => {
-					const isSelected = selected.includes(option.value);
+					const isSelected = selectedSet.has(option.value);
 					const isOptDisabled = !!option.disabled;
 					/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-to-interactive-role -- pattern aria-activedescendant : le clavier est géré au niveau du listbox (onKeyDown sur input/ul) ; les <li role="option"> ne portent que le clic souris. */
 					return (

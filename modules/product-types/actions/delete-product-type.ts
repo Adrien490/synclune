@@ -95,8 +95,8 @@ export async function deleteProductType(
 			return error(result.message);
 		}
 
-		// 5. Invalidation du cache (incluant tag détail granulaire)
-		getProductTypeInvalidationTags(result.slug).forEach((tag) => updateTag(tag));
+		// 5. Invalidation du cache (incluant tags détail granulaire + counts)
+		getProductTypeInvalidationTags(result.slug, productTypeId).forEach((tag) => updateTag(tag));
 
 		return success("Type de produit supprimé avec succès");
 	} catch (e) {

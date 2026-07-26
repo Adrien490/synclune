@@ -141,20 +141,17 @@ const LIVE_TRANSACTIONS = [
  * `requeueBatchTransactions` traite le cap (`gte cap`) en premier.
  */
 function lastTransactionUpdateMany():
-	| { where: unknown; data: Record<string, unknown> }
-	| undefined {
+	{ where: unknown; data: Record<string, unknown> } | undefined {
 	const calls = mockPrisma.eReportingTransaction.updateMany.mock.calls;
 	return calls.at(-1)?.[0] as { where: unknown; data: Record<string, unknown> } | undefined;
 }
 
 /** Premier appel updateMany = branche « capped » (fige ABANDONED, filtre `gte cap`). */
 function cappedTransactionUpdateMany():
-	| { where: Record<string, unknown>; data: Record<string, unknown> }
-	| undefined {
+	{ where: Record<string, unknown>; data: Record<string, unknown> } | undefined {
 	const calls = mockPrisma.eReportingTransaction.updateMany.mock.calls;
 	return calls[0]?.[0] as
-		| { where: Record<string, unknown>; data: Record<string, unknown> }
-		| undefined;
+		{ where: Record<string, unknown>; data: Record<string, unknown> } | undefined;
 }
 
 beforeEach(() => {

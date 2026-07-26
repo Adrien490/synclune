@@ -68,11 +68,9 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-// Mock lucide-react icons used by the hero section
-vi.mock("lucide-react", () => ({
-	Heart: (props: Record<string, unknown>) => (
-		<svg data-testid="heart-icon" aria-hidden={props["aria-hidden"] as boolean} />
-	),
+// Mock easter egg cœur (île client — porte le Heart décoratif cliquable)
+vi.mock("../hero-heart-easter-egg", () => ({
+	HeroHeartEasterEgg: () => <svg data-testid="heart-icon" aria-hidden="true" />,
 }));
 
 // Mock hero-decorations (dynamically imported, SSR:false)

@@ -7,37 +7,31 @@
  * CDN public. Or HEIC n'est décodable QUE par Safari : Chrome / Firefox /
  * Android afficheraient une image cassée sur la vitrine.
  *
- * Ce service télécharge le HEIC, le re-encode en WebP via Sharp (qui strip au
- * passage tous les EXIF/GPS — pas besoin de repasser par `stripImageMetadata`),
- * uploade le WebP et supprime l'original. En cas d'échec de décodage (build
- * Sharp sans codec libheif), il throw : l'appelant rejette alors l'upload et
- * supprime le blob HEIC orphelin — on ne persiste JAMAIS une URL HEIC publique.
+ * Ce service re-encode le buffer en WebP via Sharp (qui strip au passage tous
+ * les EXIF/GPS — pas besoin de repasser par `stripImageMetadata`), uploade le
+ * WebP et supprime l'original. En cas d'échec de décodage (build Sharp sans
+ * codec libheif), il throw : l'appelant rejette alors l'upload et supprime le
+ * blob HEIC orphelin — on ne persiste JAMAIS une URL HEIC publique.
  *
- * LAYER EXCEPTION: I/O (download + UTApi upload/delete), appelé depuis le route
- * handler UploadThing `onUploadComplete`. Même justification que
+ * LAYER EXCEPTION: I/O (UTApi upload/delete), appelé depuis le route handler
+ * UploadThing `onUploadComplete`. Même justification que
  * `strip-image-metadata.service.ts`.
  *
  * @module modules/media/services/reencode-heic.service
  */
 
 import sharp from "sharp";
-import { downloadImage } from "./image-downloader.service";
 import { utapi } from "@/shared/lib/uploadthing";
-import { isValidUploadThingUrl } from "../utils/validate-media-file";
-import { THUMBHASH_CONFIG } from "../constants/image-downloader.constants";
+import { ImageDecodeError } from "./image-downloader.service";
 
 const HEIC_MIME_TYPES = ["image/heic", "image/heif"] as const;
 const REENCODE_WEBP_QUALITY = 82;
 
 export interface ReencodeHeicInput {
-	/** UploadThing URL of the freshly uploaded blob */
-	ufsUrl: string;
 	/** UploadThing key of the original blob (deleted after successful re-upload) */
 	key: string;
 	/** Original filename — extension is rewritten to .webp */
 	name: string;
-	/** Original MIME type */
-	type: string;
 }
 
 export interface ReencodeHeicResult {
@@ -45,6 +39,8 @@ export interface ReencodeHeicResult {
 	url: string;
 	/** New UploadThing key — replaces the original HEIC */
 	key: string;
+	/** Re-encoded bytes, réutilisés en aval (ThumbHash) sans re-télécharger */
+	buffer: Buffer;
 }
 
 /** True if the MIME type designates a HEIC/HEIF image. */
@@ -53,28 +49,24 @@ export function isHeicMimeType(type: string): boolean {
 }
 
 /**
- * Re-encode a HEIC/HEIF UploadThing blob to WebP in-place.
+ * Re-encode a HEIC/HEIF buffer to WebP and replace the UploadThing blob in-place.
  *
- * @throws if download, Sharp decode (no libheif codec) or re-upload fails — the
- * caller must then delete the original HEIC blob and reject the upload.
+ * @throws {ImageDecodeError} si Sharp ne sait pas décoder le HEIC (build sans
+ *   libheif) — l'appelant doit alors supprimer le blob et rejeter l'upload.
+ * @throws {Error} si le re-upload échoue.
  */
-export async function reencodeHeicToWebp(file: ReencodeHeicInput): Promise<ReencodeHeicResult> {
-	if (!isValidUploadThingUrl(file.ufsUrl)) {
-		throw new Error(`reencodeHeicToWebp: domaine non autorisé pour ${file.ufsUrl}`);
-	}
-
-	const buffer = await downloadImage(file.ufsUrl, {
-		downloadTimeout: THUMBHASH_CONFIG.downloadTimeout,
-		maxImageSize: THUMBHASH_CONFIG.maxImageSize,
-		userAgent: "Synclune-HeicReencode/1.0",
-	});
-
+export async function reencodeHeicToWebp(
+	buffer: Buffer,
+	file: ReencodeHeicInput,
+): Promise<ReencodeHeicResult> {
 	// rotate() applique l'orientation EXIF avant le strip ; webp() force la sortie
 	// en WebP (web-safe, décodable par tous les navigateurs modernes).
-	const webpBuffer = await sharp(buffer)
-		.rotate()
-		.webp({ quality: REENCODE_WEBP_QUALITY })
-		.toBuffer();
+	let webpBuffer: Buffer;
+	try {
+		webpBuffer = await sharp(buffer).rotate().webp({ quality: REENCODE_WEBP_QUALITY }).toBuffer();
+	} catch (err) {
+		throw new ImageDecodeError(err);
+	}
 
 	const webpName = file.name.replace(/\.(heic|heif)$/i, "") + ".webp";
 	const webpFile = new File([new Uint8Array(webpBuffer)], webpName, { type: "image/webp" });
@@ -93,5 +85,5 @@ export async function reencodeHeicToWebp(file: ReencodeHeicInput): Promise<Reenc
 		// non-bloquant
 	}
 
-	return { url: uploaded.ufsUrl, key: uploaded.key };
+	return { url: uploaded.ufsUrl, key: uploaded.key, buffer: webpBuffer };
 }

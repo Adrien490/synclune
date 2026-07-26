@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import { withSerwist } from "@serwist/turbopack";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
@@ -75,10 +74,6 @@ const nextConfig: NextConfig = {
 	async headers() {
 		return [
 			{
-				source: "/serwist/:path*",
-				headers: [{ key: "Service-Worker-Allowed", value: "/" }],
-			},
-			{
 				source: "/:path*",
 				headers: [
 					{ key: "X-Content-Type-Options", value: "nosniff" },
@@ -99,13 +94,21 @@ const nextConfig: NextConfig = {
 						key: "Content-Security-Policy",
 						value: [
 							"default-src 'self'",
-							`script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://js.stripe.com https://va.vercel-scripts.com`,
+							`script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://js.stripe.com`,
 							"style-src 'self' 'unsafe-inline'",
-							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:",
+							// Unsplash uniquement hors production (images de seed) : l'hôte est
+							// aussi absent de `remotePatterns` en prod. Les deux listes doivent
+							// rester cohérentes, sinon l'image passe l'optimiseur puis se fait
+							// bloquer au rendu (ou l'inverse).
+							`img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:${process.env.NODE_ENV === "production" ? "" : " https://images.unsplash.com"}`,
 							"font-src 'self'",
-							"connect-src 'self' https://*.stripe.com https://m.stripe.network https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+							"connect-src 'self' https://*.stripe.com https://m.stripe.network https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io",
 							"frame-src https://*.stripe.com https://m.stripe.network",
-							"media-src 'self' https://*.ufs.sh https://utfs.io",
+							// Audit média M9 : `media-src` doit couvrir les mêmes hôtes que
+							// `img-src` / ALLOWED_MEDIA_DOMAINS. Une vidéo encore servie depuis
+							// uploadthing.com ou le bucket S3 legacy passait la validation Zod,
+							// s'enregistrait en base, puis était bloquée à la lecture.
+							"media-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com",
 							"worker-src 'self' blob:",
 							"object-src 'none'",
 							"frame-ancestors 'none'",
@@ -128,26 +131,50 @@ const nextConfig: NextConfig = {
 	],
 
 	images: {
-		qualities: [60, 65, 70, 75, 80, 85, 90],
+		// 3 paliers seulement (SSOT : IMAGE_QUALITY dans
+		// modules/media/constants/image-config.constants.ts). Vercel facture chaque
+		// couple (source, largeur, qualité) : 7 valeurs × 8 largeurs = jusqu'à 56
+		// variantes par image source, pour des écarts invisibles entre 70 et 75.
+		qualities: [65, 80, 90],
+		// Déclaré explicitement pour retirer 3840 : `compress-image.ts` plafonne les
+		// uploads à 2048 px, donc demander 3840 ne fait que ré-encoder une source
+		// plus petite (Next n'upscale pas) tout en facturant une variante de plus.
+		// Doit rester aligné sur DEVICE_SIZES (régression device-sizes-match-next-config).
+		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
 		minimumCacheTTL: 2678400,
 		formats: ["image/avif", "image/webp"],
+		// `/logo.jpg` et `/adri-lele.jpg` retirés avec leurs fichiers (414 Ko) : ces
+		// deux entrées d'allowlist étaient leurs SEULES références du dépôt. Tous
+		// les consommateurs réels utilisent `logo.webp` (6,8 Ko).
 		localPatterns: [
 			{ pathname: "/logo.webp", search: "" },
-			{ pathname: "/logo.jpg", search: "" },
-			{ pathname: "/adri-lele.jpg", search: "" },
 			{ pathname: "/icons/**", search: "" },
 			{ pathname: "/splash/**", search: "" },
 		],
 		remotePatterns: [
 			{ protocol: "https", hostname: "*.ufs.sh", pathname: "/f/**" },
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
-			{ protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
 			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
 			{
 				protocol: "https",
 				hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
 				pathname: "/**",
 			},
+			// `prisma/seed.ts` pointe les produits de démo vers Unsplash (audit média
+			// M15 : retrait écarté pour ne pas casser le dev local). Restreint au
+			// NON-PRODUCTION : en prod l'hôte était inutile (absent de `img-src`, donc
+			// bloqué par la CSP de toute façon) tout en laissant `/_next/image?url=…`
+			// ouvert à n'importe quelle image Unsplash — un vecteur d'épuisement du
+			// quota de transformations Vercel.
+			...(process.env.NODE_ENV === "production"
+				? []
+				: [
+						{
+							protocol: "https" as const,
+							hostname: "images.unsplash.com",
+							pathname: "/**" as const,
+						},
+					]),
 		],
 	},
 
@@ -159,7 +186,7 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default withSentryConfig(withSerwist(nextConfig), {
+export default withSentryConfig(nextConfig, {
 	tunnelRoute: "/monitoring",
 	sourcemaps: {
 		deleteSourcemapsAfterUpload: true,

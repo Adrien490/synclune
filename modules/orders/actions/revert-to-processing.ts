@@ -77,8 +77,11 @@ export async function revertToProcessing(
 				return { ...found, _error: validation.reason };
 			}
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : ré-asserte SHIPPED (miroir de canRevertToProcessing).
+			// count===0 ⇒ writer concurrent entre le findUnique et l'update — abort
+			// sans audit (le findUnique ne verrouille pas la ligne en read-committed).
+			const updated = await tx.order.updateMany({
+				where: { id, ...notDeleted, status: OrderStatus.SHIPPED },
 				data: {
 					status: OrderStatus.PROCESSING,
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
@@ -88,6 +91,9 @@ export async function revertToProcessing(
 					shippedAt: null,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId: id,
@@ -119,7 +125,10 @@ export async function revertToProcessing(
 		if ("_error" in order) {
 			return {
 				status: ActionStatus.ERROR,
-				message: ORDER_ERROR_MESSAGES.CANNOT_REVERT_NOT_SHIPPED,
+				message:
+					order._error === "concurrent_change"
+						? ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE
+						: ORDER_ERROR_MESSAGES.CANNOT_REVERT_NOT_SHIPPED,
 			};
 		}
 

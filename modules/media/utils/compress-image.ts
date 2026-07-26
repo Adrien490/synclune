@@ -125,11 +125,6 @@ function pickOutputMimeType(
 	return supportsWebPEncoding() ? "image/webp" : "image/jpeg";
 }
 
-/** Test helper: reset the AVIF support detection cache between specs */
-export function _resetAvifSupportCache(): void {
-	_avifSupportCache = null;
-}
-
 function computeTargetDimensions(
 	width: number,
 	height: number,

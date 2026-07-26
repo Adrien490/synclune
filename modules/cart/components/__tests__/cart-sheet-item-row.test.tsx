@@ -286,7 +286,10 @@ describe("CartSheetItemRow", () => {
 		expect(image).toHaveAttribute("src", "https://example.com/clip-poster.jpg");
 	});
 
-	it("falls back to video url when thumbnailUrl is missing", () => {
+	// Ce test verrouillait auparavant le bug inverse (« falls back to video url ») :
+	// l'URL .mp4 atterrissait dans <Image src>, que l'optimiseur next/image ne peut
+	// pas décoder — vignette cassée + transformation facturée pour rien.
+	it("renders NO image when a video has no poster — never the .mp4 url", () => {
 		const item = createCartItem({
 			sku: {
 				...(createCartItem().sku as Record<string, unknown>),
@@ -303,10 +306,8 @@ describe("CartSheetItemRow", () => {
 			},
 		});
 		render(<CartSheetItemRow item={item} />);
-		expect(screen.getByAltText("Clip Bague")).toHaveAttribute(
-			"src",
-			"https://example.com/clip.mp4",
-		);
+		expect(screen.queryByAltText("Clip Bague")).not.toBeInTheDocument();
+		expect(screen.getByText("Pas d'image")).toBeInTheDocument();
 	});
 
 	it("marks the actions row with data-no-swipe to prevent SwipeableCard tracking on +/- taps", () => {

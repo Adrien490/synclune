@@ -40,6 +40,35 @@ describe("updateAnnouncementSchema", () => {
 		}
 	});
 
+	it("parses isActive via formBooleanSchema (C2 audit Zod 2026-07-09)", () => {
+		const base = { message: "X", link: "", startsAt: "", endsAt: "" };
+
+		for (const [input, expected] of [
+			[true, true],
+			["true", true],
+			["on", true],
+			["false", false],
+			["off", false],
+		] as const) {
+			const result = updateAnnouncementSchema.safeParse({ ...base, isActive: input });
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.data.isActive).toBe(expected);
+			}
+		}
+
+		// Clé absente → default false (checkbox non cochée)
+		const omitted = updateAnnouncementSchema.safeParse(base);
+		expect(omitted.success).toBe(true);
+		if (omitted.success) {
+			expect(omitted.data.isActive).toBe(false);
+		}
+
+		// Garbage rejeté (l'ancien transform hand-rolled le coerçait en false)
+		const garbage = updateAnnouncementSchema.safeParse({ ...base, isActive: "garbage" });
+		expect(garbage.success).toBe(false);
+	});
+
 	it("rejects active announcement without a message", () => {
 		const result = updateAnnouncementSchema.safeParse({
 			message: "",

@@ -179,10 +179,15 @@ export function DateTimeField({
 			: format(selectedDate, "d MMMM yyyy 'à' HH:mm", { locale: fr })
 		: "";
 
+	// Le `htmlFor` cible l'input natif (mobile), invisible au-delà de `md` : le
+	// trigger du popover desktop n'héritait donc d'AUCUN nom accessible. On expose
+	// le label par `id` pour le lier aux deux contrôles (WCAG 4.1.2 / 3.3.2).
+	const labelId = `${field.name}-label`;
+
 	return (
 		<Field data-invalid={hasError}>
 			{label && (
-				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
+				<FieldLabel id={labelId} htmlFor={field.name} required={required} optional={optional}>
 					{label}
 				</FieldLabel>
 			)}
@@ -192,6 +197,10 @@ export function DateTimeField({
 				<input
 					type={dateOnly ? "date" : "datetime-local"}
 					id={field.name}
+					// Sans `label` visible, aucun nom accessible n'était exposé : on
+					// retombe sur le placeholder. Avec un label, on ne met PAS d'aria-label
+					// (il masquerait le texte visible pour les lecteurs d'écran).
+					aria-label={label ? undefined : placeholder}
 					value={nativeValue}
 					onChange={handleNativeChange}
 					onBlur={field.handleBlur}
@@ -229,6 +238,7 @@ export function DateTimeField({
 							aria-invalid={hasError}
 							aria-describedby={describedBy}
 							aria-required={required}
+							aria-labelledby={label ? labelId : undefined}
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",
 								!selectedDate && "text-muted-foreground",

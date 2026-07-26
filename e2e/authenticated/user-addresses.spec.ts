@@ -47,28 +47,70 @@ test.describe("Gestion des adresses", { tag: ["@regression"] }, () => {
 		await expect(errorMessage.first()).toBeVisible({ timeout: 3000 });
 	});
 
-	test("creer une adresse avec des donnees valides", async ({ addressPage, page }) => {
-		await addressPage.goto();
-		await addressPage.openCreateDialog();
+	// @regression address-country-hidden-input — l'ancienne assertion acceptait
+	// n'importe quel [role="alert"] : l'alerte d'ERREUR (pays manquant du FormData,
+	// champ disabled) suffisait à faire passer le test. On exige le message de succès.
+	test(
+		"creer une adresse avec des donnees valides",
+		{ tag: ["@smoke"] },
+		async ({ addressPage, page }) => {
+			await addressPage.goto();
+			await addressPage.openCreateDialog();
 
-		// Use identifiable test data for cleanup (firstName: "TestAddr")
-		await addressPage.fillAddressForm({
-			firstName: "TestAddr",
-			lastName: "E2E",
-			address1: "12 rue de la Paix",
-			postalCode: "75002",
-			city: "Paris",
-			phone: "0612345678",
-		});
+			// Use identifiable test data for cleanup (firstName: "TestAddr")
+			await addressPage.fillAddressForm({
+				firstName: "TestAddr",
+				lastName: "E2E",
+				address1: "12 rue de la Paix",
+				postalCode: "75002",
+				city: "Paris",
+				phone: "0612345678",
+			});
 
-		await addressPage.submitForm();
+			await addressPage.submitForm();
 
-		// Wait for success feedback
-		const successAlert = page
-			.locator('[role="alert"]')
-			.or(page.getByText(/ajoutée|enregistrée|créée/i));
-		await expect(successAlert.first()).toBeVisible({ timeout: 5000 });
-	});
+			// Le message de succès explicite — PAS un [role="alert"] générique
+			// (l'alerte d'erreur destructive porte aussi role="alert")
+			const successMessage = page.getByText(/ajoutée|enregistrée|créée/i);
+			await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
+		},
+	);
+
+	/**
+	 * @regression gated-form-submit — une double soumission ne crée qu'une adresse.
+	 *
+	 * Le bouton `disabled` pendant le pending ne couvre pas la touche Entrée, et
+	 * `useActionState` sérialise les dispatchs au lieu de les ignorer : deux
+	 * pressions rapides créaient donc deux adresses identiques.
+	 */
+	test(
+		"une double soumission rapide ne crée qu'une seule adresse",
+		{ tag: ["@smoke"] },
+		async ({ addressPage, page }) => {
+			await addressPage.goto();
+			await addressPage.openCreateDialog();
+
+			await addressPage.fillAddressForm({
+				firstName: "TestDouble",
+				lastName: "E2E",
+				address1: "8 avenue des Tests",
+				postalCode: "44000",
+				city: "Nantes",
+				phone: "0612345678",
+			});
+
+			// Entrée depuis un champ : contourne le `disabled` du bouton.
+			const phoneInput = page.getByLabel(/Téléphone/i).first();
+			await phoneInput.press("Enter");
+			await phoneInput.press("Enter");
+
+			const successMessage = page.getByText(/ajoutée|enregistrée|créée/i);
+			await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
+
+			await addressPage.goto();
+			await expect(page.getByText("TestDouble")).toHaveCount(1);
+		},
+	);
 
 	test("la navigation vers les adresses depuis le compte fonctionne", async ({ page }) => {
 		await page.goto("/commandes");

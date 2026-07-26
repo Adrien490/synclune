@@ -114,7 +114,7 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 				<div className="flex justify-center pt-4">
 					<Link
 						href="/produits"
-						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-all duration-200 hover:gap-3 hover:underline"
+						className="text-foreground inline-flex items-center gap-2 text-sm font-medium underline-offset-4 transition-[gap] duration-200 hover:gap-3 hover:underline"
 					>
 						Découvrir toutes les créations
 						<span className="text-xs">→</span>

@@ -61,7 +61,7 @@ export const MAX_REQUEUE_ATTEMPTS = 3;
  * Index 0 utilisé après le 1er échec, etc. Au-delà du dernier index, on
  * passe en ABANDONED.
  */
-export const RETRY_BACKOFF_MS: readonly number[] = [
+const RETRY_BACKOFF_MS: readonly number[] = [
 	1 * 60 * 60 * 1000, // 1h après 1er échec
 	4 * 60 * 60 * 1000, // 4h après 2e
 	12 * 60 * 60 * 1000, // 12h après 3e
@@ -89,11 +89,7 @@ export class ProviderBusinessError extends Error {
  *
  * Export pour réutilisation depuis d'autres orchestrateurs (`submitInvoiceById`).
  */
-export async function withDeadline<T>(
-	promise: Promise<T>,
-	deadline: number,
-	label: string,
-): Promise<T> {
+async function withDeadline<T>(promise: Promise<T>, deadline: number, label: string): Promise<T> {
 	const timeoutMs = Math.max(0, deadline - Date.now());
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const timeoutPromise = new Promise<never>((_, reject) => {
@@ -108,7 +104,7 @@ export async function withDeadline<T>(
 	}
 }
 
-export type SubmitBatchStatus =
+type SubmitBatchStatus =
 	| "SKIPPED_FLAG_OFF"
 	| "SKIPPED_BACKOFF"
 	| "SKIPPED_DRY_RUN"

@@ -89,7 +89,7 @@ export function RefundsMobileList({
 					/>
 					<ItemGroup aria-label="Remboursements" className="gap-2">
 						{refunds.map((refund) => (
-							<div key={refund.id} role="listitem">
+							<li key={refund.id}>
 								<RefundMobileItem
 									refund={{
 										id: refund.id,
@@ -105,7 +105,7 @@ export function RefundsMobileList({
 										},
 									}}
 								/>
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

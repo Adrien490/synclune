@@ -9,7 +9,6 @@ import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/c
 import {
 	fetchSkuForValidation,
 	fetchSkusForBatchValidation,
-	fetchSkusForCheckoutValidation,
 } from "@/modules/cart/data/get-sku-for-validation";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
@@ -37,6 +36,9 @@ function buildSkuDetailsSuccess(sku: NonNullable<FetchedSku>): SkuDetailsResult 
 					title: sku.product.title,
 					slug: sku.product.slug,
 					description: sku.product.description ?? null,
+					// EINV-EREPORT-007/F3 — catégorie d'opération e-reporting (GOODS par
+					// défaut si le type n'en porte pas), snapshotée sur l'OrderItem.
+					operationCategory: sku.product.type?.operationCategory ?? "GOODS",
 				},
 				images: sku.images.map((img) => ({
 					url: img.url,
@@ -191,36 +193,6 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
 		};
 	}
-}
-
-/**
- * Batched version of `getSkuDetails`: one DB query for N SKUs.
- *
- * Used by checkout session creation where 1 cart can have 10+ SKUs.
- * Returns a Map keyed by skuId. SKUs missing from the DB or failing guards
- * (deleted, inactive, draft) are present with `success: false`.
- */
-export async function getSkusDetailsBatch(
-	skuIds: string[],
-): Promise<Map<string, SkuDetailsResult>> {
-	const results = new Map<string, SkuDetailsResult>();
-	if (skuIds.length === 0) return results;
-
-	const skus = await fetchSkusForCheckoutValidation(skuIds);
-	const skuById = new Map(skus.map((s) => [s.id, s]));
-
-	for (const skuId of skuIds) {
-		const sku = skuById.get(skuId);
-		if (!sku) {
-			results.set(skuId, { success: false, error: CART_ERROR_MESSAGES.SKU_NOT_FOUND });
-			continue;
-		}
-
-		const guardError = checkSkuDetailsErrors(sku);
-		results.set(skuId, guardError ?? buildSkuDetailsSuccess(sku));
-	}
-
-	return results;
 }
 
 // Action: Valider plusieurs SKUs d'un coup (pour validation du panier complet)

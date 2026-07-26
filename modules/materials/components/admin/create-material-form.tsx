@@ -9,11 +9,13 @@ import { Loader2 } from "lucide-react";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
@@ -21,6 +23,7 @@ import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 interface CreateMaterialFormProps {
 	onSuccess?: () => void;
@@ -57,7 +60,7 @@ export function CreateMaterialForm({
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const [, action, isPending] = useActionState(
+	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			createMaterial,
 
@@ -92,6 +95,10 @@ export function CreateMaterialForm({
 		undefined,
 	);
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
 	useEffect(() => {
@@ -117,15 +124,21 @@ export function CreateMaterialForm({
 				event.preventDefault();
 				if (isPending || form.state.isSubmitting) return;
 				const formData = new FormData(event.currentTarget);
-				void form.handleSubmit().then(() => {
-					if (form.state.isValid) {
-						action(formData);
-					} else {
-						requestAnimationFrame(() => focusFirstInvalid());
-					}
-				});
+				runAfterValidation(
+					form.handleSubmit(),
+					() => {
+						if (form.state.isValid) {
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					},
+					"CreateMaterialForm",
+				);
 			}}
 		>
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<form.Subscribe
 				selector={(state) => ({
 					submissionAttempts: state.submissionAttempts,
@@ -144,7 +157,7 @@ export function CreateMaterialForm({
 						.filter(
 							(item): item is { name: string; label: string; message: string } => item !== null,
 						);
-					if (fieldErrors.length < 2) return null;
+					if (fieldErrors.length === 0) return null;
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>

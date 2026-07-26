@@ -37,7 +37,7 @@ export function SignInSocialForm({ callbackURL }: { callbackURL: string }) {
 							variant="outline"
 							size="lg"
 							aria-busy={isPending}
-							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 motion-safe:transition-all motion-safe:duration-300"
+							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 motion-safe:transition-colors motion-safe:duration-300"
 						>
 							{isPending ? (
 								<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />

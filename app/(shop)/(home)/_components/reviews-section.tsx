@@ -1,6 +1,6 @@
 import { use } from "react";
 
-import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnAccent, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import {
 	Carousel,
@@ -8,14 +8,18 @@ import {
 	CarouselDots,
 	CarouselItem,
 } from "@/shared/components/ui/carousel";
-import { SectionTitle } from "@/shared/components/section-title";
 import { SkipLink } from "@/shared/components/skip-link";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { formatRating, formatReviewCount } from "@/shared/utils/rating-utils";
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card";
+import { pickPullQuote } from "./pick-pull-quote";
+import { ReviewsPullQuote } from "./reviews-pull-quote";
 import { SectionCtaLink } from "./section-cta-link";
+import { SectionDivider } from "./section-divider";
+import { SectionHalo } from "./section-halo";
+import { SectionHeader } from "./section-header";
 
 import type { ReviewHomepage, GlobalReviewStats } from "@/modules/reviews/types/review.types";
 
@@ -38,46 +42,41 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 		return null;
 	}
 
+	const pullQuote = pickPullQuote(reviews);
+
 	return (
 		<section
 			id="reviews"
+			data-accent="mint"
 			className={cn("bg-background relative overflow-hidden", SECTION_SPACING.section)}
 			aria-labelledby="reviews-title"
 			aria-describedby="reviews-subtitle"
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
-			<SkipLink targetId="reviews-cta" label="Aller au lien Voir les créations les mieux notées" />
+			<SkipLink targetId="reviews-cta" label="Aller au lien Découvrir toutes les créations" />
+			<SectionHalo position="bottom-left" />
 
 			<div className={`relative ${CONTAINER_CLASS}`}>
-				{/* Header */}
-				<header className="mb-10 text-center lg:mb-14">
-					<Fade
-						y={MOTION_CONFIG.section.title.y}
-						duration={MOTION_CONFIG.section.title.duration}
-						inView
-						once
-					>
-						<SectionTitle id="reviews-title">Ce que dit notre clientèle</SectionTitle>
-						<HandDrawnUnderline
-							delay={MOTION_CONFIG.section.underline.delay}
-							className="mx-auto mt-2"
-						/>
-					</Fade>
-					<Fade
-						y={MOTION_CONFIG.section.subtitle.y}
-						delay={MOTION_CONFIG.section.subtitle.delay}
-						duration={MOTION_CONFIG.section.subtitle.duration}
-						inView
-						once
-					>
-						<p
-							id="reviews-subtitle"
-							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
-						>
-							Des créations uniques, plébiscitées par notre communauté
-						</p>
-					</Fade>
-
+				<SectionDivider />
+				{/* Header — cœur dessiné en rose signature (le cœur = marque, l'underline
+				    reste menthe : contraste bicolore voulu) */}
+				<SectionHeader
+					titleId="reviews-title"
+					subtitleId="reviews-subtitle"
+					title={
+						<span className="relative inline-block">
+							Ce que dit notre clientèle
+							<HandDrawnAccent
+								variant="heart"
+								width={26}
+								height={26}
+								color="var(--primary)"
+								className="absolute -top-4 -right-7 sm:-top-5 sm:-right-9"
+							/>
+						</span>
+					}
+					subtitle="Des créations uniques, plébiscitées par notre communauté"
+				>
 					{/* Aggregate rating */}
 					{stats.totalReviews > 0 && (
 						<Fade
@@ -102,7 +101,10 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 							</div>
 						</Fade>
 					)}
-				</header>
+				</SectionHeader>
+
+				{/* Pull-quote — meilleure citation en exergue Sacramento (si un avis 5★ citable existe) */}
+				{pullQuote && <ReviewsPullQuote review={pullQuote} />}
 
 				{/* Mobile: carousel */}
 				<div className="mb-8 sm:mb-10 lg:hidden">
@@ -163,14 +165,17 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						once
 						className="text-center"
 					>
+						{/* Re-ciblé /produits : le rail « Les mieux notées » (juste au-dessus)
+						    possède déjà le CTA vers le tri par note — éviter le doublon. */}
 						<SectionCtaLink
-							href="/produits?sortBy=rating-descending"
+							href="/produits"
+							variant="link"
 							aria-describedby="reviews-cta-description"
 						>
-							Voir les créations les mieux notées
+							Découvrir toutes les créations
 						</SectionCtaLink>
 						<span id="reviews-cta-description" className="sr-only">
-							Parcourir le catalogue trié par note moyenne décroissante
+							Parcourir tout le catalogue des créations Synclune
 						</span>
 					</Fade>
 				</div>

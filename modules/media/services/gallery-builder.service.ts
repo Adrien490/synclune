@@ -106,6 +106,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			blurDataUrl?: string | null;
 			altText?: string | null;
 			mediaType: "IMAGE" | "VIDEO";
+			width?: number | null;
+			height?: number | null;
 		},
 		variantInfo: {
 			materialName?: string | null;
@@ -133,6 +135,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			url: skuImage.url,
 			thumbnailUrl: skuImage.thumbnailUrl,
 			blurDataUrl: skuImage.blurDataUrl ?? undefined,
+			width: skuImage.width,
+			height: skuImage.height,
 			alt: skuImage.altText ?? generatedAlt,
 			mediaType: skuImage.mediaType,
 			source,
@@ -203,11 +207,13 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	// Second pass: regenerate ALTs with total image count for "Vue X sur Y" format
 	const totalImages = gallery.length;
 	if (totalImages > 1) {
-		for (const media of gallery) {
+		// Index construits une fois : `find`/`indexOf` dans la boucle rendaient la
+		// seconde passe quadratique (gallery × skus).
+		const skuById = new Map(product.skus.map((s) => [s.id, s]));
+		for (const [index, media] of gallery.entries()) {
 			// Only update generated ALTs (not manually defined ones from DB)
 			if (!media._hasCustomAlt) {
-				const index = gallery.indexOf(media);
-				const sku = product.skus.find((s) => s.id === media.skuId);
+				const sku = media.skuId != null ? skuById.get(media.skuId) : undefined;
 				media.alt = buildAltText(
 					product.title,
 					{

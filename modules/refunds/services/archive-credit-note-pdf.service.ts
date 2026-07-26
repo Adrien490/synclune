@@ -3,11 +3,16 @@ import { HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { utapi } from "@/shared/lib/uploadthing";
+import { sendAdminCreditNotePdfArchiveFailedAlert } from "@/modules/emails/services/admin-emails";
 import { createOrderAudit, createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 
 /**
- * Trace audit pour échec archivage avoir. Best-effort, jamais bloquant.
- * Cf. audit avoirs 2026-05-28 — EINV-CREDIT-002.
+ * Trace audit + alerte admin pour échec archivage avoir partiel. Best-effort,
+ * jamais bloquant. Symétrie avec le côté Order (`flagCreditNotePdfArchiveFailure`
+ * de `orders/archive-credit-note-pdf.service.ts`) : sans alerte, un échec
+ * d'archivage Refund restait silencieux (audit-only) alors que le cron
+ * `reconcile-invoices` (passe avoirs Refund) le rattrape désormais.
+ * Cf. audit avoirs 2026-05-28 — EINV-CREDIT-002 + audit facturation 2026-07-09.
  */
 async function flagCreditNotePdfArchiveFailure(
 	refundId: string,
@@ -29,8 +34,19 @@ async function flagCreditNotePdfArchiveFailure(
 				deferredAt: new Date().toISOString(),
 			},
 		});
+
+		const order = await prisma.order.findUnique({
+			where: { id: orderId },
+			select: { orderNumber: true },
+		});
+		await sendAdminCreditNotePdfArchiveFailedAlert({
+			orderId,
+			orderNumber: order?.orderNumber ?? orderId,
+			creditNoteNumber,
+			errorMessage,
+		});
 	} catch (sideEffectError) {
-		logger.error("flagCreditNotePdfArchiveFailure threw — audit partial", sideEffectError, {
+		logger.error("flagCreditNotePdfArchiveFailure threw — audit/alert partial", sideEffectError, {
 			service: "archive-credit-note-pdf",
 			refundId,
 			creditNoteNumber,
@@ -111,18 +127,26 @@ export async function archiveCreditNotePdf(
 			return null;
 		}
 
-		await prisma.$transaction(async (tx) => {
-			await tx.refund.update({
-				where: { id: refundId },
+		// IDEM-PDF-001 : claim conditionnel ré-évalué au lock de ligne — cf.
+		// archive-invoice-pdf.service.ts (course concurrente = double upload +
+		// double audit sans ce claim). Le perdant supprime son upload orphelin.
+		const claim = await prisma.$transaction(async (tx) => {
+			const claimed = await tx.refund.updateMany({
+				// IDEM-PDF-002 : prédicat aligné sur l'early-return (`url && hash`) — sinon
+				// une ligne `url` posée / `hash` NULL ne converge jamais.
+				where: { id: refundId, OR: [{ creditNotePdfUrl: null }, { creditNotePdfHash: null }] },
 				data: {
 					creditNotePdfUrl: data.ufsUrl,
 					creditNotePdfHash: hash,
 				},
 			});
+			if (claimed.count === 0) {
+				return { won: false as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId: refund.orderId,
-				action: OrderAction.INVOICE_ARCHIVED,
+				action: OrderAction.CREDIT_NOTE_ARCHIVED,
 				source: HistorySource.SYSTEM,
 				authorName: "Système (archive-credit-note-pdf)",
 				note: `Avoir ${creditNoteNumber} archivé sur UploadThing`,
@@ -132,7 +156,25 @@ export async function archiveCreditNotePdf(
 					creditNotePdfHash: hash,
 				},
 			});
+			return { won: true as const };
 		});
+
+		if (!claim.won) {
+			if (data.key) {
+				await utapi.deleteFiles([data.key]).catch(() => {});
+			}
+			const current = await prisma.refund.findUnique({
+				where: { id: refundId },
+				select: { creditNotePdfUrl: true, creditNotePdfHash: true },
+			});
+			if (current?.creditNotePdfUrl && current.creditNotePdfHash) {
+				return {
+					creditNotePdfUrl: current.creditNotePdfUrl,
+					creditNotePdfHash: current.creditNotePdfHash,
+				};
+			}
+			return null;
+		}
 
 		return { creditNotePdfUrl: data.ufsUrl, creditNotePdfHash: hash };
 	} catch (error) {

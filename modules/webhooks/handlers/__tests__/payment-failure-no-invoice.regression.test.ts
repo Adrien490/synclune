@@ -15,7 +15,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockPrisma,
-	mockMarkOrderAsPaid,
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
 	mockMarkOrderAsFailed,
@@ -30,7 +29,6 @@ const {
 	mockRecordSalesEReporting,
 } = vi.hoisted(() => ({
 	mockPrisma: { order: { findFirst: vi.fn() } },
-	mockMarkOrderAsPaid: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
 	mockMarkOrderAsFailed: vi.fn(),
@@ -53,7 +51,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("../../services/payment-intent.service", () => ({
-	markOrderAsPaid: mockMarkOrderAsPaid,
 	extractPaymentFailureDetails: mockExtractPaymentFailureDetails,
 	restoreStockForOrder: mockRestoreStockForOrder,
 	markOrderAsFailed: mockMarkOrderAsFailed,
@@ -134,10 +131,9 @@ describe("@regression payment-failure-no-invoice — EINV-TEST-007", () => {
 			declineCode: "insufficient_funds",
 			message: "Your card was declined.",
 		});
-		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkus: [] });
 		mockMarkOrderAsFailed.mockResolvedValue(undefined);
-		mockMarkOrderAsCancelled.mockResolvedValue(undefined);
-		mockMarkOrderAsPaid.mockResolvedValue(undefined);
+		mockMarkOrderAsCancelled.mockResolvedValue({ restoredSkus: [], userId: null });
 		mockProcessOrderFromPaymentIntent.mockResolvedValue({
 			id: "order-1",
 			orderNumber: "SYN-2026-0001",

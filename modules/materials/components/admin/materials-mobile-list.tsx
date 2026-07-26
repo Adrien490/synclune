@@ -78,9 +78,9 @@ export function MaterialsMobileList({
 					<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
 					<ItemGroup aria-label="Materiaux" className="gap-2">
 						{materials.map((material) => (
-							<div key={material.id} role="listitem">
+							<li key={material.id}>
 								<MaterialMobileItem material={material} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

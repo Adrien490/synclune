@@ -11,7 +11,7 @@ import { reconcileInvoiceOrder } from "@/modules/cron/services/reconcile-invoice
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 const schema = z.object({
-	orderId: z.string().min(1, "orderId requis"),
+	orderId: z.cuid2("orderId invalide"),
 });
 
 /**

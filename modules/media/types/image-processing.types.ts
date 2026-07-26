@@ -9,13 +9,6 @@
  */
 
 // ============================================================================
-// COMMON TYPES
-// ============================================================================
-
-/** Log function for warnings */
-type LogFn = (message: string, data?: Record<string, unknown>) => void;
-
-// ============================================================================
 // IMAGE DOWNLOADER
 // ============================================================================
 
@@ -38,19 +31,6 @@ export interface RetryOptions {
 // ============================================================================
 // THUMBHASH
 // ============================================================================
-
-export type ThumbHashLogFn = LogFn;
-
-export interface GenerateThumbHashOptions {
-	/** Download timeout (ms) */
-	downloadTimeout?: number;
-	/** Max image size (bytes) */
-	maxImageSize?: number;
-	/** Max resize dimension (pixels, max 100) */
-	maxSize?: number;
-	/** Custom log function (default: console.warn) */
-	logWarning?: ThumbHashLogFn;
-}
 
 export interface ThumbHashResult {
 	/** Binary hash encoded in base64 (~25 bytes) */

@@ -23,6 +23,9 @@ export type SkuMediaInput = {
 	blurDataUrl?: string | null;
 	altText?: string | null;
 	mediaType?: "IMAGE" | "VIDEO";
+	/** Dimensions intrinsèques lues à l'upload (NULL si illisibles ou média legacy) */
+	width?: number | null;
+	height?: number | null;
 	isPrimary: boolean;
 	position: number;
 };
@@ -50,10 +53,12 @@ export function normalizeOptionalRefs(input: {
 	materialIds?: string[];
 	size?: string;
 }): NormalizedOptionalRefs {
+	// Trim défensif (Zod trim déjà en amont) ; blancs-seuls → null comme absent.
+	const trimmedSize = input.size?.trim();
 	return {
 		colorIds: input.colorIds ? Array.from(new Set(input.colorIds)) : [],
 		materialIds: input.materialIds ? Array.from(new Set(input.materialIds)) : [],
-		size: input.size ?? null,
+		size: trimmedSize === undefined || trimmedSize === "" ? null : trimmedSize,
 	};
 }
 
@@ -92,6 +97,8 @@ export function normalizeMediaForPersistence(media: ParsedMedia[]): SkuMediaInpu
 		blurDataUrl: m.blurDataUrl,
 		altText: m.altText,
 		mediaType: index === 0 ? "IMAGE" : m.mediaType,
+		width: m.width,
+		height: m.height,
 		isPrimary: index === 0,
 		position: index,
 	}));
@@ -109,6 +116,8 @@ export function toSkuMediaCreatePayload(skuId: string, media: SkuMediaInput[]) {
 		blurDataUrl: m.blurDataUrl ?? null,
 		altText: m.altText ?? null,
 		mediaType: m.mediaType ?? detectMediaType(m.url),
+		width: m.width ?? null,
+		height: m.height ?? null,
 		isPrimary: m.isPrimary,
 		position: m.position,
 	}));
@@ -155,15 +164,33 @@ export async function assertMaterialsExist(
 }
 
 /**
+ * Offset de l'advisory lock sérialisant les writers de « variant identity » d'un
+ * même produit (create/update/restore SKU). Clé bigint `offset + hashtext(productId)` :
+ * hashtext couvre ±2,15e9, donc la plage [6,85e9 ; 11,15e9] est DISJOINTE de celle
+ * d'`ORDER_PAID_LOCK_OFFSET` (4e9 ± 2,15e9) et des clés facture/avoir (~1-2e6).
+ */
+const VARIANT_IDENTITY_LOCK_OFFSET = 9_000_000_000;
+
+/**
  * Vérifie l'unicité de la combinaison (productId, ensemble exact de colorIds, size)
  * dans la transaction. Depuis la migration M2M couleurs (2026-05-15), `colorId` n'est
  * plus un discriminateur DB unique — la « variant identity » se compose désormais
  * de l'ensemble de couleurs (en jeu) + taille, validée au niveau applicatif.
  *
- * On considère que deux SKUs sont identiques quand ils partagent EXACTEMENT le même
- * set de couleurs (ordre indifférent) ET la même taille pour le même produit.
+ * SSOT identité de variante :
+ * - Deux SKUs sont identiques quand ils partagent EXACTEMENT le même set de couleurs
+ *   (ordre indifférent) ET la même taille (comparaison insensible à la casse) pour le
+ *   même produit.
+ * - Les MATÉRIAUX ne font délibérément PAS partie de l'identité (attribut descriptif,
+ *   pas un axe de variante) — deux SKUs ne différant que par le matériau sont refusés.
+ *   Décision inverse = ajouter `materialIds` ici + adapter le sélecteur storefront.
+ * - Exception connue : `duplicateSku` crée sciemment un jumeau d'identité (inactif,
+ *   stock 0, destiné à être édité) sans passer par cette garde.
  *
- * Si excludeSkuId fourni (cas update), l'exclut de la recherche.
+ * Le check est read-then-write sans index DB (impossible sur des M2M) : un advisory
+ * lock transactionnel par produit sérialise les writers concurrents (deux créations
+ * simultanées de la même combinaison, create vs restore, etc.). Relâché au
+ * commit/rollback. Si excludeSkuId fourni (cas update), l'exclut de la recherche.
  */
 export async function assertUniqueVariantCombination(
 	tx: Prisma.TransactionClient,
@@ -174,11 +201,13 @@ export async function assertUniqueVariantCombination(
 		excludeSkuId?: string;
 	},
 ): Promise<void> {
+	await tx.$queryRaw`SELECT pg_advisory_xact_lock(${VARIANT_IDENTITY_LOCK_OFFSET}::bigint + hashtext(${params.productId}))`;
+
 	// Récupère tous les SKUs actifs du produit avec la même taille
 	const candidateSkus = await tx.productSku.findMany({
 		where: {
 			productId: params.productId,
-			size: params.size,
+			size: params.size === null ? null : { equals: params.size, mode: "insensitive" },
 			deletedAt: null,
 			...(params.excludeSkuId ? { NOT: { id: params.excludeSkuId } } : {}),
 		},

@@ -5,9 +5,8 @@ import {
 	extractPriceRange,
 } from "@/modules/collections/utils/collection-images.utils";
 import { CollectionStatus } from "@/app/generated/prisma/client";
-import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
+import { Fade, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { SectionTitle } from "@/shared/components/section-title";
 import { SkipLink } from "@/shared/components/skip-link";
 import {
 	Carousel,
@@ -21,6 +20,9 @@ import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { Heart } from "lucide-react";
 import { SectionCtaLink } from "./section-cta-link";
+import { SectionDivider } from "./section-divider";
+import { SectionHalo } from "./section-halo";
+import { SectionHeader } from "./section-header";
 
 export async function CollectionsSection() {
 	const { collections } = await getCollections({
@@ -42,8 +44,9 @@ export async function CollectionsSection() {
 	return (
 		<section
 			id="collections"
+			data-accent="lavender"
 			className={cn(
-				"bg-primary/5 relative overflow-hidden",
+				"relative overflow-hidden bg-(--section-soft)",
 				"mask-t-from-95% mask-t-to-100% mask-b-from-95% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-90%",
 				SECTION_SPACING.section,
 			)}
@@ -53,37 +56,25 @@ export async function CollectionsSection() {
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
 			<SkipLink targetId="collections-cta" label="Aller au lien Explorer les collections" />
+			<SectionHalo />
 			<div className={`relative ${CONTAINER_CLASS}`}>
-				<header className="mb-10 text-center lg:mb-14">
-					<Fade
-						y={MOTION_CONFIG.section.title.y}
-						duration={MOTION_CONFIG.section.title.duration}
-						inView
-						once
-					>
-						<SectionTitle id="collections-title">Les dernières collections</SectionTitle>
-						<HandDrawnUnderline
-							delay={MOTION_CONFIG.section.underline.delay}
-							className="mx-auto mt-2"
-						/>
-					</Fade>
-					<Fade
-						y={MOTION_CONFIG.section.subtitle.y}
-						delay={MOTION_CONFIG.section.subtitle.delay}
-						duration={MOTION_CONFIG.section.subtitle.duration}
-						inView
-						once
-					>
-						<p
-							id="collections-subtitle"
-							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
-						>
+				<SectionDivider />
+				{/* Header aligné à gauche (desktop) — casse le patron centré des rails produits.
+				    Le CTA reste sous le carousel : c'est la cible du SkipLink clavier
+				    (#collections-cta), qui doit exister à tous les breakpoints. */}
+				<SectionHeader
+					titleId="collections-title"
+					subtitleId="collections-subtitle"
+					align="left"
+					title="Les dernières collections"
+					subtitle={
+						<>
 							Je rajoute une petite touche personnelle à chaque création{" "}
 							<Heart className="text-primary fill-primary inline size-4" aria-hidden="true" />
 							<span className="sr-only"> avec amour</span>
-						</p>
-					</Fade>
-				</header>
+						</>
+					}
+				/>
 
 				<div className="mb-8 lg:mb-12">
 					<Reveal

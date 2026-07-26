@@ -62,6 +62,10 @@ export const ROUTES = {
 		COLLECTION: (slug: string) => `/collections/${slug}`,
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
+		// Suivi de commande invité (token HMAC, hors `protectedRoutes`).
+		// Volontairement PAS sous `/commandes/*` : ce préfixe est protégé par le
+		// proxy, l'y placer forcerait à affaiblir le gate d'auth de l'espace client.
+		ORDER_TRACKING: "/suivi-commande",
 		ABOUT: "/a-propos",
 		HELP: "/aide",
 	},

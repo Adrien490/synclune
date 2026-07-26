@@ -153,6 +153,21 @@ describe("PayButton", () => {
 		expect(screen.getByText(/Commander et payer 99.00 €/)).toBeInTheDocument();
 	});
 
+	// ─── Montant verrouillé (CHECKOUT-CONSENT-001) ────────────────────────────
+
+	it("affiche le montant serveur figé plutôt que le total client une fois la commande liée", () => {
+		// Le client a saisi un code promo après un refus de carte : l'écran
+		// afficherait 99,00 € alors que le PI est figé à 129,00 €.
+		render(<PayButton {...defaultProps} total={9900} lockedAmount={12900} />);
+		expect(screen.getByText(/Commander et payer 129.00 €/)).toBeInTheDocument();
+		expect(screen.queryByText(/99.00 €/)).not.toBeInTheDocument();
+	});
+
+	it("retombe sur le total client tant qu'aucune commande n'est liée", () => {
+		render(<PayButton {...defaultProps} lockedAmount={null} />);
+		expect(screen.getByText(/Commander et payer 99.00 €/)).toBeInTheDocument();
+	});
+
 	// ─── Disabled states ──────────────────────────────────────────────────────
 
 	it("is disabled when disabled=true", () => {

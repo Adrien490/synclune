@@ -18,7 +18,7 @@ import { prisma } from "@/shared/lib/prisma";
  * trou). On veut l'ensemble des numéros JAMAIS attribués pour l'année.
  */
 
-export type SequenceKind = "invoice" | "credit-note";
+type SequenceKind = "invoice" | "credit-note";
 
 export interface SequenceContinuityIssue {
 	kind: SequenceKind;

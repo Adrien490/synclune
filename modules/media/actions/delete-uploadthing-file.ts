@@ -10,8 +10,8 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { utapi } from "@/shared/lib/uploadthing";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
 
@@ -43,21 +43,15 @@ export async function deleteUploadThingFile(
 
 		const { fileUrl } = validated.data;
 
-		// 5. Extract file key from URL
-		const fileKey = extractFileKeyFromUrl(fileUrl);
-		if (!fileKey) {
-			return error("Impossible d'extraire la cle du fichier depuis l'URL");
-		}
+		// 5. Delete via le service partagé (garde anti-suppression des archives
+		// fiscales — audit média M7). Une clé déjà absente n'est pas un échec.
+		const result = await deleteUploadThingFilesFromUrls([fileUrl]);
 
-		// 6. Delete file via UTApi singleton
-		const result = await utapi.deleteFiles(fileKey);
-
-		// 7. Verify deletion succeeded
-		if (!result.success || result.deletedCount === 0) {
+		if (result.failed > 0) {
 			return error("La suppression du fichier a echoue cote UploadThing");
 		}
 
-		return success("Fichier supprime", { deletedFile: fileKey });
+		return success("Fichier supprime", { deletedFile: extractFileKeyFromUrl(fileUrl) });
 	} catch (e) {
 		return handleActionError(e, "Impossible de supprimer le fichier");
 	}

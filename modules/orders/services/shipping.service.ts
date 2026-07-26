@@ -9,6 +9,7 @@ import { addBusinessDays } from "date-fns";
 import { SHIPPING_RATES, type ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
+import { formatEuro } from "@/shared/utils/format-euro";
 import type { AllowedShippingCountry } from "../types/order.types";
 
 // ============================================================================
@@ -66,10 +67,7 @@ export function isShippingAvailable(country: string): country is AllowedShipping
  * @returns Montant formaté (ex: "6,00 €")
  */
 export function formatShippingPrice(amountInCents: number): string {
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-	}).format(amountInCents / 100);
+	return formatEuro(amountInCents);
 }
 
 // ============================================================================

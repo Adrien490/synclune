@@ -1,8 +1,13 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Button } from "@/shared/components/ui/button";
 import { useRequestEmailChange } from "@/modules/users/hooks/use-request-email-change";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { emailSchema } from "@/shared/schemas/email.schemas";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
 
 export function EmailChangeForm() {
@@ -15,18 +20,35 @@ export function EmailChangeForm() {
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
 	});
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un email refusé côté serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "EmailChangeForm",
+	});
+
 	return (
-		<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-3">
+		<form ref={formRef} action={action} onSubmit={handleGatedSubmit} className="space-y-3">
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<form.AppField
 				name="newEmail"
 				validators={{
-					onChange: ({ value }) => {
+					// SSOT : `emailSchema` (même validation que le serveur, trim/lowercase).
+					// Champ facultatif tant qu'il est vide — on ne valide qu'une saisie amorcée.
+					onChange: ({ value }: { value: string }) => {
 						if (!value) return undefined;
-						const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-						if (!emailRegex.test(value)) {
-							return "Adresse email invalide";
-						}
-						return undefined;
+						const parsed = emailSchema.safeParse(value);
+						return parsed.success ? undefined : parsed.error.issues[0]?.message;
 					},
 				}}
 			>

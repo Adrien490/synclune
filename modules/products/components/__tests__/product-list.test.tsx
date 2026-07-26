@@ -1,3 +1,4 @@
+import React from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -23,6 +24,15 @@ vi.mock("@/shared/lib/prisma", () => ({
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
+
+// Pré-lancement, ORDERS_AVAILABLE === false force toutes les Offer JSON-LD à
+// OutOfStock via getOfferAvailability. On force le flag à true ici pour tester
+// la logique stock (comportement stable au go-live) ; le gating pré-lancement
+// est verrouillé par shared/utils/__tests__/offer-availability.test.ts.
+vi.mock("@/shared/constants/orders-availability", async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	ORDERS_AVAILABLE: true,
+}));
 
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({
@@ -81,16 +91,22 @@ vi.mock("@/shared/components/animations/stagger-grid", () => ({
 		role,
 		"aria-label": ariaLabel,
 		className,
+		as: Container = "div",
+		itemAs: ItemTag = "div",
 	}: {
 		children: React.ReactNode;
 		role?: string;
 		"aria-label"?: string;
 		className?: string;
 		inView?: boolean;
+		as?: "div" | "ul" | "ol";
+		itemAs?: "div" | "li";
 	}) => (
-		<ul role={role} aria-label={ariaLabel} className={className}>
-			{children}
-		</ul>
+		<Container role={role} aria-label={ariaLabel} className={className}>
+			{React.Children.map(children, (child, index) => (
+				<ItemTag key={index}>{child}</ItemTag>
+			))}
+		</Container>
 	),
 }));
 
@@ -319,13 +335,14 @@ describe("ProductList", () => {
 			expect(screen.getByText("produits")).toBeInTheDocument();
 		});
 
-		it("renders product cards wrapped in listitem divs", async () => {
+		it("renders each product card in its own list item", async () => {
+			// `<li>` natifs depuis la conversion de StaggerGrid en `as="ul" itemAs="li"`
+			// (react-doctor prefer-tag-over-role) : plus de `role="listitem"` explicite.
 			const { container } = await renderList({
 				productsPromise: makeSuccessResult(),
 				perPage: 24,
 			});
-			const listItems = container.querySelectorAll('[role="listitem"]');
-			expect(listItems).toHaveLength(2);
+			expect(container.querySelectorAll("li")).toHaveLength(2);
 		});
 
 		it("passes correct index to each ProductCard", async () => {

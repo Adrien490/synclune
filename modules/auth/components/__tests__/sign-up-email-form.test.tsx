@@ -11,14 +11,23 @@ const {
 	mockCanSubmit,
 	mockHandleSubmit,
 	mockReset,
+	mockIsClientFormValid,
 } = vi.hoisted(() => ({
 	mockState: { value: undefined as any },
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
 	mockShake: { shake: false, onShakeComplete: vi.fn() },
 	mockCanSubmit: { value: true },
-	mockHandleSubmit: vi.fn(),
+	// Le vrai `form.handleSubmit()` renvoie une promesse, consommée par
+	// `runAfterValidation` — un mock `undefined` lèverait une unhandled exception.
+	mockHandleSubmit: vi.fn(() => Promise.resolve()),
 	mockReset: vi.fn(),
+	mockIsClientFormValid: { value: true },
+}));
+
+vi.mock("@tanstack/react-form", () => ({
+	useStore: (_store: unknown, selector: (s: { isValid: boolean }) => unknown) =>
+		selector({ isValid: mockIsClientFormValid.value }),
 }));
 
 vi.mock("@/shared/components/forms", () => ({
@@ -79,6 +88,7 @@ vi.mock("@/shared/components/forms", () => ({
 		handleSubmit: mockHandleSubmit,
 		reset: mockReset,
 		state: { isValid: true },
+		store: {},
 	}),
 }));
 
@@ -160,6 +170,7 @@ beforeEach(() => {
 	mockIsPending.value = false;
 	mockShake.shake = false;
 	mockCanSubmit.value = true;
+	mockIsClientFormValid.value = true;
 });
 
 describe("SignUpEmailForm", () => {
@@ -299,11 +310,20 @@ describe("SignUpEmailForm", () => {
 
 	// ─── Alert conditions ─────────────────────────────────────────────────────
 
-	it("does not show alert when state has VALIDATION_ERROR status", () => {
+	it("does not show alert when state has VALIDATION_ERROR status and client form is invalid (field errors already shown)", () => {
+		mockIsClientFormValid.value = false;
 		mockState.value = { status: "validation_error", message: "Champ invalide" };
 		render(<SignUpEmailForm />);
 		expect(screen.queryByTestId("success-alert")).toBeNull();
 		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	it("shows error alert for VALIDATION_ERROR status when client form is valid (client/server divergence)", () => {
+		mockIsClientFormValid.value = true;
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<SignUpEmailForm />);
+		expect(screen.getByTestId("error-alert")).toBeDefined();
+		expect(screen.getByText("Champ invalide")).toBeDefined();
 	});
 
 	it("shows error alert when state has a message but undefined status (treated as non-success)", () => {

@@ -18,8 +18,11 @@ import type { RefundReason } from "@/app/generated/prisma/client";
  *     envoyé → skip.
  *  2. Si pose réussit, envoie l'email avec `idempotencyKey: refund-confirm-{id}`
  *     (Resend dédup 24h en deuxième ligne de défense).
- *  3. Sur erreur Resend, on logge mais ne reset PAS le flag (le retry repassera
- *     par le cron `reconcile-refunds` qui re-tente le SAGA finalize).
+ *  3. Sur erreur Resend, reset compensatoire du flag à null : le claim n'a de
+ *     sens que si l'email est parti. Sans reset, tout re-passage (webhook,
+ *     cron) skippait en `already_sent` → email définitivement perdu. Le
+ *     double-envoi « envoyé mais réponse en erreur » est couvert par la clé
+ *     Resend fixe `refund-confirm-{id}` (dédup 24h).
  */
 interface SendArgs {
 	refundId: string;
@@ -71,11 +74,24 @@ export async function sendRefundConfirmationOnce(args: SendArgs): Promise<SendRe
 		});
 		return { sent: true, skipped: false };
 	} catch (error) {
-		// L'envoi a échoué après le claim DB. Le flag reste posé pour éviter
-		// le triple-envoi par un autre process, mais le cron reconcile-refunds
-		// pourra retenter le pipeline complet si nécessaire. On laisse remonter
-		// l'erreur au caller pour qu'il logge dans son contexte.
+		// L'envoi a échoué après le claim DB → reset compensatoire pour qu'un
+		// re-passage (webhook, cron, retry PostWebhookTask) puisse re-tenter.
+		// On tient le claim (count === 1), donc aucun concurrent ne peut avoir
+		// envoyé entre-temps ; la clé Resend fixe dédup le cas limite « envoyé
+		// mais réponse en erreur ».
 		logger.error(`[REFUND-EMAIL] Send failed for refund ${refundId}`, error, { refundId });
+		try {
+			await prisma.refund.updateMany({
+				where: { id: refundId },
+				data: { confirmationEmailSentAt: null },
+			});
+		} catch (resetError) {
+			// Flag orphelin : l'email ne repartira pas seul, mais on ne masque
+			// pas l'échec d'envoi initial (déjà loggé) par celui du reset.
+			logger.error(`[REFUND-EMAIL] Failed to reset claim for refund ${refundId}`, resetError, {
+				refundId,
+			});
+		}
 		return { sent: false, skipped: false, reason: "send_failed" };
 	}
 }

@@ -33,13 +33,12 @@ describe("useAdjustStockForm", () => {
 		mockAdjustSkuStock.mockResolvedValue({ status: "success" as const, message: "Stock ajusté" });
 	});
 
-	it("returns form, state, action, isPending, formErrors, adjustment, newStock, and isValid", () => {
+	it("returns form, state, action, isPending, adjustment, newStock, and isValid", () => {
 		const { result } = renderHook(() => useAdjustStockForm({ skuId: "sku-1", currentStock: 10 }));
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(result.current.formErrors).toBeDefined();
 		expect(typeof result.current.adjustment).toBe("number");
 		expect(typeof result.current.newStock).toBe("number");
 		expect(typeof result.current.isValid).toBe("boolean");

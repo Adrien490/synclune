@@ -2,12 +2,13 @@ import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import type { CollectionImage } from "../types/collection.types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 /** Delais progressifs pour effet de vague au hover (40/60/100ms) */
 const STAGGER_DELAYS = ["delay-0", "delay-[40ms]", "delay-[60ms]", "delay-[100ms]"] as const;
 
 /** Quality reduite pour images secondaires */
-const SECONDARY_IMAGE_QUALITY = 75;
+const SECONDARY_IMAGE_QUALITY = IMAGE_QUALITY.THUMBNAIL;
 
 interface CollectionImageItemProps {
 	image: CollectionImage;
@@ -53,7 +54,10 @@ export function CollectionImageItem({
 
 	const delayClass = STAGGER_DELAYS[staggerIndex % STAGGER_DELAYS.length];
 
-	// fetchPriority=high reserve a l'image LCP (1re carte, image principale).
+	// `preload` + fetchPriority=high : PAIRE indissociable reservee a l'image LCP
+	// (1re carte, image principale). `fetchPriority` seul n'emet aucun
+	// <link rel="preload"> ; `preload` seul precharge en priorite BASSE (Next 16
+	// passe fetchPriority verbatim, il ne le derive pas de preload).
 	const isHighPriority = isAboveFold && isLcpCandidate && index === 0;
 
 	return (
@@ -76,6 +80,7 @@ export function CollectionImageItem({
 					: undefined
 			}
 			sizes={sizes}
+			preload={isHighPriority}
 			loading={isAboveFold ? "eager" : "lazy"}
 			fetchPriority={isHighPriority ? "high" : "auto"}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}

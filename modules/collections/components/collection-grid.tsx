@@ -15,6 +15,7 @@ import {
 	extractCollectionImages,
 	extractPriceRange,
 } from "@/modules/collections/utils/collection-images.utils";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import { Gem } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -78,8 +79,7 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 							lowPrice: (priceRange.min / 100).toFixed(2),
 							highPrice: (priceRange.max / 100).toFixed(2),
 							offerCount: productCount,
-							availability:
-								productCount > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+							availability: getOfferAvailability(productCount > 0),
 						},
 					}),
 				},
@@ -100,7 +100,8 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 
 			{/* Grille des collections */}
 			<Stagger
-				role="list"
+				as="ul"
+				itemAs="li"
 				aria-label="Liste des collections"
 				className="xs:grid-cols-2 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4"
 				stagger={0.05}
@@ -108,18 +109,17 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 			>
 				{collections.map((collection, index) => {
 					return (
-						<div key={collection.id} role="listitem">
-							<CollectionCard
-								slug={collection.slug}
-								name={collection.name}
-								images={extractCollectionImages(collection.products)}
-								index={index}
-								headingLevel="h2"
-								productCount={collection._count.products}
-								description={collection.description}
-								priceRange={extractPriceRange(collection.products)}
-							/>
-						</div>
+						<CollectionCard
+							key={collection.id}
+							slug={collection.slug}
+							name={collection.name}
+							images={extractCollectionImages(collection.products)}
+							index={index}
+							headingLevel="h2"
+							productCount={collection._count.products}
+							description={collection.description}
+							priceRange={extractPriceRange(collection.products)}
+						/>
 					);
 				})}
 			</Stagger>

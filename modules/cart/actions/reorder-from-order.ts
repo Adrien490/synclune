@@ -13,9 +13,9 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { reorderFromOrderSchema } from "../schemas/cart.schemas";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
@@ -46,12 +46,20 @@ export async function reorderFromOrder(
 			return rateLimitResult.errorState;
 		}
 
-		// Reorder = auth required (protection privacy: enum orders)
-		const session = await getSession();
-		const userId = session?.user.id;
-		if (!userId) {
-			return error("Vous devez être connecté pour cette action");
-		}
+		// Reorder = auth required (protection privacy: enum orders).
+		// requireAuth re-vérifie en DB (deletedAt/suspendedAt/accountStatus ACTIVE).
+		const auth = await requireAuth();
+		if ("error" in auth) return auth.error;
+		const userId = auth.user.id;
+
+		// AUDIT-BIZ-001 : même gate que `addToCart` — cette action remplit le panier,
+		// donc c'est un chemin d'achat. Elle était le seul trou : le `ReorderButton`
+		// vit dans l'espace client, dont le layout est volontairement SANS gate de
+		// fermeture (« accessible to authenticated users even when the store is
+		// closed »), donc le bouton restait cliquable pendant une fermeture
+		// `StoreSettings.isClosed` ou en pré-lancement `ORDERS_AVAILABLE = false`.
+		const storeCheck = await assertStoreOpen();
+		if (storeCheck) return error(storeCheck.message);
 
 		const rawData = { orderId: safeFormGet(formData, "orderId") };
 		const validated = validateInput(reorderFromOrderSchema, rawData);
@@ -101,9 +109,6 @@ export async function reorderFromOrder(
 		if (eligibleItems.length === 0) {
 			return error("Aucun article de cette commande n'est disponible");
 		}
-
-		// Ensure cart exists (user or create session-based - user is connected so always userId branch)
-		const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 
 		const cart = await prisma.cart.upsert({
 			where: { userId },
@@ -181,7 +186,7 @@ export async function reorderFromOrder(
 		);
 
 		// Cache invalidation
-		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
+		const tags = getCartInvalidationTags(userId);
 		tags.forEach((tag) => updateTag(tag));
 		const productIds = new Set(eligibleItems.map((item) => item.sku.product.id));
 		productIds.forEach((pid) => updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(pid)));

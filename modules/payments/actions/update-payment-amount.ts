@@ -5,6 +5,13 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
+import { prisma } from "@/shared/lib/prisma";
+import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
+import {
+	calculateDiscountWithExclusion,
+	type CartItemForDiscount,
+} from "@/modules/discounts/services/discount-calculation.service";
+import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
@@ -12,6 +19,7 @@ import { calculateShipping, getShippingInfo } from "@/modules/orders/services/sh
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
+import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
 import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
@@ -21,7 +29,11 @@ const updatePaymentAmountSchema = z.object({
 	paymentIntentId: z.string().startsWith("pi_", "Payment Intent ID invalide"),
 	country: z.enum(SHIPPING_COUNTRIES, { message: "Pays de livraison invalide" }),
 	postalCode: z.string().max(20).default(""),
-	discountAmount: z.number().int().nonnegative("Le montant de réduction ne peut pas être négatif"),
+	// Audit F1 (2026-07-02) : le client envoie le CODE promo, jamais un montant.
+	// La remise est re-dérivée serveur (éligibilité + calcul) plus bas — un
+	// `discountAmount` numérique client permettait de minorer arbitrairement le
+	// PI provisoire (borné au subtotal seulement).
+	discountCode: z.string().trim().max(50).nullable().default(null),
 });
 
 interface UpdatePaymentAmountResult {
@@ -52,8 +64,9 @@ export async function updatePaymentAmount(
 				return { success: false, error: "Session invalide." };
 			}
 
-			// 2. Store-open guard (admin bypass for live checkout testing)
-			if (session?.user.role !== "ADMIN") {
+			// 2. Store-open guard (admin bypass for live checkout testing —
+			// rôle re-vérifié en DB, jamais le cookie seul)
+			if (!(await isVerifiedAdmin(session))) {
 				const storeCheck = await assertStoreOpen();
 				if (storeCheck) {
 					return { success: false, error: storeCheck.message };
@@ -84,7 +97,7 @@ export async function updatePaymentAmount(
 				};
 			}
 
-			const { paymentIntentId, country, postalCode, discountAmount } = validation.data;
+			const { paymentIntentId, country, postalCode, discountCode } = validation.data;
 			span.setAttribute("payment_intent.id", paymentIntentId);
 			span.setAttribute("checkout.is_guest", !userId);
 			span.setAttribute("shipping.country", country);
@@ -97,6 +110,8 @@ export async function updatePaymentAmount(
 			// 5a. Refuse update once an order is bound to the PI.
 			// confirmCheckout already set the authoritative amount; allowing client mutation
 			// here would enable underbilling (audit P0.1, 2026-05-11).
+			// ⚠️ Garde de PRÉSENCE fail-closed : clé brute, PAS le parse Zod fail-open
+			// (un orderId malformé serait droppé et la garde contournée).
 			if (pi.metadata.orderId) {
 				return {
 					success: false,
@@ -104,8 +119,10 @@ export async function updatePaymentAmount(
 				};
 			}
 
-			const piUserId = pi.metadata.userId;
-			const piSessionId = pi.metadata.guestSessionId;
+			// Zod boundary : champ malformé droppé → undefined → ownerMatch false (deny)
+			const piMetadata = parsePaymentIntentMetadata(pi.metadata, { paymentIntentId });
+			const piUserId = piMetadata.userId;
+			const piSessionId = piMetadata.guestSessionId;
 
 			const ownerMatch =
 				(userId !== null && piUserId === userId) ||
@@ -145,11 +162,60 @@ export async function updatePaymentAmount(
 				subtotal += item.priceAtAdd * item.quantity;
 			}
 
-			if (discountAmount > subtotal) {
-				return {
-					success: false,
-					error: "Le montant de réduction ne peut pas dépasser le sous-total.",
-				};
+			// 6b. Re-derive the discount server-side from the code (audit F1).
+			// Provisional amount only : pas de FOR UPDATE ni de vérif maxUsagePerUser
+			// (elle exige l'email de commande, inconnu ici) — le montant AUTORITAIRE
+			// est recalculé sous lock par `createOrderInTransaction` à confirmCheckout,
+			// qui rejette un code devenu inéligible. Code invalide/expiré → remise 0,
+			// sans erreur bloquante : le PI provisoire revient simplement au plein tarif.
+			let discountAmount = 0;
+			if (discountCode) {
+				const discount = await prisma.discount.findFirst({
+					where: { code: discountCode.toUpperCase(), deletedAt: null },
+					select: {
+						id: true,
+						code: true,
+						type: true,
+						value: true,
+						minOrderAmount: true,
+						maxUsageCount: true,
+						maxUsagePerUser: true,
+						usageCount: true,
+						isActive: true,
+						startsAt: true,
+						endsAt: true,
+					},
+				});
+
+				if (discount) {
+					const eligibility = checkDiscountEligibility(discount, {
+						subtotal,
+						userId: userId ?? undefined,
+					});
+
+					if (eligibility.eligible) {
+						const cartItemsForDiscount: CartItemForDiscount[] = [];
+						for (const item of cart.items) {
+							const skuResult = skuDetailsResults.find(
+								(r) => r.success && r.data?.sku.id === item.sku.id,
+							);
+							if (!skuResult?.success || !skuResult.data) continue;
+							cartItemsForDiscount.push({
+								priceInclTax: skuResult.data.sku.priceInclTax,
+								quantity: item.quantity,
+								compareAtPrice: skuResult.data.sku.compareAtPrice,
+							});
+						}
+
+						discountAmount = calculateDiscountWithExclusion({
+							type: discount.type,
+							value: discount.value,
+							cartItems: cartItemsForDiscount,
+							excludeSaleItems: true,
+						});
+						discountAmount = Math.max(0, Math.min(discountAmount, subtotal));
+					}
+				}
 			}
 
 			// 7. Calculate shipping and final total
@@ -167,11 +233,11 @@ export async function updatePaymentAmount(
 			if (!shippingUnavailable) {
 				// Audit P2.2 — garde TOCTOU. Entre le retrieve de l'étape 5 et ce
 				// `update`, `confirmCheckout` (step 9) a pu lier la commande au PI et
-				// poser le montant AUTORITAIRE (`order.total`). `discountAmount` étant
-				// une valeur client (non adossée à un code promo revalidé ici), écraser
-				// le montant maintenant permettrait une sous-facturation : le client
-				// confirmerait un montant inférieur à `order.total`. C'est rattrapé en
-				// dernier ressort par la garde montant du webhook
+				// poser le montant AUTORITAIRE (`order.total`). Même avec la remise
+				// re-dérivée serveur (audit F1), écraser le montant maintenant ferait
+				// diverger le PI de `order.total` (panier/promo ayant pu changer entre
+				// les deux calculs) : le client confirmerait un montant différent. C'est
+				// rattrapé en dernier ressort par la garde montant du webhook
 				// (checkout-order-processing.service.ts:213) — mais au prix d'une charge
 				// erronée + commande bloquée + retries Stripe. On re-vérifie donc juste
 				// avant l'update et on refuse si la commande est déjà initiée.

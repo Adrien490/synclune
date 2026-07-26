@@ -15,7 +15,6 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/modules/wishlist/constants/expiration.constants", () => ({
 	WISHLIST_EXPIRATION_DAYS: 30,
-	WISHLIST_EXPIRATION_MS: 30 * 24 * 60 * 60 * 1000,
 }));
 
 import {
@@ -24,7 +23,6 @@ import {
 	createWishlistSessionId,
 	getOrCreateWishlistSessionId,
 	clearWishlistSessionId,
-	getWishlistExpirationDate,
 } from "../wishlist-session";
 
 // ============================================================================
@@ -325,35 +323,5 @@ describe("clearWishlistSessionId", () => {
 
 		expect(cookieStore.delete).toHaveBeenCalledWith(WISHLIST_SESSION_COOKIE_NAME);
 		expect(cookieStore.delete).toHaveBeenCalledOnce();
-	});
-});
-
-// ============================================================================
-// Tests: getWishlistExpirationDate
-// ============================================================================
-
-describe("getWishlistExpirationDate", () => {
-	it("returns a Date approximately 30 days from now", () => {
-		const before = Date.now();
-		const result = getWishlistExpirationDate();
-		const after = Date.now();
-
-		const expectedMs = 30 * 24 * 60 * 60 * 1000;
-		const resultMs = result.getTime();
-
-		expect(resultMs).toBeGreaterThanOrEqual(before + expectedMs);
-		expect(resultMs).toBeLessThanOrEqual(after + expectedMs);
-	});
-
-	it("returns a Date instance", () => {
-		const result = getWishlistExpirationDate();
-
-		expect(result).toBeInstanceOf(Date);
-	});
-
-	it("returns a date in the future", () => {
-		const result = getWishlistExpirationDate();
-
-		expect(result.getTime()).toBeGreaterThan(Date.now());
 	});
 });

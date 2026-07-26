@@ -10,6 +10,12 @@
 /**
  * Default currency code for the application
  * ISO 4217 currency code
+ *
+ * Consommée par la chaîne Stripe (PaymentIntent, line items, refunds).
+ * Les formatters d'affichage (`shared/utils/format-euro.ts`, PDF facture) et
+ * plusieurs gardes hardcodent "EUR" volontairement : mono-devise assumé,
+ * verrouillé en DB par le CHECK `Order_currency_eur_check`. À centraliser
+ * ici seulement si le multi-devise devient un objectif.
  */
 export const DEFAULT_CURRENCY = "EUR" as const;
 

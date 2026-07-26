@@ -34,12 +34,15 @@ const publicRoutes = [
 	"/a-propos",
 	"/favoris",
 	"/opengraph-image",
-	"/~offline",
 	"/monitoring",
 	"/ingest",
-	"/serwist",
 	// Checkout (guest checkout supporté)
 	"/paiement",
+	// Suivi de commande invité (AUDIT-BIZ-001) : authentifié par token HMAC dans
+	// l'URL, pas par session — le checkout invité n'a pas de compte. Volontairement
+	// hors `/commandes/*` (protégé) pour ne pas affaiblir le gate de l'espace client.
+	// La page valide le token côté serveur et 404 sinon.
+	"/suivi-commande",
 ];
 
 // Routes d'authentification (redirection si déjà connecté)

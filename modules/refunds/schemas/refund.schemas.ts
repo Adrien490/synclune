@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
-import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
+import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {

@@ -4,11 +4,10 @@
 
 Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prisma 7, Stripe).
 
-- **Storefront** (`/boutique`) - Produits, panier, paiement
+- **Storefront** (`/`, groupe de routes `(shop)`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
 - **Emails** - React Email + Resend (11 templates)
-- **PWA** - Serwist (service worker, offline page)
 
 ## Commands
 
@@ -37,12 +36,12 @@ pnpm prisma migrate dev     # Create/apply migrations
 ```
 app/
 ├── (auth)/                  # Connexion, inscription, mot-de-passe, verification email
-├── (boutique)/              # Storefront (accueil, produits, collections, personnalisation, compte, legal)
+├── (shop)/                  # Storefront (accueil, produits, collections, creations, favoris, aide)
+├── (account)/               # Espace client (compte, commandes)
+├── (legal)/                 # Pages legales (CGV, mentions, confidentialite)
 ├── admin/                   # Dashboard admin (catalogue, commandes, marketing, contenu)
 ├── api/                     # Routes API (auth, cron, webhooks, search, uploadthing)
 ├── paiement/                # Pages paiement (confirmation, annulation, retour)
-├── serwist/                 # Service Worker PWA
-├── ~offline/                # Page offline PWA
 └── sitemap-images.xml/      # Generation sitemap images
 
 modules/                     # DDD - 24 modules
@@ -82,14 +81,13 @@ shared/                      # Cross-cutting concerns
 
 ## Key Technologies
 
-- **Auth**: Better Auth (email, Google, GitHub)
+- **Auth**: Better Auth (email/password, Google)
 - **Database**: PostgreSQL (Neon) + Prisma 7
 - **Forms**: TanStack Form + `useAppForm` hook
 - **State**: Zustand (9 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, micro-toast, overlay-stack, admin-list-selection, admin-list-bulk-pending)
 - **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
-- **Analytics**: Vercel Analytics + Speed Insights
 
 ### React 19 - NO MEMOIZATION
 
@@ -133,8 +131,10 @@ export async function createSomething(
 - `requireAdminWithUser()` - Idem `requireAdmin()` (re-check DB) + renvoie l'objet user
 - `requireAdminApiRoute()` - Variante route handler (renvoie une `Response` HTTP) ; re-check DB du rôle
 - `requireActiveAccountIfAuthenticated()` - Autorise les invités (pas de session) mais rejette une session dont le compte n'est pas `ACTIVE` (suspendu/INACTIVE/PENDING_DELETION). Pour les flux commerce optionnellement authentifiés (checkout, discount)
+- `isVerifiedAdmin(session)` - Variante **booléenne** (ne bloque pas) avec re-check DB, pour les branches de privilège optionnelles (ex: bypass admin de la garde « boutique fermée »). Prend la session en argument ; court-circuite sans query si le cookie ne prétend pas admin
+- `isAdmin()` (`modules/auth/utils/guards`) - Wrapper sans argument de `isVerifiedAdmin()` (résout la session + `cache()` de déduplication par requête). Garde des lectures admin de la couche `data/`, où un retour `ActionState` n'a pas de sens
 
-> ⚠️ Ne JAMAIS faire confiance à `session.user.role` pour un chemin de privilège (cookie-cache Better Auth stale ~5 min). Toujours passer par un helper `requireAdmin*` qui re-vérifie en DB.
+> ⚠️ Ne JAMAIS faire confiance à `session.user.role` pour un chemin de privilège (cookie-cache Better Auth stale ~5 min ; une rétrogradation ADMIN→USER ne révoque pas les sessions). Toujours passer par un helper `requireAdmin*` / `isVerifiedAdmin()` / `isAdmin()` qui re-vérifie en DB. Verrouillé par le garde-fou statique `modules/auth/utils/__tests__/no-raw-session-role-trust.regression.test.ts` (allowlist explicite pour les pré-filtres et l'affichage cosmétique).
 
 **Action helpers** (`shared/lib/actions/`):
 
@@ -187,7 +187,7 @@ async function fetchCart(userId?: string) {
 | `catalog`   | 15m   | 5m         | Products, SKUs, related products                            |
 | `reference` | 7d    | 24h        | Legal, collections, materials, colors, FAQs, store settings |
 
-**Invalidation des statuts commande (CACHE-AUDIT-010)** : toute mutation de `Order.status`/`paymentStatus` (Server Action, webhook handler, cron) DOIT invalider via `getOrderInvalidationTags(userId, orderId)` (`modules/orders/constants/cache.ts`) — jamais une liste de tags écrite à la main. Le helper couvre les tags user-scopés (`USER_ORDERS`, `LAST_ORDER`, `ACCOUNT_STATS`) et par-commande (`DETAIL`, `CONFIRMATION`, `HISTORY`) ; une liste partielle (`[LIST, ADMIN_ORDERS_LIST, ADMIN_BADGES]`) laisse l'espace client + le détail commande stale jusqu'à l'expiration du profil `user` (~10 min). Résoudre `userId` (ajouter `userId: true` au `select`) quand absent. Tags de cache toujours via une constante SSOT du module, jamais en littéral template.
+**Invalidation des statuts commande (CACHE-AUDIT-010)** : toute mutation de `Order.status`/`paymentStatus` (Server Action, webhook handler, cron) DOIT invalider via `getOrderInvalidationTags(userId, orderId)` (`modules/orders/constants/cache.ts`) — jamais une liste de tags écrite à la main. Le helper couvre les tags user-scopés (`USER_ORDERS`, `LAST_ORDER`, `USER_ORDERS_COUNT`) et par-commande (`DETAIL`, `CONFIRMATION`, `HISTORY`) ; une liste partielle (`[LIST, ADMIN_ORDERS_LIST, ADMIN_BADGES]`) laisse l'espace client + le détail commande stale jusqu'à l'expiration du profil `user` (~10 min). Résoudre `userId` (ajouter `userId: true` au `select`) quand absent. Tags de cache toujours via une constante SSOT du module, jamais en littéral template.
 
 ## Module Layers Pattern
 
@@ -290,7 +290,7 @@ Certains fichiers `services/` contiennent des mutations DB ou I/O (email). Ce so
 | `payments/services/order-creation.service.ts`          | Transaction atomique stock lock + order + discount usage                                                                                                                                                          |
 | `wishlist/services/notify-back-in-stock.ts`            | Notification atomique apres restock                                                                                                                                                                               |
 | `cart/services/sku-validation.service.ts`              | Validation DB reads partagees entre actions + SKU selector                                                                                                                                                        |
-| `reviews/services/send-review-requests.service.ts`     | Cron job — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email                                                                                                                             |
+| `reviews/services/send-review-requests.service.ts`     | Service cron **dormant** (route retirée, réactivable) — `order.update` pour flag `reviewRequest{Sent,Skipped}At` apres envoi email                                                                                |
 | `refunds/services/send-refund-confirmation.service.ts` | Émetteur unique email remboursement — `refund.updateMany` claim atomique (`confirmationEmailSentAt`) partagé entre cron `reconcile-refunds` + webhook `charge.refunded` + action `processRefund` (ORD-STRIPE-005) |
 | `store-settings/services/auto-reopen.service.ts`       | Cron job — `storeSettings.updateMany` pour clear `closedUntil` aux dates échues                                                                                                                                   |
 | `orders/services/archive-credit-note-pdf.service.ts`   | E-invoicing — upload UploadThing + `Order.creditNotePdfHash` SHA-256 (avoir immuable)                                                                                                                             |
@@ -303,26 +303,25 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-11 Vercel cron jobs defined in `vercel.json` (SSOT) — périmètre réduit le 2026-05-30 au cœur critique (revenu + RGPD légal) + monitoring + ops. Logic in `modules/cron/services/` (or domain modules for transactional services). Détails complets + liste des crons retirés (routes supprimées, services conservés, réactivables) : [`docs/CRONS.md`](docs/CRONS.md). ⚠️ Les crons **e-reporting** (`build/transmit-ereporting-batch`, `reconcile-voided-invoices`) sont **retirés** et **à réactiver au go-live e-reporting (1ᵉʳ sept. 2027)** — cf. [`docs/INVOICING.md § Crons`](docs/INVOICING.md). En revanche `reconcile-invoices` est **réintégré le 2026-05-30** (DLQ facture, Passes 0-3 = numérotation/PDF/avoir, obligation **LIVE** Art. 286/289-I indépendante du flag e-reporting ; ses Passes e-reporting SALES/5/6 restent no-op fail-safe tant que `INVOICE_ENABLE_EREPORTING=false`).
+11 Vercel cron jobs définis dans `vercel.json` (autorité d'exécution réelle) et mirrorés dans `modules/cron/constants/schedules.ts` (SSOT consommé par `with-cron-guard` pour le **Sentry Cron Monitoring** — alerte si un run attendu n'arrive pas, MON-03) ; cohérence des deux verrouillée par `cron-schedules-match-vercel.test.ts`. Périmètre réduit au cœur critique (revenu + RGPD légal) + monitoring + ops. Logic in `modules/cron/services/` (or domain modules for transactional services). ⚠️ Les crons **e-reporting** (`build/transmit-ereporting-batch`, `reconcile-voided-invoices`) sont **retirés** et **à réactiver au go-live e-reporting (1ᵉʳ sept. 2027)** — cf. [`docs/RUNBOOK.md § e-reporting`](docs/RUNBOOK.md). En revanche `reconcile-invoices` (Daily 2:00) assure la DLQ facture (Passes 0-3 = numérotation/PDF/avoir, obligation **LIVE** Art. 286/289-I indépendante du flag e-reporting ; ses Passes e-reporting SALES/5/6 restent no-op fail-safe tant que `INVOICE_ENABLE_EREPORTING=false`).
 
-| Job                         | Schedule           | Catégorie  |
-| --------------------------- | ------------------ | ---------- |
-| `retry-post-webhook-tasks`  | Every 5 min        | revenue    |
-| `reopen-store`              | Every 15 min       | ops        |
-| `retry-webhooks`            | Every 30 min       | revenue    |
-| `sync-async-payments`       | Every 4h           | revenue    |
-| `reconcile-refunds`         | Every 6h, H+30     | revenue    |
-| `reconcile-invoices`        | Daily 2:00         | revenue    |
-| `process-account-deletions` | Daily 5:00         | RGPD       |
-| `alert-dispute-deadlines`   | Daily 8:00         | monitoring |
-| `alert-overbilled-orders`   | Daily 8:30         | monitoring |
-| `alert-stuck-orders`        | Weekly Monday 9:00 | monitoring |
-| `hard-delete-retention`     | Monthly 2nd 4:00   | RGPD       |
+| Job                         | Schedule         | Catégorie  |
+| --------------------------- | ---------------- | ---------- |
+| `retry-post-webhook-tasks`  | Every 5 min      | revenue    |
+| `reopen-store`              | Every 15 min     | ops        |
+| `retry-webhooks`            | Every 30 min     | revenue    |
+| `sync-async-payments`       | Every 4h         | revenue    |
+| `reconcile-refunds`         | Every 6h, H+30   | revenue    |
+| `reconcile-invoices`        | Daily 2:00       | revenue    |
+| `cleanup-pending-orders`    | Daily 3:00       | ops        |
+| `process-account-deletions` | Daily 5:00       | RGPD       |
+| `alert-dispute-deadlines`   | Daily 8:00       | monitoring |
+| `hard-delete-retention`     | Monthly 2nd 4:00 | RGPD       |
+| `cleanup-orphan-media`      | Monthly 3rd 4:00 | ops        |
 
 ### Other API Routes
 
 - `api/auth/` - Better Auth handler
-- `api/search/` - Search endpoint
 - `api/uploadthing/` - UploadThing file upload handler
 
 ## Emails
@@ -337,7 +336,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 **Délivrabilité** : marketing emails (back-in-stock, review-request) ont `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click` (RFC 8058) + `Precedence: bulk` + `Auto-Submitted: auto-generated` (RFC 3834).
 
-**Endpoint désinscription** : `/notifications/desinscription` (token HMAC stateless) — alerte admin par email, **pas de persistance DB** ⇒ l'admin propage manuellement le retrait (limitation MVP, à itérer si volume).
+**Endpoint désinscription** : `/notifications/desinscription` (token HMAC stateless) — **persiste `User.marketingOptOutAt`** (Art. 21(3) RGPD) ; les émetteurs marketing (back-in-stock, review-request) filtrent ce flag dans leur `where`. Log + événement Sentry émis en signal secondaire seulement (l'email y est scrubé).
 
 Config: `shared/lib/email-config.ts`. Preview: `pnpm email:dev`.
 
@@ -383,34 +382,37 @@ Sans override : risque P2024 timeout + rollback partiel.
 
 ## Facturation électronique — invariants
 
-Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €). Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront ; cf. `docs/INVOICING.md § Réception`). Aucune **Plateforme Agréée (PA)** n'est encore branchée (dry-run intégral). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
+Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €). Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront). Aucune **Plateforme Agréée (PA)** n'est encore branchée (dry-run intégral). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
 
 ### Invariants intangibles
 
-1. **Aucune création manuelle de facture** depuis l'admin ou ailleurs. Toute facture (`invoiceNumber`) doit passer par `persist-invoice-number.service.ts`, déclenché uniquement par le webhook `payment_intent.succeeded` (eager via `ensure-invoice-number.service.ts`) ou en lazy fallback dans `app/api/orders/[orderNumber]/invoice/route.ts`. Aucune Server Action ne doit écrire `invoiceNumber` ou `creditNoteNumber`.
-2. **Aucun avoir manuel.** `creditNoteNumber` (`A-YYYY-NNNNN`) est généré uniquement par `void-invoice.service.ts`, appelé depuis `cancel-order`, `mark-as-fully-refunded` et le webhook `charge.refunded` (cas remboursement total).
-3. **`OrderHistory` est immuable** — pas de `deletedAt`, pas d'`update`, pas de `delete`. Audit trail comptable Art. L123-22, conservation 10 ans.
+1. **Aucune création manuelle de facture** depuis l'admin ou ailleurs. Toute facture (`invoiceNumber`) doit passer par `persist-invoice-number.service.ts`, déclenché uniquement par le webhook `payment_intent.succeeded` (eager via `ensure-invoice-number.service.ts`) ou en lazy fallback dans `app/api/orders/[orderNumber]/invoice/route.ts`. Aucune Server Action ne doit écrire `invoiceNumber` ou `creditNoteNumber`. Défense en profondeur (EINV-SEQ-008) : `persistInvoiceNumber` refuse en interne toute commande jamais encaissée (`paidAt` NULL **et** `paymentStatus ≠ PAID`) — Art. 289-I, la garde ne dépend plus des callers.
+2. **Aucun avoir manuel.** `creditNoteNumber` (`A-YYYY-NNNNN`) est généré uniquement par `void-invoice.service.ts` (full void Order — appelé depuis `cancel-order`, `mark-as-fully-refunded` et le webhook `charge.refunded`) et `issue-credit-note.service.ts` (avoir partiel Refund), tous deux via la séquence SSOT `credit-note-sequence.service.ts`. Les écritures `Refund.creditNote*` sont verrouillées par leur propre assertion dans `no-manual-invoice-creation.regression.test.ts`.
+3. **`OrderHistory` est immuable** — pas de `deletedAt`, pas d'`update`, pas de `delete`. Audit trail comptable Art. L123-22, conservation 10 ans. Corollaire RGPD : un audit `source: CUSTOMER` ne doit JAMAIS dériver `authorName` du client (`user.name`/`user.email`) — libellé neutre `"Client"` + `authorId` (la table n'est pas scrubée à l'anonymisation, la PII y survivrait 10 ans ; régression `order-history-no-customer-pii`).
 4. **Snapshots OrderItem figés** au moment du checkout (`productTitle`, `productImageUrl`, `skuColor`, `skuMaterial`, `skuSize`, `price`). Une mutation Product/Sku ne doit jamais modifier un OrderItem existant.
-5. **Snapshots adresses figés** sur Order (`billing*`, `shipping*`) au checkout. Le modèle `Address` du client peut évoluer indépendamment.
-6. **PDF immuable post-paiement** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). La route `/api/orders/[orderNumber]/invoice` sert le PDF archivé en priorité (régénération seulement en fallback si fetch UploadThing échoue).
-7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année.
+5. **Snapshots adresses figés** sur Order au checkout : les `shipping*` (+ `customer*`) sont copiés champ-à-champ depuis le formulaire dans la tx de création (`order-creation.service.ts`). Les `billing*` restent NULL au checkout (`billingSameAsShipping=true`, design B2C) — seul writer : action admin `update-order-billing-address` (bloquée post-facture) ; la facture retombe sur le shipping via `buildBillingAddress`. Aucune FK `Order→Address` : le modèle `Address` du client évolue indépendamment (une mutation/suppression d'Address ne touche jamais une commande).
+6. **PDF immuable post-émission (factures ET avoirs)** : `archive-invoice-pdf.service.ts` upload UploadThing + SHA-256 (`Order.invoicePdfHash`). La route `/api/orders/[orderNumber]/invoice` sert le PDF archivé en priorité (régénération seulement en fallback si fetch UploadThing échoue). **Avoirs (EINV-CREDIT-020)** : l'avoir n'a PAS de snapshot de données (contenu reconstruit depuis les colonnes Order) — son PDF est donc archivé **eagerly à l'émission** (`voidInvoice` → `ensureOrderCreditNoteArchived` ; `issueCreditNoteForRefund` → `ensureRefundCreditNoteArchived`), rattrapé par `reconcile-invoices` (Passes 3b + 7), et l'**anonymisation RGPD est bloquée** tant qu'un avoir émis n'est pas archivé (`ensureUserCreditNotesArchived` appelé par `process-account-deletions` + `anonymize-user-immediately`) — sinon le premier rendu post-scrub produirait un avoir sans identité client (Art. 289 CGI) figé comme référence immuable. Tout rendu d'avoir passe par les SSOT `render-order-credit-note.service.ts` / `render-refund-credit-note.service.ts` (routes + eager + cron : PDF bit-identique au hash archivé). **Intégrité proactive** : la Passe 8 de `reconcile-invoices` (`verify-pdf-archive-integrity.service.ts`) re-hash chaque artefact archivé (rotation ~30 j via `pdfIntegrityCheckedAt` sur Order/Refund) et auto-répare une copie UploadThing corrompue UNIQUEMENT si la régénération est bit-identique au hash DB — le hash, preuve d'immutabilité, n'est JAMAIS réécrit (divergence → alerte admin, intervention manuelle).
+7. **Numérotation séquentielle gap-free** : `F-YYYY-NNNNN` pour factures, `A-YYYY-NNNNN` pour avoirs. CHECK constraints DB strictes (`^F-[0-9]{4}-[0-9]{5}$`). Advisory locks Postgres `1_000_000+year` (facture) et `2_000_000+year` (avoir). Sérialisation totale par année. L'unicité cross-table des avoirs (Order ∪ Refund) est en plus verrouillée côté DB par le trigger `check_credit_note_cross_table_unique` (migration 20260709, rejette en 23505/P2002 les écritures contournant le lock). Les 3 tx de séquence utilisent `TX_TIMEOUT_LONG`/`TX_MAX_WAIT_LONG` (l'attente advisory lock compte dans le timeout) et retentent les codes transitoires `RETRYABLE_SEQUENCE_TX_ERROR_CODES` (P2002/P2024/P2028 — sûr car garde d'idempotence re-vérifiée sous lock).
 8. **Pas de vente manuelle / pas de caisse.** Aucune Server Action ne doit créer une commande payée sans passer par Stripe (PaymentIntent). Tout flow alternatif (`recordCashSale`, `createManualOrder`, etc.) requiert validation comptable préalable — sinon risque "logiciel de caisse" NF 525 non conforme.
 9. **Pas de mutation manuelle des modèles `EReportingTransaction` / `EReportingBatch`.** Cinq writers légitimes seulement (SSOT = test régression `no-manual-ereporting-write.regression.test.ts`) : `record-ereporting.service.ts` (hook SALES + REFUND, seul à `create` une transaction), `build-ereporting-batch.service.ts` (cron : `create` batch + assignation `updateMany` + `EReportingPeriod`), `submit-ereporting-batch.service.ts` (flip de statut post-PA + re-queue, partagé par le cron `transmit-ereporting-batch.service.ts`), et l'action admin `retry-ereporting-batch.ts` (reset REJECTED/ABANDONED → PENDING uniquement, **jamais** un statut terminal). Aucune Server Action ne doit poser un `status: ACCEPTED`/`SENT`/`REJECTED`/`ABANDONED` manuel ni créer un batch fictif — risque divergence DGFiP + invalidation idempotence transmission.
-10. **Rétention PII vs RGPD (cycle en 2 temps).** À l'anonymisation d'un compte (`anonymize-user.service.ts`), on scrubbe seulement les surfaces _opérationnelles_ (`customer*`, `shipping*`) et NON l'identité légale de la facture (`billing*`, `invoiceDataSnapshot`, PDF) — conservée au titre de l'exemption RGPD Art. 17(3)(b) (obligation Art. 289 CGI / L102 B LPF). Cette identité n'est purgée qu'à `paidAt + 10 ans` par `hard-delete-retention` (`purgeExpiredOrderPii`, marqueur `Order.piiPurgedAt`), respectant la limitation de conservation RGPD Art. 5.1.e. Ne JAMAIS scrubber `billing*` à l'anonymisation (régression `rgpd-anonymize-preserves-invoice-snapshot`). Détails : [`docs/INVOICING.md § Rétention PII vs RGPD`](docs/INVOICING.md).
+10. **Rétention PII vs RGPD (cycle en 2 temps).** À l'anonymisation d'un compte (`anonymize-user.service.ts`), on scrubbe seulement les surfaces _opérationnelles_ (`customer*`, `shipping*`) et NON l'identité légale de la facture (`billing*`, `invoiceDataSnapshot`, PDF) — conservée au titre de l'exemption RGPD Art. 17(3)(b) (obligation Art. 289 CGI / L102 B LPF). Cette identité n'est purgée qu'à `paidAt + 10 ans` par `hard-delete-retention` (`purgeExpiredOrderPii`, marqueur `Order.piiPurgedAt`), respectant la limitation de conservation RGPD Art. 5.1.e. Ne JAMAIS scrubber `billing*` à l'anonymisation (régression `rgpd-anonymize-preserves-invoice-snapshot`). Périmètre de la purge 10 ans (SSOT `modules/orders/constants/pii-scrub.ts`, contrat verrouillé par `purge-pii-scrub-contract.regression.test.ts`) : `Order` (opérationnel + `billing*` + snapshot/PDF + `stripeCustomerId`/`stripePaymentIntentId`) **+ `Refund`** (avoirs partiels `creditNotePdfUrl/Hash` + `note` libre) **+ `OrderNote.content`** (texte libre). Corollaire : ne JAMAIS écrire de **valeurs** d'adresse client dans `OrderHistory.metadata` (table immuable, jamais scrubée) — contrat `changedFields` uniquement (régression `order-history-no-customer-pii`). Les commandes jamais payées (aucune base fiscale) sont scrubées à 3 ans (`UNPAID_ORDER_PII_RETENTION_DAYS`).
 
 ### Tests régression dédiés
 
-| Test                                                                                                                                               | Fichier                                                                                                                                              | Garde                                             |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| OrderHistory n'a pas `deletedAt`                                                                                                                   | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                    | Audit trail immuable (Art. L123-22)               |
-| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                                         | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                    | Invariant 1 + 2                                   |
-| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                                      | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                   | Invariant 7                                       |
-| Aucune Server Action ne crée/mute `EReporting*` directement                                                                                        | `modules/invoices/services/__tests__/no-manual-ereporting-write.regression.test.ts`                                                                  | Invariant 9                                       |
-| Batch REJECTED/ABANDONED ⇒ transactions re-queuées (détach + PENDING), jamais orphelines                                                           | `modules/invoices/services/__tests__/ereporting-requeue-on-terminal-failure.regression.test.ts` (+ `ereporting-requeue-rebuild.integration.test.ts`) | Re-queue e-reporting (build reprend)              |
-| Filet anti-trou e-reporting : transaction PENDING dont la période est close > grâce et jamais batchée ⇒ alerte admin                               | `modules/invoices/services/__tests__/check-ereporting-period-continuity.test.ts`                                                                     | Continuité périodes DGFiP (EINV-EREPORT-008)      |
-| DLQ e-reporting : `recordSales/RefundEReportingDeferrable` flague sur "error", `reconcile-invoices` Passes SALES/REFUND drainent et lèvent le flag | `modules/invoices/services/__tests__/defer-ereporting-retry.service.test.ts` (+ passes dans `reconcile-invoices.service.test.ts`)                    | Transaction DGFiP jamais-créée (EINV-EREPORT-009) |
+| Test                                                                                                                                                                  | Fichier                                                                                                                                                                                                  | Garde                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| OrderHistory n'a pas `deletedAt`                                                                                                                                      | `modules/orders/services/__tests__/order-history-immutability.regression.test.ts`                                                                                                                        | Audit trail immuable (Art. L123-22)               |
+| Aucune action admin n'écrit `invoiceNumber`/`creditNoteNumber` directement                                                                                            | `modules/orders/services/__tests__/no-manual-invoice-creation.regression.test.ts`                                                                                                                        | Invariant 1 + 2                                   |
+| Numérotation : pas de rollover silencieux au-delà de 99999/an                                                                                                         | `modules/orders/services/__tests__/persist-invoice-number.service.test.ts` (sous-suite "overflow")                                                                                                       | Invariant 7                                       |
+| Unicité cross-table des numéros d'avoir (trigger DB rejette un doublon Order↔Refund)                                                                                  | `modules/invoices/services/__tests__/credit-note-cross-table-unique.integration.test.ts`                                                                                                                 | Invariant 7 (EINV-PRISMA-001)                     |
+| Aucune Server Action ne crée/mute `EReporting*` directement                                                                                                           | `modules/invoices/services/__tests__/no-manual-ereporting-write.regression.test.ts`                                                                                                                      | Invariant 9                                       |
+| Batch REJECTED/ABANDONED ⇒ transactions re-queuées (détach + PENDING), jamais orphelines                                                                              | `modules/invoices/services/__tests__/ereporting-requeue-on-terminal-failure.regression.test.ts` (+ `ereporting-requeue-rebuild.integration.test.ts`)                                                     | Re-queue e-reporting (build reprend)              |
+| Filet anti-trou e-reporting : transaction PENDING dont la période est close > grâce et jamais batchée ⇒ alerte admin                                                  | `modules/invoices/services/__tests__/check-ereporting-period-continuity.test.ts`                                                                                                                         | Continuité périodes DGFiP (EINV-EREPORT-008)      |
+| DLQ e-reporting : `recordSales/RefundEReportingDeferrable` flague sur "error", `reconcile-invoices` Passes SALES/REFUND drainent et lèvent le flag                    | `modules/invoices/services/__tests__/defer-ereporting-retry.service.test.ts` (+ passes dans `reconcile-invoices.service.test.ts`)                                                                        | Transaction DGFiP jamais-créée (EINV-EREPORT-009) |
+| Snapshots adresses Order : writers allowlistés (write-side) + aucun lecteur `Address` live dans les affichages commande (read-side) + isolation runtime Address→Order | `order-address-snapshot-immutability.regression.test.ts` + `modules/orders/constants/__tests__/order-address-read-snapshot-only.regression.test.ts` (+ `order-address-independence.integration.test.ts`) | Invariant 5                                       |
+| Purge PII 10 ans : contrat de champs (PII scrubée / comptable préservé) sur Order + Refund + unpaid + notes                                                           | `modules/cron/services/__tests__/purge-pii-scrub-contract.regression.test.ts`                                                                                                                            | Invariant 10                                      |
 
-> ⚠️ **Périodes e-reporting — portée de l'EXCLUDE** : `EReportingPeriod_no_overlap` garantit le NON-RECOUVREMENT (pas de double déclaration) mais **PAS** l'absence de trou (sauter une période contiguë le satisfait). L'anti-trou repose sur (a) `build-ereporting-batch` qui crée la période contiguë de toute période ayant des transactions et (b) la **Passe 5** de continuité dans `reconcile-invoices` (`check-ereporting-period-continuity.service.ts`) qui alerte sur toute transaction close jamais batchée. Cadence : `EREPORTING_PERIOD_LENGTH` (DAILY/MONTHLY/BIMONTHLY) — défaut **DAILY** prudent tant que l'arrêté/PA n'est pas figé (la franchise est de nature bimestrielle). ⚠️ **Ne JAMAIS brancher `DAILY` sur une vraie PA** (cf. F4 `docs/INVOICING.md`) : une PA attend une **soumission bimestrielle contenant le détail journalier**, pas 60 batches séparés ; basculer `BIMONTHLY` (ou découpler période-de-données/fenêtre-de-transmission) au go-live.
+> ⚠️ **Périodes e-reporting — portée de l'EXCLUDE** : `EReportingPeriod_no_overlap` garantit le NON-RECOUVREMENT (pas de double déclaration) mais **PAS** l'absence de trou (sauter une période contiguë le satisfait). L'anti-trou repose sur (a) `build-ereporting-batch` qui crée la période contiguë de toute période ayant des transactions et (b) la **Passe 5** de continuité dans `reconcile-invoices` (`check-ereporting-period-continuity.service.ts`) qui alerte sur toute transaction close jamais batchée. Cadence : `EREPORTING_PERIOD_LENGTH` (DAILY/MONTHLY/BIMONTHLY) — défaut **DAILY** prudent tant que l'arrêté/PA n'est pas figé (la franchise est de nature bimestrielle). ⚠️ **Ne JAMAIS brancher `DAILY` sur une vraie PA** (cf. `docs/RUNBOOK.md § e-reporting`) : une PA attend une **soumission bimestrielle contenant le détail journalier**, pas 60 batches séparés ; basculer `BIMONTHLY` (ou découpler période-de-données/fenêtre-de-transmission) au go-live.
 >
 > ⚠️ **Portée de la Passe 5 (EINV-EREPORT-008) vs DLQ (EINV-EREPORT-009)** : la Passe 5 ne détecte QUE les transactions **créées-mais-non-batchées**. Une transaction **jamais créée** (échec de `recordSalesEReporting`/`recordRefundEReporting` sur le hot path → aucune ligne) est invisible pour elle. Ce cas est couvert par le **DLQ EINV-EREPORT-009** : les wrappers `recordSales/RefundEReportingDeferrable` posent `Order.ereportingRetryDeferred` / `Refund.ereportingRetryDeferred` sur `"error"`, drainés par les **Passes SALES/REFUND** de `reconcile-invoices` (retente idempotente + lève le flag). Sur le **chemin webhook**, l'enregistrement passe par une PostWebhookTask persistée rejouée par `retry-post-webhook-tasks` (survit au crash). La continuité de période suppose donc que toute vente/remboursement PAID a produit sa transaction — prérequis garanti par EINV-EREPORT-009, pas par la Passe 5.
 
@@ -421,15 +423,13 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 | Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                                                                                                                   | ✓      |
 | Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)                                                                                                               | ✓      |
 | Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                                                                                                                       | ✓      |
-| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:235-242`                                                                                                                                         | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263`                                                                                                                                         | ✓      |
 | Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                                                                                                                 | ✓      |
 | Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                                                                                                                   | ✓      |
 | Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)                                                                                                   | ✓      |
 | Réforme 2026-2027 e-reporting B2C          | `record-ereporting.service.ts` + `build-ereporting-batch.service.ts` + `transmit-ereporting-batch.service.ts` (livré, dry-run prod tant que flag OFF + PA non branchée) | ⏳     |
 
-Audit conformité complet : `~/.claude/plans/tu-es-un-auditeur-radiant-stonebraker.md` (2026-05-27).
-Architecture détaillée, matrices B2C/B2B/B2G, état des phases, feature flags, troubleshooting : `docs/INVOICING.md`.
-Procédures opérationnelles alertes admin facturation : `docs/RUNBOOK-INVOICING.md` (audit monitoring 2026-05-28 — EINV-OPS-\*).
+Feature flags facturation : `modules/invoices/constants/feature-flags.ts`. Modèle d'activité, seuils & périmètre assumé : [`docs/BUSINESS.md`](docs/BUSINESS.md). Procédures opérationnelles (crons, e-reporting, seuils TVA/OSS) : [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
 ## Forms
 
@@ -458,14 +458,14 @@ const form = useAppForm<MyInput>({
 
 ### Hiérarchie
 
-| Scope               | Déclencheur                             | Commande                 | Durée cible |
-| ------------------- | --------------------------------------- | ------------------------ | ----------- |
-| **Critical path**   | Pre-commit (si modules touchés) + CI PR | `pnpm test:critical`     | < 10s       |
-| **Full unit suite** | CI PR + push main                       | `pnpm test:coverage`     | ~2 min      |
-| **Integration DB**  | Opt-in (`INTEGRATION_DATABASE_URL`)     | `pnpm test:integration`  | ~30s        |
-| **Contract Stripe** | Inclus dans full unit suite             | (incluse)                | < 5s        |
-| **E2E smoke**       | CI PR + push main                       | `pnpm e2e --grep @smoke` | ~3 min      |
-| **E2E complet**     | CI PR + push main (sharded ×4)          | `pnpm e2e`               | ~15 min     |
+| Scope               | Déclencheur                                                                                   | Commande                 | Durée cible |
+| ------------------- | --------------------------------------------------------------------------------------------- | ------------------------ | ----------- |
+| **Critical path**   | Pre-commit (si modules touchés) + CI PR                                                       | `pnpm test:critical`     | < 10s       |
+| **Full unit suite** | CI PR + push main                                                                             | `pnpm test:coverage`     | ~2 min      |
+| **Integration DB**  | CI PR (job `tests-integration`, service Postgres) + opt-in local (`INTEGRATION_DATABASE_URL`) | `pnpm test:integration`  | ~30s        |
+| **Contract Stripe** | Inclus dans full unit suite                                                                   | (incluse)                | < 5s        |
+| **E2E smoke**       | CI PR + push main                                                                             | `pnpm e2e --grep @smoke` | ~3 min      |
+| **E2E complet**     | CI PR + push main (sharded ×4)                                                                | `pnpm e2e`               | ~15 min     |
 
 ### Critical path (8 modules)
 
@@ -484,7 +484,7 @@ Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refu
 
 - Fichiers : `<nom>.test.ts(x)` à côté du code ou dans `__tests__/`.
 - **Régression locked** : suffixe `<sujet>.regression.test.ts(x)` + JSDoc `@regression <slug>` en tête. Convention : un test régression verrouille une correction de bug précise — toute modif requiert review explicite. Inventaire vivant via `grep -rn "@regression" --include="*.test.ts*"`. Exemples : `webhook-concurrency.regression.test.ts` (P2002 race), `link-history-back.regression.test.tsx` (Vaul `<DrawerClose asChild>` annule navigation `<Link>`).
-- **Integration DB** : suffixe `<nom>.integration.test.ts`, runner séparé (`vitest.integration.config.ts`), DB dédiée via `INTEGRATION_DATABASE_URL`. Import du client via `@/test/integration/prisma-client` UNIQUEMENT (jamais `@/shared/lib/prisma` → refus si URL contient "prod"/"production"). Skip silencieux si env vide.
+- **Integration DB** : suffixe `<nom>.integration.test.ts`, runner séparé (`vitest.integration.config.ts`), DB dédiée via `INTEGRATION_DATABASE_URL`. Import du client via `@/test/integration/prisma-client` UNIQUEMENT (jamais `@/shared/lib/prisma` → refus si URL contient "prod"/"production"). Skip silencieux si env vide en local ; en CI le job `tests-integration` (service Postgres éphémère) les exécute sur chaque PR. ⚠️ Le setup applique `db push` (PAS les migrations) : toute garde raw-SQL (trigger, CHECK) requise par une suite doit être listée dans `RAW_SQL_GUARD_MIGRATIONS` (`test/integration/setup.ts`), fichier idempotent.
 - **Contract Stripe** : `test/contract/stripe-events.test.ts` charge chaque fixture `test/fixtures/stripe/*.json` et vérifie shape + routing via `event-registry.dispatchEvent`. Si Stripe modifie un payload : regénérer via `stripe trigger <type> --print-json`.
 - Tags E2E : `@smoke` (flow minimal), `@critical` (paiement/auth).
 - Mocks DB : **interdit** sur les tests d'intégration orders/payments (incident historique — divergence mock/prod). Préférer `.integration.test.ts` quand la logique tient sur le comportement DB réel (FOR UPDATE, transactions, contraintes).

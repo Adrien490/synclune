@@ -70,9 +70,9 @@ export function UsersMobileList({
 					<AdminListLiveCount count={users.length} singular="client" plural="clients" />
 					<ItemGroup aria-label="Clients" className="gap-2">
 						{users.map((user) => (
-							<div key={user.id} role="listitem">
+							<li key={user.id}>
 								<UserMobileItem user={user} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

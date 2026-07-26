@@ -187,6 +187,39 @@ describe("createAddress", () => {
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
+	// @regression address-country-hidden-input — le champ pays disabled est exclu
+	// du FormData ; l'action doit mapper la clé absente vers undefined (pas null)
+	// pour laisser jouer le .default("FR") du schéma.
+	it("should pass country as undefined (not null) when the FormData key is absent", async () => {
+		await createAddress(undefined, validFormData);
+
+		expect(mockValidateInput).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ country: undefined }),
+		);
+		const rawData = mockValidateInput.mock.calls[0]?.[1] as Record<string, unknown>;
+		expect(rawData.country).not.toBeNull();
+	});
+
+	it("should forward country from FormData when present", async () => {
+		const withCountry = createFormData({
+			firstName: "Marie",
+			lastName: "Dupont",
+			address1: "12 Rue de la Paix",
+			postalCode: "75001",
+			city: "Paris",
+			phone: "+33612345678",
+			country: "BE",
+		});
+
+		await createAddress(undefined, withCountry);
+
+		expect(mockValidateInput).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({ country: "BE" }),
+		);
+	});
+
 	it("should return validation error for invalid data", async () => {
 		const validationError = { status: ActionStatus.VALIDATION_ERROR, message: "Donnees invalides" };
 		mockValidateInput.mockReturnValue({ error: validationError });

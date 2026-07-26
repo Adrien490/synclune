@@ -300,21 +300,21 @@ test.describe("SEO - robots.txt et sitemap.xml", { tag: ["@slow"] }, () => {
 		expect(body).toBeTruthy();
 		expect(body).toContain("<urlset");
 		expect(body).toContain("/creations/");
+
+		// L'extension Google Image est le SEUL intérêt de ce sitemap : sans ces
+		// assertions, elle pouvait disparaître entièrement sans faire échouer le test.
+		expect(body).toContain('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"');
+		expect(body).toContain("<image:loc>");
+		expect(body).toContain("<image:caption>");
+		expect(body).toContain("<image:title>");
+		expect(body).toContain("<lastmod>");
+
+		// Aucun `&` nu : un seul suffit à faire rejeter le sitemap par Google.
+		expect(body).not.toMatch(/&(?!amp;|quot;|apos;|lt;|gt;|#)/);
 	});
 });
 
 test.describe("SEO - noindex sur pages privees", { tag: ["@slow"] }, () => {
-	test("la page /~offline a noindex", async ({ page }) => {
-		await page.goto("/~offline");
-		await page.waitForLoadState("domcontentloaded");
-
-		const robotsMeta = page.locator('meta[name="robots"]');
-		await expect(robotsMeta).toBeAttached();
-
-		const content = await robotsMeta.getAttribute("content");
-		expect(content).toMatch(/noindex/);
-	});
-
 	test("la page /verifier-email a noindex", async ({ page }) => {
 		await page.goto("/verifier-email");
 		await page.waitForLoadState("domcontentloaded");

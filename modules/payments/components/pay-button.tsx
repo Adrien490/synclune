@@ -24,9 +24,17 @@ interface PayButtonProps {
 	 * générique "Remplis tous les champs obligatoires" par un message précis.
 	 */
 	incompleteSections?: string[];
+	/**
+	 * Montant figé par le serveur une fois la commande liée au PaymentIntent
+	 * (CHECKOUT-CONSENT-001). Non nul ⇒ c'est CE montant qui sera débité, quelles
+	 * que soient les modifications faites depuis dans le formulaire.
+	 */
+	lockedAmount?: number | null;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
 	allowNavigation?: () => void;
+	/** Remonte `finalAmount` au parent dès que la commande est liée au PI. */
+	onOrderBound?: (finalAmount: number) => void;
 }
 
 type Phase = "idle" | "validating" | "creating-order" | "awaiting-3ds";
@@ -45,8 +53,10 @@ export function PayButton({
 	email,
 	billingName,
 	incompleteSections,
+	lockedAmount,
 	getFormData,
 	allowNavigation,
+	onOrderBound,
 }: PayButtonProps) {
 	const stripe = useStripe();
 	const elements = useElements();
@@ -59,7 +69,11 @@ export function PayButton({
 		getFormData,
 		allowNavigation,
 		onPhase: setPhase,
+		onOrderBound,
 	});
+
+	// Une fois la commande liée au PI, le montant autoritaire est celui du serveur.
+	const amountToPay = lockedAmount ?? total;
 
 	// Bring error into view on mobile where the sticky CTA may otherwise hide it.
 	useEffect(() => {
@@ -178,7 +192,7 @@ export function PayButton({
 				) : (
 					<>
 						<Lock className="size-4" aria-hidden="true" />
-						<span>Commander et payer {formatEuro(total)}</span>
+						<span>Commander et payer {formatEuro(amountToPay)}</span>
 					</>
 				)}
 			</Button>

@@ -10,11 +10,17 @@ import {
 	restoreStockForOrder,
 } from "@/modules/webhooks/services/payment-intent.service";
 import { processOrderFromPaymentIntent } from "@/modules/webhooks/services/checkout.service";
+import { buildPostCheckoutTasksFromPI } from "@/modules/webhooks/services/checkout-post-tasks.service";
+import { persistPostWebhookTasks } from "@/modules/webhooks/services/post-webhook-tasks.service";
+import type { PostWebhookTask } from "@/modules/webhooks/types/webhook.types";
 import { ensureInvoiceNumberPersisted } from "@/modules/orders/services/ensure-invoice-number.service";
 import { recordSalesEReportingDeferrable } from "@/modules/invoices/services/defer-ereporting-retry.service";
 import { extractPaymentMethodFromPaymentIntent } from "@/modules/payments/services/map-stripe-payment-method";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import {
+	collectStockInvalidationTags,
+	type StockChangedSku,
+} from "@/modules/products/utils/cache.utils";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import {
 	BATCH_DEADLINE_MS,
@@ -76,8 +82,9 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			paymentStatus: true,
 			// CACHE-AUDIT-004 : nécessaire pour invalider les tags user-scopés.
 			userId: true,
-			// P2-1 : notifier le client à l'échec/abandon (parité avec le webhook
-			// handlePaymentFailure qui envoie déjà PAYMENT_FAILED_EMAIL).
+			// P2-1 : notifier le client à l'échec/abandon — ce cron est l'unique
+			// émetteur de l'email payment-failed (le webhook payment_failed est
+			// non-terminal et n'envoie rien, cf. handlePaymentFailure).
 			customerEmail: true,
 			customerName: true,
 		},
@@ -109,7 +116,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		userId: string | null,
 	): Promise<void> => {
 		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
-		await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
+		const order = await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
 		await ensureInvoiceNumberPersisted(orderId);
 		// EINV-EREPORT-009 : deferrable — flag de rattrapage si l'enregistrement échoue.
 		await recordSalesEReportingDeferrable(orderId);
@@ -117,27 +124,73 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		for (const tag of getOrderInvalidationTags(userId ?? undefined, orderId)) {
 			tagsToInvalidate.add(tag);
 		}
+
+		// WEBHOOK-AUDIT-003 : ce chemin rejouait le stock, la facture et l'e-reporting
+		// mais N'ÉMETTAIT AUCUNE confirmation de commande — or c'est précisément le
+		// chemin emprunté quand le webhook est définitivement perdu. Le client était
+		// donc débité et servi sans jamais recevoir de confirmation. On reconstruit les
+		// mêmes post-tasks que le webhook via le SSOT `buildPostCheckoutTasksFromPI`,
+		// ce qui récupère au passage les tags panier + stock/produit que la boucle
+		// ci-dessus n'invalidait pas.
+		const tasks = buildPostCheckoutTasksFromPI(order, pi);
+		const deferredTasks: PostWebhookTask[] = [];
+		for (const task of tasks) {
+			if (task.type === "INVALIDATE_CACHE") {
+				// Le cron a déjà son propre mécanisme de flush en fin de run : inutile de
+				// persister une task pour ça, et l'invalidation part immédiatement.
+				for (const tag of task.tags) tagsToInvalidate.add(tag);
+			} else {
+				deferredTasks.push(task);
+			}
+		}
+		if (deferredTasks.length > 0) {
+			// Persistance seule (pas d'exécution inline) : `retry-post-webhook-tasks`
+			// (toutes les 5 min) sélectionne sur `status + attempts`, sans filtrer par
+			// `webhookEventId`, et les exécutera donc tout seul. La latence ajoutée est
+			// négligeable sur un chemin de rattrapage qui a déjà attendu ≥ 1 h, et la
+			// task survit à un crash du cron. `skipDuplicates` sur la clé
+			// `order-confirm-${orderId}` garantit qu'un webhook arrivé entre-temps
+			// (ou un run précédent) ne produit pas un second email.
+			await persistPostWebhookTasks(prisma, null, deferredTasks);
+		}
 	};
 
-	// Échec/abandon paiement : restore stock (no-op si jamais décrémenté) PUIS
-	// markOrderAsFailed. OPS-AUDIT-003 : restore d'abord — si ça throw, on garde
-	// la commande PENDING pour le prochain run (retry atomique sans flag DB).
+	// Échec/abandon paiement : markOrderAsFailed (gardé anti-PAID) D'ABORD, puis
+	// restore stock. Audit webhooks 2026-07-02 : l'ancien ordre (OPS-AUDIT-003,
+	// restore d'abord) restockait AVANT de savoir si la transition était permise —
+	// si le PI passait `succeeded` entre le retrieve du cron et le failOrder
+	// (client finalisant son paiement), on restockait une commande devenue PAYÉE
+	// (restock fantôme). Désormais `transitioned: false` ⇒ return early sans
+	// restore ni email (le webhook succeeded ou la branche `succeeded` du prochain
+	// run fait foi). Le restore post-transition est un no-op de fait (une
+	// PENDING→FAILED implique stock jamais décrémenté) — conservé en
+	// ceinture-bretelles ; s'il throw, la commande est déjà FAILED et le stock
+	// n'a rien à rendre, on logge sans re-PENDING.
 	const failOrder = async (
 		orderId: string,
 		piId: string,
 		pi: Stripe.PaymentIntent,
-	): Promise<{ ok: true; restoredSkuIds: string[] } | { ok: false; error: string }> => {
-		let stockResult: Awaited<ReturnType<typeof restoreStockForOrder>>;
+	): Promise<
+		| { ok: true; transitioned: boolean; restoredSkus: StockChangedSku[] }
+		| { ok: false; error: string }
+	> => {
+		const { transitioned } = await markOrderAsFailed(
+			orderId,
+			piId,
+			extractPaymentFailureDetails(pi),
+		);
+		if (!transitioned) {
+			return { ok: true, transitioned: false, restoredSkus: [] };
+		}
 		try {
-			stockResult = await restoreStockForOrder(orderId);
+			const stockResult = await restoreStockForOrder(orderId);
+			return { ok: true, transitioned: true, restoredSkus: stockResult.restoredSkus };
 		} catch (stockError) {
 			return {
 				ok: false,
 				error: stockError instanceof Error ? stockError.message : String(stockError),
 			};
 		}
-		await markOrderAsFailed(orderId, piId, extractPaymentFailureDetails(pi));
-		return { ok: true, restoredSkuIds: stockResult.restoredSkuIds };
 	};
 
 	for (const order of pendingOrders) {
@@ -180,7 +233,16 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 			// une commande déjà annulée (rattrapé seulement par detectCancelledOrderRace
 			// + auto-refund). Sans ce correctif, ces commandes restaient PENDING
 			// indéfiniment au-delà de la fenêtre de poll.
-			if (status === "requires_action" || status === "requires_confirmation") {
+			// Audit webhooks 2026-07-02 : `requires_payment_method` ajouté — depuis
+			// que payment_failed est non-terminal (handlePaymentFailure observabilité
+			// seule), c'est CE cron qui acte l'échec d'un refus carte abandonné ; sans
+			// cancel du PI, un client revenant à H+1h05 re-confirmait le même PI
+			// vivant → succeeded sur commande CANCELLED → débit + auto-refund.
+			if (
+				status === "requires_action" ||
+				status === "requires_confirmation" ||
+				status === "requires_payment_method"
+			) {
 				try {
 					await stripe.paymentIntents.cancel(order.stripePaymentIntentId);
 				} catch (cancelError) {
@@ -224,7 +286,9 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 				});
 				const result = await failOrder(order.id, order.stripePaymentIntentId, paymentIntent);
 				if (!result.ok) {
-					logger.error("Stock restore failed — order kept PENDING for next run", undefined, {
+					// La transition FAILED a eu lieu mais le restore (no-op attendu) a
+					// throw — incident DB à investiguer, la commande reste FAILED.
+					logger.error("Stock restore failed after FAILED transition", undefined, {
 						cronJob: "sync-async-payments",
 						orderNumber: order.orderNumber,
 						orderId: order.id,
@@ -237,18 +301,34 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					errors++;
 					continue;
 				}
-				for (const skuId of result.restoredSkuIds) {
-					tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+				if (!result.transitioned) {
+					// Garde anti-PAID : le PI a été payé/traité entre le retrieve et le
+					// failOrder (ou un run concurrent a déjà FAILED). Ne pas envoyer
+					// l'email d'échec ni compter la commande — l'état réel fait foi.
+					logger.info("Order no longer failable — skipping (paid or already failed)", {
+						cronJob: "sync-async-payments",
+						orderNumber: order.orderNumber,
+						orderId: order.id,
+					});
+					continue;
+				}
+				// CACHE-CATALOG-002 : restock ⇒ invalider aussi la page produit +
+				// inventaire admin, pas seulement SKU_STOCK.
+				for (const tag of collectStockInvalidationTags(result.restoredSkus)) {
+					tagsToInvalidate.add(tag);
 				}
 				// CACHE-AUDIT-004 : tags user-scopés + détail commande.
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
 				}
-				// P2-1 : notifier le client (paiement non finalisé / 3DS abandonné).
+				// P2-1 : notifier le client (paiement non finalisé / refus carte / 3DS
+				// abandonné). Depuis l'audit webhooks 2026-07-02, ce cron est l'UNIQUE
+				// émetteur de cet email (handlePaymentFailure est non-terminal et
+				// n'envoie plus rien) — il part au moment où l'échec est acté (> 1h,
+				// client parti), pas pendant que le client retente sa carte.
 				// Best-effort — un échec d'email ne doit jamais faire échouer le cron ni
-				// re-PENDING la commande (déjà FAILED + stock restauré). idempotencyKey
-				// identique à celle du webhook handlePaymentFailure ⇒ Resend dédoublonne
-				// (24h) si les deux chemins se déclenchent pour la même commande.
+				// re-PENDING la commande (déjà FAILED). idempotencyKey conservée
+				// (`payment-failed-${orderId}`) : dédup Resend 24h sur les runs successifs.
 				if (order.customerEmail) {
 					try {
 						await sendPaymentFailedEmail({

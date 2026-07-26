@@ -45,10 +45,6 @@ const confirmationParamsSchema = z.object({
 	orderNumber: z.string().min(1),
 });
 
-export type OrderForConfirmation = NonNullable<
-	Awaited<ReturnType<typeof fetchOrderForConfirmation>>
->;
-
 /**
  * Retrieves an order for the confirmation page.
  *
@@ -84,7 +80,7 @@ export async function getOrderForConfirmation(
 }
 
 /**
- * Cached inner fetch. Profile `realtime` (30s stale / 15s revalidate / 1min expire)
+ * Cached inner fetch. Profile `checkout` (60s stale / 30s revalidate / 5min expire)
  * pour gerer les F5 post-paiement sans hammer DB tout en affichant le statut
  * webhook Stripe a jour rapidement. Invalide par getOrderInvalidationTags (webhooks).
  */

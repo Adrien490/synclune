@@ -3,6 +3,7 @@ import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 
 import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface OrderItem {
 	id: string;
@@ -48,7 +49,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 											fill
 											className="object-cover"
 											sizes="80px"
-											quality={80}
+											quality={IMAGE_QUALITY.STANDARD}
 											placeholder="blur"
 											blurDataURL={IMAGE_BLUR_FALLBACK}
 										/>

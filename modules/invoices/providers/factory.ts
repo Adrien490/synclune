@@ -73,12 +73,3 @@ export function getInvoiceProvider(): InvoiceProvider {
 export function resetInvoiceProviderForTests(): void {
 	cached = null;
 }
-
-/**
- * Override le singleton avec une instance pré-fabriquée. À usage exclusif des
- * tests qui injectent un `MockProvider` en mémoire. **Ne pas appeler en code
- * de prod** — le factory env-driven est l'unique source de vérité.
- */
-export function setInvoiceProviderForTests(provider: InvoiceProvider): void {
-	cached = provider;
-}

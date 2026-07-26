@@ -234,9 +234,11 @@ export function getProductCardData(
 				(link) => link.color.slug && link.color.hex && HEX_PATTERN.test(link.color.hex),
 			);
 			if (validLinks.length > 0) {
-				const slugs = validLinks.map((link) => link.color.slug);
-				const hexes = validLinks.map((link) => link.color.hex);
-				const names = validLinks.map((link) => link.color.name);
+				// `link.color` extrait une fois : évite 3 déréférencements imbriqués par lien.
+				const linkedColors = validLinks.map((link) => link.color);
+				const slugs = linkedColors.map((color) => color.slug);
+				const hexes = linkedColors.map((color) => color.hex);
+				const names = linkedColors.map((color) => color.name);
 				const comboKey = buildComboKey(slugs);
 				const existing = comboMap.get(comboKey);
 				const inStock = existing?.inStock === true || sku.inventory > 0;

@@ -79,14 +79,13 @@ describe("useCreateProductSkuForm", () => {
 
 	// ──────────── Return shape ────────────
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useCreateProductSkuForm());
 
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("isPending starts as false", () => {
@@ -179,14 +178,6 @@ describe("useCreateProductSkuForm", () => {
 		});
 
 		expect(mockCreateProductSku).toHaveBeenCalledTimes(1);
-	});
-
-	// ──────────── formErrors ────────────
-
-	it("formErrors is an empty array by default", () => {
-		const { result } = renderHook(() => useCreateProductSkuForm());
-
-		expect(result.current.formErrors).toEqual([]);
 	});
 
 	// ──────────── showSuccessToast is false ────────────

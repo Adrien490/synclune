@@ -16,6 +16,8 @@ const {
 	mockHeaders,
 	mockStripePaymentIntentsRetrieve,
 	mockStripePaymentIntentsUpdate,
+	mockDiscountFindFirst,
+	mockUserFindUnique,
 	mockCalculateShipping,
 	mockGetShippingInfo,
 	mockSentryStartSpan,
@@ -41,6 +43,11 @@ const {
 		mockHeaders: vi.fn(),
 		mockStripePaymentIntentsRetrieve: vi.fn(),
 		mockStripePaymentIntentsUpdate: vi.fn(),
+		mockDiscountFindFirst: vi.fn(),
+		// isVerifiedAdmin (require-auth réel, non mocké) re-vérifie le rôle en DB
+		// via prisma.user.findUnique — nécessaire pour le bypass admin de la garde
+		// boutique fermée.
+		mockUserFindUnique: vi.fn(),
 		mockCalculateShipping: vi.fn(),
 		mockGetShippingInfo: vi.fn(),
 		mockSentryStartSpan: vi.fn(),
@@ -71,6 +78,14 @@ vi.mock("@/modules/cart/services/sku-validation.service", () => ({
 
 vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 	assertStoreOpen: mockAssertStoreOpen,
+}));
+
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: {
+		discount: { findFirst: mockDiscountFindFirst },
+		user: { findUnique: mockUserFindUnique },
+	},
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -137,7 +152,7 @@ const VALID_PARAMS = {
 	paymentIntentId: "pi_test_abc123",
 	country: "FR",
 	postalCode: "75001",
-	discountAmount: 0,
+	discountCode: null,
 };
 
 const MOCK_CART_5000 = {
@@ -160,7 +175,7 @@ const MOCK_SKU_RESULT_5000 = {
 const MOCK_PI_USER = {
 	id: "pi_test_abc123",
 	metadata: {
-		userId: "user-123",
+		userId: "cm3user0000123qz8v4h2j9d3",
 		guestSessionId: "",
 	},
 };
@@ -169,8 +184,23 @@ const MOCK_PI_GUEST = {
 	id: "pi_test_abc123",
 	metadata: {
 		userId: "",
-		guestSessionId: "session-abc",
+		guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff",
 	},
+};
+
+/** Code promo éligible — remise fixe de 1000 c (audit F1 : dérivée serveur). */
+const MOCK_DISCOUNT_FIXED_1000 = {
+	id: "discount-1",
+	code: "PROMO10",
+	type: "FIXED_AMOUNT",
+	value: 1000,
+	minOrderAmount: null,
+	maxUsageCount: null,
+	maxUsagePerUser: null,
+	usageCount: 0,
+	isActive: true,
+	startsAt: new Date("2020-01-01"),
+	endsAt: null,
 };
 
 const MOCK_SHIPPING_INFO = {
@@ -183,11 +213,11 @@ const MOCK_SHIPPING_INFO = {
 // HELPERS
 // ============================================================================
 
-function setupAuthenticatedUser(userId = "user-123") {
+function setupAuthenticatedUser(userId = "cm3user0000123qz8v4h2j9d3") {
 	mockGetSession.mockResolvedValue({ user: { id: userId, role: "USER" } });
 }
 
-function setupGuestUser(sessionId = "session-abc") {
+function setupGuestUser(sessionId = "6f9619ff-8b86-4d11-b42d-00c04fc964ff") {
 	mockGetSession.mockResolvedValue(null);
 	mockGetOrCreateCartSessionId.mockResolvedValue(sessionId);
 }
@@ -212,7 +242,7 @@ function setupCart(cart = MOCK_CART_5000, skuResult = MOCK_SKU_RESULT_5000) {
 	mockGetSkuDetails.mockResolvedValue(skuResult);
 }
 
-function setupDefaults(userId = "user-123") {
+function setupDefaults(userId = "cm3user0000123qz8v4h2j9d3") {
 	// Sentry: run the callback directly with a stub span.
 	mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
 		fn({ setAttribute: vi.fn() }),
@@ -228,6 +258,7 @@ function setupDefaults(userId = "user-123") {
 		metadata: { userId, guestSessionId: "" },
 	});
 	mockStripePaymentIntentsUpdate.mockResolvedValue({ id: "pi_test_abc123", amount: 5499 });
+	mockDiscountFindFirst.mockResolvedValue(null);
 	setupShipping(499);
 	setupCart();
 }
@@ -271,8 +302,9 @@ describe("updatePaymentAmount", () => {
 			});
 		});
 
-		it("applies discount when discountAmount is provided", async () => {
-			const params = { ...VALID_PARAMS, discountAmount: 1000 };
+		it("applies the server-derived discount when an eligible code is provided", async () => {
+			mockDiscountFindFirst.mockResolvedValue(MOCK_DISCOUNT_FIXED_1000);
+			const params = { ...VALID_PARAMS, discountCode: "promo10" };
 
 			const result = await updatePaymentAmount(params);
 
@@ -283,16 +315,23 @@ describe("updatePaymentAmount", () => {
 			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
 				amount: 4499,
 			});
+			// Lookup normalisé en majuscules (aligné order-creation).
+			expect(mockDiscountFindFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ code: "PROMO10" }),
+				}),
+			);
 		});
 
 		it("clamps to STRIPE_MIN_AMOUNT_EUR_CENTS when discount+shipping cancel out", async () => {
 			setupShipping(0);
-			// Override cart to a 1000-cent total so discount of 1000 fully zeroes the subtotal.
+			// Override cart to a 1000-cent total so the fixed 1000-cent discount fully zeroes the subtotal.
 			setupCart(
 				{ items: [{ sku: { id: "sku-1" }, quantity: 1, priceAtAdd: 1000 }] },
 				{ success: true, data: { sku: { id: "sku-1", priceInclTax: 1000 } } },
 			);
-			const params = { ...VALID_PARAMS, discountAmount: 1000 };
+			mockDiscountFindFirst.mockResolvedValue(MOCK_DISCOUNT_FIXED_1000);
+			const params = { ...VALID_PARAMS, discountCode: "PROMO10" };
 
 			const result = await updatePaymentAmount(params);
 
@@ -321,7 +360,11 @@ describe("updatePaymentAmount", () => {
 		it("refuses the update when PI metadata already carries an orderId", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "user-123", guestSessionId: "", orderId: "order-bound" },
+				metadata: {
+					userId: "cm3user0000123qz8v4h2j9d3",
+					guestSessionId: "",
+					orderId: "order-bound",
+				},
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -356,12 +399,16 @@ describe("updatePaymentAmount", () => {
 		});
 
 		it("bypasses the closure guard for admins (live checkout testing)", async () => {
-			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
-			mockGetRateLimitIdentifier.mockReturnValue("user:admin-1");
+			mockGetSession.mockResolvedValue({
+				user: { id: "cm3admin000001qz8v4h2j9d3", role: "ADMIN" },
+			});
+			// isVerifiedAdmin re-vérifie le rôle en DB (cookie-cache Better Auth stale).
+			mockUserFindUnique.mockResolvedValue({ role: "ADMIN" });
+			mockGetRateLimitIdentifier.mockReturnValue("user:cm3admin000001qz8v4h2j9d3");
 			mockAssertStoreOpen.mockResolvedValue({ message: "Boutique fermée." });
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "admin-1", guestSessionId: "" },
+				metadata: { userId: "cm3admin000001qz8v4h2j9d3", guestSessionId: "" },
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -380,7 +427,7 @@ describe("updatePaymentAmount", () => {
 			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
 				fn({ setAttribute: vi.fn() }),
 			);
-			setupGuestUser("session-abc");
+			setupGuestUser("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 			mockAssertStoreOpen.mockResolvedValue(null);
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.1");
@@ -522,19 +569,16 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("rejects a negative discountAmount", async () => {
-			const params = { ...VALID_PARAMS, discountAmount: -50 };
+		it("rejects a non-string discountCode", async () => {
+			const params = { ...VALID_PARAMS, discountCode: 1000 };
 
 			const result = await updatePaymentAmount(params);
 
 			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.error).toBe("Le montant de réduction ne peut pas être négatif");
-			}
 		});
 
-		it("accepts zero discountAmount as valid", async () => {
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 0 });
+		it("accepts a null discountCode as valid", async () => {
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: null });
 
 			expect(result.success).toBe(true);
 		});
@@ -598,14 +642,75 @@ describe("updatePaymentAmount", () => {
 				);
 			}
 		});
+	});
 
-		it("returns an error when discountAmount exceeds the recomputed subtotal", async () => {
-			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 6000 });
+	// ──────────────────────────────────────────────────────────────
+	// Server-side discount derivation (audit F1)
+	// ──────────────────────────────────────────────────────────────
 
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.error).toBe("Le montant de réduction ne peut pas dépasser le sous-total.");
+	describe("server-side discount derivation (audit F1)", () => {
+		beforeEach(() => {
+			setupDefaults();
+		});
+
+		it("ignores a legacy/malicious numeric discountAmount field — full price applied", async () => {
+			// Ancien contrat : le client envoyait un montant arbitraire. Le champ est
+			// désormais inconnu du schéma (strippé par Zod) — aucune minoration possible.
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 4999 });
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.newTotal).toBe(5499); // 5000 + 499, remise ignorée
 			}
+			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
+				amount: 5499,
+			});
+		});
+
+		it("applies zero discount when the code is unknown", async () => {
+			mockDiscountFindFirst.mockResolvedValue(null);
+
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "NOPE" });
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.newTotal).toBe(5499);
+			}
+		});
+
+		it("applies zero discount when the code is ineligible (expired)", async () => {
+			mockDiscountFindFirst.mockResolvedValue({
+				...MOCK_DISCOUNT_FIXED_1000,
+				endsAt: new Date("2021-01-01"),
+			});
+
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "PROMO10" });
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.newTotal).toBe(5499);
+			}
+		});
+
+		it("derives a percentage discount from the cart, excluding sale items", async () => {
+			mockDiscountFindFirst.mockResolvedValue({
+				...MOCK_DISCOUNT_FIXED_1000,
+				type: "PERCENTAGE",
+				value: 10,
+			});
+
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountCode: "PROMO10" });
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.newTotal).toBe(4999); // 5000 - 10% + 499
+			}
+		});
+
+		it("does not query the discount table when no code is provided", async () => {
+			await updatePaymentAmount(VALID_PARAMS);
+
+			expect(mockDiscountFindFirst).not.toHaveBeenCalled();
 		});
 	});
 
@@ -622,7 +727,7 @@ describe("updatePaymentAmount", () => {
 		it("rejects when PI userId does not match the authenticated user", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "user-999", guestSessionId: "" },
+				metadata: { userId: "cm3user0000999qz8v4h2j9d3", guestSessionId: "" },
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -637,7 +742,7 @@ describe("updatePaymentAmount", () => {
 			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
 				fn({ setAttribute: vi.fn() }),
 			);
-			setupGuestUser("session-abc");
+			setupGuestUser("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
 			mockAssertStoreOpen.mockResolvedValue(null);
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.1");
@@ -647,7 +752,7 @@ describe("updatePaymentAmount", () => {
 			setupCart();
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "", guestSessionId: "session-xyz" },
+				metadata: { userId: "", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -661,7 +766,7 @@ describe("updatePaymentAmount", () => {
 		it("rejects when authenticated user tries to access a guest PI", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "", guestSessionId: "session-abc" },
+				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
 			});
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -675,7 +780,7 @@ describe("updatePaymentAmount", () => {
 		it("does not call stripe.paymentIntents.update on ownership mismatch", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "user-other", guestSessionId: "" },
+				metadata: { userId: "cm3userother00qz8v4h2j9d3", guestSessionId: "" },
 			});
 
 			await updatePaymentAmount(VALID_PARAMS);
@@ -711,7 +816,12 @@ describe("updatePaymentAmount", () => {
 		});
 
 		it("still computes newTotal as subtotal - discount when shipping unavailable", async () => {
-			const params = { ...VALID_PARAMS, discountAmount: 500, postalCode: "20000" };
+			mockDiscountFindFirst.mockResolvedValue({
+				...MOCK_DISCOUNT_FIXED_1000,
+				type: "PERCENTAGE",
+				value: 10,
+			});
+			const params = { ...VALID_PARAMS, discountCode: "PROMO10", postalCode: "20000" };
 
 			const result = await updatePaymentAmount(params);
 
@@ -833,39 +943,43 @@ describe("updatePaymentAmount", () => {
 		});
 
 		it("uses a user-based identifier for authenticated users", async () => {
-			setupAuthenticatedUser("user-456");
+			setupAuthenticatedUser("cm3user0000456qz8v4h2j9d3");
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("192.168.1.1");
-			mockGetRateLimitIdentifier.mockReturnValue("user:user-456");
+			mockGetRateLimitIdentifier.mockReturnValue("user:cm3user0000456qz8v4h2j9d3");
 			setupRateLimit(true);
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "user-456", guestSessionId: "" },
+				metadata: { userId: "cm3user0000456qz8v4h2j9d3", guestSessionId: "" },
 			});
 
 			await updatePaymentAmount(VALID_PARAMS);
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"update-amount:user:user-456",
+				"update-amount:user:cm3user0000456qz8v4h2j9d3",
 				expect.any(Object),
 				"192.168.1.1",
 			);
 		});
 
 		it("uses getRateLimitIdentifier for guest users", async () => {
-			setupGuestUser("session-xyz");
+			setupGuestUser("550e8400-e29b-41d4-a716-446655440000");
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.5");
 			mockGetRateLimitIdentifier.mockReturnValue("session:session-xyz");
 			setupRateLimit(true);
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
-				metadata: { userId: "", guestSessionId: "session-xyz" },
+				metadata: { userId: "", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
 			});
 
 			await updatePaymentAmount(VALID_PARAMS);
 
-			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(null, "session-xyz", "10.0.0.5");
+			expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(
+				null,
+				"550e8400-e29b-41d4-a716-446655440000",
+				"10.0.0.5",
+			);
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
 				"session:session-xyz",
 				expect.any(Object),

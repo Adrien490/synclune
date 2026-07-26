@@ -4,6 +4,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { stripe, withStripeCircuitBreaker } from "@/shared/lib/stripe";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
@@ -47,11 +48,15 @@ export async function cancelOrphanPaymentIntent(paymentIntentId: string): Promis
 		);
 
 		// Ne jamais annuler un PI déjà lié à une commande (un orphelin n'en a pas).
+		// ⚠️ Garde de PRÉSENCE fail-closed : clé brute, PAS le parse Zod fail-open
+		// (un orderId malformé serait droppé et la garde contournée).
 		if (pi.metadata.orderId) return;
 
+		// Zod boundary : champ malformé droppé → undefined → ownerMatch false (no-op)
+		const piMetadata = parsePaymentIntentMetadata(pi.metadata, { paymentIntentId });
 		const ownerMatch =
-			(userId !== null && pi.metadata.userId === userId) ||
-			(userId === null && sessionId !== null && pi.metadata.guestSessionId === sessionId);
+			(userId !== null && piMetadata.userId === userId) ||
+			(userId === null && sessionId !== null && piMetadata.guestSessionId === sessionId);
 		if (!ownerMatch) return;
 
 		// 4. Cancel (best-effort).

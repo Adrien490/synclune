@@ -16,6 +16,9 @@ const { mockAccountStatus, mockReviewStatus, mockRecompute } = vi.hoisted(() => 
 vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: mockAccountStatus,
 	ReviewStatus: mockReviewStatus,
+	// Requis par l'import transitif de @/modules/orders/constants/pii-scrub
+	// (ORDER_PII_SCRUB référence Prisma.DbNull au chargement du module).
+	Prisma: { DbNull: Symbol("DbNull") },
 }));
 
 vi.mock("@/modules/reviews/services/review-stats.service", () => ({
@@ -27,6 +30,7 @@ vi.mock("../../utils/anonymization.utils", () => ({
 }));
 
 import { anonymizeUserInTransaction } from "../anonymize-user.service";
+import { CUSTOMER_SHIPPING_PII_SCRUB } from "@/modules/orders/constants/pii-scrub";
 
 function createMockTx() {
 	return {
@@ -197,6 +201,25 @@ describe("anonymizeUserInTransaction", () => {
 				shippingPhone: "0000000000",
 				stripeCustomerId: null,
 			}),
+		});
+	});
+
+	it("drift-lock : couvre EXACTEMENT la surface opérationnelle partagée avec la purge 10 ans", async () => {
+		// Le payload d'anonymisation reste écrit en littéral dans le service (les
+		// régressions preserves-invoice scannent la source — un spread les
+		// aveuglerait). Ce test verrouille au runtime qu'il ne diverge jamais de
+		// CUSTOMER_SHIPPING_PII_SCRUB (SSOT modules/orders/constants/pii-scrub.ts) :
+		// mêmes clés, mêmes valeurs — seul customerEmail diffère (dérivé du userId).
+		// `stripePaymentIntentId` est ABSENT à dessein : refunds/litiges restent
+		// possibles post-anonymisation, il n'est nullé qu'aux purges à échéance.
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
+
+		await anonymizeUserInTransaction(mockTx as never, "user_abc");
+
+		const orderData = mockTx.order.updateMany.mock.calls[0]![0].data;
+		expect(orderData).toEqual({
+			...CUSTOMER_SHIPPING_PII_SCRUB,
+			customerEmail: "anonymized-user_abc@deleted.synclune.local",
 		});
 	});
 

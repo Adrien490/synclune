@@ -13,6 +13,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Informations légales - Synclune | Bijoux artisanaux",
@@ -46,7 +47,7 @@ export const metadata: Metadata = {
 export default async function LegalPage() {
 	"use cache";
 	cacheLife("reference");
-	cacheTag("legal-hub");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_HUB);
 	const legalPages = [
 		{
 			title: "Mentions légales",

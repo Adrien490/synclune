@@ -38,7 +38,10 @@ const {
 		mockPrisma: {
 			webhookEvent: {
 				findUnique: vi.fn(),
-				upsert: vi.fn(),
+				// IDEM-ROUTE-001 : `create` (1ʳᵉ réception) + `updateMany` (claim conditionnel
+				// de reprise) ont remplacé l'`upsert` inconditionnel.
+				create: vi.fn(),
+				updateMany: vi.fn(),
 				update: vi.fn(),
 			},
 			// ORD-STRIPE-003 : $transaction utilisée pour persister tasks + update event atomique
@@ -117,9 +120,12 @@ vi.mock("@/shared/lib/rate-limit", () => ({
 	getClientIp: mockGetClientIp,
 }));
 
-vi.mock("@/shared/lib/rate-limit-config", () => ({
-	STRIPE_WEBHOOK_LIMIT: { limit: 100, windowMs: 60_000 },
-}));
+// TEST-RLMOCK-01 : on N'isole PAS rate-limit-config — la route utilise la vraie
+// constante STRIPE_WEBHOOK_LIMIT, et les assertions ci-dessous vérifient sa vraie
+// valeur (1000, WEBHOOK-AUDIT-002). Re-mocker une valeur arbitraire rendrait le test
+// tautologique : il passerait même si la prod régressait sous le pic Stripe (~600/min),
+// provoquant des 429 sur backlog/rejeu et donc des webhooks perdus.
+import { STRIPE_WEBHOOK_LIMIT } from "@/shared/lib/rate-limit-config";
 
 import { POST } from "../route";
 
@@ -185,8 +191,11 @@ beforeEach(() => {
 	// Default: no existing webhook event (not duplicate)
 	mockPrisma.webhookEvent.findUnique.mockResolvedValue(null);
 
-	// Default: upsert returns a processing record with attempts=0
-	mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord());
+	// Default: create returns a processing record with attempts=0
+	mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord());
+
+	// Default: le claim conditionnel de reprise est gagné (IDEM-ROUTE-001).
+	mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
 
 	// Default: update resolves successfully
 	mockPrisma.webhookEvent.update.mockResolvedValue({});
@@ -282,9 +291,11 @@ describe("POST /api/webhooks/stripe - rate limit", () => {
 
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"stripe-webhook:203.0.113.10",
-			{ limit: 100, windowMs: 60_000 },
+			STRIPE_WEBHOOK_LIMIT,
 			"203.0.113.10",
 		);
+		// Garde anti-régression : la limite réelle doit rester ≥ pic Stripe (~600/min).
+		expect(STRIPE_WEBHOOK_LIMIT.limit).toBeGreaterThanOrEqual(1000);
 	});
 
 	it("uses 'unknown' identifier when client IP cannot be resolved", async () => {
@@ -295,7 +306,7 @@ describe("POST /api/webhooks/stripe - rate limit", () => {
 
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"stripe-webhook:unknown",
-			{ limit: 100, windowMs: 60_000 },
+			STRIPE_WEBHOOK_LIMIT,
 			null,
 		);
 	});
@@ -525,7 +536,9 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		await POST(req);
 
 		expect(mockDispatchEvent).not.toHaveBeenCalled();
-		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		// IDEM-ROUTE-001 : ni création, ni claim de reprise.
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("should query findUnique with the stripe event id", async () => {
@@ -538,7 +551,13 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 
 		expect(mockPrisma.webhookEvent.findUnique).toHaveBeenCalledWith({
 			where: { stripeEventId: "evt_unique_123" },
-			select: { id: true, status: true, receivedAt: true, processingStartedAt: true },
+			select: {
+				id: true,
+				status: true,
+				attempts: true,
+				receivedAt: true,
+				processingStartedAt: true,
+			},
 		});
 	});
 
@@ -546,12 +565,13 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_1",
 			status: WebhookEventStatus.FAILED,
+			attempts: 0,
 		});
 
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalled();
 		expect(response.status).toBe(200);
 	});
 
@@ -566,7 +586,9 @@ describe("POST /api/webhooks/stripe - idempotency", () => {
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		// IDEM-ROUTE-001 : ni création, ni claim de reprise.
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 		expect(response.status).toBe(200);
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
@@ -596,17 +618,15 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_stale",
 			status: WebhookEventStatus.PROCESSING,
+			attempts: 0,
 			receivedAt: new Date(FIXED_NOW_MS - 20 * 60 * 1000),
 		});
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh_stale", attempts: 1 }),
-		);
 
 		const req = makeRequest();
 		const response = await POST(req);
 
-		// Pas de court-circuit : l'upsert reprend la main + dispatch ré-exécuté.
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		// Pas de court-circuit : le claim de reprise passe + dispatch ré-exécuté.
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalled();
 		expect(mockDispatchEvent).toHaveBeenCalled();
 		expect(response.status).toBe(200);
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "processed" });
@@ -623,7 +643,9 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		// IDEM-ROUTE-001 : ni création, ni claim de reprise.
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 		expect(mockDispatchEvent).not.toHaveBeenCalled();
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
@@ -660,7 +682,9 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 		const response = await POST(req);
 
 		// Court-circuit : on ne barge PAS in sur le traitement concurrent du cron.
-		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		// IDEM-ROUTE-001 : ni création, ni claim de reprise.
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 		expect(mockDispatchEvent).not.toHaveBeenCalled();
 		expect(response.status).toBe(200);
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
@@ -673,15 +697,13 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 			receivedAt: new Date(FIXED_NOW_MS - 60 * 60 * 1000),
 			// Traitement courant démarré il y a 20 min (> seuil 15 min) → lambda crashée.
 			processingStartedAt: new Date(FIXED_NOW_MS - 20 * 60 * 1000),
+			attempts: 0,
 		});
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh_stale_processing_started", attempts: 1 }),
-		);
 
 		const req = makeRequest();
 		const response = await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalled();
 		expect(mockDispatchEvent).toHaveBeenCalled();
 		expect(response.status).toBe(200);
 		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "processed" });
@@ -689,32 +711,83 @@ describe("POST /api/webhooks/stripe - stale PROCESSING recovery", () => {
 });
 
 // ============================================================================
-// 5. Upsert PROCESSING record
+// 5. Enregistrement PROCESSING (create 1ʳᵉ réception / claim de reprise)
 // ============================================================================
 
-describe("POST /api/webhooks/stripe - upsert PROCESSING record", () => {
-	it("should upsert webhook event as PROCESSING", async () => {
+describe("POST /api/webhooks/stripe - PROCESSING record", () => {
+	it("should create the webhook event as PROCESSING on first delivery", async () => {
 		const event = makeStripeEvent({ id: "evt_upsert_test", type: "payment_intent.succeeded" });
 		mockConstructEvent.mockReturnValue(event);
 
 		const req = makeRequest();
 		await POST(req);
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalledWith({
-			where: { stripeEventId: "evt_upsert_test" },
-			create: {
+		expect(mockPrisma.webhookEvent.create).toHaveBeenCalledWith({
+			data: {
 				stripeEventId: "evt_upsert_test",
 				eventType: "payment_intent.succeeded",
 				status: WebhookEventStatus.PROCESSING,
 				// WEBHOOK-AUDIT-002 : horloge de fraîcheur du traitement courant.
 				processingStartedAt: expect.any(Date),
 			},
-			update: {
+			select: { id: true, attempts: true },
+		});
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
+	});
+
+	/**
+	 * @regression idem-route-001
+	 *
+	 * La reprise d'un event existant (FAILED / PROCESSING périmé) doit passer par un
+	 * claim CONDITIONNEL sur l'état exact lu par le pré-check, jamais par une écriture
+	 * inconditionnelle. L'ancien `upsert` écrivait PROCESSING sans ré-asserter le
+	 * statut lu : sur un event FAILED, la route et le cron retry-webhooks pouvaient
+	 * dispatcher le MÊME event en parallèle (le cron claim FAILED→PROCESSING pendant
+	 * que la route, qui avait lu FAILED, écrivait quand même). C'est la fenêtre qui
+	 * rendait atteignables les doublons handler-level, dont le doublon d'avoir sur
+	 * chargeback (IDEM-DISPUTE-001, P0).
+	 */
+	it("claims a resumed event on the exact state it read (status + attempts)", async () => {
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_resume",
+			status: WebhookEventStatus.FAILED,
+			attempts: 2,
+		});
+
+		const req = makeRequest();
+		await POST(req);
+
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalledWith({
+			where: {
+				id: "wh_resume",
+				status: WebhookEventStatus.FAILED,
+				attempts: 2,
+			},
+			data: {
 				attempts: { increment: 1 },
 				status: WebhookEventStatus.PROCESSING,
 				processingStartedAt: expect.any(Date),
 			},
 		});
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockDispatchEvent).toHaveBeenCalled();
+	});
+
+	it("does NOT dispatch when the resume claim is lost to a concurrent worker", async () => {
+		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
+			id: "wh_lost",
+			status: WebhookEventStatus.FAILED,
+			attempts: 1,
+		});
+		// Le cron retry-webhooks a claim l'event entre le findUnique et le claim.
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 0 });
+
+		const req = makeRequest();
+		const response = await POST(req);
+
+		expect(mockDispatchEvent).not.toHaveBeenCalled();
+		expect(response.status).toBe(200);
+		expect(mockNextResponseJson).toHaveBeenCalledWith({ received: true, status: "duplicate" });
 	});
 });
 
@@ -746,7 +819,7 @@ describe("POST /api/webhooks/stripe - successful processing", () => {
 
 	it("should update webhook record to COMPLETED when dispatch returns no skipped flag", async () => {
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks: [] });
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_completed" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_completed" }));
 
 		const req = makeRequest();
 		await POST(req);
@@ -762,7 +835,7 @@ describe("POST /api/webhooks/stripe - successful processing", () => {
 
 	it("should update webhook record to COMPLETED when dispatch returns null", async () => {
 		mockDispatchEvent.mockResolvedValue(null);
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_null_result" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_null_result" }));
 
 		const req = makeRequest();
 		await POST(req);
@@ -786,7 +859,7 @@ describe("POST /api/webhooks/stripe - skipped events", () => {
 		const unsupportedEvent = makeStripeEvent({ type: "customer.created" });
 		mockConstructEvent.mockReturnValue(unsupportedEvent);
 		mockIsEventSupported.mockReturnValue(false);
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_unsupported" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_unsupported" }));
 
 		const req = makeRequest();
 		const response = await POST(req);
@@ -812,7 +885,7 @@ describe("POST /api/webhooks/stripe - skipped events", () => {
 			skipped: true,
 			reason: "Unsupported event: customer.created",
 		});
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_skipped" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_skipped" }));
 
 		const req = makeRequest();
 		const response = await POST(req);
@@ -918,7 +991,7 @@ describe("POST /api/webhooks/stripe - post-webhook tasks", () => {
 describe("POST /api/webhooks/stripe - failed processing", () => {
 	it("should mark webhook record as FAILED when dispatchEvent throws", async () => {
 		mockDispatchEvent.mockRejectedValue(new Error("Handler failed"));
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_failed" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_failed" }));
 
 		const req = makeRequest();
 		// The outer catch returns 500
@@ -936,7 +1009,7 @@ describe("POST /api/webhooks/stripe - failed processing", () => {
 
 	it("should store error message string when error is not an Error instance", async () => {
 		mockDispatchEvent.mockRejectedValue("string error");
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord({ id: "wh_str_err" }));
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord({ id: "wh_str_err" }));
 
 		const req = makeRequest();
 		await POST(req);
@@ -972,16 +1045,14 @@ describe("POST /api/webhooks/stripe - failed processing", () => {
 describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	it("should send admin alert when attempts >= MAX_WEBHOOK_RETRY_ATTEMPTS - 1", async () => {
 		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so alert triggers when attempts >= 2.
-		// Realistic retry scenario: findUnique sees an existing FAILED record, so the
-		// post-upsert race-guard (existingEvent===null && attempts>=1) does NOT trigger.
+		// Retry réaliste : findUnique voit un FAILED existant → branche claim.
+		// IDEM-ROUTE-001 : le compteur post-claim vaut `attempts + 1` (1 + 1 = 2).
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_alert",
 			status: WebhookEventStatus.FAILED,
+			attempts: 1,
 		});
 		mockDispatchEvent.mockRejectedValue(new Error("Persistent failure"));
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh_alert", attempts: 2 }),
-		);
 
 		const event = makeStripeEvent({ id: "evt_alert", type: "checkout.session.completed" });
 		mockConstructEvent.mockReturnValue(event);
@@ -1002,7 +1073,7 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 		// MAX_WEBHOOK_RETRY_ATTEMPTS = 3, so NO alert when attempts < 2.
 		// First failure: no existing record, upsert hits create branch (attempts=0).
 		mockDispatchEvent.mockRejectedValue(new Error("First failure"));
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
+		mockPrisma.webhookEvent.create.mockResolvedValue(
 			makeWebhookRecord({ id: "wh_no_alert", attempts: 0 }),
 		);
 
@@ -1013,15 +1084,14 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 	});
 
 	it("should NOT send admin alert when attempts is 1 (below threshold)", async () => {
-		// Realistic retry: findUnique returns existing FAILED to bypass race-guard.
+		// Retry réaliste : findUnique renvoie un FAILED existant → branche claim.
+		// IDEM-ROUTE-001 : compteur post-claim = 0 + 1 = 1, sous le seuil d'alerte.
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_no_alert_2",
 			status: WebhookEventStatus.FAILED,
+			attempts: 0,
 		});
 		mockDispatchEvent.mockRejectedValue(new Error("Second failure"));
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh_no_alert_2", attempts: 1 }),
-		);
 
 		const req = makeRequest();
 		await POST(req);
@@ -1033,12 +1103,10 @@ describe("POST /api/webhooks/stripe - admin alert on max retries", () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue({
 			id: "wh_failed_alerted",
 			status: WebhookEventStatus.FAILED,
+			attempts: 1,
 		});
 		mockDispatchEvent.mockRejectedValue(new Error("Persistent failure"));
 		mockSendWebhookFailedAlert.mockResolvedValue({ success: true });
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh_failed_alerted", attempts: 2 }),
-		);
 
 		const req = makeRequest();
 		await POST(req);
@@ -1072,7 +1140,7 @@ describe("POST /api/webhooks/stripe - outer catch", () => {
 	});
 
 	it("should return 500 when prisma upsert throws unexpectedly", async () => {
-		mockPrisma.webhookEvent.upsert.mockRejectedValue(new Error("DB connection lost"));
+		mockPrisma.webhookEvent.create.mockRejectedValue(new Error("DB connection lost"));
 
 		const req = makeRequest();
 		const response = await POST(req);
@@ -1126,8 +1194,8 @@ describe("POST /api/webhooks/stripe - full happy path", () => {
 			callOrder.push("findUnique");
 			return null;
 		});
-		mockPrisma.webhookEvent.upsert.mockImplementation(async () => {
-			callOrder.push("upsert");
+		mockPrisma.webhookEvent.create.mockImplementation(async () => {
+			callOrder.push("create");
 			return makeWebhookRecord({ id: "wh_full" });
 		});
 		mockDispatchEvent.mockImplementation(async () => {
@@ -1162,7 +1230,7 @@ describe("POST /api/webhooks/stripe - full happy path", () => {
 
 		expect(callOrder).toEqual([
 			"findUnique",
-			"upsert",
+			"create",
 			"dispatchEvent",
 			"transaction",
 			"update",

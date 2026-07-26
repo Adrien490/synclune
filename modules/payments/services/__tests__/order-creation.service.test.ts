@@ -8,6 +8,7 @@ const {
 	mockCalculateShipping,
 	mockGenerateOrderNumber,
 	mockGetValidImageUrl,
+	mockSentryCaptureMessage,
 	MockBusinessError,
 	MOCK_DISCOUNT_ERROR_MESSAGES,
 	MOCK_DEFAULT_CURRENCY,
@@ -42,6 +43,7 @@ const {
 		mockCalculateShipping: vi.fn(),
 		mockGenerateOrderNumber: vi.fn(),
 		mockGetValidImageUrl: vi.fn(),
+		mockSentryCaptureMessage: vi.fn(),
 		MockBusinessError,
 		MOCK_DISCOUNT_ERROR_MESSAGES: { NOT_FOUND: "Code promo introuvable" },
 		MOCK_DEFAULT_CURRENCY: "EUR",
@@ -80,6 +82,15 @@ vi.mock("@/modules/discounts/constants/discount.constants", () => ({
 
 vi.mock("@/shared/constants/currency", () => ({
 	DEFAULT_CURRENCY: MOCK_DEFAULT_CURRENCY,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	withScope: vi.fn((cb: (scope: unknown) => void) =>
+		cb({ setLevel: vi.fn(), setTag: vi.fn(), setFingerprint: vi.fn(), setContext: vi.fn() }),
+	),
+	captureMessage: mockSentryCaptureMessage,
+	captureException: vi.fn(),
+	addBreadcrumb: vi.fn(),
 }));
 
 import { createOrderInTransaction } from "../order-creation.service";
@@ -205,6 +216,8 @@ describe("createOrderInTransaction — stock verification", () => {
 				{ skuId: "sku_2", quantity: 2 },
 			],
 			skuDetailsResults: [makeSkuResult({ id: "sku_1" }), makeSkuResult({ id: "sku_2" })],
+			// 1×2990 + 2×2990 — cohérent avec l'invariant CHECKOUT-TOTAL-005
+			subtotal: 8970,
 		});
 
 		await createOrderInTransaction(params);
@@ -212,14 +225,42 @@ describe("createOrderInTransaction — stock verification", () => {
 		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(2);
 	});
 
-	it("should skip FOR UPDATE query when skuResult is not successful", async () => {
+	// CHECKOUT-TOTAL-005 : plus JAMAIS de skip silencieux — un cartItem sans
+	// skuDetailsResult correspondant signifie qu'un article facturé (inclus dans
+	// le subtotal) ne serait pas snapshoté → fail-closed AVANT la transaction.
+	// @regression checkout-cart-item-fail-closed
+	it("CHECKOUT-TOTAL-005: throws (fail-closed) when a cart item has no matching sku result — no silent skip", async () => {
 		const params = makeParams({
 			skuDetailsResults: [{ success: false as const, error: "not found" }],
 		});
 
-		await createOrderInTransaction(params);
-
+		await expect(createOrderInTransaction(params)).rejects.toThrow(MockBusinessError);
+		await expect(createOrderInTransaction(params)).rejects.toThrow(
+			"Certains articles de votre panier sont introuvables. Veuillez actualiser la page.",
+		);
+		// Rejet AVANT la transaction : aucun lock pris, rien créé.
 		expect(mockTx.$queryRaw).not.toHaveBeenCalled();
+		expect(mockTx.order.create).not.toHaveBeenCalled();
+	});
+
+	// CHECKOUT-TOTAL-005 : le subtotal paramètre doit égaler Σ priceInclTax×quantity
+	// des lignes snapshotées — toute divergence (filtrage/arrondi amont) est un bug
+	// interne → rejet fail-closed + alerte Sentry, AVANT la transaction.
+	// @regression checkout-subtotal-invariant
+	it("CHECKOUT-TOTAL-005: throws and alerts Sentry when subtotal param diverges from line items sum", async () => {
+		// Items = 2×2990 = 5980, subtotal param volontairement faux.
+		const params = makeParams({ subtotal: 6000 });
+
+		await expect(createOrderInTransaction(params)).rejects.toThrow(
+			"Le montant de votre panier a changé. Veuillez actualiser la page.",
+		);
+		expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
+			"createOrderInTransaction: subtotal param diverges from line items sum",
+			"error",
+		);
+		// Rejet AVANT la transaction : aucun lock pris, rien créé.
+		expect(mockTx.$queryRaw).not.toHaveBeenCalled();
+		expect(mockTx.order.create).not.toHaveBeenCalled();
 	});
 
 	it("should throw BusinessError when SKU row not found in DB", async () => {
@@ -353,6 +394,78 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(createCall.data.customerName).toBe("Marie Dupont");
 	});
 
+	// Invariant #5 (CLAUDE.md § Facturation électronique) — snapshot adresse figé
+	// au checkout. Verrouille en VALEUR le mapping formulaire → colonnes Order que
+	// le scan statique order-address-snapshot-immutability.regression.test.ts ne
+	// couvre pas (un swap city↔postalCode ou la perte d'addressLine2 passerait
+	// inaperçu avec la seule allowlist de writers).
+	it("should snapshot the shipping address field-by-field on the order", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		await createOrderInTransaction(
+			makeParams({
+				shippingAddress: {
+					addressLine1: "12 Rue de la Paix",
+					addressLine2: "Bâtiment B, 3e étage",
+					postalCode: "75001",
+					city: "Paris",
+					country: "FR",
+					phoneNumber: "+33612345678",
+				},
+				firstName: "Marie",
+				lastName: "Dupont",
+			}),
+		);
+
+		const createCall = mockTx.order.create.mock.calls[0]![0];
+		expect(createCall.data).toMatchObject({
+			customerName: "Marie Dupont",
+			shippingFirstName: "Marie",
+			shippingLastName: "Dupont",
+			shippingAddress1: "12 Rue de la Paix",
+			shippingAddress2: "Bâtiment B, 3e étage",
+			shippingPostalCode: "75001",
+			shippingCity: "Paris",
+			shippingCountry: "FR",
+			shippingPhone: "+33612345678",
+		});
+	});
+
+	it("should not write any billing* field at checkout (billingSameAsShipping schema default)", async () => {
+		// Design B2C assumé : aucun billing* n'est écrit au checkout — les défauts
+		// schema s'appliquent (billingSameAsShipping=true, billing*=NULL) et la
+		// facture retombe sur le shipping via buildBillingAddress. Seul writer
+		// billing : l'action admin update-order-billing-address.
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		await createOrderInTransaction(makeParams());
+
+		const createCall = mockTx.order.create.mock.calls[0]![0];
+		const billingKeys = Object.keys(createCall.data).filter((key) => key.startsWith("billing"));
+		expect(billingKeys).toEqual([]);
+	});
+
+	it("should coalesce missing addressLine2 to null and missing phone to empty string", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		await createOrderInTransaction(
+			makeParams({
+				shippingAddress: {
+					addressLine1: "3 Allée des Tilleuls",
+					addressLine2: undefined,
+					postalCode: "44000",
+					city: "Nantes",
+					country: "FR",
+					phoneNumber: undefined,
+				},
+			}),
+		);
+
+		const createCall = mockTx.order.create.mock.calls[0]![0];
+		expect(createCall.data.shippingAddress2).toBeNull();
+		expect(createCall.data.shippingPhone).toBe("");
+	});
+
 	it("should denormalize product and SKU data on order items", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ id: "order_1" }));
 
@@ -363,8 +476,33 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(itemCall.data.productId).toBe("prod_1");
 		expect(itemCall.data.skuId).toBe("sku_1");
 		expect(itemCall.data.productTitle).toBe("Bague Étoile");
+		expect(itemCall.data.skuSku).toBe("SKU-001");
 		expect(itemCall.data.price).toBe(2990);
 		expect(itemCall.data.quantity).toBe(2);
+	});
+
+	// EINV-EREPORT-007/F3 — le snapshot operationCategory doit refléter le
+	// ProductType, pas retomber sur GOODS quand la donnée est présente.
+	it("should snapshot operationCategory from the product (SERVICES)", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		const serviceSku = makeSkuResult({
+			product: { ...makeSku().product, operationCategory: "SERVICES" },
+		});
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [serviceSku] }));
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		expect(itemCall.data.operationCategory).toBe("SERVICES");
+	});
+
+	it("should default operationCategory to GOODS when absent from sku details", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+
+		await createOrderInTransaction(makeParams());
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		expect(itemCall.data.operationCategory).toBe("GOODS");
 	});
 
 	it("should use primary image URL for order item", async () => {
@@ -635,8 +773,7 @@ describe("createOrderInTransaction — discount flow", () => {
 
 		// Order.customerEmail is stored normalized
 		const createCall = mockTx.order.create.mock.calls.at(-1)?.[0] as
-			| { data: { customerEmail: string } }
-			| undefined;
+			{ data: { customerEmail: string } } | undefined;
 		expect(createCall?.data.customerEmail).toBe("marie@example.com");
 	});
 

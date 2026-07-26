@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { isAllowedMediaDomain, ALLOWED_MEDIA_DOMAINS } from "@/shared/lib/media-validation";
+import { blurDataUrlSchema, mediaDimensionSchema } from "@/shared/schemas/media.schema";
 import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
 /**
@@ -14,18 +15,19 @@ const validateMediaUrl = (url: string): boolean => isAllowedMediaDomain(url, ALL
  * Securise: n'accepte que les URLs provenant de domaines autorises
  */
 export const imageSchema = z.object({
-	url: z.string().url({ message: "L'URL du media doit être valide" }).refine(validateMediaUrl, {
+	url: z.url({ message: "L'URL du media doit être valide" }).refine(validateMediaUrl, {
 		message: "L'URL du média doit provenir d'un domaine autorisé",
 	}),
 	thumbnailUrl: z
-		.string()
 		.url()
 		.refine(validateMediaUrl, {
 			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
 		})
 		.optional()
 		.nullable(),
-	blurDataUrl: z.string().max(10000).optional(),
+	blurDataUrl: blurDataUrlSchema.optional(),
 	altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional(),
 	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
+	width: mediaDimensionSchema.optional().nullable(),
+	height: mediaDimensionSchema.optional().nullable(),
 });

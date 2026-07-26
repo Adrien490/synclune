@@ -32,6 +32,8 @@ const {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
+		// STOCK-02 : acquireOrderPaidLockTx fait un tx.$queryRaw (advisory lock).
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -105,7 +107,14 @@ vi.mock("../../utils/invoice-token", () => ({
 }));
 
 vi.mock("@/shared/lib/stripe", () => ({
-	stripe: { paymentIntents: { cancel: mockStripePaymentIntentsCancel } },
+	stripe: {
+		paymentIntents: {
+			cancel: mockStripePaymentIntentsCancel,
+			// EINV-CASH-002 : le préflight statut PI ne doit pas interférer avec les
+			// assertions Sentry de cette suite (un retrieve manquant serait capturé).
+			retrieve: vi.fn().mockResolvedValue({ status: "succeeded" }),
+		},
+	},
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -114,6 +123,13 @@ vi.mock("@sentry/nextjs", () => ({
 	captureMessage: vi.fn(),
 	addBreadcrumb: vi.fn(),
 	startSpan: vi.fn((_opts: unknown, cb: () => unknown) => cb()),
+}));
+
+// EINV-CASH-005 : import dynamique post-commit (émission eager facture) — mocké
+// en succès pour ne pas interférer avec les assertions Sentry de cette suite
+// (la chaîne d'archivage tire UploadThing à l'import).
+vi.mock("@/modules/cron/services/reconcile-invoices.service", () => ({
+	reconcileInvoiceOrder: vi.fn().mockResolvedValue({ kind: "recovered" }),
 }));
 
 import { markAsPaid } from "../mark-as-paid";

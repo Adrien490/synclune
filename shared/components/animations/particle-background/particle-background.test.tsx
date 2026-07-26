@@ -1,79 +1,19 @@
-import { act, cleanup, render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock ResizeObserver (not available in jsdom)
-const resizeObserverInstances: { callback: ResizeObserverCallback; targets: Element[] }[] = [];
-class MockResizeObserver {
-	private callback: ResizeObserverCallback;
-	private targets: Element[] = [];
-	constructor(callback: ResizeObserverCallback) {
-		this.callback = callback;
-		resizeObserverInstances.push({ callback, targets: this.targets });
-	}
-	observe(target: Element) {
-		this.targets.push(target);
-	}
-	unobserve() {}
-	disconnect() {
-		this.targets.length = 0;
-	}
-}
-vi.stubGlobal("ResizeObserver", MockResizeObserver);
-
 // Mock motion/react before importing the component
-vi.mock("motion/react", () => {
-	const actual = vi.importActual("motion/react");
-	return {
-		...actual,
-		useReducedMotion: vi.fn(() => false),
-		useInView: vi.fn(() => true),
-		useMotionValue: vi.fn((initial) => ({
-			get: () => initial,
-			set: vi.fn(),
-		})),
-		useTransform: vi.fn((mvOrArray: unknown, fnOrInput: unknown, _output?: unknown) => {
-			// Handle both signatures:
-			// useTransform(mv, fn), useTransform([mv1, mv2], fn), useTransform(mv, input[], output[])
-			if (typeof fnOrInput === "function") {
-				// When first arg is an array of MotionValues, pass array of zeros to the function
-				const input = Array.isArray(mvOrArray) ? mvOrArray.map(() => 0) : 0;
-				return { get: () => fnOrInput(input), set: vi.fn() };
-			}
-			// Array mapping form: return a MotionValue-like object
-			return { get: () => 1, set: vi.fn() };
-		}),
-		useScroll: vi.fn(() => ({
-			scrollYProgress: { get: () => 0.5, set: vi.fn() },
-		})),
-		motion: new Proxy(
-			{},
-			{
-				get: (_target, prop: string) => {
-					// Return a component that renders the HTML element with forwarded props
-					const Component = ({ children, ...props }: Record<string, unknown>) => {
-						const { animate: _animate, transition: _transition, ...htmlProps } = props;
-						const Tag = prop as unknown as React.ElementType;
-						return <Tag {...htmlProps}>{children}</Tag>;
-					};
-					Component.displayName = `motion.${prop}`;
-					return Component;
-				},
+vi.mock("motion/react", () => ({
+	useReducedMotion: vi.fn(() => false),
+	useInView: vi.fn(() => true),
+	m: new Proxy(
+		{},
+		{
+			get: (_target, prop) => {
+				if (typeof prop === "symbol") return undefined;
+				return prop;
 			},
-		),
-		m: new Proxy(
-			{},
-			{
-				get: (_target, prop) => {
-					if (typeof prop === "symbol") return undefined;
-					return prop;
-				},
-			},
-		),
-	};
-});
-
-vi.mock("@/shared/hooks/use-touch-device", () => ({
-	useIsTouchDevice: vi.fn(() => false),
+		},
+	),
 }));
 
 vi.mock("@/shared/hooks/use-mounted", () => ({
@@ -82,7 +22,6 @@ vi.mock("@/shared/hooks/use-mounted", () => ({
 
 // Now import the component after mocks are set up
 const { useReducedMotion, useInView } = await import("motion/react");
-const { useIsTouchDevice } = await import("@/shared/hooks/use-touch-device");
 const { useMounted } = await import("@/shared/hooks/use-mounted");
 const { ParticleBackground } = await import("./particle-background");
 
@@ -113,7 +52,6 @@ function mockMatchMedia(queries: Record<string, boolean>) {
 
 afterEach(() => {
 	cleanup();
-	resizeObserverInstances.length = 0;
 });
 
 // Ensure matchMedia is always available with default values (desktop breakpoint active)
@@ -174,13 +112,6 @@ describe("ParticleBackground", () => {
 		vi.mocked(useReducedMotion).mockReturnValue(false);
 	});
 
-	it("renders null when disableOnTouch is true and device is touch", () => {
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(true);
-		const { container } = render(<ParticleBackground disableOnTouch />);
-		expect(container.firstElementChild).toBeNull();
-		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
-	});
-
 	it("applies custom className", () => {
 		const { container } = render(<ParticleBackground className="my-class" />);
 		const root = container.firstElementChild;
@@ -219,12 +150,8 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders mixed shapes when shape is an array", () => {
-		const { container } = render(<ParticleBackground count={4} shape={["circle", "crescent"]} />);
+		const { container } = render(<ParticleBackground count={4} shape={["circle", "heart"]} />);
 		const root = container.firstElementChild!;
-		// crescent is SVG, so we should find SVG elements
-		const svgs = root.querySelectorAll("svg");
-		expect(svgs.length).toBeGreaterThan(0);
-		// Also regular spans (circle shapes)
 		const spans = root.querySelectorAll("span.absolute");
 		expect(spans.length).toBe(4);
 	});
@@ -238,7 +165,7 @@ describe("ParticleBackground", () => {
 	});
 
 	it("renders all animation styles without crashing", () => {
-		const styles = ["float", "drift", "rise", "orbit", "breathe", "sparkle", "cascade"] as const;
+		const styles = ["float", "drift", "breathe"] as const;
 		for (const animationStyle of styles) {
 			expect(() =>
 				render(<ParticleBackground count={2} animationStyle={animationStyle} />),
@@ -247,40 +174,12 @@ describe("ParticleBackground", () => {
 		}
 	});
 
-	it("pauses particles when tab becomes hidden via visibilitychange", () => {
-		// useInView returns true, so particles are visible initially
-		vi.mocked(useInView).mockReturnValue(true);
-		const { container } = render(<ParticleBackground count={3} />);
-
-		const root = container.firstElementChild!;
-		// Particles should be rendered initially
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-
-		// Simulate tab going hidden
-		act(() => {
-			Object.defineProperty(document, "visibilityState", {
-				value: "hidden",
-				writable: true,
-				configurable: true,
-			});
-			document.dispatchEvent(new Event("visibilitychange"));
-		});
-
-		// Particles should be hidden (isInView becomes false because tabVisible=false)
-		expect(root.querySelectorAll("span.absolute").length).toBe(0);
-
-		// Simulate tab becoming visible again
-		act(() => {
-			Object.defineProperty(document, "visibilityState", {
-				value: "visible",
-				writable: true,
-				configurable: true,
-			});
-			document.dispatchEvent(new Event("visibilitychange"));
-		});
-
-		// Particles should be visible again
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
+	it("renders all shapes without crashing", () => {
+		const shapes = ["circle", "diamond", "heart", "pearl", "drop"] as const;
+		for (const shape of shapes) {
+			expect(() => render(<ParticleBackground count={2} shape={shape} />)).not.toThrow();
+			cleanup();
+		}
 	});
 
 	it("renders null when forced-colors mode is active", () => {
@@ -320,59 +219,6 @@ describe("ParticleBackground", () => {
 		expect(root.querySelectorAll("span.absolute").length).toBe(3);
 	});
 
-	it("renders with scrollFade prop without crashing", () => {
-		expect(() => render(<ParticleBackground count={3} scrollFade />)).not.toThrow();
-		// Should render particles normally
-	});
-
-	it("renders sparkle animation style", () => {
-		const { container } = render(<ParticleBackground count={3} animationStyle="sparkle" />);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-	});
-
-	it("renders cascade animation style", () => {
-		const { container } = render(<ParticleBackground count={3} animationStyle="cascade" />);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-	});
-
-	it("renders star shape without crashing", () => {
-		const { container } = render(<ParticleBackground count={3} shape="star" />);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-	});
-
-	it("renders hexagon shape without crashing", () => {
-		const { container } = render(<ParticleBackground count={3} shape="hexagon" />);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-	});
-
-	it("renders mixed shapes including star and hexagon", () => {
-		const { container } = render(
-			<ParticleBackground count={6} shape={["circle", "star", "hexagon"]} />,
-		);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(6);
-	});
-
-	it("renders with scrollParallax prop without crashing", () => {
-		expect(() => render(<ParticleBackground count={3} scrollParallax />)).not.toThrow();
-	});
-
-	it("renders with combined scrollFade and scrollParallax props", () => {
-		expect(() => render(<ParticleBackground count={3} scrollFade scrollParallax />)).not.toThrow();
-	});
-
-	// ─── Phase 3 new features ──────────────────────────────────────────
-
-	it("renders twinkle animation style without crashing", () => {
-		const { container } = render(<ParticleBackground count={3} animationStyle="twinkle" />);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(3);
-	});
-
 	it("renders with gradient enabled without crashing", () => {
 		// The radial-gradient fill content is asserted in utils.test.ts (getShapeStyles);
 		// jsdom does not reliably serialize color-mix()/radial-gradient inline styles.
@@ -381,84 +227,34 @@ describe("ParticleBackground", () => {
 		expect(root.querySelectorAll("span.absolute").length).toBe(2);
 	});
 
-	it("renders a constellation overlay (svg with preserveAspectRatio=none) when connect is set", () => {
-		const { container } = render(
-			<ParticleBackground count={10} connect={{ maxDistance: 100 }} shape="circle" />,
-		);
-		const root = container.firstElementChild!;
-		const overlay = root.querySelector('svg[preserveAspectRatio="none"]');
-		expect(overlay).toBeTruthy();
-		// maxDistance=100 (whole container) → every pair is linked → lines present
-		expect(overlay!.querySelectorAll("line").length).toBeGreaterThan(0);
+	// ─── seed ───────────────────────────────────────────────────────────
+
+	it("produces a different layout for a different seed (same props otherwise)", () => {
+		const { container: a } = render(<ParticleBackground count={4} seed={0} />);
+		const { container: b } = render(<ParticleBackground count={4} seed={1} />);
+
+		const positions = (root: Element) =>
+			Array.from(root.querySelectorAll("span.absolute")).map((s) => {
+				const el = s as HTMLElement;
+				return `${el.style.left},${el.style.top}`;
+			});
+
+		const posA = positions(a.firstElementChild!);
+		const posB = positions(b.firstElementChild!);
+		expect(posA).toHaveLength(4);
+		expect(posA).not.toEqual(posB);
 	});
 
-	it("does NOT render the constellation overlay under reduced motion", () => {
-		vi.mocked(useReducedMotion).mockReturnValue(true);
-		const { container } = render(
-			<ParticleBackground count={10} connect={{ maxDistance: 100 }} shape="circle" />,
-		);
-		const root = container.firstElementChild!;
-		expect(root.querySelector('svg[preserveAspectRatio="none"]')).toBeNull();
-		vi.mocked(useReducedMotion).mockReturnValue(false);
-	});
+	it("produces the same layout for the same seed (deterministic)", () => {
+		const { container: a } = render(<ParticleBackground count={4} seed={5} />);
+		const { container: b } = render(<ParticleBackground count={4} seed={5} />);
 
-	it("caps particle count to 12 when constellation mode is active", () => {
-		const { container } = render(
-			<ParticleBackground count={30} connect={{ maxDistance: 100 }} shape="circle" />,
-		);
-		const root = container.firstElementChild!;
-		expect(root.querySelectorAll("span.absolute").length).toBe(12);
-	});
+		const positions = (root: Element) =>
+			Array.from(root.querySelectorAll("span.absolute")).map((s) => {
+				const el = s as HTMLElement;
+				return `${el.style.left},${el.style.top}`;
+			});
 
-	it("renders with density prop without crashing (falls back to count until measured)", () => {
-		expect(() => render(<ParticleBackground count={4} density={20} />)).not.toThrow();
-	});
-});
-
-// ─── scrollFade progressive opacity mapping ──────────────────────────
-
-describe("scrollFade opacity mapping", () => {
-	it("configures progressive opacity [0→0, 0.15→1, 0.85→1, 1→0]", async () => {
-		const { useTransform } = await import("motion/react");
-		vi.mocked(useTransform).mockClear();
-
-		render(<ParticleBackground count={1} scrollFade />);
-
-		// Find the array mapping call (second arg is an array, not a function)
-		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
-			Array.isArray(args[1]),
-		);
-
-		expect(mappingCall).toBeDefined();
-		// Input breakpoints: 0%, 15%, 85%, 100% scroll progress
-		expect(mappingCall![1]).toEqual([0, 0.15, 0.85, 1]);
-		// Output opacity: fade in, hold, fade out
-		expect(mappingCall![2]).toEqual([0, 1, 1, 0]);
-	});
-
-	it("does NOT compute scrollOpacity when no scroll feature is enabled (F5: scroll pipeline gated)", async () => {
-		const { useTransform } = await import("motion/react");
-		vi.mocked(useTransform).mockClear();
-
-		render(<ParticleBackground count={1} />);
-
-		// Without scrollFade/scrollParallax, useScrollFade (and its array-mapping useTransform)
-		// is never mounted — the scroll listener pipeline stays off.
-		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
-			Array.isArray(args[1]),
-		);
-		expect(mappingCall).toBeUndefined();
-	});
-
-	it("computes scrollOpacity when scrollParallax is enabled", async () => {
-		const { useTransform } = await import("motion/react");
-		vi.mocked(useTransform).mockClear();
-
-		render(<ParticleBackground count={1} scrollParallax />);
-
-		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
-			Array.isArray(args[1]),
-		);
-		expect(mappingCall).toBeDefined();
+		expect(positions(a.firstElementChild!)).toEqual(positions(b.firstElementChild!));
 	});
 });

@@ -13,7 +13,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 
-export interface SortableColorChip {
+interface SortableColorChip {
 	id: string;
 	name: string;
 	hex: string;

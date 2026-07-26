@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 type TiltDirection = "left" | "right" | "none";
 export type WashiTapeColor = "pink" | "lavender" | "mint" | "peach";
 export type WashiTapePosition = "top-left" | "top-right" | "both";
-export type PolaroidAspect = "polaroid" | "square" | "landscape" | "portrait";
+type PolaroidAspect = "polaroid" | "square" | "landscape" | "portrait";
 
 interface PolaroidFrameProps {
 	children: ReactNode;
@@ -44,10 +44,12 @@ interface PolaroidFrameProps {
 
 const TILT_DEGREES: Record<TiltDirection, number> = { left: -2, right: 2, none: 0 };
 
+// Dérivés directionnels de --shadow-floating (globals.css) : même famille d'ombre
+// décorative, offset x signé selon le tilt du polaroid (non tokenisable en 1 var).
 const tiltShadows: Record<TiltDirection, string> = {
-	left: "2px 6px 20px rgba(0,0,0,0.13)",
-	right: "-2px 6px 20px rgba(0,0,0,0.13)",
-	none: "0 6px 20px rgba(0,0,0,0.12)",
+	left: "2px 6px 20px oklch(0 0 0 / 0.13)",
+	right: "-2px 6px 20px oklch(0 0 0 / 0.13)",
+	none: "0 6px 20px oklch(0 0 0 / 0.12)",
 };
 
 const washiColors: Record<WashiTapeColor, string> = {

@@ -6,10 +6,18 @@
  * faisait `findUnique → null`, la 2e idem ; toutes deux entraient dans
  * l'upsert qui hit la branche UPDATE → traitement dupliqué (P2002 ignoré).
  *
- * Fix : (a) race-guard `existingEvent === null && webhookRecord.attempts >= 1
- * → return duplicate` ajouté après upsert. (b) Le mock Prisma DOIT throw une
+ * Fix initial : (a) race-guard `existingEvent === null && webhookRecord.attempts
+ * >= 1 → return duplicate` ajouté après upsert. (b) Le mock Prisma DOIT throw une
  * vraie subclass `Prisma.PrismaClientKnownRequestError` via `vi.hoisted` +
  * `vi.mock("@/app/generated/prisma/client", () => ({ Prisma: { ... } }))`.
+ *
+ * MISE À JOUR IDEM-ROUTE-001 (audit idempotence 2026-07-26) : l'`upsert` a été
+ * remplacé par `create` (1ʳᵉ réception, collision = vrai P2002) + un claim
+ * CONDITIONNEL `updateMany({status, attempts})` pour les reprises. Le point (a)
+ * est donc superseded par une garde plus forte (contrainte DB + claim optimiste) ;
+ * le point (b) reste impératif. L'ancien upsert écrivait PROCESSING sans
+ * ré-asserter le statut lu, ce qui laissait la route et le cron retry-webhooks
+ * dispatcher le même event FAILED en parallèle.
  * Un `Object.assign(new Error(), { code: "P2002" })` n'est PAS `instanceof
  * PrismaClientKnownRequestError` → la branche outer-catch n'est jamais hit
  * et le test passe "green for the wrong reason".
@@ -65,7 +73,9 @@ const {
 		mockPrisma: {
 			webhookEvent: {
 				findUnique: vi.fn(),
-				upsert: vi.fn(),
+				// IDEM-ROUTE-001 : create (1ʳᵉ réception) + updateMany (claim de reprise).
+				create: vi.fn(),
+				updateMany: vi.fn(),
 				update: vi.fn(),
 			},
 			$transaction: vi.fn(),
@@ -182,7 +192,8 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		mockHeaders.mockResolvedValue(makeHeadersList());
 		mockConstructEvent.mockReturnValue(makeStripeEvent());
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue(null);
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(makeWebhookRecord());
+		mockPrisma.webhookEvent.create.mockResolvedValue(makeWebhookRecord());
+		mockPrisma.webhookEvent.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.webhookEvent.update.mockResolvedValue({});
 		mockIsEventSupported.mockReturnValue(true);
 		mockDispatchEvent.mockResolvedValue({ success: true, tasks: [] });
@@ -225,7 +236,7 @@ describe("Webhook concurrency - duplicate event processing", () => {
 
 		const result = await POST(makeRequest());
 
-		expect(mockPrisma.webhookEvent.upsert).toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).toHaveBeenCalled();
 		expect(result.status).toBe(200);
 	});
 
@@ -236,7 +247,8 @@ describe("Webhook concurrency - duplicate event processing", () => {
 
 		const result = await POST(makeRequest());
 
-		expect(mockPrisma.webhookEvent.upsert).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.create).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
 		expect(result.status).toBe(200);
 	});
 
@@ -261,7 +273,7 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		// Use a real PrismaClientKnownRequestError subclass — `Object.assign(new Error, {code})`
 		// is NOT an instance, so the route's P2002 branch would never fire and the test
 		// would silently pass via the outer catch (testing the wrong behavior).
-		mockPrisma.webhookEvent.upsert.mockRejectedValue(
+		mockPrisma.webhookEvent.create.mockRejectedValue(
 			new PrismaClientKnownRequestError("Unique constraint failed", { code: "P2002" }),
 		);
 
@@ -276,7 +288,7 @@ describe("Webhook concurrency - duplicate event processing", () => {
 	});
 
 	it("should rethrow non-P2002 Prisma errors to outer catch (500)", async () => {
-		mockPrisma.webhookEvent.upsert.mockRejectedValue(
+		mockPrisma.webhookEvent.create.mockRejectedValue(
 			new PrismaClientKnownRequestError("Connection lost", { code: "P1001" }),
 		);
 
@@ -285,22 +297,21 @@ describe("Webhook concurrency - duplicate event processing", () => {
 		expect(result.status).toBe(500);
 	});
 
-	it("should skip dispatch when concurrent upsert race detected (existingEvent=null but attempts>=1)", async () => {
-		// Race scenario: thread A and B both see findUnique=null at the same time.
-		// Thread B then upserts AFTER thread A — Prisma's upsert hits the update branch
-		// (attempts incremented to 1). Route should skip dispatch to avoid double-processing.
+	// IDEM-ROUTE-001 : remplace l'ancien test « race-guard post-upsert (existingEvent=null
+	// mais attempts>=1) ». Cette heuristique sur `attempts` n'existe plus : la 1ʳᵉ
+	// réception passe par un `create`, donc une création concurrente lève un vrai P2002
+	// (testé ci-dessus) au lieu de retomber silencieusement sur une branche `update`.
+	// La garde est désormais la contrainte d'unicité DB, strictement plus forte qu'un
+	// compteur lu après écriture.
+	it("never resurfaces a pre-existing row through the create path (no silent update branch)", async () => {
 		mockPrisma.webhookEvent.findUnique.mockResolvedValue(null);
-		mockPrisma.webhookEvent.upsert.mockResolvedValue(
-			makeWebhookRecord({ id: "wh-race", status: "PROCESSING", attempts: 1 }),
-		);
 
-		const result = await POST(makeRequest());
+		await POST(makeRequest());
 
-		expect(result.status).toBe(200);
-		expect(mockNextResponseJson).toHaveBeenCalledWith({
-			received: true,
-			status: "duplicate",
-		});
-		expect(mockDispatchEvent).not.toHaveBeenCalled();
+		// Branche 1ʳᵉ réception : `create` seul. Aucun `updateMany` (ce serait une
+		// reprise) et aucun `upsert` (qui masquerait la collision en update silencieux).
+		expect(mockPrisma.webhookEvent.create).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.webhookEvent.updateMany).not.toHaveBeenCalled();
+		expect(mockPrisma.webhookEvent).not.toHaveProperty("upsert");
 	});
 });

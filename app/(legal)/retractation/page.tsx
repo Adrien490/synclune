@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { PrintButton } from "./_components/print-button";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Formulaire de rétractation | Synclune",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
 export default async function RetractationPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
-	cacheTag("legal-retractation");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_RETRACTATION);
 
 	// Récupérer l'email de contact depuis les variables d'environnement
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";

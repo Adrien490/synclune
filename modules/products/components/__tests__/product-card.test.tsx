@@ -625,13 +625,29 @@ describe("ProductCard", () => {
 			expect(img).toHaveAttribute("data-fetch-priority", "high");
 		});
 
-		it("above-fold non-LCP (index=1-3): preload=false + eager + fetchPriority=high (no <link rel=preload> to spare bandwidth)", () => {
+		// `fetchPriority="high"` est reserve a l'UNIQUE candidat LCP (index 0).
+		// L'accorder aux 4 cartes above-fold faisait se disputer la bande passante
+		// 4G a 4 images et retardait celle qui EST le LCP (parite collection-image-item).
+		it("above-fold non-LCP (index=1-3): preload=false + eager + fetchPriority=auto (spares 4G bandwidth for the LCP image)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} index={2} />);
 			const img = container.querySelector("img[src*='image.jpg']");
 			expect(img).toHaveAttribute("data-preload", "false");
 			expect(img).toHaveAttribute("data-loading", "eager");
-			expect(img).toHaveAttribute("data-fetch-priority", "high");
+			expect(img).toHaveAttribute("data-fetch-priority", "auto");
+		});
+
+		it("emits exactly one high-priority image across a full above-fold row", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(
+				<>
+					{[0, 1, 2, 3].map((i) => (
+						<ProductCard key={i} product={createProduct()} index={i} />
+					))}
+				</>,
+			);
+			const highs = container.querySelectorAll("img[src*='image.jpg'][data-fetch-priority='high']");
+			expect(highs).toHaveLength(1);
 		});
 
 		it("below-fold (index>=4): preload=false + lazy + fetchPriority=auto", () => {

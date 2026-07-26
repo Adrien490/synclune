@@ -146,15 +146,17 @@ export function IdleContent({
 								Effacer
 							</Button>
 						</div>
-						<div role="list" className="space-y-1">
+						<ul className="space-y-1">
 							<AnimatePresence mode="popLayout">
 								{searches.map((term) => (
-									<m.div
+									/* Pas de `height`/`marginBottom` animés (relayout par frame) : `layout` +
+									   `mode="popLayout"` retirent l'item du flux et font remonter ses voisins
+									   via transform. */
+									<m.li
 										key={term}
-										role="listitem"
 										layout
-										initial={{ opacity: 1, height: "auto" }}
-										exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+										initial={{ opacity: 1 }}
+										exit={{ opacity: 0, scale: 0.97 }}
 										transition={{ duration: MOTION_CONFIG.duration.normal }}
 										className="group/item flex items-center gap-1"
 									>
@@ -169,7 +171,7 @@ export function IdleContent({
 												// Reached via arrow keys, not Tab (combobox pattern).
 												tabIndex={-1}
 												className={cn(
-													"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
+													"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-colors",
 													"hover:bg-muted touch-manipulation",
 													"focus-ring",
 													"disabled:opacity-50",
@@ -187,15 +189,15 @@ export function IdleContent({
 											type="button"
 											onClick={() => onRemoveSearch(term)}
 											disabled={isPending}
-											className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
+											className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-[color,background-color,opacity] group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
 											aria-label={`Supprimer "${term}"`}
 										>
 											<X className="size-5 sm:size-4" />
 										</button>
-									</m.div>
+									</m.li>
 								))}
 							</AnimatePresence>
-						</div>
+						</ul>
 					</section>
 				)}
 
@@ -211,16 +213,19 @@ export function IdleContent({
 							</h2>
 						</div>
 						<Stagger
-							role="list"
+							as="ul"
+							itemAs="li"
 							className="grid grid-cols-2 gap-2"
 							stagger={0.02}
 							delay={0.03}
 							y={8}
 						>
 							{collections.map((collection) => (
-								<div key={collection.slug} role="listitem">
-									<CollectionCard collection={collection} onSelect={handleNavigateClose} />
-								</div>
+								<CollectionCard
+									key={collection.slug}
+									collection={collection}
+									onSelect={handleNavigateClose}
+								/>
 							))}
 						</Stagger>
 						<div className="mt-3 text-center">

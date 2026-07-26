@@ -23,7 +23,9 @@ import { Download, LoaderCircle } from "lucide-react";
 import { useReducer } from "react";
 import { toast } from "@/shared/utils/toast";
 
-const MONTH_FORMATTER = new Intl.DateTimeFormat("fr-FR", { month: "long" });
+// `timeZone: "UTC"` + dates construites en UTC : le seul but est de nommer les
+// 12 mois, il ne doit dépendre ni du fuseau serveur ni de celui du navigateur.
+const MONTH_FORMATTER = new Intl.DateTimeFormat("fr-FR", { month: "long", timeZone: "UTC" });
 
 type PeriodType = "all" | "year" | "month" | "custom";
 
@@ -119,7 +121,7 @@ export function ExportOrdersButton() {
 		const task = (async () => {
 			let response: Response;
 			try {
-				response = await fetch(`/api/admin/orders/export?${params}`);
+				response = await fetch(`/api/admin/orders/export?${params}`, { method: "POST" });
 			} catch {
 				throw new Error("Erreur lors de l'export");
 			}
@@ -142,14 +144,14 @@ export function ExportOrdersButton() {
 			error: (err) => (err instanceof Error ? err.message : "Erreur lors de l'export"),
 		});
 
+		// Pas de `finally` : bail-out React Compiler (TryStatement + finalizer).
 		try {
 			await task;
 			dispatch({ type: "SET_OPEN", open: false });
 		} catch {
 			// error surfaced by toast.promise
-		} finally {
-			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		}
+		dispatch({ type: "SET_EXPORTING", isExporting: false });
 	}
 
 	const currentYear = new Date().getFullYear();
@@ -224,7 +226,7 @@ export function ExportOrdersButton() {
 								<SelectContent>
 									{Array.from({ length: 12 }, (_, i) => {
 										const m = String(i + 1);
-										const label = MONTH_FORMATTER.format(new Date(2024, i));
+										const label = MONTH_FORMATTER.format(new Date(Date.UTC(2024, i, 15)));
 										return (
 											<SelectItem key={m} value={m}>
 												{label.charAt(0).toUpperCase() + label.slice(1)}

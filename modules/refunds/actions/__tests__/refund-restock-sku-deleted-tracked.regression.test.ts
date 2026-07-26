@@ -143,7 +143,6 @@ vi.mock("../../constants/cache", () => ({
 		LIST: "ol",
 		USER_ORDERS: (id: string) => `u-${id}`,
 		LAST_ORDER: (id: string) => `lo-${id}`,
-		ACCOUNT_STATS: (id: string) => `as-${id}`,
 		REFUNDS: (id: string) => `r-${id}`,
 	},
 	REFUNDS_CACHE_TAGS: { LIST: "rl", DETAIL: (id: string) => `rd-${id}` },

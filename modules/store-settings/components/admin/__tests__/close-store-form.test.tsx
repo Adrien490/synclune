@@ -98,6 +98,8 @@ vi.mock("@/shared/hooks/use-focus-first-error", () => ({
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: mockTriggerHaptic,
+	// `FormServerErrorAlert` (alerte d'erreur serveur inline) consomme le hook.
+	useHaptic: () => mockTriggerHaptic,
 }));
 
 vi.mock("@/shared/utils/create-toast-callbacks", () => ({

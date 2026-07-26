@@ -12,6 +12,8 @@ const {
 		order: {
 			findUnique: vi.fn(),
 			update: vi.fn().mockResolvedValue({ orderNumber: "SYN-001" }),
+			// IDEM-PDF-001 : le success path passe par un claim updateMany conditionnel
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
@@ -52,6 +54,7 @@ describe("archiveInvoicePdf", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.order.update.mockResolvedValue({ orderNumber: "SYN-001" });
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		// $transaction calls handler with tx === mockPrisma so order.update/orderHistory.create
 		// can be exercised through the same mock as outside-tx writes.
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) =>
@@ -72,9 +75,10 @@ describe("archiveInvoicePdf", () => {
 
 		expect(result?.invoicePdfUrl).toBe("https://ufs.example/inv-1.pdf");
 		expect(result?.invoicePdfHash).toMatch(/^[a-f0-9]{64}$/);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		// IDEM-PDF-001 : claim conditionnel — le where ré-évalue invoicePdfUrl null
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: "order-1" },
+				where: { id: "order-1", OR: [{ invoicePdfUrl: null }, { invoicePdfHash: null }] },
 				data: expect.objectContaining({
 					invoicePdfUrl: "https://ufs.example/inv-1.pdf",
 					invoicePdfHash: expect.stringMatching(/^[a-f0-9]{64}$/),
@@ -97,6 +101,7 @@ describe("archiveInvoicePdf", () => {
 		});
 		expect(mockUtapi.uploadFiles).not.toHaveBeenCalled();
 		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("returns null when UploadThing returns no ufsUrl", async () => {
@@ -117,6 +122,8 @@ describe("archiveInvoicePdf", () => {
 			return "invoicePdfUrl" in data || "invoicePdfHash" in data;
 		});
 		expect(writesWithArchiveFields).toHaveLength(0);
+		// IDEM-PDF-001 : le claim updateMany (success path) ne doit pas non plus tourner
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 		expect(mockLogger.error).toHaveBeenCalled();
 	});
 

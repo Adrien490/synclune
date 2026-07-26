@@ -57,7 +57,9 @@ model User {
   accountStatus AccountStatus @default(ACTIVE)
 
   // === CONSENTEMENT RGPD ===
-  termsAcceptedAt DateTime? // Date d'acceptation CGV + politique de confidentialite
+  termsAcceptedAt   DateTime? // Date d'acceptation CGV + politique de confidentialite
+  termsVersion      String?   @db.VarChar(20) // Version des CGV/politique acceptee (SSOT shared/constants/legal-versions.ts)
+  marketingOptOutAt DateTime? // Opposition marketing (Art. 21 RGPD) — bloque back-in-stock + review-request
 
   // === ANONYMISATION RGPD ===
   anonymizedAt        DateTime? // Date d'anonymisation effective
@@ -95,7 +97,6 @@ model Session {
 
   @@unique([token])
   @@index([userId, expiresAt]) // Couvre aussi userId seul
-  @@index([expiresAt]) // cleanup-sessions cron: WHERE expiresAt < now()
 }
 
 model Account {
@@ -116,8 +117,6 @@ model Account {
 
   @@index([userId])
   @@index([providerId, accountId])
-  @@index([accessTokenExpiresAt]) // cleanup-sessions cron: expired OAuth tokens
-  @@index([refreshTokenExpiresAt]) // cleanup-sessions cron: expired refresh tokens
 }
 
 model Verification {
@@ -129,7 +128,6 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-  @@index([expiresAt]) // cleanup-sessions cron: WHERE expiresAt < now()
 }
 
 model Address {
@@ -266,7 +264,6 @@ model ProductSkuColor {
   color   Color      @relation(fields: [colorId], references: [id], onDelete: Restrict)
 
   position Int      @default(0)
-  addedAt  DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -289,7 +286,6 @@ model ProductSkuMaterial {
   material   Material   @relation(fields: [materialId], references: [id], onDelete: Restrict)
 
   position Int      @default(0)
-  addedAt  DateTime @default(now())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -425,12 +421,12 @@ model ProductSku {
   // productId en prefixe que pour les lignes actives.
   @@index([productId])
 
-  // Garantir unicite des combinaisons produit/taille (actifs uniquement)
-  // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL).
-  // Note 2026-05-15 : couleur retirée de l'index suite à la migration M2M
-  // ProductSkuColor (un SKU peut avoir plusieurs couleurs ; la « variant identity »
-  // active se réduit à productId × size, comme pour les matériaux).
-  // Permet de recréer un SKU soft-deleted avec la même taille.
+  // Note 2026-06-24 (AUDIT) : il n'existe PLUS d'index unique d'identité de variante
+  // (productId × size). L'index partiel "ProductSku_productId_colorId_size_active_key"
+  // a été DROPPÉ par la migration M2M 20260515181712_add_sku_colors_m2m sans être
+  // recréé (deux SKU même produit/taille avec combos couleurs distincts doivent
+  // coexister). L'unicité retombe sur `sku @unique` + la validation applicative à la
+  // création — AUCUNE contrainte DB ne garantit l'unicité produit×taille.
   //
   // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
   // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
@@ -449,6 +445,9 @@ enum StockMovementSource {
 }
 
 /// Audit append-only des mouvements de stock SKU.
+/// ⚠️ Journal des AJUSTEMENTS MANUELS uniquement (source MANUAL_ADJUST). Les 4 autres
+/// valeurs de StockMovementSource (SKU_UPDATE/ORDER/WEBHOOK/SYSTEM) sont RÉSERVÉES et
+/// non câblées : ce journal ne trace PAS les ventes ni les restocks (audit 2026-06-24).
 /// Immuable : pas de `updatedAt`, pas de `deletedAt` (cf. OrderHistory, Art. L123-22).
 /// `createdById` est un String simple (PAS de relation User) + `createdByName`
 /// dénormalisé, aligné sur OrderHistory.authorId/authorName : conserve l'audit
@@ -490,11 +489,17 @@ model SkuMedia {
 
   url          String    @db.VarChar(2048)
   thumbnailUrl String?   @db.VarChar(2048) // Thumbnail pour videos (poster)
-  blurDataUrl  String?   @db.Text // ThumbHash base64 placeholder (~35-50 chars)
+  blurDataUrl  String?   @db.Text // Data URL COMPLETE du placeholder (PNG ThumbHash serveur, JPEG canvas ou WebP ffmpeg pour un poster video) : plusieurs Ko, d'ou @db.Text
   altText      String?   @db.VarChar(255)
   mediaType    MediaType @default(IMAGE)
   isPrimary    Boolean   @default(false)
   position     Int       @default(0) // Position pour ordre d'affichage
+
+  // Dimensions intrinseques de l'image (ou du poster video), lues a l'upload.
+  // NULL sur les lignes anterieures a la migration tant que le backfill n'a pas
+  // tourne. Permettent un srcSet lightbox avec un `height` reel (0 auparavant).
+  width  Int?
+  height Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -521,21 +526,9 @@ model Cart {
 
   expiresAt DateTime?
 
-  // Abandoned cart recovery
-  abandonedEmailSentAt DateTime? // Date d'envoi de l'email de relance panier abandonne
-
-  // === GUEST CONTACT INFO (abandoned-cart recovery for non-authenticated users) ===
-  guestEmail       String?   @db.VarChar(255) // Email guest pour recovery (RGPD: consent requis)
-  guestPhone       String?   @db.VarChar(30) // Optionnel, pour SMS future
-  marketingConsent Boolean   @default(false) // Consentement RGPD pour emails marketing
-  guestContactAt   DateTime? // Timestamp capture contact (audit RGPD)
-
   // === DISCOUNT CODE APPLIED (pre-checkout) ===
   appliedDiscountCode String? @db.VarChar(30) // Code promo applique au panier
   discountAmountCache Int? // Montant reduction snapshot (centimes, calcule a application)
-
-  // === ORDER NOTES ===
-  notes String? @db.VarChar(500) // Instructions speciales / demandes personnalisees
 
   // === FULFILLMENT MODE ===
   fulfillmentType CartFulfillmentType @default(SHIPPING)
@@ -546,18 +539,6 @@ model Cart {
   updatedAt DateTime @updatedAt
 
   @@index([expiresAt])
-  // Note : les champs abandonedEmailSentAt / guestEmail / guestPhone / guestContactAt /
-  // marketingConsent sont du scaffolding pour une future relance panier abandonne.
-  // Tant qu'aucun cron de relance n'existe, aucun index dedie n'est maintenu
-  // (userId a deja son index via @unique). Recreer les index composites le jour
-  // ou le cron sera cable.
-  //
-  // ⚠️ GARDE RGPD (cf. RGPD-AUDIT F4) : ne PAS activer la relance (peupler guestEmail
-  // /guestPhone/marketingConsent) sans d'abord (1) un endpoint de retrait de consentement
-  // (Art. 7 RGPD — retrait aussi simple que l'octroi) et (2) la confirmation que
-  // `cleanup-carts` purge bien ces PII (il capture déjà les guests à expiresAt NULL).
-  // Capturer un email + consentement marketing sans mécanisme de retrait = violation
-  // Art. 5/7 RGPD.
 }
 
 model CartItem {
@@ -574,10 +555,6 @@ model CartItem {
   // Protege contre les changements de prix entre l'ajout et le paiement
   // Exemple: 29,99 euros = 2999 centimes
   priceAtAdd Int
-
-  // === GIFT OPTIONS ===
-  giftWrap    Boolean @default(false) // Emballage cadeau
-  giftMessage String? @db.VarChar(300) // Message cadeau (optionnel)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -602,15 +579,10 @@ model Wishlist {
   user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionId String? @unique // UUID pour sessions invite (cookie httpOnly)
 
-  // Date d'expiration pour les wishlists invite (null = utilisateur connecte)
-  expiresAt DateTime?
-
   items WishlistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([expiresAt]) // Pour le nettoyage des wishlists expirees
 }
 
 model WishlistItem {
@@ -812,11 +784,13 @@ model Order {
 
   // === AVOIR / CREDIT NOTE (Art. 272-I CGI - annulation post-facture) ===
   // ⚠️ Unicité PER-TABLE : ce @unique et celui de Refund.creditNoteNumber sont
-  // deux contraintes distinctes (Order ∪ Refund). Aucune garantie DB d'unicité
-  // GLOBALE du numéro A-YYYY-NNNNN à travers les deux tables. La non-collision
-  // repose UNIQUEMENT sur l'advisory lock de génération (2_000_000+year dans
-  // void-invoice.service) qui sérialise la séquence par année — garantie
-  // applicative, pas relationnelle.
+  // deux contraintes distinctes (Order ∪ Refund). L'unicité GLOBALE du numéro
+  // A-YYYY-NNNNN est garantie par (1) l'advisory lock de génération
+  // (2_000_000+year, credit-note-sequence.service) qui sérialise la séquence
+  // par année + lookup MAX sur l'UNION, et (2) le trigger DB
+  // check_credit_note_cross_table_unique (migration 20260709) qui rejette en
+  // 23505/P2002 toute écriture d'un numéro déjà présent dans l'autre table —
+  // filet contre les écritures SQL manuelles contournant le lock.
   // Cible (ticket futur) : migrer full-void vers Refund.creditNoteNumber puis
   // drop ces colonnes Order, pour une SSOT unique du numéro d'avoir.
   creditNoteNumber      String?   @unique @db.VarChar(30) // Format: A-YYYY-NNNNN (séquentiel par année)
@@ -873,9 +847,7 @@ model Order {
   shippedAt         DateTime? // Date d'expedition
 
   // === EMAILS POST-LIVRAISON ===
-  reviewRequestSentAt  DateTime? // Date d'envoi de l'email de demande d'avis
-  reviewReminderSentAt DateTime? // Date d'envoi du rappel de demande d'avis
-  crossSellEmailSentAt DateTime? // Date d'envoi de l'email de cross-sell
+  reviewRequestSentAt DateTime? // Date d'envoi de l'email de demande d'avis
 
   // === STATUTS ===
   status            OrderStatus       @default(PENDING)
@@ -931,9 +903,10 @@ model Order {
   // Order.total (amount_received > total). On n'auto-rembourse PAS le delta (un
   // refund auto créerait une transaction e-reporting REFUND fantôme divergente de
   // la DGFiP — Invariant 9) : on persiste le trop-perçu (en centimes) et on laisse
-  // l'admin rembourser le delta via le flux refund normal. Le cron quotidien
-  // alert-overbilled-orders ré-alerte tant que `overbillingResolvedAt` est NULL, et
-  // auto-résout (pose le timestamp) dès que les refunds COMPLETED couvrent le delta.
+  // l'admin rembourser le delta via le flux refund normal. La passe
+  // `reconcileOverbilledOrders` du cron `reconcile-refunds` (OVERBILL-RESOLVE-01)
+  // auto-résout (pose `overbillingResolvedAt`) dès que les refunds COMPLETED couvrent
+  // le delta. Suivi via le dashboard (get-action-items, en PULL).
   overbilledAmountCents Int?
   overbillingResolvedAt DateTime?
 
@@ -947,6 +920,14 @@ model Order {
   // Ce timestamp marque que la purge a eu lieu (évite le retraitement).
   piiPurgedAt DateTime?
 
+  // === INTÉGRITÉ ARCHIVES PDF (Art. L102 B LPF) ===
+  // Curseur de rotation du contrôle d'intégrité proactif (cron reconcile-invoices,
+  // passe intégrité) : re-hash périodique des PDF archivés (facture + avoir) contre
+  // invoicePdfHash/creditNotePdfHash. Posé uniquement quand tous les artefacts
+  // présents ont été vérifiés OK (ou réparés) — un échec laisse le curseur en place
+  // pour re-priorer l'ordre au prochain run.
+  pdfIntegrityCheckedAt DateTime?
+
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
@@ -954,24 +935,25 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // ⚠️ AUDIT 2026-06-24 — à ~20 cmd/mois (≤2400 lignes/10 ans) les index de tri/filtre
+  // admin sont DÉCORATIFS (un seq scan + tri en mémoire est instantané). Ne comptent
+  // vraiment que : les @unique (intégrité), les GIN trgm SQL (recherche admin), et les
+  // index PARTIELS DLQ/purge (crons sur prédicat sélectif). NE PAS rajouter d'index
+  // « par anticipation perf » : le repo a déjà dû dégraisser 2× (20260209/20260217).
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, status, createdAt(sort: Desc)]) // Espace client : "mes commandes" filtrées par statut
   @@index([customerEmail])
   @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
-  @@index([fulfillmentStatus, actualDelivery, reviewRequestSentAt, deletedAt]) // review-request-emails cron
   @@index([paidAt(sort: Desc)]) // Dashboard KPIs, revenue chart, recent orders, CSV export
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage commandes par statut
   @@index([paymentStatus, deletedAt, paidAt(sort: Desc)]) // Dashboard: recent paid orders
-  @@index([customerType, paidAt(sort: Desc)]) // Admin: dashboard CA, e-reporting B2C agregat
   @@index([invoiceStatus, invoiceArchivedAt], map: "Order_invoiceStatus_invoicePdfUrl_idx") // cron archive-unarchived (filtre GENERATED + url NULL)
   @@index([invoiceRetryDeferred, paidAt], map: "Order_invoiceRetryDeferred_idx") // Cron reconcile-invoices : index partiel SQL (WHERE invoiceRetryDeferred = true)
   @@index([ereportingRetryDeferred, paidAt], map: "Order_ereportingRetryDeferred_idx") // Cron reconcile-invoices Passe SALES (WHERE ereportingRetryDeferred = true)
   @@index([piiPurgedAt, paidAt], map: "Order_piiPurgedAt_paidAt_idx") // Cron hard-delete-retention : purge PII à paidAt+10 ans (WHERE piiPurgedAt IS NULL)
   @@index([piiPurgedAt, paidAt, createdAt], map: "Order_unpaid_pii_purge_idx") // Cron hard-delete-retention : purge PII commandes jamais payées (WHERE piiPurgedAt IS NULL AND paidAt IS NULL, range createdAt) — RGPD-AUDIT F-A
-  @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx") // Cron alert-overbilled-orders (WHERE overbilledAmountCents IS NOT NULL AND overbillingResolvedAt IS NULL)
-  // Note : crossSellEmailSentAt / reviewReminderSentAt sont du scaffolding (aucun cron
-  // cross-sell ni reminder n'existe). Recreer l'index composite le jour ou le cron sera cable.
+  @@index([overbillingResolvedAt, overbilledAmountCents], map: "Order_overbilling_unresolved_idx") // dashboard get-action-items + passe reconcileOverbilledOrders (WHERE overbilledAmountCents IS NOT NULL AND overbillingResolvedAt IS NULL)
 
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   Order_subtotal_non_negative           CHECK (subtotal >= 0)
@@ -988,6 +970,9 @@ model Order {
   //   Order_invoicePdfHash_format_check     CHECK ("invoicePdfHash" IS NULL OR "invoicePdfHash" ~ '^[a-f0-9]{64}$')
   //   Order_creditNotePdfHash_format_check  CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
   //   Order_overbilledAmountCents_positive_check CHECK ("overbilledAmountCents" IS NULL OR "overbilledAmountCents" > 0)
+  //
+  // Triggers (DB, SQL brut — non exprimables en Prisma) :
+  //   Order_creditNoteNumber_cross_unique   BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Refund (unicité cross-table séquence A-YYYY)
 }
 
 /// Historique des actions sur les commandes (audit trail)
@@ -1116,7 +1101,6 @@ model OrderNote {
   deletedAt DateTime? // Soft delete pour audit trail
 
   @@index([orderId, createdAt(sort: Desc)])
-  @@index([orderId, isInternal])
 }
 
 // ============================================================================
@@ -1215,6 +1199,10 @@ model Refund {
   creditNotePdfUrl      String?   @db.VarChar(2048)
   creditNotePdfHash     String?   @db.VarChar(64)
 
+  // Curseur de rotation du contrôle d'intégrité proactif des PDF avoir archivés
+  // (cron reconcile-invoices, passe intégrité) — symétrie Order.pdfIntegrityCheckedAt.
+  pdfIntegrityCheckedAt DateTime?
+
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement un remboursement (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
@@ -1224,13 +1212,15 @@ model Refund {
   @@index([ereportingRetryDeferred, processedAt], map: "Refund_ereportingRetryDeferred_idx") // reconcile-refunds : rattrapage e-reporting REFUND (WHERE ereportingRetryDeferred = true)
   @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
-  @@index([createdBy]) // Admin: remboursements par admin
 
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
   //   Refund_amount_positive    CHECK (amount > 0)
   //   Refund_currency_eur_check CHECK (currency = 'EUR')
   //   Refund_creditNoteNumber_format_check  CHECK ("creditNoteNumber" IS NULL OR "creditNoteNumber" ~ '^A-[0-9]{4}-[0-9]{5}$')
   //   Refund_creditNotePdfHash_format_check CHECK ("creditNotePdfHash" IS NULL OR "creditNotePdfHash" ~ '^[a-f0-9]{64}$')
+  //
+  // Triggers (DB, SQL brut — non exprimables en Prisma) :
+  //   Refund_creditNoteNumber_cross_unique  BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Order (unicité cross-table séquence A-YYYY)
 }
 
 model RefundItem {
@@ -1362,11 +1352,14 @@ model Discount {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@index([isActive, deletedAt, startsAt, endsAt]) // Admin list + checkout active check
-
   // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
-  //   Discount_value_positive     CHECK (value > 0)
-  //   Discount_percentage_max_100 CHECK (type != 'PERCENTAGE' OR value <= 100)
+  //   Discount_value_positive          CHECK (value > 0)
+  //   Discount_percentage_max_100      CHECK (type != 'PERCENTAGE' OR value <= 100)
+  //   Discount_usageCount_within_limit CHECK (maxUsageCount IS NULL OR usageCount <= maxUsageCount)
+  //   Discount_usageCount_non_negative CHECK (usageCount >= 0) — [[DISC-USAGE-002]]
+  //     borne basse : un décrément non gardé (release d'annulation) rendait le
+  //     code redeemable au-delà de maxUsageCount. Libération toujours via
+  //     `releaseOrderDiscountUsageTx`.
 }
 
 model DiscountUsage {
@@ -1464,7 +1457,7 @@ model ReviewMedia {
 
   // === MEDIA (Pattern SkuMedia) ===
   url         String  @db.VarChar(2048) // URL UploadThing
-  blurDataUrl String? @db.Text // ThumbHash base64 placeholder (~35-50 chars)
+  blurDataUrl String? @db.Text // Data URL COMPLETE du ThumbHash (PNG base64, plusieurs Ko — d'ou @db.Text, cf. l'aller-retour VARCHAR(255) des migrations 20260302/20260306)
   altText     String? @db.VarChar(255) // Alt text pour accessibilite
 
   // Position pour ordre d'affichage (0, 1, 2)
@@ -1522,8 +1515,6 @@ model ProductReviewStats {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([averageRating]) // Dashboard: filter/sort products by rating
-
   // CHECK constraint (DB, SQL brut) :
   //   ProductReviewStats_averageRating_range CHECK ("averageRating" >= 0 AND "averageRating" <= 5)
 }
@@ -1565,8 +1556,8 @@ model WebhookEvent {
   // pour survivre à un crash de la lambda Vercel après le 200 retourné à Stripe.
   postTasks PostWebhookTask[]
 
-  @@index([status, processedAt]) // cleanup + retry queries filter by status then processedAt
-  @@index([status, receivedAt]) // cleanup SKIPPED/stale webhook events by receivedAt
+  @@index([status, processedAt]) // rétention + retry queries filter by status then processedAt
+  @@index([status, receivedAt]) // rétention par receivedAt + fallback candidats retry (processedAt NULL)
   @@index([status, attempts, processedAt]) // retry-webhooks cron
 }
 
@@ -1591,7 +1582,9 @@ model PostWebhookTask {
   id String @id @default(cuid())
 
   // Lien vers WebhookEvent (audit trail). SetNull pour préserver la task si
-  // l'événement est nettoyé par cleanup-webhook-events.
+  // l'événement est purgé par la passe de rétention de `cleanup-pending-orders`.
+  // Nullable aussi par construction : `sync-async-payments` rejoue les post-tasks
+  // d'un webhook définitivement perdu (WEBHOOK-AUDIT-003) sans événement à rattacher.
   webhookEventId String?
   webhookEvent   WebhookEvent? @relation(fields: [webhookEventId], references: [id], onDelete: SetNull)
 
@@ -1614,8 +1607,16 @@ model PostWebhookTask {
   createdAt   DateTime  @default(now())
   processedAt DateTime?
 
+  // WEBHOOK-AUDIT-003 : horodatage de la DERNIÈRE tentative, posé par le claim
+  // optimiste de `executeBatch`. Support du backoff par paliers dans
+  // `retry-post-webhook-tasks` : sans lui, la sélection ne portait que sur
+  // `status + attempts` et les 5 tentatives partaient en ~20 min à cadence fixe.
+  // NULL = jamais tentée ⇒ éligible immédiatement (fail-open, lignes legacy).
+  lastAttemptAt DateTime?
+
   @@index([status, attempts, createdAt]) // cron retry-post-webhook-tasks
-  @@index([status, createdAt]) // cleanup périodique
+  @@index([status, attempts, lastAttemptAt]) // sélection par paliers de backoff
+  @@index([status, createdAt]) // passe de rétention (cleanup-pending-orders)
   @@index([webhookEventId]) // audit lookup
 }
 
@@ -1655,6 +1656,15 @@ model StoreSettings {
   // Active le mode "retrait en boutique" pour le checkout. Désactivé tant que
   // l'infra logistique n'est pas opérationnelle (cf. modules/cart/actions/set-fulfillment-mode.ts).
   clickAndCollectEnabled Boolean @default(false)
+
+  // === CRON STATE : cleanup-orphan-media ===
+  // Offset de reprise dans `utapi.listFiles` (audit média M2). Le cron ne balaie
+  // que MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT fichiers par exécution ; sans
+  // curseur persistant il repartait de 0 à chaque run et ne voyait JAMAIS au-delà
+  // des 2500 premiers fichiers. Or les PDF de facture (1 par commande payée) sont
+  // référencés et saturent progressivement cette fenêtre : la collecte d'orphelins
+  // devenait un no-op silencieux. Remis à 0 en fin de liste (balayage cyclique).
+  orphanMediaScanOffset Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

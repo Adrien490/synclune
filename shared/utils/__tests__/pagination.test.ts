@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
-vi.mock("@/shared/constants/pagination", () => ({
+vi.mock("@/shared/schemas/pagination-schema", () => ({
 	PAGINATION_DEFAULTS: { ADMIN: 20 },
 	PAGINATION_LIMITS: { MAX_ADMIN: 100 },
 	cursorSchema: { optional: () => ({}) },

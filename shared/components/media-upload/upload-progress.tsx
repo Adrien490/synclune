@@ -26,12 +26,7 @@ function nearestMilestone(percent: number): (typeof SR_MILESTONES)[number] {
 }
 
 export type UploadPhase =
-	| "validating"
-	| "compressing"
-	| "uploading"
-	| "generating-thumbnails"
-	| "finalizing"
-	| "done";
+	"validating" | "compressing" | "uploading" | "generating-thumbnails" | "finalizing" | "done";
 
 interface UploadProgressProps {
 	/** Progress percentage (0-100) */

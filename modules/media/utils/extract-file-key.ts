@@ -19,16 +19,27 @@
  */
 export function extractFileKeyFromUrl(url: string): string | null {
 	try {
-		// UploadThing format: https://utfs.io/f/{fileKey}
-		// or https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}
-		// or https://x1ain1wpub.ufs.sh/f/{fileKey}
+		// Formats acceptés :
+		//   https://utfs.io/f/{fileKey}
+		//   https://x1ain1wpub.ufs.sh/f/{fileKey}
+		//   https://uploadthing-prod.s3.us-west-2.amazonaws.com/{fileKey}  (legacy)
+		//
+		// La forme du chemin est vérifiée (audit média M16) : l'ancienne version
+		// prenait le DERNIER segment quel qu'il soit, si bien qu'une URL forgée
+		// comme `https://utfs.io/f/VRAIE_CLE/autre` renvoyait `autre`. Le motif est
+		// désormais ancré sur `/f/<clé>` ou sur un chemin à segment unique.
 		const urlObj = new URL(url);
-		const parts = urlObj.pathname.split("/");
-		// The key is the last segment of the path
-		const key = parts[parts.length - 1];
+		const segments = urlObj.pathname.split("/").filter(Boolean);
+
+		const key =
+			segments.length === 2 && segments[0] === "f"
+				? segments[1]
+				: segments.length === 1
+					? segments[0]
+					: null;
 
 		// Basic validation: key must be non-empty and contain only safe characters
-		if (!key || key === "/" || !/^[a-zA-Z0-9._-]+$/.test(key)) {
+		if (!key || !/^[a-zA-Z0-9._-]+$/.test(key)) {
 			return null;
 		}
 

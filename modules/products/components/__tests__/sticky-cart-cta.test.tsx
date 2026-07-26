@@ -363,7 +363,11 @@ describe("StickyCartCTA", () => {
 			expect(container.querySelector("img")).not.toBeInTheDocument();
 		});
 
-		it("prefers thumbnailUrl over url for the image src", () => {
+		// `thumbnailUrl` est le poster d'une VIDÉO (cf. schema.prisma) et vaut toujours
+		// NULL sur une IMAGE : une IMAGE doit se rendre via son `url` pleine résolution,
+		// pas via un poster vidéo de 480 px. La fixture précédente (IMAGE + thumbnailUrl)
+		// n'existe pas en production.
+		it("uses the full url for an IMAGE, ignoring the video-only thumbnailUrl field", () => {
 			const sku = createSku({
 				images: [
 					{
@@ -380,7 +384,43 @@ describe("StickyCartCTA", () => {
 			const { container } = renderVisible({ defaultSku: sku });
 			const img = container.querySelector("img") as HTMLImageElement;
 			expect(img).toBeInTheDocument();
-			expect(img.src).toContain("thumb.jpg");
+			expect(img.src).toContain("full.jpg");
+		});
+
+		it("uses the poster for a VIDEO, and renders nothing when it has none", () => {
+			const withPoster = createSku({
+				images: [
+					{
+						url: "https://example.com/clip.mp4",
+						thumbnailUrl: "https://example.com/poster.jpg",
+						id: "img-3",
+						blurDataUrl: null,
+						altText: null,
+						mediaType: "VIDEO" as const,
+						isPrimary: true,
+					},
+				],
+			} as any);
+			const { container: withPosterC } = renderVisible({ defaultSku: withPoster });
+			expect((withPosterC.querySelector("img") as HTMLImageElement).src).toContain("poster.jpg");
+
+			cleanup();
+
+			const noPoster = createSku({
+				images: [
+					{
+						url: "https://example.com/clip.mp4",
+						thumbnailUrl: null,
+						id: "img-4",
+						blurDataUrl: null,
+						altText: null,
+						mediaType: "VIDEO" as const,
+						isPrimary: true,
+					},
+				],
+			} as any);
+			const { container: noPosterC } = renderVisible({ defaultSku: noPoster });
+			expect(noPosterC.querySelector("img")).not.toBeInTheDocument();
 		});
 	});
 

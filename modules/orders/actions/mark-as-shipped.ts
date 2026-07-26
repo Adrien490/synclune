@@ -2,7 +2,12 @@
 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	HistorySource,
+} from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-emails";
@@ -121,8 +126,18 @@ export async function markAsShipped(
 			const shippedAt = new Date();
 			const estimatedDelivery = estimateDeliveryDate(shippedAt, found.shippingCountry);
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : le `where` ré-asserte le statut attendu (miroir de
+			// canMarkAsShipped). count===0 ⇒ un writer concurrent (autre admin,
+			// webhook, cron) a changé l'état entre le findUnique et l'update —
+			// abort sans audit ni email (le findUnique ne verrouille pas la ligne
+			// en read-committed, la transaction seule ne suffit pas).
+			const updated = await tx.order.updateMany({
+				where: {
+					id,
+					...notDeleted,
+					status: OrderStatus.PROCESSING,
+					paymentStatus: { in: [PaymentStatus.PAID, PaymentStatus.PARTIALLY_REFUNDED] },
+				},
 				data: {
 					status: OrderStatus.SHIPPED,
 					fulfillmentStatus: FulfillmentStatus.SHIPPED,
@@ -133,6 +148,9 @@ export async function markAsShipped(
 					estimatedDelivery,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			// Remonté hors transaction pour l'email de confirmation (cf. plus bas).
 			estimatedDeliveryForEmail = estimatedDelivery;
@@ -171,6 +189,7 @@ export async function markAsShipped(
 				cancelled: ORDER_ERROR_MESSAGES.CANNOT_SHIP_CANCELLED,
 				unpaid: ORDER_ERROR_MESSAGES.CANNOT_SHIP_UNPAID,
 				not_processing: ORDER_ERROR_MESSAGES.CANNOT_SHIP_NOT_PROCESSING,
+				concurrent_change: ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE,
 			};
 			return error(errorMessages[order._error] ?? ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED);
 		}

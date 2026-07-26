@@ -4,6 +4,7 @@ import {
 	ANNOUNCEMENT_VARIANTS,
 	DEFAULT_ANNOUNCEMENT_VARIANT,
 } from "@/shared/constants/announcement";
+import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
 
 import { parseParisDateTimeLocal } from "../utils/paris-datetime";
@@ -88,11 +89,7 @@ export const updateAnnouncementSchema = z
 			.optional()
 			.default("")
 			.transform((val) => parseParisDateTimeLocal(val)),
-		isActive: z
-			.union([z.boolean(), z.string()])
-			.optional()
-			.default(false)
-			.transform((val) => val === true || val === "true" || val === "on"),
+		isActive: formBooleanSchema.optional().default(false),
 		variant: z.enum(ANNOUNCEMENT_VARIANTS).optional().default(DEFAULT_ANNOUNCEMENT_VARIANT),
 	})
 	.refine(

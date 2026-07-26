@@ -1,27 +1,10 @@
-import type { MotionValue, TargetAndTransition } from "motion/react";
+import type { TargetAndTransition } from "motion/react";
 
 /** Formes des particules */
-export type ParticleShape =
-	| "circle"
-	| "diamond"
-	| "heart"
-	| "crescent"
-	| "pearl"
-	| "drop"
-	| "sparkle-4"
-	| "star"
-	| "hexagon";
+export type ParticleShape = "circle" | "diamond" | "heart" | "pearl" | "drop";
 
 /** Styles d'animation */
-export type AnimationStyle =
-	| "float"
-	| "drift"
-	| "rise"
-	| "orbit"
-	| "breathe"
-	| "sparkle"
-	| "cascade"
-	| "twinkle";
+export type AnimationStyle = "float" | "drift" | "breathe";
 
 /** Props du composant ParticleBackground */
 export interface ParticleBackgroundProps {
@@ -51,18 +34,6 @@ export interface ParticleBackgroundProps {
 	depthParallax?: boolean;
 	/** Multiplicateur de vitesse d'animation (défaut: 1, plus bas = plus lent) */
 	speed?: number;
-	/** Désactiver sur appareils tactiles - rend null (défaut: false) */
-	disableOnTouch?: boolean;
-	/**
-	 * Fade progressif des particules au scroll au lieu du on/off binaire (défaut: false).
-	 * ⚠️ Nécessite un conteneur dans le flux de scroll : sans effet si le conteneur est `fixed`.
-	 */
-	scrollFade?: boolean;
-	/**
-	 * Parallax scroll vertical proportionnel à la profondeur (défaut: false).
-	 * ⚠️ Nécessite un conteneur dans le flux de scroll : sans effet si le conteneur est `fixed`.
-	 */
-	scrollParallax?: boolean;
 	/**
 	 * Ratio du nombre de particules sur mobile par rapport au desktop.
 	 * Défaut: 0.5 (count/2). Clamp à [0.25, 1].
@@ -77,18 +48,11 @@ export interface ParticleBackgroundProps {
 	/** Remplissage radial dégradé des particules (volume/profondeur) (défaut: false) */
 	gradient?: boolean;
 	/**
-	 * Mode constellation : trace des lignes entre particules proches (effet réseau).
-	 * Desktop uniquement, désactivé en reduced-motion. Le nombre de particules est plafonné
-	 * (≤12) quand activé, car le calcul des liens est en O(n²).
-	 * - `maxDistance` : distance max entre 2 particules pour les relier, en % du conteneur (défaut: 25)
-	 * - `color` : couleur CSS des lignes (défaut: var(--color-particle-lavender))
+	 * Graine de génération : deux instances avec les mêmes params mais des `seed` différents
+	 * produisent des layouts différents (défaut: 0). À utiliser quand deux pages/sections
+	 * partagent les mêmes props pour éviter des positions strictement identiques.
 	 */
-	connect?: { maxDistance?: number; color?: string };
-	/**
-	 * Densité automatique : dérive le nombre de particules de l'aire du conteneur
-	 * (particules par mégapixel). Prioritaire sur `count` quand défini. Clamp à MAX_PARTICLES.
-	 */
-	density?: number;
+	seed?: number;
 }
 
 /** Données d'une particule générée */
@@ -110,9 +74,7 @@ export interface Particle {
 
 /** Type de configuration de forme */
 export type ShapeConfig =
-	| { type: "css"; styles: React.CSSProperties }
-	| { type: "clipPath"; clipPath: string }
-	| { type: "svg"; viewBox: string; path: string; fillRule?: "evenodd" | "nonzero" };
+	{ type: "css"; styles: React.CSSProperties } | { type: "clipPath"; clipPath: string };
 
 /** Props du sous-composant ParticleSet */
 export interface ParticleSetProps {
@@ -122,12 +84,6 @@ export interface ParticleSetProps {
 	animationStyle: AnimationStyle;
 	/** High contrast mode: reduce opacity 50%, increase blur 50% */
 	highContrast?: boolean;
-	/** Scroll-linked opacity (0-1) for progressive fade. When provided, multiplies particle opacity. */
-	scrollOpacity?: MotionValue<number>;
-	/** Scroll progress (0-1) for depth-based scroll parallax */
-	scrollYProgress?: MotionValue<number>;
-	/** Whether scroll parallax is active (controls computation, not just MotionValue presence) */
-	scrollParallax?: boolean;
 	/** Radial-gradient fill for CSS/clipPath shapes (adds volume/depth) */
 	gradient?: boolean;
 }

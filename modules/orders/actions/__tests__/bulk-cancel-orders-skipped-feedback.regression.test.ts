@@ -35,7 +35,9 @@ const {
 	mockExtractCustomerFirstName,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findMany: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany ({ count }) remplace
+		// l'ancien order.update inconditionnel de la boucle.
+		order: { findMany: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },
@@ -142,7 +144,7 @@ describe("bulkCancelOrders — ventilation complète du feedback skipped", () =>
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({ count: 0 });
@@ -205,10 +207,11 @@ describe("bulkCancelOrders — ventilation complète du feedback skipped", () =>
 				},
 			}),
 		);
-		// Une seule commande effectivement mutée.
-		expect(mockPrisma.order.update).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
-			where: { id: ID_ELIGIBLE },
+		// Une seule commande effectivement mutée — le claim IDEM-CANCEL-001 porte
+		// les préconditions PENDING+PENDING dans le where.
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: { id: ID_ELIGIBLE, status: "PENDING", paymentStatus: "PENDING" },
 			data: { status: "CANCELLED" },
 		});
 	});

@@ -7,8 +7,10 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Switch } from "@/shared/components/ui/switch";
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface RefundItemRowProps {
 	orderItem: OrderItemForRefund;
@@ -31,7 +33,9 @@ export function RefundItemRow({
 	const isSelected = itemState?.selected ?? false;
 	const quantity = itemState?.quantity ?? 0;
 	const restock = itemState?.restock ?? true;
-	const imageUrl = orderItem.skuImageUrl ?? orderItem.productImageUrl;
+	// `||` : une chaine vide compte comme absente (cf. order-items-card)
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `||` volontaire : une chaîne vide doit compter comme absente ; `??` la laisserait passer en src="" (erreur runtime next/image)
+	const imageUrl = orderItem.skuImageUrl || orderItem.productImageUrl;
 
 	const variantParts = [orderItem.skuColor, orderItem.skuMaterial, orderItem.skuSize].filter(
 		Boolean,
@@ -53,7 +57,10 @@ export function RefundItemRow({
 						alt={orderItem.productTitle}
 						fill
 						sizes="64px"
+						quality={IMAGE_QUALITY.THUMBNAIL}
 						className="object-cover"
+						placeholder="blur"
+						blurDataURL={IMAGE_BLUR_FALLBACK}
 					/>
 				</div>
 			)}

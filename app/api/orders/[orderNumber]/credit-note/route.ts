@@ -1,10 +1,13 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
-import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
-import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { archiveCreditNotePdf } from "@/modules/orders/services/archive-credit-note-pdf.service";
+import { renderOrderCreditNotePdf } from "@/modules/orders/services/render-order-credit-note.service";
 import { verifyInvoiceAccessToken } from "@/modules/orders/utils/invoice-token";
+import {
+	orderNumberParamSchema,
+	invoiceTokenSchema,
+} from "@/modules/orders/schemas/order-route-params.schema";
 import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
 import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
@@ -19,7 +22,6 @@ import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 import { OrderAction, HistorySource } from "@/app/generated/prisma/client";
 
 const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
-const DEFAULT_VOID_REASON = "Avoir comptable";
 
 /**
  * Audit RGPD Art. 30/32 : trace chaque accès avoir réussi. Le PDF de l'avoir
@@ -72,7 +74,15 @@ export async function GET(
 ) {
 	const { orderNumber } = await params;
 	const url = new URL(request.url);
-	const tokenFromQuery = url.searchParams.get("token");
+
+	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// (harmonisation avec status/route.ts). Échec → 400.
+	const orderNumberValidation = orderNumberParamSchema.safeParse(orderNumber);
+	const tokenValidation = invoiceTokenSchema.safeParse(url.searchParams.get("token"));
+	if (!orderNumberValidation.success || !tokenValidation.success) {
+		return new Response("Bad request", { status: 400 });
+	}
+	const tokenFromQuery = tokenValidation.data;
 
 	const session = await getSession();
 
@@ -261,35 +271,18 @@ export async function GET(
 		creditNotePath = "lazy_regenerate";
 	}
 
-	// Dérive le motif d'avoir depuis le dernier OrderHistory INVOICE_VOIDED
-	// (rempli par `voidInvoice` via cancel-order / mark-as-fully-refunded /
-	// webhook charge.refunded). Fallback statique conforme juridiquement.
-	const voidedEvent = await prisma.orderHistory.findFirst({
-		where: { orderId: order.id, action: OrderAction.INVOICE_VOIDED },
-		orderBy: { createdAt: "desc" },
-		select: { note: true },
-	});
-	const trimmedNote = voidedEvent?.note?.trim();
-	const reason = trimmedNote && trimmedNote.length > 0 ? trimmedNote : DEFAULT_VOID_REASON;
-
-	// `buildInvoiceData` reçoit un Order où `invoiceNumber = creditNoteNumber` :
-	// le renderer détecte le préfixe `A-` et bascule en mode AVOIR
-	// (render-invoice-pdf.ts:22,69,91,249). `precedingInvoice` injecte la
-	// référence vers la facture annulée (Art. 272-I CGI).
-	const orderAsCreditNote: GetOrderReturn = {
-		...order,
-		invoiceNumber: order.creditNoteNumber,
-		invoiceGeneratedAt: order.creditNoteGeneratedAt,
-	};
-	const pdfBuffer = renderInvoicePdf(
-		buildInvoiceData(orderAsCreditNote, {
-			precedingInvoice: {
-				invoiceNumber: order.invoiceNumber,
-				issuedAt: order.invoiceGeneratedAt!,
-				reason,
-			},
-		}),
-	);
+	// SSOT du rendu avoir (EINV-CREDIT-020) : `renderOrderCreditNotePdf` est le
+	// MÊME chemin que l'archivage eager post-`voidInvoice` et le cron
+	// `reconcile-invoices` — motif dérivé du dernier OrderHistory INVOICE_VOIDED,
+	// `precedingInvoice` vers la facture annulée (Art. 272-I CGI). Indispensable
+	// pour que la régénération reste bit-identique au hash archivé (L102 B LPF).
+	const rendered = await renderOrderCreditNotePdf(order.id);
+	if (!rendered) {
+		// État incohérent (les gardes ci-dessus ont validé creditNoteNumber) —
+		// probablement une course avec une purge/suppression concurrente.
+		return new Response("Avoir non disponible pour cette commande", { status: 404 });
+	}
+	const pdfBuffer = rendered.pdfBuffer;
 
 	// Si une archive existe avec un hash connu, le PDF régénéré doit matcher
 	// bit-à-bit (Art. L102 B LPF). Sinon : 503 plutôt que servir un PDF qui

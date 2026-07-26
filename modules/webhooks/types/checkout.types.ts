@@ -10,6 +10,12 @@ interface OrderItem {
 		id: string;
 		inventory: number;
 		sku: string;
+		// CACHE-CATALOG-002 : nécessaire pour invalider la page produit (tag
+		// `product-${slug}`) quand le stock change au paiement.
+		product: {
+			id: string;
+			slug: string;
+		};
 	} | null;
 }
 

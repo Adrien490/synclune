@@ -62,13 +62,20 @@ export function cacheDiscountDetail(code: string) {
  * Invalide automatiquement :
  * - La liste des codes promo
  * - Le détail du code promo (si id fourni)
+ * - L'entrée checkout keyed par code (si code fourni) — `cacheDiscountDetail`
+ *   cache la validation checkout sous `discount-${code}`, une mutation qui
+ *   n'invalide que l'id laisse cette entrée stale jusqu'à expiration (5 min)
  * - Les badges de la sidebar admin
  */
-export function getDiscountInvalidationTags(id?: string): string[] {
+export function getDiscountInvalidationTags(id?: string, code?: string): string[] {
 	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 
 	if (id) {
 		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(id));
+	}
+
+	if (code) {
+		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(code));
 	}
 
 	return tags;

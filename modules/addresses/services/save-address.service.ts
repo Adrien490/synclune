@@ -14,8 +14,7 @@ export interface SaveAddressInput {
 }
 
 export type SaveAddressResult =
-	| { saved: true; isDefault: boolean }
-	| { saved: false; reason: "limit" };
+	{ saved: true; isDefault: boolean } | { saved: false; reason: "limit" };
 
 /**
  * Crée une adresse pour un utilisateur en respectant la limite MAX_ADDRESSES_PER_USER.

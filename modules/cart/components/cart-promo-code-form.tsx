@@ -1,8 +1,10 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useApplyCartDiscount } from "../hooks/use-apply-cart-discount";
 import { useRemoveCartDiscount } from "../hooks/use-remove-cart-discount";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -25,11 +27,16 @@ export function CartPromoCodeForm({
 	discountAmount = null,
 }: CartPromoCodeFormProps) {
 	const [open, setOpen] = useState(false);
-	const { action: applyAction, isPending: isApplying } = useApplyCartDiscount();
+	const { state: applyState, action: applyAction, isPending: isApplying } = useApplyCartDiscount();
 	const { action: removeAction, isPending: isRemoving } = useRemoveCartDiscount();
 	const inputRef = useRef<HTMLInputElement>(null);
 	const panelId = useId();
 	const haptic = useHaptic();
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un code promo refusé par le schéma serveur
+	// n'afficherait strictement rien côté client.
+	const serverErrors = useServerFieldErrors({ state: applyState });
 
 	const handleToggle = () => {
 		const next = !open;
@@ -97,43 +104,46 @@ export function CartPromoCodeForm({
 					J&apos;ai un code promo
 				</button>
 			) : (
-				<form
-					id={panelId}
-					action={applyAction}
-					className="flex items-stretch gap-2"
-					aria-label="Appliquer un code promo"
-				>
-					<Input
-						ref={inputRef}
-						type="text"
-						name="code"
-						placeholder="Code"
-						autoComplete="off"
-						autoCapitalize="characters"
-						spellCheck={false}
-						aria-label="Code promo"
-						maxLength={30}
-						disabled={isApplying}
-						className="h-11 flex-1 uppercase"
-					/>
-					<Button type="submit" disabled={isApplying} className="h-11 min-w-24">
-						{isApplying ? (
-							<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-						) : (
-							"Appliquer"
-						)}
-					</Button>
-					<Button
-						type="button"
-						variant="ghost"
-						onClick={() => setOpen(false)}
-						disabled={isApplying}
-						className="h-11"
-						aria-label="Fermer le formulaire de code promo"
+				<div className="space-y-2">
+					<FormServerErrorAlert errors={serverErrors} />
+					<form
+						id={panelId}
+						action={applyAction}
+						className="flex items-stretch gap-2"
+						aria-label="Appliquer un code promo"
 					>
-						Annuler
-					</Button>
-				</form>
+						<Input
+							ref={inputRef}
+							type="text"
+							name="code"
+							placeholder="Code"
+							autoComplete="off"
+							autoCapitalize="characters"
+							spellCheck={false}
+							aria-label="Code promo"
+							maxLength={30}
+							disabled={isApplying}
+							className="h-11 flex-1 uppercase"
+						/>
+						<Button type="submit" disabled={isApplying} className="h-11 min-w-24">
+							{isApplying ? (
+								<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+							) : (
+								"Appliquer"
+							)}
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={() => setOpen(false)}
+							disabled={isApplying}
+							className="h-11"
+							aria-label="Fermer le formulaire de code promo"
+						>
+							Annuler
+						</Button>
+					</form>
+				</div>
 			)}
 		</div>
 	);

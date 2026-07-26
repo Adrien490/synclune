@@ -40,10 +40,6 @@ export interface RefundForCreditNote {
 			skuSize: string | null;
 			quantity: number; // quantité initialement facturée
 			price: number; // prix unitaire HT (snapshot)
-			taxRate: number;
-			taxCategoryCode: string | null;
-			hsCode: string | null;
-			unitCode: string | null;
 		};
 	}>;
 }
@@ -146,19 +142,14 @@ function buildCreditNoteLine(
 	refundItem: RefundForCreditNote["items"][number],
 	lineNumber: number,
 ): InvoiceLine {
-	const taxCategoryCode = (refundItem.orderItem.taxCategoryCode ??
-		DEFAULT_TAX_CATEGORY) as TaxCategoryCode;
-
-	// `refundItem.amount` est le total ligne remboursé (centimes, TTC ou HT
-	// selon régime). En franchise TVA (régime Synclune actuel), HT = TTC, donc
-	// les deux valent `refundItem.amount`. Pour les régimes futurs (NORMAL),
-	// le ratio taxRate doit s'appliquer — TODO Phase 2C.
+	// Franchise TVA (Art. 293 B CGI) : aucune TVA par ligne n'est stockée sur
+	// l'OrderItem (pas de colonnes taxRate/taxCategoryCode/hsCode/unitCode). Les
+	// valeurs sont dérivées intégralement ici, à l'identique de `buildInvoiceLine`
+	// côté facture (taux 0, HT = TTC). À la sortie de franchise (régime NORMAL),
+	// réintroduire OrderItem.taxRate dans les DEUX chemins (facture + avoir).
 	const lineTotalInclTax = refundItem.amount;
-	const lineTotalExclTax =
-		refundItem.orderItem.taxRate > 0
-			? Math.round(lineTotalInclTax / (1 + refundItem.orderItem.taxRate / 10_000))
-			: lineTotalInclTax;
-	const taxAmount = lineTotalInclTax - lineTotalExclTax;
+	const lineTotalExclTax = lineTotalInclTax;
+	const taxAmount = 0;
 
 	return {
 		lineNumber,
@@ -173,13 +164,13 @@ function buildCreditNoteLine(
 		quantity: refundItem.quantity,
 		unitPriceExclTax: refundItem.orderItem.price,
 		discountAmount: 0,
-		taxRate: refundItem.orderItem.taxRate,
-		taxCategoryCode,
+		taxRate: 0,
+		taxCategoryCode: DEFAULT_TAX_CATEGORY as TaxCategoryCode,
 		taxAmount,
 		lineTotalExclTax,
 		lineTotalInclTax,
-		hsCode: refundItem.orderItem.hsCode,
-		unitCode: refundItem.orderItem.unitCode,
+		hsCode: null,
+		unitCode: null,
 	};
 }
 

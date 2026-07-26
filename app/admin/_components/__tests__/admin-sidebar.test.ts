@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getAllNavItems, navigationData } from "../navigation-config";
-import { generateBreadcrumbs } from "../dashboard-breadcrumb";
+import { generateBreadcrumbs } from "../generate-breadcrumbs";
 
 // ============================================================================
 // getAllNavItems

@@ -64,10 +64,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
 	const sortBy = (getFirstParam(params.sortBy) ?? "label-ascending") as
-		| "label-ascending"
-		| "label-descending"
-		| "products-ascending"
-		| "products-descending";
+		"label-ascending" | "label-descending" | "products-ascending" | "products-descending";
 	const search = getFirstParam(params.search);
 	const filters = parseFilters(params);
 

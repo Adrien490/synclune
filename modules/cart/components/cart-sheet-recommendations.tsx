@@ -1,8 +1,10 @@
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 import { getRelatedProducts } from "@/modules/products/data/get-related-products";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
 import { CartCloseLink } from "./cart-close-link";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 /**
  * Compact cross-sell section for the cart sheet (RSC)
@@ -35,6 +37,8 @@ export async function CartSheetRecommendations() {
 						const primarySku = product.skus[0];
 						const image = primarySku?.images[0];
 						const price = primarySku?.priceInclTax;
+						// Une video sans poster n'est pas decodable par l'optimiseur -> fallback texte
+						const thumbSrc = image ? resolveMediaThumbSrc(image) : null;
 
 						return (
 							<CartCloseLink
@@ -44,13 +48,15 @@ export async function CartSheetRecommendations() {
 								aria-label={`Voir ${product.title}${price != null ? ` — ${formatEuro(price)}` : ""}`}
 							>
 								<div className="bg-muted relative aspect-square w-full overflow-hidden rounded-lg border">
-									{image ? (
+									{image && thumbSrc ? (
 										<Image
-											src={image.thumbnailUrl ?? image.url}
+											src={thumbSrc}
 											alt={image.altText ?? product.title}
 											fill
 											sizes="112px"
-											quality={60}
+											quality={IMAGE_QUALITY.THUMBNAIL}
+											placeholder={image.blurDataUrl ? "blur" : "empty"}
+											blurDataURL={image.blurDataUrl ?? undefined}
 											className="object-cover transition-transform duration-200 group-hover/reco:scale-105"
 										/>
 									) : (

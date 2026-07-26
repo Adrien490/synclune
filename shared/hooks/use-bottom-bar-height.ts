@@ -33,7 +33,11 @@ function syncCssVar() {
 export function useBottomBarHeight(height: number, enabled = true) {
 	const keyRef = useRef<symbol | null>(null);
 
-	keyRef.current ??= Symbol("bottom-bar");
+	// Lazy init null-guardée (pas `??=` : non supporté par le React Compiler).
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??=` non supporté par le React Compiler
+	if (keyRef.current === null) {
+		keyRef.current = Symbol("bottom-bar");
+	}
 
 	useEffect(() => {
 		const key = keyRef.current!;

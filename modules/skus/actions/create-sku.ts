@@ -215,6 +215,7 @@ export async function createProductSku(
 			productSku.colors.map((c) => c.color.slug),
 			productSku.colors.map((c) => c.colorId),
 			productSku.materials.map((m) => m.material.slug),
+			productSku.materials.map((m) => m.materialId),
 		);
 		tags.forEach((tag) => updateTag(tag));
 

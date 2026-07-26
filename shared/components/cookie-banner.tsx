@@ -22,7 +22,7 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
  * Accessibilité :
  * - role="region" + aria-labelledby pointant sur le h2 (banner non-bloquant honnête,
  *   l'user peut continuer à interagir avec la page ; consentement enforced côté code
- *   via ConditionalAnalytics)
+ *   via le gating RGPD de trackEvent — cf. shared/lib/analytics/track.ts)
  * - Touch targets 44px minimum sur mobile (WCAG 2.5.5)
  * - Safe area iOS pour iPhone avec barre de navigation
  * - Support prefers-reduced-motion

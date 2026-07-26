@@ -1,3 +1,5 @@
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+
 /**
  * Tailles d'images compactes pour le mega menu navbar
  *
@@ -16,10 +18,11 @@ export const COLLECTION_IMAGE_SIZES_COMPACT = {
  * Qualite d'image standardisee pour les collections
  * Balance entre qualite visuelle et taille du fichier
  */
-export const COLLECTION_IMAGE_QUALITY = 85;
+export const COLLECTION_IMAGE_QUALITY = IMAGE_QUALITY.STANDARD;
 
 /**
- * Seuil pour detection above-the-fold
- * Les images avec index < ce seuil sont preloadees avec priority
+ * Seuil above-the-fold — RE-EXPORT de la SSOT produits (valeur auparavant
+ * dupliquee ici, libre de deriver). Ne pilote que `loading="eager"` : la priorite
+ * reseau reste reservee au seul candidat LCP.
  */
-export const ABOVE_FOLD_THRESHOLD = 4;
+export { ABOVE_FOLD_THRESHOLD } from "@/modules/products/constants/product-texts.constants";

@@ -2,12 +2,20 @@
  * @regression ORD-BIZ-005
  *
  * Garantit que `updateOrderShippingAddress` et `updateOrderBillingAddress`
- * créent une entrée `OrderHistory.ADDRESS_UPDATED` immuable avec les
- * snapshots avant/après (Art. L123-22).
+ * créent une entrée `OrderHistory.ADDRESS_UPDATED` immuable traçant qui/quand/
+ * quels champs (Art. L123-22).
  *
  * Sans cette régression : un admin pourrait modifier silencieusement une
  * adresse (factice, snapshot figé). Les notes OrderNote sont mutables et
  * ne suffisent pas pour l'audit comptable.
+ *
+ * ⚠️ Contrat durci (audit rétention PII 10 ans 2026-07-09) : le metadata ne
+ * contient QUE `addressType` + `changedFields` (+ flags sameAsShipping,
+ * booléens non-PII) — JAMAIS les valeurs d'adresse (previousAddress/newAddress
+ * historiques). OrderHistory est immuable 10 ans et n'est scrubé ni à
+ * l'anonymisation ni à la purge : toute valeur de PII client qui y entre
+ * survivrait sans limite de durée (RGPD Art. 5.1.e). Les valeurs probantes
+ * vivent sur le snapshot Order et la facture figée.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -95,7 +103,7 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 	});
 
 	describe("updateOrderShippingAddress", () => {
-		it("crée OrderHistory.ADDRESS_UPDATED avec previousAddress + newAddress + addressType=shipping", async () => {
+		it("crée OrderHistory.ADDRESS_UPDATED avec changedFields + addressType=shipping, SANS valeur d'adresse", async () => {
 			mockValidateInput.mockReturnValue({
 				data: {
 					id: VALID_CUID,
@@ -146,17 +154,25 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 					authorName: "Lucie",
 					metadata: expect.objectContaining({
 						addressType: "shipping",
-						previousAddress: expect.objectContaining({
-							lastName: "OldName",
-							address1: "1 Rue Ancienne",
-						}),
-						newAddress: expect.objectContaining({
-							shippingLastName: "Dupont",
-							shippingAddress1: "12 Rue Neuve",
-						}),
+						changedFields: expect.arrayContaining([
+							"shippingLastName",
+							"shippingAddress1",
+							"shippingCity",
+						]),
 					}),
 				}),
 			);
+
+			// RGPD : aucune VALEUR d'adresse dans le metadata immuable — ni les clés
+			// historiques previousAddress/newAddress, ni une valeur saisie/lue en DB.
+			const metadata = mockCreateOrderAuditTx.mock.calls[0]![1].metadata;
+			expect(metadata).not.toHaveProperty("previousAddress");
+			expect(metadata).not.toHaveProperty("newAddress");
+			const serialized = JSON.stringify(metadata);
+			expect(serialized).not.toContain("Rue Neuve");
+			expect(serialized).not.toContain("Rue Ancienne");
+			expect(serialized).not.toContain("OldName");
+			expect(serialized).not.toContain("Dupont");
 		});
 
 		it("ne crée PAS d'audit si commande déjà expédiée (refus)", async () => {
@@ -196,7 +212,7 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 	});
 
 	describe("updateOrderBillingAddress", () => {
-		it("crée OrderHistory.ADDRESS_UPDATED avec addressType=billing + previousAddress + newAddress", async () => {
+		it("crée OrderHistory.ADDRESS_UPDATED avec addressType=billing + changedFields, SANS valeur d'adresse", async () => {
 			mockValidateInput.mockReturnValue({
 				data: {
 					id: VALID_CUID,
@@ -250,11 +266,20 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 					action: "ADDRESS_UPDATED",
 					metadata: expect.objectContaining({
 						addressType: "billing",
-						previousAddress: expect.objectContaining({ sameAsShipping: true }),
-						newAddress: expect.objectContaining({ billingLastName: "Martin" }),
+						previousSameAsShipping: true,
+						newSameAsShipping: false,
+						changedFields: expect.arrayContaining(["billingLastName", "billingAddress1"]),
 					}),
 				}),
 			);
+
+			// RGPD : aucune VALEUR d'adresse dans le metadata immuable.
+			const metadata = mockCreateOrderAuditTx.mock.calls[0]![1].metadata;
+			expect(metadata).not.toHaveProperty("previousAddress");
+			expect(metadata).not.toHaveProperty("newAddress");
+			const serialized = JSON.stringify(metadata);
+			expect(serialized).not.toContain("Martin");
+			expect(serialized).not.toContain("Saint-Michel");
 		});
 
 		it("refuse si la facture est déjà GENERATED (immutabilité comptable)", async () => {

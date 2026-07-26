@@ -327,6 +327,8 @@ export async function updateProduct(
 							blurDataUrl: image.blurDataUrl ?? null,
 							altText: image.altText ?? null,
 							mediaType: image.mediaType ?? detectMediaType(image.url),
+							width: image.width ?? null,
+							height: image.height ?? null,
 							isPrimary: image.isPrimary,
 							position: image.position,
 						},

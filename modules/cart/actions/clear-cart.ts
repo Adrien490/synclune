@@ -13,7 +13,7 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * Server Action pour vider integralement le panier
  * Compatible avec useActionState de React 19
  *
- * Supprime tous les items et reinitialise les metadonnees (discount, notes).
+ * Supprime tous les items et reinitialise les metadonnees discount.
  * Ne supprime pas le Cart lui-meme pour preserver les infos de session.
  *
  * Rate limiting configure via CART_LIMITS.CLEAR
@@ -67,7 +67,6 @@ export async function clearCart(
 				data: {
 					appliedDiscountCode: null,
 					discountAmountCache: null,
-					notes: null,
 					updatedAt: new Date(),
 				},
 			});

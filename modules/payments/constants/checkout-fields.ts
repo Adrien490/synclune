@@ -16,7 +16,7 @@ export const CHECKOUT_FIELD_LABELS: Record<string, string> = {
 	"shipping.phoneNumber": "Téléphone",
 };
 
-export const CHECKOUT_FIELD_TO_SECTION: Record<string, string> = {
+const CHECKOUT_FIELD_TO_SECTION: Record<string, string> = {
 	email: "Contact",
 	"shipping.fullName": "Livraison",
 	"shipping.addressLine1": "Livraison",

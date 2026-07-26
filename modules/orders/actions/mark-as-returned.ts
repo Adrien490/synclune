@@ -1,6 +1,6 @@
 "use server";
 
-import { FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -83,12 +83,24 @@ export async function markAsReturned(
 				return { ...found, _error: validation.reason };
 			}
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : ré-asserte DELIVERED + pas déjà RETURNED (miroir de
+			// canMarkAsReturned). count===0 ⇒ writer concurrent entre le findUnique
+			// et l'update — abort sans audit (le findUnique ne verrouille pas la
+			// ligne en read-committed).
+			const updated = await tx.order.updateMany({
+				where: {
+					id,
+					...notDeleted,
+					status: OrderStatus.DELIVERED,
+					fulfillmentStatus: { not: FulfillmentStatus.RETURNED },
+				},
 				data: {
 					fulfillmentStatus: FulfillmentStatus.RETURNED,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			// ORD-BIZ-010 : `requiresRefund: true` flag pour identifier les retours
 			// en attente de remboursement (cron / dashboard alert futur).
@@ -118,7 +130,9 @@ export async function markAsReturned(
 			const message =
 				order._error === "already_returned"
 					? ORDER_ERROR_MESSAGES.ALREADY_RETURNED
-					: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED;
+					: order._error === "concurrent_change"
+						? ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE
+						: ORDER_ERROR_MESSAGES.CANNOT_RETURN_NOT_DELIVERED;
 			return {
 				status: ActionStatus.ERROR,
 				message,

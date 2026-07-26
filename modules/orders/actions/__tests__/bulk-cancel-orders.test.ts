@@ -21,10 +21,13 @@ const {
 	mockExtractCustomerFirstName,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findMany: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany (préconditions
+		// status/paymentStatus=PENDING dans le where, retour { count }) remplace
+		// l'ancien order.update inconditionnel de la boucle.
+		order: { findMany: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
-		discount: { update: vi.fn() },
+		discount: { update: vi.fn(), updateMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -155,7 +158,7 @@ describe("bulkCancelOrders", () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({ count: 0 });
@@ -259,29 +262,64 @@ describe("bulkCancelOrders", () => {
 	// Stock restoration & audit log
 	// --------------------------------------------------------------------
 
-	it("restores stock per item with the correct quantities", async () => {
+	// STOCK-01 : le bulk n'annule QUE des commandes PENDING+PENDING, dont le stock
+	// n'a JAMAIS été décrémenté (réservation optimiste). Aucun restock ne doit avoir
+	// lieu — sinon l'inventaire gonfle au-dessus du réel (phantom stock), d'autant
+	// plus à l'échelle (purge de paniers abandonnés).
+	it("does NOT restore stock (PENDING orders were never decremented)", async () => {
 		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
 
 		await bulkCancelOrders(undefined, makeFd());
 
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
-			where: { id: "sku-A" },
-			data: { inventory: { increment: 2 } },
-		});
-		expect(mockPrisma.productSku.update).toHaveBeenCalledWith({
-			where: { id: "sku-B" },
-			data: { inventory: { increment: 1 } },
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+	});
+
+	it("flips order status to CANCELLED via an atomic conditional claim", async () => {
+		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
+
+		await bulkCancelOrders(undefined, makeFd());
+
+		// IDEM-CANCEL-001 : le where ré-évalue les préconditions PENDING+PENDING
+		// au lock de ligne (le filtre d'éligibilité est lu HORS transaction).
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith({
+			where: {
+				id: makeOrder().id,
+				status: "PENDING",
+				paymentStatus: "PENDING",
+			},
+			data: { status: "CANCELLED" },
 		});
 	});
 
-	it("flips order status to CANCELLED", async () => {
-		mockPrisma.order.findMany.mockResolvedValue([makeOrder()]);
+	// IDEM-CANCEL-001 : count===0 ⇒ la commande a été mutée par un concurrent
+	// entre le filtre d'éligibilité et le claim → skip (pas de release discount,
+	// pas d'audit, pas d'email, pas comptée dans les annulées).
+	it("skips an order whose atomic claim matches no row (concurrent mutation)", async () => {
+		const orderA = makeOrder({ id: "ord-A", orderNumber: "SYN-A", customerEmail: "a@x.com" });
+		const orderB = makeOrder({ id: "ord-B", orderNumber: "SYN-B", customerEmail: "b@x.com" });
+		mockPrisma.order.findMany.mockResolvedValue([orderA, orderB]);
+		// orderA claim OK, orderB déjà mutée par un concurrent.
+		mockPrisma.order.updateMany
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValueOnce({ count: 0 });
 
-		await bulkCancelOrders(undefined, makeFd());
+		const result = await bulkCancelOrders(undefined, makeFd());
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
-			where: { id: makeOrder().id },
-			data: { status: "CANCELLED" },
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.data).toEqual(expect.objectContaining({ count: 1 }));
+		// Audit + email uniquement pour la commande effectivement claimée.
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			mockPrisma,
+			expect.objectContaining({ orderId: "ord-A" }),
+		);
+		expect(mockSendCancelEmail).toHaveBeenCalledTimes(1);
+		expect(mockSendCancelEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "a@x.com" }));
+		// Pas de release discount pour la commande sautée.
+		expect(mockPrisma.discountUsage.findMany).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.discountUsage.findMany).toHaveBeenCalledWith({
+			where: { orderId: "ord-A" },
+			select: { id: true, discountId: true },
 		});
 	});
 
@@ -301,7 +339,7 @@ describe("bulkCancelOrders", () => {
 				newStatus: "CANCELLED",
 				note: "Stock épuisé",
 				authorId: "admin-1",
-				metadata: expect.objectContaining({ bulkOperation: true, stockRestored: true }),
+				metadata: expect.objectContaining({ bulkOperation: true, stockRestored: false }),
 			}),
 		);
 	});
@@ -330,13 +368,16 @@ describe("bulkCancelOrders", () => {
 
 		await bulkCancelOrders(undefined, makeFd());
 
-		expect(mockPrisma.discount.update).toHaveBeenCalledTimes(2);
-		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
-			where: { id: "disc-A" },
+		// [[DISC-USAGE-002]] Libération par commande via `releaseOrderDiscountUsageTx` :
+		// décrément `updateMany` GARDÉ par `usageCount > 0`. L'ancienne agrégation
+		// `decrement: count` par discountId n'avait aucune borne basse.
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(2);
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
+			where: { id: "disc-A", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
 		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-			where: { orderId: { in: [makeOrder().id] } },
+			where: { orderId: makeOrder().id },
 		});
 	});
 
@@ -347,7 +388,7 @@ describe("bulkCancelOrders", () => {
 		await bulkCancelOrders(undefined, makeFd());
 
 		expect(mockPrisma.discountUsage.deleteMany).not.toHaveBeenCalled();
-		expect(mockPrisma.discount.update).not.toHaveBeenCalled();
+		expect(mockPrisma.discount.updateMany).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------

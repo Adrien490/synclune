@@ -84,6 +84,7 @@ vi.mock("@/shared/components/ui/kbd", () => ({
 // ============================================================================
 
 import { CreateProductVariantForm } from "../create-sku-form";
+import { ActionStatus } from "@/shared/types/server-action";
 
 // ============================================================================
 // FIXTURES
@@ -126,6 +127,7 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 		store: { subscribe: vi.fn(() => () => undefined), getState: () => ({ errors: [] }) },
 		handleSubmit: vi.fn(),
 		setFieldValue: vi.fn(),
+		setFieldMeta: vi.fn(),
 		Subscribe: ({
 			children,
 			selector,
@@ -134,6 +136,22 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 			selector: (state: typeof formState) => unknown;
 		}) => <>{children(selector(formState))}</>,
 		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		// Mock fidèle du form.SubmitButton partagé (le vrai requiert le formContext)
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+			showKbdHint?: boolean;
+			className?: string;
+		}) => (
+			<button type="submit" disabled={!formState.canSubmit || isPending} aria-busy={isPending}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	};
 }
 
@@ -254,5 +272,48 @@ describe("CreateProductVariantForm", () => {
 		render(<CreateProductVariantForm {...defaultProps} />);
 
 		expect(screen.getByRole("status")).toBeInTheDocument();
+	});
+
+	// --------------------------------------------------------------------------
+	// Server errors (VALIDATION_ERROR — supprimées du toast par createToastCallbacks)
+	// --------------------------------------------------------------------------
+
+	describe("server errors", () => {
+		it("mappe une VALIDATION_ERROR path-préfixée sur le champ via setFieldMeta", () => {
+			const { form } = setup(
+				{},
+				{ state: { status: ActionStatus.VALIDATION_ERROR, message: "size: Trop long" } },
+			);
+			render(<CreateProductVariantForm {...defaultProps} />);
+
+			expect(form.setFieldMeta).toHaveBeenCalledWith("size", expect.any(Function));
+			const firstCall = form.setFieldMeta.mock.calls.at(0);
+			const updater = firstCall?.[1] as (prev: Record<string, unknown>) => Record<string, unknown>;
+			expect(updater({ errors: [] }).errors).toEqual(["Trop long"]);
+			// Mappée au champ → pas d'alerte globale avec le message brut
+			expect(screen.queryByText("size: Trop long")).not.toBeInTheDocument();
+		});
+
+		it("affiche une alerte globale pour une VALIDATION_ERROR sans path connu", () => {
+			const { form } = setup(
+				{},
+				{ state: { status: ActionStatus.VALIDATION_ERROR, message: "Données invalides." } },
+			);
+			render(<CreateProductVariantForm {...defaultProps} />);
+
+			expect(form.setFieldMeta).not.toHaveBeenCalled();
+			expect(screen.getByText("Données invalides.")).toBeInTheDocument();
+		});
+
+		it("n'affiche rien pour un statut ERROR (couvert par le toast)", () => {
+			const { form } = setup(
+				{},
+				{ state: { status: ActionStatus.ERROR, message: "Erreur serveur" } },
+			);
+			render(<CreateProductVariantForm {...defaultProps} />);
+
+			expect(form.setFieldMeta).not.toHaveBeenCalled();
+			expect(screen.queryByText("Erreur serveur")).not.toBeInTheDocument();
+		});
 	});
 });

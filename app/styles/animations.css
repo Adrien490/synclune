@@ -13,7 +13,7 @@
 	}
 
 	/* Shimmer ambiant du mot d'accent hero : balayage lent du dégradé.
-	   Appliqué via .text-gradient-multicolor (background-size: 200%).
+	   Appliqué via .text-gradient-multicolor (background-size: 300%, boucle fermée).
 	   Désactivé sous prefers-reduced-motion / forced-colors / prefers-contrast. */
 	@keyframes hero-gradient-shimmer {
 		0% {

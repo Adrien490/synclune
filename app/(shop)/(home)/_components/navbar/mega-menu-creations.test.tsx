@@ -56,9 +56,9 @@ vi.mock("./mega-menu-column", () => ({
 	),
 }));
 
-// Mock formatPrice
-vi.mock("@/modules/products/utils/format-price", () => ({
-	formatPrice: (price: number) => `${price} €`,
+// Mock formatEuro
+vi.mock("@/shared/utils/format-euro", () => ({
+	formatEuro: (cents: number) => `${cents / 100} €`,
 }));
 
 import { MegaMenuCreations } from "./mega-menu-creations";

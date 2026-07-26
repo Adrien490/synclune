@@ -1,10 +1,16 @@
 import { createHash } from "node:crypto";
 import * as Sentry from "@sentry/nextjs";
-import { buildCreditNoteData } from "@/modules/invoices/services/build-credit-note-data";
-import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { archiveCreditNotePdf } from "@/modules/refunds/services/archive-credit-note-pdf.service";
+import {
+	CREDIT_NOTE_REFUND_SELECT,
+	renderRefundCreditNotePdf,
+} from "@/modules/refunds/services/render-refund-credit-note.service";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import {
+	orderNumberParamSchema,
+	refundIdParamSchema,
+} from "@/modules/orders/schemas/order-route-params.schema";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
 import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
@@ -67,6 +73,15 @@ export async function GET(
 ) {
 	const { orderNumber, refundId } = await params;
 
+	// F4 (audit Zod) : params bornés/formatés AVANT session/rate-limit/Prisma
+	// (harmonisation avec status/route.ts). Échec → 400.
+	if (
+		!orderNumberParamSchema.safeParse(orderNumber).success ||
+		!refundIdParamSchema.safeParse(refundId).success
+	) {
+		return new Response("Bad request", { status: 400 });
+	}
+
 	const session = await getSession();
 
 	if (!session?.user.id) {
@@ -109,39 +124,7 @@ export async function GET(
 
 	const refund = await prisma.refund.findFirst({
 		where: { id: refundId, orderId: order.id, deletedAt: null },
-		select: {
-			id: true,
-			amount: true,
-			reason: true,
-			status: true,
-			creditNoteNumber: true,
-			creditNoteGeneratedAt: true,
-			creditNotePdfUrl: true,
-			creditNotePdfHash: true,
-			items: {
-				select: {
-					orderItemId: true,
-					quantity: true,
-					amount: true,
-					orderItem: {
-						select: {
-							productTitle: true,
-							productDescription: true,
-							skuSku: true,
-							skuColor: true,
-							skuMaterial: true,
-							skuSize: true,
-							quantity: true,
-							price: true,
-							taxRate: true,
-							taxCategoryCode: true,
-							hsCode: true,
-							unitCode: true,
-						},
-					},
-				},
-			},
-		},
+		select: CREDIT_NOTE_REFUND_SELECT,
 	});
 
 	if (!refund) {
@@ -176,21 +159,58 @@ export async function GET(
 			});
 			if (archived.ok) {
 				const buffer = await archived.arrayBuffer();
-				await recordCreditNoteDownload({
-					orderId: order.id,
-					refundId: refund.id,
-					creditNoteNumber: refund.creditNoteNumber,
-					authorId: auditAuthorId,
-					source: auditSource,
-				});
-				return new Response(buffer, {
-					headers: buildCreditNotePdfHeaders(refund.creditNoteNumber, orderNumber),
-				});
+				// EINV-PDF-006 : re-vérifier l'empreinte de l'artefact servi contre le hash
+				// archivé (Art. L102 B LPF) — cohérent avec /invoice et /credit-note (Order).
+				// Divergence : on NE sert PAS l'octet douteux → bascule régénération
+				// (re-vérifiée plus bas par EINV-PDF-002, 503 si elle diverge aussi).
+				// Archives legacy sans hash : servies telles quelles.
+				const servedHash =
+					refund.creditNotePdfHash != null
+						? createHash("sha256").update(new Uint8Array(buffer)).digest("hex")
+						: null;
+				if (servedHash !== null && servedHash !== refund.creditNotePdfHash) {
+					logger.error(
+						"Archived credit note PDF hash mismatch — falling back to regeneration",
+						undefined,
+						{
+							service: "credit-note-route",
+							refundId: refund.id,
+							creditNoteNumber: refund.creditNoteNumber,
+							archivedHash: refund.creditNotePdfHash,
+							servedHash,
+						},
+					);
+					Sentry.captureMessage("credit-note-pdf-archive-hash-mismatch", {
+						level: "error",
+						fingerprint: ["credit-note-refund", "archive-hash-mismatch", refund.creditNoteNumber],
+						tags: { service: "credit-note-route" },
+						extra: {
+							orderId: order.id,
+							refundId: refund.id,
+							creditNoteNumber: refund.creditNoteNumber,
+							archivedHash: refund.creditNotePdfHash,
+							servedHash,
+						},
+					});
+					// Pas de return : on tombe dans le bloc de régénération plus bas.
+				} else {
+					await recordCreditNoteDownload({
+						orderId: order.id,
+						refundId: refund.id,
+						creditNoteNumber: refund.creditNoteNumber,
+						authorId: auditAuthorId,
+						source: auditSource,
+					});
+					return new Response(buffer, {
+						headers: buildCreditNotePdfHeaders(refund.creditNoteNumber, orderNumber),
+					});
+				}
+			} else {
+				logger.warn(
+					`Archived credit note fetch failed (${archived.status}) — falling back to regeneration`,
+					{ service: "credit-note-route", refundId: refund.id },
+				);
 			}
-			logger.warn(
-				`Archived credit note fetch failed (${archived.status}) — falling back to regeneration`,
-				{ service: "credit-note-route", refundId: refund.id },
-			);
 		} catch (error) {
 			logger.warn(`Archived credit note fetch threw — falling back to regeneration`, {
 				service: "credit-note-route",
@@ -200,16 +220,18 @@ export async function GET(
 		}
 	}
 
-	// Régénération à la volée + archivage best-effort.
-	const creditNoteData = buildCreditNoteData(order, {
-		id: refund.id,
-		amount: refund.amount,
-		reason: refund.reason,
-		creditNoteNumber: refund.creditNoteNumber,
-		creditNoteGeneratedAt: refund.creditNoteGeneratedAt,
-		items: refund.items,
-	});
-	const pdfBuffer = renderInvoicePdf(creditNoteData);
+	// Régénération à la volée + archivage best-effort. SSOT du rendu
+	// (EINV-CREDIT-020) : `renderRefundCreditNotePdf` est le même chemin que
+	// l'archivage eager post-`issueCreditNoteForRefund` et le cron
+	// `reconcile-invoices` — un PDF régénéré doit rester bit-identique au hash
+	// archivé (Art. L102 B LPF).
+	const rendered = await renderRefundCreditNotePdf(refund.id);
+	if (!rendered) {
+		// État incohérent (les gardes ci-dessus ont validé creditNoteNumber) —
+		// probablement une course avec une suppression/purge concurrente.
+		return new Response("Avoir non disponible pour ce remboursement", { status: 404 });
+	}
+	const pdfBuffer = rendered.pdfBuffer;
 
 	// EINV-PDF-002 : check hash divergence si déjà archivé (cas où le fetch
 	// UploadThing a échoué mais qu'on a quand même le hash).

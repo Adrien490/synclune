@@ -7,6 +7,7 @@
 /* Split CSS imports for maintainability */
 @import "./styles/pwa.css";
 @import "./styles/utilities.css";
+@import "./styles/section-accents.css";
 @import "./styles/animations.css";
 /* scroll-driven.css moved into floating-images/ and imported locally by hero-floating-images-inner.tsx — keeps /admin /auth /paiement free of hero keyframes. */
 @import "./styles/entrance.css";
@@ -245,6 +246,27 @@ main#main-content {
 	--color-glow-lavender: oklch(0.75 0.12 280 / 0.35);
 	--color-glow-mint: oklch(0.82 0.14 160 / 0.4);
 	--color-glow-yellow: oklch(0.92 0.09 86 / 0.5);
+
+	/* ==========================================
+	   BRAND ACCENTS (accent par section — traits, underlines, bordures)
+	   Pendants opaques des --color-glow-* ci-dessus (qui restent la SSOT
+	   des halos translucides). « sun » et non « yellow » pour éviter la
+	   collision avec --secondary (jaune UI) et --accent (shadcn).
+	   Consommés par [data-accent] (app/styles/section-accents.css).
+	   Pas de token « rose » ici : l'accent rose EST --primary (SSOT unique,
+	   pas de doublon qui dériverait si --primary change).
+	   ========================================== */
+	--color-brand-lavender: oklch(0.72 0.11 295);
+	--color-brand-mint: oklch(0.78 0.11 165);
+	--color-brand-sun: oklch(0.85 0.11 86);
+
+	/* ==========================================
+	   DECORATIVE SHADOWS (tokens des ombres décoratives — remplacent
+	   les rgba(0,0,0,x) littéraux : floating images hero, polaroids, navbar)
+	   ========================================== */
+	--shadow-floating: 0 8px 30px oklch(0 0 0 / 0.12), 0 2px 8px oklch(0 0 0 / 0.08);
+	--shadow-lift: 0 12px 24px -8px oklch(0 0 0 / 0.15);
+	--shadow-header: 0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.08);
 
 	/* ==========================================
 	   HERO GRADIENT WORD (mot d'accent du h1 home)

@@ -53,7 +53,8 @@ export function cacheSkuDetailById(skuId: string) {
  * - La liste/détail couleurs + KPI distinct products (si `affectedColor*`
  *   fourni) : les stats admin `_count.skuColors` deviennent stale dès qu'un
  *   SKU change ses `colorIds`, le mutateur SKU doit propager.
- * - La liste/détail matériaux (parité M2M `ProductSkuMaterial`).
+ * - La liste/détail matériaux + KPI distinct products (parité M2M
+ *   `ProductSkuMaterial`, symétrique des couleurs).
  */
 export function getSkuInvalidationTags(
 	sku: string,
@@ -63,6 +64,7 @@ export function getSkuInvalidationTags(
 	affectedColorSlugs?: readonly string[],
 	affectedColorIds?: readonly string[],
 	affectedMaterialSlugs?: readonly string[],
+	affectedMaterialIds?: readonly string[],
 ): string[] {
 	const tags = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
@@ -95,7 +97,7 @@ export function getSkuInvalidationTags(
 
 	if (affectedColorIds?.length) {
 		for (const id of affectedColorIds) {
-			tags.push(`color-${id}-product-count`);
+			tags.push(COLORS_CACHE_TAGS.PRODUCT_COUNT(id));
 		}
 	}
 
@@ -103,6 +105,12 @@ export function getSkuInvalidationTags(
 		tags.push(MATERIALS_CACHE_TAGS.LIST);
 		for (const slug of affectedMaterialSlugs) {
 			tags.push(MATERIALS_CACHE_TAGS.DETAIL(slug));
+		}
+	}
+
+	if (affectedMaterialIds?.length) {
+		for (const id of affectedMaterialIds) {
+			tags.push(MATERIALS_CACHE_TAGS.PRODUCT_COUNT(id));
 		}
 	}
 

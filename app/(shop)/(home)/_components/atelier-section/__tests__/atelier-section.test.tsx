@@ -33,6 +33,9 @@ vi.mock("next/link", () => ({
 vi.mock("@/shared/components/animations", () => ({
 	Fade: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	HandDrawnUnderline: () => <div data-testid="underline" />,
+	HandDrawnAccent: ({ variant }: { variant?: string }) => (
+		<div data-testid="hand-drawn-accent" data-variant={variant} />
+	),
 	SplitTextCSS: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 	Stagger: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<div className={className}>{children}</div>
@@ -111,9 +114,9 @@ afterEach(() => {
 // Helper: render async server component
 // ---------------------------------------------------------------------------
 
-async function renderAtelierSection() {
+async function renderAtelierSection(stats?: React.ReactNode) {
 	const { AtelierSection } = await import("../atelier-section");
-	const jsx = await AtelierSection();
+	const jsx = await AtelierSection({ stats });
 	return render(jsx);
 }
 
@@ -232,10 +235,13 @@ describe("AtelierSection structure", () => {
 		expect(ctaTarget).toBeNull();
 	});
 
-	it("renders the section title", async () => {
+	it("renders the section title (mot « atelier » emphasé + cerclé)", async () => {
 		await renderAtelierSection();
 
-		expect(screen.getByText("Mon atelier")).toBeInTheDocument();
+		const heading = document.getElementById("atelier-section-title");
+		expect(heading).not.toBeNull();
+		expect(heading!.textContent).toContain("Mon");
+		expect(heading!.querySelector("em")?.textContent).toBe("atelier");
 	});
 
 	it("renders the new editorial subtitle", async () => {
@@ -250,12 +256,22 @@ describe("AtelierSection structure", () => {
 		expect(screen.getByTestId("timeline")).toBeInTheDocument();
 	});
 
-	// TODO(photos-atelier): la galerie polaroid est masquée temporairement (placeholders
-	// vides tant que les vraies photos ne sont pas prêtes). Réactiver cette assertion en
-	// même temps que <PolaroidGallery /> dans atelier-section.tsx.
-	it("does not render the polaroid gallery while photos are pending", async () => {
+	it("renders the illustrated polaroid gallery", async () => {
 		await renderAtelierSection();
 
-		expect(screen.queryByTestId("polaroid-gallery")).not.toBeInTheDocument();
+		expect(screen.getByTestId("polaroid-gallery")).toBeInTheDocument();
+	});
+
+	it("renders the stats slot content when provided (pattern slot Cache Components)", async () => {
+		await renderAtelierSection(<div data-testid="atelier-stats-slot" />);
+
+		expect(screen.getByTestId("atelier-stats-slot")).toBeInTheDocument();
+	});
+
+	it("renders the circle doodle around the emphasised title word", async () => {
+		await renderAtelierSection();
+
+		const accents = screen.getAllByTestId("hand-drawn-accent");
+		expect(accents.some((a) => a.getAttribute("data-variant") === "circle")).toBe(true);
 	});
 });

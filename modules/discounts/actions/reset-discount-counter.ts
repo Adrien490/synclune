@@ -16,7 +16,7 @@ import {
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
-import { getDiscountInvalidationTags } from "../constants/cache";
+import { DISCOUNT_CACHE_TAGS, getDiscountInvalidationTags } from "../constants/cache";
 
 /**
  * Réinitialise le compteur d'utilisation (usageCount) d'un code promo à 0.
@@ -64,7 +64,11 @@ export async function resetDiscountCounter(
 			data: { usageCount: 0 },
 		});
 
-		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(id, discount.code).forEach((tag) => updateTag(tag));
+		// Le compteur d'usage est caché à part (profil `checkout`) : sans ce tag, la
+		// garde `maxUsagePerUser` du checkout continuait de lire les counts d'avant
+		// la remise à zéro.
+		updateTag(DISCOUNT_CACHE_TAGS.USAGE(id));
 
 		return success(
 			`Compteur du code "${discount.code}" réinitialisé (était à ${discount.usageCount})`,

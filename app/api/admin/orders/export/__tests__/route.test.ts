@@ -46,7 +46,7 @@ vi.mock("@/modules/orders/services/export-orders-csv.service", () => ({
 	generateOrdersCsv: mockGenerateOrdersCsv,
 }));
 
-import { GET } from "../route";
+import { POST } from "../route";
 
 // ============================================================================
 // Helpers
@@ -69,7 +69,7 @@ function makeRequest(params: Record<string, string> = {}) {
 	for (const [key, value] of Object.entries(params)) {
 		url.searchParams.set(key, value);
 	}
-	return new Request(url.toString());
+	return new Request(url.toString(), { method: "POST" });
 }
 
 const SAMPLE_ORDERS = [
@@ -91,10 +91,10 @@ const SAMPLE_ORDERS = [
 ];
 
 // ============================================================================
-// Tests: GET /api/admin/orders/export
+// Tests: POST /api/admin/orders/export
 // ============================================================================
 
-describe("GET /api/admin/orders/export", () => {
+describe("POST /api/admin/orders/export", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockGetSession.mockResolvedValue(makeAdminSession());
@@ -124,7 +124,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns 401 when no session exists", async () => {
 			mockGetSession.mockResolvedValue(null);
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(401);
 		});
@@ -132,7 +132,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns 403 for non-admin user", async () => {
 			mockGetSession.mockResolvedValue(makeUserSession());
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(403);
 		});
@@ -140,7 +140,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns 401 when session user has no id", async () => {
 			mockGetSession.mockResolvedValue({ user: { role: "ADMIN" } });
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(401);
 		});
@@ -148,7 +148,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("does not query database when unauthorized", async () => {
 			mockGetSession.mockResolvedValue(null);
 
-			await GET(makeRequest({ periodType: "all" }));
+			await POST(makeRequest({ periodType: "all" }));
 
 			expect(mockPrisma.order.findMany).not.toHaveBeenCalled();
 		});
@@ -168,7 +168,7 @@ describe("GET /api/admin/orders/export", () => {
 				},
 			});
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(429);
 			expect(response.headers.get("Retry-After")).toBe("3600");
@@ -179,7 +179,7 @@ describe("GET /api/admin/orders/export", () => {
 				error: { status: "error", message: "Trop de requêtes", retryAfter: 60 },
 			});
 
-			await GET(makeRequest({ periodType: "all" }));
+			await POST(makeRequest({ periodType: "all" }));
 
 			expect(mockPrisma.order.findMany).not.toHaveBeenCalled();
 		});
@@ -189,7 +189,7 @@ describe("GET /api/admin/orders/export", () => {
 				error: { status: "error", message: "Trop de requêtes", retryAfter: 60 },
 			});
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			const body = await response.json();
 			expect(body).toEqual({ error: "Trop de requêtes" });
@@ -200,7 +200,7 @@ describe("GET /api/admin/orders/export", () => {
 				error: { status: "error", message: "Trop de requêtes" },
 			});
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(429);
 			expect(response.headers.get("Retry-After")).toBeNull();
@@ -213,25 +213,25 @@ describe("GET /api/admin/orders/export", () => {
 
 	describe("validation", () => {
 		it("defaults to periodType 'all' when omitted", async () => {
-			const response = await GET(makeRequest());
+			const response = await POST(makeRequest());
 
 			expect(response.status).toBe(200);
 		});
 
 		it("returns 400 for year period without year param", async () => {
-			const response = await GET(makeRequest({ periodType: "year" }));
+			const response = await POST(makeRequest({ periodType: "year" }));
 
 			expect(response.status).toBe(400);
 		});
 
 		it("returns 400 for month period without year/month params", async () => {
-			const response = await GET(makeRequest({ periodType: "month" }));
+			const response = await POST(makeRequest({ periodType: "month" }));
 
 			expect(response.status).toBe(400);
 		});
 
 		it("returns 400 for custom period without dates", async () => {
-			const response = await GET(makeRequest({ periodType: "custom" }));
+			const response = await POST(makeRequest({ periodType: "custom" }));
 
 			expect(response.status).toBe(400);
 		});
@@ -243,21 +243,21 @@ describe("GET /api/admin/orders/export", () => {
 
 	describe("successful export", () => {
 		it("returns CSV content with correct content-type", async () => {
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(200);
 			expect(response.headers.get("Content-Type")).toBe("text/csv; charset=utf-8");
 		});
 
 		it("returns CSV with attachment disposition and dated filename", async () => {
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			const disposition = response.headers.get("Content-Disposition");
 			expect(disposition).toMatch(/attachment; filename="livre-recettes-\d{4}-\d{2}-\d{2}\.csv"/);
 		});
 
 		it("sets defense-in-depth security headers (ORD-SEC-009)", async () => {
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
 			expect(response.headers.get("X-Frame-Options")).toBe("DENY");
@@ -268,14 +268,14 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns the CSV generated by generateOrdersCsv", async () => {
 			mockGenerateOrdersCsv.mockReturnValue("col1;col2\nval1;val2");
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			const body = await response.text();
 			expect(body).toBe("col1;col2\nval1;val2");
 		});
 
 		it("calls buildExportWhereClause with parsed input", async () => {
-			await GET(makeRequest({ periodType: "all" }));
+			await POST(makeRequest({ periodType: "all" }));
 
 			expect(mockBuildExportWhereClause).toHaveBeenCalledWith(
 				expect.objectContaining({ periodType: "all" }),
@@ -283,7 +283,7 @@ describe("GET /api/admin/orders/export", () => {
 		});
 
 		it("queries orders sorted by paidAt ascending", async () => {
-			await GET(makeRequest({ periodType: "all" }));
+			await POST(makeRequest({ periodType: "all" }));
 
 			expect(mockPrisma.order.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -293,25 +293,25 @@ describe("GET /api/admin/orders/export", () => {
 		});
 
 		it("passes orders to generateOrdersCsv", async () => {
-			await GET(makeRequest({ periodType: "all" }));
+			await POST(makeRequest({ periodType: "all" }));
 
 			expect(mockGenerateOrdersCsv).toHaveBeenCalledWith(SAMPLE_ORDERS);
 		});
 
 		it("works with year period type", async () => {
-			const response = await GET(makeRequest({ periodType: "year", year: "2026" }));
+			const response = await POST(makeRequest({ periodType: "year", year: "2026" }));
 
 			expect(response.status).toBe(200);
 		});
 
 		it("works with month period type", async () => {
-			const response = await GET(makeRequest({ periodType: "month", year: "2026", month: "1" }));
+			const response = await POST(makeRequest({ periodType: "month", year: "2026", month: "1" }));
 
 			expect(response.status).toBe(200);
 		});
 
 		it("works with custom period type", async () => {
-			const response = await GET(
+			const response = await POST(
 				makeRequest({
 					periodType: "custom",
 					dateFrom: "2026-01-01",
@@ -331,7 +331,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns 500 when database query fails", async () => {
 			mockPrisma.order.findMany.mockRejectedValue(new Error("DB timeout"));
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(500);
 		});
@@ -339,7 +339,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns error JSON when database fails", async () => {
 			mockPrisma.order.findMany.mockRejectedValue(new Error("DB error"));
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			const body = await response.json();
 			expect(body).toEqual({ error: "Erreur lors de l'export" });
@@ -350,7 +350,7 @@ describe("GET /api/admin/orders/export", () => {
 				throw new Error("CSV generation failed");
 			});
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(500);
 		});
@@ -360,7 +360,7 @@ describe("GET /api/admin/orders/export", () => {
 		it("returns 503 and does NOT serve the CSV when the BULK_EXPORT audit write fails", async () => {
 			mockPrisma.orderHistory.create.mockRejectedValue(new Error("DB down"));
 
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(503);
 			expect(response.headers.get("Content-Type")).toBe("application/json");
@@ -369,7 +369,7 @@ describe("GET /api/admin/orders/export", () => {
 		});
 
 		it("serves the CSV (200) once the BULK_EXPORT audit is written", async () => {
-			const response = await GET(makeRequest({ periodType: "all" }));
+			const response = await POST(makeRequest({ periodType: "all" }));
 
 			expect(response.status).toBe(200);
 			expect(mockPrisma.orderHistory.create).toHaveBeenCalledWith(

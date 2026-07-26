@@ -400,6 +400,10 @@ export const SORT_LABELS = {
 
 export const ORDER_ERROR_MESSAGES = {
 	NOT_FOUND: "La commande n'existe pas.",
+	// Garde atomique updateMany count===0 : le statut a changé entre le
+	// findUnique et l'update (admin concurrent, webhook, cron).
+	CONCURRENT_CHANGE:
+		"La commande a été modifiée par une autre opération. Rechargez la page et réessayez.",
 	DELETE_FAILED: "Erreur lors de la suppression de la commande.",
 	CANCEL_FAILED: "Erreur lors de l'annulation de la commande.",
 	HAS_INVOICE:

@@ -194,8 +194,11 @@ export async function createRefund(
 				restock: boolean;
 			}> = [];
 
+			// Index construit une fois : un `find` par item était quadratique.
+			const orderItemsById = new Map(order.items.map((oi) => [oi.id, oi]));
+
 			for (const item of validated.data.items) {
-				const orderItem = order.items.find((oi) => oi.id === item.orderItemId);
+				const orderItem = orderItemsById.get(item.orderItemId);
 
 				if (!orderItem) {
 					throw new Error("INVALID_ITEMS");

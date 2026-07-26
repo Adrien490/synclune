@@ -1,6 +1,6 @@
 "use server";
 
-import { isAdmin } from "@/modules/auth/utils/guards";
+import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { forbidden } from "next/navigation";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/skus.types";
@@ -8,11 +8,13 @@ import { fetchProductSkus } from "../data/fetch-skus";
 
 /**
  * Action serveur pour récupérer les SKUs de produits (admin uniquement)
+ *
+ * requireAdmin() re-vérifie le rôle en DB — jamais le cookie seul (stale ~5 min).
  */
 export async function getProductSkus(params: GetProductSkusParams): Promise<GetProductSkusReturn> {
-	const admin = await isAdmin();
+	const admin = await requireAdmin();
 
-	if (!admin) {
+	if ("error" in admin) {
 		forbidden();
 	}
 

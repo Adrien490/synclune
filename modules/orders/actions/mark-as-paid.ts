@@ -17,11 +17,13 @@ import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import { generateInvoiceAccessToken } from "../utils/invoice-token";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "../utils/build-order-tracking-url";
+import { buildUrl } from "@/shared/constants/urls";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -52,14 +54,71 @@ export async function markAsPaid(
 
 		const rawId = safeFormGet(formData, "id");
 		const note = safeFormGet(formData, "note");
+		const rawConfirm = safeFormGet(formData, "confirmOffStripePayment");
 
-		const validated = validateInput(markAsPaidSchema, { id: rawId, note });
+		const validated = validateInput(markAsPaidSchema, {
+			id: rawId,
+			note,
+			// Checkbox HTML : "on" (natif/Radix) ou "true" (soumission programmatique).
+			confirmOffStripePayment: rawConfirm === "on" || rawConfirm === "true",
+		});
 		if ("error" in validated) return validated.error;
 
-		const { id } = validated.data;
+		const { id, confirmOffStripePayment } = validated.data;
+
+		// EINV-CASH-002 (audit montant Stripe vs commande, 2026-07-02) : la garde
+		// EINV-CASH-001 (plus bas) vérifie la PRÉSENCE du PaymentIntent, pas son
+		// statut réel — un admin pouvait marquer payée une commande dont le PI est
+		// resté requires_payment_method sans autre friction. On interroge Stripe :
+		// si le PI n'est pas settled (succeeded/processing), l'admin doit attester
+		// explicitement un encaissement hors Stripe (virement/chèque), consigné
+		// dans l'audit trail. Fail-open si l'API Stripe est indisponible (garde
+		// anti-erreur pour admin de confiance, pas anti-adversaire — un outage
+		// Stripe ne doit pas bloquer une recovery légitime) : piStatus
+		// "unavailable" est alors tracé dans OrderHistory.
+		let piStatus = "unavailable";
+		const preflight = await prisma.order.findUnique({
+			where: { id, ...notDeleted },
+			select: { stripePaymentIntentId: true },
+		});
+		if (preflight?.stripePaymentIntentId) {
+			try {
+				const { stripe } = await import("@/shared/lib/stripe");
+				const pi = await stripe.paymentIntents.retrieve(preflight.stripePaymentIntentId);
+				piStatus = pi.status;
+			} catch (retrieveError) {
+				logger.warn(
+					`[mark-as-paid] PaymentIntent ${preflight.stripePaymentIntentId} retrieve failed — statut non vérifiable`,
+					{ action: "mark-as-paid", orderId: id },
+				);
+				Sentry.withScope((scope) => {
+					scope.setLevel("warning");
+					scope.setTag("payments", "mark-as-paid-pi-status-unavailable");
+					scope.setContext("order", {
+						orderId: id,
+						stripePaymentIntentId: preflight.stripePaymentIntentId,
+					});
+					Sentry.captureException(retrieveError);
+				});
+			}
+		}
+		const piSettled = piStatus === "succeeded" || piStatus === "processing";
+		const piStatusKnownUnsettled = piStatus !== "unavailable" && !piSettled;
+		if (piStatusKnownUnsettled && !confirmOffStripePayment) {
+			return {
+				status: ActionStatus.ERROR,
+				message: `Le paiement Stripe de cette commande n'a pas abouti (statut : ${piStatus}). Cochez la confirmation « paiement reçu hors Stripe » pour attester un encaissement par virement ou chèque.`,
+			};
+		}
 
 		// Transaction: fetch + validate + stock check + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+			// STOCK-02 : verrou advisory sérialisant la transition PAID avec le webhook
+			// payment_intent.succeeded concurrent (même commande). Le 2ᵉ arrivant bloque
+			// puis relit l'état PAID committé → sa garde d'idempotence court-circuite,
+			// évitant un double décrément de stock. À prendre AVANT le findUnique.
+			await acquireOrderPaidLockTx(tx, id);
+
 			const found = await tx.order.findUnique({
 				where: { id, ...notDeleted },
 				select: {
@@ -175,7 +234,15 @@ export async function markAsPaid(
 				}
 			}
 
-			// Mettre à jour la commande
+			// Mettre à jour la commande.
+			// EINV-CASH-005 : contrairement au chemin webhook, aucun
+			// payment_intent.succeeded n'arrivera jamais ici (le PI est annulé
+			// post-commit, ORD-BIZ-007) → pas de facture eager ni d'e-reporting
+			// SALES par ce canal. On pose les deux flags DLQ DANS la tx pour que
+			// la commande soit visible de la sélection candidats de
+			// reconcile-invoices (qui ne ramène QUE les commandes flaguées) même
+			// si le process meurt juste après le commit. Le rattrapage eager
+			// post-commit ci-dessous les baisse dans le cas nominal.
 			await tx.order.update({
 				where: { id },
 				data: {
@@ -183,6 +250,8 @@ export async function markAsPaid(
 					status: OrderStatus.PROCESSING,
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 					paidAt: new Date(),
+					invoiceRetryDeferred: true,
+					ereportingRetryDeferred: true,
 				},
 			});
 
@@ -203,6 +272,10 @@ export async function markAsPaid(
 				metadata: {
 					stockAdjusted,
 					itemsCount: found.items.length,
+					// EINV-CASH-002 : preuve d'audit du statut PI au moment du marquage
+					// + attestation hors-Stripe éventuelle de l'admin.
+					piStatus,
+					...(confirmOffStripePayment && { offStripeConfirmed: true }),
 					...(isRecovery && { recoveredFrom: found.paymentStatus }),
 				},
 			});
@@ -281,10 +354,36 @@ export async function markAsPaid(
 			}
 		}
 
+		// EINV-CASH-005 : émission eager de la facture (Art. 289-I — émission à
+		// l'encaissement) + e-reporting SALES, comme le fait le webhook sur le
+		// chemin canonique. reconcileInvoiceOrder exécute les mêmes passes que le
+		// cron (invoiceNumber, archive PDF, SALES) et baisse les flags DLQ posés
+		// dans la tx. Best-effort : sur échec les flags restent posés et le cron
+		// quotidien reconcile-invoices draine (import dynamique — la chaîne
+		// d'archivage tire UploadThing à l'import).
+		try {
+			const { reconcileInvoiceOrder } =
+				await import("@/modules/cron/services/reconcile-invoices.service");
+			await reconcileInvoiceOrder(order.id);
+		} catch (reconcileError) {
+			Sentry.withScope((scope) => {
+				scope.setLevel("warning");
+				scope.setTag("invoices", "mark-as-paid-eager-reconcile-failed");
+				scope.setContext("order", { orderId: order.id, orderNumber: order.orderNumber });
+				Sentry.captureException(reconcileError);
+			});
+			logger.warn(
+				`[mark-as-paid] Rattrapage facture eager échoué pour ${order.orderNumber} — le cron reconcile-invoices drainera (flags DLQ posés)`,
+				{ action: "mark-as-paid", orderId: order.id },
+			);
+		}
+
 		// Send order confirmation email for manual payment
 		let emailSent = false;
 		if (order.customerEmail) {
-			const trackingUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
+			// AUDIT-BIZ-001 : SSOT partagé avec le webhook et resend-order-email
+			// (route invité tokenisée si `userId` est null).
+			const trackingUrl = buildOrderTrackingUrl(order);
 			try {
 				await sendOrderConfirmationEmail({
 					to: order.customerEmail,

@@ -52,8 +52,11 @@ export async function toggleProductStatus(
 
 		// 4. Verifier que le produit existe et recuperer toutes les donnees necessaires
 		// (requete unique pour eviter N+1)
+		// deletedAt: null — un produit soft-deleted est ARCHIVED + deletedAt ; sans ce filtre,
+		// la transition ARCHIVED → PUBLIC le ressusciterait en gardant son deletedAt (état
+		// zombie visible dans les selects filtrés sur status seul). Parité bulk-change-product-status.
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: productId },
+			where: { id: productId, deletedAt: null },
 			select: {
 				id: true,
 				title: true,

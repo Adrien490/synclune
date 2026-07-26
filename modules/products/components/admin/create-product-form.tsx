@@ -2,25 +2,26 @@
 
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { Button } from "@/shared/components/ui/button";
-import { Kbd } from "@/shared/components/ui/kbd";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
 import { useMediaFieldUpload } from "@/modules/products/hooks/use-media-field-upload";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 import type { CreateProductFormProps } from "./create-product-form-types";
 import { CreateProductMediaCard } from "./create-product-media-card";
 import { CreateProductInfoCard } from "./create-product-info-card";
 import { CreateProductSidebarCards } from "./create-product-sidebar-cards";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 export type { CreateProductFormProps };
 
@@ -73,7 +74,7 @@ export function CreateProductForm({
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const { form, action, isPending } = useCreateProductForm({
+	const { form, state, action, isPending } = useCreateProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
@@ -98,6 +99,9 @@ export function CreateProductForm({
 		},
 	});
 
+	// Les messages produit ne sont pas path-préfixés → tout VALIDATION_ERROR serveur est global
+	const serverErrors = useServerFieldErrors({ state });
+
 	// Guard against accidental navigation loss: beforeunload + popstate + Link clicks (via NavigationGuardProvider)
 	// Block navigation when form is dirty OR an upload is currently in flight (P0.2)
 	const { allowNavigation } = useUnsavedChanges(
@@ -114,50 +118,16 @@ export function CreateProductForm({
 	}, [allowNavigation]);
 
 	// Desktop keyboard shortcut: Cmd+S / Ctrl+S submits with the currently selected status
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || isMediaUploading) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isMediaUploading, formRef, haptic]);
-
 	// Desktop keyboard shortcut: Escape cancels (symmetric to Cmd+S) — confirm if dirty
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
-			// Select/dropdown menu) — otherwise closing a Select would also trigger the
-			// "unsaved changes" confirm and navigate away.
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				form.state.isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, PRODUCTS_LIST_PATH);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, haptic, router, allowNavigation]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: PRODUCTS_LIST_PATH,
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		extraBusy: isMediaUploading,
+	});
 
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
@@ -175,13 +145,17 @@ export function CreateProductForm({
 				event.preventDefault();
 				if (isPending || isMediaUploading || form.state.isSubmitting) return;
 				const formData = new FormData(event.currentTarget);
-				void form.handleSubmit().then(() => {
-					if (form.state.isValid) {
-						action(formData);
-					} else {
-						requestAnimationFrame(() => focusFirstInvalid());
-					}
-				});
+				runAfterValidation(
+					form.handleSubmit(),
+					() => {
+						if (form.state.isValid) {
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					},
+					"CreateProductForm",
+				);
 			}}
 			onInvalidCapture={onInvalidCapture}
 		>
@@ -215,6 +189,8 @@ export function CreateProductForm({
 				<input type="hidden" name="deletedImageUrls" value={JSON.stringify(deletedImageUrls)} />
 			)}
 
+			<FormServerErrorAlert errors={serverErrors} />
+
 			{/* Validation error summary — appears after first submit attempt if 2+ errors */}
 			<form.Subscribe
 				selector={(state) => ({
@@ -234,7 +210,7 @@ export function CreateProductForm({
 						.filter(
 							(item): item is { name: string; label: string; message: string } => item !== null,
 						);
-					if (fieldErrors.length < 2) return null;
+					if (fieldErrors.length === 0) return null;
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>
@@ -282,39 +258,22 @@ export function CreateProductForm({
 			{/* Sticky footer: always-visible actions (safe-area + admin bottom-bar aware) */}
 			<form.AppForm>
 				<AdminFormFooter pending={isPending}>
-					<form.Subscribe selector={(state) => [state.canSubmit, state.values.status] as const}>
-						{([canSubmit, status]) => (
+					<form.Subscribe selector={(state) => [state.values.status] as const}>
+						{([status]) => (
 							<div className="flex justify-end">
-								<Button
-									type="submit"
-									size="input"
-									disabled={!canSubmit || isPending || isMediaUploading}
-									onClick={() => haptic("medium")}
-									className="w-full sm:w-auto sm:min-w-56"
-								>
-									{(isPending || isMediaUploading) && (
-										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									)}
-									<span>
-										{isPending
+								<form.SubmitButton
+									isPending={isPending || isMediaUploading}
+									idleLabel={status === "PUBLIC" ? "Publier le bijou" : "Enregistrer le brouillon"}
+									pendingLabel={
+										isPending
 											? status === "PUBLIC"
 												? "Publication…"
 												: "Enregistrement…"
-											: isMediaUploading
-												? "Téléversement…"
-												: status === "PUBLIC"
-													? "Publier le bijou"
-													: "Enregistrer le brouillon"}
-									</span>
-									{!isPending && !isMediaUploading && (
-										<Kbd
-											aria-hidden="true"
-											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-										>
-											⌘S
-										</Kbd>
-									)}
-								</Button>
+											: "Téléversement…"
+									}
+									showKbdHint
+									className="w-full sm:w-auto sm:min-w-56"
+								/>
 							</div>
 						)}
 					</form.Subscribe>

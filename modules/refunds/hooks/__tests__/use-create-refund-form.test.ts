@@ -149,14 +149,13 @@ describe("useCreateRefundForm", () => {
 
 	// ──────────── Return shape ────────────
 
-	it("returns form, state, action, isPending, and formErrors", () => {
+	it("returns form, state, action and isPending", () => {
 		const { result } = renderHook(() => useCreateRefundForm(DEFAULT_OPTIONS));
 
 		expect(result.current.form).toBeDefined();
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
-		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
 	it("returns computed values: reason, items, selectedItems, totalAmount, itemsForAction", () => {
@@ -335,13 +334,5 @@ describe("useCreateRefundForm", () => {
 		);
 
 		expect(result.current.form).toBeDefined();
-	});
-
-	// ──────────── formErrors ────────────
-
-	it("formErrors is an empty array by default", () => {
-		const { result } = renderHook(() => useCreateRefundForm(DEFAULT_OPTIONS));
-
-		expect(result.current.formErrors).toEqual([]);
 	});
 });

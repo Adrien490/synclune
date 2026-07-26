@@ -54,6 +54,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				id: true,
 				orderNumber: true,
 				total: true,
+				overbilledAmountCents: true,
 				paymentStatus: true,
 				customerEmail: true,
 				customerName: true,
@@ -103,6 +104,38 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 				`(${isFullyRefunded ? "total" : "partial"}: ${totalRefundedOnStripe / 100}€)`,
 			{ service: "webhook" },
 		);
+
+		// 4a-bis. Audit F4 (montant Stripe vs commande, 2026-07-02) : anomalie de
+		// montant — le cumul remboursé Stripe dépasse le maximum encaissé connu
+		// (order.total + trop-perçu éventuel). `updateOrderPaymentStatus` bascule
+		// silencieusement en REFUNDED dès `>= total` ; un sur-remboursement (refund
+		// Dashboard erroné, double refund partiel) n'était signalé qu'au niveau
+		// avoir (EINV-CREDIT-015). Alerte non bloquante, fingerprint par commande.
+		const maxRefundable = order.total + (order.overbilledAmountCents ?? 0);
+		if (totalRefundedOnStripe > maxRefundable) {
+			logger.error(
+				`⚠️ [WEBHOOK] Over-refund on order ${order.orderNumber}: Stripe refunded ${totalRefundedOnStripe} > max refundable ${maxRefundable}`,
+				undefined,
+				{ service: "webhook" },
+			);
+			Sentry.withScope((scope) => {
+				scope.setLevel("error");
+				scope.setTag("webhook", "amount-over-refund");
+				scope.setFingerprint(["webhook", "amount-over-refund", order.id]);
+				scope.setContext("order", {
+					orderId: order.id,
+					orderNumber: order.orderNumber,
+					orderTotal: order.total,
+					overbilledAmountCents: order.overbilledAmountCents,
+					totalRefundedOnStripe,
+					stripeChargeId: charge.id,
+				});
+				Sentry.captureMessage(
+					`Over-refund: Stripe refunded ${totalRefundedOnStripe} > order.total + overbilled ${maxRefundable} for order ${order.id}`,
+					"error",
+				);
+			});
+		}
 
 		// 4b. Cycle VOIDED facture (Art. 272-I CGI) si remboursement total après émission.
 		// Idempotent : noop si déjà VOIDED ou si pas de facture active.
@@ -254,9 +287,10 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// reconcile-refunds exclut ces refunds (COMPLETED + processedAt posé), un
 		// échec transitoire (timeout DB, build payload) laissait la ligne DGFiP
 		// négative définitivement perdue — sous-déclaration du net. Le wrapper pose
-		// `Refund.ereportingRetryDeferred` (DLQ) sur "error", drainé par la passe
-		// REFUND de reconcile-refunds. Aligne ce hot path sur les 3 autres chemins
-		// refund (process-refund, mark-as-fully-refunded, dispute-closed).
+		// `Refund.ereportingRetryDeferred` (DLQ) sur "error", drainé par la Passe
+		// REFUND de reconcile-invoices (pas reconcile-refunds, qui ne lit jamais ce
+		// flag). Aligne ce hot path sur les 3 autres chemins refund (process-refund,
+		// mark-as-fully-refunded, dispute-closed).
 		const completedRefunds = await prisma.refund.findMany({
 			where: { orderId: order.id, status: RefundStatus.COMPLETED, ...notDeleted },
 			select: { id: true },
@@ -270,7 +304,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 
 		// CACHE-AUDIT-003 : le remboursement modifie order.paymentStatus —
 		// passer par le helper canonique pour invalider aussi DETAIL(orderId),
-		// LAST_ORDER et ACCOUNT_STATS (la liste manuelle omettait DETAIL → page
+		// LAST_ORDER (la liste manuelle omettait DETAIL → page
 		// détail commande stale jusqu'à expiration du profil `user`).
 		const cacheTags = [
 			...getOrderInvalidationTags(order.userId ?? undefined, order.id),

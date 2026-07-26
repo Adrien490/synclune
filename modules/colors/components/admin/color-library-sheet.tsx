@@ -23,7 +23,7 @@ import {
 	type ColorLibraryEntry,
 } from "../../constants/color-library";
 
-export interface ColorLibrarySelection {
+interface ColorLibrarySelection {
 	name: string;
 	hex: string;
 	description: string | null;

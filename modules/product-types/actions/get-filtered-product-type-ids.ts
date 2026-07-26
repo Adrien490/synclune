@@ -9,12 +9,6 @@ import { BULK_PRODUCT_TYPE_ACTION_LIMIT } from "../constants/product-type.consta
 import { buildProductTypeWhereClause } from "../services/product-type-query-builder";
 import type { GetProductTypesParams } from "../types/product-type.types";
 
-export interface FilteredProductTypeIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Bypass `getProductTypes` (qui charge _count.products) — paye ~10 KB

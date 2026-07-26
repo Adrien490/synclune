@@ -183,6 +183,42 @@ export async function requireActiveAccountIfAuthenticated(): Promise<
 }
 
 /**
+ * Vérifie si l'acteur est RÉELLEMENT admin, sans bloquer (retourne un booléen).
+ *
+ * À utiliser pour les branches de privilège optionnelles (ex: bypass de la
+ * garde « boutique fermée » au checkout) où un non-admin doit simplement
+ * suivre le chemin normal au lieu de recevoir une erreur.
+ *
+ * `session.user.role` seul est best-effort (~5 min stale, cookieCache Better
+ * Auth — cf. EINV-SEC-008) : on re-vérifie le rôle en DB UNIQUEMENT quand le
+ * cookie prétend admin. Aucune query supplémentaire pour les invités et les
+ * clients normaux.
+ *
+ * @param session - Session courante (déjà résolue par l'appelant via getSession())
+ */
+export async function isVerifiedAdmin(
+	session: { user: { id: string; role?: string | null } } | null | undefined,
+): Promise<boolean> {
+	if (!session?.user.id || session.user.role !== "ADMIN") {
+		return false;
+	}
+
+	const user = await fetchUserForAuth(session.user.id);
+
+	if (!user || user.role !== "ADMIN") {
+		logger.warn("Admin privilege branch denied - stale session (demoted or deleted)", {
+			service: "require-auth",
+			userId: session.user.id,
+			sessionRole: session.user.role,
+			dbRole: user?.role ?? "user_not_found",
+		});
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Vérifie que l'utilisateur est admin
  *
  * @returns true si admin, ou une erreur ActionState

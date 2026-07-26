@@ -75,6 +75,9 @@ vi.mock("../../constants/discount.constants", () => ({
 
 vi.mock("../../constants/cache", () => ({
 	getDiscountInvalidationTags: mockGetDiscountInvalidationTags,
+	// Le compteur d'usage est caché à part : la remise à zéro doit aussi buster
+	// `USAGE(id)`, sinon la garde `maxUsagePerUser` lit des counts périmés.
+	DISCOUNT_CACHE_TAGS: { USAGE: (id: string) => `discount-usage-${id}` },
 }));
 
 import { resetDiscountCounter } from "../reset-discount-counter";
@@ -165,7 +168,7 @@ describe("resetDiscountCounter", () => {
 			where: { id: "disc-123" },
 			data: { usageCount: 0 },
 		});
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "PROMO20");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("42");
 	});

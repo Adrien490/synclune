@@ -6,18 +6,15 @@ import { cleanup } from "@testing-library/react";
 // Hoisted mocks
 // ============================================================================
 
-const { mockDeleteUploadThingFile, mockDeleteUploadThingFiles } = vi.hoisted(() => ({
+const { mockDeleteUploadThingFile } = vi.hoisted(() => ({
 	mockDeleteUploadThingFile: vi.fn(),
-	mockDeleteUploadThingFiles: vi.fn(),
 }));
 
 vi.mock("@/modules/media/actions/delete-uploadthing-file", () => ({
 	deleteUploadThingFile: mockDeleteUploadThingFile,
 }));
 
-vi.mock("@/modules/media/actions/delete-uploadthing-files", () => ({
-	deleteUploadThingFiles: mockDeleteUploadThingFiles,
-}));
+vi.mock("@/modules/media/actions/delete-uploadthing-files", () => ({}));
 
 vi.mock("sonner", () => ({
 	toast: {
@@ -37,7 +34,6 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 // ============================================================================
 
 import { useDeleteUploadThingFile } from "../use-delete-uploadthing-file";
-import { useDeleteUploadThingFiles } from "../use-delete-uploadthing-files";
 
 // ============================================================================
 // Helpers
@@ -113,89 +109,5 @@ describe("useDeleteUploadThingFile", () => {
 		expect(mockDeleteUploadThingFile).toHaveBeenCalledTimes(1);
 		const receivedFormData = mockDeleteUploadThingFile.mock.calls[0]?.[1] as FormData;
 		expect(receivedFormData.get("fileUrl")).toBe("https://example.com/file.jpg");
-	});
-});
-
-// ============================================================================
-// useDeleteUploadThingFiles
-// ============================================================================
-
-describe("useDeleteUploadThingFiles", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockDeleteUploadThingFiles.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, isPending, and deleteFiles", () => {
-		const { result } = renderHook(() => useDeleteUploadThingFiles());
-
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.deleteFiles).toBe("function");
-	});
-
-	it("isPending is false on initial render", () => {
-		const { result } = renderHook(() => useDeleteUploadThingFiles());
-
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("deleteFiles wraps a single string URL in an array and sends JSON", async () => {
-		const { result } = renderHook(() => useDeleteUploadThingFiles());
-
-		await act(async () => {
-			result.current.deleteFiles("https://example.com/file.jpg");
-		});
-
-		expect(mockDeleteUploadThingFiles).toHaveBeenCalledTimes(1);
-		const formData = mockDeleteUploadThingFiles.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("fileUrls")).toBe(JSON.stringify(["https://example.com/file.jpg"]));
-	});
-
-	it("deleteFiles sends multiple URLs as JSON array", async () => {
-		const { result } = renderHook(() => useDeleteUploadThingFiles());
-		const urls = ["https://example.com/file1.jpg", "https://example.com/file2.jpg"];
-
-		await act(async () => {
-			result.current.deleteFiles(urls);
-		});
-
-		const formData = mockDeleteUploadThingFiles.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("fileUrls")).toBe(JSON.stringify(urls));
-	});
-
-	it("deleteFiles handles an empty array", async () => {
-		const { result } = renderHook(() => useDeleteUploadThingFiles());
-
-		await act(async () => {
-			result.current.deleteFiles([]);
-		});
-
-		const formData = mockDeleteUploadThingFiles.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("fileUrls")).toBe(JSON.stringify([]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDeleteUploadThingFiles({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Fichier supprime");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockDeleteUploadThingFiles.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDeleteUploadThingFiles({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
 	});
 });

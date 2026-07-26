@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { baseMediaSchema, imageMediaSchema, nullableImageMediaSchema } from "../media.schema";
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
 // utfs.io is in UPLOADTHING_DOMAINS, which is the default for isAllowedMediaDomain
 const VALID_URL = "https://utfs.io/f/image123.jpg";
@@ -42,12 +43,24 @@ describe("baseMediaSchema", () => {
 		}
 	});
 
-	it("should reject altText exceeding 255 characters", () => {
+	it("should reject altText exceeding the shared limit", () => {
 		const result = baseMediaSchema.safeParse({
 			url: VALID_URL,
-			altText: "a".repeat(256),
+			altText: "a".repeat(TEXT_LIMITS.MEDIA_ALT_TEXT.max + 1),
 		});
 		expect(result.success).toBe(false);
+	});
+
+	// Audit média M3 : le dialogue d'édition, ce schéma et `imageSchema` (produits)
+	// bloquaient à 250 / 255 / 200 respectivement. Un alt text de 220 caractères
+	// était « enregistré » dans le dialogue puis faisait échouer la sauvegarde du
+	// produit. Cette borne doit rester dérivée de la SSOT.
+	it("accepts altText exactly at the shared limit (SSOT alignment)", () => {
+		const result = baseMediaSchema.safeParse({
+			url: VALID_URL,
+			altText: "a".repeat(TEXT_LIMITS.MEDIA_ALT_TEXT.max),
+		});
+		expect(result.success).toBe(true);
 	});
 
 	it("should reject when url is missing", () => {

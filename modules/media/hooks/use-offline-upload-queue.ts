@@ -61,16 +61,35 @@ export function useOfflineUploadQueue(
 	};
 
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		void refresh();
+		// Garde de péremption : l'`await` peut résoudre après un changement
+		// d'endpoint/contextKey ou un démontage — écrire l'état à ce moment
+		// remplacerait la liste courante par celle d'une clé abandonnée.
+		// (`AbortController` plutôt qu'un `let` booléen : TS ne suit pas
+		// l'assignation faite dans la closure de cleanup et croirait le drapeau
+		// toujours faux.)
+		const abort = new AbortController();
+		void (async () => {
+			try {
+				const list = await listEntries({ endpoint, contextKey });
+				if (abort.signal.aborted) return;
+				setEntries(list);
+				setQueuedCount(list.length);
+			} catch {
+				if (abort.signal.aborted) return;
+				setEntries([]);
+				setQueuedCount(0);
+			}
+		})();
 		// refresh periodically while mounted (cheap — IDB count)
 		const interval = setInterval(() => {
 			void getQueuedCount()
 				.then((count) => setQueuedCount((prev) => (prev === count ? prev : count)))
 				.catch(() => void 0);
 		}, 5000);
-		return () => clearInterval(interval);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		return () => {
+			abort.abort();
+			clearInterval(interval);
+		};
 	}, [endpoint, contextKey]);
 
 	useEffect(() => {

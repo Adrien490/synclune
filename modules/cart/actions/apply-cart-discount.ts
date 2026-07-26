@@ -21,6 +21,7 @@ import { checkDiscountEligibility } from "@/modules/discounts/services/discount-
 import { calculateDiscountWithExclusion } from "@/modules/discounts/services/discount-calculation.service";
 import { getDiscountUsageCounts } from "@/modules/discounts/data/get-discount-usage-counts";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { formatEuro } from "@/shared/utils/format-euro";
 import type { CartItemForDiscount } from "@/modules/discounts/types/discount.types";
 
 /**
@@ -147,8 +148,7 @@ export async function applyCartDiscount(
 		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);
 		tags.forEach((tag) => updateTag(tag));
 
-		const formattedAmount = (discountAmount / 100).toFixed(2).replace(".", ",");
-		return success(`Code "${discount.code}" appliqué (-${formattedAmount} €)`, {
+		return success(`Code "${discount.code}" appliqué (-${formatEuro(discountAmount)})`, {
 			code: discount.code,
 			discountAmount,
 			type: discount.type,

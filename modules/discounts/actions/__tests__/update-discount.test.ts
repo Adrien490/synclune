@@ -334,28 +334,38 @@ describe("updateDiscount", () => {
 	// Cache invalidation
 	// ──────────────────────────────────────────────────────────────
 
-	it("should invalidate cache tags for id after update", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
+	it("should invalidate cache tags for id and current code after update", async () => {
+		mockGetDiscountInvalidationTags.mockReturnValue([
+			"discounts-list",
+			"discount-disc-123",
+			"discount-PROMO20",
+		]);
 
 		await updateDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "PROMO20");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
 	});
 
-	it("should invalidate id-based tags only (no code-based cache anymore)", async () => {
+	it("should invalidate BOTH old and new code entries when the code changes", async () => {
+		// L'entrée checkout est keyed par code (`discount-${code}`) : un rename
+		// doit purger l'ancienne entrée ET la nouvelle (si un résidu existe).
 		mockSanitizeText.mockReturnValue("UPDATED-CODE");
-		mockPrisma.discount.findUnique
-			.mockResolvedValueOnce({ id: "disc-123", code: "OLD-CODE" })
-			.mockResolvedValueOnce(null);
-		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
+		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "OLD-CODE" });
+		mockGetDiscountInvalidationTags.mockImplementation((id: string, code: string) => [
+			"discounts-list",
+			`discount-${id}`,
+			`discount-${code}`,
+		]);
 
 		await updateDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
-		expect(mockGetDiscountInvalidationTags).not.toHaveBeenCalledWith("UPDATED-CODE");
-		expect(mockGetDiscountInvalidationTags).not.toHaveBeenCalledWith("OLD-CODE");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "OLD-CODE");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "UPDATED-CODE");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-OLD-CODE");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-UPDATED-CODE");
 	});
 
 	// ──────────────────────────────────────────────────────────────

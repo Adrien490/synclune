@@ -28,7 +28,11 @@ export const addressFormSchema = z.object({
 		.max(ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH, ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG)
 		.trim(),
 
-	address2: z.string().trim().optional(),
+	address2: z
+		.string()
+		.max(ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH, ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG)
+		.trim()
+		.optional(),
 
 	postalCode: z
 		.string()

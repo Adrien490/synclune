@@ -14,7 +14,7 @@
  * C'est un arbitrage à valider avec l'expert-comptable — pas dans le code.
  * Ajuster via `VAT_FRANCHISE_THRESHOLD_EUR` si l'activité bascule.
  */
-export const DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR = 85_000;
+const DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR = 85_000;
 
 /**
  * Mention légale obligatoire de la franchise en base de TVA (Art. 293 B CGI) —
@@ -42,3 +42,28 @@ export function getFranchiseThresholdCents(): number {
 	const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR;
 	return Math.round(safe * 100);
 }
+
+/**
+ * Seuil UNIQUE UE de ventes à distance intra-communautaires B2C (biens + services
+ * électroniques) — directive (UE) 2017/2455, transposée art. 259 D CGI.
+ *
+ * Au-delà de **10 000 €/an** de ventes à distance vers des consommateurs d'AUTRES
+ * États membres (cumul tous pays UE confondus, hors France), la TVA du pays de
+ * DESTINATION devient due et se déclare via le guichet unique **OSS**. En dessous,
+ * les règles du pays de départ s'appliquent (pour Synclune : franchise art. 293 B,
+ * TVA = 0). Synclune est très en dessous aujourd'hui, mais ce seuil n'a AUCUN
+ * garde-fou applicatif (audit G1) → on l'affiche au dashboard pour anticiper.
+ *
+ * ⚠️ Indicateur de MONITORING uniquement : aucun calcul de TVA-destination/OSS
+ * n'est implémenté (et ne doit pas l'être tant qu'on reste sous le seuil — ce
+ * serait de la sur-ingénierie). Au franchissement : voir docs/RUNBOOK.md § OSS.
+ */
+const EU_OSS_DISTANCE_SALES_THRESHOLD_EUR = 10_000;
+export const EU_OSS_DISTANCE_SALES_THRESHOLD_CENTS = EU_OSS_DISTANCE_SALES_THRESHOLD_EUR * 100;
+
+/**
+ * Codes pays EXCLUS du décompte « ventes à distance intra-UE » : la France (pays
+ * de départ) et Monaco (assimilé territoire français pour la TVA, hors champ OSS).
+ * Toute autre destination de `SHIPPING_COUNTRIES` est un État membre UE → comptée.
+ */
+export const EU_OSS_EXCLUDED_COUNTRIES = ["FR", "MC"] as const;

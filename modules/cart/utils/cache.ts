@@ -13,7 +13,7 @@ import { CART_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Configure le cache pour le panier d'un utilisateur/visiteur
- * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
+ * - Profil `checkout` (60s stale / 30s revalidate / 5min expire)
  */
 export function cacheCart(userId?: string, sessionId?: string) {
 	cacheLife("checkout");
@@ -22,7 +22,7 @@ export function cacheCart(userId?: string, sessionId?: string) {
 
 /**
  * Configure le cache pour le résumé du panier
- * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
+ * - Profil `checkout` (60s stale / 30s revalidate / 5min expire)
  */
 export function cacheCartSummary(userId?: string, sessionId?: string) {
 	cacheLife("checkout");

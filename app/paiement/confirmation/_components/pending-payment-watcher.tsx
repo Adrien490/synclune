@@ -23,7 +23,8 @@ const TIMEOUT_MS = 30_000;
  *   the full confirmation UI), or
  * - `router.replace('/paiement/annulation?...')` on FAILED/CANCELLED, or
  * - after `TIMEOUT_MS`, fall back to the "we'll email you" message (no
- *   redirect — SEPA / async payment legit).
+ *   redirect — en card-only, un PI 3DS lent peut rester PENDING quelques instants
+ *   le temps du settlement ; le webhook finalisera).
  *
  * Visibility-API aware: pauses polling when the tab is hidden so a backgrounded
  * user doesn't burn 60 req/min for nothing.

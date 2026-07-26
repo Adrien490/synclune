@@ -5,7 +5,7 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { generateBreadcrumbs } from "./dashboard-breadcrumb";
+import { generateBreadcrumbs } from "./generate-breadcrumbs";
 
 const DETAIL_ROUTE_PATTERNS = [
 	// Catalogue — detail + edit + create (5 resources)

@@ -19,6 +19,8 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
 		cartItem: { deleteMany: vi.fn() },
+		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
+		cart: { updateMany: vi.fn() },
 		$queryRaw: vi.fn(),
 	};
 	const mockPrisma = {

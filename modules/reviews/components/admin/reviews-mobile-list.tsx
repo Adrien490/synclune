@@ -73,9 +73,9 @@ export function ReviewsMobileList({
 					<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
 					<ItemGroup aria-label="Avis clients" className="gap-2">
 						{adminReviews.map((review) => (
-							<div key={review.id} role="listitem">
+							<li key={review.id}>
 								<ReviewMobileItem review={review} />
-							</div>
+							</li>
 						))}
 					</ItemGroup>
 

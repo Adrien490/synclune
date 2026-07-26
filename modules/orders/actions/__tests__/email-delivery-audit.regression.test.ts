@@ -31,7 +31,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -109,7 +109,7 @@ describe("ORD-BIZ-012 — audit reflète l'intention puis le résultat email", (
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockPrisma) => unknown) =>
 			fn(mockPrisma),
 		);
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	describe("markAsShipped", () => {

@@ -148,7 +148,7 @@ describe("addProductToWishlist", () => {
 	// Happy paths (user + guest)
 	// ----------------------------------------------------------------------
 
-	it("creates a wishlist item for an authenticated user (expiresAt=null)", async () => {
+	it("creates a wishlist item for an authenticated user", async () => {
 		const tx = makeTx();
 		tx.product.findUnique.mockResolvedValue({ id: VALID_PRODUCT_ID, status: "PUBLIC" });
 		tx.wishlist.upsert.mockResolvedValue({ id: "wl-user-1" });
@@ -164,14 +164,13 @@ describe("addProductToWishlist", () => {
 		expect(tx.wishlist.upsert).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { userId: VALID_USER_ID },
-				create: expect.objectContaining({ userId: VALID_USER_ID, expiresAt: null }),
-				update: expect.objectContaining({ expiresAt: null }),
+				create: expect.objectContaining({ userId: VALID_USER_ID }),
 			}),
 		);
 		expect(result).toEqual({ wishlistItemId: "wi-1", wishlistId: "wl-user-1" });
 	});
 
-	it("creates a wishlist item for a guest session (expiresAt set to +30d)", async () => {
+	it("creates a wishlist item for a guest session", async () => {
 		const tx = makeTx();
 		tx.product.findUnique.mockResolvedValue({ id: VALID_PRODUCT_ID, status: "PUBLIC" });
 		tx.wishlist.upsert.mockResolvedValue({ id: "wl-guest-1" });
@@ -186,7 +185,6 @@ describe("addProductToWishlist", () => {
 
 		const upsertCall = tx.wishlist.upsert.mock.calls[0]![0];
 		expect(upsertCall.where).toEqual({ sessionId: VALID_SESSION_ID });
-		expect(upsertCall.create.expiresAt).toEqual(new Date("2026-06-16T00:00:00Z"));
-		expect(upsertCall.update.expiresAt).toEqual(new Date("2026-06-16T00:00:00Z"));
+		expect(upsertCall.create.sessionId).toBe(VALID_SESSION_ID);
 	});
 });

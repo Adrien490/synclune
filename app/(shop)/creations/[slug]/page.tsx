@@ -191,11 +191,13 @@ export default async function ProductPage({
 			/>
 
 			{/* Particules précieuses pour pages produits
-			    mobileCountRatio réduit à 0.35 pour limiter le coût paint mobile (iPhone 12 Pro / Android low-end) */}
+			    mobileCountRatio réduit à 0.35 pour limiter le coût paint mobile (iPhone 12 Pro / Android low-end)
+			    seed=1 : layout distinct de /collections (props sinon équivalentes → positions identiques) */}
 			<ParticleBackground
 				count={8}
 				size={[12, 80]}
 				mobileCountRatio={0.35}
+				seed={1}
 				className="fixed inset-0 z-0"
 			/>
 

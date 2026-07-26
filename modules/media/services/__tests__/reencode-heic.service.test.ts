@@ -4,30 +4,17 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks
 // ============================================================================
 
-const {
-	mockDownloadImage,
-	mockSharp,
-	mockRotate,
-	mockWebp,
-	mockToBuffer,
-	mockUploadFiles,
-	mockDeleteFiles,
-} = vi.hoisted(() => ({
-	mockDownloadImage: vi.fn(),
-	mockSharp: vi.fn(),
-	mockRotate: vi.fn(),
-	mockWebp: vi.fn(),
-	mockToBuffer: vi.fn(),
-	mockUploadFiles: vi.fn(),
-	mockDeleteFiles: vi.fn(),
-}));
+const { mockSharp, mockRotate, mockWebp, mockToBuffer, mockUploadFiles, mockDeleteFiles } =
+	vi.hoisted(() => ({
+		mockSharp: vi.fn(),
+		mockRotate: vi.fn(),
+		mockWebp: vi.fn(),
+		mockToBuffer: vi.fn(),
+		mockUploadFiles: vi.fn(),
+		mockDeleteFiles: vi.fn(),
+	}));
 
 vi.mock("sharp", () => ({ default: mockSharp }));
-
-vi.mock("../image-downloader.service", async (importOriginal) => {
-	const actual = await importOriginal<Record<string, unknown>>();
-	return { ...actual, downloadImage: mockDownloadImage };
-});
 
 vi.mock("@/shared/lib/uploadthing", () => ({
 	utapi: {
@@ -36,19 +23,15 @@ vi.mock("@/shared/lib/uploadthing", () => ({
 	},
 }));
 
-vi.mock("@/modules/media/utils/validate-media-file", () => ({
-	isValidUploadThingUrl: vi.fn(),
-}));
-
 import { isHeicMimeType, reencodeHeicToWebp } from "../reencode-heic.service";
-import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
+import { ImageDecodeError } from "../image-downloader.service";
 
 const HEIC_FILE = {
-	ufsUrl: "https://utfs.io/f/heic-key.heic",
 	key: "heic-key",
 	name: "IMG_1234.HEIC",
-	type: "image/heic",
 };
+
+const HEIC_BUFFER = Buffer.from("heic-bytes");
 
 function setupSharp(webpBuffer: Buffer) {
 	mockToBuffer.mockResolvedValue(webpBuffer);
@@ -59,7 +42,6 @@ function setupSharp(webpBuffer: Buffer) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	vi.mocked(isValidUploadThingUrl).mockReturnValue(true);
 });
 
 describe("isHeicMimeType", () => {
@@ -72,18 +54,24 @@ describe("isHeicMimeType", () => {
 });
 
 describe("reencodeHeicToWebp", () => {
-	it("re-encodes to WebP, uploads, deletes original and returns the new url/key", async () => {
-		mockDownloadImage.mockResolvedValue(Buffer.from("heic-bytes"));
-		setupSharp(Buffer.from("webp-bytes"));
+	it("re-encodes to WebP, uploads, deletes original and returns url/key/buffer", async () => {
+		const webpBuffer = Buffer.from("webp-bytes");
+		setupSharp(webpBuffer);
 		mockUploadFiles.mockResolvedValue([
 			{ data: { ufsUrl: "https://utfs.io/f/new-key.webp", key: "new-key" } },
 		]);
 		mockDeleteFiles.mockResolvedValue({ success: true });
 
-		const result = await reencodeHeicToWebp(HEIC_FILE);
+		const result = await reencodeHeicToWebp(HEIC_BUFFER, HEIC_FILE);
 
+		expect(mockSharp).toHaveBeenCalledWith(HEIC_BUFFER);
 		expect(mockWebp).toHaveBeenCalled();
-		expect(result).toEqual({ url: "https://utfs.io/f/new-key.webp", key: "new-key" });
+		// Le buffer re-encodé est renvoyé : le ThumbHash s'en sert sans re-télécharger.
+		expect(result).toEqual({
+			url: "https://utfs.io/f/new-key.webp",
+			key: "new-key",
+			buffer: webpBuffer,
+		});
 		// l'original HEIC est supprimé après le succès de l'upload WebP
 		expect(mockDeleteFiles).toHaveBeenCalledWith(["heic-key"]);
 		// le fichier uploadé porte l'extension .webp et le bon MIME
@@ -93,8 +81,7 @@ describe("reencodeHeicToWebp", () => {
 		expect(uploadedFile?.type).toBe("image/webp");
 	});
 
-	it("throws when Sharp cannot decode the HEIC (no libheif codec)", async () => {
-		mockDownloadImage.mockResolvedValue(Buffer.from("heic-bytes"));
+	it("throws ImageDecodeError when Sharp cannot decode the HEIC (no libheif codec)", async () => {
 		mockSharp.mockReturnValue({
 			rotate: () => ({
 				webp: () => ({
@@ -103,25 +90,20 @@ describe("reencodeHeicToWebp", () => {
 			}),
 		});
 
-		await expect(reencodeHeicToWebp(HEIC_FILE)).rejects.toThrow();
+		await expect(reencodeHeicToWebp(HEIC_BUFFER, HEIC_FILE)).rejects.toBeInstanceOf(
+			ImageDecodeError,
+		);
 		// pas de suppression du blob (l'appelant gère le rejet + cleanup)
 		expect(mockDeleteFiles).not.toHaveBeenCalled();
 	});
 
 	it("throws when the re-upload returns no URL", async () => {
-		mockDownloadImage.mockResolvedValue(Buffer.from("heic-bytes"));
 		setupSharp(Buffer.from("webp-bytes"));
 		mockUploadFiles.mockResolvedValue([{ data: null }]);
 
-		await expect(reencodeHeicToWebp(HEIC_FILE)).rejects.toThrow();
-	});
-
-	it("rejects an unauthorized domain", async () => {
-		vi.mocked(isValidUploadThingUrl).mockReturnValue(false);
-
-		await expect(
-			reencodeHeicToWebp({ ...HEIC_FILE, ufsUrl: "https://evil.example/f/x.heic" }),
-		).rejects.toThrow();
-		expect(mockDownloadImage).not.toHaveBeenCalled();
+		await expect(reencodeHeicToWebp(HEIC_BUFFER, HEIC_FILE)).rejects.toThrow(
+			/re-upload returned no URL/,
+		);
+		expect(mockDeleteFiles).not.toHaveBeenCalled();
 	});
 });

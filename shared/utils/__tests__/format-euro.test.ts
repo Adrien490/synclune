@@ -53,6 +53,13 @@ describe("formatEuro", () => {
 		expect(result).toContain("€");
 	});
 
+	it("shows exact non-round price in compact mode (mega-menu)", () => {
+		// Prix affiché = prix payé : 4999 c ne doit JAMAIS s'arrondir à "50 €"
+		const result = formatEuro(4999, { compact: true });
+		expect(result).toContain("49,99");
+		expect(result).not.toContain("50");
+	});
+
 	it("shows two decimals in default mode", () => {
 		const result = formatEuro(5000);
 		expect(result).toContain("50,00");

@@ -2,7 +2,13 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import {
+	error,
+	handleActionError,
+	success,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { resetPasswordSchema } from "../schemas/auth.schemas";
@@ -51,6 +57,10 @@ export const resetPassword = async (
 				);
 			}
 		}
-		return error("Une erreur est survenue lors de la réinitialisation du mot de passe");
+		return handleActionError(
+			err,
+			"Une erreur est survenue lors de la réinitialisation du mot de passe",
+			{ service: "resetPassword" },
+		);
 	}
 };

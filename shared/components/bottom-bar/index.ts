@@ -1,11 +1,9 @@
+export { BottomBar, BottomBarActivePill } from "./bottom-bar";
 export {
-	BottomBar,
-	ActiveDot,
-	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
 	bottomBarBadgeClass,
-} from "./bottom-bar";
+} from "./bottom-bar.styles";

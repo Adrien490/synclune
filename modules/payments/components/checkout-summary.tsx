@@ -22,6 +22,7 @@ import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/disco
 import Image from "next/image";
 import Link from "next/link";
 import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
 
@@ -84,7 +85,7 @@ function SummaryContent({
 									alt={item.sku.images[0].altText ?? item.sku.product.title}
 									fill
 									sizes="64px"
-									quality={70}
+									quality={IMAGE_QUALITY.THUMBNAIL}
 									className="object-cover"
 									placeholder={item.sku.images[0].blurDataUrl ? "blur" : "empty"}
 									blurDataURL={item.sku.images[0].blurDataUrl ?? undefined}

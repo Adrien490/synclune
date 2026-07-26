@@ -12,8 +12,10 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
+import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
 import type { OrderWithItems } from "../types/checkout.types";
 import { initiateAutomaticRefund } from "./payment-intent.service";
+import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 
 /**
  * ORD-BIZ-011 : custom error thrown when a `payment_intent.succeeded` webhook
@@ -87,6 +89,7 @@ async function detectCancelledOrderRace(
 	orderId: string,
 	paymentIntentId: string,
 	flowLabel: string,
+	amountReceivedCents?: number,
 ): Promise<void> {
 	const order = await prisma.order.findUnique({
 		where: { id: orderId, ...notDeleted },
@@ -109,7 +112,12 @@ async function detectCancelledOrderRace(
 		);
 	});
 
-	await initiateAutomaticRefund(paymentIntentId, orderId, "cancelled-before-confirmation");
+	await initiateAutomaticRefund(
+		paymentIntentId,
+		orderId,
+		"cancelled-before-confirmation",
+		amountReceivedCents,
+	);
 	throw new CancelledOrderRaceError(orderId);
 }
 
@@ -143,7 +151,12 @@ function mapToOrderWithItems(order: {
 		quantity: number;
 		price: number;
 		skuId: string;
-		sku: { id: string; inventory: number; sku: string } | null;
+		sku: {
+			id: string;
+			inventory: number;
+			sku: string;
+			product: { id: string; slug: string };
+		} | null;
 	}>;
 }): OrderWithItems {
 	return {
@@ -191,6 +204,12 @@ async function processOrderAtomically(
 	expectedAmountReceived?: number | null,
 	expectedCurrency?: string | null,
 ): Promise<OrderWithItems> {
+	// STOCK-02 : verrou advisory sérialisant la transition PAID avec l'action admin
+	// markAsPaid concurrente (même commande). Le 2ᵉ arrivant bloque puis relit l'état
+	// PAID committé → la garde d'idempotence `paymentStatus === "PAID"` (étape 2)
+	// court-circuite, évitant un double décrément de stock. À prendre AVANT le fetch.
+	await acquireOrderPaidLockTx(tx, orderId);
+
 	// 1. Fetch order with items and SKUs
 	const order = await tx.order.findUnique({
 		where: { id: orderId },
@@ -202,6 +221,7 @@ async function processOrderAtomically(
 							id: true,
 							inventory: true,
 							sku: true,
+							product: { select: { id: true, slug: true } },
 						},
 					},
 				},
@@ -306,22 +326,38 @@ async function processOrderAtomically(
 	`;
 	const skuMap = new Map(skus.map((s) => [s.id, s]));
 
+	// CHECKOUT-BOUNDS-001 : agrégation des quantités PAR SKU avant la comparaison
+	// de stock. Deux `OrderItem` peuvent porter le même `skuId` (commandes
+	// historiques créées avant la garde d'unicité de `confirmCheckoutSchema`, import,
+	// futur writer). Les valider ligne par ligne contre le même snapshot `inventory`
+	// laisse passer un cumul supérieur au stock : le décrément de l'étape 4
+	// violerait alors le CHECK `ProductSku_inventory_non_negative` DANS la
+	// transaction, hors des chemins typés OversellError/AmountMismatchError →
+	// client débité, commande jamais PAID, retries Stripe en boucle.
+	const requiredQuantityBySku = new Map<string, number>();
 	for (const item of order.items) {
-		const sku = skuMap.get(item.skuId);
+		requiredQuantityBySku.set(
+			item.skuId,
+			(requiredQuantityBySku.get(item.skuId) ?? 0) + item.quantity,
+		);
+	}
+
+	for (const [skuId, requiredQuantity] of requiredQuantityBySku) {
+		const sku = skuMap.get(skuId);
 		const isValid =
 			sku &&
 			!sku.deletedAt &&
 			!sku.productDeletedAt &&
 			sku.isActive &&
 			sku.productStatus === "PUBLIC" &&
-			sku.inventory >= item.quantity;
+			sku.inventory >= requiredQuantity;
 
 		if (!isValid) {
 			const reason = !sku
 				? "SKU not found"
-				: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
+				: `invalid (active=${sku.isActive}, stock=${sku.inventory}, required=${requiredQuantity}, deleted=${!!sku.deletedAt})`;
 			logger.error(
-				`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
+				`[WEBHOOK] Validation failed for order ${orderId}, SKU ${skuId}: ${reason}`,
 				undefined,
 				{ service: "webhook" },
 			);
@@ -329,7 +365,7 @@ async function processOrderAtomically(
 			// (paiement encaissé mais stock indisponible → refund auto) d'une erreur
 			// transitoire (DB down → rethrow pour retry). Le throw interrompt la
 			// transaction AVANT tout décrément, donc aucun stock à restaurer côté loser.
-			throw new OversellError(orderId, item.skuId, reason);
+			throw new OversellError(orderId, skuId, reason);
 		}
 	}
 
@@ -337,11 +373,12 @@ async function processOrderAtomically(
 		service: "webhook",
 	});
 
-	// 4. Decrement stock for each item
-	for (const item of order.items) {
+	// 4. Decrement stock once per SKU (quantités agrégées à l'étape 3 — une seule
+	// écriture par SKU même si plusieurs lignes le référencent)
+	for (const [skuId, requiredQuantity] of requiredQuantityBySku) {
 		await tx.productSku.update({
-			where: { id: item.skuId },
-			data: { inventory: { decrement: item.quantity } },
+			where: { id: skuId },
+			data: { inventory: { decrement: requiredQuantity } },
 		});
 	}
 
@@ -390,20 +427,28 @@ async function processOrderAtomically(
 	}
 
 	// 6. Clear cart after successful payment (logged-in OR guest)
-	if (order.userId) {
-		await tx.cartItem.deleteMany({
-			where: { cart: { userId: order.userId } },
+	//
+	// [[CART-DISCOUNT-003]] On purge AUSSI le code promo appliqué au panier, comme
+	// le fait `clear-cart`. Ne vider que les `cartItem` laissait
+	// `appliedDiscountCode`/`discountAmountCache` en place : le prochain panier
+	// repartait avec un code déjà consommé, désormais repris automatiquement au
+	// checkout (cf. [[CART-DISCOUNT-002]]).
+	const cartScope = order.userId
+		? { userId: order.userId }
+		: guestSessionId
+			? { sessionId: guestSessionId }
+			: null;
+
+	if (cartScope) {
+		await tx.cartItem.deleteMany({ where: { cart: cartScope } });
+		await tx.cart.updateMany({
+			where: cartScope,
+			data: { appliedDiscountCode: null, discountAmountCache: null },
 		});
 		logger.info(
-			`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment (${flowLabel})`,
-			{ service: "webhook" },
-		);
-	} else if (guestSessionId) {
-		await tx.cartItem.deleteMany({
-			where: { cart: { sessionId: guestSessionId } },
-		});
-		logger.info(
-			`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment (${flowLabel})`,
+			`🧹 [WEBHOOK] Cart cleared for ${
+				order.userId ? `user ${order.userId}` : `guest session ${guestSessionId}`
+			} after successful payment (${flowLabel})`,
 			{ service: "webhook" },
 		);
 	}
@@ -430,7 +475,12 @@ export async function processOrderFromPaymentIntent(
 	paymentMethod?: PaymentMethod,
 ): Promise<OrderWithItems> {
 	// ORD-BIZ-011 : pré-check CANCELLED hors transaction (throws CancelledOrderRaceError).
-	await detectCancelledOrderRace(orderId, paymentIntent.id, "PI flow");
+	await detectCancelledOrderRace(
+		orderId,
+		paymentIntent.id,
+		"PI flow",
+		paymentIntent.amount_received,
+	);
 
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
@@ -446,7 +496,10 @@ export async function processOrderFromPaymentIntent(
 						typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
 					...(paymentMethod !== undefined && { paymentMethod }),
 				},
-				paymentIntent.metadata.guestSessionId,
+				// Zod boundary : guestSessionId malformé droppé (fail-open par champ)
+				parsePaymentIntentMetadata(paymentIntent.metadata, {
+					paymentIntentId: paymentIntent.id,
+				}).guestSessionId,
 				"PI flow",
 				paymentIntent.amount_received,
 				paymentIntent.currency,

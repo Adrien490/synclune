@@ -7,6 +7,7 @@ import { OrderItemsList } from "@/modules/orders/components/customer/order-items
 import { OrderRefundsCard } from "@/modules/orders/components/customer/order-refunds-card";
 import { OrderStatusTimeline } from "@/modules/orders/components/customer/order-status-timeline";
 import { OrderTracking } from "@/modules/orders/components/customer/order-tracking";
+import { OrderReturnGuidance } from "@/modules/orders/components/customer/order-return-guidance";
 import { OrderSummaryCard } from "@/modules/orders/components/customer/order-summary-card";
 import { OrderAddressesCard } from "@/modules/orders/components/customer/order-addresses-card";
 import { RequestReturnButton } from "@/modules/refunds/components/customer/request-return-button";
@@ -49,8 +50,14 @@ export async function OrderDetailContent({ orderNumber }: OrderDetailContentProp
 					{order.paymentStatus === "PAID" && (
 						<DownloadInvoiceButton orderNumber={order.orderNumber} />
 					)}
-					{canRequestReturn && (
+					{canRequestReturn ? (
 						<RequestReturnButton orderId={order.id} daysRemaining={daysRemaining} />
+					) : (
+						// AUDIT-BIZ-001 : ne plus rendre le silence. `isReturnEligible` est faux
+						// pendant toute la fenêtre PAID → DELIVERED (qui dépend de l'action admin
+						// manuelle `mark-as-delivered`), et le client n'avait alors aucune
+						// affordance ni explication — seul un mailto générique en pied de page.
+						<OrderReturnGuidance order={order} />
 					)}
 					{order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
 					{order.status === "DELIVERED" && <ReorderButton orderId={order.id} />}

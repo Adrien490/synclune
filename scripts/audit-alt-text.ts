@@ -21,6 +21,13 @@ import * as path from "path";
 
 const EXPORT_CSV = process.argv.includes("--csv");
 
+/**
+ * Nombre de médias sans alt text toléré avant sortie en échec.
+ * Défaut 0 (exigence a11y stricte) ; surchargeable pour un catalogue en cours de
+ * saisie via `ALT_TEXT_MAX_MISSING`.
+ */
+const MAX_TOLERATED_MISSING_ALT = Number.parseInt(process.env.ALT_TEXT_MAX_MISSING ?? "0", 10) || 0;
+
 // Initialisation Prisma
 const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -167,6 +174,17 @@ async function main() {
 	console.log("   3. Pour les avis, les alt text seront générés automatiquement lors de l'upload");
 
 	console.log("\n🎉 Audit terminé");
+
+	// Exit non-zéro : rend le script utilisable comme gate (`pnpm check:media`).
+	// Le seuil toléré est configurable — un catalogue en cours de saisie ne doit pas
+	// bloquer la CI, mais toute dérive au-delà du seuil devient visible.
+	if (missingAltTextImages.length > MAX_TOLERATED_MISSING_ALT) {
+		console.error(
+			`\n❌ ${missingAltTextImages.length} média(s) sans alt text (seuil toléré: ${MAX_TOLERATED_MISSING_ALT}).`,
+		);
+		console.error(`   Ajuster via ALT_TEXT_MAX_MISSING=<n> si la valeur est assumée.\n`);
+		process.exitCode = 1;
+	}
 }
 
 main()

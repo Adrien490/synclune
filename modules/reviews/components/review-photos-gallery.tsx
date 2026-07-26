@@ -10,6 +10,7 @@ const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightb
 
 import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../constants/review.constants";
 import type { ReviewPublic } from "../types/review.types";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface PhotoWithReview {
 	id: string;
@@ -92,7 +93,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 								blurDataURL={photo.blurDataUrl ?? undefined}
 								className="object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-105"
 								sizes="80px"
-								quality={75}
+								quality={IMAGE_QUALITY.STANDARD}
 							/>
 						</button>
 					))}

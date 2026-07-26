@@ -22,6 +22,7 @@ import { getProductCardData } from "@/modules/products/services/product-display.
 import { buildSkuUrl } from "@/modules/products/utils/build-sku-url";
 import { computeDiscountPercent } from "@/modules/products/utils/compute-discount-percent";
 import type { ComponentProps, ReactNode } from "react";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 const ratingFormatter = new Intl.NumberFormat("fr-FR", {
 	minimumFractionDigits: 1,
@@ -187,9 +188,18 @@ export function ProductCard({
 			? buildSkuUrl(baseUrl, defaultSku)
 			: baseUrl;
 
+	// Above-fold => `loading="eager"` (l'image est décodée sans attendre le scroll),
+	// mais SANS priorité réseau : voir isLcpCandidate.
 	const isAboveFold = !disablePreload && (index ?? 0) < ABOVE_FOLD_THRESHOLD;
 	// LCP candidate: only the very first card of a list emits `<link rel="preload">`.
 	// Multiple preload links on a 4G connection would compete for bandwidth.
+	//
+	// `preload` et `fetchPriority="high"` forment une PAIRE indissociable et sont
+	// réservés à cette seule image (parité collection-image-item) :
+	// - `preload` seul => lien de préchargement en priorité basse (Next 16 ne dérive
+	//   pas fetchPriority, cf. get-img-props : il est passé verbatim) ;
+	// - `fetchPriority="high"` sur les 4 cartes above-fold => 4 images se disputent
+	//   la bande passante 4G et retardent celle qui EST le LCP.
 	const isLcpCandidate = !disablePreload && index === 0;
 
 	// Review stats: hoisted so the rating link can include the score in its aria-label.
@@ -290,17 +300,18 @@ export function ProductCard({
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						preload={isLcpCandidate}
 						loading={isAboveFold ? "eager" : "lazy"}
-						fetchPriority={isAboveFold ? "high" : "auto"}
+						fetchPriority={isLcpCandidate ? "high" : "auto"}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>
 					{secondaryImage && (
 						<Image
 							src={secondaryImage.url}
 							alt=""
+							aria-hidden="true"
 							fill
 							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
 							loading="lazy"
-							quality={70}
+							quality={IMAGE_QUALITY.STANDARD}
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
 						/>
 					)}

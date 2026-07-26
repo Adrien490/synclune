@@ -27,8 +27,6 @@ export async function createReviewResponse(
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
 
-		const user = adminUser;
-
 		// 1b. Rate limiting
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_REVIEW_LIMITS.RESPONSE);
 		if ("error" in rateLimit) return rateLimit.error;
@@ -88,8 +86,8 @@ export async function createReviewResponse(
 			data: {
 				reviewId,
 				content: sanitizedContent,
-				authorId: user.id,
-				authorName: user.name ?? "Synclune",
+				authorId: adminUser.id,
+				authorName: adminUser.name ?? "Synclune",
 			},
 			select: {
 				id: true,

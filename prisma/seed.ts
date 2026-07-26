@@ -44,10 +44,23 @@ if (!process.env.DATABASE_URL) {
 	process.exit(1);
 }
 
-// EINV-CASH-004 : refus si la DATABASE_URL pointe vers la production, même en
-// NODE_ENV=development. Le seed crée des commandes PAID fictives (préfixe DEV,
-// sans invoiceNumber) qui pollueraient le périmètre comptable (exports / livre
-// de recettes / e-reporting). Miroir du garde de test/integration/prisma-client.
+// EINV-CASH-004 : le seed fabrique des commandes PAID fictives (PaymentIntent
+// factice `pi_…`, paidAt, ET des numéros de facture F-YYYY-NNNNN séquentiels
+// réalistes) qui pollueraient le périmètre comptable (exports / livre de
+// recettes / e-reporting) s'il tournait contre la production. Triple garde :
+// 1. NODE_ENV=production refusé (plus haut) — mais souvent non défini en shell ;
+// 2. opt-in explicite SEED_ALLOW=true requis — à poser une fois dans le .env
+//    local ; les environnements de production (Vercel) ne le définissent jamais ;
+// 3. refus de toute DATABASE_URL contenant "prod"/"production" (défense en
+//    profondeur par substring — un host Neon de prod sans "prod" dans l'URL
+//    passerait cette garde seule, d'où l'opt-in n°2). Miroir du garde de
+//    test/integration/prisma-client.
+if (process.env.SEED_ALLOW !== "true") {
+	console.error(
+		'❌ Seed refusé : définissez SEED_ALLOW="true" dans votre .env de développement (garde anti-production EINV-CASH-004).',
+	);
+	process.exit(1);
+}
 if (process.env.DATABASE_URL.includes("prod") || process.env.DATABASE_URL.includes("production")) {
 	console.error(
 		"❌ Seed interdit : DATABASE_URL contient 'prod'/'production'. Utilisez une base de développement.",
@@ -1802,16 +1815,6 @@ async function main(): Promise<void> {
 					new Date(orderDate.getTime() + 14 * 24 * 60 * 60 * 1000),
 				);
 			}
-			if (sampleBoolean(0.3)) {
-				emailTrackingData.reviewReminderSentAt = clampToNow(
-					new Date(orderDate.getTime() + 21 * 24 * 60 * 60 * 1000),
-				);
-			}
-			if (sampleBoolean(0.4)) {
-				emailTrackingData.crossSellEmailSentAt = clampToNow(
-					new Date(orderDate.getTime() + 30 * 24 * 60 * 60 * 1000),
-				);
-			}
 		}
 
 		let trackingData: Partial<Prisma.OrderCreateInput> = {};
@@ -2469,18 +2472,15 @@ async function main(): Promise<void> {
 		const itemCount = faker.number.int({ min: 1, max: 4 });
 		const selectedSKUs = faker.helpers.arrayElements(activeSKUs, itemCount);
 
-		// Abandoned carts get expiresAt and some get abandonedEmailSentAt
+		// Abandoned carts get expiresAt (relance e-mail retirée — scaffolding supprimé)
 		const expiresAt = new Date(cartDate);
 		expiresAt.setDate(expiresAt.getDate() + 30);
-		const abandonedEmailSentAt =
-			isAbandoned && sampleBoolean(0.6) ? new Date(cartDate.getTime() + 2 * 60 * 60 * 1000) : null;
 
 		try {
 			await prisma.cart.create({
 				data: {
 					userId: user.id,
 					expiresAt,
-					abandonedEmailSentAt,
 					createdAt: cartDate,
 					updatedAt: cartDate,
 					items: {

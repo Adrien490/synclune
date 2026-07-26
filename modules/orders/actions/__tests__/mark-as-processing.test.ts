@@ -22,7 +22,7 @@ const {
 	mockCanMarkAsProcessing,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -78,6 +78,7 @@ vi.mock("../../constants/order.constants", () => ({
 		CANNOT_PROCESS_NOT_PENDING: "Seule une commande en attente peut etre passee en preparation.",
 		CANNOT_PROCESS_CANCELLED: "Une commande annulee ne peut pas etre mise en preparation.",
 		CANNOT_PROCESS_UNPAID: "Une commande non payee ne peut pas etre mise en preparation.",
+		CONCURRENT_CHANGE: "La commande a ete modifiee par une autre operation.",
 		MARK_AS_PROCESSING_FAILED: "Erreur lors du passage en preparation.",
 	},
 }));
@@ -120,7 +121,7 @@ describe("markAsProcessing", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingPaidOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 
@@ -222,8 +223,13 @@ describe("markAsProcessing", () => {
 		const result = await markAsProcessing(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("SYN-2026-0001");
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
+				// Garde atomique : le where ré-asserte le statut attendu
+				where: expect.objectContaining({
+					status: "PENDING",
+					paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED"] },
+				}),
 				data: expect.objectContaining({
 					status: "PROCESSING",
 					fulfillmentStatus: "PROCESSING",

@@ -38,6 +38,10 @@ export function MaterialFilterSection({
 	const haptic = useHaptic();
 	if (materials.length === 0) return null;
 
+	// `Set` construit une fois : un `.includes()` par ligne rescanne tout le
+	// tableau à chaque rendu de la liste.
+	const selectedSet = new Set(selectedValues);
+
 	return (
 		<>
 			{materials.length > SEARCH_THRESHOLD && (
@@ -52,7 +56,7 @@ export function MaterialFilterSection({
 					<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 				) : (
 					filteredMaterials.map((material) => {
-						const isSelected = selectedValues.includes(material.slug);
+						const isSelected = selectedSet.has(material.slug);
 						return (
 							<CheckboxFilterItem
 								key={material.slug}

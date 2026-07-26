@@ -98,7 +98,12 @@ export async function updateDiscount(
 		});
 
 		// Invalidate list, admin badges, id-based detail, and code-based detail
-		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
+		// (ancien ET nouveau code : un rename doit purger l'entrée checkout de l'ancien)
+		const invalidationTags = new Set(getDiscountInvalidationTags(id, existing.code));
+		if (sanitizedCode !== existing.code) {
+			getDiscountInvalidationTags(id, sanitizedCode).forEach((tag) => invalidationTags.add(tag));
+		}
+		invalidationTags.forEach((tag) => updateTag(tag));
 
 		return success(`Code promo "${sanitizedCode}" mis à jour`);
 	} catch (e) {

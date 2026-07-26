@@ -210,7 +210,8 @@ describe("ProductCarouselUI", () => {
 			render(<ProductCarouselUI products={[makeProduct("1", { price: 4800 })]} />);
 
 			// Price appears in both the slide overlay and tooltip content
-			const priceElements = screen.getAllByText("48.00 €");
+			// (formatEuro : virgule française + espace insécable Intl avant €)
+			const priceElements = screen.getAllByText(/48,00\s?€/);
 			expect(priceElements.length).toBeGreaterThanOrEqual(1);
 		});
 

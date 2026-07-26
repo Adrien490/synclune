@@ -91,7 +91,7 @@ export async function createDiscount(
 		});
 
 		// 6. Invalidation du cache
-		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(discount.id, discount.code).forEach((tag) => updateTag(tag));
 
 		return success(`Code promo « ${discount.code} » créé`, { id: discount.id });
 	} catch (e) {

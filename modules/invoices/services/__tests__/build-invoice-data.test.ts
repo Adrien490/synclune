@@ -28,7 +28,8 @@ type Order = GetOrderReturn;
 
 function makeOrder(overrides: Partial<Order> = {}): Order {
 	return {
-		id: "order-1",
+		// cuid-like : invoiceMetaSchema valide orderId en z.cuid2() (les IDs à tirets échouent)
+		id: "ckwq2x5g9000001mh2z3v8y1a",
 		orderNumber: "SYN-2026-0001",
 		userId: "user-1",
 		stripeCheckoutSessionId: "cs_test_1",

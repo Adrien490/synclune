@@ -1,10 +1,8 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { getSessionInvalidationTags } from "@/shared/constants/cache-tags";
-import { error, success } from "@/shared/lib/actions";
+import { handleActionError, success } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 
 /**
@@ -19,22 +17,16 @@ import { headers } from "next/headers";
 export async function logout(): Promise<ActionState> {
 	try {
 		const headersList = await headers();
-		const session = await auth.api.getSession({ headers: headersList });
 
-		// Invalider le cache si on a un userId (même si l'utilisateur n'existe plus)
-		if (session?.user.id) {
-			try {
-				getSessionInvalidationTags(session.user.id).forEach((tag) => updateTag(tag));
-			} catch {
-				// Ignorer les erreurs de cache, on continue le logout
-			}
-		}
-
+		// Pas d'invalidation de cache nécessaire : les entrées "use cache: private"
+		// sont scopées par cookies de session, invalidées de fait par le signOut
 		// Révoquer la session et nettoyer les cookies
 		await auth.api.signOut({ headers: headersList });
 
 		return success("Déconnexion réussie");
-	} catch {
-		return error("Une erreur est survenue lors de la déconnexion");
+	} catch (err) {
+		return handleActionError(err, "Une erreur est survenue lors de la déconnexion", {
+			service: "logout",
+		});
 	}
 }

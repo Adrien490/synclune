@@ -1,6 +1,11 @@
 "use server";
 
-import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
+import {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	HistorySource,
+} from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
@@ -73,13 +78,24 @@ export async function markAsProcessing(
 				return { ...found, _error: validation.reason };
 			}
 
-			await tx.order.update({
-				where: { id },
+			// Garde atomique : ré-asserte PENDING + payé (miroir de canMarkAsProcessing).
+			// count===0 ⇒ writer concurrent entre le findUnique et l'update — abort
+			// sans audit (le findUnique ne verrouille pas la ligne en read-committed).
+			const updated = await tx.order.updateMany({
+				where: {
+					id,
+					...notDeleted,
+					status: OrderStatus.PENDING,
+					paymentStatus: { in: [PaymentStatus.PAID, PaymentStatus.PARTIALLY_REFUNDED] },
+				},
 				data: {
 					status: OrderStatus.PROCESSING,
 					fulfillmentStatus: FulfillmentStatus.PROCESSING,
 				},
 			});
+			if (updated.count === 0) {
+				return { ...found, _error: "concurrent_change" as const };
+			}
 
 			await createOrderAuditTx(tx, {
 				orderId: id,
@@ -106,6 +122,7 @@ export async function markAsProcessing(
 				not_pending: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_NOT_PENDING,
 				cancelled: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_CANCELLED,
 				unpaid: ORDER_ERROR_MESSAGES.CANNOT_PROCESS_UNPAID,
+				concurrent_change: ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE,
 			} as const;
 			return error(errorMessages[order._error]);
 		}

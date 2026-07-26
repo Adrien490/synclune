@@ -142,6 +142,12 @@ function ParallaxContainer({ containerRef, containerClassName, children }: Paral
  * <ParallaxImage src={...} alt="" decorative intensity={5} />
  * ```
  */
+/**
+ * @public Surface DORMANTE assumée : aucun call-site en production aujourd'hui.
+ * Conservée volontairement (suite de tests complète + e2e scroll-driven) comme
+ * brique réutilisable pour les sections éditoriales. Ne pas supprimer sur le seul
+ * constat « aucun consommateur » — cf. convention `@public` du dépôt.
+ */
 export function ParallaxImage({
 	src,
 	alt,

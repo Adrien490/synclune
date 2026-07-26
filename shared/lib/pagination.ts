@@ -17,14 +17,11 @@ export const DEFAULT_PER_PAGE = 20;
  *   Cap aligné sur `PAGINATION_LIMITS.MAX_PUBLIC = 50` — au-delà, Zod clampe
  *   silencieusement et l'utilisateur voit un nombre qui ne se reflète pas dans
  *   la requête (UX confuse).
- * - `ADMIN_PER_PAGE_OPTIONS` : tables admin (data-tables, mobile-lists). Cap
- *   aligné sur `PAGINATION_LIMITS.MAX_ADMIN = 200` (power-users).
- * - `PER_PAGE_OPTIONS` : alias historique = ADMIN (backward compat des call-sites
- *   non explicitement scopés).
+ * - `PER_PAGE_OPTIONS` : tables admin (data-tables, mobile-lists). Cap aligné
+ *   sur `PAGINATION_LIMITS.MAX_ADMIN = 200` (power-users).
  */
 export const PUBLIC_PER_PAGE_OPTIONS = [20, 50] as const;
-export const ADMIN_PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
-export const PER_PAGE_OPTIONS = ADMIN_PER_PAGE_OPTIONS;
+export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**
  * Helper to build cursor-based pagination for Prisma queries

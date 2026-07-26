@@ -17,6 +17,7 @@ const {
 	mockHandleActionError,
 	mockAnonymizeUserInTransaction,
 	mockGetUserFullInvalidationTags,
+	mockEnsureUserCreditNotesArchived,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findUnique: vi.fn() },
@@ -32,6 +33,7 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockAnonymizeUserInTransaction: vi.fn(),
 	mockGetUserFullInvalidationTags: vi.fn(() => ["tag-a"]),
+	mockEnsureUserCreditNotesArchived: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -78,6 +80,11 @@ vi.mock("../../../constants/cache", () => ({
 vi.mock("../../../services/anonymize-user.service", () => ({
 	anonymizeUserInTransaction: mockAnonymizeUserInTransaction,
 }));
+// EINV-CREDIT-020 : garde pré-anonymisation — mock module (la chaîne réelle
+// tire UploadThing instancié au chargement).
+vi.mock("@/modules/orders/services/ensure-user-credit-notes-archived.service", () => ({
+	ensureUserCreditNotesArchived: mockEnsureUserCreditNotesArchived,
+}));
 
 import { anonymizeUserImmediately } from "../anonymize-user-immediately";
 
@@ -106,6 +113,12 @@ describe("anonymizeUserImmediately", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
+		// EINV-CREDIT-020 : avoirs archivés par défaut — la garde laisse passer.
+		mockEnsureUserCreditNotesArchived.mockResolvedValue({
+			ok: true,
+			orderFailures: [],
+			refundFailures: [],
+		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockRequireAdminWithUser.mockResolvedValue({
 			user: { id: "admin-1", name: "Admin", email: "admin@test.com", role: "ADMIN" },

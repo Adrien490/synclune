@@ -21,14 +21,14 @@ export async function applyDiscountCode(
 ): Promise<ActionState> {
 	try {
 		const code = safeFormGet(formData, "code");
-		const subtotal = Number(formData.get("subtotal"));
 
 		if (!code) {
 			return error("Code promo requis");
 		}
 
 		// validateDiscountCode reads userId from session internally
-		const result = await validateDiscountCode(code, subtotal);
+		// (F9 audit Zod : le subtotal client était un input mort — recalculé serveur)
+		const result = await validateDiscountCode(code);
 
 		if (result.valid && result.discount) {
 			return success(`Code "${result.discount.code}" appliqué`, result.discount);

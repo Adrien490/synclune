@@ -291,8 +291,10 @@ describe("checkDiscountEligibility", () => {
 			// Cannot verify usage without identifier — deferred to checkout
 		});
 
-		it("should check userId limit and not emailCount when userId is present", () => {
-			// userId check takes precedence: even if emailCount is high, userId count is what matters
+		it("should check BOTH userId and email counts when userId is present", () => {
+			// [[DISC-USAGE-001]] Les deux compteurs comptent : un usage passé en
+			// invité (userId NULL, donc userCount = 0) doit rester opposable au
+			// même client une fois connecté, sinon il gagne une redemption.
 			const discount = makeDiscount({ maxUsagePerUser: 2 });
 			const context = makeContext({
 				userId: "user-1",
@@ -302,9 +304,10 @@ describe("checkDiscountEligibility", () => {
 
 			const result = checkDiscountEligibility(discount, context, usageCounts);
 
-			// userCount (1) < maxUsagePerUser (2) -> eligible
-			// emailCount branch is skipped because userId is present
-			expect(result.eligible).toBe(true);
+			// emailCount (5) >= maxUsagePerUser (2) -> non éligible, même si
+			// userCount (1) est sous la limite.
+			expect(result.eligible).toBe(false);
+			expect(result.error).toBe("Vous avez déjà utilisé ce code promo");
 		});
 
 		it("should return eligible when no usageCounts provided (caller skipped fetch)", () => {

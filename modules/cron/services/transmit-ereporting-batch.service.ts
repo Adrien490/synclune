@@ -7,9 +7,6 @@ import { INVOICE_FEATURE_FLAGS } from "@/modules/invoices/constants/feature-flag
 import {
 	submitEReportingBatchById,
 	MAX_RETRY,
-	RETRY_BACKOFF_MS,
-	ProviderBusinessError,
-	withDeadline,
 } from "@/modules/invoices/services/submit-ereporting-batch.service";
 
 /**
@@ -24,9 +21,6 @@ import {
  *
  * Cf. EINV-EREPORT-002.
  */
-
-// Ré-exports pour rétro-compat (tests cron importent depuis ce fichier).
-export { MAX_RETRY, RETRY_BACKOFF_MS, ProviderBusinessError, withDeadline };
 
 export async function transmitEReportingBatch(): Promise<CronResult> {
 	logger.info("Starting e-reporting batch transmission", {
@@ -94,6 +88,15 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 			case "NOT_ELIGIBLE":
 				skipped++;
 				break;
+			case "SKIPPED_CADENCE_GUARD":
+				// EINV-EREPORT-010 (fix FLAG-01) : la garde cadence a refusé une transmission
+				// DAILY vers une vraie PA (fail-closed). C'est un SKIP comptabilisé — sans ce
+				// case, le batch tombait dans le vide du switch (aucun compteur incrémenté) et
+				// `withCronGuard` calculait `remaining` à tort. Le signal d'alerte primaire
+				// reste le Sentry warning émis côté submit (isDailyTransmissionBlocked) ; on
+				// l'agrège ici en `skipped` pour une comptabilité exacte.
+				skipped++;
+				break;
 			case "RETRYING":
 				// EINV-CRON-004 : RETRYING est un état transitoire auto-réparant (backoff
 				// puis re-tentative au prochain run). Le compter en `errored` déclenchait
@@ -109,6 +112,19 @@ export async function transmitEReportingBatch(): Promise<CronResult> {
 				// Ne devrait jamais arriver ici (early return en début de cron).
 				skipped++;
 				break;
+			default: {
+				// Exhaustivité : si `SubmitBatchStatus` gagne un membre, `tsc` échoue ici
+				// (plus de skip silencieux d'un statut non géré). Au runtime, fail-closed
+				// en `errored` pour que `withCronGuard` alerte plutôt que d'ignorer.
+				const _exhaustive: never = result.status;
+				logger.error("Statut de transmission e-reporting non géré", undefined, {
+					cronJob: "transmit-ereporting-batch",
+					status: String(_exhaustive),
+					batchId: candidate.id,
+				});
+				errored++;
+				break;
+			}
 		}
 	}
 

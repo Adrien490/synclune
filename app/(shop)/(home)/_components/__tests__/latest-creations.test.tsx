@@ -221,7 +221,7 @@ describe("LatestCreations", () => {
 		const list = document.querySelector("ul[role='list']");
 		expect(list).not.toBeNull();
 
-		const items = list?.querySelectorAll("li.latest-card-enter-scroll") ?? [];
+		const items = list?.querySelectorAll("li.card-enter-scroll") ?? [];
 		expect(items).toHaveLength(mockProducts.length);
 
 		items.forEach((item, i) => {

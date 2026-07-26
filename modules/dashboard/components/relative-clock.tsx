@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 const RELATIVE_FORMATTER = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
 
 /** Format a past Date into a French relative time string ("il y a 5 s", "il y a 2 min"). */
-export function formatRelativeTime(date: Date, now: number): string {
+function formatRelativeTime(date: Date, now: number): string {
 	const diffSeconds = Math.round((date.getTime() - now) / 1000);
 	if (Math.abs(diffSeconds) < 60) return RELATIVE_FORMATTER.format(diffSeconds, "second");
 	const diffMinutes = Math.round(diffSeconds / 60);

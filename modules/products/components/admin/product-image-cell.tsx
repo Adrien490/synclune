@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Package } from "lucide-react";
 
 import { useLightbox } from "@/shared/hooks";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
@@ -56,7 +57,7 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 							alt={primaryImage.altText ?? productTitle}
 							fill
 							sizes="80px"
-							quality={80}
+							quality={IMAGE_QUALITY.STANDARD}
 							className="rounded-md object-cover"
 							placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={primaryImage.blurDataUrl ?? undefined}

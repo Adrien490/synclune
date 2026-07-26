@@ -4,6 +4,7 @@ import { useState, lazy, Suspense } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useLightbox } from "@/shared/hooks";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
@@ -60,7 +61,7 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 							placeholder={media.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={media.blurDataUrl ?? undefined}
 							sizes="(min-width: 768px) 96px, 80px"
-							quality={75}
+							quality={IMAGE_QUALITY.STANDARD}
 						/>
 					</button>
 				))}

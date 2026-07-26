@@ -78,10 +78,17 @@ import { cancelOrphanPaymentIntent } from "../cancel-orphan-payment-intent";
 // TESTS
 // ============================================================================
 
+// IDs au format réel : userId = cuid (Prisma @default(cuid())), guestSessionId = UUID v4.
+// Le parse Zod de la metadata (stripe-metadata.schema) droppe tout format invalide.
+const USER_ID = "cm3x7k2ab0002qz8v6f1k8c2d";
+const OTHER_USER_ID = "cm3x7k2ab0009qz8v1a2b3c4d";
+const GUEST_SESSION_A = "550e8400-e29b-41d4-a716-446655440000";
+const GUEST_SESSION_B = "6f9619ff-8b86-4d11-b42d-00c04fc964ff";
+
 const AUTH_PI = {
 	id: "pi_test_abc123",
 	status: "requires_payment_method",
-	metadata: { userId: "user-123" },
+	metadata: { userId: USER_ID },
 };
 
 describe("cancelOrphanPaymentIntent", () => {
@@ -89,7 +96,7 @@ describe("cancelOrphanPaymentIntent", () => {
 		vi.resetAllMocks();
 		mockWithStripeCircuitBreaker.mockImplementation((fn: () => Promise<unknown>) => fn());
 		// Default: authenticated owner of AUTH_PI, rate limit OK.
-		mockGetSession.mockResolvedValue({ user: { id: "user-123" } });
+		mockGetSession.mockResolvedValue({ user: { id: USER_ID } });
 		mockGetOrCreateCartSessionId.mockResolvedValue(null);
 		mockHeaders.mockResolvedValue(new Map());
 		mockGetClientIp.mockResolvedValue("1.2.3.4");
@@ -127,10 +134,10 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	it("cancels when the guest session owns the PI (metadata.guestSessionId match)", async () => {
 		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateCartSessionId.mockResolvedValue("sess-guest-1");
+		mockGetOrCreateCartSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
-			metadata: { userId: "guest", guestSessionId: "sess-guest-1" },
+			metadata: { userId: "guest", guestSessionId: GUEST_SESSION_A },
 		});
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");
@@ -141,7 +148,7 @@ describe("cancelOrphanPaymentIntent", () => {
 	it("does NOT cancel a PI owned by another user (ownership mismatch)", async () => {
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
-			metadata: { userId: "someone-else" },
+			metadata: { userId: OTHER_USER_ID },
 		});
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");
@@ -152,10 +159,10 @@ describe("cancelOrphanPaymentIntent", () => {
 
 	it("does NOT cancel a guest PI when the session id differs", async () => {
 		mockGetSession.mockResolvedValue(null);
-		mockGetOrCreateCartSessionId.mockResolvedValue("sess-A");
+		mockGetOrCreateCartSessionId.mockResolvedValue(GUEST_SESSION_A);
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
-			metadata: { userId: "guest", guestSessionId: "sess-B" },
+			metadata: { userId: "guest", guestSessionId: GUEST_SESSION_B },
 		});
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");
@@ -166,7 +173,7 @@ describe("cancelOrphanPaymentIntent", () => {
 	it("does NOT cancel a PI already bound to an order (metadata.orderId set)", async () => {
 		mockStripePaymentIntentsRetrieve.mockResolvedValue({
 			id: "pi_test_abc123",
-			metadata: { userId: "user-123", orderId: "order-1" },
+			metadata: { userId: USER_ID, orderId: "order-1" },
 		});
 
 		await cancelOrphanPaymentIntent("pi_test_abc123");

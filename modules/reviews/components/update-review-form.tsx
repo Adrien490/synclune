@@ -2,13 +2,19 @@
 
 import { Send } from "lucide-react";
 
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { cn } from "@/shared/utils/cn";
 
 import { REVIEW_CONFIG } from "../constants/review.constants";
 import { useUpdateReviewForm } from "../hooks/use-update-review-form";
 import type { ReviewUser } from "../types/review.types";
 import { ReviewMediaField } from "./review-media-field";
+
+/** Champs pouvant recevoir une erreur serveur path-préfixée (`update-review.ts`). */
+const SERVER_FIELD_NAMES = ["rating", "title", "content", "media"] as const;
 
 interface UpdateReviewFormProps {
 	review: ReviewUser;
@@ -36,7 +42,7 @@ export function UpdateReviewForm({
 		altText: m.altText ?? undefined,
 	}));
 
-	const { form, action, isPending } = useUpdateReviewForm({
+	const { form, state, action, isPending } = useUpdateReviewForm({
 		reviewId: review.id,
 		initialRating: review.rating,
 		initialTitle: review.title ?? "",
@@ -47,9 +53,22 @@ export function UpdateReviewForm({
 		},
 	});
 
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
+
+	// `updateReview` émet des messages path-préfixés et `createToastCallbacks` les
+	// retire du toast : on les remonte sur le champ ciblé, sinon en alerte globale.
+	const serverErrors = useServerFieldErrors({
+		state,
+		fieldNames: SERVER_FIELD_NAMES,
+		setFieldError: (field, message) =>
+			form.setFieldMeta(field, (prev) => ({ ...prev, errors: [message] })),
+		onFieldError: () => requestAnimationFrame(() => focusFirstInvalid()),
+	});
+
 	return (
 		<div className="group/form">
 			<form
+				ref={formRef}
 				action={action}
 				data-pending={isPending || undefined}
 				aria-busy={isPending}
@@ -61,6 +80,8 @@ export function UpdateReviewForm({
 			>
 				{/* Champ caché pour l'ID */}
 				<input type="hidden" name="id" value={review.id} />
+
+				<FormServerErrorAlert errors={serverErrors} />
 
 				{/* Sélection de la note */}
 				<form.AppField name="rating">

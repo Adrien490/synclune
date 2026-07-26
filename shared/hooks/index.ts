@@ -1,11 +1,9 @@
 // Device detection hooks
 export { useIsTouchDevice } from "./use-touch-device";
 export { useMediaQuery } from "./use-media-query";
-export { useMounted } from "./use-mounted";
 
 // Gesture hooks
 export { useLongPress } from "./use-long-press";
-export { useGestureHintOnce } from "./use-gesture-hint-once";
 
 // State & Effects hooks
 export { useBottomBarHeight } from "./use-bottom-bar-height";
@@ -14,6 +12,3 @@ export { useActiveListControls } from "./use-active-list-controls";
 
 // Modal/Lightbox hooks
 export { useLightbox } from "./use-lightbox";
-
-// A11y / keyboard navigation
-export { useRovingTabIndex } from "./use-roving-tab-index";

@@ -65,21 +65,3 @@ export async function createTestSku(
 		},
 	});
 }
-
-export async function createTestCartWithItem(
-	userId: string,
-	skuId: string,
-	quantity = 1,
-	priceAtAdd = 5_000,
-) {
-	const prisma = getIntegrationPrismaClient();
-	return prisma.cart.create({
-		data: {
-			userId,
-			items: {
-				create: { skuId, quantity, priceAtAdd },
-			},
-		},
-		include: { items: true },
-	});
-}

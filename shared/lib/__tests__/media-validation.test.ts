@@ -36,10 +36,16 @@ describe("isAllowedMediaDomain", () => {
 		).toBe(true);
 	});
 
+	// Audit média M11 : l'assertion contredisait le nom du test et documentait la
+	// faille — un `http://utfs.io/...` passait la validation et pouvait être
+	// persisté comme URL média (contenu mixte, asymétrie avec
+	// `isValidUploadThingUrl` qui exige HTTPS).
 	it("should reject an HTTP URL even for an allowed domain", () => {
-		// isAllowedMediaDomain only checks domain, not protocol
-		// so http://abc.utfs.io is allowed by domain check alone
-		expect(isAllowedMediaDomain("http://abc.utfs.io/image.jpg")).toBe(true);
+		expect(isAllowedMediaDomain("http://abc.utfs.io/image.jpg")).toBe(false);
+	});
+
+	it("should accept the HTTPS counterpart of the same host", () => {
+		expect(isAllowedMediaDomain("https://abc.utfs.io/image.jpg")).toBe(true);
 	});
 
 	it("should reject a completely foreign domain", () => {

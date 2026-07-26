@@ -28,6 +28,7 @@ const {
 			updateMany: vi.fn(),
 		},
 		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
+		stockMovement: { create: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findMany: vi.fn() },
 		$transaction: vi.fn(),
@@ -176,6 +177,7 @@ describe("updateProductSku", () => {
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
 		mockPrisma.skuMedia.create.mockResolvedValue({});
 		mockPrisma.skuMedia.createMany.mockResolvedValue({ count: 0 });
+		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findMany.mockResolvedValue([]);
 

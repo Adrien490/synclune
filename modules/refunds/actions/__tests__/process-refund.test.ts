@@ -128,14 +128,15 @@ vi.mock("@/modules/emails/services/refund-emails", () => ({
 
 // ORD-STRIPE-005 : process-refund passe par sendRefundConfirmationOnce qui
 // wrappe sendRefundConfirmationEmail. On délègue le mock vers la version legacy
-// pour préserver les assertions existantes sur l'envoi/échec.
+// pour préserver les assertions existantes sur l'envoi/échec. Contrat réel :
+// le service avale l'erreur provider et retourne `send_failed` (pas de throw).
 vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
 	sendRefundConfirmationOnce: vi.fn(async (args: Record<string, unknown>) => {
 		try {
 			await mockSendRefundConfirmationEmail(args);
 			return { sent: true, skipped: false };
-		} catch (e) {
-			throw e;
+		} catch {
+			return { sent: false, skipped: false, reason: "send_failed" };
 		}
 	}),
 }));
@@ -167,7 +168,6 @@ vi.mock("../../constants/cache", () => ({
 		LIST: "orders-list",
 		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
 		LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
-		ACCOUNT_STATS: (userId: string) => `account-stats-${userId}`,
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 	},
 	REFUNDS_CACHE_TAGS: {
@@ -420,6 +420,42 @@ describe("processRefund", () => {
 			}),
 		);
 		expect(result).toEqual({ status: "error", message: "Card was declined" });
+	});
+
+	it("should flag transient Stripe errors as retryable in failureReason and admin message", async () => {
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		mockTx.$queryRaw
+			.mockResolvedValueOnce([makeRefundRow()])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
+
+		mockCreateStripeRefund.mockResolvedValue({
+			success: false,
+			pending: false,
+			error: "Rate limit exceeded",
+			errorKind: "transient",
+			retryable: true,
+		});
+
+		const result = await processRefund(undefined, makeFormData());
+
+		// failureReason préfixé pour trier les FAILED transients côté admin.
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					status: "FAILED",
+					failureReason: "[transient] Rate limit exceeded",
+				}),
+			}),
+		);
+		// Message admin actionnable au lieu du message brut Stripe.
+		expect(result).toEqual({
+			status: "error",
+			message: expect.stringContaining("Erreur temporaire Stripe"),
+		});
 	});
 
 	it("should return pending message when Stripe returns pending", async () => {
@@ -766,11 +802,13 @@ describe("processRefund", () => {
 		await processRefund(undefined, makeFormData());
 		await new Promise((r) => setImmediate(r));
 
+		// Le service avale l'erreur provider (reset compensatoire du claim) et
+		// retourne `send_failed` — l'action trace via une OrderNote système.
 		expect(mockPrisma.orderNote.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					orderId: "order-1",
-					content: expect.stringContaining("SMTP down"),
+					content: expect.stringContaining("Échec notification confirmation remboursement"),
 					// ORD-STRIPE-008 : on utilise désormais SYSTEM_AUTHOR_ID
 					// (constante UUID v4 nil-like) au lieu du litéral "system".
 					authorId: "00000000-0000-0000-0000-000000000000",

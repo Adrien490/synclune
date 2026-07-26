@@ -29,6 +29,10 @@ function makeImage(overrides: Partial<ProductMedia> = {}): ProductMedia {
 		url: "https://utfs.io/f/image.jpg",
 		alt: "Test image",
 		mediaType: "IMAGE",
+		// `srcSet` n'est émis que si les dimensions sont connues : sans elles, la
+		// lightbox recevrait un `height` incohérent et casserait le fit/zoom.
+		width: 2000,
+		height: 2500,
 		...overrides,
 	};
 }
@@ -73,6 +77,39 @@ describe("buildLightboxSlides", () => {
 		expect(slide.srcSet).toHaveLength(8);
 		expect(slide.srcSet[0]).toHaveProperty("width", 640);
 		expect(slide.srcSet[slide.srcSet.length - 1]).toHaveProperty("width", 3840);
+	});
+
+	it("derives a real height per srcSet entry from the intrinsic ratio", () => {
+		// 2000×2500 => ratio 1.25
+		const slides = buildLightboxSlides([makeImage()], false);
+		const slide = slides[0] as unknown as {
+			width: number;
+			height: number;
+			srcSet: { width: number; height: number }[];
+		};
+
+		expect(slide.width).toBe(2000);
+		expect(slide.height).toBe(2500);
+		expect(slide.srcSet[0]).toEqual(expect.objectContaining({ width: 640, height: 800 }));
+		expect(slide.srcSet.at(-1)).toEqual(expect.objectContaining({ width: 3840, height: 4800 }));
+	});
+
+	it("never emits height: 0 — a legacy media without dimensions omits srcSet entirely", () => {
+		// `ImageSource.height` est REQUIS par la lightbox et sert au calcul du ratio :
+		// `height: 0` (ancien comportement) décrivait un ratio impossible et cassait
+		// le fit/zoom. Sans dimensions connues, on retombe sur la seule `src`.
+		const slides = buildLightboxSlides([makeImage({ width: null, height: null })], false);
+		const slide = slides[0]!;
+
+		expect(slide).not.toHaveProperty("srcSet");
+		expect(slide).not.toHaveProperty("height");
+		expect(slide).toHaveProperty("src");
+		expect(slide).toHaveProperty("alt", "Test image");
+	});
+
+	it("omits srcSet when only one dimension is known", () => {
+		const slides = buildLightboxSlides([makeImage({ width: 2000, height: null })], false);
+		expect(slides[0]).not.toHaveProperty("srcSet");
 	});
 
 	it("uses the largest size for the main src", () => {

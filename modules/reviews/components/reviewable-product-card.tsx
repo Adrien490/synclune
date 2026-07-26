@@ -18,6 +18,7 @@ import { cn } from "@/shared/utils/cn";
 
 import type { ReviewableProduct } from "../types/review.types";
 import { CreateReviewForm } from "./create-review-form";
+import { APP_TIME_ZONE } from "@/shared/utils/timezone";
 
 interface ReviewableProductCardProps {
 	product: ReviewableProduct;
@@ -28,10 +29,13 @@ interface ReviewableProductCardProps {
  * Carte d'un produit à évaluer
  * Affiche le produit avec un CTA pour laisser un avis
  */
+// `timeZone` explicite : sans lui le serveur (UTC) et le navigateur (Paris)
+// formatent une date de fin de journée différemment → mismatch d'hydratation.
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
 	day: "numeric",
 	month: "long",
 	year: "numeric",
+	timeZone: APP_TIME_ZONE,
 });
 
 export function ReviewableProductCard({ product, className }: ReviewableProductCardProps) {

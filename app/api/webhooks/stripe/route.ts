@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
@@ -121,7 +122,14 @@ export async function POST(req: Request) {
 		// 3. IDEMPOTENCE DB-LEVEL (WebhookEvent Model)
 		const existingEvent = await prisma.webhookEvent.findUnique({
 			where: { stripeEventId: event.id },
-			select: { id: true, status: true, receivedAt: true, processingStartedAt: true },
+			// IDEM-ROUTE-001 : `attempts` sert de version optimiste au claim ci-dessous.
+			select: {
+				id: true,
+				status: true,
+				attempts: true,
+				receivedAt: true,
+				processingStartedAt: true,
+			},
 		});
 
 		// WEBHOOK-AUDIT-001 : un PROCESSING « frais » signale un traitement live
@@ -160,21 +168,58 @@ export async function POST(req: Request) {
 			return NextResponse.json({ received: true, status: "duplicate" });
 		}
 
-		// Enregistrer l'événement comme PROCESSING (atomic upsert)
-		// Catch P2002 unique constraint violation on concurrent identical webhooks
-		// to return 200 instead of 500, avoiding unnecessary Stripe retries
-		let webhookRecord;
-		try {
-			webhookRecord = await prisma.webhookEvent.upsert({
-				where: { stripeEventId: event.id },
-				create: {
-					stripeEventId: event.id,
-					eventType: event.type,
-					status: WebhookEventStatus.PROCESSING,
-					// WEBHOOK-AUDIT-002 : démarre l'horloge de fraîcheur du traitement courant.
-					processingStartedAt: new Date(),
+		// Enregistrer l'événement comme PROCESSING.
+		//
+		// IDEM-ROUTE-001 (audit idempotence 2026-07-26) : l'ancien `upsert` écrivait
+		// `PROCESSING` en branche `update` SANS ré-asserter le statut lu par le pré-check
+		// ci-dessus, et le race-guard post-upsert n'armait que si l'event était absent.
+		// Sur un event `FAILED`, la séquence « la route lit FAILED → le cron
+		// retry-webhooks claim FAILED→PROCESSING → la route écrit quand même » faisait
+		// dispatcher les DEUX en parallèle. C'est la fenêtre qui rendait atteignables les
+		// doublons handler-level (dont IDEM-DISPUTE-001, P0).
+		//
+		// On distingue donc les deux cas, avec la même discipline que le cron
+		// (`retry-webhooks.service.ts`) : `create` pour une première réception, sinon un
+		// claim CONDITIONNEL sur l'état exact qu'on vient de lire (`status` + `attempts`
+		// en version optimiste). Un seul gagnant, quel que soit le nombre de concurrents.
+		let webhookRecord: { id: string; attempts: number };
+
+		if (existingEvent === null) {
+			try {
+				const created = await prisma.webhookEvent.create({
+					data: {
+						stripeEventId: event.id,
+						eventType: event.type,
+						status: WebhookEventStatus.PROCESSING,
+						// WEBHOOK-AUDIT-002 : démarre l'horloge de fraîcheur du traitement courant.
+						processingStartedAt: new Date(),
+					},
+					select: { id: true, attempts: true },
+				});
+				webhookRecord = created;
+			} catch (e) {
+				// P2002 : un thread concurrent a créé le record entre le findUnique et ici.
+				// 200 (et non 500) pour ne pas déclencher un retry Stripe inutile.
+				if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+					logger.info("Concurrent duplicate webhook detected, returning 200", {
+						correlationId,
+						eventId: event.id,
+						eventType: event.type,
+					});
+					return NextResponse.json({ received: true, status: "duplicate" });
+				}
+				throw e;
+			}
+		} else {
+			const claimed = await prisma.webhookEvent.updateMany({
+				where: {
+					id: existingEvent.id,
+					// L'état lu doit être TOUJOURS celui-là au moment d'écrire ; sinon le
+					// cron ou une autre instance a repris l'event entre-temps.
+					status: existingEvent.status,
+					attempts: existingEvent.attempts,
 				},
-				update: {
+				data: {
 					attempts: { increment: 1 },
 					status: WebhookEventStatus.PROCESSING,
 					// WEBHOOK-AUDIT-002 : une reprise (PROCESSING périmé / FAILED) redémarre
@@ -183,29 +228,18 @@ export async function POST(req: Request) {
 					processingStartedAt: new Date(),
 				},
 			});
-		} catch (e) {
-			if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-				logger.info("Concurrent duplicate webhook detected, returning 200", {
+
+			if (claimed.count === 0) {
+				logger.info("Concurrent webhook claim lost, skipping dispatch", {
 					correlationId,
 					eventId: event.id,
 					eventType: event.type,
+					readStatus: existingEvent.status,
 				});
 				return NextResponse.json({ received: true, status: "duplicate" });
 			}
-			throw e;
-		}
 
-		// Race-guard post-upsert : si findUnique a vu null mais l'upsert a hit la branche
-		// update (attempts >= 1), un thread concurrent vient de créer le record entre les
-		// deux appels. On skip le dispatch ; les contraintes @unique downstream protègent
-		// déjà l'idempotence mais ce guard évite le double-traitement explicite.
-		if (existingEvent === null && webhookRecord.attempts >= 1) {
-			logger.info("Concurrent webhook race detected (post-upsert), skipping dispatch", {
-				correlationId,
-				eventId: event.id,
-				eventType: event.type,
-			});
-			return NextResponse.json({ received: true, status: "duplicate" });
+			webhookRecord = { id: existingEvent.id, attempts: existingEvent.attempts + 1 };
 		}
 
 		try {
@@ -239,18 +273,25 @@ export async function POST(req: Request) {
 				? WebhookEventStatus.SKIPPED
 				: WebhookEventStatus.COMPLETED;
 			const tasks = result?.tasks ?? [];
-			await prisma.$transaction(async (tx) => {
-				await tx.webhookEvent.update({
-					where: { id: webhookRecord.id },
-					data: {
-						status: finalStatus,
-						processedAt: new Date(),
-					},
-				});
-				if (tasks.length > 0) {
-					await persistPostWebhookTasks(tx, webhookRecord.id, tasks);
-				}
-			});
+			await prisma.$transaction(
+				async (tx) => {
+					await tx.webhookEvent.update({
+						where: { id: webhookRecord.id },
+						data: {
+							status: finalStatus,
+							processedAt: new Date(),
+						},
+					});
+					if (tasks.length > 0) {
+						await persistPostWebhookTasks(tx, webhookRecord.id, tasks);
+					}
+				},
+				// IDEM-TX-001 : les défauts Prisma (5s/2s) sont trop serrés pour cette
+				// finalisation sous charge. Un P2024 ici laisse l'event PROCESSING sans
+				// tasks persistées : le cron rattrape, mais au prix d'un re-dispatch
+				// complet — donc de concurrence supplémentaire sur les gardes aval.
+				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+			);
 
 			// 7. RÉPONSE RAPIDE + TRAITEMENT ASYNC (Best Practice Stripe 2025)
 			const response = NextResponse.json({ received: true, status: "processed" });

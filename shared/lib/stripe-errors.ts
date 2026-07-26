@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 
-export type StripeErrorKind = "user" | "transient" | "bug" | "unknown";
+type StripeErrorKind = "user" | "transient" | "bug" | "unknown";
 
 export interface StripeErrorClassification {
 	kind: StripeErrorKind;

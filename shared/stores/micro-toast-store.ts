@@ -18,15 +18,8 @@ import { devtools } from "zustand/middleware";
  *   useMicroToastStore.getState().show(message, "wishlist") // microVariant
  */
 
-export type MicroToastVariant =
-	| "success"
-	| "info"
-	| "warning"
-	| "error"
-	| "loading"
-	| "wishlist"
-	| "cart"
-	| "discount";
+type MicroToastVariant =
+	"success" | "info" | "warning" | "error" | "loading" | "wishlist" | "cart" | "discount";
 
 const MAX_MESSAGE_LENGTH = 48;
 const DEFAULT_DURATION_MS = 1200;

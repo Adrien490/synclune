@@ -40,7 +40,8 @@ vi.mock("@/shared/utils/cn", () => ({
 // IMPORTS (after mocks)
 // ============================================================================
 
-import { SwipeableCard, applyRubberBand } from "../swipeable-card";
+import { SwipeableCard } from "../swipeable-card";
+import { applyRubberBand } from "@/shared/utils/rubber-band";
 
 // ============================================================================
 // HELPERS

@@ -22,17 +22,21 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : le claim atomique remplace order.update par
+		// order.updateMany (précondition status/paymentStatus dans le where).
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
-		discount: { update: vi.fn() },
+		discount: { update: vi.fn(), updateMany: vi.fn() },
 		refund: {
 			create: vi.fn(),
 			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
 		},
 		// ORD-STRIPE-007 : dispute.findFirst utilisé pour bloquer cancel sur dispute ouvert
 		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -131,6 +135,7 @@ vi.mock("../../constants/order.constants", () => ({
 
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
 }));
 
 import { cancelOrder } from "../cancel-order";
@@ -177,7 +182,8 @@ describe("cancelOrder", () => {
 			},
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(txOrder);
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.$queryRaw.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
@@ -263,15 +269,38 @@ describe("cancelOrder", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	// Success with PENDING payment (restore stock)
-	it("should restore stock when cancelling a PENDING payment order", async () => {
+	// STOCK-01 : une commande PENDING n'a JAMAIS décrémenté son stock (réservation
+	// optimiste : décrément seulement au passage PAID). L'annuler ne doit PAS
+	// restocker, sinon l'inventaire gonfle au-dessus du réel (phantom stock).
+	it("should NOT restore stock when cancelling a PENDING (never-decremented) order", async () => {
 		const order = createTxOrder({
 			paymentStatus: "PENDING",
+			fulfillmentStatus: "UNFULFILLED",
 			items: [{ skuId: "sku-1", quantity: 2 }],
 		});
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 
 		const result = await cancelOrder(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+	});
+
+	// STOCK-01 (contre-épreuve) : une commande PAID dont les articles ne sont pas
+	// encore expédiés (fulfillment UNFULFILLED) A bien décrémenté son stock → on
+	// DOIT le restaurer à l'annulation.
+	it("should restore stock when cancelling a PAID, not-yet-shipped order", async () => {
+		const order = createTxOrder({
+			paymentStatus: "PAID",
+			fulfillmentStatus: "UNFULFILLED",
+			items: [{ id: "item-1", skuId: "sku-1", quantity: 2, price: 4999 }],
+		});
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+
+		const result = await cancelOrder(
+			undefined,
+			createMockFormData({ id: VALID_CUID, autoRefund: "true" }),
+		);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockPrisma.productSku.update).toHaveBeenCalledWith(
@@ -388,13 +417,17 @@ describe("cancelOrder", () => {
 
 		await cancelOrder(undefined, createMockFormData({ id: VALID_CUID, autoRefund: "true" }));
 
-		expect(mockPrisma.discount.update).toHaveBeenCalledTimes(2);
-		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
-			where: { id: "disc-A" },
+		// [[DISC-USAGE-002]] Libération via `releaseOrderDiscountUsageTx` : le
+		// décrément est un `updateMany` GARDÉ par `usageCount > 0` (un `update` nu
+		// laissait le compteur passer négatif → code redeemable au-delà de
+		// maxUsageCount).
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledTimes(2);
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
+			where: { id: "disc-A", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
-		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
-			where: { id: "disc-B" },
+		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
+			where: { id: "disc-B", usageCount: { gt: 0 } },
 			data: { usageCount: { decrement: 1 } },
 		});
 		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
@@ -427,6 +460,50 @@ describe("cancelOrder", () => {
 		expect(result.message).toContain("annulée");
 	});
 
+	// IDEM-CANCEL-001 : le claim ré-évalue la précondition status/paymentStatus
+	// au lock de ligne (updateMany conditionnel), pas un update inconditionnel.
+	it("should claim the order with status/paymentStatus preconditions in the where clause", async () => {
+		const order = createTxOrder({ status: "PENDING", paymentStatus: "PENDING" });
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+
+		const result = await cancelOrder(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					id: VALID_CUID,
+					status: "PENDING",
+					paymentStatus: "PENDING",
+				}),
+				data: expect.objectContaining({ status: "CANCELLED" }),
+			}),
+		);
+	});
+
+	// IDEM-CANCEL-001 : count===0 ⇒ la commande a été mutée par un concurrent
+	// entre le findUnique et le claim → abort AVANT restock / Refund / audit.
+	it("should abort with a concurrent-change error when the atomic claim matches no row", async () => {
+		const order = createTxOrder({
+			paymentStatus: "PAID",
+			fulfillmentStatus: "UNFULFILLED",
+			items: [{ id: "item-1", skuId: "sku-1", quantity: 2, price: 4999 }],
+		});
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
+
+		const result = await cancelOrder(
+			undefined,
+			createMockFormData({ id: VALID_CUID, autoRefund: "true" }),
+		);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("modifiée par une autre opération");
+		expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
+	});
+
 	// handleActionError on unexpected exception
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
@@ -455,7 +532,7 @@ describe("cancelOrder", () => {
 			expect(result.status).toBe(ActionStatus.ERROR);
 			expect(result.message).toMatch(/payée/i);
 			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
-			expect(mockPrisma.order.update).not.toHaveBeenCalled();
+			expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 		});
 
 		it("should NOT create refund when autoRefund=true but order is PENDING", async () => {

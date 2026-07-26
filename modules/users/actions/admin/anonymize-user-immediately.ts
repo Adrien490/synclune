@@ -16,6 +16,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { anonymizeUserImmediatelySchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { ensureUserCreditNotesArchived } from "@/modules/orders/services/ensure-user-credit-notes-archived.service";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 import { anonymizeUserInTransaction } from "../../services/anonymize-user.service";
 
@@ -74,6 +75,18 @@ export async function anonymizeUserImmediately(
 
 		if (user.accountStatus === "ANONYMIZED") {
 			return error("Cet utilisateur est déjà anonymisé.");
+		}
+
+		// EINV-CREDIT-020 : tout avoir émis doit être matérialisé + archivé AVANT le
+		// scrub — sinon son premier rendu post-anonymisation reconstruirait un
+		// document sans identité client (Art. 289 CGI) figé comme référence
+		// immuable. En cas d'échec (UploadThing down…), corriger puis relancer.
+		const creditNotesReady = await ensureUserCreditNotesArchived(userId);
+		if (!creditNotesReady.ok) {
+			return error(
+				"Anonymisation bloquée : des avoirs émis n'ont pas pu être archivés (voir alerte admin). " +
+					"Corriger l'archivage (UploadThing) puis relancer.",
+			);
 		}
 
 		await prisma.$transaction(async (tx) => {

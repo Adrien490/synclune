@@ -22,5 +22,3 @@ export {
 	bulkChangeProductStatusSchema,
 	updateProductCollectionsSchema,
 } from "./product-mutation.schemas";
-
-export { imageSchema } from "./product-media.schemas";

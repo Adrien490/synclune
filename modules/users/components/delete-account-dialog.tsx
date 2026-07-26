@@ -13,6 +13,8 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { Label } from "@/shared/components/ui/label";
 import { useDeleteAccount } from "@/modules/users/hooks/use-delete-account";
 import { USER_CONSTANTS } from "@/modules/users/constants/user.constants";
@@ -27,11 +29,15 @@ export function DeleteAccountDialog() {
 
 	const isConfirmed = confirmation === CONFIRMATION_TEXT;
 
-	const { action, isPending } = useDeleteAccount({
+	const { state, action, isPending } = useDeleteAccount({
 		onSuccess: () => {
 			setOpen(false);
 		},
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const handleOpenChange = (newOpen: boolean) => {
 		if (isPending) return;
@@ -69,6 +75,7 @@ export function DeleteAccountDialog() {
 				</div>
 
 				<form action={action}>
+					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
 					<div className="space-y-2 py-4">
 						<Label htmlFor="confirmation">
 							Tapez <span className="font-mono font-bold">{CONFIRMATION_TEXT}</span> pour confirmer

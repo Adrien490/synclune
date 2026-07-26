@@ -36,12 +36,7 @@ export interface SkuForPricing {
  * sans `as` et avec exhaustivité validée par TS.
  */
 export type ProductHighlightId =
-	| "material"
-	| "color"
-	| "handmade"
-	| "french"
-	| "adjustable"
-	| "collection";
+	"material" | "color" | "handmade" | "french" | "adjustable" | "collection";
 
 export type ProductHighlight = {
 	id: ProductHighlightId;

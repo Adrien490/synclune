@@ -15,8 +15,12 @@ const validAddress = {
 	phoneNumber: "+33612345678",
 };
 
+// skuId au format cuid réel (F2 audit Zod : cartItemSchema.skuId = z.cuid2())
+const SKU_ID_1 = "cm3x7k2ab0001qz8v4h2j9d3e";
+const SKU_ID_2 = "cm3x7k2ab0002qz8v6f1k8c2d";
+
 const validCartItem = {
-	skuId: "sku-abc-123",
+	skuId: SKU_ID_1,
 	quantity: 2,
 	priceAtAdd: 4999,
 };
@@ -44,8 +48,8 @@ describe("confirmCheckoutSchema", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,
 			cartItems: [
-				{ skuId: "sku-1", quantity: 1, priceAtAdd: 1000 },
-				{ skuId: "sku-2", quantity: 3, priceAtAdd: 2500 },
+				{ skuId: SKU_ID_1, quantity: 1, priceAtAdd: 1000 },
+				{ skuId: SKU_ID_2, quantity: 3, priceAtAdd: 2500 },
 			],
 		});
 		expect(result.success).toBe(true);
@@ -75,7 +79,7 @@ describe("confirmCheckoutSchema", () => {
 	it("should accept quantity at maximum boundary", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,
-			cartItems: [{ skuId: "sku-1", quantity: MAX_QUANTITY_PER_ORDER, priceAtAdd: 500 }],
+			cartItems: [{ skuId: SKU_ID_1, quantity: MAX_QUANTITY_PER_ORDER, priceAtAdd: 500 }],
 		});
 		expect(result.success).toBe(true);
 	});
@@ -106,7 +110,7 @@ describe("confirmCheckoutSchema", () => {
 	it("should reject a cart item with quantity 0", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,
-			cartItems: [{ skuId: "sku-1", quantity: 0, priceAtAdd: 500 }],
+			cartItems: [{ skuId: SKU_ID_1, quantity: 0, priceAtAdd: 500 }],
 		});
 		expect(result.success).toBe(false);
 	});
@@ -114,7 +118,7 @@ describe("confirmCheckoutSchema", () => {
 	it("should reject a cart item with quantity exceeding maximum", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,
-			cartItems: [{ skuId: "sku-1", quantity: MAX_QUANTITY_PER_ORDER + 1, priceAtAdd: 500 }],
+			cartItems: [{ skuId: SKU_ID_1, quantity: MAX_QUANTITY_PER_ORDER + 1, priceAtAdd: 500 }],
 		});
 		expect(result.success).toBe(false);
 	});
@@ -122,7 +126,7 @@ describe("confirmCheckoutSchema", () => {
 	it("should reject a cart item with a non-positive priceAtAdd", () => {
 		const result = confirmCheckoutSchema.safeParse({
 			...validCheckout,
-			cartItems: [{ skuId: "sku-1", quantity: 1, priceAtAdd: 0 }],
+			cartItems: [{ skuId: SKU_ID_1, quantity: 1, priceAtAdd: 0 }],
 		});
 		expect(result.success).toBe(false);
 	});

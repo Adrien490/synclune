@@ -9,7 +9,6 @@ import {
 } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
-import { sendPaymentFailedEmail } from "@/modules/emails/services/payment-emails";
 import type { PostWebhookTask } from "../types/webhook.types";
 
 /**
@@ -27,7 +26,6 @@ import type { PostWebhookTask } from "../types/webhook.types";
 export const CRITICAL_EMAIL_TASKS = new Set([
 	"ORDER_CONFIRMATION_EMAIL",
 	"REFUND_CONFIRMATION_EMAIL",
-	"PAYMENT_FAILED_EMAIL",
 	"ADMIN_ORDER_PROCESSING_FAILED_ALERT",
 ]);
 
@@ -47,7 +45,7 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 			// sendRefundConfirmationOnce qui pose `Refund.confirmationEmailSentAt`
 			// atomiquement → bloque SAGA admin / cron qui auraient envoyé un 2e mail.
 			if (task.data.refundId) {
-				await sendRefundConfirmationOnce({
+				const result = await sendRefundConfirmationOnce({
 					refundId: task.data.refundId,
 					to: task.data.to,
 					orderNumber: task.data.orderNumber,
@@ -58,12 +56,17 @@ export async function dispatchEmailTask(task: EmailTask): Promise<void> {
 					invoiceNumber: task.data.invoiceNumber ?? null,
 					creditNoteNumber: task.data.creditNoteNumber ?? null,
 				});
+				// Le service avale l'erreur Resend (et reset son claim) — sans ce
+				// throw, la task passerait COMPLETED et le retry cron (5 min) ne
+				// repartirait jamais.
+				if (result.reason === "send_failed") {
+					throw new Error(
+						`Refund confirmation email failed for refund ${task.data.refundId} — task requeued`,
+					);
+				}
 			} else {
 				await sendRefundConfirmationEmail(task.data);
 			}
-			break;
-		case "PAYMENT_FAILED_EMAIL":
-			await sendPaymentFailedEmail(task.data);
 			break;
 		case "ADMIN_REFUND_FAILED_ALERT":
 			await sendAdminRefundFailedAlert(task.data);

@@ -30,7 +30,8 @@
  *   pnpm generate:video-thumbnails --check        # Health check (FFmpeg + DB) sans traitement
  *   pnpm generate:video-thumbnails --json         # Logs JSON pour monitoring/Sentry
  *
- * @see modules/media/services/generate-video-thumbnail.ts pour la generation cote serveur (upload)
+ * @see modules/media/hooks/use-video-thumbnail.ts pour la generation cote client (canvas, a l'upload).
+ * Il n'y a PAS de thumbnailing video cote serveur : retire pour compatibilite Vercel serverless.
  */
 
 import { execFile, execSync, type ChildProcess } from "node:child_process";

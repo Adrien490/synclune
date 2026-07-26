@@ -22,6 +22,8 @@ const {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
+		// STOCK-02 : acquireOrderPaidLockTx fait un tx.$queryRaw (advisory lock).
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -38,8 +40,17 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { delete
 // Stripe est importé dynamiquement par mark-as-paid pour annuler le PaymentIntent
 // (best-effort). Mocké ici pour garder le test hermétique — sinon le fixture porteur
 // d'un stripePaymentIntentId (EINV-CASH-001) déclenche un vrai appel réseau Stripe.
+// EINV-CASH-002 : `retrieve` alimente le préflight de statut PI — "succeeded" par
+// défaut (cas webhook perdu, aucune attestation requise) ; les tests EINV-CASH-002
+// overrident pour simuler un PI non settled.
+const mockPiRetrieve = vi.hoisted(() => vi.fn());
 vi.mock("@/shared/lib/stripe", () => ({
-	stripe: { paymentIntents: { cancel: vi.fn().mockResolvedValue({ status: "canceled" }) } },
+	stripe: {
+		paymentIntents: {
+			cancel: vi.fn().mockResolvedValue({ status: "canceled" }),
+			retrieve: mockPiRetrieve,
+		},
+	},
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdmin: mockRequireAdminWithUser,
@@ -87,6 +98,13 @@ vi.mock("../../schemas/order.schemas", () => ({
 		safeParse: vi.fn().mockReturnValue({ success: true, data: { id: "test", note: undefined } }),
 	},
 }));
+// EINV-CASH-005 : reconcile-invoices est importé dynamiquement post-commit pour
+// l'émission eager (facture + e-reporting). Mocké — sa chaîne d'archivage tire
+// UploadThing à l'import.
+const mockReconcileInvoiceOrder = vi.hoisted(() => vi.fn());
+vi.mock("@/modules/cron/services/reconcile-invoices.service", () => ({
+	reconcileInvoiceOrder: mockReconcileInvoiceOrder,
+}));
 
 import { markAsPaid } from "../mark-as-paid";
 import { markAsPaidSchema } from "../../schemas/order.schemas";
@@ -130,8 +148,10 @@ describe("markAsPaid", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPiRetrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.order.update.mockResolvedValue({});
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 1 });
+		mockReconcileInvoiceOrder.mockResolvedValue({ kind: "recovered" });
 
 		vi.mocked(markAsPaidSchema.safeParse).mockReturnValue({
 			success: true,
@@ -201,12 +221,102 @@ describe("markAsPaid", () => {
 		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
+	// EINV-CASH-002 : le préflight interroge le statut LIVE du PI — un PI non
+	// settled exige une attestation explicite d'encaissement hors Stripe.
+	it("rejects when the PI is not settled and no off-Stripe attestation is given (EINV-CASH-002)", async () => {
+		mockPiRetrieve.mockResolvedValue({ status: "requires_payment_method" });
+
+		const result = await markAsPaid(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toMatch(/hors Stripe/i);
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+	});
+
+	it("proceeds on an unsettled PI when the admin attests off-Stripe payment, and records it in the audit trail (EINV-CASH-002)", async () => {
+		mockPiRetrieve.mockResolvedValue({ status: "requires_payment_method" });
+		vi.mocked(markAsPaidSchema.safeParse).mockReturnValue({
+			success: true,
+			data: { id: VALID_CUID, note: undefined, confirmOffStripePayment: true },
+		} as never);
+
+		const result = await markAsPaid(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				metadata: expect.objectContaining({
+					piStatus: "requires_payment_method",
+					offStripeConfirmed: true,
+				}),
+			}),
+		);
+	});
+
+	it("fails open when the Stripe API is unavailable, recording piStatus 'unavailable' (EINV-CASH-002)", async () => {
+		// Garde anti-erreur pour admin de confiance : un outage Stripe ne doit pas
+		// bloquer une recovery légitime — le statut non vérifiable est tracé.
+		mockPiRetrieve.mockRejectedValue(new Error("Stripe down"));
+
+		const result = await markAsPaid(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			expect.anything(),
+			expect.objectContaining({
+				metadata: expect.objectContaining({ piStatus: "unavailable" }),
+			}),
+		);
+	});
+
 	it("should decrement stock when marking a recoverable order as paid", async () => {
 		// Flow Elements : le stock n'est décrémenté qu'au passage à PAID, donc une
 		// commande recoverable a toujours son stock à décrémenter ici.
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockPrisma.productSku.updateMany).toHaveBeenCalled();
+	});
+
+	// STOCK-02 : la transition PAID doit être sérialisée avec le webhook concurrent
+	// via un advisory lock acquis AVANT toute lecture/mutation.
+	it("acquires a pg_advisory_xact_lock on the order before mutating (STOCK-02)", async () => {
+		await markAsPaid(undefined, validFormData);
+		expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+		const sql = (mockPrisma.$queryRaw.mock.calls[0]?.[0] as string[] | undefined)?.join("") ?? "";
+		expect(sql).toContain("pg_advisory_xact_lock");
+	});
+
+	// EINV-CASH-005 : le PI est annulé post-commit (ORD-BIZ-007), donc aucun webhook
+	// ne viendra jamais émettre la facture ni l'e-reporting SALES. La transition PAID
+	// doit poser les flags DLQ dans la tx (visibilité reconcile-invoices crash-safe)
+	// puis tenter l'émission eager (Art. 289-I).
+	it("sets both DLQ flags in the PAID transaction so reconcile-invoices can drain on crash (EINV-CASH-005)", async () => {
+		const result = await markAsPaid(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					paymentStatus: "PAID",
+					invoiceRetryDeferred: true,
+					ereportingRetryDeferred: true,
+				}),
+			}),
+		);
+	});
+
+	it("eagerly reconciles the invoice post-commit (EINV-CASH-005)", async () => {
+		const order = createPendingOrder();
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+		const result = await markAsPaid(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockReconcileInvoiceOrder).toHaveBeenCalledWith(order.id);
+	});
+
+	it("still succeeds when the eager reconcile fails — the daily cron drains the flags (EINV-CASH-005)", async () => {
+		mockReconcileInvoiceOrder.mockRejectedValue(new Error("UploadThing down"));
+		const result = await markAsPaid(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

@@ -3,7 +3,10 @@
 import { Loader2, Package } from "lucide-react";
 import Image from "next/image";
 
+import type { MediaType } from "@/app/generated/prisma/client";
 import { ProductStatus } from "@/app/generated/prisma/enums";
+
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
@@ -11,16 +14,10 @@ import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/componen
 import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { useProductActions } from "../../hooks/use-product-actions";
-
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-
-const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
 
 const STATUS_CONFIG: Record<
 	ProductStatus,
@@ -38,6 +35,7 @@ interface Sku {
 		url: string;
 		thumbnailUrl?: string | null;
 		blurDataUrl?: string | null;
+		mediaType: MediaType;
 		isPrimary: boolean;
 	}>;
 }
@@ -62,7 +60,7 @@ const getPriceDisplay = (skus: Sku[]) => {
 	const prices = skus.map((s) => s.priceInclTax);
 	const min = Math.min(...prices);
 	const max = Math.max(...prices);
-	return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
+	return min === max ? formatEuro(min) : `${formatEuro(min)} – ${formatEuro(max)}`;
 };
 
 export function ProductMobileItem({ product, preload }: ProductMobileItemProps) {
@@ -70,6 +68,8 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
 	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
+	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> icône de secours
+	const thumbSrc = primaryImage ? resolveMediaThumbSrc(primaryImage) : null;
 
 	const { sections } = useProductActions({
 		productId: product.id,
@@ -107,9 +107,9 @@ export function ProductMobileItem({ product, preload }: ProductMobileItemProps) 
 				aria-roledescription="carte produit"
 				aria-busy={isPendingItem || undefined}
 			>
-				{primaryImage ? (
+				{primaryImage && thumbSrc ? (
 					<Image
-						src={primaryImage.thumbnailUrl ?? primaryImage.url}
+						src={thumbSrc}
 						alt=""
 						width={48}
 						height={48}

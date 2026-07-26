@@ -1,7 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { type Prisma } from "@/app/generated/prisma/client";
-import { cacheUserAccounts } from "../constants/cache";
+import { cacheUserAccounts, USERS_CACHE_TAGS } from "../constants/cache";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
@@ -41,11 +41,12 @@ export async function fetchAccount(
 	context: FetchAccountContext,
 ): Promise<GetAccountReturn | null> {
 	"use cache: private";
-	// Cache by userId if available, otherwise use generic dashboard cache
+	// Cache by userId if available, otherwise fall back to the admin accounts
+	// list tag (une entrée sans tag serait non invalidable)
 	if (context.userId) {
 		cacheUserAccounts(context.userId);
 	} else {
-		cacheDashboard();
+		cacheDashboard(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 	}
 
 	const where: Prisma.AccountWhereInput = {

@@ -37,7 +37,9 @@ const {
 	mockSentryCaptureMessage,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		// IDEM-CANCEL-001 : claim atomique order.updateMany ({ count }) remplace
+		// l'ancien order.update inconditionnel.
+		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
@@ -48,6 +50,8 @@ const {
 		},
 		// ORD-STRIPE-007 : dispute.findFirst dans cancelOrder
 		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -145,6 +149,7 @@ vi.mock("../../constants/order.constants", () => ({
 
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
+	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -197,7 +202,8 @@ describe("@regression cancel-order-void-invoice — EINV-TEST-003", () => {
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(createTxOrder());
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.$queryRaw.mockResolvedValue([]);
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });

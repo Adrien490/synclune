@@ -23,6 +23,12 @@ const {
 			update: vi.fn(),
 			delete: vi.fn(),
 		},
+		orderItem: {
+			count: vi.fn(),
+		},
+		cartItem: {
+			count: vi.fn(),
+		},
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -84,6 +90,8 @@ vi.mock("../../utils/cache.utils", () => ({
 }));
 
 import { deleteProductSku } from "../delete-sku";
+// Mocked class (cf. vi.mock ci-dessus) — la même instance que celle utilisée par l'action
+import { BusinessError } from "@/shared/lib/actions";
 
 // ============================================================================
 // HELPERS
@@ -139,13 +147,18 @@ describe("deleteProductSku", () => {
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 		mockPrisma.productSku.update.mockResolvedValue({});
 		mockPrisma.productSku.delete.mockResolvedValue({});
+		// Re-check anti-race dans la transaction : 0 = pas de course par défaut
+		mockPrisma.orderItem.count.mockResolvedValue(0);
+		mockPrisma.cartItem.count.mockResolvedValue(0);
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		// Miroir du vrai handleActionError : expose le message d'une BusinessError,
+		// fallback générique sinon
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof BusinessError ? (e as Error).message : fallback,
 		}));
 	});
 
@@ -300,5 +313,38 @@ describe("deleteProductSku", () => {
 		const result = await deleteProductSku(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	/**
+	 * @regression delete-sku-race-recheck
+	 *
+	 * Un CartItem/OrderItem peut apparaître entre les checks pré-transaction
+	 * (étapes 7-8, hors tx) et le DELETE. Le re-check au début du callback
+	 * $transaction doit refuser avec un message métier explicite (BusinessError)
+	 * au lieu de laisser la FK Restrict échouer en P2003 générique — et ne
+	 * jamais atteindre productSku.delete.
+	 */
+	describe("re-check anti-race sous transaction", () => {
+		it("should return business error and skip delete when a cart item appears mid-race", async () => {
+			// Checks pré-tx verts (_count à 0), mais le re-check tx voit 1 panier
+			mockPrisma.cartItem.count.mockResolvedValue(1);
+
+			const result = await deleteProductSku(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(result.message).toContain("vient d'être ajoutée à un panier");
+			expect(mockPrisma.productSku.delete).not.toHaveBeenCalled();
+		});
+
+		it("should return business error and skip delete when an order item appears mid-race", async () => {
+			// Checks pré-tx verts (_count à 0), mais le re-check tx voit 1 commande
+			mockPrisma.orderItem.count.mockResolvedValue(1);
+
+			const result = await deleteProductSku(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(result.message).toContain("vient d'être associée à une commande");
+			expect(mockPrisma.productSku.delete).not.toHaveBeenCalled();
+		});
 	});
 });

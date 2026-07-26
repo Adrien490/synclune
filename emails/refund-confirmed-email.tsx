@@ -112,7 +112,7 @@ RefundConfirmedEmail.PreviewProps = {
 	customerName: "Marie",
 	refundAmount: 8990,
 	reason: "CUSTOMER_REQUEST",
-	orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
+	orderDetailsUrl: "https://synclune.fr/commandes/CMD-2024-ABCD1234",
 	creditNoteNumber: "A-2026-00012",
 	invoiceNumber: "F-2026-00084",
 } as RefundConfirmedEmailProps;

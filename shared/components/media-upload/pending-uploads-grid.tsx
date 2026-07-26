@@ -63,24 +63,36 @@ export function PendingUploadsGrid({
 	const isMobile = useIsMobile();
 	const isTouchDevice = useIsTouchDevice();
 
-	// Object URLs computed in render — revoked on cleanup to avoid memory leaks.
-	// React Compiler memoizes this expression based on `files` identity.
-	const previews = files.map((file) => {
-		if (!file.type.startsWith("image/")) return "";
-		try {
-			return URL.createObjectURL(file);
-		} catch {
-			return "";
-		}
-	});
+	// Object URLs créées dans un effet et NON pendant le render : le render doit
+	// rester pur (React peut le rejouer ou l'abandonner — les URLs d'un render
+	// abandonné n'auraient jamais été révoquées et auraient retenu les Blobs).
+	const [previews, setPreviews] = useState<string[]>([]);
 
 	useEffect(() => {
+		// Boucle explicite (et non `map`) : chaque URL créée est poussée dans `urls`,
+		// le tableau que le cleanup révoque — l'appariement création/révocation reste
+		// lisible pour un humain comme pour l'analyse statique.
+		const urls: string[] = [];
+		for (const file of files) {
+			if (!file.type.startsWith("image/")) {
+				urls.push("");
+				continue;
+			}
+			try {
+				urls.push(URL.createObjectURL(file));
+			} catch {
+				urls.push("");
+			}
+		}
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- ressource navigateur : sa création est un effet de bord, impossible en render
+		setPreviews(urls);
+
 		return () => {
-			for (const url of previews) {
+			for (const url of urls) {
 				if (url) URL.revokeObjectURL(url);
 			}
 		};
-	}, [previews]);
+	}, [files]);
 
 	// Video metadata previews — async first-frame + duration extraction
 	const [videoPreviews, setVideoPreviews] = useState<Map<string, VideoMetadataPreview>>(

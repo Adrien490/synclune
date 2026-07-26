@@ -69,6 +69,8 @@ async function fetchProductForDuplication(productId: string) {
 								blurDataUrl: true,
 								altText: true,
 								mediaType: true,
+								width: true,
+								height: true,
 								isPrimary: true,
 								position: true,
 							},

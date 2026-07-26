@@ -19,27 +19,28 @@ export function ProductsMobileListSkeleton({
 			<SkeletonGroup label="Chargement des produits">
 				<ItemGroup className="gap-2">
 					{Array.from({ length: 5 }).map((_, i) => (
-						<Item
-							key={i}
-							variant="outline"
-							size="sm"
-							className="gap-3"
-							style={{ animationDelay: `${i * 100}ms` }}
-						>
-							<Skeleton shape="rounded" className="size-12 shrink-0" />
+						<li key={i}>
+							<Item
+								variant="outline"
+								size="sm"
+								className="gap-3"
+								style={{ animationDelay: `${i * 100}ms` }}
+							>
+								<Skeleton shape="rounded" className="size-12 shrink-0" />
 
-							<ItemContent>
-								<div className="flex items-center gap-2">
-									<Skeleton shape="text" className="h-5 w-32" />
-									<Skeleton shape="rounded" className="h-5 w-16" />
-								</div>
-								<div className="flex items-center gap-2">
-									<Skeleton shape="text" className="h-3 w-16" />
-									<Skeleton shape="rounded" className="h-5 w-10" />
-									<Skeleton shape="text" className="h-3 w-20" />
-								</div>
-							</ItemContent>
-						</Item>
+								<ItemContent>
+									<div className="flex items-center gap-2">
+										<Skeleton shape="text" className="h-5 w-32" />
+										<Skeleton shape="rounded" className="h-5 w-16" />
+									</div>
+									<div className="flex items-center gap-2">
+										<Skeleton shape="text" className="h-3 w-16" />
+										<Skeleton shape="rounded" className="h-5 w-10" />
+										<Skeleton shape="text" className="h-3 w-20" />
+									</div>
+								</ItemContent>
+							</Item>
+						</li>
 					))}
 				</ItemGroup>
 			</SkeletonGroup>

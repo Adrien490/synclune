@@ -9,6 +9,7 @@ import {
 
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
 import type { Product } from "@/modules/products/types/product.types";
+import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 interface StructuredDataProps {
@@ -116,9 +117,7 @@ export function StructuredData({
 								url,
 								price: (priceCents / 100).toFixed(2),
 								priceCurrency: "EUR",
-								availability: inStock
-									? "https://schema.org/InStock"
-									: "https://schema.org/OutOfStock",
+								availability: getOfferAvailability(inStock),
 								itemCondition: "https://schema.org/NewCondition",
 							},
 						}),

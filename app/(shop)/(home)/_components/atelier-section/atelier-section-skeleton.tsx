@@ -19,8 +19,9 @@ export function AtelierSectionSkeleton() {
 					<Skeleton className="bg-muted/30 mx-auto mt-5 h-5 w-56" />
 				</div>
 
-				{/* Photo hero skeleton */}
-				<Skeleton className="bg-muted/40 mx-auto mb-10 aspect-[4/3] max-w-4xl rounded-2xl sm:mb-14 sm:aspect-[16/7]" />
+				{/* TODO(photos-atelier) : ré-ajouter ici le skeleton de l'image héro
+				    (aspect-[4/3] max-w-4xl sm:aspect-[16/7]) quand elle sera décommentée
+				    dans atelier-section.tsx — retiré car il réservait ~300px fantômes. */}
 
 				{/* Confession text skeleton */}
 				<div className="mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">

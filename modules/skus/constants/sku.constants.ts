@@ -129,6 +129,8 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			altText: true,
 			isPrimary: true,
 			mediaType: true,
+			width: true,
+			height: true,
 		},
 		orderBy: { position: "asc" as const },
 	},
@@ -173,24 +175,6 @@ export const SORT_LABELS: Record<string, string> = {
 	"sku-ascending": "Référence (A-Z)",
 	"sku-descending": "Référence (Z-A)",
 };
-
-// ============================================================================
-// FILTERS
-// ============================================================================
-
-// ============================================================================
-// BULK OPERATION LIMITS
-// ============================================================================
-
-export const BULK_SKU_LIMITS = {
-	DEFAULT: 100,
-	STOCK_ADJUSTMENT: 50,
-	PRICE_UPDATE: 25,
-} as const;
-
-// ============================================================================
-// FILTERS
-// ============================================================================
 
 export const SKU_FILTERS_MIN_DATE = new Date("2020-01-01");
 export const SKU_FILTERS_MAX_INVENTORY = 100000;

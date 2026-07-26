@@ -137,7 +137,7 @@ export type CookieConsentStore = CookieConsentState & CookieConsentActions;
  * le remount des animations consumer-side ; `delta` est utilisé par le flash
  * "+N" qui flotte au-dessus du badge.
  */
-export interface BadgeBump {
+interface BadgeBump {
 	delta: number;
 	key: number;
 }

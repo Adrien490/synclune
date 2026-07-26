@@ -20,8 +20,10 @@ import {
 	RECENT_PRODUCTS_CACHE_TAGS,
 } from "@/modules/products/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
+import { getAuthSessionInvalidationTags } from "@/modules/auth/utils/cache.utils";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { sendAccountDeletionEmail } from "@/modules/emails/services/auth-emails";
+import { ensureUserCreditNotesArchived } from "@/modules/orders/services/ensure-user-credit-notes-archived.service";
 import { anonymizeUserInTransaction } from "@/modules/users/services/anonymize-user.service";
 import { getStripeClient } from "@/shared/lib/stripe";
 
@@ -99,6 +101,28 @@ export async function processAccountDeletions(): Promise<CronResult> {
 				.map((r) => r.productId)
 				.filter((id): id is string => id !== null);
 
+			// EINV-CREDIT-020 : matérialiser + archiver tout avoir émis non archivé
+			// AVANT le scrub. Après anonymisation, le rendu d'un avoir reconstruirait
+			// depuis des colonnes scrubées (« Client supprimé ») → avoir sans identité
+			// client (Art. 289 CGI) figé comme référence immuable. Échec → on REPORTE
+			// ce compte au prochain run quotidien (l'archiveur a déjà flagué la DLQ +
+			// alerté l'admin) ; le délai RGPD absorbe ce report technique temporaire.
+			const creditNotesReady = await ensureUserCreditNotesArchived(user.id);
+			if (!creditNotesReady.ok) {
+				logger.error(
+					"Skipping anonymization — unarchived credit notes could not be materialized",
+					undefined,
+					{
+						cronJob: "process-account-deletions",
+						userId: user.id,
+						orderFailures: creditNotesReady.orderFailures,
+						refundFailures: creditNotesReady.refundFailures,
+					},
+				);
+				errors++;
+				continue;
+			}
+
 			await prisma.$transaction(
 				async (tx) => {
 					await anonymizeUserInTransaction(tx, user.id);
@@ -127,10 +151,11 @@ export async function processAccountDeletions(): Promise<CronResult> {
 				// Non-blocking: continue even if email fails
 			}
 
-			// Invalidate user-related caches
+			// Invalidate user-related caches (les sessions révoquées sont listées
+			// sous les deux namespaces : admin détail user + surface auth)
 			updateTag(USERS_CACHE_TAGS.CURRENT_USER(user.id));
-			updateTag(SESSION_CACHE_TAGS.SESSION(user.id));
 			updateTag(SESSION_CACHE_TAGS.SESSIONS(user.id));
+			getAuthSessionInvalidationTags(undefined, user.id).forEach((tag) => updateTag(tag));
 			updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));

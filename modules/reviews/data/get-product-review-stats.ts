@@ -7,6 +7,11 @@ import { formatReviewStats } from "../services/review-stats.service";
 /**
  * Récupère les statistiques brutes d'un produit
  *
+ * ⚠️ Contrat : ne vérifie PAS le statut/soft-delete du produit — l'appelant doit
+ * avoir gaté la visibilité en amont (la PDP le fait ; l'admin lit légitimement
+ * les stats d'un produit DRAFT). Ne pas exposer sur une nouvelle surface
+ * publique sans garde status=PUBLIC + deletedAt=null côté appelant.
+ *
  * @param productId - ID du produit
  * @returns Statistiques brutes ou null si inexistantes
  */

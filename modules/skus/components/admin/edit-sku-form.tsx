@@ -2,24 +2,26 @@
 
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
-import { Button } from "@/shared/components/ui/button";
-import { Kbd } from "@/shared/components/ui/kbd";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useUpdateProductSkuForm } from "@/modules/skus/hooks/use-update-sku-form";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { useMediaFieldUpload } from "@/modules/products/hooks/use-media-field-upload";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
+import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 import type { SkuFormInstance, SkuFormSharedProps } from "./sku-form-types";
 import { SkuMediaCard } from "./sku-media-card";
 import { SkuSidebarCards } from "./sku-sidebar-cards";
+import { runAfterValidation } from "@/shared/utils/run-after-validation";
 
 interface EditProductVariantFormProps extends SkuFormSharedProps {
 	sku: SkuWithImages;
@@ -36,6 +38,18 @@ const FIELD_LABELS: Record<string, string> = {
 	inventory: "Stock",
 	media: "Médias",
 };
+
+// Champs pouvant recevoir une erreur serveur path-préfixée ("size: Trop long")
+// émise par create-sku.ts / update-sku.ts (cf. CLAUDE.md § Validation patterns)
+const SERVER_FIELD_NAMES = [
+	"priceInclTaxEuros",
+	"compareAtPriceEuros",
+	"inventory",
+	"size",
+	"colorIds",
+	"materialIds",
+	"media",
+] as const;
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
 	withViewTransition(() => router.push(path));
@@ -74,7 +88,7 @@ export function EditProductVariantForm({
 
 	const originalImageUrls = sku.images.map((img) => img.url);
 
-	const { form, action, isPending } = useUpdateProductSkuForm({
+	const { form, state, action, isPending } = useUpdateProductSkuForm({
 		sku,
 		onSuccess: (message, data) => {
 			haptic("success");
@@ -92,6 +106,14 @@ export function EditProductVariantForm({
 		},
 	});
 
+	const serverErrors = useServerFieldErrors({
+		state,
+		fieldNames: SERVER_FIELD_NAMES,
+		setFieldError: (field, message) =>
+			form.setFieldMeta(field, (prev) => ({ ...prev, errors: [message] })),
+		onFieldError: () => requestAnimationFrame(() => focusFirstInvalid()),
+	});
+
 	const { allowNavigation } = useUnsavedChanges(
 		form.state.isDirty || isMediaUploading,
 		!isPending,
@@ -105,49 +127,15 @@ export function EditProductVariantForm({
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
 
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
-			if (!isSaveShortcut) return;
-			event.preventDefault();
-			if (isPending || isMediaUploading) return;
-			haptic("medium");
-			formRef.current?.requestSubmit();
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, isMediaUploading, formRef, haptic]);
-
-	useEffect(() => {
-		if (isMobile) return;
-		const handler = (event: KeyboardEvent) => {
-			if (event.key !== "Escape" || isPending) return;
-			const target = event.target as HTMLElement | null;
-			// Ignore Escape when it is closing an open overlay (dialog, sheet, popover,
-			// Select/dropdown menu) — otherwise closing a Select would also trigger the
-			// "unsaved changes" confirm and navigate away.
-			if (
-				target?.closest(
-					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[data-slot='select-content'],[data-slot='dropdown-menu-content'],[role='dialog']",
-				)
-			) {
-				return;
-			}
-			if (
-				form.state.isDirty &&
-				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
-			) {
-				return;
-			}
-			event.preventDefault();
-			haptic("light");
-			allowNavigation();
-			navigateWithTransition(router, variantsListPath);
-		};
-		window.addEventListener("keydown", handler);
-		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, haptic, router, allowNavigation, variantsListPath]);
+	useAdminFormKeyboard({
+		formRef,
+		isPending,
+		isMobile,
+		listPath: variantsListPath,
+		allowNavigation,
+		getIsDirty: () => form.state.isDirty,
+		extraBusy: isMediaUploading,
+	});
 
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
@@ -159,18 +147,23 @@ export function EditProductVariantForm({
 		<form
 			ref={formRef}
 			aria-label="Formulaire d'édition de variante"
+			aria-busy={isPending || isMediaUploading}
 			className="space-y-6"
 			onSubmit={(event) => {
 				event.preventDefault();
 				if (isPending || isMediaUploading || form.state.isSubmitting) return;
 				const formData = new FormData(event.currentTarget);
-				void form.handleSubmit().then(() => {
-					if (form.state.isValid) {
-						action(formData);
-					} else {
-						requestAnimationFrame(() => focusFirstInvalid());
-					}
-				});
+				runAfterValidation(
+					form.handleSubmit(),
+					() => {
+						if (form.state.isValid) {
+							action(formData);
+						} else {
+							requestAnimationFrame(() => focusFirstInvalid());
+						}
+					},
+					"EditSkuForm",
+				);
 			}}
 			onInvalidCapture={onInvalidCapture}
 		>
@@ -210,6 +203,8 @@ export function EditProductVariantForm({
 				}}
 			</form.Subscribe>
 
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<form.Subscribe
 				selector={(state) => ({
 					submissionAttempts: state.submissionAttempts,
@@ -228,10 +223,12 @@ export function EditProductVariantForm({
 						.filter(
 							(item): item is { name: string; label: string; message: string } => item !== null,
 						);
-					if (fieldErrors.length < 2) return null;
+					if (fieldErrors.length === 0) return null;
 					return <ErrorSummary fieldErrors={fieldErrors} />;
 				}}
 			</form.Subscribe>
+
+			<RequiredFieldsNote />
 
 			<fieldset disabled={isPending} className="space-y-6">
 				<SkuMediaCard
@@ -268,38 +265,15 @@ export function EditProductVariantForm({
 
 			<form.AppForm>
 				<AdminFormFooter pending={isPending}>
-					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
-						{([canSubmit]) => (
-							<div className="flex justify-end">
-								<Button
-									type="submit"
-									size="input"
-									disabled={!canSubmit || isPending || isMediaUploading}
-									onClick={() => haptic("medium")}
-									className="w-full sm:w-auto sm:min-w-56"
-								>
-									{(isPending || isMediaUploading) && (
-										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									)}
-									<span>
-										{isPending
-											? "Mise à jour…"
-											: isMediaUploading
-												? "Téléversement…"
-												: "Mettre à jour la variante"}
-									</span>
-									{!isPending && !isMediaUploading && (
-										<Kbd
-											aria-hidden="true"
-											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-										>
-											⌘S
-										</Kbd>
-									)}
-								</Button>
-							</div>
-						)}
-					</form.Subscribe>
+					<div className="flex justify-end">
+						<form.SubmitButton
+							isPending={isPending || isMediaUploading}
+							idleLabel="Mettre à jour la variante"
+							pendingLabel={isPending ? "Mise à jour…" : "Téléversement…"}
+							showKbdHint
+							className="w-full sm:w-auto sm:min-w-56"
+						/>
+					</div>
 				</AdminFormFooter>
 			</form.AppForm>
 		</form>

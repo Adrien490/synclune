@@ -18,6 +18,18 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * - CLICK_AND_COLLECT : retrait boutique (gated par StoreSettings.clickAndCollectEnabled)
  *
  * Rate limiting via CART_LIMITS.METADATA
+ *
+ * ⚠️ **Surface DORMANTE** (constat audit qualité métier 2026-07-26) : aucun
+ * appelant côté UI à ce jour. Ce n'est PAS du code mort — le backend est complet
+ * et cohérent (`Cart.fulfillmentType` + `StoreSettings.clickAndCollectEnabled`
+ * existent en base, l'action est feature-gatée et couverte par
+ * `__tests__/set-fulfillment-mode.test.ts`) : il attend son UI de sélection au
+ * panier/checkout. Ne pas supprimer sur la seule constatation « unused ».
+ *
+ * Conséquence à connaître si l'UI est branchée : `order-creation.service.ts` pose
+ * `shippingMethod: "STANDARD"` en dur et calcule TOUJOURS des frais de port via
+ * `calculateShipping` — un panier CLICK_AND_COLLECT serait facturé la livraison.
+ * Le branchement UI devra donc traiter le cas dans la création de commande.
  */
 export async function setFulfillmentMode(
 	_: ActionState | undefined,

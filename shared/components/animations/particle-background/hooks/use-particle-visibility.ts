@@ -1,12 +1,7 @@
 "use client";
 
 import { useInView } from "motion/react";
-import { useEffect, useRef, useState } from "react";
-
-export interface ParticleVisibilityOptions {
-	/** Pause the animation when the tab is hidden (default: true) */
-	pauseWhenHidden: boolean;
-}
+import { useRef } from "react";
 
 export interface ParticleVisibilityOutput {
 	containerRef: React.RefObject<HTMLDivElement | null>;
@@ -14,30 +9,18 @@ export interface ParticleVisibilityOutput {
 }
 
 /**
- * Tracks whether the particle container should animate.
+ * Tracks whether the particle container is in the viewport (`useInView`, no margin:
+ * particles stay mounted as long as any part of the container is visible).
  *
- * Combines viewport visibility (`useInView`, margin -100px) with the tab visibility
- * (`document.visibilityState`) so particles pause when scrolled away or when the tab
- * is hidden. The particles are purely ambient — they never react to the cursor.
+ * No `visibilitychange` handling: browsers already throttle rAF in hidden tabs, so the
+ * looping animations are effectively paused for free — unmounting on tab switch only
+ * caused a visible entrance replay ("pop") when coming back.
+ *
+ * The particles are purely ambient — they never react to the cursor.
  */
-export function useParticleVisibility(
-	options: ParticleVisibilityOptions,
-): ParticleVisibilityOutput {
-	const { pauseWhenHidden } = options;
+export function useParticleVisibility(): ParticleVisibilityOutput {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const viewportInView = useInView(containerRef, { margin: "-100px" });
-	const [tabVisible, setTabVisible] = useState(true);
-
-	useEffect(() => {
-		if (!pauseWhenHidden) return;
-		function onVisibilityChange() {
-			setTabVisible(document.visibilityState === "visible");
-		}
-		document.addEventListener("visibilitychange", onVisibilityChange);
-		return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-	}, [pauseWhenHidden]);
-
-	const isInView = viewportInView && (pauseWhenHidden ? tabVisible : true);
+	const isInView = useInView(containerRef);
 
 	return { containerRef, isInView };
 }

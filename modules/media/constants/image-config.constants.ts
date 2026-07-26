@@ -6,21 +6,57 @@
 // IMAGE SIZES
 // ============================================
 
-/** Screen sizes (responsive breakpoints) */
-export const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
+/**
+ * Largeurs générées par l'optimiseur d'images Next.
+ *
+ * ⚠️ Copie des valeurs par défaut de Next (`images.deviceSizes`), utilisée pour
+ * construire à la main le `srcSet` de la lightbox via `nextImageUrl()`. Comme
+ * `next.config.ts` ne définit PAS `deviceSizes`, les deux coïncident — mais
+ * rien ne le garantit : y ajouter une largeur ici sans la déclarer dans
+ * `next.config.ts` produirait des URLs `/_next/image?w=…` rejetées en 400
+ * (audit média M17). Toute modification doit toucher les deux, ou déclarer
+ * explicitement `deviceSizes` dans `next.config.ts` à partir de cette
+ * constante. Verrouillé par `image-config.constants.test.ts`.
+ */
+export const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048] as const;
 
 // ============================================
 // IMAGE QUALITY
 // ============================================
 
+/**
+ * Paliers de qualité — SSOT alignée sur `images.qualities` de `next.config.ts`.
+ *
+ * ⚠️ COÛT : Vercel facture chaque couple (source, largeur, qualité) distinct.
+ * Le catalogue utilisait 7 valeurs (60/65/70/75/80/85/90) × 8 largeurs, soit
+ * jusqu'à 56 variantes facturées par image source, pour des écarts visuels
+ * imperceptibles entre 70 et 75 ou entre 80 et 85. Trois paliers suffisent et
+ * divisent la facture d'autant. N'AJOUTER une valeur qu'avec une raison mesurée,
+ * et la déclarer aussi dans `next.config.ts` (sinon 400 sur `/_next/image`).
+ */
+export const IMAGE_QUALITY = {
+	/** Vignettes et miniatures (≤ 120 px) : la compression ne se voit pas. */
+	THUMBNAIL: 65,
+	/** Cartes produit, grilles, panier — le gros du catalogue. */
+	STANDARD: 80,
+	/** Image principale PDP, lightbox, hero : surfaces où le détail compte. */
+	HERO: 90,
+} as const;
+
 /** Quality for lightbox images (high quality) */
-export const LIGHTBOX_QUALITY = 90;
+export const LIGHTBOX_QUALITY = IMAGE_QUALITY.HERO;
 
 /** Quality for gallery thumbnails */
-export const THUMBNAIL_IMAGE_QUALITY = 65;
+export const THUMBNAIL_IMAGE_QUALITY = IMAGE_QUALITY.THUMBNAIL;
 
-/** Quality for the gallery main image */
-export const MAIN_IMAGE_QUALITY = 85;
+/**
+ * Quality for the gallery main image.
+ *
+ * Aligné sur `LIGHTBOX_QUALITY` : l'image principale et la lightbox partagent
+ * la même source, donc les mêmes variantes optimisées sont réutilisées au lieu
+ * d'en générer un second jeu à 85.
+ */
+export const MAIN_IMAGE_QUALITY = IMAGE_QUALITY.HERO;
 
 // ============================================
 // PREFETCH
@@ -36,8 +72,12 @@ export const PREFETCH_SIZE_DESKTOP = 1080;
 // LOADING
 // ============================================
 
-/** Number of thumbnails to load eagerly (above the fold) */
-export const EAGER_LOAD_THUMBNAILS = 6;
+/**
+ * Number of thumbnails to load eagerly (above the fold).
+ * 2 seulement : la galerie est derrière un Suspense, des vignettes eager
+ * supplémentaires concurrencent le LCP (image principale) sur mobile 4G.
+ */
+export const EAGER_LOAD_THUMBNAILS = 2;
 
 // ============================================
 // SIZES ATTRIBUTE (RESPONSIVE)

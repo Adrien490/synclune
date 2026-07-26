@@ -12,7 +12,7 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
-	mockDeleteFiles,
+	mockDeleteFromUrls,
 	mockExtractFileKeyFromUrl,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
@@ -21,7 +21,7 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
-	mockDeleteFiles: vi.fn(),
+	mockDeleteFromUrls: vi.fn(),
 	mockExtractFileKeyFromUrl: vi.fn(),
 }));
 
@@ -45,13 +45,11 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 }));
 
-// Mock UTApi as a constructable class — arrow functions cannot be used with `new`
-vi.mock("uploadthing/server", () => {
-	function MockUTApi(this: { deleteFiles: typeof mockDeleteFiles }) {
-		this.deleteFiles = mockDeleteFiles;
-	}
-	return { UTApi: MockUTApi };
-});
+// L'action délègue au service partagé, qui porte la garde anti-suppression des
+// archives fiscales et le comptage correct des clés déjà absentes (audit média M7/M8).
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: mockDeleteFromUrls,
+}));
 
 vi.mock("@/modules/media/utils/extract-file-key", () => ({
 	extractFileKeyFromUrl: mockExtractFileKeyFromUrl,
@@ -103,8 +101,8 @@ describe("deleteUploadThingFile", () => {
 		// Default: key extraction succeeds
 		mockExtractFileKeyFromUrl.mockReturnValue(VALID_FILE_KEY);
 
-		// Default: UploadThing deletion succeeds
-		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
+		// Default: deletion succeeds
+		mockDeleteFromUrls.mockResolvedValue({ deleted: 1, failed: 0 });
 
 		// Default: response helpers return shaped ActionState
 		mockSuccess.mockImplementation((message: string, data?: Record<string, unknown>) => ({
@@ -133,7 +131,7 @@ describe("deleteUploadThingFile", () => {
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
 		expect(result).toEqual(authError);
-		expect(mockDeleteFiles).not.toHaveBeenCalled();
+		expect(mockDeleteFromUrls).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -147,7 +145,7 @@ describe("deleteUploadThingFile", () => {
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockDeleteFiles).not.toHaveBeenCalled();
+		expect(mockDeleteFromUrls).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -161,41 +159,21 @@ describe("deleteUploadThingFile", () => {
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
 		expect(result).toEqual(validationError);
-		expect(mockDeleteFiles).not.toHaveBeenCalled();
+		expect(mockDeleteFromUrls).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// Key extraction
+	// Delegation au service partagé
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return error when file key cannot be extracted from URL", async () => {
-		mockExtractFileKeyFromUrl.mockReturnValue(null);
-
-		const result = await deleteUploadThingFile(undefined, validFormData);
-
-		expect(mockError).toHaveBeenCalledWith("Impossible d'extraire la cle du fichier depuis l'URL");
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockDeleteFiles).not.toHaveBeenCalled();
-	});
-
-	it("should call extractFileKeyFromUrl with the validated URL", async () => {
+	it("should delegate the deletion to the shared service with the validated URL", async () => {
 		await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockExtractFileKeyFromUrl).toHaveBeenCalledWith(VALID_URL);
+		expect(mockDeleteFromUrls).toHaveBeenCalledWith([VALID_URL]);
 	});
 
-	// ──────────────────────────────────────────────────────────────
-	// UploadThing deletion
-	// ──────────────────────────────────────────────────────────────
-
-	it("should call UTApi.deleteFiles with the extracted file key", async () => {
-		await deleteUploadThingFile(undefined, validFormData);
-
-		expect(mockDeleteFiles).toHaveBeenCalledWith(VALID_FILE_KEY);
-	});
-
-	it("should return error when UTApi reports success=false", async () => {
-		mockDeleteFiles.mockResolvedValue({ success: false, deletedCount: 0 });
+	it("should return an error when the service reports a failure", async () => {
+		mockDeleteFromUrls.mockResolvedValue({ deleted: 0, failed: 1 });
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
@@ -203,13 +181,14 @@ describe("deleteUploadThingFile", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	it("should return error when UTApi reports deletedCount=0 despite success=true", async () => {
-		mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 0 });
+	// Audit média M8 : une clé déjà absente n'est PAS un échec — le fichier n'est
+	// plus là, l'objectif est atteint. L'ancien calcul local la comptait en échec.
+	it("should succeed when the file was already absent (deleted=0, failed=0)", async () => {
+		mockDeleteFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("La suppression du fichier a echoue cote UploadThing");
-		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -230,7 +209,7 @@ describe("deleteUploadThingFile", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockDeleteFiles.mockRejectedValue(new Error("Network failure"));
+		mockDeleteFromUrls.mockRejectedValue(new Error("Network failure"));
 
 		const result = await deleteUploadThingFile(undefined, validFormData);
 

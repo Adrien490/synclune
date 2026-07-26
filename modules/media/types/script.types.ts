@@ -2,7 +2,7 @@
  * Shared types for media migration scripts
  *
  * Used by:
- * - scripts/generate-blur-placeholders.ts
+ * - scripts/backfill-media-metadata.ts
  * - scripts/generate-video-thumbnails.ts
  */
 

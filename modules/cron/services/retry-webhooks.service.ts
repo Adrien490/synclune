@@ -1,9 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
+import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";
 import {
 	persistPostWebhookTasks,
 	executePersistedTasksForEvent,
@@ -32,12 +34,14 @@ const CRON_JOB = "retry-webhooks";
  * payload is refetched from Stripe (source of truth) and re-dispatched
  * through the same handler used by the live webhook route.
  *
- * Stale `PROCESSING` events older than 24h are flipped back to `FAILED` so
- * they become eligible on a future run (recovers from crashed workers).
+ * Stale `PROCESSING` events older than `STALE_PROCESSING_THRESHOLD_MS` (15 min —
+ * abaissé de 24h, WEBHOOK-AUDIT-001) are flipped back to `FAILED` so they become
+ * eligible on a future run (recovers from crashed workers).
  *
- * Backoff: handled implicitly by `processedAt < now - WEBHOOK_RETRY_MIN_AGE_MS`
- * — events older than 30 minutes (default) are eligible. The cron runs every
- * 30 minutes so each retry happens at most once per cycle.
+ * Backoff: handled implicitly by an age filter of `WEBHOOK_RETRY_MIN_AGE_MS`
+ * (30 minutes by default) on `processedAt`, with a `receivedAt` fallback for
+ * events that never reached a terminal status (WEBHOOK-AUDIT-003). The cron runs
+ * every 30 minutes so each retry happens at most once per cycle.
  */
 export async function retryFailedWebhooks(): Promise<CronResult> {
 	logger.info("Starting webhook retry", { cronJob: CRON_JOB });
@@ -76,11 +80,20 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 
 	const minAge = new Date(Date.now() - THRESHOLDS.WEBHOOK_RETRY_MIN_AGE_MS);
 
+	// WEBHOOK-AUDIT-003 : `processedAt` est NULL tant que l'event n'a jamais atteint un
+	// statut terminal — c'est exactement le cas d'un event créé PROCESSING par la route
+	// dont la lambda a crashé en plein dispatch (la branche `create` de l'upsert ne pose
+	// pas `processedAt`). Le reset stale ci-dessus le bascule en FAILED sans y toucher, et
+	// un filtre `processedAt: { lt: minAge }` seul l'EXCLUT (`NULL < date` vaut NULL en SQL,
+	// jamais vrai) : l'event était réanimé puis plus jamais sélectionné, donc perdu
+	// silencieusement — sans alerte, l'épuisement n'étant émis que par les `catch` de la
+	// route et de ce cron. On reflète donc la clause OR du reset (fallback `receivedAt`,
+	// toujours renseigné), ce qui rend au passage son usage à l'index [status, receivedAt].
 	const candidates = await prisma.webhookEvent.findMany({
 		where: {
 			status: WebhookEventStatus.FAILED,
 			attempts: { lt: MAX_WEBHOOK_RETRY_ATTEMPTS },
-			processedAt: { lt: minAge },
+			OR: [{ processedAt: { lt: minAge } }, { processedAt: null, receivedAt: { lt: minAge } }],
 		},
 		select: {
 			id: true,
@@ -88,7 +101,10 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 			eventType: true,
 			attempts: true,
 		},
-		orderBy: { processedAt: "asc" },
+		// Tri sur `receivedAt` et non `processedAt` : en ASC Postgres place les NULL en
+		// dernier, ce qui reléguerait en queue de batch les events jamais traités — les
+		// plus à risque. `receivedAt` reflète l'âge réel et n'est jamais NULL.
+		orderBy: { receivedAt: "asc" },
 		take: BATCH_SIZE_MEDIUM,
 	});
 
@@ -186,19 +202,23 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 			// l'update du webhookEvent, puis exécute. Si l'exécution échoue,
 			// les tasks restent PENDING/FAILED → retry-post-webhook-tasks les rattrape.
 			const tasks = result?.tasks ?? [];
-			await prisma.$transaction(async (tx) => {
-				await tx.webhookEvent.update({
-					where: { id: candidate.id },
-					data: {
-						status: finalStatus,
-						processedAt: new Date(),
-						errorMessage: null,
-					},
-				});
-				if (tasks.length > 0) {
-					await persistPostWebhookTasks(tx, candidate.id, tasks);
-				}
-			});
+			await prisma.$transaction(
+				async (tx) => {
+					await tx.webhookEvent.update({
+						where: { id: candidate.id },
+						data: {
+							status: finalStatus,
+							processedAt: new Date(),
+							errorMessage: null,
+						},
+					});
+					if (tasks.length > 0) {
+						await persistPostWebhookTasks(tx, candidate.id, tasks);
+					}
+				},
+				// IDEM-TX-001 : miroir de la finalisation côté route webhook.
+				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+			);
 
 			if (tasks.length > 0) {
 				try {
@@ -235,6 +255,27 @@ export async function retryFailedWebhooks(): Promise<CronResult> {
 				});
 				Sentry.captureException(error instanceof Error ? error : new Error(message));
 			});
+
+			// Audit webhooks 2026-07-02 (F3) : l'email « max retries exhausted » n'était
+			// émis que par la route (au 3ᵉ traitement live) — un event dont le dernier
+			// échec survient DANS le cron sortait du filtre `attempts < MAX` et mourait
+			// FAILED sans alerte admin. Best-effort ; l'idempotencyKey Resend
+			// (`alert:webhook-failed:${eventId}`) dédoublonne avec l'alerte route (24h).
+			if (candidate.attempts + 1 >= MAX_WEBHOOK_RETRY_ATTEMPTS) {
+				try {
+					await sendWebhookFailedAlert({
+						eventId: candidate.stripeEventId,
+						eventType: candidate.eventType,
+						attempts: candidate.attempts + 1,
+						error: message,
+					});
+				} catch (alertError) {
+					logger.error("Failed to send webhook-exhausted admin alert", alertError, {
+						cronJob: CRON_JOB,
+						eventId: candidate.stripeEventId,
+					});
+				}
+			}
 
 			errored++;
 		}

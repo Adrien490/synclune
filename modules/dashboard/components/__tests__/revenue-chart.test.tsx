@@ -210,11 +210,12 @@ describe("RevenueChart", () => {
 	// -------------------------------------------------------------------------
 
 	it("renders sr-only summary with total revenue", () => {
-		const chartData = makeChartData(3, 100); // 100 + 200 + 300 = 600
+		const chartData = makeChartData(3, 100); // 100 + 200 + 300 = 600 centimes
 
 		render(<RevenueChart chartData={chartData} />);
 
-		expect(screen.getByText(/Total revenus sur la période : 600.00 €/)).toBeInTheDocument();
+		// revenue = centimes (SUM(Order.total)) → affiché en euros via formatEuro
+		expect(screen.getByText(/Total revenus sur la période : 6,00/)).toBeInTheDocument();
 	});
 
 	it("renders sr-only summary with total orders", () => {
@@ -239,7 +240,7 @@ describe("RevenueChart", () => {
 
 		render(<RevenueChart chartData={chartData} />);
 
-		expect(screen.getByText(/Pic revenus : 300.00 € le 2 janv./)).toBeInTheDocument();
+		expect(screen.getByText(/Pic revenus : 3,00\s?€ le 2 janv./)).toBeInTheDocument();
 	});
 
 	it("renders sr-only summary with peak orders entry", () => {
@@ -310,7 +311,7 @@ describe("RevenueChart", () => {
 		);
 
 		expect(screen.getByTestId("composed-chart")).toBeInTheDocument();
-		expect(screen.getByText(/Total revenus sur la période : 500.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/Total revenus sur la période : 5,00/)).toBeInTheDocument();
 	});
 
 	// -------------------------------------------------------------------------
@@ -506,7 +507,7 @@ describe("RevenueChart", () => {
 			render(<RevenueChart chartData={makeComparisonData()} chartMode="simple" />);
 
 			expect(
-				screen.getByText(/Total revenus de la période de comparaison : 900.00 €/),
+				screen.getByText(/Total revenus de la période de comparaison : 9,00/),
 			).toBeInTheDocument();
 		});
 	});

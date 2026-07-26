@@ -5,7 +5,7 @@ import {
 	PAGINATION_LIMITS,
 	cursorSchema,
 	directionSchema,
-} from "@/shared/constants/pagination";
+} from "@/shared/schemas/pagination-schema";
 
 // ============================================================================
 // SCHEMA FACTORIES

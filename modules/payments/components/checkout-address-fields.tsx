@@ -14,6 +14,8 @@ import type { SearchAddressResult } from "@/modules/addresses/types/search-addre
 import { AddressSelector } from "./address-selector";
 import { CheckoutErrorSummary } from "./checkout-error-summary";
 import { CHECKOUT_FIELD_LABELS } from "../constants/checkout-fields";
+import { isValidPhoneNumber } from "libphonenumber-js";
+import { PHONE_ERROR_MESSAGES } from "@/shared/schemas/phone.schemas";
 
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
 	value: code,
@@ -36,11 +38,22 @@ function AddressAutocompleteField({
 	const { suggestions, isSearching, error, retry } = useAddressAutocomplete(query, country);
 
 	return (
-		<form.AppField name="shipping.addressLine1">
+		<form.AppField
+			name="shipping.addressLine1"
+			validators={{
+				onChange: ({ value }: { value: string }) => {
+					if (!value || value.trim().length === 0) {
+						return "L'adresse est requise";
+					}
+					return undefined;
+				},
+			}}
+		>
 			{(field) => (
 				<field.AutocompleteField<SearchAddressResult>
 					label="Adresse"
 					required
+					autoComplete="street-address"
 					items={suggestions}
 					isLoading={isSearching}
 					error={error}
@@ -257,7 +270,16 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 
 			<form.Subscribe selector={(s) => s.values.shipping.country}>
 				{(country) => (
-					<form.AppField name="shipping.phoneNumber">
+					<form.AppField
+						name="shipping.phoneNumber"
+						validators={{
+							onChange: ({ value }: { value: string | undefined }) => {
+								if (!value) return PHONE_ERROR_MESSAGES.REQUIRED;
+								if (!isValidPhoneNumber(value)) return PHONE_ERROR_MESSAGES.INVALID;
+								return undefined;
+							},
+						}}
+					>
 						{(field) => (
 							<div className="space-y-2">
 								<field.PhoneField

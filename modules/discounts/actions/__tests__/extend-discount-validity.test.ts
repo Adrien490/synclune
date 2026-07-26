@@ -209,7 +209,7 @@ describe("extendDiscountValidity", () => {
 
 		await extendDiscountValidity(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123", "PROMO20");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 	});
 

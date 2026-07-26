@@ -13,8 +13,17 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockTx, mockPrisma, mockStripeRefunds, mockCreateOrderAuditTx } = vi.hoisted(() => {
+const {
+	mockTx,
+	mockPrisma,
+	mockStripeRefunds,
+	mockCreateOrderAuditTx,
+	mockSentryCaptureMessage,
+	FakePrismaKnownRequestError,
+} = vi.hoisted(() => {
 	const mockTx = {
+		// IDEM-AUTOREFUND-001 : `SELECT … FOR UPDATE` de sérialisation en tête de tx.
+		$queryRaw: vi.fn(),
 		refund: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -28,10 +37,22 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockCreateOrderAuditTx } = vi.hoi
 		mockTx,
 		mockPrisma: {
 			$transaction: vi.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
-			refund: { update: vi.fn() },
+			// IDEM-AUTOREFUND-001 : le lien stripeRefundId passe par un claim
+			// conditionnel `updateMany({ stripeRefundId: null })`.
+			refund: { update: vi.fn(), updateMany: vi.fn() },
 		},
 		mockStripeRefunds: { create: vi.fn() },
 		mockCreateOrderAuditTx: vi.fn(),
+		mockSentryCaptureMessage: vi.fn(),
+		// Vraie classe d'erreur Prisma (voir le mock du client plus bas).
+		FakePrismaKnownRequestError: class FakePrismaKnownRequestError extends Error {
+			code: string;
+			constructor(message: string, { code }: { code: string }) {
+				super(message);
+				this.name = "PrismaClientKnownRequestError";
+				this.code = code;
+			}
+		},
 	};
 });
 
@@ -45,6 +66,11 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
+	// IDEM-AUTOREFUND-001 : subclass RÉELLE obligatoire. Un
+	// `Object.assign(new Error(), { code: "P2002" })` n'est PAS `instanceof` →
+	// la branche P2002 de `initiateAutomaticRefund` ne serait jamais exécutée et le
+	// test passerait « green for the wrong reason » (incident webhooks-audit-2026-05-17).
+	Prisma: { PrismaClientKnownRequestError: FakePrismaKnownRequestError },
 	HistorySource: { WEBHOOK: "WEBHOOK", ADMIN: "ADMIN", SYSTEM: "SYSTEM" },
 	OrderAction: {
 		REFUND_CREATED: "REFUND_CREATED",
@@ -97,6 +123,22 @@ vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 
 vi.mock("next/cache", () => ({ updateTag: vi.fn() }));
 
+vi.mock("@sentry/nextjs", () => ({
+	withScope: (cb: (scope: unknown) => void) =>
+		cb({
+			setLevel: vi.fn(),
+			setTag: vi.fn(),
+			setFingerprint: vi.fn(),
+			setContext: vi.fn(),
+		}),
+	captureMessage: mockSentryCaptureMessage,
+	// `shared/lib/logger` appelle addBreadcrumb (warn/info) et captureException
+	// (error) : sans ces exports, le mock fait exploser la branche même qu'on teste
+	// et l'erreur remonte au catch global → faux négatif difficile à lire.
+	captureException: vi.fn(),
+	addBreadcrumb: vi.fn(),
+}));
+
 import { initiateAutomaticRefund } from "../payment-intent.service";
 
 describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à Stripe", () => {
@@ -146,6 +188,21 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 		expect(items.reduce((acc, i) => acc + i.amount, 0)).toBe(5000);
 	});
 
+	it("Audit F2 — le Refund local porte amount_received quand il diffère d'order.total (underbilling)", async () => {
+		// Stripe a encaissé 4000 pour une commande à 5000 (AmountMismatchError).
+		// L'appel stripe.refunds.create sans `amount` rembourse le montant capturé :
+		// le Refund local doit refléter 4000, pas order.total (sinon la compta
+		// interne et l'e-reporting REFUND sur-évaluent le remboursement).
+		const result = await initiateAutomaticRefund("pi_under_1", "order-1", "amount_mismatch", 4000);
+
+		expect(result.success).toBe(true);
+		const createPayload = mockTx.refund.create.mock.calls[0]?.[0];
+		expect(createPayload.data.amount).toBe(4000);
+
+		const auditPayload = mockCreateOrderAuditTx.mock.calls[0]?.[1];
+		expect(auditPayload.metadata.amount).toBe(4000);
+	});
+
 	it("passe metadata.refund_id à Stripe pour matching webhook charge.refunded", async () => {
 		await initiateAutomaticRefund("pi_test_2", "order-1", "payment_failed");
 
@@ -166,8 +223,11 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 	it("update Refund local avec stripeRefundId APRÈS le call Stripe réussi", async () => {
 		await initiateAutomaticRefund("pi_test_3", "order-1", "payment_failed");
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
-			where: { id: "ref-auto-1" },
+		// IDEM-AUTOREFUND-001 : claim conditionnel — le `stripeRefundId: null` dans le
+		// `where` empêche d'écraser un lien déjà posé par un concurrent ou par le
+		// webhook charge.refunded.
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith({
+			where: { id: "ref-auto-1", stripeRefundId: null },
 			data: { stripeRefundId: "re_stripe_auto_1" },
 		});
 	});
@@ -183,7 +243,7 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 
 		expect(mockTx.refund.create).not.toHaveBeenCalled();
 		// Si stripeRefundId déjà posé, pas de re-update
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
 		// Le call Stripe est toujours fait (idempotency Stripe gère la dédup côté provider)
 		expect(mockStripeRefunds.create).toHaveBeenCalledTimes(1);
 	});
@@ -216,6 +276,88 @@ describe("ORD-BIZ-002 — initiateAutomaticRefund crée un Refund local lié à 
 		// Refund local créé : OK (cron reconcile-refunds rattrapera)
 		expect(mockTx.refund.create).toHaveBeenCalledTimes(1);
 		// Pas d'update stripeRefundId puisque le call Stripe a failed
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.refund.updateMany).not.toHaveBeenCalled();
+	});
+});
+
+// ============================================================================
+// @regression idem-autorefund-001
+//
+// La garde de doublon d'`initiateAutomaticRefund` est un `findFirst` sur préfixe de
+// note, sans contrainte d'unicité adossée. Deux exécutions concurrentes créaient
+// donc 2 `Refund` locaux pour UN seul `re_*` Stripe (la clé d'idempotence
+// `auto-refund-${pi}` est stable → pas de double débit), et le 2ᵉ lien heurtait
+// `Refund.stripeRefundId @unique` en P2002 NON CATCHÉ. Conséquences :
+//   - l'échec était rapporté en `{ success: false }` alors que l'argent était parti,
+//   - l'orphelin APPROVED / stripeRefundId=null gonflait `alreadyRefunded` et
+//     bouclait dans la DLQ `reconcile-refunds` jusqu'à l'alerte « remboursement
+//     manuel requis » — invitant un opérateur à rembourser une 2ᵉ fois.
+//
+// Deux garanties verrouillées ici : (1) la tx sérialise sur la ligne Order pour
+// rendre la garde autoritative ; (2) un P2002 résiduel sur le lien n'échoue PAS
+// l'opération, il alerte.
+// ============================================================================
+describe("@regression idem-autorefund-001", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
+			cb(mockTx),
+		);
+		mockTx.refund.findFirst.mockResolvedValue(null);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({
+			total: 5000,
+			items: [{ id: "oi-1", price: 5000, quantity: 1 }],
+		});
+		mockTx.refund.create.mockResolvedValue({
+			id: "ref-auto-1",
+			status: "APPROVED",
+			stripeRefundId: null,
+		});
+		mockStripeRefunds.create.mockResolvedValue({ id: "re_stripe_auto_1" });
+	});
+
+	it("sérialise sur la ligne Order (SELECT … FOR UPDATE) avant la garde de doublon", async () => {
+		await initiateAutomaticRefund("pi_lock", "order-1", "payment_failed");
+
+		expect(mockTx.$queryRaw).toHaveBeenCalled();
+		const sql = mockTx.$queryRaw.mock.calls[0]?.[0]?.join?.("?") ?? "";
+		expect(sql).toContain('FROM "Order"');
+		expect(sql).toContain("FOR UPDATE");
+	});
+
+	it("résout la garde de façon déterministe (orderBy createdAt asc)", async () => {
+		await initiateAutomaticRefund("pi_det", "order-1", "payment_failed");
+
+		expect(mockTx.refund.findFirst).toHaveBeenCalledWith(
+			expect.objectContaining({ orderBy: { createdAt: "asc" } }),
+		);
+	});
+
+	it("P2002 sur le lien (doublon résiduel) → success=true + alerte, PAS un échec", async () => {
+		mockPrisma.refund.updateMany.mockRejectedValue(
+			new FakePrismaKnownRequestError("Unique constraint failed", { code: "P2002" }),
+		);
+
+		const result = await initiateAutomaticRefund("pi_dup", "order-1", "payment_failed");
+
+		// L'argent EST parti (clé Stripe stable) → ne pas rapporter un échec, sinon la
+		// DLQ relance et un opérateur peut rembourser une 2ᵉ fois.
+		expect(result).toEqual({ success: true, refundId: "re_stripe_auto_1" });
+		expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
+			expect.stringContaining("Doublon de Refund local"),
+			"warning",
+		);
+	});
+
+	it("une erreur DB non-P2002 sur le lien reste propagée (pas d'avalement)", async () => {
+		mockPrisma.refund.updateMany.mockRejectedValue(
+			new FakePrismaKnownRequestError("Connection lost", { code: "P1001" }),
+		);
+
+		const result = await initiateAutomaticRefund("pi_db_down", "order-1", "payment_failed");
+
+		expect(result.success).toBe(false);
+		expect(result.error?.message).toBe("Connection lost");
+		expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
 	});
 });

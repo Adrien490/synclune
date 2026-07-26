@@ -28,6 +28,8 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
+const UNINITIALIZED = Symbol("uninitialized");
+
 // `focus-ring` SSOT (`app/globals.css`) hérité du `<Button>` parent — pas de
 // surcharge `focus-visible:ring-*` ici (drift convention repo).
 // `can-hover:` préfixe anti sticky-hover iOS (hover figé après tap).
@@ -61,10 +63,11 @@ function CursorPaginationInner({
 	// device a un pointer fine (souris/trackpad). Sur tactile, les raccourcis
 	// n'existent pas → bruit cognitif pour VoiceOver iOS.
 	const hasFinePointer = useMediaQuery("(pointer: fine)");
-	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
-	// Avoids spurious scroll-to-top on first render when cursor is also undefined
-	// eslint-disable-next-line react-hooks/refs
-	const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
+	// Sentinelle : distingue « pas encore initialisé » de « cursor undefined »
+	// (évite un scroll-to-top parasite au premier rendu). Constante de module et
+	// non `useRef(Symbol(...))` : useRef ignore son argument après le premier
+	// rendu, le Symbol était donc recréé puis jeté à chaque rendu. La comparaison
+	// est une simple égalité d'identité, la partager entre instances est sûr.
 	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 	// Tracker du dernier bouton cliqué pour afficher un spinner ciblé pendant
 	// `isPending`. Lu pendant le render (la condition `isPending && ...` redevient

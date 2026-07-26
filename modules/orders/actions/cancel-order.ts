@@ -19,7 +19,9 @@ import {
 	RefundStatus,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -32,9 +34,10 @@ import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
-import { getOrderInvalidationTags } from "../constants/cache";
+import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "../constants/cache";
 import { cancelOrderSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
+import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { canCancelOrder } from "../services/order-status-validation.service";
 import { voidInvoice } from "../services/void-invoice.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
@@ -82,221 +85,240 @@ export async function cancelOrder(
 
 		const { id } = validated.data;
 
-		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
-		const order = await prisma.$transaction(async (tx) => {
-			const found = await tx.order.findUnique({
-				where: { id, ...notDeleted },
-				select: {
-					id: true,
-					orderNumber: true,
-					status: true,
-					paymentStatus: true,
-					fulfillmentStatus: true,
-					total: true,
-					stripePaymentIntentId: true,
-					userId: true,
-					customerEmail: true,
-					customerName: true,
-					shippingFirstName: true,
-					invoiceNumber: true,
-					invoiceStatus: true,
-					items: {
-						select: {
-							id: true,
-							skuId: true,
-							quantity: true,
-							price: true,
-						},
-					},
-				},
-			});
+		// Transaction: fetch + validate + update + audit atomically.
+		// IDEM-CANCEL-001 : advisory lock AVANT le findUnique — sans lui, deux
+		// invocations concurrentes (double-clic, 2 onglets) lisent toutes deux le
+		// statut pré-annulation en read-committed, passent la garde canCancelOrder,
+		// et la 2ᵉ ré-applique restock + création Refund (doublon financier +
+		// phantom stock). Le lock partagé avec processOrderAtomically/markAsPaid
+		// sérialise aussi contre la transition PAID du webhook.
+		const order = await prisma.$transaction(
+			async (tx) => {
+				await acquireOrderPaidLockTx(tx, id);
 
-			if (!found) return null;
-
-			// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
-			if (!canCancelOrder(found)) {
-				const _error =
-					found.status === OrderStatus.CANCELLED
-						? ("already_cancelled" as const)
-						: ("cannot_cancel" as const);
-				return { ...found, _error };
-			}
-
-			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
-			// commande. Annuler + perdre le chargeback = double-débit côté merchant
-			// + voidInvoice émis pour rien si Stripe gagne ensuite.
-			const openDispute = await tx.dispute.findFirst({
-				where: {
-					orderId: id,
-					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
-				},
-				select: { id: true },
-			});
-			if (openDispute) {
-				return { ...found, _error: "open_dispute" as const };
-			}
-
-			// Agrégat des Refunds non-terminaux déjà créés (utilisé pour le solde
-			// auto-refund + le guard ORD-BIZ-009 ci-dessous).
-			const alreadyRefundedAggregate = await tx.refund.aggregate({
-				where: {
-					orderId: id,
-					status: {
-						in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
-					},
-					deletedAt: null,
-				},
-				_sum: { amount: true },
-			});
-			const alreadyRefundedTotal = alreadyRefundedAggregate._sum.amount ?? 0;
-			const wasPayable =
-				found.paymentStatus === PaymentStatus.PAID ||
-				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
-
-			// ORD-BIZ-009 : refus si autoRefund=false sur commande payée sans
-			// Refund couvrant le total. Sinon paymentStatus=REFUNDED serait posé
-			// sans aucun Refund DB / Stripe, créant un faux-positif comptable
-			// (commande "Remboursée" sans trace de remboursement).
-			if (wasPayable && !autoRefund && alreadyRefundedTotal < found.total) {
-				return { ...found, _error: "requires_refund" as const };
-			}
-
-			// Déterminer le nouveau paymentStatus.
-			// - PAID/PARTIALLY_REFUNDED → REFUNDED (le remboursement sera traité)
-			// - PENDING → FAILED (le paiement n'a jamais abouti, on coupe le polling cron)
-			// - FAILED/EXPIRED/REFUNDED → inchangé
-			const newPaymentStatus =
-				found.paymentStatus === PaymentStatus.PAID ||
-				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
-					? PaymentStatus.REFUNDED
-					: found.paymentStatus === PaymentStatus.PENDING
-						? PaymentStatus.FAILED
-						: found.paymentStatus;
-
-			// Restock basé sur le fulfillment : tant qu'on n'a pas préparé/expédié,
-			// les articles sont encore physiquement en stock. paymentStatus n'est pas
-			// le bon proxy (une commande PROCESSING PAID = articles non sortis du stock).
-			const shouldRestoreStock =
-				found.fulfillmentStatus === FulfillmentStatus.UNFULFILLED ||
-				found.fulfillmentStatus === FulfillmentStatus.PROCESSING;
-
-			// La facture émise n'est pas effacée (séquentialité Art. 286 CGI) — elle
-			// passe en VOIDED + 2e audit trail (un avoir doit être émis séparément).
-			const shouldVoidInvoice = found.invoiceStatus === InvoiceStatus.GENERATED;
-
-			// 1. Mettre à jour la commande
-			// Note : si shouldVoidInvoice, le passage VOIDED + émission de l'avoir
-			// (creditNoteNumber séquentiel A-YYYY-NNNNN, advisory lock dédié) sont
-			// gérés par voidInvoice() après commit (Art. 272-I CGI). Ce service
-			// ne peut pas être imbriqué dans la tx parent (advisory lock Postgres).
-			await tx.order.update({
-				where: { id },
-				data: {
-					status: OrderStatus.CANCELLED,
-					paymentStatus: newPaymentStatus,
-				},
-			});
-
-			// 2. Restaurer le stock
-			if (shouldRestoreStock) {
-				for (const item of found.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
-						data: {
-							inventory: {
-								increment: item.quantity,
+				const found = await tx.order.findUnique({
+					where: { id, ...notDeleted },
+					select: {
+						id: true,
+						orderNumber: true,
+						status: true,
+						paymentStatus: true,
+						fulfillmentStatus: true,
+						total: true,
+						stripePaymentIntentId: true,
+						userId: true,
+						customerEmail: true,
+						customerName: true,
+						shippingFirstName: true,
+						invoiceNumber: true,
+						invoiceStatus: true,
+						items: {
+							select: {
+								id: true,
+								skuId: true,
+								quantity: true,
+								price: true,
 							},
 						},
-					});
-				}
-			}
-
-			// 3. Libérer les codes promo utilisés sur cette commande
-			const discountUsages = await tx.discountUsage.findMany({
-				where: { orderId: id },
-				select: { id: true, discountId: true },
-			});
-
-			const releasedDiscountIds: string[] = [];
-			for (const usage of discountUsages) {
-				await tx.discount.update({
-					where: { id: usage.discountId },
-					data: { usageCount: { decrement: 1 } },
+					},
 				});
-				releasedDiscountIds.push(usage.discountId);
-			}
 
-			if (discountUsages.length > 0) {
-				await tx.discountUsage.deleteMany({ where: { orderId: id } });
-			}
+				if (!found) return null;
 
-			// 4. Auto-refund: créer un Refund (status APPROVED) à traiter manuellement
-			// par l'admin via processRefund (appel Stripe synchrone hors transaction).
-			// Pour PARTIALLY_REFUNDED, calcule le solde restant à rembourser
-			// (sinon on créerait un Refund du montant total qui dépasse le payé restant).
-			let createdRefundId: string | null = null;
-			let autoRefundAmount = 0;
-			if (autoRefund && wasPayable) {
-				const remainingToRefund = found.total - alreadyRefundedTotal;
-				if (remainingToRefund > 0) {
-					const refund = await tx.refund.create({
-						data: {
-							orderId: id,
-							amount: remainingToRefund,
-							reason: RefundReason.CUSTOMER_REQUEST,
-							status: RefundStatus.APPROVED,
-							note: sanitizedReason ?? "Remboursement automatique sur annulation",
-							createdBy: adminUser.id,
-							items: {
-								create: found.items.map((item) => ({
-									orderItemId: item.id,
-									quantity: item.quantity,
-									amount: item.price * item.quantity,
-									restock: shouldRestoreStock,
-								})),
-							},
-						},
-						select: { id: true },
-					});
-					createdRefundId = refund.id;
-					autoRefundAmount = remainingToRefund;
+				// Validate via state machine service (blocks SHIPPED, DELIVERED, CANCELLED)
+				if (!canCancelOrder(found)) {
+					const _error =
+						found.status === OrderStatus.CANCELLED
+							? ("already_cancelled" as const)
+							: ("cannot_cancel" as const);
+					return { ...found, _error };
 				}
-			}
 
-			// 5. Audit trail (Best Practice Stripe 2025)
-			await createOrderAuditTx(tx, {
-				orderId: id,
-				action: "CANCELLED",
-				previousStatus: found.status,
-				newStatus: OrderStatus.CANCELLED,
-				previousPaymentStatus: found.paymentStatus,
-				newPaymentStatus: newPaymentStatus,
-				note: sanitizedReason ?? undefined,
-				authorId: adminUser.id,
-				authorName: adminUser.name ?? "Admin",
-				source: HistorySource.ADMIN,
-				metadata: {
-					stockRestored: shouldRestoreStock,
-					itemsCount: found.items.length,
-					releasedDiscountIds,
-					autoRefundId: createdRefundId,
-					autoRefundAmount,
-					invoiceVoided: shouldVoidInvoice,
-				},
-			});
+				// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
+				// commande. Annuler + perdre le chargeback = double-débit côté merchant
+				// + voidInvoice émis pour rien si Stripe gagne ensuite.
+				const openDispute = await tx.dispute.findFirst({
+					where: {
+						orderId: id,
+						status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
+					},
+					select: { id: true },
+				});
+				if (openDispute) {
+					return { ...found, _error: "open_dispute" as const };
+				}
 
-			// L'audit INVOICE_VOIDED + emission avoir sont gérés par voidInvoice()
-			// après commit (advisory lock Postgres incompatible avec tx imbriquée).
+				// Agrégat des Refunds non-terminaux déjà créés (utilisé pour le solde
+				// auto-refund + le guard ORD-BIZ-009 ci-dessous).
+				const alreadyRefundedAggregate = await tx.refund.aggregate({
+					where: {
+						orderId: id,
+						status: {
+							in: [RefundStatus.PENDING, RefundStatus.APPROVED, RefundStatus.COMPLETED],
+						},
+						deletedAt: null,
+					},
+					_sum: { amount: true },
+				});
+				const alreadyRefundedTotal = alreadyRefundedAggregate._sum.amount ?? 0;
+				const wasPayable =
+					found.paymentStatus === PaymentStatus.PAID ||
+					found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
 
-			return {
-				...found,
-				_newPaymentStatus: newPaymentStatus,
-				_shouldRestoreStock: shouldRestoreStock,
-				_autoRefundId: createdRefundId,
-				_autoRefundAmount: autoRefundAmount,
-				_invoiceVoided: shouldVoidInvoice,
-			};
-		});
+				// ORD-BIZ-009 : refus si autoRefund=false sur commande payée sans
+				// Refund couvrant le total. Sinon paymentStatus=REFUNDED serait posé
+				// sans aucun Refund DB / Stripe, créant un faux-positif comptable
+				// (commande "Remboursée" sans trace de remboursement).
+				if (wasPayable && !autoRefund && alreadyRefundedTotal < found.total) {
+					return { ...found, _error: "requires_refund" as const };
+				}
+
+				// Déterminer le nouveau paymentStatus.
+				// - PAID/PARTIALLY_REFUNDED → REFUNDED (le remboursement sera traité)
+				// - PENDING → FAILED (le paiement n'a jamais abouti, on coupe le polling cron)
+				// - FAILED/EXPIRED/REFUNDED → inchangé
+				const newPaymentStatus =
+					found.paymentStatus === PaymentStatus.PAID ||
+					found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
+						? PaymentStatus.REFUNDED
+						: found.paymentStatus === PaymentStatus.PENDING
+							? PaymentStatus.FAILED
+							: found.paymentStatus;
+
+				// STOCK-01 : restocker UNIQUEMENT si le stock a réellement été décrémenté.
+				// Réservation optimiste : le décrément n'a lieu qu'au passage PAID (webhook
+				// payment_intent.succeeded ou mark-as-paid) — une commande restée PENDING n'a
+				// JAMAIS décrémenté son stock. Restocker une PENDING gonflerait l'inventaire
+				// au-dessus du réel (phantom stock → survente future), et le CHECK inventory>=0
+				// ne protège que le plancher, pas le sur-comptage. On combine donc deux
+				// conditions, alignées sur l'invariant de restoreStockForOrder
+				// (payment-intent.service.ts) :
+				//  1. le stock a été retiré : paymentStatus PAID / PARTIALLY_REFUNDED ;
+				//  2. les articles ne sont pas encore sortis physiquement : fulfillment
+				//     UNFULFILLED / PROCESSING (une PAID PROCESSING = articles encore en stock).
+				const stockWasDecremented =
+					found.paymentStatus === PaymentStatus.PAID ||
+					found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED;
+				const notYetShipped =
+					found.fulfillmentStatus === FulfillmentStatus.UNFULFILLED ||
+					found.fulfillmentStatus === FulfillmentStatus.PROCESSING;
+				const shouldRestoreStock = stockWasDecremented && notYetShipped;
+
+				// La facture émise n'est pas effacée (séquentialité Art. 286 CGI) — elle
+				// passe en VOIDED + 2e audit trail (un avoir doit être émis séparément).
+				const shouldVoidInvoice = found.invoiceStatus === InvoiceStatus.GENERATED;
+
+				// 1. Mettre à jour la commande
+				// Note : si shouldVoidInvoice, le passage VOIDED + émission de l'avoir
+				// (creditNoteNumber séquentiel A-YYYY-NNNNN, advisory lock dédié) sont
+				// gérés par voidInvoice() après commit (Art. 272-I CGI). Ce service
+				// ne peut pas être imbriqué dans la tx parent (advisory lock Postgres).
+				// IDEM-CANCEL-001 (ceinture-bretelles) : précondition de statut ré-évaluée
+				// au lock de ligne — protège aussi contre un writer qui ne prendrait pas
+				// l'advisory lock. count===0 ⇒ la commande a changé sous nos pieds :
+				// on abandonne AVANT restock / Refund / audit.
+				const claimed = await tx.order.updateMany({
+					where: { id, status: found.status, paymentStatus: found.paymentStatus },
+					data: {
+						status: OrderStatus.CANCELLED,
+						paymentStatus: newPaymentStatus,
+					},
+				});
+				if (claimed.count === 0) {
+					return { ...found, _error: "concurrent_change" as const };
+				}
+
+				// 2. Restaurer le stock
+				if (shouldRestoreStock) {
+					for (const item of found.items) {
+						await tx.productSku.update({
+							where: { id: item.skuId },
+							data: {
+								inventory: {
+									increment: item.quantity,
+								},
+							},
+						});
+					}
+				}
+
+				// 3. Libérer les codes promo utilisés sur cette commande.
+				// [[DISC-USAGE-002]] Toujours via le service canonique : son décrément est
+				// gardé par `usageCount > 0`, ce qu'un `update` direct ne fait pas (un
+				// compteur négatif rendrait le code redeemable au-delà de `maxUsageCount`).
+				const releasedDiscountIds = await releaseOrderDiscountUsageTx(tx, id);
+
+				// 4. Auto-refund: créer un Refund (status APPROVED) à traiter manuellement
+				// par l'admin via processRefund (appel Stripe synchrone hors transaction).
+				// Pour PARTIALLY_REFUNDED, calcule le solde restant à rembourser
+				// (sinon on créerait un Refund du montant total qui dépasse le payé restant).
+				let createdRefundId: string | null = null;
+				let autoRefundAmount = 0;
+				if (autoRefund && wasPayable) {
+					const remainingToRefund = found.total - alreadyRefundedTotal;
+					if (remainingToRefund > 0) {
+						const refund = await tx.refund.create({
+							data: {
+								orderId: id,
+								amount: remainingToRefund,
+								reason: RefundReason.CUSTOMER_REQUEST,
+								status: RefundStatus.APPROVED,
+								note: sanitizedReason ?? "Remboursement automatique sur annulation",
+								createdBy: adminUser.id,
+								items: {
+									create: found.items.map((item) => ({
+										orderItemId: item.id,
+										quantity: item.quantity,
+										amount: item.price * item.quantity,
+										restock: shouldRestoreStock,
+									})),
+								},
+							},
+							select: { id: true },
+						});
+						createdRefundId = refund.id;
+						autoRefundAmount = remainingToRefund;
+					}
+				}
+
+				// 5. Audit trail (Best Practice Stripe 2025)
+				await createOrderAuditTx(tx, {
+					orderId: id,
+					action: "CANCELLED",
+					previousStatus: found.status,
+					newStatus: OrderStatus.CANCELLED,
+					previousPaymentStatus: found.paymentStatus,
+					newPaymentStatus: newPaymentStatus,
+					note: sanitizedReason ?? undefined,
+					authorId: adminUser.id,
+					authorName: adminUser.name ?? "Admin",
+					source: HistorySource.ADMIN,
+					metadata: {
+						stockRestored: shouldRestoreStock,
+						itemsCount: found.items.length,
+						releasedDiscountIds,
+						autoRefundId: createdRefundId,
+						autoRefundAmount,
+						invoiceVoided: shouldVoidInvoice,
+					},
+				});
+
+				// L'audit INVOICE_VOIDED + emission avoir sont gérés par voidInvoice()
+				// après commit (advisory lock Postgres incompatible avec tx imbriquée).
+
+				return {
+					...found,
+					_newPaymentStatus: newPaymentStatus,
+					_shouldRestoreStock: shouldRestoreStock,
+					_autoRefundId: createdRefundId,
+					_autoRefundAmount: autoRefundAmount,
+					_invoiceVoided: shouldVoidInvoice,
+				};
+			},
+			// Advisory lock : l'attente derrière un webhook PAID concurrent compte
+			// dans le timeout de la tx → overrides explicites (cf. CLAUDE.md).
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		if (!order) {
 			return {
@@ -309,11 +331,13 @@ export async function cancelOrder(
 			const message =
 				order._error === "already_cancelled"
 					? ORDER_ERROR_MESSAGES.ALREADY_CANCELLED
-					: order._error === "requires_refund"
-						? "Cette commande est payée et aucun remboursement n'a été créé. Cochez « Auto-refund » pour générer le remboursement Stripe, ou créez d'abord un remboursement manuel."
-						: order._error === "open_dispute"
-							? "Un litige Stripe est en cours sur cette commande. L'annulation est bloquée jusqu'à la résolution du litige (gérée automatiquement par le webhook charge.dispute.closed)."
-							: "Impossible d'annuler une commande expediee ou livree.";
+					: order._error === "concurrent_change"
+						? "La commande a été modifiée par une autre opération pendant l'annulation. Rechargez la page et réessayez."
+						: order._error === "requires_refund"
+							? "Cette commande est payée et aucun remboursement n'a été créé. Cochez « Auto-refund » pour générer le remboursement Stripe, ou créez d'abord un remboursement manuel."
+							: order._error === "open_dispute"
+								? "Un litige Stripe est en cours sur cette commande. L'annulation est bloquée jusqu'à la résolution du litige (gérée automatiquement par le webhook charge.dispute.closed)."
+								: "Impossible d'annuler une commande expediee ou livree.";
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -364,7 +388,7 @@ export async function cancelOrder(
 
 		// Si auto-refund, invalider également le cache des remboursements de la commande
 		if (order._autoRefundId) {
-			updateTag(`order-refunds-${order.id}`);
+			updateTag(ORDERS_CACHE_TAGS.REFUNDS(order.id));
 		}
 
 		if (order.customerEmail) {

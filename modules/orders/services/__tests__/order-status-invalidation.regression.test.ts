@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
  * (`modules/orders/constants/cache.ts`) — jamais via une liste de tags écrite à
  * la main. Une liste partielle (ex: `[LIST, ADMIN_ORDERS_LIST, ADMIN_BADGES]`)
  * laisse le détail commande (DETAIL/CONFIRMATION/HISTORY) ET l'espace client
- * user-scopé (USER_ORDERS/LAST_ORDER/ACCOUNT_STATS) stale jusqu'à l'expiration du
+ * user-scopé (USER_ORDERS/LAST_ORDER) stale jusqu'à l'expiration du
  * profil `user` (~10 min).
  *
  * Ce test a été ajouté après la découverte d'une violation réelle dans

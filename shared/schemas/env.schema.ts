@@ -9,16 +9,16 @@ export const envSchema = z.object({
 	// ========================================
 	// Base de données
 	// ========================================
-	DATABASE_URL: z.string().url("DATABASE_URL doit être une URL valide"),
+	DATABASE_URL: z.url("DATABASE_URL doit être une URL valide"),
 	// Direct (unpooled) Neon endpoint utilisé exclusivement par `prisma migrate
 	// deploy` — PgBouncer (pooler) rejette les prepared statements DDL.
-	DATABASE_URL_UNPOOLED: z.string().url().optional(),
+	DATABASE_URL_UNPOOLED: z.url().optional(),
 
 	// ========================================
 	// Authentification (Better Auth)
 	// ========================================
 	BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET doit avoir au moins 32 caractères"),
-	BETTER_AUTH_URL: z.string().url(),
+	BETTER_AUTH_URL: z.url(),
 
 	// Google OAuth (optionnel)
 	GOOGLE_CLIENT_ID: z.string().optional(),
@@ -28,11 +28,11 @@ export const envSchema = z.object({
 	// Email (Resend)
 	// ========================================
 	RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY doit commencer par 're_'"),
-	RESEND_CONTACT_EMAIL: z.string().email("RESEND_CONTACT_EMAIL doit être un email valide"),
+	RESEND_CONTACT_EMAIL: z.email("RESEND_CONTACT_EMAIL doit être un email valide"),
 	// Adresse BCC ajoutée automatiquement aux alertes admin (refund failed,
 	// invoice sequence overflow, dispute, etc.). Permet d'éviter un single
 	// point of failure sur l'unique boîte admin. Optionnel.
-	EMAIL_ADMIN_BCC: z.string().email("EMAIL_ADMIN_BCC doit être un email valide").optional(),
+	EMAIL_ADMIN_BCC: z.email("EMAIL_ADMIN_BCC doit être un email valide").optional(),
 
 	// ========================================
 	// Stripe (Paiement)
@@ -62,7 +62,7 @@ export const envSchema = z.object({
 	// ========================================
 	// SEO & Verification (optionnel)
 	// ========================================
-	NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
+	NEXT_PUBLIC_SITE_URL: z.url().optional(),
 	GOOGLE_SITE_VERIFICATION: z.string().optional(),
 	BING_SITE_VERIFICATION: z.string().optional(),
 
@@ -83,7 +83,7 @@ export const envSchema = z.object({
 	// ========================================
 	// Observability (Sentry)
 	// ========================================
-	NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+	NEXT_PUBLIC_SENTRY_DSN: z.url().optional(),
 	SENTRY_ORG: z.string().optional(),
 	SENTRY_PROJECT: z.string().optional(),
 	// Token utilisé par le plugin Sentry Webpack pour uploader les sourcemaps
@@ -148,13 +148,12 @@ export const envSchema = z.object({
 		.regex(/^\d{2}\.\d{2}[A-Z]$/, "VENDOR_APE_CODE doit être au format NN.NNL. Ex: '47.91B'")
 		.optional(),
 	VENDOR_FULL_ADDRESS: z.string().min(1).optional(),
-	VENDOR_EMAIL: z.string().email("VENDOR_EMAIL doit être un email valide").optional(),
+	VENDOR_EMAIL: z.email("VENDOR_EMAIL doit être un email valide").optional(),
 	VENDOR_VAT_EXEMPTION_TEXT: z.string().min(1).optional(),
 	VENDOR_LATE_PAYMENT_PENALTY_RATE: z.string().min(1).optional(),
 	VENDOR_RECOVERY_FEE: z.string().min(1).optional(),
 	VENDOR_INSURANCE_COMPANY: z.string().min(1).optional(),
 	VENDOR_INSURANCE_CONTACT: z
-		.string()
 		.email("VENDOR_INSURANCE_CONTACT doit être un email valide")
 		.optional(),
 	VENDOR_INSURANCE_COVERAGE: z.string().min(1).optional(),

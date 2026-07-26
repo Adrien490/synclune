@@ -93,6 +93,7 @@ const mockUser = {
 	accountStatus: "ACTIVE" as const,
 	emailVerified: true,
 	deletionRequestedAt: null,
+	termsAcceptedAt: null,
 	createdAt: new Date(),
 	updatedAt: new Date(),
 };

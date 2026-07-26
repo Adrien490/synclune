@@ -35,10 +35,14 @@ export function TypeFilterSection({
 	const haptic = useHaptic();
 	if (productTypes.length === 0) return null;
 
+	// `Set` construit une fois : un `.includes()` par ligne rescanne tout le
+	// tableau à chaque rendu de la liste.
+	const selectedSet = new Set(selectedValues);
+
 	return (
 		<div className="space-y-1">
 			{productTypes.map((type) => {
-				const isSelected = selectedValues.includes(type.slug);
+				const isSelected = selectedSet.has(type.slug);
 				return (
 					<CheckboxFilterItem
 						key={type.slug}

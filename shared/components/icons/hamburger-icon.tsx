@@ -26,7 +26,7 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
+				className="motion-safe:transition-[x1,x2,y1,y2,opacity] motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
 			/>
 			{/* Middle bar → fades out */}
 			<line
@@ -49,7 +49,7 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
+				className="motion-safe:transition-[x1,x2,y1,y2,opacity] motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
 			/>
 		</svg>
 	);

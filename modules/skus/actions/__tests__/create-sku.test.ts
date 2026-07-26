@@ -32,6 +32,8 @@ const {
 		},
 		skuMedia: { create: vi.fn(), createMany: vi.fn() },
 		$transaction: vi.fn(),
+		// Advisory lock variant identity (assertUniqueVariantCombination)
+		$queryRaw: vi.fn().mockResolvedValue([]),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),

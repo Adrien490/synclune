@@ -6,19 +6,25 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAuth, mockValidateInput, mockSuccess, mockError, mockEnforceRateLimit } = vi.hoisted(
-	() => ({
-		mockAuth: {
-			api: {
-				resetPassword: vi.fn(),
-			},
+const {
+	mockAuth,
+	mockValidateInput,
+	mockSuccess,
+	mockError,
+	mockHandleActionError,
+	mockEnforceRateLimit,
+} = vi.hoisted(() => ({
+	mockAuth: {
+		api: {
+			resetPassword: vi.fn(),
 		},
-		mockValidateInput: vi.fn(),
-		mockSuccess: vi.fn(),
-		mockError: vi.fn(),
-		mockEnforceRateLimit: vi.fn(),
-	}),
-);
+	},
+	mockValidateInput: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+	mockHandleActionError: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
+}));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -35,6 +41,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,
+	handleActionError: mockHandleActionError,
 }));
 vi.mock("../schemas/auth.schemas", () => ({ resetPasswordSchema: {} }));
 vi.mock("../../services/hibp.service", () => ({
@@ -75,6 +82,10 @@ describe("resetPassword", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
+		mockHandleActionError.mockImplementation((_err: unknown, defaultMessage?: string) => ({
+			status: ActionStatus.ERROR,
+			message: defaultMessage ?? "Une erreur est survenue",
+		}));
 	});
 
 	it("should return validation error for invalid data", async () => {

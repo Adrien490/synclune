@@ -9,12 +9,6 @@ import { BULK_MATERIAL_ACTION_LIMIT } from "../constants/materials.constants";
 import { buildMaterialWhereClause } from "../services/materials-query-builder";
 import type { GetMaterialsParams } from "../types/materials.types";
 
-export interface FilteredMaterialIdsData {
-	ids: string[];
-	totalCount: number;
-	cappedAt: number;
-}
-
 /**
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Bypass `getMaterials` (qui charge _count.skus) — ici on

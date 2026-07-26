@@ -1,6 +1,11 @@
 import { Prisma, OrderAction, InvoiceStatus, HistorySource } from "@/app/generated/prisma/client";
 import { BusinessError } from "@/shared/lib/actions/business-error";
 import { prisma } from "@/shared/lib/prisma";
+import {
+	TX_TIMEOUT_LONG,
+	TX_MAX_WAIT_LONG,
+	RETRYABLE_SEQUENCE_TX_ERROR_CODES,
+} from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
 import {
@@ -14,6 +19,7 @@ import {
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { createOrderAudit, createOrderAuditTx } from "../utils/order-audit";
+import { ensureOrderCreditNoteArchived } from "./ensure-credit-note-archived.service";
 
 /**
  * Trace audit immuable + alerte admin pour échec emission avoir. Best-effort,
@@ -117,89 +123,98 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 
 	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
 		try {
-			const result = await prisma.$transaction(async (tx) => {
-				// EINV-SEQ-006 — acquérir le lock avoir AVANT la garde de doublon.
-				// Sinon TOCTOU : deux voids concurrents de la MÊME commande (webhook
-				// charge.refunded + admin mark-as-fully-refunded, ou retry Stripe)
-				// lisent tous deux `creditNoteNumber=null` avant que l'un commit,
-				// passent la garde `already-voided`, puis se sérialisent dans
-				// `nextCreditNoteNumberTx` → le 2e ÉCRASE le creditNoteNumber posé par
-				// le 1er en l'orphelinisant (= gap A-YYYY, interdit Art. 286). En
-				// prenant le lock ici, la re-lecture ci-dessous est sérialisée : le 2e
-				// entrant voit le numéro posé par le 1er → noop `already-voided`.
-				// Millésime = date du void (Paris), cohérent avec nextCreditNoteNumberTx
-				// (qui ré-acquiert le même lock xact — idempotent).
-				const now = new Date();
-				const year = getParisDateParts(now).year;
-				await acquireCreditNoteLockTx(tx, year);
+			const result = await prisma.$transaction(
+				async (tx) => {
+					// EINV-SEQ-006 — acquérir le lock avoir AVANT la garde de doublon.
+					// Sinon TOCTOU : deux voids concurrents de la MÊME commande (webhook
+					// charge.refunded + admin mark-as-fully-refunded, ou retry Stripe)
+					// lisent tous deux `creditNoteNumber=null` avant que l'un commit,
+					// passent la garde `already-voided`, puis se sérialisent dans
+					// `nextCreditNoteNumberTx` → le 2e ÉCRASE le creditNoteNumber posé par
+					// le 1er en l'orphelinisant (= gap A-YYYY, interdit Art. 286). En
+					// prenant le lock ici, la re-lecture ci-dessous est sérialisée : le 2e
+					// entrant voit le numéro posé par le 1er → noop `already-voided`.
+					// Millésime = date du void (Paris), cohérent avec nextCreditNoteNumberTx
+					// (qui ré-acquiert le même lock xact — idempotent).
+					const now = new Date();
+					const year = getParisDateParts(now).year;
+					await acquireCreditNoteLockTx(tx, year);
 
-				const order = await tx.order.findUnique({
-					where: { id: orderId },
-					select: {
-						id: true,
-						userId: true,
-						invoiceNumber: true,
-						invoiceStatus: true,
-						invoiceVoidedAt: true,
-						creditNoteNumber: true,
-					},
-				});
+					const order = await tx.order.findUnique({
+						where: { id: orderId },
+						select: {
+							id: true,
+							userId: true,
+							invoiceNumber: true,
+							invoiceStatus: true,
+							invoiceVoidedAt: true,
+							creditNoteNumber: true,
+						},
+					});
 
-				if (!order) {
-					return { kind: "missing" as const };
-				}
+					if (!order) {
+						return { kind: "missing" as const };
+					}
 
-				if (!order.invoiceNumber || order.invoiceStatus !== InvoiceStatus.GENERATED) {
-					return { kind: "no-active-invoice" as const };
-				}
+					if (!order.invoiceNumber || order.invoiceStatus !== InvoiceStatus.GENERATED) {
+						return { kind: "no-active-invoice" as const };
+					}
 
-				// Le check `invoiceStatus !== GENERATED` ligne précédente attrape déjà
-				// VOIDED, donc seul `creditNoteNumber` reste possible (race émission avoir).
-				if (order.creditNoteNumber) {
-					return {
-						kind: "already-voided" as const,
-						creditNoteNumber: order.creditNoteNumber,
-					};
-				}
+					// Le check `invoiceStatus !== GENERATED` ligne précédente attrape déjà
+					// VOIDED, donc seul `creditNoteNumber` reste possible (race émission avoir).
+					if (order.creditNoteNumber) {
+						return {
+							kind: "already-voided" as const,
+							creditNoteNumber: order.creditNoteNumber,
+						};
+					}
 
-				// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
-				// (advisory lock 2_000_000+year + lookup UNION). Garantit l'unicité
-				// cross-table que les CHECK/UNIQUE par table ne couvrent pas
-				// (EINV-PRISMA-001). Le lock a déjà été pris ci-dessus (EINV-SEQ-006) ;
-				// `nextCreditNoteNumberTx` le ré-acquiert (no-op xact) puis lit le MAX.
-				const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
+					// Séquence A-YYYY partagée Order ∪ Refund via helper SSOT
+					// (advisory lock 2_000_000+year + lookup UNION). Garantit l'unicité
+					// cross-table que les CHECK/UNIQUE par table ne couvrent pas
+					// (EINV-PRISMA-001). Le lock a déjà été pris ci-dessus (EINV-SEQ-006) ;
+					// `nextCreditNoteNumberTx` le ré-acquiert (no-op xact) puis lit le MAX.
+					const creditNoteNumber = await nextCreditNoteNumberTx(tx, year);
 
-				const updated = await tx.order.update({
-					where: { id: orderId },
-					data: {
-						invoiceStatus: InvoiceStatus.VOIDED,
-						invoiceVoidedAt: now,
-						creditNoteNumber,
-						creditNoteGeneratedAt: now,
-					},
-					select: {
-						invoiceVoidedAt: true,
-						creditNoteNumber: true,
-						creditNoteGeneratedAt: true,
-						userId: true,
-					},
-				});
+					const updated = await tx.order.update({
+						where: { id: orderId },
+						data: {
+							invoiceStatus: InvoiceStatus.VOIDED,
+							invoiceVoidedAt: now,
+							creditNoteNumber,
+							creditNoteGeneratedAt: now,
+						},
+						select: {
+							invoiceVoidedAt: true,
+							creditNoteNumber: true,
+							creditNoteGeneratedAt: true,
+							userId: true,
+						},
+					});
 
-				await createOrderAuditTx(tx, {
-					orderId,
-					action: OrderAction.INVOICE_VOIDED,
-					authorId: authorId ?? undefined,
-					authorName,
-					source,
-					note: reason,
-					metadata: {
-						invoiceNumber: order.invoiceNumber,
-						creditNoteNumber,
-					},
-				});
+					await createOrderAuditTx(tx, {
+						orderId,
+						action: OrderAction.INVOICE_VOIDED,
+						authorId: authorId ?? undefined,
+						authorName,
+						source,
+						note: reason,
+						metadata: {
+							invoiceNumber: order.invoiceNumber,
+							creditNoteNumber,
+						},
+					});
 
-				return { kind: "voided-tx" as const, updated };
-			});
+					return { kind: "voided-tx" as const, updated };
+				},
+				{
+					// L'attente sur l'advisory lock avoir (clé 2_000_000+year) compte
+					// dans le timeout de la tx interactive (défaut 5s) — 30s absorbe la
+					// sérialisation sous burst (webhook charge.refunded + admin).
+					timeout: TX_TIMEOUT_LONG,
+					maxWait: TX_MAX_WAIT_LONG,
+				},
+			);
 
 			if (result.kind === "missing") {
 				logger.warn(`voidInvoice — order not found: ${orderId}`, { service: "void-invoice" });
@@ -230,6 +245,14 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 				updateTag(tag),
 			);
 
+			// EINV-CREDIT-020 : archivage EAGER de l'avoir dès l'émission (symétrie
+			// facture `ensureInvoiceNumberPersisted`). L'avoir n'a pas de snapshot de
+			// données : sans archive, un avoir jamais téléchargé serait matérialisé
+			// depuis des colonnes scrubées après anonymisation RGPD (Art. 289 CGI).
+			// Best-effort (ne throw jamais) — un échec est flagué par l'archiveur
+			// (DLQ reconcile-invoices) sans casser le caller (webhook/action).
+			await ensureOrderCreditNoteArchived(orderId);
+
 			return {
 				kind: "voided",
 				creditNoteNumber: updated.creditNoteNumber!,
@@ -240,7 +263,7 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 			lastError = e;
 			if (
 				e instanceof Prisma.PrismaClientKnownRequestError &&
-				e.code === "P2002" &&
+				RETRYABLE_SEQUENCE_TX_ERROR_CODES.has(e.code) &&
 				attempt < MAX_RETRIES - 1
 			) {
 				continue;

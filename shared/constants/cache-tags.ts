@@ -66,39 +66,33 @@ export const SHARED_CACHE_TAGS = {
 	NAVBAR_MENU: "navbar-menu",
 
 	/**
-	 * Liste des litiges dans l'admin
-	 *
-	 * Utilisé par : webhooks (disputes)
-	 */
-	ADMIN_DISPUTES_LIST: "admin-disputes-list",
-
-	/**
-	 * Journal d'audit dans l'admin
-	 *
-	 * Utilisé par : dashboard (audit logs)
-	 */
-	ADMIN_AUDIT_LOGS: "admin-audit-logs",
-
-	/**
-	 * Liste des événements webhook dans l'admin
-	 *
-	 * Utilisé par : webhooks
-	 */
-	ADMIN_WEBHOOK_EVENTS: "admin-webhook-events",
-
-	/**
-	 * Liste des emails échoués dans l'admin
-	 *
-	 * Utilisé par : emails
-	 */
-	ADMIN_FAILED_EMAILS: "admin-failed-emails",
-
-	/**
 	 * Images du sitemap
 	 *
 	 * Utilisé par : products, sitemap-images
 	 */
 	SITEMAP_IMAGES: "sitemap-images",
+} as const;
+
+// ============================================
+// TAGS PAGES STATIQUES (contenu en dur, profil `reference`)
+// ============================================
+
+/**
+ * Tags des pages/composants à contenu statique (aucun mutateur DB).
+ * Jamais invalidés aujourd'hui — expirent par TTL `reference` (7j).
+ * Centralisés ici pour rester visibles du scan cache-scoping et permettre
+ * une invalidation ciblée si ces contenus deviennent éditables.
+ */
+export const STATIC_PAGES_CACHE_TAGS = {
+	FOOTER: "footer",
+	ATELIER_SECTION: "atelier-section",
+	LEGAL_TERMS: "legal-terms",
+	LEGAL_PRIVACY: "legal-privacy",
+	LEGAL_NOTICE: "legal-notice",
+	LEGAL_RETRACTATION: "legal-retractation",
+	LEGAL_COOKIES: "legal-cookies",
+	LEGAL_HUB: "legal-hub",
+	ACCESSIBILITY: "accessibility-page",
 } as const;
 
 // ============================================
@@ -131,21 +125,11 @@ export const STOCK_THRESHOLDS = {
  * Tags de cache pour les sessions utilisateur
  *
  * Centralisé ici pour éviter le cycle de dépendances auth ↔ users.
- * Ces tags sont utilisés par :
- * - auth: pour invalider la session lors du logout
- * - users: pour invalider les sessions lors de modifications
+ * Utilisé par users (page détail admin) et invalidé par les mutations
+ * de sessions (invalidation admin, suppression de compte, changement
+ * de mot de passe avec révocation).
  */
 export const SESSION_CACHE_TAGS = {
-	/** Session de l'utilisateur courant */
-	SESSION: (userId: string) => `session-${userId}`,
 	/** Sessions actives d'un utilisateur */
 	SESSIONS: (userId: string) => `sessions-user-${userId}`,
 } as const;
-
-/**
- * Tags à invalider lors de la modification de la session de l'utilisateur
- * (connexion, déconnexion, rafraîchissement de session)
- */
-export function getSessionInvalidationTags(userId: string): string[] {
-	return [SESSION_CACHE_TAGS.SESSION(userId)];
-}

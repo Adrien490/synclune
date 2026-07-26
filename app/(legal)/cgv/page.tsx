@@ -5,6 +5,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
+import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 export const metadata: Metadata = {
 	title: "Conditions Générales de Vente | Synclune",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 export default async function CGVPage() {
 	"use cache";
 	cacheLife("reference"); // 24h stale, 30j expire - contenu légal change rarement
-	cacheTag("legal-terms");
+	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_TERMS);
 
 	// Récupérer l'URL du site depuis les variables d'environnement
 	const siteUrl = process.env.BETTER_AUTH_URL ?? SITE_URL;

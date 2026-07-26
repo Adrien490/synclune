@@ -135,6 +135,8 @@ describe("@regression amount-mismatch-auto-refund", () => {
 			"pi_test_123",
 			"order-1",
 			expect.stringContaining("Sous-facturation"),
+			// Audit F2 : le Refund local porte le montant CAPTURÉ (4000), pas order.total.
+			4000,
 		);
 		// Commande marquée FAILED (jamais PAID)
 		expect(markOrderAsFailedMock).toHaveBeenCalledWith(

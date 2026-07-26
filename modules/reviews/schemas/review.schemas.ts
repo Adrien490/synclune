@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
+import { blurDataUrlSchema } from "@/shared/schemas/media.schema";
 import { REVIEW_CONFIG } from "../constants/review.constants";
 
 // ============================================================================
@@ -10,14 +11,10 @@ import { REVIEW_CONFIG } from "../constants/review.constants";
  * Schéma pour un média d'avis (photo)
  */
 export const reviewMediaSchema = z.object({
-	url: z.string().url("URL de média invalide").refine(isAllowedMediaDomain, {
+	url: z.url("URL de média invalide").refine(isAllowedMediaDomain, {
 		message: "L'URL du média doit provenir d'UploadThing",
 	}),
-	blurDataUrl: z
-		.string()
-		.startsWith("data:image/", "Le blurDataUrl doit être un data URI image")
-		.max(5000, "BlurDataUrl trop long")
-		.optional(),
+	blurDataUrl: blurDataUrlSchema.optional(),
 	altText: z.string().max(255, "Texte alternatif trop long").optional(),
 });
 

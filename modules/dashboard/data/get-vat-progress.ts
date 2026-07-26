@@ -54,9 +54,3 @@ export async function fetchDashboardVatProgress(): Promise<GetVatProgressReturn>
 		};
 	});
 }
-
-/**
- * Seuil à partir duquel l'alerte est affichée dans `dashboard-alerts.tsx`.
- * Permet à la propriétaire d'anticiper la bascule TVA avant dépassement effectif.
- */
-export const VAT_PROGRESS_ALERT_THRESHOLD = 80;

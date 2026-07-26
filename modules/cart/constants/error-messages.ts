@@ -41,8 +41,4 @@ export const CART_ERROR_MESSAGES = {
 	DISCOUNT_CODE_REQUIRED: "Code promo requis",
 	DISCOUNT_CODE_INVALID: "Code promo invalide",
 	DISCOUNT_CODE_NOT_APPLIED: "Aucun code promo appliqué au panier",
-
-	// Erreurs gift options
-	GIFT_MESSAGE_TOO_LONG: "Le message cadeau ne peut pas dépasser 300 caractères",
-	CART_NOTES_TOO_LONG: "Les notes ne peuvent pas dépasser 500 caractères",
 } as const;

@@ -13,6 +13,8 @@ const {
 		order: {
 			findUnique: vi.fn(),
 			update: vi.fn().mockResolvedValue({ orderNumber: "SYN-001" }),
+			// IDEM-PDF-001 : le success path passe par un claim updateMany conditionnel
+			updateMany: vi.fn().mockResolvedValue({ count: 1 }),
 		},
 		orderHistory: { create: vi.fn() },
 		$transaction: vi.fn(),
@@ -59,6 +61,7 @@ describe("archiveCreditNotePdf", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockPrisma.order.update.mockResolvedValue({ orderNumber: "SYN-001" });
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		// $transaction exécute le handler avec tx === mockPrisma pour que
 		// order.update / createOrderAuditTx soient observés via les mêmes mocks.
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockPrisma) => unknown) =>
@@ -79,9 +82,10 @@ describe("archiveCreditNotePdf", () => {
 
 		expect(result?.creditNotePdfUrl).toBe("https://ufs.example/cn-1.pdf");
 		expect(result?.creditNotePdfHash).toMatch(/^[a-f0-9]{64}$/);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		// IDEM-PDF-001 : claim conditionnel — le where ré-évalue creditNotePdfUrl null
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: "order-1" },
+				where: { id: "order-1", OR: [{ creditNotePdfUrl: null }, { creditNotePdfHash: null }] },
 				data: expect.objectContaining({
 					creditNotePdfUrl: "https://ufs.example/cn-1.pdf",
 					creditNotePdfHash: expect.stringMatching(/^[a-f0-9]{64}$/),

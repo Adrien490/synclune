@@ -261,25 +261,15 @@ describe("Footer", () => {
 
 	// --- Reassurance items ---
 
-	it("renders 3 reassurance items with trust signals (shipping rates dynamic)", async () => {
+	it("does NOT duplicate the reassurance block (SSOT = HeroReassuranceBanner under the hero)", async () => {
 		await renderFooter();
 
-		const reassurance = screen.getByRole("region", { name: /engagements/i });
-		expect(reassurance).toBeInTheDocument();
-
-		const items = within(reassurance).getAllByRole("listitem");
-		expect(items).toHaveLength(3);
-
-		// Prices come from SHIPPING_RATES via Intl.NumberFormat — tolerate NBSP between digits and €
-		expect(within(reassurance).getByText(/Livraison France\s*:\s*4,99\s*€/)).toBeInTheDocument();
-		expect(within(reassurance).getByText(/Livraison UE\s*:\s*9,50\s*€/)).toBeInTheDocument();
-
-		expect(screen.getByText("Retours sous 14 jours")).toBeInTheDocument();
-		expect(screen.getByText("Échange ou remboursement")).toBeInTheDocument();
-
-		// "Paiement sécurisé" appears in both reassurance and sr-only h3, scope to reassurance
-		expect(within(reassurance).getByText("Paiement sécurisé")).toBeInTheDocument();
-		expect(within(reassurance).getByText("CB, Visa, Mastercard")).toBeInTheDocument();
+		// Le bloc « Engagements et garanties » a été retiré du footer : la réassurance
+		// livraison/retours vit uniquement dans le bandeau sous le hero. Le footer ne
+		// garde que la confiance transactionnelle (bloc Paiement sécurisé).
+		expect(screen.queryByRole("region", { name: /engagements/i })).not.toBeInTheDocument();
+		expect(screen.queryByText("Retours sous 14 jours")).not.toBeInTheDocument();
+		expect(screen.queryByText(/Livraison France/)).not.toBeInTheDocument();
 	});
 
 	// --- Payment icons ---

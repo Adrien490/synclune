@@ -5,9 +5,9 @@ import type { GetProductSkusParams } from "../../types/skus.types";
 // Hoisted mocks
 // ============================================================================
 
-const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockForbidden } = vi.hoisted(
-	() => ({
-		mockIsAdmin: vi.fn(),
+const { mockRequireAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockForbidden } =
+	vi.hoisted(() => ({
+		mockRequireAdmin: vi.fn(),
 		mockFetchProductSkus: vi.fn(),
 		mockGetProductSkusSchema: {
 			safeParse: vi.fn(),
@@ -15,11 +15,10 @@ const { mockIsAdmin, mockFetchProductSkus, mockGetProductSkusSchema, mockForbidd
 		mockForbidden: vi.fn(() => {
 			throw new Error("NEXT_HTTP_ERROR_FALLBACK;403");
 		}),
-	}),
-);
+	}));
 
-vi.mock("@/modules/auth/utils/guards", () => ({
-	isAdmin: mockIsAdmin,
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdmin: mockRequireAdmin,
 }));
 
 vi.mock("../../data/fetch-skus", () => ({
@@ -76,7 +75,7 @@ function makeDefaultInput(): GetProductSkusParams {
 }
 
 function setupDefaults() {
-	mockIsAdmin.mockResolvedValue(true);
+	mockRequireAdmin.mockResolvedValue({ admin: true });
 	mockForbidden.mockImplementation(() => {
 		throw new Error("NEXT_HTTP_ERROR_FALLBACK;403");
 	});
@@ -101,21 +100,27 @@ describe("getProductSkus – auth guard", () => {
 	});
 
 	it("calls forbidden() when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({
+			error: { status: "error", message: "Accès non autorisé. Droits administrateur requis." },
+		});
 
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow(/403/);
 		expect(mockForbidden).toHaveBeenCalled();
 	});
 
 	it("does not query DB when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({
+			error: { status: "error", message: "Accès non autorisé. Droits administrateur requis." },
+		});
 
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow();
 		expect(mockFetchProductSkus).not.toHaveBeenCalled();
 	});
 
 	it("checks admin access before validating params", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({
+			error: { status: "error", message: "Accès non autorisé. Droits administrateur requis." },
+		});
 
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow();
 		expect(mockGetProductSkusSchema.safeParse).not.toHaveBeenCalled();
@@ -254,7 +259,9 @@ describe("getProductSkus – error handling", () => {
 	});
 
 	it("throws forbidden when user is not admin", async () => {
-		mockIsAdmin.mockResolvedValue(false);
+		mockRequireAdmin.mockResolvedValue({
+			error: { status: "error", message: "Accès non autorisé. Droits administrateur requis." },
+		});
 
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow(/403/);
 		expect(mockForbidden).toHaveBeenCalled();

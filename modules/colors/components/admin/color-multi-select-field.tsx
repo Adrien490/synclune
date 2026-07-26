@@ -65,6 +65,8 @@ export function ColorMultiSelectField({
 	// si le defaultValue n'a pas encore été hydraté côté formulaire. On normalise.
 	const safeValue = Array.isArray(value) ? value : [];
 	const isAtCap = safeValue.length >= maxSelected;
+	// `Set` hoisté : sinon un `.includes()` par option rescanne toute la sélection.
+	const selectedIds = new Set(safeValue);
 
 	// Préfixe pastille hex inline ; ring de contraste si la couleur est très claire
 	// (sinon invisible sur fond blanc du select). Au cap : grise les options non
@@ -72,7 +74,7 @@ export function ColorMultiSelectField({
 	const mappedOptions = options.map((c) => ({
 		value: c.id,
 		label: c.name,
-		disabled: isAtCap && !safeValue.includes(c.id),
+		disabled: isAtCap && !selectedIds.has(c.id),
 		prefix: (
 			<span
 				aria-hidden="true"

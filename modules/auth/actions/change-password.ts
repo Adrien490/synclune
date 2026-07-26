@@ -3,7 +3,13 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
-import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import {
+	error,
+	handleActionError,
+	success,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -12,6 +18,7 @@ import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { changePasswordSchema } from "../schemas/auth.schemas";
 import { checkPasswordBreached } from "../services/hibp.service";
+import { getAuthSessionInvalidationTags } from "../utils/cache.utils";
 
 export const changePassword = async (
 	_: ActionState | undefined,
@@ -90,8 +97,13 @@ export const changePassword = async (
 				headers: headersList,
 			});
 
-			// Invalidate session cache so revoked sessions don't persist in cache
-			updateTag(SESSION_CACHE_TAGS.SESSION(user.id));
+			// Invalidate cached session lists so revoked sessions don't persist in cache
+			if (revokeOtherSessions) {
+				[
+					...getAuthSessionInvalidationTags(undefined, user.id),
+					SESSION_CACHE_TAGS.SESSIONS(user.id),
+				].forEach((tag) => updateTag(tag));
+			}
 
 			return success(
 				revokeOtherSessions
@@ -104,9 +116,13 @@ export const changePassword = async (
 					return error("Le mot de passe actuel est incorrect");
 				}
 			}
-			return error("Une erreur est survenue lors du changement de mot de passe");
+			return handleActionError(err, "Une erreur est survenue lors du changement de mot de passe", {
+				service: "changePassword",
+			});
 		}
-	} catch {
-		return error("Une erreur inattendue est survenue");
+	} catch (err) {
+		return handleActionError(err, "Une erreur inattendue est survenue", {
+			service: "changePassword",
+		});
 	}
 };

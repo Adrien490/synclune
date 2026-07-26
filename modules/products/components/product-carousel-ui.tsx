@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/carousel";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
+import { formatEuro } from "@/shared/utils/format-euro";
 import Autoplay from "embla-carousel-autoplay";
 import { useReducedMotion } from "motion/react";
 import { Sparkles } from "lucide-react";
@@ -18,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { PRODUCT_CAROUSEL_CONFIG } from "../constants/carousel.constants";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface ProductCarouselItem {
 	id: string;
@@ -42,14 +44,19 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 	const prefersReducedMotion = useReducedMotion();
 
 	// Plugin Autoplay - désactivé si l'utilisateur préfère les mouvements réduits (a11y WCAG 2.3.2)
-	const autoplayPlugin = useRef(
-		Autoplay({
+	// Init paresseuse null-guardée : `useRef(Autoplay({...}))` reconstruisait le
+	// plugin à CHAQUE rendu pour le jeter aussitôt (useRef ignore l'argument après
+	// le premier rendu).
+	const autoplayPlugin = useRef<ReturnType<typeof Autoplay> | null>(null);
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??=` non supporté par le React Compiler
+	if (autoplayPlugin.current === null) {
+		autoplayPlugin.current = Autoplay({
 			delay: PRODUCT_CAROUSEL_CONFIG.AUTOPLAY_DELAY,
 			stopOnInteraction: false,
 			stopOnMouseEnter: true,
 			stopOnFocusIn: true,
-		}),
-	);
+		});
+	}
 
 	// eslint-disable-next-line react-hooks/refs
 	const plugins = prefersReducedMotion ? [] : [autoplayPlugin.current];
@@ -123,6 +130,9 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 									href={`/creations/${product.slug}`}
 									className="group relative block h-full min-h-80 overflow-hidden rounded-2xl shadow-2xl sm:min-h-100 lg:min-h-120"
 								>
+									{/* `preload` + `fetchPriority="high"` : paire indissociable sur la 1re
+									    slide. `preload` seul precharge en priorite BASSE (Next 16 passe
+									    fetchPriority verbatim, il ne le derive pas). */}
 									<Image
 										src={product.image.url}
 										alt={product.image.alt}
@@ -131,7 +141,8 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 										placeholder={product.image.blurDataUrl ? "blur" : "empty"}
 										blurDataURL={product.image.blurDataUrl}
 										preload={index === 0}
-										quality={index === 0 ? 90 : 80}
+										fetchPriority={index === 0 ? "high" : "auto"}
+										quality={index === 0 ? IMAGE_QUALITY.HERO : IMAGE_QUALITY.STANDARD}
 										sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 50vw"
 									/>
 
@@ -144,7 +155,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 											{product.title}
 										</h2>
 										<p className="text-base font-medium drop-shadow-md sm:text-lg">
-											{(product.price / 100).toFixed(2)} €
+											{formatEuro(product.price)}
 										</p>
 									</div>
 
@@ -239,9 +250,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 								</TooltipTrigger>
 								<TooltipContent side="top" className="hidden max-w-50 sm:block">
 									<p className="truncate text-sm font-medium">{product.title}</p>
-									<p className="text-muted-foreground text-xs">
-										{(product.price / 100).toFixed(2)} €
-									</p>
+									<p className="text-muted-foreground text-xs">{formatEuro(product.price)}</p>
 								</TooltipContent>
 							</Tooltip>
 						))}

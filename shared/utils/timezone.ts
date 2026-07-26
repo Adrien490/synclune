@@ -13,22 +13,35 @@
 
 export const APP_TIME_ZONE = "Europe/Paris";
 
+// Formatters hoistés au scope du module : construire un `Intl.DateTimeFormat`
+// coûte cher (chargement des données de locale) et ces helpers sont appelés en
+// boucle sur les points du graphe de revenus. Un formatter est stateless.
+const PARIS_WALL_CLOCK_FORMATTER = new Intl.DateTimeFormat("en-US", {
+	timeZone: APP_TIME_ZONE,
+	hourCycle: "h23",
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+});
+
+const PARIS_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+	timeZone: APP_TIME_ZONE,
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+});
+
 /**
  * Décalage (en ms) de `APP_TIME_ZONE` par rapport à UTC à l'instant donné.
  * Positif quand Paris est en avance sur UTC (toujours le cas : +1h hiver, +2h été).
  */
 function parisOffsetMs(date: Date): number {
-	const dtf = new Intl.DateTimeFormat("en-US", {
-		timeZone: APP_TIME_ZONE,
-		hourCycle: "h23",
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-		hour: "2-digit",
-		minute: "2-digit",
-		second: "2-digit",
-	});
-	const parts = Object.fromEntries(dtf.formatToParts(date).map((p) => [p.type, p.value]));
+	const parts = Object.fromEntries(
+		PARIS_WALL_CLOCK_FORMATTER.formatToParts(date).map((p) => [p.type, p.value]),
+	);
 	const asUtc = Date.UTC(
 		Number(parts.year),
 		Number(parts.month) - 1,
@@ -71,14 +84,7 @@ export function parisWallTimeToUtc(
  */
 export function getParisDateParts(date: Date): { year: number; month: number; day: number } {
 	const parts = Object.fromEntries(
-		new Intl.DateTimeFormat("en-CA", {
-			timeZone: APP_TIME_ZONE,
-			year: "numeric",
-			month: "2-digit",
-			day: "2-digit",
-		})
-			.formatToParts(date)
-			.map((p) => [p.type, p.value]),
+		PARIS_DATE_FORMATTER.formatToParts(date).map((p) => [p.type, p.value]),
 	);
 	return {
 		year: Number(parts.year),
@@ -94,10 +100,5 @@ export function getParisDateParts(date: Date): { year: number; month: number; da
  */
 export function parisDateKey(date: Date): string {
 	// en-CA produit nativement le format YYYY-MM-DD.
-	return new Intl.DateTimeFormat("en-CA", {
-		timeZone: APP_TIME_ZONE,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	}).format(date);
+	return PARIS_DATE_FORMATTER.format(date);
 }

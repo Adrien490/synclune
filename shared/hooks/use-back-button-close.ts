@@ -64,7 +64,11 @@ export function useBackButtonClose({ isOpen, onClose, id = "modal" }: UseBackBut
 
 	// Identité stable de cette instance dans la pile partagée.
 	const entryRef = useRef<BackEntry | null>(null);
-	entryRef.current ??= { id };
+	// Lazy init null-guardée (pas `??=` : non supporté par le React Compiler).
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- `??=` non supporté par le React Compiler
+	if (entryRef.current === null) {
+		entryRef.current = { id };
+	}
 
 	// Pousser un état dans l'historique à l'ouverture + s'enregistrer dans la pile
 	useEffect(() => {

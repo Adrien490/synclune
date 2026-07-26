@@ -27,7 +27,3 @@ export const ANNOUNCEMENT_VARIANT_LABELS: Record<AnnouncementVariant, string> = 
 	INFO: "Information",
 	WARNING: "Alerte",
 };
-
-export function isAnnouncementVariant(value: unknown): value is AnnouncementVariant {
-	return typeof value === "string" && (ANNOUNCEMENT_VARIANTS as readonly string[]).includes(value);
-}

@@ -16,6 +16,9 @@ const {
 	mockCheckEReportingOrphans,
 	mockRecordSalesEReporting,
 	mockRecordRefundEReporting,
+	mockEnsureOrderCreditNoteArchived,
+	mockEnsureRefundCreditNoteArchived,
+	mockVerifyPdfArchiveIntegrity,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
@@ -35,6 +38,9 @@ const {
 	mockCheckEReportingOrphans: vi.fn(),
 	mockRecordSalesEReporting: vi.fn(),
 	mockRecordRefundEReporting: vi.fn(),
+	mockEnsureOrderCreditNoteArchived: vi.fn(),
+	mockEnsureRefundCreditNoteArchived: vi.fn(),
+	mockVerifyPdfArchiveIntegrity: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -96,6 +102,18 @@ vi.mock("@/modules/invoices/services/record-ereporting.service", () => ({
 	recordRefundEReporting: mockRecordRefundEReporting,
 }));
 
+// EINV-CREDIT-020 : les services d'archivage eager d'avoir tirent la chaîne
+// UploadThing (utapi instancié au chargement) — mockés au niveau module.
+vi.mock("@/modules/orders/services/ensure-credit-note-archived.service", () => ({
+	ensureOrderCreditNoteArchived: mockEnsureOrderCreditNoteArchived,
+}));
+vi.mock("@/modules/refunds/services/ensure-credit-note-archived.service", () => ({
+	ensureRefundCreditNoteArchived: mockEnsureRefundCreditNoteArchived,
+}));
+vi.mock("@/modules/invoices/services/verify-pdf-archive-integrity.service", () => ({
+	verifyPdfArchiveIntegrity: mockVerifyPdfArchiveIntegrity,
+}));
+
 import { reconcileInvoices } from "../reconcile-invoices.service";
 
 function buildCandidate(overrides: Partial<Record<string, unknown>> = {}) {
@@ -138,6 +156,17 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		mockRecordSalesEReporting.mockResolvedValue("etx-sales");
 		mockRecordRefundEReporting.mockResolvedValue("etx-refund");
 		mockPrisma.refund.findMany.mockResolvedValue([]);
+		// EINV-CREDIT-020 : Passe 3b lit l'état d'archive (findUnique) — par défaut
+		// aucun avoir à archiver ; passes 7/8 neutres.
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockEnsureOrderCreditNoteArchived.mockResolvedValue("already-archived");
+		mockEnsureRefundCreditNoteArchived.mockResolvedValue("already-archived");
+		mockVerifyPdfArchiveIntegrity.mockResolvedValue({
+			checked: 0,
+			repaired: 0,
+			unrepaired: 0,
+			fetchFailed: 0,
+		});
 		mockPrisma.refund.update.mockResolvedValue({});
 	});
 
@@ -363,7 +392,7 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 		);
 	});
 
-	it("filters candidates by (DLQ flag OR legacy snapshot-null) + paidAt>6h (MIN_AGE_MS quarantine)", async () => {
+	it("filters candidates by (DLQ flag OR legacy snapshot-null OR unarchived credit note) + paidAt>6h (MIN_AGE_MS quarantine)", async () => {
 		await reconcileInvoices();
 		const findManyArgs = mockPrisma.order.findMany.mock.calls[0]?.[0];
 		expect(findManyArgs?.where).toMatchObject({
@@ -376,6 +405,9 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 						{ ereportingRetryDeferred: true },
 						// EINV-PDF-005 : facture legacy à snapshot manquant.
 						{ invoiceNumber: { not: null }, invoiceDataSnapshot: expect.anything() },
+						// EINV-CREDIT-020 : avoir full-void émis mais PDF jamais archivé
+						// (sélection directe, pas seulement via le flag DLQ).
+						{ creditNoteNumber: { not: null }, creditNotePdfUrl: null },
 					],
 				},
 				{ OR: [{ paidAt: { lt: expect.any(Date) } }, { paidAt: null }] },
@@ -498,6 +530,39 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 			expect(resetCall).toBeUndefined();
 		});
 
+		it("Passe SALES : retente AUSSI une commande flaguée puis REMBOURSÉE (garde paidAt, pas paymentStatus===PAID)", async () => {
+			// Régression EINV-EREPORT-009 : avant le fix, la garde `paymentStatus === PAID`
+			// excluait les commandes remboursées (le refund flippe paymentStatus). Une
+			// commande flaguée (SALES jamais enregistrée) puis remboursée avant drainage
+			// perdait définitivement sa ligne SALES (déclaration DGFiP en delta). Ici la
+			// commande est VOIDED + REFUNDED (cas nominal d'un avoir total) avec son flag
+			// DLQ encore posé : la Passe SALES DOIT quand même retenter et lever le flag.
+			mockPrisma.order.findMany.mockResolvedValueOnce([
+				buildCandidate({
+					invoiceNumber: "F-2026-00052",
+					invoiceStatus: "VOIDED",
+					invoicePdfUrl: "https://utfs.io/x.pdf",
+					invoiceDataSnapshot: { invoiceNumber: "F-2026-00052" },
+					creditNoteNumber: "A-2026-00052",
+					paymentStatus: "REFUNDED",
+					paidAt: new Date("2026-05-27T00:00:00Z"),
+					invoiceRetryDeferred: false,
+					ereportingRetryDeferred: true,
+				}),
+			]);
+			mockRecordSalesEReporting.mockResolvedValue("etx-sales-refunded");
+
+			const result = await reconcileInvoices();
+
+			// Le cœur du fix : recordSalesEReporting EST appelé malgré paymentStatus REFUNDED.
+			expect(mockRecordSalesEReporting).toHaveBeenCalledWith("order-1");
+			expect(result.ereportingSalesRecovered).toBe(1);
+			const resetCall = mockPrisma.order.update.mock.calls.find(
+				(c) => c[0]?.data?.ereportingRetryDeferred === false,
+			);
+			expect(resetCall).toBeDefined();
+		});
+
 		it("Sweep REFUND : draine les refunds COMPLETED flagués + lève le flag", async () => {
 			mockPrisma.refund.findMany.mockResolvedValueOnce([{ id: "refund-1" }, { id: "refund-2" }]);
 			mockRecordRefundEReporting.mockResolvedValue("etx-refund-1");
@@ -584,6 +649,88 @@ describe("reconcileInvoices (OPS-AUDIT-002)", () => {
 
 			expect(result.continuityIssues).toBe(0);
 			expect(result.processed).toBe(0);
+		});
+	});
+
+	// EINV-CREDIT-020 — Passes 3b (avoir Order non archivé) + 7 (avoir Refund non
+	// archivé) + 8 (intégrité). L'archivage eager est fait par voidInvoice /
+	// issueCreditNoteForRefund ; ces passes sont le filet (crash post-tx, upload KO).
+	describe("Passes avoirs non archivés + intégrité (EINV-CREDIT-020)", () => {
+		it("Passe 3b : archive l'avoir full-void manquant d'un candidat", async () => {
+			const candidate = buildCandidate({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+				invoiceStatus: "VOIDED",
+				creditNoteNumber: "A-2026-00001",
+				invoiceDataSnapshot: {},
+			});
+			mockPrisma.order.findMany.mockResolvedValue([candidate]);
+			// État d'archive lu par la Passe 3b : pas encore archivé.
+			mockPrisma.order.findUnique.mockResolvedValue({ creditNotePdfUrl: null });
+			mockEnsureOrderCreditNoteArchived.mockResolvedValue("archived");
+			mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 0 });
+
+			const result = await reconcileInvoices();
+
+			expect(mockEnsureOrderCreditNoteArchived).toHaveBeenCalledWith("order-1");
+			expect(result.creditNotePdfRecovered).toBe(1);
+			expect(result.processed).toBe(1);
+		});
+
+		it("Passe 3b : un échec d'archivage incrémente le compteur d'escalade (anyFailure)", async () => {
+			const candidate = buildCandidate({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+				invoiceStatus: "VOIDED",
+				creditNoteNumber: "A-2026-00001",
+				invoiceDataSnapshot: {},
+			});
+			mockPrisma.order.findMany.mockResolvedValue([candidate]);
+			mockPrisma.order.findUnique.mockResolvedValue({ creditNotePdfUrl: null });
+			mockEnsureOrderCreditNoteArchived.mockResolvedValue("failed");
+			mockPrisma.order.update.mockResolvedValue({ invoiceReconcileAttempts: 1 });
+
+			const result = await reconcileInvoices();
+
+			expect(result.creditNotePdfRecovered).toBe(0);
+			// anyFailure → increment invoiceReconcileAttempts (pas de reset des flags).
+			expect(mockPrisma.order.update).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: { invoiceReconcileAttempts: { increment: 1 } },
+				}),
+			);
+		});
+
+		it("Passe 7 : draine les avoirs Refund émis non archivés", async () => {
+			mockPrisma.refund.findMany
+				// Ordre des sweeps dans le service : Passe 6 (DLQ e-reporting) PUIS
+				// Passe 7 (avoirs non archivés) — 1er findMany vide, 2e = la passe avoirs.
+				.mockResolvedValueOnce([])
+				.mockResolvedValueOnce([{ id: "refund-1" }, { id: "refund-2" }])
+				.mockResolvedValue([]);
+			mockEnsureRefundCreditNoteArchived
+				.mockResolvedValueOnce("archived")
+				.mockResolvedValueOnce("failed");
+
+			const result = await reconcileInvoices();
+
+			expect(mockEnsureRefundCreditNoteArchived).toHaveBeenCalledTimes(2);
+			expect(result.refundCreditNotePdfRecovered).toBe(1);
+		});
+
+		it("Passe 8 : remonte le rapport d'intégrité dans le breakdown", async () => {
+			mockVerifyPdfArchiveIntegrity.mockResolvedValue({
+				checked: 5,
+				repaired: 1,
+				unrepaired: 2,
+				fetchFailed: 0,
+			});
+
+			const result = await reconcileInvoices();
+
+			expect(result.pdfIntegrityChecked).toBe(5);
+			expect(result.pdfIntegrityRepaired).toBe(1);
+			expect(result.pdfIntegrityUnrepaired).toBe(2);
 		});
 	});
 });

@@ -1,9 +1,16 @@
 /**
- * Constants and utilities for media file validation.
+ * Media constants and URL/ID validation helpers.
  *
- * Centralizes file size validation logic
- * to avoid duplication across upload forms.
+ * Note (audit média) : les helpers de validation de taille par `File`
+ * (`validateMediaFile` / `validatePrimaryImage` / `validateMediaFiles` /
+ * `isVideoFile`) ont été retirés — ils n'avaient plus aucun appelant en
+ * production. La validation de taille vit désormais dans `useMediaUpload`
+ * (`maxSizeImage` / `maxSizeVideo`, propagés par chaque consommateur : 16 Mo
+ * pour `catalogMedia`, 4 Mo pour `reviewMedia`), doublée côté serveur par
+ * `validateFileSize` dans le middleware UploadThing.
  */
+
+import { UPLOADTHING_DOMAINS } from "@/shared/lib/media-validation";
 
 /**
  * File size limits by media type
@@ -11,157 +18,18 @@
 export const MEDIA_SIZE_LIMITS = {
 	/** Catalog images: 16MB max (aligned with UploadThing catalogMedia route) */
 	CATALOG_IMAGE: 16 * 1024 * 1024,
+	/** Review photos: 4MB max (aligned with UploadThing reviewMedia route) */
+	REVIEW_IMAGE: 4 * 1024 * 1024,
 	/** Videos: 512MB max */
 	VIDEO: 512 * 1024 * 1024,
 } as const;
 
-/**
- * MIME types considered as videos
- */
-const VIDEO_MIME_PREFIXES = ["video/"] as const;
-
-/**
- * Media file validation result
- */
-interface MediaFileValidationResult {
-	/** true if the file is valid */
-	valid: boolean;
-	/** Error message if invalid */
-	error?: string;
-	/** Detected media type */
-	mediaType: "IMAGE" | "VIDEO";
-	/** File size in bytes */
-	fileSize: number;
-	/** Applicable size limit in bytes */
-	sizeLimit: number;
-}
-
-/**
- * Determines if a file is a video based on its MIME type
- */
-export function isVideoFile(file: File): boolean {
-	return VIDEO_MIME_PREFIXES.some((prefix) => file.type.startsWith(prefix));
-}
-
-/**
- * Validates a media file (image or video) against size limits.
- *
- * @param file - The file to validate
- * @returns Validation result with details
- *
- * @example
- * const result = validateMediaFile(file);
- * if (!result.valid) {
- *   toast.error(result.error);
- *   return;
- * }
- */
-export function validateMediaFile(file: File): MediaFileValidationResult {
-	const isVideo = isVideoFile(file);
-	const mediaType = isVideo ? "VIDEO" : "IMAGE";
-	const sizeLimit = isVideo ? MEDIA_SIZE_LIMITS.VIDEO : MEDIA_SIZE_LIMITS.CATALOG_IMAGE;
-
-	if (file.size > sizeLimit) {
-		const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-		const limitMB = sizeLimit / 1024 / 1024;
-		return {
-			valid: false,
-			error: `Le fichier dépasse la limite de ${limitMB}MB (${sizeMB}MB)`,
-			mediaType,
-			fileSize: file.size,
-			sizeLimit,
-		};
-	}
-
-	return {
-		valid: true,
-		mediaType,
-		fileSize: file.size,
-		sizeLimit,
-	};
-}
-
-/**
- * Validates a file intended to be the primary image (no video allowed).
- *
- * @param file - The file to validate
- * @returns Validation result
- *
- * @example
- * const result = validatePrimaryImage(file);
- * if (!result.valid) {
- *   toast.error(result.error);
- *   return;
- * }
- */
-export function validatePrimaryImage(file: File): MediaFileValidationResult {
-	const isVideo = isVideoFile(file);
-
-	if (isVideo) {
-		return {
-			valid: false,
-			error:
-				"Les vidéos ne peuvent pas être utilisées comme média principal. Veuillez uploader une image (JPG, PNG, WebP, GIF ou AVIF).",
-			mediaType: "VIDEO",
-			fileSize: file.size,
-			sizeLimit: MEDIA_SIZE_LIMITS.VIDEO,
-		};
-	}
-
-	return validateMediaFile(file);
-}
-
-/**
- * Validates multiple files and returns valid files + errors.
- *
- * @param files - The files to validate
- * @param options - Validation options
- * @returns Valid files and encountered errors
- */
-export function validateMediaFiles(
-	files: File[],
-	options?: {
-		/** If true, rejects videos */
-		rejectVideos?: boolean;
-		/** Maximum number of files to keep */
-		maxFiles?: number;
-	},
-): {
-	validFiles: File[];
-	errors: string[];
-	skipped: number;
-} {
-	const validFiles: File[] = [];
-	const errors: string[] = [];
-	let skipped = 0;
-
-	const filesToProcess = options?.maxFiles ? files.slice(0, options.maxFiles) : files;
-
-	if (options?.maxFiles && files.length > options.maxFiles) {
-		skipped = files.length - options.maxFiles;
-	}
-
-	for (const file of filesToProcess) {
-		const result = options?.rejectVideos ? validatePrimaryImage(file) : validateMediaFile(file);
-
-		if (result.valid) {
-			validFiles.push(file);
-		} else if (result.error) {
-			errors.push(`${file.name}: ${result.error}`);
-		}
-	}
-
-	return { validFiles, errors, skipped };
-}
-
 // ============================================================================
-// VALIDATION HELPERS (used by migration scripts)
+// VALIDATION HELPERS (used by migration scripts + delete/upload guards)
 // ============================================================================
 
 /** CUID pattern (25 alphanumeric characters starting with 'c') */
 const CUID_PATTERN = /^c[a-z0-9]{24}$/;
-
-import { UPLOADTHING_DOMAINS } from "@/shared/lib/media-validation";
 
 /**
  * Allowed UploadThing domains (strict list).

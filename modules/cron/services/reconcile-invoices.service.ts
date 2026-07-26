@@ -25,6 +25,9 @@ import {
 	backfillInvoiceDataSnapshot,
 } from "@/modules/orders/services/persist-invoice-number.service";
 import { archiveInvoicePdf } from "@/modules/orders/services/archive-invoice-pdf.service";
+import { ensureOrderCreditNoteArchived } from "@/modules/orders/services/ensure-credit-note-archived.service";
+import { ensureRefundCreditNoteArchived } from "@/modules/refunds/services/ensure-credit-note-archived.service";
+import { verifyPdfArchiveIntegrity } from "@/modules/invoices/services/verify-pdf-archive-integrity.service";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
@@ -42,6 +45,14 @@ interface ReconcileBreakdown {
 	invoiceNumberRecovered: number;
 	pdfArchiveRecovered: number;
 	creditNoteRecovered: number;
+	/** EINV-CREDIT-020 — PDF avoir full-void (Order) archivé en rattrapage. */
+	creditNotePdfRecovered: number;
+	/** EINV-CREDIT-020 — PDF avoir partiel (Refund) archivé en rattrapage. */
+	refundCreditNotePdfRecovered: number;
+	/** Passe intégrité (L102 B LPF) — artefacts re-hashés / réparés / non réparables. */
+	pdfIntegrityChecked: number;
+	pdfIntegrityRepaired: number;
+	pdfIntegrityUnrepaired: number;
 	escalated: number;
 	/** EINV-SEQ-007 — nombre d'anomalies de continuité de séquence détectées (Art. 286 CGI). */
 	continuityIssues: number;
@@ -61,6 +72,10 @@ interface ReconcileBreakdown {
  *   1. PAID + invoiceNumber NULL + paidAt > 6h → persistInvoiceNumber
  *   2. invoiceNumber + invoicePdfUrl NULL → archiveInvoicePdf (régénère PDF depuis snapshot)
  *   3. REFUNDED + invoiceStatus GENERATED + creditNoteNumber NULL → voidInvoice
+ *   3b. creditNoteNumber + creditNotePdfUrl NULL → ensureOrderCreditNoteArchived (EINV-CREDIT-020)
+ * Puis les passes globales : 4 (continuité séquences), 5 (orphelins e-reporting),
+ * 6 (DLQ e-reporting REFUND), 7 (PDF avoirs Refund manquants, EINV-CREDIT-020),
+ * 8 (intégrité proactive des PDF archivés + auto-réparation, Art. L102 B LPF).
  *
  * Sélection : `invoiceRetryDeferred=true` (DLQ) OU facture legacy à snapshot
  * manquant (`invoiceNumber` présent + `invoiceDataSnapshot` NULL — EINV-PDF-005).
@@ -92,6 +107,15 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 						{
 							invoiceNumber: { not: null },
 							invoiceDataSnapshot: { equals: Prisma.DbNull },
+						},
+						// EINV-CREDIT-020 : avoir full-void émis mais PDF jamais archivé
+						// (crash entre la tx voidInvoice et l'archivage eager, ou échec
+						// d'upload jamais flagué). Sans cette sélection directe, seul le
+						// flag DLQ ramenait ces commandes — un avoir non archivé est une
+						// fenêtre de matérialisation dégradée post-anonymisation RGPD.
+						{
+							creditNoteNumber: { not: null },
+							creditNotePdfUrl: null,
 						},
 					],
 				},
@@ -126,6 +150,11 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		invoiceNumberRecovered: 0,
 		pdfArchiveRecovered: 0,
 		creditNoteRecovered: 0,
+		creditNotePdfRecovered: 0,
+		refundCreditNotePdfRecovered: 0,
+		pdfIntegrityChecked: 0,
+		pdfIntegrityRepaired: 0,
+		pdfIntegrityUnrepaired: 0,
 		escalated: 0,
 		continuityIssues: 0,
 		ereportingOrphans: 0,
@@ -149,6 +178,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				if (recovered.invoiceNumberRecovered) breakdown.invoiceNumberRecovered++;
 				if (recovered.pdfArchiveRecovered) breakdown.pdfArchiveRecovered++;
 				if (recovered.creditNoteRecovered) breakdown.creditNoteRecovered++;
+				if (recovered.creditNotePdfRecovered) breakdown.creditNotePdfRecovered++;
 				if (recovered.ereportingSalesRecovered) breakdown.ereportingSalesRecovered++;
 				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
 					tagsToInvalidate.add(tag);
@@ -198,6 +228,21 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 	// réconciliation e-reporting/facture dans un seul cron.
 	breakdown.ereportingRefundRecovered = await runRefundEReportingDeferredSweep(deadline);
 
+	// Passe 7 (EINV-CREDIT-020) : avoirs partiels (Refund) émis mais PDF jamais
+	// archivé — symétrie de la sélection Order `creditNoteNumber + creditNotePdfUrl
+	// NULL` du batch principal. Ferme la fenêtre de matérialisation dégradée
+	// post-anonymisation RGPD (avoir sans identité client, Art. 289 CGI).
+	breakdown.refundCreditNotePdfRecovered = await runRefundCreditNotePdfSweep(deadline);
+
+	// Passe 8 (Art. L102 B LPF) : contrôle d'intégrité proactif des PDF archivés
+	// (re-hash + auto-réparation bit-identique, rotation ~30 j par artefact).
+	// Complète la vérification au serving (EINV-PDF-006) : un PDF jamais
+	// re-téléchargé ne reste plus corrompu sans détection. Jamais bloquant.
+	const integrity = await verifyPdfArchiveIntegrity(deadline);
+	breakdown.pdfIntegrityChecked = integrity.checked;
+	breakdown.pdfIntegrityRepaired = integrity.repaired;
+	breakdown.pdfIntegrityUnrepaired = integrity.unrepaired;
+
 	logger.info("Invoice reconciliation completed", {
 		cronJob: CRON_JOB,
 		processed,
@@ -222,6 +267,7 @@ export type ReconcileOutcome =
 			invoiceNumberRecovered: boolean;
 			pdfArchiveRecovered: boolean;
 			creditNoteRecovered: boolean;
+			creditNotePdfRecovered: boolean;
 			ereportingSalesRecovered: boolean;
 	  }
 	| { kind: "escalated" }
@@ -246,6 +292,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	let invoiceNumberRecovered = false;
 	let pdfArchiveRecovered = false;
 	let creditNoteRecovered = false;
+	let creditNotePdfRecovered = false;
 	let ereportingSalesRecovered = false;
 	let anyFailure = false;
 
@@ -332,10 +379,33 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		});
 		if (result.kind === "voided") {
 			creditNoteRecovered = true;
+			// Recharge en mémoire pour que la Passe 3b voie l'avoir fraîchement émis
+			// (voidInvoice archive déjà eagerly — la passe ne fera que constater).
+			order.creditNoteNumber = result.creditNoteNumber;
 		} else if (result.kind === "failed") {
 			anyFailure = true;
 		}
 		// noop = facture déjà voided ou rien à voider → on laisse anyFailure=false
+	}
+
+	// Passe 3b (EINV-CREDIT-020) : avoir full-void émis mais PDF jamais archivé.
+	// L'archivage est normalement eager dans voidInvoice ; cette passe rattrape un
+	// crash post-tx ou un échec d'upload (flag DLQ posé par l'archiveur). Sans
+	// archive, le premier rendu post-anonymisation RGPD produirait un avoir sans
+	// identité client (Art. 289 CGI) figé comme référence immuable.
+	if (order.creditNoteNumber) {
+		const archiveState = await prisma.order.findUnique({
+			where: { id: order.id },
+			select: { creditNotePdfUrl: true },
+		});
+		if (archiveState && !archiveState.creditNotePdfUrl) {
+			const status = await ensureOrderCreditNoteArchived(order.id);
+			if (status === "archived") {
+				creditNotePdfRecovered = true;
+			} else if (status === "failed") {
+				anyFailure = true;
+			}
+		}
 	}
 
 	// Passe SALES (EINV-EREPORT-009) : transaction SALES e-reporting non enregistrée.
@@ -345,7 +415,17 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 	// le compteur partagé invoiceReconcileAttempts. "skipped" (flag e-reporting OFF,
 	// déjà enregistrée, hors B2C) ⇒ succès, on lèvera le flag.
 	const withFlags = order as GetOrderReturn & { ereportingRetryDeferred?: boolean };
-	if (withFlags.ereportingRetryDeferred && order.paymentStatus === PaymentStatus.PAID) {
+	// EINV-EREPORT-009 (fix) : garder sur `paidAt != null`, PAS sur
+	// `paymentStatus === PAID`. Un remboursement flippe paymentStatus en
+	// REFUNDED/PARTIALLY_REFUNDED ; avec l'ancienne garde, une commande flaguée
+	// (SALES jamais enregistrée car recordSalesEReporting avait renvoyé "error")
+	// puis remboursée AVANT drainage tombait dans la branche « rien à faire » qui
+	// baissait le flag SANS jamais créer la transaction SALES → sous-déclaration
+	// DGFiP silencieuse et définitive. La déclaration e-reporting est en DELTA : la
+	// ligne SALES doit exister même compensée par une ligne REFUND. `paidAt` reste
+	// non-null après remboursement (jamais effacé), et recordSalesEReporting lit les
+	// totaux d'origine de la commande → la vente est correctement (ré)enregistrée.
+	if (withFlags.ereportingRetryDeferred && order.paidAt != null) {
 		const result = await recordSalesEReporting(order.id);
 		if (result === "error") {
 			anyFailure = true;
@@ -373,6 +453,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		!invoiceNumberRecovered &&
 		!pdfArchiveRecovered &&
 		!creditNoteRecovered &&
+		!creditNotePdfRecovered &&
 		!ereportingSalesRecovered
 	) {
 		// Rien à faire : drapeau posé sur une commande qui n'a finalement pas
@@ -409,6 +490,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 			invoiceNumberRecovered,
 			pdfArchiveRecovered,
 			creditNoteRecovered,
+			creditNotePdfRecovered,
 			ereportingSalesRecovered,
 		},
 	});
@@ -418,6 +500,7 @@ async function reconcileOrder(order: GetOrderReturn): Promise<ReconcileOutcome> 
 		invoiceNumberRecovered,
 		pdfArchiveRecovered,
 		creditNoteRecovered,
+		creditNotePdfRecovered,
 		ereportingSalesRecovered,
 	};
 }
@@ -440,7 +523,7 @@ async function escalate(orderId: string, orderNumber: string, attempts: number):
 			action:
 				"Intervention manuelle requise : voir /admin/ventes/commandes/" +
 				orderId +
-				" + docs/RUNBOOK-INVOICING.md",
+				" + docs/RUNBOOK.md",
 		},
 	}).catch((alertError) =>
 		logger.error("Failed to send escalation alert", alertError, {
@@ -513,7 +596,7 @@ async function runContinuityCheck(now: number): Promise<number> {
 					duplicates: i.duplicates.slice(0, 50),
 				})),
 				action:
-					"Trou/doublon de séquence légale (Art. 286 CGI) — investigation immédiate, voir docs/RUNBOOK-INVOICING.md",
+					"Trou/doublon de séquence légale (Art. 286 CGI) — investigation immédiate, voir docs/RUNBOOK.md",
 			},
 		}).catch((alertError) =>
 			logger.error("Failed to send continuity breach alert", alertError, { cronJob: CRON_JOB }),
@@ -580,7 +663,7 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
 				sampleIds: report.sampleIds,
 				capped: report.capped,
 				action:
-					"Transactions e-reporting non rattachées à un batch au-delà du délai — vérifier build-ereporting-batch, voir docs/RUNBOOK-INVOICING.md",
+					"Transactions e-reporting non rattachées à un batch au-delà du délai — vérifier build-ereporting-batch, voir docs/RUNBOOK.md",
 			},
 		}).catch((alertError) =>
 			logger.error("Failed to send e-reporting orphan alert", alertError, { cronJob: CRON_JOB }),
@@ -605,6 +688,54 @@ async function runEReportingOrphanCheck(now: Date): Promise<number> {
  *
  * @returns nombre de refunds dont la transaction REFUND a été (ré)enregistrée.
  */
+/**
+ * Passe 7 (EINV-CREDIT-020) — avoirs partiels (Refund) émis mais PDF jamais
+ * archivé. L'archivage est normalement eager dans `issueCreditNoteForRefund` ;
+ * cette passe rattrape un crash post-tx ou un échec d'upload. Borné par
+ * BATCH_SIZE_MEDIUM + la deadline batch. Jamais bloquant.
+ *
+ * @returns nombre d'avoirs Refund dont le PDF a été archivé.
+ */
+async function runRefundCreditNotePdfSweep(deadline: number): Promise<number> {
+	try {
+		const unarchived = await prisma.refund.findMany({
+			where: {
+				creditNoteNumber: { not: null },
+				creditNotePdfUrl: null,
+				status: RefundStatus.COMPLETED,
+				// Post-purge 10 ans, l'avoir n'est plus reconstituable — on n'y touche plus.
+				order: { piiPurgedAt: null },
+				...notDeleted,
+			},
+			select: { id: true },
+			take: BATCH_SIZE_MEDIUM,
+			orderBy: { creditNoteGeneratedAt: "asc" },
+		});
+
+		let recovered = 0;
+		for (const refund of unarchived) {
+			if (Date.now() > deadline) {
+				logger.warn("Approaching timeout, stopping refund credit-note PDF sweep early", {
+					cronJob: CRON_JOB,
+				});
+				break;
+			}
+			const status = await ensureRefundCreditNoteArchived(refund.id);
+			if (status === "archived") {
+				recovered++;
+			}
+			// "failed" : l'archiveur a déjà audité + alerté ; retenté au prochain run.
+		}
+		if (recovered > 0) {
+			logger.info("Refund credit-note PDF backlog drained", { cronJob: CRON_JOB, recovered });
+		}
+		return recovered;
+	} catch (e) {
+		logger.error("Refund credit-note PDF sweep threw", e, { cronJob: CRON_JOB });
+		return 0;
+	}
+}
+
 async function runRefundEReportingDeferredSweep(deadline: number): Promise<number> {
 	try {
 		const deferred = await prisma.refund.findMany({

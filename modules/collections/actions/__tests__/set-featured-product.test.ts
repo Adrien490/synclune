@@ -12,6 +12,7 @@ const {
 	mockEnforceRateLimit,
 	mockValidateInput,
 	mockSuccess,
+	mockError,
 	mockNotFound,
 	mockHandleActionError,
 	mockUpdateTag,
@@ -25,6 +26,7 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
@@ -55,6 +57,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
+	error: mockError,
 	notFound: mockNotFound,
 }));
 vi.mock("../../schemas/collection.schemas", () => ({ setFeaturedProductSchema: {} }));
@@ -82,7 +85,7 @@ function makeProductCollection(overrides: Record<string, unknown> = {}) {
 		productId: PRODUCT_ID,
 		isFeatured: false,
 		collection: { slug: "bague-soleil", name: "Bague Soleil" },
-		product: { title: "Bracelet Lune" },
+		product: { title: "Bracelet Lune", status: "PUBLIC", deletedAt: null },
 		...overrides,
 	};
 }
@@ -113,6 +116,10 @@ describe("setFeaturedProduct", () => {
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
+			message: msg,
+		}));
+		mockError.mockImplementation((msg: string) => ({
+			status: ActionStatus.ERROR,
 			message: msg,
 		}));
 		mockNotFound.mockImplementation((entity: string) => ({
@@ -184,6 +191,36 @@ describe("setFeaturedProduct", () => {
 				},
 			}),
 		);
+	});
+
+	// ---------- Published guard ----------
+
+	it("should reject a soft-deleted product without opening a transaction", async () => {
+		mockPrisma.productCollection.findUnique.mockResolvedValue(
+			makeProductCollection({
+				product: { title: "Bracelet Lune", status: "PUBLIC", deletedAt: new Date() },
+			}),
+		);
+		const result = await setFeaturedProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toBe(
+			"Seul un produit publié (et non supprimé) peut être mis en avant dans une collection.",
+		);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+	});
+
+	it("should reject a non-PUBLIC product without opening a transaction", async () => {
+		mockPrisma.productCollection.findUnique.mockResolvedValue(
+			makeProductCollection({
+				product: { title: "Bracelet Lune", status: "DRAFT", deletedAt: null },
+			}),
+		);
+		const result = await setFeaturedProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toBe(
+			"Seul un produit publié (et non supprimé) peut être mis en avant dans une collection.",
+		);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	// ---------- Success ----------

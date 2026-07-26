@@ -2,7 +2,13 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
+import {
+	error,
+	handleActionError,
+	unauthorized,
+	validateInput,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
@@ -23,10 +29,11 @@ export const signInEmail = async (
 			return unauthorized("Vous êtes déjà connecté");
 		}
 
-		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGIN);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		// Validation des données
+		// Validation AVANT rate limit : un payload malformé n'est pas une tentative
+		// de connexion. L'inverse consommait 1 des 5 essais / 15 min par IP à chaque
+		// faute de frappe, jusqu'à verrouiller un utilisateur qui a le bon mot de
+		// passe. La protection brute-force reste intacte : un payload valide (donc
+		// toute tentative réelle) est toujours compté avant l'appel à Better Auth.
 		const rawData = {
 			email: safeFormGet(formData, "email"),
 			password: safeFormGet(formData, "password"),
@@ -35,6 +42,9 @@ export const signInEmail = async (
 
 		const validation = validateInput(signInEmailSchema, rawData);
 		if ("error" in validation) return validation.error;
+
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGIN);
+		if ("error" in rateLimit) return rateLimit.error;
 
 		const { email, password, callbackURL } = validation.data;
 
@@ -63,6 +73,8 @@ export const signInEmail = async (
 			}
 		}
 
-		return error("Une erreur est survenue lors de la connexion");
+		return handleActionError(err, "Une erreur est survenue lors de la connexion", {
+			service: "signInEmail",
+		});
 	}
 };

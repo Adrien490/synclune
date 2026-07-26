@@ -32,6 +32,7 @@ import {
 	SizeSelectorGroup,
 	QuantitySection,
 } from "./sku-selector-selectors";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 // ============================================================================
 // Form Content (extracted from Subscribe for readability + perf)
@@ -201,7 +202,7 @@ export function SkuSelectorFormContent({
 							placeholder={currentImage.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={currentImage.blurDataUrl ?? undefined}
 							sizes="(min-width: 640px) 160px, 96px"
-							quality={85}
+							quality={IMAGE_QUALITY.HERO}
 						/>
 					</m.div>
 					<div className="flex flex-col justify-center">

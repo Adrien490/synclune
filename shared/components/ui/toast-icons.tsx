@@ -202,5 +202,3 @@ export const toastIcons = {
 		</div>
 	),
 };
-
-export type ToastVariant = keyof typeof toastIcons;

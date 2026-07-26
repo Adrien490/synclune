@@ -352,5 +352,15 @@ describe("addressFormSchema", () => {
 			});
 			expect(result.success).toBe(true);
 		});
+
+		it("rejects address2 exceeding MAX_ADDRESS_LENGTH (parité serveur, C3 audit Zod 2026-07-09)", () => {
+			// MAX_ADDRESS_LENGTH mocké à 255 en tête de fichier
+			const tooLong = "a".repeat(256);
+			const result = addressFormSchema.safeParse({
+				...VALID_ADDRESS,
+				address2: tooLong,
+			});
+			expect(result.success).toBe(false);
+		});
 	});
 });

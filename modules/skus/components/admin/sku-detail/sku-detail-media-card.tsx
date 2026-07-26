@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useLightbox } from "@/shared/hooks/use-lightbox";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
+import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
+import { VideoPlayBadge } from "@/shared/components/ui/video-play-badge";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 
@@ -37,6 +39,8 @@ function toProductMedia(image: SkuImage, fallbackAlt: string): ProductMedia {
 		thumbnailUrl: image.thumbnailUrl,
 		alt: image.altText ?? fallbackAlt,
 		blurDataUrl: image.blurDataUrl ?? undefined,
+		width: image.width,
+		height: image.height,
 		mediaType: image.mediaType === "VIDEO" ? "VIDEO" : "IMAGE",
 	};
 }
@@ -50,6 +54,8 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 	const images = sortGalleryImages(sku.images);
 	const [primary, ...rest] = images;
 	const fallbackAlt = `${sku.sku}${sku.product.title ? ` - ${sku.product.title}` : ""}`;
+	// Une vidéo sans poster n'est pas décodable par l'optimiseur -> tuile bg-muted
+	const primarySrc = primary ? resolveMediaThumbSrc(primary) : null;
 
 	const slides = buildLightboxSlides(
 		images.map((image) => toProductMedia(image, fallbackAlt)),
@@ -81,44 +87,60 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 							aria-label={`Agrandir l'image principale${primary.altText ? ` : ${primary.altText}` : ""}`}
 							className="focus-visible:ring-ring relative block aspect-square w-full max-w-sm cursor-zoom-in overflow-hidden rounded-lg border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
 						>
-							<Image
-								src={primary.url}
-								alt={primary.altText ?? fallbackAlt}
-								fill
-								sizes="(max-width: 768px) 100vw, 384px"
-								className="object-cover"
-								preload
-								{...(primary.blurDataUrl
-									? { placeholder: "blur" as const, blurDataURL: primary.blurDataUrl }
-									: {})}
-							/>
+							{primarySrc ? (
+								<Image
+									src={primarySrc}
+									alt={primary.altText ?? fallbackAlt}
+									fill
+									sizes="(max-width: 768px) 100vw, 384px"
+									className="object-cover"
+									preload
+									fetchPriority="high"
+									{...(primary.blurDataUrl
+										? { placeholder: "blur" as const, blurDataURL: primary.blurDataUrl }
+										: {})}
+								/>
+							) : (
+								<div className="bg-muted h-full w-full">
+									<VideoPlayBadge />
+								</div>
+							)}
 						</button>
 						{rest.length > 0 ? (
 							<ul
 								className="grid grid-cols-4 gap-2 sm:grid-cols-6"
 								aria-label={`${rest.length} image${rest.length > 1 ? "s" : ""} secondaire${rest.length > 1 ? "s" : ""}`}
 							>
-								{rest.map((image, restIndex) => (
-									<li key={image.id} className="relative">
-										<button
-											type="button"
-											onClick={() => openAt(restIndex + 1)}
-											aria-label={`Agrandir l'image ${restIndex + 2}${image.altText ? ` : ${image.altText}` : ""}`}
-											className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
-										>
-											<Image
-												src={image.thumbnailUrl ?? image.url}
-												alt={image.altText ?? ""}
-												fill
-												sizes="120px"
-												className="object-cover"
-												{...(image.blurDataUrl
-													? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
-													: {})}
-											/>
-										</button>
-									</li>
-								))}
+								{rest.map((image, restIndex) => {
+									const thumbSrc = resolveMediaThumbSrc(image);
+									return (
+										<li key={image.id} className="relative">
+											<button
+												type="button"
+												onClick={() => openAt(restIndex + 1)}
+												aria-label={`Agrandir l'image ${restIndex + 2}${image.altText ? ` : ${image.altText}` : ""}`}
+												className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
+											>
+												{thumbSrc ? (
+													<Image
+														src={thumbSrc}
+														alt={image.altText ?? ""}
+														fill
+														sizes="120px"
+														className="object-cover"
+														{...(image.blurDataUrl
+															? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
+															: {})}
+													/>
+												) : (
+													<div className="bg-muted h-full w-full">
+														<VideoPlayBadge />
+													</div>
+												)}
+											</button>
+										</li>
+									);
+								})}
 							</ul>
 						) : null}
 						{lightbox.isOpen ? (

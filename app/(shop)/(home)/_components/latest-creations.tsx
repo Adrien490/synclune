@@ -2,14 +2,15 @@ import "./latest-creations.css";
 
 import type { CSSProperties } from "react";
 
-import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
+import { Fade } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { SectionTitle } from "@/shared/components/section-title";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { SectionCtaLink } from "./section-cta-link";
+import { SectionHalo } from "./section-halo";
+import { SectionHeader } from "./section-header";
 
 export async function LatestCreations({
 	productsPromise,
@@ -22,48 +23,31 @@ export async function LatestCreations({
 	return (
 		<section
 			id="latest-creations"
+			data-accent="rose"
 			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 			style={{ viewTransitionName: "latest-creations" }}
 		>
-			{/* Soft rose halo top-right — brand warmth marker (cf. atelier section) */}
-			<div
-				className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-				aria-hidden="true"
-			>
-				<div
-					className="absolute top-[5%] right-[-8%] h-[35vh] w-[50vw] max-w-md rounded-full opacity-50 blur-3xl"
-					style={{
-						background: "radial-gradient(closest-side, var(--color-glow-pink), transparent 70%)",
-					}}
-				/>
-			</div>
+			<SectionHalo />
 			<div className={`relative ${CONTAINER_CLASS}`}>
-				{/* Baymard UX: Full scope labels — h2 "Nouvelles créations" reste explicite (vs "Nouveautés" générique) */}
-				<header className="mb-10 text-center lg:mb-14">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="latest-creations-title">Nouvelles créations</SectionTitle>
-						<HandDrawnUnderline
-							delay={MOTION_CONFIG.section.underline.delay}
-							className="mx-auto mt-2"
-						/>
-					</Fade>
-					<Fade
-						y={MOTION_CONFIG.section.subtitle.y}
-						delay={MOTION_CONFIG.section.subtitle.delay}
-						duration={MOTION_CONFIG.section.subtitle.duration}
-					>
-						<p
-							id="latest-creations-subtitle"
-							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
-						>
-							{isEmpty
-								? "De nouveaux bijoux arrivent très bientôt dans l'atelier."
-								: "Tout juste sorties de l'atelier et réalisées avec amour !"}
-						</p>
-					</Fade>
-				</header>
+				{/* Baymard UX: Full scope labels — h2 "Nouvelles créations" reste explicite (vs "Nouveautés" générique).
+				    inView=false : section near-fold, le header fade au montage (pas au scroll). */}
+				<SectionHeader
+					titleId="latest-creations-title"
+					subtitleId="latest-creations-subtitle"
+					inView={false}
+					title={
+						<>
+							Nouvelles <em className="font-medium italic">créations</em>
+						</>
+					}
+					subtitle={
+						isEmpty
+							? "De nouveaux bijoux arrivent très bientôt dans l'atelier."
+							: "Tout juste sorties de l'atelier et réalisées avec amour !"
+					}
+				/>
 				{isEmpty ? (
 					<Fade
 						y={MOTION_CONFIG.section.cta.y}
@@ -86,7 +70,7 @@ export async function LatestCreations({
 						{products.map((product, index) => (
 							<li
 								key={product.id}
-								className="latest-card-enter-scroll"
+								className="card-enter-scroll"
 								style={{ "--card-index": index } as CSSProperties}
 							>
 								<CursorGlow>
@@ -115,8 +99,10 @@ export async function LatestCreations({
 					once
 					className="text-center"
 				>
+					{/* Seul CTA « default » (rose plein) de la page hors hero — hiérarchie d'incitation. */}
 					<SectionCtaLink
 						href={isEmpty ? "/produits" : "/produits?sortBy=created-descending"}
+						variant="default"
 						aria-describedby="latest-creations-cta-description"
 					>
 						{isEmpty ? "Voir tous les bijoux disponibles" : "Voir tous les nouveaux bijoux"}

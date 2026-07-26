@@ -4,6 +4,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 const ROUNDED_CLASSES = {
 	full: "rounded-full",
@@ -47,8 +48,9 @@ export function Logo({
 	ariaLabel,
 }: LogoProps) {
 	const effectiveMaxSize = sizeMd ?? size;
-	// Petits logos (≤40px) → quality 75 suffit ; sinon 90 (fidélité brand).
-	const effectiveQuality = quality ?? (effectiveMaxSize <= 40 ? 75 : 90);
+	// Petits logos (≤40px) → palier vignette suffit ; sinon HERO (fidélité brand).
+	const effectiveQuality =
+		quality ?? (effectiveMaxSize <= 40 ? IMAGE_QUALITY.THUMBNAIL : IMAGE_QUALITY.HERO);
 
 	// Taille du texte proportionnelle à la taille du logo (base la plus grande envisagée)
 	const textSizeClass =

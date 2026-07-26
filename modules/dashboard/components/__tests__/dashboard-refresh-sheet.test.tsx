@@ -178,8 +178,7 @@ describe("DashboardRefreshSheet", () => {
 		render(<DashboardRefreshSheet open onOpenChange={onOpenChange} />);
 
 		const lastCall = mockUseRefreshDashboard.mock.calls.at(-1) as
-			| [options?: { onSuccess?: () => void }]
-			| undefined;
+			[options?: { onSuccess?: () => void }] | undefined;
 		const onSuccess = lastCall?.[0]?.onSuccess;
 		expect(typeof onSuccess).toBe("function");
 		onSuccess?.();

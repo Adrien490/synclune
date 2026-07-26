@@ -15,5 +15,6 @@ export const getLastOrderSchema = z.object({}).optional();
 // ============================================================================
 
 export const fetchLastOrderSchema = z.object({
-	userId: z.string().trim().min(1),
+	// Pas de cuid2 : IDs user générés par Better Auth (alphanumérique, majuscules possibles)
+	userId: z.string().trim().min(1).max(64),
 });

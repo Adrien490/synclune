@@ -10,6 +10,7 @@ import type { ReviewAdmin } from "../../types/review.types";
 
 import { ReviewDetailHeader } from "./review-detail-header";
 import { ReviewResponseForm } from "./review-response-form";
+import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 interface ReviewDetailPageProps {
 	review: ReviewAdmin;
@@ -63,7 +64,7 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 														fill
 														className="object-cover"
 														sizes="80px"
-														quality={75}
+														quality={IMAGE_QUALITY.STANDARD}
 														placeholder={media.blurDataUrl ? "blur" : "empty"}
 														blurDataURL={media.blurDataUrl ?? undefined}
 													/>

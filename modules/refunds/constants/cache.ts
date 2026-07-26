@@ -31,7 +31,7 @@ export const REFUNDS_CACHE_TAGS = {
 /**
  * Configure le cache pour la liste des remboursements
  * - Utilise pour : /admin/commandes/remboursements
- * - Profil "dashboard" : 1min stale, 30s revalidate
+ * - Profil `user` : 2min stale, 1min revalidate
  */
 export function cacheRefunds() {
 	cacheLife("user");
@@ -41,7 +41,7 @@ export function cacheRefunds() {
 /**
  * Configure le cache pour un remboursement specifique
  * - Utilise pour : detail admin, modale d'approbation
- * - Profil "dashboard"
+ * - Profil `user`
  */
 export function cacheRefundDetail(refundId: string, orderId?: string) {
 	cacheLife("user");

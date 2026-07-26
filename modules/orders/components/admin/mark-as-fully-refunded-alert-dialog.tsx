@@ -18,6 +18,8 @@ import { Banknote, FileWarning, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import {
 	Select,
 	SelectContent,
@@ -51,13 +53,17 @@ export function MarkAsFullyRefundedAlertDialog() {
 	const [reason, setReason] = useState("");
 	const [method, setMethod] = useState<ManualRefundMethod | "">("");
 
-	const { action, isPending } = useMarkAsFullyRefunded({
+	const { state, action, isPending } = useMarkAsFullyRefunded({
 		onSuccess: () => {
 			dialog.close();
 			setReason("");
 			setMethod("");
 		},
 	});
+
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {
@@ -74,6 +80,7 @@ export function MarkAsFullyRefundedAlertDialog() {
 		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
+					<FormServerErrorAlert errors={serverErrors} className="mb-4" />
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 					{reason.trim() ? <input type="hidden" name="reason" value={reason.trim()} /> : null}
 					<input type="hidden" name="manualRefundMethod" value={method} />

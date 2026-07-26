@@ -7,8 +7,7 @@ const { mockReducedMotion, mockControls, capturedDragProps } = vi.hoisted(() => 
 	mockControls: { set: vi.fn(), start: vi.fn() },
 	capturedDragProps: {
 		onDragEnd: null as
-			| null
-			| ((e: unknown, info: { offset: { y: number }; velocity: { y: number } }) => void),
+			null | ((e: unknown, info: { offset: { y: number }; velocity: { y: number } }) => void),
 	},
 }));
 

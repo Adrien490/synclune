@@ -144,6 +144,7 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 		store: { subscribe: vi.fn(() => () => undefined), getState: () => ({ errors: [] }) },
 		handleSubmit: vi.fn(),
 		setFieldValue: vi.fn(),
+		setFieldMeta: vi.fn(),
 		Subscribe: ({
 			children,
 			selector,
@@ -152,6 +153,22 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 			selector: (state: typeof formState) => unknown;
 		}) => <>{children(selector(formState))}</>,
 		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		// Mock fidèle du form.SubmitButton partagé (le vrai requiert le formContext)
+		SubmitButton: ({
+			isPending,
+			idleLabel,
+			pendingLabel,
+		}: {
+			isPending?: boolean;
+			idleLabel: string;
+			pendingLabel: string;
+			showKbdHint?: boolean;
+			className?: string;
+		}) => (
+			<button type="submit" disabled={!formState.canSubmit || isPending} aria-busy={isPending}>
+				{isPending ? pendingLabel : idleLabel}
+			</button>
+		),
 	};
 }
 

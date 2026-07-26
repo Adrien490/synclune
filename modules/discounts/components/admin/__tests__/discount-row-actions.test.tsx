@@ -162,16 +162,29 @@ describe("DiscountRowActions", () => {
 		expect(screen.getByText("Supprimer")).toBeInTheDocument();
 	});
 
-	it("disables 'Supprimer' when usageCount is greater than 0", () => {
-		render(<DiscountRowActions discount={createDiscount({ usageCount: 3 })} />);
+	// La garde s'aligne sur le SERVEUR (`delete-discount.ts` refuse si
+	// `_count.usages > 0`), pas sur le compteur dénormalisé `usageCount`.
+	it("disables 'Supprimer' when the discount has usages", () => {
+		render(<DiscountRowActions discount={createDiscount({ _count: { usages: 3 } })} />);
 		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
 		expect(deleteItem).toHaveAttribute("aria-disabled", "true");
 	});
 
-	it("enables 'Supprimer' when usageCount is 0", () => {
-		render(<DiscountRowActions discount={createDiscount({ usageCount: 0 })} />);
+	it("enables 'Supprimer' when the discount has no usages", () => {
+		render(<DiscountRowActions discount={createDiscount({ _count: { usages: 0 } })} />);
 		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
 		expect(deleteItem).not.toHaveAttribute("aria-disabled", "true");
+	});
+
+	// Après `resetDiscountCounter`, `usageCount` retombe à 0 mais l'historique
+	// `DiscountUsage` survit : l'UI ne doit PAS proposer un « Supprimer » que le
+	// serveur rejettera ensuite.
+	it("keeps 'Supprimer' disabled after a counter reset that preserved usage history", () => {
+		render(
+			<DiscountRowActions discount={createDiscount({ usageCount: 0, _count: { usages: 3 } })} />,
+		);
+		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
+		expect(deleteItem).toHaveAttribute("aria-disabled", "true");
 	});
 
 	it("marks 'Supprimer' as destructive variant", () => {

@@ -54,7 +54,10 @@ const FALLBACK_IMAGE_EXTENSIONS = [
 	".gif",
 	".avif",
 ];
-const FALLBACK_VIDEO_EXTENSIONS = [".mp4", ".mov"];
+// `.mov` retiré (audit média M13) : le serveur n'accepte que `video/mp4`
+// (`ALLOWED_VIDEO_TYPES`). L'accepter côté client laissait l'utilisateur
+// téléverser un fichier entier — jusqu'à 512 Mo — avant un rejet serveur.
+const FALLBACK_VIDEO_EXTENSIONS = [".mp4"];
 
 export function isValidMediaType(file: File): boolean {
 	if (file.type.startsWith("image/") || file.type.startsWith("video/")) return true;

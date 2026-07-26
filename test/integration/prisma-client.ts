@@ -10,6 +10,7 @@
  */
 import { PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 let cached: PrismaClient | null = null;
 
@@ -33,13 +34,19 @@ export function getIntegrationDatabaseUrl(): string {
 
 export function getIntegrationPrismaClient(): PrismaClient {
 	if (cached) return cached;
-	// Prisma 7 requiert un adapter. On réutilise PrismaNeon (déjà installé pour
-	// la prod Neon) qui supporte tout Postgres standard via `connectionString`.
+	// Prisma 7 requiert un adapter. Sélection par host : un Postgres standard
+	// (service container CI, docker local) n'expose pas le proxy WebSocket Neon
+	// — @neondatabase/serverless ne peut pas s'y connecter. Neon → PrismaNeon
+	// (WSS), sinon PrismaPg (TCP direct).
 	// Override aussi `DATABASE_URL` au cas où du code interne le relit.
 	const url = getIntegrationDatabaseUrl();
 	process.env.DATABASE_URL = url;
-	cached = new PrismaClient({
-		adapter: new PrismaNeon({ connectionString: url }),
-	});
+	// Le schéma par-worker est passé explicitement à l'adapter : les drivers
+	// pg/neon ignorent le search param `?schema=` (convention CLI Prisma).
+	const schema = new URL(url).searchParams.get("schema") ?? undefined;
+	const adapter = new URL(url).hostname.endsWith(".neon.tech")
+		? new PrismaNeon({ connectionString: url }, { schema })
+		: new PrismaPg({ connectionString: url }, { schema });
+	cached = new PrismaClient({ adapter });
 	return cached;
 }

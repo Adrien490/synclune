@@ -44,15 +44,16 @@ export function ResendVerificationButton({ email }: ResendVerificationButtonProp
 		onSuccess: startCooldown,
 	});
 
-	// Effect Event: reads COOLDOWN_KEY without restarting the interval every second
+	// Effect Event: reads COOLDOWN_KEY + cooldown frais sans redémarrer l'interval
+	// chaque seconde. Le `removeItem` reste HORS du updater : React peut rejouer un
+	// updater, un effet de bord y serait exécuté plusieurs fois.
 	const onTick = useEffectEvent(() => {
-		setCooldown((prev) => {
-			if (prev <= 1) {
-				localStorage.removeItem(COOLDOWN_KEY);
-				return 0;
-			}
-			return prev - 1;
-		});
+		if (cooldown <= 1) {
+			localStorage.removeItem(COOLDOWN_KEY);
+			setCooldown(0);
+			return;
+		}
+		setCooldown((prev) => prev - 1);
 	});
 
 	// Timer du cooldown — only restarts when isActive flips (false→true or true→false)

@@ -15,6 +15,9 @@ const { mockGetOrderPermissions, mockUseAlertDialog, mockUseDialog, mockResend, 
 		};
 	});
 
+// La chaîne actions → void-invoice → ensure-credit-note-archived tire
+// UploadThing (UTApi server-only, throw en jsdom) — coupe à la racine.
+vi.mock("@/shared/lib/uploadthing", () => ({ utapi: {} }));
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: mockPush }),
 }));

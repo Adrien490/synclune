@@ -8,7 +8,10 @@ import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
+import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
+import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -24,7 +27,7 @@ export function CloseStoreForm() {
 		defaultValues: { closureMessage: "", reopensAt: "" },
 	});
 
-	const [, formAction, isPending] = useActionState(
+	const [state, formAction, isPending] = useActionState(
 		withCallbacks(closeStore, {
 			...createToastCallbacks({ loadingMessage: "Fermeture de la boutique…" }),
 			onSuccess: (result) => {
@@ -37,6 +40,20 @@ export function CloseStoreForm() {
 		undefined,
 	);
 
+	// `createToastCallbacks` retire les VALIDATION_ERROR du toast (affichage inline
+	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
+	const serverErrors = useServerFieldErrors({ state });
+
+	// Gate de soumission : pas d'aller-retour serveur sur formulaire invalide, et
+	// une resoumission en vol (touche Entrée) est ignorée.
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action: formAction,
+		isPending,
+		focusFirstInvalid,
+		context: "CloseStoreForm",
+	});
+
 	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	return (
@@ -44,15 +61,13 @@ export function CloseStoreForm() {
 			ref={formRef}
 			action={formAction}
 			onInvalidCapture={onInvalidCapture}
-			onSubmit={() => {
-				queueMicrotask(() => {
-					focusFirstInvalid();
-				});
-			}}
+			onSubmit={handleGatedSubmit}
 			aria-busy={isPending}
 			data-pending={isPending ? "true" : undefined}
 			className="space-y-4 sm:space-y-6"
 		>
+			<FormServerErrorAlert errors={serverErrors} />
+
 			<p className="text-muted-foreground text-sm">
 				Les clients ne pourront plus passer de commandes tant que la boutique sera fermée. Ils
 				verront le message ci-dessous sur la page d&apos;accueil et les pages produit.

@@ -42,7 +42,17 @@ export function isAllowedMediaDomain(
 	allowedDomains: readonly string[] = UPLOADTHING_DOMAINS,
 ): boolean {
 	try {
-		const hostname = new URL(url).hostname;
+		const parsed = new URL(url);
+
+		// HTTPS obligatoire (audit média M11) : `isAllowedMediaDomain` ne testait que
+		// le hostname, si bien qu'un `http://utfs.io/f/...` était une URL média
+		// valide en base — contenu mixte à l'affichage, et asymétrie avec
+		// `isValidUploadThingUrl` qui exige HTTPS sur le chemin de suppression.
+		if (parsed.protocol !== "https:") {
+			return false;
+		}
+
+		const hostname = parsed.hostname;
 		return allowedDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
 	} catch {
 		return false;

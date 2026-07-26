@@ -8,19 +8,11 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { buildVariantLabel } from "@/modules/skus/utils/sku-variant-label";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
 const PREVIEW_LIMIT = 3;
-
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-
-function formatPrice(priceInCents: number) {
-	return PRICE_FORMATTER.format(priceInCents / 100);
-}
 
 interface ProductDetailSkusSummaryCardProps {
 	product: GetProductReturn;
@@ -51,8 +43,8 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 		minPrice === null || maxPrice === null
 			? "—"
 			: minPrice === maxPrice
-				? formatPrice(minPrice)
-				: `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
+				? formatEuro(minPrice)
+				: `${formatEuro(minPrice)} – ${formatEuro(maxPrice)}`;
 
 	const stockVariant: "destructive" | "warning" | "success" =
 		totalStock === 0 || totalStock <= STOCK_THRESHOLDS.CRITICAL

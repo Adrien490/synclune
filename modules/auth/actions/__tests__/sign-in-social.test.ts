@@ -13,6 +13,7 @@ const {
 	mockValidateInput,
 	mockError,
 	mockUnauthorized,
+	mockHandleActionError,
 	mockRedirect,
 	mockUnstableRethrow,
 } = vi.hoisted(() => ({
@@ -27,6 +28,7 @@ const {
 	mockValidateInput: vi.fn(),
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
+	mockHandleActionError: vi.fn(),
 	mockRedirect: vi.fn(),
 	mockUnstableRethrow: vi.fn(),
 }));
@@ -51,6 +53,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	error: mockError,
 	unauthorized: mockUnauthorized,
+	handleActionError: mockHandleActionError,
 }));
 vi.mock("../schemas/auth.schemas", () => ({ signInSocialSchema: {} }));
 
@@ -90,6 +93,10 @@ describe("signInSocial", () => {
 		mockUnauthorized.mockImplementation((msg: string) => ({
 			status: ActionStatus.UNAUTHORIZED,
 			message: msg,
+		}));
+		mockHandleActionError.mockImplementation((_err: unknown, defaultMessage?: string) => ({
+			status: ActionStatus.ERROR,
+			message: defaultMessage ?? "Une erreur est survenue",
 		}));
 	});
 
@@ -153,13 +160,19 @@ describe("signInSocial", () => {
 
 	it("should return generic error when signInSocial returns null (null.url throws)", async () => {
 		// When the resolved value is null, accessing null.url throws a TypeError.
-		// The catch block treats it as an unexpected error and returns the generic message.
+		// The catch block treats it as an unexpected error and routes it through
+		// handleActionError with the generic message.
 		mockAuth.api.signInSocial.mockResolvedValue(null);
 
 		const result = await signInSocial(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith(
+		expect(mockHandleActionError).toHaveBeenCalledWith(
+			expect.any(TypeError),
+			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+			{ service: "signInSocial" },
+		);
+		expect(result.message).toBe(
 			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
 		);
 	});
@@ -177,12 +190,18 @@ describe("signInSocial", () => {
 	});
 
 	it("should return generic error on unexpected exception", async () => {
-		mockAuth.api.signInSocial.mockRejectedValue(new Error("Network failure"));
+		const networkError = new Error("Network failure");
+		mockAuth.api.signInSocial.mockRejectedValue(networkError);
 
 		const result = await signInSocial(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith(
+		expect(mockHandleActionError).toHaveBeenCalledWith(
+			networkError,
+			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
+			{ service: "signInSocial" },
+		);
+		expect(result.message).toBe(
 			"Une erreur est survenue lors de la connexion. Veuillez réessayer.",
 		);
 	});
