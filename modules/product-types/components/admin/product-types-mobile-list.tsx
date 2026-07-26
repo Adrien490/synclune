@@ -14,7 +14,11 @@ interface ProductTypesMobileListProps {
 	hasActiveFilters?: boolean;
 }
 
-export function ProductTypesMobileList({ productTypesPromise, perPage, hasActiveFilters }: ProductTypesMobileListProps) {
+export function ProductTypesMobileList({
+	productTypesPromise,
+	perPage,
+	hasActiveFilters,
+}: ProductTypesMobileListProps) {
 	const { productTypes, pagination, totalCount } = use(productTypesPromise);
 
 	return (

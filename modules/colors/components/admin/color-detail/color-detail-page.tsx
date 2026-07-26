@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { TaxonomyDetailLayout } from "@/modules/taxonomies/components/taxonomy-detail-layout";
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 
 import { ColorDetailHeader } from "./color-detail-header";
@@ -12,33 +13,31 @@ import { ColorDetailStatsCardSkeleton } from "./color-detail-stats-card-skeleton
 interface ColorDetailPageProps {
 	color: ColorDetailReturn;
 	/**
-	 * Pass a non-awaited promise so the page shell + main cards can stream
-	 * while the distinct-product count resolves in parallel via Suspense.
+	 * Promesse NON attendue : la coque et les cartes principales streament
+	 * pendant que le comptage de produits distincts se résout via Suspense.
 	 */
 	distinctProductsCountPromise: Promise<number>;
 }
 
 export function ColorDetailPage({ color, distinctProductsCountPromise }: ColorDetailPageProps) {
 	return (
-		<div className="space-y-6">
-			<ColorDetailHeader color={color} />
-
-			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-				<div className="space-y-6 lg:col-span-2">
+		<TaxonomyDetailLayout
+			header={<ColorDetailHeader color={color} />}
+			main={
+				<>
 					<ColorDetailPreviewCard color={color} />
 					<ColorDetailInfoCard color={color} />
 					<ColorDetailSkusUsageCard color={color} />
-				</div>
-
-				<div className="space-y-6">
-					<Suspense fallback={<ColorDetailStatsCardSkeleton />}>
-						<ColorDetailStatsCardAsync
-							skusCount={color._count.skus}
-							productsCountPromise={distinctProductsCountPromise}
-						/>
-					</Suspense>
-				</div>
-			</div>
-		</div>
+				</>
+			}
+			side={
+				<Suspense fallback={<ColorDetailStatsCardSkeleton />}>
+					<ColorDetailStatsCardAsync
+						skusCount={color._count.skus}
+						productsCountPromise={distinctProductsCountPromise}
+					/>
+				</Suspense>
+			}
+		/>
 	);
 }

@@ -14,7 +14,11 @@ interface MaterialsMobileListProps {
 	hasActiveFilters?: boolean;
 }
 
-export function MaterialsMobileList({ materialsPromise, perPage, hasActiveFilters }: MaterialsMobileListProps) {
+export function MaterialsMobileList({
+	materialsPromise,
+	perPage,
+	hasActiveFilters,
+}: MaterialsMobileListProps) {
 	const { materials, pagination, totalCount } = use(materialsPromise);
 
 	return (

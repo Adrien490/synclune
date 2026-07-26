@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { TaxonomyDetailLayout } from "@/modules/taxonomies/components/taxonomy-detail-layout";
 import type { MaterialDetailReturn } from "@/modules/materials/data/get-material";
 
 import { MaterialDetailHeader } from "./material-detail-header";
@@ -11,8 +12,8 @@ import { MaterialDetailStatsCardSkeleton } from "./material-detail-stats-card-sk
 interface MaterialDetailPageProps {
 	material: MaterialDetailReturn;
 	/**
-	 * Pass a non-awaited promise so the page shell + main cards can stream
-	 * while the distinct-product count resolves in parallel via Suspense.
+	 * Promesse NON attendue : la coque et les cartes principales streament
+	 * pendant que le comptage de produits distincts se résout via Suspense.
 	 */
 	distinctProductsCountPromise: Promise<number>;
 }
@@ -22,24 +23,22 @@ export function MaterialDetailPage({
 	distinctProductsCountPromise,
 }: MaterialDetailPageProps) {
 	return (
-		<div className="space-y-6">
-			<MaterialDetailHeader material={material} />
-
-			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-				<div className="space-y-6 lg:col-span-2">
+		<TaxonomyDetailLayout
+			header={<MaterialDetailHeader material={material} />}
+			main={
+				<>
 					<MaterialDetailInfoCard material={material} />
 					<MaterialDetailSkusUsageCard material={material} />
-				</div>
-
-				<div className="space-y-6">
-					<Suspense fallback={<MaterialDetailStatsCardSkeleton />}>
-						<MaterialDetailStatsCardAsync
-							skusCount={material._count.skus}
-							productsCountPromise={distinctProductsCountPromise}
-						/>
-					</Suspense>
-				</div>
-			</div>
-		</div>
+				</>
+			}
+			side={
+				<Suspense fallback={<MaterialDetailStatsCardSkeleton />}>
+					<MaterialDetailStatsCardAsync
+						skusCount={material._count.skus}
+						productsCountPromise={distinctProductsCountPromise}
+					/>
+				</Suspense>
+			}
+		/>
 	);
 }

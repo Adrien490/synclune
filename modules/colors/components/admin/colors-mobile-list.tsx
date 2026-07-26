@@ -14,7 +14,11 @@ interface ColorsMobileListProps {
 	hasActiveFilters?: boolean;
 }
 
-export function ColorsMobileList({ colorsPromise, perPage, hasActiveFilters }: ColorsMobileListProps) {
+export function ColorsMobileList({
+	colorsPromise,
+	perPage,
+	hasActiveFilters,
+}: ColorsMobileListProps) {
 	const { colors, pagination, totalCount } = use(colorsPromise);
 
 	return (

@@ -1,3 +1,4 @@
+import { TaxonomyDetailLayout } from "@/modules/taxonomies/components/taxonomy-detail-layout";
 import type { ProductTypeDetailReturn } from "@/modules/product-types/data/get-product-type";
 
 import { ProductTypeDetailHeader } from "./product-type-detail-header";
@@ -12,19 +13,15 @@ interface ProductTypeDetailPageProps {
 
 export function ProductTypeDetailPage({ productType, counts }: ProductTypeDetailPageProps) {
 	return (
-		<div className="space-y-6">
-			<ProductTypeDetailHeader productType={productType} />
-
-			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
-				<div className="space-y-6 lg:col-span-2">
+		<TaxonomyDetailLayout
+			header={<ProductTypeDetailHeader productType={productType} />}
+			main={
+				<>
 					<ProductTypeDetailInfoCard productType={productType} />
 					<ProductTypeDetailProductsCard productType={productType} />
-				</div>
-
-				<div className="space-y-6">
-					<ProductTypeDetailStatsCard total={productType._count.products} counts={counts} />
-				</div>
-			</div>
-		</div>
+				</>
+			}
+			side={<ProductTypeDetailStatsCard total={productType._count.products} counts={counts} />}
+		/>
 	);
 }
