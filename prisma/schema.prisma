@@ -505,11 +505,6 @@ model SkuMedia {
 // PANIER
 // ============================================================================
 
-enum CartFulfillmentType {
-  SHIPPING // Livraison domicile (defaut)
-  CLICK_AND_COLLECT // Retrait boutique
-}
-
 model Cart {
   id String @id @default(cuid())
 
@@ -522,9 +517,6 @@ model Cart {
   // === DISCOUNT CODE APPLIED (pre-checkout) ===
   appliedDiscountCode String? @db.VarChar(30) // Code promo applique au panier
   discountAmountCache Int? // Montant reduction snapshot (centimes, calcule a application)
-
-  // === FULFILLMENT MODE ===
-  fulfillmentType CartFulfillmentType @default(SHIPPING)
 
   items CartItem[]
 
@@ -1535,7 +1527,7 @@ enum PostWebhookTaskStatus {
 ///
 /// Stripe ne re-livre PAS l'événement une fois 200 retourné. Sans persistance, un
 /// crash entre `after(...)` start et email-send = email perdu sans backstop.
-/// Le cron `retry-post-webhook-tasks` (toutes les 5min) repop PENDING + FAILED
+/// Le cron `retry-post-webhook-tasks` (toutes les 30min) repop PENDING + FAILED
 /// dont `attempts < MAX_POST_WEBHOOK_RETRY_ATTEMPTS`.
 model PostWebhookTask {
   id String @id @default(cuid())
@@ -1610,11 +1602,6 @@ model StoreSettings {
   announcementEndsAt   DateTime?
   announcementIsActive Boolean             @default(false)
   announcementVariant  AnnouncementVariant @default(PROMO)
-
-  // === FULFILLMENT GATES ===
-  // Active le mode "retrait en boutique" pour le checkout. Désactivé tant que
-  // l'infra logistique n'est pas opérationnelle (cf. modules/cart/actions/set-fulfillment-mode.ts).
-  clickAndCollectEnabled Boolean @default(false)
 
   // === CRON STATE : cleanup-orphan-media ===
   // Offset de reprise dans `utapi.listFiles` (audit média M2). Le cron ne balaie

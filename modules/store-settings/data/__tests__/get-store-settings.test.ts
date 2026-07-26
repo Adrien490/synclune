@@ -36,7 +36,6 @@ const MOCK_SETTINGS = {
 	announcementStartsAt: null,
 	announcementEndsAt: null,
 	announcementIsActive: false,
-	clickAndCollectEnabled: false,
 };
 
 // ============================================================================
@@ -76,7 +75,6 @@ describe("getStoreSettings", () => {
 				announcementEndsAt: true,
 				announcementIsActive: true,
 				announcementVariant: true,
-				clickAndCollectEnabled: true,
 			},
 		});
 	});

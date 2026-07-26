@@ -28,7 +28,6 @@ export interface StoreSettingsAdmin extends StoreStatus {
 	announcementVariant: AnnouncementVariant;
 
 	/** Feature gate : retrait en boutique activé (default false tant que logistique non opérationnelle). */
-	clickAndCollectEnabled: boolean;
 }
 
 /** Public announcement payload for storefront bar */

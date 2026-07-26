@@ -30,7 +30,6 @@ async function fetchStoreSettings(): Promise<StoreSettingsAdmin | null> {
 				announcementEndsAt: true,
 				announcementIsActive: true,
 				announcementVariant: true,
-				clickAndCollectEnabled: true,
 			},
 		});
 	} catch (err) {

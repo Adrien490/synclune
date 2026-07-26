@@ -79,12 +79,6 @@ export const applyCartDiscountSchema = z.object({
 		.transform((v) => v.toUpperCase()),
 });
 
-/**
- * Schema pour definir le mode de fulfillment
- */
-export const setFulfillmentModeSchema = z.object({
-	fulfillmentType: z.enum(["SHIPPING", "CLICK_AND_COLLECT"]),
-});
 
 /**
  * Schema pour supprimer plusieurs items en une fois

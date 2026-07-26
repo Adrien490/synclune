@@ -48,8 +48,6 @@ const INTENTIONALLY_UNGATED: Record<string, string> = {
 	"validate-cart.ts": "lecture seule (diagnostic de disponibilité)",
 	"merge-carts.ts":
 		"appelée par le hook post-login de Better Auth, pas par un geste d'achat : bloquer ferait perdre le panier invité au login",
-	"set-fulfillment-mode.ts":
-		"métadonnée de panier, déjà feature-gatée par StoreSettings.clickAndCollectEnabled (surface dormante)",
 };
 
 function listActionFiles(): string[] {
