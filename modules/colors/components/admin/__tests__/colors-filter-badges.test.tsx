@@ -62,12 +62,12 @@ describe("ColorsFilterBadges", () => {
 
 	it("calls formatStatusFilter for isActive filter with correct labels", () => {
 		render(<ColorsFilterBadges />);
-		expect(mockFormatStatusFilter).toHaveBeenCalledWith("true", "Actives", "Inactives");
+		expect(mockFormatStatusFilter).toHaveBeenCalledWith("true", "Active", "Inactive");
 	});
 
 	it("returns formatted active label for isActive=true", () => {
 		render(<ColorsFilterBadges />);
 		const result = screen.getByTestId("format-filter-result");
-		expect(result.textContent).toContain("Actives");
+		expect(result.textContent).toContain("Active");
 	});
 });

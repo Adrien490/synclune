@@ -72,6 +72,10 @@ export interface TaxonomyConfig {
 	createButtonLabel: string;
 	/** Titre du dialog de suppression, s'il diffère du libellé par défaut. */
 	deleteDialogTitle?: string;
+	/** Copie de la barre de recherche mobile (placeholder + label accessible). */
+	search: { placeholder: string; ariaLabel: string };
+	/** Label accessible du bouton « Ajouter » de la barre mobile. */
+	createAriaLabel: string;
 	/** La taxonomie porte une couleur hexadécimale (couleurs uniquement). */
 	hasHex: boolean;
 	/** La taxonomie porte un drapeau « système » non supprimable (types uniquement). */

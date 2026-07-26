@@ -46,6 +46,11 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		drawerNamespace: "colors",
 		formFields: { duplicateId: "colorId", toggleId: "id", deleteId: "id" },
 		createButtonLabel: "Créer une couleur",
+		createAriaLabel: "Créer une nouvelle couleur",
+		search: {
+			placeholder: "Une teinte de l'atelier…",
+			ariaLabel: "Rechercher une teinte de l'atelier",
+		},
 		hasHex: true,
 		hasSystemFlag: false,
 	},
@@ -69,6 +74,11 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		drawerNamespace: "materials",
 		formFields: { duplicateId: "materialId", toggleId: "id", deleteId: "id" },
 		createButtonLabel: "Créer un matériau",
+		createAriaLabel: "Créer un nouveau matériau",
+		search: {
+			placeholder: "Une matière à l'atelier…",
+			ariaLabel: "Rechercher une matière à l'atelier",
+		},
 		hasHex: false,
 		hasSystemFlag: false,
 	},
@@ -92,6 +102,11 @@ export const TAXONOMY_CONFIG: Readonly<Record<TaxonomyKind, TaxonomyConfig>> = {
 		drawerNamespace: "product-types",
 		formFields: { duplicateId: "productTypeId", toggleId: "productTypeId", deleteId: "productTypeId" },
 		createButtonLabel: "Créer un type",
+		createAriaLabel: "Créer un nouveau type de bijou",
+		search: {
+			placeholder: "Label, slug…",
+			ariaLabel: "Rechercher un type de bijou",
+		},
 		deleteDialogTitle: "Supprimer ce type de bijou ?",
 		hasHex: false,
 		hasSystemFlag: true,
@@ -103,11 +118,21 @@ export function getTaxonomyConfig(kind: TaxonomyKind): TaxonomyConfig {
 }
 
 /**
- * Accorde un participe passé au genre de la taxonomie.
- * `pastParticiple(config, "supprimé")` → « supprimée » pour une couleur.
+ * Accorde un adjectif ou un participe passé au genre de la taxonomie.
+ *
+ * `agree(config, "supprimé")` → « supprimée » pour une couleur.
+ * `agree(config, "Actif")`    → « Active »   pour une couleur.
+ *
+ * Couvre le cas régulier (ajout d'un « e ») et la terminaison en « -if », la
+ * seule irrégularité rencontrée dans ces libellés. Toute autre irrégularité
+ * (« -eux » → « -euse », « -er » → « -ère »…) doit être écrite en toutes
+ * lettres dans le registre plutôt qu'ajoutée ici : mieux vaut une donnée
+ * explicite qu'un moteur de morphologie approximatif.
  */
 export function agree(config: TaxonomyConfig, masculine: string): string {
-	return config.labels.feminine ? `${masculine}e` : masculine;
+	if (!config.labels.feminine) return masculine;
+	if (masculine.endsWith("if")) return `${masculine.slice(0, -2)}ive`;
+	return `${masculine}e`;
 }
 
 /**
