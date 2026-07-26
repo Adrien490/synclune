@@ -1,8 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
-
-import { ActiveToggle } from "@/shared/components/active-toggle";
+import { TaxonomyActiveToggle } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { useToggleColorStatus } from "@/modules/colors/hooks/use-toggle-color-status";
 
 interface ColorActiveToggleProps {
@@ -11,29 +9,14 @@ interface ColorActiveToggleProps {
 }
 
 export function ColorActiveToggle({ colorId, isActive }: ColorActiveToggleProps) {
-	const [optimisticIsActive, setOptimisticIsActive] = useOptimistic(isActive);
-	const [isTransitionPending, startTransition] = useTransition();
-
-	const { toggleStatus, isPending } = useToggleColorStatus({
-		onSuccess: () => {
-			// Server state is now synchronized
-		},
-	});
-
-	const handleToggle = (checked: boolean) => {
-		startTransition(() => {
-			// Immediate optimistic update
-			setOptimisticIsActive(checked);
-			// Server call
-			toggleStatus(colorId, checked);
-		});
-	};
+	const { toggleStatus, isPending } = useToggleColorStatus();
 
 	return (
-		<ActiveToggle
-			isActive={optimisticIsActive}
-			onToggle={handleToggle}
-			isPending={isPending || isTransitionPending}
+		<TaxonomyActiveToggle
+			id={colorId}
+			isActive={isActive}
+			toggleStatus={toggleStatus}
+			isPending={isPending}
 		/>
 	);
 }

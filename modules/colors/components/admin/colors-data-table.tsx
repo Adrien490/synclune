@@ -56,12 +56,12 @@ export function ColorsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[8%]">Aperçu</TableHead>
-					<TableHead className="w-[36%]">Nom</TableHead>
-					<TableHead className="w-[10%] text-center">Variantes</TableHead>
-					<TableHead className="w-[10%] text-center">Actif</TableHead>
+					<TableHead className="w-[10%]">Aperçu</TableHead>
+					<TableHead className="w-[52%]">Nom</TableHead>
+					<TableHead className="w-[14%] text-center">Variantes</TableHead>
+					<TableHead className="w-[12%] text-center">Actif</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque couleur"
 					>
 						Actions

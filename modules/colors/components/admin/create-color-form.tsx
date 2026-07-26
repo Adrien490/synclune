@@ -91,7 +91,7 @@ export function CreateColorForm({
 	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
 	const serverErrors = useServerFieldErrors({ state });
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;

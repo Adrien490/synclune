@@ -161,13 +161,20 @@ describe("HexColorInput", () => {
 		expect(input.value).toBe("FF5733");
 	});
 
-	it("emits selection haptic and onChange when native color picker commits", () => {
+	/**
+	 * @regression no-haptic-on-continuous-input
+	 * `<input type="color">` streame des événements `change` pendant que le doigt
+	 * parcourt la roue du sélecteur natif : l'haptique y produisait une cascade
+	 * continue (~12/s), amortie seulement par le cooldown de 80 ms. La couleur
+	 * retenue est déjà confirmée visuellement par la pastille.
+	 */
+	it("emits onChange without any haptic when native color picker commits", () => {
 		const onChange = vi.fn();
 		render(<HexColorInput value="#000000" onChange={onChange} />);
 		const native = getNativeColorInput();
 		fireEvent.change(native, { target: { value: "#aa00ff" } });
 		expect(onChange).toHaveBeenCalledWith("#AA00FF");
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("triggers light haptic when text input commits a valid hex", async () => {

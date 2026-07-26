@@ -49,7 +49,7 @@ export function MaterialsMobileList({
 
 	return (
 		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
+			<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" totalCount={totalCount} />
 			<ItemGroup aria-label="Materiaux" className="gap-2">
 				{materials.map((material) => (
 					<li key={material.id}>

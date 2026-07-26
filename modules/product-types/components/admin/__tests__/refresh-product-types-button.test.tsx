@@ -64,10 +64,10 @@ describe("RefreshProductTypesButton", () => {
 		expect(screen.getByRole("button")).toBeInTheDocument();
 	});
 
-	it("renders with label 'Rafraîchir types de produits'", () => {
+	it("renders with label 'Rafraîchir types de bijoux'", () => {
 		render(<RefreshProductTypesButton />);
 		expect(
-			screen.getByRole("button", { name: "Rafraîchir types de produits" }),
+			screen.getByRole("button", { name: "Rafraîchir types de bijoux" }),
 		).toBeInTheDocument();
 	});
 

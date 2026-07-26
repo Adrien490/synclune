@@ -123,12 +123,15 @@ export function HexColorInput({
 		setBlurAnnouncement("Code couleur incomplet, valeur précédente restaurée");
 	};
 
+	// Pas d'haptique : `<input type="color">` streame `change` pendant que le doigt
+	// parcourt la roue du sélecteur natif — c'était une cascade continue (~12/s),
+	// amortie seulement par le cooldown de 80 ms. La couleur choisie est déjà
+	// confirmée visuellement par la pastille.
 	const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (disabled) return;
 		const normalized = normalizeHex(e.target.value);
 		if (normalized !== normalizeHex(value)) {
 			onChange(normalized);
-			haptic("selection");
 		}
 	};
 

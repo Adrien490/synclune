@@ -1,43 +1,19 @@
 "use client";
 
-import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+import {
+	TaxonomyDeleteAlertDialog,
+	useTaxonomyDeleteDialog,
+} from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_COLOR_DIALOG_ID = "delete-color";
 
-interface DeleteColorData {
-	colorId: string;
-	colorName: string;
-	[key: string]: unknown;
-}
-
 export function DeleteColorAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteColorData>(DELETE_COLOR_DIALOG_ID);
-	const backToList = useBackToListOnDelete("/admin/catalogue/couleurs");
-	const { action, isPending } = useDeleteColor({
-		onSuccess: () => {
-			deleteDialog.close();
-			backToList();
-		},
-	});
+	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG.color);
+	const { action, isPending } = useDeleteColor({ onSuccess: onDeleted });
 
 	return (
-		<DeleteConfirmationDialog<DeleteColorData>
-			dialogId={DELETE_COLOR_DIALOG_ID}
-			action={action}
-			isPending={isPending}
-			hiddenFields={[{ name: "id", dataKey: "colorId" }]}
-			description={(data) => (
-				<div className="space-y-3">
-					<p>
-						Êtes-vous sûr de vouloir supprimer la couleur{" "}
-						<strong>&quot;{data?.colorName}&quot;</strong> ?
-					</p>
-					<p className="text-destructive font-medium">Cette action est irréversible.</p>
-				</div>
-			)}
-		/>
+		<TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG.color} action={action} isPending={isPending} />
 	);
 }

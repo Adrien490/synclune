@@ -57,12 +57,12 @@ export async function ProductTypesDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[20%]">Label</TableHead>
-					<TableHead className="w-[28%]">Description</TableHead>
+					<TableHead className="w-[26%]">Label</TableHead>
+					<TableHead className="w-[38%]">Description</TableHead>
 					<TableHead className="w-[12%] text-center">Produits</TableHead>
-					<TableHead className="w-[10%] text-center">Actif</TableHead>
+					<TableHead className="w-[12%] text-center">Actif</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque type de produit"
 					>
 						Actions
@@ -76,18 +76,10 @@ export async function ProductTypesDataTable({
 					return (
 						<TableRow key={productType.id}>
 							<TableCell>
-								{productType.isSystem ? (
-									<Lock
-										className="text-muted-foreground inline-block size-4"
-										aria-label="Type système verrouillé"
-									/>
-								) : null}
-							</TableCell>
-							<TableCell>
-								<div className="overflow-hidden">
+								<div className="flex min-w-0 items-center gap-1.5">
 									<Link
 										href={`/admin/catalogue/types-de-produits/${productType.slug}`}
-										className="text-foreground hover:text-foreground/80 focus-visible:ring-ring block truncate font-semibold outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+										className="text-foreground hover:text-foreground/80 focus-visible:ring-ring min-w-0 truncate font-semibold outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 										title={productType.label}
 										style={{
 											viewTransitionName: `product-type-${productType.slug}`,
@@ -95,6 +87,12 @@ export async function ProductTypesDataTable({
 									>
 										{productType.label}
 									</Link>
+									{productType.isSystem ? (
+										<Lock
+											className="text-muted-foreground size-4 shrink-0"
+											aria-label="Type système verrouillé"
+										/>
+									) : null}
 								</div>
 							</TableCell>
 							<TableCell>

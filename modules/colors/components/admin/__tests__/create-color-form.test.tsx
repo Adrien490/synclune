@@ -23,7 +23,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
 vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: mockUseIsMobile,
-	MOBILE_BREAKPOINT: 768,
+	MOBILE_MEDIA_QUERY: "(width < 48rem)",
 }));
 vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
@@ -99,13 +99,16 @@ describe("CreateColorForm", () => {
 		});
 	});
 
-	it("on mobile, does not engage the unsaved-changes guard (enabled flag false)", () => {
+	// Audit 2026-07-26 : ce test verrouillait l'inverse (`enabled === false` sur
+	// mobile). Le `!isMobile` ne protégeait de rien — Échap n'existe pas sur mobile,
+	// donc il n'y avait aucun double-prompt à éviter — et laissait la saisie mobile
+	// sans AUCUNE garde (ni beforeunload, ni popstate, ni dialogue).
+	it("on mobile, engages the unsaved-changes guard (enabled = true)", () => {
 		mockUseIsMobile.mockReturnValue(true);
 		render(<CreateColorForm />);
-		// useUnsavedChanges(isDirty, !isPending && !isMobile) → second arg `false` on mobile
 		const calls = mockUseUnsavedChanges.mock.calls as unknown as Array<[boolean, boolean]>;
 		expect(calls.length).toBeGreaterThan(0);
-		expect(calls[calls.length - 1]?.[1]).toBe(false);
+		expect(calls[calls.length - 1]?.[1]).toBe(true);
 	});
 
 	it("on desktop, engages the unsaved-changes guard when form is clean (enabled = true)", () => {

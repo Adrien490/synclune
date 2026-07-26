@@ -49,7 +49,7 @@ export function ColorsMobileList({
 
 	return (
 		<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
+			<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" totalCount={totalCount} />
 			<ItemGroup aria-label="Couleurs" className="gap-2">
 				{colors.map((color) => (
 					<li key={color.id}>

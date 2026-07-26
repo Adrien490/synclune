@@ -53,6 +53,7 @@ export function ProductTypesMobileList({
 				count={productTypes.length}
 				singular="type de bijou"
 				plural="types de bijoux"
+				totalCount={totalCount}
 			/>
 			<ItemGroup aria-label="Types de bijoux" className="gap-2">
 				{productTypes.map((productType) => (

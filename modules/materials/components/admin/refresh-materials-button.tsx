@@ -1,12 +1,24 @@
 "use client";
 
-import { RefreshButton } from "@/shared/components/refresh-button";
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+import { RefreshTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { useRefreshMaterials } from "@/modules/materials/hooks/use-refresh-materials";
 
-export function RefreshMaterialsButton() {
+interface RefreshMaterialsButtonProps {
+	className?: string;
+	variant?: "outline" | "ghost" | "secondary";
+}
+
+export function RefreshMaterialsButton({ className, variant }: RefreshMaterialsButtonProps) {
 	const { refresh, isPending } = useRefreshMaterials();
 
 	return (
-		<RefreshButton onRefresh={refresh} isPending={isPending} label="Rafraîchir les matériaux" />
+		<RefreshTaxonomyButton
+			config={TAXONOMY_CONFIG.material}
+			refresh={refresh}
+			isPending={isPending}
+			className={className}
+			variant={variant}
+		/>
 	);
 }

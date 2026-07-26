@@ -65,7 +65,13 @@ export interface TaxonomyConfig {
 	formFields: {
 		duplicateId: string;
 		toggleId: string;
+		/** Champ portant l'id dans le formulaire de suppression. */
+		deleteId: string;
 	};
+	/** Libellé du bouton de création (« Créer une couleur », « Créer un type »). */
+	createButtonLabel: string;
+	/** Titre du dialog de suppression, s'il diffère du libellé par défaut. */
+	deleteDialogTitle?: string;
 	/** La taxonomie porte une couleur hexadécimale (couleurs uniquement). */
 	hasHex: boolean;
 	/** La taxonomie porte un drapeau « système » non supprimable (types uniquement). */

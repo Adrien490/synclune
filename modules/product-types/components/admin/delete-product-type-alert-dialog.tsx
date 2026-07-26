@@ -1,51 +1,19 @@
 "use client";
 
-import { DeleteConfirmationDialog } from "@/shared/components/dialogs";
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+import {
+	TaxonomyDeleteAlertDialog,
+	useTaxonomyDeleteDialog,
+} from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 import { useDeleteProductType } from "@/modules/product-types/hooks/use-delete-product-type";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 
 export const DELETE_PRODUCT_TYPE_DIALOG_ID = "delete-product-type";
 
-interface DeleteProductTypeData {
-	productTypeId: string;
-	label: string;
-	productsCount?: number;
-	[key: string]: unknown;
-}
-
 export function DeleteProductTypeAlertDialog() {
-	const deleteDialog = useAlertDialog<DeleteProductTypeData>(DELETE_PRODUCT_TYPE_DIALOG_ID);
-	const backToList = useBackToListOnDelete("/admin/catalogue/types-de-produits");
-
-	const { action, isPending } = useDeleteProductType({
-		onSuccess: () => {
-			deleteDialog.close();
-			backToList();
-		},
-	});
+	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG["product-type"]);
+	const { action, isPending } = useDeleteProductType({ onSuccess: onDeleted });
 
 	return (
-		<DeleteConfirmationDialog<DeleteProductTypeData>
-			dialogId={DELETE_PRODUCT_TYPE_DIALOG_ID}
-			title="Supprimer ce type de bijou ?"
-			action={action}
-			isPending={isPending}
-			hiddenFields={[{ name: "productTypeId", dataKey: "productTypeId" }]}
-			description={(data) => (
-				<div className="space-y-3">
-					<p>
-						Voulez-vous vraiment supprimer le type <strong>&quot;{data?.label}&quot;</strong> ?
-					</p>
-					{data?.productsCount != null && data.productsCount > 0 && (
-						<p className="text-destructive font-medium">
-							Impossible : {data.productsCount} produit(s) actif(s) utilise(nt) ce type. Retirez-les
-							avant de supprimer.
-						</p>
-					)}
-					<p className="text-muted-foreground text-sm">Cette action est irréversible.</p>
-				</div>
-			)}
-		/>
+		<TaxonomyDeleteAlertDialog config={TAXONOMY_CONFIG["product-type"]} action={action} isPending={isPending} />
 	);
 }

@@ -56,12 +56,12 @@ export function MaterialsDataTable({
 		>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[23%]">Nom</TableHead>
-					<TableHead className="w-[28%]">Description</TableHead>
-					<TableHead className="w-[10%] text-center">Statut</TableHead>
-					<TableHead className="w-[10%] text-center">Variantes</TableHead>
+					<TableHead className="w-[28%]">Nom</TableHead>
+					<TableHead className="w-[36%]">Description</TableHead>
+					<TableHead className="w-[12%] text-center">Statut</TableHead>
+					<TableHead className="w-[12%] text-center">Variantes</TableHead>
 					<TableHead
-						className="w-[8%] text-right"
+						className="w-[12%] text-right"
 						aria-label="Actions disponibles pour chaque matériau"
 					>
 						Actions

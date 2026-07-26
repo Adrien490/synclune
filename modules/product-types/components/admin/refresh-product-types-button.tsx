@@ -1,6 +1,7 @@
 "use client";
 
-import { RefreshButton } from "@/shared/components/refresh-button";
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+import { RefreshTaxonomyButton } from "@/modules/taxonomies/components/taxonomy-list-controls";
 import { useRefreshProductTypes } from "@/modules/product-types/hooks/use-refresh-product-types";
 
 interface RefreshProductTypesButtonProps {
@@ -8,17 +9,14 @@ interface RefreshProductTypesButtonProps {
 	variant?: "outline" | "ghost" | "secondary";
 }
 
-export function RefreshProductTypesButton({
-	className,
-	variant = "outline",
-}: RefreshProductTypesButtonProps) {
+export function RefreshProductTypesButton({ className, variant }: RefreshProductTypesButtonProps) {
 	const { refresh, isPending } = useRefreshProductTypes();
 
 	return (
-		<RefreshButton
-			onRefresh={refresh}
+		<RefreshTaxonomyButton
+			config={TAXONOMY_CONFIG["product-type"]}
+			refresh={refresh}
 			isPending={isPending}
-			label="Rafraîchir types de produits"
 			className={className}
 			variant={variant}
 		/>

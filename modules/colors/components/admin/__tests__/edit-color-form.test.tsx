@@ -23,7 +23,7 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
 vi.mock("@/shared/hooks/use-mobile", () => ({
 	useIsMobile: mockUseIsMobile,
-	MOBILE_BREAKPOINT: 768,
+	MOBILE_MEDIA_QUERY: "(width < 48rem)",
 }));
 vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
@@ -83,11 +83,13 @@ describe("EditColorForm", () => {
 		expect(hidden).toHaveAttribute("value", "color-1");
 	});
 
-	it("on mobile, does not engage the unsaved-changes guard", () => {
+	// Audit 2026-07-26 : ce test verrouillait l'inverse (`enabled === false` sur
+	// mobile), laissant la saisie mobile sans aucune garde.
+	it("on mobile, engages the unsaved-changes guard", () => {
 		mockUseIsMobile.mockReturnValue(true);
 		render(<EditColorForm color={baseColor} />);
 		const calls = mockUseUnsavedChanges.mock.calls as unknown as Array<[boolean, boolean]>;
-		expect(calls[calls.length - 1]?.[1]).toBe(false);
+		expect(calls[calls.length - 1]?.[1]).toBe(true);
 	});
 
 	it("calls updateColor on submit", async () => {
