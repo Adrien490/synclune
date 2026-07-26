@@ -113,24 +113,33 @@ describe("@regression webhook-retry-null-processed-at — reprise des events jam
 	});
 
 	it("sélectionne les FAILED à processedAt NULL via un fallback sur receivedAt", async () => {
-		await retryFailedWebhooks();
+		// Horloge figée sur CE test seulement : il recalcule `minAge` après l'appel
+		// et le comparait à un `Date.now()` distinct — 1 ms de dérive suffisait à le
+		// faire échouer (~1 run sur 5). Les autres tests attendent un backoff réel,
+		// d'où le scope local plutôt qu'un beforeEach global.
+		vi.useFakeTimers();
+		try {
+			await retryFailedWebhooks();
 
-		const where = mockPrisma.webhookEvent.findMany.mock.calls[0]![0].where;
-		const minAge = new Date(Date.now() - THRESHOLDS.WEBHOOK_RETRY_MIN_AGE_MS);
+			const where = mockPrisma.webhookEvent.findMany.mock.calls[0]![0].where;
+			const minAge = new Date(Date.now() - THRESHOLDS.WEBHOOK_RETRY_MIN_AGE_MS);
 
-		expect(where.status).toBe("FAILED");
-		expect(where.attempts).toEqual({ lt: MAX_WEBHOOK_RETRY_ATTEMPTS });
+			expect(where.status).toBe("FAILED");
+			expect(where.attempts).toEqual({ lt: MAX_WEBHOOK_RETRY_ATTEMPTS });
 
-		// Le cœur du correctif : sans la 2ᵉ branche, un event jamais terminé
-		// (processedAt NULL) n'est JAMAIS candidat.
-		expect(where.OR).toHaveLength(2);
-		expect(where.OR[0].processedAt.lt.getTime()).toBe(minAge.getTime());
-		expect(where.OR[1].processedAt).toBeNull();
-		expect(where.OR[1].receivedAt.lt.getTime()).toBe(minAge.getTime());
+			// Le cœur du correctif : sans la 2ᵉ branche, un event jamais terminé
+			// (processedAt NULL) n'est JAMAIS candidat.
+			expect(where.OR).toHaveLength(2);
+			expect(where.OR[0].processedAt.lt.getTime()).toBe(minAge.getTime());
+			expect(where.OR[1].processedAt).toBeNull();
+			expect(where.OR[1].receivedAt.lt.getTime()).toBe(minAge.getTime());
 
-		// Un filtre `processedAt` de premier niveau ré-exclurait les NULL et
-		// annulerait le fallback.
-		expect(where.processedAt).toBeUndefined();
+			// Un filtre `processedAt` de premier niveau ré-exclurait les NULL et
+			// annulerait le fallback.
+			expect(where.processedAt).toBeUndefined();
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("trie sur receivedAt : en ASC, Postgres relègue les NULL de processedAt en dernier", async () => {
