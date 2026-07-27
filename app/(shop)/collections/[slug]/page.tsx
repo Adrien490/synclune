@@ -1,7 +1,6 @@
 import type { ProductFiltersSearchParams } from "@/app/(shop)/produits/_utils/types";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
-import { getPublicCollectionSlugs } from "@/modules/collections/data/get-public-collection-slugs";
 import { ProductList } from "@/modules/products/components/product-list";
 import { ProductListSkeleton } from "@/modules/products/components/product-list-skeleton";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -26,13 +25,12 @@ export type CollectionSearchParams = {
 	sortBy?: string;
 } & Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
 
-// Pre-genere les chemins des collections publiques au build time.
-// Si zero collection PUBLIC : retourne [] et laisse Next.js generer dynamiquement
-// les pages a la premiere requete (cache "use cache" interne au fetcher).
-export async function generateStaticParams() {
-	const collections = await getPublicCollectionSlugs();
-	return collections.map((c) => ({ slug: c.slug }));
-}
+// Pas de `generateStaticParams` : Cache Components REFUSE un tableau vide
+// (`EmptyGenerateStaticParamsError` fait echouer le BUILD ENTIER, pas la seule
+// route), ce qui rendait tout deploiement impossible tant qu'aucune collection
+// n'etait publiee. Les chemins sont donc rendus a la demande — le cache reste
+// assure par le "use cache" interne a getStorefrontCollectionBySlug() et
+// getProducts().
 
 type CollectionPageProps = {
 	params: Promise<{ slug: string }>;

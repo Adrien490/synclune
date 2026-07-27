@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -18,30 +17,13 @@ import {
 } from "../_utils/catalog";
 
 // ============================================================================
-// STATIC GENERATION
+// STATIC GENERATION — volontairement absente
 // ============================================================================
 
-/**
- * Génère les paramètres statiques pour toutes les pages catégorie
- * Next.js 16 avec Cache Components requiert au moins un résultat
- */
-export async function generateStaticParams() {
-	const { productTypes } = await getProductTypes({
-		perPage: 50,
-		filters: {
-			isActive: true,
-			hasProducts: true,
-		},
-	});
-
-	if (productTypes.length === 0) {
-		return [{ productTypeSlug: "__placeholder__" }];
-	}
-
-	return productTypes.map((type) => ({
-		productTypeSlug: type.slug,
-	}));
-}
+// Pas de `generateStaticParams` : Cache Components refuse un tableau vide
+// (`EmptyGenerateStaticParamsError` fait échouer le build entier), donc aucun
+// déploiement n'était possible sans type de produit actif portant des bijoux.
+// Les pages catégorie sont rendues à la demande.
 
 // ============================================================================
 // TYPES

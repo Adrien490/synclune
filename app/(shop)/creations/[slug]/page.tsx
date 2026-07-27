@@ -6,7 +6,6 @@ import { Suspense } from "react";
 import { ParticleBackground } from "@/shared/components/animations";
 import { Separator } from "@/shared/components/ui/separator";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getPublicProductSlugs } from "@/modules/products/data/get-public-product-slugs";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -36,15 +35,10 @@ import {
 	ProductReviewsSectionSkeleton,
 } from "@/modules/reviews/components/product-reviews-section";
 
-// Pre-genere les chemins des produits publics au build time
-// Next.js 16 avec Cache Components requiert au moins un résultat
-export async function generateStaticParams() {
-	const products = await getPublicProductSlugs();
-	if (products.length === 0) {
-		return [{ slug: "__placeholder__" }];
-	}
-	return products.map((p) => ({ slug: p.slug }));
-}
+// Pas de `generateStaticParams` : Cache Components refuse un tableau vide
+// (`EmptyGenerateStaticParamsError` fait échouer le build entier), donc aucun
+// déploiement n'était possible sans produit publié. Les fiches sont rendues à
+// la demande, le cache restant assuré par le "use cache" de getProductBySlug().
 
 type ProductPageParams = Promise<{ slug: string }>;
 type ProductSearchParams = Promise<{
