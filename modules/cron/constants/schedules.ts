@@ -27,23 +27,41 @@
  * 1. **Jamais de cadence < 30 min** sans bénéfice mesuré.
  * 2. **Faire coïncider les réveils.** Trois crons demi-horaires alignés sur
  *    :00/:30 = 2 réveils/heure ; les mêmes décalés = 6 réveils, même travail.
- *    Cadence actuelle ≈ 17 % de cycle de service (~16 % de l'allocation Neon).
+ *
+ * ⛔ **PLAFOND DUR — plan Vercel Hobby : une exécution par jour et par cron.**
+ * Un crontab plus fréquent (`*​/30 * * * *`, `0 * * * *`, `0 *​/4 * * *`…) fait
+ * REFUSER LE DÉPLOIEMENT ENTIER par l'API Vercel, avant même le build :
+ * « Hobby accounts are limited to daily cron jobs ». Ce n'est pas une
+ * dégradation silencieuse mais une porte fermée — constaté le 2026-07-27, la
+ * production est restée bloquée dessus. Tous les plannings sont donc
+ * quotidiens ou moins, et regroupés sur 4 fenêtres horaires (2h, 3h, 5h, 8h
+ * UTC) pour ne pas multiplier les réveils Neon : ~4 réveils/jour au lieu des
+ * ~48 de la cadence demi-horaire. Repasser à une cadence infra-journalière
+ * exige un plan Pro (verrouillé par `cron-hobby-plan-daily-limit.regression.test.ts`).
  */
 export const CRON_SCHEDULES: Record<string, string> = {
-	// Ramené de */5 à */30 (audit coûts P1-2) : à */5 la base ne s'endormait
-	// jamais. C'est un DLQ pour les emails de confirmation perdus si la lambda
-	// meurt entre `after()` et l'envoi — événement rarissime à ~20 commandes/mois.
-	// Le pire cas passe de 5 à 30 min de retard sur un email, une fois par an
-	// peut-être ; l'aligner sur `retry-webhooks` mutualise le réveil.
-	"retry-post-webhook-tasks": "*/30 * * * *",
-	// Ramené de */15 à horaire (audit coûts P1-2) : simple filet de sécurité, la
-	// réouverture est déjà appliquée à la lecture (`get-store-status.ts` traite un
-	// `reopensAt` échu comme ouvert sans attendre le cron). Le cron ne fait que
-	// remettre la ligne DB au propre. Aligné sur :00 avec les deux crons */30.
-	"reopen-store": "0 * * * *",
-	"retry-webhooks": "*/30 * * * *",
-	"sync-async-payments": "0 */4 * * *",
-	"reconcile-refunds": "30 */6 * * *",
+	// DLQ des emails de confirmation perdus si la lambda meurt entre `after()` et
+	// l'envoi — événement rarissime à ~20 commandes/mois. Passé de */30 à
+	// quotidien sous la contrainte Hobby : le pire cas devient 24 h de retard sur
+	// un email, contre 30 min. Groupé avec `retry-webhooks` et
+	// `reconcile-invoices` sur la fenêtre 2h pour mutualiser le réveil.
+	"retry-post-webhook-tasks": "0 2 * * *",
+	// Filet de sécurité seulement : la réouverture est déjà appliquée à la
+	// lecture (`get-store-status.ts` traite un `reopensAt` échu comme ouvert sans
+	// attendre le cron). Le cron ne fait que remettre la ligne DB au propre —
+	// c'est pourquoi le passage d'horaire à quotidien n'a aucun effet visible.
+	// Groupé avec `cleanup-pending-orders` sur la fenêtre 3h.
+	"reopen-store": "0 3 * * *",
+	// Passé de */30 à quotidien (contrainte Hobby). Backstop seulement : Stripe
+	// retente lui-même ses webhooks pendant 3 jours, donc un événement non rejoué
+	// pendant 24 h reste rattrapé par la source.
+	"retry-webhooks": "0 2 * * *",
+	// Passé de 4h à quotidien (contrainte Hobby) : un virement SEPA met de toute
+	// façon plusieurs jours à se dénouer côté Stripe.
+	"sync-async-payments": "0 5 * * *",
+	// Passé de 6h à quotidien (contrainte Hobby), groupé avec
+	// `alert-dispute-deadlines` sur la fenêtre 8h.
+	"reconcile-refunds": "0 8 * * *",
 	"reconcile-invoices": "0 2 * * *",
 	"cleanup-pending-orders": "0 3 * * *",
 	"process-account-deletions": "0 5 * * *",

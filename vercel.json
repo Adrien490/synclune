@@ -4,23 +4,23 @@
 	"crons": [
 		{
 			"path": "/api/cron/retry-post-webhook-tasks",
-			"schedule": "*/30 * * * *"
+			"schedule": "0 2 * * *"
 		},
 		{
 			"path": "/api/cron/retry-webhooks",
-			"schedule": "*/30 * * * *"
+			"schedule": "0 2 * * *"
 		},
 		{
 			"path": "/api/cron/reopen-store",
-			"schedule": "0 * * * *"
+			"schedule": "0 3 * * *"
 		},
 		{
 			"path": "/api/cron/sync-async-payments",
-			"schedule": "0 */4 * * *"
+			"schedule": "0 5 * * *"
 		},
 		{
 			"path": "/api/cron/reconcile-refunds",
-			"schedule": "30 */6 * * *"
+			"schedule": "0 8 * * *"
 		},
 		{
 			"path": "/api/cron/reconcile-invoices",

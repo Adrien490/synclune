@@ -373,21 +373,25 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 11 Vercel cron jobs définis dans `vercel.json` (autorité d'exécution réelle) et mirrorés dans `modules/cron/constants/schedules.ts` (SSOT consommé par `with-cron-guard` pour le **Sentry Cron Monitoring** — alerte si un run attendu n'arrive pas, MON-03) ; cohérence des deux verrouillée par `cron-schedules-match-vercel.test.ts`. Périmètre réduit au cœur critique (revenu + RGPD légal) + monitoring + ops. Logic in `modules/cron/services/` (or domain modules for transactional services). `reconcile-invoices` (Daily 2:00) assure la DLQ facture (numérotation / PDF / avoir — obligation **LIVE** Art. 286/289-I) + les passes de continuité de séquence et d'intégrité des PDF archivés.
 
-| Job                         | Schedule         | Catégorie  | Sentry monitor |
+| Job                         | Schedule (UTC)   | Catégorie  | Sentry monitor |
 | --------------------------- | ---------------- | ---------- | -------------- |
-| `retry-post-webhook-tasks`  | Every 30 min     | revenue    | ✓              |
-| `retry-webhooks`            | Every 30 min     | revenue    | ✓              |
-| `reopen-store`              | Hourly (:00)     | ops        | —              |
-| `sync-async-payments`       | Every 4h         | revenue    | ✓              |
-| `reconcile-refunds`         | Every 6h, H+30   | revenue    | —              |
+| `retry-post-webhook-tasks`  | Daily 2:00       | revenue    | ✓              |
+| `retry-webhooks`            | Daily 2:00       | revenue    | ✓              |
 | `reconcile-invoices`        | Daily 2:00       | revenue    | ✓              |
+| `reopen-store`              | Daily 3:00       | ops        | —              |
 | `cleanup-pending-orders`    | Daily 3:00       | ops        | —              |
+| `sync-async-payments`       | Daily 5:00       | revenue    | ✓              |
 | `process-account-deletions` | Daily 5:00       | RGPD       | ✓              |
+| `reconcile-refunds`         | Daily 8:00       | revenue    | —              |
 | `alert-dispute-deadlines`   | Daily 8:00       | monitoring | —              |
 | `hard-delete-retention`     | Monthly 2nd 4:00 | RGPD       | —              |
 | `cleanup-orphan-media`      | Weekly Wed 4:00  | ops        | —              |
 
-**⚠️ Budget de réveils DB (audit coûts P1-2)** — chaque exécution réveille Neon, dont le scale-to-zero se déclenche après **5 min** d'inactivité. Un cron plus fréquent que ça maintient la base allumée 24/7 : à `*/5`, `retry-post-webhook-tasks` consommait à lui seul ~95 % des 191,9 compute-hours du plan Free, et au dépassement Neon **suspend la base — boutique KO**. Deux règles, verrouillées par `cron-wakeup-budget.regression.test.ts` : (1) jamais de cadence < 30 min ; (2) aligner les réveils sur les mêmes minutes (:00/:30) plutôt que de les décaler. Cadence actuelle ≈ 2 réveils/heure, ~16 % de l'allocation.
+**⛔ Plafond dur — plan Vercel Hobby : un run par jour et par cron.** Une seule expression infra-journalière (`*/30 * * * *`, `0 * * * *`, `0 */4 * * *`…) fait **refuser le déploiement entier** par l'API Vercel, avant le build : « Hobby accounts are limited to daily cron jobs ». Ce n'est pas une dégradation silencieuse mais une porte fermée, invisible au build local comme au typecheck — la production est restée bloquée dessus (dernier déploiement réussi 38 jours plus tôt) jusqu'au 2026-07-27. Verrouillé par `cron-hobby-plan-daily-limit.regression.test.ts`, qui assert sur `vercel.json` **et** sur la SSOT. Repasser à une cadence infra-journalière exige un plan Pro — et alors ce test doit être supprimé, pas contourné.
+
+Conséquences fonctionnelles assumées : le DLQ email et le rejeu de webhooks passent de 30 min à 24 h de retard au pire (Stripe retente lui-même 3 jours, donc le rejeu reste rattrapé par la source) ; `reopen-store` n'a aucun effet visible puisque `get-store-status.ts` traite déjà un `reopensAt` échu comme ouvert à la lecture.
+
+**⚠️ Budget de réveils DB (audit coûts P1-2)** — chaque exécution réveille Neon, dont le scale-to-zero se déclenche après **5 min** d'inactivité. Un cron plus fréquent que ça maintient la base allumée 24/7 : à `*/5`, `retry-post-webhook-tasks` consommait à lui seul ~95 % des 191,9 compute-hours du plan Free, et au dépassement Neon **suspend la base — boutique KO**. Deux règles, verrouillées par `cron-wakeup-budget.regression.test.ts` : (1) jamais de cadence < 30 min ; (2) grouper les réveils plutôt que de les décaler. Le passage au quotidien sert aussi ce budget : les 11 jobs tiennent sur **4 fenêtres horaires** (2h, 3h, 5h, 8h) + 4h pour les passes hebdo/mensuelle, soit ~4 réveils/jour au lieu des ~48 de la cadence demi-horaire.
 
 **Monitors Sentry** — le monitoring cron est facturé **par monitor** (plan Developer : 1 seul inclus). Seuls les jobs revenue/légal en émettent (`SENTRY_MONITORED_CRONS` dans `schedules.ts`) ; les autres gardent la capture d'exception + l'alerte admin, mais pas la détection de run manqué.
 
@@ -590,7 +594,19 @@ Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refu
 | Components  | `PascalCase`                          |
 | Functions   | `camelCase`                           |
 | Constants   | `UPPER_SNAKE_CASE`                    |
-| UI text     | French                                |
+| UI text     | French, **tutoiement**                |
 | Code        | English                               |
 | Commits     | `feat:`, `fix:`, `docs:`, `refactor:` |
 | Indentation | Tabs                                  |
+
+### Voix : tutoiement, avec une exception
+
+Toute copie utilisateur tutoie. Le mélange n'est pas cosmétique : sur `/paiement`, deux paires étaient **co-visibles** (Alert « Vérifiez votre connexion » au-dessus du hint « Vérifie ta connexion » ; titre « Ta commande » au-dessus d'un tooltip « sur vos commandes »). Audit UI/UX paiement 2026-07-26.
+
+**Seule exception — les messages d'erreur de Stripe.** `stripe.confirmPayment` renvoie pour `card_error`/`validation_error` une `error.message` produite par Stripe en `locale: "fr"`, donc vouvoyante (« Votre carte a été refusée. »). C'est elle qui porte le **motif** du refus, et en card-only c'est le chemin d'erreur le plus fréquent : on l'affiche telle quelle (`use-checkout-submit.ts`, `mapStripeErrorMessage`). Nos propres fallbacks, eux, tutoient. `checkout-voice-tutoiement.regression.test.ts` verrouille le tunnel avec cette allowlist.
+
+⚠️ Les libellés de rate limit (« Trop de tentatives. Veuillez réessayer plus tard. ») sont encore vouvoyants dans ~26 fichiers (`discounts`, `reviews`, `payments`) — dette connue, à traiter en une passe transverse, pas fichier par fichier. Cf. [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md).
+
+## Constats connus, non corrigés
+
+[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md) recense les défauts reproduits et localisés qu'on a **délibérément** laissés en place parce qu'ils demandent une conception à part entière. Chaque entrée est doublée d'un commentaire `@see docs/KNOWN-ISSUES.md` au site du code. À lire avant de retravailler la resoumission de checkout (KI-001) ou la persistance du formulaire de paiement (KI-002) — pas pour les découvrir une seconde fois.
