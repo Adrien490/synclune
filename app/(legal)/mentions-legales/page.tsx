@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 
 export const metadata: Metadata = {
 	title: "Mentions Légales | Synclune",
@@ -90,7 +91,7 @@ export default async function MentionsLegalesPage() {
 								<strong>Numéro de TVA intracommunautaire :</strong> FR35839183027
 								<br />
 								<span className="text-muted-foreground text-sm">
-									TVA non applicable, art. 293 B du CGI (franchise en base)
+									{DEFAULT_FRANCHISE_VAT_MENTION} (franchise en base)
 								</span>
 							</p>
 							<p>

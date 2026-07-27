@@ -25,18 +25,31 @@
   - **Vercel → transformations d'images** : une hausse sans nouveau produit au catalogue signale un abus de `/_next/image` (cf. § ci-dessous).
 - **Seuils fiscaux** : avec le comptable, vérifier le CA cumulé vs **85 000 €** (franchise biens) **et** vs **10 000 €** de ventes à distance **intra-UE** (seuil OSS — voir ci-dessous).
 - Le bandeau dashboard de progression TVA (`get-vat-progress`) suit le seuil franchise national, **pas** le seuil OSS intra-UE.
+- La carte affiche **deux** paliers, parce que les conséquences diffèrent : franchir le seuil **de base** (85 000 €) laisse la franchise acquise jusqu'au 31 décembre — c'est un signal à transmettre au comptable, pas une action du mois ; franchir le seuil **majoré** (93 500 €, dérivé × 1,1) rend la TVA due **dès le 1ᵉʳ jour du mois de dépassement**. Le CA de référence est celui de l'année civile en cours, **brut de remboursements** (choix conservateur : il ne peut qu'alerter trop tôt).
 
 ## § OSS — Ventes à distance intra-UE (seuil 10 000 €)
 
 - **État actuel** : l'app facture **0 TVA** sur toutes les ventes (franchise art. 293 B). Conforme tant que les ventes intra-UE annuelles restent **< 10 000 €**.
-- **Aucune logique TVA-destination / OSS n'est codée.** Le suivi du cumul intra-UE est **manuel/comptable**.
+- **Aucune logique TVA-destination / OSS n'est codée**, et plus aucune constante ne prétend le contraire : l'échafaudage (`EU_OSS_*`, `GetEuOssProgressReturn`, cache tag `EU_OSS_PROGRESS`) a été retiré à l'audit franchise TVA 2026-07-27 — il n'avait aucun consommateur alors que son JSDoc affirmait « on l'affiche au dashboard ». Le suivi du cumul intra-UE est **manuel/comptable**.
 - **Si le seuil 10 000 € approche** : engager le comptable → inscription OSS + application de la TVA du pays de destination. Côté code, ce sera un chantier dédié (table de taux par pays + calcul au checkout + déclaration OSS). Ne pas franchir le seuil sans l'avoir préparé.
 
 ## § Mention TVA — migration CGI → CIBS (échéance 31/12/2027)
 
 - Mention actuelle sur les factures : « TVA non applicable, art. 293 B du CGI » (`DEFAULT_FRANCHISE_VAT_MENTION`).
 - L'ordonnance 2025-1247 migre la référence vers l'**art. L.223-3 du CIBS** au 1ᵉʳ sept. 2026, avec **période de tolérance jusqu'au 31/12/2027** (les deux libellés restent valides d'ici là).
-- **Action** (avant fin 2027) : basculer la mention via la variable d'env `VENDOR_VAT_EXEMPTION_TEXT` (override sans déploiement) ou mettre à jour `DEFAULT_FRANCHISE_VAT_MENTION`. **Non urgent.**
+- **Action** (avant fin 2027) : mettre à jour `DEFAULT_FRANCHISE_VAT_MENTION` (`shared/constants/vat-franchise.ts`). Toutes les surfaces en dérivent désormais — PDF de facture, PDF d'avoir, récapitulatif de paiement, CGV, mentions légales, pied d'email — et le test `@regression vat-mention-ssot` interdit toute copie littérale qui échapperait à la bascule. Jusqu'à l'audit franchise TVA 2026-07-27, quatre de ces surfaces portaient la chaîne en dur et l'email avait déjà dérivé (« article » au lieu de « art. »).
+- L'env `VENDOR_VAT_EXEMPTION_TEXT` **override le PDF uniquement** (elle alimente `getVendorLegalInfo`) : utile pour un correctif d'urgence sans déploiement, mais elle ne suffit pas pour la bascule CIBS — la constante reste le chemin normal.
+- ⚠️ Changer le libellé casse la parité bit-à-bit des **avoirs déjà archivés** (ils n'ont pas de snapshot de données et re-dérivent le vendeur à chaque rendu). La Passe 8 de `reconcile-invoices` le détectera et alertera plutôt que de réécrire un hash. Les **factures** ne sont pas concernées : leur `invoiceDataSnapshot` est figé.
+
+## § Si la franchise était perdue un jour — ce qu'il faudrait toucher
+
+Checklist consolidée (aujourd'hui dispersée en commentaires). Rien de tout ceci n'est amorcé : c'est un chantier, pas un interrupteur.
+
+- **Régime** : `VENDOR_VAT_REGIME=NORMAL`. Les factures antérieures gardent `FRANCHISE_BASE` figé sur `Order.vendorVatRegime` et donc leur mention 293 B — c'est voulu.
+- **TVA par ligne** : réintroduire `OrderItem.taxRate` / `taxCategoryCode` (colonnes supprimées par `20260528250000_simplify_b2c_einvoicing`) et les câbler dans **les deux** chemins, facture **et** avoir (`build-invoice-data.ts`, `build-credit-note-data.ts` — un seul des deux laisserait les avoirs à 0).
+- **Contrainte DB** : le CHECK `Order_total_formula` exclut `taxAmount` du total. Toute formule incluant la TVA exige une migration (+ `down.sql`).
+- **Export comptable** : `export-orders-csv.service.ts` n'a ni colonne TVA ni distinction HT/TTC — headers, `ExportableOrder` et le `select` à reprendre ensemble.
+- **Suivi de seuil** : `get-vat-progress` agrège `Order.total`, exact tant que HT = TTC. Sous TVA, il faudrait basculer sur une base HT — au moment précis où le chiffre compte le plus.
 
 ## § e-reporting DGFiP — à construire pour le 1ᵉʳ sept. 2027
 

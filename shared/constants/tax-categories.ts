@@ -1,13 +1,15 @@
 /**
  * Codes catégorie TVA — CEFACT UNTDID 5305.
  *
- * Référencés dans `OrderItem.taxCategoryCode` (CHECK constraint impose l'une
- * de ces valeurs) et utilisés par les futurs renderers Factur-X / UBL / CII
- * (mapping BT-151 Item VAT category).
+ * ⚠️ Aucune colonne DB ne porte ces codes : `OrderItem.taxCategoryCode` a été
+ * supprimée par la migration `20260528250000_simplify_b2c_einvoicing`. Ils sont
+ * dérivés à la volée par `build-invoice-data.ts` / `build-credit-note-data.ts`
+ * et figés dans `Order.invoiceDataSnapshot` (mapping BT-151 Item VAT category
+ * pour de futurs renderers Factur-X / UBL / CII).
  *
  * Synclune est aujourd'hui en franchise TVA (Art. 293 B CGI) → toutes les
  * lignes émises utilisent `ZB`. Les autres codes sont préparés pour la
- * bascule régime réel (Phase 5) ou les ventes export.
+ * bascule régime réel ou les ventes export.
  */
 export const TAX_CATEGORY_CODES = {
 	/** Standard rate — TVA appliquée au taux normal (20% FR). */

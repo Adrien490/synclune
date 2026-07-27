@@ -162,6 +162,15 @@ export const envSchema = z.object({
 	// Réforme facturation 2026-2027 — métadonnées Factur-X / UBL / annuaire DGFiP
 	VENDOR_LEGAL_FORM: z.string().min(1).optional(),
 	VENDOR_VAT_REGIME: z.enum(["FRANCHISE_BASE", "NORMAL", "SIMPLIFIE"]).optional(),
+	// Seuil de franchise en base TVA, en euros (défaut 85 000 — ventes de biens).
+	// Non validé jusqu'à l'audit franchise TVA 2026-07-27 : une valeur malformée
+	// retombait silencieusement sur le défaut, donc le dashboard affichait le bon
+	// chiffre en ignorant l'intention de l'opérateur (ex. bascule à 37 500 pour
+	// une requalification en prestation de services).
+	VAT_FRANCHISE_THRESHOLD_EUR: z.coerce
+		.number("VAT_FRANCHISE_THRESHOLD_EUR doit être un nombre d'euros (ex: '85000')")
+		.positive("VAT_FRANCHISE_THRESHOLD_EUR doit être strictement positif")
+		.optional(),
 	VENDOR_BANK_IBAN: z
 		.string()
 		.regex(/^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/, "VENDOR_BANK_IBAN doit être un IBAN valide")

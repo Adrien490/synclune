@@ -64,7 +64,7 @@ Note /100, donne les preuves, problèmes P0/P1/P2/P3, corrections et tests à aj
 
 ---
 
-## 02 — Catalogue produits
+## 02 — Catalogue produits : DONE
 
 ```text
 Audit le point « Catalogue produits » dans Synclune.
@@ -73,7 +73,7 @@ Vérifie produits, statuts DRAFT/PUBLIC/ARCHIVED, soft delete, collections, type
 
 Inspecte `modules/products/**`, `modules/product-types/**`, `modules/collections/**`, `app/(shop)/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -101,7 +101,7 @@ Vérifie que tous les prix sont stockés en centimes, formatés en EUR, jamais e
 
 Inspecte `modules/cart/**`, `modules/orders/**`, `modules/payments/**`, `shared/utils/**`, `shared/constants/**`.
 
-Note /100, propose corrections et tests d’arrondis.
+Note /100, propose corrections/améliorations si pertinent et tests d’arrondis.
 ```
 
 ---
@@ -115,7 +115,7 @@ Vérifie panier sessionId/userId, fusion éventuelle après login, expiration, q
 
 Inspecte `modules/cart/**`, `shared/stores/**`, cookies, `prisma/schema.prisma` et tests cart.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -143,7 +143,7 @@ Vérifie création PaymentIntent, montant, devise EUR, metadata, client secret, 
 
 Inspecte `modules/payments/**`, `app/paiement/**`, `app/api/**`, `shared/lib/stripe*`.
 
-Note /100, propose corrections et tests critiques.
+Note /100, propose corrections/améliorations si pertinent et tests critiques.
 ```
 
 ---
@@ -171,7 +171,7 @@ Vérifie signature Stripe, idempotence, ordre des événements, retry, DLQ, erre
 
 Inspecte `app/api/webhooks/stripe/**`, `modules/webhooks/**`, `modules/payments/**`, tests webhooks.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -199,7 +199,7 @@ Vérifie transaction atomique : lock stock, création Order, OrderItem snapshots
 
 Inspecte `modules/payments/services/order-creation.service.ts`, `modules/orders/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections et tests transactionnels.
+Note /100, propose corrections/améliorations si pertinent et tests transactionnels.
 ```
 
 ---
@@ -227,7 +227,7 @@ Vérifie que les adresses de livraison/facturation sont copiées sur Order au ch
 
 Inspecte `modules/orders/**`, `modules/addresses/**`, `app/(account)/adresses/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -241,7 +241,7 @@ Vérifie transitions OrderStatus, PaymentStatus, FulfillmentStatus, droits admin
 
 Inspecte `modules/orders/**`, `app/admin/ventes/commandes/**`, `modules/webhooks/**`, `modules/emails/**`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -269,7 +269,7 @@ Vérifie `use cache`, `cacheLife("catalog")`, `cacheTag`, invalidation produits/
 
 Inspecte `modules/products/data/**`, `modules/collections/data/**`, `modules/skus/data/**`, `shared/data/**`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -297,7 +297,7 @@ Vérifie tous les usages de `use cache`, `use cache: private`, `cacheLife`, `cac
 
 Inspecte tout le repo avec recherche globale.
 
-Note /100, propose corrections et tests de cache.
+Note /100, propose corrections/améliorations si pertinent et tests de cache.
 ```
 
 ---
@@ -311,7 +311,7 @@ Vérifie email/password, Google, sessions, cookies, email verification, password
 
 Inspecte `modules/auth/**`, `app/api/auth/**`, `app/(auth)/**`, config Better Auth.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -339,7 +339,7 @@ Vérifie `ACTIVE`, `INACTIVE`, `PENDING_DELETION`, `ANONYMIZED`, `suspendedAt`, 
 
 Inspecte `modules/auth/**`, `modules/users/**`, `app/(account)/**`, `modules/cart/**`, `modules/orders/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -367,7 +367,7 @@ Vérifie que les inputs formulaires, actions, API routes, checkout, adresses, t�
 
 Inspecte `modules/**/schemas/**`, `shared/schemas/**`, actions et routes API.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -381,7 +381,7 @@ Vérifie formulaires auth, checkout, adresse, admin produit/SKU, discounts, refu
 
 Inspecte `shared/components/forms/**`, `shared/lib/form-context`, `modules/**/components/**`.
 
-Note /100, propose corrections UX et tests.
+Note /100, propose corrections/améliorations si pertinent UX et tests.
 ```
 
 ---
@@ -395,7 +395,7 @@ Vérifie que les Server Actions et routes mutatives sont protégées contre les 
 
 Inspecte `shared/lib/actions/**`, `modules/auth/**`, Server Actions et routes API mutatives.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -409,7 +409,7 @@ Vérifie les limites sur auth, search, checkout, discounts, admin actions, refun
 
 Inspecte `shared/lib/rate-limit*`, actions, routes API et tests.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -437,7 +437,7 @@ Vérifie que Stripe secret, Resend, database, Better Auth, UploadThing, Sentry e
 
 Inspecte `.env.example`, `shared/lib/env*`, `next.config.*`, imports `process.env`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -465,7 +465,7 @@ Vérifie que la PII opérationnelle est scrubée au bon moment, que les données
 
 Inspecte cron `hard-delete-retention`, services RGPD, modèles Order/User/Address, tests.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -493,7 +493,7 @@ Vérifie advisory locks Postgres, séquence annuelle, contraintes format, absenc
 
 Inspecte `modules/invoices/**`, migrations SQL, Prisma, tests facturation.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -521,7 +521,7 @@ Vérifie génération, archivage UploadThing, SHA-256, serving du PDF archivé e
 
 Inspecte `modules/invoices/**`, `modules/orders/services/archive-invoice-pdf*`, routes invoice, UploadThing.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -549,7 +549,7 @@ Vérifie remboursements partiels/totaux, idempotence, statuts Refund, emails, av
 
 Inspecte `modules/refunds/**`, `modules/payments/**`, `modules/webhooks/**`, tests refunds.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -563,7 +563,7 @@ Vérifie gestion dispute opened/resolved, alertes admin, historique commande, mo
 
 Inspecte `modules/orders/actions/**` (litiges), `modules/refunds/**`, `modules/webhooks/**`, `modules/cron/services/**` (`alert-dispute-deadlines`), `modules/dashboard/**`, emails admin.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -577,7 +577,7 @@ Vérifie crons sync-async-payments, retry webhooks, retry post-webhook tasks, ov
 
 Inspecte `modules/cron/**`, `modules/payments/**`, `modules/webhooks/**`, tests cron.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -591,7 +591,7 @@ Note /100, propose corrections.
 
 ---
 
-## 40 — Franchise TVA micro-entreprise
+## 40 — Franchise TVA micro-entreprise : DONE
 
 ```text
 Audit le point « Franchise TVA micro-entreprise » dans Synclune.
@@ -600,7 +600,7 @@ Vérifie TVA à 0, mention Art. 293 B, seuil 85 000 €, constantes SSOT, snapsh
 
 Inspecte `shared/constants/vat-franchise.ts`, `modules/invoices/**`, `modules/orders/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent/améliorations si pertinent.
 ```
 
 ---
@@ -614,7 +614,7 @@ Vérifie les 11 crons, cohérence `vercel.json` vs `modules/cron/constants/sched
 
 Inspecte `app/api/cron/**`, `modules/cron/**`, `vercel.json`, tests schedules.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -628,7 +628,7 @@ Vérifie order confirmation, shipping, cancel, refund, payment failed, auth emai
 
 Inspecte `emails/**`, `modules/emails/**`, `shared/lib/email-config.ts`, services d’envoi.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -642,7 +642,7 @@ Vérifie List-Unsubscribe, One-Click, Precedence, Auto-Submitted, endpoint `/not
 
 Inspecte `modules/emails/**`, routes notifications, config Resend.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -656,7 +656,7 @@ Vérifie le template polyvalent AdminAlertEmail, sous-types, idempotence, conten
 
 Inspecte `emails/admin-alert*`, `modules/emails/**`, `modules/cron/**`, `modules/webhooks/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -670,7 +670,7 @@ Vérifie upload images/vidéos, permissions admin, validation type/taille, HEIC 
 
 Inspecte `app/api/uploadthing/**`, `modules/media/**`, `modules/products/**`, `shared/schemas/media*`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -684,7 +684,7 @@ Vérifie next/image, tailles, blurDataUrl/thumbhash, thumbnails vidéo, lazy loa
 
 Inspecte composants produit, `SkuMedia`, scripts thumbnails, sitemap images.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -698,7 +698,7 @@ Vérifie favoris invité/connecté, sessionId/userId, produit supprimé, notific
 
 Inspecte `modules/wishlist/**`, `modules/emails/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -726,7 +726,7 @@ Vérifie modes de livraison, shippingCost, transporteur, tracking number/url, em
 
 Inspecte `modules/orders/**` (schemas/services/composants shipping + tracking), `modules/emails/**`, `app/(account)/commandes/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -740,7 +740,7 @@ Vérifie CartFulfillmentType, shippingCost, adresse requise ou non, checkout, co
 
 Inspecte `modules/cart/**`, `modules/orders/**`, `modules/payments/**`, UI checkout.
 
-Note /100, propose corrections et tests.
+Note /100, propose corrections/améliorations si pertinent et tests.
 ```
 
 ---
@@ -754,7 +754,7 @@ Vérifie CRUD produits, SKUs, collections, types, couleurs, matériaux, médias,
 
 Inspecte `app/admin/catalogue/**`, `modules/products/**`, `modules/skus/**`, `modules/collections/**`, `modules/colors/**`, `modules/materials/**`, `modules/product-types/**`, `modules/media/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -768,7 +768,7 @@ Vérifie listing, filtres, détail, statut, remboursement, factures, avoirs, his
 
 Inspecte `modules/orders/**`, `app/admin/ventes/**`, `modules/refunds/**`, `modules/invoices/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -782,7 +782,7 @@ Vérifie KPIs, revenue chart, commandes récentes, action items, filtres, perfor
 
 Inspecte `modules/dashboard/**`, `app/admin/(dashboard)/**`, `modules/orders/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -796,7 +796,7 @@ Vérifie la recherche produits (Server Action, PAS de route `/api/search` — el
 
 Inspecte `modules/products/actions/quick-search.ts`, `modules/products/data/{quick-search-products,get-quick-search-data,fuzzy-search}.ts`, `modules/products/components/quick-search-dialog/**`, `shared/components/search-input.tsx`, `shared/components/autocomplete/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -810,7 +810,7 @@ Vérifie metadata, Open Graph, sitemap, sitemap images, robots, canonical, struc
 
 Inspecte `app/(shop)/**`, `app/sitemap*`, `app/robots*`, SEO constants.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -824,7 +824,7 @@ Vérifie CGV, mentions légales, confidentialité, cookies, livraison, retours, 
 
 Inspecte `app/(legal)/**`, contenus, liens footer et checkout.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -838,7 +838,7 @@ Vérifie shadcn/ui, Radix, Tailwind, variants, boutons, inputs, dialogs, drawers
 
 Inspecte `shared/components/ui/**`, `shared/components/**`, modules UI.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -852,7 +852,7 @@ Vérifie clavier, focus, labels, erreurs, contrastes, modales Radix/Vaul, carrou
 
 Inspecte composants UI, tests Playwright axe, pages principales.
 
-Note /100, propose corrections WCAG.
+Note /100, propose corrections/améliorations si pertinent WCAG.
 ```
 
 ---
@@ -866,7 +866,7 @@ Vérifie formulaire adresse, téléphone, livraison, code promo, Stripe Elements
 
 Inspecte `app/paiement/**`, `modules/cart/**`, `modules/payments/**`, composants checkout.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -908,7 +908,7 @@ Vérifie absence de `useMemo`, `useCallback`, `React.memo`, compatibilité avec 
 
 Inspecte `package.json`, `next.config.*`, `app/**`, `modules/**`, `shared/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -922,7 +922,7 @@ Vérifie strictness, `any`, casts dangereux, `@ts-ignore`, types Prisma, types A
 
 Inspecte `tsconfig.json`, `modules/**`, `shared/types/**`, `app/generated/prisma`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -936,7 +936,7 @@ Vérifie modèles, relations, soft delete, indexes utiles, contraintes CHECK SQL
 
 Inspecte `prisma/schema.prisma`, `prisma/migrations/**`, `shared/lib/prisma`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -950,7 +950,7 @@ Vérifie que chaque nouvelle migration a un `down.sql`, que les migrations criti
 
 Inspecte `prisma/migrations/**`, docs runbook et scripts DB.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -964,7 +964,7 @@ Vérifie usage de `TX_TIMEOUT_LONG` et `TX_MAX_WAIT_LONG` pour transactions bulk
 
 Inspecte `shared/lib/prisma`, services transactionnels, webhooks, refunds, invoices, orders.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -978,7 +978,7 @@ Vérifie `deletedAt`, helpers `notDeleted`, `softDelete`, conservation commandes
 
 Inspecte `shared/lib/prisma`, modules products/orders/users, actions admin.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1006,7 +1006,7 @@ Vérifie journal des ajustements manuels, cohérence delta, non-négativité, ad
 
 Inspecte `modules/skus/**` (stock + mouvements), `modules/orders/**`, `prisma/schema.prisma`, migrations CHECK.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1034,7 +1034,7 @@ Vérifie que `pnpm test:critical` couvre cart, orders, payments, webhooks, auth,
 
 Inspecte `package.json`, tests des modules critiques et `test/contract`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1048,7 +1048,7 @@ Vérifie `vitest.integration.config.ts`, DB test, Prisma, transactions, webhooks
 
 Inspecte config intégration et tests concernés.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1076,7 +1076,7 @@ Vérifie usage de `@axe-core/playwright` et `vitest-axe`, pages shop, produit, p
 
 Inspecte tests axe existants et composants UI.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1090,7 +1090,7 @@ Vérifie `pnpm test:coverage`, seuils éventuels, coverage des modules critiques
 
 Inspecte config Vitest, rapports coverage et tests.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1118,7 +1118,7 @@ Vérifie `pnpm knip`, dépendances mortes, exports inutilisés, fichiers orpheli
 
 Inspecte config knip, package.json et résultats.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1132,7 +1132,7 @@ Vérifie pnpm lockfile, audit, dépendances sensibles, onlyBuiltDependencies, St
 
 Inspecte `package.json`, `pnpm-lock.yaml`, config audit/Dependabot si présente.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1146,7 +1146,7 @@ Vérifie instrumentation server/client, tunnel `/monitoring`, release, source ma
 
 Inspecte `instrumentation*`, `next.config.*`, `shared/lib/logger*`, usages Sentry.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1160,7 +1160,7 @@ Vérifie logs structurés, niveaux, contexte métier, absence de secrets/PII, St
 
 Inspecte `shared/lib/logger*`, modules critiques et handlers.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1188,7 +1188,7 @@ Vérifie les 9 stores, données persistées, purge, confidentialité, hydratatio
 
 Inspecte `shared/stores/**`, providers, modules utilisant les stores.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1202,7 +1202,7 @@ Vérifie storefront, produit, galerie, panier, checkout, compte, admin, dialogs/
 
 Inspecte composants UI, pages principales et tests viewport mobile.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1216,7 +1216,7 @@ Vérifie Embla, autoplay, lightbox, navigation clavier, swipe mobile, images/vid
 
 Inspecte composants galerie produit, `yet-another-react-lightbox`, `embla-carousel`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1230,7 +1230,7 @@ Vérifie Motion, animations Tailwind, jank, layout shift, respect `prefers-reduc
 
 Inspecte composants animés et CSS global.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1258,7 +1258,7 @@ Vérifie textes FR, boutons, erreurs, confirmations, checkout, emails, messages 
 
 Inspecte composants, emails et pages légales.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1272,7 +1272,7 @@ Vérifie formats EUR, dates, téléphone, adresse FR, messages français, devise
 
 Inspecte `shared/utils/**`, `shared/constants/**`, invoices, checkout et emails.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1286,7 +1286,7 @@ Vérifie exports CSV/PDF, permissions, audit OrderHistory, RGPD, injection CSV/E
 
 Inspecte `modules/orders/**` (services export CSV), `modules/invoices/**`, `app/admin/ventes/**`, routes export et tests.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1300,7 +1300,7 @@ Vérifie route invoice, droits client/admin, orderNumber, accès invité si néc
 
 Inspecte `app/api/orders/[orderNumber]/invoice/**`, modules invoices/orders/auth.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1314,7 +1314,7 @@ Vérifie que l’admin peut rembourser correctement sans casser Stripe, statuts,
 
 Inspecte `modules/refunds/**`, `app/admin/ventes/remboursements/**`, `modules/invoices/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1328,7 +1328,7 @@ Vérifie avis, modération, review request, stats, publication/hidden, anti-spam
 
 Inspecte `modules/reviews/**`, `modules/emails/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1342,7 +1342,7 @@ Vérifie compte, commandes, adresses, wishlist, factures, suppression de compte,
 
 Inspecte `app/(account)/**`, `modules/users/**`, `modules/orders/**`, `modules/addresses/**`, `modules/wishlist/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1356,7 +1356,7 @@ Vérifie verification email, password reset, expiration tokens, contenu, sécuri
 
 Inspecte `emails/**`, `modules/auth/**`, Better Auth config, Resend.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1370,7 +1370,7 @@ Vérifie routes auth, cron, webhooks, search, uploadthing, invoice, sécurité, 
 
 Inspecte `app/api/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1384,7 +1384,7 @@ Vérifie sitemap produits/collections/images, URLs publiques uniquement, produit
 
 Inspecte `app/sitemap*`, `app/robots*`, `app/sitemap-images.xml/**`, modules catalog.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1398,7 +1398,7 @@ Vérifie erreurs 400/401/403/404/409/422/429/500, Stripe errors, Prisma errors, 
 
 Inspecte `app/**/error.tsx`, `app/**/not-found.tsx`, `shared/lib/actions/**`, modules critiques.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -1412,7 +1412,7 @@ Vérifie confirmation, annulation, retour Stripe, récupération commande, sécu
 
 Inspecte `app/paiement/**`, `modules/payments/**`, `modules/orders/**`.
 
-Note /100, propose corrections.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---

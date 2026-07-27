@@ -73,6 +73,28 @@ describe("fetchDashboardVatProgress", () => {
 		expect(result.year).toBe(2026);
 	});
 
+	it("expose le seuil majoré (base × 1,1) — 93 500 € pour les ventes de biens", () => {
+		// Les deux seuils n'ont pas la même conséquence fiscale : le majoré est le
+		// seul qui rende la TVA due dès le 1er du mois de dépassement. La carte a
+		// besoin des deux pour ne pas annoncer l'un à la place de l'autre.
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		return fetchDashboardVatProgress().then((result) => {
+			expect(result.majoredThreshold).toBe(9_350_000);
+		});
+	});
+
+	it("le seuil majoré suit l'override d'env (pas une constante figée)", () => {
+		// 37 500 € (prestations de services) → majoré 41 250 €.
+		process.env.VAT_FRANCHISE_THRESHOLD_EUR = "37500";
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		return fetchDashboardVatProgress().then((result) => {
+			expect(result.threshold).toBe(3_750_000);
+			expect(result.majoredThreshold).toBe(4_125_000);
+		});
+	});
+
 	it("scopes the aggregate query from the first day of the current Paris year", async () => {
 		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
 

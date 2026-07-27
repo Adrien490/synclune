@@ -12,6 +12,7 @@ import {
 import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
@@ -215,7 +216,7 @@ function SummaryContent({
 								aria-label="Pourquoi pas de TVA ?"
 								aria-describedby={tvaTooltipId}
 							>
-								<span>TVA non applicable, art. 293 B du CGI</span>
+								<span>{DEFAULT_FRANCHISE_VAT_MENTION}</span>
 								<Info className="size-3" aria-hidden="true" />
 							</button>
 						</TooltipTrigger>

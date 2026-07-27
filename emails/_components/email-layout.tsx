@@ -1,6 +1,7 @@
 import { Body, Container, Head, Html, Img, Link, Preview, Section, Text } from "react-email";
 import { LEGAL_URLS, EMAIL_LOGO_URL } from "@/shared/constants/legal-urls";
 import { BRAND } from "@/shared/constants/brand";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_COLORS_DARK, EMAIL_STYLES } from "../email-colors";
 
 interface EmailLayoutProps {
@@ -201,7 +202,7 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							TVA non applicable, article 293 B du CGI
+							{DEFAULT_FRANCHISE_VAT_MENTION}
 						</Text>
 						<Text
 							className={EMAIL_CLASSES.text.secondary}

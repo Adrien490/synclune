@@ -16,30 +16,47 @@ interface VatProgressCardProps {
 
 /**
  * Carte de suivi du seuil de franchise en base TVA (article 293 B CGI).
- * Affiche le cumul YTD, le seuil applicable et une barre de progression.
- * Devient `warning` à 80% et `critical` (destructive) à 100%+.
+ * Affiche le cumul YTD, le seuil de base applicable et une barre de progression.
+ *
+ * ⚠️ Quatre paliers, parce que les deux seuils n'ont PAS la même conséquence :
+ * franchir le seuil de BASE (85 000 €) en cours d'année laisse la franchise
+ * intacte jusqu'au 31 décembre, alors que franchir le seuil MAJORÉ (93 500 €)
+ * rend la TVA due dès le 1er du mois de dépassement. La carte annonçait
+ * l'échéance du majoré dès le franchissement du base — fausse consigne, et rien
+ * ne signalait le majoré, où elle devient vraie (audit franchise TVA 2026-07-27).
  */
 export function VatProgressCard({ data }: VatProgressCardProps) {
-	const { ytdRevenue, threshold, progress, year } = data;
-	const status: "default" | "warning" | "critical" =
-		progress >= 100 ? "critical" : progress >= 80 ? "warning" : "default";
+	const { ytdRevenue, threshold, majoredThreshold, progress, year } = data;
+	const status: "default" | "warning" | "exceeded" | "critical" =
+		ytdRevenue >= majoredThreshold
+			? "critical"
+			: ytdRevenue >= threshold
+				? "exceeded"
+				: progress >= 80
+					? "warning"
+					: "default";
 
 	const remaining = Math.max(threshold - ytdRevenue, 0);
 	const cappedProgress = Math.min(progress, 100);
+	// `warning` et `exceeded` partagent la teinte ambre : ni l'un ni l'autre n'exige
+	// une action ce mois-ci. Le rouge reste réservé au majoré.
+	const isAmber = status === "warning" || status === "exceeded";
 
 	const subtitle =
 		status === "critical"
-			? "Seuil dépassé — bascule TVA applicable au 1er du mois en cours"
-			: status === "warning"
-				? `Plus que ${formatEuro(remaining, { compact: true })} avant la bascule TVA`
-				: `${formatEuro(remaining, { compact: true })} restants avant le seuil`;
+			? "Seuil majoré dépassé — TVA due depuis le 1er du mois en cours"
+			: status === "exceeded"
+				? "Seuil de base dépassé — franchise maintenue cette année, préviens ton comptable"
+				: status === "warning"
+					? `Plus que ${formatEuro(remaining, { compact: true })} avant le seuil de base`
+					: `${formatEuro(remaining, { compact: true })} restants avant le seuil`;
 
 	return (
 		<Card
 			className={cn(
 				"via-background relative overflow-hidden border-l-4 bg-linear-to-br to-transparent transition-[transform,box-shadow] duration-300",
 				status === "critical" && "border-destructive/60 from-destructive/10 shadow-md",
-				status === "warning" && "border-warning/60 from-warning/10 shadow-md",
+				isAmber && "border-warning/60 from-warning/10 shadow-md",
 				status === "default" && "border-info/40 from-info/5",
 			)}
 			role="region"
@@ -66,8 +83,10 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 						</TooltipTrigger>
 						<TooltipContent side="top" className="max-w-xs">
 							<p className="text-sm">
-								Franchise en base art. 293 B CGI. Au-delà du seuil, TVA applicable rétroactivement
-								au 1er du mois en cours.
+								Franchise en base art. 293 B CGI. Au-delà du seuil de base, la franchise reste
+								acquise jusqu&apos;au 31 décembre. Au-delà du seuil majoré (
+								{formatEuro(majoredThreshold, { compact: true })}), la TVA devient due dès le 1er du
+								mois de dépassement.
 							</p>
 						</TooltipContent>
 					</Tooltip>
@@ -76,7 +95,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 					className={cn(
 						"inline-flex size-8 items-center justify-center rounded-full border transition-colors",
 						status === "critical" && "border-destructive/30 bg-destructive/15 text-destructive",
-						status === "warning" && "border-warning/30 bg-warning/15 text-warning",
+						isAmber && "border-warning/30 bg-warning/15 text-warning",
 						status === "default" && "border-info/30 bg-info/15 text-info",
 					)}
 				>
@@ -99,7 +118,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 					aria-label={`Cumul du chiffre d'affaires : ${progress.toFixed(0)} % du seuil`}
 					className={cn(
 						status === "critical" && "[&>[data-slot=progress-indicator]]:bg-destructive",
-						status === "warning" && "[&>[data-slot=progress-indicator]]:bg-warning",
+						isAmber && "[&>[data-slot=progress-indicator]]:bg-warning",
 					)}
 				/>
 
@@ -107,7 +126,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 					className={cn(
 						"text-xs font-medium",
 						status === "critical" && "text-destructive",
-						status === "warning" && "text-warning",
+						isAmber && "text-warning",
 						status === "default" && "text-muted-foreground",
 					)}
 				>

@@ -5,7 +5,10 @@ import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PAID_REVENUE_STATUSES } from "@/modules/orders/constants/revenue-status.constants";
-import { getFranchiseThresholdCents } from "@/shared/constants/vat-franchise";
+import {
+	getFranchiseThresholdCents,
+	getMajoredFranchiseThresholdCents,
+} from "@/shared/constants/vat-franchise";
 import { getParisDateParts, parisWallTimeToUtc } from "@/shared/utils/timezone";
 
 import type { GetVatProgressReturn } from "../types/dashboard.types";
@@ -44,11 +47,15 @@ export async function fetchDashboardVatProgress(): Promise<GetVatProgressReturn>
 
 		const ytdRevenue = aggregate._sum.total ?? 0;
 		const threshold = getFranchiseThresholdCents();
+		// Dérivé du même seuil (× 1,1) — aucune requête supplémentaire. Les deux
+		// paliers n'ont pas la même conséquence fiscale, cf. `vat-franchise.ts`.
+		const majoredThreshold = getMajoredFranchiseThresholdCents();
 		const progress = threshold > 0 ? (ytdRevenue / threshold) * 100 : 0;
 
 		return {
 			ytdRevenue,
 			threshold,
+			majoredThreshold,
 			progress,
 			year,
 		};

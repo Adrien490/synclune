@@ -16,6 +16,14 @@
 const DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR = 85_000;
 
 /**
+ * Ratio du seuil **majoré** sur le seuil de base — 1,1 pour les deux couples
+ * (85 000 → 93 500 pour les biens ; 37 500 → 41 250 pour les services). Dériver
+ * plutôt que dupliquer garde le majoré cohérent avec un override
+ * `VAT_FRANCHISE_THRESHOLD_EUR`.
+ */
+const MAJORED_THRESHOLD_RATIO = 1.1;
+
+/**
  * Mention légale obligatoire de la franchise en base de TVA (Art. 293 B CGI) —
  * SSOT du libellé. Doit figurer sur toute facture émise sous ce régime.
  *
@@ -28,12 +36,16 @@ const DEFAULT_VAT_FRANCHISE_THRESHOLD_EUR = 85_000;
 export const DEFAULT_FRANCHISE_VAT_MENTION = "TVA non applicable, art. 293 B du CGI";
 
 /**
- * Seuil de franchise applicable, en cents (cohérence Prisma/Stripe).
+ * Seuil de franchise **de base** applicable, en cents (cohérence Prisma/Stripe).
  *
  * Lit `VAT_FRANCHISE_THRESHOLD_EUR` (euros) si défini et valide, sinon retombe
  * sur le défaut « ventes de biens » (85 000 €). SSOT unique consommée par le
- * bandeau dashboard (`get-vat-progress`) et la vue facturation
- * (`get-invoicing-overview`).
+ * bandeau dashboard (`get-vat-progress`).
+ *
+ * ⚠️ Franchir ce seuil en cours d'année N ne fait PAS perdre la franchise cette
+ * année-là : elle est maintenue jusqu'au 31 décembre, et n'est perdue au 1ᵉʳ
+ * janvier suivant que si le dépassement se confirme. La bascule immédiate est
+ * l'affaire du seuil MAJORÉ — cf. `getMajoredFranchiseThresholdCents()`.
  */
 export function getFranchiseThresholdCents(): number {
 	const raw = process.env.VAT_FRANCHISE_THRESHOLD_EUR;
@@ -43,26 +55,15 @@ export function getFranchiseThresholdCents(): number {
 }
 
 /**
- * Seuil UNIQUE UE de ventes à distance intra-communautaires B2C (biens + services
- * électroniques) — directive (UE) 2017/2455, transposée art. 259 D CGI.
+ * Seuil de franchise **majoré** applicable, en cents (93 500 € pour les biens
+ * avec le seuil de base par défaut).
  *
- * Au-delà de **10 000 €/an** de ventes à distance vers des consommateurs d'AUTRES
- * États membres (cumul tous pays UE confondus, hors France), la TVA du pays de
- * DESTINATION devient due et se déclare via le guichet unique **OSS**. En dessous,
- * les règles du pays de départ s'appliquent (pour Synclune : franchise art. 293 B,
- * TVA = 0). Synclune est très en dessous aujourd'hui, mais ce seuil n'a AUCUN
- * garde-fou applicatif (audit G1) → on l'affiche au dashboard pour anticiper.
- *
- * ⚠️ Indicateur de MONITORING uniquement : aucun calcul de TVA-destination/OSS
- * n'est implémenté (et ne doit pas l'être tant qu'on reste sous le seuil — ce
- * serait de la sur-ingénierie). Au franchissement : voir docs/RUNBOOK.md § OSS.
+ * C'est LUI qui porte la conséquence urgente : au franchissement, la franchise
+ * cesse immédiatement et la TVA est due **dès le 1ᵉʳ jour du mois de dépassement**
+ * (les opérations déjà facturées ce mois-là doivent être régularisées). D'où deux
+ * paliers distincts au dashboard : dépasser le seuil de base est un signal à
+ * transmettre au comptable, dépasser le majoré est une action du mois en cours.
  */
-const EU_OSS_DISTANCE_SALES_THRESHOLD_EUR = 10_000;
-export const EU_OSS_DISTANCE_SALES_THRESHOLD_CENTS = EU_OSS_DISTANCE_SALES_THRESHOLD_EUR * 100;
-
-/**
- * Codes pays EXCLUS du décompte « ventes à distance intra-UE » : la France (pays
- * de départ) et Monaco (assimilé territoire français pour la TVA, hors champ OSS).
- * Toute autre destination de `SHIPPING_COUNTRIES` est un État membre UE → comptée.
- */
-export const EU_OSS_EXCLUDED_COUNTRIES = ["FR", "MC"] as const;
+export function getMajoredFranchiseThresholdCents(): number {
+	return Math.round(getFranchiseThresholdCents() * MAJORED_THRESHOLD_RATIO);
+}

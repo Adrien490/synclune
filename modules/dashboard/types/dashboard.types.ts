@@ -103,24 +103,11 @@ export type GetReviewHealthReturn = {
 export type GetVatProgressReturn = {
 	/** Cumul du chiffre d'affaires payé depuis le 1er janvier de l'année en cours */
 	ytdRevenue: number;
-	/** Seuil de franchise applicable — défaut 85 000 € (ventes de biens, cas Synclune ; 37 500 € prestations de services) */
+	/** Seuil de franchise de base — défaut 85 000 € (ventes de biens, cas Synclune ; 37 500 € prestations de services) */
 	threshold: number;
-	/** Pourcentage du seuil atteint (0–100+) */
-	progress: number;
-	/** Année courante (utile pour libellé UI) */
-	year: number;
-};
-
-// ============================================================================
-// TYPES - EU OSS THRESHOLD (ventes à distance intra-UE — seuil 10 000 €)
-// ============================================================================
-
-export type GetEuOssProgressReturn = {
-	/** Cumul YTD des ventes payées vers des consommateurs d'autres États membres UE (hors FR/MC) */
-	ytdEuSales: number;
-	/** Seuil OSS unique UE — 10 000 € (cents) */
-	threshold: number;
-	/** Pourcentage du seuil atteint (0–100+) */
+	/** Seuil majoré (base × 1,1) — au-delà, la TVA est due dès le 1er du mois de dépassement */
+	majoredThreshold: number;
+	/** Pourcentage du seuil DE BASE atteint (0–100+) */
 	progress: number;
 	/** Année courante (utile pour libellé UI) */
 	year: number;

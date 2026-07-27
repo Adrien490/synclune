@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import Link from "next/link";
 import { STATIC_PAGES_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 
 export const metadata: Metadata = {
 	title: "Conditions Générales de Vente | Synclune",
@@ -94,8 +95,8 @@ export default async function CGVPage() {
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">3. Prix</h2>
 							<p>
-								Les prix de nos produits sont indiqués en <strong>euros (EUR)</strong>, TVA non
-								applicable (art. 293 B du CGI - régime micro-entreprise).
+								Les prix de nos produits sont indiqués en <strong>euros (EUR)</strong>.{" "}
+								{DEFAULT_FRANCHISE_VAT_MENTION} (régime micro-entreprise).
 							</p>
 							<p>
 								Les frais de livraison sont calculés à l'étape de paiement, une fois l'adresse de
