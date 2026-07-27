@@ -48,7 +48,14 @@ export async function generateMetadata({
 	const productType = await getProductTypeBySlug({ slug: productTypeSlug });
 
 	if (!productType) {
-		return {};
+		// `{}` faisait hériter les métadonnées racine (donc indexables) sur une page qui
+		// va appeler `notFound()`. Alignement sur les branches « non trouvé » produit et
+		// collection, qui posent toutes deux ce `robots`.
+		return {
+			title: "Catégorie non trouvée - Synclune",
+			description: "Cette catégorie de bijoux n'existe pas ou n'est plus disponible.",
+			robots: { index: false, follow: false },
+		};
 	}
 
 	// Vérifier si des filtres additionnels sont actifs (hors type)

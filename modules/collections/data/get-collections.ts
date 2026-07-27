@@ -1,5 +1,6 @@
 import { logger } from "@/shared/lib/logger";
-import { type Prisma } from "@/app/generated/prisma/client";
+import { CollectionStatus, type Prisma } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -26,9 +27,21 @@ export { COLLECTIONS_SORT_LABELS as SORT_LABELS } from "../constants/collection.
 // ============================================================================
 
 /**
- * Récupère la liste des collections avec pagination
+ * Récupère la liste des collections avec pagination.
+ *
+ * Sécurité : le statut est forcé à PUBLIC pour tout appelant non-admin, comme le fait
+ * `getProducts`. Avant ça, la visibilité reposait entièrement sur la discipline des
+ * appelants — les 6 appelants publics passaient bien `status: PUBLIC`, mais un septième
+ * qui l'oublie publie les noms des collections DRAFT, et rien ne l'en empêchait.
+ *
+ * `options.isAdmin` permet à un appelant qui exécute déjà dans un scope `"use cache"`
+ * (ex: `getNavbarMenuData`) de fournir le statut admin sans appeler `isAdmin()` ici —
+ * `isAdmin()` lit `headers()`, une source dynamique interdite dans un scope cache.
  */
-export async function getCollections(params: GetCollectionsParams): Promise<GetCollectionsReturn> {
+export async function getCollections(
+	params: GetCollectionsParams,
+	options?: { isAdmin?: boolean },
+): Promise<GetCollectionsReturn> {
 	const validation = getCollectionsSchema.safeParse(params);
 
 	if (!validation.success) {
@@ -44,7 +57,25 @@ export async function getCollections(params: GetCollectionsParams): Promise<GetC
 		};
 	}
 
-	return fetchCollections(validation.data);
+	const admin = options?.isAdmin ?? (await isAdmin());
+	const validatedParams: GetCollectionsParams = admin
+		? validation.data
+		: {
+				...validation.data,
+				filters: {
+					// `hasProducts` d'abord, à `undefined` : le `.transform()` du schéma en fait
+					// une propriété REQUISE dont la valeur peut être `undefined`, pas une
+					// propriété optionnelle. Un simple `{ ...filters, status }` omet donc la clé
+					// quand `filters` est absent, et le type ne passe plus. Le spread qui suit
+					// la réécrit dès qu'elle existe, et tout champ ajouté au schéma plus tard est
+					// repris automatiquement.
+					hasProducts: undefined,
+					...validation.data.filters,
+					status: CollectionStatus.PUBLIC,
+				},
+			};
+
+	return fetchCollections(validatedParams);
 }
 
 /**

@@ -35,7 +35,7 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag("product-types-list");
 	},
-	cacheProductTypesAdmin: () => {
+	cacheProductTypesList: () => {
 		mockCacheLife("user");
 		mockCacheTag("product-types-list");
 	},

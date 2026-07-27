@@ -12,6 +12,7 @@ const {
 	mockProcessCursorResults,
 	mockGetSortDirection,
 	mockBuildProductTypeWhereClause,
+	mockIsAdmin,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productType: { findMany: vi.fn(), count: vi.fn() },
@@ -22,6 +23,13 @@ const {
 	mockProcessCursorResults: vi.fn(),
 	mockGetSortDirection: vi.fn(),
 	mockBuildProductTypeWhereClause: vi.fn(),
+	mockIsAdmin: vi.fn(),
+}));
+
+// Mock explicite : sans lui, `isAdmin()` résoudrait la vraie session (donc un faux
+// « non-admin » silencieux) et les assertions ci-dessous passeraient par accident.
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -39,7 +47,7 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag("product-types-list");
 	},
-	cacheProductTypesAdmin: () => {
+	cacheProductTypesList: () => {
 		mockCacheLife("user");
 		mockCacheTag("product-types-list");
 	},
@@ -145,6 +153,7 @@ function makeProductType(overrides: Record<string, unknown> = {}) {
 }
 
 function setupDefaults() {
+	mockIsAdmin.mockResolvedValue(true);
 	mockBuildProductTypeWhereClause.mockReturnValue({});
 	mockGetSortDirection.mockReturnValue("asc");
 	mockBuildCursorPagination.mockReturnValue({ take: 21 });
@@ -164,6 +173,42 @@ describe("getProductTypes", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		setupDefaults();
+	});
+
+	// Parité avec `getProducts`, qui force `status: PUBLIC` pour les non-admins. Ici la
+	// visibilité reposait entièrement sur la discipline des appelants : les 4 appelants
+	// publics passent bien `isActive: true`, mais un cinquième qui l'oublie exposait les
+	// types désactivés dans le mega-menu ou le sitemap.
+	describe("visibilité forcée pour les non-admins", () => {
+		it("forces isActive true even when the caller asks for inactive types", async () => {
+			mockIsAdmin.mockResolvedValue(false);
+
+			await getProductTypes({ sortBy: "label-ascending", filters: { isActive: false } } as never);
+
+			expect(mockBuildProductTypeWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({ filters: expect.objectContaining({ isActive: true }) }),
+			);
+		});
+
+		it("forces isActive true when no filter is provided", async () => {
+			mockIsAdmin.mockResolvedValue(false);
+
+			await getProductTypes({ sortBy: "label-ascending" } as never);
+
+			expect(mockBuildProductTypeWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({ filters: expect.objectContaining({ isActive: true }) }),
+			);
+		});
+
+		it("preserves an isActive false filter for admins (admin listing shows both)", async () => {
+			mockIsAdmin.mockResolvedValue(true);
+
+			await getProductTypes({ sortBy: "label-ascending", filters: { isActive: false } } as never);
+
+			expect(mockBuildProductTypeWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({ filters: expect.objectContaining({ isActive: false }) }),
+			);
+		});
 	});
 
 	// --- Validation ---

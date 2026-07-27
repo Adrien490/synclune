@@ -98,7 +98,10 @@ export async function duplicateProduct(
 				// Generer un nouveau SKU unique
 				const newSkuValue = generateSkuCode();
 
-				// Creer le nouveau SKU
+				// Creer le nouveau SKU + ses couleurs/materiaux M2M.
+				// `position` est recopie tel quel plutot que reindexe : la source est deja
+				// triee par position (cf. `getProductForDuplication`) et l'ordre de saisie
+				// pilote l'affichage des variantes en vitrine.
 				const createdSku = await tx.productSku.create({
 					data: {
 						productId: createdProduct.id,
@@ -108,9 +111,19 @@ export async function duplicateProduct(
 						inventory: sourceSku.inventory,
 						isActive: sourceSku.isActive,
 						isDefault: sourceSku.isDefault,
-						colorId: sourceSku.colorId,
-						materialId: sourceSku.materialId,
 						size: sourceSku.size,
+						colors: {
+							create: sourceSku.colors.map((c) => ({
+								colorId: c.colorId,
+								position: c.position,
+							})),
+						},
+						materials: {
+							create: sourceSku.materials.map((m) => ({
+								materialId: m.materialId,
+								position: m.position,
+							})),
+						},
 					},
 				});
 

@@ -164,6 +164,51 @@ Le compilateur React 19 optimise automatiquement. **NE PAS utiliser:**
 
 - `useMemo()`, `useCallback()`, `React.memo()`
 
+## Catalogue — invariants
+
+### Tous les `select` Prisma du catalogue vivent dans `constants/`
+
+`GET_PRODUCT_SELECT`, `GET_PRODUCTS_SELECT`, `GET_PRODUCT_FOR_DUPLICATION_SELECT`, `PRODUCT_CAROUSEL_SELECT`, `QUICK_SEARCH_SELECT` dans `modules/products/constants/product.constants.ts` ; les 3 selects collection dans `modules/collections/constants/collection.constants.ts` ; les 2 selects type dans `modules/product-types/constants/product-type.constants.ts`. **Ne pas écrire un `select` en ligne dans une fonction `data/`** : c'est précisément ce qui a permis à celui de la duplication de rater la migration M2M de mai 2026 (les 4 selects rangés ici avaient été mis à jour, le sien — invisible — non), et « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant ~2,5 mois.
+
+Deux garde-fous, tous deux **sans base de données** :
+
+- `catalogue-selects-schema-validity.regression.test.ts` — soumet les 10 selects au validateur Prisma via un client sur port fermé. Prisma valide côté client **avant** de connecter : une clé inconnue lève `PrismaClientValidationError`, une clé valide échoue sur la connexion. C'est le seul filet qui couvre le trou entre `tsc` (qui accepte silencieusement une clé inexistante dans un `select` — vérifié : un `@ts-expect-error` y est signalé _inutile_) et les tests d'intégration (skippés sans `INTEGRATION_DATABASE_URL`, donc toujours en local).
+- `catalogue-selects-media-filter.regression.test.ts` — voir ci-dessous.
+
+### `mediaType` : une vidéo ne doit jamais atteindre un champ qui exige une image
+
+`SkuMedia` est polymorphe. Deux familles de selects, et le test ci-dessus les distingue :
+
+| Famille             | Filtre                                                | Pourquoi                                         |
+| ------------------- | ----------------------------------------------------- | ------------------------------------------------ |
+| **vignette unique** | `where: { mediaType: "IMAGE" }` **dans le select**    | L'appelant prend `images[0]` sans pouvoir trier  |
+| **galerie**         | pas de filtre, mais `mediaType: true` **sélectionné** | La galerie a besoin des vidéos ; l'appelant trie |
+
+Côté appelant, la SSOT est **`pickPrimaryImage()`** (`modules/products/services/product-display.service.ts`) : primaire IMAGE → première IMAGE → `null`. Ne jamais réécrire `find((i) => i.isPrimary) ?? images[0]` — cette expression mettait un `.mp4` dans `og:image`, dans le champ `image` d'un nœud `Product` JSON-LD (invalide en schema.org) et dans `<Image src>` (vignette cassée **+ transformation `/_next/image` facturée**). Quand elle retourne `null`, l'appelant **omet** le champ.
+
+⚠️ `where: { isPrimary: true }` seul est banni : sur un SKU sans média primaire il rend 0 image alors que le SKU en a. Utiliser `orderBy: [{ isPrimary: "desc" }, { position: "asc" }, { id: "asc" }] + take: 1`.
+
+### Une seule `BreadcrumbList` et une seule `ItemList` par URL
+
+`PageHeader` émet un `BreadcrumbList` dès qu'on lui passe des `breadcrumbs`. Les surfaces qui injectent **déjà** leur propre JSON-LD (PDP, /produits, /produits/[type], /collections/[slug]) doivent donc passer **`noStructuredData`** — sinon deux `BreadcrumbList`. L'`ItemList` appartient au **générateur de page** (`buildCatalogJsonLd`, `generateCollectionStructuredData`), imbriquée dans son `CollectionPage` via `mainEntity` : `ProductList` n'en émet plus. Deux `ItemList` aux `numberOfItems` divergents sur une même URL laissent Google en choisir une arbitrairement. Verrouillé par `shared/components/__tests__/catalogue-single-breadcrumb.regression.test.ts`.
+
+### Visibilité : les data fns forcent, elles ne font pas confiance à l'appelant
+
+`getProducts`, `getCollections` et `getProductTypes` forcent respectivement `status: PUBLIC`, `status: PUBLIC` et `isActive: true` pour tout appelant non-admin. La discipline de l'appelant n'est **pas** un mécanisme de sécurité : les filtres étaient corrects chez les 10 appelants publics, mais rien ne l'imposait.
+
+⚠️ Les trois acceptent un `options.isAdmin` — **obligatoire** pour un appelant qui exécute déjà dans un scope `"use cache"` (ex. `getNavbarMenuData`) : `isAdmin()` lit `headers()`, source dynamique interdite là. Un appel public depuis un scope cache passe `{ isAdmin: false }`.
+
+### Statuts, soft delete
+
+- Machine à états `ProductStatus` : `product-status-validation.service.ts` (identité X→X refusée ; les 6 autres transitions autorisées). Vers `PUBLIC`, `validateProductForPublication` exige titre + ≥1 SKU actif avec stock **et un média de type IMAGE** (une vidéo `isPrimary` ne publie pas).
+- **Toute lecture-avant-mutation d'un produit filtre `deletedAt: null`.** Sans ça on fabrique l'état `status: PUBLIC` + `deletedAt` — invisible en vitrine (`notDeleted` partout) mais qui casse les gardes d'**écriture** qui ne filtrent que le statut : `delete-product-type` refuserait à jamais un type « ayant des produits PUBLIC » invisibles.
+- Il n'y a **pas** de `restore-product` : `deleteProduct` purge les `ProductCollection`, les paniers et les favoris. Archiver (`ARCHIVED`) est le chemin réversible ; supprimer ne l'est pas.
+- `Product.slug` est unique sur **toutes** les lignes, soft-deleted incluses (aucun index partiel). Pas de P2002 pour autant : `generateSlug` suffixe (`bague-x-2`). Recréer un produit supprimé ne récupère donc jamais son slug — voulu, réutiliser le slug ferait pointer une URL indexée vers un autre bijou.
+
+### Pas de `metaTitle` / `metaDescription` en base
+
+Choix assumé (micro-entreprise, un champ de moins par bijou) : le titre SEO est dérivé de `title` + prix (`buildSeoTitle`, ≤ 60 c.) et la meta description est la description produit tronquée à 155 c. Corollaire : la copie vitrine et la meta description sont le même texte. Y toucher = migration Prisma + 2 champs de formulaire, chantier à part.
+
 ## Server Actions Pattern
 
 ```typescript
@@ -487,7 +532,7 @@ Sans override : risque P2024 timeout + rollback partiel.
 
 ## Facturation électronique — invariants
 
-Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €). Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront). ⚠️ **L'e-reporting a été RETIRÉ du code le 2026-07-26** (right-sizing) : la machinerie était en dry-run intégral, écrite contre une spec non figée, sans Plateforme Agréée branchée. **À réécrire au go-live** contre l'arrêté définitif et une PA réelle — cf. [`docs/RUNBOOK.md`](docs/RUNBOOK.md). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
+Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 293 B CGI). **Seuil de franchise applicable : 85 000 € HT/an (ventes de marchandises — bijoux ; majoré 93 500 €)** ; 37 500 € ne vaut que pour les prestations de services (le `/personnalisation` sur-mesure est une zone grise à arbitrer avec le comptable). Seuil piloté par `VAT_FRANCHISE_THRESHOLD_EUR` (SSOT `shared/constants/vat-franchise.ts`, défaut 85 000 €, validé par `env.schema.ts`) ; le majoré en est dérivé × 1,1 via `getMajoredFranchiseThresholdCents()`. ⚠️ **Les deux seuils n'ont pas la même conséquence** — franchir le seuil de base laisse la franchise acquise jusqu'au 31 décembre, franchir le majoré rend la TVA due dès le 1ᵉʳ du mois de dépassement. `VatProgressCard` annonçait le second dès le premier (audit franchise TVA 2026-07-27, verrouillé par `vat-progress-card.regression.test.tsx`). La mention légale ne s'écrit **jamais en littéral** : toutes les surfaces (PDF facture/avoir, checkout, CGV, mentions légales, email) dérivent de `DEFAULT_FRANCHISE_VAT_MENTION`, verrouillé par `vat-mention-ssot.regression.test.ts` — c'est ce qui rendra la bascule CGI → CIBS (échéance 31/12/2027) atomique. Calendrier réforme : émission/e-reporting B2C obligatoire au **1ᵉʳ septembre 2027**, **réception** au **1ᵉʳ septembre 2026** (échéance la plus proche — obligation **back-office** : s'inscrire auprès d'une PA pour recevoir les factures fournisseurs, pas du code storefront). ⚠️ **L'e-reporting a été RETIRÉ du code le 2026-07-26** (right-sizing) : la machinerie était en dry-run intégral, écrite contre une spec non figée, sans Plateforme Agréée branchée. **À réécrire au go-live** contre l'arrêté définitif et une PA réelle — cf. [`docs/RUNBOOK.md`](docs/RUNBOOK.md). Les invariants ci-dessous gardent le code conforme aux Art. 286 / 289-I / 272-I CGI, L102 B LPF et L123-22 Code de Commerce.
 
 ### Invariants intangibles
 
@@ -514,15 +559,15 @@ Synclune est entrepreneur individuel **micro-entreprise franchise TVA** (Art. 29
 
 ### Conformité réglementaire (référencement)
 
-| Article                                    | Localisation                                                          | Statut |
-| ------------------------------------------ | --------------------------------------------------------------------- | ------ |
-| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                 | ✓      |
-| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)             | ✓      |
-| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                     | ✓      |
-| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263`                                       | ✓      |
-| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)               | ✓      |
-| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                 | ✓      |
-| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007) | ✓      |
+| Article                                    | Localisation                                                           | Statut |
+| ------------------------------------------ | ---------------------------------------------------------------------- | ------ |
+| Art. 286 CGI — séquentialité gap-free      | `persist-invoice-number.service.ts:50-140` + CHECK DB                  | ✓      |
+| Art. 289-I CGI — émission à l'encaissement | `ensure-invoice-number.service.ts:20-46` (ORD-COMPLY-002)              | ✓      |
+| Art. 272-I CGI — avoir post-facture        | `void-invoice.service.ts:53-194` (ORD-COMPLY-003)                      | ✓      |
+| Art. 293 B CGI — mention franchise TVA     | `render-invoice-pdf.ts:258-263` + SSOT `DEFAULT_FRANCHISE_VAT_MENTION` | ✓      |
+| Art. L102 B LPF — immutabilité 10 ans      | `archive-invoice-pdf.service.ts:22-77` (ORD-COMPLY-005)                | ✓      |
+| Art. L123-22 C. com. — audit trail         | `OrderHistory` + `createOrderAuditTx`                                  | ✓      |
+| Art. 50-0 CGI — CA à l'encaissement        | `export-orders-csv.service.ts:31-60` filtre `paidAt` (ORD-COMPLY-007)  | ✓      |
 
 Modèle d'activité, seuils & périmètre assumé : [`docs/BUSINESS.md`](docs/BUSINESS.md). Procédures opérationnelles (crons, seuils TVA/OSS) : [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 

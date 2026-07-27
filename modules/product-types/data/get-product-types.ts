@@ -1,10 +1,11 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
-import { cacheProductTypesAdmin } from "../constants/cache";
+import { cacheProductTypesList } from "../constants/cache";
 
 import {
 	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
@@ -28,11 +29,21 @@ export type { GetProductTypesParams, GetProductTypesReturn } from "../types/prod
 // ============================================================================
 
 /**
- * Action serveur pour récupérer les types de produits
- * Accessible publiquement (pas de restriction admin)
+ * Récupère les types de produits (bijoux). Accessible publiquement.
+ *
+ * Sécurité : `isActive` est forcé à `true` pour tout appelant non-admin, comme
+ * `getProducts` force `status: PUBLIC`. Avant ça, la visibilité reposait entièrement
+ * sur la discipline des appelants — les 4 appelants publics passaient bien
+ * `isActive: true`, mais un cinquième qui l'oublie expose les types désactivés dans le
+ * mega-menu ou le sitemap, et rien ne l'en empêchait.
+ *
+ * `options.isAdmin` permet à un appelant qui exécute déjà dans un scope `"use cache"`
+ * (ex: `getNavbarMenuData`) de fournir le statut admin sans appeler `isAdmin()` ici —
+ * `isAdmin()` lit `headers()`, une source dynamique interdite dans un scope cache.
  */
 export async function getProductTypes(
 	params: GetProductTypesParamsInput,
+	options?: { isAdmin?: boolean },
 ): Promise<GetProductTypesReturn> {
 	const validation = getProductTypesSchema.safeParse(params);
 
@@ -40,7 +51,12 @@ export async function getProductTypes(
 		throw new Error("Invalid parameters");
 	}
 
-	return fetchProductTypes(validation.data);
+	const admin = options?.isAdmin ?? (await isAdmin());
+	const validatedParams = admin
+		? validation.data
+		: { ...validation.data, filters: { ...validation.data.filters, isActive: true } };
+
+	return fetchProductTypes(validatedParams);
 }
 
 /**
@@ -48,7 +64,7 @@ export async function getProductTypes(
  */
 async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProductTypesReturn> {
 	"use cache";
-	cacheProductTypesAdmin();
+	cacheProductTypesList();
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_PRODUCT_TYPES_DEFAULT_PER_PAGE),

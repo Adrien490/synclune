@@ -1,6 +1,7 @@
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
+import { GET_PRODUCT_FOR_DUPLICATION_SELECT } from "../constants/product.constants";
 
 // ============================================================================
 // TYPES
@@ -15,8 +16,11 @@ type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDuplicatio
 /**
  * Récupère un produit avec toutes les données nécessaires à la duplication
  *
- * Inclut: collections, SKUs avec images
+ * Inclut: collections, SKUs avec images + couleurs/matériaux M2M
  * Utilisé par duplicate-product.ts
+ *
+ * Le select vit dans `constants/product.constants.ts` avec les 4 autres du module —
+ * il était en ligne ici, et c'est ainsi qu'il a raté la mise à jour M2M de mai 2026.
  *
  * @param productId - ID du produit à dupliquer
  */
@@ -37,47 +41,7 @@ async function fetchProductForDuplication(productId: string) {
 	try {
 		return await prisma.product.findFirst({
 			where: { id: productId, ...notDeleted },
-			select: {
-				id: true,
-				title: true,
-				slug: true,
-				description: true,
-				typeId: true,
-				collections: {
-					select: {
-						collectionId: true,
-						collection: {
-							select: { slug: true },
-						},
-					},
-				},
-				skus: {
-					select: {
-						sku: true,
-						priceInclTax: true,
-						compareAtPrice: true,
-						inventory: true,
-						isActive: true,
-						isDefault: true,
-						colorId: true,
-						materialId: true,
-						size: true,
-						images: {
-							select: {
-								url: true,
-								thumbnailUrl: true,
-								blurDataUrl: true,
-								altText: true,
-								mediaType: true,
-								width: true,
-								height: true,
-								isPrimary: true,
-								position: true,
-							},
-						},
-					},
-				},
-			},
+			select: GET_PRODUCT_FOR_DUPLICATION_SELECT,
 		});
 	} catch (error) {
 		logger.error("Failed to fetch product for duplication", error, {

@@ -54,52 +54,65 @@ type ExtractedImage = {
 };
 
 /**
+ * Choisit le média à utiliser comme IMAGE représentative d'un SKU.
+ *
+ * Priorité : média `isPrimary` de type IMAGE → premier média de type IMAGE → `null`.
+ *
+ * ⚠️ SSOT à utiliser partout où l'on a besoin d'UNE url d'image à partir d'un tableau
+ * de médias mixtes. Les selects `GET_PRODUCT_SELECT` / `GET_PRODUCTS_SELECT` ne filtrent
+ * volontairement pas `mediaType` (la galerie a besoin des vidéos) mais sélectionnent
+ * `mediaType` précisément pour que l'appelant trie. Trois consommateurs ne le
+ * faisaient pas et écrivaient un `.mp4` là où une image est requise : `og:image` /
+ * `twitter:images` (carte sociale cassée au partage), le champ `image` du nœud
+ * `Product` d'un `ItemList` JSON-LD (invalide en schema.org, rejet Google Merchant), et
+ * la vignette de recherche rapide (`<Image src>` sur une vidéo → vignette cassée + une
+ * transformation `/_next/image` facturée pour rien).
+ *
+ * Retourne `null` quand aucun rendu image n'est possible : l'appelant OMET alors le
+ * champ plutôt que de publier une url invalide.
+ *
+ * @public
+ */
+export function pickPrimaryImage<T extends { mediaType: string; isPrimary: boolean }>(
+	images: readonly T[] | undefined,
+): T | null {
+	if (!images?.length) return null;
+
+	return (
+		images.find((img) => img.isPrimary && img.mediaType === "IMAGE") ??
+		images.find((img) => img.mediaType === "IMAGE") ??
+		null
+	);
+}
+
+/**
  * Extrait l'image principale d'un SKU (fonction utilitaire unique)
  *
- * Priorité :
- * 1. Image marquée isPrimary de type IMAGE
- * 2. Première image de type IMAGE
+ * Délègue le choix du média à `pickPrimaryImage` et n'ajoute que l'habillage
+ * (alt dérivé, blurDataUrl).
  *
  * @param sku - SKU dont on veut extraire l'image
  * @param productTitle - Titre du produit pour le texte alt
  * @returns Image extraite ou null si aucune image trouvée
  */
 function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedImage | null {
-	if (sku.images.length === 0) {
+	const image = pickPrimaryImage(sku.images);
+	if (!image) {
 		return null;
 	}
 
-	// Priorité 1: Image marquée isPrimary
-	const primaryImage = sku.images.find((img) => img.isPrimary && img.mediaType === "IMAGE");
-	if (primaryImage) {
-		return {
-			id: primaryImage.id,
-			url: primaryImage.url,
-			mediaType: "IMAGE",
-			alt: truncateAltText(
-				primaryImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Image principale"}`,
-			),
-			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
-		};
-	}
+	const fallbackQualifier = image.isPrimary ? "Image principale" : "Variante";
 
-	// Priorité 2: Première image de type IMAGE
-	const firstImage = sku.images.find((img) => img.mediaType === "IMAGE");
-	if (firstImage) {
-		return {
-			id: firstImage.id,
-			url: firstImage.url,
-			mediaType: "IMAGE",
-			alt: truncateAltText(
-				firstImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Variante"}`,
-			),
-			blurDataUrl: firstImage.blurDataUrl ?? undefined,
-		};
-	}
-
-	return null;
+	return {
+		id: image.id,
+		url: image.url,
+		mediaType: "IMAGE",
+		alt: truncateAltText(
+			image.altText ??
+				`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? fallbackQualifier}`,
+		),
+		blurDataUrl: image.blurDataUrl ?? undefined,
+	};
 }
 
 /**

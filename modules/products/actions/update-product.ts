@@ -86,8 +86,17 @@ export async function updateProduct(
 		// 4. Verifier que le produit et le SKU existent
 		// Le select charge aussi title + skus (avec stock + isPrimary image) pour
 		// permettre validateProductForPublication ci-dessous sans seconde requete.
+		// deletedAt: null — meme garde que `toggle-product-status.ts`. Sans elle, cette
+		// action pouvait editer un produit soft-deleted et lui reecrire `status: PUBLIC`,
+		// fabriquant l'etat `PUBLIC` + `deletedAt` que le reste du catalogue traite comme
+		// impossible : la vitrine reste protegee (`notDeleted` partout), mais les gardes
+		// d'ECRITURE qui ne filtrent que le statut s'y cassent — `delete-product-type`
+		// refuserait a jamais un type « ayant des produits PUBLIC » invisibles, et les
+		// gardes « derniere variante active d'un produit PUBLIC » se declencheraient sur
+		// un produit supprime. Aucune surface admin n'expose un produit soft-deleted
+		// (il n'y a volontairement pas de restore-product), donc c'est un durcissement.
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: validatedData.productId },
+			where: { id: validatedData.productId, deletedAt: null },
 			select: {
 				id: true,
 				title: true,

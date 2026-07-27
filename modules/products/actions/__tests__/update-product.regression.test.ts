@@ -245,6 +245,58 @@ describe("updateProduct — regression hardening", () => {
 	// CAT-AUDIT-001 — validation publication
 	// ===================================================================
 
+	// ===================================================================
+	// CAT-AUDIT-004 — le produit soft-deleted n'est pas éditable
+	// ===================================================================
+
+	// `toggle-product-status.ts` porte ce filtre depuis un audit précédent, avec deux
+	// régressions dédiées ; `updateProduct` ne l'avait pas. Résultat atteignable :
+	// `status: PUBLIC` **avec** `deletedAt` posé — la désynchronisation que le test
+	// `collection-selects-soft-delete.regression.test.ts` anticipe explicitement côté
+	// lecture. La vitrine restait protégée (`notDeleted` partout), mais les gardes
+	// d'ÉCRITURE qui ne filtrent que le statut s'y cassaient : `delete-product-type`
+	// aurait refusé à jamais un type « ayant des produits PUBLIC » invisibles.
+	//
+	// Aucune surface admin n'expose un produit soft-deleted (il n'y a volontairement pas
+	// de `restore-product`), donc c'est un durcissement contre un POST forgé — pas une
+	// fuite active.
+	describe("CAT-AUDIT-004: produit soft-deleted exclu de la lecture-avant-mutation", () => {
+		it("filtre deletedAt: null dans le findUnique du produit", async () => {
+			mockValidateInput.mockReturnValue({ data: buildValidatedData({ status: "DRAFT" }) });
+			mockPrisma.product.findUnique.mockResolvedValue(
+				buildProductMock([
+					{ id: "sku_default", isActive: true, inventory: 10, images: [{ id: "img1" }] },
+				]),
+			);
+			mockPrisma.productSku.findFirst.mockResolvedValue({
+				id: "sku_default",
+				isDefault: true,
+				isActive: true,
+			});
+
+			await updateProduct(undefined, formData);
+
+			expect(mockPrisma.product.findUnique).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ deletedAt: null }),
+				}),
+			);
+		});
+
+		it("répond notFound et n'écrit RIEN quand le produit est soft-deleted", async () => {
+			mockValidateInput.mockReturnValue({ data: buildValidatedData({ status: "PUBLIC" }) });
+			// Le filtre `deletedAt: null` fait que Prisma ne rend rien.
+			mockPrisma.product.findUnique.mockResolvedValue(null);
+
+			const result = await updateProduct(undefined, formData);
+
+			expect(result.status).toBe(ActionStatus.NOT_FOUND);
+			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+			expect(mockPrisma.product.update).not.toHaveBeenCalled();
+			expect(mockPrisma.productSku.update).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("CAT-AUDIT-001: validateProductForPublication on status=PUBLIC", () => {
 		it("rejects status=PUBLIC when projected inventory of default SKU is 0 and no other SKU has stock", async () => {
 			mockValidateInput.mockReturnValue({

@@ -91,6 +91,14 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 			{/* Section principale avec catalogue */}
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
 				<div className="mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+					{/* H1 mobile sr-only — le PageHeader ci-dessus est `hidden sm:block`, donc en
+					    dessous de 40rem cette page n'avait AUCUN h1 : la première en-tête était
+					    le h2 d'une carte de collection (WCAG 2.4.6 / 1.3.1). Même repli que
+					    `product-catalog.tsx`, qui l'avait et dont /collections avait été oubliée. */}
+					<h1 className="sr-only sm:hidden" data-testid="collections-mobile-title">
+						Les collections
+					</h1>
+
 					<Suspense fallback={<CollectionGridSkeleton />}>
 						<CollectionGrid collectionsPromise={collectionsPromise} perPage={perPage} />
 					</Suspense>

@@ -59,7 +59,14 @@ export async function deleteProductType(
 							products: {
 								where: {
 									status: "PUBLIC",
-									skus: { some: { isActive: true } },
+									// deletedAt: null — les 5 autres _count du module l'ont, celui-ci
+									// ne l'avait pas. Un produit soft-deleted est ARCHIVED aujourd'hui,
+									// donc le compte est juste ; mais qu'un `status: PUBLIC` soit un jour
+									// reecrit sur un produit supprime rendrait ce type INDELEBILE a
+									// jamais, avec un message citant des produits invisibles. Meme
+									// famille que le pre-compte de delete-color / delete-material.
+									deletedAt: null,
+									skus: { some: { isActive: true, deletedAt: null } },
 								},
 							},
 						},
@@ -79,7 +86,7 @@ export async function deleteProductType(
 			if (pt._count.products > 0) {
 				return {
 					status: "blocked" as const,
-					message: `Le type "${pt.label}" a ${pt._count.products} produit(s) actif(s) et ne peut pas etre supprime`,
+					message: `Le type "${pt.label}" a ${pt._count.products} produit(s) actif(s) et ne peut pas être supprimé`,
 				};
 			}
 

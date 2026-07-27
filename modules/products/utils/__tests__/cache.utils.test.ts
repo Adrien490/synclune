@@ -108,7 +108,14 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
 		expect(tags).toContain("sitemap-images");
-		expect(tags).toHaveLength(9);
+		// `get-recent-products.ts` PROMETTAIT cette invalidation en JSDoc alors qu'aucune
+		// mutation produit ne bustait le tag (seuls les avis et le cron RGPD le faisaient) :
+		// un produit archivé restait dans « Vus récemment » jusqu'à expiration du profil.
+		expect(tags).toContain("recent-products-list");
+		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce
+		// tag, publier le premier bijou d'un type ne le faisait pas apparaître au mega-menu.
+		expect(tags).toContain("product-types-list");
+		expect(tags).toHaveLength(11);
 	});
 
 	it("includes SKUS + COLLECTIONS tags when productId is provided", () => {
@@ -116,7 +123,16 @@ describe("getProductInvalidationTags", () => {
 
 		expect(tags).toContain("product-prod-abc-skus");
 		expect(tags).toContain("product-prod-abc-collections");
-		expect(tags).toHaveLength(11);
+		expect(tags).toHaveLength(13);
+	});
+
+	// L'assertion de longueur ci-dessus est le garde-fou : sans elle, un tag ajouté par
+	// mégarde (ou un doublon) passerait inaperçu. On vérifie donc aussi l'unicité —
+	// `updateTag` sur un doublon est inoffensif mais signale une liste mal maintenue.
+	it("ne contient aucun tag en double", () => {
+		const tags = getProductInvalidationTags("bague-or", "prod-abc");
+
+		expect(new Set(tags).size).toBe(tags.length);
 	});
 
 	it("does not include SKUS or COLLECTIONS tags when productId is undefined", () => {

@@ -10,9 +10,6 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { StaggerGrid } from "@/shared/components/animations/stagger-grid";
 import { RefreshButton } from "./refresh-button";
 import { ProductsLoadMore } from "./products-load-more";
-import { SITE_URL } from "@/shared/constants/seo-config";
-import { getOfferAvailability } from "@/shared/utils/offer-availability";
-import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 import {
 	SearchFallbackSuggestions,
@@ -104,73 +101,25 @@ export function ProductList({
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
-	// ItemList JSON-LD for rich snippets (Google Shopping carousel-style SERPs).
-	// Each item embeds a full Product with Offer (price EUR, availability) and
-	// aggregateRating when reviews exist — mirrors home page pattern in
-	// `shared/components/structured-data.tsx` for consistency.
-	const itemListJsonLd = {
-		"@context": "https://schema.org",
-		"@type": "ItemList",
-		numberOfItems: totalCount,
-		itemListElement: products.map((product, index) => {
-			const url = `${SITE_URL}/creations/${product.slug}`;
-			// skus are pre-sorted by [isDefault desc, priceInclTax asc] in GET_PRODUCTS_SELECT
-			const defaultSku = product.skus[0];
-			const primaryImage = defaultSku?.images.find((img) => img.isPrimary) ?? defaultSku?.images[0];
-			const priceCents = defaultSku?.priceInclTax;
-			const inStock = (defaultSku?.inventory ?? 0) > 0;
-
-			const productNode: Record<string, unknown> = {
-				"@type": "Product",
-				"@id": `${url}#product`,
-				name: product.title,
-				url,
-				...(product.description && { description: product.description }),
-				...(primaryImage && { image: primaryImage.url }),
-				...(product.reviewStats &&
-					product.reviewStats.totalCount > 0 && {
-						aggregateRating: {
-							"@type": "AggregateRating",
-							ratingValue: Number(product.reviewStats.averageRating).toFixed(1),
-							reviewCount: product.reviewStats.totalCount,
-							bestRating: 5,
-							worstRating: 1,
-						},
-					}),
-				...(typeof priceCents === "number" && {
-					offers: {
-						"@type": "Offer",
-						url,
-						price: (priceCents / 100).toFixed(2),
-						priceCurrency: "EUR",
-						availability: getOfferAvailability(inStock),
-						itemCondition: "https://schema.org/NewCondition",
-					},
-				}),
-			};
-
-			return {
-				"@type": "ListItem",
-				position: index + 1,
-				url,
-				item: productNode,
-			};
-		}),
-	};
+	// PAS d'`ItemList` JSON-LD ici — volontairement.
+	//
+	// Ce composant en émettait un (`numberOfItems: totalCount`) alors que les trois pages
+	// qui le montent en émettent DÉJÀ un, imbriqué dans leur `CollectionPage` via
+	// `mainEntity` : `buildCatalogJsonLd` pour /produits et /produits/[type],
+	// `generateCollectionStructuredData` pour /collections/[slug]. Deux `ItemList` avec
+	// des `numberOfItems` divergents (total réel vs 30 sérialisés) sur une même URL :
+	// Google en retient un arbitrairement et le désaccord est un signal de qualité négatif.
+	//
+	// L'émetteur de page a été conservé parce que son `ItemList` reste *dans* son
+	// `CollectionPage`, la forme attendue sur une page de catégorie. Corollaire assumé :
+	// l'`aggregateRating` par produit disparaît du balisage (`buildItemListProduct` ne
+	// reçoit pas `reviewStats`) ; le rétablir se fait là-bas, pas ici, et pas en
+	// réintroduisant un second `ItemList`.
 
 	// Layout Grid par defaut
 	return (
 		<div className="space-y-6">
 			{liveRegion}
-
-			{/* ItemList structured data — SAFE: serialized via safeJsonLd (no user HTML) */}
-			{/* react-doctor-disable-next-line react/no-danger */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: safeJsonLd(itemListJsonLd),
-				}}
-			/>
 
 			{/* Suggestion de correction si peu de resultats */}
 			{suggestion && <SearchCorrectionSuggestion suggestion={suggestion} />}

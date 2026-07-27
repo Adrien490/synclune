@@ -1,6 +1,7 @@
 import { getProductBySlug } from "@/modules/products/data/get-product";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import type { Metadata } from "next";
-import { PRODUCTION_URL } from "@/shared/constants/urls";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 /**
  * Tronque un texte à une longueur maximale pour le SEO.
@@ -96,12 +97,16 @@ export async function generateProductMetadata({
 
 	// URL canonique et complète
 	const canonicalUrl = `/creations/${slug}`;
-	const fullUrl = `${PRODUCTION_URL}/creations/${slug}`;
+	const fullUrl = `${SITE_URL}/creations/${slug}`;
 
-	// Image du produit pour OpenGraph (image marquée isPrimary, sinon première image)
-	const skuImages = primarySku?.images ?? [];
-	const mainImage = skuImages.find((img) => img.isPrimary) ?? skuImages[0];
-	const imageUrl = mainImage?.url ?? `${PRODUCTION_URL}/opengraph-image`;
+	// Image du produit pour OpenGraph.
+	// `pickPrimaryImage` et non `find(isPrimary) ?? images[0]` : `GET_PRODUCT_SELECT` ne
+	// filtre pas `mediaType` (la galerie a besoin des vidéos), donc l'ancienne expression
+	// mettait l'url d'un `.mp4` dans `og:image`/`twitter:images` dès qu'un SKU avait une
+	// vidéo en média primaire — carte sociale cassée au partage de la fiche. Le repli sur
+	// l'OG image de marque couvre désormais aussi ce cas.
+	const mainImage = pickPrimaryImage(primarySku?.images);
+	const imageUrl = mainImage?.url ?? `${SITE_URL}/opengraph-image`;
 
 	return {
 		title,

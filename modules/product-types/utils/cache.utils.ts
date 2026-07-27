@@ -27,7 +27,7 @@ export const productTypeCountsTag = (productTypeId: string) =>
 
 /**
  * Public : `reference` (stable, navbar/options/sitemap).
- * @deprecated Préférer `cacheProductTypesPublic`/`cacheProductTypesAdmin` selon contexte.
+ * @deprecated Préférer `cacheProductTypesPublic`/`cacheProductTypesList` selon contexte.
  *             Conservé pour rétrocompatibilité tests.
  */
 export function cacheProductTypes() {
@@ -44,10 +44,20 @@ export function cacheProductTypesPublic() {
 }
 
 /**
- * Lectures admin (listing data-table, mobile-list) — admin attend feedback rapide
- * après mutation, on s'aligne sur le profil `user` (stale 2m / revalidate 1m).
+ * Liste paginée des types (`getProductTypes`) — profil `user` (stale 2m / revalidate 1m).
+ *
+ * ⚠️ Cette entrée sert le listing admin ET les lectures publiques : `getProductTypes` est
+ * appelée par le mega-menu, le sitemap, la page /produits et la recherche rapide autant
+ * que par `/admin/catalogue/types-de-produits`. Elle s'appelait `cacheProductTypesAdmin`,
+ * ce qui laissait croire à un chemin admin-only — un lecteur pouvait en conclure à tort
+ * que les surfaces publiques passaient ailleurs.
+ *
+ * Le profil `user` (et non `reference`) est conservé volontairement : l'admin attend un
+ * retour rapide après mutation, et une même entrée de cache ne peut pas avoir deux durées.
+ * C'est le côté public qui hérite de la fraîcheur, pas l'inverse — sans coût, la requête
+ * étant peu chère.
  */
-export function cacheProductTypesAdmin() {
+export function cacheProductTypesList() {
 	cacheLife("user");
 	cacheTag(PRODUCT_TYPES_CACHE_TAGS.LIST);
 }

@@ -14,6 +14,7 @@ const {
 	mockProcessCursorResults,
 	mockGetSortDirection,
 	mockGetCollectionsSelect,
+	mockIsAdmin,
 } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockCount: vi.fn(),
@@ -24,6 +25,11 @@ const {
 	mockProcessCursorResults: vi.fn(),
 	mockGetSortDirection: vi.fn(),
 	mockGetCollectionsSelect: { id: true, name: true },
+	mockIsAdmin: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -96,6 +102,7 @@ function makeValidParams(overrides: Record<string, unknown> = {}) {
 }
 
 function setupDefaults(params = makeValidParams()) {
+	mockIsAdmin.mockResolvedValue(true);
 	mockSafeParse.mockReturnValue({ success: true, data: params });
 	mockBuildCollectionWhereClause.mockReturnValue({});
 	mockGetSortDirection.mockReturnValue("asc");
@@ -136,6 +143,54 @@ describe("getCollections", () => {
 			await getCollections(params as never);
 
 			expect(mockBuildCollectionWhereClause).toHaveBeenCalledWith(params);
+		});
+	});
+
+	// ============================================================================
+	// Tests: forçage du statut (parité avec getProducts)
+	// ============================================================================
+
+	// Avant ce forçage, la visibilité reposait ENTIÈREMENT sur la discipline des
+	// appelants : les 6 appelants publics passaient bien `status: PUBLIC`, mais un
+	// septième qui l'oublie publiait les noms des collections DRAFT, et rien ne
+	// l'en empêchait. `getProducts` force depuis longtemps ; ses deux voisins non.
+	describe("visibilité forcée pour les non-admins", () => {
+		it("forces status PUBLIC even when DRAFT is explicitly requested", async () => {
+			mockIsAdmin.mockResolvedValue(false);
+			const params = makeValidParams({ filters: { status: "DRAFT" } });
+			mockSafeParse.mockReturnValue({ success: true, data: params });
+
+			await getCollections(params as never);
+
+			expect(mockBuildCollectionWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({ filters: expect.objectContaining({ status: "PUBLIC" }) }),
+			);
+		});
+
+		it("forces status PUBLIC when no status filter is provided", async () => {
+			mockIsAdmin.mockResolvedValue(false);
+			const params = makeValidParams({ filters: { hasProducts: true } });
+			mockSafeParse.mockReturnValue({ success: true, data: params });
+
+			await getCollections(params as never);
+
+			expect(mockBuildCollectionWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({
+					filters: { hasProducts: true, status: "PUBLIC" },
+				}),
+			);
+		});
+
+		it("preserves the requested status filter for admins", async () => {
+			mockIsAdmin.mockResolvedValue(true);
+			const params = makeValidParams({ filters: { status: "DRAFT" } });
+			mockSafeParse.mockReturnValue({ success: true, data: params });
+
+			await getCollections(params as never);
+
+			expect(mockBuildCollectionWhereClause).toHaveBeenCalledWith(
+				expect.objectContaining({ filters: expect.objectContaining({ status: "DRAFT" }) }),
+			);
 		});
 	});
 

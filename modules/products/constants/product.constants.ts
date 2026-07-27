@@ -342,13 +342,91 @@ export const QUICK_SEARCH_SELECT = {
 				},
 				orderBy: { position: "asc" as const },
 			},
+			// Filtre mediaType : ce select alimente UNE vignette (`search-result-item`),
+			// qui prend `images[0]` et le passe à `<Image src>`. Sans le filtre, un SKU dont
+			// le média primaire est une VIDÉO injectait un `.mp4` dans l'optimiseur
+			// d'images — vignette cassée + transformation facturée. Et `where isPrimary`
+			// seul rendait 0 image sur un SKU sans média primaire, alors qu'il en a.
+			// Même correctif que PRODUCT_CAROUSEL_SELECT ; le tri reproduit la priorité
+			// de `pickPrimaryImage` (primaire d'abord, puis position).
 			images: {
-				where: { isPrimary: true },
+				where: { mediaType: "IMAGE" as const },
+				orderBy: [
+					{ isPrimary: "desc" as const },
+					{ position: "asc" as const },
+					{ id: "asc" as const },
+				],
 				take: 1,
 				select: { url: true, blurDataUrl: true, altText: true },
 			},
 		},
 		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
+	},
+} as const satisfies Prisma.ProductSelect;
+
+/**
+ * Select de la duplication de produit (admin) — SKUs + images + jointures M2M.
+ *
+ * Vit ici, avec les 4 autres selects du module, et non plus en ligne dans
+ * `data/get-product-for-duplication.ts` : c'est cette exception qui avait laissé le
+ * select dériver. Les migrations M2M de mai 2026 ont déplacé `colorId`/`materialId`
+ * de `ProductSku` vers les tables de jointure ; les 4 selects de ce fichier ont été
+ * mis à jour, celui de la duplication — invisible ici — ne l'a pas été, et
+ * « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant
+ * ~2,5 mois (Prisma levait une `PrismaClientValidationError`, avalée par un `catch`).
+ *
+ * Validité vérifiée sans base par `__tests__/product-selects-schema-validity.regression.test.ts`.
+ */
+export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
+	id: true,
+	title: true,
+	slug: true,
+	description: true,
+	typeId: true,
+	collections: {
+		select: {
+			collectionId: true,
+			collection: {
+				select: { slug: true },
+			},
+		},
+	},
+	skus: {
+		// Un produit vivant ne porte pas de SKU soft-deleted aujourd'hui (seul
+		// `delete-product` pose `ProductSku.deletedAt`, et il soft-delete le produit dans
+		// la même tx), mais dupliquer une variante supprimée serait silencieux.
+		where: { deletedAt: null },
+		select: {
+			sku: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isActive: true,
+			isDefault: true,
+			// `position` porte l'ordre de saisie : à préserver dans la copie.
+			colors: {
+				select: { colorId: true, position: true },
+				orderBy: { position: "asc" as const },
+			},
+			materials: {
+				select: { materialId: true, position: true },
+				orderBy: { position: "asc" as const },
+			},
+			size: true,
+			images: {
+				select: {
+					url: true,
+					thumbnailUrl: true,
+					blurDataUrl: true,
+					altText: true,
+					mediaType: true,
+					width: true,
+					height: true,
+					isPrimary: true,
+					position: true,
+				},
+			},
+		},
 	},
 } as const satisfies Prisma.ProductSelect;
 

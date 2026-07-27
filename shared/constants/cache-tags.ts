@@ -59,6 +59,18 @@ export const SHARED_CACHE_TAGS = {
 	PRODUCTS_LIST: "products-list",
 
 	/**
+	 * Liste des types de bijoux (cross-module)
+	 *
+	 * Utilisé par : product-types, products
+	 * Partagé ici, comme PRODUCTS_LIST, pour éviter un cycle de dépendances : une
+	 * mutation produit doit invalider ce tag (le `hasProducts` / `_count.products` d'un
+	 * type se calcule sur les produits PUBLIC), et l'importer depuis
+	 * `product-types/constants/cache` ferait passer `products/utils/cache.utils` par
+	 * `product-types/utils/cache.utils` — qui réimporte les tags produits.
+	 */
+	PRODUCT_TYPES_LIST: "product-types-list",
+
+	/**
 	 * Menu de navigation (navbar)
 	 *
 	 * Utilisé par : collections, product-types

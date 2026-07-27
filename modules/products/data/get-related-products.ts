@@ -192,8 +192,13 @@ async function fetchContextualRelatedProducts(
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(currentProductSlug));
 
 	try {
+		// deletedAt: null — sans ce filtre, un slug supprimé alimentait quand même la
+		// stratégie contextuelle (type + collections + couleurs d'un produit invisible) au
+		// lieu de retomber sur `fetchPublicRelatedProducts`. Peu atteignable en pratique
+		// (la fiche 404 avant), mais la cohérence avec les 4 requêtes en aval — qui
+		// filtrent toutes `status: PUBLIC` + `deletedAt: null` — vaut mieux que l'exception.
 		const currentProduct = await prisma.product.findUnique({
-			where: { slug: currentProductSlug },
+			where: { slug: currentProductSlug, deletedAt: null },
 			select: {
 				id: true,
 				typeId: true,

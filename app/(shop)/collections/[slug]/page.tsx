@@ -117,10 +117,14 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 				}}
 			/>
 
+			{/* noStructuredData : le BreadcrumbList est déjà dans le @graph de
+				`generateCollectionStructuredData` injecté ci-dessus. Sans cet opt-out, cette
+				page en publiait DEUX. Même parti pris que la PDP et /produits. */}
 			<PageHeader
 				title={collection.name}
 				description={collection.description ?? undefined}
 				breadcrumbs={breadcrumbs}
+				noStructuredData
 			/>
 
 			{/* Section principale avec catalogue */}

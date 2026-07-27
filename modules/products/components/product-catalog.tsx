@@ -107,11 +107,15 @@ export function ProductCatalog({
 			{/* react-doctor-disable-next-line react/no-danger */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
+			{/* noStructuredData : le BreadcrumbList est déjà émis par le JSON-LD de page
+				(`buildCatalogJsonLd`), imbriqué dans son CollectionPage. Sans cet opt-out,
+				/produits et /produits/[type] en publiaient DEUX. Même parti pris que la PDP. */}
 			<PageHeader
 				className="hidden sm:block"
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
 				breadcrumbs={breadcrumbs}
+				noStructuredData
 			/>
 
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">

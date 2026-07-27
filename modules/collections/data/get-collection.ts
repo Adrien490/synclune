@@ -1,5 +1,6 @@
 import { logger } from "@/shared/lib/logger";
 import { CollectionStatus } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
 import { cacheCollectionDetail } from "../utils/cache.utils";
@@ -21,11 +22,20 @@ import type {
 // ============================================================================
 
 /**
- * Récupère une collection par son slug
+ * Récupère une collection par son slug — variante ADMIN : tous statuts confondus.
+ *
+ * Gardée par `isAdmin()`, comme `getCollectionOptions` et `getCollectionCountsByStatus`
+ * du même module. Sans cette garde, cette fonction et sa quasi-homonyme
+ * `getStorefrontCollectionBySlug` (qui filtre `status: PUBLIC` dans son `where`) étaient
+ * interchangeables à la lecture, alors qu'une seule des deux est sûre côté public.
  */
 export async function getCollectionBySlug(
 	params: Partial<GetCollectionParams>,
 ): Promise<GetCollectionReturn | null> {
+	if (!(await isAdmin())) {
+		return null;
+	}
+
 	const validation = getCollectionSchema.safeParse(params);
 
 	if (!validation.success) {

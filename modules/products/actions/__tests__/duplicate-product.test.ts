@@ -109,8 +109,13 @@ const sourceProduct = {
 			inventory: 10,
 			isActive: true,
 			isDefault: true,
-			colorId: "color_1",
-			materialId: "mat_1",
+			// Couleurs/matériaux en M2M (migrations de mai 2026) — les scalaires
+			// `colorId`/`materialId` n'existent plus sur ProductSku.
+			colors: [
+				{ colorId: "color_1", position: 0 },
+				{ colorId: "color_2", position: 1 },
+			],
+			materials: [{ materialId: "mat_1", position: 0 }],
 			size: "M",
 			images: [
 				{
@@ -241,6 +246,37 @@ describe("duplicateProduct", () => {
 				data: expect.objectContaining({ sku: "NEW-SKU-001" }),
 			}),
 		);
+	});
+
+	// Le SKU copié doit recréer ses lignes de jointure ProductSkuColor /
+	// ProductSkuMaterial. La boucle de duplication ne le faisait PAS : elle passait les
+	// scalaires `colorId`/`materialId`, supprimés par les migrations M2M de mai 2026 —
+	// d'où une copie qui, une fois la lecture réparée, aurait perdu silencieusement
+	// couleurs et matériaux.
+	it("should recreate the M2M colors and materials of each duplicated SKU", async () => {
+		await duplicateProduct(undefined, validFormData);
+
+		expect(mockPrisma.productSku.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					colors: {
+						create: [
+							{ colorId: "color_1", position: 0 },
+							{ colorId: "color_2", position: 1 },
+						],
+					},
+					materials: { create: [{ materialId: "mat_1", position: 0 }] },
+				}),
+			}),
+		);
+	});
+
+	it("should never write the removed colorId/materialId scalars on the new SKU", async () => {
+		await duplicateProduct(undefined, validFormData);
+
+		const data = mockPrisma.productSku.create.mock.calls[0]?.[0]?.data;
+		expect(data).not.toHaveProperty("colorId");
+		expect(data).not.toHaveProperty("materialId");
 	});
 
 	it("should duplicate SKU images in transaction", async () => {

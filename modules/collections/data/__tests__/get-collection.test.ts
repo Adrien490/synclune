@@ -10,12 +10,18 @@ const {
 	mockGetCollectionSelect,
 	mockGetCollectionStorefrontSelect,
 	mockSafeParse,
+	mockIsAdmin,
 } = vi.hoisted(() => ({
 	mockFindUnique: vi.fn(),
 	mockCacheCollectionDetail: vi.fn(),
 	mockGetCollectionSelect: { id: true, name: true },
 	mockGetCollectionStorefrontSelect: { id: true, slug: true },
 	mockSafeParse: vi.fn(),
+	mockIsAdmin: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -79,6 +85,25 @@ describe("getCollectionBySlug", () => {
 		vi.clearAllMocks();
 		mockSafeParse.mockReturnValue({ success: true, data: { slug: "test-collection" } });
 		mockFindUnique.mockResolvedValue(null);
+		mockIsAdmin.mockResolvedValue(true);
+	});
+
+	// Variante ADMIN : ce select ne filtre PAS le statut de la collection. Sans garde,
+	// elle était interchangeable avec `getStorefrontCollectionBySlug` (qui filtre
+	// `status: PUBLIC`), et une seule des deux est sûre côté public.
+	it("returns null without querying when the caller is not an admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await expect(getCollectionBySlug({ slug: "brouillon" })).resolves.toBeNull();
+		expect(mockFindUnique).not.toHaveBeenCalled();
+	});
+
+	it("checks admin before validating params", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getCollectionBySlug({ slug: "brouillon" });
+
+		expect(mockSafeParse).not.toHaveBeenCalled();
 	});
 
 	it("returns null for invalid params", async () => {
@@ -176,6 +201,15 @@ describe("getStorefrontCollectionBySlug", () => {
 		vi.clearAllMocks();
 		mockSafeParse.mockReturnValue({ success: true, data: { slug: "test-collection" } });
 		mockFindUnique.mockResolvedValue(null);
+		mockIsAdmin.mockResolvedValue(false);
+	});
+
+	// L'asymétrie est volontaire : la variante storefront reste ouverte aux visiteurs,
+	// c'est son `where` (`status: PUBLIC`) qui la rend sûre — pas une garde d'accès.
+	it("stays reachable for anonymous visitors (no admin gate)", async () => {
+		await getStorefrontCollectionBySlug({ slug: "printemps" });
+
+		expect(mockFindUnique).toHaveBeenCalled();
 	});
 
 	it("returns null for invalid params", async () => {

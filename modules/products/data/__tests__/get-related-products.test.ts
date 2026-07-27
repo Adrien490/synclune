@@ -271,7 +271,9 @@ describe("getRelatedProducts", () => {
 
 			expect(mockFindUnique).toHaveBeenCalledWith(
 				expect.objectContaining({
-					where: { slug: "my-product" },
+					// `deletedAt: null` : un slug supprimé ne doit pas alimenter la stratégie
+					// contextuelle, il doit faire retomber sur les produits similaires publics.
+					where: { slug: "my-product", deletedAt: null },
 				}),
 			);
 		});

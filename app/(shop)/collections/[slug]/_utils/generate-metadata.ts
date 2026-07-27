@@ -1,7 +1,7 @@
 import { CollectionStatus, ProductStatus } from "@/app/generated/prisma/client";
 import { getStorefrontCollectionBySlug } from "@/modules/collections/data/get-collection";
 import type { Metadata } from "next";
-import { PRODUCTION_URL } from "@/shared/constants/urls";
+import { SITE_URL } from "@/shared/constants/seo-config";
 
 /**
  * Extrait l'image du produit vedette (ou le premier produit PUBLIC) pour OpenGraph
@@ -50,6 +50,10 @@ export async function generateCollectionMetadata({
 		return {
 			title: "Collection non trouvée - Synclune",
 			description: "Cette collection n'existe pas ou n'est plus disponible.",
+			// La page appelle `notFound()`, donc le statut HTTP est bien 404 et l'impact
+			// pratique est nul — mais la branche produit équivalente pose ce `robots` et
+			// l'asymétrie n'avait aucune raison d'être. Ceinture et bretelles.
+			robots: { index: false, follow: false },
 		};
 	}
 
@@ -58,7 +62,7 @@ export async function generateCollectionMetadata({
 		collection.description ??
 		`Découvrez la collection ${collection.name} de Synclune - Des bijoux colorés et originaux faits main avec amour.`;
 	const canonicalUrl = `/collections/${slug}`;
-	const fullUrl = `${PRODUCTION_URL}/collections/${slug}`;
+	const fullUrl = `${SITE_URL}/collections/${slug}`;
 
 	// Extraire l'image du produit vedette pour OpenGraph
 	const featuredImage = getFeaturedProductImage(collection.products);

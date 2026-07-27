@@ -21,7 +21,7 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 import {
 	cacheProductTypes,
-	cacheProductTypesAdmin,
+	cacheProductTypesList,
 	cacheProductTypesPublic,
 	cacheProductTypeDetail,
 	cacheProductTypeCounts,
@@ -61,12 +61,12 @@ describe("cacheProductTypesPublic", () => {
 });
 
 // ============================================================================
-// cacheProductTypesAdmin
+// cacheProductTypesList
 // ============================================================================
 
-describe("cacheProductTypesAdmin", () => {
+describe("cacheProductTypesList", () => {
 	it("uses 'user' profile (admin feedback rapide post-mutation)", () => {
-		cacheProductTypesAdmin();
+		cacheProductTypesList();
 
 		expect(mockCacheLife).toHaveBeenCalledWith("user");
 		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");

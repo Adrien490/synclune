@@ -47,8 +47,12 @@ function makeProductForDuplication(overrides: Record<string, unknown> = {}) {
 				inventory: 10,
 				isActive: true,
 				isDefault: true,
-				colorId: "color-1",
-				materialId: "mat-1",
+				// M2M depuis les migrations de mai 2026 : plus de scalaires colorId/materialId
+				colors: [
+					{ colorId: "color-1", position: 0 },
+					{ colorId: "color-2", position: 1 },
+				],
+				materials: [{ materialId: "mat-1", position: 0 }],
 				size: null,
 				images: [
 					{
@@ -130,6 +134,39 @@ describe("getProductForDuplication", () => {
 				}),
 			}),
 		);
+	});
+
+	it("selects colors and materials via the M2M relations, with position", async () => {
+		await getProductForDuplication("prod-1");
+
+		const skusArg = mockFindFirst.mock.calls[0]?.[0]?.select?.skus;
+
+		expect(skusArg.select.colors.select).toEqual({ colorId: true, position: true });
+		expect(skusArg.select.materials.select).toEqual({ materialId: true, position: true });
+		expect(skusArg.select.colors.orderBy).toEqual({ position: "asc" });
+		expect(skusArg.select.materials.orderBy).toEqual({ position: "asc" });
+	});
+
+	// Le defaut historique : `colorId`/`materialId` etaient selectionnes comme des
+	// scalaires de ProductSku alors que les migrations M2M de mai 2026 les avaient
+	// deplaces dans les tables de jointure. Prisma levait, le catch renvoyait null, et
+	// l'admin lisait « Le produit source n'existe pas » a chaque duplication. Invisible
+	// a `tsc` (le GetSelect de Prisma 7 ne rejette pas ces cles ici) et invisible ici
+	// meme, puisque Prisma est mocke : c'est le test d'integration qui l'attrape. Cette
+	// assertion empeche seulement la reintroduction du select mort.
+	it("never selects the removed colorId/materialId scalars on ProductSku", async () => {
+		await getProductForDuplication("prod-1");
+
+		const skuSelect = mockFindFirst.mock.calls[0]?.[0]?.select?.skus?.select;
+
+		expect(skuSelect).not.toHaveProperty("colorId");
+		expect(skuSelect).not.toHaveProperty("materialId");
+	});
+
+	it("excludes soft-deleted skus", async () => {
+		await getProductForDuplication("prod-1");
+
+		expect(mockFindFirst.mock.calls[0]?.[0]?.select?.skus?.where).toEqual({ deletedAt: null });
 	});
 
 	// ─── Not found ───────────────────────────────────────────────────────────

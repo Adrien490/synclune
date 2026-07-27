@@ -23,6 +23,11 @@ export function extractCollectionImages(products: Collection["products"]) {
 /**
  * Cached public menu data (collections and product types).
  * Shared between Navbar and @quicksearch parallel route.
+ *
+ * `{ isAdmin: false }` : cette fonction est un scope `"use cache"` — `getCollections`/
+ * `getProductTypes` ne doivent pas résoudre `isAdmin()` elles-mêmes (lecture `headers()`,
+ * une source dynamique interdite dans un scope cache). Sans risque : les filtres ci-dessous
+ * forcent déjà PUBLIC/actif, ce menu n'a jamais exposé de contenu admin.
  */
 export async function getNavbarMenuData() {
 	"use cache";
@@ -30,16 +35,22 @@ export async function getNavbarMenuData() {
 	cacheTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 	const [collectionsData, productTypesData] = await Promise.allSettled([
-		getCollections({
-			perPage: 3,
-			sortBy: "products-descending",
-			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
-		}),
-		getProductTypes({
-			perPage: 12,
-			sortBy: "label-ascending",
-			filters: { isActive: true, hasProducts: true },
-		}),
+		getCollections(
+			{
+				perPage: 3,
+				sortBy: "products-descending",
+				filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
+			},
+			{ isAdmin: false },
+		),
+		getProductTypes(
+			{
+				perPage: 12,
+				sortBy: "label-ascending",
+				filters: { isActive: true, hasProducts: true },
+			},
+			{ isAdmin: false },
+		),
 	]);
 
 	if (collectionsData.status === "rejected") {

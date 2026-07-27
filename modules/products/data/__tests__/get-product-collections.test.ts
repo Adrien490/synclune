@@ -4,13 +4,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockProductCollectionFindMany, mockCollectionFindMany, mockCacheLife, mockCacheTag } =
-	vi.hoisted(() => ({
-		mockProductCollectionFindMany: vi.fn(),
-		mockCollectionFindMany: vi.fn(),
-		mockCacheLife: vi.fn(),
-		mockCacheTag: vi.fn(),
-	}));
+const {
+	mockProductCollectionFindMany,
+	mockCollectionFindMany,
+	mockCacheLife,
+	mockCacheTag,
+	mockIsAdmin,
+} = vi.hoisted(() => ({
+	mockProductCollectionFindMany: vi.fn(),
+	mockCollectionFindMany: vi.fn(),
+	mockCacheLife: vi.fn(),
+	mockCacheTag: vi.fn(),
+	mockIsAdmin: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -39,6 +49,18 @@ import { getProductCollections, getAllCollections } from "../get-product-collect
 describe("getProductCollections", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		mockIsAdmin.mockResolvedValue(true);
+	});
+
+	// Ce fichier porte `"use server"` (obligatoire : le consommateur
+	// `manage-collections-dialog` est un composant client qui appelle ces fonctions
+	// depuis un useEffect). Ses exports sont donc des endpoints RPC, et n'avaient
+	// aucune garde.
+	it("returns an empty list without querying when the caller is not an admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await expect(getProductCollections("prod-1")).resolves.toEqual([]);
+		expect(mockProductCollectionFindMany).not.toHaveBeenCalled();
 	});
 
 	it("returns mapped collections for a product", async () => {
@@ -95,6 +117,28 @@ describe("getProductCollections", () => {
 describe("getAllCollections", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		mockIsAdmin.mockResolvedValue(true);
+	});
+
+	// Le cas le plus sensible des deux : ce `findMany` ne filtre PAS le statut, donc
+	// l'endpoint rendait les noms des collections DRAFT et ARCHIVED sans aucune garde.
+	it("returns an empty list without querying when the caller is not an admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await expect(getAllCollections()).resolves.toEqual([]);
+		expect(mockCollectionFindMany).not.toHaveBeenCalled();
+	});
+
+	// Le statut reste volontairement non filtré : le formulaire admin doit pouvoir
+	// rattacher un produit à une collection encore en DRAFT.
+	it("does not filter by status for admins (DRAFT collections stay attachable)", async () => {
+		mockCollectionFindMany.mockResolvedValue([]);
+
+		await getAllCollections();
+
+		expect(mockCollectionFindMany).toHaveBeenCalledWith(
+			expect.not.objectContaining({ where: expect.anything() }),
+		);
 	});
 
 	it("returns all collections sorted by name", async () => {
