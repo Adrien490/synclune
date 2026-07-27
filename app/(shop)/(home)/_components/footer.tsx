@@ -119,7 +119,7 @@ export async function Footer() {
 									<li key={item.href}>
 										<FooterLink
 											href={item.href}
-											className="text-muted-foreground can-hover:hover:bg-primary/5 can-hover:hover:text-primary inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+											className="text-muted-foreground can-hover:hover:bg-primary/5 inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
 										</FooterLink>
@@ -142,7 +142,7 @@ export async function Footer() {
 									<FooterLink
 										href={`mailto:${BRAND.contact.email}`}
 										external
-										className="text-foreground can-hover:hover:bg-primary/8 can-hover:hover:text-primary wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										className="text-foreground can-hover:hover:bg-primary/8 wrap-break-words inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 									>
 										{BRAND.contact.email}

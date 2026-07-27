@@ -113,6 +113,21 @@ describe("useCheckoutForm", () => {
 	// Guest defaults (null session, null addresses)
 	// --------------------------------------------------------------------------
 
+	it("passe une validationLogic (validation au blur, pas à la frappe)", () => {
+		// Sans `validationLogic`, TanStack retombe sur `defaultValidationLogic` et les
+		// validateurs `onDynamic` du tunnel ne tourneraient JAMAIS — formulaire
+		// silencieusement non validé côté client. Audit UI/UX paiement 2026-07-26, F1.
+		setup();
+
+		renderHook(() => useCheckoutForm({ session: null, addresses: null }));
+
+		expect(mockUseAppForm).toHaveBeenCalledWith(
+			expect.objectContaining({
+				validationLogic: expect.any(Function),
+			}),
+		);
+	});
+
 	it("calls useAppForm with empty email for guest users", () => {
 		setup();
 

@@ -105,7 +105,11 @@ export default function CheckoutLoading() {
 				style={{ viewTransitionName: "none" }}
 			/>
 
-			<section className="py-4 pb-[calc(theme(spacing.8)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
+			{/* `pb-8` et pas `pb-[calc(theme(spacing.8)+env(safe-area-inset-bottom))]` :
+			    `theme()` est l'API Tailwind v3, et la safe-area est déjà couverte deux fois
+			    (la barre CTA porte `pb-[max(0.75rem,env(safe-area-inset-bottom))]`, et la
+			    colonne formulaire réserve `--pay-bar-height`). Aligné sur `page.tsx`. */}
+			<section className="py-4 pb-8 sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					{/*
 					 * Titre rendu sur TOUS les viewports, comme la vraie page.
@@ -117,8 +121,7 @@ export default function CheckoutLoading() {
 					 * au moment du rendu réel.
 					 *
 					 * Hauteurs alignées sur `text-xl` (28 px de line-height) puis
-					 * `sm:text-3xl` (36 px). Le `pb` suit `theme(spacing.8)` de la page : il
-					 * était à `spacing.32`, soit 96 px de padding bas fantôme.
+					 * `sm:text-3xl` (36 px).
 					 */}
 					<div className="mb-4 sm:mb-6">
 						<Skeleton className="h-7 w-56 max-sm:mx-auto sm:h-9 sm:w-72" />
@@ -127,46 +130,52 @@ export default function CheckoutLoading() {
 						</div>
 					</div>
 
-					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+					{/*
+					 * PARITÉ AVEC LA PAGE RÉELLE — le squelette enveloppait chaque section dans
+					 * une carte (`bg-card border-primary/10 rounded-2xl border px-6 py-5`) alors
+					 * que `CheckoutSection` rend une `<section>` NUE : l'utilisateur voyait
+					 * quatre cartes bordées, puis tout s'aplatissait au rendu réel. Le squelette
+					 * suit désormais la réalité (sections nues, colonne en `space-y-8`, strip de
+					 * confiance non encadré, réserve `--pay-bar-height`).
+					 * Verrouillé par `checkout-loading-parity.regression.test.ts`.
+					 * Audit UI/UX paiement 2026-07-26, F4.
+					 */}
+					<div className="grid gap-6 pb-[calc(var(--pay-bar-height,8rem)+1rem)] lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0">
 						{/* Left column — Form */}
-						<div className="space-y-6" style={{ viewTransitionName: "shop-paiement-form" }}>
+						<div className="space-y-8" style={{ viewTransitionName: "shop-paiement-form" }}>
+							{/* Note « champs obligatoires » — en tête de formulaire, comme la page */}
+							<Skeleton className="h-4 w-56" />
+
 							{/* Contact */}
-							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
-								<section className="space-y-5">
-									<SectionHeading width="w-20" />
-									<InputSkeleton labelWidth="w-28" />
-									<Skeleton className="h-4 w-64" />
-								</section>
-							</div>
+							<section className="space-y-5">
+								<SectionHeading width="w-20" />
+								<InputSkeleton labelWidth="w-28" />
+								<Skeleton className="h-4 w-64" />
+							</section>
 
 							{/* Livraison */}
-							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
-								<section className="space-y-5">
-									<SectionHeading width="w-24" />
-									<Skeleton className="h-4 w-56" />
+							<section className="space-y-5">
+								<SectionHeading width="w-24" />
+								<InputSkeleton labelWidth="w-24" />
+								<InputSkeleton labelWidth="w-20" />
+								<Skeleton className="h-4 w-44" />
+								<div className="grid grid-cols-2 gap-3 sm:gap-6">
 									<InputSkeleton labelWidth="w-24" />
-									<InputSkeleton labelWidth="w-20" />
-									<Skeleton className="h-4 w-44" />
-									<div className="grid grid-cols-2 gap-3 sm:gap-6">
-										<InputSkeleton labelWidth="w-24" />
-										<InputSkeleton labelWidth="w-12" />
-									</div>
 									<InputSkeleton labelWidth="w-12" />
-									<div className="space-y-2">
-										<Skeleton className="h-4 w-20" />
-										<Skeleton className="h-10 w-full rounded-md" />
-										<Skeleton className="h-3 w-52" />
-									</div>
-								</section>
-							</div>
+								</div>
+								<InputSkeleton labelWidth="w-12" />
+								<div className="space-y-2">
+									<Skeleton className="h-4 w-20" />
+									<Skeleton className="h-10 w-full rounded-md" />
+									<Skeleton className="h-3 w-52" />
+								</div>
+							</section>
 
-							{/* Mode d'expedition */}
-							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
-								<section className="space-y-5">
-									<SectionHeading width="w-44" />
-									<Skeleton className="h-16 w-full rounded-xl" />
-								</section>
-							</div>
+							{/* Frais et délai de livraison */}
+							<section className="space-y-5">
+								<SectionHeading width="w-44" />
+								<Skeleton className="h-16 w-full rounded-xl" />
+							</section>
 
 							{/* Code promo — collapsed link */}
 							<div className="-mx-3 flex min-h-11 items-center px-3">
@@ -174,37 +183,35 @@ export default function CheckoutLoading() {
 							</div>
 
 							{/* Paiement */}
-							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
-								<section className="space-y-5">
-									<SectionHeading width="w-24" />
+							<section className="space-y-5">
+								<SectionHeading width="w-24" />
+								<Skeleton className="h-4 w-72" />
 
-									{/* Stripe PaymentElement placeholder (CLS-safe: min-h reserves vertical space for real element) */}
-									<div className="min-h-[360px] animate-pulse space-y-4 rounded-xl border p-6">
-										<Skeleton className="h-4 w-40" />
-										<Skeleton className="h-11 w-full rounded" />
-										<div className="grid grid-cols-2 gap-4">
-											<Skeleton className="h-11 rounded" />
-											<Skeleton className="h-11 rounded" />
-										</div>
-										<Skeleton className="h-11 w-full rounded" />
+								{/* Stripe PaymentElement placeholder — min-h identique à
+								    `PaymentSectionSkeleton` (CLS) */}
+								<div className="min-h-[360px] animate-pulse space-y-4 rounded-xl border p-6">
+									<Skeleton className="h-4 w-40" />
+									<Skeleton className="h-11 w-full rounded" />
+									<div className="grid grid-cols-2 gap-4">
+										<Skeleton className="h-11 rounded" />
+										<Skeleton className="h-11 rounded" />
 									</div>
+									<Skeleton className="h-11 w-full rounded" />
+								</div>
 
-									{/* Terms + button */}
-									<div className="space-y-3">
-										<Skeleton className="mx-auto h-4 w-72" />
-										<Skeleton className="h-12 w-full rounded-md" />
-									</div>
+								{/* Trust strip — non encadré, comme `checkout-stripe-section` */}
+								<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+									<Skeleton className="h-3 w-28" />
+									<Skeleton className="hidden h-3 w-px sm:inline" />
+									<Skeleton className="h-3 w-24" />
+								</div>
 
-									{/* Trust badges */}
-									<div className="border-primary/5 bg-primary/5 rounded-xl border p-4">
-										<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-											<Skeleton className="h-3 w-28" />
-											<Skeleton className="hidden h-3 w-px sm:inline" />
-											<Skeleton className="h-3 w-24" />
-										</div>
-									</div>
-								</section>
-							</div>
+								{/* Terms + button */}
+								<div className="space-y-3">
+									<Skeleton className="mx-auto h-4 w-72" />
+									<Skeleton className="h-12 w-full rounded-md" />
+								</div>
+							</section>
 						</div>
 
 						{/* Right column — Summary */}
@@ -212,8 +219,9 @@ export default function CheckoutLoading() {
 							className="order-first lg:order-0"
 							style={{ viewTransitionName: "shop-paiement-summary" }}
 						>
-							{/* Mobile: collapsed card */}
-							<Card className="border-primary/10 rounded-2xl shadow-md md:hidden">
+							{/* Mobile: collapsed card — `lg:` comme `CheckoutSummary` (la grille ne
+							    passe à deux colonnes qu'à `lg`) */}
+							<Card className="border-primary/10 rounded-2xl shadow-md lg:hidden">
 								<CardHeader className="pb-0">
 									<div className="flex items-center justify-between">
 										<Skeleton className="h-5 w-24" />
@@ -226,7 +234,7 @@ export default function CheckoutLoading() {
 							</Card>
 
 							{/* Desktop: sticky sidebar */}
-							<Card className="border-primary/10 hidden rounded-2xl shadow-md md:sticky md:top-24 md:block">
+							<Card className="border-primary/10 hidden rounded-2xl shadow-md lg:sticky lg:top-8 lg:block">
 								<CardHeader className="pb-4">
 									<Skeleton className="h-6 w-40" />
 								</CardHeader>
@@ -239,11 +247,12 @@ export default function CheckoutLoading() {
 				</div>
 			</section>
 
-			{/* Sticky PayButton placeholder (CLS-safe: matches the real fixed-bottom button on mobile) */}
+			{/* Sticky PayButton placeholder (CLS-safe: matches the real fixed-bottom bar,
+			    which stays `fixed` until `lg:`) */}
 			<div
 				aria-hidden="true"
 				data-hide-on-keyboard=""
-				className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:hidden"
+				className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md lg:hidden"
 			>
 				<Skeleton className="h-12 w-full rounded-md" />
 			</div>

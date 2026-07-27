@@ -187,13 +187,20 @@ function SummaryContent({
 
 			<Separator />
 
-			{/* Total */}
-			<div
-				className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3"
-				aria-live="polite"
-				aria-atomic="true"
-				aria-label={`Total mis à jour : ${formatEuro(total)}`}
-			>
+			{/*
+			 * Total — PAS de région live ici.
+			 *
+			 * Ce bloc n'est monté que quand le résumé mobile est DÉPLIÉ (il est replié
+			 * par défaut), et l'instance desktop est en `display:none` sous `md` donc
+			 * ignorée des lecteurs d'écran : l'`aria-live` posé ici n'annonçait donc rien
+			 * sur mobile, y compris l'apparition des frais de port après saisie du code
+			 * postal. Il était de surcroît monté AVEC son contenu (jamais vocalisé, cf.
+			 * `live-region-premounted.regression.test.tsx`) et son `aria-label` était posé
+			 * sur un `role=generic`, qui interdit le nommage par l'auteur.
+			 * La région vit désormais dans `CheckoutSummary`, hors des deux branches.
+			 * Audit UI/UX paiement 2026-07-26, F3.
+			 */}
+			<div className="bg-primary/5 -mx-1 space-y-2 rounded-xl p-3">
 				<div className="flex items-center justify-between text-lg/7 font-semibold tracking-tight antialiased sm:text-xl/7">
 					<span>Total</span>
 					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
@@ -214,7 +221,7 @@ function SummaryContent({
 						</TooltipTrigger>
 						<TooltipContent id={tvaTooltipId} className="max-w-xs text-center">
 							Synclune est en franchise en base de TVA (régime micro-entreprise). Aucune TVA
-							n&apos;est facturée sur vos commandes.
+							n&apos;est facturée sur tes commandes.
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
@@ -244,7 +251,8 @@ function SummaryContent({
 						rel="noopener noreferrer"
 					>
 						Politique de retour
-						<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
+						<ExternalLink className="size-3" aria-hidden="true" />
+						<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 					</Link>
 					<span aria-hidden="true">·</span>
 					<Link
@@ -254,7 +262,8 @@ function SummaryContent({
 						rel="noopener noreferrer"
 					>
 						CGV
-						<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
+						<ExternalLink className="size-3" aria-hidden="true" />
+						<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 					</Link>
 				</div>
 			</div>
@@ -274,9 +283,46 @@ export function CheckoutSummary({
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
 	const haptic = useHaptic();
+	// Une seule source pour le nom accessible de la <section> mobile : elle portait
+	// À LA FOIS un `aria-label` et un `<h2 class="sr-only">` au libellé identique,
+	// donc le lecteur d'écran annonçait la région puis le titre — deux fois le même
+	// texte. `aria-labelledby` fait pointer la région sur son propre titre.
+	const mobileHeadingId = useId();
 	// Replié par défaut sur mobile (F6) : réduit le scroll jusqu'au formulaire.
 	// Le header collapsed garde le mini-total visible (nb articles + montant).
 	const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+	/**
+	 * Région live UNIQUE du total, montée ici — hors des branches mobile/desktop.
+	 *
+	 * Les deux cartes sont mutuellement exclusives par `display:none`, et le contenu
+	 * mobile n'est même pas monté quand le résumé est replié (l'état par défaut).
+	 * Une région vivant dans `SummaryContent` était donc muette sur mobile : le plus
+	 * gros changement de total du tunnel — l'apparition des frais de port après
+	 * saisie du code postal — n'était annoncé nulle part.
+	 *
+	 * Le message est calculé PENDANT LE RENDU, pas dans un `useEffect` : c'est le
+	 * pattern React « ajuster un state quand une prop change ». React relance le
+	 * rendu immédiatement, avant tout paint, donc la région naît vide (condition
+	 * d'une annonce effective, cf. `live-region-premounted.regression.test.tsx`) puis
+	 * se remplit sur le rendu suivant — sans passer par un effet.
+	 *
+	 * Limite connue : deux changements ramenant au même montant (100 → 90 → 100)
+	 * sont bien réannoncés (la clé change à chaque fois), mais un lecteur d'écran
+	 * peut avaler un message identique consécutif. Pas de compteur artificiel.
+	 */
+	const totalKey = `${total}|${shippingUnavailable}`;
+	const [renderedTotalKey, setRenderedTotalKey] = useState(totalKey);
+	const [totalAnnouncement, setTotalAnnouncement] = useState("");
+
+	if (totalKey !== renderedTotalKey) {
+		setRenderedTotalKey(totalKey);
+		setTotalAnnouncement(
+			shippingUnavailable
+				? SHIPPING_UNAVAILABLE.summary
+				: `Total mis à jour : ${formatEuro(total)}`,
+		);
+	}
 
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -300,11 +346,19 @@ export function CheckoutSummary({
 
 	return (
 		<>
+			{/* Pré-montée et VIDE au premier rendu, en dehors des deux cartes (leur
+			    conteneur parent n'est jamais `display:none`) — même pattern que la région
+			    de `CheckoutDiscountSection`. */}
+			<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+				{totalAnnouncement}
+			</span>
+
 			{/* Mobile: collapsible summary (collapsed by default — F6 — pour réduire le scroll
-			    jusqu'au formulaire ; le mini-total reste visible dans le header).
-			    Content is conditionally rendered to avoid mounting <Image> requests when collapsed. */}
-			<section className="md:hidden" aria-label="Récapitulatif de votre commande">
-				<h2 className="sr-only">Récapitulatif de votre commande</h2>
+			    jusqu'au formulaire ; le mini-total reste visible dans le header). */}
+			<section className="lg:hidden" aria-labelledby={mobileHeadingId}>
+				<h2 id={mobileHeadingId} className="sr-only">
+					Récapitulatif de ta commande
+				</h2>
 
 				<Card className="border-primary/10 rounded-2xl shadow-md">
 					<button
@@ -342,13 +396,14 @@ export function CheckoutSummary({
 			</section>
 
 			{/* Desktop: sticky sidebar */}
-			<Card className="border-primary/10 hidden rounded-2xl shadow-md md:sticky md:top-24 md:block">
-				<h2 className="sr-only">Récapitulatif de votre commande</h2>
-
+			<Card className="border-primary/10 hidden rounded-2xl shadow-md lg:sticky lg:top-8 lg:block">
+				{/* Le titre VISIBLE est le heading — plus de `sr-only` doublon au libellé
+				    différent du texte affiché. `CardTitle` rend un <div> : il ne peut pas
+				    tenir ce rôle (même raison que `checkout-cancel-heading-hierarchy`). */}
 				<CardHeader className="pb-4">
-					<CardTitle className="font-display text-lg/7 tracking-wide antialiased">
+					<h2 className="font-display text-lg/7 font-normal tracking-wide antialiased">
 						Ta commande
-					</CardTitle>
+					</h2>
 				</CardHeader>
 
 				<CardContent className="space-y-4 pb-6">

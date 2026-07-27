@@ -25,6 +25,8 @@ import { CheckoutAddressFields } from "./checkout-address-fields";
 import { CheckoutDiscountSection } from "./checkout-discount-section";
 import { CheckoutErrorSummary } from "./checkout-error-summary";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
+import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
+import { BRAND } from "@/shared/constants/brand";
 import { buildCheckoutFieldErrors, getIncompleteSections } from "../constants/checkout-fields";
 
 // Lazy-load the ~100 KB `@stripe/react-stripe-js` bundle. Keeps `/paiement`
@@ -114,9 +116,12 @@ export function CheckoutFormBody({
 			aria-label="Formulaire de paiement"
 			// Réserve = hauteur réelle de la barre CTA fixe (publiée par PayButton),
 			// pas une constante : la barre grossit quand une Alert s'y empile.
-			// Levée à `md:` — le breakpoint où la barre repasse `static` (l'ancien
-			// `lg:pb-0` laissait 8rem de vide entre 768px et 1024px).
-			className="grid gap-6 pb-[calc(var(--pay-bar-height,8rem)+1rem)] md:pb-0 lg:grid-cols-[1fr_360px] lg:gap-8"
+			// Levée à `lg:` — le breakpoint où la barre repasse `static`, où la grille passe
+			// à deux colonnes et où le résumé devient une sidebar. Elle avait été avancée à
+			// `md:`, ce qui supprimait la réserve entre 48 et 64rem alors que la barre y était
+			// encore `fixed` : elle recouvrait le bas du formulaire sur iPad portrait.
+			// Audit UI/UX paiement 2026-07-26, F5.
+			className="grid gap-6 pb-[calc(var(--pay-bar-height,8rem)+1rem)] lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0"
 		>
 			<div className="space-y-8">
 				{/*
@@ -147,13 +152,18 @@ export function CheckoutFormBody({
 					}}
 				</form.Subscribe>
 
+				{/* Note « champs obligatoires » — en tête de <form>, donc AVANT le champ
+					    email requis de la section Contact. Elle vivait dans le fieldset
+					    Livraison, c'est-à-dire sous le premier champ qu'elle décrit. */}
+				<RequiredFieldsNote />
+
 				{!isOnline && (
 					<Alert variant="destructive" role="alert" aria-live="assertive">
 						<WifiOff className="size-4" />
 						<AlertTitle>Connexion internet perdue</AlertTitle>
 						<AlertDescription>
-							Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
-							connexion active.
+							Vérifie ta connexion internet avant de continuer. Le paiement nécessite une connexion
+							active.
 						</AlertDescription>
 					</Alert>
 				)}
@@ -182,9 +192,40 @@ export function CheckoutFormBody({
 						<Alert role="status">
 							<Lock className="size-4" />
 							<AlertTitle>Montant verrouillé</AlertTitle>
-							<AlertDescription>
-								Ta commande est enregistrée : le montant à payer ne peut plus changer. Actualise la
-								page si tu veux modifier ta livraison ou ton code promo.
+							{/*
+							 * La copie promettait « Actualise la page si tu veux modifier ta livraison
+							 * ou ton code promo » — c'était FAUX dans les deux sens : le serveur refuse
+							 * toute resoumission dont le pays ou le code postal diverge de la commande
+							 * liée (`resolveIdempotentHit`), et le rechargement ne « débloquait » rien.
+							 * On dit maintenant ce qui est réellement possible, et on fournit le
+							 * contrôle au lieu de décrire un geste. Audit UI/UX paiement 2026-07-26, F2.
+							 */}
+							<AlertDescription className="space-y-3">
+								<p>
+									Ta commande est enregistrée : le montant et l&apos;adresse de livraison ne peuvent
+									plus changer. Tu peux réessayer le paiement avec une autre carte.
+								</p>
+								<p>
+									Besoin de corriger ton adresse ? Écris-nous à{" "}
+									<a href={`mailto:${BRAND.contact.email}`} className="underline">
+										{BRAND.contact.email}
+									</a>
+									, on s&apos;en occupe.
+								</p>
+								<Button
+									type="button"
+									size="sm"
+									variant="outline"
+									// `allowNavigation()` AVANT le reload : sinon `useUnsavedChanges`
+									// déclenche son `beforeunload` et l'utilisateur doit confirmer une
+									// perte de données pour une action qu'il vient de demander.
+									onClick={() => {
+										allowNavigation();
+										window.location.reload();
+									}}
+								>
+									Recharger la page
+								</Button>
 							</AlertDescription>
 						</Alert>
 					)}
@@ -195,8 +236,12 @@ export function CheckoutFormBody({
 					 * disabled) tout ce qui ferait varier le total ou la destination, plutôt
 					 * que d'afficher un récapitulatif qui ne correspondrait plus au débit.
 					 * `min-w-0` neutralise le `min-width: min-content` par défaut du fieldset.
+					 * `flex flex-col gap-8` et pas `space-y-8` : la <legend> sr-only est en
+					 * `position:absolute` et `space-y-*` (`& > * + *`) lui aurait collé 32px de
+					 * marge fantôme sur la première section. Un enfant absolu ne prend pas de `gap`.
 					 */}
-					<fieldset disabled={isAmountLocked} className="min-w-0 space-y-8">
+					<fieldset disabled={isAmountLocked} className="flex min-w-0 flex-col gap-8">
+						<legend className="sr-only">Informations de commande</legend>
 						{/* === SECTION 1: Contact === */}
 						<CheckoutContactSection form={form} session={session} />
 

@@ -112,11 +112,14 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 										<div className="space-y-2 pt-1">
 											<form.AppField name="discountCode">
 												{(field) => (
-													<div className="flex gap-2">
+													// `items-end` : le champ porte désormais un label visible, donc il
+													// est plus haut que le bouton — l'alignement par défaut (stretch)
+													// étirait le bouton sur label + input.
+													<div className="flex items-end gap-2">
 														<field.InputField
+															label="Code promo"
 															placeholder="Entrer un code"
 															className="uppercase"
-															aria-label="Code promo"
 															autoCapitalize="characters"
 															autoComplete="off"
 															autoCorrect="off"

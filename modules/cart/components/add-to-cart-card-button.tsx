@@ -8,10 +8,6 @@ import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
 import { ShoppingCart, LoaderCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import {
-	ORDERS_AVAILABLE,
-	ORDERS_PAUSED_SHORT_MESSAGE,
-} from "@/shared/constants/orders-availability";
 
 interface AddToCartCardButtonProps {
 	skuId: string;
@@ -61,13 +57,6 @@ export function AddToCartCardButton({
 	const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
 		e.stopPropagation();
 
-		// Pré-lancement : commandes pas encore ouvertes. Le bouton est déjà
-		// disabled, mais on court-circuite par sécurité (le Server Action gate).
-		if (!ORDERS_AVAILABLE) {
-			e.preventDefault();
-			return;
-		}
-
 		if (hasMultipleVariants) {
 			// Plusieurs variantes : ouvrir le dialog de sélection
 			e.preventDefault();
@@ -100,10 +89,9 @@ export function AddToCartCardButton({
 			<input type="hidden" name="quantity" value="1" />
 			<Button
 				type="submit"
-				disabled={isPending || !ORDERS_AVAILABLE}
+				disabled={isPending}
 				aria-busy={isPending}
 				onClick={handleClick}
-				title={!ORDERS_AVAILABLE ? ORDERS_PAUSED_SHORT_MESSAGE : undefined}
 				size={isMobileFull ? "default" : "icon"}
 				className={cn(
 					isMobileFull
@@ -139,11 +127,7 @@ export function AddToCartCardButton({
 					// Animation pulse + ring pendant le chargement
 					isPending && "ring-primary/30 ring-2 motion-safe:animate-pulse",
 				)}
-				aria-label={
-					!ORDERS_AVAILABLE
-						? ORDERS_PAUSED_SHORT_MESSAGE
-						: `Ajouter ${productTitle ?? "ce produit"} au panier`
-				}
+				aria-label={`Ajouter ${productTitle ?? "ce produit"} au panier`}
 			>
 				{isMobileFull ? (
 					// Mobile full-width: icône + texte ou spinner

@@ -37,11 +37,16 @@ vi.mock("@/modules/payments/actions/confirm-checkout", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
+	// ⚠️ Le vrai `Button` forwarde `...props`, donc `aria-disabled` et
+	// `aria-describedby`. Ce mock DOIT les relayer : sans ça les assertions de
+	// F6 (CTA atteignable au clavier + hint relié) seraient vertes pour rien.
 	Button: ({
 		children,
 		disabled,
 		onClick,
 		"aria-busy": ariaBusy,
+		"aria-disabled": ariaDisabled,
+		"aria-describedby": ariaDescribedBy,
 		type,
 		size,
 		className,
@@ -50,6 +55,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 		disabled?: boolean;
 		onClick?: () => void;
 		"aria-busy"?: boolean;
+		"aria-disabled"?: boolean;
+		"aria-describedby"?: string;
 		type?: string;
 		size?: string;
 		className?: string;
@@ -58,6 +65,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 			disabled={disabled}
 			onClick={onClick}
 			aria-busy={ariaBusy}
+			aria-disabled={ariaDisabled}
+			aria-describedby={ariaDescribedBy}
 			type={type as "button" | "submit" | "reset"}
 			className={className}
 			data-size={size}
@@ -170,9 +179,50 @@ describe("PayButton", () => {
 
 	// ─── Disabled states ──────────────────────────────────────────────────────
 
-	it("is disabled when disabled=true", () => {
-		render(<PayButton {...defaultProps} disabled={true} />);
-		expect(screen.getByRole("button")).toBeDisabled();
+	describe("formulaire incomplet — aria-disabled, pas disabled (F6)", () => {
+		it("marque aria-disabled mais reste dans le tab order", () => {
+			render(<PayButton {...defaultProps} disabled={true} />);
+
+			const button = screen.getByRole("button");
+			expect(button).toHaveAttribute("aria-disabled", "true");
+			// Un `disabled` natif sortirait le bouton du tab order : l'utilisateur
+			// clavier n'aurait AUCUN contrôle focusable en fin de formulaire.
+			expect(button).not.toBeDisabled();
+		});
+
+		it("le clic route vers la validation (getFormData) au lieu d'être inerte", async () => {
+			const getFormData = vi.fn().mockResolvedValue(null);
+			render(<PayButton {...defaultProps} disabled={true} getFormData={getFormData} />);
+
+			await userEvent.click(screen.getByRole("button"));
+
+			// C'est ce chemin qui déclenche `form.handleSubmit()` + `focusFirstInvalid()`
+			// côté CheckoutForm — le comportement utile quand le formulaire est incomplet.
+			expect(getFormData).toHaveBeenCalled();
+		});
+
+		it("relie le motif au bouton via aria-describedby", () => {
+			render(
+				<PayButton
+					{...defaultProps}
+					disabled={true}
+					incompleteSections={["Contact", "Livraison"]}
+				/>,
+			);
+
+			const button = screen.getByRole("button");
+			const hint = screen.getByText("À compléter : Contact, Livraison");
+			expect(hint.id).toBeTruthy();
+			expect(button).toHaveAttribute("aria-describedby", hint.id);
+		});
+
+		it("relie aussi le hint générique quand aucune section n'est fournie", () => {
+			render(<PayButton {...defaultProps} disabled={true} />);
+
+			const button = screen.getByRole("button");
+			const hint = screen.getByText("Remplis tous les champs obligatoires pour continuer.");
+			expect(button).toHaveAttribute("aria-describedby", hint.id);
+		});
 	});
 
 	it("is disabled when stripe is not loaded", () => {

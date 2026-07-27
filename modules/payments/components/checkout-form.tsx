@@ -54,7 +54,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	// Warn on tab close / back button when the form has been touched.
 	// Disabled once the user reaches the Stripe redirect via `allowNavigation()`.
 	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, true, {
-		message: "Vos informations de commande seront perdues si vous quittez cette page.",
+		message: "Tes informations de commande seront perdues si tu quittes cette page.",
 	});
 
 	const cartItems = cart.items.map((item) => ({
@@ -83,6 +83,28 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		cartItems,
 		email: isGuest ? undefined : session.user.email || undefined,
 	});
+
+	/**
+	 * Réhydratation du verrou après un RECHARGEMENT de page.
+	 *
+	 * `onOrderBound` ne couvre que la vie de l'onglet. Or le scénario le plus courant
+	 * est : carte refusée → l'Alert invite à actualiser → au remontage `lockedAmount`
+	 * repartait à `null`, le formulaire se dégelait, et `updatePaymentAmount` renvoyait
+	 * « Commande déjà initiée — actualise la page » avec un bouton « Réessayer » qui
+	 * rejouait la même séquence. Impasse fermée.
+	 *
+	 * Le serveur nous dit maintenant si une commande PENDING est déjà liée au PI
+	 * (`boundAmount`) : on reprend ce montant comme verrou dès qu'il arrive.
+	 *
+	 * Calculé PENDANT le rendu (pas dans un `useEffect`) : `boundAmount` arrive de
+	 * façon asynchrone, un initialiseur de `useState` ne le verrait jamais.
+	 * Audit UI/UX paiement 2026-07-26, F2.
+	 */
+	const [rehydratedFromBound, setRehydratedFromBound] = useState(false);
+	if (!rehydratedFromBound && pi.boundAmount !== null) {
+		setRehydratedFromBound(true);
+		if (lockedAmount === null) setLockedAmount(pi.boundAmount);
+	}
 
 	// [[CART-DISCOUNT-002]] Reprise du code promo appliqué au panier.
 	// Sans ça, un code saisi dans le panier (« Réduction (SUMMER20) −20,00 € »
@@ -128,6 +150,14 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		await form.handleSubmit();
 
 		if (!form.state.canSubmit) {
+			// `_handleSubmit` sort en avance AVANT `validateAllFields` quand
+			// `!canSubmit && submissionAttempts <= 1` (FormApi). Conséquence : si un seul
+			// champ portait déjà une erreur au premier clic, les autres champs invalides
+			// n'étaient jamais validés — le résumé n'en listait qu'un et il fallait
+			// recliquer pour voir le reste. Cette passe est idempotente et défait
+			// l'early-return.
+			await form.validateAllFields("submit");
+
 			// Focus + scroll to first invalid field (a11y WCAG 3.3.1) + error haptic
 			requestAnimationFrame(() => {
 				focusFirstInvalid();

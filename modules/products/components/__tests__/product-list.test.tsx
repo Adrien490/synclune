@@ -25,15 +25,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 // MODULE MOCKS
 // ============================================================================
 
-// Pré-lancement, ORDERS_AVAILABLE === false force toutes les Offer JSON-LD à
-// OutOfStock via getOfferAvailability. On force le flag à true ici pour tester
-// la logique stock (comportement stable au go-live) ; le gating pré-lancement
-// est verrouillé par shared/utils/__tests__/offer-availability.test.ts.
-vi.mock("@/shared/constants/orders-availability", async (importOriginal) => ({
-	...(await importOriginal<Record<string, unknown>>()),
-	ORDERS_AVAILABLE: true,
-}));
-
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({
 		product,

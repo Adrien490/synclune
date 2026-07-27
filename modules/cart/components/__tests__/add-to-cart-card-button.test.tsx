@@ -6,15 +6,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction, mockIsPending, mockOpenSkuSelector, mockDispatchFlyToCart, mockOrdersFlag } =
-	vi.hoisted(() => ({
+const { mockAction, mockIsPending, mockOpenSkuSelector, mockDispatchFlyToCart } = vi.hoisted(
+	() => ({
 		mockAction: vi.fn(),
 		mockIsPending: { value: false },
 		mockOpenSkuSelector: vi.fn(),
 		mockDispatchFlyToCart: vi.fn(),
-		// Default: orders open (operational store). Flipped per-test for the paused state.
-		mockOrdersFlag: { available: true },
-	}));
+	}),
+);
 
 // ============================================================================
 // MODULE MOCKS
@@ -22,13 +21,6 @@ const { mockAction, mockIsPending, mockOpenSkuSelector, mockDispatchFlyToCart, m
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
-
-vi.mock("@/shared/constants/orders-availability", () => ({
-	get ORDERS_AVAILABLE() {
-		return mockOrdersFlag.available;
-	},
-	ORDERS_PAUSED_SHORT_MESSAGE: "Les commandes ne sont pas encore ouvertes.",
-}));
 
 vi.mock("@/modules/cart/hooks/use-add-to-cart", () => ({
 	useAddToCart: () => ({ action: mockAction, isPending: mockIsPending.value }),
@@ -126,7 +118,6 @@ describe("AddToCartCardButton", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockIsPending.value = false;
-		mockOrdersFlag.available = true;
 	});
 
 	it("renders a form with hidden inputs", () => {
@@ -204,41 +195,5 @@ describe("AddToCartCardButton", () => {
 		// Only 1 active SKU → fly-to-cart, not sku selector
 		expect(mockOpenSkuSelector).not.toHaveBeenCalled();
 		expect(mockDispatchFlyToCart).toHaveBeenCalledOnce();
-	});
-
-	// ─── Pré-lancement : commandes en pause ───────────────────────────────
-
-	describe("when orders are not available (ORDERS_AVAILABLE=false)", () => {
-		beforeEach(() => {
-			mockOrdersFlag.available = false;
-		});
-
-		it("disables the button", () => {
-			const product = createProduct();
-			render(<AddToCartCardButton skuId="sku-1" product={product} />);
-			expect(screen.getByRole("button")).toBeDisabled();
-		});
-
-		it("announces the paused state via aria-label", () => {
-			const product = createProduct();
-			render(<AddToCartCardButton skuId="sku-1" product={product} productTitle="Bague" />);
-			expect(
-				screen.getByRole("button", { name: /commandes ne sont pas encore ouvertes/i }),
-			).toBeInTheDocument();
-		});
-
-		it("does not open the sku selector nor add to cart on click", async () => {
-			const product = createProduct({
-				skus: [
-					{ id: "sku-1", isActive: true, priceInclTax: 9900, images: [] },
-					{ id: "sku-2", isActive: true, priceInclTax: 12000, images: [] },
-				] as unknown as Product["skus"],
-			});
-			render(<AddToCartCardButton skuId="sku-1" product={product} />);
-			// Disabled buttons swallow clicks, but assert the handlers stay untouched.
-			await userEvent.click(screen.getByRole("button"));
-			expect(mockOpenSkuSelector).not.toHaveBeenCalled();
-			expect(mockDispatchFlyToCart).not.toHaveBeenCalled();
-		});
 	});
 });

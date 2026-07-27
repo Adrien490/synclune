@@ -236,7 +236,7 @@ describe("createOrderInTransaction — stock verification", () => {
 
 		await expect(createOrderInTransaction(params)).rejects.toThrow(MockBusinessError);
 		await expect(createOrderInTransaction(params)).rejects.toThrow(
-			"Certains articles de votre panier sont introuvables. Veuillez actualiser la page.",
+			"Certains articles de ton panier sont introuvables. Actualise la page.",
 		);
 		// Rejet AVANT la transaction : aucun lock pris, rien créé.
 		expect(mockTx.$queryRaw).not.toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe("createOrderInTransaction — stock verification", () => {
 		const params = makeParams({ subtotal: 6000 });
 
 		await expect(createOrderInTransaction(params)).rejects.toThrow(
-			"Le montant de votre panier a changé. Veuillez actualiser la page.",
+			"Le montant de ton panier a changé. Actualise la page.",
 		);
 		expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
 			"createOrderInTransaction: subtotal param diverges from line items sum",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
@@ -65,6 +65,7 @@ export function PayButton({
 	const [error, setError] = useState<string | null>(null);
 	const errorRef = useRef<HTMLDivElement>(null);
 	const barRef = useRef<HTMLDivElement>(null);
+	const hintId = useId();
 
 	const submit = useCheckoutSubmit({
 		getFormData,
@@ -119,6 +120,35 @@ export function PayButton({
 	const isProcessing = phase !== "idle";
 	const isAwaiting3ds = phase === "awaiting-3ds";
 
+	/**
+	 * Deux familles de blocage, deux traitements.
+	 *
+	 * `disabled` NATIF pour ce que le formulaire ne peut pas réparer et où le clic
+	 * ne doit rien déclencher : Stripe.js pas chargé, soumission en cours (garde de
+	 * ré-entrance), zone non livrable, hors ligne.
+	 *
+	 * `aria-disabled` SEUL pour l'incomplétude du formulaire : un `disabled` natif
+	 * sort le bouton du tab order, si bien qu'un utilisateur clavier arrivait en fin
+	 * de formulaire sans aucun contrôle focusable ni explication (le hint
+	 * « À compléter : … » n'était relié à rien). Pire : le bouton basculait en
+	 * `disabled` PENDANT qu'il avait le focus, ce qui renvoie le focus au <body>.
+	 * En `aria-disabled`, le bouton reste focusable et le clic route vers
+	 * `getFormData()` → `focusFirstInvalid()`, qui EST le comportement utile.
+	 * Audit UI/UX paiement 2026-07-26, F6.
+	 */
+	const isHardBlocked = !stripe || !elements || isProcessing || shippingUnavailable || !isOnline;
+	const isFormIncomplete = disabled && !isHardBlocked;
+
+	const hint = !isOnline
+		? "Vérifie ta connexion internet pour continuer."
+		: shippingUnavailable
+			? SHIPPING_UNAVAILABLE.payButton
+			: disabled && !isProcessing
+				? incompleteSections && incompleteSections.length > 0
+					? `À compléter : ${incompleteSections.join(", ")}`
+					: "Remplis tous les champs obligatoires pour continuer."
+				: null;
+
 	function showError(message: string) {
 		setError(message);
 		haptic("error");
@@ -126,6 +156,10 @@ export function PayButton({
 
 	async function handleClick() {
 		if (!stripe || !elements) return;
+		// Le bouton reste cliquable en `aria-disabled` : c'est volontaire, `submit()`
+		// enchaîne sur `getFormData()` qui valide et focus le premier champ invalide.
+		// On garde en revanche la garde de ré-entrance et les blocages durs.
+		if (isHardBlocked) return;
 
 		haptic("medium");
 		setError(null);
@@ -172,7 +206,7 @@ export function PayButton({
 		<div
 			ref={barRef}
 			data-hide-on-keyboard=""
-			className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none"
+			className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md lg:static lg:space-y-3 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none"
 		>
 			{/*
 			 * Région live des phases de paiement (A11Y-AUDIT-001).
@@ -210,10 +244,10 @@ export function PayButton({
 			<Button
 				type="button"
 				size="lg"
-				className="min-h-11 w-full touch-manipulation text-base shadow-md hover:shadow-lg motion-safe:transition-[transform,box-shadow] motion-safe:duration-150 motion-safe:active:scale-[0.98]"
-				disabled={
-					disabled || !stripe || !elements || isProcessing || shippingUnavailable || !isOnline
-				}
+				className="min-h-11 w-full touch-manipulation text-base shadow-md hover:shadow-lg aria-disabled:opacity-60 motion-safe:transition-[transform,box-shadow] motion-safe:duration-150 motion-safe:active:scale-[0.98]"
+				disabled={isHardBlocked}
+				aria-disabled={isFormIncomplete || undefined}
+				aria-describedby={hint ? hintId : undefined}
 				aria-busy={isProcessing}
 				onClick={handleClick}
 				style={{ viewTransitionName: "checkout-pay-cta" }}
@@ -231,21 +265,23 @@ export function PayButton({
 				)}
 			</Button>
 
-			{!isOnline ? (
-				<p className="text-destructive text-center text-sm" role="alert">
-					Vérifie ta connexion internet pour continuer.
+			{/* Un seul nœud de hint, porteur de `hintId` : c'est lui que le bouton
+			    référence en `aria-describedby`. Auparavant les trois variantes étaient
+			    des <p> distincts sans identifiant, donc le motif du blocage n'était
+			    jamais rattaché au contrôle bloqué. */}
+			{hint !== null && (
+				<p
+					id={hintId}
+					className={
+						!isOnline || shippingUnavailable
+							? "text-destructive text-center text-sm"
+							: "text-muted-foreground text-center text-xs lg:text-sm"
+					}
+					{...(!isOnline || shippingUnavailable ? { role: "alert" } : {})}
+				>
+					{hint}
 				</p>
-			) : shippingUnavailable ? (
-				<p className="text-destructive text-center text-sm" role="alert">
-					{SHIPPING_UNAVAILABLE.payButton}
-				</p>
-			) : disabled && !isProcessing ? (
-				<p className="text-muted-foreground text-center text-xs md:text-sm">
-					{incompleteSections && incompleteSections.length > 0
-						? `À compléter : ${incompleteSections.join(", ")}`
-						: "Remplis tous les champs obligatoires pour continuer."}
-				</p>
-			) : null}
+			)}
 		</div>
 	);
 }

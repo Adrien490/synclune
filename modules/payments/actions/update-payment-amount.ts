@@ -115,7 +115,7 @@ export async function updatePaymentAmount(
 			if (pi.metadata.orderId) {
 				return {
 					success: false,
-					error: "Commande déjà initiée — actualisez la page.",
+					error: "Commande déjà initiée — actualise la page.",
 				};
 			}
 
@@ -156,7 +156,7 @@ export async function updatePaymentAmount(
 				if (item.priceAtAdd !== skuResult.data.sku.priceInclTax) {
 					return {
 						success: false,
-						error: "Les prix de certains articles ont changé. Actualisez votre panier.",
+						error: "Les prix de certains articles ont changé. Actualise ton panier.",
 					};
 				}
 				subtotal += item.priceAtAdd * item.quantity;
@@ -247,7 +247,7 @@ export async function updatePaymentAmount(
 				if (fresh.metadata.orderId) {
 					return {
 						success: false,
-						error: "Commande déjà initiée — actualisez la page.",
+						error: "Commande déjà initiée — actualise la page.",
 					};
 				}
 

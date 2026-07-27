@@ -179,7 +179,7 @@ export async function confirmCheckout(
 				return { success: false, error: "Ce paiement a déjà été effectué." };
 			}
 			if (pi.status === "canceled") {
-				return { success: false, error: "Ce paiement a été annulé. Veuillez recommencer." };
+				return { success: false, error: "Ce paiement a été annulé. Recommence." };
 			}
 
 			// 4. Resolve email (normalize so Order.customerEmail and downstream
@@ -189,7 +189,7 @@ export async function confirmCheckout(
 				return {
 					success: false,
 					error: userId
-						? "Votre adresse email est manquante. Veuillez vous reconnecter."
+						? "Ton adresse email est manquante. Reconnecte-toi."
 						: "L'email est requis pour une commande invité.",
 				};
 			}
@@ -221,7 +221,7 @@ export async function confirmCheckout(
 				if (cartItem.priceAtAdd !== skuResult.data.sku.priceInclTax) {
 					return {
 						success: false,
-						error: "Les prix de certains articles ont changé. Actualisez votre panier.",
+						error: "Les prix de certains articles ont changé. Actualise ton panier.",
 					};
 				}
 			}
@@ -344,7 +344,7 @@ export async function confirmCheckout(
 							success: false,
 							error: isAlreadySucceeded
 								? "Ce paiement a déjà été effectué."
-								: "Ce paiement a été annulé. Veuillez recommencer.",
+								: "Ce paiement a été annulé. Recommence.",
 						};
 					}
 				}
@@ -520,6 +520,11 @@ function resolveIdempotentHit(
 	span: { setAttribute: (key: string, value: string | number | boolean) => void },
 ): ConfirmCheckoutResult | ConfirmCheckoutError {
 	const itemsDiverge = buildItemsFingerprint(v.cartItems) !== buildItemsFingerprint(order.items);
+	// ⚠️ Ne compare QUE le pays et le code postal — ce qui suffit pour le montant
+	// (le tarif d'expédition n'en dépend que de ça), mais pas pour la destination :
+	// une resoumission qui corrige `addressLine1`/`city` est ACCEPTÉE alors que la
+	// commande garde son snapshot figé, donc le colis part à l'ancienne rue sans
+	// aucun signal. @see docs/KNOWN-ISSUES.md — KI-001
 	const destinationDiverges =
 		order.shippingCountry !== v.shippingAddress.country ||
 		normalizePostalCode(order.shippingPostalCode) !==

@@ -9,8 +9,11 @@ import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
 /**
  * Generates checkout form options with dynamic pre-filling.
  *
- * localStorage draft is NOT read here to avoid hydration mismatch (server has
- * no localStorage). Draft restoration happens in useCheckoutForm via useEffect.
+ * ⚠️ Il n'existe AUCUNE sauvegarde de brouillon. Ce docblock affirmait
+ * « Draft restoration happens in useCheckoutForm via useEffect » — `use-checkout-form.ts`
+ * n'a jamais contenu cet effet ni aucun accès à `localStorage`. Un invité perd donc
+ * tout son formulaire à chaque rechargement de page.
+ * @see docs/KNOWN-ISSUES.md — KI-002
  *
  * @param session - User session (null if guest)
  * @param addresses - Saved addresses (null if guest or no addresses)

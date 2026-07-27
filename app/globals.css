@@ -98,16 +98,21 @@ html:has([data-admin-layout]) {
 	}
 }
 
-/* Checkout : la barre CTA « Commander et payer » est `fixed bottom-0` sous `md`.
+/* Checkout : la barre CTA « Commander et payer » est `fixed bottom-0` sous `lg`.
  * Sans scroll-padding-bottom, tout scroll-into-view (focus au clavier, ancre,
  * focusFirstInvalid, onFocus du PaymentElement) peut déposer le champ ciblé
  * DERRIÈRE elle. Hauteur réelle publiée par PayButton via ResizeObserver —
- * elle varie avec les Alerts 3DS / carte refusée empilées dans la barre. */
+ * elle varie avec les Alerts 3DS / carte refusée empilées dans la barre.
+ *
+ * ⚠️ Le seuil est `lg` (64rem), PAS `md` : la grille du checkout ne passe à deux
+ * colonnes qu'à `lg`, et le résumé ne devient une sidebar collante qu'à `lg`. Avec
+ * un seuil `md` ici, la plage 48–64rem (iPad portrait 768×1024) perdait la réserve
+ * alors que la barre y était encore `fixed`. Audit UI/UX paiement 2026-07-26, F5. */
 html:has([data-checkout-shell]) {
 	scroll-padding-bottom: calc(var(--pay-bar-height, 0px) + 1rem);
 }
-@media (width >= 48rem) {
-	/* `md:static` : la barre repasse en flux normal, plus rien à réserver. */
+@media (width >= 64rem) {
+	/* `lg:static` : la barre repasse en flux normal, plus rien à réserver. */
 	html:has([data-checkout-shell]) {
 		scroll-padding-bottom: 0;
 	}
@@ -173,10 +178,16 @@ main#main-content {
 		transform var(--duration-normal) var(--ease-spring),
 		opacity var(--duration-normal) ease-out;
 }
-/* Scoped to mobile widths only: above `md:` (48rem) components opting into this
- * attribute (PayButton, BottomBar) switch to non-fixed layouts, so translating
- * them would shift content in normal flow (iPad landscape + hw keyboard). */
-@media (width < 48rem) {
+/* Scoped below `lg:` (64rem): that is where BOTH opt-ins into this attribute stop
+ * being fixed — PayButton (`lg:static`) and the shop BottomBar (`lg:hidden`).
+ * Translating an element already in normal flow would shift content (iPad landscape
+ * + hw keyboard), hence the gate.
+ *
+ * ⚠️ Was `48rem`, which was wrong in both directions between 48 and 64rem: the
+ * checkout CTA bar was still `fixed` there and no longer slid out of the way, while
+ * the admin BottomBar — the only `md`-gated bar — is `display:none` in that range so
+ * translating it is inert. Audit UI/UX paiement 2026-07-26, F5. */
+@media (width < 64rem) {
 	html[data-keyboard="open"] [data-hide-on-keyboard] {
 		transform: translateY(100%);
 		opacity: 0;

@@ -12,7 +12,6 @@ import {
 import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { AddressSelector } from "./address-selector";
-import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PHONE_ERROR_MESSAGES } from "@/shared/schemas/phone.schemas";
 
@@ -40,7 +39,7 @@ function AddressAutocompleteField({
 		<form.AppField
 			name="shipping.addressLine1"
 			validators={{
-				onChange: ({ value }: { value: string }) => {
+				onDynamic: ({ value }: { value: string }) => {
 					if (!value || value.trim().length === 0) {
 						return "L'adresse est requise";
 					}
@@ -97,13 +96,19 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 	const isGuest = !session;
 
 	return (
-		<fieldset className="space-y-5">
+		// `flex flex-col gap-5` et pas `space-y-5` : la <legend> sr-only est en
+		// `position:absolute`, or `space-y-*` cible `& > * + *` et lui aurait collé
+		// 20px de marge fantôme sur le premier vrai champ. Un enfant absolu ne
+		// consomme aucun `gap`.
+		<fieldset className="flex flex-col gap-5">
+			<legend className="sr-only">Adresse de livraison</legend>
 			{/*
-			 * Le résumé d'erreurs vit désormais en TÊTE de <form> (checkout-form-body),
-			 * pas ici : il liste aussi les erreurs de la section Contact, donc rendu
-			 * dans le fieldset Livraison il apparaissait SOUS le champ qu'il désignait.
+			 * Ni le résumé d'erreurs ni la note « champs obligatoires » ne vivent ici :
+			 * tous deux sont en TÊTE de <form> (checkout-form-body). Le résumé liste aussi
+			 * les erreurs de la section Contact, et la note s'applique au champ email
+			 * obligatoire de cette même section — rendus dans le fieldset Livraison, ils
+			 * apparaissaient SOUS les champs qu'ils désignent.
 			 */}
-			<RequiredFieldsNote />
 
 			{/* Address selector for logged-in users with multiple addresses */}
 			{!isGuest && addresses && addresses.length > 1 && (
@@ -132,7 +137,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 			<form.AppField
 				name="shipping.fullName"
 				validators={{
-					onChange: ({ value }: { value: string }) => {
+					onDynamic: ({ value }: { value: string }) => {
 						if (!value || value.trim().length < 2) {
 							return "Le nom complet doit contenir au moins 2 caractères";
 						}
@@ -185,7 +190,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 							<form.AppField
 								name="shipping.postalCode"
 								validators={{
-									onChange: ({ value }: { value: string }) => {
+									onDynamic: ({ value }: { value: string }) => {
 										if (!value) return "Le code postal est requis";
 										if (value.length < 3 || value.length > 10) {
 											return "Code postal invalide";
@@ -216,7 +221,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 				<form.AppField
 					name="shipping.city"
 					validators={{
-						onChange: ({ value }: { value: string }) => {
+						onDynamic: ({ value }: { value: string }) => {
 							if (!value || value.trim().length < 2) {
 								return "La ville est requise";
 							}
@@ -239,7 +244,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 			<form.AppField
 				name="shipping.country"
 				validators={{
-					onChange: ({ value }: { value: string }) => {
+					onDynamic: ({ value }: { value: string }) => {
 						if (!value) return "Le pays est requis";
 						return undefined;
 					},
@@ -264,7 +269,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 					<form.AppField
 						name="shipping.phoneNumber"
 						validators={{
-							onChange: ({ value }: { value: string | undefined }) => {
+							onDynamic: ({ value }: { value: string | undefined }) => {
 								if (!value) return PHONE_ERROR_MESSAGES.REQUIRED;
 								if (!isValidPhoneNumber(value)) return PHONE_ERROR_MESSAGES.INVALID;
 								return undefined;

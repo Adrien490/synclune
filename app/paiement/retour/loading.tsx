@@ -18,7 +18,7 @@ export default function CheckoutReturnLoading() {
 				<Spinner className="mx-auto size-10" />
 				<div className="space-y-2">
 					<p className="text-foreground text-base font-medium">
-						Vérification de votre paiement
+						Vérification de ton paiement
 						<span aria-hidden="true" className="motion-safe:animate-pulse">
 							…
 						</span>

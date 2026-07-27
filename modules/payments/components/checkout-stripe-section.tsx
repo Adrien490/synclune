@@ -128,7 +128,8 @@ export function CheckoutStripeSection({
 								rel="noopener noreferrer"
 							>
 								conditions générales de vente
-								<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
+								<ExternalLink className="size-3" aria-hidden="true" />
+								<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 							</Link>{" "}
 							et notre{" "}
 							<Link
@@ -138,7 +139,8 @@ export function CheckoutStripeSection({
 								rel="noopener noreferrer"
 							>
 								politique de confidentialité
-								<ExternalLink className="size-3" aria-label="(nouvelle fenêtre)" />
+								<ExternalLink className="size-3" aria-hidden="true" />
+								<span className="sr-only">(ouvre dans un nouvel onglet)</span>
 							</Link>
 							.
 						</p>

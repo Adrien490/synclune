@@ -22,7 +22,7 @@ import * as Sentry from "@sentry/nextjs";
 // un article qui ne serait pas snapshoté — fail-closed, jamais de skip silencieux
 // sur un chemin de facturation.
 const CART_ITEM_MISMATCH_ERROR =
-	"Certains articles de votre panier sont introuvables. Veuillez actualiser la page.";
+	"Certains articles de ton panier sont introuvables. Actualise la page.";
 
 function isDiscountType(value: string): value is DiscountType {
 	return value === DiscountType.PERCENTAGE || value === DiscountType.FIXED_AMOUNT;
@@ -129,7 +129,7 @@ export async function createOrderInTransaction(
 				"error",
 			);
 		});
-		throw new BusinessError("Le montant de votre panier a changé. Veuillez actualiser la page.");
+		throw new BusinessError("Le montant de ton panier a changé. Actualise la page.");
 	}
 
 	return prisma.$transaction(

@@ -120,6 +120,13 @@ export function useCheckoutSubmit({
  *  - `validation_error` : champ de paiement invalide côté Stripe
  * Pour ces deux types, `error.message` est sûr à afficher. Tout autre type
  * (api_error, invalid_request_error…) reste un message générique.
+ *
+ * ⚠️ EXCEPTION DE VOIX ASSUMÉE — le reste du tunnel tutoie (convention repo), mais
+ * `error.message` est la copie de Stripe en `locale: "fr"`, donc vouvoyante
+ * (« Votre carte a été refusée. »). Elle n'est pas réécrivable : c'est elle qui
+ * porte le MOTIF du refus (fonds insuffisants, CVC, plafond…), et le paraphraser
+ * le perdrait. Seuls NOS propres fallbacks ci-dessous tutoient.
+ * Verrouillé par `checkout-voice-tutoiement.regression.test.ts` (allowlist).
  */
 function mapStripeErrorMessage(error: StripeError | undefined): string {
 	// `redirect: "always"` (défaut) fait qu'un succès redirige : on ne repasse ici
@@ -127,7 +134,7 @@ function mapStripeErrorMessage(error: StripeError | undefined): string {
 	// doit pas lever un TypeError qui masquerait l'état réel du paiement.
 	if (!error) return "Une erreur est survenue lors du paiement.";
 	if (error.type === "card_error" || error.type === "validation_error") {
-		return error.message ?? "Votre paiement a été refusé.";
+		return error.message ?? "Ton paiement a été refusé.";
 	}
 	return "Une erreur est survenue lors du paiement.";
 }

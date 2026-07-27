@@ -371,7 +371,7 @@ describe("updatePaymentAmount", () => {
 
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toBe("Commande déjà initiée — actualisez la page.");
+				expect(result.error).toBe("Commande déjà initiée — actualise la page.");
 			}
 			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
 		});
@@ -638,7 +638,7 @@ describe("updatePaymentAmount", () => {
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toBe(
-					"Les prix de certains articles ont changé. Actualisez votre panier.",
+					"Les prix de certains articles ont changé. Actualise ton panier.",
 				);
 			}
 		});

@@ -938,7 +938,7 @@ describe("confirmCheckout", () => {
 
 			expect(result).toEqual({
 				success: false,
-				error: "Ce paiement a été annulé. Veuillez recommencer.",
+				error: "Ce paiement a été annulé. Recommence.",
 			});
 			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
 		});
@@ -1172,7 +1172,7 @@ describe("confirmCheckout", () => {
 
 			expect(result).toEqual({
 				success: false,
-				error: "Votre adresse email est manquante. Veuillez vous reconnecter.",
+				error: "Ton adresse email est manquante. Reconnecte-toi.",
 			});
 		});
 	});
@@ -1248,7 +1248,7 @@ describe("confirmCheckout", () => {
 
 			expect(result).toEqual({
 				success: false,
-				error: "Les prix de certains articles ont changé. Actualisez votre panier.",
+				error: "Les prix de certains articles ont changé. Actualise ton panier.",
 			});
 		});
 
@@ -1338,7 +1338,7 @@ describe("confirmCheckout", () => {
 
 			expect(result).toEqual({
 				success: false,
-				error: "Ce paiement a été annulé. Veuillez recommencer.",
+				error: "Ce paiement a été annulé. Recommence.",
 			});
 		});
 

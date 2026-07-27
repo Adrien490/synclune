@@ -23,6 +23,12 @@ interface PaymentIntentState {
 	total: number;
 	isLoading: boolean;
 	error: string | null;
+	/**
+	 * Montant d'une commande déjà liée à ce PaymentIntent (centimes), sinon `null`.
+	 * Permet de se remonter dans l'état « montant verrouillé » après un rechargement
+	 * de page — cf. `boundAmount` dans `initialize-payment.ts` (F2).
+	 */
+	boundAmount: number | null;
 }
 
 /**
@@ -38,6 +44,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		total: 0,
 		isLoading: true,
 		error: null,
+		boundAmount: null,
 	});
 
 	const router = useRouter();
@@ -75,6 +82,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 				total: result.total,
 				isLoading: false,
 				error: null,
+				boundAmount: result.boundAmount,
 			});
 		} else {
 			setState((prev) => ({
@@ -143,6 +151,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 						total: piResult.total,
 						isLoading: false,
 						error: null,
+						boundAmount: piResult.boundAmount,
 					});
 				} else {
 					setState((prev) => ({

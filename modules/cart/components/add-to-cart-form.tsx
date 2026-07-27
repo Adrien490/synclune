@@ -8,8 +8,6 @@ import type { GetProductReturn, ProductSku } from "@/modules/products/types/prod
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { LoaderCircle } from "lucide-react";
-import { ORDERS_AVAILABLE } from "@/shared/constants/orders-availability";
-import { OrdersClosedNotice } from "@/modules/store-settings/components/orders-closed-notice";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
@@ -59,7 +57,7 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 	// Vérifier si le SKU est disponible
 	const isAvailable = selectedSku ? selectedSku.inventory > 0 && selectedSku.isActive : false;
 
-	const canAddToCart = selectedSku && isAvailable && ORDERS_AVAILABLE;
+	const canAddToCart = selectedSku && isAvailable;
 
 	const hasError =
 		!!state && state.status !== "success" && state.status !== "initial" && !isPending;
@@ -106,8 +104,6 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 						<LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
 						<span>Ajout en cours…</span>
 					</span>
-				) : !ORDERS_AVAILABLE ? (
-					<span>Commandes bientôt disponibles</span>
 				) : !selectedSku ? (
 					<>
 						{hasOnlyOneSku ? (
@@ -129,11 +125,6 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 					{state.message}
 				</p>
 			)}
-
-			{/* Pré-lancement : le bouton est désactivé, on explique pourquoi et on met
-			    le contact en avant ici aussi (le bandeau d'accueil n'est pas visible
-			    pour un visiteur arrivant directement sur une fiche produit). */}
-			{!ORDERS_AVAILABLE && <OrdersClosedNotice />}
 		</form>
 	);
 }

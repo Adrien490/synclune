@@ -31,6 +31,10 @@ const {
 	return {
 		mockPrisma: {
 			user: { findUnique: vi.fn() },
+			// `order.findUnique` résout `boundAmount` : la commande PENDING déjà liée à
+			// ce PaymentIntent, qui permet de réhydrater le verrou de montant après un
+			// rechargement (F2). Doit être mocké, sinon TOUT le happy path throw.
+			order: { findUnique: vi.fn() },
 		},
 		mockGetSession: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
@@ -167,6 +171,8 @@ function setupDefaults() {
 		user: { id: "user-123", email: "marie@example.com" },
 	});
 	mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
+	// Défaut : aucune commande liée au PI (cas nominal du premier passage).
+	mockPrisma.order.findUnique.mockResolvedValue(null);
 
 	// Guest session (not used when authenticated)
 	mockGetOrCreateCartSessionId.mockResolvedValue("session-guest-abc");
@@ -218,6 +224,63 @@ describe("initializePayment", () => {
 			expect(result.subtotal).toBe(9000);
 			expect(result.shipping).toBe(600);
 			expect(result.total).toBe(9600);
+		});
+
+		describe("boundAmount — réhydratation du verrou de montant (F2)", () => {
+			it("renvoie le total de la commande PENDING déjà liée au PaymentIntent", async () => {
+				// Scénario : carte refusée, commande créée, l'utilisateur recharge la page.
+				// Sans `boundAmount`, le client repartait `lockedAmount: null`, dégelait le
+				// formulaire, puis `updatePaymentAmount` répondait « Commande déjà initiée —
+				// actualise la page » avec un « Réessayer » qui rejouait la même séquence.
+				mockPrisma.order.findUnique.mockResolvedValue({
+					total: 12900,
+					paymentStatus: "PENDING",
+				});
+
+				const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+				expect(result.success).toBe(true);
+				if (!result.success) return;
+				expect(result.boundAmount).toBe(12900);
+			});
+
+			it("renvoie null quand aucune commande n'est liée au PaymentIntent", async () => {
+				mockPrisma.order.findUnique.mockResolvedValue(null);
+
+				const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+				expect(result.success).toBe(true);
+				if (!result.success) return;
+				expect(result.boundAmount).toBeNull();
+			});
+
+			it("renvoie null quand la commande liée est déjà PAID", async () => {
+				// Une commande payée a déjà redirigé vers /paiement/confirmation : geler le
+				// formulaire ici n'aurait aucun sens.
+				mockPrisma.order.findUnique.mockResolvedValue({
+					total: 12900,
+					paymentStatus: "PAID",
+				});
+
+				const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+				expect(result.success).toBe(true);
+				if (!result.success) return;
+				expect(result.boundAmount).toBeNull();
+			});
+
+			it("interroge la commande par stripePaymentIntentId (index unique, pas d'appel Stripe)", async () => {
+				// `paymentIntent.metadata` est ici la réponse REJOUÉE de la création : elle
+				// ne porte jamais l'orderId écrit plus tard par confirmCheckout. La source
+				// de vérité est donc notre base.
+				await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+				expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
+					expect.objectContaining({
+						where: { stripePaymentIntentId: "pi_test_123" },
+					}),
+				);
+			});
 		});
 
 		it("should return clientSecret and paymentIntentId from Stripe", async () => {
@@ -523,9 +586,7 @@ describe("initializePayment", () => {
 
 			expect(result.success).toBe(false);
 			if (result.success) return;
-			expect(result.error).toBe(
-				"Les prix de certains articles ont changé. Actualisez votre panier.",
-			);
+			expect(result.error).toBe("Les prix de certains articles ont changé. Actualise ton panier.");
 		});
 
 		it("should not return price error when prices match exactly", async () => {

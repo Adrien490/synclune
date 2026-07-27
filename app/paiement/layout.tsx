@@ -49,8 +49,14 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 			/>
 
 			{/* Header minimal */}
+			{/* Header dans le flux normal, PAS sticky : c'est un choix (64px de viewport
+			    mobile préservés sur un écran de conversion). Corollaire, le résumé desktop
+			    n'a rien à dégager en haut — son offset collant est `lg:top-8`, pas
+			    `lg:top-24` qui laissait 96px de vide. Et pas de `backdrop-blur` : rien ne
+			    défile derrière un header statique, ça ne coûtait qu'une couche de
+			    compositing. Audit UI/UX paiement 2026-07-26, F9. */}
 			<header
-				className="bg-background/90 border-primary/10 border-b backdrop-blur-md"
+				className="bg-background border-primary/10 border-b"
 				style={{ viewTransitionName: "shop-paiement-header" }}
 			>
 				{/* Safe-area cushion preserves notch on iPhone landscape (background extends behind statusbar) */}

@@ -6,12 +6,9 @@ import { getProducts, type GetProductsReturn } from "@/modules/products/data/get
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
-import { OrdersClosedNotice } from "@/modules/store-settings/components/orders-closed-notice";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { StructuredData } from "@/shared/components/structured-data";
-import { ORDERS_AVAILABLE } from "@/shared/constants/orders-availability";
 import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config";
-import { CONTAINER_CLASS } from "@/shared/constants/spacing";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
@@ -99,17 +96,6 @@ export default async function Page() {
 			    Rendered synchronously (no Suspense) so its SSR HTML — incl. the title
 			    LCP text and the desktop floating images — is in the initial document. */}
 			<HeroSection productsPromise={productsPromise} />
-
-			{/* 1a. Pré-lancement : tant que les commandes sont en pause, on cadre
-			    l'attente dès la home (au lieu de laisser le visiteur le découvrir
-			    sur une fiche/le panier). Avis en flux normal SOUS le hero — pas une
-			    bannière haute (qui entrait en conflit avec la navbar transparente,
-			    cf. retrait commit ba16d5f0). SSOT : `orders-availability.ts`. */}
-			{!ORDERS_AVAILABLE && (
-				<div className={CONTAINER_CLASS}>
-					<OrdersClosedNotice className="my-6" />
-				</div>
-			)}
 
 			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
 			<HeroReassuranceBanner />

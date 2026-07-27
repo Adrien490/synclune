@@ -260,16 +260,35 @@ describe("CheckoutAddressFields", () => {
 			expect(container.querySelector("fieldset")).toBeInTheDocument();
 		});
 
-		it("shows required fields notice", () => {
+		it("ne rend PAS la note « champs obligatoires »", () => {
+			// Elle vit désormais en tête de <form> (checkout-form-body), donc AVANT le
+			// champ email requis de la section Contact — ici elle apparaissait sous le
+			// premier champ qu'elle décrit. Assertions déplacées dans
+			// `checkout-form.test.tsx`, qui monte le vrai CheckoutFormBody et peut donc
+			// vérifier l'ORDRE, ce que ces tests ne faisaient pas.
 			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
-			expect(screen.getByText(/champs marqués/i)).toBeInTheDocument();
+			expect(screen.queryByText(/champs marqués/i)).not.toBeInTheDocument();
 		});
 
-		it("renders the asterisk to indicate required fields", () => {
+		it("expose une légende accessible pour le groupe adresse", () => {
 			const { container } = render(
 				<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />,
 			);
-			expect(container.querySelector("span.text-destructive")).toBeInTheDocument();
+			const legend = container.querySelector("legend");
+			expect(legend).toBeInTheDocument();
+			expect(legend).toHaveTextContent("Adresse de livraison");
+			expect(legend).toHaveClass("sr-only");
+		});
+
+		it("utilise flex+gap et non space-y (la legend sr-only est absolue)", () => {
+			// `space-y-*` cible `& > * + *` : la <legend> en `position:absolute` aurait
+			// collé 20px de marge fantôme sur le premier vrai champ.
+			const { container } = render(
+				<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />,
+			);
+			const fieldset = container.querySelector("fieldset");
+			expect(fieldset).toHaveClass("flex", "flex-col", "gap-5");
+			expect(fieldset?.className).not.toMatch(/space-y-/);
 		});
 	});
 

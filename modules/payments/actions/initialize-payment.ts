@@ -29,6 +29,20 @@ interface InitializePaymentResult {
 	subtotal: number;
 	shipping: number;
 	total: number;
+	/**
+	 * Montant autoritaire d'une commande DÉJÀ liée à ce PaymentIntent, en centimes —
+	 * `null` si aucune. Permet au client de se remonter dans l'état « montant
+	 * verrouillé » (CHECKOUT-CONSENT-001) après un rechargement de page.
+	 *
+	 * Sans ça, le rechargement produisait une impasse fermée : la clé d'idempotence
+	 * rejoue la réponse d'origine (un PI refusé reste `requires_payment_method`, donc
+	 * la garde d'état terminal ne s'applique pas), et cette réponse n'a jamais porté
+	 * `metadata.orderId` — le client repartait donc `lockedAmount: null`, dégelait le
+	 * formulaire, puis `updatePaymentAmount` répondait « Commande déjà initiée —
+	 * actualise la page » avec un bouton « Réessayer » qui rejouait la même séquence.
+	 * Audit UI/UX paiement 2026-07-26, F2.
+	 */
+	boundAmount: number | null;
 }
 
 interface InitializePaymentError {
@@ -117,7 +131,7 @@ export async function initializePayment(
 				if (cartItem.priceAtAdd !== skuResult.data.sku.priceInclTax) {
 					return {
 						success: false,
-						error: "Les prix de certains articles ont changé. Actualisez votre panier.",
+						error: "Les prix de certains articles ont changé. Actualise ton panier.",
 					};
 				}
 			}
@@ -182,7 +196,7 @@ export async function initializePayment(
 			if (!ownerKey) {
 				return {
 					success: false,
-					error: "Session invalide. Veuillez actualiser la page.",
+					error: "Session invalide. Actualise la page.",
 				};
 			}
 			const customerKey = stripeCustomerId ?? "anon";
@@ -237,6 +251,23 @@ export async function initializePayment(
 			span.setAttribute("checkout.subtotal", subtotal);
 			span.setAttribute("checkout.total", total);
 
+			// Une commande est-elle déjà liée à ce PI ? On interroge NOTRE base plutôt
+			// que Stripe : `Order.stripePaymentIntentId` est `@unique`, donc c'est un
+			// point-read indexé, et surtout `paymentIntent.metadata` est ici la réponse
+			// REJOUÉE de la création — elle ne contient jamais l'`orderId` écrit plus tard
+			// par `confirmCheckout`. Seule une commande encore PENDING verrouille : une
+			// commande PAID a déjà redirigé, une CANCELLED ne doit pas geler le formulaire.
+			const boundOrder = await prisma.order.findUnique({
+				where: { stripePaymentIntentId: paymentIntent.id },
+				select: { total: true, paymentStatus: true },
+			});
+			const boundAmount =
+				boundOrder && boundOrder.paymentStatus === "PENDING" ? boundOrder.total : null;
+
+			if (boundAmount !== null) {
+				span.setAttribute("checkout.bound_amount", boundAmount);
+			}
+
 			return {
 				success: true,
 				clientSecret: paymentIntent.client_secret,
@@ -244,6 +275,7 @@ export async function initializePayment(
 				subtotal,
 				shipping,
 				total,
+				boundAmount,
 			};
 		} catch (e) {
 			if (e instanceof CircuitBreakerError) {

@@ -228,6 +228,32 @@ describe("CheckoutForm", () => {
 		});
 	});
 
+	describe("note « champs obligatoires »", () => {
+		// Déplacée depuis `checkout-address-fields.test.tsx` : elle vivait dans le
+		// fieldset Livraison, donc SOUS le champ email requis de la section Contact.
+		// Ici on monte le vrai CheckoutFormBody, ce qui permet d'asserter l'ORDRE —
+		// l'invariant réel, que les anciens tests ne vérifiaient pas.
+		// Audit UI/UX paiement 2026-07-26, F9.
+
+		it("est rendue une seule fois dans le formulaire", () => {
+			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+
+			expect(screen.getAllByText(/champs marqués/i)).toHaveLength(1);
+		});
+
+		it("précède la section Contact dans l'ordre du document", () => {
+			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+
+			const note = screen.getByText(/champs marqués/i);
+			const contact = screen.getByText("Contact");
+
+			// DOCUMENT_POSITION_FOLLOWING (4) : `contact` suit `note`.
+			expect(note.compareDocumentPosition(contact) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+				Node.DOCUMENT_POSITION_FOLLOWING,
+			);
+		});
+	});
+
 	describe("offline detection", () => {
 		it("does not show offline banner when online", () => {
 			vi.stubGlobal("navigator", { onLine: true });

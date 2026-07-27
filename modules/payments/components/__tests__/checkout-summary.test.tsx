@@ -490,7 +490,32 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			expect(screen.getByLabelText("Récapitulatif de votre commande")).toBeInTheDocument();
+			expect(screen.getByLabelText("Récapitulatif de ta commande")).toBeInTheDocument();
+		});
+
+		it("ne nomme la section qu'UNE fois (pas aria-label + h2 sr-only en double)", () => {
+			// La section portait à la fois un `aria-label` et un `<h2 class="sr-only">`
+			// au libellé identique : le lecteur d'écran annonçait la région puis le
+			// titre, soit deux fois le même texte. Un seul nom, via aria-labelledby.
+			const cart = createCart([createCartItem()]);
+
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
+
+			const section = screen.getByLabelText("Récapitulatif de ta commande");
+			expect(section.tagName).toBe("SECTION");
+			expect(section).not.toHaveAttribute("aria-label");
+			expect(section).toHaveAttribute("aria-labelledby");
+			expect(screen.getAllByText("Récapitulatif de ta commande")).toHaveLength(1);
+		});
+
+		it("le titre visible du résumé desktop est un vrai heading", () => {
+			// `CardTitle` rend un <div> : le titre affiché n'était pas un heading, et un
+			// `h2 sr-only` au libellé DIFFÉRENT tenait ce rôle en doublon.
+			const cart = createCart([createCartItem()]);
+
+			render(<CheckoutSummary cart={cart} {...defaultProps} />);
+
+			expect(screen.getByRole("heading", { level: 2, name: "Ta commande" })).toBeInTheDocument();
 		});
 
 		it("shows total item count in the mobile toggle", () => {

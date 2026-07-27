@@ -132,12 +132,12 @@ describe("CheckoutContactSection", () => {
 
 	it("renders login link for guest user", () => {
 		render(<CheckoutContactSection form={createMockForm()} session={null} />);
-		expect(screen.getByRole("link", { name: "Connectez-vous" })).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Connecte-toi" })).toBeInTheDocument();
 	});
 
 	it("login link points to /connexion with callback", () => {
 		render(<CheckoutContactSection form={createMockForm()} session={null} />);
-		const link = screen.getByRole("link", { name: "Connectez-vous" });
+		const link = screen.getByRole("link", { name: "Connecte-toi" });
 		expect(link).toHaveAttribute("href", "/connexion?callbackURL=/paiement");
 	});
 

@@ -594,7 +594,19 @@ Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refu
 | Components  | `PascalCase`                          |
 | Functions   | `camelCase`                           |
 | Constants   | `UPPER_SNAKE_CASE`                    |
-| UI text     | French                                |
+| UI text     | French, **tutoiement**                |
 | Code        | English                               |
 | Commits     | `feat:`, `fix:`, `docs:`, `refactor:` |
 | Indentation | Tabs                                  |
+
+### Voix : tutoiement, avec une exception
+
+Toute copie utilisateur tutoie. Le mélange n'est pas cosmétique : sur `/paiement`, deux paires étaient **co-visibles** (Alert « Vérifiez votre connexion » au-dessus du hint « Vérifie ta connexion » ; titre « Ta commande » au-dessus d'un tooltip « sur vos commandes »). Audit UI/UX paiement 2026-07-26.
+
+**Seule exception — les messages d'erreur de Stripe.** `stripe.confirmPayment` renvoie pour `card_error`/`validation_error` une `error.message` produite par Stripe en `locale: "fr"`, donc vouvoyante (« Votre carte a été refusée. »). C'est elle qui porte le **motif** du refus, et en card-only c'est le chemin d'erreur le plus fréquent : on l'affiche telle quelle (`use-checkout-submit.ts`, `mapStripeErrorMessage`). Nos propres fallbacks, eux, tutoient. `checkout-voice-tutoiement.regression.test.ts` verrouille le tunnel avec cette allowlist.
+
+⚠️ Les libellés de rate limit (« Trop de tentatives. Veuillez réessayer plus tard. ») sont encore vouvoyants dans ~26 fichiers (`discounts`, `reviews`, `payments`) — dette connue, à traiter en une passe transverse, pas fichier par fichier. Cf. [`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md).
+
+## Constats connus, non corrigés
+
+[`docs/KNOWN-ISSUES.md`](docs/KNOWN-ISSUES.md) recense les défauts reproduits et localisés qu'on a **délibérément** laissés en place parce qu'ils demandent une conception à part entière. Chaque entrée est doublée d'un commentaire `@see docs/KNOWN-ISSUES.md` au site du code. À lire avant de retravailler la resoumission de checkout (KI-001) ou la persistance du formulaire de paiement (KI-002) — pas pour les découvrir une seconde fois.

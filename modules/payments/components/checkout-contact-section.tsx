@@ -1,7 +1,17 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import type { Session } from "@/modules/auth/lib/auth";
 import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
@@ -19,8 +29,15 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 	const isGuest = !session;
 	const router = useRouter();
 	const [isLogoutPending, startLogoutTransition] = useTransition();
+	// Changer de compte déconnecte, quitte /paiement et perd TOUT le formulaire déjà
+	// saisi (adresse comprise) : c'est destructif, donc confirmation préalable —
+	// `ResponsiveAlertDialog` est la primitive imposée pour ce cas (cf. CLAUDE.md).
+	// Dialogue local plutôt que via le store : un seul call site, aucun besoin de
+	// piloter l'ouverture à distance.
+	const [isSwitchConfirmOpen, setIsSwitchConfirmOpen] = useState(false);
 
 	const handleSwitchAccount = () => {
+		setIsSwitchConfirmOpen(false);
 		startLogoutTransition(async () => {
 			try {
 				await logout();
@@ -41,10 +58,10 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 					<form.AppField
 						name="email"
 						validators={{
-							onChange: ({ value }: { value: string }) => {
+							onDynamic: ({ value }: { value: string }) => {
 								if (!value) return "L'adresse email est requise";
 								if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-									return "Entrez une adresse email valide";
+									return "Entre une adresse email valide";
 								}
 								return undefined;
 							},
@@ -65,14 +82,14 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 								<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
 									<Info className="mt-0.5 size-3.5 shrink-0" />
 									<span>
-										Vous avez déjà un compte ?{" "}
+										Tu as déjà un compte ?{" "}
 										<Link
 											href="/connexion?callbackURL=/paiement"
 											className="text-foreground font-medium underline hover:no-underline"
 										>
-											Connectez-vous
+											Connecte-toi
 										</Link>{" "}
-										pour accéder à vos adresses enregistrées
+										pour accéder à tes adresses enregistrées
 									</span>
 								</div>
 							</div>
@@ -88,7 +105,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 						<span className="font-medium">{session.user.email}</span>
 						<button
 							type="button"
-							onClick={handleSwitchAccount}
+							onClick={() => setIsSwitchConfirmOpen(true)}
 							disabled={isLogoutPending}
 							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring ml-auto rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
 							aria-busy={isLogoutPending}
@@ -97,6 +114,28 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 						</button>
 					</div>
 				)}
+
+				<ResponsiveAlertDialog
+					open={isSwitchConfirmOpen}
+					onOpenChange={setIsSwitchConfirmOpen}
+					tone="destructive"
+				>
+					<ResponsiveAlertDialogContent>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Changer de compte ?</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
+								Tu vas être déconnecté·e et redirigé·e vers la page de connexion. Les informations
+								déjà saisies dans ce formulaire seront perdues.
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel>Rester connecté·e</ResponsiveAlertDialogCancel>
+							<ResponsiveAlertDialogAction onClick={handleSwitchAccount}>
+								Changer de compte
+							</ResponsiveAlertDialogAction>
+						</ResponsiveAlertDialogFooter>
+					</ResponsiveAlertDialogContent>
+				</ResponsiveAlertDialog>
 			</div>
 		</CheckoutSection>
 	);

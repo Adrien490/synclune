@@ -57,7 +57,7 @@ export async function reorderFromOrder(
 		// vit dans l'espace client, dont le layout est volontairement SANS gate de
 		// fermeture (« accessible to authenticated users even when the store is
 		// closed »), donc le bouton restait cliquable pendant une fermeture
-		// `StoreSettings.isClosed` ou en pré-lancement `ORDERS_AVAILABLE = false`.
+		// `StoreSettings.isClosed`.
 		const storeCheck = await assertStoreOpen();
 		if (storeCheck) return error(storeCheck.message);
 
