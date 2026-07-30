@@ -22,7 +22,6 @@ import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { after } from "next/server";
-import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
@@ -395,17 +394,14 @@ export async function processRefund(
 			}
 		}
 
-		// État du stock AVANT restock. Deux usages, un seul read :
-		//  1. gate 0→N de la notif back-in-stock (OBLIGATOIRE côté appelant —
-		//     `notifyBackInStock` ne re-vérifie pas `inventory > 0` et notifierait
-		//     sinon les favoris ajoutés produit-en-stock) ;
-		//  2. P1-1 — discriminant de `shouldReactivateAfterRestock` : on ne réactive
-		//     que ce que la VENTE a désactivé (`inventory === 0`), jamais un retrait
-		//     manuel de l'admin (`inventory > 0` + `isActive: false`).
+		// État du stock AVANT restock — P1-1, discriminant de
+		// `shouldReactivateAfterRestock` : on ne réactive que ce que la VENTE a
+		// désactivé (`inventory === 0`), jamais un retrait manuel de l'admin
+		// (`inventory > 0` + `isActive: false`).
 		//
 		// ⚠️ Rempli DANS la transaction (cf. plus bas), pas avant : lu hors-tx, ce
-		// snapshot pouvait être périmé si un writer passait entre-temps — le gate
-		// notifiait alors à tort, ou pas du tout.
+		// snapshot pouvait être périmé si un writer passait entre-temps — on
+		// réactivait alors à tort, ou pas du tout.
 		const preRestockInventory = new Map<
 			string,
 			{ inventory: number; productId: string; isActive: boolean }
@@ -623,21 +619,6 @@ export async function processRefund(
 				}
 				for (const slug of uniqueSlugs) {
 					updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
-				}
-
-				// Back-in-stock : notifier les favoris des produits dont AU MOINS un
-				// SKU repasse 0→N grâce au restock (parité avec update-sku /
-				// adjust-sku-stock / bulk-toggle-skus-status). `after()` survit au
-				// freeze serverless ; idempotence via `backInStockNotifiedAt` + Resend.
-				const reopenedProductIds = new Set<string>();
-				for (const skuId of restockedSkuIds) {
-					const pre = preRestockInventory.get(skuId);
-					if (pre && pre.inventory === 0) {
-						reopenedProductIds.add(pre.productId);
-					}
-				}
-				for (const productId of reopenedProductIds) {
-					after(() => notifyBackInStock(productId));
 				}
 			}
 			// Audit log

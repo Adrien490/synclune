@@ -31,7 +31,6 @@ import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refu
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
-import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
 import {
@@ -207,7 +206,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 					}
 
 					// P2-1 (audit refunds 2026-05-30) : invalidation caches inventaire /
-					// vitrine + notif back-in-stock pour les SKU restockés par
+					// vitrine pour les SKU restockés par
 					// finalizeRefund (parité process-refund Step 3). Le cron DLQ est le
 					// finaliseur réel des refunds admin dont le SAGA a échoué, donc c'est
 					// lui qui restaure réellement l'inventory.
@@ -225,19 +224,6 @@ export async function reconcileRefunds(): Promise<CronResult> {
 						}
 						for (const slug of new Set(restockedSkus.map((sku) => sku.product.slug))) {
 							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.DETAIL(slug));
-						}
-					}
-					// Notifier les favoris des produits repassant 0→N (await direct :
-					// contexte cron, pas de latence utilisateur à protéger).
-					for (const productId of finalized.reopenedProductIds) {
-						try {
-							await notifyBackInStock(productId);
-						} catch (notifyError) {
-							logger.error("notifyBackInStock failed during DLQ reconcile", notifyError, {
-								cronJob: "reconcile-refunds",
-								refundId: refund.id,
-								productId,
-							});
 						}
 					}
 
@@ -697,15 +683,12 @@ interface FinalizeRefundResult {
 	isFullyRefunded: boolean;
 	/** SKU dont l'inventory a réellement été incrémenté (restock=true + SKU vivant). */
 	restockedSkuIds: string[];
-	/** productId des SKU repassant 0→N (gate notif back-in-stock). */
-	reopenedProductIds: string[];
 }
 
 const FINALIZE_NOOP: FinalizeRefundResult = {
 	finalized: false,
 	isFullyRefunded: false,
 	restockedSkuIds: [],
-	reopenedProductIds: [],
 };
 
 /**
@@ -766,7 +749,6 @@ async function finalizeRefund(params: {
 			}
 		}
 		const restockedSkuIds: string[] = [];
-		const reopenedProductIds = new Set<string>();
 		if (restockBySkuId.size > 0) {
 			// STOCK-LEDGER-001 : `UPDATE … RETURNING` remplace le couple
 			// findMany-puis-update. Deux gains : le journal `StockMovement` obtient un
@@ -802,10 +784,6 @@ async function finalizeRefund(params: {
 
 				const previousInventory = row.inventory - qty;
 				restockedSkuIds.push(skuId);
-				if (previousInventory === 0) {
-					reopenedProductIds.add(row.productId);
-				}
-
 				await recordStockMovementTx(tx, {
 					skuId,
 					productId: row.productId,
@@ -865,7 +843,6 @@ async function finalizeRefund(params: {
 			finalized: true,
 			isFullyRefunded,
 			restockedSkuIds,
-			reopenedProductIds: [...reopenedProductIds],
 		};
 	});
 }

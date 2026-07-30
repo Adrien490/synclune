@@ -24,7 +24,6 @@ import {
 } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
-import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
 import { applyInventoryDeltaTx } from "../services/apply-inventory-delta.service";
 import {
@@ -117,177 +116,160 @@ export async function updateProductSku(
 		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Update product SKU in transaction
-		const {
-			productSku,
-			oldMediaUrls,
-			previousInventory,
-			newInventory,
-			previousIsActive,
-			previousColors,
-			previousMaterials,
-		} = await prisma.$transaction(
-			async (tx) => {
-				// Validate SKU exists and get product info
-				const existingSku = await tx.productSku.findUnique({
-					where: { id: validatedData.skuId },
-					select: {
-						id: true,
-						sku: true,
-						isActive: true,
-						isDefault: true,
-						inventory: true,
-						productId: true,
-						product: {
-							select: {
-								id: true,
-								title: true,
-								slug: true,
-								status: true,
-								_count: {
-									select: {
-										skus: { where: { isActive: true, deletedAt: null } },
+		const { productSku, oldMediaUrls, previousColors, previousMaterials } =
+			await prisma.$transaction(
+				async (tx) => {
+					// Validate SKU exists and get product info
+					const existingSku = await tx.productSku.findUnique({
+						where: { id: validatedData.skuId },
+						select: {
+							id: true,
+							sku: true,
+							isActive: true,
+							isDefault: true,
+							inventory: true,
+							productId: true,
+							product: {
+								select: {
+									id: true,
+									title: true,
+									slug: true,
+									status: true,
+									_count: {
+										select: {
+											skus: { where: { isActive: true, deletedAt: null } },
+										},
 									},
 								},
 							},
+							colors: {
+								select: { colorId: true, color: { select: { slug: true } } },
+							},
+							materials: {
+								select: { materialId: true, material: { select: { slug: true } } },
+							},
+							images: {
+								select: { url: true },
+							},
 						},
-						colors: {
-							select: { colorId: true, color: { select: { slug: true } } },
-						},
-						materials: {
-							select: { materialId: true, material: { select: { slug: true } } },
-						},
-						images: {
-							select: { url: true },
-						},
-					},
-				});
-
-				if (!existingSku) {
-					throw new BusinessError("La variante spécifiée n'existe pas.");
-				}
-
-				// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
-				// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
-				if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
-					throw new BusinessError(
-						"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
-					);
-				}
-
-				// Refus de retirer isDefault sans transfert. L'admin doit utiliser
-				// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
-				// unsetOtherDefaultSkus de l'action setDefaultSku).
-				if (existingSku.isDefault && !validatedData.isDefault) {
-					throw new BusinessError(
-						"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
-					);
-				}
-
-				// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
-				if (existingSku.isActive && !validatedData.isActive) {
-					assertPublicProductKeepsActiveSku({
-						productStatus: existingSku.product.status,
-						activeTotal: existingSku.product._count.skus,
-						activeAffected: 1,
 					});
-				}
 
-				await assertColorsExist(tx, refs.colorIds);
-				await assertMaterialsExist(tx, refs.materialIds);
-				await assertUniqueVariantCombination(tx, {
-					productId: existingSku.productId,
-					colorIds: refs.colorIds,
-					size: refs.size,
-					excludeSkuId: validatedData.skuId,
-				});
+					if (!existingSku) {
+						throw new BusinessError("La variante spécifiée n'existe pas.");
+					}
 
-				if (validatedData.isDefault) {
-					await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
-				}
+					// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
+					// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
+					if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
+						throw new BusinessError(
+							"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
+						);
+					}
 
-				await tx.skuMedia.deleteMany({
-					where: { skuId: validatedData.skuId },
-				});
+					// Refus de retirer isDefault sans transfert. L'admin doit utiliser
+					// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
+					// unsetOtherDefaultSkus de l'action setDefaultSku).
+					if (existingSku.isDefault && !validatedData.isDefault) {
+						throw new BusinessError(
+							"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
+						);
+					}
 
-				// Verrou ligne + DELTA relatif à la valeur affichée à l'admin, au lieu d'un
-				// set absolu last-write-wins. SSOT partagée avec `update-product` (fiche
-				// produit, cas mono-SKU) : cf. le docblock d'`applyInventoryDeltaTx` pour le
-				// détail de l'anti stock fantôme. Écrit aussi le StockMovement si delta ≠ 0.
-				const {
-					delta: inventoryDelta,
-					previousInventory: lockedInventory,
-					newInventory: targetInventory,
-				} = await applyInventoryDeltaTx(tx, {
-					skuId: validatedData.skuId,
-					productId: existingSku.productId,
-					targetInventory: validatedData.inventory,
-					originalInventory: validatedData.originalInventory,
-					fallbackInventory: existingSku.inventory,
-					admin,
-				});
+					// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
+					if (existingSku.isActive && !validatedData.isActive) {
+						assertPublicProductKeepsActiveSku({
+							productStatus: existingSku.product.status,
+							activeTotal: existingSku.product._count.skus,
+							activeAffected: 1,
+						});
+					}
 
-				const updatedSku = await tx.productSku.update({
-					where: { id: validatedData.skuId },
-					data: {
-						priceInclTax: priceInclTaxCents,
-						compareAtPrice: compareAtPriceCents,
-						inventory: { increment: inventoryDelta },
-						isActive: validatedData.isActive,
-						isDefault: validatedData.isDefault,
+					await assertColorsExist(tx, refs.colorIds);
+					await assertMaterialsExist(tx, refs.materialIds);
+					await assertUniqueVariantCombination(tx, {
+						productId: existingSku.productId,
+						colorIds: refs.colorIds,
 						size: refs.size,
-						colors: {
-							deleteMany: {},
-							create: refs.colorIds.map((colorId, index) => ({
-								colorId,
-								position: index,
-							})),
-						},
-						materials: {
-							deleteMany: {},
-							create: refs.materialIds.map((materialId, index) => ({
-								materialId,
-								position: index,
-							})),
-						},
-					},
-					include: {
-						product: { select: { title: true, slug: true } },
-						colors: {
-							include: { color: { select: { name: true, slug: true } } },
-							orderBy: { position: "asc" },
-						},
-						materials: {
-							include: { material: { select: { name: true, slug: true } } },
-							orderBy: { position: "asc" },
-						},
-					},
-				});
-
-				if (allMedia.length > 0) {
-					await tx.skuMedia.createMany({
-						data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
+						excludeSkuId: validatedData.skuId,
 					});
-				}
 
-				return {
-					productSku: updatedSku,
-					oldMediaUrls: existingSku.images.map((m) => m.url),
-					// Stock verrouillé (réel) avant écriture + stock résultant après delta :
-					// base du gate back-in-stock pour refléter l'état DB exact, pas la
-					// valeur form potentiellement périmée.
-					previousInventory: lockedInventory,
-					newInventory: targetInventory,
-					previousIsActive: existingSku.isActive,
-					previousColors: existingSku.colors,
-					previousMaterials: existingSku.materials,
-				};
-			},
-			// Cette transaction tient advisory lock d'identité de variante + FOR UPDATE sur l'inventaire.
-			// Le défaut Prisma (5 s) la faisait échouer en P2028 sous contention avec le
-			// webhook d'encaissement, qui verrouille les mêmes lignes avec 30 s — l'admin
-			// voyait une erreur générique non déterministe. Prescrit par prisma-tx-options.
-			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-		);
+					if (validatedData.isDefault) {
+						await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
+					}
+
+					await tx.skuMedia.deleteMany({
+						where: { skuId: validatedData.skuId },
+					});
+
+					// Verrou ligne + DELTA relatif à la valeur affichée à l'admin, au lieu d'un
+					// set absolu last-write-wins. SSOT partagée avec `update-product` (fiche
+					// produit, cas mono-SKU) : cf. le docblock d'`applyInventoryDeltaTx` pour le
+					// détail de l'anti stock fantôme. Écrit aussi le StockMovement si delta ≠ 0.
+					const { delta: inventoryDelta } = await applyInventoryDeltaTx(tx, {
+						skuId: validatedData.skuId,
+						productId: existingSku.productId,
+						targetInventory: validatedData.inventory,
+						originalInventory: validatedData.originalInventory,
+						fallbackInventory: existingSku.inventory,
+						admin,
+					});
+
+					const updatedSku = await tx.productSku.update({
+						where: { id: validatedData.skuId },
+						data: {
+							priceInclTax: priceInclTaxCents,
+							compareAtPrice: compareAtPriceCents,
+							inventory: { increment: inventoryDelta },
+							isActive: validatedData.isActive,
+							isDefault: validatedData.isDefault,
+							size: refs.size,
+							colors: {
+								deleteMany: {},
+								create: refs.colorIds.map((colorId, index) => ({
+									colorId,
+									position: index,
+								})),
+							},
+							materials: {
+								deleteMany: {},
+								create: refs.materialIds.map((materialId, index) => ({
+									materialId,
+									position: index,
+								})),
+							},
+						},
+						include: {
+							product: { select: { title: true, slug: true } },
+							colors: {
+								include: { color: { select: { name: true, slug: true } } },
+								orderBy: { position: "asc" },
+							},
+							materials: {
+								include: { material: { select: { name: true, slug: true } } },
+								orderBy: { position: "asc" },
+							},
+						},
+					});
+
+					if (allMedia.length > 0) {
+						await tx.skuMedia.createMany({
+							data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
+						});
+					}
+
+					return {
+						productSku: updatedSku,
+						oldMediaUrls: existingSku.images.map((m) => m.url),
+						previousColors: existingSku.colors,
+						previousMaterials: existingSku.materials,
+					};
+				},
+				// Cette transaction tient advisory lock d'identité de variante + FOR UPDATE sur l'inventaire.
+				// Le défaut Prisma (5 s) la faisait échouer en P2028 sous contention avec le
+				// webhook d'encaissement, qui verrouille les mêmes lignes avec 30 s — l'admin
+				// voyait une erreur générique non déterministe. Prescrit par prisma-tx-options.
+				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+			);
 
 		// 9. Delete removed media from UploadThing storage
 		const newMediaUrls = new Set(allMedia.map((m) => m.url));
@@ -296,17 +278,6 @@ export async function updateProductSku(
 			deleteUploadThingFilesFromUrls(removedUrls).catch((e) => {
 				logger.error("Failed to delete UploadThing files", e, { action: "updateProductSku" });
 			});
-		}
-
-		// 9.b Back-in-stock notifications (background, survives the response via
-		// `after()`): trigger when transitioning from unavailable (out of stock OR
-		// inactive) to available (inventory > 0 AND active). Le throttle interne
-		// (NOTIFY_SEND_INTERVAL_MS) rallonge le travail ; `after()` évite qu'il soit
-		// tué par le freeze serverless. Idempotent via wishlist.backInStockNotifiedAt.
-		const wasUnavailable = previousInventory === 0 || !previousIsActive;
-		const isNowAvailable = newInventory > 0 && validatedData.isActive;
-		if (wasUnavailable && isNowAvailable) {
-			after(() => notifyBackInStock(productSku.productId));
 		}
 
 		// 10. Build success message

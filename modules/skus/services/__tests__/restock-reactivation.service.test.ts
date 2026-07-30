@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
  * bijou volontairement dépublié.
  */
 
-import { shouldReactivateAfterRestock, crossesBackInStock } from "../restock-reactivation.service";
+import { shouldReactivateAfterRestock } from "../restock-reactivation.service";
 
 describe("STOCK-RESTOCK-REACTIVATE-001 — shouldReactivateAfterRestock", () => {
 	it("réactive un SKU auto-désactivé par la vente (inactif + stock 0)", () => {
@@ -42,24 +42,5 @@ describe("STOCK-RESTOCK-REACTIVATE-001 — shouldReactivateAfterRestock", () => 
 	it("est sûr sur un SKU absent (supprimé entre-temps)", () => {
 		expect(shouldReactivateAfterRestock(undefined)).toBe(false);
 		expect(shouldReactivateAfterRestock(null)).toBe(false);
-	});
-});
-
-describe("crossesBackInStock", () => {
-	it("détecte la transition 0 → N", () => {
-		expect(crossesBackInStock(0, 1)).toBe(true);
-		expect(crossesBackInStock(0, 12)).toBe(true);
-	});
-
-	it("rejette tout ce qui ne part pas de 0", () => {
-		// Gate OBLIGATOIRE : `notifyBackInStock` ne re-vérifie pas `inventory > 0`, et
-		// `backInStockNotifiedAt` est null par défaut sur TOUS les items — sans ce gate,
-		// un restock 5 → 7 notifierait les favoris ajoutés produit-en-stock.
-		expect(crossesBackInStock(5, 7)).toBe(false);
-		expect(crossesBackInStock(1, 2)).toBe(false);
-	});
-
-	it("rejette un restock qui laisse le stock à 0", () => {
-		expect(crossesBackInStock(0, 0)).toBe(false);
 	});
 });

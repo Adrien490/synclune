@@ -101,9 +101,6 @@ vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 vi.mock("@/shared/lib/logger", () => ({
 	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
-vi.mock("@/modules/wishlist/services/notify-back-in-stock", () => ({
-	notifyBackInStock: vi.fn().mockResolvedValue(undefined),
-}));
 
 import { updateProductSku } from "../update-sku";
 

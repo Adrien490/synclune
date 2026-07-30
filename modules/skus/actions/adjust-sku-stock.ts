@@ -18,7 +18,6 @@ import { after } from "next/server";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
 import { recordStockMovementTx } from "../services/stock-movement.service";
-import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 
 type AffectedRow = { inventory: number };
 
@@ -133,12 +132,6 @@ export async function adjustSkuStock(
 		tags.forEach((tag) => updateTag(tag));
 
 		const previousInventory = newInventory - adjustment;
-
-		// 8. Back-in-stock notifications (background via `after()` : le throttle
-		// interne rallonge le travail, `after()` le préserve du freeze serverless)
-		if (previousInventory === 0 && newInventory > 0) {
-			after(() => notifyBackInStock(sku.productId));
-		}
 
 		const adjustmentText = adjustment > 0 ? `+${adjustment}` : `${adjustment}`;
 		return success(

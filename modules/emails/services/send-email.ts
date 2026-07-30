@@ -5,12 +5,7 @@ import { Resend } from "resend";
 import { withRetry } from "@/shared/utils/with-retry";
 import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";
 import { logger } from "@/shared/lib/logger";
-import {
-	EMAIL_ADMIN,
-	EMAIL_ADMIN_BCC,
-	EMAIL_CONTACT,
-	EMAIL_FROM,
-} from "../constants/email.constants";
+import { EMAIL_ADMIN, EMAIL_ADMIN_BCC, EMAIL_FROM } from "../constants/email.constants";
 import type { EmailResult } from "../types/email.types";
 
 /**
@@ -135,26 +130,6 @@ function isRetryableEmailError(error: unknown): boolean {
 	return false;
 }
 
-/**
- * Construit les headers marketing conformes RFC 8058 (one-click) + RFC 3834 (auto-responder).
- * Requis par Gmail et Yahoo depuis février 2024 pour tout bulk sender (>5000 emails/jour).
- *
- * Applique aux catégories commerciales/marketing où une opt-out est attendue :
- * marketing. Les emails transactionnels (order, payment, auth)
- * ne doivent PAS avoir de List-Unsubscribe — Gmail peut les flagger comme non transactionnels.
- *
- * EMAIL-AUDIT-009 : ajout Precedence: bulk + Auto-Submitted: auto-generated pour
- * empêcher les vacation replies / auto-responders de répondre.
- */
-function buildMarketingHeaders(unsubscribeUrl: string): Record<string, string> {
-	return {
-		"List-Unsubscribe": `<${unsubscribeUrl}>, <mailto:${EMAIL_CONTACT}?subject=unsubscribe>`,
-		"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-		Precedence: "bulk",
-		"Auto-Submitted": "auto-generated",
-	};
-}
-
 export async function sendEmail(params: {
 	to: string | string[];
 	bcc?: string | string[];
@@ -164,12 +139,6 @@ export async function sendEmail(params: {
 	replyTo?: string;
 	headers?: Record<string, string>;
 	tags?: Array<{ name: string; value: string }>;
-	/**
-	 * URL de désinscription one-click. Si fournie, ajoute les headers
-	 * List-Unsubscribe + List-Unsubscribe-Post (RFC 8058). À utiliser
-	 * pour les emails commerciaux (marketing).
-	 */
-	unsubscribeUrl?: string;
 	/**
 	 * Court-circuite le cache de dédup IN-PROCESS (hash `to+subject+html[0:4096]`,
 	 * TTL 10 min). À utiliser quand un renvoi à l'identique est précisément
@@ -209,10 +178,7 @@ export async function sendEmail(params: {
 		return { success: false, error: "RESEND_API_KEY not configured" };
 	}
 
-	const mergedHeaders: Record<string, string> = {
-		...(params.unsubscribeUrl ? buildMarketingHeaders(params.unsubscribeUrl) : {}),
-		...params.headers,
-	};
+	const mergedHeaders: Record<string, string> = { ...params.headers };
 
 	// Auto-inject EMAIL_ADMIN_BCC on admin alerts (refund failed, sequence
 	// overflow, dispute, etc.) so a fallback human receives them even if the
@@ -250,7 +216,6 @@ export async function sendEmail(params: {
 			subject: params.subject,
 			category: emailCategory,
 			hasIdempotencyKey: Boolean(params.idempotencyKey),
-			hasUnsubscribeUrl: Boolean(params.unsubscribeUrl),
 		},
 	});
 
@@ -259,7 +224,6 @@ export async function sendEmail(params: {
 			withRetry(
 				async () => {
 					const {
-						unsubscribeUrl: _unsub,
 						headers: _h,
 						skipIdempotence: _si,
 						idempotencyKey: _ik,

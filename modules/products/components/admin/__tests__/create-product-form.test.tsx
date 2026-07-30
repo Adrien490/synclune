@@ -526,7 +526,7 @@ describe("CreateProductForm", () => {
 
 			expect(
 				screen.getByText(
-					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+					"La première image sera l'image principale. Glisse-dépose pour réorganiser.",
 				),
 			).toBeInTheDocument();
 		});
@@ -777,7 +777,7 @@ describe("CreateProductForm", () => {
 
 			expect(
 				screen.getByText(
-					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+					"La première image sera l'image principale. Glisse-dépose pour réorganiser.",
 				),
 			).toBeInTheDocument();
 		});

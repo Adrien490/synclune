@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 /**
@@ -46,12 +46,18 @@ const DECLARED_INVENTORY_WRITERS: Record<string, string> = {
 };
 
 function moduleSourceFiles(): string[] {
-	return execFileSync("git", ["ls-files", "modules/*.ts", "modules/**/*.ts"], {
-		encoding: "utf-8",
-	})
-		.split("\n")
-		.filter(Boolean)
-		.filter((path) => !path.includes("__tests__"));
+	return (
+		execFileSync("git", ["ls-files", "modules/*.ts", "modules/**/*.ts"], {
+			encoding: "utf-8",
+		})
+			.split("\n")
+			.filter(Boolean)
+			.filter((path) => !path.includes("__tests__"))
+			// `git ls-files` liste ce qui est SUIVI, y compris un fichier supprimé dans
+			// l'arbre de travail mais pas encore indexé (ENOENT = suite entière rouge,
+			// message illisible). Cf. les deux garde-fous jumeaux restock.
+			.filter((path) => existsSync(path))
+	);
 }
 
 /**
@@ -64,12 +70,36 @@ function moduleSourceFiles(): string[] {
  * { gte: … }` dans un `where`) et les fixtures.
  */
 function writesInventory(source: string): boolean {
-	const touchesSku = source.includes("productSku") || source.includes('"ProductSku"');
+	// Strippe la PROSE avant de scanner : `apply-inventory-delta.service.ts` documente
+	// explicitement « n'écrit PAS l'inventaire : c'est l'appelant qui pose
+	// `inventory: { increment: delta }` », et ce fragment de docstring suffisait à le
+	// faire matcher. L'inscrire dans DECLARED_INVENTORY_WRITERS aurait affirmé
+	// l'inverse de ce que fait le fichier — et l'aurait dispensé pour toujours de la
+	// question « journalise-t-il son mouvement ? » s'il venait à écrire réellement.
+	// Même correctif que son garde-fou jumeau `refund-restock-single-crediter`.
+	const code = stripCommentLines(source);
+	const touchesSku = code.includes("productSku") || code.includes('"ProductSku"');
 	if (!touchesSku) return false;
 
-	const prismaMutation = /inventory:\s*\{\s*(increment|decrement):/.test(source);
-	const rawMutation = /"inventory"\s*=\s*"inventory"\s*[+-]/.test(source);
+	const prismaMutation = /inventory:\s*\{\s*(increment|decrement):/.test(code);
+	const rawMutation = /"inventory"\s*=\s*"inventory"\s*[+-]/.test(code);
 	return prismaMutation || rawMutation;
+}
+
+/** Filtre ligne à ligne (pas de stripper « intelligent » : nid à faux négatifs). */
+function stripCommentLines(source: string): string {
+	return source
+		.split("\n")
+		.filter((line) => {
+			const trimmed = line.trim();
+			return (
+				trimmed !== "" &&
+				!trimmed.startsWith("//") &&
+				!trimmed.startsWith("*") &&
+				!trimmed.startsWith("/*")
+			);
+		})
+		.join("\n");
 }
 
 /**

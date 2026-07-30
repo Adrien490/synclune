@@ -36,15 +36,3 @@ export function shouldReactivateAfterRestock(
 	if (!skuBeforeRestock) return false;
 	return !skuBeforeRestock.isActive && skuBeforeRestock.inventory === 0;
 }
-
-/**
- * Un restock rend-il l'article de nouveau achetable (transition 0 → N) ?
- *
- * Gate OBLIGATOIRE avant `notifyBackInStock` : celle-ci ne re-vérifie PAS
- * `inventory > 0` elle-même, et `WishlistItem.backInStockNotifiedAt` est `null` par
- * défaut sur TOUS les items — sans ce gate, un restock quelconque notifierait les
- * favoris ajoutés alors que le produit était en stock.
- */
-export function crossesBackInStock(previousInventory: number, newInventory: number): boolean {
-	return previousInventory === 0 && newInventory > 0;
-}

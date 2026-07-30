@@ -57,6 +57,5 @@ export const EMAIL_SUBJECTS = {
 	REFUND_CANCELLED: "Votre demande de remboursement a été annulée - Synclune",
 	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
 	ACCOUNT_DELETED: "Votre compte a été supprimé - Synclune",
-	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",
 	EMAIL_CHANGE_CONFIRMATION: "Confirmez votre nouvelle adresse email - Synclune",
 } as const;

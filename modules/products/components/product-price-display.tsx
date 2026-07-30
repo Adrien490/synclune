@@ -10,15 +10,12 @@ import {
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
 import { CARTS_COUNT_MIN_THRESHOLD } from "@/modules/products/constants/social-proof.constants";
-import { NotifyBackInStockButton } from "@/modules/wishlist/components/notify-back-in-stock-button";
 
 interface ProductPriceProps {
 	selectedSku: ProductSku | null;
 	product: GetProductReturn;
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
 	cartsCount?: number;
-	/** Whether this product is in the user's wishlist (for back-in-stock CTA) */
-	isInWishlist?: boolean;
 }
 
 /**
@@ -30,12 +27,7 @@ interface ProductPriceProps {
  * - Afficher le badge de réduction
  * - Afficher le badge de disponibilité (En stock / Stock limité / Rupture)
  */
-export function ProductPriceDisplay({
-	selectedSku,
-	product,
-	cartsCount,
-	isInWishlist,
-}: ProductPriceProps) {
+export function ProductPriceDisplay({ selectedSku, product, cartsCount }: ProductPriceProps) {
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
 	const priceInfo = calculatePriceInfo(product.skus);
 
@@ -199,20 +191,13 @@ export function ProductPriceDisplay({
 				</p>
 			)}
 
-			{/* Section rupture de stock with notify CTA */}
+			{/* Section rupture de stock */}
 			{stockStatus === "out_of_stock" && (
-				<div className="space-y-3">
-					<div
-						className="text-destructive bg-destructive/10 border-destructive/20 flex items-start gap-2 rounded border p-2 text-xs/5 tracking-normal antialiased"
-						role="alert"
-					>
-						<p>Cette petite merveille sera bientôt disponible !</p>
-					</div>
-					<NotifyBackInStockButton
-						productId={product.id}
-						productTitle={product.title}
-						isInWishlist={isInWishlist ?? false}
-					/>
+				<div
+					className="text-destructive bg-destructive/10 border-destructive/20 flex items-start gap-2 rounded border p-2 text-xs/5 tracking-normal antialiased"
+					role="alert"
+				>
+					<p>Cette petite merveille sera bientôt disponible !</p>
 				</div>
 			)}
 		</div>

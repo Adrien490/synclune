@@ -21,7 +21,6 @@ interface ProductDetailsProps {
 	/** Nombre de paniers contenant ce produit (FOMO "dans X paniers") */
 	cartsCount?: number;
 	/** Whether this product is in the user's wishlist */
-	isInWishlist?: boolean;
 }
 
 /**
@@ -36,12 +35,7 @@ interface ProductDetailsProps {
  * - Orchestrer les composants enfants : Prix, Caractéristiques, Sélecteurs, Panier, Entretien
  * - Animer les transitions lors du changement de variante
  */
-export function ProductDetails({
-	product,
-	defaultSku,
-	cartsCount,
-	isInWishlist,
-}: ProductDetailsProps) {
+export function ProductDetails({ product, defaultSku, cartsCount }: ProductDetailsProps) {
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 	const prefersReducedMotion = useReducedMotion();
 
@@ -70,12 +64,7 @@ export function ProductDetails({
 						duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.normal,
 					}}
 				>
-					<ProductPriceDisplay
-						selectedSku={currentSku}
-						product={product}
-						cartsCount={cartsCount}
-						isInWishlist={isInWishlist}
-					/>
+					<ProductPriceDisplay selectedSku={currentSku} product={product} cartsCount={cartsCount} />
 				</m.div>
 			</AnimatePresence>
 

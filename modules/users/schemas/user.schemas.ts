@@ -163,7 +163,6 @@ export const exportUserDataResponseSchema = z.object({
 		createdAt: z.iso.datetime(),
 		termsAcceptedAt: z.iso.datetime().nullable(),
 		termsVersion: z.string().nullable(),
-		marketingOptOutAt: z.iso.datetime().nullable(),
 	}),
 	addresses: z.array(
 		z.object({

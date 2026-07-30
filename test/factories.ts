@@ -393,7 +393,6 @@ function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
 		id: "wi_cm1234567890abcde",
 		wishlistId: "wl_cm1234567890abcde",
 		productId: VALID_PRODUCT_ID,
-		backInStockNotifiedAt: null,
 		createdAt: new Date("2026-01-15"),
 		updatedAt: new Date("2026-01-15"),
 		...overrides,

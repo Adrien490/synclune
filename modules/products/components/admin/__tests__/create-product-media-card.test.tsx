@@ -275,7 +275,7 @@ describe("CreateProductMediaCard", () => {
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
 				screen.getByText(
-					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+					"La première image sera l'image principale. Glisse-dépose pour réorganiser.",
 				),
 			).toBeInTheDocument();
 		});
@@ -286,7 +286,7 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByText("Confiez jusqu'à 10 médias de votre bijou à l'atelier"),
+				screen.getByText("Confie jusqu'à 10 médias de ton bijou à l'atelier"),
 			).toBeInTheDocument();
 		});
 

@@ -22,17 +22,6 @@ vi.mock("motion/react", () => ({
 	useReducedMotion: () => false,
 }));
 
-// Stub out the NotifyBackInStockButton — not under test
-vi.mock("@/modules/wishlist/components/notify-back-in-stock-button", () => ({
-	NotifyBackInStockButton: ({
-		productTitle,
-	}: {
-		productId: string;
-		productTitle: string;
-		isInWishlist: boolean;
-	}) => <button data-testid="notify-btn">{`Notifier : ${productTitle}`}</button>,
-}));
-
 // Stub out Badge — pass-through so text assertions still work
 vi.mock("@/shared/components/ui/badge", () => ({
 	Badge: ({
@@ -151,14 +140,16 @@ describe("ProductPriceDisplay", () => {
 			expect(screen.getByText(/2/)).toBeInTheDocument();
 		});
 
-		it("shows the out-of-stock badge and notify button when inventory is 0", () => {
+		it("shows the out-of-stock badge and message when inventory is 0", () => {
 			const sku = makeSku({ inventory: 0, isActive: true });
-			render(
-				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} isInWishlist={false} />,
-			);
+			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />);
 
 			expect(screen.getByText("Rupture de stock")).toBeInTheDocument();
-			expect(screen.getByTestId("notify-btn")).toBeInTheDocument();
+			// Plus de bouton « prévenez-moi » : la notification de réassort a été
+			// retirée en V1. Le message d'attente reste la seule affordance.
+			expect(screen.getByRole("alert")).toHaveTextContent(
+				"Cette petite merveille sera bientôt disponible !",
+			);
 		});
 
 		it("renders the FOMO carts badge when cartsCount is provided and product is in stock", () => {

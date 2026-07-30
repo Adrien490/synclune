@@ -29,9 +29,8 @@ import { recordStockMovementTx } from "./stock-movement.service";
  *
  * @returns `delta` à appliquer (0 = ne rien changer, cas dominant) et l'encadrement
  *   VERROUILLÉ du stock. `previousInventory`/`newInventory` viennent de la ligne
- *   verrouillée, jamais du formulaire : c'est ce qui permet à l'appelant de gater
- *   `notifyBackInStock` sur une vraie transition 0→N (le gate est obligatoire —
- *   `notifyBackInStock` ne re-vérifie PAS `inventory > 0` lui-même).
+ *   verrouillée, jamais du formulaire : c'est ce qui rend le journal `StockMovement`
+ *   fidèle même si un writer concurrent passe entre la lecture et l'écriture.
  */
 export async function applyInventoryDeltaTx(
 	tx: Prisma.TransactionClient,
