@@ -69,8 +69,9 @@ const {
 			// STOCK-LEDGER-001 : chaque restock réussi écrit un StockMovement.
 			stockMovement: { create: vi.fn() },
 			order: { update: vi.fn() },
-			// ORD-STRIPE-007 : dispute.findFirst dans Step 1 SAGA processRefund
-			dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+			// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+			// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+			orderHistory: { count: vi.fn().mockResolvedValue(0) },
 		},
 		mockCreateStripeRefund: vi.fn(),
 		mockUpdateTag: vi.fn(),

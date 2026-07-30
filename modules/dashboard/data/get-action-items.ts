@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { DisputeStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -10,11 +10,15 @@ export type { DashboardActionItems } from "../types/dashboard.types";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // Fenêtres de monitoring « à traiter ». Jadis portées par les crons d'alerte
-// retirés à l'audit right-sizing (dispute-deadlines / overbilled-orders /
-// stuck-orders) ; le dashboard en est désormais le SSOT. Lecture seule, données
-// fraîches à chaque chargement (PAS de "use cache" : on veut l'état courant, et
-// `Date.now()` est interdit dans un bloc "use cache").
-const DISPUTE_DEADLINE_SOON_MS = 2 * DAY_MS;
+// retirés à l'audit right-sizing (overbilled-orders / stuck-orders) ; le dashboard
+// en est désormais le SSOT. Lecture seule, données fraîches à chaque chargement
+// (PAS de "use cache" : on veut l'état courant, et `Date.now()` est interdit dans
+// un bloc "use cache").
+//
+// Il n'y a PAS de compteur de litiges : le modèle `Dispute` a été retiré en V1
+// (simplification 2026-07-30). Une deadline de chargeback se suit dans le Dashboard
+// Stripe, et l'alerte e-mail émise à l'ouverture la porte déjà.
+//
 // Réutilisés depuis `THRESHOLDS` plutôt que redéclarés : les deux définitions
 // portaient les mêmes valeurs sans lien, donc pouvaient divorcer en silence.
 const STUCK_PROCESSING_MS = THRESHOLDS.STUCK_PROCESSING_MS;
@@ -31,64 +35,50 @@ export async function fetchDashboardActionItems(): Promise<DashboardActionItems>
 	return Sentry.startSpan({ name: "dashboard.fetchActionItems", op: "db.read" }, async () => {
 		const now = Date.now();
 
-		const [
-			disputesNearDeadline,
-			overbilledOrders,
-			stuckProcessing,
-			stuckShipped,
-			stuckInvoices,
-			orphanPending,
-		] = await Promise.all([
-			prisma.dispute.count({
-				where: {
-					status: DisputeStatus.NEEDS_RESPONSE,
-					dueBy: { gte: new Date(now), lte: new Date(now + DISPUTE_DEADLINE_SOON_MS) },
-					order: { ...notDeleted },
-				},
-			}),
-			prisma.order.count({
-				where: {
-					overbilledAmountCents: { not: null },
-					overbillingResolvedAt: null,
-					...notDeleted,
-				},
-			}),
-			prisma.order.count({
-				where: {
-					status: OrderStatus.PROCESSING,
-					paymentStatus: PaymentStatus.PAID,
-					paidAt: { lt: new Date(now - STUCK_PROCESSING_MS) },
-					...notDeleted,
-				},
-			}),
-			prisma.order.count({
-				where: {
-					status: OrderStatus.SHIPPED,
-					shippedAt: { lt: new Date(now - STUCK_SHIPPED_MS) },
-					actualDelivery: null,
-					...notDeleted,
-				},
-			}),
-			prisma.order.count({
-				where: {
-					paymentStatus: PaymentStatus.PAID,
-					invoiceNumber: null,
-					paidAt: { lt: new Date(now - STUCK_INVOICE_MS) },
-					...notDeleted,
-				},
-			}),
-			prisma.order.count({
-				where: {
-					paymentStatus: PaymentStatus.PENDING,
-					stripePaymentIntentId: { not: null },
-					createdAt: { lt: new Date(now - ORPHAN_PENDING_MS) },
-					...notDeleted,
-				},
-			}),
-		]);
+		const [overbilledOrders, stuckProcessing, stuckShipped, stuckInvoices, orphanPending] =
+			await Promise.all([
+				prisma.order.count({
+					where: {
+						overbilledAmountCents: { not: null },
+						overbillingResolvedAt: null,
+						...notDeleted,
+					},
+				}),
+				prisma.order.count({
+					where: {
+						status: OrderStatus.PROCESSING,
+						paymentStatus: PaymentStatus.PAID,
+						paidAt: { lt: new Date(now - STUCK_PROCESSING_MS) },
+						...notDeleted,
+					},
+				}),
+				prisma.order.count({
+					where: {
+						status: OrderStatus.SHIPPED,
+						shippedAt: { lt: new Date(now - STUCK_SHIPPED_MS) },
+						actualDelivery: null,
+						...notDeleted,
+					},
+				}),
+				prisma.order.count({
+					where: {
+						paymentStatus: PaymentStatus.PAID,
+						invoiceNumber: null,
+						paidAt: { lt: new Date(now - STUCK_INVOICE_MS) },
+						...notDeleted,
+					},
+				}),
+				prisma.order.count({
+					where: {
+						paymentStatus: PaymentStatus.PENDING,
+						stripePaymentIntentId: { not: null },
+						createdAt: { lt: new Date(now - ORPHAN_PENDING_MS) },
+						...notDeleted,
+					},
+				}),
+			]);
 
 		return {
-			disputesNearDeadline,
 			overbilledOrders,
 			stuckProcessing,
 			stuckShipped,

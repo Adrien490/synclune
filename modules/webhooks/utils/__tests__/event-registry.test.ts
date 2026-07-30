@@ -333,8 +333,6 @@ describe("isEventSupported", () => {
 			"refund.failed",
 			"charge.dispute.created",
 			"charge.dispute.closed",
-			"charge.dispute.funds_withdrawn",
-			"charge.dispute.funds_reinstated",
 			"invoice.payment_failed",
 		];
 

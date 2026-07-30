@@ -22,6 +22,7 @@ import { updateTag } from "next/cache";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { hasOpenDisputeTx } from "@/modules/orders/services/has-open-dispute.service";
 import { createRefundSchema } from "../schemas/refund.schemas";
 
 /** Active refund statuses that count toward refunded amounts/quantities */
@@ -151,14 +152,7 @@ export async function createRefund(
 
 			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la commande.
 			// Cumul refund + chargeback = double dépense côté merchant.
-			const openDispute = await tx.dispute.findFirst({
-				where: {
-					orderId,
-					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
-				},
-				select: { id: true },
-			});
-			if (openDispute) {
+			if (await hasOpenDisputeTx(tx, orderId)) {
 				throw new Error("OPEN_DISPUTE");
 			}
 

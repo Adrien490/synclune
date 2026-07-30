@@ -34,8 +34,9 @@ const {
 		refund: { update: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		order: { update: vi.fn() },
-		// ORD-STRIPE-007 : dispute.findFirst utilisé dans Step 1 du SAGA processRefund
-		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+		orderHistory: { count: vi.fn().mockResolvedValue(0) },
 	};
 	return {
 		mockRequireAdminWithUser: vi.fn(),

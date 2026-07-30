@@ -35,10 +35,6 @@
 			"schedule": "0 3 * * *"
 		},
 		{
-			"path": "/api/cron/alert-dispute-deadlines",
-			"schedule": "0 8 * * *"
-		},
-		{
 			"path": "/api/cron/hard-delete-retention",
 			"schedule": "0 4 2 * *"
 		},

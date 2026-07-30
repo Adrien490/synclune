@@ -311,28 +311,6 @@ function createMockCollection(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
-// DISPUTES
-// ============================================================================
-
-function createMockDispute(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "dp_cm1234567890abcde",
-		stripeDisputeId: "dp_test_abc123",
-		orderId: VALID_ORDER_ID,
-		amount: 4999,
-		fee: 1500,
-		currency: "EUR",
-		reason: "FRAUDULENT",
-		status: "NEEDS_RESPONSE",
-		dueBy: new Date("2026-02-15"),
-		resolvedAt: null,
-		createdAt: new Date("2026-01-20"),
-		updatedAt: new Date("2026-01-20"),
-		...overrides,
-	};
-}
-
-// ============================================================================
 // DISCOUNT USAGE
 // ============================================================================
 

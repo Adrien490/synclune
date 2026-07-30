@@ -15,9 +15,9 @@
  *
  * Perte silencieuse et définitive : aucune alerte non plus, l'épuisement n'étant
  * émis que par les `catch` de la route et du cron, dont aucun ne s'exécute.
- * Exposition maximale sur les litiges — `alert-dispute-deadlines` ne lit que les
- * lignes `Dispute` locales et n'interroge jamais Stripe, donc un
- * `charge.dispute.created` perdu n'a aucun autre filet.
+ * Exposition maximale sur les litiges : un `charge.dispute.created` perdu n'a aucun
+ * autre filet côté Synclune (depuis le retrait du modèle `Dispute` en V1, il n'existe
+ * plus aucune passe locale qui pourrait le rattraper — seul Stripe le sait).
  *
  * Ce test verrouille la clause OR (avec fallback `receivedAt`) et le tri qui
  * empêche les events jamais traités d'être relégués en fin de batch.

@@ -33,9 +33,11 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/orders/actions/mark-as-delivered.ts",
   ],
   "DISPUTE_OPENED": [
+    "modules/orders/services/has-open-dispute.service.ts",
     "modules/webhooks/handlers/dispute-handlers.ts",
   ],
   "DISPUTE_RESOLVED": [
+    "modules/orders/services/has-open-dispute.service.ts",
     "modules/webhooks/handlers/dispute-handlers.ts",
   ],
   "INVOICE_ARCHIVED": [

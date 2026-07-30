@@ -23,9 +23,9 @@ const {
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
 		refund: { create: vi.fn() },
-		orderHistory: { create: vi.fn() },
-		// ORD-STRIPE-007 : createRefund check dispute.findFirst dans la tx (Step initial)
-		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+		orderHistory: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
 		$transaction: vi.fn(),
 		$queryRaw: vi.fn(),
 	},

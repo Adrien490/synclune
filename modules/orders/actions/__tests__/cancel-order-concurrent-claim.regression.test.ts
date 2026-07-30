@@ -33,11 +33,12 @@ const {
 		order: { findUnique: vi.fn(), updateMany: vi.fn() },
 		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
 		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },
 		refund: { create: vi.fn(), aggregate: vi.fn() },
-		dispute: { findFirst: vi.fn() },
+		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+		orderHistory: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
 		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
@@ -102,7 +103,6 @@ describe("@regression IDEM-CANCEL-001 — annulations admin concurrentes", () =>
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
 		mockPrisma.$queryRaw.mockResolvedValue([]);
-		mockPrisma.dispute.findFirst.mockResolvedValue(null);
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.order.findUnique.mockResolvedValue(

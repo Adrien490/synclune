@@ -43,6 +43,7 @@ import { createOrderAuditTx } from "../utils/order-audit";
 import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { canCancelOrder } from "../services/order-status-validation.service";
 import { voidInvoice } from "../services/void-invoice.service";
+import { hasOpenDisputeTx } from "../services/has-open-dispute.service";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { extractCustomerFirstName } from "../utils/customer-name";
@@ -140,14 +141,7 @@ export async function cancelOrder(
 				// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
 				// commande. Annuler + perdre le chargeback = double-débit côté merchant
 				// + voidInvoice émis pour rien si Stripe gagne ensuite.
-				const openDispute = await tx.dispute.findFirst({
-					where: {
-						orderId: id,
-						status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
-					},
-					select: { id: true },
-				});
-				if (openDispute) {
+				if (await hasOpenDisputeTx(tx, id)) {
 					return { ...found, _error: "open_dispute" as const };
 				}
 

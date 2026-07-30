@@ -33,15 +33,15 @@ const {
 		order: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
 		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
 		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },
 		refund: {
 			create: vi.fn(),
 			aggregate: vi.fn(),
 		},
-		// ORD-STRIPE-007 : dispute.findFirst dans cancelOrder Step initial
-		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+		orderHistory: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
 		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
 		$queryRaw: vi.fn().mockResolvedValue([]),
 	};

@@ -18,24 +18,18 @@ const {
 		// IDEM-DISPUTE-001 : `SELECT … FOR UPDATE` de sérialisation en tête des
 		// transactions dispute (created + closed).
 		$queryRaw: vi.fn(),
-		dispute: {
-			create: vi.fn(),
-			findUnique: vi.fn(),
-			update: vi.fn(),
-		},
 		order: {
 			update: vi.fn(),
-		},
-		orderNote: {
-			// IDEM-DISPUTE-001 : re-lecture autoritative de la garde sous le verrou.
-			findFirst: vi.fn(),
-			create: vi.fn(),
 		},
 		refund: {
 			aggregate: vi.fn(),
 			create: vi.fn(),
 		},
 		orderHistory: {
+			// IDEM-DISPUTE-001 : re-lecture autoritative de la garde sous le verrou.
+			// Depuis le retrait du modèle `Dispute` (V1), l'anti-rejeu s'appuie sur
+			// l'audit trail (`note` préfixée) et non plus sur un `OrderNote`.
+			findFirst: vi.fn(),
 			create: vi.fn(),
 		},
 	};
@@ -44,18 +38,13 @@ const {
 		mockTx,
 		mockPrisma: {
 			$transaction: vi.fn(),
-			dispute: {
-				findUnique: vi.fn(),
-				update: vi.fn(),
-			},
 			order: {
 				findFirst: vi.fn(),
 				findUnique: vi.fn(),
 				update: vi.fn(),
 			},
-			orderNote: {
+			orderHistory: {
 				findFirst: vi.fn(),
-				create: vi.fn(),
 			},
 		},
 		mockGetBaseUrl: vi.fn(),
@@ -88,7 +77,7 @@ vi.mock("@/shared/constants/urls", () => ({
 vi.mock("@/modules/orders/constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
 		LIST: "orders-list",
-		NOTES: (orderId: string) => `order-notes-${orderId}`,
+		HISTORY: (orderId: string) => `order-history-${orderId}`,
 	},
 	// CACHE-AUDIT-010 : miroir de l'implémentation réelle (cf.
 	// modules/orders/constants/cache.ts) pour vérifier que le chargeback perdu
@@ -120,23 +109,6 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	DisputeReason: {
-		DUPLICATE: "DUPLICATE",
-		FRAUDULENT: "FRAUDULENT",
-		SUBSCRIPTION_CANCELED: "SUBSCRIPTION_CANCELED",
-		PRODUCT_UNACCEPTABLE: "PRODUCT_UNACCEPTABLE",
-		PRODUCT_NOT_RECEIVED: "PRODUCT_NOT_RECEIVED",
-		UNRECOGNIZED: "UNRECOGNIZED",
-		CREDIT_NOT_PROCESSED: "CREDIT_NOT_PROCESSED",
-		GENERAL: "GENERAL",
-	},
-	DisputeStatus: {
-		NEEDS_RESPONSE: "NEEDS_RESPONSE",
-		UNDER_REVIEW: "UNDER_REVIEW",
-		WON: "WON",
-		LOST: "LOST",
-		CHARGE_REFUNDED: "CHARGE_REFUNDED",
-	},
 	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
 	InvoiceStatus: {
 		PENDING: "PENDING",
@@ -190,11 +162,7 @@ vi.mock("@sentry/nextjs", () => ({
 	addBreadcrumb: vi.fn(),
 }));
 
-import {
-	handleDisputeCreated,
-	handleDisputeClosed,
-	handleDisputeUpdated,
-} from "../dispute-handlers";
+import { handleDisputeCreated, handleDisputeClosed } from "../dispute-handlers";
 
 // ============================================================================
 // Helpers
@@ -248,41 +216,37 @@ describe("handleDisputeCreated", () => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.create.mockResolvedValue({});
-		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.orderHistory.create.mockResolvedValue({});
 	});
 
-	it("should create a Dispute record, order note and return ADMIN_DISPUTE_ALERT + INVALIDATE_CACHE tasks on success", async () => {
+	it("should record the audit trail and return ADMIN_DISPUTE_ALERT + INVALIDATE_CACHE tasks on success", async () => {
 		const dispute = makeDispute();
 
 		const result = await handleDisputeCreated(dispute);
 
-		// Verifies the Dispute record was created
-		expect(mockTx.dispute.create).toHaveBeenCalledWith(
+		// L'audit trail est le SEUL enregistrement local du litige depuis le retrait
+		// du modèle `Dispute` : il porte la note préfixée (qui sert d'anti-rejeu) et
+		// les métadonnées Stripe brutes (raison non mappée, deadline, montant).
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledWith(
+			mockTx,
 			expect.objectContaining({
-				data: expect.objectContaining({
+				orderId: "order-1",
+				action: "DISPUTE_OPENED",
+				source: "WEBHOOK",
+				authorId: "00000000-0000-0000-0000-000000000000",
+				authorName: "Système (webhook Stripe)",
+				note: expect.stringContaining("[LITIGE OUVERT] Litige Stripe dp_test_1"),
+				metadata: expect.objectContaining({
 					stripeDisputeId: "dp_test_1",
-					orderId: "order-1",
 					amount: 5000,
-					reason: "FRAUDULENT",
-					status: "NEEDS_RESPONSE",
+					reason: "fraudulent",
 				}),
 			}),
 		);
-
-		// Verifies the note was created with the right content
-		expect(mockTx.orderNote.create).toHaveBeenCalledWith({
-			data: {
-				orderId: "order-1",
-				content: expect.stringContaining("[LITIGE OUVERT] Litige Stripe dp_test_1"),
-				authorId: "00000000-0000-0000-0000-000000000000",
-				authorName: "Système (webhook Stripe)",
-			},
-		});
 
 		expect(result).toEqual({
 			success: true,
@@ -300,7 +264,7 @@ describe("handleDisputeCreated", () => {
 				},
 				{
 					type: "INVALIDATE_CACHE",
-					tags: ["orders-list", "order-notes-order-1", "admin-badges"],
+					tags: ["orders-list", "order-history-order-1", "admin-badges"],
 				},
 			],
 		});
@@ -329,7 +293,7 @@ describe("handleDisputeCreated", () => {
 	});
 
 	it("should skip and return skipped result when a duplicate note already exists (idempotence)", async () => {
-		mockPrisma.orderNote.findFirst.mockResolvedValue({ id: "note-existing-1" });
+		mockPrisma.orderHistory.findFirst.mockResolvedValue({ id: "note-existing-1" });
 		const dispute = makeDispute();
 
 		const result = await handleDisputeCreated(dispute);
@@ -338,7 +302,7 @@ describe("handleDisputeCreated", () => {
 		expect(result).toEqual({
 			success: true,
 			skipped: true,
-			reason: "Dispute note already created",
+			reason: "Dispute already recorded",
 		});
 	});
 
@@ -356,8 +320,8 @@ describe("handleDisputeCreated", () => {
 
 		await handleDisputeCreated(dispute);
 
-		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
-		expect(createCall.data.content).toContain("bank_cannot_process");
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]![1];
+		expect(auditCall.note).toContain("bank_cannot_process");
 	});
 
 	it("should show N/A for deadline when evidence_details.due_by is missing", async () => {
@@ -372,8 +336,8 @@ describe("handleDisputeCreated", () => {
 
 		await handleDisputeCreated(dispute);
 
-		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
-		expect(createCall.data.content).toContain("Deadline de réponse: N/A");
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]![1];
+		expect(auditCall.note).toContain("Deadline de réponse: N/A");
 	});
 
 	it("should set deadline to null in task data when evidence_details.due_by is missing", async () => {
@@ -426,14 +390,12 @@ describe("handleDisputeClosed", () => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
-		mockTx.dispute.update.mockResolvedValue({});
 		mockTx.order.update.mockResolvedValue({});
-		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.orderHistory.create.mockResolvedValue({});
 		// ORD-REFUND-010: chargeback materialization needs aggregate + create
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
@@ -449,19 +411,10 @@ describe("handleDisputeClosed", () => {
 
 		const result = await handleDisputeClosed(dispute);
 
-		// Verify Dispute record was updated
-		expect(mockTx.dispute.update).toHaveBeenCalledWith({
-			where: { stripeDisputeId: "dp_test_1" },
-			data: {
-				status: "WON",
-				resolvedAt: expect.any(Date),
-			},
-		});
-
-		// Verify note content reflects a won dispute
-		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
-		expect(createCall.data.content).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: gagné");
-		expect(createCall.data.content).not.toContain("Le montant a été débité par Stripe.");
+		// L'audit trail porte le libellé de clôture
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]![1];
+		expect(auditCall.note).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: gagné");
+		expect(auditCall.note).not.toContain("Le montant a été débité par Stripe.");
 
 		// paymentStatus must not be touched
 		expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -476,19 +429,10 @@ describe("handleDisputeClosed", () => {
 
 		const result = await handleDisputeClosed(dispute);
 
-		// Verify Dispute record was updated
-		expect(mockTx.dispute.update).toHaveBeenCalledWith({
-			where: { stripeDisputeId: "dp_test_1" },
-			data: {
-				status: "LOST",
-				resolvedAt: expect.any(Date),
-			},
-		});
-
-		// Verify note content reflects a lost dispute
-		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
-		expect(createCall.data.content).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: perdu");
-		expect(createCall.data.content).toContain("Le montant a été débité par Stripe.");
+		// L'audit trail porte le libellé de clôture
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]![1];
+		expect(auditCall.note).toContain("[LITIGE CLOTURE] Litige dp_test_1 clôturé: perdu");
+		expect(auditCall.note).toContain("Le montant a été débité par Stripe.");
 
 		// paymentStatus must be updated to REFUNDED
 		expect(mockTx.order.update).toHaveBeenCalledWith({
@@ -507,7 +451,7 @@ describe("handleDisputeClosed", () => {
 
 		await handleDisputeClosed(dispute);
 
-		expect(mockTx.orderNote.create).toHaveBeenCalledTimes(1);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
 		// No redundant paymentStatus update
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
@@ -534,7 +478,7 @@ describe("handleDisputeClosed", () => {
 	});
 
 	it("should skip and return skipped result when a duplicate note already exists (idempotence)", async () => {
-		mockPrisma.orderNote.findFirst.mockResolvedValue({ id: "note-existing-2" });
+		mockPrisma.orderHistory.findFirst.mockResolvedValue({ id: "note-existing-2" });
 		const dispute = makeDispute({ status: "lost" });
 
 		const result = await handleDisputeClosed(dispute);
@@ -543,7 +487,7 @@ describe("handleDisputeClosed", () => {
 		expect(result).toEqual({
 			success: true,
 			skipped: true,
-			reason: "Dispute closed note already created",
+			reason: "Dispute closure already recorded",
 		});
 	});
 
@@ -553,7 +497,9 @@ describe("handleDisputeClosed", () => {
 		const result = await handleDisputeClosed(dispute);
 
 		const cacheTask = result?.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		// CACHE-AUDIT-010 : helper canonique (user-scopé + détail) + NOTES.
+		// CACHE-AUDIT-010 : helper canonique (user-scopé + détail). Le tag NOTES a
+		// disparu avec les OrderNote de litige — l'issue vit dans HISTORY, que le
+		// helper couvre déjà.
 		expect(cacheTask).toEqual({
 			type: "INVALIDATE_CACHE",
 			tags: [
@@ -566,7 +512,6 @@ describe("handleDisputeClosed", () => {
 				"order-history-order-1",
 				"order-confirmation-order-1",
 				"order-detail-order-1",
-				"order-notes-order-1",
 			],
 		});
 	});
@@ -596,15 +541,16 @@ describe("handleDisputeClosed", () => {
 		);
 	});
 
-	it("should skip Dispute update when no Dispute record exists", async () => {
-		mockTx.dispute.findUnique.mockResolvedValue(null);
+	it("should audit the closure of a dispute that was never recorded locally", async () => {
+		// Cas réel : `charge.dispute.closed` peut arriver sans que `created` ait été
+		// reçu (endpoint abonné en cours de litige). Il n'y a plus de miroir à
+		// retrouver — la clôture s'audite quand même.
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		const dispute = makeDispute({ status: "won" });
 
 		await handleDisputeClosed(dispute);
 
-		expect(mockTx.dispute.update).not.toHaveBeenCalled();
-		// Note should still be created
-		expect(mockTx.orderNote.create).toHaveBeenCalledTimes(1);
+		expect(mockCreateOrderAuditTx).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -620,14 +566,12 @@ describe("handleDisputeClosed — non-loss closures emit no accounting (regressi
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
-		mockTx.dispute.update.mockResolvedValue({});
 		mockTx.order.update.mockResolvedValue({});
-		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.orderHistory.create.mockResolvedValue({});
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
 		mockPrisma.order.findUnique.mockResolvedValue(null);
@@ -640,21 +584,17 @@ describe("handleDisputeClosed — non-loss closures emit no accounting (regressi
 
 		const result = await handleDisputeClosed(dispute);
 
-		// Dispute marqué terminal (WON), mais AUCUNE compta
-		expect(mockTx.dispute.update).toHaveBeenCalledWith({
-			where: { stripeDisputeId: "dp_test_1" },
-			data: { status: "WON", resolvedAt: expect.any(Date) },
-		});
+		// Clôture auditée, mais AUCUNE compta
 		expect(mockTx.refund.create).not.toHaveBeenCalled();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
 		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 
-		const createCall = mockTx.orderNote.create.mock.calls[0]![0];
-		expect(createCall.data.content).toContain(
+		const auditCall = mockCreateOrderAuditTx.mock.calls[0]![1];
+		expect(auditCall.note).toContain(
 			"[LITIGE CLOTURE] Litige dp_test_1 clôturé: clôturé sans débit",
 		);
-		expect(createCall.data.content).not.toContain("Le montant a été débité par Stripe.");
+		expect(auditCall.note).not.toContain("Le montant a été débité par Stripe.");
 		expect(result?.success).toBe(true);
 	});
 
@@ -679,26 +619,21 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder());
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.create.mockResolvedValue({});
-		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.orderHistory.create.mockResolvedValue({});
 	});
 
-	it("should store balance_transactions[0].fee when present", async () => {
+	it("should store balance_transactions[0].fee in the audit metadata when present", async () => {
 		const dispute = makeDispute({
 			balance_transactions: [{ fee: 1500 }] as unknown as Stripe.Dispute["balance_transactions"],
 		});
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ fee: 1500 }),
-			}),
-		);
+		expect(mockCreateOrderAuditTx.mock.calls[0]![1].metadata).toMatchObject({ fee: 1500 });
 	});
 
 	it("should default fee to 0 when balance_transactions is empty", async () => {
@@ -706,46 +641,33 @@ describe("handleDisputeCreated - reason and fee mapping", () => {
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ fee: 0 }),
-			}),
-		);
+		expect(mockCreateOrderAuditTx.mock.calls[0]![1].metadata).toMatchObject({ fee: 0 });
 	});
 
+	// Le retrait du modèle `Dispute` a supprimé `STRIPE_REASON_MAP` : il n'y a plus
+	// d'enum local à faire coïncider avec Stripe, donc plus de mapping à tester —
+	// et plus de perte d'information. La raison BRUTE de Stripe part telle quelle
+	// dans les métadonnées d'audit, y compris une valeur inconnue de nos libellés
+	// (l'ancien mapping l'écrasait en `GENERAL`, ce qui rendait un litige
+	// `bank_cannot_process` indistinguable d'un litige réellement « général »).
 	it.each([
-		["duplicate", "DUPLICATE"],
-		["fraudulent", "FRAUDULENT"],
-		["subscription_canceled", "SUBSCRIPTION_CANCELED"],
-		["product_unacceptable", "PRODUCT_UNACCEPTABLE"],
-		["product_not_received", "PRODUCT_NOT_RECEIVED"],
-		["unrecognized", "UNRECOGNIZED"],
-		["credit_not_processed", "CREDIT_NOT_PROCESSED"],
-		["general", "GENERAL"],
-	])("should map Stripe reason '%s' to DisputeReason.%s", async (stripeReason, expectedEnum) => {
+		"duplicate",
+		"fraudulent",
+		"subscription_canceled",
+		"product_unacceptable",
+		"product_not_received",
+		"unrecognized",
+		"credit_not_processed",
+		"general",
+		"bank_cannot_process",
+	])("should preserve the raw Stripe reason '%s' in the audit metadata", async (stripeReason) => {
 		const dispute = makeDispute({ reason: stripeReason as Stripe.Dispute["reason"] });
 
 		await handleDisputeCreated(dispute);
 
-		expect(mockTx.dispute.create).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ reason: expectedEnum }),
-			}),
-		);
-	});
-
-	it("should default unknown reason to GENERAL", async () => {
-		const dispute = makeDispute({
-			reason: "bank_cannot_process" as Stripe.Dispute["reason"],
+		expect(mockCreateOrderAuditTx.mock.calls[0]![1].metadata).toMatchObject({
+			reason: stripeReason,
 		});
-
-		await handleDisputeCreated(dispute);
-
-		expect(mockTx.dispute.create).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ reason: "GENERAL" }),
-			}),
-		);
 	});
 
 	it("should attach a stable idempotencyKey to the opening admin alert (LOW-2)", async () => {
@@ -773,14 +695,12 @@ describe("handleDisputeClosed — accounting wiring (regression)", () => {
 		vi.clearAllMocks();
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
-		mockTx.dispute.update.mockResolvedValue({});
 		mockTx.order.update.mockResolvedValue({});
-		mockTx.orderNote.create.mockResolvedValue({});
+		mockTx.orderHistory.create.mockResolvedValue({});
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
 		mockPrisma.order.findUnique.mockResolvedValue(null);
@@ -867,66 +787,13 @@ describe("handleDisputeClosed — accounting wiring (regression)", () => {
 });
 
 // ============================================================================
-// handleDisputeUpdated (LOW-1)
+// NOTE — `charge.dispute.updated` n'est plus traité (retrait du modèle `Dispute`,
+// simplification V1 2026-07-30). Le hasard que gardait l'ancien test P2-D — un
+// statut terminal livré par `updated` rendant le litige « résolu » AVANT que la
+// compta de clôture ait tourné — disparaît STRUCTURELLEMENT : `hasOpenDisputeTx`
+// ne bascule que sur un `DISPUTE_RESOLVED`, écrit uniquement par
+// `charge.dispute.closed`, dans la MÊME transaction que le Refund et l'avoir.
 // ============================================================================
-
-describe("handleDisputeUpdated", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockPrisma.dispute.findUnique.mockResolvedValue({
-			id: "dispute-1",
-			orderId: "order-1",
-			status: "NEEDS_RESPONSE",
-		});
-		mockPrisma.dispute.update.mockResolvedValue({});
-	});
-
-	it("updates the dispute status + dueBy and invalidates cache", async () => {
-		const dispute = makeDispute({ status: "under_review" });
-
-		const result = await handleDisputeUpdated(dispute);
-
-		expect(mockPrisma.dispute.update).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: { stripeDisputeId: "dp_test_1" },
-				data: expect.objectContaining({ status: "UNDER_REVIEW" }),
-			}),
-		);
-		expect(result?.tasks?.[0]?.type).toBe("INVALIDATE_CACHE");
-	});
-
-	it("skips (no mutation) when the dispute does not exist yet", async () => {
-		mockPrisma.dispute.findUnique.mockResolvedValue(null);
-		const dispute = makeDispute({ status: "under_review" });
-
-		const result = await handleDisputeUpdated(dispute);
-
-		expect(mockPrisma.dispute.update).not.toHaveBeenCalled();
-		expect(result).toEqual({
-			success: true,
-			skipped: true,
-			reason: "Dispute not yet created",
-		});
-	});
-
-	// @regression dispute-updated-terminal-status-owned-by-closed-2026-05-30
-	// P2-D : un statut terminal (lost/won/charge_refunded) livré via
-	// charge.dispute.updated NE doit PAS muter le Dispute ici — sinon le guard
-	// `hasOpenDispute` le verrait terminal et débloquerait refund/cancel/fulfillment
-	// AVANT que la compta de clôture (charge.dispute.closed) ait tourné.
-	it("does NOT mutate on a terminal status (lost) — owned by charge.dispute.closed", async () => {
-		const dispute = makeDispute({ status: "lost" });
-
-		const result = await handleDisputeUpdated(dispute);
-
-		expect(mockPrisma.dispute.update).not.toHaveBeenCalled();
-		expect(result).toEqual({
-			success: true,
-			skipped: true,
-			reason: "Terminal status owned by charge.dispute.closed",
-		});
-	});
-});
 
 // ============================================================================
 // @regression dispute-chargeback-idempotence — P1-3
@@ -943,7 +810,7 @@ describe("@regression dispute-chargeback-idempotence — P1-3", () => {
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
 		// Note déjà créée → redélivrance du webhook.
-		mockPrisma.orderNote.findFirst.mockResolvedValue({ id: "note-existing" });
+		mockPrisma.orderHistory.findFirst.mockResolvedValue({ id: "note-existing" });
 	});
 
 	it("REDÉLIVRANCE (note déjà créée) → aucun avoir (idempotence)", async () => {
@@ -979,18 +846,17 @@ describe("@regression idem-dispute-001", () => {
 		mockGetBaseUrl.mockReturnValue("https://synclune.fr");
 		mockPrisma.order.findFirst.mockResolvedValue(makeOrder({ total: 5000 }));
 		// Fast path franchi : au moment de la lecture hors-verrou, rien n'existait.
-		mockPrisma.orderNote.findFirst.mockResolvedValue(null);
+		mockPrisma.orderHistory.findFirst.mockResolvedValue(null);
 		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
 			cb(mockTx),
 		);
-		mockTx.dispute.findUnique.mockResolvedValue({ id: "dispute-1" });
 		mockTx.refund.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 		mockTx.refund.create.mockResolvedValue({ id: "ref-chargeback-1" });
 	});
 
 	it("CONCURRENT (note apparue sous le verrou) → aucun Refund, aucun avoir, aucune ligne DGFiP", async () => {
 		// Le dispatch concurrent a commité pendant qu'on attendait le FOR UPDATE.
-		mockTx.orderNote.findFirst.mockResolvedValue({ id: "note-committed-by-winner" });
+		mockTx.orderHistory.findFirst.mockResolvedValue({ id: "note-committed-by-winner" });
 
 		const result = await handleDisputeClosed(makeDispute({ status: "lost", amount: 5000 }));
 
@@ -999,14 +865,14 @@ describe("@regression idem-dispute-001", () => {
 		expect(mockPrisma.$transaction).toHaveBeenCalled();
 		// …mais la garde sous verrou a tout arrêté avant la moindre écriture.
 		expect(mockTx.refund.create).not.toHaveBeenCalled();
-		expect(mockTx.orderNote.create).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(mockVoidInvoice).not.toHaveBeenCalled();
 		expect(mockIssueCreditNoteForRefund).not.toHaveBeenCalled();
 	});
 
 	it("sérialise sur la ligne Order (SELECT … FOR UPDATE) avant de décider", async () => {
-		mockTx.orderNote.findFirst.mockResolvedValue(null);
+		mockTx.orderHistory.findFirst.mockResolvedValue(null);
 
 		await handleDisputeClosed(makeDispute({ status: "lost", amount: 5000 }));
 
@@ -1017,7 +883,7 @@ describe("@regression idem-dispute-001", () => {
 	});
 
 	it("GAGNANT (aucune note sous le verrou) → book normalement le chargeback", async () => {
-		mockTx.orderNote.findFirst.mockResolvedValue(null);
+		mockTx.orderHistory.findFirst.mockResolvedValue(null);
 
 		const result = await handleDisputeClosed(makeDispute({ status: "lost", amount: 5000 }));
 
@@ -1026,15 +892,13 @@ describe("@regression idem-dispute-001", () => {
 		expect(mockTx.refund.create).toHaveBeenCalledTimes(1);
 	});
 
-	it("handleDisputeCreated : note apparue sous le verrou → pas de 2ᵉ Dispute ni 2ᵉ alerte", async () => {
-		mockTx.orderNote.findFirst.mockResolvedValue({ id: "note-committed-by-winner" });
-		mockTx.dispute.create.mockResolvedValue({ id: "dispute-1" });
+	it("handleDisputeCreated : audit apparu sous le verrou → pas de 2ᵉ entrée ni 2ᵉ alerte", async () => {
+		mockTx.orderHistory.findFirst.mockResolvedValue({ id: "audit-committed-by-winner" });
 
 		const result = await handleDisputeCreated(makeDispute());
 
 		expect(result).toMatchObject({ skipped: true });
-		expect(mockTx.dispute.create).not.toHaveBeenCalled();
-		expect(mockTx.orderNote.create).not.toHaveBeenCalled();
+		expect(mockCreateOrderAuditTx).not.toHaveBeenCalled();
 		expect(result?.tasks).toBeUndefined();
 	});
 });

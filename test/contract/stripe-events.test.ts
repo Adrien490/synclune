@@ -20,10 +20,7 @@ const {
 	mockHandleRefundUpdated,
 	mockHandleRefundFailed,
 	mockHandleDisputeCreated,
-	mockHandleDisputeUpdated,
 	mockHandleDisputeClosed,
-	mockHandleDisputeFundsWithdrawn,
-	mockHandleDisputeFundsReinstated,
 	mockHandlePaymentSuccess,
 	mockHandlePaymentFailure,
 	mockHandlePaymentCanceled,
@@ -34,10 +31,7 @@ const {
 	mockHandleRefundUpdated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleRefundFailed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeCreated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleDisputeUpdated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandleDisputeClosed: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleDisputeFundsWithdrawn: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
-	mockHandleDisputeFundsReinstated: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentSuccess: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentFailure: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
 	mockHandlePaymentCanceled: vi.fn().mockResolvedValue({ success: true, tasks: [] }),
@@ -52,10 +46,7 @@ vi.mock("@/modules/webhooks/handlers/refund-handlers", () => ({
 }));
 vi.mock("@/modules/webhooks/handlers/dispute-handlers", () => ({
 	handleDisputeCreated: mockHandleDisputeCreated,
-	handleDisputeUpdated: mockHandleDisputeUpdated,
 	handleDisputeClosed: mockHandleDisputeClosed,
-	handleDisputeFundsWithdrawn: mockHandleDisputeFundsWithdrawn,
-	handleDisputeFundsReinstated: mockHandleDisputeFundsReinstated,
 }));
 vi.mock("@/modules/webhooks/handlers/payment-handlers", () => ({
 	handlePaymentSuccess: mockHandlePaymentSuccess,
@@ -80,10 +71,7 @@ const EXPECTED_HANDLERS: Record<string, ReturnType<typeof vi.fn>> = {
 	"charge.refund.updated": mockHandleRefundUpdated,
 	"refund.failed": mockHandleRefundFailed,
 	"charge.dispute.created": mockHandleDisputeCreated,
-	"charge.dispute.updated": mockHandleDisputeUpdated,
 	"charge.dispute.closed": mockHandleDisputeClosed,
-	"charge.dispute.funds_withdrawn": mockHandleDisputeFundsWithdrawn,
-	"charge.dispute.funds_reinstated": mockHandleDisputeFundsReinstated,
 	"payment_intent.succeeded": mockHandlePaymentSuccess,
 	"payment_intent.payment_failed": mockHandlePaymentFailure,
 	"payment_intent.canceled": mockHandlePaymentCanceled,

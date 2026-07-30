@@ -29,15 +29,15 @@ const {
 		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 		// STOCK-LEDGER-001 : le restock écrit un StockMovement dans la même tx.
 		stockMovement: { create: vi.fn() },
-		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn(), updateMany: vi.fn() },
 		refund: {
 			create: vi.fn(),
 			aggregate: vi.fn().mockResolvedValue({ _sum: { amount: 0 } }),
 		},
-		// ORD-STRIPE-007 : dispute.findFirst utilisé pour bloquer cancel sur dispute ouvert
-		dispute: { findFirst: vi.fn().mockResolvedValue(null) },
+		// ORD-STRIPE-007 : hasOpenDisputeTx compte les entrees d'audit DISPUTE_OPENED
+		// vs DISPUTE_RESOLVED (le modele Dispute a ete retire en V1). 0/0 = aucun litige.
+		orderHistory: { create: vi.fn(), count: vi.fn().mockResolvedValue(0) },
 		// IDEM-CANCEL-001 : advisory lock acquireOrderPaidLockTx → tx.$queryRaw
 		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),

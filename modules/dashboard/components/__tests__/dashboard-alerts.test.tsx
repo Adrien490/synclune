@@ -47,7 +47,6 @@ function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 
 function makeActionItems(overrides: Partial<DashboardActionItems> = {}): DashboardActionItems {
 	return {
-		disputesNearDeadline: 0,
 		overbilledOrders: 0,
 		stuckProcessing: 0,
 		stuckShipped: 0,
@@ -107,11 +106,11 @@ describe("DashboardAlerts", () => {
 			render(
 				<DashboardAlertsComponent
 					alerts={makeAlerts()}
-					actionItems={makeActionItems({ disputesNearDeadline: 1, stuckProcessing: 2 })}
+					actionItems={makeActionItems({ overbilledOrders: 1, stuckProcessing: 2 })}
 				/>,
 			);
 
-			expect(screen.getByText("1 litige à traiter (échéance proche)")).toBeInTheDocument();
+			expect(screen.getByText("1 commande sur-facturée")).toBeInTheDocument();
 			expect(screen.getByText("2 commandes en préparation depuis +7 j")).toBeInTheDocument();
 		});
 

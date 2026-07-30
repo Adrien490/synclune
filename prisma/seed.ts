@@ -172,8 +172,6 @@ async function cleanup(): Promise<void> {
 
 	console.log("🧹 Nettoyage de la base de données...");
 
-	await prisma.dispute.deleteMany();
-
 	await prisma.orderHistory.deleteMany();
 	await prisma.orderNote.deleteMany();
 	await prisma.refundItem.deleteMany();
@@ -2872,64 +2870,6 @@ async function main(): Promise<void> {
 
 	await prisma.webhookEvent.createMany({ data: webhookEventsData });
 	console.log(`✅ ${webhookEventsData.length} événements webhook créés`);
-
-	// ============================================
-	// DISPUTES (M4)
-	// ============================================
-	const ordersForDisputes = await prisma.order.findMany({
-		where: {
-			paymentStatus: PaymentStatus.PAID,
-			status: { in: [OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
-		},
-		select: { id: true, total: true, createdAt: true },
-		take: 5,
-		orderBy: { createdAt: "desc" },
-	});
-
-	const disputeReasons = [
-		"FRAUDULENT",
-		"PRODUCT_NOT_RECEIVED",
-		"PRODUCT_UNACCEPTABLE",
-		"DUPLICATE",
-		"CREDIT_NOT_PROCESSED",
-	] as const;
-	const disputeStatuses = [
-		"NEEDS_RESPONSE",
-		"UNDER_REVIEW",
-		"LOST",
-		"WON",
-		"CHARGE_REFUNDED",
-	] as const;
-
-	for (let i = 0; i < Math.min(ordersForDisputes.length, disputeStatuses.length); i++) {
-		const order = ordersForDisputes[i]!;
-		const status = disputeStatuses[i]!;
-		const disputeDate = new Date(order.createdAt);
-		disputeDate.setDate(disputeDate.getDate() + faker.number.int({ min: 5, max: 30 }));
-
-		const dueBy = new Date(disputeDate);
-		dueBy.setDate(dueBy.getDate() + 21);
-
-		const isResolved = status === "LOST" || status === "WON" || status === "CHARGE_REFUNDED";
-		const resolvedDate = isResolved ? new Date(disputeDate) : null;
-		if (resolvedDate)
-			resolvedDate.setDate(resolvedDate.getDate() + faker.number.int({ min: 7, max: 30 }));
-
-		await prisma.dispute.create({
-			data: {
-				stripeDisputeId: `dp_${faker.string.alphanumeric(24)}`,
-				orderId: order.id,
-				amount: order.total,
-				fee: 1500,
-				reason: disputeReasons[i]!,
-				status,
-				dueBy: status === "NEEDS_RESPONSE" ? dueBy : null,
-				resolvedAt: resolvedDate,
-				createdAt: disputeDate,
-			},
-		});
-	}
-	console.log(`✅ ${Math.min(ordersForDisputes.length, disputeStatuses.length)} disputes créées`);
 
 	// ============================================
 	// VERIFICATION TOKENS (missing model)

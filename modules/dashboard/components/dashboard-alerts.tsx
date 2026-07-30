@@ -26,12 +26,6 @@ type ActionItemDescriptor = {
 // Descripteurs des éléments « à traiter ». L'ordre = priorité d'affichage.
 const ACTION_ITEMS: readonly ActionItemDescriptor[] = [
 	{
-		key: "disputesNearDeadline",
-		href: "/admin/ventes/commandes",
-		icon: "alert",
-		label: (n) => `${n} litige${n > 1 ? "s" : ""} à traiter (échéance proche)`,
-	},
-	{
 		key: "overbilledOrders",
 		href: "/admin/ventes/commandes",
 		icon: "alert",

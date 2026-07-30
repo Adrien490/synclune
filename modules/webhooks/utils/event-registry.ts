@@ -14,13 +14,7 @@ import {
 	handleRefundUpdated,
 	handleRefundFailed,
 } from "../handlers/refund-handlers";
-import {
-	handleDisputeCreated,
-	handleDisputeUpdated,
-	handleDisputeClosed,
-	handleDisputeFundsWithdrawn,
-	handleDisputeFundsReinstated,
-} from "../handlers/dispute-handlers";
+import { handleDisputeCreated, handleDisputeClosed } from "../handlers/dispute-handlers";
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
@@ -77,11 +71,12 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"refund.failed": async (e) => handleRefundFailed(getRefund(e)),
 
 	// === DISPUTE (chargebacks) ===
+	// Litiges : seuls ces deux events ont une conséquence LOCALE (alerte à
+	// l'ouverture, comptabilité de la clôture). `updated` / `funds_withdrawn` /
+	// `funds_reinstated` ne tenaient à jour que le miroir `Dispute`, retiré en V1 —
+	// le cycle de vie se suit dans le Dashboard Stripe.
 	"charge.dispute.created": async (e) => handleDisputeCreated(getDispute(e)),
-	"charge.dispute.updated": async (e) => handleDisputeUpdated(getDispute(e)),
 	"charge.dispute.closed": async (e) => handleDisputeClosed(getDispute(e)),
-	"charge.dispute.funds_withdrawn": async (e) => handleDisputeFundsWithdrawn(getDispute(e)),
-	"charge.dispute.funds_reinstated": async (e) => handleDisputeFundsReinstated(getDispute(e)),
 
 	// === INVOICE ===
 	"invoice.payment_failed": async (e) => handleInvoicePaymentFailed(getInvoice(e)),

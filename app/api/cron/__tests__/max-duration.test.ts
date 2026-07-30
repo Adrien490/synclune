@@ -40,7 +40,10 @@ describe("cron routes maxDuration export", () => {
 		// 2026-07-01 (audit catalogue) : 10 → 11, réactivation de `cleanup-orphan-media`
 		// (P1-B : les mutations médias admin comptent sur ce filet — sans lui, chaque
 		// remplacement d'image orpheline le fichier UploadThing définitivement).
-		expect(routeFiles).toHaveLength(11);
+		// 2026-07-30 (simplification V1) : 11 → 10, retrait d'`alert-dispute-deadlines`
+		// avec le modèle `Dispute` — la deadline est portée par l'alerte e-mail émise à
+		// l'ouverture du litige, et le cycle de vie se suit dans le Dashboard Stripe.
+		expect(routeFiles).toHaveLength(10);
 	});
 
 	it.each(routeFiles)("%s exports maxDuration >= 60", (routePath) => {

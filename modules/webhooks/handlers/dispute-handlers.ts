@@ -2,8 +2,6 @@ import type Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/shared/lib/logger";
 import {
-	DisputeReason,
-	DisputeStatus,
 	HistorySource,
 	InvoiceStatus,
 	OrderAction,
@@ -14,18 +12,41 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
-import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
+import {
+	DISPUTE_CLOSED_NOTE_PREFIX,
+	DISPUTE_OPENED_NOTE_PREFIX,
+} from "@/modules/orders/services/has-open-dispute.service";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
- * Dispute reason labels for admin notification
+ * Litiges Stripe — SANS miroir en base (simplification V1, 2026-07-30).
+ *
+ * Le modèle `Dispute` a été retiré : il n'avait aucune page admin, et un chargeback
+ * se conteste dans le **Dashboard Stripe** (c'est là que se soumettent les preuves),
+ * pas dans Synclune. Ce qui reste ici est ce qui a une conséquence LOCALE :
+ *
+ *  - `charge.dispute.created` → alerte admin (deadline de réponse) + audit trail.
+ *  - `charge.dispute.closed`  → conséquences COMPTABLES d'un chargeback perdu :
+ *    `Refund` COMPLETED, recalcul de `paymentStatus`, avoir Art. 272-I CGI.
+ *
+ * Trois events ont été retirés avec le modèle parce qu'ils ne faisaient que tenir le
+ * miroir à jour : `charge.dispute.updated` (statut/fee), `funds_withdrawn` et
+ * `funds_reinstated` (leur propre docstring disait « informatifs : pas de mutation
+ * business directe » — la vraie transition vit dans `closed`). Stripe reste la source
+ * de vérité du cycle de vie ; le lien profond vers son dashboard est dans l'alerte.
+ *
+ * ⚠️ L'anti-rejeu s'appuie sur `OrderHistory` (`note` préfixée), pas sur un `OrderNote` :
+ * l'audit trail est immuable (Art. L123-22) et portait DÉJÀ le même texte en doublon.
  */
+
+/** Libellés FR des raisons Stripe, pour l'alerte admin. */
 const DISPUTE_REASON_LABELS: Record<string, string> = {
 	duplicate: "Paiement en double",
 	fraudulent: "Fraude",
@@ -35,20 +56,6 @@ const DISPUTE_REASON_LABELS: Record<string, string> = {
 	unrecognized: "Transaction non reconnue",
 	credit_not_processed: "Remboursement non effectué",
 	general: "Litige général",
-};
-
-/**
- * Map Stripe dispute reasons to our DisputeReason enum
- */
-const STRIPE_REASON_MAP: Record<string, DisputeReason> = {
-	duplicate: DisputeReason.DUPLICATE,
-	fraudulent: DisputeReason.FRAUDULENT,
-	subscription_canceled: DisputeReason.SUBSCRIPTION_CANCELED,
-	product_unacceptable: DisputeReason.PRODUCT_UNACCEPTABLE,
-	product_not_received: DisputeReason.PRODUCT_NOT_RECEIVED,
-	unrecognized: DisputeReason.UNRECOGNIZED,
-	credit_not_processed: DisputeReason.CREDIT_NOT_PROCESSED,
-	general: DisputeReason.GENERAL,
 };
 
 /**
@@ -71,48 +78,25 @@ function mapDisputeReasonToRefundReason(stripeReason: string): RefundReason {
 	}
 }
 
-/**
- * Map Stripe dispute status to our DisputeStatus enum.
- *
- * Les statuts d'inquiry/retrieval (`warning_*`) n'escaladent pas forcément en
- * chargeback : `warning_closed` = inquiry close SANS débit → mappé WON (terminal,
- * favorable marchand) pour ne pas laisser le litige "ouvert" côté guard. Cf. P1-A.
- */
-function mapStripeDisputeStatus(stripeStatus: string): DisputeStatus {
-	switch (stripeStatus) {
-		case "needs_response":
-		case "warning_needs_response":
-			return DisputeStatus.NEEDS_RESPONSE;
-		case "under_review":
-		case "warning_under_review":
-			return DisputeStatus.UNDER_REVIEW;
-		case "won":
-		case "warning_closed":
-			return DisputeStatus.WON;
-		case "lost":
-			return DisputeStatus.LOST;
-		case "charge_refunded":
-			return DisputeStatus.CHARGE_REFUNDED;
-		default:
-			return DisputeStatus.NEEDS_RESPONSE;
-	}
-}
-
 const SYSTEM_AUTHOR_NAME = "Système (webhook Stripe)";
 
+function resolvePaymentIntentId(dispute: Stripe.Dispute): string | undefined {
+	return typeof dispute.payment_intent === "string"
+		? dispute.payment_intent
+		: dispute.payment_intent?.id;
+}
+
 /**
- * Handles charge.dispute.created — A customer opened a chargeback
- * 1. Find the order via the dispute's payment_intent
- * 2. Create an OrderNote with dispute details
- * 3. Send admin alert with dispute details and deadline
+ * Handles charge.dispute.created — une cliente a ouvert un chargeback.
+ *
+ * 1. Retrouve la commande via le payment_intent du litige
+ * 2. Écrit l'audit trail DISPUTE_OPENED (idempotent, sous verrou de ligne)
+ * 3. Alerte l'admin avec la raison et la deadline de réponse Stripe
  */
 export async function handleDisputeCreated(
 	dispute: Stripe.Dispute,
 ): Promise<WebhookHandlerResult | null> {
-	const paymentIntentId =
-		typeof dispute.payment_intent === "string"
-			? dispute.payment_intent
-			: dispute.payment_intent?.id;
+	const paymentIntentId = resolvePaymentIntentId(dispute);
 
 	try {
 		if (!paymentIntentId) {
@@ -148,74 +132,55 @@ export async function handleDisputeCreated(
 		// ORD-REFUND-011: flag suspicious dispute (déjà remboursée → potentielle double dépense)
 		const alreadyRefunded = order.paymentStatus === PaymentStatus.REFUNDED;
 
+		const notePrefix = DISPUTE_OPENED_NOTE_PREFIX(dispute.id);
+
 		// Fast path anti-rejeu : évite d'ouvrir une transaction sur une redélivrance
 		// séquentielle. NON autoritatif (lecture hors verrou) — la garde qui décide
 		// est rejouée sous `FOR UPDATE` dans la transaction (IDEM-DISPUTE-001).
-		const existingNote = await prisma.orderNote.findFirst({
+		const existingAudit = await prisma.orderHistory.findFirst({
 			where: {
 				orderId: order.id,
-				content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
+				action: OrderAction.DISPUTE_OPENED,
+				note: { startsWith: notePrefix },
 			},
 			select: { id: true },
 		});
 
-		if (existingNote) {
-			logger.info(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`, {
+		if (existingAudit) {
+			logger.info(`[WEBHOOK] Dispute ${dispute.id} already recorded, skipping creation`, {
 				service: "webhook",
 			});
-			return { success: true, skipped: true, reason: "Dispute note already created" };
+			return { success: true, skipped: true, reason: "Dispute already recorded" };
 		}
 
-		// Create Dispute record and OrderNote atomically
 		const deadlineStr = dispute.evidence_details.due_by
 			? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 			: "N/A";
-		const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
+		const noteContent = `${notePrefix}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
 
 		const dueBy = dispute.evidence_details.due_by
 			? new Date(dispute.evidence_details.due_by * 1000)
 			: null;
 
-		const created = await prisma.$transaction(
+		const recorded = await prisma.$transaction(
 			async (tx) => {
 				// IDEM-DISPUTE-001 (audit idempotence 2026-07-26) : sérialise sur la ligne
 				// Order les dispatches concurrents du MÊME event (fenêtre route/cron sur un
 				// event FAILED, cf. IDEM-ROUTE-001), puis rejoue la garde SOUS le verrou.
 				// Sans ça, deux exécutions parallèles passaient toutes deux le findFirst
-				// hors-tx → 2 OrderNote + P2002 non catché sur Dispute.stripeDisputeId.
+				// hors-tx → 2 entrées d'audit + 2 alertes admin.
 				await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${order.id} FOR UPDATE`;
 
-				const concurrentNote = await tx.orderNote.findFirst({
+				const concurrent = await tx.orderHistory.findFirst({
 					where: {
 						orderId: order.id,
-						content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
+						action: OrderAction.DISPUTE_OPENED,
+						note: { startsWith: notePrefix },
 					},
 					select: { id: true },
 				});
 
-				if (concurrentNote) return null;
-
-				const createdDispute = await tx.dispute.create({
-					data: {
-						stripeDisputeId: dispute.id,
-						orderId: order.id,
-						amount: dispute.amount,
-						fee: dispute.balance_transactions[0]?.fee ?? 0,
-						reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
-						status: mapStripeDisputeStatus(dispute.status),
-						dueBy,
-					},
-					select: { id: true },
-				});
-
-				await tx.orderNote.create({
-					data: {
-						orderId: order.id,
-						content: noteContent,
-						authorId: SYSTEM_AUTHOR_ID,
-						authorName: SYSTEM_AUTHOR_NAME,
-					},
-				});
+				if (concurrent) return false;
 
 				// ORD-REFUND-002 + ORD-REFUND-009: audit trail dispute ouvert
 				await createOrderAuditTx(tx, {
@@ -226,7 +191,6 @@ export async function handleDisputeCreated(
 					authorName: SYSTEM_AUTHOR_NAME,
 					note: noteContent,
 					metadata: {
-						disputeId: createdDispute.id,
 						stripeDisputeId: dispute.id,
 						amount: dispute.amount,
 						fee: dispute.balance_transactions[0]?.fee ?? 0,
@@ -236,7 +200,7 @@ export async function handleDisputeCreated(
 					},
 				});
 
-				return { disputeId: createdDispute.id };
+				return true;
 			},
 			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
 			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
@@ -244,12 +208,12 @@ export async function handleDisputeCreated(
 
 		// IDEM-DISPUTE-001 : claim perdu sous le verrou → un dispatch concurrent a déjà
 		// tout écrit. Pas de 2ᵉ alerte admin (l'autre l'a émise).
-		if (!created) {
+		if (!recorded) {
 			logger.info(
 				`[WEBHOOK] Dispute ${dispute.id} already recorded by a concurrent dispatch, skipping`,
 				{ service: "webhook" },
 			);
-			return { success: true, skipped: true, reason: "Dispute note already created" };
+			return { success: true, skipped: true, reason: "Dispute already recorded" };
 		}
 
 		logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
@@ -257,8 +221,6 @@ export async function handleDisputeCreated(
 		});
 
 		const baseUrl = getBaseUrl();
-		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-		const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
 
 		return {
 			success: true,
@@ -278,10 +240,10 @@ export async function handleDisputeCreated(
 						deadline: dispute.evidence_details.due_by
 							? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
 							: null,
-						dashboardUrl,
-						stripeDashboardUrl,
+						dashboardUrl: `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`,
+						stripeDashboardUrl: EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id),
 						// LOW-2 : dédup Resend 24h + DB (1 alerte d'ouverture par litige,
-						// en plus de l'anti-replay OrderNote ci-dessus — ceinture+bretelles).
+						// en plus de l'anti-replay audit ci-dessus — ceinture+bretelles).
 						idempotencyKey: `alert:dispute-open:${dispute.id}`,
 					},
 				},
@@ -289,7 +251,7 @@ export async function handleDisputeCreated(
 					type: "INVALIDATE_CACHE",
 					tags: [
 						ORDERS_CACHE_TAGS.LIST,
-						ORDERS_CACHE_TAGS.NOTES(order.id),
+						ORDERS_CACHE_TAGS.HISTORY(order.id),
 						SHARED_CACHE_TAGS.ADMIN_BADGES,
 					],
 				},
@@ -307,18 +269,16 @@ export async function handleDisputeCreated(
 }
 
 /**
- * Handles charge.dispute.closed — A dispute was resolved (won or lost)
- * 1. Create an OrderNote with the outcome
- * 2. If lost: update paymentStatus to REFUNDED (Stripe already debited the amount)
- * 3. Send admin alert with the result
+ * Handles charge.dispute.closed — le litige est tranché.
+ *
+ * C'est le seul handler de litige à conséquence comptable : un chargeback PERDU
+ * reprend des fonds sur une commande facturée, donc il se traite comme un
+ * remboursement (Art. 272-I CGI), en miroir de `charge.refunded`.
  */
 export async function handleDisputeClosed(
 	dispute: Stripe.Dispute,
 ): Promise<WebhookHandlerResult | null> {
-	const paymentIntentId =
-		typeof dispute.payment_intent === "string"
-			? dispute.payment_intent
-			: dispute.payment_intent?.id;
+	const paymentIntentId = resolvePaymentIntentId(dispute);
 
 	try {
 		if (!paymentIntentId) {
@@ -349,28 +309,33 @@ export async function handleDisputeClosed(
 			// boucler en 500 ni déclencher l'alerte admin de retries épuisés.
 			logger.warn(
 				`⚠️ [WEBHOOK] No order found for closed dispute PI ${paymentIntentId}, skipping`,
-				{ service: "webhook" },
+				{
+					service: "webhook",
+				},
 			);
 			return { success: true, skipped: true, reason: "Order not found" };
 		}
 
+		const notePrefix = DISPUTE_CLOSED_NOTE_PREFIX(dispute.id);
+
 		// Fast path anti-rejeu : évite d'ouvrir une transaction sur une redélivrance
 		// séquentielle. NON autoritatif — la garde qui décide est rejouée sous
 		// `FOR UPDATE` dans la transaction (IDEM-DISPUTE-001), car c'est ici que se
-		// matérialisent le Refund chargeback, l'avoir et la ligne DGFiP.
-		const existingNote = await prisma.orderNote.findFirst({
+		// matérialisent le Refund chargeback et l'avoir.
+		const existingAudit = await prisma.orderHistory.findFirst({
 			where: {
 				orderId: order.id,
-				content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
+				action: OrderAction.DISPUTE_RESOLVED,
+				note: { startsWith: notePrefix },
 			},
 			select: { id: true },
 		});
 
-		if (existingNote) {
-			logger.info(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`, {
+		if (existingAudit) {
+			logger.info(`[WEBHOOK] Dispute ${dispute.id} closure already recorded, skipping`, {
 				service: "webhook",
 			});
-			return { success: true, skipped: true, reason: "Dispute closed note already created" };
+			return { success: true, skipped: true, reason: "Dispute closure already recorded" };
 		}
 
 		// P1-A (audit dispute 2026-05-30) : SEUL `lost` reprend réellement des fonds.
@@ -380,10 +345,10 @@ export async function handleDisputeClosed(
 		//   - `warning_closed` : inquiry / retrieval request close sans escalade en
 		//     chargeback (aucun débit Stripe).
 		//   - `charge_refunded` : le charge a déjà été remboursé via `charge.refunded`
-		//     (l'avoir + l'e-reporting ont déjà été émis par ce chemin) → ne pas
-		//     créer un second Refund fantôme.
+		//     (l'avoir a déjà été émis par ce chemin) → ne pas créer un second Refund
+		//     fantôme.
 		// L'ancien binaire `won = status === "won"` bookait tout ≠ won comme une
-		// perte totale → remboursement fantôme + facture VOIDED + ligne DGFiP fausse.
+		// perte totale → remboursement fantôme + facture VOIDED.
 		const isLoss = dispute.status === "lost";
 		const statusLabel =
 			dispute.status === "won"
@@ -392,62 +357,33 @@ export async function handleDisputeClosed(
 					? "perdu"
 					: "clôturé sans débit";
 
-		// Update Dispute record, create OrderNote, and update order status atomically
-		const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${isLoss ? " Le montant a été débité par Stripe." : ""}`;
+		const noteContent = `${notePrefix} clôturé: ${statusLabel}.${isLoss ? " Le montant a été débité par Stripe." : ""}`;
 
 		// P2-C : la fee de litige (~15 €) se matérialise dans les balance_transactions
-		// au retrait des fonds, pas à la création. À la clôture, on la capte si
-		// présente (sans écraser une valeur déjà posée par funds_withdrawn).
+		// au retrait des fonds. À la clôture, on la capte si présente (pour l'audit).
 		const closedFee = dispute.balance_transactions[0]?.fee ?? 0;
 
 		const outcome = await prisma.$transaction(
 			async (tx) => {
 				// IDEM-DISPUTE-001 (audit idempotence 2026-07-26) — P0. Cette transaction
-				// matérialise un Refund COMPLETED (donc un avoir A-YYYY + une ligne DGFiP,
-				// tous deux scopés AU REFUND et donc incapables de dédupliquer entre eux).
-				// Le seul garde-fou était un findFirst sur préfixe de note, HORS transaction :
-				// deux dispatches concurrents du même event (fenêtre route/cron, cf.
-				// IDEM-ROUTE-001) le passaient tous deux → 2 avoirs + 2 déclarations pour une
-				// seule reprise de fonds Stripe. On sérialise sur la ligne Order puis on
-				// rejoue la garde SOUS le verrou : un seul gagnant, sans migration.
+				// matérialise un Refund COMPLETED (donc un avoir A-YYYY, scopé AU REFUND et
+				// donc incapable de dédupliquer avec un second). Le seul garde-fou était un
+				// findFirst sur préfixe de note, HORS transaction : deux dispatches concurrents
+				// du même event (fenêtre route/cron, cf. IDEM-ROUTE-001) le passaient tous deux
+				// → 2 avoirs pour une seule reprise de fonds Stripe. On sérialise sur la ligne
+				// Order puis on rejoue la garde SOUS le verrou : un seul gagnant.
 				await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${order.id} FOR UPDATE`;
 
-				const concurrentNote = await tx.orderNote.findFirst({
+				const concurrent = await tx.orderHistory.findFirst({
 					where: {
 						orderId: order.id,
-						content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
+						action: OrderAction.DISPUTE_RESOLVED,
+						note: { startsWith: notePrefix },
 					},
 					select: { id: true },
 				});
 
-				if (concurrentNote) return { skipped: true as const };
-
-				// Update Dispute record if it exists
-				const existingDispute = await tx.dispute.findUnique({
-					where: { stripeDisputeId: dispute.id },
-					select: { id: true },
-				});
-
-				if (existingDispute) {
-					await tx.dispute.update({
-						where: { stripeDisputeId: dispute.id },
-						data: {
-							status: mapStripeDisputeStatus(dispute.status),
-							resolvedAt: new Date(),
-							// P2-C : ne pas écraser une fee déjà captée (funds_withdrawn) par 0.
-							...(closedFee > 0 ? { fee: closedFee } : {}),
-						},
-					});
-				}
-
-				await tx.orderNote.create({
-					data: {
-						orderId: order.id,
-						content: noteContent,
-						authorId: SYSTEM_AUTHOR_ID,
-						authorName: SYSTEM_AUTHOR_NAME,
-					},
-				});
+				if (concurrent) return { skipped: true as const };
 
 				// ORD-REFUND-010: matérialiser le chargeback perdu comme un Refund
 				// COMPLETED pour traçabilité comptable. Recalculer paymentStatus selon
@@ -505,7 +441,6 @@ export async function handleDisputeClosed(
 							order.paymentStatus !== newPaymentStatus ? newPaymentStatus : undefined,
 						note: noteContent,
 						metadata: {
-							disputeId: existingDispute?.id ?? null,
 							stripeDisputeId: dispute.id,
 							won: false,
 							amount: dispute.amount,
@@ -523,7 +458,7 @@ export async function handleDisputeClosed(
 				}
 
 				// Clôture sans débit (won / warning_closed / charge_refunded) : pas de
-				// mutation Order, juste audit trail. Aucun Refund/avoir/e-reporting (P1-A).
+				// mutation Order, juste audit trail. Aucun Refund/avoir (P1-A).
 				await createOrderAuditTx(tx, {
 					orderId: order.id,
 					action: OrderAction.DISPUTE_RESOLVED,
@@ -532,7 +467,6 @@ export async function handleDisputeClosed(
 					authorName: SYSTEM_AUTHOR_NAME,
 					note: noteContent,
 					metadata: {
-						disputeId: existingDispute?.id ?? null,
 						stripeDisputeId: dispute.id,
 						won: dispute.status === "won",
 						closedStatus: dispute.status,
@@ -548,13 +482,13 @@ export async function handleDisputeClosed(
 		);
 
 		// IDEM-DISPUTE-001 : garde perdue sous le verrou → un dispatch concurrent a déjà
-		// bookè la clôture. Ne PAS enchaîner avoir / e-reporting (ce serait le doublon).
+		// bookè la clôture. Ne PAS enchaîner l'avoir (ce serait le doublon).
 		if (outcome.skipped) {
 			logger.info(
 				`[WEBHOOK] Dispute ${dispute.id} closure already booked by a concurrent dispatch, skipping`,
 				{ service: "webhook" },
 			);
-			return { success: true, skipped: true, reason: "Dispute closed note already created" };
+			return { success: true, skipped: true, reason: "Dispute closure already recorded" };
 		}
 
 		const lostOutcome = outcome.lost;
@@ -666,21 +600,15 @@ export async function handleDisputeClosed(
 		}
 
 		// Pas de 2e mail d'issue (gagné/perdu) systématique : l'admin a été notifié à
-		// l'ouverture (handleDisputeCreated) et l'issue est tracée en OrderNote +
-		// OrderHistory, consultable sur le dashboard (réduction du volume d'alertes).
+		// l'ouverture (handleDisputeCreated) et l'issue est tracée en OrderHistory,
+		// consultable sur le détail commande (réduction du volume d'alertes).
 		// CACHE-AUDIT-010 : sur un chargeback perdu, `paymentStatus` passe
 		// REFUNDED/PARTIALLY_REFUNDED (cf. lostOutcome) → passer par le helper
 		// canonique pour couvrir le détail commande (DETAIL/CONFIRMATION/HISTORY)
 		// ET l'espace client user-scopé (USER_ORDERS/LAST_ORDER).
-		// Une liste manuelle laissait la commande affichée PAID côté client jusqu'à
-		// l'expiration du profil `user` (~10 min). NOTES n'est pas couvert par le
-		// helper (audit interne) → ajouté explicitement.
 		tasks.push({
 			type: "INVALIDATE_CACHE",
-			tags: [
-				...getOrderInvalidationTags(order.userId ?? undefined, order.id),
-				ORDERS_CACHE_TAGS.NOTES(order.id),
-			],
+			tags: getOrderInvalidationTags(order.userId ?? undefined, order.id),
 		});
 
 		return { success: true, tasks };
@@ -693,234 +621,4 @@ export async function handleDisputeClosed(
 		});
 		throw error;
 	}
-}
-
-/**
- * Handles charge.dispute.updated — Stripe émet cet event quand le litige évolue
- * en cours de vie (preuves soumises → `under_review`, mise à jour montant, etc.).
- *
- * Handler minimal : on rafraîchit `Dispute.status` + `dueBy` pour que le
- * dashboard reflète l'état réel (sans ça, un litige reste figé `NEEDS_RESPONSE`
- * jusqu'à la clôture même après soumission de preuves). Aucune mutation business
- * (pas de chargebackRefund, pas de paymentStatus) : ces transitions restent
- * exclusivement dans `charge.dispute.closed`. Idempotent (update par
- * stripeDisputeId, noop si le Dispute n'existe pas encore).
- */
-export async function handleDisputeUpdated(
-	dispute: Stripe.Dispute,
-): Promise<WebhookHandlerResult | null> {
-	try {
-		const existing = await prisma.dispute.findUnique({
-			where: { stripeDisputeId: dispute.id },
-			select: { id: true, orderId: true, status: true, dueBy: true },
-		});
-
-		if (!existing) {
-			// L'event updated peut précéder created (ordre de livraison Stripe non
-			// garanti) : on laisse created poser l'état initial.
-			return { success: true, skipped: true, reason: "Dispute not yet created" };
-		}
-
-		const nextStatus = mapStripeDisputeStatus(dispute.status);
-
-		// P2-D (audit dispute 2026-05-30) : les transitions TERMINALES (WON/LOST/
-		// CHARGE_REFUNDED) sont la propriété exclusive de `charge.dispute.closed`
-		// (compta : chargebackRefund, paymentStatus, avoir, e-reporting). Si Stripe
-		// livre un statut terminal via `updated` (ordre de livraison non garanti),
-		// on NE mute PAS le Dispute ici — sinon `hasOpenDispute` le verrait terminal
-		// et débloquerait refund/cancel/fulfillment AVANT que la compta de clôture
-		// ait tourné. `closed` posera l'état terminal + `resolvedAt`.
-		const TERMINAL_STATUSES: DisputeStatus[] = [
-			DisputeStatus.WON,
-			DisputeStatus.LOST,
-			DisputeStatus.CHARGE_REFUNDED,
-		];
-		if (TERMINAL_STATUSES.includes(nextStatus)) {
-			return {
-				success: true,
-				skipped: true,
-				reason: "Terminal status owned by charge.dispute.closed",
-			};
-		}
-
-		const nextDueBy = dispute.evidence_details.due_by
-			? new Date(dispute.evidence_details.due_by * 1000)
-			: null;
-
-		// P2-G : comparer ET écrire `dueBy` inconditionnellement (y compris `null`)
-		// pour refléter une deadline effacée/prolongée par Stripe.
-		const dueByChanged = (existing.dueBy?.getTime() ?? null) !== (nextDueBy?.getTime() ?? null);
-
-		if (existing.status === nextStatus && !dueByChanged) {
-			return { success: true, skipped: true, reason: "No status change" };
-		}
-
-		await prisma.dispute.update({
-			where: { stripeDisputeId: dispute.id },
-			data: {
-				status: nextStatus,
-				dueBy: nextDueBy,
-			},
-		});
-
-		logger.info(`[WEBHOOK] Dispute ${dispute.id} updated → status ${nextStatus}`, {
-			service: "webhook",
-		});
-
-		return {
-			success: true,
-			tasks: [
-				{
-					type: "INVALIDATE_CACHE",
-					tags: [
-						ORDERS_CACHE_TAGS.LIST,
-						ORDERS_CACHE_TAGS.NOTES(existing.orderId),
-						SHARED_CACHE_TAGS.ADMIN_BADGES,
-					],
-				},
-			],
-		};
-	} catch (error) {
-		captureWebhookError(error, {
-			handler: "handleDisputeUpdated",
-			eventType: "charge.dispute.updated",
-			stripeDisputeId: dispute.id,
-		});
-		throw error;
-	}
-}
-
-/**
- * ORD-REFUND-013 — Handlers minimalistes pour les flux de fonds liés aux disputes.
- *
- * `funds_withdrawn` : Stripe a retiré les fonds en attendant la résolution du dispute.
- * `funds_reinstated` : Stripe a restitué les fonds (cas dispute gagné après withdrawn).
- *
- * Ces events sont informatifs : pas de mutation business directe (les vraies
- * transitions paymentStatus restent dans `charge.dispute.closed`), mais on garde
- * un OrderNote + OrderHistory pour traçabilité de trésorerie.
- */
-async function handleDisputeFundsFlow(
-	dispute: Stripe.Dispute,
-	flow: "withdrawn" | "reinstated",
-): Promise<WebhookHandlerResult | null> {
-	const paymentIntentId =
-		typeof dispute.payment_intent === "string"
-			? dispute.payment_intent
-			: dispute.payment_intent?.id;
-	const eventType = `charge.dispute.funds_${flow}` as const;
-	const label = flow === "withdrawn" ? "Fonds retirés" : "Fonds restitués";
-	const notePrefix = flow === "withdrawn" ? "[LITIGE FONDS RETIRÉS]" : "[LITIGE FONDS RESTITUÉS]";
-
-	try {
-		if (!paymentIntentId) {
-			throw new Error(`Dispute ${dispute.id} ${flow} has no payment_intent`);
-		}
-
-		const order = await prisma.order.findFirst({
-			where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
-			select: { id: true, orderNumber: true },
-		});
-
-		if (!order) {
-			logger.warn(`[WEBHOOK] No order found for dispute ${flow} PI ${paymentIntentId}`, {
-				service: "webhook",
-			});
-			return { success: true, skipped: true, reason: `Order not found for dispute ${flow}` };
-		}
-
-		const noteContent = `${notePrefix} Litige ${dispute.id} — ${label} par Stripe (montant: ${dispute.amount} centimes).`;
-
-		// Anti-replay
-		const existingNote = await prisma.orderNote.findFirst({
-			where: {
-				orderId: order.id,
-				content: { startsWith: `${notePrefix} Litige ${dispute.id}` },
-			},
-			select: { id: true },
-		});
-
-		if (existingNote) {
-			return { success: true, skipped: true, reason: `Dispute ${flow} note already created` };
-		}
-
-		// P2-C : la fee de litige (~15 €) se matérialise dans les balance_transactions
-		// au RETRAIT des fonds (`funds_withdrawn`), pas à la création (où le tableau
-		// est vide → l'ancien code laissait `Dispute.fee` à 0 à vie). On la capte ici.
-		const withdrawnFee = flow === "withdrawn" ? (dispute.balance_transactions[0]?.fee ?? 0) : 0;
-
-		await prisma.$transaction(
-			async (tx) => {
-				await tx.orderNote.create({
-					data: {
-						orderId: order.id,
-						content: noteContent,
-						authorId: SYSTEM_AUTHOR_ID,
-						authorName: SYSTEM_AUTHOR_NAME,
-					},
-				});
-				// P2-C : updateMany (no-op si le Dispute n'est pas encore créé — l'event
-				// funds_withdrawn peut précéder created). N'écrase pas une fee déjà posée.
-				if (withdrawnFee > 0) {
-					await tx.dispute.updateMany({
-						where: { stripeDisputeId: dispute.id, fee: 0 },
-						data: { fee: withdrawnFee },
-					});
-				}
-				await createOrderAuditTx(tx, {
-					orderId: order.id,
-					action: OrderAction.DISPUTE_RESOLVED,
-					source: HistorySource.WEBHOOK,
-					authorId: SYSTEM_AUTHOR_ID,
-					authorName: SYSTEM_AUTHOR_NAME,
-					note: noteContent,
-					metadata: {
-						stripeDisputeId: dispute.id,
-						amount: dispute.amount,
-						event: `funds_${flow}`,
-					},
-				});
-			},
-			// ORD-STRIPE-004 : maxWait override pour contention multi-webhooks.
-			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
-		);
-
-		logger.info(`💸 [WEBHOOK] Dispute ${dispute.id} funds ${flow} for order ${order.orderNumber}`, {
-			service: "webhook",
-		});
-
-		return {
-			success: true,
-			tasks: [
-				{
-					type: "INVALIDATE_CACHE",
-					tags: [
-						ORDERS_CACHE_TAGS.LIST,
-						ORDERS_CACHE_TAGS.NOTES(order.id),
-						SHARED_CACHE_TAGS.ADMIN_BADGES,
-					],
-				},
-			],
-		};
-	} catch (error) {
-		captureWebhookError(error, {
-			handler: `handleDisputeFunds${flow.charAt(0).toUpperCase()}${flow.slice(1)}`,
-			eventType,
-			stripeDisputeId: dispute.id,
-			paymentIntentId,
-		});
-		throw error;
-	}
-}
-
-export async function handleDisputeFundsWithdrawn(
-	dispute: Stripe.Dispute,
-): Promise<WebhookHandlerResult | null> {
-	return handleDisputeFundsFlow(dispute, "withdrawn");
-}
-
-export async function handleDisputeFundsReinstated(
-	dispute: Stripe.Dispute,
-): Promise<WebhookHandlerResult | null> {
-	return handleDisputeFundsFlow(dispute, "reinstated");
 }

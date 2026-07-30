@@ -59,13 +59,12 @@ export const CRON_SCHEDULES: Record<string, string> = {
 	// Passé de 4h à quotidien (contrainte Hobby) : un virement SEPA met de toute
 	// façon plusieurs jours à se dénouer côté Stripe.
 	"sync-async-payments": "0 5 * * *",
-	// Passé de 6h à quotidien (contrainte Hobby), groupé avec
-	// `alert-dispute-deadlines` sur la fenêtre 8h.
+	// Passé de 6h à quotidien (contrainte Hobby). Seul occupant de la fenêtre 8h
+	// depuis le retrait d'`alert-dispute-deadlines` (simplification V1 2026-07-30).
 	"reconcile-refunds": "0 8 * * *",
 	"reconcile-invoices": "0 2 * * *",
 	"cleanup-pending-orders": "0 3 * * *",
 	"process-account-deletions": "0 5 * * *",
-	"alert-dispute-deadlines": "0 8 * * *",
 	"hard-delete-retention": "0 4 2 * *",
 	// Hebdomadaire le mercredi (audit média M2). Le scan ne couvre que
 	// MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT fichiers par exécution et reprend

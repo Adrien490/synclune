@@ -212,12 +212,13 @@ export type DashboardAlerts = {
 
 /**
  * Compteurs « à traiter » du dashboard (audit right-sizing §4.2).
- * Remplacent les 3 crons d'alerte retirés (dispute-deadlines / overbilled-orders /
- * stuck-orders) : un coup d'œil read-only à la connexion au lieu d'e-mails quotidiens.
+ * Remplacent les crons d'alerte retirés (overbilled-orders / stuck-orders) : un coup
+ * d'œil read-only à la connexion au lieu d'e-mails quotidiens.
+ *
+ * Pas de compteur de litiges : le modèle `Dispute` a été retiré en V1 (2026-07-30),
+ * les deadlines de chargeback se suivent dans le Dashboard Stripe.
  */
 export type DashboardActionItems = {
-	/** Litiges Stripe NEEDS_RESPONSE dont la deadline tombe sous 2 jours. */
-	disputesNearDeadline: number;
 	/** Commandes sur-facturées non résolues (overbilledAmountCents non nul). */
 	overbilledOrders: number;
 	/** Commandes PAID en PROCESSING depuis plus de 7 jours. */

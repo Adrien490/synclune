@@ -37,6 +37,7 @@ import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
 import { captureRefundError } from "../utils/capture-refund-error";
 import { issueCreditNoteForRefund } from "../services/issue-credit-note.service";
+import { hasOpenDisputeTx } from "@/modules/orders/services/has-open-dispute.service";
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -149,14 +150,7 @@ export async function processRefund(
 			// ORD-STRIPE-007 : bloque si un dispute Stripe est ouvert sur la
 			// commande. Sans ce guard, le refund admin + le chargeback Stripe
 			// peuvent cumuler → double dépense côté merchant.
-			const openDispute = await tx.dispute.findFirst({
-				where: {
-					orderId: refund.order_id,
-					status: { notIn: ["WON", "LOST", "CHARGE_REFUNDED"] },
-				},
-				select: { id: true },
-			});
-			if (openDispute) {
+			if (await hasOpenDisputeTx(tx, refund.order_id)) {
 				throw new Error("OPEN_DISPUTE");
 			}
 

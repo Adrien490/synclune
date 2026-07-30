@@ -26,7 +26,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 /**
@@ -70,10 +70,17 @@ function moduleSourceFiles(): string[] {
 	const out = execFileSync("git", ["ls-files", "modules/*.ts", "modules/**/*.ts"], {
 		encoding: "utf-8",
 	});
-	return out
-		.split("\n")
-		.filter(Boolean)
-		.filter((path) => !path.includes("__tests__"));
+	return (
+		out
+			.split("\n")
+			.filter(Boolean)
+			.filter((path) => !path.includes("__tests__"))
+			// `git ls-files` liste ce qui est SUIVI, y compris un fichier supprimé dans
+			// l'arbre de travail mais pas encore indexé. Sans ce filtre, supprimer un
+			// service faisait planter la suite entière sur un ENOENT (donc un message
+			// illisible au lieu d'un échec d'assertion) jusqu'au `git add`.
+			.filter((path) => existsSync(path))
+	);
 }
 
 /**

@@ -99,8 +99,5 @@ export type SupportedStripeEvent =
 	| "charge.refund.updated"
 	| "refund.failed"
 	| "charge.dispute.created"
-	| "charge.dispute.updated"
 	| "charge.dispute.closed"
-	| "charge.dispute.funds_withdrawn"
-	| "charge.dispute.funds_reinstated"
 	| "invoice.payment_failed";
