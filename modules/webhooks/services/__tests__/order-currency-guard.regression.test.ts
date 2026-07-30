@@ -18,6 +18,8 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
+		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+		stockMovement: { create: vi.fn() },
 		cartItem: { deleteMany: vi.fn() },
 		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
 		cart: { updateMany: vi.fn() },
@@ -67,7 +69,12 @@ const baseOrder = {
 			skuColor: null,
 			skuMaterial: null,
 			skuSize: null,
-			sku: { id: "sku-pi-1", inventory: 10, sku: "SKU-1" },
+			sku: {
+				id: "sku-pi-1",
+				inventory: 10,
+				sku: "SKU-1",
+				product: { id: "product-pi-1", slug: "bague-pi" },
+			},
 		},
 	],
 };

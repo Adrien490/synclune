@@ -16,15 +16,6 @@ function getMinPrice(product: Product): number {
 }
 
 /**
- * Récupère la note moyenne d'un produit
- */
-function getAverageRating(product: Product): number {
-	if (!product.reviewStats) return 0;
-	const rating = product.reviewStats.averageRating;
-	return typeof rating === "number" ? rating : Number(rating);
-}
-
-/**
  * Trie les produits selon le critère demandé
  */
 export function sortProducts(products: Product[], sortBy: string): Product[] {
@@ -65,18 +56,6 @@ export function sortProducts(products: Product[], sortBy: string): Product[] {
 			const typeA = a.type?.label ?? "";
 			const typeB = b.type?.label ?? "";
 			return typeA.localeCompare(typeB, "fr");
-		}
-
-		if (sortBy.startsWith("rating-")) {
-			const ratingA = getAverageRating(a);
-			const ratingB = getAverageRating(b);
-			// Tri secondaire par nombre d'avis pour départager les égalités
-			if (ratingA === ratingB) {
-				const countA = a.reviewStats?.totalCount ?? 0;
-				const countB = b.reviewStats?.totalCount ?? 0;
-				return multiplier * (countA - countB);
-			}
-			return multiplier * (ratingA - ratingB);
 		}
 
 		// Par défaut : plus récents en premier

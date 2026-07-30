@@ -8,7 +8,7 @@ import { createContext, useContext, useEffect, useState } from "react";
  *
  * **Pourquoi.** `generateBreadcrumbs()` dérive ses libellés du pathname : pour un
  * segment dynamique introuvable dans `navigationData`, il Title-Case le slug. Sur
- * les 6 ressources à id opaque (commandes, clients, remboursements, avis, promos,
+ * les 5 ressources à id opaque (commandes, clients, remboursements, promos,
  * variantes) cela produisait « Cm5abc123xyz » — affiché comme titre de page sur
  * mobile ET comme dernier segment du fil d'Ariane desktop. La page, elle, connaît
  * le vrai libellé (« Commande #1042 ») : c'est elle qui doit le publier.

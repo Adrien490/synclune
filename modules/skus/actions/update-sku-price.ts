@@ -60,7 +60,13 @@ export async function updateSkuPrice(
 		// 5. Vérifier existence + mettre à jour le prix dans une transaction
 		const sku = await prisma.$transaction(async (tx) => {
 			const existing = await tx.productSku.findUnique({
-				where: { id: skuId },
+				// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
+				// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
+				// surface admin ne l'expose : le muter est toujours une anomalie. Sans ce filtre,
+				// on pouvait ajuster le stock ou poser `isDefault` sur la variante d'un produit
+				// archivé — et l'index unique partiel de `isDefault` (WHERE deletedAt IS NULL) ne
+				// s'y oppose pas.
+				where: { id: skuId, deletedAt: null },
 				select: {
 					id: true,
 					sku: true,

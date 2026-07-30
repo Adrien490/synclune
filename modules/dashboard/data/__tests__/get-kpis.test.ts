@@ -208,7 +208,7 @@ describe("fetchDashboardKpis", () => {
 		vi.useRealTimers();
 	});
 
-	it("returns all expected KPI groups (no reviewHealth — split into separate fetcher)", async () => {
+	it("returns all expected KPI groups", async () => {
 		setupDefaultMocks();
 
 		const result = await fetchDashboardKpis();
@@ -222,7 +222,6 @@ describe("fetchDashboardKpis", () => {
 		expect(result).toHaveProperty("avgFulfillmentTime");
 		expect(result).toHaveProperty("newCustomers");
 		expect(result).toHaveProperty("sparklines");
-		expect(result).not.toHaveProperty("reviewHealth");
 	});
 
 	it("returns new customers count + evolution from the raw query", async () => {

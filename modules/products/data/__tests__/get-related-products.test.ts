@@ -12,7 +12,6 @@ const {
 	mockCacheTag,
 	mockGetSession,
 	mockHeaders,
-	mockSerializeProducts,
 } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockFindUnique: vi.fn(),
@@ -21,7 +20,6 @@ const {
 	mockCacheTag: vi.fn(),
 	mockGetSession: vi.fn(),
 	mockHeaders: vi.fn(),
-	mockSerializeProducts: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -52,10 +50,6 @@ vi.mock("@/modules/auth/lib/auth", () => ({
 			getSession: mockGetSession,
 		},
 	},
-}));
-
-vi.mock("../../utils/serialize-product", () => ({
-	serializeProducts: mockSerializeProducts,
 }));
 
 vi.mock("../../constants/related-products.constants", () => ({
@@ -106,7 +100,6 @@ describe("getRelatedProducts", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockHeaders.mockResolvedValue(new Headers());
-		mockSerializeProducts.mockImplementation((products: unknown[]) => products);
 	});
 
 	// ─── Public strategy (no slug, no user) ─────────────────────────────
@@ -158,17 +151,6 @@ describe("getRelatedProducts", () => {
 
 			expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 			expect(mockCacheTag).toHaveBeenCalledWith("related-products-public");
-		});
-
-		it("serializes products", async () => {
-			const products = [makeProduct("1")];
-			mockFindMany.mockResolvedValue(products);
-			mockSerializeProducts.mockReturnValue([{ ...products[0], serialized: true }]);
-
-			const result = await getRelatedProducts();
-
-			expect(mockSerializeProducts).toHaveBeenCalledWith(products);
-			expect(result[0]).toHaveProperty("serialized", true);
 		});
 	});
 

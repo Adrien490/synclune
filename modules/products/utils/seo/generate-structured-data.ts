@@ -2,22 +2,14 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
-import type { ProductReviewStatistics, ReviewPublic } from "@/modules/reviews/types/review.types";
 import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 
 interface StructuredDataOptions {
 	product: GetProductReturn;
 	selectedSku: ProductSku | null;
-	reviewStats?: ProductReviewStatistics | null;
-	reviews?: ReviewPublic[];
 }
 
-export function generateStructuredData({
-	product,
-	selectedSku,
-	reviewStats,
-	reviews,
-}: StructuredDataOptions) {
+export function generateStructuredData({ product, selectedSku }: StructuredDataOptions) {
 	// Calculer le prix minimum et maximum pour les offres agrégées
 	const activePrices = product.skus.filter((sku) => sku.isActive).map((sku) => sku.priceInclTax);
 
@@ -195,37 +187,6 @@ export function generateStructuredData({
 			"@type": "Brand",
 			name: "Synclune",
 		},
-		// AggregateRating - affiché seulement si des avis existent
-		...(reviewStats &&
-			reviewStats.totalCount > 0 && {
-				aggregateRating: {
-					"@type": "AggregateRating",
-					ratingValue: reviewStats.averageRating.toFixed(1),
-					reviewCount: reviewStats.totalCount,
-					bestRating: 5,
-					worstRating: 1,
-				},
-			}),
-		// Reviews individuels - max 10 pour les rich snippets Google
-		...(reviews &&
-			reviews.length > 0 && {
-				review: reviews.slice(0, 10).map((r) => ({
-					"@type": "Review",
-					reviewRating: {
-						"@type": "Rating",
-						ratingValue: r.rating,
-						bestRating: 5,
-						worstRating: 1,
-					},
-					author: {
-						"@type": "Person",
-						name: r.user.name ?? "Client vérifié",
-					},
-					...(r.title && { name: r.title }),
-					reviewBody: r.content,
-					datePublished: new Date(r.createdAt).toISOString().split("T")[0],
-				})),
-			}),
 		offers,
 		...(product.type && {
 			category: product.type.label,

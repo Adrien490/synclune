@@ -17,7 +17,10 @@ import {
 	InvoiceStatus,
 	RefundReason,
 	RefundStatus,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
+import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -229,15 +232,49 @@ export async function cancelOrder(
 				}
 
 				// 2. Restaurer le stock
+				// STOCK-LEDGER-001 : `UPDATE … RETURNING` pour journaliser le mouvement
+				// sans requête de plus. C'est LE crédit qui, dupliqué par
+				// STOCK-DOUBLE-CREDIT-001, gonflait l'inventaire sans laisser de trace :
+				// il mérite sa ligne au journal plus que tout autre.
 				if (shouldRestoreStock) {
+					// P1-1 : état AVANT crédit. `isActive` + `inventory` sont le discriminant de
+					// `shouldReactivateAfterRestock` — on ne réactive que ce que la VENTE a
+					// désactivé, jamais un retrait manuel de l'admin. Sans ça, annuler la
+					// commande de la dernière unité recréditait le stock en laissant le SKU
+					// `isActive: false`, donc invisible en vitrine (et la PDP d'un produit
+					// mono-SKU en `notFound()`).
+					const skusBefore = await tx.productSku.findMany({
+						where: { id: { in: Array.from(new Set(found.items.map((i) => i.skuId))) } },
+						select: { id: true, isActive: true, inventory: true },
+					});
+					const beforeById = new Map(skusBefore.map((s) => [s.id, s]));
+
 					for (const item of found.items) {
-						await tx.productSku.update({
-							where: { id: item.skuId },
-							data: {
-								inventory: {
-									increment: item.quantity,
-								},
-							},
+						const reactivate = shouldReactivateAfterRestock(beforeById.get(item.skuId));
+
+						const updated = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
+							UPDATE "ProductSku"
+							SET "inventory" = "inventory" + ${item.quantity},
+							    "isActive" = CASE WHEN ${reactivate} THEN true ELSE "isActive" END,
+							    "updatedAt" = NOW()
+							WHERE "id" = ${item.skuId}
+							RETURNING "inventory", "productId"
+						`;
+
+						// SKU hard-deleted entre-temps : rien à restaurer, rien à journaliser.
+						// On ne throw pas — l'annulation doit aboutir (le claim est déjà gagné).
+						const row = updated[0];
+						if (!row) continue;
+
+						await recordStockMovementTx(tx, {
+							skuId: item.skuId,
+							productId: row.productId,
+							previousInventory: row.inventory - item.quantity,
+							newInventory: row.inventory,
+							source: StockMovementSource.ORDER,
+							reason: `Annulation — commande ${found.orderNumber}`,
+							createdById: adminUser.id,
+							createdByName: adminUser.name ?? null,
 						});
 					}
 				}
@@ -270,7 +307,25 @@ export async function cancelOrder(
 										orderItemId: item.id,
 										quantity: item.quantity,
 										amount: item.price * item.quantity,
-										restock: shouldRestoreStock,
+										// STOCK-DOUBLE-CREDIT-001 : TOUJOURS `false`. L'étape 2
+										// ci-dessus (`shouldRestoreStock`) a DÉJÀ restauré le stock,
+										// dans cette transaction et sous le même claim. Or
+										// `processRefund` ré-incrémente tout `RefundItem` à
+										// `restock: true` (process-refund.ts:396-455), sans jamais
+										// vérifier si quelqu'un l'a précédé — sa seule garde est
+										// `status: APPROVED`, l'état exact où on le crée ici. Poser
+										// `shouldRestoreStock` créditait donc DEUX fois : une à
+										// l'annulation, une quand l'admin traite le remboursement
+										// depuis la fiche (chemin que le message de succès lui
+										// indique explicitement). L'inventaire dépassait alors le
+										// physique, et le CHECK `inventory >= 0` ne borne que le
+										// plancher — survente garantie sur les ventes suivantes.
+										// Le contrat du repo : `RefundItem.restock` est la SSOT du
+										// crédit côté `processRefund`, donc un writer qui restocke
+										// lui-même doit poser `false` (cf. mark-as-fully-refunded.ts,
+										// refund.service.ts, payment-intent.service.ts). Neutralise
+										// aussi le 3e créditeur, reconcile-refunds.service.ts:749.
+										restock: false,
 									})),
 								},
 							},

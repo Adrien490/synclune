@@ -21,6 +21,7 @@ vi.mock("@/shared/lib/stripe", () => ({
 }));
 
 import { buildInvoiceData } from "../build-invoice-data";
+import { INVOICE_DATA_FORMAT_VERSION } from "../../constants/invoice-data-format";
 import { invoiceDataSchema } from "../../schemas/invoice.schema";
 import type { GetOrderReturn } from "@/modules/orders/types/order.types";
 
@@ -130,6 +131,14 @@ describe("buildInvoiceData — B2C franchise", () => {
 			throw new Error(JSON.stringify(result.error.format(), null, 2));
 		}
 		expect(result.success).toBe(true);
+	});
+
+	// Le snapshot est figé 10 ans (Art. L102 B LPF) et relu par un `as InvoiceData` :
+	// sans marqueur de version dans le payload, un changement de forme rend
+	// `undefined` en silence sur les lignes anciennes. Cf. la régression
+	// invoice-data-format-version.
+	it("stamps the payload with the current format version", () => {
+		expect(buildInvoiceData(makeOrder()).formatVersion).toBe(INVOICE_DATA_FORMAT_VERSION);
 	});
 
 	it("snapshots invoice number + issuedAt from the Order", () => {

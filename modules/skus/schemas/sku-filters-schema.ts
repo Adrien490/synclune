@@ -85,6 +85,22 @@ export const productSkuFiltersSchema = z
 			return data.updatedAfter <= data.updatedBefore;
 		}
 		return true;
-	}, "La date de début doit être antérieure ou égale à la date de fin");
+	}, "La date de début doit être antérieure ou égale à la date de fin")
+	// Filtres de stock mutuellement exclusifs. `buildFilterConditions` empile chaque
+	// filtre dans le même `AND` : demander à la fois « en stock » et « épuisé »
+	// poussait `inventory > 0` ET `inventory <= 0`, soit un jeu de résultats
+	// VIDE GARANTI — sans message, l'admin concluait « aucune variante ».
+	.refine(
+		(data) => !(data.inStock === true && data.outOfStock === true),
+		"« En stock » et « Épuisé » ne peuvent pas être demandés en même temps",
+	)
+	.refine((data) => {
+		if (data.inStock !== true) return true;
+		return data.stockStatus !== "out_of_stock";
+	}, "« En stock » est incompatible avec le statut « Épuisé »")
+	.refine((data) => {
+		if (data.outOfStock !== true) return true;
+		return data.stockStatus !== "in_stock" && data.stockStatus !== "low_stock";
+	}, "« Épuisé » est incompatible avec un statut de stock non nul");
 
 export type ProductSkuFilters = z.infer<typeof productSkuFiltersSchema>;

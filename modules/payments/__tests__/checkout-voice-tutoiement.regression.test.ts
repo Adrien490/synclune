@@ -23,7 +23,7 @@ import { describe, expect, it } from "vitest";
  *
  * Périmètre volontairement limité au tunnel : les libellés de rate limit
  * (« Trop de tentatives. Veuillez réessayer plus tard. ») sont partagés avec
- * `discounts`/`reviews` sur ~26 fichiers et relèvent d'une passe transverse.
+ * `discounts` sur une vingtaine de fichiers et relèvent d'une passe transverse.
  *
  * Audit UI/UX paiement 2026-07-26, F7.
  */

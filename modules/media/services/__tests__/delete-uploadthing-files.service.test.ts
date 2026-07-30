@@ -278,7 +278,7 @@ describe("deleteUploadThingFileFromUrl", () => {
  * commande (`Order.creditNotePdfUrl`) et d'avoir partiel
  * (`Refund.creditNotePdfUrl`) vivent dans la MÊME app UploadThing que les médias
  * catalogue. Rien n'empêchait ce service — appelé par les actions produit/SKU/
- * avis et les actions admin de suppression média — d'effacer une archive
+ * et les actions admin de suppression média — d'effacer une archive
  * immuable sous rétention 10 ans (Art. L102 B LPF). Le cron
  * `cleanup-orphan-media` protégeait déjà ces clés côté balayage automatique ;
  * cette garde ferme le chemin manuel.

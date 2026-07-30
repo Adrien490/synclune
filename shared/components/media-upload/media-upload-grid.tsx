@@ -14,6 +14,7 @@ import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
@@ -100,7 +101,7 @@ export function MediaUploadGrid({
 	// Handle drag start
 	const handleDragStart = () => {
 		setIsDraggingAny(true);
-		setAnnouncement("Élément sélectionné. Utilisez les flèches pour déplacer.");
+		setAnnouncement("Élément saisi. Utilise les flèches pour le déplacer.");
 	};
 
 	// Handle drag end
@@ -128,7 +129,7 @@ export function MediaUploadGrid({
 		// Prevent a video from ending up in first position (covers all cases)
 		if (newMedia[0]?.mediaType === "VIDEO") {
 			triggerHaptic("error");
-			toast.error("La première position doit être une image, pas une vidéo.");
+			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			setAnnouncement("Impossible de placer une vidéo en première position.");
 			return;
 		}
@@ -154,9 +155,7 @@ export function MediaUploadGrid({
 				// Prevent a video in first position after deletion
 				if (newMedia[0]?.mediaType === "VIDEO") {
 					triggerHaptic("error");
-					toast.error(
-						"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
-					);
+					toast.error("Impossible : une vidéo passerait en première position. Réorganise d'abord.");
 					return;
 				}
 				const removedMedia = media[index];
@@ -189,7 +188,7 @@ export function MediaUploadGrid({
 		// Prevent a video in first position
 		if (newMedia[0]?.mediaType === "VIDEO") {
 			triggerHaptic("error");
-			toast.error("La première position doit être une image, pas une vidéo.");
+			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
 		}
 		triggerHaptic("selection");
@@ -203,7 +202,7 @@ export function MediaUploadGrid({
 		// Prevent a video in first position
 		if (newMedia[0]?.mediaType === "VIDEO") {
 			triggerHaptic("error");
-			toast.error("La première position doit être une image, pas une vidéo.");
+			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
 		}
 		triggerHaptic("selection");
@@ -238,12 +237,15 @@ export function MediaUploadGrid({
 			i === index ? { ...m, altText: next.length > 0 ? next : undefined } : m,
 		);
 		onChange(newMedia);
+		// Canal de retour unique : `aria-live` + fermeture du dialogue. Pas de toast —
+		// Sonner vocalise aussi, et l'annonce partirait deux fois. C'est exactement le
+		// raisonnement documenté sur `handleSetAsPrimary` ci-dessus, qui n'avait pas
+		// été appliqué ici.
 		setAnnouncement(
 			next.length > 0
 				? `Description du média ${index + 1} mise à jour.`
 				: `Description du média ${index + 1} effacée.`,
 		);
-		toast.success("Description mise à jour");
 	};
 
 	const canAddMore = media.length < maxItems;
@@ -274,7 +276,7 @@ export function MediaUploadGrid({
 			>
 				{/* Keyboard drag & drop instructions (screen readers) */}
 				<span id="drag-instructions" className="sr-only">
-					Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace ou
+					Utilise Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace ou
 					Entrée pour déposer, Échap pour annuler.
 				</span>
 
@@ -353,7 +355,7 @@ export function MediaUploadGrid({
 							className="border-primary bg-background/85 text-primary pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed backdrop-blur-sm"
 						>
 							<Upload className="size-8" aria-hidden="true" />
-							<p className="text-sm font-medium">Déposez pour ajouter</p>
+							<p className="text-sm font-medium">Dépose pour ajouter</p>
 						</div>
 					)}
 				</div>

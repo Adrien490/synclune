@@ -70,13 +70,13 @@ describe("navigation config integrity", () => {
 		}
 	});
 
-	it("collapsible groups are Catalogue and Marketing (shop-live mode)", () => {
-		// SHOP_LIVE=true expose les groupes Marketing et Contenu. Si SHOP_LIVE
-		// repasse à false, restreindre cette liste à ["Catalogue"].
+	it("Catalogue is the only collapsible group (shop-live mode)", () => {
+		// `Marketing` était le second groupe repliable ; il a disparu au retrait du
+		// système d'avis (2026-07-30), « Codes promo » ayant rejoint `Ventes`.
 		const collapsibleGroups = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
-		expect(collapsibleGroups).toEqual(["Catalogue", "Marketing"]);
+		expect(collapsibleGroups).toEqual(["Catalogue"]);
 	});
 });
 

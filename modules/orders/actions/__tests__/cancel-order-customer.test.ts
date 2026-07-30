@@ -30,7 +30,8 @@ const {
 		// IDEM-CANCEL-001 : claim atomique order.updateMany (précondition
 		// status=PENDING dans le where, retour { count }) remplace order.update.
 		order: { findUnique: vi.fn(), updateMany: vi.fn() },
-		productSku: { update: vi.fn() },
+		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
+		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn(), updateMany: vi.fn() },
@@ -133,6 +134,9 @@ function createPendingOrder(overrides: Record<string, unknown> = {}) {
 describe("cancelOrderCustomer", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		// ⚠️ `resetAllMocks` efface les implémentations posées au hoist : le retour de
+		// `findMany` DOIT être réarmé ici, sinon il rend `undefined` et le restock lève.
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 
 		mockRequireAuth.mockResolvedValue({ user: { id: VALID_USER_ID, name: "Marie Dupont" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });

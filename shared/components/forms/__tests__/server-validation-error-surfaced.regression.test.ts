@@ -36,10 +36,8 @@ const SKIP_DIRS = new Set(["node_modules", "__tests__", "generated", ".next"]);
  * Toute addition ici exige une justification explicite.
  */
 const ALLOWLIST = new Map<string, string>([
-	[
-		"modules/reviews/components/admin/review-response-actions.tsx",
-		"Menu d'actions (publier/masquer) — aucun champ saisi.",
-	],
+	// (vide — la seule entrée historique était le menu d'actions de modération
+	// d'avis, retiré avec le système d'avis le 2026-07-30)
 ]);
 
 /** Le composant rend un `<form>`. */
@@ -52,7 +50,7 @@ const RENDERS_FORM = /<form[\s>]/;
  * code : une erreur de validation y est un bug serveur, le toast générique suffit.
  */
 const HAS_USER_INPUT =
-	/<form\.AppField|form\.AppField|<Input\b|<Textarea\b|<NativeSelect\b|<SelectTrigger\b|<RatingField\b|field\.[A-Z]\w*Field\b/;
+	/<form\.AppField|form\.AppField|<Input\b|<Textarea\b|<NativeSelect\b|<SelectTrigger\b|field\.[A-Z]\w*Field\b/;
 
 /** Le composant est branché sur une action passée par le pipeline toast. */
 const USES_TOAST_PIPELINE = /createToastCallbacks|useActionState|action=\{/;

@@ -581,21 +581,6 @@ describe("productFiltersSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("should accept valid ratingMin within 1-5", () => {
-		const result = productFiltersSchema.safeParse({ ratingMin: 3 });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject ratingMin above 5", () => {
-		const result = productFiltersSchema.safeParse({ ratingMin: 6 });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject ratingMin below 1", () => {
-		const result = productFiltersSchema.safeParse({ ratingMin: 0 });
-		expect(result.success).toBe(false);
-	});
-
 	it("should reject priceMin greater than priceMax (cross-field refinement)", () => {
 		const result = productFiltersSchema.safeParse({ priceMin: 5000, priceMax: 1000 });
 		expect(result.success).toBe(false);

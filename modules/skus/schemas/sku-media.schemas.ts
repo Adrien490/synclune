@@ -13,6 +13,13 @@ export const reorderSkuMediaSchema = z.object({
 		.min(1, { message: "Au moins un media est requis" })
 		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1, {
 			message: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1} médias par variante`,
+		})
+		// Unicité : l'action vérifie « autant d'ids que de médias » ET « chaque id
+		// appartient au SKU », mais `["a","a"]` sur un SKU de 2 médias satisfait les
+		// DEUX — le média « b » gardait alors sa position périmée, et l'ordre final
+		// n'était plus une permutation. Le doublon doit être rejeté en entrée.
+		.refine((ids) => new Set(ids).size === ids.length, {
+			message: "La liste de médias contient un doublon",
 		}),
 });
 

@@ -64,7 +64,10 @@ const {
 			// P1-REVALIDATE : re-validation quantités/montant sous le FOR UPDATE.
 			refundItem: { findMany: vi.fn().mockResolvedValue([]) },
 			orderItem: { findMany: vi.fn().mockResolvedValue([]) },
-			productSku: { update: vi.fn() },
+			// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
+			productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
+			// STOCK-LEDGER-001 : chaque restock réussi écrit un StockMovement.
+			stockMovement: { create: vi.fn() },
 			order: { update: vi.fn() },
 			// ORD-STRIPE-007 : dispute.findFirst dans Step 1 SAGA processRefund
 			dispute: { findFirst: vi.fn().mockResolvedValue(null) },
@@ -163,6 +166,9 @@ vi.mock("@/modules/products/constants/cache", () => ({
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: {},
+	// STOCK-LEDGER-001 : sans cette entrée, `StockMovementSource.SYSTEM` vaut
+	// `undefined` et le restock throw un TypeError — mock partiel du client Prisma.
+	StockMovementSource: { ORDER: "ORDER", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM" },
 	PaymentStatus: { REFUNDED: "REFUNDED", PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED" },
 	RefundStatus: {
 		PENDING: "PENDING",
@@ -245,11 +251,16 @@ describe("@regression refund-restock-sku-deleted-tracked — ORD-REFUND-AUDIT-00
 			])
 			.mockResolvedValueOnce([]); // no previous completed refunds
 
-		// sku-deleted-1 throws (SKU archived), sku-ok succeeds
-		mockTx.productSku.update.mockImplementation((args: { where: { id: string } }) =>
-			args.where.id === "sku-deleted-1"
-				? Promise.reject(new Error("Record not found"))
-				: Promise.resolve({}),
+		// STOCK-LEDGER-001 : le restock est passé en `UPDATE … RETURNING` (raw SQL) pour
+		// dériver le StockMovement. Le mode d'échec « SKU disparu » n'est donc plus une
+		// exception P2025 mais **zéro ligne retournée** — c'est ce que ce mock reproduit.
+		// On discrimine sur la PRÉSENCE du skuId parmi les valeurs interpolées plutôt
+		// que sur son index : celui-ci dépend de l'ordre des `${}` dans le SQL, détail
+		// d'implémentation qu'un refactor déplacerait sans prévenir.
+		mockTx.$queryRaw.mockImplementation((_strings: unknown, ...values: unknown[]) =>
+			values.includes("sku-deleted-1")
+				? Promise.resolve([])
+				: Promise.resolve([{ inventory: 5, productId: "prod-1" }]),
 		);
 
 		const result = await processRefund(undefined, makeFormData());
@@ -281,7 +292,8 @@ describe("@regression refund-restock-sku-deleted-tracked — ORD-REFUND-AUDIT-00
 			.mockResolvedValueOnce([{ id: "ri-1", quantity: 1, restock: true, sku_id: "sku-ok" }])
 			.mockResolvedValueOnce([]);
 
-		mockTx.productSku.update.mockResolvedValue({});
+		// Restock nominal : une ligne retournée par le `UPDATE … RETURNING`.
+		mockTx.$queryRaw.mockResolvedValue([{ inventory: 5, productId: "prod-1" }]);
 
 		await processRefund(undefined, makeFormData());
 

@@ -36,7 +36,7 @@ model User {
   email            String    @unique @db.VarChar(255)
   emailVerified    Boolean   @default(false)
   image            String?   @db.VarChar(2048)
-  stripeCustomerId String?   @unique
+  stripeCustomerId String?   @unique @db.VarChar(50)
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
@@ -48,7 +48,7 @@ model User {
   // === CONSENTEMENT RGPD ===
   termsAcceptedAt   DateTime? // Date d'acceptation CGV + politique de confidentialite
   termsVersion      String?   @db.VarChar(20) // Version des CGV/politique acceptee (SSOT shared/constants/legal-versions.ts)
-  marketingOptOutAt DateTime? // Opposition marketing (Art. 21 RGPD) — bloque back-in-stock + review-request
+  marketingOptOutAt DateTime? // Opposition marketing (Art. 21 RGPD) — bloque back-in-stock
 
   // === ANONYMISATION RGPD ===
   anonymizedAt        DateTime? // Date d'anonymisation effective
@@ -65,13 +65,20 @@ model User {
   // Relations avec les remboursements (audit)
   refundsCreated Refund[] @relation("RefundCreator")
 
-  // Avis produits
-  reviews ProductReview[]
-
   // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
   //   User_name_unaccent_trgm_idx   GIN (immutable_unaccent(COALESCE(name, '')))
   //   User_email_unaccent_trgm_idx  GIN (immutable_unaccent(email))
   //     Recherche admin floue insensible aux diacritiques (index d'expression).
+  //   User_email_lower_key          UNIQUE (lower("email"))
+  //   User_email_lowercase          CHECK ("email" = lower("email"))
+  //     ⚠️ Le `@unique` ci-dessus ne couvre que l'égalité BINAIRE : `Alice@x.com` et
+  //     `alice@x.com` y passaient comme deux comptes. Le coût réel n'était pas le
+  //     doublon mais le garde de compte révoqué de `/sign-in/email` (auth.ts), qui
+  //     minuscule l'entrée puis compare la colonne en exact — une ligne en casse
+  //     mixte le faisait échouer EN SILENCE (compte suspendu qui se reconnecte).
+  //     Les trois chemins d'écriture (email/mdp, Google, changeEmail) sont normalisés
+  //     par `databaseHooks.user.{create,update}.before` ; ces deux gardes en font un
+  //     invariant de base plutôt qu'une discipline d'appelant.
 
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
   @@index([role, deletedAt]) // admin count guard + listing role filter
@@ -174,12 +181,6 @@ enum MediaType {
   VIDEO
 }
 
-/// Statut de moderation des avis produits
-enum ReviewStatus {
-  PUBLISHED // Auto-publie (defaut)
-  HIDDEN // Masque par moderation (spam, inapproprie, etc.)
-}
-
 // ============================================================================
 // CATALOGUE - ENUMS ADDITIONNELS
 // ============================================================================
@@ -198,7 +199,7 @@ enum HistorySource {
 
 model ProductType {
   id          String  @id @default(cuid(2))
-  slug        String  @unique
+  slug        String  @unique @db.VarChar(100)
   label       String  @unique @db.VarChar(50)
   description String? @db.Text
   isActive    Boolean @default(true)
@@ -214,7 +215,7 @@ model ProductType {
 
 model Color {
   id          String            @id @default(cuid(2))
-  slug        String            @unique
+  slug        String            @unique @db.VarChar(100)
   name        String            @unique @db.VarChar(100)
   hex         String            @db.VarChar(7)
   description String?           @db.Text // Notes créatrice (or rose 18K mat, hypoallergénique, etc.)
@@ -229,7 +230,7 @@ model Color {
 
 model Material {
   id           String               @id @default(cuid(2))
-  slug         String               @unique
+  slug         String               @unique @db.VarChar(100)
   name         String               @unique @db.VarChar(100)
   description  String?              @db.Text
   isActive     Boolean              @default(true)
@@ -294,7 +295,7 @@ model ProductSkuMaterial {
 model Collection {
   id          String           @id @default(cuid(2))
   name        String           @unique @db.VarChar(100)
-  slug        String           @unique
+  slug        String           @unique @db.VarChar(100)
   description String?          @db.Text
   status      CollectionStatus @default(DRAFT)
 
@@ -344,7 +345,7 @@ model ProductCollection {
 
 model Product {
   id          String        @id @default(cuid(2))
-  slug        String        @unique
+  slug        String        @unique @db.VarChar(100)
   title       String        @db.VarChar(200)
   description String?       @db.Text
   status      ProductStatus @default(PUBLIC)
@@ -360,10 +361,6 @@ model Product {
 
   skus       ProductSku[]
   orderItems OrderItem[]
-
-  // Avis produits
-  reviews     ProductReview[]
-  reviewStats ProductReviewStats?
 
   // Wishlist
   wishlistItems WishlistItem[]
@@ -462,23 +459,38 @@ model ProductSku {
 enum StockMovementSource {
   MANUAL_ADJUST // Câblé : formulaire admin d'ajustement de stock (adjust-sku-stock)
   SKU_UPDATE // Câblé : delta inventaire saisi via le formulaire d'édition SKU (update-sku)
-  ORDER // Réservé : décrément à la vente
-  WEBHOOK // Réservé : ajustement via webhook Stripe
-  SYSTEM // Réservé : ajustement système (cron, reconcile)
+  ORDER // Câblé : vente (décrément webhook/cron), encaissement manuel, restock d'annulation
+  WEBHOOK // Câblé : restauration de stock via webhook Stripe (PI annulé / commande annulée)
+  SYSTEM // Câblé : restock de remboursement (process-refund, reconcile-refunds)
 }
 
 /// Audit append-only des mouvements de stock SKU.
 ///
-/// ⚠️ Périmètre réel (audit schéma 2026-07-26) : ce journal ne trace que les
-/// ajustements d'inventaire SAISIS PAR L'ADMIN — `MANUAL_ADJUST` (adjust-sku-stock)
-/// et `SKU_UPDATE` (update-sku). Les 3 autres valeurs (ORDER/WEBHOOK/SYSTEM) restent
-/// RÉSERVÉES : ni les ventes ni les restocks automatiques n'écrivent ici.
+/// Périmètre : TOUS les mouvements d'inventaire, manuels comme automatiques.
+///  - `MANUAL_ADJUST` — adjust-sku-stock (admin)
+///  - `SKU_UPDATE`    — update-sku, delta relatif (admin)
+///  - `ORDER`         — vente (décrément webhook `payment_intent.succeeded` + cron
+///                      sync-async-payments), encaissement manuel (mark-as-paid),
+///                      restock d'annulation admin (cancel-order)
+///  - `WEBHOOK`       — restauration de stock (restoreStockForOrder,
+///                      markOrderAsCancelled)
+///  - `SYSTEM`        — restock de remboursement (process-refund, reconcile-refunds)
+///
+/// ⚠️ Élargi le 2026-07-30 (audit « validation stock panier », STOCK-LEDGER-001).
+/// Le périmètre précédent était admin-seul, au motif qu'« à ~20 commandes/mois, un
+/// ajustement manuel inexpliqué est la seule cause plausible d'un stock incohérent ».
+/// Ce raisonnement a été démenti : STOCK-DOUBLE-CREDIT-001 créditait le stock deux
+/// fois (cancel-order restockait inline PUIS posait `RefundItem.restock: true`, que
+/// processRefund honorait), sans aucun acteur humain et sans laisser de trace. Le
+/// `CHECK inventory >= 0` ne borne que le plancher : un sur-comptage est silencieux.
+/// D'où la règle : **toute mutation de `ProductSku.inventory` écrit son mouvement
+/// dans la MÊME transaction**, et lit `previousInventory` au moment de l'écriture
+/// (`UPDATE … RETURNING`, ou la valeur retournée par l'update Prisma) — jamais depuis
+/// un SELECT préalable, qu'un writer concurrent peut invalider en READ COMMITTED.
 ///
 /// ⚠️ WRITE-ONLY ASSUMÉ : aucune requête `data/` ne lit cette table et aucune UI ne
 /// l'affiche. C'est délibéré — sa valeur est d'exister le jour où un écart d'inventaire
 /// devra être expliqué (consultation via Prisma Studio / SQL), pas d'alimenter un écran.
-/// NE PAS la classer « table morte » : à ~20 commandes/mois, un ajustement manuel
-/// inexpliqué est la seule cause plausible d'un stock incohérent.
 ///
 /// Immuable : pas de `updatedAt`, pas de `deletedAt` (cf. OrderHistory, Art. L123-22).
 /// `createdById` est un String simple (PAS de relation User) + `createdByName`
@@ -832,8 +844,13 @@ model Order {
   // check_credit_note_cross_table_unique (migration 20260709) qui rejette en
   // 23505/P2002 toute écriture d'un numéro déjà présent dans l'autre table —
   // filet contre les écritures SQL manuelles contournant le lock.
-  // Cible (ticket futur) : migrer full-void vers Refund.creditNoteNumber puis
-  // drop ces colonnes Order, pour une SSOT unique du numéro d'avoir.
+  // Double SSOT ASSUMÉ, pas un oubli : décision datée et conditions de réouverture
+  // dans @see docs/KNOWN-ISSUES.md (KI-005). Migrer full-void vers
+  // Refund.creditNoteNumber toucherait d'un coup la numérotation gap-free, le
+  // trigger cross-table et l'archivage PDF des avoirs — le cœur réglementaire — pour
+  // un gain de propreté et zéro gain fonctionnel. ⚠️ Ne PAS ajouter d'écriture sur
+  // Order.creditNote* depuis un nouveau chemin de code : tout nouvel avoir passe par
+  // Refund, sinon la duplication devient une triplication.
   creditNoteNumber      String?   @unique @db.VarChar(30) // Format: A-YYYY-NNNNN (séquentiel par année)
   creditNoteGeneratedAt DateTime? // Date d'émission de l'avoir
   // Archivage PDF avoir (Art. L102 B LPF — symétrie facture). Lazy au 1er download
@@ -851,6 +868,18 @@ model Order {
   // payload InvoiceData figé au moment de l'attribution du numéro. Tout futur
   // changement de template doit pouvoir régénérer un PDF identique à partir
   // de ce snapshot (déterminisme jsPDF garanti par renderInvoicePdf).
+  //
+  // ⚠️ La FORME de ce payload est versionnée PAR LE PAYLOAD, pas par une colonne :
+  // `InvoiceData.formatVersion` (SSOT `INVOICE_DATA_FORMAT_VERSION`,
+  // modules/invoices/constants/invoice-data-format.ts). Une colonne serait hors
+  // hash et pourrait dériver du contenu qu'elle décrit. Tout changement de forme
+  // (ajout/retrait/renommage/changement d'unité) DOIT incrémenter cette constante
+  // et traiter l'ancienne version côté lecture — sinon le `as InvoiceData` de
+  // `verifyInvoiceSnapshot` rend `undefined` en silence sur les lignes anciennes,
+  // dont le hash reste pourtant valide. Snapshot sans `formatVersion` ⇒ version 1.
+  // Le snapshot est en outre validé par `invoiceDataSchema` AVANT d'être figé
+  // (cohérence somme des lignes == totaux) : un échec diffère la facture via
+  // invoiceRetryDeferred au lieu de figer 10 ans un document faux.
   invoiceDataSnapshot Json? // Payload InvoiceData complet (canonical-JSON, clés triées)
   invoiceDataHash     String? @db.VarChar(64) // SHA-256 du snapshot (audit-vérifiable)
 
@@ -997,10 +1026,21 @@ model Order {
   // Index spéciaux (DB, SQL brut — voir `prisma/sql/raw-guards.sql`) :
   //   Order_customerName_unaccent_trgm_idx / Order_customerEmail_unaccent_trgm_idx
   //     GIN d'expression : recherche admin floue insensible aux diacritiques.
-  //   Order_invoiceRetryDeferred_idx / Order_piiPurgedAt_paidAt_idx /
-  //   Order_unpaid_pii_purge_idx / Order_overbilling_unresolved_idx
-  //     Versions PARTIELLES (WHERE …) des @@index déclarés ci-dessus : ce sont
-  //     elles qui servent réellement les crons (prédicat très sélectif).
+  //     Ce sont les SEULS index d'Order qui vivent en SQL brut — parce qu'ils sont
+  //     inexprimables en Prisma, pas parce qu'ils seraient « plus rapides ».
+  //
+  // ⚠️ Les 4 index de cron déclarés ci-dessous (invoiceRetryDeferred / piiPurgedAt /
+  // unpaid_pii_purge / overbilling_unresolved) ont existé en DOUBLE jusqu'au
+  // 2026-07-30 : complets ici, puis droppés et recréés en version PARTIELLE
+  // (`WHERE …`) par l'annexe des gardes bruts. La base finissait donc dans un état
+  // que ce fichier ne décrivait pas — et la prochaine migration générée par
+  // `prisma migrate diff` aurait restauré la version complète en silence, effaçant
+  // le prédicat. Les partiels ont été retirés de la SSOT (migration
+  // 20260730130000_converge_order_shadowed_indexes) : à ≤ 2400 lignes Order sur
+  // 10 ans, l'écart partiel / complet / seq scan n'est pas mesurable, alors que la
+  // double définition était un piège réel. Les index partiels UNIQUES des autres
+  // modèles restent en SQL brut : ce sont des contraintes d'intégrité, pas des
+  // optimisations.
   //
   // Triggers (DB, SQL brut — non exprimables en Prisma) :
   //   Order_creditNoteNumber_cross_unique   BEFORE INSERT/UPDATE OF creditNoteNumber — rejette (23505) un numéro déjà présent dans Refund (unicité cross-table séquence A-YYYY)
@@ -1104,9 +1144,6 @@ model OrderItem {
   // Relations
   refundItems RefundItem[]
 
-  // Avis produit (un OrderItem peut avoir un avis, relation 1:1)
-  review ProductReview?
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1186,7 +1223,7 @@ model Refund {
   // Raison et Statut
   reason        RefundReason
   status        RefundStatus @default(PENDING)
-  failureReason String? // Detail si FAILED (ex: "insufficient_funds", "charge_already_refunded")
+  failureReason String?      @db.VarChar(500) // Detail si FAILED (ex: "insufficient_funds", "charge_already_refunded")
 
   // Note interne (ex: "Le fermoir etait casse, photos recues par mail")
   note String? @db.Text
@@ -1424,147 +1461,6 @@ model DiscountUsage {
 }
 
 // ============================================================================
-// AVIS PRODUITS
-// ============================================================================
-
-/// Avis produit laisse par un acheteur verifie
-/// Un seul avis par utilisateur et par produit (pas par OrderItem)
-/// Permet de mettre a jour l'avis apres un nouvel achat
-///
-/// DÉCISION DE PÉRIMÈTRE (audit schéma 2026-07-26) — les 4 tables du module avis
-/// (`ProductReview`, `ReviewMedia`, `ReviewResponse`, `ProductReviewStats`) sont
-/// CONSERVÉES délibérément, malgré un volume d'avis qui restera faible et une
-/// surface client de dépôt aujourd'hui montée par aucune route (seul l'admin de
-/// modération est branché). Raisons : la feature est écrite, testée et
-/// fonctionnelle — la démonter coûte plus que la garder — et les avis sont un
-/// levier de conversion réel en bijoux artisanaux. `ProductReviewStats` n'est PAS
-/// une table morte : elle est lue par les cartes produit et le JSON-LD, et évite
-/// un COUNT/AVG par carte de listing.
-/// Ne pas reclasser ces tables en « poids mort » lors d'un futur right-sizing
-/// sans rouvrir cette décision.
-model ProductReview {
-  id String @id @default(cuid(2))
-
-  // === RELATIONS PRINCIPALES ===
-  // Produit concerne (relation vers Product, pas ProductSku)
-  // Les avis sont au niveau produit, pas variante
-  // SetNull permet l'archivage produit sans bloquer (avis conserve, productId devient null)
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-
-  // Auteur de l'avis (acheteur verifie)
-  // SetNull pour conformite RGPD (anonymisation utilisateur possible)
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Preuve d'achat : OrderItem du PREMIER achat ayant permis de laisser l'avis
-  // Ce champ ne change pas lors des mises a jour de l'avis (meme si rachat ulterieur)
-  // Garantit que seuls les acheteurs verifies peuvent laisser un avis
-  orderItemId String    @unique // Un OrderItem ne peut generer qu'un seul avis
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
-
-  // === CONTENU DE L'AVIS ===
-  rating  Int // Note de 1 a 5 etoiles (CHECK constraint DB + validation Zod cote serveur)
-  title   String? @db.VarChar(150) // Titre optionnel de l'avis
-  content String  @db.Text // Commentaire texte
-
-  // === MODERATION ===
-  status ReviewStatus @default(PUBLISHED) // Auto-publie, moderation a posteriori
-
-  // === RELATIONS ===
-  medias   ReviewMedia[] // Photos de l'avis (max 3)
-  response ReviewResponse? // Reponse admin (unique)
-
-  // === TIMESTAMPS ===
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete RGPD (10 ans conservation)
-
-  // CHECK constraint (DB, SQL brut) : ProductReview_rating_range CHECK (rating >= 1 AND rating <= 5)
-
-  // === CONTRAINTES ===
-  // Un utilisateur ne peut laisser qu'un seul avis par produit
-  // S'il rachete le produit, il peut modifier son avis existant
-  // Note: Contrainte unique sur champs nullable - PostgreSQL permet plusieurs (NULL, NULL)
-  // La validation metier est faite cote applicatif pour les avis actifs
-  @@unique([userId, productId])
-  // [productId] seul couvert en prefixe par l'index composite ci-dessous
-  @@index([productId, status, deletedAt])
-  @@index([deletedAt]) // hard-delete-retention cron (soft-deleted >= 10y, sans filtre product)
-}
-
-/// Photo jointe a un avis produit
-/// Maximum 3 photos par avis (validation applicative)
-model ReviewMedia {
-  id       String        @id @default(cuid(2))
-  reviewId String
-  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  // === MEDIA (Pattern SkuMedia) ===
-  url         String  @db.VarChar(2048) // URL UploadThing
-  blurDataUrl String? @db.Text // Data URL COMPLETE du ThumbHash (PNG base64, plusieurs Ko — d'ou @db.Text, cf. l'aller-retour VARCHAR(255) des migrations 20260302/20260306)
-  altText     String? @db.VarChar(255) // Alt text pour accessibilite
-
-  // Position pour ordre d'affichage (0, 1, 2)
-  position Int @default(0)
-
-  // === TIMESTAMPS ===
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // === INDEXES ===
-  @@index([reviewId, position])
-}
-
-/// Reponse de l'admin/marque a un avis
-/// Une seule reponse possible par avis
-model ReviewResponse {
-  id       String        @id @default(cuid(2))
-  reviewId String        @unique // Une seule reponse par avis
-  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-
-  // === CONTENU ===
-  content String @db.Text // Reponse texte de la marque
-
-  // === AUTEUR ADMIN (Pattern OrderNote) ===
-  // L'admin qui a redige la reponse
-  authorId   String // ID de l'admin
-  authorName String @db.VarChar(100) // Denormalise pour historique si admin supprime
-
-  // === TIMESTAMPS ===
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete RGPD
-}
-
-/// Statistiques agregees des avis par produit
-/// Table de cache pour performances (evite COUNT/AVG a chaque requete)
-/// Mise a jour via trigger applicatif apres creation/modification/suppression d'avis
-model ProductReviewStats {
-  id        String  @id @default(cuid(2))
-  productId String  @unique
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  // === STATISTIQUES AGREGEES ===
-  totalCount    Int     @default(0) // Nombre total d'avis publies
-  averageRating Decimal @default(0) @db.Decimal(3, 2) // Moyenne (ex: 4.75)
-
-  // Distribution des notes (pour graphique cliquable)
-  rating1Count Int @default(0) // Nombre d'avis 1 etoile
-  rating2Count Int @default(0) // Nombre d'avis 2 etoiles
-  rating3Count Int @default(0) // Nombre d'avis 3 etoiles
-  rating4Count Int @default(0) // Nombre d'avis 4 etoiles
-  rating5Count Int @default(0) // Nombre d'avis 5 etoiles
-
-  // === TIMESTAMPS ===
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // CHECK constraint (DB, SQL brut) :
-  //   ProductReviewStats_averageRating_range CHECK ("averageRating" >= 0 AND "averageRating" <= 5)
-}
-
-// ============================================================================
 // WEBHOOKS IDEMPOTENCY (Stripe)
 // ============================================================================
 
@@ -1581,7 +1477,7 @@ enum WebhookEventStatus {
 model WebhookEvent {
   id            String             @id @default(cuid(2))
   stripeEventId String             @unique // evt_xxx - Cle d'idempotence
-  eventType     String             @db.VarChar(100) // checkout.session.completed, etc.
+  eventType     String             @db.VarChar(100) // payment_intent.succeeded, charge.refunded, etc.
   status        WebhookEventStatus @default(PENDING)
   errorMessage  String?            @db.Text
   attempts      Int                @default(0)

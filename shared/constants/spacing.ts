@@ -64,6 +64,16 @@ export const CONTAINER_CLASS = `${CONTAINER_MAX_WIDTH} mx-auto ${CONTAINER_PADDI
 /**
  * Footer padding vertical
  * Usage : Footer principal
- * Note: pb-24 sur mobile pour éviter que BottomActionBar cache le contenu
+ *
+ * Le pendant bas dérive de `--bottom-bar-height` — la hauteur MESURÉE de la
+ * bottom-nav, publiée seulement quand elle est visible — **sans préfixe de
+ * breakpoint**. C'était le dernier consommateur à figer son offset avec un
+ * `md:pb-12` : depuis que la bottom-nav boutique va jusqu'à `lg`, la plage
+ * 48-64rem (iPad portrait 768×1024) ne réservait plus que 48px sous une barre de
+ * 56px, et la dernière rangée du footer — les liens légaux — passait dessous
+ * (audit bottom-bar 2026-07-30, P2-1).
+ *
+ * La safe-area n'est PAS réadditionnée : elle est déjà dans la variable, et
+ * `.pwa-footer` la porte de son côté pour le cas sans barre.
  */
-export const FOOTER_PADDING = "py-12 pb-24 md:pb-12" as const;
+export const FOOTER_PADDING = "py-12 pb-[calc(var(--bottom-bar-height,0px)+3rem)]" as const;

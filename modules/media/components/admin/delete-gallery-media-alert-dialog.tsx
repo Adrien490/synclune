@@ -72,8 +72,8 @@ export function DeleteGalleryMediaAlertDialog() {
 					<ResponsiveAlertDialogTitle>Confirmer la suppression</ResponsiveAlertDialogTitle>
 					<ResponsiveAlertDialogDescription>
 						{deleteDialog.data?.skipUtapiDelete
-							? "Êtes-vous sûr de vouloir supprimer ce média de la galerie ? Les modifications seront effectives après validation du formulaire."
-							: "Êtes-vous sûr de vouloir supprimer ce média de la galerie ? Cette action est irréversible."}
+							? "Veux-tu vraiment supprimer ce média de la galerie ? Les modifications seront effectives après validation du formulaire."
+							: "Veux-tu vraiment supprimer ce média de la galerie ? Cette action est irréversible."}
 					</ResponsiveAlertDialogDescription>
 				</ResponsiveAlertDialogHeader>
 				<ResponsiveAlertDialogFooter>

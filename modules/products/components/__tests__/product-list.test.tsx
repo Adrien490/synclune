@@ -173,7 +173,6 @@ function makeProduct(id: string) {
 		type: { id: "type-1", label: "Bague", slug: "bague" },
 		skus: [],
 		collections: [],
-		reviewStats: null,
 		createdAt: new Date("2025-01-01"),
 	};
 }

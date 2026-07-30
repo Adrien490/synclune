@@ -40,12 +40,6 @@ export const GET_WISHLIST_SELECT = {
 							isActive: true,
 						},
 					},
-					reviewStats: {
-						select: {
-							averageRating: true,
-							totalCount: true,
-						},
-					},
 					skus: {
 						where: { isActive: true },
 						select: {

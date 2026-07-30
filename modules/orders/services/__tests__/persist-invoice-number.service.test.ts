@@ -84,7 +84,7 @@ function runTx() {
  */
 function makeOrderForSnapshot(): Record<string, unknown> {
 	return {
-		id: "order-1",
+		id: "nq8kx3v2p7rt9wd4bcfh6mzy",
 		orderNumber: "SYN-2026-00001",
 		userId: "user-1",
 		customerEmail: "test@example.com",
@@ -174,7 +174,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
 			expect(result?.invoiceNumber).toContain(`F-${year}-`);
@@ -188,7 +188,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceDataHash).toMatch(/^[a-f0-9]{64}$/);
 			expect(mockTx.order.update).toHaveBeenCalledOnce();
@@ -211,7 +211,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockTx.orderHistory.create).toHaveBeenCalledOnce();
 			const historyArgs = mockTx.orderHistory.create.mock.calls[0]?.[0] as {
@@ -228,7 +228,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			const sequence = result!.invoiceNumber.split("-")[2];
 			expect(sequence).toHaveLength(5);
@@ -244,7 +244,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockTx.order.update).toHaveBeenCalledOnce();
 			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
@@ -282,7 +282,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
 				data: { vendorVatNumber?: string | null };
@@ -300,7 +300,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			// 1 seul UPDATE = snapshot + numero + status sont commitees atomiquement
 			expect(mockTx.order.update).toHaveBeenCalledOnce();
@@ -321,7 +321,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			const updateArgs = mockTx.order.update.mock.calls[0]?.[0] as {
 				data: { vendorVatRegime?: string };
@@ -342,7 +342,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -356,7 +356,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00042`);
 		});
@@ -370,7 +370,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -384,7 +384,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			}));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
@@ -399,7 +399,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
 			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
@@ -416,7 +416,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
 			const values = lockSql.values;
@@ -432,7 +432,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
 			const sqlText = sqlArg.strings.join("");
@@ -450,10 +450,10 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockTx.order.update).toHaveBeenCalledWith({
-				where: { id: "order-1" },
+				where: { id: "nq8kx3v2p7rt9wd4bcfh6mzy" },
 				data: expect.objectContaining({
 					invoiceNumber: `F-${year}-00001`,
 					invoiceStatus: "GENERATED",
@@ -470,7 +470,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 			expect(mockUpdateTag).toHaveBeenCalledWith("order-detail");
@@ -484,7 +484,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("order-1", null);
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", null);
 
 			expect(result).not.toBeNull();
 			expect(result!.invoiceNumber).toBe("F-2026-00001");
@@ -513,7 +513,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceDataHash: "a".repeat(64),
 			});
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00007");
 			expect(result?.invoiceDataHash).toBe("a".repeat(64));
@@ -533,7 +533,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceDataHash: "b".repeat(64),
 			});
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
 			const lockText = mockTx.$executeRaw.mock.calls[0]![0].strings.join("");
@@ -554,7 +554,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 					return cb(mockTx);
 				});
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
 			expect(result?.invoiceNumber).toBe("F-2026-00006");
@@ -563,7 +563,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("returns null after MAX_RETRIES P2002 errors", async () => {
 			mockPrisma.$transaction.mockRejectedValue(makeP2002Error());
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(5);
@@ -577,7 +577,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("does NOT retry on non-P2002 errors", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("Connection refused"));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
@@ -590,7 +590,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			});
 			mockPrisma.$transaction.mockRejectedValue(p2001Error);
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
@@ -601,7 +601,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("returns null when transaction throws non-Prisma error", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 		});
@@ -609,7 +609,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 		it("does NOT invalidate cache tags on failure", async () => {
 			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
@@ -630,7 +630,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 			expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -649,7 +649,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockSendAdminSequenceOverflowAlert).toHaveBeenCalledWith({
 				year,
@@ -662,7 +662,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		});
@@ -676,7 +676,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe(`F-${year}-99999`);
 		});
@@ -686,7 +686,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			const year = new Date().getFullYear();
 			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-99999` }]);
 
-			await persistInvoiceNumber("order-1", "user-1");
+			await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(mockUpdateTag).not.toHaveBeenCalled();
 		});
@@ -703,14 +703,14 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 			order.paymentStatus = "PENDING";
 			mockPrisma.order.findUnique.mockResolvedValue(order);
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result).toBeNull();
 			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 			expect(mockLogger.error).toHaveBeenCalledWith(
 				expect.stringContaining("never-paid"),
 				undefined,
-				expect.objectContaining({ orderId: "order-1" }),
+				expect.objectContaining({ orderId: "nq8kx3v2p7rt9wd4bcfh6mzy" }),
 			);
 		});
 
@@ -726,7 +726,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00001");
 		});
@@ -743,7 +743,7 @@ describe("persistInvoiceNumber — generation + persistence atomique", () => {
 				invoiceGeneratedAt: new Date(),
 			});
 
-			const result = await persistInvoiceNumber("order-1", "user-1");
+			const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 			expect(result?.invoiceNumber).toBe("F-2026-00001");
 		});

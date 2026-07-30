@@ -146,11 +146,6 @@ export function countActiveFilters(
 		count += 1;
 	}
 
-	// Notes clients
-	if (filters.ratingMin !== undefined) {
-		count += 1;
-	}
-
 	// Promotions
 	if (filters.onSale) {
 		count += 1;

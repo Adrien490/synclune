@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } = vi.hoisted(() => ({
 	mockPrisma: {
 		skuMedia: { findMany: vi.fn() },
-		reviewMedia: { findMany: vi.fn() },
 		user: { findMany: vi.fn() },
 		orderItem: { findMany: vi.fn() },
 		order: { findMany: vi.fn() },
@@ -46,7 +45,6 @@ describe("cleanupOrphanMedia", () => {
 		mockDeleteFiles.mockReset();
 
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.user.findMany.mockResolvedValue([]);
 		mockPrisma.orderItem.findMany.mockResolvedValue([]);
 		mockPrisma.order.findMany.mockResolvedValue([]);
@@ -121,16 +119,12 @@ describe("cleanupOrphanMedia", () => {
 				thumbnailUrl: "https://utfs.io/f/sku-thumb-1",
 			},
 		]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([
-			{ url: "https://utfs.io/f/review-media-1" },
-		]);
 		mockPrisma.user.findMany.mockResolvedValue([{ image: "https://utfs.io/f/user-avatar-1" }]);
 
 		mockListFiles.mockResolvedValue({
 			files: [
 				{ key: "sku-media-1", uploadedAt: twoDaysAgo },
 				{ key: "sku-thumb-1", uploadedAt: twoDaysAgo },
-				{ key: "review-media-1", uploadedAt: twoDaysAgo },
 				{ key: "user-avatar-1", uploadedAt: twoDaysAgo },
 				{ key: "orphan-file", uploadedAt: twoDaysAgo },
 			],
@@ -138,7 +132,7 @@ describe("cleanupOrphanMedia", () => {
 
 		const result = await cleanupOrphanMedia();
 
-		expect(result.filesScanned).toBe(5);
+		expect(result.filesScanned).toBe(4);
 		expect(result.orphansDeleted).toBe(1);
 		expect(mockDeleteFiles).toHaveBeenCalledWith(["orphan-file"]);
 	});

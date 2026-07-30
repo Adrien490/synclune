@@ -38,7 +38,6 @@ export const productFiltersSchema = z
 		status: z.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))]).optional(),
 		stockStatus: z.enum(["in_stock", "low_stock", "out_of_stock"]).optional(),
 		onSale: z.boolean().optional(),
-		ratingMin: z.number().int().min(1).max(5).optional(),
 		collectionId: optionalStringOrStringArraySchema,
 		collectionSlug: optionalStringOrStringArraySchema,
 		/** Filter by specific product slugs (for curated selections) */

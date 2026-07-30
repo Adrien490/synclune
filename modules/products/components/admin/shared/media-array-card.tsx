@@ -1,7 +1,9 @@
 "use client";
 
+import { useRef } from "react";
 import { Info } from "lucide-react";
 
+import { cn } from "@/shared/utils/cn";
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
@@ -9,10 +11,6 @@ import { UploadErrorBanner } from "@/shared/components/media-upload/upload-progr
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import type { FailedUpload } from "@/modules/media/types/hooks.types";
 import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
-// Import statique : le module est déjà dans le bundle client via
-// `use-offline-upload-queue`, un `await import()` n'économisait rien et faisait
-// abandonner l'optimisation du composant au React Compiler.
-import { listEntries } from "@/modules/media/lib/offline-upload-queue";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import {
 	asMediaArrayField,
@@ -24,6 +22,7 @@ import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import {
 	EmptyMediaState,
 	InlineUploadZone,
+	UploadProgressPanel,
 	type UploadProgressShape,
 } from "../product-media-card-shared";
 
@@ -99,27 +98,31 @@ export function MediaArrayCard({
 	onReplayOffline,
 	skipUtapiDelete = false,
 }: MediaArrayCardProps) {
+	// Ancre de retour du focus quand le bandeau de progression disparaît : sans elle,
+	// le focus retomberait sur `<body>` à la fin de chaque envoi.
+	const cardRef = useRef<HTMLDivElement>(null);
+
 	const offlineQueue = useOfflineUploadQueue({
 		endpoint: "catalogMedia",
 		contextKey: offlineContextKey,
+		onReplayFiles: onReplayOffline,
+		// ⚠️ `autoReplayOnReconnect` doit rester à `true` : la bannière annonce
+		// « L'envoi reprendra tout seul dès que tu seras de nouveau en ligne. » Cette
+		// option a longtemps existé avec un défaut `false` qu'aucune surface ne
+		// passait — la promesse était donc fausse, et un fichier mis en file y restait
+		// indéfiniment. Ne pas retirer l'un sans réécrire l'autre.
+		autoReplayOnReconnect: true,
+		// Pas de rejeu par-dessus un envoi déjà en vol.
+		paused: isMediaUploading,
 	});
-
-	const handleReplayOffline = async () => {
-		const files = await offlineQueue.drainAsFiles();
-		if (files.length === 0 || !onReplayOffline) return;
-		await onReplayOffline(files);
-		const entries = await listEntries({
-			endpoint: "catalogMedia",
-			contextKey: offlineContextKey,
-		});
-		for (const e of entries) await offlineQueue.drop(e.id);
-	};
 
 	return (
 		<Card
+			ref={cardRef}
+			tabIndex={-1}
 			role="region"
 			aria-label={ariaLabel}
-			className={FORM_SECTION_CARD_CLASS}
+			className={cn(FORM_SECTION_CARD_CLASS, "focus-visible:outline-none")}
 			style={viewTransitionName ? { viewTransitionName } : undefined}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
@@ -143,7 +146,18 @@ export function MediaArrayCard({
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<p className="text-muted-foreground text-xs">
-										La première image sera l'image principale. Glissez-déposez pour réorganiser.
+										La première image sera l'image principale. Glisse-dépose pour réorganiser.
+										<br />
+										{/*
+										 * Le cadrage est une information que l'admin ne peut PAS déduire de ce
+										 * qu'il voit : les tuiles sont carrées ici, alors que la carte produit
+										 * de la boutique recadre en 3:4 (mobile) puis 4:5, et que la galerie
+										 * PDP est en `object-cover`. Sans cette ligne, un bijou cadré large se
+										 * découvre rogné une fois publié.
+										 */}
+										<span className="text-muted-foreground/80">
+											Les vignettes de la boutique recadrent en 3:4 — garde le bijou vers le centre.
+										</span>
 									</p>
 									<MediaCounterBadge count={currentCount} max={maxMediaCount} />
 								</div>
@@ -160,8 +174,11 @@ export function MediaArrayCard({
 								{offlineQueue.queuedCount > 0 && (
 									<OfflineQueueBanner
 										queuedCount={offlineQueue.queuedCount}
+										queuedBytes={offlineQueue.queuedBytes}
+										oldestQueuedAt={offlineQueue.oldestQueuedAt}
 										isOffline={offlineQueue.isOffline}
-										onReplay={() => void handleReplayOffline()}
+										onReplay={() => void offlineQueue.replay()}
+										onDismiss={() => void offlineQueue.dropAll()}
 										disabled={isMediaUploading}
 									/>
 								)}
@@ -188,54 +205,71 @@ export function MediaArrayCard({
 										onCancelOne={onCancelOne}
 									/>
 								) : (
-									<MediaUploadGrid
-										media={arrayField.state.value.map((m) => ({
-											url: m.url,
-											mediaType: m.mediaType,
-											altText: m.altText ?? undefined,
-											thumbnailUrl: m.thumbnailUrl ?? undefined,
-											blurDataUrl: m.blurDataUrl ?? undefined,
-										}))}
-										onFilesDropped={(files) => handleUpload(files, asMediaField(field))}
-										onChange={(newMedia) => {
-											const currentUrls = new Set(newMedia.map((m) => m.url));
-											const removed = arrayField.state.value
-												.filter((m) => !currentUrls.has(m.url))
-												.map((m) => m.url);
-											if (removed.length > 0) {
-												setDeletedImageUrls((prev) => [...prev, ...removed]);
+									<>
+										{/*
+										 * Bandeau de progression — au-dessus de la grille, pas dans la tuile
+										 * « Ajouter ». Même composant et même contenu que dans l'état vide :
+										 * la tuile ne montrait qu'un « 0/1 », sans pourcentage, sans ETA et
+										 * sans bouton Annuler, si bien qu'à partir du premier média un envoi
+										 * n'était plus interruptible.
+										 */}
+										{isMediaUploading && uploadProgress && (
+											<UploadProgressPanel
+												uploadProgress={uploadProgress}
+												onCancel={onCancel}
+												onCancelOne={onCancelOne}
+												anchorRef={cardRef}
+												className="mb-3"
+											/>
+										)}
+										<MediaUploadGrid
+											media={arrayField.state.value.map((m) => ({
+												url: m.url,
+												mediaType: m.mediaType,
+												altText: m.altText ?? undefined,
+												thumbnailUrl: m.thumbnailUrl ?? undefined,
+												blurDataUrl: m.blurDataUrl ?? undefined,
+											}))}
+											onFilesDropped={(files) => handleUpload(files, asMediaField(field))}
+											onChange={(newMedia) => {
+												const currentUrls = new Set(newMedia.map((m) => m.url));
+												const removed = arrayField.state.value
+													.filter((m) => !currentUrls.has(m.url))
+													.map((m) => m.url);
+												if (removed.length > 0) {
+													setDeletedImageUrls((prev) => [...prev, ...removed]);
+												}
+												const currentLength = arrayField.state.value.length;
+												for (let i = currentLength - 1; i >= 0; i--) {
+													arrayField.removeValue(i);
+												}
+												newMedia.forEach((m) =>
+													(field as { pushValue: (v: MediaArrayFieldValue) => void }).pushValue({
+														url: m.url,
+														mediaType: m.mediaType,
+														altText: m.altText ?? undefined,
+														thumbnailUrl: m.thumbnailUrl ?? undefined,
+														blurDataUrl: m.blurDataUrl ?? undefined,
+													}),
+												);
+											}}
+											skipUtapiDelete={skipUtapiDelete}
+											maxItems={maxMediaCount}
+											renderUploadZone={
+												isAtLimit
+													? undefined
+													: () => (
+															<InlineUploadZone
+																field={asMediaField(field)}
+																isMediaUploading={isMediaUploading}
+																handleUpload={handleUpload}
+																maxMediaCount={maxMediaCount}
+																currentCount={currentCount}
+															/>
+														)
 											}
-											const currentLength = arrayField.state.value.length;
-											for (let i = currentLength - 1; i >= 0; i--) {
-												arrayField.removeValue(i);
-											}
-											newMedia.forEach((m) =>
-												(field as { pushValue: (v: MediaArrayFieldValue) => void }).pushValue({
-													url: m.url,
-													mediaType: m.mediaType,
-													altText: m.altText ?? undefined,
-													thumbnailUrl: m.thumbnailUrl ?? undefined,
-													blurDataUrl: m.blurDataUrl ?? undefined,
-												}),
-											);
-										}}
-										skipUtapiDelete={skipUtapiDelete}
-										maxItems={maxMediaCount}
-										renderUploadZone={
-											isAtLimit
-												? undefined
-												: () => (
-														<InlineUploadZone
-															field={asMediaField(field)}
-															isMediaUploading={isMediaUploading}
-															uploadProgress={uploadProgress}
-															handleUpload={handleUpload}
-															maxMediaCount={maxMediaCount}
-															currentCount={currentCount}
-														/>
-													)
-										}
-									/>
+										/>
+									</>
 								)}
 							</div>
 						);

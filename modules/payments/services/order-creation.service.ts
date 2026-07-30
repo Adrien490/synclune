@@ -11,14 +11,15 @@ import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import { generateOrderNumber } from "@/modules/orders/services/order-generation.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.constants";
-import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
+import { DEFAULT_CURRENCY, STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import * as Sentry from "@sentry/nextjs";
 
 // CHECKOUT-TOTAL-005 : un cartItem sans skuDetailsResult correspondant signifie que
-// le subtotal (calculé par buildStripeLineItems sur les mêmes données) peut inclure
+// le subtotal (calculé par computeCartSubtotal sur les mêmes données) peut inclure
 // un article qui ne serait pas snapshoté — fail-closed, jamais de skip silencieux
 // sur un chemin de facturation.
 const CART_ITEM_MISMATCH_ERROR =
@@ -104,7 +105,7 @@ export async function createOrderInTransaction(
 	} = params;
 
 	// CHECKOUT-TOTAL-005 : invariant interne — le `subtotal` paramètre (pré-calculé
-	// hors transaction par buildStripeLineItems) doit égaler la somme des lignes qui
+	// hors transaction par computeCartSubtotal) doit égaler la somme des lignes qui
 	// seront réellement snapshotées ci-dessous (mêmes skuDetailsResults). Toute
 	// divergence (filtrage, arrondi) produirait un Order dont
 	// total ≠ Σ items + livraison − remise, indétectable en aval. Vérification pure,
@@ -150,19 +151,31 @@ export async function createOrderInTransaction(
 				}
 
 				const sku = skuResult.data.sku;
+				// `deletedAt` (SKU et produit) fait partie de la relecture : la
+				// re-validation du webhook les vérifie, celle-ci les OMETTAIT. Un SKU
+				// soft-deleted entre l'ajout au panier et le checkout produisait donc une
+				// commande PENDING qui mourait plus tard en `OversellError` → encaissement
+				// puis remboursement automatique, là où un refus propre ici évite le
+				// débit. Asymétrie corrigée.
 				const currentSkuRows = await tx.$queryRaw<
 					Array<{
 						isActive: boolean;
 						inventory: number;
 						productTitle: string;
 						productStatus: string;
+						skuDeletedAt: Date | null;
+						productDeletedAt: Date | null;
+						priceInclTax: number;
 					}>
 				>`
 				SELECT
 					ps."isActive",
 					ps.inventory,
 					p.title as "productTitle",
-					p.status as "productStatus"
+					p.status as "productStatus",
+					ps."deletedAt" as "skuDeletedAt",
+					p."deletedAt" as "productDeletedAt",
+					ps."priceInclTax"
 				FROM "ProductSku" ps
 				INNER JOIN "Product" p ON ps."productId" = p.id
 				WHERE ps.id = ${cartItem.skuId}
@@ -174,11 +187,26 @@ export async function createOrderInTransaction(
 				}
 
 				const currentSku = currentSkuRows[0]!;
+				if (currentSku.skuDeletedAt || currentSku.productDeletedAt) {
+					throw new BusinessError(`Le produit ${currentSku.productTitle} n'est plus disponible`);
+				}
 				if (!currentSku.isActive || currentSku.productStatus !== "PUBLIC") {
 					throw new BusinessError(`Le produit ${currentSku.productTitle} n'est plus disponible`);
 				}
 				if (currentSku.inventory < cartItem.quantity) {
 					throw new BusinessError(`Stock insuffisant pour ${currentSku.productTitle}`);
+				}
+				// Le PRIX aussi est vérifié sous le verrou. Il ne l'était pas : le stock et le
+				// statut étaient autoritaires-au-verrou, le prix restait autoritaire-à-la-
+				// lecture-de-cache (`fetchSkuForValidation`, profil `checkout`). Le garde-fou
+				// `priceAtAdd !== sku.priceInclTax` des 3 actions de paiement compare deux
+				// valeurs issues de la MÊME lecture cachée : il ne peut pas détecter un cache
+				// périmé, et `CHECKOUT-TOTAL-005` vérifie seulement la cohérence interne
+				// (`computedSubtotal === subtotal`), les deux côtés dérivant de cette lecture.
+				// Un changement de prix concurrent facturait donc l'ancien montant. Fail-closed,
+				// comme pour le stock : on refuse plutôt que de sous-facturer.
+				if (currentSku.priceInclTax !== sku.priceInclTax) {
+					throw new BusinessError("Le prix d'un article a changé. Actualise ton panier.");
 				}
 			}
 
@@ -330,10 +358,36 @@ export async function createOrderInTransaction(
 			// ici (contrairement à update-payment-amount qui clampe pour l'affichage) —
 			// l'invariant qui le rend inutile : `shippingCost >= STRIPE_MIN_AMOUNT_EUR_CENTS`
 			// (frais FR par défaut = 499 c, jamais null en métropole) ⇒ total >= shipping >= min.
-			// ⚠️ Si la gratuité de port ou un tarif < 50 c est introduit, ajouter ici un
-			// rejet métier explicite (PAS un clamp silencieux qui sur-facturerait le client) :
-			// Stripe refuserait sinon l'update et confirmCheckout ferait cleanupFailedCheckout.
 			const total = Math.max(0, subtotalAfterDiscount + shippingCost);
+
+			// Le rejet ci-dessous matérialise cet invariant au lieu de le documenter.
+			// Il n'est atteignable qu'après l'introduction d'un port gratuit ou d'un tarif
+			// < 50 c ; sans lui, ce jour-là, Stripe refusait l'`update` de `confirmCheckout`
+			// (montant sous le minimum EUR) et le client voyait « Une erreur est survenue »
+			// après un `cleanupFailedCheckout` — un cul-de-sac muet plutôt qu'un motif.
+			// Surtout : PAS de clamp silencieux à 50 c, qui sur-facturerait le client sans
+			// que rien ne le signale (le PI porterait 50 c, `order.total` autre chose).
+			if (total < STRIPE_MIN_AMOUNT_EUR_CENTS) {
+				Sentry.withScope((scope) => {
+					scope.setLevel("error");
+					scope.setTag("checkout", "total-below-stripe-minimum");
+					scope.setFingerprint(["order-creation", "total-below-stripe-minimum"]);
+					// Aucune PII : uniquement des montants.
+					scope.setContext("checkout", {
+						total,
+						subtotalAfterDiscount,
+						shippingCost,
+						minimum: STRIPE_MIN_AMOUNT_EUR_CENTS,
+					});
+					Sentry.captureMessage(
+						"createOrderInTransaction: order total below the Stripe EUR minimum — configuration issue",
+						"error",
+					);
+				});
+				throw new BusinessError(
+					"Le montant de ta commande est trop faible pour être encaissé. Écris-nous, on règle ça.",
+				);
+			}
 
 			// Create order with denormalized shipping address snapshot (legal compliance — immutable)
 			const newOrder = await tx.order.create({
@@ -377,9 +431,16 @@ export async function createOrderInTransaction(
 
 				const sku = skuResult.data.sku;
 				const product = sku.product;
-				const primaryImage = sku.images.find((img) => img.isPrimary);
-				const rawImageUrl = primaryImage?.url ?? sku.images[0]?.url ?? null;
-				const imageUrl = getValidImageUrl(rawImageUrl) ?? null;
+				// EINV-SNAPSHOT-MEDIA-001 : SSOT `pickPrimaryImage` (primaire IMAGE →
+				// première IMAGE → null). Le motif précédent
+				// `find((img) => img.isPrimary) ?? images[0]` est celui que CLAUDE.md
+				// bannit : aveugle au `mediaType`, il figeait un `.mp4` dans
+				// `productImageUrl`/`skuImageUrl` — snapshot immuable de rétention 10 ans,
+				// rendu dans l'historique client ET dans le PDF de facture.
+				// `getValidImageUrl` ne rattrape rien : il ne valide que HTTPS + domaine.
+				// `null` ⇒ on n'écrit pas d'URL, plutôt qu'une vidéo.
+				const primaryImage = pickPrimaryImage(sku.images);
+				const imageUrl = getValidImageUrl(primaryImage?.url ?? null) ?? null;
 
 				const colorsHex = sku.colors
 					.map((c) => c.hex)

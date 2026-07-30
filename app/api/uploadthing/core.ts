@@ -1,7 +1,6 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import * as Sentry from "@sentry/nextjs";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
@@ -22,6 +21,16 @@ import { THUMBHASH_CONFIG } from "@/modules/media/constants/image-downloader.con
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
 import { utapi } from "@/shared/lib/uploadthing";
 import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
+import {
+	ACCEPTED_IMAGE_MIME_TYPES,
+	ACCEPTED_VIDEO_MIME_TYPES,
+	IMAGE_FORMATS_LABEL,
+	VIDEO_FORMATS_LABEL,
+} from "@/modules/media/constants/media-limits.constants";
+import {
+	MAX_UPLOAD_SIZE_IMAGE,
+	MAX_UPLOAD_SIZE_VIDEO,
+} from "@/modules/media/constants/upload-size-limits";
 
 /** Métadonnées minimales d'un blob fraîchement uploadé sur UploadThing. */
 interface UploadedFile {
@@ -107,11 +116,11 @@ function captureUnexpected(err: unknown, tags: Record<string, string | number | 
  * 4. Sinon strip EXIF/GPS (RGPD).
  * 5. ThumbHash depuis le buffer final.
  *
- * @param requireMetadataStrip - `true` sur `reviewMedia` : un strip EXIF en
- *   échec REJETTE l'upload au lieu de publier l'original (audit média M4). Les
- *   photos d'avis viennent de téléphones clients et portent des coordonnées GPS ;
- *   une publication en fallback exposerait le domicile d'un client sur le CDN.
- *   `false` sur `catalogMedia` (photos maîtrisées par l'exploitante) : on
+ * @param requireMetadataStrip - `true` : un strip EXIF en échec REJETTE l'upload
+ *   au lieu de publier l'original (audit média M4). Réservé aux routes dont
+ *   l'émetteur n'est PAS l'exploitante — une photo de téléphone client porte des
+ *   coordonnées GPS, et publier l'original en fallback exposerait son domicile sur
+ *   le CDN. `false` sur `catalogMedia` (photos maîtrisées par l'exploitante) : on
  *   privilégie la disponibilité, l'échec reste tracé dans Sentry.
  */
 async function processUploadedImage(
@@ -235,34 +244,29 @@ if (!process.env.UPLOADTHING_TOKEN) {
 	);
 }
 
-// Types MIME autorisés pour la validation serveur
-// SVG intentionally excluded: can contain embedded scripts (XSS vector)
-// HEIC/HEIF: iPhone default format. Le client compresse en WebP/JPEG avant upload
-// (compress-image.ts), mais on tolère le passage HEIC brut au cas où le navigateur
-// supporte le décodage natif (Safari) ou si la compression échoue silencieusement.
-const ALLOWED_IMAGE_TYPES = [
-	"image/jpeg",
-	"image/png",
-	"image/webp",
-	"image/gif",
-	"image/avif",
-	"image/heic",
-	"image/heif",
-] as const;
-
-const ALLOWED_VIDEO_TYPES = ["video/mp4"] as const;
+// Types MIME autorisés pour la validation serveur — SSOT client-safe dans
+// `modules/media/constants/media-limits.constants.ts`, partagée avec la validation
+// cliente (`isValidMediaType`). Les deux listes ne peuvent plus diverger : leur
+// identité est verrouillée par `client-mime-allowlist.regression.test.ts`.
+const ALLOWED_IMAGE_TYPES = ACCEPTED_IMAGE_MIME_TYPES;
+const ALLOWED_VIDEO_TYPES = ACCEPTED_VIDEO_MIME_TYPES;
 
 /**
  * Valide le type MIME d'un fichier côté serveur
  * Protection contre les fichiers malveillants renommés
+ *
+ * Le message cite les formats en **libellés lisibles** (« JPEG, PNG, … ») et non
+ * en MIME bruts : c'est le seul endroit où l'utilisatrice apprend que le SVG est
+ * refusé, autant que ce soit dans sa langue.
  */
 function validateMimeType(
 	file: { type: string; name: string },
 	allowedTypes: readonly string[],
+	formatsLabel: string,
 ): void {
 	if (!allowedTypes.includes(file.type as never)) {
 		throw new UploadThingError(
-			`Type de fichier non autorisé: ${file.name} (${file.type}). Types acceptés: ${allowedTypes.join(", ")}`,
+			`Type de fichier non autorisé : ${file.name} (${file.type || "type inconnu"}). Formats acceptés : ${formatsLabel}.`,
 		);
 	}
 }
@@ -273,10 +277,13 @@ function validateMimeType(
  */
 function validateFileSize(file: { size: number; name: string }, maxSizeBytes: number): void {
 	if (file.size > maxSizeBytes) {
-		const sizeMB = (file.size / 1024 / 1024).toFixed(2);
-		const maxSizeMB = (maxSizeBytes / 1024 / 1024).toFixed(0);
+		// Unités françaises : ce message s'affiche sous une copie qui annonce
+		// « max 16 Mo ». Mélanger « MB » et « Mo » sur le même écran donne
+		// l'impression de deux plafonds différents.
+		const sizeMo = (file.size / 1024 / 1024).toFixed(1);
+		const maxSizeMo = (maxSizeBytes / 1024 / 1024).toFixed(0);
 		throw new UploadThingError(
-			`Fichier trop volumineux: ${file.name} (${sizeMB}MB). Taille max: ${maxSizeMB}MB`,
+			`Fichier trop volumineux : ${file.name} (${sizeMo} Mo). Taille max : ${maxSizeMo} Mo.`,
 		);
 	}
 }
@@ -328,24 +335,29 @@ export const ourFileRouter = {
 
 				if (!rateLimit.success) {
 					throw new UploadThingError(
-						rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
+						rateLimit.error ?? "Trop d'envois d'affilée. Patiente une minute avant de réessayer.",
 					);
 				}
 
-				// 3. Validation MIME et taille côté serveur
+				// 3. Validation MIME et taille côté serveur — plafonds tirés de la SSOT,
+				// JAMAIS de littéral ici. Cette garde était figée à 512 Mo pour la vidéo,
+				// soit 8× la valeur réelle de la config du router juste au-dessus : une
+				// défense en profondeur morte, que `middleware.test.ts` entérinait avec un
+				// cas « accepte une vidéo MP4 sous 512 Mo ». Interdit désormais par
+				// `upload-size-limits.regression.test.ts`.
 				for (const file of files) {
 					const isVideo = file.type.startsWith("video/");
 					const isImage = file.type.startsWith("image/");
 
 					if (isVideo) {
-						validateMimeType(file, ALLOWED_VIDEO_TYPES);
-						validateFileSize(file, 512 * 1024 * 1024); // 512MB
+						validateMimeType(file, ALLOWED_VIDEO_TYPES, VIDEO_FORMATS_LABEL);
+						validateFileSize(file, MAX_UPLOAD_SIZE_VIDEO);
 					} else if (isImage) {
-						validateMimeType(file, ALLOWED_IMAGE_TYPES);
-						validateFileSize(file, 16 * 1024 * 1024); // 16MB
+						validateMimeType(file, ALLOWED_IMAGE_TYPES, IMAGE_FORMATS_LABEL);
+						validateFileSize(file, MAX_UPLOAD_SIZE_IMAGE);
 					} else {
 						throw new UploadThingError(
-							`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`,
+							`Type de fichier non supporté : ${file.name} (${file.type || "type inconnu"}). Seules les images et vidéos sont acceptées.`,
 						);
 					}
 				}
@@ -382,7 +394,7 @@ export const ourFileRouter = {
 				}
 
 				// Photos catalogue : maîtrisées par l'exploitante, un strip EXIF en échec
-				// ne bloque pas la publication (contrairement à reviewMedia).
+				// ne bloque pas la publication.
 				const processed = await processUploadedImage(file, { requireMetadataStrip: false });
 
 				return {
@@ -396,82 +408,6 @@ export const ourFileRouter = {
 			} catch (err) {
 				captureUnexpected(err, {
 					endpoint: "catalogMedia",
-					step: "onUploadComplete",
-					userId: metadata.userId,
-					fileType: file.type,
-					fileSize: file.size,
-				});
-				throw err;
-			}
-		}),
-
-	// Route pour les photos d'avis clients
-	// Accessible aux utilisateurs connectés (acheteurs vérifiés)
-	reviewMedia: f({
-		image: { maxFileSize: "4MB", maxFileCount: 3 },
-	})
-		.middleware(async ({ files }) => {
-			try {
-				// 1. Authentification requise
-				const session = await getSession();
-				if (!session?.user) {
-					throw new UploadThingError(
-						"Vous devez être connecté pour ajouter des photos à votre avis",
-					);
-				}
-
-				// 2. Rate limiting
-				const headersList = await headers();
-				const clientIp = await getClientIp(headersList);
-				const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-				const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA, clientIp);
-
-				if (!rateLimit.success) {
-					throw new UploadThingError(
-						rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
-					);
-				}
-
-				// 3. Validation MIME et taille côté serveur
-				for (const file of files) {
-					validateMimeType(file, ALLOWED_IMAGE_TYPES);
-					validateFileSize(file, 4 * 1024 * 1024); // 4MB
-				}
-
-				return {
-					userId: session.user.id,
-					userName: session.user.name,
-				};
-			} catch (err) {
-				captureUnexpected(err, {
-					endpoint: "reviewMedia",
-					step: "middleware",
-					fileCount: files.length,
-				});
-				throw err;
-			}
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			try {
-				// Photos clients : le strip EXIF/GPS est BLOQUANT (audit média M4). Une
-				// photo iPhone < 1 Mo contourne la compression cliente et arrive brute
-				// avec ses coordonnées GPS ; publier l'original en fallback exposerait le
-				// domicile d'un client sur un CDN public.
-				const processed = await processUploadedImage(file, { requireMetadataStrip: true });
-
-				return {
-					url: processed.url,
-					blurDataUrl: processed.blurDataUrl,
-					// `ReviewMedia` n'a pas de colonnes width/height : ces valeurs ne sont
-					// pas persistées. Elles restent exposées pour garder `serverData`
-					// uniforme entre les deux routes (le hook d'upload est partagé).
-					width: processed.width ?? null,
-					height: processed.height ?? null,
-					uploadedBy: metadata.userId,
-				};
-			} catch (err) {
-				captureUnexpected(err, {
-					endpoint: "reviewMedia",
 					step: "onUploadComplete",
 					userId: metadata.userId,
 					fileType: file.type,

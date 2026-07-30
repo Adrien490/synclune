@@ -231,9 +231,8 @@ describe("AdminMenuSheet", () => {
 			expect(screen.getByText("Pilotage")).toBeInTheDocument();
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
 			expect(screen.getByText("Boutique")).toBeInTheDocument();
-			// Visibles en mode boutique en ligne (SHOP_LIVE=true)
+			// Visible en mode boutique en ligne (SHOP_LIVE=true)
 			expect(screen.getByText("Ventes")).toBeInTheDocument();
-			expect(screen.getByText("Marketing")).toBeInTheDocument();
 		});
 
 		it('sets aria-label="Navigation administration" on nav', () => {

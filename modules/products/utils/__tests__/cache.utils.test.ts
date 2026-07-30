@@ -109,7 +109,7 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toContain("admin-badges");
 		expect(tags).toContain("sitemap-images");
 		// `get-recent-products.ts` PROMETTAIT cette invalidation en JSDoc alors qu'aucune
-		// mutation produit ne bustait le tag (seuls les avis et le cron RGPD le faisaient) :
+		// mutation produit ne bustait le tag (seul le cron RGPD le faisait) :
 		// un produit archivé restait dans « Vus récemment » jusqu'à expiration du profil.
 		expect(tags).toContain("recent-products-list");
 		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce

@@ -31,7 +31,7 @@ interface LoadMoreProductsResult {
 /**
  * Server action to load the next page of products (mobile catalogue load-more).
  *
- * Mirror of `loadMoreReviews`: validates input, rate-limits, delegates to
+ * Validates input, rate-limits, delegates to
  * `getProducts` with `direction: "forward"`. Filters/search/sortBy are passed
  * through so the appended page respects the same constraints as the URL-driven
  * initial page rendered server-side.

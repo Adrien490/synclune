@@ -12,7 +12,6 @@ import {
 	UNPAID_ORDER_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
@@ -34,7 +33,6 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  *
  * Tables handled:
  * - Product (and ProductSku, SkuMedia, etc. via cascade) — hard delete
- * - ProductReview, ReviewResponse, ReviewMedia (via cascade) — hard delete
  * - Order (paid) — PII purge only (row kept, PII scrubbed, invoice/credit-note PDFs deleted)
  * - Refund — per-refund credit-note PDFs deleted + pointers/note scrubbed with the parent order
  * - OrderNote — free-text content scrubbed with the parent order (row + staff author kept)
@@ -293,25 +291,14 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	}
 
 	// 1. Find IDs to delete (batched to prevent timeout)
-	const [reviewIds, productIds] = await Promise.all([
-		prisma.productReview.findMany({
-			where: retentionWhere,
-			select: { id: true },
-			take: BATCH_SIZE_LARGE,
-		}),
-		prisma.product.findMany({
-			where: { ...retentionWhere, status: "ARCHIVED" },
-			select: { id: true },
-			take: BATCH_SIZE_LARGE,
-		}),
-	]);
+	const productIds = await prisma.product.findMany({
+		where: { ...retentionWhere, status: "ARCHIVED" },
+		select: { id: true },
+		take: BATCH_SIZE_LARGE,
+	});
 
 	// Check if any model hit the batch limit (more records may remain)
-	const hasMore =
-		ordersHasMore ||
-		abandonedHasMore ||
-		reviewIds.length === BATCH_SIZE_LARGE ||
-		productIds.length === BATCH_SIZE_LARGE;
+	const hasMore = ordersHasMore || abandonedHasMore || productIds.length === BATCH_SIZE_LARGE;
 
 	if (hasMore) {
 		logger.info("Batch limit reached, more records may remain for next run", {
@@ -320,14 +307,6 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	}
 
 	// 2. Collect UploadThing URLs before DB transaction
-	const reviewMediaUrls =
-		reviewIds.length > 0
-			? await prisma.reviewMedia.findMany({
-					where: { reviewId: { in: reviewIds.map((r) => r.id) } },
-					select: { url: true },
-				})
-			: [];
-
 	const skuMediaUrls =
 		productIds.length > 0
 			? await prisma.skuMedia.findMany({
@@ -338,23 +317,17 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 				})
 			: [];
 
-	// 3. Run all DB deletes in a single transaction
-	const [reviewsResult, productsResult] = await prisma.$transaction(
-		async (tx) => {
-			const reviews = await tx.productReview.deleteMany({
-				where: { id: { in: reviewIds.map((r) => r.id) } },
-			});
-			const products = await tx.product.deleteMany({
+	// 3. Run the DB deletes in a transaction
+	const productsResult = await prisma.$transaction(
+		async (tx) =>
+			tx.product.deleteMany({
 				where: { id: { in: productIds.map((p) => p.id) } },
-			});
-			return [reviews, products] as const;
-		},
+			}),
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 
 	logger.info("DB transaction completed", {
 		cronJob: "hard-delete-retention",
-		reviewsDeleted: reviewsResult.count,
 		productsDeleted: productsResult.count,
 	});
 
@@ -366,10 +339,6 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
 	}
-	if (reviewsResult.count > 0) {
-		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
-		updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
-	}
 
 	// 5. Delete UploadThing files after DB transaction succeeds
 	// Non-blocking: if UploadThing fails, orphaned files will be cleaned by cleanup-orphan-media
@@ -379,32 +348,16 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 			{ cronJob: "hard-delete-retention" },
 		);
 		return {
-			processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
+			processed: productsResult.count + ordersPurged + abandonedOrdersPurged,
 			errored: pdfPurgeErrors,
 			skipped: 0,
 			productsDeleted: productsResult.count,
-			reviewsDeleted: reviewsResult.count,
 			ordersPurged,
 			abandonedOrdersPurged,
 			orderPdfsDeleted,
 			uploadthingSkipped: true,
 			hasMore,
 		};
-	}
-
-	if (reviewMediaUrls.length > 0) {
-		try {
-			const urls = reviewMediaUrls.map((m) => m.url);
-			const result = await deleteUploadThingFilesFromUrls(urls);
-			logger.info("Deleted review media files from UploadThing", {
-				cronJob: "hard-delete-retention",
-				count: result.deleted,
-			});
-		} catch (_error) {
-			logger.warn("Failed to delete review media from UploadThing", {
-				cronJob: "hard-delete-retention",
-			});
-		}
 	}
 
 	if (skuMediaUrls.length > 0) {
@@ -427,11 +380,10 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	logger.info("Retention cleanup completed", { cronJob: "hard-delete-retention" });
 
 	return {
-		processed: productsResult.count + reviewsResult.count + ordersPurged + abandonedOrdersPurged,
+		processed: productsResult.count + ordersPurged + abandonedOrdersPurged,
 		errored: pdfPurgeErrors,
 		skipped: 0,
 		productsDeleted: productsResult.count,
-		reviewsDeleted: reviewsResult.count,
 		ordersPurged,
 		abandonedOrdersPurged,
 		orderPdfsDeleted,

@@ -62,17 +62,11 @@ export const SEO_DEFAULTS = {
 	},
 } as const;
 
-export type GlobalReviewStats = {
-	totalReviews: number;
-	averageRating: number;
-};
-
 /**
  * Génère les données structurées LocalBusiness pour le référencement
- * @param reviewStats - Statistiques globales d'avis (optionnel)
  */
-export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
-	const baseSchema = {
+export function getLocalBusinessSchema() {
+	return {
 		"@context": "https://schema.org",
 		"@type": "LocalBusiness",
 		"@id": `${SITE_URL}/#local-business`,
@@ -174,22 +168,6 @@ export function getLocalBusinessSchema(reviewStats?: GlobalReviewStats) {
 			],
 		},
 	};
-
-	// Ajouter l'AggregateRating si des avis existent
-	if (reviewStats && reviewStats.totalReviews > 0) {
-		return {
-			...baseSchema,
-			aggregateRating: {
-				"@type": "AggregateRating",
-				ratingValue: reviewStats.averageRating.toFixed(1),
-				reviewCount: reviewStats.totalReviews,
-				bestRating: 5,
-				worstRating: 1,
-			},
-		};
-	}
-
-	return baseSchema;
 }
 
 /**

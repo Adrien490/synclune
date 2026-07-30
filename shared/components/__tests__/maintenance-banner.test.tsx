@@ -145,8 +145,20 @@ describe("MaintenanceBanner", () => {
 		// réellement visible (0 sinon), et la bottom-nav boutique va jusqu'à
 		// 64rem. Un `max-md:` figeait le seuil et laissait le bandeau passer
 		// sous la barre en iPad portrait (audit responsive 2026-07-26).
-		expect(banner.className).toContain("bottom-[calc(var(--bottom-bar-height,0px)");
+		expect(banner.className).toContain("var(--bottom-bar-height,0px)");
 		expect(banner.className).not.toContain("max-md:bottom-");
+
+		// La variable porte la hauteur MESURÉE de la barre, safe-area incluse : la
+		// safe-area est ici une borne ALTERNATIVE (`max`) pour le cas sans barre, et
+		// jamais un terme additionné — sinon l'encoche compte deux fois (audit
+		// bottom-bar 2026-07-30, P1).
+		expect(banner.className).toContain(
+			"bottom-[max(var(--bottom-bar-height,0px),env(safe-area-inset-bottom,0px))]",
+		);
+		expect(banner.className).not.toMatch(/var\(--bottom-bar-height,0px\)\s*\+/);
+		// Corollaire : plus de compensation d'encoche dans le padding interne, donc
+		// plus d'override `max-md:pb-*` pour la défaire sur mobile.
+		expect(banner.className).not.toContain("max-md:pb-");
 	});
 
 	// ─── Accessibility ────────────────────────────────────────────────────

@@ -4,7 +4,10 @@ import { z } from "zod";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getCart } from "@/modules/cart/data/get-cart";
-import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
+import {
+	getSkuDetails,
+	validateCartItemsWithDb,
+} from "@/modules/cart/services/sku-validation.service";
 import { prisma } from "@/shared/lib/prisma";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
 import {
@@ -12,8 +15,9 @@ import {
 	type CartItemForDiscount,
 } from "@/modules/discounts/services/discount-calculation.service";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
@@ -76,9 +80,13 @@ export async function updatePaymentAmount(
 			// 3. In-memory rate limiting
 			const headersList = await headers();
 			const ipAddress = await getClientIp(headersList);
-			const rateLimitId = userId
-				? `update-amount:user:${userId}`
-				: getRateLimitIdentifier(null, sessionId ?? null, ipAddress);
+			// La branche authentifiée était déjà préfixée ; la branche INVITÉ retombait sur
+			// un identifiant nu, donc sur le compteur partagé du panier/des favoris (F3).
+			const rateLimitId = buildPaymentRateLimitId("update-amount", {
+				userId,
+				sessionId,
+				ipAddress,
+			});
 
 			const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.UPDATE_AMOUNT, ipAddress);
 			if (!rateLimit.success) {
@@ -132,6 +140,33 @@ export async function updatePaymentAmount(
 				return { success: false, error: "Accès non autorisé au paiement." };
 			}
 
+			// 5c. CHECKOUT-PI-STATE-001 — état du PaymentIntent.
+			// Stripe n'accepte un changement de `amount` que sur un PI encore ouvert à la
+			// saisie (`requires_payment_method`, `requires_confirmation`, `requires_action`).
+			// Sur tout autre état l'`update` de l'étape 7 lève une
+			// `StripeInvalidRequestError` que le catch global traduit en « Erreur lors de la
+			// mise à jour du montant » — un message qui ne dit rien de ce qui s'est passé et
+			// pousse le client à réessayer en boucle. On sort donc tôt, avec le motif réel.
+			// (`succeeded`/`canceled` peuvent arriver ici : confirmation dans un autre onglet,
+			// ou PI annulé par `cancelOrphanPaymentIntent` après un re-init.)
+			const AMOUNT_MUTABLE_PI_STATUSES = [
+				"requires_payment_method",
+				"requires_confirmation",
+				"requires_action",
+			] as const;
+			if (!(AMOUNT_MUTABLE_PI_STATUSES as readonly string[]).includes(pi.status)) {
+				span.setAttribute("payment_intent.status", pi.status);
+				return {
+					success: false,
+					error:
+						pi.status === "succeeded"
+							? "Ce paiement a déjà été effectué."
+							: pi.status === "canceled"
+								? "Ce paiement a été annulé. Actualise la page pour recommencer."
+								: "Ton paiement est en cours de traitement. Patiente quelques instants.",
+				};
+			}
+
 			// 6. Recompute subtotal server-side from the authenticated cart.
 			// Never trust a client-supplied subtotal (audit P0.1).
 			const cart = await getCart();
@@ -145,6 +180,21 @@ export async function updatePaymentAmount(
 
 			if (skuDetailsResults.some((r) => !r.success)) {
 				return { success: false, error: "Certains articles ne sont plus disponibles." };
+			}
+
+			// CHECKOUT-STOCK-GATE-001 : parité avec `initializePayment` — `getSkuDetails`
+			// ci-dessus ignore `inventory`. Le montant du PI est remis à jour ici après
+			// une modification de panier ; laisser passer une ligne devenue hors stock
+			// enverrait le client payer un article que la création de commande refusera.
+			const stockValidation = await validateCartItemsWithDb({
+				items: cart.items.map((item) => ({ skuId: item.sku.id, quantity: item.quantity })),
+			});
+			if (!stockValidation.success) {
+				const firstIssue = stockValidation.data?.find((item) => !item.isValid);
+				return {
+					success: false,
+					error: firstIssue?.error ?? "Certains articles ne sont plus disponibles.",
+				};
 			}
 
 			let subtotal = 0;

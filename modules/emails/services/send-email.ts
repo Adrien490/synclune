@@ -140,7 +140,7 @@ function isRetryableEmailError(error: unknown): boolean {
  * Requis par Gmail et Yahoo depuis février 2024 pour tout bulk sender (>5000 emails/jour).
  *
  * Applique aux catégories commerciales/marketing où une opt-out est attendue :
- * marketing, review. Les emails transactionnels (order, payment, auth)
+ * marketing. Les emails transactionnels (order, payment, auth)
  * ne doivent PAS avoir de List-Unsubscribe — Gmail peut les flagger comme non transactionnels.
  *
  * EMAIL-AUDIT-009 : ajout Precedence: bulk + Auto-Submitted: auto-generated pour
@@ -167,7 +167,7 @@ export async function sendEmail(params: {
 	/**
 	 * URL de désinscription one-click. Si fournie, ajoute les headers
 	 * List-Unsubscribe + List-Unsubscribe-Post (RFC 8058). À utiliser
-	 * pour les emails commerciaux (marketing, review).
+	 * pour les emails commerciaux (marketing).
 	 */
 	unsubscribeUrl?: string;
 	/**

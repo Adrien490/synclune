@@ -3,22 +3,16 @@ import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creation
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 
 import { getProducts, type GetProductsReturn } from "@/modules/products/data/get-products";
-import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
-import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
-import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { StructuredData } from "@/shared/components/structured-data";
-import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config";
+import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
 import { AtelierStats } from "./_components/atelier-section/atelier-stats";
-import { BestRatedCreations, BEST_RATED_MIN_RATING } from "./_components/best-rated-creations";
 import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
 import { HomeFaq } from "./_components/home-faq";
-import { ReviewsSection } from "./_components/reviews-section";
-import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 export const metadata: Metadata = {
 	title: {
@@ -68,28 +62,12 @@ export default async function Page() {
 		{ perPage: 4, sortBy: "created-descending", filters: { status: "PUBLIC" } },
 		{ isAdmin: false },
 	);
-	const reviewStatsPromise = getGlobalReviewStats();
-	const featuredReviewsPromise = getFeaturedReviews();
-	// Best-rated rail data — dedicated cached fetch (rating-descending + ratingMin).
-	// Kicked off in parallel; the section self-hides if too few rated products.
-	const bestRatedPromise = getProducts(
-		{
-			perPage: 4,
-			sortBy: "rating-descending",
-			filters: { status: "PUBLIC", ratingMin: BEST_RATED_MIN_RATING },
-		},
-		{ isAdmin: false },
-	);
 
 	return (
 		<>
-			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews, ItemList */}
+			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, ItemList */}
 			<Suspense fallback={null}>
-				<HomepageStructuredData
-					reviewStatsPromise={reviewStatsPromise}
-					featuredReviewsPromise={featuredReviewsPromise}
-					productsPromise={productsPromise}
-				/>
+				<HomepageStructuredData productsPromise={productsPromise} />
 			</Suspense>
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images.
@@ -112,23 +90,7 @@ export default async function Page() {
 				<CollectionsSection />
 			</Suspense>
 
-			{/* 3b. Les mieux notées - preuve sociale par la note, juste avant les avis.
-			    Suspense fallback={null} : la section s'auto-masque s'il n'y a pas assez
-			    de produits notés (cas pré-lancement) sans skeleton fantôme ni couplage
-			    au LCP du hero. */}
-			<Suspense fallback={null}>
-				<BestRatedCreations productsPromise={bestRatedPromise} />
-			</Suspense>
-
-			{/* 4. Reviews - Social proof with featured customer reviews */}
-			<Suspense fallback={<ReviewsSectionSkeleton />}>
-				<ReviewsSection
-					reviewsPromise={featuredReviewsPromise}
-					reviewStatsPromise={reviewStatsPromise}
-				/>
-			</Suspense>
-
-			{/* 5. L'Atelier - Story + creative process merged.
+			{/* 4. L'Atelier - Story + creative process merged.
 			    `stats` passe en slot ReactNode à travers le "use cache" reference de la
 			    section : les counts (profil catalog) restent frais sans figer la section. */}
 			<Suspense fallback={<AtelierSectionSkeleton />}>
@@ -143,7 +105,7 @@ export default async function Page() {
 				/>
 			</Suspense>
 
-			{/* 6. FAQ - Long-tail SEO + last-mile reassurance */}
+			{/* 5. FAQ - Long-tail SEO + last-mile reassurance */}
 			<HomeFaq />
 
 			<ScrollToTop />
@@ -152,26 +114,11 @@ export default async function Page() {
 }
 
 async function HomepageStructuredData({
-	reviewStatsPromise,
-	featuredReviewsPromise,
 	productsPromise,
 }: {
-	reviewStatsPromise: Promise<GlobalReviewStats>;
-	featuredReviewsPromise: Promise<ReviewHomepage[]>;
 	productsPromise: Promise<GetProductsReturn>;
 }) {
-	const [reviewStats, featuredReviews, productsResult] = await Promise.all([
-		reviewStatsPromise,
-		featuredReviewsPromise,
-		productsPromise,
-	]);
+	const productsResult = await productsPromise;
 
-	return (
-		<StructuredData
-			reviewStats={reviewStats}
-			includeHomepageSchemas
-			featuredReviews={featuredReviews}
-			featuredProducts={productsResult.products}
-		/>
-	);
+	return <StructuredData includeHomepageSchemas featuredProducts={productsResult.products} />;
 }

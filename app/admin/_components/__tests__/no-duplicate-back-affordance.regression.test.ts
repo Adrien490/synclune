@@ -38,7 +38,6 @@ const DETAIL_BODY_SURFACES = [
 	"modules/users/components/admin/user-detail-header.tsx",
 	"modules/refunds/components/admin/refund-detail-header.tsx",
 	"modules/refunds/components/admin/create-refund-form.tsx",
-	"modules/reviews/components/admin/review-detail-header.tsx",
 	"modules/discounts/components/admin/discount-detail/discount-detail-header.tsx",
 	"modules/skus/components/admin/sku-detail/sku-detail-header.tsx",
 	"modules/collections/components/admin/collection-detail/collection-detail-header.tsx",

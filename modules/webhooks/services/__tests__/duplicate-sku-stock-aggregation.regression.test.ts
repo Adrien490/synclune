@@ -24,6 +24,8 @@ const { mockTx, mockPrisma } = vi.hoisted(() => {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
+		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+		stockMovement: { create: vi.fn() },
 		cartItem: { deleteMany: vi.fn() },
 		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi
 		cart: { updateMany: vi.fn() },
@@ -76,7 +78,12 @@ function orderWithDuplicateLines(quantities: [number, number]) {
 			skuColor: null,
 			skuMaterial: null,
 			skuSize: null,
-			sku: { id: DUPLICATED_SKU, inventory: 5, sku: "SKU-DUP" },
+			sku: {
+				id: DUPLICATED_SKU,
+				inventory: 5,
+				sku: "SKU-DUP",
+				product: { id: "product-dup", slug: "bracelet" },
+			},
 		})),
 	};
 }
@@ -150,7 +157,12 @@ describe("processOrderAtomically — agrégation du stock par SKU (F4)", () => {
 					skuColor: null,
 					skuMaterial: null,
 					skuSize: null,
-					sku: { id: DUPLICATED_SKU, inventory: 5, sku: "SKU-DUP" },
+					sku: {
+						id: DUPLICATED_SKU,
+						inventory: 5,
+						sku: "SKU-DUP",
+						product: { id: "product-dup", slug: "bracelet" },
+					},
 				},
 			],
 		});

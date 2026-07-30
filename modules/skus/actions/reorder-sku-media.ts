@@ -51,13 +51,19 @@ export async function reorderSkuMedia(
 
 		const skuInfo = await prisma.$transaction(async (tx) => {
 			const sku = await tx.productSku.findUnique({
-				where: { id: skuId },
+				// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
+				// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
+				// surface admin ne l'expose : le muter est toujours une anomalie. Sans ce filtre,
+				// on pouvait ajuster le stock ou poser `isDefault` sur la variante d'un produit
+				// archivé — et l'index unique partiel de `isDefault` (WHERE deletedAt IS NULL) ne
+				// s'y oppose pas.
+				where: { id: skuId, deletedAt: null },
 				select: {
 					id: true,
 					sku: true,
 					productId: true,
 					product: { select: { slug: true } },
-					images: { select: { id: true } },
+					images: { select: { id: true, mediaType: true } },
 				},
 			});
 
@@ -77,12 +83,34 @@ export async function reorderSkuMedia(
 				}
 			}
 
+			// Le premier média EST le média principal : c'est l'invariant qu'appliquent
+			// `normalizeMediaForPersistence` (création/édition) et le refine
+			// « le premier média doit être une image ». Un réordonnancement qui ne
+			// réécrivait que `position` désynchronisait donc les deux notions —
+			// `images.orderBy position` (listes admin) et `images.where isPrimary`
+			// (get-sku) pouvaient désigner deux médias différents.
+			const firstMediaId = mediaIds[0]!;
+			const firstMedia = sku.images.find((m) => m.id === firstMediaId);
+			if (firstMedia?.mediaType === "VIDEO") {
+				// SSOT de la formulation : `PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE`. Cette règle
+				// existait en trois libellés divergents, un refus identique se lisant
+				// différemment selon la surface — ne pas en réintroduire un quatrième.
+				throw new BusinessError(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
+			}
+
 			// Sequential await: Prisma interactive transactions run queries on a single
 			// connection. Promise.all does not parallelize and may introduce non-determinism.
+			//
+			// `isPrimary` remis à false AVANT de poser le nouveau : l'index unique partiel
+			// `SkuMedia_one_primary_per_sku` rejetterait deux primaires simultanés.
+			await tx.skuMedia.updateMany({
+				where: { skuId, isPrimary: true },
+				data: { isPrimary: false },
+			});
 			for (let i = 0; i < mediaIds.length; i++) {
 				await tx.skuMedia.update({
 					where: { id: mediaIds[i]! },
-					data: { position: i },
+					data: { position: i, isPrimary: i === 0 },
 				});
 			}
 
@@ -105,3 +133,4 @@ export async function reorderSkuMedia(
 		return handleActionError(e, "Impossible de réordonner les médias de la variante");
 	}
 }
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";

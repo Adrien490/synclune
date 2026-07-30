@@ -5,7 +5,6 @@ import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { PRODUCT_CAROUSEL_SELECT } from "../constants/product.constants";
 import type { ProductCarouselItem } from "../types/product.types";
-import { serializeProducts } from "../utils/serialize-product";
 import { getRecentProductSlugs } from "./get-recent-product-slugs";
 import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "../constants/recent-products";
 import { RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -91,7 +90,7 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<ProductCarouselIte
 			.map((slug) => productsBySlug.get(slug))
 			.filter((p): p is ProductCarouselItem => p !== undefined);
 
-		return serializeProducts(orderedProducts);
+		return orderedProducts;
 	} catch (e) {
 		logger.error("Failed to fetch recent products from DB", e, { service: "fetchProductsBySlugs" });
 		return [];

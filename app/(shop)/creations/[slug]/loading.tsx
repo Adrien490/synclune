@@ -2,11 +2,10 @@ import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { ProductMainSkeleton } from "@/modules/products/components/product-main-skeleton";
 import { RecentlyViewedProductsSkeleton } from "@/modules/products/components/recently-viewed-products-skeleton";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
-import { ProductReviewsSectionSkeleton } from "@/modules/reviews/components/product-reviews-section";
 
 /**
  * Loading state for product detail page
- * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → Reviews → RecentlyViewed → Related
+ * Structure exacte : PageHeader → Gallery + ProductInfo/ProductDetails → RecentlyViewed → Related
  *
  * IMPORTANT: L'ordre des composants doit correspondre exactement à page.tsx pour éviter le CLS.
  * Le subtree gallery+info+details est extrait dans `ProductMainSkeleton` (single source of truth
@@ -37,12 +36,6 @@ export default function ProductDetailLoading() {
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<article className="space-y-12">
 							<ProductMainSkeleton />
-
-							{/* Separator avant avis clients */}
-							<div className="bg-border h-px" />
-
-							{/* ProductReviewsSection Skeleton */}
-							<ProductReviewsSectionSkeleton />
 
 							{/* Separator avant produits recemment vus */}
 							<div className="bg-border h-px" />

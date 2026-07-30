@@ -4,14 +4,11 @@ import { Badge } from "@/shared/components/ui/badge";
 import { HandDrawnAccent } from "@/shared/components/animations";
 import { ShareButton } from "@/modules/products/components/share-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
-import { ReviewRatingLink } from "@/modules/reviews/components/review-rating-link";
 
 interface ProductInfoProps {
 	product: GetProductReturn;
 	isInWishlist?: boolean;
-	reviewStats?: ProductReviewStatistics;
 }
 
 /**
@@ -20,10 +17,9 @@ interface ProductInfoProps {
  * Responsabilités :
  * - Titre du produit avec bouton wishlist + partage
  * - Badge type (catégorie)
- * - Note avis cliquable
  * - Bouton wishlist
  */
-export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoProps) {
+export function ProductInfo({ product, isInWishlist }: ProductInfoProps) {
 	return (
 		<div className="space-y-4">
 			{/* Titre avec boutons share + wishlist */}
@@ -49,12 +45,6 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 						<Hand className="size-3.5 shrink-0" aria-hidden="true" strokeWidth={1.6} />
 						<span>Fait main en France</span>
 					</p>
-					{/* Badge note cliquable - scrolle vers les avis (mobile) */}
-					{reviewStats && (
-						<div className="sm:hidden">
-							<ReviewRatingLink stats={reviewStats} />
-						</div>
-					)}
 				</div>
 				<div className="flex shrink-0 items-center gap-1 sm:hidden">
 					<ShareButton
@@ -82,13 +72,6 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 					>
 						{product.type.label}
 					</Badge>
-				)}
-
-				{/* Badge note cliquable sur desktop - scrolle vers les avis */}
-				{reviewStats && (
-					<div className="hidden sm:block">
-						<ReviewRatingLink stats={reviewStats} />
-					</div>
 				)}
 
 				{/* Boutons share + wishlist sur desktop */}

@@ -181,29 +181,39 @@ describe("getSkuInvalidationTags", () => {
 // ============================================================================
 
 describe("getInventoryInvalidationTags", () => {
+	// STOCK-STALE-BASELINE-001 : `skus-list` et `sku-id-*` ont été AJOUTÉS au set.
+	// Les longueurs attendues ici encodaient l'omission : le formulaire d'édition
+	// (tagué `sku-id-*` + `skus-list`) restait stale après un ajustement de stock,
+	// et son `originalInventory` périmé faussait le delta. Le contrat « le mutateur
+	// couvre les tags du lecteur » est verrouillé par
+	// `inventory-invalidation-covers-reader.regression.test.ts`.
 	it("returns base inventory tags without skuIds (including products-list)", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123");
 
 		expect(tags).toContain("product-bague-or");
 		expect(tags).toContain("product-prod-123-skus");
 		expect(tags).toContain("products-list");
+		expect(tags).toContain("skus-list");
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
-		expect(tags).toHaveLength(5);
+		expect(tags).toHaveLength(6);
 	});
 
-	it("includes SKU_STOCK tags for each skuId", () => {
+	it("includes SKU_STOCK and SKU_DETAIL_BY_ID tags for each skuId", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", ["sku-1", "sku-2"]);
 
 		expect(tags).toContain("sku-stock-sku-1");
 		expect(tags).toContain("sku-stock-sku-2");
-		expect(tags).toHaveLength(7);
+		// Le détail par id est ce que lit le formulaire d'édition.
+		expect(tags).toContain("sku-id-sku-1");
+		expect(tags).toContain("sku-id-sku-2");
+		expect(tags).toHaveLength(10);
 	});
 
 	it("handles empty skuIds array", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", []);
 
-		expect(tags).toHaveLength(5);
+		expect(tags).toHaveLength(6);
 	});
 });
 

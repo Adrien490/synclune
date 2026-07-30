@@ -1,0 +1,240 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+/**
+ * @regression pending-order-shipping-snapshot-2026-07-30
+ *
+ * Ferme KI-001 : une resoumission de checkout qui corrigeait la RUE (mêmes lignes, même
+ * pays, même code postal) était acceptée en silence, la commande gardant son snapshot
+ * figé → colis expédié à l'ancienne adresse, sans aucun signal.
+ *
+ * Ce service réécrit le snapshot, mais SEULEMENT sur une commande encore PENDING (pas
+ * encore une pièce comptable) et sous le même advisory lock que la transition PAID. Les
+ * assertions ci-dessous verrouillent chacune de ces conditions : c'est ce qui sépare une
+ * correction légitime d'une pièce comptable mutable (Art. L102 B LPF).
+ */
+
+const { mockTransaction, mockAcquireLock, mockCreateAudit, mockFindUnique, mockUpdate } =
+	vi.hoisted(() => ({
+		mockTransaction: vi.fn(),
+		mockAcquireLock: vi.fn(),
+		mockCreateAudit: vi.fn(),
+		mockFindUnique: vi.fn(),
+		mockUpdate: vi.fn(),
+	}));
+
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: { $transaction: mockTransaction },
+}));
+
+vi.mock("@/modules/orders/utils/order-paid-lock", () => ({
+	acquireOrderPaidLockTx: mockAcquireLock,
+}));
+
+vi.mock("@/modules/orders/utils/order-audit", () => ({
+	createOrderAuditTx: mockCreateAudit,
+}));
+
+vi.mock("@/app/generated/prisma/client", () => ({
+	HistorySource: { CUSTOMER: "CUSTOMER", ADMIN: "ADMIN" },
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+
+import { updatePendingOrderShippingSnapshot } from "../update-pending-order-shipping-snapshot.service";
+
+const CURRENT = {
+	paymentStatus: "PENDING",
+	shippingFirstName: "Marie",
+	shippingLastName: "Dupont",
+	shippingAddress1: "12 rue des Lilas",
+	shippingAddress2: null,
+	shippingPostalCode: "44000",
+	shippingCity: "Nantes",
+	shippingCountry: "FR",
+	shippingPhone: "+33600000000",
+};
+
+const CORRECTED = {
+	firstName: "Marie",
+	lastName: "Dupont",
+	address1: "14 rue des Lilas", // ← la correction
+	address2: null,
+	postalCode: "44000",
+	city: "Nantes",
+	country: "FR",
+	phone: "+33600000000",
+};
+
+const tx = {
+	order: { findUnique: mockFindUnique, update: mockUpdate },
+};
+
+beforeEach(() => {
+	vi.clearAllMocks();
+	mockTransaction.mockImplementation((cb: (t: unknown) => unknown) => cb(tx));
+	mockFindUnique.mockResolvedValue({ ...CURRENT });
+	mockUpdate.mockResolvedValue({});
+});
+
+describe("updatePendingOrderShippingSnapshot", () => {
+	it("corrige le snapshot et ne rapporte QUE le champ modifié", async () => {
+		const result = await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: "cm3user0001",
+			shipping: CORRECTED,
+		});
+
+		expect(result).toEqual({ updated: true, changedFields: ["shippingAddress1"] });
+		expect(mockUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: "order_1" },
+				data: expect.objectContaining({ shippingAddress1: "14 rue des Lilas" }),
+			}),
+		);
+	});
+
+	it("prend l'advisory lock AVANT de lire le statut", async () => {
+		await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: null,
+			shipping: CORRECTED,
+		});
+
+		expect(mockAcquireLock).toHaveBeenCalledWith(tx, "order_1");
+		expect(mockAcquireLock.mock.invocationCallOrder[0]!).toBeLessThan(
+			mockFindUnique.mock.invocationCallOrder[0]!,
+		);
+	});
+
+	it("REFUSE d'écrire sur une commande PAID — le webhook a gagné la course", async () => {
+		// Le cas critique : sans cette garde, on réécrirait l'adresse d'une commande
+		// encaissée, donc d'une pièce comptable dont la facture est déjà figée.
+		mockFindUnique.mockResolvedValue({ ...CURRENT, paymentStatus: "PAID" });
+
+		const result = await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: "cm3user0001",
+			shipping: CORRECTED,
+		});
+
+		expect(result).toEqual({ updated: false, reason: "not-pending" });
+		expect(mockUpdate).not.toHaveBeenCalled();
+		expect(mockCreateAudit).not.toHaveBeenCalled();
+	});
+
+	it.each(["FAILED", "REFUNDED", "PARTIALLY_REFUNDED"])(
+		"REFUSE d'écrire sur un paymentStatus %s",
+		async (paymentStatus) => {
+			mockFindUnique.mockResolvedValue({ ...CURRENT, paymentStatus });
+
+			const result = await updatePendingOrderShippingSnapshot({
+				orderId: "order_1",
+				customerUserId: null,
+				shipping: CORRECTED,
+			});
+
+			expect(result).toEqual({ updated: false, reason: "not-pending" });
+			expect(mockUpdate).not.toHaveBeenCalled();
+		},
+	);
+
+	it("n'écrit rien quand l'adresse est inchangée (double-clic, retry réseau)", async () => {
+		const result = await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: null,
+			shipping: {
+				firstName: CURRENT.shippingFirstName,
+				lastName: CURRENT.shippingLastName,
+				address1: CURRENT.shippingAddress1,
+				address2: CURRENT.shippingAddress2,
+				postalCode: CURRENT.shippingPostalCode,
+				city: CURRENT.shippingCity,
+				country: CURRENT.shippingCountry,
+				phone: CURRENT.shippingPhone,
+			},
+		});
+
+		expect(result).toEqual({ updated: false, reason: "no-change" });
+		expect(mockUpdate).not.toHaveBeenCalled();
+		expect(mockCreateAudit).not.toHaveBeenCalled();
+	});
+
+	it("rapporte not-found sur une commande absente", async () => {
+		mockFindUnique.mockResolvedValue(null);
+
+		const result = await updatePendingOrderShippingSnapshot({
+			orderId: "order_gone",
+			customerUserId: null,
+			shipping: CORRECTED,
+		});
+
+		expect(result).toEqual({ updated: false, reason: "not-found" });
+		expect(mockUpdate).not.toHaveBeenCalled();
+	});
+
+	it("pose un audit CUSTOMER sans aucune PII : authorName neutre, metadata sans valeurs", async () => {
+		// OrderHistory est immuable 10 ans et n'est jamais scrubé à l'anonymisation RGPD :
+		// ni le nom du client, ni les valeurs d'adresse ne doivent y entrer.
+		await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: "cm3user0001",
+			shipping: CORRECTED,
+		});
+
+		expect(mockCreateAudit).toHaveBeenCalledTimes(1);
+		const audit = mockCreateAudit.mock.calls[0]![1] as Record<string, unknown>;
+
+		expect(audit.action).toBe("ADDRESS_UPDATED");
+		expect(audit.source).toBe("CUSTOMER");
+		expect(audit.authorName).toBe("Client");
+		expect(audit.authorId).toBe("cm3user0001");
+		expect(audit.metadata).toEqual({
+			addressType: "shipping",
+			changedFields: ["shippingAddress1"],
+		});
+
+		// Aucune valeur d'adresse nulle part dans l'entrée d'audit.
+		const serialized = JSON.stringify(audit);
+		expect(serialized).not.toContain("14 rue des Lilas");
+		expect(serialized).not.toContain("Nantes");
+		expect(serialized).not.toContain("+33600000000");
+	});
+
+	it("omet authorId pour un invité (pas de compte) sans casser l'audit", async () => {
+		await updatePendingOrderShippingSnapshot({
+			orderId: "order_1",
+			customerUserId: null,
+			shipping: CORRECTED,
+		});
+
+		const audit = mockCreateAudit.mock.calls[0]![1] as Record<string, unknown>;
+		expect(audit).not.toHaveProperty("authorId");
+		expect(audit.authorName).toBe("Client");
+	});
+
+	it("détecte une correction sur chacun des champs hors-montant", async () => {
+		const cases: Array<[keyof typeof CORRECTED, unknown, string]> = [
+			["firstName", "Marion", "shippingFirstName"],
+			["lastName", "Duval", "shippingLastName"],
+			["address2", "Appartement 4", "shippingAddress2"],
+			["city", "Nantes Sud", "shippingCity"],
+			["phone", "+33611111111", "shippingPhone"],
+		];
+
+		for (const [field, value, expectedColumn] of cases) {
+			vi.clearAllMocks();
+			mockTransaction.mockImplementation((cb: (t: unknown) => unknown) => cb(tx));
+			mockFindUnique.mockResolvedValue({ ...CURRENT });
+
+			const result = await updatePendingOrderShippingSnapshot({
+				orderId: "order_1",
+				customerUserId: null,
+				shipping: { ...CORRECTED, address1: CURRENT.shippingAddress1, [field]: value },
+			});
+
+			expect(result).toEqual({ updated: true, changedFields: [expectedColumn] });
+		}
+	});
+});

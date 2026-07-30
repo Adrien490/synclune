@@ -1,10 +1,12 @@
 "use client";
 
 import { createPortal } from "react-dom";
+import { useState } from "react";
 import {
 	BottomBar,
 	BottomBarActivePill,
 	bottomBarContainerClass,
+	bottomBarItemWrapperClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
@@ -44,39 +46,61 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const hasOverlay = useHasOverlay();
 	const isHidden = isMenuOpen || hasOverlay;
 
+	const ordersBadge = badges?.["orders"] ?? 0;
+
+	// Annonce des changements de pastille, dérivée PENDANT LE RENDU (pas dans un
+	// effet) : la région ci-dessous est ainsi montée dès le premier rendu avec un
+	// contenu vide, la seule forme qu'un lecteur d'écran vocalise ensuite. La
+	// pastille portait auparavant elle-même `role="status" aria-live`, mais gatée
+	// sur `count > 0` : la région naissait AVEC son texte, donc la transition 0→1 —
+	// l'arrivée d'une commande à traiter, la seule qui compte — était muette
+	// (audit bottom-bar 2026-07-30, P2-4).
+	const [prevOrdersBadge, setPrevOrdersBadge] = useState(ordersBadge);
+	const [announcement, setAnnouncement] = useState("");
+	if (prevOrdersBadge !== ordersBadge) {
+		setPrevOrdersBadge(ordersBadge);
+		setAnnouncement(
+			ordersBadge > 0 ? badgeAriaLabel("orders", ordersBadge) : "Aucune commande en attente",
+		);
+	}
+
 	function renderTab(tab: NavItem) {
 		const isActive = isRouteActive(pathname, tab.url);
-		const badgeCount = tab.id === "orders" ? badges?.["orders"] : undefined;
+		const badgeCount = tab.id === "orders" ? ordersBadge : 0;
 		const Icon = tab.icon;
 		const label = tab.shortTitle ?? tab.title;
 		return (
-			<Link
-				key={tab.id}
-				href={tab.url}
-				onClick={() => !isActive && triggerHaptic("light")}
-				className={cn(bottomBarItemClass, isActive && bottomBarActiveItemClass)}
-				aria-current={isActive ? "page" : undefined}
-			>
-				{isActive && <BottomBarActivePill groupId="admin-nav" />}
-				<span className="relative">
-					<Icon className={bottomBarIconClass} aria-hidden="true" />
-					{badgeCount != null && badgeCount > 0 && (
-						/* aria-label explicite ("X commande(s)") car le label visuel tab est
-						 * plus discret qu'en menu sheet où le titre adjacent ("Commandes")
-						 * suffirait seul ; clamp visuel "99+" mais SR garde le compte exact. */
-						<span
-							className={bottomBarBadgeClass}
-							role="status"
-							aria-live="polite"
-							aria-label={badgeAriaLabel("orders", badgeCount)}
-						>
-							{badgeCount > 99 ? "99+" : badgeCount}
-						</span>
-					)}
-				</span>
-				<span className={bottomBarLabelClass}>{label}</span>
-				<LoadingIndicator />
-			</Link>
+			<li key={tab.id} className={bottomBarItemWrapperClass}>
+				<Link
+					href={tab.url}
+					// « Bottom nav tab change » = `selection` (règle haptique projet), et
+					// seulement quand l'onglet change réellement de page.
+					onClick={() => !isActive && triggerHaptic("selection")}
+					className={cn(bottomBarItemClass, isActive && bottomBarActiveItemClass)}
+					aria-current={isActive ? "page" : undefined}
+					// Le compte vit dans le nom accessible de l'onglet : le libellé visuel
+					// d'un tab est plus discret qu'en menu sheet, où le titre adjacent
+					// suffirait. Clamp visuel « 99+ », mais le SR garde le compte exact.
+					aria-label={
+						badgeCount > 0 ? `${label}, ${badgeAriaLabel("orders", badgeCount)}` : undefined
+					}
+				>
+					{isActive && <BottomBarActivePill groupId="admin-nav" />}
+					<span className="relative">
+						<Icon className={bottomBarIconClass} aria-hidden="true" />
+						{badgeCount > 0 && (
+							/* Purement visuel : le compte est déjà dans l'aria-label du lien,
+							 * et l'annonce des changements est portée par la région unique
+							 * ci-dessous. */
+							<span className={bottomBarBadgeClass} aria-hidden="true">
+								{badgeCount > 99 ? "99+" : badgeCount}
+							</span>
+						)}
+					</span>
+					<span className={bottomBarLabelClass}>{label}</span>
+					<LoadingIndicator />
+				</Link>
+			</li>
 		);
 	}
 
@@ -84,7 +108,11 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 
 	return createPortal(
 		<BottomBar as="nav" aria-label="Navigation principale administration" isHidden={isHidden}>
-			<div className={bottomBarContainerClass}>
+			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+				{announcement}
+			</div>
+			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+			<ul role="list" className={bottomBarContainerClass}>
 				{QUICK_ACCESS_TABS.map(renderTab)}
 
 				{/* Onglet Menu — ouvre le bottom sheet de navigation.
@@ -92,24 +120,28 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 				 * (cf. audit menu-sheet storefront 2026-05-14, parité a11y trigger ↔ sheet).
 				 * aria-controls reste posé même quand SheetContent est démonté hors open :
 				 * forward reference autorisée par W3C ARIA 1.2, invariant testé. */}
-				<button
-					type="button"
-					className={cn(bottomBarItemClass, isMenuOpen && bottomBarActiveItemClass)}
-					onClick={() => {
-						triggerHaptic("light");
-						if (isMenuOpen) closeMenu();
-						else openMenu();
-					}}
-					aria-haspopup="dialog"
-					aria-expanded={isMenuOpen}
-					aria-controls={ADMIN_MENU_SHEET_CONTENT_ID}
-					aria-label="Menu de navigation"
-				>
-					{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
-					<Menu className={bottomBarIconClass} aria-hidden="true" />
-					<span className={bottomBarLabelClass}>Menu</span>
-				</button>
-			</div>
+				<li className={bottomBarItemWrapperClass}>
+					<button
+						type="button"
+						className={cn(bottomBarItemClass, isMenuOpen && bottomBarActiveItemClass)}
+						onClick={() => {
+							// `light` et non `selection` : ce n'est pas un changement d'onglet mais
+							// l'ouverture d'un drawer (règle haptique projet, « Drawers admin »).
+							triggerHaptic("light");
+							if (isMenuOpen) closeMenu();
+							else openMenu();
+						}}
+						aria-haspopup="dialog"
+						aria-expanded={isMenuOpen}
+						aria-controls={ADMIN_MENU_SHEET_CONTENT_ID}
+						aria-label="Menu de navigation"
+					>
+						{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
+						<Menu className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Menu</span>
+					</button>
+				</li>
+			</ul>
 		</BottomBar>,
 		document.body,
 	);

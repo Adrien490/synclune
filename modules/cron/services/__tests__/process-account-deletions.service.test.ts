@@ -9,8 +9,6 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findMany: vi.fn() },
-		reviewMedia: { findMany: vi.fn() },
-		productReview: { findMany: vi.fn().mockResolvedValue([]) },
 		$transaction: vi.fn(),
 	},
 	mockDeleteUploadThingFileFromUrl: vi.fn(),
@@ -40,13 +38,6 @@ vi.mock("@/shared/lib/stripe", () => ({
 	getStripeClient: () => ({ customers: { del: mockStripeCustomersDel } }),
 }));
 
-vi.mock("@/modules/reviews/constants/cache", () => ({
-	REVIEWS_CACHE_TAGS: {
-		USER: (id: string) => `reviews-user-${id}`,
-		REVIEWABLE: (id: string) => `reviews-reviewable-${id}`,
-	},
-}));
-
 // EINV-CREDIT-020 : garde pré-anonymisation — mock module (la chaîne réelle
 // tire UploadThing instancié au chargement).
 vi.mock("@/modules/orders/services/ensure-user-credit-notes-archived.service", () => ({
@@ -61,8 +52,6 @@ describe("processAccountDeletions", () => {
 		vi.clearAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-09T05:00:00Z"));
-		// REVIEW-AUDIT-002 : le cron collecte les productIds des avis avant la tx.
-		mockPrisma.productReview.findMany.mockResolvedValue([]);
 		// EINV-CREDIT-020 : avoirs archivés par défaut — la garde laisse passer.
 		mockEnsureUserCreditNotesArchived.mockResolvedValue({
 			ok: true,
@@ -111,7 +100,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		const result = await processAccountDeletions();
@@ -130,9 +118,6 @@ describe("processAccountDeletions", () => {
 			address: { deleteMany: vi.fn() },
 			cart: { deleteMany: vi.fn() },
 			wishlist: { deleteMany: vi.fn() },
-			reviewMedia: { deleteMany: vi.fn() },
-			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-			reviewResponse: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -175,7 +160,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		await processAccountDeletions();
@@ -191,9 +175,6 @@ describe("processAccountDeletions", () => {
 			address: { deleteMany: vi.fn() },
 			cart: { deleteMany: vi.fn() },
 			wishlist: { deleteMany: vi.fn() },
-			reviewMedia: { deleteMany: vi.fn() },
-			productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-			reviewResponse: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -226,7 +207,6 @@ describe("processAccountDeletions", () => {
 			stripeCustomerId: "cus_test123",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockStripeCustomersDel.mockResolvedValue({ id: "cus_test123", deleted: true });
 
@@ -247,7 +227,6 @@ describe("processAccountDeletions", () => {
 			stripeCustomerId: "cus_failing",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockStripeCustomersDel.mockRejectedValue(new Error("Stripe API error"));
 
@@ -265,7 +244,6 @@ describe("processAccountDeletions", () => {
 			stripeCustomerId: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		await processAccountDeletions();
@@ -281,42 +259,12 @@ describe("processAccountDeletions", () => {
 			image: "https://utfs.io/f/abc123",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockDeleteUploadThingFileFromUrl.mockResolvedValue(true);
 
 		await processAccountDeletions();
 
 		expect(mockDeleteUploadThingFileFromUrl).toHaveBeenCalledWith("https://utfs.io/f/abc123");
-	});
-
-	it("should delete review media from UploadThing after successful transaction", async () => {
-		const mockUser = {
-			id: "user-3",
-			email: "user3@test.com",
-			name: "User Three",
-			image: null,
-		};
-		const mockReviewMedias = [
-			{ url: "https://utfs.io/f/review1" },
-			{ url: "https://utfs.io/f/review2" },
-		];
-		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue(mockReviewMedias);
-		mockPrisma.$transaction.mockResolvedValue(undefined);
-		mockDeleteUploadThingFilesFromUrls.mockResolvedValue(undefined);
-
-		await processAccountDeletions();
-
-		expect(mockPrisma.reviewMedia.findMany).toHaveBeenCalledWith({
-			where: { review: { userId: "user-3" } },
-			select: { url: true },
-		});
-
-		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
-			"https://utfs.io/f/review1",
-			"https://utfs.io/f/review2",
-		]);
 	});
 
 	it("should not fail if avatar deletion fails (non-blocking)", async () => {
@@ -327,28 +275,8 @@ describe("processAccountDeletions", () => {
 			image: "https://utfs.io/f/failing-key",
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 		mockDeleteUploadThingFileFromUrl.mockRejectedValue(new Error("UploadThing API error"));
-
-		const result = await processAccountDeletions();
-
-		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
-	});
-
-	it("should not fail if review media deletion fails (non-blocking)", async () => {
-		const mockUser = {
-			id: "user-5",
-			email: "user5@test.com",
-			name: "User Five",
-			image: null,
-		};
-		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([
-			{ url: "https://utfs.io/f/failing-review" },
-		]);
-		mockPrisma.$transaction.mockResolvedValue(undefined);
-		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(new Error("UploadThing batch error"));
 
 		const result = await processAccountDeletions();
 
@@ -363,7 +291,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockEnsureUserCreditNotesArchived.mockResolvedValue({
 			ok: false,
 			orderFailures: ["order-1"],
@@ -385,7 +312,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		const callOrder: string[] = [];
 		mockEnsureUserCreditNotesArchived.mockImplementation(async () => {
 			callOrder.push("guard");
@@ -409,7 +335,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		};
 		mockPrisma.user.findMany.mockResolvedValue([mockUser]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB connection lost"));
 
 		const result = await processAccountDeletions();
@@ -424,7 +349,6 @@ describe("processAccountDeletions", () => {
 			{ id: "user-ok2", email: "ok2@test.com", name: "OK2", image: null },
 		];
 		mockPrisma.user.findMany.mockResolvedValue(users);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction
 			.mockResolvedValueOnce(undefined)
 			.mockRejectedValueOnce(new Error("DB error"))
@@ -443,7 +367,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		}));
 		mockPrisma.user.findMany.mockResolvedValue(users);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		const result = await processAccountDeletions();
@@ -460,7 +383,6 @@ describe("processAccountDeletions", () => {
 			image: null,
 		}));
 		mockPrisma.user.findMany.mockResolvedValue(users);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue(undefined);
 
 		const result = await processAccountDeletions();

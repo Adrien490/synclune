@@ -1,204 +1,171 @@
 import { test, expect } from "../fixtures";
-import { TIMEOUTS } from "../constants";
+import { TIMEOUTS, VIEWPORTS } from "../constants";
 import path from "node:path";
 import fs from "node:fs";
 
 /**
- * Create a minimal test image file for upload testing.
- * Returns the path to the created file.
+ * Upload de médias — formulaire produit admin.
+ *
+ * ⚠️ Cette suite a été RÉÉCRITE (audit UI/UX file upload). La version précédente
+ * comptait 7 cas dont 4 ne pouvaient structurellement pas échouer :
+ *
+ * - « le bouton creer est desactive pendant l'upload » concluait par
+ *   `expect(buttonText).toBeDefined()` — vrai pour n'importe quelle chaîne, bouton
+ *   actif compris ;
+ * - trois cas étaient enveloppés dans `if ((await x.count()) > 0)` et passaient donc
+ *   à vide quand l'élément cherché n'existait pas ;
+ * - les sélecteurs `.or(page.locator("[class*='upload']"))` matchaient à peu près
+ *   n'importe quoi, et les assertions étaient `toBeAttached()` là où les intitulés
+ *   promettaient « est visible ».
+ *
+ * Règles tenues ici : pas de garde `if (count > 0)` autour d'une assertion, pas de
+ * sélecteur par fragment de classe, et `toBeVisible` / `toBeDisabled` plutôt que
+ * `toBeAttached` dès qu'on parle de ce que voit l'utilisatrice.
  */
-function createTestImage(filename: string): string {
-	const dir = path.join(process.cwd(), "e2e", ".tmp");
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir, { recursive: true });
-	}
-	const filePath = path.join(dir, filename);
 
-	// Minimal valid PNG: 1x1 pixel transparent
-	const png = Buffer.from(
-		"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-		"base64",
-	);
-	fs.writeFileSync(filePath, png);
+const TMP_DIR = path.join(process.cwd(), "e2e", ".tmp");
 
+/** PNG 1×1 valide — suffisant pour que le navigateur produise un `image/png`. */
+const PNG_1x1 = Buffer.from(
+	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+	"base64",
+);
+
+function writeTempFile(filename: string, contents: Buffer): string {
+	fs.mkdirSync(TMP_DIR, { recursive: true });
+	const filePath = path.join(TMP_DIR, filename);
+	fs.writeFileSync(filePath, contents);
 	return filePath;
 }
 
-/**
- * Cleanup test image files after test run.
- */
-function cleanupTestImages() {
-	const dir = path.join(process.cwd(), "e2e", ".tmp");
-	if (fs.existsSync(dir)) {
-		fs.rmSync(dir, { recursive: true, force: true });
-	}
-}
+const NEW_PRODUCT_URL = "/admin/catalogue/produits/nouveau";
 
-test.describe("Admin - Upload media (produit)", { tag: ["@regression"] }, () => {
+test.describe("Admin — upload de médias produit", { tag: ["@regression"] }, () => {
 	test.afterAll(() => {
-		cleanupTestImages();
+		fs.rmSync(TMP_DIR, { recursive: true, force: true });
 	});
 
-	test("la zone d'upload est visible sur le formulaire de creation produit", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits/nouveau");
+	test.beforeEach(async ({ page }) => {
+		await page.goto(NEW_PRODUCT_URL);
 		await page.waitForLoadState("domcontentloaded");
-
-		// Upload zone should be present
-		const uploadZone = page
-			.locator("#media-upload-zone")
-			.or(page.getByLabel(/Zone d'upload/i))
-			.or(page.locator("[class*='dropzone'], [class*='upload']"));
-		await expect(uploadZone.first()).toBeAttached();
 	});
 
-	test("la zone d'upload affiche les instructions", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits/nouveau");
-		await page.waitForLoadState("domcontentloaded");
+	test("la zone d'upload et ses contraintes sont visibles", async ({ page }) => {
+		// Sur desktop c'est la NativeDropzone qui est rendue visible (l'action sheet
+		// mobile est présente dans le DOM mais masquée par la media query).
+		const dropzone = page.getByRole("button", { name: /Zone d'upload des médias/i });
+		await expect(dropzone).toBeVisible();
 
-		// Should show upload instructions or drag & drop text
-		const instructions = page.getByText(/image principale|Glissez|déposez|upload/i);
-		await expect(instructions.first()).toBeAttached();
+		// Les contraintes réellement appliquées par le serveur doivent être écrites.
+		await expect(dropzone).toContainText("16 Mo");
+		await expect(dropzone).toContainText("64 Mo");
+		await expect(dropzone).toContainText("MP4");
+		// Plafond de vidéos par envoi — appliqué par le FileRouter, longtemps muet.
+		await expect(dropzone).toContainText("2 par envoi");
+		// Le collage est implémenté : il doit être découvrable.
+		await expect(dropzone).toContainText(/Ctrl\/Cmd\+V/);
 	});
 
-	test("selectionner un fichier image declenche l'upload", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits/nouveau");
-		await page.waitForLoadState("domcontentloaded");
-
-		const testImagePath = createTestImage("test-upload.png");
-
-		// Find the file input (hidden, used by the dropzone)
-		const fileInput = page.locator('input[type="file"]').first();
-		const hasFileInput = (await fileInput.count()) > 0;
-		test.skip(!hasFileInput, "Pas d'input file trouvé");
-
-		// Set the file on the input
-		await fileInput.setInputFiles(testImagePath);
-
-		// Should show upload progress or preview
-		// The upload may fail (no UploadThing in test), but the UI should react
-		const progressOrPreview = page
-			.getByRole("status")
-			.or(page.getByText(/upload|chargement|validation|erreur/i))
-			.or(page.locator("[class*='preview'], [class*='thumbnail'], [class*='progress']"));
-
-		await expect(progressOrPreview.first()).toBeAttached({ timeout: TIMEOUTS.FEEDBACK });
+	test("le compteur de médias démarre à 0 sur 6", async ({ page }) => {
+		await expect(page.getByText("0/6 médias")).toBeVisible();
 	});
 
-	test("les limites de taille sont documentees dans l'UI", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits/nouveau");
-		await page.waitForLoadState("domcontentloaded");
+	test("un fichier choisi passe par la grille de confirmation avant tout envoi", async ({
+		page,
+	}) => {
+		const filePath = writeTempFile("bague.png", PNG_1x1);
 
-		// Upload zone or surrounding text should mention file limits
-		const sizeInfo = page.getByText(/Mo|MB|taille|16|512/i);
-		// This is optional - some UIs don't show limits until an error
-		if ((await sizeInfo.count()) > 0) {
-			await expect(sizeInfo.first()).toBeAttached();
-		}
+		await page.locator('input[type="file"]').first().setInputFiles(filePath);
+
+		// Étape de revue : le fichier est en attente, pas encore téléversé.
+		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
+		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+		await expect(pendingGroup).toContainText("1 fichier en attente");
+		await expect(pendingGroup.getByRole("button", { name: /Téléverser 1 média/i })).toBeVisible();
+		await expect(pendingGroup.getByRole("button", { name: /Retirer bague\.png/i })).toBeVisible();
 	});
 
-	test("le compteur de medias affiche le nombre actuel", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits/nouveau");
-		await page.waitForLoadState("domcontentloaded");
+	test("retirer un fichier en attente vide la grille de confirmation", async ({ page }) => {
+		const filePath = writeTempFile("bague-retrait.png", PNG_1x1);
 
-		// Counter badge showing current/max count (e.g., "0/6")
-		const counter = page
-			.getByText(/0\s*\/\s*6|0\s*sur\s*6/i)
-			.or(page.locator("[class*='counter'], [class*='badge']").filter({ hasText: /\/\s*\d/ }));
-		if ((await counter.count()) > 0) {
-			await expect(counter.first()).toBeVisible();
-		}
+		await page.locator('input[type="file"]').first().setInputFiles(filePath);
+
+		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
+		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+
+		await pendingGroup.getByRole("button", { name: /Retirer bague-retrait\.png/i }).click();
+
+		await expect(pendingGroup).toBeHidden();
+	});
+
+	test("annuler la mise en attente ne laisse rien derrière", async ({ page }) => {
+		const filePath = writeTempFile("bague-annule.png", PNG_1x1);
+
+		await page.locator('input[type="file"]').first().setInputFiles(filePath);
+
+		const pendingGroup = page.getByRole("group", { name: /en attente de confirmation/i });
+		await expect(pendingGroup).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
+
+		await pendingGroup.getByRole("button", { name: "Annuler" }).click();
+
+		await expect(pendingGroup).toBeHidden();
+		await expect(page.getByText("0/6 médias")).toBeVisible();
+	});
+
+	test("un .mov est refusé AVANT toute montée réseau", async ({ page }) => {
+		// ⚠️ Le cœur de la régression `.mov` : `video/quicktime` traversait toute la
+		// validation cliente et n'était refusé qu'après un téléversement complet,
+		// jusqu'à 64 Mo. On vérifie donc à la fois le refus ET l'absence de requête
+		// vers UploadThing.
+		const uploadRequests: string[] = [];
+		page.on("request", (request) => {
+			const url = request.url();
+			if (url.includes("uploadthing") || url.includes("ufs.sh")) uploadRequests.push(url);
+		});
+
+		const movPath = writeTempFile("bijou.mov", Buffer.from([0x00, 0x00, 0x00, 0x14]));
+		await page.locator('input[type="file"]').first().setInputFiles(movPath);
+
+		// Le fichier n'entre pas dans la file de confirmation…
+		await expect(page.getByRole("group", { name: /en attente de confirmation/i })).toBeHidden();
+		// …et rien n'a été envoyé.
+		expect(uploadRequests).toEqual([]);
+	});
+
+	test("le formulaire refuse la soumission sans média", async ({ page }) => {
+		// La carte Médias porte un validateur « Au moins une image est requise ».
+		await page.getByRole("button", { name: /^Créer/i }).click();
+
+		await expect(page.getByText(/Au moins une image est requise/i)).toBeVisible({
+			timeout: TIMEOUTS.VALIDATION,
+		});
 	});
 });
 
-test.describe("Admin - Upload media (variante)", { tag: ["@regression"] }, () => {
+test.describe("Admin — upload de médias, surface mobile", { tag: ["@regression"] }, () => {
+	test.use({ viewport: VIEWPORTS.MOBILE });
+
 	test.afterAll(() => {
-		cleanupTestImages();
+		fs.rmSync(TMP_DIR, { recursive: true, force: true });
 	});
 
-	test("la page de creation variante a un champ image principale", async ({ page }) => {
-		// First find a product slug
-		await page.goto("/admin/catalogue/produits");
+	test("propose les trois sources de fichiers, sans zone de dépôt desktop", async ({ page }) => {
+		await page.goto(NEW_PRODUCT_URL);
 		await page.waitForLoadState("domcontentloaded");
 
-		const table = page.locator("table");
-		const emptyState = page.getByText(/aucun produit/i);
-		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+		// ⚠️ La bascule est désormais purement CSS. Sur téléphone, le premier paint
+		// rendait auparavant la zone de dépôt desktop (`useIsMobile()` valant `false`
+		// côté serveur) avant de la remplacer — contenu inadapté, puis décalage.
+		const trigger = page.getByRole("button", { name: /Ajouter des médias/i });
+		await expect(trigger).toBeVisible();
+		await expect(page.getByRole("button", { name: /Zone d'upload des médias/i })).toBeHidden();
 
-		const tableVisible = await table.isVisible();
-		test.skip(!tableVisible, "Pas de produits");
+		await trigger.click();
 
-		const firstProductLink = table.locator("tbody tr").first().getByRole("link").first();
-		const href = await firstProductLink.getAttribute("href");
-		test.skip(!href, "Pas de lien produit");
-
-		const match = href!.match(/\/admin\/catalogue\/produits\/([^/]+)/);
-		test.skip(!match, "Pas de slug trouvé");
-
-		await page.goto(`/admin/catalogue/produits/${match![1]}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
-
-		// Image upload field should be present
-		const imageSection = page
-			.getByText(/Image principale|Photo/i)
-			.or(page.locator('input[type="file"]'));
-		await expect(imageSection.first()).toBeAttached();
-	});
-
-	test("un input file est present pour l'upload de la variante", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits");
-		await page.waitForLoadState("domcontentloaded");
-
-		const table = page.locator("table");
-		test.skip(!(await table.isVisible()), "Pas de produits");
-
-		const firstProductLink = table.locator("tbody tr").first().getByRole("link").first();
-		const href = await firstProductLink.getAttribute("href");
-		test.skip(!href, "Pas de lien produit");
-
-		const match = href!.match(/\/admin\/catalogue\/produits\/([^/]+)/);
-		test.skip(!match, "Pas de slug");
-
-		await page.goto(`/admin/catalogue/produits/${match![1]}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
-
-		const fileInputs = page.locator('input[type="file"]');
-		const count = await fileInputs.count();
-		// Should have at least one file input (primary image)
-		expect(count).toBeGreaterThanOrEqual(1);
-	});
-
-	test("le bouton creer est desactive pendant l'upload", async ({ page }) => {
-		await page.goto("/admin/catalogue/produits");
-		await page.waitForLoadState("domcontentloaded");
-
-		const table = page.locator("table");
-		test.skip(!(await table.isVisible()), "Pas de produits");
-
-		const firstProductLink = table.locator("tbody tr").first().getByRole("link").first();
-		const href = await firstProductLink.getAttribute("href");
-		test.skip(!href, "Pas de lien produit");
-
-		const match = href!.match(/\/admin\/catalogue\/produits\/([^/]+)/);
-		test.skip(!match, "Pas de slug");
-
-		await page.goto(`/admin/catalogue/produits/${match![1]}/variantes/nouveau`);
-		await page.waitForLoadState("domcontentloaded");
-
-		const testImagePath = createTestImage("test-variant-upload.png");
-		const fileInput = page.locator('input[type="file"]').first();
-		const hasFileInput = (await fileInput.count()) > 0;
-		test.skip(!hasFileInput, "Pas d'input file");
-
-		// Set file to trigger upload
-		await fileInput.setInputFiles(testImagePath);
-
-		// During upload, the create button should show uploading state or be disabled
-		const createButton = page.getByRole("button", { name: /Créer|Upload/i });
-		if ((await createButton.count()) > 0) {
-			// Brief check - button may show "Upload..." text
-			const buttonText = await createButton.first().textContent();
-			// Either disabled or showing upload state
-			expect(buttonText).toBeDefined();
-		}
+		await expect(page.getByText("Capturer un cliché")).toBeVisible({
+			timeout: TIMEOUTS.FEEDBACK,
+		});
+		await expect(page.getByText("Depuis la pellicule")).toBeVisible();
+		await expect(page.getByText("Parcourir mes fichiers")).toBeVisible();
 	});
 });

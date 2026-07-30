@@ -134,35 +134,6 @@ function SkusSummaryCardSkeleton() {
 	);
 }
 
-function ReviewsCardSkeleton() {
-	return (
-		<Card>
-			<CardHeader>
-				<CardTitleSkeleton width="w-16" />
-			</CardHeader>
-			<CardContent className="space-y-4">
-				{/* Résumé : étoiles + note + nb */}
-				<div className="flex items-center gap-2">
-					<Skeleton className="h-4 w-24" />
-					<Skeleton className="h-4 w-8" />
-					<Skeleton className="h-4 w-14" />
-				</div>
-				{/* 5 lignes de distribution */}
-				<div className="space-y-1.5">
-					{Array.from({ length: 5 }).map((_, i) => (
-						<div key={i} className="flex items-center gap-2">
-							<Skeleton className="h-3 w-6" />
-							<Skeleton className="h-1.5 flex-1 rounded-full" />
-							<Skeleton className="h-3 w-6" />
-						</div>
-					))}
-				</div>
-				<Skeleton className="h-10 w-full" />
-			</CardContent>
-		</Card>
-	);
-}
-
 function CollectionsCardSkeleton() {
 	return (
 		<Card>
@@ -227,7 +198,6 @@ export default function AdminProductDetailLoading() {
 					<div className="space-y-6">
 						<StorefrontLinkCardSkeleton />
 						<SkusSummaryCardSkeleton />
-						<ReviewsCardSkeleton />
 						<CollectionsCardSkeleton />
 					</div>
 				</div>

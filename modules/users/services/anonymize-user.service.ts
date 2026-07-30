@@ -1,5 +1,4 @@
-import { AccountStatus, ReviewStatus, type Prisma } from "@/app/generated/prisma/client";
-import { recomputeProductReviewStatsBatch } from "@/modules/reviews/services/review-stats.service";
+import { AccountStatus, type Prisma } from "@/app/generated/prisma/client";
 import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 
 /**
@@ -82,50 +81,7 @@ export async function anonymizeUserInTransaction(
 		where: { userId },
 	});
 
-	// 7. Récupérer les produits concernés avant mutation (recompute stats ci-dessous ;
-	// l'invalidation de cache produit côté appelant est gérée par le cron). Cf. REVIEW-AUDIT-002.
-	const reviewedProducts = await tx.productReview.findMany({
-		where: { userId, productId: { not: null } },
-		select: { productId: true },
-		distinct: ["productId"],
-	});
-	const reviewedProductIds = reviewedProducts
-		.map((r) => r.productId)
-		.filter((id): id is string => id !== null);
-
-	// 8. Delete review media (potential PII: faces, identifiable decor)
-	await tx.reviewMedia.deleteMany({
-		where: { review: { userId } },
-	});
-
-	// 9. Masquer + anonymiser les avis. HIDDEN les retire du storefront ET des stats :
-	// l'auteur n'existe plus, et un avis « Contenu supprimé » publié n'a aucune valeur.
-	// Cf. REVIEW-AUDIT-005.
-	await tx.productReview.updateMany({
-		where: { userId },
-		data: {
-			status: ReviewStatus.HIDDEN,
-			content: "Contenu supprimé suite à la suppression du compte.",
-			title: null,
-		},
-	});
-
-	// 10. Recalculer les stats des produits concernés (les avis masqués ne comptent plus).
-	// Cf. REVIEW-AUDIT-002 / REVIEW-AUDIT-005.
-	await recomputeProductReviewStatsBatch(tx, reviewedProductIds);
-
-	// 11. Anonymiser le nom dénormalisé de l'auteur sur les réponses d'avis PUBLIQUES.
-	// Contrairement à OrderHistory/OrderNote.authorName (audit trail comptable interne,
-	// base Art. L123-22, conservés), une ReviewResponse est du contenu marketing affiché
-	// publiquement sur le storefront : le nom d'un admin/staff anonymisé ne doit pas y
-	// rester visible. On rebascule sur la marque (valeur de fallback déjà utilisée à la
-	// création). Cf. RGPD-AUDIT F3.
-	await tx.reviewResponse.updateMany({
-		where: { authorId: userId },
-		data: { authorName: "Synclune" },
-	});
-
-	// 12. Anonymise la PII dénormalisée des commandes — UNIQUEMENT les surfaces
+	// 7. Anonymise la PII dénormalisée des commandes — UNIQUEMENT les surfaces
 	// opérationnelles non requises par la facture légale (admin UI, étiquettes
 	// d'expédition, espace client) : email/nom/téléphone client + adresse de LIVRAISON.
 	//

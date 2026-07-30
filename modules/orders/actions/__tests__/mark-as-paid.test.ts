@@ -20,7 +20,16 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), update: vi.fn() },
-		productSku: { updateMany: vi.fn() },
+		// STOCK-LEDGER-001 : le décrément est passé en `UPDATE … RETURNING` (raw SQL)
+		// pour dériver le StockMovement — `productSku.updateMany` n'est plus appelé.
+		stockMovement: { create: vi.fn() },
+		// Désactivation des SKU tombés à 0 (parité webhook) + résolution des slugs
+		// pour l'invalidation stock/catalogue post-commit.
+		productSku: {
+			findMany: vi.fn().mockResolvedValue([]),
+			updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+		},
+		product: { findMany: vi.fn().mockResolvedValue([]) },
 		orderHistory: { create: vi.fn() },
 		// STOCK-02 : acquireOrderPaidLockTx fait un tx.$queryRaw (advisory lock).
 		$queryRaw: vi.fn(),
@@ -135,6 +144,11 @@ function createPendingOrder(overrides: Record<string, unknown> = {}) {
 describe("markAsPaid", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		// ⚠️ `resetAllMocks` efface les implémentations posées au hoist : réarmer ici,
+		// sinon `findMany` rend `undefined` et la désactivation/invalidation lève.
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
+		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.product.findMany.mockResolvedValue([]);
 
 		mockRequireAdminWithUser.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
@@ -150,7 +164,10 @@ describe("markAsPaid", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 		mockPiRetrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.order.update.mockResolvedValue({});
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 1 });
+		// `$queryRaw` sert l'advisory lock (retour ignoré) ET le `UPDATE … RETURNING`
+		// du décrément (retour lu). Une ligne retournée = décrément accepté.
+		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 3, productId: "prod-1" }]);
+		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockReconcileInvoiceOrder.mockResolvedValue({ kind: "recovered" });
 
 		vi.mocked(markAsPaidSchema.safeParse).mockReturnValue({
@@ -275,7 +292,50 @@ describe("markAsPaid", () => {
 		// commande recoverable a toujours son stock à décrémenter ici.
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.productSku.updateMany).toHaveBeenCalled();
+
+		// STOCK-LEDGER-001 : le décrément est journalisé (source ORDER, delta négatif).
+		expect(mockPrisma.stockMovement.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ source: "ORDER", delta: -1 }),
+		});
+	});
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Garde anti-survente du décrément manuel.
+	//
+	// C'est le SEUL décrément de stock déclenché par un humain, et sa condition
+	// (`isActive` + `inventory >= quantity`) n'avait AUCUNE couverture
+	// comportementale : le mock répondait toujours `{ count: 1 }`, l'unique
+	// assertion était `toHaveBeenCalled()`, et le message d'erreur n'apparaissait
+	// dans aucun test. Retirer la condition du `WHERE` laissait la suite verte.
+	// Audit « validation stock panier » 2026-07-30, P2-1.
+	// ─────────────────────────────────────────────────────────────────────────
+	describe("garde anti-survente du décrément (P2-1)", () => {
+		it("échoue quand le décrément n'affecte aucune ligne (stock insuffisant ou SKU inactif)", async () => {
+			// Zéro ligne retournée = la condition du WHERE n'a pas été satisfaite.
+			mockPrisma.$queryRaw.mockResolvedValue([]);
+
+			const result = await markAsPaid(undefined, validFormData);
+
+			expect(result.status).toBe(ActionStatus.ERROR);
+			expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
+		});
+
+		it("porte la condition de stock ET d'activité dans le SQL du décrément", async () => {
+			await markAsPaid(undefined, validFormData);
+
+			// Le décrément doit rester CONDITIONNEL : sans ces trois fragments, deux
+			// encaissements concurrents (ou un stock déjà épuisé) passeraient tous deux
+			// et l'inventaire tomberait sous zéro — rattrapé seulement par le CHECK DB,
+			// hors de tout chemin d'erreur métier.
+			const sql = mockPrisma.$queryRaw.mock.calls
+				.map((call) => (Array.isArray(call[0]) ? call[0].join("?") : String(call[0])))
+				.join("\n");
+
+			expect(sql).toContain('UPDATE "ProductSku"');
+			expect(sql).toContain('"isActive" = true');
+			expect(sql).toContain('"inventory" >=');
+			expect(sql).toContain("RETURNING");
+		});
 	});
 
 	// STOCK-02 : la transition PAID doit être sérialisée avec le webhook concurrent

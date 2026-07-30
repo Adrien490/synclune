@@ -30,6 +30,24 @@
  * primaire il rend 0 image alors que le SKU en a. Le tri
  * `[{ isPrimary: desc }, { position: asc }]` + `take: 1` donne le même résultat avec un
  * repli, et reproduit la priorité de `pickPrimaryImage`.
+ *
+ * ## Périmètre : ce fichier ne couvre QUE les selects du catalogue
+ *
+ * Il n'inspecte que des `select` exportés comme CONSTANTES. Deux selects soumis à la
+ * même règle vivent en ligne dans une fonction et sont donc verrouillés ailleurs — s'y
+ * référer avant de conclure qu'un chemin n'est pas gardé (audit « SKUs et variantes »
+ * 2026-07-30, EINV-SNAPSHOT-MEDIA-001) :
+ *
+ * - `modules/cart/data/get-sku-for-validation.ts` — alimente le snapshot figé
+ *   `OrderItem.productImageUrl` / `skuImageUrl` (facture, rétention 10 ans). C'était le
+ *   SEUL select de sélection d'image du repo à ne pas même exposer `mediaType`, et il
+ *   était hors de la liste de fichiers de ce test : c'est ce trou qui a permis à un
+ *   `.mp4` d'atteindre un PDF de facture. Verrouillé par
+ *   `modules/cart/data/__tests__/get-sku-for-validation.test.ts` (famille galerie :
+ *   `mediaType` exposé + `orderBy` reproduisant `pickPrimaryImage`).
+ * - `modules/materials/data/get-material.ts` — vignette unique, corrigée au même audit
+ *   (elle portait `where: { isPrimary: true }` ET `where: { isDefault: true }`, les deux
+ *   filtres bannis, sans `mediaType`).
  */
 import { describe, expect, it } from "vitest";
 

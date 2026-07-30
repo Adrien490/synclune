@@ -62,9 +62,6 @@ vi.mock("../../constants/order.constants", () => ({
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
 }));
-vi.mock("@/modules/reviews/constants/cache", () => ({
-	REVIEWS_CACHE_TAGS: { REVIEWABLE: (userId: string) => `reviewable-${userId}` },
-}));
 vi.mock("../../schemas/order.schemas", () => ({
 	markAsDeliveredSchema: {},
 }));
@@ -170,11 +167,6 @@ describe("markAsDelivered", () => {
 			mockPrisma,
 			expect.objectContaining({ action: "DELIVERED" }),
 		);
-	});
-
-	it("should invalidate reviewable cache for user", async () => {
-		await markAsDelivered(undefined, validFormData);
-		expect(mockUpdateTag).toHaveBeenCalledWith(expect.stringContaining("reviewable"));
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

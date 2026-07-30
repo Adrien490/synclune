@@ -200,6 +200,15 @@ export async function deleteProductSku(
 			}
 
 			// Delete the SKU (SkuMedia cascade-deleted by Prisma)
+			//
+			// Le hard delete emporte AUSSI les `StockMovement` du SKU (`onDelete: Cascade`),
+			// alors que ce journal se documente « append-only immuable ». Contradiction
+			// apparente, mais SANS conséquence, et c'est délibéré : la suppression est
+			// refusée dès qu'il existe un `orderItem` (garde ci-dessus). Un SKU jamais vendu
+			// n'a donc aucun mouvement de source `ORDER`/`WEBHOOK`/`SYSTEM` — seulement,
+			// éventuellement, des ajustements admin (`MANUAL_ADJUST`/`SKU_UPDATE`) sur un
+			// article qui n'a jamais existé commercialement. Aucune pièce comptable n'est
+			// détruite. Audit « SKUs et variantes » 2026-07-30 : constat vérifié, non corrigé.
 			await tx.productSku.delete({
 				where: { id: validatedSkuId },
 			});

@@ -14,7 +14,6 @@ import {
 	ProductStatus,
 	RefundReason,
 	RefundStatus,
-	ReviewStatus,
 	HistorySource,
 	WebhookEventStatus,
 	AccountStatus,
@@ -174,11 +173,6 @@ async function cleanup(): Promise<void> {
 	console.log("🧹 Nettoyage de la base de données...");
 
 	await prisma.dispute.deleteMany();
-
-	await prisma.reviewMedia.deleteMany();
-	await prisma.reviewResponse.deleteMany();
-	await prisma.productReview.deleteMany();
-	await prisma.productReviewStats.deleteMany();
 
 	await prisma.orderHistory.deleteMany();
 	await prisma.orderNote.deleteMany();
@@ -1962,262 +1956,6 @@ async function main(): Promise<void> {
 	console.log(`✅ ${sessionsData.length} sessions créées`);
 
 	// ============================================
-	// AVIS PRODUITS (REVIEWS) - batch
-	// ============================================
-	const reviewTitles = {
-		positive: [
-			"Absolument magnifique !",
-			"Coup de cœur",
-			"Qualité exceptionnelle",
-			"Je recommande vivement",
-			"Très satisfaite",
-			"Sublime",
-			"Parfait pour offrir",
-			"Élégance au quotidien",
-			"Un vrai bijou",
-			"Superbe cadeau",
-		],
-		neutral: [
-			"Correct dans l'ensemble",
-			"Bien mais...",
-			"Conforme à la description",
-			"Satisfaisant",
-		],
-		negative: ["Déçue", "Pas à la hauteur", "Qualité décevante"],
-	};
-
-	const reviewContents = {
-		positive: [
-			"J'ai reçu ce bijou pour mon anniversaire et je suis absolument ravie ! La qualité est au rendez-vous, les finitions sont impeccables. Je le porte tous les jours.",
-			"Commande reçue rapidement, emballage soigné. Le bijou est encore plus beau en vrai qu'en photo. Ma mère a adoré son cadeau !",
-			"C'est mon troisième achat chez Synclune et je ne suis jamais déçue. Les bijoux sont délicats, féminins et de très bonne qualité. Bravo !",
-			"Parfait pour un cadeau de mariage. Ma témoin était émue aux larmes. Un bijou qui a du sens et qui est magnifiquement réalisé.",
-			"Je cherchais un bijou original et j'ai trouvé mon bonheur. Design unique, livraison rapide, je suis conquise !",
-			"La chaîne est très délicate et s'accorde parfaitement avec mes tenues. Reçu dans un joli écrin, parfait pour offrir.",
-			"Qualité irréprochable, le bijou ne ternit pas et reste brillant même après plusieurs semaines de port quotidien.",
-			"J'ai craqué sur le design bohème et je ne regrette pas. C'est devenu mon bijou préféré, il attire toujours des compliments.",
-			"Superbe réalisation artisanale. On sent le travail soigné et l'attention aux détails. Je recommande à 100%.",
-			"Achat pour les fêtes, livraison express parfaitement respectée. Le bijou est sublime et le packaging très élégant.",
-		],
-		neutral: [
-			"Le bijou est joli mais la chaîne est un peu plus fine que ce que j'imaginais. Reste un bon rapport qualité-prix.",
-			"Conforme à la description, livraison dans les temps. Rien de négatif à signaler mais rien d'exceptionnel non plus.",
-			"Le bijou est correct pour le prix. J'aurais aimé un emballage un peu plus soigné pour offrir.",
-			"Belle couleur mais les finitions auraient pu être plus soignées. Globalement satisfaite.",
-		],
-		negative: [
-			"Le bijou est joli mais la fermeture s'est abîmée après quelques utilisations. Dommage.",
-			"La couleur est différente de ce que je voyais sur les photos. Un peu déçue mais le service client m'a bien accompagnée.",
-			"Délai de livraison plus long que prévu. Le bijou est correct mais je m'attendais à mieux pour ce prix.",
-		],
-	};
-
-	const deliveredOrders = await prisma.order.findMany({
-		where: {
-			status: OrderStatus.DELIVERED,
-			userId: { not: null },
-		},
-		include: {
-			items: {
-				include: {
-					product: true,
-				},
-			},
-			user: true,
-		},
-	});
-
-	console.log(`📝 ${deliveredOrders.length} commandes livrées trouvées pour les avis`);
-
-	const reviewsData: Prisma.ProductReviewCreateManyInput[] = [];
-	const reviewedPairs = new Set<string>();
-
-	for (const order of deliveredOrders) {
-		if (!order.userId || !order.user) continue;
-		if (!sampleBoolean(0.7)) continue;
-
-		for (const item of order.items) {
-			if (!item.productId) continue;
-
-			const pairKey = `${order.userId}-${item.productId}`;
-			if (reviewedPairs.has(pairKey)) continue;
-			if (!sampleBoolean(0.85)) continue;
-
-			const rating = faker.helpers.weightedArrayElement([
-				{ weight: 2, value: 5 },
-				{ weight: 3, value: 4 },
-				{ weight: 1, value: 3 },
-				{ weight: 0.3, value: 2 },
-				{ weight: 0.1, value: 1 },
-			]);
-
-			let titlePool: string[];
-			let contentPool: string[];
-
-			if (rating >= 4) {
-				titlePool = reviewTitles.positive;
-				contentPool = reviewContents.positive;
-			} else if (rating === 3) {
-				titlePool = reviewTitles.neutral;
-				contentPool = reviewContents.neutral;
-			} else {
-				titlePool = reviewTitles.negative;
-				contentPool = reviewContents.negative;
-			}
-
-			const hasTitle = sampleBoolean(0.7);
-			const title = hasTitle ? faker.helpers.arrayElement(titlePool) : null;
-			const content = faker.helpers.arrayElement(contentPool);
-
-			const reviewDate = new Date(order.createdAt);
-			reviewDate.setDate(reviewDate.getDate() + faker.number.int({ min: 1, max: 14 }));
-			// Clamp to now to avoid future-dated reviews
-			const now = new Date();
-			if (reviewDate > now)
-				reviewDate.setTime(now.getTime() - faker.number.int({ min: 1, max: 24 }) * 60 * 60 * 1000);
-
-			const reviewStatus = sampleBoolean(0.95) ? ReviewStatus.PUBLISHED : ReviewStatus.HIDDEN;
-
-			reviewsData.push({
-				productId: item.productId,
-				userId: order.userId,
-				orderItemId: item.id,
-				rating,
-				title,
-				content,
-				status: reviewStatus,
-				createdAt: reviewDate,
-				updatedAt: reviewDate,
-			});
-
-			reviewedPairs.add(pairKey);
-		}
-	}
-
-	await prisma.productReview.createMany({ data: reviewsData });
-	console.log(`✅ ${reviewsData.length} avis créés`);
-
-	// ============================================
-	// RÉPONSES ADMIN AUX AVIS (batch)
-	// ============================================
-	const adminResponses = {
-		positive: [
-			"Merci infiniment pour ce retour chaleureux ! Votre satisfaction est notre plus belle récompense. Au plaisir de vous retrouver parmi nous. 💫",
-			"Quel bonheur de lire votre commentaire ! Nous sommes ravies que ce bijou ait trouvé sa place dans votre quotidien. Merci pour votre confiance.",
-			"Un immense merci pour ce témoignage ! Chaque bijou est créé avec amour et savoir-faire artisanal. Votre retour nous touche profondément.",
-			"Merci pour ces mots si gentils ! Nous mettons tout notre cœur dans chaque création. Ravie que cela se ressente à travers nos bijoux.",
-			"Votre avis nous fait chaud au cœur ! Merci de faire partie de l'aventure Synclune. À très bientôt pour de nouvelles découvertes.",
-			"Merci beaucoup pour cette belle recommandation ! Nous sommes heureuses que notre travail artisanal vous plaise autant.",
-			"Quel plaisir de vous compter parmi nos clientes fidèles ! Merci pour votre confiance renouvelée et ce magnifique retour.",
-			"Merci pour ce retour enthousiaste ! Les compliments que vous recevez sont notre plus belle publicité. 🌟",
-		],
-		neutral: [
-			"Merci pour votre retour honnête. Nous prenons note de vos remarques pour continuer à nous améliorer. N'hésitez pas à nous contacter si besoin.",
-			"Merci d'avoir pris le temps de partager votre expérience. Vos suggestions nous aident à progresser. Notre équipe reste à votre disposition.",
-			"Nous vous remercions pour cet avis. La satisfaction de nos clientes est primordiale. N'hésitez pas à nous écrire pour toute question.",
-		],
-		negative: [
-			"Nous sommes sincèrement désolées de cette expérience. Votre satisfaction est notre priorité. Notre service client vous a contactée pour trouver une solution.",
-			"Merci pour ce retour, même s'il nous attriste. Nous allons examiner ce point attentivement. N'hésitez pas à nous contacter directement à contact@synclune.fr.",
-			"Nous regrettons que ce bijou n'ait pas répondu à vos attentes. Notre équipe se tient à votre disposition pour échanger et trouver une solution adaptée.",
-		],
-	};
-
-	const reviewsForResponses = await prisma.productReview.findMany({
-		where: {
-			status: ReviewStatus.PUBLISHED,
-			deletedAt: null,
-		},
-		select: {
-			id: true,
-			rating: true,
-			createdAt: true,
-		},
-	});
-
-	console.log(`💬 ${reviewsForResponses.length} avis publiés trouvés pour les réponses`);
-
-	const responsesData: Prisma.ReviewResponseCreateManyInput[] = [];
-
-	for (const review of reviewsForResponses) {
-		if (!sampleBoolean(0.5)) continue;
-
-		let responsePool: string[];
-		if (review.rating >= 4) {
-			responsePool = adminResponses.positive;
-		} else if (review.rating === 3) {
-			responsePool = adminResponses.neutral;
-		} else {
-			responsePool = adminResponses.negative;
-		}
-
-		const responseDate = new Date(review.createdAt);
-		responseDate.setDate(responseDate.getDate() + faker.number.int({ min: 1, max: 7 }));
-		// Clamp to now to avoid future-dated responses
-		const now = new Date();
-		if (responseDate > now)
-			responseDate.setTime(now.getTime() - faker.number.int({ min: 1, max: 24 }) * 60 * 60 * 1000);
-
-		responsesData.push({
-			reviewId: review.id,
-			content: faker.helpers.arrayElement(responsePool),
-			authorId: adminUser.id,
-			authorName: "L'équipe Synclune",
-			createdAt: responseDate,
-			updatedAt: responseDate,
-		});
-	}
-
-	await prisma.reviewResponse.createMany({ data: responsesData });
-	console.log(`✅ ${responsesData.length} réponses admin créées`);
-
-	// ============================================
-	// MISE À JOUR DES STATS DES REVIEWS
-	// ============================================
-	// Single groupBy query instead of N+1
-	const allPublishedReviews = await prisma.productReview.findMany({
-		where: { status: ReviewStatus.PUBLISHED, deletedAt: null },
-		select: { productId: true, rating: true },
-	});
-
-	const reviewStatsByProduct = new Map<string, { ratings: number[] }>();
-	for (const review of allPublishedReviews) {
-		if (!review.productId) continue;
-		let stats = reviewStatsByProduct.get(review.productId);
-		if (!stats) {
-			stats = { ratings: [] };
-			reviewStatsByProduct.set(review.productId, stats);
-		}
-		stats.ratings.push(review.rating);
-	}
-
-	const reviewStatsData: Prisma.ProductReviewStatsCreateManyInput[] = [];
-	for (const [productId, stats] of reviewStatsByProduct) {
-		const totalCount = stats.ratings.length;
-		const sumRatings = stats.ratings.reduce((sum, r) => sum + r, 0);
-		const averageRating = totalCount > 0 ? sumRatings / totalCount : 0;
-
-		const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-		for (const rating of stats.ratings) {
-			ratingCounts[rating as keyof typeof ratingCounts]++;
-		}
-
-		reviewStatsData.push({
-			productId,
-			totalCount,
-			averageRating,
-			rating1Count: ratingCounts[1],
-			rating2Count: ratingCounts[2],
-			rating3Count: ratingCounts[3],
-			rating4Count: ratingCounts[4],
-			rating5Count: ratingCounts[5],
-		});
-	}
-
-	await prisma.productReviewStats.createMany({ data: reviewStatsData });
-	console.log(`✅ Stats des avis créées pour ${reviewStatsByProduct.size} produits`);
-
-	// ============================================
 	// ADRESSES UTILISATEURS (batch)
 	// ============================================
 	const usersWithOrders = await prisma.user.findMany({
@@ -3136,42 +2874,6 @@ async function main(): Promise<void> {
 	console.log(`✅ ${webhookEventsData.length} événements webhook créés`);
 
 	// ============================================
-	// PHOTOS D'AVIS (REVIEW MEDIA) - batch
-	// ============================================
-	const reviewsForMedia = await prisma.productReview.findMany({
-		where: { status: ReviewStatus.PUBLISHED, deletedAt: null },
-		select: { id: true },
-		take: 5,
-	});
-
-	const reviewPhotoUrls = [
-		"https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop",
-		"https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop",
-		"https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=400&fit=crop",
-		"https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=400&fit=crop",
-		"https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=400&fit=crop",
-	];
-
-	const reviewMediaData: Prisma.ReviewMediaCreateManyInput[] = [];
-
-	for (const review of reviewsForMedia) {
-		const photoCount = faker.number.int({ min: 1, max: 3 });
-		const selectedPhotos = faker.helpers.arrayElements(reviewPhotoUrls, photoCount);
-
-		for (let i = 0; i < selectedPhotos.length; i++) {
-			reviewMediaData.push({
-				reviewId: review.id,
-				url: selectedPhotos[i]!,
-				altText: "Photo du bijou porté",
-				position: i,
-			});
-		}
-	}
-
-	await prisma.reviewMedia.createMany({ data: reviewMediaData });
-	console.log(`✅ ${reviewMediaData.length} photos d'avis créées`);
-
-	// ============================================
 	// DISPUTES (M4)
 	// ============================================
 	const ordersForDisputes = await prisma.order.findMany({
@@ -3354,20 +3056,6 @@ async function main(): Promise<void> {
 		});
 	}
 
-	// Soft-delete 3 reviews
-	const reviewsToSoftDelete = await prisma.productReview.findMany({
-		where: { deletedAt: null },
-		select: { id: true },
-		take: 3,
-		orderBy: { createdAt: "desc" },
-	});
-	for (const r of reviewsToSoftDelete) {
-		await prisma.productReview.update({
-			where: { id: r.id },
-			data: { deletedAt },
-		});
-	}
-
 	// Soft-delete 2 orders
 	const ordersToSoftDelete = await prisma.order.findMany({
 		where: { deletedAt: null, status: OrderStatus.CANCELLED },
@@ -3382,7 +3070,7 @@ async function main(): Promise<void> {
 	}
 
 	console.log(
-		`✅ Records soft-deleted: ${productsToSoftDelete.length} produits, ${reviewsToSoftDelete.length} avis, ${ordersToSoftDelete.length} commandes`,
+		`✅ Records soft-deleted: ${productsToSoftDelete.length} produits, ${ordersToSoftDelete.length} commandes`,
 	);
 
 	// ============================================

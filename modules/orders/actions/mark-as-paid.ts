@@ -6,8 +6,12 @@ import {
 	FulfillmentStatus,
 	type Prisma,
 	HistorySource,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
+import { selectDeactivatableSkuIds } from "@/modules/skus/services/validate-public-active-sku.service";
+import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -213,24 +217,98 @@ export async function markAsPaid(
 			// Une commande PENDING/FAILED/EXPIRED — seuls états recoverables ici — a donc
 			// toujours son stock à décrémenter au moment du mark-as-paid manuel.
 			const stockAdjusted = found.items.length > 0;
+			/** SKU décrémentés — sert l'invalidation de cache post-commit. */
+			const stockChanged: Array<{ skuId: string; productId: string }> = [];
+			/** SKU tombés à 0 — candidats à la désactivation automatique. */
+			const zeroStockSkus: Array<{ skuId: string; productId: string }> = [];
 
-			// Atomic stock decrement with conditional WHERE (prevents overselling)
+			// Atomic stock decrement with conditional WHERE (prevents overselling).
+			//
+			// STOCK-LEDGER-001 : passé en `UPDATE … RETURNING` (même pattern que
+			// `adjust-sku-stock.ts`) plutôt qu'un `updateMany`, pour récupérer
+			// `inventory` et `productId` APRÈS l'écriture et en dériver le
+			// `StockMovement` sans requête supplémentaire ni fenêtre de course. Une
+			// lecture préalable séparée aurait pu être invalidée par un writer
+			// concurrent entre le SELECT et l'UPDATE, et le journal aurait consigné des
+			// valeurs absolues fausses.
+			//
+			// La condition reste identique : `isActive` ET `inventory >= quantity`.
+			// Zéro ligne affectée ⇒ stock insuffisant ou variante inactive ⇒ throw, ce
+			// qui annule toute la transaction (c'est la garde anti-survente de ce
+			// chemin, le seul décrément manuel de la boutique).
 			if (stockAdjusted) {
 				for (const item of found.items) {
-					const result = await tx.productSku.updateMany({
-						where: {
-							id: item.skuId,
-							isActive: true,
-							inventory: { gte: item.quantity },
-						},
-						data: {
-							inventory: { decrement: item.quantity },
-						},
-					});
+					const updated = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
+						UPDATE "ProductSku"
+						SET "inventory" = "inventory" - ${item.quantity}, "updatedAt" = NOW()
+						WHERE "id" = ${item.skuId}
+						AND "isActive" = true
+						AND "inventory" >= ${item.quantity}
+						RETURNING "inventory", "productId"
+					`;
 
-					if (result.count === 0) {
+					if (updated.length === 0) {
 						throw new Error(`Stock insuffisant ou variante inactive pour ${item.productTitle}`);
 					}
+
+					const row = updated[0]!;
+					stockChanged.push({ skuId: item.skuId, productId: row.productId });
+					if (row.inventory === 0) {
+						zeroStockSkus.push({ skuId: item.skuId, productId: row.productId });
+					}
+					await recordStockMovementTx(tx, {
+						skuId: item.skuId,
+						productId: row.productId,
+						previousInventory: row.inventory + item.quantity,
+						newInventory: row.inventory,
+						source: StockMovementSource.ORDER,
+						reason: `Encaissement manuel — commande ${found.orderNumber}`,
+						createdById: adminUser.id,
+						createdByName: adminUser.name ?? null,
+					});
+				}
+			}
+
+			// Désactivation des SKU tombés à 0 — parité avec le chemin webhook, qui le
+			// faisait alors que cet encaissement manuel ne le faisait PAS : le même
+			// événement métier (dernière unité vendue) laissait donc deux états
+			// différents selon le canal.
+			// STOCK-LAST-ACTIVE-SKU-001 : on passe par le même filtre que le webhook, donc
+			// jamais le dernier SKU actif d'un produit PUBLIC (sinon PDP en 404).
+			if (zeroStockSkus.length > 0) {
+				const productIds = [...new Set(zeroStockSkus.map((s) => s.productId))];
+				const [products, activeSiblings] = await Promise.all([
+					tx.product.findMany({
+						where: { id: { in: productIds } },
+						select: { id: true, status: true },
+					}),
+					tx.productSku.findMany({
+						where: { productId: { in: productIds }, isActive: true, deletedAt: null },
+						select: { productId: true },
+					}),
+				]);
+				const statusByProductId = new Map(products.map((p) => [p.id, p.status as string]));
+				const activeTotalByProductId = new Map<string, number>();
+				for (const sibling of activeSiblings) {
+					activeTotalByProductId.set(
+						sibling.productId,
+						(activeTotalByProductId.get(sibling.productId) ?? 0) + 1,
+					);
+				}
+
+				const deactivatableSkuIds = selectDeactivatableSkuIds(
+					zeroStockSkus.map((s) => ({
+						skuId: s.skuId,
+						productId: s.productId,
+						productStatus: statusByProductId.get(s.productId) ?? "DRAFT",
+					})),
+					activeTotalByProductId,
+				);
+				if (deactivatableSkuIds.length > 0) {
+					await tx.productSku.updateMany({
+						where: { id: { in: deactivatableSkuIds } },
+						data: { isActive: false },
+					});
 				}
 			}
 
@@ -279,7 +357,7 @@ export async function markAsPaid(
 				},
 			});
 
-			return { ...found, _stockAdjusted: stockAdjusted };
+			return { ...found, _stockAdjusted: stockAdjusted, _stockChanged: stockChanged };
 		});
 
 		if (!order) {
@@ -308,6 +386,28 @@ export async function markAsPaid(
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+
+		// Invalidation STOCK/CATALOGUE — cet encaissement décrémente l'inventaire et
+		// ne postait QUE des tags commande : la vitrine servait donc un stock périmé
+		// jusqu'à l'expiration du profil `catalog` (5 min revalidate / 15 min stale),
+		// et l'inventaire admin jusqu'à celle du profil `user`. Le chemin webhook
+		// appelait déjà `collectStockInvalidationTags` — parité rétablie.
+		if (order._stockChanged.length > 0) {
+			const productIds = [...new Set(order._stockChanged.map((s) => s.productId))];
+			const products = await prisma.product.findMany({
+				where: { id: { in: productIds } },
+				select: { id: true, slug: true },
+			});
+			const slugByProductId = new Map(products.map((p) => [p.id, p.slug]));
+			const tags = collectStockInvalidationTags(
+				order._stockChanged.map((s) => ({
+					skuId: s.skuId,
+					productId: s.productId,
+					productSlug: slugByProductId.get(s.productId),
+				})),
+			);
+			tags.forEach((tag) => updateTag(tag));
+		}
 
 		// ORD-BIZ-007 : annule le PaymentIntent Stripe en parallèle (si encore actif)
 		// pour éviter qu'un client paie en double via le lien checkout original

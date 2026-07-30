@@ -210,4 +210,94 @@ describe("reorderFromOrder", () => {
 		expect(create).toHaveBeenCalledTimes(2);
 		expect(mockSuccess).toHaveBeenCalled();
 	});
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// Bornage par le stock. `reorderFromOrder` recommande une ancienne commande :
+	// les quantités viennent de l'historique et peuvent dépasser le stock actuel.
+	// Le clamp (`Math.min(requested, inventory, MAX_QUANTITY_PER_ORDER)`) n'avait
+	// AUCUN test — audit « validation stock panier » 2026-07-30, P2-8.
+	// ─────────────────────────────────────────────────────────────────────────
+	describe("bornage par le stock disponible (P2-8)", () => {
+		it("plafonne la quantité au stock restant quand la commande en demandait plus", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				id: "order-1",
+				// 5 exemplaires commandés à l'époque, il n'en reste que 2.
+				items: [makeOrderItem("sku-1", 5, { sku: { inventory: 2 } })],
+			});
+			const create = vi.fn();
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+				fn({ cartItem: { create, update: vi.fn() }, cart: { update: vi.fn() } }),
+			);
+
+			await reorderFromOrder(undefined, makeFormData());
+
+			expect(create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ skuId: "sku-1", quantity: 2 }),
+				}),
+			);
+		});
+
+		it("plafonne à MAX_QUANTITY_PER_ORDER même quand le stock le permettrait", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				id: "order-1",
+				items: [makeOrderItem("sku-1", 40, { sku: { inventory: 100 } })],
+			});
+			const create = vi.fn();
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+				fn({ cartItem: { create, update: vi.fn() }, cart: { update: vi.fn() } }),
+			);
+
+			await reorderFromOrder(undefined, makeFormData());
+
+			expect(create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({ skuId: "sku-1", quantity: 10 }),
+				}),
+			);
+		});
+
+		it("ignore une ligne dont le SKU est tombé à zéro", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				id: "order-1",
+				items: [
+					makeOrderItem("sku-1", 1, { sku: { inventory: 0 } }),
+					makeOrderItem("sku-2", 1, { sku: { inventory: 3 } }),
+				],
+			});
+			const create = vi.fn();
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+				fn({ cartItem: { create, update: vi.fn() }, cart: { update: vi.fn() } }),
+			);
+
+			await reorderFromOrder(undefined, makeFormData());
+
+			// Seul sku-2 est recommandé : sku-1 est écarté par le filtre `inventory > 0`.
+			expect(create).toHaveBeenCalledTimes(1);
+			expect(create).toHaveBeenCalledWith(
+				expect.objectContaining({ data: expect.objectContaining({ skuId: "sku-2" }) }),
+			);
+		});
+
+		it("borne aussi la fusion avec une ligne déjà au panier", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				id: "order-1",
+				items: [makeOrderItem("sku-1", 5, { sku: { inventory: 3 } })],
+			});
+			// Le panier contient déjà 4 unités — plus que le stock actuel.
+			mockPrisma.cart.upsert.mockResolvedValue({
+				id: "cart-1",
+				items: [{ id: "ci-1", skuId: "sku-1", quantity: 4 }],
+			});
+			const update = vi.fn();
+			mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+				fn({ cartItem: { create: vi.fn(), update }, cart: { update: vi.fn() } }),
+			);
+
+			await reorderFromOrder(undefined, makeFormData());
+
+			// La stratégie MAX est bornée par le stock : 4 → 3, jamais laissé à 4.
+			expect(update).toHaveBeenCalledWith(expect.objectContaining({ data: { quantity: 3 } }));
+		});
+	});
 });

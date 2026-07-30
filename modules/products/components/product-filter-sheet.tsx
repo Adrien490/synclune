@@ -22,7 +22,6 @@ import { FilterSection } from "./filter-section-header";
 import { TypeFilterSection } from "./filter-section-types";
 import { ColorFilterSection } from "./filter-section-colors";
 import { MaterialFilterSection } from "./filter-section-materials";
-import { RatingFilterSection } from "./filter-section-rating";
 import { AvailabilityFilterSection } from "./filter-section-availability";
 import {
 	parseFilterValuesFromURL,
@@ -203,7 +202,6 @@ function ProductFilterSheetInner({
 		const sections = ["types", "price"];
 		if (initialValues.colors.length > 0) sections.push("colors");
 		if (initialValues.materials.length > 0) sections.push("materials");
-		if (initialValues.ratingMin !== null) sections.push("rating");
 		if (initialValues.inStockOnly || initialValues.onSale) sections.push("availability");
 		return sections;
 	});
@@ -328,21 +326,7 @@ function ProductFilterSheetInner({
 								</FilterSection>
 							)}
 
-							{/* 5. Notes clients (toujours visible) */}
-							<FilterSection
-								value="rating"
-								label="Notes clients"
-								count={counts.rating}
-								badgeContent={values.ratingMin !== null ? `${values.ratingMin}+ ★` : undefined}
-								onReset={() => form.setFieldValue("ratingMin", null)}
-							>
-								<RatingFilterSection
-									selectedValue={values.ratingMin}
-									onChange={(value) => form.setFieldValue("ratingMin", value)}
-								/>
-							</FilterSection>
-
-							{/* 6. Disponibilité (toujours visible) */}
+							{/* 5. Disponibilité (toujours visible) */}
 							<FilterSection
 								value="availability"
 								label="Disponibilité"

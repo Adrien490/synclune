@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { useKeyboardOpen } from "@/shared/components/visual-viewport-bridge";
@@ -11,20 +11,6 @@ import { cn } from "@/shared/utils/cn";
 // Les constantes de classes vivent dans `./bottom-bar.styles` : un fichier de
 // composants qui exporte aussi des non-composants casse le Fast Refresh
 // (rechargement complet au lieu de la préservation d'état).
-
-// ---------------------------------------------------------------------------
-// ActiveDot
-// ---------------------------------------------------------------------------
-
-/** Small dot indicator shown above the active item. */
-export function ActiveDot() {
-	return (
-		<span
-			className="bg-primary motion-safe:animate-in motion-safe:zoom-in-50 absolute -top-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full duration-200"
-			aria-hidden="true"
-		/>
-	);
-}
 
 // ---------------------------------------------------------------------------
 // BottomBarActivePill
@@ -51,11 +37,13 @@ interface BottomBarActivePillProps {
  * @example
  * ```tsx
  * {items.map(item => (
- *   <Link key={item.href} href={item.href} className={bottomBarItemClass}>
- *     {isActive(item) && <BottomBarActivePill groupId="shop-nav" />}
- *     <Icon className={bottomBarIconClass} />
- *     <span className={bottomBarLabelClass}>{item.label}</span>
- *   </Link>
+ *   <li key={item.href} className="flex-1">
+ *     <Link href={item.href} className={bottomBarItemClass}>
+ *       {isActive(item) && <BottomBarActivePill groupId="shop-nav" />}
+ *       <Icon className={bottomBarIconClass} />
+ *       <span className={bottomBarLabelClass}>{item.label}</span>
+ *     </Link>
+ *   </li>
  * ))}
  * ```
  */
@@ -107,7 +95,17 @@ interface BottomBarProps {
 	breakpoint?: "md" | "lg";
 	/** z-index class. @default "z-(--z-bar)" */
 	zIndex?: string;
-	/** Bar height in px (reported to useBottomBarHeight). @default 56 */
+	/**
+	 * Height in px used as a **fallback until the bar has been measured** — la
+	 * hauteur publiée dans `--bottom-bar-height` est celle de l'élément réel
+	 * (`offsetHeight`), pas cette valeur. Ce n'est donc pas une hypothèse sur la
+	 * hauteur de la barre : c'est ce qui tient lieu de mesure au premier effet et
+	 * dans les environnements sans layout (jsdom). Doit rester d'accord avec le
+	 * `h-14` de `bottomBarContainerClass` — verrouillé par
+	 * `bottom-bar-height-contract.regression.test.ts`.
+	 *
+	 * @default 56
+	 */
 	height?: number;
 	/** Whether the bar is mounted / height should be registered. @default true */
 	enabled?: boolean;
@@ -120,10 +118,13 @@ interface BottomBarProps {
 /**
  * Fixed mobile bottom-bar primitive (layout-only, non-opinionated).
  *
- * Registers its height in the shared `--bottom-bar-height` CSS variable so
- * scroll containers and sticky elements (FABs, sticky-cart-cta) can offset
- * themselves above it. Handles iOS safe-area-inset-bottom, backdrop blur with
- * a solid fallback, slide-out hide state (with `inert`), and entrance spring.
+ * Publishes its **measured** height in the shared `--bottom-bar-height` CSS
+ * variable so scroll containers and sticky elements (FABs, banners, toaster) can
+ * offset themselves above it. That value is the *total* occupied height,
+ * `env(safe-area-inset-bottom)` included — consumers add their own breathing room
+ * (`+ 1rem`) and **never** re-add the safe-area inset. Handles iOS
+ * safe-area insets (bottom + sides), backdrop blur with an *opaque* fallback,
+ * slide-out hide state (with `inert`), and entrance spring.
  *
  * Slides out automatically when the soft keyboard opens (via {@link useKeyboardOpen},
  * folded into the animation target — the CSS `[data-hide-on-keyboard]` rule alone
@@ -131,16 +132,17 @@ interface BottomBarProps {
  * mounted at the surface root.
  *
  * **Composition tips:**
- * - If you want vertical dividers between items, wrap children in a flex
- *   container with `divide-x divide-border/30`.
+ * - Wrap items in a `<ul role="list">` carrying {@link bottomBarContainerClass},
+ *   one `<li className="flex-1">` per tab, so screen readers announce the item count.
+ * - If you want vertical dividers between items, add `divide-x divide-border/30`
+ *   to that container.
  * - Render {@link BottomBarActivePill} only on the active item (with a shared
- *   `groupId`) for iOS-18-style morphing indicator, or {@link ActiveDot} for a
- *   minimal footprint indicator.
+ *   `groupId`) for the iOS-18-style morphing indicator.
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from
- *   `@/shared/hooks/use-haptic` on tab click.
- * - Use `<CountBadge>` (shared/components/ui/count-badge) for neutral counters
- *   on icon items; use {@link bottomBarBadgeClass} only for destructive-tone
- *   alerts that demand action (e.g. admin orders pending).
+ *   `@/shared/hooks/use-haptic` on tab change (skip it when the tab is already active).
+ * - Use `<CountBadge>` (shared/components/ui/count-badge) for counters on icon
+ *   items — it carries the correct live-region pattern; use {@link bottomBarBadgeClass}
+ *   only for destructive-tone alerts that demand action (e.g. admin orders pending).
  */
 export function BottomBar({
 	children,
@@ -153,13 +155,13 @@ export function BottomBar({
 	className,
 	"aria-label": ariaLabel,
 }: BottomBarProps) {
+	const barRef = useRef<HTMLElement | null>(null);
 	// La barre n'est masquée qu'en CSS (`md:hidden`), donc le composant reste
 	// monté à toutes les largeurs. Sans cette garde, `--bottom-bar-height` était
-	// publiée à 56px sur desktop pour une barre invisible : chaque consommateur
-	// devait la neutraliser avec un override `md:` codé en dur, et le premier qui
-	// l'oubliait héritait de 56px fantômes (audit responsive 2026-07-26).
+	// publiée pour une barre invisible : chaque consommateur devait la neutraliser
+	// avec un override `md:` codé en dur, et le premier qui l'oubliait héritait
+	// d'une hauteur fantôme (audit responsive 2026-07-26).
 	const isBarVisible = useMediaQuery(mediaBelow(breakpoint));
-	useBottomBarHeight(height, enabled && !isHidden && isBarVisible);
 	const prefersReducedMotion = useReducedMotion();
 	// Soft-keyboard open → slide out. The CSS `[data-hide-on-keyboard]` rule is
 	// overridden by Framer's inline `transform` in the motion path, so we must
@@ -169,15 +171,43 @@ export function BottomBar({
 	const keyboardOpen = useKeyboardOpen();
 	const hidden = isHidden || keyboardOpen;
 
+	// La hauteur reste publiée pendant TOUTE la sortie, pas seulement jusqu'à ce
+	// que `hidden` bascule : la barre met un ressort à sortir, et désenregistrer
+	// tout de suite faisait redescendre toaster / bandeau cookies / FAB sur une
+	// barre encore bien visible pendant ~300 ms. `slidOut` n'est vrai qu'une fois
+	// l'animation de sortie terminée. Initialisé à `hidden` pour le montage direct
+	// sur une route masquée, où la cible égale l'état initial et où
+	// `onAnimationComplete` peut donc ne jamais se déclencher.
+	const [slidOut, setSlidOut] = useState(hidden);
+	const [prevHidden, setPrevHidden] = useState(hidden);
+	if (prevHidden !== hidden) {
+		setPrevHidden(hidden);
+		// À l'entrée, la barre occupe l'espace dès la première frame de remontée :
+		// réserver immédiatement évite que les dépendants soient recouverts.
+		if (!hidden) setSlidOut(false);
+	}
+
+	// Chemin reduced-motion : pas d'animation, donc rien à différer.
+	const occupiesSpace = prefersReducedMotion ? !hidden : !slidOut;
+	useBottomBarHeight(barRef, {
+		fallback: height,
+		enabled: enabled && isBarVisible && occupiesSpace,
+	});
+
 	const sharedClassName = cn(
 		// Littéraux statiques : Tailwind ne scanne pas les classes construites.
 		breakpoint === "lg" ? "lg:hidden" : "md:hidden",
 		"fixed right-0 bottom-0 left-0",
 		zIndex,
-		"pb-[env(safe-area-inset-bottom)]",
-		// bg-background/80 acts as fallback when backdrop-filter is unsupported;
-		// stronger blur + lower opacity produces the native iOS Tab Bar material.
-		"bg-background/80 backdrop-blur-xl",
+		// Encoche : le fond continue de courir jusqu'aux bords, seul le contenu
+		// s'insère. En paysage iPhone la barre boutique reste montée (844px < 64rem)
+		// et les onglets extrêmes tombaient sous l'encoche / le coin arrondi.
+		"pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]",
+		// Le repli sans `backdrop-filter` doit être OPAQUE : un fond à 20 % de
+		// transparence *sans flou* laisse passer la photo produit derrière des
+		// libellés `text-xs text-muted-foreground` et tombe sous 4.5:1 (WCAG 1.4.3).
+		// Avec flou, `/80` produit le matériau de la Tab Bar iOS.
+		"bg-background supports-[backdrop-filter]:bg-background/80 backdrop-blur-xl",
 		"border-border/60 border-t",
 		"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
 		hidden && "pointer-events-none",
@@ -196,25 +226,40 @@ export function BottomBar({
 			className: sharedClassName,
 		};
 		return as === "nav" ? (
-			<nav {...commonProps}>{children}</nav>
+			<nav ref={barRef} {...commonProps}>
+				{children}
+			</nav>
 		) : (
-			<div {...commonProps}>{children}</div>
+			// `barRef` est typé `HTMLElement` (contrat du hook de mesure), l'élément
+			// concret est décidé par `as` juste au-dessus.
+			<div ref={barRef as React.Ref<HTMLDivElement>} {...commonProps}>
+				{children}
+			</div>
 		);
 	}
 
-	const Component = as === "nav" ? m.nav : m.div;
+	// Branches explicites plutôt qu'un `Component = as === "nav" ? m.nav : m.div` :
+	// l'union des deux composants ne peut pas accepter un même `ref` typé.
+	const motionProps = {
+		initial: { y: "100%", opacity: 0 },
+		animate: hidden ? { y: "100%", opacity: 0 } : { y: 0, opacity: 1 },
+		transition: MOTION_CONFIG.spring.bar,
+		onAnimationComplete: () => {
+			if (hidden) setSlidOut(true);
+		},
+		"aria-label": ariaLabel,
+		"data-hide-on-keyboard": "",
+		...(hidden && { inert: true }),
+		className: sharedClassName,
+	};
 
-	return (
-		<Component
-			initial={{ y: "100%", opacity: 0 }}
-			animate={hidden ? { y: "100%", opacity: 0 } : { y: 0, opacity: 1 }}
-			transition={MOTION_CONFIG.spring.bar}
-			aria-label={ariaLabel}
-			data-hide-on-keyboard=""
-			{...(hidden && { inert: true })}
-			className={sharedClassName}
-		>
+	return as === "nav" ? (
+		<m.nav ref={barRef} {...motionProps}>
 			{children}
-		</Component>
+		</m.nav>
+	) : (
+		<m.div ref={barRef as React.Ref<HTMLDivElement>} {...motionProps}>
+			{children}
+		</m.div>
 	);
 }

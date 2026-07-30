@@ -49,6 +49,21 @@ const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => i
  * Logs structured info when a rate limit is triggered.
  * Enables post-mortem analysis: which endpoints are targeted, which IPs are suspicious.
  */
+/**
+ * Masque les segments identifiants d'une clé de rate limit avant de la logguer.
+ *
+ * Le masquage porte sur le SEGMENT, où qu'il se trouve, et pas sur le début de la
+ * chaîne : les identifiants du tunnel de paiement sont préfixés par leur action
+ * (`checkout-confirm:user:…`, cf. `modules/payments/utils/payment-rate-limit-id.ts`),
+ * si bien qu'un test `startsWith("user:")` ne les reconnaissait plus et logguait l'id
+ * en clair. Le segment `guest:<email>:<ip>`, lui, n'a jamais été masqué : l'email du
+ * client partait tel quel dans les logs à chaque blocage. L'IP reste disponible dans
+ * le champ `ip=` dédié, on ne perd donc rien d'exploitable.
+ */
+function redactRateLimitIdentifier(identifier: string): string {
+	return identifier.replace(/user:[^:]+/, "user:***").replace(/guest:.+$/, "guest:***");
+}
+
 function logRateLimitBlock(params: {
 	type: "global-ip" | "per-action";
 	identifier: string;
@@ -58,7 +73,7 @@ function logRateLimitBlock(params: {
 	retryAfterSeconds: number;
 }): void {
 	logger.warn(
-		`Blocked: type=${params.type} identifier=${params.identifier.startsWith("user:") ? "user:***" : params.identifier} ip=${params.ip} limit=${params.limit} windowMs=${params.windowMs} retryAfter=${params.retryAfterSeconds}`,
+		`Blocked: type=${params.type} identifier=${redactRateLimitIdentifier(params.identifier)} ip=${params.ip} limit=${params.limit} windowMs=${params.windowMs} retryAfter=${params.retryAfterSeconds}`,
 		{ service: "rate-limit" },
 	);
 }
@@ -169,6 +184,12 @@ function checkRateLimitInMemory(
 	skipGlobalIpLimit = false,
 ): RateLimitResult {
 	const now = Date.now();
+	// ⚠️ La clé ne porte QUE l'identifiant : ni le nom de l'action, ni sa config. Deux
+	// actions qui passent le même identifiant partagent donc un compteur, et la fenêtre
+	// appartient à la première entrée créée. Les 4 actions de paiement préfixent leur
+	// identifiant par l'action (`modules/payments/utils/payment-rate-limit-id.ts`) ;
+	// panier, favoris et codes promo restent sur un identifiant nu.
+	// @see docs/KNOWN-ISSUES.md — KI-004
 	const key = `ratelimit:${identifier}`;
 
 	// Global IP limit — read/modify/write fully synchronous (no await between get/set)

@@ -4,7 +4,6 @@ import { HeroReassuranceBannerSkeleton } from "./_components/hero-reassurance-ba
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { HomeFaqSkeleton } from "./_components/home-faq-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
-import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 export default function HomeLoading() {
 	return (
@@ -20,7 +19,6 @@ export default function HomeLoading() {
 			<HeroReassuranceBannerSkeleton />
 			<LatestCreationsSkeleton productsCount={4} />
 			<CollectionsSectionSkeleton collectionsCount={6} />
-			<ReviewsSectionSkeleton />
 			<AtelierSectionSkeleton />
 			<HomeFaqSkeleton />
 		</div>

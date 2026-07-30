@@ -136,14 +136,23 @@ describe("notifyBackInStock", () => {
 	 * Ne jamais envoyer d'email « revenu en stock » pour un produit non
 	 * achetable (archivé, brouillon, soft-deleted) — le lien produit mènerait
 	 * à une 404. Le filtre vit dans la clause `where` Prisma.
+	 *
+	 * P1-2 (audit « SKUs et variantes » 2026-07-30) : cette assertion verrouillait un
+	 * filtre INCOMPLET. `status: PUBLIC` ne suffit pas — `GET_PRODUCT_SELECT` filtre
+	 * `skus.isActive`, donc un produit PUBLIC dont aucun SKU n'est actif ET en stock
+	 * rend une PDP en `notFound()`, soit exactement le 404 que ce test prétend
+	 * empêcher. Le cas est atteignable : le webhook désactive un SKU tombé à 0.
+	 * `drain-back-in-stock.service.ts` appliquait déjà la condition SKU ; ce chemin non.
 	 */
-	it("[regression biz-bug-002] restricts to PUBLIC, non-deleted products via where clause", async () => {
+	it("[regression biz-bug-002] restricts to PUBLIC, non-deleted, PURCHASABLE products via where clause", async () => {
 		await notifyBackInStock("prod-1");
 
 		const call = mockPrisma.wishlistItem.findMany.mock.calls[0]![0];
 		expect(call.where.product).toEqual({
 			status: "PUBLIC",
 			deletedAt: null,
+			// Le produit doit avoir au moins un SKU réellement achetable.
+			skus: { some: { isActive: true, inventory: { gt: 0 }, deletedAt: null } },
 		});
 	});
 

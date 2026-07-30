@@ -12,9 +12,29 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { formatBytesShort } from "@/modules/media/utils/format-eta";
 import { cn } from "@/shared/utils/cn";
 import { CloudOff, RefreshCw, X } from "lucide-react";
 import { useState } from "react";
+
+/**
+ * Âge de la file en langage courant. `null` sous une minute : « en attente depuis
+ * 0 minute » est du bruit.
+ */
+function formatQueueAge(oldestQueuedAt: number | null | undefined): string | null {
+	if (oldestQueuedAt === null || oldestQueuedAt === undefined) return null;
+	const elapsedMs = Date.now() - oldestQueuedAt;
+	if (elapsedMs < 60_000) return null;
+
+	const minutes = Math.floor(elapsedMs / 60_000);
+	if (minutes < 60) return `En attente depuis ${minutes} min.`;
+
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `En attente depuis ${hours} h.`;
+
+	const days = Math.floor(hours / 24);
+	return `En attente depuis ${days} jour${days > 1 ? "s" : ""}.`;
+}
 
 interface OfflineQueueBannerProps {
 	/** Number of files currently held in the offline IndexedDB queue */
@@ -25,6 +45,10 @@ interface OfflineQueueBannerProps {
 	onReplay: () => void;
 	/** Triggered when user dismisses the banner (forgets queued entries via drop()) */
 	onDismiss?: () => void;
+	/** Total size of the queued files, in bytes — shown so the user knows what's held */
+	queuedBytes?: number;
+	/** Epoch ms of the oldest queued entry — shown so a stale queue is recognisable */
+	oldestQueuedAt?: number | null;
 	/** Disable CTAs while a replay is in flight */
 	disabled?: boolean;
 	/** Additional CSS classes */
@@ -41,18 +65,29 @@ interface OfflineQueueBannerProps {
  * Le dismiss vide définitivement la file IndexedDB — il passe donc par une
  * confirmation `ResponsiveAlertDialog` (tone destructive) pour éviter la perte
  * accidentelle des fichiers en attente.
+ *
+ * ⚠️ La copie annonce une reprise automatique : elle n'est vraie que parce que les
+ * appelants passent `autoReplayOnReconnect: true` à `useOfflineUploadQueue`. Ce
+ * texte a longtemps menti — l'option existait, son défaut était `false`, et aucune
+ * surface ne la passait. Ne pas réécrire l'un sans vérifier l'autre.
  */
 export function OfflineQueueBanner({
 	queuedCount,
 	isOffline,
 	onReplay,
 	onDismiss,
+	queuedBytes,
+	oldestQueuedAt,
 	disabled = false,
 	className,
 }: OfflineQueueBannerProps) {
 	const haptic = useHaptic();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	if (queuedCount <= 0) return null;
+
+	// `queuedAt` était stocké et jamais affiché : rien ne distinguait une file
+	// d'il y a trente secondes d'une file oubliée depuis trois jours.
+	const ageLabel = formatQueueAge(oldestQueuedAt);
 
 	const handleReplay = () => {
 		haptic("medium");
@@ -84,11 +119,15 @@ export function OfflineQueueBanner({
 					<div className="min-w-0">
 						<p className="text-sm font-medium text-amber-700">
 							{queuedCount} fichier{queuedCount > 1 ? "s" : ""} en attente de connexion
+							{queuedBytes !== undefined && queuedBytes > 0 && (
+								<span className="font-normal"> · {formatBytesShort(queuedBytes)}</span>
+							)}
 						</p>
 						<p className="text-muted-foreground text-xs">
 							{isOffline
-								? "Vos téléversements reprendront automatiquement au retour en ligne."
-								: "Connexion rétablie — vous pouvez relancer l'envoi."}
+								? "L'envoi reprendra tout seul dès que tu seras de nouveau en ligne."
+								: "Connexion rétablie — l'envoi va reprendre. Tu peux aussi le relancer maintenant."}
+							{ageLabel && <span> {ageLabel}</span>}
 						</p>
 					</div>
 				</div>

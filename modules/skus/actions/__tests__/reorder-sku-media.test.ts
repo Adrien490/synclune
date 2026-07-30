@@ -22,7 +22,7 @@ const {
 	return {
 		mockPrisma: {
 			productSku: { findUnique: vi.fn() },
-			skuMedia: { update: vi.fn() },
+			skuMedia: { update: vi.fn(), updateMany: vi.fn() },
 			$transaction: vi.fn(),
 		},
 		mockRequireAdmin: vi.fn(),
@@ -92,9 +92,13 @@ describe("reorderSkuMedia", () => {
 			sku: "BRC-001",
 			productId: "prod-1",
 			product: { slug: "bracelet" },
-			images: [{ id: VALID_CUID }, { id: VALID_CUID_2 }],
+			images: [
+				{ id: VALID_CUID, mediaType: "IMAGE" },
+				{ id: VALID_CUID_2, mediaType: "IMAGE" },
+			],
 		});
 		mockPrisma.skuMedia.update.mockResolvedValue({});
+		mockPrisma.skuMedia.updateMany.mockResolvedValue({ count: 1 });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -150,7 +154,7 @@ describe("reorderSkuMedia", () => {
 			sku: "BRC-001",
 			productId: "prod-1",
 			product: { slug: "bracelet" },
-			images: [{ id: VALID_CUID }],
+			images: [{ id: VALID_CUID, mediaType: "IMAGE" }],
 		});
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
@@ -169,13 +173,16 @@ describe("reorderSkuMedia", () => {
 
 	it("updates position for each media in order", async () => {
 		await reorderSkuMedia(undefined, buildForm());
+		// Le réordonnancement écrit `isPrimary` EN MÊME TEMPS que `position` : ne
+		// réécrire que `position` désynchronisait « premier média » et « média
+		// principal », que le reste du code traite comme une seule notion.
 		expect(mockPrisma.skuMedia.update).toHaveBeenCalledWith({
 			where: { id: VALID_CUID },
-			data: { position: 0 },
+			data: { position: 0, isPrimary: true },
 		});
 		expect(mockPrisma.skuMedia.update).toHaveBeenCalledWith({
 			where: { id: VALID_CUID_2 },
-			data: { position: 1 },
+			data: { position: 1, isPrimary: false },
 		});
 	});
 

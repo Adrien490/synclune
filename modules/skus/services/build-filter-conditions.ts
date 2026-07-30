@@ -209,10 +209,14 @@ export const buildFilterConditions = (
 	// Filtres de taille
 	if (filters.size !== undefined) {
 		const sizes = Array.isArray(filters.size) ? filters.size : [filters.size];
+		// Insensible à la casse : parité avec `matchSize` et
+		// `assertUniqueVariantCombination` (cf. sku-filter.service).
 		if (sizes.length === 1) {
-			conditions.push({ size: sizes[0] });
+			conditions.push({ size: { equals: sizes[0], mode: "insensitive" } });
 		} else if (sizes.length > 1) {
-			conditions.push({ size: { in: sizes } });
+			conditions.push({
+				OR: sizes.map((s) => ({ size: { equals: s, mode: "insensitive" as const } })),
+			});
 		}
 	}
 

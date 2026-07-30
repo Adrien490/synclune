@@ -153,6 +153,11 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		const allowed = [
 			// Snapshot initial au checkout (post-PaymentIntent succeeded)
 			"modules/payments/services/order-creation.service.ts",
+			// Correction client d'une commande ENCORE PENDING (KI-001, 2026-07-30) :
+			// paymentStatus re-lu sous l'advisory lock `orderPaid`, aucun champ de montant
+			// touché, audit `ADDRESS_UPDATED` obligatoire. Une commande PENDING n'est pas
+			// encore une pièce comptable — c'est ce qui rend la réécriture légitime.
+			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
 			// Anonymisation RGPD (Art. 17 GDPR — droit à l'oubli)
 			"modules/users/services/anonymize-user.service.ts",
 		].sort();
@@ -204,11 +209,30 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 		const actionFiles = [
 			"modules/orders/actions/update-order-shipping-address.ts",
 			"modules/orders/actions/update-order-billing-address.ts",
+			// Writer client (KI-001) : même exigence d'audit trail que les 2 actions admin.
+			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
 		];
 		for (const rel of actionFiles) {
 			const content = readFileSync(join(REPO_ROOT, rel), "utf-8");
 			expect(content).toMatch(/createOrderAuditTx\s*\(/);
 			expect(content).toMatch(/action\s*:\s*"ADDRESS_UPDATED"/);
 		}
+	});
+
+	it("the customer-facing snapshot writer only ever touches a PENDING order, under the paid lock", () => {
+		// Les 3 gardes qui rendent cette réécriture légitime vivent dans le même fichier.
+		// Si l'une disparaît, le snapshot d'une commande PAYÉE devient réécrivable — donc
+		// une pièce comptable mutable (Art. L102 B LPF).
+		const rel = "modules/orders/services/update-pending-order-shipping-snapshot.service.ts";
+		const content = readFileSync(join(REPO_ROOT, rel), "utf-8");
+
+		// 1. Sérialisation sur le MÊME verrou que la transition PAID.
+		expect(content).toMatch(/acquireOrderPaidLockTx\s*\(\s*tx\s*,/);
+		// 2. Statut re-vérifié (et non pas seulement lu par l'appelant).
+		expect(content).toMatch(/paymentStatus\s*!==\s*"PENDING"/);
+		// 3. Aucun champ de montant dans l'écriture.
+		const forbiddenMoneyFields = /\b(?:total|subtotal|shippingCost|discountAmount|taxAmount)\s*:/;
+		const dataBlock = /data:\s*\{[\s\S]*?\n\t\t\t\}/.exec(content)?.[0] ?? "";
+		expect(dataBlock).not.toMatch(forbiddenMoneyFields);
 	});
 });

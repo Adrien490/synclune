@@ -10,6 +10,7 @@ import {
 	BottomBar,
 	BottomBarActivePill,
 	bottomBarContainerClass,
+	bottomBarItemWrapperClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
@@ -41,6 +42,20 @@ const HIDDEN_ROUTES = [
 
 /** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
 const CART_SHEET_ID = "cart" as const;
+
+/**
+ * Racines de l'espace client qui doivent activer l'onglet « Compte ».
+ *
+ * `ROUTES.ACCOUNT.ROOT` vaut `/commandes` ; `/adresses` et `/parametres` sont deux
+ * racines distinctes du même groupe `(account)`, toutes trois rendues avec la
+ * bottom-nav. En n'en testant que deux, le carnet d'adresses n'activait aucun
+ * onglet.
+ */
+const ACCOUNT_ROUTES = [
+	ROUTES.ACCOUNT.ORDERS,
+	ROUTES.ACCOUNT.ADDRESSES,
+	ROUTES.ACCOUNT.SETTINGS,
+] as const;
 
 // Pas d'`aria-controls` sur ces deux onglets (contrairement au bouton Menu de
 // l'admin) : le panier rend DEUX contenus selon le viewport (`Drawer` mobile /
@@ -189,7 +204,10 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			label: "Compte",
 			href: accountHref,
 			icon: User,
-			isActive: isRouteActive(pathname, "/commandes") || isRouteActive(pathname, "/parametres"),
+			// Les TROIS racines de l'espace client, pas deux : `/adresses` (et ses
+			// sous-routes `nouvelle` / `[id]/modifier`) affiche la bottom-nav sans
+			// qu'aucun onglet ne soit actif (audit bottom-bar 2026-07-30, P3-5).
+			isActive: ACCOUNT_ROUTES.some((route) => isRouteActive(pathname, route)),
 			type: "link" as const,
 		},
 	];
@@ -211,7 +229,8 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 				{announcement}
 			</div>
-			<div className={bottomBarContainerClass}>
+			{/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- iOS Safari + VO drop implicit list role when list-style:none */}
+			<ul role="list" className={bottomBarContainerClass}>
 				{tabs.map((tab) => {
 					const iconEl = (
 						<span className="relative">
@@ -233,49 +252,57 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 
 					if (tab.type === "button") {
 						return (
-							<button
-								key={tab.id}
-								type="button"
-								onClick={(e) => {
-									triggerHaptic("selection");
-									tab.onClick(e);
-								}}
+							<li key={tab.id} className={bottomBarItemWrapperClass}>
+								<button
+									type="button"
+									onClick={(e) => {
+										triggerHaptic("selection");
+										tab.onClick(e);
+									}}
+									className={cn(
+										bottomBarItemClass,
+										"can-hover:hover:bg-primary/5",
+										tab.isActive && bottomBarActiveItemClass,
+									)}
+									aria-haspopup="dialog"
+									aria-expanded={tab.isActive}
+									aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
+								>
+									{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
+									{iconEl}
+									<span className={bottomBarLabelClass}>{tab.label}</span>
+								</button>
+							</li>
+						);
+					}
+
+					return (
+						<li key={tab.id} className={bottomBarItemWrapperClass}>
+							<Link
+								href={tab.href}
+								// Les onglets-liens n'émettaient AUCUN haptique là où les
+								// onglets-boutons en émettaient : un tap sur Accueil/Favoris/Compte
+								// était muet, un tap sur Recherche/Panier non. « Bottom nav tab
+								// change » = `selection` (règle haptique projet), et seulement quand
+								// l'onglet change réellement de page.
+								onClick={() => !tab.isActive && triggerHaptic("selection")}
 								className={cn(
 									bottomBarItemClass,
 									"can-hover:hover:bg-primary/5",
 									tab.isActive && bottomBarActiveItemClass,
 								)}
-								aria-haspopup="dialog"
-								aria-expanded={tab.isActive}
-								aria-label={"ariaLabel" in tab ? tab.ariaLabel : tab.label}
+								aria-current={tab.isActive ? "page" : undefined}
+								aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
 							>
 								{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 								{iconEl}
 								<span className={bottomBarLabelClass}>{tab.label}</span>
-							</button>
-						);
-					}
-
-					return (
-						<Link
-							key={tab.id}
-							href={tab.href}
-							className={cn(
-								bottomBarItemClass,
-								"can-hover:hover:bg-primary/5",
-								tab.isActive && bottomBarActiveItemClass,
-							)}
-							aria-current={tab.isActive ? "page" : undefined}
-							aria-label={"ariaLabel" in tab ? tab.ariaLabel : undefined}
-						>
-							{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
-							{iconEl}
-							<span className={bottomBarLabelClass}>{tab.label}</span>
-							<LoadingIndicator />
-						</Link>
+								<LoadingIndicator />
+							</Link>
+						</li>
 					);
 				})}
-			</div>
+			</ul>
 		</BottomBar>,
 		document.body,
 	);

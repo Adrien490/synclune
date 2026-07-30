@@ -29,6 +29,8 @@ const { mockTx, mockPrisma, mockReleaseOrderDiscountUsageTx, mockUpdateTag, mock
 				findMany: vi.fn(),
 				update: vi.fn(),
 			},
+			// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+			stockMovement: { create: vi.fn() },
 			orderHistory: {
 				create: vi.fn(),
 			},
@@ -126,10 +128,12 @@ describe("@regression IDEM-CANCEL-002 — restock atomique avec le claim CANCELL
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-a" },
 			data: { inventory: { increment: 3 } },
+			select: { inventory: true, productId: true },
 		});
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-b" },
 			data: { inventory: { increment: 3 }, isActive: true },
+			select: { inventory: true, productId: true },
 		});
 		// CACHE-CATALOG-002 : le produit est propagé pour invalider la page vitrine.
 		expect(result).toEqual({

@@ -17,6 +17,5 @@ export const DASHBOARD_CACHE_TAGS = {
 	RECENT_ORDERS: "dashboard-recent-orders",
 	ALERTS: "dashboard-alerts",
 	TOP_PRODUCTS: "dashboard-top-products",
-	REVIEW_HEALTH: "dashboard-review-health",
 	VAT_PROGRESS: "dashboard-vat-progress",
 } as const;

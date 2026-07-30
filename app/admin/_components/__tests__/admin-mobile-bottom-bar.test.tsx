@@ -101,6 +101,7 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	),
 	BottomBarActivePill: () => <span data-testid="active-pill" />,
 	bottomBarContainerClass: "container",
+	bottomBarItemWrapperClass: "item-wrapper",
 	bottomBarItemClass: "item",
 	bottomBarActiveItemClass: "active",
 	bottomBarIconClass: "icon",
@@ -180,17 +181,21 @@ describe("AdminMobileBottomBar - bouton Menu (a11y trigger ↔ sheet)", () => {
 });
 
 describe("AdminMobileBottomBar - badge orders pluralisé", () => {
+	/** Nom accessible de l'onglet Commandes (le compte y est replié). */
+	const ordersTabName = () =>
+		screen.getByRole("link", { name: /Commandes/i }).getAttribute("aria-label");
+
 	it("rend « 1 commande en attente » (singulier) pour count=1", () => {
 		render(<AdminMobileBottomBar badges={{ orders: 1 }} />);
 
-		expect(screen.getByLabelText("1 commande en attente")).toBeInTheDocument();
+		expect(ordersTabName()).toBe("Commandes, 1 commande en attente");
 		expect(screen.getByText("1")).toBeInTheDocument();
 	});
 
 	it("rend « N commandes en attente » (pluriel) pour count>=2", () => {
 		render(<AdminMobileBottomBar badges={{ orders: 5 }} />);
 
-		expect(screen.getByLabelText("5 commandes en attente")).toBeInTheDocument();
+		expect(ordersTabName()).toBe("Commandes, 5 commandes en attente");
 		expect(screen.getByText("5")).toBeInTheDocument();
 	});
 
@@ -198,18 +203,72 @@ describe("AdminMobileBottomBar - badge orders pluralisé", () => {
 		render(<AdminMobileBottomBar badges={{ orders: 250 }} />);
 
 		expect(screen.getByText("99+")).toBeInTheDocument();
-		expect(screen.getByLabelText("250 commandes en attente")).toBeInTheDocument();
+		expect(ordersTabName()).toBe("Commandes, 250 commandes en attente");
 	});
 
 	it("n'expose aucun badge pour count=0 ou orders undefined", () => {
 		const { rerender } = render(<AdminMobileBottomBar badges={{ orders: 0 }} />);
-		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+		expect(ordersTabName()).toBeNull();
+		expect(screen.queryByText("0")).not.toBeInTheDocument();
 
 		rerender(<AdminMobileBottomBar badges={{}} />);
-		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+		expect(ordersTabName()).toBeNull();
 
 		rerender(<AdminMobileBottomBar />);
-		expect(screen.queryByLabelText(/commande/)).not.toBeInTheDocument();
+		expect(ordersTabName()).toBeNull();
+	});
+});
+
+/**
+ * @regression bottom-bar-admin-badge-live-region
+ *
+ * La pastille portait elle-même `role="status" aria-live="polite"` mais n'était
+ * rendue que si `count > 0` : la région naissait AVEC son texte, et une région
+ * `aria-live` insérée en même temps que son contenu n'est pas vocalisée. La
+ * transition 0→1 — l'arrivée d'une commande à traiter, la seule qui compte —
+ * était donc muette (audit bottom-bar 2026-07-30, P2-4 ; même piège que celui
+ * documenté dans `CountBadge`).
+ */
+describe("@regression AdminMobileBottomBar - annonce du badge", () => {
+	const liveRegion = () => document.querySelector('[aria-live="polite"]');
+
+	it("monte la région live dès le premier rendu, vide, même sans badge", () => {
+		render(<AdminMobileBottomBar badges={{ orders: 0 }} />);
+
+		expect(liveRegion()).not.toBeNull();
+		expect(liveRegion()!.textContent).toBe("");
+	});
+
+	it("reste muette au premier rendu même quand un badge est déjà là", () => {
+		// Un badge présent au montage n'est pas un événement : l'annoncer volerait
+		// la parole au lecteur d'écran à chaque navigation admin.
+		render(<AdminMobileBottomBar badges={{ orders: 3 }} />);
+
+		expect(liveRegion()!.textContent).toBe("");
+	});
+
+	it("annonce la transition 0→N (le cas que l'ancienne pastille rendait muet)", () => {
+		const { rerender } = render(<AdminMobileBottomBar badges={{ orders: 0 }} />);
+
+		rerender(<AdminMobileBottomBar badges={{ orders: 1 }} />);
+
+		expect(liveRegion()!.textContent).toBe("1 commande en attente");
+	});
+
+	it("annonce le retour à zéro", () => {
+		const { rerender } = render(<AdminMobileBottomBar badges={{ orders: 2 }} />);
+
+		rerender(<AdminMobileBottomBar badges={{ orders: 0 }} />);
+
+		expect(liveRegion()!.textContent).toBe("Aucune commande en attente");
+	});
+
+	it("la pastille elle-même est décorative (pas de seconde région live)", () => {
+		render(<AdminMobileBottomBar badges={{ orders: 7 }} />);
+
+		// Le compte visuel ne doit pas être annoncé deux fois : une seule région.
+		expect(document.querySelectorAll('[aria-live="polite"]')).toHaveLength(1);
+		expect(screen.getByText("7").closest("[aria-hidden='true']")).not.toBeNull();
 	});
 });
 
@@ -256,11 +315,14 @@ describe("AdminMobileBottomBar - haptic policy", () => {
 		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 
-	it("déclenche haptic « light » au clic d'un tab inactif", () => {
+	// « Bottom nav tab change » = `selection` (règle haptique projet). Le bouton
+	// Menu garde `light` : ce n'est pas un changement d'onglet mais l'ouverture
+	// d'un drawer.
+	it("déclenche haptic « selection » au clic d'un tab inactif", () => {
 		render(<AdminMobileBottomBar />);
 
 		fireEvent.click(screen.getByRole("link", { name: /Commandes/i }));
 
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 	});
 });

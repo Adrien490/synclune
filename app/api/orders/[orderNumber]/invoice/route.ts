@@ -2,7 +2,10 @@ import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
 import { resolveInvoiceDataForRender } from "@/modules/invoices/services/resolve-invoice-data";
-import { InvoiceSnapshotIntegrityError } from "@/modules/invoices/services/verify-invoice-snapshot";
+import {
+	InvoiceSnapshotIntegrityError,
+	InvoiceSnapshotVersionError,
+} from "@/modules/invoices/services/verify-invoice-snapshot";
 import { renderInvoicePdf } from "@/modules/invoices/services/render-invoice-pdf";
 import { persistInvoiceNumber } from "@/modules/orders/services/persist-invoice-number.service";
 import { flagInvoiceFailureForReconcile } from "@/modules/orders/services/ensure-invoice-number.service";
@@ -429,6 +432,26 @@ export async function GET(
 		}
 		pdfBuffer = renderInvoicePdf(invoiceData);
 	} catch (error) {
+		if (error instanceof InvoiceSnapshotVersionError) {
+			// Snapshot écrit par un déploiement plus récent : le hash est bon mais la
+			// forme des données est inconnue de ce build (rollback, instance en retard).
+			// Rendre reviendrait à réinterpréter des champs — refus + 503 le temps que
+			// l'instance rattrape. Cf. INVOICE_DATA_FORMAT_VERSION.
+			logger.error("Invoice snapshot format version unsupported — refusing to render", error, {
+				service: "invoice-route",
+				orderId: order.id,
+				invoiceNumber: invoiceOrder.invoiceNumber ?? undefined,
+			});
+			Sentry.captureException(error, {
+				fingerprint: ["invoice", "snapshot-version", String(error.snapshotVersion)],
+				tags: { service: "invoice-route" },
+				extra: { orderId: order.id, invoiceNumber: invoiceOrder.invoiceNumber },
+			});
+			return new Response("Facture temporairement indisponible (mise à jour en cours).", {
+				status: 503,
+				headers: { "Retry-After": "60" },
+			});
+		}
 		if (error instanceof InvoiceSnapshotIntegrityError) {
 			// Snapshot comptable corrompu/altéré : refuser de servir un document
 			// non conforme (Art. L102 B LPF) plutôt que de rendre des données

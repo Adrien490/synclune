@@ -1,13 +1,4 @@
 /**
- * Props pour StarIcon (etoile avec remplissage partiel)
- */
-export interface StarIconProps {
-	fillPercentage: number;
-	size: "sm" | "md" | "lg";
-	gradientId: string;
-}
-
-/**
  * Props pour HeartIcon (favoris/wishlist)
  */
 export interface HeartIconProps {

@@ -31,7 +31,8 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn(), updateMany: vi.fn() },
-		productSku: { update: vi.fn() },
+		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
+		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },

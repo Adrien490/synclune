@@ -137,59 +137,6 @@ describe("generateStructuredData", () => {
 		expect(productData.offers.offerCount).toBe(2);
 	});
 
-	it("includes AggregateRating only when reviews exist", () => {
-		const withoutReviews = generateStructuredData({
-			product: makeProduct(),
-			selectedSku: makeSku(),
-			reviewStats: null,
-		});
-		expect(graph(withoutReviews)[0].aggregateRating).toBeUndefined();
-
-		const withZeroReviews = generateStructuredData({
-			product: makeProduct(),
-			selectedSku: makeSku(),
-			reviewStats: { totalCount: 0, averageRating: 0 } as never,
-		});
-		expect(graph(withZeroReviews)[0].aggregateRating).toBeUndefined();
-
-		const withReviews = generateStructuredData({
-			product: makeProduct(),
-			selectedSku: makeSku(),
-			reviewStats: { totalCount: 12, averageRating: 4.5 } as never,
-		});
-		expect(graph(withReviews)[0].aggregateRating).toBeDefined();
-		expect(graph(withReviews)[0].aggregateRating.ratingValue).toBe("4.5");
-		expect(graph(withReviews)[0].aggregateRating.reviewCount).toBe(12);
-	});
-
-	it("caps review list at 10 for rich snippet compliance", () => {
-		const reviews = Array.from({ length: 15 }, (_, i) => ({
-			rating: 5,
-			content: `Review ${i}`,
-			title: null,
-			user: { name: `User ${i}` },
-			createdAt: new Date("2026-01-01"),
-		}));
-
-		const result = generateStructuredData({
-			product: makeProduct(),
-			selectedSku: makeSku(),
-			reviews: reviews as never[],
-		});
-
-		expect(graph(result)[0].review).toHaveLength(10);
-	});
-
-	it("does not include review array when no reviews provided", () => {
-		const result = generateStructuredData({
-			product: makeProduct(),
-			selectedSku: makeSku(),
-			reviews: [],
-		});
-
-		expect(graph(result)[0].review).toBeUndefined();
-	});
-
 	it("sets availability based on SKU inventory", () => {
 		const inStock = generateStructuredData({
 			product: makeProduct(),

@@ -6,8 +6,8 @@
  * `isVideoFile`) ont été retirés — ils n'avaient plus aucun appelant en
  * production. La validation de taille vit désormais dans `useMediaUpload`
  * (`maxSizeImage` / `maxSizeVideo`, propagés par chaque consommateur : 16 Mo
- * pour `catalogMedia`, 4 Mo pour `reviewMedia`), doublée côté serveur par
- * `validateFileSize` dans le middleware UploadThing.
+ * pour `catalogMedia`), doublée côté serveur par `validateFileSize` dans le
+ * middleware UploadThing.
  */
 
 import { MAX_UPLOAD_SIZE_VIDEO } from "@/modules/media/constants/upload-size-limits";
@@ -20,8 +20,6 @@ import { UPLOADTHING_DOMAINS } from "@/shared/lib/media-validation";
 export const MEDIA_SIZE_LIMITS = {
 	/** Catalog images: 16MB max (aligned with UploadThing catalogMedia route) */
 	CATALOG_IMAGE: 16 * 1024 * 1024,
-	/** Review photos: 4MB max (aligned with UploadThing reviewMedia route) */
-	REVIEW_IMAGE: 4 * 1024 * 1024,
 	/** Videos — SSOT `constants/upload-size-limits.ts` */
 	VIDEO: MAX_UPLOAD_SIZE_VIDEO,
 } as const;

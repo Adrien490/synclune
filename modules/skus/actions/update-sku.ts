@@ -2,11 +2,12 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-import { Prisma, StockMovementSource } from "@/app/generated/prisma/client";
+import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_UPDATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { updateTag } from "next/cache";
 import { after } from "next/server";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,7 +26,7 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { logger } from "@/shared/lib/logger";
 import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
-import { recordStockMovementTx } from "../services/stock-movement.service";
+import { applyInventoryDeltaTx } from "../services/apply-inventory-delta.service";
 import {
 	assertColorsExist,
 	assertMaterialsExist,
@@ -65,11 +66,17 @@ export async function updateProductSku(
 
 		const rawData = {
 			skuId: safeFormGet(formData, "skuId"),
-			priceInclTaxEuros: Number(formData.get("priceInclTaxEuros")) || 0,
+			// ⚠️ Valeurs brutes transmises à Zod, PAS `Number(...) || 0`.
+			// `Number("abc")` vaut `NaN`, et `NaN || 0` vaut `0` : une saisie illisible
+			// devenait donc un stock de 0 accepté silencieusement. Sur `update-sku` c'est
+			// pire que cosmétique — combiné à `originalInventory`, ça produit un delta
+			// NÉGATIF qui vide le stock. `z.coerce.number()` rejette `NaN`, donc l'admin
+			// obtient une vraie erreur de validation sur le champ fautif.
+			priceInclTaxEuros: formData.get("priceInclTaxEuros") ?? undefined,
 			compareAtPriceEuros: formData.get("compareAtPriceEuros")
 				? Number(formData.get("compareAtPriceEuros"))
 				: undefined,
-			inventory: Number(formData.get("inventory")) || 0,
+			inventory: formData.get("inventory") ?? undefined,
 			originalInventory: formData.get("originalInventory")
 				? Number(formData.get("originalInventory"))
 				: undefined,
@@ -118,179 +125,169 @@ export async function updateProductSku(
 			previousIsActive,
 			previousColors,
 			previousMaterials,
-		} = await prisma.$transaction(async (tx) => {
-			// Validate SKU exists and get product info
-			const existingSku = await tx.productSku.findUnique({
-				where: { id: validatedData.skuId },
-				select: {
-					id: true,
-					sku: true,
-					isActive: true,
-					isDefault: true,
-					inventory: true,
-					productId: true,
-					product: {
-						select: {
-							id: true,
-							title: true,
-							slug: true,
-							status: true,
-							_count: {
-								select: {
-									skus: { where: { isActive: true, deletedAt: null } },
+		} = await prisma.$transaction(
+			async (tx) => {
+				// Validate SKU exists and get product info
+				const existingSku = await tx.productSku.findUnique({
+					where: { id: validatedData.skuId },
+					select: {
+						id: true,
+						sku: true,
+						isActive: true,
+						isDefault: true,
+						inventory: true,
+						productId: true,
+						product: {
+							select: {
+								id: true,
+								title: true,
+								slug: true,
+								status: true,
+								_count: {
+									select: {
+										skus: { where: { isActive: true, deletedAt: null } },
+									},
 								},
 							},
 						},
+						colors: {
+							select: { colorId: true, color: { select: { slug: true } } },
+						},
+						materials: {
+							select: { materialId: true, material: { select: { slug: true } } },
+						},
+						images: {
+							select: { url: true },
+						},
 					},
-					colors: {
-						select: { colorId: true, color: { select: { slug: true } } },
-					},
-					materials: {
-						select: { materialId: true, material: { select: { slug: true } } },
-					},
-					images: {
-						select: { url: true },
-					},
-				},
-			});
-
-			if (!existingSku) {
-				throw new BusinessError("La variante spécifiée n'existe pas.");
-			}
-
-			// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
-			// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
-			if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
-				throw new BusinessError(
-					"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
-				);
-			}
-
-			// Refus de retirer isDefault sans transfert. L'admin doit utiliser
-			// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
-			// unsetOtherDefaultSkus de l'action setDefaultSku).
-			if (existingSku.isDefault && !validatedData.isDefault) {
-				throw new BusinessError(
-					"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
-				);
-			}
-
-			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
-			if (existingSku.isActive && !validatedData.isActive) {
-				assertPublicProductKeepsActiveSku({
-					productStatus: existingSku.product.status,
-					activeTotal: existingSku.product._count.skus,
-					activeAffected: 1,
 				});
-			}
 
-			await assertColorsExist(tx, refs.colorIds);
-			await assertMaterialsExist(tx, refs.materialIds);
-			await assertUniqueVariantCombination(tx, {
-				productId: existingSku.productId,
-				colorIds: refs.colorIds,
-				size: refs.size,
-				excludeSkuId: validatedData.skuId,
-			});
+				if (!existingSku) {
+					throw new BusinessError("La variante spécifiée n'existe pas.");
+				}
 
-			if (validatedData.isDefault) {
-				await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
-			}
+				// Refus de desactiver la variante principale (alignement avec update-sku-status.ts).
+				// L'admin doit d'abord promouvoir une autre variante via setDefaultSku.
+				if (existingSku.isDefault && existingSku.isActive && !validatedData.isActive) {
+					throw new BusinessError(
+						"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
+					);
+				}
 
-			await tx.skuMedia.deleteMany({
-				where: { skuId: validatedData.skuId },
-			});
+				// Refus de retirer isDefault sans transfert. L'admin doit utiliser
+				// setDefaultSku sur une autre variante (qui re-set isDefault=false ici via
+				// unsetOtherDefaultSkus de l'action setDefaultSku).
+				if (existingSku.isDefault && !validatedData.isDefault) {
+					throw new BusinessError(
+						"Impossible de retirer le statut « principale » sans la transférer. Utilisez « Définir par défaut » sur une autre variante.",
+					);
+				}
 
-			// Verrou ligne + lecture du stock RÉEL pour appliquer un DELTA relatif à
-			// la valeur affichée à l'admin (originalInventory), au lieu d'un set
-			// absolu last-write-wins. Sérialise avec le FOR UPDATE du webhook
-			// (checkout-order-processing.service) → les décréments de vente commités
-			// pendant l'édition du formulaire ne sont PAS écrasés (anti stock fantôme).
-			const lockedRows = await tx.$queryRaw<{ inventory: number }[]>`
-				SELECT "inventory" FROM "ProductSku" WHERE "id" = ${validatedData.skuId} FOR UPDATE
-			`;
-			const lockedInventory = lockedRows[0]?.inventory ?? existingSku.inventory;
-			// Fallback : si le champ caché manque, baseline = cible → delta 0, aucun écrasement.
-			const baselineInventory = validatedData.originalInventory ?? validatedData.inventory;
-			const inventoryDelta = validatedData.inventory - baselineInventory;
-			const targetInventory = lockedInventory + inventoryDelta;
-			if (targetInventory < 0) {
-				throw new BusinessError(
-					"Le stock a changé depuis l'ouverture du formulaire. Rechargez la fiche et réessayez.",
-				);
-			}
+				// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
+				if (existingSku.isActive && !validatedData.isActive) {
+					assertPublicProductKeepsActiveSku({
+						productStatus: existingSku.product.status,
+						activeTotal: existingSku.product._count.skus,
+						activeAffected: 1,
+					});
+				}
 
-			const updatedSku = await tx.productSku.update({
-				where: { id: validatedData.skuId },
-				data: {
-					priceInclTax: priceInclTaxCents,
-					compareAtPrice: compareAtPriceCents,
-					inventory: { increment: inventoryDelta },
-					isActive: validatedData.isActive,
-					isDefault: validatedData.isDefault,
-					size: refs.size,
-					colors: {
-						deleteMany: {},
-						create: refs.colorIds.map((colorId, index) => ({
-							colorId,
-							position: index,
-						})),
-					},
-					materials: {
-						deleteMany: {},
-						create: refs.materialIds.map((materialId, index) => ({
-							materialId,
-							position: index,
-						})),
-					},
-				},
-				include: {
-					product: { select: { title: true, slug: true } },
-					colors: {
-						include: { color: { select: { name: true, slug: true } } },
-						orderBy: { position: "asc" },
-					},
-					materials: {
-						include: { material: { select: { name: true, slug: true } } },
-						orderBy: { position: "asc" },
-					},
-				},
-			});
-
-			// Audit inventaire : le delta appliqué via ce formulaire est tracé comme les
-			// ajustements dédiés (adjust-sku-stock), source SKU_UPDATE. Atomique avec
-			// l'update ci-dessus (même transaction).
-			if (inventoryDelta !== 0) {
-				await recordStockMovementTx(tx, {
-					skuId: updatedSku.id,
+				await assertColorsExist(tx, refs.colorIds);
+				await assertMaterialsExist(tx, refs.materialIds);
+				await assertUniqueVariantCombination(tx, {
 					productId: existingSku.productId,
+					colorIds: refs.colorIds,
+					size: refs.size,
+					excludeSkuId: validatedData.skuId,
+				});
+
+				if (validatedData.isDefault) {
+					await unsetOtherDefaultSkus(tx, existingSku.productId, validatedData.skuId);
+				}
+
+				await tx.skuMedia.deleteMany({
+					where: { skuId: validatedData.skuId },
+				});
+
+				// Verrou ligne + DELTA relatif à la valeur affichée à l'admin, au lieu d'un
+				// set absolu last-write-wins. SSOT partagée avec `update-product` (fiche
+				// produit, cas mono-SKU) : cf. le docblock d'`applyInventoryDeltaTx` pour le
+				// détail de l'anti stock fantôme. Écrit aussi le StockMovement si delta ≠ 0.
+				const {
+					delta: inventoryDelta,
 					previousInventory: lockedInventory,
 					newInventory: targetInventory,
-					source: StockMovementSource.SKU_UPDATE,
-					createdById: admin.id,
-					createdByName: admin.name ?? null,
+				} = await applyInventoryDeltaTx(tx, {
+					skuId: validatedData.skuId,
+					productId: existingSku.productId,
+					targetInventory: validatedData.inventory,
+					originalInventory: validatedData.originalInventory,
+					fallbackInventory: existingSku.inventory,
+					admin,
 				});
-			}
 
-			if (allMedia.length > 0) {
-				await tx.skuMedia.createMany({
-					data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
+				const updatedSku = await tx.productSku.update({
+					where: { id: validatedData.skuId },
+					data: {
+						priceInclTax: priceInclTaxCents,
+						compareAtPrice: compareAtPriceCents,
+						inventory: { increment: inventoryDelta },
+						isActive: validatedData.isActive,
+						isDefault: validatedData.isDefault,
+						size: refs.size,
+						colors: {
+							deleteMany: {},
+							create: refs.colorIds.map((colorId, index) => ({
+								colorId,
+								position: index,
+							})),
+						},
+						materials: {
+							deleteMany: {},
+							create: refs.materialIds.map((materialId, index) => ({
+								materialId,
+								position: index,
+							})),
+						},
+					},
+					include: {
+						product: { select: { title: true, slug: true } },
+						colors: {
+							include: { color: { select: { name: true, slug: true } } },
+							orderBy: { position: "asc" },
+						},
+						materials: {
+							include: { material: { select: { name: true, slug: true } } },
+							orderBy: { position: "asc" },
+						},
+					},
 				});
-			}
 
-			return {
-				productSku: updatedSku,
-				oldMediaUrls: existingSku.images.map((m) => m.url),
-				// Stock verrouillé (réel) avant écriture + stock résultant après delta :
-				// base du gate back-in-stock pour refléter l'état DB exact, pas la
-				// valeur form potentiellement périmée.
-				previousInventory: lockedInventory,
-				newInventory: targetInventory,
-				previousIsActive: existingSku.isActive,
-				previousColors: existingSku.colors,
-				previousMaterials: existingSku.materials,
-			};
-		});
+				if (allMedia.length > 0) {
+					await tx.skuMedia.createMany({
+						data: toSkuMediaCreatePayload(updatedSku.id, allMedia),
+					});
+				}
+
+				return {
+					productSku: updatedSku,
+					oldMediaUrls: existingSku.images.map((m) => m.url),
+					// Stock verrouillé (réel) avant écriture + stock résultant après delta :
+					// base du gate back-in-stock pour refléter l'état DB exact, pas la
+					// valeur form potentiellement périmée.
+					previousInventory: lockedInventory,
+					newInventory: targetInventory,
+					previousIsActive: existingSku.isActive,
+					previousColors: existingSku.colors,
+					previousMaterials: existingSku.materials,
+				};
+			},
+			// Cette transaction tient advisory lock d'identité de variante + FOR UPDATE sur l'inventaire.
+			// Le défaut Prisma (5 s) la faisait échouer en P2028 sous contention avec le
+			// webhook d'encaissement, qui verrouille les mêmes lignes avec 30 s — l'admin
+			// voyait une erreur générique non déterministe. Prescrit par prisma-tx-options.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		// 9. Delete removed media from UploadThing storage
 		const newMediaUrls = new Set(allMedia.map((m) => m.url));

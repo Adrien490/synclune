@@ -13,8 +13,6 @@ import { buildToShipWhereClause } from "../services/to-ship.service";
  * - `orders`  : file « à expédier » — prédicat SSOT `buildToShipWhereClause()`.
  * - `refunds` : demandes de remboursement en attente de validation admin.
  *
- * Pas de compteur `reviews` : les avis sont auto-publiés (ReviewStatus =
- * PUBLISHED | HIDDEN), il n'existe pas de file de modération à traiter.
  *
  * Typé `Record<string, number>` (keys = NavItem.id) pour être directement
  * assignable au prop `badges` des composants de navigation.

@@ -55,10 +55,6 @@ export function MarkAsDeliveredAlertDialog() {
 									Cette action force le statut si le webhook du transporteur ne fonctionne pas. La
 									date de livraison sera enregistrée.
 								</p>
-								<p className="text-muted-foreground mt-2 text-sm">
-									Une demande d&apos;avis sera automatiquement envoyée au client 7 jours après cette
-									action.
-								</p>
 							</div>
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>

@@ -150,11 +150,27 @@ describe("fetchSkuForValidation", () => {
 		});
 	});
 
-	it("orders images by createdAt ascending", async () => {
+	// EINV-SNAPSHOT-MEDIA-001 : l'ordre `createdAt: asc` rendait l'ordre d'UPLOAD, pas
+	// l'ordre d'AFFICHAGE. Ce select alimente le snapshot figé `OrderItem` (facture,
+	// rétention 10 ans) : il doit reproduire la priorité de `pickPrimaryImage`.
+	it("orders images by primary first, then position (pickPrimaryImage parity)", async () => {
 		await fetchSkuForValidation(VALID_SKU_ID);
 
 		const callArg = mockFindUnique.mock.calls[0]![0];
-		expect(callArg.select.images.orderBy).toEqual({ createdAt: "asc" });
+		expect(callArg.select.images.orderBy).toEqual([
+			{ isPrimary: "desc" },
+			{ position: "asc" },
+			{ id: "asc" },
+		]);
+	});
+
+	// `mediaType` est le champ qui permet à l'appelant d'écarter une vidéo. Sans lui,
+	// un `.mp4` se figeait dans `productImageUrl` / `skuImageUrl`.
+	it("selects mediaType so the caller can exclude videos", async () => {
+		await fetchSkuForValidation(VALID_SKU_ID);
+
+		const callArg = mockFindUnique.mock.calls[0]![0];
+		expect(callArg.select.images.select.mediaType).toBe(true);
 	});
 
 	it("returns SKU with inventory count for stock validation", async () => {

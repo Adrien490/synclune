@@ -12,7 +12,6 @@ import { updateTag } from "next/cache";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
-import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { markAsDeliveredSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { canMarkAsDelivered } from "../services/order-status-validation.service";
@@ -123,10 +122,9 @@ export async function markAsDelivered(
 			};
 		}
 
-		// Invalider les caches (orders list admin + commandes user + reviewable products)
+		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 		if (order.userId) {
-			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(order.userId));
 		}
 
 		return {

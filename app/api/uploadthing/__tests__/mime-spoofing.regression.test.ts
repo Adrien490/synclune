@@ -50,7 +50,6 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
-vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: vi.fn() }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminApiRoute: vi.fn() }));
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: vi.fn(async () => ({ success: true })),
@@ -82,7 +81,7 @@ type UploadCompleteArgs = {
 };
 
 /** Accès typé au callback interne du FileRouter UploadThing (v7). */
-function onUploadComplete(route: "catalogMedia" | "reviewMedia") {
+function onUploadComplete(route: "catalogMedia") {
 	const def = ourFileRouter[route] as unknown as {
 		onUploadComplete: (args: UploadCompleteArgs) => Promise<unknown>;
 	};
@@ -94,7 +93,7 @@ beforeEach(() => {
 	mockDeleteFiles.mockResolvedValue({ success: true, deletedCount: 1 });
 });
 
-describe.each(["catalogMedia", "reviewMedia"] as const)(
+describe.each(["catalogMedia"] as const)(
 	"%s — un contenu non décodable est rejeté par la route",
 	(route) => {
 		it("rejette l'upload et supprime le blob quand le contenu n'est pas une image", async () => {

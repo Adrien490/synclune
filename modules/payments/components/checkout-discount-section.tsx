@@ -82,6 +82,7 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 						if (result.valid && result.discount) {
 							form.setFieldValue("_appliedDiscount", result.discount);
 							form.setFieldValue("discountCode", "");
+							form.setFieldValue("_discountNotice", null);
 							form.setFieldMeta("discountCode", (prev) => ({ ...prev, errors: [] }));
 							haptic("success");
 							setLiveMessage(
@@ -92,6 +93,9 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 						haptic("error");
 						const message = result.error ?? "Code invalide";
 						setLiveMessage(message);
+						// La notice de reprise cède la place à l'erreur de champ : le client
+						// vient de tenter lui-même, c'est son essai qui doit être commenté.
+						form.setFieldValue("_discountNotice", null);
 						form.setFieldMeta("discountCode", (prev) => ({ ...prev, errors: [message] }));
 					}
 
@@ -110,6 +114,22 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 									</CollapsibleTrigger>
 									<CollapsibleContent>
 										<div className="space-y-2 pt-1">
+											{/*
+											 * Notice NON bloquante : un code repris du panier qui n'a pas pu être
+											 * appliqué (expiré, plus éligible, ou rate limit). Elle informe sans
+											 * invalider le formulaire — cf. `_discountNotice` dans
+											 * `checkout-form.utils.ts`. `role="status"` et pas `alert` : le client
+											 * n'a rien à corriger pour pouvoir payer.
+											 */}
+											<form.Subscribe selector={(s) => s.values._discountNotice}>
+												{(notice) =>
+													notice ? (
+														<p role="status" className="text-muted-foreground text-sm">
+															{notice as string}
+														</p>
+													) : null
+												}
+											</form.Subscribe>
 											<form.AppField name="discountCode">
 												{(field) => (
 													// `items-end` : le champ porte désormais un label visible, donc il

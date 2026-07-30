@@ -400,7 +400,7 @@ export function SortableMediaItem({
 								}
 								aria-label={media.altText ?? `Aperçu vidéo ${index + 1}`}
 							>
-								Votre navigateur ne supporte pas la lecture de vidéos.
+								Ton navigateur ne peut pas lire cette vidéo.
 							</video>
 						)}
 						{/* Play icon - clickable to open lightbox.

@@ -9,6 +9,7 @@ const {
 	mockGetOrCreateCartSessionId,
 	mockGetCart,
 	mockGetSkuDetails,
+	mockValidateCartItemsWithDb,
 	mockAssertStoreOpen,
 	mockCheckRateLimit,
 	mockGetClientIp,
@@ -36,6 +37,7 @@ const {
 		mockGetOrCreateCartSessionId: vi.fn(),
 		mockGetCart: vi.fn(),
 		mockGetSkuDetails: vi.fn(),
+		mockValidateCartItemsWithDb: vi.fn(),
 		mockAssertStoreOpen: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
@@ -74,6 +76,7 @@ vi.mock("@/modules/cart/data/get-cart", () => ({
 
 vi.mock("@/modules/cart/services/sku-validation.service", () => ({
 	getSkuDetails: mockGetSkuDetails,
+	validateCartItemsWithDb: mockValidateCartItemsWithDb,
 }));
 
 vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
@@ -174,6 +177,9 @@ const MOCK_SKU_RESULT_5000 = {
 
 const MOCK_PI_USER = {
 	id: "pi_test_abc123",
+	// `status` requis : la garde CHECKOUT-PI-STATE-001 refuse tout PI qui n'est plus
+	// ouvert à la saisie. Un fixture sans statut faisait échouer 20 tests d'un coup.
+	status: "requires_payment_method",
 	metadata: {
 		userId: "cm3user0000123qz8v4h2j9d3",
 		guestSessionId: "",
@@ -182,6 +188,7 @@ const MOCK_PI_USER = {
 
 const MOCK_PI_GUEST = {
 	id: "pi_test_abc123",
+	status: "requires_payment_method",
 	metadata: {
 		userId: "",
 		guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff",
@@ -240,6 +247,8 @@ function setupShipping(amount: number | null = 499) {
 function setupCart(cart = MOCK_CART_5000, skuResult = MOCK_SKU_RESULT_5000) {
 	mockGetCart.mockResolvedValue(cart);
 	mockGetSkuDetails.mockResolvedValue(skuResult);
+	// CHECKOUT-STOCK-GATE-001 : parité avec initializePayment.
+	mockValidateCartItemsWithDb.mockResolvedValue({ success: true, data: [] });
 }
 
 function setupDefaults(userId = "cm3user0000123qz8v4h2j9d3") {
@@ -360,6 +369,7 @@ describe("updatePaymentAmount", () => {
 		it("refuses the update when PI metadata already carries an orderId", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: {
 					userId: "cm3user0000123qz8v4h2j9d3",
 					guestSessionId: "",
@@ -408,6 +418,7 @@ describe("updatePaymentAmount", () => {
 			mockAssertStoreOpen.mockResolvedValue({ message: "Boutique fermée." });
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "cm3admin000001qz8v4h2j9d3", guestSessionId: "" },
 			});
 
@@ -627,6 +638,34 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
+		// CHECKOUT-STOCK-GATE-001 : `getSkuDetails` ci-dessus ne lit pas `inventory`.
+		// Sans ces cas, le défaut « stock suffisant » du beforeEach masquerait la garde.
+		it("refuse la mise à jour du montant quand une ligne dépasse le stock", async () => {
+			mockValidateCartItemsWithDb.mockResolvedValue({
+				success: false,
+				error: "Validation échouée",
+				data: [{ skuId: "sku-1", isValid: false, error: "Stock insuffisant" }],
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe("Stock insuffisant");
+			}
+			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
+		});
+
+		it("interroge la garde de stock avec les quantités du panier serveur", async () => {
+			await updatePaymentAmount(VALID_PARAMS);
+
+			// Les quantités viennent du panier SERVEUR (jamais du client ici) : c'est
+			// l'information sans laquelle `inventory < quantity` est incalculable.
+			expect(mockValidateCartItemsWithDb).toHaveBeenCalledWith({
+				items: [{ skuId: "sku-1", quantity: 2 }],
+			});
+		});
+
 		it("returns an error when the SKU price changed since cart add", async () => {
 			setupCart(MOCK_CART_5000, {
 				success: true,
@@ -727,6 +766,7 @@ describe("updatePaymentAmount", () => {
 		it("rejects when PI userId does not match the authenticated user", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "cm3user0000999qz8v4h2j9d3", guestSessionId: "" },
 			});
 
@@ -752,6 +792,7 @@ describe("updatePaymentAmount", () => {
 			setupCart();
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
 			});
 
@@ -766,6 +807,7 @@ describe("updatePaymentAmount", () => {
 		it("rejects when authenticated user tries to access a guest PI", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "", guestSessionId: "6f9619ff-8b86-4d11-b42d-00c04fc964ff" },
 			});
 
@@ -780,6 +822,7 @@ describe("updatePaymentAmount", () => {
 		it("does not call stripe.paymentIntents.update on ownership mismatch", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "cm3userother00qz8v4h2j9d3", guestSessionId: "" },
 			});
 
@@ -932,6 +975,73 @@ describe("updatePaymentAmount", () => {
 	// Rate limit identifier logic
 	// ──────────────────────────────────────────────────────────────
 
+	// ──────────────────────────────────────────────────────────────
+	// CHECKOUT-PI-STATE-001 — état du PaymentIntent
+	// ──────────────────────────────────────────────────────────────
+
+	describe("état du PaymentIntent", () => {
+		beforeEach(() => {
+			setupDefaults();
+		});
+
+		it.each([
+			["succeeded", /déjà été effectué/i],
+			["canceled", /a été annulé/i],
+			["processing", /en cours de traitement/i],
+			["requires_capture", /en cours de traitement/i],
+		])("refuse la mise à jour sur un PI %s, avec le motif réel", async (status, expected) => {
+			// Sans cette garde, `stripe.paymentIntents.update` levait une
+			// StripeInvalidRequestError que le catch global traduisait en « Erreur lors de la
+			// mise à jour du montant » — un message qui ne dit rien et pousse à réessayer.
+			mockStripePaymentIntentsRetrieve.mockResolvedValue({
+				id: "pi_test_abc123",
+				status,
+				metadata: { userId: "cm3user0000123qz8v4h2j9d3", guestSessionId: "" },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			expect((result as { error: string }).error).toMatch(expected);
+			// On sort AVANT de solliciter Stripe pour rien.
+			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
+		});
+
+		it.each(["requires_payment_method", "requires_confirmation", "requires_action"])(
+			"laisse passer un PI %s (encore ouvert à la saisie)",
+			async (status) => {
+				// `requires_action` compte : un 3DS en cours dans un autre onglet ne doit pas
+				// empêcher la mise à jour du montant, Stripe l'accepte.
+				mockStripePaymentIntentsRetrieve.mockResolvedValue({
+					id: "pi_test_abc123",
+					status,
+					metadata: { userId: "cm3user0000123qz8v4h2j9d3", guestSessionId: "" },
+				});
+
+				const result = await updatePaymentAmount(VALID_PARAMS);
+
+				expect(result.success).toBe(true);
+				expect(mockStripePaymentIntentsUpdate).toHaveBeenCalled();
+			},
+		);
+
+		it("teste l'état APRÈS l'ownership — on ne révèle pas l'état du PI d'un tiers", async () => {
+			// Ordre des gardes : un PI qui n'appartient pas à l'appelant doit répondre
+			// « accès non autorisé », jamais « ce paiement a déjà été effectué » (ce qui
+			// confirmerait à un attaquant qu'il a deviné un PI valide et encaissé).
+			mockStripePaymentIntentsRetrieve.mockResolvedValue({
+				id: "pi_test_abc123",
+				status: "succeeded",
+				metadata: { userId: "cm3userother00qz8v4h2j9d3", guestSessionId: "" },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			expect((result as { error: string }).error).toMatch(/non autorisé/i);
+		});
+	});
+
 	describe("rate limit identifier", () => {
 		beforeEach(() => {
 			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
@@ -950,6 +1060,7 @@ describe("updatePaymentAmount", () => {
 			setupRateLimit(true);
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "cm3user0000456qz8v4h2j9d3", guestSessionId: "" },
 			});
 
@@ -962,7 +1073,7 @@ describe("updatePaymentAmount", () => {
 			);
 		});
 
-		it("uses getRateLimitIdentifier for guest users", async () => {
+		it("préfixe aussi l de repli session/IP des invités", async () => {
 			setupGuestUser("550e8400-e29b-41d4-a716-446655440000");
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.5");
@@ -970,6 +1081,7 @@ describe("updatePaymentAmount", () => {
 			setupRateLimit(true);
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
+				status: "requires_payment_method",
 				metadata: { userId: "", guestSessionId: "550e8400-e29b-41d4-a716-446655440000" },
 			});
 
@@ -981,7 +1093,7 @@ describe("updatePaymentAmount", () => {
 				"10.0.0.5",
 			);
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"session:session-xyz",
+				"update-amount:session:session-xyz",
 				expect.any(Object),
 				"10.0.0.5",
 			);

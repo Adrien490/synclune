@@ -68,7 +68,6 @@ function createProduct(overrides: Record<string, unknown> = {}) {
 		status: "PUBLIC",
 		skus: [],
 		collections: [],
-		reviewStats: null,
 		createdAt: new Date("2025-01-01"),
 		...overrides,
 	};

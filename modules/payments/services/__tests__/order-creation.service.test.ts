@@ -82,6 +82,10 @@ vi.mock("@/modules/discounts/constants/discount.constants", () => ({
 
 vi.mock("@/shared/constants/currency", () => ({
 	DEFAULT_CURRENCY: MOCK_DEFAULT_CURRENCY,
+	// ⚠️ Tout export consommé par le service doit figurer ici : Vitest lève
+	// « No "X" export is defined on the mock » au premier accès, ce qui casse les 30
+	// tests du fichier d'un coup et non celui qui l'utilise.
+	STRIPE_MIN_AMOUNT_EUR_CENTS: 50,
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -110,7 +114,9 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		colors: [{ id: "color_1", name: "Or", hex: "#FFD700" }],
 		material: "Argent",
 		size: undefined,
-		images: [{ url: "https://example.com/image.jpg", isPrimary: true }],
+		images: [
+			{ url: "https://example.com/image.jpg", isPrimary: true, mediaType: "IMAGE" as const },
+		],
 		product: {
 			id: "prod_1",
 			title: "Bague Étoile",
@@ -155,6 +161,11 @@ function makeSkuRow(overrides: Record<string, unknown> = {}) {
 		inventory: 10,
 		productTitle: "Bague Étoile",
 		productStatus: "PUBLIC",
+		skuDeletedAt: null,
+		productDeletedAt: null,
+		// Doit correspondre à `makeSku().priceInclTax` : le prix est désormais vérifié
+		// sous le verrou, une divergence fait échouer la création (fail-closed).
+		priceInclTax: 2990,
 		...overrides,
 	};
 }
@@ -209,6 +220,22 @@ describe("createOrderInTransaction — stock verification", () => {
 		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(1);
 	});
 
+	// Le nombre d'appels ne dit RIEN du verrou : sans cette assertion, retirer
+	// `FOR UPDATE` du SQL laissait toute la suite verte alors que la vérification de
+	// stock devenait une simple lecture non sérialisée. Audit « validation stock
+	// panier » 2026-07-30, P2-5. Le pattern existe ailleurs dans le repo
+	// (`dispute-handlers.test.ts`, `mark-as-paid.test.ts` pour l'advisory lock).
+	it("verrouille la ligne SKU : le SQL contient bien FOR UPDATE", async () => {
+		await createOrderInTransaction(makeParams());
+
+		const sql = mockTx.$queryRaw.mock.calls
+			.map((call) => (Array.isArray(call[0]) ? call[0].join("?") : String(call[0])))
+			.join("\n");
+
+		expect(sql).toContain('FROM "ProductSku"');
+		expect(sql).toContain("FOR UPDATE");
+	});
+
 	it("should call FOR UPDATE query for each successful cart item when multiple items", async () => {
 		const params = makeParams({
 			cartItems: [
@@ -223,6 +250,28 @@ describe("createOrderInTransaction — stock verification", () => {
 		await createOrderInTransaction(params);
 
 		expect(mockTx.$queryRaw).toHaveBeenCalledTimes(2);
+	});
+
+	/**
+	 * @regression CHECKOUT-PRICE-UNDER-LOCK-001
+	 *
+	 * Le prix est vérifié SOUS le verrou, comme le stock et le statut. Il ne l'était
+	 * pas : le total était calculé depuis `fetchSkuForValidation` (cache `checkout`),
+	 * et le garde-fou `priceAtAdd !== sku.priceInclTax` des actions de paiement compare
+	 * deux valeurs issues de la MÊME lecture cachée — il ne peut donc pas détecter un
+	 * cache périmé. `CHECKOUT-TOTAL-005` ne vérifie que la cohérence interne
+	 * (`computedSubtotal === subtotal`), les deux côtés dérivant de cette même lecture.
+	 * Un changement de prix concurrent facturait donc l'ancien montant.
+	 */
+	it("CHECKOUT-PRICE-UNDER-LOCK-001: refuse quand le prix verrouillé diverge du prix facturé", async () => {
+		// Le SKU vaut 2990 au moment du calcul du total, mais 3490 sous le verrou.
+		mockTx.$queryRaw.mockResolvedValue([makeSkuRow({ priceInclTax: 3490 })]);
+
+		await expect(createOrderInTransaction(makeParams())).rejects.toThrow(
+			"Le prix d'un article a changé. Actualise ton panier.",
+		);
+		// Fail-closed : aucune commande créée, on ne sous-facture pas.
+		expect(mockTx.order.create).not.toHaveBeenCalled();
 	});
 
 	// CHECKOUT-TOTAL-005 : plus JAMAIS de skip silencieux — un cartItem sans
@@ -487,8 +536,8 @@ describe("createOrderInTransaction — order creation without discount", () => {
 
 		const skuWithPrimary = makeSkuResult({
 			images: [
-				{ url: "https://example.com/other.jpg", isPrimary: false },
-				{ url: "https://example.com/primary.jpg", isPrimary: true },
+				{ url: "https://example.com/other.jpg", isPrimary: false, mediaType: "IMAGE" as const },
+				{ url: "https://example.com/primary.jpg", isPrimary: true, mediaType: "IMAGE" as const },
 			],
 		});
 
@@ -500,12 +549,61 @@ describe("createOrderInTransaction — order creation without discount", () => {
 		expect(itemCall.data.skuImageUrl).toBe("https://example.com/primary.jpg");
 	});
 
+	/**
+	 * @regression EINV-SNAPSHOT-MEDIA-001
+	 *
+	 * Une VIDÉO marquée `isPrimary` ne doit jamais atterrir dans le snapshot figé
+	 * `OrderItem.productImageUrl` / `skuImageUrl` — immuable, rétention 10 ans, rendu
+	 * dans l'historique client ET dans le PDF de facture. Le code faisait
+	 * `find((img) => img.isPrimary) ?? images[0]`, aveugle au `mediaType` (que le
+	 * select ne remontait même pas), et `getValidImageUrl` ne valide que HTTPS +
+	 * domaine — un `.mp4` UploadThing passait donc intégralement.
+	 */
+	it("EINV-SNAPSHOT-MEDIA-001: ignore une vidéo primaire et prend la première IMAGE", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+		mockGetValidImageUrl.mockImplementation((url: string | null) => url);
+
+		const skuWithPrimaryVideo = makeSkuResult({
+			images: [
+				{ url: "https://example.com/clip.mp4", isPrimary: true, mediaType: "VIDEO" as const },
+				{ url: "https://example.com/photo.jpg", isPrimary: false, mediaType: "IMAGE" as const },
+			],
+		});
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [skuWithPrimaryVideo] }));
+
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		expect(itemCall.data.productImageUrl).toBe("https://example.com/photo.jpg");
+		expect(itemCall.data.skuImageUrl).toBe("https://example.com/photo.jpg");
+		expect(itemCall.data.productImageUrl).not.toContain(".mp4");
+	});
+
+	it("EINV-SNAPSHOT-MEDIA-001: n'écrit aucune URL quand le SKU n'a que des vidéos", async () => {
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
+		mockGetValidImageUrl.mockReturnValue(null);
+
+		const videoOnly = makeSkuResult({
+			images: [
+				{ url: "https://example.com/clip.mp4", isPrimary: true, mediaType: "VIDEO" as const },
+			],
+		});
+
+		await createOrderInTransaction(makeParams({ skuDetailsResults: [videoOnly] }));
+
+		// `pickPrimaryImage` rend null ⇒ on préfère l'absence d'image à une vidéo.
+		expect(mockGetValidImageUrl).toHaveBeenCalledWith(null);
+		const itemCall = mockTx.orderItem.create.mock.calls[0]![0];
+		expect(itemCall.data.productImageUrl).toBeNull();
+	});
+
 	it("should fall back to first image when no primary image", async () => {
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder());
 		mockGetValidImageUrl.mockReturnValue("https://example.com/first.jpg");
 
 		const skuWithoutPrimary = makeSkuResult({
-			images: [{ url: "https://example.com/first.jpg", isPrimary: false }],
+			images: [
+				{ url: "https://example.com/first.jpg", isPrimary: false, mediaType: "IMAGE" as const },
+			],
 		});
 
 		await createOrderInTransaction(makeParams({ skuDetailsResults: [skuWithoutPrimary] }));
@@ -805,7 +903,14 @@ describe("createOrderInTransaction — totals", () => {
 		expect(createCall.data.total).toBe(5832);
 	});
 
-	it("should clamp total to 0 when discount exceeds subtotal plus shipping", async () => {
+	it("REFUSE un total sous le minimum Stripe au lieu de créer la commande (MIN-AMOUNT-DIVERGE-01)", async () => {
+		// Ce test assertait auparavant `total === 0` — le `Math.max(0, …)` du service.
+		// C'était verrouiller un cul-de-sac : une commande à 0 € est créée, puis Stripe
+		// refuse l'`update` du PaymentIntent (montant sous le minimum EUR), et
+		// `confirmCheckout` la hard-delete en affichant « Une erreur est survenue ».
+		// Le scénario n'est atteignable qu'avec un port gratuit ou un tarif < 50 c
+		// (`calculateShipping` → 0 ci-dessous) — exactement ce que le commentaire
+		// ⚠️ du service annonçait sans l'implémenter.
 		mockCalculateShipping.mockReturnValue(0);
 		mockTx.$queryRaw
 			.mockReset()
@@ -813,13 +918,32 @@ describe("createOrderInTransaction — totals", () => {
 			.mockResolvedValueOnce([makeDiscountRow()]);
 		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 0 }));
 		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
-		// Even with clamped discount = subtotal, total would be 0 + 0 = 0
+		// Remise clampée au subtotal ⇒ total = 0 + 0 = 0.
+		mockCalculateDiscountWithExclusion.mockReturnValue(5980);
+
+		await expect(
+			createOrderInTransaction(makeParams({ subtotal: 5980, discountCode: "PROMO10" })),
+		).rejects.toThrow(/trop faible pour être encaissé/i);
+
+		// Fail-closed : aucune commande créée, donc rien à nettoyer en aval.
+		expect(mockTx.order.create).not.toHaveBeenCalled();
+	});
+
+	it("accepte un total exactement égal au minimum Stripe", async () => {
+		// Borne inclusive : le rejet porte sur `< 50`, pas `<= 50`.
+		mockCalculateShipping.mockReturnValue(50);
+		mockTx.$queryRaw
+			.mockReset()
+			.mockResolvedValueOnce([makeSkuRow()])
+			.mockResolvedValueOnce([makeDiscountRow()]);
+		mockTx.order.create.mockResolvedValue(makeCreatedOrder({ total: 50 }));
+		mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
 		mockCalculateDiscountWithExclusion.mockReturnValue(5980);
 
 		await createOrderInTransaction(makeParams({ subtotal: 5980, discountCode: "PROMO10" }));
 
 		const createCall = mockTx.order.create.mock.calls[0]![0];
-		expect(createCall.data.total).toBe(0);
+		expect(createCall.data.total).toBe(50);
 	});
 });
 

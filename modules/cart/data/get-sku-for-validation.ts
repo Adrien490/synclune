@@ -12,8 +12,19 @@ import { prisma } from "@/shared/lib/prisma";
  *
  * Cached with `checkout` profile (60s stale / 30s revalidate / 5min expire).
  * Tags: SKU_STOCK (invalidated on inventory mutations) + SKU_DETAIL_BY_ID
- * (invalidated on price/status/soft-delete changes). Overselling is prevented
- * downstream by `FOR UPDATE` row locks in `order-creation.service.ts`.
+ * (invalidated on price/status/soft-delete changes).
+ *
+ * ⚠️ L'`inventory` renvoyé ici peut être périmé (jusqu'à 5 min). Il sert à
+ * l'AFFICHAGE et aux gardes de courtoisie (échouer tôt côté panier / checkout),
+ * jamais à décider d'une vente : le stock n'est réellement arbitré que sous verrou
+ * de ligne — `SELECT … FOR UPDATE` dans `order-creation.service.ts:153-182`, puis
+ * le décrément du webhook (`checkout-order-processing.service.ts:306-379`), seul
+ * point qui écrit l'inventaire sur le chemin client.
+ *
+ * Ne pas relire cette note comme « l'oversell est impossible » : le `FOR UPDATE` de
+ * la création de commande ne décrémente rien, donc deux checkouts concurrents sur
+ * le dernier exemplaire passent tous les deux. Le perdant est arrêté au webhook
+ * (`OversellError` → auto-refund, ORD-STRIPE-009) — réservation optimiste assumée.
  */
 export async function fetchSkuForValidation(skuId: string) {
 	"use cache";
@@ -41,12 +52,27 @@ export async function fetchSkuForValidation(skuId: string) {
 					deletedAt: true,
 				},
 			},
+			// EINV-SNAPSHOT-MEDIA-001 : `mediaType` est OBLIGATOIRE ici. Ce select
+			// alimente le snapshot figé `OrderItem.productImageUrl` / `skuImageUrl`
+			// (`order-creation.service.ts`) — immuable, rétention 10 ans, rendu dans
+			// l'historique client ET dans le PDF de facture. Sans `mediaType`,
+			// l'appelant ne pouvait pas écarter une vidéo : un `.mp4` se figeait dans
+			// la facture, et `getValidImageUrl` ne valide que HTTPS + domaine, pas
+			// l'extension. C'était le seul select de sélection d'image du repo à ne
+			// même pas exposer le champ.
+			// `orderBy` reproduit la priorité de `pickPrimaryImage` (primaire d'abord) :
+			// `createdAt: asc` seul rendait l'ordre d'upload, pas l'ordre d'affichage.
 			images: {
-				orderBy: { createdAt: "asc" },
+				orderBy: [
+					{ isPrimary: "desc" as const },
+					{ position: "asc" as const },
+					{ id: "asc" as const },
+				],
 				select: {
 					url: true,
 					altText: true,
 					isPrimary: true,
+					mediaType: true,
 				},
 			},
 			colors: {

@@ -6,6 +6,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/orders/actions/update-order-billing-address.ts",
     "modules/orders/actions/update-order-customer-info.ts",
     "modules/orders/actions/update-order-shipping-address.ts",
+    "modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
   ],
   "BULK_EXPORT": [
     "app/api/admin/orders/export/route.ts",

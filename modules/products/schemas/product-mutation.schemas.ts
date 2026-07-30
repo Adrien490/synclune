@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
-import { ARRAY_LIMITS, PRICE_LIMITS, TEXT_LIMITS } from "@/shared/constants/validation-limits";
+import {
+	PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
+	VIDEO_EXTENSIONS,
+} from "@/modules/media/constants/media-limits.constants";
+import {
+	ARRAY_LIMITS,
+	PRICE_LIMITS,
+	STOCK_LIMITS,
+	TEXT_LIMITS,
+} from "@/shared/constants/validation-limits";
 
 import { imageSchema } from "./product-media.schemas";
 
@@ -35,6 +43,10 @@ const baseSkuFields = {
 		.number()
 		.int({ error: "L'inventaire doit être un entier" })
 		.nonnegative({ error: "L'inventaire doit être positif ou nul" })
+		// Parité avec `sku.schemas.ts` : plafond côté SERVEUR, pas seulement dans l'UI.
+		.max(STOCK_LIMITS.MAX_INVENTORY, {
+			error: `Le stock ne peut pas dépasser ${STOCK_LIMITS.MAX_INVENTORY} unités`,
+		})
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
@@ -94,6 +106,16 @@ const defaultSkuSchema = z
 	.object({
 		skuId: z.cuid2({ message: "ID variante invalide" }),
 		...baseSkuFields,
+		// Stock affiché à l'ouverture du formulaire (champ caché) — parité avec
+		// `updateProductSkuSchema.originalInventory`. Sert à appliquer un DELTA relatif
+		// sous `FOR UPDATE` plutôt qu'un set absolu last-write-wins, qui écrasait les
+		// décréments de vente commités pendant l'édition (stock fantôme → survente).
+		// Default = inventory côté action : absent ⇒ delta 0, aucun écrasement.
+		originalInventory: z.coerce
+			.number()
+			.int({ error: "Le stock d'origine doit être un entier" })
+			.nonnegative({ error: "Le stock d'origine doit être positif ou nul" })
+			.optional(),
 	})
 	.refine(skuPriceRefinement, {
 		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
@@ -166,7 +188,7 @@ export const createProductSchema = z
 			return mediaType === "IMAGE";
 		},
 		{
-			message: "Le premier média doit être une image, pas une vidéo.",
+			message: PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
 			path: ["initialSku", "media"],
 		},
 	);
@@ -240,7 +262,7 @@ export const updateProductSchema = z
 			return mediaType === "IMAGE";
 		},
 		{
-			message: "Le premier média doit être une image, pas une vidéo.",
+			message: PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
 			path: ["defaultSku", "media"],
 		},
 	);

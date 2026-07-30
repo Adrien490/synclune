@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, it, expect } from "vitest";
 import type { InvoiceData } from "../../types/invoice-data";
+import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 
 // IMPORTANT : ce test n'utilise PAS le mock jsPDF de `render-invoice-pdf.test.ts`.
 // Le déterminisme se vérifie au niveau du buffer binaire produit par la vraie
@@ -22,6 +23,7 @@ import { renderInvoicePdf } from "../render-invoice-pdf";
  */
 function makeInvoice(overrides: Partial<InvoiceData> = {}): InvoiceData {
 	return {
+		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: "F-2026-00042",
 		invoiceFormat: "PDF",
 		issuedAt: new Date("2026-05-28T10:30:00Z"),

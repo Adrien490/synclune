@@ -15,6 +15,8 @@ const {
 	const mockTx = {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn(), updateMany: vi.fn() },
+		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+		stockMovement: { create: vi.fn() },
 		$queryRaw: vi.fn(),
 		cartItem: { deleteMany: vi.fn() },
 		// [[CART-DISCOUNT-003]] purge du code promo panier après paiement réussi

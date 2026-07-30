@@ -1,8 +1,16 @@
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
-import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
+import {
+	PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
+	VIDEO_EXTENSIONS,
+} from "@/modules/media/constants/media-limits.constants";
 import { imageSchema } from "@/modules/products/schemas/product-media.schemas";
-import { TEXT_LIMITS, ARRAY_LIMITS, PRICE_LIMITS } from "@/shared/constants/validation-limits";
+import {
+	TEXT_LIMITS,
+	ARRAY_LIMITS,
+	PRICE_LIMITS,
+	STOCK_LIMITS,
+} from "@/shared/constants/validation-limits";
 
 // ============================================================================
 // MAIN SCHEMA
@@ -49,6 +57,11 @@ const baseSkuFieldsSchema = z.object({
 		.number()
 		.int({ error: "L'inventaire doit être un entier" })
 		.nonnegative({ error: "L'inventaire doit être positif ou nul" })
+		// Plafond SERVEUR : il n'existait que dans le formulaire d'ajustement, donc un
+		// POST direct passait, et le CHECK DB ne borne que le plancher.
+		.max(STOCK_LIMITS.MAX_INVENTORY, {
+			error: `Le stock ne peut pas dépasser ${STOCK_LIMITS.MAX_INVENTORY} unités`,
+		})
 		.default(0),
 
 	// Boolean fields: normalized in server action before validation
@@ -128,7 +141,7 @@ const MEDIA_REQUIRED_ERROR = {
 };
 
 const FIRST_MEDIA_NOT_VIDEO_ERROR = {
-	message: "Le premier média doit être une image, pas une vidéo.",
+	message: PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
 	path: ["media"],
 };
 

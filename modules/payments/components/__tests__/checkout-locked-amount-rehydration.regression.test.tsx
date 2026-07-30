@@ -179,6 +179,7 @@ function piState(boundAmount: number | null) {
 		error: null,
 		boundAmount,
 		updateAmount: mockUpdateAmount,
+		cancelPendingUpdate: vi.fn(),
 		retry: vi.fn(),
 	};
 }
@@ -206,13 +207,37 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
 		});
 
-		it("gèle le fieldset des informations de commande", () => {
+		it("gèle les sections qui portent le montant (frais de livraison, code promo)", () => {
 			const { container } = render(
 				<CheckoutForm cart={cart as never} session={null} addresses={null} />,
 			);
 
-			const fieldset = container.querySelector("fieldset");
-			expect(fieldset).toBeDisabled();
+			// Ciblé par sa <legend> : depuis KI-001 il y a DEUX fieldsets (celui de
+			// l'adresse, jamais désactivé, vient en premier dans le DOM) — un
+			// `querySelector("fieldset")` nu testerait le mauvais.
+			const legend = screen.getByText("Frais de livraison et code promo");
+			expect(legend.closest("fieldset")).toBeDisabled();
+			expect(container.querySelectorAll("fieldset[disabled]")).toHaveLength(1);
+		});
+
+		it("ne place PAS la section Livraison sous le fieldset gelé (KI-001)", () => {
+			// Le serveur répercute une correction de rue / ville / nom sur la commande encore
+			// PENDING. L'enfermer sous le gel rendait ce recours inatteignable — c'est le
+			// scénario du défaut : faute de frappe dans la rue, carte refusée, plus aucun
+			// moyen de corriger.
+			//
+			// Ce suite-là ne rend aucun `<input>` (le mock de `AppField` renvoie `null`) : le
+			// gel champ par champ — `disabled={lockDestination}` sur code postal + pays, et
+			// eux seuls — est verrouillé par
+			// `locked-amount-address-editable.regression.test.ts`.
+			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+
+			const shippingSection = screen.getByTestId("section-Livraison");
+			expect(shippingSection.closest("fieldset[disabled]")).toBeNull();
+
+			// Contrôle de sens : la section code promo, elle, EST sous le gel.
+			const discountSection = screen.getByText("Frais de livraison et code promo");
+			expect(discountSection.closest("fieldset")).toBeDisabled();
 		});
 
 		it("n'appelle JAMAIS updateAmount (sinon « Commande déjà initiée » en boucle)", () => {
@@ -228,7 +253,11 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
 
 			expect(screen.queryByText(/modifier ta livraison/i)).not.toBeInTheDocument();
-			expect(screen.getByText(/ne peuvent plus changer/i)).toBeInTheDocument();
+			// Et ne prétend plus l'adresse figée : elle l'était par un gel trop large,
+			// désormais restreint aux 2 champs tarifaires (KI-001).
+			expect(screen.queryByText(/l'adresse de livraison ne peuvent plus changer/i)).toBeNull();
+			expect(screen.getByText(/le montant ne changera plus/i)).toBeInTheDocument();
+			expect(screen.getByText(/corriger ta rue/i)).toBeInTheDocument();
 		});
 
 		it("offre un vrai bouton de rechargement, qui libère le garde beforeunload d'abord", async () => {

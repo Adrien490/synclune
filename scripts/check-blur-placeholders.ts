@@ -1,7 +1,7 @@
 /**
  * Audit de couverture des placeholders blur (et des dimensions d'image).
  *
- * Analyse `SkuMedia` et `ReviewMedia` pour :
+ * Analyse `SkuMedia` pour :
  * 1. Compter les médias avec/sans `blurDataUrl` — y compris les VIDÉOS, dont la
  *    couverture n'était pas auditée du tout (le scan filtrait `mediaType: IMAGE`) ;
  * 2. Ventiler les formats réellement produits (PNG ThumbHash serveur, JPEG canvas
@@ -70,8 +70,8 @@ interface BlurStats {
 	withBlur: number;
 	withoutBlur: number;
 	formats: Record<BlurFormat, number>;
-	/** `SkuMedia` IMAGE sans width/height. `null` = non applicable (ReviewMedia). */
-	withoutDimensions: number | null;
+	/** `SkuMedia` IMAGE sans width/height. */
+	withoutDimensions: number;
 }
 
 interface TableReport {
@@ -126,41 +126,34 @@ function tallyBlur(
 // ANALYSE
 // ============================================================================
 
-async function analyzeTable(tableName: "SkuMedia" | "ReviewMedia"): Promise<TableReport> {
+async function analyzeTable(tableName: "SkuMedia"): Promise<TableReport> {
 	const stats: BlurStats = {
 		total: 0,
 		withBlur: 0,
 		withoutBlur: 0,
 		formats: { ...EMPTY_FORMATS },
-		withoutDimensions: tableName === "SkuMedia" ? 0 : null,
+		withoutDimensions: 0,
 	};
 	const samplesWithoutBlur: { id: string; url: string }[] = [];
 
-	if (tableName === "SkuMedia") {
-		// Pas de filtre `mediaType` : une VIDÉO porte aussi un blur (celui de son
-		// poster) et son absence était invisible pour cet audit.
-		const rows = await prisma.skuMedia.findMany({
-			select: {
-				id: true,
-				url: true,
-				blurDataUrl: true,
-				mediaType: true,
-				width: true,
-				height: true,
-			},
-		});
-		tallyBlur(rows, stats, samplesWithoutBlur);
+	// Pas de filtre `mediaType` : une VIDÉO porte aussi un blur (celui de son
+	// poster) et son absence était invisible pour cet audit.
+	const rows = await prisma.skuMedia.findMany({
+		select: {
+			id: true,
+			url: true,
+			blurDataUrl: true,
+			mediaType: true,
+			width: true,
+			height: true,
+		},
+	});
+	tallyBlur(rows, stats, samplesWithoutBlur);
 
-		// Dimensions : seules les IMAGES en portent (cf. backfill-media-metadata).
-		stats.withoutDimensions = rows.filter(
-			(r) => r.mediaType === "IMAGE" && (r.width === null || r.height === null),
-		).length;
-	} else {
-		const rows = await prisma.reviewMedia.findMany({
-			select: { id: true, url: true, blurDataUrl: true },
-		});
-		tallyBlur(rows, stats, samplesWithoutBlur);
-	}
+	// Dimensions : seules les IMAGES en portent (cf. backfill-media-metadata).
+	stats.withoutDimensions = rows.filter(
+		(r) => r.mediaType === "IMAGE" && (r.width === null || r.height === null),
+	).length;
 
 	return { tableName, stats, samplesWithoutBlur };
 }
@@ -171,7 +164,7 @@ async function analyzeTable(tableName: "SkuMedia" | "ReviewMedia"): Promise<Tabl
 
 function printReport(reports: TableReport[]): void {
 	const totalMissingBlur = reports.reduce((s, r) => s + r.stats.withoutBlur, 0);
-	const totalMissingDims = reports.reduce((s, r) => s + (r.stats.withoutDimensions ?? 0), 0);
+	const totalMissingDims = reports.reduce((s, r) => s + r.stats.withoutDimensions, 0);
 	// Seuls les formats non identifiés sont anormaux : PNG/JPEG/WebP sont tous
 	// des sorties légitimes du pipeline actuel.
 	const totalUnknown = reports.reduce((s, r) => s + r.stats.formats.unknown, 0);
@@ -201,9 +194,7 @@ function printReport(reports: TableReport[]): void {
 			console.log(`   Total médias:       ${stats.total}`);
 			console.log(`   Avec blur:          ${stats.withBlur} (${coverage}%)`);
 			console.log(`   Sans blur:          ${stats.withoutBlur}`);
-			if (stats.withoutDimensions !== null) {
-				console.log(`   Sans dimensions:    ${stats.withoutDimensions}`);
-			}
+			console.log(`   Sans dimensions:    ${stats.withoutDimensions}`);
 
 			if (stats.withBlur > 0) {
 				console.log("\n   📦 Formats (tous légitimes sauf « inconnu »):");
@@ -258,9 +249,8 @@ function printReport(reports: TableReport[]): void {
 
 async function main() {
 	const skuMediaReport = await analyzeTable("SkuMedia");
-	const reviewMediaReport = await analyzeTable("ReviewMedia");
 
-	printReport([skuMediaReport, reviewMediaReport]);
+	printReport([skuMediaReport]);
 }
 
 main()

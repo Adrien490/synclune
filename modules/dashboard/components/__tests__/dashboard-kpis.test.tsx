@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { GetKpisReturn, GetReviewHealthReturn } from "../../types/dashboard.types";
+import type { GetKpisReturn } from "../../types/dashboard.types";
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: (amount: number) => `${amount.toFixed(2)} €`,

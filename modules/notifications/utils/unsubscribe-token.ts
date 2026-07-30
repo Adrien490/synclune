@@ -17,7 +17,7 @@ function getSigningSecret(): string {
  * Pourquoi pas d'expiration ? RFC 8058 §3.1 — un lien d'unsubscribe doit rester
  * valide indéfiniment (un user peut cliquer 2 ans après la réception).
  *
- * Pourquoi pas de scope (back-in-stock vs review) ? Désinscription = retrait
+ * Pourquoi pas de scope par type d'e-mail ? Désinscription = retrait
  * global du consentement marketing — persisté sur `User.marketingOptOutAt`
  * (RGPD-AUDIT P1-1), filtré par tous les émetteurs marketing.
  */

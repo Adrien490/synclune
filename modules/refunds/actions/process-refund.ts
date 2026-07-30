@@ -7,8 +7,11 @@ import {
 	PaymentStatus,
 	type RefundReason,
 	RefundStatus,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
+import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { REFUND_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -398,20 +401,21 @@ export async function processRefund(
 			}
 		}
 
-		// Snapshot du stock AVANT restock : sert à ne déclencher la notif
-		// back-in-stock que pour les SKU passant réellement 0→N (gate 0→N
-		// obligatoire côté appelant — notifyBackInStock ne re-check pas inventory>0
-		// et notifierait sinon les favoris ajoutés produit-en-stock).
-		const preRestockInventory = new Map<string, { inventory: number; productId: string }>();
-		if (restockBySkuId.size > 0) {
-			const rows = await prisma.productSku.findMany({
-				where: { id: { in: [...restockBySkuId.keys()] } },
-				select: { id: true, inventory: true, productId: true },
-			});
-			for (const r of rows) {
-				preRestockInventory.set(r.id, { inventory: r.inventory, productId: r.productId });
-			}
-		}
+		// État du stock AVANT restock. Deux usages, un seul read :
+		//  1. gate 0→N de la notif back-in-stock (OBLIGATOIRE côté appelant —
+		//     `notifyBackInStock` ne re-vérifie pas `inventory > 0` et notifierait
+		//     sinon les favoris ajoutés produit-en-stock) ;
+		//  2. P1-1 — discriminant de `shouldReactivateAfterRestock` : on ne réactive
+		//     que ce que la VENTE a désactivé (`inventory === 0`), jamais un retrait
+		//     manuel de l'admin (`inventory > 0` + `isActive: false`).
+		//
+		// ⚠️ Rempli DANS la transaction (cf. plus bas), pas avant : lu hors-tx, ce
+		// snapshot pouvait être périmé si un writer passait entre-temps — le gate
+		// notifiait alors à tort, ou pas du tout.
+		const preRestockInventory = new Map<
+			string,
+			{ inventory: number; productId: string; isActive: boolean }
+		>();
 		// P2.1: compteur réel mis à jour quand l'update réussit
 		let actualRestockedCount = 0;
 		// ORD-REFUND-AUDIT-001 : tracer les SKU manqués (catalogue refactor /
@@ -440,17 +444,73 @@ export async function processRefund(
 				// ORD-REFUND-AUDIT-001 : tracer les SKU manqués pour audit + alerte
 				// Sentry. Un SKU supprimé entre création refund et processing →
 				// inventory ghost silencieux sans cette traçabilité.
+				// STOCK-LEDGER-001 : chaque restock écrit son `StockMovement` (source
+				// `SYSTEM` — remboursement, pas de saisie humaine d'inventaire) dans la
+				// même transaction. `previousInventory` est dérivé du retour de l'UPDATE,
+				// pas du snapshot `preRestockInventory` calculé HORS transaction plus haut
+				// (celui-ci ne sert qu'au gate 0→N de la notif back-in-stock et peut être
+				// périmé si un writer est passé entre-temps).
+				// État pré-restock, lu DANS la transaction (cf. déclaration plus haut) :
+				// alimente le gate 0→N ET la décision de réactivation.
+				if (restockBySkuId.size > 0) {
+					const rows = await tx.productSku.findMany({
+						where: { id: { in: [...restockBySkuId.keys()] } },
+						select: { id: true, inventory: true, productId: true, isActive: true },
+					});
+					for (const r of rows) {
+						preRestockInventory.set(r.id, {
+							inventory: r.inventory,
+							productId: r.productId,
+							isActive: r.isActive,
+						});
+					}
+				}
+
 				const restockResults = await Promise.all(
 					Array.from(restockBySkuId.entries()).map(async ([skuId, qty]) => {
+						let row: { inventory: number; productId: string } | undefined;
+						// P1-1 : sans ça, rembourser la dernière unité recréditait le stock en
+						// laissant le SKU `isActive: false` — invisible en vitrine, et la notif
+						// back-in-stock ci-dessous pointait alors sur une PDP en 404.
+						const reactivate = shouldReactivateAfterRestock(preRestockInventory.get(skuId));
+
 						try {
-							await tx.productSku.update({
-								where: { id: skuId },
-								data: { inventory: { increment: qty } },
-							});
-							return { skuId, qty, ok: true } as const;
+							const updated = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
+								UPDATE "ProductSku"
+								SET "inventory" = "inventory" + ${qty},
+								    "isActive" = CASE WHEN ${reactivate} THEN true ELSE "isActive" END,
+								    "updatedAt" = NOW()
+								WHERE "id" = ${skuId}
+								RETURNING "inventory", "productId"
+							`;
+							// SKU supprimé entre la création du refund et son traitement :
+							// zéro ligne. Compté comme skipped (ORD-REFUND-AUDIT-001) — un
+							// `update` Prisma levait P2025 ici, le raw ne lève pas.
+							row = updated[0];
 						} catch {
 							return { skuId, qty, ok: false } as const;
 						}
+
+						if (!row) return { skuId, qty, ok: false } as const;
+
+						// ⚠️ HORS du try : une écriture d'inventaire vient d'être appliquée.
+						// Si le journal échoue, il faut que la transaction ENTIÈRE échoue —
+						// pas qu'on rapporte « restock ignoré » alors que le stock a bougé.
+						// C'est ce qu'un catch englobant produisait : il avalait aussi les
+						// erreurs de programmation (un `StockMovementSource` undefined via un
+						// mock partiel du client Prisma, par exemple) et les déguisait en
+						// « SKU supprimé », état métier parfaitement plausible — donc
+						// indétectable en test comme en production.
+						await recordStockMovementTx(tx, {
+							skuId,
+							productId: row.productId,
+							previousInventory: row.inventory - qty,
+							newInventory: row.inventory,
+							source: StockMovementSource.SYSTEM,
+							reason: `Remboursement ${id}`,
+						});
+
+						return { skuId, qty, ok: true } as const;
 					}),
 				);
 				skippedRestocks = restockResults

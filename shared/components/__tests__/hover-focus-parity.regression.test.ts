@@ -9,7 +9,7 @@
  * Audit responsive 2026-07-26, P2 — cinq composants révélaient une affordance au
  * survol sans équivalent focus : `filter-badge` (le « × » restait à `opacity-60`
  * au clavier), `kpi-card` (chevron « cette carte navigue »),
- * `homepage-review-card` (soulignement de lien), `dialog` et `sheet` (bouton
+ * `dialog` et `sheet` (bouton
  * fermer atténué même avec le focus dessus).
  *
  * ## Portée volontairement étroite
@@ -55,12 +55,6 @@ const GUARDS: readonly Guard[] = [
 		affordance: "le chevron indique que la carte KPI navigue",
 		hover: "group-hover:text-primary",
 		focus: "group-focus-within:text-primary",
-	},
-	{
-		file: "modules/reviews/components/homepage-review-card.tsx",
-		affordance: "le soulignement indique que le titre produit est un lien",
-		hover: "can-hover:group-hover:underline",
-		focus: "group-focus-visible:underline",
 	},
 	{
 		file: "shared/components/ui/dialog.tsx",

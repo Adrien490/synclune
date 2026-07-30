@@ -46,7 +46,7 @@ export const SELECTORS = {
  * - In local dev: skips the test gracefully.
  *
  * Use this for data that the seed script guarantees (products, collections).
- * Do NOT use for state-dependent data (orders, reviews) or UI variants (SKU selection).
+ * Do NOT use for state-dependent data (orders) or UI variants (SKU selection).
  */
 export function requireSeedData(
 	testFn: { skip: (condition: boolean, message: string) => void },

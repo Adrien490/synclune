@@ -255,27 +255,6 @@ export const PRODUCT_SEARCH_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour les avis/reviews de produits
- *
- * Protège contre spam de reviews
- */
-export const PRODUCT_REVIEW_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 avis maximum
-	windowMs: hours(24), // par jour
-};
-
-/**
- * Limite pour le chargement paginé d'avis (load more)
- *
- * Protège contre scraping rapide de tous les avis d'un produit
- * Permissif car action de lecture fréquente et légitime
- */
-export const REVIEW_LOAD_MORE_LIMIT: RateLimitConfig = {
-	limit: 30, // 30 chargements maximum
-	windowMs: minutes(1), // par minute
-};
-
-/**
  * Limite pour le chargement paginé du catalogue produits (load more mobile)
  *
  * Permissif car action de lecture fréquente sur catalogue mobile avec
@@ -623,7 +602,6 @@ export const PRODUCT_COOKIE_ACTION_LIMIT: RateLimitConfig = {
 
 export const PRODUCT_LIMITS = {
 	SEARCH: PRODUCT_SEARCH_LIMIT,
-	REVIEW: PRODUCT_REVIEW_LIMIT,
 	COOKIE_ACTION: PRODUCT_COOKIE_ACTION_LIMIT,
 } as const;
 
@@ -1424,50 +1402,6 @@ export const ADDRESS_SEARCH_LIMIT: RateLimitConfig = {
 export const ADDRESS_LIMITS = {
 	MUTATE: ADDRESS_MUTATE_LIMIT,
 	SEARCH: ADDRESS_SEARCH_LIMIT,
-} as const;
-
-// ========================================
-// ADMIN REVIEW LIMITS
-// ========================================
-
-/**
- * Limite pour la creation de reponses admin aux avis (admin)
- */
-export const ADMIN_REVIEW_RESPONSE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la moderation d'avis (admin)
- */
-export const ADMIN_REVIEW_MODERATE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la restauration d'un avis soft-deleted (admin)
- */
-const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le rafraichissement du cache avis (admin) — utilisé par le
- * banner cross-page "Sélectionner les N filtrés".
- */
-const ADMIN_REVIEW_REFRESH_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-export const ADMIN_REVIEW_LIMITS = {
-	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
-	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
-	RESTORE: ADMIN_REVIEW_RESTORE_LIMIT,
-	REFRESH: ADMIN_REVIEW_REFRESH_LIMIT,
 } as const;
 
 // ========================================

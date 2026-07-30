@@ -69,7 +69,6 @@ const MOCK_EXPORT_DATA = {
 	orders: [],
 	wishlist: [],
 	discountUsages: [],
-	reviews: [],
 	sessions: [],
 };
 

@@ -44,18 +44,31 @@ export async function getOrCreateStripeCustomer(
 				// Lowercase + trim so case variations of the same email reuse the same Stripe customer.
 				const customerIdempotencyKey = `customer-create-${params.email.toLowerCase().trim()}`;
 
+				// `initializePayment` appelle ce service AVANT toute saisie d'adresse : il
+				// passe des chaînes vides. On omet alors `name` et `address` au lieu
+				// d'envoyer un objet de chaînes vides — sinon tout client qui abandonne le
+				// tunnel laisse chez Stripe une fiche à l'adresse `{ country: "FR" }` seule,
+				// que rien ne distingue d'une adresse réellement renseignée. L'identité de
+				// facturation arrive à `confirmCheckout` via `enrichStripeCustomer`.
+				const fullName = `${params.firstName} ${params.lastName}`.trim();
+				const hasAddress = Boolean(
+					params.address.addressLine1 || params.address.postalCode || params.address.city,
+				);
+
 				const customer = await stripe.customers.create(
 					{
 						email: params.email,
-						name: `${params.firstName} ${params.lastName}`.trim(),
-						address: {
-							line1: params.address.addressLine1,
-							line2: params.address.addressLine2 ?? undefined,
-							postal_code: params.address.postalCode,
-							city: params.address.city,
-							country: params.address.country ?? "FR",
-						},
-						phone: params.phoneNumber ?? undefined,
+						...(fullName && { name: fullName }),
+						...(hasAddress && {
+							address: {
+								line1: params.address.addressLine1,
+								line2: params.address.addressLine2 ?? undefined,
+								postal_code: params.address.postalCode,
+								city: params.address.city,
+								country: params.address.country ?? "FR",
+							},
+						}),
+						...(params.phoneNumber && { phone: params.phoneNumber }),
 						metadata: {
 							source: "checkout_b2c",
 							createdFrom: "synclune-bijoux",

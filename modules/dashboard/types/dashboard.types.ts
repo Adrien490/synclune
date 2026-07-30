@@ -88,15 +88,6 @@ export type GetKpisReturn = {
 };
 
 // ============================================================================
-// TYPES - REVIEW HEALTH (split from KPIs, cached `reference`)
-// ============================================================================
-
-export type GetReviewHealthReturn = {
-	averageRating: number;
-	totalReviews: number;
-};
-
-// ============================================================================
 // TYPES - VAT THRESHOLD (franchise en base art. 293 B CGI)
 // ============================================================================
 

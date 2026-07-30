@@ -176,9 +176,19 @@ export async function notifyBackInStock(productId: string): Promise<number> {
 							// achetable. Un produit archivé/brouillon/soft-deleted dont un
 							// SKU est restocké ne doit pas générer d'email « revenu en
 							// stock » (lien produit ⇒ 404, atteinte image).
+							//
+							// P1-2 (audit « SKUs et variantes » 2026-07-30) : `status: PUBLIC`
+							// ne suffit PAS. `GET_PRODUCT_SELECT` filtre `skus.isActive`, donc
+							// un produit PUBLIC dont aucun SKU n'est actif ET en stock rend une
+							// PDP en `notFound()` — exactement le 404 que ce filtre prétend
+							// éviter. Le cas est atteignable : le webhook désactive un SKU tombé
+							// à 0, et un restock sans réactivation le laisse invisible.
+							// `drain-back-in-stock.service.ts` appliquait déjà cette condition ;
+							// le chemin d'appel direct, non — d'où l'asymétrie corrigée ici.
 							product: {
 								status: ProductStatus.PUBLIC,
 								deletedAt: null,
+								skus: { some: { isActive: true, inventory: { gt: 0 }, deletedAt: null } },
 							},
 							wishlist: {
 								userId: { not: null },

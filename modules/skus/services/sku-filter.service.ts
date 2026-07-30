@@ -123,7 +123,14 @@ export function matchSize(sku: BaseProductSku, selectors: Pick<VariantSelectors,
 	// Aucune sélection = match par défaut
 	if (!size) return true;
 
-	return sku.size === size;
+	// Comparaison INSENSIBLE À LA CASSE, par cohérence avec
+	// `assertUniqueVariantCombination` qui compare `size` en `mode: "insensitive"` :
+	// « M » et « m » sont donc la MÊME variante pour la garde d'unicité (impossible de
+	// créer les deux), mais étaient deux tailles DIFFÉRENTES ici — une taille saisie
+	// « m » par l'admin restait inatteignable depuis un lien `?size=M`. Rien ne
+	// normalise la casse stockée, la casse ne porte donc aucune identité : c'est la
+	// sélection qui doit s'aligner, pas le libellé de l'admin qu'il faut écraser.
+	return sku.size?.toLowerCase() === size.toLowerCase();
 }
 
 /**

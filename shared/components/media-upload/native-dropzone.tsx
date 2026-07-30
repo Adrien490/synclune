@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
+import { ACCEPT_ATTRIBUTE_CATALOG } from "@/modules/media/constants/media-limits.constants";
 import { cn } from "@/shared/utils/cn";
-
-const isImageOrVideo = (f: File) => f.type.startsWith("image/") || f.type.startsWith("video/");
 
 interface NativeDropzoneProps {
 	/**
-	 * Called with files chosen via click, drag-drop, or paste.
+	 * Called with files chosen via click or drag-drop.
 	 * The caller is responsible for type/size/count validation (the unified `useMediaUpload`
 	 * pipeline already does this) — this component only collects files.
 	 */
 	onFiles: (files: File[]) => void;
 	/**
-	 * `accept` filter for the hidden input (default `"image/*"`).
-	 * HEIC/HEIF are appended automatically for image flows so iOS lists Camera Roll items
-	 * even when the MIME is dropped by the browser.
+	 * `accept` filter for the hidden input. Défaut : la SSOT catalogue.
+	 *
+	 * ⚠️ Passer une liste MIME explicite (cf. `ACCEPT_ATTRIBUTE_*`), jamais un joker
+	 * `image/*,video/*` : le picker natif proposerait alors des formats que le
+	 * serveur refuse (`.mov`, `.svg`), et le fichier ne serait rejeté qu'après avoir
+	 * été téléversé en entier.
 	 */
 	accept?: string;
 	/** Allow selecting multiple files (default `true`). */
 	multiple?: boolean;
-	/** Disable the zone entirely (no click, drag, paste, or keyboard activation). */
+	/** Disable the zone entirely (no click, drag, or keyboard activation). */
 	disabled?: boolean;
 	/** Idle primary label. */
 	primaryLabel?: string;
@@ -31,8 +33,6 @@ interface NativeDropzoneProps {
 	hint?: React.ReactNode;
 	/** Accessible label of the zone. */
 	ariaLabel?: string;
-	/** Filter applied to pasted files before forwarding (default: images + videos). */
-	pasteFilter?: (file: File) => boolean;
 	/** Optional leading icon rendered above the label. */
 	icon?: React.ReactNode;
 	/** Extra classes merged onto the zone. */
@@ -40,58 +40,32 @@ interface NativeDropzoneProps {
 }
 
 /**
- * Minimal native HTML5 drop zone — click, drag&drop and paste, all routed through `onFiles`.
+ * Minimal native HTML5 drop zone — click and drag&drop, routed through `onFiles`.
  *
  * Replaces UploadThing's `UploadDropzone` so the upload path goes through the unified
  * `useMediaUpload` pipeline (HEIC compression, retry, bytes-based progress, offline queue,
- * failedFiles tracking) on desktop, exactly like mobile. Self-contained: owns its hidden
- * `<input>`, drag-over state and window-level paste listener.
+ * failedFiles tracking) on desktop, exactly like mobile. Owns its hidden `<input>` and
+ * its drag-over state.
+ *
+ * ⚠️ Le **collage** n'est PAS géré ici : il passe par `useWindowPasteFiles`, monté par
+ * la surface. Un listener `window` porté par ce composant était ajouté deux fois dès
+ * qu'une surface rendait ses branches mobile et desktop simultanément (gating CSS),
+ * et chaque fichier collé arrivait en double.
  */
 export function NativeDropzone({
 	onFiles,
-	accept = "image/*",
+	accept = ACCEPT_ATTRIBUTE_CATALOG,
 	multiple = true,
 	disabled = false,
-	primaryLabel = "Glissez vos fichiers ou cliquez",
-	dropLabel = "Relâchez pour ajouter",
+	primaryLabel = "Glisse tes fichiers ou clique",
+	dropLabel = "Relâche pour ajouter",
 	hint,
-	ariaLabel = "Zone d'upload (glissez ou cliquez)",
-	pasteFilter = isImageOrVideo,
+	ariaLabel = "Zone d'upload (glisse ou clique)",
 	icon,
 	className,
 }: NativeDropzoneProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isDropTarget, setIsDropTarget] = useState(false);
-
-	// Append HEIC/HEIF to image-accepting inputs (iOS interop).
-	const acceptWithHeic = accept.includes("image/")
-		? `${accept},image/heic,image/heif,.heic,.heif`
-		: accept;
-
-	// Window-level paste → forward matching files. Skip when focus is on a text field
-	// (the user is pasting text, not media). Keep a ref so the listener stays stable.
-	const onFilesRef = useRef(onFiles);
-	useEffect(() => {
-		onFilesRef.current = onFiles;
-	});
-	useEffect(() => {
-		if (disabled) return;
-		const handlePaste = (e: ClipboardEvent) => {
-			const target = e.target as HTMLElement | null;
-			if (target) {
-				const tag = target.tagName;
-				if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
-			}
-			const items = e.clipboardData?.files;
-			if (!items || items.length === 0) return;
-			const files = Array.from(items).filter(pasteFilter);
-			if (files.length === 0) return;
-			e.preventDefault();
-			onFilesRef.current(files);
-		};
-		window.addEventListener("paste", handlePaste);
-		return () => window.removeEventListener("paste", handlePaste);
-	}, [disabled, pasteFilter]);
 
 	const pickFiles = () => {
 		if (disabled) return;
@@ -111,7 +85,14 @@ export function NativeDropzone({
 					pickFiles();
 				}
 			}}
-			onClick={pickFiles}
+			onClick={(e) => {
+				// ⚠️ L'`<input>` caché est un ENFANT de cette zone : le clic programmatique
+				// de `pickFiles()` remonte donc jusqu'ici et rappelle le handler, qui
+				// re-clique l'input… Le sélecteur de fichiers s'ouvrait deux fois par clic.
+				// Ignorer les événements dont la cible EST l'input casse la boucle.
+				if (e.target === inputRef.current) return;
+				pickFiles();
+			}}
 			onDragOver={(e) => {
 				if (disabled) return;
 				if (!e.dataTransfer.types.includes("Files")) return;
@@ -145,7 +126,7 @@ export function NativeDropzone({
 			<input
 				ref={inputRef}
 				type="file"
-				accept={acceptWithHeic}
+				accept={accept}
 				multiple={multiple}
 				hidden
 				aria-hidden="true"

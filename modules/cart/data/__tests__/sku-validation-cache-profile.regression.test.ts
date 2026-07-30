@@ -12,9 +12,17 @@ import { describe, expect, it } from "vitest";
  * Historique : avant 2026-05-28, le JSDoc annonçait un profile "realtime"
  * (30s stale / 15s revalidate / 1min expire) qui n'existait pas dans
  * `next.config.ts:cacheLife`. L'implémentation utilisait `cacheLife("checkout")`
- * (60s/30s/300s) — divergence silencieuse. Le risque d'overselling est nul
- * grâce au verrou `FOR UPDATE` dans `order-creation.service.ts`, mais
- * l'ambiguïté pouvait mener à un mauvais choix lors d'un futur audit.
+ * (60s/30s/300s) — divergence silencieuse. L'ambiguïté pouvait mener à un mauvais
+ * choix lors d'un futur audit.
+ *
+ * ⚠️ Correction (audit validation stock panier 2026-07-30) : cette note affirmait
+ * « le risque d'overselling est nul grâce au verrou `FOR UPDATE` dans
+ * `order-creation.service.ts` ». C'est FAUX — ce verrou vérifie le stock mais ne le
+ * décrémente pas, donc deux checkouts concurrents sur le dernier exemplaire passent
+ * tous les deux. La péremption du cache n'est de toute façon pas ce qui arbitre la
+ * vente : le seul écrivain de l'inventaire sur le chemin client est le décrément du
+ * webhook, qui re-valide sous son propre `FOR UPDATE` et lève `OversellError` avant
+ * d'écrire (le perdant est remboursé automatiquement, ORD-STRIPE-009).
  *
  * Cette régression échoue si :
  *  - un commentaire référence "realtime" sans qu'un profile éponyme existe

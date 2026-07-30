@@ -90,9 +90,22 @@ interface CheckoutAddressFieldsProps {
 	form: CheckoutFormInstance;
 	session: Session | null;
 	addresses: GetUserAddressesReturn | null;
+	/**
+	 * Gèle le PAYS et le CODE POSTAL — les deux seules composantes de l'adresse dont
+	 * dépend le montant (tarif d'expédition). Posé quand une commande est déjà liée au
+	 * PaymentIntent : le client peut alors corriger sa rue, sa ville ou son nom (le
+	 * serveur répercute la correction sur le snapshot, cf. KI-001), mais pas déplacer sa
+	 * livraison dans une autre zone tarifaire — ce que `resolveIdempotentHit` refuserait.
+	 */
+	lockDestination?: boolean;
 }
 
-export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddressFieldsProps) {
+export function CheckoutAddressFields({
+	form,
+	session,
+	addresses,
+	lockDestination = false,
+}: CheckoutAddressFieldsProps) {
 	const isGuest = !session;
 
 	return (
@@ -111,7 +124,9 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 			 */}
 
 			{/* Address selector for logged-in users with multiple addresses */}
-			{!isGuest && addresses && addresses.length > 1 && (
+			{/* Masqué quand la destination est gelée : ce sélecteur réécrit le pays et le
+			    code postal en bloc, ce que le serveur refuserait à la resoumission. */}
+			{!lockDestination && !isGuest && addresses && addresses.length > 1 && (
 				<form.Subscribe selector={(s) => s.values._selectedAddressId}>
 					{(selectedAddressId) => (
 						<AddressSelector
@@ -203,6 +218,8 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 									<field.InputField
 										label="Code postal"
 										required
+										// Gelé avec le montant : le tarif d'expédition en dépend.
+										disabled={lockDestination}
 										inputMode={isNumericPostalCode ? "numeric" : "text"}
 										pattern={isNumericPostalCode ? "[0-9]*" : undefined}
 										autoComplete="postal-code"
@@ -254,6 +271,8 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 					<field.SelectField
 						label="Pays"
 						required
+						// Gelé avec le montant : le tarif d'expédition en dépend.
+						disabled={lockDestination}
 						options={countryOptions}
 						// `country` (code ISO), PAS `country-name` : les options ont pour
 						// value un code (`countryOptions` ci-dessus). Avec `country-name`

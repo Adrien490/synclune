@@ -72,6 +72,7 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	),
 	BottomBarActivePill: () => null,
 	bottomBarContainerClass: "container",
+	bottomBarItemWrapperClass: "item-wrapper",
 	bottomBarItemClass: "item",
 	bottomBarActiveItemClass: "active",
 	bottomBarIconClass: "icon",
@@ -223,6 +224,84 @@ describe("ShopMobileBottomNav", () => {
 
 			expect(screen.getByRole("button", { name: "Panier" })).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: "Favoris" })).toBeInTheDocument();
+		});
+	});
+
+	// Audit bottom-bar 2026-07-30, P3.
+	describe("structure de liste, haptique et espace client", () => {
+		/**
+		 * Cinq liens/boutons frères dans un `<nav>` ne disent pas « 5 éléments » à un
+		 * lecteur d'écran. Le `<li>` doit porter le conteneur flex, sinon le `flex-1`
+		 * de l'onglet n'a plus rien à quoi s'appliquer et les onglets ne se
+		 * répartissent plus la largeur.
+		 */
+		it("expose les onglets comme une liste", () => {
+			render(<ShopMobileBottomNav isAuthenticated={false} />);
+
+			const list = screen.getByRole("list");
+			const items = screen.getAllByRole("listitem");
+			expect(items).toHaveLength(5);
+			for (const item of items) {
+				expect(item.parentElement).toBe(list);
+				expect(item.className).toContain("item-wrapper");
+			}
+		});
+
+		/**
+		 * Les onglets-LIENS n'émettaient aucun haptique là où les onglets-boutons en
+		 * émettaient : un tap sur Accueil/Favoris/Compte était muet, un tap sur
+		 * Recherche/Panier non. La règle projet garde « bottom nav tab change » en
+		 * `selection`.
+		 */
+		it("déclenche haptic « selection » au tap d'un onglet-lien inactif", () => {
+			render(<ShopMobileBottomNav isAuthenticated={false} />);
+
+			fireEvent.click(screen.getByRole("link", { name: "Favoris" }));
+
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("ne déclenche pas d'haptique sur un onglet-lien déjà actif", () => {
+			mockIsRouteActive.mockReturnValue(true);
+			render(<ShopMobileBottomNav isAuthenticated={false} />);
+
+			fireEvent.click(screen.getByRole("link", { name: "Favoris" }));
+
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
+		});
+
+		/**
+		 * L'espace client a TROIS racines (`/commandes`, `/adresses`, `/parametres`),
+		 * toutes rendues avec la bottom-nav. L'onglet Compte n'en testait que deux :
+		 * le carnet d'adresses n'activait aucun onglet.
+		 */
+		it.each(["/commandes", "/adresses", "/parametres"])(
+			"marque l'onglet Compte actif sur %s",
+			(route) => {
+				mockUsePathname.mockReturnValue(route);
+				// Implémentation réelle : préfixe ou égalité exacte.
+				mockIsRouteActive.mockImplementation(
+					(pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`),
+				);
+
+				render(<ShopMobileBottomNav isAuthenticated />);
+
+				expect(screen.getByRole("link", { name: "Compte" })).toHaveAttribute(
+					"aria-current",
+					"page",
+				);
+			},
+		);
+
+		it("marque l'onglet Compte actif sur une sous-route du carnet d'adresses", () => {
+			mockUsePathname.mockReturnValue("/adresses/nouvelle");
+			mockIsRouteActive.mockImplementation(
+				(pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`),
+			);
+
+			render(<ShopMobileBottomNav isAuthenticated />);
+
+			expect(screen.getByRole("link", { name: "Compte" })).toHaveAttribute("aria-current", "page");
 		});
 	});
 });

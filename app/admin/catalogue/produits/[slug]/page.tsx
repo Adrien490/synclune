@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 
 import { ProductDetailPage } from "@/modules/products/components/admin/product-detail";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -52,8 +51,6 @@ export default async function AdminProductDetailPage({
 		notFound();
 	}
 
-	const reviewStats = await getProductReviewStats(product.id);
-
 	return (
 		<div className="space-y-6">
 			<Breadcrumb className="hidden md:flex">
@@ -72,7 +69,7 @@ export default async function AdminProductDetailPage({
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<ProductDetailPage product={product} reviewStats={reviewStats} />
+			<ProductDetailPage product={product} />
 
 			<ProductsAdminDialogs />
 		</div>

@@ -75,10 +75,6 @@ export const softDelete = {
 	refund: (id: string) => prisma.refund.update({ where: { id }, data: { deletedAt: new Date() } }),
 	orderNote: (id: string) =>
 		prisma.orderNote.update({ where: { id }, data: { deletedAt: new Date() } }),
-	productReview: (id: string) =>
-		prisma.productReview.update({ where: { id }, data: { deletedAt: new Date() } }),
-	reviewResponse: (id: string) =>
-		prisma.reviewResponse.update({ where: { id }, data: { deletedAt: new Date() } }),
 	product: (id: string) =>
 		prisma.product.update({ where: { id }, data: { deletedAt: new Date() } }),
 	productSku: (id: string) =>

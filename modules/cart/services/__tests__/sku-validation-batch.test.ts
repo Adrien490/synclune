@@ -14,9 +14,6 @@ vi.mock("@/modules/cart/data/get-sku-for-validation", () => ({
 }));
 
 vi.mock("@/modules/cart/schemas/cart.schemas", () => ({
-	validateSkuSchema: {
-		parse: vi.fn((input: unknown) => input),
-	},
 	getSkuDetailsSchema: {
 		parse: vi.fn((input: unknown) => input),
 	},

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	MAX_UPLOAD_SIZE_IMAGE,
+	MAX_UPLOAD_SIZE_VIDEO,
+} from "@/modules/media/constants/upload-size-limits";
+import {
 	OFFLINE_QUEUE_MAX_BYTES,
 	OfflineQueueFullError,
 	entryToFile,
@@ -11,14 +15,20 @@ import {
 // jsdom lacks IndexedDB. This file covers the pure helpers and type guarantees.
 
 describe("offline-upload-queue — pure helpers", () => {
-	it("exposes a 50 MB cap constant", () => {
-		expect(OFFLINE_QUEUE_MAX_BYTES).toBe(50 * 1024 * 1024);
+	it("peut contenir le plus gros fichier téléversable", () => {
+		// ⚠️ Invariant, pas un chiffre. Le plafond valait 50 Mo en dur, soit MOINS
+		// qu'une seule vidéo catalogue (64 Mo) : `enqueue` levait donc toujours
+		// `OfflineQueueFullError` pour une vidéo, et l'UI affichait « File hors-ligne
+		// pleine » sur une file vide. Une file incapable d'accueillir le plus gros
+		// fichier accepté par l'application est structurellement inutilisable.
+		expect(OFFLINE_QUEUE_MAX_BYTES).toBeGreaterThanOrEqual(MAX_UPLOAD_SIZE_VIDEO);
+		expect(OFFLINE_QUEUE_MAX_BYTES).toBeGreaterThanOrEqual(MAX_UPLOAD_SIZE_IMAGE);
 	});
 
-	it("OfflineQueueFullError carries a human-readable message", () => {
+	it("OfflineQueueFullError annonce le plafond réel", () => {
 		const err = new OfflineQueueFullError();
 		expect(err.name).toBe("OfflineQueueFullError");
-		expect(err.message).toContain("50 Mo");
+		expect(err.message).toContain(`${Math.round(OFFLINE_QUEUE_MAX_BYTES / 1024 / 1024)} Mo`);
 	});
 
 	it("entryToFile reconstructs a File with matching metadata", () => {
@@ -29,7 +39,7 @@ describe("offline-upload-queue — pure helpers", () => {
 			fileName: "photo.webp",
 			fileType: "image/webp",
 			mediaType: "IMAGE",
-			endpoint: "reviewMedia",
+			endpoint: "catalogMedia",
 			queuedAt: 1_700_000_000_000,
 		};
 

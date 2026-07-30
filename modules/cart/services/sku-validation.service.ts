@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import type {
-	SkuValidationResult,
 	SkuDetailsResult,
 	BatchSkuValidationResult,
 } from "@/modules/cart/types/sku-validation.types";
-import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/cart.schemas";
+import { getSkuDetailsSchema } from "@/modules/cart/schemas/cart.schemas";
 import {
 	fetchSkuForValidation,
 	fetchSkusForBatchValidation,
@@ -41,6 +40,7 @@ function buildSkuDetailsSuccess(sku: NonNullable<FetchedSku>): SkuDetailsResult 
 					url: img.url,
 					altText: img.altText ?? undefined,
 					isPrimary: img.isPrimary,
+					mediaType: img.mediaType,
 				})),
 			},
 		},
@@ -58,105 +58,6 @@ function checkSkuDetailsErrors(sku: NonNullable<FetchedSku>): SkuDetailsResult |
 		return { success: false, error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC };
 	}
 	return null;
-}
-
-// Action: Valider un SKU et son stock
-export async function validateSkuAndStock(input: {
-	skuId: string;
-	quantity: number;
-}): Promise<SkuValidationResult> {
-	try {
-		// Validation des inputs
-		const validatedInput = validateSkuSchema.parse(input);
-
-		const sku = await fetchSkuForValidation(validatedInput.skuId);
-
-		if (!sku) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.SKU_NOT_FOUND,
-			};
-		}
-
-		// Vérifier les soft deletes (SKU ou Product supprimé)
-		if (sku.deletedAt || sku.product.deletedAt) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-			};
-		}
-
-		if (!sku.isActive) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.SKU_INACTIVE,
-			};
-		}
-
-		if (sku.product.status !== "PUBLIC") {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-			};
-		}
-
-		if (sku.inventory === 0) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.OUT_OF_STOCK,
-			};
-		}
-
-		if (sku.inventory < validatedInput.quantity) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.INSUFFICIENT_STOCK,
-			};
-		}
-
-		return {
-			success: true,
-			data: {
-				sku: {
-					id: sku.id,
-					sku: sku.sku,
-					priceInclTax: sku.priceInclTax,
-					compareAtPrice: sku.compareAtPrice,
-					isActive: sku.isActive,
-					material: getSkuMaterialsLabel(sku.materials) ?? undefined,
-					colors: sku.colors.map((c) => ({
-						id: c.color.id,
-						name: c.color.name,
-						hex: c.color.hex,
-					})),
-					size: sku.size ?? undefined,
-					product: {
-						id: sku.product.id,
-						title: sku.product.title,
-						slug: sku.product.slug,
-						description: sku.product.description ?? null,
-					},
-					images: sku.images.map((img) => ({
-						url: img.url,
-						altText: img.altText ?? undefined,
-						isPrimary: img.isPrimary,
-					})),
-				},
-			},
-		};
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			return {
-				success: false,
-				error: error.issues[0]?.message ?? CART_ERROR_MESSAGES.INVALID_DATA,
-			};
-		}
-
-		return {
-			success: false,
-			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
-		};
-	}
 }
 
 // Action: Récupérer les détails complets d'un SKU pour l'affichage
@@ -189,8 +90,25 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 	}
 }
 
-// Action: Valider plusieurs SKUs d'un coup (pour validation du panier complet)
-// Optimisé: utilise une seule requête DB au lieu de N requêtes
+/**
+ * Valide un panier complet (disponibilité + quantité vs stock) en UNE requête DB.
+ *
+ * Appelants : `initializePayment` et `updatePaymentAmount` (CHECKOUT-STOCK-GATE-001).
+ * C'est la seule fonction de ce fichier qui compare `inventory` à une quantité —
+ * `getSkuDetails` ne reçoit pas de quantité et ne lit jamais le stock.
+ *
+ * ⚠️ Garde de COURTOISIE, pas garde anti-survente : la lecture passe par
+ * `fetchSkusForBatchValidation` (`"use cache"`, profil `checkout`, jusqu'à 5 min de
+ * péremption) et ne tient aucun verrou. Son rôle est d'échouer tôt et avec le bon
+ * message, avant la création du PaymentIntent. L'arbitrage réel de la vente reste le
+ * `SELECT … FOR UPDATE` de `order-creation.service.ts` puis le décrément du webhook.
+ *
+ * Historique : cette fonction est restée entièrement écrite et testée mais sans
+ * aucun appelant jusqu'à l'audit « validation stock panier » du 2026-07-30, pendant
+ * que le checkout validait tout SAUF le stock. Sa jumelle mono-SKU
+ * (`validateSkuAndStock`) a été supprimée à cette occasion — même dormance, aucun
+ * usage possible ici où les paniers sont toujours validés en lot.
+ */
 export async function validateCartItemsWithDb(input: {
 	items: Array<{
 		skuId: string;

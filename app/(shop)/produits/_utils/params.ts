@@ -89,13 +89,6 @@ export const parseFilters = (params: ProductSearchParams): ProductFilters => {
 					.filter((m) => m.length > 0)
 					.slice(0, 20);
 			}
-			// Rating filter
-			else if (key === "rating") {
-				const ratingValue = Number(filterValue);
-				if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
-					filters.ratingMin = Math.floor(ratingValue);
-				}
-			}
 			// Stock status filter
 			// NB (audit filtres S2) : `out_of_stock` est accepté ici mais l'UI
 			// storefront n'émet que `in_stock` (toggle « En stock »). `out_of_stock`

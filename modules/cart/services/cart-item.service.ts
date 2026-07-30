@@ -25,7 +25,14 @@ export function getCartItemSubtotal(item: CartItem): number {
 // ============================================================================
 
 /**
- * Vérifie si l'item est en rupture de stock
+ * L'item n'est pas servable en l'état : stock strictement inférieur à la quantité,
+ * rupture totale incluse.
+ *
+ * Prédicat UNIQUE, volontairement plus grossier que la partition
+ * `isCartItemZeroStock` / `hasInsufficientStock` d'`item-availability.service.ts` :
+ * l'UI a besoin d'un booléen « cette ligne pose problème » pour son badge, le
+ * serveur a besoin de la partition pour choisir son message. Les deux sont d'accord
+ * sur le total — `inventory < quantity` de part et d'autre.
  */
 export function isCartItemOutOfStock(item: CartItem): boolean {
 	return item.sku.inventory < item.quantity;

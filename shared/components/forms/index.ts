@@ -11,7 +11,6 @@ import { MultiSelectField } from "./multi-select-field";
 import { PasswordInputField } from "./password-input-field";
 import { PhoneField } from "./phone-field";
 import { RadioGroupField } from "./radio-group-field";
-import { RatingField } from "./rating-field";
 import { SelectField } from "./select-field";
 import { SubmitButton } from "./submit-button";
 import { SwitchField } from "./switch-field";
@@ -36,7 +35,6 @@ export const { useAppForm } = createFormHook({
 		PasswordInputField,
 		PhoneField,
 		RadioGroupField,
-		RatingField,
 		SelectField,
 		SwitchField,
 		TextareaField,

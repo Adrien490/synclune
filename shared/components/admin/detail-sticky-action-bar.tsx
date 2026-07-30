@@ -23,7 +23,11 @@ export function DetailStickyActionBar({
 	return (
 		<div
 			className={cn(
-				"bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md",
+				// La variable porte la hauteur MESURÉE de la bottom-bar, safe-area
+				// incluse : la barre d'actions se pose au ras sans rien réadditionner
+				// (audit bottom-bar 2026-07-30). L'offset ne vaut que sous `md`, où la
+				// barre admin est toujours là — d'où le repli de réservation à 56px.
+				"bg-background/95 sticky bottom-[var(--bottom-bar-height,56px)] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md",
 				"md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none",
 				className,
 			)}

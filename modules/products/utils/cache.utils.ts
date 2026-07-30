@@ -81,8 +81,9 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 		PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(productSlug),
 		// `get-recent-products.ts` documentait « Invalidé par:
 		// updateTag("recent-products-list") lors de mutations produits » — ce qui n'était
-		// vrai NULLE PART : seuls les avis et le cron RGPD bustaient ce tag. Un produit
-		// archivé restait donc dans « Vus récemment » jusqu'à expiration du profil.
+		// vrai NULLE PART : seul le cron RGPD bustait ce tag (les avis aussi, jusqu'à
+		// leur retrait le 2026-07-30). Un produit archivé restait donc dans « Vus
+		// récemment » jusqu'à expiration du profil.
 		RECENT_PRODUCTS_CACHE_TAGS.LIST,
 		// `hasProducts` / `_count.products` des types de bijoux se calculent sur les
 		// produits PUBLIC : publier le premier bijou d'un type doit le faire apparaître

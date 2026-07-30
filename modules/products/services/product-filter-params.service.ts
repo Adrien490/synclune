@@ -14,7 +14,6 @@ export interface FilterFormData {
 	materials: string[];
 	productTypes: string[];
 	priceRange: [number, number];
-	ratingMin: number | null;
 	inStockOnly: boolean;
 	onSale: boolean;
 }
@@ -39,8 +38,7 @@ interface ActiveFiltersResult {
 }
 
 /** Identifiants stables des sections de filtre (ordre du menu drill-down). */
-export type FilterSectionId =
-	"types" | "price" | "colors" | "materials" | "rating" | "availability";
+export type FilterSectionId = "types" | "price" | "colors" | "materials" | "availability";
 
 // ============================================================================
 // CONSTANTS
@@ -53,7 +51,6 @@ const FILTER_KEYS = [
 	"type",
 	"priceMin",
 	"priceMax",
-	"rating",
 	"stockStatus",
 	"onSale",
 ] as const;
@@ -88,7 +85,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 	const productTypes: string[] = [];
 	let priceMin = defaultPriceRange[0];
 	let priceMax = defaultPriceRange[1];
-	let ratingMin: number | null = null;
 	let inStockOnly = false;
 	let onSale = false;
 
@@ -114,11 +110,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 			case "priceMax":
 				priceMax = Number(value) || defaultPriceRange[1];
 				break;
-			case "rating": {
-				const val = Number(value);
-				if (val >= 1 && val <= 5) ratingMin = val;
-				break;
-			}
 			case "stockStatus":
 				inStockOnly = value === "in_stock";
 				break;
@@ -137,7 +128,6 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 		materials: [...new Set(materials)],
 		productTypes: [...new Set(productTypes)],
 		priceRange: [priceMin, priceMax],
-		ratingMin,
 		inStockOnly,
 		onSale,
 	};
@@ -237,11 +227,6 @@ export function buildFilterURL(params: BuildFilterURLParams): {
 		urlParams.set("priceMax", formData.priceRange[1].toString());
 	}
 
-	// Notes clients
-	if (formData.ratingMin !== null) {
-		urlParams.set("rating", formData.ratingMin.toString());
-	}
-
 	// Disponibilité
 	if (formData.inStockOnly) {
 		urlParams.set("stockStatus", "in_stock");
@@ -314,7 +299,6 @@ export function countActiveFilters(searchParams: URLSearchParams): ActiveFilters
 			case "type":
 			case "color":
 			case "material":
-			case "rating":
 			case "stockStatus":
 			case "onSale":
 				count += 1;
@@ -348,7 +332,6 @@ export function getDefaultFilterValues(defaultPriceRange: [number, number]): Fil
 		materials: [],
 		productTypes: [],
 		priceRange: defaultPriceRange,
-		ratingMin: null,
 		inStockOnly: false,
 		onSale: false,
 	};
@@ -405,7 +388,6 @@ export function getSectionActiveCount(
 		price: priceActive ? 1 : 0,
 		colors: values.colors.length,
 		materials: values.materials.length,
-		rating: values.ratingMin !== null ? 1 : 0,
 		availability: (values.inStockOnly ? 1 : 0) + (values.onSale ? 1 : 0),
 	};
 }

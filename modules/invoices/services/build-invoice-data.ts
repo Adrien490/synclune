@@ -1,4 +1,5 @@
 import { getVendorLegalInfo } from "@/shared/lib/stripe";
+import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import {
@@ -73,6 +74,7 @@ export function buildInvoiceData(
 	const voidedInfo = buildVoidedInfo(order);
 
 	return {
+		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: order.invoiceNumber,
 		invoiceFormat: format,
 		issuedAt: order.invoiceGeneratedAt,

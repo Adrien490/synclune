@@ -1,5 +1,4 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
-import type { ReviewSortField } from "@/modules/reviews/types/review.types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -9,8 +8,6 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { findSkuByVariants } from "@/modules/skus/services/sku-variant-finder.service";
 import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
-import { getProductReviewStats } from "@/modules/reviews/data/get-product-review-stats";
-import { getAllProductReviews } from "@/modules/reviews/data/get-reviews";
 import { getProductCartsCount } from "@/modules/cart/data/get-product-carts-count";
 
 import { PageHeader } from "@/shared/components/page-header";
@@ -30,11 +27,6 @@ import { ViewItemTracker } from "@/shared/components/analytics/view-item-tracker
 import { generateProductMetadata } from "@/modules/products/utils/seo/generate-metadata";
 import { generateStructuredData } from "@/modules/products/utils/seo/generate-structured-data";
 
-import {
-	ProductReviewsSection,
-	ProductReviewsSectionSkeleton,
-} from "@/modules/reviews/components/product-reviews-section";
-
 // Pas de `generateStaticParams` : Cache Components refuse un tableau vide
 // (`EmptyGenerateStaticParamsError` fait échouer le build entier), donc aucun
 // déploiement n'était possible sans produit publié. Les fiches sont rendues à
@@ -48,8 +40,6 @@ type ProductSearchParams = Promise<{
 	color?: string;
 	material?: string;
 	size?: string;
-	ratingFilter?: string;
-	sortBy?: string;
 }>;
 
 export default async function ProductPage({
@@ -67,12 +57,8 @@ export default async function ProductPage({
 		(async () => {
 			const product = await getProductBySlug({ slug, includeDraft: true });
 			if (!product) return null;
-			const [reviewStats, reviews, cartsCount] = await Promise.all([
-				getProductReviewStats(product.id),
-				getAllProductReviews(product.id, 10),
-				getProductCartsCount(product.id),
-			]);
-			return { product, reviewStats, reviews, cartsCount };
+			const cartsCount = await getProductCartsCount(product.id);
+			return { product, cartsCount };
 		})(),
 		getWishlistProductIds(),
 	]);
@@ -82,7 +68,7 @@ export default async function ProductPage({
 		notFound();
 	}
 
-	const { product, reviewStats, reviews, cartsCount } = productData;
+	const { product, cartsCount } = productData;
 
 	// Sécurité: Bloquer les DRAFT pour les non-admins
 	if (product.status === "DRAFT" && !admin) {
@@ -141,27 +127,14 @@ export default async function ProductPage({
 		{ label: product.title, href: `/creations/${product.slug}` },
 	];
 
-	// Génération du structured data JSON-LD (avec stats avis et reviews pour Rich Snippets Google)
+	// Génération du structured data JSON-LD
 	const structuredData = generateStructuredData({
 		product,
 		selectedSku,
-		reviewStats,
-		reviews,
 	});
 
 	// Vérifier si le produit est dans la wishlist (lookup O(1) local)
 	const isInWishlist = wishlistProductIds.has(product.id);
-
-	// Validate ratingFilter bounds (1-5)
-	const parsedRating = urlParams.ratingFilter ? parseInt(urlParams.ratingFilter, 10) : NaN;
-	const ratingFilter = parsedRating >= 1 && parsedRating <= 5 ? parsedRating : undefined;
-
-	// Validate sortBy
-	const validSortFields = new Set(["createdAt-desc", "createdAt-asc", "rating-desc", "rating-asc"]);
-	const sortBy =
-		urlParams.sortBy && validSortFields.has(urlParams.sortBy)
-			? (urlParams.sortBy as ReviewSortField)
-			: undefined;
 
 	return (
 		<div className="relative min-h-dvh">
@@ -220,12 +193,8 @@ export default async function ProductPage({
 
 									{/* Informations et configurateur scrollables */}
 									<section className="space-y-6 lg:min-h-dvh">
-										{/* 1. ProductInfo - Badges, note, wishlist (pattern Etsy : contexte rapide) */}
-										<ProductInfo
-											product={product}
-											isInWishlist={isInWishlist}
-											reviewStats={reviewStats}
-										/>
+										{/* 1. ProductInfo - Badges, wishlist (pattern Etsy : contexte rapide) */}
+										<ProductInfo product={product} isInWishlist={isInWishlist} />
 
 										<Separator className="bg-border" />
 
@@ -244,26 +213,10 @@ export default async function ProductPage({
 							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
 							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
 
-							{/* 7. Avis clients (masqué si aucun avis - 72% lisent les avis avant d'acheter) */}
-							{reviewStats.totalCount > 0 && (
-								<>
-									<Separator className="bg-border" />
-									<Suspense fallback={<ProductReviewsSectionSkeleton />}>
-										<ProductReviewsSection
-											productId={product.id}
-											productSlug={product.slug}
-											ratingFilter={ratingFilter}
-											sortBy={sortBy}
-											reviewStats={reviewStats}
-										/>
-									</Suspense>
-								</>
-							)}
-
 							{/* Separator avant produits recemment vus */}
 							<Separator className="bg-border" />
 
-							{/* 8. RecentlyViewedProducts - Produits recemment consultes */}
+							{/* 7. RecentlyViewedProducts - Produits recemment consultes */}
 							<Suspense fallback={<RecentlyViewedProductsSkeleton limit={4} />}>
 								<RecentlyViewedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>
@@ -271,7 +224,7 @@ export default async function ProductPage({
 							{/* Separator avant produits similaires */}
 							<Separator className="bg-border" />
 
-							{/* 9. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
+							{/* 8. RelatedProducts - Produits similaires (algorithme contextuel intelligent) */}
 							<Suspense fallback={<RelatedProductsSkeleton limit={4} />}>
 								<RelatedProducts currentProductSlug={product.slug} limit={4} />
 							</Suspense>

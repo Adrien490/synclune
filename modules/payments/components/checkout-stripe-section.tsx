@@ -80,7 +80,29 @@ export function CheckoutStripeSection({
 	};
 
 	return (
+		/*
+		 * `key={clientSecret}` n'est PAS cosmétique : `clientSecret` est une prop
+		 * IMMUABLE de `<Elements>`. react-stripe-js exclut explicitement cette clé de
+		 * `elements.update()` (`extractAllowedOptionsUpdates(options, prevOptions,
+		 * ['clientSecret', 'fonts'])`), donc un changement est silencieusement ignoré et
+		 * les champs carte montés restent attachés à l'ANCIEN PaymentIntent.
+		 *
+		 * Or `pi.clientSecret` change bel et bien sous cette section, qui reste montée :
+		 * `usePaymentIntent` re-initialise après 10 min d'onglet caché, et Stripe peut
+		 * alors rendre un PI différent — la clé salée `-r2` de CHECKOUT-REPLAY-001, ou
+		 * l'expiration 24 h de la clé d'idempotence. Dans les deux cas l'ancien PI est
+		 * annulé (`cancelOrphanPaymentIntent`) : sans remontage, `confirmCheckout` liait
+		 * la commande au NOUVEAU PI pendant que `stripe.confirmPayment` confirmait
+		 * l'ANCIEN, déjà annulé → erreur dure, commande PENDING orpheline, aucun débit,
+		 * et rien pour s'en sortir hors rechargement complet de la page. La reprise
+		 * serveur ajoutée par CHECKOUT-REPLAY-001 n'atteignait jamais le client.
+		 *
+		 * Le remontage réinitialise la saisie carte : c'est le comportement correct, le
+		 * PaymentIntent sous-jacent n'est plus le même.
+		 * @see modules/payments/components/__tests__/elements-client-secret-remount.regression.test.ts
+		 */
 		<Elements
+			key={clientSecret}
 			stripe={getStripe()}
 			options={{
 				clientSecret,

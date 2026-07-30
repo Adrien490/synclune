@@ -202,11 +202,16 @@ export function CheckoutFormBody({
 							 */}
 							<AlertDescription className="space-y-3">
 								<p>
-									Ta commande est enregistrée : le montant et l&apos;adresse de livraison ne peuvent
-									plus changer. Tu peux réessayer le paiement avec une autre carte.
+									Ta commande est enregistrée : le montant ne changera plus. Tu peux réessayer le
+									paiement avec une autre carte.
 								</p>
 								<p>
-									Besoin de corriger ton adresse ? Écris-nous à{" "}
+									Tu peux encore corriger ta rue, ta ville ou ton nom — c&apos;est la nouvelle
+									adresse qui sera utilisée pour l&apos;envoi. Le pays et le code postal, eux,
+									restent figés : ils déterminent les frais de livraison, donc le montant.
+								</p>
+								<p>
+									Besoin de changer de zone de livraison ? Écris-nous à{" "}
 									<a href={`mailto:${BRAND.contact.email}`} className="underline">
 										{BRAND.contact.email}
 									</a>
@@ -232,23 +237,43 @@ export function CheckoutFormBody({
 
 					{/*
 					 * CHECKOUT-CONSENT-001 — une fois la commande liée au PaymentIntent, le
-					 * montant est figé côté serveur. On gèle donc nativement (fieldset
-					 * disabled) tout ce qui ferait varier le total ou la destination, plutôt
+					 * montant est figé côté serveur. On gèle donc ce qui le ferait varier, plutôt
 					 * que d'afficher un récapitulatif qui ne correspondrait plus au débit.
+					 *
+					 * ⚠️ Le gel ne porte PAS sur toute l'adresse. Seuls le pays et le code postal
+					 * déterminent le tarif d'expédition ; la rue, le complément, la ville, le nom
+					 * et le téléphone n'ont aucun effet sur le total, et le serveur répercute
+					 * désormais leur correction sur le snapshot de la commande (KI-001, cf.
+					 * `updatePendingOrderShippingSnapshot`). Les geler ici rendrait ce chemin de
+					 * réparation inatteignable — c'est le scénario du défaut lui-même : faute de
+					 * frappe dans la rue, carte refusée, et plus aucun moyen de corriger.
+					 *
+					 * D'où deux périmètres distincts : `lockDestination` sur les 2 champs
+					 * tarifaires, `<fieldset disabled>` sur les sections qui portent le montant.
+					 */}
+					<div className="flex min-w-0 flex-col gap-8">
+						{/* === SECTION 1: Contact === */}
+						<CheckoutContactSection form={form} session={session} />
+
+						{/* === SECTION 2: Shipping Address === */}
+						<CheckoutSection title="Livraison">
+							<CheckoutAddressFields
+								form={form}
+								session={session}
+								addresses={addresses}
+								lockDestination={isAmountLocked}
+							/>
+						</CheckoutSection>
+					</div>
+
+					{/*
 					 * `min-w-0` neutralise le `min-width: min-content` par défaut du fieldset.
 					 * `flex flex-col gap-8` et pas `space-y-8` : la <legend> sr-only est en
 					 * `position:absolute` et `space-y-*` (`& > * + *`) lui aurait collé 32px de
 					 * marge fantôme sur la première section. Un enfant absolu ne prend pas de `gap`.
 					 */}
 					<fieldset disabled={isAmountLocked} className="flex min-w-0 flex-col gap-8">
-						<legend className="sr-only">Informations de commande</legend>
-						{/* === SECTION 1: Contact === */}
-						<CheckoutContactSection form={form} session={session} />
-
-						{/* === SECTION 2: Shipping Address === */}
-						<CheckoutSection title="Livraison">
-							<CheckoutAddressFields form={form} session={session} addresses={addresses} />
-						</CheckoutSection>
+						<legend className="sr-only">Frais de livraison et code promo</legend>
 
 						{/* === SECTION 3: Shipping cost & lead time === */}
 						{/* Pas « Mode d'expédition » : le tarif est unique par zone, la section

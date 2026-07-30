@@ -33,6 +33,10 @@ const {
 		color: { findUnique: vi.fn() },
 		material: { findUnique: vi.fn() },
 		orderItem: { findMany: vi.fn() },
+		// STOCK-PHANTOM-001 : `applyInventoryDeltaTx` prend un FOR UPDATE puis écrit
+		// un StockMovement quand le delta est non nul.
+		stockMovement: { create: vi.fn() },
+		$queryRaw: vi.fn(),
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -96,6 +100,13 @@ vi.mock("../../constants/cache", () => ({
 }));
 vi.mock("../../utils/cache.utils", () => ({
 	getProductInvalidationTags: mockGetProductInvalidationTags,
+}));
+// STOCK-STALE-BASELINE-001 : `updateProduct` délègue désormais l'invalidation SKU à
+// la SSOT du module skus. Mockée ici — le test produit n'a pas à connaître ses tags,
+// et `../../constants/cache` étant mocké, la vraie implémentation lirait des
+// fabriques de tags undefined.
+vi.mock("@/modules/skus/utils/cache.utils", () => ({
+	getSkuInvalidationTags: vi.fn(() => ["skus-list"]),
 }));
 vi.mock("@/modules/collections/utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
@@ -199,6 +210,9 @@ describe("updateProduct", () => {
 			updatedAt: new Date(),
 		});
 		mockPrisma.productSku.update.mockResolvedValue({});
+		// Stock verrouillé aligné sur l'inventaire du produit rendu (delta 0 par défaut).
+		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 10 }]);
+		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({});
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 1 });
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
@@ -268,7 +282,14 @@ describe("updateProduct", () => {
 
 	it("should use transaction for update", async () => {
 		await updateProduct(undefined, validFormData);
-		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+		// La transaction porte désormais un timeout explicite : elle tient l'advisory
+		// lock d'identité de variante + le `FOR UPDATE` sur l'inventaire, et le défaut
+		// Prisma (5 s) la faisait échouer en P2028 sous contention avec le webhook
+		// d'encaissement (30 s), avec une erreur générique non déterministe pour l'admin.
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(
+			expect.any(Function),
+			expect.objectContaining({ timeout: 30000, maxWait: 10000 }),
+		);
 	});
 
 	it("should invalidate cache after successful update", async () => {

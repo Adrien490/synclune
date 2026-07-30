@@ -8,11 +8,17 @@ import {
 	type PaymentStatus,
 	HistorySource,
 	OrderAction,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
+import {
+	selectDeactivatableSkuIds,
+	type DeactivationCandidate,
+} from "@/modules/skus/services/validate-public-active-sku.service";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import type { OrderWithItems } from "../types/checkout.types";
 import { initiateAutomaticRefund } from "./payment-intent.service";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
@@ -303,9 +309,13 @@ async function processOrderAtomically(
 	);
 
 	const skuIds = order.items.map((item) => item.skuId);
+	// `productId` est sélectionné pour l'audit `StockMovement` de l'étape 4 : le
+	// modèle le dénormalise, et le lire ici évite une requête de plus DANS la
+	// transaction (on tient déjà le verrou de ligne).
 	const skus = await tx.$queryRaw<
 		Array<{
 			id: string;
+			productId: string;
 			inventory: number;
 			isActive: boolean;
 			deletedAt: Date | null;
@@ -313,7 +323,7 @@ async function processOrderAtomically(
 			productDeletedAt: Date | null;
 		}>
 	>`
-		SELECT ps.id, ps.inventory, ps."isActive", ps."deletedAt",
+		SELECT ps.id, ps."productId", ps.inventory, ps."isActive", ps."deletedAt",
 		       p.status as "productStatus", p."deletedAt" as "productDeletedAt"
 		FROM "ProductSku" ps
 		INNER JOIN "Product" p ON ps."productId" = p.id
@@ -371,10 +381,34 @@ async function processOrderAtomically(
 
 	// 4. Decrement stock once per SKU (quantités agrégées à l'étape 3 — une seule
 	// écriture par SKU même si plusieurs lignes le référencent)
+	//
+	// STOCK-LEDGER-001 : chaque décrément écrit son `StockMovement` (source `ORDER`)
+	// dans la MÊME transaction. C'est la vente — le mouvement de stock le plus
+	// fréquent de la boutique — et il n'était tracé nulle part : le journal ne
+	// couvrait que les ajustements saisis par un admin. Un écart entre l'inventaire
+	// et le physique n'était donc explicable que si un humain en était la cause,
+	// hypothèse que le double crédit STOCK-DOUBLE-CREDIT-001 a démentie.
+	// `previousInventory` vient du snapshot verrouillé de l'étape 3 : aucune écriture
+	// concurrente ne peut s'être glissée entre la lecture et ce décrément.
 	for (const [skuId, requiredQuantity] of requiredQuantityBySku) {
+		// Non-null : l'étape 3 a throw `OversellError` pour tout SKU absent du map.
+		const locked = skuMap.get(skuId)!;
+
 		await tx.productSku.update({
 			where: { id: skuId },
 			data: { inventory: { decrement: requiredQuantity } },
+		});
+
+		await recordStockMovementTx(tx, {
+			skuId,
+			productId: locked.productId,
+			previousInventory: locked.inventory,
+			newInventory: locked.inventory - requiredQuantity,
+			source: StockMovementSource.ORDER,
+			reason: `Vente — commande ${order.orderNumber}`,
+			// Pas d'acteur humain : encaissement automatique (webhook Stripe ou cron
+			// sync-async-payments, qui partagent ce chemin). `createdById` est nullable
+			// précisément pour ce cas (« null = action système »).
 		});
 	}
 
@@ -411,13 +445,76 @@ async function processOrderAtomically(
 	});
 
 	// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
-	const { count: deactivatedCount } = await tx.productSku.updateMany({
-		where: { id: { in: skuIds }, inventory: 0 },
-		data: { isActive: false },
-	});
+	//
+	// STOCK-LAST-ACTIVE-SKU-001 : on ne désactive JAMAIS le dernier SKU actif d'un
+	// produit PUBLIC. Le `updateMany` était aveugle et contournait donc
+	// `assertPublicProductKeepsActiveSku`, dont les deux seuls appelants sont des
+	// actions admin : l'invariant « un produit PUBLIC garde ≥1 SKU actif » était
+	// opposable à l'admin mais jamais à une vente. Vendre la dernière unité d'un
+	// produit mono-SKU (la forme dominante) le laissait PUBLIC sans SKU actif →
+	// `GET_PRODUCT_SELECT` filtrant `isActive: true`, la PDP faisait `notFound()`
+	// alors que la carte restait listée : lien interne cassé + URL indexée en 404.
+	// Le SKU épargné reste actif à `inventory: 0`, état que la vitrine rend déjà en
+	// « rupture de stock » — et qui conserve la surface « prévenez-moi ».
+	//
+	// Les candidats se déduisent des lignes déjà verrouillées (étape 3) : le
+	// décrément vient d'être appliqué, donc `inventory - required === 0` identifie
+	// exactement les SKU à zéro, sans relecture.
+	// `skuId` étant une FK requise, Prisma type `item.sku` et `item.sku.product` comme
+	// non-nullables : pas de garde défensive ici, elle serait du code mort.
+	const productIdBySkuId = new Map(order.items.map((item) => [item.skuId, item.sku.product.id]));
+	const zeroStockCandidates: DeactivationCandidate[] = [];
+	for (const [skuId, requiredQuantity] of requiredQuantityBySku) {
+		const locked = skuMap.get(skuId);
+		const productId = productIdBySkuId.get(skuId);
+		if (!locked || !productId) continue;
+		if (locked.inventory - requiredQuantity !== 0) continue;
+		zeroStockCandidates.push({ skuId, productId, productStatus: locked.productStatus });
+	}
+
+	// Le total de SKU actifs par produit n'est nécessaire que si un produit PUBLIC
+	// risque de tomber à zéro — sinon aucune requête supplémentaire.
+	const activeTotalByProductId = new Map<string, number>();
+	const publicProductIds = Array.from(
+		new Set(
+			zeroStockCandidates.filter((c) => c.productStatus === "PUBLIC").map((c) => c.productId),
+		),
+	);
+	if (publicProductIds.length > 0) {
+		const activeSiblings = await tx.productSku.findMany({
+			where: { productId: { in: publicProductIds }, isActive: true, deletedAt: null },
+			select: { productId: true },
+		});
+		for (const sibling of activeSiblings) {
+			activeTotalByProductId.set(
+				sibling.productId,
+				(activeTotalByProductId.get(sibling.productId) ?? 0) + 1,
+			);
+		}
+	}
+
+	const deactivatableSkuIds = selectDeactivatableSkuIds(
+		zeroStockCandidates,
+		activeTotalByProductId,
+	);
+	const keptActiveCount = zeroStockCandidates.length - deactivatableSkuIds.length;
+
+	let deactivatedCount = 0;
+	if (deactivatableSkuIds.length > 0) {
+		({ count: deactivatedCount } = await tx.productSku.updateMany({
+			where: { id: { in: deactivatableSkuIds } },
+			data: { isActive: false },
+		}));
+	}
 	if (deactivatedCount > 0) {
 		logger.info(
 			`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId} (${flowLabel})`,
+			{ service: "webhook" },
+		);
+	}
+	if (keptActiveCount > 0) {
+		logger.info(
+			`📦 [WEBHOOK] ${keptActiveCount} SKU(s) kept active at stock 0 (last active SKU of a PUBLIC product) for order ${orderId} (${flowLabel})`,
 			{ service: "webhook" },
 		);
 	}

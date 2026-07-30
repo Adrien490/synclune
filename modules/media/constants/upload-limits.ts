@@ -37,21 +37,6 @@ const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
 // ========================================
 
 // ========================================
-// USER UPLOADS
-// ========================================
-
-/**
- * Rate limit for review photos (authenticated users)
- *
- * Context: Photos accompanying product reviews
- * Moderate since users are authenticated
- */
-const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 uploads maximum
-	windowMs: minutes(1), // per minute
-};
-
-// ========================================
 // ADMIN DELETE OPERATIONS
 // ========================================
 
@@ -76,8 +61,6 @@ const DELETE_MEDIA_LIMIT: RateLimitConfig = {
 export const UPLOAD_LIMITS = {
 	// Admin
 	CATALOG: UPLOAD_CATALOG_LIMIT,
-	// Users
-	REVIEW_MEDIA: UPLOAD_REVIEW_MEDIA_LIMIT,
 } as const;
 
 /**

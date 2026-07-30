@@ -9,8 +9,6 @@ import {
 	Palette,
 	Gem,
 	Settings,
-	Mail,
-	MessageSquare,
 	Ticket,
 	Megaphone,
 	Store,
@@ -100,6 +98,17 @@ const VENTES_GROUP: NavGroup = {
 			url: "/admin/ventes/facturation",
 			icon: Landmark,
 		},
+		// Route inchangée (`/admin/marketing/discounts`) : seul le regroupement
+		// visuel bouge, comme pour la fusion Contenu+Configuration → Boutique.
+		// Le hub `/admin/marketing` reste l'ancre de section de cette route et
+		// demeure atteignable par le fil d'Ariane.
+		{
+			id: "discounts",
+			title: "Codes promo",
+			shortTitle: "Promos",
+			url: "/admin/marketing/discounts",
+			icon: Ticket,
+		},
 	],
 };
 
@@ -170,28 +179,6 @@ const CATALOGUE_GROUP: NavGroup = {
 	],
 };
 
-const MARKETING_GROUP: NavGroup = {
-	label: "Marketing",
-	icon: Mail,
-	collapsible: true,
-	items: [
-		{
-			id: "discounts",
-			title: "Codes promo",
-			shortTitle: "Promos",
-			url: "/admin/marketing/discounts",
-			icon: Ticket,
-		},
-		{
-			id: "reviews",
-			title: "Avis clients",
-			shortTitle: "Avis",
-			url: "/admin/marketing/avis",
-			icon: MessageSquare,
-		},
-	],
-};
-
 /**
  * Groupe « Boutique » — réglages et contenu éditorial.
  *
@@ -227,17 +214,20 @@ const BOUTIQUE_GROUP: NavGroup = {
 
 /**
  * Ordre = fréquence d'usage quotidienne décroissante : on pilote (tableau de bord),
- * on traite les ventes, on entretient le catalogue, puis marketing et réglages.
+ * on traite les ventes, on entretient le catalogue, puis les réglages.
  *
- * Quatre groupes au lieu de six : trois groupes mono-item (Clients, Contenu,
- * Configuration) coûtaient trois libellés et trois séparateurs pour trois liens.
+ * Trois groupes au lieu de six. Quatre groupes mono-item (Clients, Contenu,
+ * Configuration, puis Marketing) coûtaient chacun un libellé et un séparateur pour
+ * un unique lien. `Marketing` est devenu mono-item au retrait du système d'avis
+ * (2026-07-30) : « Codes promo » a rejoint `Ventes`, dont il partage le gate
+ * `SHOP_LIVE` et la nature commerciale. Verrouillé par le test
+ * « n'a plus aucun groupe mono-item » de navigation-config.test.ts.
  */
 export const navigationData: NavigationData = {
 	navGroups: [
 		PILOTAGE_GROUP,
 		...(SHOP_LIVE ? [VENTES_GROUP] : []),
 		CATALOGUE_GROUP,
-		...(SHOP_LIVE ? [MARKETING_GROUP] : []),
 		BOUTIQUE_GROUP,
 	],
 };

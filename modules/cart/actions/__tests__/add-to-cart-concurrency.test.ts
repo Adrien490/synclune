@@ -1,3 +1,27 @@
+/**
+ * ⚠️ CE FICHIER NE TESTE AUCUNE CONCURRENCE RÉELLE.
+ *
+ * `$transaction` est mocké : il exécute le callback en séquence, dans le même
+ * tick. Les `Promise.all` ci-dessous ne créent donc aucun parallélisme, et
+ * l'inventaire que chaque « transaction » observe est décidé par un compteur du
+ * mock (`callCount === 1 ? 1 : 0`) — c'est-à-dire par le test lui-même. Retirer
+ * le `FOR UPDATE` du SQL de `add-to-cart.ts` ne casserait rien ici.
+ *
+ * Ce qui EST couvert, et qui a de la valeur : les branches métier d'`addToCart`
+ * en fonction du stock lu (rejet à 0, rejet si `existant + demandé > inventory`,
+ * succès sinon) et l'ordre des opérations dans la transaction.
+ *
+ * Le verrou lui-même ne peut être validé que contre un vrai Postgres. Il l'est
+ * pour le SEUL chemin où il arbitre une vente —
+ * `modules/webhooks/services/__tests__/checkout-order-processing.integration.test.ts`
+ * (le panier, lui, ne réserve rien : cf. la réservation optimiste documentée dans
+ * `order-creation.service.ts`).
+ *
+ * Renommé « branches métier » plutôt que « concurrency » à l'audit « validation
+ * stock panier » 2026-07-30 (P2-4) : le titre précédent laissait croire à une
+ * garantie de sérialisation qui n'était pas testée.
+ */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ============================================================================
@@ -123,7 +147,7 @@ function makeSkuRow(overrides: Record<string, unknown> = {}) {
 // Concurrent stock access tests
 // ============================================================================
 
-describe("addToCart - concurrency scenarios", () => {
+describe("addToCart — branches métier selon le stock lu (concurrence SIMULÉE, cf. en-tête)", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
@@ -152,8 +176,8 @@ describe("addToCart - concurrency scenarios", () => {
 	});
 
 	it("should handle two concurrent add-to-cart for the same SKU with sufficient stock", async () => {
-		// Simulate two concurrent transactions with stock=10
-		// Both should succeed because FOR UPDATE serializes access
+		// Deux appels séquentiels (le mock ne parallélise pas) avec stock=10 : les deux
+		// doivent aboutir, puisque 1+1 <= 10. On teste la branche, pas le verrou.
 		let callCount = 0;
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
 			callCount++;
@@ -304,7 +328,7 @@ describe("addToCart - concurrency scenarios", () => {
 
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
 			callCount++;
-			// First transaction sees inventory=1, second sees inventory=0 (after FOR UPDATE)
+			// First transaction sees inventory=1, second sees inventory=0 (valeur imposée par le mock, pas par un verrou)
 			const currentInventory = callCount === 1 ? 1 : 0;
 			const tx = {
 				$queryRaw: vi.fn().mockResolvedValue([makeSkuRow({ inventory: currentInventory })]),

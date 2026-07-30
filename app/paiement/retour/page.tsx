@@ -2,13 +2,19 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
 import { stripe } from "@/shared/lib/stripe";
+import { orderIdParamSchema } from "@/modules/orders/schemas/order-route-params.schema";
 
 const STRIPE_RETRIEVE_TIMEOUT_MS = 5_000;
 
+// ⚠️ `order_id` passe par le schéma partagé, jamais par un `z.cuid()` en ligne : la
+// regex cuid **v1** exige un `c` initial, que les ids `@default(cuid(2))` n'ont que
+// dans 1 cas sur 26. Chaque échec de forme tombe sur le `redirect("/")` final de cette
+// page — donc sur l'accueil pour un client qui vient de payer.
+// @see modules/orders/schemas/order-route-params.schema.ts
 const piSearchParamsSchema = z.object({
 	payment_intent: z.string().min(1),
 	redirect_status: z.string().min(1),
-	order_id: z.cuid(),
+	order_id: orderIdParamSchema,
 });
 
 export const metadata: Metadata = {

@@ -126,15 +126,52 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 		let cancelled = false;
 		void validateDiscountCode(cartDiscountCode).then((result) => {
-			if (cancelled || !result.valid || !result.discount) return;
-			form.setFieldValue("_appliedDiscount", result.discount);
+			if (cancelled) return;
+
+			if (result.valid && result.discount) {
+				form.setFieldValue("_appliedDiscount", result.discount);
+				form.setFieldValue("_discountOpen", true);
+				return;
+			}
+
+			// L'échec était totalement muet : la remise annoncée dans la cart-sheet
+			// (« Réduction (SUMMER20) −20,00 € ») disparaissait du récapitulatif sans un
+			// mot, et le client découvrait le plein tarif sur son relevé. Le motif n'est
+			// pas nécessairement « code expiré » — le rate limit de `validateDiscountCode`
+			// répond ici aussi, et un 429 ne dit rien de la validité du code (son compteur
+			// était partagé avec le reste du tunnel, cf. F3).
+			//
+			// On informe SANS bloquer : notice (`_discountNotice`) et pas erreur de champ.
+			// Une erreur sur `discountCode` rendrait `canSubmit` faux et empêcherait de
+			// payer, et pré-remplir le champ ferait re-valider le code à la soumission
+			// (`getFormData`), qui refuse alors la commande — un blocage complet là où
+			// l'ancien comportement laissait au moins passer le paiement.
 			form.setFieldValue("_discountOpen", true);
+			form.setFieldValue(
+				"_discountNotice",
+				result.error
+					? `Le code ${cartDiscountCode} n'a pas pu être appliqué : ${result.error.toLowerCase()}`
+					: `Le code ${cartDiscountCode} n'a pas pu être appliqué.`,
+			);
 		});
 
 		return () => {
 			cancelled = true;
 		};
 	}, [cartDiscountCode, form]);
+
+	/**
+	 * La commande vient d'être liée au PaymentIntent : on gèle l'affichage sur le
+	 * montant autoritaire, et on annule d'abord toute mise à jour de montant encore en
+	 * attente dans le debounce. Sans ça, une correction de code postal suivie d'un clic
+	 * sur Payer dans les 500 ms faisait arriver l'appel après la liaison : le serveur le
+	 * refusait correctement, mais le client affichait « Commande déjà initiée » +
+	 * « Réessayer » pendant l'ouverture de la fenêtre 3D Secure (F5).
+	 */
+	function handleOrderBound(finalAmount: number) {
+		pi.cancelPendingUpdate();
+		setLockedAmount(finalAmount);
+	}
 
 	/**
 	 * Builds ConfirmCheckoutData from the current form state.
@@ -254,7 +291,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 						lockedAmount={lockedAmount}
 						getFormData={getFormData}
 						allowNavigation={allowNavigation}
-						onOrderBound={setLockedAmount}
+						onOrderBound={handleOrderBound}
 					/>
 				);
 			}}

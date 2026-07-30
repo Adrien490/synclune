@@ -19,6 +19,8 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
+		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+		stockMovement: { create: vi.fn() },
 		orderHistory: {
 			create: vi.fn(),
 		},
@@ -148,6 +150,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 				inventory: { increment: 5 },
 				isActive: true,
 			},
+			select: { inventory: true, productId: true },
 		});
 	});
 
@@ -203,6 +206,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 				inventory: { increment: 1 },
 				isActive: true,
 			},
+			select: { inventory: true, productId: true },
 		});
 	});
 
@@ -227,6 +231,7 @@ describe("restoreStockForOrder — idempotency & edge cases", () => {
 			data: {
 				inventory: { increment: 1 },
 			},
+			select: { inventory: true, productId: true },
 		});
 	});
 

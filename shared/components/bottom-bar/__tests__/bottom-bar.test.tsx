@@ -1,16 +1,22 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type * as UseBottomBarHeightModule from "@/shared/hooks/use-bottom-bar-height";
 
 // Hoisted mocks (vi.mock factories are hoisted above variable declarations)
-const { useReducedMotionMock, useBottomBarHeightMock, useKeyboardOpenMock, useMediaQueryMock } =
-	vi.hoisted(() => ({
-		useReducedMotionMock: vi.fn(() => false),
-		useBottomBarHeightMock: vi.fn(),
-		useKeyboardOpenMock: vi.fn(() => false),
-		// Défaut : viewport sous le breakpoint → la barre est visible.
-		useMediaQueryMock: vi.fn(() => true),
-	}));
+const {
+	useReducedMotionMock,
+	useBottomBarHeightMock,
+	useKeyboardOpenMock,
+	useMediaQueryMock,
+	animationComplete,
+} = vi.hoisted(() => ({
+	useReducedMotionMock: vi.fn(() => false),
+	useBottomBarHeightMock: vi.fn(),
+	useKeyboardOpenMock: vi.fn(() => false),
+	// Défaut : viewport sous le breakpoint → la barre est visible.
+	useMediaQueryMock: vi.fn(() => true),
+	// Dernier `onAnimationComplete` rendu, pour piloter la fin du slide-out.
+	animationComplete: { current: null as (() => void) | null },
+}));
 
 // Mock cn utility
 vi.mock("@/shared/utils/cn", () => ({
@@ -29,6 +35,7 @@ vi.mock("motion/react", async () => {
 			transition,
 			initial,
 			animate,
+			onAnimationComplete,
 			...rest
 		}: Record<string, unknown> & { children?: React.ReactNode }) => {
 			const extras: Record<string, string> = {};
@@ -36,6 +43,11 @@ vi.mock("motion/react", async () => {
 			if (transition !== undefined) extras["data-transition"] = JSON.stringify(transition);
 			if (initial !== undefined) extras["data-initial"] = JSON.stringify(initial);
 			if (animate !== undefined) extras["data-animate"] = JSON.stringify(animate);
+			// Capturé plutôt que spreadé : `on*` inconnu sur un noeud DOM déclenche un
+			// warning React, et les tests du slide-out différé ont besoin de l'appeler.
+			if (typeof onAnimationComplete === "function") {
+				animationComplete.current = onAnimationComplete as () => void;
+			}
 			return createElement(tag, { ...rest, ...extras });
 		};
 
@@ -82,9 +94,10 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
-import { BottomBar, ActiveDot, BottomBarActivePill } from "../bottom-bar";
+import { BottomBar, BottomBarActivePill } from "../bottom-bar";
 import {
 	bottomBarContainerClass,
+	bottomBarItemWrapperClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
@@ -95,7 +108,15 @@ import {
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
+	animationComplete.current = null;
 });
+
+/** Dernier appel au hook de hauteur, sous sa forme `(ref, options)`. */
+function lastHeightCall() {
+	const call = useBottomBarHeightMock.mock.calls.at(-1) as
+		[{ current: HTMLElement | null }, { fallback: number; enabled: boolean }] | undefined;
+	return { ref: call?.[0], options: call?.[1] };
+}
 
 // ---------------------------------------------------------------------------
 // BottomBar
@@ -194,7 +215,7 @@ describe("BottomBar", () => {
 
 	// La classe Tailwind et la media query interrogée doivent dériver du MÊME
 	// prop : deux seuils indépendants, c'est la désynchronisation qui a laissé
-	// `--bottom-bar-height` à 56px pour une barre invisible.
+	// `--bottom-bar-height` publiée pour une barre invisible.
 	it("derives the matchMedia query from the same breakpoint as the hide class", () => {
 		render(
 			<BottomBar breakpoint="lg" aria-label="bar">
@@ -249,24 +270,29 @@ describe("BottomBar", () => {
 		expect(el.className).toContain("custom-class");
 	});
 
-	it("calls useBottomBarHeight with height and enabled", () => {
+	// -------------------------------------------------------------------------
+	// Contrat de hauteur
+	// -------------------------------------------------------------------------
+
+	it("passes the rendered element ref to the height hook (mesure, pas hypothèse)", () => {
+		render(
+			<BottomBar as="nav" aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const { ref } = lastHeightCall();
+		expect(ref?.current).toBe(screen.getByLabelText("bar"));
+	});
+
+	it("forwards the height prop as a fallback, enabled while visible", () => {
 		render(
 			<BottomBar height={64} enabled>
 				<span>content</span>
 			</BottomBar>,
 		);
 
-		expect(useBottomBarHeightMock).toHaveBeenCalledWith(64, true);
-	});
-
-	it("disables height registration when isHidden", () => {
-		render(
-			<BottomBar isHidden enabled>
-				<span>content</span>
-			</BottomBar>,
-		);
-
-		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
+		expect(lastHeightCall().options).toEqual({ fallback: 64, enabled: true });
 	});
 
 	it("disables height registration when not enabled", () => {
@@ -276,13 +302,13 @@ describe("BottomBar", () => {
 			</BottomBar>,
 		);
 
-		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
+		expect(lastHeightCall().options).toEqual({ fallback: 56, enabled: false });
 	});
 
 	// Régression : la barre n'est masquée qu'en CSS, donc le composant reste
-	// monté au-dessus du breakpoint. Publier `--bottom-bar-height` malgré tout
-	// réservait 56px pour une barre invisible, et chaque consommateur devait
-	// annuler l'offset avec un override de breakpoint codé en dur.
+	// monté au-dessus du breakpoint. Publier sa hauteur malgré tout réservait de
+	// la place pour une barre invisible, et chaque consommateur devait annuler
+	// l'offset avec un override de breakpoint codé en dur.
 	it("does not publish its height above the breakpoint (bar hidden by CSS)", () => {
 		useMediaQueryMock.mockReturnValue(false);
 
@@ -292,9 +318,112 @@ describe("BottomBar", () => {
 			</BottomBar>,
 		);
 
-		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
+		expect(lastHeightCall().options).toMatchObject({ enabled: false });
 		useMediaQueryMock.mockReturnValue(true);
 	});
+
+	it("ne réserve rien quand elle est montée directement sur une route masquée", () => {
+		render(
+			<BottomBar isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		// Cible == état initial : `onAnimationComplete` peut ne jamais se
+		// déclencher, l'état initial doit donc déjà valoir « sortie ».
+		expect(lastHeightCall().options).toMatchObject({ enabled: false });
+	});
+
+	// Régression P2-5 : désenregistrer dès que `isHidden` bascule faisait
+	// redescendre toaster / bandeau cookies / FAB sur une barre encore visible
+	// pendant toute la durée du ressort de sortie.
+	it("garde la hauteur réservée pendant le slide-out, jusqu'à la fin de l'animation", () => {
+		const { rerender } = render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: true });
+
+		rerender(
+			<BottomBar isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: true });
+
+		act(() => animationComplete.current?.());
+		expect(lastHeightCall().options).toMatchObject({ enabled: false });
+	});
+
+	it("réserve à nouveau dès la première frame de remontée", () => {
+		const { rerender } = render(
+			<BottomBar isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: false });
+
+		rerender(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: true });
+	});
+
+	it("snappe sans différer en reduced-motion (aucune animation à attendre)", () => {
+		useReducedMotionMock.mockReturnValue(true);
+		const { rerender } = render(
+			<BottomBar as="nav" aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: true });
+
+		rerender(
+			<BottomBar as="nav" isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+		expect(lastHeightCall().options).toMatchObject({ enabled: false });
+		useReducedMotionMock.mockReturnValue(false);
+	});
+
+	// -------------------------------------------------------------------------
+	// Safe-areas / matériau
+	// -------------------------------------------------------------------------
+
+	it("insère son contenu dans les safe-areas latérales (paysage iPhone)", () => {
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(el.className).toContain("pb-[env(safe-area-inset-bottom)]");
+		expect(el.className).toContain("pl-[env(safe-area-inset-left)]");
+		expect(el.className).toContain("pr-[env(safe-area-inset-right)]");
+	});
+
+	// Le repli sans `backdrop-filter` doit être OPAQUE : `/80` sans flou laisse
+	// passer la photo produit derrière des libellés `text-xs text-muted-foreground`.
+	it("opacifie son fond quand backdrop-filter n'est pas supporté", () => {
+		render(
+			<BottomBar aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(el.className).toContain("bg-background ");
+		expect(el.className).toContain("supports-[backdrop-filter]:bg-background/80");
+	});
+
+	// -------------------------------------------------------------------------
+	// Animation
+	// -------------------------------------------------------------------------
 
 	it("renders native element with hidden attribute when reduced motion + isHidden", () => {
 		useReducedMotionMock.mockReturnValueOnce(true);
@@ -364,37 +493,6 @@ describe("BottomBar", () => {
 		expect(el).toHaveAttribute("hidden");
 		expect(el).toHaveAttribute("inert");
 	});
-
-	it("does not register height while hidden (keyboard does not thrash layout offset)", () => {
-		// Height stays tied to isHidden only, not the transient keyboard state.
-		render(
-			<BottomBar aria-label="bar">
-				<span>content</span>
-			</BottomBar>,
-		);
-		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, true);
-	});
-});
-
-// ---------------------------------------------------------------------------
-// ActiveDot
-// ---------------------------------------------------------------------------
-
-describe("ActiveDot", () => {
-	it("renders with aria-hidden", () => {
-		render(<ActiveDot />);
-
-		const dot = document.querySelector("[aria-hidden='true']");
-		expect(dot).toBeInTheDocument();
-		expect(dot).not.toBeNull();
-	});
-
-	it("renders as a span", () => {
-		const { container } = render(<ActiveDot />);
-
-		const span = container.querySelector("span");
-		expect(span).not.toBeNull();
-	});
 });
 
 // ---------------------------------------------------------------------------
@@ -461,8 +559,24 @@ describe("Exported class constants", () => {
 		expect(bottomBarContainerClass).toContain("flex");
 	});
 
+	// Un `<li>` est `display: list-item` : sans ce conteneur flex intermédiaire,
+	// le `flex-1` de l'item n'aurait aucun effet et les onglets ne se
+	// répartiraient plus la largeur.
+	it("bottomBarItemWrapperClass rend le <li> flex pour que flex-1 s'applique", () => {
+		expect(bottomBarItemWrapperClass).toContain("flex");
+		expect(bottomBarItemWrapperClass).toContain("flex-1");
+	});
+
 	it("bottomBarItemClass uses focus-ring SSOT utility (globals.css)", () => {
 		expect(bottomBarItemClass).toContain("focus-ring");
+	});
+
+	// L'anneau de focus est un box-shadow EXTERNE et les onglets sont jointifs et
+	// tous `relative` : sans `z-10` au focus, l'onglet suivant repeint le bord
+	// partagé de l'anneau (WCAG 2.4.11).
+	it("bottomBarItemClass élève l'onglet focalisé au-dessus de ses voisins", () => {
+		expect(bottomBarItemClass).toContain("focus-visible:z-10");
+		expect(bottomBarItemClass).toContain("relative");
 	});
 
 	it("bottomBarItemClass contains min touch target", () => {
@@ -471,6 +585,13 @@ describe("Exported class constants", () => {
 
 	it("bottomBarItemClass contains min-width", () => {
 		expect(bottomBarItemClass).toContain("min-w-16");
+	});
+
+	// Le retour tactile de la pression est un transform : il suit la préférence
+	// de mouvement, comme tous les autres transforms de la primitive.
+	it("bottomBarItemClass gate son scale de pression derrière motion-safe", () => {
+		expect(bottomBarItemClass).toContain("motion-safe:active:scale-[0.98]");
+		expect(bottomBarItemClass).not.toMatch(/(^|\s)active:scale-/);
 	});
 
 	it("bottomBarActiveItemClass contains active styles", () => {
@@ -507,124 +628,5 @@ describe("Exported class constants", () => {
 	it("bottomBarLabelClass defines text size and truncation", () => {
 		expect(bottomBarLabelClass).toContain("text-xs");
 		expect(bottomBarLabelClass).toContain("truncate");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// useBottomBarHeight (CSS var integration)
-// ---------------------------------------------------------------------------
-
-describe("useBottomBarHeight", () => {
-	const CSS_VAR = "--bottom-bar-height";
-
-	afterEach(() => {
-		document.documentElement.style.removeProperty(CSS_VAR);
-	});
-
-	it("sets CSS variable when enabled", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
-			"@/shared/hooks/use-bottom-bar-height",
-		);
-
-		function TestComponent({ height, enabled }: { height: number; enabled: boolean }) {
-			realHook(height, enabled);
-			return <div data-testid="test" />;
-		}
-
-		render(<TestComponent height={56} enabled />);
-
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("56px");
-	});
-
-	it("removes CSS variable when disabled", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
-			"@/shared/hooks/use-bottom-bar-height",
-		);
-
-		function TestComponent({ enabled }: { enabled: boolean }) {
-			realHook(56, enabled);
-			return <div />;
-		}
-
-		const { rerender } = render(<TestComponent enabled />);
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("56px");
-
-		rerender(<TestComponent enabled={false} />);
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("");
-	});
-
-	it("cleans up CSS variable on unmount", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
-			"@/shared/hooks/use-bottom-bar-height",
-		);
-
-		function TestComponent() {
-			realHook(56, true);
-			return <div />;
-		}
-
-		const { unmount } = render(<TestComponent />);
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("56px");
-
-		unmount();
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("");
-	});
-
-	it("uses max height when multiple bars registered", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
-			"@/shared/hooks/use-bottom-bar-height",
-		);
-
-		function Bar({ height }: { height: number }) {
-			realHook(height, true);
-			return <div />;
-		}
-
-		render(
-			<>
-				<Bar height={56} />
-				<Bar height={72} />
-			</>,
-		);
-
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
-	});
-
-	it("preserves CSS variable when one of two bars unmounts", async () => {
-		const { useBottomBarHeight: realHook, _registry } = await vi.importActual<
-			typeof UseBottomBarHeightModule
-		>("@/shared/hooks/use-bottom-bar-height");
-
-		function Bar({ height }: { height: number }) {
-			realHook(height, true);
-			return <div />;
-		}
-
-		const { unmount: unmountFirst } = render(<Bar height={56} />);
-		render(<Bar height={72} />);
-
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
-
-		unmountFirst();
-
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
-		expect(_registry.size).toBe(1);
-	});
-
-	it("updates CSS variable when height changes", async () => {
-		const { useBottomBarHeight: realHook } = await vi.importActual<typeof UseBottomBarHeightModule>(
-			"@/shared/hooks/use-bottom-bar-height",
-		);
-
-		function TestComponent({ height }: { height: number }) {
-			realHook(height, true);
-			return <div />;
-		}
-
-		const { rerender } = render(<TestComponent height={56} />);
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("56px");
-
-		rerender(<TestComponent height={72} />);
-		expect(document.documentElement.style.getPropertyValue(CSS_VAR)).toBe("72px");
 	});
 });

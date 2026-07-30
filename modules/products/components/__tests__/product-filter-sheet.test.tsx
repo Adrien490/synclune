@@ -12,7 +12,6 @@ const EMPTY_FORM: FilterFormData = {
 	materials: [],
 	productTypes: [],
 	priceRange: [0, 500],
-	ratingMin: null,
 	inStockOnly: false,
 	onSale: false,
 };
@@ -38,7 +37,6 @@ const {
 		materials: [],
 		productTypes: [],
 		priceRange: [0, 500],
-		ratingMin: null,
 		inStockOnly: false,
 		onSale: false,
 	}),
@@ -239,12 +237,6 @@ vi.mock("../price-range-inputs", () => ({
 				onChange={(e) => onChange([Number(e.target.value), value[1]])}
 			/>
 		</div>
-	),
-}));
-
-vi.mock("@/shared/components/rating-stars", () => ({
-	RatingStars: ({ rating }: { rating: number }) => (
-		<span data-testid={`stars-${rating}`}>{rating} stars</span>
 	),
 }));
 
@@ -454,13 +446,12 @@ describe("ProductFilterSheet", () => {
 	// --------------------------------------------------------------------------
 
 	describe("Section presence", () => {
-		it("renders all 6 sections by default", () => {
+		it("renders all 5 sections by default", () => {
 			renderDefault();
 			expect(screen.getByTestId("section-types")).toBeInTheDocument();
 			expect(screen.getByTestId("section-price")).toBeInTheDocument();
 			expect(screen.getByTestId("section-colors")).toBeInTheDocument();
 			expect(screen.getByTestId("section-materials")).toBeInTheDocument();
-			expect(screen.getByTestId("section-rating")).toBeInTheDocument();
 			expect(screen.getByTestId("section-availability")).toBeInTheDocument();
 		});
 
@@ -470,7 +461,6 @@ describe("ProductFilterSheet", () => {
 			expect(screen.getByText("Prix")).toBeInTheDocument();
 			expect(screen.getByText("Couleurs")).toBeInTheDocument();
 			expect(screen.getByText("Matériaux")).toBeInTheDocument();
-			expect(screen.getByText("Notes clients")).toBeInTheDocument();
 			expect(screen.getByText("Disponibilité")).toBeInTheDocument();
 		});
 	});
@@ -491,10 +481,9 @@ describe("ProductFilterSheet", () => {
 			expect(screen.queryByTestId("section-materials")).not.toBeInTheDocument();
 		});
 
-		it("still renders Prix / Notes / Disponibilité when token sections are empty", () => {
+		it("still renders Prix / Disponibilité when token sections are empty", () => {
 			renderDefault({ colors: [], materials: [], productTypes: [] });
 			expect(screen.getByTestId("section-price")).toBeInTheDocument();
-			expect(screen.getByTestId("section-rating")).toBeInTheDocument();
 			expect(screen.getByTestId("section-availability")).toBeInTheDocument();
 		});
 
@@ -522,13 +511,12 @@ describe("ProductFilterSheet", () => {
 		});
 
 		it("also opens sections that have an active filter at mount", () => {
-			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, colors: ["or"], ratingMin: 4 });
+			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, colors: ["or"] });
 			renderDefault();
 			const defaultValue = JSON.parse(
 				screen.getByTestId("accordion").getAttribute("data-default-value") ?? "[]",
 			) as string[];
 			expect(defaultValue).toContain("colors");
-			expect(defaultValue).toContain("rating");
 			expect(defaultValue).not.toContain("materials");
 		});
 	});
@@ -624,40 +612,6 @@ describe("ProductFilterSheet", () => {
 		});
 	});
 
-	describe("Notes clients section", () => {
-		it("renders a radiogroup (mutually exclusive options)", () => {
-			renderDefault();
-			expect(screen.getByRole("radiogroup", { name: "Note minimale" })).toBeInTheDocument();
-		});
-
-		it("shows 5 rating radio options", () => {
-			renderDefault();
-			for (let stars = 1; stars <= 5; stars++) {
-				expect(screen.getByTestId(`radio-rating-${stars}`)).toBeInTheDocument();
-			}
-		});
-
-		it("renders rating stars for each option", () => {
-			renderDefault();
-			for (let stars = 1; stars <= 5; stars++) {
-				expect(screen.getByTestId(`stars-${stars}`)).toBeInTheDocument();
-			}
-		});
-
-		it("shows the correct labels", () => {
-			renderDefault();
-			expect(screen.getByText("1 étoile et plus")).toBeInTheDocument();
-			expect(screen.getByText("5 étoiles et plus")).toBeInTheDocument();
-		});
-
-		it("marks the matching radio as checked from form values", () => {
-			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, ratingMin: 4 });
-			renderDefault();
-			expect(screen.getByTestId("radio-rating-4")).toHaveAttribute("data-checked", "true");
-			expect(screen.getByTestId("radio-rating-5")).toHaveAttribute("data-checked", "false");
-		});
-	});
-
 	describe("Disponibilité section", () => {
 		it("shows the in-stock and on-sale switches", () => {
 			renderDefault();
@@ -689,12 +643,6 @@ describe("ProductFilterSheet", () => {
 			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, priceRange: [50, 200] });
 			renderDefault();
 			expect(screen.getByText("50€ - 200€")).toBeInTheDocument();
-		});
-
-		it("shows a rating badge when a minimum rating is set", () => {
-			mockParseFilterValues.mockReturnValue({ ...EMPTY_FORM, ratingMin: 4 });
-			renderDefault();
-			expect(screen.getByText("4+ ★")).toBeInTheDocument();
 		});
 
 		it("resets the section field when the reset button is clicked", () => {
@@ -730,12 +678,6 @@ describe("ProductFilterSheet", () => {
 			expect(mockSetFieldValue).toHaveBeenCalledWith("colors", ["argent"]);
 		});
 
-		it("sets the rating field when a radio is selected", () => {
-			renderDefault();
-			fireEvent.click(screen.getByTestId("radio-rating-4").querySelector("input")!);
-			expect(mockSetFieldValue).toHaveBeenCalledWith("ratingMin", 4);
-		});
-
 		it("sets the in-stock field when the switch is toggled", () => {
 			renderDefault();
 			fireEvent.click(screen.getByTestId("switch-filter-in-stock"));
@@ -759,11 +701,10 @@ describe("ProductFilterSheet", () => {
 			mockParseFilterValues.mockReturnValue({
 				...EMPTY_FORM,
 				colors: ["or", "argent"],
-				ratingMin: 4,
 			});
 			renderDefault();
 			const wrapper = screen.getByTestId("filter-wrapper");
-			expect(wrapper).toHaveAttribute("data-active-count", "3");
+			expect(wrapper).toHaveAttribute("data-active-count", "2");
 			expect(wrapper).toHaveAttribute("data-has-active", "true");
 		});
 	});

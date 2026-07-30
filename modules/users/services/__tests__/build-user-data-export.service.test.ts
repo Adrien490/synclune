@@ -33,7 +33,6 @@ function buildUser(overrides: Record<string, unknown> = {}) {
 		orders: [],
 		wishlist: null,
 		discountUsages: [],
-		reviews: [],
 		sessions: [],
 		...overrides,
 	};
@@ -316,35 +315,6 @@ describe("buildUserDataExport", () => {
 
 		expect(result!.wishlist).toHaveLength(1);
 		expect(result!.wishlist[0]!.productTitle).toBe("Bague solitaire");
-	});
-
-	// -------------------------------------------------------------------------
-	// Reviews mapping
-	// -------------------------------------------------------------------------
-
-	it("should map reviews with null product title when product is missing", async () => {
-		const reviews = [
-			{
-				product: null,
-				rating: 4,
-				title: "Beau produit",
-				content: "Tres content de mon achat.",
-				createdAt: BASE_DATE,
-				updatedAt: LATER_DATE,
-			},
-		];
-		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ reviews }));
-
-		const result = await buildUserDataExport("user_1");
-
-		expect(result!.reviews[0]).toEqual({
-			productTitle: null,
-			rating: 4,
-			title: "Beau produit",
-			content: "Tres content de mon achat.",
-			createdAt: BASE_DATE.toISOString(),
-			updatedAt: LATER_DATE.toISOString(),
-		});
 	});
 
 	// -------------------------------------------------------------------------

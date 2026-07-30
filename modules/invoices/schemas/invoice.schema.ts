@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PaymentMethod } from "@/app/generated/prisma/enums";
+import { LEGACY_INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import { TAX_CATEGORY_CODES } from "@/shared/constants/tax-categories";
 
 /**
@@ -158,6 +159,10 @@ const invoiceMetaSchema = z.object({
  */
 export const invoiceDataSchema = z
 	.object({
+		// `.default()` et non `.optional()` : un snapshot legacy relu (écrit avant
+		// l'introduction du champ) doit valider et ressortir en version 1, pas être
+		// rejeté. Cf. `INVOICE_DATA_FORMAT_VERSION`.
+		formatVersion: z.int().positive().default(LEGACY_INVOICE_DATA_FORMAT_VERSION),
 		invoiceNumber: z.union([
 			z.string().regex(/^F-[0-9]{4}-[0-9]{5}$/, "Format F-YYYY-NNNNN attendu"),
 			z.string().regex(/^A-[0-9]{4}-[0-9]{5}$/, "Format A-YYYY-NNNNN attendu (avoir)"),

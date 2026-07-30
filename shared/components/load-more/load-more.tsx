@@ -31,7 +31,7 @@ interface LoadMoreProps<TItem> {
 	getItemKey: (item: TItem) => string;
 	/** id of the list this button extends — used for aria-controls. */
 	controlsId?: string;
-	/** Singular label ("avis", "produit"). Used in counter + sr announcement. */
+	/** Singular label (ex. "produit"). Used in counter + sr announcement. */
 	itemsLabel: string;
 	/** Plural label. Defaults to `${itemsLabel}s`. */
 	itemsLabelPlural?: string;
@@ -55,11 +55,11 @@ interface LoadMoreProps<TItem> {
  * Generic Load More component.
  *
  * Append-style pagination (vs. URL-driven CursorPagination): keeps server-rendered
- * items + appends additional items in local state. Used for feeds (reviews,
+ * items + appends additional items in local state. Used for feeds (
  * product catalogue on mobile) where lecture passive prime sur navigation ciblée.
  *
  * Parent must remount via `key` derived from filter/sort searchParams to avoid
- * stale local state across re-renders (see ReviewsLoadMore call-site).
+ * stale local state across re-renders.
  */
 export function LoadMore<TItem>({
 	initialCursor,

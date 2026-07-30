@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 /**
  * @regression admin-skeleton-column-parity-2026-07-26
  *
- * Après le retrait de la machinerie bulk (commit 557da2c69), 8 des 11 skeletons
+ * Après le retrait de la machinerie bulk (commit 557da2c69), 8 des skeletons
  * admin ouvraient encore sur une colonne `checkbox` (ou `avatar`) disparue de la
  * table réelle, et 4 déclaraient `pagination="offset"` alors que toutes les
  * listes sont en pagination curseur. Le skeleton affichait donc N+1 colonnes
@@ -49,7 +49,7 @@ describe("Admin skeletons — parité avec la table réelle", () => {
 	const pairs = findPairs();
 
 	it("chaque admin data-table a son skeleton", () => {
-		expect(pairs.length).toBe(11);
+		expect(pairs.length).toBe(10);
 	});
 
 	it.each(pairs.map((p) => [p.module, p] as const))(

@@ -147,7 +147,7 @@ describe("stripImageMetadata", () => {
 
 	/**
 	 * Audit média M4 : la distinction `unchanged` / `failed` est ce qui permet à
-	 * `reviewMedia` de bloquer une publication sans confondre « image déjà propre »
+	 * à une route à strip obligatoire de bloquer une publication sans confondre « image déjà propre »
 	 * et « strip EXIF cassé ». Un retour unique (`null`) rendait la garde impossible.
 	 */
 	it("distingue `unchanged` (rien à stripper) de `failed` (strip cassé)", async () => {

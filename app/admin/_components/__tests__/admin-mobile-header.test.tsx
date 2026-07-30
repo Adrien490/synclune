@@ -228,7 +228,6 @@ describe("AdminMobileHeader", () => {
 			["/admin/catalogue/produits/abc", breadcrumbs.list],
 			["/admin/catalogue/produits/nouveau", breadcrumbs.list],
 			["/admin/catalogue/produits/abc/variantes/xyz", breadcrumbs.list],
-			["/admin/marketing/avis/abc", breadcrumbs.list],
 			["/admin/ventes/commandes/abc/notes", breadcrumbs.list],
 			["/admin/configuration/boutique/fermer", breadcrumbs.storeClose],
 		])("renders back button on detail route %s", (pathname, segmentsFn) => {

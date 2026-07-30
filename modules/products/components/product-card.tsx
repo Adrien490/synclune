@@ -16,18 +16,12 @@ import { ProductCardColorSwatches } from "./product-card-color-swatches";
 import { Badge } from "@/shared/components/ui/badge";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
-import { StarIcon } from "@/shared/components/icons/star-icon";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import { buildSkuUrl } from "@/modules/products/utils/build-sku-url";
 import { computeDiscountPercent } from "@/modules/products/utils/compute-discount-percent";
 import type { ComponentProps, ReactNode } from "react";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
-
-const ratingFormatter = new Intl.NumberFormat("fr-FR", {
-	minimumFractionDigits: 1,
-	maximumFractionDigits: 1,
-});
 
 interface ProductCardProps {
 	product: ProductCarouselItem;
@@ -73,42 +67,6 @@ function CardBadge({
 		>
 			{children}
 		</Badge>
-	);
-}
-
-/**
- * Compact star rating display for product cards (server component compatible).
- * Uses StarIcon directly to avoid the "use client" dependency of RatingStars.
- */
-function ProductCardRating({
-	averageRating,
-	totalCount,
-	productId,
-	formattedRating,
-}: {
-	averageRating: number;
-	totalCount: number;
-	productId: string;
-	formattedRating: string;
-}) {
-	if (totalCount === 0) return null;
-
-	return (
-		<div
-			className="flex items-center gap-0.5"
-			role="img"
-			aria-label={`Note : ${formattedRating} sur 5, ${totalCount} avis`}
-		>
-			{Array.from({ length: 5 }, (_, i) => (
-				<StarIcon
-					key={`star-${i}`}
-					fillPercentage={Math.min(1, Math.max(0, averageRating - i))}
-					size="sm"
-					gradientId={`card-${productId}-star-${i}`}
-				/>
-			))}
-			<span className="text-muted-foreground ml-0.5 text-xs">({totalCount})</span>
-		</div>
 	);
 }
 
@@ -201,12 +159,6 @@ export function ProductCard({
 	// - `fetchPriority="high"` sur les 4 cartes above-fold => 4 images se disputent
 	//   la bande passante 4G et retardent celle qui EST le LCP.
 	const isLcpCandidate = !disablePreload && index === 0;
-
-	// Review stats: hoisted so the rating link can include the score in its aria-label.
-	const reviewStats =
-		product.reviewStats && product.reviewStats.totalCount > 0 ? product.reviewStats : null;
-	const reviewAverage = reviewStats ? Number(reviewStats.averageRating) : 0;
-	const formattedRating = reviewStats ? ratingFormatter.format(reviewAverage) : null;
 
 	// Aligned with Gallery PDP for card→detail morph (gallery.tsx:436).
 	const productViewTransitionName = `product-${product.id}`;
@@ -342,22 +294,6 @@ export function ProductCard({
 
 				{/* Prix — placed before colors for scannability (Baymard guideline) */}
 				{!noActiveSku && <ProductPrice price={price} compareAtPrice={compareAtPrice} />}
-
-				{/* Average rating — lien direct vers la section avis (saute le stretched link via z-30) */}
-				{reviewStats && formattedRating && (
-					<Link
-						href={`${productUrl}#reviews`}
-						className="focus-ring relative z-30 inline-flex w-fit rounded-sm"
-						aria-label={`Lire les ${reviewStats.totalCount} avis (note moyenne : ${formattedRating} sur 5)`}
-					>
-						<ProductCardRating
-							averageRating={reviewAverage}
-							totalCount={reviewStats.totalCount}
-							productId={product.id}
-							formattedRating={formattedRating}
-						/>
-					</Link>
-				)}
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (

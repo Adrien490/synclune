@@ -30,7 +30,10 @@ const {
 		// P1-REVALIDATE : re-validation quantités/montant sous le FOR UPDATE.
 		refundItem: { findMany: vi.fn().mockResolvedValue([]) },
 		orderItem: { findMany: vi.fn().mockResolvedValue([]) },
-		productSku: { update: vi.fn() },
+		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
+		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
+		// STOCK-LEDGER-001 : chaque restock écrit son mouvement dans la même tx.
+		stockMovement: { create: vi.fn() },
 		order: { update: vi.fn() },
 		// ORD-STRIPE-007 : dispute.findFirst utilisé dans Step 1 pour bloquer le
 		// processRefund SAGA si un dispute Stripe est ouvert sur la commande.
@@ -54,7 +57,10 @@ const {
 				// l'avoir partiel ou total inclus dans l'email client (Art. 272-I CGI).
 				findUnique: vi.fn().mockResolvedValue(null),
 			},
-			productSku: { findMany: vi.fn() },
+			// P1-1 : lecture de l'état pré-restock DANS la transaction (gate 0→N +
+			// décision de réactivation). Défaut `[]` : sans lui, un test qui ne l'arme
+			// pas rend `undefined` et le restock lève.
+			productSku: { findMany: vi.fn().mockResolvedValue([]), update: vi.fn() },
 			user: { findUnique: vi.fn() },
 			// Legacy : conservé pour les tests historiques qui mockent ce path.
 			order: { findUnique: vi.fn() },
@@ -196,6 +202,9 @@ vi.mock("@/modules/dashboard/constants/cache", () => ({}));
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: {},
+	// STOCK-LEDGER-001 : sans cette entrée, `StockMovementSource.SYSTEM` vaut
+	// `undefined` et le restock throw un TypeError — mock partiel du client Prisma.
+	StockMovementSource: { ORDER: "ORDER", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM" },
 	PaymentStatus: {
 		REFUNDED: "REFUNDED",
 		PARTIALLY_REFUNDED: "PARTIALLY_REFUNDED",
@@ -299,6 +308,11 @@ describe("processRefund", () => {
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.productSku.update.mockResolvedValue({});
+		// STOCK-LEDGER-001 : le restock est un `UPDATE … RETURNING` (raw SQL). Les 3
+		// premiers `$queryRaw` du SAGA sont surchargés en `…Once` par chaque test ; ce
+		// défaut de base sert les appels suivants, soit précisément les restocks.
+		mockTx.$queryRaw.mockResolvedValue([{ inventory: 5, productId: "prod-1" }]);
+		mockTx.stockMovement.create.mockResolvedValue({});
 		mockTx.order.update.mockResolvedValue({});
 	});
 
@@ -539,10 +553,10 @@ describe("processRefund", () => {
 
 		await processRefund(undefined, makeFormData());
 
-		// Should restock sku-1 (restock: true)
-		expect(mockTx.productSku.update).toHaveBeenCalledWith({
-			where: { id: "sku-1" },
-			data: { inventory: { increment: 2 } },
+		// Should restock sku-1 (restock: true). L'UPDATE passe par du SQL brut : c'est
+		// le mouvement de stock journalisé qui atteste du crédit et de son montant.
+		expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({ skuId: "sku-1", delta: 2, source: "SYSTEM" }),
 		});
 	});
 
@@ -560,11 +574,18 @@ describe("processRefund", () => {
 		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
 			fn(mockTx),
 		);
-		// 1er findMany = snapshot pré-restock (stock 0 → produit épuisé) ;
-		// 2e findMany = résolution productId/slug pour invalidation cache.
-		mockPrisma.productSku.findMany
-			.mockResolvedValueOnce([{ id: "sku-1", inventory: 0, productId: "prod-1" }])
-			.mockResolvedValueOnce([{ productId: "prod-1", product: { slug: "bracelet-lune" } }]);
+		// P1-1 : le snapshot pré-restock est désormais lu DANS la transaction (`tx`),
+		// pas hors-tx — il alimente à la fois le gate 0→N et la décision de
+		// réactivation, et le lire hors-tx le rendait périmable.
+		// `isActive: false` + `inventory: 0` = SKU auto-désactivé par la vente ⇒ il doit
+		// être réactivé ET notifié.
+		mockTx.productSku.findMany.mockResolvedValue([
+			{ id: "sku-1", inventory: 0, productId: "prod-1", isActive: false },
+		]);
+		// Hors-tx : résolution productId/slug pour l'invalidation de cache.
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ productId: "prod-1", product: { slug: "bracelet-lune" } },
+		]);
 
 		await processRefund(undefined, makeFormData());
 
@@ -607,11 +628,13 @@ describe("processRefund", () => {
 
 		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_123" });
 
-		// Second transaction: productSku.update throws (SKU deleted)
+		// Second transaction: le `UPDATE … RETURNING` ne ramène AUCUNE ligne (SKU
+		// supprimé). Depuis STOCK-LEDGER-001 ce cas ne lève plus P2025 : il se signale
+		// par un résultat vide, que le service compte en `skippedRestocks`.
 		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
 			fn(mockTx),
 		);
-		mockTx.productSku.update.mockRejectedValueOnce(new Error("Record not found"));
+		mockTx.$queryRaw.mockResolvedValue([]);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
 
 		// Should not throw - just warn and continue

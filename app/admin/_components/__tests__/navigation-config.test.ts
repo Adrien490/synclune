@@ -12,22 +12,25 @@ import {
 // ============================================================================
 
 describe("navigationData", () => {
-	// Mode "boutique en ligne" (SHOP_LIVE=true) : 6 groupes complets.
-	// Si SHOP_LIVE repasse à false, restreindre à 2 groupes (Catalogue + Configuration).
-	it("has 5 navigation groups in shop-live mode", () => {
-		expect(navigationData.navGroups).toHaveLength(5);
+	// Mode "boutique en ligne" (SHOP_LIVE=true) : 4 groupes complets.
+	// Si SHOP_LIVE repasse à false, restreindre à 2 groupes (Catalogue + Boutique).
+	it("has 4 navigation groups in shop-live mode", () => {
+		expect(navigationData.navGroups).toHaveLength(4);
 	});
 
 	/**
-	 * 5 groupes et non 6 : `Clients`, `Contenu` et `Configuration` étaient des
-	 * groupes MONO-ITEM — trois libellés et trois séparateurs de chrome pour trois
-	 * liens. `Clients` rejoint `Pilotage` (avec le tableau de bord, qui n'avait
-	 * aucune entrée nommée), `Contenu` + `Configuration` fusionnent en `Boutique`.
+	 * 4 groupes et non 6 : `Clients`, `Contenu`, `Configuration` puis `Marketing`
+	 * étaient des groupes MONO-ITEM — un libellé et un séparateur de chrome chacun
+	 * pour un unique lien. `Clients` rejoint `Pilotage` (avec le tableau de bord,
+	 * qui n'avait aucune entrée nommée), `Contenu` + `Configuration` fusionnent en
+	 * `Boutique`, et `Marketing` est devenu mono-item au retrait du système d'avis
+	 * (2026-07-30) : « Codes promo » a rejoint `Ventes`, dont il partage le gate
+	 * `SHOP_LIVE` et la nature commerciale (sa route est inchangée).
 	 * L'ordre suit la fréquence d'usage quotidienne décroissante.
 	 */
-	it("includes the 5 groups in shop-live mode, ordered by daily usage", () => {
+	it("includes the 4 groups in shop-live mode, ordered by daily usage", () => {
 		const labels = navigationData.navGroups.map((g) => g.label);
-		expect(labels).toEqual(["Pilotage", "Ventes", "Catalogue", "Marketing", "Boutique"]);
+		expect(labels).toEqual(["Pilotage", "Ventes", "Catalogue", "Boutique"]);
 	});
 
 	it("n'a plus aucun groupe mono-item", () => {
@@ -68,11 +71,11 @@ describe("navigationData", () => {
 		}
 	});
 
-	it("marks Catalogue and Marketing as collapsible in shop-live mode", () => {
+	it("marks Catalogue as the only collapsible group in shop-live mode", () => {
 		const collapsibleLabels = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
-		expect(collapsibleLabels).toEqual(["Catalogue", "Marketing"]);
+		expect(collapsibleLabels).toEqual(["Catalogue"]);
 	});
 
 	it("has shortTitle on items that need it", () => {

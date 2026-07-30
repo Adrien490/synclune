@@ -246,13 +246,52 @@ describe("updateCartItem", () => {
 		expect(mockForbidden).toHaveBeenCalled();
 	});
 
-	it("returns success (no-op) when quantity unchanged", async () => {
+	// Quantité inchangée : succès, aucune ÉCRITURE — mais les gardes tournent quand
+	// même. L'assertion précédente (`$transaction` non appelée) verrouillait le
+	// court-circuit qui annonçait « Quantité mise à jour » sans avoir rien vérifié.
+	// Audit « validation stock panier » 2026-07-30.
+	it("returns success (no-op) when quantity unchanged, sans écrire", async () => {
 		mockValidateInput.mockReturnValue({ data: { cartItemId: "item-1", quantity: 1 } });
 		mockPrisma.cartItem.findUnique.mockResolvedValue(makeCartItem({ quantity: 1 }));
+		const { tx, mockCartItemUpdate, mockCartUpdate } = makeTxWithSku();
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
 
 		await updateCartItem(undefined, makeFormData("item-1", 1));
+
 		expect(mockSuccess).toHaveBeenCalledWith("Quantité mise à jour (1)");
-		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		// Les gardes ont bien tourné (la transaction s'ouvre)…
+		expect(mockPrisma.$transaction).toHaveBeenCalled();
+		// …mais rien n'est écrit : la quantité est déjà la bonne.
+		expect(mockCartItemUpdate).not.toHaveBeenCalled();
+		expect(mockCartUpdate).not.toHaveBeenCalled();
+	});
+
+	// Le cas qui motivait le changement : la ligne est passée en rupture pendant que
+	// le client regardait son panier ; il resoumet la MÊME quantité pour « réessayer ».
+	// L'ancien court-circuit répondait « Quantité mise à jour ». Il doit échouer.
+	it("échoue si le stock est devenu insuffisant, même à quantité inchangée", async () => {
+		mockValidateInput.mockReturnValue({ data: { cartItemId: "item-1", quantity: 3 } });
+		mockPrisma.cartItem.findUnique.mockResolvedValue(makeCartItem({ quantity: 3 }));
+		const { tx } = makeTxWithSku({ inventory: 1 });
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
+
+		await updateCartItem(undefined, makeFormData("item-1", 3));
+
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(mockSuccess).not.toHaveBeenCalled();
+	});
+
+	// Idem pour un SKU désactivé entre-temps.
+	it("échoue si le SKU est devenu inactif, même à quantité inchangée", async () => {
+		mockValidateInput.mockReturnValue({ data: { cartItemId: "item-1", quantity: 1 } });
+		mockPrisma.cartItem.findUnique.mockResolvedValue(makeCartItem({ quantity: 1 }));
+		const { tx } = makeTxWithSku({ isActive: false });
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
+
+		await updateCartItem(undefined, makeFormData("item-1", 1));
+
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(mockSuccess).not.toHaveBeenCalled();
 	});
 
 	it("throws BusinessError for inactive SKU", async () => {

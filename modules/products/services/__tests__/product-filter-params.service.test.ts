@@ -37,7 +37,6 @@ function makeFormData(overrides: Partial<FilterFormData> = {}): FilterFormData {
 		materials: [],
 		productTypes: [],
 		priceRange: DEFAULT_PRICE_RANGE,
-		ratingMin: null,
 		inStockOnly: false,
 		onSale: false,
 		...overrides,
@@ -67,7 +66,6 @@ describe("parseFilterValuesFromURL", () => {
 			materials: [],
 			productTypes: [],
 			priceRange: DEFAULT_PRICE_RANGE,
-			ratingMin: null,
 			inStockOnly: false,
 			onSale: false,
 		});
@@ -137,16 +135,6 @@ describe("parseFilterValuesFromURL", () => {
 	it("should use default priceMax when value is 0 or invalid", () => {
 		const result = parseFilterValuesFromURL(makeParseParams("priceMax=invalid"));
 		expect(result.priceRange[1]).toBe(DEFAULT_PRICE_RANGE[1]);
-	});
-
-	it("should parse valid rating (1-5)", () => {
-		const result = parseFilterValuesFromURL(makeParseParams("rating=4"));
-		expect(result.ratingMin).toBe(4);
-	});
-
-	it("should ignore invalid rating (0 or >5)", () => {
-		expect(parseFilterValuesFromURL(makeParseParams("rating=0")).ratingMin).toBeNull();
-		expect(parseFilterValuesFromURL(makeParseParams("rating=6")).ratingMin).toBeNull();
 	});
 
 	it("should parse stockStatus=in_stock as inStockOnly=true", () => {
@@ -267,11 +255,6 @@ describe("buildFilterURL", () => {
 		expect(result.queryString).not.toContain("priceMax");
 	});
 
-	it("should add rating when set", () => {
-		const result = buildFilterURL(makeBuildParams({ formData: makeFormData({ ratingMin: 4 }) }));
-		expect(result.queryString).toContain("rating=4");
-	});
-
 	it("should add stockStatus=in_stock when inStockOnly", () => {
 		const result = buildFilterURL(
 			makeBuildParams({ formData: makeFormData({ inStockOnly: true }) }),
@@ -335,7 +318,7 @@ describe("buildClearFiltersURL", () => {
 
 	it("should remove all filter keys", () => {
 		const params = new URLSearchParams(
-			"color=or&material=argent&type=bagues&priceMin=50&priceMax=300&rating=4&stockStatus=in_stock&onSale=true",
+			"color=or&material=argent&type=bagues&priceMin=50&priceMax=300&stockStatus=in_stock&onSale=true",
 		);
 		const result = buildClearFiltersURL(params);
 		expect(result).toBe("/produits");
@@ -384,11 +367,9 @@ describe("countActiveFilters", () => {
 		expect(result.activeFiltersCount).toBe(0);
 	});
 
-	it("should count onSale, stockStatus and rating as filters", () => {
-		const result = countActiveFilters(
-			new URLSearchParams("onSale=true&stockStatus=in_stock&rating=4"),
-		);
-		expect(result.activeFiltersCount).toBe(3);
+	it("should count onSale and stockStatus as filters", () => {
+		const result = countActiveFilters(new URLSearchParams("onSale=true&stockStatus=in_stock"));
+		expect(result.activeFiltersCount).toBe(2);
 	});
 
 	it("should count type filter", () => {
@@ -398,10 +379,10 @@ describe("countActiveFilters", () => {
 
 	it("should count combined filters correctly", () => {
 		const result = countActiveFilters(
-			new URLSearchParams("color=or&color=argent&priceMin=50&priceMax=300&rating=4"),
+			new URLSearchParams("color=or&color=argent&priceMin=50&priceMax=300"),
 		);
-		// 2 colors + 1 price range + 1 rating = 4
-		expect(result.activeFiltersCount).toBe(4);
+		// 2 colors + 1 price range = 3
+		expect(result.activeFiltersCount).toBe(3);
 	});
 });
 
@@ -417,7 +398,6 @@ describe("getDefaultFilterValues", () => {
 			materials: [],
 			productTypes: [],
 			priceRange: [10, 800],
-			ratingMin: null,
 			inStockOnly: false,
 			onSale: false,
 		});
@@ -497,7 +477,6 @@ describe("getSectionActiveCount", () => {
 			price: 0,
 			colors: 0,
 			materials: 0,
-			rating: 0,
 			availability: 0,
 		});
 	});
@@ -520,12 +499,6 @@ describe("getSectionActiveCount", () => {
 		expect(
 			getSectionActiveCount(makeFormData({ priceRange: [50, 200] }), DEFAULT_PRICE_RANGE).price,
 		).toBe(1);
-	});
-
-	it("counts rating as 1 when set", () => {
-		expect(getSectionActiveCount(makeFormData({ ratingMin: 4 }), DEFAULT_PRICE_RANGE).rating).toBe(
-			1,
-		);
 	});
 
 	it("counts each availability toggle independently", () => {

@@ -69,7 +69,7 @@ function setPaidAt(paidAt: Date): void {
 
 function makeOrderForSnapshot(): Record<string, unknown> {
 	return {
-		id: "order-1",
+		id: "nq8kx3v2p7rt9wd4bcfh6mzy",
 		orderNumber: "SYN-2026-99999",
 		userId: "user-1",
 		customerEmail: "test@example.com",
@@ -147,7 +147,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result).toBeNull();
 		expect(mockTx.order.update).not.toHaveBeenCalled();
@@ -164,7 +164,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2027-00001");
 		const queryArg = mockTx.$queryRaw.mock.calls[0]![0];
@@ -183,7 +183,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		await persistInvoiceNumber("order-1", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		const queryArg = mockTx.$queryRaw.mock.calls[0]![0];
 		expect(queryArg.values[0]).toMatch(/^F-2027-%$/);
@@ -199,7 +199,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceNumber: "F-2026-00001",
 			invoiceGeneratedAt: new Date(),
 		});
-		await persistInvoiceNumber("order-1", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 		const lockKey2026 = mockTx.$executeRaw.mock.calls[0]![0].values[0];
 
 		// Encaissement 2027
@@ -213,7 +213,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		});
 		runTx();
-		await persistInvoiceNumber("order-1", "user-1");
+		await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 		const lockKey2027 = mockTx.$executeRaw.mock.calls[0]![0].values[0];
 
 		expect(lockKey2026).toBe(1_000_000 + 2026);
@@ -226,7 +226,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 		runTx();
 		mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-99999" }]);
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result).toBeNull();
 		// 1 seul appel à $transaction (pas de retry)
@@ -245,7 +245,7 @@ describe("persistInvoiceNumber — year boundary (EINV-TEST-019)", () => {
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2026-99999");
 	});
@@ -265,7 +265,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2026-00001");
 		// Prefix + advisory lock suivent l'année d'encaissement 2026.
@@ -284,7 +284,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2027-00001");
 		expect(mockTx.$queryRaw.mock.calls[0]![0].values[0]).toBe("F-2027-%");
@@ -308,7 +308,7 @@ describe("persistInvoiceNumber — millésime = encaissement, pas génération (
 			invoiceGeneratedAt: new Date(),
 		}));
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		const result = await persistInvoiceNumber("nq8kx3v2p7rt9wd4bcfh6mzy", "user-1");
 
 		expect(result?.invoiceNumber).toBe("F-2025-00001");
 	});

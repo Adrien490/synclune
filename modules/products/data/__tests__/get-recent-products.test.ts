@@ -4,18 +4,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockGetRecentProductSlugs,
-	mockFindMany,
-	mockCacheLife,
-	mockCacheTag,
-	mockSerializeProducts,
-} = vi.hoisted(() => ({
+const { mockGetRecentProductSlugs, mockFindMany, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockGetRecentProductSlugs: vi.fn(),
 	mockFindMany: vi.fn(),
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
-	mockSerializeProducts: vi.fn(),
 }));
 
 vi.mock("../get-recent-product-slugs", () => ({
@@ -32,10 +25,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("next/cache", () => ({
 	cacheLife: mockCacheLife,
 	cacheTag: mockCacheTag,
-}));
-
-vi.mock("../../utils/serialize-product", () => ({
-	serializeProducts: mockSerializeProducts,
 }));
 
 vi.mock("../constants/product.constants", () => ({
@@ -76,7 +65,6 @@ function makeProduct(slug: string, overrides: Record<string, unknown> = {}) {
 describe("getRecentProducts", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
-		mockSerializeProducts.mockImplementation((products: unknown[]) => products);
 	});
 
 	// ─── No slugs ────────────────────────────────────────────────────────────
@@ -219,16 +207,4 @@ describe("getRecentProducts", () => {
 	});
 
 	// ─── Serialization ───────────────────────────────────────────────────────
-
-	it("serializes returned products", async () => {
-		const products = [makeProduct("bracelet-lune")];
-		mockGetRecentProductSlugs.mockResolvedValue(["bracelet-lune"]);
-		mockFindMany.mockResolvedValue(products);
-		mockSerializeProducts.mockReturnValue([{ ...products[0], serialized: true }]);
-
-		const result = await getRecentProducts();
-
-		expect(mockSerializeProducts).toHaveBeenCalled();
-		expect(result[0]).toHaveProperty("serialized", true);
-	});
 });

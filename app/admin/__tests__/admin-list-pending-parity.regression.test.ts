@@ -30,7 +30,6 @@ const LIST_PAGES = [
 	"app/admin/catalogue/materiaux/page.tsx",
 	"app/admin/catalogue/types-de-produits/page.tsx",
 	"app/admin/clients/page.tsx",
-	"app/admin/marketing/avis/page.tsx",
 	"app/admin/marketing/discounts/page.tsx",
 	"app/admin/ventes/commandes/page.tsx",
 	"app/admin/ventes/remboursements/page.tsx",
@@ -83,7 +82,7 @@ describe("état « recherche en cours » des listes admin", () => {
 		const roots = listRootFiles();
 		// Garde anti-« vert pour la mauvaise raison » : si le grep ne trouve plus
 		// rien, la boucle serait vide et le test passerait sans rien vérifier.
-		expect(roots.length).toBeGreaterThanOrEqual(10);
+		expect(roots.length).toBeGreaterThanOrEqual(9);
 
 		const missing = roots.filter(
 			(p) => !bodyWithoutImports(p).includes("ADMIN_LIST_PENDING_CLASS"),

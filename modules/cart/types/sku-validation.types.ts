@@ -29,18 +29,10 @@ interface SkuData {
 		url: string;
 		altText?: string;
 		isPrimary: boolean;
+		// EINV-SNAPSHOT-MEDIA-001 : requis pour que le consommateur du snapshot de
+		// commande puisse écarter une vidéo (`pickPrimaryImage`).
+		mediaType: "IMAGE" | "VIDEO";
 	}>;
-}
-
-/**
- * Resultat de la validation d'un SKU avec son stock
- */
-export interface SkuValidationResult {
-	success: boolean;
-	error?: string;
-	data?: {
-		sku: SkuData;
-	};
 }
 
 /**

@@ -1,4 +1,8 @@
 import { createHash } from "node:crypto";
+import {
+	INVOICE_DATA_FORMAT_VERSION,
+	readInvoiceDataFormatVersion,
+} from "@/modules/invoices/constants/invoice-data-format";
 import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
 import type { InvoiceData } from "@/modules/invoices/types/invoice-data";
 
@@ -22,10 +26,34 @@ export class InvoiceSnapshotIntegrityError extends Error {
 	}
 }
 
+/**
+ * Levée quand un snapshot annonce une version de format que ce déploiement ne
+ * connaît pas (`formatVersion > INVOICE_DATA_FORMAT_VERSION`) — typiquement une
+ * facture écrite par un déploiement plus récent, lue par un plus ancien (rollback,
+ * instance en retard). Le hash est alors valide et le document pourtant illisible :
+ * des champs peuvent avoir changé de sens. Même posture que
+ * `InvoiceSnapshotIntegrityError` — refuser de servir plutôt que servir faux.
+ */
+export class InvoiceSnapshotVersionError extends Error {
+	constructor(
+		public readonly orderId: string,
+		public readonly snapshotVersion: number,
+		public readonly supportedVersion: number,
+	) {
+		super(
+			`Invoice snapshot format version ${snapshotVersion} for order ${orderId} is newer ` +
+				`than the supported version ${supportedVersion}`,
+		);
+		this.name = "InvoiceSnapshotVersionError";
+	}
+}
+
 export interface VerifiedInvoiceSnapshot {
 	invoiceData: InvoiceData;
 	/** SHA-256 recalculé du snapshot canonical-JSON. */
 	computedHash: string;
+	/** Version de format lue dans le snapshot (absente ⇒ 1, forme legacy). */
+	formatVersion: number;
 }
 
 /**
@@ -42,6 +70,9 @@ export interface VerifiedInvoiceSnapshot {
  *   Le CHECK DB `Order_invoiceDataSnapshot_hash_coherence_check` garantit
  *   qu'un snapshot non-null implique un hash non-null pour toute facture émise
  *   après le fix — donc ce cas ne concerne que les données legacy.
+ * - `formatVersion` du snapshot > version supportée → throw
+ *   `InvoiceSnapshotVersionError`. Un `formatVersion` absent vaut 1 (forme
+ *   antérieure à son introduction) et passe.
  *
  * Le calcul réplique `persist-invoice-number.service.ts` : `canonicalJsonStringify`
  * (tri lexicographique récursif des clés) puis SHA-256 hex.
@@ -63,5 +94,12 @@ export function verifyInvoiceSnapshot(
 		throw new InvoiceSnapshotIntegrityError(orderId, expectedHash, computedHash);
 	}
 
-	return { invoiceData: snapshot as InvoiceData, computedHash };
+	// Contrôle de version APRÈS le hash : un snapshot corrompu doit être signalé
+	// comme corrompu, pas comme « version inconnue ».
+	const formatVersion = readInvoiceDataFormatVersion(snapshot);
+	if (formatVersion > INVOICE_DATA_FORMAT_VERSION) {
+		throw new InvoiceSnapshotVersionError(orderId, formatVersion, INVOICE_DATA_FORMAT_VERSION);
+	}
+
+	return { invoiceData: snapshot as InvoiceData, computedHash, formatVersion };
 }

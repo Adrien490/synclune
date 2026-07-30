@@ -167,6 +167,17 @@ export function EditProductForm({
 						<>
 							<input type="hidden" name="productId" value={productId} />
 							<input type="hidden" name="defaultSku.skuId" value={skuId} />
+							{/* Stock rendu à l'ouverture — délibérément lu sur `product` et NON sur
+							    l'état du formulaire : c'est la baseline qui permet à l'action
+							    d'appliquer un delta relatif plutôt qu'un set absolu, et donc de ne
+							    pas écraser les ventes concurrentes survenues pendant l'édition
+							    (STOCK-PHANTOM-001). La lire dans `state.values` la ferait suivre la
+							    saisie ⇒ delta toujours nul ⇒ champ de stock inopérant. */}
+							<input
+								type="hidden"
+								name="defaultSku.originalInventory"
+								value={product.skus[0]?.inventory ?? 0}
+							/>
 							{media.length > 0 ? (
 								<input type="hidden" name="defaultSku.media" value={JSON.stringify(media)} />
 							) : null}

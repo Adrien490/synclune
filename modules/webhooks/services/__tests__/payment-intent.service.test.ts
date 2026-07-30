@@ -23,6 +23,8 @@ const {
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
+		// STOCK-LEDGER-001 : le décrément de vente écrit désormais un StockMovement.
+		stockMovement: { create: vi.fn() },
 		refund: {
 			findFirst: vi.fn(),
 			create: vi.fn(),
@@ -304,11 +306,13 @@ describe("restoreStockForOrder", () => {
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-auto-deactivated" },
 			data: { inventory: { increment: 1 }, isActive: true },
+			select: { inventory: true, productId: true },
 		});
 
 		expect(mockTx.productSku.update).toHaveBeenCalledWith({
 			where: { id: "sku-manually-deactivated" },
 			data: { inventory: { increment: 1 } },
+			select: { inventory: true, productId: true },
 		});
 	});
 });

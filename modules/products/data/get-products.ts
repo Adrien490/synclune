@@ -26,7 +26,6 @@ import {
 import { getSpellSuggestion, SUGGESTION_THRESHOLD_RESULTS } from "./spell-suggestion";
 import { sortProducts, orderByIds } from "../services/product-list-sorting.service";
 import { cacheProducts } from "../utils/cache.utils";
-import { serializeProduct } from "../utils/serialize-product";
 
 // Re-exports for compatibility
 export { GET_PRODUCTS_DEFAULT_PER_PAGE } from "../constants/product.constants";
@@ -205,7 +204,7 @@ async function fetchProducts(
 		const prevCursor = hasPreviousPage ? (pageProducts[0]?.id ?? null) : null;
 
 		return {
-			products: pageProducts.map(serializeProduct),
+			products: pageProducts,
 			pagination: {
 				nextCursor,
 				prevCursor,

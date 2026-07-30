@@ -140,14 +140,6 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_quantity_positive" CHECK ("qua
 ALTER TABLE "PostWebhookTask" DROP CONSTRAINT IF EXISTS "PostWebhookTask_attempts_non_negative";
 ALTER TABLE "PostWebhookTask" ADD CONSTRAINT "PostWebhookTask_attempts_non_negative" CHECK ("attempts" >= 0);
 
--- ProductReview
-ALTER TABLE "ProductReview" DROP CONSTRAINT IF EXISTS "ProductReview_rating_range";
-ALTER TABLE "ProductReview" ADD CONSTRAINT "ProductReview_rating_range" CHECK ("rating" >= 1 AND "rating" <= 5);
-
--- ProductReviewStats
-ALTER TABLE "ProductReviewStats" DROP CONSTRAINT IF EXISTS "ProductReviewStats_averageRating_range";
-ALTER TABLE "ProductReviewStats" ADD CONSTRAINT "ProductReviewStats_averageRating_range" CHECK ("averageRating" >= 0 AND "averageRating" <= 5);
-
 -- ProductSku
 ALTER TABLE "ProductSku" DROP CONSTRAINT IF EXISTS "ProductSku_compareAtPrice_valid";
 ALTER TABLE "ProductSku" ADD CONSTRAINT "ProductSku_compareAtPrice_valid" CHECK ("compareAtPrice" IS NULL OR "compareAtPrice" >= "priceInclTax");
@@ -186,6 +178,17 @@ ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_inventory_non_negative
 ALTER TABLE "StoreSettings" DROP CONSTRAINT IF EXISTS "StoreSettings_singleton_id";
 ALTER TABLE "StoreSettings" ADD CONSTRAINT "StoreSettings_singleton_id" CHECK (id = 'store-settings-singleton');
 
+-- User
+-- `email @unique` est un index Postgres SENSIBLE À LA CASSE. Ce CHECK impose que la
+-- valeur STOCKÉE soit déjà normalisée, ce qui rend fiables les lookups en comparaison
+-- exacte — dont le garde de compte révoqué de `/sign-in/email` (auth.ts), qui
+-- minuscule l'entrée puis compare : une ligne en casse mixte le faisait échouer en
+-- silence, laissant se connecter un compte suspendu. La normalisation à l'écriture est
+-- assurée par `databaseHooks.user.{create,update}.before` (point de passage unique des
+-- trois chemins : email/mot de passe, Google, changeEmail).
+ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_email_lowercase";
+ALTER TABLE "User" ADD CONSTRAINT "User_email_lowercase" CHECK ("email" = lower("email"));
+
 -- Wishlist
 ALTER TABLE "Wishlist" DROP CONSTRAINT IF EXISTS "Wishlist_owner_required";
 ALTER TABLE "Wishlist" ADD CONSTRAINT "Wishlist_owner_required" CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL);
@@ -198,14 +201,6 @@ DROP INDEX IF EXISTS "Order_customerEmail_unaccent_trgm_idx";
 CREATE INDEX "Order_customerEmail_unaccent_trgm_idx" ON "Order" USING gin (immutable_unaccent("customerEmail") gin_trgm_ops);
 DROP INDEX IF EXISTS "Order_customerName_unaccent_trgm_idx";
 CREATE INDEX "Order_customerName_unaccent_trgm_idx" ON "Order" USING gin (immutable_unaccent("customerName") gin_trgm_ops);
-DROP INDEX IF EXISTS "Order_invoiceRetryDeferred_idx";
-CREATE INDEX "Order_invoiceRetryDeferred_idx" ON "Order" ("invoiceRetryDeferred", "paidAt") WHERE "invoiceRetryDeferred" = true;
-DROP INDEX IF EXISTS "Order_overbilling_unresolved_idx";
-CREATE INDEX "Order_overbilling_unresolved_idx" ON "Order" ("overbillingResolvedAt", "overbilledAmountCents") WHERE "overbilledAmountCents" IS NOT NULL AND "overbillingResolvedAt" IS NULL;
-DROP INDEX IF EXISTS "Order_piiPurgedAt_paidAt_idx";
-CREATE INDEX IF NOT EXISTS "Order_piiPurgedAt_paidAt_idx" ON "Order" ("piiPurgedAt", "paidAt") WHERE "piiPurgedAt" IS NULL;
-DROP INDEX IF EXISTS "Order_unpaid_pii_purge_idx";
-CREATE INDEX IF NOT EXISTS "Order_unpaid_pii_purge_idx" ON "Order" ("piiPurgedAt", "paidAt", "createdAt") WHERE "piiPurgedAt" IS NULL AND "paidAt" IS NULL;
 DROP INDEX IF EXISTS "Product_description_unaccent_trgm_idx";
 CREATE INDEX "Product_description_unaccent_trgm_idx" ON "Product" USING gin (immutable_unaccent(COALESCE(description, '')) gin_trgm_ops);
 DROP INDEX IF EXISTS "Product_title_unaccent_trgm_idx";
@@ -216,6 +211,13 @@ DROP INDEX IF EXISTS "ProductSku_productId_isDefault_unique";
 CREATE UNIQUE INDEX "ProductSku_productId_isDefault_unique" ON "ProductSku" ("productId") WHERE "isDefault" = true AND "deletedAt" IS NULL;
 DROP INDEX IF EXISTS "SkuMedia_one_primary_per_sku";
 CREATE UNIQUE INDEX "SkuMedia_one_primary_per_sku" ON "SkuMedia" ("skuId") WHERE "isPrimary" = true;
+-- Unicité de l'email INSENSIBLE À LA CASSE. Le `@unique` Prisma sur la colonne ne
+-- couvre que l'égalité binaire : `Alice@x.com` et `alice@x.com` y passaient comme
+-- deux comptes. Index d'EXPRESSION — non exprimable en Prisma, au même titre que les
+-- GIN ci-dessous. Complète (et ne remplace pas) `User_email_lowercase`, qui garantit
+-- que la valeur stockée est déjà minuscule.
+DROP INDEX IF EXISTS "User_email_lower_key";
+CREATE UNIQUE INDEX "User_email_lower_key" ON "User" (lower("email"));
 DROP INDEX IF EXISTS "User_email_unaccent_trgm_idx";
 CREATE INDEX "User_email_unaccent_trgm_idx" ON "User" USING gin (immutable_unaccent(email) gin_trgm_ops);
 DROP INDEX IF EXISTS "User_name_unaccent_trgm_idx";

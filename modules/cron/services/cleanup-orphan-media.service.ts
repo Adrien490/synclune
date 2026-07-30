@@ -96,7 +96,6 @@ async function withDeadline<T>(
  *
  * Safety net for files that lost their DB reference:
  * - SkuMedia (url, thumbnailUrl)
- * - ReviewMedia (url)
  * - User.image (avatars)
  *
  * Runs monthly to limit orphan file accumulation.
@@ -269,7 +268,6 @@ export async function cleanupOrphanMedia(): Promise<CronResult> {
  *
  * Currently tracked:
  * - catalogMedia        → SkuMedia (url, thumbnailUrl)
- * - reviewMedia         → ReviewMedia (url)
  * - (user avatars)      → User.image
  * - order snapshots     → OrderItem (productImageUrl, skuImageUrl)
  * - invoice archives    → Order (invoicePdfUrl, creditNotePdfUrl)
@@ -317,28 +315,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		},
 	});
 
-	// 2. ReviewMedia
-	await paginateCursor({
-		jobName,
-		step: "reviewMedia-scan",
-		batchSize: DB_QUERY_BATCH_SIZE,
-		deadline,
-		fetch: (cursor, take) =>
-			prisma.reviewMedia.findMany({
-				select: { id: true, url: true },
-				take,
-				...(cursor && { skip: 1, cursor: { id: cursor } }),
-				orderBy: { id: "asc" },
-			}),
-		onBatch: (batch) => {
-			for (const media of batch) {
-				const key = extractFileKeyFromUrl(media.url);
-				if (key) keys.add(key);
-			}
-		},
-	});
-
-	// 3. User avatars (only those with non-null image)
+	// 2. User avatars (only those with non-null image)
 	await paginateCursor({
 		jobName,
 		step: "userAvatar-scan",
@@ -362,7 +339,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		},
 	});
 
-	// 4. Order snapshots (MEDIA-AUDIT-003) — productImageUrl + skuImageUrl.
+	// 3. Order snapshots (MEDIA-AUDIT-003) — productImageUrl + skuImageUrl.
 	// Protège l'intégrité historique : un fichier encore référencé par une
 	// commande passée ne doit jamais être considéré orphelin.
 	await paginateCursor({
@@ -392,7 +369,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		},
 	});
 
-	// 5. Order invoice/credit-note PDF archives (RGPD-AUDIT F-C) — immutable legal
+	// 4. Order invoice/credit-note PDF archives (RGPD-AUDIT F-C) — immutable legal
 	// documents kept 10 years (Art. L102 B LPF). They are deleted ONLY by the
 	// `hard-delete-retention` cron at paidAt+10y; until then they must never be
 	// classified as orphans.
@@ -423,7 +400,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		},
 	});
 
-	// 6. Refund credit-note PDF archives (audit rétention PII 2026-07-09) — les
+	// 5. Refund credit-note PDF archives (audit rétention PII 2026-07-09) — les
 	// avoirs PARTIELS sont archivés PAR REFUND (`Refund.creditNotePdfUrl`, cf.
 	// modules/refunds/services/archive-credit-note-pdf.service.ts), pas seulement
 	// sur Order (full void). Mêmes archives légales immuables 10 ans (Art. L102 B

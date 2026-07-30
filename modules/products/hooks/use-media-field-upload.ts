@@ -1,3 +1,4 @@
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
@@ -63,7 +64,7 @@ export function useMediaFieldUpload({
 			filesToUpload[0]?.type.startsWith("video/")
 		) {
 			triggerHaptic("error");
-			toast.error("La première image doit être une image, pas une vidéo");
+			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
 		}
 

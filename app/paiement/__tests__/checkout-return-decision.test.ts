@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { VALID_CUID } from "@/test/factories";
+// ⚠️ Fixture volontairement NON préfixée `c` : avec `VALID_CUID` (héritage cuid v1),
+// les 7 branches ci-dessous restaient vertes alors que la garde de forme de la page
+// rejetait 96 % des ids réels — cf. checkout-return-order-id-cuid2.regression.
+import { VALID_CUID2_NON_C } from "@/test/factories";
 
 // ============================================================================
 // Hoisted mocks
@@ -57,10 +60,10 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		mockRetrieve.mockResolvedValue({ status: "succeeded", metadata: { orderNumber: "SYN-1" } });
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "failed", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "failed", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/confirmation");
-				expect(url).toContain(`order_id=${VALID_CUID}`);
+				expect(url).toContain(`order_id=${VALID_CUID2_NON_C}`);
 				expect(url).not.toContain("annulation");
 			},
 		);
@@ -76,7 +79,7 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		});
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "failed", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "failed", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/annulation");
 				expect(url).toContain("reason=payment_failed");
@@ -88,7 +91,7 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		mockRetrieve.mockResolvedValue({ status: "canceled", metadata: {} });
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/annulation");
 				expect(url).toContain("reason=payment_failed");
@@ -100,7 +103,7 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		mockRetrieve.mockResolvedValue({ status: "processing", metadata: { orderNumber: "SYN-1" } });
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/confirmation");
 				expect(url).toContain("pending=true");
@@ -112,7 +115,7 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		mockRetrieve.mockResolvedValue({ status: "requires_payment_method", metadata: {} });
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/annulation");
 				expect(url).toContain("reason=processing_error");
@@ -124,7 +127,7 @@ describe("CheckoutReturnPage — décision serveur sur pi.status", () => {
 		mockRetrieve.mockRejectedValue(new Error("Stripe down"));
 
 		await expectRedirectTo(
-			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID },
+			{ payment_intent: PI_ID, redirect_status: "succeeded", order_id: VALID_CUID2_NON_C },
 			(url) => {
 				expect(url).toContain("/paiement/annulation");
 				expect(url).toContain("reason=processing_error");

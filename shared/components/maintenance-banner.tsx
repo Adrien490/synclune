@@ -21,7 +21,14 @@ export function MaintenanceBanner({ closureMessage, reopensAt }: MaintenanceBann
 			// n'est publiée que lorsqu'une barre est visible (0 sinon), et la
 			// bottom-nav boutique va désormais jusqu'à 64rem. Un `max-md:` figeait
 			// le seuil et laissait le bandeau passer sous la barre en iPad portrait.
-			className="border-warning-foreground/20 bg-warning/95 text-warning-foreground fixed inset-x-0 bottom-[calc(var(--bottom-bar-height,0px)+env(safe-area-inset-bottom,0px))] z-(--z-bar) border-t px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium shadow-[0_-2px_10px_rgba(0,0,0,0.1)] max-md:pb-2.5"
+			//
+			// La variable porte la hauteur MESURÉE, safe-area incluse. Le bandeau se
+			// pose donc au ras de la barre sans rien réadditionner, et le
+			// `max(…, env(…))` ne dégage l'indicateur d'accueil que dans le cas SANS
+			// barre. Corollaire : le padding interne redevient un simple `pb-2.5`, sans
+			// le `max(…)` ni son override `max-md:` qui compensaient l'encoche une
+			// seconde fois (audit bottom-bar 2026-07-30).
+			className="border-warning-foreground/20 bg-warning/95 text-warning-foreground fixed inset-x-0 bottom-[max(var(--bottom-bar-height,0px),env(safe-area-inset-bottom,0px))] z-(--z-bar) border-t px-4 py-2.5 text-center text-sm font-medium shadow-[0_-2px_10px_rgba(0,0,0,0.1)]"
 		>
 			<div className="mx-auto flex items-center justify-center gap-2">
 				<Construction className="size-4 shrink-0" aria-hidden="true" />

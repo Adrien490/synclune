@@ -6,7 +6,10 @@ import {
 	OrderAction,
 	PaymentStatus,
 	RefundStatus,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
+import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -765,22 +768,52 @@ async function finalizeRefund(params: {
 		const restockedSkuIds: string[] = [];
 		const reopenedProductIds = new Set<string>();
 		if (restockBySkuId.size > 0) {
-			const skuRows = await tx.productSku.findMany({
+			// STOCK-LEDGER-001 : `UPDATE … RETURNING` remplace le couple
+			// findMany-puis-update. Deux gains : le journal `StockMovement` obtient un
+			// `previousInventory` lu AU MOMENT de l'écriture (le pré-SELECT laissait une
+			// fenêtre READ COMMITTED où un writer concurrent rendait la valeur
+			// consignée fausse), et le gate 0→N de la notif back-in-stock se calcule sur
+			// la même vérité. Une requête de moins par SKU, aussi.
+			// P1-1 : état AVANT crédit — discriminant de `shouldReactivateAfterRestock`.
+			// On ne réactive que ce que la VENTE a désactivé (`inventory === 0`), jamais
+			// un retrait manuel de l'admin. Sans ça, ce rattrapage recréditait le stock
+			// en laissant le SKU invisible en vitrine, et la notif back-in-stock émise
+			// juste en dessous pointait sur une PDP en 404.
+			const skusBefore = await tx.productSku.findMany({
 				where: { id: { in: [...restockBySkuId.keys()] } },
-				select: { id: true, inventory: true, productId: true },
+				select: { id: true, isActive: true, inventory: true },
 			});
-			const preById = new Map(skuRows.map((row) => [row.id, row]));
+			const beforeById = new Map(skusBefore.map((s) => [s.id, s]));
+
 			for (const [skuId, qty] of restockBySkuId) {
-				const pre = preById.get(skuId);
-				if (!pre) continue; // SKU supprimé entre create et reconcile
-				await tx.productSku.update({
-					where: { id: skuId },
-					data: { inventory: { increment: qty } },
-				});
+				const reactivate = shouldReactivateAfterRestock(beforeById.get(skuId));
+
+				const updated = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
+					UPDATE "ProductSku"
+					SET "inventory" = "inventory" + ${qty},
+					    "isActive" = CASE WHEN ${reactivate} THEN true ELSE "isActive" END,
+					    "updatedAt" = NOW()
+					WHERE "id" = ${skuId}
+					RETURNING "inventory", "productId"
+				`;
+
+				const row = updated[0];
+				if (!row) continue; // SKU supprimé entre create et reconcile
+
+				const previousInventory = row.inventory - qty;
 				restockedSkuIds.push(skuId);
-				if (pre.inventory === 0) {
-					reopenedProductIds.add(pre.productId);
+				if (previousInventory === 0) {
+					reopenedProductIds.add(row.productId);
 				}
+
+				await recordStockMovementTx(tx, {
+					skuId,
+					productId: row.productId,
+					previousInventory,
+					newInventory: row.inventory,
+					source: StockMovementSource.SYSTEM,
+					reason: `Réconciliation remboursement ${refundId}`,
+				});
 			}
 		}
 

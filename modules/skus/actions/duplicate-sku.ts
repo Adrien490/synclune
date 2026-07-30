@@ -46,7 +46,13 @@ export async function duplicateSku(
 		const { original, duplicate } = await prisma.$transaction(async (tx) => {
 			// 3. Récupérer le SKU original avec ses médias + M2M colors/materials
 			const original = await tx.productSku.findUnique({
-				where: { id: skuId },
+				// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
+				// supprimé (seul writer : `delete-product`), sans chemin de restauration. Aucune
+				// surface admin ne l'expose : le muter est toujours une anomalie. Sans ce filtre,
+				// on pouvait ajuster le stock ou poser `isDefault` sur la variante d'un produit
+				// archivé — et l'index unique partiel de `isDefault` (WHERE deletedAt IS NULL) ne
+				// s'y oppose pas.
+				where: { id: skuId, deletedAt: null },
 				select: {
 					sku: true,
 					productId: true,

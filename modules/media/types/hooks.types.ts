@@ -22,7 +22,7 @@ export interface MediaItem {
 
 export interface UseMediaUploadOptions {
 	/** UploadThing file route endpoint (default: "catalogMedia") */
-	endpoint?: "catalogMedia" | "reviewMedia";
+	endpoint?: "catalogMedia";
 	/** Max size for images in bytes (default: 16MB) */
 	maxSizeImage?: number;
 	/** Max size for videos in bytes (default: SSOT `upload-size-limits.ts`) */

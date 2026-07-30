@@ -8,11 +8,13 @@ const {
 	mockPrisma,
 	mockGetSession,
 	mockGetOrCreateCartSessionId,
+	mockGetCart,
 	mockCheckRateLimit,
 	mockGetClientIp,
 	mockGetRateLimitIdentifier,
 	mockHeaders,
 	mockGetSkuDetails,
+	mockValidateCartItemsWithDb,
 	mockCalculateShipping,
 	mockGetOrCreateStripeCustomer,
 	mockStripe,
@@ -38,11 +40,13 @@ const {
 		},
 		mockGetSession: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetCart: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
 		mockGetRateLimitIdentifier: vi.fn(),
 		mockHeaders: vi.fn(),
 		mockGetSkuDetails: vi.fn(),
+		mockValidateCartItemsWithDb: vi.fn(),
 		mockCalculateShipping: vi.fn(),
 		mockGetOrCreateStripeCustomer: vi.fn(),
 		mockStripe: {
@@ -72,6 +76,11 @@ vi.mock("@/modules/cart/lib/cart-session", () => ({
 	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
 }));
 
+// CHECKOUT-CART-PARITY-001 : les lignes du client sont confrontées au panier serveur.
+vi.mock("@/modules/cart/data/get-cart", () => ({
+	getCart: mockGetCart,
+}));
+
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getClientIp: mockGetClientIp,
@@ -88,6 +97,7 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/modules/cart/services/sku-validation.service", () => ({
 	getSkuDetails: mockGetSkuDetails,
+	validateCartItemsWithDb: mockValidateCartItemsWithDb,
 }));
 
 vi.mock("@/modules/orders/services/shipping.service", () => ({
@@ -160,6 +170,19 @@ const MOCK_PAYMENT_INTENT = {
 // HELPERS
 // ============================================================================
 
+/**
+ * Aligne le panier SERVEUR sur les lignes passées à l'action.
+ *
+ * Nécessaire dès qu'un test soumet autre chose que `VALID_CART_ITEMS` : la garde de
+ * parité (CHECKOUT-CART-PARITY-001) refuse toute divergence `skuId:quantity` entre
+ * les lignes du client et le panier serveur.
+ */
+function setServerCart(items: Array<{ skuId: string; quantity: number }>) {
+	mockGetCart.mockResolvedValue({
+		items: items.map((item) => ({ sku: { id: item.skuId }, quantity: item.quantity })),
+	});
+}
+
 function setupDefaults() {
 	// Sentry: execute the callback directly with a stub span.
 	mockSentryStartSpan.mockImplementation((_ctx: unknown, fn: (span: unknown) => unknown) =>
@@ -173,6 +196,14 @@ function setupDefaults() {
 	mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_existing" });
 	// Défaut : aucune commande liée au PI (cas nominal du premier passage).
 	mockPrisma.order.findUnique.mockResolvedValue(null);
+	// Panier serveur aligné sur VALID_CART_ITEMS — la garde de parité
+	// (CHECKOUT-CART-PARITY-001) compare `skuId:quantity`, jamais les prix.
+	mockGetCart.mockResolvedValue({
+		items: VALID_CART_ITEMS.map((item) => ({
+			sku: { id: item.skuId },
+			quantity: item.quantity,
+		})),
+	});
 
 	// Guest session (not used when authenticated)
 	mockGetOrCreateCartSessionId.mockResolvedValue("session-guest-abc");
@@ -188,6 +219,9 @@ function setupDefaults() {
 
 	// SKU details
 	mockGetSkuDetails.mockResolvedValue(MOCK_SKU_RESULT);
+	// CHECKOUT-STOCK-GATE-001 : garde de stock branchée dans initializePayment.
+	// Défaut « stock suffisant » — les cas de rupture la surchargent explicitement.
+	mockValidateCartItemsWithDb.mockResolvedValue({ success: true, data: [] });
 
 	// Shipping: 600 centimes for France Standard
 	mockCalculateShipping.mockReturnValue(600);
@@ -298,9 +332,10 @@ describe("initializePayment", () => {
 
 			// Should not call getOrCreateCartSessionId for authenticated users
 			expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
-			// checkRateLimit called with user:<userId> composite id
+			// Identifiant PRÉFIXÉ par l (F3) : un `user:<id>` nu partageait son
+			// compteur avec confirmCheckout, le panier, les favoris et les codes promo.
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"user:user-123",
+				"checkout-init:user:user-123",
 				"create-session",
 				"192.168.1.1",
 			);
@@ -412,7 +447,7 @@ describe("initializePayment", () => {
 			});
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"guest:guest@example.com:192.168.1.1",
+				"checkout-init:guest:guest@example.com:192.168.1.1",
 				"create-session",
 				"192.168.1.1",
 			);
@@ -519,6 +554,71 @@ describe("initializePayment", () => {
 	// SKU validation
 	// ──────────────────────────────────────────────────────────────
 
+	// CHECKOUT-STOCK-GATE-001 — la garde de stock. `getSkuDetails` ne lit PAS
+	// `inventory` : sans ces cas, le défaut « stock suffisant » du beforeEach rendrait
+	// la garde invisible aux tests (le mode d'échec relevé par l'audit stock).
+	describe("stock gate (CHECKOUT-STOCK-GATE-001)", () => {
+		it("refuse le paiement quand une ligne dépasse le stock disponible", async () => {
+			mockValidateCartItemsWithDb.mockResolvedValue({
+				success: false,
+				error: "Validation échouée",
+				data: [{ skuId: VALID_SKU_ID, isValid: false, error: "Stock insuffisant" }],
+			});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(false);
+			if (result.success) return;
+			// Le message du PREMIER article fautif remonte, pas un libellé générique.
+			expect(result.error).toBe("Stock insuffisant");
+			// …et aucun PaymentIntent n'est créé : c'est tout l'intérêt d'échouer ici.
+			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
+		});
+
+		it("refuse le paiement sur un SKU en rupture (inventory 0) resté isActive", async () => {
+			mockValidateCartItemsWithDb.mockResolvedValue({
+				success: false,
+				error: "Validation échouée",
+				data: [{ skuId: VALID_SKU_ID, isValid: false, error: "Cet article n'est plus en stock" }],
+			});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(false);
+			if (result.success) return;
+			expect(result.error).toBe("Cet article n'est plus en stock");
+			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
+		});
+
+		it("interroge la garde avec les quantités demandées, pas seulement les skuId", async () => {
+			const cartItems = [
+				{ skuId: VALID_SKU_ID, quantity: 3, priceAtAdd: 4500 },
+				{ skuId: VALID_SKU_ID_2, quantity: 2, priceAtAdd: 3000 },
+			];
+			setServerCart(cartItems);
+			mockGetSkuDetails.mockResolvedValueOnce(MOCK_SKU_RESULT).mockResolvedValueOnce({
+				success: true,
+				data: { sku: { id: VALID_SKU_ID_2, priceInclTax: 3000 } },
+			});
+
+			await initializePayment({ cartItems });
+
+			// Sans la quantité, la comparaison `inventory < quantity` est impossible :
+			// c'est précisément l'information que `getSkuDetails` ne transporte pas.
+			expect(mockValidateCartItemsWithDb).toHaveBeenCalledWith({ items: cartItems });
+		});
+
+		it("retombe sur un libellé générique si la garde échoue sans détail par article", async () => {
+			mockValidateCartItemsWithDb.mockResolvedValue({ success: false, error: "boom" });
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(false);
+			if (result.success) return;
+			expect(result.error).toBe("Certains articles ne sont plus disponibles.");
+		});
+	});
+
 	describe("cart item validation", () => {
 		it("should return error when a SKU is unavailable", async () => {
 			mockGetSkuDetails.mockResolvedValue({ success: false, error: "SKU not found" });
@@ -535,6 +635,7 @@ describe("initializePayment", () => {
 				{ skuId: VALID_SKU_ID, quantity: 1, priceAtAdd: 4500 },
 				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 3000 },
 			];
+			setServerCart(cartItems);
 
 			mockGetSkuDetails
 				.mockResolvedValueOnce(MOCK_SKU_RESULT)
@@ -552,6 +653,7 @@ describe("initializePayment", () => {
 				{ skuId: VALID_SKU_ID, quantity: 1, priceAtAdd: 4500 },
 				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 3000 },
 			];
+			setServerCart(cartItems);
 
 			mockGetSkuDetails.mockResolvedValueOnce(MOCK_SKU_RESULT).mockResolvedValueOnce({
 				success: true,
@@ -618,6 +720,7 @@ describe("initializePayment", () => {
 				{ skuId: VALID_SKU_ID, quantity: 3, priceAtAdd: 2000 },
 				{ skuId: VALID_SKU_ID_2, quantity: 1, priceAtAdd: 5000 },
 			];
+			setServerCart(cartItems);
 
 			mockGetSkuDetails
 				.mockResolvedValueOnce({

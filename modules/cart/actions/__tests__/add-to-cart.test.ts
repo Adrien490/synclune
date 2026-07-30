@@ -310,6 +310,24 @@ describe("addToCart", () => {
 		});
 	});
 
+	// Audit « validation stock panier » 2026-07-30, P2-5 : le verrou de ligne n'était
+	// asserté nulle part. Le retirer transformait la vérification de stock en lecture
+	// non sérialisée — deux ajouts concurrents du dernier exemplaire auraient alors
+	// tous deux vu le même inventaire — sans casser un seul test.
+	it("verrouille la ligne SKU : le SQL contient bien FOR UPDATE", async () => {
+		const { tx, mockQueryRaw } = makeTx();
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
+
+		await addToCart(undefined, makeFormData());
+
+		const sql = mockQueryRaw.mock.calls
+			.map((call) => (Array.isArray(call[0]) ? call[0].join("?") : String(call[0])))
+			.join("\n");
+
+		expect(sql).toContain('FROM "ProductSku"');
+		expect(sql).toContain("FOR UPDATE OF s");
+	});
+
 	it("throws BusinessError when out of stock for new item", async () => {
 		const { tx } = makeTx([makeSkuRow({ inventory: 0 })]);
 		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));

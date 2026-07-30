@@ -17,10 +17,6 @@ type TestProduct = {
 		priceInclTax: number;
 	}>;
 	type?: { label: string } | null;
-	reviewStats?: {
-		averageRating: number;
-		totalCount: number;
-	} | null;
 };
 
 function makeProduct(id: string, overrides: Partial<TestProduct> = {}): TestProduct {
@@ -32,7 +28,6 @@ function makeProduct(id: string, overrides: Partial<TestProduct> = {}): TestProd
 		status: "PUBLIC",
 		skus: [{ isActive: true, priceInclTax: 1000 }],
 		type: null,
-		reviewStats: null,
 		...overrides,
 	};
 }
@@ -176,54 +171,6 @@ describe("sortProducts", () => {
 
 		expect(result[0]!.id).toBe("new");
 		expect(result[1]!.id).toBe("old");
-	});
-
-	// ─── Rating sorting ────────────────────────────────────────────────
-
-	it("sorts by rating descending", () => {
-		const products = [
-			makeProduct("low", {
-				reviewStats: { averageRating: 3.0, totalCount: 5 },
-			}),
-			makeProduct("high", {
-				reviewStats: { averageRating: 4.5, totalCount: 10 },
-			}),
-		];
-
-		const result = sortProducts(products as never[], "rating-descending");
-
-		expect(result[0]!.id).toBe("high");
-		expect(result[1]!.id).toBe("low");
-	});
-
-	it("breaks rating ties by review count", () => {
-		const products = [
-			makeProduct("few-reviews", {
-				reviewStats: { averageRating: 4.0, totalCount: 2 },
-			}),
-			makeProduct("many-reviews", {
-				reviewStats: { averageRating: 4.0, totalCount: 20 },
-			}),
-		];
-
-		const result = sortProducts(products as never[], "rating-descending");
-
-		expect(result[0]!.id).toBe("many-reviews");
-		expect(result[1]!.id).toBe("few-reviews");
-	});
-
-	it("treats products without reviewStats as rating 0", () => {
-		const products = [
-			makeProduct("no-reviews", { reviewStats: null }),
-			makeProduct("has-reviews", {
-				reviewStats: { averageRating: 3.0, totalCount: 1 },
-			}),
-		];
-
-		const result = sortProducts(products as never[], "rating-descending");
-
-		expect(result[0]!.id).toBe("has-reviews");
-		expect(result[1]!.id).toBe("no-reviews");
 	});
 
 	// ─── Admin sort fields ─────────────────────────────────────────────

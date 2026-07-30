@@ -4,8 +4,13 @@ import {
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { normalizeEmail } from "@/shared/utils/normalize-email";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { handlePostLoginMerges } from "./post-login-merge";
+import {
+	normalizeUserEmailOnCreate,
+	normalizeUserEmailOnUpdate,
+} from "./normalize-user-email-hooks";
 import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -118,6 +123,33 @@ export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
 	}),
+	/**
+	 * Normalisation de `User.email` (audit schéma 2026-07-30).
+	 *
+	 * `User.email @unique` est un index Postgres SENSIBLE À LA CASSE : sans
+	 * normalisation, `Alice@x.com` et `alice@x.com` sont deux comptes distincts.
+	 * Le coût réel n'est pas le doublon — c'est le garde `hooks.before` sur
+	 * `/sign-in/email` ci-dessous, qui minuscule l'entrée puis interroge
+	 * `prisma.user.findFirst({ where: { email } })` en comparaison EXACTE : une ligne
+	 * stockée en casse mixte fait échouer EN SILENCE le blocage des comptes
+	 * suspendus / anonymisés / supprimés.
+	 *
+	 * Trois chemins écrivent cette colonne — inscription email/mot de passe, profil
+	 * Google (`accountLinking` avec `trustedProviders`), et `changeEmail` — et seul
+	 * le premier passait par le `.toLowerCase()` de `emailSchema`. Ces hooks sont le
+	 * point de passage UNIQUE de l'adaptateur : ils couvrent les trois.
+	 *
+	 * Contrepartie côté base : `User_email_lowercase` (CHECK) + `User_email_lower_key`
+	 * (index unique d'expression) dans `prisma/sql/raw-guards.sql`. L'ordre importe —
+	 * ces hooks doivent exister AVANT que le CHECK ne soit posé, sinon un fournisseur
+	 * OAuth renvoyant une casse mixte fait échouer l'inscription en dur.
+	 */
+	databaseHooks: {
+		user: {
+			create: { before: async (user) => normalizeUserEmailOnCreate(user) },
+			update: { before: async (data) => normalizeUserEmailOnUpdate(data) },
+		},
+	},
 	plugins: [
 		customSession(async ({ user, session }) => {
 			// Filtre les comptes bloqués : soft-deleted (deletedAt) + suspended (suspendedAt)
@@ -239,7 +271,9 @@ export const auth = betterAuth({
 			// pour annuler la demande via `cancelAccountDeletion`).
 			if (path === "/sign-in/email") {
 				const body = ctx.body as { email?: string } | undefined;
-				const email = body?.email?.toLowerCase().trim();
+				// Même normalisation que `databaseHooks` ci-dessus : c'est ce qui rend
+				// cette comparaison exacte fiable (cf. User_email_lowercase en base).
+				const email = body?.email ? normalizeEmail(body.email) : undefined;
 				if (email) {
 					const blockedUser = await prisma.user.findFirst({
 						where: {

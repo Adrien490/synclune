@@ -10,7 +10,7 @@ import { cn } from "@/shared/utils/cn";
  * Rendu DANS la section (avant le SectionHeader) : il hérite de l'accent par
  * cascade (`--section-accent` posé par `data-accent`) et disparaît avec les
  * sections auto-masquées (jamais de séparateur orphelin). Usage parcimonieux :
- * Collections (lavande), Reviews (menthe), FAQ (rose).
+ * Collections (lavande), FAQ (rose).
  */
 export function SectionDivider({ className }: { className?: string }) {
 	return (

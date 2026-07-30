@@ -57,6 +57,25 @@ export const PRICE_LIMITS = {
 } as const;
 
 // ============================================================================
+// LIMITES STOCK
+// ============================================================================
+
+export const STOCK_LIMITS = {
+	/**
+	 * Stock maximum par variante.
+	 *
+	 * Le plafond n'existait QUE dans le formulaire d'ajustement
+	 * (`adjust-stock-form.tsx`, constante locale) : côté serveur, `inventory` était
+	 * `int().nonnegative()` sans `.max()`, et le CHECK DB ne borne que le plancher
+	 * (`inventory >= 0`). Un POST direct à `inventory=2000000000` passait donc, et une
+	 * telle ligne devient en plus injoignable par les filtres d'inventaire admin
+	 * (bornés à `SKU_FILTERS_MAX_INVENTORY`). Valeur alignée sur celle que l'UI
+	 * affichait déjà — c'est la borne annoncée à l'admin qui devient la borne réelle.
+	 */
+	MAX_INVENTORY: 99999,
+} as const;
+
+// ============================================================================
 // LIMITES DATES
 // ============================================================================
 

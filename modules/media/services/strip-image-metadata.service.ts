@@ -17,7 +17,7 @@
  *
  * LAYER EXCEPTION: ce service contient des I/O (UTApi upload/delete).
  * Documenté dans `01-conventions.md § Services transactionnels partagés` car
- * appelé depuis le route handler UploadThing (catalogMedia + reviewMedia
+ * appelé depuis le route handler UploadThing (catalogMedia
  * `onUploadComplete`).
  *
  * @module modules/media/services/strip-image-metadata.service

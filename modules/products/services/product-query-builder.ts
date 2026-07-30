@@ -408,15 +408,6 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		}
 	}
 
-	// Rating filter (minimum average rating, 0-5)
-	if (typeof filters.ratingMin === "number" && filters.ratingMin >= 0 && filters.ratingMin <= 5) {
-		conditions.push({
-			reviewStats: {
-				averageRating: { gte: filters.ratingMin },
-			},
-		});
-	}
-
 	// Pousse l'unique contrainte variante (couleur + matériau + prix fusionnés).
 	if (hasSkuConstraint) {
 		conditions.push({ skus: { some: skuSome } });

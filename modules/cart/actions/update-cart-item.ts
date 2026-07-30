@@ -82,10 +82,22 @@ export async function updateCartItem(
 			return forbidden();
 		}
 
-		// 6. Si la quantité n'a pas changé, ne rien faire
-		if (validatedData.quantity === cartItem.quantity) {
-			return success(`Quantité mise à jour (${validatedData.quantity})`);
-		}
+		// 6. Quantité inchangée : aucune écriture nécessaire, MAIS on ne court-circuite
+		// pas pour autant.
+		//
+		// Ce retour anticipé annonçait « Quantité mise à jour » sans avoir vérifié quoi
+		// que ce soit : ni le stock, ni `isActive`, ni le statut du produit. Or c'est
+		// exactement le geste d'un client dont la ligne est signalée en rupture et qui
+		// resoumet la même quantité pour « réessayer » — il obtenait un succès. Le
+		// panier n'est certes pas la garde anti-survente (le checkout re-valide sous
+		// verrou), mais annoncer un succès sur une ligne devenue invalide repousse la
+		// découverte du problème au moment du paiement, là où elle coûte le plus cher.
+		//
+		// On laisse donc la transaction s'exécuter : elle prend le `FOR UPDATE`, applique
+		// les mêmes gardes, et l'`update` final est un no-op sémantique (même valeur).
+		// Le seul coût est une transaction courte sur un geste rare.
+		// Audit « validation stock panier » 2026-07-30, P2 mineur.
+		const quantityUnchanged = validatedData.quantity === cartItem.quantity;
 
 		// 7. Transaction: Mettre à jour l'item et le panier
 		await prisma.$transaction(async (tx) => {
@@ -126,7 +138,10 @@ export async function updateCartItem(
 				throw new BusinessError(CART_ERROR_MESSAGES.INSUFFICIENT_STOCK);
 			}
 
-			// 7d. Mettre à jour le CartItem
+			// 7d. Mettre à jour le CartItem — sauté si la quantité est inchangée : les
+			// gardes ci-dessus ont fait leur travail, il n'y a rien à écrire.
+			if (quantityUnchanged) return;
+
 			await tx.cartItem.update({
 				where: { id: validatedData.cartItemId },
 				data: { quantity: validatedData.quantity },

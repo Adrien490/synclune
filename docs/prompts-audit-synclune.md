@@ -26,7 +26,7 @@ Contexte rapide :
 
 `addresses`, `auth`, `cart`, `collections`, `colors`, `cron`, `dashboard`, `discounts`, `emails`, `invoices`,
 `materials`, `media`, `notifications`, `orders`, `payments`, `product-types`, `products`, `refunds`,
-`reviews`, `skus`, `store-settings`, `users`, `webhooks`, `wishlist`.
+`skus`, `store-settings`, `users`, `webhooks`, `wishlist`.
 
 > ⚠️ Il n'existe **pas** de module `admin`, `catalog`, `search`, `shipping`, `stock`, `analytics`, `disputes`,
 > `account`. L'admin est un **arbre de routes** (`app/admin/**`) qui consomme les modules
@@ -78,7 +78,7 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 03 — SKUs et variantes
+## 03 — SKUs et variantes : DONE
 
 ```text
 Audit le point « SKUs et variantes » dans Synclune.
@@ -120,7 +120,7 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 06 — Validation stock panier
+## 06 — Validation stock panier : DONE
 
 ```text
 Audit le point « Validation stock panier » dans Synclune.
@@ -134,7 +134,7 @@ Note /100, classe toute survente possible en P0.
 
 ---
 
-## 07 — Checkout Stripe Elements
+## 07 — Checkout Stripe Elements : DONE
 
 ```text
 Audit le point « Checkout Stripe Elements » dans Synclune.
@@ -624,7 +624,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Emails transactionnels » dans Synclune.
 
-Vérifie order confirmation, shipping, cancel, refund, payment failed, auth emails, back-in-stock, review request, contenu, erreurs et idempotence.
+Vérifie order confirmation, shipping, cancel, refund, payment failed, auth emails, back-in-stock, contenu, erreurs et idempotence.
 
 Inspecte `emails/**`, `modules/emails/**`, `shared/lib/email-config.ts`, services d’envoi.
 
@@ -1319,17 +1319,15 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 92 — Reviews produits
+## 92 — Reviews produits ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Avis produits » dans Synclune.
-
-Vérifie avis, modération, review request, stats, publication/hidden, anti-spam, accès client et affichage produit.
-
-Inspecte `modules/reviews/**`, `modules/emails/**`, `prisma/schema.prisma`.
-
-Note /100, propose corrections/améliorations si pertinent.
-```
+> ⚠️ **Système d'avis retiré du code le 2026-07-30** (décision propriétaire : la surface
+> client de dépôt n'avait jamais été montée, le levier de conversion ne s'est donc jamais
+> matérialisé). Les 4 tables (`ProductReview`, `ReviewMedia`, `ReviewResponse`,
+> `ProductReviewStats`), l'enum `ReviewStatus`, le module `modules/reviews`, la route
+> `/admin/marketing/avis`, la section avis de la page d'accueil, le filtre et le tri par note
+> et l'`AggregateRating` JSON-LD sont supprimés (migration `20260730120000_drop_reviews_system`).
+> Ce prompt n'a plus d'objet. Le reconstruire exigerait de repartir du modèle de données.
 
 ---
 
@@ -1462,7 +1460,7 @@ où elle doit changer de forme.
 | 113 | Espace client                                       | moyenne             |
 | 114 | Écrans d'authentification                           | haute               |
 | 115 | Favoris & retour en stock                           | moyenne             |
-| 116 | Avis produits                                       | moyenne             |
+| 116 | ~~Avis produits~~ (retiré 2026-07-30)               | —                   |
 | 117 | Recherche                                           | haute               |
 | 118 | Overlays : dialogs, sheets, drawers                 | socle               |
 | 119 | Feedback : toasts, squelettes, états vides, erreurs | socle               |
@@ -1744,7 +1742,7 @@ Audit le point « Page produit (PDP) desktop » dans Synclune.
 
 C'est la page qui convertit. Vérifie en 1280x800, 1440x900 et 1920x1080 : la composition en deux
 colonnes (galerie / bloc d'achat), la hiérarchie de lecture (titre, prix, variantes, ajout au panier,
-réassurance, caractéristiques, entretien, avis, produits liés), le comportement de la galerie
+réassurance, caractéristiques, entretien, produits liés), le comportement de la galerie
 (vignettes, zoom, lightbox, vidéo), la sticky CTA desktop, l'estimation de livraison, le partage,
 et les blocs secondaires (récemment vus, recommandations).
 
@@ -1757,7 +1755,7 @@ Inspecte `app/(shop)/creations/[slug]/{page.tsx,loading.tsx,error.tsx,not-found.
 `modules/products/components/{product-info,product-details,product-characteristics,
 product-highlights,product-reassurance,product-care-info,product-price-display,delivery-estimator,
 share-button,sticky-cart-cta-desktop,related-products,recently-viewed-products,product-main-skeleton}.tsx`,
-`shared/components/gallery/**`, `modules/reviews/components/**` (bloc avis).
+`shared/components/gallery/**`.
 
 Note /100, rends le verdict bloc par bloc et propose l'ordre de lecture idéal si l'actuel est mauvais.
 ```
@@ -1772,7 +1770,7 @@ Audit le point « Page produit (PDP) mobile » dans Synclune.
 Vérifie en 360x740, 375x667 et 390x844 : hauteur de la galerie (combien reste-t-il pour le prix et le
 CTA ?), swipe et pagination de la galerie, ouverture de la lightbox et sortie par geste, position et
 comportement de la CTA d'ajout au panier au scroll, atteignabilité au pouce, sections repliables
-(description, caractéristiques, entretien, avis), et absence de scroll horizontal parasite.
+(description, caractéristiques, entretien), et absence de scroll horizontal parasite.
 
 Traque : cible tactile trop petite sur les vignettes ou les pastilles de couleur, texte sous 14px sur
 une information d'achat, image qui pousse le prix sous la ligne de flottaison, vidéo en autoplay
@@ -1979,28 +1977,15 @@ Note /100, rends le verdict pour le bouton, la page et l'alerte retour en stock.
 
 ---
 
-## 116 — Avis produits (UI)
+## 116 — Avis produits (UI) ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Avis produits (UI/UX) » dans Synclune.
-
-Le module `reviews` compte beaucoup de composants : vérifie qu'ils forment une expérience et pas un
-empilement. Côté storefront : résumé de notation (moyenne, distribution), liste d'avis (tri,
-pagination, longueur du texte, avis vérifié), formulaire de dépôt (notation par étoiles accessible au
-clavier, longueur, envoi, confirmation), et affichage quand il n'y a aucun avis (le cas par défaut
-d'une boutique qui démarre — est-il traité dignement ou laisse-t-il un trou ?).
-
-Côté admin : file de modération, lecture rapide, actions publier/masquer, réponse éventuelle.
-
-Traque : étoiles non utilisables au clavier, note affichée sans nombre d'avis, bloc d'avis qui pousse
-les produits liés hors de portée, état vide honteux, incohérence entre la note de la carte produit et
-celle de la PDP.
-
-Inspecte `modules/reviews/components/**`, `shared/components/rating-stars.tsx`,
-`app/admin/marketing/avis/**`, `e2e/authenticated/{user-reviews,admin-reviews}.spec.ts`.
-
-Note /100, rends le verdict storefront puis admin.
-```
+> ⚠️ **Système d'avis retiré du code le 2026-07-30** (décision propriétaire : la surface
+> client de dépôt n'avait jamais été montée, le levier de conversion ne s'est donc jamais
+> matérialisé). Les 4 tables (`ProductReview`, `ReviewMedia`, `ReviewResponse`,
+> `ProductReviewStats`), l'enum `ReviewStatus`, le module `modules/reviews`, la route
+> `/admin/marketing/avis`, la section avis de la page d'accueil, le filtre et le tri par note
+> et l'`AggregateRating` JSON-LD sont supprimés (migration `20260730120000_drop_reviews_system`).
+> Ce prompt n'a plus d'objet. Le reconstruire exigerait de repartir du modèle de données.
 
 ---
 
@@ -2160,7 +2145,7 @@ Note /100, rends le verdict desktop puis mobile.
 ```text
 Audit le point « Admin : listes, tableaux et actions groupées » dans Synclune.
 
-Vérifie les listes admin (commandes, produits, SKUs, collections, couleurs, matériaux, types, avis,
+Vérifie les listes admin (commandes, produits, SKUs, collections, couleurs, matériaux, types,
 remises, clients, remboursements, facturation) sur trois axes :
 
 1. Desktop — densité du tableau, colonnes utiles vs bruit, en-têtes collants, tri, largeur et scroll
@@ -2508,7 +2493,7 @@ Vérifie :
 - les cascades de requêtes : deux `await` séquentiels qui pourraient être un `Promise.all` retardent le
   premier octet utile ;
 - le streaming en conditions réelles : sur un mobile en 3G simulée, l'ordre d'apparition raconte-t-il
-  quelque chose de sensé (le prix avant les avis, jamais l'inverse) ?
+  quelque chose de sensé (le prix avant les produits liés, jamais l'inverse) ?
 - les erreurs pendant le streaming : une donnée qui échoue après le début du flux — que voit-on ?
 - l'usage de `connection()` / `await` explicite pour marquer l'entrée en dynamique, si présent.
 
@@ -2601,7 +2586,7 @@ Le prompt 64 couvre le schéma et les index déclarés ; celui-ci couvre les REQ
 
 Vérifie :
 - les N+1 : boucle sur des résultats avec une requête à l'intérieur, ou `include` manquant là où une
-  jointure suffirait. Traque particulièrement les listes (catalogue, commandes admin, avis) ;
+  jointure suffirait. Traque particulièrement les listes (catalogue, commandes admin) ;
 - le sur-fetch : `findMany` sans `select`, qui ramène toutes les colonnes (descriptions longues, JSON
   de snapshot) pour n'en afficher que trois ;
 - les comptages : `count()` sur une grande table à chaque rendu de page, alors qu'un compteur approché
@@ -2851,11 +2836,11 @@ structurées, plus des helpers dédiés : `shared/utils/safe-json-ld.ts`, `share
 Vérifie :
 - chaque `dangerouslySetInnerHTML` du repo, un par un : la donnée injectée passe-t-elle par
   `safeJsonLd()` ou un assainissement équivalent ? Une seule injection non filtrée sur du contenu
-  contrôlable (titre de produit, description, nom de collection, avis client) suffit à casser le
+  contrôlable (titre de produit, description, nom de collection) suffit à casser le
   contexte `<script>` et exécuter du JavaScript ;
 - ce que fait réellement `safeJsonLd` : échappe-t-il `<`, `>`, `&`, `</script>`, les séparateurs de
   ligne U+2028/U+2029 ? Un échappement partiel donne une fausse sécurité ;
-- les avis clients et les champs libres admin (notes de commande, descriptions) : ce sont les entrées
+- les champs libres admin (notes de commande, descriptions) : ce sont les entrées
   les moins fiables du système ;
 - la CSP comme deuxième barrière : `script-src` autorise-t-il `unsafe-inline` ? Si oui, l'injection
   JSON-LD n'a aucun filet. Vérifie la stratégie de nonce et son interaction avec les scripts de
@@ -3418,4 +3403,46 @@ Inspecte les rapports d'audit existants, `docs/**`, `CLAUDE.md`, les `*.regressi
 Note /100 l'état global du projet. Puis rends le plan. Sois franc dans les deux sens : ne dramatise pas
 un projet globalement solide, et ne minimise pas un bloquant réel. Si le projet est prêt à ouvrir, dis-le
 clairement.
+```
+
+---
+
+## 157 — Upload de fichiers : UI/UX : DONE
+
+```text
+Audit le point « Upload de fichiers : UI/UX » dans Synclune.
+
+Périmètre : les surfaces où l'utilisatrice CHOISIT et ENVOIE un fichier — carte Médias des
+formulaires produit et variante (`modules/products/components/admin/product-media-card-shared.tsx`,
+`shared/media-array-card.tsx`), primitives partagées `shared/components/media-upload/**`, pipeline
+`modules/media/hooks/use-media-upload.ts` et ses sous-hooks, file hors-ligne
+`modules/media/lib/offline-upload-queue.ts`, FileRouter `app/api/uploadthing/core.ts`.
+
+Ce que l'audit doit vérifier en priorité :
+1. Le signal de progression PRINCIPAL (barre, pourcentage, annonce lecteur d'écran) est-il dérivé
+   des octets, ou d'un compte de fichiers qui ne bouge qu'à la fin ? Vérifie que ce qui s'affiche
+   simultanément à l'écran ne se contredit pas.
+2. Chaque mécanisme construit est-il BRANCHÉ ? Reprise automatique hors-ligne, bouton de vidage,
+   annulation par fichier, collage : cherche les options à défaut permissif qu'aucun appelant ne
+   passe, et les props optionnelles jamais fournies.
+3. La validation cliente refuse-t-elle exactement ce que le serveur refuse ? Un format accepté au
+   picker puis rejeté après téléversement complet est de la bande passante et de la patience
+   gaspillées. Compare l'`accept`, la validation MIME cliente et l'allowlist du FileRouter.
+4. Ce que le serveur applique est-il DIT ? Plafonds par type ET par nombre, formats refusés,
+   limites de débit. Chaque contrainte qui ne se découvre que par l'échec est un défaut.
+5. Où part le focus quand la zone de dépôt, la grille d'attente ou le bandeau de progression se
+   démonte ou se désactive ? Un utilisateur clavier ne doit jamais retomber sur `<body>`.
+6. Les bascules mobile/desktop sont-elles en CSS ou en JS ? Un `useIsMobile()` dont le fallback SSR
+   vaut « desktop » fait clignoter du contenu inadapté au premier paint sur téléphone.
+7. Régions `aria-live` : une seule par annonce, montée AVANT son contenu, jamais imbriquée, et pas
+   doublée par un toast (Sonner vocalise aussi).
+8. Unités et formulations : une seule fonction de formatage de taille, une seule formulation par
+   règle métier.
+
+Traque en particulier les tests qui verrouillent le défaut : un cas nommé « accepte X sous <limite
+8× trop haute> », une assertion `expect(x).toBeDefined()` sous un intitulé qui promet un état
+désactivé, un `if (count > 0)` autour d'une assertion, un sélecteur par fragment de classe.
+
+Note /100, propose corrections/améliorations si pertinent et tests. Prouve chaque régression
+nouvelle en réintroduisant le défaut et en vérifiant le rouge.
 ```

@@ -57,6 +57,26 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		paramsRef.current = params;
 	});
 
+	/**
+	 * Annule une mise à jour de montant encore en attente dans le debounce.
+	 *
+	 * Appelé quand la commande vient d'être liée au PaymentIntent : à partir de là le
+	 * serveur refuse tout `updatePaymentAmount` (`metadata.orderId` présent), donc un
+	 * appel déjà programmé ne peut plus rien produire d'utile — seulement une Alert
+	 * « Commande déjà initiée — actualise la page » avec un bouton « Réessayer »,
+	 * affichée PENDANT que la fenêtre 3D Secure est ouverte. Aucun risque sur le
+	 * montant, un vrai risque d'abandon.
+	 *
+	 * Scénario : correction du code postal, puis clic sur Payer dans les 500 ms.
+	 * Audit checkout Stripe Elements 2026-07-30, F5.
+	 */
+	function cancelPendingUpdate() {
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
+			debounceTimerRef.current = undefined;
+		}
+	}
+
 	// Clean up debounce timer on unmount to avoid orphan server action calls
 	useEffect(() => {
 		return () => {
@@ -210,6 +230,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 	return {
 		...state,
 		updateAmount,
+		cancelPendingUpdate,
 		retry: initFromCurrentParams,
 	};
 }

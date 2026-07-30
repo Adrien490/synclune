@@ -649,4 +649,58 @@ describe("usePaymentIntent", () => {
 
 		vi.useRealTimers();
 	});
+
+	// --------------------------------------------------------------------------
+	// cancelPendingUpdate — F5 (audit checkout Stripe Elements 2026-07-30)
+	// --------------------------------------------------------------------------
+
+	it("cancelPendingUpdate empêche un appel programmé de partir après la liaison de la commande", async () => {
+		// Scénario : correction du code postal, puis clic sur Payer dans les 500 ms. Une
+		// fois la commande liée au PI, le serveur refuse l'update (`metadata.orderId`) et
+		// l'appel n'aurait produit qu'une Alert « Commande déjà initiée — actualise la
+		// page » affichée pendant l'ouverture de la fenêtre 3D Secure.
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		act(() => {
+			result.current.updateAmount("FR", "75001", null);
+		});
+
+		act(() => {
+			result.current.cancelPendingUpdate();
+		});
+
+		await act(async () => {
+			vi.advanceTimersByTime(500);
+			await Promise.resolve();
+		});
+
+		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
+
+	it("cancelPendingUpdate est sans effet quand aucun update n'est en attente", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(() => {
+			act(() => {
+				result.current.cancelPendingUpdate();
+				result.current.cancelPendingUpdate();
+			});
+		}).not.toThrow();
+
+		vi.useRealTimers();
+	});
 });

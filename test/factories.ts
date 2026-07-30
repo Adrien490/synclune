@@ -8,6 +8,19 @@
 
 export const VALID_CUID = "cm1234567890abcdefghijklm";
 export const VALID_CUID_2 = "cm9876543210zyxwvutsrqpon";
+/**
+ * Id cuid **v2** dont la première lettre n'est PAS `c`.
+ *
+ * Tous les ids du schéma sont `@default(cuid(2))` : la première lettre est tirée au
+ * hasard dans `a-z`, donc ~25 cas sur 26 ne commencent pas par `c`. `VALID_CUID` et
+ * `VALID_CUID_2` commencent l'un et l'autre par `c` (héritage cuid v1) — ils
+ * laissaient donc passer un validateur `z.cuid()` (regex v1 `/^[cC][0-9a-z]{6,}$/`)
+ * sur un chemin où la production échouait sur 96 % des ids réels.
+ *
+ * Utiliser CETTE fixture pour tout id qui traverse une frontière de validation.
+ * @see app/paiement/__tests__/checkout-return-order-id-cuid2.regression.test.ts
+ */
+export const VALID_CUID2_NON_C = "km7q2p9x4v1w8t3r6y5z0nba";
 export const VALID_USER_ID = "user_cm1234567890abcdef";
 export const VALID_ORDER_ID = "order_cm1234567890abcde";
 export const VALID_SKU_ID = "sku_cm1234567890abcdefg";
@@ -279,26 +292,6 @@ function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
-// REVIEWS
-// ============================================================================
-
-function createMockReview(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "rev_cm1234567890abcde",
-		productId: VALID_PRODUCT_ID,
-		userId: VALID_USER_ID,
-		orderId: VALID_ORDER_ID,
-		rating: 5,
-		comment: "Magnifique bijou, je recommande !",
-		isVerifiedPurchase: true,
-		createdAt: new Date("2026-02-01"),
-		updatedAt: new Date("2026-02-01"),
-		deletedAt: null,
-		...overrides,
-	};
-}
-
-// ============================================================================
 // COLLECTIONS
 // ============================================================================
 
@@ -495,45 +488,6 @@ function createMockMaterial(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
-		...overrides,
-	};
-}
-
-// ============================================================================
-// REVIEW RESPONSES
-// ============================================================================
-
-function createMockReviewResponse(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "rr_cm1234567890abcde",
-		reviewId: "rev_cm1234567890abcde",
-		content: "Merci pour votre avis ! Nous sommes ravis que ce bijou vous plaise.",
-		authorId: "admin_cm1234567890abcde",
-		authorName: "Admin Test",
-		createdAt: new Date("2026-02-05"),
-		updatedAt: new Date("2026-02-05"),
-		deletedAt: null,
-		...overrides,
-	};
-}
-
-// ============================================================================
-// PRODUCT REVIEW STATS
-// ============================================================================
-
-function createMockProductReviewStats(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "prs_cm1234567890abcd",
-		productId: VALID_PRODUCT_ID,
-		totalCount: 12,
-		averageRating: 4.5,
-		rating1Count: 0,
-		rating2Count: 1,
-		rating3Count: 1,
-		rating4Count: 4,
-		rating5Count: 6,
-		createdAt: new Date("2026-01-01"),
-		updatedAt: new Date("2026-02-01"),
 		...overrides,
 	};
 }

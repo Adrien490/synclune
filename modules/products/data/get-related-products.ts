@@ -11,7 +11,6 @@ import {
 import { PRODUCT_CAROUSEL_SELECT } from "../constants/product.constants";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import type { ProductCarouselItem } from "../types/product.types";
-import { serializeProducts } from "../utils/serialize-product";
 
 // ============================================================================
 // MAIN FUNCTIONS
@@ -74,7 +73,7 @@ async function fetchPublicRelatedProducts(limit: number): Promise<ProductCarouse
 			},
 			take: limit,
 		});
-		return serializeProducts(products);
+		return products;
 	} catch (error) {
 		logger.error("Failed to fetch public related products", error, {
 			service: "fetchPublicRelatedProducts",
@@ -149,7 +148,7 @@ async function fetchPersonalizedRelatedProducts(
 			});
 
 			if (relatedProducts.length > 0) {
-				return serializeProducts(relatedProducts);
+				return relatedProducts;
 			}
 		}
 
@@ -170,7 +169,7 @@ async function fetchPersonalizedRelatedProducts(
 			},
 			take: limit,
 		});
-		return serializeProducts(fallbackProducts);
+		return fallbackProducts;
 	} catch (error) {
 		logger.error("Failed to fetch personalized related products", error, {
 			service: "fetchPersonalizedRelatedProducts",
@@ -327,7 +326,7 @@ async function fetchContextualRelatedProducts(
 		addProducts(similarColorProducts, RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS);
 		addProducts(newestProducts, limit - relatedProducts.length);
 
-		return serializeProducts(relatedProducts);
+		return relatedProducts;
 	} catch (error) {
 		logger.error("Failed to fetch contextual related products", error, {
 			service: "fetchContextualRelatedProducts",

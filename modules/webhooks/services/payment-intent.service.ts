@@ -10,8 +10,11 @@ import {
 	OrderAction,
 	RefundReason,
 	RefundStatus,
+	StockMovementSource,
 } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
+import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import type { StockChangedSku } from "@/modules/products/utils/cache.utils";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
@@ -133,18 +136,34 @@ export async function restoreStockForOrder(orderId: string): Promise<{
 			const skuMap = new Map(skus.map((s) => [s.id, s]));
 
 			await Promise.all(
-				Array.from(stockUpdates.entries()).map(([skuId, quantity]) => {
-					const sku = skuMap.get(skuId);
-					// Only reactivate if the SKU was auto-deactivated (inventory === 0 and inactive)
-					// Don't reactivate SKUs that were manually deactivated by admin (inventory > 0 but inactive)
-					const shouldReactivate = sku && !sku.isActive && sku.inventory === 0;
+				Array.from(stockUpdates.entries()).map(async ([skuId, quantity]) => {
+					// Règle partagée par les 4 chemins de restock (SSOT
+					// `restock-reactivation.service`) : on ne réactive que ce que la VENTE a
+					// désactivé, jamais un retrait manuel de l'admin. Elle vivait ici en
+					// clair ; les 3 autres chemins l'ignoraient (P1-1).
+					const shouldReactivate = shouldReactivateAfterRestock(skuMap.get(skuId));
 
-					return tx.productSku.update({
+					// STOCK-LEDGER-001 : on exploite la valeur RETOURNÉE par l'update
+					// plutôt qu'un `$queryRaw … RETURNING` comme ailleurs, parce que la
+					// décision de réactivation a besoin de l'`isActive` d'AVANT — donc du
+					// `findMany` ci-dessus de toute façon. `updated.inventory` reste la
+					// valeur post-écriture réelle, seule base fiable du journal.
+					const updated = await tx.productSku.update({
 						where: { id: skuId },
 						data: {
 							inventory: { increment: quantity },
 							...(shouldReactivate && { isActive: true }),
 						},
+						select: { inventory: true, productId: true },
+					});
+
+					await recordStockMovementTx(tx, {
+						skuId,
+						productId: updated.productId,
+						previousInventory: updated.inventory - quantity,
+						newInventory: updated.inventory,
+						source: StockMovementSource.WEBHOOK,
+						reason: `Restauration de stock — commande ${order.orderNumber}`,
 					});
 				}),
 			);
@@ -404,16 +423,29 @@ export async function markOrderAsCancelled(
 					select: { id: true, inventory: true, isActive: true },
 				});
 				const skuMap = new Map(skus.map((s) => [s.id, s]));
+				// STOCK-LEDGER-001 : journalise le crédit (source `WEBHOOK`) dans la même
+				// transaction que le claim CANCELLED, donc soumis au même single-winner —
+				// un rejeu du webhook ne produit ni double crédit ni doublon au journal.
 				await Promise.all(
-					Array.from(stockUpdates.entries()).map(([skuId, quantity]) => {
-						const sku = skuMap.get(skuId);
-						const shouldReactivate = sku && !sku.isActive && sku.inventory === 0;
-						return tx.productSku.update({
+					Array.from(stockUpdates.entries()).map(async ([skuId, quantity]) => {
+						// Même SSOT que restoreStockForOrder (cf. restock-reactivation.service).
+						const shouldReactivate = shouldReactivateAfterRestock(skuMap.get(skuId));
+						const updated = await tx.productSku.update({
 							where: { id: skuId },
 							data: {
 								inventory: { increment: quantity },
 								...(shouldReactivate && { isActive: true }),
 							},
+							select: { inventory: true, productId: true },
+						});
+
+						await recordStockMovementTx(tx, {
+							skuId,
+							productId: updated.productId,
+							previousInventory: updated.inventory - quantity,
+							newInventory: updated.inventory,
+							source: StockMovementSource.WEBHOOK,
+							reason: `Annulation du paiement — commande ${orderId}`,
 						});
 					}),
 				);

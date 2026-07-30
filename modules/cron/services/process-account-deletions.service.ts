@@ -3,10 +3,7 @@ import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import {
-	deleteUploadThingFileFromUrl,
-	deleteUploadThingFilesFromUrls,
-} from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteUploadThingFileFromUrl } from "@/modules/media/services/delete-uploadthing-files.service";
 import {
 	BATCH_DEADLINE_MS,
 	BATCH_SIZE_MEDIUM,
@@ -14,11 +11,6 @@ import {
 	STRIPE_TIMEOUT_MS,
 } from "@/modules/cron/constants/limits";
 import type { CronResult } from "@/modules/cron/lib/cron-result";
-import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
-import {
-	PRODUCTS_CACHE_TAGS,
-	RECENT_PRODUCTS_CACHE_TAGS,
-} from "@/modules/products/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { getAuthSessionInvalidationTags } from "@/modules/auth/utils/cache.utils";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -82,25 +74,6 @@ export async function processAccountDeletions(): Promise<CronResult> {
 			const emailBeforeAnonymization = user.email;
 			const nameBeforeAnonymization = user.name ?? "Client";
 
-			// Collect review media URLs for UploadThing cleanup after transaction
-			const reviewMedias = await prisma.reviewMedia.findMany({
-				where: { review: { userId: user.id } },
-				select: { url: true },
-			});
-			const reviewMediaUrls = reviewMedias.map((m) => m.url);
-
-			// Collect distinct productIds of the user's reviews for cache invalidation:
-			// anonymization hides them (HIDDEN) + recomputes stats, so the storefront
-			// review list / stats / product-card caches must be purged. Cf. REVIEW-AUDIT-002.
-			const reviewedProducts = await prisma.productReview.findMany({
-				where: { userId: user.id, productId: { not: null } },
-				select: { productId: true },
-				distinct: ["productId"],
-			});
-			const reviewedProductIds = reviewedProducts
-				.map((r) => r.productId)
-				.filter((id): id is string => id !== null);
-
 			// EINV-CREDIT-020 : matérialiser + archiver tout avoir émis non archivé
 			// AVANT le scrub. Après anonymisation, le rendu d'un avoir reconstruirait
 			// depuis des colonnes scrubées (« Client supprimé ») → avoir sans identité
@@ -158,23 +131,6 @@ export async function processAccountDeletions(): Promise<CronResult> {
 			getAuthSessionInvalidationTags(undefined, user.id).forEach((tag) => updateTag(tag));
 			updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
-			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
-
-			// Avis anonymisés/masqués : purger les caches storefront concernés
-			// (liste d'avis + stats par produit + cards qui embarquent reviewStats).
-			// Cf. REVIEW-AUDIT-002.
-			for (const productId of reviewedProductIds) {
-				updateTag(REVIEWS_CACHE_TAGS.PRODUCT(productId));
-				updateTag(REVIEWS_CACHE_TAGS.STATS(productId));
-			}
-			if (reviewedProductIds.length > 0) {
-				updateTag(REVIEWS_CACHE_TAGS.HOMEPAGE);
-				updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
-				updateTag(PRODUCTS_CACHE_TAGS.LIST);
-				updateTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
-				updateTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
-			}
 
 			// Delete Stripe customer AFTER successful transaction (RGPD Art. 17)
 			if (stripeCustomerId) {
@@ -203,18 +159,6 @@ export async function processAccountDeletions(): Promise<CronResult> {
 				} catch (_avatarError) {
 					// Non-blocking: avatar becomes orphan, cleaned up by cleanup-orphan-media
 					logger.warn("Failed to delete avatar", {
-						cronJob: "process-account-deletions",
-						userId: user.id,
-					});
-				}
-			}
-
-			// Delete review media from UploadThing AFTER successful transaction
-			if (reviewMediaUrls.length > 0) {
-				try {
-					await deleteUploadThingFilesFromUrls(reviewMediaUrls);
-				} catch (_mediaError) {
-					logger.warn("Failed to delete review media", {
 						cronJob: "process-account-deletions",
 						userId: user.id,
 					});

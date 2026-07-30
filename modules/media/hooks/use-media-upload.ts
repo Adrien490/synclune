@@ -7,10 +7,14 @@ import {
 	DEFAULT_MAX_SIZE_VIDEO,
 	DEFAULT_MAX_FILES,
 	DEFAULT_VIDEO_CONCURRENCY,
-	formatFileSize,
+	describeRejectedFile,
 	getMediaTypeFromFile,
 	isValidMediaType,
 } from "@/modules/media/utils/upload-helpers";
+// `formatBytesShort` (français : Ko / Mo / Go) et non l'ancien `formatFileSize`
+// (anglais : KB / MB) — ces tailles s'affichent sous une copie qui annonce « max
+// 16 Mo », deux unités sur le même écran suggéraient deux plafonds différents.
+import { formatBytesShort } from "@/modules/media/utils/format-eta";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
 import {
 	enqueue as enqueueOffline,
@@ -280,10 +284,22 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	const preValidateBasic = (files: File[]): File[] => {
 		const mediaFiles = files.filter(isValidMediaType);
 		if (mediaFiles.length < files.length) {
-			const rejected = files.length - mediaFiles.length;
-			toast.warning(`${rejected} fichier(s) ignoré(s)`, {
-				description: "Seules les images et vidéos sont acceptées",
-			});
+			const rejectedFiles = files.filter((f) => !isValidMediaType(f));
+			// Nommer le premier fichier refusé ET le format attendu : « 1 fichier
+			// ignoré / Seules les images et vidéos sont acceptées » était faux pour un
+			// `.mov`, qui EST une vidéo — et laissait réessayer à l'identique.
+			const first = rejectedFiles[0]!;
+			const others = rejectedFiles.length - 1;
+			toast.warning(
+				`${rejectedFiles.length} fichier${rejectedFiles.length > 1 ? "s" : ""} ignoré${rejectedFiles.length > 1 ? "s" : ""}`,
+				{
+					description:
+						others > 0
+							? `${describeRejectedFile(first)} (+${others} autre${others > 1 ? "s" : ""})`
+							: describeRejectedFile(first),
+					duration: 8000,
+				},
+			);
 		}
 		if (mediaFiles.length > maxFiles) {
 			toast.warning(`Maximum ${maxFiles} fichiers`, {
@@ -370,7 +386,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		for (const f of mediaFiles) {
 			if (isOversized(f)) {
 				oversized.push(f);
-				pushFailed(f, `Fichier trop volumineux (${formatFileSize(f.size)})`);
+				pushFailed(f, `Fichier trop volumineux (${formatBytesShort(f.size)})`);
 			} else {
 				validSizeFiles.push(f);
 			}
@@ -379,7 +395,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		if (oversized.length > 0) {
 			const details = oversized
 				.slice(0, 3)
-				.map((f) => `${f.name} (${formatFileSize(f.size)})`)
+				.map((f) => `${f.name} (${formatBytesShort(f.size)})`)
 				.join(", ");
 			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
 
@@ -405,7 +421,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		for (const f of files) {
 			if (isOversized(f)) {
 				oversized.push(f);
-				pushFailed(f, `Fichier trop volumineux (${formatFileSize(f.size)})`);
+				pushFailed(f, `Fichier trop volumineux (${formatBytesShort(f.size)})`);
 			} else {
 				validSizeFiles.push(f);
 			}
@@ -413,7 +429,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		if (oversized.length > 0) {
 			const details = oversized
 				.slice(0, 3)
-				.map((f) => `${f.name} (${formatFileSize(f.size)})`)
+				.map((f) => `${f.name} (${formatBytesShort(f.size)})`)
 				.join(", ");
 			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
 			toast.error(`${oversized.length} fichier(s) trop volumineux`, {
@@ -437,7 +453,10 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			} catch (e) {
 				if (e instanceof OfflineQueueFullError) {
 					toast.warning("File hors-ligne pleine", {
-						description: "Reconnectez-vous pour reprendre vos téléversements en attente.",
+						// Le message ne promet plus une reprise « en te reconnectant » : le
+						// plafond de la file est atteint, la reconnexion n'y changera rien.
+						// C'est de la place qu'il faut libérer, via « Vider la file ».
+						description: "Relance ou vide les fichiers déjà en attente pour faire de la place.",
 					});
 					break;
 				}
@@ -880,8 +899,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			: null;
 		if (cancellation.isInActiveImageBatch(fileName, batchInfo)) {
 			toast.info("Impossible d'annuler", {
-				description:
-					"Le fichier est en cours de téléversement avec d'autres. Annulez l'upload pour tout arrêter.",
+				description: "Ce fichier part avec d'autres. Annule l'envoi complet pour tout arrêter.",
 			});
 		}
 	};

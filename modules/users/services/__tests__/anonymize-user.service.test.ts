@@ -1,28 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockAccountStatus, mockReviewStatus, mockRecompute } = vi.hoisted(() => ({
+const { mockAccountStatus } = vi.hoisted(() => ({
 	mockAccountStatus: {
 		PENDING_DELETION: "PENDING_DELETION",
 		ANONYMIZED: "ANONYMIZED",
 		ACTIVE: "ACTIVE",
 	},
-	mockReviewStatus: {
-		PUBLISHED: "PUBLISHED",
-		HIDDEN: "HIDDEN",
-	},
-	mockRecompute: vi.fn(),
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: mockAccountStatus,
-	ReviewStatus: mockReviewStatus,
 	// Requis par l'import transitif de @/modules/orders/constants/pii-scrub
 	// (ORDER_PII_SCRUB référence Prisma.DbNull au chargement du module).
 	Prisma: { DbNull: Symbol("DbNull") },
-}));
-
-vi.mock("@/modules/reviews/services/review-stats.service", () => ({
-	recomputeProductReviewStatsBatch: mockRecompute,
 }));
 
 vi.mock("../../utils/anonymization.utils", () => ({
@@ -43,9 +33,6 @@ function createMockTx() {
 		address: { deleteMany: vi.fn() },
 		cart: { deleteMany: vi.fn() },
 		wishlist: { deleteMany: vi.fn() },
-		reviewMedia: { deleteMany: vi.fn() },
-		productReview: { updateMany: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
-		reviewResponse: { updateMany: vi.fn() },
 		order: { updateMany: vi.fn() },
 	};
 }
@@ -135,52 +122,6 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.wishlist.deleteMany).toHaveBeenCalledWith({ where: { userId: "user_abc" } });
 	});
 
-	it("should delete review media (PII risk)", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.reviewMedia.deleteMany).toHaveBeenCalledWith({
-			where: { review: { userId: "user_abc" } },
-		});
-	});
-
-	// REVIEW-AUDIT-005 : l'avis est masqué (HIDDEN) en plus d'être anonymisé, pour le
-	// retirer du storefront et des stats (l'auteur n'existe plus).
-	it("should hide and anonymize review content", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.productReview.updateMany).toHaveBeenCalledWith({
-			where: { userId: "user_abc" },
-			data: {
-				status: "HIDDEN",
-				content: "Contenu supprimé suite à la suppression du compte.",
-				title: null,
-			},
-		});
-	});
-
-	// REVIEW-AUDIT-002 / 005 : les stats des produits concernés sont recalculées
-	// (les avis masqués ne comptent plus dans la moyenne).
-	it("should recompute review stats for the user's reviewed products", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-		mockTx.productReview.findMany.mockResolvedValue([
-			{ productId: "prod-1" },
-			{ productId: "prod-2" },
-		]);
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.productReview.findMany).toHaveBeenCalledWith({
-			where: { userId: "user_abc", productId: { not: null } },
-			select: { productId: true },
-			distinct: ["productId"],
-		});
-		expect(mockRecompute).toHaveBeenCalledWith(mockTx, ["prod-1", "prod-2"]);
-	});
-
 	it("should anonymize order PII while preserving financial data", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
@@ -236,17 +177,6 @@ describe("anonymizeUserInTransaction", () => {
 		expect(orderData).not.toHaveProperty("invoiceDataSnapshot");
 	});
 
-	it("should anonymize public ReviewResponse author name to the brand", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.reviewResponse.updateMany).toHaveBeenCalledWith({
-			where: { authorId: "user_abc" },
-			data: { authorName: "Synclune" },
-		});
-	});
-
 	it("should perform all anonymization operations", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
@@ -259,8 +189,6 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.address.deleteMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.cart.deleteMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.wishlist.deleteMany).toHaveBeenCalledTimes(1);
-		expect(mockTx.reviewMedia.deleteMany).toHaveBeenCalledTimes(1);
-		expect(mockTx.productReview.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.order.updateMany).toHaveBeenCalledTimes(1);
 	});
 

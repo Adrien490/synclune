@@ -200,8 +200,14 @@
    Le fallback `0px` rend la règle inoffensive là où aucune barre n'existe. */
 @media (width < 64rem) {
 	[data-sonner-toaster] {
-		padding-bottom: calc(
-			var(--bottom-bar-height, 0px) + max(1rem, env(safe-area-inset-bottom))
+		/* `--bottom-bar-height` porte la hauteur MESURÉE de la barre, safe-area
+		   incluse : la réadditionner compterait l'encoche deux fois. Le
+		   `max(…, env(…))` ne couvre plus que le cas SANS barre — le checkout, où la
+		   bottom-nav est masquée et où le toast se posait sinon sur l'indicateur
+		   d'accueil (audit bottom-bar 2026-07-30). */
+		padding-bottom: max(
+			calc(var(--bottom-bar-height, 0px) + 1rem),
+			env(safe-area-inset-bottom, 0px)
 		) !important;
 		padding-top: 0 !important;
 	}

@@ -3,9 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls, mockLogger } = vi.hoisted(
 	() => ({
 		mockPrisma: {
-			productReview: { findMany: vi.fn(), deleteMany: vi.fn() },
 			product: { findMany: vi.fn(), deleteMany: vi.fn() },
-			reviewMedia: { findMany: vi.fn() },
 			skuMedia: { findMany: vi.fn() },
 			order: { findMany: vi.fn(), updateMany: vi.fn() },
 			refund: { updateMany: vi.fn() },
@@ -46,7 +44,6 @@ import {
 	REFUND_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 const buildIds = (prefix: string, count: number) =>
@@ -55,43 +52,31 @@ const buildIds = (prefix: string, count: number) =>
 describe("hardDeleteExpiredRecords", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.productReview.findMany.mockResolvedValue([]);
 		mockPrisma.product.findMany.mockResolvedValue([]);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.order.findMany.mockResolvedValue([]);
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.orderNote.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.$transaction.mockResolvedValue([{ count: 0 }, { count: 0 }]);
+		mockPrisma.$transaction.mockResolvedValue({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 0 });
 	});
 
-	it("happy path: deletes batch of products and reviews, invalidates 7 cache tags, calls UploadThing twice", async () => {
-		const reviewIds = buildIds("review", BATCH_SIZE_LARGE);
+	it("happy path: deletes batch of products, invalidates 5 cache tags, calls UploadThing once", async () => {
 		const productIds = buildIds("product", BATCH_SIZE_LARGE);
 
-		mockPrisma.productReview.findMany.mockResolvedValue(reviewIds);
 		mockPrisma.product.findMany.mockResolvedValue(productIds);
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([
-			{ url: "https://utfs.io/f/review-1" },
-			{ url: "https://utfs.io/f/review-2" },
-		]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: "https://utfs.io/f/sku-thumb-1" },
 			{ url: "https://utfs.io/f/sku-2", thumbnailUrl: null },
 		]);
-		mockPrisma.$transaction.mockResolvedValue([
-			{ count: BATCH_SIZE_LARGE },
-			{ count: BATCH_SIZE_LARGE },
-		]);
-		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 4 });
+		mockPrisma.$transaction.mockResolvedValue({ count: BATCH_SIZE_LARGE });
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 3 });
 
 		const result = await hardDeleteExpiredRecords();
 
 		expect(result).toMatchObject({
 			productsDeleted: BATCH_SIZE_LARGE,
-			reviewsDeleted: BATCH_SIZE_LARGE,
 			hasMore: true,
 		});
 
@@ -100,15 +85,9 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
-		expect(mockUpdateTag).toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.ADMIN_LIST);
-		expect(mockUpdateTag).toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
-		expect(mockUpdateTag).toHaveBeenCalledTimes(7);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
 
-		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledTimes(2);
-		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
-			"https://utfs.io/f/review-1",
-			"https://utfs.io/f/review-2",
-		]);
+		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledTimes(1);
 		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
 			"https://utfs.io/f/sku-1",
 			"https://utfs.io/f/sku-thumb-1",
@@ -121,17 +100,16 @@ describe("hardDeleteExpiredRecords", () => {
 
 		expect(result).toMatchObject({
 			productsDeleted: 0,
-			reviewsDeleted: 0,
 			hasMore: false,
 		});
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 		expect(mockDeleteUploadThingFilesFromUrls).not.toHaveBeenCalled();
 	});
 
-	it("invalidates only product tags when reviews are empty", async () => {
+	it("invalidates the product tags when a batch is deleted", async () => {
 		mockPrisma.product.findMany.mockResolvedValue(buildIds("product", 5));
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
-		mockPrisma.$transaction.mockResolvedValue([{ count: 0 }, { count: 5 }]);
+		mockPrisma.$transaction.mockResolvedValue({ count: 5 });
 
 		await hardDeleteExpiredRecords();
 
@@ -140,45 +118,31 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		expect(mockUpdateTag).toHaveBeenCalledWith(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.ADMIN_LIST);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
 	});
 
-	it("invalidates only review tags when products are empty", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue(buildIds("review", 5));
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
-		mockPrisma.$transaction.mockResolvedValue([{ count: 5 }, { count: 0 }]);
+	it("skips product tag invalidation when the delete count is zero", async () => {
+		mockPrisma.product.findMany.mockResolvedValue(buildIds("product", 5));
+		mockPrisma.$transaction.mockResolvedValue({ count: 0 });
 
 		await hardDeleteExpiredRecords();
 
-		expect(mockUpdateTag).toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.ADMIN_LIST);
-		expect(mockUpdateTag).toHaveBeenCalledWith(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(PRODUCTS_CACHE_TAGS.LIST);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(PRODUCTS_CACHE_TAGS.COUNTS);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		expect(mockUpdateTag).not.toHaveBeenCalledWith(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
-	it("returns hasMore=false when batch size limit is not reached on either model", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue(buildIds("review", 25));
+	it("returns hasMore=false when the batch size limit is not reached", async () => {
 		mockPrisma.product.findMany.mockResolvedValue(buildIds("product", 25));
-		mockPrisma.$transaction.mockResolvedValue([{ count: 25 }, { count: 25 }]);
+		mockPrisma.$transaction.mockResolvedValue({ count: 25 });
 
 		const result = await hardDeleteExpiredRecords();
 
 		expect(result.hasMore).toBe(false);
 	});
 
-	it("queries Product with status=ARCHIVED and retention cutoff, ProductReview with retention cutoff only", async () => {
+	it("queries Product with status=ARCHIVED and the retention cutoff", async () => {
 		await hardDeleteExpiredRecords();
 
-		const reviewCall = mockPrisma.productReview.findMany.mock.calls[0]![0];
 		const productCall = mockPrisma.product.findMany.mock.calls[0]![0];
-
-		expect(reviewCall.where).toEqual({ deletedAt: { lt: expect.any(Date) } });
-		expect(reviewCall.select).toEqual({ id: true });
-		expect(reviewCall.take).toBe(BATCH_SIZE_LARGE);
 
 		expect(productCall.where).toEqual({
 			deletedAt: { lt: expect.any(Date) },
@@ -187,19 +151,17 @@ describe("hardDeleteExpiredRecords", () => {
 		expect(productCall.select).toEqual({ id: true });
 		expect(productCall.take).toBe(BATCH_SIZE_LARGE);
 
-		const cutoff = reviewCall.where.deletedAt.lt as Date;
+		const cutoff = productCall.where.deletedAt.lt as Date;
 		const expectedYear = new Date().getFullYear() - RETENTION.LEGAL_RETENTION_YEARS;
 		expect(cutoff.getFullYear()).toBe(expectedYear);
 	});
 
 	it("skips UploadThing cleanup when deadline is exceeded but still invalidates caches", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue(buildIds("review", 5));
 		mockPrisma.product.findMany.mockResolvedValue(buildIds("product", 5));
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([{ url: "https://utfs.io/f/review-1" }]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
 		]);
-		mockPrisma.$transaction.mockResolvedValue([{ count: 5 }, { count: 5 }]);
+		mockPrisma.$transaction.mockResolvedValue({ count: 5 });
 
 		const initialNow = Date.now();
 		let callCount = 0;
@@ -215,10 +177,9 @@ describe("hardDeleteExpiredRecords", () => {
 
 		expect(result).toMatchObject({
 			productsDeleted: 5,
-			reviewsDeleted: 5,
 			hasMore: false,
 		});
-		expect(mockUpdateTag).toHaveBeenCalledTimes(7);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
 		expect(mockDeleteUploadThingFilesFromUrls).not.toHaveBeenCalled();
 		expect(mockLogger.warn).toHaveBeenCalledWith(
 			expect.stringContaining("Approaching timeout"),
@@ -249,13 +210,13 @@ describe("hardDeleteExpiredRecords", () => {
 			])
 			.mockResolvedValueOnce([]);
 		// paid-purge scrub tx runs first (callback exécuté pour observer les scrubs
-		// internes Refund/OrderNote/Order), then the review/product tx → array.
+		// internes Refund/OrderNote/Order), then the product tx → { count }.
 		mockPrisma.order.updateMany.mockResolvedValue({ count: 2 });
 		mockPrisma.$transaction
 			.mockImplementationOnce(async (fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
 				fn(mockPrisma),
 			)
-			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+			.mockResolvedValueOnce({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 4, failed: 0 });
 
 		const result = await hardDeleteExpiredRecords();
@@ -315,13 +276,13 @@ describe("hardDeleteExpiredRecords", () => {
 				},
 			])
 			.mockResolvedValueOnce([]);
-		// Only the review/product tx should run — the purge scrub must be skipped.
-		mockPrisma.$transaction.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		// Only the product tx should run — the purge scrub must be skipped.
+		mockPrisma.$transaction.mockResolvedValueOnce({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 0, failed: 1 });
 
 		const result = await hardDeleteExpiredRecords();
 
-		// No scrub tx ran (only the review/product tx → single $transaction call).
+		// No scrub tx ran (only the product tx → single $transaction call).
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 		// G3 (audit) : un échec de suppression PDF doit remonter en `errored` pour
 		// déclencher l'alerte admin via withCronGuard (sinon échec silencieux).
@@ -343,7 +304,7 @@ describe("hardDeleteExpiredRecords", () => {
 				},
 			])
 			.mockResolvedValueOnce([]);
-		mockPrisma.$transaction.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		mockPrisma.$transaction.mockResolvedValueOnce({ count: 0 });
 		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(new Error("UploadThing 500"));
 
 		const result = await hardDeleteExpiredRecords();
@@ -363,10 +324,8 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.order.findMany
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([{ id: "abandoned-1" }, { id: "abandoned-2" }]);
-		// 1st tx = abandoned scrub → { count }, 2nd tx = review/product → array.
-		mockPrisma.$transaction
-			.mockResolvedValueOnce({ count: 2 })
-			.mockResolvedValueOnce([{ count: 0 }, { count: 0 }]);
+		// 1st tx = abandoned scrub → { count }, 2nd tx = product delete → { count }.
+		mockPrisma.$transaction.mockResolvedValueOnce({ count: 2 }).mockResolvedValueOnce({ count: 0 });
 
 		const result = await hardDeleteExpiredRecords();
 
@@ -383,26 +342,19 @@ describe("hardDeleteExpiredRecords", () => {
 	});
 
 	it("does not throw when UploadThing rejects (non-blocking with logger.warn)", async () => {
-		mockPrisma.productReview.findMany.mockResolvedValue(buildIds("review", 3));
 		mockPrisma.product.findMany.mockResolvedValue(buildIds("product", 3));
-		mockPrisma.reviewMedia.findMany.mockResolvedValue([{ url: "https://utfs.io/f/review-1" }]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
 		]);
-		mockPrisma.$transaction.mockResolvedValue([{ count: 3 }, { count: 3 }]);
+		mockPrisma.$transaction.mockResolvedValue({ count: 3 });
 		mockDeleteUploadThingFilesFromUrls.mockRejectedValue(new Error("UploadThing API down"));
 
 		const result = await hardDeleteExpiredRecords();
 
 		expect(result).toMatchObject({
 			productsDeleted: 3,
-			reviewsDeleted: 3,
 			hasMore: false,
 		});
-		expect(mockLogger.warn).toHaveBeenCalledWith(
-			expect.stringContaining("Failed to delete review media from UploadThing"),
-			expect.objectContaining({ cronJob: "hard-delete-retention" }),
-		);
 		expect(mockLogger.warn).toHaveBeenCalledWith(
 			expect.stringContaining("Failed to delete product media from UploadThing"),
 			expect.objectContaining({ cronJob: "hard-delete-retention" }),

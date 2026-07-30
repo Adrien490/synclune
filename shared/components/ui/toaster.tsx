@@ -35,7 +35,12 @@ export function AppToaster() {
 				gap={isMobile ? 8 : 12}
 				offset={
 					isMobile
-						? "calc(var(--bottom-bar-height, 0px) + max(1rem, env(safe-area-inset-bottom)))"
+						? // `--bottom-bar-height` porte la hauteur MESURÉE de la barre, safe-area
+							// incluse : ne jamais la réadditionner, ce serait compter l'encoche deux
+							// fois. Le `max(…, env(…))` ne couvre plus que le cas SANS barre
+							// (checkout, où la bottom-nav est masquée) — sinon le toast se posait sur
+							// l'indicateur d'accueil (audit bottom-bar 2026-07-30).
+							"max(calc(var(--bottom-bar-height, 0px) + 1rem), env(safe-area-inset-bottom, 0px))"
 						: "max(1rem, env(safe-area-inset-top))"
 				}
 			/>

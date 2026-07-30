@@ -111,10 +111,7 @@ export function ProductList({
 	// Google en retient un arbitrairement et le désaccord est un signal de qualité négatif.
 	//
 	// L'émetteur de page a été conservé parce que son `ItemList` reste *dans* son
-	// `CollectionPage`, la forme attendue sur une page de catégorie. Corollaire assumé :
-	// l'`aggregateRating` par produit disparaît du balisage (`buildItemListProduct` ne
-	// reçoit pas `reviewStats`) ; le rétablir se fait là-bas, pas ici, et pas en
-	// réintroduisant un second `ItemList`.
+	// `CollectionPage`, la forme attendue sur une page de catégorie.
 
 	// Layout Grid par defaut
 	return (

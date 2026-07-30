@@ -96,13 +96,12 @@ const prisma = new PrismaClient({ adapter });
 // TYPES
 // ============================================================================
 
-type Table = "SkuMedia" | "ReviewMedia";
+type Table = "SkuMedia";
 
 interface Candidate {
 	id: string;
 	url: string;
 	needsBlur: boolean;
-	/** `ReviewMedia` n'a pas de colonnes width/height : toujours false pour cette table. */
 	needsDimensions: boolean;
 }
 
@@ -141,18 +140,6 @@ async function collectSkuMediaCandidates(): Promise<Candidate[]> {
 		needsBlur: DO_BLUR && r.blurDataUrl === null,
 		needsDimensions: DO_DIMENSIONS && (r.width === null || r.height === null),
 	}));
-}
-
-/** `ReviewMedia` n'a pas de colonnes width/height : blur uniquement. */
-async function collectReviewMediaCandidates(): Promise<Candidate[]> {
-	if (!DO_BLUR) return [];
-
-	const rows = await prisma.reviewMedia.findMany({
-		where: { blurDataUrl: null },
-		select: { id: true, url: true },
-	});
-
-	return rows.map((r) => ({ id: r.id, url: r.url, needsBlur: true, needsDimensions: false }));
 }
 
 // ============================================================================
@@ -227,15 +214,7 @@ async function processTable(table: Table, candidates: Candidate[]): Promise<Tabl
 			if (Object.keys(update).length === 0) continue;
 
 			if (!DRY_RUN) {
-				if (table === "SkuMedia") {
-					await prisma.skuMedia.update({ where: { id: candidate.id }, data: update });
-				} else {
-					// Pas de width/height sur ReviewMedia : n'écrire que le blur.
-					await prisma.reviewMedia.update({
-						where: { id: candidate.id },
-						data: { blurDataUrl: update.blurDataUrl },
-					});
-				}
+				await prisma.skuMedia.update({ where: { id: candidate.id }, data: update });
 			}
 
 			if (update.blurDataUrl) outcome.blurWritten++;
@@ -306,22 +285,14 @@ function report(outcomes: TableOutcome[]): void {
 // ============================================================================
 
 async function main() {
-	const [skuCandidates, reviewCandidates] = await Promise.all([
-		collectSkuMediaCandidates(),
-		collectReviewMediaCandidates(),
-	]);
+	const skuCandidates = await collectSkuMediaCandidates();
 
-	if (skuCandidates.length === 0 && reviewCandidates.length === 0) {
+	if (skuCandidates.length === 0) {
 		console.log("✅ Aucun média à backfiller.");
 		return;
 	}
 
-	const outcomes: TableOutcome[] = [];
-	if (skuCandidates.length > 0) outcomes.push(await processTable("SkuMedia", skuCandidates));
-	if (reviewCandidates.length > 0)
-		outcomes.push(await processTable("ReviewMedia", reviewCandidates));
-
-	report(outcomes);
+	report([await processTable("SkuMedia", skuCandidates)]);
 }
 
 main()

@@ -7,6 +7,7 @@ import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -20,8 +21,7 @@ import {
 	safeFormGet,
 	safeFormGetJSON,
 } from "@/shared/lib/actions";
-import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
-import { generateSkuCode } from "../services/sku-generation.service";
+import { generateAvailableSkuCode } from "../services/sku-generation.service";
 import {
 	assertColorsExist,
 	assertMaterialsExist,
@@ -59,11 +59,17 @@ export async function createProductSku(
 		const rawData = {
 			productId: safeFormGet(formData, "productId"),
 			sku: safeFormGet(formData, "sku") ?? "",
-			priceInclTaxEuros: Number(formData.get("priceInclTaxEuros")) || 0,
+			// ⚠️ Valeurs brutes transmises à Zod, PAS `Number(...) || 0`.
+			// `Number("abc")` vaut `NaN`, et `NaN || 0` vaut `0` : une saisie illisible
+			// devenait donc un stock de 0 accepté silencieusement. Sur `update-sku` c'est
+			// pire que cosmétique — combiné à `originalInventory`, ça produit un delta
+			// NÉGATIF qui vide le stock. `z.coerce.number()` rejette `NaN`, donc l'admin
+			// obtient une vraie erreur de validation sur le champ fautif.
+			priceInclTaxEuros: formData.get("priceInclTaxEuros") ?? undefined,
 			compareAtPriceEuros: formData.get("compareAtPriceEuros")
 				? Number(formData.get("compareAtPriceEuros"))
 				: undefined,
-			inventory: Number(formData.get("inventory")) || 0,
+			inventory: formData.get("inventory") ?? undefined,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
 			// Couleurs M2M sérialisées en JSON (cohérent avec materialIds + collectionIds)
@@ -101,95 +107,103 @@ export async function createProductSku(
 		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Create product SKU in transaction
-		const productSku = await prisma.$transaction(async (tx) => {
-			const product = await tx.product.findUnique({
-				where: { id: validatedData.productId },
-				select: { id: true, title: true },
-			});
-			if (!product) {
-				throw new BusinessError("Le produit spécifié n'existe pas.");
-			}
-
-			await assertColorsExist(tx, refs.colorIds);
-			await assertMaterialsExist(tx, refs.materialIds);
-			await assertUniqueVariantCombination(tx, {
-				productId: validatedData.productId,
-				colorIds: refs.colorIds,
-				size: refs.size,
-			});
-
-			if (validatedData.isDefault) {
-				await unsetOtherDefaultSkus(tx, validatedData.productId);
-			}
-
-			// Generate SKU code if not provided.
-			// Use unique-name-generator over a fresh generateSkuCode seed so we degrade
-			// gracefully to `-COPY-N` suffixes on the (extremely rare) timestamp+random collision.
-			const providedSku = validatedData.sku?.trim();
-			let skuValue: string;
-			if (providedSku) {
-				skuValue = providedSku;
-			} else {
-				const uniqueResult = await generateUniqueTechnicalName(
-					generateSkuCode(),
-					async (candidate) =>
-						(await tx.productSku.findUnique({
-							where: { sku: candidate },
-							select: { id: true },
-						})) !== null,
-				);
-				if (!uniqueResult.success || !uniqueResult.name) {
-					throw new BusinessError(
-						uniqueResult.error ?? "Impossible de générer un code unique pour la variante",
-					);
-				}
-				skuValue = uniqueResult.name;
-			}
-
-			const createdSku = await tx.productSku.create({
-				data: {
-					productId: validatedData.productId,
-					sku: skuValue,
-					priceInclTax: priceInclTaxCents,
-					compareAtPrice: compareAtPriceCents,
-					inventory: validatedData.inventory,
-					isActive: validatedData.isActive,
-					isDefault: validatedData.isDefault,
-					size: refs.size,
-					colors: {
-						create: refs.colorIds.map((colorId, index) => ({
-							colorId,
-							position: index,
-						})),
-					},
-					materials: {
-						create: refs.materialIds.map((materialId, index) => ({
-							materialId,
-							position: index,
-						})),
-					},
-				},
-				include: {
-					product: { select: { title: true, slug: true } },
-					colors: {
-						include: { color: { select: { name: true, slug: true } } },
-						orderBy: { position: "asc" },
-					},
-					materials: {
-						include: { material: { select: { name: true, slug: true } } },
-						orderBy: { position: "asc" },
-					},
-				},
-			});
-
-			if (allMedia.length > 0) {
-				await tx.skuMedia.createMany({
-					data: toSkuMediaCreatePayload(createdSku.id, allMedia),
+		const productSku = await prisma.$transaction(
+			async (tx) => {
+				const product = await tx.product.findUnique({
+					where: { id: validatedData.productId },
+					select: { id: true, title: true },
 				});
-			}
+				if (!product) {
+					throw new BusinessError("Le produit spécifié n'existe pas.");
+				}
 
-			return createdSku;
-		});
+				await assertColorsExist(tx, refs.colorIds);
+				await assertMaterialsExist(tx, refs.materialIds);
+				await assertUniqueVariantCombination(tx, {
+					productId: validatedData.productId,
+					colorIds: refs.colorIds,
+					size: refs.size,
+				});
+
+				if (validatedData.isDefault) {
+					await unsetOtherDefaultSkus(tx, validatedData.productId);
+				}
+
+				// Génération du code si non fourni.
+				// `generateAvailableSkuCode` retire un NOUVEAU code aléatoire à chaque
+				// collision. L'ancien chemin passait par `generateUniqueTechnicalName`, conçu
+				// pour la duplication : il suffixait son premier candidat en `-COPY`, donc
+				// TOUS les codes auto-générés s'annonçaient comme des copies.
+				const providedSku = validatedData.sku?.trim();
+				let skuValue: string;
+				if (providedSku) {
+					skuValue = providedSku;
+				} else {
+					const uniqueResult = await generateAvailableSkuCode(
+						async (candidate) =>
+							(await tx.productSku.findUnique({
+								where: { sku: candidate },
+								select: { id: true },
+							})) !== null,
+					);
+					// Union discriminée : le narrowing sur `success` donne accès à `error` d'un
+					// côté et à `name` de l'autre, sans champ optionnel à re-tester.
+					if (!uniqueResult.success) {
+						throw new BusinessError(uniqueResult.error);
+					}
+					skuValue = uniqueResult.name;
+				}
+
+				const createdSku = await tx.productSku.create({
+					data: {
+						productId: validatedData.productId,
+						sku: skuValue,
+						priceInclTax: priceInclTaxCents,
+						compareAtPrice: compareAtPriceCents,
+						inventory: validatedData.inventory,
+						isActive: validatedData.isActive,
+						isDefault: validatedData.isDefault,
+						size: refs.size,
+						colors: {
+							create: refs.colorIds.map((colorId, index) => ({
+								colorId,
+								position: index,
+							})),
+						},
+						materials: {
+							create: refs.materialIds.map((materialId, index) => ({
+								materialId,
+								position: index,
+							})),
+						},
+					},
+					include: {
+						product: { select: { title: true, slug: true } },
+						colors: {
+							include: { color: { select: { name: true, slug: true } } },
+							orderBy: { position: "asc" },
+						},
+						materials: {
+							include: { material: { select: { name: true, slug: true } } },
+							orderBy: { position: "asc" },
+						},
+					},
+				});
+
+				if (allMedia.length > 0) {
+					await tx.skuMedia.createMany({
+						data: toSkuMediaCreatePayload(createdSku.id, allMedia),
+					});
+				}
+
+				return createdSku;
+			},
+			// Cette transaction tient advisory lock d'identité de variante + la vérification d'unicité du code SKU.
+			// Le défaut Prisma (5 s) la faisait échouer en P2028 sous contention avec le
+			// webhook d'encaissement, qui verrouille les mêmes lignes avec 30 s — l'admin
+			// voyait une erreur générique non déterministe. Prescrit par prisma-tx-options.
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		// 9. Build success message
 		const variantDetails = [
@@ -233,7 +247,7 @@ export async function createProductSku(
 		};
 	} catch (e) {
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-			// Collision SKU code rare (generateSkuCode + generateUniqueTechnicalName retry interne)
+			// Collision SKU code rare (generateAvailableSkuCode retire un nouveau code par tentative)
 			// → monitoring pour detecter si le volume admin la rend frequente
 			Sentry.captureMessage("SKU code collision (P2002) on createProductSku", {
 				level: "warning",

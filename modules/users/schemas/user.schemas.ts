@@ -229,16 +229,6 @@ export const exportUserDataResponseSchema = z.object({
 			usedAt: z.iso.datetime(),
 		}),
 	),
-	reviews: z.array(
-		z.object({
-			productTitle: z.string().nullable(),
-			rating: z.number(),
-			title: z.string().nullable(),
-			content: z.string(),
-			createdAt: z.iso.datetime(),
-			updatedAt: z.iso.datetime(),
-		}),
-	),
 	sessions: z.array(
 		z.object({
 			ipAddress: z.string().nullable(),

@@ -8,7 +8,7 @@ import type { Prisma } from "@/app/generated/prisma/browser";
  * Select mince pour carousels et grilles légères (related / recent / cross-sell).
  *
  * Scope volontairement limité aux champs consommés par ProductCard /
- * getProductCardData : id, slug, title, type.label, reviewStats, skus actifs
+ * getProductCardData : id, slug, title, type.label, skus actifs
  * avec couleur/matériau/taille et UNIQUEMENT l'image primaire.
  *
  * Ne PAS utiliser pour le PLP ni l'admin — voir GET_PRODUCTS_SELECT.
@@ -24,12 +24,6 @@ export const PRODUCT_CAROUSEL_SELECT = {
 			id: true,
 			slug: true,
 			label: true,
-		},
-	},
-	reviewStats: {
-		select: {
-			averageRating: true,
-			totalCount: true,
 		},
 	},
 	skus: {
@@ -224,12 +218,6 @@ export const GET_PRODUCTS_SELECT = {
 	status: true,
 	createdAt: true,
 	updatedAt: true,
-	reviewStats: {
-		select: {
-			averageRating: true,
-			totalCount: true,
-		},
-	},
 	skus: {
 		where: {
 			isActive: true,
@@ -444,7 +432,6 @@ export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 export const LOW_STOCK_THRESHOLD = 3;
 
 export const GET_PRODUCTS_SORT_FIELDS = [
-	"rating-descending",
 	"title-ascending",
 	"title-descending",
 	"price-ascending",
@@ -469,7 +456,6 @@ export const PRODUCT_FILTER_DIALOG_ID = "product-filter-sheet";
 // ============================================================================
 
 export const PRODUCTS_SORT_OPTIONS = {
-	RATING_DESC: "rating-descending",
 	TITLE_ASC: "title-ascending",
 	TITLE_DESC: "title-descending",
 	PRICE_ASC: "price-ascending",
@@ -479,7 +465,6 @@ export const PRODUCTS_SORT_OPTIONS = {
 } as const;
 
 export const PRODUCTS_SORT_LABELS = {
-	[PRODUCTS_SORT_OPTIONS.RATING_DESC]: "Mieux notés",
 	[PRODUCTS_SORT_OPTIONS.TITLE_ASC]: "Alphabétique (A-Z)",
 	[PRODUCTS_SORT_OPTIONS.TITLE_DESC]: "Alphabétique (Z-A)",
 	[PRODUCTS_SORT_OPTIONS.PRICE_ASC]: "Prix croissant",

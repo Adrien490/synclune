@@ -13,6 +13,13 @@ export const envSchema = z.object({
 	// Direct (unpooled) Neon endpoint utilisé exclusivement par `prisma migrate
 	// deploy` — PgBouncer (pooler) rejette les prepared statements DDL.
 	DATABASE_URL_UNPOOLED: z.url().optional(),
+	// Base JETABLE et VIDE que `prisma migrate dev` rejoue avant de differ (shadow
+	// database). Sans elle, `migrate dev` échoue en P3006 sur un endpoint Neon poolé —
+	// cause racine documentée de l'historique de migrations non rejouable (audit
+	// 2026-07-26). Prisma DROP et recrée son schéma à chaque run : ne JAMAIS y pointer
+	// une base contenant des données. Optionnel (le workflow `migrate deploy` n'en a
+	// pas besoin).
+	SHADOW_DATABASE_URL: z.url().optional(),
 
 	// ========================================
 	// Authentification (Better Auth)

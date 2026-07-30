@@ -9,6 +9,9 @@ const {
 	mockPrisma,
 	mockGetSession,
 	mockGetOrCreateCartSessionId,
+	mockGetCart,
+	mockUpdatePendingShippingSnapshot,
+	mockGetOrderMetadataInvalidationTags,
 	mockGetCartInvalidationTags,
 	mockCheckRateLimit,
 	mockGetClientIp,
@@ -19,7 +22,7 @@ const {
 	mockEnrichStripeCustomer,
 	mockAfter,
 	mockCreateOrderInTransaction,
-	mockBuildStripeLineItems,
+	mockComputeCartSubtotal,
 	mockStripe,
 	mockCircuitBreakerErrorClass,
 	mockSentryStartSpan,
@@ -74,6 +77,9 @@ const {
 		},
 		mockGetSession: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetCart: vi.fn(),
+		mockUpdatePendingShippingSnapshot: vi.fn(),
+		mockGetOrderMetadataInvalidationTags: vi.fn(),
 		mockGetCartInvalidationTags: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
@@ -84,7 +90,7 @@ const {
 		mockEnrichStripeCustomer: vi.fn(),
 		mockAfter: vi.fn(),
 		mockCreateOrderInTransaction: vi.fn(),
-		mockBuildStripeLineItems: vi.fn(),
+		mockComputeCartSubtotal: vi.fn(),
 		mockStripe: {
 			paymentIntents: {
 				retrieve: vi.fn(),
@@ -119,6 +125,20 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 
 vi.mock("@/modules/cart/lib/cart-session", () => ({
 	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+}));
+
+// CHECKOUT-CART-PARITY-001 : les lignes facturées sont confrontées au panier serveur.
+vi.mock("@/modules/cart/data/get-cart", () => ({
+	getCart: mockGetCart,
+}));
+
+// KI-001 : correction du snapshot d'adresse d'une commande encore PENDING.
+vi.mock("@/modules/orders/services/update-pending-order-shipping-snapshot.service", () => ({
+	updatePendingOrderShippingSnapshot: mockUpdatePendingShippingSnapshot,
+}));
+
+vi.mock("@/modules/orders/constants/cache", () => ({
+	getOrderMetadataInvalidationTags: mockGetOrderMetadataInvalidationTags,
 }));
 
 vi.mock("@/modules/cart/constants/cache", () => ({
@@ -169,8 +189,8 @@ vi.mock("@/modules/payments/services/order-creation.service", () => ({
 	createOrderInTransaction: mockCreateOrderInTransaction,
 }));
 
-vi.mock("@/modules/payments/services/checkout-line-items.service", () => ({
-	buildStripeLineItems: mockBuildStripeLineItems,
+vi.mock("@/modules/payments/services/checkout-subtotal.service", () => ({
+	computeCartSubtotal: mockComputeCartSubtotal,
 }));
 
 vi.mock("@/shared/lib/stripe", () => ({
@@ -303,6 +323,7 @@ function createBoundOrder(
 		id: string;
 		orderNumber: string;
 		total: number;
+		userId: string | null;
 		shippingCountry: string;
 		shippingPostalCode: string;
 		items: Array<{ skuId: string; quantity: number }>;
@@ -312,6 +333,7 @@ function createBoundOrder(
 		id: "order-existing",
 		orderNumber: "SYN-20260301-XXXX",
 		total: 4990,
+		userId: "cm3user0000123qz8v4h2j9d3",
 		shippingCountry: VALID_SHIPPING_ADDRESS.country,
 		shippingPostalCode: VALID_SHIPPING_ADDRESS.postalCode,
 		items: VALID_CART_ITEMS.map((item) => ({ skuId: item.skuId, quantity: item.quantity })),
@@ -361,6 +383,19 @@ const MOCK_PAYMENT_INTENT = {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+/**
+ * Aligne le panier SERVEUR sur les lignes passées à l'action.
+ *
+ * Nécessaire dès qu'un test soumet autre chose que `VALID_CART_ITEMS` : la garde de
+ * parité (CHECKOUT-CART-PARITY-001) refuse toute divergence `skuId:quantity` entre
+ * les lignes du client et le panier serveur.
+ */
+function setServerCart(items: Array<{ skuId: string; quantity: number }>) {
+	mockGetCart.mockResolvedValue({
+		items: items.map((item) => ({ sku: { id: item.skuId }, quantity: item.quantity })),
+	});
+}
 
 function setupDefaults() {
 	// Sentry: execute the callback directly
@@ -414,11 +449,8 @@ function setupDefaults() {
 		void Promise.resolve(cb());
 	});
 
-	// Line items
-	mockBuildStripeLineItems.mockReturnValue({
-		lineItems: [],
-		subtotal: 4500,
-	});
+	// Sous-total au prix DB
+	mockComputeCartSubtotal.mockReturnValue(4500);
 
 	// Order creation
 	mockCreateOrderInTransaction.mockResolvedValue(MOCK_ORDER_RESULT);
@@ -449,6 +481,16 @@ function setupDefaults() {
 
 	// Cart cache
 	mockGetCartInvalidationTags.mockReturnValue(["cart-user-cm3user0000123qz8v4h2j9d3"]);
+	mockUpdatePendingShippingSnapshot.mockResolvedValue({ updated: false, reason: "no-change" });
+	mockGetOrderMetadataInvalidationTags.mockReturnValue(["order-meta-order-existing"]);
+	// Panier serveur aligné sur VALID_CART_ITEMS — la garde de parité
+	// (CHECKOUT-CART-PARITY-001) compare `skuId:quantity`, jamais les prix.
+	mockGetCart.mockResolvedValue({
+		items: VALID_CART_ITEMS.map((item) => ({
+			sku: { id: item.skuId },
+			quantity: item.quantity,
+		})),
+	});
 
 	// Cleanup transaction (for failed checkout tests)
 	mockPrisma.$transaction.mockImplementation(
@@ -615,10 +657,10 @@ describe("confirmCheckout", () => {
 			expect(mockUpdateTag).toHaveBeenCalledWith("discount-usage-disc-001");
 		});
 
-		it("should call buildStripeLineItems with cart items and SKU results", async () => {
+		it("should call computeCartSubtotal with cart items and SKU results", async () => {
 			await confirmCheckout(createValidData());
 
-			expect(mockBuildStripeLineItems).toHaveBeenCalledWith(VALID_CART_ITEMS, [MOCK_SKU_RESULT]);
+			expect(mockComputeCartSubtotal).toHaveBeenCalledWith(VALID_CART_ITEMS, [MOCK_SKU_RESULT]);
 		});
 
 		it("should call createOrderInTransaction with all required params", async () => {
@@ -727,6 +769,160 @@ describe("confirmCheckout", () => {
 	// Idempotence
 	// ──────────────────────────────────────────────────────────────
 
+	// ──────────────────────────────────────────────────────────────
+	// CHECKOUT-CART-PARITY-001 — parité avec le panier serveur
+	// ──────────────────────────────────────────────────────────────
+
+	describe("parité du panier client / serveur", () => {
+		it("refuse une soumission dont les quantités divergent du panier serveur", async () => {
+			// Le cas deux onglets : l'onglet A a été rendu avec quantité 1, l'onglet B l'a
+			// passée à 2. `updatePaymentAmount` posait le montant du panier SERVEUR sur le PI
+			// pendant que `confirmCheckout` facturait celui de l'onglet A.
+			setServerCart([{ skuId: VALID_SKU_ID, quantity: 5 }]);
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(false);
+			expect((result as { error: string }).error).toMatch(/panier a changé/i);
+			// Fail-closed AVANT toute création de commande ou appel Stripe.
+			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
+			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
+		});
+
+		it("refuse une ligne absente du panier serveur", async () => {
+			setServerCart([{ skuId: VALID_SKU_ID_2, quantity: 1 }]);
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(false);
+			expect((result as { error: string }).error).toMatch(/panier a changé/i);
+		});
+
+		it("refuse quand le panier serveur est vide", async () => {
+			mockGetCart.mockResolvedValue({ items: [] });
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(false);
+			expect(mockCreateOrderInTransaction).not.toHaveBeenCalled();
+		});
+
+		it("la garde s'applique APRÈS le pre-check d'idempotence (panier vidé par le webhook)", async () => {
+			// Sur une commande déjà liée et PAYÉE, le webhook a vidé le panier : exiger la
+			// parité ici rendrait tout retour sur la page de paiement impossible.
+			mockPrisma.order.findUnique.mockResolvedValue(createBoundOrder());
+			mockGetCart.mockResolvedValue({ items: [] });
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(true);
+			expect((result as { orderId: string }).orderId).toBe("order-existing");
+		});
+	});
+
+	// ──────────────────────────────────────────────────────────────
+	// KI-001 — correction d'adresse sur un hit idempotent
+	// ──────────────────────────────────────────────────────────────
+
+	describe("correction d'adresse sur hit idempotent (KI-001)", () => {
+		beforeEach(() => {
+			mockPrisma.order.findUnique.mockResolvedValue(createBoundOrder());
+		});
+
+		it("répercute une correction de rue sur le snapshot de la commande PENDING", async () => {
+			// Le défaut d'origine : mêmes lignes, même pays, même CP ⇒ la resoumission était
+			// acceptée telle quelle et le colis partait à l'ANCIENNE rue, sans aucun signal.
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["shippingAddress1"],
+			});
+
+			const result = await confirmCheckout(
+				createValidData({
+					shippingAddress: { ...VALID_SHIPPING_ADDRESS, addressLine1: "14 Rue de la Paix" },
+				}),
+			);
+
+			expect(result.success).toBe(true);
+			expect(mockUpdatePendingShippingSnapshot).toHaveBeenCalledWith(
+				expect.objectContaining({
+					orderId: "order-existing",
+					customerUserId: "cm3user0000123qz8v4h2j9d3",
+					shipping: expect.objectContaining({ address1: "14 Rue de la Paix" }),
+				}),
+			);
+		});
+
+		it("splitte fullName en firstName/lastName pour le snapshot", async () => {
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["shippingFirstName"],
+			});
+
+			await confirmCheckout(
+				createValidData({
+					shippingAddress: { ...VALID_SHIPPING_ADDRESS, fullName: "Marion Duval" },
+				}),
+			);
+
+			expect(mockUpdatePendingShippingSnapshot).toHaveBeenCalledWith(
+				expect.objectContaining({
+					shipping: expect.objectContaining({ firstName: "Marion", lastName: "Duval" }),
+				}),
+			);
+		});
+
+		it("invalide le cache commande quand le snapshot a réellement changé", async () => {
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: true,
+				changedFields: ["shippingCity"],
+			});
+
+			await confirmCheckout(createValidData());
+
+			expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(
+				"cm3user0000123qz8v4h2j9d3",
+				"order-existing",
+			);
+			expect(mockUpdateTag).toHaveBeenCalledWith("order-meta-order-existing");
+		});
+
+		it("n'invalide rien quand l'adresse est inchangée (double-clic)", async () => {
+			mockUpdatePendingShippingSnapshot.mockResolvedValue({
+				updated: false,
+				reason: "no-change",
+			});
+
+			await confirmCheckout(createValidData());
+
+			expect(mockGetOrderMetadataInvalidationTags).not.toHaveBeenCalled();
+		});
+
+		it("un échec de correction ne bloque PAS le paiement (best-effort)", async () => {
+			// La commande est par ailleurs cohérente : refuser le paiement pour un snapshot
+			// non corrigé serait un cul-de-sac bien pire que le défaut d'origine.
+			mockUpdatePendingShippingSnapshot.mockRejectedValue(new Error("advisory lock timeout"));
+
+			const result = await confirmCheckout(createValidData());
+
+			expect(result.success).toBe(true);
+			expect(mockSentryCaptureException).toHaveBeenCalled();
+		});
+
+		it("n'est PAS tenté quand la resoumission est refusée pour divergence de montant", async () => {
+			// Pays différent ⇒ tarif d'expédition différent ⇒ refus. Aucune raison de
+			// toucher au snapshot d'une commande dont on refuse le paiement.
+			const result = await confirmCheckout(
+				createValidData({
+					shippingAddress: { ...VALID_SHIPPING_ADDRESS, country: "BE", postalCode: "1000" },
+				}),
+			);
+
+			expect(result.success).toBe(false);
+			expect(mockUpdatePendingShippingSnapshot).not.toHaveBeenCalled();
+		});
+	});
+
 	describe("idempotence", () => {
 		it("should return existing order data when order already exists for PI", async () => {
 			mockPrisma.order.findUnique.mockResolvedValue(createBoundOrder());
@@ -763,6 +959,9 @@ describe("confirmCheckout", () => {
 					id: true,
 					orderNumber: true,
 					total: true,
+					// KI-001 : `userId` alimente l'audit + l'invalidation de cache de la
+					// correction d'adresse d'une commande encore PENDING.
+					userId: true,
 					shippingCountry: true,
 					shippingPostalCode: true,
 					items: { select: { skuId: true, quantity: true } },
@@ -1111,7 +1310,7 @@ describe("confirmCheckout", () => {
 			await confirmCheckout(createValidData());
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"user:cm3user0000123qz8v4h2j9d3",
+				"checkout-confirm:user:cm3user0000123qz8v4h2j9d3",
 				"create-session",
 				"192.168.1.1",
 			);
@@ -1124,7 +1323,7 @@ describe("confirmCheckout", () => {
 			await confirmCheckout(createValidData({ email: "guest@example.com" }));
 
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
-				"guest:guest@example.com:192.168.1.1",
+				"checkout-confirm:guest:guest@example.com:192.168.1.1",
 				"create-session",
 				"192.168.1.1",
 			);
@@ -1219,6 +1418,8 @@ describe("confirmCheckout", () => {
 					},
 				},
 			});
+
+			setServerCart(multipleItems);
 
 			await confirmCheckout(createValidData({ cartItems: multipleItems }));
 

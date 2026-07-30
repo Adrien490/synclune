@@ -6,8 +6,9 @@ import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
 import { acquireOrderPaidLockTx } from "@/modules/orders/utils/order-paid-lock";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { updateTag } from "next/cache";
@@ -19,7 +20,14 @@ import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { enrichStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { createOrderInTransaction } from "@/modules/payments/services/order-creation.service";
-import { buildStripeLineItems } from "@/modules/payments/services/checkout-line-items.service";
+import { computeCartSubtotal } from "@/modules/payments/services/checkout-subtotal.service";
+import {
+	cartMatchesServerCart,
+	CART_PARITY_ERROR,
+} from "@/modules/payments/services/cart-parity.service";
+import { getCart } from "@/modules/cart/data/get-cart";
+import { updatePendingOrderShippingSnapshot } from "@/modules/orders/services/update-pending-order-shipping-snapshot.service";
+import { getOrderMetadataInvalidationTags } from "@/modules/orders/constants/cache";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { saveAddressInTransaction } from "@/modules/addresses/services/save-address.service";
 import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
@@ -83,11 +91,15 @@ export async function confirmCheckout(
 			const headersList = await headers();
 			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
-			const rateLimitId = userId
-				? `user:${userId}`
-				: data.email && ipAddress
-					? `guest:${data.email.toLowerCase().trim()}:${ipAddress}`
-					: getRateLimitIdentifier(null, sessionId ?? null, ipAddress);
+			// Budget PROPRE à la confirmation (F3) : il partageait auparavant son compteur
+			// avec `initializePayment`, le panier, les favoris et la validation de code
+			// promo — un client pouvait se retrouver incapable de payer pour une heure.
+			const rateLimitId = buildPaymentRateLimitId("checkout-confirm", {
+				userId,
+				sessionId,
+				email: data.email,
+				ipAddress,
+			});
 
 			const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION, ipAddress);
 			if (!rateLimit.success) {
@@ -113,7 +125,7 @@ export async function confirmCheckout(
 				select: IDEMPOTENT_ORDER_SELECT,
 			});
 			if (existingOrder) {
-				return resolveIdempotentHit(existingOrder, v, span);
+				return await resolveIdempotentHit(existingOrder, v, span);
 			}
 
 			// 3c. CHECKOUT-IDOR-001 — ownership du PaymentIntent.
@@ -203,7 +215,50 @@ export async function confirmCheckout(
 			// best-effort et hors du chemin critique du paiement. Les invités restent
 			// B2C (pas de compte → pas d'identifiants entreprise).
 
-			// 6. Re-validate cart (stock + prices)
+			// 5bis. CHECKOUT-CART-PARITY-001 — les lignes facturées sont celles du CLIENT.
+			// Elles doivent correspondre au panier serveur, seule base de calcul de
+			// `updatePaymentAmount` (montant du PI) et de `validateDiscountCode` (remise
+			// affichée). Deux paniers différents produisent deux exclusions
+			// `excludeSaleItems` différentes, donc un `order.total` qui peut dépasser le
+			// `displayedTotal` : le client se voyait alors refuser son paiement par la garde
+			// de consentement, avec un message de divergence qui ne nommait jamais la cause.
+			// Placé APRÈS le pre-check d'idempotence (3b) : sur une commande déjà liée, le
+			// webhook a pu vider le panier et cette garde n'aurait plus de sens.
+			const serverCart = await getCart();
+			if (!serverCart || serverCart.items.length === 0) {
+				return { success: false, error: "Panier vide ou introuvable." };
+			}
+			if (!cartMatchesServerCart(v.cartItems, serverCart.items)) {
+				Sentry.withScope((scope) => {
+					scope.setLevel("warning");
+					scope.setTag("checkout", "cart-parity-mismatch");
+					scope.setFingerprint(["confirm-checkout", "cart-parity-mismatch"]);
+					// Aucune PII : uniquement des cardinalités.
+					scope.setContext("checkout", {
+						clientLineCount: v.cartItems.length,
+						serverLineCount: serverCart.items.length,
+					});
+					Sentry.captureMessage(
+						"confirmCheckout: submitted cart lines diverge from the server cart",
+						"warning",
+					);
+				});
+				logger.warn("Checkout refused: client cart diverges from server cart", {
+					service: "checkout",
+					clientLineCount: v.cartItems.length,
+					serverLineCount: serverCart.items.length,
+				});
+				return { success: false, error: CART_PARITY_ERROR };
+			}
+
+			// 6. Re-validate cart : disponibilité (soft-delete, isActive, produit PUBLIC)
+			// et PRIX. Le libellé disait « stock + prices » : c'était faux, `getSkuDetails`
+			// ne reçoit aucune quantité et ne lit jamais `inventory`.
+			// La garde de stock AUTORITAIRE est le `SELECT … FOR UPDATE` de
+			// `order-creation.service.ts:153-182`, appelé juste après — c'est le seul
+			// point qui tient un verrou de ligne, donc le seul où comparer le stock ait
+			// une valeur sous concurrence. Ne PAS ajouter ici de contrôle hors verrou :
+			// il donnerait l'illusion d'une garde sans en être une.
 			const skuDetailsResults = await Promise.all(
 				v.cartItems.map((item) => getSkuDetails({ skuId: item.skuId })),
 			);
@@ -226,8 +281,9 @@ export async function confirmCheckout(
 				}
 			}
 
-			// 7. Build line items for subtotal
-			const { subtotal } = buildStripeLineItems(v.cartItems, skuDetailsResults);
+			// 7. Sous-total au prix DB (le flux PaymentIntent n'a pas de line items —
+			// c'est `order.total` qui est posé sur le PI à l'étape 9)
+			const subtotal = computeCartSubtotal(v.cartItems, skuDetailsResults);
 
 			// 8. Create order in transaction
 			let orderResult: Awaited<ReturnType<typeof createOrderInTransaction>>;
@@ -261,7 +317,7 @@ export async function confirmCheckout(
 						select: IDEMPOTENT_ORDER_SELECT,
 					});
 					if (winner) {
-						return resolveIdempotentHit(winner, v, span);
+						return await resolveIdempotentHit(winner, v, span);
 					}
 				}
 				throw createError;
@@ -469,6 +525,7 @@ const IDEMPOTENT_ORDER_SELECT = {
 	id: true,
 	orderNumber: true,
 	total: true,
+	userId: true,
 	shippingCountry: true,
 	shippingPostalCode: true,
 	items: { select: { skuId: true, quantity: true } },
@@ -513,18 +570,24 @@ function normalizePostalCode(postalCode: string): string {
  * Un double-clic ou un retry réseau resoumet exactement les mêmes données →
  * hit idempotent inchangé. Un rechargement de page repart d'un affichage
  * cohérent avec `order.total`, donc débloque toujours le client.
+ *
+ * 3. **Correction d'adresse** (G4, 2026-07-30) : lignes, pays et code postal identiques
+ *    ⇒ le total est structurellement inchangé, mais la rue, le complément, la ville, le
+ *    nom ou le téléphone peuvent avoir été corrigés. Cette resoumission était acceptée
+ *    en silence et le colis partait à l'ancienne adresse (KI-001, désormais fermé) : on
+ *    répercute maintenant la correction sur le snapshot, tant que la commande n'est pas
+ *    payée. Cf. `updatePendingOrderShippingSnapshot` pour les 4 gardes.
  */
-function resolveIdempotentHit(
+async function resolveIdempotentHit(
 	order: IdempotentOrder,
 	v: ConfirmCheckoutData,
 	span: { setAttribute: (key: string, value: string | number | boolean) => void },
-): ConfirmCheckoutResult | ConfirmCheckoutError {
+): Promise<ConfirmCheckoutResult | ConfirmCheckoutError> {
 	const itemsDiverge = buildItemsFingerprint(v.cartItems) !== buildItemsFingerprint(order.items);
-	// ⚠️ Ne compare QUE le pays et le code postal — ce qui suffit pour le montant
-	// (le tarif d'expédition n'en dépend que de ça), mais pas pour la destination :
-	// une resoumission qui corrige `addressLine1`/`city` est ACCEPTÉE alors que la
-	// commande garde son snapshot figé, donc le colis part à l'ancienne rue sans
-	// aucun signal. @see docs/KNOWN-ISSUES.md — KI-001
+	// Ne compare QUE le pays et le code postal — les deux seules composantes dont dépend
+	// le MONTANT (tarif d'expédition). Les autres champs d'adresse ne changent aucun
+	// total : ils sont traités plus bas comme une correction à répercuter, pas comme une
+	// divergence à refuser.
 	const destinationDiverges =
 		order.shippingCountry !== v.shippingAddress.country ||
 		normalizePostalCode(order.shippingPostalCode) !==
@@ -568,6 +631,53 @@ function resolveIdempotentHit(
 			orderId: order.id,
 			orderTotal: order.total,
 			displayedTotal: v.displayedTotal,
+		});
+	}
+
+	// KI-001 (fermé) — répercuter une correction d'adresse hors-montant.
+	// À ce point : lignes identiques, pays et code postal identiques, aucun risque de
+	// sur-facturation. Une différence sur la rue / le complément / la ville / le nom / le
+	// téléphone est donc une CORRECTION du client, pas une divergence à refuser. Le
+	// service ne réécrit le snapshot que si la commande est encore PENDING, sous le même
+	// advisory lock que la transition PAID, avec entrée d'audit obligatoire.
+	//
+	// Best-effort assumé : un échec ici ne doit pas empêcher de payer une commande par
+	// ailleurs cohérente. Il est remonté à Sentry, l'admin garde `ADDRESS_UPDATED` comme
+	// trace de ce qui a été appliqué, et le snapshot reste celui d'origine.
+	const { firstName, lastName } = parseFullName(v.shippingAddress.fullName);
+	try {
+		const snapshotOutcome = await updatePendingOrderShippingSnapshot({
+			orderId: order.id,
+			customerUserId: order.userId,
+			shipping: {
+				firstName,
+				lastName,
+				address1: v.shippingAddress.addressLine1,
+				address2: v.shippingAddress.addressLine2 ?? null,
+				postalCode: v.shippingAddress.postalCode,
+				city: v.shippingAddress.city,
+				country: v.shippingAddress.country,
+				// `phoneSchema` rend le téléphone obligatoire — pas de `?? ""` à ajouter ici
+				// (contrairement à `order-creation.service.ts`, dont le type de paramètre
+				// l'accepte optionnel).
+				phone: v.shippingAddress.phoneNumber,
+			},
+		});
+
+		if (snapshotOutcome.updated) {
+			span.setAttribute("checkout.shipping_snapshot_corrected", true);
+			getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
+				updateTag(tag),
+			);
+		}
+	} catch (snapshotError) {
+		Sentry.captureException(snapshotError, {
+			tags: { checkout: "pending-shipping-snapshot-failed" },
+			extra: { orderId: order.id },
+		});
+		logger.error("Failed to correct pending order shipping snapshot", snapshotError, {
+			service: "checkout",
+			orderId: order.id,
 		});
 	}
 

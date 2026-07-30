@@ -52,14 +52,6 @@ const USER_DATA_EXPORT_INCLUDE = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	reviews: {
-		take: 200,
-		include: {
-			product: { select: { title: true } },
-		},
-		where: { deletedAt: null },
-		orderBy: { createdAt: "desc" as const },
-	},
 	sessions: {
 		take: 50,
 		orderBy: { createdAt: "desc" as const },
@@ -144,14 +136,6 @@ export async function buildUserDataExport(userId: string): Promise<UserDataExpor
 			code: usage.discount.code,
 			amountApplied: usage.amountApplied / 100,
 			usedAt: usage.createdAt.toISOString(),
-		})),
-		reviews: user.reviews.map((review) => ({
-			productTitle: review.product?.title ?? null,
-			rating: review.rating,
-			title: review.title,
-			content: review.content,
-			createdAt: review.createdAt.toISOString(),
-			updatedAt: review.updatedAt.toISOString(),
 		})),
 		sessions: user.sessions.map((session) => ({
 			ipAddress: session.ipAddress,

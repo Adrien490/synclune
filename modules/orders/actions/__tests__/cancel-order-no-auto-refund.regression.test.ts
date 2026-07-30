@@ -31,7 +31,8 @@ const {
 		// IDEM-CANCEL-001 : claim atomique order.updateMany (précondition dans le
 		// where, retour { count }) remplace l'ancien order.update inconditionnel.
 		order: { findUnique: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-		productSku: { update: vi.fn() },
+		// P1-1 : le restock lit l'état AVANT crédit (discriminant de réactivation).
+		productSku: { update: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },

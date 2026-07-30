@@ -32,14 +32,28 @@ export function isCartItemProductNotPublic(item: CartItemForValidation): boolean
 }
 
 /**
- * Vérifie si l'item est en rupture de stock totale
+ * Rupture TOTALE : il n'en reste aucun.
+ *
+ * ⚠️ Ce prédicat et `hasInsufficientStock` forment une PARTITION délibérée de
+ * « la ligne n'est pas servable » — ils sont mutuellement exclusifs, et aucun des
+ * deux ne suffit seul à répondre « cette ligne passe-t-elle ? ». La partition
+ * existe pour que `validate-cart` produise deux messages distincts (« épuisé » vs
+ * « il n'en reste que N »).
+ *
+ * Pour le test global, utiliser `isCartItemUnavailable` (ou son équivalent UI
+ * `isCartItemOutOfStock` dans `cart-item.service.ts`, qui couvre les deux cas d'un
+ * seul `inventory < quantity`).
  */
 export function isCartItemZeroStock(item: CartItemForValidation): boolean {
 	return item.sku.inventory === 0;
 }
 
 /**
- * Vérifie si le stock est insuffisant pour la quantité demandée
+ * Stock insuffisant mais NON NUL — il en reste, juste pas assez.
+ *
+ * ⚠️ Le `&& inventory > 0` n'est pas un oubli : il complète `isCartItemZeroStock`
+ * (cf. la note ci-dessus). Ne PAS le retirer en croyant « corriger » un trou —
+ * `validate-cart` classerait alors deux fois la même ligne.
  */
 export function hasInsufficientStock(item: CartItemForValidation): boolean {
 	return item.sku.inventory < item.quantity && item.sku.inventory > 0;

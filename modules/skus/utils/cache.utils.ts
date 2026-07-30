@@ -122,6 +122,17 @@ export function getSkuInvalidationTags(
  *
  * Invalide uniquement les données affectées, pas toutes les listes.
  * Utile pour les mises à jour fréquentes de stock.
+ *
+ * ⚠️ STOCK-STALE-BASELINE-001 — ce set DOIT couvrir tout tag posé par
+ * `cacheSkuDetailById` / `cacheProductSkus` ci-dessus. Il manquait
+ * `SKU_DETAIL_BY_ID` et `SKUS_LIST`, les deux tags de `fetchSkuById` /
+ * `fetchSkuDetailById` : après un ajustement de stock, le formulaire d'édition
+ * continuait donc de rendre l'ancien inventaire pendant la fenêtre du profil
+ * `user` (60 s revalidate / 120 s stale). Ce n'est pas cosmétique — ce formulaire
+ * poste ce chiffre comme `originalInventory`, la baseline du delta relatif : une
+ * baseline périmée fait diverger le stock enregistré du stock saisi (réel 15,
+ * formulaire à 10, l'admin saisit 12 ⇒ delta +2 ⇒ 17). Le mécanisme de
+ * concurrence optimiste dépend de la fraîcheur que ce helper garantit.
  */
 export function getInventoryInvalidationTags(
 	productSlug: string,
@@ -132,14 +143,16 @@ export function getInventoryInvalidationTags(
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
 		PRODUCTS_CACHE_TAGS.LIST,
+		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 
-	// Invalider le cache stock temps réel de chaque SKU
+	// Invalider le cache stock temps réel + le détail par ID de chaque SKU
 	if (skuIds) {
 		for (const skuId of skuIds) {
 			tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+			tags.push(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
 		}
 	}
 

@@ -59,7 +59,8 @@ Le dépôt ne peut pas configurer ces protections ; elles vivent dans les consol
 - **Langue : français uniquement.** Pas de framework i18n. Le site, les communications et les contrats (CGV) sont en français — cible « France + UE francophone ». Réévaluer (`next-intl`) seulement si un volume UE non-francophone réel apparaît. (Décision audit §4.9 / G4.)
 - **Devise : EUR uniquement.** Correct pour un vendeur FR/UE ; les acheteurs hors zone euro paient en EUR (conversion par leur banque). Pas de sélecteur multi-devise.
 - **e-reporting DGFiP : retiré du code (2026-07-26).** La machinerie était en dry-run intégral (flag jamais activé, aucune Plateforme Agréée branchée) et écrite contre une spec non figée : ~7 200 lignes maintenues 18 mois pour une réécriture certaine au go-live. À reconstruire en **T1 2027** contre l'arrêté définitif (obligation 1ᵉʳ sept. 2027). Voir RUNBOOK.
-- **Pas de relance panier abandonné / cross-sell / rappel d'avis / click&collect.** Scaffolding retiré (audit §4.4). À reconstruire proprement (avec consentement RGPD) si un besoin marketing émerge.
+- **Pas d'avis produits.** Le système entier (4 tables, dépôt client, modération admin, notes en JSON-LD, filtre et tri par note) a été retiré le 2026-07-30 : la surface client de dépôt n'avait jamais été montée, donc le levier de conversion ne s'est jamais matérialisé. Migration `20260730120000_drop_reviews_system` (`down.sql` recrée la structure, pas les données).
+- **Pas de relance panier abandonné / cross-sell / click&collect.** Scaffolding retiré (audit §4.4). À reconstruire proprement (avec consentement RGPD) si un besoin marketing émerge.
 
 ## Dépendance plateforme (lock-in)
 

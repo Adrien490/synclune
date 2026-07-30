@@ -20,7 +20,6 @@ const {
 	mockSortProducts,
 	mockOrderByIds,
 	mockCacheProducts,
-	mockSerializeProduct,
 } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockCacheLife: vi.fn(),
@@ -36,7 +35,6 @@ const {
 	mockSortProducts: vi.fn(),
 	mockOrderByIds: vi.fn(),
 	mockCacheProducts: vi.fn(),
-	mockSerializeProduct: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -87,10 +85,6 @@ vi.mock("../../utils/cache.utils", () => ({
 	cacheProducts: mockCacheProducts,
 }));
 
-vi.mock("../../utils/serialize-product", () => ({
-	serializeProduct: mockSerializeProduct,
-}));
-
 vi.mock("../../constants/product.constants", () => ({
 	GET_PRODUCTS_SELECT: { id: true, slug: true, title: true },
 	GET_PRODUCTS_DEFAULT_PER_PAGE: 20,
@@ -122,7 +116,6 @@ function makeProduct(id: string, overrides: Record<string, unknown> = {}) {
 		updatedAt: new Date("2024-01-01"),
 		skus: [],
 		collections: [],
-		reviewStats: null,
 		...overrides,
 	};
 }
@@ -175,7 +168,6 @@ describe("getProducts", () => {
 		mockOrderByIds.mockImplementation((products: unknown[]) => products);
 
 		// Serialization is transparent by default
-		mockSerializeProduct.mockImplementation((p: unknown) => p);
 
 		mockFindMany.mockResolvedValue([]);
 	});
@@ -453,7 +445,6 @@ describe("getProducts", () => {
 		const products = Array.from({ length: 21 }, (_, i) => makeProduct(`id-${i}`));
 		mockFindMany.mockResolvedValue(products);
 		mockSortProducts.mockReturnValue(products);
-		mockSerializeProduct.mockImplementation((p: unknown) => p);
 		setupValidParams({ perPage: 20 });
 
 		const result = await getProducts({ ...DEFAULT_PARAMS, perPage: 20 });
@@ -470,18 +461,6 @@ describe("getProducts", () => {
 		const result = await getProducts(DEFAULT_PARAMS);
 
 		expect(result.pagination.hasPreviousPage).toBe(false);
-	});
-
-	it("serializes all returned products", async () => {
-		const products = [makeProduct("id-1"), makeProduct("id-2")];
-		mockFindMany.mockResolvedValue(products);
-		mockSortProducts.mockReturnValue(products);
-		mockSerializeProduct.mockImplementation((p: { id: string }) => ({ ...p, serialized: true }));
-
-		const result = await getProducts(DEFAULT_PARAMS);
-
-		expect(mockSerializeProduct).toHaveBeenCalledTimes(2);
-		expect(result.products[0]).toMatchObject({ serialized: true });
 	});
 
 	// ─── Error handling ──────────────────────────────────────────────────────

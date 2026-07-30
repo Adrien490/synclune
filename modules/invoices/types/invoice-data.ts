@@ -28,6 +28,15 @@ import type { TaxCategoryCode } from "@/shared/constants/tax-categories";
  *  - Art. 272-I CGI (avoir) → variant via `precedingInvoice`
  */
 export interface InvoiceData {
+	/**
+	 * Version de la FORME de ce payload — SSOT `INVOICE_DATA_FORMAT_VERSION`
+	 * (`constants/invoice-data-format.ts`). À ne pas confondre avec `invoiceFormat`,
+	 * qui est le format de rendu. Absent des snapshots antérieurs à son
+	 * introduction (audit schéma 2026-07-30) ⇒ lus comme version 1.
+	 * Tout changement de forme du payload doit l'incrémenter.
+	 */
+	formatVersion: number;
+
 	// === IDENTIFIANTS ===
 	invoiceNumber: string;
 	invoiceFormat: InvoiceFormat;

@@ -2,8 +2,9 @@
 
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
 import { stripe, withStripeCircuitBreaker } from "@/shared/lib/stripe";
 import { headers } from "next/headers";
@@ -36,9 +37,13 @@ export async function cancelOrphanPaymentIntent(paymentIntentId: string): Promis
 		// 2. Rate limit (borne l'abus de l'API Stripe `cancel`).
 		const headersList = await headers();
 		const ipAddress = await getClientIp(headersList);
-		const rateLimitId = userId
-			? `cancel-orphan:user:${userId}`
-			: getRateLimitIdentifier(null, sessionId ?? null, ipAddress);
+		// Comme `updatePaymentAmount` : la branche invité retombait sur un identifiant nu,
+		// donc sur le compteur partagé avec le panier et les favoris (F3).
+		const rateLimitId = buildPaymentRateLimitId("cancel-orphan", {
+			userId,
+			sessionId,
+			ipAddress,
+		});
 		const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CANCEL_ORPHAN, ipAddress);
 		if (!rateLimit.success) return;
 

@@ -13,6 +13,7 @@ import { logger } from "@/shared/lib/logger";
 import { getVendorLegalInfo } from "@/shared/lib/stripe";
 import { normalizeFiscalIdentifier } from "@/shared/schemas/b2b-identifiers.schema";
 import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data";
+import { invoiceDataSchema } from "@/modules/invoices/schemas/invoice.schema";
 import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
 import { getParisDateParts } from "@/shared/utils/timezone";
 import { updateTag } from "next/cache";
@@ -271,6 +272,27 @@ export async function persistInvoiceNumber(
 						...vendorSnapshotForOrderShape(vendorSnapshot),
 					} as GetOrderReturn;
 					const invoiceSnapshot = buildInvoiceData(orderForBuild);
+
+					// Le refine de `invoiceDataSchema` (somme des lignes == totaux) était
+					// documenté comme le filet du renderer mais n'était appelé NULLE PART en
+					// production (audit schéma 2026-07-30) : une commande aux totaux
+					// incohérents produisait une facture figée, immuable et fausse. Il tourne
+					// désormais au seul point où le snapshot devient définitif. Échouer ici
+					// est le bon comportement : l'exception est captée plus bas, la fonction
+					// rend `null`, le caller pose `invoiceRetryDeferred` et le cron
+					// `reconcile-invoices` alerte l'admin après 3 tentatives. Mieux vaut une
+					// facture différée qu'une facture fausse conservée 10 ans (Art. 289 CGI).
+					const validation = invoiceDataSchema.safeParse(invoiceSnapshot);
+					if (!validation.success) {
+						throw new BusinessError(
+							`Snapshot de facture invalide pour la commande ${orderId} : ` +
+								validation.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join(" ; "),
+							"INVOICE_SNAPSHOT_INVALID",
+						);
+					}
+
+					// Le hash porte sur l'objet construit, pas sur la sortie de Zod : aucune
+					// transformation du validateur ne doit pouvoir déplacer l'empreinte.
 					const canonicalJson = canonicalJsonStringify(invoiceSnapshot);
 					const invoiceDataHash = createHash("sha256").update(canonicalJson).digest("hex");
 

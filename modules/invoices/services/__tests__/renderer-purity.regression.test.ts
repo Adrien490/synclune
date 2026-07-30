@@ -18,6 +18,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderInvoicePdf } from "../render-invoice-pdf";
+import { INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import type { InvoiceData } from "../../types/invoice-data";
 
 const RENDERERS = ["modules/invoices/services/render-invoice-pdf.ts"];
@@ -35,6 +36,7 @@ function stripComments(source: string): string {
 
 function makeFixture(overrides: Partial<InvoiceData> = {}): InvoiceData {
 	return {
+		formatVersion: INVOICE_DATA_FORMAT_VERSION,
 		invoiceNumber: "F-2026-00042",
 		invoiceFormat: "PDF",
 		issuedAt: new Date("2026-05-27T18:00:00Z"),

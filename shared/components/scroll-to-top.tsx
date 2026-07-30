@@ -124,7 +124,10 @@ export function ScrollToTop() {
 							// elle vaut 0 sur vrai desktop (no-op) mais 56px entre 48rem et
 							// 64rem, où la bottom-nav boutique est encore là. Sans elle dans la
 							// variante `md:`, le bouton se posait sur la barre en iPad portrait.
-							"fixed right-[max(1.5rem,env(safe-area-inset-right))] bottom-[calc(var(--bottom-bar-height,0px)+max(1rem,env(safe-area-inset-bottom)))] z-40 md:bottom-[calc(var(--bottom-bar-height,0px)+max(1.5rem,env(safe-area-inset-bottom))+var(--fab-corner-clearance,0px))]",
+							// La variable porte la hauteur MESURÉE, safe-area incluse : la
+							// réadditionner compterait l'encoche deux fois. Le `max(…, env(…))`
+							// ne couvre que le cas SANS barre (audit bottom-bar 2026-07-30).
+							"fixed right-[max(1.5rem,env(safe-area-inset-right))] bottom-[max(calc(var(--bottom-bar-height,0px)+1rem),env(safe-area-inset-bottom,0px))] z-40 md:bottom-[max(calc(var(--bottom-bar-height,0px)+1.5rem+var(--fab-corner-clearance,0px)),env(safe-area-inset-bottom,0px))]",
 							"bg-background/90 size-12 rounded-full shadow-md backdrop-blur-md",
 							"hidden cursor-pointer items-center justify-center md:flex",
 							"hover:bg-background hover:shadow-lg",

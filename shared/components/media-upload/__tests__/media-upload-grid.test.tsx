@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MediaUploadGrid, type MediaItem } from "../media-upload-grid";
+// Message importé et non recopié : les trois formulations de cette règle vivaient
+// dans trois fichiers, et un test qui recopie la chaîne verrouille la divergence.
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { __resetToastCoalesce } from "@/shared/utils/toast";
 
 // ---------------------------------------------------------------------------
@@ -333,7 +336,7 @@ describe("MediaUploadGrid", () => {
 
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
-				"La première position doit être une image, pas une vidéo.",
+				PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
 				expect.any(Object),
 			);
 		});
@@ -347,7 +350,7 @@ describe("MediaUploadGrid", () => {
 			// Should be blocked because video ends up at index 0
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
-				"La première position doit être une image, pas une vidéo.",
+				PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE,
 				expect.any(Object),
 			);
 		});
@@ -381,7 +384,7 @@ describe("MediaUploadGrid", () => {
 
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
-				"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
+				"Impossible : une vidéo passerait en première position. Réorganise d'abord.",
 				expect.any(Object),
 			);
 		});

@@ -82,9 +82,6 @@ vi.mock("../../services/order-status-validation.service", () => ({
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
 }));
-vi.mock("@/modules/reviews/constants/cache", () => ({
-	REVIEWS_CACHE_TAGS: { REVIEWABLE: (id: string) => `reviewable-${id}` },
-}));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: vi.fn((path: string) => `https://synclune.fr${path}`),
 	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },

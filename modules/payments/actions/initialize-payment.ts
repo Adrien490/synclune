@@ -5,10 +5,19 @@ import {
 	isVerifiedAdmin,
 	requireActiveAccountIfAuthenticated,
 } from "@/modules/auth/lib/require-auth";
-import { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
+import {
+	getSkuDetails,
+	validateCartItemsWithDb,
+} from "@/modules/cart/services/sku-validation.service";
 import { getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
-import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { getCart } from "@/modules/cart/data/get-cart";
+import {
+	cartMatchesServerCart,
+	CART_PARITY_ERROR,
+} from "@/modules/payments/services/cart-parity.service";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
+import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
@@ -80,11 +89,15 @@ export async function initializePayment(
 			const headersList = await headers();
 			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
-			const rateLimitId = userId
-				? `user:${userId}`
-				: input.email && ipAddress
-					? `guest:${input.email}:${ipAddress}`
-					: getRateLimitIdentifier(null, sessionId ?? null, ipAddress);
+			// Identifiant PRÉFIXÉ par l'action (F3) : sans préfixe, ce compteur était le
+			// même que celui du panier, des favoris et de la validation de code promo —
+			// 15 opérations quelconques suffisaient à bloquer le paiement pour une heure.
+			const rateLimitId = buildPaymentRateLimitId("checkout-init", {
+				userId,
+				sessionId,
+				email: input.email,
+				ipAddress,
+			});
 
 			const rateLimit = await checkRateLimit(rateLimitId, PAYMENT_LIMITS.CREATE_SESSION, ipAddress);
 			if (!rateLimit.success) {
@@ -112,7 +125,27 @@ export async function initializePayment(
 				}
 			}
 
-			// Validate cart items
+			// CHECKOUT-CART-PARITY-001 : parité avec le panier serveur, seule base de
+			// calcul de `updatePaymentAmount` et `validateDiscountCode`. La garde
+			// AUTORITAIRE est celle de `confirmCheckout` (c'est là que se décide ce qui est
+			// facturé) ; ici elle sert à échouer au montage plutôt qu'au clic sur Payer,
+			// après un formulaire entièrement rempli.
+			const serverCart = await getCart();
+			if (!serverCart || serverCart.items.length === 0) {
+				return { success: false, error: "Panier vide ou introuvable." };
+			}
+			if (!cartMatchesServerCart(input.cartItems, serverCart.items)) {
+				logger.warn("Payment init refused: client cart diverges from server cart", {
+					service: "checkout",
+					clientLineCount: input.cartItems.length,
+					serverLineCount: serverCart.items.length,
+				});
+				return { success: false, error: CART_PARITY_ERROR };
+			}
+
+			// Validate cart items — existence, soft-delete, isActive, produit PUBLIC.
+			// ⚠️ `getSkuDetails` ne regarde PAS `inventory` (il ne reçoit pas de
+			// quantité) : la garde de stock est celle juste en dessous.
 			const skuDetailsResults = await Promise.all(
 				input.cartItems.map((item) => getSkuDetails({ skuId: item.skuId })),
 			);
@@ -120,6 +153,24 @@ export async function initializePayment(
 			const failedSkus = skuDetailsResults.filter((r) => !r.success);
 			if (failedSkus.length > 0) {
 				return { success: false, error: "Certains articles ne sont plus disponibles." };
+			}
+
+			// CHECKOUT-STOCK-GATE-001 : quantité disponible vs quantité demandée, AVANT
+			// de créer le PaymentIntent. Sans cette passe, un SKU à `inventory: 0` mais
+			// `isActive: true` traversait `initializePayment` sans un mot : le client
+			// remplissait tout le formulaire, le PI était créé, et l'échec ne tombait
+			// qu'au `FOR UPDATE` de `order-creation.service.ts` au moment de payer.
+			// Une seule requête batch (`fetchSkusForBatchValidation`, profil `checkout`).
+			// Ce n'est PAS la garde anti-survente — celle-ci reste le `FOR UPDATE` de la
+			// création de commande puis le décrément webhook, seuls à tenir un verrou.
+			// C'est un filtre de courtoisie : échouer tôt, avec le bon message.
+			const stockValidation = await validateCartItemsWithDb({ items: input.cartItems });
+			if (!stockValidation.success) {
+				const firstIssue = stockValidation.data?.find((item) => !item.isValid);
+				return {
+					success: false,
+					error: firstIssue?.error ?? "Certains articles ne sont plus disponibles.",
+				};
 			}
 
 			// Verify prices

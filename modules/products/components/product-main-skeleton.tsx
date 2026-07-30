@@ -65,13 +65,9 @@ export function ProductMainSkeleton() {
 						<Skeleton className="bg-muted/30 size-10 shrink-0 rounded-full" />
 					</div>
 
-					{/* ReviewRatingLink - Mobile (sm:hidden) */}
-					<Skeleton className="bg-muted/30 h-5 w-28 sm:hidden" />
-
-					{/* Badges (type + ReviewRatingLink desktop + wishlist desktop) */}
+					{/* Badges (type + wishlist desktop) */}
 					<div className="flex flex-wrap items-center gap-2">
 						<Skeleton className="bg-muted/30 h-7 w-24 rounded-full" />
-						<Skeleton className="bg-muted/30 hidden h-5 w-28 sm:block" />
 						<Skeleton className="bg-muted/30 ml-auto hidden size-10 rounded-full sm:block" />
 					</div>
 				</div>

@@ -40,15 +40,6 @@ vi.mock("@/modules/products/components/share-button", () => ({
 	ShareButton: () => <button data-testid="share-btn">Partager</button>,
 }));
 
-// Stub ReviewRatingLink — not under test
-vi.mock("@/modules/reviews/components/review-rating-link", () => ({
-	ReviewRatingLink: ({ stats }: { stats: { averageRating: number; totalCount: number } }) => (
-		<a href="#reviews" data-testid="review-rating-link">
-			{stats.averageRating} / 5 ({stats.totalCount} avis)
-		</a>
-	),
-}));
-
 // Stub Badge
 vi.mock("@/shared/components/ui/badge", () => ({
 	Badge: ({ children }: { children: React.ReactNode; [key: string]: unknown }) => (
@@ -63,7 +54,6 @@ vi.mock("@/shared/components/animations", () => ({
 
 import { ProductInfo } from "../product-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
-import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 
 afterEach(cleanup);
 
@@ -79,16 +69,6 @@ function makeProduct(overrides: Partial<GetProductReturn> = {}): GetProductRetur
 		collections: [],
 		...overrides,
 	} as unknown as GetProductReturn;
-}
-
-function makeReviewStats(
-	overrides: Partial<ProductReviewStatistics> = {},
-): ProductReviewStatistics {
-	return {
-		totalCount: 8,
-		averageRating: 4.5,
-		...overrides,
-	} as unknown as ProductReviewStatistics;
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -115,18 +95,6 @@ describe("ProductInfo", () => {
 		render(<ProductInfo product={makeProduct({ type: null })} />);
 
 		expect(screen.queryByTestId("badge")).not.toBeInTheDocument();
-	});
-
-	it("renders the review rating link when reviewStats are provided", () => {
-		render(<ProductInfo product={makeProduct()} reviewStats={makeReviewStats()} />);
-
-		expect(screen.getAllByTestId("review-rating-link")).toHaveLength(2); // mobile + desktop
-	});
-
-	it("does not render the review rating link when reviewStats is not provided", () => {
-		render(<ProductInfo product={makeProduct()} />);
-
-		expect(screen.queryByTestId("review-rating-link")).not.toBeInTheDocument();
 	});
 
 	it("renders the wishlist button with the correct product id", () => {

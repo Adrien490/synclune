@@ -1,5 +1,4 @@
 import {
-	type GlobalReviewStats,
 	getFounderSchema,
 	getLocalBusinessSchema,
 	getOrganizationSchema,
@@ -7,15 +6,12 @@ import {
 	SITE_URL,
 } from "@/shared/constants/seo-config";
 
-import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
 import type { Product } from "@/modules/products/types/product.types";
 import { getOfferAvailability } from "@/shared/utils/offer-availability";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 interface StructuredDataProps {
-	reviewStats: GlobalReviewStats;
 	includeHomepageSchemas?: boolean;
-	featuredReviews?: ReviewHomepage[];
 	featuredProducts?: Product[];
 }
 
@@ -23,16 +19,11 @@ interface StructuredDataProps {
  * Consolidates all JSON-LD schemas into a single @graph script.
  * Sync component — data must be passed as props (no Suspense around <script> tags).
  */
-export function StructuredData({
-	reviewStats,
-	includeHomepageSchemas,
-	featuredReviews,
-	featuredProducts,
-}: StructuredDataProps) {
+export function StructuredData({ includeHomepageSchemas, featuredProducts }: StructuredDataProps) {
 	const schemas = [
 		getOrganizationSchema(),
 		getWebSiteSchema(),
-		getLocalBusinessSchema(reviewStats),
+		getLocalBusinessSchema(),
 		getFounderSchema(),
 	];
 
@@ -101,16 +92,6 @@ export function StructuredData({
 						url,
 						...(product.description && { description: product.description }),
 						...(primaryImage && { image: primaryImage.url }),
-						...(product.reviewStats &&
-							product.reviewStats.totalCount > 0 && {
-								aggregateRating: {
-									"@type": "AggregateRating",
-									ratingValue: product.reviewStats.averageRating,
-									reviewCount: product.reviewStats.totalCount,
-									bestRating: 5,
-									worstRating: 1,
-								},
-							}),
 						...(typeof priceCents === "number" && {
 							offers: {
 								"@type": "Offer",
@@ -131,37 +112,6 @@ export function StructuredData({
 					};
 				}),
 			});
-		}
-
-		// Individual Review schemas for rich snippets
-		if (featuredReviews) {
-			for (const [index, review] of featuredReviews.entries()) {
-				graphSchemas.push({
-					"@type": "Review",
-					"@id": `${SITE_URL}/#review-${index}`,
-					author: {
-						"@type": "Person",
-						name: review.user.name ?? "Anonyme",
-					},
-					datePublished: new Date(review.createdAt).toISOString(),
-					reviewBody: review.content,
-					...(review.title && { name: review.title }),
-					reviewRating: {
-						"@type": "Rating",
-						ratingValue: review.rating,
-						bestRating: 5,
-						worstRating: 1,
-					},
-					itemReviewed: {
-						"@type": "Product",
-						name: review.product.title,
-						url: `${SITE_URL}/creations/${review.product.slug}`,
-					},
-					publisher: {
-						"@id": `${SITE_URL}/#organization`,
-					},
-				});
-			}
 		}
 	}
 

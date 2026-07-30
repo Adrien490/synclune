@@ -11,7 +11,7 @@ import { logger } from "@/shared/lib/logger";
  * Les PDF de facture (`Order.invoicePdfUrl`), d'avoir sur commande
  * (`Order.creditNotePdfUrl`) et d'avoir partiel (`Refund.creditNotePdfUrl`)
  * vivent dans la MÊME app UploadThing que les médias catalogue. Rien
- * n'empêchait ce service — appelé depuis les actions produit/SKU/avis et les
+ * n'empêchait ce service — appelé depuis les actions produit/SKU et les
  * actions admin de suppression média — d'en supprimer une : ce sont des
  * archives immuables sous rétention 10 ans (Art. L102 B LPF), dont seul
  * `hard-delete-retention` est l'effaceur légitime (audit média M7).
@@ -79,12 +79,10 @@ export interface DeleteUploadThingFilesOptions {
  * LAYER EXCEPTION: This service contains side effects (UTApi.deleteFiles mutations),
  * unlike typical services/ which are pure functions. This is intentional — similar to
  * the webhooks/services/ exception documented in CLAUDE.md. The service acts as a
- * shared cleanup utility used across multiple modules (reviews, account deletion,
+ * shared cleanup utility used across multiple modules (account deletion,
  * hard deletes) and is not exposed as a Server Action.
  *
  * Used for orphan file cleanup during:
- * - Review deletion (ReviewMedia)
- * - Review update (replaced photos)
  * - Account deletion (avatar)
  * - Hard delete after legal retention
  *

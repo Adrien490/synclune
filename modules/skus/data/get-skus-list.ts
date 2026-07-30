@@ -1,4 +1,6 @@
+import * as Sentry from "@sentry/nextjs";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { logger } from "@/shared/lib/logger";
 import { forbidden } from "next/navigation";
 import { getProductSkusSchema } from "../schemas/get-skus.schemas";
 import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/skus.types";
@@ -24,16 +26,40 @@ export async function getProductSkus(params: GetProductSkusParams): Promise<GetP
 	const validation = getProductSkusSchema.safeParse(params);
 
 	if (!validation.success) {
-		return {
-			productSkus: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-		};
+		return EMPTY_PAGE;
 	}
 
-	return fetchProductSkus(validation.data);
+	// Le repli vit ICI, hors du scope `"use cache"` de `fetchProductSkus` : à
+	// l'intérieur, une panne DB transitoire aurait mis la page vide en cache pour toute
+	// la fenêtre du profil `user`, et l'admin aurait continué de voir « aucune
+	// variante » après le rétablissement. Même pattern que `get-sku.ts`.
+	try {
+		return await fetchProductSkus(validation.data);
+	} catch (error) {
+		logger.error("Failed to fetch product SKUs", error, { service: "getProductSkus" });
+		Sentry.captureException(error, {
+			tags: { module: "skus", fetcher: "getProductSkus" },
+		});
+		return {
+			...EMPTY_PAGE,
+			// Message détaillé en dev seulement — ne jamais exposer un détail
+			// d'infrastructure en production.
+			error:
+				process.env.NODE_ENV === "development"
+					? error instanceof Error
+						? error.message
+						: "Unknown error"
+					: "Failed to fetch product SKUs",
+		};
+	}
 }
+
+const EMPTY_PAGE: GetProductSkusReturn = {
+	productSkus: [],
+	pagination: {
+		nextCursor: null,
+		prevCursor: null,
+		hasNextPage: false,
+		hasPreviousPage: false,
+	},
+};

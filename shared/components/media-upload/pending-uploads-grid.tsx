@@ -5,7 +5,9 @@ import ScrollFade from "@/shared/components/scroll-fade";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
-import { formatFileSize } from "@/modules/media/utils/upload-helpers";
+// `formatBytesShort` (Ko / Mo / Go) et non l'ancien `formatFileSize` (KB / MB) :
+// ces pastilles s'affichent juste sous un hint « max 16 Mo ».
+import { formatBytesShort } from "@/modules/media/utils/format-eta";
 import {
 	formatVideoDuration,
 	getVideoMetadata,
@@ -62,6 +64,12 @@ export function PendingUploadsGrid({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const isTouchDevice = useIsTouchDevice();
+
+	// Région live du réordonnancement — laissée ouverte en P3 par l'audit du
+	// 2026-05-20 : le drag clavier fonctionnait sans qu'aucun retour vocal ne dise
+	// où l'élément avait atterri. Montée avec un contenu VIDE, sinon une région
+	// aria-live qui apparaît en même temps que son texte n'est pas vocalisée.
+	const [announcement, setAnnouncement] = useState("");
 
 	// Object URLs créées dans un effet et NON pendant le render : le render doit
 	// rester pur (React peut le rejouer ou l'abandonner — les URLs d'un render
@@ -166,15 +174,29 @@ export function PendingUploadsGrid({
 		onCancel();
 	};
 
+	const handleDragStart = () => {
+		setAnnouncement("Fichier saisi. Utilise les flèches pour le déplacer.");
+	};
+
 	const handleDragEnd = (event: DragEndEvent) => {
 		if (!onReorder) return;
+		if (event.canceled) {
+			setAnnouncement("Déplacement annulé.");
+			return;
+		}
 		const { source, target } = event.operation;
-		if (!source || !target || source.id === target.id) return;
+		if (!source || !target || source.id === target.id) {
+			setAnnouncement("");
+			return;
+		}
 		const sourceIndex = files.findIndex((f, i) => `${f.name}-${f.lastModified}-${i}` === source.id);
 		const targetIndex = files.findIndex((f, i) => `${f.name}-${f.lastModified}-${i}` === target.id);
 		if (sourceIndex < 0 || targetIndex < 0) return;
 		haptic("selection");
 		onReorder(arrayMove(files, sourceIndex, targetIndex));
+		setAnnouncement(
+			`${files[sourceIndex]?.name ?? "Fichier"} déplacé en position ${targetIndex + 1} sur ${files.length}.`,
+		);
 	};
 
 	const ctaLabel =
@@ -224,12 +246,16 @@ export function PendingUploadsGrid({
 				KeyboardSensor,
 			]}
 			modifiers={[RestrictToWindow]}
+			onDragStart={handleDragStart}
 			onDragEnd={handleDragEnd}
 		>
 			<span id="pending-drag-instructions" className="sr-only">
-				Utilisez Espace ou Entrée pour saisir un fichier, les flèches pour le déplacer, Espace ou
+				Utilise Espace ou Entrée pour saisir un fichier, les flèches pour le déplacer, Espace ou
 				Entrée pour déposer, Échap pour annuler.
 			</span>
+			<div aria-live="polite" aria-atomic="true" className="sr-only">
+				{announcement}
+			</div>
 			{list}
 		</DragDropProvider>
 	) : (
@@ -247,7 +273,7 @@ export function PendingUploadsGrid({
 					{files.length} fichier{files.length > 1 ? "s" : ""} en attente
 				</p>
 				<span className="text-muted-foreground text-xs tabular-nums">
-					{formatFileSize(files.reduce((sum, f) => sum + f.size, 0))}
+					{formatBytesShort(files.reduce((sum, f) => sum + f.size, 0))}
 				</span>
 			</div>
 
@@ -398,7 +424,7 @@ function PendingUploadItem({
 					className="bg-background/90 text-foreground text-2xs rounded px-1 tabular-nums shadow-sm"
 					aria-hidden="true"
 				>
-					{formatFileSize(file.size)}
+					{formatBytesShort(file.size)}
 				</span>
 			</div>
 		</div>

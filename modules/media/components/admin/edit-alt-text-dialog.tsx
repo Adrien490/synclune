@@ -51,7 +51,7 @@ export function EditAltTextDialog({
 						Description de {isVideo ? "la vidéo" : "l'image"} {index + 1}
 					</ResponsiveDialogTitle>
 					<ResponsiveDialogDescription>
-						Décrivez le contenu pour les lecteurs d'écran et le SEO. Concis, factuel, sans préfixe «
+						Décris le contenu pour les lecteurs d'écran et le SEO. Concis, factuel, sans préfixe «
 						Image de ».
 						<span className="mt-2 block text-xs">
 							<span className="text-emerald-700">À privilégier</span> : « Bague argent ciselé,

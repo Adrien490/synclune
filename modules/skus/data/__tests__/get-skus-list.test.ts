@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { GetProductSkusParams } from "../../types/skus.types";
+import type { GetProductSkusParams, GetProductSkusReturn } from "../../types/skus.types";
 
 // ============================================================================
 // Hoisted mocks
@@ -252,10 +252,18 @@ describe("getProductSkus – error handling", () => {
 		setupDefaults();
 	});
 
-	it("re-throws errors from fetchProductSkus", async () => {
+	// Contrat INVERSÉ volontairement : ce wrapper ne re-lève plus, il replie.
+	// Avant, `fetchProductSkus` rattrapait l'erreur elle-même — mais son catch était
+	// DANS le scope `"use cache"`, donc la page vide était mise en cache pour toute la
+	// fenêtre du profil `user`. Le repli a migré ici, hors du cache : l'erreur n'est
+	// plus jamais mémoïsée, et l'appelant reçoit une page vide + un champ `error`.
+	it("replie sur une page vide (sans re-lever) quand fetchProductSkus échoue", async () => {
 		mockFetchProductSkus.mockRejectedValue(new Error("DB down"));
 
-		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow("DB down");
+		const result = await getProductSkus(makeDefaultInput());
+
+		expect(result.productSkus).toEqual([]);
+		expect(result.pagination).toEqual(EMPTY_PAGINATION);
 	});
 
 	it("throws forbidden when user is not admin", async () => {
@@ -265,5 +273,63 @@ describe("getProductSkus – error handling", () => {
 
 		await expect(getProductSkus(makeDefaultInput())).rejects.toThrow(/403/);
 		expect(mockForbidden).toHaveBeenCalled();
+	});
+});
+
+/**
+ * Le repli sur erreur a été DÉPLACÉ de `fetchProductSkus` (scope `"use cache"`) vers
+ * ce wrapper : à l'intérieur du scope, une panne DB transitoire mettait la page vide
+ * en cache pour toute la fenêtre du profil `user`, et l'admin continuait de voir
+ * « aucune variante » après le rétablissement. Ces cas se testent donc ici.
+ */
+describe("getProductSkus – error handling (repli HORS du scope de cache)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		setupDefaults();
+	});
+
+	it("returns empty productSkus and pagination when Prisma throws", async () => {
+		mockFetchProductSkus.mockRejectedValue(new Error("DB failure"));
+
+		const result = await getProductSkus(makeDefaultInput());
+
+		expect(result.productSkus).toEqual([]);
+		expect(result.pagination).toEqual(EMPTY_PAGINATION);
+	});
+
+	it("includes specific error message in dev mode", async () => {
+		vi.stubEnv("NODE_ENV", "development");
+		mockFetchProductSkus.mockRejectedValue(new Error("Connection refused"));
+
+		const result = (await getProductSkus(makeDefaultInput())) as GetProductSkusReturn & {
+			error?: string;
+		};
+
+		expect(result.error).toBe("Connection refused");
+		vi.unstubAllEnvs();
+	});
+
+	it("returns generic error message in production", async () => {
+		vi.stubEnv("NODE_ENV", "production");
+		mockFetchProductSkus.mockRejectedValue(new Error("Connection refused"));
+
+		const result = (await getProductSkus(makeDefaultInput())) as GetProductSkusReturn & {
+			error?: string;
+		};
+
+		expect(result.error).toBe("Failed to fetch product SKUs");
+		vi.unstubAllEnvs();
+	});
+
+	it("handles non-Error objects thrown by Prisma in dev mode", async () => {
+		vi.stubEnv("NODE_ENV", "development");
+		mockFetchProductSkus.mockRejectedValue("string error");
+
+		const result = (await getProductSkus(makeDefaultInput())) as GetProductSkusReturn & {
+			error?: string;
+		};
+
+		expect(result.error).toBe("Unknown error");
+		vi.unstubAllEnvs();
 	});
 });

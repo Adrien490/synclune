@@ -32,8 +32,6 @@ import {
 	ORDER_LIMITS,
 	// Products (client)
 	PRODUCT_SEARCH_LIMIT,
-	PRODUCT_REVIEW_LIMIT,
-	REVIEW_LOAD_MORE_LIMIT,
 	PRODUCT_COOKIE_ACTION_LIMIT,
 	PRODUCT_LIMITS,
 	// Wishlist
@@ -133,10 +131,6 @@ import {
 	ADMIN_DISCOUNT_DUPLICATE_LIMIT,
 	ADMIN_DISCOUNT_REFRESH_LIMIT,
 	ADMIN_DISCOUNT_LIMITS,
-	// Admin - reviews
-	ADMIN_REVIEW_RESPONSE_LIMIT,
-	ADMIN_REVIEW_MODERATE_LIMIT,
-	ADMIN_REVIEW_LIMITS,
 	// Admin - announcements
 	ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
 	ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
@@ -192,8 +186,6 @@ describe("individual rate limit configs - valid shape", () => {
 		["ORDER_INVOICE_DOWNLOAD_LIMIT", ORDER_INVOICE_DOWNLOAD_LIMIT],
 		// Products
 		["PRODUCT_SEARCH_LIMIT", PRODUCT_SEARCH_LIMIT],
-		["PRODUCT_REVIEW_LIMIT", PRODUCT_REVIEW_LIMIT],
-		["REVIEW_LOAD_MORE_LIMIT", REVIEW_LOAD_MORE_LIMIT],
 		["PRODUCT_COOKIE_ACTION_LIMIT", PRODUCT_COOKIE_ACTION_LIMIT],
 		// Wishlist
 		["WISHLIST_TOGGLE_LIMIT", WISHLIST_TOGGLE_LIMIT],
@@ -278,9 +270,6 @@ describe("individual rate limit configs - valid shape", () => {
 		["ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT", ADMIN_DISCOUNT_TOGGLE_STATUS_LIMIT],
 		["ADMIN_DISCOUNT_DUPLICATE_LIMIT", ADMIN_DISCOUNT_DUPLICATE_LIMIT],
 		["ADMIN_DISCOUNT_REFRESH_LIMIT", ADMIN_DISCOUNT_REFRESH_LIMIT],
-		// Admin - reviews
-		["ADMIN_REVIEW_RESPONSE_LIMIT", ADMIN_REVIEW_RESPONSE_LIMIT],
-		["ADMIN_REVIEW_MODERATE_LIMIT", ADMIN_REVIEW_MODERATE_LIMIT],
 		// Admin - announcements
 		["ADMIN_ANNOUNCEMENT_CREATE_LIMIT", ADMIN_ANNOUNCEMENT_CREATE_LIMIT],
 		["ADMIN_ANNOUNCEMENT_UPDATE_LIMIT", ADMIN_ANNOUNCEMENT_UPDATE_LIMIT],
@@ -424,13 +413,11 @@ describe("ORDER_LIMITS", () => {
 describe("PRODUCT_LIMITS", () => {
 	it("contains expected keys", () => {
 		expect(PRODUCT_LIMITS).toHaveProperty("SEARCH");
-		expect(PRODUCT_LIMITS).toHaveProperty("REVIEW");
 		expect(PRODUCT_LIMITS).toHaveProperty("COOKIE_ACTION");
 	});
 
 	it("references the correct individual configs", () => {
 		expect(PRODUCT_LIMITS.SEARCH).toBe(PRODUCT_SEARCH_LIMIT);
-		expect(PRODUCT_LIMITS.REVIEW).toBe(PRODUCT_REVIEW_LIMIT);
 		expect(PRODUCT_LIMITS.COOKIE_ACTION).toBe(PRODUCT_COOKIE_ACTION_LIMIT);
 	});
 
@@ -835,28 +822,6 @@ describe("ADMIN_DISCOUNT_LIMITS", () => {
 });
 
 // ============================================================================
-// ADMIN_REVIEW_LIMITS
-// ============================================================================
-
-describe("ADMIN_REVIEW_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("RESPONSE");
-		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("MODERATE");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_REVIEW_LIMITS.RESPONSE).toBe(ADMIN_REVIEW_RESPONSE_LIMIT);
-		expect(ADMIN_REVIEW_LIMITS.MODERATE).toBe(ADMIN_REVIEW_MODERATE_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_REVIEW_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
 // ADMIN_ANNOUNCEMENT_LIMITS
 // ============================================================================
 
@@ -942,10 +907,6 @@ describe("security-sensitive limit values", () => {
 describe("windowMs sanity checks", () => {
 	it("CHECKOUT_CREATE_SESSION_LIMIT uses at least a 1-minute window", () => {
 		expect(CHECKOUT_CREATE_SESSION_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 1000);
-	});
-
-	it("PRODUCT_REVIEW_LIMIT uses at least a 1-hour window", () => {
-		expect(PRODUCT_REVIEW_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 60 * 1000);
 	});
 
 	it("RETURN_REQUEST_LIMIT uses at least a 1-hour window", () => {
