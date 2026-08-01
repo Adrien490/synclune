@@ -27,6 +27,9 @@ export type SkuWithImages = GetProductSkuReturn & {
 		blurDataUrl: string | null;
 		altText: string | null;
 		mediaType: MediaType;
+		/** Dimensions intrinsèques — le formulaire d'édition doit les round-tripper. */
+		width: number | null;
+		height: number | null;
 		isPrimary: boolean;
 	}>;
 	compareAtPrice: number | null;

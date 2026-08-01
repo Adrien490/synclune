@@ -15,6 +15,7 @@ const {
 	mockGetSortDirection,
 	mockGetCollectionsSelect,
 	mockIsAdmin,
+	mockLoggerError,
 } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
 	mockCount: vi.fn(),
@@ -26,6 +27,11 @@ const {
 	mockGetSortDirection: vi.fn(),
 	mockGetCollectionsSelect: { id: true, name: true },
 	mockIsAdmin: vi.fn(),
+	mockLoggerError: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: mockLoggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/modules/auth/utils/guards", () => ({
@@ -445,6 +451,31 @@ describe("getCollections", () => {
 				pagination: EMPTY_PAGINATION,
 				totalCount: 0,
 			});
+			expect(mockLoggerError).toHaveBeenCalled();
+		});
+
+		it("ne logge PAS un rejet de fin de prerender (HANGING_PROMISE_REJECTION), repli silencieux", async () => {
+			mockFindMany.mockRejectedValue(
+				Object.assign(new Error("During prerendering, `cookies()` rejects…"), {
+					digest: "HANGING_PROMISE_REJECTION",
+				}),
+			);
+
+			const result = await getCollections(makeValidParams() as never);
+
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION, totalCount: 0 });
+			expect(mockLoggerError).not.toHaveBeenCalled();
+		});
+
+		it("ne logge PAS « Connection closed. » pendant la phase build (lecture \"use cache\" avortée)", async () => {
+			vi.stubEnv("NEXT_PHASE", "phase-production-build");
+			mockFindMany.mockRejectedValue(new Error("Connection closed."));
+
+			const result = await getCollections(makeValidParams() as never);
+
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION, totalCount: 0 });
+			expect(mockLoggerError).not.toHaveBeenCalled();
+			vi.unstubAllEnvs();
 		});
 
 		it("returns empty collections when validation fails in getCollections wrapper", async () => {

@@ -27,7 +27,21 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
 		throw new Error("Accès non autorisé. Droits administrateur requis.");
 	}
 
-	return fetchProductCountsByStatus();
+	// Repli HORS du scope de cache : les compteurs à zéro d'une panne étaient mis en
+	// cache comme un résultat légitime pour la fenêtre du profil `user`, et « 0
+	// brouillon / 0 publié » est indiscernable d'un catalogue vide.
+	try {
+		return await fetchProductCountsByStatus();
+	} catch (error) {
+		logger.error("Failed to fetch product counts by status", error, {
+			service: "getProductCountsByStatus",
+		});
+		return {
+			[ProductStatus.PUBLIC]: 0,
+			[ProductStatus.DRAFT]: 0,
+			[ProductStatus.ARCHIVED]: 0,
+		};
+	}
 }
 
 /**
@@ -38,34 +52,23 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	cacheLife("user");
 	cacheTag(PRODUCTS_CACHE_TAGS.COUNTS);
 
-	try {
-		const counts = await prisma.product.groupBy({
-			by: ["status"],
-			where: { ...notDeleted },
-			_count: {
-				id: true,
-			},
-		});
+	const counts = await prisma.product.groupBy({
+		by: ["status"],
+		where: { ...notDeleted },
+		_count: {
+			id: true,
+		},
+	});
 
-		const result: ProductCountsByStatus = {
-			[ProductStatus.PUBLIC]: 0,
-			[ProductStatus.DRAFT]: 0,
-			[ProductStatus.ARCHIVED]: 0,
-		};
+	const result: ProductCountsByStatus = {
+		[ProductStatus.PUBLIC]: 0,
+		[ProductStatus.DRAFT]: 0,
+		[ProductStatus.ARCHIVED]: 0,
+	};
 
-		counts.forEach((count) => {
-			result[count.status as ProductStatus] = count._count.id;
-		});
+	counts.forEach((count) => {
+		result[count.status as ProductStatus] = count._count.id;
+	});
 
-		return result;
-	} catch (error) {
-		logger.error("Failed to fetch product counts by status", error, {
-			service: "fetchProductCountsByStatus",
-		});
-		return {
-			[ProductStatus.PUBLIC]: 0,
-			[ProductStatus.DRAFT]: 0,
-			[ProductStatus.ARCHIVED]: 0,
-		};
-	}
+	return result;
 }

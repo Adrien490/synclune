@@ -80,6 +80,9 @@ export async function duplicateColor(
 				name: newName,
 				slug,
 				hex: original.hex,
+				// Parité avec duplicateMaterial/duplicateProductType : les notes
+				// créatrice suivent la copie.
+				description: original.description,
 				isActive: false, // Disabled by default
 			},
 		});

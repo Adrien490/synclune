@@ -4,7 +4,7 @@ import { z } from "zod";
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
+import { ADMIN_SKU_REFRESH_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { handleActionError, safeFormGet, success } from "@/shared/lib/actions";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -19,7 +19,7 @@ export async function refreshSkus(_prevState: unknown, formData: FormData): Prom
 		if ("error" in adminCheck) return adminCheck.error;
 
 		// 2. Rate limiting
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
+		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_REFRESH_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawProductId = safeFormGet(formData, "productId");

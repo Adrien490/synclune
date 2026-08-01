@@ -1,5 +1,7 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { z } from "zod";
+import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
@@ -23,15 +25,9 @@ const collectionStatusSchema = z
 // ============================================================================
 
 export const collectionFiltersSchema = z.object({
-	hasProducts: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			if (val === "true") return true;
-			if (val === "false") return false;
-			return undefined;
-		}),
+	// SSOT `formBooleanSchema` (cf. order.schemas.ts) — même ré-implémentation,
+	// même sur-ensemble de valeurs acceptées.
+	hasProducts: formBooleanSchema.optional(),
 	status: z.union([z.enum(CollectionStatus), z.array(z.enum(CollectionStatus))]).optional(),
 });
 
@@ -66,7 +62,7 @@ export const getCollectionsSchema = z.object({
 		GET_COLLECTIONS_MAX_RESULTS_PER_PAGE,
 	),
 	sortBy: collectionSortBySchema.default(GET_COLLECTIONS_DEFAULT_SORT_BY),
-	search: z.string().max(200).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: collectionFiltersSchema.optional(),
 });
 

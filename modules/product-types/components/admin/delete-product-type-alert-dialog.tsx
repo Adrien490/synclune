@@ -7,7 +7,8 @@ import {
 } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 import { useDeleteProductType } from "@/modules/product-types/hooks/use-delete-product-type";
 
-export const DELETE_PRODUCT_TYPE_DIALOG_ID = "delete-product-type";
+// Re-dérivé du registre : ouvreurs et dialog s'abonnent au même identifiant.
+export const DELETE_PRODUCT_TYPE_DIALOG_ID = TAXONOMY_CONFIG["product-type"].deleteDialogId;
 
 export function DeleteProductTypeAlertDialog() {
 	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG["product-type"]);

@@ -16,6 +16,7 @@ import {
 import { deleteProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getCartInvalidationTags } from "@/modules/cart/constants/cache";
+import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 
@@ -49,9 +50,11 @@ export async function deleteProduct(
 
 		const { productId } = validation.data;
 
-		// 4. Verifier que le produit existe
+		// 4. Verifier que le produit existe.
+		// `deletedAt: null` — re-supprimer un produit déjà soft-deleted re-purgerait
+		// paniers/favoris/collections pour rien et rendrait un faux succès.
 		const existingProduct = await prisma.product.findUnique({
-			where: { id: productId },
+			where: { id: productId, deletedAt: null },
 			select: {
 				id: true,
 				title: true,
@@ -61,6 +64,14 @@ export async function deleteProduct(
 						collection: {
 							select: { slug: true },
 						},
+					},
+				},
+				// Cascade cache : la suppression emporte les SKUs, donc le KPI
+				// « produits distincts » de leurs couleurs et matériaux.
+				skus: {
+					select: {
+						colors: { select: { colorId: true } },
+						materials: { select: { materialId: true } },
 					},
 				},
 			},
@@ -87,11 +98,16 @@ export async function deleteProduct(
 			);
 		}
 
-		// 6. Find affected carts before deletion (for cache invalidation)
+		// 6. Find affected carts and wishlists before deletion (for cache invalidation)
 		const affectedCarts = await prisma.cartItem.findMany({
 			where: { sku: { productId } },
 			select: { cart: { select: { userId: true, sessionId: true } } },
 			distinct: ["cartId"],
+		});
+		const affectedWishlists = await prisma.wishlistItem.findMany({
+			where: { productId },
+			select: { wishlist: { select: { userId: true, sessionId: true } } },
+			distinct: ["wishlistId"],
 		});
 
 		// 7. Soft delete le produit et ses SKUs dans une transaction
@@ -126,7 +142,9 @@ export async function deleteProduct(
 			});
 		});
 
-		// 8. Invalidate cart caches for affected users
+		// 8. Invalidate cart and wishlist caches for affected users
+		// (effet limité aux caches `private` du client courant — la fenêtre de
+		// staleness des autres clients est bornée par le profil `checkout`)
 		for (const { cart } of affectedCarts) {
 			const cartTags = getCartInvalidationTags(
 				cart.userId ?? undefined,
@@ -134,9 +152,21 @@ export async function deleteProduct(
 			);
 			cartTags.forEach((tag) => updateTag(tag));
 		}
+		for (const { wishlist } of affectedWishlists) {
+			const wishlistTags = getWishlistInvalidationTags(
+				wishlist.userId ?? undefined,
+				wishlist.sessionId ?? undefined,
+			);
+			wishlistTags.forEach((tag) => updateTag(tag));
+		}
 
 		// 9. Invalidate cache tags (invalidation ciblee au lieu de revalidatePath global)
-		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id);
+		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id, {
+			affectedColorIds: existingProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId)),
+			affectedMaterialIds: existingProduct.skus.flatMap((sku) =>
+				sku.materials.map((m) => m.materialId),
+			),
+		});
 		productTags.forEach((tag) => updateTag(tag));
 
 		// Si le produit appartenait a des collections, invalider aussi leurs caches

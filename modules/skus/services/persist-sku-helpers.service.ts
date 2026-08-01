@@ -11,6 +11,7 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { BusinessError } from "@/shared/lib/actions";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import type { ParsedMedia } from "../types/sku.types";
 
 // ============================================================================
@@ -86,17 +87,24 @@ export function optionalEurosToCents(euros: number | undefined): number | null {
  * prêts pour persistance : premier item = principal (isPrimary, position 0),
  * suivants en galerie ordonnée (position 1..n).
  *
- * Le mediaType du premier item est forcé à IMAGE — le schema Zod l'a déjà
- * validé (refineFirstMediaNotVideo) mais on garde le filet pour les chemins
- * non-validés (jamais en pratique côté actions).
+ * Le schema Zod garantit déjà que le premier item est une IMAGE
+ * (refineFirstMediaNotVideo). Filet anti-bypass : on REFUSE au lieu de forcer
+ * `mediaType: "IMAGE"` en silence — l'ancien filet ÉTIQUETAIT une vidéo comme
+ * image, ce qui la faisait remonter dans tous les selects filtrés
+ * `mediaType: "IMAGE"` (carrousel, collections, quick-search) et dans le
+ * snapshot OrderItem.
  */
 export function normalizeMediaForPersistence(media: ParsedMedia[]): SkuMediaInput[] {
+	const first = media[0];
+	if (first && (first.mediaType ?? detectMediaType(first.url)) === "VIDEO") {
+		throw new BusinessError(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
+	}
 	return media.map((m, index) => ({
 		url: m.url,
 		thumbnailUrl: m.thumbnailUrl,
 		blurDataUrl: m.blurDataUrl,
 		altText: m.altText,
-		mediaType: index === 0 ? "IMAGE" : m.mediaType,
+		mediaType: m.mediaType,
 		width: m.width,
 		height: m.height,
 		isPrimary: index === 0,

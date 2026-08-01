@@ -19,12 +19,13 @@ const {
 	mockGetProductInvalidationTags,
 	mockGetCollectionInvalidationTags,
 	mockGetCartInvalidationTags,
+	mockGetWishlistInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		product: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		cartItem: { findMany: vi.fn(), deleteMany: vi.fn() },
-		wishlistItem: { deleteMany: vi.fn() },
+		wishlistItem: { findMany: vi.fn(), deleteMany: vi.fn() },
 		productCollection: { deleteMany: vi.fn() },
 		orderItem: { count: vi.fn() },
 		$transaction: vi.fn(),
@@ -40,6 +41,7 @@ const {
 	mockGetProductInvalidationTags: vi.fn(),
 	mockGetCollectionInvalidationTags: vi.fn(),
 	mockGetCartInvalidationTags: vi.fn(),
+	mockGetWishlistInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { deletedAt: null } }));
@@ -75,6 +77,9 @@ vi.mock("@/modules/collections/utils/cache.utils", () => ({
 vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,
 }));
+vi.mock("@/modules/wishlist/constants/cache", () => ({
+	getWishlistInvalidationTags: mockGetWishlistInvalidationTags,
+}));
 
 import { deleteProduct } from "../delete-product";
 
@@ -106,9 +111,14 @@ describe("deleteProduct", () => {
 			title: "Bracelet Lune",
 			slug: "bracelet-lune",
 			collections: [{ collection: { slug: "col-slug" } }],
+			// La suppression emporte les SKUs, donc le KPI « produits distincts » de
+			// leurs couleurs/matériaux — sélectionnés pour la cascade cache (audit
+			// cache catalogue 2026-07-31).
+			skus: [{ colors: [{ colorId: "col_1" }], materials: [{ materialId: "mat_1" }] }],
 		});
 		mockPrisma.orderItem.count.mockResolvedValue(0);
 		mockPrisma.cartItem.findMany.mockResolvedValue([]);
+		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);
@@ -186,6 +196,20 @@ describe("deleteProduct", () => {
 	it("should invalidate cache after deletion", async () => {
 		await deleteProduct(undefined, validFormData);
 		expect(mockUpdateTag).toHaveBeenCalled();
+	});
+
+	it("invalidates wishlist tags for each affected wishlist (audit wishlist 2026-08-01)", async () => {
+		mockPrisma.wishlistItem.findMany.mockResolvedValue([
+			{ wishlist: { userId: null, sessionId: "session-guest" } },
+			{ wishlist: { userId: "user-admin", sessionId: null } },
+		]);
+		mockGetWishlistInvalidationTags.mockReturnValue(["wishlist-tag"]);
+
+		await deleteProduct(undefined, validFormData);
+
+		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(undefined, "session-guest");
+		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith("user-admin", undefined);
+		expect(mockUpdateTag).toHaveBeenCalledWith("wishlist-tag");
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

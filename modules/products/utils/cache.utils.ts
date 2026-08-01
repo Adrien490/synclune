@@ -5,6 +5,8 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
+import { COLORS_CACHE_TAGS } from "@/modules/colors/constants/cache";
+import { MATERIALS_CACHE_TAGS } from "@/modules/materials/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS, RECENT_PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
@@ -33,20 +35,28 @@ export function cacheProductDetail(slug: string) {
 }
 
 /**
- * Configure le cache pour les SKUs d'un produit
+ * Configure le cache pour le détail d'un produit lu par ID (duplication admin).
+ *
+ * Existe parce que `get-product-for-duplication.ts` appelait
+ * `cacheProductDetail(\`product-id-${id}\`)` — un id nourri à une fabrique de slug,
+ * qui produisait `product-product-id-<cuid>`, tag qu'aucun mutateur n'émettait.
+ * L'entrée ne se rafraîchissait que par le `products-list` co-posé ici.
  */
-export function cacheProductSkus(productId: string) {
+export function cacheProductDetailById(productId: string) {
 	cacheLife("catalog");
-	cacheTag(PRODUCTS_CACHE_TAGS.SKUS(productId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
+	cacheTag(PRODUCTS_CACHE_TAGS.DETAIL_BY_ID(productId), PRODUCTS_CACHE_TAGS.LIST);
 }
 
-/**
- * Configure le cache pour un SKU spécifique
- */
-export function cacheSkuDetail(sku: string) {
-	cacheLife("catalog");
-	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku), PRODUCTS_CACHE_TAGS.SKUS_LIST);
-}
+// `cacheProductSkus` et `cacheSkuDetail` ont été RETIRÉS (audit cache catalogue
+// 2026-07-31) : ni l'un ni l'autre n'avait d'appelant en production, alors que les
+// tags qu'ils posaient — `SKUS(productId)` et `SKU_DETAIL(sku)` — étaient invalidés
+// par une dizaine de mutateurs. Deux familles de tags décoratives, et une régression
+// (STOCK-STALE-BASELINE-001) qui assertait la couverture d'un lecteur inexistant.
+//
+// `SKUS(productId)` est désormais posé par le VRAI lecteur par-produit,
+// `modules/skus/data/fetch-skus.ts`. `SKU_DETAIL(sku)` n'a pas été rebranché : aucun
+// chemin ne lit un SKU par son code, la lecture admin se fait par id
+// (`SKU_DETAIL_BY_ID` via `cacheSkuDetailById`).
 
 // ============================================
 // INVALIDATION HELPERS
@@ -71,10 +81,23 @@ export function cacheSkuDetail(sku: string) {
  * Note: RELATED_USER n'est pas invalidé ici car il dépend du contexte user.
  * Il expirera naturellement via son TTL (30min).
  */
-export function getProductInvalidationTags(productSlug: string, productId?: string): string[] {
-	const tags = [
+export function getProductInvalidationTags(
+	productSlug: string,
+	productId?: string,
+	options?: {
+		/** Couleurs portées par les SKUs du produit — leur KPI « produits distincts » bouge. */
+		affectedColorIds?: readonly string[];
+		/** Idem matériaux (parité M2M `ProductSkuMaterial`). */
+		affectedMaterialIds?: readonly string[];
+	},
+): string[] {
+	const tags: string[] = [
 		PRODUCTS_CACHE_TAGS.LIST,
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
+		// `fetchSkuDetailById` (le formulaire d'édition SKU) embarque `product.title`,
+		// `product.status` et `product._count.skus` sous `skus-list` : sans ce tag, une
+		// édition produit laissait ces champs périmés toute la fenêtre du profil `user`.
+		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		PRODUCTS_CACHE_TAGS.COUNTS,
 		PRODUCTS_CACHE_TAGS.RELATED_PUBLIC,
@@ -89,6 +112,12 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 		// produits PUBLIC : publier le premier bijou d'un type doit le faire apparaître
 		// au mega-menu et au sitemap sans attendre l'expiration du profil `user`.
 		SHARED_CACHE_TAGS.PRODUCT_TYPES_LIST,
+		// …et l'entrée du mega-menu elle-même. Elle enveloppe `getProductTypes` dans
+		// son propre scope caché, donc elle hérite bien de `product-types-list` par
+		// propagation — mais les mutateurs collections et product-types, eux, posent
+		// `NAVBAR_MENU` explicitement. S'appuyer sur la propagation d'un côté et pas
+		// de l'autre rendait l'invariant illisible pour un coût nul.
+		SHARED_CACHE_TAGS.NAVBAR_MENU,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 		SHARED_CACHE_TAGS.SITEMAP_IMAGES,
@@ -97,16 +126,52 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 	if (productId) {
 		tags.push(PRODUCTS_CACHE_TAGS.SKUS(productId));
 		tags.push(PRODUCTS_CACHE_TAGS.COLLECTIONS(productId));
+		// Lecture de duplication (`get-product-for-duplication.ts`). Elle se cachait
+		// sous un tag fabriqué à la main que personne n'invalidait.
+		tags.push(PRODUCTS_CACHE_TAGS.DETAIL_BY_ID(productId));
+	}
+
+	// `COLORS/MATERIALS.PRODUCT_COUNT(id)` ne cascadaient que depuis les mutateurs
+	// SKU (`getSkuInvalidationTags`). Or le compteur — nombre de produits DISTINCTS
+	// portant la couleur — bouge aussi quand c'est le PRODUIT qui change :
+	// suppression (cascade de ses SKUs), duplication, changement de statut (le
+	// compteur ne retient que les SKUs actifs). Le KPI des listes couleurs et
+	// matériaux restait donc faux jusqu'à expiration du profil `user`.
+	for (const colorId of options?.affectedColorIds ?? []) {
+		tags.push(COLORS_CACHE_TAGS.PRODUCT_COUNT(colorId));
+	}
+	for (const materialId of options?.affectedMaterialIds ?? []) {
+		tags.push(MATERIALS_CACHE_TAGS.PRODUCT_COUNT(materialId));
 	}
 
 	return tags;
 }
 
 /**
- * Tags à invalider lors de la modification des stocks
+ * Tags à invalider lors de la modification des stocks.
  *
- * Invalide uniquement les données affectées, pas toutes les listes.
- * Utile pour les mises à jour fréquentes de stock.
+ * SSOT unique — `modules/skus/utils/cache.utils.ts` le ré-exporte.
+ *
+ * ⚠️ Il existait ici une SECONDE implémentation homonyme, plus pauvre, à laquelle
+ * `collectStockInvalidationTags` déléguait (audit cache 2026-07-31). Elle omettait
+ * `SKU_DETAIL_BY_ID`, `SKUS_LIST` et `LIST` : toute invalidation passant par ce
+ * fichier (`toggle-product-status`, `mark-as-paid`, remboursements avec restock)
+ * laissait donc le formulaire d'édition SKU sur un inventaire périmé, alors que le
+ * même geste depuis `adjust-sku-stock` — qui importait l'autre version — était
+ * correct. Deux helpers de même nom et de couverture différente : le call site
+ * décidait de la justesse selon son import.
+ *
+ * ⚠️ STOCK-STALE-BASELINE-001 — ce set DOIT couvrir tout tag posé par
+ * `cacheSkuDetailById` / `cacheProductSkus`. Il manquait `SKU_DETAIL_BY_ID` et
+ * `SKUS_LIST`, les deux tags de `fetchSkuById` / `fetchSkuDetailById` : après un
+ * ajustement de stock, le formulaire d'édition continuait de rendre l'ancien
+ * inventaire pendant la fenêtre du profil `user` (60 s revalidate / 120 s stale).
+ * Ce n'est pas cosmétique — ce formulaire poste ce chiffre comme
+ * `originalInventory`, la baseline du delta relatif : une baseline périmée fait
+ * diverger le stock enregistré du stock saisi (réel 15, formulaire à 10, l'admin
+ * saisit 12 ⇒ delta +2 ⇒ 17). La concurrence optimiste dépend de la fraîcheur que
+ * ce helper garantit. Verrouillé par
+ * `modules/skus/utils/__tests__/inventory-invalidation-covers-reader.regression.test.ts`.
  */
 export function getInventoryInvalidationTags(
 	productSlug: string,
@@ -116,14 +181,17 @@ export function getInventoryInvalidationTags(
 	const tags = [
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
+		PRODUCTS_CACHE_TAGS.LIST,
+		PRODUCTS_CACHE_TAGS.SKUS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];
 
-	// Invalider le cache stock temps réel de chaque SKU
+	// Invalider le cache stock temps réel + le détail par ID de chaque SKU
 	if (skuIds) {
 		for (const skuId of skuIds) {
 			tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
+			tags.push(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
 		}
 	}
 

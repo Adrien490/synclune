@@ -34,7 +34,6 @@ vi.mock("../../utils/hex-normalizer", () => ({
 
 import {
 	hexColorSchema,
-	colorSlugSchema,
 	colorNameSchema,
 	createColorSchema,
 	updateColorSchema,
@@ -112,38 +111,6 @@ describe("hexColorSchema", () => {
 		if (result.success) {
 			expect(result.data).toBe("#FF5733");
 		}
-	});
-});
-
-describe("colorSlugSchema", () => {
-	it("should accept valid slug", () => {
-		const result = colorSlugSchema.safeParse("rouge-fonce");
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject uppercase characters", () => {
-		const result = colorSlugSchema.safeParse("Rouge");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject spaces", () => {
-		const result = colorSlugSchema.safeParse("rouge fonce");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject empty string", () => {
-		const result = colorSlugSchema.safeParse("");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject slug exceeding 50 characters", () => {
-		const result = colorSlugSchema.safeParse("a".repeat(51));
-
-		expect(result.success).toBe(false);
 	});
 });
 

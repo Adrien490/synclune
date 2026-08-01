@@ -15,7 +15,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
@@ -87,7 +87,7 @@ export function DuplicateProductAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Duplication…" : "Dupliquer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

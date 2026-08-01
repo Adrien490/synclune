@@ -10,10 +10,6 @@ vi.mock("@/modules/products/data/get-product", () => ({
 	getProductBySlug: mockGetProductBySlug,
 }));
 
-vi.mock("@/shared/constants/urls", () => ({
-	PRODUCTION_URL: "https://synclune.fr",
-}));
-
 import { generateProductMetadata } from "../generate-metadata";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

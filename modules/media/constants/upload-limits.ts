@@ -28,6 +28,7 @@ const minutes = (n: number) => n * 60 * 1000;
  * More permissive due to frequent admin workflow (adding products)
  */
 const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
+	name: "upload-catalog",
 	limit: 10, // 10 uploads maximum
 	windowMs: minutes(1), // per minute
 };
@@ -47,6 +48,7 @@ const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
  * Moderate limit to prevent mass deletion by compromised admin
  */
 const DELETE_MEDIA_LIMIT: RateLimitConfig = {
+	name: "delete-media",
 	limit: 20, // 20 deletions maximum
 	windowMs: minutes(1), // per minute
 };

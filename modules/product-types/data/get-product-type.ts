@@ -108,12 +108,28 @@ async function fetchProductTypeDetail(slug: string) {
 						slug: true,
 						title: true,
 						status: true,
+						// Vignette unique : l'appelant prend `skus[0].images[0]` sans pouvoir
+						// trier, donc le tri se fait ici.
+						//
+						// `where: { isDefault: true }` et `where: { isPrimary: true }` étaient
+						// tous deux des filtres — le motif banni par CLAUDE.md : un produit
+						// sans SKU par défaut, ou un SKU sans média primaire, rendait 0 image
+						// alors qu'il en a. On ordonne au lieu de filtrer. Et `mediaType:
+						// "IMAGE"` est obligatoire ici : sans lui un `.mp4` atterrit dans
+						// `<Image src>` (vignette cassée + transformation `/_next/image`
+						// facturée). Même pattern que get-material.ts.
 						skus: {
-							where: { isDefault: true },
+							where: { isActive: true, deletedAt: null },
+							orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 							take: 1,
 							select: {
 								images: {
-									where: { isPrimary: true },
+									where: { mediaType: "IMAGE" as const },
+									orderBy: [
+										{ isPrimary: "desc" as const },
+										{ position: "asc" as const },
+										{ id: "asc" as const },
+									],
 									take: 1,
 									select: { url: true, blurDataUrl: true, altText: true },
 								},

@@ -45,21 +45,43 @@ vi.mock("lucide-react", () => ({
 	}) => <svg data-testid="package-icon" className={className} aria-hidden={ariaHidden} />,
 }));
 
+// `useReducedMotion` (motion/react) lit matchMedia, absent de jsdom.
+vi.mock("motion/react", () => ({
+	useReducedMotion: () => false,
+}));
+
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
-const imageA: { url: string; blurDataUrl: null; altText: string; isPrimary: false } = {
+const baseImage = {
+	id: "img-a",
 	url: "https://example.com/a.jpg",
+	thumbnailUrl: null,
 	blurDataUrl: null,
 	altText: "Image A",
-	isPrimary: false,
+	mediaType: "IMAGE" as const,
+	isPrimary: false as const,
+	width: null,
+	height: null,
 };
 
-const imagePrimary: { url: string; blurDataUrl: null; altText: string; isPrimary: true } = {
+const imageA = baseImage;
+
+const imagePrimary = {
+	...baseImage,
+	id: "img-primary",
 	url: "https://example.com/primary.jpg",
-	blurDataUrl: null,
 	altText: "Image primaire",
-	isPrimary: true,
+	isPrimary: true as const,
+};
+
+const videoPrimary = {
+	...baseImage,
+	id: "vid-1",
+	url: "https://example.com/clip.mp4",
+	altText: "Vidéo",
+	mediaType: "VIDEO" as const,
+	isPrimary: true as const,
 };
 
 // ---------------------------------------------------------------------------
@@ -100,6 +122,22 @@ describe("ProductImageCell", () => {
 	it("utilise la première image quand aucune isPrimary", () => {
 		render(<ProductImageCell images={[imageA]} productTitle="Bague dorée" />);
 		expect(screen.getByAltText("Image A")).toBeInTheDocument();
+	});
+
+	// pickPrimaryImage (SSOT) : une vidéo `isPrimary` ne doit JAMAIS atteindre
+	// `<Image src>` — le motif `find(isPrimary) ?? images[0]` mettait un `.mp4`
+	// dans l'optimiseur (vignette cassée + transformation facturée).
+	it("retombe sur la première IMAGE quand le média primaire est une vidéo", () => {
+		const { container } = render(
+			<ProductImageCell images={[videoPrimary, imageA]} productTitle="Bague dorée" />,
+		);
+		expect(within(container).getByAltText("Image A")).toBeInTheDocument();
+		expect(within(container).queryByAltText("Vidéo")).not.toBeInTheDocument();
+	});
+
+	it("affiche l'état vide quand le produit n'a QUE des vidéos", () => {
+		render(<ProductImageCell images={[videoPrimary]} productTitle="Bague dorée" />);
+		expect(screen.getByTestId("package-icon")).toBeInTheDocument();
 	});
 
 	// Accessibility

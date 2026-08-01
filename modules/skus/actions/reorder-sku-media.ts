@@ -14,6 +14,7 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { reorderSkuMediaSchema } from "../schemas/sku-media.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
@@ -133,4 +134,3 @@ export async function reorderSkuMedia(
 		return handleActionError(e, "Impossible de réordonner les médias de la variante");
 	}
 }
-import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";

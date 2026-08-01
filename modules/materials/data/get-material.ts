@@ -97,9 +97,12 @@ async function fetchMaterialDetail(slug: string) {
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,
-				// Liens M2M actifs avec SKU joint (preserve l'ancien shape `skus[]`)
+				// Liens M2M actifs avec SKU joint (preserve l'ancien shape `skus[]`).
+				// `deletedAt: null` : le soft delete produit pose deletedAt sur les SKUs
+				// SANS toucher isActive — sans ce filtre, la carte listait des variantes
+				// fantômes de produits supprimés (liens morts).
 				skuMaterials: {
-					where: { sku: { isActive: true } },
+					where: { sku: { isActive: true, deletedAt: null } },
 					take: 10,
 					orderBy: { sku: { product: { title: "asc" } } },
 					select: {
@@ -158,7 +161,9 @@ async function fetchMaterialDetail(slug: string) {
 						},
 					},
 				},
-				_count: { select: { skuMaterials: { where: { sku: { isActive: true } } } } },
+				_count: {
+					select: { skuMaterials: { where: { sku: { isActive: true, deletedAt: null } } } },
+				},
 			},
 		});
 
@@ -197,10 +202,12 @@ async function fetchMaterialDistinctProductCount(materialId: string): Promise<nu
 	cacheTag(MATERIALS_CACHE_TAGS.PRODUCT_COUNT(materialId));
 
 	try {
-		// M2M : on cherche les SKUs actifs liés à ce matériau via la jointure
+		// M2M : on cherche les SKUs actifs liés à ce matériau via la jointure.
+		// `deletedAt: null` : sans lui, le KPI comptait les produits soft-deleted.
 		const result = await prisma.productSku.findMany({
 			where: {
 				isActive: true,
+				deletedAt: null,
 				materials: { some: { materialId } },
 			},
 			select: { productId: true },

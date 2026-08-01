@@ -109,8 +109,11 @@ export async function createProductSku(
 		// 8. Create product SKU in transaction
 		const productSku = await prisma.$transaction(
 			async (tx) => {
+				// `deletedAt: null` — créer un SKU VIVANT sur un produit soft-deleted
+				// fabriquerait une variante orpheline invisible en vitrine mais comptée
+				// par les gardes d'écriture.
 				const product = await tx.product.findUnique({
-					where: { id: validatedData.productId },
+					where: { id: validatedData.productId, deletedAt: null },
 					select: { id: true, title: true },
 				});
 				if (!product) {

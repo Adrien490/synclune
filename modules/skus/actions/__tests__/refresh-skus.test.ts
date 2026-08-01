@@ -27,7 +27,7 @@ vi.mock("@/modules/auth/lib/require-auth", () => ({
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
-vi.mock("@/shared/lib/rate-limit-config", () => ({ ADMIN_SKU_TOGGLE_STATUS_LIMIT: "sku-toggle" }));
+vi.mock("@/shared/lib/rate-limit-config", () => ({ ADMIN_SKU_REFRESH_LIMIT: "sku-refresh" }));
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
 	cacheLife: vi.fn(),

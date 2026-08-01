@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
@@ -17,7 +18,7 @@ export const getProductSkusSchema = z.object({
 		GET_PRODUCT_SKUS_MAX_RESULTS_PER_PAGE,
 	),
 	sortBy: productSkuSortBySchema.default(GET_PRODUCT_SKUS_DEFAULT_SORT_BY),
-	search: z.string().max(200).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: productSkuFiltersSchema.optional(),
 });
 

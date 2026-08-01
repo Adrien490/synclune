@@ -141,15 +141,28 @@ async function fetchSkuDetailById(skuId: string) {
 					title: true,
 					status: true,
 					_count: { select: { skus: { where: { deletedAt: null } } } },
-					// Nested fetch of the default SKU's primary image. Backed by the partial
-					// unique index `ProductSku_productId_isDefault_unique` (productId, isDefault)
-					// WHERE isDefault=true AND deletedAt IS NULL — O(1) lookup, not an N+1 risk.
+					// Vignette unique : l'appelant prend `product.skus[0]?.images[0]` sans
+					// pouvoir trier, donc le tri se fait ici.
+					//
+					// `where: { isDefault: true }` et `where: { isPrimary: true }` étaient
+					// tous deux des filtres — le motif banni par CLAUDE.md : un produit sans
+					// SKU par défaut (état que delete-sku produit légitimement), ou un SKU
+					// sans média primaire, rendait 0 image alors qu'il en a. On ordonne au
+					// lieu de filtrer. Et `mediaType: "IMAGE"` est obligatoire ici : sans lui
+					// un `.mp4` atterrit dans `<Image src>` (vignette cassée + transformation
+					// `/_next/image` facturée). Même pattern que get-material.ts.
 					skus: {
-						where: { isDefault: true, deletedAt: null },
+						where: { isActive: true, deletedAt: null },
+						orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 						take: 1,
 						select: {
 							images: {
-								where: { isPrimary: true },
+								where: { mediaType: "IMAGE" as const },
+								orderBy: [
+									{ isPrimary: "desc" as const },
+									{ position: "asc" as const },
+									{ id: "asc" as const },
+								],
 								take: 1,
 								select: { url: true, blurDataUrl: true, altText: true },
 							},

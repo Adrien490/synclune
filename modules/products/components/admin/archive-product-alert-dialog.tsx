@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";
 
@@ -104,7 +104,7 @@ export function ArchiveProductAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending
 								? isArchiving
 									? "Archivage…"

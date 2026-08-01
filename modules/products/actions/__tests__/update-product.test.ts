@@ -27,7 +27,7 @@ const {
 		product: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { findFirst: vi.fn(), update: vi.fn() },
 		productCollection: { deleteMany: vi.fn(), createMany: vi.fn() },
-		skuMedia: { deleteMany: vi.fn(), create: vi.fn() },
+		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), findMany: vi.fn() },
 		productType: { findUnique: vi.fn() },
 		collection: { findMany: vi.fn() },
 		color: { findUnique: vi.fn() },
@@ -67,6 +67,13 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_PRODUCT_UPDATE_LIMIT: "admin-product-update",
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
+// `after()` exécute son callback immédiatement : le travail asynchrone reste
+// observable via flushMicrotasks, comme l'ancienne IIFE fire-and-forget.
+vi.mock("next/server", () => ({
+	after: (fn: () => unknown) => {
+		void fn();
+	},
+}));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -174,6 +181,11 @@ describe("updateProduct", () => {
 		mockDetectMediaType.mockReturnValue("IMAGE");
 		mockGetProductInvalidationTags.mockReturnValue(["products-list"]);
 		mockGetCollectionInvalidationTags.mockReturnValue([]);
+		// La SSOT deleteUnreferencedCatalogMedia lit OrderItem ET SkuMedia : un
+		// `findMany` non armé (undefined) ferait échouer son Promise.all en
+		// silence (catch interne) et aucune suppression ne serait observée.
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
@@ -302,6 +314,55 @@ describe("updateProduct", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
+	// L'archivage désactive tous les SKUs : le formulaire d'un produit archivé
+	// reposte `isActive: false` sur un défaut DÉJÀ inactif. La garde « refus de
+	// désactiver la variante principale » ne doit viser que la TRANSITION
+	// actif → inactif — bloquer ce non-changement re-briquait l'édition des
+	// produits archivés (P1-3, audit admin catalogue 2026-08-01).
+	it("accepts resubmitting an already-inactive default SKU (archived product)", async () => {
+		mockValidateInput.mockReturnValue({
+			data: {
+				...validatedData,
+				status: "ARCHIVED",
+				defaultSku: { ...validatedData.defaultSku, isActive: false },
+			},
+		});
+		mockPrisma.product.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			title: "Bracelet Lune Updated",
+			slug: "bracelet-lune",
+			status: "ARCHIVED",
+			typeId: "type_123",
+			collections: [{ collectionId: "col_1", collection: { slug: "col-slug" } }],
+			skus: [{ id: "sku_1", isActive: false, inventory: 15, images: [{ id: "img_1" }] }],
+		});
+		mockPrisma.productSku.findFirst.mockResolvedValue({
+			id: "sku_1",
+			isDefault: true,
+			isActive: false,
+		});
+
+		const result = await updateProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("still rejects the active → inactive transition on the default SKU", async () => {
+		mockValidateInput.mockReturnValue({
+			data: {
+				...validatedData,
+				defaultSku: { ...validatedData.defaultSku, isActive: false },
+			},
+		});
+		mockPrisma.productSku.findFirst.mockResolvedValue({
+			id: "sku_1",
+			isDefault: true,
+			isActive: true,
+		});
+
+		const result = await updateProduct(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
+	});
+
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await updateProduct(undefined, validFormData);
@@ -314,8 +375,30 @@ describe("updateProduct", () => {
 		const URL_REFERENCED = "https://utfs.io/f/used-in-order";
 		const URL_FREE = "https://utfs.io/f/safe-to-delete";
 
-		/** Laisse l'IIFE fire-and-forget de suppression (étape 11) se résoudre. */
+		/** Laisse le callback `after()` de suppression (étape 11) se résoudre. */
 		const flushMicrotasks = () => new Promise((r) => setTimeout(r, 0));
+
+		/**
+		 * Le même mock `skuMedia.findMany` sert DEUX lectures distinctes :
+		 * - dans la tx, la capture d'appartenance (`where.skuId`) — les URLs que
+		 *   le SKU possède réellement, condition pour qu'elles partent en
+		 *   suppression (garde anti-RPC sur `deletedImageUrls`) ;
+		 * - dans la SSOT, le refcount de blobs partagés (`where.OR`).
+		 */
+		function armSkuMediaFindMany(shared: Array<{ url: string; thumbnailUrl: string | null }>) {
+			mockPrisma.skuMedia.findMany.mockImplementation((args: { where?: { skuId?: string } }) =>
+				args.where?.skuId
+					? Promise.resolve([
+							{ url: URL_REFERENCED, thumbnailUrl: null },
+							{ url: URL_FREE, thumbnailUrl: null },
+						])
+					: Promise.resolve(shared),
+			);
+		}
+
+		beforeEach(() => {
+			armSkuMediaFindMany([]);
+		});
 
 		function formDataWithDeletions() {
 			return createMockFormData({
@@ -356,6 +439,37 @@ describe("updateProduct", () => {
 			await flushMicrotasks();
 
 			expect(mockDeleteUTFiles).not.toHaveBeenCalled();
+		});
+
+		// La duplication produit/SKU recopie `url`/`thumbnailUrl` tels quels : deux
+		// lignes SkuMedia peuvent pointer le même blob. Supprimer l'image du doublon
+		// ne doit pas casser l'original.
+		it("préserve une URL encore référencée par une autre ligne SkuMedia (blob partagé)", async () => {
+			armSkuMediaFindMany([{ url: URL_REFERENCED, thumbnailUrl: null }]);
+
+			await updateProduct(undefined, formDataWithDeletions());
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).toHaveBeenCalledTimes(1);
+			expect(mockDeleteUTFiles).toHaveBeenCalledWith([URL_FREE]);
+		});
+
+		// `deletedImageUrls` vient du client : une URL que le SKU ne possédait pas
+		// (blob arbitraire visé par un appel RPC direct) ne doit JAMAIS partir en
+		// suppression, même si rien d'autre ne la référence.
+		it("ignore une URL absente des médias du SKU (garde d'appartenance)", async () => {
+			mockPrisma.skuMedia.findMany.mockImplementation((args: { where?: { skuId?: string } }) =>
+				args.where?.skuId
+					? // Le SKU ne possède QUE l'URL libre — pas l'URL « référencée »
+						Promise.resolve([{ url: URL_FREE, thumbnailUrl: null }])
+					: Promise.resolve([]),
+			);
+
+			await updateProduct(undefined, formDataWithDeletions());
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).toHaveBeenCalledTimes(1);
+			expect(mockDeleteUTFiles).toHaveBeenCalledWith([URL_FREE]);
 		});
 	});
 });

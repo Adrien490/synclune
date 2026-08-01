@@ -97,7 +97,7 @@ describe("getMaterialOptions", () => {
 					_count: {
 						select: {
 							skuMaterials: {
-								where: { sku: { isActive: true } },
+								where: { sku: { isActive: true, deletedAt: null } },
 							},
 						},
 					},
@@ -164,6 +164,8 @@ describe("getMaterialOptions", () => {
 		await getMaterialOptions();
 
 		const call = mockPrisma.material.findMany.mock.calls[0]![0];
-		expect(call.select._count.select.skuMaterials).toEqual({ where: { sku: { isActive: true } } });
+		expect(call.select._count.select.skuMaterials).toEqual({
+			where: { sku: { isActive: true, deletedAt: null } },
+		});
 	});
 });

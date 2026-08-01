@@ -13,6 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import {
 	Dialog,
+	DialogClose,
 	DialogContent,
 	DialogDescription,
 	DialogTitle,
@@ -149,14 +150,17 @@ export function QuickSearchDialog({
 
 	// Cycling placeholder through product types — disabled under reduced motion
 	// (an indefinitely auto-updating placeholder is itself "motion" per WCAG 2.2.2).
+	// Gardé sur `isOpen` : le composant reste monté à vie après la 1ʳᵉ ouverture
+	// (lazy gate) — sans la garde, l'intervalle re-rendait le dialog FERMÉ toutes
+	// les 3 s pour le reste de la session (audit recherche 2026-08-01, P3-4).
 	const [placeholderIndex, setPlaceholderIndex] = useState(0);
 	useEffect(() => {
-		if (inputValue.length > 0 || productTypes.length === 0 || shouldReduceMotion) return;
+		if (!isOpen || inputValue.length > 0 || productTypes.length === 0 || shouldReduceMotion) return;
 		const id = setInterval(() => {
 			setPlaceholderIndex((i) => (i + 1) % productTypes.length);
 		}, PLACEHOLDER_CYCLE_MS);
 		return () => clearInterval(id);
-	}, [inputValue.length, productTypes.length, shouldReduceMotion]);
+	}, [isOpen, inputValue.length, productTypes.length, shouldReduceMotion]);
 
 	const currentType = productTypes[placeholderIndex];
 	const placeholder = currentType ? `Rechercher : ${currentType.label}...` : "Rechercher un bijou…";
@@ -170,7 +174,13 @@ export function QuickSearchDialog({
 		if (saveToRecent) add(term);
 		triggerHaptic("medium");
 		startTransition(() => {
-			router.push(`/produits?search=${encodeURIComponent(term)}`);
+			// `replace`, pas `push` : l'entrée poussée à l'ouverture par
+			// `useBackButtonClose` porte l'URL de la page d'origine ; la consommer
+			// évite une pression retour morte par cycle ouvrir→naviguer
+			// (prescription CLAUDE.md § Overlays ; même règle sur les <Link> des
+			// cartes et de l'idle). Verrouillé par
+			// `close-reclaims-history.regression.test.tsx`.
+			router.replace(`/produits?search=${encodeURIComponent(term)}`);
 			close();
 		});
 	};
@@ -207,6 +217,13 @@ export function QuickSearchDialog({
 		setIsDragging(false);
 	};
 
+	// Le × est un `DialogClose` : la fermeture passe par Radix → `onOpenChange`
+	// → `handleClose` du wrapper `ui/dialog`, qui REPREND l'entrée d'historique
+	// poussée à l'ouverture. Un `close()` direct du store la laissait orpheline
+	// (une pression retour avalée par cycle). Le swipe clique ce même bouton via
+	// cette ref pour emprunter le même chemin.
+	const closeButtonRef = useRef<HTMLButtonElement>(null);
+
 	// Swipe-down-to-dismiss on mobile (triggered from header drag handle area)
 	const touchStartYRef = useRef<number | null>(null);
 	const touchDeltaYRef = useRef(0);
@@ -236,10 +253,11 @@ export function QuickSearchDialog({
 		touchStartYRef.current = null;
 		touchDeltaYRef.current = 0;
 		setIsDragging(false);
-		// A downward swipe past the threshold dismisses the dialog
+		// A downward swipe past the threshold dismisses the dialog — via le
+		// DialogClose (cf. `closeButtonRef`), pour la reprise d'historique.
 		if (delta > SWIPE_CLOSE_THRESHOLD_PX) {
 			triggerHaptic("medium");
-			handleClose();
+			closeButtonRef.current?.click();
 		}
 		// Snap back to 0 (transition handled by !isDragging)
 		setDragOffset(0);
@@ -259,6 +277,19 @@ export function QuickSearchDialog({
 					// `lastTrigger` before it blurred itself / before Radix took over).
 					e.preventDefault();
 					lastTrigger.el?.focus();
+				}}
+				onEscapeKeyDown={(e) => {
+					// « Escape en deux temps ». Radix écoute Escape sur `document` en
+					// CAPTURE : le `stopPropagation` du handler du champ (phase bulle)
+					// arrive toujours APRÈS son dismiss — l'arbitrage doit donc se faire
+					// ICI. Texte présent → on bloque le dismiss et on vide le champ ;
+					// champ vide → on laisse Radix fermer, ce qui passe par
+					// `onOpenChange` (reprise de l'entrée d'historique du wrapper).
+					// Verrouillé par `escape-two-step.regression.test.tsx`.
+					if (inputValue.length > 0) {
+						e.preventDefault();
+						searchInputRef.current?.clear();
+					}
 				}}
 				aria-busy={isPending}
 				style={{
@@ -294,17 +325,20 @@ export function QuickSearchDialog({
 						<span className="bg-muted-foreground/30 h-1.5 w-10 rounded-full" />
 					</div>
 					<div className="flex h-14 items-center px-4">
-						{/* Single close button: leftmost on mobile, rightmost on desktop (via order) */}
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={handleClose}
-							disabled={isPending}
-							className="order-first size-11 shrink-0 md:order-last"
-							aria-label="Fermer"
-						>
-							<X className="size-5" />
-						</Button>
+						{/* Single close button: leftmost on mobile, rightmost on desktop (via order).
+							 DialogClose (pas un onClick → close()) : cf. `closeButtonRef`. */}
+						<DialogClose asChild>
+							<Button
+								ref={closeButtonRef}
+								variant="ghost"
+								size="icon"
+								disabled={isPending}
+								className="order-first size-11 shrink-0 md:order-last"
+								aria-label="Fermer"
+							>
+								<X className="size-5" />
+							</Button>
+						</DialogClose>
 
 						<DialogTitle className="font-display flex-1 text-center text-lg font-medium md:text-left">
 							Rechercher

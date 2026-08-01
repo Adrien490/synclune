@@ -57,6 +57,20 @@ export interface UseVideoThumbnailUploadReturn {
 	cleanupOrphanThumbnail: (thumbnailUrl: string) => void;
 }
 
+const cleanupOrphanThumbnail = (thumbnailUrl: string): void => {
+	void (async () => {
+		try {
+			const formData = new FormData();
+			formData.append("fileUrl", thumbnailUrl);
+			await deleteUploadThingFile(undefined, formData);
+		} catch (cleanupError) {
+			if (process.env.NODE_ENV === "development") {
+				console.warn("[useVideoThumbnailUpload] Cleanup thumbnail orphelin échoué:", cleanupError);
+			}
+		}
+	})();
+};
+
 export function useVideoThumbnailUpload(
 	options: UseVideoThumbnailUploadOptions,
 ): UseVideoThumbnailUploadReturn {
@@ -107,23 +121,6 @@ export function useVideoThumbnailUpload(
 			}
 			return {};
 		}
-	};
-
-	const cleanupOrphanThumbnail = (thumbnailUrl: string): void => {
-		void (async () => {
-			try {
-				const formData = new FormData();
-				formData.append("fileUrl", thumbnailUrl);
-				await deleteUploadThingFile(undefined, formData);
-			} catch (cleanupError) {
-				if (process.env.NODE_ENV === "development") {
-					console.warn(
-						"[useVideoThumbnailUpload] Cleanup thumbnail orphelin échoué:",
-						cleanupError,
-					);
-				}
-			}
-		})();
 	};
 
 	return { uploadThumbnailForVideo, cleanupOrphanThumbnail };

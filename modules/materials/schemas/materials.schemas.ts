@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
@@ -57,7 +58,7 @@ export const getMaterialsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_MATERIALS_DEFAULT_PER_PAGE, GET_MATERIALS_MAX_RESULTS_PER_PAGE),
 	sortBy: materialSortBySchema.optional().default(GET_MATERIALS_DEFAULT_SORT_BY),
-	search: z.string().max(100).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: materialFiltersSchema.optional().default({}),
 });
 

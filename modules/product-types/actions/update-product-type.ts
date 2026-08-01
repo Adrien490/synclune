@@ -56,10 +56,15 @@ export async function updateProductType(
 			);
 		}
 
+		// Sanitizer AVANT l'unicité et le slug : l'update écrivait
+		// `sanitizeText(label)` alors que les deux contrôles portaient sur le
+		// label brut (même raison que create-product-type).
+		const sanitizedLabel = sanitizeText(validatedData.label);
+
 		// 7. Verifier l'unicite du label (case-insensitive, sauf si c'est le meme)
-		if (validatedData.label.toLowerCase() !== existingType.label.toLowerCase()) {
+		if (sanitizedLabel.toLowerCase() !== existingType.label.toLowerCase()) {
 			const labelExists = await prisma.productType.findFirst({
-				where: { label: { equals: validatedData.label, mode: "insensitive" } },
+				where: { label: { equals: sanitizedLabel, mode: "insensitive" } },
 			});
 
 			if (labelExists) {
@@ -67,17 +72,21 @@ export async function updateProductType(
 			}
 		}
 
-		// 8. Generer un nouveau slug si le label a change
+		// 8. Generer un nouveau slug si le label a change.
+		// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
+		// son PROPRE slug et suffixait `-2` — l'URL de la catégorie changeait.
 		const slug =
-			validatedData.label !== existingType.label
-				? await generateSlug(prisma, "productType", validatedData.label)
+			sanitizedLabel !== existingType.label
+				? await generateSlug(prisma, "productType", sanitizedLabel, {
+						excludeId: validatedData.id,
+					})
 				: existingType.slug;
 
 		// 9. Mettre a jour le type (updateMany atomique avec guard isSystem=false pour eviter TOCTOU)
 		const updateResult = await prisma.productType.updateMany({
 			where: { id: validatedData.id, isSystem: false },
 			data: {
-				label: sanitizeText(validatedData.label),
+				label: sanitizedLabel,
 				description: validatedData.description ? sanitizeText(validatedData.description) : null,
 				slug,
 			},

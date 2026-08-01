@@ -2,6 +2,7 @@ import { logger } from "@/shared/lib/logger";
 import { CollectionStatus, type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
@@ -40,7 +41,9 @@ export { COLLECTIONS_SORT_LABELS as SORT_LABELS } from "../constants/collection.
  */
 export async function getCollections(
 	params: GetCollectionsParams,
-	options?: { isAdmin?: boolean },
+	// `isAdmin?: false` (littéral, pas `boolean`) : ce paramètre ne peut que baisser
+	// le privilège — cf. la justification détaillée dans `products/data/get-products.ts`.
+	options?: { isAdmin?: false },
 ): Promise<GetCollectionsReturn> {
 	const validation = getCollectionsSchema.safeParse(params);
 
@@ -63,19 +66,42 @@ export async function getCollections(
 		: {
 				...validation.data,
 				filters: {
-					// `hasProducts` d'abord, à `undefined` : le `.transform()` du schéma en fait
-					// une propriété REQUISE dont la valeur peut être `undefined`, pas une
-					// propriété optionnelle. Un simple `{ ...filters, status }` omet donc la clé
-					// quand `filters` est absent, et le type ne passe plus. Le spread qui suit
-					// la réécrit dès qu'elle existe, et tout champ ajouté au schéma plus tard est
-					// repris automatiquement.
+					// `hasProducts` d'abord, à `undefined`, avant le spread : historiquement
+					// le `.transform()` du schéma en faisait une propriété REQUISE (valeur
+					// possiblement `undefined`), et un simple `{ ...filters, status }` omettait
+					// la clé quand `filters` était absent. Le schéma est depuis passé à
+					// `formBooleanSchema.optional()` (plus de transform), mais l'ordre reste
+					// inoffensif et robuste à un retour en arrière du schéma.
 					hasProducts: undefined,
 					...validation.data.filters,
 					status: CollectionStatus.PUBLIC,
 				},
 			};
 
-	return fetchCollections(validatedParams);
+	// Repli HORS du scope de cache. À l'intérieur, la page vide d'une panne était
+	// mise en cache sous le profil `reference` (24 h revalidate / 7 j stale) : la
+	// page /collections pouvait annoncer « aucune collection » jusqu'au lendemain,
+	// sans rien qui la distingue d'une boutique réellement sans collection.
+	try {
+		return await fetchCollections(validatedParams);
+	} catch (err) {
+		// Lecture avortée à la clôture d'un prerender (build) : signal de contrôle
+		// Next, le rendu est jeté — repli silencieux, pas un incident à logger.
+		if (!isPrerenderInterrupt(err)) {
+			logger.error("Failed to fetch collections", err, { service: "getCollections" });
+		}
+
+		return {
+			collections: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+			totalCount: 0,
+		};
+	}
 }
 
 /**
@@ -85,7 +111,8 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 	"use cache";
 	cacheCollections();
 
-	try {
+	// ⚠️ AUCUN try/catch ici : le repli appartient à `getCollections`, hors cache.
+	{
 		const where = buildCollectionWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
@@ -126,18 +153,5 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 		);
 
 		return { collections: items, pagination, totalCount };
-	} catch (err) {
-		logger.error("Failed to fetch collections", err, { service: "fetchCollections" });
-
-		return {
-			collections: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-			totalCount: 0,
-		};
 	}
 }

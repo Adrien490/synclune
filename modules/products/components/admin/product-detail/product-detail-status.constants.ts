@@ -1,10 +1,22 @@
-import type { GetProductReturn } from "@/modules/products/types/product.types";
+import type { ProductStatus } from "@/app/generated/prisma/enums";
+import {
+	PRODUCT_STATUS_LABELS,
+	PRODUCT_STATUS_VARIANTS,
+} from "@/modules/products/constants/product-status-display";
+import type { BadgeVariant } from "@/shared/types/badge.types";
 
+/**
+ * Vue fusionnée `{label, variant}` dérivée de la SSOT
+ * `product-status-display.ts` — ne redéclare aucun libellé.
+ */
 export const PRODUCT_STATUS_CONFIG: Record<
-	GetProductReturn["status"],
-	{ label: string; variant: "default" | "secondary" | "outline" }
+	ProductStatus,
+	{ label: string; variant: BadgeVariant }
 > = {
-	PUBLIC: { label: "Public", variant: "default" },
-	DRAFT: { label: "Brouillon", variant: "secondary" },
-	ARCHIVED: { label: "Archivé", variant: "outline" },
+	PUBLIC: { label: PRODUCT_STATUS_LABELS.PUBLIC, variant: PRODUCT_STATUS_VARIANTS.PUBLIC },
+	DRAFT: { label: PRODUCT_STATUS_LABELS.DRAFT, variant: PRODUCT_STATUS_VARIANTS.DRAFT },
+	ARCHIVED: {
+		label: PRODUCT_STATUS_LABELS.ARCHIVED,
+		variant: PRODUCT_STATUS_VARIANTS.ARCHIVED,
+	},
 };

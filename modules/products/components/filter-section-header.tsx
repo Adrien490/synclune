@@ -65,7 +65,7 @@ export function FilterSection({
 					<button
 						type="button"
 						onClick={onReset}
-						className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 absolute top-1/2 right-8 flex size-11 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
+						className="text-muted-foreground can-hover:hover:text-destructive can-hover:hover:bg-destructive/10 focus-ring absolute top-1/2 right-8 flex size-11 -translate-y-1/2 items-center justify-center rounded-md transition-colors"
 						aria-label={`Effacer le filtre ${label}`}
 					>
 						<X className="size-3" aria-hidden="true" />

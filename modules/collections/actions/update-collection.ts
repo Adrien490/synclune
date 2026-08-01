@@ -8,7 +8,6 @@ import { validateInput, handleActionError, success, error, notFound } from "@/sh
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { generateSlug } from "@/shared/utils/generate-slug";
 import { sanitizeText } from "@/shared/lib/sanitize";
 
@@ -72,8 +71,12 @@ export async function updateCollection(
 			if (slugChanged && existingCollection.status === CollectionStatus.PUBLIC) {
 				throw new Error("PUBLIC_RENAME_BLOCKED");
 			}
+			// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
+			// son PROPRE slug et suffixait `-2` — l'URL changeait sans raison.
 			const generatedSlug = slugChanged
-				? await generateSlug(tx, "collection", sanitizedName)
+				? await generateSlug(tx, "collection", sanitizedName, {
+						excludeId: validatedData.id,
+					})
 				: existingCollection.slug;
 
 			// Mettre a jour la collection
@@ -98,7 +101,6 @@ export async function updateCollection(
 		if (oldSlug) {
 			getCollectionInvalidationTags(oldSlug).forEach((tag) => updateTag(tag));
 		}
-		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		return success("Collection modifiée avec succès");
 	} catch (e) {

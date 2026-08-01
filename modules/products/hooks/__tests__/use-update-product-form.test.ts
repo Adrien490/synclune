@@ -6,8 +6,9 @@ import { cleanup } from "@testing-library/react";
 // Hoisted mocks
 // ============================================================================
 
-const { mockUpdateProduct } = vi.hoisted(() => ({
+const { mockUpdateProduct, mockUseAppForm } = vi.hoisted(() => ({
 	mockUpdateProduct: vi.fn(),
+	mockUseAppForm: vi.fn(),
 }));
 
 vi.mock("@/modules/products/actions/update-product", () => ({
@@ -25,9 +26,12 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/shared/components/forms", () => ({
-	useAppForm: () => ({
-		store: { subscribe: vi.fn(), getState: vi.fn(() => ({ errors: [] })) },
-	}),
+	useAppForm: (options: unknown) => {
+		mockUseAppForm(options);
+		return {
+			store: { subscribe: vi.fn(), getState: vi.fn(() => ({ errors: [] })) },
+		};
+	},
 }));
 
 vi.mock("@tanstack/react-form-nextjs", () => ({
@@ -196,6 +200,51 @@ describe("useUpdateProductForm", () => {
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	// Les actions font deleteMany + recréation des SkuMedia : un remap qui omet
+	// width/height remettait les colonnes à NULL à chaque édition du produit.
+	it("préserve width/height des images existantes dans defaultValues.media", () => {
+		const product = makeProduct({
+			skus: [
+				{
+					id: "sku-1",
+					isDefault: true,
+					isActive: true,
+					priceInclTax: 10000,
+					compareAtPrice: null,
+					inventory: 5,
+					colors: [],
+					materials: [],
+					size: null,
+					images: [
+						{
+							id: "img-1",
+							url: "https://utfs.io/f/image.jpg",
+							thumbnailUrl: null,
+							blurDataUrl: null,
+							altText: null,
+							mediaType: "IMAGE",
+							isPrimary: true,
+							width: 1600,
+							height: 1200,
+						},
+					],
+				},
+			],
+		} as unknown as Partial<GetProductReturn>);
+
+		renderHook(() => useUpdateProductForm({ product }));
+
+		// Le mock d'useAppForm ne matérialise pas d'état : on asserte les
+		// defaultValues réellement passées par le hook.
+		const options = mockUseAppForm.mock.calls[0]?.[0] as {
+			defaultValues: { defaultSku: { media: Array<Record<string, unknown>> } };
+		};
+		expect(options.defaultValues.defaultSku.media[0]).toMatchObject({
+			width: 1600,
+			height: 1200,
+		});
 	});
 
 	it("works when product has no skus", () => {

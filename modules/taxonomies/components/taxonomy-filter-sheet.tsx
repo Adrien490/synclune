@@ -79,9 +79,10 @@ function TaxonomyFilterSheetInner({
 		const params = new URLSearchParams(searchParams.toString());
 		params.delete("filter_isActive");
 		// La pagination est curseur : changer de filtre invalide le curseur courant.
+		// (`page` n'existe pas dans ce modèle — l'ancien `params.set("page", "1")`
+		// écrivait un paramètre d'URL mort.)
 		params.delete("cursor");
 		params.delete("direction");
-		params.set("page", "1");
 
 		if (isActive !== "all") {
 			params.set("filter_isActive", isActive === "active" ? "true" : "false");

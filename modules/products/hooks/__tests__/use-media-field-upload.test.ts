@@ -105,6 +105,34 @@ describe("useMediaFieldUpload", () => {
 				expect.objectContaining({ url: "https://cdn.example.com/img2.jpg", mediaType: "IMAGE" }),
 			);
 		});
+
+		// Le serveur mesure width/height à l'upload ; un pushValue qui les omet
+		// les perdait dès l'ajout, et l'action les persistait à NULL.
+		it("transmet width/height du résultat d'upload à pushValue", async () => {
+			const mockUploadMedia = vi.fn().mockResolvedValue([
+				{
+					...createUploadResult("https://cdn.example.com/img1.jpg", "IMAGE"),
+					width: 1600,
+					height: 1200,
+				},
+			]);
+			const field = createMockField();
+
+			const { result } = renderHook(() =>
+				useMediaFieldUpload({
+					uploadMedia: mockUploadMedia,
+					getAltText: () => undefined,
+				}),
+			);
+
+			await act(async () => {
+				await result.current.handleUpload([createImageFile("img1.jpg")], field);
+			});
+
+			expect(field.pushValue).toHaveBeenCalledWith(
+				expect.objectContaining({ width: 1600, height: 1200 }),
+			);
+		});
 	});
 
 	describe("vidéo en première position sur un champ vide", () => {

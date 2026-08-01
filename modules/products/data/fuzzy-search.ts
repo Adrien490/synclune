@@ -230,7 +230,14 @@ export async function fuzzySearchProductIds(
 					error,
 					{ service: "fuzzySearchProductIds", durationMs },
 				);
-				return { ids: [], totalCount: 0 };
+				// ⚠️ RETHROW, pas de retour vide : cette fonction s'exécute dans un
+				// scope `"use cache"` — retourner `{ids: []}` mettait un ZÉRO-RÉSULTAT
+				// de panne en cache pour ce terme (profil `catalog`, jusqu'à 15 min).
+				// Une erreur jetée, elle, n'est jamais mise en cache. Les appelants
+				// dégradent hors cache : `buildSearchConditions` → recherche exacte
+				// complète, `quickSearchProducts` → `{kind:"error"}` non caché.
+				// Audit recherche 2026-08-01, P1-3.
+				throw error;
 			}
 		},
 	);
@@ -293,6 +300,7 @@ async function fuzzySearchProductIdsIlikeFallback(
 			service: "fuzzySearchProductIds.fallback",
 			durationMs,
 		});
-		return { ids: [], totalCount: 0 };
+		// Rethrow : même règle que le chemin pg_trgm ci-dessus (scope "use cache").
+		throw error;
 	}
 }

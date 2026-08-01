@@ -1,16 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { useStore } from "@tanstack/react-form-nextjs";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import { useUpdateSkuPrice } from "@/modules/skus/hooks/use-update-sku-price";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
+import { InputGroupAddon } from "@/shared/components/ui/input-group";
 import { Kbd } from "@/shared/components/ui/kbd";
-import { Label } from "@/shared/components/ui/label";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -19,6 +20,8 @@ import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
+
+const COMPARE_AT_PRICE_ERROR = "Le prix barré doit être supérieur au prix de vente";
 
 interface UpdatePriceFormProps {
 	skuId: string;
@@ -31,8 +34,21 @@ interface UpdatePriceFormProps {
 	className?: string;
 }
 
+/**
+ * Les défauts sont des strings `.toFixed(2)` (affichage "50.00") tandis que
+ * `InputGroupField type="number"` renvoie `number | null` après édition.
+ */
+type PriceFieldValue = string | number | null;
+
 function toEuros(cents: number | null): string {
 	return cents ? (cents / 100).toFixed(2) : "";
+}
+
+/** Parse une valeur de champ (string des défauts ou number TanStack) en nombre, sinon null. */
+function toNumber(value: PriceFieldValue): number | null {
+	if (value === null || value === "") return null;
+	const parsed = typeof value === "number" ? value : parseFloat(value);
+	return Number.isNaN(parsed) ? null : parsed;
 }
 
 export function UpdatePriceForm({
@@ -53,9 +69,6 @@ export function UpdatePriceForm({
 	const initialPrice = (currentPrice / 100).toFixed(2);
 	const initialCompareAtPrice = toEuros(currentCompareAtPrice);
 
-	const [price, setPrice] = useState(initialPrice);
-	const [compareAtPrice, setCompareAtPrice] = useState(initialCompareAtPrice);
-
 	const { updatePrice, isPending, state } = useUpdateSkuPrice({
 		onSuccess: () => {
 			// Libère la garde : les champs restent « dirty » vis-à-vis des props jusqu'à
@@ -73,10 +86,21 @@ export function UpdatePriceForm({
 
 	const serverErrors = useServerFieldErrors({ state });
 
-	const priceValue = parseFloat(price) || 0;
-	const compareAtPriceValue = parseFloat(compareAtPrice) || 0;
-	const isValid = priceValue > 0 && (!compareAtPrice || compareAtPriceValue > priceValue);
-	const isDirty = price !== initialPrice || compareAtPrice !== initialCompareAtPrice;
+	const form = useAppForm({
+		defaultValues: {
+			price: initialPrice as PriceFieldValue,
+			compareAtPrice: initialCompareAtPrice as PriceFieldValue,
+		},
+	});
+
+	const price = useStore(form.store, (s) => s.values.price);
+	const compareAtPrice = useStore(form.store, (s) => s.values.compareAtPrice);
+	const isDirty = useStore(form.store, (s) => s.isDirty);
+
+	const priceValue = toNumber(price) ?? 0;
+	const compareAtPriceValue = toNumber(compareAtPrice) ?? 0;
+	const hasCompareAtPrice = compareAtPrice !== null && compareAtPrice !== "";
+	const isValid = priceValue > 0 && (!hasCompareAtPrice || compareAtPriceValue > priceValue);
 
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
 
@@ -95,13 +119,11 @@ export function UpdatePriceForm({
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!isValid) return;
-		const priceInEuros = parseFloat(price);
-		const compareAtPriceInEuros = compareAtPrice ? parseFloat(compareAtPrice) : null;
-		if (isNaN(priceInEuros) || priceInEuros <= 0) return;
+		const priceInEuros = toNumber(price);
+		const compareAtPriceInEuros = hasCompareAtPrice ? toNumber(compareAtPrice) : null;
+		if (priceInEuros === null || priceInEuros <= 0) return;
 		updatePrice(skuId, skuName, priceInEuros, compareAtPriceInEuros);
 	};
-
-	const compareAtPriceError = compareAtPrice && compareAtPriceValue <= priceValue;
 
 	return (
 		<form ref={formRef} onSubmit={handleSubmit} className={cn("space-y-4", className)}>
@@ -111,65 +133,59 @@ export function UpdatePriceForm({
 
 			<FormServerErrorAlert errors={serverErrors} />
 
-			<div>
-				<Label htmlFor="price" className="text-sm font-medium">
-					Prix final (€)
-				</Label>
-				<div className="relative mt-2">
-					<Input
-						id="price"
+			<form.AppField name="price">
+				{(field) => (
+					<field.InputGroupField
+						label="Prix final (€)"
 						type="number"
 						step="0.01"
 						min="0.01"
-						value={price}
-						onChange={(e) => setPrice(e.target.value)}
-						className="pr-8 text-lg font-semibold"
 						disabled={isPending}
-					/>
-					<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">€</span>
-				</div>
-			</div>
+						className="text-lg font-semibold"
+					>
+						<InputGroupAddon align="inline-end">€</InputGroupAddon>
+					</field.InputGroupField>
+				)}
+			</form.AppField>
 
-			<div>
-				<Label htmlFor="compareAtPrice" className="text-sm font-medium">
-					Prix barré (optionnel)
-				</Label>
-				<div className="relative mt-2">
-					<Input
-						id="compareAtPrice"
+			<form.AppField
+				name="compareAtPrice"
+				validators={{
+					onChangeListenTo: ["price"],
+					onChange: ({ value, fieldApi }) => {
+						const compareAt = toNumber(value);
+						if (compareAt === null) return undefined;
+						const priceInEuros = toNumber(fieldApi.form.getFieldValue("price"));
+						return priceInEuros !== null && compareAt <= priceInEuros
+							? COMPARE_AT_PRICE_ERROR
+							: undefined;
+					},
+				}}
+			>
+				{(field) => (
+					<field.InputGroupField
+						label="Prix barré (optionnel)"
 						type="number"
 						step="0.01"
 						min="0"
-						value={compareAtPrice}
-						onChange={(e) => setCompareAtPrice(e.target.value)}
 						placeholder="Laisser vide pour aucun"
-						className="pr-8"
 						disabled={isPending}
-						aria-invalid={compareAtPriceError ? true : undefined}
-						aria-describedby={compareAtPriceError ? "compareAtPrice-error" : undefined}
-					/>
-					<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">€</span>
-				</div>
-				{compareAtPriceError && (
-					<p id="compareAtPrice-error" role="alert" className="text-destructive mt-1 text-sm">
-						Le prix barré doit être supérieur au prix de vente
-					</p>
+					>
+						<InputGroupAddon align="inline-end">€</InputGroupAddon>
+					</field.InputGroupField>
 				)}
-			</div>
+			</form.AppField>
 
 			<AdminFormFooter pending={isPending}>
 				<div className="flex justify-end">
 					<Button
 						type="submit"
-						size="input"
 						disabled={!isValid || isPending}
 						aria-busy={isPending}
 						onClick={() => haptic("medium")}
 						className="w-full sm:w-auto sm:min-w-56"
 					>
-						{isPending && (
-							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						)}
+						{isPending && <Spinner presentational />}
 						<span>{isPending ? "Enregistrement…" : "Enregistrer"}</span>
 						{!isPending && (
 							<Kbd className="ml-2 hidden lg:inline-flex" aria-hidden="true">

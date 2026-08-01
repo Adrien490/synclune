@@ -1,3 +1,4 @@
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { Prisma } from "@/app/generated/prisma/client";
 import type { CollectionFilters, GetCollectionsParams } from "../types/collection.types";
 
@@ -9,7 +10,8 @@ export function buildCollectionSearchConditions(
 	search: string,
 ): Prisma.CollectionWhereInput | null {
 	if (!search || search.trim().length === 0) return null;
-	const searchTerm = search.trim();
+	// Echappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3, cf. escape-like-pattern.ts).
+	const searchTerm = escapeLikePattern(search.trim());
 
 	return {
 		OR: [

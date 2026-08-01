@@ -46,9 +46,12 @@ export async function updateProductCollections(
 			collectionIds,
 		});
 		if ("error" in validation) return validation.error;
-		// 4. Vérifier que le produit existe
+		// 4. Vérifier que le produit existe.
+		// `deletedAt: null` — `delete-product` purge délibérément les ProductCollection
+		// d'un produit supprimé (elles fuient dans les selects collections, filtrés sur
+		// status seul) : sans ce filtre, cette action les recréait.
 		const product = await prisma.product.findUnique({
-			where: { id: validation.data.productId },
+			where: { id: validation.data.productId, deletedAt: null },
 			select: { id: true, title: true, slug: true },
 		});
 

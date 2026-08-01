@@ -44,9 +44,9 @@ const WCAG_LABEL: Record<WcagRating, string> = {
 };
 
 const WCAG_CLASS: Record<WcagRating, string> = {
-	AAA: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-	AA: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-	"AA-large": "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+	AAA: "bg-success/10 text-success",
+	AA: "bg-success/10 text-success",
+	"AA-large": "bg-warning/15 text-warning",
 	faible: "bg-muted text-muted-foreground",
 };
 

@@ -103,7 +103,7 @@ vi.mock("@/shared/components/ui/label", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Loader2: () => <span data-testid="icon-loader" />,
+	Loader2Icon: () => <span data-testid="icon-loader" />,
 }));
 
 vi.mock("@/shared/utils/cn", () => ({

@@ -11,11 +11,16 @@ import {
 	GET_PRODUCTS_DEFAULT_SORT_BY,
 } from "../constants/product.constants";
 import { getProducts } from "../data/get-products";
+import { cursorValueSchema } from "@/shared/schemas/pagination-schema";
 import { productFiltersSchema } from "../schemas/product-query.schemas";
 import type { Product, SortField } from "../types/product.types";
 
 const loadMoreProductsSchema = z.object({
-	cursor: z.cuid2(),
+	// ⚠️ `cursorValueSchema` (SSOT), jamais `z.cuid2()`. Un curseur est un id
+	// OPAQUE : il vient d'un `id` Prisma cuid2 aujourd'hui, mais la SSOT documente
+	// précisément l'incident où une contrainte trop étroite rendait « Page suivante »
+	// no-op. Re-poser une contrainte ici rouvre exactement cette porte.
+	cursor: cursorValueSchema,
 	sortBy: z.string().optional(),
 	search: z.string().max(200).optional(),
 	filters: productFiltersSchema.optional(),

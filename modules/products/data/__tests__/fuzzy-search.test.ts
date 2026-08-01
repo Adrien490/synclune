@@ -157,11 +157,15 @@ describe("fuzzySearchProductIds", () => {
 
 	// ─── Error handling ──────────────────────────────────────
 
-	it("returns empty result on database error", async () => {
+	// Erreur = REJET, jamais un `{ids: []}` : la fonction s'exécute dans un scope
+	// `"use cache"` — retourner un vide sur panne figeait un zéro-résultat en
+	// cache pour ce terme (audit recherche 2026-08-01, P1-3, cf.
+	// quick-search-error-not-cached.regression.test.ts). Les appelants dégradent
+	// hors cache.
+	it("rejects on database error (after logging)", async () => {
 		mockTransaction.mockRejectedValue(new Error("DB connection failed"));
 
-		const result = await fuzzySearchProductIds("collier");
-		expect(result).toEqual({ ids: [], totalCount: 0 });
+		await expect(fuzzySearchProductIds("collier")).rejects.toThrow("DB connection failed");
 		expect(mockLogger.error).toHaveBeenCalledWith(
 			expect.stringContaining("Fuzzy search error"),
 			expect.any(Error),
@@ -169,11 +173,10 @@ describe("fuzzySearchProductIds", () => {
 		);
 	});
 
-	it("returns empty result on timeout", async () => {
+	it("rejects on timeout", async () => {
 		mockTransaction.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 5000)));
 
-		const result = await fuzzySearchProductIds("collier");
-		expect(result).toEqual({ ids: [], totalCount: 0 });
+		await expect(fuzzySearchProductIds("collier")).rejects.toThrow("Fuzzy search timeout");
 	});
 
 	// ─── Multi-word behavior ──────────────────────────────────
@@ -236,12 +239,10 @@ describe("fuzzySearchProductIds", () => {
 			expect(result).toEqual({ ids: [], totalCount: 0 });
 		});
 
-		it("returns empty result on fallback DB error (silent catch)", async () => {
+		it("rejects on fallback DB error (after logging) — même règle que le chemin pg_trgm", async () => {
 			mockQueryRaw.mockRejectedValue(new Error("connection refused"));
 
-			const result = await fuzzySearchProductIds("collier");
-
-			expect(result).toEqual({ ids: [], totalCount: 0 });
+			await expect(fuzzySearchProductIds("collier")).rejects.toThrow("connection refused");
 			expect(mockLogger.error).toHaveBeenCalledWith(
 				expect.stringContaining("Fuzzy fallback error"),
 				expect.any(Error),

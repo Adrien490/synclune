@@ -27,18 +27,45 @@ interface UseKeyboardNavigationOptions {
  * focus réel est le pattern natif : zéro ARIA, annonce garantie, et `Enter`
  * redevient l'activation native du lien/bouton.
  */
+/** Déplacement commun aux deux modes ; renvoie l'index retenu, ou `null`. */
+const computeNextIndex = (key: string, count: number, current: number): number | null => {
+	switch (key) {
+		case "ArrowDown":
+			return current < count - 1 ? current + 1 : 0;
+		case "ArrowUp":
+			return current > 0 ? current - 1 : count - 1;
+		case "Home":
+			return 0;
+		case "End":
+			return count - 1;
+		default:
+			return null;
+	}
+};
+
 export function useKeyboardNavigation({
 	isSearchMode,
 	focusSearchInput,
 }: UseKeyboardNavigationOptions) {
 	const [activeIndex, setActiveIndex] = useState(-1);
-	const contentRef = useRef<HTMLDivElement>(null);
+	// Nœud conteneur en ÉTAT (callback ref), pas en `useRef` : le conteneur vit
+	// dans `DialogContent`, que Radix démonte à chaque fermeture (Portal), alors
+	// que ce hook reste monté à vie après la première ouverture (lazy gate). Un
+	// effet `[]` lisant `contentRef.current` ne voyait que le nœud de la 1ʳᵉ
+	// ouverture : à la réouverture, observer et focusables pointaient des
+	// éléments détachés — navigation clavier morte dès la 2ᵉ ouverture.
+	// Verrouillé par `keyboard-navigation-reopen.regression.test.tsx`.
+	const [containerNode, setContainerNode] = useState<HTMLDivElement | null>(null);
 	const focusablesRef = useRef<HTMLElement[]>([]);
 
-	// Cache focusable elements and refresh when DOM content changes
+	// Cache focusable elements and refresh when DOM content changes.
+	// Re-runs on every (re)attach of the results container.
 	useEffect(() => {
-		const container = contentRef.current;
-		if (!container) return;
+		const container = containerNode;
+		if (!container) {
+			focusablesRef.current = [];
+			return;
+		}
 
 		const refresh = () => {
 			const elements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
@@ -57,7 +84,7 @@ export function useKeyboardNavigation({
 		const observer = new MutationObserver(refresh);
 		observer.observe(container, { childList: true, subtree: true });
 		return () => observer.disconnect();
-	}, []);
+	}, [containerNode]);
 
 	// Sync `data-active` (visuel) ET `aria-selected` (ARIA) sur l'option courante.
 	//
@@ -67,7 +94,7 @@ export function useKeyboardNavigation({
 	// `isActive` dans chaque composant tient en quelques lignes et couvre tous les
 	// sites d'un coup — la liste des options est déjà maintenue par ce hook.
 	useEffect(() => {
-		const container = contentRef.current;
+		const container = containerNode;
 		if (!container) return;
 
 		const prev = container.querySelector('[data-active="true"]');
@@ -84,12 +111,12 @@ export function useKeyboardNavigation({
 				el.setAttribute("aria-selected", "true");
 			}
 		}
-	}, [activeIndex]);
+	}, [activeIndex, containerNode]);
 
 	// Survol : uniquement en mode recherche. En idle le roving pilote le focus
 	// réel — laisser la souris le voler ferait sauter le focus sous le curseur.
 	useEffect(() => {
-		const container = contentRef.current;
+		const container = containerNode;
 		if (!container || !isSearchMode) return;
 
 		const handleMouseOver = (e: MouseEvent) => {
@@ -104,23 +131,7 @@ export function useKeyboardNavigation({
 
 		container.addEventListener("mouseover", handleMouseOver);
 		return () => container.removeEventListener("mouseover", handleMouseOver);
-	}, [isSearchMode]);
-
-	/** Déplacement commun aux deux modes ; renvoie l'index retenu, ou `null`. */
-	const computeNextIndex = (key: string, count: number, current: number): number | null => {
-		switch (key) {
-			case "ArrowDown":
-				return current < count - 1 ? current + 1 : 0;
-			case "ArrowUp":
-				return current > 0 ? current - 1 : count - 1;
-			case "Home":
-				return 0;
-			case "End":
-				return count - 1;
-			default:
-				return null;
-		}
-	};
+	}, [isSearchMode, containerNode]);
 
 	// Bound to the search <input> onKeyDown: the input keeps focus (ARIA 1.2
 	// combobox / aria-activedescendant pattern), so the handler must live on the
@@ -194,7 +205,9 @@ export function useKeyboardNavigation({
 	const activeDescendantId = isSearchMode && activeIndex >= 0 ? `qs-nav-${activeIndex}` : undefined;
 
 	return {
-		contentRef,
+		// Callback ref : chaque (re)montage du conteneur re-déclenche l'effet
+		// d'indexation ci-dessus. `setState` est stable, utilisable tel quel.
+		contentRef: setContainerNode,
 		handleArrowNavigation,
 		handleContentKeyDown,
 		resetActiveIndex,

@@ -83,7 +83,10 @@ describe("getCollectionInvalidationTags", () => {
 		expect(tags).toContain("collection-ete-2024-products");
 		expect(tags).toContain("products-list");
 		expect(tags).toContain("admin-badges");
-		expect(tags).toHaveLength(6);
+		// Mega-menu : images de collection triées isFeatured desc — sans ce tag,
+		// setFeaturedProduct laissait la navbar périmée jusqu'à 24 h.
+		expect(tags).toContain("navbar-menu");
+		expect(tags).toHaveLength(7);
 	});
 
 	it("uses the slug in DETAIL and PRODUCTS tags", () => {

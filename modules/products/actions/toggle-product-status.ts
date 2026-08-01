@@ -78,6 +78,11 @@ export async function toggleProductStatus(
 						id: true,
 						isActive: true,
 						inventory: true,
+						// Cascade cache : le KPI « produits distincts » des couleurs et
+						// matériaux ne compte que les SKUs actifs — publier ou archiver
+						// le produit le fait bouger.
+						colors: { select: { colorId: true } },
+						materials: { select: { materialId: true } },
 						// MEDIA-AUDIT-002 : on charge le type de chaque media (pas seulement
 						// l'image primaire) pour que validateProductForPublication exige une
 						// vraie image (mediaType IMAGE), pas une video isPrimary.
@@ -156,7 +161,12 @@ export async function toggleProductStatus(
 		});
 
 		// 7. Invalidate cache tags (invalidation ciblee)
-		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id);
+		const productTags = getProductInvalidationTags(existingProduct.slug, existingProduct.id, {
+			affectedColorIds: existingProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId)),
+			affectedMaterialIds: existingProduct.skus.flatMap((sku) =>
+				sku.materials.map((m) => m.materialId),
+			),
+		});
 		productTags.forEach((tag) => updateTag(tag));
 
 		// 7.1 Invalider les caches des collections associees

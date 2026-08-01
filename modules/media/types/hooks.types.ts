@@ -14,6 +14,14 @@ export interface MediaItem {
 	mediaType: "IMAGE" | "VIDEO";
 	thumbnailUrl: string | undefined;
 	blurDataUrl: string | undefined;
+	/**
+	 * Dimensions intrinsèques lues à l'upload (absentes sur un média legacy).
+	 * Doivent transiter par CHAQUE remap de la couche formulaire : les actions
+	 * font deleteMany + recréation, donc tout maillon qui les omet remet les
+	 * colonnes à NULL à la première édition (et efface le backfill).
+	 */
+	width?: number | null;
+	height?: number | null;
 }
 
 // ============================================================================

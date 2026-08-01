@@ -1,6 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -43,12 +44,31 @@ export type { GetProductTypesParams, GetProductTypesReturn } from "../types/prod
  */
 export async function getProductTypes(
 	params: GetProductTypesParamsInput,
-	options?: { isAdmin?: boolean },
+	// `isAdmin?: false` (littéral, pas `boolean`) : ce paramètre ne peut que baisser
+	// le privilège — cf. la justification détaillée dans `products/data/get-products.ts`.
+	options?: { isAdmin?: false },
 ): Promise<GetProductTypesReturn> {
 	const validation = getProductTypesSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error("Invalid parameters");
+		// Fail-safe, pas fail-closed : les params viennent des searchParams URL
+		// (forgeables). Un `throw` ici cassait la page entière (error boundary)
+		// sur un simple `?search=` trop long — contrat aligné sur
+		// `filters-fail-safe.regression.test.ts` (orders). Audit recherche
+		// 2026-08-01, P2-2.
+		logger.warn("getProductTypes: invalid parameters, returning empty result", {
+			service: "getProductTypes",
+		});
+		return {
+			productTypes: [],
+			pagination: {
+				nextCursor: null,
+				prevCursor: null,
+				hasNextPage: false,
+				hasPreviousPage: false,
+			},
+			totalCount: 0,
+		};
 	}
 
 	const admin = options?.isAdmin ?? (await isAdmin());

@@ -4,9 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockFindMany, mockCacheCollections, mockIsAdmin } = vi.hoisted(() => ({
+const { mockFindMany, mockCacheLife, mockCacheTag, mockIsAdmin } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
-	mockCacheCollections: vi.fn(),
+	mockCacheLife: vi.fn(),
+	mockCacheTag: vi.fn(),
 	mockIsAdmin: vi.fn(),
 }));
 
@@ -14,10 +15,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		collection: { findMany: mockFindMany },
 	},
-}));
-
-vi.mock("../../utils/cache.utils", () => ({
-	cacheCollections: mockCacheCollections,
 }));
 
 vi.mock("@/modules/auth/utils/guards", () => ({
@@ -29,8 +26,8 @@ vi.mock("@/app/generated/prisma/client", () => ({
 }));
 
 vi.mock("next/cache", () => ({
-	cacheLife: vi.fn(),
-	cacheTag: vi.fn(),
+	cacheLife: mockCacheLife,
+	cacheTag: mockCacheTag,
 	updateTag: vi.fn(),
 }));
 
@@ -144,7 +141,10 @@ describe("getCollectionOptions", () => {
 		);
 	});
 
-	it("returns empty array on DB error", async () => {
+	// Le repli vit désormais dans le WRAPPER, hors du scope `"use cache"` : à
+	// l'intérieur, la liste vide d'une panne était mise en cache comme un résultat
+	// légitime et le select « Collections » apparaissait vide.
+	it("returns empty array on DB error (repli hors du scope caché)", async () => {
 		// Arrange
 		mockFindMany.mockRejectedValue(new Error("DB unavailable"));
 
@@ -155,7 +155,12 @@ describe("getCollectionOptions", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("calls cacheCollections", async () => {
+	// Profil `user` et non `reference` : c'est un picker ADMIN qui liste les DRAFT.
+	// Sous `reference` (7 j stale / 24 h revalidate), une collection tout juste créée
+	// n'apparaissait pas dans le formulaire produit avant le lendemain — alors que
+	// l'autre lecteur admin du module était déjà en `user` (audit cache catalogue
+	// 2026-07-31).
+	it("cache sous le profil `user` avec le tag LIST", async () => {
 		// Arrange
 		mockFindMany.mockResolvedValue([]);
 
@@ -163,7 +168,8 @@ describe("getCollectionOptions", () => {
 		await getCollectionOptions();
 
 		// Assert
-		expect(mockCacheCollections).toHaveBeenCalledOnce();
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
+		expect(mockCacheTag).toHaveBeenCalledWith("collections-list");
 	});
 
 	it("returns empty array when no collections exist", async () => {

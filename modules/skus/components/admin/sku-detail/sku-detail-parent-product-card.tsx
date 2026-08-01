@@ -8,26 +8,15 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import {
+	PRODUCT_STATUS_LABELS,
+	PRODUCT_STATUS_VARIANTS,
+} from "@/modules/products/constants/product-status-display";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
 
 interface SkuDetailParentProductCardProps {
 	sku: SkuDetailReturn;
 }
-
-const STATUS_LABELS: Record<SkuDetailReturn["product"]["status"], string> = {
-	PUBLIC: "Public",
-	DRAFT: "Brouillon",
-	ARCHIVED: "Archivé",
-};
-
-const STATUS_VARIANTS: Record<
-	SkuDetailReturn["product"]["status"],
-	"default" | "secondary" | "outline"
-> = {
-	PUBLIC: "default",
-	DRAFT: "secondary",
-	ARCHIVED: "outline",
-};
 
 export function SkuDetailParentProductCard({ sku }: SkuDetailParentProductCardProps) {
 	const haptic = useHaptic();
@@ -64,8 +53,8 @@ export function SkuDetailParentProductCard({ sku }: SkuDetailParentProductCardPr
 					<div className="min-w-0 space-y-1">
 						<p className="text-foreground truncate text-sm font-medium">{sku.product.title}</p>
 						<div className="flex flex-wrap items-center gap-2">
-							<Badge variant={STATUS_VARIANTS[sku.product.status]}>
-								{STATUS_LABELS[sku.product.status]}
+							<Badge variant={PRODUCT_STATUS_VARIANTS[sku.product.status]}>
+								{PRODUCT_STATUS_LABELS[sku.product.status]}
 							</Badge>
 							<span className="text-muted-foreground text-xs">
 								{variantsCount} variante{variantsCount > 1 ? "s" : ""}

@@ -229,6 +229,8 @@ export function MediaArrayCard({
 												altText: m.altText ?? undefined,
 												thumbnailUrl: m.thumbnailUrl ?? undefined,
 												blurDataUrl: m.blurDataUrl ?? undefined,
+												width: m.width,
+												height: m.height,
 											}))}
 											onFilesDropped={(files) => handleUpload(files, asMediaField(field))}
 											onChange={(newMedia) => {
@@ -250,6 +252,11 @@ export function MediaArrayCard({
 														altText: m.altText ?? undefined,
 														thumbnailUrl: m.thumbnailUrl ?? undefined,
 														blurDataUrl: m.blurDataUrl ?? undefined,
+														// Chaque reorder/suppression reconstruit le tableau :
+														// omettre les dimensions ici les perdait au premier
+														// glisser-déposer, avant même la soumission.
+														width: m.width,
+														height: m.height,
 													}),
 												);
 											}}

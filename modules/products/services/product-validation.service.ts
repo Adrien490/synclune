@@ -77,6 +77,20 @@ export function validateProductForPublication(
 		};
 	}
 
+	// Regle 5: Les regles 3 et 4 doivent etre vraies sur le MEME SKU — evaluees
+	// independamment, un produit se publiait si le SKU A avait du stock et le
+	// SKU B une image, sans qu'aucune variante ne soit achetable ET illustree.
+	const hasSellableSku = activeSkus.some(
+		(sku) => sku.inventory > 0 && sku.images.some((img) => img.mediaType === "IMAGE"),
+	);
+	if (!hasSellableSku) {
+		return {
+			isValid: false,
+			errorMessage:
+				"Impossible de publier ce produit : aucune variante active n'a à la fois du stock et une image. Veuillez compléter au moins une variante.",
+		};
+	}
+
 	return { isValid: true, errorMessage: null };
 }
 

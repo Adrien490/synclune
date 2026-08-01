@@ -71,7 +71,14 @@ export const GET_COLLECTION_SELECT = {
 									mediaType: true,
 									isPrimary: true,
 								},
-								orderBy: { createdAt: "asc" },
+								// `isPrimary desc` d'abord : trié par `createdAt`, la vignette
+								// était l'image la plus ANCIENNE du SKU, pas la principale.
+								// Ordre aligné sur le reste du repo (get-material.ts).
+								orderBy: [
+									{ isPrimary: "desc" as const },
+									{ position: "asc" as const },
+									{ id: "asc" as const },
+								],
 							},
 						},
 						orderBy: [{ isDefault: "desc" }, { priceInclTax: "asc" }],
@@ -140,7 +147,13 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 									altText: true,
 									isPrimary: true,
 								},
-								orderBy: { createdAt: "asc" },
+								// `isPrimary desc` d'abord : trié par `createdAt`, l'OG image de
+								// la collection était l'image la plus ANCIENNE, pas la principale.
+								orderBy: [
+									{ isPrimary: "desc" as const },
+									{ position: "asc" as const },
+									{ id: "asc" as const },
+								],
 								take: 1,
 							},
 						},
@@ -185,7 +198,13 @@ export const GET_COLLECTIONS_SELECT = {
 								// Cf. supra : jamais de vidéo dans un rendu `next/image`.
 								where: { mediaType: "IMAGE" as const },
 								select: { url: true, altText: true, blurDataUrl: true },
-								orderBy: { position: "asc" },
+								// `isPrimary desc` d'abord : la carte doit montrer l'image
+								// principale, pas la première par position.
+								orderBy: [
+									{ isPrimary: "desc" as const },
+									{ position: "asc" as const },
+									{ id: "asc" as const },
+								],
 								take: 1,
 							},
 						},

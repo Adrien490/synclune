@@ -160,7 +160,7 @@ export const createProductSkuSchema = baseSkuFieldsSchema
 		productId: z.cuid2({ message: "ID produit invalide" }),
 
 		// SKU - optional, sera auto-genere si non fourni
-		sku: z.string().max(50).optional().or(z.literal("")),
+		sku: z.string().max(TEXT_LIMITS.SKU_CODE.max).optional().or(z.literal("")),
 	})
 	.refine(refineMediaMinOne, MEDIA_REQUIRED_ERROR)
 	.refine(refineFirstMediaNotVideo, FIRST_MEDIA_NOT_VIDEO_ERROR)

@@ -281,13 +281,15 @@ describe("getMaterialDistinctProductCount", () => {
 		expect(count).toBe(3);
 	});
 
-	it("filters by materialId + isActive and uses distinct", async () => {
+	it("filters by materialId + isActive + deletedAt and uses distinct", async () => {
 		mockIsAdmin.mockResolvedValue(true);
 
 		await getMaterialDistinctProductCount("mat-42");
 
+		// `deletedAt: null` : le soft delete produit pose deletedAt sur les SKUs
+		// sans toucher isActive — sans lui le KPI comptait des produits supprimés.
 		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
-			where: { isActive: true, materials: { some: { materialId: "mat-42" } } },
+			where: { isActive: true, deletedAt: null, materials: { some: { materialId: "mat-42" } } },
 			select: { productId: true },
 			distinct: ["productId"],
 		});

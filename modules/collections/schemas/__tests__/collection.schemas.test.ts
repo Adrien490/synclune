@@ -371,9 +371,21 @@ describe("collectionFiltersSchema", () => {
 			}
 		});
 
-		it("rejects a non-boolean, non-string-boolean value for hasProducts", () => {
-			const result = collectionFiltersSchema.safeParse({ hasProducts: "yes" });
-			expect(result.success).toBe(false);
+		// Audit Zod 2026-07-31 : `hasProducts` dérive désormais de la SSOT
+		// `formBooleanSchema` (`z.union([z.boolean(), z.stringbool()])`) au lieu de
+		// ré-implémenter `z.union([z.boolean(), z.enum(["true","false"])])`. Le jeu de
+		// valeurs acceptées s'élargit donc volontairement à celui de `z.stringbool()` :
+		// "1"/"0", "on"/"off", "yes"/"no" (insensible à la casse). Aucune URL existante
+		// ne change de sens — c'est un sur-ensemble — et ce qui compte est préservé :
+		// une valeur ARBITRAIRE reste rejetée, au lieu d'un `true` silencieux.
+		it("accepts the wider string-boolean vocabulary of the shared schema", () => {
+			expect(collectionFiltersSchema.safeParse({ hasProducts: "yes" }).success).toBe(true);
+			expect(collectionFiltersSchema.safeParse({ hasProducts: "on" }).success).toBe(true);
+		});
+
+		it("still rejects an arbitrary value for hasProducts", () => {
+			expect(collectionFiltersSchema.safeParse({ hasProducts: "peut-être" }).success).toBe(false);
+			expect(collectionFiltersSchema.safeParse({ hasProducts: 42 }).success).toBe(false);
 		});
 	});
 

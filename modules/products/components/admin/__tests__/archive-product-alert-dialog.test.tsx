@@ -108,7 +108,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 
 vi.mock("lucide-react", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	LoaderCircle: (props: Record<string, unknown>) => {
+	Loader2Icon: (props: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "loader-circle", ...props });
 	},
@@ -203,10 +203,10 @@ describe("ArchiveProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Archiver");
 		});
 
-		it("submit button has amber warning styling for archiving", () => {
+		it("submit button has warning token styling for archiving", () => {
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveClass("bg-amber-600");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveClass("bg-warning");
 		});
 
 		it("sets targetStatus hidden field to ARCHIVED", () => {

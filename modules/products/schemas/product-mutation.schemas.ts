@@ -1,4 +1,9 @@
 import { z } from "zod";
+// Enum GÉNÉRÉ plutôt que le littéral `["DRAFT", "PUBLIC", "ARCHIVED"]` répété 4 fois :
+// les valeurs coïncidaient, mais rien ne les rattachait à `schema.prisma`. Ajouter un
+// statut au modèle aurait laissé ces 4 schémas le refuser en silence — le reste du
+// repo dérive déjà ses enums du client Prisma (OrderStatus, RefundStatus, …).
+import { ProductStatus } from "@/app/generated/prisma/enums";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 
 import {
@@ -85,11 +90,14 @@ const baseSkuFields = {
 		.default([]),
 };
 
+// Strict (`>`), aligné sur sku.schemas.ts : un prix barré ÉGAL au prix de vente
+// serait un affichage promo mensonger. Les deux formulaires éditent le même SKU
+// — le `>=` d'ici divergeait du refine strict du formulaire variante.
 const skuPriceRefinement = <T extends { compareAtPriceEuros?: number; priceInclTaxEuros: number }>(
 	data: T,
 ) => {
 	if (!data.compareAtPriceEuros) return true;
-	return data.compareAtPriceEuros >= data.priceInclTaxEuros;
+	return data.compareAtPriceEuros > data.priceInclTaxEuros;
 };
 
 const initialSkuSchema = z
@@ -98,7 +106,7 @@ const initialSkuSchema = z
 		isDefault: formBooleanSchema.default(true),
 	})
 	.refine(skuPriceRefinement, {
-		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+		message: "Le prix comparé doit être strictement supérieur au prix de vente",
 		path: ["compareAtPriceEuros"],
 	});
 
@@ -118,7 +126,7 @@ const defaultSkuSchema = z
 			.optional(),
 	})
 	.refine(skuPriceRefinement, {
-		message: "Le prix comparé doit être supérieur ou égal au prix de vente",
+		message: "Le prix comparé doit être strictement supérieur au prix de vente",
 		path: ["compareAtPriceEuros"],
 	});
 
@@ -165,7 +173,7 @@ export const createProductSchema = z
 			.default([]),
 
 		// Status enum
-		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).default("DRAFT"),
+		status: z.enum(ProductStatus).default("DRAFT"),
 
 		// Initial SKU (required for product creation)
 		initialSku: initialSkuSchema,
@@ -239,7 +247,7 @@ export const updateProductSchema = z
 			.default([]),
 
 		// Status enum
-		status: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
+		status: z.enum(ProductStatus),
 
 		// Default SKU (modifiable)
 		defaultSku: defaultSkuSchema,
@@ -281,8 +289,8 @@ export const duplicateProductSchema = z.object({
 
 export const toggleProductStatusSchema = z.object({
 	productId: z.cuid2(),
-	currentStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
-	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]).optional(),
+	currentStatus: z.enum(ProductStatus),
+	targetStatus: z.enum(ProductStatus).optional(),
 });
 
 export const updateProductCollectionsSchema = z.object({

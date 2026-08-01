@@ -116,7 +116,7 @@ export default function MediaLightbox({
 					aria-label="Afficher les raccourcis clavier"
 					aria-expanded={helpOpen}
 					aria-controls="lightbox-kbd-help"
-					className="fixed top-4 left-4 z-[9999] hidden size-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:flex"
+					className="fixed top-4 left-4 z-(--z-max) hidden size-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:flex"
 					style={{
 						top: "calc(env(safe-area-inset-top, 0px) + 16px)",
 						left: "calc(env(safe-area-inset-left, 0px) + 16px)",
@@ -130,7 +130,7 @@ export default function MediaLightbox({
 						id="lightbox-kbd-help"
 						role="region"
 						aria-label="Raccourcis clavier"
-						className="fixed top-16 left-4 z-[9999] hidden max-w-xs rounded-lg bg-black/85 p-4 text-sm text-white shadow-xl backdrop-blur-md sm:block"
+						className="fixed top-16 left-4 z-(--z-max) hidden max-w-xs rounded-lg bg-black/85 p-4 text-sm text-white shadow-xl backdrop-blur-md sm:block"
 						style={{
 							top: "calc(env(safe-area-inset-top, 0px) + 64px)",
 							left: "calc(env(safe-area-inset-left, 0px) + 16px)",

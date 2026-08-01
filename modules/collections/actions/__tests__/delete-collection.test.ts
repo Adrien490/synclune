@@ -97,9 +97,12 @@ describe("deleteCollection", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
+		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// updateTag manuels ont été retirés des actions).
 		mockGetCollectionInvalidationTags.mockReturnValue([
 			"collections-list",
 			`collection-bague-soleil`,
+			"navbar-menu",
 		]);
 		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection());
 		mockPrisma.collection.delete.mockResolvedValue({});

@@ -197,22 +197,12 @@ export async function getQueuedBytes(filter?: {
 	return entries.reduce((sum, e) => sum + e.file.size, 0);
 }
 
-/** Horodatage de l'entrée la plus ancienne, ou `null` si la file est vide. */
-export async function getOldestQueuedAt(filter?: {
-	endpoint?: OfflineUploadEndpoint;
-	contextKey?: string;
-}): Promise<number | null> {
-	const entries = await listEntries(filter);
-	if (entries.length === 0) return null;
-	return entries.reduce((oldest, e) => Math.min(oldest, e.queuedAt), Number.POSITIVE_INFINITY);
-}
-
 /**
  * Durée de vie d'une entrée en file. Au-delà, le fichier est très probablement
  * périmé (bijou déjà publié depuis, photo reprise autrement) et il occupe du
  * quota IndexedDB pour rien.
  */
-export const OFFLINE_QUEUE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const OFFLINE_QUEUE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * Supprime les entrées plus vieilles que `maxAgeMs`. Renvoie le nombre purgé.

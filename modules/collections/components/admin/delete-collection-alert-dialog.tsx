@@ -13,7 +13,7 @@ import {
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const DELETE_COLLECTION_DIALOG_ID = "delete-collection";
 
@@ -59,7 +59,7 @@ export function DeleteCollectionAlertDialog() {
 								</p>
 								{productsCount > 0 ? (
 									<>
-										<p className="font-medium text-amber-600">
+										<p className="text-warning font-medium">
 											Cette collection contient {productsCount} produit
 											{productsCount > 1 ? "s" : ""}.
 										</p>
@@ -76,7 +76,7 @@ export function DeleteCollectionAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Suppression…" : "Supprimer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

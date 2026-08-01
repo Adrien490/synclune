@@ -13,7 +13,6 @@ import {
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
 import { updateCollectionStatusSchema } from "../schemas/collection.schemas";
 import { getCollectionInvalidationTags } from "../utils/cache.utils";
@@ -82,7 +81,6 @@ export async function updateCollectionStatus(
 		// 7. Invalidate cache tags
 		const collectionTags = getCollectionInvalidationTags(existingCollection.slug);
 		collectionTags.forEach((tag) => updateTag(tag));
-		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 		// 8. Messages de succes contextuels
 		const statusMessages: Record<CollectionStatus, string> = {

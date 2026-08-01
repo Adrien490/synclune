@@ -31,7 +31,21 @@ export async function getCollectionCountsByStatus(): Promise<GetCollectionCounts
 		};
 	}
 
-	return fetchCollectionCountsByStatus();
+	// Repli HORS du scope de cache : les compteurs à zéro d'une panne y étaient mis
+	// en cache comme un résultat légitime, indiscernables d'une boutique sans
+	// aucune collection.
+	try {
+		return await fetchCollectionCountsByStatus();
+	} catch (error) {
+		logger.error("Failed to fetch collection counts by status", error, {
+			service: "getCollectionCountsByStatus",
+		});
+		return {
+			[CollectionStatus.PUBLIC]: 0,
+			[CollectionStatus.DRAFT]: 0,
+			[CollectionStatus.ARCHIVED]: 0,
+		};
+	}
 }
 
 /**
@@ -42,33 +56,22 @@ async function fetchCollectionCountsByStatus(): Promise<CollectionCountsByStatus
 	cacheLife("user");
 	cacheTag(COLLECTIONS_CACHE_TAGS.COUNTS);
 
-	try {
-		const counts = await prisma.collection.groupBy({
-			by: ["status"],
-			_count: {
-				id: true,
-			},
-		});
+	const counts = await prisma.collection.groupBy({
+		by: ["status"],
+		_count: {
+			id: true,
+		},
+	});
 
-		const result: CollectionCountsByStatus = {
-			[CollectionStatus.PUBLIC]: 0,
-			[CollectionStatus.DRAFT]: 0,
-			[CollectionStatus.ARCHIVED]: 0,
-		};
+	const result: CollectionCountsByStatus = {
+		[CollectionStatus.PUBLIC]: 0,
+		[CollectionStatus.DRAFT]: 0,
+		[CollectionStatus.ARCHIVED]: 0,
+	};
 
-		counts.forEach((count) => {
-			result[count.status as CollectionStatus] = count._count.id;
-		});
+	counts.forEach((count) => {
+		result[count.status as CollectionStatus] = count._count.id;
+	});
 
-		return result;
-	} catch (error) {
-		logger.error("Failed to fetch collection counts by status", error, {
-			service: "fetchCollectionCountsByStatus",
-		});
-		return {
-			[CollectionStatus.PUBLIC]: 0,
-			[CollectionStatus.DRAFT]: 0,
-			[CollectionStatus.ARCHIVED]: 0,
-		};
-	}
+	return result;
 }

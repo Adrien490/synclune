@@ -37,11 +37,17 @@ export async function toggleMaterialStatus(
 		// Verifier que le materiau existe (select minimal: slug pour cache, name pour audit log)
 		const existingMaterial = await prisma.material.findUnique({
 			where: { id: validatedData.id },
-			select: { slug: true, name: true },
+			select: { slug: true, name: true, isActive: true },
 		});
 
 		if (!existingMaterial) {
 			return error("Ce materiau n'existe pas");
+		}
+
+		// Court-circuit idempotent (parité couleurs/types) : un re-clic sur l'état
+		// courant écrivait en base, requêtait les SKUs et invalidait les PDP.
+		if (existingMaterial.isActive === validatedData.isActive) {
+			return success(validatedData.isActive ? "Matériau déjà actif" : "Matériau déjà inactif");
 		}
 
 		// Mettre a jour le statut

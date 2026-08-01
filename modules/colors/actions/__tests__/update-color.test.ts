@@ -181,7 +181,9 @@ describe("updateColor", () => {
 			undefined,
 			createMockFormData({ id: COLOR_ID, name: "Or Rose", hex: "#B76E79" }),
 		);
-		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "color", "Or Rose");
+		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "color", "Or Rose", {
+			excludeId: COLOR_ID,
+		});
 		expect(mockPrisma.color.update).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ slug: "or-rose" }),

@@ -9,6 +9,9 @@ interface ProductStatusNavigationProps {
 	searchParams?: Record<string, string | string[] | undefined>;
 }
 
+// Pluriels d'onglets (« Publics », « Brouillons »…) : variante de présentation
+// volontairement locale — les singuliers SSOT vivent dans
+// modules/products/constants/product-status-display.ts.
 const STATUS_LABELS: Record<ProductStatus, string> = {
 	[ProductStatus.PUBLIC]: "Publics",
 	[ProductStatus.DRAFT]: "Brouillons",

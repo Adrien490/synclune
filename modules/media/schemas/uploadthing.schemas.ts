@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file";
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
 // ============================================================================
 // UPLOADTHING SCHEMAS
@@ -11,6 +12,8 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
  */
 const uploadThingUrlSchema = z
 	.url({ message: "URL du fichier invalide" })
+	// `z.url()` et le refine de domaine ne bornent pas la longueur (cf. TEXT_LIMITS.MEDIA_URL).
+	.max(TEXT_LIMITS.MEDIA_URL.max, "L'URL du fichier est trop longue")
 	.refine(isValidUploadThingUrl, {
 		message: "L'URL doit provenir d'un domaine UploadThing autorisé (HTTPS)",
 	});

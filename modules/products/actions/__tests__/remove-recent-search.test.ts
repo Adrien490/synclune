@@ -13,7 +13,6 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockCookies,
-	mockGetRecentSearchesInvalidationTags,
 } = vi.hoisted(() => ({
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
@@ -21,7 +20,6 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockCookies: vi.fn(),
-	mockGetRecentSearchesInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -46,9 +44,7 @@ vi.mock("../constants/recent-searches", () => ({
 	RECENT_SEARCHES_COOKIE_NAME: "recent-searches",
 	RECENT_SEARCHES_COOKIE_MAX_AGE: 2592000,
 }));
-vi.mock("../../constants/cache", () => ({
-	getRecentSearchesInvalidationTags: mockGetRecentSearchesInvalidationTags,
-}));
+vi.mock("../../constants/cache", () => ({}));
 
 import { removeRecentSearch } from "../remove-recent-search";
 
@@ -82,7 +78,6 @@ describe("removeRecentSearch", () => {
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { term: "collier" } });
-		mockGetRecentSearchesInvalidationTags.mockReturnValue(["recent-searches-list"]);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -161,8 +156,9 @@ describe("removeRecentSearch", () => {
 
 	it("should invalidate cache after removing term", async () => {
 		await removeRecentSearch(undefined, validFormData);
-		expect(mockGetRecentSearchesInvalidationTags).toHaveBeenCalled();
-		expect(mockUpdateTag).toHaveBeenCalledWith("recent-searches-list");
+		// Cf. `add-recent-search.test.ts` : le tag n'avait aucun lecteur, l'invalidation
+		// a été retirée. On asserte l'absence pour verrouiller le retrait.
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should return updated searches list in success data", async () => {

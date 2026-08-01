@@ -33,7 +33,7 @@ export function ProductMainSkeleton() {
 					<div className="bg-muted/30 relative order-2 aspect-3/4 overflow-hidden rounded-2xl sm:aspect-4/5 sm:rounded-3xl">
 						<Skeleton className="from-muted/60 via-muted/40 absolute inset-0 to-transparent" />
 						<div className="absolute inset-0 flex items-center justify-center">
-							<div className="border-muted/60 border-t-primary/40 size-16 animate-spin rounded-full border-4" />
+							<div className="border-muted/60 border-t-primary/40 size-16 rounded-full border-4 motion-safe:animate-spin" />
 						</div>
 						{/* GalleryCounter skeleton */}
 						<div className="absolute top-3 right-3">

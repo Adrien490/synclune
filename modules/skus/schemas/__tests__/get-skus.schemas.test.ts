@@ -101,13 +101,13 @@ describe("getProductSkusSchema", () => {
 		expect(getProductSkusSchema.safeParse({ cursor: "tooshort" }).success).toBe(false);
 	});
 
-	it("accepts search string up to 200 characters", () => {
-		const result = getProductSkusSchema.safeParse({ search: "a".repeat(200) });
+	it("accepts search string up to TEXT_LIMITS.SEARCH.max (100) characters", () => {
+		const result = getProductSkusSchema.safeParse({ search: "a".repeat(100) });
 		expect(result.success).toBe(true);
 	});
 
-	it("rejects search string exceeding 200 characters", () => {
-		expect(getProductSkusSchema.safeParse({ search: "a".repeat(201) }).success).toBe(false);
+	it("rejects search string exceeding TEXT_LIMITS.SEARCH.max characters", () => {
+		expect(getProductSkusSchema.safeParse({ search: "a".repeat(101) }).success).toBe(false);
 	});
 
 	it("accepts direction backward with valid cursor", () => {

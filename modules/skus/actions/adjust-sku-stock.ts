@@ -4,6 +4,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_ADJUST_STOCK_LIMIT } from "@/shared/lib/rate-limit-config";
+import { STOCK_LIMITS } from "@/shared/constants/validation-limits";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
@@ -14,7 +15,6 @@ import {
 	BusinessError,
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
-import { after } from "next/server";
 import { adjustSkuStockSchema } from "../schemas/sku.schemas";
 import { getInventoryInvalidationTags } from "../utils/cache.utils";
 import { recordStockMovementTx } from "../services/stock-movement.service";
@@ -41,19 +41,22 @@ export async function adjustSkuStock(
 		// 3. Extraire les données du FormData
 		const rawSkuId = safeFormGet(formData, "skuId");
 		const adjustmentRaw = safeFormGet(formData, "adjustment");
-		const reason = formData.get("reason") as string | null;
-
-		const adjustment = parseInt(adjustmentRaw ?? "", 10);
+		const reason = safeFormGet(formData, "reason");
 
 		// 4. Validation
 		const validation = validateInput(adjustSkuStockSchema, {
 			skuId: rawSkuId,
-			adjustment,
+			adjustment: parseInt(adjustmentRaw ?? "", 10),
+			// `.optional()` accepte `undefined`, pas `null` — `safeFormGet` rend `null`.
 			reason: reason ?? undefined,
 		});
 		if ("error" in validation) return validation.error;
 
-		const { skuId, reason: validatedReason } = validation.data;
+		// ⚠️ `adjustment` DOIT venir de `validation.data`, pas de la variable brute
+		// pré-parse : celle-ci alimentait directement le `$queryRaw` plus bas, si bien
+		// qu'un futur `.transform()` / `z.coerce` sur `adjustSkuStockSchema` aurait été
+		// silencieusement sans effet sur ce qui est écrit en base.
+		const { skuId, adjustment, reason: validatedReason } = validation.data;
 
 		// 5. Métadonnées SKU AVANT l'update : fail-fast « Variante non trouvée » +
 		// `productId` requis pour l'enregistrement du mouvement de stock.
@@ -102,14 +105,27 @@ export async function adjustSkuStock(
 					);
 				}
 			} else {
+				// Plafond STOCK_LIMITS.MAX_INVENTORY dans le WHERE : le schéma ne borne
+				// que le DELTA, pas le résultat — deux ajustements +99999 suffisaient à
+				// sortir le SKU des filtres d'inventaire admin (bornés à
+				// SKU_FILTERS_MAX_INVENTORY). Même garde que create/update-sku.
 				updated = await tx.$queryRaw<AffectedRow[]>`
 					UPDATE "ProductSku"
 					SET "inventory" = "inventory" + ${adjustment}, "updatedAt" = NOW()
 					WHERE "id" = ${skuId}
+					AND "inventory" + ${adjustment} <= ${STOCK_LIMITS.MAX_INVENTORY}
 					RETURNING "inventory"
 				`;
 
-				if (updated.length === 0) throw new BusinessError("Variante non trouvée");
+				if (updated.length === 0) {
+					const existing = await tx.$queryRaw<AffectedRow[]>`
+						SELECT "inventory" FROM "ProductSku" WHERE "id" = ${skuId}
+					`;
+					if (existing.length === 0) throw new BusinessError("Variante non trouvée");
+					throw new BusinessError(
+						`Stock maximum dépassé (${STOCK_LIMITS.MAX_INVENTORY}). Stock actuel: ${existing[0]!.inventory}, ajustement demandé: +${adjustment}`,
+					);
+				}
 			}
 
 			const nextInventory = updated[0]!.inventory;

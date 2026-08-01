@@ -99,7 +99,7 @@ export const getProductsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_PRODUCTS_DEFAULT_PER_PAGE, GET_PRODUCTS_MAX_RESULTS_PER_PAGE),
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
-	search: z.string().max(TEXT_LIMITS.PRODUCT_SEARCH.max).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: productFiltersSchema.default({}),
 	status: z.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED]).optional(),
 	includeDeleted: z.boolean().optional(),

@@ -1,3 +1,6 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
+import type { RateLimitConfig } from "@/shared/types/rate-limit.types";
+
 // ============================================================================
 // FUZZY SEARCH CONFIGURATION
 // ============================================================================
@@ -20,8 +23,12 @@ export const FUZZY_MIN_LENGTH = 3;
  * Maximum search term length.
  * pg_trgm must compute trigrams for each character.
  * Protects against DoS attacks with very long terms.
+ *
+ * Dérivée de la SSOT transverse `TEXT_LIMITS.SEARCH` (audit recherche
+ * 2026-08-01, P3-1) : schémas Zod des modules, parser URL, `maxLength` DOM et
+ * cette borne fuzzy sont désormais la même valeur.
  */
-export const MAX_SEARCH_LENGTH = 100;
+export const MAX_SEARCH_LENGTH = TEXT_LIMITS.SEARCH.max;
 
 /**
  * Result limit for fuzzy search.
@@ -69,10 +76,26 @@ export const RELEVANCE_WEIGHTS = {
 /**
  * Search request rate limits.
  * Protects against scraping and abuse.
+ *
+ * Calibrage (audit recherche 2026-08-01, P3-5) : chaque rendu de la PLP avec
+ * `?search=` consomme une unité (recherche, pagination, changement de filtre).
+ * À 15/min, un invité épuisait son budget en une navigation normale dans des
+ * résultats de recherche, alors que le quick search — bien plus bavard
+ * (1 requête par pause de frappe de 300 ms) — dispose de 50/min
+ * (`PRODUCT_SEARCH_LIMIT`). Le dépassement reste non bloquant (repli
+ * exact-only), mais dégrade la pertinence sans raison.
  */
 export const SEARCH_RATE_LIMITS = {
 	/** Limit for authenticated users */
-	authenticated: { limit: 30, windowMs: 60_000 },
+	authenticated: {
+		name: "product-fuzzy-search-authenticated",
+		limit: 30,
+		windowMs: 60_000,
+	},
 	/** Limit for unauthenticated visitors */
-	guest: { limit: 15, windowMs: 60_000 },
-} as const;
+	guest: {
+		name: "product-fuzzy-search-guest",
+		limit: 25,
+		windowMs: 60_000,
+	},
+} as const satisfies Record<string, RateLimitConfig>;

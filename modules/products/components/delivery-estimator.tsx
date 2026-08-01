@@ -14,6 +14,8 @@ import { Truck } from "lucide-react";
  * skipping weekends via date-fns addBusinessDays.
  * Proven conversion driver (Baymard: 64% look for delivery info before add-to-cart).
  */
+const formatDeliveryDate = (date: Date) => format(date, "d MMMM", { locale: fr });
+
 export function DeliveryEstimator() {
 	const now = new Date();
 
@@ -27,8 +29,6 @@ export function DeliveryEstimator() {
 
 	const minDate = addBusinessDays(now, prepMin + shipMin);
 	const maxDate = addBusinessDays(now, prepMax + shipMax);
-
-	const formatDeliveryDate = (date: Date) => format(date, "d MMMM", { locale: fr });
 
 	return (
 		<div className="text-muted-foreground flex items-center gap-2.5 text-sm">

@@ -188,7 +188,9 @@ describe("updateProductType", () => {
 
 	it("should generate new slug when label changes", async () => {
 		await updateProductType(undefined, validFormData);
-		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "productType", "Bague Updated");
+		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "productType", "Bague Updated", {
+			excludeId: "pt-1",
+		});
 	});
 
 	it("should keep existing slug when label is unchanged", async () => {

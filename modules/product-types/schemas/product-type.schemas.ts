@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { createPerPageSchema } from "@/shared/utils/pagination";
@@ -34,7 +35,7 @@ export const productTypeSortBySchema = z.preprocess((value) => {
 // ============================================================================
 
 export const getProductTypesSchema = z.object({
-	search: z.string().trim().max(255).optional(),
+	search: z.string().trim().max(TEXT_LIMITS.SEARCH.max).optional(),
 	cursor: cursorSchema,
 	direction: directionSchema,
 	perPage: createPerPageSchema(
@@ -66,12 +67,9 @@ export const productTypeDescriptionSchema = z
 	.max(500, "La description ne peut pas dépasser 500 caractères")
 	.optional();
 
-export const productTypeSlugSchema = z
-	.string()
-	.trim()
-	.min(1, "Le slug est requis")
-	.max(50, "Le slug ne peut pas dépasser 50 caractères")
-	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
+// `productTypeSlugSchema` supprimé : aucun consommateur hors de son propre test
+// (vert pour rien), et son max(50) contredisait `ProductType.slug @db.VarChar(100)`.
+// Le slug est GÉNÉRÉ côté serveur (generateSlug), jamais saisi.
 
 export const createProductTypeSchema = z.object({
 	label: productTypeLabelSchema,

@@ -1,4 +1,5 @@
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
@@ -47,15 +48,29 @@ export async function buildSearchConditions(
 		};
 	}
 
-	// Fuzzy search on title/description
-	const { ids: fuzzyIds } = await fuzzySearchProductIds(term, {
-		status: options?.status,
-	});
+	// Fuzzy search on title/description.
+	// ⚠️ En cas d'échec transitoire (timeout, panne DB), `fuzzySearchProductIds`
+	// JETTE depuis son scope `"use cache"` — une erreur jetée n'est jamais mise en
+	// cache, contrairement à l'ancien retour `{ids: []}` qui figeait un
+	// zéro-résultat de panne (audit recherche 2026-08-01, P1-3). On dégrade ICI,
+	// hors cache, vers la recherche exacte COMPLÈTE (titre/description/champs
+	// liés) — le même repli que le chemin rate-limited de `get-products.ts`.
+	// L'erreur est déjà loggée par `fuzzySearchProductIds` avant son rethrow.
+	try {
+		const { ids: fuzzyIds } = await fuzzySearchProductIds(term, {
+			status: options?.status,
+		});
 
-	// Exact conditions for related fields (SKU, colors, etc.)
-	const exactConditions = buildRelatedFieldsSearchConditions(words);
+		// Exact conditions for related fields (SKU, colors, etc.)
+		const exactConditions = buildRelatedFieldsSearchConditions(words);
 
-	return { fuzzyIds, exactConditions };
+		return { fuzzyIds, exactConditions };
+	} catch {
+		return {
+			fuzzyIds: null,
+			exactConditions: buildFullExactSearchConditions(words),
+		};
+	}
 }
 
 /**
@@ -88,17 +103,21 @@ function getWordVariants(word: string): string[] {
  */
 function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
 	const variants = getWordVariants(word);
+	// Échappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3,
+	// cf. escape-like-pattern.ts). Les champs liés sont échappés dans
+	// buildPerWordRelatedConditions (qui reçoit la variante BRUTE — pas de
+	// double échappement).
 	return {
 		OR: variants.flatMap((variant) => [
 			{
 				title: {
-					contains: variant,
+					contains: escapeLikePattern(variant),
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
 			{
 				description: {
-					contains: variant,
+					contains: escapeLikePattern(variant),
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
@@ -111,7 +130,10 @@ function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
  * Build OR conditions for a single word across related fields only
  * (SKU, color, material, collection)
  */
-function buildPerWordRelatedConditions(word: string): Prisma.ProductWhereInput[] {
+function buildPerWordRelatedConditions(rawWord: string): Prisma.ProductWhereInput[] {
+	// Échappement LIKE (P3-3, cf. escape-like-pattern.ts) — appelé avec le mot
+	// BRUT par les deux entrées (full exact + related-only).
+	const word = escapeLikePattern(rawWord);
 	return [
 		{
 			type: {

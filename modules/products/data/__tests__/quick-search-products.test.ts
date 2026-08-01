@@ -213,9 +213,14 @@ describe("quickSearchProducts", () => {
 		expect(asSuccess(result).suggestion).toBeNull();
 	});
 
-	// ─── Parallel execution ──────────────────────────────────
+	// ─── Suggestion HORS du scope de cache ──────────────────────────────────
+	//
+	// La suggestion n'est plus parallélisée avec le fetch produits : elle vit
+	// désormais HORS du cœur `"use cache"` (`fetchQuickSearchCore`), pour qu'un
+	// `null` de panne ne soit jamais figé dans l'entrée du terme (audit
+	// recherche 2026-08-01, P1-3). Elle ne part donc qu'APRÈS le cœur.
 
-	it("fetches full products and spell suggestion in parallel", async () => {
+	it("requests the spell suggestion after the cached core resolved", async () => {
 		const callOrder: string[] = [];
 		let findManyCallCount = 0;
 
@@ -227,7 +232,7 @@ describe("quickSearchProducts", () => {
 			findManyCallCount++;
 			// First call: exact-match IDs (fast)
 			if (findManyCallCount === 1) return [];
-			// Second call: full products (tracked for parallel check)
+			// Second call: full products
 			callOrder.push("findMany-start");
 			await new Promise((r) => setTimeout(r, 10));
 			callOrder.push("findMany-end");
@@ -235,20 +240,12 @@ describe("quickSearchProducts", () => {
 		});
 		mockGetSpellSuggestion.mockImplementation(async () => {
 			callOrder.push("spell-start");
-			await new Promise((r) => setTimeout(r, 10));
-			callOrder.push("spell-end");
 			return null;
 		});
 
 		await quickSearchProducts("colier");
 
-		// Both should start before either finishes (parallel via Promise.all)
-		const findManyStartIdx = callOrder.indexOf("findMany-start");
-		const spellStartIdx = callOrder.indexOf("spell-start");
-		const findManyEndIdx = callOrder.indexOf("findMany-end");
-
-		expect(spellStartIdx).toBeLessThan(findManyEndIdx);
-		expect(findManyStartIdx).toBeLessThan(spellStartIdx + 2);
+		expect(callOrder.indexOf("spell-start")).toBeGreaterThan(callOrder.indexOf("findMany-end"));
 	});
 
 	// ─── Edge cases ──────────────────────────────────

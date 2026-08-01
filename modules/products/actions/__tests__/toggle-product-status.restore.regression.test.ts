@@ -111,14 +111,36 @@ const publishableProduct = {
 	slug: "bracelet-lune",
 	status: "PUBLIC",
 	collections: [{ collection: { slug: "bijoux" } }],
-	skus: [{ id: "sku_1", isActive: true, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
+	skus: [
+		{
+			id: "sku_1",
+			isActive: true,
+			inventory: 5,
+			images: [{ mediaType: "IMAGE" }],
+			// Sélectionnés depuis la cascade cache couleurs/matériaux (audit cache
+			// catalogue 2026-07-31) — le fixture doit refléter le select réel.
+			colors: [],
+			materials: [],
+		},
+	],
 };
 
 /** Le même produit après archivage : le SKU a été désactivé par l'action. */
 const archivedProduct = {
 	...publishableProduct,
 	status: "ARCHIVED",
-	skus: [{ id: "sku_1", isActive: false, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
+	skus: [
+		{
+			id: "sku_1",
+			isActive: false,
+			inventory: 5,
+			images: [{ mediaType: "IMAGE" }],
+			// Sélectionnés depuis la cascade cache couleurs/matériaux (audit cache
+			// catalogue 2026-07-31) — le fixture doit refléter le select réel.
+			colors: [],
+			materials: [],
+		},
+	],
 };
 
 describe("toggleProductStatus — restauration (@regression archived-restore-draft)", () => {

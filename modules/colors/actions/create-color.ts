@@ -42,9 +42,11 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Check name uniqueness
+		// Check name uniqueness — insensible à la casse (aligné sur les types de
+		// bijoux) : « Or rose » et « Or Rose » seraient deux entrées identiques
+		// dans le select SKU.
 		const existingName = await prisma.color.findFirst({
-			where: { name: validatedData.name },
+			where: { name: { equals: validatedData.name, mode: "insensitive" } },
 		});
 
 		if (existingName) {

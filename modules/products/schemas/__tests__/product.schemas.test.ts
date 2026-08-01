@@ -208,6 +208,21 @@ describe("createProductSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
+	// `mediaType` est déclaré par le client et persisté tel quel : sans le
+	// recoupement d'extension, `{ url: "….mp4", mediaType: "IMAGE" }` contournait
+	// tous les refines « premier média = image » et la vidéo remontait dans les
+	// selects filtrés IMAGE (carrousel, quick-search) et le snapshot OrderItem.
+	it("rejects a video URL declared as IMAGE (mediaType spoofing)", () => {
+		const result = createProductSchema.safeParse({
+			...validInput,
+			initialSku: {
+				...validInput.initialSku,
+				media: [{ url: "https://utfs.io/f/clip.mp4", mediaType: "IMAGE" }],
+			},
+		});
+		expect(result.success).toBe(false);
+	});
+
 	it("should default status to DRAFT when not provided", () => {
 		const { status: _s, ...withoutStatus } = validInput;
 		const result = createProductSchema.safeParse(withoutStatus);
@@ -354,7 +369,9 @@ describe("createProductSchema", () => {
 		}
 	});
 
-	it("should accept when compareAtPrice equals price", () => {
+	// Strict, aligné sur sku.schemas.ts : un prix barré ÉGAL au prix de vente
+	// serait un affichage promo mensonger (les deux formulaires éditent le même SKU).
+	it("rejects when compareAtPrice equals price (promo mensongère)", () => {
 		const result = createProductSchema.safeParse({
 			...validInput,
 			initialSku: {
@@ -363,7 +380,7 @@ describe("createProductSchema", () => {
 				compareAtPriceEuros: 100,
 			},
 		});
-		expect(result.success).toBe(true);
+		expect(result.success).toBe(false);
 	});
 
 	it("should reject media URL from unauthorized domain", () => {

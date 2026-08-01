@@ -4,6 +4,7 @@ import { ProductStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getRateLimitId } from "@/modules/auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { getProductsSchema } from "../schemas/product.schemas";
@@ -45,7 +46,14 @@ const hasSortByInput = (input: unknown): input is string =>
  */
 export async function getProducts(
 	params: GetProductsParams,
-	options?: { isAdmin?: boolean },
+	// `isAdmin?: false` — littéral, pas `boolean` : ce paramètre ne peut que BAISSER
+	// le privilège. Il existe pour l'appelant qui exécute déjà dans un scope
+	// `"use cache"` (`getNavbarMenuData`), où `isAdmin()` est interdit puisqu'il lit
+	// `headers()`. En `boolean`, il offrait aussi le chemin inverse : passer `true`
+	// aurait contourné la garde re-vérifiée en DB et écrit des produits DRAFT dans
+	// une entrée de cache PARTAGÉE sous `products-list`. Le type ferme la porte à la
+	// compilation, sans coût runtime.
+	options?: { isAdmin?: false },
 ): Promise<GetProductsReturn> {
 	try {
 		// Validate input parameters
@@ -109,8 +117,39 @@ export async function getProducts(
 				: await buildSearchConditions(validatedParams.search, { status: validatedParams.status });
 		}
 
-		// Fetch products
-		const result = await fetchProducts(validatedParams, searchResult);
+		// Fetch products.
+		// Le repli « page vide » vit ICI, HORS du scope `"use cache"` de
+		// `fetchProducts`. À l'intérieur, il retournait normalement, donc Next mettait
+		// un catalogue VIDE en cache pour toute la fenêtre du profil `catalog`
+		// (5 min revalidate / 15 min stale / 6 h expire) — et rien, ni côté vitrine ni
+		// côté admin, ne distinguait cette page vide d'un catalogue réellement vide.
+		// Même motif que `skus/data/fetch-skus.ts`.
+		let result: GetProductsReturn;
+		try {
+			result = await fetchProducts(validatedParams, searchResult);
+		} catch (fetchError) {
+			// Lecture avortée à la clôture d'un prerender (build) : signal de contrôle
+			// Next, le rendu est jeté — repli silencieux, pas un incident à logger.
+			if (!isPrerenderInterrupt(fetchError)) {
+				logger.warn("Failed to fetch products", { service: "getProducts" });
+			}
+			return {
+				products: [],
+				pagination: {
+					nextCursor: null,
+					prevCursor: null,
+					hasNextPage: false,
+					hasPreviousPage: false,
+				},
+				totalCount: 0,
+				error:
+					process.env.NODE_ENV === "development"
+						? fetchError instanceof Error
+							? fetchError.message
+							: "Unknown error"
+						: "Failed to fetch products",
+			} as GetProductsReturn & { error: string };
+		}
 
 		// Suggest a correction if few or no results with an active search
 		// Skip suggestions for admins (they often search by SKU/ID)
@@ -147,7 +186,9 @@ async function fetchProducts(
 	"use cache";
 	cacheProducts();
 
-	try {
+	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient à `getProducts`
+	// ci-dessus, hors du cache (sinon une page vide de panne est mise en cache).
+	{
 		const where = buildProductWhereClause(params, searchResult);
 
 		// NOTE: All products are loaded then sorted/paginated in JS because:
@@ -213,25 +254,5 @@ async function fetchProducts(
 			},
 			totalCount: sortedProducts.length,
 		};
-	} catch (error) {
-		logger.warn("Failed to fetch products", { service: "fetchProducts" });
-		const baseReturn = {
-			products: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-			totalCount: 0,
-			error:
-				process.env.NODE_ENV === "development"
-					? error instanceof Error
-						? error.message
-						: "Unknown error"
-					: "Failed to fetch products",
-		};
-
-		return baseReturn as GetProductsReturn & { error: string };
 	}
 }

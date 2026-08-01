@@ -20,30 +20,20 @@ vi.mock("next/cache", () => ({
 // ============================================================================
 
 import {
-	cacheProductSkus,
 	cacheSkuDetailById,
 	getSkuInvalidationTags,
 	getInventoryInvalidationTags,
 	collectBulkInvalidationTags,
-	invalidateTags,
 } from "../cache.utils";
 
 beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-// ============================================================================
-// cacheProductSkus
-// ============================================================================
-
-describe("cacheProductSkus", () => {
-	it("sets productDetail cache life and tags", () => {
-		cacheProductSkus("product-123");
-
-		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
-		expect(mockCacheTag).toHaveBeenCalledWith("product-product-123-skus", "skus-list");
-	});
-});
+// `cacheProductSkus` était testé ici. Il a été SUPPRIMÉ (audit cache catalogue
+// 2026-07-31) : zéro appelant en production. Le tag `SKUS(productId)` qu'il posait
+// est désormais émis par le vrai lecteur, `../../data/fetch-skus.ts` — c'est LUI
+// que `inventory-invalidation-covers-reader.regression.test.ts` inspecte.
 
 // ============================================================================
 // cacheSkuDetailById
@@ -67,10 +57,13 @@ describe("getSkuInvalidationTags", () => {
 		const tags = getSkuInvalidationTags("SKU-001");
 
 		expect(tags).toContain("skus-list");
-		expect(tags).toContain("sku-SKU-001");
 		expect(tags).toContain("max-product-price");
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
+		// Le sitemap images lit `skus.images` : toute mutation SKU doit le buster.
+		expect(tags).toContain("sitemap-images");
+		// `sku-SKU-001` (`SKU_DETAIL`) a été retiré : aucun lecteur ne l'a jamais posé.
+		expect(tags).not.toContain("sku-SKU-001");
 		expect(tags).toHaveLength(5);
 	});
 
@@ -101,10 +94,10 @@ describe("getSkuInvalidationTags", () => {
 		const tags = getSkuInvalidationTags("SKU-001", "prod-123", "bague-or", "id-123");
 
 		expect(tags).toContain("skus-list");
-		expect(tags).toContain("sku-SKU-001");
 		expect(tags).toContain("max-product-price");
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
+		expect(tags).toContain("sitemap-images");
 		expect(tags).toContain("sku-stock-id-123");
 		expect(tags).toContain("sku-id-id-123");
 		expect(tags).toContain("product-prod-123-skus");
@@ -171,7 +164,7 @@ describe("getSkuInvalidationTags", () => {
 
 		expect(tags).not.toContain("colors-list");
 		expect(tags).not.toContain("materials-list");
-		// Base set unchanged
+		// Base set unchanged (4 depuis le retrait de `SKU_DETAIL`, tag sans lecteur)
 		expect(tags).toHaveLength(5);
 	});
 });
@@ -236,7 +229,8 @@ describe("collectBulkInvalidationTags", () => {
 		expect(tags).toBeInstanceOf(Set);
 		expect(tags.size).toBeGreaterThan(0);
 		expect(tags.has("skus-list")).toBe(true);
-		expect(tags.has("sku-SKU-001")).toBe(true);
+		// `sku-SKU-001` (SKU_DETAIL) retiré : jamais posé par un lecteur.
+		expect(tags.has("sku-SKU-001")).toBe(false);
 		expect(tags.has("sku-stock-sku-id-1")).toBe(true);
 		expect(tags.has("sku-id-sku-id-1")).toBe(true);
 		expect(tags.has("product-prod-1-skus")).toBe(true);
@@ -256,11 +250,12 @@ describe("collectBulkInvalidationTags", () => {
 		const productSkusTags = tagsArray.filter((t) => t === "product-prod-1-skus");
 		expect(productSkusTags).toHaveLength(1);
 
-		// But SKU-specific tags should be distinct
-		expect(tags.has("sku-SKU-001")).toBe(true);
-		expect(tags.has("sku-SKU-002")).toBe(true);
+		// But SKU-specific tags should be distinct — via SKU_STOCK / SKU_DETAIL_BY_ID,
+		// les seuls tags par-SKU qu'un lecteur pose réellement.
 		expect(tags.has("sku-stock-sku-1")).toBe(true);
 		expect(tags.has("sku-stock-sku-2")).toBe(true);
+		expect(tags.has("sku-id-sku-1")).toBe(true);
+		expect(tags.has("sku-id-sku-2")).toBe(true);
 	});
 
 	it("handles SKUs from different products", () => {
@@ -283,25 +278,7 @@ describe("collectBulkInvalidationTags", () => {
 	});
 });
 
-// ============================================================================
-// invalidateTags
-// ============================================================================
-
-describe("invalidateTags", () => {
-	it("calls updateTag for each tag in the Set", () => {
-		const tags = new Set(["tag-1", "tag-2", "tag-3"]);
-
-		invalidateTags(tags);
-
-		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
-		expect(mockUpdateTag).toHaveBeenCalledWith("tag-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("tag-2");
-		expect(mockUpdateTag).toHaveBeenCalledWith("tag-3");
-	});
-
-	it("does nothing for an empty Set", () => {
-		invalidateTags(new Set());
-
-		expect(mockUpdateTag).not.toHaveBeenCalled();
-	});
-});
+// `invalidateTags` a été retiré (audit cache 2026-07-31) : zéro appelant en
+// production, et son nom neutre masquait le choix d'API le plus piégeux du repo.
+// Ses deux tests vivent désormais sur les helpers explicites de
+// `shared/lib/__tests__/cache.test.ts`.

@@ -27,6 +27,17 @@ import Link from "next/link";
 import { ProductSkuRowActions } from "./sku-row-actions";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
+// Helper pour obtenir l'image primaire
+function getPrimaryImage(sku: GetProductSkusReturn["productSkus"][number]) {
+	if (sku.images.length === 0) return null;
+	return sku.images.find((img) => img.isPrimary) ?? sku.images[0];
+}
+
+// Helper pour calculer le stock disponible
+function getAvailableStock(sku: { inventory: number }): number {
+	return sku.inventory;
+}
+
 interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
 	productSlug: string;
@@ -49,17 +60,6 @@ export async function ProductVariantsDataTable({
 	hasActiveFilters = false,
 }: ProductVariantsDataTableProps) {
 	const { productSkus, pagination } = await skusPromise;
-
-	// Helper pour obtenir l'image primaire
-	const getPrimaryImage = (sku: (typeof productSkus)[0]) => {
-		if (sku.images.length === 0) return null;
-		return sku.images.find((img) => img.isPrimary) ?? sku.images[0];
-	};
-
-	// Helper pour calculer le stock disponible
-	const getAvailableStock = (sku: (typeof productSkus)[0]) => {
-		return sku.inventory;
-	};
 
 	if (productSkus.length === 0) {
 		return (

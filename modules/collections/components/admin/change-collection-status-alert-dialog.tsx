@@ -14,7 +14,8 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { Archive, FileText, Globe, LoaderCircle } from "lucide-react";
+import { Archive, FileText, Globe } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { ComponentType } from "react";
 
 export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";
@@ -120,7 +121,7 @@ export function ChangeCollectionStatusAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Changement en cours…" : `Changer en ${config.label}`}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

@@ -9,13 +9,16 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+
 import { CreateMaterialForm } from "@/modules/materials/components/admin/create-material-form";
 import {
 	EditMaterialForm,
 	type EditableMaterial,
 } from "@/modules/materials/components/admin/edit-material-form";
 
-export const MATERIAL_DIALOG_ID = "material-form";
+// Re-dérivé du registre : ouvreurs et dialog s'abonnent au même identifiant.
+export const MATERIAL_DIALOG_ID = TAXONOMY_CONFIG.material.formDialogId;
 
 interface MaterialDialogData extends Record<string, unknown> {
 	material?: EditableMaterial;

@@ -148,8 +148,8 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				)}
 				{stockStatus === "low_stock" && (
 					<Badge
-						variant="outline"
-						className="gap-1.5 border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased shadow-sm"
+						variant="warning"
+						className="gap-1.5 text-xs/5 tracking-normal antialiased shadow-sm"
 						role="status"
 						aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 					>
@@ -176,7 +176,7 @@ export function ProductPriceDisplay({ selectedSku, product, cartsCount }: Produc
 				stockStatus !== "out_of_stock" && (
 					<Badge
 						variant="outline"
-						className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased"
+						className="border-primary/50 bg-primary/10 text-primary text-xs/5 tracking-normal antialiased"
 						role="status"
 						aria-label={`Actuellement dans ${cartsCount} paniers`}
 					>

@@ -16,6 +16,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 
 import { getMaterialInvalidationTags } from "../constants/cache";
 import { duplicateMaterialSchema } from "../schemas/materials.schemas";
@@ -58,33 +59,18 @@ export async function duplicateMaterial(
 			return notFound("Materiau");
 		}
 
-		// 5. Generer un nouveau nom unique
-		const baseCopyName = `${original.name} (copie`;
-		const existingCopies = await prisma.material.findMany({
-			where: { name: { startsWith: baseCopyName } },
-			select: { name: true },
+		// 5. Generer un nouveau nom unique via la SSOT (parité couleurs/types —
+		// l'implémentation locale faisait un `startsWith` sensible à la casse).
+		const nameResult = await generateUniqueReadableName(original.name, async (name) => {
+			const existing = await prisma.material.findFirst({ where: { name } });
+			return existing !== null;
 		});
 
-		let newName: string;
-		if (existingCopies.length === 0) {
-			newName = `${original.name} (copie)`;
-		} else {
-			const existingNames = new Set(existingCopies.map((m) => m.name));
-			// Check if "(copie)" is available
-			if (!existingNames.has(`${original.name} (copie)`)) {
-				newName = `${original.name} (copie)`;
-			} else {
-				// Find the next available suffix
-				let suffix = 2;
-				while (existingNames.has(`${original.name} (copie ${suffix})`) && suffix <= 100) {
-					suffix++;
-				}
-				if (suffix > 100) {
-					return error("Impossible de generer un nom unique. Supprimez certaines copies.");
-				}
-				newName = `${original.name} (copie ${suffix})`;
-			}
+		if (!nameResult.success) {
+			return error(nameResult.error ?? "Impossible de générer un nom unique");
 		}
+
+		const newName = nameResult.name!;
 
 		// 6. Generer un slug unique
 		const slug = await generateSlug(prisma, "material", newName);

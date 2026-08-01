@@ -22,8 +22,7 @@ import {
 	safeFormGet,
 	safeFormGetJSON,
 } from "@/shared/lib/actions";
-import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
-import { logger } from "@/shared/lib/logger";
+import { deleteUnreferencedCatalogMedia } from "@/modules/media/services/delete-unreferenced-catalog-media.service";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
 import { applyInventoryDeltaTx } from "../services/apply-inventory-delta.service";
 import {
@@ -119,9 +118,12 @@ export async function updateProductSku(
 		const { productSku, oldMediaUrls, previousColors, previousMaterials } =
 			await prisma.$transaction(
 				async (tx) => {
-					// Validate SKU exists and get product info
+					// Validate SKU exists and get product info.
+					// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
+					// supprimé, sans chemin de restauration : le muter est toujours une
+					// anomalie (même garde que les 5 autres mutateurs SKU).
 					const existingSku = await tx.productSku.findUnique({
-						where: { id: validatedData.skuId },
+						where: { id: validatedData.skuId, deletedAt: null },
 						select: {
 							id: true,
 							sku: true,
@@ -271,13 +273,17 @@ export async function updateProductSku(
 				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 			);
 
-		// 9. Delete removed media from UploadThing storage
+		// 9. Delete removed media from UploadThing storage — via la SSOT qui
+		// préserve les URLs encore référencées par un snapshot de commande
+		// (MEDIA-AUDIT-003 : figé 10 ans, rendu dans le PDF de facture) ou par une
+		// autre ligne SkuMedia (blobs partagés par duplication). Ce chemin
+		// supprimait sans aucune vérif, seul divergent des trois écrivains.
+		// `after()` plutôt que fire-and-forget : en serverless, la lambda peut
+		// geler avant la résolution d'une promesse détachée.
 		const newMediaUrls = new Set(allMedia.map((m) => m.url));
 		const removedUrls = oldMediaUrls.filter((url) => !newMediaUrls.has(url));
 		if (removedUrls.length > 0) {
-			deleteUploadThingFilesFromUrls(removedUrls).catch((e) => {
-				logger.error("Failed to delete UploadThing files", e, { action: "updateProductSku" });
-			});
+			after(() => deleteUnreferencedCatalogMedia(removedUrls, { action: "updateProductSku" }));
 		}
 
 		// 10. Build success message

@@ -99,9 +99,12 @@ async function fetchColorDetail(slug: string) {
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,
-				// Liens M2M actifs avec SKU joint (préserve l'ancien shape `skus[]`)
+				// Liens M2M actifs avec SKU joint (préserve l'ancien shape `skus[]`).
+				// `deletedAt: null` : le soft delete produit pose deletedAt sur les SKUs
+				// SANS toucher isActive — sans ce filtre, la carte listait des variantes
+				// fantômes de produits supprimés (liens morts).
 				skuColors: {
-					where: { sku: { isActive: true } },
+					where: { sku: { isActive: true, deletedAt: null } },
 					take: 10,
 					orderBy: { sku: { product: { title: "asc" } } },
 					select: {
@@ -127,12 +130,28 @@ async function fetchColorDetail(slug: string) {
 										slug: true,
 										title: true,
 										status: true,
+										// Vignette unique : l'appelant prend `skus[0].images[0]` sans
+										// pouvoir trier, donc le tri se fait ici.
+										//
+										// `where: { isDefault: true }` et `where: { isPrimary: true }`
+										// étaient tous deux des filtres — le motif banni par CLAUDE.md :
+										// un produit sans SKU par défaut, ou un SKU sans média primaire,
+										// rendait 0 image alors qu'il en a. On ordonne au lieu de filtrer.
+										// Et `mediaType: "IMAGE"` est obligatoire ici : sans lui un `.mp4`
+										// atterrit dans `<Image src>` (vignette cassée + transformation
+										// `/_next/image` facturée). Même pattern que get-material.ts.
 										skus: {
-											where: { isDefault: true },
+											where: { isActive: true, deletedAt: null },
+											orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 											take: 1,
 											select: {
 												images: {
-													where: { isPrimary: true },
+													where: { mediaType: "IMAGE" as const },
+													orderBy: [
+														{ isPrimary: "desc" as const },
+														{ position: "asc" as const },
+														{ id: "asc" as const },
+													],
 													take: 1,
 													select: { url: true, blurDataUrl: true, altText: true },
 												},
@@ -144,7 +163,7 @@ async function fetchColorDetail(slug: string) {
 						},
 					},
 				},
-				_count: { select: { skuColors: { where: { sku: { isActive: true } } } } },
+				_count: { select: { skuColors: { where: { sku: { isActive: true, deletedAt: null } } } } },
 			},
 		});
 
@@ -186,10 +205,12 @@ async function fetchColorDistinctProductCount(colorId: string): Promise<number> 
 	cacheTag(COLORS_CACHE_TAGS.PRODUCT_COUNT(colorId));
 
 	try {
-		// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure
+		// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure.
+		// `deletedAt: null` : sans lui, le KPI comptait les produits soft-deleted.
 		const result = await prisma.productSku.findMany({
 			where: {
 				isActive: true,
+				deletedAt: null,
 				colors: { some: { colorId } },
 			},
 			select: { productId: true },

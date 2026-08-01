@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import type { Prisma } from "@/app/generated/prisma/browser";
 
 // ============================================================================
@@ -44,7 +45,7 @@ export const GET_COLOR_SELECT = {
 // SEARCH CONSTANTS
 // ============================================================================
 
-export const COLOR_SEARCH_MAX_LENGTH = 100;
+export const COLOR_SEARCH_MAX_LENGTH = TEXT_LIMITS.SEARCH.max;
 
 // ============================================================================
 // PAGINATION CONSTANTS

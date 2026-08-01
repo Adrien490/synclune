@@ -32,11 +32,13 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 				name: true,
 				slug: true,
 				// _count.skuMaterials avec filtre nested `sku.isActive: true`
-				// = nombre de SKUs actifs utilisant ce matériau (M2M)
+				// = nombre de SKUs actifs utilisant ce matériau (M2M).
+				// `deletedAt: null` : le soft delete produit pose deletedAt sur les SKUs
+				// SANS toucher isActive — sans lui le compte incluait des fantômes.
 				_count: {
 					select: {
 						skuMaterials: {
-							where: { sku: { isActive: true } },
+							where: { sku: { isActive: true, deletedAt: null } },
 						},
 					},
 				},

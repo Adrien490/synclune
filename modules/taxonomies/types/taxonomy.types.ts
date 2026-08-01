@@ -12,7 +12,7 @@
 export type TaxonomyKind = "color" | "material" | "product-type";
 
 /** Libellés français d'une taxonomie, pour composer les textes d'interface. */
-export interface TaxonomyLabels {
+interface TaxonomyLabels {
 	/** « couleur » */
 	singular: string;
 	/** « couleurs » */
@@ -30,7 +30,7 @@ export interface TaxonomyLabels {
 }
 
 /** Unité comptée par le champ `_count` de la taxonomie. */
-export interface TaxonomyUsageLabels {
+interface TaxonomyUsageLabels {
 	/** « variante » / « produit » */
 	singular: string;
 	/** « variantes » / « produits » */
@@ -80,20 +80,4 @@ export interface TaxonomyConfig {
 	hasHex: boolean;
 	/** La taxonomie porte un drapeau « système » non supprimable (types uniquement). */
 	hasSystemFlag: boolean;
-}
-
-/** Forme minimale commune aux trois taxonomies, telle qu'affichée en liste. */
-export interface TaxonomyListItem {
-	id: string;
-	slug: string;
-	/** Nom affiché — `Color.name`, `Material.name` ou `ProductType.label`. */
-	displayName: string;
-	description: string | null;
-	isActive: boolean;
-	/** Nombre d'usages (variantes ou produits selon la taxonomie). */
-	usageCount: number;
-	/** Présent seulement si `config.hasHex`. */
-	hex?: string;
-	/** Présent seulement si `config.hasSystemFlag`. */
-	isSystem?: boolean;
 }

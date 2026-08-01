@@ -57,13 +57,19 @@ export function useProductActions({
 		{
 			key: "manage",
 			items: [
-				{
-					key: "view",
-					label: "Voir la fiche",
-					icon: Eye,
-					href: `/creations/${productSlug}`,
-					external: true,
-				},
+				// « Voir la fiche » seulement si PUBLIC : sur un DRAFT ou ARCHIVED la
+				// vitrine répond notFound() — le lien menait à un 404 garanti.
+				...(isPublic
+					? [
+							{
+								key: "view",
+								label: "Voir la fiche",
+								icon: Eye,
+								href: `/creations/${productSlug}`,
+								external: true,
+							},
+						]
+					: []),
 				{
 					key: "edit",
 					label: "Modifier",

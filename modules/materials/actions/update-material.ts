@@ -57,10 +57,16 @@ export async function updateMaterial(
 			return error("Ce materiau n'existe pas");
 		}
 
-		// Verifier l'unicite du nom (sauf si c'est le meme)
+		// Verifier l'unicite du nom (sauf si c'est le meme) — insensible à la
+		// casse (aligné sur les types de bijoux). `id: { not }` : un rename
+		// purement cosmétique se retrouverait lui-même en insensible et serait
+		// rejeté à tort.
 		if (validatedData.name !== existingMaterial.name) {
 			const nameExists = await prisma.material.findFirst({
-				where: { name: validatedData.name },
+				where: {
+					name: { equals: validatedData.name, mode: "insensitive" },
+					id: { not: validatedData.id },
+				},
 			});
 
 			if (nameExists) {
@@ -68,10 +74,14 @@ export async function updateMaterial(
 			}
 		}
 
-		// Generer un nouveau slug si le nom a change
+		// Generer un nouveau slug si le nom a change.
+		// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
+		// son PROPRE slug et suffixait `-2` — l'URL changeait sans raison.
 		const slug =
 			validatedData.name !== existingMaterial.name
-				? await generateSlug(prisma, "material", validatedData.name)
+				? await generateSlug(prisma, "material", validatedData.name, {
+						excludeId: validatedData.id,
+					})
 				: existingMaterial.slug;
 
 		// Mettre a jour le materiau

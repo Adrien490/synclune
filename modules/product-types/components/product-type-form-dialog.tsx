@@ -9,13 +9,16 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+
 import { CreateProductTypeForm } from "@/modules/product-types/components/admin/create-product-type-form";
 import {
 	EditProductTypeForm,
 	type EditableProductType,
 } from "@/modules/product-types/components/admin/edit-product-type-form";
 
-export const PRODUCT_TYPE_DIALOG_ID = "product-type-form";
+// Re-dérivé du registre : ouvreurs et dialog s'abonnent au même identifiant.
+export const PRODUCT_TYPE_DIALOG_ID = TAXONOMY_CONFIG["product-type"].formDialogId;
 
 interface ProductTypeDialogData extends Record<string, unknown> {
 	productType?: EditableProductType;

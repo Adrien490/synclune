@@ -271,7 +271,9 @@ describe("updateMaterial", () => {
 
 		await updateMaterial(undefined, makeFormData({ name: "Or 14k" }));
 
-		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "material", "Or 14k");
+		expect(mockGenerateSlug).toHaveBeenCalledWith(mockPrisma, "material", "Or 14k", {
+			excludeId: VALID_CUID,
+		});
 	});
 
 	it("should keep existing slug when name has not changed", async () => {

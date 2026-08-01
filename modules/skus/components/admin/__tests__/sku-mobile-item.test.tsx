@@ -91,7 +91,7 @@ vi.mock("@/shared/contexts/admin-list-pending-context", () => ({
 vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
 	MoreVertical: () => <svg data-testid="icon-more-vertical" />,
-	Loader2: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
+	Loader2Icon: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
 }));
 
 import { SkuMobileItem } from "../sku-mobile-item";

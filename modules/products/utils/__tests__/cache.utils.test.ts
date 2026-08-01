@@ -22,8 +22,7 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 import {
 	cacheProducts,
 	cacheProductDetail,
-	cacheProductSkus,
-	cacheSkuDetail,
+	cacheProductDetailById,
 	getProductInvalidationTags,
 	getInventoryInvalidationTags,
 	getSkuStockInvalidationTags,
@@ -66,28 +65,31 @@ describe("cacheProductDetail", () => {
 });
 
 // ============================================================================
-// cacheProductSkus
+// cacheProductDetailById
 // ============================================================================
 
-describe("cacheProductSkus", () => {
-	it("sets productDetail cache life and SKUS + SKUS_LIST tags", () => {
-		cacheProductSkus("prod-123");
+/**
+ * `cacheProductSkus` et `cacheSkuDetail` étaient testés ici. Ils ont été SUPPRIMÉS
+ * (audit cache catalogue 2026-07-31) : aucun appelant en production, alors que les
+ * tags qu'ils posaient étaient invalidés par une dizaine de mutateurs. Ces deux
+ * `describe` verrouillaient donc la forme de tags que personne ne posait — le même
+ * mode d'échec que les `toHaveLength` de `getInventoryInvalidationTags` plus bas.
+ */
+describe("cacheProductDetailById", () => {
+	it("pose DETAIL_BY_ID + LIST sous le profil catalog", () => {
+		cacheProductDetailById("prod-123");
 
 		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
-		expect(mockCacheTag).toHaveBeenCalledWith("product-prod-123-skus", "skus-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-id-prod-123", "products-list");
 	});
-});
 
-// ============================================================================
-// cacheSkuDetail
-// ============================================================================
+	// Contre-épreuve du bug corrigé : `get-product-for-duplication.ts` appelait
+	// `cacheProductDetail(\`product-id-${id}\`)`, qui produisait un tag à DOUBLE
+	// préfixe (`product-product-id-…`) qu'aucun mutateur n'émettait.
+	it("n'émet PAS le tag à double préfixe de l'ancienne implémentation", () => {
+		cacheProductDetailById("prod-123");
 
-describe("cacheSkuDetail", () => {
-	it("sets productDetail cache life and SKU_DETAIL + SKUS_LIST tags", () => {
-		cacheSkuDetail("SKU-001");
-
-		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
-		expect(mockCacheTag).toHaveBeenCalledWith("sku-SKU-001", "skus-list");
+		expect(mockCacheTag).not.toHaveBeenCalledWith("product-product-id-prod-123", expect.anything());
 	});
 });
 
@@ -115,15 +117,43 @@ describe("getProductInvalidationTags", () => {
 		// Le `hasProducts` d'un type de bijou se calcule sur les produits PUBLIC : sans ce
 		// tag, publier le premier bijou d'un type ne le faisait pas apparaître au mega-menu.
 		expect(tags).toContain("product-types-list");
-		expect(tags).toHaveLength(11);
+		// …et l'entrée du mega-menu elle-même, que les mutateurs collections et
+		// product-types posaient déjà explicitement (audit cache catalogue 2026-07-31).
+		expect(tags).toContain("navbar-menu");
+		// `fetchSkuDetailById` embarque product.title/status/_count.skus sous `skus-list`.
+		expect(tags).toContain("skus-list");
+		expect(tags).toHaveLength(13);
 	});
 
-	it("includes SKUS + COLLECTIONS tags when productId is provided", () => {
+	it("includes SKUS + COLLECTIONS + DETAIL_BY_ID tags when productId is provided", () => {
 		const tags = getProductInvalidationTags("bague-or", "prod-abc");
 
 		expect(tags).toContain("product-prod-abc-skus");
 		expect(tags).toContain("product-prod-abc-collections");
-		expect(tags).toHaveLength(13);
+		// Lecture de duplication : elle se cachait sous un tag fabriqué à la main
+		// (`product-product-id-…`) qu'aucun mutateur n'émettait.
+		expect(tags).toContain("product-id-prod-abc");
+		expect(tags).toHaveLength(16);
+	});
+
+	// Cascade couleurs/matériaux : le KPI « produits distincts » des listes couleurs
+	// et matériaux ne bougeait que sur mutation SKU, jamais sur suppression,
+	// duplication ou changement de statut du PRODUIT.
+	it("cascade les compteurs couleurs/matériaux quand ils sont fournis", () => {
+		const tags = getProductInvalidationTags("bague-or", "prod-abc", {
+			affectedColorIds: ["col-1", "col-2"],
+			affectedMaterialIds: ["mat-1"],
+		});
+
+		expect(tags).toContain("color-col-1-product-count");
+		expect(tags).toContain("color-col-2-product-count");
+		expect(tags).toContain("material-mat-1-product-count");
+	});
+
+	it("n'ajoute aucun tag couleur/matériau sans options", () => {
+		const tags = getProductInvalidationTags("bague-or", "prod-abc");
+
+		expect(tags.filter((t) => t.endsWith("-product-count"))).toHaveLength(0);
 	});
 
 	// L'assertion de longueur ci-dessus est le garde-fou : sans elle, un tag ajouté par
@@ -156,36 +186,59 @@ describe("getProductInvalidationTags", () => {
 // getInventoryInvalidationTags
 // ============================================================================
 
+/**
+ * ⚠️ Ces 4 tests verrouillaient la version PAUVRE du helper (audit cache
+ * 2026-07-31). Il existait deux `getInventoryInvalidationTags` homonymes — celui
+ * de `modules/skus/utils/` couvrait `LIST`, `SKUS_LIST` et `SKU_DETAIL_BY_ID`,
+ * celui-ci non — et `collectStockInvalidationTags` déléguait au second. Les
+ * `toHaveLength(4/5/6)` ci-dessous gelaient donc l'absence des tags manquants :
+ * ajouter la couverture correcte faisait rougir le test censé la protéger.
+ *
+ * Les deux implémentations sont désormais fusionnées (SSOT ici, ré-export côté
+ * skus) et les comptes reflètent la couverture complète — celle qu'exige
+ * STOCK-STALE-BASELINE-001.
+ */
 describe("getInventoryInvalidationTags", () => {
+	const BASE_TAGS = [
+		"product-bague-or",
+		"product-prod-123-skus",
+		"products-list",
+		"skus-list",
+		"admin-inventory-list",
+		"admin-badges",
+	];
+
 	it("returns base inventory tags without skuIds", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123");
 
-		expect(tags).toContain("product-bague-or");
-		expect(tags).toContain("product-prod-123-skus");
-		expect(tags).toContain("admin-inventory-list");
-		expect(tags).toContain("admin-badges");
-		expect(tags).toHaveLength(4);
+		expect(tags).toEqual(BASE_TAGS);
 	});
 
-	it("includes SKU_STOCK tag for each skuId provided", () => {
+	it("includes SKU_STOCK and SKU_DETAIL_BY_ID for each skuId provided", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", ["sku-1", "sku-2"]);
 
-		expect(tags).toContain("sku-stock-sku-1");
-		expect(tags).toContain("sku-stock-sku-2");
-		expect(tags).toHaveLength(6);
+		// SKU_DETAIL_BY_ID est le tag de `fetchSkuById` / `fetchSkuDetailById` : sans
+		// lui, le formulaire d'édition rend un `originalInventory` périmé et le delta
+		// relatif diverge du stock réel (STOCK-STALE-BASELINE-001).
+		expect(tags).toEqual([
+			...BASE_TAGS,
+			"sku-stock-sku-1",
+			"sku-id-sku-1",
+			"sku-stock-sku-2",
+			"sku-id-sku-2",
+		]);
 	});
 
 	it("handles empty skuIds array gracefully", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", []);
 
-		expect(tags).toHaveLength(4);
+		expect(tags).toEqual(BASE_TAGS);
 	});
 
 	it("handles a single skuId", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", ["sku-only"]);
 
-		expect(tags).toContain("sku-stock-sku-only");
-		expect(tags).toHaveLength(5);
+		expect(tags).toEqual([...BASE_TAGS, "sku-stock-sku-only", "sku-id-sku-only"]);
 	});
 });
 

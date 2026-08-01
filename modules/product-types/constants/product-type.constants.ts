@@ -22,9 +22,13 @@ export const GET_PRODUCT_TYPES_SELECT = {
 					// aujourd'hui (deleteProduct force ARCHIVED) — ne pas dépendre
 					// de ce couplage pour le compte affiché.
 					deletedAt: null,
+					// `deletedAt: null` aussi sur le SKU : parité avec la garde de
+					// `delete-product-type` — sans lui, un produit dont tous les SKUs
+					// sont soft-deleted était compté en liste mais pas par la garde.
 					skus: {
 						some: {
 							isActive: true,
+							deletedAt: null,
 						},
 					},
 				},
@@ -50,9 +54,13 @@ export const GET_PRODUCT_TYPE_SELECT = {
 				where: {
 					status: "PUBLIC",
 					deletedAt: null,
+					// `deletedAt: null` aussi sur le SKU : parité avec la garde de
+					// `delete-product-type` — sans lui, un produit dont tous les SKUs
+					// sont soft-deleted était compté en liste mais pas par la garde.
 					skus: {
 						some: {
 							isActive: true,
+							deletedAt: null,
 						},
 					},
 				},

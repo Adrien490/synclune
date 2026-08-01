@@ -53,6 +53,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	GET_PRODUCT_SELECT,
+	GET_PRODUCT_FOR_EDIT_SELECT,
 	GET_PRODUCTS_SELECT,
 	GET_PRODUCT_FOR_DUPLICATION_SELECT,
 	PRODUCT_CAROUSEL_SELECT,
@@ -112,6 +113,7 @@ describe("selects catalogue — filtre média (@regression catalogue-selects-med
 
 	const gallerySelects: Array<[string, ImagesNode]> = [
 		["GET_PRODUCT_SELECT", productImagesNode(GET_PRODUCT_SELECT)],
+		["GET_PRODUCT_FOR_EDIT_SELECT", productImagesNode(GET_PRODUCT_FOR_EDIT_SELECT)],
 		["GET_PRODUCTS_SELECT", productImagesNode(GET_PRODUCTS_SELECT)],
 		["GET_PRODUCT_FOR_DUPLICATION_SELECT", productImagesNode(GET_PRODUCT_FOR_DUPLICATION_SELECT)],
 	];

@@ -1,10 +1,9 @@
 "use client";
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
-import { Checkbox } from "@/shared/components/ui/checkbox";
-import { Label } from "@/shared/components/ui/label";
+import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
+import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Separator } from "@/shared/components/ui/separator";
-import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useAppForm } from "@/shared/components/forms";
@@ -12,7 +11,6 @@ import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition, Suspense, type ComponentProps } from "react";
 
-import { FilterCheckboxGroup, type CheckboxArrayField } from "./skus-filter/filter-checkbox-group";
 import {
 	SKU_ACTIVE_STATUS_OPTIONS,
 	SKU_FILTER_KEYS,
@@ -20,6 +18,72 @@ import {
 	type SkuActiveFilter,
 	type SkusFilterFormData,
 } from "./skus-filter/skus-filter-options";
+
+interface CheckboxArrayField {
+	state: { value: string[] };
+	pushValue: (value: string) => void;
+	removeValue: (index: number) => void;
+}
+
+interface CheckboxOption {
+	id: string;
+	name: string;
+	hex?: string;
+}
+
+/**
+ * Groupe de checkboxes type « filtre multi-select » (couleur/matériau),
+ * construit sur le `CheckboxFilterItem` partagé (zone tactile 44px) — le
+ * groupe local sur `Checkbox`/`Label` bruts était le seul des 9 modules
+ * hors pattern (audit UI design system 2026-08-01).
+ */
+function FilterCheckboxGroup({
+	legend,
+	options,
+	field,
+	idPrefix,
+}: {
+	legend: string;
+	options: CheckboxOption[];
+	field: CheckboxArrayField;
+	idPrefix: string;
+}) {
+	return (
+		<fieldset className="space-y-1">
+			<legend className="text-foreground mb-2 text-sm font-medium">{legend}</legend>
+			<div className="max-h-48 space-y-1 overflow-y-auto">
+				{options.map((option) => {
+					const isSelected = field.state.value.includes(option.id);
+					return (
+						<CheckboxFilterItem
+							key={option.id}
+							id={`${idPrefix}-${option.id}`}
+							checked={isSelected}
+							onCheckedChange={(checked) => {
+								if (checked && !isSelected) {
+									field.pushValue(option.id);
+								} else if (!checked && isSelected) {
+									const index = field.state.value.indexOf(option.id);
+									field.removeValue(index);
+								}
+							}}
+							indicator={
+								option.hex ? (
+									<span
+										className="border-border size-4 rounded-full border"
+										style={{ backgroundColor: option.hex }}
+									/>
+								) : undefined
+							}
+						>
+							{option.name}
+						</CheckboxFilterItem>
+					);
+				})}
+			</div>
+		</fieldset>
+	);
+}
 
 interface SkusFilterSheetProps {
 	className?: string;
@@ -169,25 +233,24 @@ function SkusFilterSheetInner({
 				{/* Statut actif/inactif */}
 				<form.Field name="isActive">
 					{(field) => (
-						<fieldset className="space-y-3">
-							<legend className="text-foreground text-sm font-medium">Statut de la variante</legend>
-							<RadioGroup
-								value={field.state.value}
-								onValueChange={(value) => field.handleChange(value as SkuActiveFilter)}
-								className="space-y-2"
-							>
-								{SKU_ACTIVE_STATUS_OPTIONS.map(({ value, label }) => (
-									<div key={value} className="flex items-center space-x-2">
-										<RadioGroupItem value={value} id={`active-${value}`} />
-										<Label
-											htmlFor={`active-${value}`}
-											className="flex-1 cursor-pointer text-sm font-normal"
-										>
-											{label}
-										</Label>
-									</div>
-								))}
-							</RadioGroup>
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">
+								Statut de la variante
+							</legend>
+							{SKU_ACTIVE_STATUS_OPTIONS.map(({ value, label }) => (
+								<RadioFilterItem
+									key={value}
+									id={`active-${value}`}
+									name="filter-sku-active"
+									value={value}
+									checked={field.state.value === value}
+									onCheckedChange={(checked) => {
+										if (checked) field.handleChange(value as SkuActiveFilter);
+									}}
+								>
+									{label}
+								</RadioFilterItem>
+							))}
 						</fieldset>
 					)}
 				</form.Field>
@@ -197,36 +260,28 @@ function SkusFilterSheetInner({
 				{/* Statut du stock */}
 				<form.Field name="stockStatuses" mode="array">
 					{(field) => (
-						<fieldset className="space-y-3">
-							<legend className="text-foreground text-sm font-medium">Statut du stock</legend>
-							<div className="space-y-2">
-								{SKU_STOCK_STATUS_OPTIONS.map(({ value, label }) => {
-									const isSelected = field.state.value.includes(value);
-									return (
-										<div key={value} className="flex items-center space-x-2">
-											<Checkbox
-												id={`stock-${value}`}
-												checked={isSelected}
-												onCheckedChange={(checked) => {
-													if (checked && !isSelected) {
-														field.pushValue(value);
-													} else if (!checked && isSelected) {
-														const index = field.state.value.indexOf(value);
-														field.removeValue(index);
-													}
-												}}
-												className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-											/>
-											<Label
-												htmlFor={`stock-${value}`}
-												className="flex-1 cursor-pointer text-sm font-normal"
-											>
-												{label}
-											</Label>
-										</div>
-									);
-								})}
-							</div>
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">Statut du stock</legend>
+							{SKU_STOCK_STATUS_OPTIONS.map(({ value, label }) => {
+								const isSelected = field.state.value.includes(value);
+								return (
+									<CheckboxFilterItem
+										key={value}
+										id={`stock-${value}`}
+										checked={isSelected}
+										onCheckedChange={(checked) => {
+											if (checked && !isSelected) {
+												field.pushValue(value);
+											} else if (!checked && isSelected) {
+												const index = field.state.value.indexOf(value);
+												field.removeValue(index);
+											}
+										}}
+									>
+										{label}
+									</CheckboxFilterItem>
+								);
+							})}
 						</fieldset>
 					)}
 				</form.Field>

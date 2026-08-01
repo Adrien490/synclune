@@ -27,8 +27,9 @@ const mockFocus = vi.fn();
 
 function createSearchInputRef() {
 	// `focus` fait partie du contrat `SearchInputHandle` depuis que le mode idle
-	// rend la main au champ quand l'utilisateur retape (lot E).
-	return { current: { setValue: mockSetValue, focus: mockFocus } };
+	// rend la main au champ quand l'utilisateur retape (lot E) ; `clear` depuis
+	// que l'Escape en deux temps est arbitré par le dialog (audit 2026-08-01).
+	return { current: { setValue: mockSetValue, focus: mockFocus, clear: vi.fn() } };
 }
 
 function makeResult(

@@ -1,13 +1,11 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { success, handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { RECENT_SEARCHES_COOKIE_NAME } from "../constants/recent-searches";
-import { getRecentSearchesInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action pour effacer toutes les recherches recentes
@@ -23,9 +21,9 @@ export async function clearRecentSearches(
 		const cookieStore = await cookies();
 		cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME);
 
-		// Invalider le cache
-		const tags = getRecentSearchesInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		// Aucune invalidation : cf. `add-recent-search.ts` — le lecteur cookie
+		// `get-recent-searches.ts` n'est pas caché, `recent-searches-list` n'avait
+		// aucun poseur.
 
 		return success("Recherches effacees");
 	} catch (e) {

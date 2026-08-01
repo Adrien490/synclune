@@ -263,9 +263,13 @@ describe("useKeyboardNavigation", () => {
 	});
 
 	it("ignores non-focusable mouseover targets", () => {
-		setup(createElement("div", { className: "wrapper" }, createElement("button", null, "A")));
+		// `contentRef` est désormais un callback ref (fix qs-keyboard-navigation-
+		// survives-reopen) : on requête depuis le conteneur rendu, pas via `.current`.
+		const { container } = setup(
+			createElement("div", { className: "wrapper" }, createElement("button", null, "A")),
+		);
 
-		const wrapper = hookResultRef.current!.contentRef.current!.querySelector(".wrapper")!;
+		const wrapper = container.querySelector(".wrapper")!;
 
 		act(() => {
 			wrapper.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));

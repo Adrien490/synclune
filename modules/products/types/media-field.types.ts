@@ -6,6 +6,9 @@ export interface MediaArrayFieldValue {
 	altText?: string;
 	thumbnailUrl?: string | null;
 	blurDataUrl?: string;
+	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
+	width?: number | null;
+	height?: number | null;
 }
 
 /**

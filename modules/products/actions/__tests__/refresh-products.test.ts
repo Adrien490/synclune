@@ -62,6 +62,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_INVENTORY_LIST: "admin-inventory-list",
 		SITEMAP_IMAGES: "sitemap-images",
 		PRODUCT_TYPES_LIST: "product-types-list",
+		NAVBAR_MENU: "navbar-menu",
 	},
 }));
 
@@ -128,9 +129,11 @@ describe("refreshProducts", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("sitemap-images");
 	});
 
-	it("should invalidate exactly 10 cache tags", async () => {
+	it("should invalidate exactly 11 cache tags", async () => {
 		await refreshProducts(undefined, emptyFormData);
-		expect(mockUpdateTag).toHaveBeenCalledTimes(10);
+		// 11e tag : NAVBAR_MENU (global, présent dans getProductInvalidationTags —
+		// sans lui le mega-menu ne se rafraîchissait pas depuis le bouton).
+		expect(mockUpdateTag).toHaveBeenCalledTimes(11);
 	});
 
 	// Les tags PAR-SLUG (`product-<slug>`, `related-products-contextual-<slug>`) sont hors

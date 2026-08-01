@@ -9,6 +9,7 @@ const {
 	mockIsOpen,
 	mockClose,
 	mockRouterPush,
+	mockRouterReplace,
 	mockAdd,
 	mockSearches,
 	mockRemove,
@@ -31,6 +32,7 @@ const {
 	mockIsOpen: { current: true },
 	mockClose: vi.fn(),
 	mockRouterPush: vi.fn(),
+	mockRouterReplace: vi.fn(),
 	mockAdd: vi.fn(),
 	mockSearches: { current: [] as string[] },
 	mockRemove: vi.fn(),
@@ -65,7 +67,7 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: mockRouterPush }),
+	useRouter: () => ({ push: mockRouterPush, replace: mockRouterReplace }),
 }));
 
 vi.mock("@/modules/products/hooks/use-add-recent-search", () => ({
@@ -262,52 +264,73 @@ vi.mock("@/shared/components/search-input", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dialog", () => ({
-	Dialog: ({
-		open,
-		onOpenChange,
-		children,
-	}: {
-		open: boolean;
-		onOpenChange: (open: boolean) => void;
-		children: React.ReactNode;
-	}) => (
-		<div data-testid="dialog" data-open={open}>
-			{open && children}
-			<button onClick={() => onOpenChange(false)} data-testid="dialog-overlay-close">
-				Close overlay
-			</button>
-		</div>
-	),
-	DialogContent: ({
-		children,
-		"aria-busy": ariaBusy,
-	}: {
-		children: React.ReactNode;
-		showCloseButton?: boolean;
-		onCloseAutoFocus?: (e: Event) => void;
-		"aria-busy"?: boolean;
-		className?: string;
-	}) => (
-		<div data-testid="dialog-content" aria-busy={ariaBusy}>
-			{children}
-		</div>
-	),
-	DialogTitle: ({ children }: { children: React.ReactNode; className?: string }) => (
-		<h2 data-testid="dialog-title">{children}</h2>
-	),
-	DialogDescription: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<p data-testid="dialog-description" className={className}>
-			{children}
-		</p>
-	),
-}));
+vi.mock("@/shared/components/ui/dialog", () => {
+	// Modélise le contrat Radix : un clic sur DialogClose invoque le
+	// `onOpenChange(false)` du Dialog parent — c'est ce chemin (et non un
+	// onClick direct) que le × emprunte depuis le fix historique
+	// (close-reclaims-history.regression.test.tsx). Un mock fragment rendrait
+	// le clic inerte et le test aveugle.
+	const onOpenChangeRef: { current: ((open: boolean) => void) | null } = { current: null };
+
+	return {
+		Dialog: ({
+			open,
+			onOpenChange,
+			children,
+		}: {
+			open: boolean;
+			onOpenChange: (open: boolean) => void;
+			children: React.ReactNode;
+		}) => {
+			onOpenChangeRef.current = onOpenChange;
+			return (
+				<div data-testid="dialog" data-open={open}>
+					{open && children}
+					<button onClick={() => onOpenChange(false)} data-testid="dialog-overlay-close">
+						Close overlay
+					</button>
+				</div>
+			);
+		},
+		DialogClose: ({ children }: { children: React.ReactNode; asChild?: boolean }) => {
+			const { cloneElement, isValidElement } = require("react");
+			if (isValidElement(children)) {
+				return cloneElement(children as React.ReactElement<{ onClick?: () => void }>, {
+					onClick: () => onOpenChangeRef.current?.(false),
+				});
+			}
+			return <>{children}</>;
+		},
+		DialogContent: ({
+			children,
+			"aria-busy": ariaBusy,
+		}: {
+			children: React.ReactNode;
+			showCloseButton?: boolean;
+			onCloseAutoFocus?: (e: Event) => void;
+			"aria-busy"?: boolean;
+			className?: string;
+		}) => (
+			<div data-testid="dialog-content" aria-busy={ariaBusy}>
+				{children}
+			</div>
+		),
+		DialogTitle: ({ children }: { children: React.ReactNode; className?: string }) => (
+			<h2 data-testid="dialog-title">{children}</h2>
+		),
+		DialogDescription: ({
+			children,
+			className,
+		}: {
+			children: React.ReactNode;
+			className?: string;
+		}) => (
+			<p data-testid="dialog-description" className={className}>
+				{children}
+			</p>
+		),
+	};
+});
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
@@ -731,7 +754,7 @@ describe("QuickSearchDialog", () => {
 			};
 			render(<QuickSearchDialog {...defaultProps} />);
 			fireEvent.click(screen.getByTestId("content-view-all"));
-			expect(mockRouterPush).toHaveBeenCalledWith(
+			expect(mockRouterReplace).toHaveBeenCalledWith(
 				expect.stringContaining("/produits?search=collier"),
 			);
 		});
@@ -742,7 +765,7 @@ describe("QuickSearchDialog", () => {
 			mockIsSearchMode.current = false;
 			render(<QuickSearchDialog {...defaultProps} />);
 			fireEvent.click(screen.getByTestId("idle-recent-search"));
-			expect(mockRouterPush).toHaveBeenCalledWith(
+			expect(mockRouterReplace).toHaveBeenCalledWith(
 				expect.stringContaining("/produits?search=bague"),
 			);
 			// Should NOT call add() since saveToRecent=false
@@ -793,7 +816,9 @@ describe("QuickSearchDialog", () => {
 			};
 			render(<QuickSearchDialog {...defaultProps} />);
 			fireEvent.keyDown(screen.getByTestId("search-input"), { key: "Enter" });
-			expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("/produits?search="));
+			// `replace`, pas `push` : consomme l'entrée d'historique du dialog
+			// (cf. close-reclaims-history.regression.test.tsx).
+			expect(mockRouterReplace).toHaveBeenCalledWith(expect.stringContaining("/produits?search="));
 		});
 	});
 });

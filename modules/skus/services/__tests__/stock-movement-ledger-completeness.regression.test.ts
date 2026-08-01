@@ -42,7 +42,10 @@ const DECLARED_INVENTORY_WRITERS: Record<string, string> = {
 	"modules/orders/actions/cancel-order.ts": "ORDER (restock annulation)",
 	"modules/webhooks/services/payment-intent.service.ts": "WEBHOOK (restauration)",
 	"modules/refunds/actions/process-refund.ts": "SYSTEM (remboursement)",
-	"modules/cron/services/reconcile-refunds.service.ts": "SYSTEM (réconciliation)",
+	// P1-C (audit 2026-08-01) : le restock du rattrapage a quitté
+	// reconcile-refunds.service.ts pour le service de finalisation partagé
+	// webhook refund.updated + cron.
+	"modules/refunds/services/finalize-refund.service.ts": "SYSTEM (finalisation refund)",
 };
 
 function moduleSourceFiles(): string[] {

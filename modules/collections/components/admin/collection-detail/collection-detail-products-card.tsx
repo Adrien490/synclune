@@ -33,7 +33,7 @@ export function CollectionDetailProductsCard({ collection }: CollectionDetailPro
 					image représentative de la collection.
 				</p>
 				{isCapped && (
-					<p className="rounded-md border border-amber-300/40 bg-amber-50 p-3 text-xs text-amber-900">
+					<p className="border-warning/40 bg-warning/10 text-warning-foreground rounded-md border p-3 text-xs">
 						Affichage des {GET_COLLECTION_PRODUCTS_LIMIT} produits les plus récents (sur{" "}
 						{totalCount}
 						). Pour gérer les autres, utilisez le catalogue.

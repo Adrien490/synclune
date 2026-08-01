@@ -1,6 +1,5 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -11,7 +10,6 @@ import {
 	RECENT_SEARCHES_COOKIE_MAX_AGE,
 } from "../constants/recent-searches";
 import { removeRecentSearchSchema } from "../schemas/recent-searches.schemas";
-import { getRecentSearchesInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action pour supprimer une recherche recente specifique
@@ -67,9 +65,9 @@ export async function removeRecentSearch(
 			});
 		}
 
-		// Invalider le cache
-		const tags = getRecentSearchesInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		// Aucune invalidation : cf. `add-recent-search.ts` — le lecteur cookie
+		// `get-recent-searches.ts` n'est pas caché, `recent-searches-list` n'avait
+		// aucun poseur.
 
 		return success("Recherche supprimee", { searches: updated });
 	} catch (e) {

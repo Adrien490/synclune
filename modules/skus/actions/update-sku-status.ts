@@ -50,8 +50,11 @@ export async function updateProductSkuStatus(
 		// 5. Vérifier existence, règles métier, et mettre à jour dans une transaction
 		const { existingSku, updatedSku } = await prisma.$transaction(
 			async (tx) => {
+				// `deletedAt: null` — réactiver un SKU soft-deleted (produit supprimé)
+				// fabriquerait une variante vivante sur un produit invisible : anomalie,
+				// même garde que les 5 autres mutateurs SKU.
 				const existing = await tx.productSku.findUnique({
-					where: { id: validatedSkuId },
+					where: { id: validatedSkuId, deletedAt: null },
 					select: {
 						id: true,
 						sku: true,

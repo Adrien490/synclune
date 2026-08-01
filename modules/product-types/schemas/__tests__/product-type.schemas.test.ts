@@ -21,7 +21,6 @@ vi.mock("../../constants/product-type.constants", () => ({
 import {
 	productTypeLabelSchema,
 	productTypeDescriptionSchema,
-	productTypeSlugSchema,
 	createProductTypeSchema,
 	updateProductTypeSchema,
 	deleteProductTypeSchema,
@@ -76,38 +75,6 @@ describe("productTypeDescriptionSchema", () => {
 
 	it("should reject description exceeding 500 characters", () => {
 		const result = productTypeDescriptionSchema.safeParse("a".repeat(501));
-
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("productTypeSlugSchema", () => {
-	it("should accept valid slug", () => {
-		const result = productTypeSlugSchema.safeParse("bagues");
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject uppercase", () => {
-		const result = productTypeSlugSchema.safeParse("Bagues");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject spaces", () => {
-		const result = productTypeSlugSchema.safeParse("bagues et colliers");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject empty string", () => {
-		const result = productTypeSlugSchema.safeParse("");
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject slug exceeding 50 characters", () => {
-		const result = productTypeSlugSchema.safeParse("a".repeat(51));
 
 		expect(result.success).toBe(false);
 	});

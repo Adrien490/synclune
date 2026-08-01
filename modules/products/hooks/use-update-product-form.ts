@@ -37,6 +37,10 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				blurDataUrl: img.blurDataUrl ?? undefined,
 				altText: img.altText ?? undefined,
 				mediaType: img.mediaType,
+				// L'action fait deleteMany + recréation : omettre les dimensions ici
+				// les remettait à NULL à chaque édition du produit.
+				width: img.width,
+				height: img.height,
 			})) ?? [];
 
 	const [state, action, isPending] = useActionState(

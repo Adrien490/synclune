@@ -54,19 +54,16 @@ export const hexColorSchema = z
 		const cleaned = val.replace(/^#/, "");
 		if (!/^[0-9A-Fa-f]{3}$/.test(cleaned) && !/^[0-9A-Fa-f]{6}$/.test(cleaned)) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: "custom",
 				message: "Format invalide. Utilisez #RRGGBB (ex: #FF5733) ou #RGB (ex: #F57)",
 			});
 		}
 	})
 	.transform((val) => normalizeHex(val));
 
-export const colorSlugSchema = z
-	.string()
-	.trim()
-	.min(1, "Le slug est requis")
-	.max(50, "Le slug ne peut pas dépasser 50 caractères")
-	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
+// `colorSlugSchema` supprimé : aucun consommateur hors de son propre test
+// (vert pour rien), et son max(50) contredisait `Color.slug @db.VarChar(100)`.
+// Le slug est GÉNÉRÉ côté serveur (generateSlug), jamais saisi.
 
 export const colorNameSchema = z
 	.string()

@@ -4,18 +4,27 @@ import { useState, lazy, Suspense } from "react";
 import Image from "next/image";
 
 import { Package } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 
 import { useLightbox } from "@/shared/hooks";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
+import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
+import type { ProductMedia } from "@/modules/media/types/product-media.types";
+import { pickPrimaryImage } from "@/modules/products/services/product-display.service";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
 interface ProductImage {
+	id: string;
 	url: string;
+	thumbnailUrl: string | null;
 	blurDataUrl: string | null;
 	altText: string | null;
+	mediaType: "IMAGE" | "VIDEO";
 	isPrimary: boolean;
+	width: number | null;
+	height: number | null;
 }
 
 interface ProductImageCellProps {
@@ -23,26 +32,43 @@ interface ProductImageCellProps {
 	productTitle: string;
 }
 
+function toProductMedia(image: ProductImage, fallbackAlt: string): ProductMedia {
+	return {
+		id: image.id,
+		url: image.url,
+		thumbnailUrl: image.thumbnailUrl,
+		alt: image.altText ?? fallbackAlt,
+		blurDataUrl: image.blurDataUrl ?? undefined,
+		width: image.width,
+		height: image.height,
+		mediaType: image.mediaType,
+	};
+}
+
 /**
  * Image cell for the products datatable with lightbox on click.
- * Opens MediaLightbox with all images from the default SKU.
+ *
+ * Vignette via `pickPrimaryImage()` (SSOT : primaire IMAGE → première IMAGE →
+ * null) — le motif `find(isPrimary) ?? images[0]` mettait un `.mp4` dans
+ * `<Image src>`. Slides via `buildLightboxSlides` : les vidéos de la variante
+ * partaient toutes en slides *image* dans la lightbox.
  */
 export function ProductImageCell({ images, productTitle }: ProductImageCellProps) {
 	const { isOpen, open, close } = useLightbox();
+	const prefersReducedMotion = useReducedMotion();
 	const [currentIndex, setCurrentIndex] = useState(0);
 
-	const primaryImage = images.find((img) => img.isPrimary) ?? images[0];
-	const hasImages = images.length > 0 && primaryImage;
+	const primaryImage = pickPrimaryImage(images);
 
-	const slides = images.map((img) => ({
-		src: img.url,
-		alt: img.altText ?? productTitle,
-	}));
+	const slides = buildLightboxSlides(
+		images.map((img) => toProductMedia(img, productTitle)),
+		prefersReducedMotion ?? false,
+	);
 
 	return (
 		<>
 			<div className="bg-muted relative size-20 shrink-0 rounded-md">
-				{hasImages ? (
+				{primaryImage ? (
 					<button
 						type="button"
 						onClick={() => {

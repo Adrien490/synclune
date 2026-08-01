@@ -247,7 +247,11 @@ describe("toggleMaterialStatus", () => {
 
 	it("should invalidate material cache tags using the material slug + product cascade", async () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, isActive: true } });
-		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial({ slug: "argent-925" }));
+		// isActive: false → la demande "true" est une VRAIE transition (le
+		// court-circuit idempotent ne joue pas, l'invalidation doit partir).
+		mockPrisma.material.findUnique.mockResolvedValue(
+			createMockMaterial({ slug: "argent-925", isActive: false }),
+		);
 
 		await toggleMaterialStatus(undefined, makeFormData());
 
@@ -261,7 +265,10 @@ describe("toggleMaterialStatus", () => {
 
 	it("cascades invalidation to affected product PDPs", async () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, isActive: true } });
-		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial({ slug: "argent-925" }));
+		// isActive: false → vraie transition (cf. test précédent).
+		mockPrisma.material.findUnique.mockResolvedValue(
+			createMockMaterial({ slug: "argent-925", isActive: false }),
+		);
 
 		await toggleMaterialStatus(undefined, makeFormData());
 
@@ -273,6 +280,19 @@ describe("toggleMaterialStatus", () => {
 		const calls = mockUpdateTag.mock.calls.map((c: unknown[]) => c[0]);
 		expect(calls).toContain("product-bague-argent");
 		expect(calls).toContain("product-collier-argent");
+	});
+
+	// Court-circuit idempotent (parité couleurs/types) : un re-clic sur l'état
+	// courant ne doit ni écrire, ni requêter les SKUs, ni invalider les PDP.
+	it("short-circuits when the requested status is already current", async () => {
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, isActive: true } });
+		mockPrisma.material.findUnique.mockResolvedValue(createMockMaterial({ isActive: true }));
+
+		const result = await toggleMaterialStatus(undefined, makeFormData());
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.material.update).not.toHaveBeenCalled();
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	// --------------------------------------------------------------------------

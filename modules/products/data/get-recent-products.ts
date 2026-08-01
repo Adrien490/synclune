@@ -52,21 +52,26 @@ export async function getRecentProducts(
 }
 
 /**
- * Fonction cachee qui recupere les produits par slugs
+ * Fonction cachée qui récupère les produits par slugs.
  *
- * Cache: private (isole par utilisateur - la cle de cache inclut les slugs
- * derives du cookie utilisateur, donc pas de fuite inter-utilisateurs).
+ * Cache PUBLIC (audit cache 2026-07-31 — était `private`). Les slugs sont dérivés
+ * du cookie « vus récemment » DANS LE WRAPPER, puis passés en argument : ils font
+ * donc partie de la clé de cache Next, et deux visiteurs aux historiques
+ * différents ont deux entrées différentes. Aucune donnée personnelle n'est stockée
+ * — ce sont des fiches produit publiques, celles-là même que sert `/produits`.
  *
- * Note: Le tag `RECENT_PRODUCTS_CACHE_TAGS.LIST` est volontairement global.
- * Il permet un bust simultane pour tous les users quand le catalogue change
- * (produit supprime/archivee). Acceptable car les visites sont peu frequentes
- * et chaque user a un cache independant (keyed par slugs).
+ * `private` était contre-productif ici : une entrée privée n'est jamais stockée
+ * côté serveur, donc chaque affichage du carrousel repartait en base. En public,
+ * deux visiteurs ayant regardé les mêmes bijoux partagent la même entrée — c'est
+ * le cas fréquent sur un catalogue de cette taille.
  *
- * Invalide par: updateTag("recent-products-list") lors de mutations produits.
+ * Le tag `RECENT_PRODUCTS_CACHE_TAGS.LIST` est volontairement global : il permet
+ * un bust simultané pour tout le monde quand le catalogue change (produit
+ * supprimé/archivé). Invalidé par `getProductInvalidationTags()`.
  */
 async function fetchProductsBySlugs(slugs: string[]): Promise<ProductCarouselItem[]> {
-	"use cache: private";
-	cacheLife("catalog"); // 30m stale, 10m revalidate, 3h expire
+	"use cache";
+	cacheLife("catalog");
 	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
 
 	try {

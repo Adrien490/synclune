@@ -71,6 +71,10 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 			<Link
 				href={href}
 				prefetch
+				// `replace` : consomme l'entrée d'historique poussée à l'ouverture du
+				// dialog (même URL que la page d'origine) — sinon une pression retour
+				// morte par cycle ouvrir→naviguer (CLAUDE.md § Overlays).
+				replace
 				onClick={handleClick}
 				onPointerEnter={() => router.prefetch(href)}
 				data-active={undefined}

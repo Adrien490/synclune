@@ -103,6 +103,11 @@ const mockProduct = {
 			// Le select reel ne charge que `mediaType` (MEDIA-AUDIT-002) : la regle 4 de
 			// validateProductForPublication exige une vraie IMAGE, pas juste un media.
 			images: [{ mediaType: "IMAGE" }],
+			// Cascade cache couleurs/matériaux (audit cache catalogue 2026-07-31) : le
+			// KPI « produits distincts » ne compte que les SKUs actifs, publier ou
+			// archiver le produit le fait bouger.
+			colors: [{ colorId: "col_1" }],
+			materials: [{ materialId: "mat_1" }],
 		},
 	],
 };
@@ -212,7 +217,16 @@ describe("toggleProductStatus", () => {
 		mockPrisma.product.findUnique.mockResolvedValue({
 			...mockProduct,
 			status: "ARCHIVED",
-			skus: [{ id: "sku_1", isActive: false, inventory: 5, images: [{ mediaType: "IMAGE" }] }],
+			skus: [
+				{
+					id: "sku_1",
+					isActive: false,
+					inventory: 5,
+					images: [{ mediaType: "IMAGE" }],
+					colors: [],
+					materials: [],
+				},
+			],
 		});
 
 		const result = await toggleProductStatus(undefined, validFormData);
@@ -240,7 +254,7 @@ describe("toggleProductStatus", () => {
 		mockPrisma.product.findUnique.mockResolvedValue({
 			...mockProduct,
 			status: "ARCHIVED",
-			skus: [{ id: "sku_1", isActive: false, inventory: 0, images: [] }],
+			skus: [{ id: "sku_1", isActive: false, inventory: 0, images: [], colors: [], materials: [] }],
 		});
 
 		const result = await toggleProductStatus(undefined, validFormData);
@@ -315,7 +329,14 @@ describe("toggleProductStatus", () => {
 	it("should invalidate product and collection cache tags", async () => {
 		await toggleProductStatus(undefined, validFormData);
 		expect(mockUpdateTag).toHaveBeenCalled();
-		expect(mockGetProductInvalidationTags).toHaveBeenCalledWith("bracelet-lune", VALID_CUID);
+		// Le 3ᵉ argument cascade les compteurs couleurs/matériaux : le KPI « produits
+		// distincts » ne compte que les SKUs ACTIFS, donc publier ou archiver le
+		// produit le fait bouger — il ne cascadait que depuis les mutateurs SKU
+		// (audit cache catalogue 2026-07-31).
+		expect(mockGetProductInvalidationTags).toHaveBeenCalledWith("bracelet-lune", VALID_CUID, {
+			affectedColorIds: ["col_1"],
+			affectedMaterialIds: ["mat_1"],
+		});
 		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("bijoux");
 	});
 

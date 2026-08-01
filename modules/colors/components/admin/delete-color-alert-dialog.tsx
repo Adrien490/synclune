@@ -7,7 +7,8 @@ import {
 } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
 import { useDeleteColor } from "@/modules/colors/hooks/use-delete-color";
 
-export const DELETE_COLOR_DIALOG_ID = "delete-color";
+// Re-dérivé du registre : ouvreurs et dialog s'abonnent au même identifiant.
+export const DELETE_COLOR_DIALOG_ID = TAXONOMY_CONFIG.color.deleteDialogId;
 
 export function DeleteColorAlertDialog() {
 	const onDeleted = useTaxonomyDeleteDialog(TAXONOMY_CONFIG.color);

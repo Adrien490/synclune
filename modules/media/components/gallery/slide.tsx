@@ -44,7 +44,7 @@ function VideoLoadingSpinner() {
 				<div
 					className={cn(
 						"border-t-primary absolute inset-0 size-10 rounded-full border-3 border-transparent",
-						!prefersReduced && "animate-spin",
+						!prefersReduced && "motion-safe:animate-spin",
 					)}
 				/>
 			</div>

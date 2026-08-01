@@ -4,6 +4,7 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
 // ============================================
 // CACHE TAGS
@@ -88,7 +89,10 @@ export function getMaterialInvalidationTags(
 	if (opts.affectedProductSlugs && opts.affectedProductSlugs.length > 0) {
 		tags.add(SHARED_CACHE_TAGS.PRODUCTS_LIST);
 		for (const productSlug of opts.affectedProductSlugs) {
-			tags.add(`product-${productSlug}`);
+			// SSOT plutôt que littéral : ce template ré-implémentait à la main la
+			// valeur de PRODUCTS_CACHE_TAGS.DETAIL. Renommer le préfixe `product-`
+			// aurait cassé la cascade matériau → PDP en silence (audit cache 2026-07-31).
+			tags.add(PRODUCTS_CACHE_TAGS.DETAIL(productSlug));
 		}
 	}
 

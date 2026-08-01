@@ -119,7 +119,7 @@ vi.mock("@/shared/components/ui/checkbox", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: () => <svg data-testid="icon-loader" />,
+	Loader2Icon: () => <svg data-testid="icon-loader" />,
 	FolderOpen: () => <svg data-testid="icon-folder-open" />,
 }));
 

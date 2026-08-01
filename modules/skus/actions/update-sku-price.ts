@@ -40,7 +40,7 @@ export async function updateSkuPrice(
 		// 3. Extraire et valider les données
 		const rawSkuId = safeFormGet(formData, "skuId");
 		const priceInclTaxEuros = safeFormGet(formData, "priceInclTaxEuros");
-		const compareAtPriceEuros = formData.get("compareAtPriceEuros") as string | null;
+		const compareAtPriceEuros = safeFormGet(formData, "compareAtPriceEuros");
 
 		const validation = validateInput(updateSkuPriceSchema, {
 			skuId: rawSkuId,

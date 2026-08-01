@@ -44,6 +44,7 @@ import { PrismaClient, type Prisma } from "@/app/generated/prisma/client";
 
 import {
 	GET_PRODUCT_SELECT,
+	GET_PRODUCT_FOR_EDIT_SELECT,
 	GET_PRODUCTS_SELECT,
 	GET_PRODUCT_FOR_DUPLICATION_SELECT,
 	PRODUCT_CAROUSEL_SELECT,
@@ -58,6 +59,15 @@ import {
 	GET_PRODUCT_TYPES_SELECT,
 	GET_PRODUCT_TYPE_SELECT,
 } from "@/modules/product-types/constants/product-type.constants";
+import {
+	GET_PRODUCT_SKU_SELECT,
+	GET_PRODUCT_SKUS_DEFAULT_SELECT,
+} from "@/modules/skus/constants/sku.constants";
+import { GET_COLORS_SELECT, GET_COLOR_SELECT } from "@/modules/colors/constants/color.constants";
+import {
+	GET_MATERIALS_SELECT,
+	GET_MATERIAL_SELECT,
+} from "@/modules/materials/constants/materials.constants";
 
 // Port 1 fermé : on ne doit jamais atteindre de base depuis la suite unitaire.
 const UNREACHABLE_URL = "postgresql://unused:unused@127.0.0.1:1/unreachable";
@@ -82,6 +92,7 @@ async function verdictOf(run: () => Promise<unknown>): Promise<Verdict> {
 
 const productSelects: Array<[string, Prisma.ProductSelect]> = [
 	["GET_PRODUCT_SELECT", GET_PRODUCT_SELECT],
+	["GET_PRODUCT_FOR_EDIT_SELECT", GET_PRODUCT_FOR_EDIT_SELECT],
 	["GET_PRODUCTS_SELECT", GET_PRODUCTS_SELECT],
 	["GET_PRODUCT_FOR_DUPLICATION_SELECT", GET_PRODUCT_FOR_DUPLICATION_SELECT],
 	["PRODUCT_CAROUSEL_SELECT", PRODUCT_CAROUSEL_SELECT],
@@ -97,6 +108,25 @@ const collectionSelects: Array<[string, Prisma.CollectionSelect]> = [
 const productTypeSelects: Array<[string, Prisma.ProductTypeSelect]> = [
 	["GET_PRODUCT_TYPES_SELECT", GET_PRODUCT_TYPES_SELECT],
 	["GET_PRODUCT_TYPE_SELECT", GET_PRODUCT_TYPE_SELECT],
+];
+
+// SKUs + référentiels : hors périmètre jusqu'à l'audit 2026-08-01 alors que les
+// selects couleurs/matériaux référencent `_count.skuColors`/`_count.skuMaterials`
+// — des noms de relation RENOMMÉS par la migration M2M, soit exactement la
+// classe de défaut pour laquelle cet oracle existe.
+const productSkuSelects: Array<[string, Prisma.ProductSkuSelect]> = [
+	["GET_PRODUCT_SKU_SELECT", GET_PRODUCT_SKU_SELECT],
+	["GET_PRODUCT_SKUS_DEFAULT_SELECT", GET_PRODUCT_SKUS_DEFAULT_SELECT],
+];
+
+const colorSelects: Array<[string, Prisma.ColorSelect]> = [
+	["GET_COLORS_SELECT", GET_COLORS_SELECT],
+	["GET_COLOR_SELECT", GET_COLOR_SELECT],
+];
+
+const materialSelects: Array<[string, Prisma.MaterialSelect]> = [
+	["GET_MATERIALS_SELECT", GET_MATERIALS_SELECT],
+	["GET_MATERIAL_SELECT", GET_MATERIAL_SELECT],
 ];
 
 describe("selects catalogue — validité schéma (@regression catalogue-selects-schema-validity)", () => {
@@ -123,6 +153,27 @@ describe("selects catalogue — validité schéma (@regression catalogue-selects
 			).resolves.toBe("schema-valid");
 		},
 	);
+
+	it.each(productSkuSelects)(
+		"%s est valide au regard du schéma ProductSku",
+		async (_name, select) => {
+			await expect(
+				verdictOf(() => prisma.productSku.findFirst({ where: { id: "probe" }, select })),
+			).resolves.toBe("schema-valid");
+		},
+	);
+
+	it.each(colorSelects)("%s est valide au regard du schéma Color", async (_name, select) => {
+		await expect(
+			verdictOf(() => prisma.color.findFirst({ where: { slug: "probe" }, select })),
+		).resolves.toBe("schema-valid");
+	});
+
+	it.each(materialSelects)("%s est valide au regard du schéma Material", async (_name, select) => {
+		await expect(
+			verdictOf(() => prisma.material.findFirst({ where: { slug: "probe" }, select })),
+		).resolves.toBe("schema-valid");
+	});
 
 	// Le `create` imbriqué M2M de `duplicate-product.ts`, pendant écriture du même
 	// défaut : l'action passait `colorId`/`materialId` à `productSku.create`.

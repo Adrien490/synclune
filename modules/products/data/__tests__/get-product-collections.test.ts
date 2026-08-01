@@ -42,6 +42,13 @@ vi.mock("@/modules/collections/constants/cache", () => ({
 
 import { getProductCollections, getAllCollections } from "../get-product-collections";
 
+// ⚠️ Vrais cuid2 (24 caractères minuscules) et non `"prod-1"` : `getProductCollections`
+// est un endpoint RPC (`"use server"`) qui parse désormais son argument, et `z.cuid2()`
+// rejette les identifiants à tirets. Une fixture invalide ferait renvoyer `[]` — donc
+// un test vert sur le mauvais chemin.
+const PRODUCT_ID = "ekxpqzvlyfvmqbhjwvxkzqct";
+const OTHER_PRODUCT_ID = "hqvnzjxlmwtpkbdfrycsuoag";
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -59,7 +66,7 @@ describe("getProductCollections", () => {
 	it("returns an empty list without querying when the caller is not an admin", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 
-		await expect(getProductCollections("prod-1")).resolves.toEqual([]);
+		await expect(getProductCollections(PRODUCT_ID)).resolves.toEqual([]);
 		expect(mockProductCollectionFindMany).not.toHaveBeenCalled();
 	});
 
@@ -69,7 +76,7 @@ describe("getProductCollections", () => {
 			{ collection: { id: "col-2", name: "Été" } },
 		]);
 
-		const result = await getProductCollections("prod-1");
+		const result = await getProductCollections(PRODUCT_ID);
 
 		expect(result).toEqual([
 			{ id: "col-1", name: "Printemps" },
@@ -80,11 +87,11 @@ describe("getProductCollections", () => {
 	it("queries by productId", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
-		await getProductCollections("prod-42");
+		await getProductCollections(OTHER_PRODUCT_ID);
 
 		expect(mockProductCollectionFindMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { productId: "prod-42" },
+				where: { productId: OTHER_PRODUCT_ID },
 			}),
 		);
 	});
@@ -92,7 +99,7 @@ describe("getProductCollections", () => {
 	it("returns empty array when product has no collections", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
-		const result = await getProductCollections("prod-1");
+		const result = await getProductCollections(PRODUCT_ID);
 
 		expect(result).toEqual([]);
 	});
@@ -100,7 +107,7 @@ describe("getProductCollections", () => {
 	it("calls cacheLife with reference profile", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
-		await getProductCollections("prod-1");
+		await getProductCollections(PRODUCT_ID);
 
 		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 	});
@@ -108,9 +115,12 @@ describe("getProductCollections", () => {
 	it("calls cacheTag with product-scoped + collections-list tags", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
-		await getProductCollections("prod-1");
+		await getProductCollections(PRODUCT_ID);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("product-prod-1-collections", "collections-list");
+		expect(mockCacheTag).toHaveBeenCalledWith(
+			`product-${PRODUCT_ID}-collections`,
+			"collections-list",
+		);
 	});
 });
 

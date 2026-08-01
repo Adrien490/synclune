@@ -90,7 +90,9 @@ describe("createCollection", () => {
 		});
 		mockSanitizeText.mockImplementation((t: string) => t);
 		mockGenerateSlug.mockResolvedValue("nouvelle-collection");
-		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list"]);
+		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// updateTag manuels ont été retirés des actions).
+		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list", "navbar-menu"]);
 
 		// Transaction mock: execute the callback and return its result
 		mockPrisma.$transaction.mockImplementation(

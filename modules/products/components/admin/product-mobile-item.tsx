@@ -7,22 +7,35 @@ import type { MediaType } from "@/app/generated/prisma/client";
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
 import { resolveMediaThumbSrc } from "@/modules/media/utils/media-utils";
+import {
+	PRODUCT_STATUS_LABELS,
+	PRODUCT_STATUS_VARIANTS,
+} from "@/modules/products/constants/product-status-display";
 
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import type { BadgeVariant } from "@/shared/types/badge.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { useProductActions } from "../../hooks/use-product-actions";
 
-const STATUS_CONFIG: Record<
-	ProductStatus,
-	{ label: string; variant: "default" | "secondary" | "outline" }
-> = {
-	[ProductStatus.PUBLIC]: { label: "● Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "▣ Archivé", variant: "outline" },
+// Glyphes = affordance locale (distinction hors couleur en liste dense) ;
+// libellés et variants dérivés de la SSOT product-status-display.
+const STATUS_CONFIG: Record<ProductStatus, { label: string; variant: BadgeVariant }> = {
+	[ProductStatus.PUBLIC]: {
+		label: `● ${PRODUCT_STATUS_LABELS.PUBLIC}`,
+		variant: PRODUCT_STATUS_VARIANTS.PUBLIC,
+	},
+	[ProductStatus.DRAFT]: {
+		label: `○ ${PRODUCT_STATUS_LABELS.DRAFT}`,
+		variant: PRODUCT_STATUS_VARIANTS.DRAFT,
+	},
+	[ProductStatus.ARCHIVED]: {
+		label: `▣ ${PRODUCT_STATUS_LABELS.ARCHIVED}`,
+		variant: PRODUCT_STATUS_VARIANTS.ARCHIVED,
+	},
 };
 
 interface Sku {

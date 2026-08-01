@@ -294,9 +294,12 @@ describe("duplicateProduct", () => {
 
 	it("should invalidate product and collection cache tags after duplication", async () => {
 		await duplicateProduct(undefined, validFormData);
+		// Le 3ᵉ argument cascade les compteurs couleurs/matériaux : la copie porte les
+		// mêmes que la source, et c'est leur KPI « produits distincts » qui augmente.
 		expect(mockGetProductInvalidationTags).toHaveBeenCalledWith(
 			duplicatedProductResult.slug,
 			duplicatedProductResult.id,
+			{ affectedColorIds: ["color_1", "color_2"], affectedMaterialIds: ["mat_1"] },
 		);
 		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("bijoux");
 		expect(mockUpdateTag).toHaveBeenCalled();

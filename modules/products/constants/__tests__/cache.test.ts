@@ -4,7 +4,6 @@ import {
 	PRODUCTS_CACHE_TAGS,
 	RECENT_PRODUCTS_CACHE_TAGS,
 	getRecentProductsInvalidationTags,
-	getRecentSearchesInvalidationTags,
 } from "../cache";
 
 describe("cache constants", () => {
@@ -79,13 +78,25 @@ describe("cache constants", () => {
 		});
 	});
 
-	describe("getRecentSearchesInvalidationTags", () => {
-		it("returns a non-empty array of strings", () => {
-			const tags = getRecentSearchesInvalidationTags();
-			expect(tags.length).toBeGreaterThan(0);
-			tags.forEach((tag) => {
-				expect(typeof tag).toBe("string");
-			});
+	/**
+	 * `getRecentSearchesInvalidationTags` était testé ici — et le test se contentait
+	 * de vérifier que le helper rendait un tableau non vide, sans jamais demander si
+	 * un lecteur posait le tag. Personne ne le posait : trois Server Actions
+	 * invalidaient dans le vide (audit cache catalogue 2026-07-31). Helper et tag
+	 * supprimés ; le contrat « un tag a un lecteur ET un mutateur » est désormais
+	 * verrouillé repo-wide par
+	 * `shared/lib/__tests__/no-orphan-catalogue-cache-tags.regression.test.ts`.
+	 */
+
+	describe("DETAIL_BY_ID", () => {
+		it("produit un tag distinct de DETAIL pour un même identifiant", () => {
+			// Le bug corrigé : `DETAIL(\`product-id-${id}\`)` fabriquait un tag à double
+			// préfixe qu'aucun mutateur n'émettait.
+			expect(PRODUCTS_CACHE_TAGS.DETAIL_BY_ID("abc")).toBe("product-id-abc");
+			expect(PRODUCTS_CACHE_TAGS.DETAIL("product-id-abc")).toBe("product-product-id-abc");
+			expect(PRODUCTS_CACHE_TAGS.DETAIL_BY_ID("abc")).not.toBe(
+				PRODUCTS_CACHE_TAGS.DETAIL("product-id-abc"),
+			);
 		});
 	});
 });

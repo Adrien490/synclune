@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form-nextjs";
-import { AlertTriangle, ArrowRight, Loader2, Minus, Plus, RotateCcw } from "lucide-react";
+import { AlertTriangle, ArrowRight, Minus, Plus, RotateCcw } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import { useAdjustStockForm } from "@/modules/skus/hooks/use-adjust-stock-form";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
@@ -11,6 +12,7 @@ import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import { FieldError } from "@/shared/components/ui/field";
 import { Input } from "@/shared/components/ui/input";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { Label } from "@/shared/components/ui/label";
@@ -184,79 +186,96 @@ export function AdjustStockForm({
 							</Button>
 						)}
 					</div>
-					<div className="mt-2 flex items-center gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							size="icon"
-							onClick={() => adjustBy(-1)}
-							disabled={isPending || newStock - 1 < 0}
-							aria-label="Diminuer de 1"
-							className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
-						>
-							<Minus className="size-4" />
-						</Button>
-						<form.Field name="adjustment">
-							{(field) => (
-								<Input
-									id="adjustment"
-									name="adjustment"
-									type="text"
-									inputMode="numeric"
-									pattern="-?[0-9]*"
-									value={field.state.value}
-									onChange={(e) => {
-										const raw = e.target.value;
-										if (raw === "" || raw === "-") {
-											field.handleChange(0);
-											return;
-										}
-										const parsed = parseInt(raw, 10);
-										field.handleChange(Number.isNaN(parsed) ? 0 : parsed);
-									}}
-									onKeyDown={handleAdjustmentKeyDown}
-									className="text-center text-lg font-semibold"
-									aria-describedby="adjustment-hint"
-								/>
-							)}
-						</form.Field>
-						<Button
-							type="button"
-							variant="outline"
-							size="icon"
-							onClick={() => adjustBy(1)}
-							disabled={isPending || !canStep(1)}
-							aria-label="Augmenter de 1"
-							className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
-						>
-							<Plus className="size-4" />
-						</Button>
-					</div>
+					{/*
+					 * Contrôle custom conservé (input numérique piloté par stepper ± / pas
+					 * rapides) : irreproductible avec `field.InputField`. L'a11y du field
+					 * component est répliquée à la main — aria-invalid / aria-describedby /
+					 * aria-required + <FieldError> — cf. shared/components/forms/input-field.tsx.
+					 */}
+					<form.AppField name="adjustment">
+						{(field) => {
+							const hasError = field.state.meta.errors.length > 0;
+							const describedBy = hasError ? "adjustment-hint adjustment-error" : "adjustment-hint";
+							return (
+								<>
+									<div className="mt-2 flex items-center gap-2">
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											onClick={() => adjustBy(-1)}
+											disabled={isPending || newStock - 1 < 0}
+											aria-label="Diminuer de 1"
+											className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
+										>
+											<Minus className="size-4" />
+										</Button>
+										<Input
+											id="adjustment"
+											name="adjustment"
+											type="text"
+											inputMode="numeric"
+											pattern="-?[0-9]*"
+											value={field.state.value}
+											onChange={(e) => {
+												const raw = e.target.value;
+												if (raw === "" || raw === "-") {
+													field.handleChange(0);
+													return;
+												}
+												const parsed = parseInt(raw, 10);
+												field.handleChange(Number.isNaN(parsed) ? 0 : parsed);
+											}}
+											onBlur={field.handleBlur}
+											onKeyDown={handleAdjustmentKeyDown}
+											className="text-center text-lg font-semibold"
+											aria-invalid={hasError}
+											aria-describedby={describedBy}
+											aria-required
+										/>
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											onClick={() => adjustBy(1)}
+											disabled={isPending || !canStep(1)}
+											aria-label="Augmenter de 1"
+											className="h-11 w-11 touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
+										>
+											<Plus className="size-4" />
+										</Button>
+									</div>
 
-					{/* Pas rapides — donne au tactile l'équivalent du Maj+↑/↓ (±10) du clavier */}
-					<div className="mt-2 grid grid-cols-4 gap-2">
-						{QUICK_STEPS.map((step) => (
-							<Button
-								key={step}
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={() => adjustBy(step)}
-								disabled={isPending || !canStep(step)}
-								aria-label={`${step > 0 ? "Augmenter" : "Diminuer"} de ${Math.abs(step)}`}
-								className="h-9 touch-manipulation tabular-nums active:scale-[0.98] motion-safe:transition-transform"
-							>
-								{step > 0 ? `+${step}` : step}
-							</Button>
-						))}
-					</div>
+									{/* Pas rapides — donne au tactile l'équivalent du Maj+↑/↓ (±10) du clavier */}
+									<div className="mt-2 grid grid-cols-4 gap-2">
+										{QUICK_STEPS.map((step) => (
+											<Button
+												key={step}
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={() => adjustBy(step)}
+												disabled={isPending || !canStep(step)}
+												aria-label={`${step > 0 ? "Augmenter" : "Diminuer"} de ${Math.abs(step)}`}
+												className="h-9 touch-manipulation tabular-nums active:scale-[0.98] motion-safe:transition-transform"
+											>
+												{step > 0 ? `+${step}` : step}
+											</Button>
+										))}
+									</div>
 
-					<p
-						id="adjustment-hint"
-						className="text-muted-foreground sr-only mt-1 text-xs lg:not-sr-only"
-					>
-						Astuce : flèches ↑/↓ pour ±1, Maj+↑/↓ pour ±10.
-					</p>
+									<p
+										id="adjustment-hint"
+										className="text-muted-foreground sr-only mt-1 text-xs lg:not-sr-only"
+									>
+										Astuce : flèches ↑/↓ pour ±1, Maj+↑/↓ pour ±10.
+									</p>
+
+									<FieldError id="adjustment-error" errors={field.state.meta.errors} />
+								</>
+							);
+						}}
+					</form.AppField>
 				</div>
 
 				<div className="bg-muted rounded-md p-3">
@@ -318,34 +337,25 @@ export function AdjustStockForm({
 					)}
 				</div>
 
-				<form.Field name="reason">
+				<form.AppField name="reason">
 					{(field) => (
-						<div>
-							<Label htmlFor="reason" className="text-sm font-medium">
-								Raison <span className="text-muted-foreground font-normal">(optionnel)</span>
-							</Label>
-							<Input
-								id="reason"
-								name="reason"
-								list="adjust-stock-reason-suggestions"
-								value={field.state.value}
-								onChange={(e) => field.handleChange(e.target.value)}
-								placeholder="Ex : Correction inventaire, casse…"
-								enterKeyHint="done"
-								autoCapitalize="sentences"
-								className="mt-2"
-							/>
-							<datalist id="adjust-stock-reason-suggestions">
-								{REASON_SUGGESTIONS.map((s) => (
-									<option key={s} value={s} />
-								))}
-							</datalist>
-							<p className="text-muted-foreground mt-1 text-xs">
-								Enregistré pour le suivi des mouvements de stock.
-							</p>
-						</div>
+						<field.InputField
+							label="Raison"
+							optional
+							type="text"
+							list="adjust-stock-reason-suggestions"
+							placeholder="Ex : Correction inventaire, casse…"
+							enterKeyHint="done"
+							autoCapitalize="sentences"
+							description="Enregistré pour le suivi des mouvements de stock."
+						/>
 					)}
-				</form.Field>
+				</form.AppField>
+				<datalist id="adjust-stock-reason-suggestions">
+					{REASON_SUGGESTIONS.map((s) => (
+						<option key={s} value={s} />
+					))}
+				</datalist>
 			</fieldset>
 
 			<AdminFormFooter pending={isPending}>
@@ -363,14 +373,11 @@ export function AdjustStockForm({
 				<div className="flex justify-end">
 					<Button
 						type="submit"
-						size="input"
 						disabled={!canSubmit || isPending}
 						onClick={() => haptic("medium")}
 						className="w-full sm:w-auto sm:min-w-56"
 					>
-						{isPending && (
-							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						)}
+						{isPending && <Spinner presentational />}
 						<span>{isPending ? "Ajustement…" : "Ajuster le stock"}</span>
 						{!isPending && (
 							<Kbd

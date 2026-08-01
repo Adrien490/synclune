@@ -109,7 +109,9 @@ export async function ProductsDataTable({
 						<TableRow key={product.id}>
 							<TableCell className="py-3">
 								<ProductImageCell
-									images={product.skus[0]?.images ?? []}
+									// flatMap sur TOUS les SKUs (parité avec product-mobile-item) :
+									// `skus[0]` limitait vignette et lightbox à la première variante.
+									images={product.skus.flatMap((sku) => sku.images)}
 									productTitle={product.title}
 								/>
 							</TableCell>

@@ -149,6 +149,23 @@ describe("adjustSkuStock", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
+	// Le schéma ne borne que le DELTA : sans plafond dans le WHERE SQL, deux
+	// ajustements +99999 sortaient le SKU des filtres d'inventaire admin.
+	it("should prevent exceeding MAX_INVENTORY on increment", async () => {
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: 99999 } });
+		// First $queryRaw: conditional update returns [] (cap exceeded)
+		// Second $queryRaw: SELECT to get current stock
+		mockPrisma.$queryRaw
+			.mockImplementationOnce(() => Promise.resolve([]))
+			.mockImplementationOnce(() => Promise.resolve([{ inventory: 50 }]));
+		const fd = createMockFormData({ skuId: VALID_CUID, adjustment: "99999" });
+
+		const result = await adjustSkuStock(undefined, fd);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockPrisma.stockMovement.create).not.toHaveBeenCalled();
+	});
+
 	it("should prevent negative stock on decrement", async () => {
 		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, adjustment: -20 } });
 		// First $queryRaw: conditional update returns [] (insufficient stock)

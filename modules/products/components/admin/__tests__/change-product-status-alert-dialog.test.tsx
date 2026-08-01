@@ -112,7 +112,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 
 vi.mock("lucide-react", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	LoaderCircle: (props: Record<string, unknown>) => {
+	Loader2Icon: (props: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "loader-circle", ...props });
 	},
@@ -213,8 +213,8 @@ describe("ChangeProductStatusAlertDialog", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).not.toContain("bg-emerald-600");
-			expect(actionBtn.className).not.toContain("bg-amber-600");
+			expect(actionBtn.className).not.toContain("bg-success");
+			expect(actionBtn.className).not.toContain("bg-warning");
 		});
 
 		it("sets targetStatus hidden field to DRAFT", () => {
@@ -283,11 +283,11 @@ describe("ChangeProductStatusAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Changer en Public");
 		});
 
-		it("submit button has emerald success tone for PUBLIC", () => {
+		it("submit button has success token tone for PUBLIC", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).toContain("bg-emerald-600");
+			expect(actionBtn.className).toContain("bg-success");
 		});
 	});
 
@@ -321,11 +321,11 @@ describe("ChangeProductStatusAlertDialog", () => {
 			);
 		});
 
-		it("submit button has amber warning tone for ARCHIVED", () => {
+		it("submit button has warning token tone for ARCHIVED", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).toContain("bg-amber-600");
+			expect(actionBtn.className).toContain("bg-warning");
 		});
 
 		it("renders submit button with 'Changer en Archivé' label", () => {

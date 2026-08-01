@@ -28,6 +28,8 @@ const DEFAULT_PINCH_ZOOM_CONFIG = {
 	moveThreshold: 10,
 };
 
+const config = { ...DEFAULT_PINCH_ZOOM_CONFIG, ...PINCH_ZOOM_CONFIG };
+
 interface GalleryPinchZoomProps {
 	src: string;
 	alt: string;
@@ -67,8 +69,6 @@ export function GalleryPinchZoom({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
 	const haptic = useHaptic();
-
-	const config = { ...DEFAULT_PINCH_ZOOM_CONFIG, ...PINCH_ZOOM_CONFIG };
 
 	// États réactifs (déclenchent re-render)
 	const [scale, setScale] = useState<number>(config.minScale);

@@ -1,6 +1,7 @@
 import { logger } from "@/shared/lib/logger";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
+import { cacheProductDetailById } from "@/modules/products/utils/cache.utils";
 import { GET_PRODUCT_FOR_DUPLICATION_SELECT } from "../constants/product.constants";
 
 // ============================================================================
@@ -25,6 +26,17 @@ type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDuplicatio
  * @param productId - ID du produit à dupliquer
  */
 export async function getProductForDuplication(productId: string): Promise<ProductForDuplication> {
+	// La requête ci-dessous ne filtre pas `status` (dupliquer un DRAFT est le cas
+	// nominal) : la garde appartient donc à cette couche, pas au seul appelant.
+	// `requireAdmin()` dans `actions/duplicate-product.ts` était l'unique protection
+	// — correcte aujourd'hui, mais rien n'empêchait un second appelant de s'en
+	// passer. `isAdmin()` (et non `requireAdmin`) : un retour `ActionState` n'a pas
+	// de sens dans `data/`. Il est lu ICI, dans le wrapper, jamais dans le scope
+	// caché — `headers()` y est interdit.
+	if (!(await isAdmin())) {
+		return null;
+	}
+
 	return fetchProductForDuplication(productId);
 }
 
@@ -35,8 +47,11 @@ export async function getProductForDuplication(productId: string): Promise<Produ
 async function fetchProductForDuplication(productId: string) {
 	"use cache";
 
-	// Le product n'a pas encore de slug connu, on cache par ID
-	cacheProductDetail(`product-id-${productId}`);
+	// Le produit n'a pas encore de slug connu côté appelant, on cache par ID.
+	// ⚠️ C'était `cacheProductDetail(\`product-id-${productId}\`)` : un id nourri à
+	// une fabrique de SLUG, qui émettait `product-product-id-<cuid>` — tag qu'aucun
+	// mutateur n'invalidait (tous appellent `DETAIL(slug)`).
+	cacheProductDetailById(productId);
 
 	try {
 		return await prisma.product.findFirst({

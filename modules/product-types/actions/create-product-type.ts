@@ -38,9 +38,15 @@ export async function createProductType(
 
 		const validatedData = validated.data;
 
+		// Sanitizer AVANT l'unicité et le slug : l'insert écrivait
+		// `sanitizeText(label)` alors que les deux contrôles portaient sur le
+		// label brut — un label qui ne diffère que par le contenu sanitizé
+		// contournait l'unicité et générait un slug depuis la version brute.
+		const sanitizedLabel = sanitizeText(validatedData.label);
+
 		// 5. Verifier l'unicite du label (case-insensitive)
 		const existingLabel = await prisma.productType.findFirst({
-			where: { label: { equals: validatedData.label, mode: "insensitive" } },
+			where: { label: { equals: sanitizedLabel, mode: "insensitive" } },
 		});
 
 		if (existingLabel) {
@@ -48,12 +54,12 @@ export async function createProductType(
 		}
 
 		// 6. Generer un slug unique automatiquement
-		const slug = await generateSlug(prisma, "productType", validatedData.label);
+		const slug = await generateSlug(prisma, "productType", sanitizedLabel);
 
 		// 7. Creer le type de produit
 		const created = await prisma.productType.create({
 			data: {
-				label: sanitizeText(validatedData.label),
+				label: sanitizedLabel,
 				description: validatedData.description
 					? sanitizeText(validatedData.description)
 					: undefined,

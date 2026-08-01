@@ -9,13 +9,16 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
+import { TAXONOMY_CONFIG } from "@/modules/taxonomies/config/taxonomy.config";
+
 import { CreateColorForm } from "@/modules/colors/components/admin/create-color-form";
 import {
 	EditColorForm,
 	type EditableColor,
 } from "@/modules/colors/components/admin/edit-color-form";
 
-export const COLOR_DIALOG_ID = "color-form";
+// Re-dérivé du registre : ouvreurs et dialog s'abonnent au même identifiant.
+export const COLOR_DIALOG_ID = TAXONOMY_CONFIG.color.formDialogId;
 
 interface ColorDialogData extends Record<string, unknown> {
 	color?: EditableColor;

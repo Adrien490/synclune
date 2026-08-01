@@ -54,6 +54,9 @@ export interface UseUploadCancellationReturn {
 	isInActiveImageBatch: (fileName: string, batch: ActiveBatchInfo | null) => boolean;
 }
 
+const isInActiveImageBatch = (fileName: string, batch: ActiveBatchInfo | null): boolean =>
+	batch?.mode === "image-batch" && batch.fileNames.has(fileName);
+
 export function useUploadCancellation(): UseUploadCancellationReturn {
 	const cancelledNamesRef = useRef<Set<string>>(new Set());
 	const videoSubAbortRef = useRef<AbortController | null>(null);
@@ -94,9 +97,6 @@ export function useUploadCancellation(): UseUploadCancellationReturn {
 	const abortAnyVideo = () => {
 		videoSubAbortRef.current?.abort();
 	};
-
-	const isInActiveImageBatch = (fileName: string, batch: ActiveBatchInfo | null): boolean =>
-		batch?.mode === "image-batch" && batch.fileNames.has(fileName);
 
 	return {
 		markCancelled,

@@ -1,10 +1,12 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { applyInventoryDeltaTx } from "@/modules/skus/services/apply-inventory-delta.service";
 import { detectMediaType } from "@/modules/media/utils/media-type-detection";
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import {
 	validateInput,
 	success,
@@ -19,7 +21,7 @@ import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-option
 import { logger } from "@/shared/lib/logger";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteUnreferencedCatalogMedia } from "@/modules/media/services/delete-unreferenced-catalog-media.service";
 import { updateProductSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { getSkuInvalidationTags } from "@/modules/skus/utils/cache.utils";
@@ -136,11 +138,14 @@ export async function updateProduct(
 			return notFound("Le produit");
 		}
 
-		// Verifier que le SKU existe et appartient au produit
+		// Verifier que le SKU existe et appartient au produit.
+		// `deletedAt: null` — même garde que les mutateurs du module skus : un SKU
+		// soft-deleted ne doit pas être éditable via le formulaire produit.
 		const existingSku = await prisma.productSku.findFirst({
 			where: {
 				id: validatedData.defaultSku.skuId,
 				productId: validatedData.productId,
+				deletedAt: null,
 			},
 			select: { id: true, sku: true, isDefault: true, isActive: true },
 		});
@@ -149,10 +154,13 @@ export async function updateProduct(
 			return notFound("La variante");
 		}
 
-		// 5. Validation metier : refus de desactiver la variante principale (alignement
+		// 5. Validation metier : refus de DESACTIVER la variante principale (alignement
 		// avec update-sku-status.ts). Si l'admin veut deplacer le defaut, il doit
 		// d'abord promouvoir une autre variante via setDefaultSku.
-		if (existingSku.isDefault && !validatedData.defaultSku.isActive) {
+		// La garde ne vise que la TRANSITION actif → inactif : sur un produit
+		// archive, le defaut est deja inactif et le formulaire reposte son etat —
+		// bloquer ce non-changement re-briquerait l'edition des produits archives.
+		if (existingSku.isDefault && existingSku.isActive && !validatedData.defaultSku.isActive) {
 			return validationError(
 				"Impossible de désactiver la variante principale. Définissez d'abord une autre variante comme principale.",
 			);
@@ -214,8 +222,9 @@ export async function updateProduct(
 
 		// 8. Prepare images with isPrimary flag (first = primary)
 		// La validation que le premier média est une IMAGE (pas VIDEO) est faite
-		// dans le schéma Zod (updateProductSchema.refine). On signale toute violation
-		// d'invariant pour détecter un éventuel bypass du schéma.
+		// dans le schéma Zod (updateProductSchema.refine). Filet anti-bypass : on
+		// REFUSE (le précédent `logger.warn` signalait la violation… puis
+		// persistait quand même une vidéo en primaire).
 		const firstMedia = validatedData.defaultSku.media[0];
 		if (firstMedia?.mediaType === "VIDEO") {
 			logger.warn("Schema invariant violated: first media is VIDEO post-validation", {
@@ -223,6 +232,7 @@ export async function updateProduct(
 				productId: validatedData.productId,
 				skuId: validatedData.defaultSku.skuId,
 			});
+			return validationError(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 		}
 		const allImages = validatedData.defaultSku.media.map((media, index) => ({
 			...media,
@@ -231,7 +241,7 @@ export async function updateProduct(
 		}));
 
 		// 9. Update product in transaction
-		const updatedProduct = await prisma.$transaction(
+		const { product: updatedProduct, oldSkuMediaUrls } = await prisma.$transaction(
 			async (tx) => {
 				// Validate references exist within the transaction
 				if (normalizedTypeId) {
@@ -366,6 +376,15 @@ export async function updateProduct(
 					},
 				});
 
+				// Capture des URLs réellement possédées par le SKU AVANT le deleteMany :
+				// `deletedImageUrls` vient du client et est le paramètre le plus
+				// destructif de l'action — sans recoupement, un appel RPC direct
+				// pouvait faire supprimer n'importe quel blob UploadThing.
+				const oldMedia = await tx.skuMedia.findMany({
+					where: { skuId: validatedData.defaultSku.skuId },
+					select: { url: true, thumbnailUrl: true },
+				});
+
 				// Delete existing images for this SKU
 				await tx.skuMedia.deleteMany({
 					where: { skuId: validatedData.defaultSku.skuId },
@@ -391,7 +410,12 @@ export async function updateProduct(
 					}
 				}
 
-				return product;
+				const skuMediaUrls = new Set<string>();
+				for (const media of oldMedia) {
+					skuMediaUrls.add(media.url);
+					if (media.thumbnailUrl) skuMediaUrls.add(media.thumbnailUrl);
+				}
+				return { product, oldSkuMediaUrls: skuMediaUrls };
 			},
 			// Cette transaction tient advisory lock d'identité de variante + FOR UPDATE sur l'inventaire.
 			// Le défaut Prisma (5 s) la faisait échouer en P2028 sous contention avec le
@@ -440,46 +464,16 @@ export async function updateProduct(
 			}
 		}
 
-		// 11. Delete removed images from UploadThing storage.
-		// MEDIA-AUDIT-003 : ne jamais supprimer un fichier encore référencé par un
-		// snapshot de commande (OrderItem.productImageUrl / skuImageUrl) — sinon
-		// l'historique client afficherait une image 404 (rétention légale 10 ans).
-		// Les URLs préservées seront ramassées plus tard par cleanup-orphan-media
-		// SI plus aucune commande n'y fait référence (le cron est OrderItem-aware).
-		if (deletedImageUrls.length > 0) {
-			void (async () => {
-				try {
-					const referencingItems = await prisma.orderItem.findMany({
-						where: {
-							OR: [
-								{ productImageUrl: { in: deletedImageUrls } },
-								{ skuImageUrl: { in: deletedImageUrls } },
-							],
-						},
-						select: { productImageUrl: true, skuImageUrl: true },
-					});
-					const referencedUrls = new Set<string>();
-					for (const item of referencingItems) {
-						if (item.productImageUrl) referencedUrls.add(item.productImageUrl);
-						if (item.skuImageUrl) referencedUrls.add(item.skuImageUrl);
-					}
-					const deletableUrls = deletedImageUrls.filter((url) => !referencedUrls.has(url));
-					if (referencedUrls.size > 0) {
-						logger.info("Preserved order-referenced media from deletion", {
-							action: "updateProduct",
-							preserved: referencedUrls.size,
-							deleted: deletableUrls.length,
-						});
-					}
-					if (deletableUrls.length > 0) {
-						await deleteUploadThingFilesFromUrls(deletableUrls);
-					}
-				} catch (e) {
-					// En cas d'erreur on NE supprime PAS (préservation de l'historique) ;
-					// cleanup-orphan-media ramassera les vrais orphelins ultérieurement.
-					logger.error("Failed to delete UploadThing files", e, { action: "updateProduct" });
-				}
-			})();
+		// 11. Delete removed images from UploadThing storage — via la SSOT qui
+		// préserve les URLs encore référencées par un snapshot de commande
+		// (MEDIA-AUDIT-003) ou par une autre ligne SkuMedia (blobs partagés par
+		// duplication). `after()` plutôt que fire-and-forget : en serverless, la
+		// lambda peut geler avant la résolution d'une promesse détachée.
+		// Recoupement d'appartenance : seules les URLs que le SKU possédait avant
+		// la transaction peuvent partir en suppression.
+		const ownedDeletedUrls = deletedImageUrls.filter((url) => oldSkuMediaUrls.has(url));
+		if (ownedDeletedUrls.length > 0) {
+			after(() => deleteUnreferencedCatalogMedia(ownedDeletedUrls, { action: "updateProduct" }));
 		}
 
 		// 12. Audit log

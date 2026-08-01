@@ -6,21 +6,14 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockEnforceRateLimit,
-	mockUpdateTag,
-	mockHandleActionError,
-	mockSuccess,
-	mockCookies,
-	mockGetRecentSearchesInvalidationTags,
-} = vi.hoisted(() => ({
-	mockEnforceRateLimit: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockHandleActionError: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockCookies: vi.fn(),
-	mockGetRecentSearchesInvalidationTags: vi.fn(),
-}));
+const { mockEnforceRateLimit, mockUpdateTag, mockHandleActionError, mockSuccess, mockCookies } =
+	vi.hoisted(() => ({
+		mockEnforceRateLimit: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockCookies: vi.fn(),
+	}));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
@@ -41,9 +34,7 @@ vi.mock("next/headers", () => ({ cookies: mockCookies }));
 vi.mock("../constants/recent-searches", () => ({
 	RECENT_SEARCHES_COOKIE_NAME: "recent-searches",
 }));
-vi.mock("../../constants/cache", () => ({
-	getRecentSearchesInvalidationTags: mockGetRecentSearchesInvalidationTags,
-}));
+vi.mock("../../constants/cache", () => ({}));
 
 import { clearRecentSearches } from "../clear-recent-searches";
 
@@ -75,7 +66,6 @@ describe("clearRecentSearches", () => {
 		mockCookies.mockResolvedValue(cookieStore);
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockGetRecentSearchesInvalidationTags.mockReturnValue(["recent-searches-list"]);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -100,10 +90,10 @@ describe("clearRecentSearches", () => {
 		expect(cookieStore.delete).toHaveBeenCalledWith("recent-searches");
 	});
 
-	it("should invalidate cache after deleting cookie", async () => {
+	// Cf. `add-recent-search.test.ts` : le tag n'avait aucun lecteur.
+	it("n'invalide AUCUN tag (le lecteur cookie n'est pas caché)", async () => {
 		await clearRecentSearches(undefined, emptyFormData);
-		expect(mockGetRecentSearchesInvalidationTags).toHaveBeenCalled();
-		expect(mockUpdateTag).toHaveBeenCalledWith("recent-searches-list");
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should return success response", async () => {
@@ -127,8 +117,7 @@ describe("clearRecentSearches", () => {
 		expect(cookieStore.delete).toHaveBeenNthCalledWith(2, "recent-searches");
 	});
 
-	it("should still delete the cookie even when invalidation tag helper returns empty", async () => {
-		mockGetRecentSearchesInvalidationTags.mockReturnValue([]);
+	it("supprime le cookie sans dépendre d'aucun helper d'invalidation", async () => {
 		const result = await clearRecentSearches(undefined, emptyFormData);
 		expect(cookieStore.delete).toHaveBeenCalledWith("recent-searches");
 		expect(mockUpdateTag).not.toHaveBeenCalled();

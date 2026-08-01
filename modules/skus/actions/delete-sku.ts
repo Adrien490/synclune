@@ -16,7 +16,7 @@ import {
 	BusinessError,
 } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
-import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { deleteUnreferencedCatalogMedia } from "@/modules/media/services/delete-unreferenced-catalog-media.service";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 import { CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 
@@ -52,8 +52,11 @@ export async function deleteProductSku(
 
 		// 5. Verifier que le SKU existe et recuperer toutes les infos necessaires en UNE requete
 		// Optimisation: Consolider les counts pour eviter les N+1 queries
+		// `deletedAt: null` — un SKU soft-deleted appartient à un produit lui-même
+		// supprimé : le hard-deleter par cette action serait une anomalie (et son
+		// `_count.skus` filtré exclurait la ligne éditée).
 		const existingSku = await prisma.productSku.findUnique({
-			where: { id: validatedSkuId },
+			where: { id: validatedSkuId, deletedAt: null },
 			select: {
 				id: true,
 				sku: true,
@@ -216,8 +219,12 @@ export async function deleteProductSku(
 			return promoted;
 		});
 
-		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie
-		await deleteUploadThingFilesFromUrls(imageUrls);
+		// 11. Supprimer les fichiers UploadThing apres la suppression DB reussie —
+		// via la SSOT qui préserve les URLs encore référencées par une autre ligne
+		// SkuMedia (blobs partagés par duplication). Le refus `orderItemsCount > 0`
+		// en amont couvre déjà les snapshots de commande de CE SKU, mais pas un
+		// blob partagé avec le SKU d'origine d'une duplication.
+		await deleteUnreferencedCatalogMedia(imageUrls, { action: "deleteProductSku" });
 
 		// 12. Invalider les cache tags concernes
 		// Toutes les couleurs/matériaux liés perdent un lien (`_count.skuColors`

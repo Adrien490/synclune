@@ -1,6 +1,5 @@
 "use server";
 
-import { updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { PRODUCT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -13,7 +12,6 @@ import {
 	RECENT_SEARCHES_MAX_ITEMS,
 } from "../constants/recent-searches";
 import { addRecentSearchSchema } from "../schemas/recent-searches.schemas";
-import { getRecentSearchesInvalidationTags } from "../constants/cache";
 
 /**
  * Server Action pour ajouter une recherche recente
@@ -71,9 +69,10 @@ export async function addRecentSearch(
 			secure: process.env.NODE_ENV === "production",
 		});
 
-		// Invalider le cache
-		const tags = getRecentSearchesInvalidationTags();
-		tags.forEach((tag) => updateTag(tag));
+		// Aucune invalidation ici : les recherches récentes vivent dans un cookie, lu
+		// par `get-recent-searches.ts` qui n'est PAS caché. Le `updateTag` qui se
+		// trouvait à cette ligne visait `recent-searches-list`, un tag qu'aucun
+		// `cacheTag()` ne posait (audit cache catalogue 2026-07-31).
 
 		return success("Recherche ajoutée", { searches: updated });
 	} catch (e) {

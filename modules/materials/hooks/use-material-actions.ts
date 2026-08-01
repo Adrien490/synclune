@@ -11,6 +11,8 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
+import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
+
 import { DELETE_MATERIAL_DIALOG_ID } from "../components/admin/delete-material-alert-dialog";
 import { MATERIAL_DIALOG_ID } from "../components/material-form-dialog";
 
@@ -33,7 +35,11 @@ export function useMaterialActions({
 	materialIsActive,
 }: UseMaterialActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openDialog } = useDialog(MATERIAL_DIALOG_ID);
-	const { open: openAlert } = useAlertDialog(DELETE_MATERIAL_DIALOG_ID);
+	// Typé contre le payload du dialog mutualisé : les clés historiques
+	// (`materialId`/`materialName`) rendaient le champ caché vide et la
+	// suppression impossible depuis l'UI — avec ce générique, la dérive ne
+	// compile plus.
+	const { open: openAlert } = useAlertDialog<TaxonomyDeletePayload>(DELETE_MATERIAL_DIALOG_ID);
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
@@ -109,7 +115,7 @@ export function useMaterialActions({
 					icon: Trash2,
 					variant: "destructive",
 					closesMenu: false,
-					onSelect: () => openAlert({ materialId, materialName }),
+					onSelect: () => openAlert({ id: materialId, displayName: materialName }),
 				},
 			],
 		},

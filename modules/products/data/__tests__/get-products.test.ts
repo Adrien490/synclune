@@ -199,10 +199,22 @@ describe("getProducts", () => {
 		expect(mockIsAdmin).toHaveBeenCalled();
 	});
 
+	// `options.isAdmin` est typé `false` littéral et non `boolean` (audit cache
+	// catalogue 2026-07-31) : il ne peut que BAISSER le privilège. Il existe pour
+	// l'appelant déjà dans un scope `"use cache"` (`getNavbarMenuData`), où
+	// `isAdmin()` est interdit puisqu'il lit `headers()`. En `boolean`, il offrait
+	// aussi le chemin inverse — passer `true` aurait contourné la garde re-vérifiée
+	// en DB et écrit des produits DRAFT dans une entrée de cache PARTAGÉE.
 	it("skips isAdmin() call when options.isAdmin is provided", async () => {
-		await getProducts(DEFAULT_PARAMS, { isAdmin: true });
+		await getProducts(DEFAULT_PARAMS, { isAdmin: false });
 
 		expect(mockIsAdmin).not.toHaveBeenCalled();
+	});
+
+	it("options.isAdmin ne peut pas ÉLEVER le privilège (verrou de type)", () => {
+		// @ts-expect-error — `isAdmin` n'accepte que `false` : passer `true` doit être
+		// un défaut de compilation, pas une décision runtime.
+		void (() => getProducts(DEFAULT_PARAMS, { isAdmin: true }));
 	});
 
 	it("uses admin fallback sort when admin has no explicit sortBy", async () => {
@@ -264,10 +276,10 @@ describe("getProducts", () => {
 	it("preserves the requested status filter for admins", async () => {
 		setupValidParams({ status: "DRAFT", filters: { status: "DRAFT" } });
 
-		await getProducts(
-			{ ...DEFAULT_PARAMS, status: "DRAFT", filters: { status: "DRAFT" } },
-			{ isAdmin: true },
-		);
+		// Admin simulé via la GARDE (re-vérifiée en DB), plus via `options` — ce
+		// paramètre ne sait plus qu'abaisser le privilège.
+		mockIsAdmin.mockResolvedValue(true);
+		await getProducts({ ...DEFAULT_PARAMS, status: "DRAFT", filters: { status: "DRAFT" } });
 
 		expect(mockBuildProductWhereClause).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -407,7 +419,7 @@ describe("getProducts", () => {
 		mockFindMany.mockResolvedValue([]);
 		mockSortProducts.mockReturnValue([]);
 
-		await getProducts({ ...DEFAULT_PARAMS, search: "coliier" }, { isAdmin: true });
+		await getProducts({ ...DEFAULT_PARAMS, search: "coliier" });
 
 		expect(mockGetSpellSuggestion).not.toHaveBeenCalled();
 	});

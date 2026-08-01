@@ -1,4 +1,4 @@
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { ProductStatus } from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {

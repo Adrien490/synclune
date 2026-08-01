@@ -150,7 +150,14 @@ export async function duplicateProduct(
 		});
 
 		// 7. Invalidate cache tags
-		const productTags = getProductInvalidationTags(duplicatedProduct.slug, duplicatedProduct.id);
+		// Les couleurs/matériaux sont ceux du produit SOURCE : la copie porte les
+		// mêmes, et c'est leur KPI « produits distincts » qui vient d'augmenter.
+		const productTags = getProductInvalidationTags(duplicatedProduct.slug, duplicatedProduct.id, {
+			affectedColorIds: sourceProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId)),
+			affectedMaterialIds: sourceProduct.skus.flatMap((sku) =>
+				sku.materials.map((m) => m.materialId),
+			),
+		});
 		productTags.forEach((tag) => updateTag(tag));
 
 		// Si le produit appartient a des collections, invalider aussi les collections

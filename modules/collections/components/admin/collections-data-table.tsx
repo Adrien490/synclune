@@ -37,6 +37,13 @@ const STATUS_CONFIG: Record<
 	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: Archive },
 };
 
+// Helper pour tronquer la description
+const truncateDescription = (description: string | null, maxLength = 100) => {
+	if (!description) return "—";
+	if (description.length <= maxLength) return description;
+	return `${description.substring(0, maxLength)}...`;
+};
+
 interface CollectionsDataTableProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 	perPage: number;
@@ -49,13 +56,6 @@ export async function CollectionsDataTable({
 	hasActiveFilters,
 }: CollectionsDataTableProps) {
 	const { collections, pagination, totalCount } = await collectionsPromise;
-
-	// Helper pour tronquer la description
-	const truncateDescription = (description: string | null, maxLength = 100) => {
-		if (!description) return "—";
-		if (description.length <= maxLength) return description;
-		return `${description.substring(0, maxLength)}...`;
-	};
 
 	if (collections.length === 0) {
 		return (

@@ -25,6 +25,10 @@ const {
 		},
 		orderItem: {
 			count: vi.fn(),
+			findMany: vi.fn(),
+		},
+		skuMedia: {
+			findMany: vi.fn(),
 		},
 		cartItem: {
 			count: vi.fn(),
@@ -150,6 +154,11 @@ describe("deleteProductSku", () => {
 		// Re-check anti-race dans la transaction : 0 = pas de course par défaut
 		mockPrisma.orderItem.count.mockResolvedValue(0);
 		mockPrisma.cartItem.count.mockResolvedValue(0);
+		// La SSOT deleteUnreferencedCatalogMedia lit OrderItem ET SkuMedia : un
+		// `findMany` non armé (undefined) ferait échouer son Promise.all en
+		// silence (catch interne) et aucune suppression ne serait observée.
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
 		);

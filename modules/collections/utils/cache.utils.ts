@@ -15,7 +15,9 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 /**
  * Configure le cache pour les collections
  * - Utilisé pour : /collections, listes de collections
- * - Durée : 1h fraîche, 15min revalidation, 24h expiration
+ * - Profil `reference` (cf. next.config.ts pour les durées — ne pas les recopier ici,
+ *   ce commentaire annonçait « 1h / 15min / 24h » alors que le profil vaut 7j/24h/30j.
+ *   Le helper frère `cacheCollectionDetail` avait reçu ce correctif, pas celui-ci.)
  */
 export function cacheCollections() {
 	cacheLife("reference");
@@ -25,7 +27,8 @@ export function cacheCollections() {
 /**
  * Configure le cache pour une collection et ses produits
  * - Utilisé pour : /collections/[slug]
- * - Durée : 1h fraîche, 15min revalidation, 24h expiration
+ * - Profil `reference` (cf. next.config.ts pour les durées — ne pas les recopier ici,
+ *   ce commentaire annonçait « 1h / 15min / 24h » alors que le profil vaut 7j/24h/30j)
  */
 export function cacheCollectionDetail(slug: string) {
 	cacheLife("reference");
@@ -50,6 +53,11 @@ export function cacheCollectionDetail(slug: string) {
  * - Les produits de la collection
  * - La liste des produits (car ils affichent leur collection)
  * - Les badges de la sidebar admin
+ * - Le mega-menu de la navbar (images de collection triées isFeatured desc,
+ *   profil `reference` : sans ce tag, `setFeaturedProduct` laissait la navbar
+ *   sur l'ancienne image jusqu'à 24 h — les 5 autres mutations l'ajoutaient
+ *   chacune à la main, exactement la divergence de call sites que ce helper
+ *   existe pour empêcher ; pattern aligné sur getProductTypeInvalidationTags)
  */
 export function getCollectionInvalidationTags(collectionSlug: string): string[] {
 	return [
@@ -59,5 +67,6 @@ export function getCollectionInvalidationTags(collectionSlug: string): string[] 
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(collectionSlug),
 		SHARED_CACHE_TAGS.PRODUCTS_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
+		SHARED_CACHE_TAGS.NAVBAR_MENU,
 	];
 }

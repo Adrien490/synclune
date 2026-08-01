@@ -83,6 +83,9 @@ export function IdleContent({
 									<Tap key={product.slug} scale={0.97} className="snap-start">
 										<Link
 											href={`/creations/${product.slug}`}
+											// `replace` : consomme l'entrée d'historique du dialog
+											// (CLAUDE.md § Overlays).
+											replace
 											onClick={handleNavigateClose}
 											// Pas de `role="option"` : en idle le conteneur n'est PAS un listbox
 											// (F3) — une option y serait orpheline. `data-qs-option` suffit à la
@@ -235,6 +238,8 @@ export function IdleContent({
 						<div className="mt-3 text-center">
 							<Link
 								href="/collections"
+								// `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays).
+								replace
 								onClick={handleViewAllCollections}
 								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:min-h-9"
 							>
@@ -260,7 +265,8 @@ export function IdleContent({
 					vers le catalogue complet. Audit recherche 2026-07-26. */}
 				<div className="text-center">
 					<Button asChild variant="outline" className="min-h-11 touch-manipulation sm:min-h-10">
-						<Link href="/produits" onClick={handleViewAllProducts}>
+						{/* `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays). */}
+						<Link href="/produits" replace onClick={handleViewAllProducts}>
 							Voir tous les produits
 						</Link>
 					</Button>

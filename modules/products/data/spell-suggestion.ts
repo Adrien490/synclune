@@ -11,6 +11,7 @@ import {
 	MAX_SEARCH_LENGTH,
 	SPELL_SUGGESTION_TIMEOUT_MS,
 } from "../constants/search.constants";
+import { sanitizeForLog } from "../utils/search-helpers";
 import { setStatementTimeout, setTrigramThreshold } from "../utils/trigram-helpers";
 
 // ============================================================================
@@ -76,6 +77,32 @@ type BatchResult = {
  * @returns Best suggestion or null if none found
  */
 export async function getSpellSuggestion(
+	searchTerm: string,
+	options: SuggestionOptions = {},
+): Promise<SpellSuggestion | null> {
+	// ⚠️ Le repli `null` sur erreur vit ICI, HORS du scope `"use cache"` de
+	// `fetchSpellSuggestion` : à l'intérieur, un échec transitoire (timeout,
+	// panne DB) figeait un `null` de panne dans l'entrée de cache du terme
+	// (profil `catalog`, jusqu'à 15 min sans suggestion). Une erreur jetée n'est
+	// jamais mise en cache. Audit recherche 2026-08-01, P1-3.
+	try {
+		return await fetchSpellSuggestion(searchTerm, options);
+	} catch (error) {
+		logger.warn(
+			`Spell suggestion failed | term="${sanitizeForLog(searchTerm)}" | error="${error instanceof Error ? error.message : error}"`,
+			{ service: "getSpellSuggestion" },
+		);
+		return null;
+	}
+}
+
+/**
+ * Cœur caché de la suggestion orthographique.
+ *
+ * ⚠️ AUCUN catch-avaleur dans ce scope : toute erreur REMONTE à
+ * `getSpellSuggestion` ci-dessus, hors du cache.
+ */
+async function fetchSpellSuggestion(
 	searchTerm: string,
 	options: SuggestionOptions = {},
 ): Promise<SpellSuggestion | null> {
@@ -198,9 +225,10 @@ export async function getSpellSuggestion(
 
 		const durationMs = Math.round(performance.now() - startTime);
 		if (durationMs > 500) {
-			logger.warn(`Slow spell suggestion | term="${term}" | duration=${durationMs}ms`, {
-				service: "getSpellSuggestion",
-			});
+			logger.warn(
+				`Slow spell suggestion | term="${sanitizeForLog(term)}" | duration=${durationMs}ms`,
+				{ service: "getSpellSuggestion" },
+			);
 		}
 
 		// Merge batch results back with the full word list (including short words)
@@ -241,11 +269,14 @@ export async function getSpellSuggestion(
 			source: bestMatch.match!.source as SpellSuggestion["source"],
 		};
 	} catch (error) {
+		// Durée loggée ici (le wrapper ne peut pas la mesurer), puis RETHROW —
+		// jamais `return null` : ce scope est `"use cache"`, un `null` de panne
+		// serait figé dans l'entrée du terme. Le repli vit dans
+		// `getSpellSuggestion` (wrapper hors cache). Audit recherche 2026-08-01.
 		const durationMs = Math.round(performance.now() - startTime);
-		logger.warn(
-			`Spell suggestion failed | term="${term}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
-			{ service: "getSpellSuggestion" },
-		);
-		return null;
+		logger.warn(`Spell suggestion query failed | duration=${durationMs}ms`, {
+			service: "fetchSpellSuggestion",
+		});
+		throw error;
 	}
 }

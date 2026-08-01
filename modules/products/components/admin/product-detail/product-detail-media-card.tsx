@@ -212,7 +212,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 										aria-busy="true"
 										aria-label="Chargement de la galerie"
 									>
-										<div className="bg-muted/30 aspect-square w-full max-w-3xl animate-pulse rounded-lg" />
+										<div className="bg-muted/30 aspect-square w-full max-w-3xl rounded-lg motion-safe:animate-pulse" />
 									</div>
 								}
 							>

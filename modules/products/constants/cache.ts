@@ -25,7 +25,22 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Détail d'un produit spécifique */
 	DETAIL: (slug: string) => `product-${slug}`,
 
-	/** SKUs d'un produit */
+	/**
+	 * Détail d'un produit par ID — lecture de duplication, où le slug de la source
+	 * n'est pas connu de l'appelant.
+	 *
+	 * ⚠️ NE PAS retomber sur `DETAIL(\`product-id-${id}\`)` : c'est ce que faisait
+	 * `get-product-for-duplication.ts`, et le tag `product-product-id-<cuid>` ainsi
+	 * fabriqué n'était émis par aucun mutateur (tous appellent `DETAIL(slug)`).
+	 * L'entrée n'était joignable que par le `products-list` co-posé (audit cache
+	 * catalogue 2026-07-31).
+	 */
+	DETAIL_BY_ID: (productId: string) => `product-id-${productId}`,
+
+	/**
+	 * SKUs d'un produit — posé par `modules/skus/data/fetch-skus.ts` quand la liste
+	 * est filtrée sur un produit.
+	 */
 	SKUS: (productId: string) => `product-${productId}-skus`,
 
 	/** Collections d'un produit (invalidé lors d'updateProductCollections / create / update) */
@@ -40,8 +55,10 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** Liste globale des SKUs */
 	SKUS_LIST: "skus-list",
 
-	/** Détail d'un SKU spécifique */
-	SKU_DETAIL: (sku: string) => `sku-${sku}`,
+	// `SKU_DETAIL: (sku) => \`sku-${sku}\`` a été RETIRÉ (audit cache catalogue
+	// 2026-07-31) : invalidé inconditionnellement par `getSkuInvalidationTags`, posé
+	// par aucun lecteur. Aucun chemin ne lit un SKU par son code — l'édition admin
+	// passe par l'id, ci-dessous.
 
 	/** Détail d'un SKU par ID (pour les lookups d'édition admin) */
 	SKU_DETAIL_BY_ID: (skuId: string) => `sku-id-${skuId}`,
@@ -74,17 +91,9 @@ export function getRecentProductsInvalidationTags(): string[] {
 	return [RECENT_PRODUCTS_CACHE_TAGS.LIST];
 }
 
-/**
- * Cache tags pour les recherches recentes
- */
-const RECENT_SEARCHES_CACHE_TAGS = {
-	/** Tag principal pour les recherches recentes */
-	LIST: "recent-searches-list",
-} as const;
-
-/**
- * Retourne les tags a invalider pour les recherches recentes
- */
-export function getRecentSearchesInvalidationTags(): string[] {
-	return [RECENT_SEARCHES_CACHE_TAGS.LIST];
-}
+// `RECENT_SEARCHES_CACHE_TAGS` / `getRecentSearchesInvalidationTags` ont été RETIRÉS
+// (audit cache catalogue 2026-07-31) : trois Server Actions invalidaient
+// `recent-searches-list` alors qu'aucun lecteur ne le posait — `get-recent-searches.ts`
+// est une lecture de cookie délibérément NON cachée. Une invalidation dans le vide.
+// Si les recherches récentes devaient un jour être cachées, c'est le lecteur qui
+// devrait poser le tag EN MÊME TEMPS que ces mutateurs le réémettent.

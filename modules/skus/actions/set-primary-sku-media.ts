@@ -13,6 +13,7 @@ import {
 	success,
 	validateInput,
 } from "@/shared/lib/actions";
+import { PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE } from "@/modules/media/constants/media-limits.constants";
 import { setPrimarySkuMediaSchema } from "../schemas/sku-media.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
@@ -39,8 +40,11 @@ export async function setPrimarySkuMedia(
 		const { skuId, mediaId } = validation.data;
 
 		const skuInfo = await prisma.$transaction(async (tx) => {
+			// `sku: { deletedAt: null }` — le média d'un SKU soft-deleted (produit
+			// supprimé) ne doit plus être mutable : anomalie, même garde que les
+			// autres mutateurs SKU.
 			const media = await tx.skuMedia.findUnique({
-				where: { id: mediaId },
+				where: { id: mediaId, sku: { deletedAt: null } },
 				select: {
 					id: true,
 					skuId: true,
@@ -64,9 +68,9 @@ export async function setPrimarySkuMedia(
 				throw new BusinessError("Le média n'appartient pas à cette variante.");
 			}
 			if (media.mediaType !== "IMAGE") {
-				throw new BusinessError(
-					"Seule une image peut etre definie comme media principal (pas une video).",
-				);
+				// SSOT de copie : media-limits.constants interdit toute 4e variante
+				// de cette phrase (celle-ci était la 3e, sans accents).
+				throw new BusinessError(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			}
 
 			if (!media.isPrimary) {

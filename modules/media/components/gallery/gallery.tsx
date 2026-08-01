@@ -41,6 +41,35 @@ const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lig
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
+// Connection-aware prefetch range with intelligent fallback
+// Safari/Firefox don't support navigator.connection
+// Fallback: mobile viewport without connection API = treat as moderate connection
+function getEffectivePrefetchRange(): number {
+	const connection =
+		typeof navigator !== "undefined"
+			? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
+					?.effectiveType
+			: undefined;
+
+	// Use connection API if available
+	if (connection) {
+		return connection === "slow-2g" || connection === "2g"
+			? PREFETCH_RANGE_SLOW
+			: PREFETCH_RANGE_FAST;
+	}
+
+	// Fallback: mobile without connection API = conservative (Safari iOS ~25% FR traffic).
+	// `matchMedia` plutôt que `innerWidth` (qui inclut la scrollbar, ~15px de
+	// divergence avec le CSS) et seuil issu du SSOT en rem.
+	if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+		if (window.matchMedia(mediaBelow("md")).matches) {
+			return PREFETCH_RANGE_SLOW;
+		}
+	}
+
+	return PREFETCH_RANGE_FAST;
+}
+
 interface GalleryProps {
 	product: GetProductReturn;
 	title: string;
@@ -196,34 +225,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Track pointer drag to differentiate swipe-triggered selects from button-triggered ones
 	const isDraggingRef = useRef(false);
 
-	// Connection-aware prefetch range with intelligent fallback
-	// Safari/Firefox don't support navigator.connection
-	// Fallback: mobile viewport without connection API = treat as moderate connection
-	const getEffectivePrefetchRange = (): number => {
-		const connection =
-			typeof navigator !== "undefined"
-				? (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
-						?.effectiveType
-				: undefined;
-
-		// Use connection API if available
-		if (connection) {
-			return connection === "slow-2g" || connection === "2g"
-				? PREFETCH_RANGE_SLOW
-				: PREFETCH_RANGE_FAST;
-		}
-
-		// Fallback: mobile without connection API = conservative (Safari iOS ~25% FR traffic).
-		// `matchMedia` plutôt que `innerWidth` (qui inclut la scrollbar, ~15px de
-		// divergence avec le CSS) et seuil issu du SSOT en rem.
-		if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
-			if (window.matchMedia(mediaBelow("md")).matches) {
-				return PREFETCH_RANGE_SLOW;
-			}
-		}
-
-		return PREFETCH_RANGE_FAST;
-	};
 	const prefetchRange = getEffectivePrefetchRange();
 
 	// Smart prefetch of adjacent images (Next.js 16 + React 19)

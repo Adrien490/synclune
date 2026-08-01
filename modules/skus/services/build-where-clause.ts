@@ -1,3 +1,4 @@
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { Prisma } from "@/app/generated/prisma/client";
 import type { GetProductSkusInput } from "@/modules/skus/schemas/get-skus.schemas";
 import { buildFilterConditions } from "./build-filter-conditions";
@@ -14,7 +15,8 @@ export const buildWhereClause = (params: GetProductSkusInput): Prisma.ProductSku
 
 	// Conditions de recherche textuelle (légère)
 	if (typeof params.search === "string" && params.search.trim()) {
-		const searchTerm = params.search.trim();
+		// Echappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3, cf. escape-like-pattern.ts).
+		const searchTerm = escapeLikePattern(params.search.trim());
 		whereClause.OR = [
 			{
 				sku: {

@@ -127,7 +127,13 @@ describe("updateCollectionStatus", () => {
 
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list", "collection-bijoux"]);
+		// Miroir du contrat réel : NAVBAR_MENU vit désormais DANS le helper (les
+		// updateTag manuels ont été retirés des actions).
+		mockGetCollectionInvalidationTags.mockReturnValue([
+			"collections-list",
+			"collection-bijoux",
+			"navbar-menu",
+		]);
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
 			message: fallback,

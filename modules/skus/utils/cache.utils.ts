@@ -4,7 +4,7 @@
  * Note: Ce module utilise PRODUCTS_CACHE_TAGS car les SKUs sont liés aux produits.
  */
 
-import { cacheLife, cacheTag, updateTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { COLORS_CACHE_TAGS } from "@/modules/colors/constants/cache";
 import { MATERIALS_CACHE_TAGS } from "@/modules/materials/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -15,13 +15,9 @@ import type { SkuDataForInvalidation } from "../types/sku.types";
 // CACHE CONFIGURATION HELPERS
 // ============================================
 
-/**
- * Configure le cache pour les SKUs d'un produit
- */
-export function cacheProductSkus(productId: string) {
-	cacheLife("catalog");
-	cacheTag(PRODUCTS_CACHE_TAGS.SKUS(productId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
-}
+// Le ré-export de `cacheProductSkus` est parti avec le helper lui-même (audit cache
+// catalogue 2026-07-31) : il n'avait aucun appelant, et le tag `SKUS(productId)`
+// qu'il posait est désormais émis par le vrai lecteur, `../data/fetch-skus.ts`.
 
 /**
  * Configure le cache pour un SKU spécifique (par ID)
@@ -66,12 +62,22 @@ export function getSkuInvalidationTags(
 	affectedMaterialSlugs?: readonly string[],
 	affectedMaterialIds?: readonly string[],
 ): string[] {
-	const tags = [
+	// Annotation explicite : sans `SKU_DETAIL(sku)`, tous les éléments littéraux
+	// restants sont des constantes, et TS inférait `("skus-list" | …)[]` — les
+	// `push` conditionnels ci-dessous ne compilaient plus.
+	const tags: string[] = [
 		PRODUCTS_CACHE_TAGS.SKUS_LIST,
-		PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku),
+		// `SKU_DETAIL(sku)` retiré : aucun lecteur ne l'a jamais posé (audit cache
+		// catalogue 2026-07-31). Le paramètre `sku` reste utile aux appelants pour la
+		// journalisation et la déduplication de `collectBulkInvalidationTags`.
 		PRODUCTS_CACHE_TAGS.MAX_PRICE,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
+		// Le sitemap images lit `skus.images` triés isPrimary desc — exactement ce
+		// que mutent set-primary-sku-media, reorder-sku-media, update/delete/create-sku.
+		// Sans ce tag il restait périmé toute la fenêtre du profil `reference`
+		// (24 h revalidate / 7 j stale). Parité avec getProductInvalidationTags.
+		SHARED_CACHE_TAGS.SITEMAP_IMAGES,
 	];
 
 	// Invalider le cache stock temps réel et le détail par ID si skuId fourni
@@ -118,46 +124,23 @@ export function getSkuInvalidationTags(
 }
 
 /**
- * Tags à invalider lors de la modification des stocks
+ * Tags à invalider lors de la modification des stocks.
  *
- * Invalide uniquement les données affectées, pas toutes les listes.
- * Utile pour les mises à jour fréquentes de stock.
+ * Ré-export de la SSOT `modules/products/utils/cache.utils.ts` — les tags posés
+ * sont ceux du module products, c'est donc lui qui porte l'implémentation.
  *
- * ⚠️ STOCK-STALE-BASELINE-001 — ce set DOIT couvrir tout tag posé par
- * `cacheSkuDetailById` / `cacheProductSkus` ci-dessus. Il manquait
- * `SKU_DETAIL_BY_ID` et `SKUS_LIST`, les deux tags de `fetchSkuById` /
- * `fetchSkuDetailById` : après un ajustement de stock, le formulaire d'édition
- * continuait donc de rendre l'ancien inventaire pendant la fenêtre du profil
- * `user` (60 s revalidate / 120 s stale). Ce n'est pas cosmétique — ce formulaire
- * poste ce chiffre comme `originalInventory`, la baseline du delta relatif : une
- * baseline périmée fait diverger le stock enregistré du stock saisi (réel 15,
- * formulaire à 10, l'admin saisit 12 ⇒ delta +2 ⇒ 17). Le mécanisme de
- * concurrence optimiste dépend de la fraîcheur que ce helper garantit.
+ * ⚠️ Ce fichier en hébergeait un DOUBLON homonyme, plus complet que celui de
+ * products, qui lui gardait une version pauvre à laquelle
+ * `collectStockInvalidationTags` déléguait (audit cache 2026-07-31). La
+ * couverture d'une invalidation dépendait donc de l'import choisi par le call
+ * site. Ne pas réintroduire une seconde implémentation : étendre la SSOT.
+ *
+ * ⚠️ STOCK-STALE-BASELINE-001 — le set DOIT couvrir tout tag posé par
+ * `cacheSkuDetailById` / `cacheProductSkus` ci-dessus (justification détaillée
+ * dans la SSOT). Verrouillé par
+ * `__tests__/inventory-invalidation-covers-reader.regression.test.ts`.
  */
-export function getInventoryInvalidationTags(
-	productSlug: string,
-	productId: string,
-	skuIds?: string[],
-): string[] {
-	const tags = [
-		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
-		PRODUCTS_CACHE_TAGS.SKUS(productId),
-		PRODUCTS_CACHE_TAGS.LIST,
-		PRODUCTS_CACHE_TAGS.SKUS_LIST,
-		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
-		SHARED_CACHE_TAGS.ADMIN_BADGES,
-	];
-
-	// Invalider le cache stock temps réel + le détail par ID de chaque SKU
-	if (skuIds) {
-		for (const skuId of skuIds) {
-			tags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-			tags.push(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
-		}
-	}
-
-	return tags;
-}
+export { getInventoryInvalidationTags } from "@/modules/products/utils/cache.utils";
 
 /**
  * Collecte et déduplique les tags à invalider pour plusieurs SKUs
@@ -184,11 +167,8 @@ export function collectBulkInvalidationTags(skusData: SkuDataForInvalidation[]):
 	return uniqueTags;
 }
 
-/**
- * Invalide tous les tags d'un Set en une seule passe
- *
- * @param tags - Set de tags à invalider
- */
-export function invalidateTags(tags: Set<string>): void {
-	tags.forEach((tag) => updateTag(tag));
-}
+// `invalidateTags(Set)` a été retiré (audit cache 2026-07-31) : zéro appelant en
+// production, et son nom neutre masquait le choix d'API le plus piégeux du repo
+// (`updateTag` en Server Action vs `revalidateTag` ailleurs). Utiliser directement
+// `updateTagsAfterMutation` / `revalidateTagsInBackground` (`@/shared/lib/cache`),
+// dont le nom porte le contexte d'exécution.

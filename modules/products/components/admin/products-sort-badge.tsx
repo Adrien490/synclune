@@ -66,7 +66,7 @@ function ProductsSortBadgeInner() {
 					type="button"
 					onClick={handleReset}
 					aria-label="Effacer le tri"
-					className="text-muted-foreground hover:text-foreground focus-visible:ring-primary relative inline-flex size-7 touch-manipulation items-center justify-center rounded-full [-webkit-tap-highlight-color:transparent] before:absolute before:-inset-2 before:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+					className="text-muted-foreground can-hover:hover:text-foreground focus-ring relative inline-flex size-7 touch-manipulation items-center justify-center rounded-full [-webkit-tap-highlight-color:transparent] before:absolute before:-inset-2 before:content-['']"
 				>
 					<X className="size-3.5" aria-hidden="true" />
 				</button>

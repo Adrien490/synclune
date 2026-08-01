@@ -45,9 +45,11 @@ export async function createMaterial(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier l'unicite du nom
+		// Verifier l'unicite du nom — insensible à la casse (aligné sur les types
+		// de bijoux) : « Argent » et « argent » seraient deux entrées identiques
+		// dans le select SKU.
 		const existingName = await prisma.material.findFirst({
-			where: { name: validatedData.name },
+			where: { name: { equals: validatedData.name, mode: "insensitive" } },
 		});
 
 		if (existingName) {

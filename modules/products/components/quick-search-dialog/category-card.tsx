@@ -37,6 +37,8 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 		<Tap scale={0.97}>
 			<Link
 				href={href}
+				// `replace` : consomme l'entrée d'historique du dialog (CLAUDE.md § Overlays).
+				replace
 				onClick={handleClick}
 				data-active={undefined}
 				data-qs-option=""

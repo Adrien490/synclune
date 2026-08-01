@@ -21,6 +21,9 @@ export type MediaData = {
 	blurDataUrl: string | undefined;
 	altText: string | undefined;
 	mediaType: "IMAGE" | "VIDEO";
+	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
+	width?: number | null;
+	height?: number | null;
 };
 
 // ============================================================================

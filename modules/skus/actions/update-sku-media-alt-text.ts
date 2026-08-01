@@ -38,8 +38,11 @@ export async function updateSkuMediaAltText(
 		const { mediaId, altText } = validation.data;
 
 		const skuInfo = await prisma.$transaction(async (tx) => {
+			// `sku: { deletedAt: null }` — le média d'un SKU soft-deleted (produit
+			// supprimé) ne doit plus être mutable : anomalie, même garde que les
+			// autres mutateurs SKU.
 			const media = await tx.skuMedia.findUnique({
-				where: { id: mediaId },
+				where: { id: mediaId, sku: { deletedAt: null } },
 				select: {
 					id: true,
 					sku: {

@@ -18,6 +18,7 @@ const {
 	mockParseMedia,
 	mockSafeParse,
 	mockGetSkuInvalidationTags,
+	mockDeleteUTFiles,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: {
@@ -27,7 +28,8 @@ const {
 			update: vi.fn(),
 			updateMany: vi.fn(),
 		},
-		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
+		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn(), findMany: vi.fn() },
+		orderItem: { findMany: vi.fn() },
 		stockMovement: { create: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findMany: vi.fn() },
@@ -44,6 +46,7 @@ const {
 	mockParseMedia: vi.fn(),
 	mockSafeParse: vi.fn(),
 	mockGetSkuInvalidationTags: vi.fn(),
+	mockDeleteUTFiles: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -91,7 +94,14 @@ vi.mock("../../utils/parse-media-from-form", () => ({
 	parseMediaFromFormStrict: mockParseMedia,
 }));
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
-	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+	deleteUploadThingFilesFromUrls: mockDeleteUTFiles,
+}));
+// `after()` exécute son callback immédiatement : le travail asynchrone reste
+// observable via un flush de microtasks.
+vi.mock("next/server", () => ({
+	after: (fn: () => unknown) => {
+		void fn();
+	},
 }));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
@@ -174,6 +184,12 @@ describe("updateProductSku", () => {
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
 		mockPrisma.skuMedia.create.mockResolvedValue({});
 		mockPrisma.skuMedia.createMany.mockResolvedValue({ count: 0 });
+		// La SSOT deleteUnreferencedCatalogMedia lit OrderItem ET SkuMedia : un
+		// `findMany` non armé (undefined) ferait échouer son Promise.all en
+		// silence (catch interne) et aucune suppression ne serait observée.
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockDeleteUTFiles.mockResolvedValue({ deleted: 0, failed: 0 });
 		mockPrisma.stockMovement.create.mockResolvedValue({});
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findMany.mockResolvedValue([]);
@@ -336,5 +352,84 @@ describe("updateProductSku", () => {
 		});
 		const result = await updateProductSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	// ============================================================================
+	// MEDIA-AUDIT-003 : préservation des médias encore référencés
+	// ============================================================================
+	// Symétrique du describe éponyme d'update-product.test.ts : la garde vivait
+	// uniquement côté produit, et `update-sku` — le jumeau — supprimait
+	// d'UploadThing des blobs encore figés dans un snapshot de commande
+	// (OrderItem.productImageUrl / skuImageUrl, rétention 10 ans, rendus dans le
+	// PDF de facture) ou partagés avec un autre SKU par duplication.
+	describe("MEDIA-AUDIT-003: preservation of still-referenced media", () => {
+		const URL_REFERENCED = "https://utfs.io/f/used-in-order";
+		const URL_FREE = "https://utfs.io/f/safe-to-delete";
+
+		/** Laisse le callback `after()` de suppression (étape 9) se résoudre. */
+		const flushMicrotasks = () => new Promise((r) => setTimeout(r, 0));
+
+		beforeEach(() => {
+			// Le SKU porte deux médias ; le formulaire n'en repose aucun
+			// (safeParse.media = []) → les deux URLs partent en suppression.
+			mockPrisma.productSku.findUnique.mockResolvedValue({
+				id: VALID_CUID,
+				sku: "BRC-01",
+				isActive: true,
+				inventory: 5,
+				productId: "prod-1",
+				product: {
+					id: "prod-1",
+					title: "Bracelet",
+					slug: "test",
+					status: "DRAFT",
+					_count: { skus: 2 },
+				},
+				colors: [],
+				materials: [],
+				images: [{ url: URL_REFERENCED }, { url: URL_FREE }],
+			});
+		});
+
+		it("deletes only the URLs not referenced by any OrderItem snapshot", async () => {
+			mockPrisma.orderItem.findMany.mockResolvedValue([
+				{ productImageUrl: null, skuImageUrl: URL_REFERENCED },
+			]);
+
+			const result = await updateProductSku(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).toHaveBeenCalledTimes(1);
+			expect(mockDeleteUTFiles).toHaveBeenCalledWith([URL_FREE]);
+		});
+
+		it("does not call UploadThing delete when all removed URLs are still referenced", async () => {
+			mockPrisma.orderItem.findMany.mockResolvedValue([
+				{ productImageUrl: URL_REFERENCED, skuImageUrl: URL_FREE },
+			]);
+
+			const result = await updateProductSku(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).not.toHaveBeenCalled();
+		});
+
+		// La duplication produit/SKU recopie `url`/`thumbnailUrl` tels quels :
+		// supprimer l'image du doublon ne doit pas casser l'original.
+		it("preserves a URL still referenced by another SkuMedia row (shared blob)", async () => {
+			mockPrisma.skuMedia.findMany.mockResolvedValue([{ url: URL_REFERENCED, thumbnailUrl: null }]);
+
+			const result = await updateProductSku(undefined, validFormData);
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+
+			await flushMicrotasks();
+
+			expect(mockDeleteUTFiles).toHaveBeenCalledTimes(1);
+			expect(mockDeleteUTFiles).toHaveBeenCalledWith([URL_FREE]);
+		});
 	});
 });

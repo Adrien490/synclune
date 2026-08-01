@@ -33,8 +33,6 @@ export type GetMaterialsReturn = {
 	totalCount: number;
 };
 
-export type MaterialFilters = z.input<typeof getMaterialsSchema>["filters"];
-
 // ============================================================================
 // FUNCTION TYPES - SINGLE
 // ============================================================================

@@ -54,10 +54,16 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			return error("Cette couleur n'existe pas");
 		}
 
-		// Check name uniqueness (skip if unchanged)
+		// Check name uniqueness (skip if unchanged) — insensible à la casse
+		// (aligné sur les types de bijoux). `id: { not }` : un rename purement
+		// cosmétique (« Or rose » → « Or Rose ») se retrouverait lui-même en
+		// insensible et serait rejeté à tort.
 		if (validatedData.name !== existingColor.name) {
 			const nameExists = await prisma.color.findFirst({
-				where: { name: validatedData.name },
+				where: {
+					name: { equals: validatedData.name, mode: "insensitive" },
+					id: { not: validatedData.id },
+				},
 			});
 
 			if (nameExists) {
@@ -83,10 +89,14 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			}
 		}
 
-		// Generate new slug if name changed
+		// Generate new slug if name changed.
+		// `excludeId` : sans lui, un rename cosmétique (casse/accent) retrouvait
+		// son PROPRE slug et suffixait `-2` — l'URL changeait sans raison.
 		const slug =
 			validatedData.name !== existingColor.name
-				? await generateSlug(prisma, "color", validatedData.name)
+				? await generateSlug(prisma, "color", validatedData.name, {
+						excludeId: validatedData.id,
+					})
 				: existingColor.slug;
 
 		// isActive : ne s'applique que si transmis (édition). Création force true.

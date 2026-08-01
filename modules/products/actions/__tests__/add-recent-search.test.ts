@@ -13,7 +13,6 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockCookies,
-	mockGetRecentSearchesInvalidationTags,
 } = vi.hoisted(() => ({
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
@@ -21,7 +20,6 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockCookies: vi.fn(),
-	mockGetRecentSearchesInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -47,9 +45,7 @@ vi.mock("../constants/recent-searches", () => ({
 	RECENT_SEARCHES_COOKIE_MAX_AGE: 2592000,
 	RECENT_SEARCHES_MAX_ITEMS: 5,
 }));
-vi.mock("../../constants/cache", () => ({
-	getRecentSearchesInvalidationTags: mockGetRecentSearchesInvalidationTags,
-}));
+vi.mock("../../constants/cache", () => ({}));
 
 import { addRecentSearch } from "../add-recent-search";
 
@@ -82,7 +78,6 @@ describe("addRecentSearch", () => {
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { term: "bracelet lune" } });
-		mockGetRecentSearchesInvalidationTags.mockReturnValue(["recent-searches-list"]);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -175,10 +170,13 @@ describe("addRecentSearch", () => {
 		);
 	});
 
-	it("should invalidate cache after setting cookie", async () => {
+	// L'invalidation a été RETIRÉE (audit cache catalogue 2026-07-31) : elle visait
+	// `recent-searches-list`, un tag qu'aucun `cacheTag()` ne posait — le lecteur
+	// `get-recent-searches.ts` est une lecture de cookie délibérément non cachée.
+	// Le test asserte donc l'absence, pour qu'une réintroduction sans lecteur rougisse.
+	it("n'invalide AUCUN tag (le lecteur cookie n'est pas caché)", async () => {
 		await addRecentSearch(undefined, validFormData);
-		expect(mockGetRecentSearchesInvalidationTags).toHaveBeenCalled();
-		expect(mockUpdateTag).toHaveBeenCalledWith("recent-searches-list");
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should return updated searches list in success data", async () => {

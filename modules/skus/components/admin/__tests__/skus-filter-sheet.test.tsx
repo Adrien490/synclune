@@ -154,32 +154,6 @@ vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: () => <hr data-testid="separator" />,
 }));
 
-vi.mock("@/shared/components/ui/radio-group", () => ({
-	RadioGroup: ({
-		children,
-		value,
-		onValueChange,
-	}: {
-		children: React.ReactNode;
-		value?: string;
-		onValueChange?: (v: string) => void;
-	}) => (
-		<div data-testid="radio-group" data-value={value}>
-			{children}
-			{/* Expose onValueChange so tests can trigger it */}
-			<button data-testid="radio-group-change-active" onClick={() => onValueChange?.("active")} />
-			<button
-				data-testid="radio-group-change-inactive"
-				onClick={() => onValueChange?.("inactive")}
-			/>
-			<button data-testid="radio-group-change-all" onClick={() => onValueChange?.("all")} />
-		</div>
-	),
-	RadioGroupItem: ({ value, id }: { value: string; id?: string }) => (
-		<input type="radio" data-testid={`radio-${value}`} id={id} value={value} />
-	),
-}));
-
 // ============================================================================
 // IMPORTS (after mocks)
 // ============================================================================
@@ -342,21 +316,26 @@ describe("SkusFilterSheet", () => {
 		expect(document.getElementById("active-inactive")).toBeInTheDocument();
 	});
 
-	it("calls handleChange with 'active' when the active radio option is selected via onValueChange", () => {
+	it("calls handleChange with 'active' when the active radio option is selected", () => {
 		render(<SkusFilterSheet colorOptions={[]} materialOptions={[]} />);
-		fireEvent.click(screen.getByTestId("radio-group-change-active"));
+		fireEvent.click(document.getElementById("active-active")!);
 		expect(mockFieldHandleChange).toHaveBeenCalledWith("isActive", "active");
 	});
 
-	it("calls handleChange with 'inactive' when the inactive radio option is selected via onValueChange", () => {
+	it("calls handleChange with 'inactive' when the inactive radio option is selected", () => {
 		render(<SkusFilterSheet colorOptions={[]} materialOptions={[]} />);
-		fireEvent.click(screen.getByTestId("radio-group-change-inactive"));
+		fireEvent.click(document.getElementById("active-inactive")!);
 		expect(mockFieldHandleChange).toHaveBeenCalledWith("isActive", "inactive");
 	});
 
-	it("calls handleChange with 'all' when the all radio option is selected via onValueChange", () => {
+	it("calls handleChange with 'all' when the all radio option is selected", () => {
+		// « all » est la valeur par défaut : cliquer un radio natif déjà coché
+		// n'émet pas de change — on démarre donc filtré sur actif.
+		mockSearchParamsForEach.mockImplementation((cb: (v: string, k: string) => void) => {
+			cb("true", "filter_isActive");
+		});
 		render(<SkusFilterSheet colorOptions={[]} materialOptions={[]} />);
-		fireEvent.click(screen.getByTestId("radio-group-change-all"));
+		fireEvent.click(document.getElementById("active-all")!);
 		expect(mockFieldHandleChange).toHaveBeenCalledWith("isActive", "all");
 	});
 

@@ -197,6 +197,26 @@ export const GET_PRODUCT_SELECT = {
 } as const satisfies Prisma.ProductSelect;
 
 /**
+ * Select pour le FORMULAIRE D'ÉDITION admin — dérivé de GET_PRODUCT_SELECT,
+ * mais les SKUs INACTIFS restent chargés.
+ *
+ * L'archivage désactive TOUS les SKUs d'un produit (`toggle-product-status`).
+ * Avec le filtre `isActive: true` de GET_PRODUCT_SELECT, `/modifier` amorçait
+ * alors `skuId: ""`, prix 0, `media: []` — trois rejets Zod à la soumission :
+ * l'admin ne pouvait plus corriger ne serait-ce que le titre d'un bijou
+ * archivé (même trou pour un DRAFT dont l'unique variante est inactive).
+ * Seul le soft delete est filtré. `orderBy isDefault desc` garantit que
+ * `skus[0]` reste la variante principale, active ou non.
+ */
+export const GET_PRODUCT_FOR_EDIT_SELECT = {
+	...GET_PRODUCT_SELECT,
+	skus: {
+		...GET_PRODUCT_SELECT.skus,
+		where: { deletedAt: null },
+	},
+} as const satisfies Prisma.ProductSelect;
+
+/**
  * Select for product listings (public storefront + admin).
  * WARNING: Shared between public and admin views.
  * Do NOT add admin-only sensitive fields here (e.g. costPrice, supplierNotes).
@@ -363,7 +383,7 @@ export const QUICK_SEARCH_SELECT = {
  * « Dupliquer un produit » a répondu « Le produit source n'existe pas » pendant
  * ~2,5 mois (Prisma levait une `PrismaClientValidationError`, avalée par un `catch`).
  *
- * Validité vérifiée sans base par `__tests__/product-selects-schema-validity.regression.test.ts`.
+ * Validité vérifiée sans base par `__tests__/catalogue-selects-schema-validity.regression.test.ts`.
  */
 export const GET_PRODUCT_FOR_DUPLICATION_SELECT = {
 	id: true,

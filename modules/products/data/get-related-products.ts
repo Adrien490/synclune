@@ -83,13 +83,22 @@ async function fetchPublicRelatedProducts(limit: number): Promise<ProductCarouse
 }
 
 /**
- * Produits similaires personnalisés basés sur l'historique utilisateur
+ * Produits similaires personnalisés basés sur l'historique utilisateur.
+ *
+ * Cache PUBLIC (audit cache 2026-07-31 — était `private`). `userId` est un
+ * ARGUMENT, donc partie de la clé de cache Next : l'entrée d'un client ne peut pas
+ * être servie à un autre. Ce que la fonction RETOURNE est du catalogue public
+ * (`ProductCarouselItem`), pas l'historique lui-même — seul le choix des produits
+ * est personnalisé.
+ *
+ * `private` coûtait ici tout le cache serveur (jamais stocké côté serveur) sur une
+ * requête qui agrège `orderItem` — la plus lourde du carrousel.
  */
 async function fetchPersonalizedRelatedProducts(
 	userId: string,
 	limit: number,
 ): Promise<ProductCarouselItem[]> {
-	"use cache: private";
+	"use cache";
 	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
 

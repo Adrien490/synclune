@@ -132,7 +132,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 
 vi.mock("lucide-react", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	LoaderCircle: (props: Record<string, unknown>) => {
+	Loader2Icon: (props: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "loader-circle", ...props });
 	},

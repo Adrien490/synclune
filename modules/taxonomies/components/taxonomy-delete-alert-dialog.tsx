@@ -15,13 +15,20 @@ import type { TaxonomyConfig } from "../types/taxonomy.types";
  * suffit. `usageCount` n'était renseigné que par les types de bijoux, mais le
  * blocage vaut pour les trois (la contrainte FK est en ON DELETE RESTRICT
  * partout) — l'avertissement s'affiche donc dès qu'il est fourni.
+ *
+ * Volontairement un alias `type` SANS index signature : chaque ouvreur doit
+ * typer son `useAlertDialog<TaxonomyDeletePayload>` pour que `tsc` rougisse
+ * sur une clé manquante ou renommée. Une interface à index signature avait
+ * laissé les trois ouvreurs publier leurs clés historiques (`colorId`…) sans
+ * erreur — le champ caché postait `id=""` et aucune suppression de référentiel
+ * n'était possible depuis l'UI. (L'alias reste assignable à `AlertDialogData`
+ * grâce à l'index signature implicite des types littéraux.)
  */
-export interface TaxonomyDeletePayload {
+export type TaxonomyDeletePayload = {
 	id: string;
 	displayName: string;
 	usageCount?: number;
-	[key: string]: unknown;
-}
+};
 
 interface TaxonomyDeleteAlertDialogProps {
 	config: TaxonomyConfig;

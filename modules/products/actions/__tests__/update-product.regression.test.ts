@@ -32,7 +32,7 @@ const {
 		product: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { findFirst: vi.fn(), update: vi.fn() },
 		productCollection: { deleteMany: vi.fn(), createMany: vi.fn() },
-		skuMedia: { deleteMany: vi.fn(), create: vi.fn() },
+		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), findMany: vi.fn() },
 		productType: { findUnique: vi.fn() },
 		collection: { findMany: vi.fn() },
 		color: { findMany: vi.fn() },
@@ -233,6 +233,8 @@ describe("updateProduct — regression hardening", () => {
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 0 });
 		mockPrisma.skuMedia.deleteMany.mockResolvedValue({});
 		mockPrisma.skuMedia.create.mockResolvedValue({});
+		// Capture d'appartenance des URLs (garde deletedImageUrls) dans la tx.
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,

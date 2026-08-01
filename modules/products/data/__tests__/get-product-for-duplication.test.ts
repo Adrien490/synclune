@@ -4,9 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockFindFirst, mockCacheProductDetail } = vi.hoisted(() => ({
+const { mockFindFirst, mockCacheProductDetailById, mockIsAdmin } = vi.hoisted(() => ({
 	mockFindFirst: vi.fn(),
-	mockCacheProductDetail: vi.fn(),
+	mockCacheProductDetailById: vi.fn(),
+	mockIsAdmin: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -17,7 +18,14 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/modules/products/utils/cache.utils", () => ({
-	cacheProductDetail: mockCacheProductDetail,
+	cacheProductDetailById: mockCacheProductDetailById,
+}));
+
+// La garde `isAdmin()` a été portée dans la couche `data/` (audit cache catalogue
+// 2026-07-31) : la requête ne filtre pas `status`, et `requireAdmin()` chez l'unique
+// appelant était la seule protection — correcte, mais rien ne l'imposait.
+vi.mock("@/modules/auth/utils/guards", () => ({
+	isAdmin: mockIsAdmin,
 }));
 
 import { getProductForDuplication } from "../get-product-for-duplication";
@@ -77,7 +85,17 @@ function makeProductForDuplication(overrides: Record<string, unknown> = {}) {
 describe("getProductForDuplication", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		mockIsAdmin.mockResolvedValue(true);
 		mockFindFirst.mockResolvedValue(makeProductForDuplication());
+	});
+
+	// La garde vit désormais dans `data/`, pas seulement chez l'appelant.
+	it("retourne null et n'interroge PAS la base pour un non-admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await expect(getProductForDuplication("prod-1")).resolves.toBeNull();
+		expect(mockFindFirst).not.toHaveBeenCalled();
+		expect(mockCacheProductDetailById).not.toHaveBeenCalled();
 	});
 
 	// ─── Data fetching ───────────────────────────────────────────────────────
@@ -184,14 +202,17 @@ describe("getProductForDuplication", () => {
 	it("caches by product ID", async () => {
 		await getProductForDuplication("prod-42");
 
-		expect(mockCacheProductDetail).toHaveBeenCalledWith("product-id-prod-42");
+		// `cacheProductDetailById(id)` et non `cacheProductDetail(\`product-id-${id}\`)` :
+		// l'ancienne forme nourrissait un id à une fabrique de SLUG et produisait
+		// `product-product-id-<cuid>`, un tag qu'aucun mutateur n'émettait.
+		expect(mockCacheProductDetailById).toHaveBeenCalledWith("prod-42");
 	});
 
 	it("uses a distinct cache key per product ID", async () => {
 		await getProductForDuplication("prod-1");
 		await getProductForDuplication("prod-2");
 
-		expect(mockCacheProductDetail).toHaveBeenNthCalledWith(1, "product-id-prod-1");
-		expect(mockCacheProductDetail).toHaveBeenNthCalledWith(2, "product-id-prod-2");
+		expect(mockCacheProductDetailById).toHaveBeenNthCalledWith(1, "prod-1");
+		expect(mockCacheProductDetailById).toHaveBeenNthCalledWith(2, "prod-2");
 	});
 });

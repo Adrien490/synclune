@@ -22,6 +22,7 @@ const {
 	mockPrisma: {
 		material: {
 			findUnique: vi.fn(),
+			findFirst: vi.fn(),
 			findMany: vi.fn(),
 			create: vi.fn(),
 		},
@@ -100,7 +101,9 @@ describe("duplicateMaterial", () => {
 		mockGenerateSlug.mockResolvedValue("argent-925-copie");
 		mockGetMaterialInvalidationTags.mockReturnValue(["materials-list"]);
 		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial());
-		mockPrisma.material.findMany.mockResolvedValue([]);
+		// SSOT generateUniqueReadableName : sonde l'existence candidat par candidat
+		// via findFirst (null = nom libre).
+		mockPrisma.material.findFirst.mockResolvedValue(null);
 		mockPrisma.material.create.mockResolvedValue({
 			id: "mat-2",
 			name: "Argent 925 (copie)",
@@ -166,8 +169,10 @@ describe("duplicateMaterial", () => {
 	});
 
 	it("should increment suffix when (copie) name already exists", async () => {
-		// findMany returns existing copies — "(copie)" is taken
-		mockPrisma.material.findMany.mockResolvedValue([{ name: "Argent 925 (copie)" }]);
+		// « Argent 925 (copie) » est pris (1er findFirst non-null), « (copie 2) » libre
+		mockPrisma.material.findFirst
+			.mockResolvedValueOnce({ id: "mat-copy-1" })
+			.mockResolvedValue(null);
 
 		await duplicateMaterial(undefined, validFormData);
 

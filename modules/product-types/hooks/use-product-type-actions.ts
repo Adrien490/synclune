@@ -11,6 +11,8 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
+import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
+
 import { PRODUCT_TYPE_DIALOG_ID } from "../components/product-type-form-dialog";
 
 import { useDuplicateProductType } from "./use-duplicate-product-type";
@@ -41,7 +43,11 @@ export function useProductTypeActions({
 	isActive,
 }: UseProductTypeActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
-	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
+	// Typé contre le payload du dialog mutualisé : les clés historiques
+	// (`productTypeId`/`label`/`productsCount`) rendaient le champ caché vide
+	// et la suppression impossible depuis l'UI — avec ce générique, la dérive
+	// ne compile plus.
+	const deleteDialog = useAlertDialog<TaxonomyDeletePayload>(DELETE_PRODUCT_TYPE_DIALOG_ID);
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
@@ -129,7 +135,12 @@ export function useProductTypeActions({
 					variant: "destructive",
 					hidden: isSystem,
 					closesMenu: false,
-					onSelect: () => deleteDialog.open({ productTypeId, label, productsCount }),
+					onSelect: () =>
+						deleteDialog.open({
+							id: productTypeId,
+							displayName: label,
+							usageCount: productsCount,
+						}),
 				},
 			],
 		},

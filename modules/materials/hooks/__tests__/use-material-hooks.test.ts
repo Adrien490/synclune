@@ -8,16 +8,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockRefreshMaterials,
 	mockToggleMaterialStatus,
-	mockCreateMaterial,
 	mockDuplicateMaterial,
-	mockUpdateMaterial,
 	mockDeleteMaterial,
 } = vi.hoisted(() => ({
 	mockRefreshMaterials: vi.fn(),
 	mockToggleMaterialStatus: vi.fn(),
-	mockCreateMaterial: vi.fn(),
 	mockDuplicateMaterial: vi.fn(),
-	mockUpdateMaterial: vi.fn(),
 	mockDeleteMaterial: vi.fn(),
 }));
 
@@ -27,14 +23,8 @@ vi.mock("@/modules/materials/actions/refresh-materials", () => ({
 vi.mock("@/modules/materials/actions/toggle-material-status", () => ({
 	toggleMaterialStatus: mockToggleMaterialStatus,
 }));
-vi.mock("@/modules/materials/actions/create-material", () => ({
-	createMaterial: mockCreateMaterial,
-}));
 vi.mock("@/modules/materials/actions/duplicate-material", () => ({
 	duplicateMaterial: mockDuplicateMaterial,
-}));
-vi.mock("@/modules/materials/actions/update-material", () => ({
-	updateMaterial: mockUpdateMaterial,
 }));
 vi.mock("@/modules/materials/actions/delete-material", () => ({
 	deleteMaterial: mockDeleteMaterial,
@@ -56,9 +46,7 @@ vi.mock("sonner", () => ({
 
 import { useRefreshMaterials } from "../use-refresh-materials";
 import { useToggleMaterialStatus } from "../use-toggle-material-status";
-import { useCreateMaterial } from "../use-create-material";
 import { useDuplicateMaterial } from "../use-duplicate-material";
-import { useUpdateMaterial } from "../use-update-material";
 import { useDeleteMaterial } from "../use-delete-material";
 
 // ============================================================================
@@ -196,45 +184,8 @@ describe("useToggleMaterialStatus", () => {
 	});
 });
 
-// ============================================================================
-// useCreateMaterial
-// ============================================================================
-
-describe("useCreateMaterial", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockCreateMaterial.mockResolvedValue({ ...SUCCESS, message: "Matériau créé" });
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useCreateMaterial());
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useCreateMaterial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Matériau créé");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockCreateMaterial.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useCreateMaterial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
+// useCreateMaterial / useUpdateMaterial : hooks SUPPRIMÉS (aucun consommateur —
+// leurs tests étaient les seuls importeurs, verts pour rien ; audit 2026-08-01).
 
 // ============================================================================
 // useDuplicateMaterial
@@ -301,46 +252,6 @@ describe("useDuplicateMaterial", () => {
 
 		await act(async () => {
 			result.current.duplicate("mat-123");
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useUpdateMaterial
-// ============================================================================
-
-describe("useUpdateMaterial", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockUpdateMaterial.mockResolvedValue({ ...SUCCESS, message: "Matériau mis à jour" });
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useUpdateMaterial());
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useUpdateMaterial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Matériau mis à jour");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockUpdateMaterial.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useUpdateMaterial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

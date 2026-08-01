@@ -9,6 +9,9 @@ interface MediaValue {
 	altText?: string;
 	thumbnailUrl?: string | null;
 	blurDataUrl?: string;
+	/** Dimensions intrinsèques — cf. MediaItem : chaque remap doit les porter. */
+	width?: number | null;
+	height?: number | null;
 }
 
 export interface MediaField {
@@ -21,6 +24,8 @@ interface MediaUploadResult {
 	mediaType: "IMAGE" | "VIDEO";
 	thumbnailUrl?: string;
 	blurDataUrl?: string;
+	width?: number;
+	height?: number;
 }
 
 interface UseMediaFieldUploadOptions {
@@ -81,6 +86,8 @@ export function useMediaFieldUpload({
 					mediaType: result.mediaType,
 					thumbnailUrl: result.thumbnailUrl,
 					blurDataUrl: result.blurDataUrl,
+					width: result.width,
+					height: result.height,
 				});
 			});
 			if (results.length > 0) triggerHaptic("success");

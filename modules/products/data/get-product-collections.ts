@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+
 import { logger } from "@/shared/lib/logger";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
@@ -25,13 +27,33 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
  * Collections auxquelles un produit est rattaché. Admin uniquement.
  */
 export async function getProductCollections(
-	productId: string,
+	rawProductId: unknown,
 ): Promise<{ id: string; name: string }[]> {
 	if (!(await isAdmin())) {
 		return [];
 	}
 
-	return fetchProductCollections(productId);
+	// Endpoint RPC (cf. l'avertissement ci-dessus) : `productId: string` n'était
+	// qu'une annotation. La valeur part à la fois dans un `where` Prisma et dans un
+	// `cacheTag(...)` — une chaîne arbitraire y créerait des entrées de cache sans
+	// borne. Admin-only, donc pas une faille, mais rien ne justifie de s'en remettre
+	// au type ici plutôt qu'au parse.
+	const parsed = z.cuid2().safeParse(rawProductId);
+	if (!parsed.success) return [];
+	const productId = parsed.data;
+
+	// Repli HORS du scope de cache : le profil est `reference` (7 j stale /
+	// 24 h revalidate), donc une liste vide de panne y restait affichée jusqu'au
+	// lendemain — le formulaire admin montrait « aucune collection » et laissait
+	// l'admin en détacher le produit sans le savoir.
+	try {
+		return await fetchProductCollections(productId);
+	} catch (error) {
+		logger.error("Failed to fetch product collections", error, {
+			service: "getProductCollections",
+		});
+		return [];
+	}
 }
 
 /**
@@ -45,7 +67,13 @@ export async function getAllCollections(): Promise<{ id: string; name: string }[
 		return [];
 	}
 
-	return fetchAllCollections();
+	// Repli HORS du scope de cache (cf. `getProductCollections`).
+	try {
+		return await fetchAllCollections();
+	} catch (error) {
+		logger.error("Failed to fetch all collections", error, { service: "getAllCollections" });
+		return [];
+	}
 }
 
 async function fetchProductCollections(productId: string): Promise<{ id: string; name: string }[]> {
@@ -53,26 +81,19 @@ async function fetchProductCollections(productId: string): Promise<{ id: string;
 	cacheLife("reference");
 	cacheTag(PRODUCTS_CACHE_TAGS.COLLECTIONS(productId), COLLECTIONS_CACHE_TAGS.LIST);
 
-	try {
-		const productCollections = await prisma.productCollection.findMany({
-			where: { productId },
-			select: {
-				collection: {
-					select: { id: true, name: true },
-				},
+	const productCollections = await prisma.productCollection.findMany({
+		where: { productId },
+		select: {
+			collection: {
+				select: { id: true, name: true },
 			},
-		});
+		},
+	});
 
-		return productCollections.map((pc) => ({
-			id: pc.collection.id,
-			name: pc.collection.name,
-		}));
-	} catch (error) {
-		logger.error("Failed to fetch product collections", error, {
-			service: "fetchProductCollections",
-		});
-		return [];
-	}
+	return productCollections.map((pc) => ({
+		id: pc.collection.id,
+		name: pc.collection.name,
+	}));
 }
 
 async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {
@@ -80,15 +101,8 @@ async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {
 	cacheLife("reference");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
-	try {
-		const collections = await prisma.collection.findMany({
-			select: { id: true, name: true },
-			orderBy: { name: "asc" },
-		});
-
-		return collections;
-	} catch (error) {
-		logger.error("Failed to fetch all collections", error, { service: "fetchAllCollections" });
-		return [];
-	}
+	return prisma.collection.findMany({
+		select: { id: true, name: true },
+		orderBy: { name: "asc" },
+	});
 }

@@ -1,12 +1,9 @@
 import { FUZZY_MAX_WORDS, MAX_SEARCH_LENGTH } from "../constants/search.constants";
 
-/**
- * Escape LIKE pattern special characters (%, _, \) in a search term.
- * Prevents user input from being interpreted as LIKE wildcards.
- */
-export function escapeLikePattern(word: string): string {
-	return word.replace(/[%_\\]/g, "\\$&");
-}
+// SSOT déplacée dans shared/ (les query builders admin de tous les modules en
+// ont besoin depuis l'audit recherche 2026-08-01, P3-3) ; re-export pour les
+// consommateurs historiques du module products.
+export { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 
 /**
  * Sanitize a search term for safe logging.

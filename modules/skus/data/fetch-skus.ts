@@ -13,6 +13,12 @@ import { type GetProductSkusParams, type GetProductSkusReturn } from "../types/s
 import { buildWhereClause } from "@/modules/skus/services/build-where-clause";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
+/** Normalise un filtre `string | string[] | undefined` en tableau. */
+function toArray(value: string | string[] | undefined): string[] {
+	if (!value) return [];
+	return Array.isArray(value) ? value : [value];
+}
+
 /**
  * Récupère la liste des SKUs de produits avec pagination, tri et filtrage
  * Admin uniquement
@@ -25,6 +31,19 @@ export async function fetchProductSkus(
 	// Cache configuration for inventory list (used in admin dashboard)
 	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST, PRODUCTS_CACHE_TAGS.SKUS_LIST);
+
+	// `SKUS(productId)` était invalidé par une dizaine de mutateurs et posé par
+	// PERSONNE : son unique poseur, `cacheProductSkus`, n'avait aucun appelant en
+	// production — une famille de tags entièrement décorative (audit cache
+	// catalogue 2026-07-31). Pire, la régression STOCK-STALE-BASELINE-001 assertait
+	// la couverture de ce lecteur fantôme, donc passait au vert sur rien.
+	// Le poser ICI, sur le vrai lecteur par-produit, rend l'invalidation réelle et
+	// plus fine que de buster `admin-inventory-list` en entier à chaque geste SKU.
+	// Le filtre accepte `string | string[]` : on tague chaque produit visé. Sans
+	// filtre produit (liste globale), seuls les deux tags larges ci-dessus portent.
+	for (const productId of toArray(params.filters?.productId)) {
+		cacheTag(PRODUCTS_CACHE_TAGS.SKUS(productId));
+	}
 
 	// ⚠️ AUCUN try/catch ici : il était À L'INTÉRIEUR du scope `"use cache"`, donc une
 	// panne DB transitoire mettait une liste VIDE en cache pour toute la fenêtre du

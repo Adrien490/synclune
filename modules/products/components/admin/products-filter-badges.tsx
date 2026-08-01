@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { type ProductStatus } from "@/app/generated/prisma/browser";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -10,11 +9,7 @@ import { useSearchParams } from "next/navigation";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 
-const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-	DRAFT: "Brouillon",
-	PUBLIC: "Public",
-	ARCHIVED: "Archivé",
-};
+import { PRODUCT_STATUS_LABELS } from "@/modules/products/constants/product-status-display";
 
 const STOCK_STATUS_LABELS: Record<string, string> = {
 	in_stock: "En stock",

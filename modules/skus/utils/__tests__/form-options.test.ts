@@ -71,6 +71,15 @@ describe("getUpdateProductSkuFormOpts", () => {
 		expect(result.defaultValues.media).toEqual([]);
 	});
 
+	// Les actions font deleteMany + recréation des SkuMedia : un remap qui omet
+	// width/height remettait les colonnes à NULL à chaque édition de variante
+	// (et effaçait le backfill de scripts/backfill-media-metadata.ts).
+	it("préserve width/height des images existantes (round-trip édition)", () => {
+		const img = makeSkuImage({ width: 1600, height: 1200 });
+		const result = getUpdateProductSkuFormOpts(makeSku({ images: [img] }));
+		expect(result.defaultValues.media[0]).toMatchObject({ width: 1600, height: 1200 });
+	});
+
 	it("converts null to undefined in media fields", () => {
 		const img = makeSkuImage({
 			thumbnailUrl: null,

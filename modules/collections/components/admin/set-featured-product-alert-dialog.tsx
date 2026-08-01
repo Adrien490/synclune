@@ -11,7 +11,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -99,7 +99,7 @@ export function SetFeaturedProductAlertDialog() {
 						disabled={isPending}
 						aria-busy={isPending}
 					>
-						{isPending && <LoaderCircle className="animate-spin" />}
+						{isPending && <Spinner presentational />}
 						{isPending
 							? isFeatured
 								? "Retrait…"

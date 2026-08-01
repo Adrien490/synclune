@@ -11,6 +11,8 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
+import type { TaxonomyDeletePayload } from "@/modules/taxonomies/components/taxonomy-delete-alert-dialog";
+
 import { DELETE_COLOR_DIALOG_ID } from "../components/admin/delete-color-alert-dialog";
 import { COLOR_DIALOG_ID } from "../components/color-form-dialog";
 
@@ -39,7 +41,10 @@ export function useColorActions({
 	colorIsActive,
 }: UseColorActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openDialog } = useDialog(COLOR_DIALOG_ID);
-	const { open: openAlert } = useAlertDialog(DELETE_COLOR_DIALOG_ID);
+	// Typé contre le payload du dialog mutualisé : les clés historiques
+	// (`colorId`/`colorName`) rendaient le champ caché vide et la suppression
+	// impossible depuis l'UI — avec ce générique, la dérive ne compile plus.
+	const { open: openAlert } = useAlertDialog<TaxonomyDeletePayload>(DELETE_COLOR_DIALOG_ID);
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
@@ -124,7 +129,7 @@ export function useColorActions({
 					icon: Trash2,
 					variant: "destructive",
 					closesMenu: false,
-					onSelect: () => openAlert({ colorId, colorName }),
+					onSelect: () => openAlert({ id: colorId, displayName: colorName }),
 				},
 			],
 		},

@@ -19,6 +19,10 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 		blurDataUrl: img.blurDataUrl ?? undefined,
 		altText: img.altText ?? undefined,
 		mediaType: img.mediaType,
+		// L'action fait deleteMany + recréation : omettre les dimensions ici les
+		// remettait à NULL à chaque édition de variante.
+		width: img.width,
+		height: img.height,
 	}));
 
 	return {
