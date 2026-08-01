@@ -6,7 +6,6 @@ import {
 	CART_UPDATE_LIMIT,
 	CART_REMOVE_LIMIT,
 	CART_VALIDATE_LIMIT,
-	CART_MERGE_LIMIT,
 	CART_LIMITS,
 	// Payment
 	CHECKOUT_CREATE_SESSION_LIMIT,
@@ -15,19 +14,15 @@ import {
 	PAYMENT_LIMITS,
 	// Auth
 	AUTH_LOGIN_LIMIT,
-	AUTH_SIGNUP_LIMIT,
 	AUTH_PASSWORD_RESET_LIMIT,
 	AUTH_EMAIL_VERIFICATION_LIMIT,
 	AUTH_PASSWORD_CHANGE_LIMIT,
+	AUTH_LOGOUT_LIMIT,
+	CRON_INVOKE_LIMIT,
 	AUTH_LIMITS,
 	// Sessions
-	SESSION_REVOKE_LIMIT,
 	// Communication
-	CONTACT_SEND_MESSAGE_LIMIT,
-	COMMUNICATION_LIMITS,
 	// Orders (client)
-	ORDER_CREATE_LIMIT,
-	ORDER_CANCEL_LIMIT,
 	ORDER_INVOICE_DOWNLOAD_LIMIT,
 	ORDER_LIMITS,
 	// Products (client)
@@ -36,19 +31,10 @@ import {
 	PRODUCT_LIMITS,
 	// Wishlist
 	WISHLIST_TOGGLE_LIMIT,
-	WISHLIST_MERGE_LIMIT,
 	WISHLIST_LIMITS,
 	// User account
-	USER_DELETE_ACCOUNT_LIMIT,
-	USER_EXPORT_DATA_LIMIT,
-	USER_EMAIL_CHANGE_LIMIT,
-	USER_UPDATE_PROFILE_LIMIT,
-	USER_CANCEL_DELETION_LIMIT,
-	USER_LIMITS,
 	// Return
-	RETURN_REQUEST_LIMIT,
 	// Address
-	ADDRESS_MUTATE_LIMIT,
 	ADDRESS_SEARCH_LIMIT,
 	ADDRESS_LIMITS,
 	// Refunds
@@ -58,10 +44,6 @@ import {
 	REFUND_REFRESH_LIMIT,
 	REFUND_LIMITS,
 	// Admin - testimonials
-	ADMIN_TESTIMONIAL_CREATE_LIMIT,
-	ADMIN_TESTIMONIAL_UPDATE_LIMIT,
-	ADMIN_TESTIMONIAL_DELETE_LIMIT,
-	ADMIN_LIMITS,
 	// Admin - orders
 	ADMIN_ORDER_RESEND_EMAIL_LIMIT,
 	ADMIN_ORDER_MARK_AS_PAID_LIMIT,
@@ -69,13 +51,6 @@ import {
 	ADMIN_ORDER_REFRESH_LIMIT,
 	ADMIN_ORDER_LIMITS,
 	// Admin - users
-	ADMIN_USER_SINGLE_OPERATIONS_LIMIT,
-	ADMIN_USER_DELETE_LIMIT,
-	ADMIN_USER_EXPORT_DATA_LIMIT,
-	ADMIN_USER_SEND_RESET_LIMIT,
-	ADMIN_USER_INVALIDATE_SESSIONS_LIMIT,
-	ADMIN_USER_REFRESH_LIMIT,
-	ADMIN_USER_LIMITS,
 	// Admin - products
 	ADMIN_PRODUCT_CREATE_LIMIT,
 	ADMIN_PRODUCT_UPDATE_LIMIT,
@@ -165,63 +140,34 @@ describe("individual rate limit configs - valid shape", () => {
 		["CART_UPDATE_LIMIT", CART_UPDATE_LIMIT],
 		["CART_REMOVE_LIMIT", CART_REMOVE_LIMIT],
 		["CART_VALIDATE_LIMIT", CART_VALIDATE_LIMIT],
-		["CART_MERGE_LIMIT", CART_MERGE_LIMIT],
 		// Payment
 		["CHECKOUT_CREATE_SESSION_LIMIT", CHECKOUT_CREATE_SESSION_LIMIT],
 		["DISCOUNT_CODE_VALIDATE_LIMIT", DISCOUNT_CODE_VALIDATE_LIMIT],
 		["PAYMENT_UPDATE_AMOUNT_LIMIT", PAYMENT_UPDATE_AMOUNT_LIMIT],
 		// Auth
 		["AUTH_LOGIN_LIMIT", AUTH_LOGIN_LIMIT],
-		["AUTH_SIGNUP_LIMIT", AUTH_SIGNUP_LIMIT],
 		["AUTH_PASSWORD_RESET_LIMIT", AUTH_PASSWORD_RESET_LIMIT],
 		["AUTH_EMAIL_VERIFICATION_LIMIT", AUTH_EMAIL_VERIFICATION_LIMIT],
 		["AUTH_PASSWORD_CHANGE_LIMIT", AUTH_PASSWORD_CHANGE_LIMIT],
-		// Sessions
-		["SESSION_REVOKE_LIMIT", SESSION_REVOKE_LIMIT],
-		// Communication
-		["CONTACT_SEND_MESSAGE_LIMIT", CONTACT_SEND_MESSAGE_LIMIT],
 		// Orders
-		["ORDER_CREATE_LIMIT", ORDER_CREATE_LIMIT],
-		["ORDER_CANCEL_LIMIT", ORDER_CANCEL_LIMIT],
 		["ORDER_INVOICE_DOWNLOAD_LIMIT", ORDER_INVOICE_DOWNLOAD_LIMIT],
 		// Products
 		["PRODUCT_SEARCH_LIMIT", PRODUCT_SEARCH_LIMIT],
 		["PRODUCT_COOKIE_ACTION_LIMIT", PRODUCT_COOKIE_ACTION_LIMIT],
 		// Wishlist
 		["WISHLIST_TOGGLE_LIMIT", WISHLIST_TOGGLE_LIMIT],
-		["WISHLIST_MERGE_LIMIT", WISHLIST_MERGE_LIMIT],
-		// User
-		["USER_DELETE_ACCOUNT_LIMIT", USER_DELETE_ACCOUNT_LIMIT],
-		["USER_EXPORT_DATA_LIMIT", USER_EXPORT_DATA_LIMIT],
-		["USER_EMAIL_CHANGE_LIMIT", USER_EMAIL_CHANGE_LIMIT],
-		["USER_UPDATE_PROFILE_LIMIT", USER_UPDATE_PROFILE_LIMIT],
-		["USER_CANCEL_DELETION_LIMIT", USER_CANCEL_DELETION_LIMIT],
-		// Return
-		["RETURN_REQUEST_LIMIT", RETURN_REQUEST_LIMIT],
 		// Address
-		["ADDRESS_MUTATE_LIMIT", ADDRESS_MUTATE_LIMIT],
 		["ADDRESS_SEARCH_LIMIT", ADDRESS_SEARCH_LIMIT],
 		// Refunds
 		["REFUND_CREATE_LIMIT", REFUND_CREATE_LIMIT],
 		["REFUND_PROCESS_LIMIT", REFUND_PROCESS_LIMIT],
 		["REFUND_SINGLE_OPERATION_LIMIT", REFUND_SINGLE_OPERATION_LIMIT],
 		["REFUND_REFRESH_LIMIT", REFUND_REFRESH_LIMIT],
-		// Admin - testimonials
-		["ADMIN_TESTIMONIAL_CREATE_LIMIT", ADMIN_TESTIMONIAL_CREATE_LIMIT],
-		["ADMIN_TESTIMONIAL_UPDATE_LIMIT", ADMIN_TESTIMONIAL_UPDATE_LIMIT],
-		["ADMIN_TESTIMONIAL_DELETE_LIMIT", ADMIN_TESTIMONIAL_DELETE_LIMIT],
 		// Admin - orders
 		["ADMIN_ORDER_RESEND_EMAIL_LIMIT", ADMIN_ORDER_RESEND_EMAIL_LIMIT],
 		["ADMIN_ORDER_MARK_AS_PAID_LIMIT", ADMIN_ORDER_MARK_AS_PAID_LIMIT],
 		["ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT", ADMIN_ORDER_SINGLE_OPERATIONS_LIMIT],
 		["ADMIN_ORDER_REFRESH_LIMIT", ADMIN_ORDER_REFRESH_LIMIT],
-		// Admin - users
-		["ADMIN_USER_SINGLE_OPERATIONS_LIMIT", ADMIN_USER_SINGLE_OPERATIONS_LIMIT],
-		["ADMIN_USER_DELETE_LIMIT", ADMIN_USER_DELETE_LIMIT],
-		["ADMIN_USER_EXPORT_DATA_LIMIT", ADMIN_USER_EXPORT_DATA_LIMIT],
-		["ADMIN_USER_SEND_RESET_LIMIT", ADMIN_USER_SEND_RESET_LIMIT],
-		["ADMIN_USER_INVALIDATE_SESSIONS_LIMIT", ADMIN_USER_INVALIDATE_SESSIONS_LIMIT],
-		["ADMIN_USER_REFRESH_LIMIT", ADMIN_USER_REFRESH_LIMIT],
 		// Admin - products
 		["ADMIN_PRODUCT_CREATE_LIMIT", ADMIN_PRODUCT_CREATE_LIMIT],
 		["ADMIN_PRODUCT_UPDATE_LIMIT", ADMIN_PRODUCT_UPDATE_LIMIT],
@@ -292,7 +238,6 @@ describe("CART_LIMITS", () => {
 		expect(CART_LIMITS).toHaveProperty("UPDATE");
 		expect(CART_LIMITS).toHaveProperty("REMOVE");
 		expect(CART_LIMITS).toHaveProperty("VALIDATE");
-		expect(CART_LIMITS).toHaveProperty("MERGE");
 	});
 
 	it("references the correct individual configs", () => {
@@ -300,7 +245,6 @@ describe("CART_LIMITS", () => {
 		expect(CART_LIMITS.UPDATE).toBe(CART_UPDATE_LIMIT);
 		expect(CART_LIMITS.REMOVE).toBe(CART_REMOVE_LIMIT);
 		expect(CART_LIMITS.VALIDATE).toBe(CART_VALIDATE_LIMIT);
-		expect(CART_LIMITS.MERGE).toBe(CART_MERGE_LIMIT);
 	});
 
 	it("all entries have valid config shape", () => {
@@ -317,7 +261,9 @@ describe("CART_LIMITS", () => {
 describe("AUTH_LIMITS", () => {
 	it("contains expected keys", () => {
 		expect(AUTH_LIMITS).toHaveProperty("LOGIN");
-		expect(AUTH_LIMITS).toHaveProperty("SIGNUP");
+		// Plus de `SIGNUP` : l'inscription est fermée (`disableSignUp`) et la route
+		// `/inscription` supprimée — retrait de l'espace client 2026-07-31.
+		expect(AUTH_LIMITS).not.toHaveProperty("SIGNUP");
 		expect(AUTH_LIMITS).toHaveProperty("PASSWORD_RESET");
 		expect(AUTH_LIMITS).toHaveProperty("PASSWORD_CHANGE");
 		expect(AUTH_LIMITS).toHaveProperty("EMAIL_VERIFICATION");
@@ -325,7 +271,6 @@ describe("AUTH_LIMITS", () => {
 
 	it("references the correct individual configs", () => {
 		expect(AUTH_LIMITS.LOGIN).toBe(AUTH_LOGIN_LIMIT);
-		expect(AUTH_LIMITS.SIGNUP).toBe(AUTH_SIGNUP_LIMIT);
 		expect(AUTH_LIMITS.PASSWORD_RESET).toBe(AUTH_PASSWORD_RESET_LIMIT);
 		expect(AUTH_LIMITS.PASSWORD_CHANGE).toBe(AUTH_PASSWORD_CHANGE_LIMIT);
 		expect(AUTH_LIMITS.EMAIL_VERIFICATION).toBe(AUTH_EMAIL_VERIFICATION_LIMIT);
@@ -363,39 +308,15 @@ describe("PAYMENT_LIMITS", () => {
 });
 
 // ============================================================================
-// COMMUNICATION_LIMITS
-// ============================================================================
-
-describe("COMMUNICATION_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(COMMUNICATION_LIMITS).toHaveProperty("CONTACT");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(COMMUNICATION_LIMITS.CONTACT).toBe(CONTACT_SEND_MESSAGE_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(COMMUNICATION_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
 // ORDER_LIMITS
 // ============================================================================
 
 describe("ORDER_LIMITS", () => {
 	it("contains expected keys", () => {
-		expect(ORDER_LIMITS).toHaveProperty("CREATE");
-		expect(ORDER_LIMITS).toHaveProperty("CANCEL");
 		expect(ORDER_LIMITS).toHaveProperty("INVOICE_DOWNLOAD");
 	});
 
 	it("references the correct individual configs", () => {
-		expect(ORDER_LIMITS.CREATE).toBe(ORDER_CREATE_LIMIT);
-		expect(ORDER_LIMITS.CANCEL).toBe(ORDER_CANCEL_LIMIT);
 		expect(ORDER_LIMITS.INVOICE_DOWNLOAD).toBe(ORDER_INVOICE_DOWNLOAD_LIMIT);
 	});
 
@@ -437,7 +358,6 @@ describe("WISHLIST_LIMITS", () => {
 		expect(WISHLIST_LIMITS).toHaveProperty("TOGGLE");
 		expect(WISHLIST_LIMITS).toHaveProperty("ADD");
 		expect(WISHLIST_LIMITS).toHaveProperty("REMOVE");
-		expect(WISHLIST_LIMITS).toHaveProperty("MERGE");
 	});
 
 	it("ADD and REMOVE share the same reference as TOGGLE", () => {
@@ -446,40 +366,8 @@ describe("WISHLIST_LIMITS", () => {
 		expect(WISHLIST_LIMITS.TOGGLE).toBe(WISHLIST_TOGGLE_LIMIT);
 	});
 
-	it("references the correct individual config for MERGE", () => {
-		expect(WISHLIST_LIMITS.MERGE).toBe(WISHLIST_MERGE_LIMIT);
-	});
-
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(WISHLIST_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// USER_LIMITS
-// ============================================================================
-
-describe("USER_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(USER_LIMITS).toHaveProperty("DELETE_ACCOUNT");
-		expect(USER_LIMITS).toHaveProperty("CANCEL_DELETION");
-		expect(USER_LIMITS).toHaveProperty("EXPORT_DATA");
-		expect(USER_LIMITS).toHaveProperty("UPDATE_PROFILE");
-		expect(USER_LIMITS).toHaveProperty("CHANGE_EMAIL");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(USER_LIMITS.DELETE_ACCOUNT).toBe(USER_DELETE_ACCOUNT_LIMIT);
-		expect(USER_LIMITS.CANCEL_DELETION).toBe(USER_CANCEL_DELETION_LIMIT);
-		expect(USER_LIMITS.EXPORT_DATA).toBe(USER_EXPORT_DATA_LIMIT);
-		expect(USER_LIMITS.UPDATE_PROFILE).toBe(USER_UPDATE_PROFILE_LIMIT);
-		expect(USER_LIMITS.CHANGE_EMAIL).toBe(USER_EMAIL_CHANGE_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(USER_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
 		}
 	});
@@ -491,12 +379,10 @@ describe("USER_LIMITS", () => {
 
 describe("ADDRESS_LIMITS", () => {
 	it("contains expected keys", () => {
-		expect(ADDRESS_LIMITS).toHaveProperty("MUTATE");
 		expect(ADDRESS_LIMITS).toHaveProperty("SEARCH");
 	});
 
 	it("references the correct individual configs", () => {
-		expect(ADDRESS_LIMITS.MUTATE).toBe(ADDRESS_MUTATE_LIMIT);
 		expect(ADDRESS_LIMITS.SEARCH).toBe(ADDRESS_SEARCH_LIMIT);
 	});
 
@@ -534,30 +420,6 @@ describe("REFUND_LIMITS", () => {
 });
 
 // ============================================================================
-// ADMIN_LIMITS
-// ============================================================================
-
-describe("ADMIN_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_LIMITS).toHaveProperty("TESTIMONIAL_CREATE");
-		expect(ADMIN_LIMITS).toHaveProperty("TESTIMONIAL_UPDATE");
-		expect(ADMIN_LIMITS).toHaveProperty("TESTIMONIAL_DELETE");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_LIMITS.TESTIMONIAL_CREATE).toBe(ADMIN_TESTIMONIAL_CREATE_LIMIT);
-		expect(ADMIN_LIMITS.TESTIMONIAL_UPDATE).toBe(ADMIN_TESTIMONIAL_UPDATE_LIMIT);
-		expect(ADMIN_LIMITS.TESTIMONIAL_DELETE).toBe(ADMIN_TESTIMONIAL_DELETE_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
 // ADMIN_ORDER_LIMITS
 // ============================================================================
 
@@ -578,36 +440,6 @@ describe("ADMIN_ORDER_LIMITS", () => {
 
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(ADMIN_ORDER_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_USER_LIMITS
-// ============================================================================
-
-describe("ADMIN_USER_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_USER_LIMITS).toHaveProperty("SINGLE_OPERATIONS");
-		expect(ADMIN_USER_LIMITS).toHaveProperty("DELETE_USER");
-		expect(ADMIN_USER_LIMITS).toHaveProperty("EXPORT_DATA");
-		expect(ADMIN_USER_LIMITS).toHaveProperty("SEND_RESET");
-		expect(ADMIN_USER_LIMITS).toHaveProperty("INVALIDATE_SESSIONS");
-		expect(ADMIN_USER_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_USER_LIMITS.SINGLE_OPERATIONS).toBe(ADMIN_USER_SINGLE_OPERATIONS_LIMIT);
-		expect(ADMIN_USER_LIMITS.DELETE_USER).toBe(ADMIN_USER_DELETE_LIMIT);
-		expect(ADMIN_USER_LIMITS.EXPORT_DATA).toBe(ADMIN_USER_EXPORT_DATA_LIMIT);
-		expect(ADMIN_USER_LIMITS.SEND_RESET).toBe(ADMIN_USER_SEND_RESET_LIMIT);
-		expect(ADMIN_USER_LIMITS.INVALIDATE_SESSIONS).toBe(ADMIN_USER_INVALIDATE_SESSIONS_LIMIT);
-		expect(ADMIN_USER_LIMITS.REFRESH).toBe(ADMIN_USER_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_USER_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
 		}
 	});
@@ -875,10 +707,6 @@ describe("security-sensitive limit values", () => {
 		expect(AUTH_LOGIN_LIMIT.limit).toBeLessThanOrEqual(10);
 	});
 
-	it("AUTH_SIGNUP_LIMIT has a strict limit (<=5)", () => {
-		expect(AUTH_SIGNUP_LIMIT.limit).toBeLessThanOrEqual(5);
-	});
-
 	it("AUTH_PASSWORD_RESET_LIMIT has a strict limit (<=5)", () => {
 		expect(AUTH_PASSWORD_RESET_LIMIT.limit).toBeLessThanOrEqual(5);
 	});
@@ -887,16 +715,17 @@ describe("security-sensitive limit values", () => {
 		expect(AUTH_PASSWORD_CHANGE_LIMIT.limit).toBeLessThanOrEqual(5);
 	});
 
-	it("RETURN_REQUEST_LIMIT has a strict limit (<=10)", () => {
-		expect(RETURN_REQUEST_LIMIT.limit).toBeLessThanOrEqual(10);
+	it("AUTH_LOGOUT_LIMIT reste borné (<=20)", () => {
+		// Action publique NON authentifiée qui déclenche une écriture DB
+		// (`auth.api.signOut()`) : le plafond est la seule protection.
+		expect(AUTH_LOGOUT_LIMIT.limit).toBeLessThanOrEqual(20);
 	});
 
-	it("USER_DELETE_ACCOUNT_LIMIT has a strict limit (<=5)", () => {
-		expect(USER_DELETE_ACCOUNT_LIMIT.limit).toBeLessThanOrEqual(5);
-	});
-
-	it("CONTACT_SEND_MESSAGE_LIMIT has a strict limit (<=10)", () => {
-		expect(CONTACT_SEND_MESSAGE_LIMIT.limit).toBeLessThanOrEqual(10);
+	it("CRON_INVOKE_LIMIT reste bien au-dessous d'un usage automatisé (<=60/min)", () => {
+		// Le plafond Hobby impose un run quotidien par cron : tout ce qui approche
+		// une cadence par minute est un rejeu manuel ou de l'abus.
+		expect(CRON_INVOKE_LIMIT.limit).toBeLessThanOrEqual(60);
+		expect(CRON_INVOKE_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 1000);
 	});
 });
 
@@ -909,15 +738,7 @@ describe("windowMs sanity checks", () => {
 		expect(CHECKOUT_CREATE_SESSION_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 1000);
 	});
 
-	it("RETURN_REQUEST_LIMIT uses at least a 1-hour window", () => {
-		expect(RETURN_REQUEST_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 60 * 1000);
-	});
-
 	it("AUTH_LOGIN_LIMIT uses at least a 1-minute window", () => {
 		expect(AUTH_LOGIN_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 1000);
-	});
-
-	it("AUTH_SIGNUP_LIMIT uses at least a 1-minute window", () => {
-		expect(AUTH_SIGNUP_LIMIT.windowMs).toBeGreaterThanOrEqual(60 * 1000);
 	});
 });

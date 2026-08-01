@@ -37,13 +37,6 @@ export const SHARED_CACHE_TAGS = {
 	ADMIN_ORDERS_LIST: "admin-orders-list",
 
 	/**
-	 * Liste des clients dans l'admin
-	 *
-	 * Utilisé par : orders, users
-	 */
-	ADMIN_CUSTOMERS_LIST: "admin-customers-list",
-
-	/**
 	 * Liste de l'inventaire dans l'admin
 	 *
 	 * Utilisé par : products, skus
@@ -132,16 +125,3 @@ export const STOCK_THRESHOLDS = {
 // ============================================
 // SESSION CACHE TAGS (évite cycle auth ↔ users)
 // ============================================
-
-/**
- * Tags de cache pour les sessions utilisateur
- *
- * Centralisé ici pour éviter le cycle de dépendances auth ↔ users.
- * Utilisé par users (page détail admin) et invalidé par les mutations
- * de sessions (invalidation admin, suppression de compte, changement
- * de mot de passe avec révocation).
- */
-export const SESSION_CACHE_TAGS = {
-	/** Sessions actives d'un utilisateur */
-	SESSIONS: (userId: string) => `sessions-user-${userId}`,
-} as const;

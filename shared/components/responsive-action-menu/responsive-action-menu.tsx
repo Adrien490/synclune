@@ -1,7 +1,8 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import Link from "next/link";
 import * as React from "react";
 
@@ -201,12 +202,12 @@ interface TriggerProps {
 	asChild?: boolean;
 }
 
+const handleClick = () => {
+	triggerHaptic("selection");
+};
+
 export function ResponsiveActionMenuTrigger({ children, asChild }: TriggerProps) {
 	const { isMobile } = useMenuCtx();
-
-	const handleClick = () => {
-		triggerHaptic("selection");
-	};
 
 	if (isMobile) {
 		return (
@@ -339,7 +340,7 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 					}}
 				>
 					{item.pending ? (
-						<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+						<Spinner presentational />
 					) : Icon ? (
 						<Icon className="size-4" aria-hidden="true" />
 					) : null}
@@ -364,7 +365,7 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 			}}
 		>
 			{item.pending ? (
-				<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+				<Spinner presentational />
 			) : Icon ? (
 				<Icon className="size-4" aria-hidden="true" />
 			) : null}
@@ -397,7 +398,7 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 					)}
 					aria-hidden="true"
 				>
-					<Loader2 className="size-5 animate-spin" />
+					<Spinner presentational size="lg" />
 				</span>
 			) : Icon ? (
 				<span

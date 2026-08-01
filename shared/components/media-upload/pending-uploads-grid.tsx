@@ -14,7 +14,8 @@ import {
 	type VideoMetadataPreview,
 } from "@/modules/media/hooks/use-video-thumbnail";
 import { cn } from "@/shared/utils/cn";
-import { Loader2, Play, X } from "lucide-react";
+import { Play, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useEffect, useState } from "react";
 import { DragDropProvider, KeyboardSensor, PointerSensor, type DragEndEvent } from "@dnd-kit/react";
 import { useSortable } from "@dnd-kit/react/sortable";
@@ -296,7 +297,7 @@ export function PendingUploadsGrid({
 					disabled={disabled}
 					className="min-h-11 sm:min-w-32"
 				>
-					{disabled && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+					{disabled && <Spinner presentational />}
 					{ctaLabel}
 				</Button>
 			</div>
@@ -372,10 +373,7 @@ function PendingUploadItem({
 				/>
 			) : isVideo ? (
 				<div className="bg-muted flex size-full animate-pulse items-center justify-center motion-reduce:animate-none">
-					<Loader2
-						className="text-muted-foreground size-4 animate-spin motion-reduce:animate-none"
-						aria-label="Extraction de la miniature vidéo"
-					/>
+					<Spinner label="Extraction de la miniature vidéo" className="text-muted-foreground" />
 				</div>
 			) : (
 				<div className="bg-muted flex size-full items-center justify-center">

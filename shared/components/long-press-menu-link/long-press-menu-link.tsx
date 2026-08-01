@@ -15,7 +15,7 @@ import { cn } from "@/shared/utils/cn";
 
 import { LinkPendingOverlay } from "./link-pending-overlay";
 
-export interface LongPressMenuLinkProps {
+interface LongPressMenuLinkProps {
 	/** Destination de la navigation au tap simple (Next.js `<Link>`). */
 	href: string;
 	/** Label accessible appliqué au Link (lu par les screen readers). */

@@ -14,14 +14,36 @@ export const TEXT_LIMITS = {
 	PRODUCT_DESCRIPTION: { max: 500 },
 	/** Taille SKU */
 	SKU_SIZE: { max: 50 },
+	// Volontairement plus strict que `ProductSku.sku @db.VarChar(100)` : un code
+	// technique lisible tient en 50, et la marge absorbe les suffixes `-COPY`.
+	SKU_CODE: { max: 50 },
 	/** Texte alternatif média */
 	MEDIA_ALT_TEXT: { max: 200 },
-	/** Recherche produits */
-	PRODUCT_SEARCH: { max: 200 },
+	/**
+	 * Terme de recherche — SSOT transverse (storefront ET listes admin).
+	 *
+	 * 100 est la borne EFFECTIVE de toute la chaîne : `splitSearchTerms` (fuzzy)
+	 * rejette au-delà de `MAX_SEARCH_LENGTH` (= cette valeur), et le Zod du quick
+	 * search aussi. Avant l'unification (audit recherche 2026-08-01, P3-1), trois
+	 * bornes coexistaient (100/200/255) : une recherche PLP de 101-200 caractères
+	 * passait le schéma puis `splitSearchTerms` → `[]` → TOUT le catalogue rendu
+	 * comme « résultats de X » ; discounts 101-200 → liste vide + logger.error.
+	 */
+	SEARCH: { max: 100 },
 	/** Recherche utilisateurs */
 	USER_SEARCH: { max: 255 },
 	/** Filtre string générique */
 	FILTER_STRING: { max: 100 },
+	/**
+	 * URL de média — alignée sur `SkuMedia.url` / `SkuMedia.thumbnailUrl` et
+	 * `OrderItem.productImageUrl`, tous `VarChar(2048)`.
+	 *
+	 * ⚠️ `z.url()` valide la FORME, jamais la longueur, et le refine de domaine
+	 * autorisé ne borne que l'hôte : une URL d'un domaine légitime suivie d'une query
+	 * string longue passait la validation puis débordait la colonne. 2048 est aussi
+	 * la limite de fait des navigateurs et de `/_next/image`.
+	 */
+	MEDIA_URL: { max: 2048 },
 } as const;
 
 // ============================================================================

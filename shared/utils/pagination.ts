@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-import {
-	PAGINATION_DEFAULTS,
-	PAGINATION_LIMITS,
-	cursorSchema,
-	directionSchema,
-} from "@/shared/schemas/pagination-schema";
+import { PAGINATION_DEFAULTS, PAGINATION_LIMITS } from "@/shared/schemas/pagination-schema";
 
 // ============================================================================
 // SCHEMA FACTORIES
@@ -26,21 +21,6 @@ export function createPerPageSchema(
 		.min(1, { message: "Le nombre par page doit être au moins 1" })
 		.max(maxValue, { message: `Le nombre par page ne peut pas dépasser ${maxValue}` })
 		.default(defaultValue);
-}
-
-/**
- * Crée un schema de pagination complet réutilisable
- * @param options - Options de configuration
- */
-export function createPaginationSchema(options?: { defaultPerPage?: number; maxPerPage?: number }) {
-	const { defaultPerPage = PAGINATION_DEFAULTS.ADMIN, maxPerPage = PAGINATION_LIMITS.MAX_ADMIN } =
-		options ?? {};
-
-	return z.object({
-		cursor: cursorSchema,
-		direction: directionSchema,
-		perPage: createPerPageSchema(defaultPerPage, maxPerPage),
-	});
 }
 
 // ============================================================================

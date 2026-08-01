@@ -13,7 +13,7 @@ import { useLinkStatus } from "next/link";
  *   show nothing — true debounce. Slower navigations get a subtle directional cue
  *   (the bar slides in from the left, hinting forward motion).
  * - `bg-primary/70` keeps brand color while bumping opacity above the WCAG 1.4.11
- *   non-text contrast threshold across both light shop and dark admin surfaces.
+ *   non-text contrast threshold on the light theme (the app has no dark mode).
  * - `transform-gpu` forces compositor layer so the slide stays smooth on low-end
  *   mobile (the only consumers that paint this every nav).
  */

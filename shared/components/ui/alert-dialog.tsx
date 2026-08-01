@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
-import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
+import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 import { cn } from "@/shared/utils/cn";
 
 function AlertDialog({
@@ -60,7 +60,7 @@ function AlertDialogOverlay({
 			data-slot="alert-dialog-overlay"
 			aria-hidden="true"
 			className={cn(
-				"bg-foreground/50 fixed inset-0 z-(--z-alert) backdrop-blur-sm",
+				"fixed inset-0 z-(--z-alert) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 				"duration-200",
@@ -69,17 +69,6 @@ function AlertDialogOverlay({
 			{...props}
 		/>
 	);
-}
-
-/**
- * Rendu dans le Portal : il ne monte donc que pendant que la confirmation est
- * ouverte. Même motif que `SheetContent` / `DrawerContent` — sans lui, une
- * confirmation admin mobile laissait la bottom-bar visible et le pull-to-refresh
- * armé derrière elle.
- */
-function OverlayStackRegister({ enabled }: { enabled: boolean }) {
-	useRegisterOverlay(enabled);
-	return null;
 }
 
 function AlertDialogContent({

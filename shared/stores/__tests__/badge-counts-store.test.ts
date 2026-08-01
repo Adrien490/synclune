@@ -7,7 +7,6 @@ describe("useBadgeCountsStore", () => {
 		useBadgeCountsStore.setState({
 			wishlistCount: 0,
 			cartCount: 0,
-			wishlistBump: null,
 			cartBump: null,
 		});
 	});
@@ -125,10 +124,8 @@ describe("useBadgeCountsStore", () => {
 
 		it("should clear bump descriptors", () => {
 			useBadgeCountsStore.getState().adjustCart(2);
-			useBadgeCountsStore.getState().incrementWishlist();
 			useBadgeCountsStore.getState().reset();
 			expect(useBadgeCountsStore.getState().cartBump).toBeNull();
-			expect(useBadgeCountsStore.getState().wishlistBump).toBeNull();
 		});
 	});
 
@@ -159,25 +156,12 @@ describe("useBadgeCountsStore", () => {
 			expect(useBadgeCountsStore.getState().cartBump?.key).toBe(100);
 		});
 
-		it("incrementWishlist publishes a +1 wishlistBump", () => {
-			useBadgeCountsStore.getState().incrementWishlist();
-			expect(useBadgeCountsStore.getState().wishlistBump?.delta).toBe(1);
-		});
-
-		it("decrementWishlist publishes a -1 wishlistBump", () => {
-			useBadgeCountsStore.getState().setWishlistCount(3);
-			useBadgeCountsStore.getState().decrementWishlist();
-			expect(useBadgeCountsStore.getState().wishlistBump?.delta).toBe(-1);
-		});
+		// Pas de bump wishlist : badge « dot », sans flash "+N" — `wishlistBump`
+		// (écrit mais jamais lu) a été retiré à l'audit wishlist 2026-08-01.
 
 		it("setCartCount (server hydration) does NOT publish a bump", () => {
 			useBadgeCountsStore.getState().setCartCount(10);
 			expect(useBadgeCountsStore.getState().cartBump).toBeNull();
-		});
-
-		it("setWishlistCount (server hydration) does NOT publish a bump", () => {
-			useBadgeCountsStore.getState().setWishlistCount(10);
-			expect(useBadgeCountsStore.getState().wishlistBump).toBeNull();
 		});
 
 		it("successive adjustCart calls produce distinct keys", async () => {

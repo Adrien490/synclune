@@ -17,6 +17,7 @@ import { Search, X } from "lucide-react";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { mediaBelow } from "@/shared/constants/breakpoints";
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { useAppForm } from "@/shared/components/forms";
 import { MiniDotsLoader } from "@/shared/components/loaders/mini-dots-loader";
 import { Button } from "@/shared/components/ui/button";
@@ -31,6 +32,14 @@ export interface SearchInputHandle {
 	 * doit ramener la saisie dans le champ.
 	 */
 	focus: () => void;
+	/**
+	 * Vide le champ (même chemin que le bouton × et que la 1ʳᵉ pression
+	 * d'Escape : notifie `onLiveSearch`/`onValueChange` et rend le focus).
+	 * Utilisé par le quick search dans `onEscapeKeyDown` : Radix écoute Escape
+	 * sur `document` en capture, donc le « deux temps » doit être arbitré par
+	 * le dialog, pas par le handler bulle du champ.
+	 */
+	clear: () => void;
 }
 
 type SearchInputProps = {
@@ -139,14 +148,6 @@ function SearchInputInner({
 	const form = useAppForm({
 		defaultValues: { search: initialValue },
 	});
-
-	useImperativeHandle(ref, () => ({
-		setValue: (value: string) => {
-			form.setFieldValue("search", value);
-			onValueChange?.(value);
-		},
-		focus: () => inputRef.current?.focus(),
-	}));
 
 	// Sync URL → form
 	// Uses a ref guard to avoid resetting the input during typing (before debounce fires)
@@ -260,6 +261,17 @@ function SearchInputInner({
 		inputRef.current?.focus();
 	};
 
+	// Déclaré APRÈS `handleClear` (référencé par `clear`) — la règle
+	// react-hooks/immutability refuse la référence avant déclaration.
+	useImperativeHandle(ref, () => ({
+		setValue: (value: string) => {
+			form.setFieldValue("search", value);
+			onValueChange?.(value);
+		},
+		focus: () => inputRef.current?.focus(),
+		clear: handleClear,
+	}));
+
 	const handleKeyDown = (e: React.KeyboardEvent, currentValue: string) => {
 		if (e.key === "Escape") {
 			e.preventDefault();
@@ -275,7 +287,12 @@ function SearchInputInner({
 		}
 
 		// Flash border when maxLength reached
-		if (currentValue.length >= 200 && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+		if (
+			currentValue.length >= TEXT_LIMITS.SEARCH.max &&
+			e.key.length === 1 &&
+			!e.ctrlKey &&
+			!e.metaKey
+		) {
 			if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
 			setMaxLengthFlash(true);
 			flashTimerRef.current = setTimeout(() => setMaxLengthFlash(false), 150);
@@ -371,7 +388,7 @@ function SearchInputInner({
 									type="search"
 									inputMode="search"
 									enterKeyHint="search"
-									maxLength={200}
+									maxLength={TEXT_LIMITS.SEARCH.max}
 									value={field.state.value}
 									onChange={(e) => {
 										field.handleChange(e.target.value);

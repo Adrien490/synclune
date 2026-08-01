@@ -35,10 +35,10 @@ function useResponsiveAlert(component: string): ResponsiveCtx {
 }
 
 const TONE_ACTION_CLASSES: Record<ResponsiveAlertTone, string> = {
-	destructive: "bg-destructive text-white hover:bg-destructive/90",
-	warning: "bg-amber-600 text-white hover:bg-amber-700",
+	destructive: "bg-destructive text-white can-hover:hover:bg-destructive/90",
+	warning: "bg-warning text-warning-foreground can-hover:hover:bg-warning/90",
 	info: "",
-	success: "bg-emerald-600 text-white hover:bg-emerald-700",
+	success: "bg-success text-success-foreground can-hover:hover:bg-success/90",
 	neutral: "",
 };
 

@@ -67,7 +67,7 @@ vi.mock("lucide-react", () => ({
 	ChevronLeft: () => <span data-testid="icon-chevron-left" />,
 	ChevronRight: () => <span data-testid="icon-chevron-right" />,
 	ChevronsLeft: () => <span data-testid="icon-chevrons-left" />,
-	LoaderCircle: () => <span data-testid="icon-loader" />,
+	Loader2Icon: () => <span data-testid="icon-loader" />,
 }));
 
 import { CursorPagination } from "../cursor-pagination";

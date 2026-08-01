@@ -15,8 +15,7 @@ function Card({
 				// Mobile (< md): rendu flat type iOS Settings (no border/shadow/rounded)
 				// Desktop (>= md): Card classique
 				"bg-card text-card-foreground flex flex-col gap-6 rounded-none border-0 py-4 shadow-none md:rounded-xl md:border md:py-6 md:shadow-md",
-				interactive &&
-					"focus-visible:ring-ring can-hover:md:hover:shadow-lg cursor-pointer transition-shadow focus-visible:ring-2 focus-visible:ring-offset-2",
+				interactive && "focus-ring can-hover:md:hover:shadow-lg cursor-pointer transition-shadow",
 				className,
 			)}
 			{...props}
@@ -68,7 +67,8 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+/** @public Surface du kit shadcn/ui vendored — exempté du rapport knip. */
+export function CardAction({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-action"
@@ -88,7 +88,8 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+/** @public Surface du kit shadcn/ui vendored — exempté du rapport knip. */
+export function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
@@ -101,4 +102,4 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-export { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
+export { Card, CardContent, CardDescription, CardHeader, CardTitle };

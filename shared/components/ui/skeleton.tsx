@@ -16,10 +16,8 @@ const skeletonVariants = cva("", {
 		size: {
 			xs: "h-3",
 			sm: "h-4",
-			md: "h-6",
 			lg: "h-8",
 			xl: "h-10",
-			"2xl": "h-12",
 		},
 	},
 	defaultVariants: {
@@ -87,14 +85,15 @@ interface SkeletonAvatarProps {
 	className?: string;
 }
 
+const AVATAR_SIZE_CLASSES = {
+	sm: "size-8",
+	md: "size-10",
+	lg: "size-12",
+};
+
 /** Skeleton circulaire pour les avatars */
 function SkeletonAvatar({ size = "md", className }: SkeletonAvatarProps) {
-	const sizeClasses = {
-		sm: "size-8",
-		md: "size-10",
-		lg: "size-12",
-	};
-	return <Skeleton shape="circle" className={cn(sizeClasses[size], className)} />;
+	return <Skeleton shape="circle" className={cn(AVATAR_SIZE_CLASSES[size], className)} />;
 }
 
 interface SkeletonButtonProps {
@@ -102,14 +101,15 @@ interface SkeletonButtonProps {
 	className?: string;
 }
 
+const BUTTON_SIZE_CLASSES = {
+	sm: "h-8 w-20",
+	default: "h-10 w-28",
+	lg: "h-12 w-36",
+};
+
 /** Skeleton pour les boutons */
 function SkeletonButton({ size = "default", className }: SkeletonButtonProps) {
-	const sizeClasses = {
-		sm: "h-8 w-20",
-		default: "h-10 w-28",
-		lg: "h-12 w-36",
-	};
-	return <Skeleton shape="rounded" className={cn(sizeClasses[size], className)} />;
+	return <Skeleton shape="rounded" className={cn(BUTTON_SIZE_CLASSES[size], className)} />;
 }
 
 export { Skeleton, SkeletonGroup, SkeletonText, SkeletonAvatar, SkeletonButton };

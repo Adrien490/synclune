@@ -40,12 +40,18 @@ export type PrismaClientOrTransaction = Pick<
  *   const slug = await generateSlug(tx, "product", "Nouveau Produit");
  *   return tx.product.create({ data: { slug, ... } });
  * });
+ *
+ * // Sur un UPDATE, passer l'id de l'enregistrement édité : sans lui, un
+ * // rename cosmétique (« Or rose » → « Or Rose ») retrouvait son PROPRE slug
+ * // et retournait « or-rose-2 » — l'URL changeait sans raison.
+ * await generateSlug(tx, "color", "Or Rose", { excludeId: colorId })
  * ```
  */
 export async function generateSlug(
 	prisma: PrismaClientOrTransaction,
 	model: "product" | "collection" | "productType" | "color" | "material",
 	value: string,
+	options: { excludeId?: string } = {},
 ): Promise<string> {
 	if (!value || typeof value !== "string" || value.trim().length === 0) {
 		throw new Error("La valeur pour générer le slug ne peut pas être vide");
@@ -102,7 +108,9 @@ export async function generateSlug(
 				break;
 		}
 
-		if (!existing) {
+		// L'enregistrement en cours d'édition ne compte pas comme une collision :
+		// son slug actuel reste réutilisable par lui-même.
+		if (!existing || (options.excludeId && existing.id === options.excludeId)) {
 			return finalSlug;
 		}
 

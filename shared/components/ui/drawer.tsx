@@ -3,7 +3,7 @@
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
-import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
+import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
@@ -118,7 +118,7 @@ function DrawerHandle({
 			aria-label={ariaLabel}
 			className={cn(
 				"bg-muted-foreground/30 mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full",
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+				"focus-ring",
 				className,
 			)}
 			{...props}
@@ -134,7 +134,7 @@ function DrawerOverlay({
 		<DrawerPrimitive.Overlay
 			data-slot="drawer-overlay"
 			className={cn(
-				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-[2px]",
+				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0 fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				className,
 			)}
 			{...props}
@@ -142,20 +142,11 @@ function DrawerOverlay({
 	);
 }
 
-/**
- * Rendered inside DrawerPortal so it mounts only while the drawer is open
- * (Vaul Portal does not render children when open=false). Effect cleanup
- * runs on close → overlay-stack stays consistent.
- */
-function OverlayStackRegister() {
-	useRegisterOverlay();
-	return null;
-}
-
 function DrawerContent({
 	className,
 	children,
 	onOverlayClick,
+	registerOverlay = true,
 	...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
 	/**
@@ -164,10 +155,12 @@ function DrawerContent({
 	 * — cohérent avec le pattern Sheet primitive.
 	 */
 	onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
+	/** Parité avec Dialog/AlertDialog/Sheet — opt-out de l'overlay-stack. */
+	registerOverlay?: boolean;
 }) {
 	return (
 		<DrawerPortal data-slot="drawer-portal">
-			<OverlayStackRegister />
+			<OverlayStackRegister enabled={registerOverlay} />
 			<DrawerOverlay onClick={onOverlayClick} />
 			<DrawerPrimitive.Content
 				data-slot="drawer-content"

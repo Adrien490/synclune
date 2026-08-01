@@ -11,6 +11,8 @@ interface MultiSelectFieldProps {
 	required?: boolean;
 	disabled?: boolean;
 	options: MultiSelectOption[];
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 }
 
 export const MultiSelectField = ({
@@ -19,10 +21,14 @@ export const MultiSelectField = ({
 	required,
 	disabled,
 	options,
+	description,
 }: MultiSelectFieldProps) => {
 	const field = useFieldContext<string[]>();
 
 	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 
 	return (
 		<Field data-invalid={hasError}>
@@ -40,9 +46,15 @@ export const MultiSelectField = ({
 				placeholder={placeholder}
 				disabled={disabled}
 				aria-invalid={hasError}
-				aria-describedby={hasError ? `${field.name}-error` : undefined}
+				aria-describedby={describedBy}
 				aria-required={required}
 			/>
+
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 
 			{/*
 			 * `MultiSelect` ne rend aucun contrôle natif : sans cet input caché, le

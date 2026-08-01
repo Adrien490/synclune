@@ -17,15 +17,13 @@ const buttonVariants = cva(
 				outline:
 					"border bg-background shadow-xs can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
 				secondary: "bg-secondary text-secondary-foreground can-hover:hover:bg-secondary/80",
-				accent: "bg-accent text-accent-foreground can-hover:hover:bg-accent/90",
 				ghost: "can-hover:hover:bg-accent can-hover:hover:text-accent-foreground",
 				link: "text-primary underline-offset-4 can-hover:hover:underline",
 			},
 			size: {
 				default: "h-11 px-4 py-2 has-[>svg]:px-3",
-				sm: "h-9 rounded-xl gap-1.5 px-3 has-[>svg]:px-2.5",
-				lg: "h-12 rounded-xl px-6 has-[>svg]:px-4 text-base",
-				input: "h-11 px-4 py-2 has-[>svg]:px-3",
+				sm: "h-9 gap-1.5 px-3 has-[>svg]:px-2.5",
+				lg: "h-12 px-6 has-[>svg]:px-4 text-base",
 				icon: "size-11",
 			},
 		},

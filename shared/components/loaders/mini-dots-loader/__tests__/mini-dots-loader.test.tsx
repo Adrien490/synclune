@@ -126,7 +126,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader color="success" />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("bg-emerald-600");
+			expect(dot.className).toContain("bg-success");
 		}
 	});
 

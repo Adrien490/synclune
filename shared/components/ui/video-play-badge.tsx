@@ -30,6 +30,7 @@ interface VideoPlayBadgeProps extends VariantProps<typeof videoPlayBadgeVariants
 export function VideoPlayBadge({ size, className, showLabel = false }: VideoPlayBadgeProps) {
 	return (
 		<div
+			data-slot="video-play-badge"
 			className={cn(
 				"pointer-events-none absolute inset-0 flex items-center justify-center",
 				className,

@@ -12,7 +12,7 @@ import {
 	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { ReactNode } from "react";
 
 interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
@@ -110,7 +110,7 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? pendingLabel : submitLabel}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

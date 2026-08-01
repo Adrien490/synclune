@@ -21,36 +21,25 @@ export function getBaseUrl(): string {
 }
 
 /**
- * Production URL - Always https://synclune.fr
- * Used for canonical URLs, sitemaps, and SEO
- */
-export const PRODUCTION_URL = "https://synclune.fr";
-
-/**
  * Internal route paths
  * Centralized to avoid hardcoded strings across the codebase
  */
 export const ROUTES = {
-	// Authentication
+	// Authentication — accès administration uniquement (cf. `/connexion`).
+	// Pas de `SIGN_UP` : l'inscription est fermée (retrait de l'espace client
+	// 2026-07-31), la route `/inscription` n'existe plus.
 	AUTH: {
 		VERIFY_EMAIL: "/verifier-email",
 		FORGOT_PASSWORD: "/mot-de-passe-oublie",
 		RESET_PASSWORD: "/reinitialiser-mot-de-passe",
 		SIGN_IN: "/connexion",
-		SIGN_UP: "/inscription",
-	},
-
-	// Customer account
-	ACCOUNT: {
-		ROOT: "/commandes",
-		ORDERS: "/commandes",
-		ORDER_DETAIL: (orderIdOrNumber: string) => `/commandes/${orderIdOrNumber}`,
-		FAVORITES: "/favoris",
-		ADDRESSES: "/adresses",
-		SETTINGS: "/parametres",
 	},
 
 	// Shop
+	//
+	// Plus de bloc `ACCOUNT` : `/commandes` et `/parametres` ont disparu avec
+	// l'espace client. `/favoris` survit et rejoint la boutique — la wishlist est
+	// portée par le cookie `wishlist_session`, pas par un compte.
 	SHOP: {
 		HOME: "/",
 		PRODUCTS: "/produits",
@@ -60,11 +49,11 @@ export const ROUTES = {
 		COLLECTIONS: "/collections",
 		PRODUCT_TYPE: (slug: string) => `/produits/${slug}`,
 		COLLECTION: (slug: string) => `/collections/${slug}`,
+		FAVORITES: "/favoris",
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
-		// Suivi de commande invité (token HMAC, hors `protectedRoutes`).
-		// Volontairement PAS sous `/commandes/*` : ce préfixe est protégé par le
-		// proxy, l'y placer forcerait à affaiblir le gate d'auth de l'espace client.
+		// Suivi de commande invité, authentifié par token HMAC dans l'URL.
+		// C'est désormais le SEUL chemin par lequel un client consulte sa commande.
 		ORDER_TRACKING: "/suivi-commande",
 		ABOUT: "/a-propos",
 		HELP: "/aide",
@@ -81,12 +70,11 @@ export const ROUTES = {
 		COOKIES: "/cookies",
 	},
 
-	// Notifications
-	NOTIFICATIONS: {
-		UNSUBSCRIBE: "/notifications/desinscription",
-	},
-
 	// Admin
+	//
+	// Pas de `CUSTOMERS` / `CUSTOMER_DETAIL` : `/admin/clients` a disparu avec la
+	// gestion des utilisateurs. L'identité d'un acheteur se lit sur les snapshots
+	// de sa commande (invariant #5), pas sur une fiche.
 	ADMIN: {
 		ROOT: "/admin",
 		DASHBOARD: "/admin",
@@ -94,8 +82,6 @@ export const ROUTES = {
 		ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
 		REFUNDS: "/admin/ventes/remboursements",
 		PRODUCTS: "/admin/catalogue/produits",
-		CUSTOMERS: "/admin/clients",
-		CUSTOMER_DETAIL: (userId: string) => `/admin/clients/${userId}`,
 		STORE_CONFIG: "/admin/configuration/boutique",
 	},
 } as const;

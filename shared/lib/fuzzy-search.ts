@@ -14,6 +14,11 @@ import { prisma } from "@/shared/lib/prisma";
 
 const ADMIN_FUZZY_THRESHOLD = 0.3;
 const ADMIN_FUZZY_TIMEOUT_MS = 2000;
+// ⚠️ Plafond SILENCIEUX : le WHERE aval devient `id IN (≤200 ids)` et le
+// `count()` compte sur ce WHERE tronqué — une recherche large (« gmail ») sur
+// 800 commandes annonce « 200 résultats » sans signal de troncature. Assumé au
+// volume actuel (micro-entreprise) ; à re-poser si un jour totalCount ===
+// limite devient fréquent (audit « Admin commandes » 2026-08-01, P3).
 const ADMIN_FUZZY_MAX_RESULTS = 200;
 
 // Allowlist of table/column pairs permitted in Prisma.raw() interpolation.

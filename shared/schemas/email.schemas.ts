@@ -15,6 +15,20 @@ export const EMAIL_ERROR_MESSAGES = {
 } as const;
 
 /**
+ * Longueur maximale — alignée sur `User.email` et `Order.customerEmail`, tous deux
+ * `VarChar(255)`.
+ *
+ * ⚠️ `z.email()` valide le FORMAT, jamais la longueur : une adresse de 300 caractères
+ * techniquement valide traversait le checkout et l'inscription, puis échouait en
+ * `22001` Postgres à l'INSERT — erreur générique, sans indication du champ. Poser la
+ * borne ici la propage d'un coup au checkout, à l'auth et aux formulaires admin, qui
+ * dérivent tous de ces deux schémas.
+ */
+const EMAIL_MAX_LENGTH = 255;
+
+const EMAIL_TOO_LONG = `L'email ne peut pas dépasser ${EMAIL_MAX_LENGTH} caractères`;
+
+/**
  * Schema email de base avec validation, lowercase et trim
  * Utilise pour la connexion, inscription, reset password, etc.
  */
@@ -25,6 +39,7 @@ export const emailSchema = z
 		error: (issue) =>
 			issue.input === "" ? EMAIL_ERROR_MESSAGES.REQUIRED : EMAIL_ERROR_MESSAGES.INVALID_FORMAT,
 	})
+	.max(EMAIL_MAX_LENGTH, EMAIL_TOO_LONG)
 	.toLowerCase()
 	.trim();
 
@@ -33,6 +48,7 @@ export const emailSchema = z
  */
 export const emailOptionalSchema = z
 	.email(EMAIL_ERROR_MESSAGES.INVALID_FORMAT)
+	.max(EMAIL_MAX_LENGTH, EMAIL_TOO_LONG)
 	.toLowerCase()
 	.trim()
 	.optional();

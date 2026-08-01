@@ -10,36 +10,26 @@ import type { BadgeCountsStore } from "@/shared/types/store.types";
  * Hydraté côté serveur via BadgeCountsStoreProvider.
  * Reset au logout via useLogout pour éviter le leak de state entre users.
  *
- * Les champs `*Bump` sont publiés à chaque mutation optimistic (adjustCart,
- * incrementWishlist, decrementWishlist) et consommés par `<CountBadge>` pour
- * déclencher un flash "+N" éphémère. Les hydratations serveur (`set*Count`)
- * ne touchent volontairement PAS au bump pour éviter qu'un page-load réhydraté
- * ne déclenche un flash visuel non sollicité.
+ * `cartBump` est publié à chaque mutation optimistic (adjustCart) et consommé
+ * par `<CountBadge>` pour déclencher un flash "+N" éphémère. Les hydratations
+ * serveur (`set*Count`) ne touchent volontairement PAS au bump pour éviter
+ * qu'un page-load réhydraté ne déclenche un flash visuel non sollicité.
+ * Pas de bump wishlist : son badge est un point (`type: "dot"`), sans flash —
+ * le champ `wishlistBump`, écrit mais jamais lu, a été retiré (audit 2026-08-01).
  */
 export const useBadgeCountsStore = create<BadgeCountsStore>()(
 	devtools(
 		(set) => ({
 			wishlistCount: 0,
 			cartCount: 0,
-			wishlistBump: null,
 			cartBump: null,
 			setWishlistCount: (count) => set({ wishlistCount: count }, false, "setWishlistCount"),
 			setCartCount: (count) => set({ cartCount: count }, false, "setCartCount"),
 			incrementWishlist: () =>
-				set(
-					(state) => ({
-						wishlistCount: state.wishlistCount + 1,
-						wishlistBump: { delta: 1, key: Date.now() },
-					}),
-					false,
-					"incrementWishlist",
-				),
+				set((state) => ({ wishlistCount: state.wishlistCount + 1 }), false, "incrementWishlist"),
 			decrementWishlist: () =>
 				set(
-					(state) => ({
-						wishlistCount: Math.max(0, state.wishlistCount - 1),
-						wishlistBump: { delta: -1, key: Date.now() },
-					}),
+					(state) => ({ wishlistCount: Math.max(0, state.wishlistCount - 1) }),
 					false,
 					"decrementWishlist",
 				),
@@ -52,8 +42,7 @@ export const useBadgeCountsStore = create<BadgeCountsStore>()(
 					false,
 					`adjustCart/${delta}`,
 				),
-			reset: () =>
-				set({ wishlistCount: 0, cartCount: 0, wishlistBump: null, cartBump: null }, false, "reset"),
+			reset: () => set({ wishlistCount: 0, cartCount: 0, cartBump: null }, false, "reset"),
 		}),
 		{ name: "BadgeCountsStore", enabled: process.env.NODE_ENV === "development" },
 	),

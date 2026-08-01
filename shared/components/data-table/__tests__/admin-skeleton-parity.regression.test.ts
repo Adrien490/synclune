@@ -49,7 +49,7 @@ describe("Admin skeletons — parité avec la table réelle", () => {
 	const pairs = findPairs();
 
 	it("chaque admin data-table a son skeleton", () => {
-		expect(pairs.length).toBe(10);
+		expect(pairs.length).toBe(9);
 	});
 
 	it.each(pairs.map((p) => [p.module, p] as const))(

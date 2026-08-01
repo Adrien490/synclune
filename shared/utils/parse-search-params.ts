@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { cursorSchema } from "@/shared/schemas/pagination-schema";
 
 /**
@@ -51,9 +52,15 @@ export const searchParamParsers = {
 	},
 
 	/**
-	 * Parse search query with max length
+	 * Parse search query with max length (défaut : SSOT `TEXT_LIMITS.SEARCH`,
+	 * alignée sur les schémas Zod des modules et sur `MAX_SEARCH_LENGTH` du fuzzy).
 	 */
-	search: (value: string | string[] | undefined, maxLength = 200): string | undefined => {
+	search: (
+		value: string | string[] | undefined,
+		// Annoté `number` : TEXT_LIMITS est `as const`, le défaut seul rétrécirait
+		// le paramètre au littéral 100 et refuserait tout maxLength custom.
+		maxLength: number = TEXT_LIMITS.SEARCH.max,
+	): string | undefined => {
 		return parseSearchParam(value, z.string().max(maxLength), undefined);
 	},
 

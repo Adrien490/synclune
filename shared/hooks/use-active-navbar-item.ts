@@ -87,14 +87,11 @@ export function useActiveNavbarItem() {
 			return { label: "Les collections", href: ROUTES.SHOP.COLLECTIONS };
 		}
 
-		// Pages espace client
-		if (
-			pathname.startsWith(ROUTES.ACCOUNT.ORDERS) ||
-			pathname.startsWith(ROUTES.ACCOUNT.FAVORITES) ||
-			pathname.startsWith(ROUTES.ACCOUNT.ADDRESSES) ||
-			pathname.startsWith(ROUTES.ACCOUNT.SETTINGS)
-		) {
-			return { label: "Mon compte", href: ROUTES.ACCOUNT.ORDERS };
+		// Favoris — seule surface « personnelle » restante côté vitrine. Elle ne
+		// dépend d'aucune session : la wishlist est portée par le cookie
+		// `wishlist_session` (retrait de l'espace client 2026-07-31).
+		if (pathname.startsWith(ROUTES.SHOP.FAVORITES)) {
+			return { label: "Mes favoris", href: ROUTES.SHOP.FAVORITES };
 		}
 
 		// Pages paiement

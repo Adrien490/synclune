@@ -26,7 +26,7 @@ function PopoverContent({
 				align={align}
 				sideOffset={sideOffset}
 				className={cn(
-					"bg-popover text-popover-foreground z-50 w-72 max-w-[calc(100vw-2rem)] origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+					"bg-popover text-popover-foreground z-(--z-float) w-72 max-w-[calc(100vw-2rem)] origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
 					"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 					"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 					"motion-safe:data-[state=closed]:zoom-out-95 motion-safe:data-[state=open]:zoom-in-95",

@@ -87,7 +87,7 @@ describe("UploadProgress", () => {
 			// LoaderCircle must be present (not Check icon)
 			container.querySelector('[aria-hidden="true"] + *');
 			// Check icon wrapper should NOT exist at root level
-			const checkIcon = container.querySelector(".text-emerald-600");
+			const checkIcon = container.querySelector(".text-success");
 			expect(checkIcon).toBeNull();
 		});
 
@@ -99,8 +99,8 @@ describe("UploadProgress", () => {
 
 			expect(screen.getByText("Terminé")).toBeTruthy();
 
-			// Check icon wrapper should be present (emerald background)
-			const checkWrapper = document.querySelector(".bg-emerald-500\\/20");
+			// Check icon wrapper should be present (success token background)
+			const checkWrapper = document.querySelector(".bg-success\\/20");
 			expect(checkWrapper).toBeTruthy();
 		});
 
@@ -176,8 +176,8 @@ describe("UploadProgress", () => {
 
 			expect(screen.getByText("OK")).toBeTruthy();
 
-			// Check icon wrapper (emerald background)
-			const checkWrapper = document.querySelector(".bg-emerald-500\\/20");
+			// Check icon wrapper (success token background)
+			const checkWrapper = document.querySelector(".bg-success\\/20");
 			expect(checkWrapper).toBeTruthy();
 		});
 
@@ -262,35 +262,23 @@ describe("UploadProgress", () => {
 	// Reduced motion
 	// -------------------------------------------------------------------------
 	describe("reduced motion", () => {
-		it("retire la classe animate-spin du spinner quand useReducedMotion retourne true", () => {
-			mockUseReducedMotion.mockReturnValue(true);
-
+		// La rotation est gatée en CSS (`motion-safe:animate-spin` via la
+		// primitive Spinner), plus par le hook JS `useReducedMotion` : la classe
+		// est toujours présente, c'est la media query qui la neutralise.
+		it("le spinner est gaté motion-safe: (jamais animate-spin nu)", () => {
 			const { container } = render(<UploadProgress progress={50} />);
 
-			// Find the LoaderCircle SVG — lucide icons render as <svg> with aria-hidden
 			const spinnerCandidates = container.querySelectorAll('svg[aria-hidden="true"]');
-			// There should be at least one (the LoaderCircle spinner)
 			expect(spinnerCandidates.length).toBeGreaterThan(0);
 
-			// None of the aria-hidden SVGs should have animate-spin
+			const hasGatedSpin = Array.from(spinnerCandidates).some((el) =>
+				el.classList.contains("motion-safe:animate-spin"),
+			);
+			expect(hasGatedSpin).toBe(true);
+
 			spinnerCandidates.forEach((el) => {
 				expect(el.classList.contains("animate-spin")).toBe(false);
 			});
-		});
-
-		it("conserve la classe animate-spin du spinner quand useReducedMotion retourne false", () => {
-			mockUseReducedMotion.mockReturnValue(false);
-
-			const { container } = render(<UploadProgress progress={50} />);
-
-			const spinnerCandidates = container.querySelectorAll('svg[aria-hidden="true"]');
-			expect(spinnerCandidates.length).toBeGreaterThan(0);
-
-			// At least one spinner should have animate-spin
-			const hasAnimateSpin = Array.from(spinnerCandidates).some((el) =>
-				el.classList.contains("animate-spin"),
-			);
-			expect(hasAnimateSpin).toBe(true);
 		});
 	});
 

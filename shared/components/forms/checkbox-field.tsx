@@ -8,6 +8,8 @@ interface CheckboxFieldProps extends React.ComponentProps<typeof Checkbox> {
 	label?: ReactNode;
 	/** Label accessible pour les lecteurs d'écran (utilisé quand le label visuel contient du HTML complexe) */
 	"aria-label"?: string;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 }
 
 export const CheckboxField = ({
@@ -18,13 +20,19 @@ export const CheckboxField = ({
 	onCheckedChange,
 	className,
 	"aria-label": ariaLabel,
+	description,
 	...props
 }: CheckboxFieldProps) => {
 	const field = useFieldContext<boolean>();
 	const hiddenRef = useRef<HTMLInputElement>(null);
 
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
+
 	return (
-		<Field orientation="vertical" data-invalid={field.state.meta.errors.length > 0}>
+		<Field orientation="vertical" data-invalid={hasError}>
 			<div className="flex items-start gap-3">
 				<Checkbox
 					disabled={disabled}
@@ -40,8 +48,8 @@ export const CheckboxField = ({
 						}
 					}}
 					onBlur={field.handleBlur}
-					aria-invalid={field.state.meta.errors.length > 0}
-					aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+					aria-invalid={hasError}
+					aria-describedby={describedBy}
 					aria-required={required}
 					className={cn("mt-1", className)}
 					{...props}
@@ -64,6 +72,12 @@ export const CheckboxField = ({
 					</FieldLabel>
 				)}
 			</div>
+			{/* Layout horizontal (label à côté) : la description se rend sous le bloc */}
+			{description && (
+				<p id={descId!} className="text-muted-foreground ml-7 text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} className="ml-7" />
 		</Field>
 	);

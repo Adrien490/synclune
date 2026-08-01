@@ -35,6 +35,20 @@ import { describe, expect, it } from "vitest";
 const REPO_ROOT = process.cwd();
 const NEXT_CONFIG_PATH = join(REPO_ROOT, "next.config.ts");
 
+/**
+ * Fonctions cachées qui portent l'identité en ARGUMENT et restent volontairement
+ * en `"use cache"` public (audit « usage correct du cache Next.js » 2026-07-31).
+ *
+ * Toute entrée ajoutée ici doit répondre OUI à : « la valeur retournée serait-elle
+ * publiable telle quelle ? ». L'identité sert à CHOISIR la donnée, pas à la
+ * qualifier de personnelle.
+ */
+const PUBLIC_IDENTITY_SCOPED_CACHES = new Set<string>([
+	// Retourne des `ProductCarouselItem` — du catalogue public. `userId` ne sert
+	// qu'à choisir quels bijoux montrer ; l'historique lui-même n'est pas renvoyé.
+	"fetchPersonalizedRelatedProducts",
+]);
+
 function collectDataFiles(dir: string, acc: string[] = []): string[] {
 	let entries: string[];
 	try {
@@ -143,7 +157,7 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 		}
 	});
 
-	it('toute fonction cachée avec userId/sessionId en paramètre utilise "use cache: private"', () => {
+	it('toute fonction cachée avec userId/sessionId en paramètre est "use cache: private" OU explicitement allowlistée', () => {
 		const offenders: string[] = [];
 		for (const file of dataFiles) {
 			const source = readFileSync(file, "utf-8");
@@ -153,14 +167,42 @@ describe("Cache — scoping et profiles sur modules/ + shared/ + app/", () => {
 			for (const fn of cachedFns) {
 				const [, name, params, privateSuffix] = fn;
 				const carriesIdentity = /\buserId\b|\bsessionId\b/.test(params ?? "");
-				if (carriesIdentity && !privateSuffix) {
-					offenders.push(`${file} -> ${name}(${(params ?? "").trim()})`);
-				}
+				if (!carriesIdentity || privateSuffix) continue;
+				if (PUBLIC_IDENTITY_SCOPED_CACHES.has(name as string)) continue;
+				offenders.push(`${file} -> ${name}(${(params ?? "").trim()})`);
 			}
 		}
 		expect(
 			offenders,
-			`Ces fonctions cachées portent l'identité utilisateur en argument mais utilisent "use cache" public au lieu de "use cache: private" (risque de fuite cross-user) :\n${offenders.join("\n")}`,
+			`Ces fonctions cachées portent l'identité en argument et utilisent "use cache" public sans être allowlistées.\n` +
+				`Ce n'est PAS un risque de fuite (les arguments sont la clé de cache), c'est une décision de confidentialité : ` +
+				`la donnée retournée est-elle personnelle ? Si oui → "use cache: private". Si non (catalogue, agrégat, compteur) → ` +
+				`ajoute la fonction à PUBLIC_IDENTITY_SCOPED_CACHES avec sa justification.\n${offenders.join("\n")}`,
+		).toEqual([]);
+	});
+
+	it("l'allowlist publique ne contient que des fonctions réellement `use cache` public (contre-épreuve)", () => {
+		// Sans ça, une entrée d'allowlist devenue obsolète (fonction repassée en
+		// `private`, ou supprimée) resterait à couvrir un cas qui n'existe plus, et
+		// masquerait silencieusement la prochaine vraie violation portant le même nom.
+		const publicIdentityFns = new Set<string>();
+		for (const file of dataFiles) {
+			const source = readFileSync(file, "utf-8");
+			for (const fn of source.matchAll(
+				/async function (\w+)\s*\(([^)]*)\)[^{]*\{\s*"use cache(: private)?";/g,
+			)) {
+				const [, name, params, privateSuffix] = fn;
+				if (privateSuffix) continue;
+				if (!/\buserId\b|\bsessionId\b/.test(params ?? "")) continue;
+				publicIdentityFns.add(name as string);
+			}
+		}
+
+		const stale = [...PUBLIC_IDENTITY_SCOPED_CACHES].filter((name) => !publicIdentityFns.has(name));
+
+		expect(
+			stale,
+			`Entrées d'allowlist obsolètes (ces fonctions ne sont plus des caches publics avec identité en argument) : ${stale.join(", ")}`,
 		).toEqual([]);
 	});
 

@@ -249,32 +249,25 @@ describe("useActiveNavbarItem", () => {
 			expect(scope?.label).toBe("Les collections");
 		});
 
-		it("returns 'Mon compte' scope for /commandes", () => {
-			setPath("/commandes/ORD-001");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
-		});
-
-		it("returns 'Mon compte' scope for /favoris", () => {
+		/**
+		 * Le scope « Mon compte » couvrait `/commandes`, `/favoris` et `/parametres`.
+		 * Deux de ces trois racines ont disparu avec l'espace client (2026-07-31) ;
+		 * `/favoris` survit seul et prend son propre libellé — la wishlist est portée
+		 * par le cookie `wishlist_session`, pas par un compte.
+		 */
+		it("returns 'Mes favoris' scope for /favoris", () => {
 			setPath("/favoris");
 			const { result } = renderHook(() => useActiveNavbarItem());
 			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
+			expect(scope?.label).toBe("Mes favoris");
 		});
 
-		it("returns 'Mon compte' scope for /adresses", () => {
-			setPath("/adresses");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
-		});
-
-		it("returns 'Mon compte' scope for /parametres", () => {
-			setPath("/parametres");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
+		it("returns no scope for the removed account roots", () => {
+			for (const path of ["/commandes/ORD-001", "/parametres"]) {
+				setPath(path);
+				const { result } = renderHook(() => useActiveNavbarItem());
+				expect(result.current.getCurrentScope()).toBeNull();
+			}
 		});
 
 		it("returns 'Paiement' scope for /paiement", () => {

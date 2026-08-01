@@ -33,7 +33,7 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		const result = await enforceRateLimit("user:abc", { limit: 10, windowMs: 60000 });
+		const result = await enforceRateLimit("user:abc", { name: "test", limit: 10, windowMs: 60000 });
 
 		expect(result).toEqual({ success: true });
 	});
@@ -54,7 +54,7 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		const result = await enforceRateLimit("user:abc", { limit: 5, windowMs: 60000 });
+		const result = await enforceRateLimit("user:abc", { name: "test", limit: 5, windowMs: 60000 });
 
 		expect(result).toHaveProperty("error");
 
@@ -76,7 +76,11 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		const result = await enforceRateLimit("session:sess-1", { limit: 3, windowMs: 60000 });
+		const result = await enforceRateLimit("session:sess-1", {
+			name: "test",
+			limit: 3,
+			windowMs: 60000,
+		});
 
 		expect(result).toHaveProperty("error");
 		const actionState = (result as { error: { status: ActionStatus; message: string } }).error;
@@ -98,11 +102,11 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		await enforceRateLimit("user:test-id", { limit: 5, windowMs: 30000 });
+		await enforceRateLimit("user:test-id", { name: "test", limit: 5, windowMs: 30000 });
 
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:test-id",
-			{ limit: 5, windowMs: 30000 },
+			{ name: "test", limit: 5, windowMs: 30000 },
 			undefined,
 		);
 	});
@@ -115,7 +119,7 @@ describe("enforceRateLimit", () => {
 			reset: Date.now() + 60000,
 		});
 
-		const config = { limit: 10, windowMs: 120000 };
+		const config = { name: "test", limit: 10, windowMs: 120000 };
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
 		await enforceRateLimit("ip:1.2.3.4", config);
@@ -132,11 +136,11 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		await enforceRateLimit("user:u1", { limit: 10, windowMs: 60000 }, "5.5.5.5");
+		await enforceRateLimit("user:u1", { name: "test", limit: 10, windowMs: 60000 }, "5.5.5.5");
 
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:u1",
-			{ limit: 10, windowMs: 60000 },
+			{ name: "test", limit: 10, windowMs: 60000 },
 			"5.5.5.5",
 		);
 	});
@@ -150,11 +154,11 @@ describe("enforceRateLimit", () => {
 		});
 
 		const { enforceRateLimit } = await import("@/shared/lib/actions/rate-limit");
-		await enforceRateLimit("user:u2", { limit: 10, windowMs: 60000 }, null);
+		await enforceRateLimit("user:u2", { name: "test", limit: 10, windowMs: 60000 }, null);
 
 		expect(mockCheckRateLimit).toHaveBeenCalledWith(
 			"user:u2",
-			{ limit: 10, windowMs: 60000 },
+			{ name: "test", limit: 10, windowMs: 60000 },
 			null,
 		);
 	});

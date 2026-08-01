@@ -110,7 +110,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("lucide-react", () => ({
 	Filter: () => <span data-testid="filter-icon" />,
-	LoaderCircle: () => <span data-testid="loader-icon" />,
+	Loader2Icon: () => <span data-testid="loader-icon" />,
 	X: () => <span data-testid="x-icon" />,
 }));
 

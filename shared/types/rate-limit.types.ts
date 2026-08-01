@@ -4,6 +4,30 @@
 
 export interface RateLimitConfig {
 	/**
+	 * Segment de clé du compteur — OBLIGATOIRE.
+	 *
+	 * La clé du store est `ratelimit:<name>:<identifier>`. Sans ce champ, elle ne
+	 * portait que l'identifiant : toutes les actions partageant un `user:<id>` /
+	 * `ip:<ip>` partageaient **un seul compteur**, si bien que la limite effective
+	 * de chacune était le MINIMUM des limites en présence, avec la fenêtre de la
+	 * première entrée créée. Concrètement, 5 consultations de fiche produit
+	 * (`PRODUCT_COOKIE_ACTION`, 30/min) suffisaient à faire répondre 429 au
+	 * formulaire de connexion (`AUTH_LOGIN`, 5/15 min) sur des identifiants
+	 * pourtant valides — verrouillage de l'unique compte d'administration.
+	 *
+	 * ⚠️ Requis par le type, et non optionnel avec repli : un preset qui l'oublie
+	 * retomberait en silence sur le compteur partagé, soit exactement le défaut
+	 * corrigé. C'est `tsc` qui doit l'imposer, pas une convention.
+	 *
+	 * Deux presets de même `name` partagent délibérément un budget (ex. facture et
+	 * avoir, même profil CPU). Convention : identifiant du const sans `_LIMIT`,
+	 * en kebab-case (`CART_ADD_LIMIT` → `"cart-add"`).
+	 *
+	 * @see docs/KNOWN-ISSUES.md — KI-004 (corrigé le 2026-07-31)
+	 */
+	name: string;
+
+	/**
 	 * Nombre maximum de requêtes autorisées dans la fenêtre
 	 * @default 10
 	 */

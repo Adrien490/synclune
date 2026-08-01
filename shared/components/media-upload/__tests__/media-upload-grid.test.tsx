@@ -378,10 +378,11 @@ describe("MediaUploadGrid", () => {
 
 			fireEvent.click(screen.getByTestId("delete-0"));
 
-			// Extract onRemove from the dialog open call and invoke it
-			const dialogData = mockOpen.mock.calls[0]![0] as { onRemove: () => void };
-			dialogData.onRemove();
-
+			// La garde est évaluée AVANT l'ouverture du dialog : en mode création
+			// (upload immédiat), le dialog supprimait d'abord le blob UploadThing
+			// puis `onRemove` refusait — fichier détruit, URL morte dans le champ.
+			// Le dialog ne doit donc même pas s'ouvrir.
+			expect(mockOpen).not.toHaveBeenCalled();
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
 				"Impossible : une vidéo passerait en première position. Réorganise d'abord.",

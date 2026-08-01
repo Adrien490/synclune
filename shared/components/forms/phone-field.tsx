@@ -17,6 +17,7 @@ interface PhoneFieldProps {
 	optional?: boolean;
 	defaultCountry?: Country;
 	className?: string;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
 	description?: string;
 	/** Label du bouton Entrée sur clavier mobile (done, next, go, search, send) */
 	enterKeyHint?: "done" | "next" | "go" | "search" | "send";
@@ -78,6 +79,9 @@ export const PhoneField = ({
 	const field = useFieldContext<string | undefined>();
 
 	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 
 	return (
 		<Field data-invalid={hasError}>
@@ -101,13 +105,17 @@ export const PhoneField = ({
 				disabled={disabled}
 				inputComponent={CustomInput}
 				aria-invalid={hasError}
-				aria-describedby={hasError ? `${field.name}-error` : undefined}
+				aria-describedby={describedBy}
 				aria-required={required}
 				className={cn("PhoneInput--synclune", className)}
 				numberInputProps={{ enterKeyHint }}
 			/>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
-			{description && <p className="text-muted-foreground mt-1.5 text-xs">{description}</p>}
 		</Field>
 	);
 };

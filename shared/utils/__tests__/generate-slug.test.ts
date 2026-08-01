@@ -76,6 +76,25 @@ describe("generateSlug", () => {
 		expect(result).toBe("bague-4");
 	});
 
+	// Sur un UPDATE, l'enregistrement édité ne compte pas comme collision :
+	// sans `excludeId`, « Or rose » → « Or Rose » retrouvait son PROPRE slug
+	// et retournait « or-rose-2 » — l'URL changeait sans raison.
+	it("keeps the record's own slug on a cosmetic rename (excludeId)", async () => {
+		const prisma = makeMockPrisma({
+			"or-rose": { id: "color-1" },
+		}) as unknown as PrismaClientOrTransaction;
+		const result = await generateSlug(prisma, "color", "Or Rose", { excludeId: "color-1" });
+		expect(result).toBe("or-rose");
+	});
+
+	it("still suffixes when the colliding slug belongs to ANOTHER record", async () => {
+		const prisma = makeMockPrisma({
+			"or-rose": { id: "color-OTHER" },
+		}) as unknown as PrismaClientOrTransaction;
+		const result = await generateSlug(prisma, "color", "Or Rose", { excludeId: "color-1" });
+		expect(result).toBe("or-rose-2");
+	});
+
 	it("truncates slug exceeding max length", async () => {
 		const longName = "a".repeat(SLUG_MAX_LENGTH + 20);
 		const prisma = makeMockPrisma() as unknown as PrismaClientOrTransaction;

@@ -69,7 +69,7 @@ export const toastIcons = {
 	warning: (
 		<div className="relative" aria-hidden="true">
 			<svg
-				className="text-secondary size-[18px]"
+				className="text-warning size-[18px]"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"
@@ -83,7 +83,7 @@ export const toastIcons = {
 				<circle cx="12" cy="12" r="1.5" fill="none" stroke="currentColor" />
 			</svg>
 			<svg
-				className="text-secondary animate-sparkle-pulse absolute -top-0.5 -right-0.5 size-1.5"
+				className="text-warning animate-sparkle-pulse absolute -top-0.5 -right-0.5 size-1.5"
 				style={{ animationDelay: "1s" }}
 				viewBox="0 0 24 24"
 				fill="currentColor"
@@ -104,7 +104,7 @@ export const toastIcons = {
 				<circle cx="12" cy="12" r="8" />
 			</svg>
 			<svg
-				className="text-primary absolute inset-0 size-full animate-spin"
+				className="text-primary absolute inset-0 size-full motion-safe:animate-spin"
 				viewBox="0 0 24 24"
 				fill="none"
 				strokeWidth="1.5"

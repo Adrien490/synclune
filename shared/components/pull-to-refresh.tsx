@@ -208,7 +208,7 @@ export function PullToRefresh() {
 					className={cn(
 						"size-4 transition-colors",
 						hasReachedThreshold ? "text-primary" : "text-muted-foreground",
-						isRefreshing && !prefersReducedMotion && "animate-spin",
+						isRefreshing && !prefersReducedMotion && "motion-safe:animate-spin",
 					)}
 					style={
 						!isRefreshing && !prefersReducedMotion

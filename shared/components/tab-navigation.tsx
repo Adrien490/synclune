@@ -37,6 +37,14 @@ const PILL_BASE =
  * - Desktop : tous les onglets en ligne
  * - Mobile : N premiers onglets + bouton "Plus" ouvrant un drawer
  */
+const getPillClasses = (isActive: boolean) =>
+	cn(
+		PILL_BASE,
+		isActive
+			? "bg-primary text-primary-foreground shadow-sm"
+			: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm",
+	);
+
 export function TabNavigation({
 	items,
 	activeValue,
@@ -59,14 +67,6 @@ export function TabNavigation({
 
 	// Trouver l'item actif s'il est dans l'overflow
 	const activeOverflowItem = overflowItems.find((item) => item.value === activeValue);
-
-	const getPillClasses = (isActive: boolean) =>
-		cn(
-			PILL_BASE,
-			isActive
-				? "bg-primary text-primary-foreground shadow-sm"
-				: "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground hover:shadow-sm",
-		);
 
 	return (
 		<nav aria-label={ariaLabel} className="w-full">

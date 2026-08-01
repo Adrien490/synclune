@@ -146,6 +146,16 @@ export function MediaUploadGrid({
 
 	// Open the delete dialog
 	const handleOpenDeleteDialog = (index: number) => {
+		// Garde évaluée AVANT d'ouvrir le dialog : en mode création (upload
+		// immédiat), le dialog supprimait d'abord le blob UploadThing puis
+		// `onRemove` refusait « une vidéo passerait en première position » —
+		// fichier détruit, URL morte encore dans le champ de formulaire.
+		const wouldLeaveVideoFirst = media.filter((_, i) => i !== index)[0]?.mediaType === "VIDEO";
+		if (wouldLeaveVideoFirst) {
+			triggerHaptic("error");
+			toast.error("Impossible : une vidéo passerait en première position. Réorganise d'abord.");
+			return;
+		}
 		deleteDialog.open({
 			index,
 			url: media[index]!.url,
@@ -216,7 +226,7 @@ export function MediaUploadGrid({
 		const target = media[index];
 		if (!target || target.mediaType === "VIDEO") {
 			triggerHaptic("error");
-			toast.error("Une vidéo ne peut pas être l'image principale.");
+			toast.error(PRIMARY_MEDIA_MUST_BE_IMAGE_MESSAGE);
 			return;
 		}
 		const newMedia = arrayMove(media, index, 0);

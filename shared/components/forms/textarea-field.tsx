@@ -12,6 +12,8 @@ interface TextareaFieldProps extends React.ComponentProps<"textarea"> {
 	optional?: boolean;
 	/** Afficher un compteur de caractères (nécessite maxLength) */
 	showCounter?: boolean;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ export const TextareaField = ({
 	required,
 	optional,
 	showCounter,
+	description,
 	className,
 	// Props mobile PWA
 	enterKeyHint,
@@ -44,6 +47,9 @@ export const TextareaField = ({
 }: TextareaFieldProps) => {
 	const field = useFieldContext<string>();
 	const hasErrors = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasErrors ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 	const showFooter = hasErrors || (showCounter && maxLength);
 
 	return (
@@ -63,7 +69,7 @@ export const TextareaField = ({
 				onBlur={field.handleBlur}
 				rows={rows}
 				aria-invalid={hasErrors}
-				aria-describedby={hasErrors ? `${field.name}-error` : undefined}
+				aria-describedby={describedBy}
 				aria-required={required}
 				// Props mobile PWA
 				enterKeyHint={enterKeyHint}
@@ -75,6 +81,11 @@ export const TextareaField = ({
 				className={cn("border-input max-h-60 overflow-y-auto", className)}
 				{...rest}
 			/>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			{showFooter ? (
 				<div className="text-muted-foreground flex justify-between text-xs">
 					<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />

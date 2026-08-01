@@ -353,7 +353,7 @@ function CarouselPrevious({
 				"text-primary-foreground",
 				"hover:bg-primary/90 motion-safe:hover:scale-105",
 				// Focus visible (keyboard accessibility)
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
+				"focus-ring",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
@@ -402,7 +402,7 @@ function CarouselNext({
 				"text-primary-foreground",
 				"hover:bg-primary/90 motion-safe:hover:scale-105",
 				// Focus visible (keyboard accessibility)
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
+				"focus-ring",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions

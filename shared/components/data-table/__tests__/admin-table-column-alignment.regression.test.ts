@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
  * en-tête, et l'association `th`/`td` rompue (WCAG 1.3.1 — annonces lecteur
  * d'écran fausses).
  *
- * Cette garde vérifie statiquement, sur les 10 admin data-tables, que le nombre
+ * Cette garde vérifie statiquement, sur les 9 admin data-tables, que le nombre
  * de `<TableHead>` du header égale le nombre de `<TableCell>` d'une ligne de
  * corps. Elle attrape aussi bien l'oubli inverse (ajouter une colonne sans sa
  * cellule) que la réintroduction du défaut d'origine.
@@ -62,8 +62,8 @@ describe("Admin data-tables — alignement colonnes header/corps", () => {
 
 	const dataTables = findDataTables();
 
-	it("découvre les 10 admin data-tables", () => {
-		expect(dataTables.length).toBe(10);
+	it("découvre les 9 admin data-tables", () => {
+		expect(dataTables.length).toBe(9);
 	});
 
 	it.each(dataTables.map((path) => [relative(process.cwd(), path), path] as const))(

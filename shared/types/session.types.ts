@@ -7,26 +7,10 @@
  * Pour le type Session complet, importer depuis @/modules/auth/lib/auth
  */
 
-/**
- * Représentation minimale d'un utilisateur pour la navigation
- */
-type MinimalUser = {
-	id: string;
-	email: string;
-	name: string | null;
-};
-
-/**
- * Représentation minimale de session pour les composants partagés
- * Compatible avec le type Session de Better Auth
- */
-export type MinimalSession = {
-	user: MinimalUser;
-	session: {
-		id: string;
-		userId: string;
-	};
-};
+// `MinimalSession` / `MinimalUser` ont disparu avec le paramètre `session` de
+// `getMobileNavItems()` : le menu mobile n'a plus d'entrée dépendant de la session
+// (retrait de l'espace client 2026-07-31). Seul `NavbarSessionData` subsiste, pour
+// le menu d'administration.
 
 /**
  * Données de session restreintes pour la navbar

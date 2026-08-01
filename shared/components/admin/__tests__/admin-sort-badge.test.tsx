@@ -99,6 +99,24 @@ describe("AdminSortBadge", () => {
 		expect(url).not.toContain("sortBy");
 	});
 
+	// P2 (audit 2026-08-01) : conserver un curseur en réinitialisant le tri fait
+	// se repositionner Prisma sur cet id dans le NOUVEL orderBy + skip:1 → tranche
+	// arbitraire. Même règle que use-url-param / use-filter / sort-drawer.
+	it("purge cursor et direction en réinitialisant le tri", () => {
+		mockSearchParams.set("sortBy", "name-descending");
+		mockSearchParams.set("cursor", "tz4a98xxat96iws9zmbrgj3a");
+		mockSearchParams.set("direction", "forward");
+		mockSearchParams.set("filter_status", "SHIPPED");
+		mockUseActiveListControls.mockReturnValue({ hasActiveSort: true });
+		render(<AdminSortBadge sortLabels={SORT_LABELS} defaultSort="name-ascending" />);
+		fireEvent.click(screen.getByLabelText("Effacer le tri"));
+		const url = mockRouterPush.mock.calls[0]?.[0] as string;
+		expect(url).not.toContain("cursor");
+		expect(url).not.toContain("direction");
+		// Les filtres, eux, survivent au reset du tri.
+		expect(url).toContain("filter_status=SHIPPED");
+	});
+
 	it("falls back to defaultSort label when sortBy is not in labels map", () => {
 		mockSearchParams.set("sortBy", "unknown-sort");
 		mockUseActiveListControls.mockReturnValue({ hasActiveSort: true });

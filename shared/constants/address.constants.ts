@@ -1,11 +1,24 @@
 /**
  * Constantes de validation pour les adresses
- * Partagees entre shared/schemas et modules/addresses
+ * Partagees entre le schema checkout (`modules/payments/schemas/checkout.schema.ts`)
+ * et les schemas commande (`modules/orders/schemas/order.schemas.ts`)
  */
 
 export const ADDRESS_CONSTANTS = {
 	MIN_NAME_LENGTH: 2,
 	MAX_NAME_LENGTH: 50,
+	/**
+	 * Nom complet du checkout (champ unique « Full Name », recommandation Baymard),
+	 * splitté par `parseFullName` en prénom/nom puis RECOMPOSÉ dans
+	 * `Order.customerName` — colonne `VarChar(100)`.
+	 *
+	 * ⚠️ Vaut 100, et NON `MAX_NAME_LENGTH * 2 + 1`. À 101 (prénom 50 + espace + nom
+	 * 50) le refine par partie passait et l'INSERT échouait en `22001` dans la
+	 * transaction de création de commande : le client voyait « Une erreur est
+	 * survenue » sans savoir quoi corriger. La borne de la colonne recomposée prime
+	 * sur la somme des parties.
+	 */
+	MAX_FULL_NAME_LENGTH: 100,
 	MIN_ADDRESS_LENGTH: 5,
 	// Aligned with Prisma `Address.address1/address2 VarChar(255)` and
 	// `Order.shippingAddress1/billingAddress1 VarChar(255)` snapshot fields.
@@ -13,6 +26,8 @@ export const ADDRESS_CONSTANTS = {
 	MIN_CITY_LENGTH: 2,
 	// Aligned with Prisma `Address.city VarChar(100)` and `Order.shippingCity VarChar(100)`.
 	MAX_CITY_LENGTH: 100,
+	// Aligned with Prisma `Order.shippingPostalCode/billingPostalCode VarChar(10)`.
+	MAX_POSTAL_CODE_LENGTH: 10,
 	POSTAL_CODE_REGEX: /^[A-Za-z0-9]{2,4}[\s-]?[A-Za-z0-9]{2,4}$/,
 	DEFAULT_COUNTRY: "FR",
 } as const;

@@ -42,6 +42,7 @@ export function CounterBadge({ count, max, label, icon: Icon, className }: Count
 
 	return (
 		<Badge
+			data-slot="counter-badge"
 			className={cn(counterBadgeVariants({ status: getStatus(percentage) }), className)}
 			role="status"
 			aria-live="polite"

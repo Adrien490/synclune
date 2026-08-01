@@ -1,141 +1,61 @@
 import { describe, it, expect } from "vitest";
-import { baseMediaSchema, imageMediaSchema, nullableImageMediaSchema } from "../media.schema";
-import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
+import { blurDataUrlSchema, mediaDimensionSchema } from "../media.schema";
 
-// utfs.io is in UPLOADTHING_DOMAINS, which is the default for isAllowedMediaDomain
-const VALID_URL = "https://utfs.io/f/image123.jpg";
-const INVALID_DOMAIN_URL = "https://evil.com/image.jpg";
+/**
+ * Ce fichier couvrait `baseMediaSchema` / `imageMediaSchema` /
+ * `nullableImageMediaSchema`, retirés (audit Zod 2026-07-31) : ils n'avaient aucun
+ * consommateur en production et dupliquaient `product-media.schemas.ts`, seul
+ * schéma de média réellement branché. Restent les deux BRIQUES que ce dernier
+ * importe — ce sont elles qui méritent une couverture, puisqu'un défaut y remonte
+ * jusqu'à `next/image`.
+ */
 
-describe("baseMediaSchema", () => {
-	it("should accept a valid media object with an allowed URL", () => {
-		const result = baseMediaSchema.safeParse({ url: VALID_URL });
-		expect(result.success).toBe(true);
+describe("blurDataUrlSchema", () => {
+	it("accepte une data URL d'image", () => {
+		expect(blurDataUrlSchema.safeParse("data:image/png;base64,iVBORw0KGgo=").success).toBe(true);
+		expect(blurDataUrlSchema.safeParse("data:image/webp;base64,UklGRg==").success).toBe(true);
 	});
 
-	it("should accept a valid media object with optional blurDataUrl and altText", () => {
-		const result = baseMediaSchema.safeParse({
-			url: VALID_URL,
-			blurDataUrl: "data:image/jpeg;base64,/9j/...",
-			altText: "A beautiful necklace",
-		});
-		expect(result.success).toBe(true);
+	it("rejette une URL distante — la valeur part dans `blurDataURL` de next/image", () => {
+		expect(blurDataUrlSchema.safeParse("https://utfs.io/f/blur.png").success).toBe(false);
 	});
 
-	it("should accept null blurDataUrl and altText", () => {
-		const result = baseMediaSchema.safeParse({
-			url: VALID_URL,
-			blurDataUrl: null,
-			altText: null,
-		});
-		expect(result.success).toBe(true);
+	it("rejette une data URL non-image", () => {
+		expect(blurDataUrlSchema.safeParse("data:text/html;base64,PHNjcmlwdD4=").success).toBe(false);
 	});
 
-	it("should reject an invalid URL format", () => {
-		const result = baseMediaSchema.safeParse({ url: "not-a-url" });
-		expect(result.success).toBe(false);
+	it("rejette une chaîne vide", () => {
+		expect(blurDataUrlSchema.safeParse("").success).toBe(false);
 	});
 
-	it("should reject a URL from a non-allowed domain", () => {
-		const result = baseMediaSchema.safeParse({ url: INVALID_DOMAIN_URL });
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain("domaine autorisé");
-		}
-	});
-
-	it("should reject altText exceeding the shared limit", () => {
-		const result = baseMediaSchema.safeParse({
-			url: VALID_URL,
-			altText: "a".repeat(TEXT_LIMITS.MEDIA_ALT_TEXT.max + 1),
-		});
-		expect(result.success).toBe(false);
-	});
-
-	// Audit média M3 : le dialogue d'édition, ce schéma et `imageSchema` (produits)
-	// bloquaient à 250 / 255 / 200 respectivement. Un alt text de 220 caractères
-	// était « enregistré » dans le dialogue puis faisait échouer la sauvegarde du
-	// produit. Cette borne doit rester dérivée de la SSOT.
-	it("accepts altText exactly at the shared limit (SSOT alignment)", () => {
-		const result = baseMediaSchema.safeParse({
-			url: VALID_URL,
-			altText: "a".repeat(TEXT_LIMITS.MEDIA_ALT_TEXT.max),
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject when url is missing", () => {
-		const result = baseMediaSchema.safeParse({});
-		expect(result.success).toBe(false);
+	it("borne la longueur à 10 000 caractères", () => {
+		const prefix = "data:image/png;base64,";
+		expect(blurDataUrlSchema.safeParse(prefix + "A".repeat(10_000 - prefix.length)).success).toBe(
+			true,
+		);
+		expect(blurDataUrlSchema.safeParse(prefix + "A".repeat(10_001 - prefix.length)).success).toBe(
+			false,
+		);
 	});
 });
 
-describe("imageMediaSchema", () => {
-	it("should accept a valid image media object", () => {
-		const result = imageMediaSchema.safeParse({
-			url: VALID_URL,
-			thumbnailUrl: "https://utfs.io/f/thumb123.jpg",
-			mediaType: "IMAGE",
-		});
-		expect(result.success).toBe(true);
+describe("mediaDimensionSchema", () => {
+	it("accepte une dimension entière positive", () => {
+		expect(mediaDimensionSchema.safeParse(1).success).toBe(true);
+		expect(mediaDimensionSchema.safeParse(1920).success).toBe(true);
 	});
 
-	it("should accept mediaType VIDEO", () => {
-		const result = imageMediaSchema.safeParse({
-			url: VALID_URL,
-			mediaType: "VIDEO",
-		});
-		expect(result.success).toBe(true);
+	it("rejette zéro et les négatifs", () => {
+		expect(mediaDimensionSchema.safeParse(0).success).toBe(false);
+		expect(mediaDimensionSchema.safeParse(-1).success).toBe(false);
 	});
 
-	it("should accept when thumbnailUrl is undefined", () => {
-		const result = imageMediaSchema.safeParse({ url: VALID_URL });
-		expect(result.success).toBe(true);
+	it("rejette un décimal", () => {
+		expect(mediaDimensionSchema.safeParse(1920.5).success).toBe(false);
 	});
 
-	it("should accept when thumbnailUrl is null", () => {
-		const result = imageMediaSchema.safeParse({
-			url: VALID_URL,
-			thumbnailUrl: null,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject a thumbnailUrl from a non-allowed domain", () => {
-		const result = imageMediaSchema.safeParse({
-			url: VALID_URL,
-			thumbnailUrl: INVALID_DOMAIN_URL,
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain("domaine autorisé");
-		}
-	});
-
-	it("should reject an unknown mediaType", () => {
-		const result = imageMediaSchema.safeParse({
-			url: VALID_URL,
-			mediaType: "GIF",
-		});
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("nullableImageMediaSchema", () => {
-	it("should accept a valid image media object", () => {
-		const result = nullableImageMediaSchema.safeParse({ url: VALID_URL });
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept null (allows deletion)", () => {
-		const result = nullableImageMediaSchema.safeParse(null);
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data).toBeNull();
-		}
-	});
-
-	it("should reject undefined", () => {
-		const result = nullableImageMediaSchema.safeParse(undefined);
-		expect(result.success).toBe(false);
+	it("borne à 50 000 px — cohérence avec la garde image-bomb", () => {
+		expect(mediaDimensionSchema.safeParse(50_000).success).toBe(true);
+		expect(mediaDimensionSchema.safeParse(50_001).success).toBe(false);
 	});
 });

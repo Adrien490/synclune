@@ -31,26 +31,6 @@ export const PAGINATION_DEFAULTS = {
 	COMPACT: 5,
 } as const;
 
-/**
- * Limites spécifiques à certaines pages
- * Ces valeurs sont utilisées pour des listes spéciales (carousels, sitemaps, etc.)
- */
-const PAGE_SPECIFIC_LIMITS = {
-	/** Limite pour la liste des produits admin (affichage dense) */
-	ADMIN_PRODUCTS: 100,
-	/** Limites pour les carousels de la homepage */
-	HOMEPAGE_CAROUSEL: {
-		/** Produits mis en avant */
-		FEATURED: 4,
-		/** Nouveautés */
-		NEW: 8,
-		/** Meilleures ventes */
-		BESTSELLERS: 6,
-	},
-	/** Limite pour la génération du sitemap */
-	SITEMAP: 200,
-} as const;
-
 // ============================================================================
 // CURSOR VALIDATION
 // ============================================================================
@@ -85,12 +65,13 @@ export const CURSOR_MAX_LENGTH = 40;
  * Schema Zod pour valider un cursor (id opaque : cuid2 Prisma, id Better Auth, …)
  * Utilisable dans tous les schemas de modules
  */
-export const cursorSchema = z
+export const cursorValueSchema = z
 	.string()
 	.regex(new RegExp(`^[A-Za-z0-9]{${CURSOR_MIN_LENGTH},${CURSOR_MAX_LENGTH}}$`), {
 		message: "Cursor invalide",
-	})
-	.optional();
+	});
+
+export const cursorSchema = cursorValueSchema.optional();
 
 /**
  * Schema Zod pour la direction de pagination

@@ -29,7 +29,8 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { mediaBetween } from "@/shared/constants/breakpoints";
-import { Filter, LoaderCircle, X } from "lucide-react";
+import { Filter, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
@@ -265,7 +266,7 @@ export function FilterSheetWrapper({
 						className="h-11 w-full text-base sm:h-10 sm:text-sm"
 						data-vaul-no-drag
 					>
-						{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
+						{isPending && <Spinner presentational />}
 						{applyButtonText}
 						<Kbd className="text-muted-foreground/60 text-2xs ml-1.5 hidden font-normal lg:inline">
 							⌘↵

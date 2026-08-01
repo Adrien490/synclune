@@ -110,14 +110,14 @@ export function OfflineQueueBanner({
 				role="status"
 				aria-live="polite"
 				className={cn(
-					"flex flex-col gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 sm:flex-row sm:items-center sm:justify-between",
+					"border-warning/40 bg-warning/5 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between",
 					className,
 				)}
 			>
 				<div className="flex items-start gap-2 sm:items-center">
-					<CloudOff className="mt-0.5 size-5 shrink-0 text-amber-600 sm:mt-0" aria-hidden="true" />
+					<CloudOff className="text-warning mt-0.5 size-5 shrink-0 sm:mt-0" aria-hidden="true" />
 					<div className="min-w-0">
-						<p className="text-sm font-medium text-amber-700">
+						<p className="text-warning text-sm font-medium">
 							{queuedCount} fichier{queuedCount > 1 ? "s" : ""} en attente de connexion
 							{queuedBytes !== undefined && queuedBytes > 0 && (
 								<span className="font-normal"> · {formatBytesShort(queuedBytes)}</span>

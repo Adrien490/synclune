@@ -42,7 +42,7 @@ const itemVariants = cva(
 		// Container query scope: children can adapt to item's own width (@md:, @lg:, ...)
 		"@container/item",
 		"transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out",
-		"outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+		"focus-ring",
 		// Mobile touch: disable 300ms tap delay + iOS tap highlight (we provide our own feedback)
 		"touch-manipulation [-webkit-tap-highlight-color:transparent]",
 		// Desktop hover (existing behaviour preserved for asChild <a>)
@@ -59,7 +59,6 @@ const itemVariants = cva(
 			variant: {
 				default: "bg-transparent",
 				outline: "border-border",
-				muted: "bg-muted/50",
 			},
 			size: {
 				default: "p-4 gap-4 ",

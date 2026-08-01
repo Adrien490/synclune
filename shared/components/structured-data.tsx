@@ -19,16 +19,17 @@ interface StructuredDataProps {
  * Consolidates all JSON-LD schemas into a single @graph script.
  * Sync component — data must be passed as props (no Suspense around <script> tags).
  */
-export function StructuredData({ includeHomepageSchemas, featuredProducts }: StructuredDataProps) {
-	const schemas = [
-		getOrganizationSchema(),
-		getWebSiteSchema(),
-		getLocalBusinessSchema(),
-		getFounderSchema(),
-	];
+// Remove @context from each schema for @graph format
+const BASE_GRAPH_SCHEMAS: Record<string, unknown>[] = [
+	getOrganizationSchema(),
+	getWebSiteSchema(),
+	getLocalBusinessSchema(),
+	getFounderSchema(),
+].map(({ "@context": _, ...rest }) => rest);
 
-	// Remove @context from each schema for @graph format
-	const graphSchemas: Record<string, unknown>[] = schemas.map(({ "@context": _, ...rest }) => rest);
+export function StructuredData({ includeHomepageSchemas, featuredProducts }: StructuredDataProps) {
+	// Copie par rendu : le tableau est muté (push) selon les props.
+	const graphSchemas: Record<string, unknown>[] = [...BASE_GRAPH_SCHEMAS];
 
 	if (includeHomepageSchemas) {
 		// BreadcrumbList for homepage

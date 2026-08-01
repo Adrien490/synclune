@@ -63,7 +63,12 @@ describe("@regression webhook-global-ip-limit-bypass — exemption du plafond tr
 		// L'exemption ne doit pas transformer l'endpoint en passe-droit : le
 		// garde-fou anti-CPU-drain reste la limite par action.
 		const ip = "10.0.0.151";
-		const smallConfig = { limit: 3, windowMs: 60_000, skipGlobalIpLimit: true };
+		const smallConfig = {
+			name: "stripe-webhook-small",
+			limit: 3,
+			windowMs: 60_000,
+			skipGlobalIpLimit: true,
+		};
 
 		const allowed = [];
 		for (let i = 0; i < 3; i++) {
@@ -81,7 +86,9 @@ describe("@regression webhook-global-ip-limit-bypass — exemption du plafond tr
 		const ip = "10.0.0.152";
 		const results = [];
 		for (let i = 0; i < 105; i++) {
-			results.push(await checkRateLimit(`some-action:${ip}`, { limit: 1000 }, ip));
+			results.push(
+				await checkRateLimit(`some-action:${ip}`, { name: "some-action", limit: 1000 }, ip),
+			);
 		}
 
 		expect(results[99]!.success).toBe(true);

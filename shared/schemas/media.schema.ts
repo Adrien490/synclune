@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
-import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 
 /**
  * Longueur maximale d'un placeholder blur.
@@ -34,41 +32,15 @@ export const blurDataUrlSchema = z
 export const mediaDimensionSchema = z.number().int().positive().max(50_000);
 
 /**
- * Schema de base pour un media (image ou video)
- * Contient les champs communs a tous les types de medias
+ * ⚠️ Les schémas de média COMPOSÉS (`baseMediaSchema`, `imageMediaSchema`,
+ * `nullableImageMediaSchema`) ont été retirés (audit Zod 2026-07-31) : zéro
+ * consommateur en production, alors qu'ils dupliquaient intégralement
+ * `modules/products/schemas/product-media.schemas.ts` — le seul réellement branché
+ * (products + skus) — avec des nuances divergentes (`altText` nullable ici,
+ * simplement optional là-bas). Deux SSOT concurrentes dont une morte, et c'est la
+ * morte qui revendiquait le titre en commentaire.
+ *
+ * Ce fichier ne garde donc que les BRIQUES effectivement partagées ci-dessus
+ * (`blurDataUrlSchema`, `mediaDimensionSchema`), consommées par
+ * `product-media.schemas.ts`. Un futur schéma de média composé s'ajoute là-bas.
  */
-export const baseMediaSchema = z.object({
-	url: z.url({ message: "L'URL du media doit être valide" }).refine(isAllowedMediaDomain, {
-		message: "L'URL du media doit provenir d'un domaine autorisé",
-	}),
-	blurDataUrl: blurDataUrlSchema.optional().nullable(),
-	// Même SSOT que `modules/products/schemas/product-media.schemas.ts` et le
-	// dialogue d'édition — audit média M3 (la colonne DB tolère 255, la règle
-	// métier s'arrête à 200).
-	altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional().nullable(),
-});
-
-/**
- * Schema complet pour un media avec miniature et type
- * Utilise pour les images/videos de produits et SKUs
- */
-export const imageMediaSchema = baseMediaSchema.extend({
-	thumbnailUrl: z
-		.url()
-		.refine((url) => !url || isAllowedMediaDomain(url), {
-			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
-		})
-		.optional()
-		.nullable(),
-	mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
-	width: mediaDimensionSchema.optional().nullable(),
-	height: mediaDimensionSchema.optional().nullable(),
-});
-
-/**
- * Version nullable du schema image (pour permettre la suppression)
- */
-export const nullableImageMediaSchema = imageMediaSchema.nullable();
-
-type BaseMedia = z.infer<typeof baseMediaSchema>;
-type ImageMedia = z.infer<typeof imageMediaSchema>;

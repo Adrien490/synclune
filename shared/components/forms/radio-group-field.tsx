@@ -16,6 +16,8 @@ interface RadioGroupFieldProps {
 	label?: string;
 	/** Accessible label fallback when no visible label is provided */
 	"aria-label"?: string;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 	required?: boolean;
 	disabled?: boolean;
 	onValueChangeCallback?: (value: string) => void;
@@ -25,6 +27,7 @@ export const RadioGroupField = ({
 	options,
 	label,
 	"aria-label": ariaLabel,
+	description,
 	required,
 	disabled,
 	onValueChangeCallback,
@@ -33,6 +36,8 @@ export const RadioGroupField = ({
 	const labelId = `${field.name}-label`;
 	const errorId = `${field.name}-error`;
 	const hasErrors = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const describedBy = [descId, hasErrors ? errorId : null].filter(Boolean).join(" ") || undefined;
 
 	return (
 		<FieldSet data-invalid={hasErrors}>
@@ -50,9 +55,10 @@ export const RadioGroupField = ({
 				}}
 				className="flex flex-wrap gap-4"
 				aria-invalid={hasErrors}
+				aria-required={required}
 				aria-label={label ? undefined : ariaLabel}
 				aria-labelledby={label ? labelId : undefined}
-				aria-describedby={hasErrors ? errorId : undefined}
+				aria-describedby={describedBy}
 			>
 				{options.map((option) => {
 					const optionId = `${field.name}-${option.value}`;
@@ -71,6 +77,11 @@ export const RadioGroupField = ({
 					);
 				})}
 			</RadioGroup>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={errorId} errors={field.state.meta.errors} />
 		</FieldSet>
 	);

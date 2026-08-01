@@ -145,7 +145,7 @@ interface BadgeBump {
 interface BadgeCountsState {
 	wishlistCount: number;
 	cartCount: number;
-	wishlistBump: BadgeBump | null;
+	// Pas de `wishlistBump` : le badge favoris est un point (dot), sans flash "+N"
 	cartBump: BadgeBump | null;
 }
 

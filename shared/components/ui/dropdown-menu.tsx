@@ -30,7 +30,7 @@ function DropdownMenuContent({
 				className={cn(
 					// Base styles
 					"bg-popover text-popover-foreground",
-					"z-50 min-w-[8rem] overflow-x-hidden overflow-y-auto",
+					"z-(--z-float) min-w-[8rem] overflow-x-hidden overflow-y-auto",
 					"max-h-(--radix-dropdown-menu-content-available-height)",
 					"origin-(--radix-dropdown-menu-content-transform-origin)",
 					"rounded-md border p-1 shadow-md",
@@ -80,8 +80,6 @@ function DropdownMenuItem({
 				"data-[variant=destructive]:focus:bg-destructive/10",
 				"data-[variant=destructive]:focus:text-destructive",
 				"data-[variant=destructive]:*:[svg]:!text-destructive",
-				"=destructive]:text-destructive",
-				"=destructive]:focus:bg-destructive/20",
 				// SVG styling
 				"[&_svg:not([class*='text-'])]:text-muted-foreground",
 				"[&_svg]:pointer-events-none [&_svg]:shrink-0",

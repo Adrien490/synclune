@@ -33,6 +33,7 @@ export function MediaTypeBadge({ type, size, className }: MediaTypeBadgeProps) {
 
 	return (
 		<div
+			data-slot="media-type-badge"
 			className={cn(mediaTypeBadgeVariants({ size }), className)}
 			aria-label="Type de média : vidéo"
 		>

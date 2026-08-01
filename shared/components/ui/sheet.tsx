@@ -7,7 +7,7 @@ import { Drawer as SheetPrimitive } from "vaul";
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
-import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
+import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 
 type SheetDirection = "top" | "right" | "bottom" | "left";
 
@@ -167,7 +167,7 @@ function SheetOverlay({
 		<SheetPrimitive.Overlay
 			data-slot="sheet-overlay"
 			className={cn(
-				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-md backdrop-saturate-150",
+				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 				className,
@@ -176,16 +176,6 @@ function SheetOverlay({
 			{...props}
 		/>
 	);
-}
-
-/**
- * Rendered inside SheetPortal so it mounts only while the sheet is open
- * (Vaul/Radix Portal does not render children when open=false). Effect
- * cleanup runs on close → overlay-stack stays consistent.
- */
-function OverlayStackRegister({ enabled }: { enabled: boolean }) {
-	useRegisterOverlay(enabled);
-	return null;
 }
 
 function SheetContent({
@@ -244,7 +234,7 @@ function SheetContent({
 				{showCloseButton && (
 					<SheetPrimitive.Close
 						aria-label="Fermer le panneau"
-						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none"
+						className="focus-ring data-[state=open]:bg-secondary absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-50 inline-flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>

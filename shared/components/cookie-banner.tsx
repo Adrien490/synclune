@@ -69,8 +69,8 @@ export function CookieBanner() {
 						</h2>
 
 						<p id="cookie-description" className="text-muted-foreground text-sm leading-relaxed">
-							Nous utilisons des cookies optionnels à des fins de statistiques de navigation pour
-							améliorer votre expérience.
+							Nous utilisons des traceurs optionnels pour rejouer de façon anonymisée un échantillon
+							de sessions de navigation (textes et saisies masqués) et améliorer votre expérience.
 							<span className="sr-only">
 								{" "}
 								Votre choix sera mémorisé pendant 6 mois conformément aux recommandations CNIL.

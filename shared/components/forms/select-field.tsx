@@ -35,6 +35,8 @@ interface SelectFieldProps<T extends string> {
 	className?: string;
 	/** HTML autocomplete attribute (pour NativeSelect mobile) */
 	autoComplete?: string;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 }
 
 /**
@@ -72,11 +74,15 @@ export const SelectField = <T extends string>({
 	clearable,
 	className,
 	autoComplete,
+	description,
 }: SelectFieldProps<T>) => {
 	const field = useFieldContext<T | undefined>();
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 	const selectedOption = options.find((opt) => opt.value === field.state.value);
 	// Le `htmlFor` cible le select natif (mobile), invisible au-delà de `md` : le
 	// trigger Radix desktop n'héritait donc d'AUCUN nom accessible. On expose le
@@ -105,7 +111,7 @@ export const SelectField = <T extends string>({
 					onBlur={field.handleBlur}
 					required={required}
 					aria-invalid={hasError}
-					aria-describedby={hasError ? `${field.name}-error` : undefined}
+					aria-describedby={describedBy}
 					aria-required={required}
 					autoComplete={autoComplete}
 					className="w-full"
@@ -151,7 +157,7 @@ export const SelectField = <T extends string>({
 						className="w-full min-w-0 flex-1"
 						onBlur={field.handleBlur}
 						aria-invalid={hasError}
-						aria-describedby={hasError ? `${field.name}-error` : undefined}
+						aria-describedby={describedBy}
 						aria-required={required}
 						aria-labelledby={label ? labelId : undefined}
 					>
@@ -198,6 +204,11 @@ export const SelectField = <T extends string>({
 				)}
 			</div>
 
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

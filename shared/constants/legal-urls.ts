@@ -11,7 +11,6 @@
 const PROD_URL = "https://synclune.fr";
 
 export const LEGAL_URLS = {
-	CONTACT: `${PROD_URL}/contact`,
 	CGV: `${PROD_URL}/cgv`,
 	PRIVACY: `${PROD_URL}/confidentialite`,
 	WITHDRAWAL: `${PROD_URL}/retractation`,

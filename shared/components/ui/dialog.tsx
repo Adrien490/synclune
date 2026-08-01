@@ -6,7 +6,7 @@ import * as React from "react";
 
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
-import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
+import { OverlayStackRegister } from "@/shared/components/ui/overlay-stack-register";
 
 function Dialog({
 	open,
@@ -73,17 +73,6 @@ function DialogOverlay({
 	);
 }
 
-/**
- * Rendu dans le Portal : il ne monte donc que pendant que le dialog est ouvert
- * (Radix ne rend pas les enfants du Portal quand `open=false`). Même motif que
- * `SheetContent` / `DrawerContent` — sans lui, la bottom-bar admin restait
- * visible et le pull-to-refresh armé sous un dialog Radix.
- */
-function OverlayStackRegister({ enabled }: { enabled: boolean }) {
-	useRegisterOverlay(enabled);
-	return null;
-}
-
 function DialogContent({
 	className,
 	children,
@@ -126,7 +115,7 @@ function DialogContent({
 					<DialogPrimitive.Close
 						data-slot="dialog-close"
 						aria-label="Fermer la boîte de dialogue"
-						className="ring-offset-background focus-visible:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-sm opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
+						className="focus-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-[max(1rem,env(safe-area-inset-top))] right-4 -mr-2 flex size-11 items-center justify-center rounded-md opacity-70 transition-opacity hover:opacity-100 focus-visible:opacity-100 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0"
 					>
 						<XIcon className="size-5" aria-hidden="true" />
 						<span className="sr-only">Fermer</span>

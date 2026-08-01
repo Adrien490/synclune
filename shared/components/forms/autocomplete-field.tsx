@@ -12,6 +12,8 @@ type AutocompleteFieldProps<T> = Omit<AutocompleteProps<T>, "name" | "value" | "
 	required?: boolean;
 	/** Marque le champ comme optionnel avec "(Optionnel)" */
 	optional?: boolean;
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
+	description?: string;
 };
 
 /**
@@ -44,14 +46,20 @@ export function AutocompleteField<T>({
 	label,
 	required,
 	optional,
+	description,
 	onSelect,
 	disabled,
 	...props
 }: AutocompleteFieldProps<T>) {
 	const field = useFieldContext<string>();
 
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
+
 	return (
-		<Field data-invalid={field.state.meta.errors.length > 0}>
+		<Field data-invalid={hasError}>
 			{label && (
 				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
@@ -63,11 +71,16 @@ export function AutocompleteField<T>({
 				onChange={(value) => field.handleChange(value)}
 				onSelect={onSelect}
 				disabled={disabled}
-				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+				aria-invalid={hasError}
+				aria-describedby={describedBy}
 				aria-required={required}
 				{...props}
 			/>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

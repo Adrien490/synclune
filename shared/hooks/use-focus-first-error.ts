@@ -99,25 +99,25 @@ export function findFirstVisible(elements: Iterable<HTMLElement>): HTMLElement |
  * - `preventScroll: true` on focus so we control scroll behavior (smooth centered).
  * - Haptic `"error"` on Android / PWA, silently no-op on iOS Safari and desktop.
  */
+const focusElement = (element: HTMLElement) => {
+	element.scrollIntoView({
+		block: "center",
+		behavior: prefersReducedMotion() ? "auto" : "smooth",
+	});
+	// `focus()` accepte un options-bag sur tous les éléments focusables
+	// (HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement, HTMLButtonElement,
+	// contenteditable…). Le guard couvre le cas d'un nœud spécial où l'API
+	// est absente (rare — SVG sans tabindex, certains custom elements).
+	const focusableEl = element as HTMLElement & { focus?: (opts?: FocusOptions) => void };
+	if (typeof focusableEl.focus === "function") {
+		focusableEl.focus({ preventScroll: true });
+	}
+	triggerHaptic("error");
+};
+
 export function useFocusFirstError() {
 	const formRef = useRef<HTMLFormElement>(null);
 	const debounceRef = useRef(false);
-
-	const focusElement = (element: HTMLElement) => {
-		element.scrollIntoView({
-			block: "center",
-			behavior: prefersReducedMotion() ? "auto" : "smooth",
-		});
-		// `focus()` accepte un options-bag sur tous les éléments focusables
-		// (HTMLInputElement, HTMLTextAreaElement, HTMLSelectElement, HTMLButtonElement,
-		// contenteditable…). Le guard couvre le cas d'un nœud spécial où l'API
-		// est absente (rare — SVG sans tabindex, certains custom elements).
-		const focusableEl = element as HTMLElement & { focus?: (opts?: FocusOptions) => void };
-		if (typeof focusableEl.focus === "function") {
-			focusableEl.focus({ preventScroll: true });
-		}
-		triggerHaptic("error");
-	};
 
 	const focusFirstInvalid = () => {
 		const root = formRef.current;

@@ -1,6 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+
+import { Kbd } from "@/shared/components/ui/kbd";
 import { cn } from "@/shared/utils/cn";
 
 const subscribeStatic = () => () => {
@@ -25,14 +27,14 @@ export function ShortcutKbd({ keyLabel, className }: ShortcutKbdProps) {
 	const isMac = useSyncExternalStore(subscribeStatic, getMacSnapshot, getServerSnapshot);
 
 	return (
-		<kbd
+		<Kbd
 			className={cn(
-				"border-border/60 bg-muted/60 text-muted-foreground inline-flex h-5 items-center gap-0.5 rounded border px-1.5 font-mono text-[0.6875rem] font-medium",
+				"border-border/60 bg-muted/60 gap-0.5 rounded border px-1.5 font-mono text-[0.6875rem]",
 				className,
 			)}
 		>
 			<span aria-hidden="true">{isMac ? "⌘" : "Ctrl"}</span>
 			<span>{keyLabel}</span>
-		</kbd>
+		</Kbd>
 	);
 }

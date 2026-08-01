@@ -29,7 +29,18 @@ const globalIpLimitStore = new Map<string, RateLimitEntry>();
 
 let lastCleanup = Date.now();
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
-const MAX_STORE_SIZE = 10000;
+/**
+ * Une entrée par couple (preset × identifiant) — et non par identifiant seul
+ * depuis que le `name` du preset entre dans la clé (KI-004). Un visiteur qui
+ * cherche, charge plus de produits, remplit son panier et ses favoris occupe
+ * donc ~4 entrées au lieu d'1 : le plafond a été relevé en conséquence, sans
+ * quoi `trimStoreToMaxSize` se déclencherait ~4× plus tôt qu'avant le correctif.
+ *
+ * L'éviction se fait par `resetAt` le plus proche, donc les compteurs de sécurité
+ * à fenêtre longue (login 15 min, reset mot de passe 1 h, checkout 1 h) survivent
+ * en priorité aux compteurs de navigation à 1 min — le bon biais.
+ */
+const MAX_STORE_SIZE = 30000;
 
 // ============================================================================
 // CONSTANTS
@@ -57,25 +68,48 @@ const BLACKLIST_IPS = process.env.RATE_LIMIT_BLACKLIST?.split(",").map((ip) => i
  * (`checkout-confirm:user:…`, cf. `modules/payments/utils/payment-rate-limit-id.ts`),
  * si bien qu'un test `startsWith("user:")` ne les reconnaissait plus et logguait l'id
  * en clair. Le segment `guest:<email>:<ip>`, lui, n'a jamais été masqué : l'email du
- * client partait tel quel dans les logs à chaque blocage. L'IP reste disponible dans
- * le champ `ip=` dédié, on ne perd donc rien d'exploitable.
+ * client partait tel quel dans les logs à chaque blocage. Même défaut sur le segment
+ * `session:<uuid>` — la valeur exacte des cookies bearer `cart_session` /
+ * `wishlist_session` partait en clair vers logs/Sentry au premier blocage d'un
+ * invité, et les rejouer suffit à prendre le contrôle du panier et des favoris.
+ * L'IP reste disponible dans le champ `ip=` dédié, on ne perd donc rien
+ * d'exploitable.
  */
 function redactRateLimitIdentifier(identifier: string): string {
-	return identifier.replace(/user:[^:]+/, "user:***").replace(/guest:.+$/, "guest:***");
+	return identifier
+		.replace(/user:[^:]+/, "user:***")
+		.replace(/session:[^:]+/, "session:***")
+		.replace(/guest:.+$/, "guest:***");
 }
 
 function logRateLimitBlock(params: {
 	type: "global-ip" | "per-action";
+	action: string;
 	identifier: string;
 	ip: string | null;
 	limit: number;
 	windowMs: number;
 	retryAfterSeconds: number;
 }): void {
+	// `action=` vient du `name` du preset. Le docblock de `checkRateLimit` promet de
+	// pouvoir répondre « quels endpoints sont ciblés » en post-mortem — avec le seul
+	// identifiant, on ne le pouvait pas.
 	logger.warn(
-		`Blocked: type=${params.type} identifier=${redactRateLimitIdentifier(params.identifier)} ip=${params.ip} limit=${params.limit} windowMs=${params.windowMs} retryAfter=${params.retryAfterSeconds}`,
+		`Blocked: type=${params.type} action=${params.action} identifier=${redactRateLimitIdentifier(params.identifier)} ip=${params.ip} limit=${params.limit} windowMs=${params.windowMs} retryAfter=${params.retryAfterSeconds}`,
 		{ service: "rate-limit" },
 	);
+}
+
+/**
+ * SSOT de la forme de clé du store.
+ *
+ * Le `name` du preset entre dans la clé : sans lui, toutes les actions partageant
+ * un identifiant partageaient un compteur unique (cf. `RateLimitConfig.name`).
+ * Les 3 accès au store passent par ici — les laisser reconstruire la chaîne à la
+ * main est précisément ce qui a permis à la forme de dériver.
+ */
+function buildRateLimitKey(name: string, identifier: string): string {
+	return `ratelimit:${name}:${identifier}`;
 }
 
 function formatRetryAfter(seconds: number): string {
@@ -142,10 +176,10 @@ function cleanupExpiredEntries(): void {
  */
 export async function checkRateLimit(
 	identifier: string,
-	config: RateLimitConfig = {},
+	config: RateLimitConfig,
 	ipAddress?: string | null,
 ): Promise<RateLimitResult> {
-	const { limit = 10, windowMs = 60000, skipGlobalIpLimit = false } = config;
+	const { name, limit = 10, windowMs = 60000, skipGlobalIpLimit = false } = config;
 	const now = Date.now();
 
 	// Resolve effective IP: extract from identifier prefix OR use explicit param
@@ -169,7 +203,7 @@ export async function checkRateLimit(
 		};
 	}
 
-	return checkRateLimitInMemory(identifier, effectiveIp, limit, windowMs, skipGlobalIpLimit);
+	return checkRateLimitInMemory(name, identifier, effectiveIp, limit, windowMs, skipGlobalIpLimit);
 }
 
 // ============================================================================
@@ -177,6 +211,7 @@ export async function checkRateLimit(
 // ============================================================================
 
 function checkRateLimitInMemory(
+	name: string,
 	identifier: string,
 	ipAddress: string | null,
 	limit: number,
@@ -184,13 +219,13 @@ function checkRateLimitInMemory(
 	skipGlobalIpLimit = false,
 ): RateLimitResult {
 	const now = Date.now();
-	// ⚠️ La clé ne porte QUE l'identifiant : ni le nom de l'action, ni sa config. Deux
-	// actions qui passent le même identifiant partagent donc un compteur, et la fenêtre
-	// appartient à la première entrée créée. Les 4 actions de paiement préfixent leur
-	// identifiant par l'action (`modules/payments/utils/payment-rate-limit-id.ts`) ;
-	// panier, favoris et codes promo restent sur un identifiant nu.
-	// @see docs/KNOWN-ISSUES.md — KI-004
-	const key = `ratelimit:${identifier}`;
+	// La clé porte le `name` du preset EN PLUS de l'identifiant : deux actions qui
+	// passent le même identifiant ont donc des compteurs distincts. Deux appelants
+	// d'un MÊME preset partagent toujours une entrée — et c'est correct : ils ont
+	// par construction les mêmes `limit`/`windowMs`, donc l'anomalie « la fenêtre
+	// appartient à la première entrée » est structurellement impossible entre eux.
+	// @see docs/KNOWN-ISSUES.md — KI-004 (corrigé le 2026-07-31)
+	const key = buildRateLimitKey(name, identifier);
 
 	// Global IP limit — read/modify/write fully synchronous (no await between get/set)
 	// WEBHOOK-AUDIT-003 : les endpoints machine-to-machine (webhooks Stripe / PA) s'en
@@ -207,6 +242,7 @@ function checkRateLimitInMemory(
 			const retryAfterSeconds = Math.ceil((globalEntry.resetAt - now) / 1000);
 			logRateLimitBlock({
 				type: "global-ip",
+				action: name,
 				identifier,
 				ip: ipAddress,
 				limit: GLOBAL_IP_LIMIT,
@@ -248,6 +284,7 @@ function checkRateLimitInMemory(
 	if (!success) {
 		logRateLimitBlock({
 			type: "per-action",
+			action: name,
 			identifier,
 			ip: ipAddress,
 			limit,
@@ -315,17 +352,24 @@ export async function getClientIp(headers: ReadonlyHeaders): Promise<string | nu
 }
 
 /**
- * Resets the counter for an identifier (useful for tests)
+ * Resets the counter for a (preset, identifier) pair (useful for tests)
+ *
+ * ⚠️ Ne purge PAS `globalIpLimitStore`, qui n'a pas de chemin de reset — d'où
+ * l'obligation, dans les tests, d'allouer une IP fraîche par cas plutôt que de
+ * compter sur cette fonction pour repartir de zéro.
  */
-export function resetRateLimit(identifier: string): void {
-	rateLimitStore.delete(`ratelimit:${identifier}`);
+export function resetRateLimit(name: string, identifier: string): void {
+	rateLimitStore.delete(buildRateLimitKey(name, identifier));
 }
 
 /**
- * Gets current rate limiting stats for an identifier
+ * Gets current rate limiting stats for a (preset, identifier) pair
  */
-export function getRateLimitStatus(identifier: string): { count: number; resetAt: number } | null {
-	const entry = rateLimitStore.get(`ratelimit:${identifier}`);
+export function getRateLimitStatus(
+	name: string,
+	identifier: string,
+): { count: number; resetAt: number } | null {
+	const entry = rateLimitStore.get(buildRateLimitKey(name, identifier));
 	if (!entry || entry.resetAt < Date.now()) return null;
 	return { count: entry.count, resetAt: entry.resetAt };
 }

@@ -280,7 +280,7 @@ export const MultiSelect = ({
 			}}
 			className={cn(
 				"flex h-auto min-h-11 w-full cursor-pointer items-center justify-between rounded-md border bg-inherit p-1",
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-hidden",
+				"focus-ring",
 				disabled && "cursor-not-allowed opacity-50",
 				ariaInvalid && "border-destructive ring-destructive/20",
 				className,
@@ -352,7 +352,7 @@ export const MultiSelect = ({
 								}
 							}}
 							aria-label="Tout effacer"
-							className="text-muted-foreground hover:text-foreground focus:ring-ring mx-1 flex size-8 cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:outline-hidden disabled:cursor-not-allowed"
+							className="text-muted-foreground can-hover:hover:text-foreground focus-ring mx-1 flex size-8 cursor-pointer items-center justify-center rounded-sm disabled:cursor-not-allowed"
 						>
 							<X className="size-4" aria-hidden="true" />
 						</button>
@@ -393,7 +393,7 @@ export const MultiSelect = ({
 				autoCapitalize="none"
 				autoCorrect="off"
 				spellCheck={false}
-				className="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-10 w-full rounded-md border bg-transparent pr-9 pl-9 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+				className="border-input focus-ring flex h-10 w-full rounded-xl border bg-transparent pr-9 pl-9 text-sm shadow-xs"
 			/>
 			{search.length > 0 && (
 				<button
@@ -404,7 +404,7 @@ export const MultiSelect = ({
 						searchRef.current?.focus();
 					}}
 					aria-label="Effacer la recherche"
-					className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm focus-visible:ring-2 focus-visible:outline-hidden"
+					className="text-muted-foreground can-hover:hover:text-foreground focus-ring absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-sm"
 				>
 					<X className="size-4" aria-hidden="true" />
 				</button>

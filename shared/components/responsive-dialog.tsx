@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
 	Dialog,
-	DialogClose,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
@@ -13,7 +12,6 @@ import {
 } from "@/shared/components/ui/dialog";
 import {
 	Drawer,
-	DrawerClose,
 	DrawerContent,
 	DrawerDescription,
 	DrawerFooter,
@@ -163,11 +161,6 @@ function ResponsiveDialogDescription({
 	);
 }
 
-function ResponsiveDialogClose(props: React.ComponentProps<typeof DialogClose>) {
-	const { isMobile } = useResponsive("ResponsiveDialogClose");
-	return isMobile ? <DrawerClose {...props} /> : <DialogClose {...props} />;
-}
-
 function ResponsiveDialogTrigger(props: React.ComponentProps<typeof DialogTrigger>) {
 	const { isMobile } = useResponsive("ResponsiveDialogTrigger");
 	return isMobile ? <DrawerTrigger {...props} /> : <DialogTrigger {...props} />;
@@ -175,7 +168,6 @@ function ResponsiveDialogTrigger(props: React.ComponentProps<typeof DialogTrigge
 
 export {
 	ResponsiveDialog,
-	ResponsiveDialogClose,
 	ResponsiveDialogContent,
 	ResponsiveDialogDescription,
 	ResponsiveDialogFooter,

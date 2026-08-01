@@ -56,6 +56,24 @@ interface DateTimeFieldProps {
  * </form.AppField>
  * ```
  */
+// Parse la valeur ISO en Date
+const parseValue = (value: string | null | undefined): Date | undefined => {
+	if (!value) return undefined;
+	const date = new Date(value);
+	return isNaN(date.getTime()) ? undefined : date;
+};
+
+// Formate une Date en chaîne datetime-local (YYYY-MM-DDTHH:mm)
+const formatValue = (date: Date | undefined): string => {
+	if (!date) return "";
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	const hours = String(date.getHours()).padStart(2, "0");
+	const minutes = String(date.getMinutes()).padStart(2, "0");
+	return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export function DateTimeField({
 	label,
 	required,
@@ -74,24 +92,6 @@ export function DateTimeField({
 		[helpTextId, field.state.meta.errors.length > 0 ? `${field.name}-error` : null]
 			.filter(Boolean)
 			.join(" ") || undefined;
-
-	// Parse la valeur ISO en Date
-	const parseValue = (value: string | null | undefined): Date | undefined => {
-		if (!value) return undefined;
-		const date = new Date(value);
-		return isNaN(date.getTime()) ? undefined : date;
-	};
-
-	// Formate une Date en chaîne datetime-local (YYYY-MM-DDTHH:mm)
-	const formatValue = (date: Date | undefined): string => {
-		if (!date) return "";
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
-		const hours = String(date.getHours()).padStart(2, "0");
-		const minutes = String(date.getMinutes()).padStart(2, "0");
-		return `${year}-${month}-${day}T${hours}:${minutes}`;
-	};
 
 	const selectedDate = parseValue(field.state.value);
 	const minDate = parseValue(min);

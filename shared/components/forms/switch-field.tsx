@@ -8,7 +8,7 @@ interface SwitchFieldProps {
 	label?: ReactNode;
 	/** Label accessible pour les lecteurs d'écran */
 	"aria-label"?: string;
-	/** Description affichée sous le switch */
+	/** Texte d'aide affiché sous le champ, relié via aria-describedby */
 	description?: string;
 	disabled?: boolean;
 	required?: boolean;
@@ -24,8 +24,13 @@ export const SwitchField = ({
 	const field = useFieldContext<boolean>();
 	const hiddenRef = useRef<HTMLInputElement>(null);
 
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
+
 	return (
-		<Field orientation="vertical" data-invalid={field.state.meta.errors.length > 0}>
+		<Field orientation="vertical" data-invalid={hasError}>
 			<div className="flex items-center gap-3">
 				<Switch
 					disabled={disabled}
@@ -39,14 +44,8 @@ export const SwitchField = ({
 						}
 					}}
 					onBlur={field.handleBlur}
-					aria-invalid={field.state.meta.errors.length > 0}
-					aria-describedby={
-						field.state.meta.errors.length > 0
-							? `${field.name}-error`
-							: description
-								? `${field.name}-description`
-								: undefined
-					}
+					aria-invalid={hasError}
+					aria-describedby={describedBy}
 					aria-required={required}
 					aria-label={ariaLabel}
 				/>
@@ -63,8 +62,9 @@ export const SwitchField = ({
 					</FieldLabel>
 				)}
 			</div>
+			{/* Layout horizontal (label à côté) : la description se rend sous le bloc */}
 			{description && (
-				<p id={`${field.name}-description`} className="text-muted-foreground ml-11 text-xs">
+				<p id={descId!} className="text-muted-foreground ml-11 text-xs">
 					{description}
 				</p>
 			)}

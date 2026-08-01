@@ -1,4 +1,3 @@
-import type { MinimalSession } from "@/shared/types/session.types";
 import type { MegaMenuProduct, NavItemWithChildren } from "@/shared/types/navigation.types";
 import { ROUTES } from "@/shared/constants/urls";
 
@@ -24,21 +23,19 @@ export const MAX_COLLECTIONS_IN_MENU = 3;
  *    → Personnaliser (service différenciateur)
  *
  * ─────────────
- * 👤 COMPTE (gestion utilisateur)
- *    → Mon compte / Se connecter
+ * 🛠️ ADMIN
  *    → Tableau de bord (si admin)
  *
  * Note: "Panier" supprimé (redondant avec header)
+ * Note: plus d'entrée "Compte" — l'espace client a été retiré (2026-07-31)
  * Note: "L'atelier" retiré temporairement du menu mobile (à réintégrer plus tard)
  *
- * @param session - Session de l'utilisateur (null si non connecté)
  * @param productTypes - Types de produits actifs
  * @param collections - Collections actives (optionnel)
  * @param isAdmin - Si l'utilisateur est administrateur
  * @returns Items de navigation filtrés et adaptés avec support des children
  */
 export function getMobileNavItems(
-	session: MinimalSession | null,
 	productTypes?: Array<{ slug: string; label: string }>,
 	collections?: Array<{
 		slug: string;
@@ -90,7 +87,7 @@ export function getMobileNavItems(
 			: undefined,
 	};
 
-	// Flow optimisé: Accueil → Créations → Collections → Personnaliser → Compte → Tableau de bord (admin)
+	// Flow optimisé: Accueil → Créations → Collections → Favoris → Tableau de bord (admin)
 	const items: NavItemWithChildren[] = [
 		// 🏠 ACCUEIL - Retour à la page d'accueil
 		{ href: ROUTES.SHOP.HOME, label: "Accueil", icon: "home" },
@@ -102,13 +99,13 @@ export function getMobileNavItems(
 		// 🏡 L'ATELIER - Page à propos : retiré temporairement du menu mobile
 		// (à réintégrer plus tard). DiscoverSection rend l'item s'il est fourni.
 
-		// 👤 COMPTE - Gestion utilisateur
-		session
-			? { href: ROUTES.ACCOUNT.ROOT, label: "Mon compte", icon: "user" }
-			: { href: ROUTES.AUTH.SIGN_IN, label: "Se connecter", icon: "log-in" },
+		// 👤 Plus d'item COMPTE (retrait de l'espace client 2026-07-31). Il rendait
+		// « Mon compte » → /commandes pour une session, « Se connecter » → /connexion
+		// sinon : deux destinations qui n'existent plus pour un client. Le seul accès
+		// à une commande passe par le lien de suivi de l'email de confirmation.
 
 		// ❤️ FAVORIS - Accessible à tous (Baymard: full scope label)
-		{ href: ROUTES.ACCOUNT.FAVORITES, label: "Mes favoris", icon: "heart" },
+		{ href: ROUTES.SHOP.FAVORITES, label: "Mes favoris", icon: "heart" },
 	];
 
 	// 🛠️ ADMIN - Tableau de bord (uniquement pour les administrateurs)
@@ -203,7 +200,7 @@ export const footerNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
 	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
 	{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" },
-	{ href: ROUTES.ACCOUNT.ROOT, label: "Mon compte" },
+	{ href: ROUTES.SHOP.FAVORITES, label: "Mes favoris" },
 ] as const;
 
 // Liens légaux

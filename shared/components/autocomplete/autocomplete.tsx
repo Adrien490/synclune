@@ -294,7 +294,7 @@ export function Autocomplete<T>({
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="bg-background absolute z-50 mt-1 max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))] w-full overflow-auto overscroll-contain rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
+							className="bg-background absolute z-(--z-float) mt-1 max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))] w-full overflow-auto overscroll-contain rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
 							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}

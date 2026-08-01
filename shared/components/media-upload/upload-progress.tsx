@@ -10,7 +10,8 @@ import {
 	formatSpeedLabel,
 } from "@/modules/media/utils/format-eta";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { AlertTriangle, Check, LoaderCircle, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Check, RefreshCw, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import type { FileProgress } from "@/modules/media/types/hooks.types";
 
 // Screen reader announcements are throttled to these milestones to avoid spamming
@@ -165,20 +166,17 @@ export function UploadProgress({
 				<span className="sr-only">{srText}</span>
 
 				{isComplete ? (
-					<div className="flex size-7 items-center justify-center rounded-full bg-emerald-500/20 sm:size-5">
-						<Check className="size-4 text-emerald-600 sm:size-3" aria-hidden="true" />
+					<div className="bg-success/20 flex size-7 items-center justify-center rounded-full sm:size-5">
+						<Check className="text-success size-4 sm:size-3" aria-hidden="true" />
 					</div>
 				) : (
-					<LoaderCircle
-						className={cn("text-primary size-7 sm:size-5", !shouldReduceMotion && "animate-spin")}
-						aria-hidden="true"
-					/>
+					<Spinner presentational className="text-primary size-7 sm:size-5" />
 				)}
 
 				<span
 					className={cn(
 						"text-sm font-medium sm:text-xs",
-						isComplete ? "text-emerald-600" : "text-foreground/70",
+						isComplete ? "text-success" : "text-foreground/70",
 						!isServerProcessing && "tabular-nums",
 					)}
 					aria-hidden="true"
@@ -212,14 +210,11 @@ export function UploadProgress({
 			<span className="sr-only">{srText}</span>
 
 			{isComplete ? (
-				<div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/20 sm:size-10">
-					<Check className="size-6 text-emerald-600 sm:size-5" aria-hidden="true" />
+				<div className="bg-success/20 flex size-12 items-center justify-center rounded-full sm:size-10">
+					<Check className="text-success size-6 sm:size-5" aria-hidden="true" />
 				</div>
 			) : (
-				<LoaderCircle
-					className={cn("text-primary size-10 sm:size-8", !shouldReduceMotion && "animate-spin")}
-					aria-hidden="true"
-				/>
+				<Spinner presentational className="text-primary size-10 sm:size-8" />
 			)}
 
 			<div className="w-full space-y-2 sm:space-y-1.5">
@@ -231,7 +226,7 @@ export function UploadProgress({
 					aria-label={isServerProcessing ? "Optimisation à l'atelier" : "Progression de l'envoi"}
 					className={cn(
 						"h-2 sm:h-1.5",
-						isComplete && "[&>[data-slot=progress-indicator]]:bg-emerald-500",
+						isComplete && "[&>[data-slot=progress-indicator]]:bg-success",
 						isServerProcessing &&
 							!shouldReduceMotion &&
 							"[&>[data-slot=progress-indicator]]:w-1/3 [&>[data-slot=progress-indicator]]:motion-safe:animate-[progress-indeterminate_1.4s_ease-in-out_infinite]",
@@ -246,7 +241,7 @@ export function UploadProgress({
 						transition={{ duration: 0.18 }}
 						className={cn(
 							"text-center text-base font-medium sm:text-sm",
-							isComplete ? "text-emerald-600" : "text-foreground",
+							isComplete ? "text-success" : "text-foreground",
 							!isServerProcessing && "tabular-nums",
 						)}
 						aria-hidden="true"
@@ -375,7 +370,7 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 			className={cn(
 				"flex items-center gap-2 rounded-sm px-1.5 py-1",
 				!reducedMotion && "transition-colors duration-200",
-				isDone && "bg-emerald-500/10",
+				isDone && "bg-success/10",
 				isFailed && "bg-destructive/10",
 			)}
 			data-state={file.state}
@@ -383,7 +378,7 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 			<span
 				className={cn(
 					"flex size-4 shrink-0 items-center justify-center rounded-full",
-					isDone && "bg-emerald-500/30",
+					isDone && "bg-success/30",
 					isFailed && "bg-destructive/30",
 					isActive && "bg-primary/20",
 					!isDone && !isFailed && !isActive && "bg-muted",
@@ -391,11 +386,11 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 				aria-hidden="true"
 			>
 				{isDone ? (
-					<Check className="size-3 text-emerald-700" />
+					<Check className="text-success size-3" />
 				) : isFailed ? (
 					<AlertTriangle className="text-destructive size-3" />
 				) : isActive ? (
-					<LoaderCircle className={cn("text-primary size-3", !reducedMotion && "animate-spin")} />
+					<Spinner presentational className="text-primary size-3" />
 				) : null}
 			</span>
 			<span className="flex-1 truncate" title={file.fileName}>
@@ -407,7 +402,7 @@ function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemPro
 			<span
 				className={cn(
 					"text-muted-foreground tabular-nums",
-					isDone && "text-emerald-700",
+					isDone && "text-success",
 					isFailed && "text-destructive",
 				)}
 			>

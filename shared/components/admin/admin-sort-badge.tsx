@@ -42,6 +42,12 @@ function AdminSortBadgeInner({ sortLabels, defaultSort, sortKey = "sortBy" }: Ad
 		triggerHaptic("light");
 		const params = new URLSearchParams(searchParams.toString());
 		params.delete(sortKey);
+		// Conserver un curseur en changeant le tri est silencieusement faux : Prisma
+		// se repositionne sur cet id dans le NOUVEL orderBy puis `skip: 1` → tranche
+		// arbitraire. Même règle que use-url-param / use-filter / sort-drawer —
+		// cette surface était la seule à l'oublier (audit 2026-08-01, P2).
+		params.delete("cursor");
+		params.delete("direction");
 		withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
 	};
 
@@ -69,7 +75,7 @@ function AdminSortBadgeInner({ sortLabels, defaultSort, sortKey = "sortBy" }: Ad
 					type="button"
 					onClick={handleReset}
 					aria-label="Effacer le tri"
-					className="text-muted-foreground hover:text-foreground focus-visible:ring-primary relative inline-flex size-7 touch-manipulation items-center justify-center rounded-full [-webkit-tap-highlight-color:transparent] before:absolute before:-inset-2 before:content-[''] focus-visible:ring-2 focus-visible:outline-none"
+					className="text-muted-foreground can-hover:hover:text-foreground focus-ring relative inline-flex size-7 touch-manipulation items-center justify-center rounded-full [-webkit-tap-highlight-color:transparent] before:absolute before:-inset-2 before:content-['']"
 				>
 					<X className="size-3.5" aria-hidden="true" />
 				</button>

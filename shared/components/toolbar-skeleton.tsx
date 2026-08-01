@@ -1,4 +1,5 @@
 import { ButtonGroup } from "@/shared/components/ui/button-group";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/utils/cn";
 
 interface ToolbarSkeletonProps {
@@ -35,22 +36,22 @@ export function ToolbarSkeleton({
 		>
 			{hasSearch && (
 				<div className="min-w-0 flex-1 sm:min-w-48">
-					<div className="animate-shimmer h-9 w-full rounded-md" />
+					<Skeleton className="h-9 w-full" />
 				</div>
 			)}
 			<div className="flex shrink-0 flex-row items-center gap-2">
 				{Array.from({ length: selectCount }).map((_, i) => (
-					<div key={`s${i}`} className="animate-shimmer h-9 w-32 rounded-md" />
+					<Skeleton key={`s${i}`} className="h-9 w-32" />
 				))}
 				{buttonCount > 1 ? (
 					<ButtonGroup>
 						{Array.from({ length: buttonCount }).map((_, i) => (
-							<div key={`b${i}`} className="animate-shimmer size-9 rounded-md" />
+							<Skeleton key={`b${i}`} className="size-9" />
 						))}
 					</ButtonGroup>
 				) : (
 					Array.from({ length: buttonCount }).map((_, i) => (
-						<div key={`b${i}`} className="animate-shimmer size-9 rounded-md" />
+						<Skeleton key={`b${i}`} className="size-9" />
 					))
 				)}
 			</div>

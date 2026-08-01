@@ -39,10 +39,7 @@ function Table({ className, striped, caption, noRegion, children, ...props }: Ta
 			aria-label={caption ?? "Tableau de données"}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable container needs keyboard access
 			tabIndex={0}
-			className={cn(
-				"relative w-full overflow-x-auto scroll-smooth",
-				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-			)}
+			className={cn("relative w-full overflow-x-auto scroll-smooth", "focus-ring")}
 		>
 			{tableElement}
 		</div>
@@ -82,16 +79,6 @@ function TableBody({ className, isLoading, ...props }: TableBodyProps) {
 				isLoading && "pointer-events-none opacity-50",
 				className,
 			)}
-			{...props}
-		/>
-	);
-}
-
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-	return (
-		<tfoot
-			data-slot="table-footer"
-			className={cn("bg-muted/50 border-t font-medium [&>tr]:last:border-b-0", className)}
 			{...props}
 		/>
 	);

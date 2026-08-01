@@ -10,7 +10,8 @@ import {
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
 import { isInteractiveTarget } from "@/shared/utils/is-interactive-target";
-import { ChevronLeft, ChevronRight, ChevronsLeft, LoaderCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import {
 	useEffect,
 	useEffectEvent,
@@ -336,7 +337,7 @@ function CursorPaginationInner({
 					aria-label="Retour au début"
 				>
 					{isPending && lastAction === "reset" ? (
-						<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+						<Spinner presentational className="size-5 md:size-4" />
 					) : (
 						<ChevronsLeft className="size-5 md:size-4" />
 					)}
@@ -354,7 +355,7 @@ function CursorPaginationInner({
 						aria-label="Page précédente"
 					>
 						{isPending && lastAction === "prev" ? (
-							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+							<Spinner presentational className="size-5 md:size-4" />
 						) : (
 							<ChevronLeft className="size-5 md:size-4" />
 						)}
@@ -389,7 +390,7 @@ function CursorPaginationInner({
 						aria-label="Page suivante"
 					>
 						{isPending && lastAction === "next" ? (
-							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
+							<Spinner presentational className="size-5 md:size-4" />
 						) : (
 							<ChevronRight className="size-5 md:size-4" />
 						)}

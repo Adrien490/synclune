@@ -164,12 +164,13 @@ export const FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		section: "retours",
 		question: "Quelle est votre politique de retour ?",
 		answerText:
-			"Vous avez 14 jours après réception pour me renvoyer un bijou non porté et dans son emballage d'origine. Échange ou remboursement intégral, frais de retour à la charge de l'acheteur. Détails complets sur la page rétractation.",
+			"Vous avez 14 jours après réception pour me renvoyer un bijou non porté et dans son emballage d'origine. Échange ou remboursement intégral, frais de livraison initiaux compris ; seuls les frais de retour restent à la charge de l'acheteur. Détails complets sur la page rétractation.",
 		answer: (
 			<>
 				Vous avez <strong className="text-foreground font-semibold">14 jours</strong> après
 				réception pour me renvoyer un bijou non porté et dans son emballage d&apos;origine. Échange
-				ou remboursement intégral, frais de retour à la charge de l&apos;acheteur.{" "}
+				ou remboursement intégral, frais de livraison initiaux compris ; seuls les frais de retour
+				restent à la charge de l&apos;acheteur.{" "}
 				<Link
 					href="/retractation"
 					className="text-primary hover:text-primary/80 underline-offset-4 hover:underline focus-visible:underline"

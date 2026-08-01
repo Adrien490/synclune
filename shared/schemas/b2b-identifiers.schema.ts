@@ -54,6 +54,23 @@ export const apeCodeSchema = z
 	.regex(/^[0-9]{2}\.[0-9]{2}[A-Z]$/, "Code APE doit suivre le format NN.NNL (ex: 47.91B)");
 
 /**
+ * IBAN : ISO 13616 — 2 lettres pays + 2 chiffres clé + BBAN (jusqu'à 30).
+ *
+ * Le minimum de 4 caractères de BBAN n'est pas cosmétique : `env.schema.ts` posait
+ * `{1,30}`, donc acceptait un IBAN de 5 caractères. Aucun IBAN réel ne fait moins de
+ * 15 caractères — la borne laxiste ne protégeait de rien et laissait une faute de
+ * frappe se propager sur des factures archivées 10 ans (Art. L102 B LPF).
+ */
+export const ibanSchema = z
+	.string()
+	.regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN format invalide");
+
+/** BIC/SWIFT : ISO 9362 — 8 ou 11 caractères. */
+export const bicSchema = z
+	.string()
+	.regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "BIC/SWIFT format invalide");
+
+/**
  * Strip spaces and dots from a SIREN/SIRET/VAT input. Returns the canonical
  * form ready to feed into the schema and persist in DB. Returns null for
  * null/undefined/empty inputs.

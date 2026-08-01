@@ -7,7 +7,7 @@ vi.mock("@/shared/schemas/pagination-schema", () => ({
 	directionSchema: { optional: () => ({}) },
 }));
 
-import { constrainPerPage, createPerPageSchema, createPaginationSchema } from "../pagination";
+import { constrainPerPage, createPerPageSchema } from "../pagination";
 
 describe("constrainPerPage", () => {
 	it("returns default value when input is undefined", () => {
@@ -75,34 +75,6 @@ describe("createPerPageSchema", () => {
 	it("uses module defaults when no args provided", () => {
 		const schema = createPerPageSchema();
 		expect(schema.parse(undefined)).toBe(20); // PAGINATION_DEFAULTS.ADMIN
-	});
-});
-
-describe("createPaginationSchema", () => {
-	it("creates schema with default options", () => {
-		const schema = createPaginationSchema();
-		expect(schema).toBeDefined();
-	});
-
-	it("creates schema with custom options", () => {
-		const schema = createPaginationSchema({ defaultPerPage: 10, maxPerPage: 50 });
-		expect(schema).toBeDefined();
-	});
-
-	it("creates schema without options", () => {
-		const schema = createPaginationSchema();
-		expect(schema).toBeDefined();
-	});
-
-	// Note: safeParse tests below cannot be added here because cursorSchema and
-	// directionSchema are mocked as plain objects (not Zod schemas). The parse
-	// behavior of createPaginationSchema is validated via integration in modules
-	// that use real pagination constants. The schema factory itself is covered by
-	// createPerPageSchema tests which use the real Zod API.
-	it("returns a Zod object schema with shape property", () => {
-		const schema = createPaginationSchema();
-		// A z.object() result has a _def or shape property in Zod v4
-		expect(typeof schema).toBe("object");
 	});
 });
 

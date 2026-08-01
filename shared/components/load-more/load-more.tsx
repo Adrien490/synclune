@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import { Button } from "@/shared/components/ui/button";
 import { useInView } from "@/shared/hooks/use-in-view";
@@ -207,7 +207,7 @@ export function LoadMore<TItem>({
 						>
 							{isPending ? (
 								<>
-									<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
+									<Spinner presentational className="mr-2" />
 									Chargement…
 								</>
 							) : (

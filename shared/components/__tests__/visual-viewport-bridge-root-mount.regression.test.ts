@@ -4,7 +4,7 @@
  * Bug corrigé : `<VisualViewportBridge />` n'était monté que dans
  * `app/(shop)/layout.tsx` et `app/admin/layout.tsx`. Or `/paiement` est un segment
  * **frère** du route-group `(shop)`, pas un enfant — tout comme `(auth)`,
- * `(account)` et `/suivi-commande`. Sur ces routes, `<html data-keyboard="open">`
+ * `/suivi-commande` et `/paiement`. Sur ces routes, `<html data-keyboard="open">`
  * n'était donc JAMAIS posé, ce qui rendait inerte :
  *
  *   - `data-hide-on-keyboard` sur la barre « Commander et payer » fixe
@@ -75,7 +75,6 @@ describe("@regression keyboard-bridge-root-mount", () => {
 		const dependents = [
 			"app/paiement/layout.tsx",
 			"app/(auth)/layout.tsx",
-			"app/(account)/layout.tsx",
 			"app/suivi-commande/layout.tsx",
 		];
 

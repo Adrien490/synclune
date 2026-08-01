@@ -1,5 +1,49 @@
 import { z } from "zod";
 
+import {
+	apeCodeSchema,
+	bicSchema,
+	ibanSchema,
+	sirenSchema,
+	siretSchema,
+	vatNumberSchema,
+} from "@/shared/schemas/b2b-identifiers.schema";
+
+/**
+ * Variable d'env fiscale : normalisée puis soumise au schéma canonique partagé avec
+ * `invoice.schema.ts`.
+ *
+ * Le message d'erreur reste celui de la variable — au boot, « SIREN doit contenir
+ * exactement 9 chiffres » ne dit pas laquelle des ~50 variables est en cause.
+ *
+ * ⚠️ Le but ici est de **dédupliquer les regex, à acceptation constante**. La
+ * normalisation par défaut est donc l'identité, et chaque variable ne reçoit que le
+ * traitement que son ancienne regex autorisait déjà :
+ *
+ *  - SIREN / SIRET acceptaient les espaces (`^\d{3}\s?\d{3}\s?\d{3}$`) → on les
+ *    retire avant de valider ;
+ *  - TVA, APE, IBAN, BIC ne les acceptaient pas → aucune normalisation.
+ *
+ * En particulier, **pas de `.toUpperCase()`** : `normalizeFiscalIdentifier` en fait
+ * un, mais l'appliquer ici rendrait `fr35839183027` et `47.91b` valides alors que les
+ * anciennes regex les rejetaient, sensibles à la casse. Ces variables finissent sur
+ * des factures archivées 10 ans (Art. L102 B LPF) : élargir ce qui est accepté n'est
+ * pas un effet de bord acceptable d'un refactor de déduplication.
+ */
+const canonicalFiscal = (
+	schema: z.ZodType<string>,
+	message: string,
+	normalize: (value: string) => string = (value) => value,
+) =>
+	z
+		.string()
+		.transform(normalize)
+		.refine((value) => schema.safeParse(value).success, message)
+		.optional();
+
+/** Retire les espaces de groupage INSEE, sans toucher à la casse ni aux points. */
+const stripSpaces = (value: string) => value.replaceAll(/\s/g, "");
+
 /**
  * Schéma de validation des variables d'environnement
  *
@@ -28,8 +72,6 @@ export const envSchema = z.object({
 	BETTER_AUTH_URL: z.url(),
 
 	// Google OAuth (optionnel)
-	GOOGLE_CLIENT_ID: z.string().optional(),
-	GOOGLE_CLIENT_SECRET: z.string().optional(),
 
 	// ========================================
 	// Email (Resend)
@@ -129,31 +171,39 @@ export const envSchema = z.object({
 	// archivées 10 ans (Art. L102 B LPF).
 	VENDOR_LEGAL_NAME: z.string().min(1).optional(),
 	VENDOR_TRADE_NAME: z.string().min(1).optional(),
-	VENDOR_SIREN: z
-		.string()
-		.regex(
-			/^\d{3}\s?\d{3}\s?\d{3}$/,
-			"VENDOR_SIREN doit avoir 9 chiffres (avec ou sans espaces). Ex: '839 183 027'",
-		)
-		.optional(),
-	VENDOR_SIRET: z
-		.string()
-		.regex(
-			/^\d{3}\s?\d{3}\s?\d{3}\s?\d{5}$/,
-			"VENDOR_SIRET doit avoir 14 chiffres (avec ou sans espaces). Ex: '839 183 027 00037'",
-		)
-		.optional(),
-	VENDOR_VAT_NUMBER: z
-		.string()
-		.regex(
-			/^FR[A-Z0-9]{2}\d{9}$/,
-			"VENDOR_VAT_NUMBER doit suivre le format FR (FR + 2 chiffres/lettres + 9 chiffres SIREN). Ex: 'FR35839183027'",
-		)
-		.optional(),
-	VENDOR_APE_CODE: z
-		.string()
-		.regex(/^\d{2}\.\d{2}[A-Z]$/, "VENDOR_APE_CODE doit être au format NN.NNL. Ex: '47.91B'")
-		.optional(),
+	// ⚠️ NORMALISER PUIS valider, jamais l'inverse. SIREN et SIRET acceptent
+	// historiquement les formats INSEE avec espaces ("839 183 027") : brancher
+	// directement la SSOT — qui valide la forme CANONIQUE, sans séparateurs — ferait
+	// échouer le boot sur un `.env` parfaitement légitime. `stripSpaces` absorbe le
+	// groupage, ce qui permet de partager la regex avec `invoice.schema.ts` sans
+	// changer ce qui est accepté en entrée (cf. `canonicalFiscal`).
+	//
+	// Corollaire voulu : la valeur EXPOSÉE par `env` est désormais canonique, comme
+	// celle attendue par le snapshot de facture.
+	VENDOR_SIREN: canonicalFiscal(
+		sirenSchema,
+		"VENDOR_SIREN doit avoir 9 chiffres (avec ou sans espaces). Ex: '839 183 027'",
+		stripSpaces,
+	),
+	VENDOR_SIRET: canonicalFiscal(
+		siretSchema,
+		"VENDOR_SIRET doit avoir 14 chiffres (avec ou sans espaces). Ex: '839 183 027 00037'",
+		stripSpaces,
+	),
+	VENDOR_VAT_NUMBER: canonicalFiscal(
+		// La SSOT accepte tous les pays UE ; on garde la restriction FR ici, seule
+		// divergence VOULUE avec `invoice.schema.ts` (qui doit pouvoir relire un
+		// snapshot intra-UE).
+		vatNumberSchema.refine(
+			(value) => value.startsWith("FR"),
+			"VENDOR_VAT_NUMBER doit être un numéro français (préfixe FR)",
+		),
+		"VENDOR_VAT_NUMBER doit suivre le format FR (FR + 2 chiffres/lettres + 9 chiffres SIREN). Ex: 'FR35839183027'",
+	),
+	VENDOR_APE_CODE: canonicalFiscal(
+		apeCodeSchema,
+		"VENDOR_APE_CODE doit être au format NN.NNL. Ex: '47.91B'",
+	),
 	VENDOR_FULL_ADDRESS: z.string().min(1).optional(),
 	VENDOR_EMAIL: z.email("VENDOR_EMAIL doit être un email valide").optional(),
 	VENDOR_VAT_EXEMPTION_TEXT: z.string().min(1).optional(),
@@ -178,17 +228,15 @@ export const envSchema = z.object({
 		.number("VAT_FRANCHISE_THRESHOLD_EUR doit être un nombre d'euros (ex: '85000')")
 		.positive("VAT_FRANCHISE_THRESHOLD_EUR doit être strictement positif")
 		.optional(),
-	VENDOR_BANK_IBAN: z
-		.string()
-		.regex(/^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/, "VENDOR_BANK_IBAN doit être un IBAN valide")
-		.optional(),
-	VENDOR_BANK_BIC: z
-		.string()
-		.regex(
-			/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/,
-			"VENDOR_BANK_BIC doit être un BIC valide (8 ou 11 caractères)",
-		)
-		.optional(),
+	// Même traitement : normalisation (les IBAN se saisissent par groupes de 4) puis
+	// SSOT partagée avec `invoice.schema.ts`. La borne y passe de `{1,30}` à `{4,30}`
+	// — aucun IBAN réel ne fait moins de 15 caractères, l'ancienne laissait donc
+	// passer une faute de frappe jusque sur des factures archivées 10 ans.
+	VENDOR_BANK_IBAN: canonicalFiscal(ibanSchema, "VENDOR_BANK_IBAN doit être un IBAN valide"),
+	VENDOR_BANK_BIC: canonicalFiscal(
+		bicSchema,
+		"VENDOR_BANK_BIC doit être un BIC valide (8 ou 11 caractères)",
+	),
 
 	// ========================================
 	// Node

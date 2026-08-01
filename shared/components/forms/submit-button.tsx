@@ -1,10 +1,10 @@
 "use client";
 
 import { useStore } from "@tanstack/react-form";
-import { LoaderCircle } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useFormContext } from "@/shared/lib/form-context";
 
@@ -36,7 +36,6 @@ export function SubmitButton({
 	showKbdHint = false,
 	disabled,
 	onClick,
-	size = "input",
 	...props
 }: SubmitButtonProps) {
 	const form = useFormContext();
@@ -46,7 +45,6 @@ export function SubmitButton({
 	return (
 		<Button
 			type="submit"
-			size={size}
 			disabled={(disabled ?? false) || !canSubmit || isPending}
 			aria-busy={isPending}
 			onClick={(event) => {
@@ -55,7 +53,7 @@ export function SubmitButton({
 			}}
 			{...props}
 		>
-			{isPending && <LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />}
+			{isPending && <Spinner presentational />}
 			<span>{isPending ? pendingLabel : idleLabel}</span>
 			{showKbdHint && !isPending && (
 				<Kbd aria-hidden="true" className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex">

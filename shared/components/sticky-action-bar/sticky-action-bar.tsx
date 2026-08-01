@@ -213,6 +213,11 @@ function isDisabledItem(item: StickyActionBarItem): boolean {
  * <ProductsFilterSheet id={FILTER_ID} ... />
  * ```
  */
+const triggerItemHaptic = (item: StickyActionBarItem) => {
+	if (item.haptic === false) return;
+	triggerHaptic(item.haptic ?? "selection");
+};
+
 export function StickyActionBar({
 	items,
 	ariaLabel,
@@ -255,11 +260,6 @@ export function StickyActionBar({
 		// activeSignature is the stable digest of what matters here.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [activeSignature]);
-
-	const triggerItemHaptic = (item: StickyActionBarItem) => {
-		if (item.haptic === false) return;
-		triggerHaptic(item.haptic ?? "selection");
-	};
 
 	const stickyStyle: CSSProperties = { top: `var(${stickyTopVar},3.5rem)` };
 

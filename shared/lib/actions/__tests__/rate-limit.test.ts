@@ -14,7 +14,7 @@ import { enforceRateLimit } from "../rate-limit";
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 
 // Shared config used across tests
-const LIMIT_CONFIG: RateLimitConfig = { limit: 10, windowMs: 60000 };
+const LIMIT_CONFIG: RateLimitConfig = { name: "test", limit: 10, windowMs: 60000 };
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -177,7 +177,7 @@ describe("enforceRateLimit — argument forwarding", () => {
 
 	it("passes the limit config object to checkRateLimit", async () => {
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 4, limit: 5, reset: 9999 });
-		const customConfig: RateLimitConfig = { limit: 5, windowMs: 30000 };
+		const customConfig: RateLimitConfig = { name: "test", limit: 5, windowMs: 30000 };
 
 		await enforceRateLimit("ip:1.1.1.1", customConfig);
 

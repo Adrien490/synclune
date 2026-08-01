@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import {
-	validateInput,
-	validateFormData,
-	safeFormGet,
-	safeFormGetJSON,
-	parseFormIds,
-} from "../validation";
+import { validateInput, safeFormGet, safeFormGetJSON, parseFormIds } from "../validation";
 import { ActionStatus } from "@/shared/types/server-action";
 
 const testSchema = z.object({
@@ -50,45 +44,6 @@ describe("validateInput", () => {
 		if ("data" in result) {
 			expect(result.data.email).toBe("test@email.com");
 		}
-	});
-});
-
-describe("validateFormData", () => {
-	it("extracts and validates FormData successfully", () => {
-		const fd = new FormData();
-		fd.set("name", "Alice");
-		fd.set("age", "25");
-
-		const result = validateFormData(
-			fd,
-			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema,
-		);
-		expect(result).toEqual({ data: { name: "Alice", age: 25 } });
-	});
-
-	it("returns error when extracted data fails validation", () => {
-		const fd = new FormData();
-		fd.set("name", "");
-		fd.set("age", "25");
-
-		const result = validateFormData(
-			fd,
-			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema,
-		);
-		expect("error" in result).toBe(true);
-	});
-
-	it("handles missing fields in FormData", () => {
-		const fd = new FormData();
-
-		const result = validateFormData(
-			fd,
-			(f) => ({ name: f.get("name"), age: Number(f.get("age")) }),
-			testSchema,
-		);
-		expect("error" in result).toBe(true);
 	});
 });
 
