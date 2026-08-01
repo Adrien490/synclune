@@ -135,12 +135,27 @@ const eslintConfig = [
 		plugins: { local: localPlugin },
 		rules: {
 			"local/require-cache-life": "error",
+			"local/no-update-tag-outside-server-action": "error",
+		},
+	},
+	{
+		// `shared/lib/cache.ts` est le SEUL fichier autorisé à importer `updateTag`
+		// hors `"use server"` : c'est lui qui expose `updateTagsAfterMutation`, dont
+		// le nom porte la contrainte « Server Actions uniquement ».
+		files: ["shared/lib/cache.ts"],
+		rules: {
+			"local/no-update-tag-outside-server-action": "off",
 		},
 	},
 	{
 		files: ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
 		rules: {
 			"local/require-cache-life": "off",
+			// Les tests mockent `next/cache` : `updateTag` y est un `vi.fn()`, pas
+			// l'implémentation Next. C'est précisément l'angle mort qui a laissé
+			// passer le bug — d'où le test de contrat SANS mock qui, lui, exerce la
+			// vraie implémentation (`test/contract/cache-invalidation-context.contract.test.ts`).
+			"local/no-update-tag-outside-server-action": "off",
 		},
 	},
 	{

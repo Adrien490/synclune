@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
 		optimizePackageImports: [
 			"motion/react",
 			"lucide-react",
-			"recharts",
 			"react-day-picker",
 			"@dnd-kit/react",
 			"@dnd-kit/dom",

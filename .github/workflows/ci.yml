@@ -235,8 +235,6 @@ jobs:
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: pnpm prisma db push --skip-generate
       - name: Seed database
         env:
@@ -251,8 +249,6 @@ jobs:
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: pnpm seed
       - name: Build application
         env:
@@ -267,8 +263,6 @@ jobs:
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: pnpm build
       - name: Get Playwright version
         id: playwright-version
@@ -298,8 +292,6 @@ jobs:
           UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
         run: pnpm e2e
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()

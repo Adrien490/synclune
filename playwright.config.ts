@@ -90,55 +90,23 @@ export default defineConfig({
 			dependencies: ["setup"],
 		},
 
-		// Authenticated tests (user) - Chrome
-		{
-			name: "authenticated-user",
-			use: {
-				...devices["Desktop Chrome"],
-				storageState: "e2e/.auth/user.json",
-			},
-			testMatch: /authenticated\/user/,
-			dependencies: ["setup"],
-		},
-
-		// Authenticated tests (user) - Firefox
-		// Covers checkout/Stripe iframe differences
-		{
-			name: "authenticated-user-firefox",
-			use: {
-				...devices["Desktop Firefox"],
-				storageState: "e2e/.auth/user.json",
-			},
-			testMatch: /authenticated\/user-checkout-flow|authenticated\/user-auth-flows/,
-			dependencies: ["setup"],
-		},
-
-		// Authenticated tests (user) - WebKit
-		// Covers Safari-specific payment/session behavior
-		{
-			name: "authenticated-user-webkit",
-			use: {
-				...devices["Desktop Safari"],
-				storageState: "e2e/.auth/user.json",
-			},
-			testMatch: /authenticated\/user-checkout-flow|authenticated\/user-auth-flows/,
-			dependencies: ["setup"],
-		},
-
-		// Authenticated tests (user) - Mobile (iPhone 14)
-		// Couvre les flows connectés conversion-critiques en viewport mobile :
-		// les autres projets `authenticated-user*` ne tournent qu'en desktop, donc
-		// une régression mobile sur panier/checkout/wishlist passait inaperçue.
-		{
-			name: "authenticated-user-mobile",
-			use: {
-				...devices["iPhone 14"],
-				storageState: "e2e/.auth/user.json",
-			},
-			testMatch:
-				/authenticated\/user-checkout-flow|authenticated\/user-cart-management|authenticated\/user-wishlist/,
-			dependencies: ["setup"],
-		},
+		/**
+		 * Plus de projets `authenticated-user*` (retrait de l'espace client 2026-07-31).
+		 *
+		 * Les cinq variantes (Chrome, Firefox, WebKit, mobile) chargeaient
+		 * `e2e/.auth/user.json`, un état de session obtenu en connectant un compte
+		 * CLIENT. Ce compte ne peut plus exister : l'inscription est fermée
+		 * (`disableSignUp`) et seule l'administratrice se connecte.
+		 *
+		 * Les specs commerce qu'ils couvraient (panier, checkout, wishlist, facture,
+		 * échec de paiement, paiement asynchrone, parcours clavier) ont migré vers
+		 * `e2e/*.spec.ts` et tournent dans les projets invités — ce qui correspond
+		 * désormais au parcours réel de TOUS les clients. Le multi-navigateur du
+		 * checkout (différences d'iframe Stripe) reste couvert par les projets
+		 * `firefox` et `webkit`, et le mobile par `mobile-chrome` / `mobile-webkit`.
+		 *
+		 * `authenticated-admin` reste : c'est la seule session possible.
+		 */
 	],
 	webServer: {
 		command: process.env.CI ? "pnpm start" : "pnpm dev",

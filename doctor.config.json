@@ -36,7 +36,9 @@
 			"react-doctor/no-prop-callback-in-effect",
 			"react-doctor/no-derived-state-effect",
 			"react-doctor/no-effect-chain",
-			"react-doctor/js-batch-dom-css"
+			"react-doctor/js-batch-dom-css",
+			"react-doctor/jsx-no-constructed-context-values",
+			"react-doctor/context-provider-value-from-unmemoized-local-literal"
 		],
 		"files": [
 			"e2e/**",
@@ -179,6 +181,37 @@
 				"_comment": "Primitives shadcn/ui : `buttonVariants`/`inputVariants`/les sous-composants de navigation-menu sont exportés à côté du composant par convention amont et importés partout — les déplacer casserait le chemin de mise à jour shadcn pour un gain limité au Fast Refresh en dev.",
 				"files": ["shared/components/ui/**"],
 				"rules": ["react-doctor/only-export-components"]
+			},
+			{
+				"_comment": "Les `*_DIALOG_ID` sont co-localisés avec le composant dialog qui s'y abonne, re-dérivés du registre taxonomy.config : la désynchronisation ouvreur↔dialog a déjà cassé la suppression des 3 référentiels (P0 audit admin catalogue 2026-08-01). ~10 consommateurs + 8 mocks de test importent ces IDs depuis ces fichiers ; les déplacer romprait la co-localisation pour un gain limité au Fast Refresh en dev.",
+				"files": [
+					"modules/colors/components/admin/delete-color-alert-dialog.tsx",
+					"modules/colors/components/color-form-dialog.tsx",
+					"modules/materials/components/admin/delete-material-alert-dialog.tsx",
+					"modules/materials/components/material-form-dialog.tsx",
+					"modules/product-types/components/admin/delete-product-type-alert-dialog.tsx",
+					"modules/product-types/components/product-type-form-dialog.tsx"
+				],
+				"rules": ["react-doctor/only-export-components"]
+			},
+			{
+				"_comment": "Même justification que l'eslint-disable jsx-a11y voisin (le nom react-doctor/* dans ce commentaire ferait échouer ESLint, qui ne connaît pas ce plugin) : onMouseLeave n'efface que le highlight clavier roving — affordance pointer-only, la navigation flèches fonctionne sans.",
+				"files": ["modules/products/components/quick-search-dialog/quick-search-dialog.tsx"],
+				"rules": ["react-doctor/no-static-element-interactions"]
+			},
+			{
+				"_comment": "Faux positif : c'est exactement le pattern de lazy init null-guardée (`if (ref.current === null) ref.current = …`) que la règle déclare elle-même supporté (« The predictable null-guarded lazy initialization pattern remains supported ») — `??=` n'est pas une option, non supporté par le React Compiler.",
+				"files": ["shared/hooks/use-back-button-close.ts", "shared/hooks/use-bottom-bar-height.ts"],
+				"rules": ["react-doctor/no-ref-current-in-render"]
+			},
+			{
+				"_comment": "Paire contradictoire : le fix prescrit (lazy init null-guardée) est flaggé en erreur par no-ref-current-in-render dans cette même version. Les valeurs initiales concernées sont des Set/Map VIDES — allocation triviale jetée au re-render, sans enjeu mesurable.",
+				"files": [
+					"modules/media/hooks/use-upload-cancellation.ts",
+					"modules/media/hooks/use-video-prefetch.ts",
+					"shared/contexts/navigation-guard-context.tsx"
+				],
+				"rules": ["react-doctor/rerender-lazy-ref-init"]
 			},
 			{
 				"_comment": "Fichiers `File[]` sans identifiant stable : deux fichiers homonymes de même mtime peuvent être mis en file d'attente, l'index sert d'unicité de clé (aucun id fourni par l'API File).",
