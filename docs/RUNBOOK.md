@@ -71,15 +71,46 @@ Checklist consolidée (aujourd'hui dispersée en commentaires). Rien de tout cec
 - **Prérequis distinct, plus proche** : la **réception** des factures fournisseurs est obligatoire
   au **1ᵉʳ sept. 2026** — c'est une démarche back-office (s'inscrire auprès d'une PA), sans code.
 
+## § Compte admin compromis — révoquer les sessions
+
+Il n'y a qu'un compte, et il administre toute la boutique. Deux chemins, dans cet ordre.
+
+**1. Depuis l'application (cas nominal)** — `/admin/configuration/securite` → « Déconnecter tous
+mes appareils ». Ferme toutes les sessions, y compris la vôtre, et vous renvoie sur `/connexion`.
+
+**2. Si l'accès à l'application est déjà perdu** (mot de passe changé par l'attaquant, par
+exemple) — en base, et **les deux requêtes**, pas une seule :
+
+```sql
+UPDATE "User" SET "suspendedAt" = now() WHERE email = '<email>';
+DELETE FROM "Session" WHERE "userId" = (SELECT id FROM "User" WHERE email = '<email>');
+```
+
+⚠️ **La suspension seule ne coupe rien tout de suite.** Tant que le cookie-cache Better Auth est
+valide, `getSession()` répond depuis le cookie signé **sans lire la base** : le plugin
+`customSession`, celui qui dégrade le rôle à `USER` pour un compte révoqué, ne s'exécute même pas.
+La latence est bornée par `AUTH_SESSION_CONFIG.cookieCache.maxAge` — **60 s** (`modules/auth/lib/auth-env.ts`).
+Le `DELETE` des sessions ne raccourcit pas ce délai non plus ; il empêche la reprise _après_.
+
+Pour rendre l'accès ensuite : remettre `suspendedAt` à NULL, et réinitialiser le mot de passe via
+`/mot-de-passe-oublie` (la vérification d'email est conservée précisément pour ce cas).
+
+⚠️ Ne pas relever `cookieCache.maxAge` « pour économiser des requêtes » : c'est cette valeur, et
+elle seule, qui fixe la latence de révocation de toute l'application.
+
 ## Cron RGPD critique — `hard-delete-retention` (mensuel)
 
 - Purge les PII des commandes à `paidAt + 10 ans` (RGPD Art. 5.1.e). Un échec silencieux = PII conservée trop longtemps (risque CNIL).
 - Périmètre : ligne `Order` (opérationnel + billing + snapshot/PDF + identifiants Stripe), **avoirs partiels `Refund`** (PDF + note libre), **`OrderNote.content`**, + commandes jamais payées à 3 ans. SSOT : `modules/orders/constants/pii-scrub.ts`.
 - Une **alerte admin** est désormais émise en cas d'échec (audit §4.3). Vérifier mensuellement qu'aucune alerte n'est remontée ; sinon, relancer manuellement le cron.
 
-### Demande d'effacement RGPD d'un client INVITÉ (procédure manuelle)
+### Demande d'effacement RGPD d'un client (procédure manuelle — SEUL chemin)
 
-Le flux automatique (`process-account-deletions`) ne couvre que les comptes : une commande invitée (`userId` NULL) n'a pas de compte à supprimer. Si un invité exerce son droit d'effacement (Art. 17) avant l'échéance des 10 ans :
+⚠️ **Il n'y a plus aucun flux automatique.** Le cron `process-account-deletions` a été supprimé avec l'espace client (2026-07-31) : sans compte client, il n'y avait plus de demande de suppression à traiter. Cette procédure manuelle, qui ne couvrait auparavant que les achats invités, s'applique donc désormais à **tous** les clients — ils sont tous invités.
+
+Conséquence pratique : une demande d'effacement arrive par **email** (adresse de contact publiée dans `/confidentialite`, qui renvoie tous les droits RGPD vers ce canal) et se traite à la main. Le délai légal de réponse est de 30 jours ; rien ne le rappelle automatiquement, donc **traiter la demande à réception**.
+
+Si un client exerce son droit d'effacement (Art. 17) avant l'échéance des 10 ans :
 
 1. Identifier ses commandes par email : `Order.customerEmail`.
 2. **Vérifier que tout avoir émis est archivé** (EINV-CREDIT-020) : `Order.creditNoteNumber`/`Refund.creditNoteNumber` non NULL ⇒ `creditNotePdfUrl` doit être non NULL. Sinon, relancer le cron `reconcile-invoices` (Passes 3b/7 archivent les avoirs manquants) AVANT le scrub — un avoir matérialisé après scrub perdrait l'identité client (Art. 289 CGI).
@@ -104,6 +135,18 @@ Le millésime `F-YYYY` suit **la date d'encaissement** (`paidAt`, Europe/Paris �
 - **Usage attendu** : canal de **recovery exceptionnel** (paiement asynchrone jamais webhooké, client qui règle par virement après échec carte). Ce n'est PAS un canal de vente : un usage systématique reviendrait à un flux d'encaissement alternatif relevant de l'invariant CLAUDE.md #8 (« validation comptable préalable » — risque de qualification logiciel de caisse NF 525).
 - **À faire valider par le comptable** (point ouvert) : confirmer que ce canal d'attestation virement/chèque adossé à un PaymentIntent est acceptable en l'état, et à quel volume il devient un flux à déclarer/outiller autrement. En attendant : usage au cas par cas uniquement, chaque utilisation étant auditée dans `OrderHistory`.
 - **Contrôle périodique** (mensuel, avec les vérifs facturation) : compter les usages du mois — les entrées `OrderHistory` `action=PAID` dont `metadata.offStripeConfirmed=true`. Plus de quelques occurrences par mois ⇒ en parler au comptable avant de continuer.
+- ⚠️ **Compter aussi `metadata.piStatus='unavailable'`** (audit invariant #8, 2026-07-31). Si l'API Stripe est injoignable au moment du marquage, `mark-as-paid` **fail-open** : le statut du PI n'est pas vérifiable, l'attestation n'est donc pas exigée, et `offStripeConfirmed` est **absent** de l'audit — ces marquages échapperaient au comptage ci-dessus. Le fail-open est délibéré (un outage Stripe ne doit pas bloquer une recovery légitime) et sans risque pour l'invariant #8, le PaymentIntent restant obligatoire ; mais ces entrées sont, par construction, les moins documentées. Requête de contrôle :
+
+  ```sql
+  SELECT "createdAt", "orderId", metadata->>'piStatus' AS pi_status,
+         metadata->>'offStripeConfirmed' AS attested
+  FROM "OrderHistory"
+  WHERE action = 'PAID' AND source = 'ADMIN'
+    AND "createdAt" >= date_trunc('month', now()) - interval '1 month'
+  ORDER BY "createdAt" DESC;
+  ```
+
+  Toute ligne avec `pi_status = 'succeeded'` est un rattrapage bénin (le webhook a été doublé). Les autres méritent une justification écrite.
 
 ## § Coûts & quotas — que faire quand une jauge dérive
 
@@ -135,11 +178,10 @@ Ne pas ajouter de cron pour une tâche quotidienne : l'ajouter en **passe** de `
 
 Symptôme : 429 Resend, e-mails de confirmation manquants.
 
-Le marketing est plafonné à 40 envois/jour (`MARKETING_DAILY_EMAIL_BUDGET`), les 60 restants sont réservés au transactionnel. Si le plafond est quand même atteint :
+Il n'existe plus aucun émetteur marketing (retrait 2026-07-30, avec `MARKETING_DAILY_EMAIL_BUDGET` et la file « retour en stock ») : les 100 envois/jour du plan Free sont entièrement disponibles pour le transactionnel. Si le plafond est quand même atteint :
 
-1. Vérifier qu'aucun nouvel émetteur marketing ne contourne le budget (il doit consulter `remainingMarketingBudget`, pas ouvrir son propre compteur).
-2. Le reliquat de retour-en-stock repart automatiquement le lendemain via la passe `drainBackInStockQueue()` — aucune action manuelle.
-3. Si le volume légitime dépasse durablement 100/jour, c'est le signal de passer au plan Resend payant, pas de relever `MARKETING_DAILY_EMAIL_BUDGET`.
+1. Vérifier qu'aucun émetteur marketing n'a été réintroduit sans re-créer le triptyque budget partagé + `List-Unsubscribe` + opt-out persisté (cf. `CLAUDE.md` § Emails).
+2. Si le volume transactionnel légitime dépasse durablement 100/jour, c'est le signal de passer au plan Resend payant.
 
 ### Les minutes CI s'épuisent
 

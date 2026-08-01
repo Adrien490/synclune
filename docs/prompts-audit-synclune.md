@@ -2,9 +2,10 @@
 
 Objectif : copier-coller un prompt dans Claude Code pour auditer un point précis du projet Synclune.
 
-**156 prompts, trois blocs** : **01 → 99** métier, conformité et plomberie · **100 → 128** interfaces
-(UI/UX mobile et desktop) · **129 → 156** architecture Next 16, fiabilité, sécurité, outillage et
-exploitation. Le catalogue couvre l'intégralité du repo : toute zone sans prompt est un oubli à signaler.
+**159 prompts, trois blocs** : **01 → 99** métier, conformité et plomberie · **100 → 128** interfaces
+(UI/UX mobile et desktop) · **129 → 159** architecture Next 16, fiabilité, sécurité, outillage et
+exploitation. Sept prompts sont neutralisés (39, 43, 50, 92, 93, 113, 116 — features retirées, encarts
+datés). Le catalogue couvre l'intégralité du repo : toute zone sans prompt est un oubli à signaler.
 
 Format attendu pour chaque audit :
 
@@ -22,17 +23,24 @@ Contexte rapide :
 - Modules critiques : cart, orders, payments, webhooks, auth, discounts, refunds, invoices, emails, cron, media, wishlist.
 - Points critiques : paiement Stripe, webhooks idempotents, stock, commandes, factures, avoirs, RGPD, emails transactionnels, admin, sécurité.
 
-### Les 24 modules réels (`modules/`)
+### Les 22 modules réels (`modules/`)
 
 `addresses`, `auth`, `cart`, `collections`, `colors`, `cron`, `dashboard`, `discounts`, `emails`, `invoices`,
-`materials`, `media`, `notifications`, `orders`, `payments`, `product-types`, `products`, `refunds`,
-`skus`, `store-settings`, `users`, `webhooks`, `wishlist`.
+`materials`, `media`, `orders`, `payments`, `product-types`, `products`, `refunds`, `skus`,
+`store-settings`, `taxonomies`, `webhooks`, `wishlist`.
+
+> `addresses` ne porte plus que l'**autocomplétion** d'adresse (BAN/Geoapify) — le carnet d'adresses
+> client a disparu avec l'espace client (2026-07-31). `taxonomies` mutualise l'UI et les hooks des trois
+> référentiels (`colors`, `materials`, `product-types`).
 
 > ⚠️ Il n'existe **pas** de module `admin`, `catalog`, `search`, `shipping`, `stock`, `analytics`, `disputes`,
-> `account`. L'admin est un **arbre de routes** (`app/admin/**`) qui consomme les modules
-> métier ; l'analytics vit dans `modules/dashboard/**` ; le stock dans `modules/skus/**` ; la livraison, le
-> tracking et les litiges dans `modules/orders/**` + `modules/webhooks/**` + `modules/cron/**` ;
-> la facturation dans `modules/invoices/**` ; l'espace client dans `app/(account)/**` + `modules/users/**`.
+> `account`, `users`, `notifications`. L'admin est un **arbre de routes** (`app/admin/**`) qui consomme
+> les modules métier ; l'analytics vit dans `modules/dashboard/**` ; le stock dans `modules/skus/**` ; la
+> livraison et le tracking dans `modules/orders/**` + `modules/webhooks/**` ; les litiges se réduisent à
+> l'alerte email d'ouverture (`modules/webhooks/**`) ; la facturation dans `modules/invoices/**`.
+> **Il n'y a plus d'espace client** (retrait 2026-07-31) : la connexion est réservée à l'administration,
+> tout le parcours d'achat est invité, et le seul accès client à une commande est `app/suivi-commande/**`
+> (lien tokenisé HMAC — cf. prompts 158/159).
 > **Le filesystem fait foi** : vérifie chaque chemin cité dans un prompt avant de t'y fier.
 
 ### Positionnement vs `docs/AUDIT-PROMPTS.md`
@@ -55,9 +63,9 @@ un bon point d'entrée avant de lancer la mission large correspondante.
 ```text
 Audit le point « Qualité métier e-commerce globale » dans Synclune.
 
-Vérifie que les parcours principaux sont cohérents : découverte produit, ajout panier, checkout, paiement Stripe, confirmation commande, email, facture, compte client et admin.
+Vérifie que les parcours principaux sont cohérents : découverte produit, ajout panier, checkout invité, paiement Stripe, confirmation commande, email, facture, suivi de commande par lien tokenisé (`/suivi-commande`) et admin.
 
-Inspecte `app/(shop)/**`, `app/paiement/**`, `modules/cart/**`, `modules/orders/**`, `modules/payments/**`, `modules/webhooks/**`.
+Inspecte `app/(shop)/**`, `app/paiement/**`, `app/suivi-commande/**`, `modules/cart/**`, `modules/orders/**`, `modules/payments/**`, `modules/webhooks/**`.
 
 Note /100, donne les preuves, problèmes P0/P1/P2/P3, corrections et tests à ajouter.
 ```
@@ -106,12 +114,12 @@ Note /100, propose corrections/améliorations si pertinent et tests d’arrondis
 
 ---
 
-## 05 — Panier invité et connecté - DONE
+## 05 — Panier invité - DONE
 
 ```text
-Audit le point « Panier invité et connecté » dans Synclune.
+Audit le point « Panier invité » dans Synclune.
 
-Vérifie panier sessionId/userId, fusion éventuelle après login, expiration, quantité, prix snapshot `priceAtAdd`, stock, code promo et purge.
+Vérifie panier par cookie de session (`Cart.userId` reste nullable — l'administratrice est un User qui peut acheter), expiration, quantité, prix snapshot `priceAtAdd`, stock, code promo et purge. ⚠️ Il n'y a PLUS de fusion post-login (retrait espace client 2026-07-31) : une donnée invitée reste invitée — signale tout reliquat de code de fusion (ex. `modules/cart/data/get-cart-for-merge.ts`, sans appelant hors son test).
 
 Inspecte `modules/cart/**`, `shared/stores/**`, cookies, `prisma/schema.prisma` et tests cart.
 
@@ -141,7 +149,7 @@ Audit le point « Checkout Stripe Elements » dans Synclune.
 
 Vérifie création PaymentIntent, montant, devise EUR, metadata, client secret, validation panier, shipping, discounts et erreurs Stripe.
 
-Inspecte `modules/payments/**`, `app/paiement/**`, `app/api/**`, `shared/lib/stripe*`.
+Inspecte `modules/payments/**` (le PaymentIntent est créé par la Server Action `actions/initialize-payment.ts` — il n'existe pas de route API de checkout), `app/paiement/**`, `shared/lib/stripe*`.
 
 Note /100, propose corrections/améliorations si pertinent et tests critiques.
 ```
@@ -155,7 +163,7 @@ Audit le point « Montant Stripe vs montant commande » dans Synclune.
 
 Vérifie que le montant encaissé Stripe correspond au total Order, que les écarts sont détectés, que le surpaiement est géré et qu’aucune commande payée n’est créée manuellement.
 
-Inspecte `modules/payments/**`, `modules/orders/**`, `modules/webhooks/**`, services overbilling et tests.
+Inspecte `modules/payments/**`, `modules/orders/**`, `modules/webhooks/handlers/payment-handlers.ts`, `modules/webhooks/services/checkout-order-processing.service.ts` et tests.
 
 Note /100, classe toute divergence non gérée en P0.
 ```
@@ -223,9 +231,9 @@ Note /100, classe toute dépendance dynamique produit après commande en P0/P1.
 ```text
 Audit le point « Snapshots adresses commande » dans Synclune.
 
-Vérifie que les adresses de livraison/facturation sont copiées sur Order au checkout et restent figées même si le client modifie ses adresses.
+Vérifie que les adresses de livraison (et l'identité client) sont copiées champ à champ sur Order dans la tx de checkout (`shipping*`/`customer*`), que `billing*` reste NULL au checkout (design B2C — seul writer : `update-order-billing-address`, bloqué post-facture), et qu'aucun affichage de commande ne dépend d'une donnée vivante. ⚠️ Il n'existe PAS de modèle `Address` en base ni de carnet d'adresses client (retrait 2026-07-31) — `modules/addresses` ne porte que l'autocomplétion.
 
-Inspecte `modules/orders/**`, `modules/addresses/**`, `app/(account)/adresses/**`, `prisma/schema.prisma`.
+Inspecte `modules/payments/services/order-creation.service.ts`, `modules/payments/schemas/checkout.schema.ts`, `modules/orders/**`, `prisma/schema.prisma`, `order-address-snapshot-immutability.regression.test.ts`.
 
 Note /100, propose corrections/améliorations si pertinent et tests.
 ```
@@ -246,12 +254,12 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 15 — Invalidation cache commandes
+## 15 — Invalidation cache commandes : DONE
 
 ```text
 Audit le point « Invalidation cache commandes » dans Synclune.
 
-Vérifie que toute mutation Order.status/paymentStatus invalide via `getOrderInvalidationTags(userId, orderId)` et jamais via tags écrits à la main.
+Vérifie que toute mutation Order.status/paymentStatus invalide via `getOrderInvalidationTags(orderId)` (plus de paramètre `userId` depuis le retrait de l'espace client) et jamais via tags écrits à la main.
 
 Inspecte `modules/orders/constants/cache.ts`, `modules/orders/**`, `modules/webhooks/**`, `modules/cron/**`.
 
@@ -260,7 +268,7 @@ Note /100, classe toute invalidation partielle en P1/P0 selon impact.
 
 ---
 
-## 16 — Cache catalogue
+## 16 — Cache catalogue : DONE
 
 ```text
 Audit le point « Cache catalogue » dans Synclune.
@@ -279,16 +287,16 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 ```text
 Audit le point « Cache utilisateur et checkout » dans Synclune.
 
-Vérifie `use cache: private`, cache profile `checkout`, données user-scoped, panier, session, stock validation et confirmation commande.
+Vérifie `use cache: private`, cache profile `checkout`, panier et favoris par cookie invité, session admin, stock validation et confirmation commande (le cas nominal est désormais « pas de session » — plus de compte client).
 
-Inspecte `modules/cart/**`, `modules/orders/data/**`, `modules/users/**`, `app/(account)/**`, `shared/lib/cache*`.
+Inspecte `modules/cart/**`, `modules/orders/data/**`, `modules/auth/data/get-session.ts`, `app/suivi-commande/**`, `app/paiement/**`, `shared/lib/cache*`.
 
 Note /100, classe toute fuite cross-user en P0.
 ```
 
 ---
 
-## 18 — Usage correct de `use cache`, `cacheLife`, `cacheTag`
+## 18 — Usage correct de `use cache`, `cacheLife`, `cacheTag` : DONE
 
 ```text
 Audit le point « Usage correct du cache Next.js » dans Synclune.
@@ -307,7 +315,7 @@ Note /100, propose corrections/améliorations si pertinent et tests de cache.
 ```text
 Audit le point « Auth Better Auth » dans Synclune.
 
-Vérifie email/password, Google, sessions, cookies, email verification, password reset, comptes suspendus, comptes supprimés et sécurité des flux.
+Vérifie email/password (login admin uniquement : `disableSignUp: true`, plus AUCUN `socialProviders` — Google est parti avec l'inscription le 2026-07-31), sessions, cookies, email verification, password reset, comptes suspendus/révoqués et sécurité des flux. Signale tout reliquat d'inscription ou de social login (liens morts vers `/inscription`, vestiges Google).
 
 Inspecte `modules/auth/**`, `app/api/auth/**`, `app/(auth)/**`, config Better Auth.
 
@@ -316,7 +324,7 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 20 — Admin role et re-check DB
+## 20 — Admin role et re-check DB : DONE
 
 ```text
 Audit le point « Admin role et re-check DB » dans Synclune.
@@ -335,9 +343,9 @@ Note /100, classe toute confiance directe au cookie/session en P0/P1.
 ```text
 Audit le point « Statuts de compte » dans Synclune.
 
-Vérifie `ACTIVE`, `INACTIVE`, `PENDING_DELETION`, `ANONYMIZED`, `suspendedAt`, accès aux routes, checkout, espace client et admin.
+Vérifie `ACTIVE`, `INACTIVE`, `PENDING_DELETION`, `ANONYMIZED`, `suspendedAt`, accès aux routes, checkout et admin. ⚠️ Ces statuts ne gardent plus que le compte admin (plus aucune UI ne les pilote depuis le retrait de l'espace client) : vérifie que les gardes de lecture (`require-auth.ts`, hooks Better Auth) les appliquent toujours.
 
-Inspecte `modules/auth/**`, `modules/users/**`, `app/(account)/**`, `modules/cart/**`, `modules/orders/**`, `prisma/schema.prisma`.
+Inspecte `modules/auth/lib/require-auth.ts`, `modules/auth/lib/auth.ts`, `modules/cart/**`, `modules/orders/**`, `prisma/schema.prisma`.
 
 Note /100, propose corrections/améliorations si pertinent et tests.
 ```
@@ -358,12 +366,12 @@ Note /100, liste actions conformes/non conformes.
 
 ---
 
-## 23 — Validation Zod
+## 23 — Validation Zod : DONE
 
 ```text
 Audit le point « Validation Zod » dans Synclune.
 
-Vérifie que les inputs formulaires, actions, API routes, checkout, adresses, téléphone, discounts, remboursements et admin sont validés avec Zod.
+Vérifie que les inputs formulaires, actions, API routes, checkout, adresses (désormais dans `modules/payments/schemas/checkout.schema.ts`), téléphone, discounts, remboursements et admin sont validés avec Zod.
 
 Inspecte `modules/**/schemas/**`, `shared/schemas/**`, actions et routes API.
 
@@ -377,9 +385,9 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 ```text
 Audit le point « Formulaires TanStack Form » dans Synclune.
 
-Vérifie formulaires auth, checkout, adresse, admin produit/SKU, discounts, refunds : validation, erreurs, loading, double submit, accessibilité.
+Vérifie formulaires auth (connexion/reset uniquement — plus d'inscription), checkout (adresse via `modules/payments/components/checkout-address-fields.tsx`), admin produit/SKU, discounts, refunds : validation, erreurs, loading, double submit, accessibilité.
 
-Inspecte `shared/components/forms/**`, `shared/lib/form-context`, `modules/**/components/**`.
+Inspecte `shared/components/forms/**`, `shared/lib/form-context.tsx`, `modules/**/components/**`.
 
 Note /100, propose corrections/améliorations si pertinent UX et tests.
 ```
@@ -400,12 +408,12 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 26 — Rate limiting
+## 26 — Rate limiting : DONE
 
 ```text
 Audit le point « Rate limiting » dans Synclune.
 
-Vérifie les limites sur auth, search, checkout, discounts, admin actions, refunds, upload, emails et webhooks si pertinent.
+Vérifie les limites sur auth, search, checkout, discounts, admin actions, refunds, upload, suivi de commande (`/suivi-commande`) et webhooks si pertinent.
 
 Inspecte `shared/lib/rate-limit*`, actions, routes API et tests.
 
@@ -442,14 +450,16 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 29 — RGPD client
+## 29 — RGPD (données de commande & cookies)
 
 ```text
-Audit le point « RGPD client » dans Synclune.
+Audit le point « RGPD » dans Synclune.
 
-Vérifie consentement CGV/confidentialité, suppression de compte, anonymisation, conservation légale, PII, droits utilisateur et purge opérationnelle.
+⚠️ Périmètre recadré 2026-07-31 : il n'y a plus de compte client, donc plus de suppression/anonymisation/export de compte (services retirés avec l'espace client). Le RGPD restant porte sur les DONNÉES DE COMMANDE et le consentement cookies.
 
-Inspecte `modules/users/**`, `app/(account)/**`, `modules/auth/**`, `modules/cron/**`, `modules/orders/**`, `prisma/schema.prisma`.
+Vérifie conservation légale vs minimisation : purge PII à `paidAt + 10 ans` (`hard-delete-retention`), scrub des commandes jamais payées à 3 ans, contrat de champs `pii-scrub.ts`, absence de PII client dans `OrderHistory` (table immuable jamais scrubée), consentement cookies, et la garde exigée si un chemin d'anonymisation d'utilisateur revenait (invariant 9 de CLAUDE.md : archivage des avoirs AVANT scrub).
+
+Inspecte `modules/cron/services/**`, `modules/orders/constants/pii-scrub.ts`, `modules/orders/**`, `modules/auth/**`, `shared/stores/cookie-consent-store.ts`, `prisma/schema.prisma`.
 
 Note /100, classe les risques RGPD en P0/P1.
 ```
@@ -463,7 +473,7 @@ Audit le point « Rétention PII 10 ans » dans Synclune.
 
 Vérifie que la PII opérationnelle est scrubée au bon moment, que les données légales de facture sont conservées selon obligation, puis purgées à échéance.
 
-Inspecte cron `hard-delete-retention`, services RGPD, modèles Order/User/Address, tests.
+Inspecte cron `hard-delete-retention`, `modules/orders/constants/pii-scrub.ts` (SSOT du contrat de champs), modèles Order/Refund/OrderNote (⚠️ il n'existe PAS de modèle `Address` — les adresses sont des colonnes snapshot sur Order), `purge-pii-scrub-contract.regression.test.ts`.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
@@ -526,7 +536,7 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 35 — Interdiction vente manuelle / caisse
+## 35 — Interdiction vente manuelle / caisse : DONE
 
 ```text
 Audit le point « Interdiction vente manuelle / caisse » dans Synclune.
@@ -559,9 +569,11 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Litiges Stripe » dans Synclune.
 
-Vérifie gestion dispute opened/resolved, alertes admin, historique commande, monitoring, deadline et absence de double traitement.
+⚠️ Périmètre réduit le 2026-07-30 : plus de cron `alert-dispute-deadlines`, plus de tuile dashboard ; seul `charge.dispute.created` est routé (alerte admin à l'ouverture — la clôture passe par la comptabilité refund via `charge.refunded`).
 
-Inspecte `modules/orders/actions/**` (litiges), `modules/refunds/**`, `modules/webhooks/**`, `modules/cron/services/**` (`alert-dispute-deadlines`), `modules/dashboard/**`, emails admin.
+Vérifie l'alerte email d'ouverture, l'écriture `OrderHistory` (`DISPUTE_OPENED`/`DISPUTE_RESOLVED`), `has-open-dispute.service.ts`, l'absence de double traitement, et signale le modèle Prisma `Dispute` orphelin (toujours déclaré dans `schema.prisma` avec ses 2 enums et la relation `Order.disputes`, sans aucun code applicatif — dette de schéma).
+
+Inspecte `modules/webhooks/handlers/dispute-handlers.ts`, `modules/orders/services/has-open-dispute.service.ts`, `modules/refunds/**`, `modules/emails/services/admin-emails.ts`, `prisma/schema.prisma`.
 
 Note /100, propose corrections/améliorations si pertinent et tests.
 ```
@@ -600,7 +612,7 @@ Vérifie TVA à 0, mention Art. 293 B, seuil 85 000 €, constantes SSOT, snapsh
 
 Inspecte `shared/constants/vat-franchise.ts`, `modules/invoices/**`, `modules/orders/**`, `prisma/schema.prisma`.
 
-Note /100, propose corrections/améliorations si pertinent/améliorations si pertinent.
+Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
@@ -610,7 +622,7 @@ Note /100, propose corrections/améliorations si pertinent/améliorations si per
 ```text
 Audit le point « Cron jobs » dans Synclune.
 
-Vérifie les 11 crons, cohérence `vercel.json` vs `modules/cron/constants/schedules.ts`, guard cron, Sentry Cron Monitoring, idempotence et logs.
+Vérifie les 9 crons (tous quotidiens ou moins fréquents — plafond du plan Vercel Hobby), cohérence `vercel.json` vs `modules/cron/constants/schedules.ts`, guard cron, Sentry Cron Monitoring (4 jobs seulement, via `SENTRY_MONITORED_CRONS`), idempotence, logs, et les services de cron ORPHELINS jamais planifiés (`cleanup-carts.service.ts`, `reconcile-voided-invoices.service.ts`) : brancher ou supprimer.
 
 Inspecte `app/api/cron/**`, `modules/cron/**`, `vercel.json`, tests schedules.
 
@@ -624,7 +636,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Emails transactionnels » dans Synclune.
 
-Vérifie order confirmation, shipping, cancel, refund, payment failed, auth emails, back-in-stock, contenu, erreurs et idempotence.
+Vérifie les 8 templates : order confirmation, shipping, cancel, refund, payment failed, verification, password-reset et admin-alert — contenu, erreurs et idempotence. ⚠️ Plus aucun émetteur marketing ni back-in-stock (retirés 2026-07-30) : signale tout vestige.
 
 Inspecte `emails/**`, `modules/emails/**`, `shared/lib/email-config.ts`, services d’envoi.
 
@@ -633,17 +645,14 @@ Note /100, propose corrections/améliorations si pertinent et tests.
 
 ---
 
-## 43 — Emails marketing et désinscription
+## 43 — Emails marketing et désinscription ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Emails marketing et désinscription » dans Synclune.
-
-Vérifie List-Unsubscribe, One-Click, Precedence, Auto-Submitted, endpoint `/notifications/desinscription`, token HMAC et persistance `User.marketingOptOutAt` (Art. 21(3) RGPD) filtrée par les émetteurs marketing.
-
-Inspecte `modules/emails/**`, routes notifications, config Resend.
-
-Note /100, propose corrections/améliorations si pertinent.
-```
+> ⚠️ **Il n'existe plus AUCUN émetteur marketing depuis le 2026-07-30** : le back-in-stock est parti
+> avec toute la catégorie marketing, et l'endpoint `/notifications/desinscription`, le module
+> `modules/notifications`, les en-têtes `List-Unsubscribe`/RFC 8058 et la colonne
+> `User.marketingOptOutAt` (droppée par la migration `20260731100000`) ont tous été supprimés.
+> Tout futur émetteur marketing devra RE-CRÉER le triptyque budget partagé + en-têtes RFC 8058 +
+> opt-out persisté (cf. CLAUDE.md § Emails) — ce prompt sera alors à réécrire, pas à ressusciter.
 
 ---
 
@@ -689,14 +698,14 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 47 — Wishlist et back-in-stock
+## 47 — Wishlist (favoris) : DONE
 
 ```text
-Audit le point « Wishlist et back-in-stock » dans Synclune.
+Audit le point « Wishlist (favoris) » dans Synclune.
 
-Vérifie favoris invité/connecté, sessionId/userId, produit supprimé, notification retour stock, idempotence email et RGPD.
+Vérifie favoris par cookie invité (plus de fusion post-login), produit supprimé (`onDelete: SetNull`), expiration/purge et RGPD. ⚠️ Le back-in-stock a été retiré le 2026-07-30 : signale les reliquats (colonne `WishlistItem.backInStockNotifiedAt` + son index composite, toujours en base, orphelins).
 
-Inspecte `modules/wishlist/**`, `modules/emails/**`, `prisma/schema.prisma`.
+Inspecte `modules/wishlist/**`, `prisma/schema.prisma`.
 
 Note /100, propose corrections/améliorations si pertinent et tests.
 ```
@@ -717,49 +726,45 @@ Note /100, classe les pertes financières en P0/P1.
 
 ---
 
-## 49 — Livraison et tracking
+## 49 — Livraison et tracking : DONE
 
 ```text
 Audit le point « Livraison et tracking » dans Synclune.
 
-Vérifie modes de livraison, shippingCost, transporteur, tracking number/url, emails shipping, statuts fulfillment et espace client.
+Vérifie modes de livraison, shippingCost, transporteur, tracking number/url, emails shipping, statuts fulfillment et l'affichage du suivi côté client (page invitée `/suivi-commande` — il n'y a plus d'espace client).
 
-Inspecte `modules/orders/**` (schemas/services/composants shipping + tracking), `modules/emails/**`, `app/(account)/commandes/**`, `prisma/schema.prisma`.
+Inspecte `modules/orders/**` (schemas/services/composants shipping + tracking), `modules/emails/**`, `app/suivi-commande/**`, `prisma/schema.prisma`.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
 
-## 50 — Click and collect
+## 50 — Click and collect ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Click and collect » dans Synclune.
-
-Vérifie CartFulfillmentType, shippingCost, adresse requise ou non, checkout, confirmation, email, admin order detail.
-
-Inspecte `modules/cart/**`, `modules/orders/**`, `modules/payments/**`, UI checkout.
-
-Note /100, propose corrections/améliorations si pertinent et tests.
-```
+> ⚠️ **Le click & collect a été retiré du code** (commit `8d097623f`, surface morte) :
+> `CartFulfillmentType` n'existe plus nulle part, le modèle `Cart` ne porte aucun champ
+> `fulfillmentType`, et le checkout est expédition uniquement. Ne pas confondre avec
+> `FulfillmentStatus` (statut d'expédition d'une commande), toujours vivant.
+> Ce prompt n'a plus d'objet tant que le retrait en main propre n'est pas reconstruit.
 
 ---
 
-## 51 — Admin catalogue
+## 51 — Admin catalogue : DONE
 
 ```text
 Audit le point « Admin catalogue » dans Synclune.
 
 Vérifie CRUD produits, SKUs, collections, types, couleurs, matériaux, médias, statuts, soft delete, validations et permissions admin.
 
-Inspecte `app/admin/catalogue/**`, `modules/products/**`, `modules/skus/**`, `modules/collections/**`, `modules/colors/**`, `modules/materials/**`, `modules/product-types/**`, `modules/media/**`.
+Inspecte `app/admin/catalogue/**`, `modules/products/**`, `modules/skus/**`, `modules/collections/**`, `modules/taxonomies/**` (UI et hooks mutualisés des trois référentiels), `modules/colors/**`, `modules/materials/**`, `modules/product-types/**`, `modules/media/**`.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
 
-## 52 — Admin commandes
+## 52 — Admin commandes : DONE
 
 ```text
 Audit le point « Admin commandes » dans Synclune.
@@ -778,7 +783,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Analytics admin » dans Synclune.
 
-Vérifie KPIs, revenue chart, commandes récentes, action items, filtres, performance, données exactes et absence de double comptage refunds.
+Vérifie KPIs, commandes récentes, action items (périmètre réduit — plus de graphique de revenu ni de tuile litiges), progression franchise TVA, filtres, performance, données exactes et absence de double comptage refunds.
 
 Inspecte `modules/dashboard/**`, `app/admin/(dashboard)/**`, `modules/orders/**`.
 
@@ -787,7 +792,7 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 54 — Recherche storefront/admin
+## 54 — Recherche storefront/admin : DONE
 
 ```text
 Audit le point « Recherche » dans Synclune.
@@ -815,21 +820,21 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 56 — Pages légales
+## 56 — Pages légales : DONE
 
 ```text
 Audit le point « Pages légales » dans Synclune.
 
 Vérifie CGV, mentions légales, confidentialité, cookies, livraison, retours, micro-entreprise, TVA non applicable et conformité e-commerce.
 
-Inspecte `app/(legal)/**`, contenus, liens footer et checkout.
+Inspecte `app/(legal)/**`, `app/(shop)/aide/**` + `shared/constants/faq-items.tsx` (livraison et retours n'ont PAS de page légale dédiée — ils vivent dans l'aide et `/retractation`), `shared/constants/legal-urls.ts` (SSOT des liens), contenus, liens footer et checkout.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
 
 ---
 
-## 57 — UI design system
+## 57 — UI design system : DONE
 
 ```text
 Audit le point « UI design system » dans Synclune.
@@ -904,7 +909,7 @@ Note /100, propose lazy loading/dynamic imports.
 ```text
 Audit le point « React 19 et React Compiler » dans Synclune.
 
-Vérifie absence de `useMemo`, `useCallback`, `React.memo`, compatibilité avec React Compiler, version React 19.2.7, composants purs et doctor scripts.
+Vérifie absence de `useMemo`, `useCallback`, `React.memo`, compatibilité avec React Compiler, version React 19.2.x (19.2.8 au 2026-07-31), composants purs et doctor scripts.
 
 Inspecte `package.json`, `next.config.*`, `app/**`, `modules/**`, `shared/**`.
 
@@ -976,7 +981,7 @@ Audit le point « Soft delete » dans Synclune.
 
 Vérifie `deletedAt`, helpers `notDeleted`, `softDelete`, conservation commandes, produits/SKUs archivés et absence de suppression physique dangereuse.
 
-Inspecte `shared/lib/prisma`, modules products/orders/users, actions admin.
+Inspecte `shared/lib/prisma`, modules products/orders/skus, actions admin.
 
 Note /100, propose corrections/améliorations si pertinent.
 ```
@@ -1058,7 +1063,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Tests E2E Playwright » dans Synclune.
 
-Vérifie parcours storefront, produit, panier, checkout Stripe mock, confirmation, compte, admin, mobile, accessibilité et erreurs.
+Vérifie parcours storefront, produit, panier, checkout Stripe mock, confirmation, suivi de commande invité, admin (les specs `e2e/authenticated/` sont désormais 100 % admin), mobile, accessibilité et erreurs.
 
 Inspecte `e2e/**`, `playwright.config.*`, mocks Stripe et tests axe.
 
@@ -1072,7 +1077,7 @@ Note /100, propose scénarios manquants.
 ```text
 Audit le point « Tests accessibilité » dans Synclune.
 
-Vérifie usage de `@axe-core/playwright` et `vitest-axe`, pages shop, produit, panier, checkout, admin, auth et account.
+Vérifie usage de `@axe-core/playwright` et `vitest-axe`, pages shop, produit, panier, checkout, admin, auth et suivi de commande.
 
 Inspecte tests axe existants et composants UI.
 
@@ -1172,7 +1177,7 @@ Audit le point « Confidentialité données » dans Synclune.
 
 Vérifie PII, emails, adresses, téléphone, tokens, Stripe secrets, logs, Sentry, analytics, localStorage, Zustand persist et exports.
 
-Inspecte modules auth/account/orders/payments, stores, logging, Sentry et analytics.
+Inspecte modules auth/orders/payments/cart/wishlist, stores, logging, Sentry et analytics.
 
 Note /100, classe les fuites en P0/P1.
 ```
@@ -1184,7 +1189,7 @@ Note /100, classe les fuites en P0/P1.
 ```text
 Audit le point « Zustand stores » dans Synclune.
 
-Vérifie les 9 stores, données persistées, purge, confidentialité, hydratation, UX, badge counts, dialogs/sheets et bulk pending admin.
+Vérifie les 6 stores (dialog, alert-dialog, sheet, cookie-consent, badge-counts, overlay-stack), données persistées, purge, confidentialité, hydratation, UX, badge counts et dialogs/sheets. ⚠️ Les stores de sélection groupée admin ont été retirés — signale tout reliquat.
 
 Inspecte `shared/stores/**`, providers, modules utilisant les stores.
 
@@ -1198,7 +1203,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Responsive mobile » dans Synclune.
 
-Vérifie storefront, produit, galerie, panier, checkout, compte, admin, dialogs/drawers, boutons tactiles et performance mobile.
+Vérifie storefront, produit, galerie, panier, checkout, suivi de commande, admin, dialogs/drawers, boutons tactiles et performance mobile.
 
 Inspecte composants UI, pages principales et tests viewport mobile.
 
@@ -1296,7 +1301,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « Téléchargement facture PDF » dans Synclune.
 
-Vérifie route invoice, droits client/admin, orderNumber, accès invité si nécessaire, audit INVOICE_DOWNLOADED, PDF archivé et erreurs.
+Vérifie route invoice, accès par jeton invité vs admin (plus de compte client), orderNumber, audit INVOICE_DOWNLOADED, PDF archivé et erreurs.
 
 Inspecte `app/api/orders/[orderNumber]/invoice/**`, modules invoices/orders/auth.
 
@@ -1331,17 +1336,13 @@ Note /100, propose corrections/améliorations si pertinent.
 
 ---
 
-## 93 — Comptes et espace client
+## 93 — Comptes et espace client ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Espace client » dans Synclune.
-
-Vérifie compte, commandes, adresses, wishlist, factures, suppression de compte, sécurité et données user-scoped.
-
-Inspecte `app/(account)/**`, `modules/users/**`, `modules/orders/**`, `modules/addresses/**`, `modules/wishlist/**`.
-
-Note /100, propose corrections/améliorations si pertinent.
-```
+> ⚠️ **L'espace client a été entièrement supprimé le 2026-07-31** : `app/(account)/**`,
+> `modules/users/**`, l'inscription, Google OAuth, le carnet d'adresses, la suppression de compte et
+> la fusion post-login n'existent plus. La connexion est réservée à l'administration et tout le
+> parcours d'achat est invité. Les surfaces remplaçantes sont couvertes par les prompts **158**
+> (suivi de commande invité & jetons d'accès) et **159** (parcours 100 % invité).
 
 ---
 
@@ -1364,7 +1365,7 @@ Note /100, propose corrections/améliorations si pertinent.
 ```text
 Audit le point « API routes » dans Synclune.
 
-Vérifie routes auth, cron, webhooks, search, uploadthing, invoice, sécurité, validation, rate limit, erreurs et permissions.
+Vérifie routes auth, cron, webhooks, uploadthing, invoice, orders/status, admin/orders/export, health, csp-report et noop — sécurité, validation, rate limit, erreurs et permissions (il n'existe PAS de route `/api/search`).
 
 Inspecte `app/api/**`.
 
@@ -1432,7 +1433,7 @@ Note /100, donne un verdict : OK production, OK avec réserves, à corriger avan
 # Interfaces — UI & UX (mobile + desktop)
 
 Les prompts **01 → 99** couvrent surtout le métier, la conformité et la plomberie. Les surfaces les plus
-visitées du site (accueil, catalogue, page produit, panier, paiement, espace client, admin) n'y sont
+visitées du site (accueil, catalogue, page produit, panier, paiement, suivi de commande, admin) n'y sont
 auditées que par leur **angle données** : personne ne regarde l'écran. Les prompts **100 → 128** comblent ce
 trou, une surface d'interface à la fois, **mobile et desktop dans le même audit**.
 
@@ -1457,9 +1458,9 @@ où elle doit changer de forme.
 | 110 | Panier                                              | **critique**        |
 | 111 | Tunnel de paiement                                  | **critique**        |
 | 112 | Pages post-achat                                    | haute               |
-| 113 | Espace client                                       | moyenne             |
+| 113 | ~~Espace client~~ (retiré 2026-07-31)               | —                   |
 | 114 | Écrans d'authentification                           | haute               |
-| 115 | Favoris & retour en stock                           | moyenne             |
+| 115 | Favoris                                             | moyenne             |
 | 116 | ~~Avis produits~~ (retiré 2026-07-30)               | —                   |
 | 117 | Recherche                                           | haute               |
 | 118 | Overlays : dialogs, sheets, drawers                 | socle               |
@@ -1489,17 +1490,19 @@ Tu audites une INTERFACE, pas seulement du code. Contraintes de méthode :
    1440x900, 1920x1080. Un audit UI sans capture est incomplet — si tu n'as pas pu en produire, dis-le
    explicitement au lieu de déduire l'apparence du code.
 2. TESTE LES DEUX ENTRÉES : souris + clavier ET tactile. `playwright.config.ts` fournit déjà les
-   projets `chromium`, `firefox`, `webkit`, `mobile-chrome` (Pixel 7), `mobile-webkit` (iPhone 14) et
-   `authenticated-user-mobile` — réutilise-les plutôt que d'en créer.
+   projets `chromium`, `firefox`, `webkit`, `mobile-chrome` (Pixel 7), `mobile-webkit` (iPhone 14),
+   `tablet-portrait`, `tablet-landscape` et `authenticated-admin` — réutilise-les plutôt que d'en créer.
 3. LE FILESYSTEM FAIT FOI. Vérifie chaque chemin avant de t'y fier. Il n'existe PAS de module `admin`,
-   `search`, `shipping`, `stock`, `analytics`, `account`, `catalog` : l'admin est un arbre de routes
-   (`app/admin/**`), l'analytics vit dans `modules/dashboard/**`, l'espace client dans
-   `app/(account)/**` + `modules/users/**`.
-4. TOKENS = SSOT. Toute valeur visuelle doit venir du bloc `@theme` de `app/globals.css` :
-   `--navbar-height`, `--announcement-bar-height`, `--bottom-bar-height`, `--admin-header-height`,
-   `--fab-corner-clearance`, `--toast-safe-top`, `--z-*`, `--duration-*`, `--ease-*`, `--text-2xs`,
-   `--breakpoint-xs`, couleurs `oklch`. Toute valeur magique en dur dans un composant est un défaut à
-   signaler avec son fichier:ligne.
+   `search`, `shipping`, `stock`, `analytics`, `account`, `catalog`, `users` : l'admin est un arbre de
+   routes (`app/admin/**`), l'analytics vit dans `modules/dashboard/**`, et il n'y a PLUS d'espace
+   client (retrait 2026-07-31) — le seul accès client à une commande est `app/suivi-commande/**`.
+4. TOKENS = SSOT, en deux familles dans `app/globals.css` : le bloc `@theme` (`--z-*`, `--duration-*`,
+   `--ease-*`, `--text-2xs`, `--breakpoint-xs`, `--text-shadow-*`, `--blur-*`, couleurs `oklch`) et
+   les hauteurs de layout déclarées sur `html`/`[data-admin-layout]`/media queries (`--navbar-height`,
+   `--announcement-bar-height`, `--admin-header-height`, `--fab-corner-clearance`).
+   `--bottom-bar-height` est volontairement posée au RUNTIME (`use-bottom-bar-height`, fallback 56px)
+   et ne vaut que si la barre est visible. Toute valeur magique en dur dans un composant est un défaut
+   à signaler avec son fichier:ligne.
 5. THÈME CLAIR UNIQUEMENT. Il n'y a aucun dark mode (pas de `next-themes`, aucun
    `prefers-color-scheme` dans `app/globals.css`). Ne propose pas de dark mode dans le corps de
    l'audit ; si tu l'estimes pertinent, mets-le en annexe « chantier séparé » avec son coût.
@@ -1553,8 +1556,9 @@ Cherche les défauts structurels : valeurs en dur qui doublonnent un token, toke
 consommés, tokens consommés hors de leur intention, contrastes insuffisants (WCAG AA sur texte et sur
 états focus/disabled), et divergences entre le storefront et l'admin qui ne sont pas des choix assumés.
 
-Vérifie aussi la cohérence de marque « joaillerie artisanale » : la palette et la typographie doivent
-raconter la même chose sur les deux surfaces.
+Vérifie aussi la cohérence de marque « bijoux artisanaux colorés » (le brief est la créativité et la
+couleur, PAS la joaillerie précieuse) : la palette et la typographie doivent raconter la même chose sur
+les deux surfaces.
 
 Inspecte `app/globals.css` (bloc `@theme` et au-delà), `shared/styles/fonts.ts`,
 `shared/components/ui/**`, `shared/constants/**` (brand), et échantillonne les composants les plus
@@ -1574,8 +1578,9 @@ Audit le point « Layout, couches fixes & z-index » dans Synclune.
 Le site empile beaucoup d'éléments fixes : bannière d'annonce, navbar (transparente sur l'accueil),
 bottom bar mobile, FAB, toasts, overlays Radix/Vaul, header admin, sticky action bars.
 Vérifie que cet empilement est gouverné par les tokens `--z-*` et par les hauteurs déclarées
-(`--navbar-height`, `--announcement-bar-height`, `--bottom-bar-height`, `--admin-header-height`,
-`--fab-corner-clearance`, `--toast-safe-top`) et non par des `z-50` improvisés.
+(`--navbar-height`, `--announcement-bar-height`, `--admin-header-height`, `--fab-corner-clearance`,
+plus `--bottom-bar-height` posée au runtime par `use-bottom-bar-height`) et non par des `z-50`
+improvisés.
 
 Traque en particulier :
 - tout contenu masqué par une couche fixe (dernier item d'une liste sous la bottom bar, champ de
@@ -1614,7 +1619,7 @@ hiérarchie, raccourcis) ou est-ce une simple liste de liens déguisée ?
 
 Inspecte `app/(shop)/(home)/_components/navbar/**` (`navbar.tsx`, `desktop-nav.tsx`,
 `mega-menu-collections.tsx`, `mega-menu-creations.tsx`, `mega-menu-column.tsx`,
-`collection-mini-grid.tsx`, `navbar-styles.ts`, `navbar-wrapper.tsx`, `user-menu.tsx`,
+`navbar-styles.ts`, `navbar-wrapper.tsx`, `user-menu.tsx`,
 `navbar-icon-buttons.tsx`), `shared/hooks/use-active-navbar-item.ts`,
 `shared/hooks/use-roving-tab-index.ts`, `e2e/mega-menu-desktop.spec.ts`.
 
@@ -1640,7 +1645,7 @@ double navigation (le bug historique `<DrawerClose asChild>` qui annule un `<Lin
 
 Inspecte `app/(shop)/(home)/_components/navbar/menu-sheet*.tsx`,
 `app/(shop)/(home)/_components/navbar/edge-swipe-indicator.tsx`,
-`shared/components/bottom-bar/**`, `shared/components/swipe-back-provider.tsx`,
+`shared/components/bottom-bar/**`,
 `shared/hooks/{use-edge-swipe,use-back-button-close,use-gesture-hint-once,use-mobile}.ts`,
 `shared/stores/use-overlay-stack-store.ts`, `e2e/shop-mobile.spec.ts`,
 `e2e/mobile-accessibility.spec.ts`.
@@ -1661,7 +1666,8 @@ de la page : hero (promesse, CTA, images flottantes, bandeau de réassurance), s
 (polaroids, stats), collections, dernières créations, FAQ, footer.
 
 Juge sur trois axes :
-1. Impression de marque — est-ce qu'on croit à une joaillerie artisanale premium dès le premier écran ?
+1. Impression de marque — est-ce qu'on croit à une créatrice de bijoux artisanaux colorés dès le
+   premier écran ? (Le brief est la créativité et la couleur, PAS la joaillerie précieuse.)
 2. Chemin de conversion — combien de gestes entre l'arrivée et une fiche produit ? Le CTA principal
    est-il évident sans scroller sur 375x667 ?
 3. Solidité technique — LCP et CLS du hero, images flottantes (poids, `sizes`, priorité), animations
@@ -1714,7 +1720,8 @@ Audit le point « Filtres produits » dans Synclune.
 
 Vérifie l'expérience de filtrage en mobile (sheet) et en desktop : découvrabilité du déclencheur,
 lisibilité du nombre de filtres actifs, résumé des filtres appliqués (badges retirables), sections
-(types, couleurs, matériaux, disponibilité, note, fourchette de prix), comportement du prix
+(types, couleurs, matériaux, disponibilité, fourchette de prix — le filtre et le tri par note ont
+disparu avec les avis, 2026-07-30), comportement du prix
 (saisie, validation, min > max), application immédiate vs bouton « Appliquer », réinitialisation,
 persistance dans l'URL, retour arrière navigateur, et compte de résultats mis à jour.
 
@@ -1724,7 +1731,7 @@ cases à cocher sous 44px, absence de `aria-live` sur le compteur de résultats.
 
 Inspecte `modules/products/components/{product-filter-sheet,product-filter-trigger,filter-badges,
 filter-section-header,filter-section-types,filter-section-colors,filter-section-materials,
-filter-section-availability,filter-section-rating,price-range-inputs,clear-search-button}.tsx`,
+filter-section-availability,price-range-inputs,reset-search-filters-action}.tsx`,
 `shared/components/{filter-badge,filter-badges,filter-sheet-wrapper,select-filter}.tsx`,
 `shared/components/sort-drawer/**`, `shared/hooks/{use-filter,use-url-param,use-active-list-controls}.ts`,
 `app/(shop)/produits/_utils/**`.
@@ -1777,12 +1784,12 @@ une information d'achat, image qui pousse le prix sous la ligne de flottaison, v
 coûteuse en données, double barre fixe (bottom bar + CTA) qui mange l'écran, geste de swipe galerie
 qui entre en conflit avec le swipe de retour arrière.
 
-⚠️ Le composant `sticky-cart-cta.tsx` existe : vérifie ce qu'il fait RÉELLEMENT aujourd'hui (actif,
-conditionnel, mort) avant de conclure, et rappelle que le principe d'une CTA collante mobile sur la
-PDP a déjà été discuté — toute proposition doit être présentée comme telle, pas comme une correction.
+⚠️ Il n'existe PAS de CTA collante mobile : seul `sticky-cart-cta-desktop.tsx` existe, et le principe
+d'une sticky CTA mobile sur la PDP a déjà été REFUSÉ par le propriétaire — toute proposition doit
+être présentée comme une réouverture explicite de ce parti pris, pas comme une correction.
 
 Inspecte `app/(shop)/creations/[slug]/page.tsx`, `shared/components/gallery/**`,
-`modules/products/components/{sticky-cart-cta,product-info,product-details}.tsx`,
+`modules/products/components/{product-info,product-details}.tsx`,
 `shared/components/description-collapse.tsx`, `shared/hooks/{use-lightbox,use-long-press,
 use-touch-device}.ts`, `e2e/product-gallery-mobile.spec.ts`, `e2e/shop-mobile.spec.ts`.
 
@@ -1800,7 +1807,8 @@ C'est le point de friction n°1 d'un bijou : couleur, matériau, taille. Vérifi
 options (pastilles de couleur avec libellé accessible, pas seulement une teinte), la représentation
 des combinaisons indisponibles (grisé + raison, jamais silencieusement absent), la présélection par
 défaut (`isDefault`), la mise à jour du prix et de l'image à la sélection, l'affichage du stock
-restant, et le parcours quand une variante est en rupture (bascule vers l'alerte retour en stock).
+restant, et le parcours quand une variante est en rupture (⚠️ l'alerte retour en stock a été retirée
+le 2026-07-30 : vérifie que l'impasse de rupture reste honnête sans elle).
 
 Vérifie les deux contextes d'usage : le sélecteur inline sur la PDP et le dialog de sélection lancé
 depuis une carte produit ou le panier. Les deux doivent raconter la même chose.
@@ -1812,7 +1820,7 @@ Inspecte `modules/cart/components/{sku-selector-dialog,sku-selector-form-content
 sku-selector-selectors,sku-selector-utils.ts,add-to-cart-form,add-to-cart-card-button}.tsx`,
 `modules/products/components/{aria-color-swatch,product-card-color-swatches}.tsx`,
 `modules/skus/components/**`, `shared/hooks/use-radio-group-keyboard.ts`,
-`modules/wishlist/components/**` (alerte retour en stock).
+`modules/wishlist/components/**`.
 
 Note /100, classe toute variante indisponible sélectionnable (ou disponible non sélectionnable) en
 P0/P1, et rends le verdict pour l'inline et pour le dialog.
@@ -1825,7 +1833,7 @@ P0/P1, et rends le verdict pour l'inline et pour le dialog.
 ```text
 Audit le point « Panier (UI/UX) » dans Synclune.
 
-Vérifie le panier sous ses deux formes (sheet latéral et parcours complet), en mobile et desktop :
+Vérifie le panier (sheet latéral uniquement — il n'existe pas de page panier), en mobile et desktop :
 ouverture après ajout (feedback immédiat, animation vers le panier), lignes d'article (visuel, titre,
 variante, prix unitaire, sous-total), sélecteur de quantité, suppression avec confirmation, passage
 en favoris, code promo (saisie, erreur, retrait), résumé des montants (sous-total, remise, livraison,
@@ -1845,7 +1853,7 @@ Inspecte `modules/cart/components/**` (`cart-sheet*.tsx`, `cart-sheet-item-row.t
 `cart-sheet-recommendations.tsx`, `cart-badge.tsx`), `shared/stores/badge-counts-store.ts`,
 `e2e/cart.spec.ts`, `e2e/product-to-cart.spec.ts`.
 
-Note /100, classe toute ambiguïté sur le montant en P0/P1, et rends le verdict sheet vs page.
+Note /100, classe toute ambiguïté sur le montant en P0/P1, et rends le verdict.
 ```
 
 ---
@@ -1867,10 +1875,10 @@ Traque les tueurs de conversion : champ obligatoire non signalé avant soumissio
 loin du champ fautif, bouton de paiement qui ne dit pas combien on paie, réassurance absente à
 l'instant du paiement, spinner sans texte, double soumission possible.
 
-Inspecte `app/paiement/**` (`page.tsx`, `_components/**`), `modules/payments/components/**`,
-`modules/addresses/components/**`, `modules/cart/components/cart-promo-code-form.tsx`,
+Inspecte `app/paiement/**` (`page.tsx`, `_components/**`), `modules/payments/components/**`
+(dont `checkout-address-fields.tsx`), `modules/cart/components/cart-promo-code-form.tsx`,
 `shared/components/forms/**`, `shared/lib/form-context.tsx`, `e2e/checkout.spec.ts`,
-`e2e/authenticated/user-keyboard-purchase-flow.spec.ts`.
+`e2e/keyboard-purchase-flow.spec.ts`.
 
 Note /100, classe tout blocage ou ambiguïté de montant en P0, et rends le verdict par étape.
 ```
@@ -1896,36 +1904,19 @@ profite (ton, visuel, prochaine étape désirable) ou est-ce un reçu administra
 
 Inspecte `app/paiement/{confirmation,annulation,retour}/**`,
 `app/paiement/confirmation/_components/**`, `modules/orders/components/**` (récapitulatif),
-`modules/payments/components/**`, `e2e/authenticated/user-async-payment-flow.spec.ts`.
+`modules/payments/components/**`, `e2e/async-payment-flow.spec.ts`, `e2e/payment-failure-flow.spec.ts`.
 
 Note /100, classe tout faux succès ou attente sans issue en P0, et rends le verdict par page.
 ```
 
 ---
 
-## 113 — Espace client
+## 113 — Espace client ⛔ (retiré, plus d'objet)
 
-```text
-Audit le point « Espace client (UI/UX) » dans Synclune.
-
-Le prompt 93 couvre les données et la sécurité ; celui-ci couvre l'interface. Vérifie en mobile et
-desktop : la page d'accueil du compte (que met-elle en avant ?), la liste des commandes (statut
-lisible d'un coup d'œil, tri, pagination, état vide), le détail d'une commande (frise de statut,
-articles, montants, facture, suivi, actions disponibles selon le statut), les adresses (ajout,
-édition, suppression, adresse par défaut), les paramètres (profil, mot de passe, suppression de
-compte), et la navigation entre ces sections (onglets ? sidebar ? menu ?).
-
-Traque : statut de commande exprimé en jargon technique, action visible mais impossible, page de
-détail qui répète l'entête sur trois écrans en mobile, suppression de compte trop facile ou au
-contraire introuvable, absence de retour clair vers la boutique.
-
-Inspecte `app/(account)/**` (`_components/espace-client-content.tsx`, `commandes/**`, `adresses/**`,
-`parametres/**`), `modules/orders/components/**` (côté client), `modules/addresses/components/**`,
-`modules/users/components/**`, `shared/components/tab-navigation.tsx`,
-`e2e/authenticated/user-account-settings.spec.ts`.
-
-Note /100, rends le verdict par section et dis laquelle mérite une refonte.
-```
+> ⚠️ **L'espace client a été entièrement supprimé le 2026-07-31** (`app/(account)/**`,
+> `modules/users/**`, adresses, paramètres, suppression de compte). La seule surface client restante
+> est le suivi de commande invité `app/suivi-commande/**` (composants réutilisés :
+> `modules/orders/components/customer/**`) — couverte par le prompt **158**.
 
 ---
 
@@ -1934,45 +1925,47 @@ Note /100, rends le verdict par section et dis laquelle mérite une refonte.
 ```text
 Audit le point « Écrans d'authentification (UI/UX) » dans Synclune.
 
-Sept écrans : connexion, inscription, mot de passe oublié, réinitialisation, vérification d'email,
-renvoi de vérification, erreur. Vérifie la cohérence visuelle entre eux, la clarté du chemin (aucun
-écran ne doit être un cul-de-sac), la place de Google vs email/mot de passe, l'indicateur de force du
-mot de passe, la révélation du mot de passe, les messages d'erreur (jamais d'énumération de comptes,
-mais assez précis pour être utiles), le consentement CGV/confidentialité, et l'état après action
-(« email envoyé » : que fait le client s'il ne le reçoit pas ?).
+Six écrans (l'inscription et Google ont été retirés le 2026-07-31 — la connexion est réservée à
+l'administration) : connexion, mot de passe oublié, réinitialisation, vérification d'email, renvoi de
+vérification, erreur. Vérifie la cohérence visuelle entre eux, la clarté du chemin (aucun écran ne
+doit être un cul-de-sac — traque en particulier les liens morts résiduels vers `/inscription`),
+l'indicateur de force du mot de passe, la révélation du mot de passe, les messages d'erreur (jamais
+d'énumération de comptes, mais assez précis pour être utiles), et l'état après action (« email
+envoyé » : que fait-on s'il n'arrive pas ?).
 
-Vérifie aussi le contexte d'arrivée : un client renvoyé vers la connexion depuis le panier ou le
-checkout doit revenir là où il était, et le savoir.
+Vérifie aussi que ces écrans assument leur nouveau rôle : ils ne servent plus que l'administratrice —
+tout vestige d'un parcours client (copy, redirections panier/checkout, restes Google) est un défaut.
 
 Rappel : pas d'`autoFocus` (parti pris arbitré). Vérifie que l'accessibilité est assurée autrement
 (ordre de tabulation, labels, `aria-describedby` sur les erreurs, `autocomplete` correct).
 
-Inspecte `app/(auth)/**` (7 routes), `modules/auth/components/**`, `shared/components/forms/**`,
-`shared/utils/password-strength*`, `e2e/auth.spec.ts`, `e2e/signup-flow.spec.ts`.
+Inspecte `app/(auth)/**` (6 routes), `modules/auth/components/**`, `shared/components/forms/**`,
+`shared/utils/password-strength*`, `e2e/auth.spec.ts`.
 
 Note /100, classe tout cul-de-sac en P1, et rends le verdict par écran.
 ```
 
 ---
 
-## 115 — Favoris & retour en stock
+## 115 — Favoris
 
 ```text
-Audit le point « Favoris & retour en stock (UI/UX) » dans Synclune.
+Audit le point « Favoris (UI/UX) » dans Synclune.
 
 Vérifie le bouton favori partout où il apparaît (carte produit, PDP, panier) : état visuel clair
-(ajouté / non ajouté / en cours), feedback immédiat, libellé accessible, comportement en invité
-(le favori survit-il ? le client le sait-il ?), et cohérence du compteur dans la navbar.
+(ajouté / non ajouté / en cours), feedback immédiat, libellé accessible, persistance du favori par
+cookie invité (durée de vie ? le client le sait-il ?), et cohérence du compteur dans la navbar.
 
 Vérifie la page `/favoris` : mise en page, produit devenu indisponible ou supprimé, action « ajouter
-au panier » depuis un favori, état vide (est-il utile ou juste vide ?), et le parcours d'alerte retour
-en stock (demande, confirmation, désinscription).
+au panier » depuis un favori, et état vide (est-il utile ou juste vide ?). ⚠️ L'alerte retour en stock
+a été retirée le 2026-07-30 — ne l'audite pas, mais vérifie que la rupture de stock côté favoris reste
+honnête sans elle.
 
 Inspecte `app/(shop)/favoris/**`, `modules/wishlist/components/**`,
 `modules/products/components/product-card.tsx`, `shared/stores/badge-counts-store.ts`,
 `shared/components/ui/empty.tsx`, `e2e/pages/wishlist.page.ts`.
 
-Note /100, rends le verdict pour le bouton, la page et l'alerte retour en stock.
+Note /100, rends le verdict pour le bouton et la page.
 ```
 
 ---
@@ -2006,7 +1999,7 @@ Vérifie aussi le champ de recherche non modal (listes admin, catalogue) : debou
 
 Inspecte `modules/products/components/quick-search-dialog/**`,
 `modules/products/components/{search-correction-suggestion,search-fallback-suggestions,
-clear-search-button}.tsx`, `shared/components/search-input.tsx`,
+reset-search-filters-action}.tsx`, `shared/components/search-input.tsx`,
 `shared/components/autocomplete/**`, `shared/components/ui/{kbd,shortcut-kbd}.tsx`,
 `e2e/quick-search.spec.ts`, `e2e/search.spec.ts`.
 
@@ -2038,7 +2031,7 @@ Inspecte `shared/components/ui/{dialog,sheet,drawer,alert-dialog,responsive-aler
 vaul-nested-context}.tsx`, `shared/components/responsive-dialog.tsx`,
 `shared/components/dialogs/**`, `shared/stores/{dialog-store,sheet-store,alert-dialog-store,
 use-overlay-stack-store,overlay-state-helpers}.ts`,
-`shared/hooks/{use-register-overlay,use-back-button-close,use-escape-key}.ts`,
+`shared/hooks/{use-register-overlay,use-back-button-close}.ts`,
 `shared/providers/**`.
 
 Note /100, classe tout piège de focus ou overlay non fermable en P0, et rends le verdict par type.
@@ -2068,7 +2061,7 @@ Rappel : l'haptique reste parcimonieuse.
 
 Inspecte `shared/components/ui/{toaster,toast-icons,skeleton,empty,spinner,progress}.tsx`,
 `shared/utils/toast.ts`,
-`shared/hooks/{use-action-with-toast,use-action-state-with-toast,use-bulk-action-with-toast}.ts`,
+`shared/hooks/{use-action-with-toast,use-action-state-with-toast}.ts`,
 `shared/components/loaders/**`, tous les `app/**/loading.tsx`, `app/**/error.tsx`,
 `app/**/not-found.tsx`, `app/admin/_components/admin-{form,list}-error-boundary.tsx`,
 `e2e/toast-ui.spec.ts`, `e2e/a11y/live-regions.spec.ts`, `e2e/error-pages.spec.ts`.
@@ -2100,7 +2093,8 @@ Rappel : pas d'`autoFocus`.
 Inspecte `shared/components/forms/**`, `shared/lib/form-context.tsx`,
 `shared/hooks/{use-focus-first-error,use-server-field-errors,use-unsaved-changes,
 use-admin-form-keyboard}.ts`, `shared/components/{required-fields-note,visual-viewport-bridge}.tsx`,
-`shared/components/navigation/unsaved-changes-dialog.tsx`, `modules/addresses/components/**`,
+`shared/components/navigation/unsaved-changes-dialog.tsx`,
+`modules/payments/components/checkout-address-fields.tsx`,
 `modules/auth/components/**`, `app/paiement/_components/**`.
 
 Note /100, classe tout champ inatteignable derrière le clavier virtuel en P0/P1, et rends le verdict.
@@ -2118,9 +2112,9 @@ accès rapide, pied de page utilisateur), header, fil d'Ariane, navigation de se
 mobile, bottom bar mobile, FAB, et raccourcis clavier.
 
 Juge l'efficacité d'un usage quotidien : combien de clics pour aller de « une commande arrive » à
-« commande expédiée » ? L'arborescence (ventes / catalogue / marketing / contenu / clients /
-configuration) correspond-elle aux vraies tâches ? Les compteurs et badges attirent-ils l'attention
-au bon endroit ?
+« commande expédiée » ? Les trois groupes de la sidebar (Pilotage / Catalogue / Boutique — qui ne
+calquent PAS les segments de routes ventes/catalogue/marketing/contenu/configuration) correspondent-ils
+aux vraies tâches ? Les compteurs et badges attirent-ils l'attention au bon endroit ?
 
 Vérifie aussi : cohérence des hauteurs déclarées (`--admin-header-height`, `--bottom-bar-height`) avec
 le padding du contenu, `scroll-padding-top` et ancres, focus visible, et le dialog de raccourcis
@@ -2130,8 +2124,9 @@ Rappel : pas de double bouton retour en admin mobile.
 
 Inspecte `app/admin/layout.tsx`, `app/admin/_components/**` (`admin-sidebar.tsx`,
 `admin-mobile-header.tsx`, `admin-mobile-bottom-bar.tsx`, `admin-menu-sheet.tsx`,
-`admin-menu-collapsible-group.tsx`, `admin-menu-quick-access.tsx`, `dashboard-breadcrumb.tsx`,
-`dashboard-header*.tsx`, `section-navigation*.tsx`, `navigation-config.tsx`,
+`collapsible-nav-group.tsx`, `dashboard-breadcrumb.tsx`,
+`dashboard-header*.tsx`, `section-navigation*.tsx`, `navigation-config.tsx` (dont
+`getQuickAccessItems()`, consommé par la bottom bar),
 `keyboard-shortcuts-dialog.tsx`, `nav-main-client.tsx`), `shared/components/ui/sidebar.tsx`,
 `shared/components/admin-dashboard-fab.tsx`, `e2e/admin-workflows.spec.ts`.
 
@@ -2146,25 +2141,26 @@ Note /100, rends le verdict desktop puis mobile.
 Audit le point « Admin : listes, tableaux et actions groupées » dans Synclune.
 
 Vérifie les listes admin (commandes, produits, SKUs, collections, couleurs, matériaux, types,
-remises, clients, remboursements, facturation) sur trois axes :
+remises, remboursements, facturation — la liste clients a disparu avec l'espace client) sur trois
+axes :
 
 1. Desktop — densité du tableau, colonnes utiles vs bruit, en-têtes collants, tri, largeur et scroll
    horizontal, troncature des textes longs, actions par ligne (menu vs boutons).
 2. Mobile — un tableau ne passe pas en 390px : que devient-il ? cartes ? liste ? scroll horizontal
    assumé ? Vérifie que la réponse est cohérente d'une liste à l'autre.
-3. Sélection multiple & actions groupées — mode sélection mobile, case « tout sélectionner » (portée :
-   page ou tout le filtre ?), barre d'action collante, état en cours par ligne, confirmation
-   destructive, résultat partiel (3 sur 5 ont échoué : le dit-on ?).
+3. Actions par ligne et opérations répétitives — ⚠️ le mécanisme de sélection multiple/actions
+   groupées a été RETIRÉ (stores et composants supprimés) : vérifie qu'il n'en reste aucun vestige
+   (bouton, copy, état orphelin) et juge si son absence crée une vraie friction sur les tâches
+   répétitives, chiffres à l'appui, avant d'en proposer le retour.
 
 Vérifie aussi la barre d'outils (recherche, filtres, tri, compteur live), la pagination par curseur
 (retour arrière, position restaurée), et les états vides / chargement.
 
 Inspecte `shared/components/data-table/**`, `shared/components/{toolbar,table-scroll-container,
-admin-list-live-count,active-toggle,swipeable-card}.tsx`, `shared/components/mobile-selection/**`,
+admin-list-live-count,active-toggle,swipeable-card}.tsx`,
 `shared/components/multi-select/**`, `shared/components/sticky-action-bar/**`,
 `shared/components/responsive-action-menu/**`, `shared/components/cursor-pagination/**`,
-`shared/stores/{use-admin-list-selection-store,use-admin-list-bulk-pending-store}.ts`,
-`shared/hooks/{use-bulk-selection-action-item,use-active-list-controls,use-toolbar-drawer}.ts`,
+`shared/hooks/{use-active-list-controls,use-toolbar-drawer}.ts`,
 `app/admin/ventes/commandes/**`, `app/admin/catalogue/produits/**`,
 `e2e/authenticated/admin-pagination.spec.ts`.
 
@@ -2179,8 +2175,9 @@ Note /100, classe toute action groupée dont la portée est ambiguë en P1, et r
 Audit le point « Admin : formulaires et pages de détail » dans Synclune.
 
 Vérifie les formulaires de création/édition (produit, SKU, collection, couleur, matériau, type,
-remise, annonce, configuration boutique, remboursement) et les pages de détail (commande, client,
-remboursement) : organisation en sections ou onglets, longueur du formulaire en mobile, pied de page
+remise, annonce, configuration boutique, remboursement) et les pages de détail (commande,
+remboursement — la fiche client a disparu avec l'espace client) : organisation en sections ou
+onglets, longueur du formulaire en mobile, pied de page
 d'action (collant ? atteignable ?), sauvegarde et retour à la liste, dialogue de modifications non
 enregistrées, gestion des médias (upload, réordonnancement, suppression, alt text), et champs
 dépendants (variantes, stock, prix).
@@ -2214,7 +2211,8 @@ Audit le point « Admin : dashboard et data-viz » dans Synclune.
 Vérifie le tableau de bord : ce qu'il montre en premier (les bons KPI ?), la lisibilité des tuiles
 (valeur, unité, variation, période de comparaison), le graphique de revenu (axes, échelle, devise,
 infobulle, responsive en 390px, `prefers-reduced-motion`), les listes d'action (commandes récentes,
-alertes, stock bas, litiges), et le comportement en données vides ou insuffisantes (une boutique qui
+alertes, stock bas — plus de tuile litiges, et le modèle Prisma `Dispute` orphelin qui traîne encore
+au schéma est à signaler), et le comportement en données vides ou insuffisantes (une boutique qui
 démarre : le dashboard doit rester digne, pas afficher des zéros partout sans contexte).
 
 Vérifie aussi le poids : Recharts est lourd — est-il chargé dynamiquement, uniquement sur les routes
@@ -2237,13 +2235,13 @@ Note /100, rends le verdict par bloc du dashboard, et dis lesquels supprimer.
 ```text
 Audit le point « Gestes tactiles et haptique » dans Synclune.
 
-Le projet embarque beaucoup de gestes : swipe de retour arrière, swipe de bord, cartes glissables,
+Le projet embarque beaucoup de gestes : swipe de bord (ouverture du menu), cartes glissables,
 appui long, pull-to-refresh, plus un retour haptique. Vérifie que chacun est justifié, découvrable et
 non destructif :
 
 - chaque geste a-t-il une alternative visible (bouton, menu) ? Un geste ne doit JAMAIS être le seul
   chemin vers une action ;
-- les gestes entrent-ils en conflit entre eux (swipe galerie vs swipe retour, appui long vs scroll,
+- les gestes entrent-ils en conflit entre eux (swipe galerie vs swipe de bord, appui long vs scroll,
   pull-to-refresh vs scroll en haut de liste) ?
 - l'appui long ouvre-t-il un menu utile, et sur quelles cibles ? Le menu contextuel natif est-il
   correctement neutralisé ou volontairement conservé ?
@@ -2254,11 +2252,11 @@ non destructif :
 - souris et clavier ne doivent jamais recevoir de comportement tactile résiduel
   (`use-touch-device`).
 
-Inspecte `shared/components/{swipe-back-provider,swipeable-card,pull-to-refresh,
-long-press-menu-link}.tsx` (+ `shared/components/long-press-menu-link/**`),
-`shared/hooks/{use-haptic,use-long-press,use-edge-swipe,use-gesture-hint-once,use-touch-device}.ts`,
-`shared/utils/toast.ts`, `app/(shop)/(home)/_components/navbar/edge-swipe-indicator.tsx`,
-`modules/products/components/product-card-long-press.tsx`.
+Inspecte `shared/components/{swipeable-card,pull-to-refresh}.tsx`,
+`shared/components/long-press-menu-link/**`,
+`shared/hooks/{use-haptic,use-long-press,use-edge-swipe,use-pull-to-refresh-handler,
+use-gesture-hint-once,use-touch-device}.ts`,
+`shared/utils/toast.ts`, `app/(shop)/(home)/_components/navbar/edge-swipe-indicator.tsx`.
 
 Note /100, classe tout geste sans alternative en P1, et rends le verdict geste par geste.
 ```
@@ -2353,8 +2351,8 @@ Puis rends un PLAN, pas une liste de bugs :
 4. le filet de tests à poser avant de toucher quoi que ce soit.
 
 Inspecte largement : `shared/components/**`, `modules/*/components/**`, `app/(shop)/**`,
-`app/(account)/**`, `app/(auth)/**`, `app/paiement/**`, `app/admin/**`, `app/globals.css`, et les
-audits déjà produits.
+`app/suivi-commande/**`, `app/(auth)/**`, `app/paiement/**`, `app/admin/**`, `app/globals.css`, et
+les audits déjà produits.
 
 Note /100 globalement, puis rends le plan. Sois franc : dis ce qui est bon, et dis ce qui doit
 changer de forme plutôt que d'être repeint.
@@ -2362,12 +2360,13 @@ changer de forme plutôt que d'être repeint.
 
 ---
 
-# Architecture, fiabilité & exploitation (129 → 156)
+# Architecture, fiabilité & exploitation (129 → 159)
 
 Les prompts 01→99 couvrent le métier et la conformité, 100→128 les interfaces. Ce dernier groupe couvre
 les **couches que l'on ne voit pas** et qui font tomber une boutique : le proxy qui garde les routes, la
 frontière Server/Client, les disjoncteurs sur Stripe et Resend, les fuseaux horaires, la concurrence, le
-filet de 106 tests de régression, l'outillage et l'exploitation.
+filet de ~175 tests de régression (271 fichiers portent `@regression`, dont 96 sans le suffixe
+conventionnel), l'outillage et l'exploitation.
 
 Ces prompts n'ont pas besoin du Préambule UI/UX — ils suivent le format des prompts 01→99. Une règle
 s'applique quand même à tous : **le filesystem fait foi**, vérifie chaque chemin cité avant de t'y fier.
@@ -2404,6 +2403,9 @@ s'applique quand même à tous : **le filesystem fait foi**, vérifie chaque che
 | 154 | Vente à l'international & fiscalité           | Conformité           |
 | 155 | Recherche : infrastructure & pertinence       | Fiabilité            |
 | 156 | Feuille de route consolidée                   | Synthèse             |
+| 157 | Upload de fichiers : UI/UX                    | Produit              |
+| 158 | Suivi de commande invité & jetons d'accès     | Sécurité             |
+| 159 | Parcours 100 % invité                         | Produit              |
 
 ---
 
@@ -2449,7 +2451,7 @@ morte ou manquante de `publicRoutes` en P2/P1 selon l'impact.
 ```text
 Audit le point « Frontière Server / Client Components » dans Synclune.
 
-Avec ~540 fichiers dans `app/` et ~2600 dans `modules/`, la discipline RSC est structurante. Vérifie :
+Avec ~460 fichiers dans `app/` (hors `app/generated/`) et ~2000 dans `modules/`, la discipline RSC est structurante. Vérifie :
 - chaque `"use client"` est-il justifié ? Traque les composants clients qui n'ont ni état, ni effet, ni
   gestionnaire d'événement, ni hook navigateur — ils alourdissent le bundle pour rien ;
 - la remontée de la frontière : un `"use client"` haut dans l'arbre bascule tout son sous-arbre. Cherche
@@ -2555,12 +2557,14 @@ Vérifie :
   conversion ? La règle est-elle écrite quelque part ou reconstituée au cas par cas ?
 - les trois implémentations font-elles la même chose ? Si oui, laquelle est le SSOT et pourquoi les
   autres survivent ;
-- les bornes de période des KPI et du graphique de revenu : « aujourd'hui », « ce mois », « 30 derniers
-  jours » — début de journée en heure de Paris ou en UTC ? Un écart de 2 h en été déplace des commandes
-  d'un jour à l'autre ;
+- les bornes de période des KPI (le graphique de revenu a été retiré) : « aujourd'hui », « ce mois »,
+  « 30 derniers jours » — début de journée en heure de Paris ou en UTC ? Un écart de 2 h en été déplace
+  des commandes d'un jour à l'autre ;
 - l'heure d'été / d'hiver : les jours de bascule (23 h ou 25 h), et les crons planifiés en UTC par
-  Vercel dont l'heure locale se décale de mars à octobre (`reconcile-invoices` à 2:00, `hard-delete-retention`,
-  `cleanup-pending-orders` à 3:00 — collision possible) ;
+  Vercel dont l'heure locale se décale de mars à octobre (fenêtres réelles : 2:00
+  `retry-post-webhook-tasks` + `retry-webhooks` + `reconcile-invoices` · 3:00 `reopen-store` +
+  `cleanup-pending-orders` · 4:00 hebdo/mensuel · 5:00 · 8:00 — regroupements DÉLIBÉRÉS pour
+  mutualiser les réveils Neon, cf. `schedules.ts` : les juger comme un choix, pas un accident) ;
 - les échéances légales : rétention 10 ans (`paidAt + 10 ans`), délai de rétractation, dates de facture
   et d'avoir — toute erreur y est une erreur de conformité ;
 - le rendu déterministe des PDF (un test de régression y veille déjà) ;
@@ -2568,7 +2572,7 @@ Vérifie :
   serveur ≠ rendu client = erreur d'hydratation).
 
 Inspecte `shared/utils/{timezone,dates}.ts`, `modules/store-settings/utils/paris-datetime.ts`,
-`modules/dashboard/services/period-boundaries.service.ts`, `modules/dashboard/data/{get-kpis,get-revenue-chart}.ts`,
+`modules/dashboard/services/period-boundaries.service.ts`, `modules/dashboard/data/{get-kpis,get-vat-progress}.ts`,
 `modules/invoices/services/render-invoice-pdf.ts`, `vercel.json`, `modules/cron/constants/schedules.ts`.
 
 Note /100, classe toute erreur de borne affectant un montant ou une échéance légale en P0/P1.
@@ -2582,7 +2586,7 @@ Note /100, classe toute erreur de borne affectant un montant ou une échéance l
 Audit le point « Performance des requêtes Prisma » dans Synclune.
 
 Le prompt 64 couvre le schéma et les index déclarés ; celui-ci couvre les REQUÊTES réelles de la couche
-`data/` des 24 modules.
+`data/` des 22 modules.
 
 Vérifie :
 - les N+1 : boucle sur des résultats avec une requête à l'intérieur, ou `include` manquant là où une
@@ -2635,7 +2639,8 @@ Vérifie :
 - les timeouts : `TX_TIMEOUT_LONG` / `TX_MAX_WAIT_LONG` là où l'attente d'un verrou compte dans le budget.
 
 Inspecte `modules/payments/services/order-creation.service.ts`, `modules/orders/actions/**`,
-`modules/invoices/services/*sequence*`, `modules/webhooks/**`, `modules/skus/actions/**`,
+`modules/invoices/services/*sequence*`, `modules/orders/services/persist-invoice-number.service.ts`
+(la séquence FACTURE vit là, pas sous invoices), `modules/webhooks/**`, `modules/skus/actions/**`,
 `shared/lib/{prisma,prisma-tx-options}.ts`, les `*.integration.test.ts` et les
 `*concurrency*.regression.test.ts`.
 
@@ -2650,10 +2655,11 @@ Pour chaque risque, dis s'il est prouvé par un test d'intégration ou seulement
 ```text
 Audit le point « Feature flags et configuration runtime » dans Synclune.
 
-La configuration vient de trois endroits : les variables d'environnement (`shared/lib/env.ts` +
-`shared/schemas/env.schema.ts`, ~200 lignes de validation Zod), les flags de facturation
-(`modules/invoices/constants/feature-flags.ts`) et des constantes SSOT (`shared/constants/**`, dont
-`orders-availability.ts` qui pilote l'ouverture des commandes).
+La configuration vient de deux endroits : les variables d'environnement (`shared/lib/env.ts` +
+`shared/schemas/env.schema.ts`, ~200 lignes de validation Zod) et les réglages de boutique dynamiques
+(`modules/store-settings/**`). ⚠️ Les flags de facturation (`feature-flags.ts`,
+`INVOICE_ENABLE_EREPORTING`) sont partis avec l'e-reporting (2026-07-26) et
+`ORDERS_AVAILABLE`/`orders-availability.ts` a été supprimé (2026-07-27) — signale tout vestige.
 
 Vérifie :
 - la validation au démarrage : une variable manquante ou mal formée fait-elle échouer tôt, avec un
@@ -2661,18 +2667,17 @@ Vérifie :
 - la frontière client/serveur : aucun secret ne doit être lisible via une variable `NEXT_PUBLIC_*`
   (croise avec le prompt 28) ;
 - les valeurs par défaut : sont-elles sûres ? Un flag absent doit désactiver, pas activer, une capacité
-  réglementée (`INVOICE_ENABLE_EREPORTING` en particulier) ;
+  réglementée ;
 - la cohérence entre `.env.example` et le schéma : toute variable requise est-elle documentée, et
   inversement ?
 - les flags morts : un flag jamais lu, ou lu mais dont les deux branches sont identiques ;
-- les constantes SSOT compilées : `ORDERS_AVAILABLE` change le comportement de la boutique mais exige
-  un redéploiement — est-ce assumé et documenté (cf. prompt 153) ?
+- la fermeture de boutique : elle est pilotée uniquement par `StoreSettings` en base (cf. prompt 153),
+  plus par aucune constante compilée ;
 - la traçabilité : sait-on, en production, quelle combinaison de flags est active (log de démarrage,
   endpoint de santé) ?
 
 Inspecte `shared/lib/env.ts`, `shared/schemas/env.schema.ts`, `.env.example`,
-`modules/invoices/constants/feature-flags.ts`, `shared/constants/orders-availability.ts`,
-`next.config.ts`, `app/api/health/route.ts`.
+`modules/store-settings/**`, `next.config.ts`, `app/api/health/route.ts`.
 
 Note /100, classe tout défaut par défaut dangereux en P1 et tout secret exposé en P0.
 ```
@@ -2759,7 +2764,7 @@ Audit le point « Rendu des emails » dans Synclune.
 Les prompts 42/43/44 couvrent le contenu, l'idempotence et les déclencheurs. Celui-ci couvre le RENDU :
 ce que voit réellement le destinataire dans son client de messagerie.
 
-Vérifie sur les 12 templates :
+Vérifie sur les 8 templates :
 - la cohérence du système visuel : `emails/_components/` et `emails/email-colors.ts` sont-ils utilisés
   partout, ou certains templates redéfinissent-ils leurs couleurs et leurs espacements ?
 - la compatibilité : Gmail (web + iOS + Android), Apple Mail, Outlook. Les pièges habituels — pas de
@@ -2776,7 +2781,7 @@ Vérifie sur les 12 templates :
 - le poids total et le risque de troncature Gmail (au-delà de ~102 Ko, Gmail coupe le message) ;
 - la version texte brut : existe-t-elle, est-elle lisible ?
 
-Inspecte `emails/**` (12 templates + `_components/` + `email-colors.ts`), `emails/__tests__/**`,
+Inspecte `emails/**` (8 templates + `_components/` + `email-colors.ts`), `emails/__tests__/**`,
 `shared/lib/email-config.ts`, `modules/emails/services/**`. Utilise `pnpm email:dev` (port 3001) pour
 voir le rendu réel plutôt que de le déduire du JSX.
 
@@ -2792,31 +2797,34 @@ par template.
 Audit le point « Parcours retour et rétractation » dans Synclune.
 
 Le droit de rétractation de 14 jours (vente à distance, Code de la consommation) est une obligation, pas
-une option. Côté code, `modules/refunds/actions/request-return.ts` et
-`modules/refunds/components/customer/request-return-button.tsx` existent.
+une option. ⚠️ Le parcours self-service a été RETIRÉ : `request-return.ts` et
+`request-return-button.tsx` n'existent plus. La réalité actuelle :
+`modules/orders/components/customer/order-return-guidance.tsx` (affiché sur `/suivi-commande`) explique
+l'éligibilité via `modules/refunds/services/return-eligibility.service.ts` et renvoie vers le formulaire
+de `/retractation` + le mail de contact. Le traitement est 100 % manuel côté admin.
 
-⚠️ Établis d'abord la réalité de bout en bout : quand un client clique sur « demander un retour », que se
-passe-t-il EXACTEMENT ? Suis la chaîne complète — écriture en base, email au client, alerte admin, entrée
-dans le tableau de bord, historique de commande. Si un maillon manque, le client peut demander un retour
-sans que personne ne le sache : dis-le franchement et classe-le selon l'impact.
+Établis d'abord la réalité de bout en bout : un client qui veut se rétracter y arrive-t-il, dans les
+délais légaux, avec une trace ? Si le chemin manuel (email) ne laisse aucune trace structurée ni process
+admin, dis-le franchement et classe-le selon l'impact. Signale aussi les vestiges : le JSDoc de
+`order-return-guidance.tsx` référence encore les fichiers supprimés, et `refund.schemas.ts` porte un
+`requestReturnSchema` orphelin.
 
 Vérifie ensuite :
 - la cohérence avec la page légale `/retractation` : le délai, le point de départ, les exclusions et la
   procédure annoncés correspondent-ils au comportement réel ?
 - les bijoux personnalisés / sur-mesure : exclus du droit de rétractation par la loi. L'interface le
   reflète-t-elle ?
-- l'éligibilité : sur quelles commandes le bouton apparaît-il (statut, délai écoulé, commande déjà
-  remboursée) ? Une demande sur une commande inéligible doit être refusée côté serveur, pas seulement
-  masquée côté UI ;
-- l'idempotence : deux clics, deux onglets, un rafraîchissement — une seule demande ;
+- l'éligibilité : sur quelles commandes la guidance s'affiche-t-elle (statut, délai écoulé, commande
+  déjà remboursée) ? `return-eligibility.service.ts` est-il la seule source de cette décision ?
 - l'articulation avec le remboursement admin (prompts 36/91) et l'avoir (prompt 33) : la demande
   client débouche-t-elle sur un chemin admin clair ?
-- la trace : `OrderHistory` (immuable, sans PII client — cf. invariant 3) doit consigner la demande ;
+- la trace : le chemin manuel laisse-t-il une trace exploitable (notes de commande, `OrderHistory` —
+  immuable, sans PII client, cf. invariant 3) ?
 - l'expérience : le client sait-il où en est sa demande, ou reste-t-il sans nouvelle ?
 
-Inspecte `modules/refunds/actions/request-return.ts`, `modules/refunds/components/customer/**`,
-`modules/refunds/{schemas,constants}/**`, `app/(legal)/retractation/page.tsx`,
-`app/(account)/commandes/[orderNumber]/**`, `modules/emails/services/**`, `modules/orders/services/**`.
+Inspecte `modules/orders/components/customer/order-return-guidance.tsx`,
+`modules/refunds/services/return-eligibility.service.ts`, `modules/refunds/{schemas,constants}/**`,
+`app/(legal)/retractation/page.tsx`, `app/suivi-commande/**`, `modules/orders/services/**`.
 
 Note /100, classe toute demande client sans notification ni trace en P1 (P0 si elle est en plus
 juridiquement due), et propose le chemin complet manquant.
@@ -2878,12 +2886,14 @@ Vérifie :
   avec `publicRoutes` de `proxy.ts` et avec le sitemap ?
 - les liens sortants : `target="_blank"` accompagné de `rel="noopener noreferrer"` ;
 - la fuite par `Referer` : un lien externe depuis une page contenant un jeton dans l'URL (facture,
-  suivi de commande invité, désinscription) fuite ce jeton. La `Referrer-Policy` couvre-t-elle ce cas ?
+  suivi de commande invité — désormais le SEUL accès client à une commande) fuite ce jeton. La
+  `Referrer-Policy` couvre-t-elle ce cas ?
 - les redirections dans les emails et les liens de vérification / réinitialisation : URL absolues
   construites depuis une base de confiance, jamais depuis un en-tête `Host` de requête.
 
 Inspecte `shared/utils/is-safe-storefront-link.ts`, `proxy.ts`, `next.config.ts` (`redirects`,
-`headers`), `modules/auth/**` (flux `callbackURL`), `modules/notifications/utils/unsubscribe-token.ts`,
+`headers`), `modules/auth/**` (flux `callbackURL`),
+`modules/orders/utils/{tracking-token,build-order-tracking-url,invoice-token,order-token-signer}.ts`,
 `app/api/orders/[orderNumber]/**`, `emails/**`, `shared/lib/navigation.ts`.
 
 Note /100, classe toute redirection ouverte en P0 et toute fuite de jeton par `Referer` en P1.
@@ -2896,9 +2906,10 @@ Note /100, classe toute redirection ouverte en P0 et toute fuite de jeton par `R
 ```text
 Audit le point « Tests de régression verrouillés et garde-fous » dans Synclune.
 
-Le repo compte plus de 100 fichiers `*.regression.test.ts(x)` et un dossier `test/conventions/`. C'est le
-filet qui empêche les invariants métier de se déliter. Un filet qui a l'air vert sans rien garder est pire
-que pas de filet.
+Le repo compte ~175 fichiers `*.regression.test.ts(x)` — et 271 fichiers portant `@regression`, dont 96
+SANS le suffixe conventionnel (donc modifiables sans review : commence par là) — plus un dossier
+`test/conventions/`. C'est le filet qui empêche les invariants métier de se déliter. Un filet qui a
+l'air vert sans rien garder est pire que pas de filet.
 
 Vérifie :
 - l'inventaire : `grep -rn "@regression" --include="*.test.ts*"` — chaque fichier a-t-il bien son JSDoc
@@ -2971,19 +2982,20 @@ qui remplaceraient utilement une convention écrite.
 Audit le point « Scripts d'outillage et maintenance » dans Synclune.
 
 `scripts/` contient une dizaine d'utilitaires : `audit-alt-text.ts`, `audit-lint.ts`,
-`check-blur-placeholders.ts`, `cleanup-expired-carts.ts`, `cleanup-expired-wishlists.ts`,
+`backfill-media-metadata.ts`, `check-blur-placeholders.ts`, `cleanup-expired-carts.ts`,
 `generate-video-thumbnails.ts`, `strip-video-audio.ts`, `test-database.ts`,
 `validate-html-structure.cjs`, `lib/script-utils.ts` et `react-doctor/`.
 
 Vérifie, pour chacun :
 - est-il encore utilisé ? Par un script `package.json`, par la CI, par un humain, ou par personne ?
   Un script mort donne l'illusion d'un contrôle qui n'existe pas ;
-- est-il sûr ? Les deux `cleanup-expired-*` écrivent en base : quelle base ciblent-ils, y a-t-il un
-  garde-fou contre une exécution sur la production, sont-ils idempotents, que se passe-t-il si on les
-  interrompt à la moitié ?
-- pourquoi ces deux nettoyages sont-ils des scripts manuels alors que le nettoyage des commandes, des
-  médias orphelins et des suppressions de compte sont des crons ? Un nettoyage qu'il faut penser à
-  lancer n'est pas un nettoyage. Propose la bascule en cron ou la suppression assumée ;
+- est-il sûr ? `cleanup-expired-carts.ts` et `backfill-media-metadata.ts` écrivent en base : quelle
+  base ciblent-ils, y a-t-il un garde-fou contre une exécution sur la production, sont-ils idempotents,
+  que se passe-t-il si on les interrompt à la moitié ?
+- pourquoi ce nettoyage de paniers est-il un script manuel alors que le nettoyage des commandes et des
+  médias orphelins sont des crons ? Un nettoyage qu'il faut penser à lancer n'est pas un nettoyage.
+  Note : `modules/cron/services/cleanup-carts.service.ts` existe mais n'est branché sur AUCUN planning
+  (`vercel.json`) — purge promise jamais exécutée, à trancher : brancher ou supprimer ;
 - `test-database.ts` : peut-il toucher une base réelle ? Vérifie le refus explicite sur une URL
   contenant « prod » (le runner d'intégration a cette garde — le script l'a-t-il ?) ;
 - les scripts d'audit (`audit-alt-text`, `check-blur-placeholders`, `validate-html-structure`) : leurs
@@ -3023,8 +3035,10 @@ Vérifie :
   procédure — `migrate resolve`, `down.sql`, restauration PITR (croise avec le prompt 151) ?
 - les migrations longues : verrou de table sur une table volumineuse (`Order`, `OrderHistory`) pendant
   un `ALTER` bloque le site. Y a-t-il un contrôle de durée, un `lock_timeout` ?
-- la cohérence avec les 133 migrations existantes et avec le `db push` du runner d'intégration (qui NE
-  rejoue PAS les migrations : toute garde raw-SQL doit être listée dans `RAW_SQL_GUARD_MIGRATIONS`) ;
+- la cohérence avec l'historique baseliné : 6 migrations vivantes (`0_init` + 5 incrémentales),
+  143 archivées dans `prisma/migrations-archive/` hors du chemin Prisma, et le `db push` du runner
+  d'intégration qui NE rejoue PAS les migrations (⚠️ la constante `RAW_SQL_GUARD_MIGRATIONS` citée par
+  CLAUDE.md n'existe pas dans `test/integration/setup.ts` — dérive de doc à signaler) ;
 - les secrets : `DATABASE_URL` de production dans les secrets GitHub, portée limitée, pas de journal
   qui la révèle ;
 - la trace : sait-on après coup qui a appliqué quoi et quand ?
@@ -3063,7 +3077,7 @@ Vérifie :
   Les protections de branche correspondent-elles à l'intention ?
 
 Inspecte `.github/workflows/{codeql,ci}.yml`, `.github/dependabot.yml` (s'il existe), `knip.config.ts`,
-`package.json`, `pnpm-lock.yaml`, `codecov.yml`, `react-doctor.config.json`.
+`package.json`, `pnpm-lock.yaml`, `codecov.yml`, `doctor.config.json`.
 
 Note /100, classe l'absence de veille CVE en P1, et dis explicitement quels contrôles bloquent une
 fusion et lesquels sont décoratifs.
@@ -3077,8 +3091,10 @@ fusion et lesquels sont décoratifs.
 Audit le point « Endpoints d'exploitation » dans Synclune.
 
 Quatre routes ne servent pas le produit mais son exploitation : `app/api/health/route.ts` (vérifie la
-base et l'état des disjoncteurs Stripe/Resend, protégée par `requireAdminApiRoute` et une comparaison
-`timingSafeEqual`), `app/api/csp-report/route.ts`, `app/api/noop/route.ts` (renvoie une source map vide)
+base et l'état des disjoncteurs Stripe/Resend — ⚠️ la garde n'est PAS binaire : le détail exige un
+`HEALTHCHECK_TOKEN` valide (`timingSafeEqual`) OU une session admin, mais un appel anonyme reçoit
+quand même un `{ status: "ok" }` en 200 ; vérifie que ce mode public dégradé ne fuit rien),
+`app/api/csp-report/route.ts`, `app/api/noop/route.ts` (renvoie une source map vide)
 et `app/api/orders/[orderNumber]/status/route.ts`.
 
 Vérifie :
@@ -3145,7 +3161,8 @@ Note /100, liste les questions manquantes et toute contradiction avec les CGV (P
 Audit le point « Documentation et onboarding » dans Synclune.
 
 La documentation de ce projet est dense : `CLAUDE.md` (instructions d'agent, invariants de facturation,
-patterns), `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/{BUSINESS,RUNBOOK,AUDIT-PROMPTS,prompts-audit-synclune}.md`.
+patterns), `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`,
+`docs/{BUSINESS,RUNBOOK,AUDIT-PROMPTS,KNOWN-ISSUES,REDESIGN-PROMPT,todo,prompts-audit-synclune}.md`.
 Une documentation fausse est plus coûteuse qu'une documentation absente : elle fait prendre de mauvaises
 décisions avec assurance.
 
@@ -3182,8 +3199,10 @@ de faire violer un invariant métier.
 Audit le point « Sauvegarde, restauration et reprise » dans Synclune.
 
 Une boutique qui perd sa base perd ses commandes, ses factures et sa comptabilité — avec une obligation
-de conservation de 10 ans (Art. L102 B LPF). `docs/RUNBOOK.md` évoque la restauration PITR Neon comme
-issue de secours. Cet audit vérifie que l'issue existe vraiment.
+de conservation de 10 ans (Art. L102 B LPF). ⚠️ Constat préalable : `docs/RUNBOOK.md` ne contient
+AUCUNE procédure de sauvegarde ni de restauration (sa seule occurrence de « restaurer » parle de code
+git) — la restauration PITR Neon n'est qu'une hypothèse orale. Cet audit vérifie ce qui existe
+vraiment et fait ÉCRIRE ce qui manque.
 
 Vérifie :
 - la sauvegarde : quelle est la fenêtre de restauration PITR réellement offerte par le plan Neon utilisé ?
@@ -3227,12 +3246,13 @@ Vérifie :
   l'usage ou coupure) ? Sais-tu le dire, ou est-ce une zone d'ombre ?
 - les postes qui grossissent tout seuls : transformations `next/image` (nombre de tailles × nombre de
   produits), volume d'événements Sentry (`tracesSampleRate` — un taux à 1 en production explose vite),
-  stockage UploadThing qui n'est jamais purgé, temps de calcul Neon réveillé par 11 crons ;
-- les crons : leur fréquence est-elle proportionnée au volume réel (~20 commandes/mois d'après les
-  commentaires de la CI) ? `retry-post-webhook-tasks` toutes les 5 minutes réveille la base 8 640 fois
-  par mois — pour quel bénéfice s'il n'y a rien à rejouer ?
-- les emails : le volume a déjà été réduit volontairement ; le périmètre actuel tient-il dans le plan
-  Resend, en comptant les pics (retour en stock sur un produit populaire) ?
+  stockage UploadThing qui n'est jamais purgé, temps de calcul Neon réveillé par les 9 crons ;
+- les crons : la question de la fréquence a déjà été tranchée (9 jobs, tous quotidiens+, ~4 réveils
+  Neon/jour — plafond du plan Vercel Hobby, analyse de coût complète dans `schedules.ts`) ; vérifie
+  que ce réglage TIENT : aucune cadence infra-journalière réintroduite, fenêtres regroupées
+  maintenues, garde `cron-wakeup-budget.regression.test.ts` intacte ;
+- les emails : le volume a déjà été réduit volontairement (8 templates, plus aucun émetteur
+  marketing) ; le périmètre actuel tient-il dans le plan Resend ?
 - l'abus : sans limitation de débit inter-instances (le projet l'assume : compteur en mémoire par
   instance), un script hostile peut multiplier les invocations et les requêtes. Quel est le pire coût
   atteignable en une journée ?
@@ -3254,34 +3274,37 @@ pour dépassement en P1.
 ```text
 Audit le point « Boutique fermée et disponibilité des commandes » dans Synclune.
 
-Deux mécanismes se superposent : la constante de pré-lancement
-`shared/constants/orders-availability.ts` (`ORDERS_AVAILABLE`, compilée — un changement exige un
-redéploiement) et les réglages de boutique dynamiques `modules/store-settings/**` (fermeture jusqu'à une
-date, réouverture automatique par le cron `reopen-store` toutes les 15 minutes).
+Un seul mécanisme pilote la fermeture depuis le retrait d'`ORDERS_AVAILABLE` (2026-07-27) : les
+réglages de boutique dynamiques `modules/store-settings/**` (`StoreSettings.isClosed`, fermeture
+jusqu'à une date, cron quotidien `reopen-store` en simple filet — la réouverture est déjà appliquée À
+LA LECTURE par `data/get-store-status.ts`, qui traite un `reopensAt` échu comme ouvert).
 
 Vérifie :
 - la garde serveur : `assertStoreOpen()` est-elle appliquée à TOUTES les Server Actions de panier, de
   checkout et de paiement ? L'UI désactivée n'est qu'un confort — une action non gardée permet
-  d'acheter dans une boutique fermée ;
-- la cohérence des deux mécanismes : que se passe-t-il si `ORDERS_AVAILABLE` est vrai mais que la
-  boutique est fermée jusqu'à une date, et l'inverse ? Lequel gagne, et est-ce écrit ?
+  d'acheter dans une boutique fermée. (Constat au 2026-07-31 : elle est appelée dans
+  `initialize-payment`, `confirm-checkout` et `update-payment-amount`, mais dans AUCUNE action de
+  `modules/cart/` — à juger, et `validate-discount-code` documente une exclusion délibérée) ;
+- les vestiges : signale toute référence restante à `ORDERS_AVAILABLE` ou à la bannière « commandes en
+  pause » (retirées) ;
 - le contournement admin (`isVerifiedAdmin`) : un admin peut-il tester un achat boutique fermée, et
   cette exception est-elle sûre (re-vérification en base, pas de confiance au cookie) ?
-- la course de la réouverture : le cron efface `closedUntil` aux dates échues ; un client en cours de
-  checkout à cet instant obtient-il un état cohérent ?
-- l'affichage : l'avis « commandes en pause » apparaît-il assez tôt — avant de remplir un panier, pas
-  au moment de payer ? Les surfaces déclarées (fiche produit, pied de panier, page paiement, accueil)
-  sont-elles toutes couvertes ? (Croise avec le prompt 127.)
+- la réouverture : `get-store-status.ts` (lecture) et le cron (écriture `updateMany`) racontent-ils la
+  même chose, cache compris ?
+- l'affichage : la fermeture est-elle annoncée assez tôt — avant de remplir un panier, pas au moment
+  de payer ? Quelles surfaces l'affichent réellement (`store-closure-page`, compte à rebours de
+  réouverture) ? (Croise avec le prompt 127.)
 - les fuites : un lien direct vers `/paiement`, un panier restauré depuis un cookie, une session
   reprise après la fermeture ;
 - les effets de bord : emails, alertes de retour en stock, sitemap et données structurées
   (`offer-availability`) doivent refléter l'indisponibilité — annoncer un produit `InStock` alors
   qu'on ne peut pas commander est trompeur ;
-- le jour du lancement : la procédure de bascule est-elle documentée et sans risque ?
+- l'ouverture/fermeture opérée par l'administratrice : la procédure est-elle documentée (RUNBOOK) et
+  sans risque ?
 
-Inspecte `shared/constants/orders-availability.ts`, `modules/store-settings/**`,
-`shared/utils/offer-availability.ts`, `modules/cart/actions/**`, `modules/payments/actions/**`,
-`app/api/cron/reopen-store/**`, `docs/RUNBOOK.md`.
+Inspecte `modules/store-settings/**` (dont `services/store-closure-guard.ts` et
+`data/get-store-status.ts`), `shared/utils/offer-availability.ts`, `modules/cart/actions/**`,
+`modules/payments/actions/**`, `app/api/cron/reopen-store/**`, `docs/RUNBOOK.md`.
 
 Note /100, classe toute action d'achat non gardée côté serveur en P0.
 ```
@@ -3308,9 +3331,9 @@ Vérifie :
   `VAT_FRANCHISE_THRESHOLD_EUR` : le suivi est-il automatisé, et sur la bonne base (encaissements,
   Art. 50-0 CGI) ? La zone grise du sur-mesure (prestation de service, seuil 37 500 €) est-elle
   identifiée comme telle ?
-- la préparation à la sortie de franchise : `shared/constants/tax-categories.ts`, la ventilation de TVA
-  la ventilation par taux de TVA est-elle prête à être activée, ou faudra-t-il
-  tout écrire en urgence ?
+- la préparation à la sortie de franchise : `shared/constants/tax-categories.ts` — la ventilation par
+  taux de TVA est-elle prête à être activée, ou faudra-t-il tout écrire en urgence ?
+  (Note : `OrderItem.taxCategoryCode` a été supprimée en base, les codes sont dérivés à la volée.)
 - `shared/schemas/b2b-identifiers.schema.ts` : à quoi sert-il réellement ? S'il prépare un flux B2B
   (numéro de TVA intracommunautaire, SIRET), est-il cohérent avec un modèle assumé B2C — ou dormant ?
 - les mentions obligatoires sur facture selon la destination, et les documents douaniers hors UE ;
@@ -3318,7 +3341,7 @@ Vérifie :
   justes et visibles au bon moment ?
 
 Inspecte `shared/constants/{countries,currency,tax-categories,vat-franchise}.ts`,
-`shared/schemas/{address-schema,phone.schemas,b2b-identifiers.schema}.ts`,
+`modules/payments/schemas/checkout.schema.ts`, `shared/schemas/{phone.schemas,b2b-identifiers.schema}.ts`,
 `modules/invoices/**`, `modules/orders/**` (frais de port, adresses),
 `modules/dashboard/services/urssaf-deadline.service.ts`, `docs/{BUSINESS,RUNBOOK}.md`.
 
@@ -3388,8 +3411,9 @@ régression, TODO du code) et produis :
    données d'un autre, ou est-ce qu'une obligation légale est violée ? Tout le reste attend.
 3. LA DETTE ASSUMÉE : ce qu'on choisit de ne PAS corriger, avec la raison et le risque accepté. Un
    projet sain a une dette explicite ; ce repo a déjà des choix de ce type (limitation de débit en
-   mémoire par instance, pas de PWA, pas de dark mode, e-reporting à construire pour 2027) —
-   liste-les comme des décisions, pas comme des défauts.
+   mémoire par instance, pas de PWA, pas de dark mode, e-reporting à construire pour 2027, PAS de
+   compte client — boutique 100 % invitée depuis 2026-07-31 —, pas de retour self-service :
+   rétractation par email) — liste-les comme des décisions, pas comme des défauts.
 4. L'ORDRE D'EXÉCUTION : séquence les chantiers en tenant compte des dépendances (ex. le cache avant
    la performance, les tests avant les refontes, les fondations UI avant les surfaces) et des conflits
    de périmètre entre missions.
@@ -3414,7 +3438,8 @@ Audit le point « Upload de fichiers : UI/UX » dans Synclune.
 
 Périmètre : les surfaces où l'utilisatrice CHOISIT et ENVOIE un fichier — carte Médias des
 formulaires produit et variante (`modules/products/components/admin/product-media-card-shared.tsx`,
-`shared/media-array-card.tsx`), primitives partagées `shared/components/media-upload/**`, pipeline
+`modules/products/components/admin/shared/media-array-card.tsx`), primitives partagées
+`shared/components/media-upload/**`, pipeline
 `modules/media/hooks/use-media-upload.ts` et ses sous-hooks, file hors-ligne
 `modules/media/lib/offline-upload-queue.ts`, FileRouter `app/api/uploadthing/core.ts`.
 
@@ -3445,4 +3470,77 @@ désactivé, un `if (count > 0)` autour d'une assertion, un sélecteur par fragm
 
 Note /100, propose corrections/améliorations si pertinent et tests. Prouve chaque régression
 nouvelle en réintroduisant le défaut et en vérifiant le rouge.
+```
+
+---
+
+## 158 — Suivi de commande invité & jetons d'accès
+
+```text
+Audit le point « Suivi de commande invité et jetons d'accès » dans Synclune.
+
+Depuis le retrait de l'espace client (2026-07-31), `/suivi-commande` est le SEUL accès client à une
+commande, et le PDF de facture est servi par jeton. Deux familles de jetons HMAC sans état, à
+namespaces distincts : tracking (`tracking-token.ts`, `build-order-tracking-url.ts` — SSOT à une seule
+branche, cf. `order-tracking-url.regression.test.ts`) et facture (`invoice-token.ts`,
+`invoice-access-guard.ts`, révocation post-effacement RGPD via `isInvoiceOwnerErased()`).
+
+Vérifie :
+- la crypto : dérivation et force du secret, comparaison en temps constant, périmètre signé
+  (orderId + orderNumber), impossibilité de forger un jeton ou de le transposer d'un namespace à
+  l'autre (un jeton de suivi ne doit jamais ouvrir une facture) ;
+- l'oracle d'existence : une réponse différente entre « commande inexistante » et « jeton invalide »
+  révèle des numéros de commande — le fail doit être indistinct ;
+- l'expiration : ces liens vivent dans des emails transférables ; y a-t-il une durée de vie, et sinon,
+  est-ce un choix documenté avec son risque accepté ?
+- la fuite : `Referrer-Policy` face à un lien sortant depuis une page tokenisée, jeton en query dans
+  les logs/analytics/Sentry, partage de l'URL ;
+- la PII exposée sans session : quelles données la page montre-t-elle, et le PDF de facture en
+  montre-t-il davantage ? La purge PII 10 ans (`piiPurgedAt`) rend-elle le lien inerte proprement ?
+- l'abus : rate-limit par IP sur la page et sur les routes status/invoice, énumération de
+  `orderNumber` ;
+- le cache : la page et ses lectures sont-elles correctement scoppées (données nominatives vs
+  `"use cache"` partagé) ?
+
+Inspecte `app/suivi-commande/**`, `modules/orders/utils/{tracking-token,build-order-tracking-url,
+order-token-signer,invoice-token,invoice-access-guard}.ts`,
+`modules/orders/data/get-order-for-tracking.ts`, `modules/orders/components/customer/**`,
+`app/api/orders/[orderNumber]/{status,invoice}/**`, `proxy.ts` (`publicRoutes`).
+
+Note /100, classe tout accès non tokenisé à une donnée de commande et tout oracle d'existence en P0.
+```
+
+---
+
+## 159 — Parcours 100 % invité
+
+```text
+Audit le point « Parcours 100 % invité » dans Synclune.
+
+Depuis le 2026-07-31 il n'y a PLUS de compte client : panier et favoris vivent par cookie de session
+(`userId` nullable), le checkout est sans session (`confirmCheckout`), la consultation passe par le
+lien tokenisé (prompt 158), et il n'existe AUCUNE fusion invité→compte. La seule session possible est
+celle de l'administratrice.
+
+Vérifie :
+- le cookie porteur : durée de vie, attributs (HttpOnly, SameSite, Secure), rotation, et ce qui
+  arrive au panier/favoris quand il expire ou saute (perte silencieuse ?) ;
+- les gardes : `requireActiveAccountIfAuthenticated` sur les flux commerce — le cas nominal est
+  « pas de session », la branche session ne couvre que l'admin qui achète sur sa propre boutique ;
+- les colonnes héritées (`Order.userId`, `Cart.userId`, `Wishlist.userId`, `DiscountUsage.userId`) :
+  conservées à dessein — vérifie qu'aucun code ne choisit encore un CHEMIN sur ces données héritées
+  (le piège documenté : `buildOrderTrackingUrl` branchant sur `Order.userId` produisait un 404 sur le
+  seul lien du client) ;
+- les vestiges : reliquats de fusion (`get-cart-for-merge.ts`), liens morts vers `/inscription`,
+  copy qui promet un compte, emails qui pointent vers des routes supprimées ;
+- l'anti-abus sans identité : rate limits par IP sur panier/checkout/discounts, plafonds de
+  quantité, expiration des paniers invités (`cleanup-pending-orders`) ;
+- la continuité d'achat : que perd réellement un client sans compte (historique, réachat) et est-ce
+  compensé (email de confirmation avec lien durable) ?
+
+Inspecte `modules/cart/**`, `modules/wishlist/**`, `modules/payments/actions/**`,
+`modules/auth/lib/require-auth.ts`, `modules/orders/utils/build-order-tracking-url.ts`,
+`prisma/schema.prisma`, `proxy.ts`.
+
+Note /100, classe tout chemin qui suppose encore un compte client en P0/P1 selon l'impact.
 ```

@@ -70,11 +70,11 @@ L'app repose sur Vercel (SSR/ISR + crons) + Neon. Migration hors Vercel = chanti
 
 Ces bornes sont verrouillées par des tests de régression. Les desserrer, c'est accepter une hausse de facture : le justifier explicitement.
 
-| Poste                           | Borne                                                          | Verrouillé par                                                               |
-| ------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Transformations d'images Vercel | Hôtes épinglés sur les app-ids Synclune ; 2 paliers de qualité | `image-remote-patterns.regression.test.ts`, `image-config.constants.test.ts` |
-| Compute Neon                    | Aucun cron sous 30 min ; réveils alignés (≤ 2/heure)           | `cron-wakeup-budget.regression.test.ts`                                      |
-| Quota e-mail Resend             | 40 envois marketing/jour max, 60 réservés au transactionnel    | `notify-back-in-stock.test.ts` (sous-suite budget)                           |
-| Stockage UploadThing            | 224 Mo max par upload (< 1/8 du quota gratuit)                 | `upload-size-limits.regression.test.ts`                                      |
+| Poste                           | Borne                                                                                     | Verrouillé par                                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Transformations d'images Vercel | Hôtes épinglés sur les app-ids Synclune ; 2 paliers de qualité                            | `image-remote-patterns.regression.test.ts`, `image-config.constants.test.ts`                 |
+| Compute Neon                    | Aucun cron sous 30 min ; réveils alignés (≤ 2/heure)                                      | `cron-wakeup-budget.regression.test.ts`                                                      |
+| Quota e-mail Resend             | 0 envoi marketing (émetteurs supprimés 2026-07-30) ; 100/jour entièrement transactionnels | — (tout futur émetteur marketing devra re-créer le budget partagé, cf. `CLAUDE.md` § Emails) |
+| Stockage UploadThing            | 224 Mo max par upload (< 1/8 du quota gratuit)                                            | `upload-size-limits.regression.test.ts`                                                      |
 
 Deux d'entre eux sont des risques de **coupure de service**, pas seulement de facture : l'épuisement du compute Neon suspend la base (site KO), et l'épuisement du quota Resend journalier fait perdre les e-mails de confirmation de commande.

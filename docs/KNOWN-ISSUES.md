@@ -84,33 +84,45 @@ La convention de voix du repo est le tutoiement (cf. `CLAUDE.md` § Conventions)
 
 ---
 
-## KI-004 — Rate limit : panier, favoris et codes promo partagent encore un seul compteur
+## KI-004 — ~~Rate limit : panier, favoris et codes promo partagent encore un seul compteur~~ · **CORRIGÉ le 2026-07-31**
 
 **Trouvé le** 2026-07-30 (audit checkout Stripe Elements, F3).
+**Corrigé le** 2026-07-31 (audit « Rate limiting »).
 **Où** `shared/lib/rate-limit.ts` → `checkRateLimitInMemory`, construction de la clé.
-**Sévérité** moyenne — plus aucun effet sur le paiement (corrigé), mais un blocage croisé reste possible entre panier, favoris et codes promo.
+**Sévérité réelle** — élevée, et non « moyenne » comme annoncé ici jusqu'au correctif : le défaut ne se limitait pas à un blocage croisé panier/favoris, il **verrouillait la connexion de l'administratrice** (voir ci-dessous).
 
-`checkRateLimit` indexe son compteur sur le **seul** identifiant :
+`checkRateLimit` indexait son compteur sur le **seul** identifiant :
 
 ```ts
 const key = `ratelimit:${identifier}`;
 ```
 
-Ni le nom de l'action ni sa config n'entrent dans la clé. Deux actions qui passent le même identifiant partagent donc littéralement un compteur — et la **fenêtre appartient à l'entrée**, pas à l'appelant : c'est la première requête de la fenêtre qui fixe `resetAt`, les suivantes héritent de cette échéance quelle que soit leur propre `windowMs`.
+Ni le nom de l'action ni sa config n'entraient dans la clé. Formulation exacte du défaut : pour un identifiant donné, **la limite effective de chaque action était le MINIMUM des limites de toutes celles qui le partageaient**, et la fenêtre était celle de la première entrée créée.
 
-Restent sur un identifiant nu (`user:<id>` / `session:<id>` / `ip:<ip>`), donc sur un compteur commun :
+**Ce que l'entrée initiale avait manqué — le verrouillage de la connexion.** `signInEmail` appelle `enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGIN)` ; hors session, cela produit un `ip:<ip>` nu, partagé avec toutes les actions publiques. `AUTH_LOGIN` ayant la limite la plus basse du lot (5/15 min), n'importe quelles 5 requêtes publiques préalables l'épuisaient :
 
-- toutes les actions panier — `modules/cart/lib/cart-rate-limit.ts`
-- toutes les actions favoris — `modules/wishlist/actions/*.ts`
-- `validateDiscountCode` — `modules/discounts/actions/validate-discount-code.ts`
+1. un visiteur consulte 5 fiches produit → `addRecentProduct` (`PRODUCT_COOKIE_ACTION`, 30/min) crée `ratelimit:ip:X` à `count: 5` ;
+2. l'administratrice se connecte depuis cette IP → `count 5 >= limit 5` → 429 sur des identifiants pourtant valides.
 
-Conséquence concrète : 15 ajouts au panier consomment le budget des favoris et celui de la validation de code promo, avec la fenêtre de celui qui a créé l'entrée. Un client peut donc se voir refuser un code promo pour avoir manipulé son panier.
+Pire variante : une entrée créée par un passage sur `/mot-de-passe-oublie` (fenêtre **1 h**) gelait la connexion pour l'heure entière. Depuis le retrait de l'espace client (2026-07-31), c'est le seul compte capable d'administrer la boutique. `/api/csp-report` (20/min) aggravait le tableau : les rapports CSP sont émis **automatiquement par le navigateur**, donc le compteur pouvait être épuisé sans aucune action de l'utilisateur.
 
-**Ce qui a été corrigé** : les 4 actions de paiement passent par `modules/payments/utils/payment-rate-limit-id.ts`, qui préfixe l'identifiant par l'action (`checkout-init:`, `checkout-confirm:`, `update-amount:`, `cancel-orphan:`). C'était le cas grave : une visite sur `/paiement` plantait une fenêtre d'1 h que 15 opérations quelconques épuisaient, après quoi le bouton « Commander et payer » répondait « Trop de tentatives » pour le reste de l'heure — sur une commande au montant déjà verrouillé. Verrouillé par `payment-rate-limit-id.regression.test.ts`.
+Le commentaire de `AUTH_LOGIN_LIMIT` a d'ailleurs contribué à masquer le défaut : il annonçait un identifiant composite `login:${email}:${ip}` qui n'a jamais existé.
 
-**Pourquoi le reste est différé.** Le correctif de fond est de rendre le nom d'action **obligatoire** dans `checkRateLimit` et de dériver la clé côté bibliothèque, plutôt que de laisser chaque appelant préfixer à la main. Ça touche ~35 call sites (cart, wishlist, admin, auth, uploads), et chacun a des tests qui assertent l'identifiant exact — donc une passe transverse à part, pas un effet de bord d'un lot checkout. Attention en la faisant : le préfixe casse deux comportements implicites de `rate-limit.ts` — l'extraction automatique de l'IP depuis un identifiant `ip:…` (dont dépendent whitelist/blacklist et plafond global, à compenser en passant l'IP en 3ᵉ argument) et le masquage `startsWith("user:")` dans les logs (généralisé le 2026-07-30 en masquage par segment, qui couvre au passage l'email invité qui partait en clair).
+**Correctif.** Le `name` du preset entre désormais dans la clé, dérivée côté bibliothèque :
 
----
+```ts
+const key = buildRateLimitKey(name, identifier); // ratelimit:<name>:<identifier>
+```
+
+`name` est un champ **requis** de `RateLimitConfig` : un preset qui l'oublierait retomberait en silence sur le compteur partagé, donc c'est `tsc` qui l'impose, pas une convention. Les 118 presets SSOT le portent (convention : identifiant du const sans `_LIMIT`, en kebab-case).
+
+⚠️ **Aucun call site n'a changé.** L'estimation « ~35 call sites, chacun avec des tests assertant l'identifiant exact » mesurait l'autre approche — préfixer chez l'appelant. En mettant le nom dans l'objet de config (déjà passé en 2ᵉ argument par les 140 call sites), l'identifiant fourni par l'appelant reste nu : l'extraction automatique de l'IP depuis un `ip:…` et le masquage par segment dans les logs continuent de fonctionner inchangés. Seul `app/api/csp-report/route.ts`, unique porteur d'un littéral inline, a dû être touché.
+
+**Ce qui reste volontairement partagé.** Deux appelants d'un **même** preset partagent toujours une entrée — et c'est correct : ils ont par construction les mêmes `limit`/`windowMs`, donc l'anomalie « la fenêtre appartient à la première entrée » est structurellement impossible entre eux. C'est le cas des 14 actions de commande admin (`ADMIN_ORDER_SINGLE_OPERATIONS`) et du couple facture/avoir (partage de budget explicitement voulu).
+
+**`buildPaymentRateLimitId` est conservé tel quel**, et reste porteur : `PAYMENT_LIMITS.CREATE_SESSION` est partagé par `initializePayment` **et** `confirmCheckout`. Le nom de config seul les ferait re-collisionner, ré-introduisant le bug F3 — une visite sur `/paiement` brûlant le budget de l'encaissement. Le double préfixe qui en résulte (`ratelimit:checkout-create-session:checkout-init:user:x`) est redondant mais sûr.
+
+**Verrouillé par** `shared/lib/__tests__/rate-limit-preset-naming.regression.test.ts` (nom présent, kebab-case, unique **entre références distinctes** — la déduplication par identité d'objet est indispensable, `WISHLIST_LIMITS.ADD/REMOVE/TOGGLE` étant le même objet) et par deux cas dédiés dans `rate-limit.test.ts` (isolation des compteurs, non-héritage de fenêtre).
 
 ## KI-005 — Le numéro d'avoir a deux SSOT : `Order.creditNote*` et `Refund.creditNote*`
 
