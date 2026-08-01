@@ -5,6 +5,7 @@ import { OrderStatus } from "@/app/generated/prisma/client";
 import { UpdateTrackingForm } from "@/modules/orders/components/admin/update-tracking-form";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import type { Carrier } from "@/modules/orders/utils/carrier.utils";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type OrderTrackingPageParams = Promise<{ id: string }>;
 
@@ -25,6 +26,8 @@ export async function generateMetadata({
 }
 
 export default async function OrderTrackingPage({ params }: { params: OrderTrackingPageParams }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const order = await getOrderById({ id });
 

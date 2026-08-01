@@ -13,6 +13,7 @@ import {
 } from "@/shared/components/ui/breadcrumb";
 
 import { RefundsAdminDialogs } from "../_components/refunds-admin-dialogs";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface RefundDetailRouteProps {
 	params: Promise<{ id: string }>;
@@ -33,6 +34,8 @@ export async function generateMetadata({ params }: RefundDetailRouteProps): Prom
 }
 
 export default async function RefundDetailRoute({ params }: RefundDetailRouteProps) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const refund = await getRefundById({ id });
 

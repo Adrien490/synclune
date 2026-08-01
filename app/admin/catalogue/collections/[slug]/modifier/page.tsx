@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { EditCollectionForm } from "@/modules/collections/components/admin/edit-collection-form";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface EditCollectionPageProps {
 	params: Promise<{ slug: string }>;
@@ -16,6 +17,8 @@ export async function generateMetadata({ params }: EditCollectionPageProps): Pro
 }
 
 export default async function EditCollectionPage({ params }: EditCollectionPageProps) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 

@@ -1,42 +1,14 @@
-import type { FulfillmentStatus, OrderStatus } from "@/app/generated/prisma/client";
-import type { BadgeVariant } from "@/shared/types/badge.types";
-
-// ============================================================================
-// ORDER STATUS
-// ============================================================================
-
-export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-	PENDING: "En attente",
-	PROCESSING: "En traitement",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	CANCELLED: "Annulée",
-};
-
-export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
-	PENDING: "warning",
-	PROCESSING: "default",
-	SHIPPED: "secondary",
-	DELIVERED: "success",
-	CANCELLED: "destructive",
-};
-
-// ============================================================================
-// FULFILLMENT STATUS
-// ============================================================================
-
-export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "À préparer",
-	PROCESSING: "En préparation",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	RETURNED: "Retournée",
-};
-
-export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {
-	UNFULFILLED: "warning",
-	PROCESSING: "default",
-	SHIPPED: "secondary",
-	DELIVERED: "success",
-	RETURNED: "destructive",
-};
+/**
+ * Ré-export de la SSOT `modules/orders/constants/status-display.ts`.
+ *
+ * Ce fichier redéclarait ses propres maps : `UNFULFILLED` s'affichait
+ * « À préparer » (badge warning) sur le dashboard et « Non traitée » (badge
+ * outline) sur la liste commandes — deux vérités co-visibles en admin.
+ * Audit UI design system 2026-08-01.
+ */
+export {
+	ORDER_STATUS_LABELS,
+	ORDER_STATUS_VARIANTS,
+	FULFILLMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_VARIANTS,
+} from "@/modules/orders/constants/status-display";

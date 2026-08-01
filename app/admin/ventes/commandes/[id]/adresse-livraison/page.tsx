@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EditShippingAddressForm } from "@/modules/orders/components/admin/edit-shipping-address-form";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
 import { FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type ShippingAddressPageParams = Promise<{ id: string }>;
 
@@ -28,6 +29,8 @@ export default async function ShippingAddressPage({
 }: {
 	params: ShippingAddressPageParams;
 }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const order = await getOrderById({ id });
 

@@ -28,6 +28,7 @@ import { RefundsAdminDialogs } from "./_components/refunds-admin-dialogs";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export type RefundFiltersSearchParams = {
 	filter_status?: string;
@@ -54,6 +55,8 @@ type RefundsAdminPageProps = {
 };
 
 export default async function RefundsAdminPage({ searchParams }: RefundsAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
 	const { cursor, direction, perPage, sortBy, search } = parseRefundParams(params);

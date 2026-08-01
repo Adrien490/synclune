@@ -6,6 +6,7 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getCollections, SORT_LABELS } from "@/modules/collections/data/get-collections";
 import { getFirstParam } from "@/shared/utils/params";
+import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { type Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
@@ -24,6 +25,7 @@ import { parseFilters } from "./_utils/params";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 // Lazy loading - dialogs et bottom bar charges uniquement a l'ouverture
 const CollectionsBottomBar = dynamic(() =>
@@ -60,6 +62,8 @@ type CollectionsAdminPageProps = {
 };
 
 export default async function CollectionsAdminPage({ searchParams }: CollectionsAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
@@ -72,7 +76,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 		| "created-descending"
 		| "products-ascending"
 		| "products-descending";
-	const search = getFirstParam(params.search);
+	const search = searchParamParsers.search(params.search);
 	const filters = parseFilters(params);
 
 	// La promise de collections n'est PAS awaitée pour permettre le streaming

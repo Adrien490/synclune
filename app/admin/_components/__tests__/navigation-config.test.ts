@@ -12,10 +12,11 @@ import {
 // ============================================================================
 
 describe("navigationData", () => {
-	// Mode "boutique en ligne" (SHOP_LIVE=true) : 4 groupes complets.
-	// Si SHOP_LIVE repasse à false, restreindre à 2 groupes (Catalogue + Boutique).
-	it("has 4 navigation groups in shop-live mode", () => {
-		expect(navigationData.navGroups).toHaveLength(4);
+	// Trois groupes. Le gate `SHOP_LIVE` a disparu avec la fusion Pilotage+Ventes
+	// (retrait de l'espace client 2026-07-31) : il était codé en dur à `true` et sa
+	// branche `false` aurait fait disparaître « Tableau de bord » avec le groupe.
+	it("has 3 navigation groups", () => {
+		expect(navigationData.navGroups).toHaveLength(3);
 	});
 
 	/**
@@ -28,9 +29,9 @@ describe("navigationData", () => {
 	 * `SHOP_LIVE` et la nature commerciale (sa route est inchangée).
 	 * L'ordre suit la fréquence d'usage quotidienne décroissante.
 	 */
-	it("includes the 4 groups in shop-live mode, ordered by daily usage", () => {
+	it("includes the 3 groups, ordered by daily usage", () => {
 		const labels = navigationData.navGroups.map((g) => g.label);
-		expect(labels).toEqual(["Pilotage", "Ventes", "Catalogue", "Boutique"]);
+		expect(labels).toEqual(["Pilotage", "Catalogue", "Boutique"]);
 	});
 
 	it("n'a plus aucun groupe mono-item", () => {
@@ -71,7 +72,7 @@ describe("navigationData", () => {
 		}
 	});
 
-	it("marks Catalogue as the only collapsible group in shop-live mode", () => {
+	it("marks Catalogue as the only collapsible group", () => {
 		const collapsibleLabels = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
@@ -122,7 +123,7 @@ describe("getQuickAccessItems", () => {
 		expect(items).toHaveLength(3);
 	});
 
-	it("returns dashboard, orders, and products in order (shop-live mode)", () => {
+	it("returns dashboard, orders, and products in order", () => {
 		const items = getQuickAccessItems();
 		expect(items.map((i) => i.id)).toEqual(["dashboard", "orders", "products"]);
 	});

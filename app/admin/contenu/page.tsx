@@ -1,6 +1,7 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Megaphone } from "lucide-react";
 import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Contenu - Administration",
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ContentPage() {
+	await assertAdminPage();
+
 	return (
 		<SectionNavigation
 			title="Contenu"

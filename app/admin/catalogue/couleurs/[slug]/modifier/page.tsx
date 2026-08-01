@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditColorForm } from "@/modules/colors/components/admin/edit-color-form";
 import { getColorBySlug } from "@/modules/colors/data/get-color";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface EditColorPageProps {
 	params: Promise<{ slug: string }>;
@@ -17,6 +18,8 @@ export async function generateMetadata({ params }: EditColorPageProps): Promise<
 }
 
 export default async function EditColorPage({ params }: EditColorPageProps) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const color = await getColorBySlug({ slug, includeInactive: true });
 

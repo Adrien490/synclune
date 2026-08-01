@@ -12,8 +12,8 @@ import {
 	Ticket,
 	Megaphone,
 	Store,
-	Users,
 	Landmark,
+	ShieldAlert,
 } from "lucide-react";
 import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
 
@@ -27,16 +27,6 @@ import { ORDERS_TO_SHIP_HREF } from "@/modules/orders/constants/to-ship";
  * (WCAG 4.1.2). ID statique car la sheet est unique au DOM admin.
  */
 export const ADMIN_MENU_SHEET_CONTENT_ID = "admin-menu-sheet-content";
-
-// ============================================================================
-// SHOP STATUS FLAG
-// ============================================================================
-
-// Boutique en ligne : tous les groupes sont actifs (Ventes, Clients, Marketing,
-// Contenu). L'onglet "Commandes" est restauré dans le bottom bar mobile.
-// Cast `as boolean` pour défaire le narrowing TypeScript du littéral, sinon
-// ESLint flag `SHOP_LIVE ? ... : []` comme always-truthy.
-const SHOP_LIVE = true as boolean;
 
 // ============================================================================
 // TYPES
@@ -58,7 +48,7 @@ export interface NavItem {
 	badgeUrl?: string;
 }
 
-export interface NavGroup {
+interface NavGroup {
 	label: string;
 	icon?: LucideIcon;
 	items: NavItem[];
@@ -73,10 +63,36 @@ interface NavigationData {
 // NAVIGATION GROUPS
 // ============================================================================
 
-const VENTES_GROUP: NavGroup = {
-	label: "Ventes",
-	icon: ShoppingBag,
+/**
+ * Groupe « Pilotage » — le tableau de bord et les surfaces de vente.
+ *
+ * Fusionne les anciens `Pilotage` (tableau de bord + fiche clients) et `Ventes`.
+ * Le retrait de l'espace client (2026-07-31) a supprimé `/admin/clients`, ce qui
+ * laissait `Pilotage` avec un seul lien — un libellé de groupe et un séparateur
+ * de chrome pour « Tableau de bord » seul, exactement ce que le test
+ * « n'a plus aucun groupe mono-item » interdit.
+ *
+ * Le tableau de bord est en tête plutôt que dans un groupe à part : ses KPI (CA,
+ * commandes, progression du seuil de franchise) sont la vue d'ensemble de ce que
+ * les items suivants détaillent.
+ *
+ * Au passage, disparition du gate `SHOP_LIVE` qui n'englobait que ce groupe :
+ * codé en dur à `true`, sa branche `false` était morte depuis que la fermeture de
+ * boutique est pilotée à l'exécution par `StoreSettings.isClosed` et non plus par
+ * un drapeau de build. Le garder ici aurait fait disparaître « Tableau de bord »
+ * avec le groupe si quelqu'un l'avait repassé à `false`.
+ */
+const PILOTAGE_GROUP: NavGroup = {
+	label: "Pilotage",
+	icon: LayoutDashboard,
 	items: [
+		{
+			id: "dashboard",
+			title: "Tableau de bord",
+			shortTitle: "Accueil",
+			url: "/admin",
+			icon: LayoutDashboard,
+		},
 		{
 			id: "orders",
 			title: "Commandes",
@@ -108,34 +124,6 @@ const VENTES_GROUP: NavGroup = {
 			shortTitle: "Promos",
 			url: "/admin/marketing/discounts",
 			icon: Ticket,
-		},
-	],
-};
-
-/**
- * Groupe « Pilotage » — le tableau de bord et la fiche clients.
- *
- * `Clients` occupait à lui seul un groupe (libellé + séparateur pour un unique
- * lien) placé AVANT `Catalogue`, la deuxième surface la plus utilisée. Et
- * `/admin` n'avait aucune entrée nommée : le seul retour au tableau de bord
- * passait par le logo, non libellé.
- */
-const PILOTAGE_GROUP: NavGroup = {
-	label: "Pilotage",
-	icon: LayoutDashboard,
-	items: [
-		{
-			id: "dashboard",
-			title: "Tableau de bord",
-			shortTitle: "Accueil",
-			url: "/admin",
-			icon: LayoutDashboard,
-		},
-		{
-			id: "customers",
-			title: "Clients",
-			url: "/admin/clients",
-			icon: Users,
 		},
 	],
 };
@@ -205,6 +193,12 @@ const BOUTIQUE_GROUP: NavGroup = {
 			url: "/admin/contenu/annonces",
 			icon: Megaphone,
 		},
+		{
+			id: "security-settings",
+			title: "Sécurité",
+			url: "/admin/configuration/securite",
+			icon: ShieldAlert,
+		},
 	],
 };
 
@@ -213,23 +207,23 @@ const BOUTIQUE_GROUP: NavGroup = {
 // ============================================================================
 
 /**
- * Ordre = fréquence d'usage quotidienne décroissante : on pilote (tableau de bord),
- * on traite les ventes, on entretient le catalogue, puis les réglages.
+ * Ordre = fréquence d'usage quotidienne décroissante : on pilote et on traite les
+ * ventes, on entretient le catalogue, puis les réglages.
  *
- * Trois groupes au lieu de six. Quatre groupes mono-item (Clients, Contenu,
- * Configuration, puis Marketing) coûtaient chacun un libellé et un séparateur pour
- * un unique lien. `Marketing` est devenu mono-item au retrait du système d'avis
- * (2026-07-30) : « Codes promo » a rejoint `Ventes`, dont il partage le gate
- * `SHOP_LIVE` et la nature commerciale. Verrouillé par le test
- * « n'a plus aucun groupe mono-item » de navigation-config.test.ts.
+ * Trois groupes au lieu de six à l'origine. Cinq groupes mono-item successifs
+ * (Clients, Contenu, Configuration, Marketing, puis Pilotage) coûtaient chacun un
+ * libellé et un séparateur de chrome pour un unique lien :
+ * - `Contenu` + `Configuration` ont fusionné en `Boutique` ;
+ * - `Marketing` est devenu mono-item au retrait du système d'avis (2026-07-30),
+ *   « Codes promo » a rejoint les ventes ;
+ * - `Clients` a disparu au retrait de l'espace client (2026-07-31), ce qui a rendu
+ *   `Pilotage` mono-item à son tour → fusion avec `Ventes`.
+ *
+ * Verrouillé par le test « n'a plus aucun groupe mono-item » de
+ * navigation-config.test.ts.
  */
 export const navigationData: NavigationData = {
-	navGroups: [
-		PILOTAGE_GROUP,
-		...(SHOP_LIVE ? [VENTES_GROUP] : []),
-		CATALOGUE_GROUP,
-		BOUTIQUE_GROUP,
-	],
+	navGroups: [PILOTAGE_GROUP, CATALOGUE_GROUP, BOUTIQUE_GROUP],
 };
 
 // ============================================================================
@@ -239,18 +233,15 @@ export const navigationData: NavigationData = {
 /**
  * IDs des items affichés dans la section "Accès rapide" du menu mobile.
  * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
- * Mode boutique fermée : remplace "orders" par "store-settings".
  */
-const QUICK_ACCESS_ITEM_IDS = SHOP_LIVE
-	? (["dashboard", "orders", "products"] as const)
-	: (["dashboard", "store-settings", "products"] as const);
+const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
 
 /**
  * Récupère tous les items de navigation (liste plate).
  *
  * Plus de `DASHBOARD_ITEM` hors-groupe à concaténer : « Tableau de bord » vit
- * désormais dans `PILOTAGE_GROUP`, donc il apparaît une seule fois (le
- * concaténer en tête le dupliquerait dans la recherche du menu mobile).
+ * dans `PILOTAGE_GROUP`, donc il apparaît une seule fois (le concaténer en tête
+ * le dupliquerait dans la recherche du menu mobile).
  */
 export function getAllNavItems(): NavItem[] {
 	return navigationData.navGroups.flatMap((group) => group.items);

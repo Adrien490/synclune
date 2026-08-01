@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
 
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
+
 import { SectionHeading } from "./_components/section-heading";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
@@ -39,6 +41,13 @@ type AdminDashboardPageProps = {
 };
 
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
+	// Les 5 fetchers `modules/dashboard/data/*` (CA, TVA, alertes, commandes
+	// récentes, actions à mener) sont en `"use cache"` : ils ne PEUVENT pas
+	// s'auto-garder, `isAdmin()` lisant `headers()`, source dynamique interdite
+	// dans ce scope. C'est donc à la page de porter la garde — cf. le JSDoc
+	// d'`assertAdminPage` pour pourquoi le layout ne suffit pas.
+	await assertAdminPage();
+
 	const params = await searchParams;
 	const period = parsePeriod(params.period);
 

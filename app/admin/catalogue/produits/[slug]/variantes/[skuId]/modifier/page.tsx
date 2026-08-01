@@ -17,6 +17,7 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
@@ -54,6 +55,8 @@ export async function generateMetadata({
 }
 
 export default async function EditSkuPage({ params }: { params: EditSkuPageParams }) {
+	await assertAdminPage();
+
 	const { slug, skuId } = await params;
 
 	// Récupérer le produit, le SKU, les couleurs et matériaux en parallèle

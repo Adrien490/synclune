@@ -74,7 +74,7 @@ vi.mock("@/shared/components/ui/tabs", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Loader2: (props: { className?: string }) => (
+	Loader2Icon: (props: { className?: string }) => (
 		<span data-testid="icon-loader" className={props.className} />
 	),
 }));

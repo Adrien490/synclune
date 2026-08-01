@@ -7,7 +7,13 @@ import {
 	SORT_LABELS,
 	GET_DISCOUNTS_DEFAULT_PER_PAGE,
 } from "@/modules/discounts/data/get-discounts";
-import { getFirstParam } from "@/shared/utils/params";
+import {
+	GET_DISCOUNTS_DEFAULT_SORT_BY,
+	GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,
+	GET_DISCOUNTS_SORT_FIELDS,
+} from "@/modules/discounts/constants/discount.constants";
+import { getFirstParam, getFirstParamIn } from "@/shared/utils/params";
+import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
 import { DiscountsDataTable } from "@/modules/discounts/components/admin/discounts-data-table";
 import { DiscountsDataTableSkeleton } from "@/modules/discounts/components/admin/discounts-data-table-skeleton";
@@ -19,13 +25,16 @@ import { DiscountsSortBadge } from "@/modules/discounts/components/admin/discoun
 import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import dynamic from "next/dynamic";
-import type { DiscountType } from "@/app/generated/prisma/client";
+// Import de VALEUR (pas `import type`) : `Object.values(DiscountType)` a besoin de
+// l'objet à l'exécution pour contrôler l'appartenance de `?filter_type=`.
+import { DiscountType } from "@/app/generated/prisma/enums";
 import { type Metadata } from "next";
 
 import { DiscountsAdminDialogs } from "./_components/discounts-admin-dialogs";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const DiscountsBottomBar = dynamic(() =>
 	import("@/modules/discounts/components/admin/discounts-bottom-bar").then(
@@ -43,22 +52,32 @@ type DiscountsAdminPageProps = {
 };
 
 export default async function DiscountsAdminPage({ searchParams }: DiscountsAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
-	const cursor = getFirstParam(params.cursor);
-	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
-	const perPage = Number(getFirstParam(params.perPage)) || GET_DISCOUNTS_DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) ?? "created-descending") as
-		| "created-descending"
-		| "created-ascending"
-		| "code-ascending"
-		| "code-descending"
-		| "usage-descending"
-		| "usage-ascending";
-	const search = getFirstParam(params.search);
+	// Paramètres de liste dérivés des parseurs partagés plutôt que castés depuis
+	// l'URL : `Number(...)` et `as "forward" | "backward"` reproduisaient à la main
+	// des bornes que `searchParamParsers` (adossé à Zod) applique déjà.
+	const cursor = searchParamParsers.cursor(params.cursor);
+	const direction = searchParamParsers.direction(params.direction);
+	const perPage = searchParamParsers.perPage(
+		params.perPage,
+		GET_DISCOUNTS_DEFAULT_PER_PAGE,
+		GET_DISCOUNTS_MAX_RESULTS_PER_PAGE,
+	);
+	const sortBy = searchParamParsers.sortBy(
+		params.sortBy,
+		GET_DISCOUNTS_SORT_FIELDS,
+		GET_DISCOUNTS_DEFAULT_SORT_BY,
+	);
+	const search = searchParamParsers.search(params.search);
 
 	// Parse filters from search params
-	const filterType = getFirstParam(params.filter_type) as DiscountType | undefined;
+	// Appartenance à l'enum contrôlée : un cast nu laissait `?filter_type=BOGUS`
+	// atteindre la couche data (cf. le parseur des commandes, où le même motif
+	// produisait un 500).
+	const filterType = getFirstParamIn(params.filter_type, Object.values(DiscountType));
 	const filterIsActive = getFirstParam(params.filter_isActive);
 	const filterHasUsages = getFirstParam(params.filter_hasUsages);
 

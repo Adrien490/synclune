@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditCustomerInfoForm } from "@/modules/orders/components/admin/edit-customer-info-form";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
-import { InvoiceStatus } from "@/app/generated/prisma/browser";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type CustomerPageParams = Promise<{ id: string }>;
 
@@ -24,6 +24,8 @@ export async function generateMetadata({
 }
 
 export default async function OrderCustomerPage({ params }: { params: CustomerPageParams }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const order = await getOrderById({ id });
 
@@ -31,7 +33,9 @@ export default async function OrderCustomerPage({ params }: { params: CustomerPa
 		notFound();
 	}
 
-	if (order.invoiceStatus === InvoiceStatus.GENERATED) {
+	// invoiceNumber et non invoiceStatus : VOIDED garde son numéro, l'identité
+	// client reste verrouillée après void (Art. 272-I / L102 B).
+	if (order.invoiceNumber !== null) {
 		notFound();
 	}
 

@@ -104,39 +104,3 @@ export function fillMissingDates(
 
 	return data;
 }
-
-/**
- * Formats data with human-readable French date labels
- * Pre-computes labels server-side to avoid N x new Date() on client
- * Supports daily, weekly, and monthly granularity
- */
-export function formatChartData(
-	data: RevenueDataPoint[],
-	granularity: ChartGranularity = "daily",
-): RevenueDataPoint[] {
-	return data.map((item) => ({
-		...item,
-		date: formatDateLabel(item.date, granularity),
-	}));
-}
-
-function formatDateLabel(dateStr: string, granularity: ChartGranularity): string {
-	switch (granularity) {
-		case "daily":
-			return format(new Date(dateStr), "dd MMM", { locale: fr });
-		case "weekly": {
-			// dateStr is "YYYY-WW", parse ISO week start
-			const [yearStr, weekStr] = dateStr.split("-");
-			const year = Number(yearStr);
-			const week = Number(weekStr);
-			// Get the Monday of that ISO week
-			const jan4 = new Date(Date.UTC(year, 0, 4));
-			const daysSinceMonday = (jan4.getUTCDay() + 6) % 7;
-			const isoWeek1Monday = new Date(jan4.getTime() - daysSinceMonday * 86400000);
-			const weekStart = new Date(isoWeek1Monday.getTime() + (week - 1) * 7 * 86400000);
-			return format(weekStart, "dd MMM", { locale: fr });
-		}
-		case "monthly":
-			return format(new Date(dateStr + "-01"), "MMM yyyy", { locale: fr });
-	}
-}

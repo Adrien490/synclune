@@ -15,6 +15,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const ProductTypeFormDialog = dynamic(() =>
 	import("@/modules/product-types/components/product-type-form-dialog").then(
@@ -51,6 +52,8 @@ export default async function AdminProductTypeDetailPage({
 }: {
 	params: ProductTypeDetailPageParams;
 }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const productType = await getProductTypeDetailBySlug({ slug, includeInactive: true });
 

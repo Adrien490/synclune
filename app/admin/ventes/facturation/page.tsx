@@ -11,6 +11,7 @@ import {
 import { PageHeader } from "@/shared/components/page-header";
 import { getInvoicingOverview } from "@/modules/invoices/data/get-invoicing-overview";
 import { InvoicingOverviewSection } from "@/modules/invoices/components/admin/invoicing-overview";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Facturation - Administration",
@@ -18,6 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default async function FacturationAdminPage() {
+	await assertAdminPage();
+
 	const overview = await getInvoicingOverview();
 	if (!overview) {
 		// isAdmin guard refusal — comportement minimal (en pratique la page admin

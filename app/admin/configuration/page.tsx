@@ -1,13 +1,16 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Store } from "lucide-react";
+import { ShieldAlert, Store } from "lucide-react";
 import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Configuration - Administration",
 	description: "Paramètres de la boutique",
 };
 
-export default function ConfigurationPage() {
+export default async function ConfigurationPage() {
+	await assertAdminPage();
+
 	return (
 		<SectionNavigation
 			title="Configuration"
@@ -19,6 +22,12 @@ export default function ConfigurationPage() {
 					description: "Fermeture temporaire, messages clients",
 					href: "/admin/configuration/boutique",
 					icon: <Store className="size-5" />,
+				},
+				{
+					title: "Sécurité",
+					description: "Sessions ouvertes, déconnexion de tous les appareils",
+					href: "/admin/configuration/securite",
+					icon: <ShieldAlert className="size-5" />,
 				},
 			]}
 		/>

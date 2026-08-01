@@ -1,13 +1,16 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Ticket } from "lucide-react";
 import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Marketing - Administration",
 	description: "Gérer les campagnes marketing et promotions",
 };
 
-export default function MarketingPage() {
+export default async function MarketingPage() {
+	await assertAdminPage();
+
 	return (
 		<SectionNavigation
 			title="Marketing"

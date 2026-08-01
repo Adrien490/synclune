@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditMaterialForm } from "@/modules/materials/components/admin/edit-material-form";
 import { getMaterialBySlug } from "@/modules/materials/data/get-material";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface EditMaterialPageProps {
 	params: Promise<{ slug: string }>;
@@ -17,6 +18,8 @@ export async function generateMetadata({ params }: EditMaterialPageProps): Promi
 }
 
 export default async function EditMaterialPage({ params }: EditMaterialPageProps) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const material = await getMaterialBySlug({ slug, includeInactive: true });
 

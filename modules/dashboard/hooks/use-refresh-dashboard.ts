@@ -8,7 +8,7 @@ interface UseRefreshDashboardOptions {
 	onSuccess?: () => void;
 }
 
-export const DASHBOARD_REFRESHED_EVENT = "dashboard:refreshed" as const;
+const DASHBOARD_REFRESHED_EVENT = "dashboard:refreshed" as const;
 
 export function useRefreshDashboard(options?: UseRefreshDashboardOptions) {
 	const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);

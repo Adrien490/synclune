@@ -37,6 +37,7 @@ import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-she
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export type ProductVariantsSearchParams = {
 	cursor?: string;
@@ -107,6 +108,8 @@ export default async function ProductVariantsPage({
 	params,
 	searchParams,
 }: ProductVariantsPageProps) {
+	await assertAdminPage();
+
 	const [{ slug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Parse and validate all search parameters safely

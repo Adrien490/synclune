@@ -69,14 +69,29 @@ describe("@regression orders-filters-fail-safe", () => {
 	});
 
 	it("les bornes de dates inversées sont remises dans l'ordre", () => {
+		// 30/06 et non 31/12 : la borne « Au » est étendue à la fin du jour choisi
+		// (P2 audit 2026-08-01), et 31/12 minuit UTC + 24h-1ms bascule sur l'année
+		// suivante en heure locale — l'invariant testé ici est l'ORDRE, pas la borne.
 		const result = parse({
-			filter_createdAfter: "2026-12-31",
+			filter_createdAfter: "2026-06-30",
 			filter_createdBefore: "2020-01-01",
 		});
 		expect(result.success).toBe(true);
 		if (result.success) {
 			expect(result.data.createdAfter!.getFullYear()).toBe(2020);
 			expect(result.data.createdBefore!.getFullYear()).toBe(2026);
+		}
+	});
+
+	// P2 (audit « Admin commandes » 2026-08-01) : la borne « Au » est un JOUR
+	// calendaire — `lte minuit` excluait toute la journée sélectionnée pendant que
+	// le badge l'affichait incluse. La borne retournée couvre le jour entier.
+	it("la borne « Au » inclut toute la journée sélectionnée", () => {
+		const result = parse({ filter_createdBefore: "2026-07-15" });
+		expect(result.success).toBe(true);
+		if (result.success) {
+			const dayStart = new Date("2026-07-15").getTime();
+			expect(result.data.createdBefore!.getTime()).toBe(dayStart + 24 * 60 * 60 * 1000 - 1);
 		}
 	});
 

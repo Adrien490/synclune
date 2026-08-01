@@ -6,13 +6,16 @@ import { getStoreSettings } from "@/modules/store-settings/data/get-store-settin
 import { StoreSettingsForm } from "@/modules/store-settings/components/admin/store-settings-form";
 import { StoreSettingsFormSkeleton } from "@/modules/store-settings/components/admin/store-settings-form-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Paramètres boutique - Administration",
 	description: "Gérer l'ouverture et la fermeture de la boutique",
 };
 
-export default function StoreSettingsPage() {
+export default async function StoreSettingsPage() {
+	await assertAdminPage();
+
 	return (
 		<>
 			<PageHeader

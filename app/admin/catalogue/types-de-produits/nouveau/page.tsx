@@ -1,13 +1,16 @@
 import { type Metadata } from "next";
 
 import { CreateProductTypeForm } from "@/modules/product-types/components/admin/create-product-type-form";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Nouveau type de produit - Administration",
 	description: "Créer un nouveau type de produit",
 };
 
-export default function CreateProductTypePage() {
+export default async function CreateProductTypePage() {
+	await assertAdminPage();
+
 	return (
 		<div className="space-y-4">
 			<h1 className="text-foreground sr-only text-xl font-semibold md:not-sr-only md:text-2xl">

@@ -2,11 +2,14 @@ import { getCollectionOptions } from "@/modules/collections/data/get-collection-
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { getProductTypeOptions } from "@/modules/product-types/data/get-product-type-options";
-import { getProductBySlug } from "@/modules/products/data/get-product";
+import type { Metadata } from "next";
+
+import { getProductForEdit } from "@/modules/products/data/get-product-for-edit";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
 import { PageHeader } from "@/shared/components/page-header";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DeleteGalleryMediaAlertDialog = dynamic(() =>
@@ -33,13 +36,22 @@ const CollectionFormDialog = dynamic(() =>
 	),
 );
 
+export const metadata: Metadata = {
+	title: "Modifier le produit - Administration",
+	description: "Modifier un produit du catalogue",
+};
+
 type EditProductPageParams = Promise<{ slug: string }>;
 
 export default async function EditProductPage({ params }: { params: EditProductPageParams }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 
-	// Récupérer le produit complet avec getProductBySlug (inclut les SKUs et images)
-	const product = await getProductBySlug({
+	// Variante édition : inclut aussi les SKUs INACTIFS — l'archivage les
+	// désactive tous, et le select public rendait ce formulaire vide et
+	// non-enregistrable pour tout produit archivé.
+	const product = await getProductForEdit({
 		slug,
 		includeDraft: true, // Inclure les DRAFT pour l'édition admin
 	});

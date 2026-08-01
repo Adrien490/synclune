@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditProductTypeForm } from "@/modules/product-types/components/admin/edit-product-type-form";
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface EditProductTypePageProps {
 	params: Promise<{ slug: string }>;
@@ -17,6 +18,8 @@ export async function generateMetadata({ params }: EditProductTypePageProps): Pr
 }
 
 export default async function EditProductTypePage({ params }: EditProductTypePageProps) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const productType = await getProductTypeBySlug({ slug, includeInactive: true });
 

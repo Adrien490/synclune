@@ -12,6 +12,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const SetFeaturedProductAlertDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then(
@@ -48,6 +49,8 @@ export async function generateMetadata({ params }: CollectionDetailPageProps): P
 }
 
 export default async function AdminCollectionDetailPage({ params }: CollectionDetailPageProps) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const collection = await getCollectionBySlug({ slug });
 

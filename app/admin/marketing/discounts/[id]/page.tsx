@@ -12,6 +12,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const DiscountsAdminDialogs = dynamic(() =>
 	import("../_components/discounts-admin-dialogs").then((mod) => mod.DiscountsAdminDialogs),
@@ -44,6 +45,8 @@ export default async function AdminDiscountDetailPage({
 }: {
 	params: DiscountDetailRouteParams;
 }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const discount = await getDiscountById({ id });
 

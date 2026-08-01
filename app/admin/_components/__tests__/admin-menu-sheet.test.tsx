@@ -225,14 +225,15 @@ describe("AdminMenuSheet", () => {
 		});
 
 		// `Configuration` et `Contenu` ont fusionné en `Boutique`, `Clients` a rejoint
-		// `Pilotage` : les 3 groupes mono-item ont disparu (cf. navigation-config).
-		it("renders navigation groups (shop-live mode)", () => {
+		// Trois groupes, aucun mono-item (cf. navigation-config). `Ventes` a fusionné
+		// dans `Pilotage` au retrait de l'espace client (2026-07-31) : la disparition de
+		// `/admin/clients` laissait `Pilotage` avec le seul « Tableau de bord ».
+		it("renders navigation groups", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 			expect(screen.getByText("Pilotage")).toBeInTheDocument();
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
 			expect(screen.getByText("Boutique")).toBeInTheDocument();
-			// Visible en mode boutique en ligne (SHOP_LIVE=true)
-			expect(screen.getByText("Ventes")).toBeInTheDocument();
+			expect(screen.queryByText("Ventes")).toBeNull();
 		});
 
 		it('sets aria-label="Navigation administration" on nav', () => {
@@ -760,7 +761,7 @@ describe("AdminMenuSheet", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 			const lists = screen.getAllByRole("list");
-			// 6 nav groups (SHOP_LIVE=true) + 1 actions card = 7 minimum
+			// 3 nav groups + 1 actions card
 			expect(lists.length).toBeGreaterThanOrEqual(2);
 		});
 

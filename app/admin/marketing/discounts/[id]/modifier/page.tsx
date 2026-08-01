@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { DiscountEditPage } from "@/modules/discounts/components/admin/discount-edit-page";
 import { getDiscountById } from "@/modules/discounts/data/get-discount";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 interface DiscountEditRouteProps {
 	params: Promise<{ id: string }>;
@@ -23,6 +24,8 @@ export async function generateMetadata({ params }: DiscountEditRouteProps): Prom
 }
 
 export default async function DiscountEditRoute({ params }: DiscountEditRouteProps) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const discount = await getDiscountById({ id });
 

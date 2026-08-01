@@ -1,6 +1,12 @@
+import {
+	FulfillmentStatus,
+	InvoiceStatus,
+	OrderStatus,
+	PaymentStatus,
+} from "@/app/generated/prisma/enums";
 import type { GetOrdersParams } from "@/modules/orders/types/order.types";
 import type { OrdersSearchParams } from "../page";
-import { getAllParams, getFirstParam } from "@/shared/utils/params";
+import { getAllParamsIn, getFirstParam } from "@/shared/utils/params";
 import { ORDER_TOTAL_FILTER_MAX_CENTS } from "@/modules/orders/constants/order.constants";
 
 type OrderFilters = NonNullable<GetOrdersParams["filters"]>;
@@ -60,23 +66,25 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 			// query-builder acceptent déjà `T | T[]`. `getFirstParam()` ne retenait que la
 			// première valeur → toutes les cases suivantes étaient silencieusement ignorées,
 			// et aucun lien profond ne pouvait exprimer « PAID ou PARTIALLY_REFUNDED ».
-			const filterValues = getAllParams(value);
-
-			if (filterValues) {
-				switch (filterKey) {
-					case "status":
-						status = filterValues as OrderFilters["status"];
-						break;
-					case "paymentStatus":
-						paymentStatus = filterValues as OrderFilters["paymentStatus"];
-						break;
-					case "fulfillmentStatus":
-						fulfillmentStatus = filterValues as OrderFilters["fulfillmentStatus"];
-						break;
-					case "invoiceStatus":
-						invoiceStatus = filterValues as OrderFilters["invoiceStatus"];
-						break;
-				}
+			//
+			// ⚠️ Ces 4 valeurs étaient castées (`filterValues as OrderFilters["status"]`)
+			// sans contrôle d'appartenance : `?filter_status=BOGUS` traversait TS puis
+			// faisait échouer `getOrdersSchema` — donc un throw hors `try/catch` et une
+			// error boundary. Même exigence que `parseAmountToCents`/`parseDate`
+			// ci-dessus : une valeur hors enum devient « pas de filtre », jamais un 500.
+			switch (filterKey) {
+				case "status":
+					status = getAllParamsIn(value, Object.values(OrderStatus));
+					break;
+				case "paymentStatus":
+					paymentStatus = getAllParamsIn(value, Object.values(PaymentStatus));
+					break;
+				case "fulfillmentStatus":
+					fulfillmentStatus = getAllParamsIn(value, Object.values(FulfillmentStatus));
+					break;
+				case "invoiceStatus":
+					invoiceStatus = getAllParamsIn(value, Object.values(InvoiceStatus));
+					break;
 			}
 
 			if (filterValue) {
@@ -125,6 +133,15 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	const [orderedMin, orderedMax] = sortedBounds<number>(totalMin, totalMax);
 	const [orderedAfter, orderedBefore] = sortedBounds<Date>(createdAfter, createdBefore);
 
+	// La borne « Au » est un JOUR choisi au calendrier (les deux surfaces écrivent
+	// minuit — ISO local pour la feuille, YYYY-MM-DD pour le tiroir) : `lte minuit`
+	// excluait toute la journée sélectionnée alors que le badge l'affichait incluse
+	// (audit 2026-08-01, P2). On étend au dernier instant du jour choisi.
+	const inclusiveBefore =
+		orderedBefore !== undefined
+			? new Date(orderedBefore.getTime() + 24 * 60 * 60 * 1000 - 1)
+			: undefined;
+
 	return {
 		status,
 		paymentStatus,
@@ -136,7 +153,7 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 		totalMin: orderedMin,
 		totalMax: orderedMax,
 		createdAfter: orderedAfter,
-		createdBefore: orderedBefore,
+		createdBefore: inclusiveBefore,
 		showDeleted,
 	};
 };

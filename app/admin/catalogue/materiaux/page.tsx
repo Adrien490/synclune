@@ -6,6 +6,7 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getMaterials, MATERIALS_SORT_LABELS } from "@/modules/materials/data/get-materials";
 import { getFirstParam } from "@/shared/utils/params";
+import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
 import { MaterialsDataTable } from "@/modules/materials/components/admin/materials-data-table";
 import { MaterialsDataTableSkeleton } from "@/modules/materials/components/admin/materials-data-table-skeleton";
@@ -31,6 +32,7 @@ import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Matériaux - Administration",
@@ -42,19 +44,20 @@ type MaterialsAdminPageProps = {
 };
 
 export default async function MaterialsAdminPage({ searchParams }: MaterialsAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) ?? "name-ascending") as
-		| "name-ascending"
-		| "name-descending"
-		| "skuCount-ascending"
-		| "skuCount-descending"
-		| "createdAt-ascending"
-		| "createdAt-descending";
-	const search = getFirstParam(params.search);
+	// Repli sur le tri par défaut plutôt qu'un cast aveugle : un `?sortBy=bogus`
+	// faisait échouer le safeParse de getMaterials → liste VIDE sans message.
+	const rawSortBy = getFirstParam(params.sortBy);
+	const sortBy = (
+		rawSortBy && rawSortBy in MATERIALS_SORT_LABELS ? rawSortBy : "name-ascending"
+	) as keyof typeof MATERIALS_SORT_LABELS;
+	const search = searchParamParsers.search(params.search);
 	const filterIsActive = getFirstParam(params.filter_isActive);
 	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
 	const filters = {

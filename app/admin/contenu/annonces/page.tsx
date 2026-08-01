@@ -8,6 +8,7 @@ import { getStoreSettings } from "@/modules/store-settings/data/get-store-settin
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Annonces - Administration",
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AnnouncementsAdminPage() {
+	await assertAdminPage();
+
 	return (
 		<>
 			<PageHeader

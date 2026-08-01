@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { UpdatePriceForm } from "@/modules/skus/components/admin/update-price-form";
 import { getSkuDetailById } from "@/modules/skus/data/get-sku";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type UpdatePricePageParams = Promise<{ slug: string; skuId: string }>;
 
@@ -12,6 +13,8 @@ export const metadata: Metadata = {
 };
 
 export default async function UpdatePricePage({ params }: { params: UpdatePricePageParams }) {
+	await assertAdminPage();
+
 	const { slug, skuId } = await params;
 	const sku = await getSkuDetailById(skuId);
 

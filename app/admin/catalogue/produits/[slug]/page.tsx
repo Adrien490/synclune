@@ -12,6 +12,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const ProductsAdminDialogs = dynamic(() =>
 	import("../_components/products-admin-dialogs").then((mod) => mod.ProductsAdminDialogs),
@@ -44,6 +45,8 @@ export default async function AdminProductDetailPage({
 }: {
 	params: ProductDetailPageParams;
 }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const product = await getProductBySlug({ slug, includeDraft: true });
 

@@ -17,6 +17,7 @@ import { CreateProductTypeButton } from "@/modules/product-types/components/admi
 import { ProductTypesBottomBar } from "@/modules/product-types/components/admin/product-types-bottom-bar";
 import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
+import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
 import { ProductTypesDataTable } from "@/modules/product-types/components/admin/product-types-data-table";
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
@@ -49,6 +50,7 @@ export type ParsedProductTypeFilters = {
 };
 import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Types de bijoux - Administration",
@@ -60,15 +62,21 @@ type ProductTypesAdminPageProps = {
 };
 
 export default async function ProductTypesAdminPage({ searchParams }: ProductTypesAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
 	// Extract params
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) ?? "label-ascending") as
-		"label-ascending" | "label-descending" | "products-ascending" | "products-descending";
-	const search = getFirstParam(params.search);
+	// Repli sur le tri par défaut plutôt qu'un cast aveugle : un `?sortBy=bogus`
+	// faisait échouer le safeParse de getProductTypes → liste VIDE sans message.
+	const rawSortBy = getFirstParam(params.sortBy);
+	const sortBy = (
+		rawSortBy && rawSortBy in SORT_LABELS ? rawSortBy : "label-ascending"
+	) as keyof typeof SORT_LABELS;
+	const search = searchParamParsers.search(params.search);
 	const filters = parseFilters(params);
 
 	// La promise de types de produits n'est PAS awaitée pour permettre le streaming

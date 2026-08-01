@@ -10,6 +10,7 @@ import { MarkAsReturnedAlertDialog } from "@/modules/orders/components/admin/mar
 import { MarkAsShippedDialog } from "@/modules/orders/components/admin/mark-as-shipped-dialog";
 import { OrderNotesDialog } from "@/modules/orders/components/admin/order-notes-dialog";
 import { RevertToProcessingDialog } from "@/modules/orders/components/admin/revert-to-processing-dialog";
+import { UndoReturnAlertDialog } from "@/modules/orders/components/admin/undo-return-alert-dialog";
 
 export function OrdersAdminDialogs() {
 	return (
@@ -22,6 +23,7 @@ export function OrdersAdminDialogs() {
 			<MarkAsProcessingAlertDialog />
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
+			<UndoReturnAlertDialog />
 			<MarkAsFullyRefundedAlertDialog />
 			<OrderNotesDialog />
 		</>

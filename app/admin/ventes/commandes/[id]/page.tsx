@@ -52,6 +52,11 @@ const MarkAsReturnedAlertDialog = dynamic(() =>
 		(mod) => mod.MarkAsReturnedAlertDialog,
 	),
 );
+const UndoReturnAlertDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/undo-return-alert-dialog").then(
+		(mod) => mod.UndoReturnAlertDialog,
+	),
+);
 const MarkAsFullyRefundedAlertDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/mark-as-fully-refunded-alert-dialog").then(
 		(mod) => mod.MarkAsFullyRefundedAlertDialog,
@@ -60,11 +65,6 @@ const MarkAsFullyRefundedAlertDialog = dynamic(() =>
 const OrderNotesDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/order-notes-dialog").then(
 		(mod) => mod.OrderNotesDialog,
-	),
-);
-const ResendEmailDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/resend-email-dialog").then(
-		(mod) => mod.ResendEmailDialog,
 	),
 );
 const EditCustomerInfoDialog = dynamic(() =>
@@ -90,6 +90,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type OrderDetailPageParams = Promise<{ id: string }>;
 
@@ -114,6 +115,8 @@ export async function generateMetadata({
 }
 
 export default async function OrderDetailPage({ params }: { params: OrderDetailPageParams }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const order = await getOrderById({ id });
 
@@ -152,9 +155,9 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 			<MarkAsProcessingAlertDialog />
 			<RevertToProcessingDialog />
 			<MarkAsReturnedAlertDialog />
+			<UndoReturnAlertDialog />
 			<MarkAsFullyRefundedAlertDialog />
 			<OrderNotesDialog />
-			<ResendEmailDialog />
 			<EditCustomerInfoDialog />
 			<EditShippingAddressDialog />
 			<EditBillingAddressDialog />

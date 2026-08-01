@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Loader2, RefreshCw, X } from "lucide-react";
+import { RefreshCw, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Sheet,
@@ -146,7 +147,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 						data-vaul-no-drag
 					>
 						{isPending ? (
-							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+							<Spinner presentational />
 						) : (
 							<RefreshCw className="size-4" aria-hidden="true" />
 						)}

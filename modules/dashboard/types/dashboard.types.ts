@@ -135,15 +135,6 @@ export type RevenueDataPoint = {
 	previousRevenue?: number;
 };
 
-export type GetRevenueChartReturn = {
-	data: RevenueDataPoint[];
-	periodLabel: string;
-	/** Bucket granularity — drives accurate sr-only copy ("quotidien"/"hebdomadaire"/"mensuel") */
-	granularity: "daily" | "weekly" | "monthly";
-	/** True when a comparison series was joined onto `data` (overlay line) */
-	hasComparison: boolean;
-};
-
 // ============================================================================
 // TYPES - PERIOD BOUNDARIES
 // ============================================================================
@@ -183,23 +174,6 @@ export type RecentOrderItem = {
 
 export type GetRecentOrdersReturn = {
 	orders: RecentOrderItem[];
-};
-
-// ============================================================================
-// TYPES - TOP PRODUCTS
-// ============================================================================
-
-export type TopProductItem = {
-	productId: string | null;
-	productSlug: string | null;
-	title: string;
-	imageUrl: string | null;
-	unitsSold: number;
-	revenue: number;
-};
-
-export type GetTopProductsReturn = {
-	products: TopProductItem[];
 };
 
 // ============================================================================

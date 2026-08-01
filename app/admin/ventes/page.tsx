@@ -1,13 +1,16 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Landmark, RefreshCcw, ShoppingCart } from "lucide-react";
 import type { Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Ventes - Administration",
 	description: "Gérer les ventes, remboursements et facturation",
 };
 
-export default function VentesPage() {
+export default async function VentesPage() {
+	await assertAdminPage();
+
 	return (
 		<SectionNavigation
 			title="Ventes"

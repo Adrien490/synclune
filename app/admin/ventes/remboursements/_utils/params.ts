@@ -4,12 +4,19 @@ import {
 	GET_REFUNDS_MAX_RESULTS_PER_PAGE,
 	SORT_OPTIONS,
 } from "@/modules/refunds/constants/refund.constants";
+import { RefundReason, RefundStatus } from "@/app/generated/prisma/enums";
 import { searchParamParsers } from "@/shared/utils/parse-search-params";
-import { getFirstParam } from "@/shared/utils/params";
+import { getFirstParam, getFirstParamIn } from "@/shared/utils/params";
 
 import type { RefundsSearchParams } from "../page";
 
 const REFUND_SORT_FIELDS = Object.values(SORT_OPTIONS);
+
+/** Parse une date d'URL en rejetant les `Invalid Date` (`new Date("garbage")`). */
+const parseDate = (raw: string): Date | undefined => {
+	const date = new Date(raw);
+	return Number.isNaN(date.getTime()) ? undefined : date;
+};
 
 /**
  * Parse and validate refund search parameters from URL
@@ -45,17 +52,22 @@ export const parseRefundFilters = (params: RefundsSearchParams): RefundFilters =
 
 			if (filterValue) {
 				switch (filterKey) {
+					// Appartenance à l'enum contrôlée : un cast nu laissait une valeur
+					// d'URL arbitraire atteindre `getRefundsSchema` (cf. le parseur des
+					// commandes, où le même motif produisait un 500).
 					case "status":
-						status = filterValue as RefundFilters["status"];
+						status = getFirstParamIn(filterValue, Object.values(RefundStatus));
 						break;
 					case "reason":
-						reason = filterValue as RefundFilters["reason"];
+						reason = getFirstParamIn(filterValue, Object.values(RefundReason));
 						break;
+					// `new Date("garbage")` produit un `Invalid Date` — accepté par le
+					// type `Date`, rejeté par le schéma en aval.
 					case "createdAfter":
-						createdAfter = new Date(filterValue);
+						createdAfter = parseDate(filterValue);
 						break;
 					case "createdBefore":
-						createdBefore = new Date(filterValue);
+						createdBefore = parseDate(filterValue);
 						break;
 				}
 			}

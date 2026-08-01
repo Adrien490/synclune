@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition, Suspense, type ComponentProps, type ReactNode } from "react";
 import {
@@ -120,9 +120,9 @@ function UrlSelectControlInner({
 					</TabsList>
 				</Tabs>
 				{isPending && (
-					<Loader2
-						className="text-muted-foreground pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 animate-spin motion-reduce:hidden"
-						aria-hidden="true"
+					<Spinner
+						presentational
+						className="text-muted-foreground pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 motion-reduce:hidden"
 					/>
 				)}
 			</div>
@@ -140,9 +140,10 @@ function UrlSelectControlInner({
 				<span className="flex items-center gap-2">
 					{isPending ? (
 						<>
-							<Loader2
-								className="text-muted-foreground size-3.5 shrink-0 animate-spin motion-reduce:hidden"
-								aria-hidden="true"
+							<Spinner
+								presentational
+								size="sm"
+								className="text-muted-foreground shrink-0 motion-reduce:hidden"
 							/>
 							{/* Under reduced motion the spinner is hidden — keep the icon
 							    so the leading slot stays stable (no layout shift). */}

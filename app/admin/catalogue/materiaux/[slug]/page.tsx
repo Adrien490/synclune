@@ -15,6 +15,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const MaterialFormDialog = dynamic(() =>
 	import("@/modules/materials/components/material-form-dialog").then(
@@ -51,6 +52,8 @@ export default async function AdminMaterialDetailPage({
 }: {
 	params: MaterialDetailPageParams;
 }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const material = await getMaterialDetailBySlug(slug);
 

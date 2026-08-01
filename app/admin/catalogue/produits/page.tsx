@@ -64,6 +64,7 @@ export type ProductsSearchParams = {
 	search?: string;
 } & ProductFiltersSearchParams;
 import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Produits - Administration",
@@ -74,7 +75,9 @@ type ProductsAdminPageProps = {
 	searchParams: Promise<ProductsSearchParams>;
 };
 
-export default function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
+export default async function ProductsAdminPage({ searchParams }: ProductsAdminPageProps) {
+	await assertAdminPage();
+
 	return (
 		<>
 			<PageHeader

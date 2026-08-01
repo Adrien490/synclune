@@ -46,7 +46,7 @@ vi.mock("lucide-react", () => ({
 	ChevronDown: () => <span data-testid="icon-chevron" />,
 	RefreshCw: () => <span data-testid="icon-refresh" />,
 	Download: () => <span data-testid="icon-download" />,
-	LoaderCircle: () => <span data-testid="icon-loader" />,
+	Loader2Icon: () => <span data-testid="icon-loader" />,
 }));
 
 const mockSearchParamsGet = vi.hoisted(() => vi.fn((_key: string): string | null => null));

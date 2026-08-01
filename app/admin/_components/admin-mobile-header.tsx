@@ -18,8 +18,6 @@ const DETAIL_ROUTE_PATTERNS = [
 	/^\/admin\/catalogue\/produits\/[^/]+\/variantes$/,
 	// Catalogue — SKU variantes (detail + edit + create + inline forms stock/prix)
 	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/(modifier|stock|prix))?)$/,
-	// Clients
-	/^\/admin\/clients\/[^/]+$/,
 	// Marketing — discounts (edit + create)
 	/^\/admin\/marketing\/discounts\/(nouveau|[^/]+\/modifier)$/,
 	// Ventes — commandes (detail + inline forms notes/suivi/adresses/client)

@@ -1,6 +1,7 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Gem, Layers, Package, Palette, Tag } from "lucide-react";
 import { type Metadata } from "next";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Catalogue - Administration",
@@ -8,6 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CatalogPage() {
+	await assertAdminPage();
+
 	return (
 		<>
 			<SectionNavigation

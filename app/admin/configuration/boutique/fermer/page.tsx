@@ -12,6 +12,7 @@ import {
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
 import { PageHeader } from "@/shared/components/page-header";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Fermer la boutique - Administration",
@@ -19,6 +20,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CloseStorePage() {
+	await assertAdminPage();
+
 	const settings = await getStoreSettings();
 
 	if (settings?.isClosed) {

@@ -35,7 +35,6 @@ const ROOT = join(import.meta.dirname, "../../../..");
 const DETAIL_BODY_SURFACES = [
 	"modules/products/components/admin/product-detail/product-detail-header.tsx",
 	"modules/orders/components/admin/order-detail/order-header.tsx",
-	"modules/users/components/admin/user-detail-header.tsx",
 	"modules/refunds/components/admin/refund-detail-header.tsx",
 	"modules/refunds/components/admin/create-refund-form.tsx",
 	"modules/discounts/components/admin/discount-detail/discount-detail-header.tsx",

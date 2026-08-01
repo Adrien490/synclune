@@ -15,6 +15,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
@@ -45,6 +46,8 @@ export async function generateMetadata({
 }
 
 export default async function AdminColorDetailPage({ params }: { params: ColorDetailPageParams }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 	const color = await getColorDetailBySlug(slug);
 

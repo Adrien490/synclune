@@ -6,6 +6,7 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getColors, SORT_LABELS } from "@/modules/colors/data/get-colors";
 import { getFirstParam } from "@/shared/utils/params";
+import { searchParamParsers } from "@/shared/utils/parse-search-params";
 import { Suspense } from "react";
 import { ColorsDataTable } from "@/modules/colors/components/admin/colors-data-table";
 import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
@@ -29,6 +30,7 @@ import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
 import { ADMIN_LIST_GROUP_CLASS } from "@/shared/components/admin-list-pending.styles";
 import { cn } from "@/shared/utils/cn";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Couleurs - Administration",
@@ -40,14 +42,20 @@ type ColorsAdminPageProps = {
 };
 
 export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageProps) {
+	await assertAdminPage();
+
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
 	const perPage = Number(getFirstParam(params.perPage)) || DEFAULT_PER_PAGE;
-	const sortBy = (getFirstParam(params.sortBy) ?? "name-ascending") as
-		"name-ascending" | "name-descending" | "skuCount-ascending" | "skuCount-descending";
-	const search = getFirstParam(params.search);
+	// Repli sur le tri par défaut plutôt qu'un cast aveugle : un `?sortBy=bogus`
+	// faisait échouer le safeParse de getColors → liste VIDE sans message.
+	const rawSortBy = getFirstParam(params.sortBy);
+	const sortBy = (
+		rawSortBy && rawSortBy in SORT_LABELS ? rawSortBy : "name-ascending"
+	) as keyof typeof SORT_LABELS;
+	const search = searchParamParsers.search(params.search);
 
 	// Parse filters from search params
 	const filterIsActive = getFirstParam(params.filter_isActive);

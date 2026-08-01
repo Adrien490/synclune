@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { getColorOptions } from "@/modules/colors/data/get-color-options";
 import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
@@ -14,6 +16,12 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
+
+export const metadata: Metadata = {
+	title: "Nouvelle variante - Administration",
+	description: "Créer une nouvelle variante de produit",
+};
 
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
@@ -31,6 +39,8 @@ export default async function NewProductVariantPage({
 }: {
 	params: NewProductVariantPageParams;
 }) {
+	await assertAdminPage();
+
 	const { slug } = await params;
 
 	// Récupérer le produit

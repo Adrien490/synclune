@@ -13,6 +13,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const SkusAdminDialogs = dynamic(() =>
 	import("../_components/skus-admin-dialogs").then((mod) => mod.SkusAdminDialogs),
@@ -39,6 +40,8 @@ export async function generateMetadata({
 }
 
 export default async function AdminSkuDetailPage({ params }: { params: SkuDetailPageParams }) {
+	await assertAdminPage();
+
 	const { slug, skuId } = await params;
 
 	const [product, sku] = await Promise.all([

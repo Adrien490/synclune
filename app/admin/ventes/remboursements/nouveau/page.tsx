@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { CreateRefundForm } from "@/modules/refunds/components/admin/create-refund-form";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 export const metadata: Metadata = {
 	title: "Nouveau remboursement - Administration",
@@ -15,6 +16,8 @@ type NewRefundPageProps = {
 };
 
 export default async function NewRefundPage({ searchParams }: NewRefundPageProps) {
+	await assertAdminPage();
+
 	const { orderId } = await searchParams;
 
 	// Rediriger si pas d'orderId

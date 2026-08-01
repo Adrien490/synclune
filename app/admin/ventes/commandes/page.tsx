@@ -25,6 +25,7 @@ import { parseFilters } from "./_utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 import { ResultCountLiveRegion } from "@/shared/components/result-count-live-region";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 const OrdersBottomBar = dynamic(() =>
 	import("@/modules/orders/components/admin/orders-bottom-bar").then((mod) => mod.OrdersBottomBar),
@@ -67,7 +68,7 @@ type OrdersAdminPageProps = {
 };
 
 export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageProps) {
-	// Force dynamic rendering to enable use cache: remote in functions
+	await assertAdminPage();
 
 	const params = await searchParams;
 

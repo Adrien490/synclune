@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { OrderNotesPanel } from "@/modules/orders/components/admin/order-notes-panel";
 import { getOrderById } from "@/modules/orders/data/get-order-by-id";
+import { assertAdminPage } from "@/modules/auth/lib/assert-admin-page";
 
 type OrderNotesPageParams = Promise<{ id: string }>;
 
@@ -23,6 +24,8 @@ export async function generateMetadata({
 }
 
 export default async function OrderNotesPage({ params }: { params: OrderNotesPageParams }) {
+	await assertAdminPage();
+
 	const { id } = await params;
 	const order = await getOrderById({ id });
 

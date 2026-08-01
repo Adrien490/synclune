@@ -5,6 +5,7 @@ import { CancelRefundAlertDialog } from "@/modules/refunds/components/admin/canc
 import { ProcessRefundAlertDialog } from "@/modules/refunds/components/admin/process-refund-alert-dialog";
 import { RefundOrderPickerDialog } from "@/modules/refunds/components/admin/refund-order-picker-dialog";
 import { RejectRefundAlertDialog } from "@/modules/refunds/components/admin/reject-refund-alert-dialog";
+import { RetryRefundAlertDialog } from "@/modules/refunds/components/admin/retry-refund-alert-dialog";
 
 export function RefundsAdminDialogs() {
 	return (
@@ -13,6 +14,7 @@ export function RefundsAdminDialogs() {
 			<ProcessRefundAlertDialog />
 			<RejectRefundAlertDialog />
 			<CancelRefundAlertDialog />
+			<RetryRefundAlertDialog />
 			<RefundOrderPickerDialog />
 		</>
 	);
