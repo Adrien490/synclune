@@ -78,13 +78,6 @@ ALTER TABLE "Discount" ADD CONSTRAINT "Discount_usageCount_within_limit" CHECK (
 ALTER TABLE "Discount" DROP CONSTRAINT IF EXISTS "Discount_value_positive";
 ALTER TABLE "Discount" ADD CONSTRAINT "Discount_value_positive" CHECK ("value" > 0);
 
--- Dispute
-ALTER TABLE "Dispute" DROP CONSTRAINT IF EXISTS "Dispute_amount_positive";
-ALTER TABLE "Dispute" ADD CONSTRAINT "Dispute_amount_positive" CHECK ("amount" > 0);
-ALTER TABLE "Dispute" DROP CONSTRAINT IF EXISTS "Dispute_currency_eur_check";
-ALTER TABLE "Dispute" ADD CONSTRAINT "Dispute_currency_eur_check" CHECK (currency = 'EUR');
-ALTER TABLE "Dispute" DROP CONSTRAINT IF EXISTS "Dispute_fee_non_negative";
-ALTER TABLE "Dispute" ADD CONSTRAINT "Dispute_fee_non_negative" CHECK ("fee" >= 0);
 
 -- Order
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_creditNoteNumber_format_check";
@@ -107,6 +100,15 @@ ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_invoiceReconcileAttempts_ch
 ALTER TABLE "Order" ADD CONSTRAINT "Order_invoiceReconcileAttempts_check" CHECK ("invoiceReconcileAttempts" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_overbilledAmountCents_positive_check";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_overbilledAmountCents_positive_check" CHECK ("overbilledAmountCents" IS NULL OR "overbilledAmountCents" > 0);
+-- Invariant #8 (NF 525) : aucune commande payée sans preuve Stripe.
+-- ⚠️ La branche `piiPurgedAt` est structurelle : `ORDER_PII_SCRUB` nulle
+-- `stripePaymentIntentId` sur des lignes restées PAID (purge 10 ans). Elle est
+-- sûre parce que scrub et marqueur partent dans le MÊME updateMany.
+-- Cf. prisma/migrations/20260731120000_order_paid_requires_stripe_proof/.
+ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_paid_requires_paidAt";
+ALTER TABLE "Order" ADD CONSTRAINT "Order_paid_requires_paidAt" CHECK ("paymentStatus" <> 'PAID' OR "paidAt" IS NOT NULL);
+ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_paid_requires_stripe_proof";
+ALTER TABLE "Order" ADD CONSTRAINT "Order_paid_requires_stripe_proof" CHECK ("paymentStatus" <> 'PAID' OR "stripePaymentIntentId" IS NOT NULL OR "piiPurgedAt" IS NOT NULL);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_shippingCost_non_negative";
 ALTER TABLE "Order" ADD CONSTRAINT "Order_shippingCost_non_negative" CHECK ("shippingCost" >= 0);
 ALTER TABLE "Order" DROP CONSTRAINT IF EXISTS "Order_subtotal_non_negative";
@@ -195,8 +197,6 @@ ALTER TABLE "Wishlist" ADD CONSTRAINT "Wishlist_owner_required" CHECK ("userId" 
 
 
 -- ## Index partiels / expression / NULLS NOT DISTINCT
-DROP INDEX IF EXISTS "Address_userId_isDefault_unique";
-CREATE UNIQUE INDEX "Address_userId_isDefault_unique" ON "Address"("userId") WHERE "isDefault" = true;
 DROP INDEX IF EXISTS "Order_customerEmail_unaccent_trgm_idx";
 CREATE INDEX "Order_customerEmail_unaccent_trgm_idx" ON "Order" USING gin (immutable_unaccent("customerEmail") gin_trgm_ops);
 DROP INDEX IF EXISTS "Order_customerName_unaccent_trgm_idx";

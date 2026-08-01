@@ -45,20 +45,18 @@ model User {
   // === STATUT DE COMPTE (RGPD) ===
   accountStatus AccountStatus @default(ACTIVE)
 
-  // === CONSENTEMENT RGPD ===
-  termsAcceptedAt   DateTime? // Date d'acceptation CGV + politique de confidentialite
-  termsVersion      String?   @db.VarChar(20) // Version des CGV/politique acceptee (SSOT shared/constants/legal-versions.ts)
-  marketingOptOutAt DateTime? // Opposition marketing (Art. 21 RGPD) — bloque back-in-stock
-
-  // === ANONYMISATION RGPD ===
-  anonymizedAt        DateTime? // Date d'anonymisation effective
-  deletionRequestedAt DateTime? // Demande de suppression enregistree
+  // Plus de colonnes de consentement ni d'anonymisation (retrait de l'espace
+  // client 2026-07-31, migration 20260731100000) :
+  //   termsAcceptedAt / termsVersion  — posés à l'inscription, disparue
+  //   marketingOptOutAt               — orphelin depuis le retrait du back-in-stock
+  //   anonymizedAt / deletionRequestedAt — pilotaient le cron process-account-deletions
+  // La rétention légale ne dépendait pas d'elles : elle porte sur la commande
+  // (`Order.piiPurgedAt`, purge à `paidAt + 10 ans` par `hard-delete-retention`).
 
   sessions       Session[]
   accounts       Account[]
   orders         Order[]
   cart           Cart?
-  addresses      Address[]
   wishlist       Wishlist?
   discountUsages DiscountUsage[]
 
@@ -76,11 +74,13 @@ model User {
   //     doublon mais le garde de compte révoqué de `/sign-in/email` (auth.ts), qui
   //     minuscule l'entrée puis compare la colonne en exact — une ligne en casse
   //     mixte le faisait échouer EN SILENCE (compte suspendu qui se reconnecte).
-  //     Les trois chemins d'écriture (email/mdp, Google, changeEmail) sont normalisés
-  //     par `databaseHooks.user.{create,update}.before` ; ces deux gardes en font un
-  //     invariant de base plutôt qu'une discipline d'appelant.
+  //     Les trois chemins d'écriture d'origine (email/mdp, Google, changeEmail) ont
+  //     tous disparu au retrait de l'espace client — les hooks
+  //     `databaseHooks.user.{create,update}.before` restent néanmoins en place, et
+  //     ces deux gardes avec : ils font de la normalisation un invariant de BASE
+  //     plutôt qu'une discipline d'appelant, y compris pour un compte créé par le
+  //     seed ou en SQL manuel.
 
-  @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
   @@index([role, deletedAt]) // admin count guard + listing role filter
   @@index([deletedAt, suspendedAt]) // admin listing soft-delete + suspension filter
 }
@@ -129,35 +129,6 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
-}
-
-model Address {
-  id     String @id @default(cuid(2))
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  firstName  String  @db.VarChar(50)
-  lastName   String  @db.VarChar(50)
-  address1   String  @db.VarChar(255)
-  address2   String? @db.VarChar(255)
-  postalCode String  @db.VarChar(10)
-  city       String  @db.VarChar(100)
-  country    String  @default("FR") @db.VarChar(2)
-  phone      String  @db.VarChar(20)
-
-  isDefault Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  // Note: Contrainte unique partielle ajoutee via migration SQL brute
-  // pour garantir qu'un seul enregistrement a isDefault: true par userId
-
-  // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
-  //   Address_userId_isDefault_unique  UNIQUE ("userId") WHERE "isDefault" = true
-  //     Une seule adresse par defaut par client (index unique PARTIEL — non
-  //     exprimable en Prisma).
-
-  @@index([userId, isDefault]) // Couvre aussi userId seul
 }
 
 // ============================================================================
@@ -633,6 +604,9 @@ model Wishlist {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Purge RGPD des wishlists invitees (cleanup-wishlists.service.ts) :
+  // `updatedAt` = derniere interaction, seuil 30j (cookie glissant) + 7j de grace
+  @@index([updatedAt])
   // Gardes DB (SQL brut, SSOT `prisma/sql/raw-guards.sql`) :
   //   Wishlist_owner_required  CHECK ("userId" IS NOT NULL OR "sessionId" IS NOT NULL)
   //     Symetrie Cart : compte OU session invite, jamais orpheline.
@@ -643,12 +617,12 @@ model WishlistItem {
   wishlistId String
   wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
-  // SetNull permet l'archivage produit sans bloquer les wishlists existantes
+  // SetNull ne vaut que pour un hard delete produit (hard-delete-retention) —
+  // le chemin nominal (deleteProduct, soft delete) supprime les items AVANT.
+  // Un item orphelin (productId NULL) est invisible en lecture (filtre de
+  // relation dans les 3 fetchers) et part avec sa wishlist a la purge.
   productId String?
   product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-
-  // Back-in-stock notification
-  backInStockNotifiedAt DateTime? // Date d'envoi de la notification retour en stock
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -656,8 +630,7 @@ model WishlistItem {
   // Un produit ne peut etre ajoute qu'une seule fois par wishlist
   // Note: Contrainte unique sur champ nullable - validation metier cote applicatif
   @@unique([wishlistId, productId])
-  // [productId] seul couvert en prefixe par l'index composite ci-dessous
-  @@index([productId, backInStockNotifiedAt]) // For back-in-stock notification queries
+  @@index([productId]) // Lookup FK reverse (delete-product, cascades)
 }
 
 // ============================================================================
@@ -936,7 +909,6 @@ model Order {
   refunds        Refund[]
   notes          OrderNote[]
   history        OrderHistory[] // Audit trail (conformite legale)
-  disputes       Dispute[]
 
   // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
   billingSameAsShipping Boolean @default(true)
@@ -1017,6 +989,17 @@ model Order {
   //     ⚠️ L'invariant monétaire le plus fort du schéma : la base REFUSE une
   //     commande dont le total ne dérive pas de ses composantes. Toute évolution
   //     de la formule de prix (frais, taxes, arrondis) doit migrer ce CHECK.
+  //   Order_paid_requires_paidAt            CHECK ("paymentStatus" <> 'PAID' OR "paidAt" IS NOT NULL)
+  //   Order_paid_requires_stripe_proof
+  //     CHECK (statut <> PAID, OU stripePaymentIntentId présent, OU ligne purgée)
+  //     Filet DB de l'invariant #8 « pas de vente manuelle » (NF 525) : une
+  //     commande PAID sans PaymentIntent produirait une facture fiscale sans
+  //     encaissement (Art. 286 / 289-I CGI). Couvre le vecteur que le scan
+  //     statique ne voit pas — SQL manuel, script bugué.
+  //     ⚠️ La branche `piiPurgedAt` n'est pas une commodité : `ORDER_PII_SCRUB`
+  //     nulle `stripePaymentIntentId` sur des lignes restées PAID à la purge
+  //     10 ans. Elle tient parce que scrub et marqueur partent dans le MÊME
+  //     updateMany — les séparer casserait ici, et devrait.
   //   Order_invoiceDataHash_format_check    CHECK ("invoiceDataHash" ~ '^[a-f0-9]{64}$')
   //   Order_invoiceDataSnapshot_hash_coherence_check
   //     CHECK (snapshot et hash tous deux NULL, ou tous deux NON NULL)
@@ -1319,65 +1302,6 @@ model RefundItem {
 
   @@index([refundId])
   @@index([orderItemId])
-}
-
-// ============================================================================
-// LITIGES STRIPE (CHARGEBACKS)
-// ============================================================================
-
-enum DisputeStatus {
-  NEEDS_RESPONSE // Requires evidence submission
-  UNDER_REVIEW // Evidence submitted, Stripe reviewing
-  WON // Resolved in merchant's favor
-  LOST // Resolved in customer's favor
-  CHARGE_REFUNDED // Charge was refunded before dispute resolved
-}
-
-enum DisputeReason {
-  DUPLICATE
-  FRAUDULENT
-  SUBSCRIPTION_CANCELED
-  PRODUCT_UNACCEPTABLE
-  PRODUCT_NOT_RECEIVED
-  UNRECOGNIZED
-  CREDIT_NOT_PROCESSED
-  GENERAL
-}
-
-/// Litige Stripe (chargeback) associe a une commande
-/// Permet de tracker les disputes de maniere structuree au lieu de notes texte libres
-model Dispute {
-  id              String @id @default(cuid(2))
-  stripeDisputeId String @unique // dp_xxx
-
-  // Relation avec la commande (Restrict pour protection comptable)
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-
-  // Montants
-  amount   Int // Montant conteste en centimes
-  fee      Int    @default(0) // Frais de litige Stripe (~1500 = 15 EUR)
-  currency String @default("EUR") @db.VarChar(3)
-
-  // Raison et statut
-  reason DisputeReason
-  status DisputeStatus @default(NEEDS_RESPONSE)
-
-  // Deadline Stripe pour soumettre les preuves
-  dueBy DateTime?
-
-  // Resolution
-  resolvedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // CHECK constraints (DB, SQL brut — non exprimables en Prisma) :
-  //   Dispute_amount_positive     CHECK (amount > 0)
-  //   Dispute_fee_non_negative    CHECK (fee >= 0)
-  //   Dispute_currency_eur_check  CHECK (currency = 'EUR')
-
-  @@index([orderId])
 }
 
 // ============================================================================

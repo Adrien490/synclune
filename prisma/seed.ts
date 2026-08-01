@@ -188,7 +188,6 @@ async function cleanup(): Promise<void> {
 	await prisma.webhookEvent.deleteMany();
 	await prisma.discount.deleteMany();
 
-	await prisma.address.deleteMany();
 	await prisma.session.deleteMany();
 	await prisma.account.deleteMany();
 	await prisma.verification.deleteMany();
@@ -1612,7 +1611,6 @@ async function main(): Promise<void> {
 				name: fullName,
 				email: `${emailSlug}${index}@synclune.fr`,
 				emailVerified: isVerified,
-				termsAcceptedAt: isVerified && sampleBoolean(0.7) ? faker.date.past({ years: 0.5 }) : null,
 			} satisfies Prisma.UserCreateManyInput;
 		}),
 	];
@@ -1952,65 +1950,6 @@ async function main(): Promise<void> {
 
 	await prisma.session.createMany({ data: sessionsData });
 	console.log(`✅ ${sessionsData.length} sessions créées`);
-
-	// ============================================
-	// ADRESSES UTILISATEURS (batch)
-	// ============================================
-	const usersWithOrders = await prisma.user.findMany({
-		where: { orders: { some: {} } },
-		select: { id: true, name: true },
-		take: 15,
-	});
-
-	const addressesData: Prisma.AddressCreateManyInput[] = [];
-
-	for (const user of usersWithOrders) {
-		const firstName = user.name?.split(" ")[0] ?? faker.person.firstName();
-		const lastName = user.name?.split(" ").slice(1).join(" ") ?? faker.person.lastName();
-
-		// Default address (M9: mixed FR/EU countries)
-		const defaultCountry = faker.helpers.weightedArrayElement(
-			EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
-		);
-		addressesData.push({
-			userId: user.id,
-			firstName,
-			lastName,
-			address1: faker.location.streetAddress(),
-			address2: sampleBoolean(0.3) ? faker.location.secondaryAddress() : null,
-			postalCode: faker.location.zipCode(defaultCountry.zipFormat),
-			city: faker.location.city(),
-			country: defaultCountry.code,
-			phone: faker.helpers.replaceSymbols(
-				`${faker.helpers.arrayElement(defaultCountry.phonePrefixes)} ## ## ## ##`,
-			),
-			isDefault: true,
-		});
-
-		// 40% have a second address
-		if (sampleBoolean(0.4)) {
-			const secondCountry = faker.helpers.weightedArrayElement(
-				EU_COUNTRIES.map((c) => ({ weight: c.weight, value: c })),
-			);
-			addressesData.push({
-				userId: user.id,
-				firstName,
-				lastName,
-				address1: faker.location.streetAddress(),
-				address2: sampleBoolean(0.5) ? "Bureau " + faker.number.int({ min: 100, max: 999 }) : null,
-				postalCode: faker.location.zipCode(secondCountry.zipFormat),
-				city: faker.location.city(),
-				country: secondCountry.code,
-				phone: faker.helpers.replaceSymbols(
-					`${faker.helpers.arrayElement(secondCountry.phonePrefixes)} ## ## ## ##`,
-				),
-				isDefault: false,
-			});
-		}
-	}
-
-	await prisma.address.createMany({ data: addressesData });
-	console.log(`✅ ${addressesData.length} adresses créées`);
 
 	// ============================================
 	// CODES PROMO (DISCOUNT)
@@ -2908,21 +2847,20 @@ async function main(): Promise<void> {
 			data: { suspendedAt: faker.date.recent({ days: 7 }) },
 		});
 
-		// Pending deletion user
+		// Pending deletion user — `deletionRequestedAt` a été droppée avec le cron
+		// `process-account-deletions` (migration 20260731100000) ; le statut seul reste
+		// posable et suffit à couvrir la dégradation de session (cf. `customSession`).
 		await prisma.user.update({
 			where: { id: edgeCaseUsers[1]!.id },
-			data: {
-				accountStatus: AccountStatus.PENDING_DELETION,
-				deletionRequestedAt: faker.date.recent({ days: 14 }),
-			},
+			data: { accountStatus: AccountStatus.PENDING_DELETION },
 		});
 
-		// Anonymized user
+		// Anonymized user — idem pour `anonymizedAt`. Le scrub du nom et de l'email
+		// reste représenté, c'est lui que les gardes de connexion observent.
 		await prisma.user.update({
 			where: { id: edgeCaseUsers[2]!.id },
 			data: {
 				accountStatus: AccountStatus.ANONYMIZED,
-				anonymizedAt: faker.date.recent({ days: 30 }),
 				name: "Utilisateur anonymisé",
 				email: `anonymized-${faker.string.alphanumeric(8)}@anon.synclune.fr`,
 			},
@@ -2956,25 +2894,6 @@ async function main(): Promise<void> {
 	];
 	await prisma.discount.createMany({ data: edgeCaseDiscounts });
 	console.log(`✅ ${edgeCaseDiscounts.length} codes promo edge-case créés`);
-
-	// ============================================
-	// WISHLIST backInStockNotifiedAt (edge case)
-	// ============================================
-	const wishlistItemsForNotification = await prisma.wishlistItem.findMany({
-		select: { id: true },
-		take: 2,
-	});
-	for (const item of wishlistItemsForNotification) {
-		await prisma.wishlistItem.update({
-			where: { id: item.id },
-			data: { backInStockNotifiedAt: faker.date.recent({ days: 7 }) },
-		});
-	}
-	if (wishlistItemsForNotification.length > 0) {
-		console.log(
-			`✅ ${wishlistItemsForNotification.length} wishlist items avec backInStockNotifiedAt`,
-		);
-	}
 
 	// ============================================
 	// SOFT-DELETED RECORDS (for testing filters)
