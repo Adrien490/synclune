@@ -62,9 +62,18 @@ export function buildExportWhereClause(input: ExportInvoicesInput): Prisma.Order
 			lt: parisWallTimeToUtc(input.year, input.month, 1),
 		};
 	} else if (input.periodType === "custom" && input.dateFrom && input.dateTo) {
+		// Même règle que year/month, oubliée ici jusqu'à l'audit 2026-08-01 (P1-F) :
+		// l'UI envoie des <input type="date"> (YYYY-MM-DD), que z.coerce.date() lit
+		// en minuit UTC. `lte: dateTo` excluait alors TOUTE la journée du dernier
+		// jour (sauf 00h-01h Paris), et `gte: dateFrom` excluait 00h-01h Paris du
+		// premier — livre de recettes troué (Art. 50-0 CGI). On reconstruit les
+		// bornes en jour civil PARIS : [début du jour from, début du jour to+1[.
+		// getUTC* est exact ici : la valeur coercée porte le jour calendaire choisi.
+		const from = input.dateFrom;
+		const to = input.dateTo;
 		where.paidAt = {
-			gte: input.dateFrom,
-			lte: input.dateTo,
+			gte: parisWallTimeToUtc(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()),
+			lt: parisWallTimeToUtc(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate() + 1),
 		};
 	}
 
@@ -166,7 +175,10 @@ function escapeCsv(value: string): string {
 	if (formulaPrefixes.some((prefix) => safe.startsWith(prefix))) {
 		safe = `'${safe}`;
 	}
-	if (safe.includes(";") || safe.includes('"') || safe.includes("\n")) {
+	// `\r` guillemété au même titre que `\n` : un CR isolé en milieu de chaîne
+	// casse la ligne dans certains tableurs (il n'était couvert que comme PRÉFIXE
+	// de formule ci-dessus — audit 2026-08-01, P3).
+	if (safe.includes(";") || safe.includes('"') || safe.includes("\n") || safe.includes("\r")) {
 		return `"${safe.replace(/"/g, '""')}"`;
 	}
 	return safe;

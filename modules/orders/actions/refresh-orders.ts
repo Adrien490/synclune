@@ -27,7 +27,6 @@ export async function refreshOrders(
 		// jusqu'à expiration du profil `user` (~10 min). Cf. `getOrderInvalidationTags`,
 		// qui pousse bien les deux tags.
 		updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 
 		return success("Commandes rafraichies");

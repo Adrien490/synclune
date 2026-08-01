@@ -10,7 +10,8 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
-import { CheckCircle2, ExternalLink, Link2, Loader2 } from "lucide-react";
+import { CheckCircle2, ExternalLink, Link2 } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import {
 	CARRIERS,
@@ -19,8 +20,10 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { useUpdateTrackingForm } from "@/modules/orders/hooks/use-update-tracking-form";
+import { TRACKING_NUMBER_MAX_LENGTH } from "@/modules/orders/constants/order.constants";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { CopyButton } from "@/shared/components/copy-button";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
@@ -37,6 +40,7 @@ import {
 } from "@/shared/components/ui/select";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -90,7 +94,7 @@ export function UpdateTrackingForm({
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
-	const previousCarrierRef = useRef<Carrier | undefined>(initialCarrier);
+	const previousCarrierRef = useRef<Carrier | "" | undefined>(initialCarrier);
 
 	const { form, state, action, isPending } = useUpdateTrackingForm({
 		orderId,
@@ -139,7 +143,7 @@ export function UpdateTrackingForm({
 		listPath: successPath,
 		allowNavigation,
 		getIsDirty: () => isDirty,
-		getCanSubmit: () => trackingNumber.trim().length > 0,
+		getCanSubmit: () => trackingNumber.trim().length > 0 && carrier !== "",
 	});
 
 	const handleTrackingNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,7 +174,21 @@ export function UpdateTrackingForm({
 		trackingNumber.length >= 8 &&
 		trackingNumber !== initialTrackingNumber &&
 		!customUrlMode &&
+		carrier !== "" &&
 		carrier !== "autre";
+
+	// ORD-SEC-008 : ne proposer « Tester l'URL » que sur une valeur déjà conforme
+	// au schéma (http/https) — un `href` sur la frappe en cours était la seule
+	// surface où une URL non validée devenait cliquable (self-XSS admin).
+	const isTestableTrackingUrl = /^https?:\/\//i.test(trackingUrl);
+
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "UpdateTrackingForm",
+	});
 
 	return (
 		<form
@@ -179,12 +197,7 @@ export function UpdateTrackingForm({
 			aria-label="Formulaire de mise à jour du suivi"
 			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
-			onSubmit={(event) => {
-				if (!event.currentTarget.checkValidity()) {
-					event.preventDefault();
-					focusFirstInvalid();
-				}
-			}}
+			onSubmit={handleGatedSubmit}
 		>
 			<input type="hidden" name="id" value={orderId} />
 			<input type="hidden" name="trackingUrl" value={trackingUrl} />
@@ -198,29 +211,41 @@ export function UpdateTrackingForm({
 			<RequiredFieldsNote />
 
 			<fieldset disabled={isPending} className="space-y-4">
-				<div className="space-y-2">
-					<Label htmlFor="trackingNumber">
-						Numéro de suivi <span className="text-destructive">*</span>
-					</Label>
-					<Input
-						id="trackingNumber"
-						name="trackingNumber"
-						value={trackingNumber}
-						onChange={handleTrackingNumberChange}
-						placeholder={CARRIER_PLACEHOLDERS[carrier]}
-						autoCapitalize="characters"
-						autoCorrect="off"
-						spellCheck={false}
-						enterKeyHint="next"
-						required
-					/>
-					<p className="text-muted-foreground text-xs">
-						Le transporteur sera détecté automatiquement selon le format du numéro.
-					</p>
-				</div>
+				<form.AppField
+					name="trackingNumber"
+					validators={{
+						onChange: ({ value }) => {
+							if (!value || value.trim().length === 0) {
+								return "Le numéro de suivi est requis";
+							}
+							if (value.length > TRACKING_NUMBER_MAX_LENGTH) {
+								return `Le numéro de suivi ne peut pas dépasser ${TRACKING_NUMBER_MAX_LENGTH} caractères`;
+							}
+							return undefined;
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Numéro de suivi"
+							required
+							disabled={isPending}
+							onChange={handleTrackingNumberChange}
+							placeholder={carrier ? CARRIER_PLACEHOLDERS[carrier] : "Numéro de suivi"}
+							autoCapitalize="characters"
+							autoCorrect="off"
+							spellCheck={false}
+							enterKeyHint="next"
+							maxLength={TRACKING_NUMBER_MAX_LENGTH}
+							description="Le transporteur sera détecté automatiquement selon le format du numéro."
+						/>
+					)}
+				</form.AppField>
 
 				<div className="space-y-2">
-					<Label htmlFor="carrier">Transporteur</Label>
+					<FieldLabel htmlFor="carrier" required>
+						Transporteur
+					</FieldLabel>
 					<Select
 						value={carrier}
 						onValueChange={(value) => handleCarrierChange(value as Carrier)}
@@ -239,7 +264,7 @@ export function UpdateTrackingForm({
 						</SelectContent>
 					</Select>
 					{wasAutoDetected && (
-						<p className="flex items-center gap-1.5 text-xs text-emerald-600">
+						<p className="text-success flex items-center gap-1.5 text-xs">
 							<CheckCircle2 className="size-3.5" aria-hidden="true" />
 							<span>
 								Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
@@ -272,27 +297,29 @@ export function UpdateTrackingForm({
 									size="icon"
 									className="h-9 w-9 shrink-0"
 								/>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									asChild
-									className="h-9 w-9 shrink-0"
-								>
-									<a
-										href={trackingUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										aria-label="Tester l'URL de suivi dans un nouvel onglet"
+								{isTestableTrackingUrl && (
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										asChild
+										className="h-9 w-9 shrink-0"
 									>
-										<ExternalLink className="size-4" aria-hidden="true" />
-									</a>
-								</Button>
+										<a
+											href={trackingUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											aria-label="Tester l'URL de suivi dans un nouvel onglet"
+										>
+											<ExternalLink className="size-4" aria-hidden="true" />
+										</a>
+									</Button>
+								)}
 							</>
 						)}
 					</div>
 					{carrier === "autre" && !trackingUrl && (
-						<p className="text-xs text-amber-600">
+						<p className="text-warning text-xs">
 							Saisissez l&apos;URL de suivi manuellement pour ce transporteur.
 						</p>
 					)}
@@ -325,14 +352,11 @@ export function UpdateTrackingForm({
 				<div className="flex justify-end">
 					<Button
 						type="submit"
-						size="input"
-						disabled={isPending || !trackingNumber.trim()}
+						disabled={isPending || !trackingNumber.trim() || !carrier}
 						onClick={() => haptic("medium")}
 						className="w-full sm:w-auto sm:min-w-56"
 					>
-						{isPending && (
-							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						)}
+						{isPending && <Spinner presentational />}
 						<span>{isPending ? "Mise à jour…" : "Enregistrer le suivi"}</span>
 						{!isPending && (
 							<Kbd

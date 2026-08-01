@@ -3,6 +3,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { CART_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
@@ -31,8 +32,8 @@ export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
 
 		return await fetchCartItemCount(userId, sessionId ?? undefined);
 	} catch (e) {
-		// "use cache: private" rejects during prerendering — this is expected
-		if (e instanceof Error && "digest" in e && e.digest === "HANGING_PROMISE_REJECTION") return 0;
+		// "use cache: private" rejette à la clôture du prerender — attendu, sans log.
+		if (isPrerenderInterrupt(e)) return 0;
 		logger.error("Failed to get cart item count", e, { service: "cart" });
 		return 0;
 	}

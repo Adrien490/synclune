@@ -582,6 +582,12 @@ export async function processOrderFromPaymentIntent(
 				orderId,
 				{
 					status: "PROCESSING",
+					// Sans cette ligne, (PROCESSING, UNFULFILLED) était l'état de 100 %
+					// des commandes payées : badge admin « Non traitée » à côté de
+					// « En préparation », et aucun chemin de correction (markAsProcessing
+					// exige status=PENDING). Pas de backfill des lignes antérieures —
+					// TO_SHIP_FULFILLMENT_STATUSES et la timeline client les absorbent.
+					fulfillmentStatus: "PROCESSING",
 					paymentStatus: "PAID",
 					paidAt: new Date(),
 					stripePaymentIntentId: paymentIntent.id,

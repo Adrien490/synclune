@@ -389,7 +389,6 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							    la garde onSubmit bloque la soumission invalide. Ne pas « harmoniser ». */}
 							<Button
 								type="submit"
-								size="input"
 								disabled={isPending}
 								onClick={() => haptic("medium")}
 								className={cn(

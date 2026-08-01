@@ -231,13 +231,13 @@ export function CartSheetItemRow({
 						)}
 					</div>
 				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
-					<p className="text-xs text-amber-700">Plus que {item.sku.inventory} en stock</p>
+					<p className="text-warning text-xs">Plus que {item.sku.inventory} en stock</p>
 				) : null}
 			</div>
 
 			<div className="flex items-center justify-between gap-2" data-no-swipe data-vaul-no-drag>
 				{item.sku.inventory === 1 && !hasIssue ? (
-					<span className="text-xs font-medium text-amber-700">Dernière pièce !</span>
+					<span className="text-warning text-xs font-medium">Dernière pièce !</span>
 				) : (
 					<CartItemQuantitySelector
 						cartItemId={item.id}

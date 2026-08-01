@@ -1,6 +1,12 @@
 import { z } from "zod";
-import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "@/shared/constants/countries";
-import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
+import { ADDRESS_CONSTANTS } from "@/shared/constants/address.constants";
+import {
+	addressLineOptionalSchema,
+	addressLineSchema,
+	citySchema,
+	postalCodeSchema,
+	shippingCountrySchema,
+} from "@/shared/schemas/address.schema";
 import { emailOptionalSchema } from "@/shared/schemas/email.schemas";
 import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
@@ -10,8 +16,13 @@ import { parseFullName } from "../utils/parse-full-name";
 // Longueurs alignées sur les colonnes Prisma Order.shipping* (VarChar 50/255/100/10).
 // `fullName` est splitté par parseFullName en firstName/lastName (VarChar(50) chacun) :
 // le refine garantit qu'aucune des deux parties ne dépasse la colonne DB.
-const MAX_FULL_NAME_LENGTH = ADDRESS_CONSTANTS.MAX_NAME_LENGTH * 2 + 1;
-const MAX_POSTAL_CODE_LENGTH = 10;
+//
+// Les bornes vivent dans `ADDRESS_CONSTANTS` (SSOT), pas ici : les validateurs inline
+// de `checkout-address-fields.tsx` en dérivent aussi, et les re-poser à la main de
+// chaque côté est exactement ce qui avait laissé le client accepter une saisie que le
+// serveur refuse. Les importer depuis ce module aurait en prime tiré tout le graphe
+// Zod du checkout dans le bundle client.
+const { MAX_FULL_NAME_LENGTH, MAX_POSTAL_CODE_LENGTH } = ADDRESS_CONSTANTS;
 
 const addressSchema = z.object({
 	fullName: z
@@ -28,30 +39,23 @@ const addressSchema = z.object({
 				firstName.length <= ADDRESS_CONSTANTS.MAX_NAME_LENGTH &&
 				lastName.length <= ADDRESS_CONSTANTS.MAX_NAME_LENGTH
 			);
-		}, `Le prénom et le nom ne peuvent pas dépasser ${ADDRESS_CONSTANTS.MAX_NAME_LENGTH} caractères chacun`),
-	addressLine1: z
-		.string()
-		.min(1, "L'adresse est requise")
-		.max(ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH, ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG)
-		.trim(),
-	addressLine2: z
-		.string()
-		.max(ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH, ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG)
-		.trim()
-		.optional(),
-	city: z
-		.string()
-		.min(ADDRESS_CONSTANTS.MIN_CITY_LENGTH, ADDRESS_ERROR_MESSAGES.CITY_TOO_SHORT)
-		.max(ADDRESS_CONSTANTS.MAX_CITY_LENGTH, ADDRESS_ERROR_MESSAGES.CITY_TOO_LONG)
-		.trim(),
-	postalCode: z
-		.string()
-		.max(MAX_POSTAL_CODE_LENGTH, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE)
-		.regex(ADDRESS_CONSTANTS.POSTAL_CODE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE)
-		.trim(),
-	country: z.enum(SHIPPING_COUNTRIES, {
-		message: COUNTRY_ERROR_MESSAGE,
-	}),
+		}, `Le prénom et le nom ne peuvent pas dépasser ${ADDRESS_CONSTANTS.MAX_NAME_LENGTH} caractères chacun`)
+		// `parseFullName` rend `lastName: ""` quand la saisie ne contient aucun espace
+		// (« Léane ») : `Order.shippingLastName` recevait alors une chaîne vide, figée
+		// 10 ans dans le snapshot d'adresse et imprimée telle quelle sur la facture
+		// (Art. 286 CGI). Exiger les deux parties ici, à la seule frontière où la
+		// saisie est encore corrigeable par le client.
+		.refine(
+			(value) => parseFullName(value).lastName.length > 0,
+			"Indique ton prénom et ton nom (ex : Léane Dupont)",
+		),
+	// Briques partagées (`shared/schemas/address.schema.ts`) : mêmes contraintes que
+	// l'édition d'adresse admin, posées une seule fois.
+	addressLine1: addressLineSchema,
+	addressLine2: addressLineOptionalSchema,
+	city: citySchema,
+	postalCode: postalCodeSchema,
+	country: shippingCountrySchema,
 	phoneNumber: phoneSchema,
 });
 
@@ -74,7 +78,7 @@ const cartItemSchema = z.object({
  * contre `priceAtAdd`, (2) le stock re-vérifié `FOR UPDATE` dans
  * `order-creation.service.ts`, et (3) les bornes ci-dessous. Elles doivent donc
  * refléter exactement les limites que le panier applique côté mutation
- * (`add-to-cart`, `merge-carts`, `move-to-cart`, `reorder-from-order`) :
+ * (`add-to-cart`, `move-to-cart`) :
  *  - `max(MAX_CART_ITEMS)` : sans plafond, un tableau arbitrairement long fait
  *    exploser le `Promise.all` de `getSkuDetails` (N requêtes DB pour des skuId
  *    inexistants, qui ratent le cache par-skuId) puis N verrous `FOR UPDATE` dans
@@ -95,13 +99,26 @@ const cartItemsSchema = z
 		"Un article apparaît en double dans le panier. Actualise la page.",
 	);
 
+/**
+ * Identifiant de PaymentIntent Stripe.
+ *
+ * SSOT partagée par les trois actions de paiement : le préfixe `pi_` était vérifié
+ * par un `.startsWith()` inline dans `confirmCheckout`, et par un
+ * `paymentIntentId.startsWith("pi_")` en TypeScript nu — donc sans borne de
+ * longueur — dans `cancelOrphanPaymentIntent`. Les ids Stripe font ~27 caractères ;
+ * la borne évite qu'une chaîne arbitrairement longue parte en appel API sortant.
+ */
+export const paymentIntentIdSchema = z
+	.string()
+	.startsWith("pi_", "Payment Intent ID invalide")
+	.max(255, "Payment Intent ID invalide");
+
 export const confirmCheckoutSchema = z.object({
 	cartItems: cartItemsSchema,
 	shippingAddress: addressSchema,
 	email: emailOptionalSchema,
 	discountCode: discountCodeSchema.optional(),
-	paymentIntentId: z.string().startsWith("pi_", "Payment Intent ID invalide"),
-	saveInfo: z.boolean(),
+	paymentIntentId: paymentIntentIdSchema,
 	// Montant AFFICHÉ au client sur le bouton « Commander et payer » (centimes).
 	// Garde de CONSENTEMENT uniquement (CHECKOUT-CONSENT-001) : sur hit idempotent,
 	// `confirmCheckout` refuse de laisser payer une commande dont le `total` figé

@@ -104,7 +104,10 @@ export async function OrdersDataTable({
 			</TableHeader>
 			<TableBody>
 				{orders.map((order) => {
-					const userName = order.user?.name ?? order.user?.email ?? "Invité";
+					// Colonnes snapshot (achat 100 % invité depuis le retrait de
+					// l'espace client 2026-07-31) — la relation `user` est vide.
+					// `||` : colonnes non-nulles mais vidables par la purge PII.
+					const userName = order.customerName || order.customerEmail || "Invité";
 
 					return (
 						<TableRow key={order.id}>

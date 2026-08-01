@@ -117,7 +117,12 @@ vi.mock("../../services/void-invoice.service", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 
 vi.mock("../../schemas/order.schemas", () => ({

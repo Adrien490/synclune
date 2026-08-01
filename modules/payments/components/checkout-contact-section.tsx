@@ -89,7 +89,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 										>
 											Connecte-toi
 										</Link>{" "}
-										pour accéder à tes adresses enregistrées
+										pour retrouver tes commandes et leur suivi
 									</span>
 								</div>
 							</div>

@@ -66,10 +66,6 @@ vi.mock("@/modules/payments/components/checkout-summary", () => ({
 	CheckoutSummary: () => <div data-testid="checkout-summary" />,
 }));
 
-vi.mock("@/modules/payments/components/address-selector", () => ({
-	AddressSelector: () => <div data-testid="address-selector" />,
-}));
-
 vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
 	validateDiscountCode: vi.fn(),
 }));
@@ -91,10 +87,6 @@ vi.mock("@/modules/payments/components/pay-button", () => ({
 
 vi.mock("@/modules/payments/components/checkout-stripe-section", () => ({
 	CheckoutStripeSection: () => <div data-testid="checkout-stripe-section" />,
-}));
-
-vi.mock("@/modules/addresses/data/search-address", () => ({
-	searchAddressForCheckout: vi.fn(),
 }));
 
 vi.mock("@/modules/payments/components/shipping-method-section", () => ({
@@ -131,7 +123,6 @@ function createMockForm() {
 			phoneNumber: "",
 		},
 		_appliedDiscount: null,
-		_selectedAddressId: null,
 		_discountOpen: false,
 		discountCode: "",
 	};
@@ -202,15 +193,13 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 		});
 
 		it("remonte la page dans l'état verrouillé", () => {
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 
 			expect(screen.getByText("Montant verrouillé")).toBeInTheDocument();
 		});
 
 		it("gèle les sections qui portent le montant (frais de livraison, code promo)", () => {
-			const { container } = render(
-				<CheckoutForm cart={cart as never} session={null} addresses={null} />,
-			);
+			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
 			// Ciblé par sa <legend> : depuis KI-001 il y a DEUX fieldsets (celui de
 			// l'adresse, jamais désactivé, vient en premier dans le DOM) — un
@@ -230,7 +219,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			// gel champ par champ — `disabled={lockDestination}` sur code postal + pays, et
 			// eux seuls — est verrouillé par
 			// `locked-amount-address-editable.regression.test.ts`.
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 
 			const shippingSection = screen.getByTestId("section-Livraison");
 			expect(shippingSection.closest("fieldset[disabled]")).toBeNull();
@@ -241,7 +230,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 		});
 
 		it("n'appelle JAMAIS updateAmount (sinon « Commande déjà initiée » en boucle)", () => {
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 
 			expect(mockUpdateAmount).not.toHaveBeenCalled();
 		});
@@ -250,7 +239,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 			// `resolveIdempotentHit` refuse toute divergence de pays / code postal :
 			// l'ancienne copie « Actualise la page si tu veux modifier ta livraison »
 			// décrivait une action impossible.
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 
 			expect(screen.queryByText(/modifier ta livraison/i)).not.toBeInTheDocument();
 			// Et ne prétend plus l'adresse figée : elle l'était par un gel trop large,
@@ -267,7 +256,7 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 				value: { ...window.location, reload },
 			});
 
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 			await userEvent.click(screen.getByRole("button", { name: "Recharger la page" }));
 
 			expect(mockAllowNavigation).toHaveBeenCalled();
@@ -291,15 +280,13 @@ describe("Checkout — réhydratation du montant verrouillé", () => {
 		});
 
 		it("ne verrouille rien", () => {
-			render(<CheckoutForm cart={cart as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={cart as never} session={null} />);
 
 			expect(screen.queryByText("Montant verrouillé")).not.toBeInTheDocument();
 		});
 
 		it("laisse le fieldset actif", () => {
-			const { container } = render(
-				<CheckoutForm cart={cart as never} session={null} addresses={null} />,
-			);
+			const { container } = render(<CheckoutForm cart={cart as never} session={null} />);
 
 			expect(container.querySelector("fieldset")).not.toBeDisabled();
 		});

@@ -4,16 +4,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockCacheLife, mockCacheTag, mockCacheDiscountDetailAdmin } = vi.hoisted(
-	() => ({
+const { mockPrisma, mockCacheLife, mockCacheTag, mockCacheDiscountDetailAdmin, mockIsAdmin } =
+	vi.hoisted(() => ({
 		mockPrisma: {
 			discount: { findUnique: vi.fn() },
 		},
 		mockCacheLife: vi.fn(),
 		mockCacheTag: vi.fn(),
 		mockCacheDiscountDetailAdmin: vi.fn(),
-	}),
-);
+		mockIsAdmin: vi.fn(),
+	}));
+
+vi.mock("@/modules/auth/utils/guards", () => ({ isAdmin: mockIsAdmin }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -85,6 +87,9 @@ function makeDiscount(overrides: Record<string, unknown> = {}) {
 }
 
 function setupDefaults() {
+	// Admin par défaut : ces tests portent sur la requête, pas sur la garde —
+	// laquelle a son propre cas dédié plus bas.
+	mockIsAdmin.mockResolvedValue(true);
 	mockPrisma.discount.findUnique.mockResolvedValue(makeDiscount());
 	mockSchema.safeParse.mockReturnValue({
 		success: true,
@@ -191,10 +196,16 @@ describe("getDiscountById", () => {
 		expect(result).toBeNull();
 	});
 
-	it("does not require authentication (public function)", async () => {
-		// No auth mock is involved — simply verifies the function executes without it
+	// ⚠️ Ce test affirmait l'inverse jusqu'au 2026-07-31 (« does not require
+	// authentication (public function) ») : il verrouillait l'ABSENCE de garde sur
+	// un fetcher qui n'est consommé que par `/admin/marketing/discounts`. Un code
+	// promo qui fuite, c'est de la remise gratuite.
+	it("returns null when the actor is not a DB-verified admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
 		const result = await getDiscountById({ id: "discount-cuid-001" });
 
-		expect(result).toEqual(makeDiscount());
+		expect(result).toBeNull();
+		expect(mockPrisma.discount.findUnique).not.toHaveBeenCalled();
 	});
 });

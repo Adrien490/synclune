@@ -6,6 +6,7 @@ import { useState } from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { ResponsiveDialogFooter } from "@/shared/components/responsive-dialog";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -291,12 +292,9 @@ export function SkuSelectorFormContent({
 						)}
 						{/* Max stock badge */}
 						{selectedSku && availableToAdd === 0 && (
-							<span
-								role="status"
-								className="mt-1 inline-flex items-center rounded bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700"
-							>
+							<Badge variant="warning" role="status" className="mt-1">
 								Stock maximum atteint
-							</span>
+							</Badge>
 						)}
 					</div>
 				</div>

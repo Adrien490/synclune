@@ -3,12 +3,10 @@
 import { revalidateLogic } from "@tanstack/react-form";
 import { useAppForm } from "@/shared/components/forms";
 import type { Session } from "@/modules/auth/lib/auth";
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import { getCheckoutFormOptions } from "../utils/checkout-form.utils";
 
 interface UseCheckoutFormOptions {
 	session: Session | null;
-	addresses: GetUserAddressesReturn | null;
 }
 
 /**
@@ -39,10 +37,10 @@ interface UseCheckoutFormOptions {
  * `submit` déclenche `onDynamic` inconditionnellement).
  */
 export const useCheckoutForm = (options: UseCheckoutFormOptions) => {
-	const { session, addresses } = options;
+	const { session } = options;
 
 	const form = useAppForm({
-		...getCheckoutFormOptions(session, addresses),
+		...getCheckoutFormOptions(session),
 		validationLogic: revalidateLogic({ mode: "blur", modeAfterSubmission: "change" }),
 	});
 

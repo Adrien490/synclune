@@ -64,7 +64,6 @@ export const CRON_SCHEDULES: Record<string, string> = {
 	"reconcile-refunds": "0 8 * * *",
 	"reconcile-invoices": "0 2 * * *",
 	"cleanup-pending-orders": "0 3 * * *",
-	"process-account-deletions": "0 5 * * *",
 	"hard-delete-retention": "0 4 2 * *",
 	// Hebdomadaire le mercredi (audit média M2). Le scan ne couvre que
 	// MAX_PAGES_PER_RUN × UPLOADTHING_LIST_LIMIT fichiers par exécution et reprend
@@ -80,8 +79,8 @@ export const CRON_SCHEDULES: Record<string, string> = {
  * Jobs pour lesquels un **monitor Sentry Cron** est émis — audit coûts P2-1.
  *
  * Le monitoring cron de Sentry est facturé **par monitor** (le plan Developer
- * n'en inclut qu'**un seul**). Émettre un check-in pour les 11 jobs revenait à
- * demander 11 monitors : au-delà du quota, Sentry rejette les check-ins
+ * n'en inclut qu'**un seul**). Émettre un check-in pour les 9 jobs revenait à
+ * demander 9 monitors : au-delà du quota, Sentry rejette les check-ins
  * surnuméraires — et l'alerte « ce cron ne s'exécute plus », seule protection
  * contre un cron devenu silencieux, ne fonctionnait donc sur AUCUN job de façon
  * fiable. Un monitoring qu'on croit actif est pire que pas de monitoring.
@@ -92,7 +91,11 @@ export const CRON_SCHEDULES: Record<string, string> = {
  * - `retry-webhooks` : événements Stripe non rejoués (commandes fantômes)
  * - `sync-async-payments` : paiements SEPA jamais rapprochés (revenu)
  * - `reconcile-invoices` : DLQ facture — obligation Art. 286/289-I CGI
- * - `process-account-deletions` : obligation RGPD Art. 17 (délai légal)
+ *
+ * `process-account-deletions` a quitté cette liste avec le cron lui-même : sans
+ * compte client, plus aucune demande de suppression à honorer (retrait de
+ * l'espace client 2026-07-31). L'obligation RGPD sur les données de commande
+ * reste portée par `hard-delete-retention`, qui purge la PII à `paidAt + 10 ans`.
  *
  * Les jobs non listés restent surveillés en aval : `withCronGuard` capture
  * toujours leurs exceptions dans Sentry et envoie une alerte admin par email.
@@ -104,5 +107,4 @@ export const SENTRY_MONITORED_CRONS = new Set([
 	"retry-webhooks",
 	"sync-async-payments",
 	"reconcile-invoices",
-	"process-account-deletions",
 ]);

@@ -113,7 +113,12 @@ vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: vi.fn(() => "https://synclune.fr"),
 	ROUTES: {
 		ADMIN: { ORDER_DETAIL: (id: string) => `/admin/ventes/commandes/${id}`, ORDERS: "/admin" },
-		SHOP: { CHECKOUT: "/paiement" },
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: {
+			ORDER_TRACKING: "/suivi-commande",
+			CHECKOUT: "/paiement",
+		},
 	},
 }));
 vi.mock("@/shared/lib/stripe", () => ({ stripe: {} }));
@@ -180,7 +185,8 @@ describe("[regression ord-stripe-009] oversell loser auto-refund", () => {
 		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("order-detail-order-loser");
-			expect(cacheTask.tags).toContain("orders-user-user-loser");
+			// Plus de tag user-scopé (retrait de l'espace client 2026-07-31).
+			expect(cacheTask.tags.some((t: string) => t.startsWith("orders-user-"))).toBe(false);
 		}
 	});
 

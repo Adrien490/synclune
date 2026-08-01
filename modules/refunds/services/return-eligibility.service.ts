@@ -49,19 +49,6 @@ export function getReturnIneligibilityReason(
 }
 
 /**
- * Checks if an order is eligible for a return request.
- *
- * Conditions:
- * - Payment is PAID or PARTIALLY_REFUNDED
- * - Order has been DELIVERED with actualDelivery set
- * - Within 14-day withdrawal period from delivery date
- * - No pending or approved refund already exists
- */
-export function isReturnEligible(order: ReturnEligibilityOrder): boolean {
-	return getReturnIneligibilityReason(order) === null;
-}
-
-/**
  * Returns the number of days remaining for a return request.
  * Returns 0 if no delivery date or if the deadline has passed.
  */

@@ -99,7 +99,12 @@ export async function sendShippingConfirmationEmail({
 	/** Date de livraison estimée pré-formatée (ex: "12 juin 2026"). */
 	estimatedDelivery?: string | null;
 	shippingAddress: ShippingAddress;
-	/** EMAIL-AUDIT-003 : dedup Resend 24h. Convention `order-shipped:${orderId}`. */
+	/**
+	 * EMAIL-AUDIT-003 : dedup Resend 24h. Convention
+	 * `order-shipped:${orderId}:${trackingNumber}` — le numéro de suivi fait
+	 * partie de la clé, sinon un suivi corrigé dans les 24 h renvoyait l'email
+	 * ORIGINAL depuis le cache Resend (cf. mark-as-shipped.ts).
+	 */
 	idempotencyKey?: string;
 	/**
 	 * IDEM-EMAIL-001 : court-circuite le cache de dédup in-process (10 min).

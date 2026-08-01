@@ -29,7 +29,7 @@ const {
 	mockSentryWithScope,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		// STOCK-02 : acquireOrderPaidLockTx fait un tx.$queryRaw (advisory lock).
@@ -84,7 +84,12 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -157,6 +162,9 @@ describe("ORD-BIZ-007 — mark-as-paid annule le PaymentIntent Stripe", () => {
 			fn(mockPrisma),
 		);
 		mockSendOrderConfirmationEmail.mockResolvedValue(undefined);
+		// Garde atomique (audit 2026-08-01, P3) : l'écriture est un updateMany
+		// ré-assertant l'état lu — count 1 = pas de writer concurrent.
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	it("appelle stripe.paymentIntents.cancel quand stripePaymentIntentId est présent", async () => {
@@ -249,7 +257,7 @@ describe("ORD-BIZ-007 — mark-as-paid annule le PaymentIntent Stripe", () => {
 		const result = await markAsPaid(undefined, validFormData);
 
 		// La commande a bien été mutée (update appelé dans la transaction)
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ paymentStatus: "PAID" }),
 			}),

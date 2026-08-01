@@ -46,12 +46,24 @@ export async function getOrders(params: GetOrdersParams): Promise<GetOrdersRetur
 		if ("error" in rateCheck) {
 			fuzzyIds = [];
 		} else {
+			// La condition soft-delete du fuzzy doit SUIVRE `showDeleted`, comme le
+			// WHERE principal (`buildOrderWhereClause`) : figée sur `IS NULL`, elle
+			// rendait la recherche en Corbeille structurellement vide (intersection
+			// ids-non-supprimés × `deletedAt NOT NULL`) et le mode « Toutes »
+			// partiel. Audit « Admin commandes » 2026-08-01, P2.
+			const showDeleted = validatedParams.filters?.showDeleted ?? "active";
+			const deletedCondition =
+				showDeleted === "deleted"
+					? Prisma.sql`AND "Order"."deletedAt" IS NOT NULL`
+					: showDeleted === "all"
+						? Prisma.empty
+						: Prisma.sql`AND "Order"."deletedAt" IS NULL`;
 			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
 				columns: [
 					{ table: "Order", column: "customerName" },
 					{ table: "Order", column: "customerEmail" },
 				],
-				baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
+				baseCondition: deletedCondition,
 			});
 		}
 	}
@@ -66,7 +78,13 @@ async function fetchOrders(
 	params: GetOrdersParams,
 	fuzzyIds?: string[] | null,
 ): Promise<GetOrdersReturn> {
-	"use cache: private";
+	// Cache PUBLIC assumé (audit cache 2026-07-31). Aucun paramètre d'identité :
+	// c'est la liste admin, identique pour tous les admins, gardée par
+	// `requireAdmin()` dans le wrapper `getOrders` ci-dessus. `"use cache: private"`
+	// n'apportait aucune isolation utile ici et coûtait TOUT le cache serveur —
+	// une entrée privée n'est jamais stockée côté serveur (mémoire du navigateur
+	// uniquement), donc chaque rendu de `/admin/ventes/commandes` retapait Neon.
+	"use cache";
 	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 

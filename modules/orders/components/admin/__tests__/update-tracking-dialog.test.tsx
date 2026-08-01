@@ -48,7 +48,42 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 
 vi.mock("@/modules/orders/hooks/use-update-tracking-form", () => ({
 	useUpdateTrackingForm: () => ({
-		form: { store: {}, setFieldValue: mockFormHook.setFieldValue },
+		form: {
+			store: {},
+			setFieldValue: mockFormHook.setFieldValue,
+			state: { isValid: true, isSubmitting: false },
+			handleSubmit: () => Promise.resolve(),
+			// Le numéro de suivi est rendu via `form.AppField` + `field.InputField` :
+			// le mock reproduit le contrat minimal du field component (label lié par
+			// htmlFor, input id/name = nom du champ, description sous le champ).
+			AppField: ({
+				name,
+				children,
+			}: {
+				name: string;
+				children: (field: Record<string, unknown>) => React.ReactNode;
+			}) =>
+				children({
+					InputField: ({
+						label,
+						required: _required,
+						optional: _optional,
+						description,
+						...props
+					}: any) => (
+						<div>
+							<label htmlFor={name}>{label}</label>
+							<input
+								id={name}
+								name={name}
+								value={(mockFormStore as Record<string, any>)[name] ?? ""}
+								{...props}
+							/>
+							{description ? <p>{description}</p> : null}
+						</div>
+					),
+				}),
+		},
 		action: mockFormHook.action,
 		isPending: mockFormHook.isPending,
 	}),
@@ -132,7 +167,7 @@ vi.mock("lucide-react", () => {
 		CheckCircle2: stub,
 		ExternalLink: stub,
 		Link2: stub,
-		Loader2: stub,
+		Loader2Icon: stub,
 		Mail: stub,
 		Truck: stub,
 	};

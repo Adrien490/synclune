@@ -152,9 +152,7 @@ export async function updateTracking(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-			updateTag(tag),
-		);
+		getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return success(`Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}.`);
 	} catch (e) {

@@ -135,9 +135,7 @@ export async function updateOrderShippingAddress(
 		}
 
 		// Invalidate caches
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-			updateTag(tag),
-		);
+		getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

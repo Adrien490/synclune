@@ -52,7 +52,8 @@ describe("OrderConfirmationEmail", () => {
 		shipping: 490,
 		total: 18390,
 		shippingAddress: baseShippingAddress,
-		trackingUrl: "https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6",
+		trackingUrl:
+			"https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=abc123def456abc123def456abc12345",
 	};
 
 	it("renders without crashing", async () => {
@@ -93,7 +94,9 @@ describe("OrderConfirmationEmail", () => {
 
 	it("contains the tracking URL", async () => {
 		const html = await render(<OrderConfirmationEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/commandes/CMD-1704067200000-A1B2C3D4E5F6");
+		// `&` est encodé en `&amp;` dans le HTML rendu — on matche les deux morceaux.
+		expect(html).toContain("https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD");
+		expect(html).toContain("token=abc123def456abc123def456abc12345");
 	});
 
 	it("contains the shipping address city and postal code", async () => {
@@ -206,20 +209,32 @@ describe("ShippingConfirmationEmail", () => {
 			<ShippingConfirmationEmail
 				{...baseProps}
 				trackingUrl={null}
-				orderTrackingUrl="https://synclune.fr/commandes/CMD-1730000000-ABCD"
+				orderTrackingUrl="https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=abc123def456abc123def456abc12345"
 			/>,
 		);
 		expect(html).toContain("Voir ma commande");
-		expect(html).toContain("https://synclune.fr/commandes/CMD-1730000000-ABCD");
+		expect(html).toContain("https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD");
 	});
 
-	it("privilégie l'URL transporteur sur le lien de repli", async () => {
+	// Depuis le retrait de l'espace client (2026-07-31), l'URL tokenisée
+	// /suivi-commande est la SEULE clé du client vers sa commande — et cet email
+	// est souvent le dernier reçu. Le cas nominal doit donc porter les DEUX
+	// liens : CTA transporteur + lien durable secondaire (audit 2026-08-01).
+	it("cas nominal : CTA transporteur ET lien durable vers la commande", async () => {
 		const html = await render(
 			<ShippingConfirmationEmail
 				{...baseProps}
-				orderTrackingUrl="https://synclune.fr/commandes/CMD-1730000000-ABCD"
+				orderTrackingUrl="https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=abc123def456abc123def456abc12345"
 			/>,
 		);
+		expect(html).toContain("Suivre mon colis");
+		expect(html).toContain("https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890");
+		expect(html).toContain("Voir ma commande");
+		expect(html).toContain("https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD");
+	});
+
+	it("sans lien de commande fourni, le cas nominal ne rend que le CTA transporteur", async () => {
+		const html = await render(<ShippingConfirmationEmail {...baseProps} orderTrackingUrl={null} />);
 		expect(html).toContain("Suivre mon colis");
 		expect(html).not.toContain("Voir ma commande");
 	});

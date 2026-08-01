@@ -30,7 +30,7 @@ const {
 	mockStripeCancel,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 		productSku: { updateMany: vi.fn() },
 		orderHistory: { create: vi.fn() },
 		refund: { findFirst: vi.fn() },
@@ -81,7 +81,12 @@ vi.mock("../../utils/invoice-token", () => ({
 }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -146,6 +151,9 @@ describe("ORD-BIZ-004 — mark-as-paid recovery FAILED/EXPIRED → PAID", () => 
 		);
 		mockSendOrderConfirmationEmail.mockResolvedValue(undefined);
 		mockPrisma.refund.findFirst.mockResolvedValue(null);
+		// Garde atomique (audit 2026-08-01, P3) : l'écriture est un updateMany
+		// ré-assertant l'état lu — count 1 = pas de writer concurrent.
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 	});
 
 	it("autorise FAILED → PAID quand aucun Refund existant + trace metadata.recoveredFrom=FAILED", async () => {
@@ -205,7 +213,7 @@ describe("ORD-BIZ-004 — mark-as-paid recovery FAILED/EXPIRED → PAID", () => 
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/remboursement/i);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("refuse PAID → PAID (idempotence préservée)", async () => {

@@ -234,7 +234,7 @@ describe("OrderHistoryTimeline", () => {
 
 		render(<OrderHistoryTimeline history={[entry]} />);
 
-		expect(screen.getByText(/Traitement/)).toHaveTextContent("Traitement : Non préparé → Retourné");
+		expect(screen.getByText(/Traitement/)).toHaveTextContent("Traitement : À préparer → Retournée");
 	});
 
 	// ─── Content ──────────────────────────────────────────────────────────────

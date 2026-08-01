@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -44,17 +44,36 @@ describe("EINV-CREDIT-020 — archivage eager des avoirs", () => {
 		expect(source).toContain("ensureRefundCreditNoteArchived");
 	});
 
-	it("both anonymization paths are gated by ensureUserCreditNotesArchived BEFORE the scrub", () => {
-		const cron = read("modules/cron/services/process-account-deletions.service.ts");
-		const adminAction = read("modules/users/actions/admin/anonymize-user-immediately.ts");
-		for (const source of [cron, adminAction]) {
-			expect(source).toContain("ensureUserCreditNotesArchived");
-			// La garde doit précéder l'appel au scrub dans le flux du fichier.
-			expect(source.indexOf("ensureUserCreditNotesArchived(")).toBeGreaterThan(-1);
-			expect(source.indexOf("ensureUserCreditNotesArchived(")).toBeLessThan(
-				source.indexOf("anonymizeUserInTransaction("),
-			);
-		}
+	/**
+	 * ⚠️ La garde d'anonymisation de l'invariant #6 n'a plus de sujet.
+	 *
+	 * `ensureUserCreditNotesArchived` bloquait le scrub RGPD tant qu'un avoir émis
+	 * n'était pas archivé — sinon le premier rendu post-scrub aurait produit un avoir
+	 * sans identité client (Art. 289 CGI) figé comme référence immuable. Ses deux
+	 * seuls appelants étaient `process-account-deletions` (cron) et
+	 * `anonymize-user-immediately` (action admin) : tous deux supprimés au retrait de
+	 * l'espace client (2026-07-31), faute de comptes clients à anonymiser. Le service
+	 * est parti avec eux.
+	 *
+	 * L'invariant reste couvert par les DEUX autres mécanismes, testés juste au-dessus
+	 * et juste en dessous :
+	 *  - archivage **eager à l'émission** (`voidInvoice` → `ensureOrderCreditNoteArchived`,
+	 *    `issueCreditNoteForRefund` → `ensureRefundCreditNoteArchived`) ;
+	 *  - **rattrapage** par les passes 3b + 7 de `reconcile-invoices`.
+	 *
+	 * Ce qui disparaît est seulement le troisième filet, propre au cycle de vie d'un
+	 * compte. La purge PII à `paidAt + 10 ans` (`hard-delete-retention`) reste, et elle
+	 * n'a jamais dépendu de cette garde.
+	 *
+	 * ⛔ Si un chemin d'anonymisation d'utilisateur revient un jour, il DOIT réintroduire
+	 * cette garde avant son scrub, et ce test avec.
+	 */
+	it("aucun chemin d'anonymisation ne subsiste (la garde n'a plus de sujet)", () => {
+		expect(existsSync("modules/cron/services/process-account-deletions.service.ts")).toBe(false);
+		expect(existsSync("modules/users/actions/admin/anonymize-user-immediately.ts")).toBe(false);
+		expect(existsSync("modules/orders/services/ensure-user-credit-notes-archived.service.ts")).toBe(
+			false,
+		);
 	});
 
 	it("reconcile-invoices selects unarchived Order credit notes directly (not only via the DLQ flag)", () => {

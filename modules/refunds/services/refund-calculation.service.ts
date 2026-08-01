@@ -121,11 +121,28 @@ export function calculateRefundAmount(
 ): number {
 	const ratio = discount ? calculateDiscountRatio(discount.subtotal, discount.discountAmount) : 0;
 
-	return selectedItems.reduce((sum, item) => {
-		const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
-		const rawAmount = (orderItem?.price ?? 0) * item.quantity;
-		return sum + Math.round(rawAmount * (1 - ratio));
-	}, 0);
+	return selectedItems.reduce(
+		(sum, item) => sum + calculateItemRefundAmount(item, orderItems, ratio),
+		0,
+	);
+}
+
+/**
+ * Montant remboursable d'un item, remise proratisée.
+ *
+ * Formule miroir du plafond serveur de `create-refund.ts`
+ * (`maxItemAmount = round(price × qty × (1 − ratio))`) : le payload du
+ * formulaire doit émettre exactement ce montant pour passer la validation
+ * sans clamp silencieux.
+ */
+function calculateItemRefundAmount(
+	item: RefundItemValue,
+	orderItems: OrderItemForRefundCalc[],
+	ratio: number,
+): number {
+	const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
+	const rawAmount = (orderItem?.price ?? 0) * item.quantity;
+	return Math.round(rawAmount * (1 - ratio));
 }
 
 // ============================================================================
@@ -216,15 +233,27 @@ export function getSelectedItems(items: RefundItemValue[]): RefundItemValue[] {
 /**
  * Formate les articles pour l'action server
  *
+ * `amount` est REQUIS par `createRefundItemSchema` (sans défaut) : un payload
+ * qui l'omet échoue la validation de `createRefund` en VALIDATION_ERROR
+ * silencieux. Contrat verrouillé par
+ * `refund-form-action-contract.regression.test.ts`.
+ *
  * @param selectedItems - Articles sélectionnés
+ * @param orderItems - Articles de la commande originale (pour les prix)
+ * @param discount - Info réduction (optionnel, pour proratisation)
  * @returns Articles formatés pour la server action
  */
 export function formatItemsForAction(
 	selectedItems: RefundItemValue[],
-): { orderItemId: string; quantity: number; restock: boolean }[] {
+	orderItems: OrderItemForRefundCalc[],
+	discount?: DiscountInfo,
+): { orderItemId: string; quantity: number; amount: number; restock: boolean }[] {
+	const ratio = discount ? calculateDiscountRatio(discount.subtotal, discount.discountAmount) : 0;
+
 	return selectedItems.map((item) => ({
 		orderItemId: item.orderItemId,
 		quantity: item.quantity,
+		amount: calculateItemRefundAmount(item, orderItems, ratio),
 		restock: item.restock,
 	}));
 }

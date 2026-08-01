@@ -68,8 +68,13 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
+// `cacheLife`/`cacheTag` : requis parce que `../../constants/cache` est désormais chargé
+// POUR DE VRAI (cf. plus bas) et les importe. Un mock partiel de `next/cache` ferait
+// échouer le link ESM.
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -81,17 +86,10 @@ vi.mock("../../constants/refund.constants", () => ({
 	},
 }));
 
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-	REFUNDS_CACHE_TAGS: {
-		LIST: "refunds-list",
-		DETAIL: (id: string) => `refund-${id}`,
-	},
-}));
+// ⚠️ PAS de mock hand-written ici. Le miroir manuel précédent listait des clés figées
+// (dont `USER_ORDERS`, disparue depuis) et ne bougeait pas quand la SSOT gagnait un tag :
+// c'est exactement ce qui a laissé `getRefundInvalidationTags` naître sans que ces tests
+// le voient. On charge le vrai module — les tags assertés plus bas sont donc les vrais.
 
 // ⚠️ Miroir COMPLET des clés touchées : `getOrderInvalidationTags()` lit
 // ADMIN_ORDERS_LIST. Une clé absente ici fait passer `undefined` à `updateTag`, ce qui
@@ -277,7 +275,12 @@ describe("approveRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
+		// Plus aucun tag user-scopé : `getOrderInvalidationTags` n'en émet plus depuis
+		// le retrait de l'espace client (2026-07-31) — les data fns qu'ils
+		// invalidaient (`getUserOrders`, `getLastOrder`) ont disparu avec lui.
+		expect(mockUpdateTag).not.toHaveBeenCalledWith(
+			expect.stringMatching(/^(orders-user-|last-order-user-)/),
+		);
 	});
 
 	it("should not invalidate user-specific cache when no userId", async () => {

@@ -230,7 +230,9 @@ describe("ORD-BIZ-005 — update-order-*-address crée OrderHistory.ADDRESS_UPDA
 				id: VALID_CUID,
 				orderNumber: "SYN-2026-0001",
 				userId: "user-1",
-				invoiceStatus: "DRAFT",
+				// Miroir du select réel : le gate lit invoiceNumber (null = pas de facture
+				// émise), plus invoiceStatus (P1-B audit 2026-08-01)
+				invoiceNumber: null,
 				billingSameAsShipping: true,
 				billingFirstName: null,
 				billingLastName: null,

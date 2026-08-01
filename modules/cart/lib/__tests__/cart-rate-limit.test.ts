@@ -41,7 +41,7 @@ vi.mock("../cart-session", () => ({
 	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
 }));
 
-import { checkCartRateLimit, checkMergeCartsRateLimit } from "../cart-rate-limit";
+import { checkCartRateLimit } from "../cart-rate-limit";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 
@@ -49,7 +49,7 @@ import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 // Constants
 // ============================================================================
 
-const MOCK_LIMIT_CONFIG: RateLimitConfig = { limit: 10, windowMs: 60000 };
+const MOCK_LIMIT_CONFIG: RateLimitConfig = { name: "test", limit: 10, windowMs: 60000 };
 const MOCK_HEADERS = {} as Headers;
 const MOCK_IP = "1.2.3.4";
 const MOCK_USER_ID = "user-123";
@@ -257,125 +257,5 @@ describe("checkCartRateLimit", () => {
 	});
 });
 
-// ============================================================================
-// Tests: checkMergeCartsRateLimit
-// ============================================================================
-
-describe("checkMergeCartsRateLimit", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockHeaders.mockResolvedValue(MOCK_HEADERS);
-		mockGetClientIp.mockResolvedValue(MOCK_IP);
-		mockGetRateLimitIdentifier.mockReturnValue(MOCK_RATE_LIMIT_ID);
-		mockCheckRateLimit.mockResolvedValue(makeRateLimitSuccess());
-	});
-
-	it("returns success when rate limit is not exceeded", async () => {
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(true);
-	});
-
-	it("passes userId directly to getRateLimitIdentifier without calling getSession", async () => {
-		await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(mockGetSession).not.toHaveBeenCalled();
-		expect(mockGetRateLimitIdentifier).toHaveBeenCalledWith(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_IP);
-	});
-
-	it("passes sessionId directly to getRateLimitIdentifier without calling cart session helpers", async () => {
-		await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(mockGetCartSessionId).not.toHaveBeenCalled();
-		expect(mockGetOrCreateCartSessionId).not.toHaveBeenCalled();
-	});
-
-	it("returns userId and sessionId in context on success", async () => {
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.context.userId).toBe(MOCK_USER_ID);
-			expect(result.context.sessionId).toBe(MOCK_SESSION_ID);
-			expect(result.context.ipAddress).toBe(MOCK_IP);
-		}
-	});
-
-	it("calls checkRateLimit with the computed identifier, limitConfig and ipAddress", async () => {
-		await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(mockCheckRateLimit).toHaveBeenCalledWith(MOCK_RATE_LIMIT_ID, MOCK_LIMIT_CONFIG, MOCK_IP);
-	});
-
-	it("returns success: false when rate limit is exceeded", async () => {
-		mockCheckRateLimit.mockResolvedValue(makeRateLimitFailure());
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(false);
-	});
-
-	it("returns errorState with ActionStatus.ERROR when rate limit is exceeded", async () => {
-		mockCheckRateLimit.mockResolvedValue(makeRateLimitFailure());
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.errorState.status).toBe(ActionStatus.ERROR);
-		}
-	});
-
-	it("uses the error message from checkRateLimit when provided", async () => {
-		const customError = "Trop de tentatives de fusion. Attendez 5 minutes.";
-		mockCheckRateLimit.mockResolvedValue(makeRateLimitFailure(customError));
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.errorState.message).toBe(customError);
-		}
-	});
-
-	it("uses the default fallback message when checkRateLimit error is undefined", async () => {
-		mockCheckRateLimit.mockResolvedValue({
-			...makeRateLimitFailure(),
-			error: undefined,
-		});
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.errorState.message).toBe("Trop de requêtes. Veuillez réessayer plus tard.");
-		}
-	});
-
-	it("resolves ipAddress from headers via getClientIp", async () => {
-		const specificIp = "10.0.0.1";
-		mockGetClientIp.mockResolvedValue(specificIp);
-		mockGetRateLimitIdentifier.mockReturnValue(`ip:${specificIp}`);
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(mockHeaders).toHaveBeenCalledOnce();
-		expect(mockGetClientIp).toHaveBeenCalledWith(MOCK_HEADERS);
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.context.ipAddress).toBe(specificIp);
-		}
-	});
-
-	it("handles null ipAddress (no IP headers present)", async () => {
-		mockGetClientIp.mockResolvedValue(null);
-		mockGetRateLimitIdentifier.mockReturnValue("anonymous");
-
-		const result = await checkMergeCartsRateLimit(MOCK_USER_ID, MOCK_SESSION_ID, MOCK_LIMIT_CONFIG);
-
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.context.ipAddress).toBeNull();
-		}
-	});
-});
+// La suite `checkMergeCartsRateLimit` est partie avec la fonction (audit wishlist
+// 2026-08-01) : son unique caller `merge-carts` a disparu avec l'espace client.

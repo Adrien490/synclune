@@ -58,7 +58,6 @@ export async function markAsDelivered(
 					orderNumber: true,
 					status: true,
 					fulfillmentStatus: true,
-					userId: true,
 				},
 			});
 
@@ -122,10 +121,7 @@ export async function markAsDelivered(
 			};
 		}
 
-		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
-		if (order.userId) {
-		}
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

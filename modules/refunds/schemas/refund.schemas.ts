@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -66,7 +67,7 @@ export const getRefundsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_REFUNDS_DEFAULT_PER_PAGE, GET_REFUNDS_MAX_RESULTS_PER_PAGE),
 	sortBy: refundSortBySchema,
-	search: z.string().max(255).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: refundFiltersSchema.optional(),
 });
 
@@ -93,10 +94,29 @@ export const createRefundSchema = z.object({
 	orderId: z.cuid2(),
 	reason: z.enum(RefundReason),
 	note: z.string().max(2000).optional(),
+	/**
+	 * ⚠️ Unicité des `orderItemId` — même invariant que les lignes de panier au
+	 * checkout (`checkout.schema.ts`), et pour la même raison : la boucle de
+	 * `create-refund.ts` calcule `availableQuantity` **ligne par ligne depuis la
+	 * DB**, sans voir les autres lignes de la même requête. Deux entrées portant le
+	 * même `orderItemId` à `quantity = availableQuantity` passaient donc chacune son
+	 * contrôle puis cumulaient leur montant, et seul le plafond global
+	 * `totalAmount > maxRefundable` pouvait les rattraper — ce qui n'arrive pas
+	 * quand l'article ne pèse qu'une fraction du total de la commande.
+	 *
+	 * Aucune contrainte DB ne s'y oppose non plus : `RefundItem` n'a pas de
+	 * `@@unique([refundId, orderItemId])`. `process-refund.ts` ré-agrège bien par
+	 * `orderItemId` avant l'appel Stripe (`ITEM_QUANTITY_EXCEEDS`), mais à ce stade
+	 * un `Refund` PENDING a déjà été créé pour rien.
+	 */
 	items: z
 		.array(createRefundItemSchema)
 		.min(1, "Au moins un article doit être sélectionné")
-		.max(100, "Maximum 100 articles par remboursement"),
+		.max(100, "Maximum 100 articles par remboursement")
+		.refine(
+			(items) => new Set(items.map((item) => item.orderItemId)).size === items.length,
+			"Un article apparaît en double dans le remboursement.",
+		),
 	// ORD-REFUND-AUDIT-003 : confirmation explicite admin pour refund sur
 	// commande déjà annulée (OrderStatus.CANCELLED). Évite refund accidentel
 	// après cancel-order. UI affiche checkbox conditionnelle.
@@ -157,18 +177,4 @@ export const retryFailedRefundSchema = z.object({
  */
 export const getOrderForRefundSchema = z.object({
 	orderId: z.cuid2(),
-});
-
-// ============================================================================
-// CLIENT RETURN REQUEST SCHEMA
-// ============================================================================
-
-/**
- * Schema for client-side return requests (14-day withdrawal right)
- * Limited to customer-accessible reasons only
- */
-export const requestReturnSchema = z.object({
-	orderId: z.cuid2(),
-	reason: z.enum([RefundReason.CUSTOMER_REQUEST, RefundReason.DEFECTIVE, RefundReason.WRONG_ITEM]),
-	message: z.string().max(500).optional(),
 });

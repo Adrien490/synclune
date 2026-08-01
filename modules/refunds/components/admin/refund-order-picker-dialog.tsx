@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronRight, Loader2, SearchX } from "lucide-react";
+import { ChevronRight, SearchX } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -145,7 +146,7 @@ function RefundOrderPickerContent({ onSelect }: { onSelect: () => void }) {
 			>
 				{isLoading && results.length === 0 ? (
 					<div className="text-muted-foreground flex items-center justify-center gap-2 py-10 text-sm">
-						<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+						<Spinner presentational />
 						Recherche…
 					</div>
 				) : results.length === 0 ? (

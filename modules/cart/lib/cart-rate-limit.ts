@@ -125,42 +125,5 @@ export async function checkCartRateLimit(
 	};
 }
 
-/**
- * Version pour mergeCarts qui reçoit déjà userId et sessionId en paramètres.
- * Ne récupère pas la session (déjà vérifiée par l'appelant).
- *
- * @param userId - ID de l'utilisateur connecté
- * @param sessionId - SessionId du panier visiteur
- * @param limitConfig - Configuration du rate limiting
- * @returns CartRateLimitResult
- */
-export async function checkMergeCartsRateLimit(
-	userId: string,
-	sessionId: string,
-	limitConfig: RateLimitConfig,
-): Promise<CartRateLimitResult> {
-	const headersList = await headers();
-	const ipAddress = await getClientIp(headersList);
-
-	const rateLimitId = getRateLimitIdentifier(userId, sessionId, ipAddress);
-	const rateLimit = await checkRateLimit(rateLimitId, limitConfig, ipAddress);
-
-	if (!rateLimit.success) {
-		return {
-			success: false,
-			errorState: {
-				status: ActionStatus.ERROR,
-				message: rateLimit.error ?? "Trop de requêtes. Veuillez réessayer plus tard.",
-			},
-		};
-	}
-
-	return {
-		success: true,
-		context: {
-			userId,
-			sessionId,
-			ipAddress,
-		},
-	};
-}
+// `checkMergeCartsRateLimit` retiré (audit wishlist 2026-08-01) : son unique
+// caller `merge-carts` a disparu avec l'espace client (2026-07-31).

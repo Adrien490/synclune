@@ -65,6 +65,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: (path: string) => `https://synclune.fr${path}`,
 	getBaseUrl: mockGetBaseUrl,
 	ROUTES: mockROUTES,
 	EXTERNAL_URLS: {
@@ -74,39 +75,16 @@ vi.mock("@/shared/constants/urls", () => ({
 	},
 }));
 
-vi.mock("@/modules/orders/constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		HISTORY: (orderId: string) => `order-history-${orderId}`,
-	},
-	// CACHE-AUDIT-010 : miroir de l'implémentation réelle (cf.
-	// modules/orders/constants/cache.ts) pour vérifier que le chargeback perdu
-	// invalide bien les tags user-scopés + détail commande, pas une liste partielle.
-	getOrderInvalidationTags: (userId?: string, orderId?: string) => {
-		const tags = ["orders-list", "admin-badges", "admin-orders-list"];
-		if (userId) {
-			tags.push(
-				`orders-user-${userId}`,
-				`last-order-user-${userId}`,
-				`user-orders-count-${userId}`,
-			);
-		}
-		if (orderId) {
-			tags.push(
-				`order-history-${orderId}`,
-				`order-confirmation-${orderId}`,
-				`order-detail-${orderId}`,
-			);
-		}
-		return tags;
-	},
-}));
+// CACHE-AUDIT-010 : `@/modules/orders/constants/cache` est chargé POUR DE VRAI.
+// Il ne contient que des constantes et une fonction pure (aucun import de `next/cache`),
+// donc rien à mocker. Le miroir manuel qui vivait ici recopiait les 6 tags à la main et
+// ne bougeait pas quand la SSOT changeait : il aurait laissé passer l'absence de
+// `REFUNDS(orderId)` sur le chargeback perdu, que ce fichier est censé garder.
 
-vi.mock("@/shared/constants/cache-tags", () => ({
-	SHARED_CACHE_TAGS: {
-		ADMIN_BADGES: "admin-badges",
-	},
-}));
+// `@/shared/constants/cache-tags` chargé POUR DE VRAI : fichier de constantes pures.
+// Le mock partiel qui vivait ici n'exposait qu'`ADMIN_BADGES`, donc `ADMIN_ORDERS_LIST`
+// arrivait à `undefined` dans les tags assertés — l'assertion ci-dessous validait un
+// trou d'invalidation au lieu de le signaler.
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	HistorySource: { ADMIN: "ADMIN", WEBHOOK: "WEBHOOK", SYSTEM: "SYSTEM", CUSTOMER: "CUSTOMER" },
@@ -264,7 +242,19 @@ describe("handleDisputeCreated", () => {
 				},
 				{
 					type: "INVALIDATE_CACHE",
-					tags: ["orders-list", "order-history-order-1", "admin-badges"],
+					// L'ouverture de litige passe par `getOrderInvalidationTags` comme tout le
+					// reste : elle ne mute aucune colonne d'`Order` (audit trail seul), donc
+					// rien n'était réellement périmé avec l'ancienne liste manuelle
+					// `[LIST, HISTORY, ADMIN_BADGES]` — mais une liste écrite à la main dérive
+					// dès que la SSOT gagne un tag, et le garde-fou la refuse désormais.
+					tags: [
+						"orders-list",
+						"admin-badges",
+						"admin-orders-list",
+						"order-history-order-1",
+						"order-confirmation-order-1",
+						"order-detail-order-1",
+					],
 				},
 			],
 		});
@@ -497,21 +487,25 @@ describe("handleDisputeClosed", () => {
 		const result = await handleDisputeClosed(dispute);
 
 		const cacheTask = result?.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		// CACHE-AUDIT-010 : helper canonique (user-scopé + détail). Le tag NOTES a
-		// disparu avec les OrderNote de litige — l'issue vit dans HISTORY, que le
-		// helper couvre déjà.
+		// CACHE-AUDIT-010 : helper canonique. Le tag NOTES a disparu avec les OrderNote
+		// de litige — l'issue vit dans HISTORY, que le helper couvre déjà. Les trois
+		// tags user-scopés sont partis au retrait de l'espace client (2026-07-31).
+		//
+		// `order-refunds-order-1` : la branche `lost` matérialise le chargeback en
+		// `Refund` COMPLETED, donc l'onglet remboursements du détail commande et le
+		// formulaire `/remboursements/nouveau` doivent le voir. Poussé sur TOUTES les
+		// clôtures (ici `won`) — sur-invalider une entrée inchangée coûte moins qu'une
+		// branche de plus à tenir juste.
 		expect(cacheTask).toEqual({
 			type: "INVALIDATE_CACHE",
 			tags: [
 				"orders-list",
 				"admin-badges",
 				"admin-orders-list",
-				"orders-user-user-1",
-				"last-order-user-user-1",
-				"user-orders-count-user-1",
 				"order-history-order-1",
 				"order-confirmation-order-1",
 				"order-detail-order-1",
+				"order-refunds-order-1",
 			],
 		});
 	});

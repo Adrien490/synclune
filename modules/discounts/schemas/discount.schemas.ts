@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { DiscountType } from "@/app/generated/prisma/enums";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
@@ -62,7 +63,7 @@ export const getDiscountsSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_DISCOUNTS_DEFAULT_PER_PAGE, GET_DISCOUNTS_MAX_RESULTS_PER_PAGE),
 	sortBy: discountSortBySchema,
-	search: z.string().max(100).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: discountFiltersSchema.optional(),
 });
 
@@ -97,7 +98,18 @@ const baseDiscountSchema = z.object({
 		.int()
 		.positive("La valeur doit être positive")
 		.max(100_000_00, "La valeur ne peut pas dépasser 100 000€"),
-	minOrderAmount: z.number().int().nonnegative().optional().nullable(),
+	// `.positive()`, pas `.nonnegative()` : miroir du CHECK DB
+	// `Discount_minOrderAmount_positive` (`raw-guards.sql`), motivé au schéma Prisma
+	// par « 0 serait un code inutilisable créé par erreur ». Le schéma acceptait 0
+	// alors que l'input admin l'invitait (`min={0}`) et que `"0"` est truthy côté
+	// action — la saisie remontait donc en violation de contrainte Postgres, rendue
+	// à l'admin en erreur générique. « Pas de minimum » s'exprime par `null`.
+	minOrderAmount: z
+		.number()
+		.int()
+		.positive("Le montant minimum doit être supérieur à 0 (laisser vide pour aucun minimum)")
+		.optional()
+		.nullable(),
 	maxUsageCount: z.number().int().positive().optional().nullable(),
 	maxUsagePerUser: z.number().int().positive().optional().nullable(),
 	startsAt: z.coerce.date().optional().nullable(),

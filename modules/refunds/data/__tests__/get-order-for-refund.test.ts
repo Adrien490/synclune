@@ -32,12 +32,10 @@ vi.mock("../../constants/refund.constants", () => ({
 	GET_ORDER_FOR_REFUND_SELECT: { id: true, orderNumber: true, items: true },
 }));
 
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-}));
+// ⚠️ PAS de mock hand-written : ce test assert sur les tags posés par le fetcher, donc
+// un miroir manuel des constantes le rendrait aveugle à un tag ajouté à la SSOT — c'est
+// précisément le cas de `DETAIL(orderId)`, ajouté parce que ce fetcher lit
+// `status`/`paymentStatus`. On charge le vrai module.
 
 vi.mock("../../schemas/refund.schemas", () => ({
 	getOrderForRefundSchema: {
@@ -175,10 +173,19 @@ describe("getOrderForRefund", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
-	it("calls cacheTag with per-order refunds tag", async () => {
+	// `DETAIL(orderId)` en plus de `REFUNDS(orderId)` : ce fetcher lit
+	// `status`/`paymentStatus`/`fulfillmentStatus`, et `/remboursements/nouveau` s'en sert
+	// comme garde d'accès. Sans lui, aucun des mutateurs de statut (mark-as-paid,
+	// mark-as-shipped, transitions webhook…) n'invalidait cette entrée — le bouton
+	// « Rembourser » renvoyait alors l'admin sur un détail commande qui, lui, affichait
+	// déjà le nouveau statut.
+	it("calls cacheTag with the per-order refunds tag AND the order detail tag", async () => {
 		await getOrderForRefund({ orderId: "order-cuid-001" });
 
-		expect(mockCacheTag).toHaveBeenCalledWith("order-refunds-order-cuid-001");
+		expect(mockCacheTag).toHaveBeenCalledWith(
+			"order-refunds-order-cuid-001",
+			"order-detail-order-cuid-001",
+		);
 	});
 
 	it("returns null on DB error", async () => {

@@ -11,9 +11,8 @@ const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[
 
 /**
  * Valide qu'une chaîne respecte le format UUID v4 (canonique).
- * Exporté pour les callers externes au module cart (ex. auth hook merge).
  */
-export function isValidCartSessionId(value: string | null | undefined): value is string {
+function isValidCartSessionId(value: string | null | undefined): value is string {
 	return typeof value === "string" && UUID_V4_REGEX.test(value);
 }
 

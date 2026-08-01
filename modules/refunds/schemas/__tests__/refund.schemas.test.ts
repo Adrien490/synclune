@@ -59,7 +59,6 @@ import {
 	createRefundItemSchema,
 	approveRefundSchema,
 	rejectRefundSchema,
-	requestReturnSchema,
 } from "../refund.schemas";
 import { VALID_CUID } from "@/test/factories";
 
@@ -314,66 +313,6 @@ describe("rejectRefundSchema", () => {
 		const result = rejectRefundSchema.safeParse({
 			id: VALID_CUID,
 			reason: "a".repeat(501),
-		});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("requestReturnSchema", () => {
-	it("should accept valid customer return request", () => {
-		const result = requestReturnSchema.safeParse({
-			orderId: VALID_CUID,
-			reason: "CUSTOMER_REQUEST",
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept DEFECTIVE reason", () => {
-		const result = requestReturnSchema.safeParse({
-			orderId: VALID_CUID,
-			reason: "DEFECTIVE",
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept WRONG_ITEM reason", () => {
-		const result = requestReturnSchema.safeParse({
-			orderId: VALID_CUID,
-			reason: "WRONG_ITEM",
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject non-customer reasons (FRAUD, LOST_IN_TRANSIT, OTHER)", () => {
-		for (const reason of ["FRAUD", "LOST_IN_TRANSIT", "OTHER"]) {
-			const result = requestReturnSchema.safeParse({
-				orderId: VALID_CUID,
-				reason,
-			});
-
-			expect(result.success).toBe(false);
-		}
-	});
-
-	it("should accept optional message", () => {
-		const result = requestReturnSchema.safeParse({
-			orderId: VALID_CUID,
-			reason: "CUSTOMER_REQUEST",
-			message: "Je souhaite retourner cet article.",
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject message exceeding max length", () => {
-		const result = requestReturnSchema.safeParse({
-			orderId: VALID_CUID,
-			reason: "CUSTOMER_REQUEST",
-			message: "a".repeat(501),
 		});
 
 		expect(result.success).toBe(false);

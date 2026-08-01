@@ -13,7 +13,6 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
 import { getOrderInvalidationTags, ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
@@ -249,11 +248,13 @@ export async function handleDisputeCreated(
 				},
 				{
 					type: "INVALIDATE_CACHE",
-					tags: [
-						ORDERS_CACHE_TAGS.LIST,
-						ORDERS_CACHE_TAGS.HISTORY(order.id),
-						SHARED_CACHE_TAGS.ADMIN_BADGES,
-					],
+					// Helper canonique plutôt qu'une liste écrite à la main : elle omettait
+					// `ADMIN_ORDERS_LIST` et `DETAIL(orderId)`. L'ouverture de litige ne mute
+					// aucune colonne d'`Order` (audit trail seul), donc rien n'était réellement
+					// périmé — mais une liste manuelle à côté d'un helper SSOT dérive dès que
+					// le helper gagne un tag, et c'est cette forme-là que le garde-fou
+					// `order-status-invalidation` refuse désormais.
+					tags: getOrderInvalidationTags(order.id),
 				},
 			],
 		};
@@ -296,10 +297,9 @@ export async function handleDisputeClosed(
 				orderNumber: true,
 				paymentStatus: true,
 				total: true,
-				// CACHE-AUDIT-010 : requis pour invalider les tags user-scopés
-				// (USER_ORDERS/LAST_ORDER) quand un chargeback perdu
-				// mute paymentStatus → REFUNDED/PARTIALLY_REFUNDED.
-				userId: true,
+				// `userId` retiré : il ne servait qu'aux tags user-scopés
+				// (USER_ORDERS/LAST_ORDER), disparus avec l'espace client (2026-07-31).
+				// L'invalidation du chargeback perdu passe par `getOrderInvalidationTags`.
 			},
 		});
 
@@ -604,11 +604,21 @@ export async function handleDisputeClosed(
 		// consultable sur le détail commande (réduction du volume d'alertes).
 		// CACHE-AUDIT-010 : sur un chargeback perdu, `paymentStatus` passe
 		// REFUNDED/PARTIALLY_REFUNDED (cf. lostOutcome) → passer par le helper
-		// canonique pour couvrir le détail commande (DETAIL/CONFIRMATION/HISTORY)
-		// ET l'espace client user-scopé (USER_ORDERS/LAST_ORDER).
+		// canonique pour couvrir le détail commande (DETAIL/CONFIRMATION/HISTORY).
+		//
+		// `REFUNDS(order.id)` en plus : la branche `lostOutcome` matérialise le
+		// chargeback en `Refund` COMPLETED. C'était le seul chemin créateur de `Refund`
+		// à ne pas pousser ce tag — le handler jumeau `charge.refunded` le compose de la
+		// même façon (`refund-handlers.ts`). Sans lui, l'onglet remboursements du détail
+		// commande et le formulaire `/remboursements/nouveau` ignoraient la reprise de
+		// fonds : l'admin voyait une commande encore remboursable alors que Stripe avait
+		// déjà repris l'argent — exactement le scénario que l'alerte « DOUBLE REPRISE DE
+		// FONDS » ci-dessus cherche à éviter. Poussé inconditionnellement (et pas
+		// seulement sur `lostOutcome`) : une clôture sans débit n'invalide alors qu'une
+		// entrée inchangée, ce qui coûte moins qu'une branche de plus à tenir juste.
 		tasks.push({
 			type: "INVALIDATE_CACHE",
-			tags: getOrderInvalidationTags(order.userId ?? undefined, order.id),
+			tags: [...getOrderInvalidationTags(order.id), ORDERS_CACHE_TAGS.REFUNDS(order.id)],
 		});
 
 		return { success: true, tasks };

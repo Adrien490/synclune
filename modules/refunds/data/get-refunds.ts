@@ -51,6 +51,12 @@ export async function getRefunds(params: GetRefundsParams): Promise<GetRefundsRe
 
 /**
  * Récupère les refunds depuis la DB
+ *
+ * Tag `refunds-list` seul, ALORS QUE le select joint des colonnes Order
+ * (orderNumber, customerName/Email, total) : une correction du client via
+ * /admin/ventes/commandes/[id]/client n'invalide pas cette entrée. Assumé
+ * (audit 2026-08-01, P3) — auto-guérison ≤ 2 min (profil `user`), aucune donnée
+ * financière, et taguer chaque commande listée coûterait un tag par ligne.
  */
 async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn> {
 	"use cache";

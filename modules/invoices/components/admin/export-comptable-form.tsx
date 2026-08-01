@@ -1,16 +1,10 @@
 "use client";
 
-import { Download, LoaderCircle } from "lucide-react";
+import { Download } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
+import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
-import { Label } from "@/shared/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
 import { toast } from "@/shared/utils/toast";
 
 /**
@@ -25,6 +19,12 @@ function getAvailableYears(): number[] {
 
 type InvoiceStatusFilter = "all" | "sent" | "archived";
 
+const INVOICE_STATUS_OPTIONS: { value: InvoiceStatusFilter; label: string }[] = [
+	{ value: "all", label: "Toutes" },
+	{ value: "sent", label: "Émises (GENERATED)" },
+	{ value: "archived", label: "Annulées avoir (VOIDED)" },
+];
+
 /**
  * Export comptable du livre de recettes (Art. 286 CGI — filtre `paidAt`).
  *
@@ -36,13 +36,19 @@ type InvoiceStatusFilter = "all" | "sent" | "archived";
  */
 export function ExportComptableForm() {
 	const availableYears = getAvailableYears();
-	const [year, setYear] = useState(String(availableYears[0]));
-	const [invoiceStatus, setInvoiceStatus] = useState<InvoiceStatusFilter>("sent");
 	const [isExporting, setIsExporting] = useState(false);
+
+	const form = useAppForm({
+		defaultValues: {
+			year: String(availableYears[0]),
+			invoiceStatus: "sent" as InvoiceStatusFilter,
+		},
+	});
 
 	async function handleExport() {
 		if (isExporting) return;
 		setIsExporting(true);
+		const { year, invoiceStatus } = form.state.values;
 		const params = new URLSearchParams({
 			periodType: "year",
 			year,
@@ -85,35 +91,21 @@ export function ExportComptableForm() {
 		<div className="border-border space-y-4 rounded-md border p-4">
 			<div className="grid gap-4 sm:grid-cols-3">
 				<div className="space-y-2">
-					<Label htmlFor="export-comptable-year">Année</Label>
-					<Select value={year} onValueChange={setYear}>
-						<SelectTrigger id="export-comptable-year" aria-label="Année d'export">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							{availableYears.map((y) => (
-								<SelectItem key={y} value={String(y)}>
-									{y}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+					<form.AppField name="year">
+						{(field) => (
+							<field.SelectField
+								label="Année"
+								options={availableYears.map((y) => ({ value: String(y), label: String(y) }))}
+							/>
+						)}
+					</form.AppField>
 				</div>
 				<div className="space-y-2">
-					<Label htmlFor="export-comptable-status">Statut facture</Label>
-					<Select
-						value={invoiceStatus}
-						onValueChange={(v) => setInvoiceStatus(v as InvoiceStatusFilter)}
-					>
-						<SelectTrigger id="export-comptable-status" aria-label="Filtre statut facture">
-							<SelectValue />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="all">Toutes</SelectItem>
-							<SelectItem value="sent">Émises (GENERATED)</SelectItem>
-							<SelectItem value="archived">Annulées avoir (VOIDED)</SelectItem>
-						</SelectContent>
-					</Select>
+					<form.AppField name="invoiceStatus">
+						{(field) => (
+							<field.SelectField label="Statut facture" options={INVOICE_STATUS_OPTIONS} />
+						)}
+					</form.AppField>
 				</div>
 				<div className="flex items-end">
 					<Button
@@ -124,7 +116,7 @@ export function ExportComptableForm() {
 						className="w-full"
 					>
 						{isExporting ? (
-							<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+							<Spinner presentational />
 						) : (
 							<Download className="size-4" aria-hidden="true" />
 						)}

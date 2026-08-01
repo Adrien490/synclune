@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleX, CreditCard, Eye, Trash2 } from "lucide-react";
+import { Check, CircleX, CreditCard, Eye, RotateCcw, Trash2 } from "lucide-react";
 
 import { RefundStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -10,6 +10,7 @@ import { APPROVE_REFUND_DIALOG_ID } from "../components/admin/approve-refund-ale
 import { CANCEL_REFUND_DIALOG_ID } from "../components/admin/cancel-refund-alert-dialog";
 import { PROCESS_REFUND_DIALOG_ID } from "../components/admin/process-refund-alert-dialog";
 import { REJECT_REFUND_DIALOG_ID } from "../components/admin/reject-refund-alert-dialog";
+import { RETRY_REFUND_DIALOG_ID } from "../components/admin/retry-refund-alert-dialog";
 
 interface UseRefundActionsParams {
 	refund: {
@@ -18,6 +19,8 @@ interface UseRefundActionsParams {
 		amount: number;
 		orderId: string;
 		orderNumber: string;
+		/** Affiché dans le dialog de relance d'un refund FAILED. */
+		failureReason?: string | null;
 	};
 }
 
@@ -28,12 +31,17 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 	const processDialog = useAlertDialog(PROCESS_REFUND_DIALOG_ID);
 	const rejectDialog = useAlertDialog(REJECT_REFUND_DIALOG_ID);
 	const cancelDialog = useAlertDialog(CANCEL_REFUND_DIALOG_ID);
+	const retryDialog = useAlertDialog(RETRY_REFUND_DIALOG_ID);
 
 	const canApprove = refund.status === RefundStatus.PENDING;
 	const canProcess = refund.status === RefundStatus.APPROVED;
 	const canReject = refund.status === RefundStatus.PENDING;
 	const canCancel =
 		refund.status === RefundStatus.PENDING || refund.status === RefundStatus.APPROVED;
+	// P2 (audit 2026-08-01) : retryFailedRefund existait (FAILED → APPROVED +
+	// rotation attemptCount + adoption IDEM-REFUND-001) mais n'avait AUCUN point
+	// d'entrée UI — l'admin recréait un refund complet, second Refund orphelin.
+	const canRetry = refund.status === RefundStatus.FAILED;
 
 	const payload = {
 		refundId: refund.id,
@@ -77,6 +85,14 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 					hidden: !canProcess,
 					closesMenu: false,
 					onSelect: () => processDialog.open(payload),
+				},
+				{
+					key: "retry",
+					label: "Relancer le remboursement",
+					icon: RotateCcw,
+					hidden: !canRetry,
+					closesMenu: false,
+					onSelect: () => retryDialog.open({ ...payload, failureReason: refund.failureReason }),
 				},
 			],
 		},

@@ -3,15 +3,8 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { PaymentStatus } from "@/app/generated/prisma/browser";
-import {
-	CircleCheck,
-	CreditCard,
-	Download,
-	Ellipsis,
-	FileText,
-	Loader2,
-	Truck,
-} from "lucide-react";
+import { CircleCheck, CreditCard, Download, Ellipsis, FileText, Truck } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useActionState, useState } from "react";
 import { exportSingleOrder } from "@/modules/orders/actions/export-single-order";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -100,7 +93,10 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	};
 
 	const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
-	const canDownloadInvoice = order.paymentStatus === PaymentStatus.PAID;
+	// Miroir de la garde route : la facture d'une commande ENCAISSÉE reste
+	// téléchargeable après remboursement (partiel : facture valide ; total :
+	// facture VOIDED servie avec bandeau « FACTURE ANNULÉE »).
+	const canDownloadInvoice = order.paidAt !== null || order.paymentStatus === PaymentStatus.PAID;
 	const downloadInvoiceItem: ActionMenuItem = {
 		key: "download-invoice",
 		label: isDownloadingInvoice ? "Téléchargement…" : "Télécharger la facture",
@@ -318,7 +314,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						className="min-h-11 flex-1 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 md:flex-none"
 					>
 						{isDownloadingInvoice ? (
-							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+							<Spinner presentational />
 						) : (
 							<FileText className="size-4" aria-hidden="true" />
 						)}
@@ -336,7 +332,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 							className="min-h-11 min-w-11 touch-manipulation motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.98] sm:min-h-9 sm:min-w-9"
 						>
 							{isExporting ? (
-								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								<Spinner presentational />
 							) : (
 								<Ellipsis className="size-4" aria-hidden="true" />
 							)}

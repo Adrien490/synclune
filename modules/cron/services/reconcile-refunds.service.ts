@@ -1,15 +1,6 @@
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import * as Sentry from "@sentry/nextjs";
-import {
-	HistorySource,
-	InvoiceStatus,
-	OrderAction,
-	PaymentStatus,
-	RefundStatus,
-	StockMovementSource,
-} from "@/app/generated/prisma/client";
-import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
-import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { getStripeClient } from "@/shared/lib/stripe";
@@ -24,15 +15,10 @@ import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { REFUNDS_CACHE_TAGS } from "@/modules/refunds/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import { captureRefundError } from "@/modules/refunds/utils/capture-refund-error";
 import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
-import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
+import { finalizeRefundCompletion } from "@/modules/refunds/services/finalize-refund.service";
 import { issueCreditNoteForRefund } from "@/modules/refunds/services/issue-credit-note.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
-import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
 import {
 	AUTO_REFUND_NOTE_PREFIX,
 	initiateAutomaticRefund,
@@ -109,18 +95,13 @@ export async function reconcileRefunds(): Promise<CronResult> {
 			stripeRefundId: true,
 			amount: true,
 			orderId: true,
-			// ORD-STRIPE-007 : reason + customerEmail/Name nécessaires pour
-			// envoyer le mail confirmation client après finalisation DLQ.
-			reason: true,
-			attemptCount: true,
+			// La finalisation (restock, paymentStatus, avoir, email au snapshot
+			// customerEmail) vit dans `finalizeRefundCompletion`, qui se self-load —
+			// ce select ne porte plus que le nécessaire au pilotage de la passe.
 			order: {
 				select: {
 					id: true,
 					orderNumber: true,
-					total: true,
-					userId: true,
-					customerEmail: true,
-					customerName: true,
 				},
 			},
 		},
@@ -184,152 +165,23 @@ export async function reconcileRefunds(): Promise<CronResult> {
 			});
 
 			if (stripeRefund.status === "succeeded") {
-				const finalized = await finalizeRefund({
+				// P1-C (audit 2026-08-01) : toute la finalisation (claim COMPLETED,
+				// restock + ledger, paymentStatus, audit, avoir, voidInvoice fallback,
+				// email) vit dans le service PARTAGÉ avec le webhook refund.updated —
+				// les deux chemins sont le même code. Le service n'invalide rien :
+				// on collecte ses tags et on sort en `revalidateTagsInBackground` en
+				// fin de passe (cron — `updateTag` y throw, E872).
+				const outcome = await finalizeRefundCompletion({
 					refundId: refund.id,
-					orderId: refund.orderId,
-					orderTotal: refund.order.total,
-					refundAmount: refund.amount,
+					source: HistorySource.SYSTEM,
+					authorName: RECONCILE_AUDIT_AUTHOR,
+					auditNote: "Refund completed via Stripe DLQ reconciliation",
+					auditMetadata: { reason: "stripe_dlq_reconcile" },
 				});
-				if (finalized.finalized) {
+				if (outcome.finalized) {
 					processed++;
-					tagsToInvalidate.add(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
-					tagsToInvalidate.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
-					// CACHE-AUDIT-010 : finalizeRefund mute Order.paymentStatus — passer
-					// par le helper canonique pour couvrir DETAIL/HISTORY/CONFIRMATION(orderId)
-					// + LAST_ORDER/USER_ORDERS_COUNT, sinon la page détail
-					// commande + l'historique restent stale après le rattrapage DLQ.
-					for (const tag of getOrderInvalidationTags(
-						refund.order.userId ?? undefined,
-						refund.orderId,
-					)) {
+					for (const tag of outcome.tags) {
 						tagsToInvalidate.add(tag);
-					}
-
-					// P2-1 (audit refunds 2026-05-30) : invalidation caches inventaire /
-					// vitrine pour les SKU restockés par
-					// finalizeRefund (parité process-refund Step 3). Le cron DLQ est le
-					// finaliseur réel des refunds admin dont le SAGA a échoué, donc c'est
-					// lui qui restaure réellement l'inventory.
-					if (finalized.restockedSkuIds.length > 0) {
-						tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-						for (const skuId of finalized.restockedSkuIds) {
-							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-						}
-						const restockedSkus = await prisma.productSku.findMany({
-							where: { id: { in: finalized.restockedSkuIds } },
-							select: { productId: true, product: { select: { slug: true } } },
-						});
-						for (const productId of new Set(restockedSkus.map((sku) => sku.productId))) {
-							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKUS(productId));
-						}
-						for (const slug of new Set(restockedSkus.map((sku) => sku.product.slug))) {
-							tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.DETAIL(slug));
-						}
-					}
-
-					// EINV-CREDIT-001 : rattrapage avoir si l'admin path a abort
-					// avant l'émission. Idempotent (noop si creditNoteNumber set).
-					const creditNoteResult = await issueCreditNoteForRefund({
-						refundId: refund.id,
-						source: HistorySource.SYSTEM,
-						authorName: RECONCILE_AUDIT_AUTHOR,
-					});
-					if (creditNoteResult.kind === "failed") {
-						logger.warn(
-							`reconcile-refunds — credit note emission failed for refund ${refund.id}: ${creditNoteResult.error}`,
-							{ cronJob: "reconcile-refunds", refundId: refund.id },
-						);
-					}
-
-					// P2-2 (audit refunds 2026-05-30) : refund TOTAL finalisé par le cron
-					// → voidInvoice fallback (idempotent). issueCreditNoteForRefund noop
-					// sur un full refund (defer voidInvoice, EINV-SEQ-001). Sans ce
-					// fallback, l'avoir d'annulation (Order.creditNoteNumber) dépend
-					// uniquement du webhook charge.refunded — perdu en cas de double
-					// panne → facture stale (Art. 272-I CGI).
-					if (finalized.isFullyRefunded) {
-						const invoiceState = await prisma.order.findUnique({
-							where: { id: refund.orderId },
-							select: { invoiceStatus: true, invoiceNumber: true },
-						});
-						if (
-							invoiceState?.invoiceStatus === InvoiceStatus.GENERATED &&
-							invoiceState.invoiceNumber
-						) {
-							const voided = await voidInvoice({
-								orderId: refund.orderId,
-								authorId: SYSTEM_AUTHOR_ID,
-								authorName: RECONCILE_AUDIT_AUTHOR,
-								source: HistorySource.SYSTEM,
-								reason: "Avoir émis suite à remboursement total (réconciliation DLQ)",
-							});
-							if (voided.kind === "failed") {
-								Sentry.withScope((scope) => {
-									scope.setLevel("error");
-									scope.setTag("invoicing", "void-invoice-failed");
-									scope.setTag("source", "reconcile-refunds");
-									scope.setFingerprint(["void-invoice", "max-retries", refund.orderId]);
-									scope.setContext("order", {
-										orderId: refund.orderId,
-										orderNumber,
-									});
-									Sentry.captureMessage(
-										"voidInvoice failed during DLQ reconcile (full refund) — facture stale",
-										"error",
-									);
-								});
-							}
-						}
-					}
-
-					// ORD-STRIPE-005 : émetteur centralisé. Pose
-					// `Refund.confirmationEmailSentAt` atomiquement — si admin SAGA
-					// ou webhook `charge.refunded` a déjà envoyé, on skip silencieusement.
-					if (refund.order.customerEmail) {
-						const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.orderId));
-						try {
-							// Re-fetch post-émission : l'avoir (issueCreditNoteForRefund /
-							// voidInvoice ci-dessus) vient d'être écrit — l'email doit
-							// porter les numéros de pièces comme le path admin.
-							const refundFacts = await prisma.refund.findUnique({
-								where: { id: refund.id },
-								select: {
-									creditNoteNumber: true,
-									order: { select: { invoiceNumber: true, creditNoteNumber: true } },
-								},
-							});
-							await sendRefundConfirmationOnce({
-								refundId: refund.id,
-								to: refund.order.customerEmail,
-								orderNumber,
-								customerName: refund.order.customerName || "Client",
-								refundAmount: refund.amount,
-								reason: refund.reason,
-								orderDetailsUrl,
-								invoiceNumber: refundFacts?.order.invoiceNumber ?? null,
-								creditNoteNumber:
-									refundFacts?.creditNoteNumber ?? refundFacts?.order.creditNoteNumber ?? null,
-							});
-						} catch (emailError) {
-							logger.error(
-								"Failed to send refund confirmation email after DLQ reconcile",
-								emailError,
-								{
-									cronJob: "reconcile-refunds",
-									refundId: refund.id,
-									orderNumber,
-								},
-							);
-							// Non-bloquant : refund finalisé en DB, alerte admin
-							// via Sentry mais cron continue.
-							captureRefundError(emailError, {
-								action: "reconcile-refunds-email",
-								refundId: refund.id,
-								stripeRefundId: refund.stripeRefundId,
-								orderId: refund.orderId,
-								orderNumber,
-							});
-						}
 					}
 				} else {
 					skipped++;
@@ -396,6 +248,15 @@ export async function reconcileRefunds(): Promise<CronResult> {
 	errored += retryStats.errored;
 	skipped += retryStats.skipped;
 
+	// P1-C (audit 2026-08-01) — filet avoirs : refunds COMPLETED sans
+	// creditNoteNumber, que la phase 1 ne revoit jamais (`processedAt: null`).
+	const backfillStats = await backfillMissingCreditNotes({ minAge, maxAge, deadline });
+	processed += backfillStats.issued;
+	errored += backfillStats.errored;
+	for (const tag of backfillStats.tags) {
+		tagsToInvalidate.add(tag);
+	}
+
 	// OVERBILL-RESOLVE-01 : auto-résolution de la sur-facturation. Reprend la
 	// moitié « résolution » de l'ex-cron alert-overbilled-orders (supprimé au
 	// right-sizing) — qui était le SEUL writer de Order.overbillingResolvedAt.
@@ -415,9 +276,7 @@ export async function reconcileRefunds(): Promise<CronResult> {
 		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
-		for (const tag of tagsToInvalidate) {
-			updateTag(tag);
-		}
+		revalidateTagsInBackground(tagsToInvalidate);
 	}
 
 	logger.info("Reconciliation completed", {
@@ -510,7 +369,7 @@ async function reconcileOverbilledOrders(): Promise<{
 				});
 				if (count > 0) {
 					resolved++;
-					for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+					for (const tag of getOrderInvalidationTags(order.id)) {
 						tags.add(tag);
 					}
 					logger.info(`Overbilling auto-resolved on order ${order.orderNumber}`, {
@@ -676,173 +535,77 @@ async function retryStuckAutoRefundCreations(params: {
 	return { retried, errored, skipped };
 }
 
-interface FinalizeRefundResult {
-	/** false si le refund n'était plus APPROVED (race webhook / admin). */
-	finalized: boolean;
-	/** true si cette finalisation rend la commande totalement remboursée. */
-	isFullyRefunded: boolean;
-	/** SKU dont l'inventory a réellement été incrémenté (restock=true + SKU vivant). */
-	restockedSkuIds: string[];
-}
-
-const FINALIZE_NOOP: FinalizeRefundResult = {
-	finalized: false,
-	isFullyRefunded: false,
-	restockedSkuIds: [],
-};
-
 /**
- * Finalise un refund APPROVED → COMPLETED dans une transaction atomique :
- * - update Refund (status, processedAt) avec guard TOCTOU
- * - restocke l'inventory des RefundItem `restock=true` (P2-1, parité
- *   process-refund Step 3) — le cron DLQ est le finaliseur réel des refunds
- *   admin dont le SAGA a échoué, donc sans ça l'inventory n'est jamais restauré
- * - recalcule le paymentStatus de l'order
- *
- * Retourne `finalized: false` si le refund n'était plus APPROVED (changement
- * d'état concurrent par webhook / action admin).
+ * P1-C (audit « Admin commandes » 2026-08-01) — filet avoirs : refunds COMPLETED
+ * sans `creditNoteNumber`. Deux origines possibles : finalisation historique par
+ * l'ancien chemin webhook maigre (status+processedAt sans avoir), ou échec
+ * best-effort d'`issueCreditNoteForRefund` jamais retenté une fois `processedAt`
+ * posé (la phase 1 exige `processedAt: null`). Idempotent : le service noop si
+ * l'avoir est déjà émis, et noop sur un full-refund (l'avoir canonique vient de
+ * voidInvoice, couvert par `reconcile-voided-invoices`) — ces derniers restent
+ * candidats à chaque run de la fenêtre, à coût d'un noop.
  */
-async function finalizeRefund(params: {
-	refundId: string;
-	orderId: string;
-	orderTotal: number;
-	refundAmount: number;
-}): Promise<FinalizeRefundResult> {
-	const { refundId, orderId, orderTotal, refundAmount } = params;
+async function backfillMissingCreditNotes(params: {
+	minAge: Date;
+	maxAge: Date;
+	deadline: number;
+}): Promise<{ issued: number; errored: number; tags: string[] }> {
+	const { minAge, maxAge, deadline } = params;
 
-	return prisma.$transaction(async (tx) => {
-		const updated = await tx.refund.updateMany({
-			where: { id: refundId, status: RefundStatus.APPROVED },
-			data: { status: RefundStatus.COMPLETED, processedAt: new Date() },
-		});
-		if (updated.count === 0) {
-			// Garde belt-and-suspenders : canTransition est déjà couvert par le
-			// guard `status: APPROVED`, mais on logue le diagnostic.
-			const current = await tx.refund.findUnique({
-				where: { id: refundId },
-				select: { status: true },
-			});
-			if (current && !canTransition(current.status, RefundStatus.COMPLETED)) {
-				logger.warn("Refund cannot transition to COMPLETED — concurrent state change", {
-					cronJob: "reconcile-refunds",
-					refundId,
-					currentStatus: current.status,
-				});
-			}
-			return FINALIZE_NOOP;
-		}
-
-		// P2-1 : restock inventory pour les articles `restock=true`. Idempotent :
-		// seul le chemin qui gagne le guard `status: APPROVED` ci-dessus exécute
-		// ce bloc (process-refund Step 3 et ce cron sont mutuellement exclusifs).
-		// Coalesce par skuId (parité process-refund). Un SKU supprimé entre la
-		// création du refund et la réconciliation est skippé silencieusement.
-		const refundItems = await tx.refundItem.findMany({
-			where: { refundId, restock: true },
-			select: { quantity: true, orderItem: { select: { skuId: true } } },
-		});
-		const restockBySkuId = new Map<string, number>();
-		for (const ri of refundItems) {
-			const skuId = ri.orderItem.skuId;
-			if (skuId) {
-				restockBySkuId.set(skuId, (restockBySkuId.get(skuId) ?? 0) + ri.quantity);
-			}
-		}
-		const restockedSkuIds: string[] = [];
-		if (restockBySkuId.size > 0) {
-			// STOCK-LEDGER-001 : `UPDATE … RETURNING` remplace le couple
-			// findMany-puis-update. Deux gains : le journal `StockMovement` obtient un
-			// `previousInventory` lu AU MOMENT de l'écriture (le pré-SELECT laissait une
-			// fenêtre READ COMMITTED où un writer concurrent rendait la valeur
-			// consignée fausse), et le gate 0→N de la notif back-in-stock se calcule sur
-			// la même vérité. Une requête de moins par SKU, aussi.
-			// P1-1 : état AVANT crédit — discriminant de `shouldReactivateAfterRestock`.
-			// On ne réactive que ce que la VENTE a désactivé (`inventory === 0`), jamais
-			// un retrait manuel de l'admin. Sans ça, ce rattrapage recréditait le stock
-			// en laissant le SKU invisible en vitrine, et la notif back-in-stock émise
-			// juste en dessous pointait sur une PDP en 404.
-			const skusBefore = await tx.productSku.findMany({
-				where: { id: { in: [...restockBySkuId.keys()] } },
-				select: { id: true, isActive: true, inventory: true },
-			});
-			const beforeById = new Map(skusBefore.map((s) => [s.id, s]));
-
-			for (const [skuId, qty] of restockBySkuId) {
-				const reactivate = shouldReactivateAfterRestock(beforeById.get(skuId));
-
-				const updated = await tx.$queryRaw<Array<{ inventory: number; productId: string }>>`
-					UPDATE "ProductSku"
-					SET "inventory" = "inventory" + ${qty},
-					    "isActive" = CASE WHEN ${reactivate} THEN true ELSE "isActive" END,
-					    "updatedAt" = NOW()
-					WHERE "id" = ${skuId}
-					RETURNING "inventory", "productId"
-				`;
-
-				const row = updated[0];
-				if (!row) continue; // SKU supprimé entre create et reconcile
-
-				const previousInventory = row.inventory - qty;
-				restockedSkuIds.push(skuId);
-				await recordStockMovementTx(tx, {
-					skuId,
-					productId: row.productId,
-					previousInventory,
-					newInventory: row.inventory,
-					source: StockMovementSource.SYSTEM,
-					reason: `Réconciliation remboursement ${refundId}`,
-				});
-			}
-		}
-
-		// Recalcule total COMPLETED après cette finalisation
-		const completedAggregate = await tx.refund.aggregate({
-			where: { orderId, status: RefundStatus.COMPLETED },
-			_sum: { amount: true },
-		});
-		const totalRefunded = completedAggregate._sum.amount ?? refundAmount;
-		const isFullyRefunded = totalRefunded >= orderTotal;
-
-		let newPaymentStatus: PaymentStatus | undefined;
-		if (isFullyRefunded) {
-			newPaymentStatus = PaymentStatus.REFUNDED;
-		} else if (totalRefunded > 0) {
-			newPaymentStatus = PaymentStatus.PARTIALLY_REFUNDED;
-		}
-
-		if (newPaymentStatus) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: newPaymentStatus },
-			});
-		}
-
-		// Audit trail : conformité L123-22 + auditabilité du chemin DLQ. Sans
-		// cette ligne, un refund finalisé via cron n'a aucune trace dans
-		// OrderHistory contrairement aux refunds finalisés par webhook normal
-		// ou action admin (drift invisible post-prod, impossible à expliquer
-		// à un audit TVA).
-		await createOrderAuditTx(tx, {
-			orderId,
-			action: OrderAction.REFUND_COMPLETED,
-			source: HistorySource.SYSTEM,
-			authorName: RECONCILE_AUDIT_AUTHOR,
-			newPaymentStatus,
-			note: "Refund completed via Stripe DLQ reconciliation",
-			metadata: {
-				refundId,
-				refundAmount,
-				totalRefunded,
-				orderTotal,
-				restockedSkuCount: restockedSkuIds.length,
-				reason: "stripe_dlq_reconcile",
-			},
-		});
-
-		return {
-			finalized: true,
-			isFullyRefunded,
-			restockedSkuIds,
-		};
+	const candidates = await prisma.refund.findMany({
+		where: {
+			status: RefundStatus.COMPLETED,
+			creditNoteNumber: null,
+			processedAt: { gte: maxAge, lt: minAge },
+			order: { invoiceNumber: { not: null } },
+			...notDeleted,
+		},
+		select: { id: true, orderId: true, order: { select: { orderNumber: true } } },
+		take: BATCH_SIZE_MEDIUM,
+		orderBy: { processedAt: "asc" },
 	});
+
+	if (candidates.length === 0) return { issued: 0, errored: 0, tags: [] };
+
+	let issued = 0;
+	let errored = 0;
+	const tags = new Set<string>();
+
+	for (const refund of candidates) {
+		if (Date.now() > deadline) {
+			logger.warn("Approaching timeout, stopping credit-note backfill early", {
+				cronJob: "reconcile-refunds",
+			});
+			break;
+		}
+		try {
+			const result = await issueCreditNoteForRefund({
+				refundId: refund.id,
+				source: HistorySource.SYSTEM,
+				authorName: RECONCILE_AUDIT_AUTHOR,
+			});
+			if (result.kind === "issued") {
+				issued++;
+				tags.add(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
+				tags.add(ORDERS_CACHE_TAGS.REFUNDS(refund.orderId));
+				logger.info(`Credit note backfilled for refund ${refund.id}`, {
+					cronJob: "reconcile-refunds",
+					refundId: refund.id,
+					orderNumber: refund.order.orderNumber,
+				});
+			} else if (result.kind === "failed") {
+				errored++;
+			}
+		} catch (error) {
+			errored++;
+			captureRefundError(error, {
+				action: "reconcile-refunds-credit-note-backfill",
+				refundId: refund.id,
+				orderId: refund.orderId,
+				orderNumber: refund.order.orderNumber,
+			});
+		}
+	}
+
+	return { issued, errored, tags: [...tags] };
 }

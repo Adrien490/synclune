@@ -179,27 +179,6 @@ function createMockUser(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
-// ADDRESSES
-// ============================================================================
-
-function createMockAddress(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "addr_cm1234567890abcde",
-		userId: VALID_USER_ID,
-		firstName: "Marie",
-		lastName: "Dupont",
-		address1: "12 Rue de la Paix",
-		address2: null,
-		postalCode: "75001",
-		city: "Paris",
-		country: "FR",
-		phone: "+33612345678",
-		isDefault: false,
-		...overrides,
-	};
-}
-
-// ============================================================================
 // CARTS
 // ============================================================================
 
@@ -380,7 +359,6 @@ function createMockWishlist(overrides: Record<string, unknown> = {}) {
 		id: "wl_cm1234567890abcde",
 		userId: VALID_USER_ID,
 		sessionId: null,
-		expiresAt: null,
 		items: [],
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),

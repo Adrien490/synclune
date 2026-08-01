@@ -79,7 +79,8 @@ CancelOrderConfirmationEmail.PreviewProps = {
 	orderTotal: 8990,
 	reason: "Demande client",
 	wasRefunded: true,
-	orderDetailsUrl: "https://synclune.fr/commandes/CMD-2024-ABCD1234",
+	orderDetailsUrl:
+		"https://synclune.fr/suivi-commande?commande=CMD-2024-ABCD1234&token=abc123def456abc123def456abc12345",
 } as CancelOrderConfirmationEmailProps;
 
 export default CancelOrderConfirmationEmail;

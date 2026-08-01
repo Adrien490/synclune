@@ -1,13 +1,11 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
-import { GET_LAST_ORDER_DEFAULT_SELECT } from "../last-order.constants";
 import {
 	GET_ORDER_SELECT_ADMIN,
 	GET_ORDER_SELECT_CUSTOMER,
 	GET_ORDERS_SELECT,
 } from "../order.constants";
-import { GET_USER_ORDERS_SELECT } from "../user-orders.constants";
 
 /**
  * @regression order-address-read-snapshot-only-2026-07-02
@@ -85,20 +83,12 @@ describe("Adresses commande — lecture snapshot uniquement (Invariant #5, read-
 			.map(relPath)
 			.sort();
 
-		// Allowlist documentée — seuls usages légitimes du modèle Address live :
-		//  - modules/addresses/** : CRUD du carnet d'adresses du compte client
-		//    (aucun de ces fichiers ne touche Order — vérifié par le test
-		//    write-side order-address-snapshot-immutability).
-		//  - anonymize-user.service.ts : deleteMany RGPD (droit à l'oubli) —
-		//    supprime le carnet, les snapshots Order restent intacts.
-		const allowed = [
-			"modules/addresses/actions/delete-address.ts",
-			"modules/addresses/actions/set-default-address.ts",
-			"modules/addresses/actions/update-address.ts",
-			"modules/addresses/data/get-user-addresses.ts",
-			"modules/addresses/services/save-address.service.ts",
-			"modules/users/services/anonymize-user.service.ts",
-		].sort();
+		// Allowlist VIDE depuis le retrait du carnet d'adresses (simplification V1
+		// 2026-07-30) : plus aucun lecteur légitime du modèle `Address` live. Le modèle
+		// lui-même part avec le schéma au lot suivant, et ce test read-side avec lui —
+		// le garde write-side `order-address-snapshot-immutability` reste, lui, utile
+		// (il verrouille les writers des colonnes `shipping*` d'Order).
+		const allowed: string[] = [];
 
 		expect(readers).toEqual(allowed);
 	});
@@ -107,8 +97,6 @@ describe("Adresses commande — lecture snapshot uniquement (Invariant #5, read-
 		GET_ORDERS_SELECT,
 		GET_ORDER_SELECT_ADMIN,
 		GET_ORDER_SELECT_CUSTOMER,
-		GET_USER_ORDERS_SELECT,
-		GET_LAST_ORDER_DEFAULT_SELECT,
 	} as const;
 
 	function findAddressJoins(node: unknown, path: string, offenders: string[]): void {

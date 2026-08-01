@@ -28,7 +28,6 @@ const validCartItem = {
 const validCheckout = {
 	cartItems: [validCartItem],
 	shippingAddress: validAddress,
-	saveInfo: false,
 	paymentIntentId: "pi_test1234567890",
 };
 
@@ -68,11 +67,6 @@ describe("confirmCheckoutSchema", () => {
 			...validCheckout,
 			discountCode: "PROMO10",
 		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept saveInfo as true", () => {
-		const result = confirmCheckoutSchema.safeParse({ ...validCheckout, saveInfo: true });
 		expect(result.success).toBe(true);
 	});
 

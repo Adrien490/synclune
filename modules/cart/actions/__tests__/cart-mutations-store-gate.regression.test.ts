@@ -11,9 +11,9 @@
  * action panier qui **ajoute ou augmente** des articles doit porter le gate. Une
  * nouvelle action de ce type sans gate fait échouer ce test.
  *
- * Les actions de retrait/nettoyage (remove*, clear, move-to-wishlist,
- * update-cart-prices) sont volontairement hors périmètre : les bloquer pendant
- * une fermeture piégerait le client avec un panier qu'il ne peut plus vider.
+ * Les actions de retrait/nettoyage (remove*, clear, update-cart-prices) sont
+ * volontairement hors périmètre : les bloquer pendant une fermeture piégerait
+ * le client avec un panier qu'il ne peut plus vider.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -29,7 +29,9 @@ const MUST_GATE = [
 	"add-to-cart.ts",
 	"update-cart-item.ts",
 	"apply-cart-discount.ts",
-	"reorder-from-order.ts",
+	// `reorder-from-order.ts` a quitté cette liste avec l'action elle-même : son
+	// unique déclencheur était le bouton « Racheter » de la page détail de commande,
+	// disparue avec l'espace client (2026-07-31).
 ];
 
 /**
@@ -43,11 +45,10 @@ const INTENTIONALLY_UNGATED: Record<string, string> = {
 	"remove-multiple-items.ts": "retrait d'articles — jamais bloquant",
 	"remove-unavailable-items.ts": "nettoyage d'articles indisponibles",
 	"remove-cart-discount.ts": "retrait d'un code promo — jamais bloquant",
-	"move-to-wishlist.ts": "déplace hors du panier (net retrait)",
+	// `move-to-wishlist.ts` a quitté cette liste avec l'action elle-même
+	// (audit wishlist 2026-08-01 : endpoint RPC sans appelant UI).
 	"update-cart-prices.ts": "resynchronise des prix, n'ajoute rien",
 	"validate-cart.ts": "lecture seule (diagnostic de disponibilité)",
-	"merge-carts.ts":
-		"appelée par le hook post-login de Better Auth, pas par un geste d'achat : bloquer ferait perdre le panier invité au login",
 };
 
 function listActionFiles(): string[] {

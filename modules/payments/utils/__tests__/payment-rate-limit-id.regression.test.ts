@@ -6,8 +6,15 @@ import { buildPaymentRateLimitId } from "../payment-rate-limit-id";
 /**
  * @regression payment-rate-limit-namespace-2026-07-30
  *
- * `checkRateLimit` indexe son compteur sur le SEUL identifiant
- * (`ratelimit:${identifier}`) — ni le nom de l'action, ni sa config n'entrent dans la
+ * ⚠️ MISE À JOUR 2026-07-31 (correction de KI-004) : `checkRateLimit` mêle désormais
+ * le `name` du preset à la clé (`ratelimit:<name>:<identifier>`), ce qui isole les
+ * compteurs de deux presets différents. **Ce test reste porteur pour autant** :
+ * `initializePayment` et `confirmCheckout` partagent le MÊME preset
+ * (`PAYMENT_LIMITS.CREATE_SESSION`), donc seul le préfixe par action vérifié ici les
+ * sépare. Le retirer ré-introduirait le bug décrit ci-dessous.
+ *
+ * Contexte d'origine : `checkRateLimit` indexait son compteur sur le SEUL identifiant
+ * (`ratelimit:${identifier}`) — ni le nom de l'action, ni sa config n'entraient dans la
  * clé. `initializePayment` et `confirmCheckout` passaient `user:${userId}` nu, comme
  * toutes les actions panier, toutes les actions favoris et `validateDiscountCode` :
  * un seul compteur pour tout ce monde.

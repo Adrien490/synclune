@@ -140,7 +140,7 @@ export async function markAsReturned(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

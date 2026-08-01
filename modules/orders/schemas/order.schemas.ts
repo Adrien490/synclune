@@ -1,3 +1,4 @@
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { z } from "zod";
 import { formBooleanSchema } from "@/shared/schemas/boolean.schema";
 import {
@@ -7,8 +8,15 @@ import {
 	InvoiceStatus,
 } from "@/app/generated/prisma/client";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
-import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
-import { SHIPPING_COUNTRIES, COUNTRY_ERROR_MESSAGE } from "@/shared/constants/countries";
+import { ADDRESS_CONSTANTS } from "@/shared/constants/address.constants";
+import {
+	addressLineOptionalSchema,
+	addressLineSchema,
+	citySchema,
+	nameFieldSchema,
+	postalCodeSchema,
+	shippingCountrySchema,
+} from "@/shared/schemas/address.schema";
 import { emailSchema } from "@/shared/schemas/email.schemas";
 import { phoneSchema } from "@/shared/schemas/phone.schemas";
 import { stringOrDateSchema } from "@/shared/schemas/date.schemas";
@@ -18,7 +26,10 @@ import {
 	GET_ORDERS_MAX_RESULTS_PER_PAGE,
 	ORDER_TOTAL_FILTER_MAX_CENTS,
 	SORT_OPTIONS,
+	TRACKING_NUMBER_MAX_LENGTH,
+	TRACKING_URL_MAX_LENGTH,
 } from "../constants/order.constants";
+import { isAllowedTrackingHost } from "../constants/carrier-urls";
 
 // ============================================================================
 // HELPERS
@@ -37,14 +48,6 @@ const fulfillmentStatusSchema = z
 const invoiceStatusSchema = z
 	.union([z.enum(InvoiceStatus), z.array(z.enum(InvoiceStatus))])
 	.optional();
-
-// ============================================================================
-// GET ORDER SCHEMA
-// ============================================================================
-
-export const getOrderSchema = z.object({
-	orderNumber: z.string().trim().min(1),
-});
 
 // ============================================================================
 // FILTERS SCHEMA
@@ -120,7 +123,7 @@ export const getOrdersSchema = z.object({
 	direction: directionSchema,
 	perPage: createPerPageSchema(GET_ORDERS_DEFAULT_PER_PAGE, GET_ORDERS_MAX_RESULTS_PER_PAGE),
 	sortBy: orderSortBySchema,
-	search: z.string().max(255).optional(),
+	search: z.string().max(TEXT_LIMITS.SEARCH.max).optional(),
 	filters: orderFiltersSchema.optional(),
 });
 
@@ -313,11 +316,54 @@ const trackingUrlSchema = z.preprocess(
 	(value) => (value === "" ? undefined : value),
 	z
 		.url()
+		// Aligné sur `Order.trackingUrl VarChar(2048)` — déclaré dans le contrat
+		// zod-prisma-length-parity. Sans borne, une URL trop longue collée en mode
+		// « URL personnalisée » passait Zod puis levait un 22001 Postgres générique.
+		.max(
+			TRACKING_URL_MAX_LENGTH,
+			`L'URL de suivi ne peut pas dépasser ${TRACKING_URL_MAX_LENGTH} caractères`,
+		)
 		.refine((url) => /^https?:\/\//i.test(url), {
 			message: "L'URL de suivi doit commencer par http:// ou https://",
 		})
 		.optional(),
 );
+
+/**
+ * ORD-SEC-009 — allowlist d'hôtes sur `trackingUrl` (portée objet, car la règle
+ * dépend du transporteur choisi) :
+ *
+ * - transporteur connu (ou non renseigné) → l'hôte doit appartenir aux domaines
+ *   dérivés de `CARRIER_TRACKING_URLS` (sous-domaines inclus). Bloque à la fois
+ *   la redirection ouverte à portée admin (l'URL part au client dans l'email
+ *   d'expédition et sur `/suivi-commande`) et la désynchronisation carrier/URL ;
+ * - `carrier === "autre"` → échappatoire EXPLICITE (transporteur hors liste,
+ *   ex. coursier local) : http(s) + borne de longueur seulement.
+ *
+ * L'URL malformée est laissée à `trackingUrlSchema` (déjà signalée).
+ */
+const enforceTrackingUrlHostAllowlist = (
+	data: { carrier?: string; trackingUrl?: string },
+	ctx: z.RefinementCtx,
+): void => {
+	if (!data.trackingUrl || data.carrier === "autre") return;
+
+	let hostname: string;
+	try {
+		hostname = new URL(data.trackingUrl).hostname;
+	} catch {
+		return;
+	}
+
+	if (!isAllowedTrackingHost(hostname)) {
+		ctx.addIssue({
+			code: "custom",
+			path: ["trackingUrl"],
+			message:
+				"L'URL de suivi doit pointer vers le site d'un transporteur connu — choisis « Autre transporteur » pour une URL personnalisée.",
+		});
+	}
+};
 
 // ============================================================================
 // CARRIER ENUM
@@ -341,6 +387,18 @@ export const carrierEnum = z.enum([
 	"autre",
 ]);
 
+/**
+ * Champ `carrier` côté FormData : le picker n'a plus de valeur par défaut
+ * (il pré-remplissait « Colissimo » sur les commandes sans transporteur —
+ * attribution inventée persistée en base, audit 2026-08-01). Le hidden Radix
+ * poste alors `""`, et `safeFormGet` rend `null` si le champ manque : les deux
+ * doivent valoir « non renseigné », pas une erreur d'enum.
+ */
+const carrierFieldSchema = z.preprocess(
+	(value) => (value === "" || value === null ? undefined : value),
+	carrierEnum.optional(),
+);
+
 // ============================================================================
 // MARK AS SHIPPED SCHEMA
 // ============================================================================
@@ -349,20 +407,24 @@ export const carrierEnum = z.enum([
  * Schema pour marquer une commande comme expédiée
  * Requiert un numéro de suivi
  */
-export const markAsShippedSchema = z.object({
-	id: z.cuid2(),
-	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
-	trackingUrl: trackingUrlSchema,
-	carrier: carrierEnum.optional(),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(true)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
-});
+export const markAsShippedSchema = z
+	.object({
+		id: z.cuid2(),
+		trackingNumber: z
+			.string()
+			.min(1, "Le numéro de suivi est requis")
+			.max(
+				TRACKING_NUMBER_MAX_LENGTH,
+				`Le numéro de suivi ne peut pas dépasser ${TRACKING_NUMBER_MAX_LENGTH} caractères`,
+			),
+		trackingUrl: trackingUrlSchema,
+		carrier: carrierFieldSchema,
+		// SSOT `formBooleanSchema` : cette ré-implémentation n'acceptait que
+		// "true"/"false", là où la SSOT couvre aussi "1"/"0"/"on"/"off"/"yes"/"no"
+		// (sur-ensemble, donc sans régression) et rejette explicitement le reste.
+		sendEmail: formBooleanSchema.optional().default(true),
+	})
+	.superRefine(enforceTrackingUrlHostAllowlist);
 
 // ============================================================================
 // UPDATE TRACKING SCHEMA
@@ -372,12 +434,20 @@ export const markAsShippedSchema = z.object({
  * Schema pour mettre à jour les informations de suivi d'une commande déjà expédiée
  * Permet de modifier le numéro de suivi, l'URL et le transporteur
  */
-export const updateTrackingSchema = z.object({
-	id: z.cuid2(),
-	trackingNumber: z.string().min(1, "Le numéro de suivi est requis").max(100),
-	trackingUrl: trackingUrlSchema,
-	carrier: carrierEnum.optional(),
-});
+export const updateTrackingSchema = z
+	.object({
+		id: z.cuid2(),
+		trackingNumber: z
+			.string()
+			.min(1, "Le numéro de suivi est requis")
+			.max(
+				TRACKING_NUMBER_MAX_LENGTH,
+				`Le numéro de suivi ne peut pas dépasser ${TRACKING_NUMBER_MAX_LENGTH} caractères`,
+			),
+		trackingUrl: trackingUrlSchema,
+		carrier: carrierFieldSchema,
+	})
+	.superRefine(enforceTrackingUrlHostAllowlist);
 
 // ============================================================================
 // MARK AS DELIVERED SCHEMA
@@ -401,14 +471,9 @@ export const markAsDeliveredSchema = z.object({
  */
 export const markAsProcessingSchema = z.object({
 	id: z.cuid2(),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(false)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
+	// Pas de champ `sendEmail` : l'action ne soumet que `{ id }` et aucun email
+	// n'est envoyé sur cette transition — le champ acceptait une entrée sans
+	// aucun effet (audit 2026-08-01, P3).
 });
 
 // ============================================================================
@@ -440,6 +505,18 @@ export const revertToProcessingSchema = z.object({
 export const markAsReturnedSchema = z.object({
 	id: z.cuid2(),
 	reason: z.string().max(500).optional(),
+});
+
+// ============================================================================
+// UNDO RETURN SCHEMA
+// ============================================================================
+
+/**
+ * Schema pour annuler un retour saisi par erreur
+ * Transition FulfillmentStatus : RETURNED → DELIVERED (OrderStatus inchangé)
+ */
+export const undoReturnSchema = z.object({
+	id: z.cuid2(),
 });
 
 // ============================================================================
@@ -536,19 +613,15 @@ export const getOrderByIdSchema = z.object({
  */
 export const updateOrderShippingAddressSchema = z.object({
 	id: z.cuid2(),
-	shippingFirstName: z.string().min(1).max(50),
-	shippingLastName: z.string().min(1).max(50),
-	shippingAddress1: z.string().min(1).max(255),
-	shippingAddress2: z.string().max(255).optional().or(z.literal("")),
-	shippingPostalCode: z
-		.string()
-		.min(1)
-		.max(10)
-		.regex(ADDRESS_CONSTANTS.POSTAL_CODE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE),
-	shippingCity: z.string().min(1).max(100),
-	shippingCountry: z
-		.enum(SHIPPING_COUNTRIES, { message: COUNTRY_ERROR_MESSAGE })
-		.default(ADDRESS_CONSTANTS.DEFAULT_COUNTRY),
+	// Briques partagées (`shared/schemas/address.schema.ts`) — mêmes bornes et même
+	// regex de code postal que le checkout, posées une seule fois.
+	shippingFirstName: nameFieldSchema,
+	shippingLastName: nameFieldSchema,
+	shippingAddress1: addressLineSchema,
+	shippingAddress2: addressLineOptionalSchema.or(z.literal("")),
+	shippingPostalCode: postalCodeSchema,
+	shippingCity: citySchema,
+	shippingCountry: shippingCountrySchema.default(ADDRESS_CONSTANTS.DEFAULT_COUNTRY),
 });
 
 /**
@@ -559,18 +632,16 @@ export const updateOrderBillingAddressSchema = z
 	.object({
 		id: z.cuid2(),
 		billingSameAsShipping: z.boolean(),
-		billingFirstName: z.string().min(1).max(50).optional(),
-		billingLastName: z.string().min(1).max(50).optional(),
-		billingAddress1: z.string().min(1).max(255).optional(),
-		billingAddress2: z.string().max(255).optional().or(z.literal("")),
-		billingPostalCode: z
-			.string()
-			.min(1)
-			.max(10)
-			.regex(ADDRESS_CONSTANTS.POSTAL_CODE_REGEX, ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE)
-			.optional(),
-		billingCity: z.string().min(1).max(100).optional(),
-		billingCountry: z.enum(SHIPPING_COUNTRIES, { message: COUNTRY_ERROR_MESSAGE }).optional(),
+		// Mêmes briques que l'adresse de livraison ci-dessus, toutes optionnelles :
+		// c'est le refine plus bas qui exige le bloc complet quand la facturation
+		// diverge de la livraison.
+		billingFirstName: nameFieldSchema.optional(),
+		billingLastName: nameFieldSchema.optional(),
+		billingAddress1: addressLineSchema.optional(),
+		billingAddress2: addressLineOptionalSchema.or(z.literal("")),
+		billingPostalCode: postalCodeSchema.optional(),
+		billingCity: citySchema.optional(),
+		billingCountry: shippingCountrySchema.optional(),
 		billingPhone: phoneSchema.optional(),
 	})
 	.refine(

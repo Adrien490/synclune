@@ -13,6 +13,7 @@ const {
 	mockUpdateRefundStatus,
 	mockMarkRefundAsFailed,
 	mockGetBaseUrl,
+	mockFinalizeRefundCompletion,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
@@ -42,6 +43,12 @@ const {
 	mockUpdateRefundStatus: vi.fn(),
 	mockMarkRefundAsFailed: vi.fn(),
 	mockGetBaseUrl: vi.fn(),
+	mockFinalizeRefundCompletion: vi.fn().mockResolvedValue({
+		finalized: true,
+		isFullyRefunded: false,
+		restockedSkuIds: [],
+		tags: ["refunds-list", "order-refunds-order-1"],
+	}),
 }));
 
 vi.mock("@/modules/refunds/services/ensure-credit-note-archived.service", () => ({
@@ -61,6 +68,13 @@ vi.mock("../../services/refund.service", () => ({
 	mapStripeRefundStatus: mockMapStripeRefundStatus,
 	updateRefundStatus: mockUpdateRefundStatus,
 	markRefundAsFailed: mockMarkRefundAsFailed,
+	WEBHOOK_AUDIT_AUTHOR: "Système (webhook Stripe)",
+}));
+
+// P1-C (audit 2026-08-01) : la transition → COMPLETED passe par le service de
+// finalisation partagé (restock + avoir + email), plus par updateRefundStatus.
+vi.mock("@/modules/refunds/services/finalize-refund.service", () => ({
+	finalizeRefundCompletion: mockFinalizeRefundCompletion,
 }));
 
 vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
@@ -87,10 +101,12 @@ vi.mock("@/modules/dashboard/constants/cache", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	// `buildUrl` + `SHOP.ORDER_TRACKING` : requis depuis que le lien client passe
+	// par `buildOrderTrackingUrl` (retrait de l'espace client 2026-07-31) — un mock
+	// sans eux fait échouer le module à l'import, pas à l'assertion.
+	buildUrl: (path: string) => `https://synclune.fr${path}`,
 	ROUTES: {
-		ACCOUNT: {
-			ORDER_DETAIL: (orderNumber: string) => `/commandes/${orderNumber}`,
-		},
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
 		ADMIN: {
 			REFUNDS: "/admin/ventes/remboursements",
 		},
@@ -311,7 +327,18 @@ describe("handleChargeRefunded", () => {
 		);
 	});
 
-	it("should include userId cache tag when userId exists", async () => {
+	/**
+	 * Les tags user-scopés ont disparu avec les data fns qu'ils invalidaient
+	 * (`getUserOrders`, `getLastOrder`), retirées avec l'espace client (2026-07-31).
+	 *
+	 * Ce test remplace la paire « inclut le tag userId » / « ne l'inclut pas si
+	 * userId est null ». La seconde était verte pour la mauvaise raison :
+	 * `expect(tags).not.toContain(expect.stringContaining("orders-user-"))` compare
+	 * le matcher asymétrique par identité aux éléments du tableau — il ne le trouve
+	 * jamais, donc `not.toContain` passe quel que soit le contenu réel. Ici on
+	 * itère explicitement.
+	 */
+	it("n'émet aucun tag user-scopé, même sur une commande qui porte encore un userId", async () => {
 		const order = makeOrder({ userId: "user-1" });
 		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
@@ -322,24 +349,11 @@ describe("handleChargeRefunded", () => {
 		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
 		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
-			expect(cacheTask.tags).toContain("orders-user-user-1");
+			expect(cacheTask.tags.some((t) => t.startsWith("orders-user-"))).toBe(false);
+			expect(cacheTask.tags.some((t) => t.startsWith("last-order-user-"))).toBe(false);
 			// CACHE-AUDIT-003 : le détail commande reflète paymentStatus=REFUNDED.
 			expect(cacheTask.tags).toContain("order-detail-order-1");
 			expect(cacheTask.tags).toContain("order-refunds-order-1");
-		}
-	});
-
-	it("should not include userId cache tag when userId is null", async () => {
-		const order = makeOrder({ userId: null });
-		mockPrisma.order.findFirst.mockResolvedValue(order);
-		mockSyncStripeRefunds.mockResolvedValue(undefined);
-		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
-
-		const result = await handleChargeRefunded(makeCharge());
-
-		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
-		if (cacheTask?.type === "INVALIDATE_CACHE") {
-			expect(cacheTask.tags).not.toContain(expect.stringContaining("orders-user-"));
 		}
 	});
 
@@ -404,19 +418,19 @@ describe("handleRefundUpdated", () => {
 		expect(result).toEqual({ success: true });
 	});
 
-	it("should call updateRefundStatus when status changes", async () => {
+	it("should run the full finalization when status transitions to COMPLETED (P1-C)", async () => {
 		const refund = makeRefundRecord({ status: "APPROVED" });
 		mockResolveRefundByStripeId.mockResolvedValue(refund);
 		mockMapStripeRefundStatus.mockReturnValue("COMPLETED");
 
 		const result = await handleRefundUpdated(makeStripeRefund({ status: "succeeded" }));
 
-		expect(mockUpdateRefundStatus).toHaveBeenCalledWith(
-			"refund-db-1",
-			"COMPLETED",
-			"succeeded",
-			"APPROVED",
+		// Finalisation COMPLÈTE (restock + avoir + email + paymentStatus) via le
+		// service partagé — updateRefundStatus (status seul) recréerait le trou P1-C.
+		expect(mockFinalizeRefundCompletion).toHaveBeenCalledWith(
+			expect.objectContaining({ refundId: "refund-db-1", source: "WEBHOOK" }),
 		);
+		expect(mockUpdateRefundStatus).not.toHaveBeenCalled();
 		expect(result.success).toBe(true);
 		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {

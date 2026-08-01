@@ -1,10 +1,12 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { z } from "zod";
+import { orderIdParamSchema } from "../schemas/order-route-params.schema";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
-const orderIdSchema = z.cuid2();
+// SSOT partagée avec les route handlers commande — 3 fichiers `data/` en
+// redéclaraient chacun une copie.
+const orderIdSchema = orderIdParamSchema;
 
 export type OrderHistoryEntry = Awaited<ReturnType<typeof fetchOrderHistory>>[number];
 

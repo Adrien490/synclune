@@ -58,7 +58,7 @@ export async function retryInvoiceGeneration(
 		// Cette action peut poser un `invoiceNumber`, archiver un PDF et émettre un
 		// avoir, en écrivant des entrées d'OrderHistory : n'invalider que les deux tags
 		// de liste laissait la page détail de la commande périmée.
-		for (const tag of getOrderInvalidationTags(undefined, orderId)) {
+		for (const tag of getOrderInvalidationTags(orderId)) {
 			updateTag(tag);
 		}
 

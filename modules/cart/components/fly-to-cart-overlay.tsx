@@ -91,7 +91,7 @@ function FlyDotComponent({
 
 	return (
 		<m.div
-			className="bg-primary shadow-primary/50 pointer-events-none fixed z-[9999] size-3 rounded-full shadow-lg"
+			className="bg-primary shadow-primary/50 pointer-events-none fixed z-(--z-max) size-3 rounded-full shadow-lg"
 			initial={{
 				x: from.x - DOT_RADIUS,
 				y: from.y - DOT_RADIUS,

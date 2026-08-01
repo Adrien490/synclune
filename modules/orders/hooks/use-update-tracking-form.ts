@@ -49,7 +49,11 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 			id: options.orderId,
 			trackingNumber: options.initialTrackingNumber ?? "",
 			trackingUrl: options.initialTrackingUrl ?? "",
-			carrier: options.initialCarrier ?? ("colissimo" as Carrier),
+			// Sur une commande expédiée SANS transporteur, le défaut « colissimo »
+			// faisait persister une attribution inventée (avec l'ancienne URL,
+			// désynchronisée) dès que l'admin ne corrigeait que le numéro
+			// (audit 2026-08-01). `""` = placeholder + submit bloqué sans choix.
+			carrier: options.initialCarrier ?? ("" as Carrier | ""),
 			customUrlMode: false,
 		},
 		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),

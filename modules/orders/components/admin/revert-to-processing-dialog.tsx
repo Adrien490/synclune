@@ -10,11 +10,11 @@ import {
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { Label } from "@/shared/components/ui/label";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRevertToProcessing } from "@/modules/orders/hooks/use-revert-to-processing";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const REVERT_TO_PROCESSING_DIALOG_ID = "revert-to-processing";
 
@@ -64,10 +64,10 @@ export function RevertToProcessingDialog() {
 							</p>
 							{dialog.data?.trackingNumber && (
 								<>
-									<p className="mt-2 text-amber-600">
+									<p className="text-warning mt-2">
 										Le numéro de suivi ({dialog.data.trackingNumber}) sera supprimé.
 									</p>
-									<p className="mt-2 text-amber-600">
+									<p className="text-warning mt-2">
 										⚠️ Le client a reçu un email d'expédition. Pensez à le prévenir manuellement que
 										son numéro de suivi n'est plus valide.
 									</p>
@@ -78,9 +78,9 @@ export function RevertToProcessingDialog() {
 				</ResponsiveDialogHeader>
 
 				<div className="space-y-2 py-4">
-					<Label htmlFor="reason">
-						Raison de l'annulation <span className="text-destructive">*</span>
-					</Label>
+					<FieldLabel htmlFor="reason" required>
+						Raison de l'annulation
+					</FieldLabel>
 					<Textarea
 						id="reason"
 						placeholder="Ex: Erreur d'adresse, produit indisponible, demande client…"
@@ -104,7 +104,7 @@ export function RevertToProcessingDialog() {
 						onClick={handleSubmit}
 						disabled={!reason.trim() || isPending}
 					>
-						{isPending && <LoaderCircle className="size-4 animate-spin" />}
+						{isPending && <Spinner presentational />}
 						Annuler l'expédition
 					</Button>
 				</ResponsiveDialogFooter>

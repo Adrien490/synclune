@@ -86,12 +86,27 @@ vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
 	ORDERS_CACHE_TAGS: { REFUNDS: (orderId: string) => `order-refunds-${orderId}` },
 }));
+// SSOT refund (P3 audit 2026-08-01) : le Refund manuel créé invalide aussi
+// refunds-list / refund-<id> / ADMIN_BADGES via le helper refund.
+vi.mock("@/modules/refunds/constants/cache", () => ({
+	getRefundInvalidationTags: (refundId: string, orderId: string) => [
+		"refunds-list",
+		`refund-${refundId}`,
+		`order-refunds-${orderId}`,
+		"admin-badges",
+	],
+}));
 vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
 	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
 }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: (path: string) => `https://synclune.test${path}`,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -320,7 +335,7 @@ describe("markAsFullyRefunded", () => {
 
 	it("invalidates order caches", async () => {
 		await markAsFullyRefunded(undefined, validFormData);
-		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID, expect.any(String));
+		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(expect.any(String));
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 

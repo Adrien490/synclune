@@ -42,7 +42,19 @@ export async function getOrderForRefund(
 async function fetchOrderForRefund(orderId: string): Promise<OrderForRefund | null> {
 	"use cache";
 	cacheLife("user");
-	cacheTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
+	// `DETAIL(orderId)` en plus de `REFUNDS(orderId)` : ce fetcher lit
+	// `status`/`paymentStatus`/`fulfillmentStatus` (GET_ORDER_FOR_REFUND_SELECT), et la page
+	// qui le consomme s'en sert comme GARDE D'ACCÈS —
+	// `app/admin/ventes/remboursements/nouveau/page.tsx` calcule `getOrderPermissions(order)`
+	// dessus et redirige si `canRefund` est faux. Il dépend donc du même signal que
+	// `get-order-by-id.ts`, qui pose déjà `DETAIL(id)`.
+	//
+	// `getOrderInvalidationTags()` ne contient PAS `REFUNDS(orderId)` (seuls cancel-order,
+	// mark-as-fully-refunded et les actions refunds l'ajoutent) : sans `DETAIL`, un
+	// `mark-as-paid` / `mark-as-shipped` / une transition webhook laissait cette entrée
+	// périmée et le bouton « Rembourser » renvoyait l'admin sur le détail commande pendant
+	// toute la fenêtre du profil `user`, alors que ce détail affichait déjà PAID.
+	cacheTag(ORDERS_CACHE_TAGS.REFUNDS(orderId), ORDERS_CACHE_TAGS.DETAIL(orderId));
 
 	try {
 		// Exclure les commandes soft-deleted

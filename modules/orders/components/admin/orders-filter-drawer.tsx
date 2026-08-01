@@ -239,10 +239,10 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 									onClick={() => handleSelect(option.value)}
 									disabled={isPending}
 									className={cn(
-										"flex items-center justify-between rounded-lg px-4 py-3 text-left text-sm transition-colors",
+										"focus-ring flex items-center justify-between rounded-lg px-4 py-3 text-left text-sm transition-colors",
 										isSelected
 											? "bg-primary/5 text-foreground"
-											: "text-foreground hover:bg-muted/50",
+											: "text-foreground can-hover:hover:bg-muted/50",
 									)}
 								>
 									<span>{option.label}</span>

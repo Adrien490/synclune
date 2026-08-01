@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { parsePaymentIntentMetadata } from "@/modules/payments/schemas/stripe-metadata.schema";
+import { paymentIntentIdSchema } from "@/modules/payments/schemas/checkout.schema";
 import { stripe, withStripeCircuitBreaker } from "@/shared/lib/stripe";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
@@ -24,8 +25,14 @@ import { logger } from "@/shared/lib/logger";
  * Échecs silencieux (no-op) pour préserver la sémantique fire-and-forget — on ne
  * divulgue jamais l'existence/l'état d'un PI tiers.
  */
-export async function cancelOrphanPaymentIntent(paymentIntentId: string): Promise<void> {
-	if (!paymentIntentId.startsWith("pi_")) return;
+export async function cancelOrphanPaymentIntent(rawPaymentIntentId: unknown): Promise<void> {
+	// `unknown` + parse Zod plutôt que `paymentIntentId: string` + `.startsWith()` :
+	// le type était une promesse vide à une frontière RPC, et l'appel `.startsWith`
+	// se faisait AVANT le `try` — un argument non-string produisait donc un
+	// `TypeError` non rattrapé au lieu du no-op silencieux que documente ce fichier.
+	const parsed = paymentIntentIdSchema.safeParse(rawPaymentIntentId);
+	if (!parsed.success) return;
+	const paymentIntentId = parsed.data;
 
 	try {
 		// 1. Resolve caller identity (auth user OU session invité).

@@ -158,8 +158,14 @@ describe("Facturation — snapshots adresses Order immuables (Invariant #5)", ()
 			// touché, audit `ADDRESS_UPDATED` obligatoire. Une commande PENDING n'est pas
 			// encore une pièce comptable — c'est ce qui rend la réécriture légitime.
 			"modules/orders/services/update-pending-order-shipping-snapshot.service.ts",
-			// Anonymisation RGPD (Art. 17 GDPR — droit à l'oubli)
-			"modules/users/services/anonymize-user.service.ts",
+			// ⚠️ `modules/users/services/anonymize-user.service.ts` (anonymisation RGPD
+			// Art. 17) a quitté cette allowlist avec le module `users` entier, au retrait
+			// de l'espace client (2026-07-31) : sans compte client, aucun compte à
+			// anonymiser. Le scrub des `shipping*` d'une commande n'est plus déclenché
+			// que par la purge à `paidAt + 10 ans` (`hard-delete-retention`), qui écrit
+			// via le contrat de champs SSOT `modules/orders/constants/pii-scrub.ts` — donc
+			// par indirection de variable, hors du champ de ce scanner (cf. le test de
+			// contrat `purge-pii-scrub-contract.regression.test.ts`, qui le couvre).
 		].sort();
 
 		expect(writers).toEqual(allowed);

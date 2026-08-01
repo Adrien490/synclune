@@ -8,7 +8,9 @@ import type { ReadonlyValues } from "@/shared/types/sort.types";
 export const GET_ORDERS_SELECT = {
 	id: true,
 	orderNumber: true,
-	userId: true,
+	// Identité client : colonnes SNAPSHOT uniquement — pas de join `user`
+	// (relation quasi toujours NULL depuis le retrait de l'espace client
+	// 2026-07-31, achat 100 % invité).
 	customerEmail: true,
 	customerName: true,
 	stripePaymentIntentId: true,
@@ -29,13 +31,6 @@ export const GET_ORDERS_SELECT = {
 	invoiceGeneratedAt: true,
 	createdAt: true,
 	updatedAt: true,
-	user: {
-		select: {
-			id: true,
-			name: true,
-			email: true,
-		},
-	},
 	_count: {
 		select: {
 			items: true,
@@ -370,6 +365,28 @@ export const ORDER_TOTAL_FILTER_MAX_CENTS = 10_000_000;
 /** Même plafond exprimé en euros — valeur à passer aux inputs et au schéma d'URL. */
 export const ORDER_TOTAL_FILTER_MAX_EUROS = ORDER_TOTAL_FILTER_MAX_CENTS / 100;
 
+/**
+ * Longueur maximale d'un numéro de suivi — alignée sur `Order.trackingNumber
+ * VarChar(50)`.
+ *
+ * ⚠️ `markAsShippedSchema` et `updateTrackingSchema` bornaient à **100**, et les deux
+ * actions écrivent `validated.data.trackingNumber` sans troncature : un numéro de 51
+ * à 100 caractères (référence transporteur longue collée depuis un back-office)
+ * traversait toute la chaîne de validation puis échouait en `22001` Postgres au
+ * moment de marquer la commande expédiée — erreur générique, sans indication du
+ * champ fautif. Les deux schémas ET les deux inputs dérivent d'ici.
+ */
+export const TRACKING_NUMBER_MAX_LENGTH = 50;
+
+/**
+ * Longueur maximale d'une URL de suivi — alignée sur `Order.trackingUrl
+ * VarChar(2048)`. Même classe de défaut que `TRACKING_NUMBER_MAX_LENGTH` :
+ * sans borne Zod, une URL trop longue saisie en mode « URL personnalisée »
+ * traversait la validation puis échouait en 22001 Postgres, erreur générique.
+ * Déclarée dans `zod-prisma-length-parity.contract.test.ts`.
+ */
+export const TRACKING_URL_MAX_LENGTH = 2048;
+
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	CREATED_ASC: "created-ascending",
@@ -446,6 +463,10 @@ export const ORDER_ERROR_MESSAGES = {
 	MARK_AS_RETURNED_FAILED: "Erreur lors du marquage comme retourné.",
 	ALREADY_RETURNED: "Cette commande est déjà marquée comme retournée.",
 	CANNOT_RETURN_NOT_DELIVERED: "Seule une commande livrée peut être marquée comme retournée.",
+	// Undo return
+	UNDO_RETURN_FAILED: "Erreur lors de l'annulation du retour.",
+	CANNOT_UNDO_NOT_RETURNED:
+		"Seule une commande marquée comme retournée peut voir son retour annulé.",
 	// Update shipping address
 	UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de livraison.",
 	CANNOT_UPDATE_ADDRESS_SHIPPED:
@@ -453,7 +474,7 @@ export const ORDER_ERROR_MESSAGES = {
 	// Update billing address
 	UPDATE_BILLING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de facturation.",
 	CANNOT_UPDATE_BILLING_INVOICED:
-		"L'adresse de facturation ne peut plus être modifiée car la facture a été générée.",
+		"Ces informations ne peuvent plus être modifiées car une facture a été émise.",
 	// Update note
 	UPDATE_NOTE_FAILED: "Erreur lors de la modification de la note.",
 	NOTE_NOT_FOUND: "Note introuvable.",

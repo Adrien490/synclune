@@ -9,9 +9,13 @@ import {
 	mapStripeRefundStatus,
 	updateRefundStatus,
 	markRefundAsFailed,
+	WEBHOOK_AUDIT_AUTHOR,
 } from "../services/refund.service";
+import { finalizeRefundCompletion } from "@/modules/refunds/services/finalize-refund.service";
 import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
+import { getRefundInvalidationTags } from "@/modules/refunds/constants/cache";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 import { captureWebhookError } from "../utils/capture-webhook-error";
 import { voidInvoice } from "@/modules/orders/services/void-invoice.service";
@@ -276,10 +280,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		// passer par le helper canonique pour invalider aussi DETAIL(orderId),
 		// LAST_ORDER (la liste manuelle omettait DETAIL → page
 		// détail commande stale jusqu'à expiration du profil `user`).
-		const cacheTags = [
-			...getOrderInvalidationTags(order.userId ?? undefined, order.id),
-			ORDERS_CACHE_TAGS.REFUNDS(order.id),
-		];
+		const cacheTags = [...getOrderInvalidationTags(order.id), ORDERS_CACHE_TAGS.REFUNDS(order.id)];
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
 		// EINV-CREDIT-015 : alerte admin sur-crédit (avoir total + partiels), détectée en 4b-bis.
@@ -350,8 +351,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 							})
 							.catch(() => null)
 					: null;
-			const baseUrl = getBaseUrl();
-			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
+			const orderDetailsUrl = buildOrderTrackingUrl(order);
 
 			// EINV-CREDIT-001 / EINV-SEQ-001 : pour un refund PARTIEL, l'avoir est
 			// sur `Refund.creditNoteNumber` (issueCreditNoteForRefund, étape 4c).
@@ -458,6 +458,52 @@ export async function handleRefundUpdated(
 
 		// 3. Mettre à jour si le statut a changé
 		if (refund.status !== newStatus) {
+			// P1-C (audit « Admin commandes » 2026-08-01) : la transition → COMPLETED
+			// d'un refund resté APPROVED — le chemin nominal d'un refund parti en
+			// `pending` chez Stripe (processRefund sort avant Step 3 en déléguant à
+			// ce webhook) — doit dérouler la MÊME finalisation que le SAGA admin :
+			// restock + ledger, paymentStatus, audit, avoir Art. 272-I, email.
+			// `updateRefundStatus` ne posait que status+processedAt — et `processedAt`
+			// non nul excluait le refund à jamais du cron reconcile-refunds
+			// (candidats `processedAt: null`) : stock jamais recrédité, avoir
+			// manquant, aucun email, aucune alerte.
+			if (newStatus === RefundStatus.COMPLETED) {
+				const outcome = await finalizeRefundCompletion({
+					refundId: refund.id,
+					source: HistorySource.WEBHOOK,
+					authorId: SYSTEM_AUTHOR_ID,
+					authorName: WEBHOOK_AUDIT_AUTHOR,
+					auditNote: `Refund completed via Stripe webhook (status: ${stripeRefund.status ?? "unknown"})`,
+					auditMetadata: {
+						stripeRefundId: stripeRefund.id,
+						previousStatus: refund.status,
+					},
+				});
+
+				if (!outcome.finalized) {
+					// Claim perdu : un chemin concurrent (SAGA admin, cron) a déjà
+					// finalisé — rien à invalider de plus.
+					logger.info(
+						`⏭️ [WEBHOOK] Refund ${refund.id} already finalized by a concurrent path, skipping`,
+						{ service: "webhook", refundId: refund.id },
+					);
+					return { success: true, skipped: true, reason: "Already finalized" };
+				}
+
+				return {
+					success: true,
+					tasks: [
+						{
+							type: "INVALIDATE_CACHE",
+							// Le service retourne TOUS les tags (refund + commande —
+							// paymentStatus a bougé — + stock restocké) ; il n'invalide
+							// rien lui-même (`updateTag` throw hors Server Action, E872).
+							tags: outcome.tags,
+						},
+					],
+				};
+			}
+
 			await updateRefundStatus(
 				refund.id,
 				newStatus,
@@ -473,11 +519,14 @@ export async function handleRefundUpdated(
 						// CACHE-AUDIT-006 : le changement de statut refund + l'audit
 						// OrderHistory s'affichent sur le détail commande → invalider
 						// DETAIL et HISTORY en plus de la liste des refunds.
-						tags: [
-							ORDERS_CACHE_TAGS.REFUNDS(refund.orderId),
-							ORDERS_CACHE_TAGS.DETAIL(refund.orderId),
-							ORDERS_CACHE_TAGS.HISTORY(refund.orderId),
-						],
+						//
+						// Helper SSOT depuis l'audit invalidation commandes : la liste écrite à
+						// la main ici omettait `refunds-list`, `refund-<id>` et `ADMIN_BADGES`
+						// — or c'est LE chemin nominal d'un refund « pending » finalisé en
+						// asynchrone par Stripe, et la pastille de navigation compte les
+						// `Refund` PENDING. Les 7 Server Actions du module poussaient déjà ces
+						// tags ; seul le chemin webhook ne le faisait pas.
+						tags: getRefundInvalidationTags(refund.id, refund.orderId),
 					},
 				],
 			};
@@ -528,11 +577,7 @@ export async function handleRefundFailed(
 		tasks.push({
 			type: "INVALIDATE_CACHE",
 			// CACHE-AUDIT-006 : idem handleRefundUpdated (statut refund + audit).
-			tags: [
-				ORDERS_CACHE_TAGS.REFUNDS(refund.orderId),
-				ORDERS_CACHE_TAGS.DETAIL(refund.orderId),
-				ORDERS_CACHE_TAGS.HISTORY(refund.orderId),
-			],
+			tags: getRefundInvalidationTags(refund.id, refund.orderId),
 		});
 
 		const baseUrl = getBaseUrl();

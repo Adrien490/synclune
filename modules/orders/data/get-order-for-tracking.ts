@@ -21,7 +21,6 @@ import { verifyOrderTrackingToken } from "../utils/tracking-token";
 const GET_ORDER_TRACKING_SELECT = {
 	id: true,
 	orderNumber: true,
-	userId: true,
 	createdAt: true,
 	status: true,
 	paymentStatus: true,

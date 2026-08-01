@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
@@ -36,7 +35,6 @@ function getOnlineStatusServerSnapshot() {
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
 	session: Session | null;
-	addresses: GetUserAddressesReturn | null;
 }
 
 /**
@@ -45,11 +43,11 @@ interface CheckoutFormProps {
  * Sections: Contact, Livraison, Frais et délai de livraison, Code promo, Paiement.
  * Payment via Stripe PaymentElement — carte uniquement (pas de paiement express).
  */
-export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
+export function CheckoutForm({ cart, session }: CheckoutFormProps) {
 	const isGuest = !session;
 	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
-	const { form } = useCheckoutForm({ session, addresses });
+	const { form } = useCheckoutForm({ session });
 
 	// Warn on tab close / back button when the form has been touched.
 	// Disabled once the user reaches the Stripe redirect via `allowNavigation()`.
@@ -247,7 +245,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			email: isGuest ? (values.email as string) || undefined : undefined,
 			discountCode,
 			paymentIntentId: pi.paymentIntentId!,
-			saveInfo: values.saveInfo,
 			displayedTotal,
 		};
 	}
@@ -275,7 +272,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 						formRef={formRef}
 						cart={cart}
 						session={session}
-						addresses={addresses}
 						isGuest={isGuest}
 						isOnline={isOnline}
 						pi={pi}

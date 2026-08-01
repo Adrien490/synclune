@@ -51,7 +51,6 @@ const CONFIRM_BASE = {
 	},
 	email: "jeanne@example.com",
 	paymentIntentId: "pi_test1234567890",
-	saveInfo: false,
 };
 
 /** Les deux schémas doivent se comporter identiquement sur `cartItems`. */

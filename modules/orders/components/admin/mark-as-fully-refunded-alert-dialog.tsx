@@ -13,8 +13,10 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsFullyRefunded } from "@/modules/orders/hooks/use-mark-as-fully-refunded";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { FileWarning, LoaderCircle } from "lucide-react";
+import { FileWarning } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
@@ -138,9 +140,9 @@ export function MarkAsFullyRefundedAlertDialog() {
 									</div>
 								)}
 								<div className="mt-3 space-y-1.5">
-									<Label htmlFor="mark-as-fully-refunded-method" className="text-sm">
-										Moyen du remboursement <span className="text-destructive">*</span>
-									</Label>
+									<FieldLabel htmlFor="mark-as-fully-refunded-method" required>
+										Moyen du remboursement
+									</FieldLabel>
 									<Select
 										value={method}
 										onValueChange={(v) => setMethod(v as ManualRefundMethod)}
@@ -193,7 +195,7 @@ export function MarkAsFullyRefundedAlertDialog() {
 							disabled={isPending || !method}
 							aria-busy={isPending}
 						>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Marquage…" : "Marquer comme remboursée"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

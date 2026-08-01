@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import * as Sentry from "@sentry/nextjs";
 import {
 	HistorySource,
@@ -162,7 +162,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 				if (recovered.pdfArchiveRecovered) breakdown.pdfArchiveRecovered++;
 				if (recovered.creditNoteRecovered) breakdown.creditNoteRecovered++;
 				if (recovered.creditNotePdfRecovered) breakdown.creditNotePdfRecovered++;
-				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+				for (const tag of getOrderInvalidationTags(order.id)) {
 					tagsToInvalidate.add(tag);
 				}
 			} else if (recovered.kind === "escalated") {
@@ -181,9 +181,7 @@ export async function reconcileInvoices(): Promise<CronResult & ReconcileBreakdo
 		}
 	}
 
-	for (const tag of tagsToInvalidate) {
-		updateTag(tag);
-	}
+	revalidateTagsInBackground(tagsToInvalidate);
 
 	// Passe 4 (EINV-SEQ-007) : contrôle de continuité gap-free — défense en
 	// profondeur Art. 286 CGI. Lecture seule, hors deadline batch (2 requêtes

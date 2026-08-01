@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { logger } from "@/shared/lib/logger";
 import {
 	// IDEM-AUTOREFUND-001 : import VALEUR (et non `type`) — `Prisma.PrismaClientKnownRequestError`
@@ -309,9 +309,9 @@ export async function markOrderAsFailed(
 		});
 	}
 
-	for (const discountId of txResult.releasedDiscountIds) {
-		updateTag(DISCOUNT_CACHE_TAGS.USAGE(discountId));
-	}
+	revalidateTagsInBackground(
+		txResult.releasedDiscountIds.map((discountId) => DISCOUNT_CACHE_TAGS.USAGE(discountId)),
+	);
 
 	return { transitioned: txResult.transitioned };
 }
@@ -487,9 +487,9 @@ export async function markOrderAsCancelled(
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 
-	for (const discountId of txResult.releasedDiscountIds) {
-		updateTag(DISCOUNT_CACHE_TAGS.USAGE(discountId));
-	}
+	revalidateTagsInBackground(
+		txResult.releasedDiscountIds.map((discountId) => DISCOUNT_CACHE_TAGS.USAGE(discountId)),
+	);
 
 	return { restoredSkus: txResult.restoredSkus, userId: txResult.userId };
 }

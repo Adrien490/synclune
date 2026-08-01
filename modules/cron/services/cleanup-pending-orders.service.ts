@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import {
 	OrderStatus,
 	PaymentStatus,
@@ -156,7 +156,7 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 			);
 
 			// CACHE-AUDIT-005 : tags user-scopés + détail commande (helper canonique).
-			for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+			for (const tag of getOrderInvalidationTags(order.id)) {
 				tagsToInvalidate.add(tag);
 			}
 			processed++;
@@ -171,9 +171,7 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 	}
 
 	if (processed > 0) {
-		for (const tag of tagsToInvalidate) {
-			updateTag(tag);
-		}
+		revalidateTagsInBackground(tagsToInvalidate);
 	}
 
 	// AM-5 — tripwire SPOF : détecte les commandes PENDING à PI anormalement

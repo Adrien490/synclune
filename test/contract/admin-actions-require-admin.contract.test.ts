@@ -41,6 +41,13 @@ const ADMIN_ACTION_DIRS = [
 	"modules/colors/actions",
 	"modules/materials/actions",
 	"modules/product-types/actions",
+	// Audit « Admin role & re-check DB » 2026-07-31 : 11 actions admin mutantes
+	// vivaient encore hors contrat. Toutes étaient gardées, rien ne l'imposait.
+	// `discounts` porte en outre le seul sous-dossier d'actions du repo
+	// (`actions/admin/`), d'où le scan récursif ci-dessous.
+	"modules/discounts/actions",
+	"modules/media/actions",
+	"modules/dashboard/actions",
 ];
 
 /**
@@ -48,19 +55,18 @@ const ADMIN_ACTION_DIRS = [
  * Toute addition ici demande justification métier (commentaire obligatoire).
  */
 const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
-	// Customer-facing : un client peut annuler sa propre commande PENDING.
-	"modules/orders/actions/cancel-order-customer.ts",
-	// Customer-facing : un client peut demander un retour sur sa commande
-	// livrée (transition Order → RETURNED via webhook downstream).
-	"modules/refunds/actions/request-return.ts",
-	// Customer-facing : refresh des données de la page commandes.
-	"modules/orders/actions/refresh-orders.ts",
-	// Customer-facing : rafraîchissement par le client de SES propres commandes
-	// (bouton « Actualiser » de l'espace client + geste pull-to-refresh). Scopé à
-	// `session.user.id`, aucun paramètre accepté.
-	"modules/orders/actions/refresh-user-orders.ts",
-	// Customer-facing : refresh des données de la page remboursements.
-	"modules/refunds/actions/refresh-refunds.ts",
+	// Retrait de l'espace client (2026-07-31) — cinq entrées ont quitté cette liste :
+	//
+	// Supprimées avec leur surface : `cancel-order-customer.ts` (annulation par le
+	// client de sa commande PENDING), `request-return.ts` (demande de retour) et
+	// `refresh-user-orders.ts` (bouton « Actualiser » de l'espace client). Le client
+	// passe maintenant par l'email de contact, et l'admin exécute.
+	//
+	// `refresh-orders.ts` et `refresh-refunds.ts` étaient étiquetées « Customer-facing »
+	// à tort : les deux appellent `requireAdmin()` et rafraîchissent les LISTES ADMIN.
+	// Elles sortent donc de la whitelist pour être réellement soumises au contrat —
+	// l'assertion d'exemption ne testait que `requireAdminWithUser`, donc leur
+	// `requireAdmin()` passait sous le radar.
 	// Admin read utility : retour custom (RefundableOrderOption[]), pas ActionState,
 	// donc incompatible avec l'early-return canonique `return admin.error`. L'auth
 	// admin est bien vérifiée (requireAdmin en tête + re-check DB via getOrders) ;
@@ -78,6 +84,15 @@ const PUBLIC_OR_CUSTOMER_ACTIONS = new Set<string>([
 	"modules/products/actions/remove-recent-search.ts",
 	"modules/products/actions/clear-recent-searches.ts",
 	"modules/products/actions/add-recent-product.ts",
+	// --- Codes promo : les deux seules surfaces client du module ---
+	// Saisie d'un code au checkout par un invité. Garde volontairement faible mais
+	// RÉELLE : `requireActiveAccountIfAuthenticated()` (autorise l'invité, rejette
+	// une session dont le compte n'est pas ACTIVE) + rate limit. Retour custom
+	// `ValidateDiscountCodeReturn`, donc incompatible avec l'early-return ActionState.
+	"modules/discounts/actions/validate-discount-code.ts",
+	// Fin wrapper de lecture au-dessus de `validateDiscountCode` : hérite de sa
+	// garde et de son rate limit, n'écrit rien en base.
+	"modules/discounts/actions/apply-discount-code.ts",
 ]);
 
 interface ActionFile {
@@ -85,23 +100,42 @@ interface ActionFile {
 	source: string;
 }
 
+/**
+ * Parcours RÉCURSIF (hors `__tests__`).
+ *
+ * La version d'origine faisait un `readdirSync` plat : `modules/discounts/actions/admin/`
+ * — le seul sous-dossier d'actions du repo — serait resté invisible même après
+ * ajout de son parent à `ADMIN_ACTION_DIRS`. Un contrat qui s'arrête au premier
+ * niveau donne la garantie la plus dangereuse : celle qu'on croit avoir.
+ */
 function listActionFiles(): ActionFile[] {
 	const files: ActionFile[] = [];
-	for (const dir of ADMIN_ACTION_DIRS) {
+
+	function walk(dir: string) {
 		const absDir = join(REPO_ROOT, dir);
 		let entries: string[];
 		try {
-			entries = readdirSync(absDir);
+			entries = readdirSync(absDir, { withFileTypes: true }).map((e) =>
+				e.isDirectory() ? `${e.name}/` : e.name,
+			);
 		} catch {
-			continue; // dossier inexistant (ex. invoices/actions pas encore créé)
+			return; // dossier inexistant (ex. invoices/actions pas encore créé)
 		}
 		for (const entry of entries) {
+			if (entry.endsWith("/")) {
+				const name = entry.slice(0, -1);
+				if (name === "__tests__") continue;
+				walk(`${dir}/${name}`);
+				continue;
+			}
 			if (!entry.endsWith(".ts") || entry.endsWith(".d.ts")) continue;
 			const relativePath = `${dir}/${entry}`;
 			const source = readFileSync(join(REPO_ROOT, relativePath), "utf-8");
 			files.push({ relativePath, source });
 		}
 	}
+
+	for (const dir of ADMIN_ACTION_DIRS) walk(dir);
 	return files.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
 }
 

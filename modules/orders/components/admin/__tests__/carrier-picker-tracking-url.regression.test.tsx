@@ -127,7 +127,7 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 
 vi.mock("lucide-react", () => {
 	const stub = () => <svg />;
-	return { Link2: stub, LoaderCircle: stub, Mail: stub, Truck: stub };
+	return { Link2: stub, Loader2Icon: stub, Mail: stub, Truck: stub };
 });
 
 /** Numéro volontairement hors de tout `CARRIER_PATTERNS` connu. */

@@ -81,6 +81,9 @@ function createOrder(overrides = {}) {
 		customerEmail: "marie@example.com",
 		customerPhone: null,
 		userId: "user-1",
+		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
+		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
+		invoiceNumber: null,
 		invoiceStatus: "PENDING",
 		...overrides,
 	} as any;
@@ -102,14 +105,27 @@ describe("OrderCustomerCard", () => {
 		expect(screen.getByText("jean@example.com")).toBeInTheDocument();
 	});
 
-	it("shows Client non enregistré when userId is null", () => {
-		render(<OrderCustomerCard order={createOrder({ userId: null })} />);
-		expect(screen.getByText("Client non enregistré")).toBeInTheDocument();
-	});
+	/**
+	 * La carte distinguait « client enregistré » (nom cliquable vers `/admin/clients`)
+	 * de « Client non enregistré » (texte nu). La distinction a disparu avec l'espace
+	 * client (2026-07-31) : toute commande est un achat invité, et ce que l'admin lit
+	 * ici est le SNAPSHOT figé sur la commande (invariant #5), pas un profil vivant.
+	 *
+	 * Le rendu est donc identique quel que soit `userId` — y compris sur une commande
+	 * héritée qui en porte encore un.
+	 */
+	it("rend le nom en texte nu, sans lien de fiche client, quel que soit userId", () => {
+		for (const userId of [null, "user-42"]) {
+			const { unmount } = render(
+				<OrderCustomerCard order={createOrder({ userId, customerName: "Marie Dupont" })} />,
+			);
 
-	it("does not show Client non enregistré when userId is set", () => {
-		render(<OrderCustomerCard order={createOrder({ userId: "user-42" })} />);
-		expect(screen.queryByText("Client non enregistré")).toBeNull();
+			expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
+			expect(screen.queryByRole("link")).toBeNull();
+			expect(screen.queryByText("Client non enregistré")).toBeNull();
+
+			unmount();
+		}
 	});
 
 	it("shows phone when customerPhone is present", () => {
@@ -122,13 +138,29 @@ describe("OrderCustomerCard", () => {
 		expect(screen.queryByText(/\+336/)).toBeNull();
 	});
 
-	it("shows Modifier button when invoiceStatus is not GENERATED", () => {
-		render(<OrderCustomerCard order={createOrder({ invoiceStatus: "PENDING" })} />);
+	it("shows Modifier button when no invoice has been issued", () => {
+		render(<OrderCustomerCard order={createOrder({ invoiceNumber: null })} />);
 		expect(screen.getByRole("button", { name: /Modifier/i })).toBeInTheDocument();
 	});
 
 	it("hides Modifier button when invoice is GENERATED", () => {
-		render(<OrderCustomerCard order={createOrder({ invoiceStatus: "GENERATED" })} />);
+		render(
+			<OrderCustomerCard
+				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "GENERATED" })}
+			/>,
+		);
+		expect(screen.queryByRole("button", { name: /Modifier/i })).toBeNull();
+	});
+
+	// @regression invoice-issued-lock (P1-B audit 2026-08-01) : voidInvoice
+	// conserve invoiceNumber — l'identité client reste verrouillée après void
+	// (l'avoir est rendu depuis les colonnes vivantes, Art. 272-I / L102 B).
+	it("hides Modifier button when invoice is VOIDED (invoiceNumber conservé)", () => {
+		render(
+			<OrderCustomerCard
+				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "VOIDED" })}
+			/>,
+		);
 		expect(screen.queryByRole("button", { name: /Modifier/i })).toBeNull();
 	});
 

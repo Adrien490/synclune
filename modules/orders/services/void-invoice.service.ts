@@ -7,7 +7,7 @@ import {
 	RETRYABLE_SEQUENCE_TX_ERROR_CODES,
 } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import {
 	sendAdminCreditNoteFailedAlert,
 	sendAdminSequenceOverflowAlert,
@@ -241,9 +241,11 @@ export async function voidInvoice(params: VoidInvoiceParams): Promise<VoidInvoic
 			}
 
 			const { updated } = result;
-			getOrderInvalidationTags(updated.userId ?? undefined, orderId).forEach((tag) =>
-				updateTag(tag),
-			);
+			// Service dual-contexte (actions `cancel-order`/`mark-as-fully-refunded` ET
+			// webhook `charge.refunded`) : on invalide donc avec l'API légale dans les
+			// deux. Le read-your-own-writes reste assuré côté action, qui pose son propre
+			// `updateTag` sur les mêmes tags commande après cet appel.
+			revalidateTagsInBackground(getOrderInvalidationTags(orderId));
 
 			// EINV-CREDIT-020 : archivage EAGER de l'avoir dès l'émission (symétrie
 			// facture `ensureInvoiceNumberPersisted`). L'avoir n'a pas de snapshot de

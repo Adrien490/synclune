@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { z } from "zod";
+import { orderIdParamSchema } from "../schemas/order-route-params.schema";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -9,7 +9,9 @@ import type { OrderRefundItem } from "../types/order-refunds.types";
 // Re-export du type pour compatibilité
 export type { OrderRefundItem } from "../types/order-refunds.types";
 
-const orderIdSchema = z.cuid2();
+// SSOT partagée avec les route handlers commande — 3 fichiers `data/` en
+// redéclaraient chacun une copie.
+const orderIdSchema = orderIdParamSchema;
 
 /**
  * Récupère les remboursements d'une commande (ADMIN)

@@ -22,11 +22,30 @@ import { describe, expect, it } from "vitest";
  *
  * Allowlist documentée pour les TRANSITIONS PENDING → PAID (vs création PAID) :
  *  - `modules/webhooks/services/checkout-order-processing.service.ts` : webhook
- *    Stripe checkout.session.completed / payment_intent.succeeded
+ *    Stripe `payment_intent.succeeded` (le flow est Elements/PaymentIntents —
+ *    aucun `checkout.session.*` n'est jamais émis, cf. le commentaire de
+ *    `modules/webhooks/utils/event-registry.ts`)
  *  - `modules/orders/actions/mark-as-paid.ts` : admin fallback pour commandes
  *    déjà passées au PaymentIntent (paiement asynchrone qui n'a pas webhook —
  *    SEPA, virements). L'Order existe déjà avec stripePaymentIntentId, donc
  *    la preuve Stripe est conservée.
+ *
+ * ── Durcissement du 2026-07-31 (audit invariant #8) ───────────────────────────
+ * L'identification des writers PAID reposait sur une SEULE heuristique : la
+ * proximité `paidAt: new Date(` à ±8 lignes. Trois angles morts en découlaient,
+ * fermés ici :
+ *   1. un writer posant `paidAt` via variable ou à plus de 8 lignes passait ;
+ *   2. `export const recordCashSale = async () => {}` échappait au tripwire de
+ *      nommage, qui ne matchait que les déclarations `function` ;
+ *   3. rien n'allowlistait `order.create` LUI-MÊME — seuls les `create` portant
+ *      `paymentStatus: PAID` inline étaient rejetés, alors que le fichier voisin
+ *      `order-item-snapshot-immutability.regression.test.ts` fait déjà cette
+ *      assertion pour `orderItem.create`.
+ *
+ * Ce scan reste statique, donc aveugle au SQL brut. Le filet correspondant vit
+ * en base depuis la migration 20260731120000 (CHECK `Order_paid_requires_
+ * stripe_proof`), dont la présence est vérifiée plus bas et le comportement par
+ * `order-paid-requires-stripe-proof.integration.test.ts`.
  */
 
 const REPO_ROOT = process.cwd();
@@ -70,17 +89,28 @@ function relPath(abs: string): string {
 	return relative(REPO_ROOT, abs).replaceAll("\\", "/");
 }
 
+const stripComments = (content: string): string =>
+	content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+const PAID_VALUE = /\bpaymentStatus\s*:\s*(?:PaymentStatus\.PAID\b|"PAID")/;
+
 /**
  * Scanner brace-matching : extrait chaque bloc `{ ... }` ouvert par `data: {`
- * dans un fichier, après vérification qu'il y a un appel `order.create|upsert`.
- * Retourne true si un de ces blocs inline `paymentStatus: "PAID"` ou
- * `paymentStatus: PaymentStatus.PAID`.
+ * dans un fichier, après vérification qu'il contient un appel `order.<verb>`.
+ * Retourne true si un de ces blocs inline `paymentStatus: PAID`.
+ *
+ * `verbs` couvre par défaut TOUTES les écritures (pas seulement `create`) : un
+ * `updateMany` qui bascule un lot en PAID est aussi une vente manuelle qu'un
+ * `create`, et n'était couvert que par l'heuristique de proximité `paidAt`.
  */
-function fileCreatesPaidOrderInline(content: string): boolean {
-	const stripped = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-	if (!/\b(?:prisma|tx)\.order\.(?:create|upsert)\s*\(/.test(stripped)) return false;
-
-	const paidPattern = /\bpaymentStatus\s*:\s*(?:PaymentStatus\.PAID\b|"PAID")/;
+function fileWritesPaidOrderInline(
+	content: string,
+	verbs = "create|upsert|update|updateMany",
+): boolean {
+	const stripped = stripComments(content);
+	if (!new RegExp(String.raw`\b(?:prisma|tx)\.order\.(?:${verbs})\s*\(`).test(stripped)) {
+		return false;
+	}
 
 	const dataOpenRegex = /\bdata\s*:\s*\{/g;
 	let match: RegExpExecArray | null;
@@ -101,53 +131,124 @@ function fileCreatesPaidOrderInline(content: string): boolean {
 		}
 		if (endIdx === -1) continue;
 		const block = stripped.slice(openIdx, endIdx + 1);
-		if (paidPattern.test(block)) return true;
+		if (PAID_VALUE.test(block)) return true;
 	}
 	return false;
 }
 
+/** Les deux seuls fichiers autorisés à faire transiter une commande vers PAID. */
+const PAID_WRITER_ALLOWLIST = [
+	// Admin fallback pour paiements asynchrones non-webhookés (SEPA, etc.)
+	"modules/orders/actions/mark-as-paid.ts",
+	// Webhook Stripe payment_intent.succeeded
+	"modules/webhooks/services/checkout-order-processing.service.ts",
+].sort();
+
 describe("Facturation — pas de création manuelle de commande PAID (Invariant #8)", () => {
-	it("no source file calls prisma.order.create with paymentStatus: PAID inline", () => {
+	it("no source file writes paymentStatus: PAID in an order.create/upsert/update data block", () => {
+		// Assertion structurelle : elle ne dépend d'aucun voisinage de lignes, donc
+		// elle survit à un writer qui poserait `paidAt` autrement. Couvre les 4
+		// verbes d'écriture, pas seulement `create`.
+		//
+		// Assertion en SOUS-ENSEMBLE, pas en égalité : seul `mark-as-paid` inline
+		// aujourd'hui son bloc `data` (le webhook passe par une variable
+		// `orderUpdateData`, invisible au brace-matcher — c'est l'assertion
+		// suivante qui le couvre). Exiger l'égalité rendrait ce test rouge le jour
+		// où un fichier ALLOWLISTÉ change de style, ce qui n'est pas la régression
+		// qu'on garde.
 		const offenders = allSourceFiles
-			.filter((f) => fileCreatesPaidOrderInline(readFileSync(f, "utf-8")))
+			.filter((f) => fileWritesPaidOrderInline(readFileSync(f, "utf-8")))
 			.map(relPath)
+			.filter((rel) => !PAID_WRITER_ALLOWLIST.includes(rel))
 			.sort();
 		expect(offenders).toEqual([]);
 	});
 
 	it("only allowlisted services transition Order → PAID (paymentStatus + paidAt write)", () => {
-		// Heuristique robuste : tout WRITE de `paymentStatus: PAID` est canoniquement
-		// accompagné de `paidAt: new Date()` à proximité (≤ 8 lignes). Les READS
-		// (filtres `where:`) n'ont pas ce voisin. Cette heuristique capture aussi
-		// le pattern `processOrderAtomically(tx, id, { paymentStatus: PAID, paidAt })`
-		// où l'écriture se fait via variable indirection (data: orderUpdateData).
-		const stripped = (content: string) =>
-			content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-		const paidLineRegex = /\bpaymentStatus\s*:\s*(?:PaymentStatus\.PAID\b|"PAID")/;
-		const paidAtRegex = /\bpaidAt\s*:\s*new\s+Date\s*\(/;
+		// Heuristique COMPLÉMENTAIRE de la précédente, pas redondante : elle seule
+		// attrape le pattern `processOrderAtomically(tx, id, { paymentStatus: PAID,
+		// paidAt })` où l'objet est construit dans une variable, hors de tout
+		// `data: {` — la brace-matcher ne le voit pas.
+		//
+		// L'ancre accepte désormais toute valeur de type Date (`new Date()`, une
+		// variable, un champ calculé) là où elle n'acceptait que `new Date(` — un
+		// writer ayant calculé sa date en amont passait. Les formes exclues sont
+		// exactement la syntaxe de LECTURE, et chacune produit un faux positif
+		// réel dans le repo si on l'oublie :
+		//   `paidAt: { lt: … }`  filtre `where`  (get-action-items, invoicing-overview)
+		//   `paidAt: true`       projection `select`
+		//   `paidAt: "desc"`     clé `orderBy`
+		//
+		// ⚠️ Le `\s*` est DANS le lookahead, pas devant : écrit `paidAt\s*:\s*(?!\{)`,
+		// le moteur backtrackerait `\s*` à zéro caractère et testerait le lookahead
+		// sur l'espace — qui n'est pas `{` — donc la négation ne filtrerait rien.
+		const paidAtWrite = /\bpaidAt\s*:(?!\s*(?:\{|true\b|false\b|null\b|undefined\b|["'`]))/;
 
 		const writers = allSourceFiles
 			.filter((f) => {
-				const content = stripped(readFileSync(f, "utf-8"));
-				const lines = content.split("\n");
+				const lines = stripComments(readFileSync(f, "utf-8")).split("\n");
 				for (let i = 0; i < lines.length; i++) {
-					if (!paidLineRegex.test(lines[i]!)) continue;
+					if (!PAID_VALUE.test(lines[i]!)) continue;
 					const window = lines.slice(Math.max(0, i - 8), i + 9).join("\n");
-					if (paidAtRegex.test(window)) return true;
+					if (paidAtWrite.test(window)) return true;
 				}
 				return false;
 			})
 			.map(relPath)
 			.sort();
 
-		const allowed = [
-			// Admin fallback pour paiements asynchrones non-webhookés (SEPA, etc.)
-			"modules/orders/actions/mark-as-paid.ts",
-			// Webhook Stripe checkout.session.completed + payment_intent.succeeded
-			"modules/webhooks/services/checkout-order-processing.service.ts",
-		].sort();
+		expect(writers).toEqual(PAID_WRITER_ALLOWLIST);
+	});
 
-		expect(writers).toEqual(allowed);
+	it("only order-creation.service.ts calls prisma.order.create / upsert", () => {
+		// Calqué sur `order-item-snapshot-immutability.regression.test.ts`, qui fait
+		// déjà cette assertion pour `orderItem.create`. Sans elle, un NOUVEAU
+		// créateur de commandes (même PENDING) était invisible : seuls les `create`
+		// portant `paymentStatus: PAID` inline étaient rejetés. Or c'est la
+		// création qui fixe la provenance Stripe dont dépendent tous les gardes en
+		// aval — `mark-as-paid` refuse `!stripePaymentIntentId`, le webhook résout
+		// la commande par ce champ, et le CHECK DB s'y adosse.
+		const creators = allSourceFiles
+			.filter((f) =>
+				/\b(?:prisma|tx)\.order\.(?:create|upsert)\s*\(/.test(
+					stripComments(readFileSync(f, "utf-8")),
+				),
+			)
+			.map(relPath)
+			.sort();
+		expect(creators).toEqual(["modules/payments/services/order-creation.service.ts"]);
+	});
+
+	it("order-creation.service.ts exige un PaymentIntent et naît toujours PENDING", () => {
+		const content = readFileSync(
+			join(REPO_ROOT, "modules/payments/services/order-creation.service.ts"),
+			"utf-8",
+		);
+		// `paymentIntentId` NON optionnel : la provenance Stripe est une
+		// précondition du service, pas une discipline de l'appelant (même motif que
+		// EINV-SEQ-008 sur persistInvoiceNumber).
+		expect(content).toMatch(/\bpaymentIntentId\s*:\s*string\s*;/);
+		expect(content).not.toMatch(/\bpaymentIntentId\s*\?\s*:/);
+		// Et il doit être écrit inconditionnellement (pas derrière un spread
+		// conditionnel, qui laissait naître une commande sans preuve Stripe).
+		expect(content).toMatch(/stripePaymentIntentId\s*:\s*paymentIntentId\s*,/);
+		expect(content).not.toMatch(/\.\.\.\(\s*paymentIntentId\s*&&/);
+		// La commande naît PENDING, jamais payée.
+		expect(content).toMatch(/paymentStatus\s*:\s*"PENDING"/);
+	});
+
+	it("le filet DB de l'invariant #8 est présent dans la SSOT des gardes bruts", () => {
+		// Le scan statique de ce fichier est aveugle au SQL brut (psql direct,
+		// script de migration) — c'est le vecteur que le CHECK couvre. Vérifier ici
+		// sa PRÉSENCE coûte zéro base de données ; son COMPORTEMENT est prouvé par
+		// `order-paid-requires-stripe-proof.integration.test.ts` (job CI Postgres).
+		const guards = readFileSync(join(REPO_ROOT, "prisma/sql/raw-guards.sql"), "utf-8");
+		expect(guards).toMatch(/ADD\s+CONSTRAINT\s+"Order_paid_requires_stripe_proof"/);
+		expect(guards).toMatch(/ADD\s+CONSTRAINT\s+"Order_paid_requires_paidAt"/);
+		// L'échappatoire de la purge RGPD 10 ans doit rester dans la contrainte :
+		// `ORDER_PII_SCRUB` nulle `stripePaymentIntentId` sur des lignes restées
+		// PAID. La retirer casserait `hard-delete-retention` des années plus tard.
+		expect(guards).toMatch(/"Order_paid_requires_stripe_proof"[^;]*piiPurgedAt"\s+IS\s+NOT\s+NULL/);
 	});
 
 	it("mark-as-paid action enforces existing PaymentIntent (no cash sale shortcut)", () => {
@@ -181,8 +282,6 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		// dernier mutateur de statut sans invalidation cache) ; ce test interdit sa
 		// réintroduction sous le même nom. Le remplaçant canonique est
 		// `processOrderFromPaymentIntent` (idempotent + décrément + facture).
-		const stripComments = (c: string) =>
-			c.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 		const offenders = allSourceFiles
 			.map(relPath)
 			.filter((rel) =>
@@ -192,16 +291,27 @@ describe("Facturation — pas de création manuelle de commande PAID (Invariant 
 		expect(offenders).toEqual([]);
 	});
 
-	it("no source file exports a function named recordCashSale / createManualOrder", () => {
+	it("no source file exports a symbol named recordCashSale / createManualOrder", () => {
 		// Hint sémantique : si quelqu'un nomme une nouvelle action de cette manière,
 		// le test échoue et force une revue. Le naming est volontairement spécifique
 		// à des patterns qui violeraient typiquement l'invariant #8.
+		//
+		// Couvre les DEUX formes d'export : `export function x` et
+		// `export const x = async () => {}`. La seconde échappait au tripwire — et
+		// c'est précisément celle qu'écrirait quelqu'un suivant le style des
+		// Server Actions récentes du repo.
+		const FORBIDDEN =
+			"recordCashSale|createManualOrder|recordOfflineSale|createOfflineOrder|recordManualSale|createCashOrder";
+		const declaration = new RegExp(
+			String.raw`\bexport\s+(?:(?:async\s+)?function|const|let|var)\s+(?:${FORBIDDEN})\b`,
+		);
+		// `export { recordCashSale }` / `export { x as recordCashSale }`
+		const reexport = new RegExp(String.raw`\bexport\s*\{[^}]*\b(?:${FORBIDDEN})\b[^}]*\}`);
+
 		const offenders = allSourceFiles
 			.filter((f) => {
-				const content = readFileSync(f, "utf-8");
-				return /\bexport\s+(?:async\s+)?function\s+(?:recordCashSale|createManualOrder|recordOfflineSale|createOfflineOrder)\b/.test(
-					content,
-				);
+				const content = stripComments(readFileSync(f, "utf-8"));
+				return declaration.test(content) || reexport.test(content);
 			})
 			.map(relPath)
 			.sort();

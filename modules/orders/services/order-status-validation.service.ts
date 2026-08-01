@@ -17,6 +17,7 @@ import type {
 	OrderPermissions,
 	DeliveryValidationResult,
 	ReturnValidationResult,
+	UndoReturnValidationResult,
 	ProcessingValidationResult,
 	RevertValidationResult,
 } from "../types/order.types";
@@ -124,6 +125,28 @@ export function canMarkAsReturned(order: {
 }
 
 /**
+ * Vérifie si un retour peut être annulé (saisie par erreur).
+ *
+ * `RETURNED` était un état ABSORBANT (différé de l'audit 2026-07-26, fermé le
+ * 2026-08-01) : `markAsReturned` laisse `status = DELIVERED`, or toutes les
+ * sorties existantes exigeaient SHIPPED ou bloquaient DELIVERED — un retour
+ * saisi par erreur était irréversible par l'UI et verrouillait définitivement
+ * l'édition d'adresse.
+ */
+export function canUndoReturn(order: {
+	status: OrderStatus;
+	fulfillmentStatus: FulfillmentStatus;
+}): UndoReturnValidationResult {
+	if (
+		order.status !== OrderStatus.DELIVERED ||
+		order.fulfillmentStatus !== FulfillmentStatus.RETURNED
+	) {
+		return { canUndo: false, reason: "not_returned" };
+	}
+	return { canUndo: true };
+}
+
+/**
  * Vérifie si une commande peut passer en cours de préparation
  */
 export function canMarkAsProcessing(order: OrderForShipValidation): ProcessingValidationResult {
@@ -220,6 +243,9 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 
 		// Retour possible si livré et pas encore retourné
 		canMarkAsReturned: isDelivered && !isReturned,
+
+		// Annulation d'un retour saisi par erreur (RETURNED n'est plus absorbant)
+		canUndoReturn: isDelivered && isReturned,
 
 		// Marquage manuel comme entièrement remboursé (hors Stripe) :
 		// remboursement bancaire / chèque / virement / geste commercial.

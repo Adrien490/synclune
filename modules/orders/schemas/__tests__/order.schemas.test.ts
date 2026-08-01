@@ -76,7 +76,6 @@ vi.mock("../constants/order.constants", () => ({
 }));
 
 import {
-	getOrderSchema,
 	deleteOrderSchema,
 	cancelOrderSchema,
 	markAsShippedSchema,
@@ -97,35 +96,6 @@ function makeCuids(count: number): string[] {
 		return `clh${suffix}abcdefghijklm`;
 	});
 }
-
-// ============================================================================
-// getOrderSchema
-// ============================================================================
-
-describe("getOrderSchema", () => {
-	it("accepts a valid orderNumber", () => {
-		const result = getOrderSchema.safeParse({ orderNumber: "SYN-2024-0001" });
-		expect(result.success).toBe(true);
-	});
-
-	it("trims whitespace from orderNumber", () => {
-		const result = getOrderSchema.safeParse({ orderNumber: "  SYN-0001  " });
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.orderNumber).toBe("SYN-0001");
-		}
-	});
-
-	it("rejects an empty orderNumber", () => {
-		const result = getOrderSchema.safeParse({ orderNumber: "" });
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when orderNumber is missing", () => {
-		const result = getOrderSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
 
 // ============================================================================
 // deleteOrderSchema
@@ -208,10 +178,13 @@ describe("cancelOrderSchema", () => {
 // ============================================================================
 
 describe("markAsShippedSchema", () => {
+	// URL cohérente avec le carrier : depuis ORD-SEC-009, un hôte hors de la
+	// liste des transporteurs connus exige `carrier: "autre"` (cf.
+	// tracking-url-host-allowlist.regression.test.ts).
 	const validInput = {
 		id: VALID_CUID,
 		trackingNumber: "1Z999AA10123456784",
-		trackingUrl: "https://tracking.example.com/track/1Z999AA10123456784",
+		trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=1Z999AA10123456784",
 		carrier: "colissimo" as const,
 	};
 
@@ -290,9 +263,10 @@ describe("markAsShippedSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("accepts http://... in trackingUrl (legacy carriers)", () => {
+	it("accepts http://... in trackingUrl (legacy carriers, via « autre »)", () => {
 		const result = markAsShippedSchema.safeParse({
 			...validInput,
+			carrier: "autre",
 			trackingUrl: "http://tracking.example.com/123",
 		});
 		expect(result.success).toBe(true);

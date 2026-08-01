@@ -376,10 +376,7 @@ describe("updateOrderShippingAddress", () => {
 	it("should invalidate order metadata cache tags", async () => {
 		await updateOrderShippingAddress(undefined, validFormData);
 
-		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(
-			VALID_USER_ID,
-			VALID_ORDER_ID,
-		);
+		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(VALID_ORDER_ID);
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith(`orders-user-${VALID_USER_ID}`);
 	});

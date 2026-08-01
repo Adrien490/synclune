@@ -49,7 +49,7 @@ vi.mock("@/shared/components/ui/textarea", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: () => <svg data-testid="loader" />,
+	Loader2Icon: () => <svg data-testid="loader" />,
 }));
 
 describe("RevertToProcessingDialog", () => {

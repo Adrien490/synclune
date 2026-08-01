@@ -19,6 +19,7 @@ interface RefundRowActionsProps {
 		amount: number;
 		orderId: string;
 		orderNumber: string;
+		failureReason?: string | null;
 	};
 }
 

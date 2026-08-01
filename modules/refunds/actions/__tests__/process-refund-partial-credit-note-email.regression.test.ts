@@ -87,14 +87,24 @@ vi.mock("@/shared/types/server-action", () => ({
 	ActionStatus: { SUCCESS: "success", ERROR: "error", NOT_FOUND: "not_found" },
 }));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
+// `cacheLife`/`cacheTag` : `../../constants/cache` est chargé POUR DE VRAI (cf. plus bas).
+vi.mock("next/cache", () => ({
+	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
+}));
 vi.mock("../../lib/stripe-refund", () => ({ createStripeRefund: mockCreateStripeRefund }));
 vi.mock("@/modules/emails/services/refund-emails", () => ({
 	sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
 }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (id: string) => `/commandes/${id}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (id: string) => `/commandes/${id}` },
+	},
 }));
 vi.mock("../../schemas/refund.schemas", () => ({ processRefundSchema: {} }));
 vi.mock("../../constants/refund.constants", () => ({
@@ -107,15 +117,9 @@ vi.mock("../../constants/refund.constants", () => ({
 		PROCESS_FAILED: "x",
 	},
 }));
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (u: string) => `orders-user-${u}`,
-		LAST_ORDER: (u: string) => `last-order-${u}`,
-		REFUNDS: (o: string) => `order-refunds-${o}`,
-	},
-	REFUNDS_CACHE_TAGS: { LIST: "refunds-list", DETAIL: (id: string) => `refund-${id}` },
-}));
+// ⚠️ PAS de mock hand-written : ce miroir figeait des clés disparues (`USER_ORDERS`,
+// `LAST_ORDER`) et n'aurait pas suivi l'ajout de `getRefundInvalidationTags` à la SSOT.
+// On charge le vrai module.
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
 		ADMIN_BADGES: "admin-badges",

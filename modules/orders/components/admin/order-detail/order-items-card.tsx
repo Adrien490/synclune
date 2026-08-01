@@ -90,7 +90,7 @@ export function OrderItemsCard({
 						<span>{formatEuro(subtotal)}</span>
 					</div>
 					{discountAmount > 0 && (
-						<div className="flex justify-between text-sm text-emerald-600">
+						<div className="text-success flex justify-between text-sm">
 							<span>Réduction</span>
 							<span>-{formatEuro(discountAmount)}</span>
 						</div>

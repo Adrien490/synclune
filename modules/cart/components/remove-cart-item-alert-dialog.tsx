@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
@@ -20,7 +20,7 @@ import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 
@@ -109,30 +109,36 @@ export function RemoveCartItemAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={removeDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog
+			tone="destructive"
+			open={removeDialog.isOpen}
+			onOpenChange={handleOpenChange}
+		>
+			<ResponsiveAlertDialogContent>
 				<form onSubmit={handleSubmit} aria-label="Supprimer l'article du panier">
 					<input type="hidden" name="cartItemId" value={removeDialog.data?.cartItemId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Retirer ce produit de votre panier ?</AlertDialogTitle>
-						<AlertDialogDescription>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
+							Retirer ce produit de votre panier ?
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							{removeDialog.data?.itemName
 								? `Vous voulez vraiment retirer ${removeDialog.data.itemName} de votre panier ? Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !`
 								: "Vous voulez vraiment retirer ce produit de votre panier ? Vous pourrez toujours le retrouver dans la boutique si vous changez d'avis !"}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
 							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+						</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Spinner presentational />}
 							{isPending ? "Retrait…" : "Retirer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

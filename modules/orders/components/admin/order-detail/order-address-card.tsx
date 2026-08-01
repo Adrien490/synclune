@@ -2,7 +2,7 @@
 
 import { MapPin, Pencil, Phone, ReceiptText } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FulfillmentStatus, InvoiceStatus } from "@/app/generated/prisma/browser";
+import { FulfillmentStatus } from "@/app/generated/prisma/browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
@@ -30,7 +30,9 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 		order.fulfillmentStatus !== FulfillmentStatus.DELIVERED &&
 		order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
-	const canEditBilling = order.invoiceStatus !== InvoiceStatus.GENERATED;
+	// invoiceNumber et non invoiceStatus : VOIDED garde son numéro, l'adresse de
+	// facturation reste verrouillée après void (Art. 272-I / L102 B).
+	const canEditBilling = order.invoiceNumber === null;
 
 	const shippingAddressText = [
 		`${order.shippingFirstName} ${order.shippingLastName}`,

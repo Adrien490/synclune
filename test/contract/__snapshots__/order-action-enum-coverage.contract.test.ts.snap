@@ -10,10 +10,10 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   ],
   "BULK_EXPORT": [
     "app/api/admin/orders/export/route.ts",
+    "modules/orders/actions/export-single-order.ts",
   ],
   "CANCELLED": [
     "modules/cron/services/cleanup-pending-orders.service.ts",
-    "modules/orders/actions/cancel-order-customer.ts",
     "modules/orders/actions/cancel-order.ts",
     "modules/orders/actions/delete-order.ts",
     "modules/webhooks/services/payment-intent.service.ts",
@@ -81,16 +81,15 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
     "modules/orders/actions/mark-as-processing.ts",
   ],
   "REFUND_COMPLETED": [
-    "modules/cron/services/reconcile-refunds.service.ts",
     "modules/orders/actions/mark-as-fully-refunded.ts",
     "modules/refunds/actions/process-refund.ts",
+    "modules/refunds/services/finalize-refund.service.ts",
     "modules/webhooks/services/refund.service.ts",
   ],
   "REFUND_CREATED": [
     "modules/orders/actions/mark-as-fully-refunded.ts",
     "modules/refunds/actions/approve-refund.ts",
     "modules/refunds/actions/create-refund.ts",
-    "modules/refunds/actions/request-return.ts",
     "modules/refunds/actions/retry-failed-refund.ts",
     "modules/webhooks/services/payment-intent.service.ts",
     "modules/webhooks/services/refund.service.ts",
@@ -110,6 +109,7 @@ exports[`@regression ord-test-029 — OrderAction enum coverage > call-site map 
   ],
   "STATUS_REVERTED": [
     "modules/orders/actions/revert-to-processing.ts",
+    "modules/orders/actions/undo-return.ts",
   ],
   "TRACKING_UPDATED": [
     "modules/orders/actions/update-tracking.ts",

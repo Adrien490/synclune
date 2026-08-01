@@ -29,8 +29,6 @@ import { getCart } from "@/modules/cart/data/get-cart";
 import { updatePendingOrderShippingSnapshot } from "@/modules/orders/services/update-pending-order-shipping-snapshot.service";
 import { getOrderMetadataInvalidationTags } from "@/modules/orders/constants/cache";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
-import { saveAddressInTransaction } from "@/modules/addresses/services/save-address.service";
-import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import {
 	isVerifiedAdmin,
@@ -57,10 +55,29 @@ interface ConfirmCheckoutError {
 }
 
 export async function confirmCheckout(
-	data: ConfirmCheckoutData,
+	data: unknown,
 ): Promise<ConfirmCheckoutResult | ConfirmCheckoutError> {
 	return Sentry.startSpan({ name: "action.confirmCheckout", op: "checkout" }, async (span) => {
 		try {
+			// 0. Validation de forme EN TÊTE — action publique, `data` vient du réseau.
+			//
+			// ⚠️ Elle vivait après la construction de l'identifiant de rate limit, qui
+			// lit `data.email` : la clé `checkout-confirm:guest:<email>:<ip>` était donc
+			// dérivée d'une valeur JAMAIS validée. Un invité qui variait son email à
+			// chaque requête obtenait un compteur neuf à chaque fois — le budget propre
+			// à la confirmation (F3, cf. plus bas) ne tenait plus, et un `email`
+			// non-string faisait throw `normalizeEmail` avant toute garde métier.
+			//
+			// Même ordre que `initializePayment` et `updatePaymentAmount`, qui déclarent
+			// eux aussi `unknown` : le type de l'argument n'est PAS une garantie à une
+			// frontière RPC, seul le parse en est une.
+			const validation = confirmCheckoutSchema.safeParse(data);
+			if (!validation.success) {
+				const firstError = validation.error.issues[0]?.message ?? "Données invalides";
+				return { success: false, error: firstError };
+			}
+			const v = validation.data;
+
 			// 1. Auth check (optional - guest OK)
 			const session = await getSession();
 			const userId = session?.user.id ?? null;
@@ -97,7 +114,10 @@ export async function confirmCheckout(
 			const rateLimitId = buildPaymentRateLimitId("checkout-confirm", {
 				userId,
 				sessionId,
-				email: data.email,
+				// `v.email`, jamais `data.email` : la clé doit être dérivée de la valeur
+				// PARSÉE (normalisée en minuscules/trim par `emailOptionalSchema`), sinon
+				// une simple variation de casse suffit à ouvrir un compteur neuf.
+				email: v.email,
 				ipAddress,
 			});
 
@@ -108,14 +128,6 @@ export async function confirmCheckout(
 					error: rateLimit.error ?? "Trop de tentatives. Veuillez réessayer plus tard.",
 				};
 			}
-
-			// 3. Validate input
-			const validation = confirmCheckoutSchema.safeParse(data);
-			if (!validation.success) {
-				const firstError = validation.error.issues[0]?.message ?? "Données invalides";
-				return { success: false, error: firstError };
-			}
-			const v = validation.data;
 
 			span.setAttribute("payment_intent.id", v.paymentIntentId);
 
@@ -448,33 +460,7 @@ export async function confirmCheckout(
 				});
 			}
 
-			// 10. Save address if requested (non-blocking, logged on failure)
-			let addressSaved = true;
-			if (v.saveInfo && userId) {
-				try {
-					await prisma.$transaction((tx) =>
-						saveAddressInTransaction(tx, userId, {
-							firstName,
-							lastName,
-							address1: v.shippingAddress.addressLine1,
-							address2: v.shippingAddress.addressLine2 ?? null,
-							postalCode: v.shippingAddress.postalCode,
-							city: v.shippingAddress.city,
-							country: v.shippingAddress.country,
-							phone: v.shippingAddress.phoneNumber,
-						}),
-					);
-					getUserAddressesInvalidationTags(userId).forEach((tag) => updateTag(tag));
-				} catch (e) {
-					addressSaved = false;
-					logger.warn("Failed to save address during checkout", {
-						service: "checkout",
-						error: e instanceof Error ? e.message : String(e),
-					});
-				}
-			}
-
-			// 12. Invalidate cart cache
+			// 10. Invalidate cart cache
 			const cartTags = getCartInvalidationTags(userId ?? undefined, sessionId ?? undefined);
 			cartTags.forEach((tag) => updateTag(tag));
 
@@ -483,7 +469,6 @@ export async function confirmCheckout(
 				orderId: order.id,
 				orderNumber: order.orderNumber,
 				finalAmount: order.total,
-				...(v.saveInfo && userId && { addressSaved }),
 			};
 		} catch (e) {
 			// BIZ-BUG-007 : les rejets métier de createOrderInTransaction (code promo
@@ -666,9 +651,7 @@ async function resolveIdempotentHit(
 
 		if (snapshotOutcome.updated) {
 			span.setAttribute("checkout.shipping_snapshot_corrected", true);
-			getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-				updateTag(tag),
-			);
+			getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 		}
 	} catch (snapshotError) {
 		Sentry.captureException(snapshotError, {

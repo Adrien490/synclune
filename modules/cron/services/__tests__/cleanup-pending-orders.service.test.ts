@@ -22,8 +22,15 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
+// Ce service s'execute en contexte route handler (cron/webhook) : il invalide via
+// `revalidateTagsInBackground` -> `revalidateTag(tag, { expire: 0 })`, car
+// `updateTag` y throw (E872). Les DEUX sont routes vers le meme espion : ce que
+// ces tests verifient, c'est QUELS tags sont invalides. Le choix de l'API selon le
+// contexte est prouve, lui, sans mock, par
+// `test/contract/cache-invalidation-context.contract.test.ts`.
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+	revalidateTag: (tag: string) => mockUpdateTag(tag),
 }));
 
 vi.mock("@/modules/orders/utils/order-audit", () => ({
@@ -218,7 +225,9 @@ describe("cleanupPendingOrders", () => {
 		await cleanupPendingOrders();
 
 		const tags = mockUpdateTag.mock.calls.map((c) => c[0]);
-		expect(tags).toEqual(expect.arrayContaining(["orders-user-user-7", "order-detail-order-1"]));
+		expect(tags).toEqual(expect.arrayContaining(["order-detail-order-1"]));
+		// Plus de tag user-scopé (retrait de l'espace client 2026-07-31).
+		expect(tags.some((t: string) => t.startsWith("orders-user-"))).toBe(false);
 	});
 
 	// === AM-5 : tripwire SPOF sync-async-payments ===

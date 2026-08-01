@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_PROCESSING_DIALOG_ID = "mark-as-processing";
 
@@ -61,7 +61,7 @@ export function MarkAsProcessingAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Passage…" : "Passer en préparation"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

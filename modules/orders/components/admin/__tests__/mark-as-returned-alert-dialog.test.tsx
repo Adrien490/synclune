@@ -112,7 +112,7 @@ vi.mock("next/link", () => ({
 
 vi.mock("lucide-react", async (importOriginal) => ({
 	...((await importOriginal()) as Record<string, unknown>),
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<span data-testid="loader" className={className} />
 	),
 	RotateCcw: ({ className }: { className?: string }) => (

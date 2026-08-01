@@ -95,11 +95,21 @@ describe("Verrou de montant — l'adresse reste corrigeable", () => {
 		expect(countryBlock![0]).toMatch(/disabled=\{lockDestination\}/);
 	});
 
-	it("le sélecteur d'adresses enregistrées est masqué quand la destination est gelée", () => {
-		// Il réécrit `country` et `postalCode` en bloc : le laisser actif offrirait un
-		// contournement du gel, que le serveur refuserait à la resoumission.
+	it("aucun réécrivain d'adresse en bloc ne peut contourner le gel", () => {
+		// L'ancien vecteur était le sélecteur d'adresses enregistrées : il réécrivait
+		// `country` et `postalCode` d'un coup, donc il devait être masqué sous verrou
+		// (sinon le serveur refusait la resoumission). Le carnet d'adresses a été retiré
+		// en V1, donc le vecteur n'existe plus — on verrouille son ABSENCE plutôt que son
+		// masquage : c'est plus fort, et ça rougira si quelqu'un réintroduit un
+		// remplisseur groupé sans repasser par la question du gel.
+		//
+		// ⚠️ Ne PAS étendre l'assertion à tout `setFieldValue("shipping.postalCode")` :
+		// l'autocomplétion BAN en pose un légitimement quand la cliente choisit une
+		// suggestion, et le champ qui la porte reste éditable sous verrou (c'est le but
+		// du lot : corriger sa rue sans repasser au panier).
 		const source = stripComments(readSource(FIELDS));
-		expect(source).toMatch(/\{!lockDestination && !isGuest && addresses/);
+		expect(source).not.toMatch(/AddressSelector/);
+		expect(source).not.toMatch(/_selectedAddressId/);
 	});
 
 	it("la copie du verrou ne promet plus une adresse figée", () => {

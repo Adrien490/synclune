@@ -404,29 +404,47 @@ describe("getSelectedItems", () => {
 // ============================================================================
 
 describe("formatItemsForAction", () => {
-	it("should extract orderItemId, quantity, and restock from items", () => {
+	const orderItems: OrderItemForRefundCalc[] = [
+		makeOrderItem({ id: "item-1", price: 5000 }),
+		makeOrderItem({ id: "item-2", price: 3000 }),
+	];
+
+	it("should emit orderItemId, quantity, amount, and restock for each item", () => {
 		const items: RefundItemValue[] = [
 			makeRefundItem({ orderItemId: "item-1", quantity: 2, restock: true }),
 			makeRefundItem({ orderItemId: "item-2", quantity: 1, restock: false }),
 		];
-		const result = formatItemsForAction(items);
+		const result = formatItemsForAction(items, orderItems);
 
 		expect(result).toEqual([
-			{ orderItemId: "item-1", quantity: 2, restock: true },
-			{ orderItemId: "item-2", quantity: 1, restock: false },
+			{ orderItemId: "item-1", quantity: 2, amount: 10000, restock: true },
+			{ orderItemId: "item-2", quantity: 1, amount: 3000, restock: false },
 		]);
+	});
+
+	it("should prorate amount when a discount is provided", () => {
+		const items: RefundItemValue[] = [
+			makeRefundItem({ orderItemId: "item-1", quantity: 2, restock: true }),
+		];
+		// 20% de réduction → 10000 × 0.8
+		const result = formatItemsForAction(items, orderItems, {
+			subtotal: 13000,
+			discountAmount: 2600,
+		});
+
+		expect(result[0]?.amount).toBe(8000);
 	});
 
 	it("should strip the selected property", () => {
 		const items: RefundItemValue[] = [
 			makeRefundItem({ orderItemId: "item-1", quantity: 1, restock: true, selected: true }),
 		];
-		const result = formatItemsForAction(items);
+		const result = formatItemsForAction(items, orderItems);
 
 		expect(result[0]).not.toHaveProperty("selected");
 	});
 
 	it("should return empty array for empty input", () => {
-		expect(formatItemsForAction([])).toEqual([]);
+		expect(formatItemsForAction([], orderItems)).toEqual([]);
 	});
 });

@@ -51,6 +51,16 @@ interface FilterFormData {
 const MAX_PRICE = ORDER_TOTAL_FILTER_MAX_EUROS;
 const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
 
+// Format JOUR partagé avec le tiroir mobile : son `<input type="date">`
+// n'accepte que YYYY-MM-DD — un ISO complet écrit ici s'affichait vide dans le
+// tiroir, dont handleApplyRanges purgeait alors la période en silence à la
+// validation suivante (audit 2026-08-01, P3). `parseFilters` étend la borne
+// « Au » à la fin du jour choisi.
+const toDayParam = (date: Date): string =>
+	`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+		date.getDate(),
+	).padStart(2, "0")}`;
+
 function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -278,11 +288,19 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 			"filter_pdfNotArchived",
 			"filter_retryDeferred",
 		];
-		// Paired filters: count the pair as one filter (use the first key as representative)
-		const pairedFilters: Record<string, string[]> = {
-			filter_totalMin: ["filter_totalMin", "filter_totalMax"],
-			filter_createdAfter: ["filter_createdAfter", "filter_createdBefore"],
+		// Bornes appariées : le groupe compte pour 1 dès qu'UNE borne est présente.
+		// L'ancienne table ne reconnaissait que la clé « représentante »
+		// (filter_totalMin / filter_createdAfter) alors que chaque borne est écrite
+		// indépendamment : « Max = 200 € » seul donnait un compteur à 0 pendant que
+		// le badge affichait le filtre et que la StickyActionBar comptait 1 — trois
+		// compteurs, deux réponses (audit 2026-08-01, P2).
+		const pairedFilterGroups: Record<string, string> = {
+			filter_totalMin: "total",
+			filter_totalMax: "total",
+			filter_createdAfter: "created",
+			filter_createdBefore: "created",
 		};
+		const countedGroups = new Set<string>();
 		// Single-value filters: count if present and non-default
 		const singleValueDefaults: Record<string, string> = {
 			filter_showDeleted: "active",
@@ -291,8 +309,12 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 		searchParams.forEach((value, key) => {
 			if (multiValueKeys.includes(key)) {
 				count += 1;
-			} else if (key in pairedFilters) {
-				count += 1;
+			} else if (key in pairedFilterGroups) {
+				const group = pairedFilterGroups[key]!;
+				if (!countedGroups.has(group)) {
+					countedGroups.add(group);
+					count += 1;
+				}
 			} else if (key in singleValueDefaults && value !== singleValueDefaults[key]) {
 				count += 1;
 			}
@@ -522,19 +544,16 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 							{
 								label: "Aujourd'hui",
 								getRange: () => {
-									const today = new Date();
-									today.setHours(0, 0, 0, 0);
-									return { from: today.toISOString(), to: new Date().toISOString() };
+									const today = toDayParam(new Date());
+									return { from: today, to: today };
 								},
 							},
 							{
 								label: "7 derniers jours",
 								getRange: () => {
-									const to = new Date();
 									const from = new Date();
 									from.setDate(from.getDate() - 7);
-									from.setHours(0, 0, 0, 0);
-									return { from: from.toISOString(), to: to.toISOString() };
+									return { from: toDayParam(from), to: toDayParam(new Date()) };
 								},
 							},
 							{
@@ -542,7 +561,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 								getRange: () => {
 									const to = new Date();
 									const from = new Date(to.getFullYear(), to.getMonth(), 1);
-									return { from: from.toISOString(), to: to.toISOString() };
+									return { from: toDayParam(from), to: toDayParam(to) };
 								},
 							},
 						].map((preset) => (
@@ -591,7 +610,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												mode="single"
 												selected={field.state.value ? new Date(field.state.value) : undefined}
 												onSelect={(date) => {
-													field.handleChange(date ? date.toISOString() : "");
+													field.handleChange(date ? toDayParam(date) : "");
 												}}
 												disabled={(date) => {
 													if (date > new Date() || date < new Date("2020-01-01")) return true;
@@ -635,7 +654,7 @@ function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 												mode="single"
 												selected={field.state.value ? new Date(field.state.value) : undefined}
 												onSelect={(date) => {
-													field.handleChange(date ? date.toISOString() : "");
+													field.handleChange(date ? toDayParam(date) : "");
 												}}
 												disabled={(date) => {
 													if (date > new Date() || date < new Date("2020-01-01")) return true;

@@ -5,6 +5,7 @@ import { Elements, PaymentElement } from "@stripe/react-stripe-js";
 import Link from "next/link";
 import { ExternalLink, Lock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
+import { ROUTES } from "@/shared/constants/urls";
 import { getStripe } from "@/shared/lib/stripe-client";
 import { useStripeAppearance } from "../hooks/use-stripe-appearance";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
@@ -144,7 +145,7 @@ export function CheckoutStripeSection({
 						<p className="text-muted-foreground text-center text-xs">
 							En passant commande, tu acceptes nos{" "}
 							<Link
-								href="/cgv"
+								href={ROUTES.LEGAL.CGV}
 								className="text-foreground inline-flex items-center gap-0.5 underline hover:no-underline"
 								target="_blank"
 								rel="noopener noreferrer"
@@ -155,7 +156,7 @@ export function CheckoutStripeSection({
 							</Link>{" "}
 							et notre{" "}
 							<Link
-								href="/confidentialite"
+								href={ROUTES.LEGAL.PRIVACY}
 								className="text-foreground inline-flex items-center gap-0.5 underline hover:no-underline"
 								target="_blank"
 								rel="noopener noreferrer"

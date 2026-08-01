@@ -9,7 +9,10 @@ import {
 import { CronDeadlineExceededError, type CronResult } from "@/modules/cron/lib/cron-result";
 import { CRON_SCHEDULES, SENTRY_MONITORED_CRONS } from "@/modules/cron/constants/schedules";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
+import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
+import { CRON_INVOKE_LIMIT } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
+import { headers } from "next/headers";
 
 type CronJobResult = CronResult;
 
@@ -59,6 +62,25 @@ export function withCronGuard<R extends CronJobResult | null>(
 	const { jobName, defaultErrorMessage } = options;
 
 	return async () => {
+		// Plafond de COÛT, avant la vérification du secret : un flot de requêtes non
+		// authentifiées démarrait la lambda sans compteur, et un `CRON_SECRET` fuité
+		// donnait une invocation illimitée des jobs destructifs. La garde
+		// d'autorisation reste `verifyCronRequest` juste en dessous.
+		// Audit rate limiting 2026-07-31.
+		const clientIp = await getClientIp(await headers());
+		const rateCheck = await checkRateLimit(
+			`cron-invoke:${clientIp ?? "unknown"}`,
+			CRON_INVOKE_LIMIT,
+			clientIp,
+		);
+		if (!rateCheck.success) {
+			logger.warn(`Cron ${jobName} rate limited`, { cronJob: jobName, ip: clientIp });
+			return NextResponse.json(
+				{ success: false, job: jobName, error: "Rate limit exceeded" },
+				{ status: 429, headers: { "Retry-After": String(rateCheck.retryAfter ?? 60) } },
+			);
+		}
+
 		const unauthorized = await verifyCronRequest(jobName);
 		if (unauthorized) return unauthorized;
 

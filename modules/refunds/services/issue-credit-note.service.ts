@@ -14,7 +14,7 @@ import {
 	RETRYABLE_SEQUENCE_TX_ERROR_CODES,
 } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
 import {
 	acquireCreditNoteLockTx,
@@ -247,9 +247,13 @@ export async function issueCreditNoteForRefund(
 				return { kind: "noop", reason: "refund-not-completed" };
 			}
 
-			const { updated, orderUserId, orderId } = result;
-			getOrderInvalidationTags(orderUserId ?? undefined, orderId).forEach((tag) => updateTag(tag));
-			updateTag(REFUNDS_CACHE_TAGS.DETAIL(refundId));
+			const { updated, orderId } = result;
+			// Service dual-contexte (action `process-refund` ET cron `reconcile-refunds`) :
+			// cf. `revalidateTagsInBackground`. L'action pose son propre `updateTag`.
+			revalidateTagsInBackground([
+				...getOrderInvalidationTags(orderId),
+				REFUNDS_CACHE_TAGS.DETAIL(refundId),
+			]);
 
 			// EINV-CREDIT-020 : archivage EAGER de l'avoir partiel dès l'émission
 			// (symétrie `voidInvoice`/facture). Sans archive, un avoir jamais

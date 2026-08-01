@@ -112,7 +112,7 @@ vi.mock("@/shared/components/ui/label", () => ({
 
 vi.mock("lucide-react", () => ({
 	Download: () => <svg data-testid="icon-download" />,
-	LoaderCircle: () => <svg data-testid="icon-loader" />,
+	Loader2Icon: () => <svg data-testid="icon-loader" />,
 }));
 
 const { mockToast } = vi.hoisted(() => {

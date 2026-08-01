@@ -77,16 +77,10 @@ export const removeMultipleItemsSchema = z.object({
 		.max(50, "Maximum 50 articles supprimables en une fois"),
 });
 
-/**
- * Schema pour réajouter les items d'une commande au panier
- */
-export const reorderFromOrderSchema = z.object({
-	orderId: z.cuid2("ID de commande invalide"),
-});
+// `reorderFromOrderSchema` retiré avec l'action `reorder-from-order.ts` : son
+// unique déclencheur était le bouton « Racheter » de la page détail de commande,
+// disparue avec l'espace client (2026-07-31).
 
-/**
- * Schema pour déplacer un item vers la wishlist
- */
-export const moveToWishlistSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
-});
+// `moveToWishlistSchema` retiré avec l'action `move-to-wishlist.ts` (audit
+// wishlist 2026-08-01) : endpoint RPC sans appelant UI, qui clait de surcroît
+// la wishlist sur le sessionId du cookie PANIER — un invité perdait l'article.

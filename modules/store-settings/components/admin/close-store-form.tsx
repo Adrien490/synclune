@@ -1,6 +1,7 @@
 "use client";
 
-import { LoaderCircle, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 
@@ -137,7 +138,7 @@ export function CloseStoreForm() {
 								style={{ viewTransitionName: "store-status-action" }}
 							>
 								{isPending ? (
-									<LoaderCircle className="mr-2 size-4 animate-spin" />
+									<Spinner presentational className="mr-2" />
 								) : (
 									<Lock className="mr-2 size-4" />
 								)}

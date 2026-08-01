@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { AlertTriangle, Loader2, RotateCw } from "lucide-react";
+import { AlertTriangle, RotateCw } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -121,7 +122,7 @@ function AnomalyRow({ anomaly }: { anomaly: InvoiceAnomaly }) {
 						aria-label={`Relancer la génération pour la commande ${anomaly.orderNumber}`}
 					>
 						{pending ? (
-							<Loader2 className="size-3 animate-spin" aria-hidden="true" />
+							<Spinner presentational className="size-3" />
 						) : (
 							<RotateCw className="size-3" aria-hidden="true" />
 						)}

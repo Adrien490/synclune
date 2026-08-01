@@ -16,6 +16,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
+import { parseEstimatedDays } from "@/modules/orders/services/shipping.service";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 
 describe("Invariant Stripe min amount — tarifs de livraison", () => {
@@ -23,6 +24,25 @@ describe("Invariant Stripe min amount — tarifs de livraison", () => {
 		"le tarif %s couvre le montant minimum Stripe (%s)",
 		(_zone, rate) => {
 			expect(rate.amount).toBeGreaterThanOrEqual(STRIPE_MIN_AMOUNT_EUR_CENTS);
+		},
+	);
+});
+
+describe("Invariant format des délais — barème SHIPPING_RATES", () => {
+	// `parseEstimatedDays` retombe SILENCIEUSEMENT sur [3, 5] quand la chaîne ne
+	// matche pas « X-Y » : une faute de frappe dans le barème fausserait
+	// `estimateDeliveryDate` (donc l'email d'expédition et /suivi-commande) sans
+	// aucun signal. Ce test transforme ce repli muet en échec explicite : le
+	// tuple parsé doit être exactement celui écrit dans la chaîne.
+	it.each(Object.entries(SHIPPING_RATES))(
+		"le délai %s est parsable sans repli sur le fallback",
+		(_zone, rate) => {
+			const match = rate.estimatedDays.match(/^(\d+)-(\d+) jours ouvrés$/);
+			expect(match, `format inattendu : "${rate.estimatedDays}"`).not.toBeNull();
+			expect(parseEstimatedDays(rate.estimatedDays)).toEqual([
+				Number(match![1]),
+				Number(match![2]),
+			]);
 		},
 	);
 });

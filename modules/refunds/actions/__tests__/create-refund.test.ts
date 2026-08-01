@@ -83,16 +83,8 @@ vi.mock("../../constants/refund.constants", () => ({
 		CREATE_FAILED: "Erreur lors de la creation du remboursement.",
 	},
 }));
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		REFUNDS: (id: string) => `order-refunds-${id}`,
-	},
-	REFUNDS_CACHE_TAGS: {
-		LIST: "refunds-list",
-		DETAIL: (id: string) => `refund-${id}`,
-	},
-}));
+// ⚠️ PAS de mock hand-written ici : un miroir manuel ne bouge pas quand la SSOT gagne
+// un tag. On charge le vrai module — les tags assertés plus bas sont donc les vrais.
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: { ADMIN_BADGES: "admin-badges" },
 }));

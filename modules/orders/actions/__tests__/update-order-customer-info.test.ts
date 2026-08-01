@@ -151,11 +151,11 @@ describe("updateOrderCustomerInfo", () => {
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 
-	it("returns error when invoice already GENERATED", async () => {
+	it("returns error when an invoice has been issued (GENERATED)", async () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue(
-					createMockOrder({ invoiceStatus: "GENERATED" }),
+					createMockOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "GENERATED" }),
 				);
 				return fn(mockPrisma);
 			},
@@ -163,6 +163,25 @@ describe("updateOrderCustomerInfo", () => {
 		const result = await updateOrderCustomerInfo(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("Facture");
+	});
+
+	// @regression invoice-issued-lock (audit « Admin commandes » 2026-08-01, P1-B) :
+	// voidInvoice passe le statut à VOIDED en CONSERVANT invoiceNumber, et l'avoir
+	// est rendu depuis les colonnes Order vivantes — le gate `invoiceStatus ===
+	// GENERATED` rouvrait l'édition après void, faisant diverger l'avoir de son
+	// hash archivé (Art. 272-I / L102 B).
+	it("returns error when the invoice is VOIDED (invoiceNumber conservé)", async () => {
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				mockPrisma.order.findUnique.mockResolvedValue(
+					createMockOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "VOIDED" }),
+				);
+				return fn(mockPrisma);
+			},
+		);
+		const result = await updateOrderCustomerInfo(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
 	it("updates customer info and returns success", async () => {
@@ -243,10 +262,7 @@ describe("updateOrderCustomerInfo", () => {
 
 	it("invalidates metadata caches", async () => {
 		await updateOrderCustomerInfo(undefined, validFormData);
-		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(
-			VALID_USER_ID,
-			expect.any(String),
-		);
+		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(expect.any(String));
 	});
 
 	it("uses transaction for atomic operation", async () => {

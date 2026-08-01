@@ -29,7 +29,11 @@ function makeOrder(overrides: Record<string, unknown> = {}) {
 		invoiceStatus: null,
 		total: 4999,
 		createdAt: new Date("2026-05-01T10:00:00Z"),
-		user: { name: "Marie Dupont", email: "marie@example.com" },
+		// Colonnes snapshot — le select liste n'a plus de join `user` (achat 100 %
+		// invité, audit 2026-08-01 : l'ancien fixture `user: {...}` verrouillait
+		// une colonne « Client » qui affichait « Invité » sur toutes les lignes).
+		customerName: "Marie Dupont",
+		customerEmail: "marie@example.com",
 		...overrides,
 	};
 }

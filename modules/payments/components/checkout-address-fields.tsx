@@ -1,19 +1,22 @@
 "use client";
 
-import type { Session } from "@/modules/auth/lib/auth";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
 	NUMERIC_POSTAL_CODE_COUNTRIES,
 	type ShippingCountry,
 } from "@/shared/constants/countries";
-import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
+import { useAddressAutocomplete } from "../hooks/use-address-autocomplete";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
-import { AddressSelector } from "./address-selector";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PHONE_ERROR_MESSAGES } from "@/shared/schemas/phone.schemas";
+import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
+import { parseFullName } from "../utils/parse-full-name";
+
+// Bornes tirées de la SSOT d'adresse — jamais réécrites à la main ici : c'est cette
+// duplication qui avait laissé le client accepter des saisies que le serveur refuse.
+const { MAX_FULL_NAME_LENGTH, MAX_POSTAL_CODE_LENGTH } = ADDRESS_CONSTANTS;
 
 const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
 	value: code,
@@ -42,6 +45,9 @@ function AddressAutocompleteField({
 				onDynamic: ({ value }: { value: string }) => {
 					if (!value || value.trim().length === 0) {
 						return "L'adresse est requise";
+					}
+					if (value.trim().length > ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH) {
+						return ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG;
 					}
 					return undefined;
 				},
@@ -88,8 +94,6 @@ function AddressAutocompleteField({
 
 interface CheckoutAddressFieldsProps {
 	form: CheckoutFormInstance;
-	session: Session | null;
-	addresses: GetUserAddressesReturn | null;
 	/**
 	 * Gèle le PAYS et le CODE POSTAL — les deux seules composantes de l'adresse dont
 	 * dépend le montant (tarif d'expédition). Posé quand une commande est déjà liée au
@@ -102,12 +106,8 @@ interface CheckoutAddressFieldsProps {
 
 export function CheckoutAddressFields({
 	form,
-	session,
-	addresses,
 	lockDestination = false,
 }: CheckoutAddressFieldsProps) {
-	const isGuest = !session;
-
 	return (
 		// `flex flex-col gap-5` et pas `space-y-5` : la <legend> sr-only est en
 		// `position:absolute`, or `space-y-*` cible `& > * + *` et lui aurait collé
@@ -123,38 +123,33 @@ export function CheckoutAddressFields({
 			 * apparaissaient SOUS les champs qu'ils désignent.
 			 */}
 
-			{/* Address selector for logged-in users with multiple addresses */}
-			{/* Masqué quand la destination est gelée : ce sélecteur réécrit le pays et le
-			    code postal en bloc, ce que le serveur refuserait à la resoumission. */}
-			{!lockDestination && !isGuest && addresses && addresses.length > 1 && (
-				<form.Subscribe selector={(s) => s.values._selectedAddressId}>
-					{(selectedAddressId) => (
-						<AddressSelector
-							addresses={addresses}
-							selectedAddressId={selectedAddressId}
-							onSelectAddress={(address) => {
-								form.setFieldValue("_selectedAddressId", address.id);
-								const fullName = [address.firstName, address.lastName].filter(Boolean).join(" ");
-								form.setFieldValue("shipping.fullName", fullName);
-								form.setFieldValue("shipping.addressLine1", address.address1);
-								form.setFieldValue("shipping.addressLine2", address.address2 ?? "");
-								form.setFieldValue("shipping.city", address.city);
-								form.setFieldValue("shipping.postalCode", address.postalCode);
-								form.setFieldValue("shipping.country", address.country);
-								form.setFieldValue("shipping.phoneNumber", address.phone);
-							}}
-						/>
-					)}
-				</form.Subscribe>
-			)}
-
 			{/* Full name */}
 			<form.AppField
 				name="shipping.fullName"
 				validators={{
+					// Miroir exact des 3 étages d'`addressSchema.fullName` (longueur totale,
+					// longueur de chaque partie, nom de famille non vide). Le validateur ne
+					// posait que le minimum de 2 : une saisie trop longue ou sans nom de
+					// famille n'affichait AUCUNE erreur de champ, et le refus remontait
+					// ensuite dans le bandeau global de `confirmCheckout` — donc sans dire
+					// quel champ corriger.
 					onDynamic: ({ value }: { value: string }) => {
-						if (!value || value.trim().length < 2) {
+						const trimmed = value.trim();
+						if (trimmed.length < 2) {
 							return "Le nom complet doit contenir au moins 2 caractères";
+						}
+						if (trimmed.length > MAX_FULL_NAME_LENGTH) {
+							return `Le nom complet ne peut pas dépasser ${MAX_FULL_NAME_LENGTH} caractères`;
+						}
+						const { firstName, lastName } = parseFullName(trimmed);
+						if (
+							firstName.length > ADDRESS_CONSTANTS.MAX_NAME_LENGTH ||
+							lastName.length > ADDRESS_CONSTANTS.MAX_NAME_LENGTH
+						) {
+							return `Le prénom et le nom ne peuvent pas dépasser ${ADDRESS_CONSTANTS.MAX_NAME_LENGTH} caractères chacun`;
+						}
+						if (lastName.length === 0) {
+							return "Indique ton prénom et ton nom (ex : Léane Dupont)";
 						}
 						return undefined;
 					},
@@ -168,6 +163,7 @@ export function CheckoutAddressFields({
 						autoCapitalize="words"
 						autoCorrect="off"
 						enterKeyHint="next"
+						maxLength={MAX_FULL_NAME_LENGTH}
 					/>
 				)}
 			</form.AppField>
@@ -184,13 +180,24 @@ export function CheckoutAddressFields({
 				}}
 			</form.Subscribe>
 
-			<form.AppField name="shipping.addressLine2">
+			<form.AppField
+				name="shipping.addressLine2"
+				validators={{
+					// Le seul champ d'adresse qui n'avait AUCUN validateur : optionnel côté
+					// schéma, mais borné à 255 comme `addressLine1`.
+					onDynamic: ({ value }: { value: string | undefined }) =>
+						(value?.trim().length ?? 0) > ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH
+							? ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG
+							: undefined,
+				}}
+			>
 				{(field) => (
 					<field.InputField
 						label="Complément d'adresse"
 						optional
 						autoComplete="address-line2"
 						enterKeyHint="next"
+						maxLength={ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH}
 					/>
 				)}
 			</form.AppField>
@@ -207,8 +214,17 @@ export function CheckoutAddressFields({
 								validators={{
 									onDynamic: ({ value }: { value: string }) => {
 										if (!value) return "Le code postal est requis";
-										if (value.length < 3 || value.length > 10) {
-											return "Code postal invalide";
+										// ⚠️ Le validateur ne contrôlait QUE la longueur (3–10), alors
+										// que le serveur exige `POSTAL_CODE_REGEX` — qui demande au
+										// minimum 4 caractères. Un code postal de 3 caractères ne
+										// déclenchait donc aucune erreur de champ, puis se faisait
+										// refuser par `confirmCheckout` dans le bandeau global.
+										// Même regex des deux côtés, importée de la SSOT.
+										if (
+											value.length > MAX_POSTAL_CODE_LENGTH ||
+											!ADDRESS_CONSTANTS.POSTAL_CODE_REGEX.test(value.trim())
+										) {
+											return ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE;
 										}
 										return undefined;
 									},
@@ -225,9 +241,9 @@ export function CheckoutAddressFields({
 										autoComplete="postal-code"
 										autoCorrect="off"
 										enterKeyHint="next"
-										// Aligné sur la borne haute du validateur (10) — sans ça le
-										// champ accepte une saisie que la validation rejettera.
-										maxLength={10}
+										// Aligné sur la borne haute du validateur — sans ça le champ
+										// accepte une saisie que la validation rejettera.
+										maxLength={MAX_POSTAL_CODE_LENGTH}
 									/>
 								)}
 							</form.AppField>
@@ -239,8 +255,12 @@ export function CheckoutAddressFields({
 					name="shipping.city"
 					validators={{
 						onDynamic: ({ value }: { value: string }) => {
-							if (!value || value.trim().length < 2) {
+							const trimmed = value.trim();
+							if (trimmed.length < ADDRESS_CONSTANTS.MIN_CITY_LENGTH) {
 								return "La ville est requise";
+							}
+							if (trimmed.length > ADDRESS_CONSTANTS.MAX_CITY_LENGTH) {
+								return ADDRESS_ERROR_MESSAGES.CITY_TOO_LONG;
 							}
 							return undefined;
 						},
@@ -253,6 +273,7 @@ export function CheckoutAddressFields({
 							autoComplete="address-level2"
 							autoCapitalize="words"
 							enterKeyHint="next"
+							maxLength={ADDRESS_CONSTANTS.MAX_CITY_LENGTH}
 						/>
 					)}
 				</form.AppField>
@@ -314,15 +335,6 @@ export function CheckoutAddressFields({
 					</form.AppField>
 				)}
 			</form.Subscribe>
-
-			{/* Save info (logged-in users only) */}
-			{!isGuest && (
-				<form.AppField name="saveInfo">
-					{(field) => (
-						<field.CheckboxField label="Enregistrer mes informations pour mes prochaines commandes" />
-					)}
-				</form.AppField>
-			)}
 		</fieldset>
 	);
 }

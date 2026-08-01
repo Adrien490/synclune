@@ -12,28 +12,19 @@
  * `updateOrderShippingAddress`. Toute modification de la regle doit etre
  * faite des deux cotes. Cf. ORD-MAP-002.
  */
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { useUpdateOrderShippingAddress } from "@/modules/orders/hooks/use-update-order-shipping-address";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { useAppForm } from "@/shared/components/forms";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { Kbd } from "@/shared/components/ui/kbd";
-import { Label } from "@/shared/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/shared/components/ui/select";
+import { ADDRESS_CONSTANTS, ADDRESS_ERROR_MESSAGES } from "@/shared/constants/address.constants";
 import { COUNTRY_NAMES, SORTED_SHIPPING_COUNTRIES } from "@/shared/constants/countries";
 import { useAdminFormKeyboard } from "@/shared/hooks/use-admin-form-keyboard";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -56,6 +47,11 @@ interface EditShippingAddressFormProps {
 	successPath?: string;
 	className?: string;
 }
+
+const countryOptions = SORTED_SHIPPING_COUNTRIES.map((code) => ({
+	value: code as string,
+	label: COUNTRY_NAMES[code],
+}));
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
 	withViewTransition(() => router.push(path));
@@ -80,13 +76,25 @@ export function EditShippingAddressForm({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
-	const [isDirty, setIsDirty] = useState(false);
 	const allowNavigationRef = useRef<(() => void) | null>(null);
+
+	const form = useAppForm({
+		defaultValues: {
+			shippingFirstName,
+			shippingLastName,
+			shippingAddress1,
+			shippingAddress2: shippingAddress2 ?? "",
+			shippingPostalCode,
+			shippingCity,
+			shippingCountry,
+		},
+	});
 
 	const { state, action, isPending } = useUpdateOrderShippingAddress(() => {
 		haptic("success");
 		allowNavigationRef.current?.();
-		setIsDirty(false);
+		// Nouvelle baseline : les valeurs enregistrées ne sont plus « non sauvées ».
+		form.reset(form.state.values);
 		onSuccess?.();
 		if (redirectOnSuccess && successPath) {
 			navigateWithTransition(router, successPath);
@@ -97,7 +105,7 @@ export function EditShippingAddressForm({
 	// supposé) : sans cette alerte, un refus du schéma serveur serait muet.
 	const serverErrors = useServerFieldErrors({ state });
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
@@ -109,7 +117,16 @@ export function EditShippingAddressForm({
 		isMobile,
 		listPath: successPath,
 		allowNavigation,
-		getIsDirty: () => isDirty,
+		getIsDirty: () => form.state.isDirty,
+		getCanSubmit: () => form.state.canSubmit,
+	});
+
+	const handleGatedSubmit = useGatedFormSubmit({
+		form,
+		action,
+		isPending,
+		focusFirstInvalid,
+		context: "EditShippingAddressForm",
 	});
 
 	return (
@@ -118,16 +135,8 @@ export function EditShippingAddressForm({
 			action={action}
 			aria-label="Formulaire d'adresse de livraison"
 			className={cn("space-y-6", className)}
-			onChange={() => {
-				if (!isDirty) setIsDirty(true);
-			}}
 			onInvalidCapture={onInvalidCapture}
-			onSubmit={(event) => {
-				if (!event.currentTarget.checkValidity()) {
-					event.preventDefault();
-					focusFirstInvalid();
-				}
-			}}
+			onSubmit={handleGatedSubmit}
 		>
 			<input type="hidden" name="id" value={orderId} />
 
@@ -142,151 +151,202 @@ export function EditShippingAddressForm({
 
 			<fieldset disabled={isPending} className="space-y-4">
 				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-					<div className="space-y-2">
-						<Label htmlFor="shippingFirstName">
-							Prénom <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="shippingFirstName"
-							name="shippingFirstName"
+					<form.AppField
+						name="shippingFirstName"
+						validators={{
+							onChange: ({ value }) => {
+								const trimmed = value.trim();
+								if (trimmed.length < ADDRESS_CONSTANTS.MIN_NAME_LENGTH) {
+									return ADDRESS_ERROR_MESSAGES.FIRST_NAME_TOO_SHORT;
+								}
+								if (trimmed.length > ADDRESS_CONSTANTS.MAX_NAME_LENGTH) {
+									return ADDRESS_ERROR_MESSAGES.FIRST_NAME_TOO_LONG;
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => (
+							<field.InputField
+								label="Prénom"
+								type="text"
+								autoComplete="given-name"
+								autoCapitalize="words"
+								enterKeyHint="next"
+								required
+								maxLength={ADDRESS_CONSTANTS.MAX_NAME_LENGTH}
+							/>
+						)}
+					</form.AppField>
+					<form.AppField
+						name="shippingLastName"
+						validators={{
+							onChange: ({ value }) => {
+								const trimmed = value.trim();
+								if (trimmed.length < ADDRESS_CONSTANTS.MIN_NAME_LENGTH) {
+									return ADDRESS_ERROR_MESSAGES.LAST_NAME_TOO_SHORT;
+								}
+								if (trimmed.length > ADDRESS_CONSTANTS.MAX_NAME_LENGTH) {
+									return ADDRESS_ERROR_MESSAGES.LAST_NAME_TOO_LONG;
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => (
+							<field.InputField
+								label="Nom"
+								type="text"
+								autoComplete="family-name"
+								autoCapitalize="words"
+								enterKeyHint="next"
+								required
+								maxLength={ADDRESS_CONSTANTS.MAX_NAME_LENGTH}
+							/>
+						)}
+					</form.AppField>
+				</div>
+
+				<form.AppField
+					name="shippingAddress1"
+					validators={{
+						onChange: ({ value }) => {
+							const trimmed = value.trim();
+							if (trimmed.length === 0) {
+								return "L'adresse est requise";
+							}
+							if (trimmed.length > ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH) {
+								return ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG;
+							}
+							return undefined;
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Adresse"
 							type="text"
-							defaultValue={shippingFirstName}
-							autoComplete="given-name"
+							autoComplete="address-line1"
 							autoCapitalize="words"
 							enterKeyHint="next"
 							required
-							maxLength={50}
+							maxLength={ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH}
 						/>
-					</div>
-					<div className="space-y-2">
-						<Label htmlFor="shippingLastName">
-							Nom <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="shippingLastName"
-							name="shippingLastName"
+					)}
+				</form.AppField>
+
+				<form.AppField
+					name="shippingAddress2"
+					validators={{
+						onChange: ({ value }) =>
+							value.trim().length > ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH
+								? ADDRESS_ERROR_MESSAGES.ADDRESS_TOO_LONG
+								: undefined,
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Complément d'adresse"
 							type="text"
-							defaultValue={shippingLastName}
-							autoComplete="family-name"
-							autoCapitalize="words"
+							autoComplete="address-line2"
+							autoCapitalize="sentences"
 							enterKeyHint="next"
-							required
-							maxLength={50}
+							maxLength={ADDRESS_CONSTANTS.MAX_ADDRESS_LENGTH}
 						/>
-					</div>
-				</div>
-
-				<div className="space-y-2">
-					<Label htmlFor="shippingAddress1">
-						Adresse <span className="text-destructive">*</span>
-					</Label>
-					<Input
-						id="shippingAddress1"
-						name="shippingAddress1"
-						type="text"
-						defaultValue={shippingAddress1}
-						autoComplete="address-line1"
-						autoCapitalize="words"
-						enterKeyHint="next"
-						required
-						maxLength={255}
-					/>
-				</div>
-
-				<div className="space-y-2">
-					<Label htmlFor="shippingAddress2">Complément d&apos;adresse</Label>
-					<Input
-						id="shippingAddress2"
-						name="shippingAddress2"
-						type="text"
-						defaultValue={shippingAddress2 ?? ""}
-						autoComplete="address-line2"
-						autoCapitalize="sentences"
-						enterKeyHint="next"
-						maxLength={255}
-					/>
-				</div>
+					)}
+				</form.AppField>
 
 				<div className="grid grid-cols-3 gap-4">
-					<div className="space-y-2">
-						<Label htmlFor="shippingPostalCode">
-							Code postal <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="shippingPostalCode"
-							name="shippingPostalCode"
-							type="text"
-							inputMode="numeric"
-							autoComplete="postal-code"
-							autoCorrect="off"
-							spellCheck={false}
-							enterKeyHint="next"
-							defaultValue={shippingPostalCode}
-							required
-							maxLength={10}
-						/>
-					</div>
-					<div className="col-span-2 space-y-2">
-						<Label htmlFor="shippingCity">
-							Ville <span className="text-destructive">*</span>
-						</Label>
-						<Input
-							id="shippingCity"
+					<form.AppField
+						name="shippingPostalCode"
+						validators={{
+							onChange: ({ value }) => {
+								if (!value.trim()) {
+									return "Le code postal est requis";
+								}
+								// Même regex que le serveur (`postalCodeSchema`), importée de la SSOT.
+								if (
+									value.length > ADDRESS_CONSTANTS.MAX_POSTAL_CODE_LENGTH ||
+									!ADDRESS_CONSTANTS.POSTAL_CODE_REGEX.test(value.trim())
+								) {
+									return ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE;
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => (
+							<field.InputField
+								label="Code postal"
+								type="text"
+								inputMode="numeric"
+								autoComplete="postal-code"
+								autoCorrect="off"
+								spellCheck={false}
+								enterKeyHint="next"
+								required
+								maxLength={ADDRESS_CONSTANTS.MAX_POSTAL_CODE_LENGTH}
+							/>
+						)}
+					</form.AppField>
+					<div className="col-span-2">
+						<form.AppField
 							name="shippingCity"
-							type="text"
-							defaultValue={shippingCity}
-							autoComplete="address-level2"
-							autoCapitalize="words"
-							enterKeyHint="next"
-							required
-							maxLength={100}
-						/>
+							validators={{
+								onChange: ({ value }) => {
+									const trimmed = value.trim();
+									if (trimmed.length < ADDRESS_CONSTANTS.MIN_CITY_LENGTH) {
+										return "La ville est requise";
+									}
+									if (trimmed.length > ADDRESS_CONSTANTS.MAX_CITY_LENGTH) {
+										return ADDRESS_ERROR_MESSAGES.CITY_TOO_LONG;
+									}
+									return undefined;
+								},
+							}}
+						>
+							{(field) => (
+								<field.InputField
+									label="Ville"
+									type="text"
+									autoComplete="address-level2"
+									autoCapitalize="words"
+									enterKeyHint="next"
+									required
+									maxLength={ADDRESS_CONSTANTS.MAX_CITY_LENGTH}
+								/>
+							)}
+						</form.AppField>
 					</div>
 				</div>
 
-				<div className="space-y-2">
-					<Label htmlFor="shippingCountry">
-						Pays <span className="text-destructive">*</span>
-					</Label>
-					<Select name="shippingCountry" defaultValue={shippingCountry} disabled={isPending}>
-						<SelectTrigger id="shippingCountry">
-							<SelectValue placeholder="Sélectionner un pays" />
-						</SelectTrigger>
-						<SelectContent>
-							{SORTED_SHIPPING_COUNTRIES.map((code) => (
-								<SelectItem key={code} value={code}>
-									{COUNTRY_NAMES[code]}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				</div>
+				<form.AppField name="shippingCountry">
+					{(field) => (
+						<field.SelectField
+							label="Pays"
+							placeholder="Sélectionner un pays"
+							options={countryOptions}
+							disabled={isPending}
+							required
+							autoComplete="country"
+						/>
+					)}
+				</form.AppField>
 			</fieldset>
 
-			<AdminFormFooter pending={isPending}>
-				<div className="flex justify-end">
-					<Button
-						type="submit"
-						size="input"
-						disabled={isPending}
-						onClick={() => haptic("medium")}
-						className="w-full sm:w-auto sm:min-w-56"
-					>
-						{isPending && (
-							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						)}
-						<span>{isPending ? "Mise à jour…" : "Enregistrer l'adresse"}</span>
-						{!isPending && (
-							<Kbd
-								aria-hidden="true"
-								className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
-							>
-								⌘S
-							</Kbd>
-						)}
-					</Button>
-				</div>
-			</AdminFormFooter>
+			<form.AppForm>
+				<AdminFormFooter pending={isPending}>
+					<div className="flex justify-end">
+						<form.SubmitButton
+							isPending={isPending}
+							idleLabel="Enregistrer l'adresse"
+							pendingLabel="Mise à jour…"
+							showKbdHint
+							className="w-full sm:w-auto sm:min-w-56"
+						/>
+					</div>
+				</AdminFormFooter>
+			</form.AppForm>
 		</form>
 	);
 }

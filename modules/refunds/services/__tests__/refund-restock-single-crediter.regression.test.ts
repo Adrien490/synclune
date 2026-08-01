@@ -4,8 +4,8 @@
  * Contrat transverse : **un seul créditeur de stock par remboursement.**
  *
  * `RefundItem.restock` est la SSOT du crédit d'inventaire côté `processRefund`
- * (process-refund.ts:396-455) et de son jumeau cron `reconcile-refunds`
- * (reconcile-refunds.service.ts:749-780) — les deux sont mutuellement exclusifs
+ * (process-refund.ts:396-455) et de son jumeau asynchrone partagé webhook + cron
+ * (finalize-refund.service.ts) — les deux sont mutuellement exclusifs
  * (claim `status: APPROVED`), donc au plus UN des deux crédite.
  *
  * Corollaire : un writer qui restaure le stock LUI-MÊME doit poser `restock: false`
@@ -39,8 +39,11 @@ const DECLARED_INVENTORY_CREDITERS = [
 	"modules/orders/actions/cancel-order.ts",
 	// Consommateur de RefundItem.restock (chemin admin).
 	"modules/refunds/actions/process-refund.ts",
-	// Consommateur de RefundItem.restock (rattrapage cron, exclusif du précédent).
-	"modules/cron/services/reconcile-refunds.service.ts",
+	// Consommateur de RefundItem.restock (finalisation asynchrone partagée
+	// webhook refund.updated + cron DLQ — P1-C audit 2026-08-01 ; a remplacé le
+	// crédit inliné dans reconcile-refunds.service.ts, exclusif du précédent
+	// via le claim `status: APPROVED`).
+	"modules/refunds/services/finalize-refund.service.ts",
 	// restoreStockForOrder + restock inliné dans le claim markOrderAsCancelled.
 	"modules/webhooks/services/payment-intent.service.ts",
 	// Delta relatif du formulaire d'édition SKU admin (audit intégrité stock
@@ -215,10 +218,12 @@ describe("STOCK-DOUBLE-CREDIT-001 — un seul créditeur de stock par remboursem
 		const reconcile = readFileSync("modules/cron/services/reconcile-refunds.service.ts", "utf-8");
 		expect(refundItemRestockValues(reconcile)).toEqual([]);
 
-		// Un writer légitime qui NE crédite pas lui-même garde le droit à `true`
-		// (retour client : l'article revient physiquement).
-		const requestReturn = readFileSync("modules/refunds/actions/request-return.ts", "utf-8");
-		expect(refundItemRestockValues(requestReturn)).toEqual(["true"]);
-		expect(creditsInventory(requestReturn)).toBe(false);
+		// Le contre-exemple « writer légitime avec restock: true » était
+		// `request-return.ts` (demande de retour client) : l'article revient
+		// physiquement, donc il portait `true` sans créditer lui-même l'inventaire.
+		// L'action a été supprimée avec l'espace client (2026-07-31) — les retours
+		// passent par l'email de contact puis une action admin. Il ne reste donc
+		// aucun writer à `true` dans le repo, et l'invariant se réduit à sa
+		// moitié haute : tout créditeur écrit `restock: false`.
 	});
 });

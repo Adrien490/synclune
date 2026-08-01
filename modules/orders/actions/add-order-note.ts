@@ -14,9 +14,10 @@ import { updateTag } from "next/cache";
 /**
  * Server Action ADMIN pour ajouter une note interne à une commande
  *
- * @param isInternal Si true, la note est filtree par `getOrderNotesForUser`
- *                   et n'apparaitra jamais cote client. Default false pour
- *                   preserver le comportement historique.
+ * @param isInternal Colonne héritée de l'espace client (son lecteur
+ *                   `getOrderNotesForUser` a disparu avec lui, 2026-07-31) :
+ *                   écrite mais plus jamais lue — toutes les notes sont
+ *                   internes de fait, seule l'admin les voit.
  */
 export async function addOrderNote(
 	orderId: string,
@@ -51,7 +52,11 @@ export async function addOrderNote(
 					orderId: validated.data.orderId,
 					content: sanitizedContent,
 					authorId: auth.user.id,
-					authorName: auth.user.name ?? auth.user.email,
+					// `?? "Admin"` et non `?? email` : authorName est conservé 10 ans et
+					// n'est PAS couvert par le scrub des notes (PURGED_ORDER_NOTE_CONTENT
+					// ne remplace que content) — un email admin n'a rien à y faire.
+					// Aligné sur les 12 autres actions du module (audit 2026-08-01, P3).
+					authorName: auth.user.name ?? "Admin",
 					isInternal: validated.data.isInternal,
 				},
 			});

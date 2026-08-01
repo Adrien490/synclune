@@ -93,7 +93,10 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 		subtotal,
 		discountAmount,
 	});
-	const itemsForAction = formatItemsForAction(selectedItems);
+	const itemsForAction = formatItemsForAction(selectedItems, orderItems, {
+		subtotal,
+		discountAmount,
+	});
 
 	return {
 		form,

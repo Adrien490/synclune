@@ -46,7 +46,11 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 			id: options.orderId,
 			trackingNumber: "",
 			trackingUrl: "",
-			carrier: "colissimo" as Carrier,
+			// Pas de transporteur pré-sélectionné : un défaut « colissimo » devenait
+			// une attribution inventée persistée en base si l'admin validait sans
+			// toucher au picker (audit 2026-08-01). `""` = placeholder affiché,
+			// submit bloqué tant qu'aucun choix explicite (ou détection auto).
+			carrier: "" as Carrier | "",
 			sendEmail: true,
 			customUrlMode: false,
 		},

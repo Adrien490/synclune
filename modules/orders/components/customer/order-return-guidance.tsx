@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/aler
 import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
 import {
+	getReturnDaysRemaining,
 	getReturnIneligibilityReason,
 	WITHDRAWAL_PERIOD_DAYS,
 } from "@/modules/refunds/services/return-eligibility.service";
@@ -20,25 +21,20 @@ interface OrderReturnGuidanceProps {
 }
 
 /**
- * AUDIT-BIZ-001 — explique au client pourquoi le retour self-service n'est pas
- * (encore) disponible, et quel chemin emprunter en attendant.
+ * AUDIT-BIZ-001 — explique au client où il en est de son droit de rétractation,
+ * quel que soit l'état de la commande.
  *
- * Contexte du défaut corrigé : `RequestReturnButton` n'apparaît que si
- * `isReturnEligible` est vrai, ce qui exige `fulfillmentStatus === DELIVERED`
- * **et** `actualDelivery` — un champ écrit uniquement par l'action admin manuelle
- * `mark-as-delivered`. Entre l'encaissement et ce marquage, le client n'avait
- * AUCUNE affordance ni explication : ni annulation (réservée aux commandes
- * PENDING donc non payées), ni retour. Le droit de rétractation était bien
- * exerçable (formulaire type L221-5 sur `/retractation`) mais rien ne l'y
- * menait depuis la commande.
+ * Chaque état produit une explication ACTIONNABLE :
+ * - payée non livrée : le délai démarre à la réception + sorties immédiates
+ *   (contact, formulaire type L221-5 sur `/retractation`) ;
+ * - éligible : la demande de retour se fait PAR EMAIL — le flow self-service
+ *   (`RequestReturnButton` / `request-return.ts`) est parti avec l'espace client
+ *   (2026-07-31), l'opératrice traite ensuite via `processRefund` ;
+ * - délai écoulé : renvoi vers la garantie légale de conformité ;
+ * - demande en cours : le dit, au lieu de laisser croire à une inaction.
  *
- * `getReturnIneligibilityReason()` existait déjà et discriminait précisément le
- * motif, mais n'était consommé que côté serveur (`request-return.ts`) : l'UI
- * client jetait l'information en n'appelant que le booléen. On la branche ici.
- *
- * Rend `null` quand la commande est éligible (le caller affiche alors le vrai
- * bouton de demande de retour) ou quand parler de retour n'a pas de sens
- * (commande annulée / non payée).
+ * Rend `null` seulement quand parler de retour n'a pas de sens (commande
+ * annulée / non payée).
  */
 export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 	if (order.status === "CANCELLED") return null;
@@ -49,9 +45,6 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 		actualDelivery: order.actualDelivery,
 		refunds: order.refunds ?? [],
 	});
-
-	// Éligible → le caller rend le bouton de demande de retour.
-	if (reason === null) return null;
 
 	// Non payée : le sujet n'est pas le retour mais le paiement, traité ailleurs.
 	if (reason === "NOT_PAID") return null;
@@ -66,6 +59,25 @@ export function OrderReturnGuidance({ order }: OrderReturnGuidanceProps) {
 			{BRAND.contact.email}
 		</Link>
 	);
+
+	if (reason === null) {
+		// Éligible ≡ now < deadline, donc toujours ≥ 1 jour restant ici.
+		const daysRemaining = getReturnDaysRemaining(order.actualDelivery);
+		return (
+			<Alert>
+				<Info />
+				<AlertTitle>Retour possible</AlertTitle>
+				<AlertDescription className="space-y-2">
+					<p>
+						Tu as encore {daysRemaining} jour{daysRemaining > 1 ? "s" : ""} pour changer
+						d&apos;avis. Écris-moi à {contactLink} avec ton numéro de commande et je t&apos;indique
+						la marche à suivre pour le retour et le remboursement.
+					</p>
+					<p>Tu peux aussi utiliser le {withdrawalLink}.</p>
+				</AlertDescription>
+			</Alert>
+		);
+	}
 
 	if (reason === "ALREADY_REQUESTED") {
 		return (

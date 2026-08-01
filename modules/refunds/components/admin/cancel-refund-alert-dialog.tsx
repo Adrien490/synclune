@@ -14,7 +14,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelRefund } from "@/modules/refunds/hooks/use-cancel-refund";
 import { ActionStatus } from "@/shared/types/server-action";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const CANCEL_REFUND_DIALOG_ID = "cancel-refund";
 
@@ -70,7 +70,7 @@ export function CancelRefundAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Fermer</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Annulation…" : "Annuler la demande"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

@@ -19,7 +19,7 @@ const {
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn(), update: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
 		// STOCK-LEDGER-001 : le décrément est passé en `UPDATE … RETURNING` (raw SQL)
 		// pour dériver le StockMovement — `productSku.updateMany` n'est plus appelé.
 		stockMovement: { create: vi.fn() },
@@ -89,7 +89,12 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 vi.mock("../../constants/order.constants", () => ({
 	ORDER_ERROR_MESSAGES: {
@@ -163,7 +168,7 @@ describe("markAsPaid", () => {
 		);
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 		mockPiRetrieve.mockResolvedValue({ status: "succeeded" });
-		mockPrisma.order.update.mockResolvedValue({});
+		mockPrisma.order.updateMany.mockResolvedValue({ count: 1 });
 		// `$queryRaw` sert l'advisory lock (retour ignoré) ET le `UPDATE … RETURNING`
 		// du décrément (retour lu). Une ligne retournée = décrément accepté.
 		mockPrisma.$queryRaw.mockResolvedValue([{ inventory: 3, productId: "prod-1" }]);
@@ -235,7 +240,7 @@ describe("markAsPaid", () => {
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/Stripe/i);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	// EINV-CASH-002 : le préflight interroge le statut LIVE du PI — un PI non
@@ -247,7 +252,7 @@ describe("markAsPaid", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toMatch(/hors Stripe/i);
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockPrisma.order.updateMany).not.toHaveBeenCalled();
 	});
 
 	it("proceeds on an unsettled PI when the admin attests off-Stripe payment, and records it in the audit trail (EINV-CASH-002)", async () => {
@@ -354,7 +359,7 @@ describe("markAsPaid", () => {
 	it("sets both DLQ flags in the PAID transaction so reconcile-invoices can drain on crash (EINV-CASH-005)", async () => {
 		const result = await markAsPaid(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.order.update).toHaveBeenCalledWith(
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					paymentStatus: "PAID",

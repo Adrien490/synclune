@@ -47,7 +47,7 @@ async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 	// Tag granulaire (ORD-CACHE-001) : permet d'invalider uniquement
-	// cette commande via getOrderInvalidationTags(_, orderId).
+	// cette commande via getOrderInvalidationTags(orderId).
 	cacheTag(ORDERS_CACHE_TAGS.DETAIL(id));
 
 	try {

@@ -3,7 +3,10 @@ import { RefundStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { prisma } from "@/shared/lib/prisma";
 
-const EXPORT_MAX_ROWS = 50_000;
+// Exporté : la route d'export compare `orders.length` à ce plafond pour SIGNALER
+// la troncature (header + audit + Sentry) — sur un livre de recettes, une
+// troncature muette est un défaut de conformité latent (audit 2026-08-01, P3).
+export const EXPORT_MAX_ROWS = 50_000;
 
 export type OrderForExport = Awaited<
 	ReturnType<typeof prisma.order.findMany<{ select: typeof EXPORT_SELECT }>>

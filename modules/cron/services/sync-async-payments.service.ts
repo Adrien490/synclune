@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -109,16 +109,12 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 	// Webhook raté : un PI confirmé `succeeded` qu'on rejoue via le même chemin
 	// que le webhook (décrément stock + désactivation SKU + clear cart + facture).
 	// Idempotent via le guard `paymentStatus === "PAID"`.
-	const processPaidOrder = async (
-		orderId: string,
-		pi: Stripe.PaymentIntent,
-		userId: string | null,
-	): Promise<void> => {
+	const processPaidOrder = async (orderId: string, pi: Stripe.PaymentIntent): Promise<void> => {
 		const paymentMethod = (await extractPaymentMethodFromPaymentIntent(pi)) ?? undefined;
 		const order = await processOrderFromPaymentIntent(orderId, pi, paymentMethod);
 		await ensureInvoiceNumberPersisted(orderId);
-		// CACHE-AUDIT-004 : tags user-scopés + détail commande.
-		for (const tag of getOrderInvalidationTags(userId ?? undefined, orderId)) {
+		// CACHE-AUDIT-004 : détail commande (plus de tags user-scopés — cf. cache.ts).
+		for (const tag of getOrderInvalidationTags(orderId)) {
 			tagsToInvalidate.add(tag);
 		}
 
@@ -216,7 +212,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 					cronJob: "sync-async-payments",
 					orderNumber: order.orderNumber,
 				});
-				await processPaidOrder(order.id, paymentIntent, order.userId);
+				await processPaidOrder(order.id, paymentIntent);
 				updated++;
 				continue;
 			}
@@ -256,7 +252,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 							cronJob: "sync-async-payments",
 							orderNumber: order.orderNumber,
 						});
-						await processPaidOrder(order.id, fresh, order.userId);
+						await processPaidOrder(order.id, fresh);
 						updated++;
 						continue;
 					}
@@ -314,8 +310,8 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 				for (const tag of collectStockInvalidationTags(result.restoredSkus)) {
 					tagsToInvalidate.add(tag);
 				}
-				// CACHE-AUDIT-004 : tags user-scopés + détail commande.
-				for (const tag of getOrderInvalidationTags(order.userId ?? undefined, order.id)) {
+				// CACHE-AUDIT-004 : détail commande (plus de tags user-scopés — cf. cache.ts).
+				for (const tag of getOrderInvalidationTags(order.id)) {
 					tagsToInvalidate.add(tag);
 				}
 				// P2-1 : notifier le client (paiement non finalisé / refus carte / 3DS
@@ -362,9 +358,7 @@ export async function syncAsyncPayments(): Promise<CronResult> {
 		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		for (const tag of tagsToInvalidate) {
-			updateTag(tag);
-		}
+		revalidateTagsInBackground(tagsToInvalidate);
 	}
 
 	// Emit a single aggregated alert for all stock-restore failures (avoid per-order inbox spam)

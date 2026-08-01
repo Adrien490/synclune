@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { GET_LAST_ORDER_DEFAULT_SELECT } from "../last-order.constants";
 import {
 	GET_ORDER_SELECT_ADMIN,
 	GET_ORDER_SELECT_CUSTOMER,
 	GET_ORDERS_SELECT,
 } from "../order.constants";
-import { GET_USER_ORDERS_SELECT } from "../user-orders.constants";
 
 /**
  * @regression order-select-snapshot-only-2026-07-02
@@ -44,8 +42,6 @@ const DISPLAY_SELECTS = {
 	GET_ORDERS_SELECT,
 	GET_ORDER_SELECT_ADMIN,
 	GET_ORDER_SELECT_CUSTOMER,
-	GET_USER_ORDERS_SELECT,
-	GET_LAST_ORDER_DEFAULT_SELECT,
 } as const;
 
 describe("Sélecteurs d'affichage commandes — snapshots uniquement (Invariant #4, read-side)", () => {

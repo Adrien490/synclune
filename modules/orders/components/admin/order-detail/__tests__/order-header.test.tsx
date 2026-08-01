@@ -68,7 +68,7 @@ vi.mock("lucide-react", () => {
 		Download: stub,
 		Ellipsis: stub,
 		FileText: stub,
-		Loader2: stub,
+		Loader2Icon: stub,
 		Truck: stub,
 	};
 });

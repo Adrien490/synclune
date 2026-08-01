@@ -7,7 +7,7 @@ import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 interface AddToCartFormProps {
 	product: GetProductReturn;
@@ -101,7 +101,7 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 			>
 				{isPending ? (
 					<span className="inline-flex items-center gap-2">
-						<LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
+						<Spinner presentational />
 						<span>Ajout en cours…</span>
 					</span>
 				) : !selectedSku ? (

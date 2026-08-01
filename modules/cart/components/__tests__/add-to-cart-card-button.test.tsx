@@ -71,7 +71,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 
 vi.mock("lucide-react", () => ({
 	ShoppingCart: () => <svg data-testid="icon-shopping-cart" />,
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
 }));

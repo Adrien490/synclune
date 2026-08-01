@@ -16,7 +16,7 @@ const {
 	mockPrisma,
 	mockTx,
 	mockDispatchEmailTask,
-	mockUpdateTag,
+	mockRevalidateTagsInBackground,
 	mockSendWebhookFailedAlertEmail,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -24,12 +24,20 @@ const {
 	},
 	mockTx: { postWebhookTask: { createMany: vi.fn() } },
 	mockDispatchEmailTask: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockRevalidateTagsInBackground: vi.fn(),
 	mockSendWebhookFailedAlertEmail: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
+// Ce runner s'exécute en contexte route handler (`after()` du webhook + cron
+// `retry-post-webhook-tasks`), où `updateTag` throw (E872). Il passe donc par
+// `revalidateTagsInBackground`. C'est ce helper qu'on mocke ici — la légalité de
+// l'API selon le contexte est prouvée SANS mock par
+// `test/contract/cache-invalidation-context.contract.test.ts`, et l'exécution de
+// bout en bout par `post-webhook-tasks.route-context.regression.test.ts`.
+vi.mock("@/shared/lib/cache", () => ({
+	revalidateTagsInBackground: mockRevalidateTagsInBackground,
+}));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -144,8 +152,7 @@ describe("executeBatch — branche INVALIDATE_CACHE", () => {
 			},
 		]);
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
+		expect(mockRevalidateTagsInBackground).toHaveBeenCalledWith(["orders-list", "admin-badges"]);
 		expect(mockDispatchEmailTask).not.toHaveBeenCalled();
 		expect(stats).toEqual({ successful: 1, failed: 0, skipped: 0 });
 	});

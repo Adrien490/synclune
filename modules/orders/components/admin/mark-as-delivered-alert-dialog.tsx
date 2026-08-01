@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
 
@@ -61,7 +61,7 @@ export function MarkAsDeliveredAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Mise à jour…" : "Marquer comme livrée"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

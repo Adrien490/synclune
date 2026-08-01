@@ -47,7 +47,7 @@ const EMAIL_ERROR = "Entre une adresse email valide";
 
 /** Harnais minimal : le vrai hook de formulaire, la vraie section Contact, en invité. */
 function Harness() {
-	const { form } = useCheckoutForm({ session: null, addresses: null });
+	const { form } = useCheckoutForm({ session: null });
 	return <CheckoutContactSection form={form} session={null} />;
 }
 

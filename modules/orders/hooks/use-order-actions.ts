@@ -42,6 +42,7 @@ import { MARK_AS_RETURNED_DIALOG_ID } from "../components/admin/mark-as-returned
 import { MARK_AS_SHIPPED_DIALOG_ID } from "../components/admin/mark-as-shipped-dialog";
 import { ORDER_NOTES_DIALOG_ID } from "../components/admin/order-notes-dialog";
 import { REVERT_TO_PROCESSING_DIALOG_ID } from "../components/admin/revert-to-processing-dialog";
+import { UNDO_RETURN_DIALOG_ID } from "../components/admin/undo-return-alert-dialog";
 import { getOrderPermissions } from "../services/order-status-validation.service";
 import type { OrderStateInput } from "../types/order.types";
 
@@ -70,6 +71,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const markAsProcessingDialog = useAlertDialog(MARK_AS_PROCESSING_DIALOG_ID);
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
+	const undoReturnDialog = useAlertDialog(UNDO_RETURN_DIALOG_ID);
 	const markAsFullyRefundedDialog = useAlertDialog(MARK_AS_FULLY_REFUNDED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 	const router = useRouter();
@@ -98,6 +100,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		canMarkAsProcessing,
 		canRevertToProcessing,
 		canMarkAsReturned,
+		canUndoReturn,
 		canMarkAsFullyRefunded,
 		canDelete,
 	} = permissions;
@@ -206,6 +209,14 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					hidden: !canMarkAsReturned,
 					closesMenu: false,
 					onSelect: () => markAsReturnedDialog.open(open({})),
+				},
+				{
+					key: "undo-return",
+					label: "Annuler le retour",
+					icon: Undo2,
+					hidden: !canUndoReturn,
+					closesMenu: false,
+					onSelect: () => undoReturnDialog.open(open({})),
 				},
 			],
 		},

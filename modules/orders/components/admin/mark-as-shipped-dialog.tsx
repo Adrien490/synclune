@@ -13,6 +13,7 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { FormServerErrorAlert } from "@/shared/components/forms/form-server-error-alert";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
@@ -31,8 +32,10 @@ import {
 	type Carrier,
 } from "@/modules/orders/utils/carrier.utils";
 import { useStore } from "@tanstack/react-form";
-import { Link2, LoaderCircle, Mail, Truck } from "lucide-react";
+import { Link2, Mail, Truck } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useMarkAsShippedForm } from "@/modules/orders/hooks/use-mark-as-shipped-form";
+import { TRACKING_NUMBER_MAX_LENGTH } from "@/modules/orders/constants/order.constants";
 
 export const MARK_AS_SHIPPED_DIALOG_ID = "mark-as-shipped";
 
@@ -136,9 +139,9 @@ function MarkAsShippedFormContent({
 				<div className="space-y-4">
 					{/* Tracking Number Field */}
 					<div className="space-y-2">
-						<Label htmlFor="trackingNumber">
-							Numéro de suivi <span className="text-destructive">*</span>
-						</Label>
+						<FieldLabel htmlFor="trackingNumber" required>
+							Numéro de suivi
+						</FieldLabel>
 						<Input
 							id="trackingNumber"
 							name="trackingNumber"
@@ -146,6 +149,7 @@ function MarkAsShippedFormContent({
 							onChange={handleTrackingNumberChange}
 							placeholder="Ex: 8N00234567890"
 							disabled={isPending}
+							maxLength={TRACKING_NUMBER_MAX_LENGTH}
 							required
 						/>
 						<p className="text-muted-foreground text-xs">
@@ -155,7 +159,9 @@ function MarkAsShippedFormContent({
 
 					{/* Carrier Field */}
 					<div className="space-y-2">
-						<Label htmlFor="carrier">Transporteur</Label>
+						<FieldLabel htmlFor="carrier" required>
+							Transporteur
+						</FieldLabel>
 						<Select
 							value={carrier}
 							onValueChange={(value) => handleCarrierChange(value as Carrier)}
@@ -173,11 +179,14 @@ function MarkAsShippedFormContent({
 								))}
 							</SelectContent>
 						</Select>
-						{trackingNumber.length >= 8 && !customUrlMode && carrier !== "autre" && (
-							<p className="text-xs text-emerald-600">
-								Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
-							</p>
-						)}
+						{trackingNumber.length >= 8 &&
+							!customUrlMode &&
+							carrier !== "" &&
+							carrier !== "autre" && (
+								<p className="text-success text-xs">
+									Détecté automatiquement : {CARRIERS.find((c) => c.value === carrier)?.label}
+								</p>
+							)}
 					</div>
 
 					{/* Tracking URL */}
@@ -195,7 +204,7 @@ function MarkAsShippedFormContent({
 							disabled={isPending}
 						/>
 						{carrier === "autre" && !trackingUrl && (
-							<p className="text-xs text-amber-600">
+							<p className="text-warning text-xs">
 								Saisissez l'URL de suivi manuellement pour ce transporteur
 							</p>
 						)}
@@ -248,12 +257,10 @@ function MarkAsShippedFormContent({
 					</Button>
 					<Button
 						type="submit"
-						disabled={isPending || !trackingNumber.trim()}
+						disabled={isPending || !trackingNumber.trim() || !carrier}
 						aria-busy={isPending}
 					>
-						{isPending && (
-							<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						)}
+						{isPending && <Spinner presentational />}
 						{isPending ? "Expédition…" : "Valider l'expédition"}
 					</Button>
 				</ResponsiveDialogFooter>

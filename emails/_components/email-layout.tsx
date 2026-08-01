@@ -1,6 +1,7 @@
 import { Body, Container, Head, Html, Img, Link, Preview, Section, Text } from "react-email";
 import { LEGAL_URLS, EMAIL_LOGO_URL } from "@/shared/constants/legal-urls";
 import { BRAND } from "@/shared/constants/brand";
+import { BUSINESS_INFO } from "@/shared/constants/seo-config";
 import { DEFAULT_FRANCHISE_VAT_MENTION } from "@/shared/constants/vat-franchise";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_COLORS_DARK, EMAIL_STYLES } from "../email-colors";
 
@@ -184,7 +185,8 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							77 Boulevard du Tertre, 44100 Nantes, France
+							{BUSINESS_INFO.location.street}, {BUSINESS_INFO.location.postalCode}{" "}
+							{BUSINESS_INFO.location.city}, {BUSINESS_INFO.location.country}
 						</Text>
 						<Text
 							className={EMAIL_CLASSES.text.secondary}
@@ -193,7 +195,7 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							Micro-entreprise — SIREN 839 183 027
+							Micro-entreprise — SIREN {BUSINESS_INFO.siren}
 						</Text>
 						<Text
 							className={EMAIL_CLASSES.text.secondary}
@@ -212,7 +214,7 @@ export function EmailLayout({
 							}}
 						>
 							<Link
-								href={LEGAL_URLS.CONTACT}
+								href={`mailto:${BRAND.contact.email}`}
 								style={{
 									color: EMAIL_COLORS.text.secondary,
 									textDecoration: "underline",

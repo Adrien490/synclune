@@ -1,3 +1,4 @@
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
@@ -11,11 +12,17 @@ import type { GetDiscountParams, GetDiscountReturn } from "../types/discount.typ
 // ============================================================================
 
 /**
- * Récupère un code promo par son ID
+ * Récupère un code promo par son ID. **Admin uniquement.**
+ *
+ * Même raisonnement que `getDiscounts` : la garde vit ici, pas seulement dans
+ * `app/admin/layout.tsx`, parce qu'un layout partagé n'est pas ré-exécuté lors
+ * d'une navigation client. `isAdmin()` re-vérifie le rôle en base.
  */
 export async function getDiscountById(
 	params: Partial<GetDiscountParams>,
 ): Promise<GetDiscountReturn> {
+	if (!(await isAdmin())) return null;
+
 	const validation = getDiscountSchema.safeParse(params);
 
 	if (!validation.success) {

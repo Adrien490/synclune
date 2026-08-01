@@ -22,7 +22,7 @@ export function CartSheetTrigger({ className, ref }: CartSheetTriggerProps) {
 			ref={ref}
 			type="button"
 			onClick={open}
-			className={cn("group relative", className)}
+			className={cn("group focus-ring relative", className)}
 			aria-label="Ouvrir mon panier"
 			aria-expanded={isOpen}
 			aria-haspopup="dialog"

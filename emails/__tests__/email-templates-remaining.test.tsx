@@ -3,7 +3,6 @@ import { render } from "@react-email/render";
 import { CancelOrderConfirmationEmail } from "../cancel-order-confirmation-email";
 import { PaymentFailedEmail } from "../payment-failed-email";
 import { RefundConfirmedEmail } from "../refund-confirmed-email";
-import { AccountDeletionEmail } from "../account-deletion-email";
 import { AdminAlertEmail } from "../admin-alert-email";
 
 // ---------------------------------------------------------------------------
@@ -107,39 +106,6 @@ describe("RefundConfirmedEmail", () => {
 		const html = await render(<RefundConfirmedEmail {...baseProps} />);
 		expect(html).toContain("CMD-2024-ABCD1234");
 		expect(html).toContain("Marie");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AccountDeletionEmail
-// ---------------------------------------------------------------------------
-
-describe("AccountDeletionEmail", () => {
-	const baseProps = {
-		userName: "Marie",
-		deletionDate: "17 février 2026",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AccountDeletionEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<AccountDeletionEmail {...baseProps} />);
-		expect(html).toContain("Compte supprimé");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<AccountDeletionEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("17 février 2026");
-	});
-
-	it("contains legal retention information", async () => {
-		const html = await render(<AccountDeletionEmail {...baseProps} />);
-		expect(html).toContain("Conservation légale");
 	});
 });
 

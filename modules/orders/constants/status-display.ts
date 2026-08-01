@@ -6,7 +6,8 @@ import type {
 } from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
-// Re-export pour compatibilité
+// SSOT de l'affichage des statuts commande (labels + variants Badge).
+// Le module dashboard ré-exporte depuis ici — ne pas redéclarer ailleurs.
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 	PENDING: "En attente",
 	PROCESSING: "En traitement",
@@ -41,8 +42,11 @@ export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
 	REFUNDED: "secondary",
 };
 
+// « À préparer » + warning (et non « Non traitée » + outline) : une commande
+// payée non préparée est une tâche en attente, pas un état neutre — décision
+// audit UI design system 2026-08-01, alignée sur le dashboard.
 export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "Non traitée",
+	UNFULFILLED: "À préparer",
 	PROCESSING: "En préparation",
 	SHIPPED: "Expédiée",
 	DELIVERED: "Livrée",
@@ -50,7 +54,7 @@ export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
 };
 
 export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {
-	UNFULFILLED: "outline",
+	UNFULFILLED: "warning",
 	PROCESSING: "default",
 	SHIPPED: "secondary",
 	DELIVERED: "success",

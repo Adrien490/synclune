@@ -1,3 +1,4 @@
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { Prisma } from "@/app/generated/prisma/client";
 import type { GetOrdersParams, OrderFilters } from "../types/order.types";
 
@@ -10,7 +11,8 @@ export function buildOrderSearchConditions(search: string): Prisma.OrderWhereInp
 		return null;
 	}
 
-	const searchTerm = search.trim();
+	// Echappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3, cf. escape-like-pattern.ts).
+	const searchTerm = escapeLikePattern(search.trim());
 
 	return {
 		OR: [
@@ -20,20 +22,21 @@ export function buildOrderSearchConditions(search: string): Prisma.OrderWhereInp
 					mode: Prisma.QueryMode.insensitive,
 				},
 			},
+			// Colonnes SNAPSHOT, pas la relation `user` : l'achat est 100 % invité
+			// depuis le retrait de l'espace client (2026-07-31) — chercher
+			// `user.email`/`user.name` ne matchait plus jamais un client, et le
+			// chemin fuzzy qui couvrait ces colonnes est conditionnel (≥3 car.,
+			// rate limit, timeout pg_trgm). Audit « Admin commandes » 2026-08-01.
 			{
-				user: {
-					email: {
-						contains: searchTerm,
-						mode: Prisma.QueryMode.insensitive,
-					},
+				customerEmail: {
+					contains: searchTerm,
+					mode: Prisma.QueryMode.insensitive,
 				},
 			},
 			{
-				user: {
-					name: {
-						contains: searchTerm,
-						mode: Prisma.QueryMode.insensitive,
-					},
+				customerName: {
+					contains: searchTerm,
+					mode: Prisma.QueryMode.insensitive,
 				},
 			},
 			{

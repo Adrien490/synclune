@@ -46,8 +46,15 @@ vi.mock("@/shared/lib/stripe", () => ({
 	getStripeClient: mockGetStripeClient,
 }));
 
+// Ce service s'execute en contexte route handler (cron/webhook) : il invalide via
+// `revalidateTagsInBackground` -> `revalidateTag(tag, { expire: 0 })`, car
+// `updateTag` y throw (E872). Les DEUX sont routes vers le meme espion : ce que
+// ces tests verifient, c'est QUELS tags sont invalides. Le choix de l'API selon le
+// contexte est prouve, lui, sans mock, par
+// `test/contract/cache-invalidation-context.contract.test.ts`.
 vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
+	revalidateTag: vi.fn(),
 }));
 
 vi.mock("@/modules/refunds/services/refund-state-machine.service", () => ({
@@ -80,7 +87,7 @@ vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
 	sendRefundConfirmationOnce: mockSendRefundConfirmationOnce,
 }));
 
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 import { reconcileRefunds } from "../reconcile-refunds.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -99,6 +106,63 @@ function buildCandidate(overrides: Partial<{ id: string; stripeRefundId: string 
 	};
 }
 
+/**
+ * `prisma.refund.findUnique` sert 4 lectures distinctes dans la passe (self-load
+ * de `finalizeRefundCompletion`, lecture interne d'issueCreditNoteForRefund,
+ * re-fetch des numéros de pièces pour l'email, diagnostic de claim raté) — on
+ * dispatche sur la FORME du select plutôt que d'empiler des `mockResolvedValueOnce`
+ * fragiles à l'ordre d'appel.
+ */
+function primeRefundFindUnique(
+	overrides: {
+		order?: Record<string, unknown>;
+		facts?: {
+			creditNoteNumber: string | null;
+			order: { invoiceNumber: string | null; creditNoteNumber: string | null };
+		};
+		claimStatus?: string;
+	} = {},
+) {
+	mockPrisma.refund.findUnique.mockImplementation(async (args: any) => {
+		const sel = args?.select ?? {};
+		if (sel.order?.select?.customerEmail) {
+			// Self-load de finalizeRefundCompletion
+			return {
+				id: args.where.id,
+				amount: 2000,
+				reason: "CUSTOMER_REQUEST",
+				stripeRefundId: "re_test_1",
+				order: {
+					id: "order-1",
+					orderNumber: "SYN-001",
+					total: 5000,
+					customerEmail: null,
+					customerName: null,
+					...(overrides.order ?? {}),
+				},
+			};
+		}
+		if (sel.status && sel.creditNoteNumber) {
+			// Lecture interne d'issueCreditNoteForRefund → null = noop "missing"
+			return null;
+		}
+		if (sel.creditNoteNumber) {
+			// Re-fetch des numéros de pièces pour l'email
+			return (
+				overrides.facts ?? {
+					creditNoteNumber: null,
+					order: { invoiceNumber: null, creditNoteNumber: null },
+				}
+			);
+		}
+		if (sel.status) {
+			// Diagnostic après claim raté
+			return { status: overrides.claimStatus ?? "COMPLETED" };
+		}
+		return null;
+	});
+}
+
 describe("reconcileRefunds", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -115,6 +179,7 @@ describe("reconcileRefunds", () => {
 		// Pas de restock par défaut (finalizeRefund P2-1) ni d'avoir fallback (P2-2).
 		mockPrisma.refundItem.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.findMany.mockResolvedValue([]);
+		primeRefundFindUnique();
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		// OVERBILL-RESOLVE-01 : par défaut aucune commande sur-facturée à résoudre.
 		mockPrisma.order.findMany.mockResolvedValue([]);
@@ -199,26 +264,19 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("passes the freshly issued invoice/credit-note numbers to the confirmation email", async () => {
-		const candidate = buildCandidate();
-		mockPrisma.refund.findMany.mockResolvedValueOnce([
-			{
-				...candidate,
-				reason: "CUSTOMER_REQUEST",
-				order: {
-					...candidate.order,
-					customerEmail: "client@test.fr",
-					customerName: "Marie Dupont",
-				},
-			},
-		]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 2000 } });
 		// Re-fetch post-émission de l'avoir : l'email doit porter les numéros de
-		// pièces (F-/A-) comme le path admin, pas des null en dur.
-		mockPrisma.refund.findUnique.mockResolvedValue({
-			creditNoteNumber: "A-2026-00042",
-			order: { invoiceNumber: "F-2026-00007", creditNoteNumber: null },
+		// pièces (F-/A-) comme le path admin, pas des null en dur. Le destinataire
+		// vient du self-load de finalizeRefundCompletion (snapshot customerEmail).
+		primeRefundFindUnique({
+			order: { customerEmail: "client@test.fr", customerName: "Marie Dupont" },
+			facts: {
+				creditNoteNumber: "A-2026-00042",
+				order: { invoiceNumber: "F-2026-00007", creditNoteNumber: null },
+			},
 		});
 		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
 
@@ -235,26 +293,18 @@ describe("reconcileRefunds", () => {
 	});
 
 	it("falls back to the order credit note number for a full refund finalised by the cron", async () => {
-		const candidate = buildCandidate();
-		mockPrisma.refund.findMany.mockResolvedValueOnce([
-			{
-				...candidate,
-				reason: "CUSTOMER_REQUEST",
-				order: {
-					...candidate.order,
-					customerEmail: "client@test.fr",
-					customerName: "Marie Dupont",
-				},
-			},
-		]);
+		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
 		mockPrisma.refund.aggregate.mockResolvedValue({ _sum: { amount: 5000 } });
 		// Full refund : l'avoir vit sur Order.creditNoteNumber (voidInvoice),
 		// Refund.creditNoteNumber reste null (EINV-SEQ-001).
-		mockPrisma.refund.findUnique.mockResolvedValue({
-			creditNoteNumber: null,
-			order: { invoiceNumber: "F-2026-00007", creditNoteNumber: "A-2026-00043" },
+		primeRefundFindUnique({
+			order: { customerEmail: "client@test.fr", customerName: "Marie Dupont" },
+			facts: {
+				creditNoteNumber: null,
+				order: { invoiceNumber: "F-2026-00007", creditNoteNumber: "A-2026-00043" },
+			},
 		});
 		mockSendRefundConfirmationOnce.mockResolvedValue({ sent: true, skipped: false });
 
@@ -310,8 +360,8 @@ describe("reconcileRefunds", () => {
 		mockPrisma.refund.findMany.mockResolvedValueOnce([buildCandidate()]);
 		mockStripe.refunds.retrieve.mockResolvedValue({ status: "succeeded" });
 		// Simulates the webhook beating the cron : `status: APPROVED` no longer matches.
+		// Le diagnostic post-claim (select { status }) est servi par primeRefundFindUnique.
 		mockPrisma.refund.updateMany.mockResolvedValue({ count: 0 });
-		mockPrisma.refund.findUnique.mockResolvedValue({ status: "COMPLETED" });
 		mockCanTransition.mockReturnValue(false);
 
 		const result = await reconcileRefunds();
@@ -562,10 +612,8 @@ describe("reconcileRefunds", () => {
 
 			await reconcileRefunds();
 
-			const tags = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
-			expect(tags).toEqual(
-				expect.arrayContaining(["order-detail-order-ob", "orders-user-user-ob"]),
-			);
+			const tags = vi.mocked(revalidateTag).mock.calls.map((c) => c[0]);
+			expect(tags).toEqual(expect.arrayContaining(["order-detail-order-ob"]));
 		});
 
 		it("n'invalide PAS les tags par-commande quand rien n'est résolu (count === 0)", async () => {
@@ -576,7 +624,7 @@ describe("reconcileRefunds", () => {
 
 			await reconcileRefunds();
 
-			const tags = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+			const tags = vi.mocked(revalidateTag).mock.calls.map((c) => c[0]);
 			expect(tags).not.toContain("order-detail-order-ob");
 		});
 

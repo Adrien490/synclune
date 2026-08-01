@@ -36,8 +36,10 @@ const RESTOCK_PATHS = [
 	"modules/orders/actions/cancel-order.ts",
 	// Remboursement admin (consommateur de RefundItem.restock).
 	"modules/refunds/actions/process-refund.ts",
-	// Rattrapage cron du même remboursement (exclusif du précédent).
-	"modules/cron/services/reconcile-refunds.service.ts",
+	// Finalisation asynchrone du même remboursement (webhook refund.updated +
+	// cron reconcile-refunds — P1-C audit 2026-08-01 ; a remplacé le restock
+	// inliné dans reconcile-refunds.service.ts, exclusif du précédent).
+	"modules/refunds/services/finalize-refund.service.ts",
 	// restoreStockForOrder + restock inliné du claim markOrderAsCancelled.
 	"modules/webhooks/services/payment-intent.service.ts",
 ].sort();

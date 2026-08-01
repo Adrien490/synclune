@@ -9,7 +9,8 @@ import { useApplyCartDiscount } from "../hooks/use-apply-cart-discount";
 import { useRemoveCartDiscount } from "../hooks/use-remove-cart-discount";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { LoaderCircle, Tag, X } from "lucide-react";
+import { Tag, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 interface CartPromoCodeFormProps {
 	appliedDiscountCode?: string | null;
@@ -77,7 +78,7 @@ export function CartPromoCodeForm({
 						aria-label={`Retirer le code promo ${appliedDiscountCode}`}
 					>
 						{isRemoving ? (
-							<LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+							<Spinner presentational size="sm" />
 						) : (
 							<>
 								<X className="size-3.5" aria-hidden="true" />
@@ -126,11 +127,7 @@ export function CartPromoCodeForm({
 							className="h-11 flex-1 uppercase"
 						/>
 						<Button type="submit" disabled={isApplying} className="h-11 min-w-24">
-							{isApplying ? (
-								<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-							) : (
-								"Appliquer"
-							)}
+							{isApplying ? <Spinner presentational /> : "Appliquer"}
 						</Button>
 						<Button
 							type="button"

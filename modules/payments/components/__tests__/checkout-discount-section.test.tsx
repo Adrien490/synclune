@@ -66,7 +66,7 @@ vi.mock("lucide-react", () => ({
 	ChevronRight: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-chevron" className={className} />
 	),
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
 	X: () => <svg data-testid="icon-x" />,

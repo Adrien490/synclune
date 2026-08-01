@@ -196,7 +196,7 @@ export async function markAsShipped(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation d'expédition au client
 		let emailSent = false;

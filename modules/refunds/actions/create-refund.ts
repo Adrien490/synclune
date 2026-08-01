@@ -20,7 +20,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
-import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
+import { getRefundInvalidationTags } from "../constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { hasOpenDisputeTx } from "@/modules/orders/services/has-open-dispute.service";
 import { createRefundSchema } from "../schemas/refund.schemas";
@@ -301,11 +301,15 @@ export async function createRefund(
 		// DETAIL(orderId) / HISTORY(orderId) alors que cette action écrit une entrée
 		// d'OrderHistory affichée sur la page détail de la commande — celle-ci restait
 		// périmée jusqu'à expiration du profil `user`.
-		for (const tag of getOrderInvalidationTags(result.userId ?? undefined, orderId)) {
+		// Le duo refund écrit à la main à côté est désormais `getRefundInvalidationTags`
+		// (même SSOT que les handlers webhook, qui l'oubliaient partiellement).
+		// `Set` : les deux helpers se recouvrent sur DETAIL/HISTORY/ADMIN_BADGES.
+		for (const tag of new Set([
+			...getOrderInvalidationTags(orderId),
+			...getRefundInvalidationTags(result.refund.id, orderId),
+		])) {
 			updateTag(tag);
 		}
-		updateTag(REFUNDS_CACHE_TAGS.LIST);
-		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 		return success(
 			`Demande de remboursement créée pour ${(result.totalAmount / 100).toFixed(2)} €`,

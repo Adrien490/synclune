@@ -13,6 +13,7 @@ const {
 	mockGetSortDirection,
 	mockBuildCursorPagination,
 	mockProcessCursorResults,
+	mockIsAdmin,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: { findMany: vi.fn(), count: vi.fn() },
@@ -24,7 +25,10 @@ const {
 	mockGetSortDirection: vi.fn(),
 	mockBuildCursorPagination: vi.fn(),
 	mockProcessCursorResults: vi.fn(),
+	mockIsAdmin: vi.fn(),
 }));
+
+vi.mock("@/modules/auth/utils/guards", () => ({ isAdmin: mockIsAdmin }));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -133,6 +137,9 @@ function makeValidParams() {
 }
 
 function setupDefaults() {
+	// Admin par défaut : ces tests portent sur la requête, pas sur la garde —
+	// laquelle a son propre cas dédié plus bas.
+	mockIsAdmin.mockResolvedValue(true);
 	mockBuildDiscountWhereClause.mockReturnValue({});
 	mockGetSortDirection.mockReturnValue("desc");
 	mockBuildCursorPagination.mockReturnValue({ take: 21 });
@@ -158,6 +165,19 @@ describe("getDiscounts", () => {
 		setupDefaults();
 	});
 
+	// ⚠️ Il n'y avait AUCUNE garde ici jusqu'au 2026-07-31 : la liste des codes
+	// promo ne reposait que sur `app/admin/layout.tsx`, qu'une navigation client
+	// ne ré-exécute pas.
+	it("returns an empty result when the actor is not a DB-verified admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		const result = await getDiscounts(makeValidParams() as never);
+
+		expect(result.discounts).toEqual([]);
+		expect(result.totalCount).toBe(0);
+		expect(mockPrisma.discount.findMany).not.toHaveBeenCalled();
+	});
+
 	it("returns empty result when validation fails (instead of throwing)", async () => {
 		mockSchema.safeParse.mockReturnValue({
 			success: false,
@@ -171,7 +191,7 @@ describe("getDiscounts", () => {
 		expect(mockPrisma.discount.findMany).not.toHaveBeenCalled();
 	});
 
-	it("returns discounts for valid params (no auth required)", async () => {
+	it("returns discounts for valid params", async () => {
 		const discount = makeDiscount();
 		mockProcessCursorResults.mockReturnValue({
 			items: [discount],

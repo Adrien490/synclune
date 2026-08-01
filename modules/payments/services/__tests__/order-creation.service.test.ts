@@ -151,6 +151,11 @@ function makeParams(overrides: Record<string, unknown> = {}) {
 		lastName: "Dupont",
 		userId: "user_1",
 		finalEmail: "marie@example.com",
+		// Invariant #8 (NF 525) : une commande naît TOUJOURS avec sa provenance
+		// Stripe. Le paramètre était optionnel jusqu'au 2026-07-31 et ce fixture
+		// l'omettait — il encodait donc un contrat plus lâche que la production,
+		// où `confirmCheckout` le passe systématiquement.
+		paymentIntentId: "pi_test_order_creation",
 		...overrides,
 	};
 }

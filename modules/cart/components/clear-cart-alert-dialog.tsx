@@ -1,20 +1,20 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useClearCart } from "../hooks/use-clear-cart";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
 
@@ -61,27 +61,27 @@ export function ClearCartAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog tone="destructive" open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form onSubmit={handleSubmit} aria-label="Vider le panier">
-					<AlertDialogHeader>
-						<AlertDialogTitle>Vider votre panier ?</AlertDialogTitle>
-						<AlertDialogDescription>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Vider votre panier ?</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							Tous les articles de votre panier seront supprimés. Vous pourrez toujours les
 							retrouver dans la boutique si vous changez d&apos;avis.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel type="button" disabled={isPending}>
 							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+						</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+							{isPending && <Spinner presentational />}
 							{isPending ? "Suppression…" : "Vider"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

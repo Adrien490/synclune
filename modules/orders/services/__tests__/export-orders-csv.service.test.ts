@@ -102,14 +102,42 @@ describe("buildExportWhereClause", () => {
 		});
 	});
 
-	it("should filter by custom date range when periodType is custom", () => {
+	it("should filter by custom date range when periodType is custom (bornes jour civil Paris)", () => {
+		// Coercion réelle d'un <input type="date"> : "YYYY-MM-DD" → minuit UTC.
 		const dateFrom = new Date("2024-01-01");
 		const dateTo = new Date("2024-06-30");
 		const result = buildExportWhereClause(input({ periodType: "custom", dateFrom, dateTo }));
 		expect(result.paidAt).toEqual({
-			gte: dateFrom,
-			lte: dateTo,
+			gte: new Date(2024, 0, 1),
+			lt: new Date(2024, 6, 1),
 		});
+	});
+
+	/**
+	 * @regression ORD-COMPLY-007-custom (audit « Admin commandes » 2026-08-01, P1-F)
+	 *
+	 * La branche `custom` gardait `gte/lte` sur les Dates UTC-minuit coercées,
+	 * alors que `year`/`month` avaient été corrigées (`parisWallTimeToUtc`,
+	 * AUDIT-01). Un export « du 01/01 au 31/01 » excluait TOUTE la journée du
+	 * 31/01 (sauf 00h-01h Paris) et les encaissements du 01/01 entre 00h et 01h
+	 * Paris — livre de recettes troué (Art. 50-0 CGI), silencieux.
+	 */
+	it("inclut toute la journée du dernier jour et 00h-01h Paris du premier", () => {
+		const result = buildExportWhereClause(
+			input({
+				periodType: "custom",
+				dateFrom: new Date("2026-01-01"),
+				dateTo: new Date("2026-01-31"),
+			}),
+		);
+		const bounds = result.paidAt as { gte: Date; lt: Date };
+
+		// Encaissement le 31/01 à 14h Paris — exclu par l'ancien `lte` minuit UTC.
+		expect(new Date(2026, 0, 31, 14).getTime()).toBeLessThan(bounds.lt.getTime());
+		// Encaissement le 01/01 à 00h30 Paris (2025-12-31T23:30Z) — exclu par l'ancien `gte`.
+		expect(new Date(2026, 0, 1, 0, 30).getTime()).toBeGreaterThanOrEqual(bounds.gte.getTime());
+		// Le 1er février 00h00 Paris est hors période (borne exclusive).
+		expect(new Date(2026, 1, 1).getTime()).toBeGreaterThanOrEqual(bounds.lt.getTime());
 	});
 
 	it("should filter by invoice status sent (maps to InvoiceStatus.GENERATED)", () => {
@@ -264,13 +292,29 @@ describe("generateOrdersCsv", () => {
 			["-", "-2+3"],
 			["@", "@SUM(A1)"],
 			["\t", "\tDROP"],
-			["\r", "\rEVIL"],
 		])("escapes leading '%s' with a leading apostrophe", (_prefix, payload) => {
 			const order = makeOrder({ customerName: payload });
 			const csv = generateOrdersCsv([order]);
 			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
 			// Each field is delimited by `;` \u2014 the customerName cell must start with `'` then payload
 			expect(dataRow).toContain(`;'${payload}`);
+		});
+
+		it("escapes leading '\\r' with an apostrophe AND quotes the cell (CR = saut de ligne tableur)", () => {
+			// P3 (audit 2026-08-01) : un `\r` n'est pas qu'un pr\u00E9fixe de formule \u2014 isol\u00E9
+			// en milieu de cellule il casse la ligne dans certains tableurs, donc toute
+			// cellule en contenant est d\u00E9sormais guillem\u00E9t\u00E9e, pr\u00E9fixe compris.
+			const order = makeOrder({ customerName: "\rEVIL" });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			expect(dataRow).toContain(`;"'\rEVIL"`);
+		});
+
+		it("quotes a cell with an embedded '\\r' (not just as prefix)", () => {
+			const order = makeOrder({ customerName: "Marie\rDupont" });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			expect(dataRow).toContain(`;"Marie\rDupont"`);
 		});
 
 		it("escapes formula payloads even when other CSV special chars are present", () => {

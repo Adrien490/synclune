@@ -50,6 +50,9 @@ afterEach(cleanup);
 
 function createOrder(
 	overrides: Partial<{
+		status: string;
+		paymentStatus: string;
+		shippingCountry: string;
 		trackingNumber: string | null;
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
@@ -59,6 +62,10 @@ function createOrder(
 	}> = {},
 ) {
 	return {
+		// Paire cohérente avec un numéro de suivi présent (fix mark-as-shipped)
+		status: "SHIPPED",
+		paymentStatus: "PAID",
+		shippingCountry: "FR",
 		trackingNumber: "1Z999AA10123456784",
 		trackingUrl: "https://track.example.com/1Z999AA10123456784",
 		shippingCarrier: "colissimo",
@@ -74,8 +81,37 @@ function createOrder(
 // ============================================================================
 
 describe("OrderTracking", () => {
-	it("returns null when trackingNumber is null", () => {
-		const { container } = render(<OrderTracking order={createOrder({ trackingNumber: null })} />);
+	// Audit 2026-08-01 : entre paiement et expédition, la section rendait `null`
+	// — aucune info de délai sur la seule surface client, précisément pendant la
+	// période où le client se pose la question.
+	it("affiche la promesse de délai (préparation + transport) sur une commande payée non expédiée", () => {
+		render(<OrderTracking order={createOrder({ trackingNumber: null, status: "PROCESSING" })} />);
+		expect(screen.getByText(/préparée à l'atelier sous 2 à 4 jours ouvrés/i)).toBeInTheDocument();
+		expect(screen.getByText(/2-4 jours ouvrés de livraison/i)).toBeInTheDocument();
+	});
+
+	it("utilise le délai de transport EU pour une commande hors France", () => {
+		render(
+			<OrderTracking
+				order={createOrder({ trackingNumber: null, status: "PROCESSING", shippingCountry: "BE" })}
+			/>,
+		);
+		expect(screen.getByText(/5-8 jours ouvrés de livraison/i)).toBeInTheDocument();
+	});
+
+	it("returns null without trackingNumber when the order is cancelled", () => {
+		const { container } = render(
+			<OrderTracking order={createOrder({ trackingNumber: null, status: "CANCELLED" })} />,
+		);
+		expect(container.firstChild).toBeNull();
+	});
+
+	it("returns null without trackingNumber when payment is still pending", () => {
+		const { container } = render(
+			<OrderTracking
+				order={createOrder({ trackingNumber: null, status: "PENDING", paymentStatus: "PENDING" })}
+			/>,
+		);
 		expect(container.firstChild).toBeNull();
 	});
 
@@ -103,6 +139,10 @@ describe("OrderTracking", () => {
 		});
 		expect(link).toBeInTheDocument();
 		expect(link.getAttribute("href")).toBe("https://track.example.com/123");
+		// URL externe saisie par l'admin : la protection contre le reverse
+		// tabnabbing existait dans le code sans être verrouillée (audit 2026-08-01).
+		expect(link.getAttribute("target")).toBe("_blank");
+		expect(link.getAttribute("rel")).toBe("noopener noreferrer");
 	});
 
 	it("does not show 'Suivre mon colis' when trackingUrl is null", () => {

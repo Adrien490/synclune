@@ -42,10 +42,6 @@ vi.mock("@/modules/payments/components/payment-step", () => ({
 	),
 }));
 
-vi.mock("@/modules/payments/components/address-selector", () => ({
-	AddressSelector: () => <div data-testid="address-selector" />,
-}));
-
 vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
 	validateDiscountCode: vi.fn(),
 }));
@@ -75,10 +71,6 @@ vi.mock("@/modules/payments/components/pay-button", () => ({
 // Bypass the Stripe-section chain (which transitively imports auth/Stripe init).
 vi.mock("@/modules/payments/components/checkout-stripe-section", () => ({
 	CheckoutStripeSection: () => <div data-testid="checkout-stripe-section" />,
-}));
-
-vi.mock("@/modules/addresses/data/search-address", () => ({
-	searchAddressForCheckout: vi.fn(),
 }));
 
 vi.mock("@/modules/payments/components/shipping-method-section", () => ({
@@ -116,7 +108,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 					phoneNumber: "",
 				},
 				_appliedDiscount: null,
-				_selectedAddressId: null,
 				_discountOpen: false,
 				discountCode: "",
 			},
@@ -144,7 +135,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 							phoneNumber: "",
 						},
 						_appliedDiscount: null,
-						_selectedAddressId: null,
 						_discountOpen: false,
 						discountCode: "",
 					},
@@ -204,20 +194,20 @@ beforeEach(() => {
 describe("CheckoutForm", () => {
 	describe("step display", () => {
 		it("shows address step by default", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			expect(screen.getByText("Livraison")).toBeInTheDocument();
 			expect(screen.queryByTestId("payment-step")).toBeNull();
 		});
 
 		it("shows checkout summary alongside the form", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			expect(screen.getByTestId("checkout-summary")).toBeInTheDocument();
 		});
 
 		it("does not duplicate h1 — page parent owns the page heading", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			// The form labels itself with aria-label="Formulaire de paiement"; the page
 			// (`app/paiement/page.tsx`) owns the single <h1>. CheckoutForm must not render its own.
@@ -236,13 +226,13 @@ describe("CheckoutForm", () => {
 		// Audit UI/UX paiement 2026-07-26, F9.
 
 		it("est rendue une seule fois dans le formulaire", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			expect(screen.getAllByText(/champs marqués/i)).toHaveLength(1);
 		});
 
 		it("précède la section Contact dans l'ordre du document", () => {
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			const note = screen.getByText(/champs marqués/i);
 			const contact = screen.getByText("Contact");
@@ -258,7 +248,7 @@ describe("CheckoutForm", () => {
 		it("does not show offline banner when online", () => {
 			vi.stubGlobal("navigator", { onLine: true });
 
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			expect(screen.queryByText("Connexion internet perdue")).toBeNull();
 
@@ -268,7 +258,7 @@ describe("CheckoutForm", () => {
 		it("shows offline banner when navigator.onLine is false", () => {
 			vi.stubGlobal("navigator", { onLine: false });
 
-			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
+			render(<CheckoutForm cart={createMockCart() as never} session={null} />);
 
 			expect(screen.getByText("Connexion internet perdue")).toBeInTheDocument();
 
@@ -277,40 +267,12 @@ describe("CheckoutForm", () => {
 	});
 
 	describe("useCheckoutForm integration", () => {
-		it("calls useCheckoutForm with session and addresses", () => {
+		it("calls useCheckoutForm with the session", () => {
 			const session = createMockSession();
-			const addresses = [
-				{
-					id: "addr-1",
-					userId: "user-1",
-					firstName: "Test",
-					lastName: "User",
-					address1: "1 rue Test",
-					address2: null,
-					postalCode: "75001",
-					city: "Paris",
-					country: "FR",
-					phone: "",
-					isDefault: true,
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				},
-			];
 
-			render(
-				<CheckoutForm
-					cart={createMockCart() as never}
-					session={session as never}
-					addresses={addresses as never}
-				/>,
-			);
+			render(<CheckoutForm cart={createMockCart() as never} session={session as never} />);
 
-			expect(useCheckoutForm).toHaveBeenCalledWith(
-				expect.objectContaining({
-					session,
-					addresses,
-				}),
-			);
+			expect(useCheckoutForm).toHaveBeenCalledWith(expect.objectContaining({ session }));
 		});
 	});
 });

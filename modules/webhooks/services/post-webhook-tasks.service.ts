@@ -2,7 +2,7 @@ import { PostWebhookTaskStatus } from "@/app/generated/prisma/client";
 import type { Prisma } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { sendWebhookFailedAlertEmail } from "@/modules/emails/services/admin-emails";
 import {
 	MAX_POST_WEBHOOK_RETRY_ATTEMPTS,
@@ -162,7 +162,13 @@ export async function executeBatch(
 
 			try {
 				if (task.type === "INVALIDATE_CACHE") {
-					task.tags.forEach((tag) => updateTag(tag));
+					// CACHE-AUDIT-011 : ce runner s'exécute dans un `after()` de la route
+					// webhook OU dans le cron `retry-post-webhook-tasks` — deux route
+					// handlers. `updateTag` y throw (E872), le `catch` ci-dessous passait
+					// la task en FAILED, le cron la rejouait depuis un route handler lui
+					// aussi → FAILED en boucle. Résultat : AUCUNE invalidation ne
+					// s'exécutait après un paiement (stock vitrine périmé jusqu'à 6 h).
+					revalidateTagsInBackground(task.tags);
 				} else {
 					await dispatchEmailTask(task);
 				}

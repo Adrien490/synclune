@@ -84,7 +84,12 @@ vi.mock("../../constants/cache", () => ({
 }));
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: vi.fn((path: string) => `https://synclune.fr${path}`),
-	ROUTES: { ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` } },
+	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
+		ACCOUNT: { ORDER_DETAIL: (n: string) => `/compte/commandes/${n}` },
+	},
 }));
 vi.mock("../../utils/customer-name", () => ({
 	extractCustomerFirstName: vi.fn().mockReturnValue("Client"),

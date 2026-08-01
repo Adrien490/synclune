@@ -7,7 +7,6 @@ import { Button } from "@/shared/components/ui/button";
 import { CircleAlert, Lock, WifiOff } from "lucide-react";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import type { getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type {
@@ -42,7 +41,6 @@ interface CheckoutFormBodyProps {
 	formRef: React.RefObject<HTMLFormElement | null>;
 	cart: NonNullable<GetCartReturn>;
 	session: Session | null;
-	addresses: GetUserAddressesReturn | null;
 	isGuest: boolean;
 	isOnline: boolean;
 	pi: ReturnType<typeof usePaymentIntent>;
@@ -67,7 +65,6 @@ export function CheckoutFormBody({
 	formRef,
 	cart,
 	session,
-	addresses,
 	isGuest,
 	isOnline,
 	pi,
@@ -257,12 +254,7 @@ export function CheckoutFormBody({
 
 						{/* === SECTION 2: Shipping Address === */}
 						<CheckoutSection title="Livraison">
-							<CheckoutAddressFields
-								form={form}
-								session={session}
-								addresses={addresses}
-								lockDestination={isAmountLocked}
-							/>
+							<CheckoutAddressFields form={form} lockDestination={isAmountLocked} />
 						</CheckoutSection>
 					</div>
 

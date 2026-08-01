@@ -3,11 +3,9 @@
 /**
  * Server Action : annulation de commande **admin** (requireAdminWithUser).
  *
- * Pour l'annulation cote client (espace compte), utiliser
- * `cancel-order-customer.ts` qui applique des regles plus strictes
- * (PENDING uniquement, IDOR protection). Ne pas importer `cancelOrder`
- * depuis `app/(account)/` — cela bypasserait les gates customer.
- * Cf. ORD-MAP-007 (audit cartographie 2026-05-28).
+ * Seul chemin d'annulation restant : l'espace client (et son
+ * `cancel-order-customer.ts`) a été supprimé le 2026-07-31 — le parcours
+ * d'achat est 100 % invité, sans annulation self-service.
  */
 import {
 	OrderStatus,
@@ -21,6 +19,11 @@ import {
 } from "@/app/generated/prisma/client";
 import { recordStockMovementTx } from "@/modules/skus/services/stock-movement.service";
 import { shouldReactivateAfterRestock } from "@/modules/skus/services/restock-reactivation.service";
+import {
+	collectStockInvalidationTags,
+	type StockChangedSku,
+} from "@/modules/products/utils/cache.utils";
+import { updateTagsAfterMutation } from "@/shared/lib/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { releaseOrderDiscountUsageTx } from "@/modules/discounts/services/release-order-discount-usage.service";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -44,7 +47,7 @@ import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { canCancelOrder } from "../services/order-status-validation.service";
 import { voidInvoice } from "../services/void-invoice.service";
 import { hasOpenDisputeTx } from "../services/has-open-dispute.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "../utils/build-order-tracking-url";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { extractCustomerFirstName } from "../utils/customer-name";
 
@@ -230,6 +233,7 @@ export async function cancelOrder(
 				// sans requête de plus. C'est LE crédit qui, dupliqué par
 				// STOCK-DOUBLE-CREDIT-001, gonflait l'inventaire sans laisser de trace :
 				// il mérite sa ligne au journal plus que tout autre.
+				const restockedSkus: StockChangedSku[] = [];
 				if (shouldRestoreStock) {
 					// P1-1 : état AVANT crédit. `isActive` + `inventory` sont le discriminant de
 					// `shouldReactivateAfterRestock` — on ne réactive que ce que la VENTE a
@@ -237,9 +241,19 @@ export async function cancelOrder(
 					// commande de la dernière unité recréditait le stock en laissant le SKU
 					// `isActive: false`, donc invisible en vitrine (et la PDP d'un produit
 					// mono-SKU en `notFound()`).
+					//
+					// `productId` + `product.slug` sont sélectionnés ici, pas dans une requête
+					// dédiée : ils alimentent `collectStockInvalidationTags` après commit, et
+					// cette lecture a lieu de toute façon.
 					const skusBefore = await tx.productSku.findMany({
 						where: { id: { in: Array.from(new Set(found.items.map((i) => i.skuId))) } },
-						select: { id: true, isActive: true, inventory: true },
+						select: {
+							id: true,
+							isActive: true,
+							inventory: true,
+							productId: true,
+							product: { select: { slug: true } },
+						},
 					});
 					const beforeById = new Map(skusBefore.map((s) => [s.id, s]));
 
@@ -259,6 +273,13 @@ export async function cancelOrder(
 						// On ne throw pas — l'annulation doit aboutir (le claim est déjà gagné).
 						const row = updated[0];
 						if (!row) continue;
+
+						// Après le `continue` : un SKU disparu n'a rien à invalider.
+						restockedSkus.push({
+							skuId: item.skuId,
+							productId: row.productId,
+							productSlug: beforeById.get(item.skuId)?.product.slug ?? null,
+						});
 
 						await recordStockMovementTx(tx, {
 							skuId: item.skuId,
@@ -359,6 +380,7 @@ export async function cancelOrder(
 					...found,
 					_newPaymentStatus: newPaymentStatus,
 					_shouldRestoreStock: shouldRestoreStock,
+					_restockedSkus: restockedSkus,
 					_autoRefundId: createdRefundId,
 					_autoRefundAmount: autoRefundAmount,
 					_invoiceVoided: shouldVoidInvoice,
@@ -433,11 +455,28 @@ export async function cancelOrder(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		// Si auto-refund, invalider également le cache des remboursements de la commande
 		if (order._autoRefundId) {
 			updateTag(ORDERS_CACHE_TAGS.REFUNDS(order.id));
+		}
+
+		// STOCK-CANCEL-INVALIDATION-001 : le restock ci-dessus recrédite `inventory` ET
+		// réactive `isActive` — deux écritures CATALOGUE dont aucune n'était invalidée
+		// ici (seuls les tags commande l'étaient). Trois conséquences, toutes
+		// user-visibles jusqu'à expiration du profil `catalog` (5 min revalidate,
+		// 15 min stale, 6 h expire) :
+		//  1. la PDP continuait d'annoncer « rupture de stock » ;
+		//  2. le produit mono-SKU réactivé restait en 404 EN CACHE — le correctif P1-1
+		//     de `shouldReactivateAfterRestock` était annulé par le cache ;
+		//  3. le formulaire d'édition SKU gardait un `originalInventory` périmé, soit
+		//     la divergence de baseline exacte de STOCK-STALE-BASELINE-001.
+		// Passer par la SSOT et non par une liste écrite à la main : c'est en
+		// hand-rollant leur set que `process-refund` et `reconcile-refunds` ont
+		// chacun omis `SKU_DETAIL_BY_ID` et `SKUS_LIST`.
+		if (order._restockedSkus.length > 0) {
+			updateTagsAfterMutation(collectStockInvalidationTags(order._restockedSkus));
 		}
 
 		if (order.customerEmail) {
@@ -445,7 +484,7 @@ export async function cancelOrder(
 				order.customerName,
 				order.shippingFirstName,
 			);
-			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
+			const orderDetailsUrl = buildOrderTrackingUrl(order);
 			const emailPayload = {
 				to: order.customerEmail,
 				orderNumber: order.orderNumber,

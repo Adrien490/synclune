@@ -63,7 +63,7 @@ vi.mock("@/shared/components/ui/input", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: () => <svg data-testid="loader-icon" />,
+	Loader2Icon: () => <svg data-testid="loader-icon" />,
 	Tag: () => <svg data-testid="tag-icon" />,
 	X: () => <svg data-testid="x-icon" />,
 }));

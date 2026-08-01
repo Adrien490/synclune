@@ -35,6 +35,7 @@ export function RefundDetailHeader({ refund }: RefundDetailHeaderProps) {
 			amount: refund.amount,
 			orderId: refund.order.id,
 			orderNumber: refund.order.orderNumber,
+			failureReason: refund.failureReason,
 		},
 	});
 

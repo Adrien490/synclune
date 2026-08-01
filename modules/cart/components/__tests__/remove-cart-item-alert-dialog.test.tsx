@@ -151,7 +151,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-loader" className={className} />
 	),
 }));

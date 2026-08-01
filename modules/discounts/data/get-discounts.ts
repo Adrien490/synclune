@@ -1,4 +1,5 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
@@ -36,9 +37,19 @@ const EMPTY_RESULT: GetDiscountsReturn = {
 };
 
 /**
- * Récupère la liste des codes promo avec pagination
+ * Récupère la liste des codes promo avec pagination. **Admin uniquement.**
+ *
+ * `isAdmin()` re-vérifie le rôle EN BASE (jamais le rôle du cookie, stale
+ * jusqu'à `AUTH_SESSION_CONFIG.cookieCache.maxAge`). La garde est ici et pas
+ * seulement dans `app/admin/layout.tsx` : un layout partagé n'est pas ré-exécuté
+ * lors d'une navigation client entre deux routes qui le partagent, et le
+ * pré-filtre de `proxy.ts` est fail-open quand le cookie-cache a expiré. Sans
+ * cette ligne, la liste des codes promo n'a aucun contrôle d'accès propre —
+ * or un code promo qui fuite, c'est de la remise gratuite.
  */
 export async function getDiscounts(params: GetDiscountsParams): Promise<GetDiscountsReturn> {
+	if (!(await isAdmin())) return EMPTY_RESULT;
+
 	const validation = getDiscountsSchema.safeParse(params);
 
 	if (!validation.success) {

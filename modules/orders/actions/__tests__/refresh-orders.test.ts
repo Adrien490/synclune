@@ -144,10 +144,15 @@ describe("refreshOrders", () => {
 		}
 	});
 
-	it("invalidates the admin customers list cache tag", async () => {
+	/**
+	 * `ADMIN_CUSTOMERS_LIST` a disparu de `SHARED_CACHE_TAGS` avec la liste
+	 * `/admin/clients` (retrait de l'espace client 2026-07-31) : ce tag ne taguait
+	 * plus aucune entrée de cache, donc l'invalider ici était un no-op.
+	 */
+	it("n'invalide plus la liste clients admin (tag supprimé)", async () => {
 		await refreshOrders(undefined, makeFormData());
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("admin-customers-list");
+		expect(mockUpdateTag).not.toHaveBeenCalledWith("admin-customers-list");
 	});
 
 	it("invalidates the admin badges cache tag", async () => {

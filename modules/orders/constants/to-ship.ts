@@ -53,7 +53,7 @@ export const TO_SHIP_EXCLUDED_ORDER_STATUS = OrderStatus.CANCELLED;
  * l'inclut automatiquement, ce qui est le comportement voulu — seule `CANCELLED`
  * est exclue de la file.
  */
-export const TO_SHIP_ORDER_STATUSES = Object.values(OrderStatus).filter(
+const TO_SHIP_ORDER_STATUSES = Object.values(OrderStatus).filter(
 	(status) => status !== TO_SHIP_EXCLUDED_ORDER_STATUS,
 );
 

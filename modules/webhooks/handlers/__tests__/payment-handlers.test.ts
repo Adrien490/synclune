@@ -106,6 +106,8 @@ vi.mock("@/shared/constants/urls", () => ({
 		},
 		SHOP: {
 			CHECKOUT: "/paiement",
+			// Requis depuis que le lien client passe par `buildOrderTrackingUrl`.
+			ORDER_TRACKING: "/suivi-commande",
 		},
 	},
 }));
@@ -509,15 +511,22 @@ describe("handlePaymentFailure", () => {
 
 	// CACHE-AUDIT-002 : l'espace client + le détail commande doivent refléter
 	// les détails d'échec immédiatement, pas après expiration du profil `user`.
-	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
+	/**
+	 * Les tags user-scopés (`orders-user-*`, `last-order-user-*`) ont disparu avec
+	 * les data fns qu'ils invalidaient — `getUserOrders` et `getLastOrder`, retirées
+	 * avec l'espace client (2026-07-31). On vérifie donc le tag par-commande, et
+	 * explicitement leur ABSENCE : les réintroduire signifierait avoir recréé une
+	 * entrée de cache user-scopée sans le dire.
+	 */
+	it("invalide le tag order-detail, sans tag user-scopé", async () => {
 		const result = await handlePaymentFailure(makePaymentIntent());
 
 		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
 		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("order-detail-order-1");
-			expect(cacheTask.tags).toContain("orders-user-user-1");
-			expect(cacheTask.tags).toContain("last-order-user-user-1");
+			expect(cacheTask.tags.some((t) => t.startsWith("orders-user-"))).toBe(false);
+			expect(cacheTask.tags.some((t) => t.startsWith("last-order-user-"))).toBe(false);
 		}
 	});
 });
@@ -614,7 +623,7 @@ describe("handlePaymentCanceled", () => {
 	});
 
 	// CACHE-AUDIT-002 : idem handlePaymentFailure.
-	it("should invalidate user-scoped + order-detail tags via getOrderInvalidationTags", async () => {
+	it("invalide le tag order-detail, sans tag user-scopé", async () => {
 		mockMarkOrderAsCancelled.mockResolvedValue({ restoredSkus: [], userId: "user-1" });
 
 		const result = await handlePaymentCanceled(makePaymentIntent());
@@ -623,7 +632,7 @@ describe("handlePaymentCanceled", () => {
 		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("order-detail-order-1");
-			expect(cacheTask.tags).toContain("orders-user-user-1");
+			expect(cacheTask.tags.some((t) => t.startsWith("orders-user-"))).toBe(false);
 		}
 	});
 });

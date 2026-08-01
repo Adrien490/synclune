@@ -3,9 +3,14 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExternalLink } from "lucide-react";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
+import { getShippingRate } from "@/modules/orders/services/shipping.service";
+import { PREPARATION_DELAY_LABEL } from "@/modules/orders/constants/shipping-rates";
 
 interface OrderTrackingProps {
 	order: {
+		status: string;
+		paymentStatus: string;
+		shippingCountry: string;
 		trackingNumber: string | null;
 		trackingUrl: string | null;
 		shippingCarrier: string | null;
@@ -17,7 +22,31 @@ interface OrderTrackingProps {
 
 export function OrderTracking({ order }: OrderTrackingProps) {
 	if (!order.trackingNumber) {
-		return null;
+		// Entre le paiement et l'expédition — précisément la période où le client
+		// se demande « quand ? » — la section rendait `null` : aucune information
+		// de délai sur la seule surface client (audit 2026-08-01). On affiche la
+		// promesse dérivée des SSOT (PREPARATION_BUSINESS_DAYS + SHIPPING_RATES),
+		// les mêmes que la fiche produit (DeliveryEstimator).
+		const awaitingShipment =
+			(order.status === "PROCESSING" || order.status === "PENDING") &&
+			(order.paymentStatus === "PAID" || order.paymentStatus === "PARTIALLY_REFUNDED");
+		if (!awaitingShipment) {
+			return null;
+		}
+
+		const transitDays = getShippingRate(order.shippingCountry).estimatedDays;
+		return (
+			<section className="space-y-4">
+				<h2 className="text-base font-semibold">Suivi de livraison</h2>
+				<div className="border-border/60 border-t pt-4">
+					<p className="text-muted-foreground text-sm">
+						Ta commande est préparée à l&apos;atelier sous {PREPARATION_DELAY_LABEL}. Dès son
+						expédition, tu recevras un email avec le numéro de suivi — compte ensuite {transitDays}{" "}
+						de livraison.
+					</p>
+				</div>
+			</section>
+		);
 	}
 
 	return (
@@ -28,7 +57,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
 					{order.shippingCarrier && (
 						<span className="text-sm font-medium">
-							{getCarrierLabel(order.shippingCarrier.toLowerCase() as Carrier)}
+							{getCarrierLabel(order.shippingCarrier as Carrier)}
 						</span>
 					)}
 					<div className="flex items-center gap-2">

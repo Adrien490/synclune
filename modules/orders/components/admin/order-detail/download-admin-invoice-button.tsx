@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, LoaderCircle } from "lucide-react";
+import { Download } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { toast } from "@/shared/utils/toast";
@@ -65,7 +66,7 @@ export function DownloadAdminInvoiceButton({
 			className="w-full"
 		>
 			{isDownloading ? (
-				<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+				<Spinner presentational />
 			) : (
 				<Download className="size-4" aria-hidden="true" />
 			)}

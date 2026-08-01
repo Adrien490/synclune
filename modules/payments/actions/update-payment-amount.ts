@@ -20,7 +20,7 @@ import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { buildPaymentRateLimitId } from "@/modules/payments/utils/payment-rate-limit-id";
 import { stripe, withStripeCircuitBreaker, CircuitBreakerError } from "@/shared/lib/stripe";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
-import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
+import { type ShippingCountry } from "@/shared/constants/countries";
 import { STRIPE_MIN_AMOUNT_EUR_CENTS } from "@/shared/constants/currency";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
@@ -29,15 +29,31 @@ import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
+import { postalCodeSchema, shippingCountrySchema } from "@/shared/schemas/address.schema";
+import { discountCodeSchema } from "@/modules/discounts/schemas/discount.schemas";
+import { paymentIntentIdSchema } from "../schemas/checkout.schema";
+
+/**
+ * ⚠️ Ce schéma divergeait des deux autres actions de paiement (audit Zod
+ * 2026-07-31) : `postalCode: max(20)` **sans regex** là où le checkout applique
+ * `max(10)` + `POSTAL_CODE_REGEX`, et `discountCode: max(50)` là où
+ * `discountCodeSchema` impose 3–30 et `^[A-Z0-9-]+$`. Aucune écriture DB derrière —
+ * la remise est re-dérivée serveur — donc pas d'enjeu financier, mais un code de 40
+ * caractères ou un CP de 15 était accepté au CALCUL du montant puis refusé au
+ * paiement : le client voyait un total se calculer, puis échouer.
+ *
+ * `postalCode` reste tolérant sur l'absence (`.default("")`) : il est saisi
+ * progressivement pendant que le montant se recalcule à la volée.
+ */
 const updatePaymentAmountSchema = z.object({
-	paymentIntentId: z.string().startsWith("pi_", "Payment Intent ID invalide"),
-	country: z.enum(SHIPPING_COUNTRIES, { message: "Pays de livraison invalide" }),
-	postalCode: z.string().max(20).default(""),
+	paymentIntentId: paymentIntentIdSchema,
+	country: shippingCountrySchema,
+	postalCode: z.union([postalCodeSchema, z.literal("")]).default(""),
 	// Audit F1 (2026-07-02) : le client envoie le CODE promo, jamais un montant.
 	// La remise est re-dérivée serveur (éligibilité + calcul) plus bas — un
 	// `discountAmount` numérique client permettait de minorer arbitrairement le
 	// PI provisoire (borné au subtotal seulement).
-	discountCode: z.string().trim().max(50).nullable().default(null),
+	discountCode: discountCodeSchema.nullable().default(null),
 });
 
 interface UpdatePaymentAmountResult {

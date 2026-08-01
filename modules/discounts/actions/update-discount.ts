@@ -42,7 +42,14 @@ export async function updateDiscount(
 		const rawMinOrderEuros = formData.get("minOrderAmountEuros");
 		const value =
 			type === "FIXED_AMOUNT" ? Math.round(rawValueEuros * 100) : Math.round(rawValueEuros);
-		const minOrderAmount = rawMinOrderEuros ? Math.round(Number(rawMinOrderEuros) * 100) : null;
+		// `"0"` est une chaîne TRUTHY : sans la normalisation en `null`, saisir 0 dans
+		// « Montant minimum » produisait `minOrderAmount: 0`, rejeté par le CHECK DB
+		// `Discount_minOrderAmount_positive`. Un minimum nul et l'absence de minimum
+		// sont la même intention — on n'en persiste qu'une seule forme.
+		const parsedMinOrderCents = rawMinOrderEuros
+			? Math.round(Number(rawMinOrderEuros) * 100)
+			: null;
+		const minOrderAmount = parsedMinOrderCents === 0 ? null : parsedMinOrderCents;
 
 		const rawData = {
 			id: safeFormGet(formData, "id"),
@@ -71,7 +78,7 @@ export async function updateDiscount(
 		// Vérifier que le discount existe (et n'est pas supprimé)
 		const existing = await prisma.discount.findUnique({
 			where: { id, ...notDeleted },
-			select: { id: true, code: true },
+			select: { id: true, code: true, usageCount: true },
 		});
 
 		if (!existing) {
@@ -81,6 +88,20 @@ export async function updateDiscount(
 		// Vérifier l'unicité du code si modifié (includes soft-deleted, matches @unique constraint)
 		if (sanitizedCode !== existing.code && !(await isCodeAvailable(sanitizedCode, id))) {
 			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
+		}
+
+		// `updateDiscountSchema` ne connaît pas `usageCount` : il ne peut pas voir
+		// qu'un plafond ramené SOUS le compteur courant viole le CHECK DB
+		// `Discount_usageCount_within_limit`. Sans cette pré-vérification, un code déjà
+		// utilisé 12 fois dont l'admin ramène le plafond à 10 remontait en erreur
+		// Postgres opaque. Le `existing` était déjà chargé — seul `usageCount`
+		// manquait au select.
+		if (data.maxUsageCount !== null && data.maxUsageCount !== undefined) {
+			if (data.maxUsageCount < existing.usageCount) {
+				return error(
+					`Ce code a déjà été utilisé ${existing.usageCount} fois : le nombre maximum d'utilisations ne peut pas être inférieur.`,
+				);
+			}
 		}
 
 		await prisma.discount.update({

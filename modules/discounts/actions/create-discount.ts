@@ -43,7 +43,14 @@ export async function createDiscount(
 		const rawMinOrderEuros = formData.get("minOrderAmountEuros");
 		const value =
 			type === "FIXED_AMOUNT" ? Math.round(rawValueEuros * 100) : Math.round(rawValueEuros);
-		const minOrderAmount = rawMinOrderEuros ? Math.round(Number(rawMinOrderEuros) * 100) : null;
+		// `"0"` est une chaîne TRUTHY : sans la normalisation en `null`, saisir 0 dans
+		// « Montant minimum » produisait `minOrderAmount: 0`, rejeté par le CHECK DB
+		// `Discount_minOrderAmount_positive`. Un minimum nul et l'absence de minimum
+		// sont la même intention — on n'en persiste qu'une seule forme.
+		const parsedMinOrderCents = rawMinOrderEuros
+			? Math.round(Number(rawMinOrderEuros) * 100)
+			: null;
+		const minOrderAmount = parsedMinOrderCents === 0 ? null : parsedMinOrderCents;
 
 		const rawData = {
 			code: safeFormGet(formData, "code"),

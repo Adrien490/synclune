@@ -16,7 +16,7 @@ import { buildInvoiceData } from "@/modules/invoices/services/build-invoice-data
 import { invoiceDataSchema } from "@/modules/invoices/schemas/invoice.schema";
 import { canonicalJsonStringify } from "@/modules/invoices/utils/canonical-json";
 import { getParisDateParts } from "@/shared/utils/timezone";
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { sendAdminSequenceOverflowAlert } from "@/modules/emails/services/admin-emails";
 import { GET_ORDER_SELECT_ADMIN } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
@@ -340,7 +340,13 @@ export async function persistInvoiceNumber(
 			// Pas d'invalidation cache sur le noop idempotent (EINV-SEQ-006) : rien
 			// n'a muté, et un download concurrent ne doit pas churner le cache.
 			if (!("idempotent" in result)) {
-				getOrderInvalidationTags(userId ?? undefined, orderId).forEach((tag) => updateTag(tag));
+				// Contexte d'appel : webhook `payment_intent.succeeded`, cron
+				// `reconcile-invoices`, ou la route de téléchargement de facture — jamais
+				// une Server Action (invariant 1 : aucune action n'écrit `invoiceNumber`).
+				// `updateTag` y throw et faisait retourner `null` à cette fonction ALORS
+				// QUE le numéro était déjà commité : 503 « facture en cours de génération »
+				// + flag DLQ + alerte admin parasites (CACHE-AUDIT-011).
+				revalidateTagsInBackground(getOrderInvalidationTags(orderId));
 			}
 
 			return {

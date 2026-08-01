@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { updateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 const {
 	mockPrisma,
@@ -44,8 +44,15 @@ vi.mock("@/shared/lib/stripe", () => ({
 	getStripeClient: mockGetStripeClient,
 }));
 
+// Ce service s'execute en contexte route handler (cron/webhook) : il invalide via
+// `revalidateTagsInBackground` -> `revalidateTag(tag, { expire: 0 })`, car
+// `updateTag` y throw (E872). Les DEUX sont routes vers le meme espion : ce que
+// ces tests verifient, c'est QUELS tags sont invalides. Le choix de l'API selon le
+// contexte est prouve, lui, sans mock, par
+// `test/contract/cache-invalidation-context.contract.test.ts`.
 vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
+	revalidateTag: vi.fn(),
 }));
 
 vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
@@ -172,7 +179,7 @@ describe("syncAsyncPayments", () => {
 
 	// CACHE-AUDIT-004 : confirmation async → l'espace client doit refléter PAID
 	// immédiatement (tags user-scopés + détail), pas après expiration du profil.
-	it("CACHE-AUDIT-004: should invalidate user-scoped + order-detail tags on success", async () => {
+	it("CACHE-AUDIT-004: should invalidate order-detail tags on success, without user-scoped tags", async () => {
 		const order = {
 			id: "order-1",
 			orderNumber: "SYN-001",
@@ -185,10 +192,10 @@ describe("syncAsyncPayments", () => {
 
 		await syncAsyncPayments();
 
-		const invalidated = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+		const invalidated = vi.mocked(revalidateTag).mock.calls.map((c) => c[0]);
 		expect(invalidated).toContain("order-detail-order-1");
-		expect(invalidated).toContain("orders-user-user-9");
-		expect(invalidated).toContain("last-order-user-user-9");
+		// Plus de tag user-scopé (retrait de l'espace client 2026-07-31).
+		expect(invalidated.some((t: string) => t.startsWith("orders-user-"))).toBe(false);
 	});
 
 	// WEBHOOK-AUDIT-003 — ce cron est le filet d'un webhook `payment_intent.succeeded`
@@ -244,7 +251,7 @@ describe("syncAsyncPayments", () => {
 			expect(mockPersistPostWebhookTasks).not.toHaveBeenCalled();
 			// Les tags panier/stock que la boucle historique n'invalidait pas sont
 			// désormais couverts.
-			const invalidated = vi.mocked(updateTag).mock.calls.map((c) => c[0]);
+			const invalidated = vi.mocked(revalidateTag).mock.calls.map((c) => c[0]);
 			expect(invalidated).toContain("product-bague-lune");
 			expect(invalidated).toContain("cart-user-9");
 		});

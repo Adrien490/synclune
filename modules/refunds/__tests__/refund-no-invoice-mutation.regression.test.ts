@@ -75,6 +75,11 @@ describe("@regression refund-no-invoice-mutation", () => {
 				// Légitime : update paymentStatus PARTIALLY_REFUNDED / REFUNDED après
 				// finalisation refund (Step 3 SAGA). Ne touche PAS invoice*/creditNote*.
 				"modules/refunds/actions/process-refund.ts",
+				// Légitime : même update paymentStatus, chemin asynchrone partagé
+				// webhook refund.updated + cron DLQ (P1-C audit 2026-08-01). Les
+				// écritures invoice*/creditNote* passent par voidInvoice/issueCreditNote,
+				// jamais en direct.
+				"modules/refunds/services/finalize-refund.service.ts",
 			].sort(),
 		);
 	});

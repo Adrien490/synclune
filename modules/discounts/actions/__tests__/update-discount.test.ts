@@ -132,6 +132,10 @@ const validatedData = {
 const existingDiscount = {
 	id: "disc-123",
 	code: "PROMO20",
+	// Lu par la garde « plafond ramené sous le compteur courant » (CHECK DB
+	// `Discount_usageCount_within_limit`). Sans ce champ dans la fixture, la
+	// comparaison porte sur `undefined` et la garde ne s'exerce jamais.
+	usageCount: 0,
 };
 
 // ============================================================================
@@ -255,8 +259,36 @@ describe("updateDiscount", () => {
 
 		expect(mockPrisma.discount.findUnique).toHaveBeenCalledWith({
 			where: { id: "disc-123", deletedAt: null },
-			select: { id: true, code: true },
+			// `usageCount` : lu pour refuser un plafond ramené sous le compteur courant
+			// avant que le CHECK DB ne le fasse en erreur opaque.
+			select: { id: true, code: true, usageCount: true },
 		});
+	});
+
+	it("refuses lowering maxUsageCount below the current usageCount", async () => {
+		mockPrisma.discount.findUnique.mockResolvedValue({ ...existingDiscount, usageCount: 12 });
+		mockValidateInput.mockReturnValue({
+			success: true,
+			data: { ...validatedData, maxUsageCount: 10 },
+		});
+
+		const result = await updateDiscount(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("12");
+		expect(mockPrisma.discount.update).not.toHaveBeenCalled();
+	});
+
+	it("allows raising maxUsageCount above the current usageCount", async () => {
+		mockPrisma.discount.findUnique.mockResolvedValue({ ...existingDiscount, usageCount: 12 });
+		mockValidateInput.mockReturnValue({
+			success: true,
+			data: { ...validatedData, maxUsageCount: 20 },
+		});
+
+		await updateDiscount(undefined, validFormData);
+
+		expect(mockPrisma.discount.update).toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

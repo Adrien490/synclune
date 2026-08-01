@@ -55,6 +55,22 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 									{REFUND_REASON_LABELS[refund.reason]}
 								</DetailInfoRow>
 								<DetailInfoRow label="Créé le">{formatDateShort(refund.createdAt)}</DetailInfoRow>
+								{refund.status === "FAILED" && refund.failureReason ? (
+									// P2 (audit 2026-08-01) : la raison d'échec Stripe n'était affichée
+									// nulle part — l'admin voyait un badge « Échoué » sans pouvoir
+									// décider entre relance (erreur temporaire) et intervention.
+									<DetailInfoRow
+										label="Raison de l'échec"
+										className="border-t pt-3"
+										labelClassName="mb-1 block"
+										valueClassName="text-destructive text-pretty whitespace-pre-wrap"
+									>
+										{refund.failureReason.replace(/^\[transient\]\s*/, "")}
+										{refund.failureReason.startsWith("[transient]")
+											? " — erreur temporaire, la relance a de bonnes chances d'aboutir."
+											: ""}
+									</DetailInfoRow>
+								) : null}
 								{refund.note ? (
 									// Note libre : pas de mise en ligne (multiligne possible), séparée par un filet.
 									<DetailInfoRow

@@ -22,6 +22,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { cn } from "@/shared/utils/cn";
 import { formatDateTime } from "@/shared/utils/dates";
 import type { OrderAction, HistorySource } from "@/app/generated/prisma/enums";
+import {
+	FULFILLMENT_STATUS_LABELS,
+	ORDER_STATUS_LABELS,
+	PAYMENT_STATUS_LABELS,
+} from "@/modules/orders/constants/status-display";
 
 const VISIBLE_COUNT = 5;
 
@@ -50,49 +55,49 @@ const ACTION_CONFIG: Record<
 	OrderAction,
 	{ icon: typeof Clock; color: string; label: string; symbol: string }
 > = {
-	CREATED: { icon: Clock, color: "text-blue-500", label: "Commande créée", symbol: "⏱" },
-	PAID: { icon: CreditCard, color: "text-green-500", label: "Paiement reçu", symbol: "✓" },
+	CREATED: { icon: Clock, color: "text-info", label: "Commande créée", symbol: "⏱" },
+	PAID: { icon: CreditCard, color: "text-success", label: "Paiement reçu", symbol: "✓" },
 	PROCESSING: {
 		icon: Package,
-		color: "text-yellow-500",
+		color: "text-warning",
 		label: "En préparation",
 		symbol: "⚙",
 	},
-	SHIPPED: { icon: Truck, color: "text-purple-500", label: "Expédiée", symbol: "→" },
+	SHIPPED: { icon: Truck, color: "text-info", label: "Expédiée", symbol: "→" },
 	DELIVERED: {
 		icon: CircleCheck,
-		color: "text-green-600",
+		color: "text-success",
 		label: "Livrée",
 		symbol: "✓✓",
 	},
-	CANCELLED: { icon: CircleX, color: "text-red-500", label: "Annulée", symbol: "✗" },
+	CANCELLED: { icon: CircleX, color: "text-destructive", label: "Annulée", symbol: "✗" },
 	RETURNED: {
 		icon: RotateCcw,
-		color: "text-orange-500",
+		color: "text-warning",
 		label: "Retournée",
 		symbol: "↩",
 	},
 	STATUS_REVERTED: {
 		icon: RotateCcw,
-		color: "text-amber-500",
+		color: "text-warning",
 		label: "Statut annulé",
 		symbol: "↶",
 	},
 	TRACKING_UPDATED: {
 		icon: Truck,
-		color: "text-indigo-500",
+		color: "text-info",
 		label: "Suivi mis à jour",
 		symbol: "📦",
 	},
 	ADDRESS_UPDATED: {
 		icon: MapPin,
-		color: "text-teal-500",
+		color: "text-info",
 		label: "Adresse modifiée",
 		symbol: "📍",
 	},
 	INVOICE_GENERATED: {
 		icon: FileText,
-		color: "text-emerald-500",
+		color: "text-success",
 		label: "Facture générée",
 		symbol: "📄",
 	},
@@ -104,55 +109,55 @@ const ACTION_CONFIG: Record<
 	},
 	REFUND_CREATED: {
 		icon: RotateCcw,
-		color: "text-orange-500",
+		color: "text-warning",
 		label: "Remboursement créé",
 		symbol: "↩",
 	},
 	REFUND_COMPLETED: {
 		icon: CircleCheck,
-		color: "text-green-500",
+		color: "text-success",
 		label: "Remboursement confirmé",
 		symbol: "✓",
 	},
 	REFUND_FAILED: {
 		icon: CircleX,
-		color: "text-red-500",
+		color: "text-destructive",
 		label: "Remboursement échoué",
 		symbol: "✗",
 	},
 	DISPUTE_OPENED: {
 		icon: CircleX,
-		color: "text-red-600",
+		color: "text-destructive",
 		label: "Litige ouvert",
 		symbol: "⚠",
 	},
 	DISPUTE_RESOLVED: {
 		icon: CircleCheck,
-		color: "text-green-600",
+		color: "text-success",
 		label: "Litige résolu",
 		symbol: "✓",
 	},
 	INVOICE_VOIDED: {
 		icon: FileText,
-		color: "text-gray-500",
+		color: "text-muted-foreground",
 		label: "Facture annulée",
 		symbol: "✗",
 	},
 	CREDIT_NOTE_GENERATED: {
 		icon: FileText,
-		color: "text-amber-500",
+		color: "text-warning",
 		label: "Avoir émis",
 		symbol: "↺",
 	},
 	CREDIT_NOTE_ARCHIVED: {
 		icon: FileText,
-		color: "text-amber-600",
+		color: "text-warning",
 		label: "PDF avoir archivé",
 		symbol: "🔒",
 	},
 	INVOICE_ARCHIVED: {
 		icon: FileText,
-		color: "text-emerald-500",
+		color: "text-success",
 		label: "PDF facture archivé",
 		symbol: "🔒",
 	},
@@ -170,19 +175,19 @@ const ACTION_CONFIG: Record<
 	},
 	INVOICE_RECONCILED: {
 		icon: CircleCheck,
-		color: "text-emerald-600",
+		color: "text-success",
 		label: "Facture rattrapée (cron)",
 		symbol: "🔄",
 	},
 	INVOICE_DOWNLOADED: {
 		icon: FileText,
-		color: "text-blue-400",
+		color: "text-info",
 		label: "Facture téléchargée",
 		symbol: "⬇",
 	},
 	BULK_EXPORT: {
 		icon: FileText,
-		color: "text-indigo-400",
+		color: "text-info",
 		label: "Export CSV admin",
 		symbol: "📊",
 	},
@@ -201,25 +206,25 @@ const ACTION_CONFIG: Record<
 	// l'arrêté définitif et une Plateforme Agréée réelle (cf. docs/RUNBOOK.md).
 	PDP_SUBMITTED: {
 		icon: FileText,
-		color: "text-sky-500",
+		color: "text-info",
 		label: "Transmis à la PDP",
 		symbol: "📤",
 	},
 	PDP_ACCEPTED: {
 		icon: CircleCheck,
-		color: "text-emerald-500",
+		color: "text-success",
 		label: "Accepté par la PDP",
 		symbol: "✓",
 	},
 	PDP_REJECTED: {
 		icon: CircleX,
-		color: "text-red-500",
+		color: "text-destructive",
 		label: "Rejeté par la PDP",
 		symbol: "✗",
 	},
 	PDP_RETRY: {
 		icon: RotateCcw,
-		color: "text-amber-500",
+		color: "text-warning",
 		label: "Nouvelle tentative PDP",
 		symbol: "🔄",
 	},
@@ -231,7 +236,7 @@ const ACTION_CONFIG: Record<
 	},
 	PDP_CANCELLED: {
 		icon: CircleX,
-		color: "text-gray-500",
+		color: "text-muted-foreground",
 		label: "Transmission PDP annulée",
 		symbol: "✗",
 	},
@@ -272,18 +277,13 @@ function extractInvoiceMetadata(metadata: unknown): {
 }
 
 // Labels traduits pour les statuts
+// Dérivé des SSOT status-display — l'ordre de spread arbitre les clés
+// partagées : PENDING → « En attente » (ordre), PROCESSING → « En
+// préparation » (fulfillment), comme affiché historiquement.
 const STATUS_LABELS: Record<string, string> = {
-	PENDING: "En attente",
-	PROCESSING: "En préparation",
-	SHIPPED: "Expédiée",
-	DELIVERED: "Livrée",
-	CANCELLED: "Annulée",
-	PAID: "Payé",
-	FAILED: "Échoué",
-	PARTIALLY_REFUNDED: "Partiellement remboursé",
-	REFUNDED: "Remboursé",
-	UNFULFILLED: "Non préparé",
-	RETURNED: "Retourné",
+	...PAYMENT_STATUS_LABELS,
+	...ORDER_STATUS_LABELS,
+	...FULFILLMENT_STATUS_LABELS,
 };
 
 function getStatusLabel(status: string | null | undefined): string {

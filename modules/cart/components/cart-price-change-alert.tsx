@@ -47,7 +47,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				"border-b px-6 py-2.5 text-xs sm:text-sm",
 				hasIncrease
 					? "border-destructive/20 bg-destructive/5 text-destructive-foreground"
-					: "border-green-200 bg-green-50 text-green-900",
+					: "border-success/30 bg-success/10 text-success",
 			)}
 			role={hasIncrease ? "alert" : "status"}
 			aria-live="polite"
@@ -62,7 +62,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 			<ul
 				className={cn(
 					"list-inside list-disc space-y-0.5",
-					hasIncrease ? "text-destructive" : "text-green-800",
+					hasIncrease ? "text-destructive" : "text-success",
 				)}
 			>
 				{itemsWithPriceChange.map((item) => {
@@ -73,7 +73,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
 							<span
 								className={
-									priceIncreased ? "text-destructive font-semibold" : "font-semibold text-green-800"
+									priceIncreased ? "text-destructive font-semibold" : "text-success font-semibold"
 								}
 							>
 								{priceIncreased ? "↑ " : "↓ "}
@@ -86,7 +86,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					);
 				})}
 			</ul>
-			<p className={cn("mt-2 text-xs", hasIncrease ? "text-destructive/90" : "text-green-800/90")}>
+			<p className={cn("mt-2 text-xs", hasIncrease ? "text-destructive/90" : "text-success/90")}>
 				{hasIncrease
 					? "Votre panier conserve les prix au moment de l'ajout pour éviter toute surprise."
 					: "Vous pouvez actualiser votre panier pour profiter des nouveaux prix."}
@@ -103,12 +103,12 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 						"w-full sm:w-auto",
 						hasIncrease
 							? "border-destructive/30 text-destructive hover:bg-destructive/10"
-							: "border-green-300 text-green-900 hover:bg-green-100",
+							: "border-success/40 text-success can-hover:hover:bg-success/10",
 					)}
 				>
 					{isPending ? (
 						<>
-							<RefreshCw className="mr-1.5 size-3.5 animate-spin" />
+							<RefreshCw className="mr-1.5 size-3.5 motion-safe:animate-spin" />
 							Mise à jour…
 						</>
 					) : (
@@ -119,7 +119,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					)}
 				</Button>
 				{!hasIncrease && totalSavings > 0 && (
-					<p className="text-center text-xs font-medium text-green-800 sm:text-left">
+					<p className="text-success text-center text-xs font-medium sm:text-left">
 						Économise {formatEuro(totalSavings)} en actualisant !
 					</p>
 				)}

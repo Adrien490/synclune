@@ -620,6 +620,26 @@ describe("OrdersFilterSheet", () => {
 		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-count", "1");
 	});
 
+	// P2 (audit 2026-08-01) : chaque borne est écrite indépendamment — une borne
+	// « max seule » (ou « Au seule ») est un filtre actif à part entière. L'ancien
+	// compteur ne reconnaissait que la clé représentante du couple : « Max = 200 € »
+	// seul donnait 0 pendant que badge et StickyActionBar affichaient le filtre.
+	it("counts a lone filter_totalMax as one active filter", () => {
+		mockSearchParamsForEach.mockImplementation((cb: (v: string, k: string) => void) => {
+			cb("200", "filter_totalMax");
+		});
+		render(<OrdersFilterSheet />);
+		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-count", "1");
+	});
+
+	it("counts a lone filter_createdBefore as one active filter", () => {
+		mockSearchParamsForEach.mockImplementation((cb: (v: string, k: string) => void) => {
+			cb("2026-01-31", "filter_createdBefore");
+		});
+		render(<OrdersFilterSheet />);
+		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-count", "1");
+	});
+
 	it("counts filter_showDeleted=all as one active filter (non-default)", () => {
 		mockSearchParamsForEach.mockImplementation((cb: (v: string, k: string) => void) => {
 			cb("all", "filter_showDeleted");

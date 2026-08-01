@@ -1,3 +1,4 @@
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { type Prisma } from "@/app/generated/prisma/client";
 import type { GetDiscountsParams } from "../types/discount.types";
 
@@ -12,10 +13,11 @@ export function buildDiscountWhereClause(params: GetDiscountsParams): Prisma.Dis
 	const where: Prisma.DiscountWhereInput = { deletedAt: null };
 	const AND: Prisma.DiscountWhereInput[] = [];
 
-	// Recherche textuelle
+	// Recherche textuelle. Échappement LIKE : Prisma `contains` ne neutralise
+	// pas % _ \ (P3-3, cf. escape-like-pattern.ts).
 	if (params.search) {
 		AND.push({
-			code: { contains: params.search, mode: "insensitive" },
+			code: { contains: escapeLikePattern(params.search), mode: "insensitive" },
 		});
 	}
 

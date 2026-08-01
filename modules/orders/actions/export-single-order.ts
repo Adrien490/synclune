@@ -1,7 +1,7 @@
 "use server";
 
-import { RefundStatus } from "@/app/generated/prisma/client";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { HistorySource, OrderAction, RefundStatus } from "@/app/generated/prisma/client";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
@@ -12,6 +12,7 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { exportSingleOrderSchema } from "../schemas/order.schemas";
 import { generateOrdersCsv } from "../services/export-orders-csv.service";
+import { createOrderAudit } from "../utils/order-audit";
 
 /**
  * State retourné par exportSingleOrder : soit un ActionState de refus, soit un
@@ -39,8 +40,9 @@ export async function exportSingleOrder(
 	formData: FormData,
 ): Promise<ExportSingleOrderState> {
 	try {
-		const auth = await requireAdmin();
+		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error as ExportSingleOrderState;
+		const { user: adminUser } = auth;
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.SINGLE_OPERATIONS);
 		if ("error" in rateLimit) return rateLimit.error as ExportSingleOrderState;
 
@@ -81,6 +83,23 @@ export async function exportSingleOrder(
 				message: ORDER_ERROR_MESSAGES.NOT_FOUND,
 			} satisfies ExportSingleOrderState;
 		}
+
+		// Art. 30 RGPD — parité avec la route d'export bulk : l'export de PII client
+		// (customerName/customerEmail) laisse une trace, et l'échec de la trace
+		// AVORTE l'export (fail-closed, comme la route). Sans ça, exfiltrer commande
+		// par commande depuis le détail ne laissait aucune trace pendant que le même
+		// geste en bulk en laissait une bloquante (audit 2026-08-01, P2). Réutilise
+		// BULK_EXPORT (pas de migration d'enum sur historique baseliné), discriminé
+		// par metadata.
+		await createOrderAudit({
+			orderId: id,
+			action: OrderAction.BULK_EXPORT,
+			source: HistorySource.ADMIN,
+			authorId: adminUser.id,
+			authorName: adminUser.name ?? "Admin",
+			note: `Export CSV unitaire — commande ${order.orderNumber}`,
+			metadata: { exportType: "SINGLE_ORDER_CSV", rowCount: 1 },
+		});
 
 		const csv = generateOrdersCsv([order]);
 		const filename = `commande-${order.orderNumber}.csv`;

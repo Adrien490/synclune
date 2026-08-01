@@ -21,12 +21,13 @@ import type { ShippingZone } from "../types/shipping-zone.types";
  * Zones françaises hors périmètre de livraison.
  *
  * `CORSE` et les DOM-TOM sont exclus par les CGV §5.1 (« France métropolitaine
- * (hors DOM-TOM/DROM-COM) et Union Européenne »). `UNKNOWN` est refusé par
+ * (hors Corse et hors DOM-TOM/DROM-COM) et Union Européenne » —
+ * app/(legal)/cgv/page.tsx). `UNKNOWN` est refusé par
  * prudence : un code postal ne correspondant à aucun département connu n'a pas
  * de tarif applicable, et `getShippingRate` retomberait silencieusement sur le
  * barème métropole.
  */
-export const UNSHIPPABLE_ZONES = [
+const UNSHIPPABLE_ZONES = [
 	"CORSE",
 	"DOM",
 	"TOM",

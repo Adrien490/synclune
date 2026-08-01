@@ -13,7 +13,16 @@ const { mockPrisma, mockUpdateTag, mockGetInvalidationTags, mockLogger } = vi.ho
 
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
+// Ce service s'execute en contexte route handler (cron/webhook) : il invalide via
+// `revalidateTagsInBackground` -> `revalidateTag(tag, { expire: 0 })`, car
+// `updateTag` y throw (E872). Les DEUX sont routes vers le meme espion : ce que
+// ces tests verifient, c'est QUELS tags sont invalides. Le choix de l'API selon le
+// contexte est prouve, lui, sans mock, par
+// `test/contract/cache-invalidation-context.contract.test.ts`.
+vi.mock("next/cache", () => ({
+	updateTag: mockUpdateTag,
+	revalidateTag: (tag: string) => mockUpdateTag(tag),
+}));
 vi.mock("../../constants/cache", () => ({
 	STORE_SETTINGS_SINGLETON_ID: "store-settings-singleton",
 	getStoreSettingsInvalidationTags: mockGetInvalidationTags,

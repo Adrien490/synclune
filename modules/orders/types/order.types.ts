@@ -2,26 +2,25 @@ import { type Prisma } from "@/app/generated/prisma/client";
 import { type z } from "zod";
 import { type PaginationInfo } from "@/shared/lib/pagination";
 import { type GET_ORDER_SELECT, type GET_ORDERS_SELECT } from "../constants/order.constants";
-import {
-	type getOrderSchema,
-	type getOrdersSchema,
-	type orderFiltersSchema,
-} from "../schemas/order.schemas";
+import { type getOrdersSchema, type orderFiltersSchema } from "../schemas/order.schemas";
 
 // ============================================================================
 // TYPES - SINGLE ORDER
 // ============================================================================
 
-export type GetOrderParams = z.infer<typeof getOrderSchema>;
-
+/**
+ * Forme d'une commande complète. Consommé par les routes PDF
+ * (`/api/orders/[orderNumber]/invoice` et `credit-note/**`), qui sélectionnent
+ * `GET_ORDER_SELECT_CUSTOMER` et castent le résultat.
+ *
+ * `GetOrderParams` et `FetchOrderContext` ont disparu avec `data/get-order.ts`
+ * (retrait de l'espace client 2026-07-31) : cette data fn ne servait que la page
+ * détail de commande côté client, et son `FetchOrderContext.userId` portait le
+ * cas « propriétaire connecté non admin », qui n'existe plus.
+ */
 export type GetOrderReturn = Prisma.OrderGetPayload<{
 	select: typeof GET_ORDER_SELECT;
 }>;
-
-export interface FetchOrderContext {
-	admin: boolean;
-	userId?: string;
-}
 
 // ============================================================================
 // TYPES - ORDER LIST
@@ -101,6 +100,7 @@ export interface OrderPermissions {
 	canCancel: boolean;
 	canRevertToProcessing: boolean;
 	canMarkAsReturned: boolean;
+	canUndoReturn: boolean;
 	canMarkAsFullyRefunded: boolean;
 	canDelete: boolean;
 }
@@ -113,6 +113,10 @@ export type DeliveryValidationResult =
 type ReturnBlockReason = "already_returned" | "not_delivered";
 export type ReturnValidationResult =
 	{ canReturn: true } | { canReturn: false; reason: ReturnBlockReason };
+
+type UndoReturnBlockReason = "not_returned";
+export type UndoReturnValidationResult =
+	{ canUndo: true } | { canUndo: false; reason: UndoReturnBlockReason };
 
 type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid";
 export type ProcessingValidationResult =

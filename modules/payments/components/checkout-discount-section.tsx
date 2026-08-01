@@ -12,7 +12,8 @@ import {
 	CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { cn } from "@/shared/utils/cn";
-import { Check, ChevronRight, LoaderCircle, X } from "lucide-react";
+import { Check, ChevronRight, X } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 interface CheckoutDiscountSectionProps {
 	form: CheckoutFormInstance;
@@ -162,10 +163,7 @@ export function CheckoutDiscountSection({ form }: CheckoutDiscountSectionProps) 
 														>
 															{isApplying ? (
 																<>
-																	<LoaderCircle
-																		className="size-4 motion-safe:animate-spin"
-																		aria-hidden="true"
-																	/>
+																	<Spinner presentational />
 																	<span>Validation…</span>
 																</>
 															) : (

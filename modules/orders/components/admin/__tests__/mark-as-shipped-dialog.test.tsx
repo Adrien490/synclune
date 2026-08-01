@@ -110,7 +110,7 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 
 vi.mock("lucide-react", () => {
 	const stub = () => <svg />;
-	return { Link2: stub, LoaderCircle: stub, Mail: stub, Truck: stub };
+	return { Link2: stub, Loader2Icon: stub, Mail: stub, Truck: stub };
 });
 
 function openDialog(orderId = "order-1", orderNumber = "CMD-001") {

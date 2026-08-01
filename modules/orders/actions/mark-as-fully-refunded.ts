@@ -21,7 +21,8 @@ import { updateTag } from "next/cache";
 import * as Sentry from "@sentry/nextjs";
 
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
-import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "../constants/cache";
+import { getOrderInvalidationTags } from "../constants/cache";
+import { getRefundInvalidationTags } from "@/modules/refunds/constants/cache";
 import { markAsFullyRefundedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
@@ -29,7 +30,7 @@ import { acquireOrderPaidLockTx } from "../utils/order-paid-lock";
 import { voidInvoice } from "../services/void-invoice.service";
 import { sendAdminCreditNoteOverlapAlert } from "@/modules/emails/services/admin-emails";
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "../utils/build-order-tracking-url";
 import { logger } from "@/shared/lib/logger";
 
 /**
@@ -389,12 +390,18 @@ export async function markAsFullyRefunded(
 			}
 		}
 
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
-		// Le Refund manuel créé change la liste des remboursements de la fiche
-		// commande — tag volontairement absent de getOrderInvalidationTags.
+		// Le Refund manuel créé (COMPLETED) change AUSSI la liste des remboursements
+		// (`refunds-list`), sa fiche (`refund-<id>`) et la pastille ADMIN_BADGES —
+		// le helper refund est la SSOT de ces tags. L'ancien tag manuel
+		// ORDERS_CACHE_TAGS.REFUNDS seul laissait /admin/ventes/remboursements
+		// périmée ~2 min (audit 2026-08-01, P3). `Set` : recouvrement DETAIL/HISTORY
+		// avec le helper commande ci-dessus, updateTag est idempotent.
 		if (createdRefundId) {
-			updateTag(ORDERS_CACHE_TAGS.REFUNDS(order.id));
+			for (const tag of getRefundInvalidationTags(createdRefundId, order.id)) {
+				updateTag(tag);
+			}
 		}
 
 		// Confirmation client du remboursement hors-Stripe — même émetteur unique
@@ -414,7 +421,7 @@ export async function markAsFullyRefunded(
 				customerName: customerFirstName,
 				refundAmount: createdRefundAmount,
 				reason: RefundReason.OTHER,
-				orderDetailsUrl: buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)),
+				orderDetailsUrl: buildOrderTrackingUrl(order),
 				invoiceNumber: order.invoiceNumber,
 				creditNoteNumber,
 			}).catch((emailError) => {

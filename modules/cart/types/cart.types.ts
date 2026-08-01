@@ -52,29 +52,9 @@ export interface ValidateCartResult {
  * Item tronque lors de la fusion (MAX_CART_ITEMS depasse).
  * Expose au UI pour informer l'utilisateur qu'il a perdu des items post-login.
  */
-export interface MergeCartTruncatedItem {
-	skuId: string;
-	quantity: number;
-	productTitle: string;
-}
-
-export type MergeCartsResult =
-	| {
-			status: typeof ActionStatus.SUCCESS;
-			message: string;
-			data: {
-				mergedItems: number;
-				conflicts: number;
-				/** Items guests supprimes car depassant MAX_CART_ITEMS */
-				truncatedItems: MergeCartTruncatedItem[];
-				/** Items skip pour indisponibilite (SKU inactif, produit archive) */
-				skippedItems: MergeCartTruncatedItem[];
-			};
-	  }
-	| {
-			status: typeof ActionStatus.ERROR;
-			message: string;
-	  };
+// Plus de types de fusion de panier : `merge-carts.ts` a été supprimée avec le
+// hook post-login de Better Auth (retrait de l'espace client 2026-07-31). Un
+// panier invité RESTE invité — il n'y a plus de compte dans lequel le fusionner.
 
 // ============================================================================
 // TYPES - CART PRICING (from services/)

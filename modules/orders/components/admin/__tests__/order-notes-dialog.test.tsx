@@ -104,7 +104,7 @@ vi.mock("@/shared/components/ui/textarea", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<svg data-testid="loader" className={className} />
 	),
 	MessageSquarePlus: () => <svg data-testid="icon-message-plus" />,

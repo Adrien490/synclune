@@ -10,7 +10,8 @@
 import { Suspense, use, useState } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { LoaderCircle, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";
+import { MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 import { getOrderNotes } from "@/modules/orders/data/get-order-notes";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
@@ -59,11 +60,7 @@ export function OrderNotesPanel({ orderId, onClose, className }: OrderNotesPanel
 				/>
 				<div className="flex justify-end">
 					<Button onClick={handleAddNote} disabled={isPendingAdd || !newNote.trim()} size="sm">
-						{isPendingAdd ? (
-							<LoaderCircle className="size-4 animate-spin" />
-						) : (
-							<MessageSquarePlus className="size-4" />
-						)}
+						{isPendingAdd ? <Spinner presentational /> : <MessageSquarePlus className="size-4" />}
 						Ajouter
 					</Button>
 				</div>
@@ -73,7 +70,7 @@ export function OrderNotesPanel({ orderId, onClose, className }: OrderNotesPanel
 				<Suspense
 					fallback={
 						<div className="flex items-center justify-center py-8">
-							<LoaderCircle className="text-muted-foreground size-6 animate-spin" />
+							<Spinner label="Chargement des notes" className="text-muted-foreground size-6" />
 						</div>
 					}
 				>
@@ -148,7 +145,7 @@ function NotesList({
 								aria-label={`Supprimer la note ${note.authorName}`}
 							>
 								{isPendingDelete ? (
-									<LoaderCircle className="size-3.5 animate-spin" />
+									<Spinner presentational size="sm" />
 								) : (
 									<Trash2 className="size-3.5" />
 								)}

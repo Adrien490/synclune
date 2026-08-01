@@ -1,5 +1,5 @@
-import { Section, Text } from "react-email";
-import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { Link, Section, Text } from "react-email";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailCard } from "./_components/email-card";
 import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";
@@ -13,10 +13,12 @@ interface ShippingConfirmationEmailProps {
 	trackingNumber: string;
 	trackingUrl: string | null;
 	/**
-	 * Repli quand le transporteur n'expose pas d'URL de suivi (`autre`) : lien
-	 * vers la commande, via `buildOrderTrackingUrl`. Sans lui, l'email était un
-	 * cul-de-sac — aucun CTA du tout, alors que le client vient d'apprendre que
-	 * son colis est parti.
+	 * Lien vers la commande (`buildOrderTrackingUrl`). Deux rôles :
+	 * - repli CTA quand le transporteur n'expose pas d'URL de suivi (`autre`) —
+	 *   sans lui, l'email était un cul-de-sac ;
+	 * - lien secondaire durable dans le cas nominal — depuis le retrait de
+	 *   l'espace client (2026-07-31), cette URL tokenisée est la seule clé du
+	 *   client vers sa commande.
 	 */
 	orderTrackingUrl?: string | null;
 	carrierLabel: string;
@@ -94,6 +96,26 @@ export const ShippingConfirmationEmail = ({
 			) : (
 				orderTrackingUrl && <EmailCTA href={orderTrackingUrl}>Voir ma commande</EmailCTA>
 			)}
+
+			{/* Lien durable vers la commande, présent AUSSI dans le cas nominal :
+			    depuis le retrait de l'espace client (2026-07-31), l'URL tokenisée
+			    /suivi-commande est la seule clé du client vers sa commande, et cet
+			    email est souvent le dernier qu'il reçoit. En repli (bloc ci-dessus),
+			    le CTA la porte déjà — pas de doublon. */}
+			{trackingUrl && orderTrackingUrl && (
+				<Section style={{ marginTop: "12px", textAlign: "center" }}>
+					<Link
+						href={orderTrackingUrl}
+						style={{
+							color: EMAIL_COLORS.text.secondary,
+							textDecoration: "underline",
+							fontSize: "14px",
+						}}
+					>
+						Voir ma commande
+					</Link>
+				</Section>
+			)}
 		</EmailLayout>
 	);
 };
@@ -103,6 +125,8 @@ ShippingConfirmationEmail.PreviewProps = {
 	customerName: "Marie",
 	trackingNumber: "8N00234567890",
 	trackingUrl: "https://www.laposte.fr/outils/suivre-vos-envois?code=8N00234567890",
+	orderTrackingUrl:
+		"https://synclune.fr/suivi-commande?commande=CMD-1730000000-ABCD&token=0123456789abcdef0123456789abcdef",
 	carrierLabel: "Colissimo",
 	estimatedDelivery: "12 juin 2026",
 	shippingAddress: {

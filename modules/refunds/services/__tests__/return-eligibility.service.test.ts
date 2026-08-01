@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { isReturnEligible, getReturnDaysRemaining } from "../return-eligibility.service";
+import {
+	getReturnIneligibilityReason,
+	getReturnDaysRemaining,
+} from "../return-eligibility.service";
 import type { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 
 // ============================================================================
@@ -31,10 +34,12 @@ function makeOrder(overrides: Partial<OrderInput> = {}): OrderInput {
 }
 
 // ============================================================================
-// isReturnEligible
+// getReturnIneligibilityReason
+// (couvre aussi l'ex-`isReturnEligible`, supprimé avec le flow self-service :
+// éligible ≡ raison `null`)
 // ============================================================================
 
-describe("isReturnEligible", () => {
+describe("getReturnIneligibilityReason", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 		vi.setSystemTime(NOW);
@@ -49,29 +54,29 @@ describe("isReturnEligible", () => {
 	// --------------------------------------------------------------------------
 
 	describe("payment status", () => {
-		it("should return true for PAID orders", () => {
+		it("should return null for PAID orders", () => {
 			const order = makeOrder({ paymentStatus: "PAID" });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return true for PARTIALLY_REFUNDED orders", () => {
+		it("should return null for PARTIALLY_REFUNDED orders", () => {
 			const order = makeOrder({ paymentStatus: "PARTIALLY_REFUNDED" });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return false for REFUNDED orders", () => {
+		it("should return NOT_PAID for REFUNDED orders", () => {
 			const order = makeOrder({ paymentStatus: "REFUNDED" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_PAID");
 		});
 
-		it("should return false for PENDING payment orders", () => {
+		it("should return NOT_PAID for PENDING payment orders", () => {
 			const order = makeOrder({ paymentStatus: "PENDING" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_PAID");
 		});
 
-		it("should return false for FAILED payment orders", () => {
+		it("should return NOT_PAID for FAILED payment orders", () => {
 			const order = makeOrder({ paymentStatus: "FAILED" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_PAID");
 		});
 	});
 
@@ -80,24 +85,24 @@ describe("isReturnEligible", () => {
 	// --------------------------------------------------------------------------
 
 	describe("fulfillment status", () => {
-		it("should return true when fulfillment status is DELIVERED", () => {
+		it("should return null when fulfillment status is DELIVERED", () => {
 			const order = makeOrder({ fulfillmentStatus: "DELIVERED" });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return false when fulfillment status is SHIPPED", () => {
+		it("should return NOT_DELIVERED when fulfillment status is SHIPPED", () => {
 			const order = makeOrder({ fulfillmentStatus: "SHIPPED" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 
-		it("should return false when fulfillment status is PROCESSING", () => {
+		it("should return NOT_DELIVERED when fulfillment status is PROCESSING", () => {
 			const order = makeOrder({ fulfillmentStatus: "PROCESSING" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 
-		it("should return false when fulfillment status is UNFULFILLED", () => {
+		it("should return NOT_DELIVERED when fulfillment status is UNFULFILLED", () => {
 			const order = makeOrder({ fulfillmentStatus: "UNFULFILLED" });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 	});
 
@@ -106,29 +111,29 @@ describe("isReturnEligible", () => {
 	// --------------------------------------------------------------------------
 
 	describe("withdrawal period", () => {
-		it("should return true when delivery is within the 14-day period", () => {
+		it("should return null when delivery is within the 14-day period", () => {
 			const order = makeOrder({ actualDelivery: DELIVERED_WITHIN_PERIOD });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return true when delivery is just before the 14-day deadline expires", () => {
+		it("should return null when delivery is just before the 14-day deadline expires", () => {
 			const order = makeOrder({ actualDelivery: DELIVERED_JUST_BEFORE_EXPIRY });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return false when delivery is exactly 14 days ago (boundary expired)", () => {
+		it("should return DEADLINE_EXCEEDED when delivery is exactly 14 days ago (boundary expired)", () => {
 			const order = makeOrder({ actualDelivery: DELIVERED_EXACTLY_ON_BOUNDARY });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
 		});
 
-		it("should return false when delivery is older than 14 days", () => {
+		it("should return DEADLINE_EXCEEDED when delivery is older than 14 days", () => {
 			const order = makeOrder({ actualDelivery: DELIVERED_EXPIRED });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
 		});
 
-		it("should return false when actualDelivery is null", () => {
+		it("should return NOT_DELIVERED when actualDelivery is null", () => {
 			const order = makeOrder({ actualDelivery: null });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
 		});
 	});
 
@@ -137,79 +142,78 @@ describe("isReturnEligible", () => {
 	// --------------------------------------------------------------------------
 
 	describe("active refunds", () => {
-		it("should return true when refunds array is empty", () => {
+		it("should return null when refunds array is empty", () => {
 			const order = makeOrder({ refunds: [] });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return false when a PENDING refund exists", () => {
+		it("should return ALREADY_REQUESTED when a PENDING refund exists", () => {
 			const order = makeOrder({ refunds: [{ status: "PENDING" }] });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 
-		it("should return false when an APPROVED refund exists", () => {
+		it("should return ALREADY_REQUESTED when an APPROVED refund exists", () => {
 			const order = makeOrder({ refunds: [{ status: "APPROVED" }] });
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 
-		it("should return true when only REJECTED refunds exist", () => {
+		it("should return null when only REJECTED refunds exist", () => {
 			const order = makeOrder({ refunds: [{ status: "REJECTED" }] });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return true when only COMPLETED refunds exist", () => {
+		it("should return null when only COMPLETED refunds exist", () => {
 			const order = makeOrder({ refunds: [{ status: "COMPLETED" }] });
-			expect(isReturnEligible(order)).toBe(true);
+			expect(getReturnIneligibilityReason(order)).toBeNull();
 		});
 
-		it("should return false when one refund among many is PENDING", () => {
+		it("should return ALREADY_REQUESTED when one refund among many is PENDING", () => {
 			const order = makeOrder({
 				refunds: [{ status: "REJECTED" }, { status: "COMPLETED" }, { status: "PENDING" }],
 			});
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 
-		it("should return false when one refund among many is APPROVED", () => {
+		it("should return ALREADY_REQUESTED when one refund among many is APPROVED", () => {
 			const order = makeOrder({
 				refunds: [{ status: "REJECTED" }, { status: "APPROVED" }],
 			});
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("ALREADY_REQUESTED");
 		});
 	});
 
 	// --------------------------------------------------------------------------
-	// Combined conditions
+	// Discrimination order — the UI (OrderReturnGuidance) branches on the FIRST
+	// failing condition, so the priority payment > delivery > deadline > refund
+	// is part of the contract.
 	// --------------------------------------------------------------------------
 
-	describe("combined conditions", () => {
-		it("should return false when all conditions pass except payment status", () => {
-			const order = makeOrder({ paymentStatus: "REFUNDED" });
-			expect(isReturnEligible(order)).toBe(false);
-		});
-
-		it("should return false when all conditions pass except fulfillment status", () => {
-			const order = makeOrder({ fulfillmentStatus: "UNFULFILLED" });
-			expect(isReturnEligible(order)).toBe(false);
-		});
-
-		it("should return false when all conditions pass except delivery date", () => {
-			const order = makeOrder({ actualDelivery: DELIVERED_EXPIRED });
-			expect(isReturnEligible(order)).toBe(false);
-		});
-
-		it("should return false when all conditions pass except active refund", () => {
-			const order = makeOrder({ refunds: [{ status: "APPROVED" }] });
-			expect(isReturnEligible(order)).toBe(false);
-		});
-
-		it("should return false when no conditions are met", () => {
+	describe("discrimination order", () => {
+		it("should report NOT_PAID even when the order is also undelivered", () => {
 			const order = makeOrder({
 				paymentStatus: "FAILED",
 				fulfillmentStatus: "UNFULFILLED",
 				actualDelivery: null,
 				refunds: [{ status: "PENDING" }],
 			});
-			expect(isReturnEligible(order)).toBe(false);
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_PAID");
+		});
+
+		it("should report NOT_DELIVERED before checking the deadline or refunds", () => {
+			const order = makeOrder({
+				fulfillmentStatus: "SHIPPED",
+				actualDelivery: null,
+				refunds: [{ status: "PENDING" }],
+			});
+			expect(getReturnIneligibilityReason(order)).toBe("NOT_DELIVERED");
+		});
+
+		it("should report DEADLINE_EXCEEDED before checking refunds", () => {
+			const order = makeOrder({
+				actualDelivery: DELIVERED_EXPIRED,
+				refunds: [{ status: "PENDING" }],
+			});
+			expect(getReturnIneligibilityReason(order)).toBe("DEADLINE_EXCEEDED");
 		});
 	});
 });

@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsPaid } from "@/modules/orders/hooks/use-mark-as-paid";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const MARK_AS_PAID_DIALOG_ID = "mark-as-paid";
 
@@ -76,7 +76,7 @@ export function MarkAsPaidAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Marquage…" : "Marquer comme payée"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

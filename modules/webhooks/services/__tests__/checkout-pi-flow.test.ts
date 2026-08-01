@@ -39,10 +39,19 @@ const {
 		},
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetOrderInvalidationTags: vi.fn(),
+		// ⚠️ Ce mock doit couvrir TOUTES les clés lues par
+		// `getInventoryInvalidationTags` / `collectStockInvalidationTags`, sinon
+		// l'appel casse en `X is not a function` — un mock partiel de constantes est
+		// aussi fragile qu'un mock partiel de module (audit cache 2026-07-31 :
+		// `SKU_DETAIL_BY_ID`, `LIST` et `SKUS_LIST` manquaient après la fusion des
+		// deux `getInventoryInvalidationTags` homonymes).
 		mockProductsCacheTags: {
 			SKU_STOCK: vi.fn((skuId: string) => `sku-stock-${skuId}`),
+			SKU_DETAIL_BY_ID: vi.fn((skuId: string) => `sku-id-${skuId}`),
 			DETAIL: vi.fn((slug: string) => `product-${slug}`),
 			SKUS: vi.fn((productId: string) => `product-skus-${productId}`),
+			LIST: "products-list",
+			SKUS_LIST: "skus-list",
 		},
 		mockGetBaseUrl: vi.fn(() => "https://synclune.fr"),
 	};
@@ -247,6 +256,22 @@ describe("processOrderFromPaymentIntent", () => {
 				}),
 			}),
 		);
+	});
+
+	/**
+	 * @regression livraison-tracking-2026-08-01
+	 * Le webhook n'écrivait pas `fulfillmentStatus` : (PROCESSING, UNFULFILLED)
+	 * était l'état de 100 % des commandes payées par Stripe — badge admin
+	 * « Non traitée » à côté de « En préparation », sans chemin de correction
+	 * (markAsProcessing exige status=PENDING, déjà consommé par le webhook).
+	 */
+	it("[regression] synchronizes fulfillmentStatus to PROCESSING alongside status", async () => {
+		const paymentIntent = makePaymentIntent();
+
+		await processOrderFromPaymentIntent("order-1", paymentIntent);
+
+		const updateCall = mockTx.order.update.mock.calls[0]?.[0] as { data: Record<string, unknown> };
+		expect(updateCall.data.fulfillmentStatus).toBe("PROCESSING");
 	});
 
 	it("does not set shippingCost/shippingCarrier (already stored from confirmCheckout)", async () => {

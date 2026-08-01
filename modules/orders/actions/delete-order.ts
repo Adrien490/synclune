@@ -128,7 +128,7 @@ export async function deleteOrder(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return success(`Commande ${order.orderNumber} supprimee.`);
 	} catch (e) {

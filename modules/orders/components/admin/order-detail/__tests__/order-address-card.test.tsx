@@ -113,6 +113,9 @@ function createOrder(overrides = {}) {
 		billingCountry: null,
 		billingPhone: null,
 		fulfillmentStatus: "UNFULFILLED",
+		// Gate sur invoiceNumber (P1-B audit 2026-08-01) : null = pas de facture
+		// émise → éditable. VOIDED conserve son numéro, donc reste verrouillé.
+		invoiceNumber: null,
 		invoiceStatus: "PENDING",
 		...overrides,
 	} as any;
@@ -210,15 +213,31 @@ describe("OrderAddressCard", () => {
 		expect(screen.queryByRole("button", { name: /Modifier l'adresse de livraison/i })).toBeNull();
 	});
 
-	it("shows Modifier billing button before invoice generation", () => {
-		render(<OrderAddressCard order={createOrder({ invoiceStatus: "PENDING" })} />);
+	it("shows Modifier billing button before invoice issuance", () => {
+		render(<OrderAddressCard order={createOrder({ invoiceNumber: null })} />);
 		expect(
 			screen.getByRole("button", { name: /Modifier l'adresse de facturation/i }),
 		).toBeInTheDocument();
 	});
 
 	it("hides Modifier billing button after invoice generated", () => {
-		render(<OrderAddressCard order={createOrder({ invoiceStatus: "GENERATED" })} />);
+		render(
+			<OrderAddressCard
+				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "GENERATED" })}
+			/>,
+		);
+		expect(screen.queryByRole("button", { name: /Modifier l'adresse de facturation/i })).toBeNull();
+	});
+
+	// @regression invoice-issued-lock (P1-B audit 2026-08-01) : voidInvoice
+	// conserve invoiceNumber — l'adresse de facturation reste verrouillée après
+	// void (l'avoir est rendu depuis les colonnes vivantes, Art. 272-I / L102 B).
+	it("hides Modifier billing button when invoice is VOIDED (invoiceNumber conservé)", () => {
+		render(
+			<OrderAddressCard
+				order={createOrder({ invoiceNumber: "F-2026-00042", invoiceStatus: "VOIDED" })}
+			/>,
+		);
 		expect(screen.queryByRole("button", { name: /Modifier l'adresse de facturation/i })).toBeNull();
 	});
 

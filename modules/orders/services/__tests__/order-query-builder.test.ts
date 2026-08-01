@@ -68,24 +68,35 @@ describe("buildOrderSearchConditions", () => {
 		});
 	});
 
-	it("should include user email search", () => {
+	// Colonnes SNAPSHOT et non la relation `user` (achat 100 % invité depuis le
+	// retrait de l'espace client 2026-07-31) : l'ancien contrat `user.email`/
+	// `user.name` verrouillait une recherche client qui ne matchait plus jamais
+	// dès que le chemin fuzzy dégradait (audit « Admin commandes » 2026-08-01).
+	it("should search the customerEmail snapshot column", () => {
 		const result = buildOrderSearchConditions("test@example.com");
 		expect(result!.OR).toContainEqual({
-			user: { email: { contains: "test@example.com", mode: "insensitive" } },
+			customerEmail: { contains: "test@example.com", mode: "insensitive" },
 		});
 	});
 
-	it("should include user name search", () => {
+	it("should search the customerName snapshot column", () => {
 		const result = buildOrderSearchConditions("Jean");
 		expect(result!.OR).toContainEqual({
-			user: { name: { contains: "Jean", mode: "insensitive" } },
+			customerName: { contains: "Jean", mode: "insensitive" },
 		});
 	});
 
-	it("should include stripePaymentIntentId search", () => {
+	it("should never search through the dead user relation", () => {
+		const result = buildOrderSearchConditions("test@example.com");
+		expect(JSON.stringify(result)).not.toContain('"user"');
+	});
+
+	it("should include stripePaymentIntentId search (underscore échappé — joker LIKE)", () => {
 		const result = buildOrderSearchConditions("pi_123");
+		// `_` est un joker LIKE mono-caractère : sans échappement, "pi_123"
+		// matchait aussi "piX123". Le pattern échappé matche toujours le littéral.
 		expect(result!.OR).toContainEqual({
-			stripePaymentIntentId: { contains: "pi_123", mode: "insensitive" },
+			stripePaymentIntentId: { contains: "pi\\_123", mode: "insensitive" },
 		});
 	});
 

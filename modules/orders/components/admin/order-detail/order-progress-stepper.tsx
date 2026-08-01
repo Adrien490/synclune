@@ -86,7 +86,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 											"relative flex size-10 items-center justify-center rounded-full border-2 transition-all",
 											isCompleted && "border-primary bg-primary text-primary-foreground",
 											isCurrent && !isWaitingPayment && "border-primary bg-primary/10 text-primary",
-											isWaitingPayment && "border-amber-500 bg-amber-500/10 text-amber-600",
+											isWaitingPayment && "border-warning bg-warning/10 text-warning",
 											isPending && "border-muted-foreground/30 bg-muted text-muted-foreground",
 											isCurrent && "ring-primary/20 ring-4",
 										)}

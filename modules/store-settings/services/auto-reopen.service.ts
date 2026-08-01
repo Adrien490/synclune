@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 
 import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { logger } from "@/shared/lib/logger";
@@ -42,7 +42,7 @@ export async function autoReopenIfDue(now: Date = new Date()): Promise<AutoReope
 		});
 
 		if (result.count > 0) {
-			getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
+			revalidateTagsInBackground(getStoreSettingsInvalidationTags());
 			logger.info("Store auto-reopened by cron (reopensAt reached)", {
 				cronJob: "reopen-store",
 			});

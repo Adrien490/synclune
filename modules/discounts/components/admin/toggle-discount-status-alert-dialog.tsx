@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const TOGGLE_DISCOUNT_STATUS_DIALOG_ID = "toggle-discount-status";
 
@@ -78,7 +78,7 @@ export function ToggleDiscountStatusAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "En cours…" : isActive ? "Désactiver" : "Activer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

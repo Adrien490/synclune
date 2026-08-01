@@ -60,7 +60,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 
 // Mock lucide-react icons (LoaderCircle pour le CTA)
 vi.mock("lucide-react", () => ({
-	LoaderCircle: ({ className }: { className?: string }) => (
+	Loader2Icon: ({ className }: { className?: string }) => (
 		<svg data-testid="loader-icon" className={className} aria-hidden="true" />
 	),
 }));

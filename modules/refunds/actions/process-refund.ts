@@ -21,16 +21,15 @@ import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/acti
 import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
-import { after } from "next/server";
 
-import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
+import { getRefundInvalidationTags } from "../constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
+import { updateTagsAfterMutation } from "@/shared/lib/cache";
 
 import { sendRefundConfirmationOnce } from "@/modules/refunds/services/send-refund-confirmation.service";
 import { SYSTEM_AUTHOR_ID } from "@/modules/webhooks/constants/webhook.constants";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
@@ -330,14 +329,13 @@ export async function processRefund(
 				);
 			}
 
-			// Invalidate cache so UI reflects FAILED status
-			updateTag(ORDERS_CACHE_TAGS.LIST);
-			updateTag(REFUNDS_CACHE_TAGS.LIST);
-			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
-			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
-			if (refundData.refund.order_user_id) {
-				updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refundData.refund.order_user_id));
+			// Invalidate cache so UI reflects FAILED status.
+			// `Order.paymentStatus` n'a PAS bougé sur ce chemin (seul le Refund passe
+			// FAILED) → surface remboursement uniquement, via le helper SSOT. Il apporte
+			// en plus DETAIL/HISTORY(orderId), que la liste manuelle omettait alors que
+			// l'échec écrit une entrée d'audit affichée sur le détail commande.
+			for (const tag of getRefundInvalidationTags(id, refundData.refund.order_id)) {
+				updateTag(tag);
 			}
 
 			return {
@@ -360,9 +358,12 @@ export async function processRefund(
 
 			// Cache invalidation + audit log même sur pending (UI doit refléter
 			// l'attempt ; conformité Art. L123-22 trace toutes les tentatives).
-			updateTag(REFUNDS_CACHE_TAGS.LIST);
-			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
-			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+			// Le refund reste APPROVED et la commande n'a pas bougé → surface
+			// remboursement uniquement. La finalisation viendra de `refund.updated`
+			// (webhook) ou de `reconcile-refunds`, qui invalident tous deux.
+			for (const tag of getRefundInvalidationTags(id, refundData.refund.order_id)) {
+				updateTag(tag);
+			}
 
 			return {
 				status: ActionStatus.SUCCESS,
@@ -584,42 +585,47 @@ export async function processRefund(
 
 			// Invalider le cache commandes (paymentStatus a changé).
 			// CACHE-AUDIT-010 : passer par le helper canonique pour couvrir aussi
-			// DETAIL/HISTORY/CONFIRMATION(orderId) + USER_ORDERS_COUNT — une liste
-			// manuelle laissait la page détail commande + historique stale jusqu'à
-			// l'expiration du profil `user` (~10 min).
-			getOrderInvalidationTags(
-				refundData.refund.order_user_id ?? undefined,
-				refundData.refund.order_id,
-			).forEach((tag) => updateTag(tag));
-			updateTag(REFUNDS_CACHE_TAGS.LIST);
-			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
-			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+			// DETAIL/HISTORY/CONFIRMATION(orderId) — une liste manuelle laissait la page
+			// détail commande + historique stale jusqu'à l'expiration du profil `user`.
+			// Seul chemin de ce fichier à muter la commande, donc le seul à composer les
+			// DEUX helpers. `Set` : ils se recouvrent sur DETAIL/HISTORY/ADMIN_BADGES.
+			for (const tag of new Set([
+				...getOrderInvalidationTags(refundData.refund.order_id),
+				...getRefundInvalidationTags(id, refundData.refund.order_id),
+			])) {
+				updateTag(tag);
+			}
 
 			// Invalider le cache d'inventaire et vitrine si des articles ont été restockés.
 			// On utilise actualRestockedCount (P2.1) pour distinguer "demandé" vs "réussi"
 			// (SKU peuvent avoir été supprimés entre creation refund et processing).
 			const restockedSkuIds = Array.from(restockBySkuId.keys());
 			if (actualRestockedCount > 0 && restockedSkuIds.length > 0) {
-				updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-
-				// Invalidate storefront SKU stock and product caches
-				for (const skuId of restockedSkuIds) {
-					updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
-				}
-
-				// Fetch product info for restocked SKUs to invalidate product-level caches
+				// Ce bloc écrivait sa propre liste de tags — et lui manquait
+				// `SKU_DETAIL_BY_ID`, `SKUS_LIST`, `LIST` et `ADMIN_BADGES`, soit
+				// exactement les tags pour lesquels `getInventoryInvalidationTags` a été
+				// fait SSOT (STOCK-STALE-BASELINE-001). Passer par
+				// `collectStockInvalidationTags` : elle groupe par produit et couvre les
+				// 8 tags, là où une liste manuelle diverge dès qu'un lecteur est ajouté.
 				const restockedSkus = await prisma.productSku.findMany({
 					where: { id: { in: restockedSkuIds } },
-					select: { productId: true, product: { select: { slug: true } } },
+					select: { id: true, productId: true, product: { select: { slug: true } } },
 				});
-				const uniqueProductIds = [...new Set(restockedSkus.map((s) => s.productId))];
-				const uniqueSlugs = [...new Set(restockedSkus.map((s) => s.product.slug))];
-				for (const productId of uniqueProductIds) {
-					updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId));
-				}
-				for (const slug of uniqueSlugs) {
-					updateTag(PRODUCTS_CACHE_TAGS.DETAIL(slug));
-				}
+				const productBySkuId = new Map(restockedSkus.map((s) => [s.id, s]));
+
+				// On itère sur les ids DEMANDÉS, pas sur les lignes trouvées : un SKU
+				// hard-deleted entre-temps garde ainsi son `SKU_STOCK` invalidé — c'est
+				// le repli prévu par `collectStockInvalidationTags` quand le produit
+				// n'est pas résolu.
+				updateTagsAfterMutation(
+					collectStockInvalidationTags(
+						restockedSkuIds.map((skuId) => ({
+							skuId,
+							productId: productBySkuId.get(skuId)?.productId ?? null,
+							productSlug: productBySkuId.get(skuId)?.product.slug ?? null,
+						})),
+					),
+				);
 			}
 			// Audit log
 
@@ -669,7 +675,10 @@ export async function processRefund(
 				]);
 
 				if (customerInfo?.email) {
-					const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refundData.refund.order_id));
+					const orderDetailsUrl = buildOrderTrackingUrl({
+						id: refundData.refund.order_id,
+						orderNumber: refundData.refund.order_number,
+					});
 					const creditNoteNumber =
 						refundFacts?.creditNoteNumber ?? refundFacts?.order.creditNoteNumber ?? null;
 					const invoiceNumber = refundFacts?.order.invoiceNumber ?? null;

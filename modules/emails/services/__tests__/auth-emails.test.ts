@@ -15,15 +15,12 @@ vi.mock("@/emails/verification-email", () => ({
 vi.mock("@/emails/password-reset-email", () => ({
 	PasswordResetEmail: vi.fn((props) => ({ type: "PasswordResetEmail", props })),
 }));
-vi.mock("@/emails/account-deletion-email", () => ({
-	AccountDeletionEmail: vi.fn((props) => ({ type: "AccountDeletionEmail", props })),
-}));
+vi.mock("@/emails/account-deletion-email", () => ({}));
 
 vi.mock("../../constants/email.constants", () => ({
 	EMAIL_SUBJECTS: {
 		VERIFICATION: "Vérifiez votre adresse email - Synclune",
 		PASSWORD_RESET: "Réinitialisez votre mot de passe - Synclune",
-		ACCOUNT_DELETED: "Votre compte a été supprimé - Synclune",
 	},
 	EMAIL_CONTACT: "contact@test.com",
 }));
@@ -33,11 +30,7 @@ vi.mock("@/shared/constants/urls", () => ({
 	ROUTES: { SHOP: { PRODUCTS: "/produits" } },
 }));
 
-import {
-	sendVerificationEmail,
-	sendPasswordResetEmail,
-	sendAccountDeletionEmail,
-} from "../auth-emails";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../auth-emails";
 
 describe("sendVerificationEmail", () => {
 	beforeEach(() => {
@@ -105,33 +98,5 @@ describe("sendPasswordResetEmail", () => {
 
 		const result = await sendPasswordResetEmail({ to: "u@t.com", url: "https://x" });
 		expect(result).toEqual({ success: false, error: "RESEND_FAILED" });
-	});
-});
-
-describe("sendAccountDeletionEmail", () => {
-	beforeEach(() => {
-		vi.resetAllMocks();
-		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "d-1" } });
-	});
-
-	it("forwards userName and deletionDate, tags as 'auth'", async () => {
-		await sendAccountDeletionEmail({
-			to: "user@test.com",
-			userName: "Jean",
-			deletionDate: "2026-05-09",
-		});
-
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AccountDeletionEmail",
-				props: { userName: "Jean", deletionDate: "2026-05-09" },
-			}),
-			expect.objectContaining({
-				to: "user@test.com",
-				subject: "Votre compte a été supprimé - Synclune",
-				replyTo: "contact@test.com",
-				tags: [{ name: "category", value: "auth" }],
-			}),
-		);
 	});
 });

@@ -3,21 +3,27 @@
  */
 
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 
 // ============================================
 // CACHE TAGS
 // ============================================
 
+/**
+ * ⚠️ Plus aucun tag user-scopé ici (retrait de l'espace client 2026-07-31).
+ *
+ * `USER_ORDERS(userId)`, `LAST_ORDER(userId)` et `USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId)`
+ * ont disparu avec les seules entrées de cache qu'ils invalidaient — `getUserOrders`,
+ * `getLastOrder` et `getUserDetailAdmin`. Une commande n'a plus de propriétaire
+ * connecté : le suivi passe par `/suivi-commande` (token HMAC, tag `CONFIRMATION`)
+ * et le détail admin par `DETAIL`.
+ *
+ * Corollaire sur CACHE-AUDIT-010 : les deux helpers ci-dessous ne prennent plus de
+ * `userId`. Le garder en paramètre ignoré aurait laissé croire à une invalidation
+ * user-scopée toujours en place.
+ */
 export const ORDERS_CACHE_TAGS = {
 	/** Liste des commandes (dashboard admin) */
 	LIST: "orders-list",
-
-	/** Commandes d'un utilisateur spécifique */
-	USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-
-	/** Dernière commande d'un utilisateur (page confirmation, espace client) */
-	LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
 
 	/** Historique d'une commande spécifique (audit trail) */
 	HISTORY: (orderId: string) => `order-history-${orderId}`,
@@ -45,21 +51,12 @@ export const ORDERS_CACHE_TAGS = {
  *
  * Inclut les badges admin car le count de commandes change
  */
-export function getOrderInvalidationTags(userId?: string, orderId?: string): string[] {
+export function getOrderInvalidationTags(orderId?: string): string[] {
 	const tags: string[] = [
 		ORDERS_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 		SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
 	];
-
-	if (userId) {
-		tags.push(
-			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
-			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
-			// CACHE-AUDIT-008 : SSOT (cf. modules/users/data/get-user-detail-admin.ts)
-			USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId),
-		);
-	}
 
 	if (orderId) {
 		tags.push(
@@ -79,12 +76,8 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
  * Exclut ADMIN_BADGES et les KPIs dashboard pour éviter les
  * invalidations inutiles sur des opérations fréquentes
  */
-export function getOrderMetadataInvalidationTags(userId?: string, orderId?: string): string[] {
+export function getOrderMetadataInvalidationTags(orderId?: string): string[] {
 	const tags: string[] = [ORDERS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST];
-
-	if (userId) {
-		tags.push(ORDERS_CACHE_TAGS.USER_ORDERS(userId), ORDERS_CACHE_TAGS.LAST_ORDER(userId));
-	}
 
 	if (orderId) {
 		tags.push(

@@ -1,3 +1,4 @@
+import { escapeLikePattern } from "@/shared/utils/escape-like-pattern";
 import { type Prisma } from "@/app/generated/prisma/client";
 import type { GetRefundsParams } from "../types/refund.types";
 
@@ -15,23 +16,26 @@ export function buildRefundWhereClause(params: GetRefundsParams): Prisma.RefundW
 	};
 	const AND: Prisma.RefundWhereInput[] = [];
 
-	// Recherche textuelle (orderNumber, customerEmail, customerName)
+	// Recherche textuelle (orderNumber, customerEmail, customerName).
+	// Échappement LIKE : Prisma `contains` ne neutralise pas % _ \ (P3-3,
+	// cf. escape-like-pattern.ts).
 	if (params.search) {
+		const searchTerm = escapeLikePattern(params.search);
 		AND.push({
 			OR: [
 				{
 					order: {
-						orderNumber: { contains: params.search, mode: "insensitive" },
+						orderNumber: { contains: searchTerm, mode: "insensitive" },
 					},
 				},
 				{
 					order: {
-						customerEmail: { contains: params.search, mode: "insensitive" },
+						customerEmail: { contains: searchTerm, mode: "insensitive" },
 					},
 				},
 				{
 					order: {
-						customerName: { contains: params.search, mode: "insensitive" },
+						customerName: { contains: searchTerm, mode: "insensitive" },
 					},
 				},
 			],

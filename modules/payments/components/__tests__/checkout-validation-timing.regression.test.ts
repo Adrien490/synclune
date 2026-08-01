@@ -84,14 +84,18 @@ describe("Checkout — validation au blur, pas à la frappe", () => {
 			});
 		}
 
-		it("les 7 validateurs du tunnel sont bien tous migrés (compte exact)", () => {
+		it("les 8 validateurs du tunnel sont bien tous migrés (compte exact)", () => {
 			// Sans compte exact, un fichier dont tous les validateurs auraient été
 			// SUPPRIMÉS passerait les deux assertions ci-dessus.
+			//
+			// 7 → 8 (audit Zod 2026-07-31) : `shipping.addressLine2` était le seul champ
+			// d'adresse SANS aucun validateur — donc sans borne haute, alors que le
+			// schéma serveur le limite à 255 comme `addressLine1`.
 			const total = FIELD_FILES.reduce((sum, file) => {
 				const matches = stripComments(read(file)).match(/onDynamic:/g) ?? [];
 				return sum + matches.length;
 			}, 0);
-			expect(total).toBe(7);
+			expect(total).toBe(8);
 		});
 	});
 });

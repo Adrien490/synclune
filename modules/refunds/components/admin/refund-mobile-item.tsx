@@ -30,6 +30,7 @@ interface RefundMobileItemProps {
 		amount: number;
 		reason: RefundReason;
 		createdAt: Date;
+		failureReason?: string | null;
 		order: {
 			id: string;
 			orderNumber: string;
@@ -47,6 +48,7 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 			amount: refund.amount,
 			orderId: refund.order.id,
 			orderNumber: refund.order.orderNumber,
+			failureReason: refund.failureReason,
 		},
 	});
 

@@ -71,7 +71,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	LoaderCircle: () => <svg data-testid="loader-icon" />,
+	Loader2Icon: () => <svg data-testid="loader-icon" />,
 }));
 
 import { ClearCartAlertDialog } from "../clear-cart-alert-dialog";

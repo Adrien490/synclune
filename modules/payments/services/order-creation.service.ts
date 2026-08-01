@@ -29,6 +29,31 @@ function isDiscountType(value: string): value is DiscountType {
 	return value === DiscountType.PERCENTAGE || value === DiscountType.FIXED_AMOUNT;
 }
 
+/** Longueur des colonnes `OrderItem.skuColor` / `skuMaterial` (`VarChar(100)`). */
+const SKU_LABEL_SNAPSHOT_MAX_LENGTH = 100;
+
+/**
+ * Tronque un libellé AGRÉGÉ avant de le figer dans un snapshot `OrderItem`.
+ *
+ * ⚠️ `skuColor` et `skuMaterial` ne recopient pas un champ, ils **joignent** jusqu'à
+ * 3 noms (`ARRAY_LIMITS.SKU_COLORS` / `SKU_MATERIALS`) de 100 caractères chacun —
+ * soit jusqu'à 306 caractères pour une colonne `VarChar(100)`. Aucun schéma Zod ne
+ * couvre ce point : la valeur est construite ici, côté serveur, à partir de données
+ * déjà validées individuellement. Latent tant que les noms de couleur restent
+ * courts, mais rien ne l'empêche — et l'échec serait un `22001` **dans la
+ * transaction de création de commande**, donc un paiement en échec.
+ *
+ * Tronquer plutôt que rejeter : un libellé d'affichage abrégé est sans conséquence
+ * comptable (il ne porte ni prix ni quantité), alors que refuser la commande à
+ * l'encaissement le serait.
+ */
+function truncateSkuLabel(value: string | null): string | null {
+	if (value === null) return null;
+	return value.length > SKU_LABEL_SNAPSHOT_MAX_LENGTH
+		? value.slice(0, SKU_LABEL_SNAPSHOT_MAX_LENGTH)
+		: value;
+}
+
 type SkuDetailsResult = Awaited<ReturnType<typeof getSkuDetails>>;
 
 export interface CreateOrderParams {
@@ -48,7 +73,19 @@ export interface CreateOrderParams {
 	userId: string | null;
 	finalEmail: string | null;
 	discountCode?: string;
-	paymentIntentId?: string;
+	/**
+	 * PaymentIntent Stripe de la commande — OBLIGATOIRE (invariant #8, NF 525).
+	 *
+	 * Une commande doit naître avec sa provenance Stripe : c'est la précondition
+	 * sur laquelle reposent TOUS les gardes en aval (`mark-as-paid` refuse
+	 * `!stripePaymentIntentId`, le webhook résout la commande par ce champ, et le
+	 * CHECK `Order_paid_requires_stripe_proof` refuse l'état PAID sans lui).
+	 *
+	 * Le champ a été optionnel jusqu'au 2026-07-31 : l'unique appelant le passait
+	 * toujours, mais rien ne l'imposait. Même motif que EINV-SEQ-008 sur
+	 * `persistInvoiceNumber` — la garde vit dans le service, pas chez l'appelant.
+	 */
+	paymentIntentId: string;
 }
 
 interface CreateOrderResult {
@@ -413,7 +450,7 @@ export async function createOrderInTransaction(
 					status: "PENDING",
 					paymentStatus: "PENDING",
 					fulfillmentStatus: "UNFULFILLED",
-					...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
+					stripePaymentIntentId: paymentIntentId,
 				},
 			});
 
@@ -458,9 +495,9 @@ export async function createOrderInTransaction(
 						productDescription: product.description ?? null,
 						productImageUrl: imageUrl,
 						skuSku: sku.sku,
-						skuColor: sku.colors.map((c) => c.name).join(" · ") || null,
+						skuColor: truncateSkuLabel(sku.colors.map((c) => c.name).join(" · ") || null),
 						skuColorHexes: colorsHex || null,
-						skuMaterial: sku.material ?? null,
+						skuMaterial: truncateSkuLabel(sku.material ?? null),
 						skuSize: sku.size ?? null,
 						skuImageUrl: imageUrl,
 						price: sku.priceInclTax,

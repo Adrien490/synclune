@@ -174,6 +174,7 @@ export async function RefundsDataTable({
 										amount: refund.amount,
 										orderId: refund.order.id,
 										orderNumber: refund.order.orderNumber,
+										failureReason: refund.failureReason,
 									}}
 								/>
 							</TableCell>

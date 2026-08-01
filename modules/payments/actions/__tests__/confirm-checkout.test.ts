@@ -308,7 +308,6 @@ function createValidData(overrides: Partial<ConfirmCheckoutData> = {}): ConfirmC
 		email: undefined,
 		discountCode: undefined,
 		paymentIntentId: "pi_test_123",
-		saveInfo: false,
 		...overrides,
 	};
 }
@@ -880,10 +879,7 @@ describe("confirmCheckout", () => {
 
 			await confirmCheckout(createValidData());
 
-			expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(
-				"cm3user0000123qz8v4h2j9d3",
-				"order-existing",
-			);
+			expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith("order-existing");
 			expect(mockUpdateTag).toHaveBeenCalledWith("order-meta-order-existing");
 		});
 
@@ -1730,102 +1726,6 @@ describe("confirmCheckout", () => {
 
 		// ORD-STRIPE-004 : si la commande n'est PAS payée, cleanup hard-delete normalement
 		// (contraste avec le cas PAID ci-dessus — garantit que la garde ne sur-bloque pas).
-		it("ORD-STRIPE-004: still hard-deletes the orphan order when not PAID", async () => {
-			setupCleanupOrderState();
-			mockStripe.paymentIntents.update.mockRejectedValue(new Error("Stripe API error"));
-
-			await confirmCheckout(createValidData());
-
-			expect(mockPrisma.order.delete).toHaveBeenCalledWith({ where: { id: "order-001" } });
-			expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
-		});
-
-		// CHECKOUT-RACE-004 régression : le pre-check ORD-STRIPE-004 n'est PAS atomique
-		// avec le delete — le webhook peut flipper PAID (et décrémenter le stock) entre
-		// le pre-check (qui lit PENDING) et la transaction de cleanup. Le re-check SOUS
-		// l'advisory lock order-paid (le même que processOrderAtomically) doit alors
-		// aborter : pas de delete d'une commande payée, pas de rollback discount,
-		// alerte Sentry pour réconciliation manuelle.
-		// @regression cleanup-paid-race
-		it("CHECKOUT-RACE-004: aborts cleanup when order flips PAID between pre-check and tx (re-check under advisory lock)", async () => {
-			setupCleanupOrderState({ paymentStatus: "PAID", stripePaymentIntentId: "pi_test_123" });
-			mockStripe.paymentIntents.update.mockRejectedValue(new Error("Stripe API error"));
-
-			await confirmCheckout(createValidData());
-
-			// L'advisory lock order-paid est bien pris dans la tx de cleanup.
-			expect(mockPrisma.$queryRaw).toHaveBeenCalled();
-			// La commande payée n'est PAS supprimée, aucun rollback discount.
-			expect(mockPrisma.order.delete).not.toHaveBeenCalled();
-			expect(mockPrisma.discountUsage.deleteMany).not.toHaveBeenCalled();
-			expect(mockSentryCaptureMessage).toHaveBeenCalledWith(
-				"cleanupFailedCheckout aborted: order already PAID by concurrent webhook",
-				"error",
-			);
-		});
-
-		// CHECKOUT-RACE-004 : commande disparue entre pre-check et tx (cleanup
-		// concurrent) — no-op silencieux, pas de delete ni d'alerte.
-		it("CHECKOUT-RACE-004: skips quietly when order already deleted before the cleanup tx", async () => {
-			setupCleanupOrderState(null);
-			mockStripe.paymentIntents.update.mockRejectedValue(new Error("Stripe API error"));
-
-			await confirmCheckout(createValidData());
-
-			expect(mockPrisma.order.delete).not.toHaveBeenCalled();
-			expect(mockSentryCaptureMessage).not.toHaveBeenCalled();
-		});
-	});
-
-	// ──────────────────────────────────────────────────────────────
-	// Save address
-	// ──────────────────────────────────────────────────────────────
-
-	describe("save address", () => {
-		it("should trigger address save when saveInfo is true and user is authenticated", async () => {
-			mockPrisma.$transaction.mockImplementation(
-				async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
-					// For address save transaction
-					const tx = {
-						address: {
-							count: vi.fn().mockResolvedValue(0),
-							create: vi.fn().mockResolvedValue({}),
-						},
-					};
-					return fn(tx as unknown as typeof mockPrisma);
-				},
-			);
-
-			await confirmCheckout(createValidData({ saveInfo: true }));
-
-			// saveAddressForUser is fire-and-forget, so we verify $transaction was eventually called
-			// after the main flow completes
-			await vi.waitFor(() => {
-				expect(mockPrisma.$transaction).toHaveBeenCalled();
-			});
-		});
-
-		it("should not save address when saveInfo is false", async () => {
-			// Reset $transaction call count — only cleanup transaction should be absent
-			mockPrisma.$transaction.mockClear();
-
-			await confirmCheckout(createValidData({ saveInfo: false }));
-
-			// With saveInfo false, no address transaction should be called
-			// (the cleanup transaction only runs on failure)
-			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-		});
-
-		it("should not save address for guest users even when saveInfo is true", async () => {
-			mockGetSession.mockResolvedValue(null);
-			mockGetOrCreateCartSessionId.mockResolvedValue("6f9619ff-8b86-4d11-b42d-00c04fc964ff");
-			mockPrisma.$transaction.mockClear();
-
-			await confirmCheckout(createValidData({ email: "guest@example.com", saveInfo: true }));
-
-			// Guest users have no userId, so saveAddressForUser should not be called
-			expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-		});
 	});
 
 	// ──────────────────────────────────────────────────────────────

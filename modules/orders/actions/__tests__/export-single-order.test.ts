@@ -13,6 +13,7 @@ const {
 	mockValidateInput,
 	mockHandleActionError,
 	mockGenerateOrdersCsv,
+	mockCreateOrderAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
@@ -22,6 +23,7 @@ const {
 	mockValidateInput: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockGenerateOrdersCsv: vi.fn(),
+	mockCreateOrderAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -58,6 +60,9 @@ vi.mock("../../schemas/order.schemas", () => ({
 vi.mock("../../services/export-orders-csv.service", () => ({
 	generateOrdersCsv: mockGenerateOrdersCsv,
 }));
+vi.mock("../../utils/order-audit", () => ({
+	createOrderAudit: mockCreateOrderAudit,
+}));
 
 import { exportSingleOrder } from "../export-single-order";
 
@@ -93,6 +98,8 @@ describe("exportSingleOrder", () => {
 			paymentStatus: "PAID",
 			status: "DELIVERED",
 		});
+
+		mockCreateOrderAudit.mockResolvedValue(undefined);
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -153,5 +160,26 @@ describe("exportSingleOrder", () => {
 		const result = await exportSingleOrder(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	// P2 (audit 2026-08-01) — Art. 30 RGPD : l'export unitaire de PII client doit
+	// laisser une trace d'audit, en parité avec la route bulk qui avorte si la
+	// trace échoue. Sans elle, exfiltrer commande par commande était invisible.
+	it("écrit une trace d'audit BULK_EXPORT avant de servir le CSV", async () => {
+		await exportSingleOrder(undefined, validFormData);
+		expect(mockCreateOrderAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				orderId: VALID_CUID,
+				action: "BULK_EXPORT",
+				metadata: expect.objectContaining({ exportType: "SINGLE_ORDER_CSV", rowCount: 1 }),
+			}),
+		);
+	});
+
+	it("avorte l'export si la trace d'audit échoue (fail-closed)", async () => {
+		mockCreateOrderAudit.mockRejectedValue(new Error("audit down"));
+		const result = await exportSingleOrder(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.csv).toBeUndefined();
 	});
 });

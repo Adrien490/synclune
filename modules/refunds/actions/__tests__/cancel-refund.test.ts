@@ -68,8 +68,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
+// `cacheLife`/`cacheTag` : requis parce que `../../constants/cache` est désormais chargé
+// POUR DE VRAI (cf. plus bas) et les importe.
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -80,17 +84,9 @@ vi.mock("../../constants/refund.constants", () => ({
 	},
 }));
 
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-	REFUNDS_CACHE_TAGS: {
-		LIST: "refunds-list",
-		DETAIL: (id: string) => `refund-${id}`,
-	},
-}));
+// ⚠️ PAS de mock hand-written ici : le miroir manuel précédent listait des clés figées
+// (dont `USER_ORDERS`, disparue depuis) et ne bougeait pas quand la SSOT gagnait un tag.
+// On charge le vrai module — les tags assertés plus bas sont donc les vrais.
 
 // ⚠️ Miroir COMPLET des clés touchées : `getOrderInvalidationTags()` lit
 // ADMIN_ORDERS_LIST. Une clé absente ici fait passer `undefined` à `updateTag`, ce qui
@@ -349,7 +345,12 @@ describe("cancelRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-detail-order-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-history-order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
+		// Plus aucun tag user-scopé : `getOrderInvalidationTags` n'en émet plus depuis
+		// le retrait de l'espace client (2026-07-31) — les data fns qu'ils
+		// invalidaient (`getUserOrders`, `getLastOrder`) ont disparu avec lui.
+		expect(mockUpdateTag).not.toHaveBeenCalledWith(
+			expect.stringMatching(/^(orders-user-|last-order-user-)/),
+		);
 
 		// Pas de comptage exact : il verrouillait la liste manuelle incomplète.
 		// À la place : aucun tag ne doit être `undefined` (mock de tags incomplet).
@@ -358,28 +359,13 @@ describe("cancelRefund", () => {
 		}
 	});
 
-	it("should invalidate user-specific cache tag when order has a user", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.updateMany.mockResolvedValue({});
-
-		await cancelRefund(undefined, makeFormData());
-
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
-	});
-
-	it("should not invalidate user-specific cache tag when order has no user", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({ order: { id: "order-1", orderNumber: "SYN-001", user: null } }),
-		);
-		mockPrisma.refund.updateMany.mockResolvedValue({});
-
-		await cancelRefund(undefined, makeFormData());
-
-		const userTagCalls = mockUpdateTag.mock.calls.filter(([tag]) =>
-			(tag as string).startsWith("orders-user-"),
-		);
-		expect(userTagCalls).toHaveLength(0);
-	});
+	/**
+	 * La paire « invalide le tag user quand la commande a un user » / « ne l'invalide
+	 * pas sinon » a perdu son sujet : `getOrderInvalidationTags` n'émet plus aucun
+	 * tag user-scopé (retrait de l'espace client 2026-07-31). L'assertion d'absence
+	 * vit désormais dans le test d'invalidation ci-dessus, qui couvre les deux cas
+	 * d'un coup — le comportement ne dépend plus de la présence d'un user.
+	 */
 
 	it("should return formatted success message with amount and order number", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ amount: 5000 }));

@@ -138,7 +138,7 @@ export async function revertToProcessing(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		const trackingInfo = order.trackingNumber ? ` (ancien suivi: ${order.trackingNumber})` : "";
 

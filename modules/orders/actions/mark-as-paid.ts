@@ -178,13 +178,26 @@ export async function markAsPaid(
 				return { ...found, _error: "cancelled" as const };
 			}
 
+			// Miroir de getOrderPermissions().canMarkAsPaid : seul PENDING/PROCESSING
+			// est encaissable manuellement. Cette action était la seule du module sans
+			// précondition de statut — une commande SHIPPED/DELIVERED dont le paiement
+			// retomberait FAILED/EXPIRED aurait été ramenée à PROCESSING avec
+			// re-décrément de stock (audit 2026-08-01, P3 — seul trou du graphe).
+			if (found.status !== OrderStatus.PENDING && found.status !== OrderStatus.PROCESSING) {
+				return { ...found, _error: "not_markable" as const };
+			}
+
 			// EINV-CASH-001 : preuve Stripe obligatoire. Une commande marquée payée
 			// DOIT être née d'un checkout Stripe (PaymentIntent — seul flow émis depuis
 			// le retrait du Checkout Session hosted). Sans cette preuve PSP, mark-as-paid
-			// fabriquerait un encaissement fictif → facture fiscale + e-reporting SALES
-			// sans contrepartie réelle, ce qui expose Synclune à une qualification
+			// fabriquerait un encaissement fictif → facture fiscale (Art. 286 / 289-I
+			// CGI) sans contrepartie réelle, ce qui expose Synclune à une qualification
 			// "logiciel de caisse" non conforme (invariant CLAUDE.md #8 — « pas de
 			// commande payée sans PaymentIntent »).
+			//
+			// Depuis le 2026-07-31, la base refuse elle aussi cet état
+			// (CHECK `Order_paid_requires_stripe_proof`) : cette garde applicative
+			// reste le chemin qui produit un message d'erreur exploitable.
 			if (!found.stripePaymentIntentId) {
 				return { ...found, _error: "no_stripe_proof" as const };
 			}
@@ -315,14 +328,27 @@ export async function markAsPaid(
 			// Mettre à jour la commande.
 			// EINV-CASH-005 : contrairement au chemin webhook, aucun
 			// payment_intent.succeeded n'arrivera jamais ici (le PI est annulé
-			// post-commit, ORD-BIZ-007) → pas de facture eager ni d'e-reporting
-			// SALES par ce canal. On pose les deux flags DLQ DANS la tx pour que
-			// la commande soit visible de la sélection candidats de
-			// reconcile-invoices (qui ne ramène QUE les commandes flaguées) même
-			// si le process meurt juste après le commit. Le rattrapage eager
-			// post-commit ci-dessous les baisse dans le cas nominal.
-			await tx.order.update({
-				where: { id },
+			// post-commit, ORD-BIZ-007) → pas de facture eager par ce canal. On pose
+			// le flag DLQ DANS la tx pour que la commande soit visible de la
+			// sélection candidats de reconcile-invoices (qui ne ramène QUE les
+			// commandes flaguées) même si le process meurt juste après le commit.
+			// Le rattrapage eager post-commit ci-dessous le baisse dans le cas
+			// nominal.
+			//
+			// (Il y avait ici un SECOND flag `ereportingRetryDeferred` jusqu'au
+			// retrait de l'e-reporting le 2026-07-26 — cf. CLAUDE.md, à réécrire au
+			// go-live contre une Plateforme Agréée réelle.)
+			// Garde atomique : ré-asserte l'état LU (pattern des 5 actions sœurs —
+			// cette action était la seule à écrire sans clause de statut). THROW et
+			// non `return _error` : le décrément de stock ci-dessus est déjà écrit
+			// dans la tx, seul un rollback complet le défait.
+			const claimed = await tx.order.updateMany({
+				where: {
+					id,
+					...notDeleted,
+					status: found.status,
+					paymentStatus: found.paymentStatus,
+				},
 				data: {
 					paymentStatus: PaymentStatus.PAID,
 					status: OrderStatus.PROCESSING,
@@ -331,6 +357,9 @@ export async function markAsPaid(
 					invoiceRetryDeferred: true,
 				},
 			});
+			if (claimed.count === 0) {
+				throw new Error("CONCURRENT_STATE_CHANGE");
+			}
 
 			// Audit trail (Best Practice Stripe 2025). ORD-BIZ-004 :
 			// metadata.recoveredFrom flag recovery FAILED/EXPIRED → PAID.
@@ -376,8 +405,10 @@ export async function markAsPaid(
 						: order._error === "has_pending_refund"
 							? "Un remboursement est en cours pour cette commande. Annulez-le d'abord."
 							: order._error === "no_stripe_proof"
-								? "Cette commande n'a aucune preuve de paiement Stripe (PaymentIntent ou session Checkout). Le marquage manuel est interdit sans origine Stripe."
-								: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
+								? "Cette commande n'a aucun PaymentIntent Stripe. Le marquage manuel est interdit sans origine Stripe."
+								: order._error === "not_markable"
+									? "Seule une commande en attente ou en préparation peut être marquée comme payée."
+									: ORDER_ERROR_MESSAGES.CANNOT_PAY_CANCELLED;
 			return {
 				status: ActionStatus.ERROR,
 				message,
@@ -385,7 +416,7 @@ export async function markAsPaid(
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
-		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
+		getOrderInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		// Invalidation STOCK/CATALOGUE — cet encaissement décrémente l'inventaire et
 		// ne postait QUE des tags commande : la vitrine servait donc un stock périmé
@@ -454,12 +485,11 @@ export async function markAsPaid(
 		}
 
 		// EINV-CASH-005 : émission eager de la facture (Art. 289-I — émission à
-		// l'encaissement) + e-reporting SALES, comme le fait le webhook sur le
-		// chemin canonique. reconcileInvoiceOrder exécute les mêmes passes que le
-		// cron (invoiceNumber, archive PDF, SALES) et baisse les flags DLQ posés
-		// dans la tx. Best-effort : sur échec les flags restent posés et le cron
-		// quotidien reconcile-invoices draine (import dynamique — la chaîne
-		// d'archivage tire UploadThing à l'import).
+		// l'encaissement), comme le fait le webhook sur le chemin canonique.
+		// reconcileInvoiceOrder exécute les mêmes passes que le cron (invoiceNumber,
+		// archive PDF) et baisse le flag DLQ posé dans la tx. Best-effort : sur
+		// échec le flag reste posé et le cron quotidien reconcile-invoices draine
+		// (import dynamique — la chaîne d'archivage tire UploadThing à l'import).
 		try {
 			const { reconcileInvoiceOrder } =
 				await import("@/modules/cron/services/reconcile-invoices.service");
@@ -540,6 +570,12 @@ export async function markAsPaid(
 			message: `Commande ${order.orderNumber} marquée comme payée. Prête pour préparation.${stockMessage}${emailMessage}`,
 		};
 	} catch (e) {
+		if (e instanceof Error && e.message === "CONCURRENT_STATE_CHANGE") {
+			return {
+				status: ActionStatus.ERROR,
+				message: ORDER_ERROR_MESSAGES.CONCURRENT_CHANGE,
+			};
+		}
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED);
 	}
 }

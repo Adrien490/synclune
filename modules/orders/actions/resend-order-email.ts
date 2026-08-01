@@ -21,7 +21,6 @@ import { updateTag } from "next/cache";
 import { z } from "zod";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import type { ResendEmailType } from "../types/email.types";
 import { createOrderAudit } from "../utils/order-audit";
 import { extractCustomerFirstName } from "../utils/customer-name";
 
@@ -43,9 +42,12 @@ export type { ResendEmailType } from "../types/email.types";
  * en `success` SANS réexpédier — l'admin voyait « email renvoyé », le client ne
  * recevait rien. D'où `skipIdempotence: true` sur les deux branches.
  */
+// `unknown` et non des types nominaux : un fichier "use server" publie chaque
+// export en endpoint RPC — le type d'un paramètre est effacé à l'exécution.
+// Parser AVANT de dériver quoi que ce soit de l'argument (règle CLAUDE.md).
 export async function resendOrderEmail(
-	orderId: string,
-	emailType: ResendEmailType,
+	orderIdInput: unknown,
+	emailTypeInput: unknown,
 ): Promise<ActionState> {
 	try {
 		// 1. Vérification admin (`WithUser` : l'entrée d'audit du renvoi nomme l'auteur)
@@ -62,9 +64,10 @@ export async function resendOrderEmail(
 				orderId: z.cuid2(),
 				emailType: z.enum(["confirmation", "shipping"]),
 			}),
-			{ orderId, emailType },
+			{ orderId: orderIdInput, emailType: emailTypeInput },
 		);
 		if ("error" in validated) return validated.error;
+		const { orderId, emailType } = validated.data;
 
 		// 4. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({

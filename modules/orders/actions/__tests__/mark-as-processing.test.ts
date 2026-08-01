@@ -257,7 +257,7 @@ describe("markAsProcessing", () => {
 
 		await markAsProcessing(undefined, validFormData);
 
-		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(order.userId, order.id);
+		expect(mockGetOrderInvalidationTags).toHaveBeenCalledWith(order.id);
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith(`order-${order.id}`);
 	});

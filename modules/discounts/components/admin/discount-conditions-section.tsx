@@ -39,7 +39,11 @@ export function DiscountConditionsSection({ form, isPending }: DiscountCondition
 								type="number"
 								placeholder="ex: 50.00"
 								disabled={isPending}
-								min={0}
+								// `min={0.01}` et non 0 : le CHECK DB `Discount_minOrderAmount_positive`
+								// refuse un minimum nul (« code inutilisable créé par erreur »). Le
+								// champ vide exprime déjà « aucun minimum » — proposer 0 invitait une
+								// saisie que la base rejette.
+								min={0.01}
 								step={0.01}
 								inputMode="decimal"
 								enterKeyHint="next"

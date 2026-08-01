@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useActionState, useEffect } from "react";
 
 import {
@@ -93,7 +93,7 @@ export function ReopenStoreDialog({ previousFocusRef, reopensAt }: ReopenStoreDi
 							className="min-h-11 transition-transform duration-150 active:scale-[0.98]"
 							style={{ viewTransitionName: "store-status-action" }}
 						>
-							{isPending && <LoaderCircle className="mr-2 size-4 animate-spin" />}
+							{isPending && <Spinner presentational className="mr-2" />}
 							{isPending ? "Réouverture…" : "Réouvrir la boutique"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

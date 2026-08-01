@@ -2,14 +2,14 @@
 
 import { Button } from "@/shared/components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+	ResponsiveDialogTrigger,
+} from "@/shared/components/responsive-dialog";
 import {
 	Select,
 	SelectContent,
@@ -19,7 +19,8 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { Download, LoaderCircle } from "lucide-react";
+import { Download } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useReducer } from "react";
 import { toast } from "@/shared/utils/toast";
 
@@ -158,18 +159,23 @@ export function ExportOrdersButton() {
 	const years = Array.from({ length: currentYear - 2023 }, (_, i) => String(currentYear - i));
 
 	return (
-		<Dialog open={state.open} onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}>
-			<DialogTrigger asChild>
+		<ResponsiveDialog
+			open={state.open}
+			onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}
+		>
+			<ResponsiveDialogTrigger asChild>
 				<Button variant="outline" size="sm">
 					<Download className="mr-2 size-4" />
 					Exporter
 				</Button>
-			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>Exporter le livre de recettes</DialogTitle>
-					<DialogDescription>Export CSV des commandes payées (Article 286 CGI)</DialogDescription>
-				</DialogHeader>
+			</ResponsiveDialogTrigger>
+			<ResponsiveDialogContent className="sm:max-w-md">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Exporter le livre de recettes</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						Export CSV des commandes payées (Article 286 CGI)
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<div className="space-y-4 py-4">
 					<div className="space-y-2">
@@ -260,20 +266,20 @@ export function ExportOrdersButton() {
 					)}
 				</div>
 
-				<DialogFooter>
+				<ResponsiveDialogFooter>
 					<Button variant="outline" onClick={() => dispatch({ type: "SET_OPEN", open: false })}>
 						Annuler
 					</Button>
 					<Button onClick={handleExport} disabled={state.isExporting}>
 						{state.isExporting ? (
-							<LoaderCircle className="mr-2 size-4 animate-spin" />
+							<Spinner presentational className="mr-2" />
 						) : (
 							<Download className="mr-2 size-4" />
 						)}
 						{state.isExporting ? "Export en cours…" : "Télécharger CSV"}
 					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+				</ResponsiveDialogFooter>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

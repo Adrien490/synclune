@@ -1,6 +1,5 @@
 "use server";
 
-import { InvoiceStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -59,7 +58,7 @@ export async function updateOrderCustomerInfo(
 					id: true,
 					orderNumber: true,
 					userId: true,
-					invoiceStatus: true,
+					invoiceNumber: true,
 					customerEmail: true,
 					customerName: true,
 					customerPhone: true,
@@ -68,8 +67,12 @@ export async function updateOrderCustomerInfo(
 
 			if (!found) return null;
 
-			if (found.invoiceStatus === InvoiceStatus.GENERATED) {
-				return { ...found, _error: "invoice_generated" as const };
+			// Gate sur invoiceNumber et non invoiceStatus : voidInvoice conserve
+			// invoiceNumber (statut VOIDED), et l'avoir est rendu depuis les colonnes
+			// Order vivantes — rééditer l'identité client après void ferait diverger
+			// l'avoir de son hash archivé (Art. 272-I / L102 B).
+			if (found.invoiceNumber !== null) {
+				return { ...found, _error: "invoice_issued" as const };
 			}
 
 			const sanitizedEmail = sanitizeText(customerEmail).toLowerCase();
@@ -123,9 +126,7 @@ export async function updateOrderCustomerInfo(
 			};
 		}
 
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-			updateTag(tag),
-		);
+		getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

@@ -5,12 +5,14 @@
  * `mark-as-delivered`). `getReturnIneligibilityReason()` existait déjà et
  * discriminait le motif, mais n'était consommé que côté serveur.
  *
- * Ces tests verrouillent que chaque état non éligible produit une explication
- * ACTIONNABLE — et que l'état éligible n'en produit aucune (le caller rend alors
- * le vrai bouton de demande de retour).
+ * Ces tests verrouillent que chaque état produit une explication ACTIONNABLE,
+ * y compris l'état ÉLIGIBLE : depuis le retrait de l'espace client (2026-07-31)
+ * il n'y a plus de bouton self-service — la demande de retour se fait par email,
+ * et cette alerte est la seule affordance du client pendant la fenêtre de
+ * rétractation. Rendre `null` ici recréerait le cul-de-sac de l'audit 2026-08-01.
  */
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 
 import { OrderReturnGuidance } from "../order-return-guidance";
 
@@ -77,14 +79,25 @@ describe("OrderReturnGuidance", () => {
 		expect(screen.getByText(/Demande de retour en cours/i)).toBeInTheDocument();
 	});
 
-	it("commande éligible → ne rend rien (le caller affiche le bouton de retour)", () => {
+	it("commande éligible → propose la demande de retour par email, avec le délai restant", () => {
 		const { container } = renderGuidance({
 			fulfillmentStatus: "DELIVERED",
-			actualDelivery: new Date(),
+			actualDelivery: new Date(), // livrée à l'instant → 14 jours restants
 			status: "DELIVERED",
 		});
+		const scope = within(container as HTMLElement);
 
-		expect(container).toBeEmptyDOMElement();
+		expect(scope.getByText(/Retour possible/i)).toBeInTheDocument();
+		expect(scope.getByText(/encore 14 jours/i)).toBeInTheDocument();
+		// Les deux sorties : la demande par email, et le formulaire type L221-5.
+		expect(scope.getByRole("link", { name: /@/ })).toHaveAttribute(
+			"href",
+			expect.stringContaining("mailto:"),
+		);
+		expect(scope.getByRole("link", { name: /formulaire de rétractation/i })).toHaveAttribute(
+			"href",
+			"/retractation",
+		);
 	});
 
 	it("commande annulée → ne rend rien (parler de retour n'a pas de sens)", () => {

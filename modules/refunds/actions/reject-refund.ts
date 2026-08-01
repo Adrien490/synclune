@@ -18,7 +18,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
-import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
+import { getRefundInvalidationTags } from "../constants/cache";
 import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
 import { canTransition } from "../services/refund-state-machine.service";
@@ -43,9 +43,10 @@ export async function rejectRefund(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		const rawId = safeFormGet(formData, "id");
-		const reason = formData.get("reason") as string | null;
+		const reason = safeFormGet(formData, "reason");
 
-		const validated = validateInput(rejectRefundSchema, { id: rawId, reason });
+		// `reason` est `.optional()` côté schéma : `undefined` passe, `null` non.
+		const validated = validateInput(rejectRefundSchema, { id: rawId, reason: reason ?? undefined });
 		if ("error" in validated) return validated.error;
 
 		const { id } = validated.data;
@@ -126,14 +127,16 @@ export async function rejectRefund(
 
 		// CACHE-AUDIT-010 : passer par le helper SSOT. La liste manuelle omettait
 		// DETAIL(orderId) / HISTORY(orderId) alors que cette action écrit une entrée
-		// d'OrderHistory affichée sur la page détail de la commande, et ne couvrait
-		// qu'USER_ORDERS parmi les tags user-scopés.
-		for (const tag of getOrderInvalidationTags(refund.order.user?.id, refund.order.id)) {
+		// d'OrderHistory affichée sur la page détail de la commande.
+		// Le triplet refund écrit à la main à côté est désormais `getRefundInvalidationTags`
+		// (même SSOT que les handlers webhook, qui l'oubliaient partiellement).
+		// `Set` : les deux helpers se recouvrent sur DETAIL/HISTORY/ADMIN_BADGES.
+		for (const tag of new Set([
+			...getOrderInvalidationTags(refund.order.id),
+			...getRefundInvalidationTags(refund.id, refund.order.id),
+		])) {
 			updateTag(tag);
 		}
-		updateTag(REFUNDS_CACHE_TAGS.LIST);
-		updateTag(REFUNDS_CACHE_TAGS.DETAIL(refund.id));
-		updateTag(ORDERS_CACHE_TAGS.REFUNDS(refund.order.id));
 
 		return success(
 			`Remboursement de ${(refund.amount / 100).toFixed(2)} € refusé pour la commande ${refund.order.orderNumber}`,

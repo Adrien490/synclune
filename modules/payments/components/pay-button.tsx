@@ -4,7 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { LoaderCircle, Lock, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useCheckoutSubmit } from "../hooks/use-checkout-submit";
@@ -254,7 +255,7 @@ export function PayButton({
 			>
 				{isProcessing ? (
 					<>
-						<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+						<Spinner presentational />
 						<span>{phaseMessage || "Traitement…"}</span>
 					</>
 				) : (

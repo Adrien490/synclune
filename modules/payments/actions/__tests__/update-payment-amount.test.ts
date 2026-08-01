@@ -125,6 +125,10 @@ vi.mock("@/modules/orders/services/shipping.service", () => ({
 
 vi.mock("@/shared/constants/countries", () => ({
 	SHIPPING_COUNTRIES: ["FR", "BE", "DE", "MC", "IT", "ES"] as const,
+	// Requis depuis que `shippingCountrySchema` (SSOT `shared/schemas/address.schema`)
+	// remplace le `z.enum(SHIPPING_COUNTRIES, …)` inline : un mock partiel de ce
+	// module fait échouer l'import du schéma, pas seulement une assertion.
+	COUNTRY_ERROR_MESSAGE: "Pays de livraison invalide",
 }));
 
 vi.mock("@/shared/constants/currency", () => ({

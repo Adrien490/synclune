@@ -7,6 +7,10 @@
  * commit). Sans ce guard, le webhook gagne la race et Step 3 abort → restock
  * + audit ADMIN perdus. Critère SAGA in-flight :
  *   status === APPROVED && processedAt === null && (now - updatedAt) < 30s.
+ *
+ * Depuis P1-C (audit « Admin commandes » 2026-08-01), hors fenêtre SAGA la
+ * transition → COMPLETED passe par `finalizeRefundCompletion` (restock + avoir
+ * + email + paymentStatus), plus par le `updateRefundStatus` maigre.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -19,6 +23,7 @@ const {
 	mockUpdateRefundStatus,
 	mockMarkRefundAsFailed,
 	mockGetBaseUrl,
+	mockFinalizeRefundCompletion,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: {
@@ -38,6 +43,7 @@ const {
 	mockUpdateRefundStatus: vi.fn(),
 	mockMarkRefundAsFailed: vi.fn(),
 	mockGetBaseUrl: vi.fn(() => "https://synclune.fr"),
+	mockFinalizeRefundCompletion: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -51,6 +57,7 @@ vi.mock("../../services/refund.service", () => ({
 	mapStripeRefundStatus: mockMapStripeRefundStatus,
 	updateRefundStatus: mockUpdateRefundStatus,
 	markRefundAsFailed: mockMarkRefundAsFailed,
+	WEBHOOK_AUDIT_AUTHOR: "Système (webhook Stripe)",
 }));
 vi.mock("@/modules/orders/constants/cache", async (importOriginal) => {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
@@ -75,8 +82,12 @@ vi.mock("@/modules/refunds/services/issue-credit-note.service", () => ({
 	issueCreditNoteForRefund: vi.fn().mockResolvedValue({ kind: "noop", reason: "missing" }),
 }));
 vi.mock("../../constants/webhook.constants", () => ({ SYSTEM_AUTHOR_ID: "system" }));
+vi.mock("@/modules/refunds/services/finalize-refund.service", () => ({
+	finalizeRefundCompletion: mockFinalizeRefundCompletion,
+}));
 vi.mock("@sentry/nextjs", () => ({
 	captureMessage: vi.fn(),
+	captureException: vi.fn(),
 	withScope: (
 		cb: (s: {
 			setLevel: () => void;
@@ -114,6 +125,12 @@ describe("@regression refund-webhook-saga-in-flight-skip — ORD-REFUND-AUDIT-00
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockMapStripeRefundStatus.mockReturnValue("COMPLETED");
+		mockFinalizeRefundCompletion.mockResolvedValue({
+			finalized: true,
+			isFullyRefunded: false,
+			restockedSkuIds: [],
+			tags: ["refunds-list"],
+		});
 	});
 
 	it("skips updateRefundStatus when SAGA admin in-flight (APPROVED + processedAt=null + updatedAt<30s)", async () => {
@@ -139,6 +156,7 @@ describe("@regression refund-webhook-saga-in-flight-skip — ORD-REFUND-AUDIT-00
 		expect(result.skipped).toBe(true);
 		expect(result.reason).toBe("SAGA admin in-flight");
 		expect(mockUpdateRefundStatus).not.toHaveBeenCalled();
+		expect(mockFinalizeRefundCompletion).not.toHaveBeenCalled();
 	});
 
 	it("does NOT skip when refund.status is COMPLETED (already finalized, no SAGA risk)", async () => {
@@ -187,12 +205,12 @@ describe("@regression refund-webhook-saga-in-flight-skip — ORD-REFUND-AUDIT-00
 		const result = await handleRefundUpdated(makeStripeRefund({ status: "succeeded" }));
 
 		expect(result.skipped).toBeUndefined();
-		expect(mockUpdateRefundStatus).toHaveBeenCalledWith(
-			"refund-3",
-			"COMPLETED",
-			"succeeded",
-			"APPROVED",
+		// P1-C : hors fenêtre SAGA, la transition → COMPLETED déroule la
+		// finalisation COMPLÈTE (restock + avoir + email), pas le update maigre.
+		expect(mockFinalizeRefundCompletion).toHaveBeenCalledWith(
+			expect.objectContaining({ refundId: "refund-3", source: "WEBHOOK" }),
 		);
+		expect(mockUpdateRefundStatus).not.toHaveBeenCalled();
 	});
 
 	it("does NOT skip when processedAt is set (SAGA already past Step 3)", async () => {
@@ -215,6 +233,8 @@ describe("@regression refund-webhook-saga-in-flight-skip — ORD-REFUND-AUDIT-00
 		const result = await handleRefundUpdated(makeStripeRefund({ status: "succeeded" }));
 
 		expect(result.skipped).toBeUndefined();
-		expect(mockUpdateRefundStatus).toHaveBeenCalled();
+		expect(mockFinalizeRefundCompletion).toHaveBeenCalledWith(
+			expect.objectContaining({ refundId: "refund-4" }),
+		);
 	});
 });

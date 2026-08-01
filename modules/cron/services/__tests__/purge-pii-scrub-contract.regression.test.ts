@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Prisma } from "@/app/generated/prisma/client";
 import {
@@ -197,5 +199,36 @@ describe("PURGED_ORDER_NOTE_CONTENT — contenu de remplacement des notes intern
 		expect(typeof PURGED_ORDER_NOTE_CONTENT).toBe("string");
 		expect(PURGED_ORDER_NOTE_CONTENT.length).toBeGreaterThan(0);
 		expect(PURGED_ORDER_NOTE_CONTENT).not.toMatch(/\$\{/);
+	});
+});
+
+describe("tables couvertes par chaque passe de purge (source scan)", () => {
+	// P2 (audit « Admin commandes » 2026-08-01) : le contrat ci-dessus verrouille
+	// la FORME des payloads, mais pas QUELLES tables chaque passe scrube.
+	// `purgeAbandonedOrderPii` (commandes jamais payées, 3 ans) ne scrubait que les
+	// colonnes Order : les notes internes (texte libre) survivaient indéfiniment —
+	// une commande `paidAt: null` n'atteint JAMAIS la purge 10 ans (clé `paidAt`).
+	const source = readFileSync(join(__dirname, "..", "hard-delete-retention.service.ts"), "utf8");
+
+	function bodyOf(fnName: string): string {
+		const start = source.indexOf(`async function ${fnName}`);
+		expect(start, `${fnName} introuvable dans hard-delete-retention.service.ts`).toBeGreaterThan(
+			-1,
+		);
+		const nextFn = source.indexOf("async function", start + 1);
+		return source.slice(start, nextFn === -1 ? undefined : nextFn);
+	}
+
+	it("purgeExpiredOrderPii (10 ans) scrube Order + Refund + OrderNote", () => {
+		const body = bodyOf("purgeExpiredOrderPii");
+		expect(body).toContain("refund.updateMany");
+		expect(body).toContain("orderNote.updateMany");
+		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
+	});
+
+	it("purgeAbandonedOrderPii (jamais payées, 3 ans) scrube Order + OrderNote", () => {
+		const body = bodyOf("purgeAbandonedOrderPii");
+		expect(body).toContain("orderNote.updateMany");
+		expect(body).toContain("PURGED_ORDER_NOTE_CONTENT");
 	});
 });

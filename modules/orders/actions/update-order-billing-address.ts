@@ -1,6 +1,5 @@
 "use server";
 
-import { InvoiceStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -63,7 +62,7 @@ export async function updateOrderBillingAddress(
 					id: true,
 					orderNumber: true,
 					userId: true,
-					invoiceStatus: true,
+					invoiceNumber: true,
 					billingSameAsShipping: true,
 					billingFirstName: true,
 					billingLastName: true,
@@ -78,9 +77,13 @@ export async function updateOrderBillingAddress(
 
 			if (!found) return null;
 
-			// Cannot modify billing address after invoice generated (immutabilité comptable)
-			if (found.invoiceStatus === InvoiceStatus.GENERATED) {
-				return { ...found, _error: "invoice_generated" as const };
+			// Cannot modify billing address after invoice ISSUED (immutabilité comptable).
+			// Gate sur invoiceNumber et non invoiceStatus : voidInvoice passe le statut
+			// à VOIDED en CONSERVANT invoiceNumber, et l'avoir est rendu depuis les
+			// colonnes Order vivantes — rééditer après void ferait diverger l'avoir de
+			// son hash archivé (Art. 272-I / L102 B).
+			if (found.invoiceNumber !== null) {
+				return { ...found, _error: "invoice_issued" as const };
 			}
 
 			const newData = billing.billingSameAsShipping
@@ -148,9 +151,7 @@ export async function updateOrderBillingAddress(
 			};
 		}
 
-		getOrderMetadataInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) =>
-			updateTag(tag),
-		);
+		getOrderMetadataInvalidationTags(order.id).forEach((tag) => updateTag(tag));
 
 		return {
 			status: ActionStatus.SUCCESS,

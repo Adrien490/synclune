@@ -61,8 +61,6 @@ export type GetDiscountsReturn = {
 	totalCount: number;
 };
 
-export type DiscountFilters = NonNullable<z.infer<typeof getDiscountsSchema>["filters"]>;
-
 // ============================================================================
 // VALIDATION TYPES
 // ============================================================================

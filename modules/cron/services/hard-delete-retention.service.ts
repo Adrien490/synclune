@@ -1,4 +1,4 @@
-import { updateTag } from "next/cache";
+import { revalidateTagsInBackground } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
@@ -12,6 +12,7 @@ import {
 	UNPAID_ORDER_PII_SCRUB,
 } from "@/modules/orders/constants/pii-scrub";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
@@ -72,6 +73,8 @@ async function purgeExpiredOrderPii(
 	ordersPurged: number;
 	orderPdfsDeleted: number;
 	ordersHasMore: boolean;
+	/** IDs scrubés dans ce batch — l'appelant en dérive les tags de cache à invalider. */
+	purgedOrderIds: string[];
 	// true UNIQUEMENT quand la suppression des PDF a ÉCHOUÉ (≠ report pour deadline) :
 	// la base légale a expiré mais le scrub RGPD reste bloqué. Remonté en `errored`
 	// par l'appelant pour déclencher l'alerte admin (G3) — sinon échec silencieux.
@@ -90,7 +93,13 @@ async function purgeExpiredOrderPii(
 	});
 
 	if (orders.length === 0) {
-		return { ordersPurged: 0, orderPdfsDeleted: 0, ordersHasMore: false, pdfDeletionFailed: false };
+		return {
+			ordersPurged: 0,
+			orderPdfsDeleted: 0,
+			ordersHasMore: false,
+			purgedOrderIds: [],
+			pdfDeletionFailed: false,
+		};
 	}
 
 	const ordersHasMore = orders.length === BATCH_SIZE_LARGE;
@@ -147,7 +156,13 @@ async function purgeExpiredOrderPii(
 			cronJob: "hard-delete-retention",
 			ordersDeferred: orderIds.length,
 		});
-		return { ordersPurged: 0, orderPdfsDeleted, ordersHasMore, pdfDeletionFailed };
+		return {
+			ordersPurged: 0,
+			orderPdfsDeleted,
+			ordersHasMore,
+			purgedOrderIds: [],
+			pdfDeletionFailed,
+		};
 	}
 
 	// 2. Scrub PII + drop PDF pointers in a single transaction (compliance-critical).
@@ -177,7 +192,16 @@ async function purgeExpiredOrderPii(
 		ordersPurged: purged.count,
 	});
 
-	return { ordersPurged: purged.count, orderPdfsDeleted, ordersHasMore, pdfDeletionFailed: false };
+	return {
+		ordersPurged: purged.count,
+		orderPdfsDeleted,
+		ordersHasMore,
+		// `orderIds` et non les seules lignes effectivement écrites : `purged.count` exclut
+		// celles qu'un run concurrent avait déjà scrubées, dont l'entrée de cache peut très
+		// bien dater d'avant ce scrub. Sur-invalider est gratuit ici (cron mensuel).
+		purgedOrderIds: purged.count > 0 ? orderIds : [],
+		pdfDeletionFailed: false,
+	};
 }
 
 /**
@@ -193,9 +217,12 @@ async function purgeExpiredOrderPii(
  * unpaid orders have no archived invoice. Les identifiants Stripe pseudonymes
  * (`cus_xxx`, `pi_xxx`) partent aussi (UNPAID_ORDER_PII_SCRUB).
  */
-async function purgeAbandonedOrderPii(
-	cutoff: Date,
-): Promise<{ abandonedOrdersPurged: number; abandonedHasMore: boolean }> {
+async function purgeAbandonedOrderPii(cutoff: Date): Promise<{
+	abandonedOrdersPurged: number;
+	abandonedHasMore: boolean;
+	/** IDs scrubés dans ce batch — l'appelant en dérive les tags de cache à invalider. */
+	purgedOrderIds: string[];
+}> {
 	const orders = await prisma.order.findMany({
 		where: { paidAt: null, createdAt: { lt: cutoff }, piiPurgedAt: null },
 		select: { id: true },
@@ -203,18 +230,29 @@ async function purgeAbandonedOrderPii(
 	});
 
 	if (orders.length === 0) {
-		return { abandonedOrdersPurged: 0, abandonedHasMore: false };
+		return { abandonedOrdersPurged: 0, abandonedHasMore: false, purgedOrderIds: [] };
 	}
 
 	const abandonedHasMore = orders.length === BATCH_SIZE_LARGE;
 	const orderIds = orders.map((o) => o.id);
 
 	const purged = await prisma.$transaction(
-		async (tx) =>
-			tx.order.updateMany({
+		async (tx) => {
+			// Les notes internes (texte libre — téléphone, adresse alternative dictée
+			// au support…) portent de la PII au même titre que les colonnes Order.
+			// Cette passe les oubliait : une commande jamais payée n'atteint JAMAIS la
+			// purge 10 ans (clé `paidAt`), donc ses notes survivaient indéfiniment,
+			// sans base légale (aucune facture) — Art. 5.1.e. Audit 2026-08-01, P2.
+			// Pas de scrub Refund ici : un refund n'existe que sur commande encaissée.
+			await tx.orderNote.updateMany({
+				where: { orderId: { in: orderIds } },
+				data: { content: PURGED_ORDER_NOTE_CONTENT },
+			});
+			return tx.order.updateMany({
 				where: { id: { in: orderIds }, paidAt: null, piiPurgedAt: null },
 				data: { ...UNPAID_ORDER_PII_SCRUB, piiPurgedAt: new Date() },
-			}),
+			});
+		},
 		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 	);
 
@@ -223,7 +261,11 @@ async function purgeAbandonedOrderPii(
 		abandonedOrdersPurged: purged.count,
 	});
 
-	return { abandonedOrdersPurged: purged.count, abandonedHasMore };
+	return {
+		abandonedOrdersPurged: purged.count,
+		abandonedHasMore,
+		purgedOrderIds: purged.count > 0 ? orderIds : [],
+	};
 }
 
 export async function hardDeleteExpiredRecords(): Promise<CronResult> {
@@ -259,11 +301,20 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	// envoie l'alerte admin — sinon une purge PII bloquée passerait inaperçue (le cron
 	// renvoyait toujours errored:0). Ré-alerte chaque mois tant que l'échec persiste.
 	let pdfPurgeErrors = 0;
+	// Le scrub PII réécrit des colonnes servies par `order-detail-<id>` et
+	// `admin-orders-list` : sans invalidation, ces entrées continuaient de servir la PII
+	// APRÈS sa purge légale, jusqu'à expiration du profil `user`. Fenêtre réelle courte
+	// (cron mensuel à 4h UTC, entrées déjà expirées), mais du cache qui survit à une
+	// purge RGPD n'est pas un état qu'on veut laisser dépendre du hasard des TTL.
+	const orderTagsToInvalidate = new Set<string>();
 	while (Date.now() <= deadline) {
 		const batch = await purgeExpiredOrderPii(deadline, retentionDate);
 		ordersPurged += batch.ordersPurged;
 		orderPdfsDeleted += batch.orderPdfsDeleted;
 		ordersHasMore = batch.ordersHasMore;
+		for (const orderId of batch.purgedOrderIds) {
+			for (const tag of getOrderInvalidationTags(orderId)) orderTagsToInvalidate.add(tag);
+		}
 		if (batch.pdfDeletionFailed) pdfPurgeErrors++;
 		if (!batch.ordersHasMore || batch.ordersPurged === 0) break;
 	}
@@ -287,7 +338,17 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 		const batch = await purgeAbandonedOrderPii(unpaidPiiCutoff);
 		abandonedOrdersPurged += batch.abandonedOrdersPurged;
 		abandonedHasMore = batch.abandonedHasMore;
+		for (const orderId of batch.purgedOrderIds) {
+			for (const tag of getOrderInvalidationTags(orderId)) orderTagsToInvalidate.add(tag);
+		}
 		if (!batch.abandonedHasMore || batch.abandonedOrdersPurged === 0) break;
+	}
+
+	// Contexte cron (`app/api/cron/<job>/route.ts`) ⇒ `revalidateTag`, jamais `updateTag`
+	// (E872). Émis ici plutôt qu'au flush produit plus bas : celui-ci est gardé par
+	// `productsResult.count > 0`, qui n'a rien à voir avec une purge de commandes.
+	if (orderTagsToInvalidate.size > 0) {
+		revalidateTagsInBackground(orderTagsToInvalidate);
 	}
 
 	// 1. Find IDs to delete (batched to prevent timeout)
@@ -333,11 +394,13 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 
 	// 4. Invalidate caches when records were deleted
 	if (productsResult.count > 0) {
-		updateTag(PRODUCTS_CACHE_TAGS.LIST);
-		updateTag(PRODUCTS_CACHE_TAGS.COUNTS);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		updateTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
+		revalidateTagsInBackground([
+			PRODUCTS_CACHE_TAGS.LIST,
+			PRODUCTS_CACHE_TAGS.COUNTS,
+			SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
+			SHARED_CACHE_TAGS.ADMIN_BADGES,
+			SHARED_CACHE_TAGS.SITEMAP_IMAGES,
+		]);
 	}
 
 	// 5. Delete UploadThing files after DB transaction succeeds

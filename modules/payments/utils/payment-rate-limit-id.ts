@@ -4,11 +4,23 @@ import { normalizeEmail } from "@/shared/utils/normalize-email";
 /**
  * Actions de paiement disposant de leur propre budget de rate limit.
  *
- * Le préfixe fait partie de la CLÉ, pas de la décoration : `checkRateLimit` indexe son
- * compteur sur le seul identifiant (`ratelimit:${identifier}`), sans jamais y mêler le
- * nom de l'action ni sa config. Deux actions qui passent le même identifiant nu
- * partagent donc littéralement un compteur — et la FENÊTRE appartient à la première
- * entrée créée, pas à l'appelant.
+ * ⚠️ Ce préfixe reste PORTEUR après la correction de KI-004 (2026-07-31), et ne doit
+ * pas être retiré comme une redondance apparente.
+ *
+ * Depuis KI-004, `checkRateLimit` mêle le `name` du preset à la clé
+ * (`ratelimit:<name>:<identifier>`), ce qui isole les compteurs de deux presets
+ * DIFFÉRENTS. Mais `initializePayment` et `confirmCheckout` partagent le MÊME preset
+ * (`PAYMENT_LIMITS.CREATE_SESSION`) : le nom de config seul les remettrait sur une
+ * clé commune, ré-introduisant exactement le bug décrit ci-dessous. Seul ce préfixe
+ * par action les sépare.
+ *
+ * Conséquence assumée : la clé porte deux segments d'action
+ * (`ratelimit:checkout-create-session:checkout-init:user:x`). Redondant à la lecture,
+ * mais strictement plus sûr que les deux alternatives.
+ *
+ * Contexte d'origine (avant KI-004) : la clé ne portait QUE l'identifiant, si bien que
+ * deux actions passant le même identifiant nu partageaient littéralement un compteur —
+ * et la FENÊTRE appartenait à la première entrée créée, pas à l'appelant.
  *
  * C'est ce qui rendait le couplage pénalisant : `initializePayment` et `confirmCheckout`
  * utilisaient `user:${userId}` nu, comme toutes les actions panier

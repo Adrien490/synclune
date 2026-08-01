@@ -245,11 +245,14 @@ describe("updateOrderBillingAddress", () => {
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 
-	it("should return error when invoice already GENERATED", async () => {
+	it("should return error when an invoice has been issued (GENERATED)", async () => {
 		mockPrisma.$transaction.mockImplementation(
 			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
 				mockPrisma.order.findUnique.mockResolvedValue(
-					createOrderForBillingUpdate({ invoiceStatus: "GENERATED" }),
+					createOrderForBillingUpdate({
+						invoiceNumber: "F-2026-00042",
+						invoiceStatus: "GENERATED",
+					}),
 				);
 				return fn(mockPrisma);
 			},
@@ -259,6 +262,30 @@ describe("updateOrderBillingAddress", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("facture");
+	});
+
+	// @regression invoice-issued-lock (audit « Admin commandes » 2026-08-01, P1-B) :
+	// voidInvoice passe le statut à VOIDED en CONSERVANT invoiceNumber, et l'avoir
+	// est rendu depuis les colonnes Order vivantes — le gate `invoiceStatus ===
+	// GENERATED` rouvrait l'édition de l'adresse de facturation après void, faisant
+	// diverger l'avoir de son hash archivé (Art. 272-I / L102 B).
+	it("should return error when the invoice is VOIDED (invoiceNumber conservé)", async () => {
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => {
+				mockPrisma.order.findUnique.mockResolvedValue(
+					createOrderForBillingUpdate({
+						invoiceNumber: "F-2026-00042",
+						invoiceStatus: "VOIDED",
+					}),
+				);
+				return fn(mockPrisma);
+			},
+		);
+
+		const result = await updateOrderBillingAddress(undefined, validFormDataDistinct);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockPrisma.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should update distinct billing address and return success", async () => {
@@ -354,10 +381,7 @@ describe("updateOrderBillingAddress", () => {
 	it("should invalidate order metadata cache tags", async () => {
 		await updateOrderBillingAddress(undefined, validFormDataDistinct);
 
-		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(
-			VALID_USER_ID,
-			VALID_ORDER_ID,
-		);
+		expect(mockGetOrderMetadataInvalidationTags).toHaveBeenCalledWith(VALID_ORDER_ID);
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith(`orders-user-${VALID_USER_ID}`);
 	});

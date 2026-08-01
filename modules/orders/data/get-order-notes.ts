@@ -1,14 +1,16 @@
 "use server";
 
 import { cacheLife, cacheTag } from "next/cache";
-import { z } from "zod";
+import { orderIdParamSchema } from "../schemas/order-route-params.schema";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { OrderNoteItem, OrderNoteRecord } from "../types/order-notes.types";
 
-const orderIdSchema = z.cuid2();
+// SSOT partagée avec les route handlers commande — 3 fichiers `data/` en
+// redéclaraient chacun une copie.
+const orderIdSchema = orderIdParamSchema;
 
 /**
  * Récupère les notes d'une commande (ADMIN)

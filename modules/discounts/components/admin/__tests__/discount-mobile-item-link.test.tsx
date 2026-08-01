@@ -28,7 +28,7 @@ vi.mock("@/modules/discounts/hooks/use-discount-actions", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Loader2: () => <svg data-testid="loader" />,
+	Loader2Icon: () => <svg data-testid="loader" />,
 }));
 
 import { DiscountMobileItem } from "../discount-mobile-item";

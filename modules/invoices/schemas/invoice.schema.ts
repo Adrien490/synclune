@@ -2,6 +2,19 @@ import { z } from "zod";
 import { PaymentMethod } from "@/app/generated/prisma/enums";
 import { LEGACY_INVOICE_DATA_FORMAT_VERSION } from "@/modules/invoices/constants/invoice-data-format";
 import { TAX_CATEGORY_CODES } from "@/shared/constants/tax-categories";
+// SSOT des identifiants fiscaux. Ces regex étaient recopiées ici À L'IDENTIQUE —
+// la substitution est donc sans effet sur ce qui est accepté, ce qui compte pour un
+// schéma qui garde un snapshot archivé 10 ans (Art. L102 B LPF) : un refine plus
+// strict ferait DIFFÉRER une facture (`invoiceRetryDeferred` → alerte admin) plutôt
+// que corriger quoi que ce soit.
+import {
+	apeCodeSchema,
+	bicSchema,
+	ibanSchema,
+	sirenSchema,
+	siretSchema,
+	vatNumberSchema,
+} from "@/shared/schemas/b2b-identifiers.schema";
 
 /**
  * Validation runtime de l'objet pivot `InvoiceData` avant de le passer aux
@@ -38,25 +51,16 @@ const structuredAddressSchema = z.object({
 const sellerSchema = z.object({
 	legalName: z.string().min(1).max(255),
 	tradeName: z.string().min(1).max(255),
-	siren: z.string().regex(/^[0-9]{9}$/),
-	siret: z.string().regex(/^[0-9]{14}$/),
-	vatNumber: z
-		.string()
-		.regex(/^[A-Z]{2}[A-Z0-9]{2,13}$/)
-		.nullable(),
-	apeCode: z.string().regex(/^[0-9]{2}\.[0-9]{2}[A-Z]$/),
+	siren: sirenSchema,
+	siret: siretSchema,
+	vatNumber: vatNumberSchema.nullable(),
+	apeCode: apeCodeSchema,
 	legalForm: z.string().min(1).max(100),
 	address: structuredAddressSchema,
 	email: z.email(),
 	vatExemptionText: z.string().max(255).nullable(),
-	bankIban: z
-		.string()
-		.regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, "IBAN format invalide")
-		.nullable(),
-	bankBic: z
-		.string()
-		.regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, "BIC/SWIFT format invalide")
-		.nullable(),
+	bankIban: ibanSchema.nullable(),
+	bankBic: bicSchema.nullable(),
 });
 
 const buyerSchema = z.object({
@@ -65,14 +69,8 @@ const buyerSchema = z.object({
 	lastName: z.string().min(1).max(100),
 	email: z.email(),
 	phone: z.string().max(20).nullable(),
-	siret: z
-		.string()
-		.regex(/^[0-9]{14}$/)
-		.nullable(),
-	vatNumber: z
-		.string()
-		.regex(/^[A-Z]{2}[A-Z0-9]{2,13}$/)
-		.nullable(),
+	siret: siretSchema.nullable(),
+	vatNumber: vatNumberSchema.nullable(),
 });
 
 const invoiceLineSchema = z.object({

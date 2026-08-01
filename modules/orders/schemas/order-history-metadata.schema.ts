@@ -48,7 +48,7 @@ export const orderHistoryMetadataSchema = z.unknown().superRefine((value, ctx) =
 	const offending = findForbiddenKey(value);
 	if (offending) {
 		ctx.addIssue({
-			code: z.ZodIssueCode.custom,
+			code: "custom",
 			message: `OrderHistory.metadata cannot contain PII-like key: "${offending}". This field is exposed to customers via GET_ORDER_SELECT_CUSTOMER.`,
 			path: offending.split("."),
 		});

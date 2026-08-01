@@ -14,7 +14,8 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 import type { InvoiceStatus } from "@/app/generated/prisma/browser";
-import { FileWarning, LoaderCircle } from "lucide-react";
+import { FileWarning } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
@@ -74,8 +75,8 @@ export function CancelOrderAlertDialog() {
 									<strong>{cancelDialog.data?.orderNumber}</strong> ?
 								</p>
 								{isPaid && (
-									<div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3">
-										<p className="text-amber-700">
+									<div className="border-warning/30 bg-warning/10 mt-3 space-y-2 rounded-md border p-3">
+										<p className="text-warning">
 											Cette commande a été payée. Le statut de paiement passera à REFUNDED.
 										</p>
 										<label
@@ -141,7 +142,7 @@ export function CancelOrderAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Fermer</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Annulation…" : "Annuler la commande"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

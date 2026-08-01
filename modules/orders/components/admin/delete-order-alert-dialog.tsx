@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Label } from "@/shared/components/ui/label";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import {
 	ResponsiveAlertDialog,
 	ResponsiveAlertDialogAction,
@@ -18,7 +18,7 @@ import { FormServerErrorAlert } from "@/shared/components/forms/form-server-erro
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteOrder } from "@/modules/orders/hooks/use-delete-order";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const DELETE_ORDER_DIALOG_ID = "delete-order";
 
@@ -99,9 +99,9 @@ export function DeleteOrderAlertDialog({ successPath }: DeleteOrderAlertDialogPr
 					</ResponsiveAlertDialogHeader>
 
 					<div className="mt-4 space-y-2">
-						<Label htmlFor="delete-order-reason">
-							Raison de la suppression <span className="text-destructive">*</span>
-						</Label>
+						<FieldLabel htmlFor="delete-order-reason" required>
+							Raison de la suppression
+						</FieldLabel>
 						<Textarea
 							id="delete-order-reason"
 							name="reason"
@@ -126,7 +126,7 @@ export function DeleteOrderAlertDialog({ successPath }: DeleteOrderAlertDialogPr
 							disabled={isPending || reason.trim().length < 3}
 							aria-busy={isPending}
 						>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Suppression…" : "Supprimer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

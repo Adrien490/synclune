@@ -1,9 +1,7 @@
 "use client";
 
-import { ExternalLink, Pencil, Phone, User } from "lucide-react";
-import Link from "next/link";
+import { Pencil, Phone, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { InvoiceStatus } from "@/app/generated/prisma/browser";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
@@ -18,7 +16,10 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 	const router = useRouter();
 	const editDialog = useAlertDialog(EDIT_CUSTOMER_INFO_DIALOG_ID);
 
-	const canEdit = order.invoiceStatus !== InvoiceStatus.GENERATED;
+	// invoiceNumber et non invoiceStatus : une facture VOIDED garde son numéro et
+	// son avoir est rendu depuis les colonnes vivantes — l'identité client reste
+	// verrouillée après void (Art. 272-I / L102 B).
+	const canEdit = order.invoiceNumber === null;
 
 	const handleEdit = () => {
 		haptic("light");
@@ -55,22 +56,14 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 				)}
 			</CardHeader>
 			<CardContent className="space-y-3">
+				{/*
+				 * Plus de lien vers une fiche client : `/admin/clients` a disparu avec
+				 * l'espace client (2026-07-31). Toute commande est désormais un achat
+				 * invité, et ce que l'admin doit lire ici est le SNAPSHOT figé sur la
+				 * commande (invariant #5) — pas un profil vivant.
+				 */}
 				<div>
-					{order.userId ? (
-						<Link
-							href={`/admin/clients?search=${encodeURIComponent(order.customerEmail)}`}
-							className="hover:text-primary inline-flex items-center gap-1 font-medium transition-colors hover:underline"
-							aria-label={`Voir le profil de ${order.customerName}`}
-						>
-							{order.customerName}
-							<ExternalLink className="size-3" aria-hidden="true" />
-						</Link>
-					) : (
-						<>
-							<p className="font-medium">{order.customerName}</p>
-							<p className="text-muted-foreground text-xs">Client non enregistré</p>
-						</>
-					)}
+					<p className="font-medium">{order.customerName}</p>
 					<p className="text-muted-foreground text-sm break-words">{order.customerEmail}</p>
 					{order.customerPhone && (
 						<p className="text-muted-foreground flex items-center gap-1 text-sm">

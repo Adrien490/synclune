@@ -17,34 +17,6 @@ vi.mock("@/modules/payments/hooks/use-address-autocomplete", () => ({
 	}),
 }));
 
-vi.mock("@/modules/addresses/data/search-address", () => ({
-	searchAddressForCheckout: vi.fn(),
-}));
-
-vi.mock("@/modules/payments/components/address-selector", () => ({
-	AddressSelector: ({
-		addresses,
-		selectedAddressId,
-		onSelectAddress,
-	}: {
-		addresses: { id: string }[];
-		selectedAddressId: string | null;
-		onSelectAddress: (addr: unknown) => void;
-	}) => (
-		<div
-			data-testid="address-selector"
-			data-selected={selectedAddressId ?? ""}
-			data-count={addresses.length}
-		>
-			{addresses.map((a) => (
-				<button key={a.id} onClick={() => onSelectAddress(a)}>
-					select-{a.id}
-				</button>
-			))}
-		</div>
-	),
-}));
-
 // NB : plus de mock de `CheckoutErrorSummary` ici — le résumé d'erreurs a été
 // remonté en tête de <form> (`CheckoutFormBody`). Sa projection fieldMeta →
 // entrées est couverte par `constants/__tests__/checkout-fields.test.ts`.
@@ -60,8 +32,6 @@ vi.mock("@/shared/constants/countries", () => ({
 // ============================================================================
 
 import { CheckoutAddressFields } from "../checkout-address-fields";
-import type { Session } from "@/modules/auth/lib/auth";
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 
 // ============================================================================
 // HELPERS
@@ -79,10 +49,8 @@ type FormValues = {
 		phoneNumber: string;
 	};
 	_appliedDiscount: null;
-	_selectedAddressId: string | null;
 	_discountOpen: boolean;
 	discountCode: string;
-	saveInfo: boolean;
 };
 
 function createFormValues(overrides: Partial<FormValues["shipping"]> = {}): FormValues {
@@ -99,10 +67,8 @@ function createFormValues(overrides: Partial<FormValues["shipping"]> = {}): Form
 			...overrides,
 		},
 		_appliedDiscount: null,
-		_selectedAddressId: null,
 		_discountOpen: false,
 		discountCode: "",
-		saveInfo: false,
 	};
 }
 
@@ -215,30 +181,6 @@ function createMockForm(
 	} as unknown as Parameters<typeof CheckoutAddressFields>[0]["form"];
 }
 
-function createSession(email = "user@example.com"): Session {
-	return {
-		user: { id: "u-1", email, name: "Utilisateur Test" },
-	} as unknown as Session;
-}
-
-function createAddresses(count = 2): NonNullable<GetUserAddressesReturn> {
-	return Array.from({ length: count }, (_, i) => ({
-		id: `addr-${i + 1}`,
-		userId: "u-1",
-		firstName: "Marie",
-		lastName: "Dupont",
-		address1: `${i + 1} Rue Test`,
-		address2: null,
-		postalCode: "75001",
-		city: "Paris",
-		country: "FR",
-		phone: "+33612345678",
-		isDefault: i === 0,
-		createdAt: new Date("2024-01-01"),
-		updatedAt: new Date("2024-01-01"),
-	})) as unknown as NonNullable<GetUserAddressesReturn>;
-}
-
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -254,9 +196,7 @@ describe("CheckoutAddressFields", () => {
 
 	describe("fieldset structure", () => {
 		it("renders a fieldset element", () => {
-			const { container } = render(
-				<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />,
-			);
+			const { container } = render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(container.querySelector("fieldset")).toBeInTheDocument();
 		});
 
@@ -266,14 +206,12 @@ describe("CheckoutAddressFields", () => {
 			// premier champ qu'elle décrit. Assertions déplacées dans
 			// `checkout-form.test.tsx`, qui monte le vrai CheckoutFormBody et peut donc
 			// vérifier l'ORDRE, ce que ces tests ne faisaient pas.
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.queryByText(/champs marqués/i)).not.toBeInTheDocument();
 		});
 
 		it("expose une légende accessible pour le groupe adresse", () => {
-			const { container } = render(
-				<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />,
-			);
+			const { container } = render(<CheckoutAddressFields form={createMockForm()} />);
 			const legend = container.querySelector("legend");
 			expect(legend).toBeInTheDocument();
 			expect(legend).toHaveTextContent("Adresse de livraison");
@@ -283,9 +221,7 @@ describe("CheckoutAddressFields", () => {
 		it("utilise flex+gap et non space-y (la legend sr-only est absolue)", () => {
 			// `space-y-*` cible `& > * + *` : la <legend> en `position:absolute` aurait
 			// collé 20px de marge fantôme sur le premier vrai champ.
-			const { container } = render(
-				<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />,
-			);
+			const { container } = render(<CheckoutAddressFields form={createMockForm()} />);
 			const fieldset = container.querySelector("fieldset");
 			expect(fieldset).toHaveClass("flex", "flex-col", "gap-5");
 			expect(fieldset?.className).not.toMatch(/space-y-/);
@@ -296,37 +232,37 @@ describe("CheckoutAddressFields", () => {
 
 	describe("form fields rendering", () => {
 		it("renders the full name input field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.fullName")).toBeInTheDocument();
 		});
 
 		it("renders the address autocomplete field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("autocomplete-shipping.addressLine1")).toBeInTheDocument();
 		});
 
 		it("renders the address line 2 field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.addressLine2")).toBeInTheDocument();
 		});
 
 		it("renders the postal code field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.postalCode")).toBeInTheDocument();
 		});
 
 		it("renders the city field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.city")).toBeInTheDocument();
 		});
 
 		it("renders the country select field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("select-shipping.country")).toBeInTheDocument();
 		});
 
 		it("renders the phone number field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("phone-shipping.phoneNumber")).toBeInTheDocument();
 		});
 	});
@@ -335,7 +271,7 @@ describe("CheckoutAddressFields", () => {
 
 	describe("country select options", () => {
 		it("renders country options from SORTED_SHIPPING_COUNTRIES", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			const select = screen.getByTestId("select-shipping.country");
 			const options = select.querySelectorAll("option");
 			// FR, BE, DE from mock
@@ -343,7 +279,7 @@ describe("CheckoutAddressFields", () => {
 		});
 
 		it("renders France option with correct label", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			const select = screen.getByTestId("select-shipping.country");
 			expect(select.innerHTML).toContain("France");
 		});
@@ -353,116 +289,36 @@ describe("CheckoutAddressFields", () => {
 
 	describe("phone field helper text", () => {
 		it("shows delivery notice below the phone field", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByText(/transporteur/i)).toBeInTheDocument();
 		});
 	});
 
 	// ─── Address selector (logged-in, multiple addresses) ─────────────────────
 
-	describe("address selector", () => {
-		it("does not render AddressSelector for guest users", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={null}
-					addresses={createAddresses(2)}
-				/>,
-			);
-			expect(screen.queryByTestId("address-selector")).not.toBeInTheDocument();
-		});
-
-		it("does not render AddressSelector when addresses is null", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={null}
-				/>,
-			);
-			expect(screen.queryByTestId("address-selector")).not.toBeInTheDocument();
-		});
-
-		it("does not render AddressSelector when user has only one address", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={createAddresses(1)}
-				/>,
-			);
-			expect(screen.queryByTestId("address-selector")).not.toBeInTheDocument();
-		});
-
-		it("renders AddressSelector for logged-in user with multiple addresses", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={createAddresses(2)}
-				/>,
-			);
-			expect(screen.getByTestId("address-selector")).toBeInTheDocument();
-		});
-
-		it("renders AddressSelector with the correct address count", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={createAddresses(3)}
-				/>,
-			);
-			const selector = screen.getByTestId("address-selector");
-			expect(selector.getAttribute("data-count")).toBe("3");
-		});
-	});
-
-	// ─── Save info checkbox ───────────────────────────────────────────────────
-
-	describe("saveInfo checkbox", () => {
-		it("renders the saveInfo checkbox for logged-in users", () => {
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={null}
-				/>,
-			);
-			expect(screen.getByTestId("checkbox-saveInfo")).toBeInTheDocument();
-		});
-
-		it("does not render the saveInfo checkbox for guest users", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
-			expect(screen.queryByTestId("checkbox-saveInfo")).not.toBeInTheDocument();
-		});
-	});
-
-	// ─── Required attributes ──────────────────────────────────────────────────
-
 	describe("required field attributes", () => {
 		it("marks full name as required", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.fullName")).toHaveAttribute("required");
 		});
 
 		it("marks postal code as required", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.postalCode")).toHaveAttribute("required");
 		});
 
 		it("marks city as required", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("input-shipping.city")).toHaveAttribute("required");
 		});
 
 		it("marks country as required", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("select-shipping.country")).toHaveAttribute("required");
 		});
 
 		it("marks phone number as required", () => {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute("required");
 		});
 	});
@@ -470,7 +326,7 @@ describe("CheckoutAddressFields", () => {
 
 	describe("ergonomie clavier mobile", () => {
 		function renderGuest() {
-			render(<CheckoutAddressFields form={createMockForm()} session={null} addresses={null} />);
+			render(<CheckoutAddressFields form={createMockForm()} />);
 		}
 
 		it("le pays déclare autoComplete='country' (code ISO), pas 'country-name'", () => {
@@ -506,23 +362,11 @@ describe("CheckoutAddressFields", () => {
 			expect(address).toHaveAttribute("autocapitalize", "words");
 		});
 
-		it("le téléphone porte enterKeyHint='done' — invité comme connecté", () => {
-			// Dernier champ texte dans les deux cas : la case « enregistrer mes
-			// informations » qui suit (connecté) n'est pas une saisie clavier.
+		it("le téléphone porte enterKeyHint='done'", () => {
+			// Dernier champ texte du formulaire de livraison — « done », jamais « next ».
+			// Plus de branche invité/connecté depuis le retrait du carnet d'adresses :
+			// le composant ne reçoit plus de session, les deux rendus étaient identiques.
 			renderGuest();
-			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute(
-				"enterkeyhint",
-				"done",
-			);
-			cleanup();
-
-			render(
-				<CheckoutAddressFields
-					form={createMockForm()}
-					session={createSession()}
-					addresses={null}
-				/>,
-			);
 			expect(screen.getByTestId("phone-shipping.phoneNumber")).toHaveAttribute(
 				"enterkeyhint",
 				"done",

@@ -114,8 +114,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 }));
 
+// `cacheLife`/`cacheTag` : requis parce que `../../constants/cache` est désormais chargé
+// POUR DE VRAI (cf. plus bas) et les importe.
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
 }));
 
 vi.mock("../../lib/stripe-refund", () => ({
@@ -144,6 +148,9 @@ vi.mock("@/modules/refunds/services/send-refund-confirmation.service", () => ({
 vi.mock("@/shared/constants/urls", () => ({
 	buildUrl: mockBuildUrl,
 	ROUTES: {
+		// `SHOP.ORDER_TRACKING` : le lien client des emails passe par
+		// `buildOrderTrackingUrl` depuis le retrait de l'espace client (2026-07-31).
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
 		ACCOUNT: { ORDER_DETAIL: (id: string) => `/commandes/${id}` },
 	},
 }));
@@ -163,18 +170,9 @@ vi.mock("../../constants/refund.constants", () => ({
 	},
 }));
 
-vi.mock("../../constants/cache", () => ({
-	ORDERS_CACHE_TAGS: {
-		LIST: "orders-list",
-		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
-		LAST_ORDER: (userId: string) => `last-order-user-${userId}`,
-		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
-	},
-	REFUNDS_CACHE_TAGS: {
-		LIST: "refunds-list",
-		DETAIL: (id: string) => `refund-${id}`,
-	},
-}));
+// ⚠️ PAS de mock hand-written ici : le miroir manuel précédent listait des clés figées
+// (dont `USER_ORDERS`/`LAST_ORDER`, disparues depuis) et ne bougeait pas quand la SSOT
+// gagnait un tag. On charge le vrai module — les tags assertés plus bas sont les vrais.
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
@@ -184,9 +182,20 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 	},
 }));
 
+// ⚠️ Ce mock shadow le module pour TOUS ses importeurs, `products/utils/cache.utils`
+// compris. Il était partiel (3 fabriques) : depuis que l'action passe par la SSOT
+// `collectStockInvalidationTags` au lieu d'une liste écrite à la main (audit cache
+// catalogue 2026-07-31), `getInventoryInvalidationTags` lit aussi `LIST`,
+// `SKUS_LIST` et `SKU_DETAIL_BY_ID` — et appeler `SKU_DETAIL_BY_ID` non mocké
+// throw en plein milieu de la liste, faisant disparaître les tags qui suivent sans
+// autre symptôme que l'assertion manquante. Le mock doit couvrir tout ce que la
+// SSOT consomme.
 vi.mock("@/modules/products/constants/cache", () => ({
 	PRODUCTS_CACHE_TAGS: {
+		LIST: "products-list",
+		SKUS_LIST: "skus-list",
 		SKU_STOCK: (skuId: string) => `sku-stock-${skuId}`,
+		SKU_DETAIL_BY_ID: (skuId: string) => `sku-id-${skuId}`,
 		SKUS: (productId: string) => `product-${productId}-skus`,
 		DETAIL: (slug: string) => `product-${slug}`,
 	},
@@ -541,8 +550,11 @@ describe("processRefund", () => {
 		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
 			fn(mockTx),
 		);
+		// `id` est désormais sélectionné : `collectStockInvalidationTags` indexe les
+		// SKUs par id pour grouper par produit. Sans lui, la ligne ne se rattache à
+		// aucun produit et retombe sur le repli `SKU_STOCK` seul.
 		mockPrisma.productSku.findMany.mockResolvedValue([
-			{ productId: "prod-1", product: { slug: "bracelet-lune" } },
+			{ id: "sku-1", productId: "prod-1", product: { slug: "bracelet-lune" } },
 		]);
 
 		await processRefund(undefined, makeFormData());
@@ -650,8 +662,11 @@ describe("processRefund", () => {
 		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
 			fn(mockTx),
 		);
+		// `id` est désormais sélectionné : `collectStockInvalidationTags` indexe les
+		// SKUs par id pour grouper par produit. Sans lui, la ligne ne se rattache à
+		// aucun produit et retombe sur le repli `SKU_STOCK` seul.
 		mockPrisma.productSku.findMany.mockResolvedValue([
-			{ productId: "prod-1", product: { slug: "bracelet-lune" } },
+			{ id: "sku-1", productId: "prod-1", product: { slug: "bracelet-lune" } },
 		]);
 
 		await processRefund(undefined, makeFormData());
@@ -661,13 +676,27 @@ describe("processRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
 
-		// Should invalidate user-specific tags
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("last-order-user-user-1");
+		// Plus aucun tag user-scopé : `getOrderInvalidationTags` n'en émet plus depuis
+		// le retrait de l'espace client (2026-07-31) — les data fns qu'ils
+		// invalidaient (`getUserOrders`, `getLastOrder`) ont disparu avec lui.
+		expect(mockUpdateTag).not.toHaveBeenCalledWith(
+			expect.stringMatching(/^(orders-user-|last-order-user-)/),
+		);
 
 		// Should invalidate inventory tags for restocked items
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-inventory-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("sku-stock-sku-1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("product-prod-1-skus");
+		expect(mockUpdateTag).toHaveBeenCalledWith("product-bracelet-lune");
+
+		// Les 4 tags que la liste écrite à la main OMETTAIT — ceux-là mêmes pour
+		// lesquels `getInventoryInvalidationTags` avait été fait SSOT
+		// (STOCK-STALE-BASELINE-001). `sku-id-*` est le tag du formulaire d'édition
+		// SKU : sans lui, son `originalInventory` reste périmé et le delta relatif
+		// diverge du stock réel. Audit cache catalogue 2026-07-31.
+		expect(mockUpdateTag).toHaveBeenCalledWith("sku-id-sku-1");
+		expect(mockUpdateTag).toHaveBeenCalledWith("skus-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("products-list");
 	});
 
 	it("should include formatted amount in success message", async () => {

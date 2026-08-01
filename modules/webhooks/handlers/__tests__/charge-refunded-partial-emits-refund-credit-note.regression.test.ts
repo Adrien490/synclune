@@ -91,8 +91,12 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	// `buildUrl` + `SHOP.ORDER_TRACKING` : requis depuis que le lien client passe
+	// par `buildOrderTrackingUrl` (retrait de l'espace client 2026-07-31) — un mock
+	// sans eux fait échouer le module à l'import, pas à l'assertion.
+	buildUrl: (path: string) => `https://synclune.fr${path}`,
 	ROUTES: {
-		ACCOUNT: { ORDER_DETAIL: (n: string) => `/commandes/${n}` },
+		SHOP: { ORDER_TRACKING: "/suivi-commande" },
 		ADMIN: { REFUNDS: "/admin/ventes/remboursements" },
 	},
 }));

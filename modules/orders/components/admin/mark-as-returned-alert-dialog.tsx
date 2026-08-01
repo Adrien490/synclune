@@ -13,7 +13,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsReturned } from "@/modules/orders/hooks/use-mark-as-returned";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import Link from "next/link";
 
 export const MARK_AS_RETURNED_DIALOG_ID = "mark-as-returned";
@@ -98,7 +98,7 @@ export function MarkAsReturnedAlertDialog() {
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Marquage…" : "Marquer comme retourné"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

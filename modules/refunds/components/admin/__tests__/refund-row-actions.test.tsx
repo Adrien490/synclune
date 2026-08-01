@@ -20,6 +20,7 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 		APPROVED: "APPROVED",
 		COMPLETED: "COMPLETED",
 		REJECTED: "REJECTED",
+		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	} as const,
 }));
@@ -94,6 +95,7 @@ vi.mock("lucide-react", () => ({
 	Eye: () => <svg data-testid="icon-eye" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
+	RotateCcw: () => <svg data-testid="icon-rotate-ccw" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
 }));
 
@@ -196,6 +198,26 @@ describe("RefundRowActions", () => {
 			expect(screen.queryByText("Traiter le remboursement")).not.toBeInTheDocument();
 			expect(screen.queryByText("Refuser")).not.toBeInTheDocument();
 			expect(screen.queryByText("Annuler la demande")).not.toBeInTheDocument();
+		});
+	});
+
+	describe("FAILED status", () => {
+		// P2 (audit 2026-08-01) : retryFailedRefund existait mais n'avait aucun
+		// point d'entrée UI — l'admin recréait un refund complet, court-circuitant
+		// l'adoption IDEM-REFUND-001.
+		it("shows 'Relancer le remboursement' when status is FAILED", () => {
+			render(<RefundRowActions refund={createRefund({ status: "FAILED" })} />);
+			expect(screen.getByText("Relancer le remboursement")).toBeInTheDocument();
+			expect(screen.queryByText("Approuver")).not.toBeInTheDocument();
+			expect(screen.queryByText("Traiter le remboursement")).not.toBeInTheDocument();
+		});
+
+		it("hides 'Relancer le remboursement' for every non-FAILED status", () => {
+			for (const status of ["PENDING", "APPROVED", "COMPLETED"] as const) {
+				const { unmount } = render(<RefundRowActions refund={createRefund({ status })} />);
+				expect(screen.queryByText("Relancer le remboursement")).not.toBeInTheDocument();
+				unmount();
+			}
 		});
 	});
 });

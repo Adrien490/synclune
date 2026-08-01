@@ -12,8 +12,7 @@ import {
 	sendWebhookFailedAlertEmail,
 } from "@/modules/emails/services/admin-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { ORDERS_CACHE_TAGS, getOrderInvalidationTags } from "@/modules/orders/constants/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { getOrderInvalidationTags } from "@/modules/orders/constants/cache";
 import { collectStockInvalidationTags } from "@/modules/products/utils/cache.utils";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { PostWebhookTask, WebhookHandlerResult } from "../types/webhook.types";
@@ -356,7 +355,7 @@ async function handleOversell(
 	}
 
 	// 4. Invalidation cache (la commande passe CANCELLED côté espace client).
-	const cacheTags = [...getOrderInvalidationTags(order?.userId ?? undefined, orderId)];
+	const cacheTags = [...getOrderInvalidationTags(orderId)];
 	return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }] };
 }
 
@@ -421,7 +420,7 @@ async function handleAmountMismatch(
 	}
 
 	// 4. Invalidation cache (la commande passe FAILED côté espace client).
-	const cacheTags = [...getOrderInvalidationTags(order?.userId ?? undefined, orderId)];
+	const cacheTags = [...getOrderInvalidationTags(orderId)];
 	return { success: true, tasks: [{ type: "INVALIDATE_CACHE", tags: cacheTags }] };
 }
 
@@ -557,7 +556,7 @@ export async function handlePaymentFailure(
 
 		// CACHE-AUDIT-002 : helper canonique pour couvrir les tags user-scopés
 		// (USER_ORDERS, LAST_ORDER) et le détail commande.
-		const cacheTags: string[] = [...getOrderInvalidationTags(order.userId ?? undefined, orderId)];
+		const cacheTags: string[] = [...getOrderInvalidationTags(orderId)];
 		const tasks: PostWebhookTask[] = [{ type: "INVALIDATE_CACHE", tags: cacheTags }];
 
 		return { success: true, tasks };
@@ -598,7 +597,7 @@ export async function handlePaymentCanceled(
 		// 1+2. Cancel + restore stock — UNE SEULE transaction (IDEM-CANCEL-002).
 		// Le restock est conditionné au gain du claim CANCELLED : un rejeu de
 		// l'event (crash → retry cron) perd le claim → aucun double restock.
-		const { restoredSkus, userId } = await markOrderAsCancelled(orderId, paymentIntent.id);
+		const { restoredSkus } = await markOrderAsCancelled(orderId, paymentIntent.id);
 
 		// 3. Automatic refund if payment was captured
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
@@ -630,7 +629,7 @@ export async function handlePaymentCanceled(
 		// CACHE-CATALOG-002 : le restock invalide aussi la page produit + inventaire
 		// admin (pas seulement SKU_STOCK, jamais posé sur la vitrine).
 		const cacheTags: string[] = [
-			...getOrderInvalidationTags(userId ?? undefined, orderId),
+			...getOrderInvalidationTags(orderId),
 			...collectStockInvalidationTags(restoredSkus),
 		];
 
@@ -715,11 +714,11 @@ export async function handleInvoicePaymentFailed(
 				},
 				{
 					type: "INVALIDATE_CACHE",
-					tags: [
-						ORDERS_CACHE_TAGS.LIST,
-						SHARED_CACHE_TAGS.ADMIN_BADGES,
-						SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-					],
+					// Helper canonique : la liste manuelle reproduisait mot pour mot la sortie
+					// sans `orderId`, tout en ayant `order` sous la main. Ce handler ne mute
+					// rien (alerte seule), mais passer par le helper couvre le détail commande
+					// et supprime une copie qui aurait dérivé au premier tag ajouté.
+					tags: getOrderInvalidationTags(order?.id),
 				},
 			],
 		};

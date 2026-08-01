@@ -16,7 +16,7 @@ import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import type { RefundRecord } from "../types/webhook.types";
 
-const WEBHOOK_AUDIT_AUTHOR = "Système (webhook Stripe)";
+export const WEBHOOK_AUDIT_AUTHOR = "Système (webhook Stripe)";
 
 // Re-export types for backwards compatibility
 /** Valid currency codes */
@@ -175,6 +175,14 @@ export async function syncStripeRefunds(
 			// Step 3 verrait `status != APPROVED` et abort → restock perdu et
 			// le cron reconcile-refunds skip aussi (filtre status=APPROVED).
 			// Signature SAGA en cours : status=APPROVED ET processedAt=null.
+			//
+			// ⚠️ Skip DÉLIBÉRÉMENT inconditionnel (pas de fenêtre 30 s comme
+			// handleRefundUpdated) : l'opération `updateStatus` de ce chemin est
+			// MAIGRE (status seul, sans restock/avoir/email). Un refund parti en
+			// `pending` chez Stripe garde cette signature jusqu'à sa confirmation —
+			// sa finalisation COMPLÈTE passe par `refund.updated` →
+			// `finalizeRefundCompletion` (P1-C, audit 2026-08-01), avec le cron
+			// reconcile-refunds en filet. Élargir ce chemin-ci recréerait le trou.
 			if (existingRefund.status === RefundStatus.APPROVED && existingRefund.processedAt === null) {
 				logger.info(
 					`Refund ${existingRefund.id} pending admin SAGA finalization — skipping webhook updateStatus`,

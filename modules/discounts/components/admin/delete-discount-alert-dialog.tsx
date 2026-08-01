@@ -14,7 +14,7 @@ import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBackToListOnDelete } from "@/shared/hooks/use-back-to-list-on-delete";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export const DELETE_DISCOUNT_DIALOG_ID = "delete-discount";
 
@@ -62,7 +62,7 @@ export function DeleteDiscountAlertDialog() {
 								</p>
 								{usageCount > 0 ? (
 									<>
-										<p className="font-medium text-amber-600">
+										<p className="text-warning font-medium">
 											Ce code a été utilisé {usageCount} fois et ne peut pas être supprimé.
 										</p>
 										<p>Vous pouvez le désactiver à la place pour empêcher son utilisation.</p>
@@ -81,7 +81,7 @@ export function DeleteDiscountAlertDialog() {
 							aria-busy={isPending}
 							onClick={() => haptic("heavy")}
 						>
-							{isPending && <LoaderCircle className="animate-spin" />}
+							{isPending && <Spinner presentational />}
 							{isPending ? "Suppression…" : "Supprimer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

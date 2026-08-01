@@ -27,7 +27,7 @@ export function buildPostCheckoutTasksFromPI(
 	const invoiceUrl = buildInvoiceUrl(baseUrl, order.id, order.orderNumber);
 
 	// 1. Cache invalidation
-	const cacheTags: string[] = [...getOrderInvalidationTags(order.userId ?? undefined, order.id)];
+	const cacheTags: string[] = [...getOrderInvalidationTags(order.id)];
 
 	if (order.userId) {
 		cacheTags.push(...getCartInvalidationTags(order.userId, undefined));

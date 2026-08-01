@@ -2,7 +2,6 @@
  * Utilities for the checkout form
  */
 
-import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
 
@@ -16,27 +15,10 @@ import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
  * @see docs/KNOWN-ISSUES.md — KI-002
  *
  * @param session - User session (null if guest)
- * @param addresses - Saved addresses (null if guest or no addresses)
  * @returns Form options with pre-filled defaultValues
  */
-export function getCheckoutFormOptions(
-	session: Session | null,
-	addresses: GetUserAddressesReturn | null,
-) {
-	// Find default address or first address
-	const defaultAddress =
-		addresses && addresses.length > 0
-			? (addresses.find((addr) => addr.isDefault) ?? addresses[0])
-			: null;
-
+export function getCheckoutFormOptions(session: Session | null) {
 	const isGuest = !session;
-
-	const buildFullName = () => {
-		if (defaultAddress?.firstName || defaultAddress?.lastName) {
-			return `${defaultAddress.firstName || ""} ${defaultAddress.lastName || ""}`.trim();
-		}
-		return "";
-	};
 
 	return {
 		onSubmit: async () => {
@@ -45,18 +27,18 @@ export function getCheckoutFormOptions(
 		defaultValues: {
 			email: isGuest ? "" : session.user.email || "",
 
+			// Adresse toujours vierge : le carnet d'adresses a été retiré en V1
+			// (simplification 2026-07-30), il n'y a donc plus d'adresse par défaut à
+			// préremplir. L'autocomplétion BAN/Geoapify reste, elle, en place.
 			shipping: {
-				fullName: buildFullName(),
-				addressLine1: defaultAddress?.address1 ?? "",
-				addressLine2: defaultAddress?.address2 ?? "",
-				city: defaultAddress?.city ?? "",
-				postalCode: defaultAddress?.postalCode ?? "",
-				country: defaultAddress?.country ?? "FR",
-				phoneNumber: defaultAddress?.phone ?? "",
+				fullName: "",
+				addressLine1: "",
+				addressLine2: "",
+				city: "",
+				postalCode: "",
+				country: "FR" as const,
+				phoneNumber: "",
 			},
-
-			// Save info checkbox (logged-in users only)
-			saveInfo: false,
 
 			// Discount (replaces DiscountCodeInput state)
 			discountCode: "",
@@ -75,7 +57,6 @@ export function getCheckoutFormOptions(
 			_discountNotice: null as string | null,
 
 			// UI state (replaces useState in AddressStep)
-			_selectedAddressId: (defaultAddress?.id ?? null) as string | null,
 		},
 	};
 }

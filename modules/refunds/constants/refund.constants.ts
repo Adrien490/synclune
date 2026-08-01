@@ -231,11 +231,6 @@ export const REFUND_ERROR_MESSAGES = {
 	STRIPE_ERROR: "Erreur lors du remboursement Stripe.",
 	INVALID_ITEMS: "Les articles du remboursement sont invalides.",
 	QUANTITY_EXCEEDS_AVAILABLE: "La quantité demandée dépasse la quantité disponible.",
-	// Client-facing return request errors
-	RETURN_NOT_ELIGIBLE: "Cette commande n'est pas éligible au retour.",
-	RETURN_DEADLINE_EXCEEDED: "Le délai de rétractation de 14 jours est dépassé.",
-	RETURN_ALREADY_REQUESTED: "Une demande de retour est déjà en cours pour cette commande.",
-	RETURN_REQUEST_FAILED: "Erreur lors de la demande de retour.",
 	// ORD-STRIPE-007 : action admin bloquée car un dispute Stripe est ouvert
 	OPEN_DISPUTE:
 		"Un litige Stripe est en cours sur cette commande. Toute action de remboursement ou d'annulation doit attendre la résolution du litige (gérée automatiquement par le webhook).",

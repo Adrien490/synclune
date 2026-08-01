@@ -23,6 +23,7 @@ import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/disco
 import Image from "next/image";
 import Link from "next/link";
 import { SHIPPING_UNAVAILABLE } from "../constants/shipping-unavailable";
+import { ROUTES } from "@/shared/constants/urls";
 import { IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 
 type AppliedDiscount = NonNullable<ValidateDiscountCodeReturn["discount"]>;
@@ -139,7 +140,7 @@ function SummaryContent({
 				<button
 					type="button"
 					onClick={onEditCart}
-					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+					className="text-foreground focus-ring can-hover:hover:no-underline inline-flex items-center gap-1 rounded-sm text-xs underline"
 				>
 					Modifier mon panier
 				</button>
@@ -212,7 +213,7 @@ function SummaryContent({
 						<TooltipTrigger asChild>
 							<button
 								type="button"
-								className="text-muted-foreground focus-visible:ring-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								className="text-muted-foreground focus-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased"
 								aria-label="Pourquoi pas de TVA ?"
 								aria-describedby={tvaTooltipId}
 							>
@@ -246,7 +247,7 @@ function SummaryContent({
 				{/* Trust links */}
 				<div className="text-muted-foreground flex items-center justify-center gap-3 text-xs">
 					<Link
-						href="/retractation"
+						href={ROUTES.LEGAL.WITHDRAWAL}
 						className="inline-flex items-center gap-1 underline hover:no-underline"
 						target="_blank"
 						rel="noopener noreferrer"
@@ -257,7 +258,7 @@ function SummaryContent({
 					</Link>
 					<span aria-hidden="true">·</span>
 					<Link
-						href="/cgv"
+						href={ROUTES.LEGAL.CGV}
 						className="inline-flex items-center gap-1 underline hover:no-underline"
 						target="_blank"
 						rel="noopener noreferrer"
