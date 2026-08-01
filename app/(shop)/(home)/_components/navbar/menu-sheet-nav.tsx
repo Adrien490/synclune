@@ -63,10 +63,7 @@ export function MenuSheetNav({
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
 	const aboutItem = navItems.find((item) => item.href === ROUTES.SHOP.ABOUT);
-	const accountItem = navItems.find(
-		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
-	);
-	const favoritesItem = navItems.find((item) => item.href === ROUTES.ACCOUNT.FAVORITES);
+	const favoritesItem = navItems.find((item) => item.href === ROUTES.SHOP.FAVORITES);
 	const isLoggedIn = !!session?.user;
 
 	const navRef = useRef<HTMLElement>(null);
@@ -162,7 +159,6 @@ export function MenuSheetNav({
 			</m.div>
 
 			<AccountSection
-				accountItem={accountItem}
 				favoritesItem={favoritesItem}
 				isLoggedIn={isLoggedIn}
 				wishlistCount={wishlistCount}

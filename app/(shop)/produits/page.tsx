@@ -55,7 +55,14 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 	// `/produits` → noindex pour préserver le crawl budget Google. Le `follow`
 	// reste actif (PageRank diffuse via les liens pagination rel=prev/next).
 	const isPaginated = !!searchParamsData.cursor;
-	const shouldNoindex = hasActiveFilters || isPaginated;
+	// `?search=` : même traitement que les filtres (audit recherche 2026-08-01,
+	// P3-7). La page était indexable MAIS canonicalisée vers `/produits` nue —
+	// signaux contradictoires ; les pages de résultats de recherche interne sont
+	// par ailleurs explicitement déconseillées à l'indexation par Google. Le
+	// JSON-LD `SearchAction` (sitelinks searchbox) n'exige pas l'indexation des
+	// pages de résultats.
+	const hasSearch = !!searchParamsData.search;
+	const shouldNoindex = hasActiveFilters || isPaginated || hasSearch;
 
 	return {
 		title: DEFAULT_METADATA.title,
@@ -85,6 +92,8 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 // ============================================================================
 // PAGE
 // ============================================================================
+
+const breadcrumbs = [{ label: "Créations", href: "/produits" }];
 
 export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 	const searchParamsData = await searchParams;
@@ -122,9 +131,6 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 
 	// Compter les filtres actifs
 	const activeFiltersCount = countActiveFilters(searchParamsData, filters);
-
-	// Breadcrumbs
-	const breadcrumbs = [{ label: "Créations", href: "/produits" }];
 
 	// Snapshot products pour enrichir le JSON-LD avec ItemList (rich result Product carousel).
 	// Await partagé avec ProductCatalog — pas de double-fetch (même promise object).

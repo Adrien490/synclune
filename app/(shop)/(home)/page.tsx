@@ -70,19 +70,17 @@ export default async function Page() {
 				<HomepageStructuredData productsPromise={productsPromise} />
 			</Suspense>
 
-			{/* 1. Hero - Attention capture + rotating tagline + floating product images.
-			    Rendered synchronously (no Suspense) so its SSR HTML — incl. the title
-			    LCP text and the desktop floating images — is in the initial document. */}
-			<HeroSection productsPromise={productsPromise} />
+			{/* 1. Hero - Attention capture + rotating tagline. Fully static: its SSR
+			    HTML — incl. the title LCP text — is in the initial document. */}
+			<HeroSection />
 
 			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
 			<HeroReassuranceBanner />
 
 			{/* 2. Latest Creations - 4 most recent products.
-			    Rendered synchronously (productsPromise already awaited by HeroSection
-			    above) so React 19 hoists `<link rel="preload">` for the mobile LCP
-			    image — ProductCard[0], where the hero floating images are hidden
-			    (`hidden md:block`). Only the first card preloads (see latest-creations.tsx). */}
+			    Rendered synchronously (no Suspense) so React 19 hoists
+			    `<link rel="preload">` for the LCP image — ProductCard[0]. Only the
+			    first card preloads (see latest-creations.tsx). */}
 			<LatestCreations productsPromise={productsPromise} />
 
 			{/* 3. Collections - Thematic browsing with descriptions */}

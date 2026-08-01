@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import { Clock, Info, MapPin, UserPlus } from "lucide-react";
+import { Clock, Info, MapPin } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,7 +18,6 @@ import { OrderReturnGuidance } from "@/modules/orders/components/customer/order-
 import { orderNumberParamSchema } from "@/modules/orders/schemas/order-route-params.schema";
 import { formatCountryName } from "@/shared/constants/countries";
 import { BRAND } from "@/shared/constants/brand";
-import { ROUTES } from "@/shared/constants/urls";
 import { checkRateLimit, getClientIp } from "@/shared/lib/rate-limit";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -94,11 +93,6 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 		notFound();
 	}
 
-	// Une commande rattachée à un compte reste consultable via ce lien (l'invité a
-	// pu créer son compte ensuite — cf. `post-login-merge`), mais on l'invite à
-	// passer par son espace client, plus complet (facture, retour, réachat).
-	const hasAccount = order.userId !== null;
-
 	return (
 		<TrackingShell>
 			<div className="space-y-6">
@@ -122,6 +116,19 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 					</Alert>
 				)}
 
+				<RefundNotice order={order} />
+
+				{order.status === "CANCELLED" && order.paymentStatus === "PAID" && (
+					<Alert>
+						<Info />
+						<AlertTitle>Remboursement en cours</AlertTitle>
+						<AlertDescription>
+							Ta commande est annulée : son remboursement est en cours de traitement. Tu recevras un
+							email de confirmation dès qu&apos;il sera effectif.
+						</AlertDescription>
+					</Alert>
+				)}
+
 				<Card className="border-primary/10 rounded-2xl shadow-sm">
 					<CardContent className="space-y-6 p-4 sm:p-6">
 						<OrderStatusTimeline order={order} />
@@ -138,42 +145,6 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 					</CardContent>
 				</Card>
 
-				{!hasAccount && (
-					<Card className="rounded-xl border-dashed">
-						<CardContent className="flex items-start gap-4 p-4">
-							<div
-								aria-hidden="true"
-								className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-full"
-							>
-								<UserPlus className="text-primary size-5" />
-							</div>
-							<div className="space-y-2">
-								<h2 className="font-semibold">Crée ton compte pour tout retrouver</h2>
-								<p className="text-muted-foreground text-sm">
-									En créant un compte avec l&apos;adresse email de cette commande, elle sera
-									automatiquement rattachée — avec ta facture, tes adresses et tes prochains achats.
-								</p>
-								<Button asChild variant="outline" size="sm">
-									<Link href={ROUTES.AUTH.SIGN_UP}>
-										<UserPlus className="size-4" />
-										Créer mon compte
-									</Link>
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
-				)}
-
-				{hasAccount && (
-					<div className="text-center">
-						<Button asChild variant="outline">
-							<Link href={ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}>
-								Voir dans mon espace client
-							</Link>
-						</Button>
-					</div>
-				)}
-
 				<div className="space-y-2 text-center">
 					<p className="text-muted-foreground text-sm">Une question sur ta commande ?</p>
 					<Button asChild variant="link">
@@ -182,6 +153,33 @@ async function OrderTrackingPageContent({ searchParams }: OrderTrackingPageProps
 				</div>
 			</div>
 		</TrackingShell>
+	);
+}
+
+/**
+ * `OrderStatus` n'a pas de valeur « remboursée » : sans cette alerte, une
+ * commande intégralement remboursée affichait badge « Livrée » et total
+ * inchangé sur la seule surface client (audit 2026-08-01). Dérivée de
+ * `paymentStatus` uniquement — pas de montant, le select de la page reste
+ * minimal (le chiffre exact est dans l'email de confirmation de remboursement).
+ */
+function RefundNotice({ order }: { order: { paymentStatus: string } }) {
+	if (order.paymentStatus !== "REFUNDED" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
+		return null;
+	}
+	const isFullRefund = order.paymentStatus === "REFUNDED";
+	return (
+		<Alert>
+			<Info />
+			<AlertTitle>
+				{isFullRefund ? "Commande remboursée" : "Commande partiellement remboursée"}
+			</AlertTitle>
+			<AlertDescription>
+				{isFullRefund
+					? "Ta commande a été intégralement remboursée. Le montant apparaît sur ton compte sous quelques jours, selon ta banque."
+					: "Une partie de ta commande a été remboursée. Le détail est dans l'email de confirmation de remboursement."}
+			</AlertDescription>
+		</Alert>
 	);
 }
 

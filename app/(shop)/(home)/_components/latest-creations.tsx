@@ -78,11 +78,10 @@ export async function LatestCreations({
 										product={product}
 										index={index}
 										sectionId="latest"
-										// Sur mobile les images flottantes du hero sont `hidden md:block` :
-										// le vrai LCP mobile est ce premier card. On réactive donc son
-										// preload (`<link rel="preload">` hissé par React 19) et on garde
-										// `disablePreload` sur les suivants pour ne pas multiplier les
-										// preloads concurrents sur 4G. Verrou : hero-floating-images.test.tsx.
+										// Ce premier card est l'image LCP de la page (le hero est
+										// purement typographique) : preload actif (`<link rel="preload">`
+										// hissé par React 19), et `disablePreload` sur les suivants pour
+										// ne pas multiplier les preloads concurrents sur 4G.
 										disablePreload={index !== 0}
 										showNewBadge
 									/>

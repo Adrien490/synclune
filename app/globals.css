@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@plugin "tailwindcss-animate";
+@import "tw-animate-css";
 
 @custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
@@ -9,7 +9,6 @@
 @import "./styles/utilities.css";
 @import "./styles/section-accents.css";
 @import "./styles/animations.css";
-/* scroll-driven.css moved into floating-images/ and imported locally by hero-floating-images-inner.tsx — keeps /admin /auth /paiement free of hero keyframes. */
 @import "./styles/entrance.css";
 @import "./styles/components.css";
 
@@ -272,7 +271,14 @@ main#main-content {
 	/* FAB volontairement sous --z-bar (70) : desktop-only vs bottom-bar mobile-only (mutuellement exclusifs) */
 	--z-fab: 45;
 	--z-alert: 80;
+	/* Surfaces flottantes (popover, dropdown, tooltip, select) : au-dessus de
+	   tout overlay/alert pour rester visibles ouvertes DANS un Dialog/Sheet —
+	   avant, elles étaient à z-50 (< --z-overlay) et ne tenaient que par
+	   l'ordre DOM des portails. */
+	--z-float: 85;
 	--z-skip: 100;
+	/* Calques plein écran transitoires : lightbox média, animation fly-to-cart. */
+	--z-max: 110;
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -323,11 +329,22 @@ main#main-content {
 
 	/* ==========================================
 	   DECORATIVE SHADOWS (tokens des ombres décoratives — remplacent
-	   les rgba(0,0,0,x) littéraux : floating images hero, polaroids, navbar)
+	   les rgba(0,0,0,x) littéraux : polaroids, navbar)
 	   ========================================== */
 	--shadow-floating: 0 8px 30px oklch(0 0 0 / 0.12), 0 2px 8px oklch(0 0 0 / 0.08);
 	--shadow-lift: 0 12px 24px -8px oklch(0 0 0 / 0.15);
 	--shadow-header: 0 10px 15px -3px oklch(0 0 0 / 0.08), 0 4px 6px -4px oklch(0 0 0 / 0.08);
+
+	/* Échelle d'ombres UI (shadcn) — vivait dans :root, seule famille de tokens
+	   hors @theme (audit UI design system 2026-08-01). */
+	--shadow-2xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+	--shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+	--shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+	--shadow: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+	--shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
+	--shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
+	--shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.1), 0 8px 10px -6px oklch(0 0 0 / 0.1);
+	--shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.25);
 
 	/* ==========================================
 	   HERO GRADIENT WORD (mot d'accent du h1 home)
@@ -339,19 +356,10 @@ main#main-content {
 	--gradient-hero-to: oklch(0.68 0.14 175); /* teal/menthe */
 
 	/* ==========================================
-	   PARTICLE COLORS (opaque, particles apply their own opacity)
-	   ========================================== */
-	--color-particle-blush: oklch(0.92 0.08 350);
-	--color-particle-lavender: oklch(0.85 0.1 280);
-
-	/* ==========================================
 	   EVOLUTION COLORS (Dashboard KPIs)
 	   ========================================== */
 	--color-evolution-positive: oklch(0.55 0.17 145);
 	--color-evolution-negative: oklch(0.58 0.17 25);
-
-	--spacing-34: 8.5rem;
-	--spacing-38: 9.5rem;
 
 	--radius: 0.75rem;
 	--radius-sm: 0.5rem;
@@ -401,15 +409,11 @@ main#main-content {
 	--primary: oklch(0.8593 0.097 340.78); /* Rose foncé - WCAG AA (as background with dark text) */
 	--primary-foreground: oklch(0.1 0 0);
 
-	--secondary: oklch(0.9221 0.0871 86.29); /* Gris clair */
+	--secondary: oklch(0.9221 0.0871 86.29); /* Jaune pastel */
 	--secondary-foreground: oklch(0.13 0.01 270);
 
-	/* Star rating — gold contrasté WCAG G207 (≥3:1 sur card/background) */
-	--star-filled: oklch(0.74 0.16 80);
-	--star-empty: var(--muted-foreground);
-
 	/* ==========================================
-	   ACCENT (Couleur logo - décoratif)
+	   ACCENT (Gris neutre — hover/surfaces, aligné sur --muted)
 	   ========================================== */
 	--accent: oklch(0.94 0.01 270);
 	--accent-foreground: oklch(0.13 0.01 270);
@@ -458,16 +462,6 @@ main#main-content {
 	--polaroid-caption-violet: oklch(0.44 0.12 290);
 	--polaroid-caption-green: oklch(0.42 0.1 155);
 	--polaroid-caption-brown: oklch(0.46 0.09 70);
-
-	/* Shadows */
-	--shadow-2xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
-	--shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
-	--shadow-sm: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
-	--shadow: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
-	--shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.1);
-	--shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.1), 0 4px 6px -4px oklch(0 0 0 / 0.1);
-	--shadow-xl: 0 20px 25px -5px oklch(0 0 0 / 0.1), 0 8px 10px -6px oklch(0 0 0 / 0.1);
-	--shadow-2xl: 0 25px 50px -12px oklch(0 0 0 / 0.25);
 }
 
 /* ========================================================================

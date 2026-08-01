@@ -84,8 +84,12 @@ describe("parsePaginationParams — fail-safe (regression)", () => {
 		});
 	});
 
-	it("search borné à 200 chars", () => {
+	// 200 → 100 : unification des bornes de recherche sur la SSOT
+	// `TEXT_LIMITS.SEARCH` (audit recherche 2026-08-01, P3-1) — 100 était déjà
+	// la borne effective (`splitSearchTerms` rejetait au-delà, rendant tout le
+	// catalogue comme « résultats »).
+	it("search borné à 100 chars (TEXT_LIMITS.SEARCH)", () => {
 		const result = parsePaginationParams({ search: "x".repeat(500) });
-		expect(result.searchTerm).toHaveLength(200);
+		expect(result.searchTerm).toHaveLength(100);
 	});
 });

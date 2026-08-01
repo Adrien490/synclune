@@ -25,11 +25,6 @@ vi.mock("@/app/_components/not-found-content", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/animations", () => ({
-	ParticleBackground: () => null,
-	ParticleBackgroundError: () => null,
-}));
-
 vi.mock("next/link", () => ({
 	default: ({ href, children }: { href: string; children: React.ReactNode }) => (
 		<a href={href}>{children}</a>

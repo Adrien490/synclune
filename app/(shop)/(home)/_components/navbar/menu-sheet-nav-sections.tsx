@@ -132,12 +132,12 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 	return (
 		<div className="bg-primary/5 mb-4 rounded-xl p-4">
 			<Link
-				href={ROUTES.ACCOUNT.ROOT}
+				href={ROUTES.ADMIN.DASHBOARD}
 				replace
 				prefetch={null}
 				onClick={onNavigate}
 				className="group block"
-				aria-label={`Mon compte - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
+				aria-label={`Administration - ${labelSubject}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
 			>
 				<div>
 					<p className="text-foreground text-base font-semibold">{greeting}</p>
@@ -301,15 +301,25 @@ export function CollectionsSection({
 // --- Account Section ---
 
 interface AccountSectionProps extends SectionProps {
-	accountItem?: { href: string; label: string };
 	favoritesItem?: { href: string; label: string };
+	/** Vraie uniquement pour une session admin — cf. `MenuSheetNav`. */
 	isLoggedIn: boolean;
 	wishlistCount: number;
 	onLogoutClick?: () => void;
 }
 
+/**
+ * Section « Favoris » du menu mobile.
+ *
+ * S'appelait « Mon compte » et portait quatre entrées — lien compte/connexion,
+ * favoris, « Mes commandes », « Créer un compte ». Le retrait de l'espace client
+ * (2026-07-31) n'en laisse qu'une côté visiteur : les favoris, qui ne dépendent
+ * d'aucune session (cookie `wishlist_session`).
+ *
+ * « Déconnexion » subsiste et n'apparaît que pour la session admin, seule session
+ * possible désormais.
+ */
 export function AccountSection({
-	accountItem,
 	favoritesItem,
 	isLoggedIn,
 	wishlistCount,
@@ -318,29 +328,10 @@ export function AccountSection({
 	itemVariants,
 	delay,
 }: AccountSectionProps) {
-	// `ROUTES.ACCOUNT.ROOT` et `ROUTES.ACCOUNT.ORDERS` valent tous deux
-	// « /commandes » : rendre les deux produisait deux entrées vers la même URL,
-	// toutes deux marquées `aria-current="page"` (double annonce). Comparaison
-	// dynamique plutôt que suppression sèche — si les deux routes divergent un
-	// jour, l'entrée « Mes commandes » réapparaît d'elle-même.
-	const showOrdersLink = isLoggedIn && accountItem?.href !== ROUTES.ACCOUNT.ORDERS;
-
 	return (
 		<section aria-labelledby="section-account">
-			<SectionHeader id="section-account">{isLoggedIn ? "Mon compte" : "Compte"}</SectionHeader>
+			<SectionHeader id="section-account">Favoris</SectionHeader>
 			<ul className="space-y-1">
-				{/* Account link - adapts to session state */}
-				{accountItem && (
-					<NavLink
-						href={accountItem.href}
-						isMenuItemActive={isMenuItemActive}
-						itemVariants={itemVariants}
-						customDelay={delay(150, 0)}
-					>
-						{accountItem.label}
-					</NavLink>
-				)}
-
 				{/*
 				 * Favoris — accessible à TOUS, sans gate `isLoggedIn` : l'onglet de la
 				 * bottom bar et l'icône cœur de la navbar sont visibles pour les
@@ -353,7 +344,7 @@ export function AccountSection({
 						href={favoritesItem.href}
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
-						customDelay={delay(150, 1)}
+						customDelay={delay(150, 0)}
 						className="justify-between"
 						ariaLabel={
 							wishlistCount > 0
@@ -374,21 +365,9 @@ export function AccountSection({
 					</NavLink>
 				)}
 
-				{/* Orders — only when it is a distinct destination (cf. showOrdersLink) */}
-				{showOrdersLink && (
-					<NavLink
-						href={ROUTES.ACCOUNT.ORDERS}
-						isMenuItemActive={isMenuItemActive}
-						itemVariants={itemVariants}
-						customDelay={delay(150, 2)}
-					>
-						Mes commandes
-					</NavLink>
-				)}
-
 				{/* Logout (logged in only) — closes menu before opening dialog */}
 				{isLoggedIn && (
-					<m.li variants={itemVariants} custom={delay(150, 3)}>
+					<m.li variants={itemVariants} custom={delay(150, 1)}>
 						<button
 							type="button"
 							className={cn(
@@ -400,20 +379,6 @@ export function AccountSection({
 							Déconnexion
 						</button>
 					</m.li>
-				)}
-
-				{/* Sign up link for non-logged-in users */}
-				{!isLoggedIn && (
-					<NavLink
-						href={ROUTES.AUTH.SIGN_UP}
-						isMenuItemActive={isMenuItemActive}
-						itemVariants={itemVariants}
-						customDelay={delay(150, 1)}
-						className="text-muted-foreground can-hover:hover:text-foreground"
-						prefetch={null}
-					>
-						Créer un compte
-					</NavLink>
 				)}
 			</ul>
 		</section>

@@ -11,9 +11,9 @@ function StepIllustration({ stepId }: { stepId: string }) {
 	);
 }
 
-export function CreativeProcessTimeline() {
-	const isLast = (index: number) => index === processSteps.length - 1;
+const isLast = (index: number) => index === processSteps.length - 1;
 
+export function CreativeProcessTimeline() {
 	return (
 		<div className="mt-8 sm:mt-12">
 			{/* Desktop: horizontal grid (lg+) */}

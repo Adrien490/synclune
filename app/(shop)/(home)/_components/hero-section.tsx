@@ -1,39 +1,21 @@
-import { HeroFloatingImages } from "./floating-images";
 import { HeroGradientWord } from "./hero-gradient-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
-import type { GetProductsReturn } from "@/modules/products/data/get-products";
-import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
 import { HeroCtaButtons } from "./hero-cta-buttons";
 import { HeroHeartEasterEgg } from "./hero-heart-easter-egg";
-import { ParticleBackground } from "./hero-decorations";
 
 /**
  * Homepage hero section.
  *
- * Displays the tagline ("Des bijoux colorés"), floating product images
- * on desktop, and particle background. Products come from the shared
- * latest creations fetch (no extra query).
+ * Displays the tagline ("Des bijoux colorés").
  *
  * The full title — including the multicolor gradient accent word
  * "colorés" — renders server-side for instant LCP and requires no
- * client JS. Decorative animations (particles, scroll indicator) are
- * dynamically imported.
- *
- * Awaits `productsPromise` inline (no Suspense) so the hero — title
- * LCP text + desktop floating images — is in the initial SSR HTML
- * rather than streamed in later. The mobile LCP image preload lives
- * in LatestCreations (floating images are hidden on mobile).
+ * client JS. Fully static: no data fetch, in the initial SSR HTML.
+ * The LCP image preload lives in LatestCreations.
  */
-export async function HeroSection({
-	productsPromise,
-}: {
-	productsPromise: Promise<GetProductsReturn>;
-}) {
-	const { products } = await productsPromise;
-	const heroImages = extractHeroImages(products);
-
+export function HeroSection() {
 	return (
 		<section
 			id="hero-section"
@@ -42,7 +24,7 @@ export async function HeroSection({
 			style={{ viewTransitionName: "shop-hero" }}
 			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-dvh max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
 		>
-			{/* Particle background - dynamically imported (decorative) */}
+			{/* Decorative background glows */}
 			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				{/* Soft rose-blush glow behind the hero title — amplifies Synclune brand identity */}
 				<div
@@ -59,36 +41,8 @@ export async function HeroSection({
 							"radial-gradient(closest-side, var(--color-glow-lavender), transparent 70%)",
 					}}
 				/>
-				{/* Single instance — handles desktop + mobile internally:
-            - desktop: `count` particules ; mobile: ceil(count * mobileCountRatio) + blur réduit
-            - particules purement ambiantes (aucun suivi de la souris)
-            - `adaptive` (défaut) réduit count + blur sur appareils contraints / Save-Data
-            - `gradient` donne du volume (dégradé radial) aux perles, gouttes et cœurs */}
-				<ParticleBackground
-					shape={["heart", "pearl", "drop", "diamond", "circle"]}
-					colors={[
-						"var(--primary)",
-						"var(--secondary)",
-						"oklch(0.92 0.08 350)",
-						"oklch(0.75 0.12 280)",
-					]}
-					count={18}
-					size={[25, 90]}
-					opacity={[0.45, 0.8]}
-					blur={[4, 14]}
-					animationStyle="drift"
-					depthParallax
-					gradient
-					mobileCountRatio={0.5}
-				/>
 				<div className="bg-background/5 absolute inset-0" />
 			</div>
-
-			{/* Floating product images - Desktop only (`hidden md:block`). Server-rendered
-			    in the initial HTML but lazy-loaded (no preload): preloading them would
-			    waste ~119 KiB on mobile where they're never painted (cf.
-			    hero-floating-images.test.tsx @regression mobile-lcp-preload-2026-05-24). */}
-			<HeroFloatingImages images={heroImages} />
 
 			{/* `max-w-6xl` sans palier `2xl:` — le hero était le SEUL conteneur du
 			 * storefront à s'élargir au-delà (`2xl:max-w-7xl`), ce qui produisait un

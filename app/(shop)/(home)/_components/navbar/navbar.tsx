@@ -19,6 +19,13 @@ import { NavbarWrapper } from "./navbar-wrapper";
 /** "Nouveau" badge eligibility window — published within the last N days. */
 const NEW_PRODUCT_BADGE_DAYS = 14;
 
+// Extract primary image from a product's default SKU
+function extractProductImage(p: Awaited<ReturnType<typeof getRecentProducts>>[number]) {
+	const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
+	const image = sku?.images.find((img) => img.isPrimary) ?? sku?.images[0];
+	return { sku, image };
+}
+
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
@@ -43,13 +50,6 @@ export async function Navbar() {
 		label: t.label,
 	}));
 
-	// Extract primary image from a product's default SKU
-	function extractProductImage(p: (typeof recentProducts)[number]) {
-		const sku = p.skus.find((s) => s.isDefault) ?? p.skus[0];
-		const image = sku?.images.find((img) => img.isPrimary) ?? sku?.images[0];
-		return { sku, image };
-	}
-
 	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
 	const menuCollections = collectionsData.collections.map((c) => ({
 		slug: c.slug,
@@ -60,7 +60,7 @@ export async function Navbar() {
 	}));
 
 	// Générer les items de navigation mobile en fonction de la session et statut admin
-	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
+	const mobileNavItems = getMobileNavItems(productTypes, menuCollections, userIsAdmin);
 
 	// Featured products for the mega menu (up to 2 recent products with images).
 	// "Nouveau" badge eligibility via shared isRecent() helper (NEW_PRODUCT_BADGE_DAYS window).
@@ -176,11 +176,10 @@ export async function Navbar() {
 								/>
 							</div>
 
-							{/* Section droite: Favoris + Recherche + Compte + Panier */}
+							{/* Section droite: Favoris + Recherche + Panier (+ menu admin) */}
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
 									<NavbarIconButtons
-										isLoggedIn={!!session}
 										isAdmin={userIsAdmin}
 										userName={session?.user.name ?? null}
 										userEmail={session?.user.email ?? null}

@@ -248,6 +248,71 @@ describe("GET /api/orders/[orderNumber]/invoice", () => {
 		});
 	});
 
+	/**
+	 * @regression invoice-available-after-refund — audit « Admin commandes » 2026-08-01 (P1-A)
+	 *
+	 * La garde `paymentStatus !== "PAID"` rendait la facture archivée inaccessible dès
+	 * qu'un remboursement faisait passer la commande en PARTIALLY_REFUNDED/REFUNDED —
+	 * et rendait la branche VOIDED (bandeau « FACTURE ANNULÉE », EINV-SEC-007)
+	 * inatteignable en production, voidInvoice n'étant appelé que sur des commandes
+	 * déjà REFUNDED/FAILED. La facture d'une commande ENCAISSÉE (paidAt non nul)
+	 * reste servie (Art. L102 B LPF) ; seule une commande jamais encaissée est
+	 * refusée, miroir de la garde interne de persistInvoiceNumber.
+	 */
+	describe("@regression invoice-available-after-refund", () => {
+		it("serves the invoice for a PARTIALLY_REFUNDED order (invoice still valid)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				...PAID_ORDER,
+				paymentStatus: "PARTIALLY_REFUNDED",
+				paidAt: new Date("2026-03-30"),
+			});
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+		});
+
+		it("serves the VOIDED invoice of a REFUNDED order (état réel post-void)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				...PAID_ORDER,
+				paymentStatus: "REFUNDED",
+				paidAt: new Date("2026-03-30"),
+				invoiceStatus: "VOIDED",
+				invoiceVoidedAt: new Date("2026-05-10"),
+				creditNoteNumber: "A-2026-00007",
+			});
+			mockPrisma.order.findUnique.mockResolvedValue({
+				invoicePdfUrl: "https://utfs.io/f/voided.pdf",
+				invoicePdfHash: null,
+				invoiceDataSnapshot: null,
+				invoiceDataHash: null,
+				piiPurgedAt: null,
+			});
+			mockBuildInvoiceData.mockReturnValue({ voidedInfo: null });
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(200);
+			expect(mockRenderInvoicePdf).toHaveBeenCalledWith(
+				expect.objectContaining({
+					voidedInfo: expect.objectContaining({ creditNoteNumber: "A-2026-00007" }),
+				}),
+			);
+		});
+
+		it("still returns 400 for a never-paid order (paidAt null)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue({
+				...PAID_ORDER,
+				paymentStatus: "PENDING",
+				paidAt: null,
+			});
+
+			const res = await GET(makeReq(), makeParams());
+
+			expect(res.status).toBe(400);
+		});
+	});
+
 	describe("invoice generation", () => {
 		it("returns PDF with correct Content-Type and Content-Disposition", async () => {
 			const res = await GET(makeReq(), makeParams());

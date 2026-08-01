@@ -32,7 +32,6 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 		getStoreStatus(),
 		getSession().catch(() => null),
 	]);
-	const isAuthenticated = Boolean(session?.user);
 
 	if (storeStatus.isClosed) {
 		const admin = await isAdmin();
@@ -74,12 +73,12 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<Suspense fallback={null}>
 				<AdminDashboardFab />
 			</Suspense>
-			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
+			<ShopMobileBottomNav />
 			{/* Pas de pull-to-refresh sur le storefront : le contenu vient de caches longs
 			    (`catalog` 15 min, `reference` 24 h) qu'un `router.refresh()` ne renouvelle
 			    pas. Le geste n'y aurait rien à rafraîchir — il est réservé aux surfaces
-			    admin/compte, où il partage le chemin d'invalidation des boutons
-			    « Rafraîchir » (cf. `use-pull-to-refresh-handler`). */}
+			    admin, où il partage le chemin d'invalidation des boutons « Rafraîchir »
+			    (cf. `use-pull-to-refresh-handler`). */}
 			<SentryUserBridge userId={session?.user.id} role={session?.user.role} />
 			<CookieBannerLazy />
 		</>

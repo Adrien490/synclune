@@ -7,7 +7,7 @@ import { getPublicProductCount } from "@/modules/products/data/get-public-produc
  * Seuil d'affichage : en dessous, les chiffres desserviraient la marque
  * (catalogue jeune / pré-lancement) — la bande se masque entièrement.
  */
-export const ATELIER_STATS_MIN_PRODUCTS = 4;
+const ATELIER_STATS_MIN_PRODUCTS = 4;
 
 /**
  * Bande de chiffres de l'atelier — payoff après la timeline du process créatif.

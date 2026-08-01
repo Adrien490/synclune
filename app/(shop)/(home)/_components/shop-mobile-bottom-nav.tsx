@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Search, Heart, ShoppingBag, User } from "lucide-react";
+import { Home, Search, Heart, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -33,29 +33,10 @@ import { cn } from "@/shared/utils/cn";
  * Routes où la bottom nav shop se masque pour éviter la superposition
  * avec une CTA sticky ou un flow focus (checkout).
  */
-const HIDDEN_ROUTES = [
-	ROUTES.SHOP.CHECKOUT,
-	ROUTES.SHOP.CHECKOUT_RETURN,
-	ROUTES.AUTH.SIGN_IN,
-	ROUTES.AUTH.SIGN_UP,
-];
+const HIDDEN_ROUTES = [ROUTES.SHOP.CHECKOUT, ROUTES.SHOP.CHECKOUT_RETURN, ROUTES.AUTH.SIGN_IN];
 
 /** Id du sheet panier dans le `sheet-store` (cf. `SheetId`). */
 const CART_SHEET_ID = "cart" as const;
-
-/**
- * Racines de l'espace client qui doivent activer l'onglet « Compte ».
- *
- * `ROUTES.ACCOUNT.ROOT` vaut `/commandes` ; `/adresses` et `/parametres` sont deux
- * racines distinctes du même groupe `(account)`, toutes trois rendues avec la
- * bottom-nav. En n'en testant que deux, le carnet d'adresses n'activait aucun
- * onglet.
- */
-const ACCOUNT_ROUTES = [
-	ROUTES.ACCOUNT.ORDERS,
-	ROUTES.ACCOUNT.ADDRESSES,
-	ROUTES.ACCOUNT.SETTINGS,
-] as const;
 
 // Pas d'`aria-controls` sur ces deux onglets (contrairement au bouton Menu de
 // l'admin) : le panier rend DEUX contenus selon le viewport (`Drawer` mobile /
@@ -69,13 +50,14 @@ function tabAriaLabel(label: string, count: number, singular: string, plural: st
 	return `${label}, ${count} ${count > 1 ? plural : singular}`;
 }
 
-interface ShopMobileBottomNavProps {
-	isAuthenticated: boolean;
-}
-
 /**
  * Bottom navigation tabs pour la boutique (mobile/tablet portrait).
- * 5 onglets : Accueil • Recherche • Favoris • Panier • Compte.
+ * 4 onglets : Accueil • Recherche • Favoris • Panier.
+ *
+ * L'onglet « Compte » a disparu avec l'espace client (2026-07-31) : il menait soit
+ * à `/commandes`, soit à `/connexion` pour un visiteur — deux destinations qui
+ * n'existent plus pour un client. Les favoris restent, portés par le cookie
+ * `wishlist_session` et non par une session.
  *
  * - Affiché via createPortal en fin de <body> pour sortir du flux
  * - Masqué sur routes checkout et authentification
@@ -83,7 +65,7 @@ interface ShopMobileBottomNavProps {
  * - Touch targets 44px min (WCAG 2.5.5)
  * - Respecte `env(safe-area-inset-bottom)` via BottomBar
  */
-export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProps) {
+export function ShopMobileBottomNav() {
 	const pathname = usePathname();
 	const cartCount = useBadgeCountsStore((state) => state.cartCount);
 	const wishlistCount = useBadgeCountsStore((state) => state.wishlistCount);
@@ -140,8 +122,6 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 
 	const isHidden = HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 
-	const accountHref = isAuthenticated ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN;
-
 	const tabs = [
 		{
 			id: "home",
@@ -168,9 +148,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 		{
 			id: "wishlist",
 			label: "Favoris",
-			href: ROUTES.ACCOUNT.FAVORITES,
+			href: ROUTES.SHOP.FAVORITES,
 			icon: Heart,
-			isActive: isRouteActive(pathname, ROUTES.ACCOUNT.FAVORITES),
+			isActive: isRouteActive(pathname, ROUTES.SHOP.FAVORITES),
 			type: "link" as const,
 			// `type: "dot"` n'affiche AUCUN chiffre : sans ce libellé, le nombre de
 			// favoris n'était exposé nulle part — ni à l'œil, ni au lecteur d'écran.
@@ -198,17 +178,6 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 				bumpDelta: cartBump?.delta,
 			},
 			onClick: () => openSheet(CART_SHEET_ID),
-		},
-		{
-			id: "account",
-			label: "Compte",
-			href: accountHref,
-			icon: User,
-			// Les TROIS racines de l'espace client, pas deux : `/adresses` (et ses
-			// sous-routes `nouvelle` / `[id]/modifier`) affiche la bottom-nav sans
-			// qu'aucun onglet ne soit actif (audit bottom-bar 2026-07-30, P3-5).
-			isActive: ACCOUNT_ROUTES.some((route) => isRouteActive(pathname, route)),
-			type: "link" as const,
 		},
 	];
 

@@ -15,12 +15,6 @@ export default function CollectionsLoading() {
 		>
 			<span className="sr-only">Chargement des collections…</span>
 
-			{/* Particle system placeholder */}
-			<div
-				className="from-primary/5 to-secondary/5 fixed inset-0 z-0 via-transparent"
-				aria-hidden="true"
-			/>
-
 			{/* PageHeaderSkeleton */}
 			<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />
 

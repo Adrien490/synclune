@@ -27,7 +27,7 @@ function listCronRoutes(): string[] {
 describe("cron routes maxDuration export", () => {
 	const routeFiles = listCronRoutes();
 
-	it("discovers all 10 cron routes", () => {
+	it("discovers all 9 cron routes", () => {
 		// Tripwire : a different count means a cron was added/removed without
 		// updating vercel.json or the docs. Adjust this number deliberately.
 		// 2026-05-30 : 10 → 11, réintégration de `reconcile-invoices` (DLQ facture
@@ -43,7 +43,7 @@ describe("cron routes maxDuration export", () => {
 		// 2026-07-30 (simplification V1) : 11 → 10, retrait d'`alert-dispute-deadlines`
 		// avec le modèle `Dispute` — la deadline est portée par l'alerte e-mail émise à
 		// l'ouverture du litige, et le cycle de vie se suit dans le Dashboard Stripe.
-		expect(routeFiles).toHaveLength(10);
+		expect(routeFiles).toHaveLength(9);
 	});
 
 	it.each(routeFiles)("%s exports maxDuration >= 60", (routePath) => {

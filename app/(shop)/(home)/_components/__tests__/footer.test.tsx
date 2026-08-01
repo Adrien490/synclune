@@ -191,8 +191,10 @@ describe("Footer", () => {
 		expect(links[2]).toHaveAttribute("href", "/aide");
 		expect(links[2]).toHaveTextContent("Aide et FAQ");
 
-		expect(links[3]).toHaveAttribute("href", "/commandes");
-		expect(links[3]).toHaveTextContent("Mon compte");
+		// « Mon compte » → « Mes favoris » : l'espace client a été retiré
+		// (2026-07-31), les favoris sont la seule surface personnelle restante.
+		expect(links[3]).toHaveAttribute("href", "/favoris");
+		expect(links[3]).toHaveTextContent("Mes favoris");
 	});
 
 	// --- Focus ring SSOT (WCAG 2.4.7) ---
@@ -337,6 +339,23 @@ describe("Footer", () => {
 		expect(links[3]).toHaveTextContent("Gestion des cookies");
 		expect(links[4]).toHaveTextContent("Formulaire de rétractation");
 		expect(links[5]).toHaveTextContent("Accessibilité");
+	});
+
+	// Les libellés seuls ne suffisent pas : un href cassé (`/cvg`) passait au vert.
+	// Littéraux volontaires — asserter `ROUTES.LEGAL.*` ne ferait que refléter la
+	// source du composant, sans épingler le contrat d'URL.
+	it("points each legal link to its expected route", async () => {
+		await renderFooter();
+
+		const legalNav = screen.getByRole("navigation", { name: /liens légaux/i });
+		const links = within(legalNav).getAllByRole("link");
+
+		expect(links[0]).toHaveAttribute("href", "/cgv");
+		expect(links[1]).toHaveAttribute("href", "/mentions-legales");
+		expect(links[2]).toHaveAttribute("href", "/confidentialite");
+		expect(links[3]).toHaveAttribute("href", "/cookies");
+		expect(links[4]).toHaveAttribute("href", "/retractation");
+		expect(links[5]).toHaveAttribute("href", "/accessibilite");
 	});
 
 	// --- sr-only payment heading ---

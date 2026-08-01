@@ -81,6 +81,10 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({ getSession: mockGetSe
 vi.mock("@/shared/lib/rate-limit", () => ({
 	checkRateLimit: mockCheckRateLimit,
 	getRateLimitIdentifier: mockGetRateLimitIdentifier,
+	// La route passe désormais l'IP en 3ᵉ argument de `checkRateLimit` : sans elle,
+	// `effectiveIp` vaut null et le plafond global 100/min/IP ne s'applique jamais
+	// sur une génération PDF. Audit rate limiting 2026-07-31.
+	getClientIp: vi.fn(async () => "203.0.113.7"),
 }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ORDER_LIMITS: {

@@ -1,6 +1,6 @@
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { getOrdersForExport } from "@/modules/orders/data/get-orders-for-export";
+import { getOrdersForExport, EXPORT_MAX_ROWS } from "@/modules/orders/data/get-orders-for-export";
 import { exportInvoicesSchema } from "@/modules/orders/schemas/order.schemas";
 import {
 	buildExportWhereClause,
@@ -59,6 +59,16 @@ export async function POST(request: Request) {
 
 	try {
 		const orders = await getOrdersForExport(where);
+		// Troncature SIGNALÉE, jamais muette : « 50 000 lignes » ne doit pas se lire
+		// « tout est là » sur un livre de recettes (audit 2026-08-01, P3).
+		const truncated = orders.length === EXPORT_MAX_ROWS;
+		if (truncated) {
+			Sentry.captureMessage("orders-csv-export-truncated", {
+				level: "warning",
+				tags: { feature: "orders-export" },
+				extra: { adminUserId: admin.user.id, maxRows: EXPORT_MAX_ROWS },
+			});
+		}
 		const csv = generateOrdersCsv(orders);
 
 		const now = new Date();
@@ -85,6 +95,7 @@ export async function POST(request: Request) {
 					metadata: {
 						exportType: "ORDERS_CSV",
 						rowCount: orders.length,
+						truncated,
 						periodType: result.data.periodType,
 						year: result.data.year,
 						month: result.data.month,
@@ -123,6 +134,7 @@ export async function POST(request: Request) {
 			headers: {
 				"Content-Type": "text/csv; charset=utf-8",
 				"Content-Disposition": `attachment; filename="${filename}"`,
+				...(truncated ? { "X-Export-Truncated": "true" } : {}),
 				// ORD-SEC-009: defense en profondeur — empeche sniff MIME (anti-XSS si CSV
 				// ouvert dans navigateur), iframe embedding (anti-clickjack), referrer leak.
 				"X-Content-Type-Options": "nosniff",

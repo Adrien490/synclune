@@ -8,7 +8,7 @@ import {
 	orderNumberParamSchema,
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
-import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
 import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
@@ -90,16 +90,17 @@ export async function GET(
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// EINV-SEC-001 : `session.user.role` est best-effort (cookie-cache Better Auth
-	// stale ~5 min). Re-vérification DB partagée avec /invoice — un admin démoté ne
-	// doit pas conserver le bypass d'ownership ni le quota 200/h sur les avoirs.
-	const isAdmin = await resolveInvoiceActorIsAdmin(session, "credit-note-route");
+	// EINV-SEC-001 : `session.user.role` est best-effort (cookie-cache Better Auth).
+	// Re-vérification DB partagée avec /invoice — un admin démoté OU SUSPENDU ne doit
+	// pas conserver le bypass d'ownership ni le quota 200/h sur les avoirs.
+	const isAdmin = await isVerifiedAdmin(session, "credit-note-route");
 
 	// Rate limit : même profil CPU/I/O que /invoice (génération PDF jsPDF +
 	// upload UploadThing), on partage les configs ORDER_LIMITS.INVOICE_DOWNLOAD
 	// et ADMIN_INVOICE_DOWNLOAD. Pas de quota séparé : un client malveillant
 	// alternant /invoice et /credit-note resterait sous le même cap effectif.
 	const headersList = await headers();
+	const clientIp = await getClientIp(headersList);
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
 		: ORDER_LIMITS.INVOICE_DOWNLOAD;
@@ -107,8 +108,10 @@ export async function GET(
 		? isAdmin
 			? `admin-invoice:${session.user.id}`
 			: getRateLimitIdentifier(session.user.id)
-		: `invoice-token:${(await getClientIp(headersList)) ?? "unknown"}`;
-	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig);
+		: `invoice-token:${clientIp ?? "unknown"}`;
+	// 3ᵉ argument obligatoire — cf. `/invoice` : sans lui le plafond global 100/min/IP,
+	// la whitelist et la blacklist sont inertes sur ce chemin.
+	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig, clientIp);
 	if (!rateCheck.success) {
 		if (isAdmin) {
 			Sentry.captureMessage("admin-credit-note-download-rate-limited", {

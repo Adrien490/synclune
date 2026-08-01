@@ -8,6 +8,7 @@ import {
 	GET_PRODUCTS_DEFAULT_PER_PAGE,
 	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
 } from "@/modules/products/constants/product.constants";
+import { TEXT_LIMITS } from "@/shared/constants/validation-limits";
 import { cursorSchema, directionSchema } from "@/shared/schemas/pagination-schema";
 import { centsToEuros } from "@/shared/utils/format-euro";
 import { getFirstParam } from "@/shared/utils/params";
@@ -79,8 +80,14 @@ export function parsePaginationParams(searchParamsData: ProductSearchParams) {
 	// sortBy : déjà fail-safe côté schéma (z.preprocess avec fallback dans
 	// product-query.schemas.ts), pas de garde supplémentaire nécessaire.
 	const sortBy = getFirstParam(searchParamsData.sortBy) ?? "created-descending";
+	// Tronqué à la SSOT `TEXT_LIMITS.SEARCH` (100) — la même borne que le Zod de
+	// `getProducts` et que `splitSearchTerms` : avant l'unification, un terme de
+	// 101-200 chars passait le schéma (200) puis devenait « pas de recherche »
+	// (splitSearchTerms → []) et rendait tout le catalogue comme « résultats ».
 	const searchTerm =
-		typeof searchParamsData.search === "string" ? searchParamsData.search.slice(0, 200) : undefined;
+		typeof searchParamsData.search === "string"
+			? searchParamsData.search.slice(0, TEXT_LIMITS.SEARCH.max)
+			: undefined;
 
 	return { cursor, direction, perPage, sortBy, searchTerm };
 }

@@ -45,11 +45,11 @@ export function CookiePreferences() {
 						"Vous n'avez pas encore fait de choix."
 					) : accepted ? (
 						<>
-							Cookies <span className="font-medium text-green-600">acceptés</span>
+							Cookies <span className="text-success font-medium">acceptés</span>
 						</>
 					) : (
 						<>
-							Cookies <span className="font-medium text-orange-600">refusés</span>
+							Cookies <span className="text-warning font-medium">refusés</span>
 						</>
 					)}
 				</p>
@@ -62,8 +62,8 @@ export function CookiePreferences() {
 
 			{/* Message de confirmation */}
 			{saved && (
-				<div className="rounded-md border border-green-200 bg-green-50 p-3" role="status">
-					<p className="text-sm text-green-800">Vos préférences ont été enregistrées</p>
+				<div className="border-success/30 bg-success/10 rounded-md border p-3" role="status">
+					<p className="text-success text-sm">Vos préférences ont été enregistrées</p>
 				</div>
 			)}
 

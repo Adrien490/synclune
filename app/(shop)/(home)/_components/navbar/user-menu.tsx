@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, LayoutDashboard, LogOut, Package, Settings, User } from "lucide-react";
+import { LayoutDashboard, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
@@ -18,34 +18,34 @@ import { cn } from "@/shared/utils/cn";
 import { iconButtonClassName } from "./navbar-styles";
 
 interface UserMenuProps {
-	isLoggedIn: boolean;
 	isAdmin?: boolean;
 	userName?: string | null;
 	userEmail?: string | null;
 }
 
-export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuProps) {
+/**
+ * Menu de la navbar boutique — **réservé à l'administratrice connectée**.
+ *
+ * Retrait de l'espace client (2026-07-31) : il n'y a plus de compte client, donc
+ * plus rien à proposer à un visiteur. Deux choses ont disparu :
+ *
+ * - le **lien « Se connecter »** de la branche non connectée. Envoyer un visiteur
+ *   sur `/connexion` n'a plus de sens : il ne peut ni s'inscrire, ni avoir de
+ *   commandes. Il consulte sa commande via le lien de suivi de son email de
+ *   confirmation (`/suivi-commande`, token HMAC).
+ * - les trois entrées client (**Mes commandes**, **Mes favoris**, **Paramètres**).
+ *   Les favoris restent joignables par leur icône dédiée dans la navbar, qui ne
+ *   dépend d'aucune session.
+ *
+ * Ce qui reste est ce dont l'admin a besoin depuis la vitrine : rejoindre `/admin`
+ * et se déconnecter. Le composant rend donc `null` pour tout le monde d'autre —
+ * y compris une session non-admin héritée, qui n'aurait aucune destination.
+ */
+export function UserMenu({ isAdmin, userName, userEmail }: UserMenuProps) {
 	const [logoutOpen, setLogoutOpen] = useState(false);
 
-	if (!isLoggedIn) {
-		return (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<Link
-						href={ROUTES.AUTH.SIGN_IN}
-						className={cn("hidden sm:inline-flex", iconButtonClassName)}
-						aria-label="Se connecter"
-					>
-						<User
-							size={20}
-							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
-							aria-hidden="true"
-						/>
-					</Link>
-				</TooltipTrigger>
-				<TooltipContent className="hidden lg:block">Se connecter</TooltipContent>
-			</Tooltip>
-		);
+	if (!isAdmin) {
+		return null;
 	}
 
 	return (
@@ -54,7 +54,7 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<DropdownMenuTrigger
-							aria-label="Mon compte"
+							aria-label="Menu administration"
 							className={cn("hidden sm:inline-flex", iconButtonClassName)}
 						>
 							<User
@@ -64,7 +64,7 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 							/>
 						</DropdownMenuTrigger>
 					</TooltipTrigger>
-					<TooltipContent className="hidden lg:block">Mon compte</TooltipContent>
+					<TooltipContent className="hidden lg:block">Administration</TooltipContent>
 				</Tooltip>
 				<DropdownMenuContent
 					align="end"
@@ -88,33 +88,10 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 							<DropdownMenuSeparator />
 						</>
 					)}
-					{isAdmin && (
-						<>
-							<DropdownMenuItem asChild>
-								<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer">
-									<LayoutDashboard aria-hidden="true" />
-									<span>Tableau de bord admin</span>
-								</Link>
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-						</>
-					)}
 					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.ORDERS} prefetch={null} className="cursor-pointer">
-							<Package aria-hidden="true" />
-							<span>Mes commandes</span>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.FAVORITES} prefetch={null} className="cursor-pointer">
-							<Heart aria-hidden="true" />
-							<span>Mes favoris</span>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.SETTINGS} prefetch={null} className="cursor-pointer">
-							<Settings aria-hidden="true" />
-							<span>Paramètres</span>
+						<Link href={ROUTES.ADMIN.DASHBOARD} prefetch={null} className="cursor-pointer">
+							<LayoutDashboard aria-hidden="true" />
+							<span>Tableau de bord admin</span>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />

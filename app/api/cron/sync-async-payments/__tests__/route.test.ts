@@ -20,6 +20,19 @@ const {
 	mockSendAdminCronFailedAlert: vi.fn(),
 }));
 
+// `withCronGuard` applique un plafond d'invocation par IP (audit rate limiting
+// 2026-07-31). Deux mocks nécessaires ici :
+//  - `next/headers` : `headers()` throw hors scope de requête ;
+//  - `checkRateLimit` : le store est un Map de module, donc PARTAGÉ entre les cas
+//    de ce fichier. Avec le vrai compteur (10/min), le 11ᵉ `GET()` de la suite
+//    repartait en 429 sans jamais atteindre le handler — des tests d'alerte admin
+//    qui échouaient sur « 0 appel », loin de leur sujet.
+vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
+vi.mock("@/shared/lib/rate-limit", () => ({
+	checkRateLimit: vi.fn(async () => ({ success: true, remaining: 9, limit: 10, reset: 0 })),
+	getClientIp: vi.fn(async () => "10.0.0.1"),
+}));
+
 vi.mock("@/modules/cron/lib/verify-cron", () => ({
 	verifyCronRequest: mockVerifyCronRequest,
 	cronTimer: mockCronTimer,

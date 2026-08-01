@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 		const headersList = await headers();
 		const ip = await getClientIp(headersList);
 		const rateLimit = await checkRateLimit(`ip:${ip ?? "unknown"}`, {
+			name: "csp-report",
 			limit: 20,
 			windowMs: 60_000,
 		});

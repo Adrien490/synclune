@@ -11,15 +11,16 @@ export default function robots(): MetadataRoute.Robots {
 			{
 				userAgent: "*",
 				allow: "/",
+				// `/commandes/`, `/parametres/` et `/inscription` ont disparu de cette
+				// liste avec les routes elles-mêmes (retrait de l'espace client
+				// 2026-07-31) ; `/suivi-commande` s'y ajoute — c'est une URL nominative
+				// porteuse d'un token, elle ne doit jamais être explorée.
 				disallow: [
 					"/api/",
 					"/admin/",
-					"/commandes/",
 					"/favoris/",
-					"/adresses/",
-					"/parametres/",
+					"/suivi-commande",
 					"/connexion",
-					"/inscription",
 					"/mot-de-passe-oublie",
 					"/verifier-email",
 					"/reinitialiser-mot-de-passe",

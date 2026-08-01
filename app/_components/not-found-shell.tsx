@@ -1,6 +1,5 @@
 "use client";
 
-import { ParticleBackgroundError, RICH_ERROR_SHAPES } from "@/shared/components/animations";
 import { trackEvent } from "@/shared/lib/analytics/track";
 import * as Sentry from "@sentry/nextjs";
 import type { ReactNode } from "react";
@@ -11,9 +10,9 @@ interface NotFoundShellProps {
 	errorCode?: "404" | "403" | "401";
 	/**
 	 * `page` (défaut) : coquille autonome — rend son propre `<main>` plein écran
-	 * avec fond animé. Pour les segments dont le layout ne fournit pas de `<main>`.
+	 * avec fond dégradé. Pour les segments dont le layout ne fournit pas de `<main>`.
 	 *
-	 * `inset` : rend une `<section>` sans `min-h-dvh` ni fond animé, pour les
+	 * `inset` : rend une `<section>` sans `min-h-dvh` ni fond dégradé, pour les
 	 * segments dont le layout fournit déjà un `<main>` et un fond (ex.
 	 * `app/suivi-commande/layout.tsx`). Évite un `<main>` imbriqué et une hauteur
 	 * cumulée supérieure au viewport.
@@ -48,7 +47,6 @@ export function NotFoundShell({
 
 	return (
 		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-dvh items-center justify-center bg-linear-to-br px-4 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
-			<ParticleBackgroundError count={8} shape={RICH_ERROR_SHAPES} />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">{children}</div>
 		</main>
 	);

@@ -80,60 +80,83 @@ vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({
 
 import { UserMenu } from "./user-menu";
 
-describe("UserMenu (desktop navbar)", () => {
+describe("UserMenu (desktop navbar) — réservé à l'admin", () => {
 	afterEach(cleanup);
 
-	it("renders simple sign-in link when not logged in", () => {
-		render(<UserMenu isLoggedIn={false} />);
-		const link = screen.getByRole("link", { name: /se connecter/i });
-		expect(link).toHaveAttribute("href", "/connexion");
-		expect(screen.queryByTestId("dropdown-root")).not.toBeInTheDocument();
+	/**
+	 * Garde du retrait de l'espace client (2026-07-31).
+	 *
+	 * Le composant rendait un lien « Se connecter » à tout visiteur non connecté.
+	 * Sans compte client, cette page est un cul-de-sac : pas d'inscription, pas de
+	 * commandes. Le seul suivi de commande passe par le lien tokenisé de l'email de
+	 * confirmation.
+	 */
+	it("ne rend rien pour un visiteur non connecté", () => {
+		const { container } = render(<UserMenu />);
+
+		expect(container).toBeEmptyDOMElement();
+		expect(screen.queryByRole("link", { name: /se connecter/i })).toBeNull();
 	});
 
-	it("renders dropdown trigger with aria-label when logged in", () => {
-		render(<UserMenu isLoggedIn={true} />);
-		const trigger = screen.getByTestId("dropdown-trigger");
-		expect(trigger).toHaveAttribute("aria-label", "Mon compte");
+	/**
+	 * Une session non-admin ne peut plus exister par un chemin applicatif
+	 * (`disableSignUp` + pas d'OAuth), mais une ligne héritée le permet encore. Elle
+	 * n'a aucune destination dans ce menu → on ne le monte pas.
+	 */
+	it("ne rend rien pour une session non-admin", () => {
+		const { container } = render(<UserMenu isAdmin={false} userName="Alice" />);
+
+		expect(container).toBeEmptyDOMElement();
 	});
 
-	it("renders user name and email in label when provided", () => {
-		render(<UserMenu isLoggedIn={true} userName="Alice" userEmail="alice@example.com" />);
+	it("expose un déclencheur libellé « Menu administration » pour l'admin", () => {
+		render(<UserMenu isAdmin />);
+
+		expect(screen.getByTestId("dropdown-trigger")).toHaveAttribute(
+			"aria-label",
+			"Menu administration",
+		);
+	});
+
+	it("affiche le nom et l'email quand ils sont fournis", () => {
+		render(<UserMenu isAdmin userName="Alice" userEmail="alice@example.com" />);
+
 		expect(screen.getByText("Alice")).toBeInTheDocument();
 		expect(screen.getByText("alice@example.com")).toBeInTheDocument();
 	});
 
-	it("hides admin dashboard item when user is not admin", () => {
-		render(<UserMenu isLoggedIn={true} />);
-		expect(screen.queryByText(/tableau de bord admin/i)).not.toBeInTheDocument();
-	});
+	it("mène au tableau de bord admin", () => {
+		render(<UserMenu isAdmin />);
 
-	it("shows admin dashboard link when user is admin", () => {
-		render(<UserMenu isLoggedIn={true} isAdmin />);
-		const adminLink = screen.getByRole("link", { name: /tableau de bord admin/i });
-		expect(adminLink).toHaveAttribute("href", "/admin");
-	});
-
-	it("renders core account links", () => {
-		render(<UserMenu isLoggedIn={true} />);
-		expect(screen.getByRole("link", { name: /mes commandes/i })).toHaveAttribute(
+		expect(screen.getByRole("link", { name: /tableau de bord admin/i })).toHaveAttribute(
 			"href",
-			"/commandes",
-		);
-		expect(screen.getByRole("link", { name: /mes favoris/i })).toHaveAttribute("href", "/favoris");
-		expect(screen.getByRole("link", { name: /paramètres/i })).toHaveAttribute(
-			"href",
-			"/parametres",
+			"/admin",
 		);
 	});
 
-	it("opens logout dialog when logout item is selected", () => {
-		render(<UserMenu isLoggedIn={true} />);
+	/**
+	 * Les trois entrées client (« Mes commandes », « Mes favoris », « Paramètres »)
+	 * ont disparu avec leurs routes. Les favoris restent joignables par leur icône
+	 * dédiée dans la navbar, qui ne dépend d'aucune session.
+	 */
+	it("n'expose plus aucune entrée d'espace client", () => {
+		render(<UserMenu isAdmin />);
+
+		expect(screen.queryByRole("link", { name: /mes commandes/i })).toBeNull();
+		expect(screen.queryByRole("link", { name: /paramètres/i })).toBeNull();
+	});
+
+	it("ouvre le dialogue de déconnexion au choix de l'entrée", () => {
+		render(<UserMenu isAdmin />);
+
 		const logoutItem = screen
 			.getAllByTestId("dropdown-item")
 			.find((el) => /se déconnecter/i.test(String(el.textContent)));
 		expect(logoutItem).toBeDefined();
 		if (!logoutItem) throw new Error("logout item missing");
+
 		fireEvent.click(logoutItem);
+
 		expect(screen.getByTestId("logout-dialog-open")).toBeInTheDocument();
 	});
 });

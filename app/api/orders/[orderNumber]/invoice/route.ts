@@ -15,7 +15,7 @@ import {
 	orderNumberParamSchema,
 	invoiceTokenSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
-import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
 import { isInvoiceOwnerErased } from "@/modules/orders/utils/invoice-access-guard";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
 import { getSession } from "@/modules/auth/lib/get-current-session";
@@ -46,7 +46,7 @@ const UPLOADTHING_FETCH_TIMEOUT_MS = 5_000;
  * lui, est fail-closed — cf. `app/api/admin/orders/export/route.ts`.)
  *
  * La source distingue :
- * - ADMIN : session admin (re-vérifiée DB côté caller via session.user.role)
+ * - ADMIN : session admin, re-vérifiée en base par `isVerifiedAdmin()`
  * - CUSTOMER : owner session ou guest token (`verifyInvoiceAccessToken`)
  * - SYSTEM : devrait être inatteignable ici, garde-fou
  *
@@ -121,15 +121,18 @@ export async function GET(
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// EINV-SEC-008 / EINV-SEC-001 : re-vérification DB du rôle admin (cookie-cache
-	// Better Auth stale jusqu'à ~5 min). Helper partagé avec les routes avoir.
-	const isAdmin = await resolveInvoiceActorIsAdmin(session, "invoice-route");
+	// EINV-SEC-008 / EINV-SEC-001 : re-vérification DB du rôle admin (le cookie-cache
+	// Better Auth est stale jusqu'à AUTH_SESSION_CONFIG.cookieCache.maxAge). Passe par
+	// le helper d'auth partagé — il filtre aussi `suspendedAt` et `accountStatus`, pas
+	// seulement le rôle.
+	const isAdmin = await isVerifiedAdmin(session, "invoice-route");
 
 	// Rate limit: PDF generation is CPU-intensive.
 	// EINV-SEC-004 : admin n'est PLUS bypassé — quota large 200/h anti-exfiltration interne,
 	// avec Sentry warning à 80% du quota pour alerte proactive.
 	// EINV-SEC-010 : token auth (guest) rate-limit by IP, déjà en place.
 	const headersList = await headers();
+	const clientIp = await getClientIp(headersList);
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
 		: ORDER_LIMITS.INVOICE_DOWNLOAD;
@@ -137,8 +140,13 @@ export async function GET(
 		? isAdmin
 			? `admin-invoice:${session.user.id}`
 			: getRateLimitIdentifier(session.user.id)
-		: `invoice-token:${(await getClientIp(headersList)) ?? "unknown"}`;
-	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig);
+		: `invoice-token:${clientIp ?? "unknown"}`;
+	// ⚠️ 3ᵉ argument OBLIGATOIRE : sans lui `effectiveIp` vaut `null` et whitelist,
+	// blacklist ET plafond global 100/min/IP sont tous court-circuités. Le préfixe
+	// `invoice-token:` défait aussi l'extraction auto de `startsWith("ip:")`, donc
+	// passer l'IP explicitement est le SEUL moyen de garder le plafond transverse
+	// sur l'opération la plus coûteuse en CPU de l'app. Audit rate limiting 2026-07-31.
+	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig, clientIp);
 	if (!rateCheck.success) {
 		if (isAdmin) {
 			Sentry.captureMessage("admin-invoice-download-rate-limited", {
@@ -204,7 +212,16 @@ export async function GET(
 		});
 	}
 
-	if (order.paymentStatus !== "PAID") {
+	// Une facture n'existe que pour une commande ENCAISSÉE (Art. 289-I) — miroir de
+	// la garde interne de persistInvoiceNumber. Refuser seulement « jamais
+	// encaissée » : un remboursement ne retire pas le droit à la facture (partiel :
+	// facture toujours valide ; total : facture VOIDED servie avec le bandeau
+	// « FACTURE ANNULÉE », branche isVoidedInvoice plus bas). L'ancienne garde
+	// `paymentStatus !== "PAID"` rendait la facture archivée inaccessible dès
+	// PARTIALLY_REFUNDED/REFUNDED — et la branche VOIDED inatteignable, puisque
+	// voidInvoice n'est appelé que sur des commandes passées REFUNDED/FAILED
+	// (audit « Admin commandes » 2026-08-01, P1-A).
+	if (order.paidAt == null && order.paymentStatus !== "PAID") {
 		return new Response("Facture non disponible pour cette commande", {
 			status: 400,
 		});

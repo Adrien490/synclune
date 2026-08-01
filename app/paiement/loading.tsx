@@ -189,7 +189,7 @@ export default function CheckoutLoading() {
 
 								{/* Stripe PaymentElement placeholder — min-h identique à
 								    `PaymentSectionSkeleton` (CLS) */}
-								<div className="min-h-[360px] animate-pulse space-y-4 rounded-xl border p-6">
+								<div className="min-h-[360px] space-y-4 rounded-xl border p-6 motion-safe:animate-pulse">
 									<Skeleton className="h-4 w-40" />
 									<Skeleton className="h-11 w-full rounded" />
 									<div className="grid grid-cols-2 gap-4">

@@ -14,8 +14,9 @@ import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { ROUTES } from "@/shared/constants/urls";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateLong } from "@/shared/utils/dates";
-import { Clock, Heart, Home, Package, Sparkles, TruckIcon, UserPlus } from "lucide-react";
+import { Clock, Heart, Package, Sparkles, TruckIcon } from "lucide-react";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { buildOrderTrackingUrl } from "@/modules/orders/utils/build-order-tracking-url";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -325,54 +326,26 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 								</Fade>
 							</section>
 
-							{/* Actions */}
+							{/*
+							 * Actions — un seul chemin de suivi depuis le retrait de l'espace
+							 * client (2026-07-31). Le bouton était gaté sur `session` : « Suivre
+							 * ma commande » vers `/commandes/<n°>` pour un client connecté,
+							 * « Retour à l'accueil » pour un invité. Toute commande étant
+							 * désormais un achat invité, le lien tokenisé `/suivi-commande` est
+							 * la seule destination — et c'est exactement celui de l'email de
+							 * confirmation, donc les deux surfaces restent cohérentes.
+							 */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-								{session ? (
-									<Button asChild size="lg" className="flex-1">
-										<Link href={ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}>
-											<Package className="mr-2 size-4" />
-											Suivre ma commande
-										</Link>
-									</Button>
-								) : (
-									<Button asChild size="lg" className="flex-1">
-										<Link href={ROUTES.SHOP.HOME}>
-											<Home className="mr-2 size-4" />
-											Retour à l&apos;accueil
-										</Link>
-									</Button>
-								)}
+								<Button asChild size="lg" className="flex-1">
+									<Link href={buildOrderTrackingUrl(order)}>
+										<Package className="mr-2 size-4" />
+										Suivre ma commande
+									</Link>
+								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
 									<Link href={ROUTES.SHOP.PRODUCTS}>Continuer mes achats</Link>
 								</Button>
 							</div>
-
-							{/* Guest account creation CTA (Baymard: post-purchase account creation) */}
-							{!session && (
-								<Card className="rounded-xl border-dashed">
-									<CardContent className="flex items-start gap-4 p-4">
-										<div
-											aria-hidden="true"
-											className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-full"
-										>
-											<UserPlus className="text-primary size-5" />
-										</div>
-										<div className="space-y-2">
-											<h2 className="font-semibold">Crée ton compte pour suivre ta commande</h2>
-											<p className="text-muted-foreground text-sm">
-												Accède au suivi de ta commande, enregistre tes adresses et simplifie tes
-												prochains achats.
-											</p>
-											<Button asChild variant="outline" size="sm">
-												<Link href={ROUTES.AUTH.SIGN_UP}>
-													<UserPlus className="size-4" />
-													Créer mon compte
-												</Link>
-											</Button>
-										</div>
-									</CardContent>
-								</Card>
-							)}
 						</CardContent>
 					</Card>
 

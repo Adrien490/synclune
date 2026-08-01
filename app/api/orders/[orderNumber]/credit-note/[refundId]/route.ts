@@ -6,14 +6,15 @@ import {
 	renderRefundCreditNotePdf,
 } from "@/modules/refunds/services/render-refund-credit-note.service";
 import { createOrderAudit } from "@/modules/orders/utils/order-audit";
-import { resolveInvoiceActorIsAdmin } from "@/modules/orders/utils/resolve-invoice-admin";
+import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
 import {
 	orderNumberParamSchema,
 	refundIdParamSchema,
 } from "@/modules/orders/schemas/order-route-params.schema";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { GET_ORDER_SELECT_CUSTOMER } from "@/modules/orders/constants/order.constants";
-import { checkRateLimit, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
+import { headers } from "next/headers";
 import { ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { logger } from "@/shared/lib/logger";
 import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
@@ -88,8 +89,9 @@ export async function GET(
 		return new Response("Non autorisé", { status: 401 });
 	}
 
-	// EINV-SEC-001 : re-vérification DB du rôle admin (cookie-cache stale ~5 min).
-	const isAdmin = await resolveInvoiceActorIsAdmin(session, "credit-note-route");
+	// EINV-SEC-001 : re-vérification DB du rôle admin — le cookie-cache Better Auth
+	// est stale, et le filtre couvre aussi `suspendedAt` / `accountStatus`.
+	const isAdmin = await isVerifiedAdmin(session, "credit-note-route");
 
 	const rateLimitConfig = isAdmin
 		? ORDER_LIMITS.ADMIN_INVOICE_DOWNLOAD
@@ -97,7 +99,11 @@ export async function GET(
 	const rateLimitIdentifier = isAdmin
 		? `admin-credit-note:${session.user.id}`
 		: getRateLimitIdentifier(session.user.id);
-	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig);
+	// 3ᵉ argument obligatoire — cf. `/invoice` : l'identifiant est ici toujours
+	// user-scopé, donc sans IP explicite le plafond global 100/min/IP ne s'applique
+	// jamais et un compte unique peut saturer le CPU de génération PDF.
+	const clientIp = await getClientIp(await headers());
+	const rateCheck = await checkRateLimit(rateLimitIdentifier, rateLimitConfig, clientIp);
 	if (!rateCheck.success) {
 		return new Response("Trop de requêtes. Veuillez réessayer plus tard.", {
 			status: 429,

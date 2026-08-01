@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/shared/components/ui/card";
 import { getCart } from "@/modules/cart/data/get-cart";
 import { validateCart } from "@/modules/cart/actions/validate-cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
-import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { ShoppingBag, TriangleAlert } from "lucide-react";
 import Link from "next/link";
@@ -28,17 +27,11 @@ export const metadata: Metadata = {
  * - Détection automatique utilisateur connecté/guest
  * - Validation du panier (stock, disponibilité)
  * - Pré-remplissage des données si utilisateur connecté
- * - Chargement des adresses enregistrées pour utilisateurs connectés
  * - Création de compte optionnelle pour les guests
  * - Redirection vers Stripe Checkout après validation
  */
 export default async function CheckoutPage() {
-	// Charger en parallèle (getUserAddresses retourne null si non authentifié)
-	const [cart, session, addresses] = await Promise.all([
-		getCart(),
-		getSession(),
-		getUserAddresses(),
-	]);
+	const [cart, session] = await Promise.all([getCart(), getSession()]);
 
 	// Empty cart — render a friendly empty state instead of a silent redirect.
 	// Cart is a Sheet, not a route, so we surface the situation here with clear next steps.
@@ -165,7 +158,7 @@ export default async function CheckoutPage() {
 							</div>
 						</div>
 					</div>
-					<CheckoutForm cart={cart} session={session} addresses={addresses} />
+					<CheckoutForm cart={cart} session={session} />
 				</div>
 			</section>
 		</div>

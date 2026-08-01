@@ -99,7 +99,7 @@ export default async function CookiesPage() {
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>
 									<strong>cart_session</strong> : Identifiant de panier visiteur - Créé{" "}
-									<span className="font-medium text-green-600">
+									<span className="text-success font-medium">
 										uniquement lors de l'ajout d'un produit au panier
 									</span>
 									. Durée : 7 jours (httpOnly, secure). Stocke uniquement un identifiant pour
@@ -108,7 +108,7 @@ export default async function CookiesPage() {
 								</li>
 								<li>
 									<strong>wishlist_session</strong> : Identifiant de wishlist visiteur - Créé{" "}
-									<span className="font-medium text-green-600">
+									<span className="text-success font-medium">
 										uniquement lors de l'ajout d'un produit à votre wishlist
 									</span>
 									. Durée : 30 jours (httpOnly, secure, conforme RGPD). Stocke uniquement un
@@ -116,22 +116,69 @@ export default async function CookiesPage() {
 									wishlist n'est stocké dans ce cookie.
 								</li>
 								<li>
-									<strong>better-auth.session_token</strong> : Jeton de session utilisateur - Créé{" "}
-									<span className="font-medium text-green-600">
-										uniquement lors de votre connexion ou inscription
+									<strong>better-auth.session_token</strong> : Jeton de session - Créé{" "}
+									<span className="text-success font-medium">
+										uniquement lors d&apos;une connexion (accès réservé à l&apos;administration de
+										la boutique)
 									</span>
-									. Durée : 7 jours (httpOnly, secure). Maintient votre connexion active et
-									sécurisée.
+									. Durée : 7 jours (httpOnly, secure). Maintient la connexion active et sécurisée.
 								</li>
 								<li>
 									<strong>better-auth.session_data</strong> : Cache de session - Créé{" "}
-									<span className="font-medium text-green-600">
-										uniquement si vous êtes connecté
-									</span>
+									<span className="text-success font-medium">uniquement si vous êtes connecté</span>
 									. Durée : 5 minutes (httpOnly, secure). Améliore les performances en évitant de
 									requêter la base de données à chaque requête.
 								</li>
 							</ul>
+
+							<h3 className="mt-6 text-lg font-medium sm:text-xl">
+								Cookies de préférence et de confort (toujours actifs)
+							</h3>
+							<p>
+								Ces cookies mémorisent vos choix d&apos;affichage et facilitent votre navigation.
+								Ils sont déposés par notre site uniquement (httpOnly, secure) et ne servent à aucun
+								suivi publicitaire.
+							</p>
+							<ul className="ml-4 list-inside list-disc space-y-2">
+								<li>
+									<strong>recent-products</strong> : Produits récemment consultés - Mémorise les
+									dernières fiches produit visitées pour vous les proposer en raccourci. Durée : 30
+									jours.
+								</li>
+								<li>
+									<strong>recent-searches</strong> : Recherches récentes - Mémorise vos dernières
+									recherches pour vous les resuggérer. Durée : 30 jours.
+								</li>
+								<li>
+									<strong>fab-hidden-*</strong> : Boutons flottants masqués - Mémorise votre choix
+									de masquer un bouton d&apos;action flottant. Durée : 1 an.
+								</li>
+								<li>
+									<strong>announcement_dismissed_*</strong> : Bandeau d&apos;annonce fermé -
+									Mémorise la fermeture d&apos;un bandeau d&apos;annonce pour ne pas le réafficher.
+									Durée : 24 heures.
+								</li>
+							</ul>
+
+							<h3 className="mt-6 text-lg font-medium sm:text-xl">
+								Cookies de paiement sécurisé (Stripe)
+							</h3>
+							<p>
+								Sur la page de paiement, notre prestataire <strong>Stripe</strong> dépose ses
+								propres cookies (<strong>__stripe_mid</strong>, durée 1 an, et{" "}
+								<strong>__stripe_sid</strong>, durée 30 minutes) nécessaires au traitement sécurisé
+								du paiement et à la <strong>prévention de la fraude</strong>. Ils ne sont déposés
+								que lors du chargement du module de paiement. Pour en savoir plus, consultez la{" "}
+								<a
+									href="https://stripe.com/fr/legal/cookies-policy"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="underline"
+								>
+									politique cookies de Stripe
+								</a>
+								.
+							</p>
 
 							<h3 className="mt-6 text-lg font-medium sm:text-xl">Stockage local (LocalStorage)</h3>
 							<p>
@@ -273,7 +320,7 @@ export default async function CookiesPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 15 mars 2026
+							Dernière mise à jour : 1er août 2026
 						</p>
 					</div>
 				</div>

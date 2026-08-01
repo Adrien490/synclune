@@ -241,8 +241,6 @@
 		}
 	}
 
-	/* Hero idle float (4 keyframes) moved to floating-images/scroll-driven.css — Hero-only, not loaded on other routes. */
-
 	/* ==========================================
 	   GLITTER TWINKLE — GlitterSparkles component
 	   ========================================== */
@@ -393,8 +391,6 @@
 		.product-item {
 			animation: none;
 		}
-
-		/* hero-idle-float reduced-motion override moved to floating-images/scroll-driven.css */
 
 		.animate-glitter-twinkle {
 			animation-name: glitter-twinkle-reduced;

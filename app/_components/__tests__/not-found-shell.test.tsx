@@ -14,11 +14,6 @@ vi.mock("@/shared/lib/analytics/track", () => ({
 	trackEvent: mockTrackEvent,
 }));
 
-vi.mock("@/shared/components/animations", () => ({
-	ParticleBackgroundError: () => <div data-testid="particles" />,
-	RICH_ERROR_SHAPES: ["heart", "diamond", "circle"] as const,
-}));
-
 import { NotFoundShell } from "../not-found-shell";
 
 describe("NotFoundShell", () => {
@@ -49,7 +44,6 @@ describe("NotFoundShell", () => {
 		expect(main.className).toContain("min-h-dvh");
 		expect(main.className).toContain("safe-area-inset-bottom");
 		expect(screen.getByTestId("child")).toBeInTheDocument();
-		expect(screen.getByTestId("particles")).toBeInTheDocument();
 	});
 
 	it("emits Sentry breadcrumb and Analytics event with default 404 code", () => {

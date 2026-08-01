@@ -28,17 +28,16 @@ export default function Unauthorized() {
 				}
 				description={
 					<p className="text-muted-foreground text-lg md:text-xl">
-						Vous devez être connecté pour accéder à cette page. Connectez-vous ou créez un compte
-						pour continuer.
+						Cette page est réservée à l&apos;administration de la boutique.
 					</p>
 				}
 				actions={
 					<div className="flex flex-col justify-center gap-4 sm:flex-row">
 						<Button asChild size="lg">
-							<Link href={ROUTES.AUTH.SIGN_IN}>Se connecter</Link>
+							<Link href={ROUTES.SHOP.HOME}>Retour à la boutique</Link>
 						</Button>
 						<Button asChild variant="secondary" size="lg">
-							<Link href={ROUTES.AUTH.SIGN_UP}>Créer un compte</Link>
+							<Link href={ROUTES.AUTH.SIGN_IN}>Se connecter</Link>
 						</Button>
 					</div>
 				}

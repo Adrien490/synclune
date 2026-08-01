@@ -227,9 +227,12 @@ export default async function RetractationPage() {
 												accessoires éventuels.
 											</li>
 											<li>
-												<strong>Remboursement</strong> : Nous procéderons au remboursement dans un
-												délai de 14 jours suivant la réception des articles retournés, par le même
-												moyen de paiement que celui utilisé lors de l'achat.
+												<strong>Remboursement</strong> : Nous procéderons au remboursement de la
+												totalité des sommes versées, y compris les frais de livraison initiaux (mode
+												de livraison standard), dans un délai de 14 jours suivant la réception des
+												articles retournés ou la preuve de leur expédition (article L221-24 du Code
+												de la consommation), par le même moyen de paiement que celui utilisé lors de
+												l'achat.
 											</li>
 										</ol>
 									</AlertDescription>
@@ -257,7 +260,7 @@ export default async function RetractationPage() {
 							<div className="space-y-4">
 								<h2 className="text-xl font-semibold sm:text-2xl">Informations complémentaires</h2>
 
-								<div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-6">
+								<div className="border-info/30 bg-info/10 space-y-3 rounded-lg border p-6">
 									<p className="text-sm">
 										<strong>Adresse de retour :</strong>
 									</p>
@@ -309,7 +312,7 @@ export default async function RetractationPage() {
 							Formulaire conforme à l'annexe de l'article R221-1 du Code de la consommation
 						</p>
 						<p className="text-muted-foreground pt-2 text-center text-xs italic">
-							Dernière mise à jour : 10 mars 2026
+							Dernière mise à jour : 1er août 2026
 						</p>
 					</div>
 				</div>

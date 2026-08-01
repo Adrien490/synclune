@@ -81,7 +81,7 @@ export default function CheckoutReturnError({
 									size="lg"
 									onClick={() => triggerHaptic("light")}
 								>
-									<Link href="/commandes">Voir mes commandes</Link>
+									<Link href="/">Retour à la boutique</Link>
 								</Button>
 							</div>
 							<p className="text-muted-foreground inline-flex flex-wrap items-center justify-center gap-x-1 text-sm">

@@ -1,4 +1,3 @@
-import { HeroFloatingImagesSkeleton } from "./hero-floating-images-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
@@ -13,9 +12,6 @@ export function HeroSectionSkeleton() {
 				className="absolute inset-0 bg-linear-to-br from-pink-50/20 via-transparent to-amber-50/20"
 				aria-hidden="true"
 			/>
-
-			{/* Floating image placeholders — diamond layout, matches hero-floating-images breakpoints */}
-			<HeroFloatingImagesSkeleton />
 
 			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				<div className="flex flex-col items-center">

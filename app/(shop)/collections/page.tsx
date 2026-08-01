@@ -1,6 +1,5 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { PageHeader } from "@/shared/components/page-header";
-import { ParticleBackground } from "@/shared/components/animations";
 import { CollectionGrid } from "@/modules/collections/components/collection-grid";
 import { CollectionGridSkeleton } from "@/modules/collections/components/collection-grid-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
@@ -78,9 +77,6 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 
 	return (
 		<div className="relative min-h-dvh">
-			{/* Background décoratif - Particules pour ambiance bijoux */}
-			<ParticleBackground className="fixed inset-0 z-0" />
-
 			<PageHeader
 				title="Les collections"
 				breadcrumbs={[{ label: "Collections", href: "/collections" }]}

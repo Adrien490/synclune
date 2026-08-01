@@ -141,8 +141,9 @@ export default async function CGVPage() {
 							<h3 className="text-lg font-medium sm:text-xl">4.4 Facturation</h3>
 							<p>
 								Conformément à la réglementation en vigueur, une facture est émise pour chaque
-								commande. Elle est accessible depuis votre espace client et jointe à l'email de
-								confirmation de commande.
+								commande. Elle est téléchargeable au format PDF via le lien inclus dans l'email de
+								confirmation de commande, ainsi que depuis la page de suivi de commande accessible
+								depuis ce même email.
 							</p>
 						</section>
 
@@ -412,7 +413,7 @@ export default async function CGVPage() {
 								<strong>gratuitement</strong> à un médiateur de la consommation en vue de la
 								résolution amiable du litige.
 							</p>
-							<div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+							<div className="border-info/30 bg-info/10 rounded-lg border p-6">
 								<p className="mb-3 font-medium">Coordonnées de notre médiateur :</p>
 								<div className="space-y-1 text-sm">
 									<p>
@@ -448,29 +449,15 @@ export default async function CGVPage() {
 								recours judiciaire.
 							</p>
 
+							{/*
+							 * Pas de renvoi à la plateforme européenne de règlement en ligne des
+							 * litiges (RLL/ODR) : elle a été supprimée le 20 juillet 2025 par le
+							 * règlement (UE) 2024/3228, qui abroge le règlement n°524/2013.
+							 * L'obligation d'en afficher le lien est tombée avec elle — la
+							 * médiation de la consommation (§11.2) demeure la voie extrajudiciaire.
+							 */}
 							<h3 className="text-lg font-medium sm:text-xl">
-								11.3 Plateforme de règlement en ligne des litiges
-							</h3>
-							<p>
-								Conformément au règlement UE n°524/2013, la Commission européenne met à disposition
-								une plateforme de règlement en ligne des litiges (RLL) à l'adresse suivante :{" "}
-								<a
-									href="https://ec.europa.eu/consumers/odr"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="underline"
-								>
-									https://ec.europa.eu/consumers/odr
-								</a>
-								. Notre adresse email de contact pour la plateforme est :{" "}
-								<a href={`mailto:${contactEmail}`} className="underline">
-									{contactEmail}
-								</a>
-								.
-							</p>
-
-							<h3 className="text-lg font-medium sm:text-xl">
-								11.4 Droit applicable et juridiction
+								11.3 Droit applicable et juridiction
 							</h3>
 							<p>
 								Les présentes CGV sont régies par le droit français. À défaut de résolution amiable
@@ -500,7 +487,7 @@ export default async function CGVPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 15 mars 2026
+							Dernière mise à jour : 1er août 2026
 						</p>
 					</div>
 				</div>

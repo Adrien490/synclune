@@ -4,11 +4,9 @@ import { NotFoundContent } from "@/app/_components/not-found-content";
 import { CopyButton } from "@/shared/components/copy-button";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
-import { ROUTES } from "@/shared/constants/urls";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import * as Sentry from "@sentry/nextjs";
 import { CircleAlert } from "lucide-react";
-import Link from "next/link";
 import { useEffect } from "react";
 
 /**
@@ -85,14 +83,6 @@ export default function CheckoutConfirmationError({
 									}}
 								>
 									Réessayer
-								</Button>
-								<Button
-									asChild
-									variant="secondary"
-									size="lg"
-									onClick={() => triggerHaptic("light")}
-								>
-									<Link href={ROUTES.ACCOUNT.ORDERS}>Voir mes commandes</Link>
 								</Button>
 							</div>
 							<p className="text-muted-foreground inline-flex flex-wrap items-center justify-center gap-x-1 text-sm">

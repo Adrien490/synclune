@@ -21,12 +21,6 @@ export default function ProductDetailLoading() {
 		>
 			<span className="sr-only">Chargement du produit…</span>
 
-			{/* Particle system placeholder */}
-			<div
-				className="from-primary/5 to-secondary/5 fixed inset-0 z-0 via-transparent"
-				aria-hidden="true"
-			/>
-
 			<div className="relative z-10">
 				{/* PageHeader Skeleton - Caché sur mobile comme le vrai PageHeader */}
 				<PageHeaderSkeleton hasDescription={false} className="hidden sm:block" />

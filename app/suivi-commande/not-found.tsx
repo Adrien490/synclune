@@ -55,15 +55,6 @@ export default function OrderTrackingNotFound() {
 								<Link href={`mailto:${BRAND.contact.email}`}>M&apos;écrire</Link>
 							</Button>
 						</div>
-						<p className="text-muted-foreground text-sm">
-							Tu as un compte ?{" "}
-							<Link
-								href={ROUTES.ACCOUNT.ORDERS}
-								className="text-foreground font-medium underline hover:no-underline"
-							>
-								Retrouve tes commandes ici
-							</Link>
-						</p>
 					</div>
 				}
 			/>

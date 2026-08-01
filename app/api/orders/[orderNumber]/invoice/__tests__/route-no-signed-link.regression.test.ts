@@ -230,9 +230,15 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 			await GET(makeReq(VALID_TOKEN), makeParams());
 
+			// Le 3ᵉ argument n'est PAS décoratif : sans lui `effectiveIp` vaut null et
+			// whitelist, blacklist ET plafond global 100/min/IP deviennent inertes — le
+			// préfixe `invoice-token:` défaisant aussi l'extraction auto `startsWith("ip:")`.
+			// Génération PDF = l'opération la plus coûteuse en CPU de l'app.
+			// Audit rate limiting 2026-07-31.
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
 				"invoice-token:203.0.113.42",
 				expect.objectContaining({ limit: 10 }),
+				"203.0.113.42",
 			);
 		});
 
@@ -243,7 +249,11 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 
 			await GET(makeReq(VALID_TOKEN), makeParams());
 
-			expect(mockCheckRateLimit).toHaveBeenCalledWith("invoice-token:unknown", expect.any(Object));
+			expect(mockCheckRateLimit).toHaveBeenCalledWith(
+				"invoice-token:unknown",
+				expect.any(Object),
+				null,
+			);
 		});
 	});
 
@@ -261,6 +271,7 @@ describe("@regression invoice-route-token-auth — EINV-TEST-024", () => {
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
 				"admin-invoice:admin-1",
 				expect.objectContaining({ limit: 200 }),
+				expect.anything(),
 			);
 		});
 	});

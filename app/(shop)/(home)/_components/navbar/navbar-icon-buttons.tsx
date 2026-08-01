@@ -12,25 +12,19 @@ import { iconButtonClassName } from "./navbar-styles";
 import { UserMenu } from "./user-menu";
 
 interface NavbarIconButtonsProps {
-	isLoggedIn: boolean;
 	isAdmin?: boolean;
 	userName?: string | null;
 	userEmail?: string | null;
 }
 
-export function NavbarIconButtons({
-	isLoggedIn,
-	isAdmin,
-	userName,
-	userEmail,
-}: NavbarIconButtonsProps) {
+export function NavbarIconButtons({ isAdmin, userName, userEmail }: NavbarIconButtonsProps) {
 	return (
 		<>
 			{/* Icône favoris (visible sur mobile et desktop) */}
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<Link
-						href={ROUTES.ACCOUNT.FAVORITES}
+						href={ROUTES.SHOP.FAVORITES}
 						className={cn("inline-flex", iconButtonClassName)}
 						aria-label="Accéder à mes favoris"
 					>
@@ -48,13 +42,8 @@ export function NavbarIconButtons({
 			{/* Recherche globale (desktop) — icône compacte sous lg, barre « Rechercher ⌘K » à partir de lg */}
 			<QuickSearchTrigger variant="bar" className="hidden sm:inline-flex" />
 
-			{/* Menu compte (dropdown si connecté, lien sinon) — desktop seulement */}
-			<UserMenu
-				isLoggedIn={isLoggedIn}
-				isAdmin={isAdmin}
-				userName={userName}
-				userEmail={userEmail}
-			/>
+			{/* Menu administration — rend `null` hors session admin (desktop seulement) */}
+			<UserMenu isAdmin={isAdmin} userName={userName} userEmail={userEmail} />
 
 			{/* Icône panier - Ouvre le cart sheet */}
 			<Tooltip>

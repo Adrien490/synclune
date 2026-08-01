@@ -1,7 +1,6 @@
 "use client";
 
 import { NotFoundContent } from "@/app/_components/not-found-content";
-import { ParticleBackgroundError, RICH_ERROR_SHAPES } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
@@ -20,7 +19,6 @@ export default function ShopError({
 
 	return (
 		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60vh] items-center justify-center bg-linear-to-br px-4">
-			<ParticleBackgroundError shape={RICH_ERROR_SHAPES} />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={

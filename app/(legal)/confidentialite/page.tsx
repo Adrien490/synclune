@@ -89,30 +89,29 @@ export default async function PrivacyPolicyPage() {
 
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">3. Données collectées</h2>
-							<h3 className="text-lg font-medium sm:text-xl">
-								3.1 Lors de la création d'un compte
-							</h3>
+							{/*
+							 * Plus de sous-section « création de compte » : la boutique n'a plus
+							 * d'espace client (2026-07-31) — tout le parcours d'achat est invité.
+							 * Nom, email et mot de passe ne sont donc plus collectés qu'au moment
+							 * de la commande (sans mot de passe), listés ci-dessous.
+							 */}
+							<h3 className="text-lg font-medium sm:text-xl">3.1 Lors d'une commande</h3>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>Nom et prénom</li>
 								<li>Adresse email</li>
-								<li>Mot de passe (haché et sécurisé)</li>
-							</ul>
-
-							<h3 className="text-lg font-medium sm:text-xl">3.2 Lors d'une commande</h3>
-							<ul className="ml-4 list-inside list-disc space-y-2">
-								<li>Adresse de livraison (nom, adresse postale, téléphone)</li>
+								<li>Adresse de livraison (adresse postale, téléphone)</li>
 								<li>Historique de commandes</li>
-								<li>Informations de paiement (via Stripe - voir section 3.4)</li>
+								<li>Informations de paiement (via Stripe - voir section 3.3)</li>
 							</ul>
 
-							<h3 className="text-lg font-medium sm:text-xl">3.3 Navigation sur le site</h3>
+							<h3 className="text-lg font-medium sm:text-xl">3.2 Navigation sur le site</h3>
 							<ul className="ml-4 list-inside list-disc space-y-2">
 								<li>Cookies techniques (panier, session)</li>
 								<li>Adresse IP</li>
 								<li>Données de navigation (pages visitées, durée)</li>
 							</ul>
 
-							<h3 className="text-lg font-medium sm:text-xl">3.4 Paiement</h3>
+							<h3 className="text-lg font-medium sm:text-xl">3.3 Paiement</h3>
 							<p>
 								<strong>Aucune donnée bancaire n'est stockée sur nos serveurs.</strong> Le paiement
 								est entièrement géré par notre prestataire <strong>Stripe</strong>, certifié PCI-DSS
@@ -169,7 +168,6 @@ export default async function PrivacyPolicyPage() {
 										<li>Neon (base de données PostgreSQL)</li>
 										<li>Resend (envoi d'emails transactionnels)</li>
 										<li>UploadThing (stockage des fichiers et images)</li>
-										<li>Google (authentification OAuth)</li>
 										<li>Sentry (monitoring d'erreurs et performance)</li>
 									</ul>
 								</li>
@@ -212,11 +210,11 @@ export default async function PrivacyPolicyPage() {
 									UploadThing applique des <strong>Clauses Contractuelles Types (CCT)</strong> et
 									s'engage à protéger les données conformément au RGPD.
 								</li>
-								<li>
-									<strong>Google (États-Unis) :</strong> authentification OAuth - Google participe
-									au <strong>Data Privacy Framework (DPF)</strong> UE-États-Unis et applique des
-									garanties conformes au RGPD.
-								</li>
+								{/*
+								 * Google (OAuth) retiré des destinataires et des transferts : les
+								 * `socialProviders` ont disparu avec l'espace client (2026-07-31) —
+								 * plus aucune donnée n'est transmise à Google.
+								 */}
 								<li>
 									<strong>Sentry (États-Unis) :</strong> monitoring d'erreurs et performance -
 									Functional Software Inc., San Francisco. Sentry applique des{" "}
@@ -238,7 +236,7 @@ export default async function PrivacyPolicyPage() {
 										Durée de conservation des différents types de données personnelles
 									</caption>
 									<thead>
-										<tr className="bg-gray-100">
+										<tr className="bg-muted">
 											<th scope="col" className="border border-gray-300 p-3 text-left">
 												Type de données
 											</th>
@@ -248,21 +246,25 @@ export default async function PrivacyPolicyPage() {
 										</tr>
 									</thead>
 									<tbody>
-										<tr>
-											<td className="border border-gray-300 p-3">Compte client</td>
-											<td className="border border-gray-300 p-3">Jusqu'à suppression du compte</td>
-										</tr>
+										{/*
+										 * Ligne « Compte client » retirée : plus d'espace client
+										 * (2026-07-31), aucun compte n'est créé pour les acheteurs.
+										 */}
 										<tr>
 											<td className="border border-gray-300 p-3">Commandes</td>
 											<td className="border border-gray-300 p-3">10 ans (obligation comptable)</td>
 										</tr>
 										<tr>
 											<td className="border border-gray-300 p-3">Panier visiteur</td>
-											<td className="border border-gray-300 p-3">7 jours après création</td>
+											<td className="border border-gray-300 p-3">
+												7 jours après la dernière interaction
+											</td>
 										</tr>
 										<tr>
 											<td className="border border-gray-300 p-3">Wishlist visiteur</td>
-											<td className="border border-gray-300 p-3">30 jours après création</td>
+											<td className="border border-gray-300 p-3">
+												30 jours après la dernière interaction
+											</td>
 										</tr>
 										<tr>
 											<td className="border border-gray-300 p-3">Cookies techniques</td>
@@ -282,13 +284,14 @@ export default async function PrivacyPolicyPage() {
 								<li>
 									<strong>Droit d'accès :</strong> obtenir une copie de vos données
 								</li>
+								{/*
+								 * Plus de renvoi vers `/parametres` : la boutique n'a plus d'espace
+								 * client (2026-07-31), donc plus d'auto-service de rectification.
+								 * Tous les droits s'exercent par le même canal — l'email de contact
+								 * indiqué plus bas, avec la même obligation de réponse sous 30 jours.
+								 */}
 								<li>
-									<strong>Droit de rectification :</strong> corriger des données inexactes. Modifiez
-									votre nom, email et adresses depuis votre{" "}
-									<Link href="/compte/parametres" className="underline">
-										espace personnel
-									</Link>
-									.
+									<strong>Droit de rectification :</strong> corriger des données inexactes
 								</li>
 								<li>
 									<strong>Droit à l'effacement :</strong> supprimer vos données (sauf obligations
@@ -372,16 +375,32 @@ export default async function PrivacyPolicyPage() {
 									wishlist en base de données.
 								</li>
 								<li>
-									<strong>better-auth.session_token :</strong> jeton de session utilisateur - Créé
-									uniquement lors de votre connexion ou inscription. Durée : 7 jours (httpOnly,
-									secure). Maintient votre authentification de manière sécurisée.
+									<strong>better-auth.session_token :</strong> jeton de session - Créé uniquement
+									lors d'une connexion (l'accès authentifié est réservé à l'administration de la
+									boutique). Durée : 7 jours (httpOnly, secure). Maintient l'authentification de
+									manière sécurisée.
 								</li>
 								<li>
-									<strong>better-auth.session_data :</strong> cache de session - Créé uniquement si
-									vous êtes connecté. Durée : 5 minutes (httpOnly, secure). Optimise les
+									<strong>better-auth.session_data :</strong> cache de session - Créé uniquement
+									pour une session connectée. Durée : 5 minutes (httpOnly, secure). Optimise les
 									performances en réduisant les requêtes base de données.
 								</li>
+								<li>
+									<strong>recent-products / recent-searches :</strong> produits consultés et
+									recherches récentes - confort de navigation. Durée : 30 jours (httpOnly, secure).
+								</li>
+								<li>
+									<strong>fab-hidden-* / announcement_dismissed_* :</strong> mémorisation de vos
+									choix d'affichage (bouton flottant masqué : 1 an ; bandeau d'annonce fermé : 24
+									heures) (httpOnly, secure).
+								</li>
 							</ul>
+							<p>
+								Sur la page de paiement, notre prestataire <strong>Stripe</strong> dépose en outre
+								ses propres cookies (<strong>__stripe_mid</strong>, 1 an ;{" "}
+								<strong>__stripe_sid</strong>, 30 minutes), nécessaires au traitement sécurisé du
+								paiement et à la prévention de la fraude.
+							</p>
 
 							<h3 className="mt-4 text-lg font-medium sm:text-xl">
 								9.2 Stockage local (LocalStorage)
@@ -471,7 +490,7 @@ export default async function PrivacyPolicyPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 15 mars 2026
+							Dernière mise à jour : 1er août 2026
 						</p>
 					</div>
 				</div>

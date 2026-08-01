@@ -44,48 +44,49 @@ export const metadata: Metadata = {
 	},
 };
 
+const legalPages = [
+	{
+		title: "Mentions légales",
+		description: "Identification de l'éditeur, hébergeur et directeur de publication",
+		href: "/mentions-legales",
+		icon: FileText,
+	},
+	{
+		title: "Conditions Générales de Vente",
+		description: "CGV, livraison, paiement, garanties et règlement des litiges",
+		href: "/cgv",
+		icon: Scale,
+	},
+	{
+		title: "Politique de confidentialité",
+		description: "Protection des données personnelles et respect du RGPD",
+		href: "/confidentialite",
+		icon: Shield,
+	},
+	{
+		title: "Gestion des cookies",
+		description: "Informations sur les cookies utilisés et gestion des préférences",
+		href: "/cookies",
+		icon: Cookie,
+	},
+	{
+		title: "Droit de rétractation",
+		description: "Formulaire type de rétractation (14 jours)",
+		href: "/retractation",
+		icon: RotateCcw,
+	},
+	{
+		title: "Accessibilité",
+		description: "Déclaration d'accessibilité et engagement pour un site accessible",
+		href: "/accessibilite",
+		icon: Eye,
+	},
+];
+
 export default async function LegalPage() {
 	"use cache";
 	cacheLife("reference");
 	cacheTag(STATIC_PAGES_CACHE_TAGS.LEGAL_HUB);
-	const legalPages = [
-		{
-			title: "Mentions légales",
-			description: "Identification de l'éditeur, hébergeur et directeur de publication",
-			href: "/mentions-legales",
-			icon: FileText,
-		},
-		{
-			title: "Conditions Générales de Vente",
-			description: "CGV, livraison, paiement, garanties et règlement des litiges",
-			href: "/cgv",
-			icon: Scale,
-		},
-		{
-			title: "Politique de confidentialité",
-			description: "Protection des données personnelles et respect du RGPD",
-			href: "/confidentialite",
-			icon: Shield,
-		},
-		{
-			title: "Gestion des cookies",
-			description: "Informations sur les cookies utilisés et gestion des préférences",
-			href: "/cookies",
-			icon: Cookie,
-		},
-		{
-			title: "Droit de rétractation",
-			description: "Formulaire type de rétractation (14 jours)",
-			href: "/retractation",
-			icon: RotateCcw,
-		},
-		{
-			title: "Accessibilité",
-			description: "Déclaration d'accessibilité et engagement pour un site accessible",
-			href: "/accessibilite",
-			icon: Eye,
-		},
-	];
 
 	const contactEmail = process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr";
 

@@ -62,7 +62,6 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 }));
 
 import { MenuSheetNav } from "./menu-sheet-nav";
-import { ROUTES } from "@/shared/constants/urls";
 
 afterEach(cleanup);
 
@@ -89,13 +88,13 @@ const baseNavItems = [
 		hasDropdown: true,
 	},
 	// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems.
-	{ href: "/commandes", label: "Mon compte", icon: "user" as const },
+	// Plus d'item compte : retrait de l'espace client (2026-07-31).
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];
 
 describe("MenuSheetNav", () => {
 	describe("sections", () => {
-		it("renders discover, creations, collections, and account sections", () => {
+		it("renders discover, creations, collections, and favorites sections", () => {
 			render(
 				<MenuSheetNav
 					navItems={baseNavItems}
@@ -108,7 +107,7 @@ describe("MenuSheetNav", () => {
 			expect(screen.getByText("Découvrir")).toBeInTheDocument();
 			expect(screen.getByText("Nos créations")).toBeInTheDocument();
 			expect(screen.getByText("Collections")).toBeInTheDocument();
-			expect(screen.getByText("Compte")).toBeInTheDocument();
+			expect(screen.getByText("Favoris")).toBeInTheDocument();
 		});
 
 		// "L'atelier" (ROUTES.SHOP.ABOUT) retiré temporairement de getMobileNavItems
@@ -183,24 +182,23 @@ describe("MenuSheetNav", () => {
 	});
 
 	describe("logged out", () => {
-		it("shows sign-in link and sign-up link", () => {
-			const loggedOutNavItems = baseNavItems.map((item) =>
-				item.href === "/commandes"
-					? { ...item, href: "/connexion", label: "Se connecter", icon: "log-in" as const }
-					: item,
-			);
-
+		/**
+		 * Garde du retrait de l'espace client (2026-07-31) : la section ne doit plus
+		 * proposer « Se connecter » ni « Créer un compte » à un visiteur. `/connexion`
+		 * n'est plus qu'une porte d'administration, joignable par URL directe.
+		 */
+		it("ne propose ni connexion ni inscription", () => {
 			render(
 				<MenuSheetNav
-					navItems={loggedOutNavItems}
+					navItems={baseNavItems}
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
 				/>,
 			);
 
-			expect(screen.getByRole("link", { name: "Se connecter" })).toBeInTheDocument();
-			expect(screen.getByRole("link", { name: "Créer un compte" })).toBeInTheDocument();
+			expect(screen.queryByRole("link", { name: "Se connecter" })).toBeNull();
+			expect(screen.queryByRole("link", { name: "Créer un compte" })).toBeNull();
 		});
 
 		it("does not render user header", () => {
@@ -267,10 +265,13 @@ describe("MenuSheetNav", () => {
 			expect(screen.getByRole("button", { name: "Déconnexion" })).toBeInTheDocument();
 		});
 
-		it("ne rend PAS d'entrée « Mes commandes » séparée quand elle double « Mon compte »", () => {
-			// `ROUTES.ACCOUNT.ROOT` et `ROUTES.ACCOUNT.ORDERS` valent tous deux
-			// « /commandes » : rendre les deux produisait deux entrées vers la même
-			// URL, toutes deux marquées `aria-current="page"` sur /commandes.
+		/**
+		 * Garde du retrait de l'espace client (2026-07-31). Ce test vérifiait qu'on ne
+		 * rendait pas DEUX entrées vers `/commandes` (l'entrée « Mon compte » et
+		 * « Mes commandes » pointaient toutes deux la même URL). Il n'y a plus aucune
+		 * entrée d'espace client à dédupliquer : la section ne porte que les favoris.
+		 */
+		it("ne rend plus aucune entrée d'espace client", () => {
 			render(
 				<MenuSheetNav
 					navItems={baseNavItems}
@@ -281,11 +282,11 @@ describe("MenuSheetNav", () => {
 			);
 
 			expect(screen.queryByRole("link", { name: "Mes commandes" })).not.toBeInTheDocument();
-
-			const accountLinks = screen
-				.getAllByRole("link")
-				.filter((l) => l.getAttribute("href") === ROUTES.ACCOUNT.ROOT);
-			expect(accountLinks).toHaveLength(1);
+			expect(screen.queryByRole("link", { name: "Mon compte" })).not.toBeInTheDocument();
+			expect(screen.queryByRole("link", { name: "Créer un compte" })).not.toBeInTheDocument();
+			expect(
+				screen.getAllByRole("link").filter((l) => l.getAttribute("href") === "/commandes"),
+			).toHaveLength(0);
 		});
 
 		it("rend « Mes favoris » même sans session (parité bottom bar / navbar)", () => {

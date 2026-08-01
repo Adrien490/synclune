@@ -107,7 +107,7 @@ describe("ShopMobileBottomNav", () => {
 	 * « recherche » de la zone du pouce n'ouvrait pas la recherche.
 	 */
 	it("expose la recherche comme un bouton, pas comme un lien", () => {
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		const searchTab = screen.getByRole("button", { name: "Rechercher" });
 		expect(searchTab).toHaveAttribute("aria-haspopup", "dialog");
@@ -117,7 +117,7 @@ describe("ShopMobileBottomNav", () => {
 	});
 
 	it("ouvre le dialog de recherche rapide au clic", () => {
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		fireEvent.click(screen.getByRole("button", { name: "Rechercher" }));
 
@@ -130,7 +130,7 @@ describe("ShopMobileBottomNav", () => {
 	 * refocalise un élément périmé et le focus tombe sur <body>.
 	 */
 	it("enregistre le bouton comme dernier déclencheur pour la restauration du focus", () => {
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		const searchTab = screen.getByRole("button", { name: "Rechercher" });
 		fireEvent.click(searchTab);
@@ -140,7 +140,7 @@ describe("ShopMobileBottomNav", () => {
 
 	it("reflète l'ouverture du dialog via aria-expanded", () => {
 		mockUseDialog.mockReturnValue({ open: mockOpenDialog, isOpen: true });
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		expect(screen.getByRole("button", { name: "Rechercher" })).toHaveAttribute(
 			"aria-expanded",
@@ -149,16 +149,15 @@ describe("ShopMobileBottomNav", () => {
 	});
 
 	it("garde le panier en bouton et les autres onglets en liens", () => {
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		expect(screen.getByRole("button", { name: /panier/i })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /accueil/i })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /favoris/i })).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /compte/i })).toBeInTheDocument();
 	});
 
 	it("n'ouvre pas la recherche quand on tape sur le panier", () => {
-		render(<ShopMobileBottomNav isAuthenticated={false} />);
+		render(<ShopMobileBottomNav />);
 
 		fireEvent.click(screen.getByRole("button", { name: /panier/i }));
 
@@ -174,7 +173,7 @@ describe("ShopMobileBottomNav", () => {
 		 */
 		it("l'onglet Panier reflète l'ouverture du sheet dans aria-expanded", () => {
 			mockSheetState.openSheet = "cart";
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("button", { name: /panier/i })).toHaveAttribute(
 				"aria-expanded",
@@ -184,7 +183,7 @@ describe("ShopMobileBottomNav", () => {
 
 		it("l'onglet Panier reste replié quand un AUTRE sheet est ouvert", () => {
 			mockSheetState.openSheet = "filters";
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("button", { name: /panier/i })).toHaveAttribute(
 				"aria-expanded",
@@ -199,14 +198,14 @@ describe("ShopMobileBottomNav", () => {
 		 */
 		it("le nom accessible du Panier porte le nombre d'articles", () => {
 			mockBadgeState.cartCount = 3;
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("button", { name: "Panier, 3 articles" })).toBeInTheDocument();
 		});
 
 		it("singularise le compteur du Panier", () => {
 			mockBadgeState.cartCount = 1;
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("button", { name: "Panier, 1 article" })).toBeInTheDocument();
 		});
@@ -214,13 +213,13 @@ describe("ShopMobileBottomNav", () => {
 		/** Le badge Favoris est un `type: "dot"` : sans libellé, le nombre n'existe nulle part. */
 		it("le nom accessible des Favoris porte le nombre, invisible car badge en pastille", () => {
 			mockBadgeState.wishlistCount = 2;
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("link", { name: "Favoris, 2 favoris" })).toBeInTheDocument();
 		});
 
 		it("n'ajoute aucun compteur au nom accessible quand il vaut 0", () => {
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			expect(screen.getByRole("button", { name: "Panier" })).toBeInTheDocument();
 			expect(screen.getByRole("link", { name: "Favoris" })).toBeInTheDocument();
@@ -228,19 +227,22 @@ describe("ShopMobileBottomNav", () => {
 	});
 
 	// Audit bottom-bar 2026-07-30, P3.
-	describe("structure de liste, haptique et espace client", () => {
+	describe("structure de liste et haptique", () => {
 		/**
-		 * Cinq liens/boutons frères dans un `<nav>` ne disent pas « 5 éléments » à un
+		 * Quatre liens/boutons frères dans un `<nav>` ne disent pas « 4 éléments » à un
 		 * lecteur d'écran. Le `<li>` doit porter le conteneur flex, sinon le `flex-1`
 		 * de l'onglet n'a plus rien à quoi s'appliquer et les onglets ne se
 		 * répartissent plus la largeur.
+		 *
+		 * 5 → 4 au retrait de l'espace client (2026-07-31) : l'onglet « Compte » n'a
+		 * plus de destination.
 		 */
 		it("expose les onglets comme une liste", () => {
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			const list = screen.getByRole("list");
 			const items = screen.getAllByRole("listitem");
-			expect(items).toHaveLength(5);
+			expect(items).toHaveLength(4);
 			for (const item of items) {
 				expect(item.parentElement).toBe(list);
 				expect(item.className).toContain("item-wrapper");
@@ -249,12 +251,12 @@ describe("ShopMobileBottomNav", () => {
 
 		/**
 		 * Les onglets-LIENS n'émettaient aucun haptique là où les onglets-boutons en
-		 * émettaient : un tap sur Accueil/Favoris/Compte était muet, un tap sur
+		 * émettaient : un tap sur Accueil/Favoris était muet, un tap sur
 		 * Recherche/Panier non. La règle projet garde « bottom nav tab change » en
 		 * `selection`.
 		 */
 		it("déclenche haptic « selection » au tap d'un onglet-lien inactif", () => {
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			fireEvent.click(screen.getByRole("link", { name: "Favoris" }));
 
@@ -263,7 +265,7 @@ describe("ShopMobileBottomNav", () => {
 
 		it("ne déclenche pas d'haptique sur un onglet-lien déjà actif", () => {
 			mockIsRouteActive.mockReturnValue(true);
-			render(<ShopMobileBottomNav isAuthenticated={false} />);
+			render(<ShopMobileBottomNav />);
 
 			fireEvent.click(screen.getByRole("link", { name: "Favoris" }));
 
@@ -271,37 +273,26 @@ describe("ShopMobileBottomNav", () => {
 		});
 
 		/**
-		 * L'espace client a TROIS racines (`/commandes`, `/adresses`, `/parametres`),
-		 * toutes rendues avec la bottom-nav. L'onglet Compte n'en testait que deux :
-		 * le carnet d'adresses n'activait aucun onglet.
+		 * Garde du retrait (2026-07-31) : l'onglet « Compte » ne doit pas revenir.
+		 *
+		 * Il menait à `/commandes` pour une session et à `/connexion` sinon — deux
+		 * destinations supprimées côté client. Le remettre re-créerait un cul-de-sac
+		 * dans la zone du pouce, l'endroit le plus coûteux pour un lien mort.
 		 */
-		it.each(["/commandes", "/adresses", "/parametres"])(
-			"marque l'onglet Compte actif sur %s",
-			(route) => {
-				mockUsePathname.mockReturnValue(route);
-				// Implémentation réelle : préfixe ou égalité exacte.
-				mockIsRouteActive.mockImplementation(
-					(pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`),
-				);
+		it("n'expose plus d'onglet Compte", () => {
+			render(<ShopMobileBottomNav />);
 
-				render(<ShopMobileBottomNav isAuthenticated />);
+			expect(screen.queryByRole("link", { name: "Compte" })).toBeNull();
+			expect(screen.queryByRole("link", { name: /connexion|connecter/i })).toBeNull();
+		});
 
-				expect(screen.getByRole("link", { name: "Compte" })).toHaveAttribute(
-					"aria-current",
-					"page",
-				);
-			},
-		);
+		it("expose exactement Accueil, Recherche, Favoris et Panier", () => {
+			render(<ShopMobileBottomNav />);
 
-		it("marque l'onglet Compte actif sur une sous-route du carnet d'adresses", () => {
-			mockUsePathname.mockReturnValue("/adresses/nouvelle");
-			mockIsRouteActive.mockImplementation(
-				(pathname: string, url: string) => pathname === url || pathname.startsWith(`${url}/`),
-			);
-
-			render(<ShopMobileBottomNav isAuthenticated />);
-
-			expect(screen.getByRole("link", { name: "Compte" })).toHaveAttribute("aria-current", "page");
+			expect(screen.getByRole("link", { name: "Accueil" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Rechercher" })).toBeInTheDocument();
+			expect(screen.getByRole("link", { name: "Favoris" })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Panier" })).toBeInTheDocument();
 		});
 	});
 });
