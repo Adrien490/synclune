@@ -159,20 +159,6 @@ test.describe("Accessibilité - Formulaires auth", { tag: ["@slow"] }, () => {
 		await expect(emailLabel).toBeAttached();
 	});
 
-	test("le formulaire d'inscription a des labels associés à ses champs", async ({ page }) => {
-		await page.goto("/inscription");
-		await page.waitForLoadState("domcontentloaded");
-
-		const nameInput = page.getByRole("textbox", { name: /Prénom/i });
-		await expect(nameInput).toBeVisible();
-
-		const nameLabel = page
-			.locator("label")
-			.filter({ hasText: /Prénom/i })
-			.first();
-		await expect(nameLabel).toBeAttached();
-	});
-
 	test("les messages d'erreur sont annoncés via aria-live", async ({ page, authPage }) => {
 		await authPage.goto();
 
@@ -321,7 +307,6 @@ test.describe("Accessibilité - Structure des pages", { tag: ["@slow"] }, () => 
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
 		{ path: "/connexion", name: "Connexion" },
-		{ path: "/inscription", name: "Inscription" },
 	];
 
 	for (const { path, name } of pagesToCheck) {
@@ -350,7 +335,6 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		{ path: "/", name: "Homepage" },
 		{ path: "/produits", name: "Catalogue" },
 		{ path: "/connexion", name: "Connexion" },
-		{ path: "/inscription", name: "Inscription" },
 		// P1 - Public critical pages
 		{ path: "/collections", name: "Collections" },
 		{ path: "/favoris", name: "Favoris" },

@@ -1,15 +1,14 @@
 import type { Page } from "@playwright/test";
-import { test } from "../fixtures";
-import { expectNoA11yViolations } from "../helpers/axe";
+import { test } from "./fixtures";
+import { expectNoA11yViolations } from "./helpers/axe";
 
-test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () => {
-	const authenticatedPages = [
-		{ path: "/commandes", name: "Commandes" },
-		{ path: "/adresses", name: "Adresses" },
-		{ path: "/parametres", name: "Paramètres" },
-	];
+test.describe("Accessibilité - Tunnel de paiement", { tag: ["@slow"] }, () => {
+	// Retrait de l'espace client (2026-07-31) : `/commandes` et `/parametres`
+	// n'existent plus. Le suivi de commande invité prend leur place — sans token
+	// valide la page rend son état 404, ce qui reste une surface à auditer.
+	const guestPages = [{ path: "/suivi-commande", name: "Suivi de commande" }];
 
-	for (const { path, name } of authenticatedPages) {
+	for (const { path, name } of guestPages) {
 		test(`${name} (${path}) passe l'audit axe-core WCAG AA`, async ({ page }) => {
 			await page.goto(path);
 			await page.waitForLoadState("domcontentloaded");
@@ -40,23 +39,6 @@ test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () =>
 
 		await expectNoA11yViolations(page, { context: "Confirmation paiement" });
 	});
-
-	test("Détail commande passe l'audit axe-core WCAG AA", async ({ page }) => {
-		await page.goto("/commandes");
-		await page.waitForLoadState("domcontentloaded");
-
-		const firstOrderLink = page.locator("a[href*='/commandes/']").first();
-		if ((await firstOrderLink.count()) === 0) {
-			test.skip(true, "Aucune commande existante");
-			return;
-		}
-		const href = await firstOrderLink.getAttribute("href");
-		if (!href) return;
-		await page.goto(href);
-		await page.waitForLoadState("domcontentloaded");
-
-		await expectNoA11yViolations(page, { context: "Détail commande" });
-	});
 });
 
 // Dark mode tests for authenticated pages
@@ -65,14 +47,10 @@ async function enableDarkMode(page: Page) {
 	await page.waitForTimeout(100);
 }
 
-test.describe("Accessibilité - Pages authentifiées (dark mode)", { tag: ["@slow"] }, () => {
-	const authenticatedDarkPages = [
-		{ path: "/commandes", name: "Commandes" },
-		{ path: "/adresses", name: "Adresses" },
-		{ path: "/parametres", name: "Paramètres" },
-	];
+test.describe("Accessibilité - Tunnel de paiement (dark mode)", { tag: ["@slow"] }, () => {
+	const guestDarkPages = [{ path: "/suivi-commande", name: "Suivi de commande" }];
 
-	for (const { path, name } of authenticatedDarkPages) {
+	for (const { path, name } of guestDarkPages) {
 		test(`${name} (${path}) passe l'audit axe-core WCAG AA en dark mode`, async ({ page }) => {
 			await page.goto(path);
 			await page.waitForLoadState("domcontentloaded");
@@ -121,23 +99,5 @@ test.describe("Accessibilité - Pages authentifiées (dark mode)", { tag: ["@slo
 		await enableDarkMode(page);
 
 		await expectNoA11yViolations(page, { context: "Retour paiement (dark mode)" });
-	});
-
-	test("Détail commande passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
-		await page.goto("/commandes");
-		await page.waitForLoadState("domcontentloaded");
-
-		const firstOrderLink = page.locator("a[href*='/commandes/']").first();
-		if ((await firstOrderLink.count()) === 0) {
-			test.skip(true, "Aucune commande existante");
-			return;
-		}
-		const href = await firstOrderLink.getAttribute("href");
-		if (!href) return;
-		await page.goto(href);
-		await page.waitForLoadState("domcontentloaded");
-		await enableDarkMode(page);
-
-		await expectNoA11yViolations(page, { context: "Détail commande (dark mode)" });
 	});
 });

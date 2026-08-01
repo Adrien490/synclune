@@ -1,5 +1,5 @@
-import { test, expect } from "../fixtures";
-import { requireSeedData } from "../constants";
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
 
 /**
  * E2E checkout — declined card recovery flow.

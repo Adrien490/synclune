@@ -1,5 +1,5 @@
-import { test, expect } from "../fixtures";
-import { requireSeedData } from "../constants";
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
 
 test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critical"] }, () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage }) => {

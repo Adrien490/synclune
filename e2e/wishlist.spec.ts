@@ -1,5 +1,16 @@
-import { test, expect } from "../fixtures";
-import { requireSeedData, TIMEOUTS, SELECTORS } from "../constants";
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
+
+/*
+ * ⚠️ Sélecteurs : les aria-labels du bouton favoris sont 100 % français
+ * (« Ajouter (…) aux favoris » / « Retirer (…) des favoris », wishlist-button.tsx).
+ * Jusqu'à l'audit wishlist 2026-08-01, cette suite cherchait /wishlist/i — un
+ * motif qui ne matchait AUCUN élément du DOM : `buttonCount` valait toujours 0
+ * et les `test.skip(buttonCount === 0)` neutralisaient 4 tests sur 5 en silence,
+ * à chaque run, sous le tag @critical. Les skips sont remplacés par des
+ * assertions dures : produits seedés sans bouton favoris = échec, pas un skip.
+ */
+const TOGGLE_BUTTON_NAME = /(Ajouter|Retirer).*favoris/i;
 
 test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 	test("la page favoris est accessible", async ({ wishlistPage }) => {
@@ -17,10 +28,8 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		const productCount = await productCatalogPage.productLinks.count();
 		requireSeedData(test, productCount > 0, "No products found");
 
-		// Find a wishlist toggle button on the catalog page
-		const wishlistButton = page.getByRole("button", { name: /wishlist/i });
-		const buttonCount = await wishlistButton.count();
-		test.skip(buttonCount === 0, "No wishlist buttons visible on catalog");
+		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
+		expect(await wishlistButton.count(), "wishlist buttons on catalog").toBeGreaterThan(0);
 
 		const firstButton = wishlistButton.first();
 		const wasFavorited = await firstButton.getAttribute("aria-pressed");
@@ -48,9 +57,8 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 
 		await productCatalogPage.gotoFirstProduct();
 
-		const wishlistButton = page.getByRole("button", { name: /wishlist/i });
-		const buttonCount = await wishlistButton.count();
-		test.skip(buttonCount === 0, "No wishlist button on product detail page");
+		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
+		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
 		const wasFavorited = await wishlistButton.first().getAttribute("aria-pressed");
 
@@ -81,9 +89,8 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 
 		await productCatalogPage.gotoFirstProduct();
 
-		const wishlistButton = page.getByRole("button", { name: /wishlist/i });
-		const buttonCount = await wishlistButton.count();
-		test.skip(buttonCount === 0, "No wishlist button on product detail page");
+		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
+		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
 		// Ensure the product is favorited
 		const isPressedBefore = await wishlistButton.first().getAttribute("aria-pressed");
@@ -104,7 +111,7 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		// Cleanup: go back and unfavorite
 		await productCatalogPage.goto();
 		await productCatalogPage.gotoFirstProduct();
-		const cleanupButton = page.getByRole("button", { name: /wishlist/i });
+		const cleanupButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
 		if ((await cleanupButton.first().getAttribute("aria-pressed")) === "true") {
 			await cleanupButton.first().click();
 			await expect(cleanupButton.first()).not.toHaveAttribute("aria-busy", "true", {
@@ -113,68 +120,19 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		}
 	});
 
-	test("wishlist guest → merge apres login", async ({ browser }) => {
-		// 1. Create a fresh unauthenticated context
-		const context = await browser.newContext();
-		const page = await context.newPage();
-
-		// 2. Browse products as guest
-		await page.goto("http://localhost:3000/produits");
-		await page.waitForLoadState("domcontentloaded");
-
-		const productLinks = page.locator(SELECTORS.PRODUCT_LINK);
-		const productCount = await productLinks.count();
-		test.skip(productCount === 0, "No products found");
-
-		// 3. Add product to wishlist as guest (toggle heart button)
-		const wishlistButton = page.getByRole("button", { name: /wishlist/i });
-		const buttonCount = await wishlistButton.count();
-		test.skip(buttonCount === 0, "No wishlist buttons visible on catalog");
-
-		const firstButton = wishlistButton.first();
-		await firstButton.click();
-		await expect(firstButton).not.toHaveAttribute("aria-busy", "true", {
-			timeout: TIMEOUTS.FEEDBACK,
-		});
-
-		// Verify the product is now in wishlist (aria-pressed="true")
-		await expect(firstButton).toHaveAttribute("aria-pressed", "true");
-
-		// 4. Navigate to login and authenticate
-		await page.goto("http://localhost:3000/connexion");
-		await page.waitForLoadState("domcontentloaded");
-
-		const email = process.env.E2E_USER_EMAIL ?? "user2@synclune.fr";
-		const password = process.env.E2E_USER_PASSWORD ?? "password123";
-
-		await page.getByRole("textbox", { name: /email/i }).fill(email);
-		await page.locator('input[type="password"]').fill(password);
-		await page.getByRole("button", { name: /se connecter/i }).click();
-
-		// Wait for redirect away from login
-		await expect(page).not.toHaveURL(/\/connexion/, { timeout: TIMEOUTS.AUTH_REDIRECT });
-
-		// 5. Navigate to wishlist page and verify the guest item was merged
-		await page.goto("http://localhost:3000/favoris");
-		await page.waitForLoadState("domcontentloaded");
-
-		const wishlistItems = page.locator(SELECTORS.PRODUCT_LINK);
-		await expect(async () => {
-			const count = await wishlistItems.count();
-			expect(count).toBeGreaterThan(0);
-		}).toPass({ timeout: TIMEOUTS.DATA_LOAD });
-
-		// Cleanup: remove the product from wishlist
-		const removeButton = page.getByRole("button", { name: /wishlist/i }).first();
-		if ((await removeButton.getAttribute("aria-pressed")) === "true") {
-			await removeButton.click();
-			await expect(removeButton).not.toHaveAttribute("aria-busy", "true", {
-				timeout: TIMEOUTS.FEEDBACK,
-			});
-		}
-
-		await context.close();
-	});
+	/*
+	 * Le test « wishlist guest → merge apres login » a été retiré au retrait de
+	 * l'espace client (2026-07-31).
+	 *
+	 * Il connectait un compte CLIENT pour vérifier que la wishlist invité était
+	 * fusionnée dans celle du compte. Les deux moitiés ont disparu : il n'y a plus de
+	 * compte client à connecter (`disableSignUp`), et `mergeWishlists` a été supprimée
+	 * avec le hook post-login de Better Auth.
+	 *
+	 * Le nouveau contrat est plus simple, et couvert par les tests ci-dessus : la
+	 * wishlist invité N'EST PLUS fusionnée — elle reste attachée au cookie
+	 * `wishlist_session` (30 jours, renouvelés à chaque interaction).
+	 */
 
 	test("retirer un produit depuis la page favoris", async ({
 		page,
@@ -189,9 +147,8 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 
 		await productCatalogPage.gotoFirstProduct();
 
-		const wishlistButton = page.getByRole("button", { name: /wishlist/i });
-		const buttonCount = await wishlistButton.count();
-		test.skip(buttonCount === 0, "No wishlist button on product detail page");
+		const wishlistButton = page.getByRole("button", { name: TOGGLE_BUTTON_NAME });
+		expect(await wishlistButton.count(), "wishlist button on PDP").toBeGreaterThan(0);
 
 		// Ensure favorited
 		const isPressed = await wishlistButton.first().getAttribute("aria-pressed");
@@ -206,10 +163,11 @@ test.describe("Wishlist - Favoris", { tag: ["@critical"] }, () => {
 		await wishlistPage.goto();
 
 		const itemsBefore = await wishlistPage.getItemCount();
-		test.skip(itemsBefore === 0, "No items in wishlist to remove");
+		expect(itemsBefore, "wishlist items after adding one").toBeGreaterThan(0);
 
-		// Remove first item
-		const removeButton = page.getByRole("button", { name: /wishlist/i }).first();
+		// Remove first item — sur /favoris, tous les coeurs sont en état
+		// « Retirer … des favoris » (isInWishlist forcé à true)
+		const removeButton = page.getByRole("button", { name: /Retirer.*favoris/i }).first();
 		await removeButton.click();
 		await expect(removeButton).not.toHaveAttribute("aria-busy", "true", { timeout: 5000 });
 

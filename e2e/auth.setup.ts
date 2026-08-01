@@ -2,8 +2,6 @@ import { test as setup, expect, type Page } from "@playwright/test";
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@synclune.fr";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "password123";
-const USER_EMAIL = process.env.E2E_USER_EMAIL ?? "user2@synclune.fr";
-const USER_PASSWORD = process.env.E2E_USER_PASSWORD ?? "password123";
 
 /**
  * Authenticate via Better Auth API directly (faster than UI login).
@@ -28,8 +26,11 @@ async function authenticateViaAPI(
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Verify we're authenticated by checking we can access /commandes
-		await page.goto("/commandes");
+		// Vérifie l'authentification via `/admin`, seule surface authentifiée depuis le
+		// retrait de l'espace client (2026-07-31). `/commandes` servait de sonde ici ;
+		// la route n'existe plus, et le proxy l'aurait renvoyée sur `/` — donc sans
+		// `/connexion` dans l'URL, la sonde aurait validé un état NON authentifié.
+		await page.goto("/admin");
 		await page.waitForLoadState("domcontentloaded");
 
 		if (!page.url().includes("/connexion")) {
@@ -76,6 +77,7 @@ setup("authenticate as admin", async ({ page }) => {
 	await authenticateViaAPI(page, ADMIN_EMAIL, ADMIN_PASSWORD, "e2e/.auth/admin.json");
 });
 
-setup("authenticate as user", async ({ page }) => {
-	await authenticateViaAPI(page, USER_EMAIL, USER_PASSWORD, "e2e/.auth/user.json");
-});
+// Plus de `setup("authenticate as user")` : il n'existe plus de compte CLIENT à
+// connecter (inscription fermée, `disableSignUp`) — retrait de l'espace client
+// 2026-07-31. Les specs commerce tournent en invité, ce qui est le parcours réel
+// de tous les clients.

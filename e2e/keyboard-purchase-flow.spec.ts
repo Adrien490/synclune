@@ -1,5 +1,5 @@
-import { test, expect } from "../fixtures";
-import { VISIBLE_ALERT } from "../helpers/assertions";
+import { test, expect } from "./fixtures";
+import { VISIBLE_ALERT } from "./helpers/assertions";
 
 test.describe("Parcours achat clavier complet", { tag: ["@slow"] }, () => {
 	test("navigation clavier de la liste produits au checkout", async ({ page, cartPage }) => {

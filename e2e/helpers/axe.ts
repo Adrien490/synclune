@@ -2,7 +2,6 @@ import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
 
-const GLOBAL_EXCLUDES = ['[data-testid="particle-background"]'];
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 export async function expectNoA11yViolations(
@@ -15,7 +14,7 @@ export async function expectNoA11yViolations(
 ) {
 	const builder = new AxeBuilder({ page }).withTags(WCAG_TAGS);
 
-	for (const selector of [...GLOBAL_EXCLUDES, ...(options?.exclude ?? [])]) {
+	for (const selector of options?.exclude ?? []) {
 		builder.exclude(selector);
 	}
 	if (options?.disableRules?.length) {

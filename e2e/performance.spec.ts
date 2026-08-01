@@ -167,7 +167,7 @@ test.describe("Performance budgets", { tag: ["@slow"] }, () => {
 		expect(inp, `INP was ${inp}ms, budget is ${INP_BUDGET}ms`).toBeLessThan(INP_BUDGET);
 	});
 
-	const criticalPages = ["/", "/produits", "/collections", "/connexion", "/inscription"];
+	const criticalPages = ["/", "/produits", "/collections", "/connexion"];
 
 	for (const route of criticalPages) {
 		test(`${route} loads under budget`, async ({ page }) => {

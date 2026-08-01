@@ -31,7 +31,6 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 };
 /** Routes hors `(shop)` / `admin` : celles que le bug laissait sans pont. */
 const ROUTES_WITHOUT_SHOP_LAYOUT = [
 	{ path: "/connexion", label: "(auth)" },
-	{ path: "/inscription", label: "(auth)" },
 	{ path: "/suivi-commande", label: "/suivi-commande" },
 ];
 

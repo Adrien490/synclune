@@ -19,7 +19,7 @@ test.describe("Smoke tests", { tag: ["@smoke", "@critical"] }, () => {
 		await expect(heading).toBeVisible();
 	});
 
-	const criticalRoutes = ["/", "/produits", "/collections", "/connexion", "/inscription"];
+	const criticalRoutes = ["/", "/produits", "/collections", "/connexion"];
 
 	for (const route of criticalRoutes) {
 		test(`${route} returns 200`, async ({ page }) => {

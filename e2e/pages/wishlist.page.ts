@@ -9,7 +9,9 @@ export class WishlistPage {
 
 	constructor(private page: Page) {
 		this.heading = page.getByRole("heading", { level: 1 });
-		this.emptyHeading = page.getByRole("heading", { name: /wishlist est vide/i });
+		// « Votre liste de favoris est vide » (wishlist-empty-state.tsx) — un motif
+		// « wishlist » ne matche RIEN : tout le DOM rendu est en français
+		this.emptyHeading = page.getByRole("heading", { name: /liste de favoris est vide/i });
 		this.shopLink = page.getByRole("link", { name: /Découvrir nos créations/i });
 	}
 
@@ -22,7 +24,8 @@ export class WishlistPage {
 		if (productTitle) {
 			return this.page.getByLabel(new RegExp(`(Ajouter|Retirer) ${productTitle}`, "i"));
 		}
-		return this.page.getByRole("button", { name: /wishlist/i });
+		// aria-labels réels : « Ajouter (…) aux favoris » / « Retirer (…) des favoris »
+		return this.page.getByRole("button", { name: /(Ajouter|Retirer).*favoris/i });
 	}
 
 	async toggleItem(productTitle?: string) {

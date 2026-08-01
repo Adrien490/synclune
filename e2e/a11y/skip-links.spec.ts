@@ -5,7 +5,6 @@ test.describe("Accessibilité - Skip link", { tag: ["@slow"] }, () => {
 		{ path: "/", name: "Boutique (homepage)" },
 		{ path: "/produits", name: "Boutique (produits)" },
 		{ path: "/connexion", name: "Auth (connexion)" },
-		{ path: "/inscription", name: "Auth (inscription)" },
 		{ path: "/paiement/annulation", name: "Checkout (annulation)" },
 	];
 

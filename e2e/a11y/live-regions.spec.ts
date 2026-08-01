@@ -104,7 +104,9 @@ test.describe("Accessibilité - Live regions", { tag: ["@regression"] }, () => {
 	test("une erreur de validation est annoncée par le champ, pas par le toaster", async ({
 		page,
 	}) => {
-		await page.goto("/inscription");
+		// `/inscription` supprimée (2026-07-31) — le formulaire de connexion porte la
+		// même validation d'email, donc le même `FieldError` à éprouver.
+		await page.goto("/connexion");
 		await page.waitForLoadState("domcontentloaded");
 
 		const emailInput = page.getByLabel(/^Email/i).first();

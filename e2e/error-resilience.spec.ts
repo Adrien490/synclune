@@ -23,14 +23,7 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 	});
 
 	test("les pages critiques ne retournent pas d'erreur 500", async ({ page }) => {
-		const criticalPages = [
-			"/",
-			"/produits",
-			"/collections",
-			"/connexion",
-			"/inscription",
-			"/mot-de-passe-oublie",
-		];
+		const criticalPages = ["/", "/produits", "/collections", "/connexion", "/mot-de-passe-oublie"];
 
 		for (const route of criticalPages) {
 			const response = await page.goto(route);

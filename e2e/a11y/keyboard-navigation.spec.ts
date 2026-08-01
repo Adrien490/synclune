@@ -72,8 +72,11 @@ test.describe("Navigation clavier", { tag: ["@slow"] }, () => {
 	 * sélecteurs du dialog.
 	 */
 
+	// `/connexion` remplace `/inscription` comme support de ce test : la route
+	// d'inscription a été supprimée (2026-07-31) et le formulaire de connexion porte
+	// les mêmes primitives (champs + submit) que ce test éprouve.
 	test("formulaire Tab order - champs séquentiels sans saut", async ({ page }) => {
-		await page.goto("/inscription");
+		await page.goto("/connexion");
 		await page.waitForLoadState("domcontentloaded");
 
 		// Collect all form inputs in order

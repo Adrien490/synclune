@@ -1,5 +1,5 @@
-import { test, expect } from "../fixtures";
-import { requireSeedData } from "../constants";
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
 
 test.describe(
 	"Parcours paiement asynchrone (SEPA)",

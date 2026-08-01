@@ -1,6 +1,6 @@
-import { test, expect } from "../fixtures";
-import { requireSeedData } from "../constants";
-import { VISIBLE_ALERT } from "../helpers/assertions";
+import { test, expect } from "./fixtures";
+import { requireSeedData } from "./constants";
+import { VISIBLE_ALERT } from "./helpers/assertions";
 
 test.describe("Checkout - Codes promo", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ productCatalogPage, cartPage, page }) => {

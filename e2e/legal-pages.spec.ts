@@ -67,6 +67,22 @@ test.describe("Pages légales", { tag: ["@regression"] }, () => {
 		});
 	}
 
+	// `/aide` était absente de `publicRoutes` (proxy.ts) : le default-deny la
+	// redirigeait vers l'accueil alors que le footer, le sitemap et le JSON-LD
+	// FAQPage pointaient dessus. Audit « Pages légales » 2026-08-01.
+	test("/aide charge la FAQ sans être redirigée vers l'accueil", async ({ page }) => {
+		const response = await page.goto("/aide", {
+			waitUntil: "domcontentloaded",
+		});
+		expect(response?.url()).toMatch(/\/aide$/);
+
+		const heading = page.getByRole("heading", { name: /Aide|FAQ/i });
+		await expect(heading.first()).toBeVisible();
+
+		const body = await page.textContent("body");
+		expect(body).toMatch(/livraison|retour/i);
+	});
+
 	test("/a-propos redirige vers l'accueil", async ({ page }) => {
 		const response = await page.goto("/a-propos", {
 			waitUntil: "domcontentloaded",

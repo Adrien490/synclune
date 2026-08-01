@@ -113,88 +113,12 @@ test.describe("Authentification - Connexion", { tag: ["@critical"] }, () => {
 	});
 });
 
-test.describe("Authentification - Inscription", { tag: ["@critical"] }, () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/inscription");
-		await page.waitForLoadState("domcontentloaded");
-	});
-
-	test("la page d'inscription charge correctement", async ({ page }) => {
-		await expect(page).toHaveURL(/\/inscription/);
-		await expect(page).toHaveTitle(/Inscription.*Synclune|Synclune.*Inscription/i);
-	});
-
-	test("la page d'inscription affiche le titre h1", async ({ page }) => {
-		const heading = page.getByRole("heading", { level: 1, name: /Inscription/i });
-		await expect(heading).toBeVisible();
-	});
-
-	test("la page d'inscription affiche les champs requis", async ({ page }) => {
-		const nameInput = page.getByRole("textbox", { name: /Prénom/i });
-		await expect(nameInput).toBeVisible();
-
-		const emailInput = page.getByRole("textbox", { name: /^Email$/i });
-		await expect(emailInput).toBeVisible();
-
-		const passwordInput = page.locator('input[type="password"]');
-		await expect(passwordInput).toBeVisible();
-	});
-
-	test("la page d'inscription affiche le bouton de soumission", async ({ page }) => {
-		const submitButton = page.getByRole("button", { name: /S'inscrire/i });
-		await expect(submitButton).toBeVisible();
-	});
-
-	test("la page d'inscription affiche un lien vers les CGV", async ({ page }) => {
-		const cgvLink = page.getByRole("link", { name: /conditions générales/i });
-		await expect(cgvLink).toBeAttached();
-	});
-
-	test("la page d'inscription affiche un lien vers la politique de confidentialité", async ({
-		page,
-	}) => {
-		const privacyLink = page.getByRole("link", { name: /politique de confidentialité/i });
-		await expect(privacyLink).toBeAttached();
-	});
-
-	test("la page d'inscription affiche un lien vers la connexion", async ({ page }) => {
-		const signInLink = page.getByRole("link", { name: /Connectez-vous/i });
-		await expect(signInLink).toBeVisible();
-		await expect(signInLink).toHaveAttribute("href", "/connexion");
-	});
-
-	test("la page d'inscription affiche le lien de retour au site", async ({ page }) => {
-		const backLink = page.getByRole("link", { name: /Retour au site/i });
-		await expect(backLink).toBeVisible();
-	});
-
-	test("le formulaire d'inscription valide le format email", async ({ page }) => {
-		const emailInput = page.getByRole("textbox", { name: /^Email$/i });
-		await emailInput.fill("email-invalide");
-		await emailInput.blur();
-
-		const errorMessage = page.getByText(/Format d'email invalide/i);
-		await expect(errorMessage).toBeVisible();
-	});
-
-	test("le formulaire d'inscription valide la longueur du prénom", async ({ page }) => {
-		const nameInput = page.getByRole("textbox", { name: /Prénom/i });
-		await nameInput.fill("A");
-		await nameInput.blur();
-
-		const errorMessage = page.getByText(/au moins 2 caractères/i);
-		await expect(errorMessage).toBeVisible();
-	});
-
-	test("le formulaire d'inscription valide la longueur du mot de passe", async ({ page }) => {
-		const passwordInput = page.locator('input[type="password"]').first();
-		await passwordInput.fill("court");
-		await passwordInput.blur();
-
-		const errorMessage = page.getByText(/au moins 8 caractères/i);
-		await expect(errorMessage).toBeVisible();
-	});
-});
+/*
+ * Le bloc « Authentification - Inscription » a été retiré avec la route
+ * `/inscription` (2026-07-31). L'inscription est fermée côté API par
+ * `emailAndPassword.disableSignUp`, et `/connexion` n'est plus qu'une porte
+ * d'administration — couverte par le bloc de connexion ci-dessus.
+ */
 
 test.describe("Authentification - Mot de passe oublié", { tag: ["@regression"] }, () => {
 	test.beforeEach(async ({ page }) => {

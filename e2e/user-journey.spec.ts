@@ -35,17 +35,35 @@ test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () =
 		});
 	});
 
-	const accountRoutes = ["/commandes", "/adresses", "/favoris"];
+	/**
+	 * Ce bloc vérifiait que `/commandes`, `/parametres` et `/favoris` redirigeaient un
+	 * visiteur vers `/connexion`. Deux de ces trois routes ont disparu au retrait de
+	 * l'espace client (2026-07-31) — et `/favoris` n'a JAMAIS dû rediriger : la
+	 * wishlist est portée par le cookie `wishlist_session`, elle est accessible aux
+	 * invités (le test passait parce que la route figurait déjà dans `publicRoutes`,
+	 * donc l'assertion de redirection n'y était jamais évaluée… sur une liste où elle
+	 * n'aurait pas dû figurer).
+	 *
+	 * Le nouveau contrat : les routes client supprimées tombent dans le default-deny
+	 * du proxy (→ `/`), et `/favoris` reste servi tel quel.
+	 */
+	const removedAccountRoutes = ["/commandes", "/parametres"];
 
-	for (const route of accountRoutes) {
-		test(`${route} redirects unauthenticated users to login`, async ({ page }) => {
+	for (const route of removedAccountRoutes) {
+		test(`${route} n'existe plus et retombe sur l'accueil (default-deny)`, async ({ page }) => {
 			await page.goto(route);
 			await page.waitForLoadState("domcontentloaded");
 
-			const url = page.url();
-			expect(url, `${route} should redirect to connexion`).toMatch(/\/connexion/);
+			expect(new URL(page.url()).pathname, `${route} doit retomber sur /`).toBe("/");
 		});
 	}
+
+	test("/favoris reste accessible sans compte", async ({ page }) => {
+		await page.goto("/favoris");
+		await page.waitForLoadState("domcontentloaded");
+
+		expect(new URL(page.url()).pathname).toBe("/favoris");
+	});
 });
 
 test.describe("Navigation entre pages critiques", () => {

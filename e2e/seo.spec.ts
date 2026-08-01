@@ -248,7 +248,7 @@ test.describe("SEO - Pages légales", { tag: ["@slow"] }, () => {
 });
 
 test.describe("SEO - Attributs HTML globaux", { tag: ["@slow"] }, () => {
-	const pagesToCheck = ["/", "/produits", "/collections", "/connexion", "/inscription"];
+	const pagesToCheck = ["/", "/produits", "/collections", "/connexion"];
 
 	for (const path of pagesToCheck) {
 		test(`la page ${path} a lang="fr" sur l'élément html`, async ({ page }) => {
