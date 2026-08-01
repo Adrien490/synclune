@@ -21,8 +21,6 @@ const {
 	mockGetClientIp,
 	mockEnforceRateLimit,
 	mockUpdateTag,
-	mockGetGuestWishlistForMerge,
-	mockGetUserWishlistForMerge,
 	mockGetWishlistInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -53,8 +51,6 @@ const {
 	mockGetClientIp: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
-	mockGetGuestWishlistForMerge: vi.fn(),
-	mockGetUserWishlistForMerge: vi.fn(),
 	mockGetWishlistInvalidationTags: vi.fn(),
 }));
 
@@ -65,9 +61,6 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 vi.mock("@/modules/wishlist/lib/wishlist-session", () => ({
 	getWishlistSessionId: mockGetWishlistSessionId,
 	getOrCreateWishlistSessionId: mockGetOrCreateWishlistSessionId,
-	getWishlistExpirationDate: () => new Date("2026-03-19"),
-	isValidUuidV4: (value: string) =>
-		/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value),
 }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -86,11 +79,6 @@ vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("@/modules/wishlist/constants/cache", () => ({
 	getWishlistInvalidationTags: mockGetWishlistInvalidationTags,
 }));
-vi.mock("../../data/get-wishlist-for-merge", () => ({
-	getGuestWishlistForMerge: mockGetGuestWishlistForMerge,
-	getUserWishlistForMerge: mockGetUserWishlistForMerge,
-}));
-
 // Mock enforceRateLimit while keeping real validateInput, success, error, handleActionError
 vi.mock("@/shared/lib/actions", async (importOriginal) => {
 	const actual = await importOriginal<typeof ActionsModule>();
@@ -107,7 +95,6 @@ vi.mock("@/shared/lib/actions", async (importOriginal) => {
 import { addToWishlist } from "../add-to-wishlist";
 import { removeFromWishlist } from "../remove-from-wishlist";
 import { toggleWishlistItem } from "../toggle-wishlist-item";
-import { mergeWishlists } from "../merge-wishlists";
 
 // ============================================================================
 // HELPERS
@@ -689,316 +676,5 @@ describe("toggleWishlistItem", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("Deja");
-	});
-});
-
-// ============================================================================
-// mergeWishlists
-// ============================================================================
-
-describe("mergeWishlists", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		setupDefaults();
-	});
-
-	it("should return error when session user doesn't match userId", async () => {
-		mockGetSession.mockResolvedValue({ user: { id: "different-user" } });
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe("Non autorisé");
-	});
-
-	it("should return error when user not found", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue(null);
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
-	it("should return error when user is soft-deleted", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: new Date(),
-		});
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
-	it("should return success with 0 items when no guest wishlist", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue(null);
-		mockGetUserWishlistForMerge.mockResolvedValue(null);
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(expect.objectContaining({ addedItems: 0, skippedItems: 0 }));
-	});
-
-	it("should return success with 0 items when guest wishlist is empty", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: [],
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue(null);
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		// Empty guest wishlist should still be deleted
-		expect(mockPrisma.wishlist.delete).toHaveBeenCalledWith({
-			where: { id: "guest-wl" },
-		});
-	});
-
-	it("should merge items correctly, skipping duplicates and non-PUBLIC", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: [
-				{
-					productId: "prod-1",
-					product: { id: "prod-1", status: "PUBLIC" },
-				},
-				{
-					productId: "prod-2",
-					product: { id: "prod-2", status: "PUBLIC" },
-				},
-				{
-					productId: "prod-3",
-					product: { id: "prod-3", status: "ARCHIVED" },
-				},
-				{
-					productId: "prod-existing",
-					product: { id: "prod-existing", status: "PUBLIC" },
-				},
-				{ productId: null, product: null },
-			],
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue({
-			id: "user-wl",
-			items: [{ productId: "prod-existing" }],
-		});
-
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 2 });
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(expect.objectContaining({ addedItems: 2 }));
-		// Should only add prod-1 and prod-2 (prod-3 is ARCHIVED, prod-existing is duplicate, null is invalid)
-		expect(mockPrisma.wishlistItem.createMany).toHaveBeenCalledWith({
-			data: [
-				{ wishlistId: "user-wl", productId: "prod-1" },
-				{ wishlistId: "user-wl", productId: "prod-2" },
-			],
-		});
-	});
-
-	it("should create user wishlist if it doesn't exist", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: [
-				{
-					productId: "prod-1",
-					product: { id: "prod-1", status: "PUBLIC" },
-				},
-			],
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue(null);
-		mockPrisma.wishlist.create.mockResolvedValue({
-			id: "new-user-wl",
-			items: [],
-		});
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockPrisma.wishlist.create).toHaveBeenCalledWith(
-			expect.objectContaining({
-				data: expect.objectContaining({ userId: VALID_USER_ID }),
-			}),
-		);
-	});
-
-	it("should cap merged items to WISHLIST_MAX_ITEMS", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-
-		// User already has 450 items, guest has 100 valid items
-		// Should only add 50 (500 - 450 = 50 available slots)
-		const guestItems = Array.from({ length: 100 }, (_, i) => ({
-			productId: `guest-prod-${i}`,
-			product: { id: `guest-prod-${i}`, status: "PUBLIC" },
-		}));
-
-		const userItems = Array.from({ length: 450 }, (_, i) => ({
-			productId: `user-prod-${i}`,
-		}));
-
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: guestItems,
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue({
-			id: "user-wl",
-			items: userItems,
-		});
-
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 50 });
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(expect.objectContaining({ addedItems: 50 }));
-
-		// Verify createMany was called with exactly 50 items
-		const createManyCall = mockPrisma.wishlistItem.createMany.mock.calls[0]![0];
-		expect(createManyCall.data).toHaveLength(50);
-	});
-
-	it("should add 0 items when user wishlist is already at max", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-
-		const guestItems = [
-			{
-				productId: "prod-1",
-				product: { id: "prod-1", status: "PUBLIC" },
-			},
-		];
-		const userItems = Array.from({ length: 500 }, (_, i) => ({
-			productId: `user-prod-${i}`,
-		}));
-
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: guestItems,
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue({
-			id: "user-wl",
-			items: userItems,
-		});
-
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual(expect.objectContaining({ addedItems: 0 }));
-		// createMany should NOT be called since 0 items to add
-		expect(mockPrisma.wishlistItem.createMany).not.toHaveBeenCalled();
-	});
-
-	it("should delete guest wishlist after merge", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: [
-				{
-					productId: "prod-1",
-					product: { id: "prod-1", status: "PUBLIC" },
-				},
-			],
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue({
-			id: "user-wl",
-			items: [],
-		});
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		expect(mockPrisma.wishlist.delete).toHaveBeenCalledWith({
-			where: { id: "guest-wl" },
-		});
-	});
-
-	it("should invalidate both guest and user cache tags", async () => {
-		setupAuthenticatedUser();
-		mockPrisma.user.findUnique.mockResolvedValue({
-			id: VALID_USER_ID,
-			deletedAt: null,
-		});
-		mockGetGuestWishlistForMerge.mockResolvedValue({
-			id: "guest-wl",
-			items: [
-				{
-					productId: "prod-1",
-					product: { id: "prod-1", status: "PUBLIC" },
-				},
-			],
-		});
-		mockGetUserWishlistForMerge.mockResolvedValue({
-			id: "user-wl",
-			items: [],
-		});
-		mockPrisma.$transaction.mockImplementation(
-			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
-		);
-		mockPrisma.wishlistItem.createMany.mockResolvedValue({ count: 1 });
-		mockPrisma.wishlist.delete.mockResolvedValue({});
-
-		await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
-
-		// Should call getWishlistInvalidationTags for both guest and user
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(undefined, VALID_SESSION_ID);
-		expect(mockGetWishlistInvalidationTags).toHaveBeenCalledWith(VALID_USER_ID, undefined);
 	});
 });

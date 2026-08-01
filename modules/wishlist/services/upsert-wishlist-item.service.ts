@@ -68,20 +68,24 @@ export async function addProductToWishlist(
 		);
 	}
 
-	// 2. Upsert wishlist parent
+	// 2. Upsert wishlist parent — `updatedAt` rafraîchi explicitement : la purge
+	// (`cleanup-wishlists.service.ts`) s'en sert comme date de dernière
+	// interaction, et un `update: {}` vide ne garantit pas le bump du @updatedAt.
 	const wishlist = await tx.wishlist.upsert({
 		where: userId ? { userId } : { sessionId: sessionId! },
 		create: {
 			userId: userId ?? null,
 			sessionId: sessionId ?? null,
 		},
-		update: {},
+		update: { updatedAt: new Date() },
 		select: { id: true },
 	});
 
-	// 3. Check cap WISHLIST_MAX_ITEMS
+	// 3. Check cap WISHLIST_MAX_ITEMS — `productId: { not: null }` : un hard
+	// delete produit (onDelete: SetNull) laisse des items orphelins invisibles
+	// en lecture ; les compter ferait refuser des ajouts sur une grille vide.
 	const itemCount = await tx.wishlistItem.count({
-		where: { wishlistId: wishlist.id },
+		where: { wishlistId: wishlist.id, productId: { not: null } },
 	});
 	if (itemCount >= WISHLIST_MAX_ITEMS) {
 		throw new BusinessError(WISHLIST_ERROR_MESSAGES.WISHLIST_FULL, WISHLIST_FULL_SENTINEL);

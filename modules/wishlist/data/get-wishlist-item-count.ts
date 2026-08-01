@@ -1,6 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { isPrerenderInterrupt } from "@/shared/lib/prerender-interrupt";
 import { getWishlistSessionId } from "@/modules/wishlist/lib/wishlist-session";
 import { cacheWishlistCount } from "../constants/cache";
 
@@ -22,27 +23,33 @@ import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn> {
 	try {
 		const session = await getSession().catch((e) => {
-			logger.warn(
-				`getSession failed in wishlist count, falling back to anonymous: ${e instanceof Error ? e.message : String(e)}`,
-				{ service: "wishlist" },
-			);
+			// Pendant le prerender (PPR), headers()/cookies() rejettent à la clôture —
+			// signal attendu, pas un incident : le repli anonyme suffit, sans log.
+			if (!isPrerenderInterrupt(e)) {
+				logger.warn(
+					`getSession failed in wishlist count, falling back to anonymous: ${e instanceof Error ? e.message : String(e)}`,
+					{ service: "wishlist" },
+				);
+			}
 			return null;
 		});
 		const userId = session?.user.id;
 		const sessionId = !userId
 			? await getWishlistSessionId().catch((e) => {
-					logger.warn(
-						`getWishlistSessionId failed in wishlist count, no guest session: ${e instanceof Error ? e.message : String(e)}`,
-						{ service: "wishlist" },
-					);
+					if (!isPrerenderInterrupt(e)) {
+						logger.warn(
+							`getWishlistSessionId failed in wishlist count, no guest session: ${e instanceof Error ? e.message : String(e)}`,
+							{ service: "wishlist" },
+						);
+					}
 					return null;
 				})
 			: null;
 
 		return await fetchWishlistItemCount(userId, sessionId ?? undefined);
 	} catch (e) {
-		// "use cache: private" rejects during prerendering — this is expected
-		if (e instanceof Error && "digest" in e && e.digest === "HANGING_PROMISE_REJECTION") return 0;
+		// "use cache: private" rejette à la clôture du prerender — attendu, sans log.
+		if (isPrerenderInterrupt(e)) return 0;
 		logger.error("Failed to get wishlist item count", e, { service: "wishlist" });
 		return 0;
 	}
@@ -62,7 +69,10 @@ async function fetchWishlistItemCount(
 	"use cache: private";
 	cacheWishlistCount(userId, sessionId);
 
-	try {
+	// ⚠️ AUCUN try/catch dans ce scope : le repli appartient au wrapper
+	// `getWishlistItemCount`, hors du cache — sinon le 0 d'une panne est mis en
+	// cache pour toute la fenêtre du profil. Même motif que `get-products.ts`.
+	{
 		// Pas d'utilisateur ni de session = pas de wishlist
 		if (!userId && !sessionId) {
 			return 0;
@@ -79,8 +89,5 @@ async function fetchWishlistItemCount(
 		});
 
 		return count;
-	} catch (e) {
-		logger.error("Failed to fetch wishlist item count", e, { service: "wishlist" });
-		return 0;
 	}
 }

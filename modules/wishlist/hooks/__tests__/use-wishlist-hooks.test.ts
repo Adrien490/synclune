@@ -108,11 +108,6 @@ const ERROR = {
 	message: "Erreur serveur",
 };
 
-const UNAUTHORIZED = {
-	status: "unauthorized" as const,
-	message: "Non autorisé",
-};
-
 // ============================================================================
 // useWishlistToggle
 // ============================================================================
@@ -191,8 +186,8 @@ describe("useWishlistToggle", () => {
 		expect(mockRouterRefresh).toHaveBeenCalled();
 	});
 
-	it("redirects to login when action returns UNAUTHORIZED", async () => {
-		mockToggleWishlistItem.mockResolvedValue(UNAUTHORIZED);
+	it("never redirects to /connexion on error (login réservé à l'admin depuis 2026-07-31)", async () => {
+		mockToggleWishlistItem.mockResolvedValue(ERROR);
 		const { result } = renderHook(() => useWishlistToggle());
 
 		const formData = new FormData();
@@ -202,7 +197,7 @@ describe("useWishlistToggle", () => {
 			result.current.action(formData);
 		});
 
-		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("/connexion?callbackURL="));
+		expect(mockRouterPush).not.toHaveBeenCalled();
 	});
 
 	it("calls triggerHaptic exactly once per add (G10 — single haptic rule)", async () => {
@@ -377,8 +372,8 @@ describe("useRemoveFromWishlist", () => {
 		expect(mockDecrementWishlist).toHaveBeenCalled();
 	});
 
-	it("rolls back badge and redirects to login when action returns UNAUTHORIZED", async () => {
-		mockRemoveFromWishlist.mockResolvedValue(UNAUTHORIZED);
+	it("rolls back badge without redirecting on error (login réservé à l'admin depuis 2026-07-31)", async () => {
+		mockRemoveFromWishlist.mockResolvedValue(ERROR);
 		const { result } = renderHook(() => useRemoveFromWishlist());
 
 		const formData = new FormData();
@@ -389,7 +384,7 @@ describe("useRemoveFromWishlist", () => {
 		});
 
 		expect(mockIncrementWishlist).toHaveBeenCalled();
-		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("/connexion?callbackURL="));
+		expect(mockRouterPush).not.toHaveBeenCalled();
 	});
 
 	it("does not call onSuccess when action fails", async () => {

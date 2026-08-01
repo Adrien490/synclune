@@ -18,11 +18,9 @@ vi.mock("@/modules/wishlist/constants/expiration.constants", () => ({
 }));
 
 import {
-	isValidUuidV4,
 	getWishlistSessionId,
 	createWishlistSessionId,
 	getOrCreateWishlistSessionId,
-	clearWishlistSessionId,
 } from "../wishlist-session";
 
 // ============================================================================
@@ -47,28 +45,6 @@ function makeCookieStore(value?: string) {
 		delete: vi.fn(),
 	};
 }
-
-// ============================================================================
-// Tests: isValidUuidV4
-// ============================================================================
-
-describe("isValidUuidV4", () => {
-	it("returns true for a valid UUID v4", () => {
-		expect(isValidUuidV4(VALID_UUID_V4)).toBe(true);
-	});
-
-	it("returns false for a UUID v1", () => {
-		expect(isValidUuidV4(UUID_V1)).toBe(false);
-	});
-
-	it("returns false for an arbitrary string", () => {
-		expect(isValidUuidV4("not-a-uuid")).toBe(false);
-	});
-
-	it("returns false for an empty string", () => {
-		expect(isValidUuidV4("")).toBe(false);
-	});
-});
 
 // ============================================================================
 // Tests: getWishlistSessionId
@@ -264,6 +240,22 @@ describe("getOrCreateWishlistSessionId", () => {
 		expect(result).toBe(VALID_UUID_V4);
 	});
 
+	it("re-poses the existing cookie with a full maxAge (sliding expiration)", async () => {
+		// Sans re-set, le cookie expirait 30 j après sa CRÉATION même pour une
+		// invitée active — perte silencieuse de tous ses favoris à J+30 pile
+		// (audit wishlist 2026-08-01, symétrie avec getOrCreateCartSessionId).
+		const cookieStore = makeCookieStore(VALID_UUID_V4);
+		mockCookies.mockResolvedValue(cookieStore);
+
+		await getOrCreateWishlistSessionId();
+
+		expect(cookieStore.set).toHaveBeenCalledWith(
+			WISHLIST_SESSION_COOKIE_NAME,
+			VALID_UUID_V4,
+			expect.objectContaining({ maxAge: 60 * 60 * 24 * 30 }),
+		);
+	});
+
 	it("does not call crypto.randomUUID when a valid session already exists", async () => {
 		mockCookies.mockResolvedValue(makeCookieStore(VALID_UUID_V4));
 
@@ -306,22 +298,4 @@ describe("getOrCreateWishlistSessionId", () => {
 	});
 });
 
-// ============================================================================
-// Tests: clearWishlistSessionId
-// ============================================================================
-
-describe("clearWishlistSessionId", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
-	it("deletes the wishlist_session cookie", async () => {
-		const cookieStore = makeCookieStore(VALID_UUID_V4);
-		mockCookies.mockResolvedValue(cookieStore);
-
-		await clearWishlistSessionId();
-
-		expect(cookieStore.delete).toHaveBeenCalledWith(WISHLIST_SESSION_COOKIE_NAME);
-		expect(cookieStore.delete).toHaveBeenCalledOnce();
-	});
-});
+// `clearWishlistSessionId` retiré avec la fusion post-login — plus de suite dédiée.

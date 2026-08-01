@@ -3,10 +3,8 @@
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { removeFromWishlist } from "@/modules/wishlist/actions/remove-from-wishlist";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
-import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseRemoveFromWishlistOptions {
 	onSuccess?: (message: string) => void;
@@ -37,9 +35,6 @@ interface UseRemoveFromWishlistOptions {
  * ```
  */
 export const useRemoveFromWishlist = (options?: UseRemoveFromWishlistOptions) => {
-	const router = useRouter();
-	const pathname = usePathname();
-
 	// Store pour optimistic UI du badge navbar
 	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
 	const decrementWishlist = useBadgeCountsStore((state) => state.decrementWishlist);
@@ -61,20 +56,12 @@ export const useRemoveFromWishlist = (options?: UseRemoveFromWishlistOptions) =>
 						options?.onSuccess?.(result.message);
 					}
 				},
-				onError: (result: unknown) => {
+				onError: () => {
 					// Rollback du badge navbar (re-increment car on avait décrémenté)
 					incrementWishlist();
-
-					// Redirect to login if unauthorized
-					if (
-						result &&
-						typeof result === "object" &&
-						"status" in result &&
-						result.status === ActionStatus.UNAUTHORIZED
-					) {
-						const callbackURL = encodeURIComponent(pathname);
-						router.push(`/connexion?callbackURL=${callbackURL}`);
-					}
+					// Pas de branche UNAUTHORIZED : la wishlist est 100 % invité et
+					// /connexion est réservé à l'administration (retrait de l'espace
+					// client 2026-07-31).
 				},
 			}),
 		),

@@ -53,4 +53,5 @@ export type GetWishlistItemCountReturn = number;
 // TYPES - WISHLIST MERGE
 // ============================================================================
 
-export type MergeWishlistsResult = ActionState;
+// `MergeWishlistsResult` retiré avec `merge-wishlists.ts` (2026-07-31) : la
+// wishlist invité reste attachée à son cookie `wishlist_session`.

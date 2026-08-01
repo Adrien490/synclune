@@ -7,19 +7,16 @@ import { WISHLIST_EXPIRATION_DAYS } from "@/modules/wishlist/constants/expiratio
 const WISHLIST_SESSION_COOKIE_NAME = "wishlist_session";
 
 /**
- * Durée de vie du cookie : 30 jours
- * Cette durée est réinitialisée à chaque interaction avec la wishlist
- * Utilise WISHLIST_EXPIRATION_DAYS pour cohérence avec la durée de vie de la wishlist
+ * Durée de vie du cookie : 30 jours, glissants — `getOrCreateWishlistSessionId()`
+ * re-pose le cookie à chaque interaction wishlist pour rafraîchir son maxAge,
+ * en cohérence avec la purge (`cleanup-wishlists.service.ts`, seuil sur
+ * `Wishlist.updatedAt` = dernière interaction). Utilise WISHLIST_EXPIRATION_DAYS
+ * pour cohérence avec la durée de rétention annoncée.
  */
 const WISHLIST_SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * WISHLIST_EXPIRATION_DAYS; // 30 jours en secondes
 
 // Regex UUID v4 pour validation
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-/** Validates that a string is a valid UUID v4 */
-export function isValidUuidV4(value: string): boolean {
-	return UUID_V4_REGEX.test(value);
-}
 
 /**
  * Récupère l'identifiant de session de la wishlist depuis les cookies
@@ -45,6 +42,15 @@ export async function getWishlistSessionId(): Promise<string | null> {
  */
 export async function createWishlistSessionId(): Promise<string> {
 	const sessionId = crypto.randomUUID(); // UUID v4 sécurisé (ex: 550e8400-e29b-41d4-a716-446655440000)
+	await setWishlistSessionCookie(sessionId);
+	return sessionId;
+}
+
+/**
+ * Pose (ou re-pose) le cookie de session wishlist avec un maxAge complet.
+ * Re-poser un cookie existant rafraîchit son expiration (glissante).
+ */
+async function setWishlistSessionCookie(sessionId: string): Promise<void> {
 	const cookieStore = await cookies();
 
 	cookieStore.set(WISHLIST_SESSION_COOKIE_NAME, sessionId, {
@@ -54,29 +60,29 @@ export async function createWishlistSessionId(): Promise<string> {
 		maxAge: WISHLIST_SESSION_COOKIE_MAX_AGE,
 		path: "/",
 	});
-
-	return sessionId;
 }
 
 /**
  * Récupère l'identifiant de session existant ou en crée un nouveau
+ *
+ * Un cookie existant est re-posé avec la même valeur pour rafraîchir son
+ * maxAge (expiration glissante, alignée sur `Wishlist.updatedAt` qui sert de
+ * seuil à la purge). Sans cela, une invitée active > 30 jours perdait ses
+ * favoris à J+30 pile après la création du cookie (audit wishlist 2026-08-01
+ * — la JSDoc promettait le glissement, le code ne le faisait pas).
+ *
  * @returns L'identifiant de session
  */
 export async function getOrCreateWishlistSessionId(): Promise<string> {
 	const existingSessionId = await getWishlistSessionId();
 
 	if (existingSessionId) {
+		await setWishlistSessionCookie(existingSessionId);
 		return existingSessionId;
 	}
 
 	return await createWishlistSessionId();
 }
 
-/**
- * Supprime le cookie de session de la wishlist
- * Utilisé lors de la connexion d'un utilisateur pour fusionner sa wishlist visiteur
- */
-export async function clearWishlistSessionId(): Promise<void> {
-	const cookieStore = await cookies();
-	cookieStore.delete(WISHLIST_SESSION_COOKIE_NAME);
-}
+// `clearWishlistSessionId` retiré (audit wishlist 2026-08-01) : son seul usage
+// était la fusion post-login, supprimée avec l'espace client (2026-07-31).

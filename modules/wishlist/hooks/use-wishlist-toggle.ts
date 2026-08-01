@@ -1,11 +1,10 @@
 "use client";
 
 import { useActionState, useOptimistic, useTransition, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-item";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -36,7 +35,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		productTitle,
 	} = options ?? {};
 	const router = useRouter();
-	const pathname = usePathname();
 
 	// Store pour optimistic UI du badge navbar
 	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
@@ -90,7 +88,7 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						onSuccess?.(actionType);
 					}
 				},
-				onError: (result: unknown) => {
+				onError: () => {
 					// Rollback de l'état optimiste (coeur)
 					setOptimisticIsInWishlist(initialIsInWishlist);
 
@@ -103,17 +101,9 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 
 					// Force re-fetch to restore optimistically removed grid items
 					router.refresh();
-
-					// Redirection vers connexion si non authentifié
-					if (
-						result &&
-						typeof result === "object" &&
-						"status" in result &&
-						result.status === ActionStatus.UNAUTHORIZED
-					) {
-						const callbackURL = encodeURIComponent(pathname);
-						router.push(`/connexion?callbackURL=${callbackURL}`);
-					}
+					// Pas de branche UNAUTHORIZED : la wishlist est 100 % invité et
+					// /connexion est réservé à l'administration (retrait de l'espace
+					// client 2026-07-31).
 				},
 			}),
 		),
