@@ -12,13 +12,10 @@ import {
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
 import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
-import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { ActionState } from "@/shared/types/server-action";
-import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { changePasswordSchema } from "../schemas/auth.schemas";
 import { checkPasswordBreached } from "../services/hibp.service";
-import { getAuthSessionInvalidationTags } from "../utils/cache.utils";
 
 export const changePassword = async (
 	_: ActionState | undefined,
@@ -97,13 +94,13 @@ export const changePassword = async (
 				headers: headersList,
 			});
 
-			// Invalidate cached session lists so revoked sessions don't persist in cache
-			if (revokeOtherSessions) {
-				[
-					...getAuthSessionInvalidationTags(undefined, user.id),
-					SESSION_CACHE_TAGS.SESSIONS(user.id),
-				].forEach((tag) => updateTag(tag));
-			}
+			// Plus AUCUNE invalidation de cache ici, et c'est correct : les deux
+			// familles de tags concernées (`auth-sessions-*` et `sessions-user-*`)
+			// n'ont plus un seul lecteur depuis le retrait de l'espace client
+			// (2026-07-31) — le fetcher `modules/auth/data/get-session.ts` et la page
+			// détail utilisateur qui les posaient ont été supprimés. Invalider un tag
+			// que personne ne pose ne rafraîchit rien ; ça donne juste l'illusion
+			// d'une cascade. Better Auth révoque les sessions en base, ce qui suffit.
 
 			return success(
 				revokeOtherSessions

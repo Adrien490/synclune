@@ -29,10 +29,25 @@ export const AUTH_SESSION_CONFIG = {
 	expiresIn: 60 * 60 * 24 * 7,
 	/** Duree avant rafraichissement automatique (en secondes) - 1 jour */
 	updateAge: 60 * 60 * 24,
-	/** Configuration du cache cookie pour optimiser les performances */
+	/**
+	 * Cache cookie de session : tant qu'il est valide, `auth.api.getSession()`
+	 * répond depuis le cookie signé **sans aucune lecture en base** — le plugin
+	 * `customSession` (celui qui dégrade le rôle à `USER` pour un compte révoqué)
+	 * ne s'exécute même pas.
+	 *
+	 * ⚠️ C'est donc `maxAge` — et rien d'autre — qui fixe la latence de révocation
+	 * de toute l'application. Supprimer les lignes `Session` en base ne coupe rien
+	 * avant son expiration.
+	 *
+	 * **60 s et non 300 s** (audit « Admin role & re-check DB », 2026-07-31) : à
+	 * 5 min, le bouton « Déconnecter tous mes appareils » laissait un attaquant
+	 * disposant d'une session volée garder l'accès admin cinq minutes après le
+	 * clic. Le coût est négligeable ici — une seule opératrice, et **zéro impact
+	 * sur le trafic invité** (pas de cookie de session ⇒ pas de requête du tout).
+	 */
 	cookieCache: {
 		enabled: true,
-		maxAge: 60 * 5, // 5 minutes
+		maxAge: 60,
 	},
 } as const;
 
@@ -80,6 +95,15 @@ export const AUTH_RATE_LIMIT_RULES = {
 	"/verify-email": {
 		window: 60,
 		max: 5,
+	},
+	// ⚠️ `/verify-email` est le point de CONSOMMATION du lien, pas celui d'ENVOI.
+	// Sans la règle ci-dessous, `/send-verification-email` retombait sur le global
+	// Better Auth (100/60 s), soit 33× plus permissif que son voisin
+	// `/forget-password` — et l'API brute court-circuite le compteur par email-cible
+	// de `resend-verification-email.ts`. Audit rate limiting 2026-07-31.
+	"/send-verification-email": {
+		window: 60,
+		max: 3,
 	},
 	"/change-password": {
 		window: 60,

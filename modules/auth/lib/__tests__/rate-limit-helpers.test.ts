@@ -43,7 +43,7 @@ import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 const MOCK_HEADERS = new Headers({ "x-forwarded-for": "1.2.3.4" });
 const MOCK_IP = "1.2.3.4";
 const MOCK_USER_ID = "user-abc";
-const MOCK_LIMIT: RateLimitConfig = { limit: 10, windowMs: 60000 };
+const MOCK_LIMIT: RateLimitConfig = { name: "test", limit: 10, windowMs: 60000 };
 
 // ============================================================================
 // getRateLimitId
@@ -202,7 +202,7 @@ describe("enforceRateLimitForCurrentUser", () => {
 	});
 
 	it("forwards the limit config to checkRateLimit", async () => {
-		const customLimit: RateLimitConfig = { limit: 3, windowMs: 30000 };
+		const customLimit: RateLimitConfig = { name: "test", limit: 3, windowMs: 30000 };
 		mockCheckRateLimit.mockResolvedValue({ success: true, remaining: 2, limit: 3 });
 
 		await enforceRateLimitForCurrentUser(customLimit);

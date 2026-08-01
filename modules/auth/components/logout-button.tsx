@@ -14,7 +14,7 @@ export function LogoutButton({ className, children }: LogoutButtonProps) {
 	return (
 		<button
 			type="button"
-			className={cn(className)}
+			className={cn("focus-ring", className)}
 			data-pending={isPending || isLoggedOut ? "" : undefined}
 			disabled={isPending || isLoggedOut}
 			aria-busy={isPending}

@@ -164,7 +164,7 @@ describe("changePassword", () => {
 		expect(result.message).toContain("incorrect");
 	});
 
-	it("should invalidate session list caches when revokeOtherSessions is true", async () => {
+	it("does not invalidate any cache tag — none of them has a reader left", async () => {
 		const formData = createMockFormData({
 			currentPassword: "OldP@ss123",
 			newPassword: "NewP@ss456",
@@ -173,10 +173,13 @@ describe("changePassword", () => {
 		});
 		const result = await changePassword(undefined, formData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		// Tags réellement posés par les lecteurs : namespace auth + détail admin user
-		expect(mockUpdateTag).toHaveBeenCalledWith("auth-sessions-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith(`auth-sessions-${VALID_USER_ID}`);
-		expect(mockUpdateTag).toHaveBeenCalledWith(`sessions-user-${VALID_USER_ID}`);
+		// ⚠️ Ce test asseyait l'inverse jusqu'au 2026-07-31 : il vérifiait
+		// l'invalidation de `auth-sessions-list`, `auth-sessions-<id>` et
+		// `sessions-user-<id>`. Les trois tags avaient perdu leur unique lecteur avec
+		// l'espace client (le fetcher `modules/auth/data/get-session.ts` et la page
+		// détail utilisateur). Invalider un tag que personne ne pose ne rafraîchit
+		// rien — le test verrouillait donc une cascade imaginaire.
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should not invalidate session caches without revokeOtherSessions", async () => {

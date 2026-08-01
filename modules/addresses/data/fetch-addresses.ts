@@ -10,7 +10,8 @@ import { transformCompletionResult } from "../utils/address-transform.utils";
 /**
  * Récupère les suggestions d'adresses depuis l'API d'autocomplétion de l'IGN
  * Cette fonction est mise en cache pour optimiser les performances
- * Cache: 4h fraîche, 1h revalidation, 30j expiration (profil 'reference')
+ * Cache : profil `reference` (durées dans next.config.ts — ne pas les recopier ici,
+ * ce commentaire annonçait « 4h / 1h » alors que le profil vaut 7j/24h/30j)
  */
 export async function fetchAddresses(
 	params: ValidatedSearchAddressParams,

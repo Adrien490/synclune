@@ -32,23 +32,26 @@ const publicRoutes = [
 	"/retractation",
 	// Autres pages publiques
 	"/a-propos",
+	"/aide",
 	"/favoris",
 	"/opengraph-image",
 	"/monitoring",
 	"/ingest",
 	// Checkout (guest checkout supporté)
 	"/paiement",
-	// Suivi de commande invité (AUDIT-BIZ-001) : authentifié par token HMAC dans
-	// l'URL, pas par session — le checkout invité n'a pas de compte. Volontairement
-	// hors `/commandes/*` (protégé) pour ne pas affaiblir le gate de l'espace client.
-	// La page valide le token côté serveur et 404 sinon.
+	// Suivi de commande (AUDIT-BIZ-001) : authentifié par token HMAC dans l'URL,
+	// pas par session. C'est désormais le SEUL chemin de consultation d'une
+	// commande côté client (retrait de l'espace client 2026-07-31). La page valide
+	// le token côté serveur et 404 sinon.
 	"/suivi-commande",
 ];
 
-// Routes d'authentification (redirection si déjà connecté)
+// Routes d'authentification (redirection si déjà connecté).
+// Plus d'`/inscription` : la route a été supprimée et `disableSignUp` ferme
+// l'endpoint. La laisser ici l'aurait rendue « publique » au regard du
+// default-deny, donc non journalisée si quelqu'un la sonde.
 const authRoutes = [
 	"/connexion",
-	"/inscription",
 	"/mot-de-passe-oublie",
 	"/reinitialiser-mot-de-passe",
 	"/verifier-email",
@@ -56,28 +59,26 @@ const authRoutes = [
 	"/error",
 ];
 
-// Routes protégées par authentification (utilisateur connecté requis)
-// Note: Couvre les routes exactes ET leurs sous-routes (ex: /compte/*)
-const protectedRoutes = ["/commandes", "/adresses", "/parametres"] as const;
-
 // Routes protégées par admin (admin requis)
 const adminRoutes = ["/admin"] as const;
 
 // Routes API (toutes gèrent leur propre authentification côté serveur)
 // SÉCURITÉ: Ajouter ici toute nouvelle route API. Les routes non listées sont bloquées (default-deny).
+// ⚠️ Cette liste est une ALLOWLIST : chaque entrée court-circuite le default-deny.
+// Quatre entrées mortes y traînaient (`/api/products`, `/api/collections`,
+// `/api/search`, `/api/analytics` — aucun `route.ts` correspondant sur le disque,
+// audit 2026-07-31). Une entrée morte n'ouvre rien tant que la route n'existe pas,
+// mais elle pré-autorise le jour où quelqu'un crée le fichier, sans que personne ne
+// repasse par la décision d'exposition. Ne laisser ici que des routes réelles.
 const apiRoutes = [
 	"/api/auth",
 	"/api/uploadthing",
 	"/api/webhooks",
-	"/api/products",
-	"/api/collections",
 	"/api/cron",
 	"/api/health",
 	"/api/csp-report",
 	"/api/orders",
 	"/api/admin",
-	"/api/search",
-	"/api/analytics",
 ];
 
 // Helper function pour vérifier les routes (exactes ou sous-routes)
@@ -99,11 +100,6 @@ export async function proxy(request: NextRequest) {
 	const sessionCookie = getSessionCookie(request);
 	const isLoggedIn = !!sessionCookie;
 
-	// ===== 0. REDIRECT /compte → /commandes =====
-	if (pathname === "/compte" || pathname.startsWith("/compte/")) {
-		return NextResponse.redirect(new URL("/commandes", nextUrl.origin));
-	}
-
 	// ===== 1. ROUTES API =====
 	// Toutes les routes API gèrent leur propre authentification côté serveur
 	if (matchesAnyRoute(pathname, apiRoutes)) {
@@ -111,10 +107,14 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 2. ROUTES D'AUTHENTIFICATION (AVANT les routes publiques) =====
-	// Rediriger les utilisateurs connectés vers /commandes
+	// Une session ne peut plus être qu'administratrice : la destination d'un
+	// utilisateur déjà connecté qui retombe sur `/connexion` est donc `/admin` et
+	// non plus `/commandes` (route supprimée — la redirection y aurait produit un
+	// default-deny vers `/`, soit une boucle perçue comme « la connexion ne marche
+	// pas »).
 	if (matchesAnyRoute(pathname, authRoutes)) {
 		if (isLoggedIn) {
-			return NextResponse.redirect(new URL("/commandes", nextUrl.origin));
+			return NextResponse.redirect(new URL("/admin", nextUrl.origin));
 		}
 		// Utilisateur non connecté -> autoriser l'accès aux pages d'auth
 		return NextResponse.next();
@@ -126,10 +126,25 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 4. ROUTES PROTÉGÉES ADMIN =====
-	// Vérification du rôle ADMIN via le cookie cache signé (HMAC, pas de DB call).
-	// Si le cookie cache a expiré (TTL 5 min) ou si le rôle n'est pas présent dans le cache,
-	// on laisse passer → la validation serveur définitive (requireAdmin) bloquera si nécessaire.
-	// Les pages/actions admin DOIVENT toujours utiliser requireAdmin() pour la validation serveur définitive.
+	// Pré-filtrage UX uniquement, via le cookie cache signé (HMAC, zéro appel DB).
+	//
+	// ⚠️ FAIL-OPEN ASSUMÉ : si le cookie cache a expiré (TTL
+	// `AUTH_SESSION_CONFIG.cookieCache.maxAge`) ou ne porte pas de rôle, la condition
+	// ci-dessous est fausse et la requête PASSE. Ce middleware ne sait donc que
+	// *refuser* sur un cookie qui se déclare non-admin ; il n'autorise rien.
+	//
+	// Ce qui autorise réellement, et qui doit exister pour que ce fail-open soit
+	// acceptable :
+	//   - `app/admin/layout.tsx` → `requireAdminWithUser()` (chargement dur) ;
+	//   - CHAQUE `app/admin/**/page.tsx` → `assertAdminPage()`, parce qu'un layout
+	//     partagé n'est PAS ré-exécuté lors d'une navigation client entre routes
+	//     qui le partagent. Verrouillé par
+	//     `app/admin/__tests__/admin-page-auth-guard.regression.test.ts`.
+	//   - chaque Server Action / route API → `requireAdmin*()`.
+	//
+	// Ce commentaire affirmait déjà cette dernière ligne avant l'audit du
+	// 2026-07-31, alors qu'aucune des 50 pages ne l'honorait. Ne pas le laisser
+	// redevenir une promesse : le garde-fou ci-dessus est ce qui la tient.
 	if (matchesAnyRoute(pathname, adminRoutes)) {
 		// Pas connecté -> redirection vers login
 		if (!isLoggedIn) {
@@ -147,19 +162,11 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// ===== 5. ROUTES PROTÉGÉES UTILISATEUR =====
-	// matchesAnyRoute vérifie les routes exactes ET les sous-routes
-	if (matchesAnyRoute(pathname, protectedRoutes)) {
-		// Pas connecté -> redirection vers login
-		if (!isLoggedIn) {
-			const redirectUrl = new URL("/connexion", nextUrl.origin);
-			redirectUrl.searchParams.set("callbackURL", pathname);
-			return NextResponse.redirect(redirectUrl);
-		}
-
-		// Utilisateur connecté -> autoriser l'accès
-		return NextResponse.next();
-	}
+	// ===== 5. PLUS DE ROUTES PROTÉGÉES NON-ADMIN =====
+	// `protectedRoutes` portait `/commandes` et `/parametres`, les deux racines de
+	// l'espace client, supprimé le 2026-07-31. `/admin` est désormais la seule
+	// surface authentifiée, traitée ci-dessus. Les routes client tombent donc dans
+	// le default-deny — ce qui est le comportement voulu : elles n'existent plus.
 
 	// ===== 6. DEFAULT-DENY =====
 	// SÉCURITÉ: Les routes non définies sont bloquées. Si une nouvelle route est ajoutée,

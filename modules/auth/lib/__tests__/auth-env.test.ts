@@ -58,8 +58,12 @@ describe("AUTH_SESSION_CONFIG", () => {
 		expect(AUTH_SESSION_CONFIG.cookieCache.enabled).toBe(true);
 	});
 
-	it("has cookieCache maxAge of 5 minutes", () => {
-		expect(AUTH_SESSION_CONFIG.cookieCache.maxAge).toBe(60 * 5);
+	// 60 s et pas 300 : c'est cette valeur — et elle seule — qui borne la latence
+	// de révocation, le cookie-cache étant servi sans lecture DB (audit « Admin
+	// role & re-check DB », 2026-07-31). La relever rallonge d'autant la fenêtre
+	// pendant laquelle une session révoquée reste admin.
+	it("has cookieCache maxAge of 60 seconds (revocation latency bound)", () => {
+		expect(AUTH_SESSION_CONFIG.cookieCache.maxAge).toBe(60);
 	});
 });
 
@@ -86,6 +90,20 @@ describe("AUTH_RATE_LIMIT_RULES", () => {
 
 	it("verify-email allows 5 requests per 60s window", () => {
 		expect(AUTH_RATE_LIMIT_RULES["/verify-email"]).toEqual({ window: 60, max: 5 });
+	});
+
+	// `/verify-email` CONSOMME le lien, `/send-verification-email` l'ÉMET : sans règle
+	// propre, l'endpoint d'envoi retombait sur le global Better Auth (100/60 s) et
+	// laissait bombarder l'unique adresse admin via l'API brute, en contournant le
+	// compteur par email-cible de la Server Action. Audit rate limiting 2026-07-31.
+	it("send-verification-email allows 3 requests per 60s window (parité /forget-password)", () => {
+		expect(AUTH_RATE_LIMIT_RULES["/send-verification-email"]).toEqual({ window: 60, max: 3 });
+	});
+
+	it("couvre les deux endpoints d'envoi d'email au même seuil", () => {
+		expect(AUTH_RATE_LIMIT_RULES["/send-verification-email"].max).toBe(
+			AUTH_RATE_LIMIT_RULES["/forget-password"].max,
+		);
 	});
 });
 

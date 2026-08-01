@@ -12,7 +12,8 @@ import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { CircleCheck, CircleX, LoaderCircle } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
@@ -190,7 +191,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 						>
 							{isPending ? (
 								<>
-									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<Spinner presentational />
 									Réinitialisation…
 								</>
 							) : state?.status === ActionStatus.SUCCESS ? (

@@ -47,6 +47,13 @@ export const requestPasswordReset = async (
 				body: { email, redirectTo: "/reinitialiser-mot-de-passe" },
 			});
 
+			// Plus d'invalidation de `auth-verifications-list` : la vue admin des
+			// vérifications qui posait ce tag a disparu avec l'espace client
+			// (2026-07-31). Invalider un tag que plus aucun lecteur ne pose, c'est
+			// invalider dans le vide — et ça fait croire à une cascade qui n'existe
+			// pas. Si une liste admin des vérifications revient, elle devra
+			// réintroduire LES DEUX côtés (lecteur + mutateur).
+
 			return success(GENERIC_SUCCESS_MESSAGE);
 		} catch (err) {
 			// Succès même en cas d'erreur pour ne pas révéler d'information

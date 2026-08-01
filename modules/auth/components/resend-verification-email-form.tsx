@@ -15,7 +15,8 @@ import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { useServerFieldErrors } from "@/shared/hooks/use-server-field-errors";
 import { useResendCooldown } from "@/modules/auth/hooks/use-resend-cooldown";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { CircleX, CircleCheck, Mail, LoaderCircle } from "lucide-react";
+import { CircleX, CircleCheck, Mail } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
 import { useEffect, useRef } from "react";
 
@@ -170,7 +171,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 							aria-busy={isPending}
 						>
 							{isPending ? (
-								<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								<Spinner presentational />
 							) : (
 								<Mail className="size-4" aria-hidden="true" />
 							)}

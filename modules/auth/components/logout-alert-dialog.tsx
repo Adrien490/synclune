@@ -1,18 +1,18 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import { useState } from "react";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+	ResponsiveAlertDialogTrigger,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useLogout } from "../hooks/use-logout";
 
 interface LogoutAlertDialogProps {
@@ -34,40 +34,40 @@ export function LogoutAlertDialog({
 	});
 
 	return (
-		<AlertDialog open={open} onOpenChange={setOpen}>
-			{children && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={open} onOpenChange={setOpen}>
+			{children && <ResponsiveAlertDialogTrigger asChild>{children}</ResponsiveAlertDialogTrigger>}
+			<ResponsiveAlertDialogContent>
 				<form
 					action={action}
 					data-pending={isPending || isLoggedOut ? "" : undefined}
 					aria-busy={isPending || isLoggedOut}
 				>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Se déconnecter ?</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div className="space-y-3">
 								<p>Voulez-vous vraiment vous déconnecter de votre compte ?</p>
 								<p className="text-muted-foreground text-sm">
 									Vous pourrez vous reconnecter à tout moment.
 								</p>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel type="button" disabled={isPending || isLoggedOut}>
 							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="submit"
 							disabled={isPending || isLoggedOut}
 							aria-busy={isPending || isLoggedOut}
 						>
-							{(isPending || isLoggedOut) && <LoaderCircle className="motion-safe:animate-spin" />}
+							{(isPending || isLoggedOut) && <Spinner presentational />}
 							{isLoggedOut ? "Déconnecté !" : isPending ? "Déconnexion…" : "Se déconnecter"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

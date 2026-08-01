@@ -10,8 +10,6 @@ const {
 	mockRequestPasswordReset,
 	mockResendVerificationEmail,
 	mockResetPassword,
-	mockSignInSocial,
-	mockSignUpEmail,
 	mockLogout,
 	mockRouterPush,
 	mockRouterRefresh,
@@ -20,8 +18,6 @@ const {
 	mockRequestPasswordReset: vi.fn(),
 	mockResendVerificationEmail: vi.fn(),
 	mockResetPassword: vi.fn(),
-	mockSignInSocial: vi.fn(),
-	mockSignUpEmail: vi.fn(),
 	mockLogout: vi.fn(),
 	mockRouterPush: vi.fn(),
 	mockRouterRefresh: vi.fn(),
@@ -38,12 +34,6 @@ vi.mock("@/modules/auth/actions/resend-verification-email", () => ({
 }));
 vi.mock("@/modules/auth/actions/reset-password", () => ({
 	resetPassword: mockResetPassword,
-}));
-vi.mock("@/modules/auth/actions/sign-in-social", () => ({
-	signInSocial: mockSignInSocial,
-}));
-vi.mock("@/modules/auth/actions/sign-up-email", () => ({
-	signUpEmail: mockSignUpEmail,
 }));
 vi.mock("@/modules/auth/actions/logout", () => ({
 	logout: mockLogout,
@@ -74,8 +64,6 @@ import { useChangePassword } from "../use-change-password";
 import { useRequestPasswordReset } from "../use-request-password-reset";
 import { useResendVerificationEmail } from "../use-resend-verification-email";
 import { useResetPassword } from "../use-reset-password";
-import { useSignInSocial } from "../use-sign-in-social";
-import { useSignUpEmail } from "../use-sign-up-email";
 import { useFormErrorShake } from "../use-form-error-shake";
 import { useLogout } from "../use-logout";
 
@@ -306,122 +294,6 @@ describe("useResetPassword", () => {
 		});
 
 		expect(result.current.state).toEqual(ERROR);
-	});
-});
-
-// ============================================================================
-// useSignInSocial
-// ============================================================================
-
-describe("useSignInSocial", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockSignInSocial.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useSignInSocial());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useSignInSocial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledTimes(1);
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockSignInSocial.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useSignInSocial({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("works without options (no crash)", async () => {
-		const { result } = renderHook(() => useSignInSocial());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockSignInSocial).toHaveBeenCalledTimes(1);
-	});
-});
-
-// ============================================================================
-// useSignUpEmail
-// ============================================================================
-
-describe("useSignUpEmail", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockSignUpEmail.mockResolvedValue({ ...SUCCESS, message: "Compte créé" });
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useSignUpEmail());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useSignUpEmail({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Compte créé");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockSignUpEmail.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useSignUpEmail({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("state reflects error on failure", async () => {
-		mockSignUpEmail.mockResolvedValue(ERROR);
-		const { result } = renderHook(() => useSignUpEmail());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(result.current.state).toEqual(ERROR);
-	});
-
-	it("calls the action each time it is invoked", async () => {
-		const { result } = renderHook(() => useSignUpEmail());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockSignUpEmail).toHaveBeenCalledTimes(2);
 	});
 });
 

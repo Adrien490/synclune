@@ -13,7 +13,7 @@ import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useGatedFormSubmit } from "@/shared/hooks/use-gated-form-submit";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { LoaderCircle } from "lucide-react";
+import { Spinner } from "@/shared/components/ui/spinner";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useStore } from "@tanstack/react-form";
@@ -170,7 +170,7 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 						>
 							{isPending ? (
 								<>
-									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<Spinner presentational />
 									<span>Connexion…</span>
 								</>
 							) : (

@@ -8,10 +8,10 @@ import { cacheLife, cacheTag } from "next/cache";
 // CACHE TAGS
 // ============================================
 
-export const ADDRESSES_CACHE_TAGS = {
-	/** Adresses d'un utilisateur */
-	USER_ADDRESSES: (userId: string) => `addresses-user-${userId}`,
-
+// Non exporté depuis le retrait du carnet d'adresses : plus aucun mutateur à
+// invalider, `cacheAddressSearch` ci-dessous est le seul consommateur. La
+// constante reste la SSOT du tag — jamais de littéral template au call site.
+const ADDRESSES_CACHE_TAGS = {
 	/** Recherche d'adresses via l'API BAN (autocomplete) */
 	ADDRESS_SEARCH: (query: string) => `address-search-${query.toLowerCase().trim()}`,
 } as const;
@@ -29,15 +29,4 @@ export const ADDRESSES_CACHE_TAGS = {
 export function cacheAddressSearch(query: string) {
 	cacheLife("reference");
 	cacheTag(ADDRESSES_CACHE_TAGS.ADDRESS_SEARCH(query));
-}
-
-// ============================================
-// INVALIDATION HELPERS
-// ============================================
-
-/**
- * Tags à invalider lors de la modification des adresses d'un utilisateur
- */
-export function getUserAddressesInvalidationTags(userId: string): string[] {
-	return [ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId)];
 }

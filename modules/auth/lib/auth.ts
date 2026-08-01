@@ -6,18 +6,15 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { normalizeEmail } from "@/shared/utils/normalize-email";
 import { AccountStatus } from "@/app/generated/prisma/client";
-import { handlePostLoginMerges } from "./post-login-merge";
 import {
 	normalizeUserEmailOnCreate,
 	normalizeUserEmailOnUpdate,
 } from "./normalize-user-email-hooks";
-import { stripe } from "@better-auth/stripe";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware, APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { customSession } from "better-auth/plugins";
-import Stripe from "stripe";
 import {
 	AUTH_PASSWORD_CONFIG,
 	AUTH_RATE_LIMIT_RULES,
@@ -28,27 +25,43 @@ import {
 // Valider les variables d'environnement au démarrage
 validateAuthEnvironment();
 
-// Initialiser Stripe client avec valeur par défaut pour le build
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-06-24.dahlia",
-	maxNetworkRetries: 2,
-	timeout: 10_000,
-});
-
+/**
+ * Authentification **réservée à l'administratrice** (retrait de l'espace client
+ * 2026-07-31). Il n'y a plus de compte client : le panier, les favoris, le
+ * checkout et le suivi de commande fonctionnent tous en invité (cookie de
+ * session / token HMAC). `/connexion` n'existe donc plus que pour accéder à
+ * `/admin`.
+ *
+ * Trois conséquences sur cette configuration :
+ *
+ * 1. `disableSignUp: true` — plus aucune création de compte par l'API. La route
+ *    `/inscription` et le formulaire ont été supprimés, mais couper l'UI ne
+ *    ferme pas l'endpoint `/sign-up/email` : ce flag, lui, le ferme.
+ * 2. Plus de `socialProviders` — Google était un chemin d'inscription à part
+ *    entière (un compte est créé au premier login OAuth), donc incompatible
+ *    avec « inscription désactivée ». Il part avec `accountLinking`, dont les
+ *    `trustedProviders` n'ont plus d'objet.
+ * 3. Plus de plugin `@better-auth/stripe` — il n'existait que pour
+ *    `createCustomerOnSignUp` et son `onCustomerCreate` qui créait le panier et
+ *    la wishlist du nouvel inscrit. Le Customer Stripe du checkout est géré
+ *    ailleurs, par `payments/services/stripe-customer.service.ts`.
+ *
+ * ⚠️ Créer un nouvel administrateur passe désormais par `prisma/seed.ts` ou par
+ * la base — pas par l'application. C'est assumé (opératrice unique).
+ *
+ * La vérification d'email est **conservée** : `requireEmailVerification: true`
+ * bloque la connexion d'un compte non vérifié, donc retirer l'envoi du mail et
+ * les pages `/verifier-email` + `/renvoyer-verification` laisserait un admin
+ * fraîchement créé sans aucun moyen de débloquer son propre accès.
+ */
 export const auth = betterAuth({
-	account: {
-		accountLinking: {
-			enabled: true,
-			trustedProviders: ["google"],
-		},
-	},
 	user: {
 		// Pas d'additionalFields firstName/lastName : ces données vivent uniquement
-		// sur le modèle Address (shipping/billing). Better Auth tentait un fallback join
-		// sur des colonnes User inexistantes (drift schéma → erreur P2022 ColumnNotFound).
-		changeEmail: {
-			enabled: true,
-		},
+		// sur les snapshots d'adresse de la commande. Better Auth tentait un fallback
+		// join sur des colonnes User inexistantes (drift schéma → P2022 ColumnNotFound).
+		//
+		// Pas de `changeEmail` non plus : c'était une surface de l'espace client
+		// (`/parametres`), et l'admin change son email en base.
 	},
 	rateLimit: {
 		enabled: true,
@@ -56,15 +69,11 @@ export const auth = betterAuth({
 		max: 100,
 		customRules: AUTH_RATE_LIMIT_RULES,
 	},
-	socialProviders: {
-		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-		},
-	},
 	emailAndPassword: {
 		requireEmailVerification: true, // Validation d'email obligatoire dans tous les environnements
 		enabled: true,
+		// Ferme `/sign-up/email` au niveau de l'API, pas seulement de l'UI.
+		disableSignUp: true,
 		sendResetPassword: async ({ user, url }) => {
 			// Better Auth génère automatiquement l'URL avec /api/auth/reset-password/{token}?callbackURL=...
 			// On envoie cette URL directement dans l'email
@@ -98,7 +107,10 @@ export const auth = betterAuth({
 				logger.error("Failed to send verification email", error, { service: "auth" });
 			}
 		},
-		sendOnSignUp: true, // Envoi automatique à l'inscription
+		// Pas de `sendOnSignUp` : il n'y a plus d'inscription. L'envoi passe
+		// désormais uniquement par `/renvoyer-verification` (action
+		// `resendVerificationEmail`), le seul déblocage possible d'un compte admin
+		// non vérifié.
 		autoSignInAfterVerification: true, // Auto-login after email verification to reduce friction
 	},
 
@@ -134,15 +146,17 @@ export const auth = betterAuth({
 	 * stockée en casse mixte fait échouer EN SILENCE le blocage des comptes
 	 * suspendus / anonymisés / supprimés.
 	 *
-	 * Trois chemins écrivent cette colonne — inscription email/mot de passe, profil
-	 * Google (`accountLinking` avec `trustedProviders`), et `changeEmail` — et seul
-	 * le premier passait par le `.toLowerCase()` de `emailSchema`. Ces hooks sont le
-	 * point de passage UNIQUE de l'adaptateur : ils couvrent les trois.
+	 * ⚠️ **Conservés malgré `disableSignUp`** (retrait de l'espace client
+	 * 2026-07-31). Les trois chemins d'écriture d'origine — inscription, profil
+	 * Google, `changeEmail` — ont tous disparu, donc ces hooks ne sont plus sur un
+	 * chemin chaud. Ils restent parce que le garde de `/sign-in/email` en dépend :
+	 * il compare en casse exacte, et c'est cette normalisation qui rend la
+	 * comparaison fiable. Les retirer rendrait ce garde silencieusement faux dès
+	 * qu'une ligne serait écrite en casse mixte par un autre chemin (seed, SQL
+	 * manuel, futur provider).
 	 *
 	 * Contrepartie côté base : `User_email_lowercase` (CHECK) + `User_email_lower_key`
-	 * (index unique d'expression) dans `prisma/sql/raw-guards.sql`. L'ordre importe —
-	 * ces hooks doivent exister AVANT que le CHECK ne soit posé, sinon un fournisseur
-	 * OAuth renvoyant une casse mixte fait échouer l'inscription en dur.
+	 * (index unique d'expression) dans `prisma/sql/raw-guards.sql`.
 	 */
 	databaseHooks: {
 		user: {
@@ -153,8 +167,13 @@ export const auth = betterAuth({
 	plugins: [
 		customSession(async ({ user, session }) => {
 			// Filtre les comptes bloqués : soft-deleted (deletedAt) + suspended (suspendedAt)
-			// + accountStatus INACTIVE/ANONYMIZED. PENDING_DELETION reste accepté pour
-			// permettre à l'utilisateur d'annuler sa demande via `cancelAccountDeletion`.
+			// + accountStatus INACTIVE/ANONYMIZED.
+			//
+			// PENDING_DELETION reste toléré, mais plus pour la raison d'origine : il
+			// permettait au client d'annuler sa demande de suppression depuis
+			// `/parametres`, surface qui n'existe plus. Aucun chemin applicatif ne pose
+			// plus ce statut — il ne subsiste que pour ne pas verrouiller une ligne
+			// héritée.
 			//
 			// ⚠️ DÉFENSE EN PROFONDEUR — Ne pas se reposer uniquement sur cette dégradation.
 			// `requireAuth()` / `requireAdmin*()` (modules/auth/lib/require-auth.ts) re-checkent
@@ -189,72 +208,12 @@ export const auth = betterAuth({
 				session,
 			};
 		}),
-		stripe({
-			stripeClient,
-			stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
-			createCustomerOnSignUp: true,
-
-			// 🔴 CORRECTION : Hook appelé après création du Customer Stripe
-			onCustomerCreate: async ({ stripeCustomer: _stripeCustomer, user }, _request) => {
-				// Create cart and wishlist automatically on signup
-				try {
-					await prisma.$transaction(async (tx) => {
-						// Créer le panier
-						await tx.cart.create({
-							data: {
-								userId: user.id,
-							},
-						});
-
-						// Créer la wishlist
-						await tx.wishlist.create({
-							data: {
-								userId: user.id,
-							},
-						});
-					});
-				} catch (error) {
-					// Don't block signup if cart/wishlist creation fails - they'll be created on first use (via upsert)
-					logger.error("Cart/wishlist creation failed on signup", error, {
-						service: "auth",
-						userId: user.id,
-					});
-				}
-
-				// Stripe customer events are tracked via Sentry and /api/webhooks/stripe
-			},
-
-			// 🔴 CORRECTION : Personnaliser les paramètres de création du Customer Stripe
-			getCustomerCreateParams: async (user, _request) => {
-				return {
-					// Ajouter le nom complet si disponible
-					name: user.name || user.email,
-
-					// Métadonnées personnalisées pour faciliter le tracking
-					metadata: {
-						userId: user.id,
-						signupDate: new Date().toISOString(),
-						source: "website",
-						// Ajouter d'autres métadonnées utiles pour votre business
-						// referralSource: user.metadata?.referralSource,
-					},
-
-					// Optionnel : Préférence de communication
-					// preferred_locales: ["fr"],
-				};
-			},
-
-			// 🔴 CORRECTION : Handler global pour tous les événements Stripe (monitoring)
-			onEvent: async (_event) => {
-				// Stripe events are monitored via Sentry; payment events handled by /api/webhooks/stripe
-			},
-		}),
 		nextCookies(), // IMPORTANT: doit être le dernier plugin pour gérer les cookies dans les server actions
 	],
 	pages: {
 		error: "/error",
 		signIn: "/connexion",
-		signUp: "/inscription",
+		// Pas de `signUp` : la route `/inscription` n'existe plus.
 	},
 	session: {
 		expiresIn: AUTH_SESSION_CONFIG.expiresIn,
@@ -267,8 +226,14 @@ export const auth = betterAuth({
 
 			// Bloquer signin email pour comptes révoqués (suspended/anonymized/deleted).
 			// Réponse générique "invalid credentials" → pas d'énumération possible.
-			// PENDING_DELETION + INACTIVE restent permis (peuvent se reconnecter
-			// pour annuler la demande via `cancelAccountDeletion`).
+			//
+			// `PENDING_DELETION` et `INACTIVE` restent permis. La raison d'origine
+			// (« se reconnecter pour annuler la demande via `cancelAccountDeletion` »)
+			// n'existe plus — ce flux est parti avec l'espace client. Ce qui tient
+			// encore : aucun chemin applicatif ne pose plus ces deux statuts, donc
+			// seule une ligne héritée peut les porter, et le plugin `customSession`
+			// dégrade de toute façon un compte non-ACTIVE au rôle `USER`. Les bloquer
+			// ici n'ajouterait rien et fermerait la porte à un compte récupérable.
 			if (path === "/sign-in/email") {
 				const body = ctx.body as { email?: string } | undefined;
 				// Même normalisation que `databaseHooks` ci-dessus : c'est ce qui rend
@@ -301,12 +266,11 @@ export const auth = betterAuth({
 				}
 			}
 
-			// Security audit logging for auth-sensitive endpoints
+			// Security audit logging for auth-sensitive endpoints.
+			// `/sign-up/email` n'y figure plus : `disableSignUp` le rejette avant
+			// d'arriver ici, et l'y garder suggérerait un chemin d'inscription vivant.
 			const isAuthAttempt =
-				path === "/sign-in/email" ||
-				path === "/sign-up/email" ||
-				path === "/reset-password" ||
-				path === "/forget-password";
+				path === "/sign-in/email" || path === "/reset-password" || path === "/forget-password";
 
 			if (isAuthAttempt) {
 				const ip =
@@ -320,12 +284,10 @@ export const auth = betterAuth({
 				});
 			}
 		}),
-		// Rattachement des données invité post-login (merge panier/wishlist +
-		// liaison commandes guest). Corps extrait dans `post-login-merge.ts`
-		// pour testabilité (charger auth.ts exige toute la config Better Auth).
-		after: createAuthMiddleware(async (ctx) => {
-			await handlePostLoginMerges(ctx);
-		}),
+		// Pas de `hooks.after` : il ne portait que `handlePostLoginMerges` (merge du
+		// panier et de la wishlist invités dans ceux du compte + rattachement des
+		// commandes guest par email). Sans compte client, il n'y a plus rien à
+		// rattacher — les données invitées RESTENT invitées.
 	},
 });
 

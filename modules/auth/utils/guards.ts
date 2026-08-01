@@ -5,9 +5,10 @@ import { isVerifiedAdmin } from "@/modules/auth/lib/require-auth";
 /**
  * Vérifie si l'utilisateur actuel est RÉELLEMENT admin (re-vérification DB).
  *
- * ⚠️ Ne JAMAIS revenir à `session.user.role === "ADMIN"` seul : le cookieCache
- * Better Auth (`AUTH_SESSION_CONFIG.cookieCache.maxAge`, 5 min) laisse un admin
- * rétrogradé/suspendu/supprimé avec un cookie qui prétend encore `ADMIN`.
+ * ⚠️ Ne JAMAIS revenir à `session.user.role === "ADMIN"` seul : tant que le
+ * cookieCache Better Auth est valide (`AUTH_SESSION_CONFIG.cookieCache.maxAge`),
+ * la session est servie SANS lecture en base, donc un admin
+ * rétrogradé/suspendu/supprimé garde un cookie qui prétend encore `ADMIN`.
  * Cf. `get-current-session.ts` (EINV-SEC-008) et le garde-fou
  * `__tests__/no-raw-session-role-trust.regression.test.ts`.
  *

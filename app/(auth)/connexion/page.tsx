@@ -1,57 +1,46 @@
 import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { SignInEmailForm } from "@/modules/auth/components/sign-in-email-form";
-import { SignInSocialForm } from "@/modules/auth/components/sign-in-social-form";
-import { SignUpLink } from "@/modules/auth/components/sign-up-link";
+import { ROUTES } from "@/shared/constants/urls";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Connexion | Synclune",
-	description:
-		"Connectez-vous à votre espace personnel Synclune pour accéder à vos commandes, favoris et informations.",
+	description: "Accès à l'administration Synclune.",
 	robots: { index: false, follow: false },
 	openGraph: {
 		title: "Connexion | Synclune",
-		description: "Accédez à votre espace personnel",
+		description: "Accès à l'administration Synclune",
 		type: "website",
 	},
 };
 
+/**
+ * Connexion — **réservée à l'administration** (retrait de l'espace client
+ * 2026-07-31).
+ *
+ * Il n'y a plus de compte client : plus de bouton Google (c'était un chemin
+ * d'inscription, un compte étant créé au premier login OAuth), plus de lien
+ * « créer un compte », et la destination par défaut est `/admin` et non `/`.
+ *
+ * La page reste hors des liens de navigation de la vitrine — elle n'est joignable
+ * que par URL directe ou par la redirection du proxy sur `/admin`.
+ */
 export default async function LoginPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ callbackURL?: string }>;
 }) {
 	const { callbackURL } = await searchParams;
-	const resolvedCallbackURL = callbackURL ?? "/";
+	const resolvedCallbackURL = callbackURL ?? ROUTES.ADMIN.ROOT;
 
 	return (
 		<AuthPageLayout
 			backHref="/"
 			backLabel="Retour au site"
 			title="Connexion"
-			description="Pour accéder à votre espace personnel"
+			description="Pour accéder à l'administration de la boutique"
 		>
-			<div className="space-y-6">
-				{/* Social login */}
-				<SignInSocialForm callbackURL={resolvedCallbackURL} />
-
-				<div className="relative">
-					<div className="absolute inset-0 flex items-center">
-						<span className="w-full border-t" />
-					</div>
-					<div className="relative flex justify-center text-xs uppercase">
-						<span className="bg-background text-muted-foreground px-2">Ou avec votre email</span>
-					</div>
-				</div>
-
-				{/* Email login */}
-				<SignInEmailForm callbackURL={resolvedCallbackURL} />
-
-				{/* Sign up link */}
-				<div className="border-t pt-4 text-center">
-					<SignUpLink callbackURL={callbackURL} />
-				</div>
-			</div>
+			<SignInEmailForm callbackURL={resolvedCallbackURL} />
 		</AuthPageLayout>
 	);
 }

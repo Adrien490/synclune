@@ -83,23 +83,23 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 				backLabel="Retour au site"
 				title="Bienvenue"
 				icon={
-					<div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
-						<Sparkles className="size-8 text-green-600" aria-hidden="true" />
+					<div className="bg-success/15 flex size-16 items-center justify-center rounded-full">
+						<Sparkles className="text-success size-8" aria-hidden="true" />
 					</div>
 				}
 			>
 				<div className="space-y-6">
 					<div
-						className="flex flex-col items-center gap-4 rounded-md border border-green-500/30 bg-green-500/15 p-6"
+						className="border-success/30 bg-success/15 flex flex-col items-center gap-4 rounded-md border p-6"
 						role="status"
 						aria-live="polite"
 					>
-						<CircleCheck className="size-12 text-green-500" aria-hidden="true" />
+						<CircleCheck className="text-success size-12" aria-hidden="true" />
 						<div className="space-y-2 text-center">
-							<p className={cn("font-display text-lg font-normal text-green-700")}>
+							<p className={cn("font-display text-success text-lg font-normal")}>
 								Email vérifié avec succès
 							</p>
-							<p className="text-sm text-green-600/90">
+							<p className="text-success/90 text-sm">
 								{isConnected
 									? "Votre compte a été activé et vous êtes connecté."
 									: "Votre compte a été activé. Vous pouvez maintenant vous connecter."}

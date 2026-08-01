@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { handleActionError, success } from "@/shared/lib/actions";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 
@@ -16,6 +18,12 @@ import { headers } from "next/headers";
  */
 export async function logout(): Promise<ActionState> {
 	try {
+		// Action publique par conception (on déconnecte même une session orpheline,
+		// cf. le docblock ci-dessus), donc le seul plafond possible est le rate limit :
+		// sans lui, `auth.api.signOut()` est une écriture DB illimitée non authentifiée.
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.LOGOUT);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		const headersList = await headers();
 
 		// Pas d'invalidation de cache nécessaire : les entrées "use cache: private"
